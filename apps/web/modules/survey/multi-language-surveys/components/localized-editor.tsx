@@ -172,7 +172,7 @@ export function LocalizedEditor({
 
           {value && selectedLanguageCode !== "default" && value.default ? (
             <div className="mt-1 flex text-xs text-gray-500">
-              <strong>{t("environments.workspace.languages.translate")}:</strong>
+              <strong>{t("workspace.languages.translate")}:</strong>
               <span className="ml-1">
                 {getTextContent(recallToHeadline(value, localSurvey, false, "default").default ?? "")}
               </span>
@@ -182,9 +182,7 @@ export function LocalizedEditor({
       )}
 
       {isInComplete ? (
-        <div className="mt-1 text-xs text-red-400">
-          {t("environments.workspace.languages.incomplete_translations")}
-        </div>
+        <div className="mt-1 text-xs text-red-400">{t("workspace.languages.incomplete_translations")}</div>
       ) : null}
     </div>
   );

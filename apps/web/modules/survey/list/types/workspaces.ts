@@ -1,5 +1,3 @@
-import { Environment, Workspace } from "@prisma/client";
+import { Workspace } from "@prisma/client";
 
-export interface TUserWorkspace extends Pick<Workspace, "id" | "name"> {
-  environments: Pick<Environment, "id" | "type">[];
-}
+export interface TUserWorkspace extends Pick<Workspace, "id" | "name"> {}

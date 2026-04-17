@@ -188,7 +188,6 @@ describe("Response Processing", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
       name: "Test Survey",
-      environmentId: "env1",
       createdBy: null,
       blocks: [
         {

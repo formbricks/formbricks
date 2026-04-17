@@ -1,20 +1,13 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
-import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { logger } from "@formbricks/logger";
 import { ZId, ZString } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ValidationError } from "@formbricks/types/errors";
-import {
-  TWorkspace,
-  TWorkspaceUpdateInput,
-  ZWorkspace,
-  ZWorkspaceUpdateInput,
-} from "@formbricks/types/workspace";
-import { createEnvironment } from "@/lib/environment/service";
+import { TWorkspace, TWorkspaceUpdateInput, ZWorkspaceUpdateInput } from "@formbricks/types/workspace";
 import { validateInputs } from "@/lib/utils/validate";
-import { deleteFilesByEnvironmentId } from "@/modules/storage/service";
+import { deleteFilesByWorkspaceId } from "@/modules/storage/service";
 
 const selectWorkspace = {
   id: true,
@@ -30,7 +23,7 @@ const selectWorkspace = {
   placement: true,
   clickOutsideClose: true,
   overlay: true,
-  environments: true,
+  appSetupCompleted: true,
   styling: true,
   logo: true,
   customHeadScripts: true,
@@ -41,19 +34,14 @@ export const updateWorkspace = async (
   inputWorkspace: TWorkspaceUpdateInput
 ): Promise<TWorkspace> => {
   validateInputs([workspaceId, ZId], [inputWorkspace, ZWorkspaceUpdateInput]);
-  const { environments, ...data } = inputWorkspace;
+  const { ...data } = inputWorkspace;
   let updatedWorkspace;
   try {
     updatedWorkspace = await prisma.workspace.update({
       where: {
         id: workspaceId,
       },
-      data: {
-        ...data,
-        environments: {
-          connect: environments?.map((environment) => ({ id: environment.id })) ?? [],
-        },
-      },
+      data,
       select: selectWorkspace,
     });
   } catch (error) {
@@ -63,16 +51,7 @@ export const updateWorkspace = async (
     throw error;
   }
 
-  try {
-    const workspace = ZWorkspace.parse(updatedWorkspace);
-
-    return workspace;
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      logger.error(error.issues, "Error updating workspace");
-    }
-    throw new ValidationError("Data validation of workspace failed");
-  }
+  return updatedWorkspace as TWorkspace;
 };
 
 export const createWorkspace = async (
@@ -85,10 +64,10 @@ export const createWorkspace = async (
     throw new ValidationError("Workspace Name is required");
   }
 
-  const { environments, teamIds, ...data } = workspaceInput;
+  const { teamIds, ...data } = workspaceInput;
 
   try {
-    let workspace = await prisma.workspace.create({
+    const workspace = await prisma.workspace.create({
       data: {
         config: {
           channel: null,
@@ -110,19 +89,7 @@ export const createWorkspace = async (
       });
     }
 
-    const devEnvironment = await createEnvironment(workspace.id, {
-      type: "development",
-    });
-
-    const prodEnvironment = await createEnvironment(workspace.id, {
-      type: "production",
-    });
-
-    const updatedWorkspace = await updateWorkspace(workspace.id, {
-      environments: [devEnvironment, prodEnvironment],
-    });
-
-    return updatedWorkspace;
+    return workspace;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === PrismaErrorType.UniqueConstraintViolation) {
@@ -144,19 +111,11 @@ export const deleteWorkspace = async (workspaceId: string): Promise<TWorkspace> 
     });
 
     if (workspace) {
-      // delete all files from storage related to this workspace
+      const s3Result = await deleteFilesByWorkspaceId(workspaceId, []);
 
-      const s3FilesPromises = workspace.environments.map(async (environment) => {
-        return deleteFilesByEnvironmentId(environment.id);
-      });
-
-      const s3FilesResult = await Promise.all(s3FilesPromises);
-
-      for (const result of s3FilesResult) {
-        if (!result.ok) {
-          // fail silently because we don't want to throw an error if the files are not deleted
-          logger.error(result.error, "Error deleting S3 files");
-        }
+      if (!s3Result.ok) {
+        // fail silently because we don't want to throw an error if the files are not deleted
+        logger.error(s3Result.error, "Error deleting S3 files");
       }
     }
 

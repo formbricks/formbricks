@@ -14,6 +14,7 @@ import {
 } from "@formbricks/types/organizations";
 import { cache } from "@/lib/cache";
 import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@/lib/constants";
+import { getWorkspace } from "@/lib/workspace/service";
 import {
   type TStandardCloudPlan,
   getCatalogItemForPlan,
@@ -458,18 +459,21 @@ const resolvePendingChangeEffectiveAt = (
 const ensureHobbySubscription = async (
   organizationId: string,
   customerId: string,
-  idempotencySuffix: string
+  subscriptionCount: number
 ): Promise<void> => {
   if (!stripeClient) return;
   const hobbyItems = await getCatalogItemsForPlan("hobby", "monthly");
 
+  // Include subscriptionCount so the key is stable across concurrent calls (same
+  // count → same key → Stripe deduplicates) but changes after a cancellation
+  // (count increases → new key → allows legitimate re-creation).
   await stripeClient.subscriptions.create(
     {
       customer: customerId,
       items: hobbyItems,
       metadata: { organizationId },
     },
-    { idempotencyKey: `ensure-hobby-subscription-${organizationId}-${idempotencySuffix}` }
+    { idempotencyKey: `ensure-hobby-subscription-${organizationId}-${subscriptionCount}` }
   );
 };
 
@@ -549,7 +553,7 @@ export const createProTrialSubscription = async (
 export const createPaidPlanCheckoutSession = async (input: {
   organizationId: string;
   customerId: string;
-  environmentId: string;
+  workspaceId: string;
   plan: Exclude<TStandardCloudPlan, "hobby">;
   interval: TCloudBillingInterval;
 }): Promise<string> => {
@@ -569,6 +573,10 @@ export const createPaidPlanCheckoutSession = async (input: {
   }
 
   const items = await getCatalogItemsForPlan(input.plan, input.interval);
+  const workspace = await getWorkspace(input.workspaceId);
+  if (!workspace) {
+    throw new ResourceNotFoundError("workspace", input.workspaceId);
+  }
   const session = await stripeClient.checkout.sessions.create({
     mode: "subscription",
     customer: input.customerId,
@@ -583,8 +591,8 @@ export const createPaidPlanCheckoutSession = async (input: {
       address: "auto",
       name: "auto",
     },
-    success_url: `${WEBAPP_URL}/billing-confirmation?environmentId=${input.environmentId}&checkout_success=1`,
-    cancel_url: `${WEBAPP_URL}/environments/${input.environmentId}/settings/billing`,
+    success_url: `${WEBAPP_URL}/billing-confirmation?workspaceId=${input.workspaceId}&checkout_success=1`,
+    cancel_url: `${WEBAPP_URL}/workspaces/${workspace.id}/settings/billing`,
     metadata: {
       organizationId: input.organizationId,
       targetPlan: input.plan,
@@ -1264,8 +1272,7 @@ export const findOrganizationIdByStripeCustomerId = async (customerId: string): 
 };
 
 export const reconcileCloudStripeSubscriptionsForOrganization = async (
-  organizationId: string,
-  idempotencySuffix = "reconcile"
+  organizationId: string
 ): Promise<void> => {
   const client = stripeClient;
   if (!IS_FORMBRICKS_CLOUD || !client) return;
@@ -1313,11 +1320,26 @@ export const reconcileCloudStripeSubscriptionsForOrganization = async (
     );
 
     await Promise.all(
-      hobbySubscriptions.map(({ subscription }) =>
-        client.subscriptions.cancel(subscription.id, {
-          prorate: false,
-        })
-      )
+      hobbySubscriptions.map(async ({ subscription }) => {
+        try {
+          await client.subscriptions.cancel(subscription.id, {
+            prorate: false,
+          });
+        } catch (err) {
+          if (
+            err instanceof Stripe.errors.StripeInvalidRequestError &&
+            err.statusCode === 404 &&
+            err.code === "resource_missing"
+          ) {
+            logger.warn(
+              { subscriptionId: subscription.id, organizationId },
+              "Subscription already deleted, skipping cancel"
+            );
+            return;
+          }
+          throw err;
+        }
+      })
     );
     return;
   }
@@ -1327,12 +1349,14 @@ export const reconcileCloudStripeSubscriptionsForOrganization = async (
     // (e.g. webhook + bootstrap) both seeing 0 and creating duplicate hobbies.
     const freshSubscriptions = await client.subscriptions.list({
       customer: customerId,
-      status: "active",
-      limit: 1,
+      status: "all",
+      limit: 20,
     });
 
-    if (freshSubscriptions.data.length === 0) {
-      await ensureHobbySubscription(organizationId, customerId, idempotencySuffix);
+    const freshActive = freshSubscriptions.data.filter((sub) => ACTIVE_SUBSCRIPTION_STATUSES.has(sub.status));
+
+    if (freshActive.length === 0) {
+      await ensureHobbySubscription(organizationId, customerId, freshSubscriptions.data.length);
     }
   }
 };
@@ -1340,6 +1364,6 @@ export const reconcileCloudStripeSubscriptionsForOrganization = async (
 export const ensureCloudStripeSetupForOrganization = async (organizationId: string): Promise<void> => {
   if (!IS_FORMBRICKS_CLOUD || !stripeClient) return;
   await ensureStripeCustomerForOrganization(organizationId);
-  await reconcileCloudStripeSubscriptionsForOrganization(organizationId, "bootstrap");
+  await reconcileCloudStripeSubscriptionsForOrganization(organizationId);
   await syncOrganizationBillingFromStripe(organizationId);
 };

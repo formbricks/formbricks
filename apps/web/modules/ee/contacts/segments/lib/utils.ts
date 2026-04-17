@@ -37,33 +37,33 @@ export const convertOperatorToText = (operator: TAllOperators, t: TFunction) => 
     case "greaterEqual":
       return ">=";
     case "isSet":
-      return t("environments.segments.operator_is_set");
+      return t("workspace.segments.operator_is_set");
     case "isNotSet":
-      return t("environments.segments.operator_is_not_set");
+      return t("workspace.segments.operator_is_not_set");
     case "contains":
-      return t("environments.segments.operator_contains");
+      return t("workspace.segments.operator_contains");
     case "doesNotContain":
-      return t("environments.segments.operator_does_not_contain");
+      return t("workspace.segments.operator_does_not_contain");
     case "startsWith":
-      return t("environments.segments.operator_starts_with");
+      return t("workspace.segments.operator_starts_with");
     case "endsWith":
-      return t("environments.segments.operator_ends_with");
+      return t("workspace.segments.operator_ends_with");
     case "userIsIn":
-      return t("environments.segments.operator_user_is_in");
+      return t("workspace.segments.operator_user_is_in");
     case "userIsNotIn":
-      return t("environments.segments.operator_user_is_not_in");
+      return t("workspace.segments.operator_user_is_not_in");
     case "isOlderThan":
-      return t("environments.segments.operator_is_older_than");
+      return t("workspace.segments.operator_is_older_than");
     case "isNewerThan":
-      return t("environments.segments.operator_is_newer_than");
+      return t("workspace.segments.operator_is_newer_than");
     case "isBefore":
-      return t("environments.segments.operator_is_before");
+      return t("workspace.segments.operator_is_before");
     case "isAfter":
-      return t("environments.segments.operator_is_after");
+      return t("workspace.segments.operator_is_after");
     case "isBetween":
-      return t("environments.segments.operator_is_between");
+      return t("workspace.segments.operator_is_between");
     case "isSameDay":
-      return t("environments.segments.operator_is_same_day");
+      return t("workspace.segments.operator_is_same_day");
     default:
       return operator;
   }
@@ -72,45 +72,45 @@ export const convertOperatorToText = (operator: TAllOperators, t: TFunction) => 
 export const convertOperatorToTitle = (operator: TAllOperators, t: TFunction) => {
   switch (operator) {
     case "equals":
-      return t("environments.segments.operator_title_equals");
+      return t("workspace.segments.operator_title_equals");
     case "notEquals":
-      return t("environments.segments.operator_title_not_equals");
+      return t("workspace.segments.operator_title_not_equals");
     case "lessThan":
-      return t("environments.segments.operator_title_less_than");
+      return t("workspace.segments.operator_title_less_than");
     case "lessEqual":
-      return t("environments.segments.operator_title_less_equal");
+      return t("workspace.segments.operator_title_less_equal");
     case "greaterThan":
-      return t("environments.segments.operator_title_greater_than");
+      return t("workspace.segments.operator_title_greater_than");
     case "greaterEqual":
-      return t("environments.segments.operator_title_greater_equal");
+      return t("workspace.segments.operator_title_greater_equal");
     case "isSet":
-      return t("environments.segments.operator_title_is_set");
+      return t("workspace.segments.operator_title_is_set");
     case "isNotSet":
-      return t("environments.segments.operator_title_is_not_set");
+      return t("workspace.segments.operator_title_is_not_set");
     case "contains":
-      return t("environments.segments.operator_title_contains");
+      return t("workspace.segments.operator_title_contains");
     case "doesNotContain":
-      return t("environments.segments.operator_title_does_not_contain");
+      return t("workspace.segments.operator_title_does_not_contain");
     case "startsWith":
-      return t("environments.segments.operator_title_starts_with");
+      return t("workspace.segments.operator_title_starts_with");
     case "endsWith":
-      return t("environments.segments.operator_title_ends_with");
+      return t("workspace.segments.operator_title_ends_with");
     case "userIsIn":
-      return t("environments.segments.operator_title_user_is_in");
+      return t("workspace.segments.operator_title_user_is_in");
     case "userIsNotIn":
-      return t("environments.segments.operator_title_user_is_not_in");
+      return t("workspace.segments.operator_title_user_is_not_in");
     case "isOlderThan":
-      return t("environments.segments.operator_title_is_older_than");
+      return t("workspace.segments.operator_title_is_older_than");
     case "isNewerThan":
-      return t("environments.segments.operator_title_is_newer_than");
+      return t("workspace.segments.operator_title_is_newer_than");
     case "isBefore":
-      return t("environments.segments.operator_title_is_before");
+      return t("workspace.segments.operator_title_is_before");
     case "isAfter":
-      return t("environments.segments.operator_title_is_after");
+      return t("workspace.segments.operator_title_is_after");
     case "isBetween":
-      return t("environments.segments.operator_title_is_between");
+      return t("workspace.segments.operator_title_is_between");
     case "isSameDay":
-      return t("environments.segments.operator_title_is_same_day");
+      return t("workspace.segments.operator_title_is_same_day");
     default:
       return operator;
   }

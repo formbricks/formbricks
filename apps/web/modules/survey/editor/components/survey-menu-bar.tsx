@@ -32,7 +32,6 @@ interface SurveyMenuBarProps {
   localSurvey: TSurvey;
   survey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;
-  environmentId: string;
   activeId: TSurveyEditorTabs;
   setActiveId: React.Dispatch<React.SetStateAction<TSurveyEditorTabs>>;
   setInvalidElements: React.Dispatch<React.SetStateAction<string[] | null>>;
@@ -49,7 +48,6 @@ interface SurveyMenuBarProps {
 export const SurveyMenuBar = ({
   localSurvey,
   survey,
-  environmentId,
   setLocalSurvey,
   activeId,
   setActiveId,
@@ -62,6 +60,7 @@ export const SurveyMenuBar = ({
   setIsCautionDialogOpen,
   isStorageConfigured = true,
 }: SurveyMenuBarProps) => {
+  const workspaceBasePath = `/workspaces/${workspace.id}`;
   const { t } = useTranslation();
   const router = useRouter();
   const [audiencePrompt, setAudiencePrompt] = useState(true);
@@ -72,6 +71,7 @@ export const SurveyMenuBar = ({
   const [lastAutoSaved, setLastAutoSaved] = useState<Date | null>(null);
   const isSuccessfullySavedRef = useRef(false);
   const isAutoSavingRef = useRef(false);
+  const isSurveyPublishingRef = useRef(false);
 
   // Refs for interval-based auto-save (to access current values without re-creating interval)
   const localSurveyRef = useRef(localSurvey);
@@ -109,7 +109,7 @@ export const SurveyMenuBar = ({
   }, [survey]);
 
   useEffect(() => {
-    const warningText = t("environments.surveys.edit.unsaved_changes_warning");
+    const warningText = t("workspace.surveys.edit.unsaved_changes_warning");
     const handleWindowClose = (e: BeforeUnloadEvent) => {
       // Skip warning if we just successfully saved
       if (isSuccessfullySavedRef.current) {
@@ -168,7 +168,7 @@ export const SurveyMenuBar = ({
 
       // create a new private segment
       const newSegment = await createSegmentAction({
-        environmentId: localSurvey.environmentId,
+        workspaceId: localSurvey.workspaceId,
         filters,
         isPrivate: true,
         surveyId: localSurvey.id,
@@ -269,8 +269,8 @@ export const SurveyMenuBar = ({
       // Skip if tab is not visible (no computation, no API calls for background tabs)
       if (document.hidden) return;
 
-      // Skip if already saving (manual or auto)
-      if (isAutoSavingRef.current || isSurveySavingRef.current) return;
+      // Skip if already saving, publishing, or auto-saving
+      if (isAutoSavingRef.current || isSurveySavingRef.current || isSurveyPublishingRef.current) return;
 
       // Check for changes using refs (avoids re-creating interval on every change)
       const { updatedAt: localUpdatedAt, ...localSurveyRest } = localSurveyRef.current;
@@ -289,10 +289,19 @@ export const SurveyMenuBar = ({
         } as unknown as TSurveyDraft);
 
         if (updatedSurveyResponse?.data) {
+          const savedData = updatedSurveyResponse.data;
+
+          // If the segment changed on the server (e.g., private segment was deleted when
+          // switching from app to link type), update localSurvey to prevent stale segment
+          // references when publishing
+          if (!isEqual(localSurveyRef.current.segment, savedData.segment)) {
+            setLocalSurvey({ ...localSurveyRef.current, segment: savedData.segment });
+          }
+
           // Update surveyRef (not localSurvey state) to prevent re-renders during auto-save.
           // This keeps the UI stable while still tracking that changes have been saved.
           // The comparison uses refs, so this prevents unnecessary re-saves.
-          surveyRef.current = { ...updatedSurveyResponse.data };
+          surveyRef.current = { ...savedData };
           isSuccessfullySavedRef.current = true;
           setLastAutoSaved(new Date());
         }
@@ -321,7 +330,7 @@ export const SurveyMenuBar = ({
       setIsSurveySaving(false);
       if (updatedSurveyResponse?.data) {
         setLocalSurvey(updatedSurveyResponse.data);
-        toast.success(t("environments.surveys.edit.changes_saved"));
+        toast.success(t("workspace.surveys.edit.changes_saved"));
         isSuccessfullySavedRef.current = true;
         router.refresh();
       } else {
@@ -333,7 +342,7 @@ export const SurveyMenuBar = ({
     } catch (e) {
       console.error(e);
       setIsSurveySaving(false);
-      toast.error(t("environments.surveys.edit.error_saving_changes"));
+      toast.error(t("workspace.surveys.edit.error_saving_changes"));
       return false;
     }
   };
@@ -378,7 +387,7 @@ export const SurveyMenuBar = ({
       });
 
       if (localSurvey.type !== "link" && !localSurvey.triggers?.length) {
-        toast.error(t("environments.surveys.edit.please_set_a_survey_trigger"));
+        toast.error(t("workspace.surveys.edit.please_set_a_survey_trigger"));
         setIsSurveySaving(false);
         return false;
       }
@@ -390,7 +399,7 @@ export const SurveyMenuBar = ({
       setIsSurveySaving(false);
       if (updatedSurveyResponse?.data) {
         setLocalSurvey(updatedSurveyResponse.data);
-        toast.success(t("environments.surveys.edit.changes_saved"));
+        toast.success(t("workspace.surveys.edit.changes_saved"));
         // Set flag to prevent beforeunload warning during router.refresh()
         isSuccessfullySavedRef.current = true;
         router.refresh();
@@ -404,7 +413,7 @@ export const SurveyMenuBar = ({
     } catch (e) {
       console.error(e);
       setIsSurveySaving(false);
-      toast.error(t("environments.surveys.edit.error_saving_changes"));
+      toast.error(t("workspace.surveys.edit.error_saving_changes"));
       return false;
     }
   };
@@ -417,11 +426,13 @@ export const SurveyMenuBar = ({
   };
 
   const handleSurveyPublish = async () => {
+    isSurveyPublishingRef.current = true;
     setIsSurveyPublishing(true);
 
     const isSurveyValidatedWithZod = validateSurveyWithZod();
 
     if (!isSurveyValidatedWithZod) {
+      isSurveyPublishingRef.current = false;
       setIsSurveyPublishing(false);
       return;
     }
@@ -429,6 +440,7 @@ export const SurveyMenuBar = ({
     try {
       const isSurveyValidResult = isSurveyValid(localSurvey, selectedLanguageCode, t, responseCount);
       if (!isSurveyValidResult) {
+        isSurveyPublishingRef.current = false;
         setIsSurveyPublishing(false);
         return;
       }
@@ -445,17 +457,20 @@ export const SurveyMenuBar = ({
       if (!publishResult?.data) {
         const errorMessage = getFormattedErrorMessage(publishResult);
         toast.error(errorMessage);
+        isSurveyPublishingRef.current = false;
         setIsSurveyPublishing(false);
         return;
       }
 
+      isSurveyPublishingRef.current = false;
       setIsSurveyPublishing(false);
       // Set flag to prevent beforeunload warning during navigation
       isSuccessfullySavedRef.current = true;
-      router.push(`/environments/${environmentId}/surveys/${localSurvey.id}/summary?success=true`);
+      router.push(`${workspaceBasePath}/surveys/${localSurvey.id}/summary?success=true`);
     } catch (error) {
       console.error(error);
-      toast.error(t("environments.surveys.edit.error_publishing_survey"));
+      toast.error(t("workspace.surveys.edit.error_publishing_survey"));
+      isSurveyPublishingRef.current = false;
       setIsSurveyPublishing(false);
     }
   };
@@ -507,7 +522,7 @@ export const SurveyMenuBar = ({
         {responseCount > 0 && (
           <div>
             <Alert variant="warning" size="small">
-              <AlertTitle>{t("environments.surveys.edit.caution_text")}</AlertTitle>
+              <AlertTitle>{t("workspace.surveys.edit.caution_text")}</AlertTitle>
               <AlertButton onClick={() => setIsCautionDialogOpen(true)}>{t("common.learn_more")}</AlertButton>
             </Alert>
           </div>
@@ -531,7 +546,7 @@ export const SurveyMenuBar = ({
             size="sm"
             loading={isSurveySaving}
             onClick={() => handleSaveAndGoBack()}>
-            {t("environments.surveys.edit.save_and_close")}
+            {t("workspace.surveys.edit.save_and_close")}
           </Button>
         )}
         {localSurvey.status === "draft" && audiencePrompt && !isLinkSurvey && (
@@ -541,7 +556,7 @@ export const SurveyMenuBar = ({
               setAudiencePrompt(false);
               setActiveId("settings");
             }}>
-            {t("environments.surveys.edit.continue_to_settings")}
+            {t("workspace.surveys.edit.continue_to_settings")}
             <SettingsIcon />
           </Button>
         )}
@@ -552,17 +567,15 @@ export const SurveyMenuBar = ({
             disabled={isSurveySaving || containsEmptyTriggers}
             loading={isSurveyPublishing}
             onClick={handleSurveyPublish}>
-            {isCxMode
-              ? t("environments.surveys.edit.save_and_close")
-              : t("environments.surveys.edit.publish")}
+            {isCxMode ? t("workspace.surveys.edit.save_and_close") : t("workspace.surveys.edit.publish")}
           </Button>
         )}
       </div>
       <AlertDialog
-        headerText={t("environments.surveys.edit.confirm_survey_changes")}
+        headerText={t("workspace.surveys.edit.confirm_survey_changes")}
         open={isConfirmDialogOpen}
         setOpen={setConfirmDialogOpen}
-        mainText={t("environments.surveys.edit.unsaved_changes_warning")}
+        mainText={t("workspace.surveys.edit.unsaved_changes_warning")}
         confirmBtnLabel={t("common.save")}
         declineBtnLabel={t("common.discard")}
         declineBtnVariant="destructive"

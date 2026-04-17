@@ -42,9 +42,9 @@ export const AddElementButton = ({ addElement, workspace, isCxMode }: AddElement
             <PlusIcon className="h-5 w-5 text-white" />
           </div>
           <div className="px-4 py-3">
-            <p className="text-sm font-semibold">{t("environments.surveys.edit.add_block")}</p>
+            <p className="text-sm font-semibold">{t("workspace.surveys.edit.add_block")}</p>
             <p className="mt-1 text-xs text-slate-500">
-              {t("environments.surveys.edit.choose_the_first_question_on_your_block")}
+              {t("workspace.surveys.edit.choose_the_first_question_on_your_block")}
             </p>
           </div>
         </div>

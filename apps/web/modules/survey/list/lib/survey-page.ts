@@ -148,12 +148,12 @@ function buildStandardCursorWhere(
 }
 
 function buildBaseWhere(
-  environmentId: string,
+  workspaceId: string,
   filterCriteria?: TSurveyFilterCriteria,
   extraWhere?: Prisma.SurveyWhereInput
 ): Prisma.SurveyWhereInput {
   return {
-    environmentId,
+    workspaceId,
     ...buildWhereClause(filterCriteria),
     ...extraWhere,
   };
@@ -197,7 +197,7 @@ function getRelevanceNextCursor(survey: TSurveyRow, bucket: TRelevanceBucket): T
 }
 
 async function findSurveyRows(
-  environmentId: string,
+  workspaceId: string,
   limit: number,
   sortBy: TStandardSurveyListSort,
   filterCriteria?: TSurveyFilterCriteria,
@@ -207,7 +207,7 @@ async function findSurveyRows(
   const cursorWhere = cursor ? buildStandardCursorWhere(sortBy, cursor) : undefined;
 
   return prisma.survey.findMany({
-    where: buildBaseWhere(environmentId, filterCriteria, {
+    where: buildBaseWhere(workspaceId, filterCriteria, {
       ...extraWhere,
       ...cursorWhere,
     }),
@@ -237,11 +237,11 @@ function buildSurveyListPage(rows: TSurveyRow[], cursor: TSurveyListPageCursor |
 }
 
 async function getStandardSurveyListPage(
-  environmentId: string,
+  workspaceId: string,
   options: TGetSurveyListPageOptions & { sortBy: TStandardSurveyListSort }
 ): Promise<TSurveyListPage> {
   const surveyRows = await findSurveyRows(
-    environmentId,
+    workspaceId,
     options.limit,
     options.sortBy,
     options.filterCriteria,
@@ -258,7 +258,7 @@ async function getStandardSurveyListPage(
 }
 
 async function findRelevanceRows(
-  environmentId: string,
+  workspaceId: string,
   limit: number,
   filterCriteria: TSurveyFilterCriteria | undefined,
   bucket: TRelevanceBucket,
@@ -271,7 +271,7 @@ async function findRelevanceRows(
     : undefined;
 
   return prisma.survey.findMany({
-    where: buildBaseWhere(environmentId, filterCriteria, {
+    where: buildBaseWhere(workspaceId, filterCriteria, {
       ...statusWhere,
       ...cursorWhere,
     }),
@@ -282,10 +282,10 @@ async function findRelevanceRows(
 }
 
 async function hasMoreRelevanceRowsInOtherBucket(
-  environmentId: string,
+  workspaceId: string,
   filterCriteria?: TSurveyFilterCriteria
 ): Promise<boolean> {
-  const otherRows = await findRelevanceRows(environmentId, 1, filterCriteria, OTHER_BUCKET, null);
+  const otherRows = await findRelevanceRows(workspaceId, 1, filterCriteria, OTHER_BUCKET, null);
   return otherRows.length > 0;
 }
 
@@ -315,13 +315,13 @@ function buildRelevancePage(rows: TSurveyRow[], bucket: TRelevanceBucket | null)
 }
 
 async function getInProgressRelevanceStep(
-  environmentId: string,
+  workspaceId: string,
   limit: number,
   filterCriteria: TSurveyFilterCriteria | undefined,
   cursor: TRelevanceSurveyListCursor | null
 ): Promise<{ pageRows: TSurveyRow[]; remaining: number; response: TSurveyListPage | null }> {
   const inProgressRows = await findRelevanceRows(
-    environmentId,
+    workspaceId,
     limit,
     filterCriteria,
     IN_PROGRESS_BUCKET,
@@ -337,7 +337,7 @@ async function getInProgressRelevanceStep(
 }
 
 async function buildInProgressOnlyRelevancePage(
-  environmentId: string,
+  workspaceId: string,
   rows: TSurveyRow[],
   filterCriteria: TSurveyFilterCriteria | undefined,
   cursor: TRelevanceSurveyListCursor | null
@@ -345,13 +345,13 @@ async function buildInProgressOnlyRelevancePage(
   const hasOtherRows =
     rows.length > 0 &&
     shouldReadInProgressBucket(cursor) &&
-    (await hasMoreRelevanceRowsInOtherBucket(environmentId, filterCriteria));
+    (await hasMoreRelevanceRowsInOtherBucket(workspaceId, filterCriteria));
 
   return buildRelevancePage(rows, hasOtherRows ? IN_PROGRESS_BUCKET : null);
 }
 
 async function getRelevanceSurveyListPage(
-  environmentId: string,
+  workspaceId: string,
   options: TGetSurveyListPageOptions & { sortBy: "relevance" }
 ): Promise<TSurveyListPage> {
   const relevanceCursor = getRelevanceCursor(options.cursor);
@@ -360,7 +360,7 @@ async function getRelevanceSurveyListPage(
 
   if (shouldReadInProgressBucket(relevanceCursor)) {
     const inProgressStep = await getInProgressRelevanceStep(
-      environmentId,
+      workspaceId,
       remaining,
       options.filterCriteria,
       relevanceCursor
@@ -376,7 +376,7 @@ async function getRelevanceSurveyListPage(
 
   if (remaining <= 0) {
     return await buildInProgressOnlyRelevancePage(
-      environmentId,
+      workspaceId,
       pageRows,
       options.filterCriteria,
       relevanceCursor
@@ -384,7 +384,7 @@ async function getRelevanceSurveyListPage(
   }
 
   const otherRows = await findRelevanceRows(
-    environmentId,
+    workspaceId,
     remaining,
     options.filterCriteria,
     OTHER_BUCKET,
@@ -397,18 +397,18 @@ async function getRelevanceSurveyListPage(
 }
 
 export async function getSurveyListPage(
-  environmentId: string,
+  workspaceId: string,
   options: TGetSurveyListPageOptions
 ): Promise<TSurveyListPage> {
   try {
     if (options.sortBy === "relevance") {
-      return await getRelevanceSurveyListPage(environmentId, {
+      return await getRelevanceSurveyListPage(workspaceId, {
         ...options,
         sortBy: "relevance",
       });
     }
 
-    return await getStandardSurveyListPage(environmentId, {
+    return await getStandardSurveyListPage(workspaceId, {
       ...options,
       sortBy: options.sortBy,
     });

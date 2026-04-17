@@ -7,6 +7,7 @@ import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { gethasNoOrganizations } from "@/lib/instance/service";
 import { createMembership } from "@/lib/membership/service";
 import { createOrganization } from "@/lib/organization/service";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { ensureCloudStripeSetupForOrganization } from "@/modules/ee/billing/lib/organization-billing";
@@ -48,6 +49,11 @@ export const createOrganizationAction = authenticatedActionClient
 
       ctx.auditLoggingCtx.organizationId = newOrganization.id;
       ctx.auditLoggingCtx.newObject = newOrganization;
+
+      capturePostHogEvent(ctx.user.id, "organization_created", {
+        organization_id: newOrganization.id,
+        is_first_org: hasNoOrganizations,
+      });
 
       return newOrganization;
     })

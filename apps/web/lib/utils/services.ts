@@ -9,7 +9,7 @@ import { validateInputs } from "@/lib/utils/validate";
 import { getQuota as getQuotaService } from "@/modules/ee/quotas/lib/quotas";
 
 export const getActionClass = reactCache(
-  async (actionClassId: string): Promise<{ environmentId: string } | null> => {
+  async (actionClassId: string): Promise<{ workspaceId: string } | null> => {
     validateInputs([actionClassId, ZId]);
 
     try {
@@ -18,7 +18,7 @@ export const getActionClass = reactCache(
           id: actionClassId,
         },
         select: {
-          environmentId: true,
+          workspaceId: true,
         },
       });
 
@@ -56,38 +56,15 @@ export const getApiKey = reactCache(async (apiKeyId: string): Promise<{ organiza
   }
 });
 
-export const getEnvironment = reactCache(
-  async (environmentId: string): Promise<{ workspaceId: string } | null> => {
-    validateInputs([environmentId, ZId]);
-
-    try {
-      const environment = await prisma.environment.findUnique({
-        where: {
-          id: environmentId,
-        },
-        select: {
-          workspaceId: true,
-        },
-      });
-      return environment;
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        throw new DatabaseError(error.message);
-      }
-      throw error;
-    }
-  }
-);
-
 export const getIntegration = reactCache(
-  async (integrationId: string): Promise<{ environmentId: string } | null> => {
+  async (integrationId: string): Promise<{ workspaceId: string } | null> => {
     try {
       const integration = await prisma.integration.findUnique({
         where: {
           id: integrationId,
         },
         select: {
-          environmentId: true,
+          workspaceId: true,
         },
       });
       return integration;
@@ -154,7 +131,14 @@ export const getWorkspace = reactCache(
         },
         select: { organizationId: true },
       });
-      return workspacePrisma;
+
+      if (workspacePrisma) return workspacePrisma;
+
+      // Fallback: the id may be a legacy environmentId
+      return await prisma.workspace.findUnique({
+        where: { legacyEnvironmentId: workspaceId },
+        select: { organizationId: true },
+      });
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);
@@ -185,7 +169,7 @@ export const getResponse = reactCache(async (responseId: string): Promise<{ surv
   }
 });
 
-export const getSurvey = reactCache(async (surveyId: string): Promise<{ environmentId: string } | null> => {
+export const getSurvey = reactCache(async (surveyId: string): Promise<{ workspaceId: string } | null> => {
   validateInputs([surveyId, ZId]);
   try {
     const survey = await prisma.survey.findUnique({
@@ -193,7 +177,7 @@ export const getSurvey = reactCache(async (surveyId: string): Promise<{ environm
         id: surveyId,
       },
       select: {
-        environmentId: true,
+        workspaceId: true,
       },
     });
 
@@ -206,20 +190,20 @@ export const getSurvey = reactCache(async (surveyId: string): Promise<{ environm
   }
 });
 
-export const getTag = reactCache(async (id: string): Promise<{ environmentId: string } | null> => {
+export const getTag = reactCache(async (id: string): Promise<{ workspaceId: string } | null> => {
   validateInputs([id, ZId]);
   const tag = await prisma.tag.findUnique({
     where: {
       id,
     },
     select: {
-      environmentId: true,
+      workspaceId: true,
     },
   });
   return tag;
 });
 
-export const getWebhook = async (id: string): Promise<{ environmentId: string } | null> => {
+export const getWebhook = async (id: string): Promise<{ workspaceId: string } | null> => {
   validateInputs([id, ZId]);
 
   try {
@@ -228,7 +212,7 @@ export const getWebhook = async (id: string): Promise<{ environmentId: string } 
         id,
       },
       select: {
-        environmentId: true,
+        workspaceId: true,
       },
     });
     return webhook;
@@ -291,7 +275,7 @@ export const isTeamPartOfOrganization = async (organizationId: string, teamId: s
   return team.organizationId === organizationId;
 };
 
-export const getContact = reactCache(async (contactId: string): Promise<{ environmentId: string } | null> => {
+export const getContact = reactCache(async (contactId: string): Promise<{ workspaceId: string } | null> => {
   validateInputs([contactId, ZId]);
 
   try {
@@ -299,7 +283,7 @@ export const getContact = reactCache(async (contactId: string): Promise<{ enviro
       where: {
         id: contactId,
       },
-      select: { environmentId: true },
+      select: { workspaceId: true },
     });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -310,14 +294,14 @@ export const getContact = reactCache(async (contactId: string): Promise<{ enviro
   }
 });
 
-export const getSegment = reactCache(async (segmentId: string): Promise<{ environmentId: string } | null> => {
+export const getSegment = reactCache(async (segmentId: string): Promise<{ workspaceId: string } | null> => {
   validateInputs([segmentId, ZId]);
   try {
     const segment = await prisma.segment.findUnique({
       where: {
         id: segmentId,
       },
-      select: { environmentId: true },
+      select: { workspaceId: true },
     });
 
     return segment;

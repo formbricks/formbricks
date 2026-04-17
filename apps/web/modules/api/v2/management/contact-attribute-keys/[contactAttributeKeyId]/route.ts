@@ -34,7 +34,7 @@ export const GET = async (
         return handleApiError(request, res.error as ApiErrorResponseV2);
       }
 
-      if (!hasPermission(authentication.environmentPermissions, res.data.environmentId, "GET")) {
+      if (!hasPermission(authentication.workspacePermissions, res.data.workspaceId, "GET")) {
         return handleApiError(request, {
           type: "unauthorized",
           details: [{ field: "environment", issue: "unauthorized" }],
@@ -68,7 +68,7 @@ export const PUT = async (
       if (!res.ok) {
         return handleApiError(request, res.error as ApiErrorResponseV2, auditLog);
       }
-      if (!hasPermission(authentication.environmentPermissions, res.data.environmentId, "PUT")) {
+      if (!hasPermission(authentication.workspacePermissions, res.data.workspaceId, "PUT")) {
         return handleApiError(
           request,
           {
@@ -141,7 +141,7 @@ export const DELETE = async (
         return handleApiError(request, res.error as ApiErrorResponseV2, auditLog);
       }
 
-      if (!hasPermission(authentication.environmentPermissions, res.data.environmentId, "DELETE")) {
+      if (!hasPermission(authentication.workspacePermissions, res.data.workspaceId, "DELETE")) {
         return handleApiError(
           request,
           {

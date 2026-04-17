@@ -70,7 +70,7 @@ const html = await renderResponseFinishedEmail({
   responseCount,
   response,
   WEBAPP_URL,
-  environmentId,
+  workspaceId,
   organization,
   elements, // Pre-processed data
   t,

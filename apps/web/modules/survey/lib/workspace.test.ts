@@ -4,12 +4,12 @@ import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
-import { getWorkspaceWithTeamIdsByEnvironmentId } from "./workspace";
+import { getWorkspaceWithTeamIds } from "./workspace";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
     workspace: {
-      findFirst: vi.fn(),
+      findUnique: vi.fn(),
     },
   },
 }));
@@ -25,15 +25,14 @@ vi.mock("react", () => ({
   cache: vi.fn((fn) => fn),
 }));
 
-const environmentId = "test-environment-id";
+const workspaceId = "test-workspace-id";
 const mockWorkspacePrisma = {
-  id: "clq6167un000008l56jd8s3f9",
+  id: workspaceId,
   name: "Test Workspace",
   createdAt: new Date(),
   updatedAt: new Date(),
   createdById: null,
   workspaceTeams: [{ teamId: "team1" }, { teamId: "team2" }],
-  environments: [],
   surveys: [],
   webhooks: [],
   apiKey: null,
@@ -50,11 +49,6 @@ const mockWorkspacePrisma = {
   overlay: "none",
   segment: null,
   surveyClosedMessage: null,
-  singleUseId: null,
-  productOverwrites: null,
-  brandColor: null,
-  highlightBorderColor: null,
-  responseCount: null,
   organizationId: "clq6167un000008l56jd8s3f9",
   config: { channel: "app", industry: "eCommerce" },
   logo: null,
@@ -65,7 +59,7 @@ const mockWorkspaceWithTeam: Workspace & { teamIds: string[] } = {
   teamIds: ["team1", "team2"],
 };
 
-describe("getWorkspaceWithTeamIdsByEnvironmentId", () => {
+describe("getWorkspaceWithTeamIds", () => {
   beforeEach(() => {
     vi.resetAllMocks();
   });
@@ -75,17 +69,13 @@ describe("getWorkspaceWithTeamIdsByEnvironmentId", () => {
   });
 
   test("should return workspace with team IDs when workspace is found", async () => {
-    vi.mocked(prisma.workspace.findFirst).mockResolvedValue(mockWorkspacePrisma);
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue(mockWorkspacePrisma);
 
-    const workspace = await getWorkspaceWithTeamIdsByEnvironmentId(environmentId);
+    const workspace = await getWorkspaceWithTeamIds(workspaceId);
 
-    expect(prisma.workspace.findFirst).toHaveBeenCalledWith({
+    expect(prisma.workspace.findUnique).toHaveBeenCalledWith({
       where: {
-        environments: {
-          some: {
-            id: environmentId,
-          },
-        },
+        id: workspaceId,
       },
       include: {
         workspaceTeams: {
@@ -100,17 +90,13 @@ describe("getWorkspaceWithTeamIdsByEnvironmentId", () => {
   });
 
   test("should return null when workspace is not found", async () => {
-    vi.mocked(prisma.workspace.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.workspace.findUnique).mockResolvedValue(null);
 
-    const workspace = await getWorkspaceWithTeamIdsByEnvironmentId(environmentId);
+    const workspace = await getWorkspaceWithTeamIds(workspaceId);
 
-    expect(prisma.workspace.findFirst).toHaveBeenCalledWith({
+    expect(prisma.workspace.findUnique).toHaveBeenCalledWith({
       where: {
-        environments: {
-          some: {
-            id: environmentId,
-          },
-        },
+        id: workspaceId,
       },
       include: {
         workspaceTeams: {
@@ -130,18 +116,18 @@ describe("getWorkspaceWithTeamIdsByEnvironmentId", () => {
       clientVersion: "0.0.1",
     });
 
-    vi.mocked(prisma.workspace.findFirst).mockRejectedValue(errToThrow);
+    vi.mocked(prisma.workspace.findUnique).mockRejectedValue(errToThrow);
 
-    await expect(getWorkspaceWithTeamIdsByEnvironmentId(environmentId)).rejects.toThrow(DatabaseError);
+    await expect(getWorkspaceWithTeamIds(workspaceId)).rejects.toThrow(DatabaseError);
     expect(logger.error).toHaveBeenCalled();
   });
 
   test("should rethrow error if not PrismaClientKnownRequestError", async () => {
     const errorMessage = "Some other error";
     const error = new Error(errorMessage);
-    vi.mocked(prisma.workspace.findFirst).mockRejectedValue(error);
+    vi.mocked(prisma.workspace.findUnique).mockRejectedValue(error);
 
-    await expect(getWorkspaceWithTeamIdsByEnvironmentId(environmentId)).rejects.toThrow(error);
+    await expect(getWorkspaceWithTeamIds(workspaceId)).rejects.toThrow(error);
     expect(logger.error).not.toHaveBeenCalled();
   });
 });

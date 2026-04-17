@@ -9,7 +9,7 @@ export const ZContact = z.object({
   id: z.cuid2(),
   createdAt: z.date(),
   updatedAt: z.date(),
-  environmentId: z.cuid2(),
+  workspaceId: z.string(),
 });
 
 const ZContactTableAttributeData = z.object({
@@ -40,7 +40,7 @@ export type TContact = z.infer<typeof ZContact>;
 
 export type TTransformPersonInput = {
   id: string;
-  environmentId: string;
+  workspaceId: string;
   attributes: {
     value: string;
     valueNumber: number | null;
@@ -201,7 +201,7 @@ export const validateUniqueAttributeKeys = (
 };
 
 export const ZContactBulkUploadRequest = z.object({
-  environmentId: z.cuid2(),
+  workspaceId: z.string(),
   contacts: z
     .array(ZContactBulkUploadContact)
     .max(250, {
@@ -285,7 +285,7 @@ export type TContactBulkUploadResponseSuccess = TContactBulkUploadResponseBase &
 
 // Schema for single contact creation - simplified with flat attributes
 export const ZContactCreateRequest = z.object({
-  environmentId: z.cuid2(),
+  workspaceId: z.string().min(1),
   attributes: z.record(z.string(), z.string()).superRefine((attributes, ctx) => {
     // Check if email attribute exists and is valid
     const email = attributes.email;
@@ -313,7 +313,7 @@ export type TContactCreateRequest = z.infer<typeof ZContactCreateRequest>;
 export const ZContactResponse = z.object({
   id: z.cuid2(),
   createdAt: z.date(),
-  environmentId: z.cuid2(),
+  workspaceId: z.string().min(1),
   attributes: z.record(z.string(), z.string()),
 });
 
@@ -426,7 +426,7 @@ export const createEditContactAttributesSchema = (
         if (!hasValue) {
           ctx.addIssue({
             code: "custom",
-            message: t("environments.contacts.date_value_required"),
+            message: t("workspace.contacts.date_value_required"),
             path: ["attributes", index, "value"],
           });
           return;
@@ -436,7 +436,7 @@ export const createEditContactAttributesSchema = (
         if (Number.isNaN(date.getTime())) {
           ctx.addIssue({
             code: "custom",
-            message: t("environments.contacts.invalid_date_format"),
+            message: t("workspace.contacts.invalid_date_format"),
             path: ["attributes", index, "value"],
           });
         }
@@ -444,7 +444,7 @@ export const createEditContactAttributesSchema = (
         if (!hasValue) {
           ctx.addIssue({
             code: "custom",
-            message: t("environments.contacts.number_value_required"),
+            message: t("workspace.contacts.number_value_required"),
             path: ["attributes", index, "value"],
           });
           return;
@@ -453,7 +453,7 @@ export const createEditContactAttributesSchema = (
         if (Number.isNaN(Number(attr.value))) {
           ctx.addIssue({
             code: "custom",
-            message: t("environments.contacts.invalid_number_format"),
+            message: t("workspace.contacts.invalid_number_format"),
             path: ["attributes", index, "value"],
           });
         }

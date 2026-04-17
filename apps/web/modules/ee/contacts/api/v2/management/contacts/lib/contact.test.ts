@@ -25,7 +25,7 @@ describe("contact.ts", () => {
   describe("createContact", () => {
     test("returns bad_request error when email attribute is missing", async () => {
       const contactData: TContactCreateRequest = {
-        environmentId: "env123",
+        workspaceId: "workspace123",
         attributes: {
           firstName: "John",
         },
@@ -42,7 +42,7 @@ describe("contact.ts", () => {
 
     test("returns bad_request error when email attribute value is empty", async () => {
       const contactData: TContactCreateRequest = {
-        environmentId: "env123",
+        workspaceId: "workspace123",
         attributes: {
           email: "",
         },
@@ -59,7 +59,7 @@ describe("contact.ts", () => {
 
     test("returns bad_request error when attribute keys do not exist", async () => {
       const contactData: TContactCreateRequest = {
-        environmentId: "env123",
+        workspaceId: "workspace123",
         attributes: {
           email: "john@example.com",
           nonExistentKey: "value",
@@ -67,7 +67,7 @@ describe("contact.ts", () => {
       };
 
       vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue([
-        { id: "attr1", key: "email", name: "Email", type: "default", environmentId: "env123" },
+        { id: "attr1", key: "email", name: "Email", type: "default", workspaceId: "workspace123" },
       ] as TContactAttributeKey[]);
 
       const result = await createContact(contactData);
@@ -83,7 +83,7 @@ describe("contact.ts", () => {
 
     test("returns conflict error when contact with same email already exists", async () => {
       const contactData: TContactCreateRequest = {
-        environmentId: "env123",
+        workspaceId: "workspace123",
         attributes: {
           email: "john@example.com",
         },
@@ -91,7 +91,7 @@ describe("contact.ts", () => {
 
       vi.mocked(prisma.contact.findFirst).mockResolvedValueOnce({
         id: "existing-contact-id",
-        environmentId: "env123",
+        workspaceId: "workspace123",
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -109,7 +109,7 @@ describe("contact.ts", () => {
 
     test("returns conflict error when contact with same userId already exists", async () => {
       const contactData: TContactCreateRequest = {
-        environmentId: "env123",
+        workspaceId: "workspace123",
         attributes: {
           email: "john@example.com",
           userId: "user123",
@@ -120,7 +120,7 @@ describe("contact.ts", () => {
         .mockResolvedValueOnce(null) // No existing contact by email
         .mockResolvedValueOnce({
           id: "existing-contact-id",
-          environmentId: "env123",
+          workspaceId: "workspace123",
           createdAt: new Date(),
           updatedAt: new Date(),
         }); // Existing contact by userId
@@ -138,7 +138,7 @@ describe("contact.ts", () => {
 
     test("successfully creates contact with existing attribute keys", async () => {
       const contactData: TContactCreateRequest = {
-        environmentId: "env123",
+        workspaceId: "workspace123",
         attributes: {
           email: "john@example.com",
           firstName: "John",
@@ -146,13 +146,13 @@ describe("contact.ts", () => {
       };
 
       const existingAttributeKeys = [
-        { id: "attr1", key: "email", name: "Email", type: "default", environmentId: "env123" },
-        { id: "attr2", key: "firstName", name: "First Name", type: "custom", environmentId: "env123" },
+        { id: "attr1", key: "email", name: "Email", type: "default", workspaceId: "workspace123" },
+        { id: "attr2", key: "firstName", name: "First Name", type: "custom", workspaceId: "workspace123" },
       ] as TContactAttributeKey[];
 
       const contactWithAttributes = {
         id: "contact123",
-        environmentId: "env123",
+        workspaceId: "workspace123",
         createdAt: new Date("2023-01-01T00:00:00.000Z"),
         updatedAt: new Date("2023-01-01T00:00:00.000Z"),
         userId: null,
@@ -183,7 +183,7 @@ describe("contact.ts", () => {
         expect(result.data).toEqual({
           id: "contact123",
           createdAt: new Date("2023-01-01T00:00:00.000Z"),
-          environmentId: "env123",
+          workspaceId: "workspace123",
           attributes: {
             email: "john@example.com",
             firstName: "John",
@@ -194,14 +194,14 @@ describe("contact.ts", () => {
 
     test("returns internal_server_error when contact creation returns null", async () => {
       const contactData: TContactCreateRequest = {
-        environmentId: "env123",
+        workspaceId: "workspace123",
         attributes: {
           email: "john@example.com",
         },
       };
 
       const existingAttributeKeys = [
-        { id: "attr1", key: "email", name: "Email", type: "default", environmentId: "env123" },
+        { id: "attr1", key: "email", name: "Email", type: "default", workspaceId: "workspace123" },
       ] as TContactAttributeKey[];
 
       vi.mocked(prisma.contact.findFirst).mockResolvedValue(null);
@@ -221,7 +221,7 @@ describe("contact.ts", () => {
 
     test("returns internal_server_error when database error occurs", async () => {
       const contactData: TContactCreateRequest = {
-        environmentId: "env123",
+        workspaceId: "workspace123",
         attributes: {
           email: "john@example.com",
         },
@@ -240,19 +240,19 @@ describe("contact.ts", () => {
 
     test("does not check for userId conflict when userId is not provided", async () => {
       const contactData: TContactCreateRequest = {
-        environmentId: "env123",
+        workspaceId: "workspace123",
         attributes: {
           email: "john@example.com",
         },
       };
 
       const existingAttributeKeys = [
-        { id: "attr1", key: "email", name: "Email", type: "default", environmentId: "env123" },
+        { id: "attr1", key: "email", name: "Email", type: "default", workspaceId: "workspace123" },
       ] as TContactAttributeKey[];
 
       const contactWithAttributes = {
         id: "contact123",
-        environmentId: "env123",
+        workspaceId: "workspace123",
         createdAt: new Date("2023-01-01T00:00:00.000Z"),
         updatedAt: new Date("2023-01-01T00:00:00.000Z"),
         userId: null,
@@ -278,7 +278,7 @@ describe("contact.ts", () => {
 
     test("returns bad_request error when multiple attribute keys are missing", async () => {
       const contactData: TContactCreateRequest = {
-        environmentId: "env123",
+        workspaceId: "workspace123",
         attributes: {
           email: "john@example.com",
           nonExistentKey1: "value1",
@@ -287,7 +287,7 @@ describe("contact.ts", () => {
       };
 
       vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue([
-        { id: "attr1", key: "email", name: "Email", type: "default", environmentId: "env123" },
+        { id: "attr1", key: "email", name: "Email", type: "default", workspaceId: "workspace123" },
       ] as TContactAttributeKey[]);
 
       const result = await createContact(contactData);
@@ -303,7 +303,7 @@ describe("contact.ts", () => {
 
     test("correctly handles userId extraction from attributes", async () => {
       const contactData: TContactCreateRequest = {
-        environmentId: "env123",
+        workspaceId: "workspace123",
         attributes: {
           email: "john@example.com",
           userId: "user123",
@@ -312,9 +312,9 @@ describe("contact.ts", () => {
       };
 
       const existingAttributeKeys = [
-        { id: "attr1", key: "email", name: "Email", type: "default", environmentId: "env123" },
-        { id: "attr2", key: "userId", name: "User ID", type: "default", environmentId: "env123" },
-        { id: "attr3", key: "firstName", name: "First Name", type: "custom", environmentId: "env123" },
+        { id: "attr1", key: "email", name: "Email", type: "default", workspaceId: "workspace123" },
+        { id: "attr2", key: "userId", name: "User ID", type: "default", workspaceId: "workspace123" },
+        { id: "attr3", key: "firstName", name: "First Name", type: "custom", workspaceId: "workspace123" },
       ] as TContactAttributeKey[];
 
       vi.mocked(prisma.contact.findFirst).mockResolvedValue(null);
@@ -322,7 +322,7 @@ describe("contact.ts", () => {
 
       const contactWithAttributes = {
         id: "contact123",
-        environmentId: "env123",
+        workspaceId: "workspace123",
         createdAt: new Date("2023-01-01T00:00:00.000Z"),
         updatedAt: new Date("2023-01-01T00:00:00.000Z"),
         userId: null,

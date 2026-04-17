@@ -4,17 +4,13 @@ import { err, ok } from "@formbricks/types/error-handlers";
 import { TOrganizationBilling } from "@formbricks/types/organizations";
 import { getBillingUsageCycleWindow } from "@/lib/utils/billing";
 
-export const getOrganizationIdFromEnvironmentId = reactCache(async (environmentId: string) => {
+export const getOrganizationIdFromWorkspaceId = reactCache(async (workspaceId: string) => {
   try {
     const organization = await prisma.organization.findFirst({
       where: {
         workspaces: {
           some: {
-            environments: {
-              some: {
-                id: environmentId,
-              },
-            },
+            id: workspaceId,
           },
         },
       },
@@ -76,21 +72,16 @@ export const getOrganizationBilling = reactCache(async (organizationId: string) 
   }
 });
 
-export const getAllEnvironmentsFromOrganizationId = reactCache(async (organizationId: string) => {
+export const getAllWorkspaceIdsFromOrganizationId = reactCache(async (organizationId: string) => {
   try {
     const organization = await prisma.organization.findUnique({
       where: {
         id: organizationId,
       },
-
       select: {
         workspaces: {
           select: {
-            environments: {
-              select: {
-                id: true,
-              },
-            },
+            id: true,
           },
         },
       },
@@ -100,11 +91,9 @@ export const getAllEnvironmentsFromOrganizationId = reactCache(async (organizati
       return err({ type: "not_found", details: [{ field: "organization", issue: "not found" }] });
     }
 
-    const environmentIds = organization.workspaces
-      .flatMap((workspace) => workspace.environments)
-      .map((environment) => environment.id);
+    const workspaceIds = organization.workspaces.map((workspace) => workspace.id);
 
-    return ok(environmentIds);
+    return ok(workspaceIds);
   } catch (error) {
     return err({
       type: "internal_server_error",
@@ -124,20 +113,20 @@ export const getMonthlyOrganizationResponseCount = reactCache(async (organizatio
 
     const usageCycleWindow = getBillingUsageCycleWindow(billing.data);
 
-    // Get all environment IDs for the organization
-    const environmentIdsResult = await getAllEnvironmentsFromOrganizationId(organizationId);
-    if (!environmentIdsResult.ok) {
-      return err(environmentIdsResult.error);
+    // Get all workspace IDs for the organization
+    const workspaceIdsResult = await getAllWorkspaceIdsFromOrganizationId(organizationId);
+    if (!workspaceIdsResult.ok) {
+      return err(workspaceIdsResult.error);
     }
 
-    // Use Prisma's aggregate to count responses for all environments
+    // Use Prisma's aggregate to count responses for all workspaces
     const responseAggregations = await prisma.response.aggregate({
       _count: {
         id: true,
       },
       where: {
         AND: [
-          { survey: { environmentId: { in: environmentIdsResult.data } } },
+          { survey: { workspaceId: { in: workspaceIdsResult.data } } },
           { createdAt: { gte: usageCycleWindow.start, lt: usageCycleWindow.end } },
         ],
       },

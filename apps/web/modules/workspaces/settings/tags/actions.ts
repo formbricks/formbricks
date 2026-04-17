@@ -6,10 +6,8 @@ import { getTag } from "@/lib/tag/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import {
-  getEnvironmentIdFromTagId,
-  getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromTagId,
-  getWorkspaceIdFromEnvironmentId,
+  getOrganizationIdFromWorkspaceId,
   getWorkspaceIdFromTagId,
 } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
@@ -97,14 +95,15 @@ const ZMergeTagsAction = z.object({
 
 export const mergeTagsAction = authenticatedActionClient.inputSchema(ZMergeTagsAction).action(
   withAuditLogging("merged", "tag", async ({ ctx, parsedInput }) => {
-    const originalTagEnvironmentId = await getEnvironmentIdFromTagId(parsedInput.originalTagId);
-    const newTagEnvironmentId = await getEnvironmentIdFromTagId(parsedInput.newTagId);
+    const originalTagWorkspaceId = await getWorkspaceIdFromTagId(parsedInput.originalTagId);
+    const newTagWorkspaceId = await getWorkspaceIdFromTagId(parsedInput.newTagId);
 
-    if (originalTagEnvironmentId !== newTagEnvironmentId) {
-      throw new Error("Tags must be in the same environment");
+    if (originalTagWorkspaceId !== newTagWorkspaceId) {
+      throw new Error("Tags must be in the same workspace");
     }
 
-    const organizationId = await getOrganizationIdFromEnvironmentId(newTagEnvironmentId);
+    const workspaceId = newTagWorkspaceId;
+    const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId,
@@ -116,7 +115,7 @@ export const mergeTagsAction = authenticatedActionClient.inputSchema(ZMergeTagsA
         {
           type: "workspaceTeam",
           minPermission: "readWrite",
-          workspaceId: await getWorkspaceIdFromEnvironmentId(newTagEnvironmentId),
+          workspaceId,
         },
       ],
     });

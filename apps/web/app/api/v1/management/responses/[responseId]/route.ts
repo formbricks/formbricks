@@ -4,7 +4,7 @@ import { handleErrorResponse } from "@/app/api/v1/auth";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { TApiV1Authentication, THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
-import { scheduleResponsePipelineEvents } from "@/app/lib/pipelines";
+import { sendToPipeline } from "@/app/lib/pipelines";
 import { deleteResponse, getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
@@ -31,7 +31,7 @@ async function fetchAndAuthorizeResponse(
     return { error: responses.notFoundResponse("Survey", response.surveyId, true) };
   }
 
-  if (!hasPermission(authentication.environmentPermissions, survey.environmentId, requiredPermission)) {
+  if (!hasPermission(authentication.workspacePermissions, survey.workspaceId, requiredPermission)) {
     return { error: responses.unauthorizedResponse() };
   }
 
@@ -169,13 +169,21 @@ export const PUT = withV1ApiWrapper({
         auditLog.newObject = updated;
       }
 
-      scheduleResponsePipelineEvents({
-        environmentId: result.survey.environmentId,
-        events: updated.finished ? ["responseUpdated", "responseFinished"] : ["responseUpdated"],
-        response: updated,
-        responseId: updated.id,
+      sendToPipeline({
+        event: "responseUpdated",
+        workspaceId: result.survey.workspaceId,
         surveyId: result.survey.id,
+        response: updated,
       });
+
+      if (updated.finished) {
+        sendToPipeline({
+          event: "responseFinished",
+          workspaceId: result.survey.workspaceId,
+          surveyId: result.survey.id,
+          response: updated,
+        });
+      }
 
       return {
         response: responses.successResponse({ ...updated, data: resolveStorageUrlsInObject(updated.data) }),

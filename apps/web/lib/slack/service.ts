@@ -55,10 +55,10 @@ export const fetchChannels = async (slackIntegration: TIntegration): Promise<TIn
   return channels;
 };
 
-export const getSlackChannels = async (environmentId: string): Promise<TIntegrationItem[]> => {
+export const getSlackChannels = async (workspaceId: string): Promise<TIntegrationItem[]> => {
   let channels: TIntegrationItem[] = [];
   try {
-    const slackIntegration = (await getIntegrationByType(environmentId, "slack")) as TIntegrationSlack;
+    const slackIntegration = (await getIntegrationByType(workspaceId, "slack")) as TIntegrationSlack;
     if (slackIntegration && slackIntegration.config?.key) {
       channels = await fetchChannels(slackIntegration);
     }

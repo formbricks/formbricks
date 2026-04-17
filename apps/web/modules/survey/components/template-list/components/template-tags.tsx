@@ -58,7 +58,7 @@ const getChannelTag = (channels: NonNullabeChannel[] | undefined, t: TFunction):
       return labels.map(removeSurveySuffix).join(" " + t("common.or") + " ");
 
     case 3:
-      return t("environments.surveys.templates.all_channels");
+      return t("workspace.surveys.templates.all_channels");
 
     default:
       return undefined;
@@ -83,7 +83,7 @@ export const TemplateTags = ({ template, selectedFilter }: TemplateTagsProps) =>
     }
     if (!industries || industries.length === 0) return undefined;
     return industries.length > 1
-      ? t("environments.surveys.templates.multiple_industries")
+      ? t("workspace.surveys.templates.multiple_industries")
       : getIndustryMapping(t).find((industry) => industry.value === industries[0])?.label;
   };
 
@@ -111,7 +111,7 @@ export const TemplateTags = ({ template, selectedFilter }: TemplateTagsProps) =>
       )}
       {template.preset.blocks.some((block) => block.logic && block.logic.length > 0) && (
         <TooltipRenderer
-          tooltipContent={t("environments.surveys.templates.uses_branching_logic")}
+          tooltipContent={t("workspace.surveys.templates.uses_branching_logic")}
           shouldRender={true}>
           <SplitIcon className="h-5 w-5 rounded border border-slate-300 bg-slate-50 p-0.5 text-slate-400" />
         </TooltipRenderer>

@@ -46,7 +46,7 @@ const createMockSurvey = (blocks: TSurveyBlock[] = []): TSurvey => ({
   updatedAt: new Date(),
   name: "Test Survey",
   type: "link",
-  environmentId: "env-1",
+  workspaceId: "ws-1",
   createdBy: null,
   status: "draft",
   displayOption: "respondMultiple",

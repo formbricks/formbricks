@@ -73,7 +73,7 @@ export const updateActionClassAction = authenticatedActionClient.inputSchema(ZUp
     ctx.auditLoggingCtx.actionClassId = parsedInput.actionClassId;
     ctx.auditLoggingCtx.oldObject = actionClass;
     const result = await updateActionClass(
-      actionClass.environmentId,
+      actionClass.workspaceId,
       parsedInput.actionClassId,
       parsedInput.updatedAction
     );

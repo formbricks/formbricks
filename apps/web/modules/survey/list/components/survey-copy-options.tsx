@@ -4,31 +4,31 @@ import { Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { getWorkspacesByEnvironmentIdAction } from "@/modules/survey/list/actions";
+import { getWorkspacesByWorkspaceIdAction } from "@/modules/survey/list/actions";
 import { TSurvey } from "@/modules/survey/list/types/surveys";
 import { TUserWorkspace } from "@/modules/survey/list/types/workspaces";
 import { CopySurveyForm } from "./copy-survey-form";
 
 interface SurveyCopyOptionsProps {
   survey: TSurvey;
-  environmentId: string;
+  workspaceId: string;
   onCancel: () => void;
   setOpen: (value: boolean) => void;
 }
 
-const SurveyCopyOptions = ({ environmentId, survey, onCancel, setOpen }: SurveyCopyOptionsProps) => {
+const SurveyCopyOptions = ({ workspaceId, survey, onCancel, setOpen }: SurveyCopyOptionsProps) => {
   const [workspaces, setWorkspaces] = useState<TUserWorkspace[]>([]);
   const [workspaceLoading, setWorkspaceLoading] = useState(true);
 
   useEffect(() => {
     const fetchWorkspaces = async () => {
-      const getWorkspacesByEnvironmentIdResponse = await getWorkspacesByEnvironmentIdAction({
-        environmentId,
+      const getWorkspacesByWorkspaceIdResponse = await getWorkspacesByWorkspaceIdAction({
+        workspaceId,
       });
-      if (getWorkspacesByEnvironmentIdResponse?.data) {
-        setWorkspaces(getWorkspacesByEnvironmentIdResponse?.data);
+      if (getWorkspacesByWorkspaceIdResponse?.data) {
+        setWorkspaces(getWorkspacesByWorkspaceIdResponse?.data);
       } else {
-        const errorMessage = getFormattedErrorMessage(getWorkspacesByEnvironmentIdResponse);
+        const errorMessage = getFormattedErrorMessage(getWorkspacesByWorkspaceIdResponse);
         toast.error(errorMessage);
       }
 
@@ -36,7 +36,7 @@ const SurveyCopyOptions = ({ environmentId, survey, onCancel, setOpen }: SurveyC
     };
 
     fetchWorkspaces();
-  }, [environmentId]);
+  }, [workspaceId]);
 
   if (workspaceLoading) {
     return (

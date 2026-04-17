@@ -73,7 +73,7 @@ function Consent({
       />
 
       {/* Consent Checkbox */}
-      <div className="relative">
+      <div className="relative" data-element-input>
         <ElementError errorMessage={errorMessage} dir={dir} />
 
         <label

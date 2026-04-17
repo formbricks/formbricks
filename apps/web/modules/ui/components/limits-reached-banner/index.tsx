@@ -5,18 +5,16 @@ import Link from "next/link";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TOrganization } from "@formbricks/types/organizations";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 
 interface LimitsReachedBannerProps {
   organization: TOrganization;
-  environmentId: string;
   responseCount: number;
 }
 
-export const LimitsReachedBanner = ({
-  organization,
-  responseCount,
-  environmentId,
-}: LimitsReachedBannerProps) => {
+export const LimitsReachedBanner = ({ organization, responseCount }: LimitsReachedBannerProps) => {
+  const { workspace } = useWorkspace();
+  const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const { t } = useTranslation();
   const orgBillingResponseLimit = organization.billing?.limits?.monthly?.responses;
   const isResponseLimitReached = orgBillingResponseLimit !== null && responseCount >= orgBillingResponseLimit;
@@ -46,7 +44,7 @@ export const LimitsReachedBanner = ({
                         </>
                       ) : null}
                     </p>
-                    <Link href={`/environments/${environmentId}/settings/billing`}>
+                    <Link href={`${workspaceBasePath}/settings/billing`}>
                       <span className="text-sm text-slate-900">{t("common.learn_more")}</span>
                     </Link>
                   </div>

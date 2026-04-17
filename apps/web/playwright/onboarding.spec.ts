@@ -18,7 +18,7 @@ test.describe("Onboarding Flow Test", async () => {
     await page.getByPlaceholder("e.g. Formbricks").fill(workspaceName);
     await page.locator("#form-next-button").click();
 
-    await page.waitForURL(/\/environments\/[^/]+\/surveys/);
+    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
     await expect(page.getByText(workspaceName)).toBeVisible();
   });
 
@@ -37,7 +37,7 @@ test.describe("Onboarding Flow Test", async () => {
 
     await page.getByRole("button", { name: "I will do it later" }).click();
 
-    await page.waitForURL(/\/environments\/[^/]+\/surveys/);
+    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
     await expect(page.getByText(workspaceName)).toBeVisible();
   });
 });
@@ -56,9 +56,9 @@ test.describe("CX Onboarding", async () => {
 
     await page.getByRole("button", { name: "NPS Implement proven best" }).click();
 
-    await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/edit(\?.*)mode=cx$/);
+    await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/edit(\?.*)mode=cx$/);
     await page.getByRole("button", { name: "Save & Close" }).click();
 
-    await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/);
+    await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/);
   });
 });

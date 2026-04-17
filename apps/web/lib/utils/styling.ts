@@ -1,6 +1,6 @@
-import { TJsEnvironmentStateSurvey, TJsEnvironmentStateWorkspace } from "@formbricks/types/js";
+import { TJsWorkspaceStateSurvey, TJsWorkspaceStateWorkspaceSetting } from "@formbricks/types/js";
 
-export const getStyling = (workspace: TJsEnvironmentStateWorkspace, survey: TJsEnvironmentStateSurvey) => {
+export const getStyling = (workspace: TJsWorkspaceStateWorkspaceSetting, survey: TJsWorkspaceStateSurvey) => {
   // allow style overwrite is disabled from the workspace
   if (!workspace.styling.allowStyleOverwrite) {
     return workspace.styling;

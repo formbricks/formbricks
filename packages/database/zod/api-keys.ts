@@ -1,20 +1,17 @@
-import { type ApiKey, type ApiKeyEnvironment, ApiKeyPermission, EnvironmentType } from "@prisma/client";
+import { type ApiKey, ApiKeyPermission, type ApiKeyWorkspace } from "@prisma/client";
 import { z } from "zod";
 import { ZOrganizationAccess } from "../../types/api-key";
 
 export const ZApiKeyPermission = z.enum(ApiKeyPermission);
 
-export const ZApiKeyEnvironment = z.object({
+export const ZApiKeyWorkspace = z.object({
   id: z.cuid2(),
   createdAt: z.date(),
   updatedAt: z.date(),
   apiKeyId: z.cuid2(),
-  environmentId: z.cuid2(),
   workspaceId: z.cuid2(),
-  workspaceName: z.string(),
-  environmentType: z.enum(EnvironmentType),
   permission: ZApiKeyPermission,
-}) satisfies z.ZodType<ApiKeyEnvironment>;
+}) satisfies z.ZodType<ApiKeyWorkspace>;
 
 export const ZApiKey = z.object({
   id: z.cuid2(),
@@ -31,14 +28,14 @@ export const ZApiKey = z.object({
 export const ZApiKeyCreateInput = z.object({
   label: z.string(),
   organizationId: z.cuid2(),
-  environmentIds: z.array(z.cuid2()),
+  workspaceIds: z.array(z.cuid2()),
   permissions: z.record(z.cuid2(), ZApiKeyPermission),
   createdBy: z.string(),
 });
 
-export const ZApiKeyEnvironmentCreateInput = z.object({
+export const ZApiKeyWorkspaceCreateInput = z.object({
   apiKeyId: z.cuid2(),
-  environmentId: z.cuid2(),
+  workspaceId: z.cuid2(),
   permission: ZApiKeyPermission,
 });
 
@@ -47,13 +44,10 @@ export const ZApiKeyData = ZApiKey.pick({
   organizationAccess: true,
 }).extend(
   z.object({
-    environments: z.array(
-      ZApiKeyEnvironment.pick({
-        environmentId: true,
-        environmentType: true,
+    workspaces: z.array(
+      ZApiKeyWorkspace.pick({
         permission: true,
         workspaceId: true,
-        workspaceName: true,
       })
     ),
   }).shape

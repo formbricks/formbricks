@@ -97,7 +97,7 @@ export const FeedbackRecordDirectorySettingsModal = ({
     });
 
     if (response?.data) {
-      toast.success(t("environments.settings.feedback_record_directories.directory_updated_successfully"));
+      toast.success(t("workspace.settings.feedback_record_directories.directory_updated_successfully"));
       closeSettingsModal();
       router.refresh();
     } else {
@@ -111,12 +111,12 @@ export const FeedbackRecordDirectorySettingsModal = ({
       <DialogContent>
         <DialogHeader className="pb-4">
           <DialogTitle>
-            {t("environments.settings.feedback_record_directories.directory_settings_title", {
+            {t("workspace.settings.feedback_record_directories.directory_settings_title", {
               directoryName: directory.name,
             })}
           </DialogTitle>
           <DialogDescription>
-            {t("environments.settings.feedback_record_directories.directory_settings_description")}
+            {t("workspace.settings.feedback_record_directories.directory_settings_description")}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
@@ -128,12 +128,12 @@ export const FeedbackRecordDirectorySettingsModal = ({
                 render={({ field, fieldState: { error } }) => (
                   <FormItem>
                     <FormLabel>
-                      {t("environments.settings.feedback_record_directories.directory_name")}
+                      {t("workspace.settings.feedback_record_directories.directory_name")}
                     </FormLabel>
                     <FormControl>
                       <Input
                         type="text"
-                        placeholder={t("environments.settings.feedback_record_directories.directory_name")}
+                        placeholder={t("workspace.settings.feedback_record_directories.directory_name")}
                         {...field}
                         disabled={!isOwnerOrManager}
                       />
@@ -145,14 +145,14 @@ export const FeedbackRecordDirectorySettingsModal = ({
 
               <IdBadge
                 id={directory.id}
-                label={t("environments.settings.feedback_record_directories.directory_id")}
+                label={t("workspace.settings.feedback_record_directories.directory_id")}
                 variant="column"
               />
 
               <div className="space-y-2">
                 <FormLabel>{t("common.workspaces")}</FormLabel>
                 <Muted className="block text-slate-500">
-                  {t("environments.settings.feedback_record_directories.assign_workspaces_description")}
+                  {t("workspace.settings.feedback_record_directories.assign_workspaces_description")}
                 </Muted>
                 <MultiSelect
                   options={workspaceOptions}
@@ -162,7 +162,7 @@ export const FeedbackRecordDirectorySettingsModal = ({
                   }}
                   disabled={!isOwnerOrManager}
                   placeholder={t(
-                    "environments.settings.feedback_record_directories.select_workspaces_placeholder"
+                    "workspace.settings.feedback_record_directories.select_workspaces_placeholder"
                   )}
                   containerClassName="focus-within:ring-0 focus-within:ring-offset-0"
                 />

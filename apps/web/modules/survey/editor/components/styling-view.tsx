@@ -33,7 +33,7 @@ import {
 import { Switch } from "@/modules/ui/components/switch";
 
 interface StylingViewProps {
-  environmentId: string;
+  workspaceId: string;
   workspace: Workspace;
   localSurvey: TSurvey;
   setLocalSurvey: React.Dispatch<React.SetStateAction<TSurvey>>;
@@ -49,7 +49,7 @@ interface StylingViewProps {
 
 export const StylingView = ({
   colors,
-  environmentId,
+  workspaceId,
   workspace,
   localSurvey,
   setLocalSurvey,
@@ -61,6 +61,7 @@ export const StylingView = ({
   isCxMode,
   isStorageConfigured = true,
 }: StylingViewProps) => {
+  const workspaceBasePath = `/workspaces/${workspace.id}`;
   const { t } = useTranslation();
 
   const savedWorkspaceStyling = workspace.styling as Partial<TWorkspaceStyling> | null;
@@ -105,7 +106,7 @@ export const StylingView = ({
       form.setValue(key as keyof TSurveyStyling, value, { shouldDirty: true });
     }
 
-    toast.success(t("environments.workspace.look.suggested_colors_applied_please_save"));
+    toast.success(t("workspace.look.suggested_colors_applied_please_save"));
     setConfirmSuggestColorsOpen(false);
   };
 
@@ -123,7 +124,7 @@ export const StylingView = ({
     });
 
     setConfirmResetStylingModalOpen(false);
-    toast.success(t("environments.surveys.edit.styling_set_to_theme_styles"));
+    toast.success(t("workspace.surveys.edit.styling_set_to_theme_styles"));
   };
 
   useEffect(() => {
@@ -211,15 +212,21 @@ export const StylingView = ({
                 render={({ field }) => (
                   <FormItem className="flex items-center gap-2 space-y-0">
                     <FormControl>
-                      <Switch checked={!!field.value} onCheckedChange={handleOverwriteToggle} />
+                      <Switch
+                        id="overwrite-theme-styling"
+                        checked={!!field.value}
+                        onCheckedChange={handleOverwriteToggle}
+                      />
                     </FormControl>
 
                     <div>
-                      <FormLabel className="text-base font-semibold text-slate-900">
-                        {t("environments.surveys.edit.add_custom_styles")}
+                      <FormLabel
+                        htmlFor="overwrite-theme-styling"
+                        className="text-base font-semibold text-slate-900">
+                        {t("workspace.surveys.edit.add_custom_styles")}
                       </FormLabel>
                       <FormDescription className="text-sm text-slate-800">
-                        {t("environments.surveys.edit.override_theme_with_individual_styles_for_this_survey")}
+                        {t("workspace.surveys.edit.override_theme_with_individual_styles_for_this_survey")}
                       </FormDescription>
                     </div>
                   </FormItem>
@@ -235,10 +242,8 @@ export const StylingView = ({
                 name="brandColor.light"
                 render={({ field }) => (
                   <FormItem className="space-y-1">
-                    <FormLabel>{t("environments.surveys.edit.brand_color")}</FormLabel>
-                    <FormDescription>
-                      {t("environments.surveys.edit.brand_color_description")}
-                    </FormDescription>
+                    <FormLabel>{t("workspace.surveys.edit.brand_color")}</FormLabel>
+                    <FormDescription>{t("workspace.surveys.edit.brand_color_description")}</FormDescription>
                     <FormControl>
                       <ColorPicker
                         color={field.value ?? STYLE_DEFAULTS.brandColor?.light ?? COLOR_DEFAULTS.brandColor}
@@ -255,7 +260,7 @@ export const StylingView = ({
                 className="h-10 justify-center gap-1"
                 onClick={() => setConfirmSuggestColorsOpen(true)}>
                 <SparklesIcon className="mr-2 h-4 w-4" />
-                {t("environments.workspace.look.suggest_colors")}
+                {t("workspace.look.suggest_colors")}
               </Button>
             </div>
           )}
@@ -280,7 +285,7 @@ export const StylingView = ({
               <BackgroundStylingCard
                 open={stylingOpen}
                 setOpen={setStylingOpen}
-                environmentId={environmentId}
+                workspaceId={workspaceId}
                 colors={colors}
                 disabled={!overwriteThemeStyling}
                 isUnsplashConfigured={isUnsplashConfigured}
@@ -292,7 +297,7 @@ export const StylingView = ({
                 open={logoSettingsOpen}
                 setOpen={setLogoSettingsOpen}
                 disabled={!overwriteThemeStyling}
-                environmentId={environmentId}
+                workspaceId={workspaceId}
                 form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
                 isStorageConfigured={isStorageConfigured}
               />
@@ -308,17 +313,14 @@ export const StylingView = ({
                     variant="ghost"
                     className="flex items-center gap-2"
                     onClick={() => setConfirmResetStylingModalOpen(true)}>
-                    {t("environments.surveys.edit.reset_to_theme_styles")}
+                    {t("workspace.surveys.edit.reset_to_theme_styles")}
                     <RotateCcwIcon className="h-4 w-4" />
                   </Button>
                 )}
               </div>
               <p className="text-sm text-slate-500">
-                {t("environments.surveys.edit.adjust_the_theme_in_the")}{" "}
-                <Link
-                  href={`/environments/${environmentId}/workspace/look`}
-                  target="_blank"
-                  className="font-semibold underline">
+                {t("workspace.surveys.edit.adjust_the_theme_in_the")}{" "}
+                <Link href={`${workspaceBasePath}/look`} target="_blank" className="font-semibold underline">
                   {t("common.look_and_feel")}
                 </Link>{" "}
                 {t("common.settings")}
@@ -328,8 +330,8 @@ export const StylingView = ({
           <AlertDialog
             open={confirmResetStylingModalOpen}
             setOpen={setConfirmResetStylingModalOpen}
-            headerText={t("environments.surveys.edit.reset_to_theme_styles")}
-            mainText={t("environments.surveys.edit.reset_to_theme_styles_main_text")}
+            headerText={t("workspace.surveys.edit.reset_to_theme_styles")}
+            mainText={t("workspace.surveys.edit.reset_to_theme_styles_main_text")}
             confirmBtnLabel={t("common.confirm")}
             onDecline={() => setConfirmResetStylingModalOpen(false)}
             onConfirm={onResetThemeStyling}
@@ -338,9 +340,9 @@ export const StylingView = ({
           <AlertDialog
             open={confirmSuggestColorsOpen}
             setOpen={setConfirmSuggestColorsOpen}
-            headerText={t("environments.workspace.look.generate_theme_header")}
-            mainText={t("environments.workspace.look.generate_theme_confirmation")}
-            confirmBtnLabel={t("environments.workspace.look.generate_theme_btn")}
+            headerText={t("workspace.look.generate_theme_header")}
+            mainText={t("workspace.look.generate_theme_confirmation")}
+            confirmBtnLabel={t("workspace.look.generate_theme_btn")}
             declineBtnLabel={t("common.cancel")}
             onConfirm={handleSuggestColors}
             onDecline={() => setConfirmSuggestColorsOpen(false)}

@@ -71,7 +71,7 @@ export const ActionSettingsTab = ({
         <>
           <CodeActionForm form={form} isReadOnly={true} />
           <p className="text-sm text-slate-600">
-            {t("environments.actions.this_is_a_code_action_please_make_changes_in_your_code_base")}
+            {t("workspace.actions.this_is_a_code_action_please_make_changes_in_your_code_base")}
           </p>
         </>
       );
@@ -83,7 +83,7 @@ export const ActionSettingsTab = ({
 
     return (
       <p className="text-sm text-slate-600">
-        {t("environments.actions.this_action_was_created_automatically_you_cannot_make_changes_to_it")}
+        {t("workspace.actions.this_action_was_created_automatically_you_cannot_make_changes_to_it")}
       </p>
     );
   };
@@ -92,7 +92,7 @@ export const ActionSettingsTab = ({
     try {
       setIsUpdatingAction(true);
       validatePermissions(isReadOnly, t);
-      const updatedAction = buildActionObject(data, actionClass.environmentId, t);
+      const updatedAction = buildActionObject(data, actionClass.workspaceId, t);
 
       const result = await updateActionClassAction({
         actionClassId: actionClass.id,
@@ -104,7 +104,7 @@ export const ActionSettingsTab = ({
       }
       setOpen(false);
       router.refresh();
-      toast.success(t("environments.actions.action_updated_successfully"));
+      toast.success(t("workspace.actions.action_updated_successfully"));
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unknown error occurred");
     } finally {
@@ -121,7 +121,7 @@ export const ActionSettingsTab = ({
         return;
       }
       router.refresh();
-      toast.success(t("environments.actions.action_deleted_successfully"));
+      toast.success(t("workspace.actions.action_deleted_successfully"));
       setOpen(false);
     } catch {
       toast.error(t("common.something_went_wrong_please_try_again"));
@@ -181,7 +181,7 @@ export const ActionSettingsTab = ({
         setOpen={setOpenDeleteDialog}
         isDeleting={isDeletingAction}
         deleteWhat={t("common.action")}
-        text={t("environments.actions.delete_action_text")}
+        text={t("workspace.actions.delete_action_text")}
         onDelete={handleDeleteAction}
       />
     </div>

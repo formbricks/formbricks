@@ -5,6 +5,8 @@ import { validateInputs } from "@/lib/utils/validate";
 import { TWorkspaceUpdateBrandingInput } from "../types/workspace";
 import { updateWorkspaceBranding } from "./workspace";
 
+vi.mock("server-only", () => ({}));
+
 vi.mock("@formbricks/database", () => ({
   prisma: {
     workspace: {
@@ -59,7 +61,6 @@ describe("updateWorkspaceBranding", () => {
       placement: "bottomRight" as const,
       clickOutsideClose: true,
       overlay: "none",
-      environments: [{ id: "test-env-id" }],
       languages: [],
       logo: null,
     };
@@ -90,11 +91,6 @@ describe("updateWorkspaceBranding", () => {
       select: {
         id: true,
         organizationId: true,
-        environments: {
-          select: {
-            id: true,
-          },
-        },
       },
     });
   });

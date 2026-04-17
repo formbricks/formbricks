@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/__mocks__/database";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { getActionClasses } from "@/lib/actionClass/service";
-import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import {
   createSurveyInput,
   mockActionClass,
@@ -19,7 +19,7 @@ vi.mock("@/lib/actionClass/service", () => ({
 }));
 
 vi.mock("@/lib/organization/service", () => ({
-  getOrganizationByEnvironmentId: vi.fn(),
+  getOrganizationByWorkspaceId: vi.fn(),
   subscribeOrganizationMembersToSurveyResponses: vi.fn(),
 }));
 
@@ -33,7 +33,7 @@ describe("survey service scheduling", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-04-17T12:30:00.000Z"));
     vi.mocked(getActionClasses).mockResolvedValue([mockActionClass] as never);
-    vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue({ id: "org123" } as never);
+    vi.mocked(getOrganizationByWorkspaceId).mockResolvedValue({ id: "org123" } as never);
     mockQueueAuditEventWithoutRequest.mockResolvedValue(undefined);
   });
 
@@ -197,7 +197,7 @@ describe("survey service scheduling", () => {
       type: "link",
     } as never);
 
-    const createdSurvey = await createSurvey(updateSurveyInput.environmentId, {
+    const createdSurvey = await createSurvey(updateSurveyInput.workspaceId, {
       ...createSurveyInput,
       name: "Scheduled survey",
       publishOn: dueSelection,

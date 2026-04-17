@@ -8,8 +8,8 @@ import { TLanguage } from "@formbricks/types/workspace";
 import {
   DateRange,
   SelectedFilterValue,
-} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
-import { OptionsType } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ElementsComboBox";
+} from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
+import { OptionsType } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/ElementsComboBox";
 import { generateElementAndFilterOptions, getFormattedFilters, getTodayDate } from "./surveys";
 
 describe("surveys", () => {
@@ -41,7 +41,6 @@ describe("surveys", () => {
         questions: [],
         createdAt: new Date(),
         updatedAt: new Date(),
-        environmentId: "env1",
         status: "draft",
       } as unknown as TSurvey;
 
@@ -61,12 +60,11 @@ describe("surveys", () => {
         questions: [],
         createdAt: new Date(),
         updatedAt: new Date(),
-        environmentId: "env1",
         status: "draft",
       } as unknown as TSurvey;
 
       const tags: TTag[] = [
-        { id: "tag1", name: "Tag 1", environmentId: "env1", createdAt: new Date(), updatedAt: new Date() },
+        { id: "tag1", name: "Tag 1", workspaceId: "env1", createdAt: new Date(), updatedAt: new Date() },
       ];
 
       const result = generateElementAndFilterOptions(survey, tags, {}, {}, {}, []);
@@ -85,7 +83,6 @@ describe("surveys", () => {
         questions: [],
         createdAt: new Date(),
         updatedAt: new Date(),
-        environmentId: "env1",
         status: "draft",
       } as unknown as TSurvey;
 
@@ -109,7 +106,6 @@ describe("surveys", () => {
         questions: [],
         createdAt: new Date(),
         updatedAt: new Date(),
-        environmentId: "env1",
         status: "draft",
       } as unknown as TSurvey;
 
@@ -133,7 +129,6 @@ describe("surveys", () => {
         questions: [],
         createdAt: new Date(),
         updatedAt: new Date(),
-        environmentId: "env1",
         status: "draft",
       } as unknown as TSurvey;
 
@@ -159,7 +154,6 @@ describe("surveys", () => {
         questions: [],
         createdAt: new Date(),
         updatedAt: new Date(),
-        environmentId: "env1",
         status: "draft",
         languages: [{ language: { code: "en" } as unknown as TLanguage } as unknown as TSurveyLanguage],
       } as unknown as TSurvey;
@@ -258,7 +252,6 @@ describe("surveys", () => {
         questions: [],
         createdAt: new Date(),
         updatedAt: new Date(),
-        environmentId: "env1",
         status: "draft",
       } as unknown as TSurvey;
 
@@ -279,7 +272,6 @@ describe("surveys", () => {
         questions: [],
         createdAt: new Date(),
         updatedAt: new Date(),
-        environmentId: "env1",
         status: "draft",
       } as unknown as TSurvey;
 
@@ -316,7 +308,6 @@ describe("surveys", () => {
         blocks: [],
         createdAt: new Date(),
         updatedAt: new Date(),
-        environmentId: "env1",
         status: "draft",
       } as unknown as TSurvey;
 
@@ -342,7 +333,6 @@ describe("surveys", () => {
         blocks: [],
         createdAt: new Date(),
         updatedAt: new Date(),
-        environmentId: "env1",
         status: "draft",
       } as unknown as TSurvey;
 
@@ -489,7 +479,6 @@ describe("surveys", () => {
       questions: [],
       createdAt: new Date(),
       updatedAt: new Date(),
-      environmentId: "env1",
       status: "draft",
     } as unknown as TSurvey;
 

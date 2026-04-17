@@ -1,5 +1,5 @@
 import { TOrganization } from "@formbricks/types/organizations";
-import { TSurvey, TSurveyCreateInputWithEnvironmentId } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyCreateInputWithWorkspaceId } from "@formbricks/types/surveys/types";
 import { responses } from "@/app/lib/api/response";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { getIsSpamProtectionEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -7,7 +7,7 @@ import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/ut
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 
 export const checkFeaturePermissions = async (
-  surveyData: TSurveyCreateInputWithEnvironmentId,
+  surveyData: TSurveyCreateInputWithWorkspaceId,
   organization: TOrganization,
   oldSurvey?: TSurvey
 ): Promise<Response | null> => {

@@ -23,7 +23,7 @@ export const AddLanguageButton: React.FC<AddLanguageButtonProps> = ({
     return (
       <Button onClick={onClick} size="sm" variant="secondary">
         <PlusIcon />
-        {t("environments.workspace.languages.add_language")}
+        {t("workspace.languages.add_language")}
       </Button>
     );
   }

@@ -5,7 +5,7 @@ import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 
 export const getContactByUserId = async (
-  environmentId: string,
+  workspaceId: string,
   userId: string
 ): Promise<
   Result<
@@ -23,7 +23,7 @@ export const getContactByUserId = async (
           some: {
             attributeKey: {
               key: "userId",
-              environmentId,
+              workspaceId,
             },
             value: userId,
           },

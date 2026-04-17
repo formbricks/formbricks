@@ -11,7 +11,8 @@ import {
   type TOrganizationStripePendingChange,
   type TOrganizationStripeSubscriptionStatus,
 } from "@formbricks/types/organizations";
-import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
+import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { cn } from "@/lib/cn";
 import { formatDateForDisplay } from "@/lib/utils/datetime";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
@@ -30,14 +31,14 @@ import type { TStripeBillingCatalogDisplay } from "../lib/stripe-billing-catalog
 import { TrialAlert } from "./trial-alert";
 import { UsageCard } from "./usage-card";
 
-const BILLING_CONFIRMATION_ENVIRONMENT_ID_KEY = "billingConfirmationEnvironmentId";
+const BILLING_CONFIRMATION_WORKSPACE_ID_KEY = "billingConfirmationWorkspaceId";
 
 type TDisplayPlan = "hobby" | "pro" | "scale" | "custom" | "unknown";
 type TStandardPlan = "hobby" | "pro" | "scale";
 
 interface PricingTableProps {
   organization: TOrganization;
-  environmentId: string;
+  workspaceId: string;
   responseCount: number;
   workspaceCount: number;
   usageCycleStart: Date;
@@ -59,11 +60,11 @@ const STANDARD_PLAN_LEVEL: Record<TStandardPlan, number> = {
 };
 
 const getCurrentCloudPlanLabel = (plan: TDisplayPlan, t: (key: string) => string) => {
-  if (plan === "hobby") return t("environments.settings.billing.plan_hobby");
-  if (plan === "pro") return t("environments.settings.billing.plan_pro");
-  if (plan === "scale") return t("environments.settings.billing.plan_scale");
-  if (plan === "custom") return t("environments.settings.billing.plan_custom");
-  return t("environments.settings.billing.plan_unknown");
+  if (plan === "hobby") return t("workspace.settings.billing.plan_hobby");
+  if (plan === "pro") return t("workspace.settings.billing.plan_pro");
+  if (plan === "scale") return t("workspace.settings.billing.plan_scale");
+  if (plan === "custom") return t("workspace.settings.billing.plan_custom");
+  return t("workspace.settings.billing.plan_unknown");
 };
 
 const formatMoney = (currency: string, unitAmount: number | null, locale: string) => {
@@ -92,21 +93,21 @@ const getPlanPeriodLabel = (
   t: (key: string) => string
 ) => {
   if (plan === "hobby" || interval === "monthly") {
-    return t("environments.settings.billing.per_month");
+    return t("workspace.settings.billing.per_month");
   }
 
-  return t("environments.settings.billing.per_year");
+  return t("workspace.settings.billing.per_year");
 };
 
-const getPlanChangePayload = (environmentId: string, plan: TStandardPlan, interval: TCloudBillingInterval) =>
+const getPlanChangePayload = (workspaceId: string, plan: TStandardPlan, interval: TCloudBillingInterval) =>
   plan === "hobby"
     ? {
-        environmentId,
+        workspaceId,
         targetPlan: "hobby" as const,
         targetInterval: "monthly" as const,
       }
     : {
-        environmentId,
+        workspaceId,
         targetPlan: plan,
         targetInterval: interval,
       };
@@ -116,22 +117,22 @@ const getPlanChangeSuccessMessage = (
   t: (key: string) => string
 ) => {
   if (mode === "scheduled") {
-    return t("environments.settings.billing.plan_change_scheduled");
+    return t("workspace.settings.billing.plan_change_scheduled");
   }
 
-  return t("environments.settings.billing.plan_change_applied");
+  return t("workspace.settings.billing.plan_change_applied");
 };
 
 const getActionErrorMessage = (serverError: string, t: (key: string) => string) => {
   if (serverError === "mixed_interval_checkout_unsupported") {
-    return t("environments.settings.billing.yearly_checkout_unavailable");
+    return t("workspace.settings.billing.yearly_checkout_unavailable");
   }
 
   return t("common.something_went_wrong_please_try_again");
 };
 
 export const PricingTable = ({
-  environmentId,
+  workspaceId,
   organization,
   responseCount,
   workspaceCount,
@@ -147,6 +148,7 @@ export const PricingTable = ({
   billingCatalog,
 }: PricingTableProps) => {
   const { t, i18n } = useTranslation();
+  const { workspace } = useWorkspace();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isRetryingStripeSetup, setIsRetryingStripeSetup] = useState(false);
@@ -196,10 +198,10 @@ export const PricingTable = ({
           billingCatalog.hobby.monthly.unitAmount,
           locale
         ),
-        description: t("environments.settings.billing.plan_hobby_description"),
+        description: t("workspace.settings.billing.plan_hobby_description"),
         features: [
-          t("environments.settings.billing.plan_hobby_feature_workspaces"),
-          t("environments.settings.billing.plan_hobby_feature_responses"),
+          t("workspace.settings.billing.plan_hobby_feature_workspaces"),
+          t("workspace.settings.billing.plan_hobby_feature_responses"),
         ],
       },
       {
@@ -210,11 +212,11 @@ export const PricingTable = ({
           billingCatalog.pro[selectedInterval].unitAmount,
           locale
         ),
-        description: t("environments.settings.billing.plan_pro_description"),
+        description: t("workspace.settings.billing.plan_pro_description"),
         features: [
-          t("environments.settings.billing.plan_feature_everything_in_hobby"),
-          t("environments.settings.billing.plan_pro_feature_workspaces"),
-          t("environments.settings.billing.plan_pro_feature_responses"),
+          t("workspace.settings.billing.plan_feature_everything_in_hobby"),
+          t("workspace.settings.billing.plan_pro_feature_workspaces"),
+          t("workspace.settings.billing.plan_pro_feature_responses"),
         ],
       },
       {
@@ -225,19 +227,21 @@ export const PricingTable = ({
           billingCatalog.scale[selectedInterval].unitAmount,
           locale
         ),
-        description: t("environments.settings.billing.plan_scale_description"),
+        description: t("workspace.settings.billing.plan_scale_description"),
         features: [
-          t("environments.settings.billing.plan_feature_everything_in_pro"),
-          t("environments.settings.billing.plan_scale_feature_workspaces"),
-          t("environments.settings.billing.plan_scale_feature_responses"),
+          t("workspace.settings.billing.plan_feature_everything_in_pro"),
+          t("workspace.settings.billing.plan_scale_feature_workspaces"),
+          t("workspace.settings.billing.plan_scale_feature_responses"),
         ],
       },
     ];
   }, [billingCatalog, locale, selectedInterval, t]);
 
-  const persistEnvironmentId = () => {
+  const persistWorkspaceId = () => {
     if (globalThis.window !== undefined) {
-      globalThis.window.sessionStorage.setItem(BILLING_CONFIRMATION_ENVIRONMENT_ID_KEY, environmentId);
+      if (workspace?.id) {
+        globalThis.window.sessionStorage.setItem(BILLING_CONFIRMATION_WORKSPACE_ID_KEY, workspace.id);
+      }
     }
   };
 
@@ -248,7 +252,7 @@ export const PricingTable = ({
   };
 
   const openBillingPortal = async () => {
-    const response = await manageSubscriptionAction({ environmentId });
+    const response = await manageSubscriptionAction({ workspaceId });
     if (response?.serverError) {
       toast.error(getActionErrorMessage(response.serverError, t));
       return;
@@ -263,8 +267,8 @@ export const PricingTable = ({
 
   const openTrialPaymentCheckout = async () => {
     try {
-      persistEnvironmentId();
-      const response = await createTrialPaymentCheckoutAction({ environmentId });
+      persistWorkspaceId();
+      const response = await createTrialPaymentCheckoutAction({ workspaceId });
       if (response?.serverError) {
         toast.error(getActionErrorMessage(response.serverError, t));
         return;
@@ -310,13 +314,13 @@ export const PricingTable = ({
     }
 
     if (interval === "yearly") {
-      toast.error(t("environments.settings.billing.yearly_checkout_unavailable"));
+      toast.error(t("workspace.settings.billing.yearly_checkout_unavailable"));
       return;
     }
 
-    persistEnvironmentId();
+    persistWorkspaceId();
     const response = await createPlanCheckoutAction({
-      environmentId,
+      workspaceId,
       targetPlan: plan,
       targetInterval: interval,
     });
@@ -343,7 +347,7 @@ export const PricingTable = ({
         return;
       }
 
-      const response = await changeBillingPlanAction(getPlanChangePayload(environmentId, plan, interval));
+      const response = await changeBillingPlanAction(getPlanChangePayload(workspaceId, plan, interval));
       if (response?.serverError) {
         toast.error(getActionErrorMessage(response.serverError, t));
         return;
@@ -361,13 +365,13 @@ export const PricingTable = ({
   const undoPendingChange = async () => {
     setIsPlanActionPending("undo");
     try {
-      const response = await undoPendingPlanChangeAction({ environmentId });
+      const response = await undoPendingPlanChangeAction({ workspaceId });
       if (response?.serverError) {
         toast.error(getActionErrorMessage(response.serverError, t));
         return;
       }
       if (response?.data) {
-        toast.success(t("environments.settings.billing.pending_change_removed"));
+        toast.success(t("workspace.settings.billing.pending_change_removed"));
         router.refresh();
         return;
       }
@@ -385,26 +389,26 @@ export const PricingTable = ({
     const isCurrentSelection =
       currentCloudPlan === plan && (plan === "hobby" || currentBillingInterval === interval);
     if (isCurrentSelection) {
-      return t("environments.settings.billing.current_plan_cta");
+      return t("workspace.settings.billing.current_plan_cta");
     }
 
     const isPendingSelection =
       pendingChange?.targetPlan === plan && (plan === "hobby" || pendingChange.targetInterval === interval);
     if (isPendingSelection) {
-      return t("environments.settings.billing.pending_plan_cta");
+      return t("workspace.settings.billing.pending_plan_cta");
     }
 
     if (!hasPaymentMethod && plan !== "hobby") {
-      return t("environments.settings.billing.upgrade_now");
+      return t("workspace.settings.billing.upgrade_now");
     }
 
     if (currentPlanLevel === null) {
-      return t("environments.settings.billing.switch_plan_now");
+      return t("workspace.settings.billing.switch_plan_now");
     }
 
     return STANDARD_PLAN_LEVEL[plan] > currentPlanLevel
-      ? t("environments.settings.billing.upgrade_now")
-      : t("environments.settings.billing.switch_at_period_end");
+      ? t("workspace.settings.billing.upgrade_now")
+      : t("workspace.settings.billing.switch_at_period_end");
   };
 
   return (
@@ -414,17 +418,15 @@ export const PricingTable = ({
           (hasPaymentMethod ? (
             <TrialAlert trialDaysRemaining={trialDaysRemaining} hasPaymentMethod>
               <AlertDescription>
-                {t("environments.settings.billing.trial_payment_method_added_description")}
+                {t("workspace.settings.billing.trial_payment_method_added_description")}
               </AlertDescription>
             </TrialAlert>
           ) : (
             <TrialAlert trialDaysRemaining={trialDaysRemaining}>
-              <AlertDescription>
-                {t("environments.settings.billing.trial_alert_description")}
-              </AlertDescription>
+              <AlertDescription>{t("workspace.settings.billing.trial_alert_description")}</AlertDescription>
               {hasBillingRights && (
                 <AlertButton onClick={() => void openTrialPaymentCheckout()}>
-                  {t("environments.settings.billing.add_payment_method")}
+                  {t("workspace.settings.billing.add_payment_method")}
                 </AlertButton>
               )}
             </TrialAlert>
@@ -432,9 +434,9 @@ export const PricingTable = ({
 
         {pendingChange && (
           <Alert variant="info" className="max-w-4xl">
-            <AlertTitle>{t("environments.settings.billing.pending_plan_change_title")}</AlertTitle>
+            <AlertTitle>{t("workspace.settings.billing.pending_plan_change_title")}</AlertTitle>
             <AlertDescription>
-              {t("environments.settings.billing.pending_plan_change_description")
+              {t("workspace.settings.billing.pending_plan_change_description")
                 .replace("{{plan}}", getCurrentCloudPlanLabel(pendingChange.targetPlan, t))
                 .replace(
                   "{{date}}",
@@ -448,7 +450,7 @@ export const PricingTable = ({
             </AlertDescription>
             {hasBillingRights && (
               <AlertButton onClick={() => void undoPendingChange()} loading={isPlanActionPending === "undo"}>
-                {t("environments.settings.billing.keep_current_plan")}
+                {t("workspace.settings.billing.keep_current_plan")}
               </AlertButton>
             )}
           </Alert>
@@ -456,32 +458,32 @@ export const PricingTable = ({
 
         {isStripeSetupIncomplete && hasBillingRights && (
           <Alert variant="warning">
-            <AlertTitle>{t("environments.settings.billing.stripe_setup_incomplete")}</AlertTitle>
+            <AlertTitle>{t("workspace.settings.billing.stripe_setup_incomplete")}</AlertTitle>
             <AlertDescription>
-              {t("environments.settings.billing.stripe_setup_incomplete_description")}
+              {t("workspace.settings.billing.stripe_setup_incomplete_description")}
             </AlertDescription>
             <AlertButton onClick={() => void retryStripeSetup()} loading={isRetryingStripeSetup}>
-              {t("environments.settings.billing.retry_setup")}
+              {t("workspace.settings.billing.retry_setup")}
             </AlertButton>
           </Alert>
         )}
 
         {currentCloudPlan === "custom" && (
           <Alert>
-            <AlertTitle>{t("environments.settings.billing.custom_plan_title")}</AlertTitle>
-            <AlertDescription>{t("environments.settings.billing.custom_plan_description")}</AlertDescription>
+            <AlertTitle>{t("workspace.settings.billing.custom_plan_title")}</AlertTitle>
+            <AlertDescription>{t("workspace.settings.billing.custom_plan_description")}</AlertDescription>
           </Alert>
         )}
 
         <SettingsCard
-          title={t("environments.settings.billing.subscription")}
-          description={t("environments.settings.billing.subscription_description")}
+          title={t("workspace.settings.billing.subscription")}
+          description={t("workspace.settings.billing.subscription_description")}
           buttonInfo={
             canShowSubscriptionButton
               ? {
                   text: hasPaymentMethod
-                    ? t("environments.settings.billing.manage_billing_details")
-                    : t("environments.settings.billing.add_payment_method"),
+                    ? t("workspace.settings.billing.manage_billing_details")
+                    : t("workspace.settings.billing.add_payment_method"),
                   onClick: () => void (hasPaymentMethod ? openBillingPortal() : openTrialPaymentCheckout()),
                   variant: "default",
                 }
@@ -490,7 +492,7 @@ export const PricingTable = ({
           <div className="flex flex-col gap-6">
             <div className="flex flex-col gap-1">
               <p className="text-sm font-semibold text-slate-700">
-                {t("environments.settings.billing.your_plan")}
+                {t("workspace.settings.billing.your_plan")}
               </p>
               <div className="flex flex-wrap items-center gap-2">
                 <Badge type="success" size="normal" text={getCurrentCloudPlanLabel(currentCloudPlan, t)} />
@@ -500,8 +502,8 @@ export const PricingTable = ({
                     size="normal"
                     text={
                       currentBillingInterval === "monthly"
-                        ? t("environments.settings.billing.monthly")
-                        : t("environments.settings.billing.yearly")
+                        ? t("workspace.settings.billing.monthly")
+                        : t("workspace.settings.billing.yearly")
                     }
                   />
                 )}
@@ -509,7 +511,7 @@ export const PricingTable = ({
                   <Badge
                     type="warning"
                     size="normal"
-                    text={t("environments.settings.billing.status_trialing")}
+                    text={t("workspace.settings.billing.status_trialing")}
                   />
                 )}
               </div>
@@ -521,10 +523,10 @@ export const PricingTable = ({
                 currentCount={responseCount}
                 limit={organization.billing.limits.monthly.responses}
                 isUnlimited={responsesUnlimitedCheck}
-                unlimitedLabel={t("environments.settings.billing.unlimited_responses")}
+                unlimitedLabel={t("workspace.settings.billing.unlimited_responses")}
               />
               <p className="text-sm text-slate-500">
-                {t("environments.settings.billing.usage_cycle")}: {usageCycleLabel}
+                {t("workspace.settings.billing.usage_cycle")}: {usageCycleLabel}
               </p>
             </div>
 
@@ -533,20 +535,20 @@ export const PricingTable = ({
               currentCount={workspaceCount}
               limit={organization.billing.limits.workspaces}
               isUnlimited={workspacesUnlimitedCheck}
-              unlimitedLabel={t("environments.settings.billing.unlimited_workspaces")}
+              unlimitedLabel={t("workspace.settings.billing.unlimited_workspaces")}
             />
           </div>
         </SettingsCard>
 
         {showPlanSelector && (
           <SettingsCard
-            title={t("environments.settings.billing.plan_selection_title")}
-            description={t("environments.settings.billing.plan_selection_description")}>
+            title={t("workspace.settings.billing.plan_selection_title")}
+            description={t("workspace.settings.billing.plan_selection_description")}>
             <div className="flex flex-col gap-6">
               <div
                 className="flex w-fit rounded-xl border border-slate-200 bg-slate-100 p-1"
                 role="tablist"
-                aria-label={t("environments.settings.billing.billing_interval_toggle")}>
+                aria-label={t("workspace.settings.billing.billing_interval_toggle")}>
                 {(["monthly", "yearly"] as const).map((interval) => (
                   <button
                     key={interval}
@@ -562,8 +564,8 @@ export const PricingTable = ({
                         : "text-slate-600 hover:text-slate-900"
                     )}>
                     {interval === "monthly"
-                      ? t("environments.settings.billing.monthly")
-                      : t("environments.settings.billing.yearly")}
+                      ? t("workspace.settings.billing.monthly")
+                      : t("workspace.settings.billing.yearly")}
                   </button>
                 ))}
               </div>
@@ -602,17 +604,17 @@ export const PricingTable = ({
                       <div className="mb-4 flex min-h-7 items-start gap-2">
                         {planCard.plan === "pro" && (
                           <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600">
-                            {t("environments.settings.billing.most_popular")}
+                            {t("workspace.settings.billing.most_popular")}
                           </span>
                         )}
                         {isCurrentSelection && (
                           <span className="rounded-md bg-emerald-100 px-2 py-1 text-xs font-medium text-emerald-700">
-                            {t("environments.settings.billing.current_plan_badge")}
+                            {t("workspace.settings.billing.current_plan_badge")}
                           </span>
                         )}
                         {isPendingSelection && (
                           <span className="rounded-md bg-amber-100 px-2 py-1 text-xs font-medium text-amber-700">
-                            {t("environments.settings.billing.pending_plan_badge")}
+                            {t("workspace.settings.billing.pending_plan_badge")}
                           </span>
                         )}
                       </div>
@@ -637,7 +639,7 @@ export const PricingTable = ({
                         shouldRender={isMissingPaymentMethodUpgrade}
                         triggerClass="block w-full"
                         tooltipContent={t(
-                          "environments.settings.billing.add_payment_method_to_upgrade_tooltip"
+                          "workspace.settings.billing.add_payment_method_to_upgrade_tooltip"
                         )}>
                         <Button
                           variant="secondary"
@@ -651,7 +653,7 @@ export const PricingTable = ({
 
                       <div className="mt-8 border-t border-slate-100 pt-6">
                         <p className="mb-4 text-sm font-semibold text-slate-900">
-                          {t("environments.settings.billing.this_includes")}
+                          {t("workspace.settings.billing.this_includes")}
                         </p>
                         <ul className="space-y-3">
                           {planCard.features.map((feature) => (

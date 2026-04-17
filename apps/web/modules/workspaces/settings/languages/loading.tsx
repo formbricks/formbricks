@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { LanguageLabels } from "@/modules/survey/multi-language-surveys/components/language-labels";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -21,8 +21,8 @@ export const LanguagesLoading = () => {
         <WorkspaceConfigNavigation activeId="languages" loading />
       </PageHeader>
       <SettingsCard
-        title={t("environments.workspace.languages.multi_language_surveys")}
-        description={t("environments.workspace.languages.multi_language_surveys_description")}>
+        title={t("workspace.languages.multi_language_surveys")}
+        description={t("workspace.languages.multi_language_surveys_description")}>
         <div className="flex flex-col space-y-4">
           <LanguageLabels />
           {loaderIds.map((id) => (

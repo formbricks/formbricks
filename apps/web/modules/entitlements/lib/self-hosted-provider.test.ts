@@ -24,14 +24,14 @@ beforeEach(() => {
 describe("getSelfHostedOrganizationEntitlementsContext", () => {
   test("throws ResourceNotFoundError when organization is null", async () => {
     mockGetOrg.mockResolvedValue(null);
-    mockGetLicense.mockResolvedValue({ status: "no-license", features: null, active: false });
+    mockGetLicense.mockResolvedValue({ status: "no-license", features: null, active: false } as any);
 
     await expect(getSelfHostedOrganizationEntitlementsContext("org1")).rejects.toThrow(ResourceNotFoundError);
   });
 
   test("returns context with no license features", async () => {
     mockGetOrg.mockResolvedValue({ id: "org1" } as any);
-    mockGetLicense.mockResolvedValue({ status: "no-license", features: null, active: false });
+    mockGetLicense.mockResolvedValue({ status: "no-license", features: null, active: false } as any);
 
     const result = await getSelfHostedOrganizationEntitlementsContext("org1");
 
@@ -98,5 +98,47 @@ describe("getSelfHostedOrganizationEntitlementsContext", () => {
     const result = await getSelfHostedOrganizationEntitlementsContext("org1");
 
     expect(result.features).toContain("hide-branding");
+  });
+
+  test("maps aiSmartTools feature to ai-smart-tools entitlement", async () => {
+    mockGetOrg.mockResolvedValue({ id: "org1" } as any);
+    mockGetLicense.mockResolvedValue({
+      status: "active",
+      active: true,
+      features: { aiSmartTools: true },
+    } as any);
+
+    const result = await getSelfHostedOrganizationEntitlementsContext("org1");
+
+    expect(result.features).toContain("ai-smart-tools");
+    expect(result.features).not.toContain("ai-data-analysis");
+  });
+
+  test("maps aiDataAnalysis feature to ai-data-analysis entitlement", async () => {
+    mockGetOrg.mockResolvedValue({ id: "org1" } as any);
+    mockGetLicense.mockResolvedValue({
+      status: "active",
+      active: true,
+      features: { aiDataAnalysis: true },
+    } as any);
+
+    const result = await getSelfHostedOrganizationEntitlementsContext("org1");
+
+    expect(result.features).toContain("ai-data-analysis");
+    expect(result.features).not.toContain("ai-smart-tools");
+  });
+
+  test("maps both AI features when both are enabled", async () => {
+    mockGetOrg.mockResolvedValue({ id: "org1" } as any);
+    mockGetLicense.mockResolvedValue({
+      status: "active",
+      active: true,
+      features: { aiSmartTools: true, aiDataAnalysis: true },
+    } as any);
+
+    const result = await getSelfHostedOrganizationEntitlementsContext("org1");
+
+    expect(result.features).toContain("ai-smart-tools");
+    expect(result.features).toContain("ai-data-analysis");
   });
 });

@@ -1,3 +1,4 @@
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { cookies } from "next/headers";
@@ -9,11 +10,16 @@ import {
   EMAIL_VERIFICATION_DISABLED,
   ENCRYPTION_KEY,
   ENTERPRISE_LICENSE_KEY,
+  POSTHOG_KEY,
   SESSION_MAX_AGE,
+  WEBAPP_URL,
 } from "@/lib/constants";
 import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
 import { verifyToken } from "@/lib/jwt";
-import { getUserByEmail, updateUser, updateUserLastLoginAt } from "@/modules/auth/lib/user";
+import { capturePostHogEvent } from "@/lib/posthog";
+import { getValidatedCallbackUrl } from "@/lib/utils/url";
+import { getAuthCallbackUrlFromCookies } from "@/modules/auth/lib/callback-url";
+import { updateUser, updateUserLastLoginAt } from "@/modules/auth/lib/user";
 import {
   logAuthAttempt,
   logAuthEvent,
@@ -23,14 +29,13 @@ import {
   shouldLogAuthFailure,
   verifyPassword,
 } from "@/modules/auth/lib/utils";
-import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
-import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { getSSOProviders } from "@/modules/ee/sso/lib/providers";
 import { handleSsoCallback } from "@/modules/ee/sso/lib/sso-handlers";
 import { createBrevoCustomer } from "./brevo";
 
 export const authOptions: NextAuthOptions = {
+  adapter: PrismaAdapter(prisma),
   providers: [
     CredentialsProvider({
       id: "credentials",
@@ -55,8 +60,6 @@ export const authOptions: NextAuthOptions = {
         backupCode: { label: "Backup Code", type: "input", placeholder: "Two-factor backup code" },
       },
       async authorize(credentials, _req) {
-        await applyIPRateLimit(rateLimitConfigs.auth.login);
-
         // Use email for rate limiting when available, fall back to "unknown_user" for credential validation
         const identifier = credentials?.email || "unknown_user"; // NOSONAR // We want to check for empty strings
 
@@ -245,8 +248,6 @@ export const authOptions: NextAuthOptions = {
         },
       },
       async authorize(credentials, _req) {
-        await applyIPRateLimit(rateLimitConfigs.auth.verifyEmail);
-
         // For token verification, we can't rate limit effectively by token (single-use)
         // So we use a generic identifier for token abuse attempts
         const identifier = "email_verification_attempts";
@@ -310,30 +311,17 @@ export const authOptions: NextAuthOptions = {
     ...(ENTERPRISE_LICENSE_KEY ? getSSOProviders() : []),
   ],
   session: {
+    strategy: "database",
     maxAge: SESSION_MAX_AGE,
   },
   callbacks: {
-    async jwt({ token }) {
-      const existingUser = await getUserByEmail(token?.email!);
-
-      if (!existingUser) {
-        return token;
+    async session({ session, user }) {
+      if (session.user) {
+        session.user.id = user.id;
+        if ("isActive" in user && typeof user.isActive === "boolean") {
+          session.user.isActive = user.isActive;
+        }
       }
-
-      return {
-        ...token,
-        profile: { id: existingUser.id },
-        isActive: existingUser.isActive,
-      };
-    },
-    async session({ session, token }) {
-      // @ts-expect-error
-      session.user.id = token?.id;
-      // @ts-expect-error
-      session.user = token.profile;
-      // @ts-expect-error
-      session.user.isActive = token.isActive;
-
       return session;
     },
     async signIn({ user, account }) {
@@ -341,11 +329,32 @@ export const authOptions: NextAuthOptions = {
 
       // get callback url from the cookie store,
       const callbackUrl =
-        cookieStore.get("__Secure-next-auth.callback-url")?.value ||
-        cookieStore.get("next-auth.callback-url")?.value ||
-        "";
+        getValidatedCallbackUrl(getAuthCallbackUrlFromCookies(cookieStore), WEBAPP_URL) ?? "";
 
       const userEmail = user.email ?? "";
+      const userId = user.id as string;
+
+      // Capture sign-in event for PostHog (query BEFORE updating lastLoginAt)
+      const captureSignIn = async (provider: string) => {
+        if (!POSTHOG_KEY) return;
+
+        try {
+          const [membershipCount, userData] = await Promise.all([
+            prisma.membership.count({ where: { userId } }),
+            prisma.user.findUnique({ where: { id: userId }, select: { lastLoginAt: true } }),
+          ]);
+          const isFirstLoginToday =
+            userData?.lastLoginAt?.toISOString().slice(0, 10) !== new Date().toISOString().slice(0, 10);
+
+          capturePostHogEvent(userId, "user_signed_in", {
+            auth_provider: provider,
+            organization_count: membershipCount,
+            is_first_login_today: isFirstLoginToday,
+          });
+        } catch (error) {
+          logger.warn({ error }, "Failed to capture PostHog sign-in event");
+        }
+      };
 
       if (account?.provider === "credentials" || account?.provider === "token") {
         // check if user's email is verified or not
@@ -353,6 +362,7 @@ export const authOptions: NextAuthOptions = {
           logger.error("Email Verification is Pending");
           throw new Error("Email Verification is Pending");
         }
+        void captureSignIn(account.provider);
         await updateUserLastLoginAt(userEmail);
         return true;
       }
@@ -364,10 +374,12 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (result) {
+          void captureSignIn(account.provider);
           await updateUserLastLoginAt(userEmail);
         }
         return result;
       }
+      void captureSignIn(account?.provider ?? "unknown");
       await updateUserLastLoginAt(userEmail);
       return true;
     },

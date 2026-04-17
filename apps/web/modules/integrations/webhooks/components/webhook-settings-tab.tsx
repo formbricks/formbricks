@@ -26,9 +26,16 @@ interface WebhookSettingsTabProps {
   surveys: TSurvey[];
   setOpen: (v: boolean) => void;
   isReadOnly: boolean;
+  allowInternalUrls: boolean;
 }
 
-export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: WebhookSettingsTabProps) => {
+export const WebhookSettingsTab = ({
+  webhook,
+  surveys,
+  setOpen,
+  isReadOnly,
+  allowInternalUrls,
+}: WebhookSettingsTabProps) => {
   const { t } = useTranslation();
   const router = useRouter();
   const { register, handleSubmit } = useForm({
@@ -60,7 +67,7 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: We
 
   const handleTestEndpoint = async (sendSuccessToast: boolean): Promise<boolean> => {
     try {
-      const { valid, error } = validWebHookURL(testEndpointInput);
+      const { valid, error } = validWebHookURL(testEndpointInput, allowInternalUrls);
       if (!valid) {
         toast.error(error ?? t("common.something_went_wrong_please_try_again"));
         return false;
@@ -75,17 +82,17 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: We
         throw new Error(errorMessage);
       }
       setHittingEndpoint(false);
-      if (sendSuccessToast) toast.success(t("environments.integrations.webhooks.endpoint_pinged"));
+      if (sendSuccessToast) toast.success(t("workspace.integrations.webhooks.endpoint_pinged"));
       setEndpointAccessible(true);
       return true;
     } catch (err) {
       setHittingEndpoint(false);
       const errMessage = err instanceof Error ? err.message : "Unknown error occurred";
       toast.error(
-        `${t("environments.integrations.webhooks.endpoint_pinged_error")} \n ${errMessage.length < 250 ? errMessage : t("environments.integrations.webhooks.please_check_console")}`,
+        `${t("workspace.integrations.webhooks.endpoint_pinged_error")} \n ${errMessage.length < 250 ? errMessage : t("workspace.integrations.webhooks.please_check_console")}`,
         { className: errMessage.length < 250 ? "break-all" : "" }
       );
-      console.error(t("environments.integrations.webhooks.webhook_test_failed_due_to"), errMessage);
+      console.error(t("workspace.integrations.webhooks.webhook_test_failed_due_to"), errMessage);
       setEndpointAccessible(false);
       return false;
     }
@@ -151,7 +158,7 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: We
     });
     if (updateWebhookActionResult?.data) {
       router.refresh();
-      toast.success(t("environments.integrations.webhooks.webhook_updated_successfully"));
+      toast.success(t("workspace.integrations.webhooks.webhook_updated_successfully"));
     } else {
       const errorMessage = getFormattedErrorMessage(updateWebhookActionResult);
       toast.error(errorMessage);
@@ -172,7 +179,7 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: We
               {...register("name")}
               disabled={isReadOnly}
               defaultValue={webhook.name ?? ""}
-              placeholder={t("environments.integrations.webhooks.webhook_name_placeholder")}
+              placeholder={t("workspace.integrations.webhooks.webhook_name_placeholder")}
             />
           </div>
         </div>
@@ -200,7 +207,7 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: We
                       ? "border-slate-200 bg-white"
                       : null
               )}
-              placeholder={t("environments.integrations.webhooks.webhook_url_placeholder")}
+              placeholder={t("workspace.integrations.webhooks.webhook_url_placeholder")}
             />
             <Button
               type="button"
@@ -210,14 +217,14 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: We
               onClick={() => {
                 handleTestEndpoint(true);
               }}>
-              {t("environments.integrations.webhooks.test_endpoint")}
+              {t("workspace.integrations.webhooks.test_endpoint")}
             </Button>
           </div>
         </div>
 
         {webhook.secret && (
           <div className="col-span-1">
-            <Label htmlFor="secret">{t("environments.integrations.webhooks.signing_secret")}</Label>
+            <Label htmlFor="secret">{t("workspace.integrations.webhooks.signing_secret")}</Label>
             <div className="mt-1 flex">
               <div className="relative flex-1">
                 <Input
@@ -257,20 +264,20 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: We
               </Button>
             </div>
             <p className="mt-1 text-xs text-slate-500">
-              {t("environments.integrations.webhooks.secret_description")}
+              {t("workspace.integrations.webhooks.secret_description")}
             </p>
             <Link
               href="https://formbricks.com/docs/xm-and-surveys/core-features/integrations/webhooks#webhook-security-with-standard-webhooks"
               target="_blank"
               className="mt-1 inline-flex items-center gap-1 text-xs text-slate-600 underline hover:text-slate-800">
-              {t("environments.integrations.webhooks.learn_to_verify")}
+              {t("workspace.integrations.webhooks.learn_to_verify")}
               <ExternalLinkIcon className="h-3 w-3" />
             </Link>
           </div>
         )}
 
         <div>
-          <Label htmlFor="Triggers">{t("environments.integrations.webhooks.triggers")}</Label>
+          <Label htmlFor="Triggers">{t("workspace.integrations.webhooks.triggers")}</Label>
           <TriggerCheckboxGroup
             selectedTriggers={selectedTriggers}
             onCheckboxChange={handleCheckboxChange}
@@ -321,13 +328,13 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: We
         open={openDeleteDialog}
         setOpen={setOpenDeleteDialog}
         deleteWhat={t("common.webhook")}
-        text={t("environments.integrations.webhooks.webhook_delete_confirmation")}
+        text={t("workspace.integrations.webhooks.webhook_delete_confirmation")}
         onDelete={async () => {
           setOpen(false);
           const deleteWebhookActionResult = await deleteWebhookAction({ id: webhook.id });
           if (deleteWebhookActionResult?.data) {
             router.refresh();
-            toast.success(t("environments.integrations.webhooks.webhook_deleted_successfully"));
+            toast.success(t("workspace.integrations.webhooks.webhook_deleted_successfully"));
           } else {
             const errorMessage = getFormattedErrorMessage(deleteWebhookActionResult);
             toast.error(errorMessage);

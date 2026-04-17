@@ -9,9 +9,9 @@ export const getSurveyQuestions = reactCache(async (surveyId: string) => {
         id: surveyId,
       },
       select: {
-        environmentId: true,
         questions: true,
         blocks: true,
+        workspaceId: true,
       },
     });
 

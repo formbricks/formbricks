@@ -645,7 +645,7 @@ describe("organization-billing", () => {
       createPaidPlanCheckoutSession({
         organizationId: "org_1",
         customerId: "cus_1",
-        environmentId: "env_1",
+        workspaceId: "ws_1",
         plan: "pro",
         interval: "yearly",
       })
@@ -1906,7 +1906,7 @@ describe("organization-billing", () => {
         items: [{ price: "price_hobby_monthly", quantity: 1 }],
         metadata: { organizationId: "org_1" },
       },
-      { idempotencyKey: "ensure-hobby-subscription-org_1-bootstrap" }
+      { idempotencyKey: "ensure-hobby-subscription-org_1-0" }
     );
     expect(mocks.prismaOrganizationBillingUpdate).toHaveBeenCalledWith({
       where: { organizationId: "org_1" },
@@ -1975,7 +1975,7 @@ describe("organization-billing", () => {
       ],
     });
 
-    await reconcileCloudStripeSubscriptionsForOrganization("org_1", "evt_123");
+    await reconcileCloudStripeSubscriptionsForOrganization("org_1");
 
     expect(mocks.subscriptionsCancel).toHaveBeenCalledWith("sub_hobby", { prorate: false });
     expect(mocks.subscriptionsCreate).not.toHaveBeenCalled();

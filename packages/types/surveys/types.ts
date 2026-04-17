@@ -825,7 +825,7 @@ export const ZSurveyBase = z.object({
   updatedAt: z.date(),
   name: z.string(),
   type: ZSurveyType,
-  environmentId: z.string(),
+  workspaceId: z.cuid2(),
   createdBy: z.string().nullable(),
   status: ZSurveyStatus,
   displayOption: ZSurveyDisplayOption,
@@ -922,6 +922,7 @@ export const ZSurveyBase = z.object({
   recaptcha: ZSurveyRecaptcha.nullable(),
   isSingleResponsePerEmailEnabled: z.boolean(),
   isBackButtonHidden: z.boolean(),
+  isAutoProgressingEnabled: z.boolean().optional().prefault(false),
   isCaptureIpEnabled: z.boolean(),
   pin: z
     .string()
@@ -3806,6 +3807,7 @@ export const ZSurveyCreateInput = makeSchemaOptional(ZSurveyBase)
     endings: ZSurveyEndings.prefault([]),
     type: ZSurveyType.prefault("link"),
     followUps: z.array(ZSurveyFollowUp.omit({ createdAt: true, updatedAt: true })).prefault([]),
+    isAutoProgressingEnabled: z.boolean().prefault(false),
   })
   .superRefine((survey, ctx) => {
     surveyRefinement(survey as z.infer<typeof ZSurveyBase>, ctx);
@@ -3833,7 +3835,7 @@ export const ZSurveyCreateInput = makeSchemaOptional(ZSurveyBase)
 
 export type TSurvey = z.infer<typeof ZSurvey>;
 
-export const ZSurveyCreateInputWithEnvironmentId = makeSchemaOptional(ZSurveyBase)
+export const ZSurveyCreateInputWithWorkspaceId = makeSchemaOptional(ZSurveyBase)
   .omit({
     id: true,
     createdAt: true,
@@ -3844,7 +3846,7 @@ export const ZSurveyCreateInputWithEnvironmentId = makeSchemaOptional(ZSurveyBas
   })
   .extend({
     name: z.string(), // Keep name required
-    environmentId: z.string(),
+    workspaceId: z.string(),
     questions: ZSurveyBase.shape.questions,
     blocks: ZSurveyBase.shape.blocks,
     languages: z.array(ZSurveyLanguage).prefault([]),
@@ -3854,6 +3856,7 @@ export const ZSurveyCreateInputWithEnvironmentId = makeSchemaOptional(ZSurveyBas
     endings: ZSurveyEndings.prefault([]),
     type: ZSurveyType.prefault("link"),
     followUps: z.array(ZSurveyFollowUp.omit({ createdAt: true, updatedAt: true })).prefault([]),
+    isAutoProgressingEnabled: z.boolean().prefault(false),
   })
   .superRefine((survey, ctx) => {
     surveyRefinement(survey as z.infer<typeof ZSurveyBase>, ctx);
@@ -3879,7 +3882,7 @@ export const ZSurveyCreateInputWithEnvironmentId = makeSchemaOptional(ZSurveyBas
     }
   });
 
-export type TSurveyCreateInputWithEnvironmentId = z.infer<typeof ZSurveyCreateInputWithEnvironmentId>;
+export type TSurveyCreateInputWithWorkspaceId = z.infer<typeof ZSurveyCreateInputWithWorkspaceId>;
 export interface TSurveyDates {
   createdAt: TSurvey["createdAt"];
   updatedAt: TSurvey["updatedAt"];

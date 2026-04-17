@@ -83,7 +83,7 @@ function CTA({
       />
 
       {/* CTA Button */}
-      <div className="relative space-y-2">
+      <div className="relative space-y-2" data-element-input>
         <ElementError errorMessage={errorMessage} dir={dir} />
 
         {buttonExternal ? (

@@ -8,7 +8,7 @@ import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbr
 import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurvey, TSurveyCreateInput, ZSurvey, ZSurveyCreateInput } from "@formbricks/types/surveys/types";
 import {
-  getOrganizationByEnvironmentId,
+  getOrganizationByWorkspaceId,
   subscribeOrganizationMembersToSurveyResponses,
 } from "@/lib/organization/service";
 import { TriggerUpdate } from "@/modules/survey/editor/types/survey-trigger";
@@ -34,7 +34,7 @@ export const selectSurvey = {
   updatedAt: true,
   name: true,
   type: true,
-  environmentId: true,
+  workspaceId: true,
   createdBy: true,
   status: true,
   welcomeCard: true,
@@ -55,6 +55,7 @@ export const selectSurvey = {
   isVerifyEmailEnabled: true,
   isSingleResponsePerEmailEnabled: true,
   isBackButtonHidden: true,
+  isAutoProgressingEnabled: true,
   isCaptureIpEnabled: true,
   redirectUrl: true,
   workspaceOverwrites: true,
@@ -90,7 +91,7 @@ export const selectSurvey = {
           id: true,
           createdAt: true,
           updatedAt: true,
-          environmentId: true,
+          workspaceId: true,
           name: true,
           description: true,
           type: true,
@@ -184,13 +185,13 @@ export const handleTriggerUpdates = (
 };
 
 const reconcilePersistedSurveySchedulingIfDue = async ({
-  environmentId,
   logSource,
   survey,
+  workspaceId,
 }: {
-  environmentId: string;
   logSource: "survey-create" | "survey-update";
   survey: TSurvey;
+  workspaceId: string;
 }): Promise<TSurvey> => {
   const now = new Date();
 
@@ -200,9 +201,9 @@ const reconcilePersistedSurveySchedulingIfDue = async ({
 
   const reconciliationResult = await reconcileDueSurveySchedules({
     logContext: {
-      environmentId,
       source: logSource,
       surveyId: survey.id,
+      workspaceId,
     },
     now,
     surveyId: survey.id,
@@ -291,13 +292,13 @@ export const getSurveysByActionClassId = reactCache(
 );
 
 export const getSurveys = reactCache(
-  async (environmentId: string, limit?: number, offset?: number): Promise<TSurvey[]> => {
-    validateInputs([environmentId, ZId], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
+  async (workspaceId: string, limit?: number, offset?: number): Promise<TSurvey[]> => {
+    validateInputs([workspaceId, ZId], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
 
     try {
       const surveysPrisma = await prisma.survey.findMany({
         where: {
-          environmentId,
+          workspaceId,
         },
         select: selectSurvey,
         orderBy: {
@@ -318,12 +319,12 @@ export const getSurveys = reactCache(
   }
 );
 
-export const getSurveyCount = reactCache(async (environmentId: string): Promise<number> => {
-  validateInputs([environmentId, ZId]);
+export const getSurveyCount = reactCache(async (workspaceId: string): Promise<number> => {
+  validateInputs([workspaceId, ZId]);
   try {
     const surveyCount = await prisma.survey.count({
       where: {
-        environmentId: environmentId,
+        workspaceId,
       },
     });
 
@@ -350,15 +351,14 @@ export const updateSurveyInternal = async (
     const surveyId = updatedSurvey.id;
     let data: any = {};
 
-    const actionClasses = await getActionClasses(updatedSurvey.environmentId);
+    const actionClasses = await getActionClasses(updatedSurvey.workspaceId);
     const currentSurvey = await getSurvey(surveyId);
 
     if (!currentSurvey) {
       throw new ResourceNotFoundError("Survey", surveyId);
     }
 
-    const { triggers, environmentId, segment, questions, languages, type, followUps, ...surveyData } =
-      updatedSurvey;
+    const { triggers, segment, questions, languages, type, followUps, ...surveyData } = updatedSurvey;
 
     if (!skipValidation) {
       checkForInvalidImagesInQuestions(questions);
@@ -454,7 +454,6 @@ export const updateSurveyInternal = async (
             data: updatedInput,
             select: {
               surveys: { select: { id: true } },
-              environmentId: true,
               id: true,
             },
           });
@@ -497,6 +496,7 @@ export const updateSurveyInternal = async (
       }
     } else if (type === "app") {
       if (!currentSurvey.segment) {
+        const workspaceId = updatedSurvey.workspaceId;
         await prisma.survey.update({
           where: {
             id: surveyId,
@@ -505,8 +505,8 @@ export const updateSurveyInternal = async (
             segment: {
               connectOrCreate: {
                 where: {
-                  environmentId_title: {
-                    environmentId,
+                  workspaceId_title: {
+                    workspaceId,
                     title: surveyId,
                   },
                 },
@@ -514,9 +514,9 @@ export const updateSurveyInternal = async (
                   title: surveyId,
                   isPrivate: true,
                   filters: [],
-                  environment: {
+                  workspace: {
                     connect: {
-                      id: environmentId,
+                      id: workspaceId,
                     },
                   },
                 },
@@ -585,7 +585,7 @@ export const updateSurveyInternal = async (
       data.blocks = stripIsDraftFromBlocks(updatedSurvey.blocks);
     }
 
-    const organization = await getOrganizationByEnvironmentId(environmentId);
+    const organization = await getOrganizationByWorkspaceId(updatedSurvey.workspaceId);
     if (!organization) {
       throw new ResourceNotFoundError("Organization", null);
     }
@@ -615,9 +615,9 @@ export const updateSurveyInternal = async (
     });
 
     return await reconcilePersistedSurveySchedulingIfDue({
-      environmentId,
       logSource: "survey-update",
       survey: transformPrismaSurvey<TSurvey>(persistedSurvey),
+      workspaceId: updatedSurvey.workspaceId,
     });
   } catch (error) {
     logger.error(error, "Error updating survey");
@@ -638,20 +638,18 @@ export const updateSurveyDraft = async (updatedSurvey: TSurvey): Promise<TSurvey
   return updateSurveyInternal(updatedSurvey, true);
 };
 
-export const createSurvey = async (
-  environmentId: string,
-  surveyBody: TSurveyCreateInput
-): Promise<TSurvey> => {
-  const [parsedEnvironmentId, parsedSurveyBody] = validateInputs(
-    [environmentId, ZId],
+export const createSurvey = async (workspaceId: string, surveyBody: TSurveyCreateInput): Promise<TSurvey> => {
+  const [parsedWorkspaceId, parsedSurveyBody] = validateInputs(
+    [workspaceId, ZId],
     [surveyBody, ZSurveyCreateInput]
   );
 
   try {
     const { createdBy, languages, ...restSurveyBody } = parsedSurveyBody;
-    const actionClasses = await getActionClasses(parsedEnvironmentId);
 
-    let data: Omit<Prisma.SurveyCreateInput, "environment"> = {
+    const actionClasses = await getActionClasses(parsedWorkspaceId);
+
+    let data: Omit<Prisma.SurveyCreateInput, "workspace"> = {
       ...restSurveyBody,
       ...normalizeSurveyScheduling({
         pauseOn: restSurveyBody.pauseOn ?? null,
@@ -675,7 +673,7 @@ export const createSurvey = async (
       };
     }
 
-    const organization = await getOrganizationByEnvironmentId(parsedEnvironmentId);
+    const organization = await getOrganizationByWorkspaceId(parsedWorkspaceId);
     if (!organization) {
       throw new ResourceNotFoundError("Organization", null);
     }
@@ -705,9 +703,9 @@ export const createSurvey = async (
     const survey = await prisma.survey.create({
       data: {
         ...data,
-        environment: {
+        workspace: {
           connect: {
-            id: parsedEnvironmentId,
+            id: parsedWorkspaceId,
           },
         },
       },
@@ -721,9 +719,9 @@ export const createSurvey = async (
           title: survey.id,
           filters: [],
           isPrivate: true,
-          environment: {
+          workspace: {
             connect: {
-              id: parsedEnvironmentId,
+              id: parsedWorkspaceId,
             },
           },
         },
@@ -756,9 +754,9 @@ export const createSurvey = async (
     };
 
     const reconciledSurvey = await reconcilePersistedSurveySchedulingIfDue({
-      environmentId: parsedEnvironmentId,
       logSource: "survey-create",
       survey: transformedSurvey,
+      workspaceId: parsedWorkspaceId,
     });
 
     if (createdBy) {
@@ -819,7 +817,6 @@ export const loadNewSegmentInSurvey = async (surveyId: string, newSegmentId: str
           id: currentSurveySegment.id,
         },
         select: {
-          environmentId: true,
           surveys: {
             select: {
               id: true,

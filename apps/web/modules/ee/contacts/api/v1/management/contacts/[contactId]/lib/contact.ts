@@ -36,7 +36,6 @@ export const deleteContact = async (contactId: string): Promise<void> => {
       where: { id: contactId },
       select: {
         id: true,
-        environmentId: true,
         attributes: { select: { attributeKey: { select: { key: true } }, value: true } },
       },
     });

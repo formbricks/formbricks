@@ -145,7 +145,7 @@ function DropdownVariant({
   searchPlaceholder,
   searchNoResultsText,
 }: Readonly<DropdownVariantProps>): React.JSX.Element {
-  const handleOptionToggle = (optionId: string) => {
+  const handleOptionToggle = (optionId: string): void => {
     if (selectedValues.includes(optionId)) {
       handleOptionRemove(optionId);
     } else {
@@ -280,6 +280,7 @@ function DropdownVariant({
           placeholder={otherOptionPlaceholder}
           disabled={disabled}
           aria-required={required}
+          aria-invalid={Boolean(errorMessage)}
           dir={dir}
           className="mt-2 w-full"
         />
@@ -401,6 +402,7 @@ function ListVariant({
                   placeholder={otherOptionPlaceholder}
                   disabled={disabled}
                   aria-required={required}
+                  aria-invalid={Boolean(errorMessage)}
                   dir={dir}
                   className="mt-2 w-full"
                   ref={otherInputRef}
@@ -540,7 +542,7 @@ function MultiSelect({
       />
 
       {/* Options */}
-      <div className="relative">
+      <div className="relative" data-element-input>
         {variant === "dropdown" ? (
           <DropdownVariant
             inputId={inputId}

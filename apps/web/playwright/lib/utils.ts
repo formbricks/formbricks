@@ -5,22 +5,20 @@ export async function loginAndGetApiKey(page: Page, users: UsersFixture) {
   const user = await users.create();
   await user.login();
 
-  await page.waitForURL(/\/environments\/[^/]+\/surveys/, { timeout: 30000 });
+  await page.waitForURL(/\/workspaces\/[^/]+\/surveys/, { timeout: 30000 });
 
-  const environmentId =
-    /\/environments\/([^/]+)\/surveys/.exec(page.url())?.[1] ??
+  const workspaceId =
+    /\/workspaces\/([^/]+)\/surveys/.exec(page.url())?.[1] ??
     (() => {
-      throw new Error("Unable to parse environmentId from URL");
+      throw new Error("Unable to parse workspaceId from URL");
     })();
 
-  await page.goto(`/environments/${environmentId}/settings/api-keys`, { waitUntil: "domcontentloaded" });
+  await page.goto(`/workspaces/${workspaceId}/settings/api-keys`, { waitUntil: "domcontentloaded" });
 
   await page.getByRole("button", { name: "Add API Key" }).waitFor({ state: "visible", timeout: 15000 });
   await page.getByRole("button", { name: "Add API Key" }).click();
   await page.getByPlaceholder("e.g. GitHub, PostHog, Slack").fill("E2E Test API Key");
   await page.getByRole("button", { name: "+ Add permission" }).click();
-  await page.getByRole("button", { name: "development" }).click();
-  await page.getByRole("menuitem", { name: "production" }).click();
   await page.getByRole("button", { name: "read" }).click();
   await page.getByRole("menuitem", { name: "manage" }).click();
   await page.getByTestId("organization-access-accessControl-read").click();
@@ -41,5 +39,5 @@ export async function loginAndGetApiKey(page: Page, users: UsersFixture) {
 
   const apiKey = (await page.evaluate("navigator.clipboard.readText()")) as string;
 
-  return { environmentId, apiKey };
+  return { workspaceId, apiKey };
 }

@@ -8,6 +8,12 @@ import {
   updateOrganizationEmailLogoUrl,
 } from "./organization";
 
+vi.mock("server-only", () => ({}));
+
+vi.mock("@/lib/utils/validate", () => ({
+  validateInputs: vi.fn(),
+}));
+
 vi.mock("@formbricks/database", () => ({
   prisma: {
     organization: {
@@ -39,7 +45,6 @@ describe("organization", () => {
         workspaces: [
           {
             id: "clp123456789012345678901234",
-            environments: [{ id: "cle123456789012345678901234" }],
           },
         ],
       };
@@ -65,11 +70,6 @@ describe("organization", () => {
           workspaces: {
             select: {
               id: true,
-              environments: {
-                select: {
-                  id: true,
-                },
-              },
             },
           },
         },
@@ -100,7 +100,6 @@ describe("organization", () => {
         workspaces: [
           {
             id: "clp123456789012345678901234",
-            environments: [{ id: "cle123456789012345678901234" }],
           },
         ],
       };
@@ -118,11 +117,6 @@ describe("organization", () => {
           workspaces: {
             select: {
               id: true,
-              environments: {
-                select: {
-                  id: true,
-                },
-              },
             },
           },
         },
@@ -152,11 +146,6 @@ describe("organization", () => {
           workspaces: {
             select: {
               id: true,
-              environments: {
-                select: {
-                  id: true,
-                },
-              },
             },
           },
         },

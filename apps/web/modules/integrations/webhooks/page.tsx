@@ -1,6 +1,6 @@
+import { DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS } from "@/lib/constants";
 import { getSurveys } from "@/lib/survey/service";
 import { getTranslate } from "@/lingodotdev/server";
-import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { AddWebhookButton } from "@/modules/integrations/webhooks/components/add-webhook-button";
 import { WebhookRowData } from "@/modules/integrations/webhooks/components/webhook-row-data";
 import { WebhookTable } from "@/modules/integrations/webhooks/components/webhook-table";
@@ -9,25 +9,37 @@ import { getWebhooks } from "@/modules/integrations/webhooks/lib/webhook";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 
-export const WebhooksPage = async (props: { params: Promise<{ environmentId: string }> }) => {
+export const WebhooksPage = async (props: { params: Promise<{ workspaceId: string }> }) => {
   const params = await props.params;
   const t = await getTranslate();
 
-  const { isReadOnly, environment } = await getEnvironmentAuth(params.environmentId);
+  const { isReadOnly, workspace } = await getWorkspaceAuth(params.workspaceId);
 
   const [webhooks, surveys] = await Promise.all([
-    getWebhooks(params.environmentId),
-    getSurveys(params.environmentId, 200), // HOTFIX: not getting all surveys for now since it's maxing out the prisma accelerate limit
+    getWebhooks(workspace.id),
+    getSurveys(workspace.id, 200), // HOTFIX: not getting all surveys for now since it's maxing out the prisma accelerate limit
   ]);
 
-  const renderAddWebhookButton = () => <AddWebhookButton environment={environment} surveys={surveys} />;
+  const renderAddWebhookButton = () => (
+    <AddWebhookButton
+      workspaceId={workspace.id}
+      surveys={surveys}
+      allowInternalUrls={DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS}
+    />
+  );
 
   return (
     <PageContentWrapper>
       <GoBackButton />
       <PageHeader pageTitle={t("common.webhooks")} cta={!isReadOnly ? renderAddWebhookButton() : <></>} />
-      <WebhookTable environment={environment} webhooks={webhooks} surveys={surveys} isReadOnly={isReadOnly}>
+      <WebhookTable
+        workspaceId={workspace.id}
+        webhooks={webhooks}
+        surveys={surveys}
+        isReadOnly={isReadOnly}
+        allowInternalUrls={DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS}>
         <WebhookTableHeading />
         {webhooks.map((webhook) => (
           <WebhookRowData key={webhook.id} webhook={webhook} surveys={surveys} />
