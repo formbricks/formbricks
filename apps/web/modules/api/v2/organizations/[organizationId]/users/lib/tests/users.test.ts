@@ -98,14 +98,11 @@ describe("Users Lib", () => {
 
     test("returns conflict error if user with email already exists", async () => {
       (prisma.user.create as any).mockRejectedValueOnce(
-        new Prisma.PrismaClientKnownRequestError(
-          "Unique constraint failed on the fields: (`email`)",
-          {
-            code: PrismaErrorType.UniqueConstraintViolation,
-            clientVersion: "1.0.0",
-            meta: { target: ["email"] },
-          }
-        )
+        new Prisma.PrismaClientKnownRequestError("Unique constraint failed on the fields: (`email`)", {
+          code: PrismaErrorType.UniqueConstraintViolation,
+          clientVersion: "1.0.0",
+          meta: { target: ["email"] },
+        })
       );
       const result = await createUser(
         { name: "Duplicate", email: "test@example.com", role: "member" },

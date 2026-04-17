@@ -1,6 +1,4 @@
-import { PlusIcon } from "lucide-react";
 import { Metadata } from "next";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { DEFAULT_LOCALE, IS_FORMBRICKS_CLOUD, SURVEYS_PER_PAGE } from "@/lib/constants";
@@ -11,11 +9,6 @@ import { getTranslate } from "@/lingodotdev/server";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { getProjectWithTeamIdsByEnvironmentId } from "@/modules/survey/lib/project";
 import { SurveysList } from "@/modules/survey/list/components/survey-list";
-import { getSurveyCount } from "@/modules/survey/list/lib/survey";
-import { TemplateContainerWithPreview } from "@/modules/survey/templates/components/template-container";
-import { Button } from "@/modules/ui/components/button";
-import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
-import { PageHeader } from "@/modules/ui/components/page-header";
 
 export const metadata: Metadata = {
   title: "Your Surveys",
@@ -44,65 +37,24 @@ export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) 
     return redirect(getBillingFallbackPath(params.environmentId, IS_FORMBRICKS_CLOUD));
   }
 
-  const surveyCount = await getSurveyCount(params.environmentId);
-
   const currentProjectChannel = project.config.channel ?? null;
   const locale = (await getUserLocale(session.user.id)) ?? DEFAULT_LOCALE;
-  const createSurveyButton = (
-    <Button size="sm" asChild>
-      <Link href={`/environments/${environment.id}/surveys/templates`}>
-        {t("environments.surveys.new_survey")}
-        <PlusIcon />
-      </Link>
-    </Button>
-  );
-
   const projectWithRequiredProps = {
     ...project,
     brandColor: project.styling?.brandColor?.light ?? null,
     highlightBorderColor: null,
   };
 
-  if (surveyCount === 0)
-    return (
-      <TemplateContainerWithPreview
-        userId={session.user.id}
-        environment={environment}
-        project={projectWithRequiredProps}
-        isTemplatePage={false}
-        publicDomain={publicDomain}
-      />
-    );
-
-  let content;
-  if (surveyCount > 0) {
-    content = (
-      <>
-        <PageHeader pageTitle={t("common.surveys")} cta={isReadOnly ? <></> : createSurveyButton} />
-        <SurveysList
-          environmentId={environment.id}
-          isReadOnly={isReadOnly}
-          publicDomain={publicDomain}
-          userId={session.user.id}
-          surveysPerPage={SURVEYS_PER_PAGE}
-          currentProjectChannel={currentProjectChannel}
-          locale={locale}
-        />
-      </>
-    );
-  } else if (isReadOnly) {
-    content = (
-      <>
-        <h1 className="px-6 text-3xl font-extrabold text-slate-700">
-          {t("environments.surveys.no_surveys_created_yet")}
-        </h1>
-
-        <h2 className="px-6 text-lg font-medium text-slate-500">
-          {t("environments.surveys.read_only_user_not_allowed_to_create_survey_warning")}
-        </h2>
-      </>
-    );
-  }
-
-  return <PageContentWrapper>{content}</PageContentWrapper>;
+  return (
+    <SurveysList
+      environment={environment}
+      project={projectWithRequiredProps}
+      isReadOnly={isReadOnly}
+      publicDomain={publicDomain}
+      userId={session.user.id}
+      surveysPerPage={SURVEYS_PER_PAGE}
+      currentProjectChannel={currentProjectChannel}
+      locale={locale}
+    />
+  );
 };

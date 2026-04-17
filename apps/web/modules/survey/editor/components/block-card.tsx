@@ -61,8 +61,6 @@ interface BlockCardProps {
   setActiveElementId: (elementId: string | null) => void;
   lastElement: boolean;
   lastElementIndex: number;
-  selectedLanguageCode: string;
-  setSelectedLanguageCode: (language: string) => void;
   invalidElements?: string[];
   addElement: (element: any, index?: number) => void;
   isFormbricksCloud: boolean;
@@ -97,8 +95,6 @@ export const BlockCard = ({
   setActiveElementId,
   lastElement,
   lastElementIndex,
-  selectedLanguageCode,
-  setSelectedLanguageCode,
   invalidElements,
   addElement,
   isFormbricksCloud,
@@ -116,6 +112,8 @@ export const BlockCard = ({
   moveElementToBlock,
   totalBlocks,
 }: BlockCardProps) => {
+  const selectedLanguageCode = "default";
+
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: block.id,
   });
@@ -173,7 +171,6 @@ export const BlockCard = ({
     elementIdx,
     updateElement,
     selectedLanguageCode,
-    setSelectedLanguageCode,
     isInvalid: invalidElements ? invalidElements.includes(element.id) : false,
     locale,
     isStorageConfigured,
@@ -435,7 +432,6 @@ export const BlockCard = ({
                                 updateElement={updateElement}
                                 updateBlockLogic={updateBlockLogic}
                                 updateBlockLogicFallback={updateBlockLogicFallback}
-                                selectedLanguageCode={selectedLanguageCode}
                               />
                             </Collapsible.CollapsibleContent>
                           </Collapsible.Root>
@@ -469,7 +465,6 @@ export const BlockCard = ({
                 block={block}
                 blockIndex={blockIdx}
                 selectedLanguageCode={selectedLanguageCode}
-                setSelectedLanguageCode={setSelectedLanguageCode}
                 updateBlockButtonLabel={updateBlockButtonLabel}
                 updateBlockLogic={updateBlockLogic}
                 updateBlockLogicFallback={updateBlockLogicFallback}

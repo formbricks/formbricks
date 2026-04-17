@@ -75,11 +75,7 @@ export const POST = withV1ApiWrapper({
 
     if (survey.environmentId !== environmentId) {
       return {
-        response: responses.badRequestResponse(
-          "Survey does not belong to the environment",
-          { surveyId, environmentId },
-          true
-        ),
+        response: responses.badRequestResponse("Survey does not belong to this environment", undefined, true),
       };
     }
 

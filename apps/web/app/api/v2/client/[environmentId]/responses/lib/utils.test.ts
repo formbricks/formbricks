@@ -124,11 +124,8 @@ describe("checkSurveyValidity", () => {
     expect(result).toBeInstanceOf(Response);
     expect(result?.status).toBe(400);
     expect(responses.badRequestResponse).toHaveBeenCalledWith(
-      "Survey is part of another environment",
-      {
-        "survey.environmentId": "env-2",
-        environmentId: "env-1",
-      },
+      "Survey does not belong to this environment",
+      undefined,
       true
     );
   });

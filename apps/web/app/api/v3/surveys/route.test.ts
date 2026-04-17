@@ -321,11 +321,11 @@ describe("GET /api/v3/surveys", () => {
     const res = await GET(req, {} as any);
     const body = await res.json();
     expect(body.data[0]).not.toHaveProperty("blocks");
-    expect(body.data[0]).not.toHaveProperty("singleUse");
     expect(body.data[0]).not.toHaveProperty("_count");
     expect(body.data[0]).not.toHaveProperty("environmentId");
     expect(body.data[0].id).toBe("s1");
     expect(body.data[0].workspaceId).toBe("env_1");
+    expect(body.data[0].singleUse).toBeNull();
   });
 
   test("returns 403 when getSurveyListPage throws ResourceNotFoundError", async () => {

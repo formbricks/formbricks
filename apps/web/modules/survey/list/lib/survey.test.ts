@@ -17,7 +17,6 @@ import { TProjectWithLanguages, TSurvey } from "../types/surveys";
 // Import the module to be tested
 import {
   copySurveyToOtherEnvironment,
-  deleteSurvey,
   getSurvey,
   getSurveyCount,
   getSurveys,
@@ -417,57 +416,6 @@ describe("getSurveysSortedByRelevance", () => {
     const unknownError = new Error("Unknown error");
     vi.mocked(prisma.survey.count).mockRejectedValue(unknownError);
     await expect(getSurveysSortedByRelevance(environmentId)).rejects.toThrow(unknownError);
-  });
-});
-
-describe("deleteSurvey", () => {
-  beforeEach(() => {
-    resetMocks();
-  });
-
-  const mockDeletedSurveyData = {
-    id: surveyId,
-    environmentId,
-    segment: null,
-    type: "web" as any,
-    triggers: [{ actionClass: { id: "action_1" } }],
-  };
-
-  test("should delete a survey and revalidate caches (no private segment)", async () => {
-    vi.mocked(prisma.survey.delete).mockResolvedValue(mockDeletedSurveyData as any);
-    const result = await deleteSurvey(surveyId);
-
-    expect(result).toBe(true);
-    expect(prisma.survey.delete).toHaveBeenCalledWith({
-      where: { id: surveyId },
-      select: expect.objectContaining({ id: true, environmentId: true, segment: expect.anything() }),
-    });
-    expect(prisma.segment.delete).not.toHaveBeenCalled();
-  });
-
-  test("should revalidate segment cache for non-private segment if segment exists", async () => {
-    const surveyWithPublicSegment = {
-      ...mockDeletedSurveyData,
-      segment: { id: "segment_public_1", isPrivate: false },
-    };
-    vi.mocked(prisma.survey.delete).mockResolvedValue(surveyWithPublicSegment as any);
-
-    await deleteSurvey(surveyId);
-
-    expect(prisma.segment.delete).not.toHaveBeenCalled();
-  });
-
-  test("should throw DatabaseError on Prisma error", async () => {
-    const prismaError = makePrismaKnownError();
-    vi.mocked(prisma.survey.delete).mockRejectedValue(prismaError);
-    await expect(deleteSurvey(surveyId)).rejects.toThrow(DatabaseError);
-    expect(logger.error).toHaveBeenCalledWith(prismaError, "Error deleting survey");
-  });
-
-  test("should rethrow unknown error", async () => {
-    const unknownError = new Error("Unknown error");
-    vi.mocked(prisma.survey.delete).mockRejectedValue(unknownError);
-    await expect(deleteSurvey(surveyId)).rejects.toThrow(unknownError);
   });
 });
 

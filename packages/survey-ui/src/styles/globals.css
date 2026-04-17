@@ -197,8 +197,8 @@
   opacity: var(--fb-label-opacity);
 }
 
-#fbjs .label-upper,
-#fbjs .label-upper * {
+#fbjs .label-card,
+#fbjs .label-card * {
   font-family: var(--fb-element-upper-label-font-family);
   font-weight: var(--fb-element-upper-label-font-weight);
   font-size: var(--fb-element-upper-label-font-size);

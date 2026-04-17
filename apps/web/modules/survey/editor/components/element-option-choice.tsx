@@ -28,8 +28,6 @@ interface ChoiceProps {
   addChoice: (choiceIdx: number) => void;
   isInvalid: boolean;
   localSurvey: TSurvey;
-  selectedLanguageCode: string;
-  setSelectedLanguageCode: (language: string) => void;
   surveyLanguages: TSurveyLanguage[];
   element: TSurveyMultipleChoiceElement | TSurveyRankingElement;
   updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
@@ -46,8 +44,6 @@ export const ElementOptionChoice = ({
   isInvalid,
   localSurvey,
   elementIdx,
-  selectedLanguageCode,
-  setSelectedLanguageCode,
   surveyLanguages,
   updateChoice,
   element,
@@ -104,8 +100,6 @@ export const ElementOptionChoice = ({
           elementIdx={elementIdx}
           value={choice.label}
           updateChoice={updateChoice}
-          selectedLanguageCode={selectedLanguageCode}
-          setSelectedLanguageCode={setSelectedLanguageCode}
           isInvalid={
             isInvalid && !isLabelValidForAllLanguages(element.choices?.[choiceIdx]?.label, surveyLanguages)
           }
@@ -151,8 +145,6 @@ export const ElementOptionChoice = ({
               createI18nString(t("environments.surveys.edit.please_specify"), surveyLanguageCodes)
             }
             updateElement={updateElement}
-            selectedLanguageCode={selectedLanguageCode}
-            setSelectedLanguageCode={setSelectedLanguageCode}
             isInvalid={
               isInvalid && !isLabelValidForAllLanguages(element.choices?.[choiceIdx]?.label, surveyLanguages)
             }
