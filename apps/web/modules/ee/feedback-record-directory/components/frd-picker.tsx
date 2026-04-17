@@ -48,7 +48,7 @@ export const FrdPicker = ({ directories, selectedDirectoryId, onChange, workspac
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 p-1">
       <Label htmlFor="feedbackRecordDirectory">{t("workspace.analysis.charts.data_source")}</Label>
       <Select value={selectedDirectoryId ?? ""} onValueChange={onChange}>
         <SelectTrigger id="feedbackRecordDirectory">
