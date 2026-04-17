@@ -48,7 +48,7 @@ const filterOptions: Record<string, string[]> = {
   rating: ["1", "2", "3", "4", "5"],
   nps: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
   csat: ["1", "2", "3", "4", "5"],
-  ces: ["1", "2", "3", "4", "5"],
+  ces: ["1", "2", "3", "4", "5", "6", "7"],
   cta: ["Clicked", "Dismissed"],
   tags: ["Applied", "Not applied"],
   consent: ["Accepted", "Dismissed"],

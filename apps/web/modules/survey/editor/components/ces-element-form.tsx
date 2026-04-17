@@ -18,9 +18,6 @@ interface CESElementFormProps {
   element: TSurveyCesElement;
   elementIdx: number;
   updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
-  lastElement: boolean;
-  selectedLanguageCode: string;
-  setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
   locale: TUserLocale;
   isStorageConfigured: boolean;
@@ -33,8 +30,6 @@ export const CESElementForm = ({
   updateElement,
   isInvalid,
   localSurvey,
-  selectedLanguageCode,
-  setSelectedLanguageCode,
   locale,
   isStorageConfigured = true,
   isExternalUrlsAllowed,
@@ -53,8 +48,6 @@ export const CESElementForm = ({
         elementIdx={elementIdx}
         isInvalid={isInvalid}
         updateElement={updateElement}
-        selectedLanguageCode={selectedLanguageCode}
-        setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
         isStorageConfigured={isStorageConfigured}
         autoFocus={!element.headline?.default || element.headline.default.trim() === ""}
@@ -73,8 +66,6 @@ export const CESElementForm = ({
                 elementIdx={elementIdx}
                 isInvalid={isInvalid}
                 updateElement={updateElement}
-                selectedLanguageCode={selectedLanguageCode}
-                setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
                 autoFocus={!element.subheader?.default || element.subheader.default.trim() === ""}
@@ -102,7 +93,7 @@ export const CESElementForm = ({
 
       <div className="mt-3 flex justify-between gap-8">
         <div className="flex-1">
-          <Label htmlFor="subheader">{t("environments.surveys.edit.scale")}</Label>
+          <Label htmlFor="scale">{t("environments.surveys.edit.scale")}</Label>
           <div className="mt-2">
             <Dropdown
               options={[
@@ -122,7 +113,7 @@ export const CESElementForm = ({
           </div>
         </div>
         <div className="flex-1">
-          <Label htmlFor="subheader">{t("environments.surveys.edit.range")}</Label>
+          <Label htmlFor="range">{t("environments.surveys.edit.range")}</Label>
           <div className="mt-2">
             <Dropdown
               options={[
@@ -142,15 +133,13 @@ export const CESElementForm = ({
         <div className="flex-1">
           <ElementFormInput
             id="lowerLabel"
-            placeholder="Very difficult"
+            placeholder={t("templates.ces_lower_label")}
             value={element.lowerLabel}
             label={t("environments.surveys.edit.lower_label")}
             localSurvey={localSurvey}
             elementIdx={elementIdx}
             isInvalid={isInvalid}
             updateElement={updateElement}
-            selectedLanguageCode={selectedLanguageCode}
-            setSelectedLanguageCode={setSelectedLanguageCode}
             locale={locale}
             isStorageConfigured={isStorageConfigured}
           />
@@ -158,15 +147,13 @@ export const CESElementForm = ({
         <div className="flex-1">
           <ElementFormInput
             id="upperLabel"
-            placeholder="Very easy"
+            placeholder={t("templates.ces_upper_label")}
             value={element.upperLabel}
             label={t("environments.surveys.edit.upper_label")}
             localSurvey={localSurvey}
             elementIdx={elementIdx}
             isInvalid={isInvalid}
             updateElement={updateElement}
-            selectedLanguageCode={selectedLanguageCode}
-            setSelectedLanguageCode={setSelectedLanguageCode}
             locale={locale}
             isStorageConfigured={isStorageConfigured}
           />

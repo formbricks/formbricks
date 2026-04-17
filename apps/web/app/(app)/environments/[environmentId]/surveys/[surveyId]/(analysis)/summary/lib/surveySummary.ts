@@ -628,12 +628,12 @@ export const getElementSummary = async (
         // CSAT: top 2 ratings out of 5 are "satisfied"
         const satisfiedCount = (choiceCountMap[4] || 0) + (choiceCountMap[5] || 0);
         const satisfiedPercentage =
-          totalResponseCount > 0 ? Math.round((satisfiedCount / totalResponseCount) * 100) : 0;
+          totalResponseCount > 0 ? convertFloatTo2Decimal((satisfiedCount / totalResponseCount) * 100) : 0;
 
         summary.push({
           type: element.type,
           element,
-          average: convertFloatTo2Decimal(totalRating / totalResponseCount) || 0,
+          average: totalResponseCount > 0 ? convertFloatTo2Decimal(totalRating / totalResponseCount) : 0,
           responseCount: totalResponseCount,
           choices: values,
           dismissed: {
@@ -684,7 +684,7 @@ export const getElementSummary = async (
         summary.push({
           type: element.type,
           element,
-          average: convertFloatTo2Decimal(totalRating / totalResponseCount) || 0,
+          average: totalResponseCount > 0 ? convertFloatTo2Decimal(totalRating / totalResponseCount) : 0,
           responseCount: totalResponseCount,
           choices: values,
           dismissed: {

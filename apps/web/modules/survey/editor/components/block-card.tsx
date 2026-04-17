@@ -203,8 +203,6 @@ export const BlockCard = ({
     TSurveyElementTypeEnum.OpenText,
     TSurveyElementTypeEnum.CTA,
     TSurveyElementTypeEnum.Rating,
-    TSurveyElementTypeEnum.CSAT,
-    TSurveyElementTypeEnum.CES,
     TSurveyElementTypeEnum.Cal,
     TSurveyElementTypeEnum.ContactInfo,
   ]);

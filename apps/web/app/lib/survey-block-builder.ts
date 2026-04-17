@@ -98,7 +98,8 @@ export const buildOpenTextElement = ({
   };
 };
 
-export const buildRatingElement = ({
+const buildScaleElement = <T extends TSurveyRatingElement | TSurveyCsatElement | TSurveyCesElement>({
+  type,
   id,
   headline,
   subheader,
@@ -109,6 +110,32 @@ export const buildRatingElement = ({
   required,
   isColorCodingEnabled = false,
 }: {
+  type: T["type"];
+  id?: string;
+  headline: string;
+  scale: T["scale"];
+  range: T["range"];
+  lowerLabel?: string;
+  upperLabel?: string;
+  subheader?: string;
+  required?: boolean;
+  isColorCodingEnabled?: boolean;
+}): T => {
+  return {
+    id: id ?? createId(),
+    type,
+    subheader: subheader ? createI18nString(subheader, []) : undefined,
+    headline: createI18nString(headline, []),
+    scale,
+    range,
+    required: required ?? false,
+    isColorCodingEnabled,
+    lowerLabel: lowerLabel ? createI18nString(lowerLabel, []) : undefined,
+    upperLabel: upperLabel ? createI18nString(upperLabel, []) : undefined,
+  } as T;
+};
+
+export const buildRatingElement = (params: {
   id?: string;
   headline: string;
   scale: TSurveyRatingElement["scale"];
@@ -118,20 +145,8 @@ export const buildRatingElement = ({
   subheader?: string;
   required?: boolean;
   isColorCodingEnabled?: boolean;
-}): TSurveyRatingElement => {
-  return {
-    id: id ?? createId(),
-    type: TSurveyElementTypeEnum.Rating,
-    subheader: subheader ? createI18nString(subheader, []) : undefined,
-    headline: createI18nString(headline, []),
-    scale,
-    range,
-    required: required ?? false,
-    isColorCodingEnabled,
-    lowerLabel: lowerLabel ? createI18nString(lowerLabel, []) : undefined,
-    upperLabel: upperLabel ? createI18nString(upperLabel, []) : undefined,
-  };
-};
+}): TSurveyRatingElement =>
+  buildScaleElement<TSurveyRatingElement>({ ...params, type: TSurveyElementTypeEnum.Rating });
 
 export const buildConsentElement = ({
   id,
@@ -215,14 +230,8 @@ export const buildNPSElement = ({
 };
 
 export const buildCsatElement = ({
-  id,
-  headline,
-  subheader,
   scale = "smiley",
-  lowerLabel,
-  upperLabel,
-  required,
-  isColorCodingEnabled = false,
+  ...params
 }: {
   id?: string;
   headline: string;
@@ -232,31 +241,13 @@ export const buildCsatElement = ({
   subheader?: string;
   required?: boolean;
   isColorCodingEnabled?: boolean;
-}): TSurveyCsatElement => {
-  return {
-    id: id ?? createId(),
-    type: TSurveyElementTypeEnum.CSAT,
-    subheader: subheader ? createI18nString(subheader, []) : undefined,
-    headline: createI18nString(headline, []),
-    scale,
-    range: 5,
-    required: required ?? false,
-    isColorCodingEnabled,
-    lowerLabel: lowerLabel ? createI18nString(lowerLabel, []) : undefined,
-    upperLabel: upperLabel ? createI18nString(upperLabel, []) : undefined,
-  };
-};
+}): TSurveyCsatElement =>
+  buildScaleElement<TSurveyCsatElement>({ ...params, scale, range: 5, type: TSurveyElementTypeEnum.CSAT });
 
 export const buildCesElement = ({
-  id,
-  headline,
-  subheader,
   scale = "number",
   range = 5,
-  lowerLabel,
-  upperLabel,
-  required,
-  isColorCodingEnabled = false,
+  ...params
 }: {
   id?: string;
   headline: string;
@@ -267,20 +258,8 @@ export const buildCesElement = ({
   subheader?: string;
   required?: boolean;
   isColorCodingEnabled?: boolean;
-}): TSurveyCesElement => {
-  return {
-    id: id ?? createId(),
-    type: TSurveyElementTypeEnum.CES,
-    subheader: subheader ? createI18nString(subheader, []) : undefined,
-    headline: createI18nString(headline, []),
-    scale,
-    range,
-    required: required ?? false,
-    isColorCodingEnabled,
-    lowerLabel: lowerLabel ? createI18nString(lowerLabel, []) : undefined,
-    upperLabel: upperLabel ? createI18nString(upperLabel, []) : undefined,
-  };
-};
+}): TSurveyCesElement =>
+  buildScaleElement<TSurveyCesElement>({ ...params, scale, range, type: TSurveyElementTypeEnum.CES });
 
 // Helper function to create block-level jump logic based on operator
 export const createBlockJumpLogic = (
