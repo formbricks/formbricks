@@ -78,6 +78,58 @@ interface SingleSelectProps {
   searchNoResultsText?: string;
 }
 
+const useDropdownCommitState = ({
+  variant,
+  selectedValue,
+  onChange,
+  handleDropdownOpen,
+  handleDropdownClose,
+}: {
+  variant: "list" | "dropdown";
+  selectedValue: string | undefined;
+  onChange: (value: string) => void;
+  handleDropdownOpen: () => void;
+  handleDropdownClose: () => void;
+}) => {
+  const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
+  const [pendingDropdownValue, setPendingDropdownValue] = React.useState<string | undefined>(selectedValue);
+  const [hasPendingDropdownChange, setHasPendingDropdownChange] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!isDropdownOpen) {
+      setPendingDropdownValue(selectedValue);
+      setHasPendingDropdownChange(false);
+    }
+  }, [selectedValue, isDropdownOpen]);
+
+  const handleDropdownOpenChange = (open: boolean) => {
+    setIsDropdownOpen(open);
+    if (open) {
+      setPendingDropdownValue(selectedValue);
+      setHasPendingDropdownChange(false);
+      handleDropdownOpen();
+      return;
+    }
+
+    handleDropdownClose();
+    if (hasPendingDropdownChange && pendingDropdownValue && pendingDropdownValue !== selectedValue) {
+      onChange(pendingDropdownValue);
+    }
+    setHasPendingDropdownChange(false);
+  };
+
+  const effectiveSelectedValue =
+    variant === "dropdown" && isDropdownOpen ? pendingDropdownValue : selectedValue;
+
+  return {
+    effectiveSelectedValue,
+    handleDropdownOpenChange,
+    setPendingDropdownValue,
+    setHasPendingDropdownChange,
+  };
+};
+
+// NOSONAR - This component intentionally keeps list/dropdown rendering in one place for consistent a11y behavior.
 function SingleSelect({
   elementId,
   headline,
@@ -128,6 +180,19 @@ function SingleSelect({
     handleDropdownClose,
   } = useDropdownSearch({ options, hasOtherOption, otherOptionLabel, isSearchEnabled: showSearch });
 
+  const {
+    effectiveSelectedValue,
+    handleDropdownOpenChange,
+    setPendingDropdownValue,
+    setHasPendingDropdownChange,
+  } = useDropdownCommitState({
+    variant,
+    selectedValue,
+    onChange,
+    handleDropdownOpen,
+    handleDropdownClose,
+  });
+
   React.useEffect(() => {
     if (!isOtherSelected || disabled) return;
 
@@ -162,7 +227,7 @@ function SingleSelect({
   const optionLabelClassName = "font-option text-option font-option-weight text-option-label";
 
   // Get selected option label for dropdown display
-  const selectedOption = options.find((opt) => opt.id === selectedValue);
+  const selectedOption = options.find((opt) => opt.id === effectiveSelectedValue);
   const displayText = isOtherSelected
     ? otherValue || otherOptionLabel
     : (selectedOption?.label ?? placeholder);
@@ -185,11 +250,7 @@ function SingleSelect({
         {variant === "dropdown" ? (
           <>
             <ElementError errorMessage={errorMessage} dir={dir} />
-            <DropdownMenu
-              onOpenChange={(open) => {
-                if (open) handleDropdownOpen();
-                else handleDropdownClose();
-              }}>
+            <DropdownMenu onOpenChange={handleDropdownOpenChange}>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
@@ -217,7 +278,12 @@ function SingleSelect({
                   />
                 ) : null}
                 <div className="max-h-[260px] overflow-y-auto">
-                  <DropdownMenuRadioGroup value={selectedValue} onValueChange={onChange}>
+                  <DropdownMenuRadioGroup
+                    value={effectiveSelectedValue}
+                    onValueChange={(newValue) => {
+                      setPendingDropdownValue(newValue);
+                      setHasPendingDropdownChange(newValue !== selectedValue);
+                    }}>
                     {filteredRegularOptions.map((option) => {
                       const optionId = `${inputId}-${option.id}`;
 

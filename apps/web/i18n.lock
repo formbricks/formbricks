@@ -1288,7 +1288,7 @@ checksums:
     environments/surveys/edit/audience: a4d9fab4214a641e2d358fbb28f010e0
     environments/surveys/edit/auto_close_on_inactivity: 093db516799315ccd4242a3675693012
     environments/surveys/edit/auto_progress_rating_and_nps: 76b98e95a5b850850baa0ccc3c7fbf7c
-    environments/surveys/edit/auto_progress_rating_and_nps_description: cbf676789b9f3f47e36bdf35fa58282b
+    environments/surveys/edit/auto_progress_rating_and_nps_description: 2a992dd8a5b9532f178f9a21881feb9a
     environments/surveys/edit/auto_save_disabled: f7411fb0dcfb8f7b19b85f0be54f2231
     environments/surveys/edit/auto_save_disabled_tooltip: 77322e1e866b7d29f7641a88bbd3b681
     environments/surveys/edit/auto_save_on: 1524d466830b00c5d727c701db404963
@@ -2809,12 +2809,14 @@ checksums:
     templates/improve_trial_conversion_question_1_subheader: 67c7047ba2365d461df14dbed3f9506d
     templates/improve_trial_conversion_question_2_button_label: 89ddbcf710eba274963494f312bdc8a9
     templates/improve_trial_conversion_question_2_headline: 05dd4820f60b9d267a9affc7e662f029
+    templates/improve_trial_conversion_question_3_button_label: 89ddbcf710eba274963494f312bdc8a9
+    templates/improve_trial_conversion_question_3_headline: 3daeccf3dfc7bf8e9868c10fb3ea0b19
     templates/improve_trial_conversion_question_4_button_label: d94a6a11cfdf4ebde4c5332e585e2e96
     templates/improve_trial_conversion_question_4_headline: 9b07341f65574c4165086ec107cebb45
     templates/improve_trial_conversion_question_4_html: 8ce95691eeeae7ad61c4d2f867b918ca
     templates/improve_trial_conversion_question_5_button_label: 89ddbcf710eba274963494f312bdc8a9
     templates/improve_trial_conversion_question_5_headline: dbd99e216fcbf8693b8e77fbd77e1c84
-    templates/improve_trial_conversion_question_5_subheader: b9b478e967930358b0c74324a7c18fc8
+    templates/improve_trial_conversion_question_5_subheader: 859876a442a633f4aa0d78fd0ee4ab4c
     templates/improve_trial_conversion_question_6_headline: f15239ecc4f1a6bd8bea77a38b39c844
     templates/improve_trial_conversion_question_6_subheader: e147ddbb609fff6e6fc78fb1f4add0ac
     templates/integration_setup_survey_description: 696ccab07d7098cdb79c224fa1208889
