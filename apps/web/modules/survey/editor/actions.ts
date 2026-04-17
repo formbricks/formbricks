@@ -3,9 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { ZActionClassInput } from "@formbricks/types/action-classes";
+import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey, ZSurvey } from "@formbricks/types/surveys/types";
-import { UNSPLASH_ACCESS_KEY, UNSPLASH_ALLOWED_DOMAINS } from "@/lib/constants";
+import { POSTHOG_KEY, UNSPLASH_ACCESS_KEY, UNSPLASH_ALLOWED_DOMAINS } from "@/lib/constants";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { actionClient, authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import {
@@ -21,9 +23,10 @@ import { checkExternalUrlsPermission } from "@/modules/survey/editor/lib/check-e
 import { updateSurvey, updateSurveyDraft } from "@/modules/survey/editor/lib/survey";
 import { ZSurveyDraft } from "@/modules/survey/editor/types/survey";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
+import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { checkSpamProtectionPermission } from "@/modules/survey/lib/permission";
 import { getOrganizationBilling, getSurvey } from "@/modules/survey/lib/survey";
-import { getProject } from "./lib/project";
+import { getProject, getProjectLanguages } from "./lib/project";
 
 /**
  * Checks if survey follow-ups can be added for the given organization.
@@ -145,6 +148,26 @@ export const updateSurveyAction = authenticatedActionClient.inputSchema(ZSurvey)
     ctx.auditLoggingCtx.oldObject = oldObject;
     ctx.auditLoggingCtx.newObject = result;
 
+    if (POSTHOG_KEY && result.status !== "draft") {
+      const isPublish = oldObject?.status === "draft" && result.status === "inProgress";
+
+      const posthogEventMetadata = {
+        survey_id: result.id,
+        survey_type: result.type,
+        question_count: getElementsFromBlocks(result.blocks).length,
+        organization_id: organizationId,
+        has_targeting: result.segment ? !result.segment.isPrivate : false,
+        language_count: result.languages?.length ?? 0,
+      };
+
+      if (isPublish) {
+        capturePostHogEvent(ctx.user.id, "survey_published", posthogEventMetadata);
+        capturePostHogEvent(ctx.user.id, "survey_updated", posthogEventMetadata);
+      } else {
+        capturePostHogEvent(ctx.user.id, "survey_updated", posthogEventMetadata);
+      }
+    }
+
     revalidatePath(`/environments/${result.environmentId}/surveys/${result.id}`);
 
     return result;
@@ -175,6 +198,32 @@ export const refetchProjectAction = authenticatedActionClient
     });
 
     return await getProject(parsedInput.projectId);
+  });
+
+const ZGetProjectLanguagesAction = z.object({
+  projectId: ZId,
+});
+
+export const getProjectLanguagesAction = authenticatedActionClient
+  .inputSchema(ZGetProjectLanguagesAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromProjectId(parsedInput.projectId),
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "projectTeam",
+          minPermission: "read",
+          projectId: parsedInput.projectId,
+        },
+      ],
+    });
+
+    return await getProjectLanguages(parsedInput.projectId);
   });
 
 const ZGetImagesFromUnsplashAction = z.object({
@@ -260,8 +309,6 @@ export const triggerDownloadUnsplashImageAction = actionClient
       const errorData = await response.json();
       throw new Error(errorData.error || "Failed to download image from Unsplash");
     }
-
-    return;
   });
 
 const ZCreateActionClassAction = z.object({

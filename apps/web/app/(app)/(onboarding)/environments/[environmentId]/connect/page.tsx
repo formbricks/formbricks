@@ -1,5 +1,6 @@
 import { XIcon } from "lucide-react";
 import Link from "next/link";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ConnectWithFormbricks } from "@/app/(app)/(onboarding)/environments/[environmentId]/connect/components/ConnectWithFormbricks";
 import { getEnvironment } from "@/lib/environment/service";
 import { getPublicDomain } from "@/lib/getPublicUrl";
@@ -20,12 +21,12 @@ const Page = async (props: ConnectPageProps) => {
   const environment = await getEnvironment(params.environmentId);
 
   if (!environment) {
-    throw new Error(t("common.environment_not_found"));
+    throw new ResourceNotFoundError(t("common.environment"), params.environmentId);
   }
 
   const project = await getProjectByEnvironmentId(environment.id);
   if (!project) {
-    throw new Error(t("common.workspace_not_found"));
+    throw new ResourceNotFoundError(t("common.workspace"), null);
   }
 
   const channel = project.config.channel || null;

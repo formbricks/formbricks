@@ -2,7 +2,12 @@
 
 import { z } from "zod";
 import { ZId, ZUuid } from "@formbricks/types/common";
-import { AuthenticationError, OperationNotAllowedError, ValidationError } from "@formbricks/types/errors";
+import {
+  AuthenticationError,
+  OperationNotAllowedError,
+  ResourceNotFoundError,
+  ValidationError,
+} from "@formbricks/types/errors";
 import { ZMembershipUpdateInput } from "@formbricks/types/memberships";
 import { IS_FORMBRICKS_CLOUD, USER_MANAGEMENT_MINIMUM_ROLE } from "@/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
@@ -21,7 +26,7 @@ import { getInvite } from "@/modules/organization/settings/teams/lib/invite";
 export const checkRoleManagementPermission = async (organizationId: string) => {
   const organization = await getOrganization(organizationId);
   if (!organization) {
-    throw new Error("Organization not found");
+    throw new ResourceNotFoundError("Organization", organizationId);
   }
 
   const isAccessControlAllowed = await getAccessControlPermission(organizationId);

@@ -5,10 +5,16 @@ import { logger } from "@formbricks/logger";
 import { InvalidInputError, UnknownError } from "@formbricks/types/errors";
 import { ZUser, ZUserEmail, ZUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
 import { hashPassword } from "@/lib/auth";
-import { IS_FORMBRICKS_CLOUD, IS_TURNSTILE_CONFIGURED, TURNSTILE_SECRET_KEY } from "@/lib/constants";
+import {
+  IS_FORMBRICKS_CLOUD,
+  IS_TURNSTILE_CONFIGURED,
+  TURNSTILE_SECRET_KEY,
+  WEBAPP_URL,
+} from "@/lib/constants";
 import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
 import { createOrganization } from "@/lib/organization/service";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { actionClient } from "@/lib/utils/action-client";
 import { ActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { createUser, updateUser } from "@/modules/auth/lib/user";
@@ -160,6 +166,11 @@ async function handleOrganizationCreation(ctx: ActionClientCtx, user: TCreatedUs
     });
   }
 
+  capturePostHogEvent(user.id, "organization_created", {
+    organization_id: organization.id,
+    is_first_org: true,
+  });
+
   await updateUser(user.id, {
     notificationSettings: {
       ...user.notificationSettings,
@@ -185,7 +196,20 @@ async function handlePostUserCreation(
   }
 
   if (!emailVerificationDisabled) {
-    await sendVerificationEmail({ id: user.id, email: user.email, locale: user.locale });
+    let inviteCallbackUrl: string | undefined;
+
+    if (inviteToken) {
+      const inviteUrl = new URL("/invite", WEBAPP_URL);
+      inviteUrl.searchParams.set("token", inviteToken);
+      inviteCallbackUrl = inviteUrl.toString();
+    }
+
+    await sendVerificationEmail({
+      id: user.id,
+      email: user.email,
+      locale: user.locale,
+      callbackUrl: inviteCallbackUrl,
+    });
   }
 }
 
@@ -210,6 +234,13 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
         isFormbricksCloud: parsedInput.isFormbricksCloud,
         subscribeToSecurityUpdates: parsedInput.subscribeToSecurityUpdates,
         subscribeToProductUpdates: parsedInput.subscribeToProductUpdates,
+      });
+
+      capturePostHogEvent(user.id, "user_signed_up", {
+        auth_provider: "credentials",
+        email_domain: user.email.split("@")[1],
+        signup_source: parsedInput.inviteToken ? "invite" : "direct",
+        invite_organization_id: ctx.auditLoggingCtx.organizationId ?? null,
       });
     }
 

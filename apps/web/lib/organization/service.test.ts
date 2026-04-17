@@ -72,7 +72,8 @@ describe("Organization Service", () => {
           stripeCustomerId: null,
           usageCycleAnchor: new Date(),
         },
-        isAIEnabled: false,
+        isAISmartToolsEnabled: false,
+        isAIDataAnalysisEnabled: false,
         whitelabel: false,
       };
 
@@ -124,7 +125,8 @@ describe("Organization Service", () => {
             stripeCustomerId: null,
             usageCycleAnchor: new Date(),
           },
-          isAIEnabled: false,
+          isAISmartToolsEnabled: false,
+          isAIDataAnalysisEnabled: false,
           whitelabel: false,
         },
       ];
@@ -176,7 +178,8 @@ describe("Organization Service", () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         billing: expectedBilling,
-        isAIEnabled: false,
+        isAISmartToolsEnabled: false,
+        isAIDataAnalysisEnabled: false,
         whitelabel: false,
       };
 
@@ -235,7 +238,8 @@ describe("Organization Service", () => {
           stripeCustomerId: null,
           usageCycleAnchor: new Date(),
         },
-        isAIEnabled: false,
+        isAISmartToolsEnabled: false,
+        isAIDataAnalysisEnabled: false,
         whitelabel: false,
         memberships: [{ userId: "user1" }, { userId: "user2" }],
         projects: [
@@ -276,7 +280,8 @@ describe("Organization Service", () => {
           stripeCustomerId: null,
           usageCycleAnchor: expect.any(Date),
         },
-        isAIEnabled: false,
+        isAISmartToolsEnabled: false,
+        isAIDataAnalysisEnabled: false,
         whitelabel: false,
       });
       expect(prisma.organization.update).toHaveBeenCalledWith({

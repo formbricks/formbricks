@@ -3,15 +3,15 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { TFunction } from "i18next";
 import { UsersIcon } from "lucide-react";
-import { TSegmentWithSurveyNames } from "@formbricks/types/segment";
+import { TSegmentWithSurveyRefs } from "@formbricks/types/segment";
 import { timeSinceDate } from "@/lib/time";
 import { formatDateForDisplay } from "@/lib/utils/datetime";
 
 export const generateSegmentTableColumns = (
   t: TFunction,
   locale: string
-): ColumnDef<TSegmentWithSurveyNames>[] => {
-  const titleColumn: ColumnDef<TSegmentWithSurveyNames> = {
+): ColumnDef<TSegmentWithSurveyRefs>[] => {
+  const titleColumn: ColumnDef<TSegmentWithSurveyRefs> = {
     id: "title",
     accessorKey: "title",
     header: t("common.title"),
@@ -32,7 +32,7 @@ export const generateSegmentTableColumns = (
     },
   };
 
-  const updatedAtColumn: ColumnDef<TSegmentWithSurveyNames> = {
+  const updatedAtColumn: ColumnDef<TSegmentWithSurveyRefs> = {
     id: "updatedAt",
     accessorKey: "updatedAt",
     header: t("common.updated_at"),
@@ -41,7 +41,7 @@ export const generateSegmentTableColumns = (
     },
   };
 
-  const createdAtColumn: ColumnDef<TSegmentWithSurveyNames> = {
+  const createdAtColumn: ColumnDef<TSegmentWithSurveyRefs> = {
     id: "createdAt",
     accessorKey: "createdAt",
     header: t("common.created_at"),

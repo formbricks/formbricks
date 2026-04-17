@@ -35,7 +35,6 @@ interface MultipleChoiceElementFormProps {
   elementIdx: number;
   updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
   selectedLanguageCode: string;
-  setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
   locale: TUserLocale;
   isStorageConfigured: boolean;
@@ -49,7 +48,6 @@ export const MultipleChoiceElementForm = ({
   isInvalid,
   localSurvey,
   selectedLanguageCode,
-  setSelectedLanguageCode,
   locale,
   isStorageConfigured = true,
   isExternalUrlsAllowed,
@@ -262,8 +260,6 @@ export const MultipleChoiceElementForm = ({
         elementIdx={elementIdx}
         isInvalid={isInvalid}
         updateElement={updateElement}
-        selectedLanguageCode={selectedLanguageCode}
-        setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
         isStorageConfigured={isStorageConfigured}
         autoFocus={!element.headline?.default || element.headline.default.trim() === ""}
@@ -282,8 +278,6 @@ export const MultipleChoiceElementForm = ({
                 elementIdx={elementIdx}
                 isInvalid={isInvalid}
                 updateElement={updateElement}
-                selectedLanguageCode={selectedLanguageCode}
-                setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
                 autoFocus={!element.subheader?.default || element.subheader.default.trim() === ""}
@@ -353,8 +347,6 @@ export const MultipleChoiceElementForm = ({
                     addChoice={addChoice}
                     isInvalid={isInvalid}
                     localSurvey={localSurvey}
-                    selectedLanguageCode={selectedLanguageCode}
-                    setSelectedLanguageCode={setSelectedLanguageCode}
                     surveyLanguages={surveyLanguages}
                     element={element}
                     updateElement={updateElement}
@@ -369,8 +361,8 @@ export const MultipleChoiceElementForm = ({
         </div>
 
         <div className="mt-2">
-          <div className="mt-2 flex items-center justify-between space-x-2">
-            <div className="flex gap-2">
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap gap-2">
               {specialChoices.map((specialChoice) => {
                 if (element.choices.some((c) => c.id === specialChoice.id)) return null;
                 return (
@@ -443,7 +435,6 @@ export const MultipleChoiceElementForm = ({
         }}
         element={element}
         localSurvey={localSurvey}
-        selectedLanguageCode={selectedLanguageCode}
         surveyLanguageCodes={surveyLanguageCodes}
         locale={locale}
       />

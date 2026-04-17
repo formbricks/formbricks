@@ -1,7 +1,7 @@
 import { type z } from "zod";
 import type { TI18nString } from "../i18n";
 import type { TSurveyLanguage } from "./types";
-import { getTextContent } from "./validation";
+import { findLanguageCodesForDuplicateLabels, getTextContent } from "./validation";
 
 const extractLanguageCodes = (surveyLanguages?: TSurveyLanguage[]): string[] => {
   if (!surveyLanguages) return [];
@@ -92,28 +92,5 @@ export const validateElementLabels = (
   return null;
 };
 
-export const findLanguageCodesForDuplicateLabels = (
-  labels: TI18nString[],
-  surveyLanguages: TSurveyLanguage[]
-): string[] => {
-  const enabledLanguages = surveyLanguages.filter((lang) => lang.enabled);
-  const languageCodes = extractLanguageCodes(enabledLanguages);
-
-  const languagesToCheck = languageCodes.length === 0 ? ["default"] : languageCodes;
-
-  const duplicateLabels = new Set<string>();
-
-  for (const language of languagesToCheck) {
-    const labelTexts = labels
-      .map((label) => label[language])
-      .filter((text): text is string => typeof text === "string" && text.trim().length > 0)
-      .map((text) => text.trim());
-    const uniqueLabels = new Set(labelTexts);
-
-    if (uniqueLabels.size !== labelTexts.length) {
-      duplicateLabels.add(language);
-    }
-  }
-
-  return Array.from(duplicateLabels);
-};
+// Re-export for backwards compatibility
+export { findLanguageCodesForDuplicateLabels };

@@ -106,7 +106,7 @@ function PictureSelect({
       />
 
       {/* Picture Grid - 2 columns */}
-      <div className="relative">
+      <div className="relative" data-element-input>
         <ElementError errorMessage={errorMessage} dir={dir} />
         {allowMulti ? (
           <div className="grid grid-cols-2 gap-2">

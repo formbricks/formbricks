@@ -1,3 +1,4 @@
+import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { SurveyAnalysisNavigation } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
 import { ResponsePage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponsePage";
 import { SurveyAnalysisCTA } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA";
@@ -31,15 +32,15 @@ const Page = async (props: { params: Promise<{ environmentId: string; surveyId: 
   ]);
 
   if (!survey) {
-    throw new Error(t("common.survey_not_found"));
+    throw new ResourceNotFoundError(t("common.survey"), params.surveyId);
   }
 
   if (!user) {
-    throw new Error(t("common.user_not_found"));
+    throw new AuthenticationError(t("common.not_authenticated"));
   }
 
   if (!organization) {
-    throw new Error(t("common.organization_not_found"));
+    throw new ResourceNotFoundError(t("common.organization"), null);
   }
 
   const segments = isContactsEnabled ? await getSegments(params.environmentId) : [];
@@ -48,7 +49,7 @@ const Page = async (props: { params: Promise<{ environmentId: string; surveyId: 
 
   const organizationBilling = await getOrganizationBilling(organization.id);
   if (!organizationBilling) {
-    throw new Error(t("common.organization_not_found"));
+    throw new ResourceNotFoundError(t("common.organization"), organization.id);
   }
 
   const isQuotasAllowed = await getIsQuotasEnabled(organization.id);

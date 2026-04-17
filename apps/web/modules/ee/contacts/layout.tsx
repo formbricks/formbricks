@@ -1,7 +1,9 @@
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import { AuthorizationError } from "@formbricks/types/errors";
+import { AuthenticationError, AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
+import { getBillingFallbackPath } from "@/lib/membership/navigation";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
@@ -24,11 +26,11 @@ const ConfigLayout = async (props: {
   ]);
 
   if (!organization) {
-    throw new Error(t("common.organization_not_found"));
+    throw new ResourceNotFoundError(t("common.organization"), null);
   }
 
   if (!session) {
-    throw new Error(t("common.session_not_found"));
+    throw new AuthenticationError(t("common.not_authenticated"));
   }
 
   const hasAccess = await hasUserEnvironmentAccess(session.user.id, params.environmentId);
@@ -40,12 +42,12 @@ const ConfigLayout = async (props: {
   const { isBilling } = getAccessFlags(currentUserMembership?.role);
 
   if (isBilling) {
-    return redirect(`/environments/${params.environmentId}/settings/billing`);
+    return redirect(getBillingFallbackPath(params.environmentId, IS_FORMBRICKS_CLOUD));
   }
 
   const project = await getProjectByEnvironmentId(params.environmentId);
   if (!project) {
-    throw new Error(t("common.workspace_not_found"));
+    throw new ResourceNotFoundError(t("common.workspace"), null);
   }
 
   return children;

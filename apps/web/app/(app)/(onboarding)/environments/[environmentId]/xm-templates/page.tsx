@@ -1,6 +1,7 @@
 import { XIcon } from "lucide-react";
 import { getServerSession } from "next-auth";
 import Link from "next/link";
+import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { XMTemplateList } from "@/app/(app)/(onboarding)/environments/[environmentId]/xm-templates/components/XMTemplateList";
 import { getEnvironment } from "@/lib/environment/service";
 import { getProjectByEnvironmentId, getUserProjects } from "@/lib/project/service";
@@ -23,22 +24,22 @@ const Page = async (props: XMTemplatePageProps) => {
   const environment = await getEnvironment(params.environmentId);
   const t = await getTranslate();
   if (!session) {
-    throw new Error(t("common.session_not_found"));
+    throw new AuthenticationError(t("common.not_authenticated"));
   }
 
   const user = await getUser(session.user.id);
   if (!user) {
-    throw new Error(t("common.user_not_found"));
+    throw new AuthenticationError(t("common.not_authenticated"));
   }
   if (!environment) {
-    throw new Error(t("common.environment_not_found"));
+    throw new ResourceNotFoundError(t("common.environment"), params.environmentId);
   }
 
   const organizationId = await getOrganizationIdFromEnvironmentId(environment.id);
 
   const project = await getProjectByEnvironmentId(environment.id);
   if (!project) {
-    throw new Error(t("common.workspace_not_found"));
+    throw new ResourceNotFoundError(t("common.workspace"), null);
   }
 
   const projects = await getUserProjects(session.user.id, organizationId);

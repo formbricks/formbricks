@@ -94,7 +94,7 @@ function Matrix({
       />
 
       {/* Matrix Table */}
-      <div className="relative">
+      <div className="relative" data-element-input>
         <ElementError errorMessage={errorMessage} dir={dir} />
 
         {/* Table container with overflow for mobile */}

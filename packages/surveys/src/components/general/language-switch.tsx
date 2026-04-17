@@ -59,7 +59,7 @@ export function LanguageSwitch({
     handleI18nLanguage(calculatedLanguageCode);
 
     if (setDir) {
-      const calculateDir = isRTLLanguage(survey, calculatedLanguageCode) ? "rtl" : "auto";
+      const calculateDir = isRTLLanguage(survey, calculatedLanguageCode) ? "rtl" : "ltr";
       setDir?.(calculateDir);
     }
 

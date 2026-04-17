@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
-import { OperationNotAllowedError } from "@formbricks/types/errors";
+import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { getOrganization } from "@/lib/organization/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
@@ -45,7 +45,7 @@ export const updateProjectBrandingAction = authenticatedActionClient.inputSchema
       const organization = await getOrganization(organizationId);
 
       if (!organization) {
-        throw new Error("Organization not found");
+        throw new ResourceNotFoundError("Organization", organizationId);
       }
       const canRemoveBranding = await getRemoveBrandingPermission(organizationId);
 

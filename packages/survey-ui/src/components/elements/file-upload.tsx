@@ -292,7 +292,7 @@ function FileUpload({
         imageAltText={imageAltText}
       />
 
-      <div className="relative">
+      <div className="relative" data-element-input>
         <ElementError errorMessage={errorMessage} dir={dir} />
 
         <div

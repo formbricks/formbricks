@@ -11,8 +11,7 @@ import { getDisplayCountBySurveyId } from "@/lib/display/service";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
-import { evaluateLogic, performActions } from "@/lib/surveyLogic/utils";
-import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
+import { getElementsFromBlocks } from "@/lib/survey/utils";
 import {
   getElementSummary,
   getResponsesForSummary,
@@ -44,7 +43,7 @@ vi.mock("@/lib/survey/service", () => ({
 }));
 vi.mock("@/lib/surveyLogic/utils", () => ({
   evaluateLogic: vi.fn(),
-  performActions: vi.fn(() => ({ jumpTarget: undefined, requiredQuestionIds: [], calculations: {} })),
+  performActions: vi.fn(() => ({ jumpTarget: undefined, requiredElementIds: [], calculations: {} })),
 }));
 vi.mock("@/lib/utils/validate", () => ({
   validateInputs: vi.fn(),
@@ -165,7 +164,7 @@ describe("getSurveySummaryMeta", () => {
   });
 
   test("calculates meta correctly", () => {
-    const meta = getSurveySummaryMeta(mockResponses, 10, mockQuotas);
+    const meta = getSurveySummaryMeta(mockBaseSurvey, mockResponses, 10, mockQuotas);
     expect(meta.displayCount).toBe(10);
     expect(meta.totalResponses).toBe(3);
     expect(meta.startsPercentage).toBe(30);
@@ -179,18 +178,73 @@ describe("getSurveySummaryMeta", () => {
   });
 
   test("handles zero display count", () => {
-    const meta = getSurveySummaryMeta(mockResponses, 0, mockQuotas);
+    const meta = getSurveySummaryMeta(mockBaseSurvey, mockResponses, 0, mockQuotas);
     expect(meta.startsPercentage).toBe(0);
     expect(meta.completedPercentage).toBe(0);
   });
 
   test("handles zero responses", () => {
-    const meta = getSurveySummaryMeta([], 10, mockQuotas);
+    const meta = getSurveySummaryMeta(mockBaseSurvey, [], 10, mockQuotas);
     expect(meta.totalResponses).toBe(0);
     expect(meta.completedResponses).toBe(0);
     expect(meta.dropOffCount).toBe(0);
     expect(meta.dropOffPercentage).toBe(0);
     expect(meta.ttcAverage).toBe(0);
+  });
+
+  test("uses block-level TTC to avoid multiplying by number of elements", () => {
+    const surveyWithOneBlockThreeElements: TSurvey = {
+      ...mockBaseSurvey,
+      blocks: [
+        {
+          id: "block1",
+          name: "Block 1",
+          elements: [
+            {
+              id: "q1",
+              type: TSurveyElementTypeEnum.OpenText,
+              headline: { default: "Q1" },
+              required: false,
+              inputType: "text",
+              charLimit: { enabled: false },
+            },
+            {
+              id: "q2",
+              type: TSurveyElementTypeEnum.OpenText,
+              headline: { default: "Q2" },
+              required: false,
+              inputType: "text",
+              charLimit: { enabled: false },
+            },
+            {
+              id: "q3",
+              type: TSurveyElementTypeEnum.OpenText,
+              headline: { default: "Q3" },
+              required: false,
+              inputType: "text",
+              charLimit: { enabled: false },
+            },
+          ] as TSurveyElement[],
+        },
+      ],
+      questions: [],
+    };
+
+    const responses = [
+      {
+        id: "r1",
+        data: { q1: "a", q2: "b", q3: "c" },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: "en",
+        ttc: { q1: 5000, q2: 5000, q3: 4800, _total: 14800 },
+        finished: true,
+      },
+    ] as any;
+
+    const meta = getSurveySummaryMeta(surveyWithOneBlockThreeElements, responses, 1, mockQuotas);
+    expect(meta.ttcAverage).toBe(5000);
   });
 });
 
@@ -229,12 +283,6 @@ describe("getSurveySummaryDropOff", () => {
     vi.mocked(convertFloatTo2Decimal).mockImplementation((num) =>
       num !== undefined && num !== null ? parseFloat(num.toFixed(2)) : 0
     );
-    vi.mocked(evaluateLogic).mockReturnValue(false); // Default: no logic triggers
-    vi.mocked(performActions).mockReturnValue({
-      jumpTarget: undefined,
-      requiredElementIds: [],
-      calculations: {},
-    });
   });
 
   test("calculates dropOff correctly with welcome card disabled", () => {
@@ -246,7 +294,7 @@ describe("getSurveySummaryDropOff", () => {
         contact: null,
         contactAttributes: {},
         language: "en",
-        ttc: { q1: 10 },
+        ttc: { q1: 10, q2: 5 }, // Saw q2 but didn't answer it
         finished: false,
       }, // Dropped at q2
       {
@@ -269,22 +317,55 @@ describe("getSurveySummaryDropOff", () => {
     );
 
     expect(dropOff.length).toBe(2);
-    // Q1
+    // Q1: welcome card disabled so impressions = displayCount
     expect(dropOff[0].elementId).toBe("q1");
-    expect(dropOff[0].impressions).toBe(displayCount); // Welcome card disabled, so first question impressions = displayCount
+    expect(dropOff[0].impressions).toBe(displayCount);
     expect(dropOff[0].dropOffCount).toBe(displayCount - responses.length); // 5 displays - 2 started = 3 dropped before q1
     expect(dropOff[0].dropOffPercentage).toBe(60); // (3/5)*100
     expect(dropOff[0].ttc).toBe(10);
 
-    // Q2
+    // Q2: both responses saw q2 (r1 has ttc for q2, r2 answered q2)
     expect(dropOff[1].elementId).toBe("q2");
-    expect(dropOff[1].impressions).toBe(responses.length); // 2 responses reached q1, so 2 impressions for q2
-    expect(dropOff[1].dropOffCount).toBe(1); // 1 response dropped at q2
+    expect(dropOff[1].impressions).toBe(2);
+    expect(dropOff[1].dropOffCount).toBe(1); // r1 dropped at q2 (last seen element)
     expect(dropOff[1].dropOffPercentage).toBe(50); // (1/2)*100
-    expect(dropOff[1].ttc).toBe(10);
+    expect(dropOff[1].ttc).toBe(10); // block-level TTC uses max block time per response
   });
 
-  test("handles logic jumps", () => {
+  test("drop-off attributed to last seen element when user doesn't reach next question", () => {
+    // Welcome card enabled so first element drop-off is NOT overridden by displayCount
+    const surveyWithWelcome: TSurvey = {
+      ...surveyWithBlocks,
+      welcomeCard: { enabled: true, headline: { default: "Welcome" } } as unknown as TSurvey["welcomeCard"],
+    };
+    const responses = [
+      {
+        id: "r1",
+        data: { q1: "a" },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: "en",
+        ttc: { q1: 10 }, // Only saw q1, never reached q2
+        finished: false,
+      },
+    ] as any;
+    const displayCount = 1;
+    const dropOff = getSurveySummaryDropOff(
+      surveyWithWelcome,
+      getElementsFromBlocks(surveyWithWelcome.blocks),
+      responses,
+      displayCount
+    );
+
+    expect(dropOff[0].impressions).toBe(1); // Saw q1
+    expect(dropOff[0].dropOffCount).toBe(1); // Dropped at q1 (last seen element)
+    expect(dropOff[1].impressions).toBe(0); // Never saw q2
+    expect(dropOff[1].dropOffCount).toBe(0);
+  });
+
+  test("handles logic jumps — impressions based on actual ttc/data, not logic replay", () => {
+    // Survey with 4 questions across 4 blocks, logic on block2 jumps q2->q4 (skipping q3)
     const surveyWithLogic: TSurvey = {
       ...mockBaseSurvey,
       blocks: [
@@ -315,36 +396,6 @@ describe("getSurveySummaryDropOff", () => {
               charLimit: { enabled: false },
             },
           ] as TSurveyElement[],
-          logic: [
-            {
-              id: "logic1",
-              conditions: {
-                id: "condition1",
-                connector: "and" as const,
-                conditions: [
-                  {
-                    id: "c1",
-                    leftOperand: {
-                      type: "element" as const,
-                      value: "q2",
-                    },
-                    operator: "equals" as const,
-                    rightOperand: {
-                      type: "static" as const,
-                      value: "b",
-                    },
-                  },
-                ],
-              },
-              actions: [
-                {
-                  id: "action1",
-                  objective: "jumpToBlock" as const,
-                  target: "q4",
-                },
-              ],
-            },
-          ],
         },
         {
           id: "block3",
@@ -377,28 +428,21 @@ describe("getSurveySummaryDropOff", () => {
       ],
       questions: [],
     };
+
+    // Response where user answered q1, q2, then logic jumped to q4 (skipping q3).
+    // The ttc/data reflects exactly what elements were shown — no logic replay needed.
     const responses = [
       {
         id: "r1",
-        data: { q1: "a", q2: "b" },
+        data: { q1: "a", q2: "b", q4: "d" },
         updatedAt: new Date(),
         contact: null,
         contactAttributes: {},
         language: "en",
-        ttc: { q1: 10, q2: 10 },
+        ttc: { q1: 10, q2: 10, q4: 10 }, // q3 has no ttc entry — was skipped by logic
         finished: false,
-      }, // Jumps from q2 to q4, drops at q4
+      },
     ];
-    vi.mocked(evaluateLogic).mockImplementation((_s, data, _v, _, _l) => {
-      // Simulate logic on q2 triggering
-      return data.q2 === "b";
-    });
-    vi.mocked(performActions).mockImplementation((_s, actions, _d, _v) => {
-      if (actions[0] && "objective" in actions[0] && actions[0].objective === "jumpToBlock") {
-        return { jumpTarget: actions[0].target, requiredElementIds: [], calculations: {} };
-      }
-      return { jumpTarget: undefined, requiredElementIds: [], calculations: {} };
-    });
 
     const dropOff = getSurveySummaryDropOff(
       surveyWithLogic,
@@ -407,11 +451,11 @@ describe("getSurveySummaryDropOff", () => {
       1
     );
 
-    expect(dropOff[0].impressions).toBe(1); // q1
-    expect(dropOff[1].impressions).toBe(1); // q2
-    expect(dropOff[2].impressions).toBe(0); // q3 (skipped)
-    expect(dropOff[3].impressions).toBe(1); // q4 (jumped to)
-    expect(dropOff[3].dropOffCount).toBe(1); // Dropped at q4
+    expect(dropOff[0].impressions).toBe(1); // q1: seen
+    expect(dropOff[1].impressions).toBe(1); // q2: seen
+    expect(dropOff[2].impressions).toBe(0); // q3: skipped by logic (no ttc, no data)
+    expect(dropOff[3].impressions).toBe(1); // q4: jumped to, seen
+    expect(dropOff[3].dropOffCount).toBe(1); // Dropped at q4 (last seen element, not finished)
   });
 });
 

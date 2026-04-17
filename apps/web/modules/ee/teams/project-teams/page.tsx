@@ -1,3 +1,4 @@
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { getTranslate } from "@/lingodotdev/server";
 import { AccessView } from "@/modules/ee/teams/project-teams/components/access-view";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
@@ -15,7 +16,7 @@ export const ProjectTeams = async (props: { params: Promise<{ environmentId: str
   const teams = await getTeamsByProjectId(project.id);
 
   if (!teams) {
-    throw new Error(t("common.teams_not_found"));
+    throw new ResourceNotFoundError(t("common.teams"), null);
   }
 
   return (

@@ -5631,6 +5631,9 @@ components:
         isBackButtonHidden:
           type: boolean
           description: Whether the back button is hidden
+        isAutoProgressingEnabled:
+          type: boolean
+          description: Whether auto-progress is enabled for eligible question types
         recaptcha:
           type:
             - object
@@ -5706,6 +5709,7 @@ components:
         - isSingleResponsePerEmailEnabled
         - inlineTriggers
         - isBackButtonHidden
+        - isAutoProgressingEnabled
         - recaptcha
         - metadata
         - displayPercentage

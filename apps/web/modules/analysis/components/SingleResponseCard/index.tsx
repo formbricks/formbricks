@@ -8,6 +8,7 @@ import { TResponse, TResponseWithQuotas } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { DecrementQuotasCheckbox } from "@/modules/ui/components/decrement-quotas-checkbox";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
@@ -104,7 +105,11 @@ export const SingleResponseCard = ({
       if (isReadOnly) {
         throw new Error(t("common.not_authorized"));
       }
-      await deleteResponseAction({ responseId: response.id, decrementQuotas });
+      const result = await deleteResponseAction({ responseId: response.id, decrementQuotas });
+      if (result?.serverError) {
+        toast.error(getFormattedErrorMessage(result));
+        return;
+      }
       updateResponseList?.([response.id]);
       if (setSelectedResponseId) setSelectedResponseId(null);
       toast.success(t("environments.surveys.responses.response_deleted_successfully"));

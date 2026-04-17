@@ -1,7 +1,7 @@
 "use client";
 
 import * as Sentry from "@sentry/nextjs";
-import { ChevronDownIcon, ChevronRightIcon, CogIcon, HotelIcon, Loader2, PlusIcon } from "lucide-react";
+import { ChevronDownIcon, ChevronRightIcon, CogIcon, FoldersIcon, Loader2, PlusIcon } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
@@ -19,6 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
 import { ModalButton } from "@/modules/ui/components/upgrade-prompt";
 import { useProject } from "../context/environment-context";
 
@@ -33,6 +34,8 @@ interface ProjectBreadcrumbProps {
   currentEnvironmentId: string;
   isAccessControlAllowed: boolean;
   isEnvironmentBreadcrumbVisible: boolean;
+  isBilling: boolean;
+  isMembershipPending: boolean;
 }
 
 const isActiveProjectSetting = (pathname: string, settingId: string): boolean => {
@@ -56,6 +59,8 @@ export const ProjectBreadcrumb = ({
   currentEnvironmentId,
   isAccessControlAllowed,
   isEnvironmentBreadcrumbVisible,
+  isBilling,
+  isMembershipPending,
 }: ProjectBreadcrumbProps) => {
   const { t } = useTranslation();
   const [isProjectDropdownOpen, setIsProjectDropdownOpen] = useState(false);
@@ -134,6 +139,10 @@ export const ProjectBreadcrumb = ({
       href: `/environments/${currentEnvironmentId}/workspace/tags`,
     },
   ];
+  const areProjectSettingsDisabled = isMembershipPending || isBilling;
+  const projectSettingsDisabledMessage = isMembershipPending
+    ? t("common.loading")
+    : t("common.you_are_not_authorized_to_perform_this_action");
 
   if (!currentProject) {
     const errorMessage = `Workspace not found for workspace id: ${currentProjectId}`;
@@ -198,7 +207,7 @@ export const ProjectBreadcrumb = ({
           id="projectDropdownTrigger"
           asChild>
           <div className="flex items-center gap-1">
-            <HotelIcon className="h-3 w-3" strokeWidth={1.5} />
+            <FoldersIcon className="h-3 w-3" strokeWidth={1.5} />
             <span>{projectName}</span>
             {isPending && <Loader2 className="h-3 w-3 animate-spin" strokeWidth={1.5} />}
             {isEnvironmentBreadcrumbVisible && !isProjectDropdownOpen ? (
@@ -211,7 +220,7 @@ export const ProjectBreadcrumb = ({
 
         <DropdownMenuContent align="start" className="mt-2">
           <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
-            <HotelIcon className="mr-2 inline h-4 w-4" strokeWidth={1.5} />
+            <FoldersIcon className="mr-2 inline h-4 w-4" strokeWidth={1.5} />
             {t("common.choose_workspace")}
           </div>
           {isLoadingProjects && (
@@ -247,7 +256,24 @@ export const ProjectBreadcrumb = ({
                   </DropdownMenuCheckboxItem>
                 ))}
               </DropdownMenuGroup>
-              {isOwnerOrManager && (
+              {isMembershipPending || !isOwnerOrManager ? (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      aria-disabled="true"
+                      className="relative flex w-full cursor-not-allowed select-none items-center justify-between rounded-lg py-1.5 pl-8 pr-2 text-sm font-medium text-slate-400">
+                      <span>{t("common.add_new_workspace")}</span>
+                      <PlusIcon className="ml-2 h-4 w-4" strokeWidth={1.5} />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-fit max-w-72 px-3 py-2 text-sm text-slate-700">
+                    {isMembershipPending
+                      ? t("common.loading")
+                      : t("common.you_are_not_authorized_to_perform_this_action")}
+                  </PopoverContent>
+                </Popover>
+              ) : (
                 <DropdownMenuCheckboxItem
                   onClick={handleAddProject}
                   className="w-full cursor-pointer justify-between">
@@ -264,13 +290,30 @@ export const ProjectBreadcrumb = ({
               {t("common.workspace_configuration")}
             </div>
             {projectSettings.map((setting) => (
-              <DropdownMenuCheckboxItem
-                key={setting.id}
-                checked={isActiveProjectSetting(pathname, setting.id)}
-                onClick={() => handleProjectSettingsNavigation(setting.id)}
-                className="cursor-pointer">
-                {setting.label}
-              </DropdownMenuCheckboxItem>
+              <div key={setting.id}>
+                {areProjectSettingsDisabled ? (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        aria-disabled="true"
+                        className="relative flex w-full cursor-not-allowed select-none items-center rounded-lg py-1.5 pl-8 pr-2 text-sm font-medium text-slate-400">
+                        {setting.label}
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-fit max-w-72 px-3 py-2 text-sm text-slate-700">
+                      {projectSettingsDisabledMessage}
+                    </PopoverContent>
+                  </Popover>
+                ) : (
+                  <DropdownMenuCheckboxItem
+                    checked={isActiveProjectSetting(pathname, setting.id)}
+                    onClick={() => handleProjectSettingsNavigation(setting.id)}
+                    className="cursor-pointer">
+                    {setting.label}
+                  </DropdownMenuCheckboxItem>
+                )}
+              </div>
             ))}
           </DropdownMenuGroup>
         </DropdownMenuContent>

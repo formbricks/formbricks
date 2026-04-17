@@ -105,7 +105,9 @@ export const SurveyDropDownMenu = ({
         targetEnvironmentId: environmentId,
       });
 
-      if (duplicatedSurveyResponse?.data) {
+      if (duplicatedSurveyResponse?.serverError) {
+        toast.error(getFormattedErrorMessage(duplicatedSurveyResponse));
+      } else if (duplicatedSurveyResponse?.data) {
         const transformedDuplicatedSurvey = await getSurveyAction({
           surveyId: duplicatedSurveyResponse.data.id,
         });

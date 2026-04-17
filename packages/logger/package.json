@@ -30,7 +30,7 @@
     "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
     "lint:fix": "eslint . --ext .ts,.js,.tsx,.jsx --fix",
     "lint:report": "eslint . --format json --output-file ../../lint-results/app-store.json",
-    "build": "tsc && vite build",
+    "build": "rimraf dist && tsc && vite build",
     "test": "vitest run"
   },
   "author": "Formbricks <hola@formbricks.com>",
