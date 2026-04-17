@@ -13,6 +13,7 @@ const surveyA = {
   updatedAt: new Date("2026-04-15T10:00:00.000Z"),
   responseCount: 0,
   creator: { name: "Alice" },
+  singleUse: null,
 };
 
 const surveyB = {

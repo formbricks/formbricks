@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { getSurvey } from "@/lib/survey/service";
-import { deleteSurvey } from "@/modules/survey/lib/delete-survey";
+import { deleteSurvey } from "@/modules/survey/lib/surveys";
 import { DELETE } from "./route";
 
 const { mockAuthenticateRequest } = vi.hoisted(() => ({
@@ -54,7 +54,7 @@ vi.mock("@/lib/survey/service", () => ({
   getSurvey: vi.fn(),
 }));
 
-vi.mock("@/modules/survey/lib/delete-survey", () => ({
+vi.mock("@/modules/survey/lib/surveys", () => ({
   deleteSurvey: vi.fn(),
 }));
 

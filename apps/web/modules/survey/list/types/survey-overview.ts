@@ -24,6 +24,12 @@ export const ZSurveyListItem = z.object({
       name: z.string(),
     })
     .nullable(),
+  singleUse: z
+    .object({
+      enabled: z.boolean(),
+      isEncrypted: z.boolean(),
+    })
+    .nullable(),
 });
 
 export type TSurveyOverviewType = z.infer<typeof ZSurveyOverviewType>;

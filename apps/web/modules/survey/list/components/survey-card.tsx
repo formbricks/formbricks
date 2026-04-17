@@ -15,11 +15,19 @@ import { SurveyDropDownMenu } from "./survey-dropdown-menu";
 interface SurveyCardProps {
   survey: TSurveyListItem;
   environmentId: string;
+  publicDomain: string;
   isReadOnly: boolean;
   deleteSurvey: (surveyId: string) => Promise<void>;
   locale: TUserLocale;
 }
-export const SurveyCard = ({ survey, environmentId, isReadOnly, deleteSurvey, locale }: SurveyCardProps) => {
+export const SurveyCard = ({
+  survey,
+  environmentId,
+  publicDomain,
+  isReadOnly,
+  deleteSurvey,
+  locale,
+}: SurveyCardProps) => {
   const { t } = useTranslation();
   const surveyStatusLabel = (() => {
     switch (survey.status) {
@@ -97,6 +105,7 @@ export const SurveyCard = ({ survey, environmentId, isReadOnly, deleteSurvey, lo
           survey={survey}
           key={`surveys-${survey.id}`}
           environmentId={environmentId}
+          publicDomain={publicDomain}
           disabled={isDraftAndReadOnly}
           isSurveyCreationDeletionDisabled={isSurveyCreationDeletionDisabled}
           deleteSurvey={deleteSurvey}

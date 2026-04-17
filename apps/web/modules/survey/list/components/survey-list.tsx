@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import { TProjectConfigChannel } from "@formbricks/types/project";
 import { TUserLocale } from "@formbricks/types/user";
 import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@/lib/localStorage";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { useDeleteSurvey } from "@/modules/survey/list/hooks/use-delete-survey";
 import { useSurveys } from "@/modules/survey/list/hooks/use-surveys";
 import { initialFilters } from "@/modules/survey/list/lib/constants";
@@ -16,7 +17,6 @@ import {
   normalizeSurveyFilters,
   parseStoredSurveyFilters,
 } from "@/modules/survey/list/lib/utils";
-import { getV3ApiErrorMessage } from "@/modules/survey/list/lib/v3-surveys-client";
 import { TSurveyOverviewFilters } from "@/modules/survey/list/types/survey-overview";
 import { TemplateContainerWithPreview } from "@/modules/survey/templates/components/template-container";
 import { Button } from "@/modules/ui/components/button";
@@ -207,6 +207,7 @@ export const SurveysList = ({
               environmentId={environment.id}
               isReadOnly={isReadOnly}
               deleteSurvey={handleDeleteSurvey}
+              publicDomain={publicDomain}
               locale={locale}
             />
           ))}

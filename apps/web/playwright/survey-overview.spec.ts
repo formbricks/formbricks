@@ -1,4 +1,4 @@
-import { Page, expect } from "@playwright/test";
+import { expect } from "@playwright/test";
 import { prisma } from "@formbricks/database";
 import { test } from "./lib/fixtures";
 
@@ -19,6 +19,57 @@ const getUserIdForEmail = async (email: string) => {
   }
 
   return user.id;
+};
+
+const getWorkspaceIdsForEmail = async (email: string) => {
+  const user = await prisma.user.findUnique({
+    where: {
+      email,
+    },
+    select: {
+      id: true,
+      memberships: {
+        select: {
+          organizationId: true,
+          organization: {
+            select: {
+              projects: {
+                select: {
+                  id: true,
+                  environments: {
+                    where: {
+                      type: "development",
+                    },
+                    select: {
+                      id: true,
+                    },
+                    take: 1,
+                  },
+                },
+                take: 1,
+              },
+            },
+          },
+        },
+        take: 1,
+      },
+    },
+  });
+
+  const membership = user?.memberships[0];
+  const project = membership?.organization.projects[0];
+  const environment = project?.environments[0];
+
+  if (!user || !membership || !project || !environment) {
+    throw new Error(`Workspace not found for email: ${email}`);
+  }
+
+  return {
+    userId: user.id,
+    organizationId: membership.organizationId,
+    projectId: project.id,
+    environmentId: environment.id,
+  };
 };
 
 const createSurveySeed = async ({
@@ -139,7 +190,7 @@ test.describe("Survey overview", () => {
     await expect(page.getByText(paginatedSurveyName, { exact: true })).toBeVisible();
   });
 
-  test("removes unsupported actions and optimistically deletes the last survey into the template state", async ({
+  test("keeps draft-only actions and optimistically deletes the last survey into the template state", async ({
     page,
     users,
   }) => {
@@ -252,5 +303,87 @@ test.describe("Survey overview", () => {
     await expect(page.getByText(surveyName, { exact: true })).toBeHidden();
     await expect(page.getByText(surveyName, { exact: true })).toBeVisible();
     await expect(page.getByText("Delete failed", { exact: true })).toBeVisible();
+  });
+
+  test("shows preview and copy link for published link surveys and hides the dropdown when no actions are available", async ({
+    page,
+    users,
+  }) => {
+    const timestamp = Date.now();
+    const email = `overview-actions-${timestamp}@example.com`;
+    const name = `overview-actions-${timestamp}`;
+    const linkSurveyName = `Published Link ${timestamp}`;
+    const appSurveyName = `Read Only App ${timestamp}`;
+    const user = await users.create({
+      email,
+      name,
+      projectName: "Action Workspace",
+    });
+    const { userId, organizationId, projectId, environmentId } = await getWorkspaceIdsForEmail(email);
+
+    await prisma.membership.update({
+      where: {
+        userId_organizationId: {
+          userId,
+          organizationId,
+        },
+      },
+      data: {
+        role: "member",
+      },
+    });
+
+    const team = await prisma.team.create({
+      data: {
+        name: `Read Only Team ${timestamp}`,
+        organizationId,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    await prisma.teamUser.create({
+      data: {
+        teamId: team.id,
+        userId,
+        role: "contributor",
+      },
+    });
+
+    await prisma.projectTeam.create({
+      data: {
+        teamId: team.id,
+        projectId,
+        permission: "read",
+      },
+    });
+
+    await user.login();
+    await page.goto(`/environments/${environmentId}/surveys`);
+
+    await createSurveySeed({
+      environmentId,
+      userId,
+      name: linkSurveyName,
+      status: "paused",
+      type: "link",
+    });
+    await createSurveySeed({
+      environmentId,
+      userId,
+      name: appSurveyName,
+      status: "completed",
+      type: "app",
+    });
+
+    await page.reload();
+    const linkRow = page.locator("div.relative.block", { has: page.getByText(linkSurveyName, { exact: true }) });
+    await linkRow.locator("[data-testid='survey-dropdown-trigger']").click();
+    await expect(page.getByRole("button", { name: "Preview", exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Copy link", exact: true })).toBeVisible();
+
+    const appRow = page.locator("div.relative.block", { has: page.getByText(appSurveyName, { exact: true }) });
+    await expect(appRow.locator("[data-testid='survey-dropdown-trigger']")).toHaveCount(0);
   });
 });

@@ -263,7 +263,7 @@ components:
       type: object
       description: |
         Shape returned by `GET /api/v3/surveys`. Serialized dates are ISO 8601 strings.
-        The v3 overview contract intentionally omits `environmentId`, `singleUse`, and internal fields such as `_count`.
+        The v3 overview contract intentionally omits `environmentId` and internal fields such as `_count`.
         Legacy DB rows may include survey **type** values `website` or `web` (see Prisma); filter **type** only accepts `link` | `app`.
       properties:
         id: { type: string }
@@ -277,6 +277,12 @@ components:
         updatedAt: { type: string, format: date-time }
         responseCount: { type: integer }
         creator: { type: object, nullable: true, properties: { name: { type: string } } }
+        singleUse:
+          type: object
+          nullable: true
+          properties:
+            enabled: { type: boolean }
+            isEncrypted: { type: boolean }
     SurveyDeleteResponse:
       type: object
       required: [data]

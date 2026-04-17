@@ -5,7 +5,7 @@ const { mockDeleteSharedSurvey } = vi.hoisted(() => ({
   mockDeleteSharedSurvey: vi.fn(),
 }));
 
-vi.mock("@/modules/survey/lib/delete-survey", () => ({
+vi.mock("@/modules/survey/lib/surveys", () => ({
   deleteSurvey: mockDeleteSharedSurvey,
 }));
 

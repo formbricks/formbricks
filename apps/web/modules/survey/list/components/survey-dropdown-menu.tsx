@@ -1,14 +1,16 @@
 "use client";
 
-import { MoreVertical, SquarePenIcon, TrashIcon } from "lucide-react";
+import { EyeIcon, LinkIcon, MoreVertical, SquarePenIcon, TrashIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { logger } from "@formbricks/logger";
 import { cn } from "@/lib/cn";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
-import { getV3ApiErrorMessage } from "@/modules/survey/list/lib/v3-surveys-client";
+import { copySurveyLink } from "@/modules/survey/lib/client-utils";
 import { TSurveyListItem } from "@/modules/survey/list/types/survey-overview";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import {
@@ -22,6 +24,7 @@ import {
 interface SurveyDropDownMenuProps {
   environmentId: string;
   survey: TSurveyListItem;
+  publicDomain: string;
   disabled?: boolean;
   isSurveyCreationDeletionDisabled?: boolean;
   deleteSurvey: (surveyId: string) => Promise<void>;
@@ -30,6 +33,7 @@ interface SurveyDropDownMenuProps {
 export const SurveyDropDownMenu = ({
   environmentId,
   survey,
+  publicDomain,
   disabled,
   isSurveyCreationDeletionDisabled,
   deleteSurvey,
@@ -42,6 +46,11 @@ export const SurveyDropDownMenu = ({
   const router = useRouter();
 
   const editHref = `/environments/${environmentId}/surveys/${survey.id}/edit`;
+  const surveyLink = useMemo(() => `${publicDomain}/s/${survey.id}`, [publicDomain, survey.id]);
+  const isSingleUseEnabled = survey.singleUse?.enabled ?? false;
+  const canManageSurvey = !isSurveyCreationDeletionDisabled;
+  const canPreviewOrCopyLink = survey.type === "link" && survey.status !== "draft";
+  const hasVisibleActions = canManageSurvey || canPreviewOrCopyLink;
 
   const handleDeleteSurvey = async (surveyId: string) => {
     setLoading(true);
@@ -56,11 +65,27 @@ export const SurveyDropDownMenu = ({
     }
   };
 
+  const handleCopyLink = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    try {
+      e.preventDefault();
+      setIsDropDownOpen(false);
+      await navigator.clipboard.writeText(copySurveyLink(surveyLink));
+      toast.success(t("common.copied_to_clipboard"));
+    } catch (error) {
+      logger.error(error);
+      toast.error(t("common.something_went_wrong_please_try_again"));
+    }
+  };
+
   const handleEditforActiveSurvey = (e: React.MouseEvent) => {
     e.preventDefault();
     setIsDropDownOpen(false);
     setIsCautionDialogOpen(true);
   };
+
+  if (!hasVisibleActions) {
+    return null;
+  }
 
   return (
     <div
@@ -82,7 +107,7 @@ export const SurveyDropDownMenu = ({
         </DropdownMenuTrigger>
         <DropdownMenuContent className="inline-block w-auto min-w-max">
           <DropdownMenuGroup>
-            {!isSurveyCreationDeletionDisabled && (
+            {canManageSurvey && (
               <DropdownMenuItem>
                 <Link
                   className="flex w-full items-center"
@@ -93,7 +118,44 @@ export const SurveyDropDownMenu = ({
                 </Link>
               </DropdownMenuItem>
             )}
-            {!isSurveyCreationDeletionDisabled && (
+            {canPreviewOrCopyLink && (
+              <DropdownMenuItem>
+                <button
+                  type="button"
+                  className={cn(
+                    "flex w-full items-center",
+                    isSingleUseEnabled && "cursor-not-allowed opacity-50"
+                  )}
+                  disabled={isSingleUseEnabled}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setIsDropDownOpen(false);
+                    const previewUrl = new URL(surveyLink);
+                    previewUrl.searchParams.set("preview", "true");
+                    globalThis.window.open(previewUrl.toString(), "_blank");
+                  }}>
+                  <EyeIcon className="mr-2 h-4 w-4" />
+                  {t("common.preview")}
+                </button>
+              </DropdownMenuItem>
+            )}
+            {canPreviewOrCopyLink && (
+              <DropdownMenuItem>
+                <button
+                  type="button"
+                  data-testid="copy-link"
+                  className={cn(
+                    "flex w-full items-center",
+                    isSingleUseEnabled && "cursor-not-allowed opacity-50"
+                  )}
+                  disabled={isSingleUseEnabled}
+                  onClick={handleCopyLink}>
+                  <LinkIcon className="mr-2 h-4 w-4" />
+                  {t("common.copy_link")}
+                </button>
+              </DropdownMenuItem>
+            )}
+            {canManageSurvey && (
               <DropdownMenuItem>
                 <button
                   type="button"
@@ -112,7 +174,7 @@ export const SurveyDropDownMenu = ({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {!isSurveyCreationDeletionDisabled && (
+      {canManageSurvey && (
         <DeleteDialog
           deleteWhat={t("common.survey")}
           open={isDeleteDialogOpen}
@@ -123,7 +185,7 @@ export const SurveyDropDownMenu = ({
         />
       )}
 
-      {survey.responseCount > 0 && (
+      {canManageSurvey && survey.responseCount > 0 && (
         <EditPublicSurveyAlertDialog
           open={isCautionDialogOpen}
           setOpen={setIsCautionDialogOpen}

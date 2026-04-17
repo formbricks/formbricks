@@ -44,6 +44,7 @@ describe("useSurveys", () => {
                 updatedAt: "2026-04-15T10:00:00.000Z",
                 responseCount: 0,
                 creator: { name: "Alice" },
+                singleUse: null,
               },
             ],
             meta: {
@@ -69,6 +70,7 @@ describe("useSurveys", () => {
                 updatedAt: "2026-04-15T11:00:00.000Z",
                 responseCount: 2,
                 creator: { name: "Bob" },
+                singleUse: null,
               },
             ],
             meta: {

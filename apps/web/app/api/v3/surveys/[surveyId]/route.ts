@@ -5,7 +5,7 @@ import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { problemForbidden, problemInternalError, successResponse } from "@/app/api/v3/lib/response";
 import { getSurvey } from "@/lib/survey/service";
-import { deleteSurvey } from "@/modules/survey/lib/delete-survey";
+import { deleteSurvey } from "@/modules/survey/lib/surveys";
 
 export const DELETE = withV3ApiWrapper({
   auth: "both",
@@ -52,10 +52,7 @@ export const DELETE = withV3ApiWrapper({
         {
           id: deletedSurvey.id,
         },
-        {
-          requestId,
-          cache: "private, no-store",
-        }
+        { requestId }
       );
     } catch (error) {
       if (error instanceof ResourceNotFoundError) {
