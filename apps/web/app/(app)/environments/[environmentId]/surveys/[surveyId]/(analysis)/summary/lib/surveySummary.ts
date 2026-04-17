@@ -17,9 +17,7 @@ import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/survey
 import {
   TSurvey,
   TSurveyElementSummaryAddress,
-  TSurveyElementSummaryCes,
   TSurveyElementSummaryContactInfo,
-  TSurveyElementSummaryCsat,
   TSurveyElementSummaryDate,
   TSurveyElementSummaryFileUpload,
   TSurveyElementSummaryHiddenFields,
@@ -27,7 +25,6 @@ import {
   TSurveyElementSummaryOpenText,
   TSurveyElementSummaryPictureSelection,
   TSurveyElementSummaryRanking,
-  TSurveyElementSummaryRating,
   TSurveyLanguage,
   TSurveySummary,
 } from "@formbricks/types/surveys/types";
@@ -274,6 +271,49 @@ const checkForI18n = (
   return responseData[id];
 };
 
+const computeNumericScaleStats = (
+  elementId: string,
+  range: number,
+  responses: TSurveySummaryResponse[]
+): {
+  choices: { rating: number; count: number; percentage: number }[];
+  choiceCountMap: Record<number, number>;
+  totalResponseCount: number;
+  totalRating: number;
+  dismissed: number;
+  average: number;
+} => {
+  const choiceCountMap: Record<number, number> = {};
+  for (let i = 1; i <= range; i++) {
+    choiceCountMap[i] = 0;
+  }
+
+  let totalResponseCount = 0;
+  let totalRating = 0;
+  let dismissed = 0;
+
+  responses.forEach((response) => {
+    const answer = response.data[elementId];
+    if (typeof answer === "number") {
+      totalResponseCount++;
+      choiceCountMap[answer]++;
+      totalRating += answer;
+    } else if (response.ttc && response.ttc[elementId] > 0) {
+      dismissed++;
+    }
+  });
+
+  const choices = Object.entries(choiceCountMap).map(([label, count]) => ({
+    rating: Number.parseInt(label),
+    count,
+    percentage: totalResponseCount > 0 ? convertFloatTo2Decimal((count / totalResponseCount) * 100) : 0,
+  }));
+
+  const average = totalResponseCount > 0 ? convertFloatTo2Decimal(totalRating / totalResponseCount) : 0;
+
+  return { choices, choiceCountMap, totalResponseCount, totalRating, dismissed, average };
+};
+
 export const getElementSummary = async (
   survey: TSurvey,
   elements: TSurveyElement[],
@@ -474,50 +514,16 @@ export const getElementSummary = async (
         break;
       }
       case TSurveyElementTypeEnum.Rating: {
-        let values: TSurveyElementSummaryRating["choices"] = [];
-        const choiceCountMap: Record<number, number> = {};
-        const range = element.range;
-
-        for (let i = 1; i <= range; i++) {
-          choiceCountMap[i] = 0;
-        }
-
-        let totalResponseCount = 0;
-        let totalRating = 0;
-        let dismissed = 0;
-
-        responses.forEach((response) => {
-          const answer = response.data[element.id];
-          if (typeof answer === "number") {
-            totalResponseCount++;
-            choiceCountMap[answer]++;
-            totalRating += answer;
-          } else if (response.ttc && response.ttc[element.id] > 0) {
-            dismissed++;
-          }
-        });
-
-        Object.entries(choiceCountMap).forEach(([label, count]) => {
-          values.push({
-            rating: Number.parseInt(label),
-            count,
-            percentage:
-              totalResponseCount > 0 ? convertFloatTo2Decimal((count / totalResponseCount) * 100) : 0,
-          });
-        });
+        const stats = computeNumericScaleStats(element.id, element.range, responses);
 
         summary.push({
           type: element.type,
           element,
-          average: convertFloatTo2Decimal(totalRating / totalResponseCount) || 0,
-          responseCount: totalResponseCount,
-          choices: values,
-          dismissed: {
-            count: dismissed,
-          },
+          average: stats.average,
+          responseCount: stats.totalResponseCount,
+          choices: stats.choices,
+          dismissed: { count: stats.dismissed },
         });
-
-        values = [];
         break;
       }
       case TSurveyElementTypeEnum.NPS: {
@@ -593,106 +599,37 @@ export const getElementSummary = async (
         break;
       }
       case TSurveyElementTypeEnum.CSAT: {
-        let values: TSurveyElementSummaryCsat["choices"] = [];
-        const choiceCountMap: Record<number, number> = {};
-        const range = element.range;
-
-        for (let i = 1; i <= range; i++) {
-          choiceCountMap[i] = 0;
-        }
-
-        let totalResponseCount = 0;
-        let totalRating = 0;
-        let dismissed = 0;
-
-        responses.forEach((response) => {
-          const answer = response.data[element.id];
-          if (typeof answer === "number") {
-            totalResponseCount++;
-            choiceCountMap[answer]++;
-            totalRating += answer;
-          } else if (response.ttc && response.ttc[element.id] > 0) {
-            dismissed++;
-          }
-        });
-
-        Object.entries(choiceCountMap).forEach(([label, count]) => {
-          values.push({
-            rating: Number.parseInt(label),
-            count,
-            percentage:
-              totalResponseCount > 0 ? convertFloatTo2Decimal((count / totalResponseCount) * 100) : 0,
-          });
-        });
+        const stats = computeNumericScaleStats(element.id, element.range, responses);
 
         // CSAT: top 2 ratings out of 5 are "satisfied"
-        const satisfiedCount = (choiceCountMap[4] || 0) + (choiceCountMap[5] || 0);
+        const satisfiedCount = (stats.choiceCountMap[4] || 0) + (stats.choiceCountMap[5] || 0);
         const satisfiedPercentage =
-          totalResponseCount > 0 ? convertFloatTo2Decimal((satisfiedCount / totalResponseCount) * 100) : 0;
+          stats.totalResponseCount > 0
+            ? convertFloatTo2Decimal((satisfiedCount / stats.totalResponseCount) * 100)
+            : 0;
 
         summary.push({
           type: element.type,
           element,
-          average: totalResponseCount > 0 ? convertFloatTo2Decimal(totalRating / totalResponseCount) : 0,
-          responseCount: totalResponseCount,
-          choices: values,
-          dismissed: {
-            count: dismissed,
-          },
-          csat: {
-            satisfiedCount,
-            satisfiedPercentage,
-          },
+          average: stats.average,
+          responseCount: stats.totalResponseCount,
+          choices: stats.choices,
+          dismissed: { count: stats.dismissed },
+          csat: { satisfiedCount, satisfiedPercentage },
         });
-
-        values = [];
         break;
       }
       case TSurveyElementTypeEnum.CES: {
-        let values: TSurveyElementSummaryCes["choices"] = [];
-        const choiceCountMap: Record<number, number> = {};
-        const range = element.range;
-
-        for (let i = 1; i <= range; i++) {
-          choiceCountMap[i] = 0;
-        }
-
-        let totalResponseCount = 0;
-        let totalRating = 0;
-        let dismissed = 0;
-
-        responses.forEach((response) => {
-          const answer = response.data[element.id];
-          if (typeof answer === "number") {
-            totalResponseCount++;
-            choiceCountMap[answer]++;
-            totalRating += answer;
-          } else if (response.ttc && response.ttc[element.id] > 0) {
-            dismissed++;
-          }
-        });
-
-        Object.entries(choiceCountMap).forEach(([label, count]) => {
-          values.push({
-            rating: Number.parseInt(label),
-            count,
-            percentage:
-              totalResponseCount > 0 ? convertFloatTo2Decimal((count / totalResponseCount) * 100) : 0,
-          });
-        });
+        const stats = computeNumericScaleStats(element.id, element.range, responses);
 
         summary.push({
           type: element.type,
           element,
-          average: totalResponseCount > 0 ? convertFloatTo2Decimal(totalRating / totalResponseCount) : 0,
-          responseCount: totalResponseCount,
-          choices: values,
-          dismissed: {
-            count: dismissed,
-          },
+          average: stats.average,
+          responseCount: stats.totalResponseCount,
+          choices: stats.choices,
+          dismissed: { count: stats.dismissed },
         });
-
-        values = [];
         break;
       }
       case TSurveyElementTypeEnum.CTA: {
