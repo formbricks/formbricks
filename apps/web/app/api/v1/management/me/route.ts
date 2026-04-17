@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import { NextRequest } from "next/server";
 import { prisma } from "@formbricks/database";
 import { getSessionUser } from "@/app/api/v1/management/me/lib/utils";
 import { responses } from "@/app/lib/api/response";
@@ -144,7 +145,7 @@ const isValidApiKeyEnvironment = (apiKeyData: ApiKeyData): boolean => {
   );
 };
 
-const handleApiKeyAuthentication = async (apiKey: string) => {
+const handleApiKeyAuthentication = async (request: NextRequest, apiKey: string) => {
   const apiKeyData = await validateApiKey(apiKey);
 
   if (!apiKeyData) {
@@ -160,8 +161,8 @@ const handleApiKeyAuthentication = async (apiKey: string) => {
 
   if (
     !isRouteRateLimitedByEnvoy({
-      pathname: "/api/v1/management/me",
-      method: "GET",
+      pathname: request.nextUrl.pathname,
+      method: request.method,
       authType: "apiKey",
     })
   ) {
@@ -193,12 +194,12 @@ const handleSessionAuthentication = async () => {
   return Response.json(user);
 };
 
-export const GET = async () => {
+export const GET = async (request: NextRequest) => {
   const headersList = await headers();
   const apiKey = headersList.get("x-api-key");
 
   if (apiKey) {
-    return handleApiKeyAuthentication(apiKey);
+    return handleApiKeyAuthentication(request, apiKey);
   }
 
   return handleSessionAuthentication();
