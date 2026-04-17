@@ -23,15 +23,16 @@ interface ElementMediaProps {
   imgUrl?: string;
   videoUrl?: string;
   altText?: string;
+  className?: string;
 }
 
-export function ElementMedia({ imgUrl, videoUrl, altText = "Image" }: ElementMediaProps) {
+export function ElementMedia({ imgUrl, videoUrl, altText = "Image", className }: ElementMediaProps) {
   const { t } = useTranslation();
   const videoUrlWithParams = videoUrl ? getVideoUrlWithParams(videoUrl) : undefined;
   const [isLoading, setIsLoading] = useState(true);
 
   return (
-    <div className="group/image relative mb-6 block min-h-40 rounded-md">
+    <div className={cn("group/image relative mb-6 block min-h-40 rounded-md", className)}>
       {isLoading ? (
         <div className="absolute inset-auto flex h-full w-full animate-pulse items-center justify-center rounded-md bg-slate-200" />
       ) : null}

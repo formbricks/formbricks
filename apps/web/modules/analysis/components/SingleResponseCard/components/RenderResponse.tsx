@@ -165,10 +165,12 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
           />
         );
       } else if (Array.isArray(responseData)) {
-        const itemsArray = responseData.map((choice) => {
-          const choiceId = getChoiceIdByValue(choice, element);
-          return { value: choice, id: choiceId };
-        });
+        const itemsArray = responseData
+          .filter((choice) => choice !== "")
+          .map((choice) => {
+            const choiceId = getChoiceIdByValue(choice, element);
+            return { value: choice, id: choiceId };
+          });
         return (
           <>
             {element.type === TSurveyElementTypeEnum.Ranking ? (

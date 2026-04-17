@@ -29,6 +29,7 @@ export const ZJsEnvironmentStateSurvey = ZSurveyBase.pick({
   delay: true,
   projectOverwrites: true,
   isBackButtonHidden: true,
+  isAutoProgressingEnabled: true,
   recaptcha: true,
 }).superRefine((survey, ctx) => {
   surveyRefinement(survey as z.infer<typeof ZSurveyBase>, ctx);

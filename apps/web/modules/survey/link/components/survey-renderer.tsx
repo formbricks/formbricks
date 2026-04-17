@@ -9,6 +9,7 @@ import {
   IS_RECAPTCHA_CONFIGURED,
   PRIVACY_URL,
   RECAPTCHA_SITE_KEY,
+  TERMS_URL,
 } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { PinScreen } from "@/modules/survey/link/components/pin-screen";
@@ -141,6 +142,7 @@ export const renderSurvey = async ({
         singleUseResponse={singleUseResponse}
         IMPRINT_URL={IMPRINT_URL}
         PRIVACY_URL={PRIVACY_URL}
+        TERMS_URL={TERMS_URL}
         IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
         verifiedEmail={verifiedEmail}
         languageCode={languageCode}
@@ -173,6 +175,7 @@ export const renderSurvey = async ({
       verifiedEmail={verifiedEmail}
       IMPRINT_URL={IMPRINT_URL}
       PRIVACY_URL={PRIVACY_URL}
+      TERMS_URL={TERMS_URL}
       IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
     />
   );

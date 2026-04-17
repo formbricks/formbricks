@@ -7,18 +7,18 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@/lib/localStorage";
 import { doesSamlConnectionExistAction } from "@/modules/ee/sso/actions";
-import { getCallbackUrl } from "@/modules/ee/sso/lib/utils";
+import { getSsoReturnToUrl } from "@/modules/ee/sso/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 
 interface SamlButtonProps {
-  inviteUrl?: string;
+  returnToUrl?: string;
   lastUsed?: boolean;
   samlTenant: string;
   samlProduct: string;
   source: "signin" | "signup";
 }
 
-export const SamlButton = ({ inviteUrl, lastUsed, samlTenant, samlProduct, source }: SamlButtonProps) => {
+export const SamlButton = ({ returnToUrl, lastUsed, samlTenant, samlProduct, source }: SamlButtonProps) => {
   const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -34,13 +34,13 @@ export const SamlButton = ({ inviteUrl, lastUsed, samlTenant, samlProduct, sourc
       return;
     }
 
-    const callbackUrlWithSource = getCallbackUrl(inviteUrl, source);
+    const returnToUrlWithSource = getSsoReturnToUrl(returnToUrl, source);
 
     signIn(
       "saml",
       {
         redirect: true,
-        callbackUrl: callbackUrlWithSource,
+        callbackUrl: returnToUrlWithSource,
       },
       {
         tenant: samlTenant,

@@ -1,5 +1,7 @@
+import { Prisma } from "@prisma/client";
 import { describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TGetUsersFilter } from "@/modules/api/v2/organizations/[organizationId]/users/types/users";
 import { createUser, getUsers, updateUser } from "../users";
 
@@ -88,6 +90,51 @@ describe("Users Lib", () => {
     test("returns internal_server_error if creation fails", async () => {
       (prisma.user.create as any).mockRejectedValueOnce(new Error("Create error"));
       const result = await createUser({ name: "fail", email: "fail@example.com", role: "manager" }, "org456");
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.type).toBe("internal_server_error");
+      }
+    });
+
+    test("returns conflict error if user with email already exists", async () => {
+      (prisma.user.create as any).mockRejectedValueOnce(
+        new Prisma.PrismaClientKnownRequestError(
+          "Unique constraint failed on the fields: (`email`)",
+          {
+            code: PrismaErrorType.UniqueConstraintViolation,
+            clientVersion: "1.0.0",
+            meta: { target: ["email"] },
+          }
+        )
+      );
+      const result = await createUser(
+        { name: "Duplicate", email: "test@example.com", role: "member" },
+        "org456"
+      );
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.type).toBe("conflict");
+        expect(result.error.details).toEqual([
+          { field: "email", issue: "A user with this email already exists" },
+        ]);
+      }
+    });
+
+    test("returns internal_server_error if unique constraint violation is not on email", async () => {
+      (prisma.user.create as any).mockRejectedValueOnce(
+        new Prisma.PrismaClientKnownRequestError(
+          "Unique constraint failed on the fields: (`organizationId`,`email`)",
+          {
+            code: PrismaErrorType.UniqueConstraintViolation,
+            clientVersion: "1.0.0",
+            meta: { target: ["organizationId"] },
+          }
+        )
+      );
+      const result = await createUser(
+        { name: "Duplicate", email: "test@example.com", role: "member" },
+        "org456"
+      );
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error.type).toBe("internal_server_error");

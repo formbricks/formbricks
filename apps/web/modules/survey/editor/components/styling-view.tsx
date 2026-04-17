@@ -211,11 +211,15 @@ export const StylingView = ({
                 render={({ field }) => (
                   <FormItem className="flex items-center gap-2 space-y-0">
                     <FormControl>
-                      <Switch checked={!!field.value} onCheckedChange={handleOverwriteToggle} />
+                      <Switch
+                        id="overwrite-theme-styling"
+                        checked={!!field.value}
+                        onCheckedChange={handleOverwriteToggle}
+                      />
                     </FormControl>
 
                     <div>
-                      <FormLabel className="text-base font-semibold text-slate-900">
+                      <FormLabel htmlFor="overwrite-theme-styling" className="text-base font-semibold text-slate-900">
                         {t("environments.surveys.edit.add_custom_styles")}
                       </FormLabel>
                       <FormDescription className="text-sm text-slate-800">

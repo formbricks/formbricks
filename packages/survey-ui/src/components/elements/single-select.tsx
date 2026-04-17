@@ -272,6 +272,7 @@ function SingleSelect({
                 onChange={handleOtherInputChange}
                 placeholder={otherOptionPlaceholder}
                 disabled={disabled}
+                aria-invalid={Boolean(errorMessage)}
                 dir={dir}
                 className="mt-2 w-full"
               />
@@ -334,6 +335,7 @@ function SingleSelect({
                       placeholder={otherOptionPlaceholder}
                       disabled={disabled}
                       aria-required={required}
+                      aria-invalid={Boolean(errorMessage)}
                       dir={dir}
                       className="mt-2 w-full"
                     />

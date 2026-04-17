@@ -1,0 +1,38 @@
+---
+title: "Offline Support"
+description: "Allow respondents to complete link surveys even without an internet connection."
+icon: "wifi-slash"
+---
+
+Offline support lets respondents fill out link surveys when they lose connectivity. Responses are stored locally on the device and automatically synced to the server when the connection is restored.
+
+## How it Works
+
+1. When enabled, survey responses are saved to the browser's IndexedDB as the respondent progresses.
+2. If the respondent goes offline, they can continue filling out the survey without interruption.
+3. When the connection is restored, all pending responses are automatically synced to the server.
+4. A status alert is shown at the top of the page to inform the respondent of the current state (offline, syncing, or synced).
+
+<Note>
+  Offline support is only available for **link surveys**. App and website surveys are not affected.
+</Note>
+
+## Enabling Offline Support
+
+Append the `offlineSupport=true` query parameter to your survey link:
+
+```sh
+https://formbricks.com/s/your-survey-id?offlineSupport=true
+```
+
+You can combine it with other query parameters:
+
+```sh
+https://formbricks.com/s/your-survey-id?offlineSupport=true&source=Google&lang=de
+```
+
+## Limitations
+
+- **File uploads** are not supported offline. Text, choice, number, and other non-file responses are fully queued.
+- **Stale data** is automatically discarded after 24 hours if it was never synced.
+- The alert banner is not shown when the survey is embedded via iframe (`isEmbed` mode).

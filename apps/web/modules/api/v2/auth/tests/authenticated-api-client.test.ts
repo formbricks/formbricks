@@ -12,6 +12,10 @@ vi.mock("@/modules/api/v2/lib/utils", () => ({
   logApiRequest: vi.fn(),
 }));
 
+vi.mock("@/lib/posthog", () => ({
+  capturePostHogEvent: vi.fn(),
+}));
+
 describe("authenticatedApiClient", () => {
   beforeEach(() => {
     vi.clearAllMocks();
