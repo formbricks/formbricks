@@ -299,6 +299,12 @@ export const MainNavigation = ({
       hidden: !isFormbricksCloud,
     },
     {
+      id: "feedback-record-directories",
+      label: t("workspace.settings.feedback_record_directories.title"),
+      href: `/workspaces/${workspace.id}/settings/feedback-record-directories`,
+      hidden: !isOwnerOrManager,
+    },
+    {
       id: "enterprise",
       label: t("common.enterprise_license"),
       href: `/workspaces/${workspace.id}/settings/enterprise`,
