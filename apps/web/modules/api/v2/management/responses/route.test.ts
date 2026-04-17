@@ -5,12 +5,12 @@ const {
   mockCreateResponseWithQuotaEvaluation,
   mockCreatedResponse,
   mockFormatValidationErrorsForV2Api,
-  mockGetEnvironmentId,
-  mockGetResponseSnapshotForPipeline,
+  mockGetResponseForPipeline,
   mockGetSurveyQuestions,
+  mockGetWorkspaceId,
   mockHandleApiError,
   mockHasPermission,
-  mockScheduleResponsePipelineEvents,
+  mockSendToPipeline,
   mockValidateFileUploads,
   mockValidateOtherOptionLengthForMultipleChoice,
   mockValidateResponseData,
@@ -19,23 +19,23 @@ const {
   mockCreateResponseWithQuotaEvaluation: vi.fn(),
   mockCreatedResponse: vi.fn(),
   mockFormatValidationErrorsForV2Api: vi.fn(),
-  mockGetEnvironmentId: vi.fn(),
-  mockGetResponseSnapshotForPipeline: vi.fn(),
+  mockGetResponseForPipeline: vi.fn(),
   mockGetSurveyQuestions: vi.fn(),
+  mockGetWorkspaceId: vi.fn(),
   mockHandleApiError: vi.fn(),
   mockHasPermission: vi.fn(),
-  mockScheduleResponsePipelineEvents: vi.fn(),
+  mockSendToPipeline: vi.fn(),
   mockValidateFileUploads: vi.fn(),
   mockValidateOtherOptionLengthForMultipleChoice: vi.fn(),
   mockValidateResponseData: vi.fn(),
 }));
 
 vi.mock("@/app/lib/pipelines", () => ({
-  scheduleResponsePipelineEvents: mockScheduleResponsePipelineEvents,
+  sendToPipeline: mockSendToPipeline,
 }));
 
-vi.mock("@/lib/response/service", () => ({
-  getResponseSnapshotForPipeline: mockGetResponseSnapshotForPipeline,
+vi.mock("@/modules/api/v2/management/responses/[responseId]/lib/response", () => ({
+  getResponseForPipeline: mockGetResponseForPipeline,
 }));
 
 vi.mock("@/modules/api/lib/validation", () => ({
@@ -63,7 +63,7 @@ vi.mock("@/modules/api/v2/lib/utils", () => ({
 }));
 
 vi.mock("@/modules/api/v2/management/lib/helper", () => ({
-  getEnvironmentId: mockGetEnvironmentId,
+  getWorkspaceId: mockGetWorkspaceId,
 }));
 
 vi.mock("@/modules/api/v2/management/responses/[responseId]/lib/survey", () => ({
@@ -84,7 +84,7 @@ vi.mock("./lib/response", () => ({
   getResponses: vi.fn(),
 }));
 
-const environmentId = "cm9environment000108l4abcz12";
+const workspaceId = "cm9workspace000108l4abcz12";
 const surveyId = "cm9survey000108l4abcz12zz";
 const responseId = "cm9response000108l4abcz12";
 const createdAt = new Date("2026-04-13T10:00:00.000Z");
@@ -135,7 +135,7 @@ describe("POST /modules/api/v2/management/responses", () => {
         await handler({
           auditLog: undefined,
           authentication: {
-            environmentPermissions: [{ environmentId, actions: ["POST"] }],
+            workspacePermissions: [{ workspaceId, actions: ["POST"] }],
           },
           parsedInput: {
             body: {
@@ -146,32 +146,37 @@ describe("POST /modules/api/v2/management/responses", () => {
           },
         })
     );
-    mockGetEnvironmentId.mockResolvedValue({ data: environmentId, ok: true });
+    mockGetWorkspaceId.mockResolvedValue({ data: { workspaceId }, ok: true });
     mockHasPermission.mockReturnValue(true);
     mockGetSurveyQuestions.mockResolvedValue({ data: { blocks: [], questions: [] }, ok: true });
     mockValidateFileUploads.mockReturnValue(true);
     mockValidateOtherOptionLengthForMultipleChoice.mockReturnValue(undefined);
     mockValidateResponseData.mockReturnValue(null);
     mockCreateResponseWithQuotaEvaluation.mockResolvedValue({ data: createdResponse, ok: true });
-    mockGetResponseSnapshotForPipeline.mockResolvedValue(responseSnapshot);
+    mockGetResponseForPipeline.mockResolvedValue({ data: responseSnapshot, ok: true });
     mockCreatedResponse.mockImplementation((body: unknown) => Response.json(body, { status: 201 }));
     mockHandleApiError.mockImplementation((_, error) => Response.json({ error }, { status: 400 }));
   });
 
-  test("passes the freshly hydrated response snapshot to the pipeline scheduler", async () => {
+  test("passes the freshly hydrated response snapshot to the pipeline", async () => {
     const { POST } = await import("./route");
     const response = await POST(
       new Request("http://localhost/api/v2/management/responses", { method: "POST" })
     );
 
     expect(response.status).toBe(201);
-    expect(mockGetResponseSnapshotForPipeline).toHaveBeenCalledWith(responseId);
-    expect(mockScheduleResponsePipelineEvents).toHaveBeenCalledWith({
-      environmentId,
-      events: ["responseCreated", "responseFinished"],
+    expect(mockGetResponseForPipeline).toHaveBeenCalledWith(responseId);
+    expect(mockSendToPipeline).toHaveBeenNthCalledWith(1, {
+      event: "responseCreated",
       response: responseSnapshot,
-      responseId,
       surveyId,
+      workspaceId,
+    });
+    expect(mockSendToPipeline).toHaveBeenNthCalledWith(2, {
+      event: "responseFinished",
+      response: responseSnapshot,
+      surveyId,
+      workspaceId,
     });
   });
 });
