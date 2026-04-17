@@ -3,6 +3,8 @@ import { TConnectorWithMappings } from "@formbricks/types/connector";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
+vi.mock("server-only", () => ({}));
+
 const mockCreateFeedbackRecordsBatch = vi.fn();
 
 vi.mock("@/modules/hub", () => ({
@@ -54,6 +56,7 @@ function createConnector(
     type: "formbricks",
     status: "active",
     workspaceId: "env-1",
+    feedbackRecordDirectoryId: "frd-1",
     lastSyncAt: null,
     formbricksMappings: [
       {
@@ -117,7 +120,7 @@ describe("handleConnectorPipeline", () => {
       mockResponse,
       mockSurvey,
       connector.formbricksMappings,
-      "env-1"
+      "frd-1"
     );
     expect(mockCreateFeedbackRecordsBatch).not.toHaveBeenCalled();
     expect(updateConnector).not.toHaveBeenCalled();

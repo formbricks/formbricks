@@ -25,12 +25,14 @@ interface ConnectorsSectionProps {
   workspaceId: string;
   initialConnectors: TConnectorWithMappings[];
   initialSurveys: TUnifySurvey[];
+  directories: { id: string; name: string }[];
 }
 
 export function ConnectorsSection({
   workspaceId,
   initialConnectors,
   initialSurveys,
+  directories,
 }: ConnectorsSectionProps) {
   const { t } = useTranslation();
   const router = useRouter();
@@ -41,6 +43,7 @@ export function ConnectorsSection({
   const handleCreateConnector = async (data: {
     name: string;
     type: TConnectorType;
+    feedbackRecordDirectoryId: string;
     surveyMappings?: { surveyId: string; elementIds: string[] }[];
     fieldMappings?: TFieldMapping[];
   }): Promise<string | undefined> => {
@@ -49,6 +52,7 @@ export function ConnectorsSection({
       connectorInput: {
         name: data.name,
         type: data.type,
+        feedbackRecordDirectoryId: data.feedbackRecordDirectoryId,
       },
       formbricksMappings:
         data.type === "formbricks" && data.surveyMappings?.length ? data.surveyMappings : undefined,
@@ -159,6 +163,7 @@ export function ConnectorsSection({
             onCreateConnector={handleCreateConnector}
             surveys={initialSurveys}
             workspaceId={workspaceId}
+            directories={directories}
           />
         }>
         <UnifyConfigNavigation workspaceId={workspaceId} activeId="sources" />
@@ -182,6 +187,7 @@ export function ConnectorsSection({
         onOpenChange={(open) => !open && setEditingConnector(null)}
         onUpdateConnector={handleUpdateConnector}
         surveys={initialSurveys}
+        directories={directories}
         onOpenCsvImport={() => {
           if (editingConnector) {
             setCsvImportConnector(editingConnector);

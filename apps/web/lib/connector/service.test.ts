@@ -39,6 +39,7 @@ vi.mock("@/lib/utils/validate", () => ({
 const ENV_ID = "clxxxxxxxxxxxxxxxx001";
 const CONNECTOR_ID = "clxxxxxxxxxxxxxxxx002";
 const SURVEY_ID = "clxxxxxxxxxxxxxxxx003";
+const FRD_ID = "clxxxxxxxxxxxxxxxx004";
 const NOW = new Date("2026-02-24T10:00:00.000Z");
 
 const mockConnector = {
@@ -300,11 +301,15 @@ describe("createConnectorWithMappings", () => {
     tx.connector.create.mockResolvedValue({ id: CONNECTOR_ID, workspaceId: ENV_ID });
     tx.connector.findUniqueOrThrow.mockResolvedValue(mockConnectorWithMappingsFromDb);
 
-    const result = await createConnectorWithMappings(ENV_ID, { name: "New", type: "formbricks" });
+    const result = await createConnectorWithMappings(ENV_ID, {
+      name: "New",
+      type: "formbricks",
+      feedbackRecordDirectoryId: FRD_ID,
+    });
 
     expect(tx.connector.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: { name: "New", type: "formbricks", workspaceId: ENV_ID },
+        data: { name: "New", type: "formbricks", workspaceId: ENV_ID, feedbackRecordDirectoryId: FRD_ID },
       })
     );
     expect(tx.connectorFormbricksMapping.create).not.toHaveBeenCalled();
@@ -320,7 +325,7 @@ describe("createConnectorWithMappings", () => {
 
     await createConnectorWithMappings(
       ENV_ID,
-      { name: "FB", type: "formbricks" },
+      { name: "FB", type: "formbricks", feedbackRecordDirectoryId: FRD_ID },
       {
         type: "formbricks",
         mappings: [
@@ -356,7 +361,7 @@ describe("createConnectorWithMappings", () => {
 
     await createConnectorWithMappings(
       ENV_ID,
-      { name: "CSV", type: "csv" },
+      { name: "CSV", type: "csv", feedbackRecordDirectoryId: FRD_ID },
       {
         type: "field",
         mappings: [{ sourceFieldId: "col-1", targetFieldId: "value_text" }],
@@ -384,9 +389,13 @@ describe("createConnectorWithMappings", () => {
       })
     );
 
-    await expect(createConnectorWithMappings(ENV_ID, { name: "Dup", type: "formbricks" })).rejects.toThrow(
-      InvalidInputError
-    );
+    await expect(
+      createConnectorWithMappings(ENV_ID, {
+        name: "Dup",
+        type: "formbricks",
+        feedbackRecordDirectoryId: FRD_ID,
+      })
+    ).rejects.toThrow(InvalidInputError);
   });
 
   test("throws DatabaseError on generic Prisma error", async () => {
@@ -397,9 +406,9 @@ describe("createConnectorWithMappings", () => {
       })
     );
 
-    await expect(createConnectorWithMappings(ENV_ID, { name: "Fail", type: "csv" })).rejects.toThrow(
-      DatabaseError
-    );
+    await expect(
+      createConnectorWithMappings(ENV_ID, { name: "Fail", type: "csv", feedbackRecordDirectoryId: FRD_ID })
+    ).rejects.toThrow(DatabaseError);
   });
 });
 

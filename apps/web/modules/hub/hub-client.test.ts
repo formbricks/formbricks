@@ -1,8 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import FormbricksHub from "@formbricks/hub";
 
+vi.mock("server-only", () => ({}));
+
 vi.mock("@formbricks/hub", () => {
-  const MockFormbricksHub = vi.fn();
+  // Must use `function` (not arrow) so it's valid as a `new` target.
+  const MockFormbricksHub = vi.fn(function () {});
   return { default: MockFormbricksHub };
 });
 
@@ -40,7 +43,9 @@ describe("getHubClient", () => {
   test("creates and caches a new client when HUB_API_KEY is set", async () => {
     mutableEnv.HUB_API_KEY = "test-key";
     const mockInstance = { feedbackRecords: {} } as unknown as FormbricksHub;
-    vi.mocked(FormbricksHub).mockReturnValue(mockInstance);
+    vi.mocked(FormbricksHub).mockImplementation(function () {
+      return mockInstance as any;
+    });
 
     const { getHubClient } = await import("./hub-client");
     const client = getHubClient();
@@ -71,7 +76,9 @@ describe("getHubClient", () => {
 
     mutableEnv.HUB_API_KEY = "now-set";
     const mockInstance = { feedbackRecords: {} } as unknown as FormbricksHub;
-    vi.mocked(FormbricksHub).mockReturnValue(mockInstance);
+    vi.mocked(FormbricksHub).mockImplementation(function () {
+      return mockInstance as any;
+    });
 
     const second = getHubClient();
     expect(second).toBe(mockInstance);

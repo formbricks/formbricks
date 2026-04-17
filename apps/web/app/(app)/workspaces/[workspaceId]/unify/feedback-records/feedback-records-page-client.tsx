@@ -9,12 +9,16 @@ import { FeedbackRecordsTable } from "./feedback-records-table";
 
 interface FeedbackRecordsPageClientProps {
   workspaceId: string;
+  directories: { id: string; name: string }[];
+  initialFrdId: string | null;
   initialRecords: FeedbackRecordData[];
   initialNextCursor?: string;
 }
 
 export function FeedbackRecordsPageClient({
   workspaceId,
+  directories,
+  initialFrdId,
   initialRecords,
   initialNextCursor,
 }: FeedbackRecordsPageClientProps) {
@@ -28,6 +32,8 @@ export function FeedbackRecordsPageClient({
 
       <FeedbackRecordsTable
         workspaceId={workspaceId}
+        directories={directories}
+        initialFrdId={initialFrdId}
         initialRecords={initialRecords}
         initialNextCursor={initialNextCursor}
       />

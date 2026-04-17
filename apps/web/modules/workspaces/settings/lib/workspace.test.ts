@@ -38,6 +38,13 @@ vi.mock("@formbricks/database", () => ({
     workspaceTeam: {
       createMany: vi.fn(),
     },
+    feedbackRecordDirectory: {
+      upsert: vi.fn(),
+    },
+    feedbackRecordDirectoryWorkspace: {
+      count: vi.fn(),
+      create: vi.fn(),
+    },
   },
 }));
 
@@ -94,10 +101,50 @@ describe("workspace lib", () => {
       const createdWorkspace = { ...baseWorkspace, id: "p2" };
       vi.mocked(prisma.workspace.create).mockResolvedValueOnce(createdWorkspace as any);
       vi.mocked(prisma.workspaceTeam.createMany).mockResolvedValueOnce({} as any);
+      vi.mocked(prisma.feedbackRecordDirectory.upsert).mockResolvedValueOnce({ id: "frd-1" } as any);
+      vi.mocked(prisma.feedbackRecordDirectoryWorkspace.count).mockResolvedValueOnce(0);
+      vi.mocked(prisma.feedbackRecordDirectoryWorkspace.create).mockResolvedValueOnce({} as any);
       const result = await createWorkspace("org1", { name: "Workspace 1", teamIds: ["t1"] });
       expect(result).toEqual(createdWorkspace);
       expect(prisma.workspace.create).toHaveBeenCalled();
       expect(prisma.workspaceTeam.createMany).toHaveBeenCalled();
+      expect(prisma.feedbackRecordDirectory.upsert).toHaveBeenCalled();
+    });
+
+    test("creates workspace and links default FRD when first workspace", async () => {
+      const createdWorkspace = { ...baseWorkspace, id: "p3" };
+      vi.mocked(prisma.workspace.create).mockResolvedValueOnce(createdWorkspace as any);
+      vi.mocked(prisma.feedbackRecordDirectory.upsert).mockResolvedValueOnce({ id: "frd-1" } as any);
+      vi.mocked(prisma.feedbackRecordDirectoryWorkspace.count).mockResolvedValueOnce(0);
+      vi.mocked(prisma.feedbackRecordDirectoryWorkspace.create).mockResolvedValueOnce({} as any);
+
+      await createWorkspace("org1", { name: "Workspace No Teams" });
+
+      expect(prisma.feedbackRecordDirectory.upsert).toHaveBeenCalledWith({
+        where: {
+          organizationId_name: { organizationId: "org1", name: "Default Feedback Record Directory" },
+        },
+        create: { name: "Default Feedback Record Directory", organizationId: "org1" },
+        update: {},
+        select: { id: true },
+      });
+      expect(prisma.feedbackRecordDirectoryWorkspace.count).toHaveBeenCalledWith({
+        where: { feedbackRecordDirectoryId: "frd-1" },
+      });
+      expect(prisma.feedbackRecordDirectoryWorkspace.create).toHaveBeenCalledWith({
+        data: { feedbackRecordDirectoryId: "frd-1", workspaceId: "p3" },
+      });
+    });
+
+    test("skips FRD link when default FRD already has links", async () => {
+      const createdWorkspace = { ...baseWorkspace, id: "p4" };
+      vi.mocked(prisma.workspace.create).mockResolvedValueOnce(createdWorkspace as any);
+      vi.mocked(prisma.feedbackRecordDirectory.upsert).mockResolvedValueOnce({ id: "frd-1" } as any);
+      vi.mocked(prisma.feedbackRecordDirectoryWorkspace.count).mockResolvedValueOnce(1);
+
+      await createWorkspace("org1", { name: "Second Workspace" });
+
+      expect(prisma.feedbackRecordDirectoryWorkspace.create).not.toHaveBeenCalled();
     });
 
     test("throws ValidationError if name is missing", async () => {

@@ -22,6 +22,7 @@ import {
   getWorkspaceIdFromContactId,
   getWorkspaceIdFromIntegrationId,
   getWorkspaceIdFromLanguageId,
+  getWorkspaceIdFromQuotaId,
   getWorkspaceIdFromResponseId,
   getWorkspaceIdFromSegmentId,
   getWorkspaceIdFromSurveyId,
@@ -328,22 +329,18 @@ describe("Helper Utilities", () => {
       expect(orgId).toBe("org1");
     });
 
-    test("getOrganizationIdFromConnectorId returns organization ID through environment and project", async () => {
+    test("getOrganizationIdFromConnectorId returns organization ID through workspace", async () => {
       vi.mocked(services.getConnector).mockResolvedValueOnce({
-        environmentId: "env1",
+        workspaceId: "workspace1",
       });
-      vi.mocked(services.getEnvironment).mockResolvedValueOnce({
-        projectId: "project1",
-      });
-      vi.mocked(services.getProject).mockResolvedValueOnce({
+      vi.mocked(services.getWorkspace).mockResolvedValueOnce({
         organizationId: "org1",
       });
 
       const orgId = await getOrganizationIdFromConnectorId("connector1");
       expect(orgId).toBe("org1");
       expect(services.getConnector).toHaveBeenCalledWith("connector1");
-      expect(services.getEnvironment).toHaveBeenCalledWith("env1");
-      expect(services.getProject).toHaveBeenCalledWith("project1");
+      expect(services.getWorkspace).toHaveBeenCalledWith("workspace1");
     });
 
     test("getOrganizationIdFromConnectorId throws error when connector not found", async () => {
@@ -493,90 +490,8 @@ describe("Helper Utilities", () => {
         workspaceId: "workspace1",
       });
 
-      const projectId = await getProjectIdFromQuotaId("quota1");
-      expect(projectId).toBe("project1");
-    });
-
-    test("getProjectIdFromConnectorId returns project ID through environment", async () => {
-      vi.mocked(services.getConnector).mockResolvedValueOnce({
-        environmentId: "env1",
-      });
-      vi.mocked(services.getEnvironment).mockResolvedValueOnce({
-        projectId: "project1",
-      });
-
-      const projectId = await getProjectIdFromConnectorId("connector1");
-      expect(projectId).toBe("project1");
-      expect(services.getConnector).toHaveBeenCalledWith("connector1");
-      expect(services.getEnvironment).toHaveBeenCalledWith("env1");
-    });
-
-    test("getProjectIdFromConnectorId throws error when connector not found", async () => {
-      vi.mocked(services.getConnector).mockResolvedValueOnce(null);
-
-      await expect(getProjectIdFromConnectorId("nonexistent")).rejects.toThrow(ResourceNotFoundError);
-      expect(services.getConnector).toHaveBeenCalledWith("nonexistent");
-    });
-  });
-
-  describe("Environment ID retrieval functions", () => {
-    test("getEnvironmentIdFromSurveyId returns environment ID directly", async () => {
-      vi.mocked(services.getSurvey).mockResolvedValueOnce({
-        environmentId: "env1",
-      });
-
-      const environmentId = await getEnvironmentIdFromSurveyId("survey1");
-      expect(environmentId).toBe("env1");
-    });
-
-    test("getEnvironmentIdFromSurveyId throws error when survey not found", async () => {
-      vi.mocked(services.getSurvey).mockResolvedValueOnce(null);
-      await expect(getEnvironmentIdFromSurveyId("nonexistent")).rejects.toThrow(ResourceNotFoundError);
-    });
-
-    test("getEnvironmentIdFromResponseId returns environment ID correctly", async () => {
-      vi.mocked(services.getResponse).mockResolvedValueOnce({
-        surveyId: "survey1",
-      });
-      vi.mocked(services.getSurvey).mockResolvedValueOnce({
-        environmentId: "env1",
-      });
-
-      const environmentId = await getEnvironmentIdFromResponseId("response1");
-      expect(environmentId).toBe("env1");
-    });
-
-    test("getEnvironmentIdFromResponseId throws error when response not found", async () => {
-      vi.mocked(services.getResponse).mockResolvedValueOnce(null);
-      await expect(getEnvironmentIdFromResponseId("nonexistent")).rejects.toThrow(ResourceNotFoundError);
-    });
-
-    test("getEnvironmentIdFromSegmentId returns environment ID directly", async () => {
-      vi.mocked(services.getSegment).mockResolvedValueOnce({
-        environmentId: "env1",
-      });
-
-      const environmentId = await getEnvironmentIdFromSegmentId("segment1");
-      expect(environmentId).toBe("env1");
-    });
-
-    test("getEnvironmentIdFromSegmentId throws error when segment not found", async () => {
-      vi.mocked(services.getSegment).mockResolvedValueOnce(null);
-      await expect(getEnvironmentIdFromSegmentId("nonexistent")).rejects.toThrow(ResourceNotFoundError);
-    });
-
-    test("getEnvironmentIdFromTagId returns environment ID directly", async () => {
-      vi.mocked(services.getTag).mockResolvedValueOnce({
-        environmentId: "env1",
-      });
-
-      const environmentId = await getEnvironmentIdFromTagId("tag1");
-      expect(environmentId).toBe("env1");
-    });
-
-    test("getEnvironmentIdFromTagId throws error when tag not found", async () => {
-      vi.mocked(services.getTag).mockResolvedValueOnce(null);
-      await expect(getEnvironmentIdFromTagId("nonexistent")).rejects.toThrow(ResourceNotFoundError);
+      const workspaceId = await getWorkspaceIdFromQuotaId("quota1");
+      expect(workspaceId).toBe("workspace1");
     });
   });
 

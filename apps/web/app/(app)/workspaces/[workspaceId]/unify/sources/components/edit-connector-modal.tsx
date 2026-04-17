@@ -38,6 +38,7 @@ interface EditConnectorModalProps {
     fieldMappings?: TFieldMapping[];
   }) => Promise<void>;
   surveys: TUnifySurvey[];
+  directories: { id: string; name: string }[];
   onOpenCsvImport?: () => void;
 }
 
@@ -80,6 +81,7 @@ export const EditConnectorModal = ({
   onOpenChange,
   onUpdateConnector,
   surveys,
+  directories,
   onOpenCsvImport,
 }: EditConnectorModalProps) => {
   const { t } = useTranslation();
@@ -202,6 +204,11 @@ export const EditConnectorModal = ({
     handleOpenChange(false);
   };
 
+  const assignedDirectoryName =
+    directories.find((d) => d.id === connector?.feedbackRecordDirectoryId)?.name ??
+    connector?.feedbackRecordDirectoryId ??
+    "—";
+
   const saveChangesDisbaled = useMemo(() => {
     if (!connector) return true;
     if (!connectorName.trim()) return true;
@@ -244,6 +251,12 @@ export const EditConnectorModal = ({
               onChange={(e) => setConnectorName(e.target.value)}
               placeholder={t("workspace.unify.enter_name_for_source")}
             />
+          </div>
+
+          <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
+            {t("workspace.unify.records_will_go_to")}{" "}
+            <span className="font-medium text-slate-900">{assignedDirectoryName}</span>
+            <p className="mt-1 text-xs text-slate-400">{t("workspace.unify.frd_cannot_be_changed")}</p>
           </div>
 
           {connector.type === "formbricks" ? (

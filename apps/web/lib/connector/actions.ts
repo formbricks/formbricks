@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import {
@@ -23,7 +24,7 @@ import {
   getOrganizationIdFromSurveyId,
   getOrganizationIdFromWorkspaceId,
 } from "@/lib/utils/helper";
-import { getTranslate } from "@/lingodotdev/server";
+import { getFeedbackRecordDirectoriesByWorkspaceId } from "@/modules/ee/feedback-record-directory/lib/feedback-record-directory";
 import { listFeedbackRecords } from "@/modules/hub/service";
 import type { FeedbackRecordListParams, FeedbackRecordListResponse } from "@/modules/hub/types";
 import { importCsvData } from "./csv-import";
@@ -43,7 +44,7 @@ const ZDeleteConnectorAction = z.object({
 });
 
 export const deleteConnectorAction = authenticatedActionClient
-  .schema(ZDeleteConnectorAction)
+  .inputSchema(ZDeleteConnectorAction)
   .action(
     async ({
       ctx,
@@ -126,7 +127,7 @@ const ZCreateConnectorWithMappingsAction = z
     if (data.connectorInput.type === "formbricks") {
       if (!data.formbricksMappings?.length) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           path: ["formbricksMappings"],
           message: "At least one survey mapping is required for Formbricks connectors",
         });
@@ -134,7 +135,7 @@ const ZCreateConnectorWithMappingsAction = z
     } else if (data.connectorInput.type === "csv") {
       if (!data.fieldMappings?.length) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           path: ["fieldMappings"],
           message: "At least one field mapping is required for CSV connectors",
         });
@@ -143,58 +144,59 @@ const ZCreateConnectorWithMappingsAction = z
   });
 
 export const createConnectorWithMappingsAction = authenticatedActionClient
-  .schema(ZCreateConnectorWithMappingsAction)
-  .action(
-    async ({
-      ctx,
-      parsedInput,
-    }: {
-      ctx: AuthenticatedActionClientCtx;
-      parsedInput: z.infer<typeof ZCreateConnectorWithMappingsAction>;
-    }): Promise<TConnectorWithMappings> => {
-      const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "workspaceTeam",
-            minPermission: "readWrite",
-            workspaceId: parsedInput.workspaceId,
-          },
-        ],
-      });
+  .inputSchema(ZCreateConnectorWithMappingsAction)
+  .action(async ({ ctx, parsedInput }): Promise<TConnectorWithMappings> => {
+    const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "workspaceTeam",
+          minPermission: "readWrite",
+          workspaceId: parsedInput.workspaceId,
+        },
+      ],
+    });
 
-      let mappingsInput: TMappingsInput | undefined;
-
-      const { formbricksMappings, fieldMappings } = parsedInput;
-
-      if (formbricksMappings?.length) {
-        await Promise.all(
-          formbricksMappings.map(async ({ surveyId }) => {
-            const orgId = await getOrganizationIdFromSurveyId(surveyId);
-            if (orgId !== organizationId) {
-              throw new AuthorizationError("You are not authorized to access this survey");
-            }
-          })
-        );
-
-        mappingsInput = await resolveFormbricksMappingsInput(formbricksMappings);
-      } else if (fieldMappings?.length) {
-        mappingsInput = { type: "field", mappings: fieldMappings };
-      }
-
-      return createConnectorWithMappings(
-        parsedInput.workspaceId,
-        { ...parsedInput.connectorInput, createdBy: ctx.user.id },
-        mappingsInput
-      );
+    // Verify FRD belongs to same org
+    const frd = await prisma.feedbackRecordDirectory.findUnique({
+      where: { id: parsedInput.connectorInput.feedbackRecordDirectoryId },
+      select: { organizationId: true },
+    });
+    if (frd?.organizationId !== organizationId) {
+      throw new AuthorizationError("Invalid feedback record directory");
     }
-  );
+
+    let mappingsInput: TMappingsInput | undefined;
+
+    const { formbricksMappings, fieldMappings } = parsedInput;
+
+    if (formbricksMappings?.length) {
+      await Promise.all(
+        formbricksMappings.map(async ({ surveyId }) => {
+          const orgId = await getOrganizationIdFromSurveyId(surveyId);
+          if (orgId !== organizationId) {
+            throw new AuthorizationError("You are not authorized to access this survey");
+          }
+        })
+      );
+
+      mappingsInput = await resolveFormbricksMappingsInput(formbricksMappings);
+    } else if (fieldMappings?.length) {
+      mappingsInput = { type: "field", mappings: fieldMappings };
+    }
+
+    return createConnectorWithMappings(
+      parsedInput.workspaceId,
+      { ...parsedInput.connectorInput, createdBy: ctx.user.id },
+      mappingsInput
+    );
+  });
 
 const ZUpdateConnectorWithMappingsAction = z.object({
   connectorId: ZId,
@@ -205,7 +207,7 @@ const ZUpdateConnectorWithMappingsAction = z.object({
 });
 
 export const updateConnectorWithMappingsAction = authenticatedActionClient
-  .schema(ZUpdateConnectorWithMappingsAction)
+  .inputSchema(ZUpdateConnectorWithMappingsAction)
   .action(
     async ({
       ctx,
@@ -263,7 +265,7 @@ const ZDuplicateConnectorAction = z.object({
 });
 
 export const duplicateConnectorAction = authenticatedActionClient
-  .schema(ZDuplicateConnectorAction)
+  .inputSchema(ZDuplicateConnectorAction)
   .action(
     async ({
       ctx,
@@ -319,7 +321,12 @@ export const duplicateConnectorAction = authenticatedActionClient
 
       return createConnectorWithMappings(
         parsedInput.workspaceId,
-        { name: `${source.name} (copy)`, type: source.type, createdBy: ctx.user.id },
+        {
+          name: `${source.name} (copy)`,
+          type: source.type,
+          feedbackRecordDirectoryId: source.feedbackRecordDirectoryId,
+          createdBy: ctx.user.id,
+        },
         mappingsInput
       );
     }
@@ -331,7 +338,7 @@ const ZGetResponseCountAction = z.object({
 });
 
 export const getResponseCountAction = authenticatedActionClient
-  .schema(ZGetResponseCountAction)
+  .inputSchema(ZGetResponseCountAction)
   .action(
     async ({
       ctx,
@@ -368,7 +375,7 @@ const ZImportHistoricalResponsesAction = z.object({
 });
 
 export const importHistoricalResponsesAction = authenticatedActionClient
-  .schema(ZImportHistoricalResponsesAction)
+  .inputSchema(ZImportHistoricalResponsesAction)
   .action(
     async ({
       ctx,
@@ -415,7 +422,7 @@ const ZImportCsvDataAction = z.object({
 });
 
 export const importCsvDataAction = authenticatedActionClient
-  .schema(ZImportCsvDataAction)
+  .inputSchema(ZImportCsvDataAction)
   .action(
     async ({
       ctx,
@@ -460,6 +467,7 @@ export const importCsvDataAction = authenticatedActionClient
 
 const ZListFeedbackRecordsAction = z.object({
   workspaceId: ZId,
+  frdId: ZId,
   limit: z.number().min(1).max(1000).optional(),
   cursor: z.string().optional(),
   sourceType: z.string().optional(),
@@ -497,8 +505,14 @@ export const listFeedbackRecordsAction = authenticatedActionClient
         ],
       });
 
+      // Verify FRD belongs to workspace's accessible FRDs
+      const frds = await getFeedbackRecordDirectoriesByWorkspaceId(parsedInput.workspaceId);
+      if (!frds.some((f) => f.id === parsedInput.frdId)) {
+        throw new Error("Feedback record directory not accessible");
+      }
+
       const params: FeedbackRecordListParams = {
-        tenant_id: parsedInput.workspaceId,
+        tenant_id: parsedInput.frdId,
         limit: parsedInput.limit ?? 50,
       };
       if (parsedInput.cursor) params.cursor = parsedInput.cursor;
@@ -510,8 +524,7 @@ export const listFeedbackRecordsAction = authenticatedActionClient
       const result = await listFeedbackRecords(params);
       if (result.error || !result.data) {
         logger.warn({ error: result.error }, "Failed to list feedback records");
-        const t = await getTranslate();
-        throw new Error(result.error?.message ?? t("workspace.unify.failed_to_load_feedback_records"));
+        throw new Error(result.error?.message ?? "Failed to load feedback records");
       }
 
       return result.data;
