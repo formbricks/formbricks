@@ -4,7 +4,6 @@ import { getSessionUser } from "@/app/api/v1/management/me/lib/utils";
 import { responses } from "@/app/lib/api/response";
 import { CONTROL_HASH } from "@/lib/constants";
 import { hashSha256, parseApiKeyV2, verifySecret } from "@/lib/crypto";
-import { isRouteRateLimitedByEnvoy } from "@/modules/core/rate-limit/envoy-rate-limit-coverage";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 
@@ -158,17 +157,7 @@ const handleApiKeyAuthentication = async (apiKey: string) => {
     });
   }
 
-  if (
-    !isRouteRateLimitedByEnvoy({
-      pathname: "/api/v1/management/me",
-      method: "GET",
-      authType: "apiKey",
-    })
-  ) {
-    const rateLimitError = await checkRateLimit(apiKeyData.id);
-    if (rateLimitError) return rateLimitError;
-  }
-
+  // Rate limiting for apiKey auth is enforced by Envoy in v5 — see envoy-rate-limit-coverage.ts
   if (!isValidApiKeyEnvironment(apiKeyData)) {
     return responses.badRequestResponse("You can't use this method with this API key");
   }

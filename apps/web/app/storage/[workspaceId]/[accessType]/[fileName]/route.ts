@@ -7,7 +7,6 @@ import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { authorizePrivateDownload } from "@/app/storage/[workspaceId]/[accessType]/[fileName]/lib/auth";
 import { resolveClientApiIds } from "@/lib/utils/resolve-client-id";
 import { authOptions } from "@/modules/auth/lib/authOptions";
-import { isRouteRateLimitedByEnvoy } from "@/modules/core/rate-limit/envoy-rate-limit-coverage";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { deleteFile, getFileStreamForDownload } from "@/modules/storage/service";
@@ -122,21 +121,10 @@ export const DELETE = async (
       : responses.notAuthenticatedResponse();
   }
 
-  if (authResult.ok) {
+  // Rate limiting for apiKey DELETE is enforced by Envoy in v5 — see envoy-rate-limit-coverage.ts
+  if (authResult.ok && authResult.data.authType !== "apiKey") {
     try {
-      if (authResult.data.authType === "apiKey") {
-        if (
-          !isRouteRateLimitedByEnvoy({
-            pathname: request.nextUrl.pathname,
-            method: request.method,
-            authType: "apiKey",
-          })
-        ) {
-          await applyRateLimit(rateLimitConfigs.storage.delete, authResult.data.apiKeyId);
-        }
-      } else {
-        await applyRateLimit(rateLimitConfigs.storage.delete, authResult.data.userId);
-      }
+      await applyRateLimit(rateLimitConfigs.storage.delete, authResult.data.userId);
     } catch (error) {
       return responses.tooManyRequestsResponse(
         error instanceof Error ? error.message : "Unknown error occurred"
