@@ -129,6 +129,11 @@ export class RecallNode extends DecoratorNode<ReactNode> {
     writable.__fallbackValue = fallbackValue;
   }
 
+  setRecallItemLabel(label: string): void {
+    const writable = this.getWritable();
+    writable.__recallItem = { ...writable.__recallItem, label };
+  }
+
   getTextContent(): string {
     return `#recall:${this.__recallItem.id}/fallback:${this.__fallbackValue}#`;
   }

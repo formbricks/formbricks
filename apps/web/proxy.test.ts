@@ -29,7 +29,19 @@ vi.mock("@/lib/constants", () => ({
 }));
 
 vi.mock("@/lib/utils/url", () => ({
-  isValidCallbackUrl: (url: string) => url.startsWith("http://localhost:3000"),
+  getValidatedCallbackUrl: (url: string | null, webAppUrl: string) => {
+    if (!url) {
+      return null;
+    }
+
+    try {
+      const parsedWebAppUrl = new URL(webAppUrl);
+      const parsedUrl = new URL(url, parsedWebAppUrl.origin);
+      return parsedUrl.origin === parsedWebAppUrl.origin ? parsedUrl.toString() : null;
+    } catch {
+      return null;
+    }
+  },
 }));
 
 vi.mock("@formbricks/logger", () => ({
@@ -61,6 +73,19 @@ describe("proxy", () => {
 
     const response = await proxy(
       new NextRequest("http://localhost:3000/auth/login?callbackUrl=https%3A%2F%2Fevil.example")
+    );
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ error: "Invalid callback URL" });
+  });
+
+  test("rejects callback URLs that only match the hostname on a different port", async () => {
+    mockGetProxySession.mockResolvedValue(null);
+
+    const response = await proxy(
+      new NextRequest(
+        "http://localhost:3000/auth/login?callbackUrl=http%3A%2F%2Flocalhost%3A4000%2Fenvironments%2Ftest"
+      )
     );
 
     expect(response.status).toBe(400);

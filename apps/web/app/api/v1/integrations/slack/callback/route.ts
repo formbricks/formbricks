@@ -1,3 +1,4 @@
+import { logger } from "@formbricks/logger";
 import {
   TIntegrationSlackConfig,
   TIntegrationSlackConfigData,
@@ -8,6 +9,8 @@ import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, SLACK_REDIRECT_URI, WEBAPP_URL } from "@/lib/constants";
 import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { createOrUpdateIntegration, getIntegrationByType } from "@/lib/integration/service";
+import { capturePostHogEvent } from "@/lib/posthog";
+import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
 
 export const GET = withV1ApiWrapper({
   handler: async ({ req, authentication }) => {
@@ -104,6 +107,16 @@ export const GET = withV1ApiWrapper({
       const result = await createOrUpdateIntegration(environmentId, integration);
 
       if (result) {
+        try {
+          const organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
+          capturePostHogEvent(authentication.user.id, "integration_connected", {
+            integration_type: "slack",
+            organization_id: organizationId,
+          });
+        } catch (err) {
+          logger.error({ error: err }, "Failed to capture PostHog integration_connected event for slack");
+        }
+
         return {
           response: Response.redirect(
             `${WEBAPP_URL}/environments/${environmentId}/workspace/integrations/slack`

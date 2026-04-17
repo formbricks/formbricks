@@ -1,6 +1,6 @@
 import { UAParser } from "ua-parser-js";
 import { ZEnvironmentId } from "@formbricks/types/environment";
-import { InvalidInputError } from "@formbricks/types/errors";
+import { InvalidInputError, UniqueConstraintError } from "@formbricks/types/errors";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { checkSurveyValidity } from "@/app/api/v2/client/[environmentId]/responses/lib/utils";
 import { reportApiError } from "@/app/lib/api/api-error-reporter";
@@ -175,6 +175,10 @@ const createResponseForRequest = async ({
   } catch (error) {
     if (error instanceof InvalidInputError) {
       return responses.badRequestResponse(error.message, undefined, true);
+    }
+
+    if (error instanceof UniqueConstraintError) {
+      return responses.conflictResponse(error.message, undefined, true);
     }
 
     const response = getUnexpectedPublicErrorResponse();

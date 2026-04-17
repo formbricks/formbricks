@@ -141,7 +141,6 @@ function DropdownVariant({
   otherOptionPlaceholder,
   dir,
   otherInputRef,
-  required,
   searchPlaceholder,
   searchNoResultsText,
 }: Readonly<DropdownVariantProps>): React.JSX.Element {
@@ -279,7 +278,8 @@ function DropdownVariant({
           onChange={handleOtherInputChange}
           placeholder={otherOptionPlaceholder}
           disabled={disabled}
-          aria-required={required}
+          required
+          aria-invalid={Boolean(errorMessage)}
           dir={dir}
           className="mt-2 w-full"
         />
@@ -329,7 +329,6 @@ function ListVariant({
   otherOptionPlaceholder,
   dir,
   otherInputRef,
-  required,
 }: Readonly<ListVariantProps>): React.JSX.Element {
   const isNoneSelected = value.includes("none");
 
@@ -400,7 +399,8 @@ function ListVariant({
                   onChange={handleOtherInputChange}
                   placeholder={otherOptionPlaceholder}
                   disabled={disabled}
-                  aria-required={required}
+                  required
+                  aria-invalid={Boolean(errorMessage)}
                   dir={dir}
                   className="mt-2 w-full"
                   ref={otherInputRef}

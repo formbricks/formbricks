@@ -16,6 +16,7 @@ interface ContactsPageLayoutProps {
   children: ReactNode;
   upgradePromptTitle?: string;
   upgradePromptDescription?: string;
+  upgradeFeature?: string;
 }
 
 export const ContactsPageLayout = async ({
@@ -28,6 +29,7 @@ export const ContactsPageLayout = async ({
   children,
   upgradePromptTitle,
   upgradePromptDescription,
+  upgradeFeature = "contacts",
 }: ContactsPageLayoutProps) => {
   const t = await getTranslate();
 
@@ -44,6 +46,7 @@ export const ContactsPageLayout = async ({
           <UpgradePrompt
             title={upgradePromptTitle ?? t("environments.contacts.unlock_contacts_title")}
             description={upgradePromptDescription ?? t("environments.contacts.unlock_contacts_description")}
+            feature={upgradeFeature}
             buttons={[
               {
                 text: IS_FORMBRICKS_CLOUD ? t("common.upgrade_plan") : t("common.request_trial_license"),

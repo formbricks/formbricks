@@ -107,7 +107,9 @@ export const SummaryMetadata = ({
           label={t("environments.surveys.summary.time_to_complete")}
           percentage={null}
           value={ttcAverage === 0 ? <span>-</span> : `${formatTime(ttcAverage)}`}
-          tooltipText={t("environments.surveys.summary.ttc_tooltip")}
+          tooltipText={t("environments.surveys.summary.ttc_survey_tooltip", {
+            defaultValue: "Average time to complete the survey.",
+          })}
           isLoading={isLoading}
         />
 

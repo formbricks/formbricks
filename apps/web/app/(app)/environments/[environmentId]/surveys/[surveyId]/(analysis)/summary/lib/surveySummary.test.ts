@@ -164,7 +164,7 @@ describe("getSurveySummaryMeta", () => {
   });
 
   test("calculates meta correctly", () => {
-    const meta = getSurveySummaryMeta(mockResponses, 10, mockQuotas);
+    const meta = getSurveySummaryMeta(mockBaseSurvey, mockResponses, 10, mockQuotas);
     expect(meta.displayCount).toBe(10);
     expect(meta.totalResponses).toBe(3);
     expect(meta.startsPercentage).toBe(30);
@@ -178,18 +178,73 @@ describe("getSurveySummaryMeta", () => {
   });
 
   test("handles zero display count", () => {
-    const meta = getSurveySummaryMeta(mockResponses, 0, mockQuotas);
+    const meta = getSurveySummaryMeta(mockBaseSurvey, mockResponses, 0, mockQuotas);
     expect(meta.startsPercentage).toBe(0);
     expect(meta.completedPercentage).toBe(0);
   });
 
   test("handles zero responses", () => {
-    const meta = getSurveySummaryMeta([], 10, mockQuotas);
+    const meta = getSurveySummaryMeta(mockBaseSurvey, [], 10, mockQuotas);
     expect(meta.totalResponses).toBe(0);
     expect(meta.completedResponses).toBe(0);
     expect(meta.dropOffCount).toBe(0);
     expect(meta.dropOffPercentage).toBe(0);
     expect(meta.ttcAverage).toBe(0);
+  });
+
+  test("uses block-level TTC to avoid multiplying by number of elements", () => {
+    const surveyWithOneBlockThreeElements: TSurvey = {
+      ...mockBaseSurvey,
+      blocks: [
+        {
+          id: "block1",
+          name: "Block 1",
+          elements: [
+            {
+              id: "q1",
+              type: TSurveyElementTypeEnum.OpenText,
+              headline: { default: "Q1" },
+              required: false,
+              inputType: "text",
+              charLimit: { enabled: false },
+            },
+            {
+              id: "q2",
+              type: TSurveyElementTypeEnum.OpenText,
+              headline: { default: "Q2" },
+              required: false,
+              inputType: "text",
+              charLimit: { enabled: false },
+            },
+            {
+              id: "q3",
+              type: TSurveyElementTypeEnum.OpenText,
+              headline: { default: "Q3" },
+              required: false,
+              inputType: "text",
+              charLimit: { enabled: false },
+            },
+          ] as TSurveyElement[],
+        },
+      ],
+      questions: [],
+    };
+
+    const responses = [
+      {
+        id: "r1",
+        data: { q1: "a", q2: "b", q3: "c" },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: "en",
+        ttc: { q1: 5000, q2: 5000, q3: 4800, _total: 14800 },
+        finished: true,
+      },
+    ] as any;
+
+    const meta = getSurveySummaryMeta(surveyWithOneBlockThreeElements, responses, 1, mockQuotas);
+    expect(meta.ttcAverage).toBe(5000);
   });
 });
 
@@ -274,7 +329,7 @@ describe("getSurveySummaryDropOff", () => {
     expect(dropOff[1].impressions).toBe(2);
     expect(dropOff[1].dropOffCount).toBe(1); // r1 dropped at q2 (last seen element)
     expect(dropOff[1].dropOffPercentage).toBe(50); // (1/2)*100
-    expect(dropOff[1].ttc).toBe(7.5); // avg of r1(5ms) and r2(10ms)
+    expect(dropOff[1].ttc).toBe(10); // block-level TTC uses max block time per response
   });
 
   test("drop-off attributed to last seen element when user doesn't reach next question", () => {

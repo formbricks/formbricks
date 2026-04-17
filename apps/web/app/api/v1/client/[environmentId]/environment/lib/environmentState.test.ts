@@ -6,6 +6,7 @@ import { TJsEnvironmentState, TJsEnvironmentStateProject } from "@formbricks/typ
 import { TOrganization } from "@formbricks/types/organizations";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { cache } from "@/lib/cache";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { EnvironmentStateData, getEnvironmentStateData } from "./data";
 import { getEnvironmentState } from "./environmentState";
 
@@ -36,6 +37,11 @@ vi.mock("@/lib/constants", () => ({
   IS_RECAPTCHA_CONFIGURED: true,
   IS_PRODUCTION: true,
   ENTERPRISE_LICENSE_KEY: "mock_enterprise_license_key",
+  POSTHOG_KEY: "phc_test_key",
+}));
+
+vi.mock("@/lib/posthog", () => ({
+  capturePostHogEvent: vi.fn(),
 }));
 
 // Mock @formbricks/cache
@@ -302,5 +308,39 @@ describe("getEnvironmentState", () => {
     const result = await getEnvironmentState(environmentId);
 
     expect(result.data.actionClasses).toEqual([]);
+  });
+
+  test("should capture app_connected PostHog event when app setup completes", async () => {
+    const noCodeAction = {
+      ...mockActionClasses[0],
+      id: "action-2",
+      type: "noCode" as const,
+      key: null,
+    };
+    const incompleteEnvironmentData = {
+      ...mockEnvironmentStateData,
+      environment: {
+        ...mockEnvironmentStateData.environment,
+        appSetupCompleted: false,
+      },
+      actionClasses: [...mockActionClasses, noCodeAction],
+    };
+    vi.mocked(getEnvironmentStateData).mockResolvedValue(incompleteEnvironmentData);
+
+    await getEnvironmentState(environmentId);
+
+    expect(capturePostHogEvent).toHaveBeenCalledWith(environmentId, "app_connected", {
+      num_surveys: 1,
+      num_code_actions: 1,
+      num_no_code_actions: 1,
+    });
+  });
+
+  test("should not capture app_connected event when app setup already completed", async () => {
+    vi.mocked(getEnvironmentStateData).mockResolvedValue(mockEnvironmentStateData);
+
+    await getEnvironmentState(environmentId);
+
+    expect(capturePostHogEvent).not.toHaveBeenCalled();
   });
 });

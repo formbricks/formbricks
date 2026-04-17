@@ -20,6 +20,7 @@
     "question_video": "Frågevideo",
     "required": "Obligatorisk",
     "respondents_will_not_see_this_card": "Respondenter kommer inte att se detta kort",
+    "response_saved_offline": "Ditt svar har inte skickats än. Det kommer att skickas automatiskt när du är online igen.",
     "retry": "Försök igen",
     "retrying": "Försöker igen...",
     "search": "Sök...",
@@ -32,6 +33,7 @@
     "terms_of_service": "Användarvillkor",
     "the_servers_cannot_be_reached_at_the_moment": "Servrarna kan inte nås för tillfället.",
     "they_will_be_redirected_immediately": "De kommer att omdirigeras omedelbart",
+    "welcome_video": "Välkomstkortvideo",
     "your_feedback_is_stuck": "Din feedback fastnade :("
   },
   "errors": {

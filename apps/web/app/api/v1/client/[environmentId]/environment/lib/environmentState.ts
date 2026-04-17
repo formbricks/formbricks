@@ -3,7 +3,8 @@ import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { TJsEnvironmentState } from "@formbricks/types/js";
 import { cache } from "@/lib/cache";
-import { IS_RECAPTCHA_CONFIGURED, RECAPTCHA_SITE_KEY } from "@/lib/constants";
+import { IS_RECAPTCHA_CONFIGURED, POSTHOG_KEY, RECAPTCHA_SITE_KEY } from "@/lib/constants";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { getEnvironmentStateData } from "./data";
 
 /**
@@ -30,6 +31,14 @@ export const getEnvironmentState = async (
           where: { id: environmentId },
           data: { appSetupCompleted: true },
         });
+
+        if (POSTHOG_KEY) {
+          capturePostHogEvent(environmentId, "app_connected", {
+            num_surveys: surveys.length,
+            num_code_actions: actionClasses.filter((ac) => ac.type === "code").length,
+            num_no_code_actions: actionClasses.filter((ac) => ac.type === "noCode").length,
+          });
+        }
       }
 
       // Build the response data

@@ -20,6 +20,7 @@
     "question_video": "Spørgsmålsvideo",
     "required": "Påkrævet",
     "respondents_will_not_see_this_card": "Respondenter vil ikke se dette kort",
+    "response_saved_offline": "Dit svar er ikke sendt endnu. Det bliver automatisk indsendt, når du er online igen.",
     "retry": "Prøv igen",
     "retrying": "Prøver igen…",
     "search": "Søg...",
@@ -32,6 +33,7 @@
     "terms_of_service": "Vilkår for brug",
     "the_servers_cannot_be_reached_at_the_moment": "Serverne kan ikke kontaktes lige nu.",
     "they_will_be_redirected_immediately": "De bliver straks omdirigeret",
+    "welcome_video": "Velkomstkortvideo",
     "your_feedback_is_stuck": "Din feedback sidder fast :("
   },
   "errors": {

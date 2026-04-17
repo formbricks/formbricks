@@ -1,6 +1,6 @@
 import type { TSurvey } from "@/modules/survey/list/types/surveys";
 
-export type TV3SurveyListItem = Omit<TSurvey, "environmentId" | "singleUse"> & {
+export type TV3SurveyListItem = Omit<TSurvey, "environmentId"> & {
   workspaceId: string;
 };
 
@@ -9,7 +9,7 @@ export type TV3SurveyListItem = Omit<TSurvey, "environmentId" | "singleUse"> & {
  * Internally surveys are still scoped by environmentId; externally v3 exposes workspaceId.
  */
 export function serializeV3SurveyListItem(survey: TSurvey): TV3SurveyListItem {
-  const { environmentId, singleUse: _omitSingleUse, ...rest } = survey;
+  const { environmentId, ...rest } = survey;
 
   return {
     ...rest,
