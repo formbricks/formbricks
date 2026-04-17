@@ -15,20 +15,14 @@ const apiKeySelect = {
   lastUsedAt: true,
   apiKeyWorkspaces: {
     select: {
-      environment: {
+      workspace: {
         select: {
           id: true,
-          type: true,
+          legacyEnvironmentId: true,
           createdAt: true,
           updatedAt: true,
-          workspaceId: true,
+          name: true,
           appSetupCompleted: true,
-          workspace: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
         },
       },
       permission: true,
@@ -44,17 +38,13 @@ type ApiKeyData = {
   lastUsedAt: Date | null;
   apiKeyWorkspaces: Array<{
     permission: string;
-    environment: {
+    workspace: {
       id: string;
-      type: string;
+      legacyEnvironmentId: string | null;
       createdAt: Date;
       updatedAt: Date;
-      workspaceId: string;
+      name: string;
       appSetupCompleted: boolean;
-      workspace: {
-        id: string;
-        name: string;
-      };
     };
   }>;
 };
@@ -117,20 +107,21 @@ const updateApiKeyUsage = async (apiKeyId: string) => {
 };
 
 const buildEnvironmentResponse = (apiKeyData: ApiKeyData) => {
-  const env = apiKeyData.apiKeyWorkspaces[0].environment;
+  const workspace = apiKeyData.apiKeyWorkspaces[0].workspace;
   return Response.json({
-    id: env.id,
-    type: env.type,
-    createdAt: env.createdAt,
-    updatedAt: env.updatedAt,
-    appSetupCompleted: env.appSetupCompleted,
+    // Keep v1 payload shape stable while sourcing data from workspace.
+    id: workspace.legacyEnvironmentId ?? workspace.id,
+    type: "production",
+    createdAt: workspace.createdAt,
+    updatedAt: workspace.updatedAt,
+    appSetupCompleted: workspace.appSetupCompleted,
     workspace: {
-      id: env.workspaceId,
-      name: env.workspace.name,
+      id: workspace.id,
+      name: workspace.name,
     },
     // Backwards compat: old consumers expect project fields
-    projectId: env.workspaceId,
-    projectName: env.workspace.name,
+    projectId: workspace.id,
+    projectName: workspace.name,
   });
 };
 
