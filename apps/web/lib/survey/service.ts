@@ -600,12 +600,14 @@ const attachSurveyFollowUpsToCreateData = (
   data: Omit<Prisma.SurveyCreateInput, "workspace">,
   followUps?: TSurveyCreateInput["followUps"]
 ): Omit<Prisma.SurveyCreateInput, "workspace"> => {
+  const { followUps: _, ...dataWithoutFollowUps } = data;
+
   if (!followUps?.length) {
-    return data;
+    return dataWithoutFollowUps;
   }
 
   return {
-    ...data,
+    ...dataWithoutFollowUps,
     followUps: {
       create: followUps.map((followUp) => ({
         name: followUp.name,

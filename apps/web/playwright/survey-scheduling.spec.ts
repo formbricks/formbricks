@@ -34,13 +34,13 @@ const createMinimalSurvey = async (page: Page) => {
   await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/edit$/);
 };
 
-const pickDate = async (page: Page, dayOffset: number, pickerIndex: number) => {
+const pickDate = async (page: Page, dayOffset: number) => {
   const targetDate = new Date();
   targetDate.setDate(targetDate.getDate() + dayOffset);
 
   const scheduleCard = page.getByTestId("survey-schedule-card");
 
-  await scheduleCard.getByRole("button", { name: "Pick a date" }).nth(pickerIndex).click();
+  await scheduleCard.getByRole("button", { name: "Pick a date" }).first().click();
 
   const calendarPopover = page.locator("[data-radix-popper-content-wrapper]").last();
   const calendar = calendarPopover.locator(".react-calendar");
@@ -60,10 +60,8 @@ const pickDate = async (page: Page, dayOffset: number, pickerIndex: number) => {
 
   await calendar
     .locator(".react-calendar__month-view__days")
-    .getByRole("button", {
-      exact: true,
-      name: targetDate.getDate().toString(),
-    })
+    .locator("button:not([disabled])")
+    .filter({ hasText: new RegExp(`^${targetDate.getDate().toString()}$`) })
     .click();
 
   return targetDate;
@@ -89,33 +87,43 @@ test.describe("Survey scheduling settings", () => {
     await expect(page.getByText("Survey will be published at 00:00 CET on the selected date")).toBeVisible();
     await expect(page.getByText("Survey will be paused at 00:00 CET on the selected date")).toBeVisible();
 
-    const publishDate = await pickDate(page, 1, 0);
-    const pauseDate = await pickDate(page, 2, 1);
+    const publishDate = await pickDate(page, 2);
+    const pauseDate = await pickDate(page, 3);
 
-    await expect(page.getByRole("button", { name: formatSelectedDate(publishDate) })).toBeVisible();
-    await expect(page.getByRole("button", { name: formatSelectedDate(pauseDate) })).toBeVisible();
+    await expect(
+      scheduleCard.getByRole("button", { name: formatSelectedDate(publishDate), exact: true })
+    ).toBeVisible();
+    await expect(
+      scheduleCard.getByRole("button", { name: formatSelectedDate(pauseDate), exact: true })
+    ).toBeVisible();
 
-    const saveSurveyRequest = page.waitForRequest((request) => {
-      const { pathname } = new URL(request.url());
-      return request.method() === "POST" && /\/surveys\/[^/]+\/edit$/.test(pathname);
+    const saveSurveyResponse = page.waitForResponse((response) => {
+      const { pathname } = new URL(response.url());
+      return (
+        response.request().method() === "POST" && /\/surveys\/[^/]+\/edit$/.test(pathname) && response.ok()
+      );
     });
 
-    await page.getByRole("button", { name: "Save as draft", exact: true }).click();
-    await saveSurveyRequest;
+    await page.getByRole("button", { name: "Save as draft", exact: true }).click({ noWaitAfter: true });
+    await saveSurveyResponse;
 
-    await page.reload();
+    await page.reload({ waitUntil: "domcontentloaded" });
     await page
       .locator('nav[aria-label="Tabs"]')
       .getByRole("button", { name: "Settings", exact: true })
       .click();
-    await expandScheduleCard(page);
+    const { scheduleCard: reloadedScheduleCard } = await expandScheduleCard(page);
 
-    await expect(page.getByRole("button", { name: formatSelectedDate(publishDate) })).toBeVisible();
-    await expect(page.getByRole("button", { name: formatSelectedDate(pauseDate) })).toBeVisible();
+    await expect(
+      reloadedScheduleCard.getByRole("button", { name: formatSelectedDate(publishDate), exact: true })
+    ).toBeVisible();
+    await expect(
+      reloadedScheduleCard.getByRole("button", { name: formatSelectedDate(pauseDate), exact: true })
+    ).toBeVisible();
 
     await page.getByTestId("clear-publish-on-date").click();
     await page.getByTestId("clear-pause-on-date").click();
 
-    await expect(scheduleCard.getByRole("button", { name: "Pick a date" })).toHaveCount(2);
+    await expect(reloadedScheduleCard.getByRole("button", { name: "Pick a date" })).toHaveCount(2);
   });
 });
