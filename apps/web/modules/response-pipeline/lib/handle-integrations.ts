@@ -6,7 +6,7 @@ import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
 import { TIntegrationGoogleSheets } from "@formbricks/types/integration/google-sheet";
 import { TIntegrationNotion, TIntegrationNotionConfigData } from "@formbricks/types/integration/notion";
 import { TIntegrationSlack } from "@formbricks/types/integration/slack";
-import { TResponseDataValue, TResponseMeta } from "@formbricks/types/responses";
+import { TResponse, TResponseDataValue, TResponseMeta } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
@@ -22,6 +22,11 @@ import { getFormattedDateTimeString } from "@/lib/utils/datetime";
 import { parseRecallInfo } from "@/lib/utils/recall";
 import { truncateText } from "@/lib/utils/strings";
 import { resolveStorageUrlAuto } from "@/modules/storage/utils";
+
+type TIntegrationPipelineData = {
+  response: Pick<TResponse, "createdAt" | "data" | "meta" | "variables">;
+  surveyId: string;
+};
 
 const convertMetaObjectToString = (metadata: TResponseMeta): string => {
   let result: string[] = [];
@@ -62,7 +67,7 @@ const toIntegrationFieldSelection = (config: {
 
 const processDataForIntegration = async (
   integrationType: TIntegrationType,
-  data: TResponsePipelineJobData,
+  data: TIntegrationPipelineData,
   survey: TSurvey,
   selection: TIntegrationFieldSelection
 ): Promise<{
@@ -103,7 +108,7 @@ const processDataForIntegration = async (
 
 export const handleIntegrations = async (
   integrations: TIntegration[],
-  data: TResponsePipelineJobData,
+  data: TIntegrationPipelineData,
   survey: TSurvey
 ) => {
   for (const integration of integrations) {
@@ -150,7 +155,7 @@ export const handleIntegrations = async (
 
 const handleAirtableIntegration = async (
   integration: TIntegrationAirtable,
-  data: TResponsePipelineJobData,
+  data: TIntegrationPipelineData,
   survey: TSurvey
 ): Promise<Result<void, Error>> => {
   try {
@@ -182,7 +187,7 @@ const handleAirtableIntegration = async (
 
 const handleGoogleSheetsIntegration = async (
   integration: TIntegrationGoogleSheets,
-  data: TResponsePipelineJobData,
+  data: TIntegrationPipelineData,
   survey: TSurvey
 ): Promise<Result<void, Error>> => {
   try {
@@ -219,7 +224,7 @@ const handleGoogleSheetsIntegration = async (
 
 const handleSlackIntegration = async (
   integration: TIntegrationSlack,
-  data: TResponsePipelineJobData,
+  data: TIntegrationPipelineData,
   survey: TSurvey
 ): Promise<Result<void, Error>> => {
   try {
@@ -294,7 +299,7 @@ const createEmptyResponseObject = (responseData: Record<string, unknown>): Recor
 
 const extractResponses = async (
   integrationType: TIntegrationType,
-  pipelineData: TResponsePipelineJobData,
+  pipelineData: TIntegrationPipelineData,
   elementIds: string[],
   survey: TSurvey
 ): Promise<{
@@ -340,7 +345,7 @@ const extractResponses = async (
 
 const handleNotionIntegration = async (
   integration: TIntegrationNotion,
-  data: TResponsePipelineJobData,
+  data: TIntegrationPipelineData,
   surveyData: TSurvey
 ): Promise<Result<void, Error>> => {
   try {
@@ -367,7 +372,7 @@ const handleNotionIntegration = async (
 
 const buildNotionPayloadProperties = (
   mapping: TIntegrationNotionConfigData["mapping"],
-  data: TResponsePipelineJobData,
+  data: TIntegrationPipelineData,
   surveyData: TSurvey
 ) => {
   const properties: any = {};

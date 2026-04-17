@@ -8,7 +8,7 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { type TUserLocale, ZUserLocale } from "@formbricks/types/user";
 import { generateStandardWebhookSignature } from "@/lib/crypto";
 import { getIntegrations } from "@/lib/integration/service";
-import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
 import { validateWebhookUrl } from "@/lib/utils/validate-webhook-url";
@@ -82,13 +82,13 @@ const fetchWithTimeout = async (
 };
 
 const getWebhooksForPipeline = async (
-  environmentId: string,
+  workspaceId: string,
   event: PipelineTriggers,
   surveyId: string
 ): Promise<Webhook[]> => {
   return await prisma.webhook.findMany({
     where: {
-      environmentId,
+      workspaceId,
       triggers: { has: event },
       OR: [{ surveyIds: { has: surveyId } }, { surveyIds: { isEmpty: true } }],
     },
@@ -211,15 +211,17 @@ const deliverWebhooks = async ({
 const loadResponseFinishedContext = async ({
   data,
   logContext,
+  workspaceId,
 }: {
   data: TResponsePipelineJobData;
   logContext: ReturnType<typeof getPipelineLogContext>;
+  workspaceId: string;
 }): Promise<{
   integrations: Awaited<ReturnType<typeof getIntegrations>>;
   responseCount: number | null;
 }> => {
   const [integrationsResult, responseCountResult] = await Promise.allSettled([
-    getIntegrations(data.environmentId),
+    getIntegrations(workspaceId),
     getResponseCountBySurveyId(data.surveyId),
   ]);
 
@@ -252,9 +254,11 @@ const loadResponseFinishedContext = async ({
 const getUsersWithNotifications = async ({
   data,
   logContext,
+  workspaceId,
 }: {
   data: TResponsePipelineJobData;
   logContext: ReturnType<typeof getPipelineLogContext>;
+  workspaceId: string;
 }): Promise<Array<{ email: string; locale: TUserLocale }>> => {
   try {
     const users = await prisma.user.findMany({
@@ -264,9 +268,7 @@ const getUsersWithNotifications = async ({
             organization: {
               workspaces: {
                 some: {
-                  environments: {
-                    some: { id: data.environmentId },
-                  },
+                  id: workspaceId,
                 },
               },
             },
@@ -289,11 +291,7 @@ const getUsersWithNotifications = async ({
                   workspaceTeams: {
                     some: {
                       workspace: {
-                        environments: {
-                          some: {
-                            id: data.environmentId,
-                          },
-                        },
+                        id: workspaceId,
                       },
                     },
                   },
@@ -368,12 +366,14 @@ const sendNotificationEmailsSafely = async ({
   responseCount,
   survey,
   usersWithNotifications,
+  workspaceId,
 }: {
   data: TResponsePipelineJobData;
   logContext: ReturnType<typeof getPipelineLogContext>;
   responseCount: number | null;
   survey: NonNullable<Awaited<ReturnType<typeof getSurvey>>>;
   usersWithNotifications: Array<{ email: string; locale: TUserLocale }>;
+  workspaceId: string;
 }): Promise<void> => {
   if (responseCount === null) {
     if (usersWithNotifications.length > 0) {
@@ -395,7 +395,7 @@ const sendNotificationEmailsSafely = async ({
         await sendResponseFinishedEmail(
           user.email,
           user.locale,
-          data.environmentId,
+          workspaceId,
           survey,
           data.response,
           responseCount
@@ -491,15 +491,18 @@ const runResponseFinishedSideEffects = async ({
   logContext,
   organizationId,
   survey,
+  workspaceId,
 }: {
   data: TResponsePipelineJobData;
   logContext: ReturnType<typeof getPipelineLogContext>;
   organizationId: string;
   survey: NonNullable<Awaited<ReturnType<typeof getSurvey>>>;
+  workspaceId: string;
 }) => {
   const { integrations, responseCount } = await loadResponseFinishedContext({
     data,
     logContext,
+    workspaceId,
   });
 
   if (integrations.length > 0) {
@@ -519,6 +522,7 @@ const runResponseFinishedSideEffects = async ({
   const usersWithNotifications = await getUsersWithNotifications({
     data,
     logContext,
+    workspaceId,
   });
 
   await handleFollowUpsSafely({
@@ -533,6 +537,7 @@ const runResponseFinishedSideEffects = async ({
     responseCount,
     survey,
     usersWithNotifications,
+    workspaceId,
   });
 
   await handleSurveyAutoCompleteSafely({
@@ -585,22 +590,19 @@ export const processResponsePipelineJob: JobHandler<TResponsePipelineJobData> = 
   const logContext = getPipelineLogContext(data, context);
 
   try {
-    const organization = await getOrganizationByEnvironmentId(data.environmentId);
-    if (!organization) {
-      throw new ResourceNotFoundError("Organization", "Organization not found");
-    }
-
     const survey = await getSurvey(data.surveyId);
     if (!survey) {
       throw new ResourceNotFoundError("Survey", data.surveyId);
     }
 
-    if (survey.environmentId !== data.environmentId) {
-      throw new Error(`Survey ${data.surveyId} does not belong to environment ${data.environmentId}`);
+    const organization = await getOrganizationByWorkspaceId(survey.workspaceId);
+    if (!organization) {
+      throw new ResourceNotFoundError("Organization", "Organization not found");
     }
 
     const event = data.event as PipelineTriggers;
-    const webhooks = await getWebhooksForPipeline(data.environmentId, event, data.surveyId);
+    const workspaceId = survey.workspaceId;
+    const webhooks = await getWebhooksForPipeline(workspaceId, event, data.surveyId);
     await deliverWebhooks({
       data,
       logContext,
@@ -614,6 +616,7 @@ export const processResponsePipelineJob: JobHandler<TResponsePipelineJobData> = 
         logContext,
         organizationId: organization.id,
         survey,
+        workspaceId,
       });
     }
 

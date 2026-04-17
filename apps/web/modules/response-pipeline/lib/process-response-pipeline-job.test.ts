@@ -6,7 +6,7 @@ import { processResponsePipelineJob } from "./process-response-pipeline-job";
 const {
   mockFetch,
   mockGetIntegrations,
-  mockGetOrganizationByEnvironmentId,
+  mockGetOrganizationByWorkspaceId,
   mockGetResponseCountBySurveyId,
   mockGetSurvey,
   mockHandleIntegrations,
@@ -23,7 +23,7 @@ const {
 } = vi.hoisted(() => ({
   mockFetch: vi.fn(),
   mockGetIntegrations: vi.fn(),
-  mockGetOrganizationByEnvironmentId: vi.fn(),
+  mockGetOrganizationByWorkspaceId: vi.fn(),
   mockGetResponseCountBySurveyId: vi.fn(),
   mockGetSurvey: vi.fn(),
   mockHandleIntegrations: vi.fn(),
@@ -59,7 +59,7 @@ vi.mock("./telemetry", () => ({
 }));
 
 vi.mock("@/lib/organization/service", () => ({
-  getOrganizationByEnvironmentId: mockGetOrganizationByEnvironmentId,
+  getOrganizationByWorkspaceId: mockGetOrganizationByWorkspaceId,
 }));
 
 vi.mock("@/lib/integration/service", () => ({
@@ -150,13 +150,13 @@ const organization = {
 const survey = {
   autoComplete: null,
   createdAt: new Date("2026-04-01T10:00:00.000Z"),
-  environmentId: "env_123",
   followUps: [],
   id: "survey_123",
   name: "Test survey",
   status: "inProgress",
   type: "app",
   updatedAt: new Date("2026-04-01T10:00:00.000Z"),
+  workspaceId: "workspace_123",
 };
 
 const originalFetch = global.fetch;
@@ -164,7 +164,7 @@ const originalFetch = global.fetch;
 describe("processResponsePipelineJob", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetOrganizationByEnvironmentId.mockResolvedValue(organization);
+    mockGetOrganizationByWorkspaceId.mockResolvedValue(organization);
     mockGetSurvey.mockResolvedValue(survey);
     mockGetIntegrations.mockResolvedValue([]);
     mockPrismaWebhookFindMany.mockResolvedValue([]);
@@ -204,7 +204,7 @@ describe("processResponsePipelineJob", () => {
     expect(mockPrismaWebhookFindMany).toHaveBeenCalledWith({
       where: {
         OR: [{ surveyIds: { has: "survey_123" } }, { surveyIds: { isEmpty: true } }],
-        environmentId: "env_123",
+        workspaceId: "workspace_123",
         triggers: { has: "responseCreated" },
       },
     });
@@ -293,7 +293,7 @@ describe("processResponsePipelineJob", () => {
     expect(mockSendResponseFinishedEmail).toHaveBeenCalledWith(
       "owner@example.com",
       "en-US",
-      "env_123",
+      "workspace_123",
       expect.objectContaining({ id: "survey_123" }),
       baseData.response,
       1
@@ -651,15 +651,10 @@ describe("processResponsePipelineJob", () => {
     expect(mockSendTelemetryEvents).toHaveBeenCalledTimes(1);
   });
 
-  test("fails fast on preflight mismatches", async () => {
-    mockGetSurvey.mockResolvedValue({
-      ...survey,
-      environmentId: "env_other",
-    });
+  test("fails fast when the organization cannot be resolved for the survey workspace", async () => {
+    mockGetOrganizationByWorkspaceId.mockResolvedValue(null);
 
-    await expect(processResponsePipelineJob(baseData, baseContext)).rejects.toThrow(
-      "Survey survey_123 does not belong to environment env_123"
-    );
+    await expect(processResponsePipelineJob(baseData, baseContext)).rejects.toThrow("Organization not found");
 
     expect(mockLoggerError).toHaveBeenCalledWith(
       expect.objectContaining({
