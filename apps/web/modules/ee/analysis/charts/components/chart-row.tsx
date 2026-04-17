@@ -13,9 +13,10 @@ interface ChartRowProps {
   chart: TChartWithCreator;
   workspaceId: string;
   isReadOnly: boolean;
+  directories: { id: string; name: string }[];
 }
 
-export function ChartRow({ chart, workspaceId, isReadOnly }: Readonly<ChartRowProps>) {
+export function ChartRow({ chart, workspaceId, isReadOnly, directories }: Readonly<ChartRowProps>) {
   const { t } = useTranslation();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const IconComponent = CHART_TYPE_ICONS[chart.type] ?? BarChart3Icon;
@@ -86,6 +87,7 @@ export function ChartRow({ chart, workspaceId, isReadOnly }: Readonly<ChartRowPr
           chartId={chart.id}
           initialChart={chart}
           onSuccess={() => setIsEditDialogOpen(false)}
+          directories={directories}
         />
       )}
     </>

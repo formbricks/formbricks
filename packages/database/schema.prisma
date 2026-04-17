@@ -1075,23 +1075,26 @@ enum ChartType {
 /// @property createdBy - User who created the chart
 /// @property dashboards - Dashboards that use this chart
 model Chart {
-  id          String            @id @default(cuid())
-  createdAt   DateTime          @default(now()) @map(name: "created_at")
-  updatedAt   DateTime          @updatedAt @map(name: "updated_at")
-  name        String
-  type        ChartType
-  workspace   Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId String
+  id                        String                  @id @default(cuid())
+  createdAt                 DateTime                @default(now()) @map(name: "created_at")
+  updatedAt                 DateTime                @updatedAt @map(name: "updated_at")
+  name                      String
+  type                      ChartType
+  workspace                 Workspace               @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId               String
   /// [ChartQuery] - Cube.js query configuration
-  query       Json              @default("{}")
+  query                     Json                    @default("{}")
   /// [ChartConfig] - Visualization configuration (colors, labels, formatting)
-  config      Json              @default("{}")
-  creator     User?             @relation("chartCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
-  createdBy   String?
-  widgets     DashboardWidget[]
+  config                    Json                    @default("{}")
+  creator                   User?                   @relation("chartCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  createdBy                 String?
+  feedbackRecordDirectory   FeedbackRecordDirectory @relation(fields: [feedbackRecordDirectoryId], references: [id])
+  feedbackRecordDirectoryId String
+  widgets                   DashboardWidget[]
 
   @@unique([workspaceId, name])
   @@index([workspaceId, createdAt])
+  @@index([feedbackRecordDirectoryId])
 }
 
 /// Represents a dashboard containing multiple charts.
@@ -1262,6 +1265,7 @@ model FeedbackRecordDirectory {
   organization   Organization                       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   workspaces     FeedbackRecordDirectoryWorkspace[]
   connectors     Connector[]
+  charts         Chart[]
 
   @@unique([organizationId, name])
 }

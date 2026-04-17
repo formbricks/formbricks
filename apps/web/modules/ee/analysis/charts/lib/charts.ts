@@ -22,6 +22,7 @@ export const selectChart = {
   type: true,
   query: true,
   config: true,
+  feedbackRecordDirectoryId: true,
   createdAt: true,
   updatedAt: true,
 } as const;
@@ -38,6 +39,7 @@ export const createChart = async (data: TChartCreateInput): Promise<TChart> => {
         query: data.query,
         config: data.config,
         createdBy: data.createdBy,
+        feedbackRecordDirectoryId: data.feedbackRecordDirectoryId,
       },
       select: selectChart,
     });
@@ -154,6 +156,7 @@ export const duplicateChart = async (
       type: ZChartType.parse(sourceChart.type),
       query: ZChartQuery.parse(sourceChart.query),
       config: ZChartConfig.parse(sourceChart.config ?? {}),
+      feedbackRecordDirectoryId: sourceChart.feedbackRecordDirectoryId,
       createdBy,
     });
   } catch (error) {

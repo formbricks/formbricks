@@ -10,6 +10,7 @@ import { ChartPreview } from "@/modules/ee/analysis/charts/components/chart-prev
 import { ManualChartBuilder } from "@/modules/ee/analysis/charts/components/manual-chart-builder";
 import { SaveChartDialog } from "@/modules/ee/analysis/charts/components/save-chart-dialog";
 import { useChartDialog } from "@/modules/ee/analysis/charts/hooks/use-chart-dialog";
+import { FrdPicker } from "@/modules/ee/feedback-record-directory/components/frd-picker";
 import {
   Dialog,
   DialogBody,
@@ -24,6 +25,7 @@ interface CreateChartViewProps {
   onOpenChange: (open: boolean) => void;
   workspaceId: string;
   onSuccess?: () => void;
+  directories: { id: string; name: string }[];
 }
 
 export function CreateChartView({
@@ -31,6 +33,7 @@ export function CreateChartView({
   onOpenChange,
   workspaceId,
   onSuccess,
+  directories,
 }: Readonly<CreateChartViewProps>) {
   const { t } = useTranslation();
 
@@ -51,8 +54,10 @@ export function CreateChartView({
     setIsSaveDialogOpen,
     isAddToDashboardDialogOpen,
     setIsAddToDashboardDialogOpen,
+    selectedDirectoryId,
+    setSelectedDirectoryId,
     handleClose,
-  } = useChartDialog({ open, onOpenChange, workspaceId, onSuccess });
+  } = useChartDialog({ open, onOpenChange, workspaceId, onSuccess, directories });
 
   const chartPreviewRef = useRef<HTMLDivElement>(null);
 
@@ -61,6 +66,8 @@ export function CreateChartView({
       chartPreviewRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
   }, [chartData]);
+
+  const hasSelectedDirectory = !!selectedDirectoryId;
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
@@ -71,38 +78,54 @@ export function CreateChartView({
         </DialogHeader>
         <DialogBody>
           <div className="grid gap-4">
-            <AIQuerySection workspaceId={workspaceId} onChartGenerated={handleChartGenerated} />
-
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                <div className="w-full border-t border-gray-200" />
-              </div>
-              <div className="relative flex justify-center">
-                <span className="bg-white px-2 text-sm text-gray-500">
-                  {t("workspace.analysis.charts.OR")}
-                </span>
-              </div>
-            </div>
-
-            <ManualChartBuilder
-              selectedChartType={selectedChartType}
-              onChartTypeSelect={handleChartTypeChange}
+            <FrdPicker
+              directories={directories}
+              selectedDirectoryId={selectedDirectoryId}
+              onChange={setSelectedDirectoryId}
+              workspaceId={workspaceId}
             />
 
-            {selectedChartType && (
-              <AdvancedChartBuilder
-                workspaceId={workspaceId}
-                chartType={selectedChartType}
-                initialQuery={chartData?.query}
-                hidePreview={true}
-                onChartGenerated={handleChartGenerated}
-              />
-            )}
+            {hasSelectedDirectory && (
+              <>
+                <AIQuerySection
+                  workspaceId={workspaceId}
+                  onChartGenerated={handleChartGenerated}
+                  feedbackRecordDirectoryId={selectedDirectoryId}
+                />
 
-            {chartData && (
-              <div ref={chartPreviewRef}>
-                <ChartPreview chartData={chartData} />
-              </div>
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                    <div className="w-full border-t border-gray-200" />
+                  </div>
+                  <div className="relative flex justify-center">
+                    <span className="bg-white px-2 text-sm text-gray-500">
+                      {t("workspace.analysis.charts.OR")}
+                    </span>
+                  </div>
+                </div>
+
+                <ManualChartBuilder
+                  selectedChartType={selectedChartType}
+                  onChartTypeSelect={handleChartTypeChange}
+                />
+
+                {selectedChartType && (
+                  <AdvancedChartBuilder
+                    workspaceId={workspaceId}
+                    chartType={selectedChartType}
+                    initialQuery={chartData?.query}
+                    hidePreview={true}
+                    onChartGenerated={handleChartGenerated}
+                    feedbackRecordDirectoryId={selectedDirectoryId}
+                  />
+                )}
+
+                {chartData && (
+                  <div ref={chartPreviewRef}>
+                    <ChartPreview chartData={chartData} />
+                  </div>
+                )}
+              </>
             )}
           </div>
         </DialogBody>

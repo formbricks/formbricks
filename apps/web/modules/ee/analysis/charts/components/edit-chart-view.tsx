@@ -20,6 +20,7 @@ import {
   DialogTitle,
 } from "@/modules/ui/components/dialog";
 import { Input } from "@/modules/ui/components/input";
+import { Label } from "@/modules/ui/components/label";
 
 interface EditChartViewProps {
   open: boolean;
@@ -28,6 +29,7 @@ interface EditChartViewProps {
   chartId: string;
   initialChart?: TChartWithCreator;
   onSuccess?: () => void;
+  directories: { id: string; name: string }[];
 }
 
 export function EditChartView({
@@ -37,6 +39,7 @@ export function EditChartView({
   chartId,
   initialChart,
   onSuccess,
+  directories,
 }: Readonly<EditChartViewProps>) {
   const { t } = useTranslation();
 
@@ -58,8 +61,9 @@ export function EditChartView({
     isSaving,
     isAddToDashboardDialogOpen,
     setIsAddToDashboardDialogOpen,
+    selectedDirectoryId,
     handleClose,
-  } = useChartDialog({ open, onOpenChange, workspaceId, chartId, initialChart, onSuccess });
+  } = useChartDialog({ open, onOpenChange, workspaceId, chartId, initialChart, onSuccess, directories });
 
   if (isLoadingChart && !initialChart) {
     return <ChartDialogLoadingView open={open} onClose={handleClose} />;
@@ -87,6 +91,7 @@ export function EditChartView({
   }
 
   const chartType = selectedChartType ?? DEFAULT_CHART_TYPE;
+  const directoryName = directories.find((d) => d.id === selectedDirectoryId)?.name;
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
@@ -109,6 +114,14 @@ export function EditChartView({
                 className="w-full"
               />
             </div>
+            {directoryName && (
+              <div className="space-y-2">
+                <Label>{t("workspace.analysis.charts.data_source")}</Label>
+                <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
+                  {directoryName}
+                </div>
+              </div>
+            )}
             <div className="space-y-2">
               <ManualChartBuilder selectedChartType={chartType} onChartTypeSelect={handleChartTypeChange} />
             </div>
@@ -118,6 +131,7 @@ export function EditChartView({
               initialQuery={chartData?.query ?? initialQuery}
               hidePreview={true}
               onChartGenerated={handleChartGenerated}
+              feedbackRecordDirectoryId={selectedDirectoryId}
             />
             <ChartPreview chartData={chartData} isLoading={isLoadingChart} error={chartLoadError} />
           </div>

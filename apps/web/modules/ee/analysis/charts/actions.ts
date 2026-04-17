@@ -8,7 +8,7 @@ import { ZId } from "@formbricks/types/common";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { executeQuery } from "@/modules/ee/analysis/api/lib/cube-client";
-import { validateQueryMembers } from "@/modules/ee/analysis/charts/lib/chart-utils";
+import { injectTenantFilter, validateQueryMembers } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import {
   createChart,
   deleteChart,
@@ -213,6 +213,7 @@ export const getChartsAction = authenticatedActionClient
 const ZExecuteQueryAction = z.object({
   workspaceId: ZId,
   query: ZChartQuery,
+  feedbackRecordDirectoryId: ZId,
 });
 
 export const executeQueryAction = authenticatedActionClient
@@ -229,8 +230,10 @@ export const executeQueryAction = authenticatedActionClient
 
       validateQueryMembers(parsedInput.query);
 
+      const scopedQuery = injectTenantFilter(parsedInput.query, parsedInput.feedbackRecordDirectoryId);
+
       try {
-        return await executeQuery(parsedInput.query as Record<string, unknown>);
+        return await executeQuery(scopedQuery as Record<string, unknown>);
       } catch (error) {
         throw error instanceof Error ? error : new Error("Failed to execute query");
       }
@@ -277,6 +280,7 @@ const ZGenerateAIQueryResponse = z.object({
 const ZGenerateAIChartAction = z.object({
   workspaceId: ZId,
   prompt: z.string().min(1).max(2000),
+  feedbackRecordDirectoryId: ZId,
 });
 
 export const generateAIChartAction = authenticatedActionClient
@@ -331,7 +335,12 @@ export const generateAIChartAction = authenticatedActionClient
 
       validateQueryMembers(cleanQuery as TChartQuery);
 
-      const data = await executeQuery(cleanQuery);
+      const scopedQuery = injectTenantFilter(
+        cleanQuery as TChartQuery,
+        parsedInput.feedbackRecordDirectoryId
+      );
+
+      const data = await executeQuery(scopedQuery as Record<string, unknown>);
 
       return {
         query: cleanQuery,
