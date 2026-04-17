@@ -111,11 +111,6 @@ const nextConfig = {
         destination: "/api/v1/management/me",
         permanent: true,
       },
-      {
-        source: "/api/v1/me",
-        destination: "/api/v1/management/me",
-        permanent: true,
-      },
       // Redirect old project URLs to new workspace URLs
       {
         source: "/environments/:environmentId/project/:path*",
@@ -418,45 +413,7 @@ const nextConfig = {
           },
         ]
       : [];
-    return [
-      ...posthogRewrites,
-      {
-        source: "/api/packages/website",
-        destination: "/js/formbricks.umd.cjs",
-      },
-      {
-        source: "/api/packages/app",
-        destination: "/js/formbricks.umd.cjs",
-      },
-      {
-        source: "/api/packages/js",
-        destination: "/js/formbricks.umd.cjs",
-      },
-      {
-        source: "/api/packages/surveys",
-        destination: "/js/surveys.umd.cjs",
-      },
-      {
-        source: "/api/v1/client/:environmentId/website/environment",
-        destination: "/api/v1/client/:environmentId/environment",
-      },
-      {
-        source: "/api/v1/client/:environmentId/app/environment",
-        destination: "/api/v1/client/:environmentId/environment",
-      },
-      {
-        source: "/api/v1/management/people/:id*",
-        destination: "/api/v1/management/contacts/:id*",
-      },
-      {
-        source: "/api/v1/management/attribute-classes",
-        destination: "/api/v1/management/contact-attribute-keys",
-      },
-      {
-        source: "/api/v1/management/attribute-classes/:id*",
-        destination: "/api/v1/management/contact-attribute-keys/:id*",
-      },
-    ];
+    return [...posthogRewrites];
   },
   env: {
     NEXTAUTH_URL: process.env.NEXTAUTH_URL, // TODO: Remove this once we have a proper solution for the base path
