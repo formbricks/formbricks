@@ -1,0 +1,75 @@
+{
+  "baseUrl": "http://localhost:3000",
+  "expectations": {
+    "v1ManagementMeStatusByKey": {
+      "K1_W1_DEV_MANAGE": 200,
+      "K2_W1_PROD_READ": 200,
+      "K3_W2_DEV_MANAGE": 200,
+      "K4_W2_PROD_WRITE": 200
+    },
+    "v2MeStatusByKey": {
+      "K1_W1_DEV_MANAGE": 401,
+      "K2_W1_PROD_READ": 401,
+      "K3_W2_DEV_MANAGE": 401,
+      "K4_W2_PROD_WRITE": 401
+    }
+  },
+  "features": {
+    "eeContacts": true,
+    "storage": true
+  },
+  "planPath": "API Testing plan.md",
+  "scopes": {
+    "w1Dev": {
+      "actionClassId": "cmo1hb042002b0jmfh5sw4oln",
+      "contactAttributeKeyId": "cmo1gowa900070jmfyfzowueh",
+      "contactId": "cmo1w5vtb000306zndlqg833n",
+      "environmentId": "cmo1gowa900060jmfab7c10ue",
+      "responseId": "cmo1h6rgl00280jmfskrznu1t",
+      "segmentId": "cmo1w5vtl000706znnv0nnai5",
+      "surveyId": "cmo1h667t00250jmfliszkm7s",
+      "webhookId": "cmo1w5vt2000106zn3th11yg6",
+      "workspaceId": "cmo1gow9300050jmf2zkbd649"
+    },
+    "w1Prod": {
+      "actionClassId": "cmo1hcc6j002c0jmfw97ney4c",
+      "contactAttributeKeyId": "cmo1gowb4000d0jmfukh4lm6g",
+      "contactId": "cmo1h2xs7001t0jmfat14ofz1",
+      "environmentId": "cmo1gowb4000c0jmfxjntbf9h",
+      "responseId": "cmo1w5w1j000906znfn2waklw",
+      "segmentId": "cmo1h5hbt00240jmfp4ddwwto",
+      "surveyId": "cmo1gphm3000i0jmfz7crtakg",
+      "webhookId": "cmo1gzg8i000n0jmfx35fkxr1",
+      "workspaceId": "cmo1gow9300050jmf2zkbd649"
+    },
+    "w2Dev": {
+      "actionClassId": null,
+      "contactAttributeKeyId": "cmo1hu1dy003c0jmfiaraklmk",
+      "contactId": null,
+      "environmentId": "cmo1hu1dx003b0jmfe7qy50to",
+      "responseId": null,
+      "segmentId": null,
+      "surveyId": null,
+      "webhookId": null,
+      "workspaceId": "cmo1hu1dh003a0jmf0y80rcak"
+    },
+    "w2Prod": {
+      "actionClassId": null,
+      "contactAttributeKeyId": "cmo1hu1e9003i0jmfciblxunp",
+      "contactId": null,
+      "environmentId": "cmo1hu1e9003h0jmfmsqk8mwo",
+      "responseId": "cmo1hugl2003p0jmf52na95w2",
+      "segmentId": null,
+      "surveyId": "cmo1hu7ih003n0jmfz0vgep9d",
+      "webhookId": null,
+      "workspaceId": "cmo1hu1dh003a0jmf0y80rcak"
+    }
+  },
+  "timeouts": {
+    "healthPollIntervalMs": 2000,
+    "maxConsecutiveNetworkFailures": 3,
+    "requestMs": 15000,
+    "startupWaitMs": 120000,
+    "stepMs": 30000
+  }
+}

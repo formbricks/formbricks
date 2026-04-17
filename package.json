@@ -33,6 +33,7 @@
     "test": "turbo run test --no-cache",
     "test:coverage": "turbo run test:coverage --no-cache",
     "test:e2e": "playwright test",
+    "api:test:plan": "tsx scripts/run-api-testing-plan.ts",
     "test-e2e:azure": "pnpm test:e2e -c playwright.service.config.ts --workers=10",
     "prepare": "husky install",
     "storybook": "turbo run storybook",
