@@ -54,11 +54,19 @@ export const DatePicker = ({
   const [formattedDate, setFormattedDate] = useState<string | undefined>(getDisplayDate(date, locale));
   const [isOpen, setIsOpen] = useState(false);
   const btnRef = useRef<HTMLButtonElement>(null);
+  const effectiveMinDate = minDate ?? getDefaultMinDate();
 
   useEffect(() => {
-    onChange(date ? new Date(date) : undefined);
+    const nextValue = date ? new Date(date) : undefined;
+    const nextValueTime = nextValue?.getTime();
+    const currentValueTime = value?.getTime();
+
+    if (nextValueTime !== currentValueTime) {
+      onChange(nextValue);
+    }
+
     setFormattedDate(getDisplayDate(date, locale));
-  }, [date, locale]);
+  }, [date, locale, value]);
 
   const onDateChange = (date: Date) => {
     if (date) {
@@ -111,12 +119,12 @@ export const DatePicker = ({
             locale={locale}
             value={value}
             onChange={(date) => onDateChange(date as Date)}
-            minDate={minDate || getDefaultMinDate()}
+            minDate={effectiveMinDate}
             className="!border-0"
             tileClassName={({ date }: { date: Date }) => {
               const baseClass =
                 "hover:fb-bg-input-bg-selected fb-rounded-custom fb-h-9 fb-p-0 fb-mt-1 fb-font-normal fb-text-heading aria-selected:fb-opacity-100 focus:fb-ring-2 focus:fb-bg-slate-200";
-              const today = getDefaultMinDate();
+              const today = effectiveMinDate;
 
               // today's date class
               if (

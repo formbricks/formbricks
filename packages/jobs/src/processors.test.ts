@@ -173,10 +173,10 @@ describe("@formbricks/jobs processor registry", () => {
               tags: [
                 {
                   createdAt: "2026-04-07T10:00:00.000Z",
-                  environmentId: "env_123",
                   id: "cm8cmpnjj000108jfdr9dfqe8",
                   name: "tag-1",
                   updatedAt: "2026-04-07T10:00:00.000Z",
+                  workspaceId: "cm8cmpnjj000108jfdr9dfqe9",
                 },
               ],
               updatedAt: "2026-04-07T10:00:00.000Z",

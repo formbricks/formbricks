@@ -16,7 +16,7 @@ export const toDateOnlySelection = (date: Date): Date =>
   );
 
 export const toCalendarDate = (date: Date): Date => {
-  const { day, month, year } = getUtcDateParts(date);
+  const { day, month, year } = getFixedCETDateParts(date);
 
   return new Date(year, month, day, LOCAL_CALENDAR_NOON_HOUR, 0, 0, 0);
 };
@@ -32,7 +32,7 @@ export const normalizeDateOnlySelectionToCETMidnight = (date: Date | null): Date
     return null;
   }
 
-  const { day, month, year } = getUtcDateParts(date);
+  const { day, month, year } = getFixedCETDateParts(date);
 
   return new Date(Date.UTC(year, month, day, 0, 0, 0, 0) - FIXED_CET_OFFSET_MS);
 };

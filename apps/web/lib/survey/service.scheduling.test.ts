@@ -27,6 +27,29 @@ vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
   queueAuditEventWithoutRequest: mockQueueAuditEventWithoutRequest,
 }));
 
+const createSchedulingCandidate = ({
+  id = updateSurveyInput.id,
+  pauseOn,
+  publishOn,
+  status,
+  workspaceId = updateSurveyInput.workspaceId,
+}: {
+  id?: string;
+  pauseOn: Date | null;
+  publishOn: Date | null;
+  status: "draft" | "inProgress";
+  workspaceId?: string;
+}) => ({
+  id,
+  pauseOn,
+  publishOn,
+  status,
+  workspace: {
+    organizationId: "org123",
+  },
+  workspaceId,
+});
+
 describe("survey service scheduling", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -105,6 +128,42 @@ describe("survey service scheduling", () => {
     );
   });
 
+  test("manual completion clears both scheduling dates", async () => {
+    const scheduledSelection = new Date(Date.UTC(2026, 3, 20, 12, 0, 0));
+    prisma.survey.findUnique.mockResolvedValueOnce({
+      ...mockSurveyOutput,
+      pauseOn: scheduledSelection,
+      publishOn: scheduledSelection,
+      status: "inProgress",
+    } as never);
+    prisma.survey.update.mockResolvedValueOnce({
+      ...mockSurveyOutput,
+      pauseOn: null,
+      publishOn: null,
+      status: "completed",
+    } as never);
+
+    await updateSurveyInternal(
+      {
+        ...updateSurveyInput,
+        pauseOn: scheduledSelection,
+        publishOn: scheduledSelection,
+        status: "completed",
+      },
+      true
+    );
+
+    expect(prisma.survey.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          pauseOn: null,
+          publishOn: null,
+          status: "completed",
+        }),
+      })
+    );
+  });
+
   test("saving a due publish schedule catches up immediately", async () => {
     const dueSelection = new Date(Date.UTC(2026, 3, 17, 12, 0, 0));
     const normalizedDuePublishOn = new Date("2026-04-16T23:00:00.000Z");
@@ -127,18 +186,11 @@ describe("survey service scheduling", () => {
     } as never);
     prisma.survey.findMany
       .mockResolvedValueOnce([
-        {
-          environment: {
-            workspace: {
-              organizationId: "org123",
-            },
-          },
-          environmentId: updateSurveyInput.environmentId,
-          id: updateSurveyInput.id,
+        createSchedulingCandidate({
           pauseOn: null,
           publishOn: normalizedDuePublishOn,
           status: "draft",
-        },
+        }),
       ] as never)
       .mockResolvedValueOnce([] as never);
     prisma.survey.updateMany.mockResolvedValueOnce({ count: 1 } as never);
@@ -175,18 +227,11 @@ describe("survey service scheduling", () => {
     } as never);
     prisma.survey.findMany
       .mockResolvedValueOnce([
-        {
-          environment: {
-            workspace: {
-              organizationId: "org123",
-            },
-          },
-          environmentId: updateSurveyInput.environmentId,
-          id: updateSurveyInput.id,
+        createSchedulingCandidate({
           pauseOn: null,
           publishOn: normalizedDuePublishOn,
           status: "draft",
-        },
+        }),
       ] as never)
       .mockResolvedValueOnce([] as never);
     prisma.survey.updateMany.mockResolvedValueOnce({ count: 1 } as never);
@@ -241,32 +286,18 @@ describe("survey service scheduling", () => {
     } as never);
     prisma.survey.findMany
       .mockResolvedValueOnce([
-        {
-          environment: {
-            workspace: {
-              organizationId: "org123",
-            },
-          },
-          environmentId: updateSurveyInput.environmentId,
-          id: updateSurveyInput.id,
+        createSchedulingCandidate({
           pauseOn: normalizedDueDate,
           publishOn: normalizedDueDate,
           status: "draft",
-        },
+        }),
       ] as never)
       .mockResolvedValueOnce([
-        {
-          environment: {
-            workspace: {
-              organizationId: "org123",
-            },
-          },
-          environmentId: updateSurveyInput.environmentId,
-          id: updateSurveyInput.id,
+        createSchedulingCandidate({
           pauseOn: normalizedDueDate,
           publishOn: null,
           status: "inProgress",
-        },
+        }),
       ] as never);
     prisma.survey.updateMany
       .mockResolvedValueOnce({ count: 1 } as never)

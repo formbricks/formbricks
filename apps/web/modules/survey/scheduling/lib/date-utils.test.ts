@@ -8,7 +8,7 @@ import {
 
 describe("survey scheduling date utils", () => {
   test("stores selected dates as noon UTC date-only values", () => {
-    const selectedDate = new Date(2026, 3, 17, 9, 15, 0, 0);
+    const selectedDate = new Date("2026-04-17T09:15:00.000Z");
     const storedDate = toDateOnlySelection(selectedDate);
 
     expect(storedDate.toISOString()).toBe("2026-04-17T12:00:00.000Z");
@@ -28,6 +28,20 @@ describe("survey scheduling date utils", () => {
     const storedDate = new Date("2026-04-17T12:00:00.000Z");
 
     expect(normalizeDateOnlySelectionToCETMidnight(storedDate)?.toISOString()).toBe(
+      "2026-04-16T23:00:00.000Z"
+    );
+  });
+
+  test("keeps already-normalized CET midnight values stable when re-saved", () => {
+    const normalizedStoredDate = new Date("2026-04-16T23:00:00.000Z");
+    const calendarDate = toCalendarDate(normalizedStoredDate);
+    const reselectedDate = toDateOnlySelection(calendarDate);
+
+    expect(reselectedDate.toISOString()).toBe("2026-04-17T12:00:00.000Z");
+    expect(normalizeDateOnlySelectionToCETMidnight(normalizedStoredDate)?.toISOString()).toBe(
+      "2026-04-16T23:00:00.000Z"
+    );
+    expect(normalizeDateOnlySelectionToCETMidnight(reselectedDate)?.toISOString()).toBe(
       "2026-04-16T23:00:00.000Z"
     );
   });

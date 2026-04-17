@@ -2,7 +2,7 @@
 
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { ChevronDownIcon } from "lucide-react";
-import { type Dispatch, type SetStateAction, useEffect, useState } from "react";
+import { type Dispatch, type SetStateAction, useEffect, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -26,14 +26,41 @@ export const SurveySchedulingCard = ({ localSurvey, locale, setLocalSurvey }: Su
   const publishOn = localSurvey.publishOn ? toCalendarDate(localSurvey.publishOn) : null;
   const pauseOn = localSurvey.pauseOn ? toCalendarDate(localSurvey.pauseOn) : null;
   const minDate = getCurrentFixedCETCalendarDate();
+  const minPauseDate = publishOn && publishOn.getTime() > minDate.getTime() ? publishOn : minDate;
   const hasScheduledDates = publishOn !== null || pauseOn !== null;
   const [open, setOpen] = useState(() => hasScheduledDates);
+  const headingId = useId();
+  const summaryId = useId();
 
   useEffect(() => {
     if (hasScheduledDates) {
       setOpen(true);
     }
   }, [hasScheduledDates]);
+
+  useEffect(() => {
+    if (!publishOn || !pauseOn || pauseOn.getTime() >= publishOn.getTime()) {
+      return;
+    }
+
+    setLocalSurvey((currentSurvey) => {
+      if (!currentSurvey.pauseOn || !currentSurvey.publishOn) {
+        return currentSurvey;
+      }
+
+      const currentPauseOn = toCalendarDate(currentSurvey.pauseOn);
+      const currentPublishOn = toCalendarDate(currentSurvey.publishOn);
+
+      if (currentPauseOn.getTime() >= currentPublishOn.getTime()) {
+        return currentSurvey;
+      }
+
+      return {
+        ...currentSurvey,
+        pauseOn: null,
+      };
+    });
+  }, [pauseOn, publishOn, setLocalSurvey]);
 
   const scheduleSummary = [
     publishOn
@@ -46,22 +73,28 @@ export const SurveySchedulingCard = ({ localSurvey, locale, setLocalSurvey }: Su
     <Collapsible.Root
       open={open}
       onOpenChange={setOpen}
+      data-testid="survey-schedule-card"
       className={cn(open ? "" : "hover:bg-slate-50", "w-full rounded-lg border border-slate-300 bg-white")}>
       <Collapsible.CollapsibleTrigger asChild>
         <button
           type="button"
           className="flex w-full items-start justify-between gap-4 px-6 py-5 text-left"
-          aria-label={t("workspace.surveys.edit.survey_schedule")}>
+          aria-expanded={open}
+          aria-labelledby={`${headingId} ${summaryId}`}>
           <div className="space-y-1">
-            <h3 className="font-semibold text-slate-800">{t("workspace.surveys.edit.survey_schedule")}</h3>
+            <h3 id={headingId} className="font-semibold text-slate-800">
+              {t("workspace.surveys.edit.survey_schedule")}
+            </h3>
             {scheduleSummary.length > 0 ? (
-              scheduleSummary.map((summaryLine) => (
-                <p key={summaryLine} className="text-sm text-slate-500">
-                  {summaryLine}
-                </p>
-              ))
+              <div id={summaryId}>
+                {scheduleSummary.map((summaryLine) => (
+                  <p key={summaryLine} className="text-sm text-slate-500">
+                    {summaryLine}
+                  </p>
+                ))}
+              </div>
             ) : (
-              <p className="text-sm text-slate-500">
+              <p id={summaryId} className="text-sm text-slate-500">
                 {t("workspace.surveys.edit.schedule_survey_publish_and_pause_dates")}
               </p>
             )}
@@ -97,9 +130,17 @@ export const SurveySchedulingCard = ({ localSurvey, locale, setLocalSurvey }: Su
                 }));
               }}
               updateSurveyDate={(date) => {
+                const nextPublishOn = toDateOnlySelection(date);
+                const nextPublishCalendarDate = toCalendarDate(nextPublishOn);
+
                 setLocalSurvey((currentSurvey) => ({
                   ...currentSurvey,
-                  publishOn: toDateOnlySelection(date),
+                  pauseOn:
+                    currentSurvey.pauseOn &&
+                    toCalendarDate(currentSurvey.pauseOn).getTime() < nextPublishCalendarDate.getTime()
+                      ? null
+                      : currentSurvey.pauseOn,
+                  publishOn: nextPublishOn,
                 }));
               }}
             />
@@ -120,7 +161,7 @@ export const SurveySchedulingCard = ({ localSurvey, locale, setLocalSurvey }: Su
               clearButtonLabel={t("workspace.surveys.edit.clear_pause_on_date")}
               date={pauseOn}
               locale={locale}
-              minDate={minDate}
+              minDate={minPauseDate}
               onClearDate={() => {
                 setLocalSurvey((currentSurvey) => ({
                   ...currentSurvey,

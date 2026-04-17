@@ -4,14 +4,17 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ZId, ZOptionalNumber } from "@formbricks/types/common";
-import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurvey, TSurveyCreateInput, ZSurvey, ZSurveyCreateInput } from "@formbricks/types/surveys/types";
 import {
   getOrganizationByWorkspaceId,
   subscribeOrganizationMembersToSurveyResponses,
 } from "@/lib/organization/service";
-import { TriggerUpdate } from "@/modules/survey/editor/types/survey-trigger";
+import {
+  checkTriggersValidity as checkSurveyTriggersValidity,
+  handleTriggerUpdates as handleSurveyTriggerUpdates,
+} from "@/modules/survey/lib/trigger-updates";
 import {
   isSurveySchedulingDue,
   normalizeSurveyScheduling,
@@ -114,35 +117,8 @@ export const selectSurvey = {
   slug: true,
 } satisfies Prisma.SurveySelect;
 
-const getTriggerIds = (triggers: TSurvey["triggers"]): string[] | null => {
-  if (!triggers) return null;
-  if (!Array.isArray(triggers)) {
-    throw new InvalidInputError("Invalid trigger id");
-  }
-
-  return triggers.map((trigger) => {
-    const actionClassId = trigger?.actionClass?.id;
-    if (typeof actionClassId !== "string") {
-      throw new InvalidInputError("Invalid trigger id");
-    }
-    return actionClassId;
-  });
-};
-
 export const checkTriggersValidity = (triggers: TSurvey["triggers"], actionClasses: ActionClass[]) => {
-  const triggerIds = getTriggerIds(triggers);
-  if (!triggerIds) return;
-
-  // check if all the triggers are valid
-  triggerIds.forEach((triggerId) => {
-    if (!actionClasses.find((actionClass) => actionClass.id === triggerId)) {
-      throw new InvalidInputError("Invalid trigger id");
-    }
-  });
-
-  if (new Set(triggerIds).size !== triggerIds.length) {
-    throw new InvalidInputError("Duplicate trigger id");
-  }
+  checkSurveyTriggersValidity(triggers, actionClasses);
 };
 
 export const handleTriggerUpdates = (
@@ -150,38 +126,7 @@ export const handleTriggerUpdates = (
   currentTriggers: TSurvey["triggers"],
   actionClasses: ActionClass[]
 ) => {
-  const updatedTriggerIds = getTriggerIds(updatedTriggers);
-  if (!updatedTriggerIds) return {};
-
-  checkTriggersValidity(updatedTriggers, actionClasses);
-
-  const currentTriggerIds = getTriggerIds(currentTriggers) ?? [];
-
-  // added triggers are triggers that are not in the current triggers and are there in the new triggers
-  const addedTriggerIds = updatedTriggerIds.filter((triggerId) => !currentTriggerIds.includes(triggerId));
-
-  // deleted triggers are triggers that are not in the new triggers and are there in the current triggers
-  const deletedTriggerIds = currentTriggerIds.filter((triggerId) => !updatedTriggerIds.includes(triggerId));
-
-  // Construct the triggers update object
-  const triggersUpdate: TriggerUpdate = {};
-
-  if (addedTriggerIds.length > 0) {
-    triggersUpdate.create = addedTriggerIds.map((triggerId) => ({
-      actionClassId: triggerId,
-    }));
-  }
-
-  if (deletedTriggerIds.length > 0) {
-    // disconnect the public triggers from the survey
-    triggersUpdate.deleteMany = {
-      actionClassId: {
-        in: deletedTriggerIds,
-      },
-    };
-  }
-
-  return triggersUpdate;
+  return handleSurveyTriggerUpdates(updatedTriggers, currentTriggers, actionClasses);
 };
 
 const reconcilePersistedSurveySchedulingIfDue = async ({
@@ -583,11 +528,6 @@ export const updateSurveyInternal = async (
     // Strip isDraft from elements before saving
     if (updatedSurvey.blocks && updatedSurvey.blocks.length > 0) {
       data.blocks = stripIsDraftFromBlocks(updatedSurvey.blocks);
-    }
-
-    const organization = await getOrganizationByWorkspaceId(updatedSurvey.workspaceId);
-    if (!organization) {
-      throw new ResourceNotFoundError("Organization", null);
     }
 
     const normalizedScheduling = normalizeSurveyScheduling({

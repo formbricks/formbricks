@@ -5,6 +5,7 @@ import { logger } from "@formbricks/logger";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
 import { type TAuditStatus } from "@/modules/ee/audit-logs/types/audit-log";
+import { SURVEY_SCHEDULING_RECONCILIATION_BATCH_SIZE } from "./constants";
 import { isDateDue, normalizeDateOnlySelectionToCETMidnight } from "./date-utils";
 
 type TSurveySchedulingTransition = "publish" | "pause";
@@ -20,16 +21,12 @@ interface ReconcileDueSurveySchedulesOptions {
 }
 
 const surveySchedulingCandidateSelect = {
-  environment: {
+  workspace: {
     select: {
-      workspace: {
-        select: {
-          organizationId: true,
-        },
-      },
+      organizationId: true,
     },
   },
-  environmentId: true,
+  workspaceId: true,
   id: true,
   pauseOn: true,
   publishOn: true,
@@ -39,6 +36,11 @@ const surveySchedulingCandidateSelect = {
 type TSurveySchedulingCandidate = Prisma.SurveyGetPayload<{
   select: typeof surveySchedulingCandidateSelect;
 }>;
+
+interface LoadDueTransitionCandidatesOptions {
+  surveyId?: string;
+  take: number;
+}
 
 const getTransitionConfig = (
   transition: TSurveySchedulingTransition
@@ -113,10 +115,10 @@ const logAuditFailure = (
     {
       ...logContext,
       auditStatus: logStatus,
-      environmentId: candidate.environmentId,
       err: auditError,
       surveyId: candidate.id,
       transition,
+      workspaceId: candidate.workspaceId,
     },
     "Survey scheduling audit log failed"
   );
@@ -134,7 +136,7 @@ const queueTransitionAudit = async (
       action: "updated",
       newObject,
       oldObject,
-      organizationId: candidate.environment.workspace.organizationId,
+      organizationId: candidate.workspace.organizationId,
       status: "success",
       targetId: candidate.id,
       targetType: "survey",
@@ -149,12 +151,21 @@ const queueTransitionAudit = async (
 const loadDueTransitionCandidates = async (
   transition: TSurveySchedulingTransition,
   now: Date,
-  surveyId?: string
+  { surveyId, take }: LoadDueTransitionCandidatesOptions
 ): Promise<TSurveySchedulingCandidate[]> => {
   const { currentStatus, dueField } = getTransitionConfig(transition);
 
   return await prisma.survey.findMany({
+    orderBy: [
+      {
+        [dueField]: "asc",
+      },
+      {
+        id: "asc",
+      },
+    ],
     select: surveySchedulingCandidateSelect,
+    take,
     where: {
       ...(surveyId ? { id: surveyId } : {}),
       [dueField]: {
@@ -199,11 +210,11 @@ const applyTransition = async (
         ...logContext,
         currentStatus,
         dueField,
-        environmentId: candidate.environmentId,
         err: error,
         nextStatus,
         surveyId: candidate.id,
         transition,
+        workspaceId: candidate.workspaceId,
       },
       "Survey scheduling transition failed"
     );
@@ -222,14 +233,29 @@ const reconcileTransition = async (
   logContext: SurveySchedulingLogContext,
   surveyId?: string
 ): Promise<number> => {
-  const candidates = await loadDueTransitionCandidates(transition, now, surveyId);
+  const batchSize = surveyId ? 1 : SURVEY_SCHEDULING_RECONCILIATION_BATCH_SIZE;
   let transitionCount = 0;
 
-  for (const candidate of candidates) {
-    const wasUpdated = await applyTransition(candidate, transition, now, logContext);
+  while (true) {
+    const candidates = await loadDueTransitionCandidates(transition, now, {
+      surveyId,
+      take: batchSize,
+    });
 
-    if (wasUpdated) {
-      transitionCount += 1;
+    if (candidates.length === 0) {
+      break;
+    }
+
+    for (const candidate of candidates) {
+      const wasUpdated = await applyTransition(candidate, transition, now, logContext);
+
+      if (wasUpdated) {
+        transitionCount += 1;
+      }
+    }
+
+    if (surveyId || candidates.length < batchSize) {
+      break;
     }
   }
 
@@ -256,8 +282,13 @@ export const normalizeSurveyScheduling = ({
     normalizedPublishOn = null;
   }
 
-  if (isManualStatusChange && (status === "paused" || status === "completed")) {
+  if (isManualStatusChange && status === "paused") {
     normalizedPauseOn = null;
+  }
+
+  if (isManualStatusChange && status === "completed") {
+    normalizedPauseOn = null;
+    normalizedPublishOn = null;
   }
 
   return {

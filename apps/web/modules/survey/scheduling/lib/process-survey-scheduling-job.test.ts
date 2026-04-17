@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/__mocks__/database";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { SURVEY_SCHEDULING_RECONCILIATION_BATCH_SIZE } from "./constants";
 import { processSurveySchedulingJob } from "./process-survey-scheduling-job";
 
 const { mockLoggerError, mockLoggerInfo, mockQueueAuditEventWithoutRequest } = vi.hoisted(() => ({
@@ -30,24 +31,24 @@ const baseContext = {
 };
 
 const createCandidate = ({
+  id = "survey123",
   pauseOn,
   publishOn,
   status,
 }: {
+  id?: string;
   pauseOn: Date | null;
   publishOn: Date | null;
   status: "draft" | "inProgress";
 }) => ({
-  environment: {
-    workspace: {
-      organizationId: "org123",
-    },
-  },
-  environmentId: "env123",
-  id: "survey123",
+  id,
   pauseOn,
   publishOn,
   status,
+  workspace: {
+    organizationId: "org123",
+  },
+  workspaceId: "workspace123",
 });
 
 describe("processSurveySchedulingJob", () => {
@@ -91,6 +92,51 @@ describe("processSurveySchedulingJob", () => {
       },
     });
     expect(mockQueueAuditEventWithoutRequest).toHaveBeenCalledTimes(1);
+  });
+
+  test("processes due publish transitions in batches when the backlog is large", async () => {
+    const duePublishOn = new Date("2026-04-16T23:00:00.000Z");
+    const firstBatch = Array.from({ length: SURVEY_SCHEDULING_RECONCILIATION_BATCH_SIZE }, (_, index) =>
+      createCandidate({
+        id: `survey-${index}`,
+        pauseOn: null,
+        publishOn: duePublishOn,
+        status: "draft",
+      })
+    );
+    const secondBatch = [
+      createCandidate({
+        id: `survey-${SURVEY_SCHEDULING_RECONCILIATION_BATCH_SIZE}`,
+        pauseOn: null,
+        publishOn: duePublishOn,
+        status: "draft",
+      }),
+    ];
+
+    prisma.survey.findMany
+      .mockResolvedValueOnce(firstBatch as never)
+      .mockResolvedValueOnce(secondBatch as never)
+      .mockResolvedValueOnce([] as never)
+      .mockResolvedValueOnce([] as never);
+    prisma.survey.updateMany.mockResolvedValue({ count: 1 } as never);
+
+    await expect(processSurveySchedulingJob({ scope: "global" }, baseContext)).resolves.toBeUndefined();
+
+    expect(prisma.survey.findMany).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        take: SURVEY_SCHEDULING_RECONCILIATION_BATCH_SIZE,
+      })
+    );
+    expect(prisma.survey.findMany).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        take: SURVEY_SCHEDULING_RECONCILIATION_BATCH_SIZE,
+      })
+    );
+    expect(prisma.survey.updateMany).toHaveBeenCalledTimes(
+      SURVEY_SCHEDULING_RECONCILIATION_BATCH_SIZE + secondBatch.length
+    );
   });
 
   test("pauses due published surveys", async () => {
