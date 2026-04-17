@@ -586,14 +586,16 @@ export const createSurvey = async (workspaceId: string, surveyBody: TSurveyCreat
 
   try {
     const { createdBy, languages, ...restSurveyBody } = parsedSurveyBody;
+    const normalizedPauseOn = restSurveyBody.pauseOn instanceof Date ? restSurveyBody.pauseOn : null;
+    const normalizedPublishOn = restSurveyBody.publishOn instanceof Date ? restSurveyBody.publishOn : null;
 
     const actionClasses = await getActionClasses(parsedWorkspaceId);
 
     let data: Omit<Prisma.SurveyCreateInput, "workspace"> = {
       ...restSurveyBody,
       ...normalizeSurveyScheduling({
-        pauseOn: restSurveyBody.pauseOn ?? null,
-        publishOn: restSurveyBody.publishOn ?? null,
+        pauseOn: normalizedPauseOn,
+        publishOn: normalizedPublishOn,
         status: restSurveyBody.status ?? "draft",
       }),
       // @ts-expect-error - languages would be undefined in case of empty array

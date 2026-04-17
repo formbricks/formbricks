@@ -1,4 +1,3 @@
-import type { TResponsePipelineJobData } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
 import { Result } from "@formbricks/types/error-handlers";
 import { TIntegration, TIntegrationType } from "@formbricks/types/integration";
