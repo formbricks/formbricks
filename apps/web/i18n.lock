@@ -2694,11 +2694,11 @@ checksums:
     templates/gauge_feature_satisfaction_question_2_headline: 0fcbefbfcf5c21e42de8a36cb2cad854
     templates/identify_customer_goals_description: c30d06df9e5c76334e4c3d470ee6e4d8
     templates/identify_customer_goals_name: f8123dbfa22e169517a811fae7496595
-    templates/identify_customer_goals_question_1_headline: bd9cd414fb723110d7f0a786bbf89d6c
     templates/identify_customer_goals_question_1_choice_1: a6803cfbdbd6208eedf5c691f9e106a5
     templates/identify_customer_goals_question_1_choice_2: 7461749517d62030ec2e3915cf1d223b
     templates/identify_customer_goals_question_1_choice_3: 725eb3ee0d4f2d229fcf588c21e66a86
     templates/identify_customer_goals_question_1_choice_4: 3985521036afaf1cbd2bdc7a4d86d351
+    templates/identify_customer_goals_question_1_headline: bd9cd414fb723110d7f0a786bbf89d6c
     templates/identify_sign_up_barriers_description: 5b2fbee8c425d7a4d0706ec3628cea11
     templates/identify_sign_up_barriers_name: 3bbc5352dfa7a9c237bc2c6b21b608dd
     templates/identify_sign_up_barriers_question_1_button_label: 080fd22c580f56ffdcea6c3d60448b84
