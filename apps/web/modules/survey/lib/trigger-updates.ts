@@ -34,7 +34,7 @@ export const checkTriggersValidity = (triggers: unknown, actionClasses: TriggerA
   if (!triggerIds) return;
 
   triggerIds.forEach((triggerId) => {
-    if (!actionClasses.find((actionClass) => actionClass.id === triggerId)) {
+    if (!actionClasses.some((actionClass) => actionClass.id === triggerId)) {
       throw new InvalidInputError("Invalid trigger id");
     }
   });

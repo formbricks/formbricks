@@ -578,6 +578,61 @@ export const updateSurveyDraft = async (updatedSurvey: TSurvey): Promise<TSurvey
   return updateSurveyInternal(updatedSurvey, true);
 };
 
+const attachSurveyCreatorToCreateData = (
+  data: Omit<Prisma.SurveyCreateInput, "workspace">,
+  createdBy?: string | null
+): Omit<Prisma.SurveyCreateInput, "workspace"> => {
+  if (!createdBy) {
+    return data;
+  }
+
+  return {
+    ...data,
+    creator: {
+      connect: {
+        id: createdBy,
+      },
+    },
+  };
+};
+
+const attachSurveyFollowUpsToCreateData = (
+  data: Omit<Prisma.SurveyCreateInput, "workspace">,
+  followUps?: TSurveyCreateInput["followUps"]
+): Omit<Prisma.SurveyCreateInput, "workspace"> => {
+  if (!followUps?.length) {
+    return data;
+  }
+
+  return {
+    ...data,
+    followUps: {
+      create: followUps.map((followUp) => ({
+        name: followUp.name,
+        trigger: followUp.trigger,
+        action: followUp.action,
+      })),
+    },
+  };
+};
+
+const validateSurveyCreateDataMedia = (
+  data: Omit<Prisma.SurveyCreateInput, "workspace">
+): Omit<Prisma.SurveyCreateInput, "workspace"> => {
+  if (data.questions) {
+    checkForInvalidImagesInQuestions(data.questions);
+  }
+
+  if (data.blocks?.length) {
+    return {
+      ...data,
+      blocks: validateMediaAndPrepareBlocks(data.blocks),
+    };
+  }
+
+  return data;
+};
+
 export const createSurvey = async (workspaceId: string, surveyBody: TSurveyCreateInput): Promise<TSurvey> => {
   const [parsedWorkspaceId, parsedSurveyBody] = validateInputs(
     [workspaceId, ZId],
@@ -591,7 +646,7 @@ export const createSurvey = async (workspaceId: string, surveyBody: TSurveyCreat
 
     const actionClasses = await getActionClasses(parsedWorkspaceId);
 
-    let data: Omit<Prisma.SurveyCreateInput, "workspace"> = {
+    const baseData: Omit<Prisma.SurveyCreateInput, "workspace"> = {
       ...restSurveyBody,
       ...normalizeSurveyScheduling({
         pauseOn: normalizedPauseOn,
@@ -606,40 +661,16 @@ export const createSurvey = async (workspaceId: string, surveyBody: TSurveyCreat
         : undefined,
       attributeFilters: undefined,
     };
-
-    if (createdBy) {
-      data.creator = {
-        connect: {
-          id: createdBy,
-        },
-      };
-    }
+    const data = validateSurveyCreateDataMedia(
+      attachSurveyFollowUpsToCreateData(
+        attachSurveyCreatorToCreateData(baseData, createdBy),
+        restSurveyBody.followUps
+      )
+    );
 
     const organization = await getOrganizationByWorkspaceId(parsedWorkspaceId);
     if (!organization) {
       throw new ResourceNotFoundError("Organization", null);
-    }
-
-    // Survey follow-ups
-    if (restSurveyBody.followUps?.length) {
-      data.followUps = {
-        create: restSurveyBody.followUps.map((followUp) => ({
-          name: followUp.name,
-          trigger: followUp.trigger,
-          action: followUp.action,
-        })),
-      };
-    } else {
-      delete data.followUps;
-    }
-
-    if (data.questions) {
-      checkForInvalidImagesInQuestions(data.questions);
-    }
-
-    // Validate and prepare blocks for persistence
-    if (data.blocks && data.blocks.length > 0) {
-      data.blocks = validateMediaAndPrepareBlocks(data.blocks);
     }
 
     const survey = await prisma.survey.create({
