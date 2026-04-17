@@ -38,6 +38,7 @@ export const getFeedbackRecordDirectories = reactCache(
           _count: {
             select: {
               workspaces: true,
+              connectors: true,
             },
           },
         },
@@ -51,6 +52,7 @@ export const getFeedbackRecordDirectories = reactCache(
         name: dir.name,
         isArchived: dir.isArchived,
         workspaceCount: dir._count.workspaces,
+        connectorCount: dir._count.connectors,
       }));
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -70,6 +72,33 @@ export const getFeedbackRecordDirectories = reactCache(
  * @throws {DatabaseError} If a Prisma database error occurs.
  * @throws Re-throws any other unexpected errors.
  */
+/**
+ * Lists feedback record directories assigned to a workspace.
+ * Used by connector creation to pick an FRD.
+ */
+export const getFeedbackRecordDirectoriesByWorkspaceId = reactCache(
+  async (workspaceId: string): Promise<{ id: string; name: string }[]> => {
+    validateInputs([workspaceId, ZId]);
+    try {
+      const rows = await prisma.feedbackRecordDirectoryWorkspace.findMany({
+        where: {
+          workspaceId,
+          feedbackRecordDirectory: { isArchived: false },
+        },
+        select: {
+          feedbackRecordDirectory: { select: { id: true, name: true } },
+        },
+      });
+      return rows.map((r) => r.feedbackRecordDirectory);
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+      throw error;
+    }
+  }
+);
+
 export const getFeedbackRecordDirectoryDetails = reactCache(
   async (directoryId: string): Promise<TFeedbackRecordDirectoryDetails | null> => {
     validateInputs([directoryId, ZId]);
@@ -93,6 +122,16 @@ export const getFeedbackRecordDirectoryDetails = reactCache(
               },
             },
           },
+          connectors: {
+            select: {
+              id: true,
+              name: true,
+              type: true,
+              workspaceId: true,
+              workspace: { select: { name: true } },
+            },
+            orderBy: { createdAt: "desc" },
+          },
         },
       });
 
@@ -108,6 +147,13 @@ export const getFeedbackRecordDirectoryDetails = reactCache(
         workspaces: directory.workspaces.map((dp) => ({
           workspaceId: dp.workspaceId,
           workspaceName: dp.workspace.name,
+        })),
+        connectors: directory.connectors.map((c) => ({
+          id: c.id,
+          name: c.name,
+          type: c.type,
+          workspaceId: c.workspaceId,
+          workspaceName: c.workspace.name,
         })),
       };
     } catch (error) {
@@ -133,14 +179,28 @@ export const getFeedbackRecordDirectoryDetails = reactCache(
  */
 export const createFeedbackRecordDirectory = async (
   organizationId: string,
-  name: string
+  name: string,
+  workspaceIds?: string[]
 ): Promise<string> => {
   validateInputs([organizationId, ZId], [name, z.string().trim().min(1, "DIRECTORY_NAME_REQUIRED")]);
   try {
+    // Verify workspaces belong to same org
+    if (workspaceIds?.length) {
+      const count = await prisma.workspace.count({
+        where: { id: { in: workspaceIds }, organizationId },
+      });
+      if (count !== workspaceIds.length) {
+        throw new InvalidInputError("DIRECTORY_PROJECTS_INVALID_ORG");
+      }
+    }
+
     const directory = await prisma.feedbackRecordDirectory.create({
       data: {
         name,
         organizationId,
+        workspaces: workspaceIds?.length
+          ? { create: workspaceIds.map((workspaceId) => ({ workspaceId })) }
+          : undefined,
       },
       select: {
         id: true,
@@ -244,8 +304,16 @@ export const updateFeedbackRecordDirectory = async (
       payload.name = name;
     }
 
-    if (isArchived !== undefined) {
-      payload.isArchived = isArchived;
+    if (isArchived === true) {
+      const connectorCount = await prisma.connector.count({
+        where: { feedbackRecordDirectoryId: directoryId },
+      });
+      if (connectorCount > 0) {
+        throw new InvalidInputError("DIRECTORY_HAS_CONNECTORS");
+      }
+      payload.isArchived = true;
+    } else if (isArchived === false) {
+      payload.isArchived = false;
     }
 
     if (workspaceIds !== undefined) {

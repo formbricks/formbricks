@@ -1,0 +1,304 @@
+"use client";
+
+import { FileSpreadsheetIcon, GlobeIcon } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { TConnectorType, TConnectorWithMappings } from "@formbricks/types/connector";
+import { Button } from "@/modules/ui/components/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/modules/ui/components/dialog";
+import { Input } from "@/modules/ui/components/input";
+import { Label } from "@/modules/ui/components/label";
+import {
+  FEEDBACK_RECORD_FIELDS,
+  SAMPLE_CSV_COLUMNS,
+  TFieldMapping,
+  TSourceField,
+  TUnifySurvey,
+} from "../types";
+import { parseCSVColumnsToFields } from "../utils";
+import { FormbricksSurveySelector } from "./formbricks-survey-selector";
+import { MappingUI } from "./mapping-ui";
+
+interface EditConnectorModalProps {
+  connector: TConnectorWithMappings | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onUpdateConnector: (data: {
+    connectorId: string;
+    workspaceId: string;
+    name: string;
+    surveyMappings?: { surveyId: string; elementIds: string[] }[];
+    fieldMappings?: TFieldMapping[];
+  }) => Promise<void>;
+  surveys: TUnifySurvey[];
+  directories: { id: string; name: string }[];
+  onOpenCsvImport?: () => void;
+}
+
+const getConnectorIcon = (type: TConnectorType) => {
+  switch (type) {
+    case "formbricks":
+      return <GlobeIcon className="h-5 w-5 text-slate-500" />;
+    case "csv":
+      return <FileSpreadsheetIcon className="h-5 w-5 text-slate-500" />;
+    default:
+      return <GlobeIcon className="h-5 w-5 text-slate-500" />;
+  }
+};
+
+const getConnectorTypeLabelKey = (type: TConnectorType): string => {
+  switch (type) {
+    case "formbricks":
+      return "workspace.unify.formbricks_surveys";
+    case "csv":
+      return "workspace.unify.csv_import";
+    default:
+      return type;
+  }
+};
+
+const groupMappingsBySurvey = (
+  mappings: { surveyId: string; elementId: string }[]
+): Record<string, string[]> => {
+  const grouped: Record<string, string[]> = {};
+  for (const m of mappings) {
+    if (!grouped[m.surveyId]) grouped[m.surveyId] = [];
+    grouped[m.surveyId].push(m.elementId);
+  }
+  return grouped;
+};
+
+export const EditConnectorModal = ({
+  connector,
+  open,
+  onOpenChange,
+  onUpdateConnector,
+  surveys,
+  directories,
+  onOpenCsvImport,
+}: EditConnectorModalProps) => {
+  const { t } = useTranslation();
+  const [connectorName, setConnectorName] = useState("");
+  const [mappings, setMappings] = useState<TFieldMapping[]>([]);
+  const [sourceFields, setSourceFields] = useState<TSourceField[]>([]);
+
+  const [selectedSurveyId, setSelectedSurveyId] = useState<string | null>(null);
+  const [elementIdsBySurvey, setElementIdsBySurvey] = useState<Record<string, string[]>>({});
+
+  const selectedElementIds = selectedSurveyId ? (elementIdsBySurvey[selectedSurveyId] ?? []) : [];
+
+  const requiredFields = FEEDBACK_RECORD_FIELDS.filter((f) => f.required);
+  const allRequiredMapped = requiredFields.every((field) =>
+    mappings.some((m) => m.targetFieldId === field.id && (m.sourceFieldId || m.staticValue))
+  );
+
+  useEffect(() => {
+    if (connector) {
+      setConnectorName(connector.name);
+
+      if (connector.type === "formbricks") {
+        const fbMappings = connector.formbricksMappings;
+        setSelectedSurveyId(fbMappings.length > 0 ? fbMappings[0].surveyId : null);
+        setElementIdsBySurvey(groupMappingsBySurvey(fbMappings));
+        setSourceFields([]);
+        setMappings([]);
+      } else if (connector.type === "csv") {
+        const columnsFromMappings = [
+          ...new Set(connector.fieldMappings.map((m) => m.sourceFieldId).filter(Boolean)),
+        ];
+        setSourceFields(
+          columnsFromMappings.length > 0
+            ? parseCSVColumnsToFields(columnsFromMappings.join(","))
+            : parseCSVColumnsToFields(SAMPLE_CSV_COLUMNS)
+        );
+        setMappings(
+          connector.fieldMappings.map((m) => ({
+            sourceFieldId: m.sourceFieldId,
+            targetFieldId: m.targetFieldId,
+            staticValue: m.staticValue ?? undefined,
+          }))
+        );
+        setSelectedSurveyId(null);
+        setElementIdsBySurvey({});
+      } else {
+        setSourceFields([]);
+        setMappings([]);
+        setSelectedSurveyId(null);
+        setElementIdsBySurvey({});
+      }
+    }
+  }, [connector]);
+
+  const resetForm = () => {
+    setConnectorName("");
+    setMappings([]);
+    setSourceFields([]);
+    setSelectedSurveyId(null);
+    setElementIdsBySurvey({});
+  };
+
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!newOpen) {
+      resetForm();
+    }
+    onOpenChange(newOpen);
+  };
+
+  const handleSurveySelect = (surveyId: string | null) => {
+    setSelectedSurveyId(surveyId);
+  };
+
+  const handleElementToggle = (elementId: string) => {
+    if (!selectedSurveyId) return;
+    setElementIdsBySurvey((prev) => {
+      const current = prev[selectedSurveyId] ?? [];
+      return {
+        ...prev,
+        [selectedSurveyId]: current.includes(elementId)
+          ? current.filter((id) => id !== elementId)
+          : [...current, elementId],
+      };
+    });
+  };
+
+  const handleSelectAllElements = (surveyId: string) => {
+    const survey = surveys.find((s) => s.id === surveyId);
+    if (survey) {
+      setElementIdsBySurvey((prev) => ({
+        ...prev,
+        [surveyId]: survey.elements.map((e) => e.id),
+      }));
+    }
+  };
+
+  const handleDeselectAllElements = () => {
+    if (!selectedSurveyId) return;
+    setElementIdsBySurvey((prev) => ({
+      ...prev,
+      [selectedSurveyId]: [],
+    }));
+  };
+
+  const handleUpdate = async () => {
+    if (!connector || !connectorName.trim()) return;
+
+    const surveyMappings = Object.entries(elementIdsBySurvey)
+      .filter(([, ids]) => ids.length > 0)
+      .map(([surveyId, elementIds]) => ({ surveyId, elementIds }));
+
+    await onUpdateConnector({
+      connectorId: connector.id,
+      workspaceId: connector.workspaceId,
+      name: connectorName.trim(),
+      surveyMappings:
+        connector.type === "formbricks" && surveyMappings.length > 0 ? surveyMappings : undefined,
+      fieldMappings: connector.type !== "formbricks" && mappings.length > 0 ? mappings : undefined,
+    });
+    handleOpenChange(false);
+  };
+
+  const assignedDirectoryName =
+    directories.find((d) => d.id === connector?.feedbackRecordDirectoryId)?.name ??
+    connector?.feedbackRecordDirectoryId ??
+    "—";
+
+  const saveChangesDisbaled = useMemo(() => {
+    if (!connector) return true;
+    if (!connectorName.trim()) return true;
+
+    if (connector.type === "formbricks") {
+      return !Object.values(elementIdsBySurvey).some((ids) => ids.length > 0);
+    }
+
+    if (connector.type === "csv") {
+      return !allRequiredMapped;
+    }
+  }, [allRequiredMapped, connector, connectorName, elementIdsBySurvey]);
+
+  if (!connector) return null;
+
+  return (
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="max-w-3xl">
+        <DialogHeader>
+          <DialogTitle>{t("workspace.unify.edit_source_connection")}</DialogTitle>
+          <DialogDescription>{t("workspace.unify.update_mapping_description")}</DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 py-4">
+          <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+            {getConnectorIcon(connector.type)}
+            <div>
+              <p className="text-sm font-medium text-slate-900">
+                {t(getConnectorTypeLabelKey(connector.type))}
+              </p>
+              <p className="text-xs text-slate-500">{t("workspace.unify.source_type_cannot_be_changed")}</p>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="editConnectorName">{t("workspace.unify.source_name")}</Label>
+            <Input
+              id="editConnectorName"
+              value={connectorName}
+              onChange={(e) => setConnectorName(e.target.value)}
+              placeholder={t("workspace.unify.enter_name_for_source")}
+            />
+          </div>
+
+          <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
+            {t("workspace.unify.records_will_go_to")}{" "}
+            <span className="font-medium text-slate-900">{assignedDirectoryName}</span>
+            <p className="mt-1 text-xs text-slate-400">{t("workspace.unify.frd_cannot_be_changed")}</p>
+          </div>
+
+          {connector.type === "formbricks" ? (
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+              <FormbricksSurveySelector
+                surveys={surveys}
+                selectedSurveyId={selectedSurveyId}
+                selectedElementIds={selectedElementIds}
+                onSurveySelect={handleSurveySelect}
+                onElementToggle={handleElementToggle}
+                onSelectAllElements={handleSelectAllElements}
+                onDeselectAllElements={handleDeselectAllElements}
+              />
+            </div>
+          ) : (
+            <div className="max-h-[40vh] overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-4">
+              <MappingUI
+                sourceFields={sourceFields}
+                mappings={mappings}
+                onMappingsChange={setMappings}
+                connectorType={connector.type}
+              />
+            </div>
+          )}
+        </div>
+
+        <DialogFooter>
+          {connector.type === "csv" && (
+            <Button
+              variant="secondary"
+              onClick={() => {
+                handleOpenChange(false);
+                onOpenCsvImport?.();
+              }}>
+              {t("workspace.unify.import_feedback")}
+            </Button>
+          )}
+          <Button onClick={handleUpdate} disabled={saveChangesDisbaled}>
+            {t("workspace.unify.save_changes")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};

@@ -40,7 +40,7 @@ test.describe("Survey Styling", async () => {
     await user.login();
 
     // Navigate to Look & Feel settings
-    await page.getByRole("link", { name: "Configuration" }).click();
+    await page.getByRole("link", { name: "Configure" }).click();
     await page.getByRole("link", { name: "Look & Feel" }).click();
     await page.waitForURL(/\/workspaces\/[^/]+\/look/);
 
@@ -173,7 +173,7 @@ test.describe("Survey Styling", async () => {
     await user.login();
 
     // Navigate to Look & Feel settings
-    await page.getByRole("link", { name: "Configuration" }).click();
+    await page.getByRole("link", { name: "Configure" }).click();
     await page.getByRole("link", { name: "Look & Feel" }).click();
     await page.waitForURL(/\/workspaces\/[^/]+\/look/);
 
@@ -262,7 +262,7 @@ test.describe("Survey Styling", async () => {
     await user.login();
 
     // Navigate to Look & Feel settings
-    await page.getByRole("link", { name: "Configuration" }).click();
+    await page.getByRole("link", { name: "Configure" }).click();
     await page.getByRole("link", { name: "Look & Feel" }).click();
     await page.waitForURL(/\/workspaces\/[^/]+\/look/);
 

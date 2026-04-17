@@ -138,6 +138,11 @@ export const WorkspaceBreadcrumb = ({
       label: t("common.tags"),
       href: `${workspaceBasePath}/tags`,
     },
+    {
+      id: "unify",
+      label: t("common.unify"),
+      href: `${workspaceBasePath}/workspace/unify`,
+    },
   ];
 
   const areWorkspaceSettingsDisabled = isMembershipPending || isBilling;
