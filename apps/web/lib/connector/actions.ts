@@ -536,11 +536,6 @@ export const listFeedbackRecordsAction = authenticatedActionClient
         .sort((a, b) => (a.collected_at < b.collected_at ? 1 : -1))
         .slice(0, perFrdLimit);
 
-      const result = { data: { data: merged, limit: perFrdLimit }, error: null };
-      if (!result.data) {
-        throw new Error("Failed to load feedback records");
-      }
-
-      return result.data;
+      return { data: merged, limit: perFrdLimit };
     }
   );

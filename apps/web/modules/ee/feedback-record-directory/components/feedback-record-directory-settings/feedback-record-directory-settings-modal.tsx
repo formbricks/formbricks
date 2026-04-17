@@ -37,7 +37,7 @@ import { Input } from "@/modules/ui/components/input";
 import { MultiSelect } from "@/modules/ui/components/multi-select";
 import { Muted } from "@/modules/ui/components/typography";
 
-interface FeedbackRecordDirectoryFormModalProps {
+interface FeedbackRecordDirectorySettingsModalProps {
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   directory?: TFeedbackRecordDirectoryDetails;
@@ -53,7 +53,7 @@ export const FeedbackRecordDirectorySettingsModal = ({
   organizationId,
   orgWorkspaces,
   membershipRole,
-}: FeedbackRecordDirectoryFormModalProps) => {
+}: FeedbackRecordDirectorySettingsModalProps) => {
   const { t } = useTranslation();
   const { isOwner, isManager } = getAccessFlags(membershipRole);
   const isOwnerOrManager = isOwner || isManager;

@@ -29,11 +29,10 @@ export default async function UnifyFeedbackRecordsPage(props: { params: Promise<
     frds.map((frd) => listFeedbackRecords({ tenant_id: frd.id, limit: INITIAL_PAGE_SIZE }))
   );
 
-  if (results.some((r) => r.error)) {
-    throw new Error(t("workspace.unify.failed_to_load_feedback_records"));
-  }
+  // Don't crash if Hub is unreachable — show empty state
+  const successfulResults = results.filter((r) => !r.error);
 
-  const merged = results
+  const merged = successfulResults
     .flatMap((r) => r.data?.data ?? [])
     .sort((a, b) => (a.collected_at < b.collected_at ? 1 : -1))
     .slice(0, INITIAL_PAGE_SIZE);
