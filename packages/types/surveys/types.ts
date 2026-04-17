@@ -3035,6 +3035,8 @@ const isInvalidOperatorsForElementType = (
       break;
     case TSurveyElementTypeEnum.NPS:
     case TSurveyElementTypeEnum.Rating:
+    case TSurveyElementTypeEnum.CSAT:
+    case TSurveyElementTypeEnum.CES:
       if (
         ![
           "equals",
