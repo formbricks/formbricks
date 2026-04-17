@@ -475,7 +475,7 @@ export const MainNavigation = ({
   );
 
   const switcherIconClasses =
-    "flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-600";
+    "flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600";
   const isInitialProjectsLoading = isWorkspaceDropdownOpen && !hasInitializedProjects && !workspaceLoadError;
 
   return (

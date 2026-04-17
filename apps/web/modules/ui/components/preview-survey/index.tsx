@@ -2,13 +2,21 @@
 
 import { Environment, Project } from "@prisma/client";
 import { motion } from "framer-motion";
-import { ExpandIcon, MonitorIcon, ShrinkIcon, SmartphoneIcon } from "lucide-react";
+import { ExpandIcon, GlobeIcon, MonitorIcon, ShrinkIcon, SmartphoneIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import { TProjectStyling } from "@formbricks/types/project";
-import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyLanguage, TSurveyStyling } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
 import { ClientLogo } from "@/modules/ui/components/client-logo";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/modules/ui/components/dropdown-menu";
 import { MediaBackground } from "@/modules/ui/components/media-background";
 import { ResetProgressButton } from "@/modules/ui/components/reset-progress-button";
 import { SurveyInline } from "@/modules/ui/components/survey";
@@ -24,6 +32,8 @@ interface PreviewSurveyProps {
   project: Project;
   environment: Pick<Environment, "id" | "appSetupCompleted">;
   languageCode: string;
+  setLanguageCode?: (code: string) => void;
+  locale?: TUserLocale;
   isSpamProtectionAllowed: boolean;
   publicDomain: string;
 }
@@ -38,6 +48,8 @@ export const PreviewSurvey = ({
   project,
   environment,
   languageCode,
+  setLanguageCode,
+  locale,
   isSpamProtectionAllowed,
   publicDomain,
 }: PreviewSurveyProps) => {
@@ -48,6 +60,10 @@ export const PreviewSurvey = ({
 
   const [previewMode, setPreviewMode] = useState("desktop");
   const ContentRef = useRef<HTMLDivElement | null>(null);
+
+  const enabledLanguages = useMemo(() => survey.languages.filter((l) => l.enabled), [survey.languages]);
+  const showLanguageSelector = setLanguageCode && enabledLanguages.length > 1;
+
   const { projectOverwrites } = survey || {};
 
   const { placement: surveyPlacement } = projectOverwrites || {};
@@ -228,7 +244,15 @@ export const PreviewSurvey = ({
             <p className="absolute left-0 top-0 m-2 rounded bg-slate-100 px-2 py-1 text-xs text-slate-400">
               {t("common.preview")}
             </p>
-            <div className="absolute right-0 top-0 m-2">
+            <div className="absolute right-0 top-0 m-2 flex items-center gap-1">
+              {showLanguageSelector && (
+                <LanguageSelector
+                  languages={enabledLanguages}
+                  languageCode={languageCode}
+                  setLanguageCode={setLanguageCode}
+                  locale={locale}
+                />
+              )}
               <ResetProgressButton onClick={resetProgress} />
             </div>
             <MediaBackground
@@ -324,6 +348,14 @@ export const PreviewSurvey = ({
                 </p>
 
                 <div className="flex items-center">
+                  {showLanguageSelector && (
+                    <LanguageSelector
+                      languages={enabledLanguages}
+                      languageCode={languageCode}
+                      setLanguageCode={setLanguageCode}
+                      locale={locale}
+                    />
+                  )}
                   {isFullScreenPreview ? (
                     <ShrinkIcon
                       className="mr-1 h-[22px] w-[22px] cursor-pointer rounded-md bg-white p-1 text-slate-500 hover:text-slate-700"
@@ -423,6 +455,46 @@ export const PreviewSurvey = ({
         />
       </div>
     </div>
+  );
+};
+
+const LanguageSelector = ({
+  languages,
+  languageCode,
+  setLanguageCode,
+  locale,
+}: {
+  languages: TSurveyLanguage[];
+  languageCode: string;
+  setLanguageCode: (code: string) => void;
+  locale?: TUserLocale;
+}) => {
+  const { t } = useTranslation();
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className="mr-1 flex h-[22px] w-[22px] cursor-pointer items-center justify-center rounded-md bg-white p-1 text-slate-500 hover:text-slate-700"
+          aria-label="Change preview language">
+          <GlobeIcon className="h-full w-full" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        {languages.map((surveyLang) => {
+          const code = surveyLang.default ? "default" : surveyLang.language.code;
+          return (
+            <DropdownMenuItem
+              key={surveyLang.language.code}
+              className={cn("text-xs", languageCode === code && "font-semibold")}
+              onSelect={() => setLanguageCode(code)}>
+              {getLanguageLabel(surveyLang.language.code, locale ?? "en")}
+              {surveyLang.default && ` (${t("common.default")})`}
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };
 

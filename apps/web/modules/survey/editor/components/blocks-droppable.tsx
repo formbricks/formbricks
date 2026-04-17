@@ -25,8 +25,6 @@ interface BlocksDroppableProps {
   duplicateElement: (elementIdx: number) => void;
   activeElementId: string | null;
   setActiveElementId: (elementId: string | null) => void;
-  selectedLanguageCode: string;
-  setSelectedLanguageCode: (language: string) => void;
   invalidElements: string[] | null;
   addElement: (element: any, index?: number) => void;
   isFormbricksCloud: boolean;
@@ -52,9 +50,7 @@ export const BlocksDroppable = ({
   setLocalSurvey,
   moveElement,
   project,
-  selectedLanguageCode,
   setActiveElementId,
-  setSelectedLanguageCode,
   updateElement,
   updateBlockLogic,
   updateBlockLogicFallback,
@@ -97,8 +93,6 @@ export const BlocksDroppable = ({
               updateBlockLogicFallback={updateBlockLogicFallback}
               updateBlockButtonLabel={updateBlockButtonLabel}
               duplicateElement={duplicateElement}
-              selectedLanguageCode={selectedLanguageCode}
-              setSelectedLanguageCode={setSelectedLanguageCode}
               deleteElement={deleteElement}
               activeElementId={activeElementId}
               setActiveElementId={setActiveElementId}

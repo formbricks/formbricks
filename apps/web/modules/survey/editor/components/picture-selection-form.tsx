@@ -22,8 +22,6 @@ interface PictureSelectionFormProps {
   element: TSurveyPictureSelectionElement;
   elementIdx: number;
   updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
-  selectedLanguageCode: string;
-  setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
   locale: TUserLocale;
   isStorageConfigured: boolean;
@@ -35,8 +33,6 @@ export const PictureSelectionForm = ({
   element,
   elementIdx,
   updateElement,
-  selectedLanguageCode,
-  setSelectedLanguageCode,
   isInvalid,
   locale,
   isStorageConfigured = true,
@@ -87,8 +83,6 @@ export const PictureSelectionForm = ({
         elementIdx={elementIdx}
         isInvalid={isInvalid}
         updateElement={updateElement}
-        selectedLanguageCode={selectedLanguageCode}
-        setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
         isStorageConfigured={isStorageConfigured}
         isExternalUrlsAllowed={isExternalUrlsAllowed}
@@ -106,8 +100,6 @@ export const PictureSelectionForm = ({
                 elementIdx={elementIdx}
                 isInvalid={isInvalid}
                 updateElement={updateElement}
-                selectedLanguageCode={selectedLanguageCode}
-                setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
                 isExternalUrlsAllowed={isExternalUrlsAllowed}
