@@ -3,27 +3,27 @@
 import { signIn } from "next-auth/react";
 import { useTranslation } from "react-i18next";
 import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@/lib/localStorage";
-import { getCallbackUrl } from "@/modules/ee/sso/lib/utils";
+import { getSsoReturnToUrl } from "@/modules/ee/sso/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { GoogleIcon } from "@/modules/ui/components/icons";
 
 interface GoogleButtonProps {
-  inviteUrl?: string;
+  returnToUrl?: string;
   lastUsed?: boolean;
   source: "signin" | "signup";
 }
 
-export const GoogleButton = ({ inviteUrl, lastUsed, source }: GoogleButtonProps) => {
+export const GoogleButton = ({ returnToUrl, lastUsed, source }: GoogleButtonProps) => {
   const { t } = useTranslation();
   const handleLogin = async () => {
     if (typeof window !== "undefined") {
       localStorage.setItem(FORMBRICKS_LOGGED_IN_WITH_LS, "Google");
     }
-    const callbackUrlWithSource = getCallbackUrl(inviteUrl, source);
+    const returnToUrlWithSource = getSsoReturnToUrl(returnToUrl, source);
 
     await signIn("google", {
       redirect: true,
-      callbackUrl: callbackUrlWithSource,
+      callbackUrl: returnToUrlWithSource,
     });
   };
 

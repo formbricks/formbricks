@@ -70,6 +70,7 @@ const mockEnvironmentData = {
       displayOption: "displayOnce",
       hiddenFields: { enabled: false },
       isBackButtonHidden: false,
+      isAutoProgressingEnabled: true,
       triggers: [],
       displayPercentage: null,
       delay: 0,
@@ -122,6 +123,13 @@ describe("getEnvironmentStateData", () => {
         surveys: expect.any(Object),
       }),
     });
+
+    const prismaCall = vi.mocked(prisma.environment.findUnique).mock.calls[0][0];
+    expect(prismaCall.select.surveys.select).toEqual(
+      expect.objectContaining({
+        isAutoProgressingEnabled: true,
+      })
+    );
   });
 
   test("should throw ResourceNotFoundError when environment is not found", async () => {

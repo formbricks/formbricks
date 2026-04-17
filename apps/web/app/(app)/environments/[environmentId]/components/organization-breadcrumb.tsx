@@ -25,6 +25,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
 import { useOrganization } from "../context/environment-context";
 
 interface OrganizationBreadcrumbProps {
@@ -35,6 +36,7 @@ interface OrganizationBreadcrumbProps {
   isFormbricksCloud: boolean;
   isMember: boolean;
   isOwnerOrManager: boolean;
+  isMembershipPending: boolean;
 }
 
 const isActiveOrganizationSetting = (pathname: string, settingId: string): boolean => {
@@ -56,6 +58,7 @@ export const OrganizationBreadcrumb = ({
   isFormbricksCloud,
   isMember,
   isOwnerOrManager,
+  isMembershipPending,
 }: OrganizationBreadcrumbProps) => {
   const { t } = useTranslation();
   const [isOrganizationDropdownOpen, setIsOrganizationDropdownOpen] = useState(false);
@@ -142,7 +145,10 @@ export const OrganizationBreadcrumb = ({
       id: "api-keys",
       label: t("common.api_keys"),
       href: `/environments/${currentEnvironmentId}/settings/api-keys`,
-      hidden: !isOwnerOrManager,
+      disabled: isMembershipPending || !isOwnerOrManager,
+      disabledMessage: isMembershipPending
+        ? t("common.loading")
+        : t("common.you_are_not_authorized_to_perform_this_action"),
     },
     {
       id: "domain",
@@ -160,7 +166,11 @@ export const OrganizationBreadcrumb = ({
       id: "enterprise",
       label: t("common.enterprise_license"),
       href: `/environments/${currentEnvironmentId}/settings/enterprise`,
-      hidden: isFormbricksCloud || isMember,
+      hidden: isFormbricksCloud,
+      disabled: isMembershipPending || isMember,
+      disabledMessage: isMembershipPending
+        ? t("common.loading")
+        : t("common.you_are_not_authorized_to_perform_this_action"),
     },
   ];
 
@@ -242,14 +252,30 @@ export const OrganizationBreadcrumb = ({
 
               {organizationSettings.map((setting) => {
                 return setting.hidden ? null : (
-                  <DropdownMenuCheckboxItem
-                    key={setting.id}
-                    checked={isActiveOrganizationSetting(pathname, setting.id)}
-                    hidden={setting.hidden}
-                    onClick={() => handleSettingChange(setting.href)}
-                    className="cursor-pointer">
-                    {setting.label}
-                  </DropdownMenuCheckboxItem>
+                  <div key={setting.id}>
+                    {setting.disabled ? (
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button
+                            type="button"
+                            aria-disabled="true"
+                            className="relative flex w-full cursor-not-allowed select-none items-center rounded-lg py-1.5 pl-8 pr-2 text-sm font-medium text-slate-400">
+                            {setting.label}
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-fit max-w-72 px-3 py-2 text-sm text-slate-700">
+                          {setting.disabledMessage}
+                        </PopoverContent>
+                      </Popover>
+                    ) : (
+                      <DropdownMenuCheckboxItem
+                        checked={isActiveOrganizationSetting(pathname, setting.id)}
+                        onClick={() => handleSettingChange(setting.href)}
+                        className="cursor-pointer">
+                        {setting.label}
+                      </DropdownMenuCheckboxItem>
+                    )}
+                  </div>
                 );
               })}
             </div>

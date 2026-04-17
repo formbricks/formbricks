@@ -407,7 +407,7 @@ function Rating({
       />
 
       {/* Rating Options */}
-      <div className="relative">
+      <div className="relative" data-element-input>
         <ElementError errorMessage={errorMessage} dir={dir} />
         <fieldset className="w-full" dir={dir}>
           <legend className="sr-only">Rating options</legend>
@@ -426,12 +426,12 @@ function Rating({
           {(lowerLabel ?? upperLabel) ? (
             <div className="mt-4 flex justify-between gap-8 px-1.5">
               {lowerLabel ? (
-                <Label variant="default" className="max-w-[50%] text-xs leading-6" dir={dir}>
+                <Label variant="card" className="max-w-[50%] leading-6" dir={dir}>
                   {lowerLabel}
                 </Label>
               ) : null}
               {upperLabel ? (
-                <Label variant="default" className="max-w-[50%] text-right text-xs leading-6" dir={dir}>
+                <Label variant="card" className="max-w-[50%] text-right leading-6" dir={dir}>
                   {upperLabel}
                 </Label>
               ) : null}

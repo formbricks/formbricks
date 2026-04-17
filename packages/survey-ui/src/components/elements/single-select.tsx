@@ -181,7 +181,7 @@ function SingleSelect({
       />
 
       {/* Options */}
-      <div>
+      <div data-element-input>
         {variant === "dropdown" ? (
           <>
             <ElementError errorMessage={errorMessage} dir={dir} />
@@ -272,13 +272,15 @@ function SingleSelect({
                 onChange={handleOtherInputChange}
                 placeholder={otherOptionPlaceholder}
                 disabled={disabled}
+                required
+                aria-invalid={Boolean(errorMessage)}
                 dir={dir}
                 className="mt-2 w-full"
               />
             ) : null}
           </>
         ) : (
-          <div className="relative">
+          <div className="relative" data-element-input>
             <ElementError errorMessage={errorMessage} dir={dir} />
             <RadioGroup
               name={inputId}
@@ -333,7 +335,8 @@ function SingleSelect({
                       onChange={handleOtherInputChange}
                       placeholder={otherOptionPlaceholder}
                       disabled={disabled}
-                      aria-required={required}
+                      required
+                      aria-invalid={Boolean(errorMessage)}
                       dir={dir}
                       className="mt-2 w-full"
                     />

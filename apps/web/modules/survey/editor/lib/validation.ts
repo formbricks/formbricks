@@ -23,7 +23,12 @@ import {
   TSurveyRedirectUrlCard,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
-import { findLanguageCodesForDuplicateLabels, getTextContent } from "@formbricks/types/surveys/validation";
+import {
+  TValidateIdError,
+  TValidateIdErrorCode,
+  findLanguageCodesForDuplicateLabels,
+  getTextContent,
+} from "@formbricks/types/surveys/validation";
 import { extractLanguageCodes, getLocalizedValue } from "@/lib/i18n/utils";
 import { checkForEmptyFallBackValue } from "@/lib/utils/recall";
 
@@ -298,4 +303,28 @@ export const isSurveyValid = (
   }
 
   return true;
+};
+
+export const getValidateIdErrorMessage = (
+  error: TValidateIdError,
+  type: "hiddenField" | "question",
+  t: TFunction
+): string => {
+  const localizedType =
+    type === "hiddenField" ? t("common.hidden_field") : t("environments.surveys.edit.question");
+
+  switch (error.code) {
+    case TValidateIdErrorCode.Empty:
+      return t("environments.surveys.edit.validate_id_empty", { type: localizedType });
+    case TValidateIdErrorCode.Duplicate:
+      return t("environments.surveys.edit.validate_id_duplicate", { type: localizedType });
+    case TValidateIdErrorCode.Reserved:
+      return t("environments.surveys.edit.validate_id_reserved", { type: localizedType, field: error.field });
+    case TValidateIdErrorCode.HasSpaces:
+      return t("environments.surveys.edit.validate_id_no_spaces", { type: localizedType });
+    case TValidateIdErrorCode.InvalidChars:
+      return t("environments.surveys.edit.validate_id_invalid_chars", { type: localizedType });
+    default:
+      return t("environments.surveys.edit.validate_id_invalid_chars", { type: localizedType });
+  }
 };

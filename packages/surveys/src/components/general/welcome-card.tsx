@@ -8,6 +8,7 @@ import { ScrollableContainer } from "@/components/wrappers/scrollable-container"
 import { getLocalizedValue } from "@/lib/i18n";
 import { replaceRecallInfo } from "@/lib/recall";
 import { calculateElementIdx, getElementsFromSurveyBlocks } from "@/lib/utils";
+import { ElementMedia } from "./element-media";
 import { Headline } from "./headline";
 import { Subheader } from "./subheader";
 
@@ -15,6 +16,7 @@ interface WelcomeCardProps {
   headline?: TI18nString;
   subheader?: TI18nString;
   fileUrl?: string;
+  videoUrl?: string;
   buttonLabel?: TI18nString;
   onSubmit: (data: TResponseData, ttc: TResponseTtc) => void;
   survey: TJsEnvironmentStateSurvey;
@@ -69,6 +71,7 @@ export function WelcomeCard({
   headline,
   subheader,
   fileUrl,
+  videoUrl,
   buttonLabel,
   onSubmit,
   languageCode,
@@ -145,7 +148,9 @@ export function WelcomeCard({
     <ScrollableContainer fullSizeCards={fullSizeCards}>
       <div>
         {fileUrl ? (
-          <img src={fileUrl} className="mb-8 max-h-96 w-1/4 object-contain" alt={t("common.company_logo")} />
+          <ElementMedia imgUrl={fileUrl} altText={t("common.company_logo")} className="mb-8 min-h-0 w-1/4" />
+        ) : videoUrl ? (
+          <ElementMedia videoUrl={videoUrl} altText={t("common.welcome_video")} />
         ) : null}
 
         <Headline

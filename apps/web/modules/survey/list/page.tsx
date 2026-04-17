@@ -2,8 +2,10 @@ import { PlusIcon } from "lucide-react";
 import { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { DEFAULT_LOCALE, SURVEYS_PER_PAGE } from "@/lib/constants";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { DEFAULT_LOCALE, IS_FORMBRICKS_CLOUD, SURVEYS_PER_PAGE } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
+import { getBillingFallbackPath } from "@/lib/membership/navigation";
 import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
@@ -33,29 +35,27 @@ export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) 
   const project = await getProjectWithTeamIdsByEnvironmentId(params.environmentId);
 
   if (!project) {
-    throw new Error(t("common.workspace_not_found"));
+    throw new ResourceNotFoundError(t("common.workspace"), null);
   }
 
   const { session, isBilling, environment, isReadOnly } = await getEnvironmentAuth(params.environmentId);
 
   if (isBilling) {
-    return redirect(`/environments/${params.environmentId}/settings/billing`);
+    return redirect(getBillingFallbackPath(params.environmentId, IS_FORMBRICKS_CLOUD));
   }
 
   const surveyCount = await getSurveyCount(params.environmentId);
 
   const currentProjectChannel = project.config.channel ?? null;
   const locale = (await getUserLocale(session.user.id)) ?? DEFAULT_LOCALE;
-  const CreateSurveyButton = () => {
-    return (
-      <Button size="sm" asChild>
-        <Link href={`/environments/${environment.id}/surveys/templates`}>
-          {t("environments.surveys.new_survey")}
-          <PlusIcon />
-        </Link>
-      </Button>
-    );
-  };
+  const createSurveyButton = (
+    <Button size="sm" asChild>
+      <Link href={`/environments/${environment.id}/surveys/templates`}>
+        {t("environments.surveys.new_survey")}
+        <PlusIcon />
+      </Link>
+    </Button>
+  );
 
   const projectWithRequiredProps = {
     ...project,
@@ -78,7 +78,7 @@ export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) 
   if (surveyCount > 0) {
     content = (
       <>
-        <PageHeader pageTitle={t("common.surveys")} cta={isReadOnly ? <></> : <CreateSurveyButton />} />
+        <PageHeader pageTitle={t("common.surveys")} cta={isReadOnly ? <></> : createSurveyButton} />
         <SurveysList
           environmentId={environment.id}
           isReadOnly={isReadOnly}

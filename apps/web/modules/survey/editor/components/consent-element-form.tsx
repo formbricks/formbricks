@@ -16,8 +16,6 @@ interface ConsentElementFormProps {
   element: TSurveyConsentElement;
   elementIdx: number;
   updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
-  selectedLanguageCode: string;
-  setSelectedLanguageCode: (languageCode: string) => void;
   isInvalid: boolean;
   locale: TUserLocale;
   isStorageConfigured: boolean;
@@ -30,8 +28,6 @@ export const ConsentElementForm = ({
   updateElement,
   isInvalid,
   localSurvey,
-  selectedLanguageCode,
-  setSelectedLanguageCode,
   locale,
   isStorageConfigured = true,
   isExternalUrlsAllowed,
@@ -45,8 +41,6 @@ export const ConsentElementForm = ({
     elementIdx,
     isInvalid,
     updateElement,
-    selectedLanguageCode,
-    setSelectedLanguageCode,
     locale,
     isStorageConfigured,
     isExternalUrlsAllowed,

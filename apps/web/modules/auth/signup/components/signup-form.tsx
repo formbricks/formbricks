@@ -11,6 +11,7 @@ import Turnstile, { useTurnstile } from "react-turnstile";
 import { z } from "zod";
 import { TUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { buildVerificationRequestedPath } from "@/modules/auth/lib/verification-links";
 import { createUserAction } from "@/modules/auth/signup/actions";
 import { TermsPrivacyLinks } from "@/modules/auth/signup/components/terms-privacy-links";
 import { SSOOptions } from "@/modules/ee/sso/components/sso-options";
@@ -84,7 +85,7 @@ export const SignupForm = ({
 
   const turnstile = useTurnstile();
 
-  const callbackUrl = useMemo(() => {
+  const returnToUrl = useMemo(() => {
     if (inviteToken) {
       return webAppUrl + "/invite?token=" + inviteToken;
     } else {
@@ -125,7 +126,10 @@ export const SignupForm = ({
 
       const url = emailVerificationDisabled
         ? `/auth/signup-without-verification-success?token=${token}`
-        : `/auth/verification-requested?token=${token}`;
+        : buildVerificationRequestedPath({
+            token: token ?? "",
+            callbackUrl: inviteToken ? returnToUrl : undefined,
+          });
 
       if (createUserResponse?.data) {
         router.push(url);
@@ -319,7 +323,7 @@ export const SignupForm = ({
           samlSsoEnabled={samlSsoEnabled}
           samlTenant={samlTenant}
           samlProduct={samlProduct}
-          callbackUrl={callbackUrl}
+          returnToUrl={returnToUrl}
           source="signup"
         />
       )}
@@ -328,7 +332,7 @@ export const SignupForm = ({
         <span className="leading-5 text-slate-500">{t("auth.signup.have_an_account")}</span>
         <br />
         <Link
-          href={inviteToken ? `/auth/login?callbackUrl=${callbackUrl}` : "/auth/login"}
+          href={inviteToken ? `/auth/login?callbackUrl=${returnToUrl}` : "/auth/login"}
           className="font-semibold text-slate-600 underline hover:text-slate-700">
           {t("auth.signup.log_in")}
         </Link>

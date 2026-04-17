@@ -21,8 +21,6 @@ interface ElementToggleTableProps {
   elementIdx: number;
   isInvalid: boolean;
   updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
-  selectedLanguageCode: string;
-  setSelectedLanguageCode: (languageCode: string) => void;
   locale: TUserLocale;
   isStorageConfigured: boolean;
 }
@@ -34,8 +32,6 @@ export const ElementToggleTable = ({
   elementIdx,
   isInvalid,
   updateElement,
-  selectedLanguageCode,
-  setSelectedLanguageCode,
   locale,
   isStorageConfigured,
 }: ElementToggleTableProps) => {
@@ -114,8 +110,6 @@ export const ElementToggleTable = ({
                 elementIdx={elementIdx}
                 isInvalid={isInvalid}
                 updateElement={updateElement}
-                selectedLanguageCode={selectedLanguageCode}
-                setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
               />

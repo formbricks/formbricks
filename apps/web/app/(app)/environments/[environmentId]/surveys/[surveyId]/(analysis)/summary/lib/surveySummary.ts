@@ -11,7 +11,6 @@ import {
   TResponseData,
   TResponseFilterCriteria,
   TResponseTtc,
-  TResponseVariables,
   ZResponseFilterCriteria,
 } from "@formbricks/types/responses";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
@@ -37,8 +36,7 @@ import { getDisplayCountBySurveyId } from "@/lib/display/service";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { buildWhereClause } from "@/lib/response/utils";
 import { getSurvey } from "@/lib/survey/service";
-import { findElementLocation, getElementsFromBlocks } from "@/lib/survey/utils";
-import { evaluateLogic, performActions } from "@/lib/surveyLogic/utils";
+import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { validateInputs } from "@/lib/utils/validate";
 import { convertFloatTo2Decimal } from "./utils";
 
@@ -53,7 +51,32 @@ interface TSurveySummaryResponse {
   finished: boolean;
 }
 
+const getElementIdToBlockIdMap = (survey: TSurvey): Record<string, string> => {
+  return survey.blocks.reduce<Record<string, string>>((acc, block) => {
+    block.elements.forEach((element) => {
+      acc[element.id] = block.id;
+    });
+    return acc;
+  }, {});
+};
+
+const getBlockTimesForResponse = (
+  response: TSurveySummaryResponse,
+  survey: TSurvey
+): Record<string, number> => {
+  return survey.blocks.reduce<Record<string, number>>((acc, block) => {
+    const maxElementTtc = block.elements.reduce((maxTtc, element) => {
+      const elementTtc = response.ttc?.[element.id] ?? 0;
+      return Math.max(maxTtc, elementTtc);
+    }, 0);
+
+    acc[block.id] = maxElementTtc;
+    return acc;
+  }, {});
+};
+
 export const getSurveySummaryMeta = (
+  survey: TSurvey,
   responses: TSurveySummaryResponse[],
   displayCount: number,
   quotas: TSurveySummary["quotas"]
@@ -62,9 +85,15 @@ export const getSurveySummaryMeta = (
 
   let ttcResponseCount = 0;
   const ttcSum = responses.reduce((acc, response) => {
-    if (response.ttc?._total) {
+    const blockTimes = getBlockTimesForResponse(response, survey);
+    const responseBlockTtcTotal = Object.values(blockTimes).reduce((sum, ttc) => sum + ttc, 0);
+
+    // Fallback to _total for malformed surveys with no block mappings.
+    const responseTtcTotal = responseBlockTtcTotal > 0 ? responseBlockTtcTotal : (response.ttc?._total ?? 0);
+
+    if (responseTtcTotal > 0) {
       ttcResponseCount++;
-      return acc + response.ttc._total;
+      return acc + responseTtcTotal;
     }
     return acc;
   }, 0);
@@ -93,63 +122,13 @@ export const getSurveySummaryMeta = (
   };
 };
 
-const evaluateLogicAndGetNextElementId = (
-  localSurvey: TSurvey,
-  elements: TSurveyElement[],
-  data: TResponseData,
-  localVariables: TResponseVariables,
-  currentElementIndex: number,
-  currElementTemp: TSurveyElement,
-  selectedLanguage: string | null
-): {
-  nextElementId: string | undefined;
-  updatedSurvey: TSurvey;
-  updatedVariables: TResponseVariables;
-} => {
-  let updatedSurvey = { ...localSurvey };
-  let updatedVariables = { ...localVariables };
-
-  let firstJumpTarget: string | undefined;
-
-  const { block: currentBlock } = findElementLocation(localSurvey, currElementTemp.id);
-
-  if (currentBlock?.logic && currentBlock.logic.length > 0) {
-    for (const logic of currentBlock.logic) {
-      if (evaluateLogic(localSurvey, data, localVariables, logic.conditions, selectedLanguage ?? "default")) {
-        const { jumpTarget, requiredElementIds, calculations } = performActions(
-          updatedSurvey,
-          logic.actions,
-          data,
-          updatedVariables
-        );
-
-        if (requiredElementIds.length > 0) {
-          // Update blocks to mark elements as required
-          updatedSurvey.blocks = updatedSurvey.blocks.map((block) => ({
-            ...block,
-            elements: block.elements.map((e) =>
-              requiredElementIds.includes(e.id) ? { ...e, required: true } : e
-            ),
-          }));
-        }
-        updatedVariables = { ...updatedVariables, ...calculations };
-
-        if (jumpTarget && !firstJumpTarget) {
-          firstJumpTarget = jumpTarget;
-        }
-      }
-    }
-  }
-
-  // If no jump target was set, check for a fallback logic
-  if (!firstJumpTarget && currentBlock?.logicFallback) {
-    firstJumpTarget = currentBlock.logicFallback;
-  }
-
-  // Return the first jump target if found, otherwise go to the next element
-  const nextElementId = firstJumpTarget || elements[currentElementIndex + 1]?.id || undefined;
-
-  return { nextElementId, updatedSurvey, updatedVariables };
+// Determine whether a response interacted with a given element.
+// An element was "seen" if the respondent has a ttc entry for it OR provided an answer.
+// This is more reliable than replaying survey logic, which can misattribute impressions
+// when branching logic skips elements or when partial response data is insufficient
+// to evaluate conditions correctly.
+const wasElementSeen = (response: TSurveySummaryResponse, elementId: string): boolean => {
+  return (response.ttc != null && response.ttc[elementId] > 0) || response.data[elementId] !== undefined;
 };
 
 export const getSurveySummaryDropOff = (
@@ -169,69 +148,35 @@ export const getSurveySummaryDropOff = (
   let dropOffArr = new Array(elements.length).fill(0) as number[];
   let impressionsArr = new Array(elements.length).fill(0) as number[];
   let dropOffPercentageArr = new Array(elements.length).fill(0) as number[];
-
-  const surveyVariablesData = survey.variables?.reduce(
-    (acc, variable) => {
-      acc[variable.id] = variable.value;
-      return acc;
-    },
-    {} as Record<string, string | number>
-  );
+  const elementIdToBlockId = getElementIdToBlockIdMap(survey);
 
   responses.forEach((response) => {
-    // Calculate total time-to-completion
+    // Calculate total time-to-completion per element
+    const blockTimes = getBlockTimesForResponse(response, survey);
     Object.keys(totalTtc).forEach((elementId) => {
-      if (response.ttc && response.ttc[elementId]) {
-        totalTtc[elementId] += response.ttc[elementId];
+      const blockId = elementIdToBlockId[elementId];
+      const blockTtc = blockId ? (blockTimes[blockId] ?? 0) : 0;
+      if (blockTtc > 0) {
+        totalTtc[elementId] += blockTtc;
         responseCounts[elementId]++;
       }
     });
 
-    let localSurvey = structuredClone(survey);
-    let localResponseData: TResponseData = { ...response.data };
-    let localVariables: TResponseVariables = {
-      ...surveyVariablesData,
-    };
+    // Count impressions based on actual interaction data (ttc + response data)
+    // instead of replaying survey logic which is unreliable with branching
+    let lastSeenIdx = -1;
 
-    let currQuesIdx = 0;
-
-    while (currQuesIdx < elements.length) {
-      const currQues = elements[currQuesIdx];
-      if (!currQues) break;
-
-      // element is not answered and required
-      if (response.data[currQues.id] === undefined && currQues.required) {
-        dropOffArr[currQuesIdx]++;
-        impressionsArr[currQuesIdx]++;
-        break;
+    for (let i = 0; i < elements.length; i++) {
+      const element = elements[i];
+      if (wasElementSeen(response, element.id)) {
+        impressionsArr[i]++;
+        lastSeenIdx = i;
       }
+    }
 
-      impressionsArr[currQuesIdx]++;
-
-      const { nextElementId, updatedSurvey, updatedVariables } = evaluateLogicAndGetNextElementId(
-        localSurvey,
-        elements,
-        localResponseData,
-        localVariables,
-        currQuesIdx,
-        currQues,
-        response.language
-      );
-
-      localSurvey = updatedSurvey;
-      localVariables = updatedVariables;
-
-      if (nextElementId) {
-        const nextQuesIdx = elements.findIndex((q) => q.id === nextElementId);
-        if (!response.data[nextElementId] && !response.finished) {
-          dropOffArr[nextQuesIdx]++;
-          impressionsArr[nextQuesIdx]++;
-          break;
-        }
-        currQuesIdx = nextQuesIdx;
-      } else {
-        currQuesIdx++;
-      }
+    // Attribute drop-off to the last element the respondent interacted with
+    if (!response.finished && lastSeenIdx >= 0) {
+      dropOffArr[lastSeenIdx]++;
     }
   });
 
@@ -240,6 +185,8 @@ export const getSurveySummaryDropOff = (
     totalTtc[elementId] = responseCounts[elementId] > 0 ? totalTtc[elementId] / responseCounts[elementId] : 0;
   });
 
+  // When the welcome card is disabled, the first element's impressions should equal displayCount
+  // because every survey display is an impression of the first element
   if (!survey.welcomeCard.enabled) {
     dropOffArr[0] = displayCount - impressionsArr[0];
     if (impressionsArr[0] > displayCount) dropOffPercentageArr[0] = 0;
@@ -251,7 +198,7 @@ export const getSurveySummaryDropOff = (
 
     impressionsArr[0] = displayCount;
   } else {
-    dropOffPercentageArr[0] = (dropOffArr[0] / impressionsArr[0]) * 100;
+    dropOffPercentageArr[0] = impressionsArr[0] > 0 ? (dropOffArr[0] / impressionsArr[0]) * 100 : 0;
   }
 
   for (let i = 1; i < elements.length; i++) {
@@ -1062,10 +1009,8 @@ export const getSurveySummary = reactCache(
       ]);
 
       const dropOff = getSurveySummaryDropOff(survey, elements, responses, displayCount);
-      const [meta, elementSummary] = await Promise.all([
-        getSurveySummaryMeta(responses, displayCount, quotas),
-        getElementSummary(survey, elements, responses, dropOff),
-      ]);
+      const meta = getSurveySummaryMeta(survey, responses, displayCount, quotas);
+      const elementSummary = await getElementSummary(survey, elements, responses, dropOff);
 
       return {
         meta,
@@ -1149,7 +1094,9 @@ export const getResponsesForSummary = reactCache(
       const transformedResponses: TSurveySummaryResponse[] = await Promise.all(
         responses.map((responsePrisma) => {
           return {
-            ...responsePrisma,
+            id: responsePrisma.id,
+            data: (responsePrisma.data ?? {}) as TResponseData,
+            updatedAt: responsePrisma.updatedAt,
             contact: responsePrisma.contact
               ? {
                   id: responsePrisma.contact.id as string,
@@ -1158,6 +1105,10 @@ export const getResponsesForSummary = reactCache(
                   )?.value as string,
                 }
               : null,
+            contactAttributes: (responsePrisma.contactAttributes ?? {}) as TResponseContactAttributes,
+            language: responsePrisma.language,
+            ttc: (responsePrisma.ttc ?? {}) as TResponseTtc,
+            finished: responsePrisma.finished,
           };
         })
       );

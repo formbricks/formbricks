@@ -4,7 +4,12 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
-import { AuthorizationError, DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import {
+  AuthenticationError,
+  AuthorizationError,
+  DatabaseError,
+  ResourceNotFoundError,
+} from "@formbricks/types/errors";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { getEnvironment } from "@/lib/environment/service";
@@ -43,19 +48,19 @@ export const getEnvironmentAuth = reactCache(async (environmentId: string): Prom
   ]);
 
   if (!project) {
-    throw new Error(t("common.workspace_not_found"));
+    throw new ResourceNotFoundError(t("common.workspace"), null);
   }
 
   if (!environment) {
-    throw new Error(t("common.environment_not_found"));
+    throw new ResourceNotFoundError(t("common.environment"), environmentId);
   }
 
   if (!session) {
-    throw new Error(t("common.session_not_found"));
+    throw new AuthenticationError(t("common.not_authenticated"));
   }
 
   if (!organization) {
-    throw new Error(t("common.organization_not_found"));
+    throw new ResourceNotFoundError(t("common.organization"), null);
   }
 
   const currentUserMembership = await getMembershipByUserIdOrganizationId(session?.user.id, organization.id);
@@ -109,7 +114,7 @@ export const environmentIdLayoutChecks = async (environmentId: string) => {
 
   const organization = await getOrganizationByEnvironmentId(environmentId);
   if (!organization) {
-    throw new Error(t("common.organization_not_found"));
+    throw new ResourceNotFoundError(t("common.organization"), null);
   }
 
   return { t, session, user, organization };
@@ -179,7 +184,8 @@ export const getEnvironmentWithRelations = reactCache(async (environmentId: stri
                     stripe: true,
                   },
                 },
-                isAIEnabled: true,
+                isAISmartToolsEnabled: true,
+                isAIDataAnalysisEnabled: true,
                 whitelabel: true,
                 // Current user's membership only (filtered at DB level)
                 memberships: {
@@ -242,7 +248,8 @@ export const getEnvironmentWithRelations = reactCache(async (environmentId: stri
         updatedAt: data.project.organization.updatedAt,
         name: data.project.organization.name,
         billing: data.project.organization.billing,
-        isAIEnabled: data.project.organization.isAIEnabled,
+        isAISmartToolsEnabled: data.project.organization.isAISmartToolsEnabled,
+        isAIDataAnalysisEnabled: data.project.organization.isAIDataAnalysisEnabled,
         whitelabel: data.project.organization.whitelabel,
       },
       environments: data.project.environments,
@@ -274,18 +281,18 @@ export const getEnvironmentLayoutData = reactCache(
     const session = await getServerSession(authOptions);
 
     if (!session?.user) {
-      throw new Error(t("common.session_not_found"));
+      throw new AuthenticationError(t("common.not_authenticated"));
     }
 
     // Verify userId matches session (safety check)
     if (session.user.id !== userId) {
-      throw new Error("User ID mismatch with session");
+      throw new AuthenticationError("User ID mismatch with session");
     }
 
     // Get user first (lightweight query needed for subsequent checks)
     const user = await getUser(userId); // 1 DB query
     if (!user) {
-      throw new Error(t("common.user_not_found"));
+      throw new AuthenticationError(t("common.not_authenticated"));
     }
 
     // Authorization check before expensive data fetching
@@ -296,7 +303,7 @@ export const getEnvironmentLayoutData = reactCache(
 
     const relationData = await getEnvironmentWithRelations(environmentId, userId);
     if (!relationData) {
-      throw new Error(t("common.environment_not_found"));
+      throw new ResourceNotFoundError(t("common.environment"), environmentId);
     }
 
     const { environment, project, organization, environments, membership } = relationData;
