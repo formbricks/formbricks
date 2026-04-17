@@ -2,7 +2,10 @@ import { type TResponseData } from "@formbricks/types/responses";
 import { type TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 
 const isAutoProgressElementType = (type: TSurveyElementTypeEnum): boolean =>
-  type === TSurveyElementTypeEnum.Rating || type === TSurveyElementTypeEnum.NPS;
+  type === TSurveyElementTypeEnum.Rating ||
+  type === TSurveyElementTypeEnum.NPS ||
+  type === TSurveyElementTypeEnum.CSAT ||
+  type === TSurveyElementTypeEnum.CES;
 
 export const getAutoProgressElement = (
   elements: TSurveyElement[],

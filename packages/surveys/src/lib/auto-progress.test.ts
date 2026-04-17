@@ -14,13 +14,17 @@ const createElement = (id: string, type: TSurveyElementTypeEnum, required: boole
   }) as unknown as TSurveyElement;
 
 describe("auto-progress helpers", () => {
-  test("returns auto-progress element for single rating/nps blocks only", () => {
+  test("returns auto-progress element for single rating/nps/csat/ces blocks only", () => {
     const ratingElement = createElement("rating_1", TSurveyElementTypeEnum.Rating, true);
     const npsElement = createElement("nps_1", TSurveyElementTypeEnum.NPS, false);
+    const csatElement = createElement("csat_1", TSurveyElementTypeEnum.CSAT, true);
+    const cesElement = createElement("ces_1", TSurveyElementTypeEnum.CES, true);
     const openTextElement = createElement("text_1", TSurveyElementTypeEnum.OpenText, false);
 
     expect(getAutoProgressElement([ratingElement], true)).toEqual(ratingElement);
     expect(getAutoProgressElement([npsElement], true)).toEqual(npsElement);
+    expect(getAutoProgressElement([csatElement], true)).toEqual(csatElement);
+    expect(getAutoProgressElement([cesElement], true)).toEqual(cesElement);
     expect(getAutoProgressElement([openTextElement], true)).toBeNull();
     expect(getAutoProgressElement([ratingElement], false)).toBeNull();
     expect(getAutoProgressElement([ratingElement, npsElement], true)).toBeNull();
