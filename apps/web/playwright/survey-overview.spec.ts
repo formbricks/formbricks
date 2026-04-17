@@ -240,7 +240,7 @@ test.describe("Survey overview", () => {
     await expect(page.getByText("Duplicate", { exact: true })).toHaveCount(0);
     await expect(page.getByText("Copy...", { exact: true })).toHaveCount(0);
     await expect(page.getByText("Preview", { exact: true })).toHaveCount(0);
-    await expect(page.getByText("Copy link", { exact: true })).toHaveCount(0);
+    await expect(page.getByTestId("copy-link")).toHaveCount(0);
     await page.getByRole("button", { name: "Delete", exact: true }).click();
     await page.getByRole("dialog").getByRole("button", { name: "Delete", exact: true }).click();
 
@@ -381,7 +381,7 @@ test.describe("Survey overview", () => {
     const linkRow = page.locator("div.relative.block", { has: page.getByText(linkSurveyName, { exact: true }) });
     await linkRow.locator("[data-testid='survey-dropdown-trigger']").click();
     await expect(page.getByRole("button", { name: "Preview", exact: true })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Copy link", exact: true })).toBeVisible();
+    await expect(page.getByTestId("copy-link")).toBeVisible();
 
     const appRow = page.locator("div.relative.block", { has: page.getByText(appSurveyName, { exact: true }) });
     await expect(appRow.locator("[data-testid='survey-dropdown-trigger']")).toHaveCount(0);
