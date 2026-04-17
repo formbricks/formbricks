@@ -121,13 +121,10 @@ export const DELETE = async (
       : responses.notAuthenticatedResponse();
   }
 
-  if (authResult.ok) {
+  // Rate limiting for apiKey DELETE is enforced by Envoy in v5 — see envoy-rate-limit-coverage.ts
+  if (authResult.ok && authResult.data.authType !== "apiKey") {
     try {
-      if (authResult.data.authType === "apiKey") {
-        await applyRateLimit(rateLimitConfigs.storage.delete, authResult.data.apiKeyId);
-      } else {
-        await applyRateLimit(rateLimitConfigs.storage.delete, authResult.data.userId);
-      }
+      await applyRateLimit(rateLimitConfigs.storage.delete, authResult.data.userId);
     } catch (error) {
       return responses.tooManyRequestsResponse(
         error instanceof Error ? error.message : "Unknown error occurred"
