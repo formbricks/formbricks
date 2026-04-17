@@ -23,7 +23,7 @@ export const AzureButton = ({ returnToUrl, directRedirect = false, lastUsed, sou
     }
     const returnToUrlWithSource = getSsoReturnToUrl(returnToUrl, source);
 
-    await signIn("azuread", {
+    await signIn("azure-ad", {
       redirect: true,
       callbackUrl: returnToUrlWithSource,
     });

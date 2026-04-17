@@ -4,6 +4,7 @@ import { GET } from "./route";
 const mocks = vi.hoisted(() => ({
   getServerSession: vi.fn(),
   completeSsoRecovery: vi.fn(),
+  deleteSessionBySessionToken: vi.fn(),
   getSsoRecoveryFailureRedirectUrl: vi.fn(),
   verifySsoRelinkIntent: vi.fn(),
 }));
@@ -19,6 +20,10 @@ vi.mock("@/modules/auth/lib/authOptions", () => ({
 vi.mock("@/modules/ee/sso/lib/sso-recovery", () => ({
   completeSsoRecovery: mocks.completeSsoRecovery,
   getSsoRecoveryFailureRedirectUrl: mocks.getSsoRecoveryFailureRedirectUrl,
+}));
+
+vi.mock("@/modules/auth/lib/auth-session-repository", () => ({
+  deleteSessionBySessionToken: mocks.deleteSessionBySessionToken,
 }));
 
 vi.mock("@/lib/jwt", () => ({
@@ -67,6 +72,33 @@ describe("SSO recovery completion route", () => {
       sessionUserId: "user_1",
     });
     expect(response.headers.get("location")).toBe("http://localhost:3000/invite?token=invite-token");
+  });
+
+  test("clears the current session before redirecting back to login on failure", async () => {
+    mocks.getServerSession.mockResolvedValue({ user: { id: "user_1" } });
+    mocks.completeSsoRecovery.mockRejectedValue(new Error("OAuthAccountNotLinked"));
+    mocks.verifySsoRelinkIntent.mockReturnValue({
+      callbackUrl: "http://localhost:3000/environments/env_1?foo=bar",
+    });
+    mocks.getSsoRecoveryFailureRedirectUrl.mockImplementation((callbackUrl?: string) =>
+      callbackUrl
+        ? `http://localhost:3000/auth/login?error=OAuthAccountNotLinked&callbackUrl=${encodeURIComponent(callbackUrl)}`
+        : "http://localhost:3000/auth/login?error=OAuthAccountNotLinked"
+    );
+
+    const response = await GET(
+      new Request("http://localhost:3000/api/auth/sso/recovery/complete?intent=test-intent", {
+        headers: {
+          cookie: "next-auth.session-token=session-token-123",
+        },
+      })
+    );
+
+    expect(mocks.deleteSessionBySessionToken).toHaveBeenCalledWith("session-token-123");
+    expect(response.headers.get("set-cookie")).toContain("next-auth.session-token=");
+    expect(response.headers.get("location")).toBe(
+      "http://localhost:3000/auth/login?error=OAuthAccountNotLinked&callbackUrl=http%3A%2F%2Flocalhost%3A3000%2Fenvironments%2Fenv_1%3Ffoo%3Dbar"
+    );
   });
 
   test("preserves the original callback URL on failure when the intent can still be verified", async () => {

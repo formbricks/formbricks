@@ -151,4 +151,44 @@ describe("backfill legacy SSO accounts migration", () => {
     });
     expect(migrationMock.executeRaw).toHaveBeenCalledTimes(1);
   });
+
+  test("skips stale legacy provider ids when the user already has a canonical account for that provider", async () => {
+    const migrationMock = createMigrationTxMock();
+    migrationMock.queryRaw
+      .mockResolvedValueOnce([
+        {
+          id: "legacy_azure_account",
+          provider: "azure-ad",
+          providerAccountId: "stale-subject",
+          userId: "user_1",
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          id: "canonical_azure_account",
+          provider: "azuread",
+          providerAccountId: "current-subject",
+          userId: "user_1",
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          id: "user_1",
+          identityProvider: "azuread",
+          identityProviderAccountId: "stale-subject",
+        },
+      ]);
+
+    const stats = await backfillLegacySsoAccounts(migrationMock.tx);
+
+    expect(stats).toEqual({
+      scanned: 1,
+      inserted: 0,
+      normalizedLegacyAccounts: 0,
+      skippedConflict: 0,
+      skippedExisting: 2,
+      skippedMissingId: 0,
+    });
+    expect(migrationMock.executeRaw).not.toHaveBeenCalled();
+  });
 });

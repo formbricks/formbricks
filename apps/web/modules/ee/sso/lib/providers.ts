@@ -27,14 +27,11 @@ export const getSSOProviders = () => [
     clientId: GOOGLE_CLIENT_ID || "",
     clientSecret: GOOGLE_CLIENT_SECRET || "",
   }),
-  {
-    ...AzureAD({
-      clientId: AZUREAD_CLIENT_ID || "",
-      clientSecret: AZUREAD_CLIENT_SECRET || "",
-      tenantId: AZUREAD_TENANT_ID || "",
-    }),
-    id: "azuread",
-  },
+  AzureAD({
+    clientId: AZUREAD_CLIENT_ID || "",
+    clientSecret: AZUREAD_CLIENT_SECRET || "",
+    tenantId: AZUREAD_TENANT_ID || "",
+  }),
   {
     id: "openid",
     name: OIDC_DISPLAY_NAME || "OpenId",

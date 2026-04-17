@@ -43,6 +43,8 @@ export const normalizeLegacySsoProvider = (provider: string): string | null =>
 const getAccountKey = (provider: string, providerAccountId: string): string =>
   `${provider}:${providerAccountId}`;
 
+const getUserProviderKey = (userId: string, provider: string): string => `${userId}:${provider}`;
+
 export const backfillLegacySsoAccounts = async (tx: TMigrationTx): Promise<TSsoBackfillStats> => {
   const stats: TSsoBackfillStats = {
     scanned: 0,
@@ -66,10 +68,15 @@ export const backfillLegacySsoAccounts = async (tx: TMigrationTx): Promise<TSsoB
   const canonicalAccountByKey = new Map(
     canonicalAccounts.map((account) => [getAccountKey(account.provider, account.providerAccountId), account])
   );
+  const canonicalAccountByUserProvider = new Map(
+    canonicalAccounts.map((account) => [getUserProviderKey(account.userId, account.provider), account])
+  );
 
   for (const legacyAccount of legacyAzureAccounts) {
     const accountKey = getAccountKey("azuread", legacyAccount.providerAccountId);
     const canonicalAccount = canonicalAccountByKey.get(accountKey);
+    const userProviderKey = getUserProviderKey(legacyAccount.userId, "azuread");
+    const existingUserProviderAccount = canonicalAccountByUserProvider.get(userProviderKey);
 
     if (canonicalAccount) {
       if (canonicalAccount.userId !== legacyAccount.userId) {
@@ -86,6 +93,12 @@ export const backfillLegacySsoAccounts = async (tx: TMigrationTx): Promise<TSsoB
       continue;
     }
 
+    if (existingUserProviderAccount) {
+      stats.skippedExisting += 1;
+      console.warn("Skipping Azure account normalization because a canonical account already exists.");
+      continue;
+    }
+
     await tx.$executeRaw`
       UPDATE "Account"
       SET "provider" = 'azuread',
@@ -94,6 +107,10 @@ export const backfillLegacySsoAccounts = async (tx: TMigrationTx): Promise<TSsoB
     `;
     stats.normalizedLegacyAccounts += 1;
     canonicalAccountByKey.set(accountKey, {
+      ...legacyAccount,
+      provider: "azuread",
+    });
+    canonicalAccountByUserProvider.set(userProviderKey, {
       ...legacyAccount,
       provider: "azuread",
     });
@@ -117,8 +134,16 @@ export const backfillLegacySsoAccounts = async (tx: TMigrationTx): Promise<TSsoB
 
     const accountKey = getAccountKey(provider, user.identityProviderAccountId);
     const existingAccount = canonicalAccountByKey.get(accountKey);
+    const userProviderKey = getUserProviderKey(user.id, provider);
+    const existingUserProviderAccount = canonicalAccountByUserProvider.get(userProviderKey);
 
     if (!existingAccount) {
+      if (existingUserProviderAccount) {
+        stats.skippedExisting += 1;
+        console.warn("Skipping legacy SSO backfill because a canonical account already exists.");
+        continue;
+      }
+
       const insertedAccountId = createId();
       await tx.$executeRaw`
         INSERT INTO "Account" ("id", "created_at", "updated_at", "userId", "type", "provider", "providerAccountId")
@@ -126,6 +151,12 @@ export const backfillLegacySsoAccounts = async (tx: TMigrationTx): Promise<TSsoB
       `;
       stats.inserted += 1;
       canonicalAccountByKey.set(accountKey, {
+        id: insertedAccountId,
+        userId: user.id,
+        provider,
+        providerAccountId: user.identityProviderAccountId,
+      });
+      canonicalAccountByUserProvider.set(userProviderKey, {
         id: insertedAccountId,
         userId: user.id,
         provider,

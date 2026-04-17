@@ -4,7 +4,7 @@ import { getSSOProviders } from "./providers";
 type TSsoProvider = ReturnType<typeof getSSOProviders>[number];
 type TOidcProvider = Extract<TSsoProvider, { id: "openid" }>;
 type TSamlProvider = Extract<TSsoProvider, { id: "saml" }>;
-type TAzureProvider = Extract<TSsoProvider, { id: "azuread" }>;
+type TAzureProvider = Extract<TSsoProvider, { id: "azure-ad" }>;
 
 const getProviderById = <TId extends TSsoProvider["id"]>(id: TId): Extract<TSsoProvider, { id: TId }> => {
   const provider = getSSOProviders().find(
@@ -76,10 +76,10 @@ describe("SSO Providers", () => {
   test("should configure SAML provider correctly", () => {
     const samlProvider = getProviderById("saml") as TSamlProvider;
     const googleProvider = getProviderById("google");
-    const azureProvider = getProviderById("azuread") as TAzureProvider;
+    const azureProvider = getProviderById("azure-ad") as TAzureProvider;
 
     expect(samlProvider.id).toBe("saml");
-    expect(azureProvider.id).toBe("azuread");
+    expect(azureProvider.id).toBe("azure-ad");
     expect(samlProvider.name).toBe("BoxyHQ SAML");
     expect(samlProvider.version).toBe("2.0");
     expect(samlProvider.checks).toContain("pkce");
@@ -121,14 +121,14 @@ describe("SSO Providers", () => {
 
     const { getSSOProviders: getProvidersWithMissingAzureEnv } = await import("./providers");
     const azureProvider = getProvidersWithMissingAzureEnv().find(
-      (provider): provider is TAzureProvider => provider.id === "azuread"
+      (provider): provider is TAzureProvider => provider.id === "azure-ad"
     );
 
     if (!azureProvider) {
       throw new Error("Azure provider not found");
     }
 
-    expect(azureProvider.id).toBe("azuread");
+    expect(azureProvider.id).toBe("azure-ad");
     expect(azureProvider.options.clientId).toBe("");
     expect(azureProvider.options.clientSecret).toBe("");
     expect(azureProvider.options.tenantId).toBe("");
