@@ -7,8 +7,13 @@ type TEnvoyRateLimitRequest = {
 };
 
 const V1_CLIENT_STORAGE_PATTERN = /^\/api\/v1\/client\/[^/]+\/storage$/;
-const V1_CLIENT_PATTERN = /^\/api\/v1\/client\/[^/]+\/(environment|responses(?:\/[^/]+)?|displays|user)$/;
-const V2_CLIENT_RESPONSES_PATTERN = /^\/api\/v2\/client\/[^/]+\/responses(?:\/[^/]+)?$/;
+const V1_CLIENT_ENVIRONMENT_PATTERN = /^\/api\/v1\/client\/[^/]+\/environment$/;
+const V1_CLIENT_RESPONSES_PATTERN = /^\/api\/v1\/client\/[^/]+\/responses$/;
+const V1_CLIENT_RESPONSE_PATTERN = /^\/api\/v1\/client\/[^/]+\/responses\/[^/]+$/;
+const V1_CLIENT_DISPLAYS_PATTERN = /^\/api\/v1\/client\/[^/]+\/displays$/;
+const V1_CLIENT_USER_PATTERN = /^\/api\/v1\/client\/[^/]+\/user$/;
+const V2_CLIENT_RESPONSES_PATTERN = /^\/api\/v2\/client\/[^/]+\/responses$/;
+const V2_CLIENT_RESPONSE_PATTERN = /^\/api\/v2\/client\/[^/]+\/responses\/[^/]+$/;
 const V2_CLIENT_DISPLAYS_PATTERN = /^\/api\/v2\/client\/[^/]+\/displays$/;
 const V2_CLIENT_STORAGE_PATTERN = /^\/api\/v2\/client\/[^/]+\/storage$/;
 const STORAGE_DELETE_PATTERN = /^\/storage\/[^/]+\/(public|private)\/.+$/;
@@ -17,8 +22,6 @@ const V1_MANAGEMENT_PREFIX = "/api/v1/management/";
 const V1_WEBHOOKS_PREFIX = "/api/v1/webhooks/";
 
 const V1_GENERAL_METHODS = new Set(["GET", "POST", "PUT", "PATCH", "DELETE"]);
-const V2_RESPONSES_METHODS = new Set(["POST", "PUT"]);
-
 const normalizeMethod = (method: string): string => method.toUpperCase();
 
 const matchesPrefixedPath = (pathname: string, prefix: string): boolean => pathname.startsWith(prefix);
@@ -74,11 +77,31 @@ export const isRouteRateLimitedByEnvoy = ({
     return true;
   }
 
-  if (V1_GENERAL_METHODS.has(normalizedMethod) && V1_CLIENT_PATTERN.test(pathname)) {
+  if (normalizedMethod === "GET" && V1_CLIENT_ENVIRONMENT_PATTERN.test(pathname)) {
     return true;
   }
 
-  if (V2_RESPONSES_METHODS.has(normalizedMethod) && V2_CLIENT_RESPONSES_PATTERN.test(pathname)) {
+  if (normalizedMethod === "POST" && V1_CLIENT_RESPONSES_PATTERN.test(pathname)) {
+    return true;
+  }
+
+  if (normalizedMethod === "PUT" && V1_CLIENT_RESPONSE_PATTERN.test(pathname)) {
+    return true;
+  }
+
+  if (normalizedMethod === "POST" && V1_CLIENT_DISPLAYS_PATTERN.test(pathname)) {
+    return true;
+  }
+
+  if (normalizedMethod === "POST" && V1_CLIENT_USER_PATTERN.test(pathname)) {
+    return true;
+  }
+
+  if (normalizedMethod === "POST" && V2_CLIENT_RESPONSES_PATTERN.test(pathname)) {
+    return true;
+  }
+
+  if (normalizedMethod === "PUT" && V2_CLIENT_RESPONSE_PATTERN.test(pathname)) {
     return true;
   }
 

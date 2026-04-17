@@ -57,6 +57,14 @@ describe("isRouteRateLimitedByEnvoy", () => {
 
     expect(
       isRouteRateLimitedByEnvoy({
+        pathname: "/api/v1/client/env_123/responses",
+        method: "POST",
+        authType: "none",
+      })
+    ).toBe(true);
+
+    expect(
+      isRouteRateLimitedByEnvoy({
         pathname: "/api/v1/client/env_123/responses/response_123",
         method: "PUT",
         authType: "none",
@@ -65,7 +73,31 @@ describe("isRouteRateLimitedByEnvoy", () => {
 
     expect(
       isRouteRateLimitedByEnvoy({
+        pathname: "/api/v1/client/env_123/displays",
+        method: "POST",
+        authType: "none",
+      })
+    ).toBe(true);
+
+    expect(
+      isRouteRateLimitedByEnvoy({
+        pathname: "/api/v1/client/env_123/user",
+        method: "POST",
+        authType: "none",
+      })
+    ).toBe(true);
+
+    expect(
+      isRouteRateLimitedByEnvoy({
         pathname: "/api/v1/client/env_123/storage",
+        method: "POST",
+        authType: "none",
+      })
+    ).toBe(true);
+
+    expect(
+      isRouteRateLimitedByEnvoy({
+        pathname: "/api/v2/client/env_123/responses",
         method: "POST",
         authType: "none",
       })
@@ -119,6 +151,38 @@ describe("isRouteRateLimitedByEnvoy", () => {
       isRouteRateLimitedByEnvoy({
         pathname: "/api/v2/health",
         method: "GET",
+        authType: "none",
+      })
+    ).toBe(false);
+
+    expect(
+      isRouteRateLimitedByEnvoy({
+        pathname: "/api/v1/client/env_123/environment",
+        method: "PATCH",
+        authType: "none",
+      })
+    ).toBe(false);
+
+    expect(
+      isRouteRateLimitedByEnvoy({
+        pathname: "/api/v1/client/env_123/displays",
+        method: "GET",
+        authType: "none",
+      })
+    ).toBe(false);
+
+    expect(
+      isRouteRateLimitedByEnvoy({
+        pathname: "/api/v2/client/env_123/responses",
+        method: "PUT",
+        authType: "none",
+      })
+    ).toBe(false);
+
+    expect(
+      isRouteRateLimitedByEnvoy({
+        pathname: "/api/v2/client/env_123/responses/response_123",
+        method: "POST",
         authType: "none",
       })
     ).toBe(false);

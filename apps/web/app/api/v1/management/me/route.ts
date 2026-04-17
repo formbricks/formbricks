@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import { NextRequest } from "next/server";
 import { prisma } from "@formbricks/database";
 import { getSessionUser } from "@/app/api/v1/management/me/lib/utils";
 import { responses } from "@/app/lib/api/response";

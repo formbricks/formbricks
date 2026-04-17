@@ -536,6 +536,34 @@ describe("withV1ApiWrapper", () => {
     expect(applyIPRateLimit).toHaveBeenCalled();
   });
 
+  test("keeps app rate limiting for uncovered verbs on otherwise covered client paths", async () => {
+    const { isClientSideApiRoute, isManagementApiRoute, isIntegrationRoute } =
+      await import("@/app/middleware/endpoint-validator");
+    const { authenticateRequest } = await import("@/app/api/v1/auth");
+    const { applyIPRateLimit } = await import("@/modules/core/rate-limit/helpers");
+
+    vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: true, isRateLimited: true });
+    vi.mocked(isManagementApiRoute).mockReturnValue({
+      isManagementApi: false,
+      authenticationMethod: AuthMethod.None,
+    });
+    vi.mocked(isIntegrationRoute).mockReturnValue(false);
+    vi.mocked(authenticateRequest).mockResolvedValue(null);
+    vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
+
+    const handler = vi.fn().mockResolvedValue({
+      response: responses.successResponse({ data: "test" }),
+    });
+
+    const req = createMockRequest({ method: "PATCH", url: "/api/v1/client/env_123/environment" });
+    const { withV1ApiWrapper } = await import("./with-api-logging");
+    const wrapped = withV1ApiWrapper({ handler });
+    const res = await wrapped(req, undefined);
+
+    expect(res.status).toBe(200);
+    expect(applyIPRateLimit).toHaveBeenCalled();
+  });
+
   test("returns authentication error for non-client routes without auth", async () => {
     const { isClientSideApiRoute, isManagementApiRoute, isIntegrationRoute } =
       await import("@/app/middleware/endpoint-validator");
