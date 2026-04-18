@@ -275,9 +275,7 @@ const checkExitIntentWrapper = (e: MouseEvent): void => {
 
 export const addExitIntentListener = (): void => {
   if (typeof document !== "undefined" && !isExitIntentListenerAdded) {
-    document
-      .querySelector("body")
-      ?.addEventListener("mouseleave", checkExitIntentWrapper as unknown as EventListener);
+    document.addEventListener("mouseleave", checkExitIntentWrapper as unknown as EventListener);
     isExitIntentListenerAdded = true;
   }
 };
