@@ -23,7 +23,8 @@ export const toSafeIdentifier = (value: string): string => {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "_")
     .replace(/_+/g, "_")
-    .replace(/^_+|_+$/g, "");
+    .replace(/^_+/, "")
+    .replace(/_+$/, "");
 
   return normalized.replace(/^[^a-z]+/, "");
 };
