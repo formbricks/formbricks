@@ -30,7 +30,7 @@ export const selectSurvey = {
   displayPercentage: true,
   autoComplete: true,
   publishOn: true,
-  pauseOn: true,
+  closeOn: true,
   isVerifyEmailEnabled: true,
   isSingleResponsePerEmailEnabled: true,
   isCaptureIpEnabled: true,

@@ -12,7 +12,6 @@ import { HowToSendCard } from "@/modules/survey/editor/components/how-to-send-ca
 import { RecontactOptionsCard } from "@/modules/survey/editor/components/recontact-options-card";
 import { ResponseOptionsCard } from "@/modules/survey/editor/components/response-options-card";
 import { SurveyPlacementCard } from "@/modules/survey/editor/components/survey-placement-card";
-import { SurveySchedulingCard } from "@/modules/survey/editor/components/survey-scheduling-card";
 import { TargetingLockedCard } from "@/modules/survey/editor/components/targeting-locked-card";
 import { WhenToSendCard } from "@/modules/survey/editor/components/when-to-send-card";
 
@@ -98,13 +97,12 @@ export const SettingsView = ({
         setLocalSurvey={setLocalSurvey}
         responseCount={responseCount}
         isSpamProtectionAllowed={isSpamProtectionAllowed}
+        locale={locale}
       />
 
       <RecontactOptionsCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
 
       {isAppSurvey && <SurveyPlacementCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />}
-
-      <SurveySchedulingCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} locale={locale} />
     </div>
   );
 };

@@ -1,16 +1,21 @@
 "use client";
 
-import { CheckIcon, PauseIcon, PencilIcon } from "lucide-react";
+import { CalendarClockIcon, CheckIcon, PauseIcon, PencilIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 
 interface SurveyStatusIndicatorProps {
   status: TSurvey["status"];
+  isScheduled?: boolean;
   tooltip?: boolean;
 }
 
-export const SurveyStatusIndicator = ({ status, tooltip }: SurveyStatusIndicatorProps) => {
+export const SurveyStatusIndicator = ({
+  status,
+  isScheduled = false,
+  tooltip,
+}: SurveyStatusIndicatorProps) => {
   const { t } = useTranslation();
   if (tooltip) {
     return (
@@ -25,7 +30,11 @@ export const SurveyStatusIndicator = ({ status, tooltip }: SurveyStatusIndicator
             )}
             {status === "paused" && (
               <div className="rounded-full bg-slate-300 p-1">
-                <PauseIcon className="h-3 w-3 text-slate-600" />
+                {isScheduled ? (
+                  <CalendarClockIcon className="h-3 w-3 text-slate-600" />
+                ) : (
+                  <PauseIcon className="h-3 w-3 text-slate-600" />
+                )}
               </div>
             )}
             {status === "completed" && (
@@ -51,9 +60,15 @@ export const SurveyStatusIndicator = ({ status, tooltip }: SurveyStatusIndicator
                 </>
               ) : status === "paused" ? (
                 <>
-                  <span className="text-slate-800">{t("common.survey_paused")}</span>
+                  <span className="text-slate-800">
+                    {isScheduled ? t("common.survey_scheduled") : t("common.survey_paused")}
+                  </span>
                   <div className="rounded-full bg-slate-300 p-1">
-                    <PauseIcon className="h-3 w-3 text-slate-600" />
+                    {isScheduled ? (
+                      <CalendarClockIcon className="h-3 w-3 text-slate-600" />
+                    ) : (
+                      <PauseIcon className="h-3 w-3 text-slate-600" />
+                    )}
                   </div>
                 </>
               ) : status === "completed" ? (
@@ -80,7 +95,11 @@ export const SurveyStatusIndicator = ({ status, tooltip }: SurveyStatusIndicator
         )}
         {status === "paused" && (
           <div className="rounded-full bg-slate-300 p-1">
-            <PauseIcon className="h-3 w-3 text-slate-600" />
+            {isScheduled ? (
+              <CalendarClockIcon className="h-3 w-3 text-slate-600" />
+            ) : (
+              <PauseIcon className="h-3 w-3 text-slate-600" />
+            )}
           </div>
         )}
         {status === "completed" && (

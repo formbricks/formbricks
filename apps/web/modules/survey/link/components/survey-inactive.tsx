@@ -9,16 +9,22 @@ import footerLogo from "../lib/footerlogo.svg";
 
 export const SurveyInactive = async ({
   status,
+  isScheduled = false,
   surveyClosedMessage,
   workspace,
 }: {
   status: "paused" | "completed" | "link invalid" | "response submitted" | "link expired";
+  isScheduled?: boolean;
   surveyClosedMessage?: TSurveyClosedMessage | null;
   workspace?: Pick<Workspace, "linkSurveyBranding">;
 }) => {
   const t = await getTranslate();
   const icons = {
-    paused: <PauseCircleIcon className="h-20 w-20" />,
+    paused: isScheduled ? (
+      <CalendarClockIcon className="h-20 w-20" />
+    ) : (
+      <PauseCircleIcon className="h-20 w-20" />
+    ),
     completed: <CheckCircle2Icon className="h-20 w-20" />,
     "link invalid": <HelpCircleIcon className="h-20 w-20" />,
     "response submitted": <CheckCircle2Icon className="h-20 w-20" />,
@@ -26,7 +32,7 @@ export const SurveyInactive = async ({
   };
 
   const descriptions = {
-    paused: t("s.paused"),
+    paused: isScheduled ? t("s.scheduled") : t("s.paused"),
     completed: t("s.completed"),
     "link invalid": t("s.link_invalid"),
     "response submitted": t("s.response_submitted"),
@@ -47,7 +53,9 @@ export const SurveyInactive = async ({
         <h1 className="text-4xl font-bold text-slate-800">
           {(status === "completed" || status === "link expired") && surveyClosedMessage
             ? surveyClosedMessage.heading
-            : `${t("common.survey")} ${status}.`}
+            : isScheduled
+              ? t("common.survey_scheduled")
+              : `${t("common.survey")} ${status}.`}
         </h1>
         <p className="text-lg leading-10 text-slate-500">
           {status === "completed" && surveyClosedMessage

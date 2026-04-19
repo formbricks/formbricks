@@ -8,7 +8,7 @@ import { type TAuditStatus } from "@/modules/ee/audit-logs/types/audit-log";
 import { SURVEY_SCHEDULING_RECONCILIATION_BATCH_SIZE } from "./constants";
 import { isDateDue, normalizeDateOnlySelectionToCETMidnight } from "./date-utils";
 
-type TSurveySchedulingTransition = "publish" | "pause";
+type TSurveySchedulingTransition = "publish" | "close";
 
 interface SurveySchedulingLogContext {
   [key: string]: unknown;
@@ -28,7 +28,7 @@ const surveySchedulingCandidateSelect = {
   },
   workspaceId: true,
   id: true,
-  pauseOn: true,
+  closeOn: true,
   publishOn: true,
   status: true,
 } satisfies Prisma.SurveySelect;
@@ -45,25 +45,25 @@ interface LoadDueTransitionCandidatesOptions {
 const getTransitionConfig = (
   transition: TSurveySchedulingTransition
 ): {
-  clearField: "publishOn" | "pauseOn";
+  clearField: "publishOn" | "closeOn";
   currentStatus: SurveyStatus;
-  dueField: "publishOn" | "pauseOn";
+  dueField: "publishOn" | "closeOn";
   nextStatus: SurveyStatus;
 } => {
   if (transition === "publish") {
     return {
       clearField: "publishOn",
-      currentStatus: "draft",
+      currentStatus: "paused",
       dueField: "publishOn",
       nextStatus: "inProgress",
     };
   }
 
   return {
-    clearField: "pauseOn",
+    clearField: "closeOn",
     currentStatus: "inProgress",
-    dueField: "pauseOn",
-    nextStatus: "paused",
+    dueField: "closeOn",
+    nextStatus: "completed",
   };
 };
 
@@ -77,12 +77,12 @@ const getTransitionAuditState = (
   if (transition === "publish") {
     return {
       newObject: {
-        pauseOn: candidate.pauseOn,
+        closeOn: candidate.closeOn,
         publishOn: null,
         status: "inProgress",
       },
       oldObject: {
-        pauseOn: candidate.pauseOn,
+        closeOn: candidate.closeOn,
         publishOn: candidate.publishOn,
         status: candidate.status,
       },
@@ -91,12 +91,12 @@ const getTransitionAuditState = (
 
   return {
     newObject: {
-      pauseOn: null,
+      closeOn: null,
       publishOn: candidate.publishOn,
-      status: "paused",
+      status: "completed",
     },
     oldObject: {
-      pauseOn: candidate.pauseOn,
+      closeOn: candidate.closeOn,
       publishOn: candidate.publishOn,
       status: candidate.status,
     },
@@ -264,16 +264,16 @@ const reconcileTransition = async (
 
 export const normalizeSurveyScheduling = ({
   currentStatus,
-  pauseOn,
+  closeOn,
   publishOn,
   status,
 }: {
   currentStatus?: TSurvey["status"] | null;
-  pauseOn: Date | null;
+  closeOn: Date | null;
   publishOn: Date | null;
   status: TSurvey["status"];
-}): Pick<TSurvey, "pauseOn" | "publishOn"> => {
-  let normalizedPauseOn = normalizeDateOnlySelectionToCETMidnight(pauseOn);
+}): Pick<TSurvey, "closeOn" | "publishOn"> => {
+  let normalizedCloseOn = normalizeDateOnlySelectionToCETMidnight(closeOn);
   let normalizedPublishOn = normalizeDateOnlySelectionToCETMidnight(publishOn);
   const isManualStatusChange =
     currentStatus === undefined || currentStatus === null || currentStatus !== status;
@@ -282,42 +282,42 @@ export const normalizeSurveyScheduling = ({
     normalizedPublishOn = null;
   }
 
-  if (isManualStatusChange && status === "paused") {
-    normalizedPauseOn = null;
+  if (isManualStatusChange && status === "paused" && normalizedPublishOn === null) {
+    normalizedCloseOn = null;
   }
 
   if (isManualStatusChange && status === "completed") {
-    normalizedPauseOn = null;
+    normalizedCloseOn = null;
     normalizedPublishOn = null;
   }
 
   return {
-    pauseOn: normalizedPauseOn,
+    closeOn: normalizedCloseOn,
     publishOn: normalizedPublishOn,
   };
 };
 
 export const isSurveySchedulingDue = (
-  survey: Pick<TSurvey, "pauseOn" | "publishOn">,
+  survey: Pick<TSurvey, "closeOn" | "publishOn">,
   now: Date = new Date()
-): boolean => isDateDue(survey.publishOn, now) || isDateDue(survey.pauseOn, now);
+): boolean => isDateDue(survey.publishOn, now) || isDateDue(survey.closeOn, now);
 
 export const reconcileDueSurveySchedules = async ({
   logContext = {},
   now = new Date(),
   surveyId,
 }: ReconcileDueSurveySchedulesOptions = {}): Promise<{
-  pausedCount: number;
+  closedCount: number;
   publishedCount: number;
   surveyUpdated: boolean;
 }> => {
   const publishedCount = await reconcileTransition("publish", now, logContext, surveyId);
-  const pausedCount = await reconcileTransition("pause", now, logContext, surveyId);
+  const closedCount = await reconcileTransition("close", now, logContext, surveyId);
 
   logger.info(
     {
       ...logContext,
-      pausedCount,
+      closedCount,
       publishedCount,
       surveyId,
     },
@@ -325,8 +325,8 @@ export const reconcileDueSurveySchedules = async ({
   );
 
   return {
-    pausedCount,
+    closedCount,
     publishedCount,
-    surveyUpdated: publishedCount > 0 || pausedCount > 0,
+    surveyUpdated: publishedCount > 0 || closedCount > 0,
   };
 };

@@ -45,7 +45,7 @@ describe("Survey Editor Library Tests", () => {
     delay: 0,
     autoComplete: null,
     publishOn: null,
-    pauseOn: null,
+    closeOn: null,
     workspaceOverwrites: null,
     styling: null,
     showLanguageSwitch: false,

@@ -54,7 +54,7 @@ export const selectSurvey = {
   displayPercentage: true,
   autoComplete: true,
   publishOn: true,
-  pauseOn: true,
+  closeOn: true,
   isVerifyEmailEnabled: true,
   isSingleResponsePerEmailEnabled: true,
   isBackButtonHidden: true,
@@ -532,14 +532,14 @@ export const updateSurveyInternal = async (
 
     const normalizedScheduling = normalizeSurveyScheduling({
       currentStatus: currentSurvey.status,
-      pauseOn: surveyData.pauseOn,
+      closeOn: surveyData.closeOn,
       publishOn: surveyData.publishOn,
       status: updatedSurvey.status,
     });
 
     surveyData.updatedAt = new Date();
     surveyData.publishOn = normalizedScheduling.publishOn;
-    surveyData.pauseOn = normalizedScheduling.pauseOn;
+    surveyData.closeOn = normalizedScheduling.closeOn;
 
     data = {
       ...surveyData,
@@ -643,7 +643,7 @@ export const createSurvey = async (workspaceId: string, surveyBody: TSurveyCreat
 
   try {
     const { createdBy, languages, ...restSurveyBody } = parsedSurveyBody;
-    const normalizedPauseOn = restSurveyBody.pauseOn instanceof Date ? restSurveyBody.pauseOn : null;
+    const normalizedCloseOn = restSurveyBody.closeOn instanceof Date ? restSurveyBody.closeOn : null;
     const normalizedPublishOn = restSurveyBody.publishOn instanceof Date ? restSurveyBody.publishOn : null;
 
     const actionClasses = await getActionClasses(parsedWorkspaceId);
@@ -651,7 +651,7 @@ export const createSurvey = async (workspaceId: string, surveyBody: TSurveyCreat
     const baseData: Omit<Prisma.SurveyCreateInput, "workspace"> = {
       ...restSurveyBody,
       ...normalizeSurveyScheduling({
-        pauseOn: normalizedPauseOn,
+        closeOn: normalizedCloseOn,
         publishOn: normalizedPublishOn,
         status: restSurveyBody.status ?? "draft",
       }),

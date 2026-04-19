@@ -902,7 +902,7 @@ export const ZSurveyBase = z.object({
     .date()
     .nullish()
     .transform((value) => value ?? null),
-  pauseOn: z.coerce
+  closeOn: z.coerce
     .date()
     .nullish()
     .transform((value) => value ?? null),

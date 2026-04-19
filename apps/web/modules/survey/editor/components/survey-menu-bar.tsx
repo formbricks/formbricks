@@ -150,6 +150,13 @@ export const SurveyMenuBar = ({
 
     if (localSurvey.status !== "draft" && containsEmptyTriggers) return true;
   }, [containsEmptyTriggers, isSurveySaving, localSurvey.status]);
+  const isPublishScheduled = localSurvey.status === "draft" && localSurvey.publishOn !== null;
+  let draftPrimaryLabel = t("workspace.surveys.edit.publish");
+  if (isPublishScheduled) {
+    draftPrimaryLabel = t("workspace.surveys.edit.schedule_survey");
+  } else if (isCxMode) {
+    draftPrimaryLabel = t("workspace.surveys.edit.save_and_close");
+  }
 
   const handleBack = () => {
     const { updatedAt, ...localSurveyRest } = localSurvey;
@@ -475,6 +482,55 @@ export const SurveyMenuBar = ({
     }
   };
 
+  const handleSurveySchedule = async () => {
+    isSurveyPublishingRef.current = true;
+    setIsSurveyPublishing(true);
+
+    const isSurveyValidatedWithZod = validateSurveyWithZod();
+
+    if (!isSurveyValidatedWithZod) {
+      isSurveyPublishingRef.current = false;
+      setIsSurveyPublishing(false);
+      return;
+    }
+
+    try {
+      const isSurveyValidResult = isSurveyValid(localSurvey, selectedLanguageCode, t, responseCount);
+      if (!isSurveyValidResult) {
+        isSurveyPublishingRef.current = false;
+        setIsSurveyPublishing(false);
+        return;
+      }
+      const status = "paused";
+      const segment = await handleSegmentUpdate();
+      clearSurveyLocalStorage();
+
+      const scheduleResult = await updateSurveyAction({
+        ...localSurvey,
+        status,
+        segment,
+      });
+
+      if (!scheduleResult?.data) {
+        const errorMessage = getFormattedErrorMessage(scheduleResult);
+        toast.error(errorMessage);
+        isSurveyPublishingRef.current = false;
+        setIsSurveyPublishing(false);
+        return;
+      }
+
+      isSurveyPublishingRef.current = false;
+      setIsSurveyPublishing(false);
+      isSuccessfullySavedRef.current = true;
+      router.push(`${workspaceBasePath}/surveys/${localSurvey.id}/summary?scheduled=true`);
+    } catch (error) {
+      console.error(error);
+      toast.error(t("workspace.surveys.edit.error_publishing_survey"));
+      isSurveyPublishingRef.current = false;
+      setIsSurveyPublishing(false);
+    }
+  };
+
   return (
     <div className="border-b border-slate-200 bg-white px-5 py-2.5 sm:flex sm:items-center sm:justify-between">
       <div className="flex h-full items-center space-x-2 whitespace-nowrap">
@@ -566,8 +622,8 @@ export const SurveyMenuBar = ({
             size="sm"
             disabled={isSurveySaving || containsEmptyTriggers}
             loading={isSurveyPublishing}
-            onClick={handleSurveyPublish}>
-            {isCxMode ? t("workspace.surveys.edit.save_and_close") : t("workspace.surveys.edit.publish")}
+            onClick={isPublishScheduled ? handleSurveySchedule : handleSurveyPublish}>
+            {draftPrimaryLabel}
           </Button>
         )}
       </div>

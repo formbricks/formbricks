@@ -32,17 +32,17 @@ const baseContext = {
 
 const createCandidate = ({
   id = "survey123",
-  pauseOn,
+  closeOn,
   publishOn,
   status,
 }: {
   id?: string;
-  pauseOn: Date | null;
+  closeOn: Date | null;
   publishOn: Date | null;
-  status: "draft" | "inProgress";
+  status: "draft" | "paused" | "inProgress";
 }) => ({
   id,
-  pauseOn,
+  closeOn,
   publishOn,
   status,
   workspace: {
@@ -63,13 +63,13 @@ describe("processSurveySchedulingJob", () => {
     vi.useRealTimers();
   });
 
-  test("publishes due draft surveys", async () => {
+  test("publishes due paused surveys", async () => {
     prisma.survey.findMany
       .mockResolvedValueOnce([
         createCandidate({
-          pauseOn: null,
+          closeOn: null,
           publishOn: new Date("2026-04-16T23:00:00.000Z"),
-          status: "draft",
+          status: "paused",
         }),
       ] as never)
       .mockResolvedValueOnce([] as never);
@@ -88,7 +88,7 @@ describe("processSurveySchedulingJob", () => {
           lte: new Date("2026-04-17T12:30:00.000Z"),
           not: null,
         },
-        status: "draft",
+        status: "paused",
       },
     });
     expect(mockQueueAuditEventWithoutRequest).toHaveBeenCalledTimes(1);
@@ -99,17 +99,17 @@ describe("processSurveySchedulingJob", () => {
     const firstBatch = Array.from({ length: SURVEY_SCHEDULING_RECONCILIATION_BATCH_SIZE }, (_, index) =>
       createCandidate({
         id: `survey-${index}`,
-        pauseOn: null,
+        closeOn: null,
         publishOn: duePublishOn,
-        status: "draft",
+        status: "paused",
       })
     );
     const secondBatch = [
       createCandidate({
         id: `survey-${SURVEY_SCHEDULING_RECONCILIATION_BATCH_SIZE}`,
-        pauseOn: null,
+        closeOn: null,
         publishOn: duePublishOn,
-        status: "draft",
+        status: "paused",
       }),
     ];
 
@@ -139,10 +139,10 @@ describe("processSurveySchedulingJob", () => {
     );
   });
 
-  test("pauses due published surveys", async () => {
+  test("closes due published surveys", async () => {
     prisma.survey.findMany.mockResolvedValueOnce([] as never).mockResolvedValueOnce([
       createCandidate({
-        pauseOn: new Date("2026-04-16T23:00:00.000Z"),
+        closeOn: new Date("2026-04-16T23:00:00.000Z"),
         publishOn: null,
         status: "inProgress",
       }),
@@ -153,12 +153,12 @@ describe("processSurveySchedulingJob", () => {
 
     expect(prisma.survey.updateMany).toHaveBeenCalledWith({
       data: {
-        pauseOn: null,
-        status: "paused",
+        closeOn: null,
+        status: "completed",
       },
       where: {
         id: "survey123",
-        pauseOn: {
+        closeOn: {
           lte: new Date("2026-04-17T12:30:00.000Z"),
           not: null,
         },
@@ -177,18 +177,18 @@ describe("processSurveySchedulingJob", () => {
     expect(mockQueueAuditEventWithoutRequest).not.toHaveBeenCalled();
   });
 
-  test("publishes before pausing when both schedules are due on the same day", async () => {
+  test("publishes before closing when both schedules are due on the same day", async () => {
     prisma.survey.findMany
       .mockResolvedValueOnce([
         createCandidate({
-          pauseOn: new Date("2026-04-16T23:00:00.000Z"),
+          closeOn: new Date("2026-04-16T23:00:00.000Z"),
           publishOn: new Date("2026-04-16T23:00:00.000Z"),
-          status: "draft",
+          status: "paused",
         }),
       ] as never)
       .mockResolvedValueOnce([
         createCandidate({
-          pauseOn: new Date("2026-04-16T23:00:00.000Z"),
+          closeOn: new Date("2026-04-16T23:00:00.000Z"),
           publishOn: null,
           status: "inProgress",
         }),
@@ -208,9 +208,9 @@ describe("processSurveySchedulingJob", () => {
     prisma.survey.findMany
       .mockResolvedValueOnce([
         createCandidate({
-          pauseOn: null,
+          closeOn: null,
           publishOn: new Date("2026-04-16T23:00:00.000Z"),
-          status: "draft",
+          status: "paused",
         }),
       ] as never)
       .mockResolvedValueOnce([] as never);
@@ -226,9 +226,9 @@ describe("processSurveySchedulingJob", () => {
     prisma.survey.findMany
       .mockResolvedValueOnce([
         createCandidate({
-          pauseOn: null,
+          closeOn: null,
           publishOn: new Date("2026-04-16T23:00:00.000Z"),
-          status: "draft",
+          status: "paused",
         }),
       ] as never)
       .mockResolvedValueOnce([] as never);

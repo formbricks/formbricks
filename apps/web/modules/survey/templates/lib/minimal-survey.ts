@@ -12,7 +12,7 @@ export const getMinimalSurvey = (t: TFunction): TSurvey => ({
   createdBy: null,
   status: "draft",
   publishOn: null,
-  pauseOn: null,
+  closeOn: null,
   displayOption: "displayOnce",
   autoClose: null,
   triggers: [],

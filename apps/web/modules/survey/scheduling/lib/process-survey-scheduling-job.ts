@@ -23,7 +23,7 @@ export const processSurveySchedulingJob: JobHandler<TSurveySchedulingJobData> = 
   logger.info(
     {
       ...logContext,
-      pausedCount: result.pausedCount,
+      closedCount: result.closedCount,
       publishedCount: result.publishedCount,
     },
     "Survey scheduling reconciliation job completed"
