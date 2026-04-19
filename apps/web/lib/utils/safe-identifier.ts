@@ -18,15 +18,36 @@ export const isSafeIdentifier = (value: string): boolean => {
  * It also ensures the identifier starts with a lowercase letter by stripping invalid leading chars.
  */
 export const toSafeIdentifier = (value: string): string => {
-  const normalized = value
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/_+/g, "_")
-    .replace(/^_+/, "")
-    .replace(/_+$/, "");
+  const normalized = value.trim().toLowerCase();
+  let safeIdentifier = "";
+  let shouldInsertUnderscore = false;
 
-  return normalized.replace(/^[^a-z]+/, "");
+  for (const char of normalized) {
+    const isLowercaseLetter = char >= "a" && char <= "z";
+    const isDigit = char >= "0" && char <= "9";
+
+    if (isLowercaseLetter || isDigit) {
+      if (shouldInsertUnderscore && safeIdentifier.length > 0) {
+        safeIdentifier += "_";
+      }
+      safeIdentifier += char;
+      shouldInsertUnderscore = false;
+      continue;
+    }
+
+    if (safeIdentifier.length > 0) {
+      shouldInsertUnderscore = true;
+    }
+  }
+
+  for (let i = 0; i < safeIdentifier.length; i++) {
+    const char = safeIdentifier[i];
+    if (char >= "a" && char <= "z") {
+      return safeIdentifier.slice(i);
+    }
+  }
+
+  return "";
 };
 
 /**
