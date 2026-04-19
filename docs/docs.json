@@ -114,6 +114,7 @@
                 "icon": "mobile",
                 "pages": [
                   "xm-and-surveys/surveys/website-app-surveys/quickstart",
+                  "xm-and-surveys/surveys/website-app-surveys/workspace-id-migration",
                   "xm-and-surveys/surveys/website-app-surveys/framework-guides",
                   "xm-and-surveys/surveys/website-app-surveys/google-tag-manager",
                   {

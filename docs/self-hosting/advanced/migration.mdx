@@ -6,6 +6,8 @@ icon: "arrow-right"
 
 ## v5
 
+**Rate Limit**
+
 Formbricks v5 changes how rate limiting is enforced:
 
 - several public and API-key routes are no longer rate-limited inside the application server
@@ -20,6 +22,18 @@ Formbricks v5 changes how rate limiting is enforced:
 
 See the [rate-limiting guide](/self-hosting/advanced/rate-limiting) for the exact covered route groups, thresholds,
 and the remaining app-enforced limits.
+
+**Workspaces and Environment IDs**
+
+Environment IDs were deprecated to simplify SDK setup around a single Workspace ID while keeping existing
+integrations backward compatible during migration.
+
+**Website & App Surveys SDK: Migrate to Workspace ID**
+
+<Info>
+  Formbricks v5 also includes the Environment ID to Workspace ID transition for SDK setup. If you still rely on a
+  legacy Environment ID, read the [Migrate to Workspace ID guide](/xm-and-surveys/surveys/website-app-surveys/workspace-id-migration).
+</Info>
 
 ## v4.7
 
