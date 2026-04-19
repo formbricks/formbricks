@@ -8,7 +8,7 @@ import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey, TSurveyElementSummaryNps } from "@formbricks/types/surveys/types";
 import { HalfCircle, ProgressBar } from "@/modules/ui/components/progress-bar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/modules/ui/components/tabs";
-import { TooltipProvider } from "@/modules/ui/components/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { convertFloatToNDecimal } from "../lib/utils";
 import { ClickableBarSegment } from "./ClickableBarSegment";
 import { ElementSummaryHeader } from "./ElementSummaryHeader";
@@ -39,6 +39,7 @@ const calculateNPSOpacity = (rating: number): number => {
 export const NPSSummary = ({ elementSummary, survey, setFilter }: NPSSummaryProps) => {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<"aggregated" | "individual">("aggregated");
+  const promotersPercentage = convertFloatToNDecimal(elementSummary.promoters.percentage, 2);
 
   const applyFilter = (group: string) => {
     const filters = {
@@ -81,13 +82,23 @@ export const NPSSummary = ({ elementSummary, survey, setFilter }: NPSSummaryProp
         elementSummary={elementSummary}
         survey={survey}
         additionalInfo={
-          <div className="flex items-center space-x-2 rounded-lg bg-slate-100 p-2">
-            <SatisfactionIndicator percentage={elementSummary.promoters.percentage} />
-            <div>
-              {t("environments.surveys.summary.promoters")}:{" "}
-              {convertFloatToNDecimal(elementSummary.promoters.percentage, 2)}%
-            </div>
-          </div>
+          <TooltipProvider delayDuration={150}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center space-x-2 rounded-lg bg-slate-100 p-2">
+                  <SatisfactionIndicator percentage={elementSummary.promoters.percentage} />
+                  <div>
+                    {t("environments.surveys.summary.promoters")}: {promotersPercentage}%
+                  </div>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">
+                {t("environments.surveys.summary.nps_promoters_tooltip", {
+                  percentage: promotersPercentage,
+                })}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         }
       />
 

@@ -64,17 +64,7 @@ const getSmiley = (
     />
   );
 
-  return (
-    <table style={{ width: "48px", height: "48px" }}>
-      {" "}
-      {/* NOSONAR S5256 - Need table layout for email compatibility (gmail) */}
-      <tr>
-        <td align="center" valign="middle">
-          {icon}
-        </td>
-      </tr>
-    </table>
-  );
+  return <div className="flex h-12 w-12 items-center justify-center">{icon}</div>;
 };
 
 export const RatingSmiley = ({
