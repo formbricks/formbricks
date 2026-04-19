@@ -13,6 +13,22 @@ export const isSafeIdentifier = (value: string): boolean => {
 };
 
 /**
+ * Converts a free-form string to a safe identifier candidate.
+ * The output only contains lowercase letters, numbers, and underscores.
+ * It also ensures the identifier starts with a lowercase letter by stripping invalid leading chars.
+ */
+export const toSafeIdentifier = (value: string): string => {
+  const normalized = value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_+|_+$/g, "");
+
+  return normalized.replace(/^[^a-z]+/, "");
+};
+
+/**
  * Converts a snake_case string to Title Case for display as a label.
  * Example: "job_description" -> "Job Description"
  *          "api_key" -> "Api Key"
