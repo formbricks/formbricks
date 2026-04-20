@@ -113,11 +113,6 @@ const nextConfig = {
         destination: "/api/v1/management/me",
         permanent: true,
       },
-      {
-        source: "/api/v1/me",
-        destination: "/api/v1/management/me",
-        permanent: true,
-      },
       // Redirect old project URLs to new workspace URLs
       {
         source: "/environments/:environmentId/project/:path*",
@@ -423,43 +418,6 @@ const nextConfig = {
     return [
       ...posthogRewrites,
       {
-        source: "/api/packages/website",
-        destination: "/js/formbricks.umd.cjs",
-      },
-      {
-        source: "/api/packages/app",
-        destination: "/js/formbricks.umd.cjs",
-      },
-      {
-        source: "/api/packages/js",
-        destination: "/js/formbricks.umd.cjs",
-      },
-      {
-        source: "/api/packages/surveys",
-        destination: "/js/surveys.umd.cjs",
-      },
-      {
-        source: "/api/v1/client/:environmentId/website/environment",
-        destination: "/api/v1/client/:environmentId/environment",
-      },
-      {
-        source: "/api/v1/client/:environmentId/app/environment",
-        destination: "/api/v1/client/:environmentId/environment",
-      },
-      {
-        source: "/api/v1/management/people/:id*",
-        destination: "/api/v1/management/contacts/:id*",
-      },
-      {
-        source: "/api/v1/management/attribute-classes",
-        destination: "/api/v1/management/contact-attribute-keys",
-      },
-      {
-        source: "/api/v1/management/attribute-classes/:id*",
-        destination: "/api/v1/management/contact-attribute-keys/:id*",
-      },
-      // Backwards compatibility: project-teams → workspace-teams
-      {
         source: "/api/v2/organizations/:organizationId/project-teams",
         destination: "/api/v2/organizations/:organizationId/workspace-teams",
       },
@@ -503,6 +461,5 @@ const sentryOptions = {
 // Always enable Sentry plugin to inject Debug IDs
 // Runtime Sentry reporting still depends on DSN being set via environment variables
 const exportConfig = process.env.SENTRY_AUTH_TOKEN ? withSentryConfig(nextConfig, sentryOptions) : nextConfig;
-
 
 export default exportConfig;

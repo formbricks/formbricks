@@ -9,6 +9,22 @@ const { mockAuthenticateRequest, mockGetServerSession } = vi.hoisted(() => ({
   mockGetServerSession: vi.fn(),
 }));
 
+const { mockQueueAuditEvent, mockBuildAuditLogBaseObject } = vi.hoisted(() => ({
+  mockQueueAuditEvent: vi.fn().mockImplementation(async () => undefined),
+  mockBuildAuditLogBaseObject: vi.fn((action: string, targetType: string, apiUrl: string) => ({
+    action,
+    targetType,
+    userId: "unknown",
+    targetId: "unknown",
+    organizationId: "unknown",
+    status: "failure",
+    oldObject: undefined,
+    newObject: undefined,
+    userType: "api",
+    apiUrl,
+  })),
+}));
+
 vi.mock("next-auth", () => ({
   getServerSession: mockGetServerSession,
 }));
@@ -23,6 +39,14 @@ vi.mock("@/modules/auth/lib/authOptions", () => ({
 
 vi.mock("@/modules/core/rate-limit/helpers", () => ({
   applyRateLimit: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
+  queueAuditEvent: mockQueueAuditEvent,
+}));
+
+vi.mock("@/app/lib/api/with-api-logging", () => ({
+  buildAuditLogBaseObject: mockBuildAuditLogBaseObject,
 }));
 
 vi.mock("@formbricks/logger", () => ({
@@ -43,6 +67,114 @@ describe("withV3ApiWrapper", () => {
 
   afterEach(() => {
     vi.clearAllMocks();
+  });
+
+  test("passes an audit log to the handler and queues success after the response", async () => {
+    const { queueAuditEvent } = await import("@/modules/ee/audit-logs/lib/handler");
+
+    mockGetServerSession.mockResolvedValue({
+      user: { id: "user_1", name: "Test", email: "t@example.com" },
+      expires: "2026-01-01",
+    });
+
+    const handler = vi.fn(async ({ auditLog }) => {
+      expect(auditLog).toEqual(
+        expect.objectContaining({
+          action: "deleted",
+          targetType: "survey",
+          userId: "user_1",
+          userType: "user",
+          status: "failure",
+        })
+      );
+
+      if (auditLog) {
+        auditLog.targetId = "survey_1";
+        auditLog.organizationId = "org_1";
+        auditLog.oldObject = { id: "survey_1" };
+      }
+
+      return Response.json({ ok: true });
+    });
+
+    const wrapped = withV3ApiWrapper({
+      auth: "both",
+      action: "deleted",
+      targetType: "survey",
+      handler,
+    });
+
+    const response = await wrapped(
+      new NextRequest("http://localhost/api/v3/surveys/survey_1", {
+        method: "DELETE",
+        headers: { "x-request-id": "req-audit" },
+      }),
+      {} as never
+    );
+
+    expect(response.status).toBe(200);
+    expect(queueAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "deleted",
+        targetType: "survey",
+        targetId: "survey_1",
+        organizationId: "org_1",
+        userId: "user_1",
+        userType: "user",
+        status: "success",
+        oldObject: { id: "survey_1" },
+      })
+    );
+  });
+
+  test("queues a failure audit log when the handler returns a non-ok response", async () => {
+    const { queueAuditEvent } = await import("@/modules/ee/audit-logs/lib/handler");
+
+    mockAuthenticateRequest.mockResolvedValue({
+      type: "apiKey",
+      apiKeyId: "key_1",
+      organizationId: "org_1",
+      organizationAccess: { accessControl: { read: true, write: true } },
+      environmentPermissions: [],
+    });
+
+    const wrapped = withV3ApiWrapper({
+      auth: "both",
+      action: "deleted",
+      targetType: "survey",
+      handler: async ({ auditLog }) => {
+        if (auditLog) {
+          auditLog.targetId = "survey_2";
+        }
+
+        return new Response("forbidden", { status: 403 });
+      },
+    });
+
+    const response = await wrapped(
+      new NextRequest("http://localhost/api/v3/surveys/survey_2", {
+        method: "DELETE",
+        headers: {
+          "x-request-id": "req-failure-audit",
+          "x-api-key": "fbk_test",
+        },
+      }),
+      {} as never
+    );
+
+    expect(response.status).toBe(403);
+    expect(queueAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "deleted",
+        targetType: "survey",
+        targetId: "survey_2",
+        organizationId: "org_1",
+        userId: "key_1",
+        userType: "api",
+        status: "failure",
+        eventId: "req-failure-audit",
+      })
+    );
   });
 
   test("uses session auth first in both mode and injects request id into plain responses", async () => {

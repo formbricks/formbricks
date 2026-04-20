@@ -20,13 +20,13 @@ import { SurveyEditorTabs } from "@/modules/survey/editor/components/survey-edit
 import { SurveyMenuBar } from "@/modules/survey/editor/components/survey-menu-bar";
 import { TFollowUpEmailToUser } from "@/modules/survey/editor/types/survey-follow-up";
 import { FollowUpsView } from "@/modules/survey/follow-ups/components/follow-ups-view";
+import { LanguageView } from "@/modules/survey/multi-language-surveys/components/language-view";
 import { PreviewSurvey } from "@/modules/ui/components/preview-survey";
-import { refetchWorkspaceAction } from "../actions";
+import { getWorkspaceLanguagesAction, refetchWorkspaceAction } from "../actions";
 
 interface SurveyEditorProps {
   survey: TSurvey;
   workspace: Workspace;
-  appSetupCompleted: boolean;
   actionClasses: ActionClass[];
   contactAttributeKeys: TContactAttributeKey[];
   segments: TSegment[];
@@ -56,7 +56,6 @@ export const SurveyEditor = ({
   survey,
   workspace,
   workspaceLanguages,
-  appSetupCompleted,
   actionClasses,
   contactAttributeKeys,
   segments,
@@ -84,24 +83,34 @@ export const SurveyEditor = ({
   const [activeElementId, setActiveElementId] = useState<string | null>(null);
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>(() => structuredClone(survey));
   const [invalidElements, setInvalidElements] = useState<string[] | null>([]);
+  const [hasIncompleteTranslations, setHasIncompleteTranslations] = useState(false);
 
   const [selectedLanguageCode, setSelectedLanguageCode] = useState<string>("default");
   const surveyEditorRef = useRef(null);
   const [localWorkspace, setLocalWorkspace] = useState<Workspace>(workspace);
+  const [localWorkspaceLanguages, setLocalWorkspaceLanguages] = useState<Language[]>(workspaceLanguages);
 
   const [styling, setStyling] = useState<TSurveyStyling | null>(localSurvey?.styling ?? null);
   const [localStylingChanges, setLocalStylingChanges] = useState<TSurveyStyling | null>(null);
 
-  const fetchLatestWorkspace = useCallback(async () => {
-    const refetchWorkspaceResponse = await refetchWorkspaceAction({ workspaceId: localWorkspace.id });
+  const fetchLatestWorkspaceData = useCallback(async () => {
+    const [refetchWorkspaceResponse, refetchLanguagesResponse] = await Promise.all([
+      refetchWorkspaceAction({ workspaceId: localWorkspace.id }),
+      getWorkspaceLanguagesAction({ workspaceId: localWorkspace.id }),
+    ]);
+
     if (refetchWorkspaceResponse?.data) {
       setLocalWorkspace(refetchWorkspaceResponse.data);
+    }
+
+    if (refetchLanguagesResponse?.data) {
+      setLocalWorkspaceLanguages(refetchLanguagesResponse.data);
     }
   }, [localWorkspace.id]);
 
   const [isCautionDialogOpen, setIsCautionDialogOpen] = useState(false);
 
-  useDocumentVisibility(fetchLatestWorkspace);
+  useDocumentVisibility(fetchLatestWorkspaceData);
 
   useEffect(() => {
     if (survey) {
@@ -189,6 +198,7 @@ export const SurveyEditor = ({
             setActiveId={setActiveView}
             isCxMode={isCxMode}
             isStylingTabVisible={!!workspace.styling.allowStyleOverwrite}
+            hasLanguageErrors={hasIncompleteTranslations}
           />
 
           {activeView === "elements" && (
@@ -198,11 +208,9 @@ export const SurveyEditor = ({
               activeElementId={activeElementId}
               setActiveElementId={setActiveElementId}
               workspace={localWorkspace}
-              workspaceLanguages={workspaceLanguages}
               invalidElements={invalidElements}
               setInvalidElements={setInvalidElements}
               selectedLanguageCode={selectedLanguageCode || "default"}
-              setSelectedLanguageCode={setSelectedLanguageCode}
               isFormbricksCloud={isFormbricksCloud}
               isCxMode={isCxMode}
               locale={locale}
@@ -228,6 +236,16 @@ export const SurveyEditor = ({
               isUnsplashConfigured={isUnsplashConfigured}
               isCxMode={isCxMode}
               isStorageConfigured={isStorageConfigured}
+            />
+          )}
+
+          {activeView === "language" && (
+            <LanguageView
+              localSurvey={localSurvey}
+              setLocalSurvey={setLocalSurveyNonNull}
+              projectLanguages={localWorkspaceLanguages}
+              locale={locale}
+              setHasIncompleteTranslations={setHasIncompleteTranslations}
             />
           )}
 
@@ -270,9 +288,10 @@ export const SurveyEditor = ({
             survey={localSurvey}
             elementId={activeElementId}
             workspace={localWorkspace}
-            environment={{ appSetupCompleted }}
             previewType={localSurvey.type === "app" ? "modal" : "fullwidth"}
             languageCode={selectedLanguageCode}
+            setLanguageCode={setSelectedLanguageCode}
+            locale={locale}
             isSpamProtectionAllowed={isSpamProtectionAllowed}
             publicDomain={publicDomain}
           />

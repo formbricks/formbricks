@@ -17,7 +17,7 @@ import {
 import { useCallback, useEffect, useState } from "react";
 import { logger } from "@formbricks/logger";
 import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
-import { getFallbackValues, getRecallItems } from "@/lib/utils/recall";
+import { getFallbackValues, getRecallItemLabel, getRecallItems } from "@/lib/utils/recall";
 import { RecallItemSelect } from "@/modules/survey/components/element-form-input/components/recall-item-select";
 import { $createRecallNode, RecallNode } from "./recall-node";
 
@@ -306,6 +306,63 @@ export const RecallPlugin = ({
     });
   }, [editor, convertTextToRecallNodes]);
 
+  // Sync recall node labels when the survey data changes (e.g. headline edited in translations modal)
+  useEffect(() => {
+    // Check if any labels actually need updating before calling editor.update().
+    // This avoids unnecessary updates that steal focus and trigger cascading re-renders.
+    let needsUpdate = false;
+    editor.getEditorState().read(() => {
+      const root = $getRoot();
+      const allRecallNodes = findAllRecallNodes(root);
+      for (const recallNode of allRecallNodes) {
+        const recallItem = recallNode.getRecallItem();
+        const currentLabel =
+          getRecallItemLabel(recallItem.id, localSurvey, selectedLanguageCode) ?? recallItem.label;
+        if (currentLabel !== recallItem.label) {
+          needsUpdate = true;
+          break;
+        }
+      }
+    });
+
+    if (!needsUpdate) return;
+
+    const rootElement = editor.getRootElement();
+    const editorHasFocus = rootElement?.contains(document.activeElement) ?? false;
+
+    // Save the full DOM selection so we can restore the exact cursor position if stolen
+    const domSelection = editorHasFocus ? null : globalThis.getSelection();
+    const savedRange =
+      domSelection && domSelection.rangeCount > 0 ? domSelection.getRangeAt(0).cloneRange() : null;
+
+    editor.update(
+      () => {
+        const root = $getRoot();
+        const allRecallNodes = findAllRecallNodes(root);
+        for (const recallNode of allRecallNodes) {
+          const recallItem = recallNode.getRecallItem();
+          const currentLabel =
+            getRecallItemLabel(recallItem.id, localSurvey, selectedLanguageCode) ?? recallItem.label;
+          if (currentLabel !== recallItem.label) {
+            recallNode.setRecallItemLabel(currentLabel);
+          }
+        }
+      },
+      {
+        onUpdate: () => {
+          // Restore the full selection (including cursor position) after reconciliation
+          if (!editorHasFocus && savedRange) {
+            const sel = globalThis.getSelection();
+            if (sel) {
+              sel.removeAllRanges();
+              sel.addRange(savedRange);
+            }
+          }
+        },
+      }
+    );
+  }, [editor, localSurvey, selectedLanguageCode, findAllRecallNodes]);
+
   useEffect(() => {
     const removeUpdateListener = editor.registerUpdateListener(handleEditorUpdate);
     const removeKeyListener = editor.registerCommand(KEY_DOWN_COMMAND, handleKeyDown, COMMAND_PRIORITY_HIGH);
@@ -379,6 +436,7 @@ export const RecallPlugin = ({
       };
 
       editor.update(handleRecallInsert);
+      editor.blur();
       setAtSymbolPosition(null);
       setShowRecallItemSelect(false);
 
@@ -389,10 +447,11 @@ export const RecallPlugin = ({
       }
       setRecallItems(newItems);
 
-      // Show fallback input after state is updated
+      // Delay opening the fallback popover so the dropdown fully unmounts
+      // first. Without this, the dropdown's dismiss events close the popover.
       setTimeout(() => {
         onShowFallbackInput();
-      }, 0);
+      }, 150);
     },
     [
       editor,

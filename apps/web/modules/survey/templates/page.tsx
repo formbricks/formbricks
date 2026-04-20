@@ -34,7 +34,6 @@ export const SurveyTemplatesPage = async (props: SurveyTemplateProps) => {
   return (
     <TemplateContainerWithPreview
       userId={session.user.id}
-      appSetupCompleted={workspace.appSetupCompleted}
       workspace={workspace}
       publicDomain={publicDomain}
     />

@@ -7,6 +7,7 @@ import {
   problemTooManyRequests,
   problemUnauthorized,
   successListResponse,
+  successResponse,
 } from "./response";
 
 describe("v3 problem responses", () => {
@@ -91,5 +92,29 @@ describe("successListResponse", () => {
   test("custom Cache-Control", async () => {
     const res = successListResponse([], { limit: 5, nextCursor: null }, { cache: "private, max-age=0" });
     expect(res.headers.get("Cache-Control")).toBe("private, max-age=0");
+  });
+});
+
+describe("successResponse", () => {
+  test("wraps the payload in a data envelope", async () => {
+    const res = successResponse({ id: "survey_1" }, { requestId: "req-success" });
+    expect(res.status).toBe(200);
+    expect(res.headers.get("X-Request-Id")).toBe("req-success");
+    expect(res.headers.get("Cache-Control")).toContain("no-store");
+    expect(await res.json()).toEqual({
+      data: { id: "survey_1" },
+    });
+  });
+
+  test("allows custom status and cache headers", async () => {
+    const res = successResponse(
+      { ok: true },
+      {
+        cache: "private, max-age=60",
+        status: 202,
+      }
+    );
+    expect(res.status).toBe(202);
+    expect(res.headers.get("Cache-Control")).toBe("private, max-age=60");
   });
 });

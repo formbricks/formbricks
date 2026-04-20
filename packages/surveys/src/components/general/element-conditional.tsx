@@ -331,6 +331,22 @@ export function ElementConditional({
             errorMessage={errorMessage}
           />
         );
+      case TSurveyElementTypeEnum.CSAT:
+      case TSurveyElementTypeEnum.CES:
+        return (
+          <RatingElement
+            key={element.id}
+            element={element}
+            value={typeof value === "number" ? value : undefined}
+            onChange={onChange}
+            languageCode={languageCode}
+            ttc={ttc}
+            setTtc={wrappedSetTtc}
+            currentElementId={currentElementId}
+            dir={dir}
+            errorMessage={errorMessage}
+          />
+        );
       case TSurveyElementTypeEnum.ContactInfo:
         return (
           <ContactInfoElement

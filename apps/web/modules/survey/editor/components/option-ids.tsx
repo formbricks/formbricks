@@ -9,7 +9,6 @@ import { Label } from "@/modules/ui/components/label";
 interface OptionIdsElementProps {
   type: "element";
   element: TSurveyElement;
-  selectedLanguageCode: string;
 }
 
 interface OptionIdsVariablesProps {
@@ -21,6 +20,7 @@ type OptionIdsProps = OptionIdsElementProps | OptionIdsVariablesProps;
 
 export const OptionIds = (props: OptionIdsProps) => {
   const { t } = useTranslation();
+  const selectedLanguageCode = "default";
 
   const renderChoiceIds = (element: TSurveyElement, selectedLanguageCode: string) => {
     switch (element.type) {
@@ -92,7 +92,7 @@ export const OptionIds = (props: OptionIdsProps) => {
   return (
     <div className="space-y-3">
       <Label className="text-sm font-medium text-gray-700">{t("common.option_ids")}</Label>
-      <div className="w-full">{renderChoiceIds(props.element, props.selectedLanguageCode)}</div>
+      <div className="w-full">{renderChoiceIds(props.element, selectedLanguageCode)}</div>
     </div>
   );
 };
