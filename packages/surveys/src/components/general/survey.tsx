@@ -1119,7 +1119,7 @@ export function Survey({
                       survey={localSurvey}
                       surveyLanguages={localSurvey.languages}
                       setSelectedLanguageCode={setSelectedLanguage}
-                      hoverColor={styling.inputColor?.light ?? "#f8fafc"}
+                      hoverColor={styling.inputBgColor?.light ?? "#f8fafc"}
                       borderRadius={styling.roundness ?? 8}
                       setDir={setDir}
                       dir={dir}
@@ -1132,7 +1132,7 @@ export function Survey({
                   {isCloseButtonVisible && (
                     <SurveyCloseButton
                       onClose={onClose}
-                      hoverColor={styling.inputColor?.light ?? "#f8fafc"}
+                      hoverColor={styling.inputBgColor?.light ?? "#f8fafc"}
                       borderRadius={styling.roundness ?? 8}
                     />
                   )}

@@ -98,14 +98,62 @@ export interface TStylingColor {
 
 export interface TBaseStyling {
   brandColor?: TStylingColor | null;
-  questionColor?: TStylingColor | null;
-  inputColor?: TStylingColor | null;
+  accentBgColor?: TStylingColor | null;
+  accentBgColorSelected?: TStylingColor | null;
+  fontFamily?: string | null;
+
+  // Buttons
+  buttonBgColor?: TStylingColor | null;
+  buttonTextColor?: TStylingColor | null;
+  buttonBorderRadius?: number | string | null;
+  buttonHeight?: number | string | null;
+  buttonFontSize?: number | string | null;
+  buttonFontWeight?: string | number | null;
+  buttonPaddingX?: number | string | null;
+  buttonPaddingY?: number | string | null;
+
+  // Inputs
+  inputBgColor?: TStylingColor | null;
   inputBorderColor?: TStylingColor | null;
+  inputBorderRadius?: number | string | null;
+  inputHeight?: number | string | null;
+  inputTextColor?: TStylingColor | null;
+  inputFontSize?: number | string | null;
+  inputPlaceholderOpacity?: number | null;
+  inputPaddingX?: number | string | null;
+  inputPaddingY?: number | string | null;
+  inputShadow?: string | null;
+
+  // Options
+  optionBgColor?: TStylingColor | null;
+  optionLabelColor?: TStylingColor | null;
+  optionBorderColor?: TStylingColor | null;
+  optionBorderRadius?: number | string | null;
+  optionPaddingX?: number | string | null;
+  optionPaddingY?: number | string | null;
+  optionFontSize?: number | string | null;
+
+  // Headlines & Descriptions
+  elementHeadlineFontSize?: number | string | null;
+  elementHeadlineFontWeight?: string | number | null;
+  elementHeadlineColor?: TStylingColor | null;
+  elementDescriptionFontSize?: number | string | null;
+  elementDescriptionFontWeight?: string | number | null;
+  elementDescriptionColor?: TStylingColor | null;
+  elementUpperLabelFontSize?: number | string | null;
+  elementUpperLabelColor?: TStylingColor | null;
+  elementUpperLabelFontWeight?: string | number | null;
+
+  // Progress Bar
+  progressTrackHeight?: number | string | null;
+  progressTrackBgColor?: TStylingColor | null;
+  progressIndicatorBgColor?: TStylingColor | null;
+
   cardBackgroundColor?: TStylingColor | null;
   cardBorderColor?: TStylingColor | null;
   highlightBorderColor?: TStylingColor | null;
   isDarkModeEnabled?: boolean | null;
-  roundness?: number | null;
+  roundness?: number | string | null;
   cardArrangement?: {
     linkSurveys: "casual" | "straight" | "simple";
     appSurveys: "casual" | "straight" | "simple";

@@ -26,8 +26,6 @@ const getBaseWorkspaceStyling = (overrides: Partial<TWorkspaceStyling> = {}): TW
     cardBackgroundColor: null,
     cardBorderColor: null,
 
-    questionColor: null,
-    inputColor: null,
     inputBorderColor: null,
     roundness: null, // defaults to 8 in addCustomThemeToDom if null here
     hideProgressBar: null,
@@ -297,12 +295,13 @@ describe("addCustomThemeToDom", () => {
   test("should apply all survey styling properties", () => {
     const styling: TSurveyStyling = {
       brandColor: { light: "#112233" },
-      questionColor: { light: "#AABBCC" },
+      elementHeadlineColor: { light: "#AABBCC" },
+      elementDescriptionColor: { light: "#AABBCC" },
       inputBorderColor: { light: "#DDDDDD" },
       cardBackgroundColor: { light: "#EEEEEE" },
       cardBorderColor: { light: "#CCCCCC" },
 
-      inputColor: { light: "#F0F0F0" },
+      inputBgColor: { light: "#F0F0F0" },
       roundness: 12,
       hideProgressBar: false,
       background: { bg: "#ABCDEF", bgType: "color", brightness: 100 },
@@ -449,46 +448,27 @@ describe("addCustomThemeToDom", () => {
   test("should derive input-placeholder-color from inputTextColor when set", () => {
     const styling: TSurveyStyling = {
       ...getBaseWorkspaceStyling(),
-      questionColor: { light: "#AABBCC" },
       inputTextColor: { light: "#112233" },
     };
     addCustomThemeToDom({ styling });
     const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
     const variables = getCssVariables(styleElement);
 
-    // Placeholder should be derived from inputTextColor, not questionColor
-    expect(variables["--fb-input-placeholder-color"]).toBeDefined();
-    expect(variables["--fb-placeholder-color"]).toBeDefined();
-    // Both should be based on inputTextColor (#112233) mixed with white, not questionColor (#AABBCC)
-    // We can verify by checking the placeholder color doesn't contain the questionColor mix
-    expect(variables["--fb-input-placeholder-color"]).toBe(variables["--fb-placeholder-color"]);
-  });
-
-  test("should derive input-placeholder-color from questionColor when inputTextColor is not set", () => {
-    const styling: TSurveyStyling = {
-      ...getBaseWorkspaceStyling(),
-      questionColor: { light: "#AABBCC" },
-    };
-    addCustomThemeToDom({ styling });
-    const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
-    const variables = getCssVariables(styleElement);
-
-    // Placeholder should fall back to questionColor when inputTextColor is not set
     expect(variables["--fb-input-placeholder-color"]).toBeDefined();
     expect(variables["--fb-placeholder-color"]).toBeDefined();
     expect(variables["--fb-input-placeholder-color"]).toBe(variables["--fb-placeholder-color"]);
   });
 
-  test("should set signature and branding text colors for dark questionColor", () => {
+  test("should set signature and branding text colors for dark elementHeadlineColor", () => {
     const styling = getBaseWorkspaceStyling({
-      questionColor: { light: "#202020" }, // A dark color
-      brandColor: { light: "#123456" }, // brandColor needed for some default fallbacks if not directly testing them
+      elementHeadlineColor: { light: "#202020" }, // A dark color
+      brandColor: { light: "#123456" },
     });
     addCustomThemeToDom({ styling });
     const styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement;
     const variables = getCssVariables(styleElement);
 
-    // For dark questionColor ('#202020'), isLight is false, so mix with white.
+    // For dark elementHeadlineColor ('#202020'), isLight is false, so mix with white.
     expect(variables["--fb-signature-text-color"]).toBeDefined();
     expect(variables["--fb-branding-text-color"]).toBeDefined();
   });
@@ -501,11 +481,11 @@ describe("addCustomThemeToDom", () => {
     expect(variables["--fb-border-radius"]).toBe("0px");
   });
 
-  test("should set input-background-color-selected to slate-50 for white inputColor", () => {
+  test("should set input-background-color-selected to slate-50 for white inputBgColor", () => {
     const whiteColors = ["#fff", "#ffffff", "white"];
     whiteColors.forEach((color) => {
       const styling = getBaseWorkspaceStyling({
-        inputColor: { light: color },
+        inputBgColor: { light: color },
         brandColor: { light: "#123" },
       });
       addCustomThemeToDom({ styling });
@@ -515,9 +495,9 @@ describe("addCustomThemeToDom", () => {
     });
   });
 
-  test("should mix input-background-color-selected for non-white inputColor", () => {
+  test("should mix input-background-color-selected for non-white inputBgColor", () => {
     const styling = getBaseWorkspaceStyling({
-      inputColor: { light: "#E0E0E0" },
+      inputBgColor: { light: "#E0E0E0" },
       brandColor: { light: "#123" },
     }); // Not white
     addCustomThemeToDom({ styling });
@@ -618,9 +598,6 @@ describe("getBaseWorkspaceStyling_Helper", () => {
     expect(baseStyling.cardBackgroundColor).toBeNull();
     expect(baseStyling.cardBorderColor).toBeNull();
 
-    expect(baseStyling.questionColor).toBeNull();
-    // Specifically testing lines highlighted by user
-    expect(baseStyling.inputColor).toBeNull();
     expect(baseStyling.inputBorderColor).toBeNull();
     expect(baseStyling.roundness).toBeNull();
     expect(baseStyling.hideProgressBar).toBeNull();
@@ -632,7 +609,7 @@ describe("getBaseWorkspaceStyling_Helper", () => {
 
   test("should correctly apply overrides to specified properties", () => {
     const overrides: Partial<TWorkspaceStyling> = {
-      inputColor: { light: "#111" },
+      inputBgColor: { light: "#111" },
       inputBorderColor: { light: "#222" },
       roundness: 10,
       hideProgressBar: true,
@@ -642,7 +619,7 @@ describe("getBaseWorkspaceStyling_Helper", () => {
     };
     const styled = getBaseWorkspaceStyling(overrides);
 
-    expect(styled.inputColor).toEqual({ light: "#111" });
+    expect(styled.inputBgColor).toEqual({ light: "#111" });
     expect(styled.inputBorderColor).toEqual({ light: "#222" });
     expect(styled.roundness).toBe(10);
     expect(styled.hideProgressBar).toBe(true);
