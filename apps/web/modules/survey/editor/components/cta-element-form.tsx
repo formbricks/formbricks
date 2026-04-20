@@ -20,8 +20,6 @@ interface CTAElementFormProps {
   elementIdx: number;
   updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
   lastElement: boolean;
-  selectedLanguageCode: string;
-  setSelectedLanguageCode: (languageCode: string) => void;
   isInvalid: boolean;
   locale: TUserLocale;
   isStorageConfigured: boolean;
@@ -35,8 +33,6 @@ export const CTAElementForm = ({
   lastElement,
   isInvalid,
   localSurvey,
-  selectedLanguageCode,
-  setSelectedLanguageCode,
   locale,
   isStorageConfigured = true,
   isExternalUrlsAllowed,
@@ -50,13 +46,11 @@ export const CTAElementForm = ({
       <ElementFormInput
         id="headline"
         value={element.headline}
-        label={t("environments.surveys.edit.question") + "*"}
+        label={t("workspace.surveys.edit.question") + "*"}
         localSurvey={localSurvey}
         elementIdx={elementIdx}
         isInvalid={isInvalid}
         updateElement={updateElement}
-        selectedLanguageCode={selectedLanguageCode}
-        setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
         isStorageConfigured={isStorageConfigured}
         autoFocus={!element.headline?.default || element.headline.default.trim() === ""}
@@ -75,8 +69,6 @@ export const CTAElementForm = ({
                 elementIdx={elementIdx}
                 isInvalid={isInvalid}
                 updateElement={updateElement}
-                selectedLanguageCode={selectedLanguageCode}
-                setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
                 autoFocus={!element.subheader?.default || element.subheader.default.trim() === ""}
@@ -97,7 +89,7 @@ export const CTAElementForm = ({
               });
             }}>
             <PlusIcon className="mr-1 h-4 w-4" />
-            {t("environments.surveys.edit.add_description")}
+            {t("workspace.surveys.edit.add_description")}
           </Button>
         )}
       </div>
@@ -107,29 +99,27 @@ export const CTAElementForm = ({
           isChecked={element.buttonExternal}
           onToggle={() => updateElement(elementIdx, { buttonExternal: !element.buttonExternal })}
           htmlId="buttonExternal"
-          title={t("environments.surveys.edit.button_external")}
-          description={t("environments.surveys.edit.button_external_description")}
+          title={t("workspace.surveys.edit.button_external")}
+          description={t("workspace.surveys.edit.button_external_description")}
           childBorder
           customContainerClass="p-0 mt-4">
           <div className="flex flex-1 flex-col gap-2 px-4 pb-4 pt-1">
             <ElementFormInput
               id="ctaButtonLabel"
               value={element.ctaButtonLabel}
-              label={t("environments.surveys.edit.cta_button_label")}
+              label={t("workspace.surveys.edit.cta_button_label")}
               localSurvey={localSurvey}
               elementIdx={elementIdx}
               maxLength={48}
               placeholder={lastElement ? t("common.finish") : t("common.next")}
               isInvalid={isInvalid}
               updateElement={updateElement}
-              selectedLanguageCode={selectedLanguageCode}
-              setSelectedLanguageCode={setSelectedLanguageCode}
               locale={locale}
               isStorageConfigured={isStorageConfigured}
             />
 
             <div>
-              <Label htmlFor="buttonLabel">{t("environments.surveys.edit.button_url")}</Label>
+              <Label htmlFor="buttonLabel">{t("workspace.surveys.edit.button_url")}</Label>
               <Input
                 id="buttonUrl"
                 name="buttonUrl"

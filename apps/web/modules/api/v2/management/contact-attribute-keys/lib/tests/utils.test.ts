@@ -3,7 +3,6 @@ import { TGetContactAttributeKeysFilter } from "@/modules/api/v2/management/cont
 import { getContactAttributeKeysQuery } from "../utils";
 
 describe("getContactAttributeKeysQuery", () => {
-  const environmentId = "env-123";
   const baseParams: TGetContactAttributeKeysFilter = {
     limit: 10,
     skip: 0,
@@ -15,31 +14,30 @@ describe("getContactAttributeKeysQuery", () => {
     vi.clearAllMocks();
   });
 
-  test("returns query with environmentId in array when no params are provided", () => {
-    const environmentIds = ["env-1", "env-2"];
-    const result = getContactAttributeKeysQuery(environmentIds);
+  test("returns query with workspaceId in array when no params are provided", () => {
+    const workspaceIds = ["ws-1", "ws-2"];
+    const result = getContactAttributeKeysQuery(workspaceIds);
 
     expect(result).toEqual({
       where: {
-        environmentId: {
-          in: environmentIds,
+        workspaceId: {
+          in: workspaceIds,
         },
       },
     });
   });
 
   test("applies common filters when provided", () => {
-    const environmentIds = ["env-1", "env-2"];
+    const workspaceIds = ["ws-1", "ws-2"];
     const params: TGetContactAttributeKeysFilter = {
       ...baseParams,
-      environmentId,
     };
-    const result = getContactAttributeKeysQuery(environmentIds, params);
+    const result = getContactAttributeKeysQuery(workspaceIds, params);
 
     expect(result).toEqual({
       where: {
-        environmentId: {
-          in: environmentIds,
+        workspaceId: {
+          in: workspaceIds,
         },
       },
       take: 10,
@@ -50,22 +48,21 @@ describe("getContactAttributeKeysQuery", () => {
   });
 
   test("applies date filters when provided", () => {
-    const environmentIds = ["env-1", "env-2"];
+    const workspaceIds = ["ws-1", "ws-2"];
     const startDate = new Date("2023-01-01");
     const endDate = new Date("2023-12-31");
 
     const params: TGetContactAttributeKeysFilter = {
       ...baseParams,
-      environmentId,
       startDate,
       endDate,
     };
-    const result = getContactAttributeKeysQuery(environmentIds, params);
+    const result = getContactAttributeKeysQuery(workspaceIds, params);
 
     expect(result).toEqual({
       where: {
-        environmentId: {
-          in: environmentIds,
+        workspaceId: {
+          in: workspaceIds,
         },
         createdAt: {
           gte: startDate,
@@ -80,20 +77,19 @@ describe("getContactAttributeKeysQuery", () => {
   });
 
   test("handles multiple filter parameters correctly", () => {
-    const environmentIds = ["env-1", "env-2"];
+    const workspaceIds = ["ws-1", "ws-2"];
     const params: TGetContactAttributeKeysFilter = {
-      environmentId,
       limit: 5,
       skip: 10,
       sortBy: "updatedAt",
       order: "asc",
     };
-    const result = getContactAttributeKeysQuery(environmentIds, params);
+    const result = getContactAttributeKeysQuery(workspaceIds, params);
 
     expect(result).toEqual({
       where: {
-        environmentId: {
-          in: environmentIds,
+        workspaceId: {
+          in: workspaceIds,
         },
       },
       take: 5,

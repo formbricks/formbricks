@@ -1,22 +1,22 @@
-import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
-import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { OrganizationSettingsNavbar } from "@/app/(app)/workspaces/[workspaceId]/settings/(organization)/components/OrganizationSettingsNavbar";
+import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { DEFAULT_LOCALE, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
-import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
-import { getProjectsByOrganizationId } from "@/modules/organization/settings/api-keys/lib/projects";
+import { getWorkspacesByOrganizationId } from "@/modules/organization/settings/api-keys/lib/workspaces";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { ApiKeyList } from "./components/api-key-list";
 
-export const APIKeysPage = async (props: { params: Promise<{ environmentId: string }> }) => {
+export const APIKeysPage = async (props: { params: Promise<{ workspaceId: string }> }) => {
   const params = await props.params;
   const t = await getTranslate();
 
-  const { currentUserMembership, organization, session } = await getEnvironmentAuth(params.environmentId);
+  const { currentUserMembership, organization, session } = await getWorkspaceAuth(params.workspaceId);
 
-  const [projects, locale] = await Promise.all([
-    getProjectsByOrganizationId(organization.id),
+  const [workspaces, locale] = await Promise.all([
+    getWorkspacesByOrganizationId(organization.id),
     getUserLocale(session.user.id),
   ]);
 
@@ -26,9 +26,8 @@ export const APIKeysPage = async (props: { params: Promise<{ environmentId: stri
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("environments.settings.general.organization_settings")}>
+      <PageHeader pageTitle={t("workspace.settings.general.organization_settings")}>
         <OrganizationSettingsNavbar
-          environmentId={params.environmentId}
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           membershipRole={currentUserMembership?.role}
           activeId="api-keys"
@@ -36,12 +35,12 @@ export const APIKeysPage = async (props: { params: Promise<{ environmentId: stri
       </PageHeader>
       <SettingsCard
         title={t("common.api_keys")}
-        description={t("environments.settings.api_keys.api_keys_description")}>
+        description={t("workspace.settings.api_keys.api_keys_description")}>
         <ApiKeyList
           organizationId={organization.id}
           locale={locale ?? DEFAULT_LOCALE}
           isReadOnly={!canAccessApiKeys}
-          projects={projects}
+          workspaces={workspaces}
         />
       </SettingsCard>
     </PageContentWrapper>

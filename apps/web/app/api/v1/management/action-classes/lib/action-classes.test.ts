@@ -13,7 +13,7 @@ vi.mock("@formbricks/database", () => ({
 }));
 
 describe("getActionClasses", () => {
-  const mockEnvironmentIds = ["env1", "env2"];
+  const mockWorkspaceIds = ["ws1", "ws2"];
   const mockActionClasses = [
     {
       id: "action1",
@@ -24,7 +24,7 @@ describe("getActionClasses", () => {
       type: "code" as const,
       key: "test-key-1" as string | null,
       noCodeConfig: {},
-      environmentId: "env1",
+      workspaceId: "ws1",
     },
     {
       id: "action2",
@@ -35,7 +35,7 @@ describe("getActionClasses", () => {
       type: "noCode" as const,
       key: "test-key-2" as string | null,
       noCodeConfig: {},
-      environmentId: "env2",
+      workspaceId: "ws2",
     },
   ];
 
@@ -43,16 +43,16 @@ describe("getActionClasses", () => {
     vi.clearAllMocks();
   });
 
-  test("successfully fetches action classes for given environment IDs", async () => {
+  test("successfully fetches action classes for given workspace IDs", async () => {
     // Mock the prisma findMany response
     vi.mocked(prisma.actionClass.findMany).mockResolvedValue(mockActionClasses);
 
-    const result = await getActionClasses(mockEnvironmentIds);
+    const result = await getActionClasses(mockWorkspaceIds);
 
     expect(result).toEqual(mockActionClasses);
     expect(prisma.actionClass.findMany).toHaveBeenCalledWith({
       where: {
-        environmentId: { in: mockEnvironmentIds },
+        workspaceId: { in: mockWorkspaceIds },
       },
       select: expect.any(Object),
       orderBy: {
@@ -65,10 +65,10 @@ describe("getActionClasses", () => {
     // Mock the prisma findMany to throw an error
     vi.mocked(prisma.actionClass.findMany).mockRejectedValue(new Error("Database error"));
 
-    await expect(getActionClasses(mockEnvironmentIds)).rejects.toThrow(DatabaseError);
+    await expect(getActionClasses(mockWorkspaceIds)).rejects.toThrow(DatabaseError);
   });
 
-  test("handles empty environment IDs array", async () => {
+  test("handles empty workspace IDs array", async () => {
     // Mock the prisma findMany response
     vi.mocked(prisma.actionClass.findMany).mockResolvedValue([]);
 
@@ -77,7 +77,7 @@ describe("getActionClasses", () => {
     expect(result).toEqual([]);
     expect(prisma.actionClass.findMany).toHaveBeenCalledWith({
       where: {
-        environmentId: { in: [] },
+        workspaceId: { in: [] },
       },
       select: expect.any(Object),
       orderBy: {

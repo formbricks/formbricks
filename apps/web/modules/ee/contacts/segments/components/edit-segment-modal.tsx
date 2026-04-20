@@ -18,7 +18,7 @@ import { SegmentActivityTab } from "./segment-activity-tab";
 import { TSegmentActivitySummary } from "./segment-activity-utils";
 
 interface EditSegmentModalProps {
-  environmentId: string;
+  workspaceId: string;
   open: boolean;
   setOpen: (open: boolean) => void;
   currentSegment: TSegmentWithSurveyRefs;
@@ -33,7 +33,7 @@ const SegmentSettingsTab = ({
   activitySummary,
   contactAttributeKeys,
   currentSegment,
-  environmentId,
+  workspaceId,
   isContactsEnabled,
   isReadOnly,
   segments,
@@ -43,7 +43,7 @@ const SegmentSettingsTab = ({
   | "activitySummary"
   | "contactAttributeKeys"
   | "currentSegment"
-  | "environmentId"
+  | "workspaceId"
   | "isContactsEnabled"
   | "isReadOnly"
   | "segments"
@@ -57,7 +57,7 @@ const SegmentSettingsTab = ({
     <SegmentSettings
       activitySummary={activitySummary}
       contactAttributeKeys={contactAttributeKeys}
-      environmentId={environmentId}
+      workspaceId={workspaceId}
       initialSegment={currentSegment}
       segments={segments}
       setOpen={setOpen}
@@ -67,7 +67,7 @@ const SegmentSettingsTab = ({
 };
 
 export const EditSegmentModal = ({
-  environmentId,
+  workspaceId,
   open,
   setOpen,
   currentSegment,
@@ -92,7 +92,7 @@ export const EditSegmentModal = ({
           activitySummary={activitySummary}
           contactAttributeKeys={contactAttributeKeys}
           currentSegment={currentSegment}
-          environmentId={environmentId}
+          workspaceId={workspaceId}
           isContactsEnabled={isContactsEnabled}
           isReadOnly={isReadOnly}
           segments={segments}

@@ -15,9 +15,9 @@ export const ManageTeamButton = ({ onClick, disabled }: ManageTeamButtonProps) =
   return (
     <TooltipRenderer
       shouldRender={disabled}
-      tooltipContent={t("environments.settings.teams.manage_team_disabled")}>
+      tooltipContent={t("workspace.settings.teams.manage_team_disabled")}>
       <Button size="sm" variant="secondary" disabled={disabled} onClick={onClick}>
-        {t("environments.settings.teams.manage_team")}
+        {t("workspace.settings.teams.manage_team")}
       </Button>
     </TooltipRenderer>
   );

@@ -76,7 +76,7 @@ export const generateAttributeTableColumns = (
   const dataTypeColumn: ColumnDef<TContactAttributeKey> = {
     id: "dataType",
     accessorKey: "dataType",
-    header: t("environments.contacts.data_type"),
+    header: t("workspace.contacts.data_type"),
     cell: ({ row }) => {
       const dataType = row.original.dataType;
       const getIcon = () => {

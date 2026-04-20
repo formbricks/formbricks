@@ -62,7 +62,7 @@ export default defineConfig({
 
         // UI Components and Templates
         "**/stories.*", // Storybook files
-        "**/templates.ts", // Project-specific template files
+        "**/templates.ts", // Workspace-specific template files
         "modules/ui/components/icons/*", // Icon components
         "modules/ui/components/icons/**", // Icon components (nested)
 

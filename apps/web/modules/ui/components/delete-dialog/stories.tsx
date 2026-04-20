@@ -274,9 +274,9 @@ export const Deleting: Story = {
 export const Disabled: Story = {
   render: RenderDeleteDialog,
   args: {
-    triggerText: "Delete Project",
-    deleteWhat: "Project",
-    text: "This project cannot be deleted because it has active surveys.",
+    triggerText: "Delete Workspace",
+    deleteWhat: "Workspace",
+    text: "This workspace cannot be deleted because it has active surveys.",
     hasChildren: false,
     numberOfListItems: 0,
     childrenContent: "",

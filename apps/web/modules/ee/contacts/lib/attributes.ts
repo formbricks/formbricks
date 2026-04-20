@@ -100,7 +100,7 @@ const deleteAttributes = async (
  *
  * @param contactId - The ID of the contact to update
  * @param userId - The user ID of the contact
- * @param environmentId - The environment ID
+ * @param workspaceId - The workspace ID
  * @param contactAttributesParam - The attributes to update/create
  * @param deleteRemovedAttributes - When true, deletes attributes that exist in DB but are not in the payload.
  * Use this for UI forms where all attributes are submitted. Default is false (merge behavior) for API calls.
@@ -108,7 +108,7 @@ const deleteAttributes = async (
 export const updateAttributes = async (
   contactId: string,
   userId: string,
-  environmentId: string,
+  workspaceId: string,
   contactAttributesParam: TContactAttributesInput,
   deleteRemovedAttributes: boolean = false
 ): Promise<{
@@ -121,7 +121,7 @@ export const updateAttributes = async (
   validateInputs(
     [contactId, ZId],
     [userId, ZString],
-    [environmentId, ZId],
+    [workspaceId, ZId],
     [contactAttributesParam, ZContactAttributesInput]
   );
 
@@ -149,9 +149,9 @@ export const updateAttributes = async (
   const [currentAttributes, contactAttributeKeys, existingEmailAttribute, existingUserIdAttribute] =
     await Promise.all([
       getContactAttributes(contactId),
-      getContactAttributeKeys(environmentId),
-      emailValue ? hasEmailAttribute(emailValue, environmentId, contactId) : Promise.resolve(null),
-      userIdValue ? hasUserIdAttribute(userIdValue, environmentId, contactId) : Promise.resolve(null),
+      getContactAttributeKeys(workspaceId),
+      emailValue ? hasEmailAttribute(emailValue, workspaceId, contactId) : Promise.resolve(null),
+      userIdValue ? hasUserIdAttribute(userIdValue, workspaceId, contactId) : Promise.resolve(null),
     ]);
 
   // Process email and userId existence early
@@ -320,7 +320,7 @@ export const updateAttributes = async (
         params: { keys: invalidKeys.join(", ") },
       });
       logger.warn(
-        { environmentId, invalidKeys },
+        { workspaceId, invalidKeys },
         "SDK tried to create attributes with invalid keys - skipping"
       );
     }
@@ -346,7 +346,7 @@ export const updateAttributes = async (
 
         // Log new attribute creation with their types
         for (const { key, dataType } of preparedNewAttributes) {
-          logger.info({ environmentId, attributeKey: key, dataType }, "Created new contact attribute");
+          logger.info({ workspaceId, attributeKey: key, dataType }, "Created new contact attribute");
           messages.push({ code: "new_attribute_created", params: { key, dataType } });
         }
 
@@ -359,7 +359,7 @@ export const updateAttributes = async (
                 name: formatSnakeCaseToTitleCase(key),
                 type: "custom",
                 dataType,
-                environment: { connect: { id: environmentId } },
+                workspaceId,
                 attributes: {
                   create: {
                     contactId,

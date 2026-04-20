@@ -4,12 +4,17 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   applyIPRateLimit: vi.fn(),
-  getEnvironmentState: vi.fn(),
+  getWorkspaceState: vi.fn(),
+  resolveClientApiIds: vi.fn(),
   contextualLoggerError: vi.fn(),
 }));
 
-vi.mock("@/app/api/v1/client/[environmentId]/environment/lib/environmentState", () => ({
-  getEnvironmentState: mocks.getEnvironmentState,
+vi.mock("@/app/api/v1/client/[workspaceId]/environment/lib/environmentState", () => ({
+  getWorkspaceState: mocks.getWorkspaceState,
+}));
+
+vi.mock("@/lib/utils/resolve-client-id", () => ({
+  resolveClientApiIds: mocks.resolveClientApiIds,
 }));
 
 vi.mock("@/modules/core/rate-limit/helpers", () => ({
@@ -75,21 +80,22 @@ describe("api/v2 client environment route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.applyIPRateLimit.mockResolvedValue(undefined);
+    mocks.resolveClientApiIds.mockResolvedValue({ workspaceId: "ck12345678901234567890123" });
   });
 
   test("reports v1-backed failures as v2 and keeps the response payload unchanged", async () => {
     const underlyingError = new Error("Environment load failed");
-    mocks.getEnvironmentState.mockRejectedValue(underlyingError);
+    mocks.getWorkspaceState.mockRejectedValue(underlyingError);
 
     const request = createMockRequest(
       "https://api.test/api/v2/client/ck12345678901234567890123/environment",
       new Map([["x-request-id", "req-v2-env"]])
     );
 
-    const { GET } = await import("./route");
+    const { GET } = await import("../../../../v1/client/[workspaceId]/environment/route");
     const response = await GET(request, {
       params: Promise.resolve({
-        environmentId: "ck12345678901234567890123",
+        workspaceId: "ck12345678901234567890123",
       }),
     });
 

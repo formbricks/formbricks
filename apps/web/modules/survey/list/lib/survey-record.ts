@@ -14,7 +14,7 @@ export const surveySelect = {
   },
   status: true,
   singleUse: true,
-  environmentId: true,
+  workspaceId: true,
   _count: {
     select: { responses: true },
   },

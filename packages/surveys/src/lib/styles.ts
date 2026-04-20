@@ -1,7 +1,7 @@
 // Add this import for survey-ui CSS variables
 import surveyUiCss from "@formbricks/survey-ui/styles?inline";
-import { type TProjectStyling } from "@formbricks/types/project";
 import { type TSurveyStyling } from "@formbricks/types/surveys/types";
+import { type TWorkspaceStyling } from "@formbricks/types/workspace";
 import { isLight, mixColor } from "@/lib/color";
 import global from "@/styles/global.css?inline";
 import preflight from "@/styles/preflight.css?inline";
@@ -55,7 +55,7 @@ export const addStylesToDom = () => {
   }
 };
 
-export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TSurveyStyling }): void => {
+export const addCustomThemeToDom = ({ styling }: { styling: TWorkspaceStyling | TSurveyStyling }): void => {
   // Check if the style element already exists
   let styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement | null;
 
@@ -348,7 +348,7 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
     upperDecls += "  color: var(--fb-element-upper-label-color) !important;\n";
     upperDecls += "  opacity: var(--fb-element-upper-label-opacity, 1) !important;\n";
   }
-  addRule("#fbjs .label-upper,\n#fbjs .label-upper *", upperDecls);
+  addRule("#fbjs .label-card,\n#fbjs .label-card *", upperDecls);
 
   // --- Buttons ---
   let buttonDecls = "";

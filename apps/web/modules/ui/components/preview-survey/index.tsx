@@ -1,14 +1,22 @@
 "use client";
 
-import { Environment, Project } from "@prisma/client";
+import { Workspace } from "@prisma/client";
 import { motion } from "framer-motion";
-import { ExpandIcon, MonitorIcon, ShrinkIcon, SmartphoneIcon } from "lucide-react";
+import { ExpandIcon, GlobeIcon, MonitorIcon, ShrinkIcon, SmartphoneIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { TProjectStyling } from "@formbricks/types/project";
-import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
+import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
+import { TSurvey, TSurveyLanguage, TSurveyStyling } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
+import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
 import { ClientLogo } from "@/modules/ui/components/client-logo";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/modules/ui/components/dropdown-menu";
 import { MediaBackground } from "@/modules/ui/components/media-background";
 import { ResetProgressButton } from "@/modules/ui/components/reset-progress-button";
 import { SurveyInline } from "@/modules/ui/components/survey";
@@ -21,9 +29,10 @@ interface PreviewSurveyProps {
   survey: TSurvey;
   elementId?: string | null;
   previewType?: TPreviewType;
-  project: Project;
-  environment: Pick<Environment, "id" | "appSetupCompleted">;
+  workspace: Workspace;
   languageCode: string;
+  setLanguageCode?: (code: string) => void;
+  locale?: TUserLocale;
   isSpamProtectionAllowed: boolean;
   publicDomain: string;
 }
@@ -35,9 +44,10 @@ export const PreviewSurvey = ({
   elementId,
   survey,
   previewType,
-  project,
-  environment,
+  workspace,
   languageCode,
+  setLanguageCode,
+  locale,
   isSpamProtectionAllowed,
   publicDomain,
 }: PreviewSurveyProps) => {
@@ -48,35 +58,37 @@ export const PreviewSurvey = ({
 
   const [previewMode, setPreviewMode] = useState("desktop");
   const ContentRef = useRef<HTMLDivElement | null>(null);
-  const { projectOverwrites } = survey || {};
+  const enabledLanguages = useMemo(() => survey.languages.filter((l) => l.enabled), [survey.languages]);
+  const showLanguageSelector = setLanguageCode && enabledLanguages.length > 1;
+  const { workspaceOverwrites } = survey || {};
 
-  const { placement: surveyPlacement } = projectOverwrites || {};
-  const { overlay: surveyOverlay } = projectOverwrites || {};
-  const { clickOutsideClose: surveyClickOutsideClose } = projectOverwrites || {};
+  const { placement: surveyPlacement } = workspaceOverwrites || {};
+  const { overlay: surveyOverlay } = workspaceOverwrites || {};
+  const { clickOutsideClose: surveyClickOutsideClose } = workspaceOverwrites || {};
 
-  const placement = surveyPlacement || project.placement;
-  const overlay = surveyOverlay ?? project.overlay;
-  const clickOutsideClose = surveyClickOutsideClose ?? project.clickOutsideClose;
+  const placement = surveyPlacement || workspace.placement;
+  const overlay = surveyOverlay ?? workspace.overlay;
+  const clickOutsideClose = surveyClickOutsideClose ?? workspace.clickOutsideClose;
 
-  const styling: TSurveyStyling | TProjectStyling = useMemo(() => {
-    // allow style overwrite is disabled from the project
-    if (!project.styling.allowStyleOverwrite) {
-      return project.styling;
+  const styling: TSurveyStyling | TWorkspaceStyling = useMemo(() => {
+    // allow style overwrite is disabled from the workspace
+    if (!workspace.styling.allowStyleOverwrite) {
+      return workspace.styling;
     }
 
-    // allow style overwrite is enabled from the project
-    if (project.styling.allowStyleOverwrite) {
+    // allow style overwrite is enabled from the workspace
+    if (workspace.styling.allowStyleOverwrite) {
       // survey style overwrite is disabled
       if (!survey.styling?.overwriteThemeStyling) {
-        return project.styling;
+        return workspace.styling;
       }
 
       // survey style overwrite is enabled
       return survey.styling;
     }
 
-    return project.styling;
-  }, [project.styling, survey.styling]);
+    return workspace.styling;
+  }, [workspace.styling, survey.styling]);
 
   const updateElementId = useCallback(
     (newElementId: string) => {
@@ -154,10 +166,10 @@ export const PreviewSurvey = ({
   };
 
   useEffect(() => {
-    if (environment) {
-      setAppSetupCompleted(environment.appSetupCompleted);
+    if (workspace) {
+      setAppSetupCompleted(workspace.appSetupCompleted);
     }
-  }, [environment]);
+  }, [workspace]);
 
   const isSpamProtectionEnabled = useMemo(() => {
     return isSpamProtectionAllowed && survey.recaptcha?.enabled;
@@ -228,7 +240,15 @@ export const PreviewSurvey = ({
             <p className="absolute left-0 top-0 m-2 rounded bg-slate-100 px-2 py-1 text-xs text-slate-400">
               {t("common.preview")}
             </p>
-            <div className="absolute right-0 top-0 m-2">
+            <div className="absolute right-0 top-0 m-2 flex items-center gap-1">
+              {showLanguageSelector && (
+                <LanguageSelector
+                  languages={enabledLanguages}
+                  languageCode={languageCode}
+                  setLanguageCode={setLanguageCode}
+                  locale={locale}
+                />
+              )}
               <ResetProgressButton onClick={resetProgress} />
             </div>
             <MediaBackground
@@ -249,7 +269,7 @@ export const PreviewSurvey = ({
                     appUrl={publicDomain}
                     isPreviewMode={true}
                     survey={survey}
-                    isBrandingEnabled={project.inAppSurveyBranding}
+                    isBrandingEnabled={workspace.inAppSurveyBranding}
                     isRedirectDisabled={true}
                     languageCode={languageCode}
                     styling={styling}
@@ -267,12 +287,7 @@ export const PreviewSurvey = ({
                 <div className="flex h-full w-full flex-col justify-center px-1">
                   <div className="absolute left-5 top-5">
                     {!styling.isLogoHidden && (
-                      <ClientLogo
-                        environmentId={environment.id}
-                        projectLogo={project.logo}
-                        surveyLogo={styling.logo}
-                        previewSurvey
-                      />
+                      <ClientLogo workspaceLogo={workspace.logo} surveyLogo={styling.logo} previewSurvey />
                     )}
                   </div>
                   <div className="z-10 w-full rounded-lg border border-transparent">
@@ -280,7 +295,7 @@ export const PreviewSurvey = ({
                       appUrl={publicDomain}
                       isPreviewMode={true}
                       survey={{ ...survey, type: "link" }}
-                      isBrandingEnabled={project.linkSurveyBranding}
+                      isBrandingEnabled={workspace.linkSurveyBranding}
                       languageCode={languageCode}
                       responseCount={42}
                       styling={styling}
@@ -312,18 +327,24 @@ export const PreviewSurvey = ({
                   }}
                   aria-label={
                     isFullScreenPreview
-                      ? t("environments.surveys.edit.shrink_preview")
-                      : t("environments.surveys.edit.expand_preview")
+                      ? t("workspace.surveys.edit.shrink_preview")
+                      : t("workspace.surveys.edit.expand_preview")
                   }></button>
               </div>
               <div className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
                 <p>
-                  {previewType === "modal"
-                    ? t("environments.surveys.edit.your_web_app")
-                    : t("common.preview")}
+                  {previewType === "modal" ? t("workspace.surveys.edit.your_web_app") : t("common.preview")}
                 </p>
 
                 <div className="flex items-center">
+                  {showLanguageSelector && (
+                    <LanguageSelector
+                      languages={enabledLanguages}
+                      languageCode={languageCode}
+                      setLanguageCode={setLanguageCode}
+                      locale={locale}
+                    />
+                  )}
                   {isFullScreenPreview ? (
                     <ShrinkIcon
                       className="mr-1 h-[22px] w-[22px] cursor-pointer rounded-md bg-white p-1 text-slate-500 hover:text-slate-700"
@@ -357,7 +378,7 @@ export const PreviewSurvey = ({
                   appUrl={publicDomain}
                   isPreviewMode={true}
                   survey={survey}
-                  isBrandingEnabled={project.inAppSurveyBranding}
+                  isBrandingEnabled={workspace.inAppSurveyBranding}
                   isRedirectDisabled={true}
                   languageCode={languageCode}
                   styling={styling}
@@ -379,12 +400,7 @@ export const PreviewSurvey = ({
                 isEditorView>
                 <div className="absolute left-5 top-5">
                   {!styling.isLogoHidden && (
-                    <ClientLogo
-                      environmentId={environment.id}
-                      projectLogo={project.logo}
-                      surveyLogo={styling.logo}
-                      previewSurvey
-                    />
+                    <ClientLogo workspaceLogo={workspace.logo} surveyLogo={styling.logo} previewSurvey />
                   )}
                 </div>
                 <div className="z-0 w-full max-w-4xl rounded-lg border-transparent">
@@ -392,7 +408,7 @@ export const PreviewSurvey = ({
                     appUrl={publicDomain}
                     isPreviewMode={true}
                     survey={{ ...survey, type: "link" }}
-                    isBrandingEnabled={project.linkSurveyBranding}
+                    isBrandingEnabled={workspace.linkSurveyBranding}
                     isRedirectDisabled={true}
                     languageCode={languageCode}
                     responseCount={42}
@@ -423,6 +439,46 @@ export const PreviewSurvey = ({
         />
       </div>
     </div>
+  );
+};
+
+const LanguageSelector = ({
+  languages,
+  languageCode,
+  setLanguageCode,
+  locale,
+}: {
+  languages: TSurveyLanguage[];
+  languageCode: string;
+  setLanguageCode: (code: string) => void;
+  locale?: TUserLocale;
+}) => {
+  const { t } = useTranslation();
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className="mr-1 flex h-[22px] w-[22px] cursor-pointer items-center justify-center rounded-md bg-white p-1 text-slate-500 hover:text-slate-700"
+          aria-label="Change preview language">
+          <GlobeIcon className="h-full w-full" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        {languages.map((surveyLang) => {
+          const code = surveyLang.default ? "default" : surveyLang.language.code;
+          return (
+            <DropdownMenuItem
+              key={surveyLang.language.code}
+              className={cn("text-xs", languageCode === code && "font-semibold")}
+              onSelect={() => setLanguageCode(code)}>
+              {getLanguageLabel(surveyLang.language.code, locale ?? "en")}
+              {surveyLang.default && ` (${t("common.default")})`}
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };
 

@@ -45,7 +45,7 @@ export const CreateOrganizationModal = ({ open, setOpen }: CreateOrganizationMod
     setLoading(true);
     const createOrganizationResponse = await createOrganizationAction({ organizationName: data.name });
     if (createOrganizationResponse?.data) {
-      toast.success(t("environments.settings.general.organization_created_successfully"));
+      toast.success(t("workspace.settings.general.organization_created_successfully"));
       router.push(`/organizations/${createOrganizationResponse.data.id}`);
       setOpen(false);
     } else {
@@ -61,19 +61,19 @@ export const CreateOrganizationModal = ({ open, setOpen }: CreateOrganizationMod
       <DialogContent disableCloseOnOutsideClick={true}>
         <DialogHeader>
           <PlusCircleIcon />
-          <DialogTitle>{t("environments.settings.general.create_new_organization")}</DialogTitle>
+          <DialogTitle>{t("workspace.settings.general.create_new_organization")}</DialogTitle>
           <DialogDescription>
-            {t("environments.settings.general.create_new_organization_description")}
+            {t("workspace.settings.general.create_new_organization_description")}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(submitOrganization)} className="space-y-4">
           <DialogBody>
             <div className="grid w-full space-y-2">
-              <Label>{t("environments.settings.general.organization_name")}</Label>
+              <Label>{t("workspace.settings.general.organization_name")}</Label>
               <Input
                 autoFocus
-                placeholder={t("environments.settings.general.organization_name_placeholder")}
+                placeholder={t("workspace.settings.general.organization_name_placeholder")}
                 {...register("name", { required: true })}
               />
             </div>
@@ -88,7 +88,7 @@ export const CreateOrganizationModal = ({ open, setOpen }: CreateOrganizationMod
               {t("common.cancel")}
             </Button>
             <Button type="submit" loading={loading} disabled={!isOrganizationNameValid}>
-              {t("environments.settings.general.create_new_organization")}
+              {t("workspace.settings.general.create_new_organization")}
             </Button>
           </DialogFooter>
         </form>

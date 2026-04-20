@@ -7,7 +7,7 @@ import { makeCacheKey } from "./utils/key";
  *
  * Benefits:
  * - Clear namespace hierarchy (fb = formbricks)
- * - Collision-proof across environments
+ * - Collision-proof across workspaces
  * - Easy debugging and monitoring
  * - Predictable invalidation patterns
  * - Multi-tenant safe
@@ -15,11 +15,11 @@ import { makeCacheKey } from "./utils/key";
  */
 
 export const createCacheKey = {
-  // Environment-related keys
-  environment: {
-    state: (environmentId: string): CacheKey => makeCacheKey("env", environmentId, "state"),
-    config: (environmentId: string): CacheKey => makeCacheKey("env", environmentId, "config"),
-    segments: (environmentId: string): CacheKey => makeCacheKey("env", environmentId, "segments"),
+  // Workspace-related keys
+  workspace: {
+    state: (workspaceId: string): CacheKey => makeCacheKey("env", workspaceId, "state"),
+    config: (workspaceId: string): CacheKey => makeCacheKey("env", workspaceId, "config"),
+    segments: (workspaceId: string): CacheKey => makeCacheKey("env", workspaceId, "segments"),
   },
 
   // Organization-related keys

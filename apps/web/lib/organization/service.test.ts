@@ -64,7 +64,7 @@ describe("Organization Service", () => {
         updatedAt: new Date(),
         billing: {
           limits: {
-            projects: 3,
+            workspaces: 3,
             monthly: {
               responses: 1500,
             },
@@ -117,7 +117,7 @@ describe("Organization Service", () => {
           updatedAt: new Date(),
           billing: {
             limits: {
-              projects: 3,
+              workspaces: 3,
               monthly: {
                 responses: 1500,
               },
@@ -163,7 +163,7 @@ describe("Organization Service", () => {
     test("should create organization with default billing settings", async () => {
       const expectedBilling = {
         limits: {
-          projects: IS_FORMBRICKS_CLOUD ? 1 : 3,
+          workspaces: IS_FORMBRICKS_CLOUD ? 1 : 3,
           monthly: {
             responses: IS_FORMBRICKS_CLOUD ? 250 : 1500,
           },
@@ -194,7 +194,7 @@ describe("Organization Service", () => {
           billing: {
             create: {
               limits: {
-                projects: IS_FORMBRICKS_CLOUD ? 1 : 3,
+                workspaces: IS_FORMBRICKS_CLOUD ? 1 : 3,
                 monthly: {
                   responses: IS_FORMBRICKS_CLOUD ? 250 : 1500,
                 },
@@ -230,7 +230,7 @@ describe("Organization Service", () => {
         updatedAt: new Date(),
         billing: {
           limits: {
-            projects: 3,
+            workspaces: 3,
             monthly: {
               responses: 1500,
             },
@@ -242,7 +242,7 @@ describe("Organization Service", () => {
         isAIDataAnalysisEnabled: false,
         whitelabel: false,
         memberships: [{ userId: "user1" }, { userId: "user2" }],
-        projects: [
+        workspaces: [
           {
             environments: [{ id: "env1" }, { id: "env2" }],
           },
@@ -272,7 +272,7 @@ describe("Organization Service", () => {
         updatedAt: expect.any(Date),
         billing: {
           limits: {
-            projects: 3,
+            workspaces: 3,
             monthly: {
               responses: 1500,
             },
@@ -354,7 +354,7 @@ describe("Organization Service", () => {
         name: "Test Org",
         billing: { stripeCustomerId: "cus_123" },
         memberships: [],
-        projects: [],
+        workspaces: [],
       } as any);
 
       await deleteOrganization("org1");

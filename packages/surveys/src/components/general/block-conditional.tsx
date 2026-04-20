@@ -20,6 +20,8 @@ import { getLocalizedValue } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { getFirstErrorMessage, validateBlockResponses } from "@/lib/validation/evaluator";
 
+const AUTO_PROGRESS_SUBMIT_DELAY_MS = 350;
+
 interface BlockConditionalProps {
   block: TSurveyBlock;
   value: TResponseData;
@@ -82,7 +84,8 @@ export function BlockConditional({
   const autoProgressElement = getAutoProgressElement(block.elements, isAutoProgressingEnabled);
   const shouldHideSubmitButton = shouldHideSubmitButtonForAutoProgress(
     block.elements,
-    isAutoProgressingEnabled
+    isAutoProgressingEnabled,
+    value
   );
 
   // Handle change for an individual element
@@ -128,7 +131,7 @@ export function BlockConditional({
         } finally {
           autoProgressingInFlightRef.current = false;
         }
-      }, 0);
+      }, AUTO_PROGRESS_SUBMIT_DELAY_MS);
     }
   };
 

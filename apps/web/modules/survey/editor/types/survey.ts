@@ -11,7 +11,6 @@ export const ZSurveyDraft = z.looseObject({
   // Essential fields - strictly validated
   id: ZId,
   status: z.literal("draft"),
-  environmentId: ZId,
   type: ZSurveyType,
   name: z.string().min(1, "Survey name is required"),
 

@@ -1,10 +1,10 @@
 "use client";
 
-import { Project, Response } from "@prisma/client";
+import { Response, Workspace } from "@prisma/client";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { TProjectStyling } from "@formbricks/types/project";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
+import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { validateSurveyPinAction } from "@/modules/survey/link/actions";
@@ -13,7 +13,7 @@ import { OTPInput } from "@/modules/ui/components/otp-input";
 
 interface PinScreenProps {
   surveyId: string;
-  project: Pick<Project, "styling" | "logo" | "linkSurveyBranding" | "customHeadScripts">;
+  workspace: Pick<Workspace, "styling" | "logo" | "linkSurveyBranding" | "customHeadScripts">;
   singleUseId?: string;
   singleUseResponse?: Pick<Response, "id" | "finished">;
   publicDomain: string;
@@ -29,13 +29,13 @@ interface PinScreenProps {
   recaptchaSiteKey?: string;
   isSpamProtectionEnabled?: boolean;
   responseCount?: number;
-  styling: TProjectStyling | TSurveyStyling;
+  styling: TWorkspaceStyling | TSurveyStyling;
 }
 
 export const PinScreen = (props: PinScreenProps) => {
   const {
     surveyId,
-    project,
+    workspace,
     publicDomain,
     singleUseId,
     singleUseResponse,
@@ -121,7 +121,7 @@ export const PinScreen = (props: PinScreenProps) => {
   return (
     <SurveyClientWrapper
       survey={survey}
-      project={project}
+      workspace={workspace}
       styling={styling}
       publicDomain={publicDomain}
       responseCount={responseCount}

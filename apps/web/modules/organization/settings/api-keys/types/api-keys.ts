@@ -1,17 +1,16 @@
 import { type ApiKey, ApiKeyPermission } from "@prisma/client";
 import { z } from "zod";
 import { ZOrganizationAccess } from "@formbricks/types/api-key";
-import { ZEnvironment } from "@formbricks/types/environment";
-import { ZProject } from "@formbricks/types/project";
+import { ZWorkspace } from "@formbricks/types/workspace";
 
-export const ZApiKeyEnvironmentPermission = z.object({
-  environmentId: z.string(),
+export const ZApiKeyWorkspacePermission = z.object({
+  workspaceId: z.string(),
   permission: z.enum(ApiKeyPermission),
 });
 
 export const ZApiKeyCreateInput = z.object({
   label: z.string(),
-  environmentPermissions: z.array(ZApiKeyEnvironmentPermission).optional(),
+  workspacePermissions: z.array(ZApiKeyWorkspacePermission).optional(),
   organizationAccess: ZOrganizationAccess,
 });
 
@@ -27,41 +26,35 @@ export interface TApiKey extends ApiKey {
   apiKey?: string;
 }
 
-export const OrganizationProject = z.object({
+export const OrganizationWorkspace = z.object({
   id: z.string(),
   name: z.string(),
-  environments: z.array(ZEnvironment),
 });
 
-export type TOrganizationProject = z.infer<typeof OrganizationProject>;
+export type TOrganizationWorkspace = z.infer<typeof OrganizationWorkspace>;
 
-export const TApiKeyEnvironmentPermission = z.object({
-  environmentId: z.string(),
+export const TApiKeyWorkspacePermission = z.object({
+  workspaceId: z.string(),
   permission: z.enum(ApiKeyPermission),
 });
 
-export type TApiKeyEnvironmentPermission = z.infer<typeof TApiKeyEnvironmentPermission>;
+export type TApiKeyWorkspacePermission = z.infer<typeof TApiKeyWorkspacePermission>;
 
 export interface TApiKeyWithEnvironmentPermission extends Pick<
   ApiKey,
   "id" | "label" | "createdAt" | "organizationAccess"
 > {
-  apiKeyEnvironments: TApiKeyEnvironmentPermission[];
+  apiKeyWorkspaces: TApiKeyWorkspacePermission[];
 }
 
-const ZApiKeyEnvironmentWithProject = z.object({
+const ZApiKeyWorkspaceWithWorkspace = z.object({
   id: z.string(),
   createdAt: z.date(),
   updatedAt: z.date(),
   apiKeyId: z.string(),
-  environmentId: z.string(),
-  projectId: z.string(),
-  projectName: z.string(),
-  environmentType: z.string(),
+  workspaceId: z.string(),
   permission: z.enum(ApiKeyPermission),
-  environment: ZEnvironment.extend({
-    project: ZProject.pick({ id: true, name: true }),
-  }),
+  workspace: ZWorkspace.pick({ id: true, name: true }),
 });
 
 const ZApiKey = z.object({
@@ -77,8 +70,8 @@ const ZApiKey = z.object({
   organizationAccess: ZOrganizationAccess,
 });
 
-export const ZApiKeyWithEnvironmentAndProject = ZApiKey.extend({
-  apiKeyEnvironments: z.array(ZApiKeyEnvironmentWithProject),
+export const ZApiKeyWithEnvironmentAndWorkspace = ZApiKey.extend({
+  apiKeyWorkspaces: z.array(ZApiKeyWorkspaceWithWorkspace),
 });
 
-export type TApiKeyWithEnvironmentAndProject = z.infer<typeof ZApiKeyWithEnvironmentAndProject>;
+export type TApiKeyWithEnvironmentAndWorkspace = z.infer<typeof ZApiKeyWithEnvironmentAndWorkspace>;

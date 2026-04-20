@@ -15,9 +15,9 @@ export const QuotasSummary = ({ quotas }: QuotasSummaryProps) => {
         <div className="grid min-h-10 grid-cols-6 items-center rounded-t-xl border-b border-slate-200 bg-slate-100 text-sm font-semibold text-slate-500">
           <div className="px-2">{t("common.progress")}</div>
           <div className="col-span-3 px-2">{t("common.label")}</div>
-          <div className="px-2 text-right">{t("environments.surveys.summary.limit")}</div>
+          <div className="px-2 text-right">{t("workspace.surveys.summary.limit")}</div>
           <div className="px-2 text-right md:mr-1 md:pl-6">
-            {t("environments.surveys.summary.current_count")}
+            {t("workspace.surveys.summary.current_count")}
           </div>
         </div>
         {quotas.length > 0 ? (

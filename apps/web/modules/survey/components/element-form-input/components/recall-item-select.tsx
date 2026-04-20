@@ -122,7 +122,11 @@ export const RecallItemSelect = ({
         return !recallItemIds.includes(element.id) && !notAllowed && element.id !== elementId && idx > index;
       })
       .map((element) => {
-        return { id: element.id, label: element.headline[selectedLanguageCode], type: "element" as const };
+        return {
+          id: element.id,
+          label: element.headline[selectedLanguageCode],
+          type: "element" as const,
+        };
       });
 
     return filteredElements;
@@ -169,7 +173,7 @@ export const RecallItemSelect = ({
         align="start"
         side="bottom"
         data-recall-dropdown>
-        <p className="font-medium">{t("environments.surveys.edit.recall_information_from")}</p>
+        <p className="font-medium">{t("workspace.surveys.edit.recall_information_from")}</p>
         <Input
           id="recallItemSearchInput"
           placeholder="Search options"
@@ -208,14 +212,14 @@ export const RecallItemSelect = ({
                 }}>
                 <div>{IconComponent && <IconComponent className="mr-2 w-4" />}</div>
                 <p className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm">
-                  {getTextContentWithRecallTruncated(recallItem.label)}
+                  {getTextContentWithRecallTruncated(recallItem.label).trim() || t("common.no_text_found")}
                 </p>
               </DropdownMenuItem>
             );
           })}
           {filteredRecallItems.length === 0 && (
             <p className="p-2 text-sm font-medium text-slate-700">
-              {t("environments.surveys.edit.no_recall_items_found")}
+              {t("workspace.surveys.edit.no_recall_items_found")}
             </p>
           )}
         </div>

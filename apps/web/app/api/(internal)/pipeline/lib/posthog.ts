@@ -4,7 +4,7 @@ interface SurveyResponsePostHogEventParams {
   organizationId: string;
   surveyId: string;
   surveyType: string;
-  environmentId: string;
+  workspaceId: string;
   responseCount: number;
 }
 
@@ -16,7 +16,7 @@ export const captureSurveyResponsePostHogEvent = ({
   organizationId,
   surveyId,
   surveyType,
-  environmentId,
+  workspaceId,
   responseCount,
 }: SurveyResponsePostHogEventParams): void => {
   if (responseCount !== 1 && responseCount % 100 !== 0) return;
@@ -25,7 +25,7 @@ export const captureSurveyResponsePostHogEvent = ({
     survey_id: surveyId,
     survey_type: surveyType,
     organization_id: organizationId,
-    environment_id: environmentId,
+    workspace_id: workspaceId,
     response_count: responseCount,
     is_first_response: responseCount === 1,
     milestone: responseCount === 1 ? "first" : String(responseCount),

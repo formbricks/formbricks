@@ -15,9 +15,9 @@ import {
 } from "@formbricks/types/organizations";
 import { TUserNotificationSettings } from "@formbricks/types/user";
 import { IS_FORMBRICKS_CLOUD, ITEMS_PER_PAGE } from "@/lib/constants";
-import { getProjects } from "@/lib/project/service";
 import { updateUser } from "@/lib/user/service";
 import { getBillingUsageCycleWindow } from "@/lib/utils/billing";
+import { getWorkspaces } from "@/lib/workspace/service";
 import { cleanupStripeCustomer } from "@/modules/ee/billing/lib/organization-billing";
 import { validateInputs } from "../utils/validate";
 
@@ -43,7 +43,7 @@ type TOrganizationWithBilling = Prisma.OrganizationGetPayload<{ select: typeof s
 
 const getDefaultOrganizationBilling = (): TOrganizationBilling => ({
   limits: {
-    projects: IS_FORMBRICKS_CLOUD ? 1 : 3,
+    workspaces: IS_FORMBRICKS_CLOUD ? 1 : 3,
     monthly: {
       responses: IS_FORMBRICKS_CLOUD ? 250 : 1500,
     },
@@ -80,8 +80,6 @@ const mapOrganization = (organization: TOrganizationWithBilling): TOrganization 
 
 export const getOrganizationsTag = (organizationId: string) => `organizations-${organizationId}`;
 export const getOrganizationsByUserIdCacheTag = (userId: string) => `users-${userId}-organizations`;
-export const getOrganizationByEnvironmentIdCacheTag = (environmentId: string) =>
-  `environments-${environmentId}-organization`;
 
 export const getOrganizationsByUserId = reactCache(
   async (userId: string, page?: number): Promise<TOrganization[]> => {
@@ -114,30 +112,26 @@ export const getOrganizationsByUserId = reactCache(
   }
 );
 
-export const getOrganizationByEnvironmentId = reactCache(
-  async (environmentId: string): Promise<TOrganization | null> => {
-    validateInputs([environmentId, ZId]);
+export const getOrganizationByWorkspaceId = reactCache(
+  async (workspaceId: string): Promise<TOrganization | null> => {
+    validateInputs([workspaceId, ZId]);
 
     try {
       const organization = await prisma.organization.findFirst({
         where: {
-          projects: {
+          workspaces: {
             some: {
-              environments: {
-                some: {
-                  id: environmentId,
-                },
-              },
+              id: workspaceId,
             },
           },
         },
-        select: { ...select, memberships: true }, // include memberships
+        select: { ...select, memberships: true },
       });
 
       return organization ? mapOrganization(organization) : null;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
-        logger.error(error, "Error getting organization by environment id");
+        logger.error(error, "Error getting organization by workspace id");
         throw new DatabaseError(error.message);
       }
 
@@ -249,7 +243,7 @@ export const updateOrganization = async (
         where: {
           id: organizationId,
         },
-        select: { ...select, memberships: true, projects: { select: { environments: true } } }, // include memberships & environments
+        select: { ...select, memberships: true, workspaces: { select: { id: true } } }, // include memberships & workspaces
       });
     });
 
@@ -260,7 +254,7 @@ export const updateOrganization = async (
     const organization = {
       ...mapOrganization(updatedOrganization),
       memberships: undefined,
-      projects: undefined,
+      workspaces: undefined,
     };
 
     return organization;
@@ -295,14 +289,9 @@ export const deleteOrganization = async (organizationId: string) => {
             userId: true,
           },
         },
-        projects: {
+        workspaces: {
           select: {
             id: true,
-            environments: {
-              select: {
-                id: true,
-              },
-            },
           },
         },
       },
@@ -333,18 +322,18 @@ export const getMonthlyOrganizationResponseCount = reactCache(
 
       const usageCycleWindow = getBillingUsageCycleWindow(organization.billing);
 
-      // Get all environment IDs for the organization
-      const projects = await getProjects(organizationId);
-      const environmentIds = projects.flatMap((project) => project.environments.map((env) => env.id));
+      // Get all workspace IDs for the organization
+      const workspaces = await getWorkspaces(organizationId);
+      const workspaceIds = workspaces.map((workspace) => workspace.id);
 
-      // Use Prisma's aggregate to count responses for all environments
+      // Use Prisma's aggregate to count responses for all workspaces
       const responseAggregations = await prisma.response.aggregate({
         _count: {
           id: true,
         },
         where: {
           AND: [
-            { survey: { environmentId: { in: environmentIds } } },
+            { survey: { workspaceId: { in: workspaceIds } } },
             { createdAt: { gte: usageCycleWindow.start, lt: usageCycleWindow.end } },
           ],
         },

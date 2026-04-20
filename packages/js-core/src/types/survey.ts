@@ -1,10 +1,10 @@
-import type { TEnvironmentStateSurvey, TProjectStyling, TSurveyStyling } from "@/types/config";
+import type { TSurveyStyling, TWorkspaceStateSurvey, TWorkspaceStyling } from "@/types/config";
 import type { TResponseData, TResponseUpdate } from "@/types/response";
 import type { TFileUploadParams, TUploadFileConfig } from "@/types/storage";
 
 export interface SurveyBaseProps {
-  survey: TEnvironmentStateSurvey;
-  styling: TSurveyStyling | TProjectStyling;
+  survey: TWorkspaceStateSurvey;
+  styling: TSurveyStyling | TWorkspaceStyling;
   isBrandingEnabled: boolean;
   getSetIsError?: (getSetError: (value: boolean) => void) => void;
   getSetIsResponseSendingFinished?: (getSetIsResponseSendingFinished: (value: boolean) => void) => void;

@@ -1,6 +1,6 @@
 "use client";
 
-import { ActionClass, Environment, Language, OrganizationRole, Project } from "@prisma/client";
+import { ActionClass, Language, OrganizationRole, Workspace } from "@prisma/client";
 import { type Dispatch, type SetStateAction, useCallback, useEffect, useRef, useState } from "react";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurveyQuota } from "@formbricks/types/quota";
@@ -10,7 +10,7 @@ import { TUserLocale } from "@formbricks/types/user";
 import { extractLanguageCodes, getEnabledLanguages } from "@/lib/i18n/utils";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { useDocumentVisibility } from "@/lib/useDocumentVisibility";
-import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
+import { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
 import { ElementsView } from "@/modules/survey/editor/components/elements-view";
 import { LoadingSkeleton } from "@/modules/survey/editor/components/loading-skeleton";
@@ -20,13 +20,13 @@ import { SurveyEditorTabs } from "@/modules/survey/editor/components/survey-edit
 import { SurveyMenuBar } from "@/modules/survey/editor/components/survey-menu-bar";
 import { TFollowUpEmailToUser } from "@/modules/survey/editor/types/survey-follow-up";
 import { FollowUpsView } from "@/modules/survey/follow-ups/components/follow-ups-view";
+import { LanguageView } from "@/modules/survey/multi-language-surveys/components/language-view";
 import { PreviewSurvey } from "@/modules/ui/components/preview-survey";
-import { refetchProjectAction } from "../actions";
+import { getWorkspaceLanguagesAction, refetchWorkspaceAction } from "../actions";
 
 interface SurveyEditorProps {
   survey: TSurvey;
-  project: Project;
-  environment: Pick<Environment, "id" | "appSetupCompleted">;
+  workspace: Workspace;
   actionClasses: ActionClass[];
   contactAttributeKeys: TContactAttributeKey[];
   segments: TSegment[];
@@ -40,9 +40,9 @@ interface SurveyEditorProps {
   isQuotasAllowed: boolean;
   isCxMode: boolean;
   locale: TUserLocale;
-  projectPermission: TTeamPermission | null;
+  workspacePermission: TTeamPermission | null;
   mailFrom: string;
-  projectLanguages: Language[];
+  workspaceLanguages: Language[];
   isSurveyFollowUpsAllowed: boolean;
   userEmail: string;
   teamMemberDetails: TFollowUpEmailToUser[];
@@ -54,9 +54,8 @@ interface SurveyEditorProps {
 
 export const SurveyEditor = ({
   survey,
-  project,
-  projectLanguages,
-  environment,
+  workspace,
+  workspaceLanguages,
   actionClasses,
   contactAttributeKeys,
   segments,
@@ -70,7 +69,7 @@ export const SurveyEditor = ({
   isQuotasAllowed,
   isCxMode = false,
   locale,
-  projectPermission,
+  workspacePermission,
   mailFrom,
   isSurveyFollowUpsAllowed = false,
   userEmail,
@@ -84,24 +83,34 @@ export const SurveyEditor = ({
   const [activeElementId, setActiveElementId] = useState<string | null>(null);
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>(() => structuredClone(survey));
   const [invalidElements, setInvalidElements] = useState<string[] | null>([]);
+  const [hasIncompleteTranslations, setHasIncompleteTranslations] = useState(false);
 
   const [selectedLanguageCode, setSelectedLanguageCode] = useState<string>("default");
   const surveyEditorRef = useRef(null);
-  const [localProject, setLocalProject] = useState<Project>(project);
+  const [localWorkspace, setLocalWorkspace] = useState<Workspace>(workspace);
+  const [localWorkspaceLanguages, setLocalWorkspaceLanguages] = useState<Language[]>(workspaceLanguages);
 
   const [styling, setStyling] = useState<TSurveyStyling | null>(localSurvey?.styling ?? null);
   const [localStylingChanges, setLocalStylingChanges] = useState<TSurveyStyling | null>(null);
 
-  const fetchLatestProject = useCallback(async () => {
-    const refetchProjectResponse = await refetchProjectAction({ projectId: localProject.id });
-    if (refetchProjectResponse?.data) {
-      setLocalProject(refetchProjectResponse.data);
+  const fetchLatestWorkspaceData = useCallback(async () => {
+    const [refetchWorkspaceResponse, refetchLanguagesResponse] = await Promise.all([
+      refetchWorkspaceAction({ workspaceId: localWorkspace.id }),
+      getWorkspaceLanguagesAction({ workspaceId: localWorkspace.id }),
+    ]);
+
+    if (refetchWorkspaceResponse?.data) {
+      setLocalWorkspace(refetchWorkspaceResponse.data);
     }
-  }, [localProject.id]);
+
+    if (refetchLanguagesResponse?.data) {
+      setLocalWorkspaceLanguages(refetchLanguagesResponse.data);
+    }
+  }, [localWorkspace.id]);
 
   const [isCautionDialogOpen, setIsCautionDialogOpen] = useState(false);
 
-  useDocumentVisibility(fetchLatestProject);
+  useDocumentVisibility(fetchLatestWorkspaceData);
 
   useEffect(() => {
     if (survey) {
@@ -123,20 +132,20 @@ export const SurveyEditor = ({
   useEffect(() => {
     const listener = () => {
       if (document.visibilityState === "visible") {
-        const fetchLatestProject = async () => {
-          const refetchProjectResponse = await refetchProjectAction({ projectId: localProject.id });
-          if (refetchProjectResponse?.data) {
-            setLocalProject(refetchProjectResponse.data);
+        const fetchLatestWorkspace = async () => {
+          const refetchWorkspaceResponse = await refetchWorkspaceAction({ workspaceId: localWorkspace.id });
+          if (refetchWorkspaceResponse?.data) {
+            setLocalWorkspace(refetchWorkspaceResponse.data);
           }
         };
-        fetchLatestProject();
+        fetchLatestWorkspace();
       }
     };
     document.addEventListener("visibilitychange", listener);
     return () => {
       document.removeEventListener("visibilitychange", listener);
     };
-  }, [localProject.id]);
+  }, [localWorkspace.id]);
 
   // when the survey type changes, we need to reset the active element id to the first element
   useEffect(() => {
@@ -168,11 +177,10 @@ export const SurveyEditor = ({
         setLocalSurvey={setLocalSurveyNonNull}
         localSurvey={localSurvey}
         survey={survey}
-        environmentId={environment.id}
         activeId={activeView}
         setActiveId={setActiveView}
         setInvalidElements={setInvalidElements}
-        project={localProject}
+        workspace={localWorkspace}
         responseCount={responseCount}
         selectedLanguageCode={selectedLanguageCode}
         setSelectedLanguageCode={setSelectedLanguageCode}
@@ -189,7 +197,8 @@ export const SurveyEditor = ({
             activeId={activeView}
             setActiveId={setActiveView}
             isCxMode={isCxMode}
-            isStylingTabVisible={!!project.styling.allowStyleOverwrite}
+            isStylingTabVisible={!!workspace.styling.allowStyleOverwrite}
+            hasLanguageErrors={hasIncompleteTranslations}
           />
 
           {activeView === "elements" && (
@@ -198,12 +207,10 @@ export const SurveyEditor = ({
               setLocalSurvey={setLocalSurveyNonNull}
               activeElementId={activeElementId}
               setActiveElementId={setActiveElementId}
-              project={localProject}
-              projectLanguages={projectLanguages}
+              workspace={localWorkspace}
               invalidElements={invalidElements}
               setInvalidElements={setInvalidElements}
               selectedLanguageCode={selectedLanguageCode || "default"}
-              setSelectedLanguageCode={setSelectedLanguageCode}
               isFormbricksCloud={isFormbricksCloud}
               isCxMode={isCxMode}
               locale={locale}
@@ -215,13 +222,13 @@ export const SurveyEditor = ({
             />
           )}
 
-          {activeView === "styling" && project.styling.allowStyleOverwrite && (
+          {activeView === "styling" && workspace.styling.allowStyleOverwrite && (
             <StylingView
               colors={colors}
-              environmentId={environment.id}
+              workspaceId={workspace.id}
               localSurvey={localSurvey}
               setLocalSurvey={setLocalSurveyNonNull}
-              project={localProject}
+              workspace={localWorkspace}
               styling={styling ?? null}
               setStyling={setStyling}
               localStylingChanges={localStylingChanges}
@@ -232,9 +239,18 @@ export const SurveyEditor = ({
             />
           )}
 
+          {activeView === "language" && (
+            <LanguageView
+              localSurvey={localSurvey}
+              setLocalSurvey={setLocalSurveyNonNull}
+              projectLanguages={localWorkspaceLanguages}
+              locale={locale}
+              setHasIncompleteTranslations={setHasIncompleteTranslations}
+            />
+          )}
+
           {activeView === "settings" && (
             <SettingsView
-              environment={environment}
               localSurvey={localSurvey}
               setLocalSurvey={setLocalSurveyNonNull}
               actionClasses={actionClasses}
@@ -244,7 +260,7 @@ export const SurveyEditor = ({
               membershipRole={membershipRole}
               isUserTargetingAllowed={isUserTargetingAllowed}
               isSpamProtectionAllowed={isSpamProtectionAllowed}
-              projectPermission={projectPermission}
+              workspacePermission={workspacePermission}
               isFormbricksCloud={isFormbricksCloud}
               isQuotasAllowed={isQuotasAllowed}
               quotas={quotas}
@@ -270,10 +286,11 @@ export const SurveyEditor = ({
           <PreviewSurvey
             survey={localSurvey}
             elementId={activeElementId}
-            project={localProject}
-            environment={environment}
+            workspace={localWorkspace}
             previewType={localSurvey.type === "app" ? "modal" : "fullwidth"}
             languageCode={selectedLanguageCode}
+            setLanguageCode={setSelectedLanguageCode}
+            locale={locale}
             isSpamProtectionAllowed={isSpamProtectionAllowed}
             publicDomain={publicDomain}
           />

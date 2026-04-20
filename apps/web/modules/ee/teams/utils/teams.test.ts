@@ -1,10 +1,10 @@
 import { describe, expect, test } from "vitest";
-import { ZTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
 import { ZTeamRole } from "@/modules/ee/teams/team-list/types/team";
+import { ZTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
 import { TeamPermissionMapping, TeamRoleMapping, getTeamAccessFlags, getTeamPermissionFlags } from "./teams";
 
 describe("TeamPermissionMapping", () => {
-  test("maps ProjectTeamPermission to correct labels", () => {
+  test("maps WorkspaceTeamPermission to correct labels", () => {
     expect(TeamPermissionMapping[ZTeamPermission.enum.read]).toBe("Read");
     expect(TeamPermissionMapping[ZTeamPermission.enum.readWrite]).toBe("Read & write");
     expect(TeamPermissionMapping[ZTeamPermission.enum.manage]).toBe("Manage");

@@ -16,7 +16,7 @@ import { SurveyState } from "./survey-state";
 
 interface QueueConfig {
   appUrl: string;
-  environmentId: string;
+  workspaceId: string;
   retryAttempts: number;
   persistOffline?: boolean;
   surveyId?: string;
@@ -64,7 +64,7 @@ export class ResponseQueue {
     this.surveyState = surveyState;
     this.api = new ApiClient({
       appUrl: config.appUrl,
-      environmentId: config.environmentId,
+      workspaceId: config.workspaceId,
     });
   }
 

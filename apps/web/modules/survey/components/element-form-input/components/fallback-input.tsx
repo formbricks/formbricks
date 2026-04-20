@@ -44,7 +44,7 @@ export const FallbackInput = ({
         align="start"
         side="bottom"
         sideOffset={4}>
-        <p className="font-medium">{t("environments.surveys.edit.add_fallback_placeholder")}</p>
+        <p className="font-medium">{t("workspace.surveys.edit.add_fallback_placeholder")}</p>
 
         <div className="mt-2 space-y-3">
           {filteredRecallItems.map((recallItem, idx) => {
@@ -60,12 +60,12 @@ export const FallbackInput = ({
                   id={inputId}
                   autoFocus={idx === filteredRecallItems.length - 1}
                   value={fallbacks[recallItem.id]?.replaceAll("nbsp", " ") || ""}
-                  placeholder={t("environments.surveys.edit.enter_fallback_value")}
+                  placeholder={t("workspace.surveys.edit.enter_fallback_value")}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();
                       if (containsEmptyFallback()) {
-                        toast.error(t("environments.surveys.edit.fallback_missing"));
+                        toast.error(t("workspace.surveys.edit.fallback_missing"));
                         return;
                       }
                       addFallback();

@@ -8,7 +8,7 @@ import { getTranslate } from "@/lingodotdev/server";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { ToasterClient } from "@/modules/ui/components/toaster-client";
 
-const ProjectOnboardingLayout = async (props: {
+const WorkspaceOnboardingLayout = async (props: {
   params: Promise<{ organizationId: string }>;
   children: React.ReactNode;
 }) => {
@@ -47,4 +47,4 @@ const ProjectOnboardingLayout = async (props: {
   );
 };
 
-export default ProjectOnboardingLayout;
+export default WorkspaceOnboardingLayout;

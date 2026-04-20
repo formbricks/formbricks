@@ -28,7 +28,6 @@ interface RankingElementFormProps {
   elementIdx: number;
   updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
   selectedLanguageCode: string;
-  setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
   locale: TUserLocale;
   isStorageConfigured: boolean;
@@ -42,7 +41,6 @@ export const RankingElementForm = ({
   isInvalid,
   localSurvey,
   selectedLanguageCode,
-  setSelectedLanguageCode,
   locale,
   isStorageConfigured = true,
   isExternalUrlsAllowed,
@@ -107,27 +105,27 @@ export const RankingElementForm = ({
   const shuffleOptionsTypes = {
     none: {
       id: "none",
-      label: t("environments.surveys.edit.keep_current_order"),
+      label: t("workspace.surveys.edit.keep_current_order"),
       show: true,
     },
     all: {
       id: "all",
-      label: t("environments.surveys.edit.randomize_all"),
+      label: t("workspace.surveys.edit.randomize_all"),
       show: element.choices.length > 0,
     },
     exceptLast: {
       id: "exceptLast",
-      label: t("environments.surveys.edit.randomize_all_except_last"),
+      label: t("workspace.surveys.edit.randomize_all_except_last"),
       show: true,
     },
     reverseOrderOccasionally: {
       id: "reverseOrderOccasionally",
-      label: t("environments.surveys.edit.reverse_order_occasionally"),
+      label: t("workspace.surveys.edit.reverse_order_occasionally"),
       show: true,
     },
     reverseOrderExceptLast: {
       id: "reverseOrderExceptLast",
-      label: t("environments.surveys.edit.reverse_order_occasionally_except_last"),
+      label: t("workspace.surveys.edit.reverse_order_occasionally_except_last"),
       show: true,
     },
   };
@@ -145,13 +143,11 @@ export const RankingElementForm = ({
       <ElementFormInput
         id="headline"
         value={element.headline}
-        label={t("environments.surveys.edit.question") + "*"}
+        label={t("workspace.surveys.edit.question") + "*"}
         localSurvey={localSurvey}
         elementIdx={elementIdx}
         isInvalid={isInvalid}
         updateElement={updateElement}
-        selectedLanguageCode={selectedLanguageCode}
-        setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
         isStorageConfigured={isStorageConfigured}
         autoFocus={!element.headline?.default || element.headline.default.trim() === ""}
@@ -170,8 +166,6 @@ export const RankingElementForm = ({
                 elementIdx={elementIdx}
                 isInvalid={isInvalid}
                 updateElement={updateElement}
-                selectedLanguageCode={selectedLanguageCode}
-                setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
                 autoFocus={!element.subheader?.default || element.subheader.default.trim() === ""}
@@ -192,13 +186,13 @@ export const RankingElementForm = ({
               });
             }}>
             <PlusIcon className="mr-1 h-4 w-4" />
-            {t("environments.surveys.edit.add_description")}
+            {t("workspace.surveys.edit.add_description")}
           </Button>
         )}
       </div>
 
       <div className="mt-3">
-        <Label htmlFor="choices">{t("environments.surveys.edit.options")}</Label>
+        <Label htmlFor="choices">{t("workspace.surveys.edit.options")}</Label>
         <div className="mt-2" id="choices">
           <DndContext
             id="ranking-choices"
@@ -232,8 +226,6 @@ export const RankingElementForm = ({
                     addChoice={addChoice}
                     isInvalid={isInvalid}
                     localSurvey={localSurvey}
-                    selectedLanguageCode={selectedLanguageCode}
-                    setSelectedLanguageCode={setSelectedLanguageCode}
                     surveyLanguages={surveyLanguages}
                     element={element}
                     updateElement={updateElement}
@@ -253,7 +245,7 @@ export const RankingElementForm = ({
               type="button"
               disabled={element.choices?.length >= 25}
               onClick={() => addOption()}>
-              {t("environments.surveys.edit.add_option")}
+              {t("workspace.surveys.edit.add_option")}
               <PlusIcon />
             </Button>
             <ShuffleOptionSelect

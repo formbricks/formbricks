@@ -32,10 +32,9 @@ const mockAuthentication = {
   type: "apiKey" as const,
   environmentPermissions: [
     {
-      environmentId: "env-id",
-      environmentType: "development" as const,
-      projectId: "project-id",
-      projectName: "Project Name",
+      environmentType: "production" as const,
+      workspaceId: "workspace-id",
+      workspaceName: "Workspace Name",
       permission: "manage" as const,
     },
   ],

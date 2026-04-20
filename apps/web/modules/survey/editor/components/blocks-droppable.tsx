@@ -1,6 +1,6 @@
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { Project } from "@prisma/client";
+import { Workspace } from "@prisma/client";
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
@@ -11,7 +11,7 @@ import { BlockCard } from "@/modules/survey/editor/components/block-card";
 interface BlocksDroppableProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;
-  project: Project;
+  workspace: Workspace;
   moveElement: (elementIdx: number, up: boolean) => void;
   updateElement: (elementIdx: number, updatedAttributes: any) => void;
   updateBlockLogic: (elementIdx: number, logic: TSurveyBlockLogic[]) => void;
@@ -25,8 +25,6 @@ interface BlocksDroppableProps {
   duplicateElement: (elementIdx: number) => void;
   activeElementId: string | null;
   setActiveElementId: (elementId: string | null) => void;
-  selectedLanguageCode: string;
-  setSelectedLanguageCode: (language: string) => void;
   invalidElements: string[] | null;
   addElement: (element: any, index?: number) => void;
   isFormbricksCloud: boolean;
@@ -51,10 +49,8 @@ export const BlocksDroppable = ({
   localSurvey,
   setLocalSurvey,
   moveElement,
-  project,
-  selectedLanguageCode,
+  workspace,
   setActiveElementId,
-  setSelectedLanguageCode,
   updateElement,
   updateBlockLogic,
   updateBlockLogicFallback,
@@ -88,7 +84,7 @@ export const BlocksDroppable = ({
               key={block.id}
               localSurvey={localSurvey}
               setLocalSurvey={setLocalSurvey}
-              project={project}
+              workspace={workspace}
               block={block}
               blockIdx={blockIdx}
               moveElement={moveElement}
@@ -97,8 +93,6 @@ export const BlocksDroppable = ({
               updateBlockLogicFallback={updateBlockLogicFallback}
               updateBlockButtonLabel={updateBlockButtonLabel}
               duplicateElement={duplicateElement}
-              selectedLanguageCode={selectedLanguageCode}
-              setSelectedLanguageCode={setSelectedLanguageCode}
               deleteElement={deleteElement}
               activeElementId={activeElementId}
               setActiveElementId={setActiveElementId}

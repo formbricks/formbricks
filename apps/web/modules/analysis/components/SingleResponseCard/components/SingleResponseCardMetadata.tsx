@@ -6,7 +6,6 @@ import { useTranslation } from "react-i18next";
 import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import { TResponse } from "@formbricks/types/responses";
 import { TUserLocale } from "@formbricks/types/user";
-import { Button } from "@/modules/ui/components/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 
 interface InfoIconButtonProps {
@@ -26,9 +25,11 @@ const InfoIconButton = ({
     <TooltipProvider delayDuration={0}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="outline" size="icon" aria-label={ariaLabel}>
+          <button
+            className="flex h-4 w-4 items-center justify-center rounded text-slate-500 hover:text-slate-700"
+            aria-label={ariaLabel}>
             <Icon className="h-4 w-4" />
-          </Button>
+          </button>
         </TooltipTrigger>
         <TooltipContent avoidCollisions align="start" side="bottom" className={maxWidth}>
           {tooltipContent}
@@ -66,13 +67,13 @@ export const SingleResponseCardMetadata = ({ response, locale }: SingleResponseC
       {response.singleUseId && (
         <div className="mb-2">
           <p className="py-1 font-semibold text-slate-700">
-            {t("environments.surveys.responses.single_use_id")}
+            {t("workspace.surveys.responses.single_use_id")}
           </p>
           <span>{response.singleUseId}</span>
         </div>
       )}
       <p className="py-1 font-semibold text-slate-700">
-        {t("environments.surveys.responses.person_attributes")}
+        {t("workspace.surveys.responses.person_attributes")}
       </p>
       {Object.keys(response.contactAttributes || {}).map((key) => (
         <p key={key} className="truncate" title={`${key}: ${response.contactAttributes?.[key]}`}>
@@ -84,22 +85,22 @@ export const SingleResponseCardMetadata = ({ response, locale }: SingleResponseC
 
   const userAgentTooltipContent = hasUserAgent ? (
     <div className="text-slate-600">
-      <p className="py-1 font-semibold text-slate-700">{t("environments.surveys.responses.device_info")}</p>
+      <p className="py-1 font-semibold text-slate-700">{t("workspace.surveys.responses.device_info")}</p>
       {response.meta.userAgent?.browser && (
         <p className="truncate" title={`Browser: ${response.meta.userAgent.browser}`}>
-          {t("environments.surveys.responses.browser")}: {response.meta.userAgent.browser}
+          {t("workspace.surveys.responses.browser")}: {response.meta.userAgent.browser}
         </p>
       )}
       {response.meta.userAgent?.os && (
         <p className="truncate" title={`OS: ${response.meta.userAgent.os}`}>
-          {t("environments.surveys.responses.os")}: {response.meta.userAgent.os}
+          {t("workspace.surveys.responses.os")}: {response.meta.userAgent.os}
         </p>
       )}
       {response.meta.userAgent && (
         <p
           className="truncate"
           title={`Device: ${response.meta.userAgent.device ? response.meta.userAgent.device : "PC / Generic device"}`}>
-          {t("environments.surveys.responses.device")}:{" "}
+          {t("workspace.surveys.responses.device")}:{" "}
           {response.meta.userAgent.device ? response.meta.userAgent.device : "PC / Generic device"}
         </p>
       )}
@@ -115,17 +116,17 @@ export const SingleResponseCardMetadata = ({ response, locale }: SingleResponseC
       )}
       {response.meta.source && (
         <p className="truncate" title={`Source: ${response.meta.source}`}>
-          {t("environments.surveys.responses.source")}: {response.meta.source}
+          {t("workspace.surveys.responses.source")}: {response.meta.source}
         </p>
       )}
       {response.meta.country && (
         <p className="truncate" title={`Country: ${response.meta.country}`}>
-          {t("environments.surveys.responses.country")}: {response.meta.country}
+          {t("workspace.surveys.responses.country")}: {response.meta.country}
         </p>
       )}
       {response.meta.ipAddress && (
         <p className="truncate" title={`IP Address: ${response.meta.ipAddress}`}>
-          {t("environments.surveys.responses.ip_address")}: {response.meta.ipAddress}
+          {t("workspace.surveys.responses.ip_address")}: {response.meta.ipAddress}
         </p>
       )}
     </div>
@@ -145,14 +146,14 @@ export const SingleResponseCardMetadata = ({ response, locale }: SingleResponseC
         <InfoIconButton
           icon={Tag}
           tooltipContent={contactAttributesTooltipContent}
-          ariaLabel={t("environments.surveys.responses.person_attributes")}
+          ariaLabel={t("workspace.surveys.responses.person_attributes")}
         />
       )}
       {hasUserAgent && userAgentTooltipContent && (
         <InfoIconButton
           icon={userAgentDeviceIcon}
           tooltipContent={userAgentTooltipContent}
-          ariaLabel={t("environments.surveys.responses.device_info")}
+          ariaLabel={t("workspace.surveys.responses.device_info")}
           maxWidth="max-w-md"
         />
       )}

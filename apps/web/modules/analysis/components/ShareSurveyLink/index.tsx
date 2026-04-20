@@ -65,8 +65,8 @@ export const ShareSurveyLink = ({
         <Button
           disabled={!surveyUrl}
           variant="secondary"
-          title={t("environments.surveys.copy_survey_link_to_clipboard")}
-          aria-label={t("environments.surveys.copy_survey_link_to_clipboard")}
+          title={t("workspace.surveys.copy_survey_link_to_clipboard")}
+          aria-label={t("workspace.surveys.copy_survey_link_to_clipboard")}
           onClick={() => {
             navigator.clipboard.writeText(surveyUrl);
             toast.success(t("common.copied_to_clipboard"));
@@ -75,8 +75,8 @@ export const ShareSurveyLink = ({
           <Copy />
         </Button>
         <Button
-          title={t("environments.surveys.preview_survey_in_a_new_tab")}
-          aria-label={t("environments.surveys.preview_survey_in_a_new_tab")}
+          title={t("workspace.surveys.preview_survey_in_a_new_tab")}
+          aria-label={t("workspace.surveys.preview_survey_in_a_new_tab")}
           disabled={!surveyUrl}
           onClick={async () => {
             const url = await getPreviewUrl();

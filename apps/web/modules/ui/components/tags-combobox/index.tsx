@@ -63,7 +63,7 @@ export const TagsCombobox = ({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button aria-expanded={open}>{t("environments.workspace.tags.add_tag")}</Button>
+        <Button aria-expanded={open}>{t("workspace.tags.add_tag")}</Button>
       </PopoverTrigger>
       <PopoverContent className="max-h-60 w-[200px] overflow-y-auto p-0">
         <Command
@@ -79,14 +79,12 @@ export const TagsCombobox = ({
 
             return 0;
           }}>
-          <div className="p-1">
+          <div className="px-1 pt-1">
             <CommandInput
               placeholder={
-                tagsToSearch?.length === 0
-                  ? t("environments.workspace.tags.add_tag")
-                  : t("environments.workspace.tags.search_tags")
+                tagsToSearch?.length === 0 ? t("workspace.tags.add_tag") : t("workspace.tags.search_tags")
               }
-              className="border-b border-none border-transparent shadow-none outline-0 ring-offset-transparent focus:border-none focus:border-transparent focus:shadow-none focus:outline-0 focus:ring-offset-transparent"
+              className="h-8 border-b border-none border-transparent py-1 shadow-none outline-0 ring-offset-transparent focus:border-none focus:border-transparent focus:shadow-none focus:outline-0 focus:ring-offset-transparent"
               value={searchValue}
               onValueChange={(search) => setSearchValue(search)}
               onKeyDown={(e) => {
@@ -103,7 +101,7 @@ export const TagsCombobox = ({
             />
           </div>
           <CommandList className="border-0">
-            <CommandGroup>
+            <CommandGroup className="p-0">
               {tagsToSearch?.map((tag) => {
                 return (
                   <CommandItem
@@ -127,7 +125,7 @@ export const TagsCombobox = ({
                       onClick={() => createTag?.(trimmedSearchValue)}
                       className="h-8 w-full text-left hover:cursor-pointer hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
                       disabled={!!currentTags.find((tag) => tag.label === trimmedSearchValue)}>
-                      + {t("environments.workspace.tags.add")} {trimmedSearchValue}
+                      + {t("workspace.tags.add")} {trimmedSearchValue}
                     </button>
                   </CommandItem>
                 )}

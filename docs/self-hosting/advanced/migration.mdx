@@ -4,6 +4,23 @@ description: "Formbricks Self-hosted version migration"
 icon: "arrow-right"
 ---
 
+## v5
+
+Formbricks v5 changes how rate limiting is enforced:
+
+- several public and API-key routes are no longer rate-limited inside the application server
+- those routes are now expected to be protected by Envoy Gateway or an equivalent edge rate limiter
+- the remaining session-based routes, server actions, and uncovered APIs still use the in-app limiter
+
+<Warning>
+  If you self-host Formbricks without Envoy or another equivalent edge rate limiter, upgrade planning for v5
+  must include new edge protection for the covered routes. Otherwise those routes will no longer be throttled
+  by the application server after the upgrade.
+</Warning>
+
+See the [rate-limiting guide](/self-hosting/advanced/rate-limiting) for the exact covered route groups, thresholds,
+and the remaining app-enforced limits.
+
 ## v4.7
 
 Formbricks v4.7 introduces **typed contact attributes** with native `number` and `date` data types. This enables comparison-based segment filters (e.g. "signup date before 2025-01-01") that were previously not possible with string-only attribute values.
@@ -39,6 +56,7 @@ When Formbricks v4.7 starts for the first time, the data migration will:
       If you run into "**No such container**", use `docker ps` to find your container name, e.g.
       `formbricks_postgres_1`.
     </Info>
+
   </Tab>
   <Tab title="Kubernetes">
     If you are using the **in-cluster PostgreSQL** deployed by the Helm chart:
@@ -52,6 +70,7 @@ When Formbricks v4.7 starts for the first time, the data migration will:
     </Info>
 
     If you are using a **managed PostgreSQL** service (e.g. AWS RDS, Cloud SQL), use your provider's backup/snapshot feature or run `pg_dump` directly against the external host.
+
   </Tab>
 </Tabs>
 
@@ -69,6 +88,7 @@ When Formbricks v4.7 starts for the first time, the data migration will:
     # Start with Formbricks v4.7
     docker compose up -d
     ```
+
   </Tab>
   <Tab title="Kubernetes">
     ```bash
@@ -81,6 +101,7 @@ When Formbricks v4.7 starts for the first time, the data migration will:
       The Helm chart includes a migration Job that automatically runs Prisma schema migrations as a
       PreSync hook before the new pods start. No manual migration step is needed.
     </Info>
+
   </Tab>
 </Tabs>
 
@@ -105,6 +126,7 @@ After Formbricks starts, check the logs to see whether the value backfill was co
     ```bash
     kubectl logs -n formbricks job/formbricks-migration
     ```
+
   </Tab>
 </Tabs>
 
@@ -121,6 +143,7 @@ If the migration skipped the value backfill, run the standalone backfill script 
     ```
 
     <Info>Replace `formbricks` with your actual container name if it differs. Use `docker ps` to find it.</Info>
+
   </Tab>
   <Tab title="Kubernetes">
     ```bash
@@ -130,6 +153,7 @@ If the migration skipped the value backfill, run the standalone backfill script 
     <Info>
       If your Formbricks deployment has a different name, run `kubectl get deploy -n formbricks` to find it.
     </Info>
+
   </Tab>
 </Tabs>
 

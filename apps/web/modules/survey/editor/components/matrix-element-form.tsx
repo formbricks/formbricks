@@ -27,8 +27,6 @@ interface MatrixElementFormProps {
   element: TSurveyMatrixElement;
   elementIdx: number;
   updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
-  selectedLanguageCode: string;
-  setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
   locale: TUserLocale;
   isStorageConfigured: boolean;
@@ -41,8 +39,6 @@ export const MatrixElementForm = ({
   updateElement,
   isInvalid,
   localSurvey,
-  selectedLanguageCode,
-  setSelectedLanguageCode,
   locale,
   isStorageConfigured = true,
   isExternalUrlsAllowed,
@@ -81,7 +77,7 @@ export const MatrixElementForm = ({
       const elementIdx = findOptionUsedInLogic(localSurvey, element.id, index.toString());
       if (elementIdx !== -1) {
         toast.error(
-          t("environments.surveys.edit.column_used_in_logic_error", {
+          t("workspace.surveys.edit.column_used_in_logic_error", {
             questionIndex: elementIdx + 1,
           })
         );
@@ -91,7 +87,7 @@ export const MatrixElementForm = ({
       const elementIdx = findOptionUsedInLogic(localSurvey, element.id, index.toString(), true);
       if (elementIdx !== -1) {
         toast.error(
-          t("environments.surveys.edit.row_used_in_logic_error", {
+          t("workspace.surveys.edit.row_used_in_logic_error", {
             questionIndex: elementIdx + 1,
           })
         );
@@ -175,27 +171,27 @@ export const MatrixElementForm = ({
   const shuffleOptionsTypes = {
     none: {
       id: "none",
-      label: t("environments.surveys.edit.keep_current_order"),
+      label: t("workspace.surveys.edit.keep_current_order"),
       show: true,
     },
     all: {
       id: "all",
-      label: t("environments.surveys.edit.randomize_all"),
+      label: t("workspace.surveys.edit.randomize_all"),
       show: true,
     },
     exceptLast: {
       id: "exceptLast",
-      label: t("environments.surveys.edit.randomize_all_except_last"),
+      label: t("workspace.surveys.edit.randomize_all_except_last"),
       show: true,
     },
     reverseOrderOccasionally: {
       id: "reverseOrderOccasionally",
-      label: t("environments.surveys.edit.reverse_order_occasionally"),
+      label: t("workspace.surveys.edit.reverse_order_occasionally"),
       show: true,
     },
     reverseOrderExceptLast: {
       id: "reverseOrderExceptLast",
-      label: t("environments.surveys.edit.reverse_order_occasionally_except_last"),
+      label: t("workspace.surveys.edit.reverse_order_occasionally_except_last"),
       show: true,
     },
   };
@@ -206,13 +202,11 @@ export const MatrixElementForm = ({
       <ElementFormInput
         id="headline"
         value={element.headline}
-        label={t("environments.surveys.edit.question") + "*"}
+        label={t("workspace.surveys.edit.question") + "*"}
         localSurvey={localSurvey}
         elementIdx={elementIdx}
         isInvalid={isInvalid}
         updateElement={updateElement}
-        selectedLanguageCode={selectedLanguageCode}
-        setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
         isStorageConfigured={isStorageConfigured}
         autoFocus={!element.headline?.default || element.headline.default.trim() === ""}
@@ -230,8 +224,6 @@ export const MatrixElementForm = ({
                 elementIdx={elementIdx}
                 isInvalid={isInvalid}
                 updateElement={updateElement}
-                selectedLanguageCode={selectedLanguageCode}
-                setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
                 autoFocus={!element.subheader?.default || element.subheader.default.trim() === ""}
@@ -252,14 +244,14 @@ export const MatrixElementForm = ({
               });
             }}>
             <PlusIcon className="mr-1 h-4 w-4" />
-            {t("environments.surveys.edit.add_description")}
+            {t("workspace.surveys.edit.add_description")}
           </Button>
         )}
       </div>
       <div className="mt-3 grid grid-cols-2 gap-4">
         <div>
           {/* Rows section */}
-          <Label htmlFor="rows">{t("environments.surveys.edit.rows")}</Label>
+          <Label htmlFor="rows">{t("workspace.surveys.edit.rows")}</Label>
           <div className="mt-2">
             <DndContext id="matrix-rows" onDragEnd={(e) => handleMatrixDragEnd("row", e)}>
               <SortableContext items={element.rows} strategy={verticalListSortingStrategy}>
@@ -277,8 +269,6 @@ export const MatrixElementForm = ({
                       onDelete={(index) => handleDeleteLabel("row", index)}
                       onKeyDown={(e) => handleKeyDown(e, "row", index)}
                       canDelete={element.rows.length > 2}
-                      selectedLanguageCode={selectedLanguageCode}
-                      setSelectedLanguageCode={setSelectedLanguageCode}
                       isInvalid={
                         isInvalid &&
                         !isLabelValidForAllLanguages(element.rows[index].label, localSurvey.languages)
@@ -299,13 +289,13 @@ export const MatrixElementForm = ({
                 handleAddLabel("row");
               }}>
               <PlusIcon />
-              {t("environments.surveys.edit.add_row")}
+              {t("workspace.surveys.edit.add_row")}
             </Button>
           </div>
         </div>
         <div>
           {/* Columns section */}
-          <Label htmlFor="columns">{t("environments.surveys.edit.columns")}</Label>
+          <Label htmlFor="columns">{t("workspace.surveys.edit.columns")}</Label>
           <div className="mt-2">
             <DndContext id="matrix-columns" onDragEnd={(e) => handleMatrixDragEnd("column", e)}>
               <SortableContext items={element.columns} strategy={verticalListSortingStrategy}>
@@ -323,8 +313,6 @@ export const MatrixElementForm = ({
                       onDelete={(index) => handleDeleteLabel("column", index)}
                       onKeyDown={(e) => handleKeyDown(e, "column", index)}
                       canDelete={element.columns.length > 2}
-                      selectedLanguageCode={selectedLanguageCode}
-                      setSelectedLanguageCode={setSelectedLanguageCode}
                       isInvalid={
                         isInvalid &&
                         !isLabelValidForAllLanguages(element.columns[index].label, localSurvey.languages)
@@ -345,7 +333,7 @@ export const MatrixElementForm = ({
                 handleAddLabel("column");
               }}>
               <PlusIcon />
-              {t("environments.surveys.edit.add_column")}
+              {t("workspace.surveys.edit.add_column")}
             </Button>
           </div>
           <div className="mt-3 flex flex-1 items-center justify-end gap-2">

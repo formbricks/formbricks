@@ -24,8 +24,6 @@ interface MatrixSortableItemProps {
   onDelete: (index: number) => void;
   onKeyDown: (e: React.KeyboardEvent) => void;
   canDelete: boolean;
-  selectedLanguageCode: string;
-  setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
   locale: TUserLocale;
   isStorageConfigured: boolean;
@@ -41,8 +39,6 @@ export const MatrixSortableItem = ({
   onDelete,
   onKeyDown,
   canDelete,
-  selectedLanguageCode,
-  setSelectedLanguageCode,
   isInvalid,
   locale,
   isStorageConfigured,
@@ -73,8 +69,6 @@ export const MatrixSortableItem = ({
           elementIdx={elementIdx}
           value={choice.label}
           updateMatrixLabel={updateMatrixLabel}
-          selectedLanguageCode={selectedLanguageCode}
-          setSelectedLanguageCode={setSelectedLanguageCode}
           isInvalid={isInvalid}
           locale={locale}
           onKeyDown={onKeyDown}
