@@ -413,7 +413,13 @@ const nextConfig = {
           },
         ]
       : [];
-    return [...posthogRewrites];
+    return [
+      ...posthogRewrites,
+      {
+        source: "/api/v2/organizations/:organizationId/project-teams",
+        destination: "/api/v2/organizations/:organizationId/workspace-teams",
+      },
+    ];
   },
   env: {
     NEXTAUTH_URL: process.env.NEXTAUTH_URL, // TODO: Remove this once we have a proper solution for the base path
@@ -453,6 +459,5 @@ const sentryOptions = {
 // Always enable Sentry plugin to inject Debug IDs
 // Runtime Sentry reporting still depends on DSN being set via environment variables
 const exportConfig = process.env.SENTRY_AUTH_TOKEN ? withSentryConfig(nextConfig, sentryOptions) : nextConfig;
-
 
 export default exportConfig;
