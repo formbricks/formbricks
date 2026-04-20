@@ -50,16 +50,6 @@ interface TIntegrationFieldSelection {
   includeVariables: boolean;
 }
 
-type TIntegrationPipelineData = {
-  surveyId: string;
-  response: {
-    createdAt: Date;
-    data: Record<string, TResponseDataValue>;
-    meta: TResponseMeta;
-    variables: Record<string, string | number>;
-  };
-};
-
 const toIntegrationFieldSelection = (config: {
   elementIds: string[];
   includeCreatedAt?: boolean | null;
