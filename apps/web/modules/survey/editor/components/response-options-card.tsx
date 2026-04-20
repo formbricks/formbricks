@@ -10,7 +10,11 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
 import {
-  getCurrentFixedCETCalendarDate,
+  SURVEY_SCHEDULING_TIME_LABEL,
+  SURVEY_SCHEDULING_TIME_ZONE_LABEL,
+} from "@/modules/survey/scheduling/lib/constants";
+import {
+  getMinimumSurveySchedulingCalendarDate,
   toCalendarDate,
   toDateOnlySelection,
 } from "@/modules/survey/scheduling/lib/date-utils";
@@ -55,15 +59,14 @@ export const ResponseOptionsCard = ({
   const [recaptchaThreshold, setRecaptchaThreshold] = useState<number>(localSurvey.recaptcha?.threshold ?? 0);
   const publishOn = localSurvey.publishOn ? toCalendarDate(localSurvey.publishOn) : null;
   const closeOn = localSurvey.closeOn ? toCalendarDate(localSurvey.closeOn) : null;
-  const minDate = getCurrentFixedCETCalendarDate();
-  const minPublishDate = new Date(minDate);
-  minPublishDate.setDate(minPublishDate.getDate() + 1);
+  const minimumSchedulingDate = getMinimumSurveySchedulingCalendarDate();
+  const minPublishDate = minimumSchedulingDate;
   const minCloseDate = (() => {
     if (!publishOn) {
-      return minDate;
+      return minimumSchedulingDate;
     }
 
-    return publishOn.getTime() > minDate.getTime() ? publishOn : minDate;
+    return publishOn.getTime() > minimumSchedulingDate.getTime() ? publishOn : minimumSchedulingDate;
   })();
   const isPublishOnDateEnabled = localSurvey.publishOn !== null;
   const isCloseOnDateEnabled = localSurvey.closeOn !== null;
@@ -324,7 +327,10 @@ export const ResponseOptionsCard = ({
             isChecked={isPublishOnDateEnabled}
             onToggle={togglePublishOnDate}
             title={t("workspace.surveys.edit.publish_survey_on_date")}
-            description={t("workspace.surveys.edit.survey_will_be_published_at_midnight_cet")}
+            description={t("workspace.surveys.edit.survey_will_be_published_at_midnight_cet", {
+              time: SURVEY_SCHEDULING_TIME_LABEL,
+              timeZone: SURVEY_SCHEDULING_TIME_ZONE_LABEL,
+            })}
             childBorder={true}>
             <div className="p-4">
               <DatePicker
@@ -361,7 +367,10 @@ export const ResponseOptionsCard = ({
             isChecked={isCloseOnDateEnabled}
             onToggle={toggleCloseOnDate}
             title={t("workspace.surveys.edit.close_survey_on_date")}
-            description={t("workspace.surveys.edit.survey_will_be_closed_at_midnight_cet")}
+            description={t("workspace.surveys.edit.survey_will_be_closed_at_midnight_cet", {
+              time: SURVEY_SCHEDULING_TIME_LABEL,
+              timeZone: SURVEY_SCHEDULING_TIME_ZONE_LABEL,
+            })}
             childBorder={true}>
             <div className="p-4">
               <DatePicker

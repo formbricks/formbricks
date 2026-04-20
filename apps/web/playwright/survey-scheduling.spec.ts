@@ -1,4 +1,8 @@
 import { type Page, expect } from "@playwright/test";
+import {
+  SURVEY_SCHEDULING_TIME_LABEL,
+  SURVEY_SCHEDULING_TIME_ZONE_LABEL,
+} from "@/modules/survey/scheduling/lib/constants";
 import { test } from "./lib/fixtures";
 
 const formatSelectedDate = (date: Date): string =>
@@ -54,6 +58,9 @@ const createMinimalSurvey = async (page: Page) => {
   await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/edit$/);
 };
 
+const publishScheduleSummary = `Survey will be published at ${SURVEY_SCHEDULING_TIME_LABEL} in the ${SURVEY_SCHEDULING_TIME_ZONE_LABEL} timezone on the selected date`;
+const closeScheduleSummary = `Survey will be closed at ${SURVEY_SCHEDULING_TIME_LABEL} in the ${SURVEY_SCHEDULING_TIME_ZONE_LABEL} timezone on the selected date`;
+
 const pickDateForToggle = async (page: Page, toggleTitle: string, dayOffset: number) => {
   const targetDate = new Date();
   targetDate.setDate(targetDate.getDate() + dayOffset);
@@ -105,8 +112,8 @@ test.describe("Survey scheduling settings", () => {
     await openResponseOptions(page);
     await expect(page.getByText("Publish survey on date")).toBeVisible();
     await expect(page.getByText("Close survey on date")).toBeVisible();
-    await expect(page.getByText("Survey will be published at 00:00 CET on the selected date")).toBeVisible();
-    await expect(page.getByText("Survey will be closed at 00:00 CET on the selected date")).toBeVisible();
+    await expect(page.getByText(publishScheduleSummary)).toBeVisible();
+    await expect(page.getByText(closeScheduleSummary)).toBeVisible();
 
     await ensureDateToggleEnabled(page, "Publish survey on date");
     await ensureDateToggleEnabled(page, "Close survey on date");

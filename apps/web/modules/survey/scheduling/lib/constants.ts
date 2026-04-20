@@ -1,5 +1,11 @@
-export const SURVEY_SCHEDULING_TIME_ZONE = "Etc/GMT-1";
-export const SURVEY_SCHEDULING_DAILY_CRON_PATTERN = "0 0 * * *";
+const padSchedulingTimePart = (value: number): string => value.toString().padStart(2, "0");
+
+export const SURVEY_SCHEDULING_TIME_ZONE = "Europe/Berlin";
+export const SURVEY_SCHEDULING_LOCAL_HOUR = 0;
+export const SURVEY_SCHEDULING_LOCAL_MINUTE = 0;
+export const SURVEY_SCHEDULING_TIME_LABEL = `${padSchedulingTimePart(SURVEY_SCHEDULING_LOCAL_HOUR)}:${padSchedulingTimePart(SURVEY_SCHEDULING_LOCAL_MINUTE)}`;
+export const SURVEY_SCHEDULING_TIME_ZONE_LABEL = SURVEY_SCHEDULING_TIME_ZONE;
+export const SURVEY_SCHEDULING_DAILY_CRON_PATTERN = `${SURVEY_SCHEDULING_LOCAL_MINUTE} ${SURVEY_SCHEDULING_LOCAL_HOUR} * * *`;
 export const SURVEY_SCHEDULING_GLOBAL_SCOPE = "global";
 export const SURVEY_SCHEDULING_DAILY_SCHEDULE_ID = "daily-survey-scheduling";
 export const SURVEY_SCHEDULING_RECONCILIATION_BATCH_SIZE = 250;

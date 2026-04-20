@@ -13,6 +13,7 @@ type TQueueAddMethod = ReturnType<
 type TQueueScheduleMethod = ReturnType<
   typeof vi.fn<(jobId: string, schedule: unknown, template: unknown) => Promise<unknown>>
 >;
+type TQueueRemoveSchedulerMethod = ReturnType<typeof vi.fn<(jobId: string) => Promise<boolean>>>;
 type TWorkerOnMethod = ReturnType<
   typeof vi.fn<(event: string, handler: (...args: unknown[]) => void) => void>
 >;
@@ -54,6 +55,7 @@ export const asRedisConnection = (connection: MockRedisConnection): IORedis =>
 export interface MockQueue {
   add: TQueueAddMethod;
   close: TAsyncVoidMethod;
+  removeJobScheduler: TQueueRemoveSchedulerMethod;
   upsertJobScheduler: TQueueScheduleMethod;
   waitUntilReady: TAsyncVoidMethod;
 }
@@ -61,6 +63,7 @@ export interface MockQueue {
 export const createMockQueue = (overrides: Partial<MockQueue> = {}): MockQueue => ({
   add: vi.fn<(name: string, data: unknown, options?: unknown) => Promise<unknown>>(),
   close: vi.fn<() => Promise<void>>().mockResolvedValue(undefined),
+  removeJobScheduler: vi.fn<(jobId: string) => Promise<boolean>>().mockResolvedValue(true),
   upsertJobScheduler: vi.fn<(jobId: string, schedule: unknown, template: unknown) => Promise<unknown>>(),
   waitUntilReady: vi.fn<() => Promise<void>>().mockResolvedValue(undefined),
   ...overrides,

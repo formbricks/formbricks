@@ -193,6 +193,21 @@ const upsertRecurringBackgroundJobSchedule = async <TData>(
   );
 };
 
+const removeRecurringBackgroundJobSchedule = async (
+  jobName: string,
+  identity: TBackgroundJobScheduleIdentity
+): Promise<boolean> => {
+  const definition = getBackgroundJobDefinition(jobName);
+
+  if (!definition) {
+    throw new Error(`No background job definition registered for job: ${jobName}`);
+  }
+
+  const { queue } = await getJobsQueue();
+
+  return await queue.removeJobScheduler(getRecurringJobSchedulerId(definition.name, identity));
+};
+
 export const enqueueTestLogJob = async (data: TTestLogJobData): Promise<Job> => {
   try {
     return await enqueueBackgroundJob(JOB_NAMES.testLog, data);
@@ -332,6 +347,25 @@ export const upsertRecurringSurveySchedulingJobSchedule = async (
         scope: identity.scope,
       },
       "Failed to upsert BullMQ survey scheduling schedule"
+    );
+    throw error;
+  }
+};
+
+export const removeRecurringSurveySchedulingJobSchedule = async (
+  identity: TBackgroundJobScheduleIdentity
+): Promise<boolean> => {
+  try {
+    return await removeRecurringBackgroundJobSchedule(JOB_NAMES.surveyScheduling, identity);
+  } catch (error) {
+    logger.error(
+      {
+        err: error,
+        jobName: JOB_NAMES.surveyScheduling,
+        scheduleId: identity.scheduleId,
+        scope: identity.scope,
+      },
+      "Failed to remove BullMQ survey scheduling schedule"
     );
     throw error;
   }

@@ -6,7 +6,7 @@ import type { TSurvey } from "@formbricks/types/surveys/types";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
 import { type TAuditStatus } from "@/modules/ee/audit-logs/types/audit-log";
 import { SURVEY_SCHEDULING_RECONCILIATION_BATCH_SIZE } from "./constants";
-import { isDateDue, normalizeDateOnlySelectionToCETMidnight } from "./date-utils";
+import { isDateDue, normalizeDateOnlySelectionToSurveySchedulingDateTime } from "./date-utils";
 
 type TSurveySchedulingTransition = "publish" | "close";
 
@@ -273,8 +273,8 @@ export const normalizeSurveyScheduling = ({
   publishOn: Date | null;
   status: TSurvey["status"];
 }): Pick<TSurvey, "closeOn" | "publishOn"> => {
-  let normalizedCloseOn = normalizeDateOnlySelectionToCETMidnight(closeOn);
-  let normalizedPublishOn = normalizeDateOnlySelectionToCETMidnight(publishOn);
+  let normalizedCloseOn = normalizeDateOnlySelectionToSurveySchedulingDateTime(closeOn);
+  let normalizedPublishOn = normalizeDateOnlySelectionToSurveySchedulingDateTime(publishOn);
   const isManualStatusChange =
     currentStatus === undefined || currentStatus === null || currentStatus !== status;
 

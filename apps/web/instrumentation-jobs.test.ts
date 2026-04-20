@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 const mockStartJobsRuntime = vi.fn();
+const mockRemoveRecurringSurveySchedulingJobSchedule = vi.fn();
 const mockUpsertRecurringSurveySchedulingJobSchedule = vi.fn();
 const mockDebug = vi.fn();
 const mockError = vi.fn();
@@ -16,6 +17,7 @@ const slowTest = (name: string, fn: () => Promise<void>): void => {
 };
 
 vi.mock("@formbricks/jobs", () => ({
+  removeRecurringSurveySchedulingJobSchedule: mockRemoveRecurringSurveySchedulingJobSchedule,
   startJobsRuntime: mockStartJobsRuntime,
   upsertRecurringSurveySchedulingJobSchedule: mockUpsertRecurringSurveySchedulingJobSchedule,
 }));
@@ -47,6 +49,7 @@ describe("instrumentation-jobs", () => {
     vi.resetModules();
     vi.clearAllMocks();
     vi.useFakeTimers();
+    mockRemoveRecurringSurveySchedulingJobSchedule.mockResolvedValue(true);
     mockGetJobsQueueingConfig.mockReturnValue({
       enabled: false,
       redisUrl: null,
@@ -271,11 +274,18 @@ describe("instrumentation-jobs", () => {
       });
 
       const { registerRecurringJobs } = await import("./instrumentation-jobs");
+      const { SURVEY_SCHEDULING_DAILY_CRON_PATTERN, SURVEY_SCHEDULING_TIME_ZONE } =
+        await import("@/modules/survey/scheduling/lib/constants");
 
       await registerRecurringJobs();
       await registerRecurringJobs();
 
       expect(mockStartJobsRuntime).not.toHaveBeenCalled();
+      expect(mockRemoveRecurringSurveySchedulingJobSchedule).toHaveBeenCalledTimes(1);
+      expect(mockRemoveRecurringSurveySchedulingJobSchedule).toHaveBeenCalledWith({
+        scheduleId: "daily-survey-scheduling",
+        scope: "global",
+      });
       expect(mockUpsertRecurringSurveySchedulingJobSchedule).toHaveBeenCalledTimes(1);
       expect(mockUpsertRecurringSurveySchedulingJobSchedule).toHaveBeenCalledWith(
         {
@@ -283,9 +293,9 @@ describe("instrumentation-jobs", () => {
           scope: "global",
         },
         {
-          cronPattern: "0 0 * * *",
+          cronPattern: SURVEY_SCHEDULING_DAILY_CRON_PATTERN,
           kind: "cron",
-          timeZone: "Etc/GMT-1",
+          timeZone: SURVEY_SCHEDULING_TIME_ZONE,
         },
         {
           scope: "global",

@@ -3,6 +3,7 @@ import {
   type JobsRuntimeHandle,
   type TResponsePipelineJobData,
   type TSurveySchedulingJobData,
+  removeRecurringSurveySchedulingJobSchedule,
   startJobsRuntime,
   upsertRecurringSurveySchedulingJobSchedule,
 } from "@formbricks/jobs";
@@ -39,6 +40,11 @@ const surveySchedulingJobHandler: NonNullable<JobHandlerOverrides[string]> = asy
 };
 
 const registerSurveySchedulingSchedule = async (): Promise<void> => {
+  await removeRecurringSurveySchedulingJobSchedule({
+    scheduleId: SURVEY_SCHEDULING_DAILY_SCHEDULE_ID,
+    scope: SURVEY_SCHEDULING_GLOBAL_SCOPE,
+  });
+
   await upsertRecurringSurveySchedulingJobSchedule(
     {
       scheduleId: SURVEY_SCHEDULING_DAILY_SCHEDULE_ID,

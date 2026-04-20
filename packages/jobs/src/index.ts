@@ -12,6 +12,7 @@ export {
   enqueueSurveySchedulingJob,
   enqueueTestLogJob,
   getBackgroundJobProducer,
+  removeRecurringSurveySchedulingJobSchedule,
   scheduleResponsePipelineJobAt,
   scheduleSurveySchedulingJobAt,
   scheduleTestLogJobAt,

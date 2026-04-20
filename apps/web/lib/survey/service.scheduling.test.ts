@@ -131,8 +131,8 @@ describe("survey service scheduling", () => {
   test("scheduling from draft keeps closeOn when publishOn is set", async () => {
     const scheduledPublishSelection = new Date(Date.UTC(2026, 3, 20, 12, 0, 0));
     const scheduledCloseSelection = new Date(Date.UTC(2026, 3, 21, 12, 0, 0));
-    const normalizedPublishOn = new Date("2026-04-19T23:00:00.000Z");
-    const normalizedCloseOn = new Date("2026-04-20T23:00:00.000Z");
+    const normalizedPublishOn = new Date("2026-04-19T22:00:00.000Z");
+    const normalizedCloseOn = new Date("2026-04-20T22:00:00.000Z");
 
     prisma.survey.findUnique.mockResolvedValueOnce({
       ...mockSurveyOutput,
@@ -207,7 +207,7 @@ describe("survey service scheduling", () => {
 
   test("saving a due publish schedule catches up immediately for paused surveys", async () => {
     const dueSelection = new Date(Date.UTC(2026, 3, 17, 12, 0, 0));
-    const normalizedDuePublishOn = new Date("2026-04-16T23:00:00.000Z");
+    const normalizedDuePublishOn = new Date("2026-04-16T22:00:00.000Z");
 
     prisma.survey.findUnique
       .mockResolvedValueOnce({
@@ -258,7 +258,7 @@ describe("survey service scheduling", () => {
 
   test("saving a due publish schedule in draft does not auto-publish", async () => {
     const dueSelection = new Date(Date.UTC(2026, 3, 17, 12, 0, 0));
-    const normalizedDuePublishOn = new Date("2026-04-16T23:00:00.000Z");
+    const normalizedDuePublishOn = new Date("2026-04-16T22:00:00.000Z");
 
     prisma.survey.findUnique.mockResolvedValueOnce({
       ...mockSurveyOutput,
@@ -288,7 +288,7 @@ describe("survey service scheduling", () => {
 
   test("creating a paused survey with a due publish schedule catches up immediately", async () => {
     const dueSelection = new Date(Date.UTC(2026, 3, 17, 12, 0, 0));
-    const normalizedDuePublishOn = new Date("2026-04-16T23:00:00.000Z");
+    const normalizedDuePublishOn = new Date("2026-04-16T22:00:00.000Z");
 
     prisma.survey.create.mockResolvedValueOnce({
       ...mockSurveyOutput,
@@ -334,7 +334,7 @@ describe("survey service scheduling", () => {
 
   test("same-day publish and close resolves to completed", async () => {
     const sameDaySelection = new Date(Date.UTC(2026, 3, 17, 12, 0, 0));
-    const normalizedDueDate = new Date("2026-04-16T23:00:00.000Z");
+    const normalizedDueDate = new Date("2026-04-16T22:00:00.000Z");
 
     prisma.survey.findUnique
       .mockResolvedValueOnce({

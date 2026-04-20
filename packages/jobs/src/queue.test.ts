@@ -15,6 +15,7 @@ import {
   enqueueTestLogJob,
   getBackgroundJobProducer,
   getJobsQueue,
+  removeRecurringSurveySchedulingJobSchedule,
   resetJobsQueueFactory,
   scheduleResponsePipelineJobAt,
   scheduleSurveySchedulingJobAt,
@@ -30,6 +31,7 @@ const {
   mockLoggerError,
   mockQueueAdd,
   mockQueueClose,
+  mockQueueRemoveJobScheduler,
   mockQueueUpsertJobScheduler,
   mockQueueWaitUntilReady,
 } = vi.hoisted(() => ({
@@ -37,6 +39,7 @@ const {
   mockLoggerError: vi.fn(),
   mockQueueAdd: vi.fn(),
   mockQueueClose: vi.fn(),
+  mockQueueRemoveJobScheduler: vi.fn(),
   mockQueueUpsertJobScheduler: vi.fn(),
   mockQueueWaitUntilReady: vi.fn(),
 }));
@@ -97,6 +100,7 @@ vi.mock("bullmq", () => ({
     return {
       add: mockQueueAdd,
       close: mockQueueClose,
+      removeJobScheduler: mockQueueRemoveJobScheduler,
       upsertJobScheduler: mockQueueUpsertJobScheduler,
       waitUntilReady: mockQueueWaitUntilReady,
     };
@@ -479,6 +483,23 @@ describe("@formbricks/jobs queue helpers", () => {
       }
     );
     expect(scheduledJob.id).toBe("job-7c");
+  });
+
+  test("removes recurring survey scheduling schedules", async () => {
+    mockQueueRemoveJobScheduler.mockResolvedValue(true);
+
+    const removed = await removeRecurringSurveySchedulingJobSchedule({
+      scheduleId: "daily-survey-scheduling",
+      scope: "global",
+    });
+
+    expect(mockQueueRemoveJobScheduler).toHaveBeenCalledWith(
+      getRecurringJobSchedulerId(JOB_NAMES.surveyScheduling, {
+        scheduleId: "daily-survey-scheduling",
+        scope: "global",
+      })
+    );
+    expect(removed).toBe(true);
   });
 
   test("exposes recurring survey scheduling through the engine-neutral producer interface", async () => {

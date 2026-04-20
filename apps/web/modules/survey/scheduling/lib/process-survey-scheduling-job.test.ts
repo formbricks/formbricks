@@ -68,7 +68,7 @@ describe("processSurveySchedulingJob", () => {
       .mockResolvedValueOnce([
         createCandidate({
           closeOn: null,
-          publishOn: new Date("2026-04-16T23:00:00.000Z"),
+          publishOn: new Date("2026-04-16T22:00:00.000Z"),
           status: "paused",
         }),
       ] as never)
@@ -95,7 +95,7 @@ describe("processSurveySchedulingJob", () => {
   });
 
   test("processes due publish transitions in batches when the backlog is large", async () => {
-    const duePublishOn = new Date("2026-04-16T23:00:00.000Z");
+    const duePublishOn = new Date("2026-04-16T22:00:00.000Z");
     const firstBatch = Array.from({ length: SURVEY_SCHEDULING_RECONCILIATION_BATCH_SIZE }, (_, index) =>
       createCandidate({
         id: `survey-${index}`,
@@ -142,7 +142,7 @@ describe("processSurveySchedulingJob", () => {
   test("closes due published surveys", async () => {
     prisma.survey.findMany.mockResolvedValueOnce([] as never).mockResolvedValueOnce([
       createCandidate({
-        closeOn: new Date("2026-04-16T23:00:00.000Z"),
+        closeOn: new Date("2026-04-16T22:00:00.000Z"),
         publishOn: null,
         status: "inProgress",
       }),
@@ -181,14 +181,14 @@ describe("processSurveySchedulingJob", () => {
     prisma.survey.findMany
       .mockResolvedValueOnce([
         createCandidate({
-          closeOn: new Date("2026-04-16T23:00:00.000Z"),
-          publishOn: new Date("2026-04-16T23:00:00.000Z"),
+          closeOn: new Date("2026-04-16T22:00:00.000Z"),
+          publishOn: new Date("2026-04-16T22:00:00.000Z"),
           status: "paused",
         }),
       ] as never)
       .mockResolvedValueOnce([
         createCandidate({
-          closeOn: new Date("2026-04-16T23:00:00.000Z"),
+          closeOn: new Date("2026-04-16T22:00:00.000Z"),
           publishOn: null,
           status: "inProgress",
         }),
@@ -209,7 +209,7 @@ describe("processSurveySchedulingJob", () => {
       .mockResolvedValueOnce([
         createCandidate({
           closeOn: null,
-          publishOn: new Date("2026-04-16T23:00:00.000Z"),
+          publishOn: new Date("2026-04-16T22:00:00.000Z"),
           status: "paused",
         }),
       ] as never)
@@ -227,7 +227,7 @@ describe("processSurveySchedulingJob", () => {
       .mockResolvedValueOnce([
         createCandidate({
           closeOn: null,
-          publishOn: new Date("2026-04-16T23:00:00.000Z"),
+          publishOn: new Date("2026-04-16T22:00:00.000Z"),
           status: "paused",
         }),
       ] as never)
