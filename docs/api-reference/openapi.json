@@ -225,7 +225,9 @@
           }
         },
         "summary": "Update Contact (Attributes)",
-        "tags": ["Client API - Contacts"]
+        "tags": [
+          "Client API - Contacts"
+        ]
       }
     },
     "/api/v1/client/{environmentId}/displays": {
@@ -423,7 +425,9 @@
           }
         },
         "summary": "Create Display",
-        "tags": ["Client API - Display"]
+        "tags": [
+          "Client API - Display"
+        ]
       }
     },
     "/api/v1/client/{environmentId}/displays/{displayId}": {
@@ -627,7 +631,9 @@
           }
         },
         "summary": "Update Display",
-        "tags": ["Client API - Display"]
+        "tags": [
+          "Client API - Display"
+        ]
       }
     },
     "/api/v1/client/{environmentId}/environment": {
@@ -713,7 +719,11 @@
                               "type": "boolean"
                             },
                             "overlay": {
-                              "enum": ["none", "light", "dark"],
+                              "enum": [
+                                "none",
+                                "light",
+                                "dark"
+                              ],
                               "example": "none",
                               "type": "string"
                             },
@@ -1046,7 +1056,9 @@
           }
         },
         "summary": "Get Environment State",
-        "tags": ["Client API - Environment"]
+        "tags": [
+          "Client API - Environment"
+        ]
       }
     },
     "/api/v1/client/{environmentId}/identify/contacts/{userId}": {
@@ -1085,8 +1097,13 @@
                       }
                     ],
                     "lastDisplayAt": "2024-04-23T08:59:37.550Z",
-                    "responses": ["pjogp5a1wyxon6umplmf49b8"],
-                    "segments": ["fi8f9oekza95wwszrptidivq", "zgwrv8eg7vfavdhzv1s0po1w"],
+                    "responses": [
+                      "pjogp5a1wyxon6umplmf49b8"
+                    ],
+                    "segments": [
+                      "fi8f9oekza95wwszrptidivq",
+                      "zgwrv8eg7vfavdhzv1s0po1w"
+                    ],
                     "userId": "user-123"
                   },
                   "properties": {
@@ -1220,7 +1237,9 @@
           }
         },
         "summary": "Get Contact State",
-        "tags": ["Client API - Contacts"]
+        "tags": [
+          "Client API - Contacts"
+        ]
       }
     },
     "/api/v1/client/{environmentId}/responses": {
@@ -1259,25 +1278,47 @@
               },
               "schema": {
                 "properties": {
-                  "data": { "additionalProperties": true, "type": "object" },
-                  "finished": { "type": "boolean" },
+                  "data": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "finished": {
+                    "type": "boolean"
+                  },
                   "language": {
                     "description": "Language of the response (survey should have this language enabled)",
-                    "enum": ["en", "de", "pt", "etc.."],
+                    "enum": [
+                      "en",
+                      "de",
+                      "pt",
+                      "etc.."
+                    ],
                     "type": "string"
                   },
                   "meta": {
                     "properties": {
-                      "action": { "type": "string" },
-                      "source": { "type": "string" },
-                      "url": { "type": "string" }
+                      "action": {
+                        "type": "string"
+                      },
+                      "source": {
+                        "type": "string"
+                      },
+                      "url": {
+                        "type": "string"
+                      }
                     },
                     "type": "object"
                   },
-                  "surveyId": { "type": "string" },
-                  "userId": { "type": "string" }
+                  "surveyId": {
+                    "type": "string"
+                  },
+                  "userId": {
+                    "type": "string"
+                  }
                 },
-                "required": ["surveyId"],
+                "required": [
+                  "surveyId"
+                ],
                 "type": "object"
               }
             }
@@ -1534,7 +1575,9 @@
           }
         },
         "summary": "Create Response",
-        "tags": ["Client API - Response"]
+        "tags": [
+          "Client API - Response"
+        ]
       }
     },
     "/api/v1/client/{environmentId}/responses/{responseId}": {
@@ -1736,7 +1779,9 @@
           }
         },
         "summary": "Update Response",
-        "tags": ["Client API - Response"]
+        "tags": [
+          "Client API - Response"
+        ]
       }
     },
     "/api/v1/client/{environmentId}/user": {
@@ -2146,7 +2191,9 @@
           }
         },
         "summary": "Create or Identify User",
-        "tags": ["Client API - User"]
+        "tags": [
+          "Client API - User"
+        ]
       }
     },
     "/api/v1/management/action-classes": {
@@ -2339,7 +2386,9 @@
           }
         },
         "summary": "Get All Action Classes",
-        "tags": ["Management API - Action Class"]
+        "tags": [
+          "Management API - Action Class"
+        ]
       },
       "post": {
         "description": "Create Action Class from the UI or from the API! You can read more about them [here](https://formbricks.com/docs/in-app-surveys/actions).",
@@ -2404,7 +2453,12 @@
                       },
                       "type": {
                         "description": "Type of no-code trigger",
-                        "enum": ["click", "pageView", "exitIntent", "fiftyPercentScroll"],
+                        "enum": [
+                          "click",
+                          "pageView",
+                          "exitIntent",
+                          "fiftyPercentScroll"
+                        ],
                         "type": "string"
                       },
                       "urlFilters": {
@@ -2428,22 +2482,35 @@
                               "type": "string"
                             }
                           },
-                          "required": ["rule", "value"],
+                          "required": [
+                            "rule",
+                            "value"
+                          ],
                           "type": "object"
                         },
                         "type": "array"
                       }
                     },
-                    "required": ["type", "urlFilters"],
+                    "required": [
+                      "type",
+                      "urlFilters"
+                    ],
                     "type": "object"
                   },
                   "type": {
                     "description": "Type of action class",
-                    "enum": ["code", "noCode"],
+                    "enum": [
+                      "code",
+                      "noCode"
+                    ],
                     "type": "string"
                   }
                 },
-                "required": ["environmentId", "name", "type"],
+                "required": [
+                  "environmentId",
+                  "name",
+                  "type"
+                ],
                 "type": "object"
               }
             }
@@ -2574,7 +2641,9 @@
           }
         },
         "summary": "Create Action Class",
-        "tags": ["Management API - Action Class"]
+        "tags": [
+          "Management API - Action Class"
+        ]
       }
     },
     "/api/v1/management/action-classes/{actionClassId}": {
@@ -2783,7 +2852,9 @@
           }
         },
         "summary": "Delete Action Class",
-        "tags": ["Management API - Action Class"]
+        "tags": [
+          "Management API - Action Class"
+        ]
       },
       "get": {
         "description": "Fetch an Action Class by it's ID",
@@ -2937,738 +3008,9 @@
           }
         },
         "summary": "Get Action Class by ID",
-        "tags": ["Management API - Action Class"]
-      }
-    },
-    "/api/v1/management/attribute-classes": {
-      "get": {
-        "description": "Fetches all the available attribute classes",
-        "parameters": [
-          {
-            "example": "{{apiKey}}",
-            "in": "header",
-            "name": "x-api-key",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "data": [
-                    {
-                      "archived": false,
-                      "createdAt": "2024-04-09T04:53:29.577Z",
-                      "description": "The email of the person",
-                      "environmentId": "clurwouax000azffxt7n5unn3",
-                      "id": "clurwouax000ezffxs7unemg2",
-                      "name": "email",
-                      "type": "automatic",
-                      "updatedAt": "2024-04-09T04:53:29.577Z"
-                    },
-                    {
-                      "archived": false,
-                      "createdAt": "2024-04-09T04:53:29.577Z",
-                      "description": "The language used by the person",
-                      "environmentId": "clurwouax000azffxt7n5unn3",
-                      "id": "clurwouax000fzffxv9rycait",
-                      "name": "language",
-                      "type": "automatic",
-                      "updatedAt": "2024-04-09T04:53:29.577Z"
-                    },
-                    {
-                      "archived": false,
-                      "createdAt": "2024-04-22T08:59:27.319Z",
-                      "description": null,
-                      "environmentId": "clurwouax000azffxt7n5unn3",
-                      "id": "clvaq78470004mhqfm0x3kasv",
-                      "name": "Init Attribute 2",
-                      "type": "code",
-                      "updatedAt": "2024-04-22T08:59:27.319Z"
-                    },
-                    {
-                      "archived": false,
-                      "createdAt": "2024-04-22T08:59:27.348Z",
-                      "description": null,
-                      "environmentId": "clurwouax000azffxt7n5unn3",
-                      "id": "clvaq78500005mhqfd8z2dnxq",
-                      "name": "Init Attribute 1",
-                      "type": "code",
-                      "updatedAt": "2024-04-22T08:59:27.348Z"
-                    },
-                    {
-                      "archived": false,
-                      "createdAt": "2024-04-23T07:41:05.917Z",
-                      "description": null,
-                      "environmentId": "clurwouax000azffxt7n5unn3",
-                      "id": "clvc2ub5p000l494j1xwrgvqe",
-                      "name": "created_from",
-                      "type": "code",
-                      "updatedAt": "2024-04-23T07:41:05.917Z"
-                    },
-                    {
-                      "archived": false,
-                      "createdAt": "2024-04-23T07:42:32.659Z",
-                      "description": null,
-                      "environmentId": "clurwouax000azffxt7n5unn3",
-                      "id": "clvc2w637000n494j4z3oyye3",
-                      "name": "Created From",
-                      "type": "code",
-                      "updatedAt": "2024-04-23T07:42:32.659Z"
-                    }
-                  ]
-                },
-                "schema": {
-                  "type": "object"
-                }
-              }
-            },
-            "description": "OK",
-            "headers": {
-              "Connection": {
-                "schema": {
-                  "example": "keep-alive",
-                  "type": "string"
-                }
-              },
-              "Date": {
-                "schema": {
-                  "example": "Tue, 23 Apr 2024 09:14:46 GMT",
-                  "type": "string"
-                }
-              },
-              "Keep-Alive": {
-                "schema": {
-                  "example": "timeout=5",
-                  "type": "string"
-                }
-              },
-              "Transfer-Encoding": {
-                "schema": {
-                  "example": "chunked",
-                  "type": "string"
-                }
-              },
-              "cache-control": {
-                "schema": {
-                  "example": "private, no-store",
-                  "type": "string"
-                }
-              },
-              "content-type": {
-                "schema": {
-                  "example": "application/json",
-                  "type": "string"
-                }
-              },
-              "vary": {
-                "schema": {
-                  "example": "RSC, Next-Router-State-Tree, Next-Router-Prefetch",
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Get All Attribute Classes",
-        "tags": ["Management API - Attribute Class"]
-      },
-      "post": {
-        "description": "Create a new Attribute Class by passing in its type as well as the name! Now just use them in your app and pass this value with a user & it'll be associated with it.",
-        "parameters": [
-          {
-            "example": "{{apiKey}}",
-            "in": "header",
-            "name": "x-api-key",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "example": {
-                  "environmentId": "{{environmentId}}",
-                  "key": "my-custom-attribute",
-                  "name": "My new Attribute",
-                  "type": "custom"
-                },
-                "properties": {
-                  "description": {
-                    "type": "string"
-                  },
-                  "environmentId": {
-                    "type": "string"
-                  },
-                  "key": {
-                    "type": "string"
-                  },
-                  "name": {
-                    "type": "string"
-                  },
-                  "type": {
-                    "enum": ["custom"]
-                  }
-                },
-                "required": ["environmentId", "key", "name", "type"],
-                "type": "object"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "data": {
-                    "archived": false,
-                    "createdAt": "2024-04-23T11:21:38.155Z",
-                    "description": null,
-                    "environmentId": "clurwouax000azffxt7n5unn3",
-                    "id": "clvcapx7v0000xz1zskcgf5k0",
-                    "key": "my-custom-attribute",
-                    "name": "My new Attribute",
-                    "type": "custom",
-                    "updatedAt": "2024-04-23T11:21:38.155Z"
-                  }
-                },
-                "schema": {
-                  "type": "object"
-                }
-              }
-            },
-            "description": "OK",
-            "headers": {
-              "Connection": {
-                "schema": {
-                  "example": "keep-alive",
-                  "type": "string"
-                }
-              },
-              "Date": {
-                "schema": {
-                  "example": "Tue, 23 Apr 2024 11:21:38 GMT",
-                  "type": "string"
-                }
-              },
-              "Keep-Alive": {
-                "schema": {
-                  "example": "timeout=5",
-                  "type": "string"
-                }
-              },
-              "Transfer-Encoding": {
-                "schema": {
-                  "example": "chunked",
-                  "type": "string"
-                }
-              },
-              "cache-control": {
-                "schema": {
-                  "example": "private, no-store",
-                  "type": "string"
-                }
-              },
-              "content-type": {
-                "schema": {
-                  "example": "application/json",
-                  "type": "string"
-                }
-              },
-              "vary": {
-                "schema": {
-                  "example": "RSC, Next-Router-State-Tree, Next-Router-Prefetch",
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "code": "bad_request",
-                  "details": {},
-                  "message": "\nInvalid `prisma.attributeClass.create()` invocation:\n\n\nUnique constraint failed on the fields: (`name`,`environmentId`)"
-                },
-                "schema": {
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Bad Request",
-            "headers": {
-              "Connection": {
-                "schema": {
-                  "example": "keep-alive",
-                  "type": "string"
-                }
-              },
-              "Date": {
-                "schema": {
-                  "example": "Tue, 23 Apr 2024 11:22:39 GMT",
-                  "type": "string"
-                }
-              },
-              "Keep-Alive": {
-                "schema": {
-                  "example": "timeout=5",
-                  "type": "string"
-                }
-              },
-              "Transfer-Encoding": {
-                "schema": {
-                  "example": "chunked",
-                  "type": "string"
-                }
-              },
-              "content-type": {
-                "schema": {
-                  "example": "application/json",
-                  "type": "string"
-                }
-              },
-              "vary": {
-                "schema": {
-                  "example": "RSC, Next-Router-State-Tree, Next-Router-Prefetch",
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Create Attribute Class",
-        "tags": ["Management API - Attribute Class"]
-      }
-    },
-    "/api/v1/management/attribute-classes/{attributeClassId}": {
-      "delete": {
-        "description": "Delete an attribute class by its ID. Please note that you currently cannot delete the \"automatic\" type of attributes. Please ignore them if you do not wish to utilise them.",
-        "parameters": [
-          {
-            "example": "{{apiKey}}",
-            "in": "header",
-            "name": "x-api-key",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
-            "name": "attributeClassId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "data": {
-                    "archived": false,
-                    "createdAt": "2024-04-22T08:59:27.319Z",
-                    "description": null,
-                    "environmentId": "clurwouax000azffxt7n5unn3",
-                    "id": "clvaq78470004mhqfm0x3kasv",
-                    "name": "Init Attribute 2",
-                    "type": "code",
-                    "updatedAt": "2024-04-22T08:59:27.319Z"
-                  }
-                },
-                "schema": {
-                  "type": "object"
-                }
-              }
-            },
-            "description": "OK",
-            "headers": {
-              "Connection": {
-                "schema": {
-                  "example": "keep-alive",
-                  "type": "string"
-                }
-              },
-              "Date": {
-                "schema": {
-                  "example": "Tue, 23 Apr 2024 09:58:24 GMT",
-                  "type": "string"
-                }
-              },
-              "Keep-Alive": {
-                "schema": {
-                  "example": "timeout=5",
-                  "type": "string"
-                }
-              },
-              "Transfer-Encoding": {
-                "schema": {
-                  "example": "chunked",
-                  "type": "string"
-                }
-              },
-              "cache-control": {
-                "schema": {
-                  "example": "private, no-store",
-                  "type": "string"
-                }
-              },
-              "content-type": {
-                "schema": {
-                  "example": "application/json",
-                  "type": "string"
-                }
-              },
-              "vary": {
-                "schema": {
-                  "example": "RSC, Next-Router-State-Tree, Next-Router-Prefetch",
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "code": "bad_request",
-                  "details": {},
-                  "message": "Automatic Attribute Classes cannot be deleted"
-                },
-                "schema": {
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Bad Request",
-            "headers": {
-              "Connection": {
-                "schema": {
-                  "example": "keep-alive",
-                  "type": "string"
-                }
-              },
-              "Date": {
-                "schema": {
-                  "example": "Tue, 23 Apr 2024 09:57:48 GMT",
-                  "type": "string"
-                }
-              },
-              "Keep-Alive": {
-                "schema": {
-                  "example": "timeout=5",
-                  "type": "string"
-                }
-              },
-              "Transfer-Encoding": {
-                "schema": {
-                  "example": "chunked",
-                  "type": "string"
-                }
-              },
-              "content-type": {
-                "schema": {
-                  "example": "application/json",
-                  "type": "string"
-                }
-              },
-              "vary": {
-                "schema": {
-                  "example": "RSC, Next-Router-State-Tree, Next-Router-Prefetch",
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "code": "not_found",
-                  "details": {
-                    "resource_id": "clurwouax000ezffxs7unemg2s",
-                    "resource_type": "Attribute Class"
-                  },
-                  "message": "Attribute Class not found"
-                },
-                "schema": {
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Not Found",
-            "headers": {
-              "Connection": {
-                "schema": {
-                  "example": "keep-alive",
-                  "type": "string"
-                }
-              },
-              "Date": {
-                "schema": {
-                  "example": "Tue, 23 Apr 2024 09:57:29 GMT",
-                  "type": "string"
-                }
-              },
-              "Keep-Alive": {
-                "schema": {
-                  "example": "timeout=5",
-                  "type": "string"
-                }
-              },
-              "Transfer-Encoding": {
-                "schema": {
-                  "example": "chunked",
-                  "type": "string"
-                }
-              },
-              "cache-control": {
-                "schema": {
-                  "example": "private, no-store",
-                  "type": "string"
-                }
-              },
-              "content-type": {
-                "schema": {
-                  "example": "application/json",
-                  "type": "string"
-                }
-              },
-              "vary": {
-                "schema": {
-                  "example": "RSC, Next-Router-State-Tree, Next-Router-Prefetch",
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Delete Attribute Class",
-        "tags": ["Management API - Attribute Class"]
-      },
-      "get": {
-        "description": "Fetches an Attribute Class by its ID",
-        "parameters": [
-          {
-            "example": "{{apiKey}}",
-            "in": "header",
-            "name": "x-api-key",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
-            "name": "attributeClassId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "data": {
-                    "archived": false,
-                    "createdAt": "2024-04-09T04:53:29.577Z",
-                    "description": "The email of the person",
-                    "environmentId": "clurwouax000azffxt7n5unn3",
-                    "id": "clurwouax000ezffxs7unemg2",
-                    "name": "email",
-                    "type": "automatic",
-                    "updatedAt": "2024-04-09T04:53:29.577Z"
-                  }
-                },
-                "schema": {
-                  "type": "object"
-                }
-              }
-            },
-            "description": "OK",
-            "headers": {
-              "Connection": {
-                "schema": {
-                  "example": "keep-alive",
-                  "type": "string"
-                }
-              },
-              "Date": {
-                "schema": {
-                  "example": "Tue, 23 Apr 2024 09:15:25 GMT",
-                  "type": "string"
-                }
-              },
-              "Keep-Alive": {
-                "schema": {
-                  "example": "timeout=5",
-                  "type": "string"
-                }
-              },
-              "Transfer-Encoding": {
-                "schema": {
-                  "example": "chunked",
-                  "type": "string"
-                }
-              },
-              "cache-control": {
-                "schema": {
-                  "example": "private, no-store",
-                  "type": "string"
-                }
-              },
-              "content-type": {
-                "schema": {
-                  "example": "application/json",
-                  "type": "string"
-                }
-              },
-              "vary": {
-                "schema": {
-                  "example": "RSC, Next-Router-State-Tree, Next-Router-Prefetch",
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "code": "not_found",
-                  "details": {
-                    "resource_id": "clurwouax000ezffxs7unemg2s",
-                    "resource_type": "Attribute Class"
-                  },
-                  "message": "Attribute Class not found"
-                },
-                "schema": {
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Not Found",
-            "headers": {
-              "Connection": {
-                "schema": {
-                  "example": "keep-alive",
-                  "type": "string"
-                }
-              },
-              "Date": {
-                "schema": {
-                  "example": "Tue, 23 Apr 2024 09:15:59 GMT",
-                  "type": "string"
-                }
-              },
-              "Keep-Alive": {
-                "schema": {
-                  "example": "timeout=5",
-                  "type": "string"
-                }
-              },
-              "Transfer-Encoding": {
-                "schema": {
-                  "example": "chunked",
-                  "type": "string"
-                }
-              },
-              "cache-control": {
-                "schema": {
-                  "example": "private, no-store",
-                  "type": "string"
-                }
-              },
-              "content-type": {
-                "schema": {
-                  "example": "application/json",
-                  "type": "string"
-                }
-              },
-              "vary": {
-                "schema": {
-                  "example": "RSC, Next-Router-State-Tree, Next-Router-Prefetch",
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "500": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "code": "internal_server_error",
-                  "details": {},
-                  "message": "Some error occurred"
-                },
-                "schema": {
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Internal Server Error",
-            "headers": {
-              "Connection": {
-                "schema": {
-                  "example": "keep-alive",
-                  "type": "string"
-                }
-              },
-              "Date": {
-                "schema": {
-                  "example": "Tue, 23 Apr 2024 09:15:37 GMT",
-                  "type": "string"
-                }
-              },
-              "Keep-Alive": {
-                "schema": {
-                  "example": "timeout=5",
-                  "type": "string"
-                }
-              },
-              "Transfer-Encoding": {
-                "schema": {
-                  "example": "chunked",
-                  "type": "string"
-                }
-              },
-              "cache-control": {
-                "schema": {
-                  "example": "private, no-store",
-                  "type": "string"
-                }
-              },
-              "content-type": {
-                "schema": {
-                  "example": "application/json",
-                  "type": "string"
-                }
-              },
-              "vary": {
-                "schema": {
-                  "example": "RSC, Next-Router-State-Tree, Next-Router-Prefetch",
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Get Attribute Class by ID",
-        "tags": ["Management API - Attribute Class"]
+        "tags": [
+          "Management API - Action Class"
+        ]
       }
     },
     "/api/v1/management/contact-attribute-keys": {
@@ -3751,7 +3093,9 @@
           }
         },
         "summary": "Get All Contact Attribute Keys",
-        "tags": ["Management API - Contact Attribute Keys"]
+        "tags": [
+          "Management API - Contact Attribute Keys"
+        ]
       }
     },
     "/api/v1/management/contact-attribute-keys/{contactAttributeKeyId}": {
@@ -3902,7 +3246,9 @@
           }
         },
         "summary": "Get Contact Attribute Key by ID",
-        "tags": ["Management API - Contact Attribute Keys"]
+        "tags": [
+          "Management API - Contact Attribute Keys"
+        ]
       }
     },
     "/api/v1/management/contact-attributes": {
@@ -3982,7 +3328,9 @@
           }
         },
         "summary": "Get All Contact Attributes",
-        "tags": ["Management API - Contact Attributes"]
+        "tags": [
+          "Management API - Contact Attributes"
+        ]
       }
     },
     "/api/v1/management/contacts": {
@@ -4068,7 +3416,9 @@
           }
         },
         "summary": "Get All Contacts",
-        "tags": ["Management API - Contacts"]
+        "tags": [
+          "Management API - Contacts"
+        ]
       }
     },
     "/api/v1/management/contacts/{contactId}": {
@@ -4172,7 +3522,9 @@
           }
         },
         "summary": "Get Contact by ID",
-        "tags": ["Management API - Contacts"]
+        "tags": [
+          "Management API - Contacts"
+        ]
       }
     },
     "/api/v1/management/me": {
@@ -4251,376 +3603,9 @@
           }
         },
         "summary": "Me",
-        "tags": ["Management API - Me"]
-      }
-    },
-    "/api/v1/management/people": {
-      "get": {
-        "description": "Get all the identified people from Formbricks",
-        "parameters": [
-          {
-            "example": "{{apiKey}}",
-            "in": "header",
-            "name": "x-api-key",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "data": [
-                    {
-                      "attributes": {
-                        "Init Attribute 1": "eight",
-                        "language": "gu"
-                      },
-                      "createdAt": "2024-04-22T08:59:26.959Z",
-                      "environmentId": "clurwouax000azffxt7n5unn3",
-                      "id": "clvaq77u70002mhqfih5bnk0i",
-                      "updatedAt": "2024-04-22T08:59:26.959Z",
-                      "userId": "THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING"
-                    },
-                    {
-                      "attributes": {},
-                      "createdAt": "2024-04-23T07:12:44.928Z",
-                      "environmentId": "clurwouax000azffxt7n5unn3",
-                      "id": "clvc1tuo00003494jnz64wd0t",
-                      "updatedAt": "2024-04-23T07:12:44.928Z",
-                      "userId": "1"
-                    },
-                    {
-                      "attributes": {
-                        "Init Attribute 1": "eight",
-                        "language": "gu"
-                      },
-                      "createdAt": "2024-04-23T07:30:42.730Z",
-                      "environmentId": "clurwouax000azffxt7n5unn3",
-                      "id": "clvc2gyay0009494jbanqhr79",
-                      "updatedAt": "2024-04-23T07:30:42.730Z",
-                      "userId": "SECOND-USER-ID"
-                    },
-                    {
-                      "attributes": {},
-                      "createdAt": "2024-04-23T07:35:47.091Z",
-                      "environmentId": "clurwouax000azffxt7n5unn3",
-                      "id": "clvc2nh5g000h494jkr6qcxhz",
-                      "updatedAt": "2024-04-23T07:35:47.091Z",
-                      "userId": "Shubham"
-                    },
-                    {
-                      "attributes": {
-                        "Created From": "API",
-                        "created_from": "API"
-                      },
-                      "createdAt": "2024-04-23T07:39:22.696Z",
-                      "environmentId": "clurwouax000azffxt7n5unn3",
-                      "id": "clvc2s3ig000k494jltkqkm2u",
-                      "updatedAt": "2024-04-23T07:39:22.696Z",
-                      "userId": "THIS-IS-A-VVERY-LONG-USER-ID-FOR-TESTING"
-                    }
-                  ]
-                },
-                "schema": {
-                  "type": "object"
-                }
-              }
-            },
-            "description": "OK",
-            "headers": {
-              "Connection": {
-                "schema": {
-                  "example": "keep-alive",
-                  "type": "string"
-                }
-              },
-              "Date": {
-                "schema": {
-                  "example": "Tue, 23 Apr 2024 11:35:32 GMT",
-                  "type": "string"
-                }
-              },
-              "Keep-Alive": {
-                "schema": {
-                  "example": "timeout=5",
-                  "type": "string"
-                }
-              },
-              "Transfer-Encoding": {
-                "schema": {
-                  "example": "chunked",
-                  "type": "string"
-                }
-              },
-              "cache-control": {
-                "schema": {
-                  "example": "private, no-store",
-                  "type": "string"
-                }
-              },
-              "content-type": {
-                "schema": {
-                  "example": "application/json",
-                  "type": "string"
-                }
-              },
-              "vary": {
-                "schema": {
-                  "example": "RSC, Next-Router-State-Tree, Next-Router-Prefetch",
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Get All Persons",
-        "tags": ["Management API - People"]
-      }
-    },
-    "/api/v1/management/people/{personId}": {
-      "delete": {
-        "description": "Delete an identified person from Formbricks.",
-        "parameters": [
-          {
-            "example": "{{apiKey}}",
-            "in": "header",
-            "name": "x-api-key",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
-            "name": "personId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "data": {
-                    "success": "Person deleted successfully"
-                  }
-                },
-                "schema": {
-                  "type": "object"
-                }
-              }
-            },
-            "description": "OK",
-            "headers": {
-              "Connection": {
-                "schema": {
-                  "example": "keep-alive",
-                  "type": "string"
-                }
-              },
-              "Date": {
-                "schema": {
-                  "example": "Tue, 23 Apr 2024 11:37:27 GMT",
-                  "type": "string"
-                }
-              },
-              "Keep-Alive": {
-                "schema": {
-                  "example": "timeout=5",
-                  "type": "string"
-                }
-              },
-              "Transfer-Encoding": {
-                "schema": {
-                  "example": "chunked",
-                  "type": "string"
-                }
-              },
-              "cache-control": {
-                "schema": {
-                  "example": "private, no-store",
-                  "type": "string"
-                }
-              },
-              "content-type": {
-                "schema": {
-                  "example": "application/json",
-                  "type": "string"
-                }
-              },
-              "vary": {
-                "schema": {
-                  "example": "RSC, Next-Router-State-Tree, Next-Router-Prefetch",
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "code": "not_found",
-                  "details": {
-                    "resource_id": "clvaq77u70002mhqfih5bnk0i",
-                    "resource_type": "Person"
-                  },
-                  "message": "Person not found"
-                },
-                "schema": {
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Not Found",
-            "headers": {
-              "Connection": {
-                "schema": {
-                  "example": "keep-alive",
-                  "type": "string"
-                }
-              },
-              "Date": {
-                "schema": {
-                  "example": "Tue, 23 Apr 2024 11:37:37 GMT",
-                  "type": "string"
-                }
-              },
-              "Keep-Alive": {
-                "schema": {
-                  "example": "timeout=5",
-                  "type": "string"
-                }
-              },
-              "Transfer-Encoding": {
-                "schema": {
-                  "example": "chunked",
-                  "type": "string"
-                }
-              },
-              "cache-control": {
-                "schema": {
-                  "example": "private, no-store",
-                  "type": "string"
-                }
-              },
-              "content-type": {
-                "schema": {
-                  "example": "application/json",
-                  "type": "string"
-                }
-              },
-              "vary": {
-                "schema": {
-                  "example": "RSC, Next-Router-State-Tree, Next-Router-Prefetch",
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Delete Person",
-        "tags": ["Management API - People"]
-      },
-      "get": {
-        "description": "Get a person by their internal ID on Formbricks. This internal ID can be found from the Get All Person endpoint.",
-        "parameters": [
-          {
-            "example": "{{apiKey}}",
-            "in": "header",
-            "name": "x-api-key",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
-            "name": "personId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "data": {
-                    "attributes": {
-                      "Init Attribute 1": "eight",
-                      "language": "gu"
-                    },
-                    "createdAt": "2024-04-22T08:59:26.959Z",
-                    "environmentId": "clurwouax000azffxt7n5unn3",
-                    "id": "clvaq77u70002mhqfih5bnk0i",
-                    "updatedAt": "2024-04-22T08:59:26.959Z",
-                    "userId": "THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING"
-                  }
-                },
-                "schema": {
-                  "type": "object"
-                }
-              }
-            },
-            "description": "OK",
-            "headers": {
-              "Connection": {
-                "schema": {
-                  "example": "keep-alive",
-                  "type": "string"
-                }
-              },
-              "Date": {
-                "schema": {
-                  "example": "Tue, 23 Apr 2024 11:36:41 GMT",
-                  "type": "string"
-                }
-              },
-              "Keep-Alive": {
-                "schema": {
-                  "example": "timeout=5",
-                  "type": "string"
-                }
-              },
-              "Transfer-Encoding": {
-                "schema": {
-                  "example": "chunked",
-                  "type": "string"
-                }
-              },
-              "cache-control": {
-                "schema": {
-                  "example": "private, no-store",
-                  "type": "string"
-                }
-              },
-              "content-type": {
-                "schema": {
-                  "example": "application/json",
-                  "type": "string"
-                }
-              },
-              "vary": {
-                "schema": {
-                  "example": "RSC, Next-Router-State-Tree, Next-Router-Prefetch",
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Get Person by ID",
-        "tags": ["Management API - People"]
+        "tags": [
+          "Management API - Me"
+        ]
       }
     },
     "/api/v1/management/responses": {
@@ -5063,7 +4048,9 @@
           }
         },
         "summary": "Get Survey Responses",
-        "tags": ["Management API - Response"]
+        "tags": [
+          "Management API - Response"
+        ]
       },
       "post": {
         "description": "Create a user response using the management API. This will trigger the response pipeline, including webhooks, integrations, follow-up emails, and other configured actions.",
@@ -5086,7 +4073,9 @@
                   "value": {
                     "createdAt": "2024-09-05T08:44:16.051Z",
                     "data": {
-                      "hg508afs7lgx8nlni5dtit5u": ["Hello World"]
+                      "hg508afs7lgx8nlni5dtit5u": [
+                        "Hello World"
+                      ]
                     },
                     "finished": false,
                     "language": "en",
@@ -5113,7 +4102,12 @@
                   },
                   "language": {
                     "description": "Language of the response (survey should have this language enabled)",
-                    "enum": ["en", "de", "pt", "etc.."],
+                    "enum": [
+                      "en",
+                      "de",
+                      "pt",
+                      "etc.."
+                    ],
                     "type": "string"
                   },
                   "surveyId": {
@@ -5126,7 +4120,9 @@
                     "type": "string"
                   }
                 },
-                "required": ["surveyId"],
+                "required": [
+                  "surveyId"
+                ],
                 "type": "object"
               }
             }
@@ -5285,7 +4281,9 @@
           }
         },
         "summary": "Create Response",
-        "tags": ["Management API - Response"]
+        "tags": [
+          "Management API - Response"
+        ]
       }
     },
     "/api/v1/management/responses/{responseId}": {
@@ -5461,7 +4459,9 @@
           }
         },
         "summary": "Delete Response",
-        "tags": ["Management API - Response"]
+        "tags": [
+          "Management API - Response"
+        ]
       },
       "get": {
         "description": "Fetch the entire response object based on its ID",
@@ -5635,7 +4635,9 @@
           }
         },
         "summary": "Get Response by ID",
-        "tags": ["Management API - Response"]
+        "tags": [
+          "Management API - Response"
+        ]
       },
       "put": {
         "description": "Update an existing user response with new data. This will trigger the response pipeline, including webhooks, integrations, follow-up emails (if the response is marked as finished), and other configured actions.",
@@ -5832,7 +4834,9 @@
           }
         },
         "summary": "Update Response",
-        "tags": ["Management API - Response"]
+        "tags": [
+          "Management API - Response"
+        ]
       }
     },
     "/api/v1/management/storage": {
@@ -5853,7 +4857,11 @@
           "content": {
             "application/json": {
               "example": {
-                "allowedFileExtensions": ["png", "jpg", "jpeg"],
+                "allowedFileExtensions": [
+                  "png",
+                  "jpg",
+                  "jpeg"
+                ],
                 "environmentId": "env123",
                 "fileName": "profile.png",
                 "fileType": "image/png"
@@ -5908,7 +4916,11 @@
                     "type": "string"
                   }
                 },
-                "required": ["fileName", "fileType", "environmentId"],
+                "required": [
+                  "fileName",
+                  "fileType",
+                  "environmentId"
+                ],
                 "type": "object"
               }
             }
@@ -6026,7 +5038,9 @@
           }
         },
         "summary": "Upload Public File",
-        "tags": ["Management API - Storage"]
+        "tags": [
+          "Management API - Storage"
+        ]
       }
     },
     "/api/v1/management/surveys": {
@@ -6106,19 +5120,19 @@
                             {
                               "id": "xpoxuu3sifk1ee8he67ctf5i",
                               "label": {
-                                "default": "Sun \u2600\ufe0f"
+                                "default": "Sun ☀️"
                               }
                             },
                             {
                               "id": "hnsovcdmxtcbly6tig1az3qc",
                               "label": {
-                                "default": "Ocean \ud83c\udf0a"
+                                "default": "Ocean 🌊"
                               }
                             },
                             {
                               "id": "kcnelzdxknvwo8fq20d3nrr5",
                               "label": {
-                                "default": "Palms \ud83c\udf34"
+                                "default": "Palms 🌴"
                               }
                             }
                           ],
@@ -6213,7 +5227,9 @@
           }
         },
         "summary": "Get All Surveys",
-        "tags": ["Management API - Survey"]
+        "tags": [
+          "Management API - Survey"
+        ]
       },
       "post": {
         "description": "Create a survey with granular settings, questions, their types, welcomeCard, thankYouCard, languages, etc right from this API. We'd however recommend you to do this via our Formbricks App with the UI for a better visual experience.",
@@ -6243,16 +5259,25 @@
                     "displayPercentage": null,
                     "endings": [
                       {
-                        "buttonLabel": { "default": "Create your own Survey" },
+                        "buttonLabel": {
+                          "default": "Create your own Survey"
+                        },
                         "buttonLink": "https://formbricks.com/signup",
-                        "headline": { "default": "Thank you!" },
+                        "headline": {
+                          "default": "Thank you!"
+                        },
                         "id": "p73t62dgwq0cvmtt6ug0hmfc",
-                        "subheader": { "default": "We appreciate your feedback." },
+                        "subheader": {
+                          "default": "We appreciate your feedback."
+                        },
                         "type": "endScreen"
                       }
                     ],
                     "environmentId": "{{environmentId}}",
-                    "hiddenFields": { "enabled": false, "fieldIds": [] },
+                    "hiddenFields": {
+                      "enabled": false,
+                      "fieldIds": []
+                    },
                     "isVerifyEmailEnabled": false,
                     "languages": [],
                     "name": "Example Survey",
@@ -6260,21 +5285,44 @@
                     "productOverwrites": null,
                     "questions": [
                       {
-                        "headline": { "default": "What would you like to know?" },
+                        "headline": {
+                          "default": "What would you like to know?"
+                        },
                         "id": "ovpy6va1hab7fl12n913zua0",
                         "inputType": "text",
-                        "placeholder": { "default": "Type your answer here..." },
+                        "placeholder": {
+                          "default": "Type your answer here..."
+                        },
                         "required": true,
-                        "subheader": { "default": "This is an example survey." },
+                        "subheader": {
+                          "default": "This is an example survey."
+                        },
                         "type": "openText"
                       },
                       {
                         "choices": [
-                          { "id": "xpoxuu3sifk1ee8he67ctf5i", "label": { "default": "Sun \u2600\ufe0f" } },
-                          { "id": "hnsovcdmxtcbly6tig1az3qc", "label": { "default": "Ocean \ud83c\udf0a" } },
-                          { "id": "kcnelzdxknvwo8fq20d3nrr5", "label": { "default": "Palms \ud83c\udf34" } }
+                          {
+                            "id": "xpoxuu3sifk1ee8he67ctf5i",
+                            "label": {
+                              "default": "Sun ☀️"
+                            }
+                          },
+                          {
+                            "id": "hnsovcdmxtcbly6tig1az3qc",
+                            "label": {
+                              "default": "Ocean 🌊"
+                            }
+                          },
+                          {
+                            "id": "kcnelzdxknvwo8fq20d3nrr5",
+                            "label": {
+                              "default": "Palms 🌴"
+                            }
+                          }
                         ],
-                        "headline": { "default": "What's important on vacay?" },
+                        "headline": {
+                          "default": "What's important on vacay?"
+                        },
                         "id": "awkn2llljy7a4oulp5t15yec",
                         "required": true,
                         "shuffleOption": "none",
@@ -6285,7 +5333,10 @@
                     "redirectUrl": null,
                     "segmentId": null,
                     "showLanguageSwitch": null,
-                    "singleUse": { "enabled": false, "isEncrypted": true },
+                    "singleUse": {
+                      "enabled": false,
+                      "isEncrypted": true
+                    },
                     "status": "inProgress",
                     "styling": null,
                     "surveyClosedMessage": null,
@@ -6294,7 +5345,9 @@
                     "welcomeCard": {
                       "enabled": true,
                       "fileUrl": "",
-                      "headline": { "default": "Welcome!" },
+                      "headline": {
+                        "default": "Welcome!"
+                      },
                       "html": {
                         "default": "<p class=\"fb-editor-paragraph\" dir=\"ltr\"><span style=\"white-space: pre-wrap;\">Thanks for providing your feedback - let's go!</span></p>"
                       },
@@ -6307,18 +5360,34 @@
               "schema": {
                 "properties": {
                   "displayOption": {
-                    "enum": ["displayOnce", "displayMultiple", "respondMultiple", "displaySome"],
+                    "enum": [
+                      "displayOnce",
+                      "displayMultiple",
+                      "respondMultiple",
+                      "displaySome"
+                    ],
                     "type": "string"
                   },
-                  "environmentId": { "type": "string" },
+                  "environmentId": {
+                    "type": "string"
+                  },
                   "languages": {
                     "items": {
                       "properties": {
-                        "default": { "type": "boolean" },
-                        "enabled": { "type": "boolean" },
+                        "default": {
+                          "type": "boolean"
+                        },
+                        "enabled": {
+                          "type": "boolean"
+                        },
                         "language": {
                           "description": "Language of the survey (This language should exist in your environment)",
-                          "enum": ["en", "de", "pt", "etc.."],
+                          "enum": [
+                            "en",
+                            "de",
+                            "pt",
+                            "etc.."
+                          ],
                           "type": "string"
                         }
                       },
@@ -6326,29 +5395,70 @@
                     },
                     "type": "array"
                   },
-                  "name": { "type": "string" },
+                  "name": {
+                    "type": "string"
+                  },
                   "questions": {
                     "items": {
                       "properties": {
                         "date": {
                           "properties": {
-                            "format": { "enum": ["M-d-y", "d-M-y", "y-M-d"], "type": "string" }
+                            "format": {
+                              "enum": [
+                                "M-d-y",
+                                "d-M-y",
+                                "y-M-d"
+                              ],
+                              "type": "string"
+                            }
                           },
                           "type": "object"
                         },
-                        "id": { "type": "string" },
+                        "id": {
+                          "type": "string"
+                        },
                         "inputType": {
-                          "enum": ["text", "email", "url", "number", "phone"],
+                          "enum": [
+                            "text",
+                            "email",
+                            "url",
+                            "number",
+                            "phone"
+                          ],
                           "type": "string"
                         },
                         "rating": {
                           "properties": {
-                            "range": { "enum": [3, 4, 5, 6, 7, 10], "type": "integer" },
-                            "scale": { "enum": ["number", "smiley", "star"], "type": "string" }
+                            "range": {
+                              "enum": [
+                                3,
+                                4,
+                                5,
+                                6,
+                                7,
+                                10
+                              ],
+                              "type": "integer"
+                            },
+                            "scale": {
+                              "enum": [
+                                "number",
+                                "smiley",
+                                "star"
+                              ],
+                              "type": "string"
+                            }
                           },
                           "type": "object"
                         },
-                        "shuffleOption": { "enum": ["none", "all", "exceptLast"], "type": "string" },
+                        "shuffleOption": {
+                          "enum": [
+                            "none",
+                            "all",
+                            "exceptLast"
+                          ],
+                          "type": "string"
+                        },
                         "type": {
                           "enum": [
                             "address",
@@ -6374,10 +5484,29 @@
                     },
                     "type": "array"
                   },
-                  "status": { "enum": ["draft", "inProgress", "paused", "completed"], "type": "string" },
-                  "type": { "enum": ["link", "app"], "type": "string" }
+                  "status": {
+                    "enum": [
+                      "draft",
+                      "inProgress",
+                      "paused",
+                      "completed"
+                    ],
+                    "type": "string"
+                  },
+                  "type": {
+                    "enum": [
+                      "link",
+                      "app"
+                    ],
+                    "type": "string"
+                  }
                 },
-                "required": ["environmentId", "name", "type", "status"],
+                "required": [
+                  "environmentId",
+                  "name",
+                  "type",
+                  "status"
+                ],
                 "type": "object"
               }
             }
@@ -6445,19 +5574,19 @@
                           {
                             "id": "xpoxuu3sifk1ee8he67ctf5i",
                             "label": {
-                              "default": "Sun \u2600\ufe0f"
+                              "default": "Sun ☀️"
                             }
                           },
                           {
                             "id": "hnsovcdmxtcbly6tig1az3qc",
                             "label": {
-                              "default": "Ocean \ud83c\udf0a"
+                              "default": "Ocean 🌊"
                             }
                           },
                           {
                             "id": "kcnelzdxknvwo8fq20d3nrr5",
                             "label": {
-                              "default": "Palms \ud83c\udf34"
+                              "default": "Palms 🌴"
                             }
                           }
                         ],
@@ -6624,7 +5753,9 @@
           }
         },
         "summary": "Create Survey",
-        "tags": ["Management API - Survey"]
+        "tags": [
+          "Management API - Survey"
+        ]
       }
     },
     "/api/v1/management/surveys/{surveyId}": {
@@ -6711,19 +5842,19 @@
                           {
                             "id": "xpoxuu3sifk1ee8he67ctf5i",
                             "label": {
-                              "default": "Sun \u2600\ufe0f"
+                              "default": "Sun ☀️"
                             }
                           },
                           {
                             "id": "hnsovcdmxtcbly6tig1az3qc",
                             "label": {
-                              "default": "Ocean \ud83c\udf0a"
+                              "default": "Ocean 🌊"
                             }
                           },
                           {
                             "id": "kcnelzdxknvwo8fq20d3nrr5",
                             "label": {
-                              "default": "Palms \ud83c\udf34"
+                              "default": "Palms 🌴"
                             }
                           }
                         ],
@@ -6879,7 +6010,9 @@
           }
         },
         "summary": "Delete Survey",
-        "tags": ["Management API - Survey"]
+        "tags": [
+          "Management API - Survey"
+        ]
       },
       "get": {
         "description": "Fetch a survey object based on its ID",
@@ -6964,19 +6097,19 @@
                           {
                             "id": "xpoxuu3sifk1ee8he67ctf5i",
                             "label": {
-                              "default": "Sun \u2600\ufe0f"
+                              "default": "Sun ☀️"
                             }
                           },
                           {
                             "id": "hnsovcdmxtcbly6tig1az3qc",
                             "label": {
-                              "default": "Ocean \ud83c\udf0a"
+                              "default": "Ocean 🌊"
                             }
                           },
                           {
                             "id": "kcnelzdxknvwo8fq20d3nrr5",
                             "label": {
-                              "default": "Palms \ud83c\udf34"
+                              "default": "Palms 🌴"
                             }
                           }
                         ],
@@ -7070,7 +6203,9 @@
           }
         },
         "summary": "Get Survey by ID",
-        "tags": ["Management API - Survey"]
+        "tags": [
+          "Management API - Survey"
+        ]
       },
       "put": {
         "description": "Update an existing survey with new properties. This is also what we'd recommend you to do from the UI for a better visual feedback.",
@@ -7167,19 +6302,19 @@
                           {
                             "id": "xpoxuu3sifk1ee8he67ctf5i",
                             "label": {
-                              "default": "Sun \u2600\ufe0f"
+                              "default": "Sun ☀️"
                             }
                           },
                           {
                             "id": "hnsovcdmxtcbly6tig1az3qc",
                             "label": {
-                              "default": "Ocean \ud83c\udf0a"
+                              "default": "Ocean 🌊"
                             }
                           },
                           {
                             "id": "kcnelzdxknvwo8fq20d3nrr5",
                             "label": {
-                              "default": "Palms \ud83c\udf34"
+                              "default": "Palms 🌴"
                             }
                           }
                         ],
@@ -7326,7 +6461,9 @@
           }
         },
         "summary": "Update Survey",
-        "tags": ["Management API - Survey"]
+        "tags": [
+          "Management API - Survey"
+        ]
       }
     },
     "/api/v1/management/surveys/{surveyId}/singleUseIds": {
@@ -7508,7 +6645,9 @@
           }
         },
         "summary": "Get SingleUse Links",
-        "tags": ["Management API - Survey"]
+        "tags": [
+          "Management API - Survey"
+        ]
       }
     },
     "/api/v1/webhooks": {
@@ -7538,7 +6677,11 @@
                       "name": null,
                       "source": "user",
                       "surveyIds": [],
-                      "triggers": ["responseCreated", "responseUpdated", "responseFinished"],
+                      "triggers": [
+                        "responseCreated",
+                        "responseUpdated",
+                        "responseFinished"
+                      ],
                       "updatedAt": "2024-04-23T12:35:45.326Z",
                       "url": "https://eoy8o887lmsqmhz.m.pipedream.net"
                     },
@@ -7549,7 +6692,11 @@
                       "name": null,
                       "source": "user",
                       "surveyIds": [],
-                      "triggers": ["responseCreated", "responseUpdated", "responseFinished"],
+                      "triggers": [
+                        "responseCreated",
+                        "responseUpdated",
+                        "responseFinished"
+                      ],
                       "updatedAt": "2024-04-23T12:36:07.100Z",
                       "url": "https://eoy8o887lmsqmhz.m.pipedream.net"
                     },
@@ -7560,7 +6707,11 @@
                       "name": null,
                       "source": "user",
                       "surveyIds": [],
-                      "triggers": ["responseCreated", "responseUpdated", "responseFinished"],
+                      "triggers": [
+                        "responseCreated",
+                        "responseUpdated",
+                        "responseFinished"
+                      ],
                       "updatedAt": "2024-04-23T12:36:56.507Z",
                       "url": "https://eoy8o887lmsqmhz.m.pipedream.net"
                     }
@@ -7613,7 +6764,9 @@
           }
         },
         "summary": "Get All Webhooks",
-        "tags": ["Management API - Webhook"]
+        "tags": [
+          "Management API - Webhook"
+        ]
       },
       "post": {
         "description": "Create a new webhook right from the API and see it active right away!",
@@ -7634,7 +6787,11 @@
               "examples": {
                 "default": {
                   "value": {
-                    "triggers": ["responseCreated", "responseUpdated", "responseFinished"],
+                    "triggers": [
+                      "responseCreated",
+                      "responseUpdated",
+                      "responseFinished"
+                    ],
                     "url": "https://eoy8o887lmsqmhz.m.pipedream.net"
                   }
                 }
@@ -7655,7 +6812,11 @@
                   "triggers": {
                     "description": "List of events that trigger this webhook",
                     "items": {
-                      "enum": ["responseCreated", "responseUpdated", "responseFinished"],
+                      "enum": [
+                        "responseCreated",
+                        "responseUpdated",
+                        "responseFinished"
+                      ],
                       "type": "string"
                     },
                     "type": "array"
@@ -7665,7 +6826,10 @@
                     "type": "string"
                   }
                 },
-                "required": ["url", "triggers"],
+                "required": [
+                  "url",
+                  "triggers"
+                ],
                 "type": "object"
               }
             }
@@ -7683,7 +6847,11 @@
                     "name": null,
                     "source": "user",
                     "surveyIds": [],
-                    "triggers": ["responseCreated", "responseUpdated", "responseFinished"],
+                    "triggers": [
+                      "responseCreated",
+                      "responseUpdated",
+                      "responseFinished"
+                    ],
                     "updatedAt": "2024-04-23T12:35:45.326Z",
                     "url": "https://eoy8o887lmsqmhz.m.pipedream.net"
                   }
@@ -7741,7 +6909,9 @@
           }
         },
         "summary": "Create Webhook",
-        "tags": ["Management API - Webhook"]
+        "tags": [
+          "Management API - Webhook"
+        ]
       }
     },
     "/api/v1/webhooks/{webhookId}": {
@@ -7778,7 +6948,11 @@
                     "name": null,
                     "source": "user",
                     "surveyIds": [],
-                    "triggers": ["responseCreated", "responseUpdated", "responseFinished"],
+                    "triggers": [
+                      "responseCreated",
+                      "responseUpdated",
+                      "responseFinished"
+                    ],
                     "updatedAt": "2024-04-23T12:35:45.326Z",
                     "url": "https://eoy8o887lmsqmhz.m.pipedream.net"
                   }
@@ -7898,7 +7072,9 @@
           }
         },
         "summary": "Delete Webhook",
-        "tags": ["Management API - Webhook"]
+        "tags": [
+          "Management API - Webhook"
+        ]
       },
       "get": {
         "description": "Get a specific webhook object based on its ID",
@@ -7933,7 +7109,11 @@
                     "name": null,
                     "source": "user",
                     "surveyIds": [],
-                    "triggers": ["responseCreated", "responseUpdated", "responseFinished"],
+                    "triggers": [
+                      "responseCreated",
+                      "responseUpdated",
+                      "responseFinished"
+                    ],
                     "updatedAt": "2024-04-23T12:35:45.326Z",
                     "url": "https://eoy8o887lmsqmhz.m.pipedream.net"
                   }
@@ -7991,7 +7171,9 @@
           }
         },
         "summary": "Get Webhook",
-        "tags": ["Management API - Webhook"]
+        "tags": [
+          "Management API - Webhook"
+        ]
       }
     },
     "/health": {
@@ -8134,7 +7316,9 @@
           }
         },
         "summary": "Health Check",
-        "tags": ["Health"]
+        "tags": [
+          "Health"
+        ]
       }
     }
   },
