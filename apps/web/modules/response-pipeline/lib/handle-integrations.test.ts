@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import type { TResponsePipelineJobData } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
 import {
   TIntegrationAirtable,
@@ -56,6 +55,7 @@ const questionId2 = "q2";
 const questionId3 = "q3_picture";
 const hiddenFieldId = "hidden1";
 const variableId = "var1";
+type TIntegrationPipelineInput = Parameters<typeof handleIntegrations>[1];
 
 const mockPipelineInput = {
   workspaceId: "env1",
@@ -93,7 +93,7 @@ const mockPipelineInput = {
     },
     ttc: {},
   } as unknown as TResponse,
-} as TResponsePipelineJobData;
+} as Parameters<typeof handleIntegrations>[1];
 
 const mockSurvey = {
   id: surveyId,
@@ -444,7 +444,7 @@ describe("handleIntegrations", () => {
 
     test("maps picture selection URLs without mutating the shared response payload", async () => {
       vi.mocked(writeNotionData).mockResolvedValue(undefined);
-      const pipelineInput = structuredClone(mockPipelineInput) as TResponsePipelineJobData;
+      const pipelineInput = structuredClone(mockPipelineInput) as TIntegrationPipelineInput;
 
       await handleIntegrations([mockNotionIntegration], pipelineInput, mockSurvey);
 
@@ -462,7 +462,7 @@ describe("handleIntegrations", () => {
 
     test("coerces non-string Notion text values and avoids invalid multi-url payloads", async () => {
       vi.mocked(writeNotionData).mockResolvedValue(undefined);
-      const pipelineInput = structuredClone(mockPipelineInput) as TResponsePipelineJobData;
+      const pipelineInput = structuredClone(mockPipelineInput) as TIntegrationPipelineInput;
       const pipelineResponseData = pipelineInput.response.data as Record<string, unknown>;
       pipelineResponseData[questionId1] = 42;
       pipelineResponseData.objectField = { foo: "bar" };
