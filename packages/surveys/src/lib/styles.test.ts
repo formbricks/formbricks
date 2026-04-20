@@ -297,6 +297,7 @@ describe("addCustomThemeToDom", () => {
       brandColor: { light: "#112233" },
       elementHeadlineColor: { light: "#AABBCC" },
       elementDescriptionColor: { light: "#AABBCC" },
+      inputTextColor: { light: "#334455" },
       inputBorderColor: { light: "#DDDDDD" },
       cardBackgroundColor: { light: "#EEEEEE" },
       cardBorderColor: { light: "#CCCCCC" },
@@ -349,8 +350,8 @@ describe("addCustomThemeToDom", () => {
     const styling: TSurveyStyling = {
       ...getBaseWorkspaceStyling(),
       // Buttons
-      buttonBgColor: { light: "#btn-bg" },
-      buttonTextColor: { light: "#btn-text" },
+      buttonBgColor: { light: "#AA1122" },
+      buttonTextColor: { light: "#BB2233" },
       buttonBorderRadius: 4,
       buttonHeight: "40",
       buttonFontSize: 16,
@@ -358,7 +359,7 @@ describe("addCustomThemeToDom", () => {
       buttonPaddingX: 20,
       buttonPaddingY: 10,
       // Inputs
-      inputTextColor: { light: "#input-text" },
+      inputTextColor: { light: "#334455" },
       inputBorderRadius: 4,
       inputHeight: 40,
       inputFontSize: 14,
@@ -367,9 +368,9 @@ describe("addCustomThemeToDom", () => {
       inputPlaceholderOpacity: 0.5,
       inputShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
       // Options
-      optionBgColor: { light: "#option-bg" },
-      optionLabelColor: { light: "#option-label" },
-      optionBorderColor: { light: "#option-border" },
+      optionBgColor: { light: "#CC4455" },
+      optionLabelColor: { light: "#DD5566" },
+      optionBorderColor: { light: "#EE6677" },
       optionBorderRadius: 4,
       optionPaddingX: 12,
       optionPaddingY: 8,
@@ -377,13 +378,13 @@ describe("addCustomThemeToDom", () => {
       // Element Headline & Description
       elementHeadlineFontSize: 24,
       elementHeadlineFontWeight: "bold",
-      elementHeadlineColor: { light: "#headline-color" },
+      elementHeadlineColor: { light: "#223344" },
       elementDescriptionFontSize: 16,
-      elementDescriptionColor: { light: "#desc-color" },
+      elementDescriptionColor: { light: "#445566" },
       // Progress Bar
       progressTrackHeight: 4,
-      progressTrackBgColor: { light: "#track-bg" },
-      progressIndicatorBgColor: { light: "#indicator-bg" },
+      progressTrackBgColor: { light: "#667788" },
+      progressIndicatorBgColor: { light: "#778899" },
     };
 
     addCustomThemeToDom({ styling });
@@ -391,8 +392,8 @@ describe("addCustomThemeToDom", () => {
     const variables = getCssVariables(styleElement);
 
     // Buttons
-    expect(variables["--fb-button-bg-color"]).toBe("#btn-bg");
-    expect(variables["--fb-button-text-color"]).toBe("#btn-text");
+    expect(variables["--fb-button-bg-color"]).toBe("#AA1122");
+    expect(variables["--fb-button-text-color"]).toBe("#BB2233");
     expect(variables["--fb-button-border-radius"]).toBe("4px");
     expect(variables["--fb-button-height"]).toBe("40px");
     expect(variables["--fb-button-font-size"]).toBe("16px");
@@ -400,7 +401,7 @@ describe("addCustomThemeToDom", () => {
     expect(variables["--fb-button-padding-x"]).toBe("20px");
     expect(variables["--fb-button-padding-y"]).toBe("10px");
     // Inputs
-    expect(variables["--fb-input-text-color"]).toBe("#input-text");
+    expect(variables["--fb-input-text-color"]).toBe("#334455");
     expect(variables["--fb-input-border-radius"]).toBe("4px");
     expect(variables["--fb-input-height"]).toBe("40px");
     expect(variables["--fb-input-font-size"]).toBe("14px");
@@ -409,9 +410,9 @@ describe("addCustomThemeToDom", () => {
     expect(variables["--fb-input-placeholder-opacity"]).toBe("0.5");
     expect(variables["--fb-input-shadow"]).toBe("0 1px 2px 0 rgba(0, 0, 0, 0.05)");
     // Options
-    expect(variables["--fb-option-bg-color"]).toBe("#option-bg");
-    expect(variables["--fb-option-label-color"]).toBe("#option-label");
-    expect(variables["--fb-option-border-color"]).toBe("#option-border");
+    expect(variables["--fb-option-bg-color"]).toBe("#CC4455");
+    expect(variables["--fb-option-label-color"]).toBe("#DD5566");
+    expect(variables["--fb-option-border-color"]).toBe("#EE6677");
     expect(variables["--fb-option-border-radius"]).toBe("4px");
     expect(variables["--fb-option-padding-x"]).toBe("12px");
     expect(variables["--fb-option-padding-y"]).toBe("8px");
@@ -419,13 +420,13 @@ describe("addCustomThemeToDom", () => {
     // Element Headline & Description
     expect(variables["--fb-element-headline-font-size"]).toBe("24px");
     expect(variables["--fb-element-headline-font-weight"]).toBe("bold");
-    expect(variables["--fb-element-headline-color"]).toBe("#headline-color");
+    expect(variables["--fb-element-headline-color"]).toBe("#223344");
     expect(variables["--fb-element-description-font-size"]).toBe("16px");
-    expect(variables["--fb-element-description-color"]).toBe("#desc-color");
+    expect(variables["--fb-element-description-color"]).toBe("#445566");
     // Progress Bar
     expect(variables["--fb-progress-track-height"]).toBe("4px");
-    expect(variables["--fb-progress-track-bg-color"]).toBe("#track-bg");
-    expect(variables["--fb-progress-indicator-bg-color"]).toBe("#indicator-bg");
+    expect(variables["--fb-progress-track-bg-color"]).toBe("#667788");
+    expect(variables["--fb-progress-indicator-bg-color"]).toBe("#778899");
   });
 
   test("should format dimensions correctly", () => {
