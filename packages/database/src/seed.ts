@@ -378,6 +378,18 @@ async function main(): Promise<void> {
     },
   });
 
+  const defaultFrd = await prisma.feedbackRecordDirectory.upsert({
+    where: {
+      organizationId_name: { organizationId: organization.id, name: "Default Feedback Record Directory" },
+    },
+    update: {},
+    create: {
+      name: "Default Feedback Record Directory",
+      organizationId: organization.id,
+    },
+    select: { id: true },
+  });
+
   // Users
   const passwordHash = await hashPassword(SEED_CREDENTIALS.ADMIN.password, 10);
 
@@ -446,6 +458,21 @@ async function main(): Promise<void> {
       id: SEED_IDS.WORKSPACE,
       name: "Seed Workspace",
       organizationId: organization.id,
+    },
+  });
+
+  // Link default FRD to workspace
+  await prisma.feedbackRecordDirectoryWorkspace.upsert({
+    where: {
+      feedbackRecordDirectoryId_workspaceId: {
+        feedbackRecordDirectoryId: defaultFrd.id,
+        workspaceId: workspace.id,
+      },
+    },
+    update: {},
+    create: {
+      feedbackRecordDirectoryId: defaultFrd.id,
+      workspaceId: workspace.id,
     },
   });
 

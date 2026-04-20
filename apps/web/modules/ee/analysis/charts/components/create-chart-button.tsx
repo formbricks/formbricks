@@ -8,9 +8,10 @@ import { Button } from "@/modules/ui/components/button";
 
 interface CreateChartButtonProps {
   workspaceId: string;
+  directories: { id: string; name: string }[];
 }
 
-export function CreateChartButton({ workspaceId }: Readonly<CreateChartButtonProps>) {
+export function CreateChartButton({ workspaceId, directories }: Readonly<CreateChartButtonProps>) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { t } = useTranslation();
 
@@ -20,7 +21,12 @@ export function CreateChartButton({ workspaceId }: Readonly<CreateChartButtonPro
         <PlusIcon className="mr-2 h-4 w-4" />
         {t("workspace.analysis.charts.create_chart")}
       </Button>
-      <CreateChartDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} workspaceId={workspaceId} />
+      <CreateChartDialog
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        workspaceId={workspaceId}
+        directories={directories}
+      />
     </>
   );
 }

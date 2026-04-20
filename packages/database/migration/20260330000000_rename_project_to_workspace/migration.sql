@@ -4,7 +4,6 @@ ALTER TYPE "ProjectTeamPermission" RENAME TO "WorkspaceTeamPermission";
 -- Rename tables
 ALTER TABLE "Project" RENAME TO "Workspace";
 ALTER TABLE "ProjectTeam" RENAME TO "WorkspaceTeam";
-ALTER TABLE "FeedbackRecordDirectoryProject" RENAME TO "FeedbackRecordDirectoryWorkspace";
 
 -- Rename "Workspace" (was "Project") constraints and indexes
 ALTER TABLE "Workspace" RENAME CONSTRAINT "Project_pkey" TO "Workspace_pkey";
@@ -32,14 +31,6 @@ ALTER TABLE "WorkspaceTeam" ADD CONSTRAINT "WorkspaceTeam_pkey" PRIMARY KEY ("wo
 ALTER TABLE "WorkspaceTeam" RENAME CONSTRAINT "ProjectTeam_projectId_fkey" TO "WorkspaceTeam_workspaceId_fkey";
 ALTER TABLE "WorkspaceTeam" RENAME CONSTRAINT "ProjectTeam_teamId_fkey" TO "WorkspaceTeam_teamId_fkey";
 ALTER INDEX "ProjectTeam_teamId_idx" RENAME TO "WorkspaceTeam_teamId_idx";
-
--- Rename "FeedbackRecordDirectoryWorkspace" (was "FeedbackRecordDirectoryProject") columns and constraints
-ALTER TABLE "FeedbackRecordDirectoryWorkspace" RENAME COLUMN "projectId" TO "workspaceId";
-ALTER TABLE "FeedbackRecordDirectoryWorkspace" DROP CONSTRAINT "FeedbackRecordDirectoryProject_pkey";
-ALTER TABLE "FeedbackRecordDirectoryWorkspace" ADD CONSTRAINT "FeedbackRecordDirectoryWorkspace_pkey" PRIMARY KEY ("feedbackRecordDirectoryId", "workspaceId");
-ALTER TABLE "FeedbackRecordDirectoryWorkspace" RENAME CONSTRAINT "FeedbackRecordDirectoryProject_feedbackRecordDirectoryId_fkey" TO "FeedbackRecordDirectoryWorkspace_feedbackRecordDirectoryId_fkey";
-ALTER TABLE "FeedbackRecordDirectoryWorkspace" RENAME CONSTRAINT "FeedbackRecordDirectoryProject_projectId_fkey" TO "FeedbackRecordDirectoryWorkspace_workspaceId_fkey";
-ALTER INDEX "FeedbackRecordDirectoryProject_projectId_idx" RENAME TO "FeedbackRecordDirectoryWorkspace_workspaceId_idx";
 
 -- Rename JSON key "projects" to "workspaces" inside OrganizationBilling.limits
 UPDATE "OrganizationBilling"

@@ -45,9 +45,12 @@ const selectChart = {
   type: true,
   query: true,
   config: true,
+  feedbackRecordDirectoryId: true,
   createdAt: true,
   updatedAt: true,
 };
+
+const mockFeedbackRecordDirectoryId = "frd-abc-123";
 
 const mockChart = {
   id: mockChartId,
@@ -55,6 +58,7 @@ const mockChart = {
   type: "bar",
   query: { measures: ["Responses.count"] },
   config: { showLegend: true },
+  feedbackRecordDirectoryId: mockFeedbackRecordDirectoryId,
   createdAt: new Date("2025-01-01"),
   updatedAt: new Date("2025-01-01"),
 };
@@ -78,6 +82,7 @@ describe("Chart Service", () => {
         type: "bar",
         query: { measures: ["Responses.count"] },
         config: { showLegend: true },
+        feedbackRecordDirectoryId: mockFeedbackRecordDirectoryId,
         createdBy: mockUserId,
       });
 
@@ -89,6 +94,7 @@ describe("Chart Service", () => {
           workspaceId: mockWorkspaceId,
           query: { measures: ["Responses.count"] },
           config: { showLegend: true },
+          feedbackRecordDirectoryId: mockFeedbackRecordDirectoryId,
           createdBy: mockUserId,
         },
         select: selectChart,
@@ -108,6 +114,7 @@ describe("Chart Service", () => {
           type: "bar",
           query: {},
           config: {},
+          feedbackRecordDirectoryId: mockFeedbackRecordDirectoryId,
           createdBy: mockUserId,
         })
       ).rejects.toMatchObject({
@@ -126,6 +133,7 @@ describe("Chart Service", () => {
           type: "bar",
           query: {},
           config: {},
+          feedbackRecordDirectoryId: mockFeedbackRecordDirectoryId,
           createdBy: mockUserId,
         })
       ).rejects.toMatchObject({
@@ -363,6 +371,7 @@ describe("Chart Service", () => {
           type: true,
           query: true,
           config: true,
+          feedbackRecordDirectoryId: true,
           createdAt: true,
           updatedAt: true,
           creator: { select: { name: true } },

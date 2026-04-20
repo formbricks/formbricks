@@ -11,6 +11,7 @@ export interface CreateChartDialogProps {
   chartId?: string;
   initialChart?: TChartWithCreator;
   onSuccess?: () => void;
+  directories: { id: string; name: string }[];
 }
 
 export function CreateChartDialog({
@@ -20,6 +21,7 @@ export function CreateChartDialog({
   chartId,
   initialChart,
   onSuccess,
+  directories,
 }: Readonly<CreateChartDialogProps>) {
   if (chartId) {
     return (
@@ -30,6 +32,7 @@ export function CreateChartDialog({
         chartId={chartId}
         initialChart={initialChart}
         onSuccess={onSuccess}
+        directories={directories}
       />
     );
   }
@@ -40,6 +43,7 @@ export function CreateChartDialog({
       onOpenChange={onOpenChange}
       workspaceId={workspaceId}
       onSuccess={onSuccess}
+      directories={directories}
     />
   );
 }

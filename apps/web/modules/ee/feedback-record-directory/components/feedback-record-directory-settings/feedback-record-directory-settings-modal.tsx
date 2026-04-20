@@ -9,7 +9,10 @@ import { useTranslation } from "react-i18next";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { updateFeedbackRecordDirectoryAction } from "@/modules/ee/feedback-record-directory/actions";
+import {
+  createFeedbackRecordDirectoryAction,
+  updateFeedbackRecordDirectoryAction,
+} from "@/modules/ee/feedback-record-directory/actions";
 import { ArchiveFeedbackRecordDirectory } from "@/modules/ee/feedback-record-directory/components/feedback-record-directory-settings/archive-feedback-record-directory";
 import {
   TFeedbackRecordDirectoryDetails,
@@ -37,7 +40,8 @@ import { Muted } from "@/modules/ui/components/typography";
 interface FeedbackRecordDirectorySettingsModalProps {
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  directory: TFeedbackRecordDirectoryDetails;
+  directory?: TFeedbackRecordDirectoryDetails;
+  organizationId: string;
   orgWorkspaces: TOrganizationWorkspace[];
   membershipRole: TOrganizationRole;
 }
@@ -46,6 +50,7 @@ export const FeedbackRecordDirectorySettingsModal = ({
   open,
   setOpen,
   directory,
+  organizationId,
   orgWorkspaces,
   membershipRole,
 }: FeedbackRecordDirectorySettingsModalProps) => {
@@ -53,6 +58,7 @@ export const FeedbackRecordDirectorySettingsModal = ({
   const { isOwner, isManager } = getAccessFlags(membershipRole);
   const isOwnerOrManager = isOwner || isManager;
   const router = useRouter();
+  const isEdit = !!directory;
 
   const workspaceOptions = useMemo(
     () =>
@@ -63,13 +69,13 @@ export const FeedbackRecordDirectorySettingsModal = ({
   );
 
   const initialWorkspaceIds = useMemo(
-    () => directory.workspaces.map((p) => p.workspaceId),
-    [directory.workspaces]
+    () => directory?.workspaces.map((p) => p.workspaceId) ?? [],
+    [directory?.workspaces]
   );
 
   const form = useForm<TFeedbackRecordDirectoryUpdateInput>({
     defaultValues: {
-      name: directory.name,
+      name: directory?.name ?? "",
       workspaceIds: initialWorkspaceIds,
     },
     mode: "onChange",
@@ -81,24 +87,33 @@ export const FeedbackRecordDirectorySettingsModal = ({
     handleSubmit,
     formState: { isSubmitting },
     setValue,
+    reset,
   } = form;
 
-  const closeSettingsModal = () => {
+  const closeModal = () => {
+    reset();
     setOpen(false);
   };
 
-  const handleUpdate: SubmitHandler<TFeedbackRecordDirectoryUpdateInput> = async (data) => {
-    const response = await updateFeedbackRecordDirectoryAction({
-      directoryId: directory.id,
-      data: {
-        name: data.name,
-        workspaceIds: data.workspaceIds,
-      },
-    });
+  const handleSubmitForm: SubmitHandler<TFeedbackRecordDirectoryUpdateInput> = async (data) => {
+    const response = isEdit
+      ? await updateFeedbackRecordDirectoryAction({
+          directoryId: directory.id,
+          data: { name: data.name, workspaceIds: data.workspaceIds },
+        })
+      : await createFeedbackRecordDirectoryAction({
+          organizationId,
+          name: data.name ?? "",
+          workspaceIds: data.workspaceIds,
+        });
 
     if (response?.data) {
-      toast.success(t("workspace.settings.feedback_record_directories.directory_updated_successfully"));
-      closeSettingsModal();
+      toast.success(
+        isEdit
+          ? t("workspace.settings.feedback_record_directories.directory_updated_successfully")
+          : t("workspace.settings.feedback_record_directories.directory_created_successfully")
+      );
+      closeModal();
       router.refresh();
     } else {
       const errorCode = getFormattedErrorMessage(response);
@@ -107,20 +122,24 @@ export const FeedbackRecordDirectorySettingsModal = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(newOpen) => (newOpen ? setOpen(true) : closeModal())}>
       <DialogContent>
         <DialogHeader className="pb-4">
           <DialogTitle>
-            {t("workspace.settings.feedback_record_directories.directory_settings_title", {
-              directoryName: directory.name,
-            })}
+            {isEdit
+              ? t("workspace.settings.feedback_record_directories.directory_settings_title", {
+                  directoryName: directory.name,
+                })
+              : t("workspace.settings.feedback_record_directories.create_feedback_directory")}
           </DialogTitle>
           <DialogDescription>
-            {t("workspace.settings.feedback_record_directories.directory_settings_description")}
+            {isEdit
+              ? t("workspace.settings.feedback_record_directories.directory_settings_description")
+              : t("workspace.settings.feedback_record_directories.create_feedback_directory")}
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
-          <form className="contents space-y-4" onSubmit={handleSubmit(handleUpdate)}>
+          <form className="contents space-y-4" onSubmit={handleSubmit(handleSubmitForm)}>
             <DialogBody className="flex-grow space-y-6 overflow-y-auto">
               <FormField
                 control={control}
@@ -143,11 +162,13 @@ export const FeedbackRecordDirectorySettingsModal = ({
                 )}
               />
 
-              <IdBadge
-                id={directory.id}
-                label={t("workspace.settings.feedback_record_directories.directory_id")}
-                variant="column"
-              />
+              {isEdit && (
+                <IdBadge
+                  id={directory.id}
+                  label={t("workspace.settings.feedback_record_directories.directory_id")}
+                  variant="column"
+                />
+              )}
 
               <div className="space-y-2">
                 <FormLabel>{t("common.workspaces")}</FormLabel>
@@ -156,7 +177,7 @@ export const FeedbackRecordDirectorySettingsModal = ({
                 </Muted>
                 <MultiSelect
                   options={workspaceOptions}
-                  value={form.watch("workspaceIds")}
+                  value={form.watch("workspaceIds") ?? []}
                   onChange={(selected) => {
                     setValue("workspaceIds", selected, { shouldDirty: true });
                   }}
@@ -167,20 +188,56 @@ export const FeedbackRecordDirectorySettingsModal = ({
                   containerClassName="focus-within:ring-0 focus-within:ring-offset-0"
                 />
               </div>
+
+              {isEdit && (
+                <div className="space-y-2">
+                  <FormLabel>{t("workspace.unify.connectors")}</FormLabel>
+                  <Muted className="block text-slate-500">
+                    {t("workspace.settings.feedback_record_directories.connectors_description")}
+                  </Muted>
+                  {directory.connectors.length === 0 ? (
+                    <p className="rounded-md border border-dashed border-slate-200 p-3 text-center text-sm text-slate-400">
+                      {t("workspace.settings.feedback_record_directories.no_connectors")}
+                    </p>
+                  ) : (
+                    <ul className="space-y-2">
+                      {directory.connectors.map((c) => (
+                        <li
+                          key={c.id}
+                          className="flex items-center justify-between rounded-md border border-slate-200 bg-slate-50 p-3 text-sm">
+                          <div>
+                            <p className="font-medium text-slate-900">{c.name}</p>
+                            <p className="text-xs text-slate-500">
+                              {c.type} · {c.workspaceName}
+                            </p>
+                          </div>
+                          <a
+                            className="text-xs font-medium text-slate-700 hover:text-slate-900 hover:underline"
+                            href={`/workspaces/${c.workspaceId}/unify/sources`}>
+                            {t("common.view")}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
             </DialogBody>
             <DialogFooter>
-              <div className="w-full">
-                <ArchiveFeedbackRecordDirectory
-                  directoryId={directory.id}
-                  onArchive={closeSettingsModal}
-                  isOwnerOrManager={isOwnerOrManager}
-                />
-              </div>
-              <Button size="default" type="button" variant="outline" onClick={closeSettingsModal}>
+              {isEdit && (
+                <div className="w-full">
+                  <ArchiveFeedbackRecordDirectory
+                    directoryId={directory.id}
+                    onArchive={closeModal}
+                    isOwnerOrManager={isOwnerOrManager}
+                  />
+                </div>
+              )}
+              <Button size="default" type="button" variant="outline" onClick={closeModal}>
                 {t("common.cancel")}
               </Button>
               <Button type="submit" size="default" loading={isSubmitting} disabled={!isOwnerOrManager}>
-                {t("common.save")}
+                {isEdit ? t("common.save") : t("common.create")}
               </Button>
             </DialogFooter>
           </form>

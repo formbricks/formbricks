@@ -4,6 +4,7 @@ import {
   CHART_MEASURE_COLORS,
   formatCellValue,
   formatXAxisTick,
+  injectTenantFilter,
   preparePieData,
   resolveChartType,
   validateQueryMembers,
@@ -133,6 +134,52 @@ describe("chart-utils", () => {
           filters: [{ member: "Invalid.field", operator: "equals", values: ["x"] }],
         })
       ).toThrow(/Invalid query members/);
+    });
+  });
+
+  describe("injectTenantFilter", () => {
+    test("appends tenant filter to query with no existing filters", () => {
+      const query = { measures: ["FeedbackRecords.count"] };
+      const result = injectTenantFilter(query, "tenant-123");
+
+      expect(result.filters).toHaveLength(1);
+      expect(result.filters![0]).toEqual({
+        member: "FeedbackRecords.tenantId",
+        operator: "equals",
+        values: ["tenant-123"],
+      });
+      expect(result.measures).toEqual(["FeedbackRecords.count"]);
+    });
+
+    test("appends tenant filter to query with existing filters", () => {
+      const query = {
+        measures: ["FeedbackRecords.count"],
+        filters: [{ member: "FeedbackRecords.sentiment", operator: "equals" as const, values: ["positive"] }],
+      };
+      const result = injectTenantFilter(query, "tenant-456");
+
+      expect(result.filters).toHaveLength(2);
+      expect(result.filters![0]).toEqual({
+        member: "FeedbackRecords.sentiment",
+        operator: "equals",
+        values: ["positive"],
+      });
+      expect(result.filters![1]).toEqual({
+        member: "FeedbackRecords.tenantId",
+        operator: "equals",
+        values: ["tenant-456"],
+      });
+    });
+
+    test("does not mutate the original query", () => {
+      const query = {
+        measures: ["FeedbackRecords.count"],
+        filters: [{ member: "FeedbackRecords.sentiment", operator: "equals" as const, values: ["positive"] }],
+      };
+      const result = injectTenantFilter(query, "tenant-789");
+
+      expect(query.filters).toHaveLength(1);
+      expect(result.filters).toHaveLength(2);
     });
   });
 

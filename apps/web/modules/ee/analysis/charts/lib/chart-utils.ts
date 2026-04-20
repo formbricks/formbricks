@@ -116,3 +116,19 @@ export function validateQueryMembers(query: TChartQuery): void {
     );
   }
 }
+
+/**
+ * Injects a tenant_id filter into a Cube.js query to scope results to a specific
+ * FeedbackRecordDirectory. Called server-side before every query execution.
+ */
+export function injectTenantFilter(query: TChartQuery, tenantId: string): TChartQuery {
+  const tenantFilter: TCubeFilter = {
+    member: "FeedbackRecords.tenantId",
+    operator: "equals",
+    values: [tenantId],
+  };
+  return {
+    ...query,
+    filters: [...(query.filters ?? []), tenantFilter],
+  };
+}

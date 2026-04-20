@@ -60,6 +60,7 @@ vi.mock("@/modules/ee/analysis/charts/lib/charts", () => ({
     type: true,
     query: true,
     config: true,
+    feedbackRecordDirectoryId: true,
     createdAt: true,
     updatedAt: true,
   },

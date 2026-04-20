@@ -113,6 +113,12 @@ cube(`FeedbackRecords`, {
       type: `string`,
       description: `Emotion extracted from metadata JSONB field`,
     },
+
+    tenantId: {
+      sql: `tenant_id`,
+      type: `string`,
+      description: `Tenant ID linking to FeedbackRecordDirectory`,
+    },
   },
 
   joins: {

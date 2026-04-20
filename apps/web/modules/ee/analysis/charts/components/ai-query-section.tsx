@@ -13,9 +13,14 @@ import { Input } from "@/modules/ui/components/input";
 interface AIQuerySectionProps {
   workspaceId: string;
   onChartGenerated: (data: AnalyticsResponse) => void;
+  feedbackRecordDirectoryId: string;
 }
 
-export function AIQuerySection({ workspaceId, onChartGenerated }: Readonly<AIQuerySectionProps>) {
+export function AIQuerySection({
+  workspaceId,
+  onChartGenerated,
+  feedbackRecordDirectoryId,
+}: Readonly<AIQuerySectionProps>) {
   const [userQuery, setUserQuery] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const { t } = useTranslation();
@@ -28,6 +33,7 @@ export function AIQuerySection({ workspaceId, onChartGenerated }: Readonly<AIQue
       const result = await generateAIChartAction({
         workspaceId,
         prompt: userQuery.trim(),
+        feedbackRecordDirectoryId,
       });
 
       if (result?.data) {
