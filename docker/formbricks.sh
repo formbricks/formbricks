@@ -5,9 +5,25 @@ ubuntu_version=$(lsb_release -a 2>/dev/null | grep -v "No LSB modules are availa
 
 write_rustfs_init_script() {
   local target_path="${1:-rustfs-init.sh}"
+  local script_dir
+  local template_path
+
+  script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+  template_path="${script_dir}/rustfs-init.sh"
+
+  if [ -f "$template_path" ]; then
+    cp "$template_path" "$target_path"
+    chmod +x "$target_path"
+    return
+  fi
 
   cat >"$target_path" << 'RUSTFS_SCRIPT_EOF'
 #!/bin/sh
+# Shared RustFS bootstrap script.
+# Used directly by docker-compose.dev.yml for local development and used as the
+# source template for the generated rustfs-init.sh in docker/formbricks.sh for
+# one-click/self-hosted installs. packages/storage/src/rustfs-init-bootstrap.test.ts
+# also validates that the generated script stays in sync with this file.
 set -e
 echo '⏳ Waiting for RustFS to be ready...'
 attempts=0
