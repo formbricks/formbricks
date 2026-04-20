@@ -13,8 +13,6 @@ import { ACTION_TYPE_ICON_LOOKUP } from "@/modules/workspaces/settings/(setup)/a
 
 interface ActivityTabProps {
   actionClass: TActionClass;
-  otherEnvActionClasses: TActionClass[];
-  isReadOnly: boolean;
 }
 
 export const ActionActivityTab = ({ actionClass }: ActivityTabProps) => {
@@ -84,12 +82,6 @@ export const ActionActivityTab = ({ actionClass }: ActivityTabProps) => {
           <div className="mt-1 flex items-center">
             <div className="mr-1.5 h-4 w-4 text-slate-600">{ACTION_TYPE_ICON_LOOKUP[actionClass.type]}</div>
             <p className="text-sm capitalize text-slate-700">{actionClass.type}</p>
-          </div>
-        </div>
-        <div className="">
-          <Label className="text-xs font-normal text-slate-500">{t("common.environment")}</Label>
-          <div className="items-center-center flex gap-2">
-            <p className="text-xs text-slate-700">{t("common.production")}</p>
           </div>
         </div>
       </div>
