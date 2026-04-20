@@ -1,23 +1,64 @@
 import { Page } from "@playwright/test";
 import { UsersFixture } from "../fixtures/users";
 
+type EnvironmentSurveyLocation = {
+  environmentId: string;
+  isSurveyList: boolean;
+};
+
+const getEnvironmentSurveyLocation = (url: URL): EnvironmentSurveyLocation | null => {
+  const segments = url.pathname.split("/").filter(Boolean);
+
+  if (segments.length !== 2 && segments.length !== 3) {
+    return null;
+  }
+
+  if (segments[0] !== "environments") {
+    return null;
+  }
+
+  const environmentId = segments[1];
+
+  if (!environmentId) {
+    return null;
+  }
+
+  if (segments.length === 2) {
+    return {
+      environmentId,
+      isSurveyList: false,
+    };
+  }
+
+  if (segments[2] !== "surveys") {
+    return null;
+  }
+
+  return {
+    environmentId,
+    isSurveyList: true,
+  };
+};
+
 export async function gotoSurveyList(page: Page): Promise<string> {
-  await page.waitForURL(/\/environments\/[^/]+(?:\/surveys)?(?:\?.*)?$/, { timeout: 30000 });
+  await page.waitForURL((url) => getEnvironmentSurveyLocation(url) !== null, { timeout: 30000 });
 
   const currentUrl = new URL(page.url());
-  const match = /^\/environments\/([^/]+)(?:\/surveys)?$/.exec(currentUrl.pathname);
+  const location = getEnvironmentSurveyLocation(currentUrl);
 
-  if (!match) {
+  if (!location) {
     throw new Error(`Unable to determine environmentId from URL: ${page.url()}`);
   }
 
-  const environmentId = match[1];
+  const { environmentId, isSurveyList } = location;
 
-  if (currentUrl.pathname === `/environments/${environmentId}`) {
+  if (!isSurveyList) {
     await page.goto(`/environments/${environmentId}/surveys`, { waitUntil: "domcontentloaded" });
   }
 
-  await page.waitForURL(/\/environments\/[^/]+\/surveys(?:\?.*)?$/, { timeout: 30000 });
+  await page.waitForURL((url) => getEnvironmentSurveyLocation(url)?.isSurveyList === true, {
+    timeout: 30000,
+  });
 
   return environmentId;
 }
