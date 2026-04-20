@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { LandingSidebar } from "@/app/(app)/(onboarding)/organizations/[organizationId]/landing/components/landing-sidebar";
-import { ProjectAndOrgSwitch } from "@/app/(app)/environments/[environmentId]/components/project-and-org-switch";
+import { WorkspaceAndOrgSwitch } from "@/app/(app)/workspaces/[workspaceId]/components/workspace-and-org-switch";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
@@ -35,12 +35,12 @@ const Page = async (props: { params: Promise<{ organizationId: string }> }) => {
       <div className="flex-1">
         <div className="flex h-full flex-col">
           <div className="p-6">
-            {/* we only need to render organization breadcrumb on this page, organizations/projects are lazy-loaded */}
-            <ProjectAndOrgSwitch
+            {/* we only need to render organization breadcrumb on this page, organizations/workspaces are lazy-loaded */}
+            <WorkspaceAndOrgSwitch
               currentOrganizationId={organization.id}
               currentOrganizationName={organization.name}
               isMultiOrgEnabled={isMultiOrgEnabled}
-              organizationProjectsLimit={0}
+              organizationWorkspacesLimit={0}
               isFormbricksCloud={IS_FORMBRICKS_CLOUD}
               isLicenseActive={false}
               isOwnerOrManager={false}
@@ -48,7 +48,6 @@ const Page = async (props: { params: Promise<{ organizationId: string }> }) => {
               isMember={isMember}
               isBilling={isBilling}
               isMembershipPending={isMembershipPending}
-              environments={[]}
             />
           </div>
           <div className="flex h-full flex-col items-center justify-center space-y-12">

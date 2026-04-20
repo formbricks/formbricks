@@ -132,7 +132,7 @@ export function ConditionalLogic({
   return (
     <div className="mt-4" ref={parent}>
       <Label className="flex gap-2">
-        {t("environments.surveys.edit.conditional_logic")}
+        {t("workspace.surveys.edit.conditional_logic")}
         <SplitIcon className="h-4 w-4 rotate-90" />
       </Label>
 
@@ -210,7 +210,7 @@ export function ConditionalLogic({
           size="sm"
           variant="secondary"
           onClick={addLogic}>
-          {t("environments.surveys.edit.add_logic")}
+          {t("workspace.surveys.edit.add_logic")}
           <PlusIcon />
         </Button>
       </div>

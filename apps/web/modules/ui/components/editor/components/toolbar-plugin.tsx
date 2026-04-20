@@ -325,10 +325,10 @@ export const ToolbarPlugin = (
 
   const getLinkItemTooltipText = () => {
     if (!props.isExternalUrlsAllowed) {
-      return t("environments.surveys.edit.external_urls_paywall_tooltip");
+      return t("workspace.surveys.edit.external_urls_paywall_tooltip");
     }
 
-    return isLink ? t("environments.surveys.edit.edit_link") : t("environments.surveys.edit.insert_link");
+    return isLink ? t("workspace.surveys.edit.edit_link") : t("workspace.surveys.edit.insert_link");
   };
 
   const items = [
@@ -337,7 +337,7 @@ export const ToolbarPlugin = (
       icon: Bold,
       onClick: () => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold"),
       active: isBold,
-      tooltipText: t("environments.surveys.edit.bold"),
+      tooltipText: t("workspace.surveys.edit.bold"),
       disabled: false,
     },
     {
@@ -345,7 +345,7 @@ export const ToolbarPlugin = (
       icon: Italic,
       onClick: () => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic"),
       active: isItalic,
-      tooltipText: t("environments.surveys.edit.italic"),
+      tooltipText: t("workspace.surveys.edit.italic"),
       disabled: false,
     },
     {
@@ -353,7 +353,7 @@ export const ToolbarPlugin = (
       icon: Underline,
       onClick: () => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "underline"),
       active: isUnderline,
-      tooltipText: t("environments.surveys.edit.underline"),
+      tooltipText: t("workspace.surveys.edit.underline"),
       disabled: false,
     },
     {
@@ -369,7 +369,7 @@ export const ToolbarPlugin = (
       icon: AtSign,
       onClick: () => props.setShowRecallItemSelect(true),
       active: false,
-      tooltipText: t("environments.surveys.edit.recall_data"),
+      tooltipText: t("workspace.surveys.edit.recall_data"),
       disabled: false,
     },
     {
@@ -377,7 +377,7 @@ export const ToolbarPlugin = (
       icon: PencilIcon,
       onClick: () => props.setShowFallbackInput(true),
       active: false,
-      tooltipText: t("environments.surveys.edit.edit_recall"),
+      tooltipText: t("workspace.surveys.edit.edit_recall"),
       disabled: !props.recallItemsCount || props.recallItemsCount === 0,
     },
   ];

@@ -88,7 +88,7 @@ const LinkEditorContent = ({ editor, open, setOpen }: LinkEditorProps) => {
 
   const handleSubmit = () => {
     if (!validateUrl(linkUrl)) {
-      setError(t("environments.surveys.edit.please_enter_a_valid_url"));
+      setError(t("workspace.surveys.edit.please_enter_a_valid_url"));
       return;
     }
     if (linkUrl) {

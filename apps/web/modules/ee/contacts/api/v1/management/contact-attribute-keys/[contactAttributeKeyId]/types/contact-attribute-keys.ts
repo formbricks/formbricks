@@ -10,7 +10,7 @@ export const ZContactAttributeKeyCreateInput = z.object({
   description: z.string().optional(),
   type: z.enum(["custom"]),
   dataType: ZContactAttributeDataType.optional(),
-  environmentId: z.string(),
+  workspaceId: z.string(),
   name: z.string().optional(),
 });
 export type TContactAttributeKeyCreateInput = z.infer<typeof ZContactAttributeKeyCreateInput>;

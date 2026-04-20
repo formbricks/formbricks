@@ -26,28 +26,28 @@ type TResponseUpdateResponse = Record<string, unknown> & TResponseQuota;
 // Simple API client using fetch
 export class ApiClient {
   readonly appUrl: string;
-  readonly environmentId: string;
+  readonly workspaceId: string;
 
-  constructor({ appUrl, environmentId }: { appUrl: string; environmentId: string }) {
+  constructor({ appUrl, workspaceId }: { appUrl: string; workspaceId: string }) {
     this.appUrl = appUrl;
-    this.environmentId = environmentId;
+    this.workspaceId = workspaceId;
   }
 
   async createDisplay(
-    displayInput: Omit<TDisplayCreateInput, "environmentId"> & { contactId?: string }
+    displayInput: Omit<TDisplayCreateInput, "workspaceId"> & { contactId?: string }
   ): Promise<Result<{ id: string }, ApiErrorResponse>> {
     const fromV1 = !!displayInput.userId;
 
     return makeRequest(
       this.appUrl,
-      `/api/${fromV1 ? "v1" : "v2"}/client/${this.environmentId}/displays`,
+      `/api/${fromV1 ? "v1" : "v2"}/client/${this.workspaceId}/displays`,
       "POST",
       displayInput
     );
   }
 
   async createResponse(
-    responseInput: Omit<TResponseInput, "environmentId"> & {
+    responseInput: Omit<TResponseInput, "workspaceId"> & {
       contactId: string | null;
       recaptchaToken?: string;
     }
@@ -56,7 +56,7 @@ export class ApiClient {
 
     return makeRequest(
       this.appUrl,
-      `/api/${fromV1 ? "v1" : "v2"}/client/${this.environmentId}/responses`,
+      `/api/${fromV1 ? "v1" : "v2"}/client/${this.workspaceId}/responses`,
       "POST",
       responseInput
     );
@@ -73,7 +73,7 @@ export class ApiClient {
   }: TResponseUpdateInput & { responseId: string }): Promise<
     Result<TResponseUpdateResponse, ApiErrorResponse>
   > {
-    return makeRequest(this.appUrl, `/api/v1/client/${this.environmentId}/responses/${responseId}`, "PUT", {
+    return makeRequest(this.appUrl, `/api/v1/client/${this.workspaceId}/responses/${responseId}`, "PUT", {
       finished,
       endingId,
       data,
@@ -102,7 +102,7 @@ export class ApiClient {
       surveyId,
     };
 
-    const response = await fetch(`${this.appUrl}/api/v1/client/${this.environmentId}/storage`, {
+    const response = await fetch(`${this.appUrl}/api/v1/client/${this.workspaceId}/storage`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

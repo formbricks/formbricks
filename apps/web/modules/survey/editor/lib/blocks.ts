@@ -84,7 +84,7 @@ export const addBlock = (
   const newBlock: TSurveyBlock = {
     ...block,
     id: createId(),
-    name: block.name || t("environments.surveys.edit.untitled_block"),
+    name: block.name || t("workspace.surveys.edit.untitled_block"),
     elements: block.elements || [],
     buttonLabel: createI18nString(block.buttonLabel || t("templates.next"), []),
     backButtonLabel: createI18nString(block.backButtonLabel || t("templates.back"), []),

@@ -20,7 +20,7 @@ test.describe("Survey Create & Submit Response without logic", async () => {
     const user = await users.create();
     await user.login();
 
-    await page.waitForURL(/\/environments\/[^/]+\/surveys/);
+    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
 
     await test.step("Create Survey", async () => {
       await createSurvey(page, surveys.createAndSubmit);
@@ -38,7 +38,7 @@ test.describe("Survey Create & Submit Response without logic", async () => {
       await page.getByRole("button", { name: "Publish" }).click();
 
       // Get URL - increase timeout for slower local environments
-      await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/, { timeout: 60000 });
+      await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/, { timeout: 60000 });
       await page.getByLabel("Copy survey link to clipboard").click();
       url = await page.evaluate("navigator.clipboard.readText()");
     });
@@ -245,7 +245,7 @@ test.describe("Multi Language Survey Create", async () => {
     const user = await users.create();
     await user.login();
 
-    await page.waitForURL(/\/environments\/[^/]+\/surveys/);
+    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
 
     // Add workspace languages (English + German)
     await page.getByRole("link", { name: "Configuration" }).click();
@@ -692,7 +692,7 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByRole("button", { name: "Publish" }).click();
 
     await page.waitForTimeout(2000);
-    await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/, { timeout: 60000 });
+    await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/, { timeout: 60000 });
     await page.getByLabel("Select Language").click();
     await page.getByText("German").click();
     await page.getByLabel("Copy survey link to clipboard").click();
@@ -710,7 +710,7 @@ test.describe("Testing Survey with advanced logic", async () => {
     const user = await users.create();
     await user.login();
 
-    await page.waitForURL(/\/environments\/[^/]+\/surveys/);
+    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
 
     await test.step("Create Survey", async () => {
       await createSurveyWithLogic(page, surveys.createWithLogicAndSubmit);
@@ -725,7 +725,7 @@ test.describe("Testing Survey with advanced logic", async () => {
       await page.getByRole("button", { name: "Publish" }).click();
 
       // Get URL
-      await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/);
+      await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/);
       await page.getByLabel("Copy survey link to clipboard").click();
       url = await page.evaluate("navigator.clipboard.readText()");
     });
@@ -972,7 +972,7 @@ test.describe("Testing Survey with advanced logic", async () => {
 
     await test.step("Verify Survey Response", async () => {
       await page.goBack();
-      await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/);
+      await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/);
 
       const currentUrl = page.url();
       const updatedUrl = currentUrl.replace("summary?share=true", "responses");

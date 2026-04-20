@@ -5,8 +5,8 @@ import { Logger } from "@/lib/common/logger";
 import {
   mockAppUrl,
   mockAttributes,
-  mockEnvironmentId,
   mockUserId,
+  mockWorkspaceId,
 } from "@/lib/user/tests/__mocks__/update.mock";
 import { sendUpdates, sendUpdatesToBackend } from "@/lib/user/update";
 import { type TUpdates } from "@/types/config";
@@ -65,7 +65,7 @@ describe("sendUpdatesToBackend", () => {
 
     const result = await sendUpdatesToBackend({
       appUrl: mockAppUrl,
-      environmentId: mockEnvironmentId,
+      workspaceId: mockWorkspaceId,
       updates: { userId: mockUserId, attributes: mockAttributes },
     });
 
@@ -89,7 +89,7 @@ describe("sendUpdatesToBackend", () => {
 
     const result = await sendUpdatesToBackend({
       appUrl: mockAppUrl,
-      environmentId: mockEnvironmentId,
+      workspaceId: mockWorkspaceId,
       updates: mockUpdates,
     });
 
@@ -111,7 +111,7 @@ describe("sendUpdatesToBackend", () => {
 
     const result = await sendUpdatesToBackend({
       appUrl: mockAppUrl,
-      environmentId: mockEnvironmentId,
+      workspaceId: mockWorkspaceId,
       updates: mockUpdates,
     });
 
@@ -128,8 +128,8 @@ describe("sendUpdates", () => {
     (Config.getInstance as Mock).mockImplementation(() => ({
       get: vi.fn().mockReturnValue({
         appUrl: mockAppUrl,
-        environmentId: mockEnvironmentId,
-        environment: {
+        workspaceId: mockWorkspaceId,
+        workspace: {
           data: {
             surveys: [],
           },

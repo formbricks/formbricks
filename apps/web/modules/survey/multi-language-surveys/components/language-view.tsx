@@ -63,7 +63,7 @@ export const LanguageView = ({
   setHasIncompleteTranslations,
 }: LanguageViewProps) => {
   const { t } = useTranslation();
-  const environmentId = localSurvey.environmentId;
+  const { workspaceId } = localSurvey;
 
   const [isMultiLanguageActivated, setIsMultiLanguageActivated] = useState(localSurvey.languages.length > 0);
   const [confirmationModalInfo, setConfirmationModalInfo] = useState<ConfirmationModalInfo>({
@@ -117,9 +117,9 @@ export const LanguageView = ({
       if (localSurvey.languages.length > 0) {
         setConfirmationModalInfo({
           open: true,
-          title: t("environments.surveys.edit.remove_translations"),
-          body: t("environments.surveys.edit.this_action_will_remove_all_the_translations_from_this_survey"),
-          buttonText: t("environments.surveys.edit.remove_translations"),
+          title: t("workspace.surveys.edit.remove_translations"),
+          body: t("workspace.surveys.edit.this_action_will_remove_all_the_translations_from_this_survey"),
+          buttonText: t("workspace.surveys.edit.remove_translations"),
           buttonVariant: "destructive",
           onConfirm: () => {
             updateSurveyTranslations(localSurvey, []);
@@ -200,9 +200,9 @@ export const LanguageView = ({
     const label = getLanguageLabel(code, locale) ?? code;
     setConfirmationModalInfo({
       open: true,
-      title: `${t("environments.surveys.edit.remove_translations")}: ${label}`,
-      body: t("environments.surveys.edit.this_will_remove_the_language_and_all_its_translations"),
-      buttonText: t("environments.surveys.edit.remove_translations"),
+      title: `${t("workspace.surveys.edit.remove_translations")}: ${label}`,
+      body: t("workspace.surveys.edit.this_will_remove_the_language_and_all_its_translations"),
+      buttonText: t("workspace.surveys.edit.remove_translations"),
       buttonVariant: "destructive",
       onConfirm: () => {
         const cleanedSurvey = removeLanguageKeysFromSurvey(localSurvey, code);
@@ -216,9 +216,9 @@ export const LanguageView = ({
   const handleChangeDefault = () => {
     setConfirmationModalInfo({
       open: true,
-      title: t("environments.surveys.edit.remove_translations"),
-      body: t("environments.surveys.edit.this_action_will_remove_all_the_translations_from_this_survey"),
-      buttonText: t("environments.surveys.edit.remove_translations"),
+      title: t("workspace.surveys.edit.remove_translations"),
+      body: t("workspace.surveys.edit.this_action_will_remove_all_the_translations_from_this_survey"),
+      buttonText: t("workspace.surveys.edit.remove_translations"),
       buttonVariant: "destructive",
       onConfirm: () => {
         updateSurveyTranslations(localSurvey, []);
@@ -249,10 +249,10 @@ export const LanguageView = ({
           />
           <div>
             <Label htmlFor="activate-translations-toggle" className="text-base font-semibold text-slate-900">
-              {t("environments.surveys.edit.activate_translations")}
+              {t("workspace.surveys.edit.activate_translations")}
             </Label>
             <p className="text-sm text-slate-500">
-              {t("environments.surveys.edit.present_your_survey_in_multiple_languages")}
+              {t("workspace.surveys.edit.present_your_survey_in_multiple_languages")}
             </p>
           </div>
         </div>
@@ -267,18 +267,18 @@ export const LanguageView = ({
           {/* Default language select — only show when no default is set yet */}
           {projectLanguages.length > 0 && !defaultLanguage && (
             <div className="space-y-2">
-              <Label>{t("environments.surveys.edit.default_language")}</Label>
+              <Label>{t("workspace.surveys.edit.default_language")}</Label>
               <div className="w-56">
                 <Select
                   onValueChange={(code) => {
                     setConfirmationModalInfo({
                       open: true,
                       title:
-                        t("environments.surveys.edit.confirm_default_language") +
+                        t("workspace.surveys.edit.confirm_default_language") +
                         ": " +
                         getLanguageLabel(code, locale),
                       body: t(
-                        "environments.surveys.edit.once_set_the_default_language_for_this_survey_can_only_be_changed_by_disabling_the_multi_language_option_and_deleting_all_translations"
+                        "workspace.surveys.edit.once_set_the_default_language_for_this_survey_can_only_be_changed_by_disabling_the_multi_language_option_and_deleting_all_translations"
                       ),
                       buttonText: t("common.confirm"),
                       buttonVariant: "default",
@@ -310,13 +310,13 @@ export const LanguageView = ({
                       {t("common.language")}
                     </th>
                     <th className="px-4 py-2.5 text-left font-medium text-slate-600">
-                      {t("environments.surveys.edit.code")}
+                      {t("workspace.surveys.edit.code")}
                     </th>
                     <th className="px-4 py-2.5 text-left font-medium text-slate-600">
-                      {t("environments.surveys.edit.translated")}
+                      {t("workspace.surveys.edit.translated")}
                     </th>
                     <th className="px-4 py-2.5 text-left font-medium text-slate-600">
-                      {t("environments.surveys.edit.visible")}
+                      {t("workspace.surveys.edit.visible")}
                     </th>
                     <th className="w-12 px-4 py-2.5" />
                   </tr>
@@ -345,7 +345,7 @@ export const LanguageView = ({
                           <DropdownMenuItem
                             className="text-red-600 focus:text-red-600"
                             onClick={handleChangeDefault}>
-                            {t("environments.surveys.edit.change_default")}
+                            {t("workspace.surveys.edit.change_default")}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -414,13 +414,13 @@ export const LanguageView = ({
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                   <DropdownMenuItem onClick={() => openTranslationModal(pl.code)}>
-                                    {t("environments.surveys.edit.manage_translations")}
+                                    {t("workspace.surveys.edit.manage_translations")}
                                   </DropdownMenuItem>
                                   {progress && progress.translated > 0 && (
                                     <DropdownMenuItem
                                       className="text-red-600 focus:text-red-600"
                                       onClick={() => handleRemoveTranslations(pl.code)}>
-                                      {t("environments.surveys.edit.remove_translations")}
+                                      {t("workspace.surveys.edit.remove_translations")}
                                     </DropdownMenuItem>
                                   )}
                                 </DropdownMenuContent>
@@ -437,8 +437,8 @@ export const LanguageView = ({
 
           {/* Manage workspace languages link */}
           <Button asChild size="sm" variant="secondary">
-            <Link href={`/environments/${environmentId}/workspace/languages`} target="_blank">
-              {t("environments.surveys.edit.manage_languages")}
+            <Link href={`/workspaces/${workspaceId}/languages`} target="_blank">
+              {t("workspace.surveys.edit.manage_languages")}
               <ArrowUpRight className="ml-1 h-4 w-4" />
             </Link>
           </Button>
@@ -450,9 +450,9 @@ export const LanguageView = ({
             disabled={enabledLanguages.length <= 1}
             isChecked={!!localSurvey.showLanguageSwitch}
             onToggle={handleLanguageSwitchToggle}
-            title={t("environments.surveys.edit.show_language_switch")}
+            title={t("workspace.surveys.edit.show_language_switch")}
             description={t(
-              "environments.surveys.edit.enable_participants_to_switch_the_survey_language_at_any_point_during_the_survey"
+              "workspace.surveys.edit.enable_participants_to_switch_the_survey_language_at_any_point_during_the_survey"
             )}
             childBorder={true}
           />
@@ -462,11 +462,11 @@ export const LanguageView = ({
       {projectLanguages.length === 0 && (
         <div className="rounded-lg border border-slate-300 bg-white p-6 text-center">
           <p className="text-sm text-slate-500">
-            {t("environments.surveys.edit.no_languages_found_add_first_one_to_get_started")}
+            {t("workspace.surveys.edit.no_languages_found_add_first_one_to_get_started")}
           </p>
           <Button asChild size="sm" variant="secondary" className="mt-3">
-            <Link href={`/environments/${environmentId}/workspace/languages`} target="_blank">
-              {t("environments.surveys.edit.manage_languages")}
+            <Link href={`/workspaces/${workspaceId}/languages`} target="_blank">
+              {t("workspace.surveys.edit.manage_languages")}
               <ArrowUpRight className="ml-1 h-4 w-4" />
             </Link>
           </Button>

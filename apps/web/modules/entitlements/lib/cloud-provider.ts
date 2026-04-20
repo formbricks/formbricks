@@ -30,7 +30,7 @@ export const getCloudOrganizationEntitlementsContext = async (
       source: "cloud_stripe",
       features: [],
       limits: {
-        projects: defaultBilling.limits?.projects ?? null,
+        workspaces: defaultBilling.limits?.workspaces ?? null,
         monthlyResponses: defaultBilling.limits?.monthly?.responses ?? null,
       },
       licenseStatus: license.status,
@@ -46,7 +46,7 @@ export const getCloudOrganizationEntitlementsContext = async (
     source: "cloud_stripe",
     features: (billing.stripe?.features ?? []).filter(isEntitlementFeature),
     limits: {
-      projects: billing.limits?.projects ?? null,
+      workspaces: billing.limits?.workspaces ?? null,
       monthlyResponses: billing.limits?.monthly?.responses ?? null,
     },
     licenseStatus: license.status,

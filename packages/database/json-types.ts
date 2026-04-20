@@ -8,7 +8,6 @@ import {
   type TOrganizationBillingPlanLimits,
   type TOrganizationStripeBilling,
 } from "../types/organizations";
-import { type TProjectConfig, type TProjectStyling } from "../types/project";
 import type { TSurveyQuotaLogic } from "../types/quota";
 import { type TResponseContactAttributes, type TResponseData, type TResponseMeta } from "../types/responses";
 import { type TBaseFilters } from "../types/segment";
@@ -18,15 +17,16 @@ import {
   type TSurveyEnding,
   type TSurveyHiddenFields,
   type TSurveyMetadata,
-  type TSurveyProjectOverwrites,
   type TSurveyQuestions,
   type TSurveyRecaptcha,
   type TSurveySingleUse,
   type TSurveyStyling,
   type TSurveyVariables,
   type TSurveyWelcomeCard,
+  type TSurveyWorkspaceOverwrites,
 } from "../types/surveys/types";
 import type { TUserLocale, TUserNotificationSettings } from "../types/user";
+import { type TWorkspaceConfig, type TWorkspaceStyling } from "../types/workspace";
 import type { TSurveyFollowUpAction, TSurveyFollowUpTrigger } from "./types/survey-follow-up";
 
 declare global {
@@ -34,7 +34,7 @@ declare global {
     export type ActionProperties = Record<string, string>;
     export type ActionClassNoCodeConfig = TActionClassNoCodeConfig;
     export type IntegrationConfig = TIntegrationConfig;
-    export type ProjectConfig = TProjectConfig;
+    export type WorkspaceConfig = TWorkspaceConfig;
     export type ResponseData = TResponseData;
     export type ResponseMeta = TResponseMeta;
     export type ResponseContactAttributes = TResponseContactAttributes;
@@ -44,7 +44,7 @@ declare global {
     export type SurveyEnding = TSurveyEnding;
     export type SurveyHiddenFields = TSurveyHiddenFields;
     export type SurveyVariables = TSurveyVariables;
-    export type SurveyProjectOverwrites = TSurveyProjectOverwrites;
+    export type SurveyWorkspaceOverwrites = TSurveyWorkspaceOverwrites;
     export type SurveyStyling = TSurveyStyling;
     export type SurveyClosedMessage = TSurveyClosedMessage;
     export type SurveySingleUse = TSurveySingleUse;
@@ -54,7 +54,7 @@ declare global {
     export type OrganizationStripeBilling = TOrganizationStripeBilling;
     export type UserNotificationSettings = TUserNotificationSettings;
     export type SegmentFilter = TBaseFilters;
-    export type Styling = TProjectStyling;
+    export type Styling = TWorkspaceStyling;
     export type Locale = TUserLocale;
     export type SurveyFollowUpTrigger = TSurveyFollowUpTrigger;
     export type SurveyFollowUpAction = TSurveyFollowUpAction;

@@ -138,7 +138,7 @@ export const ManageTranslationsModal = ({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent width="wide" className="max-h-[85dvh]">
         <DialogHeader>
-          <DialogTitle>{t("environments.surveys.edit.manage_translations")}</DialogTitle>
+          <DialogTitle>{t("workspace.surveys.edit.manage_translations")}</DialogTitle>
           <div className="mt-2 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="h-1.5 w-20 overflow-hidden rounded-full bg-slate-200">
@@ -155,8 +155,8 @@ export const ManageTranslationsModal = ({
               <DropdownMenuTrigger asChild>
                 <Button variant="secondary" size="sm" className="text-xs">
                   {missingFirst
-                    ? t("environments.surveys.edit.missing_first")
-                    : t("environments.surveys.edit.show_in_order")}
+                    ? t("workspace.surveys.edit.missing_first")
+                    : t("workspace.surveys.edit.show_in_order")}
                   <ChevronDownIcon className="ml-1 h-3.5 w-3.5" />
                 </Button>
               </DropdownMenuTrigger>
@@ -164,12 +164,12 @@ export const ManageTranslationsModal = ({
                 <DropdownMenuItem
                   className={cn(!missingFirst && "font-semibold", "text-xs")}
                   onSelect={() => setMissingFirst(false)}>
-                  {t("environments.surveys.edit.show_in_order")}
+                  {t("workspace.surveys.edit.show_in_order")}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   className={cn(missingFirst && "font-semibold", "text-xs")}
                   onSelect={() => setMissingFirst(true)}>
-                  {t("environments.surveys.edit.missing_first")}
+                  {t("workspace.surveys.edit.missing_first")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

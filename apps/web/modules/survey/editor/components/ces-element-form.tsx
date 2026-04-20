@@ -43,7 +43,7 @@ export const CESElementForm = ({
       <ElementFormInput
         id="headline"
         value={element.headline}
-        label={t("environments.surveys.edit.question") + "*"}
+        label={t("workspace.surveys.edit.question") + "*"}
         localSurvey={localSurvey}
         elementIdx={elementIdx}
         isInvalid={isInvalid}
@@ -86,20 +86,20 @@ export const CESElementForm = ({
               });
             }}>
             <PlusIcon className="mr-1 h-4 w-4" />
-            {t("environments.surveys.edit.add_description")}
+            {t("workspace.surveys.edit.add_description")}
           </Button>
         )}
       </div>
 
       <div className="mt-3 flex justify-between gap-8">
         <div className="flex-1">
-          <Label htmlFor="scale">{t("environments.surveys.edit.scale")}</Label>
+          <Label htmlFor="scale">{t("workspace.surveys.edit.scale")}</Label>
           <div className="mt-2">
             <Dropdown
               options={[
-                { label: t("environments.surveys.edit.number"), value: "number", icon: HashIcon },
-                { label: t("environments.surveys.edit.star"), value: "star", icon: StarIcon },
-                { label: t("environments.surveys.edit.smiley"), value: "smiley", icon: SmileIcon },
+                { label: t("workspace.surveys.edit.number"), value: "number", icon: HashIcon },
+                { label: t("workspace.surveys.edit.star"), value: "star", icon: StarIcon },
+                { label: t("workspace.surveys.edit.smiley"), value: "smiley", icon: SmileIcon },
               ]}
               defaultValue={element.scale || "number"}
               onSelect={(option) => {
@@ -113,12 +113,12 @@ export const CESElementForm = ({
           </div>
         </div>
         <div className="flex-1">
-          <Label htmlFor="range">{t("environments.surveys.edit.range")}</Label>
+          <Label htmlFor="range">{t("workspace.surveys.edit.range")}</Label>
           <div className="mt-2">
             <Dropdown
               options={[
-                { label: t("environments.surveys.edit.five_points_recommended"), value: 5 },
-                { label: t("environments.surveys.edit.seven_points"), value: 7 },
+                { label: t("workspace.surveys.edit.five_points_recommended"), value: 5 },
+                { label: t("workspace.surveys.edit.seven_points"), value: 7 },
               ]}
               defaultValue={element.range || 5}
               onSelect={(option) =>
@@ -135,7 +135,7 @@ export const CESElementForm = ({
             id="lowerLabel"
             placeholder={t("templates.ces_lower_label")}
             value={element.lowerLabel}
-            label={t("environments.surveys.edit.lower_label")}
+            label={t("workspace.surveys.edit.lower_label")}
             localSurvey={localSurvey}
             elementIdx={elementIdx}
             isInvalid={isInvalid}
@@ -149,7 +149,7 @@ export const CESElementForm = ({
             id="upperLabel"
             placeholder={t("templates.ces_upper_label")}
             value={element.upperLabel}
-            label={t("environments.surveys.edit.upper_label")}
+            label={t("workspace.surveys.edit.upper_label")}
             localSurvey={localSurvey}
             elementIdx={elementIdx}
             isInvalid={isInvalid}
@@ -165,8 +165,8 @@ export const CESElementForm = ({
           isChecked={element.isColorCodingEnabled}
           onToggle={() => updateElement(elementIdx, { isColorCodingEnabled: !element.isColorCodingEnabled })}
           htmlId="isColorCodingEnabled"
-          title={t("environments.surveys.edit.add_color_coding")}
-          description={t("environments.surveys.edit.add_color_coding_description")}
+          title={t("workspace.surveys.edit.add_color_coding")}
+          description={t("workspace.surveys.edit.add_color_coding_description")}
           childBorder
           customContainerClass="p-0 mt-4"
         />

@@ -51,24 +51,24 @@ export const assertOrganizationAIConfigured = async (
 
   if (!isCapabilityEntitled) {
     throw new OperationNotAllowedError(
-      t("environments.settings.general.ai_features_not_enabled_for_organization")
+      t("workspace.settings.general.ai_features_not_enabled_for_organization")
     );
   }
 
   if (capability === "smartTools" && !aiConfig.isAISmartToolsEnabled) {
     throw new OperationNotAllowedError(
-      t("environments.settings.general.ai_smart_tools_disabled_for_organization")
+      t("workspace.settings.general.ai_smart_tools_disabled_for_organization")
     );
   }
 
   if (capability === "dataAnalysis" && !aiConfig.isAIDataAnalysisEnabled) {
     throw new OperationNotAllowedError(
-      t("environments.settings.general.ai_data_analysis_disabled_for_organization")
+      t("workspace.settings.general.ai_data_analysis_disabled_for_organization")
     );
   }
 
   if (!aiConfig.isInstanceConfigured) {
-    throw new OperationNotAllowedError(t("environments.settings.general.ai_instance_not_configured"));
+    throw new OperationNotAllowedError(t("workspace.settings.general.ai_instance_not_configured"));
   }
 
   return aiConfig;

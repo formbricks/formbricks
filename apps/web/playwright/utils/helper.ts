@@ -1,8 +1,7 @@
 import { expect } from "@playwright/test";
-import { readFileSync, writeFileSync } from "fs";
 import { Page } from "playwright";
 import { logger } from "@formbricks/logger";
-import { TProjectConfigChannel } from "@formbricks/types/project";
+import { TWorkspaceConfigChannel } from "@formbricks/types/workspace";
 import { CreateSurveyParams, CreateSurveyWithLogicParams } from "@/playwright/utils/mock";
 
 export const signUpAndLogin = async (
@@ -103,13 +102,13 @@ export const uploadFileForFileUploadQuestion = async (page: Page) => {
 
 export const finishOnboarding = async (
   page: Page,
-  projectChannel: TProjectConfigChannel = "website"
+  workspaceChannel: TWorkspaceConfigChannel = "website"
 ): Promise<void> => {
   await page.waitForURL(/\/organizations\/[^/]+\/workspaces\/new\/mode/);
 
   await page.getByRole("button", { name: "Formbricks Surveys Multi-" }).click();
 
-  if (projectChannel === "app") {
+  if (workspaceChannel === "app") {
     await page.getByRole("button", { name: "In-product surveys" }).click();
   } else {
     await page.getByRole("button", { name: "Link & email surveys" }).click();
@@ -120,20 +119,12 @@ export const finishOnboarding = async (
   await page.getByPlaceholder("e.g. Formbricks").fill("My Workspace");
   await page.locator("#form-next-button").click();
 
-  if (projectChannel !== "link") {
+  if (workspaceChannel !== "link") {
     await page.getByRole("button", { name: "I will do it later" }).click();
   }
 
-  await page.waitForURL(/\/environments\/[^/]+\/surveys/);
+  await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
   await expect(page.getByText("My Workspace")).toBeVisible();
-};
-
-export const replaceEnvironmentIdInHtml = (filePath: string, environmentId: string): string => {
-  let htmlContent = readFileSync(filePath, "utf-8");
-  htmlContent = htmlContent.replace(/environmentId: ".*?"/, `environmentId: "${environmentId}"`);
-
-  writeFileSync(filePath, htmlContent, { mode: 1 });
-  return "file:///" + filePath;
 };
 
 export const signupUsingInviteToken = async (page: Page, name: string, email: string, password: string) => {
@@ -209,7 +200,7 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   await page.getByText("Start from scratch").click();
   await page.getByRole("button", { name: "Create survey", exact: true }).click();
 
-  await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/edit$/);
+  await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/edit$/);
 
   // Welcome Card
   await expect(page.locator("#welcome-toggle")).toBeVisible();
@@ -415,7 +406,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByText("Start from scratch").click();
   await page.getByRole("button", { name: "Create survey", exact: true }).click();
 
-  await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/edit$/);
+  await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/edit$/);
 
   // Add variables
   await page.getByText("Variables").click();

@@ -1,4 +1,4 @@
-import { TProjectConfigChannel } from "@formbricks/types/project";
+import { TWorkspaceConfigChannel } from "@formbricks/types/workspace";
 import { initialFilters } from "@/modules/survey/list/lib/constants";
 import {
   TSurveyOverviewFilters,
@@ -27,7 +27,7 @@ function getNormalizedStatus(value: unknown): TSurveyOverviewFilters["status"] {
 
 function getNormalizedType(
   value: unknown,
-  currentProjectChannel?: TProjectConfigChannel
+  currentProjectChannel?: TWorkspaceConfigChannel
 ): TSurveyOverviewType[] {
   if (currentProjectChannel === "link" || !Array.isArray(value)) {
     return [];
@@ -44,7 +44,7 @@ function getNormalizedSort(value: unknown): TSurveyOverviewSort {
 
 export function normalizeSurveyFilters(
   filters: Partial<TSurveyOverviewFilters> | null | undefined,
-  currentProjectChannel?: TProjectConfigChannel
+  currentProjectChannel?: TWorkspaceConfigChannel
 ): TSurveyOverviewFilters {
   return {
     name: typeof filters?.name === "string" ? filters.name.trim() : initialFilters.name,
@@ -56,7 +56,7 @@ export function normalizeSurveyFilters(
 
 export function parseStoredSurveyFilters(
   storedValue: string | null,
-  currentProjectChannel?: TProjectConfigChannel
+  currentProjectChannel?: TWorkspaceConfigChannel
 ): TSurveyOverviewFilters | null {
   if (!storedValue) {
     return null;

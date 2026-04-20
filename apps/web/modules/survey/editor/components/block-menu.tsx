@@ -60,7 +60,7 @@ export const BlockMenu = ({
         </Button>
       </TooltipRenderer>
 
-      <TooltipRenderer tooltipContent={t("environments.surveys.edit.duplicate_block")}>
+      <TooltipRenderer tooltipContent={t("workspace.surveys.edit.duplicate_block")}>
         <Button
           variant="ghost"
           size="icon"
@@ -73,7 +73,7 @@ export const BlockMenu = ({
         </Button>
       </TooltipRenderer>
 
-      <TooltipRenderer tooltipContent={t("environments.surveys.edit.delete_block")}>
+      <TooltipRenderer tooltipContent={t("workspace.surveys.edit.delete_block")}>
         <Button
           variant="ghost"
           size="icon"

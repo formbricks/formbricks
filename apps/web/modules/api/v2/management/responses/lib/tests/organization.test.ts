@@ -1,20 +1,19 @@
 import {
-  environmentId,
-  environmentIds,
   organizationBilling,
-  organizationEnvironments,
   organizationId,
+  organizationWorkspaces,
+  workspaceId,
+  workspaceIds,
 } from "./__mocks__/organization.mock";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import {
-  getAllEnvironmentsFromOrganizationId,
+  getAllWorkspaceIdsFromOrganizationId,
   getMonthlyOrganizationResponseCount,
   getOrganizationBilling,
-  getOrganizationIdFromEnvironmentId,
+  getOrganizationIdFromWorkspaceId,
 } from "@/modules/api/v2/management/responses/lib/organization";
 
-type OrgFindFirst = Awaited<ReturnType<typeof prisma.organization.findFirst>>;
 type OrgFindUnique = Awaited<ReturnType<typeof prisma.organization.findUnique>>;
 type ResponseAggregate = Awaited<ReturnType<typeof prisma.response.aggregate>>;
 
@@ -35,14 +34,14 @@ describe("Organization Lib", () => {
     vi.clearAllMocks();
   });
 
-  describe("getOrganizationIdFromEnvironmentId", () => {
+  describe("getOrganizationIdFromWorkspaceId", () => {
     test("return organization id when found", async () => {
-      vi.mocked(prisma.organization.findFirst).mockResolvedValue({ id: organizationId } as OrgFindFirst);
+      vi.mocked(prisma.organization.findFirst).mockResolvedValue({ id: organizationId } as any);
 
-      const result = await getOrganizationIdFromEnvironmentId(environmentId);
+      const result = await getOrganizationIdFromWorkspaceId(workspaceId);
       expect(prisma.organization.findFirst).toHaveBeenCalledWith({
         where: {
-          projects: { some: { environments: { some: { id: environmentId } } } },
+          workspaces: { some: { id: workspaceId } },
         },
         select: { id: true },
       });
@@ -54,7 +53,7 @@ describe("Organization Lib", () => {
 
     test("return a not_found error when organization is not found", async () => {
       vi.mocked(prisma.organization.findFirst).mockResolvedValue(null);
-      const result = await getOrganizationIdFromEnvironmentId(environmentId);
+      const result = await getOrganizationIdFromWorkspaceId(workspaceId);
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error).toEqual({
@@ -67,7 +66,7 @@ describe("Organization Lib", () => {
     test("return an internal_server_error when an exception is thrown", async () => {
       const error = new Error("DB error");
       vi.mocked(prisma.organization.findFirst).mockRejectedValue(error);
-      const result = await getOrganizationIdFromEnvironmentId(environmentId);
+      const result = await getOrganizationIdFromWorkspaceId(workspaceId);
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error).toEqual({
@@ -82,7 +81,7 @@ describe("Organization Lib", () => {
     test("return organization billing when found", async () => {
       vi.mocked(prisma.organization.findFirst).mockResolvedValue({
         billing: organizationBilling,
-      } as OrgFindFirst);
+      } as any);
 
       const result = await getOrganizationBilling(organizationId);
       expect(prisma.organization.findFirst).toHaveBeenCalledWith({
@@ -131,31 +130,31 @@ describe("Organization Lib", () => {
     });
   });
 
-  describe("getAllEnvironmentsFromOrganizationId", () => {
-    test("return all environments from organization", async () => {
+  describe("getAllWorkspaceIdsFromOrganizationId", () => {
+    test("return all workspace ids from organization", async () => {
       vi.mocked(prisma.organization.findUnique).mockResolvedValue(
-        organizationEnvironments as unknown as OrgFindUnique
+        organizationWorkspaces as unknown as OrgFindUnique
       );
-      const result = await getAllEnvironmentsFromOrganizationId(organizationId);
+      const result = await getAllWorkspaceIdsFromOrganizationId(organizationId);
       expect(prisma.organization.findUnique).toHaveBeenCalledWith({
         where: { id: organizationId },
         select: {
-          projects: {
+          workspaces: {
             select: {
-              environments: { select: { id: true } },
+              id: true,
             },
           },
         },
       });
       expect(result.ok).toBe(true);
       if (result.ok) {
-        expect(result.data).toEqual(environmentIds);
+        expect(result.data).toEqual(workspaceIds);
       }
     });
 
     test("return a not_found error when organization is not found", async () => {
       vi.mocked(prisma.organization.findUnique).mockResolvedValue(null);
-      const result = await getAllEnvironmentsFromOrganizationId(organizationId);
+      const result = await getAllWorkspaceIdsFromOrganizationId(organizationId);
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error).toEqual({
@@ -168,7 +167,7 @@ describe("Organization Lib", () => {
     test("return an internal_server_error when an exception is thrown", async () => {
       const error = new Error("DB error");
       vi.mocked(prisma.organization.findUnique).mockRejectedValue(error);
-      const result = await getAllEnvironmentsFromOrganizationId(organizationId);
+      const result = await getAllWorkspaceIdsFromOrganizationId(organizationId);
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error).toEqual({
@@ -195,9 +194,9 @@ describe("Organization Lib", () => {
     test("return response count when usageCycleAnchor is not set", async () => {
       vi.mocked(prisma.organization.findFirst).mockResolvedValue({
         billing: { ...organizationBilling, usageCycleAnchor: null },
-      } as OrgFindFirst);
+      } as any);
       vi.mocked(prisma.organization.findUnique).mockResolvedValue(
-        organizationEnvironments as unknown as OrgFindUnique
+        organizationWorkspaces as unknown as OrgFindUnique
       );
       vi.mocked(prisma.response.aggregate).mockResolvedValue({
         _count: { id: 5 },
@@ -214,12 +213,12 @@ describe("Organization Lib", () => {
     test("return response count", async () => {
       vi.mocked(prisma.organization.findFirst).mockResolvedValue({
         billing: organizationBilling,
-      } as OrgFindFirst);
+      } as any);
       vi.mocked(prisma.response.aggregate).mockResolvedValue({
         _count: { id: 5 },
       } as unknown as ResponseAggregate);
       vi.mocked(prisma.organization.findUnique).mockResolvedValue(
-        organizationEnvironments as unknown as OrgFindUnique
+        organizationWorkspaces as unknown as OrgFindUnique
       );
 
       const result = await getMonthlyOrganizationResponseCount(organizationId);
@@ -233,11 +232,11 @@ describe("Organization Lib", () => {
     test("handle internal_server_error in aggregation", async () => {
       vi.mocked(prisma.organization.findFirst).mockResolvedValue({
         billing: organizationBilling,
-      } as OrgFindFirst);
+      } as any);
       const error = new Error("Aggregate error");
       vi.mocked(prisma.response.aggregate).mockRejectedValue(error);
       vi.mocked(prisma.organization.findUnique).mockResolvedValue(
-        organizationEnvironments as unknown as OrgFindUnique
+        organizationWorkspaces as unknown as OrgFindUnique
       );
 
       const result = await getMonthlyOrganizationResponseCount(organizationId);
@@ -250,10 +249,10 @@ describe("Organization Lib", () => {
       }
     });
 
-    test("handle error when getAllEnvironmentsFromOrganizationId fails", async () => {
+    test("handle error when getAllWorkspaceIdsFromOrganizationId fails", async () => {
       vi.mocked(prisma.organization.findFirst).mockResolvedValue({
         billing: organizationBilling,
-      } as OrgFindFirst);
+      } as any);
       vi.mocked(prisma.organization.findUnique).mockResolvedValue(null);
 
       const result = await getMonthlyOrganizationResponseCount(organizationId);

@@ -8,7 +8,7 @@ import { updateSurveyInternal } from "@/lib/survey/service";
 import { validateMediaAndPrepareBlocks } from "@/lib/survey/utils";
 import { TriggerUpdate } from "@/modules/survey/editor/types/survey-trigger";
 import { getActionClasses } from "@/modules/survey/lib/action-class";
-import { getOrganizationAIKeys, getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
+import { getOrganizationAIKeys, getOrganizationIdFromWorkspaceId } from "@/modules/survey/lib/organization";
 import { getSurvey, selectSurvey } from "@/modules/survey/lib/survey";
 
 export const updateSurveyDraft = async (updatedSurvey: TSurvey): Promise<TSurvey> => {
@@ -20,16 +20,18 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
   try {
     const surveyId = updatedSurvey.id;
     let data: any = {};
+    const workspaceId = updatedSurvey.workspaceId;
 
-    const actionClasses = await getActionClasses(updatedSurvey.environmentId);
-    const currentSurvey = await getSurvey(surveyId);
+    const [actionClasses, currentSurvey] = await Promise.all([
+      getActionClasses(workspaceId),
+      getSurvey(surveyId),
+    ]);
 
     if (!currentSurvey) {
       throw new ResourceNotFoundError("Survey", surveyId);
     }
 
-    const { triggers, environmentId, segment, questions, languages, type, followUps, ...surveyData } =
-      updatedSurvey;
+    const { triggers, segment, questions, languages, type, followUps, ...surveyData } = updatedSurvey;
 
     // Validate and prepare blocks for persistence
     if (updatedSurvey.blocks && updatedSurvey.blocks.length > 0) {
@@ -118,7 +120,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
             data: updatedInput,
             select: {
               surveys: { select: { id: true } },
-              environmentId: true,
+              workspaceId: true,
               id: true,
             },
           });
@@ -169,8 +171,8 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
             segment: {
               connectOrCreate: {
                 where: {
-                  environmentId_title: {
-                    environmentId,
+                  workspaceId_title: {
+                    workspaceId,
                     title: surveyId,
                   },
                 },
@@ -178,9 +180,9 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
                   title: surveyId,
                   isPrivate: true,
                   filters: [],
-                  environment: {
+                  workspace: {
                     connect: {
-                      id: environmentId,
+                      id: workspaceId,
                     },
                   },
                 },
@@ -239,7 +241,7 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       };
     }
 
-    const organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
+    const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
     const organization = await getOrganizationAIKeys(organizationId);
     if (!organization) {
       throw new ResourceNotFoundError("Organization", null);

@@ -64,14 +64,12 @@ export const moveApiKeysToApiKeysNew: MigrationScript = {
           )
         `;
 
-        // Create the API key environment relation using Prisma
-        await tx.apiKeyEnvironment.create({
-          data: {
-            apiKeyId: apiKey.id,
-            environmentId: apiKey.environmentId,
-            permission: "manage",
-          },
-        });
+        // Create the API key environment relation using raw SQL
+        // (uses raw SQL because the schema has since changed and Prisma types no longer include environmentId)
+        await tx.$executeRaw`
+          INSERT INTO "ApiKeyEnvironment" ("id", "apiKeyId", "environmentId", "permission", "createdAt", "updatedAt")
+          VALUES (gen_random_uuid(), ${apiKey.id}, ${apiKey.environmentId}, 'manage', NOW(), NOW())
+        `;
         migratedCount++;
       } catch (error) {
         console.error(`Error migrating API key ${apiKey.id}:`, error);

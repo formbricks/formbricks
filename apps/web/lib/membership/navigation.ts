@@ -1,4 +1,4 @@
-export const getBillingFallbackPath = (environmentId: string, isFormbricksCloud: boolean): string => {
+export const getBillingFallbackPath = (workspaceId: string, isFormbricksCloud: boolean): string => {
   const settingsPath = isFormbricksCloud ? "billing" : "enterprise";
-  return `/environments/${environmentId}/settings/${settingsPath}`;
+  return `/workspaces/${workspaceId}/settings/${settingsPath}`;
 };

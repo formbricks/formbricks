@@ -4,10 +4,10 @@ import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
 import { ZColor, ZEndingCardUrl, ZId, ZOverlay, ZPlacement, ZStorageUrl, getZSafeUrl } from "../common";
 import { ZContactAttributes } from "../contact-attribute";
 import { type TI18nString, ZI18nString } from "../i18n";
-import { ZLanguage } from "../project";
 import { ZSegment } from "../segment";
 import { ZAllowedFileExtension } from "../storage";
 import { ZBaseStyling } from "../styling";
+import { ZLanguage } from "../workspace";
 import { type TSurveyBlock, type TSurveyBlockLogicAction, ZSurveyBlocks } from "./blocks";
 import { findBlocksWithCyclicLogic } from "./blocks-validation";
 import {
@@ -227,7 +227,7 @@ export const ZSurveySlug = z
 
 export type TSurveySlug = z.infer<typeof ZSurveySlug>;
 
-export const ZSurveyProjectOverwrites = z.object({
+export const ZSurveyWorkspaceOverwrites = z.object({
   brandColor: ZColor.nullish(),
   highlightBorderColor: ZColor.nullish(),
   placement: ZPlacement.nullish(),
@@ -235,7 +235,7 @@ export const ZSurveyProjectOverwrites = z.object({
   overlay: ZOverlay.nullish(),
 });
 
-export type TSurveyProjectOverwrites = z.infer<typeof ZSurveyProjectOverwrites>;
+export type TSurveyWorkspaceOverwrites = z.infer<typeof ZSurveyWorkspaceOverwrites>;
 
 export const ZSurveyBackgroundBgType = z.enum(["animation", "color", "upload", "image"]);
 
@@ -867,7 +867,7 @@ export const ZSurveyBase = z.object({
   updatedAt: z.date(),
   name: z.string(),
   type: ZSurveyType,
-  environmentId: z.string(),
+  workspaceId: z.cuid2(),
   createdBy: z.string().nullable(),
   status: ZSurveyStatus,
   displayOption: ZSurveyDisplayOption,
@@ -946,7 +946,7 @@ export const ZSurveyBase = z.object({
       error: "Response limit must be greater than 0",
     })
     .nullable(),
-  projectOverwrites: ZSurveyProjectOverwrites.nullable(),
+  workspaceOverwrites: ZSurveyWorkspaceOverwrites.nullable(),
   styling: ZSurveyStyling.nullable(),
   showLanguageSwitch: z.boolean().nullable(),
   surveyClosedMessage: ZSurveyClosedMessage.nullable(),
@@ -3828,7 +3828,7 @@ export const ZSurveyCreateInput = makeSchemaOptional(ZSurveyBase)
     id: true,
     createdAt: true,
     updatedAt: true,
-    projectOverwrites: true,
+    workspaceOverwrites: true,
     languages: true,
     followUps: true,
   })
@@ -3871,18 +3871,18 @@ export const ZSurveyCreateInput = makeSchemaOptional(ZSurveyBase)
 
 export type TSurvey = z.infer<typeof ZSurvey>;
 
-export const ZSurveyCreateInputWithEnvironmentId = makeSchemaOptional(ZSurveyBase)
+export const ZSurveyCreateInputWithWorkspaceId = makeSchemaOptional(ZSurveyBase)
   .omit({
     id: true,
     createdAt: true,
     updatedAt: true,
-    projectOverwrites: true,
+    workspaceOverwrites: true,
     languages: true,
     followUps: true,
   })
   .extend({
     name: z.string(), // Keep name required
-    environmentId: z.string(),
+    workspaceId: z.string(),
     questions: ZSurveyBase.shape.questions,
     blocks: ZSurveyBase.shape.blocks,
     languages: z.array(ZSurveyLanguage).prefault([]),
@@ -3918,7 +3918,7 @@ export const ZSurveyCreateInputWithEnvironmentId = makeSchemaOptional(ZSurveyBas
     }
   });
 
-export type TSurveyCreateInputWithEnvironmentId = z.infer<typeof ZSurveyCreateInputWithEnvironmentId>;
+export type TSurveyCreateInputWithWorkspaceId = z.infer<typeof ZSurveyCreateInputWithWorkspaceId>;
 export interface TSurveyDates {
   createdAt: TSurvey["createdAt"];
   updatedAt: TSurvey["updatedAt"];

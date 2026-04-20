@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { TUserLocale } from "@formbricks/types/user";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { cn } from "@/lib/cn";
 import { timeSince } from "@/lib/time";
 import { formatDateForDisplay } from "@/lib/utils/datetime";
@@ -14,21 +15,15 @@ import { SurveyDropDownMenu } from "./survey-dropdown-menu";
 
 interface SurveyCardProps {
   survey: TSurveyListItem;
-  environmentId: string;
   publicDomain: string;
   isReadOnly: boolean;
   deleteSurvey: (surveyId: string) => Promise<void>;
   locale: TUserLocale;
 }
-export const SurveyCard = ({
-  survey,
-  environmentId,
-  publicDomain,
-  isReadOnly,
-  deleteSurvey,
-  locale,
-}: SurveyCardProps) => {
+export const SurveyCard = ({ survey, publicDomain, isReadOnly, deleteSurvey, locale }: SurveyCardProps) => {
   const { t } = useTranslation();
+  const { workspace } = useWorkspace();
+  const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const surveyStatusLabel = (() => {
     switch (survey.status) {
       case "inProgress":
@@ -48,9 +43,9 @@ export const SurveyCard = ({
 
   const linkHref = useMemo(() => {
     return survey.status === "draft"
-      ? `/environments/${environmentId}/surveys/${survey.id}/edit`
-      : `/environments/${environmentId}/surveys/${survey.id}/summary`;
-  }, [survey.status, survey.id, environmentId]);
+      ? `${workspaceBasePath}/surveys/${survey.id}/edit`
+      : `${workspaceBasePath}/surveys/${survey.id}/summary`;
+  }, [survey.status, survey.id, workspaceBasePath]);
 
   const isDraftAndReadOnly = survey.status === "draft" && isReadOnly;
 
@@ -104,7 +99,6 @@ export const SurveyCard = ({
         <SurveyDropDownMenu
           survey={survey}
           key={`surveys-${survey.id}`}
-          environmentId={environmentId}
           publicDomain={publicDomain}
           disabled={isDraftAndReadOnly}
           isSurveyCreationDeletionDisabled={isSurveyCreationDeletionDisabled}

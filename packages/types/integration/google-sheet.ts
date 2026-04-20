@@ -31,7 +31,6 @@ export type TIntegrationGoogleSheetsConfig = z.infer<typeof ZIntegrationGoogleSh
 export const ZGoogleSheetIntegration = z.object({
   id: z.string(),
   type: z.literal("googleSheets"),
-  environmentId: z.string(),
   config: ZIntegrationGoogleSheetsConfig,
 });
 

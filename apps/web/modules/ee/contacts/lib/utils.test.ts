@@ -17,7 +17,7 @@ describe("utils", () => {
   test("transformPrismaContact returns correct structure", () => {
     const person: TTransformPersonInput = {
       id: "c1",
-      environmentId: "env-1",
+      workspaceId: "workspace-1",
       createdAt: new Date("2024-01-01T00:00:00.000Z"),
       updatedAt: new Date("2024-01-02T00:00:00.000Z"),
       attributes: [
@@ -37,7 +37,6 @@ describe("utils", () => {
     };
     const result = transformPrismaContact(person);
     expect(result.id).toBe("c1");
-    expect(result.environmentId).toBe("env-1");
     expect(result.attributes).toEqual({ email: "john@example.com", name: "John" });
     expect(result.createdAt).toBeInstanceOf(Date);
     expect(result.updatedAt).toBeInstanceOf(Date);
@@ -47,7 +46,7 @@ describe("utils", () => {
     const testDate = new Date("2024-06-15T10:30:00.000Z");
     const person: TTransformPersonInput = {
       id: "c2",
-      environmentId: "env-1",
+      workspaceId: "workspace-1",
       createdAt: new Date("2024-01-01T00:00:00.000Z"),
       updatedAt: new Date("2024-01-02T00:00:00.000Z"),
       attributes: [

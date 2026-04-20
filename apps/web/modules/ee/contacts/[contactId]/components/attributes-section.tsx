@@ -38,7 +38,7 @@ export const AttributesSection = async ({ contactId }: { contactId: string }) =>
 
   const renderAttributeValue = (attr: (typeof attributesWithKeyInfo)[number]) => {
     if (!attr.value) {
-      return <span className="text-slate-300">{t("environments.contacts.not_provided")}</span>;
+      return <span className="text-slate-300">{t("workspace.contacts.not_provided")}</span>;
     }
 
     // Special handling for userId to show IdBadge
@@ -51,7 +51,7 @@ export const AttributesSection = async ({ contactId }: { contactId: string }) =>
 
   return (
     <div className="space-y-6">
-      <h2 className="text-lg font-bold text-slate-700">{t("environments.contacts.system_attributes")}</h2>
+      <h2 className="text-lg font-bold text-slate-700">{t("workspace.contacts.system_attributes")}</h2>
 
       {systemAttributes.map((attr) => (
         <div key={attr.key}>
@@ -74,7 +74,7 @@ export const AttributesSection = async ({ contactId }: { contactId: string }) =>
       {customAttributes.length > 0 && (
         <>
           <hr />
-          <h2 className="text-lg font-bold text-slate-700">{t("environments.contacts.custom_attributes")}</h2>
+          <h2 className="text-lg font-bold text-slate-700">{t("workspace.contacts.custom_attributes")}</h2>
           {customAttributes.map((attr) => (
             <div key={attr.key}>
               <dt className="flex items-center gap-2 text-sm font-medium text-slate-500">
@@ -95,7 +95,7 @@ export const AttributesSection = async ({ contactId }: { contactId: string }) =>
       </div>
 
       <div>
-        <dt className="text-sm font-medium text-slate-500">{t("environments.contacts.displays")}</dt>
+        <dt className="text-sm font-medium text-slate-500">{t("workspace.contacts.displays")}</dt>
         <dd className="mt-1 text-sm text-slate-900">{numberOfDisplays}</dd>
       </div>
     </div>

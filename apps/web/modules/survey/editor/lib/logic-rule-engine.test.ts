@@ -40,43 +40,43 @@ describe("getLogicRules", () => {
       expect(openTextTextRules).toBeDefined();
       expect(openTextTextRules.options).toEqual([
         {
-          label: "mockTranslate(environments.surveys.edit.equals)",
+          label: "mockTranslate(workspace.surveys.edit.equals)",
           value: ZSurveyLogicConditionsOperator.enum.equals,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.does_not_equal)",
+          label: "mockTranslate(workspace.surveys.edit.does_not_equal)",
           value: ZSurveyLogicConditionsOperator.enum.doesNotEqual,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.contains)",
+          label: "mockTranslate(workspace.surveys.edit.contains)",
           value: ZSurveyLogicConditionsOperator.enum.contains,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.does_not_contain)",
+          label: "mockTranslate(workspace.surveys.edit.does_not_contain)",
           value: ZSurveyLogicConditionsOperator.enum.doesNotContain,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.starts_with)",
+          label: "mockTranslate(workspace.surveys.edit.starts_with)",
           value: ZSurveyLogicConditionsOperator.enum.startsWith,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.does_not_start_with)",
+          label: "mockTranslate(workspace.surveys.edit.does_not_start_with)",
           value: ZSurveyLogicConditionsOperator.enum.doesNotStartWith,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.ends_with)",
+          label: "mockTranslate(workspace.surveys.edit.ends_with)",
           value: ZSurveyLogicConditionsOperator.enum.endsWith,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.does_not_end_with)",
+          label: "mockTranslate(workspace.surveys.edit.does_not_end_with)",
           value: ZSurveyLogicConditionsOperator.enum.doesNotEndWith,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.is_submitted)",
+          label: "mockTranslate(workspace.surveys.edit.is_submitted)",
           value: ZSurveyLogicConditionsOperator.enum.isSubmitted,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.is_skipped)",
+          label: "mockTranslate(workspace.surveys.edit.is_skipped)",
           value: ZSurveyLogicConditionsOperator.enum.isSkipped,
         },
       ]);
@@ -93,11 +93,11 @@ describe("getLogicRules", () => {
         { label: ">=", value: ZSurveyLogicConditionsOperator.enum.isGreaterThanOrEqual },
         { label: "<=", value: ZSurveyLogicConditionsOperator.enum.isLessThanOrEqual },
         {
-          label: "mockTranslate(environments.surveys.edit.is_submitted)",
+          label: "mockTranslate(workspace.surveys.edit.is_submitted)",
           value: ZSurveyLogicConditionsOperator.enum.isSubmitted,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.is_skipped)",
+          label: "mockTranslate(workspace.surveys.edit.is_skipped)",
           value: ZSurveyLogicConditionsOperator.enum.isSkipped,
         },
       ]);
@@ -108,23 +108,23 @@ describe("getLogicRules", () => {
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         {
-          label: "mockTranslate(environments.surveys.edit.equals)",
+          label: "mockTranslate(workspace.surveys.edit.equals)",
           value: ZSurveyLogicConditionsOperator.enum.equals,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.does_not_equal)",
+          label: "mockTranslate(workspace.surveys.edit.does_not_equal)",
           value: ZSurveyLogicConditionsOperator.enum.doesNotEqual,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.equals_one_of)",
+          label: "mockTranslate(workspace.surveys.edit.equals_one_of)",
           value: ZSurveyLogicConditionsOperator.enum.equalsOneOf,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.is_submitted)",
+          label: "mockTranslate(workspace.surveys.edit.is_submitted)",
           value: ZSurveyLogicConditionsOperator.enum.isSubmitted,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.is_skipped)",
+          label: "mockTranslate(workspace.surveys.edit.is_skipped)",
           value: ZSurveyLogicConditionsOperator.enum.isSkipped,
         },
       ]);
@@ -135,35 +135,35 @@ describe("getLogicRules", () => {
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         {
-          label: "mockTranslate(environments.surveys.edit.equals)",
+          label: "mockTranslate(workspace.surveys.edit.equals)",
           value: ZSurveyLogicConditionsOperator.enum.equals,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.does_not_equal)",
+          label: "mockTranslate(workspace.surveys.edit.does_not_equal)",
           value: ZSurveyLogicConditionsOperator.enum.doesNotEqual,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.does_not_include_one_of)",
+          label: "mockTranslate(workspace.surveys.edit.does_not_include_one_of)",
           value: ZSurveyLogicConditionsOperator.enum.doesNotIncludeOneOf,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.does_not_include_all_of)",
+          label: "mockTranslate(workspace.surveys.edit.does_not_include_all_of)",
           value: ZSurveyLogicConditionsOperator.enum.doesNotIncludeAllOf,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.includes_all_of)",
+          label: "mockTranslate(workspace.surveys.edit.includes_all_of)",
           value: ZSurveyLogicConditionsOperator.enum.includesAllOf,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.includes_one_of)",
+          label: "mockTranslate(workspace.surveys.edit.includes_one_of)",
           value: ZSurveyLogicConditionsOperator.enum.includesOneOf,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.is_submitted)",
+          label: "mockTranslate(workspace.surveys.edit.is_submitted)",
           value: ZSurveyLogicConditionsOperator.enum.isSubmitted,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.is_skipped)",
+          label: "mockTranslate(workspace.surveys.edit.is_skipped)",
           value: ZSurveyLogicConditionsOperator.enum.isSkipped,
         },
       ]);
@@ -174,35 +174,35 @@ describe("getLogicRules", () => {
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         {
-          label: "mockTranslate(environments.surveys.edit.equals)",
+          label: "mockTranslate(workspace.surveys.edit.equals)",
           value: ZSurveyLogicConditionsOperator.enum.equals,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.does_not_equal)",
+          label: "mockTranslate(workspace.surveys.edit.does_not_equal)",
           value: ZSurveyLogicConditionsOperator.enum.doesNotEqual,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.does_not_include_one_of)",
+          label: "mockTranslate(workspace.surveys.edit.does_not_include_one_of)",
           value: ZSurveyLogicConditionsOperator.enum.doesNotIncludeOneOf,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.does_not_include_all_of)",
+          label: "mockTranslate(workspace.surveys.edit.does_not_include_all_of)",
           value: ZSurveyLogicConditionsOperator.enum.doesNotIncludeAllOf,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.includes_all_of)",
+          label: "mockTranslate(workspace.surveys.edit.includes_all_of)",
           value: ZSurveyLogicConditionsOperator.enum.includesAllOf,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.includes_one_of)",
+          label: "mockTranslate(workspace.surveys.edit.includes_one_of)",
           value: ZSurveyLogicConditionsOperator.enum.includesOneOf,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.is_submitted)",
+          label: "mockTranslate(workspace.surveys.edit.is_submitted)",
           value: ZSurveyLogicConditionsOperator.enum.isSubmitted,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.is_skipped)",
+          label: "mockTranslate(workspace.surveys.edit.is_skipped)",
           value: ZSurveyLogicConditionsOperator.enum.isSkipped,
         },
       ]);
@@ -219,11 +219,11 @@ describe("getLogicRules", () => {
         { label: ">=", value: ZSurveyLogicConditionsOperator.enum.isGreaterThanOrEqual },
         { label: "<=", value: ZSurveyLogicConditionsOperator.enum.isLessThanOrEqual },
         {
-          label: "mockTranslate(environments.surveys.edit.is_submitted)",
+          label: "mockTranslate(workspace.surveys.edit.is_submitted)",
           value: ZSurveyLogicConditionsOperator.enum.isSubmitted,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.is_skipped)",
+          label: "mockTranslate(workspace.surveys.edit.is_skipped)",
           value: ZSurveyLogicConditionsOperator.enum.isSkipped,
         },
       ]);
@@ -240,11 +240,11 @@ describe("getLogicRules", () => {
         { label: ">=", value: ZSurveyLogicConditionsOperator.enum.isGreaterThanOrEqual },
         { label: "<=", value: ZSurveyLogicConditionsOperator.enum.isLessThanOrEqual },
         {
-          label: "mockTranslate(environments.surveys.edit.is_submitted)",
+          label: "mockTranslate(workspace.surveys.edit.is_submitted)",
           value: ZSurveyLogicConditionsOperator.enum.isSubmitted,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.is_skipped)",
+          label: "mockTranslate(workspace.surveys.edit.is_skipped)",
           value: ZSurveyLogicConditionsOperator.enum.isSkipped,
         },
       ]);
@@ -255,11 +255,11 @@ describe("getLogicRules", () => {
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         {
-          label: "mockTranslate(environments.surveys.edit.is_clicked)",
+          label: "mockTranslate(workspace.surveys.edit.is_clicked)",
           value: ZSurveyLogicConditionsOperator.enum.isClicked,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.is_not_clicked)",
+          label: "mockTranslate(workspace.surveys.edit.is_not_clicked)",
           value: ZSurveyLogicConditionsOperator.enum.isNotClicked,
         },
       ]);
@@ -270,11 +270,11 @@ describe("getLogicRules", () => {
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         {
-          label: "mockTranslate(environments.surveys.edit.is_accepted)",
+          label: "mockTranslate(workspace.surveys.edit.is_accepted)",
           value: ZSurveyLogicConditionsOperator.enum.isAccepted,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.is_skipped)",
+          label: "mockTranslate(workspace.surveys.edit.is_skipped)",
           value: ZSurveyLogicConditionsOperator.enum.isSkipped,
         },
       ]);
@@ -285,27 +285,27 @@ describe("getLogicRules", () => {
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         {
-          label: "mockTranslate(environments.surveys.edit.equals)",
+          label: "mockTranslate(workspace.surveys.edit.equals)",
           value: ZSurveyLogicConditionsOperator.enum.equals,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.does_not_equal)",
+          label: "mockTranslate(workspace.surveys.edit.does_not_equal)",
           value: ZSurveyLogicConditionsOperator.enum.doesNotEqual,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.is_before)",
+          label: "mockTranslate(workspace.surveys.edit.is_before)",
           value: ZSurveyLogicConditionsOperator.enum.isBefore,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.is_after)",
+          label: "mockTranslate(workspace.surveys.edit.is_after)",
           value: ZSurveyLogicConditionsOperator.enum.isAfter,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.is_submitted)",
+          label: "mockTranslate(workspace.surveys.edit.is_submitted)",
           value: ZSurveyLogicConditionsOperator.enum.isSubmitted,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.is_skipped)",
+          label: "mockTranslate(workspace.surveys.edit.is_skipped)",
           value: ZSurveyLogicConditionsOperator.enum.isSkipped,
         },
       ]);
@@ -316,11 +316,11 @@ describe("getLogicRules", () => {
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         {
-          label: "mockTranslate(environments.surveys.edit.is_submitted)",
+          label: "mockTranslate(workspace.surveys.edit.is_submitted)",
           value: ZSurveyLogicConditionsOperator.enum.isSubmitted,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.is_skipped)",
+          label: "mockTranslate(workspace.surveys.edit.is_skipped)",
           value: ZSurveyLogicConditionsOperator.enum.isSkipped,
         },
       ]);
@@ -331,11 +331,11 @@ describe("getLogicRules", () => {
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         {
-          label: "mockTranslate(environments.surveys.edit.is_submitted)",
+          label: "mockTranslate(workspace.surveys.edit.is_submitted)",
           value: ZSurveyLogicConditionsOperator.enum.isSubmitted,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.is_skipped)",
+          label: "mockTranslate(workspace.surveys.edit.is_skipped)",
           value: ZSurveyLogicConditionsOperator.enum.isSkipped,
         },
       ]);
@@ -346,11 +346,11 @@ describe("getLogicRules", () => {
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         {
-          label: "mockTranslate(environments.surveys.edit.is_booked)",
+          label: "mockTranslate(workspace.surveys.edit.is_booked)",
           value: ZSurveyLogicConditionsOperator.enum.isBooked,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.is_skipped)",
+          label: "mockTranslate(workspace.surveys.edit.is_skipped)",
           value: ZSurveyLogicConditionsOperator.enum.isSkipped,
         },
       ]);
@@ -361,15 +361,15 @@ describe("getLogicRules", () => {
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         {
-          label: "mockTranslate(environments.surveys.edit.is_partially_submitted)",
+          label: "mockTranslate(workspace.surveys.edit.is_partially_submitted)",
           value: ZSurveyLogicConditionsOperator.enum.isPartiallySubmitted,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.is_completely_submitted)",
+          label: "mockTranslate(workspace.surveys.edit.is_completely_submitted)",
           value: ZSurveyLogicConditionsOperator.enum.isCompletelySubmitted,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.is_skipped)",
+          label: "mockTranslate(workspace.surveys.edit.is_skipped)",
           value: ZSurveyLogicConditionsOperator.enum.isSkipped,
         },
       ]);
@@ -380,23 +380,23 @@ describe("getLogicRules", () => {
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         {
-          label: "mockTranslate(environments.surveys.edit.equals)",
+          label: "mockTranslate(workspace.surveys.edit.equals)",
           value: ZSurveyLogicConditionsOperator.enum.equals,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.does_not_equal)",
+          label: "mockTranslate(workspace.surveys.edit.does_not_equal)",
           value: ZSurveyLogicConditionsOperator.enum.doesNotEqual,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.is_empty)",
+          label: "mockTranslate(workspace.surveys.edit.is_empty)",
           value: ZSurveyLogicConditionsOperator.enum.isEmpty,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.is_not_empty)",
+          label: "mockTranslate(workspace.surveys.edit.is_not_empty)",
           value: ZSurveyLogicConditionsOperator.enum.isNotEmpty,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.is_any_of)",
+          label: "mockTranslate(workspace.surveys.edit.is_any_of)",
           value: ZSurveyLogicConditionsOperator.enum.isAnyOf,
         },
       ]);
@@ -407,11 +407,11 @@ describe("getLogicRules", () => {
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         {
-          label: "mockTranslate(environments.surveys.edit.is_submitted)",
+          label: "mockTranslate(workspace.surveys.edit.is_submitted)",
           value: ZSurveyLogicConditionsOperator.enum.isSubmitted,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.is_skipped)",
+          label: "mockTranslate(workspace.surveys.edit.is_skipped)",
           value: ZSurveyLogicConditionsOperator.enum.isSkipped,
         },
       ]);
@@ -422,11 +422,11 @@ describe("getLogicRules", () => {
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         {
-          label: "mockTranslate(environments.surveys.edit.is_submitted)",
+          label: "mockTranslate(workspace.surveys.edit.is_submitted)",
           value: ZSurveyLogicConditionsOperator.enum.isSubmitted,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.is_skipped)",
+          label: "mockTranslate(workspace.surveys.edit.is_skipped)",
           value: ZSurveyLogicConditionsOperator.enum.isSkipped,
         },
       ]);
@@ -439,35 +439,35 @@ describe("getLogicRules", () => {
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         {
-          label: "mockTranslate(environments.surveys.edit.equals)",
+          label: "mockTranslate(workspace.surveys.edit.equals)",
           value: ZSurveyLogicConditionsOperator.enum.equals,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.does_not_equal)",
+          label: "mockTranslate(workspace.surveys.edit.does_not_equal)",
           value: ZSurveyLogicConditionsOperator.enum.doesNotEqual,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.contains)",
+          label: "mockTranslate(workspace.surveys.edit.contains)",
           value: ZSurveyLogicConditionsOperator.enum.contains,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.does_not_contain)",
+          label: "mockTranslate(workspace.surveys.edit.does_not_contain)",
           value: ZSurveyLogicConditionsOperator.enum.doesNotContain,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.starts_with)",
+          label: "mockTranslate(workspace.surveys.edit.starts_with)",
           value: ZSurveyLogicConditionsOperator.enum.startsWith,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.does_not_start_with)",
+          label: "mockTranslate(workspace.surveys.edit.does_not_start_with)",
           value: ZSurveyLogicConditionsOperator.enum.doesNotStartWith,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.ends_with)",
+          label: "mockTranslate(workspace.surveys.edit.ends_with)",
           value: ZSurveyLogicConditionsOperator.enum.endsWith,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.does_not_end_with)",
+          label: "mockTranslate(workspace.surveys.edit.does_not_end_with)",
           value: ZSurveyLogicConditionsOperator.enum.doesNotEndWith,
         },
       ]);
@@ -493,43 +493,43 @@ describe("getLogicRules", () => {
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([
         {
-          label: "mockTranslate(environments.surveys.edit.equals)",
+          label: "mockTranslate(workspace.surveys.edit.equals)",
           value: ZSurveyLogicConditionsOperator.enum.equals,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.does_not_equal)",
+          label: "mockTranslate(workspace.surveys.edit.does_not_equal)",
           value: ZSurveyLogicConditionsOperator.enum.doesNotEqual,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.contains)",
+          label: "mockTranslate(workspace.surveys.edit.contains)",
           value: ZSurveyLogicConditionsOperator.enum.contains,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.does_not_contain)",
+          label: "mockTranslate(workspace.surveys.edit.does_not_contain)",
           value: ZSurveyLogicConditionsOperator.enum.doesNotContain,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.starts_with)",
+          label: "mockTranslate(workspace.surveys.edit.starts_with)",
           value: ZSurveyLogicConditionsOperator.enum.startsWith,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.does_not_start_with)",
+          label: "mockTranslate(workspace.surveys.edit.does_not_start_with)",
           value: ZSurveyLogicConditionsOperator.enum.doesNotStartWith,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.ends_with)",
+          label: "mockTranslate(workspace.surveys.edit.ends_with)",
           value: ZSurveyLogicConditionsOperator.enum.endsWith,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.does_not_end_with)",
+          label: "mockTranslate(workspace.surveys.edit.does_not_end_with)",
           value: ZSurveyLogicConditionsOperator.enum.doesNotEndWith,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.is_set)",
+          label: "mockTranslate(workspace.surveys.edit.is_set)",
           value: ZSurveyLogicConditionsOperator.enum.isSet,
         },
         {
-          label: "mockTranslate(environments.surveys.edit.is_not_set)",
+          label: "mockTranslate(workspace.surveys.edit.is_not_set)",
           value: ZSurveyLogicConditionsOperator.enum.isNotSet,
         },
       ]);

@@ -220,7 +220,7 @@ describe("withV3ApiWrapper", () => {
       apiKeyId: "key_1",
       organizationId: "org_1",
       organizationAccess: { accessControl: { read: true, write: false } },
-      environmentPermissions: [],
+      workspacePermissions: [],
     });
 
     const handler = vi.fn(async ({ authentication }) => {
