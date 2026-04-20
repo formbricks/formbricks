@@ -1,10 +1,14 @@
 name: Build & Cache Web App
 
+on:
+  workflow_dispatch:
+    inputs:
+      e2e_testing_mode:
+        description: "Set E2E Testing Mode"
+        required: false
+        default: "0"
+
 inputs:
-  e2e_testing_mode:
-    description: "Set E2E Testing Mode"
-    required: false
-    default: "0"
   turbo_token:
     description: "Turborepo token"
     required: false

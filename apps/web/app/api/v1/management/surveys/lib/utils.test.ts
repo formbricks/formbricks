@@ -107,7 +107,6 @@ const baseSurveyData: TSurveyCreateInputWithWorkspaceId = {
   welcomeCard: { enabled: false, showResponseCount: false, timeToFinish: false },
   blocks: [],
   followUps: [],
-  isAutoProgressingEnabled: false,
 };
 
 describe("checkFeaturePermissions", () => {
