@@ -89,6 +89,7 @@ const ToolbarButton = ({ icon: Icon, active, onClick, tooltipText, disabled }: T
           variant="ghost"
           size="icon"
           type="button"
+          tabIndex={-1}
           onClick={onClick}
           disabled={disabled}
           className={getButtonClassName(active)}>
@@ -385,7 +386,7 @@ export const ToolbarPlugin = (
     <div className="toolbar flex" ref={toolbarRef}>
       {!props.excludedToolbarItems?.includes("blockType") && supportedBlockTypes.has(blockType) && (
         <DropdownMenu>
-          <DropdownMenuTrigger className="text-subtle">
+          <DropdownMenuTrigger className="text-subtle" tabIndex={-1}>
             <>
               <span className={cn("icon", blockType)} />
               <span className="text text-default hidden sm:flex">

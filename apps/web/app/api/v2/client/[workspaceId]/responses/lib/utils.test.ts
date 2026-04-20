@@ -92,6 +92,7 @@ const mockSurvey: TSurvey = {
   isCaptureIpEnabled: false,
   metadata: {},
   slug: null,
+  isAutoProgressingEnabled: true,
 };
 
 const mockResponseInput: TResponseInputV2 = {
@@ -126,7 +127,6 @@ describe("checkSurveyValidity", () => {
     expect(responses.badRequestResponse).toHaveBeenCalledWith(
       "Survey is part of another workspace",
       {
-        "survey.workspaceId": "ws-2",
         workspaceId: "ws-1",
       },
       true

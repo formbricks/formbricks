@@ -16,7 +16,8 @@ interface ApiErrorResponse {
     | "method_not_allowed"
     | "not_authenticated"
     | "forbidden"
-    | "too_many_requests";
+    | "too_many_requests"
+    | "conflict";
   message: string;
   details: {
     [key: string]: string | string[] | number | number[] | boolean | boolean[];
@@ -236,6 +237,30 @@ const internalServerErrorResponse = (
   );
 };
 
+const conflictResponse = (
+  message: string,
+  details?: { [key: string]: string },
+  cors: boolean = false,
+  cache: string = "private, no-store"
+) => {
+  const headers = {
+    ...(cors && corsHeaders),
+    "Cache-Control": cache,
+  };
+
+  return Response.json(
+    {
+      code: "conflict",
+      message,
+      details: details || {},
+    } as ApiErrorResponse,
+    {
+      status: 409,
+      headers,
+    }
+  );
+};
+
 const tooManyRequestsResponse = (
   message: string,
   cors: boolean = false,
@@ -270,4 +295,5 @@ export const responses = {
   successResponse,
   tooManyRequestsResponse,
   forbiddenResponse,
+  conflictResponse,
 };

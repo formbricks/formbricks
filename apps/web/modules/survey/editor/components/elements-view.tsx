@@ -11,7 +11,7 @@ import {
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
-import { Language, Workspace } from "@prisma/client";
+import { Workspace } from "@prisma/client";
 import React, { SetStateAction, useEffect, useMemo } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -52,7 +52,6 @@ import {
   isUsedInRecall,
 } from "@/modules/survey/editor/lib/utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
-import { MultiLanguageCard } from "@/modules/survey/multi-language-surveys/components/multi-language-card";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { isEndingCardValid, isWelcomeCardValid, validateElement } from "../lib/validation";
 
@@ -62,11 +61,9 @@ interface ElementsViewProps {
   activeElementId: string | null;
   setActiveElementId: (elementId: string | null) => void;
   workspace: Workspace;
-  workspaceLanguages: Language[];
   invalidElements: string[] | null;
   setInvalidElements: React.Dispatch<SetStateAction<string[] | null>>;
   selectedLanguageCode: string;
-  setSelectedLanguageCode: (languageCode: string) => void;
   isFormbricksCloud: boolean;
   isCxMode: boolean;
   locale: TUserLocale;
@@ -83,10 +80,8 @@ export const ElementsView = ({
   localSurvey,
   setLocalSurvey,
   workspace,
-  workspaceLanguages,
   invalidElements,
   setInvalidElements,
-  setSelectedLanguageCode,
   selectedLanguageCode,
   isFormbricksCloud,
   isCxMode,
@@ -560,7 +555,7 @@ export const ElementsView = ({
 
     // If source block is now empty, delete it
     if (sourceBlock.elements.length === 0) {
-      const blockIdx = updatedSurvey.blocks.findIndex((b) => b.id === sourceBlock.id);
+      const blockIdx = updatedSurvey.blocks.findIndex((b) => b.id === sourceBlock?.id);
       if (blockIdx !== -1) {
         updatedSurvey.blocks.splice(blockIdx, 1);
       }
@@ -850,8 +845,6 @@ export const ElementsView = ({
             setActiveElementId={setActiveElementId}
             activeElementId={activeElementId}
             isInvalid={invalidElements ? invalidElements.includes("start") : false}
-            setSelectedLanguageCode={setSelectedLanguageCode}
-            selectedLanguageCode={selectedLanguageCode}
             locale={locale}
             isStorageConfigured={isStorageConfigured}
             isExternalUrlsAllowed={isExternalUrlsAllowed}
@@ -874,8 +867,6 @@ export const ElementsView = ({
           updateBlockLogicFallback={updateBlockLogicFallback}
           updateBlockButtonLabel={updateBlockButtonLabel}
           duplicateElement={duplicateElement}
-          selectedLanguageCode={selectedLanguageCode}
-          setSelectedLanguageCode={setSelectedLanguageCode}
           deleteElement={deleteElement}
           activeElementId={activeElementId}
           setActiveElementId={setActiveElementId}
@@ -915,8 +906,6 @@ export const ElementsView = ({
                   setActiveElementId={setActiveElementId}
                   activeElementId={activeElementId}
                   isInvalid={invalidElements ? invalidElements.includes(ending.id) : false}
-                  setSelectedLanguageCode={setSelectedLanguageCode}
-                  selectedLanguageCode={selectedLanguageCode}
                   addEndingCard={addEndingCard}
                   isFormbricksCloud={isFormbricksCloud}
                   locale={locale}
@@ -948,16 +937,6 @@ export const ElementsView = ({
               activeElementId={activeElementId}
               setActiveElementId={setActiveElementId}
               quotas={quotas}
-            />
-
-            <MultiLanguageCard
-              localSurvey={localSurvey}
-              workspaceLanguages={workspaceLanguages}
-              setLocalSurvey={setLocalSurvey}
-              setActiveElementId={setActiveElementId}
-              activeElementId={activeElementId}
-              setSelectedLanguageCode={setSelectedLanguageCode}
-              locale={locale}
             />
           </>
         )}

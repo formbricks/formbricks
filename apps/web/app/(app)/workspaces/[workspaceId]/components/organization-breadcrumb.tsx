@@ -117,8 +117,12 @@ export const OrganizationBreadcrumb = ({
   const workspaceBasePath = `/workspaces/${workspace?.id}`;
 
   const handleOrganizationChange = (organizationId: string) => {
-    if (organizationId === currentOrganizationId) return;
     startTransition(() => {
+      setIsOrganizationDropdownOpen(false);
+      if (organizationId === currentOrganizationId && currentWorkspaceId) {
+        router.push(`/workspaces/${currentWorkspaceId}/settings/general`);
+        return;
+      }
       router.push(`/organizations/${organizationId}/`);
     });
   };

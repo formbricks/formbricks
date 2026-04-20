@@ -11,7 +11,6 @@ interface AdvancedSettingsProps {
   updateElement: (elementIdx: number, updatedAttributes: any) => void;
   updateBlockLogic: (elementIdx: number, logic: TSurveyBlockLogic[]) => void;
   updateBlockLogicFallback: (elementIdx: number, logicFallback: string | undefined) => void;
-  selectedLanguageCode: string;
 }
 
 export const AdvancedSettings = ({
@@ -19,7 +18,6 @@ export const AdvancedSettings = ({
   elementIdx,
   localSurvey,
   updateElement,
-  selectedLanguageCode,
 }: AdvancedSettingsProps) => {
   const showOptionIds =
     element.type === TSurveyElementTypeEnum.PictureSelection ||
@@ -36,9 +34,7 @@ export const AdvancedSettings = ({
         updateElement={updateElement}
       />
 
-      {showOptionIds && (
-        <OptionIds type="element" element={element} selectedLanguageCode={selectedLanguageCode} />
-      )}
+      {showOptionIds && <OptionIds type="element" element={element} />}
     </div>
   );
 };

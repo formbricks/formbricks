@@ -20,7 +20,6 @@ export const checkSurveyValidity = async (
     return responses.badRequestResponse(
       "Survey is part of another workspace",
       {
-        "survey.workspaceId": survey.workspaceId,
         workspaceId,
       },
       true

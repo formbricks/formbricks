@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { ZActionClassInput } from "@formbricks/types/action-classes";
+import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey, ZSurvey } from "@formbricks/types/surveys/types";
 import { POSTHOG_KEY, UNSPLASH_ACCESS_KEY, UNSPLASH_ALLOWED_DOMAINS } from "@/lib/constants";
@@ -23,7 +24,7 @@ import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/ut
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { checkSpamProtectionPermission } from "@/modules/survey/lib/permission";
 import { getOrganizationBilling, getSurvey } from "@/modules/survey/lib/survey";
-import { getWorkspace } from "./lib/workspace";
+import { getWorkspace, getWorkspaceLanguages } from "./lib/workspace";
 
 /**
  * Checks if survey follow-ups can be added for the given organization.
@@ -195,6 +196,32 @@ export const refetchWorkspaceAction = authenticatedActionClient
     });
 
     return await getWorkspace(parsedInput.workspaceId);
+  });
+
+const ZGetWorkspaceLanguagesAction = z.object({
+  workspaceId: ZId,
+});
+
+export const getWorkspaceLanguagesAction = authenticatedActionClient
+  .inputSchema(ZGetWorkspaceLanguagesAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId),
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "workspaceTeam",
+          minPermission: "read",
+          workspaceId: parsedInput.workspaceId,
+        },
+      ],
+    });
+
+    return await getWorkspaceLanguages(parsedInput.workspaceId);
   });
 
 const ZGetImagesFromUnsplashAction = z.object({

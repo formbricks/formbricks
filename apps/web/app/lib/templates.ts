@@ -971,13 +971,13 @@ const improveTrialConversion = (t: TFunction): TTemplate => {
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[2],
-              headline: t("templates.improve_trial_conversion_question_2_headline"),
+              headline: t("templates.improve_trial_conversion_question_3_headline"),
               required: true,
               inputType: "text",
             }),
           ],
           logic: [createBlockJumpLogic(reusableElementIds[2], block6Id, "isSubmitted")],
-          buttonLabel: t("templates.improve_trial_conversion_question_2_button_label"),
+          buttonLabel: t("templates.improve_trial_conversion_question_3_button_label"),
           t,
         }),
         buildBlock({
@@ -1647,14 +1647,14 @@ const identifyCustomerGoals = (t: TFunction): TTemplate => {
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceSingle,
-              headline: "What's your primary goal for using $[workspaceName]?",
+              headline: t("templates.identify_customer_goals_question_1_headline"),
               required: true,
               shuffleOption: "none",
               choices: [
-                "Understand my user base deeply",
-                "Identify upselling opportunities",
-                "Build the best possible product",
-                "Rule the world to make everyone breakfast brussels sprouts.",
+                t("templates.identify_customer_goals_question_1_choice_1"),
+                t("templates.identify_customer_goals_question_1_choice_2"),
+                t("templates.identify_customer_goals_question_1_choice_3"),
+                t("templates.identify_customer_goals_question_1_choice_4"),
               ],
             }),
           ],
