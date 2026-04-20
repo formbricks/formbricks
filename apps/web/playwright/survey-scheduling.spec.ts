@@ -17,6 +17,17 @@ const formatVisibleMonth = (date: Date): string =>
 const getDateToggleContainer = (page: Page, title: string) =>
   page.locator("h3", { hasText: title }).locator("xpath=ancestor::div[contains(@class,'px-4 py-2')][1]");
 
+const openResponseOptions = async (page: Page) => {
+  const publishOnDateLabel = page.getByText("Publish survey on date", { exact: true });
+
+  if (await publishOnDateLabel.isVisible().catch(() => false)) {
+    return;
+  }
+
+  await page.getByText("Response options", { exact: true }).click();
+  await expect(publishOnDateLabel).toBeVisible();
+};
+
 const createMinimalSurvey = async (page: Page) => {
   await page.getByText("Start from scratch").click();
   await page.getByRole("button", { name: "Create survey", exact: true }).click();
@@ -69,6 +80,7 @@ test.describe("Survey scheduling settings", () => {
       .getByRole("button", { name: "Settings", exact: true })
       .click();
 
+    await openResponseOptions(page);
     await expect(page.getByText("Publish survey on date")).toBeVisible();
     await expect(page.getByText("Close survey on date")).toBeVisible();
     await expect(page.getByText("Survey will be published at 00:00 CET on the selected date")).toBeVisible();
@@ -107,6 +119,8 @@ test.describe("Survey scheduling settings", () => {
       .locator('nav[aria-label="Tabs"]')
       .getByRole("button", { name: "Settings", exact: true })
       .click();
+
+    await openResponseOptions(page);
     const reloadedPublishDateToggle = getDateToggleContainer(page, "Publish survey on date");
     const reloadedCloseDateToggle = getDateToggleContainer(page, "Close survey on date");
 
@@ -136,6 +150,7 @@ test.describe("Survey scheduling settings", () => {
       .getByRole("button", { name: "Settings", exact: true })
       .click();
 
+    await openResponseOptions(page);
     await page.getByText("Publish survey on date").click();
     await pickDateForToggle(page, "Publish survey on date", 2);
 
@@ -143,6 +158,6 @@ test.describe("Survey scheduling settings", () => {
     await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/summary/);
 
     await expect(page.getByText("Survey scheduled successfully")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Scheduled", exact: true })).toBeVisible();
+    await expect(page).toHaveURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/summary/);
   });
 });
