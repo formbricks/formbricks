@@ -1,4 +1,9 @@
 #!/bin/sh
+# Shared RustFS bootstrap script.
+# Used directly by docker-compose.dev.yml for local development and used as the
+# source template for the generated rustfs-init.sh in docker/formbricks.sh for
+# one-click/self-hosted installs. packages/storage/src/rustfs-init-bootstrap.test.ts
+# also validates that the generated script stays in sync with this file.
 set -e
 echo '⏳ Waiting for RustFS to be ready...'
 attempts=0
