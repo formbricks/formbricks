@@ -7,10 +7,12 @@ checksums:
     common/back: f541015a827e37cb3b1234e56bc2aa3c
     common/close_survey: 36e6aaa19051cb253aa155ad69a9edbc
     common/company_logo: 82d5c0d5994508210ee02d684819f4b8
+    common/failed_to_load_booking_widget: 6fcdeae283dc6c08cc8186c3751ecf24
     common/finish: ffa7a10f71182b48fefed7135bee24fa
     common/language_switch: fd72a9ada13f672f4fd5da863b22cc46
     common/next: 89ddbcf710eba274963494f312bdc8a9
     common/no_results_found: 5518f2865757dc73900aa03ef8be6934
+    common/open_booking_page_directly_at: 5f51eb388be802279f52b0eda32985e7
     common/open_in_new_tab: 6844e4922a7a40a7ee25c10ea109cdeb
     common/people_responded: b685fb877090d8658db724ad07a0dbd8
     common/please_retry_now_or_try_again_later: 949a3841e2eb01fa249790a42bf23aa5

@@ -1,5 +1,6 @@
 import snippet from "@calcom/embed-snippet";
 import { useEffect, useMemo, useState } from "preact/hooks";
+import { useTranslation } from "react-i18next";
 import { type TSurveyCalElement } from "@formbricks/types/surveys/elements";
 import { cn } from "@/lib/utils";
 
@@ -10,7 +11,7 @@ interface CalEmbedProps {
 
 export function CalEmbed({ element, onSuccessfulBooking }: CalEmbedProps) {
   const [error, setError] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+  const { t } = useTranslation();
 
   const cal = useMemo(() => {
     const calInline = snippet("https://cal.com/embed.js");
@@ -50,7 +51,6 @@ export function CalEmbed({ element, onSuccessfulBooking }: CalEmbedProps) {
       el.remove();
     });
     setError(false);
-    setErrorMessage("");
     cal("init", { calOrigin: element.calHost ? `https://${element.calHost}` : "https://cal.com" });
     cal("inline", {
       elementOrSelector: "#cal-embed",
@@ -79,9 +79,6 @@ export function CalEmbed({ element, onSuccessfulBooking }: CalEmbedProps) {
               node.addEventListener("error", () => {
                 cleanup();
                 setError(true);
-                setErrorMessage(
-                  "Failed to load booking widget. Your environment may be blocking cross-origin resources."
-                );
               });
             }
           }
@@ -96,9 +93,6 @@ export function CalEmbed({ element, onSuccessfulBooking }: CalEmbedProps) {
         if (!iframe) {
           cleanup();
           setError(true);
-          setErrorMessage(
-            "Failed to load booking widget. Your environment may be blocking cross-origin resources."
-          );
         }
       }, 5000);
     }
@@ -110,16 +104,13 @@ export function CalEmbed({ element, onSuccessfulBooking }: CalEmbedProps) {
     return (
       <div className="relative mt-4 overflow-auto">
         <div className="border-border rounded-input border p-4 text-center">
-          <p className="text-sm text-red-600">
-            {errorMessage}
-          </p>
+          <p className="text-sm text-red-600">{t("common.failed_to_load_booking_widget")}</p>
           <p className="text-muted-foreground mt-2 text-xs">
-            Try opening the booking page directly at{" "}
+            {t("common.open_booking_page_directly_at")}{" "}
             <a
               href={`https://${element.calHost || "cal.com"}/${element.calUserName}`}
               target="_blank"
               rel="noopener noreferrer"
-              onClick={() => onSuccessfulBooking()}
               className="underline">
               {element.calHost || "cal.com"}/{element.calUserName}
             </a>
@@ -131,10 +122,7 @@ export function CalEmbed({ element, onSuccessfulBooking }: CalEmbedProps) {
 
   return (
     <div className="relative mt-4 overflow-auto">
-      <div id="cal-embed" className={cn("border-border rounded-input border")}>
-        {/* The cal.com widget renders here. If COEP/credentialless blocks the iframe,
-            the timeout above will trigger an error state with a fallback link. */}
-      </div>
+      <div id="cal-embed" className={cn("border-border rounded-input border")} />
     </div>
   );
 }
