@@ -515,6 +515,41 @@ describe("handleIntegrations", () => {
       );
     });
 
+    test("sanitizes mixed Notion multi-select values and preserves numeric precision", async () => {
+      vi.mocked(writeNotionData).mockResolvedValue(undefined);
+      const pipelineInput = structuredClone(mockPipelineInput) as TIntegrationPipelineInput;
+      const pipelineResponseData = pipelineInput.response.data as Record<string, unknown>;
+      pipelineResponseData[questionId2] = ["Choice 1", { name: "Choice, 3" }, 42] as unknown as string[];
+      pipelineResponseData.numericField = 3.5;
+
+      const notionIntegration = structuredClone(mockNotionIntegration);
+      notionIntegration.config.data[0].mapping = [
+        {
+          element: { id: questionId2, name: "Question 2", type: TSurveyQuestionTypeEnum.MultipleChoiceMulti },
+          column: { id: "col_multi", name: "Multi", type: "multi_select" },
+        },
+        {
+          element: { id: "numericField", name: "Numeric Field", type: TSurveyQuestionTypeEnum.OpenText },
+          column: { id: "col_number", name: "Number", type: "number" },
+        },
+      ] as TIntegrationNotionConfigData["mapping"];
+
+      await handleIntegrations([notionIntegration], pipelineInput, mockSurvey);
+
+      expect(writeNotionData).toHaveBeenCalledWith(
+        "db1",
+        expect.objectContaining({
+          Multi: {
+            multi_select: [{ name: "Choice 1" }, { name: "Choice 3" }],
+          },
+          Number: {
+            number: 3.5,
+          },
+        }),
+        notionIntegration.config
+      );
+    });
+
     test("should return error result on failure", async () => {
       const error = new Error("Notion API error");
       vi.mocked(writeNotionData).mockRejectedValue(error);

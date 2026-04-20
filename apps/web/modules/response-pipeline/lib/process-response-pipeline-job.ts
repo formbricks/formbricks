@@ -1,10 +1,10 @@
 import "server-only";
 import { PipelineTriggers, type Webhook } from "@prisma/client";
+import { UnrecoverableError } from "bullmq";
 import { createHash } from "node:crypto";
 import { prisma } from "@formbricks/database";
 import type { JobHandler, TResponsePipelineJobData } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { type TUserLocale, ZUserLocale } from "@formbricks/types/user";
 import { generateStandardWebhookSignature } from "@/lib/crypto";
 import { getIntegrations } from "@/lib/integration/service";
@@ -470,9 +470,13 @@ const handleSurveyAutoCompleteSafely = async ({
       userType: "system",
       targetId: survey.id,
       organizationId,
-      newObject: {
-        status: "completed",
-      },
+      ...(logStatus === "success"
+        ? {
+            newObject: {
+              status: "completed",
+            },
+          }
+        : {}),
     });
   } catch (error) {
     logger.error(
@@ -592,14 +596,14 @@ export const processResponsePipelineJob: JobHandler<TResponsePipelineJobData> = 
   try {
     const survey = await getSurvey(data.surveyId);
     if (!survey) {
-      throw new ResourceNotFoundError("Survey", data.surveyId);
+      throw new UnrecoverableError(`Survey ${data.surveyId} not found`);
     }
 
     const workspaceId = survey.workspaceId;
 
     const organization = await getOrganizationByWorkspaceId(workspaceId);
     if (!organization) {
-      throw new ResourceNotFoundError("Organization", "Organization not found");
+      throw new UnrecoverableError(`Organization not found for workspace ${workspaceId}`);
     }
 
     const event = data.event as PipelineTriggers;

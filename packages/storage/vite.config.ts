@@ -19,7 +19,6 @@ export default defineConfig({
         "@formbricks/logger",
       ],
     },
-    emptyOutDir: false,
   },
   test: {
     environment: "node",

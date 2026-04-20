@@ -1,5 +1,5 @@
 import "server-only";
-import { StorageErrorCode } from "@formbricks/storage";
+import { type StorageError, StorageErrorCode } from "@formbricks/storage";
 import { TResponseData } from "@formbricks/types/responses";
 import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/storage";
 import { TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
@@ -7,10 +7,6 @@ import { responses } from "@/app/lib/api/response";
 import { WEBAPP_URL } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getOriginalFileNameFromUrl } from "./url-helpers";
-
-type TStorageError = {
-  code: (typeof StorageErrorCode)[keyof typeof StorageErrorCode];
-};
 
 // Re-export for backward compatibility with server-side code
 export { getOriginalFileNameFromUrl } from "./url-helpers";
@@ -116,7 +112,7 @@ export const isValidImageFile = (fileUrl: string): boolean => {
 };
 
 export const getErrorResponseFromStorageError = (
-  error: TStorageError,
+  error: StorageError,
   details?: Record<string, string>
 ): Response => {
   switch (error.code) {

@@ -278,6 +278,7 @@ describe("@formbricks/jobs runtime", () => {
 
   test("logs signal shutdown failures", async () => {
     const processOnceSpy = vi.spyOn(process, "once");
+    const processExitSpy = vi.spyOn(process, "exit").mockImplementation((() => undefined) as never);
     await startJobsRuntime({ redisUrl: "redis://localhost:6379" });
     const sigtermRegistration = processOnceSpy.mock.calls.find(
       (call): call is ["SIGTERM", () => void] => call[0] === "SIGTERM"
@@ -291,7 +292,7 @@ describe("@formbricks/jobs runtime", () => {
 
     await vi.waitFor(() => {
       const shutdownFailureCall = mockLogger.error.mock.calls.find(
-        (call) => call[1] === "BullMQ shutdown failed in closeRuntime after SIGTERM"
+        (call) => call[1] === "Failed to close BullMQ Redis connection cleanly"
       ) as [unknown, string] | undefined;
 
       expect(shutdownFailureCall).toBeDefined();
@@ -299,6 +300,9 @@ describe("@formbricks/jobs runtime", () => {
       expect(shutdownFailureContext?.err).toBeInstanceOf(Error);
     });
 
+    expect(processExitSpy).toHaveBeenCalledWith(0);
+
+    processExitSpy.mockRestore();
     processOnceSpy.mockRestore();
   });
 });

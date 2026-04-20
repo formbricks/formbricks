@@ -50,7 +50,7 @@ export const GET = async (
   // Stream the file — try workspaceId path first (new uploads), fall back to environmentId (legacy)
   const streamResult = await getFileStreamForDownload(fileName, resolved.workspaceId, accessType, idParam);
 
-  if ("error" in streamResult) {
+  if (!streamResult.ok) {
     const errorResponse = getErrorResponseFromStorageError(streamResult.error, { fileName });
     return errorResponse;
   }
@@ -139,7 +139,7 @@ export const DELETE = async (
     idParam
   );
 
-  if ("error" in deleteResult) {
+  if (!deleteResult.ok) {
     const { error } = deleteResult;
 
     logger.error({ error }, "Error deleting file");

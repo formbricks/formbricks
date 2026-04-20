@@ -15,6 +15,24 @@ import {
 } from "@/modules/ee/audit-logs/types/audit-log";
 import { getIsAuditLogsEnabled } from "@/modules/ee/license-check/lib/utils";
 
+export type TAuditEventInput = {
+  action: TAuditAction;
+  targetType: TAuditTarget;
+  userId: string;
+  userType: TActor;
+  targetId: string;
+  organizationId: string;
+  status: TAuditStatus;
+  oldObject?: Record<string, unknown> | null;
+  newObject?: Record<string, unknown> | null;
+  eventId?: string;
+  apiUrl?: string;
+};
+
+type TBuildAuditEventInput = TAuditEventInput & {
+  ipAddress: string;
+};
+
 /**
  * Builds an audit event and logs it.
  * Redacts sensitive data from the old and new objects before logging.
@@ -32,20 +50,7 @@ export const buildAndLogAuditEvent = async ({
   newObject,
   eventId,
   apiUrl,
-}: {
-  action: TAuditAction;
-  targetType: TAuditTarget;
-  userId: string;
-  userType: TActor;
-  targetId: string;
-  organizationId: string;
-  ipAddress: string;
-  status: TAuditStatus;
-  oldObject?: Record<string, unknown> | null;
-  newObject?: Record<string, unknown> | null;
-  eventId?: string;
-  apiUrl?: string;
-}) => {
+}: TBuildAuditEventInput) => {
   if (!AUDIT_LOG_ENABLED && !(await getIsAuditLogsEnabled())) {
     return;
   }
@@ -97,19 +102,7 @@ export const queueAuditEventBackground = async ({
   status,
   eventId,
   apiUrl,
-}: {
-  action: TAuditAction;
-  targetType: TAuditTarget;
-  userId: string;
-  userType: TActor;
-  targetId: string;
-  organizationId: string;
-  oldObject?: Record<string, unknown> | null;
-  newObject?: Record<string, unknown> | null;
-  status: TAuditStatus;
-  eventId?: string;
-  apiUrl?: string;
-}) => {
+}: TAuditEventInput) => {
   setImmediate(async () => {
     const ipAddress = await getClientIpFromHeaders();
     await buildAndLogAuditEvent({
@@ -145,19 +138,7 @@ export const queueAuditEvent = async ({
   status,
   eventId,
   apiUrl,
-}: {
-  action: TAuditAction;
-  targetType: TAuditTarget;
-  userId: string;
-  userType: TActor;
-  targetId: string;
-  organizationId: string;
-  oldObject?: Record<string, unknown> | null;
-  newObject?: Record<string, unknown> | null;
-  status: TAuditStatus;
-  eventId?: string;
-  apiUrl?: string;
-}) => {
+}: TAuditEventInput) => {
   const ipAddress = await getClientIpFromHeaders();
 
   await buildAndLogAuditEvent({
@@ -193,20 +174,7 @@ export const queueAuditEventWithoutRequest = async ({
   eventId,
   apiUrl,
   ipAddress = UNKNOWN_DATA,
-}: {
-  action: TAuditAction;
-  targetType: TAuditTarget;
-  userId: string;
-  userType: TActor;
-  targetId: string;
-  organizationId: string;
-  oldObject?: Record<string, unknown> | null;
-  newObject?: Record<string, unknown> | null;
-  status: TAuditStatus;
-  eventId?: string;
-  apiUrl?: string;
-  ipAddress?: string;
-}) => {
+}: TAuditEventInput & { ipAddress?: string }) => {
   await buildAndLogAuditEvent({
     action,
     targetType,

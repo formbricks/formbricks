@@ -117,14 +117,12 @@ const toEnqueuedJob = (
     id?: Job["id"];
   }
 ): EnqueuedJob => {
-  const jobId = Reflect.get(job as object, "id") as Job["id"] | undefined;
-
-  if (jobId === undefined) {
+  if (job.id === undefined) {
     throw new Error(`Missing BullMQ job.id in toEnqueuedJob for jobName=${job.name}`);
   }
 
   return {
-    jobId: String(jobId),
+    jobId: String(job.id),
     jobName: job.name,
     queueName: job.queueName,
   };

@@ -152,6 +152,7 @@ describe("POST /modules/api/v2/management/responses", () => {
     mockValidateFileUploads.mockReturnValue(true);
     mockValidateOtherOptionLengthForMultipleChoice.mockReturnValue(undefined);
     mockValidateResponseData.mockReturnValue(null);
+    mockSendToPipeline.mockResolvedValue(undefined);
     mockCreateResponseWithQuotaEvaluation.mockResolvedValue({ data: createdResponse, ok: true });
     mockGetResponseSnapshotForPipeline.mockResolvedValue({ data: responseSnapshot, ok: true });
     mockCreatedResponse.mockImplementation((body: unknown) => Response.json(body, { status: 201 }));
@@ -178,5 +179,57 @@ describe("POST /modules/api/v2/management/responses", () => {
       response: responseSnapshot,
       surveyId,
     });
+  });
+
+  test("returns 201 when loading the pipeline snapshot throws", async () => {
+    mockGetResponseSnapshotForPipeline.mockRejectedValueOnce(new Error("snapshot failed"));
+
+    const { POST } = await import("./route");
+    const response = await POST(
+      new Request("http://localhost/api/v2/management/responses", { method: "POST" })
+    );
+
+    expect(response.status).toBe(201);
+    expect(mockSendToPipeline).not.toHaveBeenCalled();
+  });
+
+  test("returns 201 when pipeline dispatch rejects", async () => {
+    mockSendToPipeline.mockRejectedValueOnce(new Error("pipeline failed"));
+
+    const { POST } = await import("./route");
+    const response = await POST(
+      new Request("http://localhost/api/v2/management/responses", { method: "POST" })
+    );
+
+    await Promise.resolve();
+
+    expect(response.status).toBe(201);
+    expect(mockSendToPipeline).toHaveBeenCalledTimes(2);
+  });
+
+  test("returns the create-response error payload when response creation fails", async () => {
+    mockCreateResponseWithQuotaEvaluation.mockResolvedValueOnce({
+      ok: false,
+      error: {
+        type: "bad_request",
+        details: [{ field: "surveyId", issue: "invalid" }],
+      },
+    });
+
+    const { POST } = await import("./route");
+    const response = await POST(
+      new Request("http://localhost/api/v2/management/responses", { method: "POST" })
+    );
+
+    expect(response.status).toBe(400);
+    expect(mockHandleApiError).toHaveBeenCalledWith(
+      expect.any(Request),
+      {
+        type: "bad_request",
+        details: [{ field: "surveyId", issue: "invalid" }],
+      },
+      undefined
+    );
+    expect(mockSendToPipeline).not.toHaveBeenCalled();
   });
 });
