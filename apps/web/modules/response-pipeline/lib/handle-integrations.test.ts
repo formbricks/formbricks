@@ -25,7 +25,6 @@ import {
 import { TResponse, TResponseMeta } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
-import { TPipelineInput } from "@/app/api/(internal)/pipeline/types/pipelines";
 import { writeData as airtableWriteData } from "@/lib/airtable/service";
 import { writeData as googleSheetWriteData } from "@/lib/googleSheet/service";
 import { getLocalizedValue } from "@/lib/i18n/utils";
@@ -35,7 +34,7 @@ import { writeDataToSlack } from "@/lib/slack/service";
 import { getFormattedDateTimeString } from "@/lib/utils/datetime";
 import { parseRecallInfo } from "@/lib/utils/recall";
 import { truncateText } from "@/lib/utils/strings";
-import { handleIntegrations } from "./handleIntegrations";
+import { handleIntegrations } from "./handle-integrations";
 
 // Mock dependencies
 vi.mock("@/lib/airtable/service");
@@ -56,6 +55,7 @@ const questionId2 = "q2";
 const questionId3 = "q3_picture";
 const hiddenFieldId = "hidden1";
 const variableId = "var1";
+type TIntegrationPipelineInput = Parameters<typeof handleIntegrations>[1];
 
 const mockPipelineInput = {
   workspaceId: "env1",
@@ -93,7 +93,7 @@ const mockPipelineInput = {
     },
     ttc: {},
   } as unknown as TResponse,
-} as TPipelineInput;
+} as Parameters<typeof handleIntegrations>[1];
 
 const mockSurvey = {
   id: surveyId,
@@ -440,6 +440,114 @@ describe("handleIntegrations", () => {
       await handleIntegrations([mockNotionIntegration], differentSurveyInput, mockSurvey);
 
       expect(writeNotionData).not.toHaveBeenCalled();
+    });
+
+    test("maps picture selection URLs without mutating the shared response payload", async () => {
+      vi.mocked(writeNotionData).mockResolvedValue(undefined);
+      const pipelineInput = structuredClone(mockPipelineInput) as TIntegrationPipelineInput;
+
+      await handleIntegrations([mockNotionIntegration], pipelineInput, mockSurvey);
+
+      expect(writeNotionData).toHaveBeenCalledWith(
+        "db1",
+        expect.objectContaining({
+          "Column 3": {
+            url: "http://image.com/1",
+          },
+        }),
+        mockNotionIntegration.config
+      );
+      expect(pipelineInput.response.data[questionId3]).toEqual(["picChoice1"]);
+    });
+
+    test("coerces non-string Notion text values and avoids invalid multi-url payloads", async () => {
+      vi.mocked(writeNotionData).mockResolvedValue(undefined);
+      const pipelineInput = structuredClone(mockPipelineInput) as TIntegrationPipelineInput;
+      const pipelineResponseData = pipelineInput.response.data as Record<string, unknown>;
+      pipelineResponseData[questionId1] = 42;
+      pipelineResponseData.objectField = { foo: "bar" };
+      pipelineResponseData.manyUrls = ["https://example.com/a", "https://example.com/b"];
+
+      const notionIntegration = structuredClone(mockNotionIntegration);
+      notionIntegration.config.data[0].mapping = [
+        {
+          element: { id: questionId1, name: "Question 1", type: TSurveyQuestionTypeEnum.OpenText },
+          column: { id: "col_title", name: "Title", type: "title" },
+        },
+        {
+          element: { id: "objectField", name: "Object Field", type: TSurveyQuestionTypeEnum.OpenText },
+          column: { id: "col_rich", name: "Rich", type: "rich_text" },
+        },
+        {
+          element: { id: "manyUrls", name: "Many Urls", type: TSurveyQuestionTypeEnum.OpenText },
+          column: { id: "col_url", name: "Url", type: "url" },
+        },
+      ] as TIntegrationNotionConfigData["mapping"];
+
+      await handleIntegrations([notionIntegration], pipelineInput, mockSurvey);
+
+      expect(writeNotionData).toHaveBeenCalledWith(
+        "db1",
+        expect.objectContaining({
+          Rich: {
+            rich_text: [
+              {
+                text: {
+                  content: JSON.stringify({ foo: "bar" }),
+                },
+              },
+            ],
+          },
+          Title: {
+            title: [
+              {
+                text: {
+                  content: "42",
+                },
+              },
+            ],
+          },
+          Url: {
+            url: null,
+          },
+        }),
+        notionIntegration.config
+      );
+    });
+
+    test("sanitizes mixed Notion multi-select values and preserves numeric precision", async () => {
+      vi.mocked(writeNotionData).mockResolvedValue(undefined);
+      const pipelineInput = structuredClone(mockPipelineInput) as TIntegrationPipelineInput;
+      const pipelineResponseData = pipelineInput.response.data as Record<string, unknown>;
+      pipelineResponseData[questionId2] = ["Choice 1", { name: "Choice, 3" }, 42] as unknown as string[];
+      pipelineResponseData.numericField = 3.5;
+
+      const notionIntegration = structuredClone(mockNotionIntegration);
+      notionIntegration.config.data[0].mapping = [
+        {
+          element: { id: questionId2, name: "Question 2", type: TSurveyQuestionTypeEnum.MultipleChoiceMulti },
+          column: { id: "col_multi", name: "Multi", type: "multi_select" },
+        },
+        {
+          element: { id: "numericField", name: "Numeric Field", type: TSurveyQuestionTypeEnum.OpenText },
+          column: { id: "col_number", name: "Number", type: "number" },
+        },
+      ] as TIntegrationNotionConfigData["mapping"];
+
+      await handleIntegrations([notionIntegration], pipelineInput, mockSurvey);
+
+      expect(writeNotionData).toHaveBeenCalledWith(
+        "db1",
+        expect.objectContaining({
+          Multi: {
+            multi_select: [{ name: "Choice 1" }, { name: "Choice 3" }],
+          },
+          Number: {
+            number: 3.5,
+          },
+        }),
+        notionIntegration.config
+      );
     });
 
     test("should return error result on failure", async () => {

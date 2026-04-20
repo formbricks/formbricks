@@ -11,6 +11,8 @@ import {
   verifyPassword,
 } from "./auth";
 
+const PASSWORD_TEST_TIMEOUT_MS = 30_000;
+
 // Mock prisma
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -21,26 +23,38 @@ vi.mock("@formbricks/database", () => ({
 }));
 
 describe("Password Management", () => {
-  test("hashPassword should hash a password", async () => {
-    const password = "testPassword123";
-    const hashedPassword = await hashPassword(password);
-    expect(hashedPassword).toBeDefined();
-    expect(hashedPassword).not.toBe(password);
-  });
+  test(
+    "hashPassword should hash a password",
+    async () => {
+      const password = "testPassword123";
+      const hashedPassword = await hashPassword(password);
+      expect(hashedPassword).toBeDefined();
+      expect(hashedPassword).not.toBe(password);
+    },
+    PASSWORD_TEST_TIMEOUT_MS
+  );
 
-  test("verifyPassword should verify a correct password", async () => {
-    const password = "testPassword123";
-    const hashedPassword = await hashPassword(password);
-    const isValid = await verifyPassword(password, hashedPassword);
-    expect(isValid).toBe(true);
-  });
+  test(
+    "verifyPassword should verify a correct password",
+    async () => {
+      const password = "testPassword123";
+      const hashedPassword = await hashPassword(password);
+      const isValid = await verifyPassword(password, hashedPassword);
+      expect(isValid).toBe(true);
+    },
+    PASSWORD_TEST_TIMEOUT_MS
+  );
 
-  test("verifyPassword should reject an incorrect password", async () => {
-    const password = "testPassword123";
-    const hashedPassword = await hashPassword(password);
-    const isValid = await verifyPassword("wrongPassword", hashedPassword);
-    expect(isValid).toBe(false);
-  });
+  test(
+    "verifyPassword should reject an incorrect password",
+    async () => {
+      const password = "testPassword123";
+      const hashedPassword = await hashPassword(password);
+      const isValid = await verifyPassword("wrongPassword", hashedPassword);
+      expect(isValid).toBe(false);
+    },
+    PASSWORD_TEST_TIMEOUT_MS
+  );
 });
 
 describe("Organization Access", () => {

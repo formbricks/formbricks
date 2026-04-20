@@ -1,5 +1,5 @@
 import "server-only";
-import { StorageError, StorageErrorCode } from "@formbricks/storage";
+import { type StorageError, StorageErrorCode } from "@formbricks/storage";
 import { TResponseData } from "@formbricks/types/responses";
 import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/storage";
 import { TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";

@@ -20,6 +20,7 @@ const baseWorkspace: Workspace = {
   id: "p1",
   createdAt: new Date(),
   updatedAt: new Date(),
+  legacyEnvironmentId: null,
   name: "Workspace 1",
   organizationId: "org1",
   styling: { allowStyleOverwrite: true } as any,

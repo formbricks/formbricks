@@ -4,7 +4,6 @@ import { v7 as uuidv7 } from "uuid";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { sendTelemetryEvents } from "@/app/api/(internal)/pipeline/lib/telemetry";
 import { ZPipelineInput } from "@/app/api/(internal)/pipeline/types/pipelines";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
@@ -21,11 +20,12 @@ import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
 import { TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { recordResponseCreatedMeterEvent } from "@/modules/ee/billing/lib/metering";
 import { sendResponseFinishedEmail } from "@/modules/email";
+import { handleIntegrations } from "@/modules/response-pipeline/lib/handle-integrations";
+import { captureSurveyResponsePostHogEvent } from "@/modules/response-pipeline/lib/posthog";
+import { sendTelemetryEvents } from "@/modules/response-pipeline/lib/telemetry";
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { sendFollowUpsForResponse } from "@/modules/survey/follow-ups/lib/follow-ups";
 import { FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
-import { handleIntegrations } from "./lib/handleIntegrations";
-import { captureSurveyResponsePostHogEvent } from "./lib/posthog";
 
 export const POST = async (request: Request) => {
   const requestHeaders = await headers();
