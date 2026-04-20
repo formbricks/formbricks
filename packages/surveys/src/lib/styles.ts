@@ -348,7 +348,7 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
     upperDecls += "  color: var(--fb-element-upper-label-color) !important;\n";
     upperDecls += "  opacity: var(--fb-element-upper-label-opacity, 1) !important;\n";
   }
-  addRule("#fbjs .label-upper,\n#fbjs .label-upper *", upperDecls);
+  addRule("#fbjs .label-card,\n#fbjs .label-card *", upperDecls);
 
   // --- Buttons ---
   let buttonDecls = "";

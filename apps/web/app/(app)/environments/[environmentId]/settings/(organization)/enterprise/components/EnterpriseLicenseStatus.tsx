@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { formatDateForDisplay, formatDateTimeForDisplay } from "@/lib/utils/datetime";
 import { recheckLicenseAction } from "@/modules/ee/license-check/actions";
 import type { TLicenseStatus } from "@/modules/ee/license-check/types/enterprise-license";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
@@ -15,6 +16,7 @@ import { SettingsCard } from "../../../components/SettingsCard";
 
 interface EnterpriseLicenseStatusProps {
   status: TLicenseStatus;
+  lastChecked: Date;
   gracePeriodEnd?: Date;
   environmentId: string;
 }
@@ -44,10 +46,12 @@ const getBadgeConfig = (
 
 export const EnterpriseLicenseStatus = ({
   status,
+  lastChecked,
   gracePeriodEnd,
   environmentId,
 }: EnterpriseLicenseStatusProps) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
   const router = useRouter();
   const [isRechecking, setIsRechecking] = useState(false);
 
@@ -92,7 +96,12 @@ export const EnterpriseLicenseStatus = ({
       <div className="flex flex-col gap-4">
         <div className="flex items-center justify-between gap-3">
           <div className="flex flex-col gap-1.5">
-            <Badge type={badgeConfig.type} text={badgeConfig.label} size="normal" className="w-fit" />
+            <div className="flex flex-wrap items-center gap-3">
+              <Badge type={badgeConfig.type} text={badgeConfig.label} size="normal" className="w-fit" />
+              <span className="text-sm text-slate-500">
+                {t("common.updated_at")} {formatDateTimeForDisplay(new Date(lastChecked), locale)}
+              </span>
+            </div>
           </div>
           <Button
             type="button"
@@ -118,7 +127,7 @@ export const EnterpriseLicenseStatus = ({
           <Alert variant="warning" size="small">
             <AlertDescription className="overflow-visible whitespace-normal">
               {t("environments.settings.enterprise.license_unreachable_grace_period", {
-                gracePeriodEnd: new Date(gracePeriodEnd).toLocaleDateString(undefined, {
+                gracePeriodEnd: formatDateForDisplay(new Date(gracePeriodEnd), locale, {
                   year: "numeric",
                   month: "short",
                   day: "numeric",

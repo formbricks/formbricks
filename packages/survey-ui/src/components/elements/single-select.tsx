@@ -8,6 +8,11 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/general/dropdown-menu";
+import {
+  DropdownSearchInput,
+  SEARCH_THRESHOLD,
+  useDropdownSearch,
+} from "@/components/general/dropdown-search";
 import { ElementError } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { Input } from "@/components/general/input";
@@ -45,7 +50,7 @@ interface SingleSelectProps {
   requiredLabel?: string;
   /** Error message to display below the options */
   errorMessage?: string;
-  /** Text direction: 'ltr' (left-to-right), 'rtl' (right-to-left), or 'auto' (auto-detect from content) */
+  /** Text direction: 'ltr' (left-to-right), 'rtl' (right-to-right), or 'auto' (auto-detect from content) */
   dir?: "ltr" | "rtl" | "auto";
   /** Whether the options are disabled */
   disabled?: boolean;
@@ -67,8 +72,64 @@ interface SingleSelectProps {
   imageUrl?: string;
   /** Video URL to display above the headline */
   videoUrl?: string;
+  /** Placeholder text for the search input in dropdown mode */
+  searchPlaceholder?: string;
+  /** Message shown when search yields no results */
+  searchNoResultsText?: string;
 }
 
+const useDropdownCommitState = ({
+  variant,
+  selectedValue,
+  onChange,
+  handleDropdownOpen,
+  handleDropdownClose,
+}: {
+  variant: "list" | "dropdown";
+  selectedValue: string | undefined;
+  onChange: (value: string) => void;
+  handleDropdownOpen: () => void;
+  handleDropdownClose: () => void;
+}) => {
+  const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
+  const [pendingDropdownValue, setPendingDropdownValue] = React.useState<string | undefined>(selectedValue);
+  const [hasPendingDropdownChange, setHasPendingDropdownChange] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!isDropdownOpen) {
+      setPendingDropdownValue(selectedValue);
+      setHasPendingDropdownChange(false);
+    }
+  }, [selectedValue, isDropdownOpen]);
+
+  const handleDropdownOpenChange = (open: boolean) => {
+    setIsDropdownOpen(open);
+    if (open) {
+      setPendingDropdownValue(selectedValue);
+      setHasPendingDropdownChange(false);
+      handleDropdownOpen();
+      return;
+    }
+
+    handleDropdownClose();
+    if (hasPendingDropdownChange && pendingDropdownValue && pendingDropdownValue !== selectedValue) {
+      onChange(pendingDropdownValue);
+    }
+    setHasPendingDropdownChange(false);
+  };
+
+  const effectiveSelectedValue =
+    variant === "dropdown" && isDropdownOpen ? pendingDropdownValue : selectedValue;
+
+  return {
+    effectiveSelectedValue,
+    handleDropdownOpenChange,
+    setPendingDropdownValue,
+    setHasPendingDropdownChange,
+  };
+};
+
+// NOSONAR - This component intentionally keeps list/dropdown rendering in one place for consistent a11y behavior.
 function SingleSelect({
   elementId,
   headline,
@@ -91,12 +152,46 @@ function SingleSelect({
   onOtherValueChange,
   imageUrl,
   videoUrl,
+  searchPlaceholder = "Search...",
+  searchNoResultsText = "No results found",
 }: Readonly<SingleSelectProps>): React.JSX.Element {
   // Ensure value is always a string or undefined
   const selectedValue = value ?? undefined;
   const hasOtherOption = Boolean(otherOptionId);
   const isOtherSelected = hasOtherOption && selectedValue === otherOptionId;
   const otherInputRef = React.useRef<HTMLInputElement>(null);
+
+  // Search + side-locking for the dropdown variant
+  const allDropdownOptionCount = options.length + (hasOtherOption ? 1 : 0);
+  const showSearch = variant === "dropdown" && allDropdownOptionCount > SEARCH_THRESHOLD;
+
+  const {
+    searchQuery,
+    setSearchQuery,
+    searchInputRef,
+    lockedSide,
+    contentRef,
+    noneOption,
+    noneMatchesSearch,
+    filteredRegularOptions,
+    otherMatchesSearch,
+    hasNoResults,
+    handleDropdownOpen,
+    handleDropdownClose,
+  } = useDropdownSearch({ options, hasOtherOption, otherOptionLabel, isSearchEnabled: showSearch });
+
+  const {
+    effectiveSelectedValue,
+    handleDropdownOpenChange,
+    setPendingDropdownValue,
+    setHasPendingDropdownChange,
+  } = useDropdownCommitState({
+    variant,
+    selectedValue,
+    onChange,
+    handleDropdownOpen,
+    handleDropdownClose,
+  });
 
   React.useEffect(() => {
     if (!isOtherSelected || disabled) return;
@@ -132,7 +227,7 @@ function SingleSelect({
   const optionLabelClassName = "font-option text-option font-option-weight text-option-label";
 
   // Get selected option label for dropdown display
-  const selectedOption = options.find((opt) => opt.id === selectedValue);
+  const selectedOption = options.find((opt) => opt.id === effectiveSelectedValue);
   const displayText = isOtherSelected
     ? otherValue || otherOptionLabel
     : (selectedOption?.label ?? placeholder);
@@ -151,11 +246,11 @@ function SingleSelect({
       />
 
       {/* Options */}
-      <div>
+      <div data-element-input>
         {variant === "dropdown" ? (
           <>
             <ElementError errorMessage={errorMessage} dir={dir} />
-            <DropdownMenu>
+            <DropdownMenu onOpenChange={handleDropdownOpenChange}>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="outline"
@@ -168,12 +263,28 @@ function SingleSelect({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="bg-option-bg max-h-[300px] w-[var(--radix-dropdown-menu-trigger-width)] overflow-y-auto"
+                ref={contentRef}
+                side={lockedSide}
+                avoidCollisions={lockedSide === undefined}
+                className="bg-option-bg border-input-border w-(--radix-dropdown-menu-trigger-width) overflow-hidden"
                 align="start">
-                <DropdownMenuRadioGroup value={selectedValue} onValueChange={onChange}>
-                  {options
-                    .filter((option) => option.id !== "none")
-                    .map((option) => {
+                {showSearch ? (
+                  <DropdownSearchInput
+                    searchQuery={searchQuery}
+                    setSearchQuery={setSearchQuery}
+                    searchInputRef={searchInputRef}
+                    placeholder={searchPlaceholder}
+                    dir={dir}
+                  />
+                ) : null}
+                <div className="max-h-[260px] overflow-y-auto">
+                  <DropdownMenuRadioGroup
+                    value={effectiveSelectedValue}
+                    onValueChange={(newValue) => {
+                      setPendingDropdownValue(newValue);
+                      setHasPendingDropdownChange(newValue !== selectedValue);
+                    }}>
+                    {filteredRegularOptions.map((option) => {
                       const optionId = `${inputId}-${option.id}`;
 
                       return (
@@ -187,34 +298,36 @@ function SingleSelect({
                         </DropdownMenuRadioItem>
                       );
                     })}
-                  {hasOtherOption && otherOptionId ? (
-                    <DropdownMenuRadioItem
-                      value={otherOptionId}
-                      id={`${inputId}-${otherOptionId}`}
-                      dir={dir}
-                      disabled={disabled}>
-                      <span className="font-input font-input-weight text-input-text">
-                        {otherValue || otherOptionLabel}
-                      </span>
-                    </DropdownMenuRadioItem>
-                  ) : null}
-                  {options
-                    .filter((option) => option.id === "none")
-                    .map((option) => {
-                      const optionId = `${inputId}-${option.id}`;
-
-                      return (
-                        <DropdownMenuRadioItem
-                          key={option.id}
-                          value={option.id}
-                          id={optionId}
-                          dir={dir}
-                          disabled={disabled}>
-                          <span className="font-input font-input-weight text-input-text">{option.label}</span>
-                        </DropdownMenuRadioItem>
-                      );
-                    })}
-                </DropdownMenuRadioGroup>
+                    {otherMatchesSearch && otherOptionId ? (
+                      <DropdownMenuRadioItem
+                        value={otherOptionId}
+                        id={`${inputId}-${otherOptionId}`}
+                        dir={dir}
+                        disabled={disabled}>
+                        <span className="font-input font-input-weight text-input-text">
+                          {otherValue || otherOptionLabel}
+                        </span>
+                      </DropdownMenuRadioItem>
+                    ) : null}
+                    {noneOption && noneMatchesSearch ? (
+                      <DropdownMenuRadioItem
+                        key={noneOption.id}
+                        value={noneOption.id}
+                        id={`${inputId}-${noneOption.id}`}
+                        dir={dir}
+                        disabled={disabled}>
+                        <span className="font-input font-input-weight text-input-text">
+                          {noneOption.label}
+                        </span>
+                      </DropdownMenuRadioItem>
+                    ) : null}
+                    {hasNoResults ? (
+                      <div className="text-input-placeholder px-2 py-4 text-center text-sm">
+                        {searchNoResultsText}
+                      </div>
+                    ) : null}
+                  </DropdownMenuRadioGroup>
+                </div>
               </DropdownMenuContent>
             </DropdownMenu>
             {isOtherSelected ? (
@@ -225,13 +338,15 @@ function SingleSelect({
                 onChange={handleOtherInputChange}
                 placeholder={otherOptionPlaceholder}
                 disabled={disabled}
+                required
+                aria-invalid={Boolean(errorMessage)}
                 dir={dir}
                 className="mt-2 w-full"
               />
             ) : null}
           </>
         ) : (
-          <div className="relative">
+          <div className="relative" data-element-input>
             <ElementError errorMessage={errorMessage} dir={dir} />
             <RadioGroup
               name={inputId}
@@ -286,7 +401,8 @@ function SingleSelect({
                       onChange={handleOtherInputChange}
                       placeholder={otherOptionPlaceholder}
                       disabled={disabled}
-                      aria-required={required}
+                      required
+                      aria-invalid={Boolean(errorMessage)}
                       dir={dir}
                       className="mt-2 w-full"
                     />

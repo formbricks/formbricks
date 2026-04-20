@@ -10,6 +10,7 @@ import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
+import { EnterpriseLicenseFeaturesTable } from "./components/EnterpriseLicenseFeaturesTable";
 
 const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
   const params = await props.params;
@@ -93,15 +94,19 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
         />
       </PageHeader>
       {hasLicense ? (
-        <EnterpriseLicenseStatus
-          status={licenseState.status}
-          gracePeriodEnd={
-            licenseState.status === "unreachable"
-              ? new Date(licenseState.lastChecked.getTime() + GRACE_PERIOD_MS)
-              : undefined
-          }
-          environmentId={params.environmentId}
-        />
+        <>
+          <EnterpriseLicenseStatus
+            status={licenseState.status}
+            lastChecked={licenseState.lastChecked}
+            gracePeriodEnd={
+              licenseState.status === "unreachable"
+                ? new Date(licenseState.lastChecked.getTime() + GRACE_PERIOD_MS)
+                : undefined
+            }
+            environmentId={params.environmentId}
+          />
+          {licenseState.features && <EnterpriseLicenseFeaturesTable features={licenseState.features} />}
+        </>
       ) : (
         <div>
           <div className="relative isolate mt-8 overflow-hidden rounded-lg bg-slate-900 px-3 pt-8 shadow-2xl sm:px-8 md:pt-12 lg:flex lg:gap-x-10 lg:px-12 lg:pt-0">

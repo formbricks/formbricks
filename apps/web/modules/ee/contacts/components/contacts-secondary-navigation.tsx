@@ -1,3 +1,4 @@
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TProject } from "@formbricks/types/project";
 import { getProjectByEnvironmentId } from "@/lib/project/service";
 import { getTranslate } from "@/lingodotdev/server";
@@ -20,7 +21,7 @@ export const ContactsSecondaryNavigation = async ({
     project = await getProjectByEnvironmentId(environmentId);
 
     if (!project) {
-      throw new Error(t("common.workspace_not_found"));
+      throw new ResourceNotFoundError(t("common.workspace"), null);
     }
   }
 
@@ -31,14 +32,14 @@ export const ContactsSecondaryNavigation = async ({
       href: `/environments/${environmentId}/contacts`,
     },
     {
-      id: "segments",
-      label: t("common.segments"),
-      href: `/environments/${environmentId}/segments`,
-    },
-    {
       id: "attributes",
       label: t("common.attributes"),
       href: `/environments/${environmentId}/attributes`,
+    },
+    {
+      id: "segments",
+      label: t("common.segments"),
+      href: `/environments/${environmentId}/segments`,
     },
   ];
 

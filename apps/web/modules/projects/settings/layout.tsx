@@ -1,5 +1,7 @@
 import { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { getBillingFallbackPath } from "@/lib/membership/navigation";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 
 export const metadata: Metadata = {
@@ -13,18 +15,13 @@ export const ProjectSettingsLayout = async (props: {
   const params = await props.params;
   const { children } = props;
 
-  try {
-    // Use the new utility to get all required data with authorization checks
-    const { isBilling } = await getEnvironmentAuth(params.environmentId);
+  // Use the new utility to get all required data with authorization checks
+  const { isBilling } = await getEnvironmentAuth(params.environmentId);
 
-    // Redirect billing users
-    if (isBilling) {
-      return redirect(`/environments/${params.environmentId}/settings/billing`);
-    }
-
-    return children;
-  } catch (error) {
-    // The error boundary will catch this
-    throw error;
+  // Redirect billing users
+  if (isBilling) {
+    return redirect(getBillingFallbackPath(params.environmentId, IS_FORMBRICKS_CLOUD));
   }
+
+  return children;
 };

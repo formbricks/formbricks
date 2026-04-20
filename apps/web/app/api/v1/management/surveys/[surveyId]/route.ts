@@ -1,5 +1,6 @@
 import { logger } from "@formbricks/logger";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZSurveyUpdateInput } from "@formbricks/types/surveys/types";
 import { handleErrorResponse } from "@/app/api/v1/auth";
 import { deleteSurvey } from "@/app/api/v1/management/surveys/[surveyId]/lib/surveys";
@@ -70,6 +71,12 @@ export const GET = withV1ApiWrapper({
         response: responses.successResponse(resolveStorageUrlsInObject(result.survey)),
       };
     } catch (error) {
+      if (error instanceof ResourceNotFoundError) {
+        return {
+          response: responses.notFoundResponse("Survey", params.surveyId),
+        };
+      }
+
       return {
         response: handleErrorResponse(error),
       };

@@ -64,7 +64,7 @@ export const SurveyAnalysisCTA = ({
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
 
-  const { organizationId, project } = useEnvironment();
+  const { project } = useEnvironment();
   const { refreshSingleUseId } = useSingleUseId(survey, isReadOnly);
 
   const appSetupCompleted = survey.type === "app" && environment.appSetupCompleted;
@@ -128,7 +128,6 @@ export const SurveyAnalysisCTA = ({
     setIsResetting(true);
     const result = await resetSurveyAction({
       surveyId: survey.id,
-      organizationId: organizationId,
       projectId: project.id,
     });
     if (result?.data) {

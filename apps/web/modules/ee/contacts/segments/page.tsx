@@ -45,8 +45,10 @@ export const SegmentsPage = async ({
         />
       }
       upgradePromptTitle={t("environments.segments.unlock_segments_title")}
-      upgradePromptDescription={t("environments.segments.unlock_segments_description")}>
+      upgradePromptDescription={t("environments.segments.unlock_segments_description")}
+      upgradeFeature="segments">
       <SegmentTable
+        allSegments={segments}
         segments={filteredSegments}
         contactAttributeKeys={contactAttributeKeys}
         isContactsEnabled={isContactsEnabled}

@@ -78,7 +78,7 @@ export const AttributesTable = ({
   // Generate columns
   const columns = useMemo(() => {
     return generateAttributeTableColumns(searchValue, isReadOnly, isExpanded ?? false, t, locale);
-  }, [searchValue, isReadOnly, isExpanded]);
+  }, [searchValue, isReadOnly, isExpanded, locale, t]);
 
   // Load saved settings from localStorage
   useEffect(() => {

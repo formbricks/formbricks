@@ -1,5 +1,7 @@
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { getDisplaysByContactId } from "@/lib/display/service";
 import { getResponsesByContactId } from "@/lib/response/service";
+import { getLocale } from "@/lingodotdev/language";
 import { getTranslate } from "@/lingodotdev/server";
 import { getContactAttributesWithKeyInfo } from "@/modules/ee/contacts/lib/contact-attributes";
 import { getContact } from "@/modules/ee/contacts/lib/contacts";
@@ -9,13 +11,14 @@ import { IdBadge } from "@/modules/ui/components/id-badge";
 
 export const AttributesSection = async ({ contactId }: { contactId: string }) => {
   const t = await getTranslate();
-  const [contact, attributesWithKeyInfo] = await Promise.all([
+  const [locale, contact, attributesWithKeyInfo] = await Promise.all([
+    getLocale(),
     getContact(contactId),
     getContactAttributesWithKeyInfo(contactId),
   ]);
 
   if (!contact) {
-    throw new Error(t("environments.contacts.contact_not_found"));
+    throw new ResourceNotFoundError(t("common.contact"), contactId);
   }
 
   const [responses, displays] = await Promise.all([
@@ -43,7 +46,7 @@ export const AttributesSection = async ({ contactId }: { contactId: string }) =>
       return <IdBadge id={attr.value} />;
     }
 
-    return formatAttributeValue(attr.value, attr.dataType);
+    return formatAttributeValue(attr.value, attr.dataType, locale);
   };
 
   return (

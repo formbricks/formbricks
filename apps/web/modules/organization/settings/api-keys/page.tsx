@@ -1,7 +1,7 @@
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
-import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
-import { findMatchingLocale } from "@/lib/utils/locale";
+import { DEFAULT_LOCALE, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { getProjectsByOrganizationId } from "@/modules/organization/settings/api-keys/lib/projects";
@@ -12,11 +12,13 @@ import { ApiKeyList } from "./components/api-key-list";
 export const APIKeysPage = async (props: { params: Promise<{ environmentId: string }> }) => {
   const params = await props.params;
   const t = await getTranslate();
-  const locale = await findMatchingLocale();
 
-  const { currentUserMembership, organization } = await getEnvironmentAuth(params.environmentId);
+  const { currentUserMembership, organization, session } = await getEnvironmentAuth(params.environmentId);
 
-  const projects = await getProjectsByOrganizationId(organization.id);
+  const [projects, locale] = await Promise.all([
+    getProjectsByOrganizationId(organization.id),
+    getUserLocale(session.user.id),
+  ]);
 
   const canAccessApiKeys = currentUserMembership.role === "owner" || currentUserMembership.role === "manager";
 
@@ -37,7 +39,7 @@ export const APIKeysPage = async (props: { params: Promise<{ environmentId: stri
         description={t("environments.settings.api_keys.api_keys_description")}>
         <ApiKeyList
           organizationId={organization.id}
-          locale={locale}
+          locale={locale ?? DEFAULT_LOCALE}
           isReadOnly={!canAccessApiKeys}
           projects={projects}
         />

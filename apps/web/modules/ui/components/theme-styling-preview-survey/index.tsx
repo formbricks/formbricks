@@ -157,7 +157,7 @@ export const ThemeStylingPreviewSurvey = ({
             <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
           </div>
           <div className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
-            <p>{isAppSurvey ? "Your web app" : "Preview"}</p>
+            <p>{isAppSurvey ? t("environments.surveys.edit.your_web_app") : t("common.preview")}</p>
 
             <div className="flex items-center">
               <ResetProgressButton onClick={resetQuestionProgress} />

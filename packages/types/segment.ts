@@ -333,6 +333,10 @@ export const ZSegmentFilters: z.ZodType<TBaseFilters> = z
     error: "Invalid filters applied",
   });
 
+const ZRequiredSegmentFilters = ZSegmentFilters.refine((filters) => filters.length > 0, {
+  error: "At least one filter is required",
+});
+
 export const ZSegment = z.object({
   id: z.string(),
   title: z.string(),
@@ -350,16 +354,20 @@ export const ZSegmentCreateInput = z.object({
   title: z.string(),
   description: z.string().optional(),
   isPrivate: z.boolean().prefault(true),
-  filters: ZSegmentFilters,
+  filters: ZRequiredSegmentFilters,
   surveyId: z.string(),
 });
 
 export type TSegmentCreateInput = z.infer<typeof ZSegmentCreateInput>;
 
 export type TSegment = z.infer<typeof ZSegment>;
-export type TSegmentWithSurveyNames = TSegment & {
-  activeSurveys: string[];
-  inactiveSurveys: string[];
+export interface TSegmentSurveyReference {
+  id: string;
+  name: string;
+}
+export type TSegmentWithSurveyRefs = TSegment & {
+  activeSurveys: TSegmentSurveyReference[];
+  inactiveSurveys: TSegmentSurveyReference[];
 };
 
 export const ZSegmentUpdateInput = z
@@ -367,7 +375,7 @@ export const ZSegmentUpdateInput = z
     title: z.string(),
     description: z.string().nullable(),
     isPrivate: z.boolean().prefault(true),
-    filters: ZSegmentFilters,
+    filters: ZRequiredSegmentFilters,
     surveys: z.array(z.string()),
   })
   .partial();

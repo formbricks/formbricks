@@ -12,6 +12,7 @@ import flixbusLogo from "@/images/customer-logos/flixbus-white.svg";
 import githubLogo from "@/images/customer-logos/github-logo.png";
 import siemensLogo from "@/images/customer-logos/siemens.png";
 import { startProTrialAction } from "@/modules/ee/billing/actions";
+import { startHobbyAction } from "@/modules/ee/billing/actions";
 import { Button } from "@/modules/ui/components/button";
 
 interface SelectPlanCardProps {
@@ -31,6 +32,7 @@ const CUSTOMER_LOGOS = [
 export const SelectPlanCard = ({ nextUrl, organizationId }: SelectPlanCardProps) => {
   const router = useRouter();
   const [isStartingTrial, setIsStartingTrial] = useState(false);
+  const [isStartingHobby, setIsStartingHobby] = useState(false);
   const { t } = useTranslation();
 
   const TRIAL_FEATURE_KEYS = [
@@ -64,8 +66,20 @@ export const SelectPlanCard = ({ nextUrl, organizationId }: SelectPlanCardProps)
     }
   };
 
-  const handleContinueFree = () => {
-    router.push(nextUrl);
+  const handleContinueHobby = async () => {
+    setIsStartingHobby(true);
+    try {
+      const result = await startHobbyAction({ organizationId });
+      if (result?.data) {
+        router.push(nextUrl);
+      } else {
+        toast.error(t("common.something_went_wrong_please_try_again"));
+        setIsStartingHobby(false);
+      }
+    } catch {
+      toast.error(t("common.something_went_wrong_please_try_again"));
+      setIsStartingHobby(false);
+    }
   };
 
   return (
@@ -98,7 +112,7 @@ export const SelectPlanCard = ({ nextUrl, organizationId }: SelectPlanCardProps)
             onClick={handleStartTrial}
             className="mt-4 w-full"
             loading={isStartingTrial}
-            disabled={isStartingTrial}>
+            disabled={isStartingTrial || isStartingHobby}>
             {t("common.start_free_trial")}
           </Button>
         </div>
@@ -124,9 +138,10 @@ export const SelectPlanCard = ({ nextUrl, organizationId }: SelectPlanCardProps)
       </div>
 
       <button
-        onClick={handleContinueFree}
+        onClick={handleContinueHobby}
+        disabled={isStartingTrial || isStartingHobby}
         className="text-sm text-slate-400 underline-offset-2 transition-colors hover:text-slate-600 hover:underline">
-        {t("environments.settings.billing.stay_on_hobby_plan")}
+        {isStartingHobby ? t("common.loading") : t("environments.settings.billing.stay_on_hobby_plan")}
       </button>
     </div>
   );

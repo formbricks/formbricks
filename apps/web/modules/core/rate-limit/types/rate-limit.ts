@@ -13,6 +13,7 @@ export type TRateLimitConfig = z.infer<typeof ZRateLimitConfig>;
 
 const ZRateLimitResponse = z.object({
   allowed: z.boolean().describe("Whether the request is allowed"),
+  retryAfter: z.int().positive().optional().describe("Seconds until the current rate-limit window resets"),
 });
 
 export type TRateLimitResponse = z.infer<typeof ZRateLimitResponse>;

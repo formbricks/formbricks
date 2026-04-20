@@ -8,10 +8,11 @@ import { TResponseTableData } from "@formbricks/types/responses";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
+import { TUserLocale } from "@formbricks/types/user";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { extractChoiceIdsFromResponse } from "@/lib/response/utils";
 import { getContactIdentifier } from "@/lib/utils/contact";
-import { getFormattedDateTimeString } from "@/lib/utils/datetime";
+import { formatDateTimeForDisplay } from "@/lib/utils/datetime";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { RenderResponse } from "@/modules/analysis/components/SingleResponseCard/components/RenderResponse";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
@@ -34,6 +35,7 @@ const getElementColumnsData = (
   element: TSurveyElement,
   survey: TSurvey,
   isExpanded: boolean,
+  locale: TUserLocale,
   t: TFunction
 ): ColumnDef<TResponseTableData>[] => {
   const ELEMENTS_ICON_MAP = getElementIconMap(t);
@@ -167,6 +169,7 @@ const getElementColumnsData = (
                 survey={survey}
                 responseData={responseValue}
                 language={language}
+                locale={locale}
                 isExpanded={isExpanded}
                 showId={false}
               />
@@ -218,6 +221,7 @@ const getElementColumnsData = (
                 survey={survey}
                 responseData={responseValue}
                 language={language}
+                locale={locale}
                 isExpanded={isExpanded}
                 showId={false}
               />
@@ -259,11 +263,14 @@ export const generateResponseTableColumns = (
   survey: TSurvey,
   isExpanded: boolean,
   isReadOnly: boolean,
+  locale: TUserLocale,
   t: TFunction,
   showQuotasColumn: boolean
 ): ColumnDef<TResponseTableData>[] => {
   const elements = getElementsFromBlocks(survey.blocks);
-  const elementColumns = elements.flatMap((element) => getElementColumnsData(element, survey, isExpanded, t));
+  const elementColumns = elements.flatMap((element) =>
+    getElementColumnsData(element, survey, isExpanded, locale, t)
+  );
 
   const dateColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "createdAt",
@@ -271,7 +278,7 @@ export const generateResponseTableColumns = (
     size: 200,
     cell: ({ row }) => {
       const date = new Date(row.original.createdAt);
-      return <p className="text-slate-900">{getFormattedDateTimeString(date)}</p>;
+      return <p className="text-slate-900">{formatDateTimeForDisplay(date, locale)}</p>;
     },
   };
 

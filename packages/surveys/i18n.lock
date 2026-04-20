@@ -10,6 +10,7 @@ checksums:
     common/finish: ffa7a10f71182b48fefed7135bee24fa
     common/language_switch: fd72a9ada13f672f4fd5da863b22cc46
     common/next: 89ddbcf710eba274963494f312bdc8a9
+    common/no_results_found: 5518f2865757dc73900aa03ef8be6934
     common/open_in_new_tab: 6844e4922a7a40a7ee25c10ea109cdeb
     common/people_responded: b685fb877090d8658db724ad07a0dbd8
     common/please_retry_now_or_try_again_later: 949a3841e2eb01fa249790a42bf23aa5
@@ -20,8 +21,10 @@ checksums:
     common/question_video: cc554b661fd62ac59db500307b3ba44e
     common/required: 04d7fb6f37ffe0a6ca97d49e2a8b6eb5
     common/respondents_will_not_see_this_card: 18c3dd44d6ff6ca2310ad196b84f30d3
+    common/response_saved_offline: 7c06127ffc49fe30c5c1d8ca792c7a0d
     common/retry: 6e44d18639560596569a1278f9c83676
     common/retrying: 40989361ea5f6b95897b95ac928b5bd9
+    common/search: fe877a75eac472fc5b188c135c78a558
     common/select_option: d68a0fb9afd0817dc31b3e9cb11855cb
     common/select_options: d5a80087e889848e0fed3f1be359366f
     common/sending_responses: 244f1aebc3f6a101ae2f8b630d7967ec
@@ -31,6 +34,7 @@ checksums:
     common/terms_of_service: 5add91f519e39025708e54a7eb7a9fc5
     common/the_servers_cannot_be_reached_at_the_moment: f8adbeccac69f9230a55b5b3af52b081
     common/they_will_be_redirected_immediately: 936bc99cb575cba95ea8f04d82bb353b
+    common/welcome_video: 1f87e84c0a563c2522eef5cb71a1f95c
     common/your_feedback_is_stuck: db2b6aba26723b01aee0fc918d3ca052
     errors/all_options_must_be_ranked: 360a2edff623496f7047907bad115ea1
     errors/all_rows_must_be_answered: 295f41a0ef04cbb3491c798053c61abd
@@ -41,7 +45,9 @@ checksums:
     errors/file_input/file_size_exceeded_alert: d8e482a2ff05e78bbacaed9e9db9b5eb
     errors/file_input/no_valid_file_types_selected: 795acdedcffbcf06e57ea93fc16771ce
     errors/file_input/only_one_file_can_be_uploaded_at_a_time: 1eda42bd46887f9702049e23fa7cb127
+    errors/file_input/placeholder_text: 15b61e390b6c5501d3e3b9da9f6c7930
     errors/file_input/upload_failed: 735fdfc1a37ab035121328237ddd6fd0
+    errors/file_input/uploading: baef62e2015a34d6747ed6e4192a27b1
     errors/file_input/you_can_only_upload_a_maximum_of_files: 72fe144f81075e5b06bae53b3a84d4db
     errors/invalid_device_error/message: 8813dcd0e3e41934af18d7a15f8c83f4
     errors/invalid_device_error/title: ea7dbb9970c717e4d466f8e1211bd461

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TUserLocale } from "@formbricks/types/user";
+import { formatDateForDisplay } from "@/lib/utils/datetime";
 import type { TLicenseStatus } from "@/modules/ee/license-check/types/enterprise-license";
 
 interface PendingDowngradeBannerProps {
@@ -31,7 +32,7 @@ export const PendingDowngradeBanner = ({
     : false;
 
   const scheduledDowngradeDate = new Date(lastChecked.getTime() + threeDaysInMillis);
-  const formattedDate = scheduledDowngradeDate.toLocaleDateString(locale, {
+  const formattedDate = formatDateForDisplay(scheduledDowngradeDate, locale, {
     year: "numeric",
     month: "long",
     day: "numeric",

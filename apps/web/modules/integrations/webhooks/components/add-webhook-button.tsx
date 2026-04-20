@@ -11,9 +11,10 @@ import { AddWebhookModal } from "./add-webhook-modal";
 interface AddWebhookButtonProps {
   environment: TEnvironment;
   surveys: TSurvey[];
+  allowInternalUrls: boolean;
 }
 
-export const AddWebhookButton = ({ environment, surveys }: AddWebhookButtonProps) => {
+export const AddWebhookButton = ({ environment, surveys, allowInternalUrls }: AddWebhookButtonProps) => {
   const { t } = useTranslation();
   const [isAddWebhookModalOpen, setAddWebhookModalOpen] = useState(false);
   return (
@@ -31,6 +32,7 @@ export const AddWebhookButton = ({ environment, surveys }: AddWebhookButtonProps
         surveys={surveys}
         open={isAddWebhookModalOpen}
         setOpen={setAddWebhookModalOpen}
+        allowInternalUrls={allowInternalUrls}
       />
     </>
   );

@@ -38,6 +38,7 @@ export const ActionSettingsTab = ({
   setOpen,
   isReadOnly,
 }: ActionSettingsTabProps) => {
+  const actionDocsHref = "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/actions";
   const { createdAt, updatedAt, id, ...restActionClass } = actionClass;
   const router = useRouter();
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
@@ -146,7 +147,7 @@ export const ActionSettingsTab = ({
 
           <div className="flex justify-between gap-x-2 border-slate-200 pt-4">
             <div className="flex items-center gap-x-2">
-              {!isReadOnly ? (
+              {isReadOnly ? null : (
                 <Button
                   type="button"
                   variant="destructive"
@@ -155,22 +156,22 @@ export const ActionSettingsTab = ({
                   <TrashIcon />
                   {t("common.delete")}
                 </Button>
-              ) : null}
+              )}
 
               <Button variant="secondary" asChild>
-                <Link href="https://formbricks.com/docs/actions/no-code" target="_blank">
+                <Link href={actionDocsHref} target="_blank">
                   {t("common.read_docs")}
                 </Link>
               </Button>
             </div>
 
-            {!isReadOnly ? (
+            {isReadOnly ? null : (
               <div className="flex space-x-2">
                 <Button type="submit" loading={isUpdatingAction}>
                   {t("common.save_changes")}
                 </Button>
               </div>
-            ) : null}
+            )}
           </div>
         </form>
       </FormProvider>

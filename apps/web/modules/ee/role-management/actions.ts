@@ -2,7 +2,12 @@
 
 import { z } from "zod";
 import { ZId, ZUuid } from "@formbricks/types/common";
-import { AuthenticationError, OperationNotAllowedError, ValidationError } from "@formbricks/types/errors";
+import {
+  AuthenticationError,
+  OperationNotAllowedError,
+  ResourceNotFoundError,
+  ValidationError,
+} from "@formbricks/types/errors";
 import { ZMembershipUpdateInput } from "@formbricks/types/memberships";
 import { IS_FORMBRICKS_CLOUD, USER_MANAGEMENT_MINIMUM_ROLE } from "@/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
@@ -10,6 +15,7 @@ import { getUserManagementAccess } from "@/lib/membership/utils";
 import { getOrganization } from "@/lib/organization/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
+import { getOrganizationIdFromInviteId } from "@/lib/utils/helper";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getAccessControlPermission } from "@/modules/ee/license-check/lib/utils";
 import { updateInvite } from "@/modules/ee/role-management/lib/invite";
@@ -20,7 +26,7 @@ import { getInvite } from "@/modules/organization/settings/teams/lib/invite";
 export const checkRoleManagementPermission = async (organizationId: string) => {
   const organization = await getOrganization(organizationId);
   if (!organization) {
-    throw new Error("Organization not found");
+    throw new ResourceNotFoundError("Organization", organizationId);
   }
 
   const isAccessControlAllowed = await getAccessControlPermission(organizationId);
@@ -31,7 +37,6 @@ export const checkRoleManagementPermission = async (organizationId: string) => {
 
 const ZUpdateInviteAction = z.object({
   inviteId: ZUuid,
-  organizationId: ZId,
   data: ZInviteUpdateInput,
 });
 
@@ -39,17 +44,16 @@ export type TUpdateInviteAction = z.infer<typeof ZUpdateInviteAction>;
 
 export const updateInviteAction = authenticatedActionClient.inputSchema(ZUpdateInviteAction).action(
   withAuditLogging("updated", "invite", async ({ ctx, parsedInput }) => {
-    const currentUserMembership = await getMembershipByUserIdOrganizationId(
-      ctx.user.id,
-      parsedInput.organizationId
-    );
+    const organizationId = await getOrganizationIdFromInviteId(parsedInput.inviteId);
+
+    const currentUserMembership = await getMembershipByUserIdOrganizationId(ctx.user.id, organizationId);
     if (!currentUserMembership) {
       throw new AuthenticationError("User not a member of this organization");
     }
 
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: parsedInput.organizationId,
+      organizationId,
       access: [
         {
           data: parsedInput.data,
@@ -68,9 +72,9 @@ export const updateInviteAction = authenticatedActionClient.inputSchema(ZUpdateI
       throw new OperationNotAllowedError("Managers can only invite members");
     }
 
-    await checkRoleManagementPermission(parsedInput.organizationId);
+    await checkRoleManagementPermission(organizationId);
 
-    ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
+    ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.inviteId = parsedInput.inviteId;
     ctx.auditLoggingCtx.oldObject = { ...(await getInvite(parsedInput.inviteId)) };
 

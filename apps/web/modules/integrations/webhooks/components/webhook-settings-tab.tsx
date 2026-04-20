@@ -26,9 +26,16 @@ interface WebhookSettingsTabProps {
   surveys: TSurvey[];
   setOpen: (v: boolean) => void;
   isReadOnly: boolean;
+  allowInternalUrls: boolean;
 }
 
-export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: WebhookSettingsTabProps) => {
+export const WebhookSettingsTab = ({
+  webhook,
+  surveys,
+  setOpen,
+  isReadOnly,
+  allowInternalUrls,
+}: WebhookSettingsTabProps) => {
   const { t } = useTranslation();
   const router = useRouter();
   const { register, handleSubmit } = useForm({
@@ -60,7 +67,7 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: We
 
   const handleTestEndpoint = async (sendSuccessToast: boolean): Promise<boolean> => {
     try {
-      const { valid, error } = validWebHookURL(testEndpointInput);
+      const { valid, error } = validWebHookURL(testEndpointInput, allowInternalUrls);
       if (!valid) {
         toast.error(error ?? t("common.something_went_wrong_please_try_again"));
         return false;
@@ -82,7 +89,7 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: We
       setHittingEndpoint(false);
       const errMessage = err instanceof Error ? err.message : "Unknown error occurred";
       toast.error(
-        `${t("environments.integrations.webhooks.endpoint_pinged_error")} \n ${errMessage.length < 250 ? `${t("common.error")}:  ${errMessage}` : t("environments.integrations.webhooks.please_check_console")}`,
+        `${t("environments.integrations.webhooks.endpoint_pinged_error")} \n ${errMessage.length < 250 ? errMessage : t("environments.integrations.webhooks.please_check_console")}`,
         { className: errMessage.length < 250 ? "break-all" : "" }
       );
       console.error(t("environments.integrations.webhooks.webhook_test_failed_due_to"), errMessage);
@@ -300,7 +307,9 @@ export const WebhookSettingsTab = ({ webhook, surveys, setOpen, isReadOnly }: We
             )}
 
             <Button variant="secondary" asChild>
-              <Link href="https://formbricks.com/docs/api/management/webhooks" target="_blank">
+              <Link
+                href="https://formbricks.com/docs/xm-and-surveys/core-features/integrations/webhooks"
+                target="_blank">
                 {t("common.read_docs")}
               </Link>
             </Button>

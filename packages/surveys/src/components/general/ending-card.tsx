@@ -1,4 +1,4 @@
-import { useEffect } from "preact/hooks";
+import { useCallback, useEffect } from "preact/hooks";
 import { useTranslation } from "react-i18next";
 import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
 import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
@@ -25,6 +25,7 @@ interface EndingCardProps {
   onOpenExternalURL?: (url: string) => void | Promise<void>;
   isPreviewMode: boolean;
   fullSizeCards: boolean;
+  isOfflineWithPending?: boolean;
 }
 
 export function EndingCard({
@@ -40,7 +41,8 @@ export function EndingCard({
   onOpenExternalURL,
   isPreviewMode,
   fullSizeCards,
-}: EndingCardProps) {
+  isOfflineWithPending = false,
+}: Readonly<EndingCardProps>) {
   const { t } = useTranslation();
   const media =
     endingCard.type === "endScreen" && (endingCard.imageUrl ?? endingCard.videoUrl) ? (
@@ -66,26 +68,30 @@ export function EndingCard({
     </div>
   );
 
-  const processAndRedirect = (urlString: string) => {
-    try {
-      const url = replaceRecallInfo(urlString, responseData, variablesData);
-      if (url && new URL(url)) {
-        if (onOpenExternalURL) {
-          onOpenExternalURL(url);
-        } else {
-          window.top?.location.replace(url);
+  const processAndRedirect = useCallback(
+    (urlString: string) => {
+      try {
+        const url = replaceRecallInfo(urlString, responseData, variablesData, languageCode);
+        if (url && new URL(url)) {
+          if (onOpenExternalURL) {
+            onOpenExternalURL(url);
+          } else {
+            window.top?.location.replace(url);
+          }
         }
+      } catch (error) {
+        console.error("Invalid URL after recall processing:", error);
       }
-    } catch (error) {
-      console.error("Invalid URL after recall processing:", error);
-    }
-  };
+    },
+    [languageCode, onOpenExternalURL, responseData, variablesData]
+  );
 
-  const handleSubmit = () => {
+  const handleSubmit = useCallback(() => {
+    if (isOfflineWithPending) return;
     if (!isRedirectDisabled && endingCard.type === "endScreen" && endingCard.buttonLink) {
       processAndRedirect(endingCard.buttonLink);
     }
-  };
+  }, [endingCard, isOfflineWithPending, isRedirectDisabled, processAndRedirect]);
 
   useEffect(() => {
     if (isCurrent) {
@@ -114,7 +120,15 @@ export function EndingCard({
     return () => {
       document.removeEventListener("keydown", handleEnter);
     };
-  }, [isCurrent, isResponseSendingFinished, isRedirectDisabled, endingCard, survey.type]);
+  }, [
+    endingCard,
+    handleSubmit,
+    isCurrent,
+    isRedirectDisabled,
+    isResponseSendingFinished,
+    processAndRedirect,
+    survey.type,
+  ]);
 
   return (
     <ScrollableContainer fullSizeCards={fullSizeCards}>
@@ -130,7 +144,8 @@ export function EndingCard({
                     headline={replaceRecallInfo(
                       getLocalizedValue(endingCard.headline, languageCode),
                       responseData,
-                      variablesData
+                      variablesData,
+                      languageCode
                     )}
                     elementId="EndingCard"
                   />
@@ -138,7 +153,8 @@ export function EndingCard({
                     subheader={replaceRecallInfo(
                       getLocalizedValue(endingCard.subheader, languageCode),
                       responseData,
-                      variablesData
+                      variablesData,
+                      languageCode
                     )}
                     elementId="EndingCard"
                   />
@@ -148,11 +164,13 @@ export function EndingCard({
                         buttonLabel={replaceRecallInfo(
                           getLocalizedValue(endingCard.buttonLabel, languageCode),
                           responseData,
-                          variablesData
+                          variablesData,
+                          languageCode
                         )}
                         isLastQuestion={false}
                         focus={isCurrent ? autoFocusEnabled : false}
                         onClick={handleSubmit}
+                        disabled={isOfflineWithPending}
                       />
                     </div>
                   ) : null}
@@ -188,6 +206,22 @@ export function EndingCard({
             </div>
             <h1 className="text-brand">{t("common.sending_responses")}</h1>
           </>
+        )}
+        {isOfflineWithPending && isResponseSendingFinished && (
+          <div className="mx-auto mt-5 flex w-fit items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              className="h-4 w-4 shrink-0 text-amber-500">
+              <path
+                fillRule="evenodd"
+                d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.345 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 6a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 6zm0 9a1 1 0 100-2 1 1 0 000 2z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <p className="text-xs text-amber-700">{t("common.response_saved_offline")}</p>
+          </div>
         )}
       </div>
     </ScrollableContainer>

@@ -12,8 +12,12 @@ const relevantEvents = new Set([
   "customer.subscription.created",
   "customer.subscription.updated",
   "customer.subscription.deleted",
-  "invoice.finalized",
   "entitlements.active_entitlement_summary.updated",
+  "subscription_schedule.created",
+  "subscription_schedule.updated",
+  "subscription_schedule.released",
+  "subscription_schedule.canceled",
+  "subscription_schedule.completed",
 ]);
 
 /**
@@ -146,7 +150,7 @@ export const webhookHandler = async (requestBody: string, stripeSignature: strin
       await handleSetupCheckoutCompleted(event.data.object, stripe);
     }
 
-    await reconcileCloudStripeSubscriptionsForOrganization(organizationId, event.id);
+    await reconcileCloudStripeSubscriptionsForOrganization(organizationId);
     await syncOrganizationBillingFromStripe(organizationId, {
       id: event.id,
       created: event.created,

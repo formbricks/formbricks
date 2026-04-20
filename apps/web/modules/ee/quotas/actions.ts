@@ -21,7 +21,6 @@ import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 
 const ZDeleteQuotaAction = z.object({
   quotaId: ZId,
-  surveyId: ZId,
 });
 
 const checkQuotasEnabled = async (organizationId: string) => {
@@ -37,7 +36,7 @@ const checkQuotasEnabled = async (organizationId: string) => {
 
 export const deleteQuotaAction = authenticatedActionClient.inputSchema(ZDeleteQuotaAction).action(
   withAuditLogging("deleted", "quota", async ({ ctx, parsedInput }) => {
-    const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
+    const organizationId = await getOrganizationIdFromQuotaId(parsedInput.quotaId);
     await checkQuotasEnabled(organizationId);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -49,7 +48,7 @@ export const deleteQuotaAction = authenticatedActionClient.inputSchema(ZDeleteQu
         },
         {
           type: "projectTeam",
-          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
+          projectId: await getProjectIdFromQuotaId(parsedInput.quotaId),
           minPermission: "readWrite",
         },
       ],
@@ -72,7 +71,7 @@ const ZUpdateQuotaAction = z.object({
 
 export const updateQuotaAction = authenticatedActionClient.inputSchema(ZUpdateQuotaAction).action(
   withAuditLogging("updated", "quota", async ({ ctx, parsedInput }) => {
-    const organizationId = await getOrganizationIdFromSurveyId(parsedInput.quota.surveyId);
+    const organizationId = await getOrganizationIdFromQuotaId(parsedInput.quotaId);
     await checkQuotasEnabled(organizationId);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -84,7 +83,7 @@ export const updateQuotaAction = authenticatedActionClient.inputSchema(ZUpdateQu
         },
         {
           type: "projectTeam",
-          projectId: await getProjectIdFromSurveyId(parsedInput.quota.surveyId),
+          projectId: await getProjectIdFromQuotaId(parsedInput.quotaId),
           minPermission: "readWrite",
         },
       ],

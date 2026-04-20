@@ -1,3 +1,4 @@
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { MainNavigation } from "@/app/(app)/environments/[environmentId]/components/MainNavigation";
 import { TopControlBar } from "@/app/(app)/environments/[environmentId]/components/TopControlBar";
 import { IS_DEVELOPMENT, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
@@ -42,7 +43,7 @@ export const EnvironmentLayout = async ({ layoutData, children }: EnvironmentLay
 
   // Validate that project permission exists for members
   if (isMember && !projectPermission) {
-    throw new Error(t("common.workspace_permission_not_found"));
+    throw new ResourceNotFoundError(t("common.workspace"), null);
   }
 
   return (
@@ -74,6 +75,10 @@ export const EnvironmentLayout = async ({ layoutData, children }: EnvironmentLay
           isDevelopment={IS_DEVELOPMENT}
           membershipRole={membership.role}
           publicDomain={publicDomain}
+          isMultiOrgEnabled={isMultiOrgEnabled}
+          organizationProjectsLimit={organizationProjectsLimit}
+          isLicenseActive={active}
+          isAccessControlAllowed={isAccessControlAllowed}
         />
         <div id="mainContent" className="flex flex-1 flex-col overflow-hidden bg-slate-50">
           <TopControlBar

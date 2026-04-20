@@ -34,9 +34,16 @@ interface AddWebhookModalProps {
   open: boolean;
   surveys: TSurvey[];
   setOpen: (v: boolean) => void;
+  allowInternalUrls: boolean;
 }
 
-export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWebhookModalProps) => {
+export const AddWebhookModal = ({
+  environmentId,
+  surveys,
+  open,
+  setOpen,
+  allowInternalUrls,
+}: AddWebhookModalProps) => {
   const router = useRouter();
   const {
     handleSubmit,
@@ -59,7 +66,7 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
     sendSuccessToast: boolean
   ): Promise<{ success: boolean; secret?: string }> => {
     try {
-      const { valid, error } = validWebHookURL(testEndpointInput);
+      const { valid, error } = validWebHookURL(testEndpointInput, allowInternalUrls);
       if (!valid) {
         toast.error(error ?? t("common.something_went_wrong_please_try_again"));
         return { success: false };
@@ -85,9 +92,7 @@ export const AddWebhookModal = ({ environmentId, surveys, open, setOpen }: AddWe
       const errMessage = err instanceof Error ? err.message : "Unknown error occurred";
       toast.error(
         `${t("environments.integrations.webhooks.endpoint_pinged_error")} \n ${
-          errMessage.length < 250
-            ? `${t("common.error")}:  ${errMessage}`
-            : t("environments.integrations.webhooks.please_check_console")
+          errMessage.length < 250 ? errMessage : t("environments.integrations.webhooks.please_check_console")
         }`,
         { className: errMessage.length < 250 ? "break-all" : "" }
       );

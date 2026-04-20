@@ -181,7 +181,7 @@ export const EmailCustomizationSettings = ({
 
   const buttons: [ModalButton, ModalButton] = [
     {
-      text: isFormbricksCloud ? t("common.start_free_trial") : t("common.request_trial_license"),
+      text: isFormbricksCloud ? t("common.upgrade_plan") : t("common.request_trial_license"),
       href: isFormbricksCloud
         ? `/environments/${environmentId}/settings/billing`
         : "https://formbricks.com/upgrade-self-hosting-license",
@@ -300,6 +300,7 @@ export const EmailCustomizationSettings = ({
             title={t("environments.settings.general.customize_email_with_a_higher_plan")}
             description={t("environments.settings.general.eliminate_branding_with_whitelabel")}
             buttons={buttons}
+            feature="email_customization"
           />
         )}
 

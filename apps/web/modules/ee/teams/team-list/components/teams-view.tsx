@@ -1,3 +1,4 @@
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
@@ -32,12 +33,12 @@ export const TeamsView = async ({
   ]);
 
   if (!teams) {
-    throw new Error(t("common.teams_not_found"));
+    throw new ResourceNotFoundError(t("common.teams"), null);
   }
 
   const buttons: [ModalButton, ModalButton] = [
     {
-      text: IS_FORMBRICKS_CLOUD ? t("common.start_free_trial") : t("common.request_trial_license"),
+      text: IS_FORMBRICKS_CLOUD ? t("common.upgrade_plan") : t("common.request_trial_license"),
       href: IS_FORMBRICKS_CLOUD
         ? `/environments/${environmentId}/settings/billing`
         : "https://formbricks.com/docs/self-hosting/license#30-day-trial-license-request",
@@ -66,6 +67,7 @@ export const TeamsView = async ({
           title={t("environments.settings.teams.unlock_teams_title")}
           description={t("environments.settings.teams.unlock_teams_description")}
           buttons={buttons}
+          feature="teams"
         />
       )}
     </SettingsCard>

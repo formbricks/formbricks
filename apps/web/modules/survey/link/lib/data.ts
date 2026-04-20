@@ -47,6 +47,7 @@ export const getSurveyWithMetadata = reactCache(async (surveyId: string) => {
         redirectUrl: true,
         pin: true,
         isBackButtonHidden: true,
+        isAutoProgressingEnabled: true,
         isCaptureIpEnabled: true,
 
         // Single use configuration

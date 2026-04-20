@@ -1,10 +1,10 @@
-import DOMPurify from "isomorphic-dompurify";
+import { sanitize } from "isomorphic-dompurify";
 import * as React from "react";
 import { cn, stripInlineStyles } from "@/lib/utils";
 
 interface LabelProps extends React.ComponentProps<"label"> {
   /** Label variant for different styling contexts */
-  variant?: "default" | "headline" | "description";
+  variant?: "default" | "headline" | "description" | "card";
 }
 
 /**
@@ -39,7 +39,7 @@ function Label({
   const isHtml = childrenString ? isValidHTML(strippedContent) : false;
   const safeHtml =
     isHtml && strippedContent
-      ? DOMPurify.sanitize(strippedContent, {
+      ? sanitize(strippedContent, {
           ADD_ATTR: ["target"],
           FORBID_ATTR: ["style"],
         })
@@ -51,6 +51,8 @@ function Label({
     variantClass = "label-headline";
   } else if (variant === "description") {
     variantClass = "label-description";
+  } else if (variant === "card") {
+    variantClass = "label-card";
   }
 
   // Base classes - use flex-col for HTML content to allow line breaks, flex items-center for non-HTML

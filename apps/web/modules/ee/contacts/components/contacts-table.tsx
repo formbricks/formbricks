@@ -17,7 +17,9 @@ import { VisibilityState, flexRender, getCoreRowModel, useReactTable } from "@ta
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { deleteContactAction } from "@/modules/ee/contacts/actions";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -65,14 +67,15 @@ export const ContactsTable = ({
   const [isExpanded, setIsExpanded] = useState<boolean | null>(null);
   const [rowSelection, setRowSelection] = useState({});
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = (i18n.resolvedLanguage ?? i18n.language ?? "en-US") as TUserLocale;
 
   const [parent] = useAutoAnimate();
 
   // Generate columns
   const columns = useMemo(() => {
-    return generateContactTableColumns(searchValue, data, isReadOnly, t);
-  }, [searchValue, data, isReadOnly]);
+    return generateContactTableColumns(searchValue, data, isReadOnly, locale, t);
+  }, [searchValue, data, isReadOnly, locale, t]);
 
   // Load saved settings from localStorage
   useEffect(() => {
@@ -218,7 +221,10 @@ export const ContactsTable = ({
   };
 
   const deleteContact = async (contactId: string) => {
-    await deleteContactAction({ contactId });
+    const result = await deleteContactAction({ contactId });
+    if (result?.serverError) {
+      throw new Error(getFormattedErrorMessage(result));
+    }
   };
 
   return (

@@ -2,6 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table";
 import { TFunction } from "i18next";
+import { TUserLocale } from "@formbricks/types/user";
 import { formatAttributeValue } from "@/modules/ee/contacts/lib/format-attribute-value";
 import { getSelectionColumn } from "@/modules/ui/components/data-table";
 import { HighlightedText } from "@/modules/ui/components/highlighted-text";
@@ -12,6 +13,7 @@ export const generateContactTableColumns = (
   searchValue: string,
   data: TContactTableData[],
   isReadOnly: boolean,
+  locale: TUserLocale,
   t: TFunction
 ): ColumnDef<TContactTableData>[] => {
   const userColumn: ColumnDef<TContactTableData> = {
@@ -75,7 +77,7 @@ export const generateContactTableColumns = (
           cell: ({ row }: { row: { original: TContactTableData } }) => {
             const attribute = row.original.attributes.find((a) => a.key === attr.key);
             if (!attribute) return null;
-            const formattedValue = formatAttributeValue(attribute.value, attribute.dataType);
+            const formattedValue = formatAttributeValue(attribute.value, attribute.dataType, locale);
             return <HighlightedText value={formattedValue} searchValue={searchValue} />;
           },
         };

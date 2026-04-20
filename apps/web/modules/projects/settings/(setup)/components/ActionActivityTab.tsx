@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TActionClass, TActionClassInput, TActionClassInputCode } from "@formbricks/types/action-classes";
 import { TEnvironment } from "@formbricks/types/environment";
-import { convertDateTimeStringShort } from "@/lib/time";
+import { formatDateTimeForDisplay } from "@/lib/utils/datetime";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { getActiveInactiveSurveysAction } from "@/modules/projects/settings/(setup)/app-connection/actions";
 import { ACTION_TYPE_ICON_LOOKUP } from "@/modules/projects/settings/(setup)/app-connection/utils";
@@ -32,7 +32,8 @@ export const ActionActivityTab = ({
   environment,
   isReadOnly,
 }: ActivityTabProps) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
   const [activeSurveys, setActiveSurveys] = useState<string[] | undefined>();
   const [inactiveSurveys, setInactiveSurveys] = useState<string[] | undefined>();
   const [loading, setLoading] = useState(true);
@@ -136,29 +137,25 @@ export const ActionActivityTab = ({
       </div>
       <div className="col-span-1 space-y-3 rounded-lg border border-slate-100 bg-slate-50 p-2">
         <div>
-          <Label className="text-xs font-normal text-slate-500">Created on</Label>
-          <p className="text-xs text-slate-700">
-            {convertDateTimeStringShort(actionClass.createdAt?.toString())}
-          </p>
+          <Label className="text-xs font-normal text-slate-500">{t("common.created_at")}</Label>
+          <p className="text-xs text-slate-700">{formatDateTimeForDisplay(actionClass.createdAt, locale)}</p>
         </div>{" "}
         <div>
-          <Label className="text-xs font-normal text-slate-500">Last updated</Label>
-          <p className="text-xs text-slate-700">
-            {convertDateTimeStringShort(actionClass.updatedAt?.toString())}
-          </p>
+          <Label className="text-xs font-normal text-slate-500">{t("common.updated_at")}</Label>
+          <p className="text-xs text-slate-700">{formatDateTimeForDisplay(actionClass.updatedAt, locale)}</p>
         </div>
         <div>
-          <Label className="block text-xs font-normal text-slate-500">Type</Label>
+          <Label className="block text-xs font-normal text-slate-500">{t("common.type")}</Label>
           <div className="mt-1 flex items-center">
             <div className="mr-1.5 h-4 w-4 text-slate-600">{ACTION_TYPE_ICON_LOOKUP[actionClass.type]}</div>
             <p className="text-sm capitalize text-slate-700">{actionClass.type}</p>
           </div>
         </div>
         <div className="">
-          <Label className="text-xs font-normal text-slate-500">Environment</Label>
+          <Label className="text-xs font-normal text-slate-500">{t("common.environment")}</Label>
           <div className="items-center-center flex gap-2">
             <p className="text-xs text-slate-700">
-              {environment.type === "development" ? "Development" : "Production"}
+              {environment.type === "development" ? t("common.development") : t("common.production")}
             </p>
             <Button
               onClick={() => {
@@ -166,7 +163,10 @@ export const ActionActivityTab = ({
               }}
               className="m-0 p-0 text-xs font-medium text-black underline underline-offset-4 focus:ring-0 focus:ring-offset-0"
               variant="ghost">
-              {environment.type === "development" ? "Copy to Production" : "Copy to Development"}
+              {t("common.copy_to_environment", {
+                environment:
+                  environment.type === "development" ? t("common.production") : t("common.development"),
+              })}
             </Button>
           </div>
         </div>

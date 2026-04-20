@@ -1,11 +1,11 @@
 import { notFound } from "next/navigation";
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
-import { env } from "@/lib/env";
 import { getMonthlyOrganizationResponseCount } from "@/lib/organization/service";
 import { getOrganizationProjectsCount } from "@/lib/project/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getCloudBillingDisplayContext } from "@/modules/ee/billing/lib/cloud-billing-display";
+import { getStripeBillingCatalogDisplay } from "@/modules/ee/billing/lib/stripe-billing-catalog";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -21,7 +21,10 @@ export const PricingPage = async (props: { params: Promise<{ environmentId: stri
     notFound();
   }
 
-  const cloudBillingDisplayContext = await getCloudBillingDisplayContext(organization.id);
+  const [cloudBillingDisplayContext, billingCatalog] = await Promise.all([
+    getCloudBillingDisplayContext(organization.id),
+    getStripeBillingCatalogDisplay(),
+  ]);
 
   const organizationWithSyncedBilling = {
     ...organization,
@@ -53,13 +56,14 @@ export const PricingPage = async (props: { params: Promise<{ environmentId: stri
         projectCount={projectCount}
         hasBillingRights={hasBillingRights}
         currentCloudPlan={cloudBillingDisplayContext.currentCloudPlan}
+        currentBillingInterval={cloudBillingDisplayContext.currentBillingInterval}
         currentSubscriptionStatus={cloudBillingDisplayContext.currentSubscriptionStatus}
+        pendingChange={cloudBillingDisplayContext.pendingChange}
         usageCycleStart={cloudBillingDisplayContext.usageCycleStart}
         usageCycleEnd={cloudBillingDisplayContext.usageCycleEnd}
-        stripePublishableKey={env.STRIPE_PUBLISHABLE_KEY ?? null}
-        stripePricingTableId={env.STRIPE_PRICING_TABLE_ID ?? null}
         isStripeSetupIncomplete={!organizationWithSyncedBilling.billing.stripeCustomerId}
         trialDaysRemaining={cloudBillingDisplayContext.trialDaysRemaining}
+        billingCatalog={billingCatalog}
       />
     </PageContentWrapper>
   );

@@ -9,6 +9,7 @@
     "finish": "Завершить",
     "language_switch": "Переключение языка",
     "next": "Далее",
+    "no_results_found": "Результатов не найдено",
     "open_in_new_tab": "Открыть в новой вкладке",
     "people_responded": "{count, plural, one {1 человек ответил} other {{count} человека ответили}}",
     "please_retry_now_or_try_again_later": "Пожалуйста, повторите попытку сейчас или попробуйте позже.",
@@ -19,8 +20,10 @@
     "question_video": "Видео вопрос",
     "required": "Обязательно",
     "respondents_will_not_see_this_card": "Респонденты не увидят эту карточку",
+    "response_saved_offline": "Твой ответ еще не отправлен. Он будет отправлен автоматически, как только ты снова будешь онлайн.",
     "retry": "Повторить",
     "retrying": "Повторная попытка...",
+    "search": "Поиск...",
     "select_option": "Выбери вариант",
     "select_options": "Выбери варианты",
     "sending_responses": "Отправка ответов...",
@@ -30,6 +33,7 @@
     "terms_of_service": "Условия использования",
     "the_servers_cannot_be_reached_at_the_moment": "Сервера в данный момент недоступны.",
     "they_will_be_redirected_immediately": "Они будут немедленно перенаправлены",
+    "welcome_video": "Видео приветственной карточки",
     "your_feedback_is_stuck": "Ваш отзыв застрял :("
   },
   "errors": {
@@ -43,7 +47,9 @@
       "file_size_exceeded_alert": "Файл должен быть меньше {maxSizeInMB} МБ",
       "no_valid_file_types_selected": "Не выбраны допустимые типы файлов. Пожалуйста, выберите допустимый тип файла.",
       "only_one_file_can_be_uploaded_at_a_time": "Можно загрузить только один файл за раз.",
+      "placeholder_text": "Нажмите или перетащите файлы для загрузки",
       "upload_failed": "Ошибка загрузки! Пожалуйста, попробуйте снова.",
+      "uploading": "Загрузка...",
       "you_can_only_upload_a_maximum_of_files": "Вы можете загрузить максимум {FILE_LIMIT} файлов."
     },
     "invalid_device_error": {

@@ -193,7 +193,7 @@ export const IndividualInviteTab = ({
                     ? `/environments/${environmentId}/settings/billing`
                     : "https://formbricks.com/upgrade-self-hosting-license"
                 }>
-                {t("common.start_free_trial")}
+                {t("common.upgrade_plan")}
               </Link>
             </AlertDescription>
           </Alert>

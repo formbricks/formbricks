@@ -28,7 +28,6 @@ interface RankingElementFormProps {
   elementIdx: number;
   updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
   selectedLanguageCode: string;
-  setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
   locale: TUserLocale;
   isStorageConfigured: boolean;
@@ -42,7 +41,6 @@ export const RankingElementForm = ({
   isInvalid,
   localSurvey,
   selectedLanguageCode,
-  setSelectedLanguageCode,
   locale,
   isStorageConfigured = true,
   isExternalUrlsAllowed,
@@ -115,6 +113,21 @@ export const RankingElementForm = ({
       label: t("environments.surveys.edit.randomize_all"),
       show: element.choices.length > 0,
     },
+    exceptLast: {
+      id: "exceptLast",
+      label: t("environments.surveys.edit.randomize_all_except_last"),
+      show: true,
+    },
+    reverseOrderOccasionally: {
+      id: "reverseOrderOccasionally",
+      label: t("environments.surveys.edit.reverse_order_occasionally"),
+      show: true,
+    },
+    reverseOrderExceptLast: {
+      id: "reverseOrderExceptLast",
+      label: t("environments.surveys.edit.reverse_order_occasionally_except_last"),
+      show: true,
+    },
   };
 
   useEffect(() => {
@@ -135,8 +148,6 @@ export const RankingElementForm = ({
         elementIdx={elementIdx}
         isInvalid={isInvalid}
         updateElement={updateElement}
-        selectedLanguageCode={selectedLanguageCode}
-        setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
         isStorageConfigured={isStorageConfigured}
         autoFocus={!element.headline?.default || element.headline.default.trim() === ""}
@@ -155,8 +166,6 @@ export const RankingElementForm = ({
                 elementIdx={elementIdx}
                 isInvalid={isInvalid}
                 updateElement={updateElement}
-                selectedLanguageCode={selectedLanguageCode}
-                setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
                 autoFocus={!element.subheader?.default || element.subheader.default.trim() === ""}
@@ -217,8 +226,6 @@ export const RankingElementForm = ({
                     addChoice={addChoice}
                     isInvalid={isInvalid}
                     localSurvey={localSurvey}
-                    selectedLanguageCode={selectedLanguageCode}
-                    setSelectedLanguageCode={setSelectedLanguageCode}
                     surveyLanguages={surveyLanguages}
                     element={element}
                     updateElement={updateElement}

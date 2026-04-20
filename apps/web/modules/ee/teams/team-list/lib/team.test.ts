@@ -301,7 +301,7 @@ describe("updateTeamDetails", () => {
       updatedAt: new Date(),
     });
     vi.mocked(prisma.team.findUnique).mockResolvedValueOnce(null);
-    await expect(updateTeamDetails("t1", data)).rejects.toThrow("Team not found");
+    await expect(updateTeamDetails("t1", data)).rejects.toThrow("Team with ID t1 not found");
   });
   test("throws error if user not in org membership", async () => {
     vi.mocked(prisma.team.findUnique).mockResolvedValueOnce({

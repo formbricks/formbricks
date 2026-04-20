@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { updateSurveyAction } from "@/modules/survey/editor/actions";
 import {
   Select,
   SelectContent,
@@ -14,7 +15,6 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { SurveyStatusIndicator } from "@/modules/ui/components/survey-status-indicator";
-import { updateSurveyAction } from "../actions";
 
 interface SurveyStatusDropdownProps {
   environment: TEnvironment;

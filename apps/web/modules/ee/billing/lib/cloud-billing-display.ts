@@ -1,6 +1,10 @@
 import "server-only";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { type TOrganizationStripeSubscriptionStatus } from "@formbricks/types/organizations";
+import {
+  type TCloudBillingInterval,
+  type TOrganizationStripePendingChange,
+  type TOrganizationStripeSubscriptionStatus,
+} from "@formbricks/types/organizations";
 import { getBillingUsageCycleWindow } from "@/lib/utils/billing";
 import { getOrganizationBillingWithReadThroughSync } from "./organization-billing";
 
@@ -9,7 +13,9 @@ export type TCloudBillingDisplayPlan = "hobby" | "pro" | "scale" | "custom" | "u
 export type TCloudBillingDisplayContext = {
   organizationId: string;
   currentCloudPlan: TCloudBillingDisplayPlan;
+  currentBillingInterval: TCloudBillingInterval | null;
   currentSubscriptionStatus: TOrganizationStripeSubscriptionStatus | null;
+  pendingChange: TOrganizationStripePendingChange | null;
   trialDaysRemaining: number | null;
   usageCycleStart: Date;
   usageCycleEnd: Date;
@@ -26,6 +32,18 @@ const resolveCurrentSubscriptionStatus = (
   billing: NonNullable<Awaited<ReturnType<typeof getOrganizationBillingWithReadThroughSync>>>
 ): TOrganizationStripeSubscriptionStatus | null => {
   return billing.stripe?.subscriptionStatus ?? null;
+};
+
+const resolveCurrentBillingInterval = (
+  billing: NonNullable<Awaited<ReturnType<typeof getOrganizationBillingWithReadThroughSync>>>
+): TCloudBillingInterval | null => {
+  return billing.stripe?.interval ?? null;
+};
+
+const resolvePendingChange = (
+  billing: NonNullable<Awaited<ReturnType<typeof getOrganizationBillingWithReadThroughSync>>>
+): TOrganizationStripePendingChange | null => {
+  return billing.stripe?.pendingChange ?? null;
 };
 
 const MS_PER_DAY = 86_400_000;
@@ -58,7 +76,9 @@ export const getCloudBillingDisplayContext = async (
   return {
     organizationId,
     currentCloudPlan: resolveCurrentCloudPlan(billing),
+    currentBillingInterval: resolveCurrentBillingInterval(billing),
     currentSubscriptionStatus: resolveCurrentSubscriptionStatus(billing),
+    pendingChange: resolvePendingChange(billing),
     trialDaysRemaining: resolveTrialDaysRemaining(billing),
     usageCycleStart: usageCycleWindow.start,
     usageCycleEnd: usageCycleWindow.end,

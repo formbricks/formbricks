@@ -17,13 +17,12 @@ import { TProjectWithLanguages, TSurvey } from "../types/surveys";
 // Import the module to be tested
 import {
   copySurveyToOtherEnvironment,
-  deleteSurvey,
   getSurvey,
   getSurveyCount,
   getSurveys,
   getSurveysSortedByRelevance,
-  surveySelect,
 } from "./survey";
+import { surveySelect } from "./survey-record";
 
 vi.mock("react", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react")>();
@@ -197,7 +196,19 @@ describe("getSurvey", () => {
 
     const survey = await getSurvey(surveyId);
 
-    expect(survey).toEqual({ ...prismaSurvey, responseCount: 5 });
+    expect(survey).toEqual({
+      id: prismaSurvey.id,
+      createdAt: prismaSurvey.createdAt,
+      updatedAt: prismaSurvey.updatedAt,
+      name: prismaSurvey.name,
+      type: prismaSurvey.type,
+      creator: prismaSurvey.creator,
+      status: prismaSurvey.status,
+      singleUse: prismaSurvey.singleUse,
+      environmentId: prismaSurvey.environmentId,
+      responseCount: 5,
+    });
+    expect(survey).not.toHaveProperty("_count");
     expect(prisma.survey.findUnique).toHaveBeenCalledWith({
       where: { id: surveyId },
       select: surveySelect,
@@ -234,7 +245,15 @@ describe("getSurveys", () => {
     { ...mockSurveyPrisma, id: "s2", name: "Survey 2", _count: { responses: 2 } },
   ];
   const expectedSurveys: TSurvey[] = mockPrismaSurveys.map((s) => ({
-    ...s,
+    id: s.id,
+    createdAt: s.createdAt,
+    updatedAt: s.updatedAt,
+    name: s.name,
+    type: s.type,
+    creator: s.creator,
+    status: s.status,
+    singleUse: s.singleUse,
+    environmentId: s.environmentId,
     responseCount: s._count.responses,
   }));
 
@@ -243,6 +262,7 @@ describe("getSurveys", () => {
     const surveys = await getSurveys(environmentId);
 
     expect(surveys).toEqual(expectedSurveys);
+    expect(surveys[0]).not.toHaveProperty("_count");
     expect(prisma.survey.findMany).toHaveBeenCalledWith({
       where: { environmentId, ...buildWhereClause() },
       select: surveySelect,
@@ -317,8 +337,30 @@ describe("getSurveysSortedByRelevance", () => {
     _count: { responses: 5 },
   };
 
-  const expectedInProgressSurvey: TSurvey = { ...mockInProgressPrisma, responseCount: 3 };
-  const expectedOtherSurvey: TSurvey = { ...mockOtherPrisma, responseCount: 5 };
+  const expectedInProgressSurvey: TSurvey = {
+    id: mockInProgressPrisma.id,
+    createdAt: mockInProgressPrisma.createdAt,
+    updatedAt: mockInProgressPrisma.updatedAt,
+    name: mockInProgressPrisma.name,
+    type: mockInProgressPrisma.type,
+    creator: mockInProgressPrisma.creator,
+    status: mockInProgressPrisma.status,
+    singleUse: mockInProgressPrisma.singleUse,
+    environmentId: mockInProgressPrisma.environmentId,
+    responseCount: 3,
+  };
+  const expectedOtherSurvey: TSurvey = {
+    id: mockOtherPrisma.id,
+    createdAt: mockOtherPrisma.createdAt,
+    updatedAt: mockOtherPrisma.updatedAt,
+    name: mockOtherPrisma.name,
+    type: mockOtherPrisma.type,
+    creator: mockOtherPrisma.creator,
+    status: mockOtherPrisma.status,
+    singleUse: mockOtherPrisma.singleUse,
+    environmentId: mockOtherPrisma.environmentId,
+    responseCount: 5,
+  };
 
   test("should fetch inProgress surveys first, then others if limit not met", async () => {
     vi.mocked(prisma.survey.count).mockResolvedValue(1); // 1 inProgress survey
@@ -329,6 +371,7 @@ describe("getSurveysSortedByRelevance", () => {
     const surveys = await getSurveysSortedByRelevance(environmentId, 2, 0);
 
     expect(surveys).toEqual([expectedInProgressSurvey, expectedOtherSurvey]);
+    expect(surveys[0]).not.toHaveProperty("_count");
     expect(prisma.survey.count).toHaveBeenCalledWith({
       where: { environmentId, status: "inProgress", ...buildWhereClause() },
     });
@@ -373,57 +416,6 @@ describe("getSurveysSortedByRelevance", () => {
     const unknownError = new Error("Unknown error");
     vi.mocked(prisma.survey.count).mockRejectedValue(unknownError);
     await expect(getSurveysSortedByRelevance(environmentId)).rejects.toThrow(unknownError);
-  });
-});
-
-describe("deleteSurvey", () => {
-  beforeEach(() => {
-    resetMocks();
-  });
-
-  const mockDeletedSurveyData = {
-    id: surveyId,
-    environmentId,
-    segment: null,
-    type: "web" as any,
-    triggers: [{ actionClass: { id: "action_1" } }],
-  };
-
-  test("should delete a survey and revalidate caches (no private segment)", async () => {
-    vi.mocked(prisma.survey.delete).mockResolvedValue(mockDeletedSurveyData as any);
-    const result = await deleteSurvey(surveyId);
-
-    expect(result).toBe(true);
-    expect(prisma.survey.delete).toHaveBeenCalledWith({
-      where: { id: surveyId },
-      select: expect.objectContaining({ id: true, environmentId: true, segment: expect.anything() }),
-    });
-    expect(prisma.segment.delete).not.toHaveBeenCalled();
-  });
-
-  test("should revalidate segment cache for non-private segment if segment exists", async () => {
-    const surveyWithPublicSegment = {
-      ...mockDeletedSurveyData,
-      segment: { id: "segment_public_1", isPrivate: false },
-    };
-    vi.mocked(prisma.survey.delete).mockResolvedValue(surveyWithPublicSegment as any);
-
-    await deleteSurvey(surveyId);
-
-    expect(prisma.segment.delete).not.toHaveBeenCalled();
-  });
-
-  test("should throw DatabaseError on Prisma error", async () => {
-    const prismaError = makePrismaKnownError();
-    vi.mocked(prisma.survey.delete).mockRejectedValue(prismaError);
-    await expect(deleteSurvey(surveyId)).rejects.toThrow(DatabaseError);
-    expect(logger.error).toHaveBeenCalledWith(prismaError, "Error deleting survey");
-  });
-
-  test("should rethrow unknown error", async () => {
-    const unknownError = new Error("Unknown error");
-    vi.mocked(prisma.survey.delete).mockRejectedValue(unknownError);
-    await expect(deleteSurvey(surveyId)).rejects.toThrow(unknownError);
   });
 });
 

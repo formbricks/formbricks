@@ -4,7 +4,7 @@
 import "@testing-library/jest-dom/vitest";
 import { renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { z } from "zod";
+import type { z } from "zod";
 import { TActionClass, TActionClassInput } from "@formbricks/types/action-classes";
 import {
   createActionClassZodResolver,

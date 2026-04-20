@@ -1,3 +1,4 @@
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { cn } from "@/lib/cn";
 import { IS_STORAGE_CONFIGURED, SURVEY_BG_COLORS, UNSPLASH_ACCESS_KEY } from "@/lib/constants";
@@ -24,7 +25,7 @@ export const ProjectLookSettingsPage = async (props: { params: Promise<{ environ
   const project = await getProjectByEnvironmentId(params.environmentId);
 
   if (!project) {
-    throw new Error("Workspace not found");
+    throw new ResourceNotFoundError(t("common.workspace"), null);
   }
 
   const canRemoveBranding = await getRemoveBrandingPermission(organization.id);

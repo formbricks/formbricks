@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { WEBAPP_URL } from "@/lib/constants";
 import { getEnvironment, getEnvironments } from "@/lib/environment/service";
 import { getTranslate } from "@/lingodotdev/server";
@@ -10,25 +11,38 @@ interface EnvironmentNoticeProps {
 }
 
 export const EnvironmentNotice = async ({ environmentId, subPageUrl }: EnvironmentNoticeProps) => {
-  const t = await getTranslate();
-  const environment = await getEnvironment(environmentId);
+  const [t, environment] = await Promise.all([getTranslate(), getEnvironment(environmentId)]);
+
   if (!environment) {
-    throw new Error("Environment not found");
+    throw new ResourceNotFoundError(t("common.environment"), environmentId);
   }
 
   const environments = await getEnvironments(environment.projectId);
-  const otherEnvironmentId = environments.filter((e) => e.id !== environment.id)[0].id;
+  const otherEnvironment = environments.find(
+    (candidateEnvironment) => candidateEnvironment.id !== environment.id
+  );
+
+  if (!otherEnvironment) {
+    throw new ResourceNotFoundError(t("common.environment"), null);
+  }
+
+  const currentEnvironmentLabel = t(
+    environment.type === "production" ? "common.production" : "common.development"
+  );
+  const targetEnvironmentLabel = t(
+    otherEnvironment.type === "production" ? "common.production" : "common.development"
+  );
 
   return (
     <div>
       <Alert variant="info" size="small" className="max-w-4xl">
-        <AlertTitle>{t("common.environment_notice", { environment: environment.type })}</AlertTitle>
+        <AlertTitle>{t("common.environment_notice", { environment: currentEnvironmentLabel })}</AlertTitle>
         <AlertButton>
           <Link
-            href={`${WEBAPP_URL}/environments/${otherEnvironmentId}${subPageUrl}`}
+            href={`${WEBAPP_URL}/environments/${otherEnvironment.id}${subPageUrl}`}
             className="ml-1 cursor-pointer underline">
             {t("common.switch_to", {
-              environment: environment.type === "production" ? "Development" : "Production",
+              environment: targetEnvironmentLabel,
             })}
           </Link>
         </AlertButton>

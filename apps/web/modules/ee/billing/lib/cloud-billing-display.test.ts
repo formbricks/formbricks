@@ -29,7 +29,9 @@ describe("cloud-billing-display", () => {
     expect(result).toEqual({
       organizationId: "org_1",
       currentCloudPlan: "pro",
+      currentBillingInterval: null,
       currentSubscriptionStatus: null,
+      pendingChange: null,
       trialDaysRemaining: null,
       usageCycleStart: new Date("2026-01-15T00:00:00.000Z"),
       usageCycleEnd: new Date("2026-02-15T00:00:00.000Z"),

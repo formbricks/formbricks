@@ -1,13 +1,14 @@
 import { getServerSession } from "next-auth";
 import { TEnvironment } from "@formbricks/types/environment";
+import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
+import { DEFAULT_LOCALE } from "@/lib/constants";
 import { getDisplaysByContactId } from "@/lib/display/service";
 import { getProjectByEnvironmentId } from "@/lib/project/service";
 import { getResponsesByContactId } from "@/lib/response/service";
 import { getSurveys } from "@/lib/survey/service";
 import { getUser } from "@/lib/user/service";
-import { findMatchingLocale } from "@/lib/utils/locale";
 import { getTranslate } from "@/lingodotdev/server";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getProjectPermissionByUserId } from "@/modules/ee/teams/lib/roles";
@@ -35,12 +36,12 @@ export const ActivitySection = async ({ environment, contactId, environmentTags 
   const t = await getTranslate();
 
   if (!session) {
-    throw new Error(t("common.session_not_found"));
+    throw new AuthenticationError(t("common.not_authenticated"));
   }
 
   const user = await getUser(session.user.id);
   if (!user) {
-    throw new Error(t("common.user_not_found"));
+    throw new AuthenticationError(t("common.not_authenticated"));
   }
 
   if (!responses) {
@@ -49,11 +50,11 @@ export const ActivitySection = async ({ environment, contactId, environmentTags 
 
   const project = await getProjectByEnvironmentId(environment.id);
   if (!project) {
-    throw new Error(t("common.workspace_not_found"));
+    throw new ResourceNotFoundError(t("common.workspace"), null);
   }
 
   const projectPermission = await getProjectPermissionByUserId(session.user.id, project.id);
-  const locale = await findMatchingLocale();
+  const locale = user.locale ?? DEFAULT_LOCALE;
 
   return (
     <ActivityTimeline

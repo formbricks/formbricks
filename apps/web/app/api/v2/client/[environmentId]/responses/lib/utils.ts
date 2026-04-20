@@ -17,14 +17,7 @@ export const checkSurveyValidity = async (
   responseInput: TResponseInputV2
 ): Promise<Response | null> => {
   if (survey.environmentId !== environmentId) {
-    return responses.badRequestResponse(
-      "Survey is part of another environment",
-      {
-        "survey.environmentId": survey.environmentId,
-        environmentId,
-      },
-      true
-    );
+    return responses.badRequestResponse("Survey does not belong to this environment", undefined, true);
   }
 
   if (survey.type === "link" && survey.singleUse?.enabled) {

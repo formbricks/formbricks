@@ -15,7 +15,7 @@ import {
 import { TEmailTemplateLegalProps } from "@formbricks/email/src/types/email";
 import { logger } from "@formbricks/logger";
 import type { TLinkSurveyEmailData } from "@formbricks/types/email";
-import { InvalidInputError } from "@formbricks/types/errors";
+import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import type { TResponse } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import type { TSurvey } from "@formbricks/types/surveys/types";
@@ -42,6 +42,7 @@ import { createEmailChangeToken, createInviteToken, createToken, createTokenForL
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getElementResponseMapping } from "@/lib/responses";
 import { getTranslate } from "@/lingodotdev/server";
+import { buildVerificationLinks } from "@/modules/auth/lib/verification-links";
 import { resolveStorageUrl } from "@/modules/storage/utils";
 
 export const IS_SMTP_CONFIGURED = Boolean(SMTP_HOST && SMTP_PORT);
@@ -126,18 +127,23 @@ export const sendVerificationEmail = async ({
   id,
   email,
   locale,
+  callbackUrl,
 }: {
   id: string;
   email: TUserEmail;
   locale: TUserLocale;
+  callbackUrl?: string;
 }): Promise<boolean> => {
   try {
     const t = await getTranslate(locale);
     const token = createToken(id, {
       expiresIn: "1d",
     });
-    const verifyLink = `${WEBAPP_URL}/auth/verify?token=${encodeURIComponent(token)}`;
-    const verificationRequestLink = `${WEBAPP_URL}/auth/verification-requested?token=${encodeURIComponent(token)}`;
+    const { verifyLink, verificationRequestLink } = buildVerificationLinks({
+      token,
+      webAppUrl: WEBAPP_URL,
+      callbackUrl,
+    });
 
     const html = await renderVerificationEmail({
       verificationRequestLink,
@@ -157,17 +163,19 @@ export const sendVerificationEmail = async ({
   }
 };
 
-export const sendForgotPasswordEmail = async (user: {
-  id: string;
+export const sendPasswordResetLinkEmail = async (user: {
   email: TUserEmail;
   locale: TUserLocale;
+  verifyLink: string;
+  linkValidityInMinutes: number;
 }): Promise<boolean> => {
   const t = await getTranslate(user.locale);
-  const token = createToken(user.id, {
-    expiresIn: "1d",
+  const html = await renderForgotPasswordEmail({
+    verifyLink: user.verifyLink,
+    linkValidityInMinutes: user.linkValidityInMinutes,
+    t,
+    ...legalProps,
   });
-  const verifyLink = `${WEBAPP_URL}/auth/forgot-password/reset?token=${encodeURIComponent(token)}`;
-  const html = await renderForgotPasswordEmail({ verifyLink, t, ...legalProps });
   return await sendEmail({
     to: user.email,
     subject: t("emails.forgot_password_email_subject"),
@@ -237,7 +245,7 @@ export const sendResponseFinishedEmail = async (
   const organization = await getOrganizationByEnvironmentId(environmentId);
 
   if (!organization) {
-    throw new Error("Organization not found");
+    throw new ResourceNotFoundError("Organization", null);
   }
 
   // Pre-process the element response mapping before passing to email

@@ -89,7 +89,7 @@ export const InviteMemberModal = ({
           <DialogDescription>{t("environments.settings.teams.invite_member_description")}</DialogDescription>
         </DialogHeader>
 
-        <DialogBody className="flex flex-col gap-6" unconstrained>
+        <DialogBody className="flex min-h-0 flex-col gap-6 overflow-y-auto">
           {!showTeamAdminRestrictions && (
             <TabToggle
               id="type"

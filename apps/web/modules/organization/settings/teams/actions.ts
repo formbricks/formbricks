@@ -10,6 +10,7 @@ import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { createInviteToken } from "@/lib/jwt";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromInviteId } from "@/lib/utils/helper";
@@ -27,14 +28,15 @@ import { deleteInvite, getInvite, inviteUser, refreshInviteExpiration, resendInv
 
 const ZDeleteInviteAction = z.object({
   inviteId: ZUuid,
-  organizationId: ZId,
 });
 
 export const deleteInviteAction = authenticatedActionClient.inputSchema(ZDeleteInviteAction).action(
   withAuditLogging("deleted", "invite", async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromInviteId(parsedInput.inviteId);
+
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: parsedInput.organizationId,
+      organizationId,
       access: [
         {
           type: "organization",
@@ -42,7 +44,7 @@ export const deleteInviteAction = authenticatedActionClient.inputSchema(ZDeleteI
         },
       ],
     });
-    ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
+    ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.inviteId = parsedInput.inviteId;
     ctx.auditLoggingCtx.oldObject = { ...(await getInvite(parsedInput.inviteId)) };
     return await deleteInvite(parsedInput.inviteId);
@@ -325,6 +327,11 @@ export const inviteUserAction = authenticatedActionClient.inputSchema(ZInviteUse
     if (inviteId) {
       await sendInviteMemberEmail(inviteId, parsedInput.email, ctx.user.name ?? "", parsedInput.name ?? "");
     }
+
+    capturePostHogEvent(ctx.user.id, "team_member_invited", {
+      organization_id: parsedInput.organizationId,
+      invitee_role: parsedInput.role,
+    });
 
     return inviteId;
   })

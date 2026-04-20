@@ -1,5 +1,6 @@
 import { Project, SurveyType } from "@prisma/client";
 import { type JSX, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { TProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
@@ -21,6 +22,7 @@ interface LinkSurveyWrapperProps {
   handleResetSurvey: () => void;
   IMPRINT_URL?: string;
   PRIVACY_URL?: string;
+  TERMS_URL?: string;
   IS_FORMBRICKS_CLOUD: boolean;
   publicDomain: string;
   isBrandingEnabled: boolean;
@@ -39,11 +41,13 @@ export const LinkSurveyWrapper = ({
   handleResetSurvey,
   IMPRINT_URL,
   PRIVACY_URL,
+  TERMS_URL,
   IS_FORMBRICKS_CLOUD,
   publicDomain,
   isBrandingEnabled,
   dir = "auto",
 }: LinkSurveyWrapperProps) => {
+  const { t } = useTranslation();
   //for embedded survey strip away all surrounding css
   const [isBackgroundLoaded, setIsBackgroundLoaded] = useState(false);
 
@@ -88,7 +92,7 @@ export const LinkSurveyWrapper = ({
               {isPreview && (
                 <div className="fixed left-0 top-0 flex w-full items-center justify-between bg-slate-600 p-2 px-4 text-center text-sm text-white shadow-sm">
                   <div />
-                  Survey Preview 👀
+                  {t("environments.surveys.edit.survey_preview")}
                   <ResetProgressButton onClick={handleResetSurvey} />
                 </div>
               )}
@@ -99,6 +103,7 @@ export const LinkSurveyWrapper = ({
         <LegalFooter
           IMPRINT_URL={IMPRINT_URL}
           PRIVACY_URL={PRIVACY_URL}
+          TERMS_URL={TERMS_URL}
           IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
           surveyUrl={publicDomain + "/s/" + surveyId}
         />

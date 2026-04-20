@@ -23,8 +23,6 @@ interface EditWelcomeCardProps {
   setActiveElementId: (id: string | null) => void;
   activeElementId: string | null;
   isInvalid: boolean;
-  selectedLanguageCode: string;
-  setSelectedLanguageCode: (languageCode: string) => void;
   locale: TUserLocale;
   isStorageConfigured: boolean;
   isExternalUrlsAllowed?: boolean;
@@ -36,8 +34,6 @@ export const EditWelcomeCard = ({
   setActiveElementId,
   activeElementId,
   isInvalid,
-  selectedLanguageCode,
-  setSelectedLanguageCode,
   locale,
   isStorageConfigured = true,
   isExternalUrlsAllowed,
@@ -128,12 +124,21 @@ export const EditWelcomeCard = ({
                 id="welcome-card-image"
                 allowedFileExtensions={["png", "jpeg", "jpg", "webp", "heic"]}
                 environmentId={environmentId}
-                onFileUpload={(url: string[] | undefined, _fileType: "image" | "video") => {
-                  if (url?.[0]) {
-                    updateSurvey({ fileUrl: url[0] });
+                onFileUpload={(url: string[] | undefined, fileType: "image" | "video") => {
+                  if (url?.length && url[0]) {
+                    const update =
+                      fileType === "video"
+                        ? { videoUrl: url[0], fileUrl: undefined }
+                        : { fileUrl: url[0], videoUrl: undefined };
+                    updateSurvey(update);
+                  } else {
+                    updateSurvey({ fileUrl: undefined, videoUrl: undefined });
                   }
                 }}
                 fileUrl={localSurvey?.welcomeCard?.fileUrl}
+                videoUrl={localSurvey?.welcomeCard?.videoUrl}
+                isVideoAllowed={true}
+                maxSizeInMB={5}
                 isStorageConfigured={isStorageConfigured}
               />
             </div>
@@ -146,8 +151,6 @@ export const EditWelcomeCard = ({
                 elementIdx={-1}
                 isInvalid={isInvalid}
                 updateSurvey={updateSurvey}
-                selectedLanguageCode={selectedLanguageCode}
-                setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
                 isExternalUrlsAllowed={isExternalUrlsAllowed}
@@ -162,8 +165,6 @@ export const EditWelcomeCard = ({
                 elementIdx={-1}
                 isInvalid={isInvalid}
                 updateSurvey={updateSurvey}
-                selectedLanguageCode={selectedLanguageCode}
-                setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
                 isExternalUrlsAllowed={isExternalUrlsAllowed}
@@ -182,8 +183,6 @@ export const EditWelcomeCard = ({
                     placeholder={t("common.next")}
                     isInvalid={isInvalid}
                     updateSurvey={updateSurvey}
-                    selectedLanguageCode={selectedLanguageCode}
-                    setSelectedLanguageCode={setSelectedLanguageCode}
                     label={t("environments.surveys.edit.next_button_label")}
                     locale={locale}
                     isStorageConfigured={isStorageConfigured}

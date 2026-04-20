@@ -64,7 +64,7 @@ packages/surveys/
 
    ```bash
    # packages/surveys/.env
-   LINGODOTDEV_API_KEY=<YOUR_API_KEY>
+   LINGO_API_KEY=<YOUR_API_KEY>
    ```
 
 4. **Generate Translations**

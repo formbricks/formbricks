@@ -2,9 +2,9 @@ import { redirect } from "next/navigation";
 import { TIntegrationSlack } from "@formbricks/types/integration/slack";
 import { getSurveys } from "@/app/(app)/environments/[environmentId]/workspace/integrations/lib/surveys";
 import { SlackWrapper } from "@/app/(app)/environments/[environmentId]/workspace/integrations/slack/components/SlackWrapper";
-import { SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, WEBAPP_URL } from "@/lib/constants";
+import { DEFAULT_LOCALE, SLACK_CLIENT_ID, SLACK_CLIENT_SECRET, WEBAPP_URL } from "@/lib/constants";
 import { getIntegrationByType } from "@/lib/integration/service";
-import { findMatchingLocale } from "@/lib/utils/locale";
+import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
@@ -17,14 +17,13 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
 
   const t = await getTranslate();
 
-  const { isReadOnly, environment } = await getEnvironmentAuth(params.environmentId);
+  const { isReadOnly, environment, session } = await getEnvironmentAuth(params.environmentId);
 
-  const [surveys, slackIntegration] = await Promise.all([
+  const [surveys, slackIntegration, locale] = await Promise.all([
     getSurveys(params.environmentId),
     getIntegrationByType(params.environmentId, "slack"),
+    getUserLocale(session.user.id),
   ]);
-
-  const locale = await findMatchingLocale();
 
   if (isReadOnly) {
     return redirect("./");
@@ -41,7 +40,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
           surveys={surveys}
           slackIntegration={slackIntegration as TIntegrationSlack}
           webAppUrl={WEBAPP_URL}
-          locale={locale}
+          locale={locale ?? DEFAULT_LOCALE}
         />
       </div>
     </PageContentWrapper>

@@ -5,6 +5,7 @@ import { WebhookIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { type TUserLocale } from "@formbricks/types/user";
 import { WebhookOverviewTab } from "@/modules/integrations/webhooks/components/webhook-overview-tab";
 import { WebhookSettingsTab } from "@/modules/integrations/webhooks/components/webhook-settings-tab";
 import {
@@ -22,21 +23,36 @@ interface WebhookModalProps {
   webhook: Webhook;
   surveys: TSurvey[];
   isReadOnly: boolean;
+  allowInternalUrls: boolean;
 }
 
-export const WebhookModal = ({ open, setOpen, webhook, surveys, isReadOnly }: WebhookModalProps) => {
-  const { t } = useTranslation();
+export const WebhookModal = ({
+  open,
+  setOpen,
+  webhook,
+  surveys,
+  isReadOnly,
+  allowInternalUrls,
+}: WebhookModalProps) => {
+  const { t, i18n } = useTranslation();
+  const locale = (i18n.resolvedLanguage ?? i18n.language ?? "en-US") as TUserLocale;
   const [activeTab, setActiveTab] = useState(0);
 
   const tabs = [
     {
       title: t("common.overview"),
-      children: <WebhookOverviewTab webhook={webhook} surveys={surveys} />,
+      children: <WebhookOverviewTab webhook={webhook} surveys={surveys} locale={locale} />,
     },
     {
       title: t("common.settings"),
       children: (
-        <WebhookSettingsTab webhook={webhook} surveys={surveys} setOpen={setOpen} isReadOnly={isReadOnly} />
+        <WebhookSettingsTab
+          webhook={webhook}
+          surveys={surveys}
+          setOpen={setOpen}
+          isReadOnly={isReadOnly}
+          allowInternalUrls={allowInternalUrls}
+        />
       ),
     },
   ];

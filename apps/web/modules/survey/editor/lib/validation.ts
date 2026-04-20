@@ -23,7 +23,12 @@ import {
   TSurveyRedirectUrlCard,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
-import { findLanguageCodesForDuplicateLabels, getTextContent } from "@formbricks/types/surveys/validation";
+import {
+  TValidateIdError,
+  TValidateIdErrorCode,
+  findLanguageCodesForDuplicateLabels,
+  getTextContent,
+} from "@formbricks/types/surveys/validation";
 import { extractLanguageCodes, getLocalizedValue } from "@/lib/i18n/utils";
 import { checkForEmptyFallBackValue } from "@/lib/utils/recall";
 
@@ -151,11 +156,7 @@ export const validationRules = {
 
     for (const field of fieldsToValidate) {
       const fieldValue = (element as unknown as Record<string, Record<string, string> | undefined>)[field];
-      if (
-        fieldValue &&
-        typeof fieldValue[defaultLanguageCode] !== "undefined" &&
-        fieldValue[defaultLanguageCode].trim() !== ""
-      ) {
+      if (fieldValue?.[defaultLanguageCode] !== undefined && fieldValue[defaultLanguageCode].trim() !== "") {
         isValid = isValid && isLabelValidForAllLanguages(fieldValue, languages);
       }
     }
@@ -201,6 +202,16 @@ export const validateSurveyElementsInBatch = (
 
 const isContentValid = (content: Record<string, string> | undefined, surveyLanguages: TSurveyLanguage[]) => {
   return !content || isLabelValidForAllLanguages(content, surveyLanguages);
+};
+
+const hasValidSurveyClosedMessageHeading = (survey: TSurvey): boolean => {
+  if (survey.type !== "link" || !survey.surveyClosedMessage) {
+    return true;
+  }
+
+  const heading = survey.surveyClosedMessage.heading?.trim() ?? "";
+
+  return heading.length > 0;
 };
 
 export const isWelcomeCardValid = (card: TSurveyWelcomeCard, surveyLanguages: TSurveyLanguage[]): boolean => {
@@ -286,5 +297,34 @@ export const isSurveyValid = (
     }
   }
 
+  if (!hasValidSurveyClosedMessageHeading(survey)) {
+    toast.error(t("environments.surveys.edit.survey_closed_message_heading_required"));
+    return false;
+  }
+
   return true;
+};
+
+export const getValidateIdErrorMessage = (
+  error: TValidateIdError,
+  type: "hiddenField" | "question",
+  t: TFunction
+): string => {
+  const localizedType =
+    type === "hiddenField" ? t("common.hidden_field") : t("environments.surveys.edit.question");
+
+  switch (error.code) {
+    case TValidateIdErrorCode.Empty:
+      return t("environments.surveys.edit.validate_id_empty", { type: localizedType });
+    case TValidateIdErrorCode.Duplicate:
+      return t("environments.surveys.edit.validate_id_duplicate", { type: localizedType });
+    case TValidateIdErrorCode.Reserved:
+      return t("environments.surveys.edit.validate_id_reserved", { type: localizedType, field: error.field });
+    case TValidateIdErrorCode.HasSpaces:
+      return t("environments.surveys.edit.validate_id_no_spaces", { type: localizedType });
+    case TValidateIdErrorCode.InvalidChars:
+      return t("environments.surveys.edit.validate_id_invalid_chars", { type: localizedType });
+    default:
+      return t("environments.surveys.edit.validate_id_invalid_chars", { type: localizedType });
+  }
 };

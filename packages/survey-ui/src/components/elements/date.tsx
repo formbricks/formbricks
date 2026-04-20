@@ -161,7 +161,7 @@ function DateElement({
         videoUrl={videoUrl}
       />
 
-      <div className="relative">
+      <div className="relative" data-element-input>
         <ElementError errorMessage={errorMessage} dir={dir} />
         {/* Calendar - Always visible */}
         <div className="w-full">

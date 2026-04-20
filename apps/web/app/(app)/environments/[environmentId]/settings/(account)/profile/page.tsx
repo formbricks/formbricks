@@ -1,3 +1,4 @@
+import { AuthenticationError } from "@formbricks/types/errors";
 import { AccountSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(account)/components/AccountSettingsNavbar";
 import { AccountSecurity } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/components/AccountSecurity";
 import { EMAIL_VERIFICATION_DISABLED, IS_FORMBRICKS_CLOUD, PASSWORD_RESET_DISABLED } from "@/lib/constants";
@@ -28,7 +29,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
   const user = session?.user ? await getUser(session.user.id) : null;
 
   if (!user) {
-    throw new Error(t("common.user_not_found"));
+    throw new AuthenticationError(t("common.not_authenticated"));
   }
 
   const isPasswordResetEnabled = !PASSWORD_RESET_DISABLED && user.identityProvider === "email";
@@ -60,7 +61,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
                   buttons={[
                     {
                       text: IS_FORMBRICKS_CLOUD
-                        ? t("common.start_free_trial")
+                        ? t("common.upgrade_plan")
                         : t("common.request_trial_license"),
                       href: IS_FORMBRICKS_CLOUD
                         ? `/environments/${params.environmentId}/settings/billing`
