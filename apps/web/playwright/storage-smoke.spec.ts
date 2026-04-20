@@ -18,7 +18,6 @@ test.describe("Storage Smoke", () => {
     await page.getByRole("button", { name: "Create survey", exact: true }).click();
     await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/edit$/);
 
-    await page.getByRole("main").getByText("What would you like to know?").click();
     await fillRichTextEditor(page, "Question*", "Storage smoke question");
 
     const addBlock = "Add BlockChoose the first question on your Block";
