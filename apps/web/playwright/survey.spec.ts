@@ -1,6 +1,7 @@
 import { type Locator, expect } from "@playwright/test";
 import { surveys } from "@/playwright/utils/mock";
 import { test } from "./lib/fixtures";
+import { gotoSurveyList } from "./lib/utils";
 import * as helper from "./utils/helper";
 import { createSurvey, createSurveyWithLogic, uploadImageChoicesForPictureSelection } from "./utils/helper";
 
@@ -33,7 +34,7 @@ test.describe("Survey Create & Submit Response without logic", async () => {
     const user = await users.create();
     await user.login();
 
-    await page.waitForURL(/\/environments\/[^/]+\/surveys/);
+    await gotoSurveyList(page);
 
     await test.step("Create Survey", async () => {
       await createSurvey(page, surveys.createAndSubmit);
@@ -259,7 +260,7 @@ test.describe("Multi Language Survey Create", async () => {
     const user = await users.create();
     await user.login();
 
-    await page.waitForURL(/\/environments\/[^/]+\/surveys/);
+    await gotoSurveyList(page);
 
     //add a new language
     await page.getByRole("link", { name: "Configuration" }).click();
@@ -751,7 +752,7 @@ test.describe("Testing Survey with advanced logic", async () => {
     const user = await users.create();
     await user.login();
 
-    await page.waitForURL(/\/environments\/[^/]+\/surveys/);
+    await gotoSurveyList(page);
 
     await test.step("Create Survey", async () => {
       await createSurveyWithLogic(page, surveys.createWithLogicAndSubmit);

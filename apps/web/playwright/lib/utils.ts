@@ -1,17 +1,32 @@
 import { Page } from "@playwright/test";
 import { UsersFixture } from "../fixtures/users";
 
+export async function gotoSurveyList(page: Page): Promise<string> {
+  await page.waitForURL(/\/environments\/[^/]+(?:\/surveys)?(?:\?.*)?$/, { timeout: 30000 });
+
+  const currentUrl = new URL(page.url());
+  const match = /^\/environments\/([^/]+)(?:\/surveys)?$/.exec(currentUrl.pathname);
+
+  if (!match) {
+    throw new Error(`Unable to determine environmentId from URL: ${page.url()}`);
+  }
+
+  const environmentId = match[1];
+
+  if (currentUrl.pathname === `/environments/${environmentId}`) {
+    await page.goto(`/environments/${environmentId}/surveys`, { waitUntil: "domcontentloaded" });
+  }
+
+  await page.waitForURL(/\/environments\/[^/]+\/surveys(?:\?.*)?$/, { timeout: 30000 });
+
+  return environmentId;
+}
+
 export async function loginAndGetApiKey(page: Page, users: UsersFixture) {
   const user = await users.create();
   await user.login();
 
-  await page.waitForURL(/\/environments\/[^/]+\/surveys/, { timeout: 30000 });
-
-  const environmentId =
-    /\/environments\/([^/]+)\/surveys/.exec(page.url())?.[1] ??
-    (() => {
-      throw new Error("Unable to parse environmentId from URL");
-    })();
+  const environmentId = await gotoSurveyList(page);
 
   await page.goto(`/environments/${environmentId}/settings/api-keys`, { waitUntil: "domcontentloaded" });
 

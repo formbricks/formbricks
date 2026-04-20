@@ -337,7 +337,7 @@ $tls_block
         set -e
         attempts=0
         max_attempts=30
-        until mc alias set rustfs http://rustfs:9000 "$rustfs_admin_user" "$rustfs_admin_password" >/dev/null 2>&1 \
+        until mc alias set rustfs http://rustfs:9000 "\$RUSTFS_ADMIN_USER" "\$RUSTFS_ADMIN_PASSWORD" >/dev/null 2>&1 \
           && mc ls rustfs >/dev/null 2>&1; do
           attempts=\$((attempts + 1))
           if [ "\$attempts" -ge "\$max_attempts" ]; then
@@ -346,32 +346,32 @@ $tls_block
           fi
           sleep 2
         done
-        mc mb rustfs/"$rustfs_bucket_name" --ignore-existing
-        cat > /tmp/formbricks-policy.json << 'POLICY_EOF'
+        mc mb rustfs/"\$RUSTFS_BUCKET_NAME" --ignore-existing
+        cat > /tmp/formbricks-policy.json << POLICY_EOF
         {
           "Version": "2012-10-17",
           "Statement": [
             {
               "Effect": "Allow",
               "Action": ["s3:DeleteObject", "s3:GetObject", "s3:PutObject"],
-              "Resource": ["arn:aws:s3:::$rustfs_bucket_name/*"]
+              "Resource": ["arn:aws:s3:::\$RUSTFS_BUCKET_NAME/*"]
             },
             {
               "Effect": "Allow",
               "Action": ["s3:ListBucket"],
-              "Resource": ["arn:aws:s3:::$rustfs_bucket_name"]
+              "Resource": ["arn:aws:s3:::\$RUSTFS_BUCKET_NAME"]
             }
           ]
         }
         POLICY_EOF
-        if ! mc admin policy info rustfs "$rustfs_policy_name" >/dev/null 2>&1; then
-          mc admin policy create rustfs "$rustfs_policy_name" /tmp/formbricks-policy.json || \
-            mc admin policy add rustfs "$rustfs_policy_name" /tmp/formbricks-policy.json
+        if ! mc admin policy info rustfs "\$RUSTFS_POLICY_NAME" >/dev/null 2>&1; then
+          mc admin policy create rustfs "\$RUSTFS_POLICY_NAME" /tmp/formbricks-policy.json || \
+            mc admin policy add rustfs "\$RUSTFS_POLICY_NAME" /tmp/formbricks-policy.json
         fi
-        if ! mc admin user info rustfs "$rustfs_service_user" >/dev/null 2>&1; then
-          mc admin user add rustfs "$rustfs_service_user" "$rustfs_service_password"
+        if ! mc admin user info rustfs "\$RUSTFS_SERVICE_USER" >/dev/null 2>&1; then
+          mc admin user add rustfs "\$RUSTFS_SERVICE_USER" "\$RUSTFS_SERVICE_PASSWORD"
         fi
-        mc admin policy attach rustfs "$rustfs_policy_name" --user "$rustfs_service_user"
+        mc admin policy attach rustfs "\$RUSTFS_POLICY_NAME" --user "\$RUSTFS_SERVICE_USER"
 EOF
 
   awk '
@@ -626,6 +626,7 @@ ensure_service_user_and_policy() {
     -e RUSTFS_BUCKET_NAME="$rustfs_bucket_name" \
     -e RUSTFS_POLICY_NAME="$rustfs_policy_name" \
     --entrypoint /bin/sh "$MC_IMAGE" -lc '
+      set -e
       mc alias set rustfs http://rustfs:9000 "$RUSTFS_ADMIN_USER" "$RUSTFS_ADMIN_PASSWORD" >/dev/null 2>&1
       if ! mc admin policy info rustfs "$RUSTFS_POLICY_NAME" >/dev/null 2>&1; then
         cat > /tmp/formbricks-policy.json << EOF
@@ -640,9 +641,9 @@ EOF
         mc admin policy create rustfs "$RUSTFS_POLICY_NAME" /tmp/formbricks-policy.json >/dev/null 2>&1 || mc admin policy add rustfs "$RUSTFS_POLICY_NAME" /tmp/formbricks-policy.json >/dev/null 2>&1
       fi
       if ! mc admin user info rustfs "$RUSTFS_SERVICE_USER" >/dev/null 2>&1; then
-        mc admin user add rustfs "$RUSTFS_SERVICE_USER" "$RUSTFS_SERVICE_PASSWORD" >/dev/null 2>&1 || true
+        mc admin user add rustfs "$RUSTFS_SERVICE_USER" "$RUSTFS_SERVICE_PASSWORD" >/dev/null 2>&1
       fi
-      mc admin policy attach rustfs "$RUSTFS_POLICY_NAME" --user "$RUSTFS_SERVICE_USER" >/dev/null 2>&1 || true
+      mc admin policy attach rustfs "$RUSTFS_POLICY_NAME" --user "$RUSTFS_SERVICE_USER" >/dev/null 2>&1
     '
 }
 
