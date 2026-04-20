@@ -17,6 +17,12 @@ const formatVisibleMonth = (date: Date): string =>
 const getDateToggleContainer = (page: Page, title: string) =>
   page.locator("h3", { hasText: title }).locator("xpath=ancestor::div[contains(@class,'px-4 py-2')][1]");
 
+const getDatePickerTrigger = (page: Page, toggleTitle: string) =>
+  getDateToggleContainer(page, toggleTitle)
+    .locator("xpath=.//div[contains(@class,'mt-4') and contains(@class,'bg-slate-50')]")
+    .getByRole("button")
+    .first();
+
 const openResponseOptions = async (page: Page) => {
   const publishOnDateLabel = page.getByText("Publish survey on date", { exact: true });
 
@@ -37,8 +43,9 @@ const createMinimalSurvey = async (page: Page) => {
 const pickDateForToggle = async (page: Page, toggleTitle: string, dayOffset: number) => {
   const targetDate = new Date();
   targetDate.setDate(targetDate.getDate() + dayOffset);
-  const toggleContainer = getDateToggleContainer(page, toggleTitle);
-  await toggleContainer.getByRole("button").first().click();
+  const datePickerTrigger = getDatePickerTrigger(page, toggleTitle);
+  await expect(datePickerTrigger).toBeVisible();
+  await datePickerTrigger.click();
 
   const calendarPopover = page.locator("[data-radix-popper-content-wrapper]").last();
   const calendar = calendarPopover.locator(".react-calendar");
