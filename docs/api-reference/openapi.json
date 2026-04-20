@@ -225,9 +225,7 @@
           }
         },
         "summary": "Update Contact (Attributes)",
-        "tags": [
-          "Client API - Contacts"
-        ]
+        "tags": ["Client API - Contacts"]
       }
     },
     "/api/v1/client/{environmentId}/displays": {
@@ -425,9 +423,7 @@
           }
         },
         "summary": "Create Display",
-        "tags": [
-          "Client API - Display"
-        ]
+        "tags": ["Client API - Display"]
       }
     },
     "/api/v1/client/{environmentId}/displays/{displayId}": {
@@ -631,9 +627,7 @@
           }
         },
         "summary": "Update Display",
-        "tags": [
-          "Client API - Display"
-        ]
+        "tags": ["Client API - Display"]
       }
     },
     "/api/v1/client/{environmentId}/environment": {
@@ -719,11 +713,7 @@
                               "type": "boolean"
                             },
                             "overlay": {
-                              "enum": [
-                                "none",
-                                "light",
-                                "dark"
-                              ],
+                              "enum": ["none", "light", "dark"],
                               "example": "none",
                               "type": "string"
                             },
@@ -1056,9 +1046,7 @@
           }
         },
         "summary": "Get Environment State",
-        "tags": [
-          "Client API - Environment"
-        ]
+        "tags": ["Client API - Environment"]
       }
     },
     "/api/v1/client/{environmentId}/identify/contacts/{userId}": {
@@ -1097,13 +1085,8 @@
                       }
                     ],
                     "lastDisplayAt": "2024-04-23T08:59:37.550Z",
-                    "responses": [
-                      "pjogp5a1wyxon6umplmf49b8"
-                    ],
-                    "segments": [
-                      "fi8f9oekza95wwszrptidivq",
-                      "zgwrv8eg7vfavdhzv1s0po1w"
-                    ],
+                    "responses": ["pjogp5a1wyxon6umplmf49b8"],
+                    "segments": ["fi8f9oekza95wwszrptidivq", "zgwrv8eg7vfavdhzv1s0po1w"],
                     "userId": "user-123"
                   },
                   "properties": {
@@ -1237,9 +1220,7 @@
           }
         },
         "summary": "Get Contact State",
-        "tags": [
-          "Client API - Contacts"
-        ]
+        "tags": ["Client API - Contacts"]
       }
     },
     "/api/v1/client/{environmentId}/responses": {
@@ -1287,12 +1268,7 @@
                   },
                   "language": {
                     "description": "Language of the response (survey should have this language enabled)",
-                    "enum": [
-                      "en",
-                      "de",
-                      "pt",
-                      "etc.."
-                    ],
+                    "enum": ["en", "de", "pt", "etc.."],
                     "type": "string"
                   },
                   "meta": {
@@ -1316,9 +1292,7 @@
                     "type": "string"
                   }
                 },
-                "required": [
-                  "surveyId"
-                ],
+                "required": ["surveyId"],
                 "type": "object"
               }
             }
@@ -1575,9 +1549,7 @@
           }
         },
         "summary": "Create Response",
-        "tags": [
-          "Client API - Response"
-        ]
+        "tags": ["Client API - Response"]
       }
     },
     "/api/v1/client/{environmentId}/responses/{responseId}": {
@@ -1779,9 +1751,7 @@
           }
         },
         "summary": "Update Response",
-        "tags": [
-          "Client API - Response"
-        ]
+        "tags": ["Client API - Response"]
       }
     },
     "/api/v1/client/{environmentId}/user": {
@@ -2191,9 +2161,7 @@
           }
         },
         "summary": "Create or Identify User",
-        "tags": [
-          "Client API - User"
-        ]
+        "tags": ["Client API - User"]
       }
     },
     "/api/v1/management/action-classes": {
@@ -2386,9 +2354,7 @@
           }
         },
         "summary": "Get All Action Classes",
-        "tags": [
-          "Management API - Action Class"
-        ]
+        "tags": ["Management API - Action Class"]
       },
       "post": {
         "description": "Create Action Class from the UI or from the API! You can read more about them [here](https://formbricks.com/docs/in-app-surveys/actions).",
@@ -2453,12 +2419,7 @@
                       },
                       "type": {
                         "description": "Type of no-code trigger",
-                        "enum": [
-                          "click",
-                          "pageView",
-                          "exitIntent",
-                          "fiftyPercentScroll"
-                        ],
+                        "enum": ["click", "pageView", "exitIntent", "fiftyPercentScroll"],
                         "type": "string"
                       },
                       "urlFilters": {
@@ -2482,35 +2443,22 @@
                               "type": "string"
                             }
                           },
-                          "required": [
-                            "rule",
-                            "value"
-                          ],
+                          "required": ["rule", "value"],
                           "type": "object"
                         },
                         "type": "array"
                       }
                     },
-                    "required": [
-                      "type",
-                      "urlFilters"
-                    ],
+                    "required": ["type", "urlFilters"],
                     "type": "object"
                   },
                   "type": {
                     "description": "Type of action class",
-                    "enum": [
-                      "code",
-                      "noCode"
-                    ],
+                    "enum": ["code", "noCode"],
                     "type": "string"
                   }
                 },
-                "required": [
-                  "environmentId",
-                  "name",
-                  "type"
-                ],
+                "required": ["environmentId", "name", "type"],
                 "type": "object"
               }
             }
@@ -2641,9 +2589,7 @@
           }
         },
         "summary": "Create Action Class",
-        "tags": [
-          "Management API - Action Class"
-        ]
+        "tags": ["Management API - Action Class"]
       }
     },
     "/api/v1/management/action-classes/{actionClassId}": {
@@ -2852,9 +2798,7 @@
           }
         },
         "summary": "Delete Action Class",
-        "tags": [
-          "Management API - Action Class"
-        ]
+        "tags": ["Management API - Action Class"]
       },
       "get": {
         "description": "Fetch an Action Class by it's ID",
@@ -3008,9 +2952,7 @@
           }
         },
         "summary": "Get Action Class by ID",
-        "tags": [
-          "Management API - Action Class"
-        ]
+        "tags": ["Management API - Action Class"]
       }
     },
     "/api/v1/management/contact-attribute-keys": {
@@ -3093,9 +3035,7 @@
           }
         },
         "summary": "Get All Contact Attribute Keys",
-        "tags": [
-          "Management API - Contact Attribute Keys"
-        ]
+        "tags": ["Management API - Contact Attribute Keys"]
       }
     },
     "/api/v1/management/contact-attribute-keys/{contactAttributeKeyId}": {
@@ -3246,9 +3186,7 @@
           }
         },
         "summary": "Get Contact Attribute Key by ID",
-        "tags": [
-          "Management API - Contact Attribute Keys"
-        ]
+        "tags": ["Management API - Contact Attribute Keys"]
       }
     },
     "/api/v1/management/contact-attributes": {
@@ -3328,9 +3266,7 @@
           }
         },
         "summary": "Get All Contact Attributes",
-        "tags": [
-          "Management API - Contact Attributes"
-        ]
+        "tags": ["Management API - Contact Attributes"]
       }
     },
     "/api/v1/management/contacts": {
@@ -3416,9 +3352,7 @@
           }
         },
         "summary": "Get All Contacts",
-        "tags": [
-          "Management API - Contacts"
-        ]
+        "tags": ["Management API - Contacts"]
       }
     },
     "/api/v1/management/contacts/{contactId}": {
@@ -3522,9 +3456,7 @@
           }
         },
         "summary": "Get Contact by ID",
-        "tags": [
-          "Management API - Contacts"
-        ]
+        "tags": ["Management API - Contacts"]
       }
     },
     "/api/v1/management/me": {
@@ -3603,9 +3535,7 @@
           }
         },
         "summary": "Me",
-        "tags": [
-          "Management API - Me"
-        ]
+        "tags": ["Management API - Me"]
       }
     },
     "/api/v1/management/responses": {
@@ -4048,9 +3978,7 @@
           }
         },
         "summary": "Get Survey Responses",
-        "tags": [
-          "Management API - Response"
-        ]
+        "tags": ["Management API - Response"]
       },
       "post": {
         "description": "Create a user response using the management API. This will trigger the response pipeline, including webhooks, integrations, follow-up emails, and other configured actions.",
@@ -4073,9 +4001,7 @@
                   "value": {
                     "createdAt": "2024-09-05T08:44:16.051Z",
                     "data": {
-                      "hg508afs7lgx8nlni5dtit5u": [
-                        "Hello World"
-                      ]
+                      "hg508afs7lgx8nlni5dtit5u": ["Hello World"]
                     },
                     "finished": false,
                     "language": "en",
@@ -4102,12 +4028,7 @@
                   },
                   "language": {
                     "description": "Language of the response (survey should have this language enabled)",
-                    "enum": [
-                      "en",
-                      "de",
-                      "pt",
-                      "etc.."
-                    ],
+                    "enum": ["en", "de", "pt", "etc.."],
                     "type": "string"
                   },
                   "surveyId": {
@@ -4120,9 +4041,7 @@
                     "type": "string"
                   }
                 },
-                "required": [
-                  "surveyId"
-                ],
+                "required": ["surveyId"],
                 "type": "object"
               }
             }
@@ -4281,9 +4200,7 @@
           }
         },
         "summary": "Create Response",
-        "tags": [
-          "Management API - Response"
-        ]
+        "tags": ["Management API - Response"]
       }
     },
     "/api/v1/management/responses/{responseId}": {
@@ -4459,9 +4376,7 @@
           }
         },
         "summary": "Delete Response",
-        "tags": [
-          "Management API - Response"
-        ]
+        "tags": ["Management API - Response"]
       },
       "get": {
         "description": "Fetch the entire response object based on its ID",
@@ -4635,9 +4550,7 @@
           }
         },
         "summary": "Get Response by ID",
-        "tags": [
-          "Management API - Response"
-        ]
+        "tags": ["Management API - Response"]
       },
       "put": {
         "description": "Update an existing user response with new data. This will trigger the response pipeline, including webhooks, integrations, follow-up emails (if the response is marked as finished), and other configured actions.",
@@ -4834,9 +4747,7 @@
           }
         },
         "summary": "Update Response",
-        "tags": [
-          "Management API - Response"
-        ]
+        "tags": ["Management API - Response"]
       }
     },
     "/api/v1/management/storage": {
@@ -4857,11 +4768,7 @@
           "content": {
             "application/json": {
               "example": {
-                "allowedFileExtensions": [
-                  "png",
-                  "jpg",
-                  "jpeg"
-                ],
+                "allowedFileExtensions": ["png", "jpg", "jpeg"],
                 "environmentId": "env123",
                 "fileName": "profile.png",
                 "fileType": "image/png"
@@ -4916,11 +4823,7 @@
                     "type": "string"
                   }
                 },
-                "required": [
-                  "fileName",
-                  "fileType",
-                  "environmentId"
-                ],
+                "required": ["fileName", "fileType", "environmentId"],
                 "type": "object"
               }
             }
@@ -5038,9 +4941,7 @@
           }
         },
         "summary": "Upload Public File",
-        "tags": [
-          "Management API - Storage"
-        ]
+        "tags": ["Management API - Storage"]
       }
     },
     "/api/v1/management/surveys": {
@@ -5227,9 +5128,7 @@
           }
         },
         "summary": "Get All Surveys",
-        "tags": [
-          "Management API - Survey"
-        ]
+        "tags": ["Management API - Survey"]
       },
       "post": {
         "description": "Create a survey with granular settings, questions, their types, welcomeCard, thankYouCard, languages, etc right from this API. We'd however recommend you to do this via our Formbricks App with the UI for a better visual experience.",
@@ -5360,12 +5259,7 @@
               "schema": {
                 "properties": {
                   "displayOption": {
-                    "enum": [
-                      "displayOnce",
-                      "displayMultiple",
-                      "respondMultiple",
-                      "displaySome"
-                    ],
+                    "enum": ["displayOnce", "displayMultiple", "respondMultiple", "displaySome"],
                     "type": "string"
                   },
                   "environmentId": {
@@ -5382,12 +5276,7 @@
                         },
                         "language": {
                           "description": "Language of the survey (This language should exist in your environment)",
-                          "enum": [
-                            "en",
-                            "de",
-                            "pt",
-                            "etc.."
-                          ],
+                          "enum": ["en", "de", "pt", "etc.."],
                           "type": "string"
                         }
                       },
@@ -5404,11 +5293,7 @@
                         "date": {
                           "properties": {
                             "format": {
-                              "enum": [
-                                "M-d-y",
-                                "d-M-y",
-                                "y-M-d"
-                              ],
+                              "enum": ["M-d-y", "d-M-y", "y-M-d"],
                               "type": "string"
                             }
                           },
@@ -5418,45 +5303,24 @@
                           "type": "string"
                         },
                         "inputType": {
-                          "enum": [
-                            "text",
-                            "email",
-                            "url",
-                            "number",
-                            "phone"
-                          ],
+                          "enum": ["text", "email", "url", "number", "phone"],
                           "type": "string"
                         },
                         "rating": {
                           "properties": {
                             "range": {
-                              "enum": [
-                                3,
-                                4,
-                                5,
-                                6,
-                                7,
-                                10
-                              ],
+                              "enum": [3, 4, 5, 6, 7, 10],
                               "type": "integer"
                             },
                             "scale": {
-                              "enum": [
-                                "number",
-                                "smiley",
-                                "star"
-                              ],
+                              "enum": ["number", "smiley", "star"],
                               "type": "string"
                             }
                           },
                           "type": "object"
                         },
                         "shuffleOption": {
-                          "enum": [
-                            "none",
-                            "all",
-                            "exceptLast"
-                          ],
+                          "enum": ["none", "all", "exceptLast"],
                           "type": "string"
                         },
                         "type": {
@@ -5485,28 +5349,15 @@
                     "type": "array"
                   },
                   "status": {
-                    "enum": [
-                      "draft",
-                      "inProgress",
-                      "paused",
-                      "completed"
-                    ],
+                    "enum": ["draft", "inProgress", "paused", "completed"],
                     "type": "string"
                   },
                   "type": {
-                    "enum": [
-                      "link",
-                      "app"
-                    ],
+                    "enum": ["link", "app"],
                     "type": "string"
                   }
                 },
-                "required": [
-                  "environmentId",
-                  "name",
-                  "type",
-                  "status"
-                ],
+                "required": ["environmentId", "name", "type", "status"],
                 "type": "object"
               }
             }
@@ -5753,9 +5604,7 @@
           }
         },
         "summary": "Create Survey",
-        "tags": [
-          "Management API - Survey"
-        ]
+        "tags": ["Management API - Survey"]
       }
     },
     "/api/v1/management/surveys/{surveyId}": {
@@ -6010,9 +5859,7 @@
           }
         },
         "summary": "Delete Survey",
-        "tags": [
-          "Management API - Survey"
-        ]
+        "tags": ["Management API - Survey"]
       },
       "get": {
         "description": "Fetch a survey object based on its ID",
@@ -6203,9 +6050,7 @@
           }
         },
         "summary": "Get Survey by ID",
-        "tags": [
-          "Management API - Survey"
-        ]
+        "tags": ["Management API - Survey"]
       },
       "put": {
         "description": "Update an existing survey with new properties. This is also what we'd recommend you to do from the UI for a better visual feedback.",
@@ -6461,9 +6306,7 @@
           }
         },
         "summary": "Update Survey",
-        "tags": [
-          "Management API - Survey"
-        ]
+        "tags": ["Management API - Survey"]
       }
     },
     "/api/v1/management/surveys/{surveyId}/singleUseIds": {
@@ -6645,9 +6488,7 @@
           }
         },
         "summary": "Get SingleUse Links",
-        "tags": [
-          "Management API - Survey"
-        ]
+        "tags": ["Management API - Survey"]
       }
     },
     "/api/v1/webhooks": {
@@ -6677,11 +6518,7 @@
                       "name": null,
                       "source": "user",
                       "surveyIds": [],
-                      "triggers": [
-                        "responseCreated",
-                        "responseUpdated",
-                        "responseFinished"
-                      ],
+                      "triggers": ["responseCreated", "responseUpdated", "responseFinished"],
                       "updatedAt": "2024-04-23T12:35:45.326Z",
                       "url": "https://eoy8o887lmsqmhz.m.pipedream.net"
                     },
@@ -6692,11 +6529,7 @@
                       "name": null,
                       "source": "user",
                       "surveyIds": [],
-                      "triggers": [
-                        "responseCreated",
-                        "responseUpdated",
-                        "responseFinished"
-                      ],
+                      "triggers": ["responseCreated", "responseUpdated", "responseFinished"],
                       "updatedAt": "2024-04-23T12:36:07.100Z",
                       "url": "https://eoy8o887lmsqmhz.m.pipedream.net"
                     },
@@ -6707,11 +6540,7 @@
                       "name": null,
                       "source": "user",
                       "surveyIds": [],
-                      "triggers": [
-                        "responseCreated",
-                        "responseUpdated",
-                        "responseFinished"
-                      ],
+                      "triggers": ["responseCreated", "responseUpdated", "responseFinished"],
                       "updatedAt": "2024-04-23T12:36:56.507Z",
                       "url": "https://eoy8o887lmsqmhz.m.pipedream.net"
                     }
@@ -6764,9 +6593,7 @@
           }
         },
         "summary": "Get All Webhooks",
-        "tags": [
-          "Management API - Webhook"
-        ]
+        "tags": ["Management API - Webhook"]
       },
       "post": {
         "description": "Create a new webhook right from the API and see it active right away!",
@@ -6787,11 +6614,7 @@
               "examples": {
                 "default": {
                   "value": {
-                    "triggers": [
-                      "responseCreated",
-                      "responseUpdated",
-                      "responseFinished"
-                    ],
+                    "triggers": ["responseCreated", "responseUpdated", "responseFinished"],
                     "url": "https://eoy8o887lmsqmhz.m.pipedream.net"
                   }
                 }
@@ -6812,11 +6635,7 @@
                   "triggers": {
                     "description": "List of events that trigger this webhook",
                     "items": {
-                      "enum": [
-                        "responseCreated",
-                        "responseUpdated",
-                        "responseFinished"
-                      ],
+                      "enum": ["responseCreated", "responseUpdated", "responseFinished"],
                       "type": "string"
                     },
                     "type": "array"
@@ -6826,10 +6645,7 @@
                     "type": "string"
                   }
                 },
-                "required": [
-                  "url",
-                  "triggers"
-                ],
+                "required": ["url", "triggers"],
                 "type": "object"
               }
             }
@@ -6847,11 +6663,7 @@
                     "name": null,
                     "source": "user",
                     "surveyIds": [],
-                    "triggers": [
-                      "responseCreated",
-                      "responseUpdated",
-                      "responseFinished"
-                    ],
+                    "triggers": ["responseCreated", "responseUpdated", "responseFinished"],
                     "updatedAt": "2024-04-23T12:35:45.326Z",
                     "url": "https://eoy8o887lmsqmhz.m.pipedream.net"
                   }
@@ -6909,9 +6721,7 @@
           }
         },
         "summary": "Create Webhook",
-        "tags": [
-          "Management API - Webhook"
-        ]
+        "tags": ["Management API - Webhook"]
       }
     },
     "/api/v1/webhooks/{webhookId}": {
@@ -6948,11 +6758,7 @@
                     "name": null,
                     "source": "user",
                     "surveyIds": [],
-                    "triggers": [
-                      "responseCreated",
-                      "responseUpdated",
-                      "responseFinished"
-                    ],
+                    "triggers": ["responseCreated", "responseUpdated", "responseFinished"],
                     "updatedAt": "2024-04-23T12:35:45.326Z",
                     "url": "https://eoy8o887lmsqmhz.m.pipedream.net"
                   }
@@ -7072,9 +6878,7 @@
           }
         },
         "summary": "Delete Webhook",
-        "tags": [
-          "Management API - Webhook"
-        ]
+        "tags": ["Management API - Webhook"]
       },
       "get": {
         "description": "Get a specific webhook object based on its ID",
@@ -7109,11 +6913,7 @@
                     "name": null,
                     "source": "user",
                     "surveyIds": [],
-                    "triggers": [
-                      "responseCreated",
-                      "responseUpdated",
-                      "responseFinished"
-                    ],
+                    "triggers": ["responseCreated", "responseUpdated", "responseFinished"],
                     "updatedAt": "2024-04-23T12:35:45.326Z",
                     "url": "https://eoy8o887lmsqmhz.m.pipedream.net"
                   }
@@ -7171,9 +6971,7 @@
           }
         },
         "summary": "Get Webhook",
-        "tags": [
-          "Management API - Webhook"
-        ]
+        "tags": ["Management API - Webhook"]
       }
     },
     "/health": {
@@ -7316,9 +7114,7 @@
           }
         },
         "summary": "Health Check",
-        "tags": [
-          "Health"
-        ]
+        "tags": ["Health"]
       }
     }
   },
