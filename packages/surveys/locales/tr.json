@@ -20,6 +20,7 @@
     "question_video": "Soru Videosu",
     "required": "Zorunlu",
     "respondents_will_not_see_this_card": "Yanıtlayıcılar bu kartı görmeyecek",
+    "response_saved_offline": "Yanıtın henüz gönderilmedi. İnternete geri döndüğünde otomatik olarak iletilecek.",
     "retry": "Yeniden dene",
     "retrying": "Yeniden deneniyor…",
     "search": "Ara...",
@@ -32,6 +33,7 @@
     "terms_of_service": "Hizmet Şartları",
     "the_servers_cannot_be_reached_at_the_moment": "Sunuculara şu anda ulaşılamıyor.",
     "they_will_be_redirected_immediately": "Hemen yönlendirilecekler",
+    "welcome_video": "Karşılama Kartı videosu",
     "your_feedback_is_stuck": "Geri bildiriminiz takıldı :("
   },
   "errors": {
