@@ -238,7 +238,7 @@
             "type": ["string", "null"]
           },
           "workspaceId": {
-            "description": "The workspace this contact belongs to",
+            "description": "The Workspace this contact belongs to",
             "type": "string"
           }
         },
@@ -326,7 +326,7 @@
             "type": "string"
           },
           "workspaceId": {
-            "description": "The ID of the workspace this attribute belongs to",
+            "description": "The ID of the Workspace this attribute belongs to",
             "type": "string"
           }
         },
@@ -372,7 +372,7 @@
             "type": ["string", "null"]
           },
           "workspaceId": {
-            "description": "The ID of the workspace this attribute belongs to",
+            "description": "The ID of the Workspace this attribute belongs to",
             "type": "string"
           }
         },
@@ -531,17 +531,17 @@
       "projectTeam": {
         "properties": {
           "createdAt": {
-            "description": "The date and time the project tem was created",
+            "description": "The date and time the Workspace team was created",
             "example": "2021-01-01T00:00:00.000Z",
             "type": "string"
           },
           "permission": {
-            "description": "Level of access granted to the project",
+            "description": "Level of access granted to the Workspace",
             "enum": ["read", "readWrite", "manage"],
             "type": "string"
           },
           "projectId": {
-            "description": "The ID of the project",
+            "description": "The ID of the Workspace",
             "type": "string"
           },
           "teamId": {
@@ -549,7 +549,7 @@
             "type": "string"
           },
           "updatedAt": {
-            "description": "The date and time the project team was last updated",
+            "description": "The date and time the Workspace team was last updated",
             "example": "2021-01-01T00:00:00.000Z",
             "type": "string"
           }
@@ -2693,7 +2693,7 @@
             "type": ["string", "null"]
           },
           "projectOverwrites": {
-            "description": "Project specific overwrites",
+            "description": "Workspace-specific overwrites",
             "properties": {
               "brandColor": {
                 "pattern": "^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$",
@@ -3052,7 +3052,7 @@
             "type": "object"
           },
           "workspaceId": {
-            "description": "The workspace ID of the survey",
+            "description": "The Workspace ID of the survey",
             "type": "string"
           }
         },
@@ -3243,7 +3243,7 @@
             "type": "string"
           },
           "workspaceId": {
-            "description": "The ID of the workspace",
+            "description": "The ID of the Workspace",
             "type": "string"
           }
         },
@@ -3284,7 +3284,7 @@
   "paths": {
     "/client/{workspaceId}/contacts/{userId}/attributes": {
       "put": {
-        "description": "Update a contact's attributes in Formbricks to keep them in sync with your app or when you want to set a custom attribute in Formbricks. Note - Environments are deprecated. Use workspace/workspaceId terminology.",
+        "description": "Update a contact's attributes in Formbricks to keep them in sync with your app or when you want to set a custom attribute in Formbricks. Note - Environments are deprecated. Use Workspace/workspaceId terminology.",
         "parameters": [
           {
             "in": "path",
@@ -3359,7 +3359,7 @@
     },
     "/client/{workspaceId}/displays": {
       "post": {
-        "description": "Create a new display for a valid survey ID. If a userId is passed, the display is linked to the user. Note - Environments are deprecated. Use workspace/workspaceId terminology.",
+        "description": "Create a new display for a valid survey ID. If a userId is passed, the display is linked to the user. Note - Environments are deprecated. Use Workspace/workspaceId terminology.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -3401,10 +3401,10 @@
     },
     "/client/{workspaceId}/environment": {
       "get": {
-        "description": "Retrieves the workspace state to be used in Formbricks SDKs. Note - Environments are deprecated. Use workspace/workspaceId terminology. **Cache Behavior**: This endpoint uses server-side caching with a **5-minute TTL (Time To Live)**. Any changes to surveys, action classes, project settings, or other workspace data will take up to 5 minutes to reflect in the API response. This caching is implemented to improve performance for high-frequency SDK requests.",
+        "description": "Retrieves the Workspace state to be used in Formbricks SDKs. Note - Environments are deprecated. Use Workspace/workspaceId terminology. **Cache Behavior**: This endpoint uses server-side caching with a **5-minute TTL (Time To Live)**. Any changes to surveys, action classes, Workspace settings, or other Workspace data will take up to 5 minutes to reflect in the API response. This caching is implemented to improve performance for high-frequency SDK requests.",
         "parameters": [
           {
-            "description": "The ID of the workspace. Deprecated alias `environmentId`.",
+            "description": "The ID of the Workspace. Deprecated alias `environmentId`.",
             "in": "path",
             "name": "workspaceId",
             "required": true,
@@ -3443,7 +3443,7 @@
     },
     "/client/{workspaceId}/identify/contacts/{userId}": {
       "get": {
-        "description": "Retrieves a contact's state including their segments, displays, responses and other tracking information. If the contact doesn't exist, it will be created. Note - Environments are deprecated. Use workspace/workspaceId terminology.",
+        "description": "Retrieves a contact's state including their segments, displays, responses and other tracking information. If the contact doesn't exist, it will be created. Note - Environments are deprecated. Use Workspace/workspaceId terminology.",
         "parameters": [
           {
             "in": "path",
@@ -3491,7 +3491,7 @@
     },
     "/client/{workspaceId}/responses": {
       "post": {
-        "description": "Create a response for a survey and its fields with the user's responses. The userId & meta here is optional. Note - Environments are deprecated. Use workspace/workspaceId terminology.",
+        "description": "Create a response for a survey and its fields with the user's responses. The userId & meta here is optional. Note - Environments are deprecated. Use Workspace/workspaceId terminology.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -3533,10 +3533,10 @@
     },
     "/client/{workspaceId}/responses/{responseId}": {
       "put": {
-        "description": "Update an existing response for example when you want to mark a response as finished or you want to change an existing response's value. Note - Environments are deprecated. Use workspace/workspaceId terminology.",
+        "description": "Update an existing response for example when you want to mark a response as finished or you want to change an existing response's value. Note - Environments are deprecated. Use Workspace/workspaceId terminology.",
         "parameters": [
           {
-            "description": "The ID of the workspace. Deprecated alias `environmentId`.",
+            "description": "The ID of the Workspace. Deprecated alias `environmentId`.",
             "in": "path",
             "name": "workspaceId",
             "required": true,
@@ -3613,10 +3613,10 @@
     },
     "/client/{workspaceId}/storage": {
       "post": {
-        "description": "API endpoint for uploading private files. Uploaded files are kept private so that only users with access to the specified workspace can retrieve them. The endpoint validates the survey ID, file name, and file type from the request body, and returns a signed URL for S3 uploads along with a local upload URL. Note - Environments are deprecated. Use workspace/workspaceId terminology.",
+        "description": "API endpoint for uploading private files. Uploaded files are kept private so that only users with access to the specified Workspace can retrieve them. The endpoint validates the survey ID, file name, and file type from the request body, and returns a signed URL for S3 uploads along with a local upload URL. Note - Environments are deprecated. Use Workspace/workspaceId terminology.",
         "parameters": [
           {
-            "description": "The ID of the workspace. Deprecated alias `environmentId`.",
+            "description": "The ID of the Workspace. Deprecated alias `environmentId`.",
             "in": "path",
             "name": "workspaceId",
             "required": true,
@@ -3756,7 +3756,7 @@
     },
     "/client/{workspaceId}/user": {
       "post": {
-        "description": "Endpoint for creating or identifying a user within the specified workspace. If the user already exists, this will identify them and potentially update user attributes. If they don't exist, it will create a new user. Note - Environments are deprecated. Use workspace/workspaceId terminology.",
+        "description": "Endpoint for creating or identifying a user within the specified Workspace. If the user already exists, this will identify them and potentially update user attributes. If they don't exist, it will create a new user. Note - Environments are deprecated. Use Workspace/workspaceId terminology.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -3834,7 +3834,7 @@
     },
     "/management/contact-attribute-keys": {
       "get": {
-        "description": "Gets contact attribute keys from the database. Note - Environments are deprecated. Use workspace/workspaceId terminology.",
+        "description": "Gets contact attribute keys from the database. Note - Environments are deprecated. Use Workspace/workspaceId terminology.",
         "operationId": "getContactAttributeKeys",
         "parameters": [
           {
@@ -3911,11 +3911,11 @@
             }
           },
           {
-            "description": "The workspace ID to filter by",
+            "description": "The Workspace ID to filter by",
             "in": "query",
             "name": "workspaceId",
             "schema": {
-              "description": "The workspace ID to filter by",
+              "description": "The Workspace ID to filter by",
               "type": "string"
             }
           },
@@ -3985,7 +3985,7 @@
                             "type": "string"
                           },
                           "workspaceId": {
-                            "description": "The ID of the workspace this attribute belongs to",
+                            "description": "The ID of the Workspace this attribute belongs to",
                             "type": "string"
                           }
                         },
@@ -4019,7 +4019,7 @@
         "tags": ["Management API - Contact Attribute Keys"]
       },
       "post": {
-        "description": "Creates a contact attribute key in the database. Note - Environments are deprecated. Use workspace/workspaceId terminology.",
+        "description": "Creates a contact attribute key in the database. Note - Environments are deprecated. Use Workspace/workspaceId terminology.",
         "operationId": "createContactAttributeKey",
         "requestBody": {
           "content": {
@@ -4084,7 +4084,7 @@
                       "type": "string"
                     },
                     "workspaceId": {
-                      "description": "The ID of the workspace this attribute belongs to",
+                      "description": "The ID of the Workspace this attribute belongs to",
                       "type": "string"
                     }
                   },
@@ -4166,7 +4166,7 @@
                       "type": "string"
                     },
                     "workspaceId": {
-                      "description": "The ID of the workspace this attribute belongs to",
+                      "description": "The ID of the Workspace this attribute belongs to",
                       "type": "string"
                     }
                   },
@@ -4246,7 +4246,7 @@
                       "type": "string"
                     },
                     "workspaceId": {
-                      "description": "The ID of the workspace this attribute belongs to",
+                      "description": "The ID of the Workspace this attribute belongs to",
                       "type": "string"
                     }
                   },
@@ -4337,7 +4337,7 @@
                       "type": "string"
                     },
                     "workspaceId": {
-                      "description": "The ID of the workspace this attribute belongs to",
+                      "description": "The ID of the Workspace this attribute belongs to",
                       "type": "string"
                     }
                   },
@@ -4354,7 +4354,7 @@
     },
     "/management/contacts": {
       "post": {
-        "description": "Creates a single contact in the database. This endpoint expects a top-level `attributes` object. For bulk uploads, use `PUT /management/contacts/bulk`, which expects `contacts[].attributes[]` instead. Each contact must have a valid email address in the attributes. All attribute keys must already exist in the workspace. The email is used as the unique identifier along with the workspace. Note - Environments are deprecated. Use workspace/workspaceId terminology.",
+        "description": "Creates a single contact in the database. This endpoint expects a top-level `attributes` object. For bulk uploads, use `PUT /management/contacts/bulk`, which expects `contacts[].attributes[]` instead. Each contact must have a valid email address in the attributes. All attribute keys must already exist in the Workspace. The email is used as the unique identifier along with the Workspace. Note - Environments are deprecated. Use Workspace/workspaceId terminology.",
         "operationId": "createContact",
         "requestBody": {
           "content": {
@@ -4391,7 +4391,7 @@
               }
             }
           },
-          "description": "The single contact to create. Must include a top-level `attributes` object with an email attribute, and all attribute keys must already exist in the workspace. Note - Environments are deprecated. Use workspace/workspaceId terminology.",
+          "description": "The single contact to create. Must include a top-level `attributes` object with an email attribute, and all attribute keys must already exist in the Workspace. Note - Environments are deprecated. Use Workspace/workspaceId terminology.",
           "required": true
         },
         "responses": {
@@ -4446,7 +4446,7 @@
     },
     "/management/contacts/bulk": {
       "put": {
-        "description": "Uploads contacts in bulk. This endpoint expects the bulk request shape: `contacts` must be an array, and each contact item must contain an `attributes` array of `{ attributeKey, value }` objects. Unlike `POST /management/contacts`, this endpoint does not accept a top-level `attributes` object. Each contact must include an `email` attribute in its `attributes` array, and that email must be valid. Note - Environments are deprecated. Use workspace/workspaceId terminology.",
+        "description": "Uploads contacts in bulk. This endpoint expects the bulk request shape: `contacts` must be an array, and each contact item must contain an `attributes` array of `{ attributeKey, value }` objects. Unlike `POST /management/contacts`, this endpoint does not accept a top-level `attributes` object. Each contact must include an `email` attribute in its `attributes` array, and that email must be valid. Note - Environments are deprecated. Use Workspace/workspaceId terminology.",
         "operationId": "uploadBulkContacts",
         "requestBody": {
           "content": {
@@ -6133,7 +6133,7 @@
     },
     "/management/webhooks": {
       "get": {
-        "description": "Gets webhooks from the database. Note - Environments are deprecated. Use workspace/workspaceId terminology.",
+        "description": "Gets webhooks from the database. Note - Environments are deprecated. Use Workspace/workspaceId terminology.",
         "operationId": "getWebhooks",
         "parameters": [
           {
@@ -6279,7 +6279,7 @@
                             "type": "string"
                           },
                           "workspaceId": {
-                            "description": "The ID of the workspace",
+                            "description": "The ID of the Workspace",
                             "type": "string"
                           }
                         },
@@ -6313,7 +6313,7 @@
         "tags": ["Management API - Webhooks"]
       },
       "post": {
-        "description": "Creates a webhook in the database. Note - Environments are deprecated. Use workspace/workspaceId terminology.",
+        "description": "Creates a webhook in the database. Note - Environments are deprecated. Use Workspace/workspaceId terminology.",
         "operationId": "createWebhook",
         "requestBody": {
           "content": {
@@ -6356,7 +6356,7 @@
                     "type": "string"
                   },
                   "workspaceId": {
-                    "description": "The ID of the workspace",
+                    "description": "The ID of the Workspace",
                     "type": "string"
                   }
                 },
@@ -6432,7 +6432,7 @@
                       "type": "string"
                     },
                     "workspaceId": {
-                      "description": "The ID of the workspace",
+                      "description": "The ID of the Workspace",
                       "type": "string"
                     }
                   },
@@ -6449,7 +6449,7 @@
     },
     "/management/webhooks/{id}": {
       "delete": {
-        "description": "Deletes a webhook from the database. Note - Environments are deprecated. Use workspace/workspaceId terminology.",
+        "description": "Deletes a webhook from the database. Note - Environments are deprecated. Use Workspace/workspaceId terminology.",
         "operationId": "deleteWebhook",
         "parameters": [
           {
@@ -6518,7 +6518,7 @@
                       "type": "string"
                     },
                     "workspaceId": {
-                      "description": "The ID of the workspace",
+                      "description": "The ID of the Workspace",
                       "type": "string"
                     }
                   },
@@ -6533,7 +6533,7 @@
         "tags": ["Management API - Webhooks"]
       },
       "get": {
-        "description": "Gets a webhook from the database. Note - Environments are deprecated. Use workspace/workspaceId terminology.",
+        "description": "Gets a webhook from the database. Note - Environments are deprecated. Use Workspace/workspaceId terminology.",
         "operationId": "getWebhook",
         "parameters": [
           {
@@ -6602,7 +6602,7 @@
                       "type": "string"
                     },
                     "workspaceId": {
-                      "description": "The ID of the workspace",
+                      "description": "The ID of the Workspace",
                       "type": "string"
                     }
                   },
@@ -6617,7 +6617,7 @@
         "tags": ["Management API - Webhooks"]
       },
       "put": {
-        "description": "Updates a webhook in the database. Note - Environments are deprecated. Use workspace/workspaceId terminology.",
+        "description": "Updates a webhook in the database. Note - Environments are deprecated. Use Workspace/workspaceId terminology.",
         "operationId": "updateWebhook",
         "parameters": [
           {
@@ -6671,7 +6671,7 @@
                     "type": "string"
                   },
                   "workspaceId": {
-                    "description": "The ID of the workspace",
+                    "description": "The ID of the Workspace",
                     "type": "string"
                   }
                 },
@@ -6747,7 +6747,7 @@
                       "type": "string"
                     },
                     "workspaceId": {
-                      "description": "The ID of the workspace",
+                      "description": "The ID of the Workspace",
                       "type": "string"
                     }
                   },
@@ -6764,7 +6764,7 @@
     },
     "/me": {
       "get": {
-        "description": "Fetches the projects and organizations associated with the API key.",
+        "description": "Fetches the Workspaces and organizations associated with the API key.",
         "operationId": "me",
         "responses": {
           "200": {
@@ -6885,7 +6885,7 @@
     },
     "/organizations/{organizationId}/project-teams": {
       "delete": {
-        "description": "Deletes a project team from the database.",
+        "description": "Deletes a Workspace team from the database.",
         "operationId": "deleteProjectTeam",
         "parameters": [
           {
@@ -6921,17 +6921,17 @@
                 "schema": {
                   "properties": {
                     "createdAt": {
-                      "description": "The date and time the project tem was created",
+                      "description": "The date and time the Workspace team was created",
                       "example": "2021-01-01T00:00:00.000Z",
                       "type": "string"
                     },
                     "permission": {
-                      "description": "Level of access granted to the project",
+                      "description": "Level of access granted to the Workspace",
                       "enum": ["read", "readWrite", "manage"],
                       "type": "string"
                     },
                     "projectId": {
-                      "description": "The ID of the project",
+                      "description": "The ID of the Workspace",
                       "type": "string"
                     },
                     "teamId": {
@@ -6939,7 +6939,7 @@
                       "type": "string"
                     },
                     "updatedAt": {
-                      "description": "The date and time the project team was last updated",
+                      "description": "The date and time the Workspace team was last updated",
                       "example": "2021-01-01T00:00:00.000Z",
                       "type": "string"
                     }
@@ -6948,11 +6948,11 @@
                 }
               }
             },
-            "description": "Project team deleted successfully."
+            "description": "Workspace team deleted successfully."
           }
         },
-        "summary": "Delete a project team",
-        "tags": ["Organizations API - Project Teams"]
+        "summary": "Delete a Workspace team",
+        "tags": ["Organizations API - Workspace Teams"]
       },
       "get": {
         "description": "Gets projectTeams from the database.",
@@ -7065,17 +7065,17 @@
                       "items": {
                         "properties": {
                           "createdAt": {
-                            "description": "The date and time the project tem was created",
+                            "description": "The date and time the Workspace team was created",
                             "example": "2021-01-01T00:00:00.000Z",
                             "type": "string"
                           },
                           "permission": {
-                            "description": "Level of access granted to the project",
+                            "description": "Level of access granted to the Workspace",
                             "enum": ["read", "readWrite", "manage"],
                             "type": "string"
                           },
                           "projectId": {
-                            "description": "The ID of the project",
+                            "description": "The ID of the Workspace",
                             "type": "string"
                           },
                           "teamId": {
@@ -7083,7 +7083,7 @@
                             "type": "string"
                           },
                           "updatedAt": {
-                            "description": "The date and time the project team was last updated",
+                            "description": "The date and time the Workspace team was last updated",
                             "example": "2021-01-01T00:00:00.000Z",
                             "type": "string"
                           }
@@ -7111,14 +7111,14 @@
                 }
               }
             },
-            "description": "Project teams retrieved successfully."
+            "description": "Workspace teams retrieved successfully."
           }
         },
-        "summary": "Get project teams",
-        "tags": ["Organizations API - Project Teams"]
+        "summary": "Get Workspace teams",
+        "tags": ["Organizations API - Workspace Teams"]
       },
       "post": {
-        "description": "Creates a project team in the database.",
+        "description": "Creates a Workspace team in the database.",
         "operationId": "createProjectTeam",
         "parameters": [
           {
@@ -7137,12 +7137,12 @@
               "schema": {
                 "properties": {
                   "permission": {
-                    "description": "Level of access granted to the project",
+                    "description": "Level of access granted to the Workspace",
                     "enum": ["read", "readWrite", "manage"],
                     "type": "string"
                   },
                   "projectId": {
-                    "description": "The ID of the project",
+                    "description": "The ID of the Workspace",
                     "type": "string"
                   },
                   "teamId": {
@@ -7155,7 +7155,7 @@
               }
             }
           },
-          "description": "The project team to create",
+          "description": "The Workspace team to create",
           "required": true
         },
         "responses": {
@@ -7165,17 +7165,17 @@
                 "schema": {
                   "properties": {
                     "createdAt": {
-                      "description": "The date and time the project tem was created",
+                      "description": "The date and time the Workspace team was created",
                       "example": "2021-01-01T00:00:00.000Z",
                       "type": "string"
                     },
                     "permission": {
-                      "description": "Level of access granted to the project",
+                      "description": "Level of access granted to the Workspace",
                       "enum": ["read", "readWrite", "manage"],
                       "type": "string"
                     },
                     "projectId": {
-                      "description": "The ID of the project",
+                      "description": "The ID of the Workspace",
                       "type": "string"
                     },
                     "teamId": {
@@ -7183,7 +7183,7 @@
                       "type": "string"
                     },
                     "updatedAt": {
-                      "description": "The date and time the project team was last updated",
+                      "description": "The date and time the Workspace team was last updated",
                       "example": "2021-01-01T00:00:00.000Z",
                       "type": "string"
                     }
@@ -7192,14 +7192,14 @@
                 }
               }
             },
-            "description": "Project team created successfully."
+            "description": "Workspace team created successfully."
           }
         },
         "summary": "Create a projectTeam",
-        "tags": ["Organizations API - Project Teams"]
+        "tags": ["Organizations API - Workspace Teams"]
       },
       "put": {
-        "description": "Updates a project team in the database.",
+        "description": "Updates a Workspace team in the database.",
         "operationId": "updateProjectTeam",
         "parameters": [
           {
@@ -7218,12 +7218,12 @@
               "schema": {
                 "properties": {
                   "permission": {
-                    "description": "Level of access granted to the project",
+                    "description": "Level of access granted to the Workspace",
                     "enum": ["read", "readWrite", "manage"],
                     "type": "string"
                   },
                   "projectId": {
-                    "description": "The ID of the project",
+                    "description": "The ID of the Workspace",
                     "type": "string"
                   },
                   "teamId": {
@@ -7236,7 +7236,7 @@
               }
             }
           },
-          "description": "The project team to update",
+          "description": "The Workspace team to update",
           "required": true
         },
         "responses": {
@@ -7246,17 +7246,17 @@
                 "schema": {
                   "properties": {
                     "createdAt": {
-                      "description": "The date and time the project tem was created",
+                      "description": "The date and time the Workspace team was created",
                       "example": "2021-01-01T00:00:00.000Z",
                       "type": "string"
                     },
                     "permission": {
-                      "description": "Level of access granted to the project",
+                      "description": "Level of access granted to the Workspace",
                       "enum": ["read", "readWrite", "manage"],
                       "type": "string"
                     },
                     "projectId": {
-                      "description": "The ID of the project",
+                      "description": "The ID of the Workspace",
                       "type": "string"
                     },
                     "teamId": {
@@ -7264,7 +7264,7 @@
                       "type": "string"
                     },
                     "updatedAt": {
-                      "description": "The date and time the project team was last updated",
+                      "description": "The date and time the Workspace team was last updated",
                       "example": "2021-01-01T00:00:00.000Z",
                       "type": "string"
                     }
@@ -7273,11 +7273,11 @@
                 }
               }
             },
-            "description": "Project team updated successfully."
+            "description": "Workspace team updated successfully."
           }
         },
-        "summary": "Update a project team",
-        "tags": ["Organizations API - Project Teams"]
+        "summary": "Update a Workspace team",
+        "tags": ["Organizations API - Workspace Teams"]
       }
     },
     "/organizations/{organizationId}/teams": {
@@ -8269,8 +8269,8 @@
       "name": "Organizations API - Teams"
     },
     {
-      "description": "Operations for managing project teams.",
-      "name": "Organizations API - Project Teams"
+      "description": "Operations for managing Workspace teams.",
+      "name": "Organizations API - Workspace Teams"
     },
     {
       "description": "Operations for managing users.",

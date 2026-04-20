@@ -62,7 +62,7 @@ erDiagram
 1. **Organization**
 
    - Top-level entity for multi-tenancy
-   - Contains multiple workspaces and team members
+   - Contains multiple Workspaces and team members
    - Manages billing and whitelabel settings
 
 2. **Workspace**
@@ -72,8 +72,8 @@ erDiagram
    - Controls branding and display settings
 
 3. **WorkspaceTeam**
-   - Maps teams to workspaces
-   - Controls workspace-level access permissions
+   - Maps teams to Workspaces
+   - Controls Workspace-level access permissions
    - Enables scoped collaboration across teams
 
 ### Survey Management
@@ -111,7 +111,7 @@ erDiagram
 
 3. **Team**
    - Groups users within organizations
-   - Controls workspace access permissions
+   - Controls Workspace access permissions
    - Facilitates collaborative survey management
 
 ## Data Isolation
@@ -120,20 +120,20 @@ The database schema ensures proper data isolation through:
 
 1. **Organization-level isolation**
 
-   - Each organization has its own workspaces
+   - Each organization has its own Workspaces
    - Users can belong to multiple organizations
    - Resources are scoped to organizations
 
-2. **Workspace-level isolation**
+2. **Environment-level isolation**
 
    - Independent surveys, contacts, action classes, and integrations
-   - Isolated API key workspace assignments
+   - Isolated API key Workspace assignments
    - Workspace-specific configuration and styling defaults
 
 3. **Team-based access isolation**
 
-   - Teams are linked to workspaces through `WorkspaceTeam`
-   - Permissions are scoped per workspace
+   - Teams are linked to Workspaces through `WorkspaceTeam`
+   - Permissions are scoped per Workspace
    - Access can be delegated without exposing all organization resources
 
 
@@ -158,7 +158,7 @@ Formbricks stores all data in PostgreSQL tables. Here's a comprehensive list of 
 | Account               | Stores third-party authentication accounts (OAuth) and their tokens    |
 | ActionClass           | Defines triggerable events that can launch surveys                     |
 | ApiKey                | Stores API authentication keys for organization-level access          |
-| ApiKeyWorkspace       | Maps API keys to the workspaces they can access                      |
+| ApiKeyWorkspace       | Maps API keys to the Workspaces they can access                      |
 | Contact               | Records information about user that can receive and respond to surveys |
 | ContactAttribute      | Stores attribute values for contacts (e.g., role, company size)        |
 | ContactAttributeKey   | Defines available attribute types for contacts                         |
@@ -169,7 +169,7 @@ Formbricks stores all data in PostgreSQL tables. Here's a comprehensive list of 
 | Invite                | Manages pending invitations to join organizations                      |
 | Language              | Defines supported languages for multi-lingual surveys                  |
 | Membership            | Links users to organizations with specific roles                       |
-| Organization          | Top-level container for workspaces and team management                |
+| Organization          | Top-level container for Workspaces and team management                |
 | Response              | Stores survey responses and associated metadata                        |
 | Segment               | Defines groups of contacts based on attributes                         |
 | Survey                | Stores survey configurations, questions, and display rules             |
@@ -181,7 +181,7 @@ Formbricks stores all data in PostgreSQL tables. Here's a comprehensive list of 
 | TagsOnResponses       | Junction table linking tags to responses                               |
 | Team                  | Groups users within organizations                                      |
 | TeamUser              | Links users to teams with specific roles                               |
-| WorkspaceTeam         | Manages team access permissions to workspaces                          |
+| WorkspaceTeam         | Manages team access permissions to Workspaces                          |
 | User                  | Stores user account information and preferences                        |
 | Webhook               | Manages webhook endpoints for event notifications                      |
 

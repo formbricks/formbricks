@@ -21,12 +21,12 @@ Integrate the **Formbricks App Survey SDK** into your app using multiple options
   </Card>
 
 <Card title="React.js" icon="react" color="lightblue" href="#react-js">
-  Load our JavaScript library with your workspace ID, and you're ready to
+  Load our JavaScript library with your Workspace ID, and you're ready to
   go!
 </Card>
 
 <Card title="Next.js" icon="react" href="#next-js">
-  Natively add us to your Next.js project, with support for both App and Pages project
+  Natively add us to your Next.js app, with support for both App and Pages setups
   structure.
 </Card>
 
@@ -57,7 +57,7 @@ Before getting started, make sure you have:
 
 - A running web application with user authentication in your chosen framework.
 
-- A Formbricks account with your **workspace ID** and **API host**, available in the **Setup Checklist** under **Settings**.
+- A Formbricks account with your **Workspace ID** and **API host**, available in the **Setup Checklist** under **Settings**.
 
 ## HTML
 
@@ -86,7 +86,7 @@ Now, visit the [Validate Your Setup](#validate-your-setup) section to verify you
 ## React.js
 
 Install the Formbricks SDK using one of the following package managers: `npm`, `pnpm`, or `yarn`. &#x20;
-Note that **`zod`** is required as a peer dependency and must also be installed in your project.
+Note that **`zod`** is required as a peer dependency and must also be installed in your app.
 
 ```javascript npm
 npm install @formbricks/js zod
@@ -131,7 +131,7 @@ Now, visit the [Validate Your Setup](#validate-your-setup) section to verify you
 
 ## Next.js
 
-Next.js projects use either the **App Directory** or the **Pages Directory**. Since the Formbricks SDK runs on the client side, follow these steps based on your setup:
+Next.js apps use either the **App Directory** or the **Pages Directory**. Since the Formbricks SDK runs on the client side, follow these steps based on your setup:
 
 - **App Directory**: Create a new component in `app/formbricks.tsx` and call it in `app/layout.tsx`.
 
@@ -373,7 +373,7 @@ Install the Formbricks iOS SDK using the following steps:
    end
    ```
 
-2. Run `pod install` in your project directory
+2. Run `pod install` in your app directory
 3. Import in your code:
    ```swift
    import FormbricksSDK

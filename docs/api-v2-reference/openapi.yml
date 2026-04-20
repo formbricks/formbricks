@@ -29,8 +29,8 @@ tags:
     description: Operations for managing webhooks.
   - name: Organizations API - Teams
     description: Operations for managing teams.
-  - name: Organizations API - Project Teams
-    description: Operations for managing project teams.
+  - name: Organizations API - Workspace Teams
+    description: Operations for managing Workspace teams.
   - name: Organizations API - Users
     description: Operations for managing users.
 security:
@@ -41,14 +41,14 @@ paths:
       security: []
       description: Update an existing response for example when you want to mark a
         response as finished or you want to change an existing response's value.
-        Note - Environments are deprecated. Use workspace/workspaceId terminology.
+        Note - Environments are deprecated. Use Workspace/workspaceId terminology.
       parameters:
         - in: path
           name: workspaceId
           required: true
           schema:
             type: string
-          description: The ID of the workspace. Deprecated alias `environmentId`.
+          description: The ID of the Workspace. Deprecated alias `environmentId`.
         - in: path
           name: responseId
           required: true
@@ -94,7 +94,7 @@ paths:
       security: []
       description: Create a response for a survey and its fields with the user's
         responses. The userId & meta here is optional. Note - Environments are deprecated.
-        Use workspace/workspaceId terminology.
+        Use Workspace/workspaceId terminology.
       requestBody:
         content:
           application/json:
@@ -123,7 +123,7 @@ paths:
       security: []
       description: Update a contact's attributes in Formbricks to keep them in sync
         with your app or when you want to set a custom attribute in Formbricks.
-        Note - Environments are deprecated. Use workspace/workspaceId terminology.
+        Note - Environments are deprecated. Use Workspace/workspaceId terminology.
       parameters:
         - in: path
           name: workspaceId
@@ -173,7 +173,7 @@ paths:
       security: []
       description: Retrieves a contact's state including their segments, displays,
         responses and other tracking information. If the contact doesn't exist,
-        it will be created. Note - Environments are deprecated. Use workspace/workspaceId
+        it will be created. Note - Environments are deprecated. Use Workspace/workspaceId
         terminology.
       parameters:
         - in: path
@@ -207,7 +207,7 @@ paths:
       security: []
       description: Create a new display for a valid survey ID. If a userId is passed,
         the display is linked to the user. Note - Environments are deprecated. Use
-        workspace/workspaceId terminology.
+        Workspace/workspaceId terminology.
       requestBody:
         content:
           application/json:
@@ -234,11 +234,11 @@ paths:
   /client/{workspaceId}/environment:
     get:
       security: []
-      description: "Retrieves the workspace state to be used in Formbricks SDKs.
-        Note - Environments are deprecated. Use workspace/workspaceId terminology.
+      description: "Retrieves the Workspace state to be used in Formbricks SDKs.
+        Note - Environments are deprecated. Use Workspace/workspaceId terminology.
         **Cache Behavior**: This endpoint uses server-side caching with a
         **5-minute TTL (Time To Live)**. Any changes to surveys, action classes,
-        project settings, or other workspace data will take up to 5 minutes to
+        Workspace settings, or other Workspace data will take up to 5 minutes to
         reflect in the API response. This caching is implemented to improve
         performance for high-frequency SDK requests."
       parameters:
@@ -247,7 +247,7 @@ paths:
           required: true
           schema:
             type: string
-          description: The ID of the workspace. Deprecated alias `environmentId`.
+          description: The ID of the Workspace. Deprecated alias `environmentId`.
       responses:
         "200":
           content:
@@ -269,9 +269,9 @@ paths:
     post:
       security: []
       description: Endpoint for creating or identifying a user within the specified
-        workspace. If the user already exists, this will identify them and
+        Workspace. If the user already exists, this will identify them and
         potentially update user attributes. If they don't exist, it will create
-        a new user. Note - Environments are deprecated. Use workspace/workspaceId
+        a new user. Note - Environments are deprecated. Use Workspace/workspaceId
         terminology.
       requestBody:
         content:
@@ -302,11 +302,11 @@ paths:
       security: []
       summary: Upload Private File
       description: API endpoint for uploading private files. Uploaded files are kept
-        private so that only users with access to the specified workspace can
+        private so that only users with access to the specified Workspace can
         retrieve them. The endpoint validates the survey ID, file name, and file
         type from the request body, and returns a signed URL for S3 uploads
         along with a local upload URL. Note - Environments are deprecated. Use
-        workspace/workspaceId terminology.
+        Workspace/workspaceId terminology.
       tags:
         - Client API - File Upload
       parameters:
@@ -315,7 +315,7 @@ paths:
           required: true
           schema:
             type: string
-          description: The ID of the workspace. Deprecated alias `environmentId`.
+          description: The ID of the Workspace. Deprecated alias `environmentId`.
       requestBody:
         required: true
         content:
@@ -463,7 +463,7 @@ paths:
     get:
       operationId: me
       summary: Me
-      description: Fetches the projects and organizations associated with the API key.
+      description: Fetches the Workspaces and organizations associated with the API key.
       tags:
         - Me
       responses:
@@ -1441,7 +1441,7 @@ paths:
         /management/contacts`, this endpoint does not accept a top-level `attributes`
         object. Each contact must include an `email` attribute in its `attributes`
         array, and that email must be valid. Note - Environments are deprecated.
-        Use workspace/workspaceId terminology.
+        Use Workspace/workspaceId terminology.
       tags:
         - Management API - Contacts
       requestBody:
@@ -1584,8 +1584,8 @@ paths:
         a top-level `attributes` object. For bulk uploads, use `PUT /management/contacts/bulk`,
         which expects `contacts[].attributes[]` instead. Each contact must have
         a valid email address in the attributes. All attribute keys must already
-        exist in the workspace. The email is used as the unique identifier along
-        with the workspace. Note - Environments are deprecated. Use workspace/workspaceId
+        exist in the Workspace. The email is used as the unique identifier along
+        with the Workspace. Note - Environments are deprecated. Use Workspace/workspaceId
         terminology.
       tags:
         - Management API - Contacts
@@ -1593,7 +1593,7 @@ paths:
         required: true
         description: The single contact to create. Must include a top-level `attributes`
           object with an email attribute, and all attribute keys must already exist
-          in the workspace. Note - Environments are deprecated. Use workspace/workspaceId
+          in the Workspace. Note - Environments are deprecated. Use Workspace/workspaceId
           terminology.
         content:
           application/json:
@@ -1659,7 +1659,7 @@ paths:
       operationId: getContactAttributeKeys
       summary: Get contact attribute keys
       description: Gets contact attribute keys from the database. Note - Environments
-        are deprecated. Use workspace/workspaceId terminology.
+        are deprecated. Use Workspace/workspaceId terminology.
       tags:
         - Management API - Contact Attribute Keys
       parameters:
@@ -1717,10 +1717,10 @@ paths:
             description: Date field to filter by
         - in: query
           name: workspaceId
-          description: The workspace ID to filter by
+          description: The Workspace ID to filter by
           schema:
             type: string
-            description: The workspace ID to filter by
+            description: The Workspace ID to filter by
         - in: query
           name: environmentId
           description: Deprecated alias for workspaceId
@@ -1781,7 +1781,7 @@ paths:
                           example: custom
                         workspaceId:
                           type: string
-                          description: The ID of the workspace this attribute belongs to
+                          description: The ID of the Workspace this attribute belongs to
                         environmentId:
                           type: string
                           deprecated: true
@@ -1799,7 +1799,7 @@ paths:
       operationId: createContactAttributeKey
       summary: Create a contact attribute key
       description: Creates a contact attribute key in the database. Note - Environments
-        are deprecated. Use workspace/workspaceId terminology.
+        are deprecated. Use Workspace/workspaceId terminology.
       tags:
         - Management API - Contact Attribute Keys
       requestBody:
@@ -1857,7 +1857,7 @@ paths:
                     example: custom
                   workspaceId:
                     type: string
-                    description: The ID of the workspace this attribute belongs to
+                    description: The ID of the Workspace this attribute belongs to
                   environmentId:
                     type: string
                     deprecated: true
@@ -1924,7 +1924,7 @@ paths:
                     example: custom
                   workspaceId:
                     type: string
-                    description: The ID of the workspace this attribute belongs to
+                    description: The ID of the Workspace this attribute belongs to
                   environmentId:
                     type: string
                     deprecated: true
@@ -1997,7 +1997,7 @@ paths:
                     example: custom
                   workspaceId:
                     type: string
-                    description: The ID of the workspace this attribute belongs to
+                    description: The ID of the Workspace this attribute belongs to
                   environmentId:
                     type: string
                     deprecated: true
@@ -2063,7 +2063,7 @@ paths:
                     example: custom
                   workspaceId:
                     type: string
-                    description: The ID of the workspace this attribute belongs to
+                    description: The ID of the Workspace this attribute belongs to
                   environmentId:
                     type: string
                     deprecated: true
@@ -2225,7 +2225,7 @@ paths:
       operationId: getWebhooks
       summary: Get webhooks
       description: Gets webhooks from the database. Note - Environments are deprecated.
-        Use workspace/workspaceId terminology.
+        Use Workspace/workspaceId terminology.
       tags:
         - Management API - Webhooks
       parameters:
@@ -2330,7 +2330,7 @@ paths:
                           description: The source of the webhook
                         workspaceId:
                           type: string
-                          description: The ID of the workspace
+                          description: The ID of the Workspace
                         environmentId:
                           type: string
                           deprecated: true
@@ -2363,7 +2363,7 @@ paths:
       operationId: createWebhook
       summary: Create a webhook
       description: Creates a webhook in the database. Note - Environments are deprecated.
-        Use workspace/workspaceId terminology.
+        Use Workspace/workspaceId terminology.
       tags:
         - Management API - Webhooks
       requestBody:
@@ -2389,7 +2389,7 @@ paths:
                   description: The source of the webhook
                 workspaceId:
                   type: string
-                  description: The ID of the workspace
+                  description: The ID of the Workspace
                 environmentId:
                   type: string
                   deprecated: true
@@ -2448,7 +2448,7 @@ paths:
                     description: The source of the webhook
                   workspaceId:
                     type: string
-                    description: The ID of the workspace
+                    description: The ID of the Workspace
                   environmentId:
                     type: string
                     deprecated: true
@@ -2470,7 +2470,7 @@ paths:
       operationId: getWebhook
       summary: Get a webhook
       description: Gets a webhook from the database. Note - Environments are deprecated.
-        Use workspace/workspaceId terminology.
+        Use Workspace/workspaceId terminology.
       tags:
         - Management API - Webhooks
       parameters:
@@ -2514,7 +2514,7 @@ paths:
                     description: The source of the webhook
                   workspaceId:
                     type: string
-                    description: The ID of the workspace
+                    description: The ID of the Workspace
                   environmentId:
                     type: string
                     deprecated: true
@@ -2535,7 +2535,7 @@ paths:
       operationId: updateWebhook
       summary: Update a webhook
       description: Updates a webhook in the database. Note - Environments are deprecated.
-        Use workspace/workspaceId terminology.
+        Use Workspace/workspaceId terminology.
       tags:
         - Management API - Webhooks
       parameters:
@@ -2568,7 +2568,7 @@ paths:
                   description: The source of the webhook
                 workspaceId:
                   type: string
-                  description: The ID of the workspace
+                  description: The ID of the Workspace
                 environmentId:
                   type: string
                   deprecated: true
@@ -2627,7 +2627,7 @@ paths:
                     description: The source of the webhook
                   workspaceId:
                     type: string
-                    description: The ID of the workspace
+                    description: The ID of the Workspace
                   environmentId:
                     type: string
                     deprecated: true
@@ -2648,7 +2648,7 @@ paths:
       operationId: deleteWebhook
       summary: Delete a webhook
       description: Deletes a webhook from the database. Note - Environments are deprecated.
-        Use workspace/workspaceId terminology.
+        Use Workspace/workspaceId terminology.
       tags:
         - Management API - Webhooks
       parameters:
@@ -2692,7 +2692,7 @@ paths:
                     description: The source of the webhook
                   workspaceId:
                     type: string
-                    description: The ID of the workspace
+                    description: The ID of the Workspace
                   environmentId:
                     type: string
                     deprecated: true
@@ -3021,10 +3021,10 @@ paths:
   /organizations/{organizationId}/project-teams:
     get:
       operationId: getProjectTeams
-      summary: Get project teams
+      summary: Get Workspace teams
       description: Gets projectTeams from the database.
       tags:
-        - Organizations API - Project Teams
+        - Organizations API - Workspace Teams
       parameters:
         - in: path
           name: organizationId
@@ -3094,7 +3094,7 @@ paths:
             type: string
       responses:
         "200":
-          description: Project teams retrieved successfully.
+          description: Workspace teams retrieved successfully.
           content:
             application/json:
               schema:
@@ -3107,15 +3107,15 @@ paths:
                       properties:
                         createdAt:
                           type: string
-                          description: The date and time the project tem was created
+                          description: The date and time the Workspace team was created
                           example: 2021-01-01T00:00:00.000Z
                         updatedAt:
                           type: string
-                          description: The date and time the project team was last updated
+                          description: The date and time the Workspace team was last updated
                           example: 2021-01-01T00:00:00.000Z
                         projectId:
                           type: string
-                          description: The ID of the project
+                          description: The ID of the Workspace
                         teamId:
                           type: string
                           description: The ID of the team
@@ -3125,7 +3125,7 @@ paths:
                             - read
                             - readWrite
                             - manage
-                          description: Level of access granted to the project
+                          description: Level of access granted to the Workspace
                   meta:
                     type: object
                     properties:
@@ -3138,9 +3138,9 @@ paths:
     post:
       operationId: createProjectTeam
       summary: Create a projectTeam
-      description: Creates a project team in the database.
+      description: Creates a Workspace team in the database.
       tags:
-        - Organizations API - Project Teams
+        - Organizations API - Workspace Teams
       parameters:
         - in: path
           name: organizationId
@@ -3150,7 +3150,7 @@ paths:
           required: true
       requestBody:
         required: true
-        description: The project team to create
+        description: The Workspace team to create
         content:
           application/json:
             schema:
@@ -3161,21 +3161,21 @@ paths:
                   description: The ID of the team
                 projectId:
                   type: string
-                  description: The ID of the project
+                  description: The ID of the Workspace
                 permission:
                   type: string
                   enum:
                     - read
                     - readWrite
                     - manage
-                  description: Level of access granted to the project
+                  description: Level of access granted to the Workspace
               required:
                 - teamId
                 - projectId
                 - permission
       responses:
         "201":
-          description: Project team created successfully.
+          description: Workspace team created successfully.
           content:
             application/json:
               schema:
@@ -3183,15 +3183,15 @@ paths:
                 properties:
                   createdAt:
                     type: string
-                    description: The date and time the project tem was created
+                    description: The date and time the Workspace team was created
                     example: 2021-01-01T00:00:00.000Z
                   updatedAt:
                     type: string
-                    description: The date and time the project team was last updated
+                    description: The date and time the Workspace team was last updated
                     example: 2021-01-01T00:00:00.000Z
                   projectId:
                     type: string
-                    description: The ID of the project
+                    description: The ID of the Workspace
                   teamId:
                     type: string
                     description: The ID of the team
@@ -3201,13 +3201,13 @@ paths:
                       - read
                       - readWrite
                       - manage
-                    description: Level of access granted to the project
+                    description: Level of access granted to the Workspace
     put:
       operationId: updateProjectTeam
-      summary: Update a project team
-      description: Updates a project team in the database.
+      summary: Update a Workspace team
+      description: Updates a Workspace team in the database.
       tags:
-        - Organizations API - Project Teams
+        - Organizations API - Workspace Teams
       parameters:
         - in: path
           name: organizationId
@@ -3217,7 +3217,7 @@ paths:
           required: true
       requestBody:
         required: true
-        description: The project team to update
+        description: The Workspace team to update
         content:
           application/json:
             schema:
@@ -3228,21 +3228,21 @@ paths:
                   description: The ID of the team
                 projectId:
                   type: string
-                  description: The ID of the project
+                  description: The ID of the Workspace
                 permission:
                   type: string
                   enum:
                     - read
                     - readWrite
                     - manage
-                  description: Level of access granted to the project
+                  description: Level of access granted to the Workspace
               required:
                 - teamId
                 - projectId
                 - permission
       responses:
         "200":
-          description: Project team updated successfully.
+          description: Workspace team updated successfully.
           content:
             application/json:
               schema:
@@ -3250,15 +3250,15 @@ paths:
                 properties:
                   createdAt:
                     type: string
-                    description: The date and time the project tem was created
+                    description: The date and time the Workspace team was created
                     example: 2021-01-01T00:00:00.000Z
                   updatedAt:
                     type: string
-                    description: The date and time the project team was last updated
+                    description: The date and time the Workspace team was last updated
                     example: 2021-01-01T00:00:00.000Z
                   projectId:
                     type: string
-                    description: The ID of the project
+                    description: The ID of the Workspace
                   teamId:
                     type: string
                     description: The ID of the team
@@ -3268,13 +3268,13 @@ paths:
                       - read
                       - readWrite
                       - manage
-                    description: Level of access granted to the project
+                    description: Level of access granted to the Workspace
     delete:
       operationId: deleteProjectTeam
-      summary: Delete a project team
-      description: Deletes a project team from the database.
+      summary: Delete a Workspace team
+      description: Deletes a Workspace team from the database.
       tags:
-        - Organizations API - Project Teams
+        - Organizations API - Workspace Teams
       parameters:
         - in: path
           name: organizationId
@@ -3294,7 +3294,7 @@ paths:
           required: true
       responses:
         "200":
-          description: Project team deleted successfully.
+          description: Workspace team deleted successfully.
           content:
             application/json:
               schema:
@@ -3302,15 +3302,15 @@ paths:
                 properties:
                   createdAt:
                     type: string
-                    description: The date and time the project tem was created
+                    description: The date and time the Workspace team was created
                     example: 2021-01-01T00:00:00.000Z
                   updatedAt:
                     type: string
-                    description: The date and time the project team was last updated
+                    description: The date and time the Workspace team was last updated
                     example: 2021-01-01T00:00:00.000Z
                   projectId:
                     type: string
-                    description: The ID of the project
+                    description: The ID of the Workspace
                   teamId:
                     type: string
                     description: The ID of the team
@@ -3320,7 +3320,7 @@ paths:
                       - read
                       - readWrite
                       - manage
-                    description: Level of access granted to the project
+                    description: Level of access granted to the Workspace
   /organizations/{organizationId}/users:
     get:
       operationId: getUsers
@@ -3949,7 +3949,7 @@ components:
           example: 2021-01-01T00:00:00.000Z
         workspaceId:
           type: string
-          description: The workspace this contact belongs to
+          description: The Workspace this contact belongs to
         environmentId:
           type: string
           deprecated: true
@@ -4035,7 +4035,7 @@ components:
           example: custom
         workspaceId:
           type: string
-          description: The ID of the workspace this attribute belongs to
+          description: The ID of the Workspace this attribute belongs to
         environmentId:
           type: string
           deprecated: true
@@ -4150,7 +4150,7 @@ components:
           description: The user who created the survey
         workspaceId:
           type: string
-          description: The workspace ID of the survey
+          description: The Workspace ID of the survey
         environmentId:
           type: string
           deprecated: true
@@ -5614,7 +5614,7 @@ components:
                 - light
                 - dark
                 - null
-          description: Project specific overwrites
+          description: Workspace-specific overwrites
         styling:
           type:
             - object
@@ -5930,7 +5930,7 @@ components:
           description: The source of the webhook
         workspaceId:
           type: string
-          description: The ID of the workspace
+          description: The ID of the Workspace
         environmentId:
           type: string
           deprecated: true
@@ -5990,15 +5990,15 @@ components:
       properties:
         createdAt:
           type: string
-          description: The date and time the project tem was created
+          description: The date and time the Workspace team was created
           example: 2021-01-01T00:00:00.000Z
         updatedAt:
           type: string
-          description: The date and time the project team was last updated
+          description: The date and time the Workspace team was last updated
           example: 2021-01-01T00:00:00.000Z
         projectId:
           type: string
-          description: The ID of the project
+          description: The ID of the Workspace
         teamId:
           type: string
           description: The ID of the team
@@ -6008,7 +6008,7 @@ components:
             - read
             - readWrite
             - manage
-          description: Level of access granted to the project
+          description: Level of access granted to the Workspace
       required:
         - createdAt
         - updatedAt
@@ -6093,7 +6093,7 @@ components:
           example: The user's email address
         workspaceId:
           type: string
-          description: The ID of the workspace this attribute belongs to
+          description: The ID of the Workspace this attribute belongs to
         environmentId:
           type: string
           deprecated: true
