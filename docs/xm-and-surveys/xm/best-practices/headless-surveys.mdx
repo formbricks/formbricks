@@ -49,7 +49,8 @@ Headers:
 
 Body:
 {
-  "environmentId": "your-environment-id",
+  "workspaceId": "your-workspace-id",
+  "environmentId": "your-environment-id", // deprecated alias
   "type": "link",
   "name": "Customer Feedback Survey",
   "questions": [
@@ -92,7 +93,7 @@ Headers: x-api-key: \<your-api-key\>
 
 ⚠️ Backend only: API key required, cannot be called from browser.
 
-**Option B (Client Environment API)**:  You can fetch all the survey schema and surveys from the Client side using the Client Environment API. However, this only works for Website & App surveys since they are the only ones that are made public on the Client API for our SDK to pull into an app. Make sure that:
+**Option B (Client Workspace API)**:  You can fetch all the survey schema and surveys from the Client side using the Client Workspace API. However, this only works for Website & App surveys since they are the only ones that are made public on the Client API for our SDK to pull into an app. Make sure that:
 
 1. Survey type: Website & App  
 2. Recontact Options: Overwrite Global Waiting Time & Always show  
@@ -103,7 +104,7 @@ These are **necessary requirements** for the survey to show up in the endpoint.
 More about the Endpoint [here](https://formbricks.com/docs/api-reference/client-api--environment/get-environment-state).
 
 ```javascript
-GET /api/v1/client/{environmentId}/environment
+GET /api/v1/client/{workspaceId}/environment
 Headers:
   Content-Type: application/json
 
@@ -152,7 +153,7 @@ Post responses directly from the browser to Formbricks Client API. Read more abo
 ✅ No authentication required \- Safe for browser/mobile apps.
 
 ```javascript
-POST /api/v1/client/{environmentId}/responses
+POST /api/v1/client/{workspaceId}/responses
 Headers:
   Content-Type: application/json
 

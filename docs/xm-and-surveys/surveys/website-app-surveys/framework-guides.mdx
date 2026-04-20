@@ -21,7 +21,7 @@ Integrate the **Formbricks App Survey SDK** into your app using multiple options
   </Card>
 
 <Card title="React.js" icon="react" color="lightblue" href="#react-js">
-  Load our JavaScript library with your environment ID, and you're ready to
+  Load our JavaScript library with your workspace ID, and you're ready to
   go!
 </Card>
 
@@ -57,7 +57,7 @@ Before getting started, make sure you have:
 
 - A running web application with user authentication in your chosen framework.
 
-- A Formbricks account with your **environment ID** and **API host**, available in the **Setup Checklist** under **Settings**.
+- A Formbricks account with your **workspace ID** and **API host**, available in the **Setup Checklist** under **Settings**.
 
 ## HTML
 
@@ -68,8 +68,8 @@ All you need to do is copy a `<script>` tag to your HTML head:
 <script type="text/javascript">
 !function(){
     var appUrl = "https://app.formbricks.com"; // use PUBLIC_URL if you are using multi-domain setup, otherwise use WEBAPP_URL
-    var environmentId = "<your-environment-id>";
-var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=appUrl+"/js/formbricks.umd.cjs";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.setup({environmentId: environmentId, appUrl: appUrl})},500)}();
+    var workspaceId = "<your-workspace-id>";
+var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src=appUrl+"/js/formbricks.umd.cjs";var e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(t,e),setTimeout(function(){window.formbricks.setup({workspaceId: workspaceId, appUrl: appUrl})},500)}();
 </script>
 <!-- END Formbricks Surveys -->
 ```
@@ -78,7 +78,7 @@ var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src
 
 | Name           | Type   | Description                            |
 | -------------- | ------ | -------------------------------------- |
-| environment-id | string | Formbricks Environment ID.             |
+| workspace-id | string | Formbricks Workspace ID.               |
 | app-url        | string | URL of the hosted Formbricks instance. |
 
 Now, visit the [Validate Your Setup](#validate-your-setup) section to verify your setup!
@@ -108,7 +108,7 @@ import formbricks from "@formbricks/js";
 
 if (typeof window !== "undefined") {
   formbricks.setup({
-    environmentId: "<environment-id>",
+    workspaceId: "<workspace-id>",
     appUrl: "<app-url>", // use PUBLIC_URL if you are using multi-domain setup, otherwise use WEBAPP_URL
   });
 }
@@ -124,7 +124,7 @@ export default App;
 
 | Name           | Type   | Description                            |
 | -------------- | ------ | -------------------------------------- |
-| environment-id | string | Formbricks Environment ID.             |
+| workspace-id | string | Formbricks Workspace ID.               |
 | app-url        | string | URL of the hosted Formbricks instance. |
 
 Now, visit the [Validate Your Setup](#validate-your-setup) section to verify your setup!
@@ -166,7 +166,7 @@ export default function FormbricksProvider() {
 
   useEffect(() => {
     formbricks.setup({
-      environmentId: "<environment-id>",
+      workspaceId: "<workspace-id>",
       appUrl: "<app-url>", // use PUBLIC_URL if you are using multi-domain setup, otherwise use WEBAPP_URL
     });
   }, []);
@@ -210,7 +210,7 @@ import formbricks from "@formbricks/js";
 
 if (typeof window !== "undefined") {
   formbricks.setup({
-    environmentId: "<environment-id>",
+    workspaceId: "<workspace-id>",
     appUrl: "<app-url>", // use PUBLIC_URL if you are using multi-domain setup, otherwise use WEBAPP_URL
   });
 }
@@ -235,7 +235,7 @@ export default function App({ Component, pageProps }: AppProps) {
 
 | Name           | Type   | Description                            |
 | -------------- | ------ | -------------------------------------- |
-| environment-id | string | Formbricks Environment ID.             |
+| workspace-id | string | Formbricks Workspace ID.               |
 | app-url        | string | URL of the hosted Formbricks instance. |
 
 First, initialize the Formbricks SDK to run only on the client side. To track page changes, register the route change event with the Next.js router.
@@ -263,7 +263,7 @@ import formbricks from "@formbricks/js";
 
 if (typeof window !== "undefined") {
   formbricks.setup({
-    environmentId: "<environment-id>",
+    workspaceId: "<workspace-id>",
     appUrl: "<app-url>", // use PUBLIC_URL if you are using multi-domain setup, otherwise use WEBAPP_URL
   });
 }
@@ -292,7 +292,7 @@ router.afterEach((to, from) => {
 
 | Name           | Type   | Description                            |
 | -------------- | ------ | -------------------------------------- |
-| environment-id | string | Formbricks Environment ID.             |
+| workspace-id | string | Formbricks Workspace ID.               |
 | app-url        | string | URL of the hosted Formbricks instance. |
 
 Now, visit the [Validate Your Setup](#validate-your-setup) section to verify your setup!
@@ -320,7 +320,7 @@ Now, update your `App.js/App.tsx` file to initialize Formbricks:
 import Formbricks from "@formbricks/react-native";
 
 const config = {
-  environmentId: "<environment-id>",
+  workspaceId: "<workspace-id>",
   appUrl: "<app-url>", // use PUBLIC_URL if you are using multi-domain setup, otherwise use WEBAPP_URL
 };
 
@@ -338,7 +338,7 @@ export default function App() {
 
 | Name           | Type   | Description                            |
 | -------------- | ------ | -------------------------------------- |
-| environment-id | string | Formbricks Environment ID.             |
+| workspace-id | string | Formbricks Workspace ID.               |
 | app-url        | string | URL of the hosted Formbricks instance. |
 
 Now, visit the [Validate Your Setup](#validate-your-setup) section to verify your setup!
@@ -387,7 +387,7 @@ import FormbricksSDK
 // 1. Build your config (you can also inject userId + attributes here)
 let config = FormbricksConfig.Builder(
         appUrl: "https://your‑app.bricks.com", // use PUBLIC_URL if you are using multi-domain setup, otherwise use WEBAPP_URL
-        environmentId: "YOUR_ENV_ID"
+        workspaceId: "YOUR_WORKSPACE_ID"
     )
     .setLogLevel(.debug)
     .build()
@@ -424,7 +424,7 @@ Formbricks.cleanup(waitForOperations: true) {
 
 | Name           | Type   | Description                            |
 | -------------- | ------ | -------------------------------------- |
-| environment-id | string | Formbricks Environment ID.             |
+| workspace-id | string | Formbricks Workspace ID.               |
 | app-url        | string | URL of the hosted Formbricks instance. |
 
 Now, visit the [Validate Your Setup](#validate-your-setup) section to verify your setup!
@@ -468,7 +468,7 @@ android {
 // 1. Initialize the SDK
 val config = FormbricksConfig.Builder(
     "https://your-formbricks-server.com",
-    "YOUR_ENVIRONMENT_ID"
+    "YOUR_WORKSPACE_ID"
 )
   .setLoggingEnabled(true)
   .setFragmentManager(supportFragmentManager)
@@ -498,7 +498,7 @@ Formbricks.logout()
 
 | Name           | Type   | Description                            |
 | -------------- | ------ | -------------------------------------- |
-| environment-id | string | Formbricks Environment ID.             |
+| workspace-id | string | Formbricks Workspace ID.               |
 | app-url        | string | URL of the hosted Formbricks instance. |
 
 ## Validate your setup

@@ -12,32 +12,31 @@ This documentation only applies to Formbricks Cloud instances. On-premise deploy
 
 ## Multi-Tenancy in Formbricks Cloud
 
-Formbricks Cloud is architected as a true multi-tenant system where each organization operates in its own isolated environment while sharing the underlying infrastructure. This approach allows multiple organizations to use the platform independently without visibility into each other's data.
+Formbricks Cloud is architected as a true multi-tenant system where each organization operates in its own isolated workspace while sharing the underlying infrastructure. This approach allows multiple organizations to use the platform independently without visibility into each other's data.
 
 ### Organizational Structure
 
 ```mermaid
 graph TD
-    Organization[Organization] --> Project1[Project 1]
-    Organization --> Project2[Project 2]
-    Organization --> ProjectN[Project n]
-    
-    Project1 --> DevEnv1[Development Environment]
-    Project1 --> ProdEnv1[Production Environment]
-    
-    DevEnv1 --> Survey1[Surveys]
-    DevEnv1 --> Contact1[Contacts]
-    DevEnv1 --> Action1[Actions]
-    DevEnv1 --> ApiKey1[API Keys]
-    DevEnv1 --> Webhook1[Webhooks]
-    DevEnv1 --> Integration1[Integrations]
-    
-    ProdEnv1 --> Survey2[Surveys]
-    ProdEnv1 --> Contact2[Contacts]
-    ProdEnv1 --> Action2[Actions]
-    ProdEnv1 --> ApiKey2[API Keys]
-    ProdEnv1 --> Webhook2[Webhooks]
-    ProdEnv1 --> Integration2[Integrations]
+    Organization[Organization] --> Workspace1[Workspace 1]
+    Organization --> Workspace2[Workspace 2]
+    Organization --> WorkspaceN[Workspace n]
+
+    Workspace1 --> Survey1[Surveys]
+    Workspace1 --> Contact1[Contacts]
+    Workspace1 --> Action1[Action Classes]
+    Workspace1 --> ApiKeyScope1[API Key Scopes]
+    Workspace1 --> Webhook1[Webhooks]
+    Workspace1 --> Integration1[Integrations]
+    Workspace1 --> Segment1[Segments]
+
+    Workspace2 --> Survey2[Surveys]
+    Workspace2 --> Contact2[Contacts]
+    Workspace2 --> Action2[Action Classes]
+    Workspace2 --> ApiKeyScope2[API Key Scopes]
+    Workspace2 --> Webhook2[Webhooks]
+    Workspace2 --> Integration2[Integrations]
+    Workspace2 --> Segment2[Segments]
 ```
 
 The multi-tenant architecture in Formbricks Cloud is built around three key levels of isolation:
@@ -55,35 +54,32 @@ The multi-tenant architecture in Formbricks Cloud is built around three key leve
   - Billing: Access to billing information only
 - Billing and subscription management occurs at the organization level
 
-### 2. Project-Level Isolation
+### 2. Workspace-Level Isolation
 
-Projects provide an additional layer of isolation within an organization:
+Within each organization, further isolation is maintained through workspaces:
 
-- Organizations can have multiple projects to separate different applications or product lines
-- Projects have their own configuration, branding, and style settings
-- Team-based access control allows fine-grained permission management within projects
-- Language settings and customizations are project-specific
-
-### 3. Environment-Level Isolation
-
-Within each organization's projects, further isolation is maintained through environments:
-
-- Each project has separate production and development environments
-- Complete separation of resources between environments:
+- Organizations can have multiple workspaces to separate different applications or product lines
+- Complete separation of resources between workspaces:
   - Surveys and responses
   - Contacts and attributes
   - Action classes and triggers
-  - API keys and integrations
+  - API key scopes and integrations
   - Webhooks and notifications
   - Segments and targeting rules
-- Environments are created automatically when a project is created
-- Changes in development environments have no impact on production
-- Surveys can be copied between environments
-- Each environment has its own dedicated resources and settings
+- Workspace-specific configuration, branding, and style settings
+- Language settings and customizations are workspace-specific
 
-## Data Security in Multi-Tenant Environment
+### 3. Team-Based Access Isolation
 
-Formbricks ensures data security in its multi-tenant environment through:
+Team access is scoped per workspace:
+
+- Teams can be granted access to specific workspaces via workspace-team mapping
+- Permissions are applied at the workspace level for finer-grained access control
+- Users can collaborate in one workspace without being granted access to all organization resources
+
+## Data Security in the Multi-Tenant Model
+
+Formbricks ensures data security in its multi-tenant workspace model through:
 
 - **Database Layer Isolation**: 
   - Foreign key constraints enforce data isolation
@@ -96,7 +92,7 @@ Formbricks ensures data security in its multi-tenant environment through:
   - Multi-factor authentication support
 
 - **API Access Control**: 
-  - API keys are scoped to specific environments
+  - API keys are scoped to specific workspaces
   - Rate limiting per organization
   - Request validation and sanitization
 

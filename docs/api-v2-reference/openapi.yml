@@ -36,18 +36,19 @@ tags:
 security:
   - apiKeyAuth: []
 paths:
-  /client/{environmentId}/responses/{responseId}:
+  /client/{workspaceId}/responses/{responseId}:
     put:
       security: []
       description: Update an existing response for example when you want to mark a
         response as finished or you want to change an existing response's value.
+        Note - Environments are deprecated. Use workspace/workspaceId terminology.
       parameters:
         - in: path
-          name: environmentId
+          name: workspaceId
           required: true
           schema:
             type: string
-          description: The ID of the environment.
+          description: The ID of the workspace. Deprecated alias `environmentId`.
         - in: path
           name: responseId
           required: true
@@ -88,11 +89,12 @@ paths:
       servers:
         - url: https://app.formbricks.com/api/v2
           description: Formbricks Client
-  /client/{environmentId}/responses:
+  /client/{workspaceId}/responses:
     post:
       security: []
       description: Create a response for a survey and its fields with the user's
-        responses. The userId & meta here is optional
+        responses. The userId & meta here is optional. Note - Environments are deprecated.
+        Use workspace/workspaceId terminology.
       requestBody:
         content:
           application/json:
@@ -116,14 +118,15 @@ paths:
       servers:
         - url: https://app.formbricks.com/api/v2
           description: Formbricks Client
-  /client/{environmentId}/contacts/{userId}/attributes:
+  /client/{workspaceId}/contacts/{userId}/attributes:
     put:
       security: []
       description: Update a contact's attributes in Formbricks to keep them in sync
         with your app or when you want to set a custom attribute in Formbricks.
+        Note - Environments are deprecated. Use workspace/workspaceId terminology.
       parameters:
         - in: path
-          name: environmentId
+          name: workspaceId
           required: true
           schema:
             type: string
@@ -165,15 +168,16 @@ paths:
       servers:
         - url: https://app.formbricks.com/api/v2
           description: Formbricks Client
-  /client/{environmentId}/identify/contacts/{userId}:
+  /client/{workspaceId}/identify/contacts/{userId}:
     get:
       security: []
       description: Retrieves a contact's state including their segments, displays,
         responses and other tracking information. If the contact doesn't exist,
-        it will be created.
+        it will be created. Note - Environments are deprecated. Use workspace/workspaceId
+        terminology.
       parameters:
         - in: path
-          name: environmentId
+          name: workspaceId
           required: true
           schema:
             type: string
@@ -198,11 +202,12 @@ paths:
       servers:
         - url: https://app.formbricks.com/api/v2
           description: Formbricks Client
-  /client/{environmentId}/displays:
+  /client/{workspaceId}/displays:
     post:
       security: []
       description: Create a new display for a valid survey ID. If a userId is passed,
-        the display is linked to the user.
+        the display is linked to the user. Note - Environments are deprecated. Use
+        workspace/workspaceId terminology.
       requestBody:
         content:
           application/json:
@@ -226,45 +231,48 @@ paths:
       servers:
         - url: https://app.formbricks.com/api/v2
           description: Formbricks Client
-  /client/{environmentId}/environment:
+  /client/{workspaceId}/environment:
     get:
       security: []
-      description: "Retrieves the environment state to be used in Formbricks SDKs.
+      description: "Retrieves the workspace state to be used in Formbricks SDKs.
+        Note - Environments are deprecated. Use workspace/workspaceId terminology.
         **Cache Behavior**: This endpoint uses server-side caching with a
         **5-minute TTL (Time To Live)**. Any changes to surveys, action classes,
-        project settings, or other environment data will take up to 5 minutes to
+        project settings, or other workspace data will take up to 5 minutes to
         reflect in the API response. This caching is implemented to improve
         performance for high-frequency SDK requests."
       parameters:
         - in: path
-          name: environmentId
+          name: workspaceId
           required: true
           schema:
             type: string
-          description: The ID of the environment.
+          description: The ID of the workspace. Deprecated alias `environmentId`.
       responses:
         "200":
           content:
             application/json:
               example:
-                environmentId: env123
+                workspaceId: ws_01h2xce9q8p3w4x5y6z7a8b9c0
+                environmentId: env_01h2xce9q8p3w4x5y6z7a8b9c0
                 state: active
               schema:
                 type: object
           description: OK
-      summary: Get Environment State
+      summary: Get Workspace State
       tags:
-        - Client API - Environment
+        - Client API - Workspace
       servers:
         - url: https://app.formbricks.com/api/v2
           description: Formbricks Client
-  /client/{environmentId}/user:
+  /client/{workspaceId}/user:
     post:
       security: []
       description: Endpoint for creating or identifying a user within the specified
-        environment. If the user already exists, this will identify them and
+        workspace. If the user already exists, this will identify them and
         potentially update user attributes. If they don't exist, it will create
-        a new user.
+        a new user. Note - Environments are deprecated. Use workspace/workspaceId
+        terminology.
       requestBody:
         content:
           application/json:
@@ -289,24 +297,25 @@ paths:
       servers:
         - url: https://app.formbricks.com/api/v2
           description: Formbricks Client
-  /client/{environmentId}/storage:
+  /client/{workspaceId}/storage:
     post:
       security: []
       summary: Upload Private File
       description: API endpoint for uploading private files. Uploaded files are kept
-        private so that only users with access to the specified environment can
+        private so that only users with access to the specified workspace can
         retrieve them. The endpoint validates the survey ID, file name, and file
         type from the request body, and returns a signed URL for S3 uploads
-        along with a local upload URL.
+        along with a local upload URL. Note - Environments are deprecated. Use
+        workspace/workspaceId terminology.
       tags:
         - Client API - File Upload
       parameters:
         - in: path
-          name: environmentId
+          name: workspaceId
           required: true
           schema:
             type: string
-          description: The ID of the environment.
+          description: The ID of the workspace. Deprecated alias `environmentId`.
       requestBody:
         required: true
         content:
@@ -483,13 +492,17 @@ paths:
                         additionalProperties: false
                     required:
                       - accessControl
-                  environments:
+                  workspaces:
                     type: array
                     items:
                       type: object
                       properties:
+                        workspaceId:
+                          type: string
                         environmentId:
                           type: string
+                          deprecated: true
+                          description: Deprecated alias for workspaceId.
                         environmentType:
                           type: string
                           enum:
@@ -506,6 +519,41 @@ paths:
                         projectName:
                           type: string
                       required:
+                        - workspaceId
+                        - environmentId
+                        - environmentType
+                        - permission
+                        - projectId
+                        - projectName
+                  environments:
+                    type: array
+                    deprecated: true
+                    description: Deprecated alias of `workspaces`.
+                    items:
+                      type: object
+                      properties:
+                        workspaceId:
+                          type: string
+                        environmentId:
+                          type: string
+                          deprecated: true
+                        environmentType:
+                          type: string
+                          enum:
+                            - production
+                            - development
+                        permission:
+                          type: string
+                          enum:
+                            - read
+                            - write
+                            - manage
+                        projectId:
+                          type: string
+                        projectName:
+                          type: string
+                      required:
+                        - workspaceId
                         - environmentId
                         - environmentType
                         - permission
@@ -1392,14 +1440,15 @@ paths:
         an `attributes` array of `{ attributeKey, value }` objects. Unlike `POST
         /management/contacts`, this endpoint does not accept a top-level `attributes`
         object. Each contact must include an `email` attribute in its `attributes`
-        array, and that email must be valid.
+        array, and that email must be valid. Note - Environments are deprecated.
+        Use workspace/workspaceId terminology.
       tags:
         - Management API - Contacts
       requestBody:
         required: true
         description: >-
           The contacts to upload. Use the full nested bulk body shown
-          in the example or cURL snippet: `{ environmentId, contacts: [{ attributes:
+          in the example or cURL snippet: `{ workspaceId, environmentId (deprecated), contacts: [{ attributes:
           [{ attributeKey: { key, name }, value }] }] }`. Each contact must include
           an `email` attribute inside its `attributes` array.
         content:
@@ -1407,8 +1456,12 @@ paths:
             schema:
               type: object
               properties:
+                workspaceId:
+                  type: string
                 environmentId:
                   type: string
+                  deprecated: true
+                  description: Deprecated alias for workspaceId.
                 contacts:
                   type: array
                   items:
@@ -1438,9 +1491,11 @@ paths:
                       - attributes
                   maxItems: 250
               required:
+                - workspaceId
                 - environmentId
                 - contacts
             example:
+              workspaceId: ws_01h2xce9q8p3w4x5y6z7a8b9c0
               environmentId: env_01h2xce9q8p3w4x5y6z7a8b9c0
               contacts:
                 - attributes:
@@ -1529,30 +1584,38 @@ paths:
         a top-level `attributes` object. For bulk uploads, use `PUT /management/contacts/bulk`,
         which expects `contacts[].attributes[]` instead. Each contact must have
         a valid email address in the attributes. All attribute keys must already
-        exist in the environment. The email is used as the unique identifier along
-        with the environment.
+        exist in the workspace. The email is used as the unique identifier along
+        with the workspace. Note - Environments are deprecated. Use workspace/workspaceId
+        terminology.
       tags:
         - Management API - Contacts
       requestBody:
         required: true
         description: The single contact to create. Must include a top-level `attributes`
           object with an email attribute, and all attribute keys must already exist
-          in the environment.
+          in the workspace. Note - Environments are deprecated. Use workspace/workspaceId
+          terminology.
         content:
           application/json:
             schema:
               type: object
               properties:
+                workspaceId:
+                  type: string
                 environmentId:
                   type: string
+                  deprecated: true
+                  description: Deprecated alias for workspaceId.
                 attributes:
                   type: object
                   additionalProperties:
                     type: string
               required:
+                - workspaceId
                 - environmentId
                 - attributes
             example:
+              workspaceId: ws_01h2xce9q8p3w4x5y6z7a8b9c0
               environmentId: env_01h2xce9q8p3w4x5y6z7a8b9c0
               attributes:
                 email: john.doe@example.com
@@ -1571,8 +1634,12 @@ paths:
                     type: string
                   createdAt:
                     type: string
+                  workspaceId:
+                    type: string
                   environmentId:
                     type: string
+                    deprecated: true
+                    description: Deprecated alias for workspaceId.
                   attributes:
                     type: object
                     additionalProperties:
@@ -1580,6 +1647,7 @@ paths:
               example:
                 id: ctc_01h2xce9q8p3w4x5y6z7a8b9c2
                 createdAt: 2023-01-01T12:00:00.000Z
+                workspaceId: ws_01h2xce9q8p3w4x5y6z7a8b9c0
                 environmentId: env_01h2xce9q8p3w4x5y6z7a8b9c0
                 attributes:
                   email: john.doe@example.com
@@ -1590,7 +1658,8 @@ paths:
     get:
       operationId: getContactAttributeKeys
       summary: Get contact attribute keys
-      description: Gets contact attribute keys from the database.
+      description: Gets contact attribute keys from the database. Note - Environments
+        are deprecated. Use workspace/workspaceId terminology.
       tags:
         - Management API - Contact Attribute Keys
       parameters:
@@ -1647,11 +1716,18 @@ paths:
             enum: *a8
             description: Date field to filter by
         - in: query
-          name: environmentId
-          description: The environment ID to filter by
+          name: workspaceId
+          description: The workspace ID to filter by
           schema:
             type: string
-            description: The environment ID to filter by
+            description: The workspace ID to filter by
+        - in: query
+          name: environmentId
+          description: Deprecated alias for workspaceId
+          deprecated: true
+          schema:
+            type: string
+            description: Deprecated alias for workspaceId
       responses:
         "200":
           description: Contact attribute keys retrieved successfully.
@@ -1703,9 +1779,13 @@ paths:
                             - custom
                           description: Whether this is a default or custom attribute
                           example: custom
+                        workspaceId:
+                          type: string
+                          description: The ID of the workspace this attribute belongs to
                         environmentId:
                           type: string
-                          description: The ID of the environment this attribute belongs to
+                          deprecated: true
+                          description: Deprecated alias for workspaceId.
                   meta:
                     type: object
                     properties:
@@ -1718,7 +1798,8 @@ paths:
     post:
       operationId: createContactAttributeKey
       summary: Create a contact attribute key
-      description: Creates a contact attribute key in the database.
+      description: Creates a contact attribute key in the database. Note - Environments
+        are deprecated. Use workspace/workspaceId terminology.
       tags:
         - Management API - Contact Attribute Keys
       requestBody:
@@ -1774,9 +1855,13 @@ paths:
                       - custom
                     description: Whether this is a default or custom attribute
                     example: custom
+                  workspaceId:
+                    type: string
+                    description: The ID of the workspace this attribute belongs to
                   environmentId:
                     type: string
-                    description: The ID of the environment this attribute belongs to
+                    deprecated: true
+                    description: Deprecated alias for workspaceId.
   /management/contact-attribute-keys/{id}:
     get:
       operationId: getContactAttributeKey
@@ -1837,9 +1922,13 @@ paths:
                       - custom
                     description: Whether this is a default or custom attribute
                     example: custom
+                  workspaceId:
+                    type: string
+                    description: The ID of the workspace this attribute belongs to
                   environmentId:
                     type: string
-                    description: The ID of the environment this attribute belongs to
+                    deprecated: true
+                    description: Deprecated alias for workspaceId.
     put:
       operationId: updateContactAttributeKey
       summary: Update a contact attribute key
@@ -1906,9 +1995,13 @@ paths:
                       - custom
                     description: Whether this is a default or custom attribute
                     example: custom
+                  workspaceId:
+                    type: string
+                    description: The ID of the workspace this attribute belongs to
                   environmentId:
                     type: string
-                    description: The ID of the environment this attribute belongs to
+                    deprecated: true
+                    description: Deprecated alias for workspaceId.
     delete:
       operationId: deleteContactAttributeKey
       summary: Delete a contact attribute key
@@ -1968,9 +2061,13 @@ paths:
                       - custom
                     description: Whether this is a default or custom attribute
                     example: custom
+                  workspaceId:
+                    type: string
+                    description: The ID of the workspace this attribute belongs to
                   environmentId:
                     type: string
-                    description: The ID of the environment this attribute belongs to
+                    deprecated: true
+                    description: Deprecated alias for workspaceId.
   /management/surveys/{surveyId}/contact-links/contacts/{contactId}/:
     get:
       operationId: getPersonalizedSurveyLink
@@ -2127,7 +2224,8 @@ paths:
     get:
       operationId: getWebhooks
       summary: Get webhooks
-      description: Gets webhooks from the database.
+      description: Gets webhooks from the database. Note - Environments are deprecated.
+        Use workspace/workspaceId terminology.
       tags:
         - Management API - Webhooks
       parameters:
@@ -2230,9 +2328,13 @@ paths:
                             - make
                             - n8n
                           description: The source of the webhook
+                        workspaceId:
+                          type: string
+                          description: The ID of the workspace
                         environmentId:
                           type: string
-                          description: The ID of the environment
+                          deprecated: true
+                          description: Deprecated alias for workspaceId.
                         triggers:
                           type: array
                           items:
@@ -2260,7 +2362,8 @@ paths:
     post:
       operationId: createWebhook
       summary: Create a webhook
-      description: Creates a webhook in the database.
+      description: Creates a webhook in the database. Note - Environments are deprecated.
+        Use workspace/workspaceId terminology.
       tags:
         - Management API - Webhooks
       requestBody:
@@ -2284,9 +2387,13 @@ paths:
                   type: string
                   enum: *a9
                   description: The source of the webhook
+                workspaceId:
+                  type: string
+                  description: The ID of the workspace
                 environmentId:
                   type: string
-                  description: The ID of the environment
+                  deprecated: true
+                  description: Deprecated alias for workspaceId.
                 triggers:
                   type: array
                   items:
@@ -2303,6 +2410,7 @@ paths:
                 - name
                 - url
                 - source
+                - workspaceId
                 - environmentId
                 - triggers
                 - surveyIds
@@ -2338,9 +2446,13 @@ paths:
                     type: string
                     enum: *a9
                     description: The source of the webhook
+                  workspaceId:
+                    type: string
+                    description: The ID of the workspace
                   environmentId:
                     type: string
-                    description: The ID of the environment
+                    deprecated: true
+                    description: Deprecated alias for workspaceId.
                   triggers:
                     type: array
                     items:
@@ -2357,7 +2469,8 @@ paths:
     get:
       operationId: getWebhook
       summary: Get a webhook
-      description: Gets a webhook from the database.
+      description: Gets a webhook from the database. Note - Environments are deprecated.
+        Use workspace/workspaceId terminology.
       tags:
         - Management API - Webhooks
       parameters:
@@ -2399,9 +2512,13 @@ paths:
                     type: string
                     enum: *a9
                     description: The source of the webhook
+                  workspaceId:
+                    type: string
+                    description: The ID of the workspace
                   environmentId:
                     type: string
-                    description: The ID of the environment
+                    deprecated: true
+                    description: Deprecated alias for workspaceId.
                   triggers:
                     type: array
                     items:
@@ -2417,7 +2534,8 @@ paths:
     put:
       operationId: updateWebhook
       summary: Update a webhook
-      description: Updates a webhook in the database.
+      description: Updates a webhook in the database. Note - Environments are deprecated.
+        Use workspace/workspaceId terminology.
       tags:
         - Management API - Webhooks
       parameters:
@@ -2448,9 +2566,13 @@ paths:
                   type: string
                   enum: *a9
                   description: The source of the webhook
+                workspaceId:
+                  type: string
+                  description: The ID of the workspace
                 environmentId:
                   type: string
-                  description: The ID of the environment
+                  deprecated: true
+                  description: Deprecated alias for workspaceId.
                 triggers:
                   type: array
                   items:
@@ -2467,6 +2589,7 @@ paths:
                 - name
                 - url
                 - source
+                - workspaceId
                 - environmentId
                 - triggers
                 - surveyIds
@@ -2502,9 +2625,13 @@ paths:
                     type: string
                     enum: *a9
                     description: The source of the webhook
+                  workspaceId:
+                    type: string
+                    description: The ID of the workspace
                   environmentId:
                     type: string
-                    description: The ID of the environment
+                    deprecated: true
+                    description: Deprecated alias for workspaceId.
                   triggers:
                     type: array
                     items:
@@ -2520,7 +2647,8 @@ paths:
     delete:
       operationId: deleteWebhook
       summary: Delete a webhook
-      description: Deletes a webhook from the database.
+      description: Deletes a webhook from the database. Note - Environments are deprecated.
+        Use workspace/workspaceId terminology.
       tags:
         - Management API - Webhooks
       parameters:
@@ -2562,9 +2690,13 @@ paths:
                     type: string
                     enum: *a9
                     description: The source of the webhook
+                  workspaceId:
+                    type: string
+                    description: The ID of the workspace
                   environmentId:
                     type: string
-                    description: The ID of the environment
+                    deprecated: true
+                    description: Deprecated alias for workspaceId.
                   triggers:
                     type: array
                     items:
@@ -3599,13 +3731,17 @@ components:
               additionalProperties: false
           required:
             - accessControl
-        environments:
+        workspaces:
           type: array
           items:
             type: object
             properties:
+              workspaceId:
+                type: string
               environmentId:
                 type: string
+                deprecated: true
+                description: Deprecated alias for workspaceId.
               environmentType:
                 type: string
                 enum:
@@ -3622,6 +3758,41 @@ components:
               projectName:
                 type: string
             required:
+              - workspaceId
+              - environmentId
+              - environmentType
+              - permission
+              - projectId
+              - projectName
+        environments:
+          type: array
+          deprecated: true
+          description: Deprecated alias of `workspaces`.
+          items:
+            type: object
+            properties:
+              workspaceId:
+                type: string
+              environmentId:
+                type: string
+                deprecated: true
+              environmentType:
+                type: string
+                enum:
+                  - production
+                  - development
+              permission:
+                type: string
+                enum:
+                  - read
+                  - write
+                  - manage
+              projectId:
+                type: string
+              projectName:
+                type: string
+            required:
+              - workspaceId
               - environmentId
               - environmentType
               - permission
@@ -3630,6 +3801,7 @@ components:
       required:
         - organizationId
         - organizationAccess
+        - workspaces
         - environments
     response:
       type: object
@@ -3775,14 +3947,19 @@ components:
           type: string
           description: When the contact was last updated
           example: 2021-01-01T00:00:00.000Z
+        workspaceId:
+          type: string
+          description: The workspace this contact belongs to
         environmentId:
           type: string
-          description: The environment this contact belongs to
+          deprecated: true
+          description: Deprecated alias for workspaceId.
       required:
         - id
         - userId
         - createdAt
         - updatedAt
+        - workspaceId
         - environmentId
     contactAttribute:
       type: object
@@ -3856,9 +4033,13 @@ components:
             - custom
           description: Whether this is a default or custom attribute
           example: custom
+        workspaceId:
+          type: string
+          description: The ID of the workspace this attribute belongs to
         environmentId:
           type: string
-          description: The ID of the environment this attribute belongs to
+          deprecated: true
+          description: Deprecated alias for workspaceId.
       required:
         - id
         - createdAt
@@ -3868,6 +4049,7 @@ components:
         - name
         - description
         - type
+        - workspaceId
         - environmentId
     survey:
       type: object
@@ -3966,9 +4148,13 @@ components:
             - string
             - "null"
           description: The user who created the survey
+        workspaceId:
+          type: string
+          description: The workspace ID of the survey
         environmentId:
           type: string
-          description: The environment ID of the survey
+          deprecated: true
+          description: Deprecated alias for workspaceId.
         blocks:
           type: array
           items:
@@ -5689,6 +5875,7 @@ components:
         - displayProgressBar
         - pin
         - createdBy
+        - workspaceId
         - environmentId
         - blocks
         - endings
@@ -5741,9 +5928,13 @@ components:
           type: string
           enum: *a9
           description: The source of the webhook
+        workspaceId:
+          type: string
+          description: The ID of the workspace
         environmentId:
           type: string
-          description: The ID of the environment
+          deprecated: true
+          description: Deprecated alias for workspaceId.
         triggers:
           type: array
           items:
@@ -5763,6 +5954,7 @@ components:
         - updatedAt
         - url
         - source
+        - workspaceId
         - environmentId
         - triggers
         - surveyIds
@@ -5899,13 +6091,18 @@ components:
             - "null"
           description: Description of the attribute
           example: The user's email address
+        workspaceId:
+          type: string
+          description: The ID of the workspace this attribute belongs to
         environmentId:
           type: string
-          description: The ID of the environment this attribute belongs to
+          deprecated: true
+          description: Deprecated alias for workspaceId.
       required:
         - key
         - name
         - description
+        - workspaceId
         - environmentId
       description: Input data for creating or updating a contact attribute
     contactAttributeKeyId:
