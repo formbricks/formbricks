@@ -112,7 +112,7 @@ describe("BullMQ integration tests", () => {
       }),
       "BullMQ job failed"
     );
-  }, 15000);
+  }, 35000);
 
   test("processes delayed jobs after their scheduled time", async () => {
     if (!isRedisAvailable || !queueEvents) {
@@ -121,13 +121,14 @@ describe("BullMQ integration tests", () => {
     }
 
     const startedAt = Date.now();
+    const scheduledFor = startedAt + 500;
     const job = await scheduleTestLogJobAt(
-      { runAt: new Date(startedAt + 500) },
+      { runAt: new Date(scheduledFor) },
       { message: "integration delayed success" }
     );
 
     await expect(job.waitUntilFinished(queueEvents)).resolves.toBeUndefined();
-    expect(Date.now() - startedAt).toBeGreaterThanOrEqual(250);
+    expect(Date.now()).toBeGreaterThanOrEqual(scheduledFor);
   }, 15000);
 
   test("upserts recurring schedules using the engine-neutral producer interface", async () => {

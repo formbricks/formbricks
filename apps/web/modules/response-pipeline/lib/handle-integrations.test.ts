@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import type { TResponsePipelineJobData } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
 import {
   TIntegrationAirtable,
@@ -56,6 +55,7 @@ const questionId2 = "q2";
 const questionId3 = "q3_picture";
 const hiddenFieldId = "hidden1";
 const variableId = "var1";
+type TIntegrationPipelineInput = Parameters<typeof handleIntegrations>[1];
 
 const mockPipelineInput = {
   workspaceId: "env1",
@@ -93,7 +93,7 @@ const mockPipelineInput = {
     },
     ttc: {},
   } as unknown as TResponse,
-} as TResponsePipelineJobData;
+} as Parameters<typeof handleIntegrations>[1];
 
 const mockSurvey = {
   id: surveyId,
@@ -444,7 +444,7 @@ describe("handleIntegrations", () => {
 
     test("maps picture selection URLs without mutating the shared response payload", async () => {
       vi.mocked(writeNotionData).mockResolvedValue(undefined);
-      const pipelineInput = structuredClone(mockPipelineInput) as TResponsePipelineJobData;
+      const pipelineInput = structuredClone(mockPipelineInput) as TIntegrationPipelineInput;
 
       await handleIntegrations([mockNotionIntegration], pipelineInput, mockSurvey);
 
@@ -462,7 +462,7 @@ describe("handleIntegrations", () => {
 
     test("coerces non-string Notion text values and avoids invalid multi-url payloads", async () => {
       vi.mocked(writeNotionData).mockResolvedValue(undefined);
-      const pipelineInput = structuredClone(mockPipelineInput) as TResponsePipelineJobData;
+      const pipelineInput = structuredClone(mockPipelineInput) as TIntegrationPipelineInput;
       const pipelineResponseData = pipelineInput.response.data as Record<string, unknown>;
       pipelineResponseData[questionId1] = 42;
       pipelineResponseData.objectField = { foo: "bar" };
@@ -509,6 +509,41 @@ describe("handleIntegrations", () => {
           },
           Url: {
             url: null,
+          },
+        }),
+        notionIntegration.config
+      );
+    });
+
+    test("sanitizes mixed Notion multi-select values and preserves numeric precision", async () => {
+      vi.mocked(writeNotionData).mockResolvedValue(undefined);
+      const pipelineInput = structuredClone(mockPipelineInput) as TIntegrationPipelineInput;
+      const pipelineResponseData = pipelineInput.response.data as Record<string, unknown>;
+      pipelineResponseData[questionId2] = ["Choice 1", { name: "Choice, 3" }, 42] as unknown as string[];
+      pipelineResponseData.numericField = 3.5;
+
+      const notionIntegration = structuredClone(mockNotionIntegration);
+      notionIntegration.config.data[0].mapping = [
+        {
+          element: { id: questionId2, name: "Question 2", type: TSurveyQuestionTypeEnum.MultipleChoiceMulti },
+          column: { id: "col_multi", name: "Multi", type: "multi_select" },
+        },
+        {
+          element: { id: "numericField", name: "Numeric Field", type: TSurveyQuestionTypeEnum.OpenText },
+          column: { id: "col_number", name: "Number", type: "number" },
+        },
+      ] as TIntegrationNotionConfigData["mapping"];
+
+      await handleIntegrations([notionIntegration], pipelineInput, mockSurvey);
+
+      expect(writeNotionData).toHaveBeenCalledWith(
+        "db1",
+        expect.objectContaining({
+          Multi: {
+            multi_select: [{ name: "Choice 1" }, { name: "Choice 3" }],
+          },
+          Number: {
+            number: 3.5,
           },
         }),
         notionIntegration.config

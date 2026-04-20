@@ -78,6 +78,7 @@ const createMockSurvey = (blocks: TSurveyBlock[] = []): TSurvey => ({
   followUps: [],
   delay: 0,
   autoComplete: null,
+  isAutoProgressingEnabled: false,
   showLanguageSwitch: null,
   recaptcha: null,
   isBackButtonHidden: false,

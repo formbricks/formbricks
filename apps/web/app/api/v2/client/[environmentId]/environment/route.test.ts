@@ -17,6 +17,18 @@ vi.mock("@/lib/utils/resolve-client-id", () => ({
   resolveClientApiIds: mocks.resolveClientApiIds,
 }));
 
+vi.mock("@/app/api/v1/auth", () => ({
+  authenticateRequest: vi.fn(),
+}));
+
+vi.mock("@/modules/auth/lib/authOptions", () => ({
+  authOptions: {},
+}));
+
+vi.mock("next-auth", () => ({
+  getServerSession: vi.fn(),
+}));
+
 vi.mock("@/modules/core/rate-limit/helpers", () => ({
   applyIPRateLimit: mocks.applyIPRateLimit,
   applyRateLimit: vi.fn(),
@@ -49,10 +61,8 @@ vi.mock("@formbricks/logger", () => ({
   },
 }));
 
-vi.mock("@/lib/constants", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/lib/constants")>();
+vi.mock("@/lib/constants", () => {
   return {
-    ...actual,
     AUDIT_LOG_ENABLED: false,
     IS_PRODUCTION: true,
     SENTRY_DSN: "test-dsn",
@@ -78,6 +88,7 @@ const createMockRequest = (url: string, headers = new Map<string, string>()): Ne
 
 describe("api/v2 client environment route", () => {
   beforeEach(() => {
+    vi.resetModules();
     vi.clearAllMocks();
     mocks.applyIPRateLimit.mockResolvedValue(undefined);
     mocks.resolveClientApiIds.mockResolvedValue({ workspaceId: "ck12345678901234567890123" });
@@ -92,7 +103,7 @@ describe("api/v2 client environment route", () => {
       new Map([["x-request-id", "req-v2-env"]])
     );
 
-    const { GET } = await import("../../../../v1/client/[workspaceId]/environment/route");
+    const { GET } = await import("../../../../v2/client/[workspaceId]/environment/route");
     const response = await GET(request, {
       params: Promise.resolve({
         workspaceId: "ck12345678901234567890123",

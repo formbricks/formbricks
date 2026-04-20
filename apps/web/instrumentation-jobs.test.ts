@@ -250,6 +250,7 @@ describe("instrumentation-jobs", () => {
     await vi.advanceTimersByTimeAsync(30_000);
 
     expect(mockStartJobsRuntime).toHaveBeenCalledTimes(2);
+    await expect(registerJobsWorker()).resolves.toBe(recoveredRuntime);
   });
 
   slowTest(
@@ -347,9 +348,13 @@ describe("instrumentation-jobs", () => {
       await import("./instrumentation-jobs");
 
     await expect(registerJobsWorker()).resolves.toBe(failingRuntime);
-    await expect(resetJobsWorkerRegistrationForTests()).rejects.toThrow("close failed");
+    await expect(resetJobsWorkerRegistrationForTests()).resolves.toBeUndefined();
     await expect(registerJobsWorker()).resolves.toBe(nextRuntime);
 
     expect(mockStartJobsRuntime).toHaveBeenCalledTimes(2);
+    expect(mockError).toHaveBeenCalledWith(
+      { err: expect.any(Error) },
+      "BullMQ worker test reset close failed"
+    );
   });
 });

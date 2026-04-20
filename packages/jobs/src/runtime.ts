@@ -96,6 +96,14 @@ export const startJobsRuntime = async ({
         removeProcessListener("SIGTERM", handleSigterm);
         removeProcessListener("SIGINT", handleSigint);
 
+        const closeConnectionSafely = async (connection: IORedis, connectionName: string): Promise<void> => {
+          try {
+            await closeRedisConnection(connection);
+          } catch (error) {
+            logger.error({ err: error, connectionName }, "Failed to close BullMQ Redis connection cleanly");
+          }
+        };
+
         await Promise.all(
           workers.map(async (worker, index) => {
             try {
@@ -115,8 +123,10 @@ export const startJobsRuntime = async ({
         }
 
         await Promise.all([
-          closeRedisConnection(producerConnection),
-          ...workerConnections.map((workerConnection) => closeRedisConnection(workerConnection)),
+          closeConnectionSafely(producerConnection, "producer"),
+          ...workerConnections.map((workerConnection, index) =>
+            closeConnectionSafely(workerConnection, `worker-${(index + 1).toString()}`)
+          ),
         ]);
       })();
     }
@@ -125,15 +135,23 @@ export const startJobsRuntime = async ({
   };
 
   const handleSigterm = (): void => {
-    void closeRuntime().catch((error: unknown) => {
-      logger.error({ err: error }, "BullMQ shutdown failed in closeRuntime after SIGTERM");
-    });
+    void closeRuntime()
+      .catch((error: unknown) => {
+        logger.error({ err: error }, "BullMQ shutdown failed in closeRuntime after SIGTERM");
+      })
+      .finally(() => {
+        process.exit(0);
+      });
   };
 
   const handleSigint = (): void => {
-    void closeRuntime().catch((error: unknown) => {
-      logger.error({ err: error }, "BullMQ shutdown failed in closeRuntime after SIGINT");
-    });
+    void closeRuntime()
+      .catch((error: unknown) => {
+        logger.error({ err: error }, "BullMQ shutdown failed in closeRuntime after SIGINT");
+      })
+      .finally(() => {
+        process.exit(0);
+      });
   };
 
   try {
@@ -144,6 +162,7 @@ export const startJobsRuntime = async ({
         redisUrl,
         connectionName: `formbricks-jobs-runtime-worker-${(workerIndex + 1).toString()}`,
       });
+      workerConnections.push(workerConnection);
       const worker = new Worker(
         JOBS_QUEUE_NAME,
         async (job: Job) => {
@@ -156,7 +175,6 @@ export const startJobsRuntime = async ({
         }
       );
 
-      workerConnections.push(workerConnection);
       workers.push(worker);
       registerWorkerLogging(worker, workerIndex + 1);
     }

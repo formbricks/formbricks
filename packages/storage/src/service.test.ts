@@ -11,19 +11,11 @@ import { createPresignedPost } from "@aws-sdk/s3-presigned-post";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-vi.mock("@formbricks/logger", () => ({
-  logger: {
-    error: vi.fn(),
-    warn: vi.fn(),
-    info: vi.fn(),
-    debug: vi.fn(),
-  },
-}));
-
 type Paginator<T> = AsyncGenerator<T, undefined, unknown>;
 const mockLogger = vi.hoisted(() => ({
   debug: vi.fn(),
   error: vi.fn(),
+  info: vi.fn(),
   warn: vi.fn(),
 }));
 

@@ -28,6 +28,7 @@ const ZSchedulerKeySegment = z
 
 export const ZBackgroundJobScheduleId = ZSchedulerKeySegment;
 export const ZBackgroundJobScheduleScope = ZSchedulerKeySegment;
+export const ZBackgroundJobName = ZSchedulerKeySegment;
 export const ZBackgroundJobScheduleIdentity = z.object({
   scheduleId: ZBackgroundJobScheduleId,
   scope: ZBackgroundJobScheduleScope,
@@ -41,34 +42,26 @@ export const ZRunAtBackgroundJobSchedule = z.object({
 
 export type TRunAtBackgroundJobSchedule = z.infer<typeof ZRunAtBackgroundJobSchedule>;
 
-export const ZRecurringEveryBackgroundJobSchedule = z
-  .object({
-    ...ZScheduleWindow,
-    everyMs: ZPositiveInteger,
-    kind: z.literal("every"),
-  })
+export const ZRecurringEveryBackgroundJobSchedule = z.object({
+  ...ZScheduleWindow,
+  everyMs: ZPositiveInteger,
+  kind: z.literal("every"),
+});
+
+export const ZRecurringCronBackgroundJobSchedule = z.object({
+  ...ZScheduleWindow,
+  cronPattern: z.string().trim().min(1),
+  immediately: z.boolean().optional(),
+  kind: z.literal("cron"),
+  timeZone: z.string().trim().min(1).optional(),
+});
+
+export const ZRecurringBackgroundJobSchedule = z
+  .discriminatedUnion("kind", [ZRecurringEveryBackgroundJobSchedule, ZRecurringCronBackgroundJobSchedule])
   .refine(hasValidScheduleWindow, {
     message: "endAt must be after startAt",
     path: ["endAt"],
   });
-
-export const ZRecurringCronBackgroundJobSchedule = z
-  .object({
-    ...ZScheduleWindow,
-    cronPattern: z.string().trim().min(1),
-    immediately: z.boolean().optional(),
-    kind: z.literal("cron"),
-    timeZone: z.string().trim().min(1).optional(),
-  })
-  .refine(hasValidScheduleWindow, {
-    message: "endAt must be after startAt",
-    path: ["endAt"],
-  });
-
-export const ZRecurringBackgroundJobSchedule = z.discriminatedUnion("kind", [
-  ZRecurringEveryBackgroundJobSchedule,
-  ZRecurringCronBackgroundJobSchedule,
-]);
 
 export type TRecurringBackgroundJobSchedule = z.infer<typeof ZRecurringBackgroundJobSchedule>;
 
@@ -115,7 +108,8 @@ export const getRecurringJobSchedulerId = (
   jobName: string,
   identity: TBackgroundJobScheduleIdentity
 ): string => {
+  const parsedJobName = ZBackgroundJobName.parse(jobName);
   const parsedIdentity = ZBackgroundJobScheduleIdentity.parse(identity);
 
-  return `${jobName}:${parsedIdentity.scope}:${parsedIdentity.scheduleId}`;
+  return `${parsedJobName}:${parsedIdentity.scope}:${parsedIdentity.scheduleId}`;
 };

@@ -50,6 +50,16 @@ interface TIntegrationFieldSelection {
   includeVariables: boolean;
 }
 
+type TIntegrationPipelineData = {
+  surveyId: string;
+  response: {
+    createdAt: Date;
+    data: Record<string, TResponseDataValue>;
+    meta: TResponseMeta;
+    variables: Record<string, string | number>;
+  };
+};
+
 const toIntegrationFieldSelection = (config: {
   elementIds: string[];
   includeCreatedAt?: boolean | null;
@@ -469,7 +479,22 @@ const getMultiSelectValue = (value: TNotionValueInput) => {
     return null;
   }
 
-  return value.map((entry: string) => ({ name: entry.replaceAll(",", "") }));
+  return (value as unknown[]).flatMap((entry) => {
+    if (typeof entry === "string") {
+      return [{ name: entry.replaceAll(",", "") }];
+    }
+
+    if (
+      entry &&
+      typeof entry === "object" &&
+      "name" in entry &&
+      typeof (entry as { name?: unknown }).name === "string"
+    ) {
+      return [{ name: (entry as { name: string }).name.replaceAll(",", "") }];
+    }
+
+    return [];
+  });
 };
 
 const getTitleValue = (value: TNotionValueInput) => {
@@ -546,8 +571,10 @@ const getValue = (colType: string, value: TNotionValueInput) => {
         };
       case "email":
         return value;
-      case "number":
-        return Number.parseInt(value as string, 10);
+      case "number": {
+        const numeric = typeof value === "number" ? value : Number(value);
+        return Number.isFinite(numeric) ? numeric : null;
+      }
       case "phone_number":
         return value;
       case "url":

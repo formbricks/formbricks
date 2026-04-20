@@ -193,6 +193,7 @@ export const registerJobsWorker = async (): Promise<JobsRuntimeHandle | null> =>
 
 export const resetJobsWorkerRegistrationForTests = async (): Promise<void> => {
   const runtime = globalForJobsRuntime.formbricksJobsRuntime;
+  const initializing = globalForJobsRuntime.formbricksJobsRuntimeInitializing;
   clearRecurringJobsRetryTimeout();
   clearJobsWorkerRetryTimeout();
   globalForJobsRuntime.formbricksJobsRecurringRegistered = undefined;
@@ -200,7 +201,35 @@ export const resetJobsWorkerRegistrationForTests = async (): Promise<void> => {
   globalForJobsRuntime.formbricksJobsRuntime = undefined;
   globalForJobsRuntime.formbricksJobsRuntimeInitializing = undefined;
 
+  const runtimesToClose = new Set<JobsRuntimeHandle>();
+
   if (runtime) {
-    await runtime.close();
+    runtimesToClose.add(runtime);
   }
+
+  if (initializing) {
+    try {
+      const initializedRuntime = await initializing;
+      runtimesToClose.add(initializedRuntime);
+    } catch {
+      // Startup failures are already surfaced by the test that triggered them.
+    }
+  }
+
+  if (globalForJobsRuntime.formbricksJobsRuntime) {
+    runtimesToClose.add(globalForJobsRuntime.formbricksJobsRuntime);
+  }
+
+  globalForJobsRuntime.formbricksJobsRuntime = undefined;
+  globalForJobsRuntime.formbricksJobsRuntimeInitializing = undefined;
+
+  await Promise.all(
+    [...runtimesToClose].map(async (runtimeHandle) => {
+      try {
+        await runtimeHandle.close();
+      } catch (error) {
+        logger.error({ err: error }, "BullMQ worker test reset close failed");
+      }
+    })
+  );
 };

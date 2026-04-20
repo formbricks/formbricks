@@ -83,6 +83,7 @@ const mockSurvey: TSurvey = {
   displayLimit: null,
   endings: [],
   followUps: [],
+  isAutoProgressingEnabled: false,
   isBackButtonHidden: false,
   isSingleResponsePerEmailEnabled: false,
   isVerifyEmailEnabled: false,

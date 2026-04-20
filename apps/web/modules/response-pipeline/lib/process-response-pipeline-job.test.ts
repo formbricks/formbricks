@@ -1,3 +1,4 @@
+import { UnrecoverableError } from "bullmq";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { TResponsePipelineJobData } from "@formbricks/jobs";
 import { FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
@@ -362,11 +363,13 @@ describe("processResponsePipelineJob", () => {
       }),
       "Response pipeline survey auto-complete update failed"
     );
-    expect(mockQueueAuditEventWithoutRequest).toHaveBeenCalledWith(
+    const auditCall = mockQueueAuditEventWithoutRequest.mock.calls.at(-1)?.[0];
+    expect(auditCall).toEqual(
       expect.objectContaining({
         status: "failure",
       })
     );
+    expect(auditCall).not.toHaveProperty("newObject");
   });
 
   test("fails the job before the final attempt when webhook delivery fails", async () => {
@@ -651,15 +654,17 @@ describe("processResponsePipelineJob", () => {
     expect(mockSendTelemetryEvents).toHaveBeenCalledTimes(1);
   });
 
-  test("fails fast when the organization cannot be resolved for the survey workspace", async () => {
+  test("fails fast when the workspace organization cannot be found", async () => {
     mockGetOrganizationByWorkspaceId.mockResolvedValue(null);
 
-    await expect(processResponsePipelineJob(baseData, baseContext)).rejects.toThrow("Organization not found");
+    await expect(processResponsePipelineJob(baseData, baseContext)).rejects.toThrow(
+      new UnrecoverableError("Organization not found for workspace workspace_123")
+    );
 
     expect(mockLoggerError).toHaveBeenCalledWith(
       expect.objectContaining({
         environmentId: "env_123",
-        err: expect.any(Error),
+        err: expect.any(UnrecoverableError),
         jobId: "job_123",
         responseId: "response_123",
         surveyId: "survey_123",

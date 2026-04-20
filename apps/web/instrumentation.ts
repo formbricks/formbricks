@@ -28,10 +28,17 @@ export const register = async () => {
     if (process.env.NEXT_PHASE !== "phase-production-build") {
       try {
         const { registerJobsWorker, registerRecurringJobs } = await import("./instrumentation-jobs");
-        void registerRecurringJobs().catch(() => undefined);
-        void registerJobsWorker().catch(() => undefined);
+        void registerRecurringJobs().catch((error: unknown) => {
+          logger.error(
+            { err: error },
+            "BullMQ recurring job registration failed during Next.js instrumentation"
+          );
+        });
+        void registerJobsWorker().catch((error: unknown) => {
+          logger.error({ err: error }, "BullMQ worker registration failed during Next.js instrumentation");
+        });
       } catch (error) {
-        logger.error({ err: error }, "BullMQ worker registration failed during Next.js instrumentation");
+        logger.error({ err: error }, "BullMQ instrumentation import failed during Next.js instrumentation");
       }
     }
   }

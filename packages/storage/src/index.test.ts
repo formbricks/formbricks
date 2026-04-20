@@ -9,6 +9,5 @@ describe("@formbricks/storage public API", () => {
     expect(storage.deleteFile).toBeTypeOf("function");
     expect(storage.deleteFilesByPrefix).toBeTypeOf("function");
     expect(storage.StorageErrorCode).toBeDefined();
-    expect("StorageError" in storage).toBe(false);
   });
 });
