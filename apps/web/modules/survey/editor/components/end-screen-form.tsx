@@ -20,7 +20,6 @@ interface EndScreenFormProps {
   endingCardIndex: number;
   isInvalid: boolean;
   selectedLanguageCode: string;
-  setSelectedLanguageCode: (languageCode: string) => void;
   updateSurvey: (
     input: Partial<TSurveyEndScreenCard & { _forceUpdate?: boolean }> | Partial<TSurveyRedirectUrlCard>
   ) => void;
@@ -35,7 +34,6 @@ export const EndScreenForm = ({
   endingCardIndex,
   isInvalid,
   selectedLanguageCode,
-  setSelectedLanguageCode,
   updateSurvey,
   endingCard,
   locale,
@@ -66,8 +64,6 @@ export const EndScreenForm = ({
         elementIdx={questions.length + endingCardIndex}
         isInvalid={isInvalid}
         updateSurvey={updateSurvey}
-        selectedLanguageCode={selectedLanguageCode}
-        setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
         isStorageConfigured={isStorageConfigured}
         autoFocus={!endingCard.headline?.default || endingCard.headline.default.trim() === ""}
@@ -85,8 +81,6 @@ export const EndScreenForm = ({
                 elementIdx={questions.length + endingCardIndex}
                 isInvalid={isInvalid}
                 updateSurvey={updateSurvey}
-                selectedLanguageCode={selectedLanguageCode}
-                setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
                 autoFocus={!endingCard.subheader?.default || endingCard.subheader.default.trim() === ""}
@@ -155,8 +149,6 @@ export const EndScreenForm = ({
                 elementIdx={questions.length + endingCardIndex}
                 isInvalid={isInvalid}
                 updateSurvey={updateSurvey}
-                selectedLanguageCode={selectedLanguageCode}
-                setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
               />

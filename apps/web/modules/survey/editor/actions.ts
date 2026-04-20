@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { ZActionClassInput } from "@formbricks/types/action-classes";
+import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey, ZSurvey } from "@formbricks/types/surveys/types";
 import { POSTHOG_KEY, UNSPLASH_ACCESS_KEY, UNSPLASH_ALLOWED_DOMAINS } from "@/lib/constants";
@@ -25,7 +26,7 @@ import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/ut
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { checkSpamProtectionPermission } from "@/modules/survey/lib/permission";
 import { getOrganizationBilling, getSurvey } from "@/modules/survey/lib/survey";
-import { getProject } from "./lib/project";
+import { getProject, getProjectLanguages } from "./lib/project";
 
 /**
  * Checks if survey follow-ups can be added for the given organization.
@@ -197,6 +198,32 @@ export const refetchProjectAction = authenticatedActionClient
     });
 
     return await getProject(parsedInput.projectId);
+  });
+
+const ZGetProjectLanguagesAction = z.object({
+  projectId: ZId,
+});
+
+export const getProjectLanguagesAction = authenticatedActionClient
+  .inputSchema(ZGetProjectLanguagesAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromProjectId(parsedInput.projectId),
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "projectTeam",
+          minPermission: "read",
+          projectId: parsedInput.projectId,
+        },
+      ],
+    });
+
+    return await getProjectLanguages(parsedInput.projectId);
   });
 
 const ZGetImagesFromUnsplashAction = z.object({

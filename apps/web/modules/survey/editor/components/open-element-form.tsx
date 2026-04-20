@@ -23,8 +23,6 @@ interface OpenElementFormProps {
   elementIdx: number;
   updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
   lastElement: boolean;
-  selectedLanguageCode: string;
-  setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
   locale: TUserLocale;
   isStorageConfigured: boolean;
@@ -37,8 +35,6 @@ export const OpenElementForm = ({
   updateElement,
   isInvalid,
   localSurvey,
-  selectedLanguageCode,
-  setSelectedLanguageCode,
   locale,
   isStorageConfigured = true,
   isExternalUrlsAllowed,
@@ -59,8 +55,6 @@ export const OpenElementForm = ({
         elementIdx={elementIdx}
         isInvalid={isInvalid}
         updateElement={updateElement}
-        selectedLanguageCode={selectedLanguageCode}
-        setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
         isStorageConfigured={isStorageConfigured}
         autoFocus={!element.headline?.default || element.headline.default.trim() === ""}
@@ -79,8 +73,6 @@ export const OpenElementForm = ({
                 elementIdx={elementIdx}
                 isInvalid={isInvalid}
                 updateElement={updateElement}
-                selectedLanguageCode={selectedLanguageCode}
-                setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
                 autoFocus={!element.subheader?.default || element.subheader.default.trim() === ""}
@@ -117,8 +109,6 @@ export const OpenElementForm = ({
           elementIdx={elementIdx}
           isInvalid={isInvalid}
           updateElement={updateElement}
-          selectedLanguageCode={selectedLanguageCode}
-          setSelectedLanguageCode={setSelectedLanguageCode}
           label={t("common.placeholder")}
           locale={locale}
           isStorageConfigured={isStorageConfigured}

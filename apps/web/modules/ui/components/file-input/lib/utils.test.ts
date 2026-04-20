@@ -67,6 +67,15 @@ describe("File Input Utils", () => {
       expect(toast.error).toHaveBeenCalledWith(expect.stringContaining("File exceeds 5 MB size limit."));
     });
 
+    test("should show size error for oversized files even when mime type is empty", async () => {
+      const files = [new File(["x".repeat(101000)], "large.ico", { type: "" })];
+
+      const result = await getAllowedFiles(files, ["ico"], 0.1);
+
+      expect(result).toHaveLength(0);
+      expect(toast.error).toHaveBeenCalledWith(expect.stringContaining("File exceeds 0.1 MB size limit."));
+    });
+
     test("should convert HEIC files to JPEG", async () => {
       const heicFile = new File(["test"], "test.heic", { type: "image/heic" });
       const mockConvertedFile = new File(["converted"], "test.jpg", { type: "image/jpeg" });

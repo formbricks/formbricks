@@ -24,8 +24,6 @@ interface FileUploadFormProps {
   element: TSurveyFileUploadElement;
   elementIdx: number;
   updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
-  selectedLanguageCode: string;
-  setSelectedLanguageCode: (languageCode: string) => void;
   isInvalid: boolean;
   isFormbricksCloud: boolean;
   locale: TUserLocale;
@@ -40,8 +38,6 @@ export const FileUploadElementForm = ({
   updateElement,
   isInvalid,
   project,
-  selectedLanguageCode,
-  setSelectedLanguageCode,
   isFormbricksCloud,
   locale,
   isStorageConfigured = true,
@@ -91,8 +87,6 @@ export const FileUploadElementForm = ({
         elementIdx={elementIdx}
         isInvalid={isInvalid}
         updateElement={updateElement}
-        selectedLanguageCode={selectedLanguageCode}
-        setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
         isStorageConfigured={isStorageConfigured}
         autoFocus={!element.headline?.default || element.headline.default.trim() === ""}
@@ -110,8 +104,6 @@ export const FileUploadElementForm = ({
                 elementIdx={elementIdx}
                 isInvalid={isInvalid}
                 updateElement={updateElement}
-                selectedLanguageCode={selectedLanguageCode}
-                setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
                 autoFocus={!element.subheader?.default || element.subheader.default.trim() === ""}
