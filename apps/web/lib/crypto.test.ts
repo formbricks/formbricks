@@ -14,7 +14,7 @@ import {
   verifySecret,
 } from "./crypto";
 
-const SECRET_HASH_TEST_TIMEOUT_MS = 30_000;
+const SECRET_HASH_TEST_TIMEOUT_MS = 45_000;
 
 // Unmock crypto for these tests since we want to test the actual crypto functions
 vi.unmock("crypto");

@@ -382,6 +382,7 @@
     "save": "保存",
     "save_as_draft": "保存为草稿",
     "save_changes": "保存 更改",
+    "save_without_scheduling": "保存但不安排发布",
     "saving": "保存",
     "scheduled": "已安排",
     "search": "搜索",

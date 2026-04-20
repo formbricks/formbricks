@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarClockIcon, CheckIcon, PauseIcon, PencilIcon } from "lucide-react";
+import { CalendarClockIcon, CheckIcon, type LucideIcon, PauseIcon, PencilIcon } from "lucide-react";
 import { type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -19,32 +19,29 @@ const InProgressIndicator = () => (
   </span>
 );
 
-const PausedIndicator = ({ isScheduled }: { isScheduled: boolean }) => (
-  <div className="rounded-full bg-slate-300 p-1">
-    {isScheduled ? (
-      <CalendarClockIcon className="h-3 w-3 text-slate-600" />
-    ) : (
-      <PauseIcon className="h-3 w-3 text-slate-600" />
-    )}
+const IconIndicator = ({ containerClassName, Icon }: { containerClassName: string; Icon: LucideIcon }) => (
+  <div className={containerClassName}>
+    <Icon className="h-3 w-3 text-slate-600" />
   </div>
+);
+
+const PausedIndicator = ({ isScheduled }: { isScheduled: boolean }) => (
+  <IconIndicator
+    containerClassName="rounded-full bg-slate-300 p-1"
+    Icon={isScheduled ? CalendarClockIcon : PauseIcon}
+  />
 );
 
 const CompletedIndicator = () => (
-  <div className="rounded-full bg-slate-200 p-1">
-    <CheckIcon className="h-3 w-3 text-slate-600" />
-  </div>
+  <IconIndicator containerClassName="rounded-full bg-slate-200 p-1" Icon={CheckIcon} />
 );
 
 const DraftIndicator = () => (
-  <div className="rounded-full bg-slate-300 p-1">
-    <PencilIcon className="h-3 w-3 text-slate-600" />
-  </div>
+  <IconIndicator containerClassName="rounded-full bg-slate-300 p-1" Icon={PencilIcon} />
 );
 
 const DraftTooltipIndicator = () => (
-  <div className="rounded-full bg-slate-200 p-1">
-    <CheckIcon className="h-3 w-3 text-slate-600" />
-  </div>
+  <IconIndicator containerClassName="rounded-full bg-slate-200 p-1" Icon={CheckIcon} />
 );
 
 const renderStatusIndicator = ({ isScheduled, status, tooltip }: SurveyStatusIndicatorProps): ReactNode => {

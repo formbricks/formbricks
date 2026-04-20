@@ -68,7 +68,7 @@ const pickDateForToggle = async (page: Page, toggleTitle: string, dayOffset: num
 test.describe("Survey scheduling settings", () => {
   test.setTimeout(1000 * 60 * 3);
 
-  test("set, persist, and clear publish/close dates", async ({ page, users }) => {
+  test("saving a draft with publish dates clears the pending schedule", async ({ page, users }) => {
     const user = await users.create();
     await user.login();
 
@@ -89,7 +89,8 @@ test.describe("Survey scheduling settings", () => {
     await page.getByText("Publish survey on date").click();
     await page.getByText("Close survey on date").click();
     await expect(page.getByRole("button", { name: "Schedule survey", exact: true })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Save as draft", exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Save without scheduling", exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Save as draft", exact: true })).not.toBeVisible();
     await expect(page.getByRole("button", { name: "Publish", exact: true })).not.toBeVisible();
 
     const publishDate = await pickDateForToggle(page, "Publish survey on date", 2);
@@ -111,7 +112,9 @@ test.describe("Survey scheduling settings", () => {
       );
     });
 
-    await page.getByRole("button", { name: "Save as draft", exact: true }).click({ noWaitAfter: true });
+    await page.getByRole("button", { name: "Save without scheduling", exact: true }).click({
+      noWaitAfter: true,
+    });
     await saveSurveyResponse;
 
     await page.reload({ waitUntil: "domcontentloaded" });
@@ -121,19 +124,6 @@ test.describe("Survey scheduling settings", () => {
       .click();
 
     await openResponseOptions(page);
-    const reloadedPublishDateToggle = getDateToggleContainer(page, "Publish survey on date");
-    const reloadedCloseDateToggle = getDateToggleContainer(page, "Close survey on date");
-
-    await expect(
-      reloadedPublishDateToggle.getByRole("button", { name: formatSelectedDate(publishDate), exact: true })
-    ).toBeVisible();
-    await expect(
-      reloadedCloseDateToggle.getByRole("button", { name: formatSelectedDate(closeDate), exact: true })
-    ).toBeVisible();
-
-    await page.getByTestId("clear-publish-on-date").click();
-    await page.getByTestId("clear-close-on-date").click();
-
     await expect(page.getByTestId("clear-publish-on-date")).not.toBeVisible();
     await expect(page.getByTestId("clear-close-on-date")).not.toBeVisible();
   });
@@ -153,6 +143,8 @@ test.describe("Survey scheduling settings", () => {
     await openResponseOptions(page);
     await page.getByText("Publish survey on date").click();
     await pickDateForToggle(page, "Publish survey on date", 2);
+    await page.getByText("Close survey on date").click();
+    await pickDateForToggle(page, "Close survey on date", 2);
 
     await page.getByRole("button", { name: "Schedule survey", exact: true }).click({ noWaitAfter: true });
     await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/summary/);

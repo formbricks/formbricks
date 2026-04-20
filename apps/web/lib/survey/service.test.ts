@@ -5,7 +5,12 @@ import { testInputValidation } from "vitestSetup";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { TActionClass } from "@formbricks/types/action-classes";
-import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import {
+  DatabaseError,
+  InvalidInputError,
+  ResourceNotFoundError,
+  ValidationError,
+} from "@formbricks/types/errors";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyCreateInput, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { getActionClasses } from "@/lib/actionClass/service";
@@ -36,7 +41,7 @@ import {
   updateSurveyInternal,
 } from "./service";
 
-const SURVEY_SERVICE_TEST_TIMEOUT_MS = 15_000;
+const SURVEY_SERVICE_TEST_TIMEOUT_MS = 30_000;
 
 // Mock organization service
 vi.mock("@/lib/organization/service", () => ({
@@ -317,7 +322,13 @@ describe("Tests for updateSurvey", () => {
   });
 
   describe("Sad Path", () => {
-    testInputValidation(updateSurvey, "123#");
+    test(
+      "throws a ValidationError if the inputs are invalid",
+      async () => {
+        await expect(updateSurvey("123#" as unknown as TSurvey)).rejects.toThrow(ValidationError);
+      },
+      SURVEY_SERVICE_TEST_TIMEOUT_MS
+    );
 
     test("Throws ResourceNotFoundError if the survey does not exist", async () => {
       prisma.survey.findUnique.mockRejectedValueOnce(

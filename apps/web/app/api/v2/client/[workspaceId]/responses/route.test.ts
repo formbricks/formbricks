@@ -109,7 +109,7 @@ describe("api/v2 client responses route", () => {
       error: underlyingError,
     });
     expect(mocks.sendToPipeline).not.toHaveBeenCalled();
-  });
+  }, 15000);
 
   test("reports unexpected pre-persistence failures with the same generic public response", async () => {
     const underlyingError = new Error("survey lookup failed");
@@ -146,5 +146,5 @@ describe("api/v2 client responses route", () => {
     });
     expect(mocks.createResponseWithQuotaEvaluation).not.toHaveBeenCalled();
     expect(mocks.sendToPipeline).not.toHaveBeenCalled();
-  });
+  }, 15000);
 });

@@ -63,10 +63,7 @@ export const ResponseOptionsCard = ({
       return minDate;
     }
 
-    const publishPlusOneDay = new Date(publishOn);
-    publishPlusOneDay.setDate(publishPlusOneDay.getDate() + 1);
-
-    return publishPlusOneDay.getTime() > minDate.getTime() ? publishPlusOneDay : minDate;
+    return publishOn.getTime() > minDate.getTime() ? publishOn : minDate;
   })();
   const isPublishOnDateEnabled = localSurvey.publishOn !== null;
   const isCloseOnDateEnabled = localSurvey.closeOn !== null;
@@ -168,10 +165,7 @@ export const ResponseOptionsCard = ({
       return;
     }
 
-    const minimumCloseDate = new Date(publishOn);
-    minimumCloseDate.setDate(minimumCloseDate.getDate() + 1);
-
-    if (closeOn.getTime() >= minimumCloseDate.getTime()) {
+    if (closeOn.getTime() >= publishOn.getTime()) {
       return;
     }
 
@@ -182,10 +176,8 @@ export const ResponseOptionsCard = ({
 
       const currentCloseOn = toCalendarDate(currentSurvey.closeOn);
       const currentPublishOn = toCalendarDate(currentSurvey.publishOn);
-      const currentMinimumCloseDate = new Date(currentPublishOn);
-      currentMinimumCloseDate.setDate(currentMinimumCloseDate.getDate() + 1);
 
-      if (currentCloseOn.getTime() >= currentMinimumCloseDate.getTime()) {
+      if (currentCloseOn.getTime() >= currentPublishOn.getTime()) {
         return currentSurvey;
       }
 
@@ -212,7 +204,7 @@ export const ResponseOptionsCard = ({
       ...currentSurvey,
       closeOn:
         currentSurvey.closeOn &&
-        toCalendarDate(currentSurvey.closeOn).getTime() <= nextPublishCalendarDate.getTime()
+        toCalendarDate(currentSurvey.closeOn).getTime() < nextPublishCalendarDate.getTime()
           ? null
           : currentSurvey.closeOn,
       publishOn: nextPublishOn,
@@ -355,7 +347,7 @@ export const ResponseOptionsCard = ({
                     ...currentSurvey,
                     closeOn:
                       currentSurvey.closeOn &&
-                      toCalendarDate(currentSurvey.closeOn).getTime() <= nextPublishCalendarDate.getTime()
+                      toCalendarDate(currentSurvey.closeOn).getTime() < nextPublishCalendarDate.getTime()
                         ? null
                         : currentSurvey.closeOn,
                     publishOn: nextPublishOn,
