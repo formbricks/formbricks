@@ -1,5 +1,9 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { cn } from "./utils";
+
+vi.mock("isomorphic-dompurify", () => ({
+  sanitize: vi.fn((value: string) => value),
+}));
 
 describe("cn", () => {
   test("merges class names correctly", () => {

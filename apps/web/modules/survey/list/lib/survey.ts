@@ -145,53 +145,6 @@ export const getSurvey = reactCache(async (surveyId: string): Promise<TSurvey | 
   return mapSurveyRowToSurvey(surveyPrisma);
 });
 
-export const deleteSurvey = async (surveyId: string): Promise<boolean> => {
-  try {
-    const deletedSurvey = await prisma.survey.delete({
-      where: {
-        id: surveyId,
-      },
-      select: {
-        id: true,
-        environmentId: true,
-        segment: {
-          select: {
-            id: true,
-            isPrivate: true,
-          },
-        },
-        type: true,
-        triggers: {
-          select: {
-            actionClass: {
-              select: {
-                id: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
-    if (deletedSurvey.type === "app" && deletedSurvey.segment?.isPrivate) {
-      await prisma.segment.delete({
-        where: {
-          id: deletedSurvey.segment.id,
-        },
-      });
-    }
-
-    return true;
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      logger.error(error, "Error deleting survey");
-      throw new DatabaseError(error.message);
-    }
-
-    throw error;
-  }
-};
-
 const getExistingSurvey = async (surveyId: string) => {
   return await prisma.survey.findUnique({
     where: {

@@ -96,14 +96,7 @@ const validateSurvey = async (responseInput: TResponseInput, environmentId: stri
   }
   if (survey.environmentId !== environmentId) {
     return {
-      error: responses.badRequestResponse(
-        "Survey is part of another environment",
-        {
-          "survey.environmentId": survey.environmentId,
-          environmentId,
-        },
-        true
-      ),
+      error: responses.badRequestResponse("Survey does not belong to this environment", undefined, true),
     };
   }
   return { survey };

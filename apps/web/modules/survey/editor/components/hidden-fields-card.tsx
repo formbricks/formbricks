@@ -12,6 +12,7 @@ import { validateId } from "@formbricks/types/surveys/validation";
 import { cn } from "@/lib/cn";
 import { extractRecallInfo } from "@/lib/utils/recall";
 import { findHiddenFieldUsedInLogic, isUsedInQuota, isUsedInRecall } from "@/modules/survey/editor/lib/utils";
+import { getValidateIdErrorMessage } from "@/modules/survey/editor/lib/validation";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
@@ -205,7 +206,6 @@ export const HiddenFieldsCard = ({
               const existingHiddenFieldIds = localSurvey.hiddenFields.fieldIds ?? [];
               const existingVariableNames = localSurvey.variables.map((v) => v.name);
               const validateIdError = validateId(
-                "Hidden field",
                 hiddenField,
                 existingElementIds,
                 existingEndingCardIds,
@@ -214,7 +214,7 @@ export const HiddenFieldsCard = ({
               );
 
               if (validateIdError) {
-                toast.error(validateIdError);
+                toast.error(getValidateIdErrorMessage(validateIdError, "hiddenField", t));
                 return;
               }
 

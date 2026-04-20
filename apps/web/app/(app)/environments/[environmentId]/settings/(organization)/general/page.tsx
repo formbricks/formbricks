@@ -1,4 +1,5 @@
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
+import { isInstanceAIConfigured } from "@/lib/ai/service";
 import { FB_LOGO_URL, IS_FORMBRICKS_CLOUD, IS_STORAGE_CONFIGURED } from "@/lib/constants";
 import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
@@ -64,7 +65,11 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
       <SettingsCard
         title={t("environments.settings.general.ai_enabled")}
         description={t("environments.settings.general.ai_enabled_description")}>
-        <AISettingsToggle organization={organization} membershipRole={currentUserMembership?.role} />
+        <AISettingsToggle
+          organization={organization}
+          membershipRole={currentUserMembership?.role}
+          isInstanceAIConfigured={isInstanceAIConfigured()}
+        />
       </SettingsCard>
       <EmailCustomizationSettings
         organization={organization}

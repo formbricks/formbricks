@@ -247,7 +247,7 @@ test.describe("Multi Language Survey Create", async () => {
 
     await page.waitForURL(/\/environments\/[^/]+\/surveys/);
 
-    //add a new language
+    // Add workspace languages (English + German)
     await page.getByRole("link", { name: "Configuration" }).click();
     await page.getByRole("link", { name: "Survey Languages" }).click();
     await page.getByRole("button", { name: "Edit languages" }).click();
@@ -265,14 +265,13 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByText("German", { exact: true }).nth(1).click();
     await page.getByRole("button", { name: "Save changes" }).click();
     await page.waitForTimeout(2000);
+
+    // Create survey and add all questions in English (default language)
     await page.getByRole("link", { name: "Surveys" }).click();
     await page.getByText("Start from scratch").click();
     await page.getByRole("button", { name: "Create survey", exact: true }).click();
-    await page.locator("#multi-lang-toggle").click();
-    await page.getByRole("combobox").click();
-    await page.getByLabel("English (en)").click();
-    await page.getByRole("button", { name: "Confirm" }).click();
-    await page.getByLabel("German").click();
+
+    // Enable welcome card
     await page.locator("#welcome-toggle").click();
 
     // Add questions in default language
@@ -292,6 +291,7 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByPlaceholder("Option 1").fill(surveys.createAndSubmit.multiSelectQuestion.options[0]);
     await page.getByPlaceholder("Option 2").fill(surveys.createAndSubmit.multiSelectQuestion.options[1]);
     await page.getByPlaceholder("Option 3").fill(surveys.createAndSubmit.multiSelectQuestion.options[2]);
+
     await page
       .locator("div")
       .filter({ hasText: /^Add BlockChoose the first question on your Block$/ })
@@ -404,310 +404,282 @@ test.describe("Multi Language Survey Create", async () => {
     await page.getByPlaceholder("Option 5").click();
     await page.getByPlaceholder("Option 5").fill(surveys.createAndSubmit.ranking.choices[4]);
 
-    // Enable translation in german
-    await page.getByText("Welcome CardShownOn").click();
-    await page.getByRole("button", { name: "English" }).nth(1).click();
-    await page.getByRole("button", { name: "German" }).click();
+    // Navigate to Language tab to enable translations and add German
+    await page.getByText("Language").click();
+    await page.locator("#activate-translations-toggle").click();
 
-    // Fill welcome card in german using rich text editor helper
-    await helper.fillRichTextEditor(page, "Note*", surveys.germanCreate.welcomeCard.headline);
-    await helper.fillRichTextEditor(page, "Welcome message", surveys.germanCreate.welcomeCard.description);
-    await page.getByPlaceholder("Next").click();
-    await page.getByPlaceholder("Next").fill(surveys.germanCreate.welcomeCard.buttonLabel);
+    // Select English as default language
+    await page.locator("button", { hasText: "Select Language" }).click();
+    await page.getByText("English (en)", { exact: true }).click();
+    await page.getByRole("button", { name: "Confirm" }).click();
 
-    // Fill Open text question in german
-    await page.getByRole("main").getByText("Free text").click();
-    await helper.fillRichTextEditor(page, "Question*", surveys.germanCreate.openTextQuestion.question);
-    await page.getByLabel("Placeholder").click();
-    await page.getByLabel("Placeholder").fill(surveys.germanCreate.openTextQuestion.placeholder);
-    await page.getByText("Show Block settings").first().click();
-    await page.getByRole("textbox", { name: "Button Label", exact: true }).first().click();
+    // Enable German by toggling its switch in the language table
     await page
-      .getByRole("textbox", { name: "Button Label", exact: true })
-      .first()
-      .fill(surveys.germanCreate.next);
-    await page
-      .locator("div")
-      .filter({ hasText: /^Block 11 question$/ })
-      .first()
+      .getByRole("row", { name: /German/ })
+      .getByRole("switch")
       .click();
 
-    // Fill Single select question in german
-    await page.getByRole("main").getByText("Single-Select").click();
-    await helper.fillRichTextEditor(page, "Question*", surveys.germanCreate.singleSelectQuestion.question);
-    await page.getByPlaceholder("Option 1").click();
-    await page.getByPlaceholder("Option 1").fill(surveys.germanCreate.singleSelectQuestion.options[0]);
-    await page.getByPlaceholder("Option 2").click();
-    await page.getByPlaceholder("Option 2").fill(surveys.germanCreate.singleSelectQuestion.options[1]);
-    await page.getByText("Show Block settings").first().click();
-    await page.getByRole("textbox", { name: "Button Label", exact: true }).first().click();
-    await page
-      .getByRole("textbox", { name: "Button Label", exact: true })
-      .first()
-      .fill(surveys.germanCreate.next);
-    await page.getByRole("textbox", { name: "“Back” Button Label", exact: true }).first().click();
-    await page
-      .getByRole("textbox", { name: "“Back” Button Label", exact: true })
-      .first()
-      .fill(surveys.germanCreate.back);
-    await page
-      .locator("div")
-      .filter({ hasText: /^Block 21 question$/ })
-      .first()
-      .click();
+    // Open translation modal for German by clicking the German row
+    await page.getByRole("cell", { name: "German" }).click();
+    await expect(page.getByRole("dialog")).toBeVisible();
 
-    // Fill Multi select question in german
-    await page.getByRole("main").getByRole("heading", { name: "Multi-Select" }).click();
+    // Fill translations in the Manage Translations modal
+    // Welcome card translations (rich text for headline/subheader, plain for buttonLabel)
+    await helper.fillModalRichTranslation(
+      page,
+      "welcomeCard.headline",
+      surveys.germanCreate.welcomeCard.headline
+    );
+    await helper.fillModalRichTranslation(
+      page,
+      "welcomeCard.subheader",
+      surveys.germanCreate.welcomeCard.description
+    );
+    await helper.fillModalTranslation(
+      page,
+      "welcomeCard.buttonLabel",
+      surveys.germanCreate.welcomeCard.buttonLabel
+    );
 
-    await helper.fillRichTextEditor(page, "Question*", surveys.germanCreate.multiSelectQuestion.question);
-    await page.getByPlaceholder("Option 1").click();
-    await page.getByPlaceholder("Option 1").fill(surveys.germanCreate.multiSelectQuestion.options[0]);
-    await page.getByPlaceholder("Option 2").click();
-    await page.getByPlaceholder("Option 2").fill(surveys.germanCreate.multiSelectQuestion.options[1]);
-    await page.getByPlaceholder("Option 3").click();
-    await page.getByPlaceholder("Option 3").fill(surveys.germanCreate.multiSelectQuestion.options[2]);
-    await page.getByText("Show Block settings").first().click();
-    await page.getByRole("textbox", { name: "Button Label", exact: true }).first().click();
-    await page
-      .getByRole("textbox", { name: "Button Label", exact: true })
-      .first()
-      .fill(surveys.germanCreate.next);
-    await page.getByRole("textbox", { name: "“Back” Button Label", exact: true }).first().click();
-    await page
-      .getByRole("textbox", { name: "“Back” Button Label", exact: true })
-      .first()
-      .fill(surveys.germanCreate.back);
-    await page
-      .locator("div")
-      .filter({ hasText: /^Block 31 question$/ })
-      .first()
-      .click();
+    // Block 0 - Open text question
+    await helper.fillModalTranslation(page, "blocks.0.buttonLabel", surveys.germanCreate.next);
+    await helper.fillModalRichTranslation(
+      page,
+      "blocks.0.elements.0.headline",
+      surveys.germanCreate.openTextQuestion.question
+    );
+    await helper.fillModalTranslation(
+      page,
+      "blocks.0.elements.0.placeholder",
+      surveys.germanCreate.openTextQuestion.placeholder
+    );
 
-    // Fill Picture select question in german
-    await page.getByRole("main").getByText("Picture Selection").click();
-    await helper.fillRichTextEditor(page, "Question*", surveys.germanCreate.pictureSelectQuestion.question);
-    await page.getByText("Show Block settings").first().click();
-    await page.getByRole("textbox", { name: "Button Label", exact: true }).first().click();
-    await page
-      .getByRole("textbox", { name: "Button Label", exact: true })
-      .first()
-      .fill(surveys.germanCreate.next);
-    await page.getByRole("textbox", { name: "“Back” Button Label", exact: true }).first().click();
-    await page
-      .getByRole("textbox", { name: "“Back” Button Label", exact: true })
-      .first()
-      .fill(surveys.germanCreate.back);
-    await page
-      .locator("div")
-      .filter({ hasText: /^Block 41 question$/ })
-      .first()
-      .click();
+    // Block 1 - Single-select question
+    await helper.fillModalRichTranslation(
+      page,
+      "blocks.1.elements.0.headline",
+      surveys.germanCreate.singleSelectQuestion.question
+    );
+    await helper.fillModalTranslation(
+      page,
+      "blocks.1.elements.0.choices.0.label",
+      surveys.germanCreate.singleSelectQuestion.options[0]
+    );
+    await helper.fillModalTranslation(
+      page,
+      "blocks.1.elements.0.choices.1.label",
+      surveys.germanCreate.singleSelectQuestion.options[1]
+    );
 
-    // Fill Rating question in german
-    await page.getByRole("main").getByText("Rating").click();
-    await helper.fillRichTextEditor(page, "Question*", surveys.germanCreate.ratingQuestion.question);
-    await page.getByPlaceholder("Not good").click();
-    await page.getByPlaceholder("Not good").fill(surveys.germanCreate.ratingQuestion.lowLabel);
-    await page.getByPlaceholder("Very satisfied").click();
-    await page.getByPlaceholder("Very satisfied").fill(surveys.germanCreate.ratingQuestion.highLabel);
-    await page.getByText("Show Block settings").first().click();
-    await page.getByRole("textbox", { name: "Button Label", exact: true }).first().click();
-    await page
-      .getByRole("textbox", { name: "Button Label", exact: true })
-      .first()
-      .fill(surveys.germanCreate.next);
-    await page.getByRole("textbox", { name: "“Back” Button Label", exact: true }).first().click();
-    await page
-      .getByRole("textbox", { name: "“Back” Button Label", exact: true })
-      .first()
-      .fill(surveys.germanCreate.back);
-    await page
-      .locator("div")
-      .filter({ hasText: /^Block 51 question$/ })
-      .first()
-      .click();
+    // Block 2 - Multi-select question
+    await helper.fillModalRichTranslation(
+      page,
+      "blocks.2.elements.0.headline",
+      surveys.germanCreate.multiSelectQuestion.question
+    );
+    await helper.fillModalTranslation(
+      page,
+      "blocks.2.elements.0.choices.0.label",
+      surveys.germanCreate.multiSelectQuestion.options[0]
+    );
+    await helper.fillModalTranslation(
+      page,
+      "blocks.2.elements.0.choices.1.label",
+      surveys.germanCreate.multiSelectQuestion.options[1]
+    );
+    await helper.fillModalTranslation(
+      page,
+      "blocks.2.elements.0.choices.2.label",
+      surveys.germanCreate.multiSelectQuestion.options[2]
+    );
 
-    // Fill NPS question in german
-    await page.getByRole("main").getByText("Net Promoter Score (NPS)").click();
-    await helper.fillRichTextEditor(page, "Question*", surveys.germanCreate.npsQuestion.question);
-    await page.getByLabel("Lower Label").click();
-    await page.getByLabel("Lower Label").fill(surveys.germanCreate.npsQuestion.lowLabel);
-    await page.getByLabel("Upper Label").click();
-    await page.getByLabel("Upper Label").fill(surveys.germanCreate.npsQuestion.highLabel);
-    await page.getByText("Show Block settings").first().click();
-    await page.getByRole("textbox", { name: "Button Label", exact: true }).first().click();
-    await page
-      .getByRole("textbox", { name: "Button Label", exact: true })
-      .first()
-      .fill(surveys.germanCreate.next);
-    await page.getByRole("textbox", { name: "“Back” Button Label", exact: true }).first().click();
-    await page
-      .getByRole("textbox", { name: "“Back” Button Label", exact: true })
-      .first()
-      .fill(surveys.germanCreate.back);
-    await page
-      .locator("div")
-      .filter({ hasText: /^Block 61 question$/ })
-      .first()
-      .click();
+    // Block 3 - Picture selection question
+    await helper.fillModalRichTranslation(
+      page,
+      "blocks.3.elements.0.headline",
+      surveys.germanCreate.pictureSelectQuestion.question
+    );
 
-    // Fill Date question in german
-    await page.getByRole("main").getByText("Date").click();
-    await helper.fillRichTextEditor(page, "Question*", surveys.germanCreate.dateQuestion.question);
-    await page.getByText("Show Block settings").first().click();
-    await page.getByRole("textbox", { name: "Button Label", exact: true }).first().click();
-    await page
-      .getByRole("textbox", { name: "Button Label", exact: true })
-      .first()
-      .fill(surveys.germanCreate.next);
-    await page.getByRole("textbox", { name: "“Back” Button Label", exact: true }).first().click();
-    await page
-      .getByRole("textbox", { name: "“Back” Button Label", exact: true })
-      .first()
-      .fill(surveys.germanCreate.back);
-    await page
-      .locator("div")
-      .filter({ hasText: /^Block 71 question$/ })
-      .first()
-      .click();
+    // Block 4 - Rating question
+    await helper.fillModalRichTranslation(
+      page,
+      "blocks.4.elements.0.headline",
+      surveys.germanCreate.ratingQuestion.question
+    );
+    await helper.fillModalTranslation(
+      page,
+      "blocks.4.elements.0.lowerLabel",
+      surveys.germanCreate.ratingQuestion.lowLabel
+    );
+    await helper.fillModalTranslation(
+      page,
+      "blocks.4.elements.0.upperLabel",
+      surveys.germanCreate.ratingQuestion.highLabel
+    );
 
-    // Fill File upload question in german
-    await page.getByRole("main").getByText("File Upload").click();
-    await helper.fillRichTextEditor(page, "Question*", surveys.germanCreate.fileUploadQuestion.question);
-    await page.getByText("Show Block settings").first().click();
-    await page.getByRole("textbox", { name: "Button Label", exact: true }).first().click();
-    await page
-      .getByRole("textbox", { name: "Button Label", exact: true })
-      .first()
-      .fill(surveys.germanCreate.next);
-    await page.getByRole("textbox", { name: "“Back” Button Label", exact: true }).first().click();
-    await page
-      .getByRole("textbox", { name: "“Back” Button Label", exact: true })
-      .first()
-      .fill(surveys.germanCreate.back);
-    await page
-      .locator("div")
-      .filter({ hasText: /^Block 81 question$/ })
-      .first()
-      .click();
+    // Block 5 - NPS question
+    await helper.fillModalRichTranslation(
+      page,
+      "blocks.5.elements.0.headline",
+      surveys.germanCreate.npsQuestion.question
+    );
+    await helper.fillModalTranslation(
+      page,
+      "blocks.5.elements.0.lowerLabel",
+      surveys.germanCreate.npsQuestion.lowLabel
+    );
+    await helper.fillModalTranslation(
+      page,
+      "blocks.5.elements.0.upperLabel",
+      surveys.germanCreate.npsQuestion.highLabel
+    );
 
-    // Fill Matrix question in german
-    await page.getByRole("main").getByText("Matrix").click();
-    await helper.fillRichTextEditor(page, "Question*", surveys.germanCreate.matrix.question);
-    await page.locator("#row-0").click();
-    await page.locator("#row-0").fill(surveys.germanCreate.matrix.rows[0]);
-    await page.locator("#row-1").click();
-    await page.locator("#row-1").fill(surveys.germanCreate.matrix.rows[1]);
-    await page.locator("#row-2").click();
-    await page.locator("#row-2").fill(surveys.germanCreate.matrix.rows[2]);
-    await page.locator("#column-0").click();
-    await page.locator("#column-0").fill(surveys.germanCreate.matrix.columns[0]);
-    await page.locator("#column-1").click();
-    await page.locator("#column-1").fill(surveys.germanCreate.matrix.columns[1]);
-    await page.locator("#column-2").click();
-    await page.locator("#column-2").fill(surveys.germanCreate.matrix.columns[2]);
-    await page.locator("#column-3").click();
-    await page.locator("#column-3").fill(surveys.germanCreate.matrix.columns[3]);
-    await page.getByText("Show Block settings").first().click();
-    await page.getByRole("textbox", { name: "Button Label", exact: true }).first().click();
-    await page
-      .getByRole("textbox", { name: "Button Label", exact: true })
-      .first()
-      .fill(surveys.germanCreate.next);
-    await page.getByRole("textbox", { name: "“Back” Button Label", exact: true }).first().click();
-    await page
-      .getByRole("textbox", { name: "“Back” Button Label", exact: true })
-      .first()
-      .fill(surveys.germanCreate.back);
-    await page
-      .locator("div")
-      .filter({ hasText: /^Block 91 question$/ })
-      .first()
-      .click();
+    // Block 6 - Date question
+    await helper.fillModalRichTranslation(
+      page,
+      "blocks.6.elements.0.headline",
+      surveys.germanCreate.dateQuestion.question
+    );
 
-    // Fill Address question in german
-    await page.getByRole("main").getByText("Address").click();
-    await helper.fillRichTextEditor(page, "Question*", surveys.germanCreate.addressQuestion.question);
-    await page.locator('[id="addressLine1\\.placeholder"]').click();
-    await page
-      .locator('[id="addressLine1\\.placeholder"]')
-      .fill(surveys.germanCreate.addressQuestion.placeholder.addressLine1);
-    await page.locator('[id="addressLine2\\.placeholder"]').click();
-    await page
-      .locator('[id="addressLine2\\.placeholder"]')
-      .fill(surveys.germanCreate.addressQuestion.placeholder.addressLine2);
-    await page.locator('[id="city\\.placeholder"]').click();
-    await page
-      .locator('[id="city\\.placeholder"]')
-      .fill(surveys.germanCreate.addressQuestion.placeholder.city);
-    await page.locator('[id="state\\.placeholder"]').click();
-    await page
-      .locator('[id="state\\.placeholder"]')
-      .fill(surveys.germanCreate.addressQuestion.placeholder.state);
-    await page.locator('[id="zip\\.placeholder"]').click();
-    await page.locator('[id="zip\\.placeholder"]').fill(surveys.germanCreate.addressQuestion.placeholder.zip);
-    await page.locator('[id="country\\.placeholder"]').click();
-    await page
-      .locator('[id="country\\.placeholder"]')
-      .fill(surveys.germanCreate.addressQuestion.placeholder.country);
-    await page.getByText("Show Block settings").first().click();
-    await page.getByRole("textbox", { name: "Button Label", exact: true }).first().click();
-    await page
-      .getByRole("textbox", { name: "Button Label", exact: true })
-      .first()
-      .fill(surveys.germanCreate.next);
-    await page.getByRole("textbox", { name: "“Back” Button Label", exact: true }).first().click();
-    await page
-      .getByRole("textbox", { name: "“Back” Button Label", exact: true })
-      .first()
-      .fill(surveys.germanCreate.back);
-    await page
-      .locator("div")
-      .filter({ hasText: /^Block 101 question$/ })
-      .first()
-      .click();
+    // Block 7 - File upload question
+    await helper.fillModalRichTranslation(
+      page,
+      "blocks.7.elements.0.headline",
+      surveys.germanCreate.fileUploadQuestion.question
+    );
 
-    // Fill Ranking question in german
-    await page.getByRole("main").getByText("Ranking").click();
-    await helper.fillRichTextEditor(page, "Question*", surveys.germanCreate.ranking.question);
-    await page.getByPlaceholder("Option 1").click();
-    await page.getByPlaceholder("Option 1").fill(surveys.germanCreate.ranking.choices[0]);
-    await page.getByPlaceholder("Option 2").click();
-    await page.getByPlaceholder("Option 2").fill(surveys.germanCreate.ranking.choices[1]);
-    await page.getByPlaceholder("Option 3").click();
-    await page.getByPlaceholder("Option 3").fill(surveys.germanCreate.ranking.choices[2]);
-    await page.getByPlaceholder("Option 4").click();
-    await page.getByPlaceholder("Option 4").fill(surveys.germanCreate.ranking.choices[3]);
-    await page.getByPlaceholder("Option 5").click();
-    await page.getByPlaceholder("Option 5").fill(surveys.germanCreate.ranking.choices[4]);
-    await page.getByText("Show Block settings").first().click();
-    await page.getByRole("textbox", { name: "Button Label", exact: true }).first().click();
-    await page
-      .getByRole("textbox", { name: "Button Label", exact: true })
-      .first()
-      .fill(surveys.germanCreate.next);
-    await page.getByRole("textbox", { name: "“Back” Button Label", exact: true }).first().click();
-    await page
-      .getByRole("textbox", { name: "“Back” Button Label", exact: true })
-      .first()
-      .fill(surveys.germanCreate.back);
-    await page
-      .locator("div")
-      .filter({ hasText: /^Block 111 question$/ })
-      .first()
-      .click();
+    // Block 8 - Matrix question
+    await helper.fillModalRichTranslation(
+      page,
+      "blocks.8.elements.0.headline",
+      surveys.germanCreate.matrix.question
+    );
+    await helper.fillModalTranslation(
+      page,
+      "blocks.8.elements.0.rows.0.label",
+      surveys.germanCreate.matrix.rows[0]
+    );
+    await helper.fillModalTranslation(
+      page,
+      "blocks.8.elements.0.rows.1.label",
+      surveys.germanCreate.matrix.rows[1]
+    );
+    await helper.fillModalTranslation(
+      page,
+      "blocks.8.elements.0.rows.2.label",
+      surveys.germanCreate.matrix.rows[2]
+    );
+    await helper.fillModalTranslation(
+      page,
+      "blocks.8.elements.0.columns.0.label",
+      surveys.germanCreate.matrix.columns[0]
+    );
+    await helper.fillModalTranslation(
+      page,
+      "blocks.8.elements.0.columns.1.label",
+      surveys.germanCreate.matrix.columns[1]
+    );
+    await helper.fillModalTranslation(
+      page,
+      "blocks.8.elements.0.columns.2.label",
+      surveys.germanCreate.matrix.columns[2]
+    );
+    await helper.fillModalTranslation(
+      page,
+      "blocks.8.elements.0.columns.3.label",
+      surveys.germanCreate.matrix.columns[3]
+    );
 
-    // Fill Thank you card in german
-    await page.getByText("Ending card").first().click();
-    await helper.fillRichTextEditor(page, "Note*", surveys.germanCreate.endingCard.headline);
-    await helper.fillRichTextEditor(page, "Description", surveys.germanCreate.endingCard.description);
+    // Block 9 - Address question
+    await helper.fillModalRichTranslation(
+      page,
+      "blocks.9.elements.0.headline",
+      surveys.germanCreate.addressQuestion.question
+    );
+    await helper.fillModalTranslation(
+      page,
+      "blocks.9.elements.0.addressLine1.placeholder",
+      surveys.germanCreate.addressQuestion.placeholder.addressLine1
+    );
+    await helper.fillModalTranslation(
+      page,
+      "blocks.9.elements.0.addressLine2.placeholder",
+      surveys.germanCreate.addressQuestion.placeholder.addressLine2
+    );
+    await helper.fillModalTranslation(
+      page,
+      "blocks.9.elements.0.city.placeholder",
+      surveys.germanCreate.addressQuestion.placeholder.city
+    );
+    await helper.fillModalTranslation(
+      page,
+      "blocks.9.elements.0.state.placeholder",
+      surveys.germanCreate.addressQuestion.placeholder.state
+    );
+    await helper.fillModalTranslation(
+      page,
+      "blocks.9.elements.0.zip.placeholder",
+      surveys.germanCreate.addressQuestion.placeholder.zip
+    );
+    await helper.fillModalTranslation(
+      page,
+      "blocks.9.elements.0.country.placeholder",
+      surveys.germanCreate.addressQuestion.placeholder.country
+    );
 
-    await page.locator("#showButton").check();
+    // Block 10 - Ranking question
+    await helper.fillModalRichTranslation(
+      page,
+      "blocks.10.elements.0.headline",
+      surveys.germanCreate.ranking.question
+    );
+    await helper.fillModalTranslation(
+      page,
+      "blocks.10.elements.0.choices.0.label",
+      surveys.germanCreate.ranking.choices[0]
+    );
+    await helper.fillModalTranslation(
+      page,
+      "blocks.10.elements.0.choices.1.label",
+      surveys.germanCreate.ranking.choices[1]
+    );
+    await helper.fillModalTranslation(
+      page,
+      "blocks.10.elements.0.choices.2.label",
+      surveys.germanCreate.ranking.choices[2]
+    );
+    await helper.fillModalTranslation(
+      page,
+      "blocks.10.elements.0.choices.3.label",
+      surveys.germanCreate.ranking.choices[3]
+    );
+    await helper.fillModalTranslation(
+      page,
+      "blocks.10.elements.0.choices.4.label",
+      surveys.germanCreate.ranking.choices[4]
+    );
 
-    await page.getByPlaceholder("Create your own Survey").click();
-    await page.getByPlaceholder("Create your own Survey").fill(surveys.germanCreate.endingCard.buttonLabel);
+    // Ending card translations
+    await helper.fillModalRichTranslation(
+      page,
+      "endings.0.headline",
+      surveys.germanCreate.endingCard.headline
+    );
+    await helper.fillModalRichTranslation(
+      page,
+      "endings.0.subheader",
+      surveys.germanCreate.endingCard.description
+    );
+    await helper.fillModalTranslation(
+      page,
+      "endings.0.buttonLabel",
+      surveys.germanCreate.endingCard.buttonLabel
+    );
 
-    // TODO: @pandeymangg - figure out if this is required
+    // Save translations
+    await page.getByRole("button", { name: "Save" }).click();
+
+    // Configure as link survey and publish
     await page.getByRole("button", { name: "Settings", exact: true }).click();
 
     await page.locator("#howToSendCardTrigger").click();

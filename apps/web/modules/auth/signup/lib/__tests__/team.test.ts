@@ -1,9 +1,9 @@
-import { MOCK_IDS, MOCK_INVITE, MOCK_TEAM, MOCK_TEAM_USER } from "./__mocks__/team-mocks";
+import { MOCK_IDS, MOCK_INVITE, MOCK_TEAM_USER } from "./__mocks__/team-mocks";
 import { OrganizationRole } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { CreateMembershipInvite } from "@/modules/auth/signup/types/invites";
-import { createTeamMembership, getTeamProjectIds } from "../team";
+import { createTeamMembership, getTeamForOrganization } from "../team";
 
 // Setup all mocks
 const setupMocks = () => {
@@ -14,7 +14,7 @@ const setupMocks = () => {
         findUnique: vi.fn(),
       },
       teamUser: {
-        create: vi.fn(),
+        upsert: vi.fn(),
       },
     },
   }));
@@ -49,6 +49,8 @@ const setupMocks = () => {
 setupMocks();
 
 describe("Team Management", () => {
+  const mockTeamLookup = { id: MOCK_IDS.teamId };
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -56,8 +58,8 @@ describe("Team Management", () => {
   describe("createTeamMembership", () => {
     describe("when user is an admin", () => {
       test("creates a team membership with admin role", async () => {
-        vi.mocked(prisma.team.findUnique).mockResolvedValue(MOCK_TEAM as unknown as any);
-        vi.mocked(prisma.teamUser.create).mockResolvedValue(MOCK_TEAM_USER);
+        vi.mocked(prisma.team.findUnique).mockResolvedValue(mockTeamLookup as any);
+        vi.mocked(prisma.teamUser.upsert).mockResolvedValue(MOCK_TEAM_USER as any);
 
         await createTeamMembership(MOCK_INVITE, MOCK_IDS.userId);
         expect(prisma.team.findUnique).toHaveBeenCalledWith({
@@ -66,19 +68,24 @@ describe("Team Management", () => {
             organizationId: MOCK_IDS.organizationId,
           },
           select: {
-            projectTeams: {
-              select: {
-                projectId: true,
-              },
-            },
+            id: true,
           },
         });
 
-        expect(prisma.teamUser.create).toHaveBeenCalledWith({
-          data: {
+        expect(prisma.teamUser.upsert).toHaveBeenCalledWith({
+          create: {
             teamId: MOCK_IDS.teamId,
             userId: MOCK_IDS.userId,
             role: "admin",
+          },
+          update: {
+            role: "admin",
+          },
+          where: {
+            teamId_userId: {
+              teamId: MOCK_IDS.teamId,
+              userId: MOCK_IDS.userId,
+            },
           },
         });
       });
@@ -91,19 +98,28 @@ describe("Team Management", () => {
           role: "member" as OrganizationRole,
         };
 
-        vi.mocked(prisma.team.findUnique).mockResolvedValue(MOCK_TEAM as unknown as any);
-        vi.mocked(prisma.teamUser.create).mockResolvedValue({
+        vi.mocked(prisma.team.findUnique).mockResolvedValue(mockTeamLookup as any);
+        vi.mocked(prisma.teamUser.upsert).mockResolvedValue({
           ...MOCK_TEAM_USER,
           role: "contributor",
-        });
+        } as any);
 
         await createTeamMembership(nonAdminInvite, MOCK_IDS.userId);
 
-        expect(prisma.teamUser.create).toHaveBeenCalledWith({
-          data: {
+        expect(prisma.teamUser.upsert).toHaveBeenCalledWith({
+          create: {
             teamId: MOCK_IDS.teamId,
             userId: MOCK_IDS.userId,
             role: "contributor",
+          },
+          update: {
+            role: "contributor",
+          },
+          where: {
+            teamId_userId: {
+              teamId: MOCK_IDS.teamId,
+              userId: MOCK_IDS.userId,
+            },
           },
         });
       });
@@ -111,8 +127,8 @@ describe("Team Management", () => {
 
     describe("error handling", () => {
       test("throws error when database operation fails", async () => {
-        vi.mocked(prisma.team.findUnique).mockResolvedValue(MOCK_TEAM as unknown as any);
-        vi.mocked(prisma.teamUser.create).mockRejectedValue(new Error("Database error"));
+        vi.mocked(prisma.team.findUnique).mockResolvedValue(mockTeamLookup as any);
+        vi.mocked(prisma.teamUser.upsert).mockRejectedValue(new Error("Database error"));
 
         await expect(createTeamMembership(MOCK_INVITE, MOCK_IDS.userId)).rejects.toThrow("Database error");
       });
@@ -127,42 +143,47 @@ describe("Team Management", () => {
 
         vi.mocked(prisma.team.findUnique)
           .mockResolvedValueOnce(null)
-          .mockResolvedValueOnce(MOCK_TEAM as unknown as any);
-        vi.mocked(prisma.teamUser.create).mockResolvedValue(MOCK_TEAM_USER);
+          .mockResolvedValueOnce(mockTeamLookup as any);
+        vi.mocked(prisma.teamUser.upsert).mockResolvedValue(MOCK_TEAM_USER as any);
 
         await createTeamMembership(inviteWithMultipleTeams, MOCK_IDS.userId);
 
         expect(prisma.team.findUnique).toHaveBeenCalledTimes(2);
-        expect(prisma.teamUser.create).toHaveBeenCalledTimes(1);
-        expect(prisma.teamUser.create).toHaveBeenCalledWith({
-          data: {
+        expect(prisma.teamUser.upsert).toHaveBeenCalledTimes(1);
+        expect(prisma.teamUser.upsert).toHaveBeenCalledWith({
+          create: {
             teamId: MOCK_IDS.teamId,
             userId: MOCK_IDS.userId,
             role: "admin",
+          },
+          update: {
+            role: "admin",
+          },
+          where: {
+            teamId_userId: {
+              teamId: MOCK_IDS.teamId,
+              userId: MOCK_IDS.userId,
+            },
           },
         });
       });
     });
   });
 
-  describe("getTeamProjectIds", () => {
-    test("returns team with projectTeams when team exists", async () => {
-      vi.mocked(prisma.team.findUnique).mockResolvedValue(MOCK_TEAM as unknown as any);
+  describe("getTeamForOrganization", () => {
+    test("returns the team when it exists in the organization", async () => {
+      vi.mocked(prisma.team.findUnique).mockResolvedValue(mockTeamLookup as any);
 
-      const result = await getTeamProjectIds(MOCK_IDS.teamId, MOCK_IDS.organizationId);
+      const result = await getTeamForOrganization(MOCK_IDS.teamId, MOCK_IDS.organizationId);
 
-      expect(result).toEqual(MOCK_TEAM);
+      expect(result).toEqual(mockTeamLookup);
       expect(prisma.team.findUnique).toHaveBeenCalledWith({
         where: {
           id: MOCK_IDS.teamId,
           organizationId: MOCK_IDS.organizationId,
         },
         select: {
-          projectTeams: {
-            select: {
-              projectId: true,
-            },
-          },
+          id: true,
         },
       });
     });
@@ -170,9 +191,31 @@ describe("Team Management", () => {
     test("returns null when team does not exist", async () => {
       vi.mocked(prisma.team.findUnique).mockResolvedValue(null);
 
-      const result = await getTeamProjectIds(MOCK_IDS.teamId, MOCK_IDS.organizationId);
+      const result = await getTeamForOrganization(MOCK_IDS.teamId, MOCK_IDS.organizationId);
 
       expect(result).toBeNull();
+    });
+
+    test("uses the transaction client directly when provided", async () => {
+      const tx = {
+        team: {
+          findUnique: vi.fn().mockResolvedValue(mockTeamLookup),
+        },
+      } as any;
+
+      const result = await getTeamForOrganization(MOCK_IDS.teamId, MOCK_IDS.organizationId, tx);
+
+      expect(result).toEqual(mockTeamLookup);
+      expect(tx.team.findUnique).toHaveBeenCalledWith({
+        where: {
+          id: MOCK_IDS.teamId,
+          organizationId: MOCK_IDS.organizationId,
+        },
+        select: {
+          id: true,
+        },
+      });
+      expect(prisma.team.findUnique).not.toHaveBeenCalled();
     });
   });
 });

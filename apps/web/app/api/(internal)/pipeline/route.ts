@@ -8,7 +8,7 @@ import { sendTelemetryEvents } from "@/app/api/(internal)/pipeline/lib/telemetry
 import { ZPipelineInput } from "@/app/api/(internal)/pipeline/types/pipelines";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { CRON_SECRET } from "@/lib/constants";
+import { CRON_SECRET, POSTHOG_KEY } from "@/lib/constants";
 import { generateStandardWebhookSignature } from "@/lib/crypto";
 import { getIntegrations } from "@/lib/integration/service";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
@@ -24,6 +24,7 @@ import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { sendFollowUpsForResponse } from "@/modules/survey/follow-ups/lib/follow-ups";
 import { FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
 import { handleIntegrations } from "./lib/handleIntegrations";
+import { captureSurveyResponsePostHogEvent } from "./lib/posthog";
 
 export const POST = async (request: Request) => {
   const requestHeaders = await headers();
@@ -298,6 +299,18 @@ export const POST = async (request: Request) => {
     }).catch((error) => {
       logger.error({ error, responseId: response.id }, "Failed to record response meter event");
     });
+
+    if (POSTHOG_KEY) {
+      const responseCount = await getResponseCountBySurveyId(surveyId);
+
+      captureSurveyResponsePostHogEvent({
+        organizationId: organization.id,
+        surveyId,
+        surveyType: survey.type,
+        environmentId,
+        responseCount,
+      });
+    }
 
     // Send telemetry events
     await sendTelemetryEvents();

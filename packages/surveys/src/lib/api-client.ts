@@ -46,6 +46,16 @@ export class ApiClient {
     );
   }
 
+  async getResponseIdByDisplayId(
+    displayId: string
+  ): Promise<Result<{ responseId: string | null }, ApiErrorResponse>> {
+    return makeRequest(
+      this.appUrl,
+      `/api/v1/client/${this.environmentId}/displays/${displayId}/response`,
+      "GET"
+    );
+  }
+
   async createResponse(
     responseInput: Omit<TResponseInput, "environmentId"> & {
       contactId: string | null;

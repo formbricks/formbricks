@@ -209,6 +209,7 @@ const baseSurveyProperties = {
     },
   ],
   isBackButtonHidden: false,
+  isAutoProgressingEnabled: false,
   isCaptureIpEnabled: false,
   endings: [
     {

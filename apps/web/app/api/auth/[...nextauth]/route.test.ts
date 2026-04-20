@@ -1,9 +1,18 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { GET } from "./route";
 
+type WrappedAuthOptions = {
+  callbacks: {
+    signIn: (params: { user: unknown; account: unknown }) => Promise<boolean | string>;
+  };
+  events: {
+    signIn: (params: { user: unknown; account: unknown; isNewUser: boolean }) => Promise<void>;
+  };
+};
+
 const mocks = vi.hoisted(() => {
   const nextAuthHandler = vi.fn(async () => new Response(null, { status: 200 }));
-  const nextAuth = vi.fn(() => nextAuthHandler);
+  const nextAuth = vi.fn((_authOptions: WrappedAuthOptions) => nextAuthHandler);
 
   return {
     nextAuth,
@@ -54,7 +63,7 @@ vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
   queueAuditEventBackground: mocks.queueAuditEventBackground,
 }));
 
-const getWrappedAuthOptions = async (requestId: string = "req-123") => {
+const getWrappedAuthOptions = async (requestId: string = "req-123"): Promise<WrappedAuthOptions> => {
   const request = new Request("http://localhost/api/auth/signin", {
     headers: { "x-request-id": requestId },
   });
@@ -63,7 +72,17 @@ const getWrappedAuthOptions = async (requestId: string = "req-123") => {
 
   expect(mocks.nextAuth).toHaveBeenCalledTimes(1);
 
-  return mocks.nextAuth.mock.calls[0][0];
+  const firstCall = mocks.nextAuth.mock.calls.at(0);
+  if (!firstCall) {
+    throw new Error("NextAuth was not called");
+  }
+
+  const [authOptions] = firstCall;
+  if (!authOptions) {
+    throw new Error("NextAuth options were not provided");
+  }
+
+  return authOptions;
 };
 
 describe("auth route audit logging", () => {
@@ -132,6 +151,36 @@ describe("auth route audit logging", () => {
           authMethod: "password",
           provider: "credentials",
           errorMessage: "Access denied",
+        }),
+      })
+    );
+  });
+
+  test("logs blocked SSO account-linking attempts as SSO failures", async () => {
+    const error = new Error("OAuthAccountNotLinked");
+    mocks.baseSignIn.mockRejectedValueOnce(error);
+
+    const authOptions = await getWrappedAuthOptions("req-sso-failure");
+    const user = { id: "user_3", email: "user3@example.com" };
+    const account = { provider: "google" };
+
+    await expect(authOptions.callbacks.signIn({ user, account })).rejects.toThrow("OAuthAccountNotLinked");
+
+    expect(mocks.queueAuditEventBackground).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "signedIn",
+        targetType: "user",
+        userId: "user_3",
+        targetId: "user_3",
+        organizationId: "unknown",
+        status: "failure",
+        userType: "user",
+        eventId: "req-sso-failure",
+        newObject: expect.objectContaining({
+          email: "user3@example.com",
+          authMethod: "sso",
+          provider: "google",
+          errorMessage: "OAuthAccountNotLinked",
         }),
       })
     );

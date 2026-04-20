@@ -26,7 +26,8 @@ const Page = async (props: { params: Promise<{ organizationId: string }> }) => {
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
 
   const membership = await getMembershipByUserIdOrganizationId(session.user.id, organization.id);
-  const { isMember } = getAccessFlags(membership?.role);
+  const { isMember, isBilling } = getAccessFlags(membership?.role);
+  const isMembershipPending = membership?.role === undefined;
 
   return (
     <div className="flex min-h-full min-w-full flex-row">
@@ -45,6 +46,8 @@ const Page = async (props: { params: Promise<{ organizationId: string }> }) => {
               isOwnerOrManager={false}
               isAccessControlAllowed={false}
               isMember={isMember}
+              isBilling={isBilling}
+              isMembershipPending={isMembershipPending}
               environments={[]}
             />
           </div>

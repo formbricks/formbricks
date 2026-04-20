@@ -81,7 +81,11 @@ export const extractChoiceIdsFromResponse = (
 
   if (Array.isArray(responseValue)) {
     // Multiple choice case - response is an array of selected choice labels
-    return responseValue.map(findChoiceByLabel).filter((choiceId): choiceId is string => choiceId !== null);
+    // Filter out empty string sentinel used as "other" marker in multipleChoiceMulti
+    return responseValue
+      .filter((v) => v !== "")
+      .map(findChoiceByLabel)
+      .filter((choiceId): choiceId is string => choiceId !== null);
   } else if (typeof responseValue === "string") {
     // Single choice case - response is a single choice label
     const choiceId = findChoiceByLabel(responseValue);
