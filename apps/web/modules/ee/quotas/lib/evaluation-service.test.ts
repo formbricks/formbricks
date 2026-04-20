@@ -98,7 +98,6 @@ describe("Quota Evaluation Service", () => {
     autoClose: null,
     delay: 0,
     displayPercentage: null,
-    isAutoProgressingEnabled: false,
     isBackButtonHidden: false,
     workspaceOverwrites: null,
     styling: null,
