@@ -118,90 +118,6 @@ paths:
       servers:
         - url: https://app.formbricks.com/api/v2
           description: Formbricks Client
-  /client/{workspaceId}/contacts/{userId}/attributes:
-    put:
-      security: []
-      description: Update a contact's attributes in Formbricks to keep them in sync
-        with your app or when you want to set a custom attribute in Formbricks.
-        Note - Environments are deprecated. Use Workspace/workspaceId terminology.
-      parameters:
-        - in: path
-          name: workspaceId
-          required: true
-          schema:
-            type: string
-        - in: path
-          name: userId
-          required: true
-          schema:
-            type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              example:
-                attributes: {}
-              type: object
-      responses:
-        "200":
-          content:
-            application/json:
-              examples:
-                example-0: {}
-                example-1: {}
-              schema:
-                type: object
-          description: OK
-        "500":
-          content:
-            application/json:
-              example:
-                code: internal_server_error
-                details: {}
-                message: "Unable to complete request: Expected"
-              schema:
-                type: object
-          description: Internal Server Error
-      summary: Update Contact (Attributes)
-      tags:
-        - Client API - Contacts
-      servers:
-        - url: https://app.formbricks.com/api/v2
-          description: Formbricks Client
-  /client/{workspaceId}/identify/contacts/{userId}:
-    get:
-      security: []
-      description: Retrieves a contact's state including their segments, displays,
-        responses and other tracking information. If the contact doesn't exist,
-        it will be created. Note - Environments are deprecated. Use Workspace/workspaceId
-        terminology.
-      parameters:
-        - in: path
-          name: workspaceId
-          required: true
-          schema:
-            type: string
-        - in: path
-          name: userId
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          content:
-            application/json:
-              example:
-                userId: user123
-                state: active
-              schema:
-                type: object
-          description: OK
-      summary: Get Contact State
-      tags:
-        - Client API - Contacts
-      servers:
-        - url: https://app.formbricks.com/api/v2
-          description: Formbricks Client
   /client/{workspaceId}/displays:
     post:
       security: []
@@ -3018,11 +2934,11 @@ paths:
                   organizationId:
                     type: string
                     description: The ID of the organization
-  /organizations/{organizationId}/project-teams:
+  /organizations/{organizationId}/workspace-teams:
     get:
-      operationId: getProjectTeams
+      operationId: getWorkspaceTeams
       summary: Get Workspace teams
-      description: Gets projectTeams from the database.
+      description: Gets workspace teams from the database.
       tags:
         - Organizations API - Workspace Teams
       parameters:
@@ -3136,8 +3052,8 @@ paths:
                       offset:
                         type: number
     post:
-      operationId: createProjectTeam
-      summary: Create a projectTeam
+      operationId: createWorkspaceTeam
+      summary: Create a Workspace team
       description: Creates a Workspace team in the database.
       tags:
         - Organizations API - Workspace Teams
@@ -3203,7 +3119,7 @@ paths:
                       - manage
                     description: Level of access granted to the Workspace
     put:
-      operationId: updateProjectTeam
+      operationId: updateWorkspaceTeam
       summary: Update a Workspace team
       description: Updates a Workspace team in the database.
       tags:
@@ -3270,7 +3186,7 @@ paths:
                       - manage
                     description: Level of access granted to the Workspace
     delete:
-      operationId: deleteProjectTeam
+      operationId: deleteWorkspaceTeam
       summary: Delete a Workspace team
       description: Deletes a Workspace team from the database.
       tags:
@@ -5985,7 +5901,7 @@ components:
         - updatedAt
         - name
         - organizationId
-    projectTeam:
+    workspaceTeam:
       type: object
       properties:
         createdAt:
