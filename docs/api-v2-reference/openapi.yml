@@ -95,6 +95,13 @@ paths:
       description: Create a response for a survey and its fields with the user's
         responses. The userId & meta here is optional. Note - Environments are deprecated.
         Use Workspace/workspaceId terminology.
+      parameters:
+        - in: path
+          name: workspaceId
+          required: true
+          schema:
+            type: string
+          description: The ID of the Workspace. Deprecated alias `environmentId`.
       requestBody:
         content:
           application/json:
@@ -124,6 +131,13 @@ paths:
       description: Create a new display for a valid survey ID. If a userId is passed,
         the display is linked to the user. Note - Environments are deprecated. Use
         Workspace/workspaceId terminology.
+      parameters:
+        - in: path
+          name: workspaceId
+          required: true
+          schema:
+            type: string
+          description: The ID of the Workspace. Deprecated alias `environmentId`.
       requestBody:
         content:
           application/json:
@@ -189,6 +203,13 @@ paths:
         potentially update user attributes. If they don't exist, it will create
         a new user. Note - Environments are deprecated. Use Workspace/workspaceId
         terminology.
+      parameters:
+        - in: path
+          name: workspaceId
+          required: true
+          schema:
+            type: string
+          description: The ID of the Workspace. Deprecated alias `environmentId`.
       requestBody:
         content:
           application/json:
@@ -1408,11 +1429,9 @@ paths:
                   maxItems: 250
               required:
                 - workspaceId
-                - environmentId
                 - contacts
             example:
               workspaceId: ws_01h2xce9q8p3w4x5y6z7a8b9c0
-              environmentId: env_01h2xce9q8p3w4x5y6z7a8b9c0
               contacts:
                 - attributes:
                     - attributeKey:
@@ -1528,11 +1547,9 @@ paths:
                     type: string
               required:
                 - workspaceId
-                - environmentId
                 - attributes
             example:
               workspaceId: ws_01h2xce9q8p3w4x5y6z7a8b9c0
-              environmentId: env_01h2xce9q8p3w4x5y6z7a8b9c0
               attributes:
                 email: john.doe@example.com
                 firstName: John
@@ -2327,7 +2344,6 @@ paths:
                 - url
                 - source
                 - workspaceId
-                - environmentId
                 - triggers
                 - surveyIds
       responses:
@@ -2506,7 +2522,6 @@ paths:
                 - url
                 - source
                 - workspaceId
-                - environmentId
                 - triggers
                 - surveyIds
       responses:

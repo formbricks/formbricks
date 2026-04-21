@@ -266,8 +266,7 @@ export const handleFeedbackSubmit = async (YesNo, pageUrl) => {
 
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_FORMBRICKS_COM_API_HOST}/api/v1/client/workspaces/${process.env.NEXT_PUBLIC_FORMBRICKS_COM_WORKSPACE_ID}/responses`, // For testing, replace this with the API host and workspace ID of your Development workspace on app.formbricks.com
-  };
+      `${process.env.NEXT_PUBLIC_FORMBRICKS_COM_API_HOST}/api/v1/client/${process.env.NEXT_PUBLIC_FORMBRICKS_COM_WORKSPACE_ID}/responses`, // For testing, replace this with the API host and workspace ID of your Development workspace on app.formbricks.com
       {
         method: "POST",
         headers: {
@@ -309,7 +308,7 @@ export const updateFeedback = async (freeText, responseId) => {
 
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_FORMBRICKS_COM_API_HOST}/api/v1/client/workspaces/${process.env.NEXT_PUBLIC_FORMBRICKS_COM_WORKSPACE_ID}/responses/${responseId}`,
+      `${process.env.NEXT_PUBLIC_FORMBRICKS_COM_API_HOST}/api/v1/client/${process.env.NEXT_PUBLIC_FORMBRICKS_COM_WORKSPACE_ID}/responses/${responseId}`,
       {
         method: "PUT",
         headers: {
@@ -353,8 +352,7 @@ Now, you have to replace the IDs and the API host accordingly in your `handleFee
   try {
     const res = await fetch(
 			// Note that we also updated the API host to 'https://app.formbricks.com/'
-      `https:app.formbricks.com/api/v1/client/workspaces/clgwcwp4z000lpf0hur7uxbuv/responses`,
-  };
+      `https://app.formbricks.com/api/v1/client/clgwcwp4z000lpf0hur7uxbuv/responses`,
 ```
 
 And lastly, in the `updateFeedback` function
@@ -363,8 +361,7 @@ And lastly, in the `updateFeedback` function
   try {
     const res = await fetch(
 		// Note that we also updated the API host to 'https://app.formbricks.com/'
-      `https:app.formbricks.com/api/v1/client/workspaces/clgwcwp4z000lpf0hur7uxbuv/responses/${responseId}`, // Note that we also updated the API host to 'https://app.formbricks.com/'
-}
+      `https://app.formbricks.com/api/v1/client/clgwcwp4z000lpf0hur7uxbuv/responses/${responseId}`, // Note that we also updated the API host to 'https://app.formbricks.com/'
 ```
 
 ### You’re good to go! 🎉
