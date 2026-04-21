@@ -48,6 +48,14 @@ export const WebsiteEmbedTab = ({ surveyUrl }: WebsiteEmbedTabProps) => {
         {t("common.copy_code")}
         <CopyIcon />
       </Button>
+
+      <div className="relative h-[300px] w-full overflow-hidden rounded-lg border border-slate-300">
+        <iframe
+          title={t("common.preview")}
+          src={`${surveyUrl}${embedModeEnabled ? "?embed=true" : ""}`}
+          className="absolute inset-0 h-full w-full border-0"
+        />
+      </div>
     </>
   );
 };
