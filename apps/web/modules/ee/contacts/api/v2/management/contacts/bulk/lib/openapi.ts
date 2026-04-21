@@ -15,7 +15,7 @@ const bulkContactEndpoint: ZodOpenApiOperationObject = {
       "application/json": {
         schema: ZContactBulkUploadRequest,
         example: {
-          workspaceId: "env_01h2xce9q8p3w4x5y6z7a8b9c0",
+          workspaceId: "cm01h2xce9q8p3w4x5y6z7a8b9c0",
           contacts: [
             {
               attributes: [
