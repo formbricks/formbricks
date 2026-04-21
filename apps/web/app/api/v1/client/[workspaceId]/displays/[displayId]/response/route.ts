@@ -2,6 +2,7 @@ import { logger } from "@formbricks/logger";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { responses } from "@/app/lib/api/response";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
+import { resolveClientApiIds } from "@/lib/utils/resolve-client-id";
 import { getResponseIdByDisplayId } from "./lib/response";
 
 export const OPTIONS = async (): Promise<Response> => {
@@ -12,11 +13,19 @@ export const GET = withV1ApiWrapper({
   handler: async ({
     req,
     props,
-  }: THandlerParams<{ params: Promise<{ environmentId: string; displayId: string }> }>) => {
+  }: THandlerParams<{ params: Promise<{ workspaceId: string; displayId: string }> }>) => {
     const params = await props.params;
 
+    const resolved = await resolveClientApiIds(params.workspaceId);
+    if (!resolved) {
+      return {
+        response: responses.notFoundResponse("Workspace", params.workspaceId, true),
+      };
+    }
+    const { workspaceId } = resolved;
+
     try {
-      const response = await getResponseIdByDisplayId(params.environmentId, params.displayId);
+      const response = await getResponseIdByDisplayId(workspaceId, params.displayId);
 
       return {
         response: responses.successResponse(response, true),
@@ -29,8 +38,8 @@ export const GET = withV1ApiWrapper({
       }
 
       logger.error(
-        { error, url: req.url, environmentId: params.environmentId, displayId: params.displayId },
-        "Error in GET /api/v1/client/[environmentId]/displays/[displayId]/response"
+        { error, url: req.url, workspaceId, displayId: params.displayId },
+        "Error in GET /api/v1/client/[workspaceId]/displays/[displayId]/response"
       );
       return {
         response: responses.internalServerErrorResponse("Something went wrong. Please try again."),

@@ -20,7 +20,7 @@ vi.mock("@formbricks/database", () => ({
 }));
 
 describe("getResponseIdByDisplayId", () => {
-  const environmentId = "env1234567890123456789012";
+  const workspaceId = "ws1234567890123456789012";
   const displayId = "display1234567890123456789";
 
   beforeEach(() => {
@@ -34,17 +34,17 @@ describe("getResponseIdByDisplayId", () => {
       },
     } as any);
 
-    const result = await getResponseIdByDisplayId(environmentId, displayId);
+    const result = await getResponseIdByDisplayId(workspaceId, displayId);
 
     expect(validateInputs).toHaveBeenCalledWith(
-      [environmentId, expect.any(Object)],
+      [workspaceId, expect.any(Object)],
       [displayId, expect.any(Object)]
     );
     expect(prisma.display.findFirst).toHaveBeenCalledWith({
       where: {
         id: displayId,
         survey: {
-          environmentId,
+          workspaceId,
         },
       },
       select: {
@@ -63,15 +63,15 @@ describe("getResponseIdByDisplayId", () => {
       response: null,
     } as any);
 
-    await expect(getResponseIdByDisplayId(environmentId, displayId)).resolves.toEqual({
+    await expect(getResponseIdByDisplayId(workspaceId, displayId)).resolves.toEqual({
       responseId: null,
     });
   });
 
-  test("throws ResourceNotFoundError when the display does not exist in the environment", async () => {
+  test("throws ResourceNotFoundError when the display does not exist in the workspace", async () => {
     vi.mocked(prisma.display.findFirst).mockResolvedValue(null);
 
-    await expect(getResponseIdByDisplayId(environmentId, displayId)).rejects.toThrow(
+    await expect(getResponseIdByDisplayId(workspaceId, displayId)).rejects.toThrow(
       new ResourceNotFoundError("Display", displayId)
     );
   });
@@ -82,7 +82,7 @@ describe("getResponseIdByDisplayId", () => {
       throw validationError;
     });
 
-    await expect(getResponseIdByDisplayId(environmentId, displayId)).rejects.toThrow(ValidationError);
+    await expect(getResponseIdByDisplayId(workspaceId, displayId)).rejects.toThrow(ValidationError);
     expect(prisma.display.findFirst).not.toHaveBeenCalled();
   });
 
@@ -93,6 +93,6 @@ describe("getResponseIdByDisplayId", () => {
     });
     vi.mocked(prisma.display.findFirst).mockRejectedValue(prismaError);
 
-    await expect(getResponseIdByDisplayId(environmentId, displayId)).rejects.toThrow(DatabaseError);
+    await expect(getResponseIdByDisplayId(workspaceId, displayId)).rejects.toThrow(DatabaseError);
   });
 });

@@ -51,7 +51,7 @@ export class ApiClient {
   ): Promise<Result<{ responseId: string | null }, ApiErrorResponse>> {
     return makeRequest(
       this.appUrl,
-      `/api/v1/client/${this.environmentId}/displays/${displayId}/response`,
+      `/api/v1/client/${this.workspaceId}/displays/${displayId}/response`,
       "GET"
     );
   }
