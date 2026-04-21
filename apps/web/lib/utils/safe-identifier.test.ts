@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { isSafeIdentifier } from "./safe-identifier";
+import { isSafeIdentifier, toSafeIdentifier } from "./safe-identifier";
 
 describe("safe-identifier", () => {
   describe("isSafeIdentifier", () => {
@@ -30,6 +30,25 @@ describe("safe-identifier", () => {
 
     test("returns false for empty string", () => {
       expect(isSafeIdentifier("")).toBe(false);
+    });
+  });
+
+  describe("toSafeIdentifier", () => {
+    test("normalizes free-form labels into safe identifiers", () => {
+      expect(toSafeIdentifier("Date of Birth")).toBe("date_of_birth");
+      expect(toSafeIdentifier("Customer-ID")).toBe("customer_id");
+      expect(toSafeIdentifier("  Preferred Language  ")).toBe("preferred_language");
+      expect(toSafeIdentifier("city__name")).toBe("city_name");
+    });
+
+    test("strips invalid leading characters until first lowercase letter", () => {
+      expect(toSafeIdentifier("123 Date")).toBe("date");
+      expect(toSafeIdentifier("__name")).toBe("name");
+      expect(toSafeIdentifier("99")).toBe("");
+    });
+
+    test("keeps already safe identifiers unchanged", () => {
+      expect(toSafeIdentifier("country_code")).toBe("country_code");
     });
   });
 });

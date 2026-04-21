@@ -4,6 +4,7 @@ import {
   EyeOffIcon,
   FileDigitIcon,
   FileTextIcon,
+  GaugeIcon,
   HomeIcon,
   ListIcon,
   ListOrderedIcon,
@@ -11,6 +12,7 @@ import {
   PhoneIcon,
   PresentationIcon,
   Rows3Icon,
+  SmilePlusIcon,
   StarIcon,
 } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -38,6 +40,8 @@ const elementIconMapping = {
   address: HomeIcon,
   contactInfo: ContactIcon,
   ranking: ListOrderedIcon,
+  csat: SmilePlusIcon,
+  ces: GaugeIcon,
 };
 
 interface RecallItemSelectProps {

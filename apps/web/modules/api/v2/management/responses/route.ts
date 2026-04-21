@@ -1,5 +1,6 @@
 import { Response } from "@prisma/client";
 import { NextRequest } from "next/server";
+import { logger } from "@formbricks/logger";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { formatValidationErrorsForV2Api, validateResponseData } from "@/modules/api/lib/validation";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
@@ -14,6 +15,31 @@ import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { resolveStorageUrlsInObject, validateFileUploads } from "@/modules/storage/utils";
 import { createResponseWithQuotaEvaluation, getResponses } from "./lib/response";
+
+const queueResponsePipelineEvent = ({
+  event,
+  response,
+  surveyId,
+  workspaceId,
+}: Parameters<typeof sendToPipeline>[0]): void => {
+  void sendToPipeline({
+    event,
+    response,
+    surveyId,
+    workspaceId,
+  }).catch((error: unknown) => {
+    logger.error(
+      {
+        err: error,
+        event,
+        responseId: response.id,
+        surveyId,
+        workspaceId,
+      },
+      "Failed to send response event to pipeline"
+    );
+  });
+};
 
 export const GET = async (request: NextRequest) =>
   authenticatedApiClient({
@@ -156,23 +182,35 @@ export const POST = async (request: Request) =>
       }
 
       // Fetch created response with relations for pipeline
-      const createdResponseForPipeline = await getResponseForPipeline(createResponseResult.data.id);
-      if (createdResponseForPipeline.ok) {
-        sendToPipeline({
-          event: "responseCreated",
-          workspaceId,
-          surveyId: body.surveyId,
-          response: createdResponseForPipeline.data,
-        });
-
-        if (createResponseResult.data.finished) {
-          sendToPipeline({
-            event: "responseFinished",
+      try {
+        const createdResponseForPipeline = await getResponseForPipeline(createResponseResult.data.id);
+        if (createdResponseForPipeline.ok) {
+          queueResponsePipelineEvent({
+            event: "responseCreated",
             workspaceId,
             surveyId: body.surveyId,
             response: createdResponseForPipeline.data,
           });
+
+          if (createResponseResult.data.finished) {
+            queueResponsePipelineEvent({
+              event: "responseFinished",
+              workspaceId,
+              surveyId: body.surveyId,
+              response: createdResponseForPipeline.data,
+            });
+          }
         }
+      } catch (error) {
+        logger.error(
+          {
+            err: error,
+            responseId: createResponseResult.data.id,
+            surveyId: body.surveyId,
+            workspaceId,
+          },
+          "Failed to load response data for pipeline dispatch"
+        );
       }
 
       if (auditLog) {

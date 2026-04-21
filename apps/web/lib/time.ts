@@ -1,5 +1,5 @@
 import { type Locale, formatDistance } from "date-fns";
-import { de, enUS, es, fr, hu, ja, nl, pt, ptBR, ro, ru, sv, zhCN, zhTW } from "date-fns/locale";
+import { de, enUS, es, fr, hu, ja, nl, pt, ptBR, ro, ru, sv, tr, zhCN, zhTW } from "date-fns/locale";
 import { TUserLocale } from "@formbricks/types/user";
 import { formatDateForDisplay } from "./utils/datetime";
 
@@ -17,6 +17,7 @@ const TIME_SINCE_LOCALES: Record<TUserLocale, Locale> = {
   "ro-RO": ro,
   "ru-RU": ru,
   "sv-SE": sv,
+  "tr-TR": tr,
   "zh-Hans-CN": zhCN,
   "zh-Hant-TW": zhTW,
 };

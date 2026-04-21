@@ -692,6 +692,10 @@ checksums:
     templates/career_development_survey_question_6_choice_6: 79acaa6cd481262bea4e743a422529d2
     templates/career_development_survey_question_6_headline: 88d2a87cbf2ec21882798890990c2225
     templates/career_development_survey_question_6_subheader: b9b478e967930358b0c74324a7c18fc8
+    templates/ces: 49fc8d0ae7b82f3e7d49922ada7ab7a1
+    templates/ces_description: 66f4aaa7e76fd87d19c4ec3bf71481e0
+    templates/ces_lower_label: c2f05d3610d8879ae503a61d49e32e80
+    templates/ces_upper_label: b88eaddaea17a4f285209c2529a9b8f8
     templates/cess_survey_name: dd706043a56d66f2895cad743935c5b4
     templates/cess_survey_question_1_headline: 70115a7960746a05acef03f815652fc3
     templates/cess_survey_question_1_lower_label: 586eedbc7b53319775e42c7cd4cef4de
@@ -755,7 +759,9 @@ checksums:
     templates/consent_description: d76e48fb1e8c291b51e783eaf7fc910d
     templates/contact_info: 73913230e8988f5f423e54e0fd43f368
     templates/contact_info_description: 0e8962e628bb0a072a4217ae172db43b
-    templates/csat_description: 4dd35d7fecfa9fdf47765c7108c3d535
+    templates/csat: 6864fe0caad3b052a4ec0837e7b71cee
+    templates/csat_description: 0e64d5594f961e5070a95f715594549e
+    templates/csat_lower_label: 206c68e770b90abd737c8c4cb99aa695
     templates/csat_name: f216066cef52693bbaa842a3305377c7
     templates/csat_question_10_headline: b6a9ca9c6c20dced146d817c9a1e9be7
     templates/csat_question_10_placeholder: 37ee9c84f3777b9220d4faec1e1c78ee
@@ -831,6 +837,7 @@ checksums:
     templates/csat_survey_question_2_placeholder: 37ee9c84f3777b9220d4faec1e1c78ee
     templates/csat_survey_question_3_headline: 25974b7f1692cad41908fe305830b6c0
     templates/csat_survey_question_3_placeholder: 37ee9c84f3777b9220d4faec1e1c78ee
+    templates/csat_upper_label: a3a49eb9cc86972bce6dc41a107f472d
     templates/cta_description: bc94a2ddc965b286a8677b0642696c7e
     templates/custom_survey_description: 0492afdea2ef1bd683eaf48a2bad2caa
     templates/custom_survey_name: 6fc756927ca9ea22c26368cccd64a67e
@@ -3107,6 +3114,8 @@ checksums:
     workspace/surveys/summary/configure_alerts: 05cc642cd9398034d7e68589d22d97cf
     workspace/surveys/summary/congrats: 378f06fe96289e527153f8201088ff74
     workspace/surveys/summary/connect_your_website_or_app_with_formbricks_to_get_started: d24183c86d08b16d58daa8ad887b2837
+    workspace/surveys/summary/csat_satisfied: 4d6121afdc705a70465a230d6d1f6217
+    workspace/surveys/summary/csat_satisfied_tooltip: 3a69a76559a40fbbdff14525d83b459c
     workspace/surveys/summary/current_count: 6a3e59de8559e88e991e0aeafa9cfeec
     workspace/surveys/summary/custom_range: 9bc7e02a890644b13b5c0b0bdd96c165
     workspace/surveys/summary/delete_all_existing_responses_and_displays: e346bcbdb1e0dfbce5925e19fdf0cc78
@@ -3114,6 +3123,7 @@ checksums:
     workspace/surveys/summary/downloading_qr_code: 3c46bf636e617848a4fca9b6c5b51dac
     workspace/surveys/summary/drop_offs: 605ee950f82110132d6c5780926af109
     workspace/surveys/summary/drop_offs_tooltip: 2a01683380be45f17636365886cf3452
+    workspace/surveys/summary/effort_score: b79157d02a8ead85459c158272951ab5
     workspace/surveys/summary/filter_added_successfully: e247f65020cd87454bcec0da6f0fd034
     workspace/surveys/summary/filter_updated_successfully: 01146bc7e6394e271836be2f1b3a257b
     workspace/surveys/summary/filtered_responses_csv: aad66a98be6a09cac8bef9e4db4a75cf
@@ -3163,6 +3173,7 @@ checksums:
     workspace/surveys/summary/limit: 347051f1a068e01e8c4e4f6744d8e727
     workspace/surveys/summary/no_identified_impressions: c3bc42e6feb9010ced905ded51c5afc4
     workspace/surveys/summary/no_responses_found: f10190cffdda4ca1bed479acbb89b13f
+    workspace/surveys/summary/nps_promoters_tooltip: dea6a683c0c36189e325656d5a7596b8
     workspace/surveys/summary/other_values_found: 48a74ee68c05f7fb162072b50c683b6a
     workspace/surveys/summary/overall: 6c6d6533013d4739766af84b2871bca6
     workspace/surveys/summary/promoters: 41fbb8d0439227661253a82fda39f521
@@ -3175,7 +3186,6 @@ checksums:
     workspace/surveys/summary/quotas_completed_tooltip: ec5c4dc67eda27c06764354f695db613
     workspace/surveys/summary/reset_survey: 8c88ddb81f5f787d183d2e7cb43e7c64
     workspace/surveys/summary/reset_survey_warning: 6b44be171d7e2716f234387b100b173d
-    workspace/surveys/summary/satisfied: 4d542ba354b85e644acbca5691d2ce45
     workspace/surveys/summary/selected_responses_csv: 9cef3faccd54d4f24647791e6359db90
     workspace/surveys/summary/selected_responses_excel: a0ade8b2658e887a4a3f2ad3bdb0c686
     workspace/surveys/summary/setup_integrations: 70de06d73be671a0cd58a3fd4fa62e53

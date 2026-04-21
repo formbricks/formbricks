@@ -20,12 +20,14 @@ function DropdownMenuTrigger({ ...props }: React.ComponentProps<typeof DropdownM
 function DropdownMenuContent({
   className,
   sideOffset = 4,
+  ref,
   ...props
 }: Readonly<React.ComponentProps<typeof DropdownMenuPrimitive.Content>>) {
   return (
     <DropdownMenuPrimitive.Portal>
       <div id="fbjs">
         <DropdownMenuPrimitive.Content
+          ref={ref}
           data-slot="dropdown-menu-content"
           sideOffset={sideOffset}
           className={cn(

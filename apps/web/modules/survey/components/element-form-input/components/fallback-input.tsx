@@ -36,14 +36,15 @@ export const FallbackInput = ({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        {open ? <div className="z-10 h-0 w-full cursor-pointer" /> : triggerButton}
+        {open || !triggerButton ? <div className="z-10 h-0 w-full cursor-pointer" /> : triggerButton}
       </PopoverTrigger>
 
       <PopoverContent
         className="w-auto border border-slate-300 bg-slate-50 p-3 text-xs shadow-lg"
         align="start"
         side="bottom"
-        sideOffset={4}>
+        sideOffset={4}
+        onInteractOutside={(e) => e.preventDefault()}>
         <p className="font-medium">{t("workspace.surveys.edit.add_fallback_placeholder")}</p>
 
         <div className="mt-2 space-y-3">

@@ -2355,737 +2355,6 @@
         "tags": ["Management API - Action Class"]
       }
     },
-    "/api/v1/management/attribute-classes": {
-      "get": {
-        "description": "Fetches all the available attribute classes",
-        "parameters": [
-          {
-            "example": "{{apiKey}}",
-            "in": "header",
-            "name": "x-api-key",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "data": [
-                    {
-                      "archived": false,
-                      "createdAt": "2024-04-09T04:53:29.577Z",
-                      "description": "The email of the person",
-                      "id": "clurwouax000ezffxs7unemg2",
-                      "name": "email",
-                      "type": "automatic",
-                      "updatedAt": "2024-04-09T04:53:29.577Z",
-                      "workspaceId": "clurwouax000azffxt7n5unn3"
-                    },
-                    {
-                      "archived": false,
-                      "createdAt": "2024-04-09T04:53:29.577Z",
-                      "description": "The language used by the person",
-                      "id": "clurwouax000fzffxv9rycait",
-                      "name": "language",
-                      "type": "automatic",
-                      "updatedAt": "2024-04-09T04:53:29.577Z",
-                      "workspaceId": "clurwouax000azffxt7n5unn3"
-                    },
-                    {
-                      "archived": false,
-                      "createdAt": "2024-04-22T08:59:27.319Z",
-                      "description": null,
-                      "id": "clvaq78470004mhqfm0x3kasv",
-                      "name": "Init Attribute 2",
-                      "type": "code",
-                      "updatedAt": "2024-04-22T08:59:27.319Z",
-                      "workspaceId": "clurwouax000azffxt7n5unn3"
-                    },
-                    {
-                      "archived": false,
-                      "createdAt": "2024-04-22T08:59:27.348Z",
-                      "description": null,
-                      "id": "clvaq78500005mhqfd8z2dnxq",
-                      "name": "Init Attribute 1",
-                      "type": "code",
-                      "updatedAt": "2024-04-22T08:59:27.348Z",
-                      "workspaceId": "clurwouax000azffxt7n5unn3"
-                    },
-                    {
-                      "archived": false,
-                      "createdAt": "2024-04-23T07:41:05.917Z",
-                      "description": null,
-                      "id": "clvc2ub5p000l494j1xwrgvqe",
-                      "name": "created_from",
-                      "type": "code",
-                      "updatedAt": "2024-04-23T07:41:05.917Z",
-                      "workspaceId": "clurwouax000azffxt7n5unn3"
-                    },
-                    {
-                      "archived": false,
-                      "createdAt": "2024-04-23T07:42:32.659Z",
-                      "description": null,
-                      "id": "clvc2w637000n494j4z3oyye3",
-                      "name": "Created From",
-                      "type": "code",
-                      "updatedAt": "2024-04-23T07:42:32.659Z",
-                      "workspaceId": "clurwouax000azffxt7n5unn3"
-                    }
-                  ]
-                },
-                "schema": {
-                  "type": "object"
-                }
-              }
-            },
-            "description": "OK",
-            "headers": {
-              "Connection": {
-                "schema": {
-                  "example": "keep-alive",
-                  "type": "string"
-                }
-              },
-              "Date": {
-                "schema": {
-                  "example": "Tue, 23 Apr 2024 09:14:46 GMT",
-                  "type": "string"
-                }
-              },
-              "Keep-Alive": {
-                "schema": {
-                  "example": "timeout=5",
-                  "type": "string"
-                }
-              },
-              "Transfer-Encoding": {
-                "schema": {
-                  "example": "chunked",
-                  "type": "string"
-                }
-              },
-              "cache-control": {
-                "schema": {
-                  "example": "private, no-store",
-                  "type": "string"
-                }
-              },
-              "content-type": {
-                "schema": {
-                  "example": "application/json",
-                  "type": "string"
-                }
-              },
-              "vary": {
-                "schema": {
-                  "example": "RSC, Next-Router-State-Tree, Next-Router-Prefetch",
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Get All Attribute Classes",
-        "tags": ["Management API - Attribute Class"]
-      },
-      "post": {
-        "description": "Create a new Attribute Class by passing in its type as well as the name! Now just use them in your app and pass this value with a user & it'll be associated with it.",
-        "parameters": [
-          {
-            "example": "{{apiKey}}",
-            "in": "header",
-            "name": "x-api-key",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "example": {
-                  "key": "my-custom-attribute",
-                  "name": "My new Attribute",
-                  "type": "custom",
-                  "workspaceId": "{{workspaceId}}"
-                },
-                "properties": {
-                  "description": {
-                    "type": "string"
-                  },
-                  "key": {
-                    "type": "string"
-                  },
-                  "name": {
-                    "type": "string"
-                  },
-                  "type": {
-                    "enum": ["custom"]
-                  },
-                  "workspaceId": {
-                    "type": "string"
-                  }
-                },
-                "required": ["workspaceId", "key", "name", "type"],
-                "type": "object"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "data": {
-                    "archived": false,
-                    "createdAt": "2024-04-23T11:21:38.155Z",
-                    "description": null,
-                    "id": "clvcapx7v0000xz1zskcgf5k0",
-                    "key": "my-custom-attribute",
-                    "name": "My new Attribute",
-                    "type": "custom",
-                    "updatedAt": "2024-04-23T11:21:38.155Z",
-                    "workspaceId": "clurwouax000azffxt7n5unn3"
-                  }
-                },
-                "schema": {
-                  "type": "object"
-                }
-              }
-            },
-            "description": "OK",
-            "headers": {
-              "Connection": {
-                "schema": {
-                  "example": "keep-alive",
-                  "type": "string"
-                }
-              },
-              "Date": {
-                "schema": {
-                  "example": "Tue, 23 Apr 2024 11:21:38 GMT",
-                  "type": "string"
-                }
-              },
-              "Keep-Alive": {
-                "schema": {
-                  "example": "timeout=5",
-                  "type": "string"
-                }
-              },
-              "Transfer-Encoding": {
-                "schema": {
-                  "example": "chunked",
-                  "type": "string"
-                }
-              },
-              "cache-control": {
-                "schema": {
-                  "example": "private, no-store",
-                  "type": "string"
-                }
-              },
-              "content-type": {
-                "schema": {
-                  "example": "application/json",
-                  "type": "string"
-                }
-              },
-              "vary": {
-                "schema": {
-                  "example": "RSC, Next-Router-State-Tree, Next-Router-Prefetch",
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "code": "bad_request",
-                  "details": {},
-                  "message": "\nInvalid `prisma.attributeClass.create()` invocation:\n\n\nUnique constraint failed on the fields: (`name`,`workspaceId`)"
-                },
-                "schema": {
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Bad Request",
-            "headers": {
-              "Connection": {
-                "schema": {
-                  "example": "keep-alive",
-                  "type": "string"
-                }
-              },
-              "Date": {
-                "schema": {
-                  "example": "Tue, 23 Apr 2024 11:22:39 GMT",
-                  "type": "string"
-                }
-              },
-              "Keep-Alive": {
-                "schema": {
-                  "example": "timeout=5",
-                  "type": "string"
-                }
-              },
-              "Transfer-Encoding": {
-                "schema": {
-                  "example": "chunked",
-                  "type": "string"
-                }
-              },
-              "content-type": {
-                "schema": {
-                  "example": "application/json",
-                  "type": "string"
-                }
-              },
-              "vary": {
-                "schema": {
-                  "example": "RSC, Next-Router-State-Tree, Next-Router-Prefetch",
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Create Attribute Class",
-        "tags": ["Management API - Attribute Class"]
-      }
-    },
-    "/api/v1/management/attribute-classes/{attributeClassId}": {
-      "delete": {
-        "description": "Delete an attribute class by its ID. Please note that you currently cannot delete the \"automatic\" type of attributes. Please ignore them if you do not wish to utilise them.",
-        "parameters": [
-          {
-            "example": "{{apiKey}}",
-            "in": "header",
-            "name": "x-api-key",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
-            "name": "attributeClassId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "data": {
-                    "archived": false,
-                    "createdAt": "2024-04-22T08:59:27.319Z",
-                    "description": null,
-                    "id": "clvaq78470004mhqfm0x3kasv",
-                    "name": "Init Attribute 2",
-                    "type": "code",
-                    "updatedAt": "2024-04-22T08:59:27.319Z",
-                    "workspaceId": "clurwouax000azffxt7n5unn3"
-                  }
-                },
-                "schema": {
-                  "type": "object"
-                }
-              }
-            },
-            "description": "OK",
-            "headers": {
-              "Connection": {
-                "schema": {
-                  "example": "keep-alive",
-                  "type": "string"
-                }
-              },
-              "Date": {
-                "schema": {
-                  "example": "Tue, 23 Apr 2024 09:58:24 GMT",
-                  "type": "string"
-                }
-              },
-              "Keep-Alive": {
-                "schema": {
-                  "example": "timeout=5",
-                  "type": "string"
-                }
-              },
-              "Transfer-Encoding": {
-                "schema": {
-                  "example": "chunked",
-                  "type": "string"
-                }
-              },
-              "cache-control": {
-                "schema": {
-                  "example": "private, no-store",
-                  "type": "string"
-                }
-              },
-              "content-type": {
-                "schema": {
-                  "example": "application/json",
-                  "type": "string"
-                }
-              },
-              "vary": {
-                "schema": {
-                  "example": "RSC, Next-Router-State-Tree, Next-Router-Prefetch",
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "400": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "code": "bad_request",
-                  "details": {},
-                  "message": "Automatic Attribute Classes cannot be deleted"
-                },
-                "schema": {
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Bad Request",
-            "headers": {
-              "Connection": {
-                "schema": {
-                  "example": "keep-alive",
-                  "type": "string"
-                }
-              },
-              "Date": {
-                "schema": {
-                  "example": "Tue, 23 Apr 2024 09:57:48 GMT",
-                  "type": "string"
-                }
-              },
-              "Keep-Alive": {
-                "schema": {
-                  "example": "timeout=5",
-                  "type": "string"
-                }
-              },
-              "Transfer-Encoding": {
-                "schema": {
-                  "example": "chunked",
-                  "type": "string"
-                }
-              },
-              "content-type": {
-                "schema": {
-                  "example": "application/json",
-                  "type": "string"
-                }
-              },
-              "vary": {
-                "schema": {
-                  "example": "RSC, Next-Router-State-Tree, Next-Router-Prefetch",
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "code": "not_found",
-                  "details": {
-                    "resource_id": "clurwouax000ezffxs7unemg2s",
-                    "resource_type": "Attribute Class"
-                  },
-                  "message": "Attribute Class not found"
-                },
-                "schema": {
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Not Found",
-            "headers": {
-              "Connection": {
-                "schema": {
-                  "example": "keep-alive",
-                  "type": "string"
-                }
-              },
-              "Date": {
-                "schema": {
-                  "example": "Tue, 23 Apr 2024 09:57:29 GMT",
-                  "type": "string"
-                }
-              },
-              "Keep-Alive": {
-                "schema": {
-                  "example": "timeout=5",
-                  "type": "string"
-                }
-              },
-              "Transfer-Encoding": {
-                "schema": {
-                  "example": "chunked",
-                  "type": "string"
-                }
-              },
-              "cache-control": {
-                "schema": {
-                  "example": "private, no-store",
-                  "type": "string"
-                }
-              },
-              "content-type": {
-                "schema": {
-                  "example": "application/json",
-                  "type": "string"
-                }
-              },
-              "vary": {
-                "schema": {
-                  "example": "RSC, Next-Router-State-Tree, Next-Router-Prefetch",
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Delete Attribute Class",
-        "tags": ["Management API - Attribute Class"]
-      },
-      "get": {
-        "description": "Fetches an Attribute Class by its ID",
-        "parameters": [
-          {
-            "example": "{{apiKey}}",
-            "in": "header",
-            "name": "x-api-key",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
-            "name": "attributeClassId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "data": {
-                    "archived": false,
-                    "createdAt": "2024-04-09T04:53:29.577Z",
-                    "description": "The email of the person",
-                    "id": "clurwouax000ezffxs7unemg2",
-                    "name": "email",
-                    "type": "automatic",
-                    "updatedAt": "2024-04-09T04:53:29.577Z",
-                    "workspaceId": "clurwouax000azffxt7n5unn3"
-                  }
-                },
-                "schema": {
-                  "type": "object"
-                }
-              }
-            },
-            "description": "OK",
-            "headers": {
-              "Connection": {
-                "schema": {
-                  "example": "keep-alive",
-                  "type": "string"
-                }
-              },
-              "Date": {
-                "schema": {
-                  "example": "Tue, 23 Apr 2024 09:15:25 GMT",
-                  "type": "string"
-                }
-              },
-              "Keep-Alive": {
-                "schema": {
-                  "example": "timeout=5",
-                  "type": "string"
-                }
-              },
-              "Transfer-Encoding": {
-                "schema": {
-                  "example": "chunked",
-                  "type": "string"
-                }
-              },
-              "cache-control": {
-                "schema": {
-                  "example": "private, no-store",
-                  "type": "string"
-                }
-              },
-              "content-type": {
-                "schema": {
-                  "example": "application/json",
-                  "type": "string"
-                }
-              },
-              "vary": {
-                "schema": {
-                  "example": "RSC, Next-Router-State-Tree, Next-Router-Prefetch",
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "code": "not_found",
-                  "details": {
-                    "resource_id": "clurwouax000ezffxs7unemg2s",
-                    "resource_type": "Attribute Class"
-                  },
-                  "message": "Attribute Class not found"
-                },
-                "schema": {
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Not Found",
-            "headers": {
-              "Connection": {
-                "schema": {
-                  "example": "keep-alive",
-                  "type": "string"
-                }
-              },
-              "Date": {
-                "schema": {
-                  "example": "Tue, 23 Apr 2024 09:15:59 GMT",
-                  "type": "string"
-                }
-              },
-              "Keep-Alive": {
-                "schema": {
-                  "example": "timeout=5",
-                  "type": "string"
-                }
-              },
-              "Transfer-Encoding": {
-                "schema": {
-                  "example": "chunked",
-                  "type": "string"
-                }
-              },
-              "cache-control": {
-                "schema": {
-                  "example": "private, no-store",
-                  "type": "string"
-                }
-              },
-              "content-type": {
-                "schema": {
-                  "example": "application/json",
-                  "type": "string"
-                }
-              },
-              "vary": {
-                "schema": {
-                  "example": "RSC, Next-Router-State-Tree, Next-Router-Prefetch",
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "500": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "code": "internal_server_error",
-                  "details": {},
-                  "message": "Some error occurred"
-                },
-                "schema": {
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Internal Server Error",
-            "headers": {
-              "Connection": {
-                "schema": {
-                  "example": "keep-alive",
-                  "type": "string"
-                }
-              },
-              "Date": {
-                "schema": {
-                  "example": "Tue, 23 Apr 2024 09:15:37 GMT",
-                  "type": "string"
-                }
-              },
-              "Keep-Alive": {
-                "schema": {
-                  "example": "timeout=5",
-                  "type": "string"
-                }
-              },
-              "Transfer-Encoding": {
-                "schema": {
-                  "example": "chunked",
-                  "type": "string"
-                }
-              },
-              "cache-control": {
-                "schema": {
-                  "example": "private, no-store",
-                  "type": "string"
-                }
-              },
-              "content-type": {
-                "schema": {
-                  "example": "application/json",
-                  "type": "string"
-                }
-              },
-              "vary": {
-                "schema": {
-                  "example": "RSC, Next-Router-State-Tree, Next-Router-Prefetch",
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Get Attribute Class by ID",
-        "tags": ["Management API - Attribute Class"]
-      }
-    },
     "/api/v1/management/contact-attribute-keys": {
       "get": {
         "description": "Retrieve a list of all contact attribute keys defined in the current workspace",
@@ -3669,375 +2938,6 @@
         "tags": ["Management API - Me"]
       }
     },
-    "/api/v1/management/people": {
-      "get": {
-        "description": "Get all the identified people from Formbricks",
-        "parameters": [
-          {
-            "example": "{{apiKey}}",
-            "in": "header",
-            "name": "x-api-key",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "data": [
-                    {
-                      "attributes": {
-                        "Init Attribute 1": "eight",
-                        "language": "gu"
-                      },
-                      "createdAt": "2024-04-22T08:59:26.959Z",
-                      "id": "clvaq77u70002mhqfih5bnk0i",
-                      "updatedAt": "2024-04-22T08:59:26.959Z",
-                      "userId": "THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING",
-                      "workspaceId": "clurwouax000azffxt7n5unn3"
-                    },
-                    {
-                      "attributes": {},
-                      "createdAt": "2024-04-23T07:12:44.928Z",
-                      "id": "clvc1tuo00003494jnz64wd0t",
-                      "updatedAt": "2024-04-23T07:12:44.928Z",
-                      "userId": "1",
-                      "workspaceId": "clurwouax000azffxt7n5unn3"
-                    },
-                    {
-                      "attributes": {
-                        "Init Attribute 1": "eight",
-                        "language": "gu"
-                      },
-                      "createdAt": "2024-04-23T07:30:42.730Z",
-                      "id": "clvc2gyay0009494jbanqhr79",
-                      "updatedAt": "2024-04-23T07:30:42.730Z",
-                      "userId": "SECOND-USER-ID",
-                      "workspaceId": "clurwouax000azffxt7n5unn3"
-                    },
-                    {
-                      "attributes": {},
-                      "createdAt": "2024-04-23T07:35:47.091Z",
-                      "id": "clvc2nh5g000h494jkr6qcxhz",
-                      "updatedAt": "2024-04-23T07:35:47.091Z",
-                      "userId": "Shubham",
-                      "workspaceId": "clurwouax000azffxt7n5unn3"
-                    },
-                    {
-                      "attributes": {
-                        "Created From": "API",
-                        "created_from": "API"
-                      },
-                      "createdAt": "2024-04-23T07:39:22.696Z",
-                      "id": "clvc2s3ig000k494jltkqkm2u",
-                      "updatedAt": "2024-04-23T07:39:22.696Z",
-                      "userId": "THIS-IS-A-VVERY-LONG-USER-ID-FOR-TESTING",
-                      "workspaceId": "clurwouax000azffxt7n5unn3"
-                    }
-                  ]
-                },
-                "schema": {
-                  "type": "object"
-                }
-              }
-            },
-            "description": "OK",
-            "headers": {
-              "Connection": {
-                "schema": {
-                  "example": "keep-alive",
-                  "type": "string"
-                }
-              },
-              "Date": {
-                "schema": {
-                  "example": "Tue, 23 Apr 2024 11:35:32 GMT",
-                  "type": "string"
-                }
-              },
-              "Keep-Alive": {
-                "schema": {
-                  "example": "timeout=5",
-                  "type": "string"
-                }
-              },
-              "Transfer-Encoding": {
-                "schema": {
-                  "example": "chunked",
-                  "type": "string"
-                }
-              },
-              "cache-control": {
-                "schema": {
-                  "example": "private, no-store",
-                  "type": "string"
-                }
-              },
-              "content-type": {
-                "schema": {
-                  "example": "application/json",
-                  "type": "string"
-                }
-              },
-              "vary": {
-                "schema": {
-                  "example": "RSC, Next-Router-State-Tree, Next-Router-Prefetch",
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Get All Persons",
-        "tags": ["Management API - People"]
-      }
-    },
-    "/api/v1/management/people/{personId}": {
-      "delete": {
-        "description": "Delete an identified person from Formbricks.",
-        "parameters": [
-          {
-            "example": "{{apiKey}}",
-            "in": "header",
-            "name": "x-api-key",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
-            "name": "personId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "data": {
-                    "success": "Person deleted successfully"
-                  }
-                },
-                "schema": {
-                  "type": "object"
-                }
-              }
-            },
-            "description": "OK",
-            "headers": {
-              "Connection": {
-                "schema": {
-                  "example": "keep-alive",
-                  "type": "string"
-                }
-              },
-              "Date": {
-                "schema": {
-                  "example": "Tue, 23 Apr 2024 11:37:27 GMT",
-                  "type": "string"
-                }
-              },
-              "Keep-Alive": {
-                "schema": {
-                  "example": "timeout=5",
-                  "type": "string"
-                }
-              },
-              "Transfer-Encoding": {
-                "schema": {
-                  "example": "chunked",
-                  "type": "string"
-                }
-              },
-              "cache-control": {
-                "schema": {
-                  "example": "private, no-store",
-                  "type": "string"
-                }
-              },
-              "content-type": {
-                "schema": {
-                  "example": "application/json",
-                  "type": "string"
-                }
-              },
-              "vary": {
-                "schema": {
-                  "example": "RSC, Next-Router-State-Tree, Next-Router-Prefetch",
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "code": "not_found",
-                  "details": {
-                    "resource_id": "clvaq77u70002mhqfih5bnk0i",
-                    "resource_type": "Person"
-                  },
-                  "message": "Person not found"
-                },
-                "schema": {
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Not Found",
-            "headers": {
-              "Connection": {
-                "schema": {
-                  "example": "keep-alive",
-                  "type": "string"
-                }
-              },
-              "Date": {
-                "schema": {
-                  "example": "Tue, 23 Apr 2024 11:37:37 GMT",
-                  "type": "string"
-                }
-              },
-              "Keep-Alive": {
-                "schema": {
-                  "example": "timeout=5",
-                  "type": "string"
-                }
-              },
-              "Transfer-Encoding": {
-                "schema": {
-                  "example": "chunked",
-                  "type": "string"
-                }
-              },
-              "cache-control": {
-                "schema": {
-                  "example": "private, no-store",
-                  "type": "string"
-                }
-              },
-              "content-type": {
-                "schema": {
-                  "example": "application/json",
-                  "type": "string"
-                }
-              },
-              "vary": {
-                "schema": {
-                  "example": "RSC, Next-Router-State-Tree, Next-Router-Prefetch",
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Delete Person",
-        "tags": ["Management API - People"]
-      },
-      "get": {
-        "description": "Get a person by their internal ID on Formbricks. This internal ID can be found from the Get All Person endpoint.",
-        "parameters": [
-          {
-            "example": "{{apiKey}}",
-            "in": "header",
-            "name": "x-api-key",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
-            "name": "personId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "data": {
-                    "attributes": {
-                      "Init Attribute 1": "eight",
-                      "language": "gu"
-                    },
-                    "createdAt": "2024-04-22T08:59:26.959Z",
-                    "id": "clvaq77u70002mhqfih5bnk0i",
-                    "updatedAt": "2024-04-22T08:59:26.959Z",
-                    "userId": "THIS-IS-A-VERY-LONG-USER-ID-FOR-TESTING",
-                    "workspaceId": "clurwouax000azffxt7n5unn3"
-                  }
-                },
-                "schema": {
-                  "type": "object"
-                }
-              }
-            },
-            "description": "OK",
-            "headers": {
-              "Connection": {
-                "schema": {
-                  "example": "keep-alive",
-                  "type": "string"
-                }
-              },
-              "Date": {
-                "schema": {
-                  "example": "Tue, 23 Apr 2024 11:36:41 GMT",
-                  "type": "string"
-                }
-              },
-              "Keep-Alive": {
-                "schema": {
-                  "example": "timeout=5",
-                  "type": "string"
-                }
-              },
-              "Transfer-Encoding": {
-                "schema": {
-                  "example": "chunked",
-                  "type": "string"
-                }
-              },
-              "cache-control": {
-                "schema": {
-                  "example": "private, no-store",
-                  "type": "string"
-                }
-              },
-              "content-type": {
-                "schema": {
-                  "example": "application/json",
-                  "type": "string"
-                }
-              },
-              "vary": {
-                "schema": {
-                  "example": "RSC, Next-Router-State-Tree, Next-Router-Prefetch",
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Get Person by ID",
-        "tags": ["Management API - People"]
-      }
-    },
     "/api/v1/management/responses": {
       "get": {
         "description": "Pass the surveyId as a Query Parameter & only fetch responses for a specific survey that you have access to.",
@@ -4539,14 +3439,9 @@
                     "description": "Update timestamp (optional; usually set by server)",
                     "format": "date-time",
                     "type": "string"
-                  },
-                  "workspaceId": {
-                    "description": "The ID of the workspace",
-                    "example": "clseedworkspace000000000",
-                    "type": "string"
                   }
                 },
-                "required": ["surveyId", "workspaceId"],
+                "required": ["surveyId"],
                 "type": "object"
               }
             }
@@ -5525,19 +4420,19 @@
                             {
                               "id": "xpoxuu3sifk1ee8he67ctf5i",
                               "label": {
-                                "default": "Sun \u2600\ufe0f"
+                                "default": "Sun ☀️"
                               }
                             },
                             {
                               "id": "hnsovcdmxtcbly6tig1az3qc",
                               "label": {
-                                "default": "Ocean \ud83c\udf0a"
+                                "default": "Ocean 🌊"
                               }
                             },
                             {
                               "id": "kcnelzdxknvwo8fq20d3nrr5",
                               "label": {
-                                "default": "Palms \ud83c\udf34"
+                                "default": "Palms 🌴"
                               }
                             }
                           ],
@@ -5707,19 +4602,19 @@
                           {
                             "id": "xpoxuu3sifk1ee8he67ctf5i",
                             "label": {
-                              "default": "Sun \u2600\ufe0f"
+                              "default": "Sun ☀️"
                             }
                           },
                           {
                             "id": "hnsovcdmxtcbly6tig1az3qc",
                             "label": {
-                              "default": "Ocean \ud83c\udf0a"
+                              "default": "Ocean 🌊"
                             }
                           },
                           {
                             "id": "kcnelzdxknvwo8fq20d3nrr5",
                             "label": {
-                              "default": "Palms \ud83c\udf34"
+                              "default": "Palms 🌴"
                             }
                           }
                         ],
@@ -5929,19 +4824,19 @@
                           {
                             "id": "xpoxuu3sifk1ee8he67ctf5i",
                             "label": {
-                              "default": "Sun \u2600\ufe0f"
+                              "default": "Sun ☀️"
                             }
                           },
                           {
                             "id": "hnsovcdmxtcbly6tig1az3qc",
                             "label": {
-                              "default": "Ocean \ud83c\udf0a"
+                              "default": "Ocean 🌊"
                             }
                           },
                           {
                             "id": "kcnelzdxknvwo8fq20d3nrr5",
                             "label": {
-                              "default": "Palms \ud83c\udf34"
+                              "default": "Palms 🌴"
                             }
                           }
                         ],
@@ -6195,19 +5090,19 @@
                           {
                             "id": "xpoxuu3sifk1ee8he67ctf5i",
                             "label": {
-                              "default": "Sun \u2600\ufe0f"
+                              "default": "Sun ☀️"
                             }
                           },
                           {
                             "id": "hnsovcdmxtcbly6tig1az3qc",
                             "label": {
-                              "default": "Ocean \ud83c\udf0a"
+                              "default": "Ocean 🌊"
                             }
                           },
                           {
                             "id": "kcnelzdxknvwo8fq20d3nrr5",
                             "label": {
-                              "default": "Palms \ud83c\udf34"
+                              "default": "Palms 🌴"
                             }
                           }
                         ],
@@ -6448,19 +5343,19 @@
                           {
                             "id": "xpoxuu3sifk1ee8he67ctf5i",
                             "label": {
-                              "default": "Sun \u2600\ufe0f"
+                              "default": "Sun ☀️"
                             }
                           },
                           {
                             "id": "hnsovcdmxtcbly6tig1az3qc",
                             "label": {
-                              "default": "Ocean \ud83c\udf0a"
+                              "default": "Ocean 🌊"
                             }
                           },
                           {
                             "id": "kcnelzdxknvwo8fq20d3nrr5",
                             "label": {
-                              "default": "Palms \ud83c\udf34"
+                              "default": "Palms 🌴"
                             }
                           }
                         ],
@@ -6651,19 +5546,19 @@
                           {
                             "id": "xpoxuu3sifk1ee8he67ctf5i",
                             "label": {
-                              "default": "Sun \u2600\ufe0f"
+                              "default": "Sun ☀️"
                             }
                           },
                           {
                             "id": "hnsovcdmxtcbly6tig1az3qc",
                             "label": {
-                              "default": "Ocean \ud83c\udf0a"
+                              "default": "Ocean 🌊"
                             }
                           },
                           {
                             "id": "kcnelzdxknvwo8fq20d3nrr5",
                             "label": {
-                              "default": "Palms \ud83c\udf34"
+                              "default": "Palms 🌴"
                             }
                           }
                         ],
@@ -7148,14 +6043,9 @@
                   "url": {
                     "description": "The webhook URL to call when triggers are fired",
                     "type": "string"
-                  },
-                  "workspaceId": {
-                    "description": "The ID of the workspace",
-                    "example": "clseedworkspace000000000",
-                    "type": "string"
                   }
                 },
-                "required": ["url", "triggers", "workspaceId"],
+                "required": ["url", "triggers"],
                 "type": "object"
               }
             }
@@ -7482,6 +6372,149 @@
         },
         "summary": "Get Webhook",
         "tags": ["Management API - Webhook"]
+      }
+    },
+    "/health": {
+      "get": {
+        "description": "Formbricks' Health Check endpoint to make sure the App & the Database are connected with each other & up!",
+        "responses": {
+          "200": {
+            "content": {
+              "text/plain": {
+                "example": "<!DOCTYPE html>\n<html lang=\"en\">\n    <head>\n        <meta charSet=\"utf-8\"/>\n        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/>\n        <link rel=\"stylesheet\" href=\"/_next/static/css/css-app_globals_css.css?v=1713855830239\" data-precedence=\"next_static/css/css-app_globals_css.css\"/>\n        <link rel=\"preload\" as=\"script\" fetchPriority=\"low\" href=\"/_next/static/chunks/webpack.js?v=1713855830239\"/>\n        <script src=\"/_next/static/chunks/main-app.js?v=1713855830239\" async=\"\"></script>\n        <script src=\"/_next/static/chunks/app-pages-internals.js\" async=\"\"></script>\n        <script src=\"/_next/static/chunks/app/health/error.js\" async=\"\"></script>\n        <script src=\"/_next/static/chunks/app/error.js\" async=\"\"></script>\n        <script src=\"/_next/static/chunks/app/not-found.js\" async=\"\"></script>\n        <script src=\"/_next/static/chunks/app/global-error.js\" async=\"\"></script>\n        <title>Formbricks</title>\n        <meta name=\"description\" content=\"Open-Source Survey Suite\"/>\n        <meta name=\"robots\" content=\"noindex, nofollow\"/>\n        <meta name=\"googlebot\" content=\"noindex, nofollow\"/>\n        <link rel=\"icon\" href=\"/favicon.ico\" type=\"image/x-icon\" sizes=\"48x48\"/>\n        <script src=\"/_next/static/chunks/polyfills.js\" noModule=\"\"></script>\n    </head>\n    <body class=\"flex h-screen flex-col\">\n        <div class=\"mx-auto flex h-full max-w-xl flex-col items-center justify-center text-center\">\n            <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"40\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"green\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-badge-check \">\n                <path d=\"M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z\"></path>\n                <path d=\"m9 12 2 2 4-4\"></path>\n            </svg>\n            <p class=\"text-md mt-4 font-bold text-zinc-900\">All systems are up and running</p>\n        </div>\n        <script src=\"/_next/static/chunks/webpack.js?v=1713855830239\" async=\"\"></script>\n        <script>(self.__next_f=self.__next_f||[]).push([0]);self.__next_f.push([2,null])</script>\n        <script>self.__next_f.push([1,\"1:HL[\\\"/_next/static/css/css-app_globals_css.css?v=1713855830239\\\",\\\"style\\\"]\\n0:D{\\\"name\\\":\\\"rQ\\\",\\\"env\\\":\\\"Server\\\"}\\n\"])</script>\n        <script>self.__next_f.push([1,\"2:I[\\\"(app-pages-browser)/../../node_modules/next/dist/client/components/app-router.js\\\",[\\\"app-pages-internals\\\",\\\"static/chunks/app-pages-internals.js\\\"],\\\"\\\"]\\n5:I[\\\"(app-pages-browser)/../../node_modules/next/dist/client/components/layout-router.js\\\",[\\\"app-pages-internals\\\",\\\"static/chunks/app-pages-internals.js\\\"],\\\"\\\"]\\n6:I[\\\"(app-pages-browser)/./app/health/error.tsx\\\",[\\\"app/health/error\\\",\\\"static/chunks/app/health/error.js\\\"],\\\"default\\\"]\\n7:I[\\\"(app-pages-browser)/../../node_modules/next/dist/client/components/render-from-template-context.js\\\",[\\\"app-pages-internals\\\",\\\"static/chunks/app-pages-internals.js\\\"],\\\"\\\"]\\n9:I[\\\"(app-pages-browser)/./app/error.tsx\\\",[\\\"app/error\\\",\\\"static/chunks/app/error.js\\\"],\\\"default\\\"]\\nb:I[\\\"(app-pages-browser)/../../node_modules/next/dist/client/link.js\\\",[\\\"app/not-found\\\",\\\"static/chunks/app/not-found.js\\\"],\\\"\\\"]\\ne:I[\\\"(app-pages-browser)/./app/global-error.tsx\\\",[\\\"app/global-error\\\",\\\"static/chunks/app/global-error.js\\\"],\\\"default\\\"]\\n3:D{\\\"name\\\":\\\"\\\",\\\"env\\\":\\\"Server\\\"}\\n4:D{\\\"name\\\":\\\"HealthPage\\\",\\\"env\\\":\\\"Server\\\"}\\n8:D{\\\"name\\\":\\\"RootLayout\\\",\\\"env\\\":\\\"Server\\\"}\\na:D{\\\"name\\\":\\\"NotFound\\\",\\\"env\\\":\\\"Server\\\"}\\nc:D{\\\"name\\\":\\\"Button\\\",\\\"env\\\":\\\"Server\\\"}\\nc:[\\\"$\\\",\\\"button\\\",null,{\\\"className\\\":\\\"inline-flex items-center appearance-none px-6 py-3 text-sm font-medium rounded-md relative text-white bg-brand-dark hover:bg-brand focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-900 mt-8\\\",\\\"children\\\":[\\\"$undefined\\\",\\\"Back to home\\\",false,\\\"$undefined\\\"],\\\"disabled\\\":false,\\\"onClick\\\":\\\"$undefined\\\"}]\\na:[\\\"$\\\",\\\"div\\\",null,{\\\"className\\\":\\\"mx-auto flex h-full max-w-xl flex-col items-center justify-center py-16 text-center\\\",\\\"children\\\":[[\\\"$\\\",\\\"p\\\",null,{\\\"className\\\":\\\"text-sm font-semibold text-zinc-900 dark:text-white\\\",\\\"children\\\":\\\"404\\\"}],[\\\"$\\\",\\\"h1\\\",null,{\\\"className\\\":\\\"mt-2 text-2xl font-bold text-zinc-900 dark:text-white\\\",\\\"children\\\":\\\"Page not found\\\"}],[\\\"$\\\",\\\"p\\\",null,{\\\"className\\\":\\\"mt-2 text-base text-zinc-600 dark:text-zinc-400\\\",\\\"children\\\":\\\"Sorry, we couldn't find the page you're looking for.\\\"}],[\\\"$\\\",\\\"$Lb\\\",null,{\\\"href\\\":\\\"/\\\",\\\"children\\\":\\\"$c\\\"}]]}]\\n8:[\\\"$\\\",\\\"html\\\",null,{\\\"lang\\\":\\\"en\\\",\\\"child\"])</script>\n        <script>self.__next_f.push([1,\"ren\\\":[false,[\\\"$\\\",\\\"body\\\",null,{\\\"className\\\":\\\"flex h-screen flex-col\\\",\\\"children\\\":[\\\"$\\\",\\\"$L5\\\",null,{\\\"parallelRouterKey\\\":\\\"children\\\",\\\"segmentPath\\\":[\\\"children\\\"],\\\"error\\\":\\\"$9\\\",\\\"errorStyles\\\":[],\\\"errorScripts\\\":[],\\\"template\\\":[\\\"$\\\",\\\"$L7\\\",null,{}],\\\"templateStyles\\\":\\\"$undefined\\\",\\\"templateScripts\\\":\\\"$undefined\\\",\\\"notFound\\\":\\\"$a\\\",\\\"notFoundStyles\\\":[],\\\"styles\\\":null}]}]]}]\\nd:D{\\\"name\\\":\\\"\\\",\\\"env\\\":\\\"Server\\\"}\\nf:[]\\n0:[[[\\\"$\\\",\\\"link\\\",\\\"0\\\",{\\\"rel\\\":\\\"stylesheet\\\",\\\"href\\\":\\\"/_next/static/css/css-app_globals_css.css?v=1713855830239\\\",\\\"precedence\\\":\\\"next_static/css/css-app_globals_css.css\\\",\\\"crossOrigin\\\":\\\"$undefined\\\"}]],[\\\"$\\\",\\\"$L2\\\",null,{\\\"buildId\\\":\\\"development\\\",\\\"assetPrefix\\\":\\\"\\\",\\\"initialCanonicalUrl\\\":\\\"/health\\\",\\\"initialTree\\\":[\\\"\\\",{\\\"children\\\":[\\\"health\\\",{\\\"children\\\":[\\\"__PAGE__\\\",{}]}]},\\\"$undefined\\\",\\\"$undefined\\\",true],\\\"initialSeedData\\\":[\\\"\\\",{\\\"children\\\":[\\\"health\\\",{\\\"children\\\":[\\\"__PAGE__\\\",{},[[\\\"$L3\\\",\\\"$L4\\\"],null],null]},[\\\"$\\\",\\\"$L5\\\",null,{\\\"parallelRouterKey\\\":\\\"children\\\",\\\"segmentPath\\\":[\\\"children\\\",\\\"health\\\",\\\"children\\\"],\\\"error\\\":\\\"$6\\\",\\\"errorStyles\\\":[],\\\"errorScripts\\\":[],\\\"template\\\":[\\\"$\\\",\\\"$L7\\\",null,{}],\\\"templateStyles\\\":\\\"$undefined\\\",\\\"templateScripts\\\":\\\"$undefined\\\",\\\"notFound\\\":\\\"$undefined\\\",\\\"notFoundStyles\\\":\\\"$undefined\\\",\\\"styles\\\":null}],null]},[\\\"$8\\\",null],null],\\\"couldBeIntercepted\\\":false,\\\"initialHead\\\":[false,\\\"$Ld\\\"],\\\"globalErrorComponent\\\":\\\"$e\\\",\\\"missingSlots\\\":\\\"$Wf\\\"}]]\\n\"])</script>\n        <script>self.__next_f.push([1,\"d:[[\\\"$\\\",\\\"meta\\\",\\\"0\\\",{\\\"name\\\":\\\"viewport\\\",\\\"content\\\":\\\"width=device-width, initial-scale=1\\\"}],[\\\"$\\\",\\\"meta\\\",\\\"1\\\",{\\\"charSet\\\":\\\"utf-8\\\"}],[\\\"$\\\",\\\"title\\\",\\\"2\\\",{\\\"children\\\":\\\"Formbricks\\\"}],[\\\"$\\\",\\\"meta\\\",\\\"3\\\",{\\\"name\\\":\\\"description\\\",\\\"content\\\":\\\"Open-Source Survey Suite\\\"}],[\\\"$\\\",\\\"meta\\\",\\\"4\\\",{\\\"name\\\":\\\"robots\\\",\\\"content\\\":\\\"noindex, nofollow\\\"}],[\\\"$\\\",\\\"meta\\\",\\\"5\\\",{\\\"name\\\":\\\"googlebot\\\",\\\"content\\\":\\\"noindex, nofollow\\\"}],[\\\"$\\\",\\\"link\\\",\\\"6\\\",{\\\"rel\\\":\\\"icon\\\",\\\"href\\\":\\\"/favicon.ico\\\",\\\"type\\\":\\\"image/x-icon\\\",\\\"sizes\\\":\\\"48x48\\\"}]]\\n3:null\\n10:D{\\\"name\\\":\\\"BadgeCheck\\\",\\\"env\\\":\\\"Server\\\"}\\n10:[\\\"$\\\",\\\"svg\\\",null,{\\\"xmlns\\\":\\\"http://www.w3.org/2000/svg\\\",\\\"width\\\":24,\\\"height\\\":40,\\\"viewBox\\\":\\\"0 0 24 24\\\",\\\"fill\\\":\\\"none\\\",\\\"stroke\\\":\\\"green\\\",\\\"strokeWidth\\\":2,\\\"strokeLinecap\\\":\\\"round\\\",\\\"strokeLinejoin\\\":\\\"round\\\",\\\"className\\\":\\\"lucide lucide-badge-check \\\",\\\"children\\\":[[\\\"$\\\",\\\"path\\\",\\\"3c2336\\\",{\\\"d\\\":\\\"M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z\\\"}],[\\\"$\\\",\\\"path\\\",\\\"dzmm74\\\",{\\\"d\\\":\\\"m9 12 2 2 4-4\\\"}],\\\"$undefined\\\"]}]\\n4:[\\\"$\\\",\\\"div\\\",null,{\\\"className\\\":\\\"mx-auto flex h-full max-w-xl flex-col items-center justify-center text-center\\\",\\\"children\\\":[\\\"$10\\\",[\\\"$\\\",\\\"p\\\",null,{\\\"className\\\":\\\"text-md mt-4 font-bold text-zinc-900\\\",\\\"children\\\":\\\"All systems are up and running\\\"}]]}]\\n\"])</script>\n    </body>\n</html>",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "OK",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "example": "no-store, must-revalidate",
+                  "type": "string"
+                }
+              },
+              "Connection": {
+                "schema": {
+                  "example": "keep-alive",
+                  "type": "string"
+                }
+              },
+              "Content-Encoding": {
+                "schema": {
+                  "example": "gzip",
+                  "type": "string"
+                }
+              },
+              "Content-Type": {
+                "schema": {
+                  "example": "text/html; charset=utf-8",
+                  "type": "string"
+                }
+              },
+              "Date": {
+                "schema": {
+                  "example": "Tue, 23 Apr 2024 07:03:50 GMT",
+                  "type": "string"
+                }
+              },
+              "Keep-Alive": {
+                "schema": {
+                  "example": "timeout=5",
+                  "type": "string"
+                }
+              },
+              "Transfer-Encoding": {
+                "schema": {
+                  "example": "chunked",
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "schema": {
+                  "example": "RSC, Next-Router-State-Tree, Next-Router-Prefetch, Accept-Encoding",
+                  "type": "string"
+                }
+              },
+              "X-Powered-By": {
+                "schema": {
+                  "example": "Next.js",
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "text/plain": {
+                "example": "<!DOCTYPE html>\n<html id=\"__next_error__\">\n    <head>\n        <meta charSet=\"utf-8\"/>\n        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/>\n        <link rel=\"preload\" as=\"script\" fetchPriority=\"low\" href=\"/_next/static/chunks/webpack.js\"/>\n        <script src=\"/_next/static/chunks/main-app.js\" async=\"\"></script>\n        <script src=\"/_next/static/chunks/app-pages-internals.js\" async=\"\"></script>\n        <script src=\"/_next/static/chunks/app/global-error.js\" async=\"\"></script>\n        <meta name=\"robots\" content=\"noindex\"/>\n        <meta name=\"next-error\" content=\"not-found\"/>\n        <title>Formbricks</title>\n        <meta name=\"description\" content=\"Open-Source Survey Suite\"/>\n        <meta name=\"robots\" content=\"noindex, nofollow\"/>\n        <meta name=\"googlebot\" content=\"noindex, nofollow\"/>\n        <link rel=\"icon\" href=\"/favicon.ico\" type=\"image/x-icon\" sizes=\"48x48\"/>\n        <script src=\"/_next/static/chunks/polyfills.js\" noModule=\"\"></script>\n    </head>\n    <body>\n        <script src=\"/_next/static/chunks/webpack.js\" async=\"\"></script>\n        <script>(self.__next_f=self.__next_f||[]).push([0]);self.__next_f.push([2,null])</script>\n        <script>self.__next_f.push([1,\"1:HL[\\\"/_next/static/css/css-app_globals_css.css?v=1713855907820\\\",\\\"style\\\"]\\n0:D{\\\"name\\\":\\\"rQ\\\",\\\"env\\\":\\\"Server\\\"}\\n\"])</script>\n        <script>self.__next_f.push([1,\"2:I[\\\"(app-pages-browser)/../../node_modules/next/dist/client/components/app-router.js\\\",[\\\"app-pages-internals\\\",\\\"static/chunks/app-pages-internals.js\\\"],\\\"\\\"]\\n5:I[\\\"(app-pages-browser)/../../node_modules/next/dist/client/components/layout-router.js\\\",[\\\"app-pages-internals\\\",\\\"static/chunks/app-pages-internals.js\\\"],\\\"\\\"]\\n6:I[\\\"(app-pages-browser)/./app/health/error.tsx\\\",[\\\"app/health/error\\\",\\\"static/chunks/app/health/error.js\\\"],\\\"default\\\"]\\n7:I[\\\"(app-pages-browser)/../../node_modules/next/dist/client/components/render-from-template-context.js\\\",[\\\"app-pages-internals\\\",\\\"static/chunks/app-pages-internals.js\\\"],\\\"\\\"]\\n9:I[\\\"(app-pages-browser)/./app/error.tsx\\\",[\\\"app/error\\\",\\\"static/chunks/app/error.js\\\"],\\\"default\\\"]\\nb:I[\\\"(app-pages-browser)/../../node_modules/next/dist/client/link.js\\\",[\\\"app/not-found\\\",\\\"static/chunks/app/not-found.js\\\"],\\\"\\\"]\\ne:I[\\\"(app-pages-browser)/./app/global-error.tsx\\\",[\\\"app/global-error\\\",\\\"static/chunks/app/global-error.js\\\"],\\\"default\\\"]\\n3:D{\\\"name\\\":\\\"\\\",\\\"env\\\":\\\"Server\\\"}\\n4:D{\\\"name\\\":\\\"HealthPage\\\",\\\"env\\\":\\\"Server\\\"}\\n8:D{\\\"name\\\":\\\"RootLayout\\\",\\\"env\\\":\\\"Server\\\"}\\na:D{\\\"name\\\":\\\"NotFound\\\",\\\"env\\\":\\\"Server\\\"}\\nc:D{\\\"name\\\":\\\"Button\\\",\\\"env\\\":\\\"Server\\\"}\\nc:[\\\"$\\\",\\\"button\\\",null,{\\\"className\\\":\\\"inline-flex items-center appearance-none px-6 py-3 text-sm font-medium rounded-md relative text-white bg-brand-dark hover:bg-brand focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-900 mt-8\\\",\\\"children\\\":[\\\"$undefined\\\",\\\"Back to home\\\",false,\\\"$undefined\\\"],\\\"disabled\\\":false,\\\"onClick\\\":\\\"$undefined\\\"}]\\na:[\\\"$\\\",\\\"div\\\",null,{\\\"className\\\":\\\"mx-auto flex h-full max-w-xl flex-col items-center justify-center py-16 text-center\\\",\\\"children\\\":[[\\\"$\\\",\\\"p\\\",null,{\\\"className\\\":\\\"text-sm font-semibold text-zinc-900 dark:text-white\\\",\\\"children\\\":\\\"404\\\"}],[\\\"$\\\",\\\"h1\\\",null,{\\\"className\\\":\\\"mt-2 text-2xl font-bold text-zinc-900 dark:text-white\\\",\\\"children\\\":\\\"Page not found\\\"}],[\\\"$\\\",\\\"p\\\",null,{\\\"className\\\":\\\"mt-2 text-base text-zinc-600 dark:text-zinc-400\\\",\\\"children\\\":\\\"Sorry, we couldn't find the page you're looking for.\\\"}],[\\\"$\\\",\\\"$Lb\\\",null,{\\\"href\\\":\\\"/\\\",\\\"children\\\":\\\"$c\\\"}]]}]\\n8:[\\\"$\\\",\\\"html\\\",null,{\\\"lang\\\":\\\"en\\\",\\\"child\"])</script>\n        <script>self.__next_f.push([1,\"ren\\\":[false,[\\\"$\\\",\\\"body\\\",null,{\\\"className\\\":\\\"flex h-screen flex-col\\\",\\\"children\\\":[\\\"$\\\",\\\"$L5\\\",null,{\\\"parallelRouterKey\\\":\\\"children\\\",\\\"segmentPath\\\":[\\\"children\\\"],\\\"error\\\":\\\"$9\\\",\\\"errorStyles\\\":[],\\\"errorScripts\\\":[],\\\"template\\\":[\\\"$\\\",\\\"$L7\\\",null,{}],\\\"templateStyles\\\":\\\"$undefined\\\",\\\"templateScripts\\\":\\\"$undefined\\\",\\\"notFound\\\":\\\"$a\\\",\\\"notFoundStyles\\\":[],\\\"styles\\\":null}]}]]}]\\nd:D{\\\"name\\\":\\\"\\\",\\\"env\\\":\\\"Server\\\"}\\nf:[]\\n0:[[[\\\"$\\\",\\\"link\\\",\\\"0\\\",{\\\"rel\\\":\\\"stylesheet\\\",\\\"href\\\":\\\"/_next/static/css/css-app_globals_css.css?v=1713855907820\\\",\\\"precedence\\\":\\\"next_static/css/css-app_globals_css.css\\\",\\\"crossOrigin\\\":\\\"$undefined\\\"}]],[\\\"$\\\",\\\"$L2\\\",null,{\\\"buildId\\\":\\\"development\\\",\\\"assetPrefix\\\":\\\"\\\",\\\"initialCanonicalUrl\\\":\\\"/health\\\",\\\"initialTree\\\":[\\\"\\\",{\\\"children\\\":[\\\"health\\\",{\\\"children\\\":[\\\"__PAGE__\\\",{}]}]},\\\"$undefined\\\",\\\"$undefined\\\",true],\\\"initialSeedData\\\":[\\\"\\\",{\\\"children\\\":[\\\"health\\\",{\\\"children\\\":[\\\"__PAGE__\\\",{},[[\\\"$L3\\\",\\\"$L4\\\"],null],null]},[\\\"$\\\",\\\"$L5\\\",null,{\\\"parallelRouterKey\\\":\\\"children\\\",\\\"segmentPath\\\":[\\\"children\\\",\\\"health\\\",\\\"children\\\"],\\\"error\\\":\\\"$6\\\",\\\"errorStyles\\\":[],\\\"errorScripts\\\":[],\\\"template\\\":[\\\"$\\\",\\\"$L7\\\",null,{}],\\\"templateStyles\\\":\\\"$undefined\\\",\\\"templateScripts\\\":\\\"$undefined\\\",\\\"notFound\\\":\\\"$undefined\\\",\\\"notFoundStyles\\\":\\\"$undefined\\\",\\\"styles\\\":null}],null]},[\\\"$8\\\",null],null],\\\"couldBeIntercepted\\\":false,\\\"initialHead\\\":[false,\\\"$Ld\\\"],\\\"globalErrorComponent\\\":\\\"$e\\\",\\\"missingSlots\\\":\\\"$Wf\\\"}]]\\n\"])</script>\n        <script>self.__next_f.push([1,\"d:[[\\\"$\\\",\\\"meta\\\",\\\"0\\\",{\\\"name\\\":\\\"viewport\\\",\\\"content\\\":\\\"width=device-width, initial-scale=1\\\"}],[\\\"$\\\",\\\"meta\\\",\\\"1\\\",{\\\"charSet\\\":\\\"utf-8\\\"}],[\\\"$\\\",\\\"title\\\",\\\"2\\\",{\\\"children\\\":\\\"Formbricks\\\"}],[\\\"$\\\",\\\"meta\\\",\\\"3\\\",{\\\"name\\\":\\\"description\\\",\\\"content\\\":\\\"Open-Source Survey Suite\\\"}],[\\\"$\\\",\\\"meta\\\",\\\"4\\\",{\\\"name\\\":\\\"robots\\\",\\\"content\\\":\\\"noindex, nofollow\\\"}],[\\\"$\\\",\\\"meta\\\",\\\"5\\\",{\\\"name\\\":\\\"googlebot\\\",\\\"content\\\":\\\"noindex, nofollow\\\"}],[\\\"$\\\",\\\"link\\\",\\\"6\\\",{\\\"rel\\\":\\\"icon\\\",\\\"href\\\":\\\"/favicon.ico\\\",\\\"type\\\":\\\"image/x-icon\\\",\\\"sizes\\\":\\\"48x48\\\"}]]\\n3:null\\n10:D{\\\"name\\\":\\\"BadgeCheck\\\",\\\"env\\\":\\\"Server\\\"}\\n10:[\\\"$\\\",\\\"svg\\\",null,{\\\"xmlns\\\":\\\"http://www.w3.org/2000/svg\\\",\\\"width\\\":24,\\\"height\\\":40,\\\"viewBox\\\":\\\"0 0 24 24\\\",\\\"fill\\\":\\\"none\\\",\\\"stroke\\\":\\\"green\\\",\\\"strokeWidth\\\":2,\\\"strokeLinecap\\\":\\\"round\\\",\\\"strokeLinejoin\\\":\\\"round\\\",\\\"className\\\":\\\"lucide lucide-badge-check \\\",\\\"children\\\":[[\\\"$\\\",\\\"path\\\",\\\"3c2336\\\",{\\\"d\\\":\\\"M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z\\\"}],[\\\"$\\\",\\\"path\\\",\\\"dzmm74\\\",{\\\"d\\\":\\\"m9 12 2 2 4-4\\\"}],\\\"$undefined\\\"]}]\\n4:[\\\"$\\\",\\\"div\\\",null,{\\\"className\\\":\\\"mx-auto flex h-full max-w-xl flex-col items-center justify-center text-center\\\",\\\"children\\\":[\\\"$10\\\",[\\\"$\\\",\\\"p\\\",null,{\\\"className\\\":\\\"text-md mt-4 font-bold text-zinc-900\\\",\\\"children\\\":\\\"All systems are up and running\\\"}]]}]\\n\"])</script>\n    </body>\n</html>",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Internal Server Error",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "example": "no-store, must-revalidate",
+                  "type": "string"
+                }
+              },
+              "Connection": {
+                "schema": {
+                  "example": "keep-alive",
+                  "type": "string"
+                }
+              },
+              "Content-Encoding": {
+                "schema": {
+                  "example": "gzip",
+                  "type": "string"
+                }
+              },
+              "Content-Type": {
+                "schema": {
+                  "example": "text/html; charset=utf-8",
+                  "type": "string"
+                }
+              },
+              "Date": {
+                "schema": {
+                  "example": "Tue, 23 Apr 2024 07:05:08 GMT",
+                  "type": "string"
+                }
+              },
+              "Keep-Alive": {
+                "schema": {
+                  "example": "timeout=5",
+                  "type": "string"
+                }
+              },
+              "Transfer-Encoding": {
+                "schema": {
+                  "example": "chunked",
+                  "type": "string"
+                }
+              },
+              "Vary": {
+                "schema": {
+                  "example": "RSC, Next-Router-State-Tree, Next-Router-Prefetch, Accept-Encoding",
+                  "type": "string"
+                }
+              },
+              "X-Powered-By": {
+                "schema": {
+                  "example": "Next.js",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Health Check",
+        "tags": ["Health"]
       }
     }
   },

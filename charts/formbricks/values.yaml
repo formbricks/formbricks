@@ -451,6 +451,9 @@ envoy:
 envoyRedis:
   enabled: false
   fullnameOverride: "formbricks-envoy-redis"
+  # Only affects the bundled envoy Redis release.
+  # If you point Envoy rate limiting at an external Redis/Valkey instance instead,
+  # configure that deployment separately with `maxmemory-policy noeviction`.
   architecture: replication
   rbac:
     create: true
@@ -511,9 +514,16 @@ envoyRedis:
 ##########################################################
 redis:
   enabled: true # Enable/disable Redis
+  # Use this to point Formbricks jobs and cache traffic at an existing Redis/Valkey deployment.
+  # External Redis instances must also be configured with `maxmemory-policy noeviction`
+  # in their redis.conf/valkey.conf (or equivalent managed-service setting) to avoid BullMQ job loss.
   externalRedisUrl: ""
   fullnameOverride: "formbricks-redis"
   architecture: standalone
+  commonConfiguration: |-
+    appendonly yes
+    save ""
+    maxmemory-policy noeviction
   auth:
     enabled: true
     existingSecret: "formbricks-app-secrets"

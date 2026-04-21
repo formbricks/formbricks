@@ -781,11 +781,9 @@ export const ElementsView = ({
 
   useEffect(() => {
     const elementWithEmptyFallback = checkForEmptyFallBackValue(localSurvey, selectedLanguageCode);
-    if (elementWithEmptyFallback) {
+    if (elementWithEmptyFallback && activeElementId !== elementWithEmptyFallback.id) {
       setActiveElementId(elementWithEmptyFallback.id);
-      if (activeElementId === elementWithEmptyFallback.id) {
-        toast.error(t("workspace.surveys.edit.fallback_missing"));
-      }
+      toast.error(t("workspace.surveys.edit.fallback_missing"));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeElementId, setActiveElementId, localSurvey, selectedLanguageCode]);
