@@ -1,11 +1,13 @@
 "use client";
 
-import { ChevronDownIcon } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { ChevronDownIcon, SparklesIcon } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { cn } from "@/lib/cn";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -21,6 +23,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
+import {
+  checkAITranslationAvailableAction,
+  getAITranslationResultAction,
+  translateSurveyFieldsAction,
+} from "../lib/ai-translation-action";
 import { type TranslatableString } from "../lib/types";
 import {
   extractTranslatableStrings,
@@ -38,6 +46,7 @@ interface ManageTranslationsModalProps {
   languageCode: string;
   languageName: string;
   defaultLanguageName: string;
+  workspaceId: string;
 }
 
 export const ManageTranslationsModal = ({
@@ -48,6 +57,7 @@ export const ManageTranslationsModal = ({
   languageCode,
   languageName,
   defaultLanguageName,
+  workspaceId,
 }: ManageTranslationsModalProps) => {
   const { t } = useTranslation();
 
@@ -55,6 +65,20 @@ export const ManageTranslationsModal = ({
 
   const [draftTranslations, setDraftTranslations] = useState<Record<string, string>>({});
   const [missingFirst, setMissingFirst] = useState(false);
+  const [isAIAvailable, setIsAIAvailable] = useState(false);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [translatingPaths, setTranslatingPaths] = useState<Set<string>>(new Set());
+  const pollingCancelledRef = useRef(false);
+
+  // Cancel polling when modal closes
+  useEffect(() => {
+    if (!open) {
+      pollingCancelledRef.current = true;
+    }
+    return () => {
+      pollingCancelledRef.current = true;
+    };
+  }, [open]);
 
   // Initialize drafts when modal opens
   useEffect(() => {
@@ -66,6 +90,17 @@ export const ManageTranslationsModal = ({
       setDraftTranslations(drafts);
     }
   }, [open, strings, languageCode]);
+
+  // Check AI availability when modal opens
+  useEffect(() => {
+    if (open) {
+      checkAITranslationAvailableAction({ workspaceId }).then((result) => {
+        if (result?.data) {
+          setIsAIAvailable(result.data.available);
+        }
+      });
+    }
+  }, [open, workspaceId]);
 
   const isDraftEmpty = useCallback(
     (s: TranslatableString) => {
@@ -117,6 +152,76 @@ export const ManageTranslationsModal = ({
     setDraftTranslations((prev) => ({ ...prev, [path]: value }));
   }, []);
 
+  const emptyFields = useMemo(
+    () => strings.filter((s) => isDraftEmpty(s) && (s.value.default || "").trim()),
+    [strings, isDraftEmpty]
+  );
+
+  const handleTranslateWithAI = async () => {
+    if (emptyFields.length === 0) return;
+
+    const paths = new Set(emptyFields.map((s) => s.path));
+    setIsTranslating(true);
+    setTranslatingPaths(paths);
+
+    const toastId = toast.loading(t("workspace.surveys.edit.ai_translating"));
+
+    const enqueueResult = await translateSurveyFieldsAction({
+      workspaceId,
+      fields: emptyFields.map((s) => ({
+        path: s.path,
+        defaultText: s.value.default || "",
+        isRichText: s.isRichText,
+      })),
+      sourceLanguage: defaultLanguageName,
+      targetLanguage: languageName,
+    });
+
+    if (!enqueueResult?.data?.jobId) {
+      const errorMessage = getFormattedErrorMessage(enqueueResult);
+      toast.error(errorMessage || "Translation failed", { id: toastId });
+      setIsTranslating(false);
+      setTranslatingPaths(new Set());
+      return;
+    }
+
+    const { jobId } = enqueueResult.data;
+    pollingCancelledRef.current = false;
+
+    // Poll for results
+    const pollInterval = 2000;
+    const maxAttempts = 60; // 2 minutes max
+    let attempts = 0;
+
+    const poll = async (): Promise<void> => {
+      if (pollingCancelledRef.current) return;
+
+      attempts++;
+      const pollResult = await getAITranslationResultAction({ jobId });
+
+      if (pollResult?.data?.status === "complete" && pollResult.data.translations) {
+        setDraftTranslations((prev) => ({ ...prev, ...pollResult.data!.translations }));
+        toast.success(t("workspace.surveys.edit.ai_translation_complete"), { id: toastId });
+        setIsTranslating(false);
+        setTranslatingPaths(new Set());
+        return;
+      }
+
+      if (attempts >= maxAttempts) {
+        toast.error("Translation timed out", { id: toastId });
+        setIsTranslating(false);
+        setTranslatingPaths(new Set());
+        return;
+      }
+
+      // Continue polling
+      await new Promise((resolve) => setTimeout(resolve, pollInterval));
+      await poll();
+    };
+
+    await poll();
+  };
+
   const handleSave = () => {
     const updatedSurvey = structuredClone(localSurvey);
     for (const s of strings) {
@@ -151,28 +256,55 @@ export const ManageTranslationsModal = ({
                 {progress.translated}/{progress.total}
               </span>
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="secondary" size="sm" className="text-xs">
-                  {missingFirst
-                    ? t("workspace.surveys.edit.missing_first")
-                    : t("workspace.surveys.edit.show_in_order")}
-                  <ChevronDownIcon className="ml-1 h-3.5 w-3.5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="text-xs">
-                <DropdownMenuItem
-                  className={cn(!missingFirst && "font-semibold", "text-xs")}
-                  onSelect={() => setMissingFirst(false)}>
-                  {t("workspace.surveys.edit.show_in_order")}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className={cn(missingFirst && "font-semibold", "text-xs")}
-                  onSelect={() => setMissingFirst(true)}>
-                  {t("workspace.surveys.edit.missing_first")}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <div className="flex items-center gap-2">
+              {isAIAvailable && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          className="text-xs"
+                          onClick={handleTranslateWithAI}
+                          disabled={isTranslating || emptyFields.length === 0}
+                          loading={isTranslating}>
+                          <SparklesIcon className="mr-1 h-3.5 w-3.5" />
+                          {t("workspace.surveys.edit.ai_translate")}
+                        </Button>
+                      </div>
+                    </TooltipTrigger>
+                    {emptyFields.length === 0 && !isTranslating && (
+                      <TooltipContent>
+                        {t("workspace.surveys.edit.ai_translation_all_fields_populated")}
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="secondary" size="sm" className="text-xs">
+                    {missingFirst
+                      ? t("workspace.surveys.edit.missing_first")
+                      : t("workspace.surveys.edit.show_in_order")}
+                    <ChevronDownIcon className="ml-1 h-3.5 w-3.5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="text-xs">
+                  <DropdownMenuItem
+                    className={cn(!missingFirst && "font-semibold", "text-xs")}
+                    onSelect={() => setMissingFirst(false)}>
+                    {t("workspace.surveys.edit.show_in_order")}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className={cn(missingFirst && "font-semibold", "text-xs")}
+                    onSelect={() => setMissingFirst(true)}>
+                    {t("workspace.surveys.edit.missing_first")}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </DialogHeader>
 
@@ -194,6 +326,7 @@ export const ManageTranslationsModal = ({
                   onChange={handleDraftChange}
                   localSurvey={mergedSurvey}
                   languageCode={languageCode}
+                  disabled={translatingPaths.has(s.path)}
                 />
               ))}
             </tbody>

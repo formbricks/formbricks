@@ -12,6 +12,7 @@ interface RichTextTranslationInputProps {
   localSurvey: TSurvey;
   languageCode: string;
   elementId: string;
+  disabled?: boolean;
 }
 
 export const RichTextTranslationInput = ({
@@ -21,6 +22,7 @@ export const RichTextTranslationInput = ({
   localSurvey,
   languageCode,
   elementId,
+  disabled,
 }: RichTextTranslationInputProps) => {
   const [firstRender, setFirstRender] = useState(true);
 
@@ -37,6 +39,7 @@ export const RichTextTranslationInput = ({
         localSurvey={localSurvey}
         elementId={elementId}
         selectedLanguageCode={languageCode}
+        editable={!disabled}
       />
     </div>
   );

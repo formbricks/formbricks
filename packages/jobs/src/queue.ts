@@ -19,7 +19,7 @@ import {
   getRecurringJobSchedulerId,
   toBullMQRepeatOptions,
 } from "@/src/schedules";
-import { type TResponsePipelineJobData, type TTestLogJobData } from "@/src/types";
+import { type TAITranslationJobData, type TResponsePipelineJobData, type TTestLogJobData } from "@/src/types";
 
 export interface JobsQueueHandle {
   connection: IORedis;
@@ -189,6 +189,18 @@ const upsertRecurringBackgroundJobSchedule = async <TData>(
   );
 };
 
+export const enqueueAITranslationJob = async (data: TAITranslationJobData): Promise<Job> => {
+  try {
+    return await enqueueBackgroundJob(JOB_NAMES.aiTranslation, data);
+  } catch (error) {
+    logger.error(
+      { err: error, jobName: JOB_NAMES.aiTranslation },
+      "Failed to enqueue BullMQ AI translation job"
+    );
+    throw error;
+  }
+};
+
 export const enqueueTestLogJob = async (data: TTestLogJobData): Promise<Job> => {
   try {
     return await enqueueBackgroundJob(JOB_NAMES.testLog, data);
@@ -285,6 +297,7 @@ export const upsertRecurringResponsePipelineJobSchedule = async (
 };
 
 export const getBackgroundJobProducer = (): BackgroundJobProducer => ({
+  enqueueAITranslation: async (data) => toEnqueuedJob(await enqueueAITranslationJob(data)),
   enqueueResponsePipeline: async (data) => toEnqueuedJob(await enqueueResponsePipelineJob(data)),
   enqueueTestLog: async (data) => toEnqueuedJob(await enqueueTestLogJob(data)),
   scheduleResponsePipelineAt: async (schedule, data) =>

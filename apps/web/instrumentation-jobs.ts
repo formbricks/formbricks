@@ -1,12 +1,14 @@
 import {
   type JobHandlerOverrides,
   type JobsRuntimeHandle,
+  type TAITranslationJobData,
   type TResponsePipelineJobData,
   startJobsRuntime,
 } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
 import { getJobsWorkerBootstrapConfig } from "@/lib/jobs/config";
 import { processResponsePipelineJob } from "@/modules/response-pipeline/lib/process-response-pipeline-job";
+import { processAITranslationJob } from "@/modules/survey/multi-language-surveys/lib/process-ai-translation-job";
 
 const WORKER_STARTUP_RETRY_DELAY_MS = 30_000;
 
@@ -18,8 +20,14 @@ type TJobsRuntimeGlobal = typeof globalThis & {
 
 const globalForJobsRuntime = globalThis as TJobsRuntimeGlobal;
 const RESPONSE_PIPELINE_JOB_NAME = "response-pipeline.process";
+const AI_TRANSLATION_JOB_NAME = "ai-translation.translate";
+
 const responsePipelineJobHandler: NonNullable<JobHandlerOverrides[string]> = async (data, context) => {
   await processResponsePipelineJob(data as TResponsePipelineJobData, context);
+};
+
+const aiTranslationJobHandler: NonNullable<JobHandlerOverrides[string]> = async (data, context) => {
+  await processAITranslationJob(data as TAITranslationJobData, context);
 };
 
 const clearJobsWorkerRetryTimeout = (): void => {
@@ -68,9 +76,11 @@ export const registerJobsWorker = async (): Promise<JobsRuntimeHandle | null> =>
     ? {
         ...runtimeOptions.jobHandlerOverrides,
         [RESPONSE_PIPELINE_JOB_NAME]: responsePipelineJobHandler,
+        [AI_TRANSLATION_JOB_NAME]: aiTranslationJobHandler,
       }
     : {
         [RESPONSE_PIPELINE_JOB_NAME]: responsePipelineJobHandler,
+        [AI_TRANSLATION_JOB_NAME]: aiTranslationJobHandler,
       };
 
   globalForJobsRuntime.formbricksJobsRuntimeInitializing = startJobsRuntime({

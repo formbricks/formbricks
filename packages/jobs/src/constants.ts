@@ -6,6 +6,7 @@ export const JOBS_PREFIX = "formbricks:jobs";
 export const JOB_NAMES = {
   testLog: "system.test-log",
   responsePipeline: "response-pipeline.process",
+  aiTranslation: "ai-translation.translate",
 } as const;
 
 const JOBS_DEFAULT_BACKOFF = Object.freeze({

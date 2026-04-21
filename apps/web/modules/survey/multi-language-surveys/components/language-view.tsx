@@ -498,6 +498,7 @@ export const LanguageView = ({
         defaultLanguageName={
           defaultLanguage ? (getLanguageLabel(defaultLanguage.code, locale) ?? defaultLanguage.code) : ""
         }
+        workspaceId={workspaceId}
       />
     </div>
   );

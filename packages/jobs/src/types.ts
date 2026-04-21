@@ -33,3 +33,19 @@ export const ZResponsePipelineJobData = z.object({
 });
 
 export type TResponsePipelineJobData = z.infer<typeof ZResponsePipelineJobData>;
+
+export const ZAITranslationField = z.object({
+  path: z.string(),
+  defaultText: z.string(),
+  isRichText: z.boolean(),
+});
+
+export const ZAITranslationJobData = z.object({
+  organizationId: z.string().min(1),
+  workspaceId: z.string().min(1),
+  fields: z.array(ZAITranslationField).min(1),
+  sourceLanguage: z.string().min(1),
+  targetLanguage: z.string().min(1),
+});
+
+export type TAITranslationJobData = z.infer<typeof ZAITranslationJobData>;

@@ -8,6 +8,7 @@ export type {
   UpsertedRecurringJobSchedule,
 } from "./contracts";
 export {
+  enqueueAITranslationJob,
   enqueueResponsePipelineJob,
   enqueueTestLogJob,
   getBackgroundJobProducer,
@@ -16,6 +17,7 @@ export {
   upsertRecurringResponsePipelineJobSchedule,
   upsertRecurringTestLogJobSchedule,
 } from "./queue";
+export { processAITranslationJob } from "./processors/ai-translation";
 export { processResponsePipelineJob } from "./processors/response-pipeline";
 export { processTestLogJob } from "./processors/test-log";
 export { startJobsRuntime } from "./runtime";
@@ -38,6 +40,16 @@ export type {
   TRecurringBackgroundJobSchedule,
   TRunAtBackgroundJobSchedule,
 } from "./schedules";
-export { ZResponsePipelineEvent, ZResponsePipelineJobData, ZTestLogJobData } from "./types";
-export type { TResponsePipelineEvent, TResponsePipelineJobData, TTestLogJobData } from "./types";
+export {
+  ZAITranslationJobData,
+  ZResponsePipelineEvent,
+  ZResponsePipelineJobData,
+  ZTestLogJobData,
+} from "./types";
+export type {
+  TAITranslationJobData,
+  TResponsePipelineEvent,
+  TResponsePipelineJobData,
+  TTestLogJobData,
+} from "./types";
 /* v8 ignore stop */
