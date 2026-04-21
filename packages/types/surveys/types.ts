@@ -342,6 +342,13 @@ export const ZInvitationAudience = z.discriminatedUnion("source", [
     emailColumn: z.string(),
     nameColumn: z.string().optional(),
   }),
+  // Ad-hoc list of emails typed/pasted into the editor. Unlike segments, this
+  // doesn't require the Formbricks EE Contacts license. Unlike Snowflake, it
+  // works without any data-warehouse integration. Good for small, targeted sends.
+  z.object({
+    source: z.literal("manualList"),
+    emails: z.array(z.string().email()).min(1),
+  }),
 ]);
 
 export type TInvitationAudience = z.infer<typeof ZInvitationAudience>;

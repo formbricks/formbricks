@@ -18,7 +18,24 @@ export async function resolveAudience(audience: TInvitationAudience): Promise<TA
   if (audience.source === "segment") {
     return resolveSegmentAudience(audience.segmentId);
   }
+  if (audience.source === "manualList") {
+    return resolveManualListAudience(audience.emails);
+  }
   return resolveSnowflakeAudience(audience);
+}
+
+function resolveManualListAudience(emails: string[]): TAudienceMember[] {
+  const seen = new Set<string>();
+  const out: TAudienceMember[] = [];
+  for (const raw of emails) {
+    const email = raw.trim().toLowerCase();
+    if (!email || seen.has(email)) continue;
+    seen.add(email);
+    // No name available from a manual list; ensureContact will still create
+    // a Contact row for each unique email with just the email attribute set.
+    out.push({ email, name: null, existingContactId: null });
+  }
+  return out;
 }
 
 async function resolveSegmentAudience(segmentId: string): Promise<TAudienceMember[]> {
