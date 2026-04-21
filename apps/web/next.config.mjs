@@ -191,14 +191,15 @@ const nextConfig = {
   async headers() {
     const isProduction = process.env.NODE_ENV === "production";
     const scriptSrcUnsafeEval = isProduction ? "" : " 'unsafe-eval'";
-    const devLoopbackSources = isProduction
-      ? []
-      : getUniqueValues([
+    const allowLoopbackSources = !isProduction || process.env.E2E_TESTING === "1";
+    const devLoopbackSources = allowLoopbackSources
+      ? getUniqueValues([
           ...LOOPBACK_WILDCARD_ORIGINS,
           ...getLoopbackOriginVariants(process.env.WEBAPP_URL),
           ...getLoopbackOriginVariants(process.env.NEXTAUTH_URL),
           ...getLoopbackOriginVariants(process.env.S3_ENDPOINT_URL),
-        ]);
+        ])
+      : [];
     const devLoopbackSourceList = devLoopbackSources.length > 0 ? ` ${devLoopbackSources.join(" ")}` : "";
 
     const cspBase = `default-src 'self'; script-src 'self' 'unsafe-inline'${scriptSrcUnsafeEval} https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' blob: data:${devLoopbackSourceList} https:; font-src 'self' data: https:; connect-src 'self'${devLoopbackSourceList} https: wss:; frame-src 'self' https://app.cal.com https:; media-src 'self' https:; object-src 'self' data: https:; base-uri 'self'; form-action 'self'`;
