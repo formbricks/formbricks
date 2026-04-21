@@ -7,7 +7,12 @@ import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import type { TSurveyFilterCriteria } from "@formbricks/types/surveys/types";
 import { buildWhereClause } from "@/modules/survey/lib/utils";
 import type { TSurvey } from "../types/surveys";
-import { type TSurveyRow, mapSurveyRowsToSurveys, surveySelect } from "./survey-record";
+import {
+  type TSurveyRow,
+  getResponseCountsBySurveyIds,
+  mapSurveyRowsToSurveys,
+  surveySelect,
+} from "./survey-record";
 
 const SURVEY_LIST_CURSOR_VERSION = 1 as const;
 const IN_PROGRESS_BUCKET = "inProgress" as const;
@@ -229,9 +234,14 @@ function getPageRows<T>(rows: T[], limit: number): { pageRows: T[]; hasMore: boo
   };
 }
 
-function buildSurveyListPage(rows: TSurveyRow[], cursor: TSurveyListPageCursor | null): TSurveyListPage {
+async function buildSurveyListPage(
+  rows: TSurveyRow[],
+  cursor: TSurveyListPageCursor | null
+): Promise<TSurveyListPage> {
+  const responseCountsBySurveyId = await getResponseCountsBySurveyIds(rows.map((survey) => survey.id));
+
   return {
-    surveys: mapSurveyRowsToSurveys(rows),
+    surveys: mapSurveyRowsToSurveys(rows, responseCountsBySurveyId),
     nextCursor: cursor ? encodeSurveyListPageCursor(cursor) : null,
   };
 }
@@ -251,7 +261,7 @@ async function getStandardSurveyListPage(
   const { pageRows, hasMore } = getPageRows(surveyRows, options.limit);
   const lastRow = getLastSurveyRow(pageRows);
 
-  return buildSurveyListPage(
+  return await buildSurveyListPage(
     pageRows,
     hasMore && lastRow ? getStandardNextCursor(lastRow, options.sortBy) : null
   );
@@ -308,10 +318,13 @@ function shouldReadInProgressBucket(cursor: TRelevanceSurveyListCursor | null): 
   return !cursor || cursor.bucket === IN_PROGRESS_BUCKET;
 }
 
-function buildRelevancePage(rows: TSurveyRow[], bucket: TRelevanceBucket | null): TSurveyListPage {
+async function buildRelevancePage(
+  rows: TSurveyRow[],
+  bucket: TRelevanceBucket | null
+): Promise<TSurveyListPage> {
   const lastRow = getLastSurveyRow(rows);
 
-  return buildSurveyListPage(rows, bucket && lastRow ? getRelevanceNextCursor(lastRow, bucket) : null);
+  return await buildSurveyListPage(rows, bucket && lastRow ? getRelevanceNextCursor(lastRow, bucket) : null);
 }
 
 async function getInProgressRelevanceStep(
@@ -332,7 +345,7 @@ async function getInProgressRelevanceStep(
   return {
     pageRows,
     remaining: limit - pageRows.length,
-    response: hasMore ? buildRelevancePage(pageRows, IN_PROGRESS_BUCKET) : null,
+    response: hasMore ? await buildRelevancePage(pageRows, IN_PROGRESS_BUCKET) : null,
   };
 }
 
@@ -347,7 +360,7 @@ async function buildInProgressOnlyRelevancePage(
     shouldReadInProgressBucket(cursor) &&
     (await hasMoreRelevanceRowsInOtherBucket(environmentId, filterCriteria));
 
-  return buildRelevancePage(rows, hasOtherRows ? IN_PROGRESS_BUCKET : null);
+  return await buildRelevancePage(rows, hasOtherRows ? IN_PROGRESS_BUCKET : null);
 }
 
 async function getRelevanceSurveyListPage(
@@ -393,7 +406,7 @@ async function getRelevanceSurveyListPage(
   const { pageRows: otherPageRows, hasMore: hasMoreOther } = getPageRows(otherRows, remaining);
   pageRows.push(...otherPageRows);
 
-  return buildRelevancePage(pageRows, hasMoreOther ? OTHER_BUCKET : null);
+  return await buildRelevancePage(pageRows, hasMoreOther ? OTHER_BUCKET : null);
 }
 
 export async function getSurveyListPage(

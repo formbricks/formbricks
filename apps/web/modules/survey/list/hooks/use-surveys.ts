@@ -32,6 +32,7 @@ export const useSurveys = ({
         workspaceId,
         limit,
         cursor: pageParam,
+        includeTotalCount: pageParam === null,
         filters,
         signal,
       }),

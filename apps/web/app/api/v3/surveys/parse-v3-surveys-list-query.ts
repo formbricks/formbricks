@@ -28,6 +28,7 @@ const SUPPORTED_QUERY_PARAMS = [
   "workspaceId",
   "limit",
   "cursor",
+  "includeTotalCount",
   FILTER_NAME_CONTAINS_QUERY_PARAM,
   FILTER_STATUS_IN_QUERY_PARAM,
   FILTER_TYPE_IN_QUERY_PARAM,
@@ -53,6 +54,11 @@ const ZV3SurveysListQuery = z.object({
   workspaceId: ZId,
   limit: z.coerce.number().int().min(1).max(V3_SURVEYS_MAX_LIMIT).default(V3_SURVEYS_DEFAULT_LIMIT),
   cursor: z.string().min(1).optional(),
+  includeTotalCount: z
+    .enum(["true", "false"])
+    .optional()
+    .transform((value) => value !== "false")
+    .default(true),
   [FILTER_NAME_CONTAINS_QUERY_PARAM]: z
     .string()
     .max(512)
@@ -71,6 +77,7 @@ export type TV3SurveysListQueryParseResult =
       workspaceId: string;
       limit: number;
       cursor: TSurveyListPageCursor | null;
+      includeTotalCount: boolean;
       sortBy: TSurveyListSort;
       filterCriteria: TSurveyFilterCriteria | undefined;
     }
@@ -111,6 +118,7 @@ export function parseV3SurveysListQuery(searchParams: URLSearchParams): TV3Surve
     workspaceId: searchParams.get("workspaceId"),
     limit: searchParams.get("limit") ?? undefined,
     cursor: searchParams.get("cursor")?.trim() || undefined,
+    includeTotalCount: searchParams.get("includeTotalCount")?.trim() || undefined,
     [FILTER_NAME_CONTAINS_QUERY_PARAM]: searchParams.get(FILTER_NAME_CONTAINS_QUERY_PARAM) ?? undefined,
     [FILTER_STATUS_IN_QUERY_PARAM]: statusVals.length > 0 ? statusVals : undefined,
     [FILTER_TYPE_IN_QUERY_PARAM]: typeVals.length > 0 ? typeVals : undefined,
@@ -153,6 +161,7 @@ export function parseV3SurveysListQuery(searchParams: URLSearchParams): TV3Surve
     workspaceId: q.workspaceId,
     limit: q.limit,
     cursor,
+    includeTotalCount: q.includeTotalCount,
     sortBy,
     filterCriteria: buildFilterCriteria(q),
   };

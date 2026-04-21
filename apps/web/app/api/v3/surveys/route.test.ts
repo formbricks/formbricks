@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { getSurveyCount } from "@/modules/survey/list/lib/survey";
-import { getSurveyListPage } from "@/modules/survey/list/lib/survey-page";
+import { encodeSurveyListPageCursor, getSurveyListPage } from "@/modules/survey/list/lib/survey-page";
 import { GET } from "./route";
 
 const { mockAuthenticateRequest } = vi.hoisted(() => ({
@@ -255,6 +255,29 @@ describe("GET /api/v3/surveys", () => {
       filterCriteria: undefined,
     });
     expect(getSurveyCount).toHaveBeenCalledWith(resolvedEnvironmentId, undefined);
+  });
+
+  test("skips totalCount when includeTotalCount=false", async () => {
+    vi.mocked(getSurveyListPage).mockResolvedValue({
+      surveys: [],
+      nextCursor: null,
+    });
+    const cursor = encodeSurveyListPageCursor({
+      version: 1,
+      sortBy: "updatedAt",
+      value: "2026-04-15T10:00:00.000Z",
+      id: "survey_1",
+    });
+
+    const req = createRequest(
+      `http://localhost/api/v3/surveys?workspaceId=${validWorkspaceId}&cursor=${cursor}&includeTotalCount=false`
+    );
+    const res = await GET(req, {} as any);
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.meta).toEqual({ limit: 20, nextCursor: null, totalCount: null });
+    expect(getSurveyCount).not.toHaveBeenCalled();
   });
 
   test("passes filter query to getSurveyListPage", async () => {
