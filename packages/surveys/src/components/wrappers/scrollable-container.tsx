@@ -18,6 +18,7 @@ export const ScrollableContainer = forwardRef<ScrollableContainerHandle, Scrolla
     const [isAtBottom, setIsAtBottom] = useState(false);
     const [isAtTop, setIsAtTop] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
+    const contentRef = useRef<HTMLDivElement>(null);
     const isSurveyPreview = Boolean(document.getElementById("survey-preview"));
 
     const checkScroll = () => {
@@ -49,6 +50,7 @@ export const ScrollableContainer = forwardRef<ScrollableContainerHandle, Scrolla
     useEffect(() => {
       const element = containerRef.current;
       if (!element) return;
+      const contentElement = contentRef.current;
 
       checkScroll();
 
@@ -63,7 +65,9 @@ export const ScrollableContainer = forwardRef<ScrollableContainerHandle, Scrolla
               checkScroll();
             })
           : null;
-      resizeObserver?.observe(element);
+      if (contentElement) {
+        resizeObserver?.observe(contentElement);
+      }
 
       return () => {
         element.removeEventListener("scroll", handleScroll);
@@ -95,7 +99,7 @@ export const ScrollableContainer = forwardRef<ScrollableContainerHandle, Scrolla
             maxHeight,
           }}
           className={cn("bg-survey-bg overflow-auto px-4")}>
-          {children}
+          <div ref={contentRef}>{children}</div>
         </div>
         {!isAtBottom && (
           <>
