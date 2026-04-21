@@ -93,6 +93,7 @@ export const selectSurvey = {
     },
   },
   followUps: true,
+  invitationConfig: true,
 } satisfies Prisma.SurveySelect;
 
 export const getOrganizationBilling = reactCache(

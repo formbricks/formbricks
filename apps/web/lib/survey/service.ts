@@ -111,6 +111,7 @@ export const selectSurvey = {
   },
   followUps: true,
   slug: true,
+  invitationConfig: true,
 } satisfies Prisma.SurveySelect;
 
 export const checkTriggersValidity = (triggers: TSurvey["triggers"], actionClasses: ActionClass[]) => {

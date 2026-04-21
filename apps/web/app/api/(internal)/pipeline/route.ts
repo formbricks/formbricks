@@ -234,11 +234,15 @@ export const POST = async (request: Request) => {
     }
 
     // Link response to any pending invitation so reminders stop targeting this person.
-    try {
-      await linkResponseToInvitation(response.id);
-    } catch (error) {
-      logger.error({ error, surveyId, responseId: response.id }, "linkResponseToInvitation failed");
-      // Never block the pipeline
+    // Short-circuit for surveys that don't use the invitation feature — skips 2 DB
+    // queries per response-finished event for the vast majority of surveys.
+    if (survey.invitationConfig) {
+      try {
+        await linkResponseToInvitation(response.id);
+      } catch (error) {
+        logger.error({ error, surveyId, responseId: response.id }, "linkResponseToInvitation failed");
+        // Never block the pipeline
+      }
     }
 
     // Snowflake sync (if enabled for this survey)
