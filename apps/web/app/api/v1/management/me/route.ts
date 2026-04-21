@@ -120,8 +120,10 @@ const buildEnvironmentResponse = (apiKeyData: ApiKeyData) => {
       name: workspace.name,
     },
     // Backwards compat: old consumers expect project fields
-    projectId: workspace.id,
-    projectName: workspace.name,
+    project: {
+      id: workspace.id,
+      name: workspace.name,
+    },
   });
 };
 
