@@ -51,6 +51,19 @@
     "@formbricks/i18n-utils#test": {
       "dependsOn": ["@formbricks/i18n-utils#build"]
     },
+    "@formbricks/jobs#build": {
+      "dependsOn": ["@formbricks/logger#build"],
+      "outputs": ["dist/**"]
+    },
+    "@formbricks/jobs#lint": {
+      "dependsOn": ["@formbricks/logger#build"]
+    },
+    "@formbricks/jobs#test": {
+      "dependsOn": ["@formbricks/logger#build"]
+    },
+    "@formbricks/jobs#test:coverage": {
+      "dependsOn": ["@formbricks/logger#build"]
+    },
     "@formbricks/js-core#build": {
       "dependsOn": ["^build", "@formbricks/database#build"],
       "outputs": ["dist/**"]
@@ -123,6 +136,7 @@
         "@formbricks/ai#build",
         "@formbricks/cache#build",
         "@formbricks/database#build",
+        "@formbricks/jobs#build",
         "@formbricks/logger#build",
         "@formbricks/storage#build"
       ],
@@ -135,6 +149,7 @@
         "@formbricks/cache#build",
         "@formbricks/database#build",
         "@formbricks/database#db:setup",
+        "@formbricks/jobs#build",
         "@formbricks/logger#build",
         "@formbricks/storage#build"
       ],
@@ -147,6 +162,7 @@
         "@formbricks/database#build",
         "@formbricks/storage#build",
         "@formbricks/cache#build",
+        "@formbricks/jobs#build",
         "@formbricks/surveys#build"
       ]
     },
@@ -157,6 +173,7 @@
         "@formbricks/database#build",
         "@formbricks/storage#build",
         "@formbricks/cache#build",
+        "@formbricks/jobs#build",
         "@formbricks/surveys#build"
       ]
     },
@@ -186,6 +203,10 @@
         "AZUREAD_TENANT_ID",
         "AUTH_SSO_DEFAULT_TEAM_ID",
         "AUTH_SKIP_INVITE_FOR_SSO",
+        "BULLMQ_EXTERNAL_WORKER_ENABLED",
+        "BULLMQ_WORKER_CONCURRENCY",
+        "BULLMQ_WORKER_COUNT",
+        "BULLMQ_WORKER_ENABLED",
         "BASE_PATH",
         "BREVO_API_KEY",
         "BREVO_LIST_ID",

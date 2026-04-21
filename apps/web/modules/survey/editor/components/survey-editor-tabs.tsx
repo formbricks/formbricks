@@ -1,6 +1,13 @@
 "use client";
 
-import { MailIcon, PaintbrushIcon, Rows3Icon, SettingsIcon } from "lucide-react";
+import {
+  AlertTriangleIcon,
+  Languages,
+  MailIcon,
+  PaintbrushIcon,
+  Rows3Icon,
+  SettingsIcon,
+} from "lucide-react";
 import { type JSX, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { TSurveyEditorTabs } from "@formbricks/types/surveys/types";
@@ -10,6 +17,7 @@ interface Tab {
   id: TSurveyEditorTabs;
   label: string;
   icon: JSX.Element;
+  alert?: boolean;
 }
 
 interface SurveyEditorTabsProps {
@@ -17,6 +25,7 @@ interface SurveyEditorTabsProps {
   setActiveId: React.Dispatch<React.SetStateAction<TSurveyEditorTabs>>;
   isStylingTabVisible?: boolean;
   isCxMode: boolean;
+  hasLanguageErrors?: boolean;
 }
 
 export const SurveyEditorTabs = ({
@@ -24,6 +33,7 @@ export const SurveyEditorTabs = ({
   setActiveId,
   isStylingTabVisible,
   isCxMode,
+  hasLanguageErrors,
 }: SurveyEditorTabsProps) => {
   const { t } = useTranslation();
   const tabsComputed = useMemo(() => {
@@ -37,6 +47,12 @@ export const SurveyEditorTabs = ({
         id: "styling",
         label: t("common.styling"),
         icon: <PaintbrushIcon className="h-5 w-5" />,
+      },
+      {
+        id: "language",
+        label: t("common.language"),
+        icon: <Languages className="h-5 w-5" />,
+        alert: hasLanguageErrors,
       },
       {
         id: "settings",
@@ -54,7 +70,7 @@ export const SurveyEditorTabs = ({
       return tabs;
     }
     return tabs.filter((tab) => tab.id !== "styling");
-  }, [isStylingTabVisible, t]);
+  }, [isStylingTabVisible, t, hasLanguageErrors]);
 
   // Hide settings tab in CX mode
   let tabsToDisplay = isCxMode ? tabsComputed.filter((tab) => tab.id !== "settings") : tabsComputed;
@@ -76,6 +92,7 @@ export const SurveyEditorTabs = ({
             aria-current={tab.id === activeId ? "page" : undefined}>
             {tab.icon && <div className="mr-2 h-5 w-5">{tab.icon}</div>}
             {tab.label}
+            {tab.alert && <AlertTriangleIcon className="ml-1.5 h-4 w-4 text-amber-500" />}
           </button>
         ))}
       </nav>

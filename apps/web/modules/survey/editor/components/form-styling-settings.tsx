@@ -2,13 +2,14 @@
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import * as Collapsible from "@radix-ui/react-collapsible";
-import { CheckIcon } from "lucide-react";
+import { CheckIcon, SparklesIcon } from "lucide-react";
 import React, { useState } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
+import { Button } from "@/modules/ui/components/button";
 import {
   ColorField,
   DimensionInput,
@@ -23,6 +24,7 @@ type FormStylingSettingsProps = {
   isSettingsPage?: boolean;
   disabled?: boolean;
   form: UseFormReturn<TWorkspaceStyling | TSurveyStyling>;
+  onSuggestColorsClick?: () => void;
 };
 
 export const FormStylingSettings = ({
@@ -31,6 +33,7 @@ export const FormStylingSettings = ({
   disabled = false,
   setOpen,
   form,
+  onSuggestColorsClick,
 }: FormStylingSettingsProps) => {
   const { t } = useTranslation();
 
@@ -80,6 +83,24 @@ export const FormStylingSettings = ({
         <hr className="py-1 text-slate-600" />
 
         <div className="flex flex-col gap-6 p-6">
+          <div className="grid grid-cols-2 items-end gap-4">
+            <ColorField
+              form={form}
+              name="brandColor.light"
+              label={t("workspace.surveys.edit.brand_color")}
+              description={t("workspace.surveys.edit.brand_color_description")}
+            />
+            <Button
+              type="button"
+              variant="default"
+              className="h-10 justify-center gap-1"
+              onClick={onSuggestColorsClick}
+              disabled={disabled || !onSuggestColorsClick}>
+              <SparklesIcon className="mr-2 h-4 w-4" />
+              {t("workspace.look.suggest_colors")}
+            </Button>
+          </div>
+
           {/* Headlines & Descriptions */}
           <StylingSection
             title={t("workspace.look.advanced_styling_section_headlines")}

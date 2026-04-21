@@ -73,7 +73,6 @@ const validateSurvey = async (responseInput: TResponseInput, workspaceId: string
       error: responses.badRequestResponse(
         "Survey is part of another workspace",
         {
-          "survey.workspaceId": survey.workspaceId,
           workspaceId,
         },
         true

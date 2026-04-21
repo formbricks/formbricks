@@ -150,9 +150,7 @@ const handleApiKeyAuthentication = async (apiKey: string) => {
     });
   }
 
-  const rateLimitError = await checkRateLimit(apiKeyData.id);
-  if (rateLimitError) return rateLimitError;
-
+  // Rate limiting for apiKey auth is enforced by Envoy in v5 — see envoy-rate-limit-coverage.ts
   if (!isValidApiKeyEnvironment(apiKeyData)) {
     return responses.badRequestResponse("You can't use this method with this API key");
   }

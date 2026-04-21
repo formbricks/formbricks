@@ -13,6 +13,8 @@ import {
   SelectedFilterValue,
   useResponseFilter,
 } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
+import { CESSummary } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/CESSummary";
+import { CSATSummary } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/CSATSummary";
 import { CTASummary } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/CTASummary";
 import { CalSummary } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/CalSummary";
 import { ConsentSummary } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/ConsentSummary";
@@ -149,6 +151,26 @@ export const SummaryList = ({ summary, responseCount, survey, locale }: SummaryL
           if (elementSummary.type === TSurveyElementTypeEnum.Rating) {
             return (
               <RatingSummary
+                key={elementSummary.element.id}
+                elementSummary={elementSummary}
+                survey={survey}
+                setFilter={setFilter}
+              />
+            );
+          }
+          if (elementSummary.type === TSurveyElementTypeEnum.CSAT) {
+            return (
+              <CSATSummary
+                key={elementSummary.element.id}
+                elementSummary={elementSummary}
+                survey={survey}
+                setFilter={setFilter}
+              />
+            );
+          }
+          if (elementSummary.type === TSurveyElementTypeEnum.CES) {
+            return (
+              <CESSummary
                 key={elementSummary.element.id}
                 elementSummary={elementSummary}
                 survey={survey}

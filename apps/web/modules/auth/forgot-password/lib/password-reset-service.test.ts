@@ -252,7 +252,7 @@ describe("password-reset-service", () => {
 
   const parseTokenFromResetLink = (): string => {
     const lastCall = vi.mocked(sendPasswordResetLinkEmail).mock.calls.at(-1);
-    const verifyLink = lastCall?.[0]?.verifyLink;
+    const verifyLink = (lastCall?.[0] as { verifyLink?: string } | undefined)?.verifyLink;
 
     if (!verifyLink) {
       throw new Error("No verify link found");
@@ -271,7 +271,7 @@ describe("password-reset-service", () => {
   const parseTokenFromDebugLog = (): string => {
     const verifyLink = vi
       .mocked(logger.info)
-      .mock.calls.map(([payload]) => payload?.verifyLink)
+      .mock.calls.map(([payload]) => (payload as { verifyLink?: string } | undefined)?.verifyLink)
       .find((loggedVerifyLink): loggedVerifyLink is string => typeof loggedVerifyLink === "string");
 
     if (!verifyLink) {

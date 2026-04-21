@@ -413,16 +413,22 @@ export const MainNavigation = ({
     : `/workspaces/${workspace.id}/surveys/`;
 
   const handleWorkspaceChange = (workspaceId: string) => {
-    if (workspaceId === workspace.id) return;
+    const targetPath =
+      workspaceId === workspace.id ? `/workspaces/${workspace.id}/surveys` : `/workspaces/${workspaceId}/`;
     startTransition(() => {
-      router.push(`/workspaces/${workspaceId}/`);
+      setIsWorkspaceDropdownOpen(false);
+      router.push(targetPath);
     });
   };
 
   const handleOrganizationChange = (organizationId: string) => {
-    if (organizationId === organization.id) return;
+    const targetPath =
+      organizationId === organization.id
+        ? `/workspaces/${workspace.id}/settings/general`
+        : `/organizations/${organizationId}/`;
     startTransition(() => {
-      router.push(`/organizations/${organizationId}/`);
+      setIsOrganizationDropdownOpen(false);
+      router.push(targetPath);
     });
   };
 
@@ -479,7 +485,7 @@ export const MainNavigation = ({
   );
 
   const switcherIconClasses =
-    "flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-600";
+    "flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600";
   const isInitialWorkspacesLoading =
     isWorkspaceDropdownOpen && !hasInitializedWorkspaces && !workspaceLoadError;
 

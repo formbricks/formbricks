@@ -26,17 +26,6 @@ export const ZSurvey = z.object({
 
 export type TSurvey = z.infer<typeof ZSurvey>;
 
-export const ZSurveyCopyFormValidation = z.object({
-  workspaces: z.array(
-    z.object({
-      workspace: z.string(),
-      environments: z.array(z.string()),
-    })
-  ),
-});
-
-export type TSurveyCopyFormData = z.infer<typeof ZSurveyCopyFormValidation>;
-
 export interface TWorkspaceWithLanguages extends Pick<Workspace, "id"> {
   languages: Pick<Language, "code" | "alias">[];
 }

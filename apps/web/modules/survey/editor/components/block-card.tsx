@@ -22,8 +22,10 @@ import { AdvancedSettings } from "@/modules/survey/editor/components/advanced-se
 import { BlockMenu } from "@/modules/survey/editor/components/block-menu";
 import { BlockSettings } from "@/modules/survey/editor/components/block-settings";
 import { CalElementForm } from "@/modules/survey/editor/components/cal-element-form";
+import { CESElementForm } from "@/modules/survey/editor/components/ces-element-form";
 import { ConsentElementForm } from "@/modules/survey/editor/components/consent-element-form";
 import { ContactInfoElementForm } from "@/modules/survey/editor/components/contact-info-element-form";
+import { CSATElementForm } from "@/modules/survey/editor/components/csat-element-form";
 import { CTAElementForm } from "@/modules/survey/editor/components/cta-element-form";
 import { DateElementForm } from "@/modules/survey/editor/components/date-element-form";
 import { EditorCardMenu } from "@/modules/survey/editor/components/editor-card-menu";
@@ -59,8 +61,6 @@ interface BlockCardProps {
   setActiveElementId: (elementId: string | null) => void;
   lastElement: boolean;
   lastElementIndex: number;
-  selectedLanguageCode: string;
-  setSelectedLanguageCode: (language: string) => void;
   invalidElements?: string[];
   addElement: (element: any, index?: number) => void;
   isFormbricksCloud: boolean;
@@ -95,8 +95,6 @@ export const BlockCard = ({
   setActiveElementId,
   lastElement,
   lastElementIndex,
-  selectedLanguageCode,
-  setSelectedLanguageCode,
   invalidElements,
   addElement,
   isFormbricksCloud,
@@ -114,6 +112,8 @@ export const BlockCard = ({
   moveElementToBlock,
   totalBlocks,
 }: BlockCardProps) => {
+  const selectedLanguageCode = "default";
+
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: block.id,
   });
@@ -156,6 +156,8 @@ export const BlockCard = ({
         TSurveyElementTypeEnum.PictureSelection,
         TSurveyElementTypeEnum.Rating,
         TSurveyElementTypeEnum.NPS,
+        TSurveyElementTypeEnum.CSAT,
+        TSurveyElementTypeEnum.CES,
         TSurveyElementTypeEnum.Ranking,
         TSurveyElementTypeEnum.Matrix,
       ].includes(elementType)
@@ -169,7 +171,6 @@ export const BlockCard = ({
     elementIdx,
     updateElement,
     selectedLanguageCode,
-    setSelectedLanguageCode,
     isInvalid: invalidElements ? invalidElements.includes(element.id) : false,
     locale,
     isStorageConfigured,
@@ -184,6 +185,8 @@ export const BlockCard = ({
     [TSurveyElementTypeEnum.NPS]: NPSElementForm,
     [TSurveyElementTypeEnum.CTA]: CTAElementForm,
     [TSurveyElementTypeEnum.Rating]: RatingElementForm,
+    [TSurveyElementTypeEnum.CSAT]: CSATElementForm,
+    [TSurveyElementTypeEnum.CES]: CESElementForm,
     [TSurveyElementTypeEnum.Consent]: ConsentElementForm,
     [TSurveyElementTypeEnum.Date]: DateElementForm,
     [TSurveyElementTypeEnum.PictureSelection]: PictureSelectionForm,
@@ -427,7 +430,6 @@ export const BlockCard = ({
                                 updateElement={updateElement}
                                 updateBlockLogic={updateBlockLogic}
                                 updateBlockLogicFallback={updateBlockLogicFallback}
-                                selectedLanguageCode={selectedLanguageCode}
                               />
                             </Collapsible.CollapsibleContent>
                           </Collapsible.Root>
@@ -461,7 +463,6 @@ export const BlockCard = ({
                 block={block}
                 blockIndex={blockIdx}
                 selectedLanguageCode={selectedLanguageCode}
-                setSelectedLanguageCode={setSelectedLanguageCode}
                 updateBlockButtonLabel={updateBlockButtonLabel}
                 updateBlockLogic={updateBlockLogic}
                 updateBlockLogicFallback={updateBlockLogicFallback}

@@ -23,8 +23,6 @@ interface EditWelcomeCardProps {
   setActiveElementId: (id: string | null) => void;
   activeElementId: string | null;
   isInvalid: boolean;
-  selectedLanguageCode: string;
-  setSelectedLanguageCode: (languageCode: string) => void;
   locale: TUserLocale;
   isStorageConfigured: boolean;
   isExternalUrlsAllowed?: boolean;
@@ -36,8 +34,6 @@ export const EditWelcomeCard = ({
   setActiveElementId,
   activeElementId,
   isInvalid,
-  selectedLanguageCode,
-  setSelectedLanguageCode,
   locale,
   isStorageConfigured = true,
   isExternalUrlsAllowed,
@@ -157,8 +153,6 @@ export const EditWelcomeCard = ({
                 elementIdx={-1}
                 isInvalid={isInvalid}
                 updateSurvey={updateSurvey}
-                selectedLanguageCode={selectedLanguageCode}
-                setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
                 isExternalUrlsAllowed={isExternalUrlsAllowed}
@@ -173,8 +167,6 @@ export const EditWelcomeCard = ({
                 elementIdx={-1}
                 isInvalid={isInvalid}
                 updateSurvey={updateSurvey}
-                selectedLanguageCode={selectedLanguageCode}
-                setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
                 isExternalUrlsAllowed={isExternalUrlsAllowed}
@@ -193,8 +185,6 @@ export const EditWelcomeCard = ({
                     placeholder={t("common.next")}
                     isInvalid={isInvalid}
                     updateSurvey={updateSurvey}
-                    selectedLanguageCode={selectedLanguageCode}
-                    setSelectedLanguageCode={setSelectedLanguageCode}
                     label={t("workspace.surveys.edit.next_button_label")}
                     locale={locale}
                     isStorageConfigured={isStorageConfigured}

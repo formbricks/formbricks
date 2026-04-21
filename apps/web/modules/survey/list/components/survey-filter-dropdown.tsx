@@ -12,7 +12,7 @@ import {
 
 interface SurveyFilterDropdownProps {
   title: string;
-  id: "createdBy" | "status" | "type";
+  id: "status" | "type";
   options: TFilterOption[];
   selectedOptions: string[];
   setSelectedOptions: (value: string) => void;

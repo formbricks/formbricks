@@ -6,7 +6,6 @@ import { EMAIL_VERIFICATION_DISABLED } from "@/lib/constants";
 import { capturePostHogEvent } from "@/lib/posthog";
 // Import mocked rate limiting functions
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
-import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { authOptions } from "./authOptions";
 import { mockUser } from "./mock-data";
 import { hashPassword } from "./utils";
@@ -220,8 +219,8 @@ describe("authOptions", () => {
       });
     }, 15000);
 
-    describe("Rate Limiting", () => {
-      test("should apply rate limiting before credential validation", async () => {
+    describe("Envoy-managed callback behavior", () => {
+      test("should not apply in-app rate limiting before credential validation", async () => {
         vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
         vi.spyOn(prisma.user, "findUnique").mockResolvedValue({
           id: mockUserId,
@@ -235,27 +234,14 @@ describe("authOptions", () => {
 
         await credentialsProvider.options.authorize(credentials, {});
 
-        expect(applyIPRateLimit).toHaveBeenCalledWith(rateLimitConfigs.auth.login);
-        expect(applyIPRateLimit).toHaveBeenCalledBefore(prisma.user.findUnique as any);
+        expect(applyIPRateLimit).not.toHaveBeenCalled();
+        expect(prisma.user.findUnique).toHaveBeenCalled();
       });
 
-      test("should block login when rate limit exceeded", async () => {
+      test("should ignore app limiter errors because login is Envoy-managed", async () => {
         vi.mocked(applyIPRateLimit).mockRejectedValue(
           new Error("Maximum number of requests reached. Please try again later.")
         );
-        const findUniqueSpy = vi.spyOn(prisma.user, "findUnique");
-
-        const credentials = { email: mockUser.email, password: mockPassword };
-
-        await expect(credentialsProvider.options.authorize(credentials, {})).rejects.toThrow(
-          "Maximum number of requests reached. Please try again later."
-        );
-
-        expect(findUniqueSpy).not.toHaveBeenCalled();
-      });
-
-      test("should use correct rate limit configuration", async () => {
-        vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
         vi.spyOn(prisma.user, "findUnique").mockResolvedValue({
           id: mockUserId,
           email: mockUser.email,
@@ -266,13 +252,14 @@ describe("authOptions", () => {
 
         const credentials = { email: mockUser.email, password: mockPassword };
 
-        await credentialsProvider.options.authorize(credentials, {});
+        const result = await credentialsProvider.options.authorize(credentials, {});
 
-        expect(applyIPRateLimit).toHaveBeenCalledWith({
-          interval: 900,
-          allowedPerInterval: 30,
-          namespace: "auth:login",
+        expect(result).toEqual({
+          id: mockUserId,
+          email: mockUser.email,
+          emailVerified: expect.any(Date),
         });
+        expect(applyIPRateLimit).not.toHaveBeenCalled();
       });
     });
 
@@ -315,30 +302,28 @@ describe("authOptions", () => {
       );
     });
 
-    describe("Rate Limiting", () => {
-      test("should apply rate limiting before token verification", async () => {
+    describe("Envoy-managed callback behavior", () => {
+      test("should not apply in-app rate limiting before token verification", async () => {
         vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
 
         const credentials = { token: "sometoken" };
 
         await expect(tokenProvider.options.authorize(credentials, {})).rejects.toThrow();
 
-        expect(applyIPRateLimit).toHaveBeenCalledWith(rateLimitConfigs.auth.verifyEmail);
+        expect(applyIPRateLimit).not.toHaveBeenCalled();
       });
 
-      test("should block verification when rate limit exceeded", async () => {
+      test("should ignore app limiter errors because token verification is Envoy-managed", async () => {
         vi.mocked(applyIPRateLimit).mockRejectedValue(
           new Error("Maximum number of requests reached. Please try again later.")
         );
-        const findUniqueSpy = vi.spyOn(prisma.user, "findUnique");
 
         const credentials = { token: "sometoken" };
 
         await expect(tokenProvider.options.authorize(credentials, {})).rejects.toThrow(
-          "Maximum number of requests reached. Please try again later."
+          "Either a user does not match the provided token or the token is invalid"
         );
-
-        expect(findUniqueSpy).not.toHaveBeenCalled();
+        expect(applyIPRateLimit).not.toHaveBeenCalled();
       });
     });
   });

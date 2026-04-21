@@ -29,5 +29,12 @@ export default defineConfig({
       include: ["src/**/*.ts"],
     },
   },
-  plugins: [dts({ rollupTypes: true }) as PluginOption],
+  plugins: [
+    dts({
+      include: ["src/**/*"],
+      entryRoot: "src",
+      outDir: "dist",
+      rollupTypes: true,
+    }) as PluginOption,
+  ],
 });

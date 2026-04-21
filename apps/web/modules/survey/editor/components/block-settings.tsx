@@ -17,7 +17,6 @@ interface BlockSettingsProps {
   block: TSurveyBlock;
   blockIndex: number;
   selectedLanguageCode: string;
-  setSelectedLanguageCode: (languageCode: string) => void;
   updateBlockButtonLabel: (
     blockIndex: number,
     labelKey: "buttonLabel" | "backButtonLabel",
@@ -35,7 +34,6 @@ export const BlockSettings = ({
   block,
   blockIndex,
   selectedLanguageCode,
-  setSelectedLanguageCode,
   updateBlockButtonLabel,
   updateBlockLogic,
   updateBlockLogicFallback,
@@ -97,8 +95,6 @@ export const BlockSettings = ({
                     });
                   }
                 }}
-                selectedLanguageCode={selectedLanguageCode}
-                setSelectedLanguageCode={setSelectedLanguageCode}
                 placeholder={t("common.back")}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
@@ -139,8 +135,6 @@ export const BlockSettings = ({
                   updateBlockButtonLabel(blockIndex, "buttonLabel", updatedButtonLabel);
                 }
               }}
-              selectedLanguageCode={selectedLanguageCode}
-              setSelectedLanguageCode={setSelectedLanguageCode}
               placeholder={t("common.next")}
               locale={locale}
               isStorageConfigured={isStorageConfigured}

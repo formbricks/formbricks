@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { TActor, TAuditAction, TAuditStatus, TAuditTarget } from "../types/audit-log";
 // Import original module to access its original exports for the mock factory
 import * as OriginalHandler from "./handler";
@@ -131,6 +132,7 @@ const mockCtxBase = {
 function clearAllMockHandles() {
   if (serviceLogAuditEventMockHandle) serviceLogAuditEventMockHandle.mockClear().mockResolvedValue(undefined);
   if (loggerErrorMockHandle) loggerErrorMockHandle.mockClear();
+  vi.mocked(getClientIpFromHeaders).mockClear();
   if (mutableConstants) {
     // Check because it's a var and could be re-assigned (though not in this code)
     mutableConstants.AUDIT_LOG_ENABLED = true;
@@ -183,6 +185,29 @@ describe("queueAuditEventBackground", () => {
     expect(serviceLogAuditEventMockHandle).toHaveBeenCalled();
     const logCall = serviceLogAuditEventMockHandle.mock.calls[0][0];
     expect(logCall.action).toBe(baseEventParams.action);
+  });
+});
+
+describe("queueAuditEventWithoutRequest", () => {
+  beforeEach(() => {
+    clearAllMockHandles();
+  });
+  afterEach(() => {
+    vi.resetModules();
+  });
+
+  test("logs audit events without reading request headers", async () => {
+    await OriginalHandler.queueAuditEventWithoutRequest({
+      ...baseEventParams,
+      ipAddress: "worker-ip",
+    });
+
+    expect(serviceLogAuditEventMockHandle).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ipAddress: "worker-ip",
+      })
+    );
+    expect(vi.mocked(getClientIpFromHeaders)).not.toHaveBeenCalled();
   });
 });
 
