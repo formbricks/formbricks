@@ -230,41 +230,6 @@ We believe this is the only path forward to build the comprehensive Survey and E
 
 Additional migration steps are needed if you are using a self-hosted Formbricks setup that uses either local file storage (not S3-compatible file storage) or doesn't already use a Redis cache.
 
-### Local uploads to bundled RustFS
-
-If your current self-hosted setup still stores uploads on the local filesystem and you now want to move to the
-bundled object storage setup, use the RustFS migration helper:
-
-```bash
-# Download the latest script
-curl -fsSL -o migrate-to-rustfs.sh \
-  https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/migrate-to-rustfs.sh
-
-# Make it executable
-chmod +x migrate-to-rustfs.sh
-
-# Launch the guided migration
-./migrate-to-rustfs.sh
-```
-
-This helper:
-
-- Adds bundled RustFS services to your Compose setup
-- Configures the bucket, policy, and least-privilege service credentials
-- Writes generated RustFS credentials to a local `.env` file with restricted permissions
-- Copies legacy local uploads into the RustFS bucket
-- Removes legacy local upload configuration only after the copy succeeds
-
-<Note>
-  This helper targets a convenient single-server RustFS setup. If you need higher availability or a
-  larger-scale storage architecture, prefer external object storage or a dedicated RustFS deployment.
-</Note>
-
-<Info>
-  This helper does **not** migrate MinIO-backed installs to RustFS. It is designed only for setups that still
-  use local uploads.
-</Info>
-
 ### Legacy one-click v4.0 upgrade
 
 For historical v4.0 upgrades, our original one-click migration script is still available:
