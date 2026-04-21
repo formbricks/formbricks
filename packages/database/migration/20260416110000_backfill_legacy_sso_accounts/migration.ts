@@ -83,7 +83,16 @@ export const backfillLegacySsoAccounts = async (tx: TMigrationTx): Promise<TSsoB
     if (canonicalAccount) {
       if (canonicalAccount.userId !== legacyAccount.userId) {
         stats.skippedConflict += 1;
-        console.warn("Skipping Azure account normalization due to ownership conflict.");
+        console.warn(
+          [
+            "Skipping Azure account normalization due to ownership conflict.",
+            `provider=azuread`,
+            `legacyAccountId=${legacyAccount.id}`,
+            `legacyUserId=${legacyAccount.userId}`,
+            `canonicalAccountId=${canonicalAccount.id}`,
+            `canonicalUserId=${canonicalAccount.userId}`,
+          ].join(" ")
+        );
         continue;
       }
 
@@ -97,7 +106,16 @@ export const backfillLegacySsoAccounts = async (tx: TMigrationTx): Promise<TSsoB
 
     if (existingUserProviderAccount) {
       stats.skippedExisting += 1;
-      console.warn("Skipping Azure account normalization because a canonical account already exists.");
+      console.warn(
+        [
+          "Skipping Azure account normalization because a canonical account already exists.",
+          `provider=azuread`,
+          `legacyAccountId=${legacyAccount.id}`,
+          `legacyUserId=${legacyAccount.userId}`,
+          `canonicalAccountId=${existingUserProviderAccount.id}`,
+          `canonicalUserId=${existingUserProviderAccount.userId}`,
+        ].join(" ")
+      );
       continue;
     }
 
