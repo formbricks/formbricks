@@ -108,7 +108,7 @@ describe("ApiClient", () => {
         expect(result.data.responseId).toBe("response123");
       }
       expect(vi.mocked(global.fetch).mock.calls[0][0]).toContain(
-        "/api/v1/client/env-test/displays/display123/response"
+        "/api/v1/client/ws-test/displays/display123/response"
       );
     });
 
