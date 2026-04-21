@@ -94,6 +94,40 @@ describe("ApiClient", () => {
     });
   });
 
+  describe("getResponseIdByDisplayId", () => {
+    test("gets a linked responseId for a display", async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ ok: true, data: { responseId: "response123" } }),
+      } as unknown as Response);
+
+      const result = await client.getResponseIdByDisplayId("display123");
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data.responseId).toBe("response123");
+      }
+      expect(vi.mocked(global.fetch).mock.calls[0][0]).toContain(
+        "/api/v1/client/env-test/displays/display123/response"
+      );
+    });
+
+    test("returns an error if the display lookup fails", async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        json: async () => ({ code: "not_found" }),
+      } as unknown as Response);
+
+      const result = await client.getResponseIdByDisplayId("missing-display");
+
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error.status).toBe(404);
+      }
+    });
+  });
+
   describe("updateResponse", () => {
     test("updates a response successfully", async () => {
       vi.mocked(global.fetch).mockResolvedValueOnce({

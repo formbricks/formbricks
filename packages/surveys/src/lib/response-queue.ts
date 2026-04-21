@@ -20,6 +20,7 @@ interface QueueConfig {
   retryAttempts: number;
   persistOffline?: boolean;
   surveyId?: string;
+  onResponseCreated?: (responseId: string) => void;
   onResponseSendingFailed?: (responseUpdate: TResponseUpdate, errorCode?: TResponseErrorCodesEnum) => void;
   onResponseSendingFinished?: () => void;
   onQuotaFull?: (quotaInfo: TQuotaFullResponse) => void;
@@ -358,6 +359,37 @@ export class ResponseQueue {
     return error.details?.code === RECAPTCHA_VERIFICATION_ERROR_CODE;
   }
 
+  private getCreatePayload(
+    responseUpdate: TResponseUpdate
+  ): Omit<
+    Parameters<ApiClient["createResponse"]>[0],
+    "contactId" | "userId" | "singleUseId" | "surveyId" | "displayId" | "recaptchaToken"
+  > {
+    if (!this.surveyState.shouldCreateResponseFromState) {
+      return {
+        finished: responseUpdate.finished,
+        data: { ...responseUpdate.data, ...responseUpdate.hiddenFields },
+        ttc: responseUpdate.ttc,
+        variables: responseUpdate.variables,
+        language: responseUpdate.language,
+        meta: responseUpdate.meta,
+        endingId: responseUpdate.endingId,
+      };
+    }
+
+    const accumulatedResponse = this.surveyState.responseAcc;
+
+    return {
+      finished: accumulatedResponse.finished,
+      data: { ...accumulatedResponse.data, ...responseUpdate.hiddenFields },
+      ttc: accumulatedResponse.ttc,
+      variables: accumulatedResponse.variables,
+      language: accumulatedResponse.language ?? responseUpdate.language,
+      meta: accumulatedResponse.meta ?? responseUpdate.meta,
+      endingId: accumulatedResponse.endingId ?? responseUpdate.endingId,
+    };
+  }
+
   private handleSuccessfulResponse(responseUpdate: TResponseUpdate, quotaFullResponse?: TQuotaFullResponse) {
     if (responseUpdate.finished) {
       this.config.onResponseSendingFinished?.();
@@ -398,13 +430,13 @@ export class ResponseQueue {
           return err(response.error);
         }
       } else {
+        const createPayload = this.getCreatePayload(responseUpdate);
         response = await this.api.createResponse({
-          ...responseUpdate,
+          ...createPayload,
           surveyId: this.surveyState.surveyId,
           contactId: this.surveyState.contactId || null,
           userId: this.surveyState.userId || null,
           singleUseId: this.surveyState.singleUseId || null,
-          data: { ...responseUpdate.data, ...responseUpdate.hiddenFields },
           displayId: this.surveyState.displayId,
           recaptchaToken: this.responseRecaptchaToken ?? undefined,
         });
@@ -414,6 +446,8 @@ export class ResponseQueue {
         }
 
         this.surveyState.updateResponseId(response.data.id);
+        this.surveyState.disableBootstrapResponseCreate();
+        this.config.onResponseCreated?.(response.data.id);
         if (this.config.setSurveyState) {
           this.config.setSurveyState(this.surveyState);
         }

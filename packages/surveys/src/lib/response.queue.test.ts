@@ -38,11 +38,14 @@ const getSurveyState: () => SurveyState = () => ({
   contactId: "contact1",
   surveyId: "survey1",
   singleUseId: "single1",
+  shouldCreateResponseFromState: false,
   responseAcc: { finished: false, data: {}, ttc: {}, variables: {} },
   updateResponseId: vi.fn(),
   updateDisplayId: vi.fn(),
   updateUserId: vi.fn(),
   updateContactId: vi.fn(),
+  enableBootstrapResponseCreate: vi.fn(),
+  disableBootstrapResponseCreate: vi.fn(),
   accumulateResponse: vi.fn(),
   isResponseFinished: vi.fn(),
   clear: vi.fn(),
@@ -185,8 +188,55 @@ describe("ResponseQueue", () => {
     const result = await queue.sendResponse(responseUpdate);
     expect(apiMock.createResponse).toHaveBeenCalled();
     expect(surveyState.updateResponseId).toHaveBeenCalledWith("newid");
+    expect(surveyState.disableBootstrapResponseCreate).toHaveBeenCalled();
     expect(config.setSurveyState).toHaveBeenCalledWith(surveyState);
     expect(result.ok).toBe(true);
+  });
+
+  test("sendResponse uses accumulated response state when bootstrap create is enabled", async () => {
+    surveyState.shouldCreateResponseFromState = true;
+    surveyState.responseAcc = {
+      finished: true,
+      data: { q1: "saved", q2: "latest" },
+      ttc: { q1: 100, q2: 200 },
+      variables: { locale: "en" },
+      language: "en",
+      meta: { url: "https://example.com" },
+      endingId: "ending-1",
+    };
+    apiMock.createResponse.mockResolvedValue({ ok: true, data: { id: "newid" } });
+
+    await queue.sendResponse({
+      data: { q2: "latest" },
+      hiddenFields: { hidden: "value" },
+      finished: false,
+      language: "de",
+      endingId: null,
+    });
+
+    expect(apiMock.createResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        finished: true,
+        data: { q1: "saved", q2: "latest", hidden: "value" },
+        ttc: { q1: 100, q2: 200 },
+        variables: { locale: "en" },
+        language: "en",
+        meta: { url: "https://example.com" },
+        endingId: "ending-1",
+        displayId: "display1",
+      })
+    );
+  });
+
+  test("sendResponse notifies when a responseId is created", async () => {
+    const onResponseCreated = vi.fn();
+    queue = new ResponseQueue(getConfig({ onResponseCreated }), surveyState);
+    apiMock = queue.api;
+    apiMock.createResponse.mockResolvedValue({ ok: true, data: { id: "newid" } });
+
+    await queue.sendResponse(responseUpdate);
+
+    expect(onResponseCreated).toHaveBeenCalledWith("newid");
   });
 
   test("sendResponse returns err if createResponse fails", async () => {
