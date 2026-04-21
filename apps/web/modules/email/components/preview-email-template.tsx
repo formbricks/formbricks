@@ -442,7 +442,7 @@ export async function PreviewEmailTemplate({
 
 function EmailTemplateWrapper({
   children,
-  surveyUrl,
+  surveyUrl: _surveyUrl,
   styling,
 }: {
   children: React.ReactNode;
@@ -480,12 +480,9 @@ function EmailTemplateWrapper({
           },
         },
       }}>
-      <Link
-        className="bg-card-bg-color border-card-border-color rounded-custom mx-0 my-2 block overflow-auto border border-solid p-8 font-sans text-inherit"
-        href={surveyUrl}
-        target="_blank">
+      <Section className="bg-card-bg-color border-card-border-color rounded-custom mx-0 my-2 border border-solid p-8 font-sans text-inherit">
         {children}
-      </Link>
+      </Section>
     </Tailwind>
   );
 }
