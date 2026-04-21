@@ -4,6 +4,7 @@ import {
   EyeOffIcon,
   FileDigitIcon,
   FileTextIcon,
+  GaugeIcon,
   HomeIcon,
   ListIcon,
   ListOrderedIcon,
@@ -11,6 +12,7 @@ import {
   PhoneIcon,
   PresentationIcon,
   Rows3Icon,
+  SmilePlusIcon,
   StarIcon,
 } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -38,6 +40,8 @@ const elementIconMapping = {
   address: HomeIcon,
   contactInfo: ContactIcon,
   ranking: ListOrderedIcon,
+  csat: SmilePlusIcon,
+  ces: GaugeIcon,
 };
 
 interface RecallItemSelectProps {
@@ -122,7 +126,11 @@ export const RecallItemSelect = ({
         return !recallItemIds.includes(element.id) && !notAllowed && element.id !== elementId && idx > index;
       })
       .map((element) => {
-        return { id: element.id, label: element.headline[selectedLanguageCode], type: "element" as const };
+        return {
+          id: element.id,
+          label: element.headline[selectedLanguageCode],
+          type: "element" as const,
+        };
       });
 
     return filteredElements;
@@ -208,7 +216,7 @@ export const RecallItemSelect = ({
                 }}>
                 <div>{IconComponent && <IconComponent className="mr-2 w-4" />}</div>
                 <p className="max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm">
-                  {getTextContentWithRecallTruncated(recallItem.label)}
+                  {getTextContentWithRecallTruncated(recallItem.label).trim() || t("common.no_text_found")}
                 </p>
               </DropdownMenuItem>
             );

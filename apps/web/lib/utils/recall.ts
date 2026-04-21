@@ -54,7 +54,7 @@ export const findRecallInfoById = (text: string, id: string): string | null => {
   return match ? match[0] : null;
 };
 
-const getRecallItemLabel = <T extends TSurvey>(
+export const getRecallItemLabel = <T extends TSurvey>(
   recallItemId: string,
   survey: T,
   languageCode: string

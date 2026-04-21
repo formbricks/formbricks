@@ -13,6 +13,7 @@ export const ZUserLocale = z.enum([
   "ro-RO",
   "ru-RU",
   "sv-SE",
+  "tr-TR",
   "zh-Hans-CN",
   "zh-Hant-TW",
 ]);

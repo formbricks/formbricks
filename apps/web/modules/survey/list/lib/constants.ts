@@ -1,8 +1,7 @@
-import { TSurveyFilters } from "@formbricks/types/surveys/types";
+import { TSurveyOverviewFilters } from "@/modules/survey/list/types/survey-overview";
 
-export const initialFilters: TSurveyFilters = {
+export const initialFilters: TSurveyOverviewFilters = {
   name: "",
-  createdBy: [],
   status: [],
   type: [],
   sortBy: "relevance",

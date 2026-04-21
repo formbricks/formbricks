@@ -58,7 +58,9 @@ export function useDropdownSearch<T extends { id: string; label: string }>({
 
   const focusSearchAndLockSide = (): void => {
     searchInputRef.current?.focus();
-    const side = contentRef.current?.dataset.side;
+    const dataset = contentRef.current?.dataset;
+    if (!dataset) return;
+    const side = dataset.side;
     if (side === "top" || side === "bottom") setLockedSide(side);
   };
 

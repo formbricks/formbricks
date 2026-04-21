@@ -27,8 +27,6 @@ interface MatrixElementFormProps {
   element: TSurveyMatrixElement;
   elementIdx: number;
   updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
-  selectedLanguageCode: string;
-  setSelectedLanguageCode: (language: string) => void;
   isInvalid: boolean;
   locale: TUserLocale;
   isStorageConfigured: boolean;
@@ -41,8 +39,6 @@ export const MatrixElementForm = ({
   updateElement,
   isInvalid,
   localSurvey,
-  selectedLanguageCode,
-  setSelectedLanguageCode,
   locale,
   isStorageConfigured = true,
   isExternalUrlsAllowed,
@@ -211,8 +207,6 @@ export const MatrixElementForm = ({
         elementIdx={elementIdx}
         isInvalid={isInvalid}
         updateElement={updateElement}
-        selectedLanguageCode={selectedLanguageCode}
-        setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
         isStorageConfigured={isStorageConfigured}
         autoFocus={!element.headline?.default || element.headline.default.trim() === ""}
@@ -230,8 +224,6 @@ export const MatrixElementForm = ({
                 elementIdx={elementIdx}
                 isInvalid={isInvalid}
                 updateElement={updateElement}
-                selectedLanguageCode={selectedLanguageCode}
-                setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
                 autoFocus={!element.subheader?.default || element.subheader.default.trim() === ""}
@@ -277,8 +269,6 @@ export const MatrixElementForm = ({
                       onDelete={(index) => handleDeleteLabel("row", index)}
                       onKeyDown={(e) => handleKeyDown(e, "row", index)}
                       canDelete={element.rows.length > 2}
-                      selectedLanguageCode={selectedLanguageCode}
-                      setSelectedLanguageCode={setSelectedLanguageCode}
                       isInvalid={
                         isInvalid &&
                         !isLabelValidForAllLanguages(element.rows[index].label, localSurvey.languages)
@@ -323,8 +313,6 @@ export const MatrixElementForm = ({
                       onDelete={(index) => handleDeleteLabel("column", index)}
                       onKeyDown={(e) => handleKeyDown(e, "column", index)}
                       canDelete={element.columns.length > 2}
-                      selectedLanguageCode={selectedLanguageCode}
-                      setSelectedLanguageCode={setSelectedLanguageCode}
                       isInvalid={
                         isInvalid &&
                         !isLabelValidForAllLanguages(element.columns[index].label, localSurvey.languages)

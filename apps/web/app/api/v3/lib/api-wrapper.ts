@@ -4,10 +4,13 @@ import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import { TooManyRequestsError } from "@formbricks/types/errors";
 import { authenticateRequest } from "@/app/api/v1/auth";
+import { buildAuditLogBaseObject } from "@/app/lib/api/with-api-logging";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import type { TRateLimitConfig } from "@/modules/core/rate-limit/types/rate-limit";
+import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
+import { TAuditAction, TAuditTarget } from "@/modules/ee/audit-logs/types/audit-log";
 import {
   type InvalidParam,
   problemBadRequest,
@@ -15,7 +18,7 @@ import {
   problemTooManyRequests,
   problemUnauthorized,
 } from "./response";
-import type { TV3Authentication } from "./types";
+import type { TV3AuditLog, TV3Authentication } from "./types";
 
 type TV3Schema = z.ZodTypeAny;
 type MaybePromise<T> = T | Promise<T>;
@@ -38,6 +41,7 @@ export type TV3HandlerParams<TParsedInput = Record<string, never>, TProps = unkn
   req: NextRequest;
   props: TProps;
   authentication: TV3Authentication;
+  auditLog?: TV3AuditLog;
   parsedInput: TParsedInput;
   requestId: string;
   instance: string;
@@ -48,6 +52,8 @@ export type TWithV3ApiWrapperParams<S extends TV3Schemas | undefined, TProps = u
   schemas?: S;
   rateLimit?: boolean;
   customRateLimitConfig?: TRateLimitConfig;
+  action?: TAuditAction;
+  targetType?: TAuditTarget;
   handler: (params: TV3HandlerParams<TV3ParsedInput<S>, TProps>) => MaybePromise<Response>;
 };
 
@@ -293,10 +299,61 @@ async function applyV3RateLimitOrRespond(params: {
   return null;
 }
 
+function buildV3AuditLog(
+  authentication: TV3Authentication,
+  action?: TAuditAction,
+  targetType?: TAuditTarget,
+  apiUrl?: string
+): TV3AuditLog | undefined {
+  if (!authentication || !action || !targetType || !apiUrl) {
+    return undefined;
+  }
+
+  const auditLog = buildAuditLogBaseObject(action, targetType, apiUrl);
+
+  if ("user" in authentication && authentication.user?.id) {
+    auditLog.userId = authentication.user.id;
+    auditLog.userType = "user";
+  } else if ("apiKeyId" in authentication) {
+    auditLog.userId = authentication.apiKeyId;
+    auditLog.userType = "api";
+    auditLog.organizationId = authentication.organizationId;
+  }
+
+  return auditLog;
+}
+
+async function queueV3AuditLog(
+  auditLog: TV3AuditLog | undefined,
+  requestId: string,
+  log: ReturnType<typeof logger.withContext>
+): Promise<void> {
+  if (!auditLog) {
+    return;
+  }
+
+  try {
+    await queueAuditEvent({
+      ...auditLog,
+      ...(auditLog.status === "failure" ? { eventId: auditLog.eventId ?? requestId } : {}),
+    });
+  } catch (error) {
+    log.error({ error }, "Failed to queue V3 audit event");
+  }
+}
+
 export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unknown>(
   params: TWithV3ApiWrapperParams<S, TProps>
 ): ((req: NextRequest, props: TProps) => Promise<Response>) => {
-  const { auth = "both", schemas, rateLimit = true, customRateLimitConfig, handler } = params;
+  const {
+    auth = "both",
+    schemas,
+    rateLimit = true,
+    customRateLimitConfig,
+    handler,
+    action,
+    targetType,
+  } = params;
 
   return async (req: NextRequest, props: TProps): Promise<Response> => {
     const requestId = req.headers.get("x-request-id") ?? crypto.randomUUID();
@@ -306,6 +363,7 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
       method: req.method,
       path: instance,
     });
+    let auditLog: TV3AuditLog | undefined;
 
     try {
       const authResult = await authenticateV3RequestOrRespond(req, auth, requestId, instance);
@@ -331,17 +389,33 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
         return rateLimitResponse;
       }
 
+      auditLog = buildV3AuditLog(authResult.authentication, action, targetType, req.url);
+
       const response = await handler({
         req,
         props,
         authentication: authResult.authentication,
+        auditLog,
         parsedInput: parsedInputResult.parsedInput,
         requestId,
         instance,
       });
 
+      if (auditLog) {
+        if (response.ok) {
+          auditLog.status = "success";
+        } else {
+          auditLog.eventId = requestId;
+        }
+      }
+
+      await queueV3AuditLog(auditLog, requestId, log);
       return ensureRequestIdHeader(response, requestId);
     } catch (error) {
+      if (auditLog) {
+        auditLog.eventId = requestId;
+        await queueV3AuditLog(auditLog, requestId, log);
+      }
       log.error({ error, statusCode: 500 }, "V3 API unexpected error");
       return problemInternalError(requestId, "An unexpected error occurred.", instance);
     }
