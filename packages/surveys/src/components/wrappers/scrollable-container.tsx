@@ -25,7 +25,7 @@ export const ScrollableContainer = forwardRef<ScrollableContainerHandle, Scrolla
       const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
 
       // Use a small tolerance to account for zoom-related precision issues
-      const tolerance = 1;
+      const tolerance = 5;
 
       // Check if at bottom with tolerance
       setIsAtBottom(scrollTop + clientHeight >= scrollHeight - tolerance);
@@ -37,6 +37,7 @@ export const ScrollableContainer = forwardRef<ScrollableContainerHandle, Scrolla
     const scrollToBottom = () => {
       if (containerRef.current) {
         containerRef.current.scrollTop = containerRef.current.scrollHeight;
+        requestAnimationFrame(checkScroll);
       }
     };
 
@@ -49,13 +50,24 @@ export const ScrollableContainer = forwardRef<ScrollableContainerHandle, Scrolla
       const element = containerRef.current;
       if (!element) return;
 
+      checkScroll();
+
       const handleScroll = () => {
         checkScroll();
       };
       element.addEventListener("scroll", handleScroll);
 
+      const resizeObserver =
+        typeof ResizeObserver !== "undefined"
+          ? new ResizeObserver(() => {
+              checkScroll();
+            })
+          : null;
+      resizeObserver?.observe(element);
+
       return () => {
         element.removeEventListener("scroll", handleScroll);
+        resizeObserver?.disconnect();
       };
     }, []);
 
