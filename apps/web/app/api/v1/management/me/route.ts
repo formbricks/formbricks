@@ -106,7 +106,7 @@ const updateApiKeyUsage = async (apiKeyId: string) => {
   });
 };
 
-const buildEnvironmentResponse = (apiKeyData: ApiKeyData) => {
+const buildWorkspaceResponse = (apiKeyData: ApiKeyData) => {
   const workspace = apiKeyData.apiKeyWorkspaces[0].workspace;
   return Response.json({
     // Keep v1 payload shape stable while sourcing data from workspace.
@@ -157,7 +157,7 @@ const handleApiKeyAuthentication = async (apiKey: string) => {
     return responses.badRequestResponse("You can't use this method with this API key");
   }
 
-  return buildEnvironmentResponse(apiKeyData);
+  return buildWorkspaceResponse(apiKeyData);
 };
 
 const handleSessionAuthentication = async () => {
