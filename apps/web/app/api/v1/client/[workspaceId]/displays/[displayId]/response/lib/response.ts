@@ -5,17 +5,17 @@ import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
 
 export const getResponseIdByDisplayId = async (
-  environmentId: string,
+  workspaceId: string,
   displayId: string
 ): Promise<{ responseId: string | null }> => {
-  validateInputs([environmentId, ZId], [displayId, ZId]);
+  validateInputs([workspaceId, ZId], [displayId, ZId]);
 
   try {
     const display = await prisma.display.findFirst({
       where: {
         id: displayId,
         survey: {
-          environmentId,
+          workspaceId,
         },
       },
       select: {
