@@ -85,26 +85,10 @@ jobs:
           echo "S3_REGION=us-east-1" >> .env
           echo "S3_BUCKET_NAME=formbricks-e2e" >> .env
           echo "S3_ENDPOINT_URL=http://localhost:9000" >> .env
-          echo "S3_ACCESS_KEY=devrustfs" >> .env
-          echo "S3_SECRET_KEY=devrustfs123" >> .env
+          echo "S3_ACCESS_KEY=devrustfs-service" >> .env
+          echo "S3_SECRET_KEY=devrustfs-service123" >> .env
           echo "S3_FORCE_PATH_STYLE=1" >> .env
         shell: bash
-
-      - name: Install S3 bootstrap client (mc)
-        run: |
-          set -euo pipefail
-          MC_VERSION="RELEASE.2025-08-13T08-35-41Z"
-          MC_BASE="https://dl.min.io/client/mc/release/linux-amd64/archive"
-          MC_BIN="mc.${MC_VERSION}"
-          MC_SUM="${MC_BIN}.sha256sum"
-
-          curl -fsSL "${MC_BASE}/${MC_BIN}" -o "${MC_BIN}"
-          curl -fsSL "${MC_BASE}/${MC_SUM}" -o "${MC_SUM}"
-
-          sha256sum -c "${MC_SUM}"
-
-          chmod +x "${MC_BIN}"
-          sudo mv "${MC_BIN}" /usr/local/bin/mc
 
       - name: Start RustFS Server
         run: |
@@ -125,30 +109,24 @@ jobs:
 
           echo "RustFS server started"
 
-      - name: Wait for RustFS and create S3 bucket
+      - name: Bootstrap RustFS bucket and browser upload CORS
         run: |
           set -euo pipefail
 
-          echo "Waiting for RustFS to be ready for S3 requests..."
-          ready=0
-          for i in {1..60}; do
-            if curl -fsS http://localhost:9000/health/ready >/dev/null && \
-              mc alias set local http://localhost:9000 devrustfs devrustfs123 >/dev/null 2>&1 && \
-              mc ls local >/dev/null 2>&1; then
-              echo "RustFS is ready after ${i} seconds"
-              ready=1
-              break
-            fi
-            sleep 1
-          done
-
-          if [ "$ready" -ne 1 ]; then
-            echo "::error::RustFS did not become ready for S3 requests within 60 seconds"
-            exit 1
-          fi
-
-          mc alias set local http://localhost:9000 devrustfs devrustfs123
-          mc mb --ignore-existing local/formbricks-e2e
+          docker run --rm \
+            --network host \
+            --entrypoint /bin/sh \
+            -e RUSTFS_ENDPOINT_URL=http://127.0.0.1:9000 \
+            -e RUSTFS_ADMIN_USER=devrustfs \
+            -e RUSTFS_ADMIN_PASSWORD=devrustfs123 \
+            -e RUSTFS_SERVICE_USER=devrustfs-service \
+            -e RUSTFS_SERVICE_PASSWORD=devrustfs-service123 \
+            -e RUSTFS_BUCKET_NAME=formbricks-e2e \
+            -e RUSTFS_POLICY_NAME=formbricks-e2e-policy \
+            -e RUSTFS_CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000 \
+            -v "$PWD/docker/rustfs-init.sh:/tmp/rustfs-init.sh:ro" \
+            minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868 \
+            /tmp/rustfs-init.sh
 
       - name: Build App
         run: |

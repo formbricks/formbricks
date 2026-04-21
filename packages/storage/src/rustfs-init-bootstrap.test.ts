@@ -46,6 +46,11 @@ if [ "$1" = "mb" ] && [ "$2" = "rustfs/formbricks" ] && [ "$3" = "--ignore-exist
   exit 0
 fi
 
+if [ "$1" = "cors" ] && [ "$2" = "set" ] && [ "$3" = "rustfs/formbricks" ]; then
+  cp "$4" "$capture_dir/cors.xml"
+  exit 0
+fi
+
 if [ "$1" = "admin" ] && [ "$2" = "policy" ] && [ "$3" = "info" ]; then
   exit 1
 fi
@@ -103,6 +108,7 @@ afterEach(() => {
   for (const tempDir of tempDirs.splice(0)) {
     rmSync(tempDir, { recursive: true, force: true });
   }
+  rmSync("/tmp/formbricks-cors.xml", { force: true });
   rmSync("/tmp/formbricks-policy.json", { force: true });
 });
 
@@ -140,6 +146,7 @@ describe("docker/formbricks.sh RustFS bootstrap", () => {
         RUSTFS_SERVICE_PASSWORD: "service-password",
         RUSTFS_BUCKET_NAME: "formbricks",
         RUSTFS_POLICY_NAME: "formbricks-app-policy",
+        RUSTFS_CORS_ALLOWED_ORIGINS: "http://localhost:3000,http://127.0.0.1:3000",
       },
     });
 
@@ -149,6 +156,7 @@ describe("docker/formbricks.sh RustFS bootstrap", () => {
       "alias set rustfs http://rustfs:9000 admin-user admin-password",
       "ls rustfs",
       "mb rustfs/formbricks --ignore-existing",
+      "cors set rustfs/formbricks /tmp/formbricks-cors.xml",
       "admin policy info rustfs formbricks-app-policy",
       "admin policy create rustfs formbricks-app-policy /tmp/formbricks-policy.json",
       "admin user info rustfs service-user",
@@ -176,6 +184,22 @@ describe("docker/formbricks.sh RustFS bootstrap", () => {
         },
       ],
     });
+
+    expect(readFileSync(join(captureDir, "cors.xml"), "utf8")).toBe(`<CORSConfiguration>
+  <CORSRule>
+    <AllowedOrigin>http://localhost:3000</AllowedOrigin>
+    <AllowedOrigin>http://127.0.0.1:3000</AllowedOrigin>
+    <AllowedMethod>GET</AllowedMethod>
+    <AllowedMethod>HEAD</AllowedMethod>
+    <AllowedMethod>POST</AllowedMethod>
+    <AllowedMethod>PUT</AllowedMethod>
+    <AllowedMethod>DELETE</AllowedMethod>
+    <AllowedHeader>*</AllowedHeader>
+    <ExposeHeader>ETag</ExposeHeader>
+    <MaxAgeSeconds>3000</MaxAgeSeconds>
+  </CORSRule>
+</CORSConfiguration>
+`);
   });
 
   test("generated init script falls back to policy add when policy create is unavailable", () => {

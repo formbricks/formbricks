@@ -3,8 +3,8 @@ import { test } from "./lib/fixtures";
 import { gotoSurveyList } from "./lib/utils";
 import { fillRichTextEditor, uploadImageChoicesForPictureSelection } from "./utils/helper";
 
-const firstPictureChoiceAlt = "logo-transparent.png";
-const secondPictureChoiceAlt = "android-chrome-192x192.png";
+const firstPictureChoiceAltPrefix = "playwright-choice-1--fid--";
+const secondPictureChoiceAltPrefix = "playwright-choice-2--fid--";
 
 test.describe("Storage Smoke", () => {
   test.setTimeout(1000 * 60 * 3);
@@ -33,7 +33,7 @@ test.describe("Storage Smoke", () => {
 
     await uploadImageChoicesForPictureSelection(page);
 
-    await expect(page.getByRole("img", { name: firstPictureChoiceAlt })).toBeVisible();
-    await expect(page.getByRole("img", { name: secondPictureChoiceAlt })).toBeVisible();
+    await expect(page.locator(`img[alt^="${firstPictureChoiceAltPrefix}"]`)).toHaveCount(1);
+    await expect(page.locator(`img[alt^="${secondPictureChoiceAltPrefix}"]`)).toHaveCount(1);
   });
 });

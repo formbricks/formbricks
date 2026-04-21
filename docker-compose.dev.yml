@@ -60,6 +60,7 @@ services:
       - RUSTFS_POLICY_NAME=formbricks-policy
       - RUSTFS_SERVICE_USER=devrustfs-service
       - RUSTFS_SERVICE_PASSWORD=devrustfs-service123
+      - RUSTFS_CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001,http://localhost:3002,http://127.0.0.1:3002
     volumes:
       - ./docker/rustfs-init.sh:/usr/local/bin/rustfs-init.sh:ro
     entrypoint:
