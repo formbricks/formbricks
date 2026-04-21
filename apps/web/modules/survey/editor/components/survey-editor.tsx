@@ -20,8 +20,9 @@ import { SurveyEditorTabs } from "@/modules/survey/editor/components/survey-edit
 import { SurveyMenuBar } from "@/modules/survey/editor/components/survey-menu-bar";
 import { TFollowUpEmailToUser } from "@/modules/survey/editor/types/survey-follow-up";
 import { FollowUpsView } from "@/modules/survey/follow-ups/components/follow-ups-view";
+import { LanguageView } from "@/modules/survey/multi-language-surveys/components/language-view";
 import { PreviewSurvey } from "@/modules/ui/components/preview-survey";
-import { refetchProjectAction } from "../actions";
+import { getProjectLanguagesAction, refetchProjectAction } from "../actions";
 
 interface SurveyEditorProps {
   survey: TSurvey;
@@ -84,24 +85,32 @@ export const SurveyEditor = ({
   const [activeElementId, setActiveElementId] = useState<string | null>(null);
   const [localSurvey, setLocalSurvey] = useState<TSurvey | null>(() => structuredClone(survey));
   const [invalidElements, setInvalidElements] = useState<string[] | null>([]);
+  const [hasIncompleteTranslations, setHasIncompleteTranslations] = useState(false);
 
   const [selectedLanguageCode, setSelectedLanguageCode] = useState<string>("default");
   const surveyEditorRef = useRef(null);
   const [localProject, setLocalProject] = useState<Project>(project);
+  const [localProjectLanguages, setLocalProjectLanguages] = useState<Language[]>(projectLanguages);
 
   const [styling, setStyling] = useState<TSurveyStyling | null>(localSurvey?.styling ?? null);
   const [localStylingChanges, setLocalStylingChanges] = useState<TSurveyStyling | null>(null);
 
-  const fetchLatestProject = useCallback(async () => {
-    const refetchProjectResponse = await refetchProjectAction({ projectId: localProject.id });
+  const fetchLatestProjectData = useCallback(async () => {
+    const [refetchProjectResponse, refetchLanguagesResponse] = await Promise.all([
+      refetchProjectAction({ projectId: localProject.id }),
+      getProjectLanguagesAction({ projectId: localProject.id }),
+    ]);
     if (refetchProjectResponse?.data) {
       setLocalProject(refetchProjectResponse.data);
+    }
+    if (refetchLanguagesResponse?.data) {
+      setLocalProjectLanguages(refetchLanguagesResponse.data);
     }
   }, [localProject.id]);
 
   const [isCautionDialogOpen, setIsCautionDialogOpen] = useState(false);
 
-  useDocumentVisibility(fetchLatestProject);
+  useDocumentVisibility(fetchLatestProjectData);
 
   useEffect(() => {
     if (survey) {
@@ -190,6 +199,7 @@ export const SurveyEditor = ({
             setActiveId={setActiveView}
             isCxMode={isCxMode}
             isStylingTabVisible={!!project.styling.allowStyleOverwrite}
+            hasLanguageErrors={hasIncompleteTranslations}
           />
 
           {activeView === "elements" && (
@@ -199,11 +209,9 @@ export const SurveyEditor = ({
               activeElementId={activeElementId}
               setActiveElementId={setActiveElementId}
               project={localProject}
-              projectLanguages={projectLanguages}
               invalidElements={invalidElements}
               setInvalidElements={setInvalidElements}
               selectedLanguageCode={selectedLanguageCode || "default"}
-              setSelectedLanguageCode={setSelectedLanguageCode}
               isFormbricksCloud={isFormbricksCloud}
               isCxMode={isCxMode}
               locale={locale}
@@ -229,6 +237,16 @@ export const SurveyEditor = ({
               isUnsplashConfigured={isUnsplashConfigured}
               isCxMode={isCxMode}
               isStorageConfigured={isStorageConfigured}
+            />
+          )}
+
+          {activeView === "language" && (
+            <LanguageView
+              localSurvey={localSurvey}
+              setLocalSurvey={setLocalSurveyNonNull}
+              projectLanguages={localProjectLanguages}
+              locale={locale}
+              setHasIncompleteTranslations={setHasIncompleteTranslations}
             />
           )}
 
@@ -274,6 +292,8 @@ export const SurveyEditor = ({
             environment={environment}
             previewType={localSurvey.type === "app" ? "modal" : "fullwidth"}
             languageCode={selectedLanguageCode}
+            setLanguageCode={setSelectedLanguageCode}
+            locale={locale}
             isSpamProtectionAllowed={isSpamProtectionAllowed}
             publicDomain={publicDomain}
           />

@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TContactAttributeDataType } from "@formbricks/types/contact-attribute-key";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { formatSnakeCaseToTitleCase, isSafeIdentifier } from "@/lib/utils/safe-identifier";
+import { formatSnakeCaseToTitleCase, isSafeIdentifier, toSafeIdentifier } from "@/lib/utils/safe-identifier";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -57,25 +57,27 @@ export function CreateAttributeModal({ environmentId }: Readonly<CreateAttribute
   };
 
   const handleNameChange = (value: string) => {
-    setFormData((prev) => ({ ...prev, name: value }));
-    if (keyError && formData.key) {
-      validateKey(formData.key);
+    const previousAutoKey = toSafeIdentifier(formData.name);
+    const newAutoKey = toSafeIdentifier(value);
+    const shouldAutoUpdateKey = !formData.key || formData.key === previousAutoKey;
+
+    setFormData((prev) => ({
+      ...prev,
+      name: value,
+      key: shouldAutoUpdateKey ? newAutoKey : prev.key,
+    }));
+
+    if (shouldAutoUpdateKey && keyError) {
+      if (newAutoKey) {
+        validateKey(newAutoKey);
+      } else {
+        setKeyError("");
+      }
     }
   };
 
   const handleKeyChange = (value: string) => {
-    const previousAutoLabel = formData.key ? formatSnakeCaseToTitleCase(formData.key) : "";
-    const newAutoLabel = value ? formatSnakeCaseToTitleCase(value) : "";
-
-    setFormData((prev) => {
-      // Auto-update name if it's empty or matches the previous auto-generated label
-      const shouldAutoUpdateName = !prev.name || prev.name === previousAutoLabel;
-      return {
-        ...prev,
-        key: value,
-        name: shouldAutoUpdateName ? newAutoLabel : prev.name,
-      };
-    });
+    setFormData((prev) => ({ ...prev, key: value }));
     validateKey(value);
   };
 
@@ -165,6 +167,17 @@ export function CreateAttributeModal({ environmentId }: Readonly<CreateAttribute
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-2">
                   <label className="text-sm font-medium text-slate-900">
+                    {t("environments.contacts.attribute_label")}
+                  </label>
+                  <Input
+                    value={formData.name}
+                    onChange={(e) => handleNameChange(e.target.value)}
+                    placeholder={t("environments.contacts.attribute_label_placeholder")}
+                  />
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium text-slate-900">
                     {t("environments.contacts.attribute_key")}
                   </label>
                   <Input
@@ -175,17 +188,6 @@ export function CreateAttributeModal({ environmentId }: Readonly<CreateAttribute
                   />
                   {keyError && <p className="text-sm text-red-500">{keyError}</p>}
                   <p className="text-xs text-slate-500">{t("environments.contacts.attribute_key_hint")}</p>
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium text-slate-900">
-                    {t("environments.contacts.attribute_label")}
-                  </label>
-                  <Input
-                    value={formData.name}
-                    onChange={(e) => handleNameChange(e.target.value)}
-                    placeholder={t("environments.contacts.attribute_label_placeholder")}
-                  />
                 </div>
 
                 <div className="flex flex-col gap-2">

@@ -226,6 +226,7 @@ vi.mock("@/lib/constants", async (importOriginal) => {
       "ro-RO",
       "ru-RU",
       "sv-SE",
+      "tr-TR",
       "zh-Hans-CN",
       "zh-Hant-TW",
     ],

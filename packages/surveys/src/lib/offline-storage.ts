@@ -241,6 +241,44 @@ export const getSurveyProgress = async (surveyId: string): Promise<SurveyProgres
   }
 };
 
+export const patchSurveyProgressSnapshot = async (
+  surveyId: string,
+  snapshotPatch: Partial<SerializedSurveyState>
+): Promise<void> => {
+  try {
+    const db = await openDb();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_SURVEY_PROGRESS, "readwrite");
+      const store = tx.objectStore(STORE_SURVEY_PROGRESS);
+      const getRequest = store.get(surveyId);
+
+      getRequest.onsuccess = () => {
+        const existing = getRequest.result as SurveyProgressEntry | undefined;
+        if (!existing) {
+          resolve();
+          return;
+        }
+
+        const putRequest = store.put({
+          ...existing,
+          surveyStateSnapshot: {
+            ...existing.surveyStateSnapshot,
+            ...snapshotPatch,
+          },
+          updatedAt: Date.now(),
+        });
+
+        putRequest.onsuccess = () => resolve();
+        putRequest.onerror = () => reject(putRequest.error ?? new Error("IndexedDB request failed"));
+      };
+
+      getRequest.onerror = () => reject(getRequest.error ?? new Error("IndexedDB request failed"));
+    });
+  } catch (e) {
+    console.warn("Formbricks: Failed to patch survey progress snapshot in IndexedDB", e);
+  }
+};
+
 export const clearSurveyProgress = async (surveyId: string): Promise<void> => {
   try {
     const db = await openDb();

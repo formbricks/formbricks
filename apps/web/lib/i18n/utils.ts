@@ -214,6 +214,13 @@ export const appLanguages = [
     },
   },
   {
+    code: "tr-TR",
+    label: {
+      "en-US": "Turkish",
+      native: "Türkçe",
+    },
+  },
+  {
     code: "zh-Hans-CN",
     label: {
       "en-US": "Chinese (Simplified)",

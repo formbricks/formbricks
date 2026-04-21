@@ -79,6 +79,7 @@ export const getWebAppLocale = (languageCode: string, survey: TSurvey): string =
     ja: "ja-JP",
     es: "es-ES",
     sv: "sv-SE",
+    tr: "tr-TR",
     ru: "ru-RU",
   };
 

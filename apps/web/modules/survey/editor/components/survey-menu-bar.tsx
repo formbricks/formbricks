@@ -245,6 +245,7 @@ export const SurveyMenuBar = ({
           const messageSplit = firstError.message.split("-fLang-")[0];
 
           toast.error(`${messageSplit} ${invalidLanguageLabels.join(", ")}`);
+          setActiveId("language");
         } else {
           toast.error(firstError.message, {
             className: "w-fit !max-w-md",

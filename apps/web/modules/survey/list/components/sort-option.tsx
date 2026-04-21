@@ -1,11 +1,12 @@
 "use client";
 
-import { TSortOption, TSurveyFilters } from "@formbricks/types/surveys/types";
+import { TSortOption } from "@formbricks/types/surveys/types";
+import { TSurveyOverviewFilters } from "@/modules/survey/list/types/survey-overview";
 import { DropdownMenuItem } from "@/modules/ui/components/dropdown-menu";
 
 interface SortOptionProps {
   option: TSortOption;
-  sortBy: TSurveyFilters["sortBy"];
+  sortBy: TSurveyOverviewFilters["sortBy"];
   handleSortChange: (option: TSortOption) => void;
 }
 

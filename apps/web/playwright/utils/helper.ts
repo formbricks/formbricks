@@ -179,6 +179,30 @@ export const fillRichTextEditor = async (page: Page, labelText: string, content:
   await editor.pressSequentially(content, { delay: 50 });
 };
 
+/**
+ * Fill a plain text translation in the Manage Translations modal.
+ * Targets the row by data-testid which includes the translation path.
+ */
+export const fillModalTranslation = async (page: Page, path: string, text: string): Promise<void> => {
+  const row = page.locator(`[data-testid="translation-row-${path}"]`);
+  await row.scrollIntoViewIfNeeded();
+  const input = row.locator("input");
+  await input.fill(text);
+};
+
+/**
+ * Fill a rich text translation in the Manage Translations modal.
+ */
+export const fillModalRichTranslation = async (page: Page, path: string, text: string): Promise<void> => {
+  const row = page.locator(`[data-testid="translation-row-${path}"]`);
+  await row.scrollIntoViewIfNeeded();
+  const editor = row.locator(".editor-input").first();
+  await editor.click();
+  await editor.press("Meta+a");
+  await editor.press("Backspace");
+  await editor.pressSequentially(text, { delay: 50 });
+};
+
 export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   const addBlock = "Add BlockChoose the first question on your Block";
 
