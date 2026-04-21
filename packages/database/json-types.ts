@@ -13,6 +13,7 @@ import {
   type TSurveyClosedMessage,
   type TSurveyEnding,
   type TSurveyHiddenFields,
+  type TSurveyInvitationConfig,
   type TSurveyMetadata,
   type TSurveyProjectOverwrites,
   type TSurveyQuestions,
@@ -55,5 +56,6 @@ declare global {
     export type OrganizationAccess = TOrganizationAccess;
     export type SurveyMetadata = TSurveyMetadata;
     export type SurveyQuotaLogic = TSurveyQuotaLogic;
+    export type SurveyInvitationConfig = TSurveyInvitationConfig;
   }
 }

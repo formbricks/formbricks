@@ -9,6 +9,7 @@ export { EmbedSurveyPreviewEmail } from "../emails/survey/embed-survey-preview-e
 export { ResponseFinishedEmail } from "../emails/survey/response-finished-email";
 export { EmailCustomizationPreviewEmail } from "../emails/general/email-customization-preview-email";
 export { FollowUpEmail } from "../emails/survey/follow-up-email";
+export { InvitationEmail } from "../emails/survey/invitation-email";
 
 export { EmailButton } from "./components/email-button";
 export { EmailFooter } from "./components/email-footer";
@@ -27,6 +28,7 @@ export {
   renderResponseFinishedEmail,
   renderEmailCustomizationPreviewEmail,
   renderFollowUpEmail,
+  renderInvitationEmail,
 } from "./lib/render";
 
 export { render } from "@react-email/render";

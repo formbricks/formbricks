@@ -125,6 +125,7 @@ model Contact {
   responses     Response[]
   attributes    ContactAttribute[]
   displays      Display[]
+  invitations   SurveyInvitation[]
 
   @@index([environmentId])
 }
@@ -167,6 +168,7 @@ model Response {
   language          String?
   displayId         String?             @unique
   display           Display?            @relation(fields: [displayId], references: [id])
+  invitation        SurveyInvitation?
 
   @@unique([surveyId, singleUseId])
   @@index([createdAt])
@@ -375,20 +377,23 @@ model Survey {
   /// [SurveySingleUse]
   singleUse Json? @default("{\"enabled\": false, \"isEncrypted\": true}")
 
-  isVerifyEmailEnabled            Boolean          @default(false)
-  isSingleResponsePerEmailEnabled Boolean          @default(false)
-  isBackButtonHidden              Boolean          @default(false)
-  autoAdvance                     Boolean          @default(false)
-  snowflakeSync                   Boolean          @default(false)
+  isVerifyEmailEnabled            Boolean            @default(false)
+  isSingleResponsePerEmailEnabled Boolean            @default(false)
+  isBackButtonHidden              Boolean            @default(false)
+  autoAdvance                     Boolean            @default(false)
+  snowflakeSync                   Boolean            @default(false)
   pin                             String?
   displayPercentage               Decimal?
   languages                       SurveyLanguage[]
   showLanguageSwitch              Boolean?
   followUps                       SurveyFollowUp[]
   /// [SurveyRecaptcha]
-  recaptcha                       Json?            @default("{\"enabled\": false, \"threshold\":0.1}")
+  recaptcha                       Json?              @default("{\"enabled\": false, \"threshold\":0.1}")
   /// [SurveyLinkMetadata]
-  metadata                        Json             @default("{}")
+  metadata                        Json               @default("{}")
+  invitations                     SurveyInvitation[]
+  /// [SurveyInvitationConfig]
+  invitationConfig                Json?
 
   slug String? @unique
 
@@ -461,6 +466,39 @@ model SurveyFollowUp {
   trigger   Json
   /// [SurveyFollowUpAction]
   action    Json
+}
+
+/// Tracks a single recipient invited to take a survey, plus response + reminder state.
+/// An invitation is created (with sentAt=null) when the audience is resolved; sentAt is
+/// set after the email is delivered. respondedAt + responseId are populated when the
+/// recipient completes the survey. Reminders advance sentOffsetDays.
+///
+/// Either contactId is set (Formbricks contact) or it's null and the invitation refers
+/// to a recipient resolved from an external audience source (e.g. ASLA Snowflake query).
+/// linkToken is always an opaque JWT used at /c/<token> to load the survey.
+model SurveyInvitation {
+  id             String    @id @default(cuid())
+  createdAt      DateTime  @default(now()) @map(name: "created_at")
+  updatedAt      DateTime  @updatedAt @map(name: "updated_at")
+  survey         Survey    @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  surveyId       String
+  contact        Contact?  @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  contactId      String?
+  recipientEmail String
+  recipientName  String?
+  linkToken      String    @unique
+  sentAt         DateTime?
+  respondedAt    DateTime?
+  responseId     String?   @unique
+  response       Response? @relation(fields: [responseId], references: [id], onDelete: SetNull)
+  lastReminderAt DateTime?
+  reminderCount  Int       @default(0)
+  // Which scheduled-reminder offsets have already fired for this invitation
+  sentOffsetDays Int[]     @default([])
+
+  @@unique([surveyId, recipientEmail])
+  @@index([surveyId, respondedAt])
+  @@index([surveyId, contactId])
 }
 
 enum ActionType {

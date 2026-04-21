@@ -13,6 +13,7 @@ import { ResponseOptionsCard } from "@/modules/survey/editor/components/response
 import { SurveyPlacementCard } from "@/modules/survey/editor/components/survey-placement-card";
 import { TargetingLockedCard } from "@/modules/survey/editor/components/targeting-locked-card";
 import { WhenToSendCard } from "@/modules/survey/editor/components/when-to-send-card";
+import { RecipientsCard } from "@/modules/survey/invitations/components/recipients-card";
 
 interface SettingsViewProps {
   environment: Pick<Environment, "id" | "appSetupCompleted">;
@@ -104,6 +105,10 @@ export const SettingsView = ({
         onUpdate={(externalDataSources) => setLocalSurvey({ ...localSurvey, externalDataSources })}
         environmentId={environment.id}
       />
+
+      {localSurvey.type === "link" && (
+        <RecipientsCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} segments={segments} />
+      )}
 
       <RecontactOptionsCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
 

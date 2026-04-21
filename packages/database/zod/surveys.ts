@@ -194,6 +194,9 @@ const ZSurveyBase = z.object({
   isSingleResponsePerEmailEnabled: z.boolean().openapi({
     description: "Whether single response per email is enabled",
   }),
+  invitationConfig: z.record(z.any()).nullable().optional().openapi({
+    description: "Invitation + reminder configuration (audience, schedule, email templates)",
+  }),
   inlineTriggers: z.array(z.any()).nullable().openapi({
     description: "Inline triggers configuration",
   }),

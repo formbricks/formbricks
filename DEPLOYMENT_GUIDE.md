@@ -375,6 +375,32 @@ ssh -i ~/.ssh/id_ed25519_workgh -p 2222 gregcohen@20.185.219.8 \
 
 ---
 
+## Scheduled reminders (ASLA)
+
+The survey invitation + reminder feature (see `apps/web/modules/survey/invitations/`)
+ships with an endpoint for scheduled reminders at `POST /api/cron/reminders`. The
+endpoint is authenticated with the same `CRON_SECRET` used by the internal pipeline.
+
+Formbricks has no built-in scheduler, so this must be driven externally. On the
+production VM, add a daily crontab entry:
+
+```bash
+# Edit VM crontab
+ssh -i ~/.ssh/id_ed25519_workgh -p 2222 gregcohen@20.185.219.8 "crontab -e"
+
+# Line to add (runs 09:00 VM time every day)
+0 9 * * * /usr/bin/curl -sS -X POST -H "x-api-key: $CRON_SECRET" https://surveys.asla.org/api/cron/reminders >> /var/log/formbricks-reminders.log 2>&1
+```
+
+`$CRON_SECRET` must be exported in the user's shell environment (or inlined
+directly — it's the same value as in `/opt/formbricks/.env`).
+
+Each run is idempotent: every (invitation, offset-day) pair is stored in
+`SurveyInvitation.sentOffsetDays`, so re-running or running more than once a
+day will not cause duplicate emails.
+
+---
+
 **Last Updated:** 2026-02-09
 **Maintainer:** Greg Cohen
 **VM:** nan01 (20.185.219.8:2222)

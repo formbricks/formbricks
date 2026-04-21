@@ -4,6 +4,7 @@ import {
   renderEmailCustomizationPreviewEmail,
   renderEmbedSurveyPreviewEmail,
   renderForgotPasswordEmail,
+  renderInvitationEmail,
   renderInviteAcceptedEmail,
   renderInviteEmail,
   renderLinkSurveyEmail,
@@ -295,6 +296,29 @@ export const sendEmailCustomizationPreviewEmail = async (
     to,
     subject: t("emails.email_customization_preview_email_subject"),
     html: emailHtmlBody,
+  });
+};
+
+export const sendSurveyInvitationEmail = async (data: {
+  to: string;
+  subject: string;
+  body: string;
+  surveyLink: string;
+  logoUrl?: string;
+}): Promise<boolean> => {
+  const t = await getTranslate();
+  const html = await renderInvitationEmail({
+    subject: data.subject,
+    body: data.body,
+    surveyLink: data.surveyLink,
+    logoUrl: data.logoUrl,
+    t,
+    ...legalProps,
+  });
+  return await sendEmail({
+    to: data.to,
+    subject: data.subject,
+    html,
   });
 };
 

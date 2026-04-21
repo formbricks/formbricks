@@ -85,16 +85,28 @@ export const ResponseOptionsCard = ({
   };
 
   const handleVerifyEmailToogle = () => {
-    setVerifyEmailToggle(!verifyEmailToggle);
-    setLocalSurvey({ ...localSurvey, isVerifyEmailEnabled: !localSurvey.isVerifyEmailEnabled });
-  };
-
-  const handleSingleResponsePerEmailToggle = () => {
-    setIsSingleResponsePerEmailToggle(!isSingleResponsePerEmailEnabledToggle);
+    const next = !verifyEmailToggle;
+    setVerifyEmailToggle(next);
+    // Disabling email verification forces the dedupe sub-option off too —
+    // it has no meaning without a verified email.
     setLocalSurvey({
       ...localSurvey,
-      isSingleResponsePerEmailEnabled: !localSurvey.isSingleResponsePerEmailEnabled,
+      isVerifyEmailEnabled: next,
+      isSingleResponsePerEmailEnabled: next ? localSurvey.isSingleResponsePerEmailEnabled : false,
     });
+    if (!next) setIsSingleResponsePerEmailToggle(false);
+  };
+
+  const handleLimitOneResponsePerPersonToggle = () => {
+    const next = !isSingleResponsePerEmailEnabledToggle;
+    setIsSingleResponsePerEmailToggle(next);
+    // Dedupe implies verification: flip both on together; flipping off leaves verification alone.
+    setLocalSurvey({
+      ...localSurvey,
+      isSingleResponsePerEmailEnabled: next,
+      isVerifyEmailEnabled: next ? true : localSurvey.isVerifyEmailEnabled,
+    });
+    if (next) setVerifyEmailToggle(true);
   };
 
   const handleClosedSurveyMessageChange = ({
@@ -329,17 +341,16 @@ export const ResponseOptionsCard = ({
                 onToggle={handleVerifyEmailToogle}
                 title={t("environments.surveys.edit.verify_email_before_submission")}
                 description={t("environments.surveys.edit.verify_email_before_submission_description")}
-                childBorder={true}>
-                <div className="m-1">
-                  <AdvancedOptionToggle
-                    htmlId="preventDoubleSubmission"
-                    isChecked={isSingleResponsePerEmailEnabledToggle}
-                    onToggle={handleSingleResponsePerEmailToggle}
-                    title={t("environments.surveys.edit.prevent_double_submission")}
-                    description={t("environments.surveys.edit.prevent_double_submission_description")}
-                  />
-                </div>
-              </AdvancedOptionToggle>
+              />
+
+              {/* Limit One Response Per Person (was nested; promoted to top-level so it's discoverable) */}
+              <AdvancedOptionToggle
+                htmlId="limitOneResponsePerPerson"
+                isChecked={isSingleResponsePerEmailEnabledToggle}
+                onToggle={handleLimitOneResponsePerPersonToggle}
+                title={t("environments.surveys.edit.limit_one_response_per_person")}
+                description={t("environments.surveys.edit.limit_one_response_per_person_description")}
+              />
 
               {/* Protect Survey with Pin */}
               <AdvancedOptionToggle

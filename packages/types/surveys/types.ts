@@ -329,6 +329,51 @@ export const ZSurveyMetadata = z.object({
 
 export type TSurveyMetadata = z.infer<typeof ZSurveyMetadata>;
 
+// ----- Survey invitation & reminder configuration (ASLA fork) -----
+
+export const ZInvitationAudience = z.discriminatedUnion("source", [
+  z.object({
+    source: z.literal("segment"),
+    segmentId: z.string().cuid2(),
+  }),
+  z.object({
+    source: z.literal("snowflake"),
+    queryId: z.string(),
+    emailColumn: z.string(),
+    nameColumn: z.string().optional(),
+  }),
+]);
+
+export type TInvitationAudience = z.infer<typeof ZInvitationAudience>;
+
+export const ZReminderSchedule = z.object({
+  enabled: z.boolean(),
+  daysAfterInvite: z.array(z.number().int().min(0).max(365)),
+  maxReminders: z.number().int().min(0).max(20),
+});
+
+export type TReminderSchedule = z.infer<typeof ZReminderSchedule>;
+
+export const ZInvitationEmailTemplate = z.object({
+  subject: z.string().min(1).max(500),
+  body: z.string(),
+});
+
+export const ZInvitationEmailTemplates = z.object({
+  invitation: ZInvitationEmailTemplate,
+  reminder: ZInvitationEmailTemplate,
+});
+
+export type TInvitationEmailTemplates = z.infer<typeof ZInvitationEmailTemplates>;
+
+export const ZSurveyInvitationConfig = z.object({
+  audience: ZInvitationAudience,
+  reminderSchedule: ZReminderSchedule,
+  emailTemplates: ZInvitationEmailTemplates,
+});
+
+export type TSurveyInvitationConfig = z.infer<typeof ZSurveyInvitationConfig>;
+
 export const ZSurveyQuestionChoice = z.object({
   id: z.string(),
   label: ZI18nString,
@@ -944,6 +989,7 @@ export const ZSurvey = z
     singleUse: ZSurveySingleUse.nullable(),
     autoAdvance: z.boolean().optional().default(false),
     snowflakeSync: z.boolean().optional().default(false),
+    invitationConfig: ZSurveyInvitationConfig.nullable().optional(),
     isVerifyEmailEnabled: z.boolean(),
     recaptcha: ZSurveyRecaptcha.nullable(),
     isSingleResponsePerEmailEnabled: z.boolean(),

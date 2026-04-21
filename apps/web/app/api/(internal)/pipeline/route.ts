@@ -19,6 +19,7 @@ import { TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-
 import { sendResponseFinishedEmail } from "@/modules/email";
 import { sendFollowUpsForResponse } from "@/modules/survey/follow-ups/lib/follow-ups";
 import { FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
+import { linkResponseToInvitation } from "@/modules/survey/invitations/lib/invitations";
 import { handleIntegrations } from "./lib/handleIntegrations";
 import { buildSnowflakeRows } from "./lib/snowflake-sync";
 
@@ -230,6 +231,14 @@ export const POST = async (request: Request) => {
           },
         });
       }
+    }
+
+    // Link response to any pending invitation so reminders stop targeting this person.
+    try {
+      await linkResponseToInvitation(response.id);
+    } catch (error) {
+      logger.error({ error, surveyId, responseId: response.id }, "linkResponseToInvitation failed");
+      // Never block the pipeline
     }
 
     // Snowflake sync (if enabled for this survey)
