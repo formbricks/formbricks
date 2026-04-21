@@ -6,7 +6,7 @@ import { fillRichTextEditor, uploadImageChoicesForPictureSelection } from "./uti
 const firstPictureChoiceAltPrefix = "playwright-choice-1--fid--";
 const secondPictureChoiceAltPrefix = "playwright-choice-2--fid--";
 
-test.describe("Storage Smoke", () => {
+test.describe("Storage Smoke @storage-smoke", () => {
   test.setTimeout(1000 * 60 * 3);
 
   test("uploads picture selection images against real storage", async ({ page, users }) => {
