@@ -8,6 +8,7 @@ const setTestEnv = (overrides: Record<string, string | undefined> = {}) => {
     NODE_ENV: "test",
     DATABASE_URL: "https://example.com/db",
     ENCRYPTION_KEY: "12345678901234567890123456789012",
+    HUB_API_URL: "https://hub.formbricks.local",
     ...overrides,
   };
 };
@@ -21,13 +22,22 @@ describe("env", () => {
     process.env = ORIGINAL_ENV;
   });
 
+  test("allows ambient DEBUG values from external tooling", async () => {
+    setTestEnv({
+      DEBUG: "pnpm:*",
+    });
+
+    const { env } = await import("./env");
+
+    expect(env.DEBUG).toBe("pnpm:*");
+  });
+
   test("uses the default password reset token lifetime when env var is not set", async () => {
     setTestEnv({
       PASSWORD_RESET_TOKEN_LIFETIME_MINUTES: undefined,
     });
 
     const { env } = await import("./env");
-
     expect(env.PASSWORD_RESET_TOKEN_LIFETIME_MINUTES).toBe(30);
   });
 

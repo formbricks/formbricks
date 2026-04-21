@@ -2,7 +2,28 @@ import { TFunction } from "i18next";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { ZSurveyLogicConditionsOperator } from "@formbricks/types/surveys/logic";
 
+const getNumericScaleOptions = (t: TFunction) => ({
+  options: [
+    { label: "=", value: ZSurveyLogicConditionsOperator.enum.equals },
+    { label: "!=", value: ZSurveyLogicConditionsOperator.enum.doesNotEqual },
+    { label: ">", value: ZSurveyLogicConditionsOperator.enum.isGreaterThan },
+    { label: "<", value: ZSurveyLogicConditionsOperator.enum.isLessThan },
+    { label: ">=", value: ZSurveyLogicConditionsOperator.enum.isGreaterThanOrEqual },
+    { label: "<=", value: ZSurveyLogicConditionsOperator.enum.isLessThanOrEqual },
+    {
+      label: t("workspace.surveys.edit.is_submitted"),
+      value: ZSurveyLogicConditionsOperator.enum.isSubmitted,
+    },
+    {
+      label: t("workspace.surveys.edit.is_skipped"),
+      value: ZSurveyLogicConditionsOperator.enum.isSkipped,
+    },
+  ],
+});
+
 export const getLogicRules = (t: TFunction) => {
+  const numericScaleOptions = getNumericScaleOptions(t);
+
   return {
     element: {
       [`${TSurveyElementTypeEnum.OpenText}.text`]: {
@@ -181,78 +202,10 @@ export const getLogicRules = (t: TFunction) => {
           },
         ],
       },
-      [TSurveyElementTypeEnum.Rating]: {
-        options: [
-          {
-            label: "=",
-            value: ZSurveyLogicConditionsOperator.enum.equals,
-          },
-          {
-            label: "!=",
-            value: ZSurveyLogicConditionsOperator.enum.doesNotEqual,
-          },
-          {
-            label: ">",
-            value: ZSurveyLogicConditionsOperator.enum.isGreaterThan,
-          },
-          {
-            label: "<",
-            value: ZSurveyLogicConditionsOperator.enum.isLessThan,
-          },
-          {
-            label: ">=",
-            value: ZSurveyLogicConditionsOperator.enum.isGreaterThanOrEqual,
-          },
-          {
-            label: "<=",
-            value: ZSurveyLogicConditionsOperator.enum.isLessThanOrEqual,
-          },
-          {
-            label: t("workspace.surveys.edit.is_submitted"),
-            value: ZSurveyLogicConditionsOperator.enum.isSubmitted,
-          },
-          {
-            label: t("workspace.surveys.edit.is_skipped"),
-            value: ZSurveyLogicConditionsOperator.enum.isSkipped,
-          },
-        ],
-      },
-      [TSurveyElementTypeEnum.NPS]: {
-        options: [
-          {
-            label: "=",
-            value: ZSurveyLogicConditionsOperator.enum.equals,
-          },
-          {
-            label: "!=",
-            value: ZSurveyLogicConditionsOperator.enum.doesNotEqual,
-          },
-          {
-            label: ">",
-            value: ZSurveyLogicConditionsOperator.enum.isGreaterThan,
-          },
-          {
-            label: "<",
-            value: ZSurveyLogicConditionsOperator.enum.isLessThan,
-          },
-          {
-            label: ">=",
-            value: ZSurveyLogicConditionsOperator.enum.isGreaterThanOrEqual,
-          },
-          {
-            label: "<=",
-            value: ZSurveyLogicConditionsOperator.enum.isLessThanOrEqual,
-          },
-          {
-            label: t("workspace.surveys.edit.is_submitted"),
-            value: ZSurveyLogicConditionsOperator.enum.isSubmitted,
-          },
-          {
-            label: t("workspace.surveys.edit.is_skipped"),
-            value: ZSurveyLogicConditionsOperator.enum.isSkipped,
-          },
-        ],
-      },
+      [TSurveyElementTypeEnum.Rating]: numericScaleOptions,
+      [TSurveyElementTypeEnum.NPS]: numericScaleOptions,
+      [TSurveyElementTypeEnum.CSAT]: numericScaleOptions,
+      [TSurveyElementTypeEnum.CES]: numericScaleOptions,
       [TSurveyElementTypeEnum.CTA]: {
         options: [
           {

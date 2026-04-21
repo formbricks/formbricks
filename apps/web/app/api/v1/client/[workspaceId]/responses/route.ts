@@ -126,7 +126,6 @@ export const POST = withV1ApiWrapper({
         response: responses.badRequestResponse(
           "Survey is part of another workspace",
           {
-            "survey.workspaceId": survey.workspaceId,
             workspaceId,
           },
           true

@@ -121,13 +121,10 @@ export const DELETE = async (
       : responses.notAuthenticatedResponse();
   }
 
-  if (authResult.ok) {
+  // Rate limiting for apiKey DELETE is enforced by Envoy in v5 — see envoy-rate-limit-coverage.ts
+  if (authResult.ok && authResult.data.authType !== "apiKey") {
     try {
-      if (authResult.data.authType === "apiKey") {
-        await applyRateLimit(rateLimitConfigs.storage.delete, authResult.data.apiKeyId);
-      } else {
-        await applyRateLimit(rateLimitConfigs.storage.delete, authResult.data.userId);
-      }
+      await applyRateLimit(rateLimitConfigs.storage.delete, authResult.data.userId);
     } catch (error) {
       return responses.tooManyRequestsResponse(
         error instanceof Error ? error.message : "Unknown error occurred"
@@ -142,20 +139,20 @@ export const DELETE = async (
     idParam
   );
 
-  const isSuccess = deleteResult.ok;
+  if (!deleteResult.ok) {
+    const { error } = deleteResult;
 
-  if (!isSuccess) {
-    logger.error({ error: deleteResult.error }, "Error deleting file");
+    logger.error({ error }, "Error deleting file");
 
     await logFileDeletion({
-      failureReason: deleteResult.error.code,
+      failureReason: error.code,
       accessType,
       userId: session?.user?.id,
       workspaceId: resolved.workspaceId,
       apiUrl: request.url,
     });
 
-    const errorResponse = getErrorResponseFromStorageError(deleteResult.error, { fileName });
+    const errorResponse = getErrorResponseFromStorageError(error, { fileName });
     return errorResponse;
   }
 

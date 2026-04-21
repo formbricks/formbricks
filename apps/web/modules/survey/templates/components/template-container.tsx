@@ -13,7 +13,6 @@ import { getMinimalSurvey } from "../lib/minimal-survey";
 
 type TemplateContainerWithPreviewProps = {
   workspace: Workspace;
-  appSetupCompleted: boolean;
   userId: string;
   isTemplatePage?: boolean;
   publicDomain: string;
@@ -21,7 +20,6 @@ type TemplateContainerWithPreviewProps = {
 
 export const TemplateContainerWithPreview = ({
   workspace,
-  appSetupCompleted,
   userId,
   isTemplatePage = true,
   publicDomain,
@@ -71,7 +69,6 @@ export const TemplateContainerWithPreview = ({
               survey={{ ...getMinimalSurvey(t), ...activeTemplate.preset }}
               elementId={activeElementId}
               workspace={workspace}
-              environment={{ appSetupCompleted }}
               languageCode={"default"}
               isSpamProtectionAllowed={false} // setting it to false as this is a template
               publicDomain={publicDomain}
