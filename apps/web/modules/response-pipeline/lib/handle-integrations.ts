@@ -5,7 +5,7 @@ import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
 import { TIntegrationGoogleSheets } from "@formbricks/types/integration/google-sheet";
 import { TIntegrationNotion, TIntegrationNotionConfigData } from "@formbricks/types/integration/notion";
 import { TIntegrationSlack } from "@formbricks/types/integration/slack";
-import { TResponseDataValue, TResponseMeta } from "@formbricks/types/responses";
+import { TResponse, TResponseDataValue, TResponseMeta } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
@@ -21,6 +21,11 @@ import { getFormattedDateTimeString } from "@/lib/utils/datetime";
 import { parseRecallInfo } from "@/lib/utils/recall";
 import { truncateText } from "@/lib/utils/strings";
 import { resolveStorageUrlAuto } from "@/modules/storage/utils";
+
+type TIntegrationPipelineData = {
+  response: Pick<TResponse, "createdAt" | "data" | "meta" | "variables">;
+  surveyId: string;
+};
 
 const convertMetaObjectToString = (metadata: TResponseMeta): string => {
   let result: string[] = [];
@@ -44,16 +49,6 @@ interface TIntegrationFieldSelection {
   includeMetadata: boolean;
   includeVariables: boolean;
 }
-
-type TIntegrationPipelineData = {
-  surveyId: string;
-  response: {
-    createdAt: Date;
-    data: Record<string, TResponseDataValue>;
-    meta: TResponseMeta;
-    variables: Record<string, string | number>;
-  };
-};
 
 const toIntegrationFieldSelection = (config: {
   elementIds: string[];

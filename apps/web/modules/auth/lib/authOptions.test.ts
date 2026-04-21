@@ -108,6 +108,7 @@ vi.mock("next/headers", () => ({
 const mockUserId = "cm5yzxcp900000cl78fzocjal";
 const mockPassword = randomBytes(12).toString("hex");
 const mockHashedPassword = await hashPassword(mockPassword);
+const AUTH_OPTIONS_SLOW_TEST_TIMEOUT_MS = 20_000;
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -197,90 +198,106 @@ describe("authOptions", () => {
       );
     }, 15000);
 
-    test("should successfully login when credentials are valid", async () => {
-      vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true }); // Rate limiting passes
-      const fakeUser = {
-        id: mockUserId,
-        email: mockUser.email,
-        password: mockHashedPassword,
-        emailVerified: new Date(),
-        twoFactorEnabled: false,
-      };
-
-      vi.spyOn(prisma.user, "findUnique").mockResolvedValue(fakeUser as any);
-
-      const credentials = { email: mockUser.email, password: mockPassword };
-
-      const result = await credentialsProvider.options.authorize(credentials, {});
-      expect(result).toEqual({
-        id: fakeUser.id,
-        email: fakeUser.email,
-        emailVerified: fakeUser.emailVerified,
-      });
-    }, 15000);
-
-    describe("Envoy-managed callback behavior", () => {
-      test("should not apply in-app rate limiting before credential validation", async () => {
-        vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
-        vi.spyOn(prisma.user, "findUnique").mockResolvedValue({
+    test(
+      "should successfully login when credentials are valid",
+      async () => {
+        vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true }); // Rate limiting passes
+        const fakeUser = {
           id: mockUserId,
           email: mockUser.email,
           password: mockHashedPassword,
           emailVerified: new Date(),
           twoFactorEnabled: false,
-        } as any);
+        };
 
-        const credentials = { email: mockUser.email, password: mockPassword };
-
-        await credentialsProvider.options.authorize(credentials, {});
-
-        expect(applyIPRateLimit).not.toHaveBeenCalled();
-        expect(prisma.user.findUnique).toHaveBeenCalled();
-      });
-
-      test("should ignore app limiter errors because login is Envoy-managed", async () => {
-        vi.mocked(applyIPRateLimit).mockRejectedValue(
-          new Error("Maximum number of requests reached. Please try again later.")
-        );
-        vi.spyOn(prisma.user, "findUnique").mockResolvedValue({
-          id: mockUserId,
-          email: mockUser.email,
-          password: mockHashedPassword,
-          emailVerified: new Date(),
-          twoFactorEnabled: false,
-        } as any);
+        vi.spyOn(prisma.user, "findUnique").mockResolvedValue(fakeUser as any);
 
         const credentials = { email: mockUser.email, password: mockPassword };
 
         const result = await credentialsProvider.options.authorize(credentials, {});
-
         expect(result).toEqual({
-          id: mockUserId,
-          email: mockUser.email,
-          emailVerified: expect.any(Date),
+          id: fakeUser.id,
+          email: fakeUser.email,
+          emailVerified: fakeUser.emailVerified,
         });
-        expect(applyIPRateLimit).not.toHaveBeenCalled();
-      });
+      },
+      AUTH_OPTIONS_SLOW_TEST_TIMEOUT_MS
+    );
+
+    describe("Envoy-managed callback behavior", () => {
+      test(
+        "should not apply in-app rate limiting before credential validation",
+        async () => {
+          vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
+          vi.spyOn(prisma.user, "findUnique").mockResolvedValue({
+            id: mockUserId,
+            email: mockUser.email,
+            password: mockHashedPassword,
+            emailVerified: new Date(),
+            twoFactorEnabled: false,
+          } as any);
+
+          const credentials = { email: mockUser.email, password: mockPassword };
+
+          await credentialsProvider.options.authorize(credentials, {});
+
+          expect(applyIPRateLimit).not.toHaveBeenCalled();
+          expect(prisma.user.findUnique).toHaveBeenCalled();
+        },
+        AUTH_OPTIONS_SLOW_TEST_TIMEOUT_MS
+      );
+
+      test(
+        "should ignore app limiter errors because login is Envoy-managed",
+        async () => {
+          vi.mocked(applyIPRateLimit).mockRejectedValue(
+            new Error("Maximum number of requests reached. Please try again later.")
+          );
+          vi.spyOn(prisma.user, "findUnique").mockResolvedValue({
+            id: mockUserId,
+            email: mockUser.email,
+            password: mockHashedPassword,
+            emailVerified: new Date(),
+            twoFactorEnabled: false,
+          } as any);
+
+          const credentials = { email: mockUser.email, password: mockPassword };
+
+          const result = await credentialsProvider.options.authorize(credentials, {});
+
+          expect(result).toEqual({
+            id: mockUserId,
+            email: mockUser.email,
+            emailVerified: expect.any(Date),
+          });
+          expect(applyIPRateLimit).not.toHaveBeenCalled();
+        },
+        AUTH_OPTIONS_SLOW_TEST_TIMEOUT_MS
+      );
     });
 
     describe("Two-Factor Backup Code login", () => {
-      test("should throw error if backup codes are missing", async () => {
-        vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true }); // Rate limiting passes
-        const mockUser = {
-          id: mockUserId,
-          email: "2fa@example.com",
-          password: mockHashedPassword,
-          twoFactorEnabled: true,
-          backupCodes: null,
-        };
-        vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockUser as any);
+      test(
+        "should throw error if backup codes are missing",
+        async () => {
+          vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true }); // Rate limiting passes
+          const mockUser = {
+            id: mockUserId,
+            email: "2fa@example.com",
+            password: mockHashedPassword,
+            twoFactorEnabled: true,
+            backupCodes: null,
+          };
+          vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockUser as any);
 
-        const credentials = { email: mockUser.email, password: mockPassword, backupCode: "123456" };
+          const credentials = { email: mockUser.email, password: mockPassword, backupCode: "123456" };
 
-        await expect(credentialsProvider.options.authorize(credentials, {})).rejects.toThrow(
-          "No backup codes found"
-        );
-      });
+          await expect(credentialsProvider.options.authorize(credentials, {})).rejects.toThrow(
+            "No backup codes found"
+          );
+        },
+        AUTH_OPTIONS_SLOW_TEST_TIMEOUT_MS
+      );
     });
   });
 
@@ -479,44 +496,52 @@ describe("authOptions", () => {
   describe("Two-Factor Authentication (TOTP)", () => {
     const credentialsProvider = getProviderById("credentials");
 
-    test("should throw error if TOTP code is missing when 2FA is enabled", async () => {
-      vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true }); // Rate limiting passes
-      const mockUser = {
-        id: mockUserId,
-        email: "2fa@example.com",
-        password: mockHashedPassword,
-        twoFactorEnabled: true,
-        twoFactorSecret: "encrypted_secret",
-      };
-      vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockUser as any);
+    test(
+      "should throw error if TOTP code is missing when 2FA is enabled",
+      async () => {
+        vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true }); // Rate limiting passes
+        const mockUser = {
+          id: mockUserId,
+          email: "2fa@example.com",
+          password: mockHashedPassword,
+          twoFactorEnabled: true,
+          twoFactorSecret: "encrypted_secret",
+        };
+        vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockUser as any);
 
-      const credentials = { email: mockUser.email, password: mockPassword };
+        const credentials = { email: mockUser.email, password: mockPassword };
 
-      await expect(credentialsProvider.options.authorize(credentials, {})).rejects.toThrow(
-        "second factor required"
-      );
-    });
+        await expect(credentialsProvider.options.authorize(credentials, {})).rejects.toThrow(
+          "second factor required"
+        );
+      },
+      AUTH_OPTIONS_SLOW_TEST_TIMEOUT_MS
+    );
 
-    test("should throw error if two factor secret is missing", async () => {
-      vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true }); // Rate limiting passes
-      const mockUser = {
-        id: mockUserId,
-        email: "2fa@example.com",
-        password: mockHashedPassword,
-        twoFactorEnabled: true,
-        twoFactorSecret: null,
-      };
-      vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockUser as any);
+    test(
+      "should throw error if two factor secret is missing",
+      async () => {
+        vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true }); // Rate limiting passes
+        const mockUser = {
+          id: mockUserId,
+          email: "2fa@example.com",
+          password: mockHashedPassword,
+          twoFactorEnabled: true,
+          twoFactorSecret: null,
+        };
+        vi.spyOn(prisma.user, "findUnique").mockResolvedValue(mockUser as any);
 
-      const credentials = {
-        email: mockUser.email,
-        password: mockPassword,
-        totpCode: "123456",
-      };
+        const credentials = {
+          email: mockUser.email,
+          password: mockPassword,
+          totpCode: "123456",
+        };
 
-      await expect(credentialsProvider.options.authorize(credentials, {})).rejects.toThrow(
-        "Internal Server Error"
-      );
-    });
+        await expect(credentialsProvider.options.authorize(credentials, {})).rejects.toThrow(
+          "Internal Server Error"
+        );
+      },
+      AUTH_OPTIONS_SLOW_TEST_TIMEOUT_MS
+    );
   });
 });

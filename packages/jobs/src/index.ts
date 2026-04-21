@@ -9,14 +9,19 @@ export type {
 } from "./contracts";
 export {
   enqueueResponsePipelineJob,
+  enqueueSurveySchedulingJob,
   enqueueTestLogJob,
   getBackgroundJobProducer,
+  removeRecurringSurveySchedulingJobSchedule,
   scheduleResponsePipelineJobAt,
+  scheduleSurveySchedulingJobAt,
   scheduleTestLogJobAt,
   upsertRecurringResponsePipelineJobSchedule,
+  upsertRecurringSurveySchedulingJobSchedule,
   upsertRecurringTestLogJobSchedule,
 } from "./queue";
 export { processResponsePipelineJob } from "./processors/response-pipeline";
+export { processSurveySchedulingJob } from "./processors/survey-scheduling";
 export { processTestLogJob } from "./processors/test-log";
 export { startJobsRuntime } from "./runtime";
 export {
@@ -38,6 +43,16 @@ export type {
   TRecurringBackgroundJobSchedule,
   TRunAtBackgroundJobSchedule,
 } from "./schedules";
-export { ZResponsePipelineEvent, ZResponsePipelineJobData, ZTestLogJobData } from "./types";
-export type { TResponsePipelineEvent, TResponsePipelineJobData, TTestLogJobData } from "./types";
+export {
+  ZResponsePipelineEvent,
+  ZResponsePipelineJobData,
+  ZSurveySchedulingJobData,
+  ZTestLogJobData,
+} from "./types";
+export type {
+  TResponsePipelineEvent,
+  TResponsePipelineJobData,
+  TSurveySchedulingJobData,
+  TTestLogJobData,
+} from "./types";
 /* v8 ignore stop */

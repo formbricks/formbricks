@@ -11,6 +11,8 @@ export const getMinimalSurvey = (t: TFunction): TSurvey => ({
   workspaceId: "someWorkspaceId1",
   createdBy: null,
   status: "draft",
+  publishOn: null,
+  closeOn: null,
   displayOption: "displayOnce",
   autoClose: null,
   triggers: [],

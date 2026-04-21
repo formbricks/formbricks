@@ -4,7 +4,7 @@ import type {
   TRecurringBackgroundJobSchedule,
   TRunAtBackgroundJobSchedule,
 } from "@/src/schedules";
-import type { TResponsePipelineJobData, TTestLogJobData } from "@/src/types";
+import type { TResponsePipelineJobData, TSurveySchedulingJobData, TTestLogJobData } from "@/src/types";
 
 export interface JobExecutionContext {
   attempt: number;
@@ -53,16 +53,26 @@ export const toAnyBackgroundJobDefinition = <TData>(
 
 export interface BackgroundJobProducer {
   enqueueResponsePipeline: (data: TResponsePipelineJobData) => Promise<EnqueuedJob>;
+  enqueueSurveyScheduling: (data: TSurveySchedulingJobData) => Promise<EnqueuedJob>;
   enqueueTestLog: (data: TTestLogJobData) => Promise<EnqueuedJob>;
   scheduleResponsePipelineAt: (
     schedule: TRunAtBackgroundJobSchedule,
     data: TResponsePipelineJobData
+  ) => Promise<EnqueuedJob>;
+  scheduleSurveySchedulingAt: (
+    schedule: TRunAtBackgroundJobSchedule,
+    data: TSurveySchedulingJobData
   ) => Promise<EnqueuedJob>;
   scheduleTestLogAt: (schedule: TRunAtBackgroundJobSchedule, data: TTestLogJobData) => Promise<EnqueuedJob>;
   upsertRecurringResponsePipelineSchedule: (
     identity: TBackgroundJobScheduleIdentity,
     schedule: TRecurringBackgroundJobSchedule,
     data: TResponsePipelineJobData
+  ) => Promise<UpsertedRecurringJobSchedule>;
+  upsertRecurringSurveySchedulingSchedule: (
+    identity: TBackgroundJobScheduleIdentity,
+    schedule: TRecurringBackgroundJobSchedule,
+    data: TSurveySchedulingJobData
   ) => Promise<UpsertedRecurringJobSchedule>;
   upsertRecurringTestLogSchedule: (
     identity: TBackgroundJobScheduleIdentity,

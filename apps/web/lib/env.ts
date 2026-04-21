@@ -107,6 +107,22 @@ const validateActiveAIProviderConfiguration = (values: TAIConfigurationEnv, ctx:
   providerValidators[values.AI_PROVIDER](values, ctx);
 };
 
+const isValidIanaTimeZone = (value: string): boolean => {
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: value });
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const ZSurveySchedulingTimeZone = z.string().trim().min(1).refine(isValidIanaTimeZone, {
+  message: "NEXT_PUBLIC_SURVEY_SCHEDULING_TIME_ZONE must be a valid IANA time zone",
+});
+
+const ZSurveySchedulingLocalHour = z.coerce.number().int().min(0).max(23);
+const ZSurveySchedulingLocalMinute = z.coerce.number().int().min(0).max(59);
+
 const parsedEnv = createEnv({
   /*
    * Serverside Environment variables, not available on the client.
@@ -257,6 +273,11 @@ const parsedEnv = createEnv({
       .optional(),
     SENTRY_ENVIRONMENT: z.string().optional(),
   },
+  client: {
+    NEXT_PUBLIC_SURVEY_SCHEDULING_TIME_ZONE: ZSurveySchedulingTimeZone.optional().default("Europe/Berlin"),
+    NEXT_PUBLIC_SURVEY_SCHEDULING_LOCAL_HOUR: ZSurveySchedulingLocalHour.optional().default(0),
+    NEXT_PUBLIC_SURVEY_SCHEDULING_LOCAL_MINUTE: ZSurveySchedulingLocalMinute.optional().default(0),
+  },
 
   /*
    * Due to how Next.js bundles environment variables on Edge and Client,
@@ -325,6 +346,9 @@ const parsedEnv = createEnv({
     MAIL_FROM_NAME: process.env.MAIL_FROM_NAME,
     NEXTAUTH_URL: process.env.NEXTAUTH_URL,
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
+    NEXT_PUBLIC_SURVEY_SCHEDULING_LOCAL_HOUR: process.env.NEXT_PUBLIC_SURVEY_SCHEDULING_LOCAL_HOUR,
+    NEXT_PUBLIC_SURVEY_SCHEDULING_LOCAL_MINUTE: process.env.NEXT_PUBLIC_SURVEY_SCHEDULING_LOCAL_MINUTE,
+    NEXT_PUBLIC_SURVEY_SCHEDULING_TIME_ZONE: process.env.NEXT_PUBLIC_SURVEY_SCHEDULING_TIME_ZONE,
     SENTRY_DSN: process.env.SENTRY_DSN,
     NOTION_OAUTH_CLIENT_ID: process.env.NOTION_OAUTH_CLIENT_ID,
     NOTION_OAUTH_CLIENT_SECRET: process.env.NOTION_OAUTH_CLIENT_SECRET,

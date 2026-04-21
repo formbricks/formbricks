@@ -22,8 +22,23 @@ export const SuccessMessage = ({ survey }: SummaryMetadataProps) => {
   const appSetupCompleted = workspace.appSetupCompleted;
 
   useEffect(() => {
-    const newSurveyParam = searchParams?.get("success");
-    if (newSurveyParam && survey && workspace) {
+    const publishSuccessParam = searchParams.get("success");
+    const scheduledSuccessParam = searchParams.get("scheduled");
+
+    if (scheduledSuccessParam) {
+      toast.success(t("workspace.surveys.summary.survey_scheduled_successfully"), {
+        id: "survey-schedule-success-toast",
+        duration: 5000,
+        position: "bottom-right",
+      });
+
+      const url = new URL(globalThis.location.href);
+      url.searchParams.delete("scheduled");
+      globalThis.history.replaceState({}, "", url.toString());
+      return;
+    }
+
+    if (publishSuccessParam) {
       setConfetti(true);
       toast.success(
         isAppSurvey && !appSetupCompleted
@@ -38,16 +53,16 @@ export const SuccessMessage = ({ survey }: SummaryMetadataProps) => {
       );
 
       // Remove success param from url
-      const url = new URL(window.location.href);
+      const url = new URL(globalThis.location.href);
       url.searchParams.delete("success");
       if (survey.type === "link") {
         // Add share param to url to open share embed modal
         url.searchParams.set("share", "true");
       }
 
-      window.history.replaceState({}, "", url.toString());
+      globalThis.history.replaceState({}, "", url.toString());
     }
-  }, [workspace, isAppSurvey, searchParams, survey, appSetupCompleted, t]);
+  }, [appSetupCompleted, isAppSurvey, searchParams, survey.type, t]);
 
   return <>{confetti && <Confetti />}</>;
 };

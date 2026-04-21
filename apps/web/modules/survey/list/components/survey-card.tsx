@@ -24,6 +24,7 @@ export const SurveyCard = ({ survey, publicDomain, isReadOnly, deleteSurvey, loc
   const { t } = useTranslation();
   const { workspace } = useWorkspace();
   const workspaceBasePath = `/workspaces/${workspace?.id}`;
+  const isScheduled = survey.status === "paused" && survey.publishOn !== null;
   const surveyStatusLabel = (() => {
     switch (survey.status) {
       case "inProgress":
@@ -33,7 +34,7 @@ export const SurveyCard = ({ survey, publicDomain, isReadOnly, deleteSurvey, loc
       case "draft":
         return t("common.draft");
       case "paused":
-        return t("common.paused");
+        return isScheduled ? t("common.scheduled") : t("common.paused");
       default:
         return undefined;
     }
@@ -66,7 +67,7 @@ export const SurveyCard = ({ survey, publicDomain, isReadOnly, deleteSurvey, loc
           survey.status === "draft" && "bg-slate-100",
           survey.status === "paused" && "bg-slate-100"
         )}>
-        <SurveyStatusIndicator status={survey.status} /> {surveyStatusLabel}{" "}
+        <SurveyStatusIndicator status={survey.status} isScheduled={isScheduled} /> {surveyStatusLabel}{" "}
       </div>
       <div className="col-span-1 max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm text-slate-600">
         {survey.responseCount}
