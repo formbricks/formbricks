@@ -38,10 +38,12 @@ import {
 // only has once the user fills it in. We validate on send rather than forcing
 // the editor to hold only canonical values (which would require `null`
 // placeholders that complicate every render).
+type TManualRecipient = { email: string; firstName?: string; lastName?: string };
+
 type TInvitationAudienceDraft =
   | { source: "segment"; segmentId: string }
   | { source: "snowflake"; queryId: string; emailColumn: string; nameColumn?: string }
-  | { source: "manualList"; emails: string[] };
+  | { source: "manualList"; recipients: TManualRecipient[] };
 
 interface TInvitationConfigDraft {
   audience: TInvitationAudienceDraft;
@@ -114,7 +116,7 @@ export const RecipientsCard = ({ localSurvey, setLocalSurvey, segments }: Recipi
   const audienceIsValid =
     (audience.source === "segment" && Boolean(audience.segmentId)) ||
     (audience.source === "snowflake" && Boolean(audience.queryId && audience.emailColumn)) ||
-    (audience.source === "manualList" && audience.emails.length > 0);
+    (audience.source === "manualList" && audience.recipients.length > 0);
 
   // Build a canonical, validated config for server dispatch. Returns null (and
   // shows a toast) if the draft fails schema validation — this is a belt-and-
@@ -202,7 +204,7 @@ export const RecipientsCard = ({ localSurvey, setLocalSurvey, segments }: Recipi
                 } else if (value === "snowflake") {
                   updateAudience({ source: "snowflake", queryId: "", emailColumn: "email" });
                 } else {
-                  updateAudience({ source: "manualList", emails: [] });
+                  updateAudience({ source: "manualList", recipients: [] });
                 }
               }}>
               <SelectTrigger>
@@ -240,24 +242,40 @@ export const RecipientsCard = ({ localSurvey, setLocalSurvey, segments }: Recipi
 
             {audience.source === "manualList" && (
               <div className="space-y-2">
-                <Label htmlFor="manualEmails">Email addresses</Label>
+                <Label htmlFor="manualEmails">Recipients (email, first name, last name)</Label>
                 <textarea
                   id="manualEmails"
-                  className="min-h-24 w-full rounded-md border border-slate-300 bg-white p-2 font-mono text-sm"
-                  value={audience.emails.join("\n")}
+                  className="min-h-28 w-full rounded-md border border-slate-300 bg-white p-2 font-mono text-sm"
+                  value={audience.recipients
+                    .map((r) =>
+                      [r.email, r.firstName ?? "", r.lastName ?? ""]
+                        .join(", ")
+                        .replace(/(,\s*)+$/, "")
+                    )
+                    .join("\n")}
                   onChange={(e) => {
-                    // Split on commas or newlines, trim whitespace, drop blanks.
-                    const emails = e.target.value
-                      .split(/[\n,]/)
-                      .map((s) => s.trim())
-                      .filter(Boolean);
-                    updateAudience({ source: "manualList", emails });
+                    // Each line is `email[, firstName[, lastName]]`. Trim
+                    // cells, keep rows that parse as an email.
+                    const recipients: TManualRecipient[] = e.target.value
+                      .split(/\n/)
+                      .map((line) => {
+                        const parts = line.split(",").map((s) => s.trim());
+                        const email = parts[0] ?? "";
+                        const firstName = parts[1] || undefined;
+                        const lastName = parts[2] || undefined;
+                        return { email, firstName, lastName };
+                      })
+                      .filter((r) => /.+@.+\..+/.test(r.email));
+                    updateAudience({ source: "manualList", recipients });
                   }}
-                  placeholder="alice@example.com&#10;bob@example.com"
+                  placeholder={
+                    "alice@example.com\nbob@example.com, Bob\ncarol@example.com, Carol, Smith"
+                  }
                 />
                 <p className="text-xs text-slate-500">
-                  One email per line (or comma-separated). {audience.emails.length} recipient
-                  {audience.emails.length === 1 ? "" : "s"}.
+                  One recipient per line. Format: <code>email, firstName, lastName</code> (first and
+                  last names are optional). {audience.recipients.length} recipient
+                  {audience.recipients.length === 1 ? "" : "s"}.
                 </p>
               </div>
             )}

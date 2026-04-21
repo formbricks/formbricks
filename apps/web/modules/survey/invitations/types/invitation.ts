@@ -25,6 +25,8 @@ export type TInvitationSummary = z.infer<typeof ZInvitationSummary>;
 
 export const MERGE_FIELDS = [
   "recipientName",
+  "recipientFirstName",
+  "recipientLastName",
   "recipientEmail",
   "surveyName",
   "surveyLink",

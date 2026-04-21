@@ -59,6 +59,8 @@ export async function runScheduledReminders(): Promise<{
           id: true,
           recipientEmail: true,
           recipientName: true,
+          recipientFirstName: true,
+          recipientLastName: true,
           contactId: true,
           linkToken: true,
           sentOffsetDays: true,
@@ -104,6 +106,8 @@ export async function runScheduledReminders(): Promise<{
 
           const vars = {
             recipientName: inv.recipientName ?? "",
+            recipientFirstName: inv.recipientFirstName ?? "",
+            recipientLastName: inv.recipientLastName ?? "",
             recipientEmail: inv.recipientEmail,
             surveyName: survey.name,
             surveyLink,

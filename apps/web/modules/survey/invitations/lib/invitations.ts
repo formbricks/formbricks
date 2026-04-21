@@ -19,7 +19,12 @@ const DEFAULT_ATTRIBUTE_KEYS = ["email", "firstName", "lastName"] as const;
 //  (c) re-fetching on conflict.
 // This avoids duplicate Contact rows when two sends race (e.g. a manual "Send
 // invitations" click and a scheduled reminder firing simultaneously).
-async function ensureContact(environmentId: string, email: string, name: string | null): Promise<string> {
+async function ensureContact(
+  environmentId: string,
+  email: string,
+  firstName: string | null,
+  lastName: string | null
+): Promise<string> {
   const findExisting = () =>
     prisma.contact.findFirst({
       where: {
@@ -37,9 +42,6 @@ async function ensureContact(environmentId: string, email: string, name: string 
     select: { id: true, key: true },
   });
   const keyByName = new Map(keys.map((k) => [k.key, k.id]));
-
-  const [firstName, ...rest] = (name ?? "").split(/\s+/).filter(Boolean);
-  const lastName = rest.join(" ") || null;
 
   const createAttributes: { attributeKeyId: string; value: string }[] = [];
   const emailKeyId = keyByName.get("email");
@@ -98,9 +100,10 @@ export async function upsertInvitation(args: {
   }
 
   // Either creating fresh, resuming an un-sent invitation, or explicit refresh:
-  // resolve Contact (create for Snowflake audiences) and generate a fresh link.
+  // resolve Contact (create for Snowflake / manual-list audiences) and generate a fresh link.
   const contactId =
-    member.existingContactId ?? (await ensureContact(environmentId, member.email, member.name));
+    member.existingContactId ??
+    (await ensureContact(environmentId, member.email, member.firstName, member.lastName));
 
   const linkResult = await getContactSurveyLink(contactId, surveyId);
   if (!linkResult.ok) {
@@ -111,7 +114,13 @@ export async function upsertInvitation(args: {
   if (existing) {
     await prisma.surveyInvitation.update({
       where: { id: existing.id },
-      data: { linkToken, contactId, recipientName: member.name },
+      data: {
+        linkToken,
+        contactId,
+        recipientName: member.name,
+        recipientFirstName: member.firstName,
+        recipientLastName: member.lastName,
+      },
     });
     return { id: existing.id, contactId, linkToken, created: false };
   }
@@ -122,6 +131,8 @@ export async function upsertInvitation(args: {
       contactId,
       recipientEmail: member.email,
       recipientName: member.name,
+      recipientFirstName: member.firstName,
+      recipientLastName: member.lastName,
       linkToken,
     },
     select: { id: true },
@@ -171,6 +182,8 @@ export async function sendInvitationsForSurvey(args: {
 
       const vars = {
         recipientName: member.name ?? "",
+        recipientFirstName: member.firstName ?? "",
+        recipientLastName: member.lastName ?? "",
         recipientEmail: member.email,
         surveyName,
         surveyLink: linkToken,

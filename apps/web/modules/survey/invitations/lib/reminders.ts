@@ -32,6 +32,8 @@ export async function sendManualReminders(args: {
       id: true,
       recipientEmail: true,
       recipientName: true,
+      recipientFirstName: true,
+      recipientLastName: true,
       contactId: true,
       linkToken: true,
     },
@@ -61,6 +63,8 @@ export async function sendManualReminders(args: {
 
       const vars = {
         recipientName: inv.recipientName ?? "",
+        recipientFirstName: inv.recipientFirstName ?? "",
+        recipientLastName: inv.recipientLastName ?? "",
         recipientEmail: inv.recipientEmail,
         surveyName,
         surveyLink,

@@ -477,24 +477,26 @@ model SurveyFollowUp {
 /// to a recipient resolved from an external audience source (e.g. ASLA Snowflake query).
 /// linkToken is always an opaque JWT used at /c/<token> to load the survey.
 model SurveyInvitation {
-  id             String    @id @default(cuid())
-  createdAt      DateTime  @default(now()) @map(name: "created_at")
-  updatedAt      DateTime  @updatedAt @map(name: "updated_at")
-  survey         Survey    @relation(fields: [surveyId], references: [id], onDelete: Cascade)
-  surveyId       String
-  contact        Contact?  @relation(fields: [contactId], references: [id], onDelete: SetNull)
-  contactId      String?
-  recipientEmail String
-  recipientName  String?
-  linkToken      String    @unique
-  sentAt         DateTime?
-  respondedAt    DateTime?
-  responseId     String?   @unique
-  response       Response? @relation(fields: [responseId], references: [id], onDelete: SetNull)
-  lastReminderAt DateTime?
-  reminderCount  Int       @default(0)
+  id                 String    @id @default(cuid())
+  createdAt          DateTime  @default(now()) @map(name: "created_at")
+  updatedAt          DateTime  @updatedAt @map(name: "updated_at")
+  survey             Survey    @relation(fields: [surveyId], references: [id], onDelete: Cascade)
+  surveyId           String
+  contact            Contact?  @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  contactId          String?
+  recipientEmail     String
+  recipientName      String?
+  recipientFirstName String?
+  recipientLastName  String?
+  linkToken          String    @unique
+  sentAt             DateTime?
+  respondedAt        DateTime?
+  responseId         String?   @unique
+  response           Response? @relation(fields: [responseId], references: [id], onDelete: SetNull)
+  lastReminderAt     DateTime?
+  reminderCount      Int       @default(0)
   // Which scheduled-reminder offsets have already fired for this invitation
-  sentOffsetDays Int[]     @default([])
+  sentOffsetDays     Int[]     @default([])
 
   @@unique([surveyId, recipientEmail])
   @@index([surveyId, respondedAt])

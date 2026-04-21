@@ -5,7 +5,11 @@ import { getContactsInSegment } from "@/modules/ee/contacts/lib/contacts";
 
 export type TAudienceMember = {
   email: string;
+  // Full name for the `{{recipientName}}` merge field. Derived from first+last
+  // when both are available, or null if neither is known.
   name: string | null;
+  firstName: string | null;
+  lastName: string | null;
   // If the audience comes from a Formbricks segment, we already have a Contact row.
   // Snowflake-sourced members get a Contact row created lazily at invitation-send time.
   existingContactId: string | null;
@@ -19,21 +23,24 @@ export async function resolveAudience(audience: TInvitationAudience): Promise<TA
     return resolveSegmentAudience(audience.segmentId);
   }
   if (audience.source === "manualList") {
-    return resolveManualListAudience(audience.emails);
+    return resolveManualListAudience(audience.recipients);
   }
   return resolveSnowflakeAudience(audience);
 }
 
-function resolveManualListAudience(emails: string[]): TAudienceMember[] {
+function resolveManualListAudience(
+  recipients: { email: string; firstName?: string; lastName?: string }[]
+): TAudienceMember[] {
   const seen = new Set<string>();
   const out: TAudienceMember[] = [];
-  for (const raw of emails) {
-    const email = raw.trim().toLowerCase();
+  for (const r of recipients) {
+    const email = r.email.trim().toLowerCase();
     if (!email || seen.has(email)) continue;
     seen.add(email);
-    // No name available from a manual list; ensureContact will still create
-    // a Contact row for each unique email with just the email attribute set.
-    out.push({ email, name: null, existingContactId: null });
+    const firstName = r.firstName?.trim() || null;
+    const lastName = r.lastName?.trim() || null;
+    const name = [firstName, lastName].filter(Boolean).join(" ") || null;
+    out.push({ email, name, firstName, lastName, existingContactId: null });
   }
   return out;
 }
@@ -48,12 +55,14 @@ async function resolveSegmentAudience(segmentId: string): Promise<TAudienceMembe
     const email = (contact.attributes?.email ?? "").trim().toLowerCase();
     if (!email || seen.has(email)) continue;
     seen.add(email);
-    const first = contact.attributes?.firstName?.trim() ?? "";
-    const last = contact.attributes?.lastName?.trim() ?? "";
-    const name = `${first} ${last}`.trim();
+    const firstName = contact.attributes?.firstName?.trim() || null;
+    const lastName = contact.attributes?.lastName?.trim() || null;
+    const name = [firstName, lastName].filter(Boolean).join(" ") || null;
     out.push({
       email,
-      name: name || null,
+      name,
+      firstName,
+      lastName,
       existingContactId: contact.contactId,
     });
   }
@@ -82,8 +91,17 @@ async function resolveSnowflakeAudience(
 
     const nameRaw = audience.nameColumn ? row[audience.nameColumn] : null;
     const name = typeof nameRaw === "string" && nameRaw.trim() ? nameRaw.trim() : null;
+    // For Snowflake sources we only have a single nameColumn; split on first
+    // whitespace for a best-effort first/last so merge fields can still work.
+    let firstName: string | null = null;
+    let lastName: string | null = null;
+    if (name) {
+      const [first, ...rest] = name.split(/\s+/);
+      firstName = first || null;
+      lastName = rest.join(" ") || null;
+    }
 
-    out.push({ email, name, existingContactId: null });
+    out.push({ email, name, firstName, lastName, existingContactId: null });
   }
   return out;
 }
