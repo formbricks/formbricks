@@ -81,6 +81,20 @@ export const RecipientsCard = ({ localSurvey, setLocalSurvey, segments }: Recipi
     return existing ?? emptyDraft;
   });
 
+  // Raw textarea content for manualList. Kept separately so partial lines
+  // (e.g. "it@") while the user is mid-typing aren't filtered out of view.
+  // We re-parse to `recipients` on every change, but the textarea renders
+  // from this raw string so every keystroke is preserved.
+  const [manualListRaw, setManualListRaw] = useState<string>(() => {
+    const existing = localSurvey.invitationConfig as TInvitationConfigDraft | null | undefined;
+    if (existing?.audience.source !== "manualList") return "";
+    return existing.audience.recipients
+      .map((r) =>
+        [r.email, r.firstName ?? "", r.lastName ?? ""].join(", ").replace(/(,\s*)+$/, "")
+      )
+      .join("\n");
+  });
+
   useEffect(() => {
     if (!open) return;
     getInvitationSummaryAction({ surveyId: localSurvey.id })
@@ -205,6 +219,7 @@ export const RecipientsCard = ({ localSurvey, setLocalSurvey, segments }: Recipi
                   updateAudience({ source: "snowflake", queryId: "", emailColumn: "email" });
                 } else {
                   updateAudience({ source: "manualList", recipients: [] });
+                  setManualListRaw("");
                 }
               }}>
               <SelectTrigger>
@@ -246,17 +261,15 @@ export const RecipientsCard = ({ localSurvey, setLocalSurvey, segments }: Recipi
                 <textarea
                   id="manualEmails"
                   className="min-h-28 w-full rounded-md border border-slate-300 bg-white p-2 font-mono text-sm"
-                  value={audience.recipients
-                    .map((r) =>
-                      [r.email, r.firstName ?? "", r.lastName ?? ""]
-                        .join(", ")
-                        .replace(/(,\s*)+$/, "")
-                    )
-                    .join("\n")}
+                  value={manualListRaw}
                   onChange={(e) => {
-                    // Each line is `email[, firstName[, lastName]]`. Trim
-                    // cells, keep rows that parse as an email.
-                    const recipients: TManualRecipient[] = e.target.value
+                    const raw = e.target.value;
+                    setManualListRaw(raw);
+                    // Parse only the lines that look like valid emails.
+                    // Partial/in-progress lines stay in the textarea via the
+                    // raw-string state above, but they don't get stored as
+                    // recipients until they parse cleanly.
+                    const recipients: TManualRecipient[] = raw
                       .split(/\n/)
                       .map((line) => {
                         const parts = line.split(",").map((s) => s.trim());
@@ -274,7 +287,7 @@ export const RecipientsCard = ({ localSurvey, setLocalSurvey, segments }: Recipi
                 />
                 <p className="text-xs text-slate-500">
                   One recipient per line. Format: <code>email, firstName, lastName</code> (first and
-                  last names are optional). {audience.recipients.length} recipient
+                  last names are optional). {audience.recipients.length} valid recipient
                   {audience.recipients.length === 1 ? "" : "s"}.
                 </p>
               </div>
