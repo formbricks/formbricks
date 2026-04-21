@@ -19,6 +19,7 @@ import {
   subscribeOrganizationMembersToSurveyResponses,
 } from "@/lib/organization/service";
 import { evaluateLogic } from "@/lib/surveyLogic/utils";
+import { handleTriggerUpdates } from "@/modules/survey/lib/trigger-updates";
 import {
   mockActionClass,
   mockId,
@@ -35,7 +36,6 @@ import {
   getSurveys,
   getSurveysByActionClassId,
   getSurveysBySegmentId,
-  handleTriggerUpdates,
   loadNewSegmentInSurvey,
   updateSurvey,
   updateSurveyInternal,

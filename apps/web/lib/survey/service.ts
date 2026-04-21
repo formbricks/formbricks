@@ -1,5 +1,5 @@
 import "server-only";
-import { ActionClass, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
@@ -11,10 +11,7 @@ import {
   getOrganizationByWorkspaceId,
   subscribeOrganizationMembersToSurveyResponses,
 } from "@/lib/organization/service";
-import {
-  checkTriggersValidity as checkSurveyTriggersValidity,
-  handleTriggerUpdates as handleSurveyTriggerUpdates,
-} from "@/modules/survey/lib/trigger-updates";
+import { handleTriggerUpdates } from "@/modules/survey/lib/trigger-updates";
 import {
   isSurveySchedulingDue,
   normalizeSurveyScheduling,
@@ -116,18 +113,6 @@ export const selectSurvey = {
   followUps: true,
   slug: true,
 } satisfies Prisma.SurveySelect;
-
-export const checkTriggersValidity = (triggers: TSurvey["triggers"], actionClasses: ActionClass[]) => {
-  checkSurveyTriggersValidity(triggers, actionClasses);
-};
-
-export const handleTriggerUpdates = (
-  updatedTriggers: TSurvey["triggers"],
-  currentTriggers: TSurvey["triggers"],
-  actionClasses: ActionClass[]
-) => {
-  return handleSurveyTriggerUpdates(updatedTriggers, currentTriggers, actionClasses);
-};
 
 const reconcilePersistedSurveySchedulingIfDue = async ({
   logSource,
@@ -658,8 +643,7 @@ export const createSurvey = async (workspaceId: string, surveyBody: TSurveyCreat
       // @ts-expect-error - languages would be undefined in case of empty array
       languages: languages?.length ? languages : undefined,
       triggers: restSurveyBody.triggers
-        ? // @ts-expect-error - triggers' createdAt and updatedAt are actually dates
-          handleTriggerUpdates(restSurveyBody.triggers, [], actionClasses)
+        ? handleTriggerUpdates(restSurveyBody.triggers, [], actionClasses)
         : undefined,
       attributeFilters: undefined,
     };

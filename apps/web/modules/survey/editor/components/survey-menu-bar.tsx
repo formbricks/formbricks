@@ -159,13 +159,13 @@ export const SurveyMenuBar = ({
     draftPrimaryLabel = t("workspace.surveys.edit.save_and_close");
   }
 
-  const getDraftSurveyToPersist = (draftSurvey: TSurvey, segment: TSegment | null): TSurveyDraft =>
-    ({
-      ...draftSurvey,
-      closeOn: draftSurvey.publishOn ? null : draftSurvey.closeOn,
-      publishOn: null,
-      segment,
-    }) as unknown as TSurveyDraft;
+  const getDraftSurveyToPersist = (draftSurvey: TSurvey, segment: TSegment | null): TSurveyDraft => ({
+    ...draftSurvey,
+    closeOn: draftSurvey.publishOn ? null : draftSurvey.closeOn,
+    publishOn: null,
+    segment,
+    status: "draft",
+  });
 
   const handleBack = () => {
     const { updatedAt, ...localSurveyRest } = localSurvey;

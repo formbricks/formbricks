@@ -10,8 +10,6 @@ import { getActionClasses } from "@/modules/survey/lib/action-class";
 import { selectSurvey } from "@/modules/survey/lib/survey";
 import { handleTriggerUpdates } from "@/modules/survey/lib/trigger-updates";
 
-export { handleTriggerUpdates } from "@/modules/survey/lib/trigger-updates";
-
 export const createSurvey = async (workspaceId: string, surveyBody: TSurveyCreateInput): Promise<TSurvey> => {
   try {
     const { createdBy, ...restSurveyBody } = surveyBody;

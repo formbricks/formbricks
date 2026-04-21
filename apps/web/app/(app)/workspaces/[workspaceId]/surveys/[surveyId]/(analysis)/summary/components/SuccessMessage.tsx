@@ -22,11 +22,8 @@ export const SuccessMessage = ({ survey }: SummaryMetadataProps) => {
   const appSetupCompleted = workspace.appSetupCompleted;
 
   useEffect(() => {
-    const publishSuccessParam = searchParams?.get("success");
-    const scheduledSuccessParam = searchParams?.get("scheduled");
-    if (!survey || !workspace) {
-      return;
-    }
+    const publishSuccessParam = searchParams.get("success");
+    const scheduledSuccessParam = searchParams.get("scheduled");
 
     if (scheduledSuccessParam) {
       toast.success(t("workspace.surveys.summary.survey_scheduled_successfully"), {
@@ -65,7 +62,7 @@ export const SuccessMessage = ({ survey }: SummaryMetadataProps) => {
 
       globalThis.history.replaceState({}, "", url.toString());
     }
-  }, [workspace, isAppSurvey, searchParams, survey, appSetupCompleted, t]);
+  }, [appSetupCompleted, isAppSurvey, searchParams, survey.type, t]);
 
   return <>{confetti && <Confetti />}</>;
 };

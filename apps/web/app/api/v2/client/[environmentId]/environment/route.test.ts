@@ -148,5 +148,5 @@ describe("api/v2 client environment route", () => {
         }),
       })
     );
-  }, 20000);
+  });
 });

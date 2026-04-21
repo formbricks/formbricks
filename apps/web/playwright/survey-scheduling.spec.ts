@@ -169,7 +169,7 @@ test.describe("Survey scheduling settings", () => {
 
     await openResponseOptions(page);
     await pickDateForToggle(page, "Publish survey on date", 2);
-    await pickDateForToggle(page, "Close survey on date", 2);
+    await pickDateForToggle(page, "Close survey on date", 3);
 
     await page.getByRole("button", { name: "Schedule survey", exact: true }).click({ noWaitAfter: true });
     await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/summary/);

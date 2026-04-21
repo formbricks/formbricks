@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/__mocks__/database";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { ValidationError } from "@formbricks/types/errors";
 import { getActionClasses } from "@/lib/actionClass/service";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import {
@@ -332,59 +333,47 @@ describe("survey service scheduling", () => {
     expect(mockQueueAuditEventWithoutRequest).toHaveBeenCalledTimes(1);
   });
 
-  test("same-day publish and close resolves to completed", async () => {
+  test("same-day publish and close is rejected", async () => {
     const sameDaySelection = new Date(Date.UTC(2026, 3, 17, 12, 0, 0));
-    const normalizedDueDate = new Date("2026-04-16T22:00:00.000Z");
 
-    prisma.survey.findUnique
-      .mockResolvedValueOnce({
-        ...mockSurveyOutput,
-        closeOn: null,
-        publishOn: null,
-        status: "paused",
-      } as never)
-      .mockResolvedValueOnce({
-        ...mockSurveyOutput,
-        closeOn: null,
-        publishOn: null,
-        status: "completed",
-      } as never);
-    prisma.survey.update.mockResolvedValueOnce({
+    prisma.survey.findUnique.mockResolvedValueOnce({
       ...mockSurveyOutput,
-      closeOn: normalizedDueDate,
-      publishOn: normalizedDueDate,
+      closeOn: null,
+      publishOn: null,
       status: "paused",
     } as never);
-    prisma.survey.findMany
-      .mockResolvedValueOnce([
-        createSchedulingCandidate({
-          closeOn: normalizedDueDate,
-          publishOn: normalizedDueDate,
-          status: "paused",
-        }),
-      ] as never)
-      .mockResolvedValueOnce([
-        createSchedulingCandidate({
-          closeOn: normalizedDueDate,
-          publishOn: null,
-          status: "inProgress",
-        }),
-      ] as never);
-    prisma.survey.updateMany
-      .mockResolvedValueOnce({ count: 1 } as never)
-      .mockResolvedValueOnce({ count: 1 } as never);
 
-    const updatedSurvey = await updateSurveyInternal(
-      {
-        ...updateSurveyInput,
+    await expect(
+      updateSurveyInternal(
+        {
+          ...updateSurveyInput,
+          closeOn: sameDaySelection,
+          publishOn: sameDaySelection,
+          status: "paused",
+        },
+        true
+      )
+    ).rejects.toThrow(ValidationError);
+
+    expect(prisma.survey.update).not.toHaveBeenCalled();
+    expect(mockQueueAuditEventWithoutRequest).not.toHaveBeenCalled();
+  });
+
+  test("creating a survey with the same publish and close date is rejected", async () => {
+    const sameDaySelection = new Date(Date.UTC(2026, 3, 17, 12, 0, 0));
+
+    await expect(
+      createSurvey(updateSurveyInput.workspaceId, {
+        ...createSurveyInput,
         closeOn: sameDaySelection,
+        name: "Scheduled survey",
         publishOn: sameDaySelection,
         status: "paused",
-      },
-      true
-    );
+        type: "link",
+      })
+    ).rejects.toThrow(ValidationError);
 
-    expect(updatedSurvey.status).toBe("completed");
-    expect(mockQueueAuditEventWithoutRequest).toHaveBeenCalledTimes(2);
+    expect(prisma.survey.create).not.toHaveBeenCalled();
+    expect(mockQueueAuditEventWithoutRequest).not.toHaveBeenCalled();
   });
 });

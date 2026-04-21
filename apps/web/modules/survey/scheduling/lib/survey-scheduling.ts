@@ -2,6 +2,7 @@ import "server-only";
 import { type Prisma, type SurveyStatus } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
+import { ValidationError } from "@formbricks/types/errors";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
 import { type TAuditStatus } from "@/modules/ee/audit-logs/types/audit-log";
@@ -289,6 +290,14 @@ export const normalizeSurveyScheduling = ({
   if (isManualStatusChange && status === "completed") {
     normalizedCloseOn = null;
     normalizedPublishOn = null;
+  }
+
+  if (
+    normalizedPublishOn !== null &&
+    normalizedCloseOn !== null &&
+    normalizedCloseOn.getTime() <= normalizedPublishOn.getTime()
+  ) {
+    throw new ValidationError("Close date must be after publish date");
   }
 
   return {

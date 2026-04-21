@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { useWorkspaceContext } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { updateSurveyAction } from "@/modules/survey/editor/actions";
 import {
@@ -22,7 +21,6 @@ interface SurveyStatusDropdownProps {
 }
 
 export const SurveyStatusDropdown = ({ updateLocalSurveyStatus, survey }: SurveyStatusDropdownProps) => {
-  const { workspace } = useWorkspaceContext();
   const { t } = useTranslation();
   const router = useRouter();
   const isScheduled = survey.status === "paused" && survey.publishOn !== null;
@@ -70,9 +68,7 @@ export const SurveyStatusDropdown = ({ updateLocalSurveyStatus, survey }: Survey
           <SelectTrigger className="w-[170px] bg-white md:w-[200px]">
             <SelectValue>
               <div className="flex items-center">
-                {(survey.type === "link" || workspace.appSetupCompleted) && (
-                  <SurveyStatusIndicator status={survey.status} isScheduled={isScheduled} />
-                )}
+                <SurveyStatusIndicator status={survey.status} isScheduled={isScheduled} />
                 <span className="ml-2 text-sm text-slate-700">
                   {survey.status === "inProgress" && t("common.in_progress")}
                   {survey.status === "paused" && (isScheduled ? t("common.scheduled") : t("common.paused"))}
