@@ -28,6 +28,8 @@ interface TAccountRow {
   userId: string;
 }
 
+const LEGACY_SSO_USER_BATCH_SIZE = 1000;
+
 const LEGACY_SSO_PROVIDER_MAP: Record<string, string> = {
   google: "google",
   github: "github",
@@ -116,62 +118,91 @@ export const backfillLegacySsoAccounts = async (tx: TMigrationTx): Promise<TSsoB
     });
   }
 
-  const legacySsoUsers = await tx.$queryRaw<TLegacySsoUserRow[]>`
-    SELECT "id", "identityProvider", "identityProviderAccountId"
-    FROM "User"
-    WHERE "identityProvider" <> 'email'
-  `;
+  const fetchLegacySsoUserBatch = async (afterUserId: string | null): Promise<TLegacySsoUserRow[]> => {
+    if (afterUserId) {
+      return tx.$queryRaw<TLegacySsoUserRow[]>`
+        SELECT "id", "identityProvider", "identityProviderAccountId"
+        FROM "User"
+        WHERE "identityProvider" <> 'email'
+          AND "id" > ${afterUserId}
+        ORDER BY "id" ASC
+        LIMIT ${LEGACY_SSO_USER_BATCH_SIZE}
+      `;
+    }
 
-  stats.scanned = legacySsoUsers.length;
+    return tx.$queryRaw<TLegacySsoUserRow[]>`
+      SELECT "id", "identityProvider", "identityProviderAccountId"
+      FROM "User"
+      WHERE "identityProvider" <> 'email'
+      ORDER BY "id" ASC
+      LIMIT ${LEGACY_SSO_USER_BATCH_SIZE}
+    `;
+  };
 
-  for (const user of legacySsoUsers) {
-    const provider = normalizeLegacySsoProvider(user.identityProvider);
+  let lastProcessedUserId: string | null = null;
+  let hasMoreUsers = true;
 
-    if (!provider || !user.identityProviderAccountId) {
-      stats.skippedMissingId += 1;
+  while (hasMoreUsers) {
+    const legacySsoUsers = await fetchLegacySsoUserBatch(lastProcessedUserId);
+
+    if (legacySsoUsers.length === 0) {
+      hasMoreUsers = false;
       continue;
     }
 
-    const accountKey = getAccountKey(provider, user.identityProviderAccountId);
-    const existingAccount = canonicalAccountByKey.get(accountKey);
-    const userProviderKey = getUserProviderKey(user.id, provider);
-    const existingUserProviderAccount = canonicalAccountByUserProvider.get(userProviderKey);
+    stats.scanned += legacySsoUsers.length;
 
-    if (!existingAccount) {
-      if (existingUserProviderAccount) {
-        stats.skippedExisting += 1;
-        console.warn("Skipping legacy SSO backfill because a canonical account already exists.");
+    for (const user of legacySsoUsers) {
+      const provider = normalizeLegacySsoProvider(user.identityProvider);
+
+      if (!provider || !user.identityProviderAccountId) {
+        stats.skippedMissingId += 1;
         continue;
       }
 
-      const insertedAccountId = createId();
-      await tx.$executeRaw`
-        INSERT INTO "Account" ("id", "created_at", "updated_at", "userId", "type", "provider", "providerAccountId")
-        VALUES (${insertedAccountId}, NOW(), NOW(), ${user.id}, 'oauth', ${provider}, ${user.identityProviderAccountId})
-      `;
-      stats.inserted += 1;
-      canonicalAccountByKey.set(accountKey, {
-        id: insertedAccountId,
-        userId: user.id,
-        provider,
-        providerAccountId: user.identityProviderAccountId,
-      });
-      canonicalAccountByUserProvider.set(userProviderKey, {
-        id: insertedAccountId,
-        userId: user.id,
-        provider,
-        providerAccountId: user.identityProviderAccountId,
-      });
-      continue;
+      const accountKey = getAccountKey(provider, user.identityProviderAccountId);
+      const existingAccount = canonicalAccountByKey.get(accountKey);
+      const userProviderKey = getUserProviderKey(user.id, provider);
+      const existingUserProviderAccount = canonicalAccountByUserProvider.get(userProviderKey);
+
+      if (!existingAccount) {
+        if (existingUserProviderAccount) {
+          stats.skippedExisting += 1;
+          console.warn("Skipping legacy SSO backfill because a canonical account already exists.");
+          continue;
+        }
+
+        const insertedAccountId = createId();
+        await tx.$executeRaw`
+          INSERT INTO "Account" ("id", "created_at", "updated_at", "userId", "type", "provider", "providerAccountId")
+          VALUES (${insertedAccountId}, NOW(), NOW(), ${user.id}, 'oauth', ${provider}, ${user.identityProviderAccountId})
+        `;
+        stats.inserted += 1;
+        canonicalAccountByKey.set(accountKey, {
+          id: insertedAccountId,
+          userId: user.id,
+          provider,
+          providerAccountId: user.identityProviderAccountId,
+        });
+        canonicalAccountByUserProvider.set(userProviderKey, {
+          id: insertedAccountId,
+          userId: user.id,
+          provider,
+          providerAccountId: user.identityProviderAccountId,
+        });
+        continue;
+      }
+
+      if (existingAccount.userId === user.id) {
+        stats.skippedExisting += 1;
+        continue;
+      }
+
+      stats.skippedConflict += 1;
+      console.warn(`Skipping legacy SSO backfill due to ownership conflict for provider ${provider}.`);
     }
 
-    if (existingAccount.userId === user.id) {
-      stats.skippedExisting += 1;
-      continue;
-    }
-
-    stats.skippedConflict += 1;
-    console.warn(`Skipping legacy SSO backfill due to ownership conflict for provider ${provider}.`);
+    lastProcessedUserId = legacySsoUsers[legacySsoUsers.length - 1].id;
   }
 
   console.log(
