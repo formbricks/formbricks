@@ -103,7 +103,7 @@ describe("instrumentation-jobs", () => {
 
     await responsePipelineOverride?.(
       {
-        environmentId: "env_123",
+        workspaceId: "ws_123",
         event: "responseCreated",
         response: { id: "res_123" },
         surveyId: "survey_123",
@@ -119,7 +119,7 @@ describe("instrumentation-jobs", () => {
 
     expect(mockProcessResponsePipelineJob).toHaveBeenCalledWith(
       {
-        environmentId: "env_123",
+        workspaceId: "ws_123",
         event: "responseCreated",
         response: { id: "res_123" },
         surveyId: "survey_123",

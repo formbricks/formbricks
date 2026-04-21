@@ -46,7 +46,7 @@ const mockConnection = {
 } as unknown as IORedis;
 
 const responsePipelineJobData = {
-  environmentId: "env_123",
+  workspaceId: "cm8cmpnjj000108jfdr9dfqe8",
   event: "responseCreated" as const,
   response: {
     contact: null,
@@ -65,7 +65,7 @@ const responsePipelineJobData = {
     updatedAt: new Date("2026-04-07T10:00:00.000Z"),
     variables: {},
   },
-  surveyId: "survey_123",
+  surveyId: "cm8cmpnjj000108jfdr9dfqe7",
 };
 
 vi.mock("@formbricks/logger", () => ({

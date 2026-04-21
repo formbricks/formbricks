@@ -122,7 +122,7 @@ describe("Integration Service", () => {
       },
     ];
 
-    test("should get all integrations for an environment", async () => {
+    test("should get all integrations for a workspace", async () => {
       vi.mocked(prisma.integration.findMany).mockResolvedValue(mockIntegrations);
 
       const result = await getIntegrations(mockWorkspaceId);
