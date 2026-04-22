@@ -88,7 +88,7 @@ export const ResponsePage = ({
     setResponses((prev) => prev.map((r) => (r.id === responseId ? updatedResponse : r)));
   };
 
-  const refreshResponses = useCallback(async () => {
+  const refetchResponses = useCallback(async () => {
     const getResponsesActionResponse = await getResponsesAction({
       surveyId,
       limit: responsesPerPage,
@@ -178,7 +178,7 @@ export const ResponsePage = ({
         locale={locale}
         isQuotasAllowed={isQuotasAllowed}
         quotas={quotas}
-        onRefresh={refreshResponses}
+        onRefresh={refetchResponses}
       />
     </>
   );
