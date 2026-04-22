@@ -1852,6 +1852,8 @@
       "secret": "Titok",
       "unable_to_copy_api_key": "Az API kulcs másolása nem lehetséges",
       "unable_to_delete_api_key": "Nem lehet törölni az API-kulcsot",
+      "unknown_directory": "Ismeretlen könyvtár",
+      "unknown_workspace": "Ismeretlen munkaterület",
       "workspace_access": "Munkaterület-hozzáférés"
     },
     "app-connection": {

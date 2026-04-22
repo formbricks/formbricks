@@ -1852,6 +1852,8 @@
       "secret": "Geheim",
       "unable_to_copy_api_key": "Kan API-sleutel niet kopiëren",
       "unable_to_delete_api_key": "Kan API-sleutel niet verwijderen",
+      "unknown_directory": "Onbekende map",
+      "unknown_workspace": "Onbekende workspace",
       "workspace_access": "Workspace-toegang"
     },
     "app-connection": {

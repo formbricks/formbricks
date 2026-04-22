@@ -1852,6 +1852,8 @@
       "secret": "Secret",
       "unable_to_copy_api_key": "Nu se poate copia cheia API",
       "unable_to_delete_api_key": "Nu se poate șterge cheia API",
+      "unknown_directory": "Director necunoscut",
+      "unknown_workspace": "Spațiu de lucru necunoscut",
       "workspace_access": "Acces spațiu de lucru"
     },
     "app-connection": {

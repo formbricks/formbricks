@@ -1852,6 +1852,8 @@
       "secret": "Gizli Anahtar",
       "unable_to_copy_api_key": "API anahtarı kopyalanamıyor",
       "unable_to_delete_api_key": "API anahtarı silinemiyor",
+      "unknown_directory": "Bilinmeyen dizin",
+      "unknown_workspace": "Bilinmeyen çalışma alanı",
       "workspace_access": "Çalışma Alanı Erişimi"
     },
     "app-connection": {

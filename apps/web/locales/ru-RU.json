@@ -1852,6 +1852,8 @@
       "secret": "Секрет",
       "unable_to_copy_api_key": "Не удалось скопировать API-ключ",
       "unable_to_delete_api_key": "Не удалось удалить API-ключ",
+      "unknown_directory": "Неизвестный каталог",
+      "unknown_workspace": "Неизвестное рабочее пространство",
       "workspace_access": "Доступ к рабочему пространству"
     },
     "app-connection": {

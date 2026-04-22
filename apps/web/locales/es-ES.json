@@ -1852,6 +1852,8 @@
       "secret": "Secreto",
       "unable_to_copy_api_key": "No se puede copiar la clave de API",
       "unable_to_delete_api_key": "No se puede eliminar la clave API",
+      "unknown_directory": "Directorio desconocido",
+      "unknown_workspace": "Espacio de trabajo desconocido",
       "workspace_access": "Acceso al espacio de trabajo"
     },
     "app-connection": {

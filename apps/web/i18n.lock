@@ -1782,6 +1782,8 @@ checksums:
     workspace/api_keys/secret: f041e5eb96121c8b4f2b8af7e0f83a9b
     workspace/api_keys/unable_to_copy_api_key: 148506832e31d033fa3569ce292d2120
     workspace/api_keys/unable_to_delete_api_key: 1fd76d9a22c5f5f8c241c4891fca8295
+    workspace/api_keys/unknown_directory: ed07f55f5dba1f451a45f2cf6e01c9a9
+    workspace/api_keys/unknown_workspace: 4b0df2d07ebc9ab084158b1b9525ae5e
     workspace/api_keys/workspace_access: b38cb73197ef5f5fa6653b88c68aa0bd
     workspace/app-connection/app_connection: 778d2305e1a9c8efe91c2c7b4af37ae4
     workspace/app-connection/app_connection_description: dde226414bd2265cbd0daf6635efcfdd

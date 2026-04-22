@@ -1852,6 +1852,8 @@
       "secret": "密鑰",
       "unable_to_copy_api_key": "無法複製 API 金鑰",
       "unable_to_delete_api_key": "無法刪除 API 金鑰",
+      "unknown_directory": "未知目錄",
+      "unknown_workspace": "未知工作區",
       "workspace_access": "工作區存取"
     },
     "app-connection": {

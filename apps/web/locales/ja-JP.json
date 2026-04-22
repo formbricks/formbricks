@@ -1852,6 +1852,8 @@
       "secret": "シークレット",
       "unable_to_copy_api_key": "APIキーをコピーできません",
       "unable_to_delete_api_key": "APIキーを削除できません",
+      "unknown_directory": "不明なディレクトリ",
+      "unknown_workspace": "不明なワークスペース",
       "workspace_access": "ワークスペースアクセス"
     },
     "app-connection": {

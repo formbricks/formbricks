@@ -1852,6 +1852,8 @@
       "secret": "Hemlig",
       "unable_to_copy_api_key": "Kunde inte kopiera API-nyckel",
       "unable_to_delete_api_key": "Det gick inte att radera API-nyckeln",
+      "unknown_directory": "Okänd katalog",
+      "unknown_workspace": "Okänd arbetsyta",
       "workspace_access": "Arbetsyteåtkomst"
     },
     "app-connection": {
