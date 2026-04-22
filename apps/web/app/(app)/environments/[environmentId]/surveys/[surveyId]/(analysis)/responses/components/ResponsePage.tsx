@@ -2,6 +2,7 @@
 
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TResponseWithQuotas } from "@formbricks/types/responses";
@@ -13,6 +14,7 @@ import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/surv
 import { ResponseDataView } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseDataView";
 import { CustomFilter } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
 
 interface ResponsePageProps {
@@ -93,7 +95,14 @@ export const ResponsePage = ({
       offset: 0,
       filterCriteria: filters,
     });
-    const freshResponses = getResponsesActionResponse?.data || [];
+
+    if (getResponsesActionResponse?.serverError) {
+      const errorMessage = getFormattedErrorMessage(getResponsesActionResponse);
+      toast.error(errorMessage ?? "Failed to refresh responses");
+      return;
+    }
+
+    const freshResponses = getResponsesActionResponse?.data ?? [];
     setResponses(freshResponses);
     setPage(1);
     setHasMore(freshResponses.length >= responsesPerPage);
