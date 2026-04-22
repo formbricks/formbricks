@@ -101,20 +101,19 @@ scopeLayerTheme.postcss = true;
 // with the initial values. This gives the survey widget the defaults it needs
 // while keeping everything scoped.
 const replaceAtPropertyWithScoped = () => {
-  const collected = new Map();
   return {
     postcssPlugin: "postcss-replace-at-property-with-scoped",
-    AtRule: {
-      property: (atRule) => {
+    OnceExit(root) {
+      const collected = new Map();
+      root.walkAtRules("property", (atRule) => {
         if (!atRule.params.startsWith("--tw-")) return;
         const name = atRule.params;
         atRule.walkDecls("initial-value", (decl) => {
           collected.set(name, decl.value);
         });
         atRule.remove();
-      },
-    },
-    OnceExit(root) {
+      });
+
       if (collected.size === 0) return;
       const postcss = require("postcss");
       const rule = postcss.rule({
