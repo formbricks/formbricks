@@ -13,12 +13,32 @@ export const ZApiKeyFeedbackRecordDirectoryPermission = z.object({
   permission: z.enum(ApiKeyPermission),
 });
 
-export const ZApiKeyCreateInput = z.object({
-  label: z.string(),
-  workspacePermissions: z.array(ZApiKeyWorkspacePermission).optional(),
-  feedbackRecordDirectoryPermissions: z.array(ZApiKeyFeedbackRecordDirectoryPermission).optional(),
-  organizationAccess: ZOrganizationAccess,
-});
+export const ZApiKeyCreateInput = z
+  .object({
+    label: z.string(),
+    workspacePermissions: z.array(ZApiKeyWorkspacePermission).optional(),
+    feedbackRecordDirectoryPermissions: z.array(ZApiKeyFeedbackRecordDirectoryPermission).optional(),
+    organizationAccess: ZOrganizationAccess,
+  })
+  .refine(
+    (data) => {
+      if (!data.workspacePermissions) return true;
+      const ids = data.workspacePermissions.map((p) => p.workspaceId);
+      return new Set(ids).size === ids.length;
+    },
+    { message: "Duplicate workspace permissions are not allowed", path: ["workspacePermissions"] }
+  )
+  .refine(
+    (data) => {
+      if (!data.feedbackRecordDirectoryPermissions) return true;
+      const ids = data.feedbackRecordDirectoryPermissions.map((p) => p.feedbackRecordDirectoryId);
+      return new Set(ids).size === ids.length;
+    },
+    {
+      message: "Duplicate feedback record directory permissions are not allowed",
+      path: ["feedbackRecordDirectoryPermissions"],
+    }
+  );
 
 export type TApiKeyCreateInput = z.infer<typeof ZApiKeyCreateInput>;
 
@@ -39,20 +59,10 @@ export const OrganizationWorkspace = z.object({
 
 export type TOrganizationWorkspace = z.infer<typeof OrganizationWorkspace>;
 
-export const TApiKeyWorkspacePermission = z.object({
-  workspaceId: z.string(),
-  permission: z.enum(ApiKeyPermission),
-});
-
-export type TApiKeyWorkspacePermission = z.infer<typeof TApiKeyWorkspacePermission>;
-
-export const TApiKeyFeedbackRecordDirectoryPermission = z.object({
-  feedbackRecordDirectoryId: z.string(),
-  permission: z.enum(ApiKeyPermission),
-});
+export type TApiKeyWorkspacePermission = z.infer<typeof ZApiKeyWorkspacePermission>;
 
 export type TApiKeyFeedbackRecordDirectoryPermission = z.infer<
-  typeof TApiKeyFeedbackRecordDirectoryPermission
+  typeof ZApiKeyFeedbackRecordDirectoryPermission
 >;
 
 export interface TApiKeyWithEnvironmentPermission extends Pick<

@@ -125,6 +125,7 @@ export const AddApiKeyModal = ({
   const [selectedDirectoryPermissions, setSelectedDirectoryPermissions] = useState<
     Record<string, DirectoryPermissionRecord>
   >({});
+  const [nextDirectoryPermissionId, setNextDirectoryPermissionId] = useState(0);
 
   const workspaceOptions: WorkspaceOption[] = workspaces.map((workspace) => ({
     id: workspace.id,
@@ -178,21 +179,20 @@ export const AddApiKeyModal = ({
     }
   };
 
-  const removeDirectoryPermission = (index: number) => {
-    const keyToRemove = `directory-permission-${index}`;
+  const removeDirectoryPermission = (key: string) => {
     setSelectedDirectoryPermissions((prev) =>
-      Object.fromEntries(Object.entries(prev).filter(([key]) => key !== keyToRemove))
+      Object.fromEntries(Object.entries(prev).filter(([k]) => k !== key))
     );
   };
 
   const addDirectoryPermission = () => {
-    const newIndex = Object.keys(selectedDirectoryPermissions).length;
     const initial = getInitialDirectoryPermission();
     if (initial) {
       setSelectedDirectoryPermissions({
         ...selectedDirectoryPermissions,
-        [`directory-permission-${newIndex}`]: initial,
+        [`directory-permission-${nextDirectoryPermissionId}`]: initial,
       });
+      setNextDirectoryPermissionId((id) => id + 1);
     }
   };
 
@@ -266,6 +266,7 @@ export const AddApiKeyModal = ({
     reset();
     setSelectedPermissions({});
     setSelectedDirectoryPermissions({});
+    setNextDirectoryPermissionId(0);
     setSelectedOrganizationAccess(defaultOrganizationAccess);
   };
 
@@ -401,7 +402,6 @@ export const AddApiKeyModal = ({
               <Label>{t("workspace.api_keys.feedback_record_directory_access")}</Label>
               <div className="space-y-2">
                 {Object.keys(selectedDirectoryPermissions).map((key) => {
-                  const index = parseInt(key.split("-")[2]);
                   const permission = selectedDirectoryPermissions[key];
                   return (
                     <div key={key} className="flex items-center gap-2">
@@ -468,7 +468,7 @@ export const AddApiKeyModal = ({
                       </div>
 
                       {/* Delete button */}
-                      <button type="button" className="p-2" onClick={() => removeDirectoryPermission(index)}>
+                      <button type="button" className="p-2" onClick={() => removeDirectoryPermission(key)}>
                         <Trash2Icon className={"h-5 w-5 text-slate-500 hover:text-red-500"} />
                       </button>
                     </div>
@@ -525,6 +525,7 @@ export const AddApiKeyModal = ({
                 reset();
                 setSelectedPermissions({});
                 setSelectedDirectoryPermissions({});
+                setNextDirectoryPermissionId(0);
               }}>
               {t("common.cancel")}
             </Button>

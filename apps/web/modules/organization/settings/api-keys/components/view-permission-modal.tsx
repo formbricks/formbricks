@@ -71,11 +71,13 @@ export const ViewPermissionModal = ({
   const organizationAccess = apiKey.organizationAccess as TOrganizationAccess;
 
   const getWorkspaceName = (workspaceId: string) => {
-    return workspaces.find((workspace) => workspace.id === workspaceId)?.name;
+    const name = workspaces.find((workspace) => workspace.id === workspaceId)?.name;
+    return name ?? `${t("workspace.api_keys.unknown_workspace")} (${workspaceId})`;
   };
 
   const getDirectoryName = (directoryId: string) => {
-    return feedbackRecordDirectories.find((d) => d.id === directoryId)?.name;
+    const name = feedbackRecordDirectories.find((d) => d.id === directoryId)?.name;
+    return name ?? `${t("workspace.api_keys.unknown_directory")} (${directoryId})`;
   };
 
   const updateApiKey = async () => {
