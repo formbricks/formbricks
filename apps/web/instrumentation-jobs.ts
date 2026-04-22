@@ -7,8 +7,8 @@ import {
 } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
 import { getJobsWorkerBootstrapConfig } from "@/lib/jobs/config";
+import { processAITranslationJob } from "@/modules/ee/ai-translation/lib/process-ai-translation-job";
 import { processResponsePipelineJob } from "@/modules/response-pipeline/lib/process-response-pipeline-job";
-import { processAITranslationJob } from "@/modules/survey/multi-language-surveys/lib/process-ai-translation-job";
 
 const WORKER_STARTUP_RETRY_DELAY_MS = 30_000;
 

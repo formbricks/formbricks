@@ -7,26 +7,33 @@ import { assertOrganizationAIConfigured } from "@/lib/ai/service";
 import { cache } from "@/lib/cache";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
+import {
+  getOrganizationIdFromSurveyId,
+  getOrganizationIdFromWorkspaceId,
+  getWorkspaceIdFromSurveyId,
+} from "@/lib/utils/helper";
 import { getAITranslationCacheKey } from "./process-ai-translation-job";
 
 const ZCheckAITranslationAvailableAction = z.object({
-  workspaceId: ZId,
+  surveyId: ZId,
 });
 
 export const checkAITranslationAvailableAction = authenticatedActionClient
   .inputSchema(ZCheckAITranslationAvailableAction)
   .action(async ({ ctx, parsedInput }) => {
-    const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
-
+    const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId,
       access: [
         {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
           type: "workspaceTeam",
-          workspaceId: parsedInput.workspaceId,
-          minPermission: "readWrite",
+          minPermission: "read",
+          workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
         },
       ],
     });
@@ -61,6 +68,10 @@ export const translateSurveyFieldsAction = authenticatedActionClient
       userId: ctx.user.id,
       organizationId,
       access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
         {
           type: "workspaceTeam",
           workspaceId: parsedInput.workspaceId,

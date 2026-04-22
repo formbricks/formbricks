@@ -44,31 +44,42 @@ export const assertOrganizationAIConfigured = async (
   organizationId: string,
   capability: "smartTools" | "dataAnalysis"
 ): Promise<TOrganizationAIConfig> => {
-  const t = await getTranslate();
+  // getTranslate() calls headers() which is unavailable in BullMQ worker context.
+  // Use a lazy getter so callers outside a request scope still work.
+  let t: Awaited<ReturnType<typeof getTranslate>> | undefined;
+  const msg = async (key: string): Promise<string> => {
+    try {
+      t ??= await getTranslate();
+      return t(key as any);
+    } catch {
+      return key;
+    }
+  };
+
   const aiConfig = await getOrganizationAIConfig(organizationId);
   const isCapabilityEntitled =
     capability === "smartTools" ? aiConfig.isAISmartToolsEntitled : aiConfig.isAIDataAnalysisEntitled;
 
   if (!isCapabilityEntitled) {
     throw new OperationNotAllowedError(
-      t("workspace.settings.general.ai_features_not_enabled_for_organization")
+      await msg("workspace.settings.general.ai_features_not_enabled_for_organization")
     );
   }
 
   if (capability === "smartTools" && !aiConfig.isAISmartToolsEnabled) {
     throw new OperationNotAllowedError(
-      t("workspace.settings.general.ai_smart_tools_disabled_for_organization")
+      await msg("workspace.settings.general.ai_smart_tools_disabled_for_organization")
     );
   }
 
   if (capability === "dataAnalysis" && !aiConfig.isAIDataAnalysisEnabled) {
     throw new OperationNotAllowedError(
-      t("workspace.settings.general.ai_data_analysis_disabled_for_organization")
+      await msg("workspace.settings.general.ai_data_analysis_disabled_for_organization")
     );
   }
 
   if (!aiConfig.isInstanceConfigured) {
-    throw new OperationNotAllowedError(t("workspace.settings.general.ai_instance_not_configured"));
+    throw new OperationNotAllowedError(await msg("workspace.settings.general.ai_instance_not_configured"));
   }
 
   return aiConfig;

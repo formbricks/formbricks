@@ -2245,15 +2245,12 @@ checksums:
     workspace/settings/feedback_record_directories/show_archived: c4c1c3bbddc1bb1540c079b589a2d3de
     workspace/settings/feedback_record_directories/title: e3d425c27f80162f29ce094e31a3fd8f
     workspace/settings/feedback_record_directories/unarchive: 671fc7e9d7c8cb4d182a25a46551c168
-    workspace/settings/general/ai_data_analysis_disabled_for_organization: 2066fe71ecf8994ba738c79b63a1934b
     workspace/settings/general/ai_data_analysis_enabled: 45fabb594da6851f73fef50ca40fe525
     workspace/settings/general/ai_data_analysis_enabled_description: 46d4f0bdf4ebf89e78f79cc961a2de83
     workspace/settings/general/ai_enabled: 3cb1fce89c525e754448d5bd143eb6b5
     workspace/settings/general/ai_enabled_description: e8c3e9f362588898a6cea85e18c013a1
-    workspace/settings/general/ai_features_not_enabled_for_organization: e344473bd813fc43f69c51138f74bc8e
     workspace/settings/general/ai_instance_not_configured: 37a80753eb22b5bfc985d0e1f2145e3f
     workspace/settings/general/ai_settings_updated_successfully: 2a6f534dc3a246ced46becd8a4a9543d
-    workspace/settings/general/ai_smart_tools_disabled_for_organization: 13df84ae47d35dfa6e86ffa62f29c75d
     workspace/settings/general/ai_smart_tools_enabled: 1dda984f5262c5f9120ee9a409236758
     workspace/settings/general/ai_smart_tools_enabled_description: 1ceca6707746d3ab4a530712a06d91da
     workspace/settings/general/bulk_invite_warning_description: e8737a2fbd5ff353db5580d17b4b5a37
@@ -2439,6 +2436,10 @@ checksums:
     workspace/surveys/edit/adjust_survey_closed_message: ae6f38c9daf08656362bd84459a312fa
     workspace/surveys/edit/adjust_survey_closed_message_description: e906aebd9af6451a2a39c73287927299
     workspace/surveys/edit/adjust_the_theme_in_the: bccdafda8af5871513266f668b55d690
+    workspace/surveys/edit/ai_translate: f25943cdeffe155ee524428f4daa5da2
+    workspace/surveys/edit/ai_translating: fce4992a1d766124c3e25ef279785a2b
+    workspace/surveys/edit/ai_translation_all_fields_populated: d78f6a663ea19ce77045970179bd200f
+    workspace/surveys/edit/ai_translation_complete: f443d0801404f728e68000b46ca67598
     workspace/surveys/edit/all_are_true: 05d02c5afac857da530b73dcf18dd8e4
     workspace/surveys/edit/all_other_answers_will_continue_to: 9a5d09eea42ff5fd1c18cc58a14dcabd
     workspace/surveys/edit/allow_multi_select: 7b4b83f7a0205e2a0a8971671a69a174

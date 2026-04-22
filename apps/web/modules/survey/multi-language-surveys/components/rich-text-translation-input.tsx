@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { md } from "@/lib/markdownIt";
 import { Editor } from "@/modules/ui/components/editor";
@@ -25,11 +25,23 @@ export const RichTextTranslationInput = ({
   disabled,
 }: RichTextTranslationInputProps) => {
   const [firstRender, setFirstRender] = useState(true);
+  const [editorKey, setEditorKey] = useState(0);
+  const prevDisabledRef = useRef(disabled);
+
+  // Remount the editor when AI translation finishes (disabled transitions from true → false)
+  // so the editor picks up the externally populated value.
+  useEffect(() => {
+    if (prevDisabledRef.current && !disabled) {
+      setEditorKey((k) => k + 1);
+      setFirstRender(true);
+    }
+    prevDisabledRef.current = disabled;
+  }, [disabled]);
 
   return (
-    <div className="rounded-md">
+    <div className={disabled ? "pointer-events-none rounded-md opacity-60" : "rounded-md"}>
       <Editor
-        key={path}
+        key={`${path}-${editorKey}`}
         disableLists
         excludedToolbarItems={["blockType"]}
         firstRender={firstRender}
@@ -39,7 +51,7 @@ export const RichTextTranslationInput = ({
         localSurvey={localSurvey}
         elementId={elementId}
         selectedLanguageCode={languageCode}
-        editable={!disabled}
+        editable
       />
     </div>
   );

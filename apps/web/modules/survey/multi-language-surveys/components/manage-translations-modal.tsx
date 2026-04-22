@@ -8,6 +8,10 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import {
+  getAITranslationResultAction,
+  translateSurveyFieldsAction,
+} from "@/modules/ee/ai-translation/lib/actions";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -24,11 +28,6 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
-import {
-  checkAITranslationAvailableAction,
-  getAITranslationResultAction,
-  translateSurveyFieldsAction,
-} from "../lib/ai-translation-action";
 import { type TranslatableString } from "../lib/types";
 import {
   extractTranslatableStrings,
@@ -47,6 +46,7 @@ interface ManageTranslationsModalProps {
   languageName: string;
   defaultLanguageName: string;
   workspaceId: string;
+  isAIAvailable: boolean;
 }
 
 export const ManageTranslationsModal = ({
@@ -58,6 +58,7 @@ export const ManageTranslationsModal = ({
   languageName,
   defaultLanguageName,
   workspaceId,
+  isAIAvailable,
 }: ManageTranslationsModalProps) => {
   const { t } = useTranslation();
 
@@ -65,7 +66,6 @@ export const ManageTranslationsModal = ({
 
   const [draftTranslations, setDraftTranslations] = useState<Record<string, string>>({});
   const [missingFirst, setMissingFirst] = useState(false);
-  const [isAIAvailable, setIsAIAvailable] = useState(false);
   const [isTranslating, setIsTranslating] = useState(false);
   const [translatingPaths, setTranslatingPaths] = useState<Set<string>>(new Set());
   const pollingCancelledRef = useRef(false);
@@ -90,17 +90,6 @@ export const ManageTranslationsModal = ({
       setDraftTranslations(drafts);
     }
   }, [open, strings, languageCode]);
-
-  // Check AI availability when modal opens
-  useEffect(() => {
-    if (open) {
-      checkAITranslationAvailableAction({ workspaceId }).then((result) => {
-        if (result?.data) {
-          setIsAIAvailable(result.data.available);
-        }
-      });
-    }
-  }, [open, workspaceId]);
 
   const isDraftEmpty = useCallback(
     (s: TranslatableString) => {

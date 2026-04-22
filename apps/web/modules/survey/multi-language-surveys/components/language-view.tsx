@@ -10,6 +10,7 @@ import { TSurvey, TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
 import { addMultiLanguageLabels, extractLanguageCodes, getEnabledLanguages } from "@/lib/i18n/utils";
+import { checkAITranslationAvailableAction } from "@/modules/ee/ai-translation/lib/actions";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
@@ -66,6 +67,7 @@ export const LanguageView = ({
   const { workspaceId } = localSurvey;
 
   const [isMultiLanguageActivated, setIsMultiLanguageActivated] = useState(localSurvey.languages.length > 0);
+  const [isAIAvailable, setIsAIAvailable] = useState(false);
   const [confirmationModalInfo, setConfirmationModalInfo] = useState<ConfirmationModalInfo>({
     title: "",
     open: false,
@@ -84,6 +86,15 @@ export const LanguageView = ({
   const translatableStrings = useMemo(() => extractTranslatableStrings(localSurvey, t), [localSurvey, t]);
 
   const enabledLanguages = getEnabledLanguages(localSurvey.languages);
+
+  // Check AI availability once on mount
+  useEffect(() => {
+    checkAITranslationAvailableAction({ surveyId: localSurvey.id }).then((result) => {
+      if (result?.data) {
+        setIsAIAvailable(result.data.available);
+      }
+    });
+  }, [localSurvey.id]);
 
   // Sync multi-language state
   useEffect(() => {
@@ -499,6 +510,7 @@ export const LanguageView = ({
           defaultLanguage ? (getLanguageLabel(defaultLanguage.code, locale) ?? defaultLanguage.code) : ""
         }
         workspaceId={workspaceId}
+        isAIAvailable={isAIAvailable}
       />
     </div>
   );

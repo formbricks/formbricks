@@ -6,6 +6,7 @@ const mockError = vi.fn();
 const mockWarn = vi.fn();
 const mockGetJobsWorkerBootstrapConfig = vi.fn();
 const mockProcessResponsePipelineJob = vi.fn();
+const mockProcessAITranslationJob = vi.fn();
 const TEST_TIMEOUT_MS = 15_000;
 const slowTest = (name: string, fn: () => Promise<void>): void => {
   test(name, fn, TEST_TIMEOUT_MS);
@@ -30,6 +31,10 @@ vi.mock("@formbricks/logger", () => ({
 
 vi.mock("@/modules/response-pipeline/lib/process-response-pipeline-job", () => ({
   processResponsePipelineJob: mockProcessResponsePipelineJob,
+}));
+
+vi.mock("@/modules/ee/ai-translation/lib/process-ai-translation-job", () => ({
+  processAITranslationJob: mockProcessAITranslationJob,
 }));
 
 describe("instrumentation-jobs", () => {
@@ -91,6 +96,7 @@ describe("instrumentation-jobs", () => {
       jobHandlerOverrides: {
         "test-log.process": mockExistingOverride,
         "response-pipeline.process": expect.any(Function),
+        "ai-translation.translate": expect.any(Function),
       },
       redisUrl: "redis://localhost:6379",
       workerCount: 2,
