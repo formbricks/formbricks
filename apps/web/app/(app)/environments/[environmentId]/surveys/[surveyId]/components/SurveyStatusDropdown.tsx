@@ -17,11 +17,7 @@ import {
 } from "@/modules/ui/components/select";
 import { SurveyStatusIndicator } from "@/modules/ui/components/survey-status-indicator";
 
-interface SurveyStatusDropdownProps {
-  updateLocalSurveyStatus?: (status: TSurvey["status"]) => void;
-}
-
-export const SurveyStatusDropdown = ({ updateLocalSurveyStatus }: SurveyStatusDropdownProps) => {
+export const SurveyStatusDropdown = () => {
   const { environment } = useEnvironment();
   const { survey } = useSurvey();
   const { t } = useTranslation();
@@ -41,10 +37,6 @@ export const SurveyStatusDropdown = ({ updateLocalSurveyStatus }: SurveyStatusDr
       const toastMessage = statusToToastMessage[resultingStatus];
       if (toastMessage) {
         toast.success(toastMessage);
-      }
-
-      if (updateLocalSurveyStatus) {
-        updateLocalSurveyStatus(resultingStatus);
       }
 
       router.refresh();
