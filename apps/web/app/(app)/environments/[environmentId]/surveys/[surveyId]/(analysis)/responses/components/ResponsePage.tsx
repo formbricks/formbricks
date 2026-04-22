@@ -86,6 +86,19 @@ export const ResponsePage = ({
     setResponses((prev) => prev.map((r) => (r.id === responseId ? updatedResponse : r)));
   };
 
+  const refreshResponses = useCallback(async () => {
+    const getResponsesActionResponse = await getResponsesAction({
+      surveyId,
+      limit: responsesPerPage,
+      offset: 0,
+      filterCriteria: filters,
+    });
+    const freshResponses = getResponsesActionResponse?.data || [];
+    setResponses(freshResponses);
+    setPage(1);
+    setHasMore(freshResponses.length >= responsesPerPage);
+  }, [filters, responsesPerPage, surveyId]);
+
   const surveyMemoized = useMemo(() => {
     return replaceHeadlineRecall(survey, "default");
   }, [survey]);
@@ -156,6 +169,7 @@ export const ResponsePage = ({
         locale={locale}
         isQuotasAllowed={isQuotasAllowed}
         quotas={quotas}
+        onRefresh={refreshResponses}
       />
     </>
   );

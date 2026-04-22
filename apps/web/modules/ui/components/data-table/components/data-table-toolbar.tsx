@@ -52,14 +52,12 @@ export const DataTableToolbar = <T,>({
         <div>{leftContent}</div>
       )}
       <div className="flex space-x-2">
-        {type === "contact" && onRefresh ? (
-          <TooltipRenderer
-            tooltipContent={t("environments.contacts.contacts_table_refresh")}
-            shouldRender={true}>
+        {onRefresh ? (
+          <TooltipRenderer tooltipContent={t("common.refresh")} shouldRender={true}>
             <button
               onClick={async () => {
                 await onRefresh();
-                toast.success(t("environments.contacts.contacts_table_refresh_success"));
+                toast.success(t("common.data_refreshed_successfully"));
               }}
               className="cursor-pointer rounded-md border bg-white hover:border-slate-400">
               <RefreshCcwIcon strokeWidth={1.5} className={cn("m-1 h-6 w-6 p-0.5")} />
