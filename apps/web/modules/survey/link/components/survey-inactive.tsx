@@ -9,16 +9,24 @@ import footerLogo from "../lib/footerlogo.svg";
 
 export const SurveyInactive = async ({
   status,
+  isScheduled = false,
   surveyClosedMessage,
   workspace,
 }: {
   status: "paused" | "completed" | "link invalid" | "response submitted" | "link expired";
+  isScheduled?: boolean;
   surveyClosedMessage?: TSurveyClosedMessage | null;
   workspace?: Pick<Workspace, "linkSurveyBranding">;
 }) => {
   const t = await getTranslate();
+  const hasCustomClosedMessage =
+    (status === "completed" || status === "link expired") && Boolean(surveyClosedMessage);
   const icons = {
-    paused: <PauseCircleIcon className="h-20 w-20" />,
+    paused: isScheduled ? (
+      <CalendarClockIcon className="h-20 w-20" />
+    ) : (
+      <PauseCircleIcon className="h-20 w-20" />
+    ),
     completed: <CheckCircle2Icon className="h-20 w-20" />,
     "link invalid": <HelpCircleIcon className="h-20 w-20" />,
     "response submitted": <CheckCircle2Icon className="h-20 w-20" />,
@@ -26,12 +34,22 @@ export const SurveyInactive = async ({
   };
 
   const descriptions = {
-    paused: t("s.paused"),
+    paused: isScheduled ? t("s.scheduled") : t("s.paused"),
     completed: t("s.completed"),
     "link invalid": t("s.link_invalid"),
     "response submitted": t("s.response_submitted"),
     "link expired": t("c.link_expired_description"),
   };
+  let title = `${t("common.survey")} ${status}.`;
+
+  if (hasCustomClosedMessage) {
+    title = surveyClosedMessage?.heading ?? title;
+  } else if (isScheduled) {
+    title = t("common.survey_scheduled");
+  }
+
+  const description =
+    status === "completed" && surveyClosedMessage ? surveyClosedMessage.subheading : descriptions[status];
 
   const showCTA =
     status !== "link invalid" &&
@@ -44,16 +62,8 @@ export const SurveyInactive = async ({
     <div className="flex h-full flex-col items-center justify-between bg-gradient-to-br from-slate-200 to-slate-50 px-4 py-8 text-center">
       <div className="my-auto flex flex-col items-center space-y-3 text-slate-300">
         {icons[status]}
-        <h1 className="text-4xl font-bold text-slate-800">
-          {(status === "completed" || status === "link expired") && surveyClosedMessage
-            ? surveyClosedMessage.heading
-            : `${t("common.survey")} ${status}.`}
-        </h1>
-        <p className="text-lg leading-10 text-slate-500">
-          {status === "completed" && surveyClosedMessage
-            ? surveyClosedMessage.subheading
-            : descriptions[status]}
-        </p>
+        <h1 className="text-4xl font-bold text-slate-800">{title}</h1>
+        <p className="text-lg leading-10 text-slate-500">{description}</p>
         {showCTA && (
           <Button className="mt-2" asChild>
             <Link href="https://formbricks.com">{t("s.create_your_own")}</Link>

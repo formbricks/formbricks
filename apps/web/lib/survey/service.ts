@@ -1,5 +1,5 @@
 import "server-only";
-import { ActionClass, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
@@ -11,7 +11,12 @@ import {
   getOrganizationByWorkspaceId,
   subscribeOrganizationMembersToSurveyResponses,
 } from "@/lib/organization/service";
-import { TriggerUpdate } from "@/modules/survey/editor/types/survey-trigger";
+import { handleTriggerUpdates } from "@/modules/survey/lib/trigger-updates";
+import {
+  isSurveySchedulingDue,
+  normalizeSurveyScheduling,
+  reconcileDueSurveySchedules,
+} from "@/modules/survey/scheduling/lib/survey-scheduling";
 import { getActionClasses } from "../actionClass/service";
 import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
@@ -45,6 +50,8 @@ export const selectSurvey = {
   delay: true,
   displayPercentage: true,
   autoComplete: true,
+  publishOn: true,
+  closeOn: true,
   isVerifyEmailEnabled: true,
   isSingleResponsePerEmailEnabled: true,
   isBackButtonHidden: true,
@@ -107,74 +114,45 @@ export const selectSurvey = {
   slug: true,
 } satisfies Prisma.SurveySelect;
 
-const getTriggerIds = (triggers: TSurvey["triggers"]): string[] | null => {
-  if (!triggers) return null;
-  if (!Array.isArray(triggers)) {
-    throw new InvalidInputError("Invalid trigger id");
+const reconcilePersistedSurveySchedulingIfDue = async ({
+  logSource,
+  survey,
+  workspaceId,
+}: {
+  logSource: "survey-create" | "survey-update";
+  survey: TSurvey;
+  workspaceId: string;
+}): Promise<TSurvey> => {
+  const now = new Date();
+
+  if (!isSurveySchedulingDue(survey, now)) {
+    return survey;
   }
 
-  return triggers.map((trigger) => {
-    const actionClassId = trigger?.actionClass?.id;
-    if (typeof actionClassId !== "string") {
-      throw new InvalidInputError("Invalid trigger id");
-    }
-    return actionClassId;
+  const reconciliationResult = await reconcileDueSurveySchedules({
+    logContext: {
+      source: logSource,
+      surveyId: survey.id,
+      workspaceId,
+    },
+    now,
+    surveyId: survey.id,
   });
-};
 
-export const checkTriggersValidity = (triggers: TSurvey["triggers"], actionClasses: ActionClass[]) => {
-  const triggerIds = getTriggerIds(triggers);
-  if (!triggerIds) return;
+  if (!reconciliationResult.surveyUpdated) {
+    return survey;
+  }
 
-  // check if all the triggers are valid
-  triggerIds.forEach((triggerId) => {
-    if (!actionClasses.find((actionClass) => actionClass.id === triggerId)) {
-      throw new InvalidInputError("Invalid trigger id");
-    }
+  const reconciledSurvey = await prisma.survey.findUnique({
+    where: { id: survey.id },
+    select: selectSurvey,
   });
 
-  if (new Set(triggerIds).size !== triggerIds.length) {
-    throw new InvalidInputError("Duplicate trigger id");
-  }
-};
-
-export const handleTriggerUpdates = (
-  updatedTriggers: TSurvey["triggers"],
-  currentTriggers: TSurvey["triggers"],
-  actionClasses: ActionClass[]
-) => {
-  const updatedTriggerIds = getTriggerIds(updatedTriggers);
-  if (!updatedTriggerIds) return {};
-
-  checkTriggersValidity(updatedTriggers, actionClasses);
-
-  const currentTriggerIds = getTriggerIds(currentTriggers) ?? [];
-
-  // added triggers are triggers that are not in the current triggers and are there in the new triggers
-  const addedTriggerIds = updatedTriggerIds.filter((triggerId) => !currentTriggerIds.includes(triggerId));
-
-  // deleted triggers are triggers that are not in the new triggers and are there in the current triggers
-  const deletedTriggerIds = currentTriggerIds.filter((triggerId) => !updatedTriggerIds.includes(triggerId));
-
-  // Construct the triggers update object
-  const triggersUpdate: TriggerUpdate = {};
-
-  if (addedTriggerIds.length > 0) {
-    triggersUpdate.create = addedTriggerIds.map((triggerId) => ({
-      actionClassId: triggerId,
-    }));
+  if (!reconciledSurvey) {
+    throw new ResourceNotFoundError("Survey", survey.id);
   }
 
-  if (deletedTriggerIds.length > 0) {
-    // disconnect the public triggers from the survey
-    triggersUpdate.deleteMany = {
-      actionClassId: {
-        in: deletedTriggerIds,
-      },
-    };
-  }
-
-  return triggersUpdate;
+  return transformPrismaSurvey<TSurvey>(reconciledSurvey);
 };
 
 export const getSurvey = reactCache(async (surveyId: string): Promise<TSurvey | null> => {
@@ -537,12 +515,16 @@ export const updateSurveyInternal = async (
       data.blocks = stripIsDraftFromBlocks(updatedSurvey.blocks);
     }
 
-    const organization = await getOrganizationByWorkspaceId(updatedSurvey.workspaceId);
-    if (!organization) {
-      throw new ResourceNotFoundError("Organization", null);
-    }
+    const normalizedScheduling = normalizeSurveyScheduling({
+      currentStatus: currentSurvey.status,
+      closeOn: surveyData.closeOn,
+      publishOn: surveyData.publishOn,
+      status: updatedSurvey.status,
+    });
 
     surveyData.updatedAt = new Date();
+    surveyData.publishOn = normalizedScheduling.publishOn;
+    surveyData.closeOn = normalizedScheduling.closeOn;
 
     data = {
       ...surveyData,
@@ -551,28 +533,17 @@ export const updateSurveyInternal = async (
     };
 
     delete data.createdBy;
-    const prismaSurvey = await prisma.survey.update({
+    const persistedSurvey = await prisma.survey.update({
       where: { id: surveyId },
       data,
       select: selectSurvey,
     });
 
-    let surveySegment: TSegment | null = null;
-    if (prismaSurvey.segment) {
-      surveySegment = {
-        ...prismaSurvey.segment,
-        surveys: prismaSurvey.segment.surveys.map((survey) => survey.id),
-      };
-    }
-
-    const modifiedSurvey: TSurvey = {
-      ...prismaSurvey, // Properties from prismaSurvey
-      displayPercentage: Number(prismaSurvey.displayPercentage) || null,
-      segment: surveySegment,
-      customHeadScriptsMode: prismaSurvey.customHeadScriptsMode,
-    };
-
-    return modifiedSurvey;
+    return await reconcilePersistedSurveySchedulingIfDue({
+      logSource: "survey-update",
+      survey: transformPrismaSurvey<TSurvey>(persistedSurvey),
+      workspaceId: updatedSurvey.workspaceId,
+    });
   } catch (error) {
     logger.error(error, "Error updating survey");
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -592,6 +563,63 @@ export const updateSurveyDraft = async (updatedSurvey: TSurvey): Promise<TSurvey
   return updateSurveyInternal(updatedSurvey, true);
 };
 
+const attachSurveyCreatorToCreateData = (
+  data: Omit<Prisma.SurveyCreateInput, "workspace">,
+  createdBy?: string | null
+): Omit<Prisma.SurveyCreateInput, "workspace"> => {
+  if (!createdBy) {
+    return data;
+  }
+
+  return {
+    ...data,
+    creator: {
+      connect: {
+        id: createdBy,
+      },
+    },
+  };
+};
+
+const attachSurveyFollowUpsToCreateData = (
+  data: Omit<Prisma.SurveyCreateInput, "workspace">,
+  followUps?: TSurveyCreateInput["followUps"]
+): Omit<Prisma.SurveyCreateInput, "workspace"> => {
+  const { followUps: _, ...dataWithoutFollowUps } = data;
+
+  if (!followUps?.length) {
+    return dataWithoutFollowUps;
+  }
+
+  return {
+    ...dataWithoutFollowUps,
+    followUps: {
+      create: followUps.map((followUp) => ({
+        name: followUp.name,
+        trigger: followUp.trigger,
+        action: followUp.action,
+      })),
+    },
+  };
+};
+
+const validateSurveyCreateDataMedia = (
+  data: Omit<Prisma.SurveyCreateInput, "workspace">
+): Omit<Prisma.SurveyCreateInput, "workspace"> => {
+  if (data.questions) {
+    checkForInvalidImagesInQuestions(data.questions);
+  }
+
+  if (data.blocks?.length) {
+    return {
+      ...data,
+      blocks: validateMediaAndPrepareBlocks(data.blocks),
+    };
+  }
+
+  return data;
+};
+
 export const createSurvey = async (workspaceId: string, surveyBody: TSurveyCreateInput): Promise<TSurvey> => {
   const [parsedWorkspaceId, parsedSurveyBody] = validateInputs(
     [workspaceId, ZId],
@@ -600,53 +628,35 @@ export const createSurvey = async (workspaceId: string, surveyBody: TSurveyCreat
 
   try {
     const { createdBy, languages, ...restSurveyBody } = parsedSurveyBody;
+    const normalizedCloseOn = restSurveyBody.closeOn instanceof Date ? restSurveyBody.closeOn : null;
+    const normalizedPublishOn = restSurveyBody.publishOn instanceof Date ? restSurveyBody.publishOn : null;
 
     const actionClasses = await getActionClasses(parsedWorkspaceId);
 
-    let data: Omit<Prisma.SurveyCreateInput, "workspace"> = {
+    const baseData: Omit<Prisma.SurveyCreateInput, "workspace"> = {
       ...restSurveyBody,
+      ...normalizeSurveyScheduling({
+        closeOn: normalizedCloseOn,
+        publishOn: normalizedPublishOn,
+        status: restSurveyBody.status ?? "draft",
+      }),
       // @ts-expect-error - languages would be undefined in case of empty array
       languages: languages?.length ? languages : undefined,
       triggers: restSurveyBody.triggers
-        ? // @ts-expect-error - triggers' createdAt and updatedAt are actually dates
-          handleTriggerUpdates(restSurveyBody.triggers, [], actionClasses)
+        ? handleTriggerUpdates(restSurveyBody.triggers, [], actionClasses)
         : undefined,
       attributeFilters: undefined,
     };
-
-    if (createdBy) {
-      data.creator = {
-        connect: {
-          id: createdBy,
-        },
-      };
-    }
+    const data = validateSurveyCreateDataMedia(
+      attachSurveyFollowUpsToCreateData(
+        attachSurveyCreatorToCreateData(baseData, createdBy),
+        restSurveyBody.followUps
+      )
+    );
 
     const organization = await getOrganizationByWorkspaceId(parsedWorkspaceId);
     if (!organization) {
       throw new ResourceNotFoundError("Organization", null);
-    }
-
-    // Survey follow-ups
-    if (restSurveyBody.followUps?.length) {
-      data.followUps = {
-        create: restSurveyBody.followUps.map((followUp) => ({
-          name: followUp.name,
-          trigger: followUp.trigger,
-          action: followUp.action,
-        })),
-      };
-    } else {
-      delete data.followUps;
-    }
-
-    if (data.questions) {
-      checkForInvalidImagesInQuestions(data.questions);
-    }
-
-    // Validate and prepare blocks for persistence
-    if (data.blocks && data.blocks.length > 0) {
-      data.blocks = validateMediaAndPrepareBlocks(data.blocks);
     }
 
     const survey = await prisma.survey.create({
@@ -702,11 +712,17 @@ export const createSurvey = async (workspaceId: string, surveyBody: TSurveyCreat
       }),
     };
 
+    const reconciledSurvey = await reconcilePersistedSurveySchedulingIfDue({
+      logSource: "survey-create",
+      survey: transformedSurvey,
+      workspaceId: parsedWorkspaceId,
+    });
+
     if (createdBy) {
-      await subscribeOrganizationMembersToSurveyResponses(survey.id, createdBy, organization.id);
+      await subscribeOrganizationMembersToSurveyResponses(reconciledSurvey.id, createdBy, organization.id);
     }
 
-    return transformedSurvey;
+    return reconciledSurvey;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       logger.error(error, "Error creating survey");

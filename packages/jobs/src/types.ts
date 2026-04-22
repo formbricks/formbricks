@@ -49,3 +49,9 @@ export const ZAITranslationJobData = z.object({
 });
 
 export type TAITranslationJobData = z.infer<typeof ZAITranslationJobData>;
+
+export const ZSurveySchedulingJobData = z.object({
+  scope: z.literal("global"),
+});
+
+export type TSurveySchedulingJobData = z.infer<typeof ZSurveySchedulingJobData>;

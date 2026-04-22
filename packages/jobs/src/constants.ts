@@ -7,6 +7,7 @@ export const JOB_NAMES = {
   testLog: "system.test-log",
   responsePipeline: "response-pipeline.process",
   aiTranslation: "ai-translation.translate",
+  surveyScheduling: "survey-scheduling.reconcile",
 } as const;
 
 const JOBS_DEFAULT_BACKOFF = Object.freeze({

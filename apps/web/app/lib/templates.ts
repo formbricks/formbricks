@@ -4824,6 +4824,8 @@ export const previewSurvey = (workspaceName: string, t: TFunction): TSurvey => {
     workspaceId: "cmnh38nzx00003b6r3svd9pv2",
     createdBy: "cltwumfbz0000echxysz6ptvq",
     status: "inProgress" as const,
+    publishOn: null,
+    closeOn: null,
     welcomeCard: {
       enabled: false,
       headline: createI18nString(t("templates.preview_survey_welcome_card_headline"), []),

@@ -9,6 +9,7 @@ describe("@formbricks/jobs public API", () => {
     expect(jobs.startJobsRuntime).toBeTypeOf("function");
     expect(jobs.ZResponsePipelineEvent).toBeDefined();
     expect(jobs.ZResponsePipelineJobData).toBeDefined();
+    expect(jobs.ZSurveySchedulingJobData).toBeDefined();
     expect(jobs.ZTestLogJobData).toBeDefined();
     expect("JOB_NAMES" in jobs).toBe(false);
     expect("JOBS_DEFAULT_JOB_OPTIONS" in jobs).toBe(false);

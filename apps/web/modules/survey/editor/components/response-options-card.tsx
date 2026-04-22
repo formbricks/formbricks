@@ -7,9 +7,20 @@ import { KeyboardEventHandler, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
+import {
+  SURVEY_SCHEDULING_TIME_LABEL,
+  SURVEY_SCHEDULING_TIME_ZONE_LABEL,
+} from "@/modules/survey/scheduling/lib/constants";
+import {
+  getMinimumSurveySchedulingCalendarDate,
+  toCalendarDate,
+  toDateOnlySelection,
+} from "@/modules/survey/scheduling/lib/date-utils";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Alert, AlertTitle } from "@/modules/ui/components/alert";
+import { DatePicker } from "@/modules/ui/components/date-picker";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { Slider } from "@/modules/ui/components/slider";
@@ -19,6 +30,7 @@ interface ResponseOptionsCardProps {
   setLocalSurvey: (survey: TSurvey | ((prev: TSurvey) => TSurvey)) => void;
   responseCount: number;
   isSpamProtectionAllowed: boolean;
+  locale: TUserLocale;
 }
 
 export const ResponseOptionsCard = ({
@@ -26,9 +38,10 @@ export const ResponseOptionsCard = ({
   setLocalSurvey,
   responseCount,
   isSpamProtectionAllowed,
+  locale,
 }: ResponseOptionsCardProps) => {
   const { t } = useTranslation();
-  const [open, setOpen] = useState(localSurvey.type === "link" ? true : false);
+  const [open, setOpen] = useState(localSurvey.type === "link");
   const autoComplete = localSurvey.autoComplete !== null;
   const [surveyClosedMessageToggle, setSurveyClosedMessageToggle] = useState(false);
   const [verifyEmailToggle, setVerifyEmailToggle] = useState(localSurvey.isVerifyEmailEnabled);
@@ -44,6 +57,24 @@ export const ResponseOptionsCard = ({
   });
 
   const [recaptchaThreshold, setRecaptchaThreshold] = useState<number>(localSurvey.recaptcha?.threshold ?? 0);
+  const publishOn = localSurvey.publishOn ? toCalendarDate(localSurvey.publishOn) : null;
+  const closeOn = localSurvey.closeOn ? toCalendarDate(localSurvey.closeOn) : null;
+  const minimumSchedulingDate = getMinimumSurveySchedulingCalendarDate();
+  const minPublishDate = minimumSchedulingDate;
+  const minCloseDate = (() => {
+    if (!publishOn) {
+      return minimumSchedulingDate;
+    }
+
+    const nextCalendarDay = new Date(publishOn);
+    nextCalendarDay.setDate(nextCalendarDay.getDate() + 1);
+
+    return nextCalendarDay.getTime() > minimumSchedulingDate.getTime()
+      ? nextCalendarDay
+      : minimumSchedulingDate;
+  })();
+  const isPublishOnDateEnabled = localSurvey.publishOn !== null;
+  const isCloseOnDateEnabled = localSurvey.closeOn !== null;
 
   const isPinProtectionEnabled = localSurvey.pin !== null;
 
@@ -128,7 +159,7 @@ export const ResponseOptionsCard = ({
   };
 
   useEffect(() => {
-    if (!!localSurvey.surveyClosedMessage) {
+    if (localSurvey.surveyClosedMessage) {
       setSurveyClosedMessage({
         heading: localSurvey.surveyClosedMessage.heading ?? surveyClosedMessage.heading,
         subheading: localSurvey.surveyClosedMessage.subheading ?? surveyClosedMessage.subheading,
@@ -136,6 +167,72 @@ export const ResponseOptionsCard = ({
       setSurveyClosedMessageToggle(true);
     }
   }, [localSurvey, surveyClosedMessage.heading, surveyClosedMessage.subheading]);
+
+  useEffect(() => {
+    if (!publishOn || !closeOn) {
+      return;
+    }
+
+    if (closeOn.getTime() > publishOn.getTime()) {
+      return;
+    }
+
+    setLocalSurvey((currentSurvey) => {
+      if (!currentSurvey.closeOn || !currentSurvey.publishOn) {
+        return currentSurvey;
+      }
+
+      const currentCloseOn = toCalendarDate(currentSurvey.closeOn);
+      const currentPublishOn = toCalendarDate(currentSurvey.publishOn);
+
+      if (currentCloseOn.getTime() > currentPublishOn.getTime()) {
+        return currentSurvey;
+      }
+
+      return {
+        ...currentSurvey,
+        closeOn: null,
+      };
+    });
+  }, [closeOn, publishOn, setLocalSurvey]);
+
+  const togglePublishOnDate = () => {
+    if (isPublishOnDateEnabled) {
+      setLocalSurvey((currentSurvey) => ({
+        ...currentSurvey,
+        publishOn: null,
+      }));
+      return;
+    }
+
+    const nextPublishOn = toDateOnlySelection(minPublishDate);
+    const nextPublishCalendarDate = toCalendarDate(nextPublishOn);
+
+    setLocalSurvey((currentSurvey) => ({
+      ...currentSurvey,
+      closeOn:
+        currentSurvey.closeOn &&
+        toCalendarDate(currentSurvey.closeOn).getTime() <= nextPublishCalendarDate.getTime()
+          ? null
+          : currentSurvey.closeOn,
+      publishOn: nextPublishOn,
+    }));
+  };
+
+  const toggleCloseOnDate = () => {
+    if (isCloseOnDateEnabled) {
+      setLocalSurvey((currentSurvey) => ({
+        ...currentSurvey,
+        closeOn: null,
+      }));
+      return;
+    }
+
+    setLocalSurvey((currentSurvey) => ({
+      ...currentSurvey,
+      closeOn: toDateOnlySelection(minCloseDate),
+    }));
+  };
 
   const toggleAutocomplete = () => {
     if (autoComplete) {
@@ -148,7 +245,7 @@ export const ResponseOptionsCard = ({
   };
 
   const handleInputResponse = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = parseInt(e.target.value);
+    let value = Number.parseInt(e.target.value);
     if (Number.isNaN(value) || value < 1) {
       value = 1;
     }
@@ -158,12 +255,12 @@ export const ResponseOptionsCard = ({
   };
 
   const handleInputResponseBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    if (parseInt(e.target.value) === 0) {
+    if (Number.parseInt(e.target.value) === 0) {
       toast.error(t("workspace.surveys.edit.response_limit_can_t_be_set_to_0"));
       return;
     }
 
-    if (parseInt(e.target.value) <= responseCount) {
+    if (Number.parseInt(e.target.value) <= responseCount) {
       toast.error(
         t("workspace.surveys.edit.response_limit_needs_to_exceed_number_of_received_responses", {
           responseCount,
@@ -172,7 +269,6 @@ export const ResponseOptionsCard = ({
           id: "response-limit-error",
         }
       );
-      return;
     }
   };
   const [parent] = useAutoAnimate();
@@ -231,6 +327,78 @@ export const ResponseOptionsCard = ({
       <Collapsible.CollapsibleContent className="flex flex-col" ref={parent}>
         <hr className="py-1 text-slate-600" />
         <div className="p-3">
+          <AdvancedOptionToggle
+            htmlId="publishSurveyOnDate"
+            isChecked={isPublishOnDateEnabled}
+            onToggle={togglePublishOnDate}
+            title={t("workspace.surveys.edit.publish_survey_on_date")}
+            description={t("workspace.surveys.edit.survey_will_be_published_at_midnight_cet", {
+              time: SURVEY_SCHEDULING_TIME_LABEL,
+              timeZone: SURVEY_SCHEDULING_TIME_ZONE_LABEL,
+            })}
+            childBorder={true}>
+            <div className="p-4">
+              <DatePicker
+                clearButtonId="clear-publish-on-date"
+                clearButtonLabel={t("workspace.surveys.edit.clear_publish_on_date")}
+                date={publishOn}
+                locale={locale}
+                minDate={minPublishDate}
+                onClearDate={() => {
+                  setLocalSurvey((currentSurvey) => ({
+                    ...currentSurvey,
+                    publishOn: null,
+                  }));
+                }}
+                updateSurveyDate={(date) => {
+                  const nextPublishOn = toDateOnlySelection(date);
+                  const nextPublishCalendarDate = toCalendarDate(nextPublishOn);
+
+                  setLocalSurvey((currentSurvey) => ({
+                    ...currentSurvey,
+                    closeOn:
+                      currentSurvey.closeOn &&
+                      toCalendarDate(currentSurvey.closeOn).getTime() <= nextPublishCalendarDate.getTime()
+                        ? null
+                        : currentSurvey.closeOn,
+                    publishOn: nextPublishOn,
+                  }));
+                }}
+              />
+            </div>
+          </AdvancedOptionToggle>
+          <AdvancedOptionToggle
+            htmlId="closeSurveyOnDate"
+            isChecked={isCloseOnDateEnabled}
+            onToggle={toggleCloseOnDate}
+            title={t("workspace.surveys.edit.close_survey_on_date")}
+            description={t("workspace.surveys.edit.survey_will_be_closed_at_midnight_cet", {
+              time: SURVEY_SCHEDULING_TIME_LABEL,
+              timeZone: SURVEY_SCHEDULING_TIME_ZONE_LABEL,
+            })}
+            childBorder={true}>
+            <div className="p-4">
+              <DatePicker
+                clearButtonId="clear-close-on-date"
+                clearButtonLabel={t("workspace.surveys.edit.clear_close_on_date")}
+                date={closeOn}
+                locale={locale}
+                minDate={minCloseDate}
+                onClearDate={() => {
+                  setLocalSurvey((currentSurvey) => ({
+                    ...currentSurvey,
+                    closeOn: null,
+                  }));
+                }}
+                updateSurveyDate={(date) => {
+                  setLocalSurvey((currentSurvey) => ({
+                    ...currentSurvey,
+                    closeOn: toDateOnlySelection(date),
+                  }));
+                }}
+              />
+            </div>
+          </AdvancedOptionToggle>
           {/* Close Survey on Limit */}
           <AdvancedOptionToggle
             htmlId="closeOnNumberOfResponse"

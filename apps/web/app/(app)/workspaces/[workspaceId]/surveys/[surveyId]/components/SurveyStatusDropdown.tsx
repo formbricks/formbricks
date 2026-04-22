@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { useWorkspaceContext } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { updateSurveyAction } from "@/modules/survey/editor/actions";
 import {
@@ -22,18 +21,19 @@ interface SurveyStatusDropdownProps {
 }
 
 export const SurveyStatusDropdown = ({ updateLocalSurveyStatus, survey }: SurveyStatusDropdownProps) => {
-  const { workspace } = useWorkspaceContext();
   const { t } = useTranslation();
   const router = useRouter();
+  const isScheduled = survey.status === "paused" && survey.publishOn !== null;
 
   const handleStatusChange = async (status: TSurvey["status"]) => {
     const updateSurveyActionResponse = await updateSurveyAction({ ...survey, status });
 
     if (updateSurveyActionResponse?.data) {
-      const resultingStatus = updateSurveyActionResponse.data.status;
+      const { publishOn, status: resultingStatus } = updateSurveyActionResponse.data;
+      const isResultScheduled = resultingStatus === "paused" && publishOn !== null;
       const statusToToastMessage: Partial<Record<TSurvey["status"], string>> = {
         inProgress: t("common.survey_live"),
-        paused: t("common.survey_paused"),
+        paused: isResultScheduled ? t("common.survey_scheduled") : t("common.survey_paused"),
         completed: t("common.survey_completed"),
       };
 
@@ -68,12 +68,10 @@ export const SurveyStatusDropdown = ({ updateLocalSurveyStatus, survey }: Survey
           <SelectTrigger className="w-[170px] bg-white md:w-[200px]">
             <SelectValue>
               <div className="flex items-center">
-                {(survey.type === "link" || workspace.appSetupCompleted) && (
-                  <SurveyStatusIndicator status={survey.status} />
-                )}
+                <SurveyStatusIndicator status={survey.status} isScheduled={isScheduled} />
                 <span className="ml-2 text-sm text-slate-700">
                   {survey.status === "inProgress" && t("common.in_progress")}
-                  {survey.status === "paused" && t("common.paused")}
+                  {survey.status === "paused" && (isScheduled ? t("common.scheduled") : t("common.paused"))}
                   {survey.status === "completed" && t("common.completed")}
                 </span>
               </div>
@@ -88,8 +86,8 @@ export const SurveyStatusDropdown = ({ updateLocalSurveyStatus, survey }: Survey
             </SelectItem>
             <SelectItem className="group font-normal hover:text-slate-900" value="paused">
               <div className="flex w-full items-center justify-center gap-2">
-                <SurveyStatusIndicator status={"paused"} />
-                {t("common.paused")}
+                <SurveyStatusIndicator status={"paused"} isScheduled={isScheduled} />
+                {isScheduled ? t("common.scheduled") : t("common.paused")}
               </div>
             </SelectItem>
             <SelectItem className="group font-normal hover:text-slate-900" value="completed">

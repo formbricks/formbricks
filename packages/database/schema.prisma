@@ -379,6 +379,8 @@ model Survey {
   autoClose           Int?
   autoComplete        Int?
   delay               Int                     @default(0)
+  publishOn           DateTime?
+  closeOn             DateTime?
   /// [SurveyClosedMessage]
   surveyClosedMessage Json?
   segmentId           String?
@@ -413,8 +415,10 @@ model Survey {
   customHeadScripts     String?
   customHeadScriptsMode SurveyScriptMode? @default(add)
 
-  @@index([segmentId])
   @@index([workspaceId, updatedAt])
+  @@index([segmentId])
+  @@index([status, publishOn])
+  @@index([status, closeOn])
 }
 
 /// Represents a quota configuration for a survey.

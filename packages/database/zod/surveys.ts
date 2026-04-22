@@ -90,6 +90,8 @@ const ZSurveyBase = z.object({
   autoClose: z.number().nullable().describe("Auto close time in seconds"),
   autoComplete: z.number().nullable().describe("Auto complete time in seconds"),
   delay: z.number().describe("Delay before showing survey"),
+  publishOn: z.coerce.date().nullable().describe("Date when the survey should be published"),
+  closeOn: z.coerce.date().nullable().describe("Date when the survey should be closed"),
   surveyClosedMessage: z
     .object({
       enabled: z.boolean(),

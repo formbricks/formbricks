@@ -10,15 +10,20 @@ export type {
 export {
   enqueueAITranslationJob,
   enqueueResponsePipelineJob,
+  enqueueSurveySchedulingJob,
   enqueueTestLogJob,
   getBackgroundJobProducer,
+  removeRecurringSurveySchedulingJobSchedule,
   scheduleResponsePipelineJobAt,
+  scheduleSurveySchedulingJobAt,
   scheduleTestLogJobAt,
   upsertRecurringResponsePipelineJobSchedule,
+  upsertRecurringSurveySchedulingJobSchedule,
   upsertRecurringTestLogJobSchedule,
 } from "./queue";
 export { processAITranslationJob } from "./processors/ai-translation";
 export { processResponsePipelineJob } from "./processors/response-pipeline";
+export { processSurveySchedulingJob } from "./processors/survey-scheduling";
 export { processTestLogJob } from "./processors/test-log";
 export { startJobsRuntime } from "./runtime";
 export {
@@ -44,12 +49,14 @@ export {
   ZAITranslationJobData,
   ZResponsePipelineEvent,
   ZResponsePipelineJobData,
+  ZSurveySchedulingJobData,
   ZTestLogJobData,
 } from "./types";
 export type {
   TAITranslationJobData,
   TResponsePipelineEvent,
   TResponsePipelineJobData,
+  TSurveySchedulingJobData,
   TTestLogJobData,
 } from "./types";
 /* v8 ignore stop */
