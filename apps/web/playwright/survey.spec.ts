@@ -269,7 +269,7 @@ test.describe("Multi Language Survey Create", async () => {
     test.skip(!storageConfigured, "Storage-dependent survey E2E requires configured file storage.");
 
     // Add workspace languages (English + German)
-    await page.getByRole("link", { name: "Configuration" }).click();
+    await page.getByRole("link", { name: "Configure" }).click();
     await page.getByRole("link", { name: "Survey Languages" }).click();
     await page.getByRole("button", { name: "Edit languages" }).click();
     await page.getByRole("button", { name: "Add language" }).click();

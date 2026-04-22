@@ -395,26 +395,28 @@ model Survey {
   /// [SurveySingleUse]
   singleUse Json? @default("{\"enabled\": false, \"isEncrypted\": true}")
 
-  isVerifyEmailEnabled            Boolean          @default(false)
-  isSingleResponsePerEmailEnabled Boolean          @default(false)
-  isBackButtonHidden              Boolean          @default(false)
-  isAutoProgressingEnabled        Boolean          @default(false)
-  isCaptureIpEnabled              Boolean          @default(false)
+  isVerifyEmailEnabled            Boolean                      @default(false)
+  isSingleResponsePerEmailEnabled Boolean                      @default(false)
+  isBackButtonHidden              Boolean                      @default(false)
+  isAutoProgressingEnabled        Boolean                      @default(false)
+  isCaptureIpEnabled              Boolean                      @default(false)
   pin                             String?
   displayPercentage               Decimal?
   languages                       SurveyLanguage[]
   showLanguageSwitch              Boolean?
   followUps                       SurveyFollowUp[]
   /// [SurveyRecaptcha]
-  recaptcha                       Json?            @default("{\"enabled\": false, \"threshold\":0.1}")
+  recaptcha                       Json?                        @default("{\"enabled\": false, \"threshold\":0.1}")
   /// [SurveyLinkMetadata]
-  metadata                        Json             @default("{}")
+  metadata                        Json                         @default("{}")
+  connectorMappings               ConnectorFormbricksMapping[]
 
   slug String? @unique
 
   customHeadScripts     String?
   customHeadScriptsMode SurveyScriptMode? @default(add)
 
+  @@unique([id, workspaceId])
   @@index([workspaceId, updatedAt])
   @@index([segmentId])
   @@index([status, publishOn])
@@ -618,6 +620,8 @@ model Workspace {
   appSetupCompleted                 Boolean                            @default(false)
   customHeadScripts                 String? // Custom HTML scripts for link surveys (self-hosted only)
   feedbackRecordDirectoryWorkspaces FeedbackRecordDirectoryWorkspace[]
+  charts                            Chart[]
+  dashboards                        Dashboard[]
 
   surveys              Survey[]
   contacts             Contact[]
@@ -628,6 +632,7 @@ model Workspace {
   segments             Segment[]
   integrations         Integration[]
   apiKeyWorkspaces     ApiKeyWorkspace[]
+  connectors           Connector[]
 
   @@unique([organizationId, name])
 }
@@ -912,6 +917,9 @@ model User {
   /// [Locale]
   locale                    String              @default("en-US")
   surveys                   Survey[]
+  charts                    Chart[]             @relation("chartCreatedBy")
+  dashboards                Dashboard[]         @relation("dashboardCreatedBy")
+  connectors                Connector[]
   teamUsers                 TeamUser[]
   lastLoginAt               DateTime?
   isActive                  Boolean             @default(true)
@@ -1051,6 +1059,198 @@ model WorkspaceTeam {
   @@index([teamId])
 }
 
+enum ChartType {
+  area
+  bar
+  line
+  pie
+  big_number
+}
+
+/// Represents a chart/visualization that can be used in multiple dashboards.
+/// Charts are reusable components that query analytics data.
+///
+/// @property id - Unique identifier for the chart
+/// @property name - Display name of the chart
+/// @property type - Type of visualization (bar, line, pie, etc.)
+/// @property workspace - The workspace this chart belongs to
+/// @property query - Cube.js query configuration (JSON)
+/// @property config - Chart-specific configuration (colors, labels, etc.)
+/// @property createdBy - User who created the chart
+/// @property dashboards - Dashboards that use this chart
+model Chart {
+  id                        String                  @id @default(cuid())
+  createdAt                 DateTime                @default(now()) @map(name: "created_at")
+  updatedAt                 DateTime                @updatedAt @map(name: "updated_at")
+  name                      String
+  type                      ChartType
+  workspace                 Workspace               @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId               String
+  /// [ChartQuery] - Cube.js query configuration
+  query                     Json                    @default("{}")
+  /// [ChartConfig] - Visualization configuration (colors, labels, formatting)
+  config                    Json                    @default("{}")
+  creator                   User?                   @relation("chartCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  createdBy                 String?
+  feedbackRecordDirectory   FeedbackRecordDirectory @relation(fields: [feedbackRecordDirectoryId], references: [id])
+  feedbackRecordDirectoryId String
+  widgets                   DashboardWidget[]
+
+  @@unique([workspaceId, name])
+  @@index([workspaceId, createdAt])
+  @@index([feedbackRecordDirectoryId])
+}
+
+/// Represents a dashboard containing multiple charts.
+/// Dashboards aggregate analytics insights at the workspace level.
+///
+/// @property id - Unique identifier for the dashboard
+/// @property name - Display name of the dashboard
+/// @property workspace - The workspace this dashboard belongs to
+/// @property widgets - Charts on this dashboard
+/// @property createdBy - User who created the dashboard
+model Dashboard {
+  id          String            @id @default(cuid())
+  createdAt   DateTime          @default(now()) @map(name: "created_at")
+  updatedAt   DateTime          @updatedAt @map(name: "updated_at")
+  name        String
+  workspace   Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId String
+  creator     User?             @relation("dashboardCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  createdBy   String?
+  widgets     DashboardWidget[]
+
+  @@unique([workspaceId, name])
+  @@index([workspaceId, createdAt])
+}
+
+/// Represents a chart widget on a dashboard.
+/// Widgets are positioned using a grid layout system.
+///
+/// @property id - Unique identifier for the widget
+/// @property dashboard - The dashboard this widget belongs to
+/// @property chart - The chart displayed in this widget (chart name is used for display)
+/// @property layout - Grid layout configuration (x, y, width, height)
+/// @property order - Display order within the dashboard
+model DashboardWidget {
+  id          String    @id @default(cuid())
+  createdAt   DateTime  @default(now()) @map(name: "created_at")
+  updatedAt   DateTime  @updatedAt @map(name: "updated_at")
+  dashboard   Dashboard @relation(fields: [dashboardId], references: [id], onDelete: Cascade)
+  dashboardId String
+  chart       Chart     @relation(fields: [chartId], references: [id], onDelete: Cascade)
+  chartId     String
+  /// [WidgetLayout] - Grid layout: { x, y, w, h }
+  layout      Json      @default("{\"x\":0,\"y\":0,\"w\":4,\"h\":3}")
+  order       Int       @default(0)
+
+  @@index([dashboardId, order])
+}
+
+enum ConnectorType {
+  formbricks
+  csv
+}
+
+enum ConnectorStatus {
+  active
+  paused
+  error
+}
+
+enum HubFieldType {
+  text
+  categorical
+  nps
+  csat
+  ces
+  rating
+  number
+  boolean
+  date
+}
+
+/// Base connector for all integration types.
+/// Connects external data sources to the Hub for feedback record creation.
+///
+/// @property id - Unique identifier for the connector
+/// @property name - Display name for the connector
+/// @property type - Type of connector (formbricks, webhook, csv, email, slack)
+/// @property status - Current state of the connector (active, paused)
+/// @property environment - The environment this connector belongs to
+/// @property config - Type-specific configuration (e.g., webhook secret, S3 config)
+/// @property formbricksMappings - Element mappings for Formbricks connectors
+/// @property fieldMappings - Field mappings for other connector types
+model Connector {
+  id                        String                       @id @default(cuid())
+  createdAt                 DateTime                     @default(now()) @map(name: "created_at")
+  updatedAt                 DateTime                     @updatedAt @map(name: "updated_at")
+  name                      String
+  type                      ConnectorType
+  status                    ConnectorStatus              @default(active)
+  workspaceId               String
+  workspace                 Workspace                    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  feedbackRecordDirectoryId String
+  feedbackRecordDirectory   FeedbackRecordDirectory      @relation(fields: [feedbackRecordDirectoryId], references: [id], onDelete: Cascade)
+  formbricksMappings        ConnectorFormbricksMapping[]
+  fieldMappings             ConnectorFieldMapping[]
+  lastSyncAt                DateTime?                    @map(name: "last_sync_at")
+  createdBy                 String?                      @map(name: "created_by")
+  creator                   User?                        @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+
+  @@unique([id, workspaceId])
+  @@unique([workspaceId, name])
+  @@index([type])
+  @@index([feedbackRecordDirectoryId])
+}
+
+/// Maps survey elements to Hub FeedbackRecords for Formbricks connectors.
+/// Each row represents one element that will create FeedbackRecords when answered.
+///
+/// @property id - Unique identifier for the mapping
+/// @property connector - The parent connector
+/// @property survey - The survey containing the element
+/// @property elementId - The element ID within the survey (from blocks[].elements[].id)
+/// @property hubFieldType - The field_type to use in Hub (text, nps, rating, etc.)
+/// @property customFieldLabel - Optional override for the element headline as field_label in Hub
+model ConnectorFormbricksMapping {
+  id               String       @id @default(cuid())
+  createdAt        DateTime     @default(now()) @map(name: "created_at")
+  connectorId      String
+  workspaceId      String
+  connector        Connector    @relation(fields: [connectorId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  surveyId         String
+  survey           Survey       @relation(fields: [surveyId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  elementId        String
+  hubFieldType     HubFieldType
+  customFieldLabel String?      @map(name: "custom_field_label")
+
+  @@unique([workspaceId, connectorId, surveyId, elementId])
+  @@index([workspaceId, surveyId])
+  @@index([surveyId])
+}
+
+/// Generic field mapping for Webhook, CSV, Email, Slack connectors.
+/// Maps source fields to Hub FeedbackRecord fields.
+///
+/// @property id - Unique identifier for the mapping
+/// @property connector - The parent connector
+/// @property sourceFieldId - Field path for webhook (e.g., "user.id"), column name for CSV
+/// @property targetFieldId - Hub field (collected_at, field_id, value_text, etc.)
+/// @property staticValue - If set, use this value instead of reading from sourceFieldId
+model ConnectorFieldMapping {
+  id            String    @id @default(cuid())
+  createdAt     DateTime  @default(now()) @map(name: "created_at")
+  connectorId   String
+  workspaceId   String
+  connector     Connector @relation(fields: [connectorId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  sourceFieldId String    @map(name: "source_field_id")
+  targetFieldId String    @map(name: "target_field_id")
+  staticValue   String?   @map(name: "static_value")
+
+  @@unique([workspaceId, connectorId, sourceFieldId, targetFieldId])
+}
+
 /// Represents a feedback record directory (Hub tenant) owned by an organization.
 /// Directories group feedback data and are assigned to workspaces for access control.
 ///
@@ -1068,6 +1268,8 @@ model FeedbackRecordDirectory {
   organizationId String
   organization   Organization                       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   workspaces     FeedbackRecordDirectoryWorkspace[]
+  connectors     Connector[]
+  charts         Chart[]
 
   @@unique([organizationId, name])
 }

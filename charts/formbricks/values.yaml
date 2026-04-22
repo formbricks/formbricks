@@ -17,7 +17,7 @@ formbricks:
   # REQUIRED: Base URL of the site (e.g., https://formbricks.example.com)
   # This is used for WEBAPP_URL and NEXTAUTH_URL
   webappUrl: ""
-  
+
   # Optional: Public URL for surveys (defaults to webappUrl if not set)
   publicUrl: ""
 

@@ -57,3 +57,7 @@ ALTER TABLE "ApiKeyEnvironment" RENAME TO "ApiKeyWorkspace";
 ALTER INDEX "ApiKeyEnvironment_pkey" RENAME TO "ApiKeyWorkspace_pkey";
 ALTER INDEX "ApiKeyEnvironment_apiKeyId_workspaceId_key" RENAME TO "ApiKeyWorkspace_apiKeyId_workspaceId_key";
 ALTER INDEX "ApiKeyEnvironment_workspaceId_idx" RENAME TO "ApiKeyWorkspace_workspaceId_idx";
+
+-- Rename foreign key constraints to match new table name
+ALTER TABLE "ApiKeyWorkspace" RENAME CONSTRAINT "ApiKeyEnvironment_apiKeyId_fkey" TO "ApiKeyWorkspace_apiKeyId_fkey";
+ALTER TABLE "ApiKeyWorkspace" RENAME CONSTRAINT "ApiKeyEnvironment_workspaceId_fkey" TO "ApiKeyWorkspace_workspaceId_fkey";
