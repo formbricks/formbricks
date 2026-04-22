@@ -2757,7 +2757,7 @@
         "ai_instance_not_configured": "KI ist nicht konfiguriert. Kontaktiere deinen Administrator.",
         "ai_smart_tools_disabled": "KI-Smart-Tools sind für diese Organisation deaktiviert.",
         "ai_translate": "Mit KI übersetzen",
-        "ai_translating": "Übersetze mit KI...",
+        "ai_translating": "Übersetze mit KI... Bitte lasse dieses Fenster geöffnet.",
         "ai_translation_all_fields_populated": "Alle Felder sind bereits übersetzt",
         "ai_translation_complete": "KI-Übersetzung abgeschlossen",
         "ai_translation_failed": "Übersetzung fehlgeschlagen",

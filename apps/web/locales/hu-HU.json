@@ -2757,7 +2757,7 @@
         "ai_instance_not_configured": "Az AI nincs konfigurálva. Kérjük, forduljon a rendszergazdájához.",
         "ai_smart_tools_disabled": "Az AI intelligens eszközök le vannak tiltva ezen szervezet számára.",
         "ai_translate": "Fordítás mesterséges intelligenciával",
-        "ai_translating": "Fordítás mesterséges intelligenciával...",
+        "ai_translating": "AI fordítás folyamatban... Kérjük, tartsa nyitva ezt az ablakot.",
         "ai_translation_all_fields_populated": "Minden mező már le van fordítva",
         "ai_translation_complete": "A mesterséges intelligencia által végzett fordítás befejeződött",
         "ai_translation_failed": "A fordítás sikertelen volt",

@@ -2757,7 +2757,7 @@
         "ai_instance_not_configured": "AI nu este configurat. Contactează administratorul.",
         "ai_smart_tools_disabled": "Instrumentele inteligente AI sunt dezactivate pentru această organizație.",
         "ai_translate": "Traduce cu AI",
-        "ai_translating": "Se traduce cu AI...",
+        "ai_translating": "Se traduce cu AI... Te rugăm să ții această fereastră deschisă.",
         "ai_translation_all_fields_populated": "Toate câmpurile sunt deja traduse",
         "ai_translation_complete": "Traducerea AI finalizată",
         "ai_translation_failed": "Traducerea a eșuat",

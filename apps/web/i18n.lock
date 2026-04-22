@@ -2638,7 +2638,7 @@ checksums:
     workspace/surveys/edit/ai_instance_not_configured: 939ad7c3240fa8de98a325239f1b36bc
     workspace/surveys/edit/ai_smart_tools_disabled: 13df84ae47d35dfa6e86ffa62f29c75d
     workspace/surveys/edit/ai_translate: f25943cdeffe155ee524428f4daa5da2
-    workspace/surveys/edit/ai_translating: fce4992a1d766124c3e25ef279785a2b
+    workspace/surveys/edit/ai_translating: 098a2293b39f9f258d67f926cf03df37
     workspace/surveys/edit/ai_translation_all_fields_populated: d78f6a663ea19ce77045970179bd200f
     workspace/surveys/edit/ai_translation_complete: f443d0801404f728e68000b46ca67598
     workspace/surveys/edit/ai_translation_failed: fd356a173d0abde7a0fc660394954cc7

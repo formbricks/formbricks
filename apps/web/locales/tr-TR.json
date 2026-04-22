@@ -2757,7 +2757,7 @@
         "ai_instance_not_configured": "Yapay zeka yapılandırılmamış. Yöneticinle iletişime geç.",
         "ai_smart_tools_disabled": "Bu organizasyon için yapay zeka akıllı araçları devre dışı.",
         "ai_translate": "Yapay Zeka ile Çevir",
-        "ai_translating": "Yapay Zeka ile çevriliyor...",
+        "ai_translating": "Yapay zeka ile çevriliyor... Lütfen bu pencereyi açık tutun.",
         "ai_translation_all_fields_populated": "Tüm alanlar zaten çevrilmiş",
         "ai_translation_complete": "Yapay Zeka çevirisi tamamlandı",
         "ai_translation_failed": "Çeviri başarısız oldu",

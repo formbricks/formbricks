@@ -62,7 +62,14 @@ Rules:
     }
 
     // Store result in Redis for the polling action to pick up
-    await cache.set(cacheKey, { userId: data.userId, translations }, AI_TRANSLATION_RESULT_TTL_MS);
+    const cacheResult = await cache.set(
+      cacheKey,
+      { userId: data.userId, translations },
+      AI_TRANSLATION_RESULT_TTL_MS
+    );
+    if (!cacheResult.ok) {
+      throw new Error("Failed to store AI translation result in cache");
+    }
 
     logger.info(
       {
@@ -77,11 +84,14 @@ Rules:
     // On the last retry attempt, store a failure marker so the client
     // stops polling instead of spinning until the 2-minute timeout.
     if (isLastAttempt) {
-      await cache.set(
+      const failureResult = await cache.set(
         cacheKey,
         { userId: data.userId, error: error instanceof Error ? error.message : "Translation failed" },
         AI_TRANSLATION_RESULT_TTL_MS
       );
+      if (!failureResult.ok) {
+        logger.error({ jobId: context.jobId }, "Failed to store AI translation failure marker in cache");
+      }
     }
     throw error;
   }

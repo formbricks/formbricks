@@ -2757,7 +2757,7 @@
         "ai_instance_not_configured": "AI är inte konfigurerad. Kontakta din administratör.",
         "ai_smart_tools_disabled": "AI smarta verktyg är inaktiverade för den här organisationen.",
         "ai_translate": "Översätt med AI",
-        "ai_translating": "Översätter med AI...",
+        "ai_translating": "Översätter med AI... Vänligen håll denna dialogruta öppen.",
         "ai_translation_all_fields_populated": "Alla fält är redan översatta",
         "ai_translation_complete": "AI-översättning klar",
         "ai_translation_failed": "Översättningen misslyckades",

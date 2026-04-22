@@ -2757,7 +2757,7 @@
         "ai_instance_not_configured": "AIが設定されていません。管理者にお問い合わせください。",
         "ai_smart_tools_disabled": "この組織ではAIスマートツールが無効になっています。",
         "ai_translate": "AIで翻訳",
-        "ai_translating": "AIで翻訳中...",
+        "ai_translating": "AIで翻訳中... このモーダルを開いたままにしてください。",
         "ai_translation_all_fields_populated": "すべてのフィールドは既に翻訳されています",
         "ai_translation_complete": "AI翻訳が完了しました",
         "ai_translation_failed": "翻訳に失敗しました",

@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { enqueueAITranslationJob } from "@formbricks/jobs";
 import { ZId } from "@formbricks/types/common";
+import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { assertOrganizationAIConfigured } from "@/lib/ai/service";
 import { cache } from "@/lib/cache";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
@@ -119,7 +120,7 @@ export const getAITranslationResultAction = authenticatedActionClient
 
     // Verify the requesting user owns this translation result
     if (result.data.userId !== ctx.user.id) {
-      throw new Error("Not authorized");
+      throw new OperationNotAllowedError("Not authorized");
     }
 
     // Check if the job failed

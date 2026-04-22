@@ -2757,7 +2757,7 @@
         "ai_instance_not_configured": "AI 未設定。請聯絡您的管理員。",
         "ai_smart_tools_disabled": "此組織已停用 AI 智慧工具。",
         "ai_translate": "使用 AI 翻譯",
-        "ai_translating": "AI 翻譯中...",
+        "ai_translating": "正在使用 AI 翻譯...請保持此視窗開啟。",
         "ai_translation_all_fields_populated": "所有欄位都已翻譯",
         "ai_translation_complete": "AI 翻譯完成",
         "ai_translation_failed": "翻譯失敗",

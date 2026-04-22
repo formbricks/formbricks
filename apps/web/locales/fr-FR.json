@@ -2757,7 +2757,7 @@
         "ai_instance_not_configured": "L'IA n'est pas configurée. Contacte ton administrateur.",
         "ai_smart_tools_disabled": "Les outils intelligents IA sont désactivés pour cette organisation.",
         "ai_translate": "Traduire avec l'IA",
-        "ai_translating": "Traduction avec l'IA en cours...",
+        "ai_translating": "Traduction en cours avec l'IA... Garde cette fenêtre ouverte.",
         "ai_translation_all_fields_populated": "Tous les champs sont déjà traduits",
         "ai_translation_complete": "Traduction IA terminée",
         "ai_translation_failed": "La traduction a échoué",

@@ -2757,7 +2757,7 @@
         "ai_instance_not_configured": "AI 未配置。请联系您的管理员。",
         "ai_smart_tools_disabled": "此组织已禁用 AI 智能工具。",
         "ai_translate": "使用 AI 翻译",
-        "ai_translating": "正在使用 AI 翻译...",
+        "ai_translating": "AI 翻译中...请保持此窗口打开。",
         "ai_translation_all_fields_populated": "所有字段均已翻译",
         "ai_translation_complete": "AI 翻译完成",
         "ai_translation_failed": "翻译失败",

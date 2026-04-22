@@ -2757,7 +2757,7 @@
         "ai_instance_not_configured": "ИИ не настроен. Свяжись с администратором.",
         "ai_smart_tools_disabled": "Умные инструменты ИИ отключены для этой организации.",
         "ai_translate": "Перевести с помощью ИИ",
-        "ai_translating": "Перевод с помощью ИИ...",
+        "ai_translating": "Перевод с помощью ИИ... Пожалуйста, не закрывай это окно.",
         "ai_translation_all_fields_populated": "Все поля уже переведены",
         "ai_translation_complete": "Перевод с помощью ИИ завершён",
         "ai_translation_failed": "Перевод не удался",

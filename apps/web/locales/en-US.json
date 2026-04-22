@@ -2757,7 +2757,7 @@
         "ai_instance_not_configured": "AI is not configured. Contact your administrator.",
         "ai_smart_tools_disabled": "AI smart tools are disabled for this organization.",
         "ai_translate": "Translate with AI",
-        "ai_translating": "Translating with AI...",
+        "ai_translating": "Translating with AI... Please keep this modal open.",
         "ai_translation_all_fields_populated": "All fields are already translated",
         "ai_translation_complete": "AI translation complete",
         "ai_translation_failed": "Translation failed",

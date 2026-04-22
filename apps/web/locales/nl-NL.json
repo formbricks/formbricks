@@ -2757,7 +2757,7 @@
         "ai_instance_not_configured": "AI is niet geconfigureerd. Neem contact op met je beheerder.",
         "ai_smart_tools_disabled": "AI slimme tools zijn uitgeschakeld voor deze organisatie.",
         "ai_translate": "Vertalen met AI",
-        "ai_translating": "Bezig met vertalen via AI...",
+        "ai_translating": "Vertalen met AI... Laat dit venster open.",
         "ai_translation_all_fields_populated": "Alle velden zijn al vertaald",
         "ai_translation_complete": "AI-vertaling voltooid",
         "ai_translation_failed": "Vertaling mislukt",
