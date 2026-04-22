@@ -467,6 +467,7 @@ export const importCsvDataAction = authenticatedActionClient
 
 const ZListFeedbackRecordsAction = z.object({
   workspaceId: ZId,
+  frdId: ZId,
   limit: z.number().min(1).max(1000).optional(),
   cursor: z.string().optional(),
   sourceType: z.string().optional(),
@@ -504,38 +505,28 @@ export const listFeedbackRecordsAction = authenticatedActionClient
         ],
       });
 
-      // tenant_id = FRD id. Fan out across all FRDs assigned to this workspace, merge + sort desc.
+      // Verify FRD belongs to workspace's accessible FRDs
       const frds = await getFeedbackRecordDirectoriesByWorkspaceId(parsedInput.workspaceId);
-      if (frds.length === 0) {
-        return { data: [], limit: parsedInput.limit ?? 50 };
+      if (!frds.some((f) => f.id === parsedInput.frdId)) {
+        throw new Error("Feedback record directory not accessible");
       }
 
-      const perFrdLimit = parsedInput.limit ?? 50;
-      const baseParams = {
-        limit: perFrdLimit,
-        ...(parsedInput.sourceType ? { source_type: parsedInput.sourceType } : {}),
-        ...(parsedInput.fieldType ? { field_type: parsedInput.fieldType } : {}),
-        ...(parsedInput.since ? { since: parsedInput.since } : {}),
-        ...(parsedInput.until ? { until: parsedInput.until } : {}),
+      const params: FeedbackRecordListParams = {
+        tenant_id: parsedInput.frdId,
+        limit: parsedInput.limit ?? 50,
       };
+      if (parsedInput.cursor) params.cursor = parsedInput.cursor;
+      if (parsedInput.sourceType) params.source_type = parsedInput.sourceType;
+      if (parsedInput.fieldType) params.field_type = parsedInput.fieldType;
+      if (parsedInput.since) params.since = parsedInput.since;
+      if (parsedInput.until) params.until = parsedInput.until;
 
-      const results = await Promise.all(
-        frds.map((frd) =>
-          listFeedbackRecords({ ...baseParams, tenant_id: frd.id } as FeedbackRecordListParams)
-        )
-      );
-
-      const errored = results.find((r) => r.error);
-      if (errored?.error) {
-        logger.warn({ error: errored.error }, "Failed to list feedback records");
-        throw new Error(errored.error.message);
+      const result = await listFeedbackRecords(params);
+      if (result.error || !result.data) {
+        logger.warn({ error: result.error }, "Failed to list feedback records");
+        throw new Error(result.error?.message ?? "Failed to load feedback records");
       }
 
-      const merged = results
-        .flatMap((r) => r.data?.data ?? [])
-        .sort((a, b) => (a.collected_at < b.collected_at ? 1 : -1))
-        .slice(0, perFrdLimit);
-
-      return { data: merged, limit: perFrdLimit };
+      return result.data;
     }
   );

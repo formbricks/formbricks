@@ -9,14 +9,18 @@ import { FeedbackRecordsTable } from "./feedback-records-table";
 
 interface FeedbackRecordsPageClientProps {
   workspaceId: string;
+  directories: { id: string; name: string }[];
+  initialFrdId: string | null;
   initialRecords: FeedbackRecordData[];
-  frdMap: Record<string, string>;
+  initialNextCursor?: string;
 }
 
 export function FeedbackRecordsPageClient({
   workspaceId,
+  directories,
+  initialFrdId,
   initialRecords,
-  frdMap,
+  initialNextCursor,
 }: FeedbackRecordsPageClientProps) {
   const { t } = useTranslation();
 
@@ -26,7 +30,13 @@ export function FeedbackRecordsPageClient({
         <UnifyConfigNavigation workspaceId={workspaceId} activeId="feedback-records" />
       </PageHeader>
 
-      <FeedbackRecordsTable workspaceId={workspaceId} initialRecords={initialRecords} frdMap={frdMap} />
+      <FeedbackRecordsTable
+        workspaceId={workspaceId}
+        directories={directories}
+        initialFrdId={initialFrdId}
+        initialRecords={initialRecords}
+        initialNextCursor={initialNextCursor}
+      />
     </PageContentWrapper>
   );
 }
