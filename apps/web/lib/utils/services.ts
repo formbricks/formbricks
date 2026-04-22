@@ -313,3 +313,25 @@ export const getSegment = reactCache(async (segmentId: string): Promise<{ worksp
     throw error;
   }
 });
+
+export const getConnector = reactCache(
+  async (connectorId: string): Promise<{ workspaceId: string } | null> => {
+    validateInputs([connectorId, ZId]);
+    try {
+      const connector = await prisma.connector.findUnique({
+        where: {
+          id: connectorId,
+        },
+        select: { workspaceId: true },
+      });
+
+      return connector;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+
+      throw error;
+    }
+  }
+);

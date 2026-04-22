@@ -84,9 +84,10 @@ export const SingleResponseCardHeader = ({
 
           {pageType === "people" && (
             <div className="flex items-center justify-center space-x-2 rounded-full bg-slate-100 p-1 px-2 text-sm text-slate-600">
-              {(survey.type === "link" || workspace?.appSetupCompleted) && (
-                <SurveyStatusIndicator status={survey.status} />
-              )}
+              <SurveyStatusIndicator
+                status={survey.status}
+                isScheduled={survey.status === "paused" && survey.publishOn !== null}
+              />
               <Link className="hover:underline" href={`${workspaceBasePath}/surveys/${survey.id}/summary`}>
                 {survey.name}
               </Link>

@@ -940,6 +940,14 @@ export const ZSurveyBase = z.object({
     })
   ),
   delay: z.number(),
+  publishOn: z.coerce
+    .date()
+    .nullish()
+    .transform((value) => value ?? null),
+  closeOn: z.coerce
+    .date()
+    .nullish()
+    .transform((value) => value ?? null),
   autoComplete: z
     .number()
     .min(1, {

@@ -2,6 +2,7 @@
 
 import {
   ArrowUpRightIcon,
+  BarChart3Icon,
   Building2Icon,
   ChevronRightIcon,
   Cog,
@@ -14,6 +15,7 @@ import {
   PlusIcon,
   RocketIcon,
   SettingsIcon,
+  Shapes,
   UserCircleIcon,
   UserIcon,
 } from "lucide-react";
@@ -165,6 +167,20 @@ export const MainNavigation = ({
         disabled: isMembershipPending || isBilling,
       },
       {
+        name: t("common.analysis"),
+        href: `/workspaces/${workspace.id}/dashboards`,
+        icon: BarChart3Icon,
+        isActive: pathname?.includes("/dashboards") || pathname?.includes("/charts"),
+        isHidden: false,
+        disabled: isMembershipPending || isBilling,
+      },
+      {
+        name: t("workspace.unify.unify_feedback"),
+        href: `/workspaces/${workspace.id}/unify/sources`,
+        icon: Shapes,
+        isActive: pathname?.includes("/unify"),
+      },
+      {
         name: t("common.configuration"),
         href: `/workspaces/${workspace.id}/general`,
         icon: Cog,
@@ -290,6 +306,12 @@ export const MainNavigation = ({
       label: t("common.billing"),
       href: `/workspaces/${workspace.id}/settings/billing`,
       hidden: !isFormbricksCloud,
+    },
+    {
+      id: "feedback-record-directories",
+      label: t("workspace.settings.feedback_record_directories.title"),
+      href: `/workspaces/${workspace.id}/settings/feedback-record-directories`,
+      hidden: !isOwnerOrManager,
     },
     {
       id: "enterprise",

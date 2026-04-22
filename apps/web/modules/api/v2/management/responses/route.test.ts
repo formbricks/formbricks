@@ -5,11 +5,11 @@ const {
   mockCreateResponseWithQuotaEvaluation,
   mockCreatedResponse,
   mockFormatValidationErrorsForV2Api,
-  mockGetResponseSnapshotForPipeline,
+  mockGetResponseForPipeline,
   mockGetSurveyQuestions,
+  mockGetWorkspaceId,
   mockHandleApiError,
   mockHasPermission,
-  mockGetWorkspaceId,
   mockSendToPipeline,
   mockValidateFileUploads,
   mockValidateOtherOptionLengthForMultipleChoice,
@@ -19,11 +19,11 @@ const {
   mockCreateResponseWithQuotaEvaluation: vi.fn(),
   mockCreatedResponse: vi.fn(),
   mockFormatValidationErrorsForV2Api: vi.fn(),
-  mockGetResponseSnapshotForPipeline: vi.fn(),
+  mockGetResponseForPipeline: vi.fn(),
   mockGetSurveyQuestions: vi.fn(),
+  mockGetWorkspaceId: vi.fn(),
   mockHandleApiError: vi.fn(),
   mockHasPermission: vi.fn(),
-  mockGetWorkspaceId: vi.fn(),
   mockSendToPipeline: vi.fn(),
   mockValidateFileUploads: vi.fn(),
   mockValidateOtherOptionLengthForMultipleChoice: vi.fn(),
@@ -67,7 +67,7 @@ vi.mock("@/modules/api/v2/management/responses/[responseId]/lib/survey", () => (
 }));
 
 vi.mock("@/modules/api/v2/management/responses/[responseId]/lib/response", () => ({
-  getResponseForPipeline: mockGetResponseSnapshotForPipeline,
+  getResponseForPipeline: mockGetResponseForPipeline,
 }));
 
 vi.mock("@/modules/organization/settings/api-keys/lib/utils", () => ({
@@ -154,35 +154,35 @@ describe("POST /modules/api/v2/management/responses", () => {
     mockValidateResponseData.mockReturnValue(null);
     mockSendToPipeline.mockResolvedValue(undefined);
     mockCreateResponseWithQuotaEvaluation.mockResolvedValue({ data: createdResponse, ok: true });
-    mockGetResponseSnapshotForPipeline.mockResolvedValue({ data: responseSnapshot, ok: true });
+    mockGetResponseForPipeline.mockResolvedValue({ data: responseSnapshot, ok: true });
     mockCreatedResponse.mockImplementation((body: unknown) => Response.json(body, { status: 201 }));
     mockHandleApiError.mockImplementation((_, error) => Response.json({ error }, { status: 400 }));
   });
 
-  test("passes the freshly hydrated response snapshot to the pipeline scheduler", async () => {
+  test("passes the freshly hydrated response snapshot to the pipeline", async () => {
     const { POST } = await import("./route");
     const response = await POST(
       new Request("http://localhost/api/v2/management/responses", { method: "POST" })
     );
 
     expect(response.status).toBe(201);
-    expect(mockGetResponseSnapshotForPipeline).toHaveBeenCalledWith(responseId);
+    expect(mockGetResponseForPipeline).toHaveBeenCalledWith(responseId);
     expect(mockSendToPipeline).toHaveBeenNthCalledWith(1, {
       event: "responseCreated",
-      workspaceId,
       response: responseSnapshot,
       surveyId,
+      workspaceId,
     });
     expect(mockSendToPipeline).toHaveBeenNthCalledWith(2, {
       event: "responseFinished",
-      workspaceId,
       response: responseSnapshot,
       surveyId,
+      workspaceId,
     });
   });
 
   test("returns 201 when loading the pipeline snapshot throws", async () => {
-    mockGetResponseSnapshotForPipeline.mockRejectedValueOnce(new Error("snapshot failed"));
+    mockGetResponseForPipeline.mockRejectedValueOnce(new Error("snapshot failed"));
 
     const { POST } = await import("./route");
     const response = await POST(

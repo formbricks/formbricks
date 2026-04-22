@@ -33,3 +33,9 @@ export const ZResponsePipelineJobData = z.object({
 });
 
 export type TResponsePipelineJobData = z.infer<typeof ZResponsePipelineJobData>;
+
+export const ZSurveySchedulingJobData = z.object({
+  scope: z.literal("global"),
+});
+
+export type TSurveySchedulingJobData = z.infer<typeof ZSurveySchedulingJobData>;

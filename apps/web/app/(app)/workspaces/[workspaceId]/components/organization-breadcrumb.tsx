@@ -150,9 +150,9 @@ export const OrganizationBreadcrumb = ({
     },
     {
       id: "feedback-record-directories",
-      label: t("workspace.settings.feedback_record_directories.nav_label"),
+      label: t("workspace.settings.feedback_record_directories.title"),
       href: `${workspaceBasePath}/settings/feedback-record-directories`,
-      hidden: isMember,
+      hidden: !isOwnerOrManager,
     },
     {
       id: "api-keys",

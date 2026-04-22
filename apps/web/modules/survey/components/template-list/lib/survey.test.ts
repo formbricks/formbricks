@@ -9,7 +9,8 @@ import { getOrganization, subscribeOrganizationMembersToSurveyResponses } from "
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { getActionClasses } from "@/modules/survey/lib/action-class";
 import { selectSurvey } from "@/modules/survey/lib/survey";
-import { createSurvey, handleTriggerUpdates } from "./survey";
+import { handleTriggerUpdates } from "@/modules/survey/lib/trigger-updates";
+import { createSurvey } from "./survey";
 
 vi.mock("@/lib/utils/helper", () => ({
   getOrganizationIdFromWorkspaceId: vi.fn().mockResolvedValue("org-123"),
