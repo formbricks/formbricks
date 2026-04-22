@@ -26,11 +26,6 @@ CREATE UNIQUE INDEX "FeedbackRecordDirectory_organizationId_name_key" ON "Feedba
 -- CreateIndex
 CREATE INDEX "FeedbackRecordDirectoryWorkspace_workspaceId_idx" ON "FeedbackRecordDirectoryWorkspace"("workspaceId");
 
--- RenameForeignKey
-ALTER TABLE "ApiKeyWorkspace" RENAME CONSTRAINT "ApiKeyEnvironment_apiKeyId_fkey" TO "ApiKeyWorkspace_apiKeyId_fkey";
-
--- RenameForeignKey
-ALTER TABLE "ApiKeyWorkspace" RENAME CONSTRAINT "ApiKeyEnvironment_workspaceId_fkey" TO "ApiKeyWorkspace_workspaceId_fkey";
 
 -- AddForeignKey
 ALTER TABLE "FeedbackRecordDirectory" ADD CONSTRAINT "FeedbackRecordDirectory_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "Organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -45,12 +40,6 @@ ALTER TABLE "FeedbackRecordDirectoryWorkspace" ADD CONSTRAINT "FeedbackRecordDir
 ALTER TABLE "Connector" ADD COLUMN "feedbackRecordDirectoryId" TEXT NOT NULL;
 ALTER TABLE "Connector" ADD CONSTRAINT "Connector_feedbackRecordDirectoryId_fkey" FOREIGN KEY ("feedbackRecordDirectoryId") REFERENCES "FeedbackRecordDirectory"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 CREATE INDEX "Connector_feedbackRecordDirectoryId_idx" ON "Connector"("feedbackRecordDirectoryId");
-
--- RenameIndex
-ALTER INDEX "ConnectorFieldMapping_workspaceId_connectorId_source_fiel_key" RENAME TO "ConnectorFieldMapping_workspaceId_connectorId_source_field__key";
-
--- RenameIndex
-ALTER INDEX "ConnectorFormbricksMapping_workspaceId_connectorId_survey_key" RENAME TO "ConnectorFormbricksMapping_workspaceId_connectorId_surveyId_key";
 
 -- AlterTable
 ALTER TABLE "Chart" ADD COLUMN "feedbackRecordDirectoryId" TEXT NOT NULL;

@@ -54,12 +54,12 @@ CREATE UNIQUE INDEX "Connector_workspaceId_name_key" ON "public"."Connector"("wo
 CREATE INDEX "Connector_type_idx" ON "public"."Connector"("type");
 
 -- ConnectorFormbricksMapping indexes
-CREATE UNIQUE INDEX "ConnectorFormbricksMapping_workspaceId_connectorId_survey_key" ON "public"."ConnectorFormbricksMapping"("workspaceId", "connectorId", "surveyId", "elementId");
+CREATE UNIQUE INDEX "ConnectorFormbricksMapping_workspaceId_connectorId_surveyId_elementId_key" ON "public"."ConnectorFormbricksMapping"("workspaceId", "connectorId", "surveyId", "elementId");
 CREATE INDEX "ConnectorFormbricksMapping_workspaceId_surveyId_idx" ON "public"."ConnectorFormbricksMapping"("workspaceId", "surveyId");
 CREATE INDEX "ConnectorFormbricksMapping_surveyId_idx" ON "public"."ConnectorFormbricksMapping"("surveyId");
 
 -- ConnectorFieldMapping indexes
-CREATE UNIQUE INDEX "ConnectorFieldMapping_workspaceId_connectorId_source_fiel_key" ON "public"."ConnectorFieldMapping"("workspaceId", "connectorId", "source_field_id", "target_field_id");
+CREATE UNIQUE INDEX "ConnectorFieldMapping_workspaceId_connectorId_sourceFieldId_targetFieldId_key" ON "public"."ConnectorFieldMapping"("workspaceId", "connectorId", "source_field_id", "target_field_id");
 
 -- Survey composite unique (for composite FK from ConnectorFormbricksMapping)
 CREATE UNIQUE INDEX "Survey_id_workspaceId_key" ON "public"."Survey"("id", "workspaceId");
