@@ -5,14 +5,13 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { TEnvironment } from "@formbricks/types/environment";
 import { TSegment } from "@formbricks/types/segment";
-import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
 import { useEnvironment } from "@/app/(app)/environments/[environmentId]/context/environment-context";
 import { SuccessMessage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SuccessMessage";
 import { ShareSurveyModal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/share-survey-modal";
 import { SurveyStatusDropdown } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
+import { useSurvey } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/context/survey-context";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
 import { useSingleUseId } from "@/modules/survey/hooks/useSingleUseId";
@@ -23,8 +22,6 @@ import { IconBar } from "@/modules/ui/components/iconbar";
 import { resetSurveyAction } from "../actions";
 
 interface SurveyAnalysisCTAProps {
-  survey: TSurvey;
-  environment: TEnvironment;
   isReadOnly: boolean;
   user: TUser;
   publicDomain: string;
@@ -41,8 +38,6 @@ interface ModalState {
 }
 
 export const SurveyAnalysisCTA = ({
-  survey,
-  environment,
   isReadOnly,
   user,
   publicDomain,
@@ -64,7 +59,8 @@ export const SurveyAnalysisCTA = ({
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
 
-  const { project } = useEnvironment();
+  const { environment, project } = useEnvironment();
+  const { survey } = useSurvey();
   const { refreshSingleUseId } = useSingleUseId(survey, isReadOnly);
 
   const appSetupCompleted = survey.type === "app" && environment.appSetupCompleted;
@@ -183,7 +179,7 @@ export const SurveyAnalysisCTA = ({
   return (
     <div className="hidden justify-end gap-x-1.5 sm:flex">
       {!isReadOnly && (appSetupCompleted || survey.type === "link") && survey.status !== "draft" && (
-        <SurveyStatusDropdown environment={environment} survey={survey} />
+        <SurveyStatusDropdown />
       )}
 
       <IconBar actions={iconActions} />
@@ -215,7 +211,7 @@ export const SurveyAnalysisCTA = ({
           projectCustomScripts={project.customHeadScripts}
         />
       )}
-      <SuccessMessage environment={environment} survey={survey} />
+      <SuccessMessage />
 
       {responseCount > 0 && (
         <EditPublicSurveyAlertDialog

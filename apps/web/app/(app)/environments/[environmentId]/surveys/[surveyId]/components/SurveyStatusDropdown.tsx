@@ -3,8 +3,9 @@
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { useEnvironment } from "@/app/(app)/environments/[environmentId]/context/environment-context";
+import { useSurvey } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/context/survey-context";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { updateSurveyAction } from "@/modules/survey/editor/actions";
 import {
@@ -16,17 +17,9 @@ import {
 } from "@/modules/ui/components/select";
 import { SurveyStatusIndicator } from "@/modules/ui/components/survey-status-indicator";
 
-interface SurveyStatusDropdownProps {
-  environment: TEnvironment;
-  updateLocalSurveyStatus?: (status: TSurvey["status"]) => void;
-  survey: TSurvey;
-}
-
-export const SurveyStatusDropdown = ({
-  environment,
-  updateLocalSurveyStatus,
-  survey,
-}: SurveyStatusDropdownProps) => {
+export const SurveyStatusDropdown = () => {
+  const { environment } = useEnvironment();
+  const { survey } = useSurvey();
   const { t } = useTranslation();
   const router = useRouter();
 
@@ -44,10 +37,6 @@ export const SurveyStatusDropdown = ({
       const toastMessage = statusToToastMessage[resultingStatus];
       if (toastMessage) {
         toast.success(toastMessage);
-      }
-
-      if (updateLocalSurveyStatus) {
-        updateLocalSurveyStatus(resultingStatus);
       }
 
       router.refresh();

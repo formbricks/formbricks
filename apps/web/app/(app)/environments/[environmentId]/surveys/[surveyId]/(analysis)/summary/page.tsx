@@ -66,8 +66,6 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
         pageTitle={survey.name}
         cta={
           <SurveyAnalysisCTA
-            environment={environment}
-            survey={survey}
             isReadOnly={isReadOnly}
             user={user}
             publicDomain={publicDomain}
@@ -78,7 +76,7 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
             isStorageConfigured={IS_STORAGE_CONFIGURED}
           />
         }>
-        <SurveyAnalysisNavigation environmentId={environment.id} survey={survey} activeId="summary" />
+        <SurveyAnalysisNavigation activeId="summary" />
       </PageHeader>
       <SummaryPage
         environment={environment}
