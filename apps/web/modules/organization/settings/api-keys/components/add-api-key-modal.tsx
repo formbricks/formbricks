@@ -7,7 +7,10 @@ import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TOrganizationAccess } from "@formbricks/types/api-key";
-import { TOrganizationWorkspace } from "@/modules/organization/settings/api-keys/types/api-keys";
+import {
+  TOrganizationFeedbackRecordDirectory,
+  TOrganizationWorkspace,
+} from "@/modules/organization/settings/api-keys/types/api-keys";
 import { Alert, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -37,13 +40,23 @@ interface AddApiKeyModalProps {
       permission: ApiKeyPermission;
       workspaceId: string;
     }>;
+    feedbackRecordDirectoryPermissions: Array<{
+      permission: ApiKeyPermission;
+      feedbackRecordDirectoryId: string;
+    }>;
     organizationAccess: TOrganizationAccess;
   }) => Promise<void>;
   workspaces: TOrganizationWorkspace[];
+  feedbackRecordDirectories: TOrganizationFeedbackRecordDirectory[];
   isCreatingAPIKey: boolean;
 }
 
 interface WorkspaceOption {
+  id: string;
+  name: string;
+}
+
+interface FeedbackRecordDirectoryOption {
   id: string;
   name: string;
 }
@@ -54,6 +67,12 @@ interface PermissionRecord {
   workspaceName: string;
 }
 
+interface DirectoryPermissionRecord {
+  feedbackRecordDirectoryId: string;
+  permission: ApiKeyPermission;
+  feedbackRecordDirectoryName: string;
+}
+
 const permissionOptions = [ApiKeyPermission.read, ApiKeyPermission.write, ApiKeyPermission.manage];
 
 export const AddApiKeyModal = ({
@@ -61,6 +80,7 @@ export const AddApiKeyModal = ({
   setOpen,
   onSubmit,
   workspaces,
+  feedbackRecordDirectories,
   isCreatingAPIKey,
 }: AddApiKeyModalProps) => {
   const { t } = useTranslation();
@@ -89,12 +109,31 @@ export const AddApiKeyModal = ({
     return {};
   };
 
+  const getInitialDirectoryPermission = (): DirectoryPermissionRecord | null => {
+    if (feedbackRecordDirectories.length > 0) {
+      return {
+        feedbackRecordDirectoryId: feedbackRecordDirectories[0].id,
+        permission: ApiKeyPermission.read,
+        feedbackRecordDirectoryName: feedbackRecordDirectories[0].name,
+      };
+    }
+    return null;
+  };
+
   // Initialize with one permission by default
   const [selectedPermissions, setSelectedPermissions] = useState<Record<string, PermissionRecord>>({});
+  const [selectedDirectoryPermissions, setSelectedDirectoryPermissions] = useState<
+    Record<string, DirectoryPermissionRecord>
+  >({});
 
   const workspaceOptions: WorkspaceOption[] = workspaces.map((workspace) => ({
     id: workspace.id,
     name: workspace.name,
+  }));
+
+  const directoryOptions: FeedbackRecordDirectoryOption[] = feedbackRecordDirectories.map((directory) => ({
+    id: directory.id,
+    name: directory.name,
   }));
 
   const removePermission = (index: number) => {
@@ -139,10 +178,57 @@ export const AddApiKeyModal = ({
     }
   };
 
+  const removeDirectoryPermission = (index: number) => {
+    const updated = { ...selectedDirectoryPermissions };
+    delete updated[`directory-permission-${index}`];
+    setSelectedDirectoryPermissions(updated);
+  };
+
+  const addDirectoryPermission = () => {
+    const newIndex = Object.keys(selectedDirectoryPermissions).length;
+    const initial = getInitialDirectoryPermission();
+    if (initial) {
+      setSelectedDirectoryPermissions({
+        ...selectedDirectoryPermissions,
+        [`directory-permission-${newIndex}`]: initial,
+      });
+    }
+  };
+
+  const updateDirectoryPermissionLevel = (key: string, permission: ApiKeyPermission) => {
+    setSelectedDirectoryPermissions({
+      ...selectedDirectoryPermissions,
+      [key]: {
+        ...selectedDirectoryPermissions[key],
+        permission,
+      },
+    });
+  };
+
+  const updateDirectorySelection = (key: string, directoryId: string) => {
+    const directory = feedbackRecordDirectories.find((d) => d.id === directoryId);
+    if (directory) {
+      setSelectedDirectoryPermissions({
+        ...selectedDirectoryPermissions,
+        [key]: {
+          ...selectedDirectoryPermissions[key],
+          feedbackRecordDirectoryId: directoryId,
+          feedbackRecordDirectoryName: directory.name,
+        },
+      });
+    }
+  };
+
   const checkForDuplicatePermissions = () => {
     const permissions = Object.values(selectedPermissions);
     const uniquePermissions = new Set(permissions.map((p) => p.workspaceId));
     return uniquePermissions.size !== permissions.length;
+  };
+
+  const checkForDuplicateDirectoryPermissions = () => {
+    const permissions = Object.values(selectedDirectoryPermissions);
+    const unique = new Set(permissions.map((p) => p.feedbackRecordDirectoryId));
+    return unique.size !== permissions.length;
   };
 
   const submitAPIKey = async () => {
@@ -153,20 +239,32 @@ export const AddApiKeyModal = ({
       return;
     }
 
+    if (checkForDuplicateDirectoryPermissions()) {
+      toast.error(t("workspace.api_keys.duplicate_directory_access"));
+      return;
+    }
+
     // Convert permissions to the format expected by the API
     const workspacePermissions = Object.values(selectedPermissions).map((permission) => ({
       permission: permission.permission,
       workspaceId: permission.workspaceId,
     }));
 
+    const feedbackRecordDirectoryPermissions = Object.values(selectedDirectoryPermissions).map((p) => ({
+      permission: p.permission,
+      feedbackRecordDirectoryId: p.feedbackRecordDirectoryId,
+    }));
+
     await onSubmit({
       label: data.label,
       workspacePermissions,
+      feedbackRecordDirectoryPermissions,
       organizationAccess: selectedOrganizationAccess,
     });
 
     reset();
     setSelectedPermissions({});
+    setSelectedDirectoryPermissions({});
     setSelectedOrganizationAccess(defaultOrganizationAccess);
   };
 
@@ -178,13 +276,14 @@ export const AddApiKeyModal = ({
 
     // Check if at least one workspace permission is set or one organization access toggle is ON
     const hasWorkspaceAccess = Object.keys(selectedPermissions).length > 0;
+    const hasDirectoryAccess = Object.keys(selectedDirectoryPermissions).length > 0;
 
     const hasOrganizationAccess = Object.values(selectedOrganizationAccess).some((accessGroup) =>
       Object.values(accessGroup).some((value) => value === true)
     );
 
     // Disable submit if no access rights are granted
-    return !(hasWorkspaceAccess || hasOrganizationAccess);
+    return !(hasWorkspaceAccess || hasDirectoryAccess || hasOrganizationAccess);
   };
 
   const setSelectedOrganizationAccessValue = (key: string, accessType: string, value: boolean) => {
@@ -297,6 +396,94 @@ export const AddApiKeyModal = ({
               </div>
             </div>
 
+            <div className="space-y-2">
+              <Label>{t("workspace.api_keys.feedback_record_directory_access")}</Label>
+              <div className="space-y-2">
+                {Object.keys(selectedDirectoryPermissions).map((key) => {
+                  const index = parseInt(key.split("-")[2]);
+                  const permission = selectedDirectoryPermissions[key];
+                  return (
+                    <div key={key} className="flex items-center gap-2">
+                      {/* Directory dropdown */}
+                      <div className="w-1/2">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button
+                              type="button"
+                              className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none">
+                              <span className="flex w-4/5 flex-1">
+                                <span className="w-full truncate text-left">
+                                  {permission.feedbackRecordDirectoryName}
+                                </span>
+                              </span>
+                              <span className="flex h-full items-center border-l pl-3">
+                                <ChevronDownIcon className="h-4 w-4 text-slate-500" />
+                              </span>
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent className="max-h-[300px] min-w-[8rem] overflow-y-auto">
+                            {directoryOptions.map((option) => (
+                              <DropdownMenuItem
+                                key={option.id}
+                                onClick={() => {
+                                  updateDirectorySelection(key, option.id);
+                                }}>
+                                {option.name}
+                              </DropdownMenuItem>
+                            ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+
+                      {/* Permission level dropdown */}
+                      <div className="w-1/2">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button
+                              type="button"
+                              className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none">
+                              <span className="flex w-4/5 flex-1">
+                                <span className="w-full truncate text-left capitalize">
+                                  {permission.permission}
+                                </span>
+                              </span>
+                              <span className="flex h-full items-center border-l pl-3">
+                                <ChevronDownIcon className="h-4 w-4 text-slate-500" />
+                              </span>
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent className="min-w-[8rem] capitalize">
+                            {permissionOptions.map((option) => (
+                              <DropdownMenuItem
+                                key={option}
+                                onClick={() => {
+                                  updateDirectoryPermissionLevel(key, option);
+                                }}>
+                                {option}
+                              </DropdownMenuItem>
+                            ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+
+                      {/* Delete button */}
+                      <button type="button" className="p-2" onClick={() => removeDirectoryPermission(index)}>
+                        <Trash2Icon className={"h-5 w-5 text-slate-500 hover:text-red-500"} />
+                      </button>
+                    </div>
+                  );
+                })}
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={addDirectoryPermission}
+                  disabled={feedbackRecordDirectories.length === 0}>
+                  <span className="mr-2">+</span> {t("workspace.settings.api_keys.add_permission")}
+                </Button>
+              </div>
+            </div>
+
             <div className="space-y-4">
               <Label>{t("workspace.api_keys.organization_access")}</Label>
               {Object.keys(selectedOrganizationAccess).map((key) => (
@@ -336,6 +523,7 @@ export const AddApiKeyModal = ({
                 setOpen(false);
                 reset();
                 setSelectedPermissions({});
+                setSelectedDirectoryPermissions({});
               }}>
               {t("common.cancel")}
             </Button>

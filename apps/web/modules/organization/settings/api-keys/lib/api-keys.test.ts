@@ -36,6 +36,7 @@ const mockApiKeyWithEnvironments: TApiKeyWithEnvironmentPermission = {
       permission: ApiKeyPermission.manage,
     },
   ],
+  apiKeyFeedbackRecordDirectories: [],
 };
 
 // Mock modules before tests

@@ -8,6 +8,7 @@ import { TOrganizationAccess } from "@formbricks/types/api-key";
 import {
   TApiKeyUpdateInput,
   TApiKeyWithEnvironmentPermission,
+  TOrganizationFeedbackRecordDirectory,
   TOrganizationWorkspace,
   ZApiKeyUpdateInput,
 } from "@/modules/organization/settings/api-keys/types/api-keys";
@@ -31,6 +32,7 @@ interface ViewPermissionModalProps {
   onSubmit: (data: TApiKeyUpdateInput) => Promise<void>;
   apiKey: TApiKeyWithEnvironmentPermission;
   workspaces: TOrganizationWorkspace[];
+  feedbackRecordDirectories: TOrganizationFeedbackRecordDirectory[];
   isUpdating: boolean;
 }
 
@@ -40,6 +42,7 @@ export const ViewPermissionModal = ({
   onSubmit,
   apiKey,
   workspaces,
+  feedbackRecordDirectories,
   isUpdating,
 }: ViewPermissionModalProps) => {
   const { register, getValues, handleSubmit, reset, watch } = useForm<TApiKeyUpdateInput>({
@@ -69,6 +72,10 @@ export const ViewPermissionModal = ({
 
   const getWorkspaceName = (workspaceId: string) => {
     return workspaces.find((workspace) => workspace.id === workspaceId)?.name;
+  };
+
+  const getDirectoryName = (directoryId: string) => {
+    return feedbackRecordDirectories.find((d) => d.id === directoryId)?.name;
   };
 
   const updateApiKey = async () => {
@@ -142,6 +149,50 @@ export const ViewPermissionModal = ({
                       </div>
                     );
                   })}
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>{t("workspace.api_keys.feedback_record_directory_access")}</Label>
+                {apiKey.apiKeyFeedbackRecordDirectories?.length === 0 && (
+                  <div className="text-center text-sm">
+                    {t("workspace.api_keys.no_directory_permissions_found")}
+                  </div>
+                )}
+                <div className="space-y-2">
+                  {apiKey.apiKeyFeedbackRecordDirectories?.map((permission) => (
+                    <div key={permission.feedbackRecordDirectoryId} className="flex items-center gap-2">
+                      <div className="w-1/2">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button
+                              type="button"
+                              className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none">
+                              <span className="flex w-4/5 flex-1">
+                                <span className="w-full truncate text-left">
+                                  {getDirectoryName(permission.feedbackRecordDirectoryId)}
+                                </span>
+                              </span>
+                            </button>
+                          </DropdownMenuTrigger>
+                        </DropdownMenu>
+                      </div>
+                      <div className="w-1/2">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button
+                              type="button"
+                              className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none">
+                              <span className="flex w-4/5 flex-1">
+                                <span className="w-full truncate text-left capitalize">
+                                  {permission.permission}
+                                </span>
+                              </span>
+                            </button>
+                          </DropdownMenuTrigger>
+                        </DropdownMenu>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
               <div className="space-y-4">
