@@ -1,6 +1,7 @@
 /* eslint-disable import/no-relative-packages -- required for importing types */
 /* eslint-disable @typescript-eslint/no-namespace -- using namespaces is required for prisma-json-types-generator */
 import { type TActionClassNoCodeConfig } from "../types/action-classes";
+import type { TChartConfig, TChartQuery, TWidgetLayout } from "../types/analysis";
 import type { TOrganizationAccess } from "../types/api-key";
 import { type TIntegrationConfig } from "../types/integration";
 import {
@@ -61,5 +62,8 @@ declare global {
     export type OrganizationAccess = TOrganizationAccess;
     export type SurveyMetadata = TSurveyMetadata;
     export type SurveyQuotaLogic = TSurveyQuotaLogic;
+    export type ChartQuery = TChartQuery;
+    export type ChartConfig = TChartConfig;
+    export type WidgetLayout = TWidgetLayout;
   }
 }

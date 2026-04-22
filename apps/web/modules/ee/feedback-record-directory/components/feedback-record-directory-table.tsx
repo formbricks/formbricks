@@ -11,7 +11,6 @@ import {
   getFeedbackRecordDirectoryDetailsAction,
   updateFeedbackRecordDirectoryAction,
 } from "@/modules/ee/feedback-record-directory/actions";
-import { CreateFeedbackRecordDirectoryModal } from "@/modules/ee/feedback-record-directory/components/create-feedback-record-directory-modal";
 import { FeedbackRecordDirectorySettingsModal } from "@/modules/ee/feedback-record-directory/components/feedback-record-directory-settings/feedback-record-directory-settings-modal";
 import {
   TFeedbackRecordDirectory,
@@ -161,17 +160,22 @@ export const FeedbackRecordDirectoryTable = ({
         </Table>
       </div>
 
-      <CreateFeedbackRecordDirectoryModal
-        open={openCreateModal}
-        setOpen={setOpenCreateModal}
-        organizationId={organizationId}
-      />
+      {openCreateModal && (
+        <FeedbackRecordDirectorySettingsModal
+          open={openCreateModal}
+          setOpen={setOpenCreateModal}
+          organizationId={organizationId}
+          orgWorkspaces={orgWorkspaces}
+          membershipRole={membershipRole}
+        />
+      )}
 
       {openSettingsModal && selectedDirectory && (
         <FeedbackRecordDirectorySettingsModal
           open={openSettingsModal}
           setOpen={setOpenSettingsModal}
           directory={selectedDirectory}
+          organizationId={organizationId}
           orgWorkspaces={orgWorkspaces}
           membershipRole={membershipRole}
         />

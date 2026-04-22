@@ -232,7 +232,7 @@ export const ElementsComboBox = ({ options, selected, onChangeValue }: ElementCo
       </div>
 
       {open && (
-        <div className="animate-in absolute top-full z-10 mt-1 w-full overflow-auto rounded-md shadow-md outline-none">
+        <div className="absolute top-full z-10 mt-1 w-full overflow-auto rounded-md shadow-md outline-none animate-in">
           <CommandList className="max-h-[600px]">
             <CommandEmpty>{t("common.no_result_found")}</CommandEmpty>
             {options?.map((data) => (
