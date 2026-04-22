@@ -1,14 +1,22 @@
 import { PipelineTriggers } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { getBackgroundJobProducer } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
 import { TResponse } from "@formbricks/types/responses";
-import { enqueuePipelineJob, triggerPipelineDrain } from "@/app/lib/pipeline-queue";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { TPipelineInput } from "@/app/lib/types/pipelines";
+import { getJobsQueueingConfig } from "@/lib/jobs/config";
 
-vi.mock("@/app/lib/pipeline-queue", () => ({
-  enqueuePipelineJob: vi.fn(),
-  triggerPipelineDrain: vi.fn(),
+const mockEnqueueResponsePipeline = vi.fn();
+
+vi.mock("@formbricks/jobs", () => ({
+  getBackgroundJobProducer: vi.fn(() => ({
+    enqueueResponsePipeline: mockEnqueueResponsePipeline,
+  })),
+}));
+
+vi.mock("@/lib/jobs/config", () => ({
+  getJobsQueueingConfig: vi.fn(),
 }));
 
 vi.mock("@formbricks/logger", () => ({
@@ -27,33 +35,49 @@ describe("sendToPipeline", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(getJobsQueueingConfig).mockReturnValue({
+      enabled: true,
+      redisUrl: "redis://localhost:6379",
+    });
   });
 
-  test("enqueues the pipeline job and triggers draining", async () => {
-    vi.mocked(enqueuePipelineJob).mockResolvedValue({
-      ...testData,
+  test("enqueues the pipeline job through the BullMQ producer", async () => {
+    mockEnqueueResponsePipeline.mockResolvedValue({
       jobId: "job-1",
-      attempt: 1,
-      enqueuedAt: Date.now(),
-      notBefore: null,
+      jobName: "response-pipeline.process",
+      queueName: "background-jobs",
     });
 
     await sendToPipeline(testData);
 
-    expect(enqueuePipelineJob).toHaveBeenCalledWith(testData);
-    expect(triggerPipelineDrain).toHaveBeenCalledTimes(1);
+    expect(getBackgroundJobProducer).toHaveBeenCalledTimes(1);
+    expect(mockEnqueueResponsePipeline).toHaveBeenCalledWith(testData);
   });
 
   test("logs enqueue failures and rethrows", async () => {
     const testError = new Error("Redis unavailable");
-    vi.mocked(enqueuePipelineJob).mockRejectedValue(testError);
+    mockEnqueueResponsePipeline.mockRejectedValue(testError);
 
     await expect(sendToPipeline(testData)).rejects.toThrow(testError);
 
-    expect(triggerPipelineDrain).not.toHaveBeenCalled();
     expect(logger.error).toHaveBeenCalledWith(
-      { error: testError, event: testData.event, surveyId: testData.surveyId },
+      {
+        error: testError,
+        event: testData.event,
+        surveyId: testData.surveyId,
+        workspaceId: testData.workspaceId,
+      },
       "Error queueing pipeline event"
     );
   });
-};
+
+  test("throws when BullMQ queueing is disabled", async () => {
+    vi.mocked(getJobsQueueingConfig).mockReturnValue({
+      enabled: false,
+      redisUrl: null,
+    });
+
+    await expect(sendToPipeline(testData)).rejects.toThrow("BullMQ response pipeline queueing is not enabled");
+    expect(getBackgroundJobProducer).not.toHaveBeenCalled();
+  });
+});

@@ -254,7 +254,7 @@ export const putResponseHandler = async ({
 
   const { quotaFull, ...responseData } = updatedResponse;
 
-  sendToPipeline({
+  await sendToPipeline({
     event: "responseUpdated",
     workspaceId: survey.workspaceId,
     surveyId: survey.id,
@@ -262,7 +262,7 @@ export const putResponseHandler = async ({
   });
 
   if (updatedResponse.finished) {
-    sendToPipeline({
+    await sendToPipeline({
       event: "responseFinished",
       workspaceId: survey.workspaceId,
       surveyId: survey.id,
