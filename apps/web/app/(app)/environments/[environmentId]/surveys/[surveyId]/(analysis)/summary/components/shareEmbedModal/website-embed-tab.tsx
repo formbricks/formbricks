@@ -55,7 +55,7 @@ export const WebsiteEmbedTab = ({ surveyUrl }: WebsiteEmbedTabProps) => {
         <CopyIcon />
       </Button>
 
-      <p className="text-sm font-medium text-slate-700">{t("common.preview")}</p>
+      <p className="text-base font-semibold text-slate-800">{t("common.preview")}</p>
       <div className="relative h-[500px] w-full overflow-hidden rounded-lg border border-slate-300">
         <iframe
           title={t("common.preview")}
