@@ -150,7 +150,7 @@ export const OrganizationBreadcrumb = ({
     },
     {
       id: "feedback-record-directories",
-      label: t("workspace.settings.feedback_record_directories.nav_label"),
+      label: t("workspace.settings.feedback_record_directories.title"),
       href: `${workspaceBasePath}/settings/feedback-record-directories`,
       hidden: isMember,
     },
@@ -174,15 +174,6 @@ export const OrganizationBreadcrumb = ({
       label: t("common.billing"),
       href: `${workspaceBasePath}/settings/billing`,
       hidden: !isFormbricksCloud,
-    },
-    {
-      id: "feedback-record-directories",
-      label: t("workspace.settings.feedback_record_directories.title"),
-      href: `${workspaceBasePath}/settings/feedback-record-directories`,
-      disabled: isMembershipPending || isMember,
-      disabledMessage: isMembershipPending
-        ? t("common.loading")
-        : t("common.you_are_not_authorized_to_perform_this_action"),
     },
     {
       id: "enterprise",
