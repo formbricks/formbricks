@@ -2,6 +2,7 @@
 
 import {
   ArrowUpRightIcon,
+  BarChart3Icon,
   Building2Icon,
   ChevronRightIcon,
   Cog,
@@ -14,6 +15,7 @@ import {
   PlusIcon,
   RocketIcon,
   SettingsIcon,
+  Shapes,
   UserCircleIcon,
   UserIcon,
 } from "lucide-react";
@@ -163,6 +165,20 @@ export const MainNavigation = ({
           pathname?.includes("/segments") ||
           pathname?.includes("/attributes"),
         disabled: isMembershipPending || isBilling,
+      },
+      {
+        name: t("common.analysis"),
+        href: `/workspaces/${workspace.id}/dashboards`,
+        icon: BarChart3Icon,
+        isActive: pathname?.includes("/dashboards") || pathname?.includes("/charts"),
+        isHidden: false,
+        disabled: isMembershipPending || isBilling,
+      },
+      {
+        name: t("workspace.unify.unify_feedback"),
+        href: `/workspaces/${workspace.id}/unify/sources`,
+        icon: Shapes,
+        isActive: pathname?.includes("/unify"),
       },
       {
         name: t("common.configuration"),

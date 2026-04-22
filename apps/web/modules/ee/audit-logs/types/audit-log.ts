@@ -25,6 +25,9 @@ export const ZAuditTarget = z.enum([
   "integration",
   "file",
   "quota",
+  "chart",
+  "dashboard",
+  "dashboardWidget",
   "feedbackRecordDirectory",
 ]);
 export const ZAuditAction = z.enum([

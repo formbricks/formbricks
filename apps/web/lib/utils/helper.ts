@@ -2,6 +2,7 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   getActionClass,
   getApiKey,
+  getConnector,
   getContact,
   getIntegration,
   getInvite,
@@ -271,4 +272,14 @@ export const isStringMatch = (query: string, value: string): boolean => {
   const valueModified = value.toLowerCase().replace(/ /g, "").replace(/_/g, "").replace(/-/g, "");
 
   return valueModified.includes(queryModified);
+};
+
+// Connector helpers
+export const getOrganizationIdFromConnectorId = async (connectorId: string) => {
+  const connector = await getConnector(connectorId);
+  if (!connector) {
+    throw new ResourceNotFoundError("connector", connectorId);
+  }
+
+  return await getOrganizationIdFromWorkspaceId(connector.workspaceId);
 };

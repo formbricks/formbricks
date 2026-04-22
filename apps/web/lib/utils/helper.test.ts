@@ -5,6 +5,7 @@ import {
   getFormattedErrorMessage,
   getOrganizationIdFromActionClassId,
   getOrganizationIdFromApiKeyId,
+  getOrganizationIdFromConnectorId,
   getOrganizationIdFromContactId,
   getOrganizationIdFromIntegrationId,
   getOrganizationIdFromInviteId,
@@ -46,6 +47,7 @@ vi.mock("@/lib/utils/services", () => ({
   getLanguage: vi.fn(),
   getTeam: vi.fn(),
   getTag: vi.fn(),
+  getConnector: vi.fn(),
 }));
 
 describe("Helper Utilities", () => {
@@ -325,6 +327,27 @@ describe("Helper Utilities", () => {
 
       const orgId = await getOrganizationIdFromQuotaId("quota1");
       expect(orgId).toBe("org1");
+    });
+
+    test("getOrganizationIdFromConnectorId returns organization ID through workspace", async () => {
+      vi.mocked(services.getConnector).mockResolvedValueOnce({
+        workspaceId: "workspace1",
+      });
+      vi.mocked(services.getWorkspace).mockResolvedValueOnce({
+        organizationId: "org1",
+      });
+
+      const orgId = await getOrganizationIdFromConnectorId("connector1");
+      expect(orgId).toBe("org1");
+      expect(services.getConnector).toHaveBeenCalledWith("connector1");
+      expect(services.getWorkspace).toHaveBeenCalledWith("workspace1");
+    });
+
+    test("getOrganizationIdFromConnectorId throws error when connector not found", async () => {
+      vi.mocked(services.getConnector).mockResolvedValueOnce(null);
+
+      await expect(getOrganizationIdFromConnectorId("nonexistent")).rejects.toThrow(ResourceNotFoundError);
+      expect(services.getConnector).toHaveBeenCalledWith("nonexistent");
     });
   });
 

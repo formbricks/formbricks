@@ -220,7 +220,7 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
               width: `${position.width}px`,
             }}>
             <CommandList className="border-0">
-              <div className="text-popover-foreground animate-in max-h-32 w-full overflow-auto rounded-md border border-slate-300 bg-white shadow-md outline-none">
+              <div className="text-popover-foreground max-h-32 w-full overflow-auto rounded-md border border-slate-300 bg-white shadow-md outline-none animate-in">
                 <CommandGroup className="h-full overflow-auto">
                   {selectableOptions.map((option) => (
                     <CommandItem
