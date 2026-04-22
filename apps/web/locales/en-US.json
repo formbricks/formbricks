@@ -676,8 +676,6 @@
       "attributes_msg_new_attribute_created": "Created new attribute “{key}” with type “{dataType}”",
       "attributes_msg_userid_already_exists": "The user ID already exists for this environment and was not updated.",
       "contact_deleted_successfully": "Contact deleted successfully",
-      "contacts_table_refresh": "Refresh contacts",
-      "contacts_table_refresh_success": "Contacts refreshed successfully",
       "create_attribute": "Create attribute",
       "create_new_attribute": "Create new attribute",
       "create_new_attribute_description": "Create a new attribute for segmentation purposes.",
