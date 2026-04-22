@@ -179,9 +179,10 @@ export const AddApiKeyModal = ({
   };
 
   const removeDirectoryPermission = (index: number) => {
-    const updated = { ...selectedDirectoryPermissions };
-    delete updated[`directory-permission-${index}`];
-    setSelectedDirectoryPermissions(updated);
+    const keyToRemove = `directory-permission-${index}`;
+    setSelectedDirectoryPermissions((prev) =>
+      Object.fromEntries(Object.entries(prev).filter(([key]) => key !== keyToRemove))
+    );
   };
 
   const addDirectoryPermission = () => {

@@ -116,6 +116,12 @@ describe("API Key Management", () => {
               workspaceId: true,
             },
           },
+          apiKeyFeedbackRecordDirectories: {
+            select: {
+              permission: true,
+              feedbackRecordDirectoryId: true,
+            },
+          },
           createdAt: true,
           id: true,
           label: true,
@@ -404,6 +410,7 @@ describe("API Key Management", () => {
         }),
         include: {
           apiKeyWorkspaces: true,
+          apiKeyFeedbackRecordDirectories: true,
         },
       });
     });
