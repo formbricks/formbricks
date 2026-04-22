@@ -1,6 +1,5 @@
 /// <reference types="vitest" />
 import { resolve } from "path";
-import dts from "vite-plugin-dts";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
@@ -27,11 +26,4 @@ export default defineConfig({
       reporter: ["text", "json", "html", "lcov"],
     },
   },
-  plugins: [
-    dts({
-      include: ["src/**/*", "types/**/*"],
-      entryRoot: ".",
-      outDir: "dist",
-    }),
-  ],
 });

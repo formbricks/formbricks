@@ -31,9 +31,9 @@
   },
   "scripts": {
     "dev": "concurrently -n \"ESM,UMD\" \"vite build --watch --mode dev\" \"BUILD_UMD=true vite build --watch --mode dev\"",
-    "build": "cross-env NODE_OPTIONS=--max-old-space-size=8192 tsc --noEmit && cross-env NODE_OPTIONS=--max-old-space-size=8192 vite build && cross-env NODE_OPTIONS=--max-old-space-size=8192 BUILD_UMD=true vite build",
-    "build:analyze": "cross-env NODE_OPTIONS=--max-old-space-size=8192 tsc --noEmit && cross-env NODE_OPTIONS=--max-old-space-size=8192 ANALYZE=true vite build",
-    "build:dev": "cross-env NODE_OPTIONS=--max-old-space-size=8192 tsc --noEmit && cross-env NODE_OPTIONS=--max-old-space-size=8192 vite build --mode dev",
+    "build": "cross-env NODE_OPTIONS=--max-old-space-size=8192 vite build && cross-env NODE_OPTIONS=--max-old-space-size=8192 BUILD_UMD=true vite build && cross-env NODE_OPTIONS=--max-old-space-size=8192 tsc --project tsconfig.build.json",
+    "build:analyze": "cross-env NODE_OPTIONS=--max-old-space-size=8192 ANALYZE=true vite build && cross-env NODE_OPTIONS=--max-old-space-size=8192 tsc --project tsconfig.build.json",
+    "build:dev": "cross-env NODE_OPTIONS=--max-old-space-size=8192 vite build --mode dev && cross-env NODE_OPTIONS=--max-old-space-size=8192 tsc --project tsconfig.build.json",
     "go": "concurrently -n \"ESM,UMD\" \"vite build --watch --mode dev\" \"BUILD_UMD=true vite build --watch --mode dev\"",
     "lint": "eslint src --fix --ext .ts,.js,.tsx,.jsx",
     "preview": "vite preview",
@@ -47,7 +47,7 @@
     "@formbricks/survey-ui": "workspace:*",
     "i18next": "25.8.18",
     "i18next-icu": "2.4.3",
-    "isomorphic-dompurify": "3.1.0",
+    "isomorphic-dompurify": "3.9.0",
     "preact": "10.29.0",
     "react-i18next": "16.5.8",
     "tailwind-merge": "3.5.0"
@@ -68,9 +68,7 @@
     "postcss": "8.5.8",
     "rollup-plugin-visualizer": "7.0.1",
     "tailwindcss": "4.2.1",
-    "terser": "5.46.0",
     "vite": "7.3.2",
-    "vite-plugin-dts": "4.5.4",
     "vite-tsconfig-paths": "6.1.1"
   }
 }

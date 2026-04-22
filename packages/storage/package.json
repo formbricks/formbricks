@@ -6,7 +6,7 @@
   "homepage": "https://formbricks.com",
   "description": "Storage Controller for Formbricks",
   "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "types": "./dist/src/index.d.ts",
   "repository": {
     "type": "git",
     "url": "https://github.com/formbricks/formbricks"
@@ -20,7 +20,7 @@
     "dist"
   ],
   "exports": {
-    "types": "./dist/index.d.ts",
+    "types": "./dist/src/index.d.ts",
     "import": "./dist/index.js",
     "require": "./dist/index.cjs"
   },
@@ -29,24 +29,23 @@
     "lint": "eslint . --ext .ts,.js",
     "lint:fix": "eslint . --ext .ts,.js --fix",
     "lint:report": "eslint . --format json --output-file ../../lint-results/app-store.json",
-    "build": "tsc && vite build",
+    "build": "vite build && tsc --project tsconfig.build.json",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "go": "vite build --watch --mode dev"
   },
   "author": "Formbricks <hola@formbricks.com>",
   "dependencies": {
-    "@formbricks/logger": "workspace:*",
     "@aws-sdk/client-s3": "3.1007.0",
     "@aws-sdk/s3-presigned-post": "3.1007.0",
-    "@aws-sdk/s3-request-presigner": "3.1007.0"
+    "@aws-sdk/s3-request-presigner": "3.1007.0",
+    "@formbricks/logger": "workspace:*"
   },
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/eslint-config": "workspace:*",
+    "@vitest/coverage-v8": "4.1.5",
     "vite": "7.3.2",
-    "vite-plugin-dts": "4.5.4",
-    "vitest": "4.0.18",
-    "@vitest/coverage-v8": "4.0.18"
+    "vitest": "4.1.5"
   }
 }

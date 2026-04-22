@@ -1,6 +1,5 @@
 /// <reference types="vitest" />
 import { resolve } from "path";
-import dts from "vite-plugin-dts";
 import { defineConfig } from "vitest/config";
 import type { ViteUserConfig } from "vitest/config";
 import webPackageJson from "../../apps/web/package.json";
@@ -22,7 +21,6 @@ export default defineConfig({
       output: { inlineDynamicImports: true },
     },
     emptyOutDir: false, // keep the dist folder to avoid errors with pnpm go when folder is empty during build
-    minify: "terser",
     lib: {
       entry: resolve(__dirname, "src/index.ts"),
       name: "formbricks",
@@ -31,10 +29,6 @@ export default defineConfig({
     },
   },
   plugins: [
-    dts({
-      rollupTypes: false,
-      insertTypesEntry: true,
-    }) as VitestPluginOption,
     copyCompiledAssetsPlugin({
       filename: "formbricks",
       distDir: resolve(__dirname, "dist"),

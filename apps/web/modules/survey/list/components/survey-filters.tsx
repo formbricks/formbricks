@@ -4,7 +4,6 @@ import { TFunction } from "i18next";
 import { ChevronDownIcon, X } from "lucide-react";
 import { type Dispatch, type SetStateAction, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useDebounce } from "react-use";
 import type { TProjectConfigChannel } from "@formbricks/types/project";
 import type { TFilterOption, TSortOption } from "@formbricks/types/surveys/types";
 import { SortOption } from "@/modules/survey/list/components/sort-option";
@@ -59,7 +58,12 @@ export const SurveyFilters = ({
   const { sortBy, status, type } = surveyFilters;
   const [name, setName] = useState(surveyFilters.name);
   const { t } = useTranslation();
-  useDebounce(() => setSurveyFilters((prev) => ({ ...prev, name })), 800, [name]);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => setSurveyFilters((prev) => ({ ...prev, name })), 800);
+
+    return () => clearTimeout(timeoutId);
+  }, [name, setSurveyFilters]);
 
   const [dropdownOpenStates, setDropdownOpenStates] = useState(new Map());
 

@@ -1,6 +1,5 @@
 /// <reference types="vitest" />
 import { defineConfig } from "vite";
-import dts from "vite-plugin-dts";
 import tsconfigPaths from "vite-tsconfig-paths";
 import tailwindcss from "@tailwindcss/vite";
 
@@ -49,10 +48,6 @@ export default defineConfig({
   },
   plugins: [
     tsconfigPaths(),
-    dts({
-      include: ["src"],
-      exclude: ["**/*.stories.tsx", "**/*.test.ts", "**/story-helpers.tsx"],
-    }),
     tailwindcss(),
   ],
   test: {
@@ -69,4 +64,3 @@ export default defineConfig({
     },
   },
 });
-

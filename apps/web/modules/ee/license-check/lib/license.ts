@@ -1,7 +1,6 @@
 import "server-only";
-import { HttpsProxyAgent } from "https-proxy-agent";
-import fetch from "node-fetch";
 import { cache as reactCache } from "react";
+import { ProxyAgent } from "undici";
 import { z } from "zod";
 import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
@@ -358,12 +357,6 @@ const fetchLicenseFromServerInternal = async (retryCount = 0): Promise<TEnterpri
     // (skip this check during E2E tests as we intentionally use null)
     if (!E2E_TESTING && !instanceId) return null;
 
-    const proxyUrl = env.HTTPS_PROXY ?? env.HTTP_PROXY;
-    const agent = proxyUrl ? new HttpsProxyAgent(proxyUrl) : undefined;
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), CONFIG.API.TIMEOUT_MS);
-
     const payload: Record<string, unknown> = {
       licenseKey: env.ENTERPRISE_LICENSE_KEY,
       usage: { responseCount },
@@ -373,15 +366,16 @@ const fetchLicenseFromServerInternal = async (retryCount = 0): Promise<TEnterpri
       payload.instanceId = instanceId;
     }
 
+    const proxyUrl = env.HTTPS_PROXY ?? env.HTTP_PROXY;
+    const dispatcher = proxyUrl ? new ProxyAgent(proxyUrl) : undefined;
+
     const res = await fetch(CONFIG.API.ENDPOINT, {
       body: JSON.stringify(payload),
+      dispatcher,
       headers: { "Content-Type": "application/json" },
       method: "POST",
-      agent,
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
+      signal: AbortSignal.timeout(CONFIG.API.TIMEOUT_MS),
+    } as RequestInit & { dispatcher?: ProxyAgent });
 
     if (res.ok) {
       const responseJson = (await res.json()) as { data: unknown };

@@ -1,5 +1,4 @@
 import { TFunction } from "i18next";
-import { capitalize } from "lodash";
 import {
   AirplayIcon,
   ArrowUpFromDotIcon,
@@ -9,6 +8,7 @@ import {
   SmartphoneIcon,
 } from "lucide-react";
 import { TResponseMeta } from "@formbricks/types/responses";
+import { capitalize } from "@/lib/utils/object";
 
 export const getAddressFieldLabel = (field: string, t: TFunction) => {
   switch (field) {

@@ -2,7 +2,6 @@ import { promises as fs } from "fs";
 import { glob } from "glob";
 import { dirname, resolve } from "path";
 import { Plugin, UserConfig, defineConfig } from "vite";
-import dts from "vite-plugin-dts";
 
 const copySqlMigrationsPlugin: Plugin = {
   name: "copy-sql-migrations",
@@ -69,14 +68,6 @@ export default defineConfig(async (): Promise<UserConfig> => {
       emptyOutDir: true,
       ssr: true, // Server-side rendering mode for Node.js
     },
-    plugins: [
-      dts({
-        rollupTypes: false,
-        include: ["src/**/*"],
-        exclude: ["src/**/*.test.ts", "src/**/*.spec.ts"],
-        insertTypesEntry: true,
-      }),
-      copySqlMigrationsPlugin,
-    ],
+    plugins: [copySqlMigrationsPlugin],
   };
 });

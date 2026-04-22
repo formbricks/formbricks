@@ -133,7 +133,6 @@ export const renderWidget = async (
       environmentId: config.get().environmentId,
       contactId: config.get().user.data.contactId ?? undefined,
       action,
-      // @ts-expect-error -- the types are not compatible because they come from different places (types package vs local types)
       survey,
       isBrandingEnabled,
       clickOutside,
@@ -230,7 +229,7 @@ export const removeWidgetContainer = (): void => {
 const SURVEYS_LOAD_TIMEOUT_MS = 10000;
 const SURVEYS_POLL_INTERVAL_MS = 200;
 
-type TFormbricksSurveys = typeof globalThis.window.formbricksSurveys;
+type TFormbricksSurveys = NonNullable<typeof globalThis.window.formbricksSurveys>;
 
 let surveysLoadPromise: Promise<TFormbricksSurveys> | null = null;
 

@@ -1,7 +1,7 @@
 "use client";
 
-import { capitalize } from "lodash";
 import { TValidationRuleType } from "@formbricks/types/surveys/validation-rules";
+import { capitalize } from "@/lib/utils/object";
 import {
   Select,
   SelectContent,
