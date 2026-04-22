@@ -14,6 +14,11 @@ vi.mock("@/lib/cache", () => ({ cache: { set: mocks.cacheSet } }));
 vi.mock("@formbricks/logger", () => ({
   logger: { info: mocks.loggerInfo, error: mocks.loggerError },
 }));
+vi.mock("@formbricks/cache", () => ({
+  createCacheKey: {
+    custom: (namespace: string, id: string) => `fb:${namespace}:${id}`,
+  },
+}));
 
 const makeData = () => ({
   organizationId: "org_1",
@@ -51,7 +56,7 @@ describe("processAITranslationJob", () => {
     await processAITranslationJob(makeData(), makeContext());
 
     expect(mocks.cacheSet).toHaveBeenCalledWith(
-      "ai-translation-result:42",
+      "fb:ai-translation:42",
       { userId: "user_1", translations: { "q1.headline": "Hallo", "q1.subheader": "Welt" } },
       300_000
     );
@@ -67,7 +72,7 @@ describe("processAITranslationJob", () => {
     await processAITranslationJob(makeData(), makeContext());
 
     expect(mocks.cacheSet).toHaveBeenCalledWith(
-      "ai-translation-result:42",
+      "fb:ai-translation:42",
       expect.objectContaining({ translations: expect.objectContaining({ "q1.headline": "Hallo" }) }),
       300_000
     );
@@ -102,7 +107,7 @@ describe("processAITranslationJob", () => {
     ).rejects.toThrow(aiError);
 
     expect(mocks.cacheSet).toHaveBeenCalledWith(
-      "ai-translation-result:42",
+      "fb:ai-translation:42",
       { userId: "user_1", error: "ai_features_not_enabled" },
       300_000
     );
@@ -138,6 +143,6 @@ describe("processAITranslationJob", () => {
 describe("getAITranslationCacheKey", () => {
   test("returns prefixed key", async () => {
     const { getAITranslationCacheKey } = await import("./process-ai-translation-job");
-    expect(getAITranslationCacheKey("99")).toBe("ai-translation-result:99");
+    expect(getAITranslationCacheKey("99")).toBe("fb:ai-translation:99");
   });
 });

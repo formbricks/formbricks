@@ -89,11 +89,24 @@ export const LanguageView = ({
 
   // Check AI availability once on mount
   useEffect(() => {
-    checkAITranslationAvailableAction({ surveyId: localSurvey.id }).then((result) => {
-      if (result?.data) {
-        setIsAIAvailable(result.data.available);
-      }
-    });
+    let isCurrent = true;
+    setIsAIAvailable(false);
+
+    checkAITranslationAvailableAction({ surveyId: localSurvey.id })
+      .then((result) => {
+        if (isCurrent) {
+          setIsAIAvailable(result?.data?.available ?? false);
+        }
+      })
+      .catch(() => {
+        if (isCurrent) {
+          setIsAIAvailable(false);
+        }
+      });
+
+    return () => {
+      isCurrent = false;
+    };
   }, [localSurvey.id]);
 
   // Sync multi-language state

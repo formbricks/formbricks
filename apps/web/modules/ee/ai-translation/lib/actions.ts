@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { enqueueAITranslationJob } from "@formbricks/jobs";
+import { ZAITranslationField, enqueueAITranslationJob } from "@formbricks/jobs";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { assertOrganizationAIConfigured } from "@/lib/ai/service";
@@ -47,17 +47,11 @@ export const checkAITranslationAvailableAction = authenticatedActionClient
     }
   });
 
-const ZTranslateField = z.object({
-  path: z.string(),
-  defaultText: z.string(),
-  isRichText: z.boolean(),
-});
-
 const ZTranslateSurveyFieldsAction = z.object({
   workspaceId: ZId,
-  fields: z.array(ZTranslateField).min(1),
-  sourceLanguage: z.string(),
-  targetLanguage: z.string(),
+  fields: z.array(ZAITranslationField).min(1),
+  sourceLanguage: z.string().min(1),
+  targetLanguage: z.string().min(1),
 });
 
 export const translateSurveyFieldsAction = authenticatedActionClient
@@ -128,7 +122,12 @@ export const getAITranslationResultAction = authenticatedActionClient
       return { status: "failed" as const, error: result.data.error };
     }
 
+    if (!result.data.translations) {
+      // Malformed cache entry — treat as still pending so the poller can retry
+      return { status: "pending" as const };
+    }
+
     // Let the 5-minute TTL handle cleanup — eager deletion risks losing
     // the result if the response is dropped before the client receives it.
-    return { status: "complete" as const, translations: result.data.translations! };
+    return { status: "complete" as const, translations: result.data.translations };
   });

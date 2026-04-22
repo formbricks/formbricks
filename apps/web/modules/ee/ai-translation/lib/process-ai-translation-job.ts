@@ -1,4 +1,5 @@
 import "server-only";
+import { type CacheKey, createCacheKey } from "@formbricks/cache";
 import type { JobExecutionContext, TAITranslationJobData } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
 import { generateOrganizationAIText } from "@/lib/ai/service";
@@ -6,7 +7,8 @@ import { cache } from "@/lib/cache";
 
 const AI_TRANSLATION_RESULT_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
-export const getAITranslationCacheKey = (jobId: string): string => `ai-translation-result:${jobId}`;
+export const getAITranslationCacheKey = (jobId: string): CacheKey =>
+  createCacheKey.custom("ai-translation", jobId);
 
 export const processAITranslationJob = async (
   data: TAITranslationJobData,
@@ -38,17 +40,27 @@ Rules:
       prompt: JSON.stringify(items),
     });
 
-    // Parse AI response as JSON — extract the first {...} block to handle
-    // code fences, wrapper text, or other LLM formatting artifacts.
+    // Parse AI response as JSON.
+    // 1. Strip markdown code fences if present, then try JSON.parse directly.
+    // 2. Fall back to extracting the first {...} block for wrapper text.
     let parsed: Record<string, string>;
     try {
-      const start = result.text.indexOf("{");
-      const end = result.text.lastIndexOf("}");
-      if (start === -1 || end === -1 || end <= start) {
-        throw new Error("No JSON object found in AI response");
+      const stripped = result.text.replaceAll(/^```(?:json)?\s*\n?|\n?```\s*$/g, "").trim();
+      try {
+        parsed = JSON.parse(stripped);
+      } catch {
+        const start = stripped.indexOf("{");
+        const end = stripped.lastIndexOf("}");
+        if (start === -1 || end === -1 || end <= start) {
+          throw new Error("No JSON object found in AI response");
+        }
+        parsed = JSON.parse(stripped.slice(start, end + 1));
       }
-      parsed = JSON.parse(result.text.slice(start, end + 1));
-    } catch {
+    } catch (parseError) {
+      logger.error(
+        { rawResponse: result.text.slice(0, 500), parseError },
+        "Failed to parse AI translation response"
+      );
       throw new Error("Failed to parse AI translation response");
     }
 

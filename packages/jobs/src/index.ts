@@ -46,6 +46,7 @@ export type {
   TRunAtBackgroundJobSchedule,
 } from "./schedules";
 export {
+  ZAITranslationField,
   ZAITranslationJobData,
   ZResponsePipelineEvent,
   ZResponsePipelineJobData,

@@ -68,17 +68,15 @@ export const ManageTranslationsModal = ({
   const [missingFirst, setMissingFirst] = useState(false);
   const [isTranslating, setIsTranslating] = useState(false);
   const [translatingPaths, setTranslatingPaths] = useState<Set<string>>(new Set());
-  const pollingCancelledRef = useRef(false);
+  const activePollTokenRef = useRef<symbol | null>(null);
 
-  // Reset polling state when modal opens, cancel when it closes
+  // Cancel any in-flight polling when modal closes
   useEffect(() => {
-    if (open) {
-      pollingCancelledRef.current = false;
-    } else {
-      pollingCancelledRef.current = true;
+    if (!open) {
+      activePollTokenRef.current = null;
     }
     return () => {
-      pollingCancelledRef.current = true;
+      activePollTokenRef.current = null;
     };
   }, [open]);
 
@@ -200,14 +198,27 @@ export const ManageTranslationsModal = ({
 
     const { jobId } = enqueueResult.data;
 
+    // Each invocation gets its own token so stale loops from previous
+    // jobs cannot clobber state when the modal is reopened.
+    const token = Symbol("ai-translation-poll");
+    activePollTokenRef.current = token;
+
     // Poll for results
     const pollInterval = 2000;
     const maxAttempts = 60; // 2 minutes max
     let attempts = 0;
+    let timedOut = false;
 
-    while (attempts < maxAttempts && !pollingCancelledRef.current) {
+    while (activePollTokenRef.current === token) {
       attempts++;
+      if (attempts > maxAttempts) {
+        timedOut = true;
+        break;
+      }
+
       const pollResult = await getAITranslationResultAction({ jobId });
+
+      if (activePollTokenRef.current !== token) break;
 
       if (pollResult?.data?.status === "complete" && pollResult.data.translations) {
         const { translations } = pollResult.data;
@@ -229,10 +240,10 @@ export const ManageTranslationsModal = ({
       await new Promise((resolve) => setTimeout(resolve, pollInterval));
     }
 
-    if (attempts >= maxAttempts) {
+    if (timedOut) {
       toast.error(t("workspace.surveys.edit.ai_translation_timed_out"), { id: toastId });
     } else {
-      // Polling was cancelled (modal closed) — dismiss the loading toast
+      // Polling was cancelled (modal closed or new job started) — dismiss the loading toast
       toast.dismiss(toastId);
     }
 
