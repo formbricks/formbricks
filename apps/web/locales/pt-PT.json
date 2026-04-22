@@ -3177,7 +3177,7 @@
         "survey_preview": "Pré-visualização do questionário 👀",
         "survey_styling": "Estilo do formulário",
         "survey_trigger": "Desencadeador de Inquérito",
-        "survey_will_be_closed_at_midnight_cet": "O inquérito será pausado às {time} no fuso horário {timeZone} na data selecionada",
+        "survey_will_be_closed_at_midnight_cet": "O inquérito será encerrado às {time} no fuso horário {timeZone} na data selecionada",
         "survey_will_be_published_at_midnight_cet": "O inquérito será publicado às {time} no fuso horário {timeZone} na data selecionada",
         "target_block_not_found": "Bloco de destino não encontrado",
         "targeted": "Alvo",

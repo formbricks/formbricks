@@ -3177,7 +3177,7 @@
         "survey_preview": "Vista previa de la encuesta 👀",
         "survey_styling": "Estilo del formulario",
         "survey_trigger": "Activador de la encuesta",
-        "survey_will_be_closed_at_midnight_cet": "La encuesta se pausará a las {time} en la zona horaria {timeZone} en la fecha seleccionada",
+        "survey_will_be_closed_at_midnight_cet": "La encuesta se cerrará a las {time} en la zona horaria {timeZone} en la fecha seleccionada",
         "survey_will_be_published_at_midnight_cet": "La encuesta se publicará a las {time} en la zona horaria {timeZone} en la fecha seleccionada",
         "target_block_not_found": "Bloque objetivo no encontrado",
         "targeted": "Dirigido",

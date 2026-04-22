@@ -3177,7 +3177,7 @@
         "survey_preview": "Aperçu du sondage 👀",
         "survey_styling": "Style de formulaire",
         "survey_trigger": "Déclencheur d'enquête",
-        "survey_will_be_closed_at_midnight_cet": "L'enquête sera mise en pause à {time} dans le fuseau horaire {timeZone} à la date sélectionnée",
+        "survey_will_be_closed_at_midnight_cet": "L'enquête sera fermée à {time} dans le fuseau horaire {timeZone} à la date sélectionnée",
         "survey_will_be_published_at_midnight_cet": "L'enquête sera publiée à {time} dans le fuseau horaire {timeZone} à la date sélectionnée",
         "target_block_not_found": "Bloc cible non trouvé",
         "targeted": "Ciblé",

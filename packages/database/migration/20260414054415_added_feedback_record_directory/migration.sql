@@ -51,3 +51,12 @@ ALTER INDEX "ConnectorFieldMapping_workspaceId_connectorId_source_fiel_key" RENA
 
 -- RenameIndex
 ALTER INDEX "ConnectorFormbricksMapping_workspaceId_connectorId_survey_key" RENAME TO "ConnectorFormbricksMapping_workspaceId_connectorId_surveyId_key";
+
+-- AlterTable
+ALTER TABLE "Chart" ADD COLUMN "feedbackRecordDirectoryId" TEXT NOT NULL;
+
+-- CreateIndex
+CREATE INDEX "Chart_feedbackRecordDirectoryId_idx" ON "Chart"("feedbackRecordDirectoryId");
+
+-- AddForeignKey
+ALTER TABLE "Chart" ADD CONSTRAINT "Chart_feedbackRecordDirectoryId_fkey" FOREIGN KEY ("feedbackRecordDirectoryId") REFERENCES "FeedbackRecordDirectory"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
