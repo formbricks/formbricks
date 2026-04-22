@@ -3,10 +3,10 @@
 declare global {
   interface Window {
     formbricksSurveys?: {
-      renderSurveyInline: (...args: never[]) => unknown;
-      renderSurveyModal: (...args: never[]) => unknown;
-      renderSurvey: (...args: never[]) => unknown;
-      onFilePick: (...args: never[]) => unknown;
+      renderSurveyInline: (...args: unknown[]) => unknown;
+      renderSurveyModal: (...args: unknown[]) => unknown;
+      renderSurvey: (options: unknown) => void;
+      onFilePick: (...args: unknown[]) => unknown;
       setNonce: (nonce: string | undefined) => void;
     };
   }

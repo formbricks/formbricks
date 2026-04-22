@@ -16,6 +16,12 @@ import {
   TLicenseStatus,
 } from "@/modules/ee/license-check/types/enterprise-license";
 
+// Module-level ProxyAgent singleton — reused across all license fetches to avoid leaking
+// socket pools on every call (ProxyAgent owns connection pools and should not be created
+// per-request in long-lived processes).
+const _proxyUrl = env.HTTPS_PROXY ?? env.HTTP_PROXY;
+const _proxyDispatcher = _proxyUrl ? new ProxyAgent(_proxyUrl) : undefined;
+
 // Configuration
 const CONFIG = {
   CACHE: {
@@ -366,12 +372,9 @@ const fetchLicenseFromServerInternal = async (retryCount = 0): Promise<TEnterpri
       payload.instanceId = instanceId;
     }
 
-    const proxyUrl = env.HTTPS_PROXY ?? env.HTTP_PROXY;
-    const dispatcher = proxyUrl ? new ProxyAgent(proxyUrl) : undefined;
-
     const res = await fetch(CONFIG.API.ENDPOINT, {
       body: JSON.stringify(payload),
-      dispatcher,
+      dispatcher: _proxyDispatcher,
       headers: { "Content-Type": "application/json" },
       method: "POST",
       signal: AbortSignal.timeout(CONFIG.API.TIMEOUT_MS),

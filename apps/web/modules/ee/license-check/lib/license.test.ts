@@ -369,6 +369,8 @@ describe("License Core Logic", () => {
       const fetch = global.fetch as Mock;
       fetch.mockReset();
 
+      // Reset modules so the dynamic import below gets a fresh module with the new env mock
+      vi.resetModules();
       // Mock the env module with empty license key
       vi.doMock("@/lib/env", () => ({
         env: {

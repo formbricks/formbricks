@@ -93,7 +93,7 @@
       "hono": "4.12.14",
       "lodash": "4.18.1",
       "node-forge": "1.4.0",
-      "@opentelemetry/otlp-transformer@0.212.0>protobufjs": "8.0.1",
+      "@opentelemetry/otlp-transformer>protobufjs": "8.0.1",
       "tar": "7.5.13"
     },
     "comments": {
