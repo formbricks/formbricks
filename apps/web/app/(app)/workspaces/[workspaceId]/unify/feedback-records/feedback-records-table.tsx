@@ -80,7 +80,7 @@ export const FeedbackRecordsTable = ({
   const [error, setError] = useState<string | null>(null);
 
   const fetchRecords = useCallback(
-    async (frdId: string, cursor: string | undefined, append: boolean) => {
+    async (frdId: string, cursor: string | undefined, append: boolean): Promise<string | null> => {
       const setLoading = append ? setIsLoadingMore : setIsRefreshing;
       setLoading(true);
       setError(null);
@@ -93,21 +93,26 @@ export const FeedbackRecordsTable = ({
       });
 
       if (!result?.data) {
-        setError(getFormattedErrorMessage(result) ?? t("workspace.unify.failed_to_load_feedback_records"));
+        const message =
+          getFormattedErrorMessage(result) ?? t("workspace.unify.failed_to_load_feedback_records");
+        setError(message);
         setLoading(false);
-        return;
+        return message;
       }
 
       const response = result.data;
       setRecords((prev) => (append ? [...prev, ...response.data] : response.data));
       setNextCursor(response.next_cursor);
       setLoading(false);
+      return null;
     },
     [workspaceId, t]
   );
 
   const handleFrdChange = (frdId: string) => {
     setSelectedFrdId(frdId);
+    setRecords([]);
+    setNextCursor(undefined);
     fetchRecords(frdId, undefined, false);
   };
 
@@ -119,7 +124,11 @@ export const FeedbackRecordsTable = ({
   const handleRefresh = async () => {
     if (!selectedFrdId || isRefreshing) return;
     const toastId = toast.loading(t("workspace.unify.refreshing_feedback_records"));
-    await fetchRecords(selectedFrdId, undefined, false);
+    const errorMessage = await fetchRecords(selectedFrdId, undefined, false);
+    if (errorMessage) {
+      toast.error(errorMessage, { id: toastId });
+      return;
+    }
     toast.success(t("workspace.unify.feedback_records_refreshed"), { id: toastId });
   };
 
