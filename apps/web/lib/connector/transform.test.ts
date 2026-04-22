@@ -185,6 +185,24 @@ describe("transformResponseToFeedbackRecords", () => {
     expect(result[0].collected_at).toBe(NOW.toISOString());
   });
 
+  test("falls back to updatedAt when createdAt is missing", () => {
+    const updatedAt = new Date("2026-02-25T10:00:00.000Z");
+    const response = { ...mockResponse, createdAt: undefined, updatedAt } as unknown as TResponse;
+    const mappings = [createMapping({ elementId: "el-text", hubFieldType: "text" })];
+    const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings);
+    expect(result[0].collected_at).toBe(updatedAt.toISOString());
+  });
+
+  test("parses string createdAt values for collected_at", () => {
+    const response = {
+      ...mockResponse,
+      createdAt: "2026-02-26T10:00:00.000Z",
+    } as unknown as TResponse;
+    const mappings = [createMapping({ elementId: "el-text", hubFieldType: "text" })];
+    const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings);
+    expect(result[0].collected_at).toBe("2026-02-26T10:00:00.000Z");
+  });
+
   test("includes tenant_id when provided", () => {
     const mappings = [createMapping({ elementId: "el-text", hubFieldType: "text" })];
     const result = transformResponseToFeedbackRecords(mockResponse, mockSurvey, mappings, "tenant-abc");

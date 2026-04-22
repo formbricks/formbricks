@@ -40,7 +40,7 @@ export async function ChartsListPage({ workspaceId }: Readonly<ChartsListPagePro
 
   return (
     <AnalysisPageLayout
-      pageTitle={t("common.analysis")}
+      pageTitle={t("common.dashboards")}
       workspaceId={workspaceId}
       cta={
         isReadOnly ? undefined : <CreateChartButton workspaceId={workspaceId} directories={directories} />

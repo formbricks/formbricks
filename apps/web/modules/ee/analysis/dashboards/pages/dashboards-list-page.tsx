@@ -35,7 +35,7 @@ export const DashboardsListPage = async ({ workspaceId }: Readonly<DashboardsLis
 
   return (
     <AnalysisPageLayout
-      pageTitle={t("common.analysis")}
+      pageTitle={t("common.dashboards")}
       workspaceId={workspaceId}
       cta={isReadOnly ? undefined : <CreateDashboardButton workspaceId={workspaceId} />}>
       <DashboardsListContent

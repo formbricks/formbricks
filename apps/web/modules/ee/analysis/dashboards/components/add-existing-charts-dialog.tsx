@@ -1,11 +1,12 @@
 "use client";
 
 import { Loader2Icon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { getChartsAction } from "@/modules/ee/analysis/charts/actions";
+import { CreateChartButton } from "@/modules/ee/analysis/charts/components/create-chart-button";
 import { addChartToDashboardAction } from "@/modules/ee/analysis/dashboards/actions";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -18,6 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
+import { Label } from "@/modules/ui/components/label";
 import { MultiSelect } from "@/modules/ui/components/multi-select";
 
 interface AddExistingChartsDialogProps {
@@ -25,6 +27,7 @@ interface AddExistingChartsDialogProps {
   onOpenChange: (open: boolean) => void;
   workspaceId: string;
   dashboardId: string;
+  directories: { id: string; name: string }[];
   existingChartIds: string[];
   onSuccess: () => void;
 }
@@ -39,6 +42,7 @@ export function AddExistingChartsDialog({
   onOpenChange,
   workspaceId,
   dashboardId,
+  directories,
   existingChartIds,
   onSuccess,
 }: Readonly<AddExistingChartsDialogProps>) {
@@ -48,30 +52,29 @@ export function AddExistingChartsDialog({
   const [isLoading, setIsLoading] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
 
+  const loadCharts = useCallback(async () => {
+    setIsLoading(true);
+    setSelectedChartIds([]);
+    try {
+      const result = await getChartsAction({ workspaceId });
+      if (result?.data) {
+        const availableCharts = result.data.filter((chart) => !existingChartIds.includes(chart.id));
+        setChartOptions(availableCharts.map((chart) => ({ value: chart.id, label: chart.name })));
+      } else {
+        const errorMessage = getFormattedErrorMessage(result);
+        toast.error(errorMessage);
+      }
+    } catch {
+      toast.error(t("workspace.analysis.dashboards.charts_load_failed"));
+    } finally {
+      setIsLoading(false);
+    }
+  }, [workspaceId, existingChartIds, t]);
+
   useEffect(() => {
     if (!open) return;
-
-    const loadCharts = async () => {
-      setIsLoading(true);
-      setSelectedChartIds([]);
-      try {
-        const result = await getChartsAction({ workspaceId });
-        if (result?.data) {
-          const availableCharts = result.data.filter((chart) => !existingChartIds.includes(chart.id));
-          setChartOptions(availableCharts.map((chart) => ({ value: chart.id, label: chart.name })));
-        } else {
-          const errorMessage = getFormattedErrorMessage(result);
-          toast.error(errorMessage);
-        }
-      } catch {
-        toast.error(t("workspace.analysis.dashboards.charts_load_failed"));
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     loadCharts();
-  }, [open, workspaceId, existingChartIds, t]);
+  }, [open, loadCharts]);
 
   const handleAdd = async () => {
     if (selectedChartIds.length === 0) return;
@@ -136,25 +139,40 @@ export function AddExistingChartsDialog({
                   </AlertDescription>
                 </Alert>
               )}
-              <MultiSelect
-                options={chartOptions}
-                value={selectedChartIds}
-                onChange={setSelectedChartIds}
-                placeholder={t("common.search_charts")}
-                disabled={chartOptions.length === 0}
-              />
+              <div className="space-y-2">
+                <Label>{t("common.add_chart")}</Label>
+                <MultiSelect
+                  options={chartOptions}
+                  value={selectedChartIds}
+                  onChange={setSelectedChartIds}
+                  placeholder={t("common.search_charts")}
+                  disabled={chartOptions.length === 0}
+                />
+              </div>
             </>
           )}
         </DialogBody>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isAdding}>
-            {t("common.cancel")}
-          </Button>
-          <Button onClick={handleAdd} loading={isAdding} disabled={selectedChartIds.length === 0 || isAdding}>
-            {selectedChartIds.length > 0
-              ? t("workspace.analysis.dashboards.add_count_charts", { count: selectedChartIds.length })
-              : t("common.add")}
-          </Button>
+        <DialogFooter className="sm:justify-between">
+          <CreateChartButton
+            workspaceId={workspaceId}
+            directories={directories}
+            label={t("workspace.analysis.dashboards.create_new_chart")}
+            onSuccess={loadCharts}
+            buttonProps={{ variant: "outline", size: "default", disabled: isAdding }}
+          />
+          <div className="flex flex-col-reverse gap-2 sm:flex-row">
+            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isAdding}>
+              {t("common.cancel")}
+            </Button>
+            <Button
+              onClick={handleAdd}
+              loading={isAdding}
+              disabled={selectedChartIds.length === 0 || isAdding}>
+              {selectedChartIds.length > 0
+                ? t("workspace.analysis.dashboards.add_count_charts", { count: selectedChartIds.length })
+                : t("common.add")}
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -167,7 +167,7 @@ export const MainNavigation = ({
         disabled: isMembershipPending || isBilling,
       },
       {
-        name: t("common.analysis"),
+        name: t("common.dashboards"),
         href: `/workspaces/${workspace.id}/dashboards`,
         icon: BarChart3Icon,
         isActive: pathname?.includes("/dashboards") || pathname?.includes("/charts"),

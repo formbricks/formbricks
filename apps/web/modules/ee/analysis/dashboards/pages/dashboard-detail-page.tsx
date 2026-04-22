@@ -4,6 +4,7 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { executeQuery } from "@/modules/ee/analysis/api/lib/cube-client";
 import { injectTenantFilter } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
+import { getFeedbackRecordDirectoriesByWorkspaceId } from "@/modules/ee/feedback-record-directory/lib/feedback-record-directory";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { DashboardDetailClient } from "../components/dashboard-detail-client";
 import { getDashboard } from "../lib/dashboards";
@@ -59,12 +60,14 @@ export async function DashboardDetailPage({
       widgetDataPromises.set(widgetId, Promise.resolve(result));
     }
   });
+  const directories = await getFeedbackRecordDirectoriesByWorkspaceId(workspaceId);
 
   return (
     <DashboardDetailClient
       workspaceId={workspaceId}
       dashboard={dashboard}
       widgetDataPromises={widgetDataPromises}
+      directories={directories}
       isReadOnly={isReadOnly}
     />
   );

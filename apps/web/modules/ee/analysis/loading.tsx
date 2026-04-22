@@ -14,7 +14,7 @@ export const AnalysisListLoading = () => {
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.analysis")}>
+      <PageHeader pageTitle={t("common.dashboards")}>
         {workspaceId ? <AnalysisSecondaryNavigation workspaceId={workspaceId} /> : null}
       </PageHeader>
       <DashboardsListSkeleton
