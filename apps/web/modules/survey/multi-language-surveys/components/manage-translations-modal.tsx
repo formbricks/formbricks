@@ -70,9 +70,11 @@ export const ManageTranslationsModal = ({
   const [translatingPaths, setTranslatingPaths] = useState<Set<string>>(new Set());
   const pollingCancelledRef = useRef(false);
 
-  // Cancel polling when modal closes
+  // Reset polling state when modal opens, cancel when it closes
   useEffect(() => {
-    if (!open) {
+    if (open) {
+      pollingCancelledRef.current = false;
+    } else {
       pollingCancelledRef.current = true;
     }
     return () => {
@@ -141,9 +143,28 @@ export const ManageTranslationsModal = ({
     setDraftTranslations((prev) => ({ ...prev, [path]: value }));
   }, []);
 
-  const emptyFields = useMemo(
-    () => strings.filter((s) => isDraftEmpty(s) && (s.value.default || "").trim()),
-    [strings, isDraftEmpty]
+  const emptyFields = useMemo(() => {
+    return strings.filter((s) => {
+      const val = draftTranslations[s.path];
+      if (val !== undefined && val !== "") {
+        const text = s.isRichText ? getTextContent(val) : val;
+        if (text.trim()) return false;
+      }
+      return (s.value.default || "").trim() !== "";
+    });
+  }, [strings, draftTranslations]);
+
+  const getAIErrorMessage = useCallback(
+    (errorCode: string): string => {
+      const errorMessages: Record<string, string> = {
+        ai_features_not_enabled: t("workspace.surveys.edit.ai_features_not_enabled"),
+        ai_smart_tools_disabled: t("workspace.surveys.edit.ai_smart_tools_disabled"),
+        ai_data_analysis_disabled: t("workspace.surveys.edit.ai_data_analysis_disabled"),
+        ai_instance_not_configured: t("workspace.surveys.edit.ai_instance_not_configured"),
+      };
+      return errorMessages[errorCode] ?? errorCode;
+    },
+    [t]
   );
 
   const handleTranslateWithAI = async () => {
@@ -168,47 +189,55 @@ export const ManageTranslationsModal = ({
 
     if (!enqueueResult?.data?.jobId) {
       const errorMessage = getFormattedErrorMessage(enqueueResult);
-      toast.error(errorMessage || "Translation failed", { id: toastId });
+      toast.error(
+        errorMessage ? getAIErrorMessage(errorMessage) : t("workspace.surveys.edit.ai_translation_failed"),
+        { id: toastId }
+      );
       setIsTranslating(false);
       setTranslatingPaths(new Set());
       return;
     }
 
     const { jobId } = enqueueResult.data;
-    pollingCancelledRef.current = false;
 
     // Poll for results
     const pollInterval = 2000;
     const maxAttempts = 60; // 2 minutes max
     let attempts = 0;
 
-    const poll = async (): Promise<void> => {
-      if (pollingCancelledRef.current) return;
-
+    while (attempts < maxAttempts && !pollingCancelledRef.current) {
       attempts++;
       const pollResult = await getAITranslationResultAction({ jobId });
 
       if (pollResult?.data?.status === "complete" && pollResult.data.translations) {
-        setDraftTranslations((prev) => ({ ...prev, ...pollResult.data!.translations }));
+        const { translations } = pollResult.data;
+        setDraftTranslations((prev) => ({ ...prev, ...translations }));
         toast.success(t("workspace.surveys.edit.ai_translation_complete"), { id: toastId });
         setIsTranslating(false);
         setTranslatingPaths(new Set());
         return;
       }
 
-      if (attempts >= maxAttempts) {
-        toast.error("Translation timed out", { id: toastId });
+      if (pollResult?.data?.status === "failed") {
+        const errorCode = pollResult.data.error ?? "";
+        toast.error(getAIErrorMessage(errorCode), { id: toastId });
         setIsTranslating(false);
         setTranslatingPaths(new Set());
         return;
       }
 
-      // Continue polling
       await new Promise((resolve) => setTimeout(resolve, pollInterval));
-      await poll();
-    };
+    }
 
-    await poll();
+    if (attempts >= maxAttempts) {
+      toast.error(t("workspace.surveys.edit.ai_translation_timed_out"), { id: toastId });
+    } else {
+      // Polling was cancelled (modal closed) — dismiss the loading toast
+      toast.dismiss(toastId);
+    }
+
+    setIsTranslating(false);
+    setTranslatingPaths(new Set());
   };
 
   const handleSave = () => {
@@ -252,7 +281,6 @@ export const ManageTranslationsModal = ({
                     <TooltipTrigger asChild>
                       <div>
                         <Button
-                          variant="secondary"
                           size="sm"
                           className="text-xs"
                           onClick={handleTranslateWithAI}

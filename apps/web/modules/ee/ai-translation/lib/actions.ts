@@ -86,6 +86,7 @@ export const translateSurveyFieldsAction = authenticatedActionClient
     const job = await enqueueAITranslationJob({
       organizationId,
       workspaceId: parsedInput.workspaceId,
+      userId: ctx.user.id,
       fields: parsedInput.fields,
       sourceLanguage: parsedInput.sourceLanguage,
       targetLanguage: parsedInput.targetLanguage,
@@ -100,9 +101,13 @@ const ZGetAITranslationResultAction = z.object({
 
 export const getAITranslationResultAction = authenticatedActionClient
   .inputSchema(ZGetAITranslationResultAction)
-  .action(async ({ parsedInput }) => {
+  .action(async ({ ctx, parsedInput }) => {
     const cacheKey = getAITranslationCacheKey(parsedInput.jobId);
-    const result = await cache.get<Record<string, string>>(cacheKey);
+    const result = await cache.get<{
+      userId: string;
+      translations?: Record<string, string>;
+      error?: string;
+    }>(cacheKey);
 
     if (!result.ok) {
       return { status: "pending" as const };
@@ -112,8 +117,17 @@ export const getAITranslationResultAction = authenticatedActionClient
       return { status: "pending" as const };
     }
 
-    // Clean up after reading
-    await cache.del([cacheKey]);
+    // Verify the requesting user owns this translation result
+    if (result.data.userId !== ctx.user.id) {
+      throw new Error("Not authorized");
+    }
 
-    return { status: "complete" as const, translations: result.data };
+    // Check if the job failed
+    if (result.data.error) {
+      return { status: "failed" as const, error: result.data.error };
+    }
+
+    // Let the 5-minute TTL handle cleanup — eager deletion risks losing
+    // the result if the response is dropped before the client receives it.
+    return { status: "complete" as const, translations: result.data.translations! };
   });

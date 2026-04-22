@@ -13,7 +13,6 @@ const mocks = vi.hoisted(() => ({
   getOrganization: vi.fn(),
   getIsAIDataAnalysisEnabled: vi.fn(),
   getIsAISmartToolsEnabled: vi.fn(),
-  getTranslate: vi.fn(),
   loggerError: vi.fn(),
 }));
 
@@ -66,10 +65,6 @@ vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getIsAISmartToolsEnabled: mocks.getIsAISmartToolsEnabled,
 }));
 
-vi.mock("@/lingodotdev/server", () => ({
-  getTranslate: mocks.getTranslate,
-}));
-
 describe("AI organization service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -82,9 +77,6 @@ describe("AI organization service", () => {
     });
     mocks.getIsAISmartToolsEnabled.mockResolvedValue(true);
     mocks.getIsAIDataAnalysisEnabled.mockResolvedValue(true);
-    mocks.getTranslate.mockResolvedValue((key: string, values?: Record<string, string>) =>
-      values ? `${key}:${JSON.stringify(values)}` : key
-    );
   });
 
   test("returns the instance AI status and organization settings", async () => {

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ZId } from "@formbricks/types/common";
 import { ZResponse } from "@formbricks/types/responses";
 import { ZTag } from "@formbricks/types/tags";
 
@@ -43,6 +44,7 @@ export const ZAITranslationField = z.object({
 export const ZAITranslationJobData = z.object({
   organizationId: z.string().min(1),
   workspaceId: z.string().min(1),
+  userId: ZId,
   fields: z.array(ZAITranslationField).min(1),
   sourceLanguage: z.string().min(1),
   targetLanguage: z.string().min(1),
