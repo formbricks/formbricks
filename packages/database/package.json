@@ -29,7 +29,8 @@
   },
   "scripts": {
     "clean": "rimraf .turbo node_modules dist",
-    "build": "pnpm generate && vite build && tsc --project tsconfig.build.json && node -e \"require('node:fs').writeFileSync('dist/index.d.ts', 'export * from \\\"./client\\\";\\n')\"",
+    "build": "pnpm generate && vite build && pnpm build:types",
+    "build:types": "tsc --project tsconfig.build.json && node write-types-entrypoint.cjs",
     "dev": "vite build --watch",
     "db:migrate:deploy": "env DATABASE_URL=\"${MIGRATE_DATABASE_URL:-$DATABASE_URL}\" node ./dist/scripts/apply-migrations.js",
     "db:migrate:dev": "pnpm build && dotenv -e ../../.env -- sh -c \"pnpm prisma generate && node ./dist/scripts/apply-migrations.js\"",

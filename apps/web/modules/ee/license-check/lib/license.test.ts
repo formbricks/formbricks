@@ -82,6 +82,9 @@ vi.mock("@/lib/constants", async (importOriginal) => {
   return {
     ...(typeof actual === "object" && actual !== null ? actual : {}),
     IS_FORMBRICKS_CLOUD: false, // Default to self-hosted for most tests
+    // Keep false so the normal instanceId + guard logic is exercised. No real
+    // network calls are made: global.fetch and getInstanceId() are both mocked
+    // at the top of this file, so the license server is never actually reached.
     E2E_TESTING: false,
     REVALIDATION_INTERVAL: 3600, // Example value
     ENTERPRISE_LICENSE_KEY: "test-license-key",
