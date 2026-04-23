@@ -10,8 +10,7 @@ import {
   getOrganizationIdFromWorkspaceId,
   getWorkspaceIdFromSurveyId,
 } from "@/lib/utils/helper";
-import { ZAITranslationField } from "./translate-fields";
-import { translateFields } from "./translate-fields";
+import { ZAITranslationField, translateFields } from "./translate-fields";
 
 const ZCheckAITranslationAvailableAction = z.object({
   surveyId: ZId,
