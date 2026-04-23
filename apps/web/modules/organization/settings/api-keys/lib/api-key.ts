@@ -6,7 +6,7 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { TOrganizationAccess } from "@formbricks/types/api-key";
 import { ZId } from "@formbricks/types/common";
-import { DatabaseError } from "@formbricks/types/errors";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { CONTROL_HASH } from "@/lib/constants";
 import { hashSecret, hashSha256, parseApiKeyV2, verifySecret } from "@/lib/crypto";
 import { validateInputs } from "@/lib/utils/validate";
@@ -197,6 +197,16 @@ export const createApiKey = async (
       organizationAccess,
       ...apiKeyDataWithoutPermissions
     } = apiKeyData;
+
+    if (feedbackRecordDirectoryPermissions && feedbackRecordDirectoryPermissions.length > 0) {
+      const directoryIds = feedbackRecordDirectoryPermissions.map((p) => p.feedbackRecordDirectoryId);
+      const ownedCount = await prisma.feedbackRecordDirectory.count({
+        where: { id: { in: directoryIds }, organizationId },
+      });
+      if (ownedCount !== directoryIds.length) {
+        throw new ResourceNotFoundError("FeedbackRecordDirectory", null);
+      }
+    }
 
     // Create the API key
     const result = await prisma.apiKey.create({

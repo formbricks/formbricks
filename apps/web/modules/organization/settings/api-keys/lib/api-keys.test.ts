@@ -1,7 +1,7 @@
 import { ApiKey, ApiKeyPermission, Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { DatabaseError } from "@formbricks/types/errors";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TApiKeyWithEnvironmentPermission } from "../types/api-keys";
 import {
   createApiKey,
@@ -49,6 +49,9 @@ vi.mock("@formbricks/database", () => ({
       delete: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+    },
+    feedbackRecordDirectory: {
+      count: vi.fn(),
     },
   },
 }));
@@ -510,6 +513,7 @@ describe("API Key Management", () => {
     });
 
     test("creates an API key with feedback record directory permissions", async () => {
+      vi.mocked(prisma.feedbackRecordDirectory.count).mockResolvedValueOnce(2);
       vi.mocked(prisma.apiKey.create).mockResolvedValueOnce(mockApiKey);
 
       await createApiKey("org123", "user123", {
@@ -518,6 +522,10 @@ describe("API Key Management", () => {
           { feedbackRecordDirectoryId: "dir1", permission: ApiKeyPermission.read },
           { feedbackRecordDirectoryId: "dir2", permission: ApiKeyPermission.write },
         ],
+      });
+
+      expect(prisma.feedbackRecordDirectory.count).toHaveBeenCalledWith({
+        where: { id: { in: ["dir1", "dir2"] }, organizationId: "org123" },
       });
 
       expect(prisma.apiKey.create).toHaveBeenCalledWith({
@@ -549,6 +557,7 @@ describe("API Key Management", () => {
     });
 
     test("creates an API key with both workspace and directory permissions", async () => {
+      vi.mocked(prisma.feedbackRecordDirectory.count).mockResolvedValueOnce(1);
       vi.mocked(prisma.apiKey.create).mockResolvedValueOnce(mockApiKey);
 
       await createApiKey("org123", "user123", {
@@ -573,6 +582,25 @@ describe("API Key Management", () => {
           apiKeyFeedbackRecordDirectories: true,
         },
       });
+    });
+
+    test("rejects when a feedbackRecordDirectoryId is not owned by the organization", async () => {
+      vi.mocked(prisma.feedbackRecordDirectory.count).mockResolvedValueOnce(1);
+
+      await expect(
+        createApiKey("org123", "user123", {
+          ...mockApiKeyData,
+          feedbackRecordDirectoryPermissions: [
+            { feedbackRecordDirectoryId: "dir1", permission: ApiKeyPermission.read },
+            { feedbackRecordDirectoryId: "foreign-dir", permission: ApiKeyPermission.read },
+          ],
+        })
+      ).rejects.toThrow(ResourceNotFoundError);
+
+      expect(prisma.feedbackRecordDirectory.count).toHaveBeenCalledWith({
+        where: { id: { in: ["dir1", "foreign-dir"] }, organizationId: "org123" },
+      });
+      expect(prisma.apiKey.create).not.toHaveBeenCalled();
     });
 
     test("rejects create input with duplicate feedbackRecordDirectoryId", async () => {
