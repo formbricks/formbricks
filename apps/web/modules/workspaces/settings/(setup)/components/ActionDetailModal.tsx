@@ -13,7 +13,6 @@ interface ActionDetailModalProps {
   actionClass: TActionClass;
   actionClasses: TActionClass[];
   isReadOnly: boolean;
-  otherEnvActionClasses: TActionClass[];
 }
 
 export const ActionDetailModal = ({
@@ -22,19 +21,12 @@ export const ActionDetailModal = ({
   actionClass,
   actionClasses,
   isReadOnly,
-  otherEnvActionClasses,
 }: ActionDetailModalProps) => {
   const { t } = useTranslation();
   const tabs = [
     {
       title: t("common.activity"),
-      children: (
-        <ActionActivityTab
-          otherEnvActionClasses={otherEnvActionClasses}
-          isReadOnly={isReadOnly}
-          actionClass={actionClass}
-        />
-      ),
+      children: <ActionActivityTab actionClass={actionClass} />,
     },
     {
       title: t("common.settings"),

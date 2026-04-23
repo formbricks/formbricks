@@ -30,7 +30,7 @@ export function EmbedSurveyPreviewEmail({
         </Text>
         <div className="text-sm" dangerouslySetInnerHTML={{ __html: html }} />
         <Text className="text-center text-sm text-slate-700">
-          {t("emails.embed_survey_preview_email_environment_id")}: {workspaceId}
+          {t("emails.embed_survey_preview_email_workspace_id")}: {workspaceId}
         </Text>
       </Container>
     </EmailTemplate>
@@ -38,5 +38,16 @@ export function EmbedSurveyPreviewEmail({
 }
 
 export default function EmbedSurveyPreviewEmailPreview(): React.JSX.Element {
-  return <EmbedSurveyPreviewEmail {...exampleData.embedSurveyPreviewEmail} />;
+  const previewData = exampleData.embedSurveyPreviewEmail as {
+    html: string;
+    workspaceId?: string;
+    environmentId?: string;
+  };
+
+  return (
+    <EmbedSurveyPreviewEmail
+      html={previewData.html}
+      workspaceId={previewData.workspaceId ?? previewData.environmentId ?? "workspace-preview"}
+    />
+  );
 }

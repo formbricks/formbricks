@@ -67,14 +67,7 @@ export const ActionSettingsTab = ({
 
   const renderActionForm = () => {
     if (actionClass.type === "code") {
-      return (
-        <>
-          <CodeActionForm form={form} isReadOnly={true} />
-          <p className="text-sm text-slate-600">
-            {t("workspace.actions.this_is_a_code_action_please_make_changes_in_your_code_base")}
-          </p>
-        </>
-      );
+      return <CodeActionForm form={form} isReadOnly={true} />;
     }
 
     if (actionClass.type === "noCode") {

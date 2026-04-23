@@ -11,14 +11,12 @@ import { ActionTableHeading } from "@/modules/workspaces/settings/(setup)/compon
 import { AddActionModal } from "@/modules/workspaces/settings/(setup)/components/AddActionModal";
 
 interface ActionSettingsCardProps {
-  otherEnvActionClasses: TActionClass[];
   workspaceId: string;
   actionClasses: TActionClass[];
   isReadOnly: boolean;
   locale: TUserLocale;
 }
 export const ActionSettingsCard = ({
-  otherEnvActionClasses,
   workspaceId,
   actionClasses,
   isReadOnly,
@@ -36,10 +34,7 @@ export const ActionSettingsCard = ({
           onClick: () => setIsActionModalOpen(true),
           variant: "default",
         }}>
-        <ActionClassesTable
-          otherEnvActionClasses={otherEnvActionClasses}
-          actionClasses={actionClasses}
-          isReadOnly={isReadOnly}>
+        <ActionClassesTable actionClasses={actionClasses} isReadOnly={isReadOnly}>
           <ActionTableHeading />
           {actionClasses.map((actionClass) => (
             <ActionClassDataRow key={actionClass.id} actionClass={actionClass} locale={locale} />
