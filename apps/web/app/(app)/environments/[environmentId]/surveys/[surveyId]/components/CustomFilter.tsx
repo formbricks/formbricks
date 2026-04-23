@@ -29,6 +29,7 @@ import {
 import { getResponsesDownloadUrlAction } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/actions";
 import { downloadResponsesFile } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/utils";
 import { getFormattedFilters, getTodayDate } from "@/app/lib/surveys/surveys";
+import { formatDateTimeForDisplay } from "@/lib/utils/datetime";
 import { useClickOutside } from "@/lib/utils/hooks/useClickOutside";
 import { Calendar } from "@/modules/ui/components/calendar";
 import {
@@ -37,6 +38,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
+import { Input } from "@/modules/ui/components/input";
 import { PopoverTriggerButton, ResponseFilter } from "./ResponseFilter";
 
 enum DateSelected {
@@ -125,8 +127,20 @@ const getDateRangeLabel = (from: Date, to: Date, t: TFunction) => {
   return matchedRange ? matchedRange.label : getFilterDropDownLabels(t).CUSTOM_RANGE;
 };
 
+const getTimeValue = (date: Date | undefined, fallback: string) => {
+  if (!date) return fallback;
+  return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+};
+
+const applyTimeToDate = (date: Date, timeValue: string) => {
+  const [hours, minutes] = timeValue.split(":").map(Number);
+  const nextDate = new Date(date);
+  nextDate.setHours(Number.isNaN(hours) ? 0 : hours, Number.isNaN(minutes) ? 0 : minutes, 0, 0);
+  return nextDate;
+};
+
 export const CustomFilter = ({ survey }: CustomFilterProps) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { selectedFilter, dateRange, setDateRange, resetState } = useResponseFilter();
   const [filterRange, setFilterRange] = useState(
     dateRange.from && dateRange.to
@@ -139,6 +153,8 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
   const [isDownloadDropDownOpen, setIsDownloadDropDownOpen] = useState<boolean>(false);
   const [hoveredRange, setHoveredRange] = useState<DateRange | null>(null);
   const [isDownloading, setIsDownloading] = useState<boolean>(false);
+  const [fromTime, setFromTime] = useState("00:00");
+  const [toTime, setToTime] = useState("23:59");
 
   const firstMountRef = useRef(true);
 
@@ -154,6 +170,13 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
       resetState();
     }
   }, [survey?.id, resetState]);
+
+  useEffect(() => {
+    if (!isDatePickerOpen) return;
+
+    setFromTime(getTimeValue(dateRange.from, "00:00"));
+    setToTime(getTimeValue(dateRange.to, "23:59"));
+  }, [dateRange.from, dateRange.to, isDatePickerOpen]);
 
   const filters = useMemo(
     () => getFormattedFilters(survey, selectedFilter, dateRange),
@@ -210,12 +233,12 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
       // Check if the selected date is after the current 'to' date
       if (startOfRange > dateRange?.to!) {
         const nextDay = new Date(startOfRange);
-        nextDay.setDate(nextDay.getDate() + 1);
         nextDay.setHours(23, 59, 59, 999);
         setDateRange({ from: startOfRange, to: nextDay });
       } else {
         setDateRange((prevData) => ({ from: startOfRange, to: prevData.to }));
       }
+      setFromTime("00:00");
       setSelectingDate(DateSelected.TO);
     } else {
       const endOfRange = new Date(date);
@@ -224,15 +247,45 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
       // Check if the selected date is before the current 'from' date
       if (endOfRange < dateRange?.from!) {
         const previousDay = new Date(endOfRange);
-        previousDay.setDate(previousDay.getDate() - 1);
         previousDay.setHours(0, 0, 0, 0); // Set to the start of the selected day
         setDateRange({ from: previousDay, to: endOfRange });
       } else {
         setDateRange((prevData) => ({ from: prevData?.from, to: endOfRange }));
       }
+      setToTime("23:59");
       setIsDatePickerOpen(false);
       setSelectingDate(DateSelected.FROM);
     }
+  };
+
+  const handleFromTimeChange = (timeValue: string) => {
+    setFromTime(timeValue);
+
+    if (!dateRange.from) return;
+
+    const nextFrom = applyTimeToDate(dateRange.from, timeValue);
+    setDateRange((prevData) => {
+      if (prevData.to && nextFrom > prevData.to) {
+        return { from: nextFrom, to: nextFrom };
+      }
+
+      return { from: nextFrom, to: prevData.to };
+    });
+  };
+
+  const handleToTimeChange = (timeValue: string) => {
+    setToTime(timeValue);
+
+    if (!dateRange.to) return;
+
+    const nextTo = applyTimeToDate(dateRange.to, timeValue);
+    setDateRange((prevData) => {
+      if (prevData.from && nextTo < prevData.from) {
+        return { from: nextTo, to: nextTo };
+      }
+
+      return { from: prevData.from, to: nextTo };
+    });
   };
 
   const handleDatePickerClose = () => {
@@ -269,6 +322,44 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
   };
 
   useClickOutside(datePickerRef, () => handleDatePickerClose());
+
+  const customRangeLabel =
+    dateRange?.from && dateRange?.to
+      ? `${formatDateTimeForDisplay(dateRange.from, i18n.resolvedLanguage ?? "en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        })} - ${formatDateTimeForDisplay(dateRange.to, i18n.resolvedLanguage ?? "en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        })}`
+      : `${
+          dateRange?.from
+            ? formatDateTimeForDisplay(dateRange.from, i18n.resolvedLanguage ?? "en-US", {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })
+            : "Select first date"
+        } - ${
+          dateRange?.to
+            ? formatDateTimeForDisplay(dateRange.to, i18n.resolvedLanguage ?? "en-US", {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              })
+            : "Select last date"
+        }`;
+
   return (
     <div className="relative flex justify-between">
       <div className="flex justify-stretch gap-x-1.5">
@@ -280,11 +371,7 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
           }}>
           <DropdownMenuTrigger asChild>
             <PopoverTriggerButton isOpen={isFilterDropDownOpen}>
-              {filterRange === getFilterDropDownLabels(t).CUSTOM_RANGE
-                ? `${dateRange?.from ? format(dateRange?.from, "dd LLL") : "Select first date"} - ${
-                    dateRange?.to ? format(dateRange.to, "dd LLL") : "Select last date"
-                  }`
-                : filterRange}
+              {filterRange === getFilterDropDownLabels(t).CUSTOM_RANGE ? customRangeLabel : filterRange}
             </PopoverTriggerButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent>
@@ -427,20 +514,34 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
         </DropdownMenu>
       </div>
       {isDatePickerOpen && (
-        <div ref={datePickerRef} className="absolute top-full z-50 my-2 rounded-md border bg-white">
+        <div
+          ref={datePickerRef}
+          className="absolute top-full z-50 my-2 overflow-hidden rounded-md border bg-white shadow-lg">
           <Calendar
             autoFocus
             mode="range"
             defaultMonth={dateRange?.from}
             selected={hoveredRange || dateRange}
             numberOfMonths={2}
-            onDayClick={(date) => handleDateChange(date)}
+            onDayClick={(day) => handleDateChange(day)}
             onDayMouseEnter={handleDateHoveredChange}
             onDayMouseLeave={() => setHoveredRange(null)}
             classNames={{
               day_today: "hover:bg-slate-200 bg-white",
             }}
           />
+          <div className="border-t border-slate-200 bg-slate-50 p-3">
+            <div className="grid grid-cols-2 gap-3">
+              <label className="flex flex-col gap-1 text-xs font-medium text-slate-600">
+                <span>{t("common.from")}</span>
+                <Input type="time" value={fromTime} onChange={(e) => handleFromTimeChange(e.target.value)} />
+              </label>
+              <label className="flex flex-col gap-1 text-xs font-medium text-slate-600">
+                <span>{t("common.to")}</span>
+                <Input type="time" value={toTime} onChange={(e) => handleToTimeChange(e.target.value)} />
+              </label>
+            </div>
+          </div>
         </div>
       )}
     </div>

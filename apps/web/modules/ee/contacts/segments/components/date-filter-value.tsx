@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TDateOperator, TSegmentFilterValue, TTimeUnit } from "@formbricks/types/segment";
 import { cn } from "@/lib/cn";
-import { toUTCDateString } from "@/modules/ee/contacts/segments/lib/date-utils";
+import { dateToUTCISOString, inputValueToDate } from "@/lib/utils/date-input";
+import { DatePicker } from "@/modules/ui/components/date-picker";
 import { Input } from "@/modules/ui/components/input";
 import {
   Select,
@@ -76,24 +77,22 @@ export function DateFilterValue({ operator, value, onChange, viewOnly }: DateFil
 
     return (
       <div className="flex items-center gap-2">
-        <Input
-          type="date"
-          className="h-9 w-auto bg-white"
+        <DatePicker
+          date={betweenValue[0] ? inputValueToDate(betweenValue[0].split("T")[0]) : null}
+          updateSurveyDate={(date) => onChange([dateToUTCISOString(date), betweenValue[1]])}
           disabled={viewOnly}
-          value={betweenValue[0] ? betweenValue[0].split("T")[0] : ""}
-          onChange={(e) => {
-            onChange([toUTCDateString(e.target.value), betweenValue[1]]);
-          }}
+          buttonClassName="h-9 w-full min-w-[180px] bg-white"
+          className="flex-1"
+          placeholder={t("environments.surveys.edit.validation.start_date")}
         />
         <span className="text-sm text-slate-600">{t("common.and")}</span>
-        <Input
-          type="date"
-          className="h-9 w-auto bg-white"
+        <DatePicker
+          date={betweenValue[1] ? inputValueToDate(betweenValue[1].split("T")[0]) : null}
+          updateSurveyDate={(date) => onChange([betweenValue[0], dateToUTCISOString(date)])}
           disabled={viewOnly}
-          value={betweenValue[1] ? betweenValue[1].split("T")[0] : ""}
-          onChange={(e) => {
-            onChange([betweenValue[0], toUTCDateString(e.target.value)]);
-          }}
+          buttonClassName="h-9 w-full min-w-[180px] bg-white"
+          className="flex-1"
+          placeholder={t("environments.surveys.edit.validation.end_date")}
         />
       </div>
     );
@@ -104,14 +103,12 @@ export function DateFilterValue({ operator, value, onChange, viewOnly }: DateFil
   const dateValue = typeof value === "string" ? value : "";
 
   return (
-    <Input
-      type="date"
-      className="h-9 w-auto bg-white"
+    <DatePicker
+      date={dateValue ? inputValueToDate(dateValue.split("T")[0]) : null}
+      updateSurveyDate={(date) => onChange(dateToUTCISOString(date))}
       disabled={viewOnly}
-      value={dateValue ? dateValue.split("T")[0] : ""}
-      onChange={(e) => {
-        onChange(toUTCDateString(e.target.value));
-      }}
+      buttonClassName="h-9 w-full min-w-[180px] bg-white"
+      placeholder={t("common.pick_a_date")}
     />
   );
 }

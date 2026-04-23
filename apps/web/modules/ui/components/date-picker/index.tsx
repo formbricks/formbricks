@@ -1,124 +1,100 @@
 "use client";
 
-import { format } from "date-fns";
 import { CalendarCheckIcon, CalendarIcon, XIcon } from "lucide-react";
-import { useRef, useState } from "react";
-import Calendar from "react-calendar";
+import { type ComponentProps, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
+import { formatDateForDisplay } from "@/lib/utils/datetime";
 import { Button } from "@/modules/ui/components/button";
+import { Calendar } from "@/modules/ui/components/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
-import "./styles.css";
-
-const getOrdinalSuffix = (day: number) => {
-  if (day > 3 && day < 21) return "th"; // 11th, 12th, 13th, etc.
-  switch (day % 10) {
-    case 1:
-      return "st";
-    case 2:
-      return "nd";
-    case 3:
-      return "rd";
-    default:
-      return "th";
-  }
-};
 
 interface DatePickerProps {
   date: Date | null;
   updateSurveyDate: (date: Date) => void;
   minDate?: Date;
+  maxDate?: Date;
   onClearDate?: () => void;
+  disabled?: boolean;
+  placeholder?: string;
+  className?: string;
+  buttonClassName?: string;
 }
 
-export const DatePicker = ({ date, updateSurveyDate, minDate, onClearDate }: DatePickerProps) => {
-  const { t } = useTranslation();
-  const [value, onChange] = useState<Date | undefined>(date ? new Date(date) : undefined);
-  const [formattedDate, setFormattedDate] = useState<string | undefined>(
-    date ? format(new Date(date), "do MMM, yyyy") : undefined
-  );
+export const DatePicker = ({
+  date,
+  updateSurveyDate,
+  minDate,
+  maxDate,
+  onClearDate,
+  disabled,
+  placeholder,
+  className,
+  buttonClassName,
+}: DatePickerProps) => {
+  const { t, i18n } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
 
-  const btnRef = useRef<HTMLButtonElement>(null);
+  const resolvedLocale = i18n.resolvedLanguage ?? "en-US";
 
-  const onDateChange = (date: Date) => {
-    if (date) {
-      updateSurveyDate(date);
-      const day = date.getDate();
-      const ordinalSuffix = getOrdinalSuffix(day);
-      const formatted = format(date, `d'${ordinalSuffix}' MMM, yyyy`);
-      setFormattedDate(formatted);
-      onChange(date);
-      setIsOpen(false);
+  const selectedDate = useMemo(() => date ?? undefined, [date]);
+
+  const disabledDays = useMemo<ComponentProps<typeof Calendar>["disabled"]>(() => {
+    if (disabled) {
+      return true;
     }
-  };
+
+    const matchers = [] as NonNullable<ComponentProps<typeof Calendar>["disabled"]>[];
+
+    if (minDate) {
+      matchers.push({ before: minDate });
+    }
+
+    if (maxDate) {
+      matchers.push({ after: maxDate });
+    }
+
+    return matchers.length > 0 ? (matchers as ComponentProps<typeof Calendar>["disabled"]) : undefined;
+  }, [disabled, maxDate, minDate]);
+
+  const formattedDate = useMemo(() => {
+    if (!date) return undefined;
+    return formatDateForDisplay(date, resolvedLocale);
+  }, [date, resolvedLocale]);
 
   const handleClearDate = () => {
     if (onClearDate) {
       onClearDate();
-      setFormattedDate(undefined);
-      onChange(undefined);
     }
   };
 
   return (
-    <div className="flex items-center gap-2">
+    <div className={cn("flex items-center gap-2", className)}>
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
-          {formattedDate ? (
-            <Button
-              variant={"ghost"}
-              className={cn(
-                "w-[280px] justify-start border border-slate-300 bg-white text-left font-normal",
-                !formattedDate && "text-muted-foreground bg-slate-800"
-              )}
-              ref={btnRef}>
-              <CalendarCheckIcon className="mr-2 h-4 w-4" />
-              {formattedDate}
-            </Button>
-          ) : (
-            <Button
-              variant={"ghost"}
-              className={cn(
-                "w-[280px] justify-start border border-slate-300 bg-white text-left font-normal",
-                !formattedDate && "text-muted-foreground"
-              )}
-              onClick={() => setIsOpen(true)}
-              ref={btnRef}>
-              <CalendarIcon className="mr-2 h-4 w-4" />
-              <span>{t("common.pick_a_date")}</span>
-            </Button>
-          )}
+          <Button
+            variant="outline"
+            disabled={disabled}
+            className={cn(
+              "justify-start border-slate-300 bg-white text-left font-normal text-slate-800 shadow-none hover:bg-slate-50",
+              !formattedDate && "text-slate-500",
+              buttonClassName
+            )}>
+            {formattedDate ? <CalendarCheckIcon className="h-4 w-4" /> : <CalendarIcon className="h-4 w-4" />}
+            <span>{formattedDate ?? placeholder ?? t("common.pick_a_date")}</span>
+          </Button>
         </PopoverTrigger>
-        <PopoverContent align="start" className="min-w-96 rounded-lg px-4 py-3">
+        <PopoverContent align="start" className="w-auto p-0">
           <Calendar
-            value={value}
-            onChange={(date) => onDateChange(date as Date)}
-            minDate={minDate || new Date()}
-            className="!border-0"
-            tileClassName={({ date }: { date: Date }) => {
-              const baseClass =
-                "hover:fb-bg-input-bg-selected fb-rounded-custom fb-h-9 fb-p-0 fb-mt-1 fb-font-normal fb-text-heading aria-selected:fb-opacity-100 focus:fb-ring-2 focus:fb-bg-slate-200";
-              // today's date class
-              if (
-                date.getDate() === new Date().getDate() &&
-                date.getMonth() === new Date().getMonth() &&
-                date.getFullYear() === new Date().getFullYear()
-              ) {
-                return `${baseClass} !fb-bg-brand !fb-border-border-highlight !fb-text-heading focus:fb-ring-2 focus:fb-bg-slate-200`;
-              }
-              // active date class
-              if (
-                date.getDate() === value?.getDate() &&
-                date.getMonth() === value?.getMonth() &&
-                date.getFullYear() === value?.getFullYear()
-              ) {
-                return `${baseClass} !fb-bg-brand !fb-border-border-highlight !fb-text-heading`;
-              }
-
-              return baseClass;
+            mode="single"
+            selected={selectedDate}
+            defaultMonth={selectedDate ?? minDate ?? new Date()}
+            onSelect={(nextDate) => {
+              if (!nextDate) return;
+              updateSurveyDate(nextDate);
+              setIsOpen(false);
             }}
-            showNeighboringMonth={false}
+            disabled={disabledDays}
           />
         </PopoverContent>
       </Popover>
@@ -126,6 +102,7 @@ export const DatePicker = ({ date, updateSurveyDate, minDate, onClearDate }: Dat
         <Button
           variant="outline"
           size="sm"
+          disabled={disabled}
           onClick={handleClearDate}
           className="h-8 w-8 p-0 hover:bg-slate-200">
           <XIcon className="h-4 w-4" />

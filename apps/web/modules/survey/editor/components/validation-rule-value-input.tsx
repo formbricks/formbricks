@@ -4,6 +4,8 @@ import { useTranslation } from "react-i18next";
 import { ALLOWED_FILE_EXTENSIONS, TAllowedFileExtension } from "@formbricks/types/storage";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TValidationRule, TValidationRuleType } from "@formbricks/types/surveys/validation-rules";
+import { dateToInputValue, inputValueToDate } from "@/lib/utils/date-input";
+import { DatePicker } from "@/modules/ui/components/date-picker";
 import { Input } from "@/modules/ui/components/input";
 import { MultiSelect } from "@/modules/ui/components/multi-select";
 import {
@@ -49,28 +51,28 @@ export const ValidationRuleValueInput = ({
 
   // Special handling for date range inputs
   if (ruleType === "isBetween" || ruleType === "isNotBetween") {
+    const [startDate, endDate] = (currentValue as string)?.split(",") ?? ["", ""];
+
     return (
       <div className="flex w-full items-center gap-2">
-        <Input
-          type="date"
-          value={(currentValue as string)?.split(",")?.[0] ?? ""}
-          onChange={(e) => {
-            const currentEndDate = (currentValue as string)?.split(",")?.[1] ?? "";
-            onChange(`${e.target.value},${currentEndDate}`);
+        <DatePicker
+          date={startDate ? inputValueToDate(startDate) : null}
+          updateSurveyDate={(date) => {
+            onChange(`${dateToInputValue(date)},${endDate}`);
           }}
           placeholder={t("environments.surveys.edit.validation.start_date")}
-          className="h-9 flex-1 bg-white"
+          buttonClassName="h-9 w-full bg-white"
+          className="flex-1"
         />
         <span className="text-sm text-slate-500">{t("common.and")}</span>
-        <Input
-          type="date"
-          value={(currentValue as string)?.split(",")?.[1] ?? ""}
-          onChange={(e) => {
-            const currentStartDate = (currentValue as string)?.split(",")?.[0] ?? "";
-            onChange(`${currentStartDate},${e.target.value}`);
+        <DatePicker
+          date={endDate ? inputValueToDate(endDate) : null}
+          updateSurveyDate={(date) => {
+            onChange(`${startDate},${dateToInputValue(date)}`);
           }}
           placeholder={t("environments.surveys.edit.validation.end_date")}
-          className="h-9 flex-1 bg-white"
+          buttonClassName="h-9 w-full bg-white"
+          className="flex-1"
         />
       </div>
     );
@@ -124,6 +126,19 @@ export const ValidationRuleValueInput = ({
   }
 
   // Default text/number input
+  if (htmlInputType === "date") {
+    const dateValue = typeof currentValue === "string" ? currentValue : "";
+
+    return (
+      <DatePicker
+        date={dateValue ? inputValueToDate(dateValue) : null}
+        updateSurveyDate={(date) => onChange(dateToInputValue(date))}
+        placeholder={config.valuePlaceholder}
+        buttonClassName="h-9 min-w-[180px] bg-white"
+      />
+    );
+  }
+
   return (
     <Input
       type={htmlInputType}
