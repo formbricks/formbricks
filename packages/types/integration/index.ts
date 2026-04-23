@@ -1,12 +1,12 @@
 import { z } from "zod";
-import { TIntegrationAirtable, ZIntegrationAirtableConfig, ZIntegrationAirtableInput } from "./airtable";
+import { type TIntegrationAirtable, ZIntegrationAirtableConfig, ZIntegrationAirtableInput } from "./airtable";
 import {
-  TIntegrationGoogleSheets,
+  type TIntegrationGoogleSheets,
   ZIntegrationGoogleSheetsConfig,
   ZIntegrationGoogleSheetsInput,
 } from "./google-sheet";
-import { TIntegrationNotion, ZIntegrationNotionConfig, ZIntegrationNotionInput } from "./notion";
-import { TIntegrationSlack, ZIntegrationSlackConfig, ZIntegrationSlackInput } from "./slack";
+import { type TIntegrationNotion, ZIntegrationNotionConfig, ZIntegrationNotionInput } from "./notion";
+import { type TIntegrationSlack, ZIntegrationSlackConfig, ZIntegrationSlackInput } from "./slack";
 
 export const ZIntegrationType = z.enum(["googleSheets", "n8n", "airtable", "notion", "slack"]);
 export type TIntegrationType = z.infer<typeof ZIntegrationType>;
