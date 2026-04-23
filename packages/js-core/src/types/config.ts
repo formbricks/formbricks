@@ -96,6 +96,8 @@ export interface TStylingColor {
   dark?: string | null | undefined;
 }
 
+type TDimension = number | string | null;
+
 export interface TBaseStyling {
   brandColor?: TStylingColor | null;
   accentBgColor?: TStylingColor | null;
@@ -105,47 +107,47 @@ export interface TBaseStyling {
   // Buttons
   buttonBgColor?: TStylingColor | null;
   buttonTextColor?: TStylingColor | null;
-  buttonBorderRadius?: number | string | null;
-  buttonHeight?: number | string | null;
-  buttonFontSize?: number | string | null;
-  buttonFontWeight?: string | number | null;
-  buttonPaddingX?: number | string | null;
-  buttonPaddingY?: number | string | null;
+  buttonBorderRadius?: TDimension;
+  buttonHeight?: TDimension;
+  buttonFontSize?: TDimension;
+  buttonFontWeight?: TDimension;
+  buttonPaddingX?: TDimension;
+  buttonPaddingY?: TDimension;
 
   // Inputs
   inputBgColor?: TStylingColor | null;
   inputBorderColor?: TStylingColor | null;
-  inputBorderRadius?: number | string | null;
-  inputHeight?: number | string | null;
+  inputBorderRadius?: TDimension;
+  inputHeight?: TDimension;
   inputTextColor?: TStylingColor | null;
-  inputFontSize?: number | string | null;
+  inputFontSize?: TDimension;
   inputPlaceholderOpacity?: number | null;
-  inputPaddingX?: number | string | null;
-  inputPaddingY?: number | string | null;
+  inputPaddingX?: TDimension;
+  inputPaddingY?: TDimension;
   inputShadow?: string | null;
 
   // Options
   optionBgColor?: TStylingColor | null;
   optionLabelColor?: TStylingColor | null;
   optionBorderColor?: TStylingColor | null;
-  optionBorderRadius?: number | string | null;
-  optionPaddingX?: number | string | null;
-  optionPaddingY?: number | string | null;
-  optionFontSize?: number | string | null;
+  optionBorderRadius?: TDimension;
+  optionPaddingX?: TDimension;
+  optionPaddingY?: TDimension;
+  optionFontSize?: TDimension;
 
   // Headlines & Descriptions
-  elementHeadlineFontSize?: number | string | null;
-  elementHeadlineFontWeight?: string | number | null;
+  elementHeadlineFontSize?: TDimension;
+  elementHeadlineFontWeight?: TDimension;
   elementHeadlineColor?: TStylingColor | null;
-  elementDescriptionFontSize?: number | string | null;
-  elementDescriptionFontWeight?: string | number | null;
+  elementDescriptionFontSize?: TDimension;
+  elementDescriptionFontWeight?: TDimension;
   elementDescriptionColor?: TStylingColor | null;
-  elementUpperLabelFontSize?: number | string | null;
+  elementUpperLabelFontSize?: TDimension;
   elementUpperLabelColor?: TStylingColor | null;
-  elementUpperLabelFontWeight?: string | number | null;
+  elementUpperLabelFontWeight?: TDimension;
 
   // Progress Bar
-  progressTrackHeight?: number | string | null;
+  progressTrackHeight?: TDimension;
   progressTrackBgColor?: TStylingColor | null;
   progressIndicatorBgColor?: TStylingColor | null;
 
@@ -153,7 +155,7 @@ export interface TBaseStyling {
   cardBorderColor?: TStylingColor | null;
   highlightBorderColor?: TStylingColor | null;
   isDarkModeEnabled?: boolean | null;
-  roundness?: number | string | null;
+  roundness?: TDimension;
   cardArrangement?: {
     linkSurveys: "casual" | "straight" | "simple";
     appSurveys: "casual" | "straight" | "simple";
