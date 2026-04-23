@@ -27,19 +27,19 @@ interface ManageIntegrationProps {
   airtableArray: TIntegrationItem[];
   locale: TUserLocale;
   showReconnectButton: boolean;
-  handleAirtableAuthorization: () => void;
+  handleAirtableAuthorization: () => Promise<void>;
 }
 
-export const ManageIntegration = (props: ManageIntegrationProps) => {
-  const {
-    airtableIntegration,
-    environmentId,
-    setIsConnected,
-    surveys,
-    airtableArray,
-    showReconnectButton,
-    handleAirtableAuthorization,
-  } = props;
+export const ManageIntegration = ({
+  airtableIntegration,
+  environmentId,
+  setIsConnected,
+  surveys,
+  airtableArray,
+  showReconnectButton,
+  handleAirtableAuthorization,
+  locale,
+}: ManageIntegrationProps) => {
   const { t } = useTranslation();
 
   const tableHeaders = [
@@ -153,9 +153,7 @@ export const ManageIntegration = (props: ManageIntegrationProps) => {
               <div className="col-span-2 text-center">{data.surveyName}</div>
               <div className="col-span-2 text-center">{data.tableName}</div>
               <div className="col-span-2 text-center">{data.elements}</div>
-              <div className="col-span-2 text-center">
-                {timeSince(data.createdAt.toString(), props.locale)}
-              </div>
+              <div className="col-span-2 text-center">{timeSince(data.createdAt.toString(), locale)}</div>
             </button>
           ))}
         </div>
