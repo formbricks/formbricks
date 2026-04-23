@@ -1,6 +1,6 @@
-!function () {
+!(function () {
   var appUrl = "https://app.formbricks.com"; // use PUBLIC_URL if you are using multi-domain setup, otherwise use WEBAPP_URL
-  var environmentId = "clgwcwp4z000lpf0hur7pzbuv";
+  var workspaceId = "clgwcwp4z000lpf0hur7pzbuv";
 
   var t = document.createElement("script");
   t.type = "text/javascript";
@@ -11,6 +11,6 @@
   e.parentNode.insertBefore(t, e);
 
   setTimeout(function () {
-    window.formbricks.setup({ environmentId: environmentId, appUrl: appUrl });
+    window.formbricks.setup({ workspaceId: workspaceId, appUrl: appUrl });
   }, 500);
-}();
+})();

@@ -49,18 +49,18 @@ These limits are expected to be enforced at the gateway layer in Formbricks v5 a
 | `GET, POST, PUT, PATCH, DELETE /api/v1/management/*` (API key auth only) | 100 requests | 1 minute   | API key ID     |
 | `POST /api/v1/management/storage` (API key auth only)                    | 5 requests   | 1 minute   | API key ID     |
 | `GET, POST, PUT, PATCH, DELETE /api/v1/webhooks/*` (API key auth only)   | 100 requests | 1 minute   | API key ID     |
-| `GET /api/v1/client/[environmentId]/environment`                         | 100 requests | 1 minute   | IP hash        |
-| `POST /api/v1/client/[environmentId]/responses`                          | 100 requests | 1 minute   | IP hash        |
-| `PUT /api/v1/client/[environmentId]/responses/[responseId]`              | 100 requests | 1 minute   | IP hash        |
-| `POST /api/v1/client/[environmentId]/displays`                           | 100 requests | 1 minute   | IP hash        |
-| `POST /api/v1/client/[environmentId]/user`                               | 100 requests | 1 minute   | IP hash        |
-| `POST /api/v1/client/[environmentId]/storage`                            | 5 requests   | 1 minute   | IP hash        |
-| `POST /api/v2/client/[environmentId]/responses`                          | 100 requests | 1 minute   | IP hash        |
-| `PUT /api/v2/client/[environmentId]/responses/[responseId]`              | 100 requests | 1 minute   | IP hash        |
-| `POST /api/v2/client/[environmentId]/displays`                           | 100 requests | 1 minute   | IP hash        |
-| `POST /api/v2/client/[environmentId]/storage`                            | 5 requests   | 1 minute   | IP hash        |
-| `DELETE /storage/[environmentId]/public/[fileName]` (API key auth only)  | 5 requests   | 1 minute   | API key ID     |
-| `DELETE /storage/[environmentId]/private/[fileName]` (API key auth only) | 5 requests   | 1 minute   | API key ID     |
+| `GET /api/v1/client/[workspaceId]/environment`                         | 100 requests | 1 minute   | IP hash        |
+| `POST /api/v1/client/[workspaceId]/responses`                          | 100 requests | 1 minute   | IP hash        |
+| `PUT /api/v1/client/[workspaceId]/responses/[responseId]`              | 100 requests | 1 minute   | IP hash        |
+| `POST /api/v1/client/[workspaceId]/displays`                           | 100 requests | 1 minute   | IP hash        |
+| `POST /api/v1/client/[workspaceId]/user`                               | 100 requests | 1 minute   | IP hash        |
+| `POST /api/v1/client/[workspaceId]/storage`                            | 5 requests   | 1 minute   | IP hash        |
+| `POST /api/v2/client/[workspaceId]/responses`                          | 100 requests | 1 minute   | IP hash        |
+| `PUT /api/v2/client/[workspaceId]/responses/[responseId]`              | 100 requests | 1 minute   | IP hash        |
+| `POST /api/v2/client/[workspaceId]/displays`                           | 100 requests | 1 minute   | IP hash        |
+| `POST /api/v2/client/[workspaceId]/storage`                            | 5 requests   | 1 minute   | IP hash        |
+| `DELETE /storage/[workspaceId]/public/[fileName]` (API key auth only)  | 5 requests   | 1 minute   | API key ID     |
+| `DELETE /storage/[workspaceId]/private/[fileName]` (API key auth only) | 5 requests   | 1 minute   | API key ID     |
 
 Session-authenticated `/api/v1/management/*`, `/api/v1/management/me`, `/api/v1/management/storage`, and
 `DELETE /storage/...` requests are **not** covered by the current Envoy policies and remain app-enforced.
@@ -77,9 +77,9 @@ These are the limits that still run inside the Formbricks application server:
 | `api.v1`                      | 100 requests | 1 minute   | Session user ID               | Session-authenticated v1 management routes, `/api/v1/management/me`, and `/api/v1/integrations/*`                                                         |
 | `api.v2`                      | 100 requests | 1 minute   | API key ID                    | Authenticated v2 API wrapper outside the Envoy-managed `/api/v2/client/*` subset                                                                          |
 | `api.v3`                      | 100 requests | 1 minute   | API key ID or session user ID | v3 API wrapper                                                                                                                                            |
-| `api.client`                  | 100 requests | 1 minute   | IP hash                       | Uncovered client routes such as `GET /api/v1/client/og`, `GET /api/v2/client/[environmentId]/environment`, and `POST /api/v2/client/[environmentId]/user` |
+| `api.client`                  | 100 requests | 1 minute   | IP hash                       | Uncovered client routes such as `GET /api/v1/client/og`, `GET /api/v2/client/[workspaceId]/environment`, and `POST /api/v2/client/[workspaceId]/user` |
 | `storage.upload`              | 5 requests   | 1 minute   | Session user ID               | Session-authenticated `POST /api/v1/management/storage`                                                                                                   |
-| `storage.delete`              | 5 requests   | 1 minute   | Session user ID               | Session-authenticated `DELETE /storage/[environmentId]/[accessType]/[fileName]`                                                                           |
+| `storage.delete`              | 5 requests   | 1 minute   | Session user ID               | Session-authenticated `DELETE /storage/[workspaceId]/[accessType]/[fileName]`                                                                           |
 | `actions.emailUpdate`         | 3 requests   | 60 minutes | User ID                       | Profile email update action                                                                                                                               |
 | `actions.surveyFollowUp`      | 50 requests  | 60 minutes | Organization ID               | Survey follow-up email processing                                                                                                                         |
 | `actions.sendLinkSurveyEmail` | 10 requests  | 60 minutes | IP hash                       | Link survey email send action                                                                                                                             |
