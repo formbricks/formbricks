@@ -359,12 +359,12 @@ describe("Tests for updateSurvey", () => {
 
 describe("Tests for getSurveyCount service", () => {
   describe("Happy Path", () => {
-    test("Counts the total number of surveys for a given environment ID", async () => {
+    test("Counts the total number of surveys for a given workspace ID", async () => {
       const count = await getSurveyCount(mockId);
       expect(count).toEqual(1);
     });
 
-    test("Returns zero count when there are no surveys for a given environment ID", async () => {
+    test("Returns zero count when there are no surveys for a given workspace ID", async () => {
       prisma.survey.count.mockResolvedValue(0);
       const count = await getSurveyCount(mockId);
       expect(count).toEqual(0);
@@ -644,7 +644,6 @@ describe("Tests for createSurvey", () => {
 
   beforeEach(() => {
     vi.mocked(getActionClasses).mockResolvedValue(mockActionClasses as TActionClass[]);
-    // environment model removed - no mock needed
   });
 
   describe("Happy Path", () => {

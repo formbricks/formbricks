@@ -17,7 +17,7 @@ export const createContactEndpoint: ZodOpenApiOperationObject = {
       "application/json": {
         schema: ZContactCreateRequest,
         example: {
-          environmentId: "env_01h2xce9q8p3w4x5y6z7a8b9c0",
+          workspaceId: "cm01h2xce9q8p3w4x5y6z7a8b9c0",
           attributes: {
             email: "john.doe@example.com",
             firstName: "John",
@@ -38,7 +38,7 @@ export const createContactEndpoint: ZodOpenApiOperationObject = {
           example: {
             id: "ctc_01h2xce9q8p3w4x5y6z7a8b9c2",
             createdAt: "2023-01-01T12:00:00.000Z",
-            environmentId: "env_01h2xce9q8p3w4x5y6z7a8b9c0",
+            workspaceId: "cm01h2xce9q8p3w4x5y6z7a8b9c0",
             attributes: {
               email: "john.doe@example.com",
               firstName: "John",

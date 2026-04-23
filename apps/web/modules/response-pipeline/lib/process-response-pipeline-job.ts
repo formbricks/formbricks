@@ -30,7 +30,7 @@ const getPipelineLogContext = (
   context: Parameters<JobHandler<TResponsePipelineJobData>>[1]
 ) => ({
   attempt: context.attempt,
-  environmentId: data.environmentId,
+  workspaceId: data.workspaceId,
   event: data.event,
   jobId: context.jobId,
   jobName: context.jobName,

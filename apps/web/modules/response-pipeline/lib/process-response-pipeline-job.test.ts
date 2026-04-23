@@ -106,7 +106,7 @@ vi.mock("@formbricks/logger", () => ({
 }));
 
 const baseData: TResponsePipelineJobData = {
-  environmentId: "env_123",
+  workspaceId: "ws_123",
   event: "responseCreated",
   response: {
     contact: null,
@@ -663,7 +663,7 @@ describe("processResponsePipelineJob", () => {
 
     expect(mockLoggerError).toHaveBeenCalledWith(
       expect.objectContaining({
-        environmentId: "env_123",
+        workspaceId: "ws_123",
         err: expect.any(UnrecoverableError),
         jobId: "job_123",
         responseId: "response_123",
