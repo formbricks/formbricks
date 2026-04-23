@@ -254,23 +254,14 @@ describe("no-code-event-listeners file", () => {
     (document.removeEventListener as Mock).mockRestore();
   });
 
-  test("addExitIntentListener adds mouseleave to body", () => {
-    // JSDOM doesn't always have body != null, so let's ensure there's one
+  test("addExitIntentListener adds mouseleave to document", () => {
+    const addEventListenerMock = vi.fn();
     vi.stubGlobal("document", {
-      querySelector: vi.fn().mockReturnValue({
-        addEventListener: vi.fn(),
-      }),
-      body: {
-        innerHTML: `<body><div>Test</div></body>`,
-      },
+      addEventListener: addEventListenerMock,
     });
 
-    const addListenerSpy = vi.spyOn(document.querySelector("body") as HTMLElement, "addEventListener");
-
     addExitIntentListener();
-    expect(addListenerSpy).toHaveBeenCalledWith("mouseleave", expect.any(Function));
-
-    addListenerSpy.mockRestore();
+    expect(addEventListenerMock).toHaveBeenCalledWith("mouseleave", expect.any(Function));
   });
 
   test("removeExitIntentListener removes mouseleave from document", () => {
@@ -338,7 +329,6 @@ describe("no-code-event-listeners file", () => {
 
   // Test cases for Exit Intent Handlers
   describe("Exit Intent Handlers", () => {
-    let querySelectorMock: MockInstance;
     let addEventListenerMock: Mock;
     let removeEventListenerMock: Mock;
 
@@ -346,14 +336,9 @@ describe("no-code-event-listeners file", () => {
       addEventListenerMock = vi.fn();
       removeEventListenerMock = vi.fn();
 
-      querySelectorMock = vi.fn().mockReturnValue({
+      vi.stubGlobal("document", {
         addEventListener: addEventListenerMock,
         removeEventListener: removeEventListenerMock,
-      });
-
-      vi.stubGlobal("document", {
-        querySelector: querySelectorMock,
-        removeEventListener: removeEventListenerMock, // For direct document.removeEventListener calls
       });
       (handleUrlFilters as Mock).mockReset(); // Reset mock for each test
     });
@@ -364,10 +349,11 @@ describe("no-code-event-listeners file", () => {
       // No explicit expect, passes if no error. querySelector would not be called.
     });
 
-    test("addExitIntentListener does not add if body is not found", () => {
-      querySelectorMock.mockReturnValue(null); // body not found
-      addExitIntentListener();
-      expect(addEventListenerMock).not.toHaveBeenCalled();
+    test("addExitIntentListener does not re-add if already added", () => {
+      addExitIntentListener(); // First call
+      expect(addEventListenerMock).toHaveBeenCalledTimes(1);
+      addExitIntentListener(); // Second call should be a no-op
+      expect(addEventListenerMock).toHaveBeenCalledTimes(1);
     });
 
     test("checkExitIntent does not trigger if clientY > 0", () => {
