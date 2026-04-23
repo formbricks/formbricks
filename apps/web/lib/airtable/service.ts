@@ -3,7 +3,6 @@ import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import {
-  TIntegrationAirtable,
   TIntegrationAirtableConfigData,
   TIntegrationAirtableCredential,
   ZIntegrationAirtableBases,
@@ -24,6 +23,11 @@ export const getBases = async (key: string) => {
     },
   });
 
+  if (!req.ok) {
+    const body = await req.text().catch(() => "");
+    throw new Error(`Airtable API error fetching bases: ${req.status} ${req.statusText} ${body}`);
+  }
+
   const res = await req.json();
   return ZIntegrationAirtableBases.parse(res);
 };
@@ -34,6 +38,11 @@ const tableFetcher = async (key: TIntegrationAirtableCredential, baseId: string)
       Authorization: `Bearer ${key.access_token}`,
     },
   });
+
+  if (!req.ok) {
+    const body = await req.text().catch(() => "");
+    throw new Error(`Airtable API error fetching tables: ${req.status} ${req.statusText} ${body}`);
+  }
 
   const res = await req.json();
 
@@ -78,10 +87,7 @@ export const fetchAirtableAuthToken = async (formData: Record<string, any>) => {
 
 export const getAirtableToken = async (environmentId: string) => {
   try {
-    const airtableIntegration = (await getIntegrationByType(
-      environmentId,
-      "airtable"
-    )) as TIntegrationAirtable;
+    const airtableIntegration = await getIntegrationByType(environmentId, "airtable");
 
     const { access_token, expiry_date, refresh_token } = ZIntegrationAirtableCredential.parse(
       airtableIntegration?.config.key

@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { logger } from "@formbricks/logger";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
 import { AirtableWrapper } from "@/app/(app)/environments/[environmentId]/workspace/integrations/airtable/components/AirtableWrapper";
@@ -31,8 +32,14 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
   );
 
   let airtableArray: TIntegrationItem[] = [];
+  let isTokenValid = true;
   if (airtableIntegration?.config.key) {
-    airtableArray = await getAirtableTables(params.environmentId);
+    try {
+      airtableArray = await getAirtableTables(params.environmentId);
+    } catch (error) {
+      logger.error(error, "Failed to load Airtable bases — token may be expired or revoked");
+      isTokenValid = false;
+    }
   }
   if (isReadOnly) {
     return redirect("./");
@@ -51,6 +58,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
           surveys={surveys}
           webAppUrl={WEBAPP_URL}
           locale={locale ?? DEFAULT_LOCALE}
+          showReconnectButton={!isTokenValid}
         />
       </div>
     </PageContentWrapper>
