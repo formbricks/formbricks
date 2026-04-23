@@ -37,7 +37,9 @@ SET styling = (
   || CASE WHEN styling ? 'inputBorderColor' AND NOT (styling ? 'optionBorderColor')
      THEN jsonb_build_object('optionBorderColor', styling->'inputBorderColor') ELSE '{}'::jsonb END
 ) - 'questionColor' - 'inputColor'
-WHERE styling IS NOT NULL AND styling != 'null'::jsonb;
+WHERE styling IS NOT NULL
+  AND styling != 'null'::jsonb
+  AND jsonb_typeof(styling) = 'object';
 
 -- ── Survey ───────────────────────────────────────────────────────────────────
 UPDATE "Survey"
@@ -64,4 +66,6 @@ SET styling = (
   || CASE WHEN styling ? 'inputBorderColor' AND NOT (styling ? 'optionBorderColor')
      THEN jsonb_build_object('optionBorderColor', styling->'inputBorderColor') ELSE '{}'::jsonb END
 ) - 'questionColor' - 'inputColor'
-WHERE styling IS NOT NULL AND styling != 'null'::jsonb;
+WHERE styling IS NOT NULL
+  AND styling != 'null'::jsonb
+  AND jsonb_typeof(styling) = 'object';
