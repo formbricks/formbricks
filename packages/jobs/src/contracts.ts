@@ -4,12 +4,7 @@ import type {
   TRecurringBackgroundJobSchedule,
   TRunAtBackgroundJobSchedule,
 } from "@/src/schedules";
-import type {
-  TAITranslationJobData,
-  TResponsePipelineJobData,
-  TSurveySchedulingJobData,
-  TTestLogJobData,
-} from "@/src/types";
+import type { TResponsePipelineJobData, TSurveySchedulingJobData, TTestLogJobData } from "@/src/types";
 
 export interface JobExecutionContext {
   attempt: number;
@@ -57,7 +52,6 @@ export const toAnyBackgroundJobDefinition = <TData>(
 });
 
 export interface BackgroundJobProducer {
-  enqueueAITranslation: (data: TAITranslationJobData) => Promise<EnqueuedJob>;
   enqueueResponsePipeline: (data: TResponsePipelineJobData) => Promise<EnqueuedJob>;
   enqueueSurveyScheduling: (data: TSurveySchedulingJobData) => Promise<EnqueuedJob>;
   enqueueTestLog: (data: TTestLogJobData) => Promise<EnqueuedJob>;

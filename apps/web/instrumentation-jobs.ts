@@ -1,7 +1,6 @@
 import {
   type JobHandlerOverrides,
   type JobsRuntimeHandle,
-  type TAITranslationJobData,
   type TResponsePipelineJobData,
   type TSurveySchedulingJobData,
   removeRecurringSurveySchedulingJobSchedule,
@@ -10,7 +9,6 @@ import {
 } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
 import { getJobsQueueingConfig, getJobsWorkerBootstrapConfig } from "@/lib/jobs/config";
-import { processAITranslationJob } from "@/modules/ee/ai-translation/lib/process-ai-translation-job";
 import { processResponsePipelineJob } from "@/modules/response-pipeline/lib/process-response-pipeline-job";
 import {
   SURVEY_SCHEDULING_DAILY_CRON_PATTERN,
@@ -33,7 +31,6 @@ type TJobsRuntimeGlobal = typeof globalThis & {
 
 const globalForJobsRuntime = globalThis as TJobsRuntimeGlobal;
 const RESPONSE_PIPELINE_JOB_NAME = "response-pipeline.process";
-const AI_TRANSLATION_JOB_NAME = "ai-translation.translate";
 const SURVEY_SCHEDULING_JOB_NAME = "survey-scheduling.reconcile";
 
 const responsePipelineJobHandler: NonNullable<JobHandlerOverrides[string]> = async (data, context) => {
@@ -90,10 +87,6 @@ const scheduleRecurringJobsRetry = (): void => {
     { retryDelayMs: WORKER_STARTUP_RETRY_DELAY_MS },
     "BullMQ recurring job registration retry scheduled"
   );
-};
-
-const aiTranslationJobHandler: NonNullable<JobHandlerOverrides[string]> = async (data, context) => {
-  await processAITranslationJob(data as TAITranslationJobData, context);
 };
 
 const clearJobsWorkerRetryTimeout = (): void => {
@@ -176,12 +169,10 @@ export const registerJobsWorker = async (): Promise<JobsRuntimeHandle | null> =>
     ? {
         ...runtimeOptions.jobHandlerOverrides,
         [RESPONSE_PIPELINE_JOB_NAME]: responsePipelineJobHandler,
-        [AI_TRANSLATION_JOB_NAME]: aiTranslationJobHandler,
         [SURVEY_SCHEDULING_JOB_NAME]: surveySchedulingJobHandler,
       }
     : {
         [RESPONSE_PIPELINE_JOB_NAME]: responsePipelineJobHandler,
-        [AI_TRANSLATION_JOB_NAME]: aiTranslationJobHandler,
         [SURVEY_SCHEDULING_JOB_NAME]: surveySchedulingJobHandler,
       };
 

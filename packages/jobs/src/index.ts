@@ -8,7 +8,6 @@ export type {
   UpsertedRecurringJobSchedule,
 } from "./contracts";
 export {
-  enqueueAITranslationJob,
   enqueueResponsePipelineJob,
   enqueueSurveySchedulingJob,
   enqueueTestLogJob,
@@ -21,7 +20,6 @@ export {
   upsertRecurringSurveySchedulingJobSchedule,
   upsertRecurringTestLogJobSchedule,
 } from "./queue";
-export { processAITranslationJob } from "./processors/ai-translation";
 export { processResponsePipelineJob } from "./processors/response-pipeline";
 export { processSurveySchedulingJob } from "./processors/survey-scheduling";
 export { processTestLogJob } from "./processors/test-log";
@@ -46,15 +44,12 @@ export type {
   TRunAtBackgroundJobSchedule,
 } from "./schedules";
 export {
-  ZAITranslationField,
-  ZAITranslationJobData,
   ZResponsePipelineEvent,
   ZResponsePipelineJobData,
   ZSurveySchedulingJobData,
   ZTestLogJobData,
 } from "./types";
 export type {
-  TAITranslationJobData,
   TResponsePipelineEvent,
   TResponsePipelineJobData,
   TSurveySchedulingJobData,

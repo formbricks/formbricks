@@ -1,11 +1,8 @@
 "use server";
 
 import { z } from "zod";
-import { ZAITranslationField, enqueueAITranslationJob } from "@formbricks/jobs";
 import { ZId } from "@formbricks/types/common";
-import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { assertOrganizationAIConfigured } from "@/lib/ai/service";
-import { cache } from "@/lib/cache";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import {
@@ -13,7 +10,8 @@ import {
   getOrganizationIdFromWorkspaceId,
   getWorkspaceIdFromSurveyId,
 } from "@/lib/utils/helper";
-import { getAITranslationCacheKey } from "./process-ai-translation-job";
+import { ZAITranslationField } from "./translate-fields";
+import { translateFields } from "./translate-fields";
 
 const ZCheckAITranslationAvailableAction = z.object({
   surveyId: ZId,
@@ -75,59 +73,14 @@ export const translateSurveyFieldsAction = authenticatedActionClient
       ],
     });
 
-    // Ensure AI is configured before enqueuing
     await assertOrganizationAIConfigured(organizationId, "smartTools");
 
-    const job = await enqueueAITranslationJob({
+    const translations = await translateFields({
       organizationId,
-      workspaceId: parsedInput.workspaceId,
-      userId: ctx.user.id,
       fields: parsedInput.fields,
       sourceLanguage: parsedInput.sourceLanguage,
       targetLanguage: parsedInput.targetLanguage,
     });
 
-    return { jobId: String(job.id) };
-  });
-
-const ZGetAITranslationResultAction = z.object({
-  jobId: z.string().min(1),
-});
-
-export const getAITranslationResultAction = authenticatedActionClient
-  .inputSchema(ZGetAITranslationResultAction)
-  .action(async ({ ctx, parsedInput }) => {
-    const cacheKey = getAITranslationCacheKey(parsedInput.jobId);
-    const result = await cache.get<{
-      userId: string;
-      translations?: Record<string, string>;
-      error?: string;
-    }>(cacheKey);
-
-    if (!result.ok) {
-      return { status: "pending" as const };
-    }
-
-    if (result.data === null) {
-      return { status: "pending" as const };
-    }
-
-    // Verify the requesting user owns this translation result
-    if (result.data.userId !== ctx.user.id) {
-      throw new OperationNotAllowedError("Not authorized");
-    }
-
-    // Check if the job failed
-    if (result.data.error) {
-      return { status: "failed" as const, error: result.data.error };
-    }
-
-    if (!result.data.translations) {
-      // Malformed cache entry — treat as still pending so the poller can retry
-      return { status: "pending" as const };
-    }
-
-    // Let the 5-minute TTL handle cleanup — eager deletion risks losing
-    // the result if the response is dropped before the client receives it.
-    return { status: "complete" as const, translations: result.data.translations };
+    return { translations };
   });

@@ -9,7 +9,6 @@ const mockWarn = vi.fn();
 const mockGetJobsQueueingConfig = vi.fn();
 const mockGetJobsWorkerBootstrapConfig = vi.fn();
 const mockProcessResponsePipelineJob = vi.fn();
-const mockProcessAITranslationJob = vi.fn();
 const mockProcessSurveySchedulingJob = vi.fn();
 const TEST_TIMEOUT_MS = 15_000;
 
@@ -39,10 +38,6 @@ vi.mock("@formbricks/logger", () => ({
 
 vi.mock("@/modules/response-pipeline/lib/process-response-pipeline-job", () => ({
   processResponsePipelineJob: mockProcessResponsePipelineJob,
-}));
-
-vi.mock("@/modules/ee/ai-translation/lib/process-ai-translation-job", () => ({
-  processAITranslationJob: mockProcessAITranslationJob,
 }));
 
 vi.mock("@/modules/survey/scheduling/lib/process-survey-scheduling-job", () => ({
@@ -112,7 +107,6 @@ describe("instrumentation-jobs", () => {
       concurrency: 4,
       jobHandlerOverrides: {
         "response-pipeline.process": expect.any(Function),
-        "ai-translation.translate": expect.any(Function),
         "survey-scheduling.reconcile": expect.any(Function),
         "test-log.process": mockExistingOverride,
       },

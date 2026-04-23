@@ -1,17 +1,14 @@
 "use client";
 
 import { ChevronDownIcon, SparklesIcon } from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { cn } from "@/lib/cn";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import {
-  getAITranslationResultAction,
-  translateSurveyFieldsAction,
-} from "@/modules/ee/ai-translation/lib/actions";
+import { translateSurveyFieldsAction } from "@/modules/ee/ai-translation/lib/actions";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -68,17 +65,6 @@ export const ManageTranslationsModal = ({
   const [missingFirst, setMissingFirst] = useState(false);
   const [isTranslating, setIsTranslating] = useState(false);
   const [translatingPaths, setTranslatingPaths] = useState<Set<string>>(new Set());
-  const activePollTokenRef = useRef<symbol | null>(null);
-
-  // Cancel any in-flight polling when modal closes
-  useEffect(() => {
-    if (!open) {
-      activePollTokenRef.current = null;
-    }
-    return () => {
-      activePollTokenRef.current = null;
-    };
-  }, [open]);
 
   // Initialize drafts when modal opens
   useEffect(() => {
@@ -174,81 +160,35 @@ export const ManageTranslationsModal = ({
 
     const toastId = toast.loading(t("workspace.surveys.edit.ai_translating"));
 
-    const enqueueResult = await translateSurveyFieldsAction({
-      workspaceId,
-      fields: emptyFields.map((s) => ({
-        path: s.path,
-        defaultText: s.value.default || "",
-        isRichText: s.isRichText,
-      })),
-      sourceLanguage: defaultLanguageName,
-      targetLanguage: languageName,
-    });
+    try {
+      const result = await translateSurveyFieldsAction({
+        workspaceId,
+        fields: emptyFields.map((s) => ({
+          path: s.path,
+          defaultText: s.value.default || "",
+          isRichText: s.isRichText,
+        })),
+        sourceLanguage: defaultLanguageName,
+        targetLanguage: languageName,
+      });
 
-    if (!enqueueResult?.data?.jobId) {
-      const errorMessage = getFormattedErrorMessage(enqueueResult);
-      toast.error(
-        errorMessage ? getAIErrorMessage(errorMessage) : t("workspace.surveys.edit.ai_translation_failed"),
-        { id: toastId }
-      );
+      if (!result?.data?.translations) {
+        const errorMessage = getFormattedErrorMessage(result);
+        toast.error(
+          errorMessage ? getAIErrorMessage(errorMessage) : t("workspace.surveys.edit.ai_translation_failed"),
+          { id: toastId }
+        );
+        return;
+      }
+
+      setDraftTranslations((prev) => ({ ...prev, ...result.data.translations }));
+      toast.success(t("workspace.surveys.edit.ai_translation_complete"), { id: toastId });
+    } catch {
+      toast.error(t("workspace.surveys.edit.ai_translation_failed"), { id: toastId });
+    } finally {
       setIsTranslating(false);
       setTranslatingPaths(new Set());
-      return;
     }
-
-    const { jobId } = enqueueResult.data;
-
-    // Each invocation gets its own token so stale loops from previous
-    // jobs cannot clobber state when the modal is reopened.
-    const token = Symbol("ai-translation-poll");
-    activePollTokenRef.current = token;
-
-    // Poll for results
-    const pollInterval = 2000;
-    const maxAttempts = 60; // 2 minutes max
-    let attempts = 0;
-    let timedOut = false;
-
-    while (activePollTokenRef.current === token) {
-      attempts++;
-      if (attempts > maxAttempts) {
-        timedOut = true;
-        break;
-      }
-
-      const pollResult = await getAITranslationResultAction({ jobId });
-
-      if (activePollTokenRef.current !== token) break;
-
-      if (pollResult?.data?.status === "complete" && pollResult.data.translations) {
-        const { translations } = pollResult.data;
-        setDraftTranslations((prev) => ({ ...prev, ...translations }));
-        toast.success(t("workspace.surveys.edit.ai_translation_complete"), { id: toastId });
-        setIsTranslating(false);
-        setTranslatingPaths(new Set());
-        return;
-      }
-
-      if (pollResult?.data?.status === "failed") {
-        const errorCode = pollResult.data.error ?? "";
-        toast.error(getAIErrorMessage(errorCode), { id: toastId });
-        setIsTranslating(false);
-        setTranslatingPaths(new Set());
-        return;
-      }
-
-      await new Promise((resolve) => setTimeout(resolve, pollInterval));
-    }
-
-    if (timedOut) {
-      toast.error(t("workspace.surveys.edit.ai_translation_timed_out"), { id: toastId });
-    } else {
-      // Polling was cancelled (modal closed or new job started) — dismiss the loading toast
-      toast.dismiss(toastId);
-    }
-
-    setIsTranslating(false);
-    setTranslatingPaths(new Set());
   };
 
   const handleSave = () => {

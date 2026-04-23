@@ -20,7 +20,6 @@ import {
   toBullMQRepeatOptions,
 } from "@/src/schedules";
 import {
-  type TAITranslationJobData,
   type TResponsePipelineJobData,
   type TSurveySchedulingJobData,
   type TTestLogJobData,
@@ -209,18 +208,6 @@ const removeRecurringBackgroundJobSchedule = async (
   return await queue.removeJobScheduler(getRecurringJobSchedulerId(definition.name, identity));
 };
 
-export const enqueueAITranslationJob = async (data: TAITranslationJobData): Promise<Job> => {
-  try {
-    return await enqueueBackgroundJob(JOB_NAMES.aiTranslation, data);
-  } catch (error) {
-    logger.error(
-      { err: error, jobName: JOB_NAMES.aiTranslation },
-      "Failed to enqueue BullMQ AI translation job"
-    );
-    throw error;
-  }
-};
-
 export const enqueueTestLogJob = async (data: TTestLogJobData): Promise<Job> => {
   try {
     return await enqueueBackgroundJob(JOB_NAMES.testLog, data);
@@ -385,7 +372,6 @@ export const removeRecurringSurveySchedulingJobSchedule = async (
 };
 
 export const getBackgroundJobProducer = (): BackgroundJobProducer => ({
-  enqueueAITranslation: async (data) => toEnqueuedJob(await enqueueAITranslationJob(data)),
   enqueueResponsePipeline: async (data) => toEnqueuedJob(await enqueueResponsePipelineJob(data)),
   enqueueSurveyScheduling: async (data) => toEnqueuedJob(await enqueueSurveySchedulingJob(data)),
   enqueueTestLog: async (data) => toEnqueuedJob(await enqueueTestLogJob(data)),
