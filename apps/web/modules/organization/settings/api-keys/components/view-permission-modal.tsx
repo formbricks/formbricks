@@ -5,10 +5,10 @@ import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { TOrganizationAccess } from "@formbricks/types/api-key";
+import { type TOrganizationWorkspace } from "@/modules/ee/teams/team-list/types/workspace";
 import {
-  TApiKeyUpdateInput,
-  TApiKeyWithEnvironmentPermission,
-  TOrganizationWorkspace,
+  type TApiKeyUpdateInput,
+  type TApiKeyWithEnvironmentPermission,
   ZApiKeyUpdateInput,
 } from "@/modules/organization/settings/api-keys/types/api-keys";
 import { Button } from "@/modules/ui/components/button";
@@ -66,6 +66,7 @@ export const ViewPermissionModal = ({
 
   const { t } = useTranslation();
   const organizationAccess = apiKey.organizationAccess as TOrganizationAccess;
+  const workspacePermissions = apiKey.apiKeyWorkspaces ?? [];
 
   const getWorkspaceName = (workspaceId: string) => {
     return workspaces.find((workspace) => workspace.id === workspaceId)?.name;
@@ -97,13 +98,13 @@ export const ViewPermissionModal = ({
               </div>
               <div className="space-y-2">
                 <Label>{t("workspace.api_keys.permissions")}</Label>
-                {apiKey.apiKeyWorkspaces?.length === 0 && (
+                {workspacePermissions.length === 0 && (
                   <div className="text-center text-sm">
-                    {t("workspace.api_keys.no_env_permissions_found")}
+                    {t("workspace.api_keys.no_workspace_permissions_found")}
                   </div>
                 )}
                 <div className="space-y-2">
-                  {apiKey.apiKeyWorkspaces?.map((permission) => {
+                  {workspacePermissions.map((permission) => {
                     return (
                       <div key={permission.workspaceId} className="flex items-center gap-2">
                         {/* Workspace dropdown */}

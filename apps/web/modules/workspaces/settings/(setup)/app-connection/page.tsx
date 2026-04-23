@@ -36,7 +36,7 @@ export const AppConnectionPage = async ({ params }: { params: Promise<{ workspac
           title={t("workspace.app-connection.sdk_connection_details")}
           description={t("workspace.app-connection.sdk_connection_details_description")}>
           <div className="space-y-3">
-            <IdBadge id={workspace.id} label={t("workspace.app-connection.environment_id")} />
+            <IdBadge id={workspace.id} label={t("workspace.app-connection.workspace_id")} />
             <IdBadge id={WEBAPP_URL} label={t("workspace.app-connection.webapp_url")} />
           </div>
         </SettingsCard>
@@ -71,7 +71,6 @@ export const AppConnectionPage = async ({ params }: { params: Promise<{ workspac
           )}
         </SettingsCard>
         <ActionSettingsCard
-          otherEnvActionClasses={[]}
           workspaceId={workspace.id}
           actionClasses={actionClasses}
           isReadOnly={isReadOnly}
