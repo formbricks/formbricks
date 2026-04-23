@@ -1,5 +1,4 @@
 import * as z from "zod";
-import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
 import { responses } from "@/app/lib/api/response";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { getAirtableToken, getTables } from "@/lib/airtable/service";
@@ -36,7 +35,7 @@ export const GET = withV1ApiWrapper({
       };
     }
 
-    const integration = (await getIntegrationByType(environmentId, "airtable")) as TIntegrationAirtable;
+    const integration = await getIntegrationByType(environmentId, "airtable");
 
     if (!integration) {
       return {

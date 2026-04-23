@@ -1,8 +1,4 @@
-import {
-  TIntegrationNotion,
-  TIntegrationNotionConfig,
-  TIntegrationNotionDatabase,
-} from "@formbricks/types/integration/notion";
+import { TIntegrationNotionConfig, TIntegrationNotionDatabase } from "@formbricks/types/integration/notion";
 import { ENCRYPTION_KEY } from "@/lib/constants";
 import { symmetricDecrypt } from "@/lib/crypto";
 import { getIntegrationByType } from "../integration/service";
@@ -29,7 +25,7 @@ const fetchPages = async (config: TIntegrationNotionConfig) => {
 export const getNotionDatabases = async (environmentId: string): Promise<TIntegrationNotionDatabase[]> => {
   let results: TIntegrationNotionDatabase[] = [];
   try {
-    const notionIntegration = (await getIntegrationByType(environmentId, "notion")) as TIntegrationNotion;
+    const notionIntegration = await getIntegrationByType(environmentId, "notion");
     if (notionIntegration && notionIntegration.config?.key.bot_id) {
       results = await fetchPages(notionIntegration.config);
     }

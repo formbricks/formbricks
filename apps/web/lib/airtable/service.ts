@@ -3,7 +3,6 @@ import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TIntegrationItem } from "@formbricks/types/integration";
 import {
-  TIntegrationAirtable,
   TIntegrationAirtableConfigData,
   TIntegrationAirtableCredential,
   ZIntegrationAirtableBases,
@@ -88,10 +87,7 @@ export const fetchAirtableAuthToken = async (formData: Record<string, any>) => {
 
 export const getAirtableToken = async (environmentId: string) => {
   try {
-    const airtableIntegration = (await getIntegrationByType(
-      environmentId,
-      "airtable"
-    )) as TIntegrationAirtable;
+    const airtableIntegration = await getIntegrationByType(environmentId, "airtable");
 
     const { access_token, expiry_date, refresh_token } = ZIntegrationAirtableCredential.parse(
       airtableIntegration?.config.key
