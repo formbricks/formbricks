@@ -136,14 +136,21 @@ export const getSurveysSortedByRelevance = reactCache(
 );
 
 export const getSurvey = reactCache(async (surveyId: string): Promise<TSurvey | null> => {
-  let surveyPrisma;
   try {
-    surveyPrisma = await prisma.survey.findUnique({
+    const surveyPrisma = await prisma.survey.findUnique({
       where: {
         id: surveyId,
       },
       select: surveySelect,
     });
+
+    if (!surveyPrisma) {
+      return null;
+    }
+
+    const responseCountsBySurveyId = await getResponseCountsBySurveyIds([surveyPrisma.id]);
+
+    return mapSurveyRowToSurvey(surveyPrisma, responseCountsBySurveyId.get(surveyPrisma.id) ?? 0);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       logger.error(error, "Error getting survey");
@@ -151,14 +158,6 @@ export const getSurvey = reactCache(async (surveyId: string): Promise<TSurvey | 
     }
     throw error;
   }
-
-  if (!surveyPrisma) {
-    return null;
-  }
-
-  const responseCountsBySurveyId = await getResponseCountsBySurveyIds([surveyPrisma.id]);
-
-  return mapSurveyRowToSurvey(surveyPrisma, responseCountsBySurveyId.get(surveyPrisma.id) ?? 0);
 });
 
 const getExistingSurvey = async (surveyId: string) => {

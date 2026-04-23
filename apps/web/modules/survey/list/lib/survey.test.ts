@@ -240,6 +240,15 @@ describe("getSurvey", () => {
     expect(logger.error).toHaveBeenCalledWith(prismaError, "Error getting survey");
   });
 
+  test("should throw DatabaseError when response count lookup fails", async () => {
+    const prismaError = makePrismaKnownError();
+    vi.mocked(prisma.survey.findUnique).mockResolvedValue({ ...mockSurveyPrisma } as any);
+    vi.mocked(prisma.response.groupBy).mockRejectedValue(prismaError);
+
+    await expect(getSurvey(surveyId)).rejects.toThrow(DatabaseError);
+    expect(logger.error).toHaveBeenCalledWith(prismaError, "Error getting survey");
+  });
+
   test("should rethrow unknown error", async () => {
     const unknownError = new Error("Unknown error");
     vi.mocked(prisma.survey.findUnique).mockRejectedValue(unknownError);
