@@ -1,9 +1,169 @@
 import { expect } from "@playwright/test";
 import { readFileSync, writeFileSync } from "fs";
+import { resolve } from "node:path";
 import { Page } from "playwright";
 import { logger } from "@formbricks/logger";
 import { TProjectConfigChannel } from "@formbricks/types/project";
 import { CreateSurveyParams, CreateSurveyWithLogicParams } from "@/playwright/utils/mock";
+
+const MOCK_STORAGE_UPLOAD_PATH = "/__playwright__/mock-storage-upload";
+const MOCK_STORAGE_FILE_PATH = "/storage/playwright-mock";
+
+type MockStorageFileFixture = {
+  name: string;
+  mimeType: string;
+  buffer: Buffer;
+  publicAssetPath?: string;
+};
+
+export const PLAYWRIGHT_PICTURE_SELECTION_FILES: MockStorageFileFixture[] = [
+  {
+    name: "playwright-choice-1.png",
+    mimeType: "image/png",
+    buffer: readFileSync(resolve(process.cwd(), "apps/web/public/logo-transparent.png")),
+    publicAssetPath: "/logo-transparent.png",
+  },
+  {
+    name: "playwright-choice-2.png",
+    mimeType: "image/png",
+    buffer: readFileSync(resolve(process.cwd(), "apps/web/public/favicon/android-chrome-192x192.png")),
+    publicAssetPath: "/favicon/android-chrome-192x192.png",
+  },
+];
+
+const PLAYWRIGHT_STORAGE_FILE_FIXTURES = new Map(
+  PLAYWRIGHT_PICTURE_SELECTION_FILES.map((file) => [file.name, file] as const)
+);
+
+const DEFAULT_MOCK_STORAGE_FILE_FIXTURE: MockStorageFileFixture = {
+  name: "mock-file.svg",
+  mimeType: "image/svg+xml",
+  buffer: Buffer.from(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" fill="#0f172a"/><circle cx="32" cy="32" r="18" fill="#22c55e"/></svg>`,
+    "utf8"
+  ),
+};
+
+const getMockStorageFileUrl = (
+  appOrigin: string,
+  fileName: string,
+  accessType: "public" | "private"
+): string => {
+  if (accessType === "public") {
+    const fixture = PLAYWRIGHT_STORAGE_FILE_FIXTURES.get(fileName);
+
+    if (fixture?.publicAssetPath) {
+      return new URL(fixture.publicAssetPath, appOrigin).toString();
+    }
+  }
+
+  return `${MOCK_STORAGE_FILE_PATH}/${accessType}/${encodeURIComponent(fileName)}`;
+};
+
+/**
+ * Survey builder E2E tests exercise survey authoring and response flows.
+ * They are not the right place to depend on browser reachability to a real object-storage sidecar,
+ * especially when some CI browsers run remotely. Mock the storage boundary so these tests stay scoped
+ * to survey behavior, while real storage compatibility is covered by dedicated smoke/integration checks.
+ */
+export const mockStorageUploads = async (page: Page): Promise<void> => {
+  await page.route("**/api/v1/management/storage", async (route) => {
+    if (route.request().method() !== "POST") {
+      await route.fallback();
+      return;
+    }
+
+    const payload = route.request().postDataJSON() as { fileName?: string } | undefined;
+    const fileName = payload?.fileName ?? "uploaded-file.bin";
+    const appOrigin = new URL(route.request().url()).origin;
+
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        data: {
+          signedUrl: `${appOrigin}${MOCK_STORAGE_UPLOAD_PATH}/${encodeURIComponent(fileName)}`,
+          presignedFields: {
+            key: fileName,
+          },
+          fileUrl: getMockStorageFileUrl(appOrigin, fileName, "public"),
+          signingData: null,
+          updatedFileName: fileName,
+        },
+      }),
+    });
+  });
+
+  await page.route(
+    (url) => {
+      const pathname = url.pathname;
+      const segments = pathname.split("/").filter(Boolean);
+
+      return (
+        segments.length === 5 &&
+        segments[0] === "api" &&
+        segments[1] === "v1" &&
+        segments[2] === "client" &&
+        segments[4] === "storage"
+      );
+    },
+    async (route) => {
+      if (route.request().method() !== "POST") {
+        await route.fallback();
+        return;
+      }
+
+      const payload = route.request().postDataJSON() as { fileName?: string } | undefined;
+      const fileName = payload?.fileName ?? "uploaded-file.bin";
+      const appOrigin = new URL(route.request().url()).origin;
+
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          data: {
+            signedUrl: `${appOrigin}${MOCK_STORAGE_UPLOAD_PATH}/${encodeURIComponent(fileName)}`,
+            presignedFields: {
+              key: fileName,
+            },
+            fileUrl: getMockStorageFileUrl(appOrigin, fileName, "private"),
+            signingData: null,
+            updatedFileName: fileName,
+          },
+        }),
+      });
+    }
+  );
+
+  await page.route(`**${MOCK_STORAGE_UPLOAD_PATH}/**`, async (route) => {
+    if (route.request().method() !== "POST") {
+      await route.fallback();
+      return;
+    }
+
+    await route.fulfill({
+      status: 201,
+      contentType: "application/xml",
+      body: `<?xml version="1.0" encoding="UTF-8"?><PostResponse><Location>${MOCK_STORAGE_UPLOAD_PATH}</Location></PostResponse>`,
+    });
+  });
+
+  await page.route(`**${MOCK_STORAGE_FILE_PATH}/**`, async (route) => {
+    if (!["GET", "HEAD"].includes(route.request().method())) {
+      await route.fallback();
+      return;
+    }
+
+    const fileName = decodeURIComponent(route.request().url().split("/").pop() ?? "");
+    const fixture = PLAYWRIGHT_STORAGE_FILE_FIXTURES.get(fileName) ?? DEFAULT_MOCK_STORAGE_FILE_FIXTURE;
+
+    await route.fulfill({
+      status: 200,
+      contentType: fixture.mimeType,
+      body: route.request().method() === "HEAD" ? "" : fixture.buffer,
+    });
+  });
+};
 
 export const signUpAndLogin = async (
   page: Page,
@@ -76,28 +236,22 @@ export const apiLogin = async (page: Page, email: string, password: string) => {
   });
 };
 
-export const uploadFileForFileUploadQuestion = async (page: Page) => {
-  try {
-    const fileInput = page.locator('input[type="file"]');
-    const response1 = await fetch("https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-1-small.jpg");
-    const response2 = await fetch("https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-2-small.jpg");
-    const buffer1 = Buffer.from(await response1.arrayBuffer());
-    const buffer2 = Buffer.from(await response2.arrayBuffer());
+export const waitForPendingFileUploads = async (page: Page): Promise<void> => {
+  await expect(page.locator("svg.animate-spin.text-slate-700")).toHaveCount(0, { timeout: 60000 });
+  await expect(page.getByText("Some files failed to upload")).toHaveCount(0);
+  await expect(page.getByText("No files were uploaded")).toHaveCount(0);
+  await expect(page.getByText("Invalid file name, please rename your file and try again")).toHaveCount(0);
+};
 
-    await fileInput.setInputFiles([
-      {
-        name: "puppy-1-small.jpg",
-        mimeType: "image/jpeg",
-        buffer: buffer1,
-      },
-      {
-        name: "puppy-2-small.jpg",
-        mimeType: "image/jpeg",
-        buffer: buffer2,
-      },
-    ]);
+export const uploadImageChoicesForPictureSelection = async (page: Page) => {
+  const fileInput = page.locator('input[type="file"]');
+  await fileInput.setInputFiles(PLAYWRIGHT_PICTURE_SELECTION_FILES);
+
+  try {
+    await waitForPendingFileUploads(page);
   } catch (error) {
-    logger.error(error, "Error uploading files");
+    logger.error(error, "Error waiting for file uploads to finish");
+    throw error;
   }
 };
 
@@ -319,8 +473,7 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   await page.getByRole("button", { name: "Add description" }).click();
   await fillRichTextEditor(page, "Description", params.pictureSelectQuestion.description);
 
-  // Handle file uploads
-  await uploadFileForFileUploadQuestion(page);
+  await uploadImageChoicesForPictureSelection(page);
 
   // File Upload Question
   await page
@@ -490,24 +643,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await fillRichTextEditor(page, "Question*", params.pictureSelectQuestion.question);
   await page.getByRole("button", { name: "Add description" }).click();
   await fillRichTextEditor(page, "Description", params.pictureSelectQuestion.description);
-  const fileInput = page.locator('input[type="file"]');
-  const response1 = await fetch("https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-1-small.jpg");
-  const response2 = await fetch("https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-2-small.jpg");
-  const buffer1 = Buffer.from(await response1.arrayBuffer());
-  const buffer2 = Buffer.from(await response2.arrayBuffer());
-
-  await fileInput.setInputFiles([
-    {
-      name: "puppy-1-small.jpg",
-      mimeType: "image/jpeg",
-      buffer: buffer1,
-    },
-    {
-      name: "puppy-2-small.jpg",
-      mimeType: "image/jpeg",
-      buffer: buffer2,
-    },
-  ]);
+  await uploadImageChoicesForPictureSelection(page);
 
   // Rating Question
   await page

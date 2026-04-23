@@ -87,28 +87,24 @@ graph TD
 ### Component Description
 
 1. **Formbricks Cluster**
-
    - Multiple Formbricks instances (1..n) running in parallel
    - Each instance is stateless and can handle any incoming request
    - Automatic failover if any instance becomes unavailable
 
 2. **PostgreSQL Database**
-
    - Primary database storing all survey, response, and contact data
    - Optional high-availability setup with primary-replica configuration
    - Handles all persistent data storage needs
 
 3. **Redis Cluster**
-
    - Acts as a distributed cache layer
    - Improves performance by caching frequently accessed data
    - Can be configured in HA mode with primary-replica setup
    - Handles session management and real-time features
 
 4. **S3 Compatible Storage**
-
    - Stores file uploads and attachments
-   - Can be any S3-compatible storage service (AWS S3, MinIO, etc.)
+   - Can be any S3-compatible storage service (AWS S3, RustFS, etc.)
    - Provides reliable and scalable file storage
 
 5. **Load Balancer**
@@ -139,13 +135,13 @@ S3_SECRET_KEY=your-secret-key
 S3_REGION=your-region
 S3_BUCKET_NAME=your-bucket-name
 
-# For S3-compatible storage (e.g., StorJ, MinIO)
+# For S3-compatible storage (e.g., StorJ, RustFS)
 # Leave empty for Amazon S3
 S3_ENDPOINT_URL=https://your-s3-compatible-endpoint
 
-# Enable for S3-compatible storage that requires path style
-# 0 for disabled, 1 for enabled
-S3_FORCE_PATH_STYLE=0
+# Enable for RustFS and most third-party S3-compatible storage
+# Set to 0 (or omit) for Amazon S3
+S3_FORCE_PATH_STYLE=1
 ```
 
 When using S3 in a cluster setup, ensure that:

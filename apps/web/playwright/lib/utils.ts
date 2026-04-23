@@ -1,17 +1,73 @@
 import { Page } from "@playwright/test";
 import { UsersFixture } from "../fixtures/users";
 
+type EnvironmentSurveyLocation = {
+  environmentId: string;
+  isSurveyList: boolean;
+};
+
+const getEnvironmentSurveyLocation = (url: URL): EnvironmentSurveyLocation | null => {
+  const segments = url.pathname.split("/").filter(Boolean);
+
+  if (segments.length !== 2 && segments.length !== 3) {
+    return null;
+  }
+
+  if (segments[0] !== "environments") {
+    return null;
+  }
+
+  const environmentId = segments[1];
+
+  if (!environmentId) {
+    return null;
+  }
+
+  if (segments.length === 2) {
+    return {
+      environmentId,
+      isSurveyList: false,
+    };
+  }
+
+  if (segments[2] !== "surveys") {
+    return null;
+  }
+
+  return {
+    environmentId,
+    isSurveyList: true,
+  };
+};
+
+export async function gotoSurveyList(page: Page): Promise<string> {
+  await page.waitForURL((url) => getEnvironmentSurveyLocation(url) !== null, { timeout: 30000 });
+
+  const currentUrl = new URL(page.url());
+  const location = getEnvironmentSurveyLocation(currentUrl);
+
+  if (!location) {
+    throw new Error(`Unable to determine environmentId from URL: ${page.url()}`);
+  }
+
+  const { environmentId, isSurveyList } = location;
+
+  if (!isSurveyList) {
+    await page.goto(`/environments/${environmentId}/surveys`, { waitUntil: "domcontentloaded" });
+  }
+
+  await page.waitForURL((url) => getEnvironmentSurveyLocation(url)?.isSurveyList === true, {
+    timeout: 30000,
+  });
+
+  return environmentId;
+}
+
 export async function loginAndGetApiKey(page: Page, users: UsersFixture) {
   const user = await users.create();
   await user.login();
 
-  await page.waitForURL(/\/environments\/[^/]+\/surveys/, { timeout: 30000 });
-
-  const environmentId =
-    /\/environments\/([^/]+)\/surveys/.exec(page.url())?.[1] ??
-    (() => {
-      throw new Error("Unable to parse environmentId from URL");
-    })();
+  const environmentId = await gotoSurveyList(page);
 
   await page.goto(`/environments/${environmentId}/settings/api-keys`, { waitUntil: "domcontentloaded" });
 

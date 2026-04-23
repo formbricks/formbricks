@@ -10,6 +10,8 @@ import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { sendToPipeline } from "@/app/lib/pipelines";
+import { ENCRYPTION_KEY } from "@/lib/constants";
+import { symmetricDecrypt } from "@/lib/crypto";
 import { getSurvey } from "@/lib/survey/service";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
@@ -125,6 +127,114 @@ export const POST = withV1ApiWrapper({
       return {
         response: responses.badRequestResponse("Survey does not belong to this environment", undefined, true),
       };
+    }
+
+    if (survey.type === "link" && survey.singleUse?.enabled) {
+      if (!responseInputData.singleUseId) {
+        return {
+          response: responses.badRequestResponse(
+            "Missing single use id",
+            {
+              surveyId: survey.id,
+              environmentId,
+            },
+            true
+          ),
+        };
+      }
+
+      if (!responseInputData.meta?.url) {
+        return {
+          response: responses.badRequestResponse(
+            "Missing or invalid URL in response metadata",
+            {
+              surveyId: survey.id,
+              environmentId,
+            },
+            true
+          ),
+        };
+      }
+
+      let url: URL;
+      try {
+        url = new URL(responseInputData.meta.url);
+      } catch (error) {
+        return {
+          response: responses.badRequestResponse(
+            "Invalid URL in response metadata",
+            {
+              surveyId: survey.id,
+              environmentId,
+              error: error instanceof Error ? error.message : "Unknown error occurred",
+            },
+            true
+          ),
+        };
+      }
+
+      const suId = url.searchParams.get("suId");
+      if (!suId) {
+        return {
+          response: responses.badRequestResponse(
+            "Missing single use id",
+            {
+              surveyId: survey.id,
+              environmentId,
+            },
+            true
+          ),
+        };
+      }
+
+      if (survey.singleUse.isEncrypted) {
+        if (!ENCRYPTION_KEY) {
+          logger.error({ url: req.url, surveyId: survey.id, environmentId }, "ENCRYPTION_KEY is not set");
+          return {
+            response: responses.internalServerErrorResponse("An unexpected error occurred.", true),
+          };
+        }
+
+        let decryptedSuId: string;
+        try {
+          decryptedSuId = symmetricDecrypt(suId, ENCRYPTION_KEY);
+        } catch {
+          return {
+            response: responses.badRequestResponse(
+              "Invalid single use id",
+              {
+                surveyId: survey.id,
+                environmentId,
+              },
+              true
+            ),
+          };
+        }
+
+        if (decryptedSuId !== responseInputData.singleUseId) {
+          return {
+            response: responses.badRequestResponse(
+              "Invalid single use id",
+              {
+                surveyId: survey.id,
+                environmentId,
+              },
+              true
+            ),
+          };
+        }
+      } else if (responseInputData.singleUseId !== suId) {
+        return {
+          response: responses.badRequestResponse(
+            "Invalid single use id",
+            {
+              surveyId: survey.id,
+              environmentId,
+            },
+            true
+          ),
+        };
+      }
     }
 
     if (!validateFileUploads(responseInputData.data, survey.questions)) {

@@ -10,16 +10,15 @@ import {
   EMAIL_VERIFICATION_DISABLED,
   ENCRYPTION_KEY,
   ENTERPRISE_LICENSE_KEY,
-  POSTHOG_KEY,
   SESSION_MAX_AGE,
   WEBAPP_URL,
 } from "@/lib/constants";
 import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
 import { verifyToken } from "@/lib/jwt";
-import { capturePostHogEvent } from "@/lib/posthog";
 import { getValidatedCallbackUrl } from "@/lib/utils/url";
 import { getAuthCallbackUrlFromCookies } from "@/modules/auth/lib/callback-url";
-import { updateUser, updateUserLastLoginAt } from "@/modules/auth/lib/user";
+import { finalizeSuccessfulSignIn } from "@/modules/auth/lib/sign-in-tracking";
+import { updateUser } from "@/modules/auth/lib/user";
 import {
   logAuthAttempt,
   logAuthEvent,
@@ -267,12 +266,13 @@ export const authOptions: NextAuthOptions = {
             throw new Error("Token not found");
           }
 
-          const { id } = await verifyToken(credentials?.token);
-          user = await prisma.user.findUnique({
+          const { id, purpose } = await verifyToken(credentials?.token);
+          const foundUser = await prisma.user.findUnique({
             where: {
               id: id,
             },
           });
+          user = foundUser ? { ...foundUser, authFlowPurpose: purpose } : null;
         } catch (e) {
           logger.error(e, "Error in CredentialsProvider authorize");
 
@@ -291,7 +291,10 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Either a user does not match the provided token or the token is invalid");
         }
 
-        if (user.emailVerified) {
+        const authFlowPurpose = user.authFlowPurpose ?? "email_verification";
+        const isSsoRecovery = authFlowPurpose === "sso_recovery";
+
+        if (user.emailVerified && !isSsoRecovery) {
           logEmailVerificationAttempt(false, "email_already_verified", user.id, user.email);
           throw new Error("Email already verified");
         }
@@ -301,14 +304,20 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Your account is currently inactive. Please contact the organization admin.");
         }
 
-        user = await updateUser(user.id, { emailVerified: new Date() });
+        if (!user.emailVerified && !isSsoRecovery) {
+          const updatedUser = await updateUser(user.id, { emailVerified: new Date() });
+          user = {
+            ...updatedUser,
+            authFlowPurpose,
+          };
 
-        logEmailVerificationAttempt(true, undefined, user.id, user.email, {
-          emailVerifiedAt: user.emailVerified,
-        });
+          logEmailVerificationAttempt(true, undefined, user.id, user.email, {
+            emailVerifiedAt: user.emailVerified,
+          });
 
-        // send new user to brevo after email verification
-        createBrevoCustomer({ id: user.id, email: user.email });
+          // send new user to brevo after email verification
+          createBrevoCustomer({ id: user.id, email: user.email });
+        }
 
         return user;
       },
@@ -339,37 +348,27 @@ export const authOptions: NextAuthOptions = {
 
       const userEmail = user.email ?? "";
       const userId = user.id as string;
-
-      // Capture sign-in event for PostHog (query BEFORE updating lastLoginAt)
-      const captureSignIn = async (provider: string) => {
-        if (!POSTHOG_KEY) return;
-
-        try {
-          const [membershipCount, userData] = await Promise.all([
-            prisma.membership.count({ where: { userId } }),
-            prisma.user.findUnique({ where: { id: userId }, select: { lastLoginAt: true } }),
-          ]);
-          const isFirstLoginToday =
-            userData?.lastLoginAt?.toISOString().slice(0, 10) !== new Date().toISOString().slice(0, 10);
-
-          capturePostHogEvent(userId, "user_signed_in", {
-            auth_provider: provider,
-            organization_count: membershipCount,
-            is_first_login_today: isFirstLoginToday,
-          });
-        } catch (error) {
-          logger.warn({ error }, "Failed to capture PostHog sign-in event");
-        }
-      };
+      const authFlowPurpose =
+        "authFlowPurpose" in user && typeof user.authFlowPurpose === "string"
+          ? user.authFlowPurpose
+          : undefined;
 
       if (account?.provider === "credentials" || account?.provider === "token") {
+        if (account.provider === "token" && authFlowPurpose === "sso_recovery") {
+          return true;
+        }
+
         // check if user's email is verified or not
         if ("emailVerified" in user && !user.emailVerified && !EMAIL_VERIFICATION_DISABLED) {
           logger.error("Email Verification is Pending");
           throw new Error("Email Verification is Pending");
         }
-        void captureSignIn(account.provider);
-        await updateUserLastLoginAt(userEmail);
+
+        await finalizeSuccessfulSignIn({
+          userId,
+          email: userEmail,
+          provider: account.provider,
+        });
         return true;
       }
       if (ENTERPRISE_LICENSE_KEY && account) {
@@ -379,14 +378,20 @@ export const authOptions: NextAuthOptions = {
           callbackUrl,
         });
 
-        if (result) {
-          void captureSignIn(account.provider);
-          await updateUserLastLoginAt(userEmail);
+        if (result === true) {
+          await finalizeSuccessfulSignIn({
+            userId,
+            email: userEmail,
+            provider: account.provider,
+          });
         }
         return result;
       }
-      void captureSignIn(account?.provider ?? "unknown");
-      await updateUserLastLoginAt(userEmail);
+      await finalizeSuccessfulSignIn({
+        userId,
+        email: userEmail,
+        provider: account?.provider ?? "unknown",
+      });
       return true;
     },
   },

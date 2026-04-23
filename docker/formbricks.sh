@@ -3,6 +3,166 @@
 set -e
 ubuntu_version=$(lsb_release -a 2>/dev/null | grep -v "No LSB modules are available." | grep "Description:" | awk -F "Description:\t" '{print $2}')
 
+write_rustfs_init_script() {
+  local target_path="${1:-rustfs-init.sh}"
+  local script_dir
+  local template_path
+
+  script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+  template_path="${script_dir}/rustfs-init.sh"
+
+  if [ -f "$template_path" ]; then
+    cp "$template_path" "$target_path"
+    chmod +x "$target_path"
+    return
+  fi
+
+  cat >"$target_path" << 'RUSTFS_SCRIPT_EOF'
+#!/bin/sh
+# Shared RustFS bootstrap script.
+# Used directly by docker-compose.dev.yml for local development and used as the
+# source template for the generated rustfs-init.sh in docker/formbricks.sh for
+# one-click/self-hosted installs. packages/storage/src/rustfs-init-bootstrap.test.ts
+# also validates that the generated script stays in sync with this file.
+set -e
+rustfs_endpoint_url="${RUSTFS_ENDPOINT_URL:-http://rustfs:9000}"
+echo '⏳ Waiting for RustFS to be ready...'
+attempts=0
+max_attempts=30
+until mc alias set rustfs "$rustfs_endpoint_url" "$RUSTFS_ADMIN_USER" "$RUSTFS_ADMIN_PASSWORD" >/dev/null 2>&1 \
+  && mc ls rustfs >/dev/null 2>&1; do
+  attempts=$((attempts + 1))
+  if [ $attempts -ge $max_attempts ]; then
+    printf '❌ Failed to connect to RustFS after %s attempts\n' $max_attempts
+    exit 1
+  fi
+  printf '...still waiting attempt %s/%s\n' $attempts $max_attempts
+  sleep 2
+done
+echo '🔗 RustFS reachable; alias configured.'
+
+echo '🪣 Creating bucket (idempotent)...'
+mc mb rustfs/$RUSTFS_BUCKET_NAME --ignore-existing
+
+if [ -n "${RUSTFS_CORS_ALLOWED_ORIGINS:-}" ]; then
+  echo '🌐 Applying bucket CORS configuration...'
+  cors_file="/tmp/formbricks-cors.xml"
+
+  cat > "$cors_file" << EOF
+<CORSConfiguration>
+  <CORSRule>
+EOF
+
+  old_ifs=$IFS
+  IFS=','
+  for origin in $RUSTFS_CORS_ALLOWED_ORIGINS; do
+    trimmed_origin=$(printf '%s' "$origin" | tr -d '[:space:]')
+    if [ -n "$trimmed_origin" ]; then
+      printf '    <AllowedOrigin>%s</AllowedOrigin>\n' "$trimmed_origin" >> "$cors_file"
+    fi
+  done
+  IFS=$old_ifs
+
+  cat >> "$cors_file" << EOF
+    <AllowedMethod>GET</AllowedMethod>
+    <AllowedMethod>HEAD</AllowedMethod>
+    <AllowedMethod>POST</AllowedMethod>
+    <AllowedMethod>PUT</AllowedMethod>
+    <AllowedMethod>DELETE</AllowedMethod>
+    <AllowedHeader>*</AllowedHeader>
+    <ExposeHeader>ETag</ExposeHeader>
+    <MaxAgeSeconds>3000</MaxAgeSeconds>
+  </CORSRule>
+</CORSConfiguration>
+EOF
+
+  mc cors set rustfs/$RUSTFS_BUCKET_NAME "$cors_file"
+  echo 'CORS configuration applied successfully.'
+fi
+
+echo '📄 Creating JSON policy file...'
+cat > /tmp/formbricks-policy.json << EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["s3:DeleteObject", "s3:GetObject", "s3:PutObject"],
+      "Resource": ["arn:aws:s3:::$RUSTFS_BUCKET_NAME/*"]
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["s3:ListBucket"],
+      "Resource": ["arn:aws:s3:::$RUSTFS_BUCKET_NAME"]
+    }
+  ]
+}
+EOF
+
+echo '🔒 Creating policy (idempotent)...'
+if ! mc admin policy info rustfs "$RUSTFS_POLICY_NAME" >/dev/null 2>&1; then
+  mc admin policy create rustfs "$RUSTFS_POLICY_NAME" /tmp/formbricks-policy.json || \
+    mc admin policy add rustfs "$RUSTFS_POLICY_NAME" /tmp/formbricks-policy.json
+  echo 'Policy created successfully.'
+else
+  echo 'Policy already exists, skipping creation.'
+fi
+
+echo '👤 Creating service user (idempotent)...'
+if ! mc admin user info rustfs "$RUSTFS_SERVICE_USER" >/dev/null 2>&1; then
+  mc admin user add rustfs "$RUSTFS_SERVICE_USER" "$RUSTFS_SERVICE_PASSWORD"
+  echo 'User created successfully.'
+else
+  echo 'User already exists, skipping creation.'
+fi
+
+echo '🔗 Attaching policy to user (idempotent)...'
+mc admin policy attach rustfs "$RUSTFS_POLICY_NAME" --user "$RUSTFS_SERVICE_USER"
+
+echo '✅ RustFS setup complete!'
+RUSTFS_SCRIPT_EOF
+
+  chmod +x "$target_path"
+}
+
+upsert_dotenv_var() {
+  local key="$1"
+  local value="$2"
+  local env_file="${3:-.env}"
+  local tmp_file
+
+  touch "$env_file"
+  chmod 600 "$env_file"
+  tmp_file=$(mktemp)
+
+  awk -v insert_key="$key" -v insert_val="$value" '
+    BEGIN { updated=0 }
+    $0 ~ "^" insert_key "=" {
+      print insert_key "=" insert_val
+      updated=1
+      next
+    }
+    { print }
+    END {
+      if (!updated) {
+        print insert_key "=" insert_val
+      }
+    }
+  ' "$env_file" >"$tmp_file" && mv "$tmp_file" "$env_file"
+}
+
+write_rustfs_env_file() {
+  local env_file="${1:-.env}"
+
+  upsert_dotenv_var "FORMBRICKS_RUSTFS_ADMIN_USER" "$rustfs_admin_user" "$env_file"
+  upsert_dotenv_var "FORMBRICKS_RUSTFS_ADMIN_PASSWORD" "$rustfs_admin_password" "$env_file"
+  upsert_dotenv_var "FORMBRICKS_RUSTFS_SERVICE_USER" "$rustfs_service_user" "$env_file"
+  upsert_dotenv_var "FORMBRICKS_RUSTFS_SERVICE_PASSWORD" "$rustfs_service_password" "$env_file"
+  upsert_dotenv_var "FORMBRICKS_RUSTFS_BUCKET_NAME" "$rustfs_bucket_name" "$env_file"
+  upsert_dotenv_var "FORMBRICKS_RUSTFS_POLICY_NAME" "$rustfs_policy_name" "$env_file"
+  upsert_dotenv_var "FORMBRICKS_RUSTFS_REGION" "us-east-1" "$env_file"
+}
+
 install_formbricks() {
   # Friendly welcome
   echo "🧱 Welcome to the Formbricks Setup Script"
@@ -273,7 +433,7 @@ EOT
   if [[ -z $configure_uploads ]]; then configure_uploads="y"; fi
 
   if [[ $configure_uploads == "y" ]]; then
-    # Storage choice: External S3 vs bundled MinIO
+    # Storage choice: External S3 vs bundled RustFS
     read -p "🗄️  Do you want to use an external S3-compatible storage (AWS S3/DO Spaces/etc.)? [y/N] " use_external_s3
     use_external_s3=$(echo "$use_external_s3" | tr '[:upper:]' '[:lower:]')
     if [[ -z $use_external_s3 ]]; then use_external_s3="n"; fi
@@ -286,29 +446,29 @@ EOT
       read -p "   S3 Bucket Name: " ext_s3_bucket
       read -p "   S3 Endpoint URL (leave empty if you are using AWS S3, otherwise please enter the endpoint URL of the third party S3 compatible storage service): " ext_s3_endpoint
       
-      minio_storage="n"
+      rustfs_storage="n"
     else
-      minio_storage="y"
+      rustfs_storage="y"
       default_files_domain="files.$domain_name"
       read -p "🔗 Enter the files subdomain for object storage (e.g., $default_files_domain): " files_domain
       if [[ -z $files_domain ]]; then files_domain="$default_files_domain"; fi
 
-      echo "🔑 Generating MinIO credentials..."
-      minio_root_user="formbricks-$(openssl rand -hex 4)"
-      minio_root_password=$(openssl rand -base64 20)
-      minio_service_user="formbricks-service-$(openssl rand -hex 4)"
-      minio_service_password=$(openssl rand -base64 20)
-      minio_bucket_name="formbricks-uploads"
-      minio_policy_name="formbricks-policy"
+      echo "🔑 Generating RustFS credentials..."
+      rustfs_admin_user="formbricks-$(openssl rand -hex 4)"
+      rustfs_admin_password=$(openssl rand -base64 20)
+      rustfs_service_user="formbricks-service-$(openssl rand -hex 4)"
+      rustfs_service_password=$(openssl rand -base64 20)
+      rustfs_bucket_name="formbricks-uploads"
+      rustfs_policy_name="formbricks-policy"
       
-      echo "✅ MinIO will be configured with:"
-      echo "   S3 Access Key (least privilege): $minio_service_user"
-      echo "   Bucket: $minio_bucket_name"
+      echo "✅ RustFS will be configured with:"
+      echo "   S3 Access Key (least privilege): $rustfs_service_user"
+      echo "   Bucket: $rustfs_bucket_name"
     fi
   else
-    minio_storage="n"
+    rustfs_storage="n"
     use_external_s3="n"
-    echo "⚠️ File uploads are disabled. Proceeding without S3/MinIO configuration."
+    echo "⚠️ File uploads are disabled. Proceeding without S3-compatible storage configuration."
   fi
 
   echo "📥 Downloading docker-compose.yml from Formbricks GitHub repository..."
@@ -353,20 +513,21 @@ EOT
       sed -E -i 's|^([[:space:]]*)#?[[:space:]]*S3_FORCE_PATH_STYLE:[[:space:]]*.*$|\1# S3_FORCE_PATH_STYLE:|' docker-compose.yml
     fi
     echo "🚗 External S3 configuration updated successfully!"
-  elif [[ $minio_storage == "y" ]]; then
-    echo "🚗 Configuring bundled MinIO..."
-    sed -i "s|# S3_ACCESS_KEY:|S3_ACCESS_KEY: \"$minio_service_user\"|" docker-compose.yml
-    sed -i "s|# S3_SECRET_KEY:|S3_SECRET_KEY: \"$minio_service_password\"|" docker-compose.yml
-    sed -i "s|# S3_REGION:|S3_REGION: \"us-east-1\"|" docker-compose.yml
-    sed -i "s|# S3_BUCKET_NAME:|S3_BUCKET_NAME: \"$minio_bucket_name\"|" docker-compose.yml
+  elif [[ $rustfs_storage == "y" ]]; then
+    echo "🚗 Configuring bundled RustFS..."
+    write_rustfs_env_file ".env"
+    sed -i 's|# S3_ACCESS_KEY:|S3_ACCESS_KEY: "${FORMBRICKS_RUSTFS_SERVICE_USER}"|' docker-compose.yml
+    sed -i 's|# S3_SECRET_KEY:|S3_SECRET_KEY: "${FORMBRICKS_RUSTFS_SERVICE_PASSWORD}"|' docker-compose.yml
+    sed -i 's|# S3_REGION:|S3_REGION: "${FORMBRICKS_RUSTFS_REGION}"|' docker-compose.yml
+    sed -i 's|# S3_BUCKET_NAME:|S3_BUCKET_NAME: "${FORMBRICKS_RUSTFS_BUCKET_NAME}"|' docker-compose.yml
     if [[ $https_setup == "y" ]]; then
       sed -i "s|# S3_ENDPOINT_URL:|S3_ENDPOINT_URL: \"https://$files_domain\"|" docker-compose.yml
     else
       sed -i "s|# S3_ENDPOINT_URL:|S3_ENDPOINT_URL: \"http://$files_domain\"|" docker-compose.yml
     fi
-    # Ensure S3_FORCE_PATH_STYLE is enabled for MinIO
+    # Ensure S3_FORCE_PATH_STYLE is enabled for RustFS
     sed -E -i 's|^([[:space:]]*)#?[[:space:]]*S3_FORCE_PATH_STYLE:[[:space:]]*.*$|\1S3_FORCE_PATH_STYLE: 1|' docker-compose.yml
-    echo "🚗 MinIO S3 configuration updated successfully!"
+    echo "🚗 RustFS S3 configuration updated successfully!"
   fi
 
   # SUPER SIMPLE: Use multiple simple operations instead of complex AWK
@@ -400,8 +561,8 @@ EOT
 { print }
 ' docker-compose.yml >tmp.yml && mv tmp.yml docker-compose.yml
 
-  # Step 2: Ensure formbricks waits for minio-init to complete successfully (mapping depends_on)
-  if [[ $minio_storage == "y" ]]; then
+  # Step 2: Ensure formbricks waits for rustfs-init to complete successfully (mapping depends_on)
+  if [[ $rustfs_storage == "y" ]]; then
     # Remove any existing simple depends_on list and replace with mapping
     awk '
       BEGIN{in_fb=0; removing=0}
@@ -422,7 +583,9 @@ EOT
           print "    depends_on:"
           print "      postgres:"
           print "        condition: service_started"
-          print "      minio-init:"
+          print "      redis:"
+          print "        condition: service_started"
+          print "      rustfs-init:"
           print "        condition: service_completed_successfully"
           inserted=1
         }
@@ -437,59 +600,82 @@ EOT
   insert_traefik="y"
   if grep -q "^  traefik:" docker-compose.yml; then insert_traefik="n"; fi
 
-  if [[ $minio_storage == "y" ]]; then
-    insert_minio="y"; insert_minio_init="y"
-    if grep -q "^  minio:" docker-compose.yml; then insert_minio="n"; fi
-    if grep -q "^  minio-init:" docker-compose.yml; then insert_minio_init="n"; fi
+  if [[ $rustfs_storage == "y" ]]; then
+    rustfs_cors_origin="https://$domain_name"
+    if [[ $https_setup != "y" ]]; then
+      rustfs_cors_origin="http://$domain_name"
+    fi
 
-    if [[ $insert_minio == "y" ]]; then
+    insert_rustfs_perms="y"; insert_rustfs="y"; insert_rustfs_init="y"
+    if grep -q "^  rustfs-perms:" docker-compose.yml; then insert_rustfs_perms="n"; fi
+    if grep -q "^  rustfs:" docker-compose.yml; then insert_rustfs="n"; fi
+    if grep -q "^  rustfs-init:" docker-compose.yml; then insert_rustfs_init="n"; fi
+
+    if [[ $insert_rustfs_perms == "y" ]]; then
       cat >> "$services_snippet_file" << EOF
 
-  minio:
-    restart: always
-    image: minio/minio@sha256:13582eff79c6605a2d315bdd0e70164142ea7e98fc8411e9e10d089502a6d883
-    command: server /data
-    environment:
-      MINIO_ROOT_USER: "$minio_root_user"
-      MINIO_ROOT_PASSWORD: "$minio_root_password"
+  rustfs-perms:
+    image: busybox:1.36.1
+    user: "0:0"
+    command: ["sh", "-c", "mkdir -p /data && chown -R 10001:10001 /data"]
     volumes:
-      - minio-data:/data
-    labels:
-      - "traefik.enable=true"
-      # S3 API on files subdomain
-      - "traefik.http.routers.minio-s3.rule=Host(\`$files_domain\`)"
-      - "traefik.http.routers.minio-s3.entrypoints=websecure"
-      - "traefik.http.routers.minio-s3.tls=true"
-      - "traefik.http.routers.minio-s3.tls.certresolver=default"
-      - "traefik.http.routers.minio-s3.service=minio-s3"
-      - "traefik.http.services.minio-s3.loadbalancer.server.port=9000"
-      # CORS and rate limit (adjust origins if needed)
-      - "traefik.http.routers.minio-s3.middlewares=minio-cors,minio-ratelimit"
-      - "traefik.http.middlewares.minio-cors.headers.accesscontrolallowmethods=GET,PUT,POST,DELETE,HEAD,OPTIONS"
-      - "traefik.http.middlewares.minio-cors.headers.accesscontrolallowheaders=*"
-      - "traefik.http.middlewares.minio-cors.headers.accesscontrolalloworiginlist=https://$domain_name"
-      - "traefik.http.middlewares.minio-cors.headers.accesscontrolmaxage=100"
-      - "traefik.http.middlewares.minio-cors.headers.addvaryheader=true"
-      - "traefik.http.middlewares.minio-ratelimit.ratelimit.average=100"
-      - "traefik.http.middlewares.minio-ratelimit.ratelimit.burst=200"
+      - rustfs-data:/data
 EOF
     fi
 
-    if [[ $insert_minio_init == "y" ]]; then
+    if [[ $insert_rustfs == "y" ]]; then
       cat >> "$services_snippet_file" << EOF
-  minio-init:
+  rustfs:
+    restart: always
+    image: rustfs/rustfs:1.0.0-alpha.93
+    depends_on:
+      rustfs-perms:
+        condition: service_completed_successfully
+    command: /data
+    environment:
+      RUSTFS_ACCESS_KEY: "\${FORMBRICKS_RUSTFS_ADMIN_USER}"
+      RUSTFS_SECRET_KEY: "\${FORMBRICKS_RUSTFS_ADMIN_PASSWORD}"
+      RUSTFS_ADDRESS: ":9000"
+    volumes:
+      - rustfs-data:/data
+    labels:
+      - "traefik.enable=true"
+      # S3 API on files subdomain
+      - "traefik.http.routers.rustfs-s3.rule=Host(\`$files_domain\`)"
+      - "traefik.http.routers.rustfs-s3.entrypoints=websecure"
+      - "traefik.http.routers.rustfs-s3.tls=true"
+      - "traefik.http.routers.rustfs-s3.tls.certresolver=default"
+      - "traefik.http.routers.rustfs-s3.service=rustfs-s3"
+      - "traefik.http.services.rustfs-s3.loadbalancer.server.port=9000"
+      # CORS and rate limit (adjust origins if needed)
+      - "traefik.http.routers.rustfs-s3.middlewares=rustfs-cors,rustfs-ratelimit"
+      - "traefik.http.middlewares.rustfs-cors.headers.accesscontrolallowmethods=GET,PUT,POST,DELETE,HEAD,OPTIONS"
+      - "traefik.http.middlewares.rustfs-cors.headers.accesscontrolallowheaders=*"
+      - "traefik.http.middlewares.rustfs-cors.headers.accesscontrolalloworiginlist=https://$domain_name"
+      - "traefik.http.middlewares.rustfs-cors.headers.accesscontrolmaxage=100"
+      - "traefik.http.middlewares.rustfs-cors.headers.addvaryheader=true"
+      - "traefik.http.middlewares.rustfs-ratelimit.ratelimit.average=100"
+      - "traefik.http.middlewares.rustfs-ratelimit.ratelimit.burst=200"
+EOF
+    fi
+
+    if [[ $insert_rustfs_init == "y" ]]; then
+      cat >> "$services_snippet_file" << EOF
+  rustfs-init:
     image: minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868
     depends_on:
-      - minio
+      - rustfs
     environment:
-      MINIO_ROOT_USER: "$minio_root_user"
-      MINIO_ROOT_PASSWORD: "$minio_root_password"
-      MINIO_SERVICE_USER: "$minio_service_user"
-      MINIO_SERVICE_PASSWORD: "$minio_service_password"
-      MINIO_BUCKET_NAME: "$minio_bucket_name"
-    entrypoint: ["/bin/sh", "/tmp/minio-init.sh"]
+      RUSTFS_ADMIN_USER: "\${FORMBRICKS_RUSTFS_ADMIN_USER}"
+      RUSTFS_ADMIN_PASSWORD: "\${FORMBRICKS_RUSTFS_ADMIN_PASSWORD}"
+      RUSTFS_SERVICE_USER: "\${FORMBRICKS_RUSTFS_SERVICE_USER}"
+      RUSTFS_SERVICE_PASSWORD: "\${FORMBRICKS_RUSTFS_SERVICE_PASSWORD}"
+      RUSTFS_BUCKET_NAME: "\${FORMBRICKS_RUSTFS_BUCKET_NAME}"
+      RUSTFS_POLICY_NAME: "\${FORMBRICKS_RUSTFS_POLICY_NAME}"
+      RUSTFS_CORS_ALLOWED_ORIGINS: "$rustfs_cors_origin"
+    entrypoint: ["/bin/sh", "/tmp/rustfs-init.sh"]
     volumes:
-      - ./minio-init.sh:/tmp/minio-init.sh:ro
+      - ./rustfs-init.sh:/tmp/rustfs-init.sh:ro
 EOF
     fi
 
@@ -501,7 +687,7 @@ EOF
     container_name: "traefik"
     depends_on:
       - formbricks
-      - minio
+      - rustfs
     ports:
       - "80:80"
       - "443:443"
@@ -513,11 +699,11 @@ EOF
 EOF
     fi
 
-    # Downgrade MinIO router to plain HTTP when HTTPS is not configured
+    # Downgrade RustFS router to plain HTTP when HTTPS is not configured
     if [[ $https_setup != "y" ]]; then
-      sed -i 's/traefik.http.routers.minio-s3.entrypoints=websecure/traefik.http.routers.minio-s3.entrypoints=web/' "$services_snippet_file"
-      sed -i '/traefik.http.routers.minio-s3.tls=true/d' "$services_snippet_file"
-      sed -i '/traefik.http.routers.minio-s3.tls.certresolver=default/d' "$services_snippet_file"
+      sed -i 's/traefik.http.routers.rustfs-s3.entrypoints=websecure/traefik.http.routers.rustfs-s3.entrypoints=web/' "$services_snippet_file"
+      sed -i '/traefik.http.routers.rustfs-s3.tls=true/d' "$services_snippet_file"
+      sed -i '/traefik.http.routers.rustfs-s3.tls.certresolver=default/d' "$services_snippet_file"
       sed -i "s|accesscontrolalloworiginlist=https://$domain_name|accesscontrolalloworiginlist=http://$domain_name|" "$services_snippet_file"
     fi
   else
@@ -577,14 +763,14 @@ EOF
         END { if (invol && !added) { print "  redis:"; print "    driver: local" } }
       ' docker-compose.yml > tmp.yml && mv tmp.yml docker-compose.yml
     fi
-    # Ensure minio-data if needed
-    if [[ $minio_storage == "y" ]]; then
-      if ! awk '/^volumes:/{invol=1; next} invol && (/^[^[:space:]]/ || NF==0){invol=0} invol{ if($1=="minio-data:") found=1 } END{ exit(found?0:1) }' docker-compose.yml; then
+    # Ensure rustfs-data if needed
+    if [[ $rustfs_storage == "y" ]]; then
+      if ! awk '/^volumes:/{invol=1; next} invol && (/^[^[:space:]]/ || NF==0){invol=0} invol{ if($1=="rustfs-data:") found=1 } END{ exit(found?0:1) }' docker-compose.yml; then
         awk '
           /^volumes:/ { print; invol=1; next }
-          invol && /^[^[:space:]]/ { if(!added){ print "  minio-data:"; print "    driver: local"; added=1 } ; invol=0 }
+          invol && /^[^[:space:]]/ { if(!added){ print "  rustfs-data:"; print "    driver: local"; added=1 } ; invol=0 }
           { print }
-          END { if (invol && !added) { print "  minio-data:"; print "    driver: local" } }
+          END { if (invol && !added) { print "  rustfs-data:"; print "    driver: local" } }
         ' docker-compose.yml > tmp.yml && mv tmp.yml docker-compose.yml
       fi
     fi
@@ -596,77 +782,16 @@ EOF
       echo "    driver: local"
       echo "  redis:"
       echo "    driver: local"
-      if [[ $minio_storage == "y" ]]; then
-        echo "  minio-data:"
+      if [[ $rustfs_storage == "y" ]]; then
+        echo "  rustfs-data:"
         echo "    driver: local"
       fi
     } >> docker-compose.yml
   fi
 
-  # Create minio-init script outside heredoc to avoid variable expansion issues
-  if [[ $minio_storage == "y" ]]; then
-    cat > minio-init.sh << 'MINIO_SCRIPT_EOF'
-#!/bin/sh
-echo '⏳ Waiting for MinIO to be ready...'
-attempts=0
-max_attempts=30
-until mc alias set minio http://minio:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD" >/dev/null 2>&1 \
-  && mc ls minio >/dev/null 2>&1; do
-  attempts=$((attempts + 1))
-  if [ $attempts -ge $max_attempts ]; then
-    printf '❌ Failed to connect to MinIO after %s attempts\n' $max_attempts
-    exit 1
-  fi
-  printf '...still waiting attempt %s/%s\n' $attempts $max_attempts
-  sleep 2
-done
-echo '🔗 MinIO reachable; alias configured.'
-
-echo '🪣 Creating bucket (idempotent)...';
-mc mb minio/$MINIO_BUCKET_NAME --ignore-existing;
-
-echo '📄 Creating JSON policy file...';
-cat > /tmp/formbricks-policy.json << EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": ["s3:DeleteObject", "s3:GetObject", "s3:PutObject"],
-      "Resource": ["arn:aws:s3:::$MINIO_BUCKET_NAME/*"]
-    },
-    {
-      "Effect": "Allow",
-      "Action": ["s3:ListBucket"],
-      "Resource": ["arn:aws:s3:::$MINIO_BUCKET_NAME"]
-    }
-  ]
-}
-EOF
-
-echo '🔒 Creating policy (idempotent)...';
-if ! mc admin policy info minio formbricks-policy >/dev/null 2>&1; then
-  mc admin policy create minio formbricks-policy /tmp/formbricks-policy.json || mc admin policy add minio formbricks-policy /tmp/formbricks-policy.json;
-  echo 'Policy created successfully.';
-else
-  echo 'Policy already exists, skipping creation.';
-fi
-
-echo '👤 Creating service user (idempotent)...';
-if ! mc admin user info minio "$MINIO_SERVICE_USER" >/dev/null 2>&1; then
-  mc admin user add minio "$MINIO_SERVICE_USER" "$MINIO_SERVICE_PASSWORD";
-  echo 'User created successfully.';
-else
-  echo 'User already exists, skipping creation.';
-fi
-
-echo '🔗 Attaching policy to user (idempotent)...';
-mc admin policy attach minio formbricks-policy --user "$MINIO_SERVICE_USER" || echo 'Policy already attached or attachment failed (non-fatal).';
-
-echo '✅ MinIO setup complete!';
-exit 0;
-MINIO_SCRIPT_EOF
-    chmod +x minio-init.sh
+  # Create rustfs-init script outside heredoc to avoid variable expansion issues
+  if [[ $rustfs_storage == "y" ]]; then
+    write_rustfs_init_script "rustfs-init.sh"
   fi
 
   newgrp docker <<END
@@ -678,10 +803,10 @@ echo "🔗 To edit more variables and deeper config, go to the formbricks/docker
 echo "🚨 Make sure you have set up the DNS records as well as inbound rules for the domain name and IP address of this instance."
 echo ""
 
-if [[ $minio_storage == "y" ]]; then
-    echo "🗄️  MinIO Storage Setup Complete:"
-    echo "   • Access Key: $minio_service_user (least privilege)"
-    echo "   • Bucket: $minio_bucket_name (✅ created and secured)"
+if [[ $rustfs_storage == "y" ]]; then
+    echo "🗄️  RustFS Storage Setup Complete:"
+    echo "   • Bucket: $rustfs_bucket_name (✅ created and secured)"
+    echo "   • Generated credentials stored in ./formbricks/.env (permissions set to 600)"
     echo ""
 fi
 
@@ -736,64 +861,78 @@ get_logs() {
   sudo docker compose logs
 }
 
-cleanup_minio_init() {
-  echo "🧹 Cleaning up MinIO init service and references..."
+cleanup_rustfs_init() {
+  echo "🧹 Cleaning up RustFS init service and references..."
   cd formbricks
 
-  # Remove minio-init service block from docker-compose.yml
+  # Remove rustfs-init service block from docker-compose.yml
   awk '
     BEGIN{skip=0}
     /^services:[[:space:]]*$/ { print; next }
-    /^  minio-init:/          { skip=1; next }
+    /^  rustfs-init:/         { skip=1; next }
     /^  [A-Za-z0-9_-]+:/      { if (skip) skip=0 }
     { if (!skip) print }
   ' docker-compose.yml > tmp.yml && mv tmp.yml docker-compose.yml
 
-  # Remove list-style "- minio-init" lines under depends_on (if any)
+  # Remove list-style init dependencies under depends_on (if any)
   if sed --version >/dev/null 2>&1; then
+    sed -E -i '/^[[:space:]]*-[[:space:]]*rustfs-init[[:space:]]*$/d' docker-compose.yml
     sed -E -i '/^[[:space:]]*-[[:space:]]*minio-init[[:space:]]*$/d' docker-compose.yml
   else
+    sed -E -i '' '/^[[:space:]]*-[[:space:]]*rustfs-init[[:space:]]*$/d' docker-compose.yml
     sed -E -i '' '/^[[:space:]]*-[[:space:]]*minio-init[[:space:]]*$/d' docker-compose.yml
   fi
 
-  # Remove the minio-init mapping and its condition line (mapping style depends_on)
+  # Remove the mapping style depends_on entries for init jobs
   if sed --version >/dev/null 2>&1; then
+    sed -i '/^[[:space:]]*rustfs-init:[[:space:]]*$/,/^[[:space:]]*condition:[[:space:]]*service_completed_successfully[[:space:]]*$/d' docker-compose.yml
     sed -i '/^[[:space:]]*minio-init:[[:space:]]*$/,/^[[:space:]]*condition:[[:space:]]*service_completed_successfully[[:space:]]*$/d' docker-compose.yml
   else
+    sed -i '' '/^[[:space:]]*rustfs-init:[[:space:]]*$/,/^[[:space:]]*condition:[[:space:]]*service_completed_successfully[[:space:]]*$/d' docker-compose.yml
     sed -i '' '/^[[:space:]]*minio-init:[[:space:]]*$/,/^[[:space:]]*condition:[[:space:]]*service_completed_successfully[[:space:]]*$/d' docker-compose.yml
   fi
 
-  # Remove any stopped minio-init container and restart without orphans
+  # Remove any stopped init containers and restart without orphans
+  docker compose rm -f -s rustfs-init >/dev/null 2>&1 || true
   docker compose rm -f -s minio-init >/dev/null 2>&1 || true
   docker compose up -d --remove-orphans
 
-  echo "✅ MinIO init cleanup complete."
+  echo "✅ RustFS init cleanup complete."
 }
 
-case "$1" in
-install)
-  install_formbricks
-  ;;
-update)
-  update_formbricks
-  ;;
-stop)
-  stop_formbricks
-  ;;
-restart)
-  restart_formbricks
-  ;;
-logs)
-  get_logs
-  ;;
+cleanup_minio_init() {
+  cleanup_rustfs_init
+}
+
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  case "$1" in
+  install)
+    install_formbricks
+    ;;
+  update)
+    update_formbricks
+    ;;
+  stop)
+    stop_formbricks
+    ;;
+  restart)
+    restart_formbricks
+    ;;
+  logs)
+    get_logs
+    ;;
+  cleanup-rustfs-init)
+    cleanup_rustfs_init
+    ;;
   cleanup-minio-init)
     cleanup_minio_init
     ;;
-uninstall)
-  uninstall_formbricks
-  ;;
-*)
-  echo "🚀 Executing default step of installing Formbricks"
-  install_formbricks
-  ;;
-esac
+  uninstall)
+    uninstall_formbricks
+    ;;
+  *)
+    echo "🚀 Executing default step of installing Formbricks"
+    install_formbricks
+    ;;
+  esac
+fi

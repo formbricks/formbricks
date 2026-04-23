@@ -1,5 +1,6 @@
 import { expect } from "@playwright/test";
 import { test } from "./lib/fixtures";
+import { gotoSurveyList } from "./lib/utils";
 
 test.describe("Survey Follow-Up Create & Edit", async () => {
   // 3 minutes
@@ -9,7 +10,7 @@ test.describe("Survey Follow-Up Create & Edit", async () => {
     const user = await users.create();
     await user.login();
 
-    await page.waitForURL(/\/environments\/[^/]+\/surveys/);
+    await gotoSurveyList(page);
 
     await test.step("Create a new survey", async () => {
       await page.getByText("Start from scratch").click();

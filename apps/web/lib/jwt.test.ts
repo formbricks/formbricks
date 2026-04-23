@@ -6,11 +6,13 @@ import {
   createEmailChangeToken,
   createEmailToken,
   createInviteToken,
+  createSsoRelinkIntent,
   createToken,
   createTokenForLinkSurvey,
   getEmailFromEmailToken,
   verifyEmailChangeToken,
   verifyInviteToken,
+  verifySsoRelinkIntent,
   verifyToken,
   verifyTokenForLinkSurvey,
 } from "./jwt";
@@ -380,6 +382,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       expect(verified).toEqual({
         id: mockUser.id, // Returns the decrypted user ID
         email: mockUser.email,
+        purpose: "email_verification",
       });
     });
 
@@ -414,6 +417,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       expect(verified).toEqual({
         id: mockUser.id, // Returns the raw ID from payload
         email: mockUser.email,
+        purpose: "email_verification",
       });
     });
 
@@ -425,6 +429,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       expect(verified).toEqual({
         id: mockUser.id, // Returns the decrypted user ID
         email: mockUser.email,
+        purpose: "email_verification",
       });
     });
 
@@ -1002,6 +1007,79 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
         const results = await Promise.all(verifications);
         expect(results.length).toBe(100);
         expect(results.every((result: any) => result.id === mockUser.id)).toBe(true); // Returns decrypted user ID
+      });
+    });
+
+    describe("SSO recovery support", () => {
+      test("creates verification tokens that preserve the recovery purpose", async () => {
+        const token = createToken(mockUser.id, { purpose: "sso_recovery", expiresIn: "15m" });
+
+        await expect(verifyToken(token)).resolves.toEqual(
+          expect.objectContaining({
+            id: mockUser.id,
+            email: mockUser.email,
+            purpose: "sso_recovery",
+          })
+        );
+      });
+
+      test("defaults legacy verification tokens to email_verification when purpose is missing", async () => {
+        const legacyToken = jwt.sign({ id: `encrypted_${mockUser.id}` }, TEST_NEXTAUTH_SECRET);
+
+        await expect(verifyToken(legacyToken)).resolves.toEqual(
+          expect.objectContaining({
+            id: mockUser.id,
+            email: mockUser.email,
+            purpose: "email_verification",
+          })
+        );
+      });
+
+      test("round-trips SSO relink intents without losing callback state", () => {
+        const intent = createSsoRelinkIntent({
+          userId: mockUser.id,
+          email: mockUser.email,
+          provider: "google",
+          providerAccountId: "provider-123",
+          callbackUrl: "http://localhost:3000/invite?token=invite-token",
+        });
+
+        expect(verifySsoRelinkIntent(intent)).toEqual({
+          userId: mockUser.id,
+          email: mockUser.email,
+          provider: "google",
+          providerAccountId: "provider-123",
+          callbackUrl: "http://localhost:3000/invite?token=invite-token",
+        });
+      });
+
+      test("rejects expired SSO relink intents", () => {
+        const expiredIntent = jwt.sign(
+          {
+            userId: crypto.symmetricEncrypt(mockUser.id, TEST_ENCRYPTION_KEY),
+            email: crypto.symmetricEncrypt(mockUser.email, TEST_ENCRYPTION_KEY),
+            provider: "google",
+            providerAccountId: crypto.symmetricEncrypt("provider-123", TEST_ENCRYPTION_KEY),
+            callbackUrl: crypto.symmetricEncrypt("http://localhost:3000", TEST_ENCRYPTION_KEY),
+            exp: Math.floor(Date.now() / 1000) - 3600,
+          },
+          TEST_NEXTAUTH_SECRET
+        );
+
+        expect(() => verifySsoRelinkIntent(expiredIntent)).toThrow();
+      });
+
+      test("rejects tampered SSO relink intents", () => {
+        const intent = createSsoRelinkIntent({
+          userId: mockUser.id,
+          email: mockUser.email,
+          provider: "google",
+          providerAccountId: "provider-123",
+          callbackUrl: "http://localhost:3000",
+        });
+
+        const tamperedIntent = `${intent.slice(0, -1)}x`;
+        expect(() => verifySsoRelinkIntent(tamperedIntent)).toThrow();
       });
     });
   });

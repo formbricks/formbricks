@@ -14,6 +14,26 @@ If you’re looking to quickly set up a production instance of Formbricks on an 
   automatic SSL management via Let’s Encrypt.
 </Note>
 
+<Warning>
+  The bundled RustFS option in this one-click setup is designed for convenience on a single server. It is a
+  good fit for small-scale or low-complexity self-hosted deployments, but it is not the ideal RustFS
+  architecture for high-availability or larger production environments. For stricter production requirements,
+  use external object storage or run a dedicated RustFS deployment separately from the Formbricks one-click
+  stack.
+</Warning>
+
+<Note>
+  When bundled RustFS is enabled, the installer stores the generated RustFS credentials in `./formbricks/.env`
+  and restricts the file to `0600`. Keep that file private, include it in your server backup plan, and avoid
+  checking it into source control or copying it to shared locations.
+</Note>
+
+<Note>
+  For better RustFS performance and stability, prefer local SSD or NVMe-backed storage for the host volume
+  behind `rustfs-data`. Avoid NFS and other network filesystems for bundled RustFS data, and use XFS on
+  dedicated storage disks when you manage the host layout yourself.
+</Note>
+
 For other operating systems or a more customized installation, please refer to the advanced installation guide with [Docker](/self-hosting/setup/docker).
 
 ### Requirements
@@ -312,17 +332,22 @@ To restart Formbricks, simply run the following command:
 
 The script will automatically restart all the Formbricks related containers and brings the entire stack up with the previous configuration.
 
-## Cleanup MinIO init (optional)
+## Cleanup RustFS init (optional)
 
-During the one-click setup, a temporary `minio-init` service configures MinIO (bucket, policy, service user). It is idempotent and safe to leave in place; it will do nothing on subsequent starts once configuration exists.
+During the one-click setup, a temporary `rustfs-init` service configures RustFS (bucket, policy, service
+user). It is idempotent and safe to leave in place; it will do nothing on subsequent starts once the
+configuration exists.
 
-If you prefer to remove the `minio-init` service and its references after a successful setup, run:
+If you prefer to remove the `rustfs-init` service and its references after a successful setup, run:
 
 ```
-./formbricks.sh cleanup-minio-init
+./formbricks.sh cleanup-rustfs-init
 ```
 
-This only removes the init job and its Compose references; it does not delete any data or affect your MinIO configuration.
+`./formbricks.sh cleanup-minio-init` is still available as a backward-compatible alias.
+
+This only removes the init job and its Compose references; it does not delete any data or affect your RustFS
+configuration.
 
 ## Uninstall
 

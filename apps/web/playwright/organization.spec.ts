@@ -1,5 +1,6 @@
 import { expect } from "playwright/test";
 import { test } from "./lib/fixtures";
+import { gotoSurveyList } from "./lib/utils";
 import { invites } from "./utils/mock";
 
 test.describe("Invite, accept and remove organization member", async () => {
@@ -7,7 +8,7 @@ test.describe("Invite, accept and remove organization member", async () => {
     const user = await users.create();
     await user.login();
 
-    await page.waitForURL(/\/environments\/[^/]+\/surveys/);
+    await gotoSurveyList(page);
   });
 
   test("Invite organization member", async ({ page }) => {

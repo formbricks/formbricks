@@ -117,26 +117,37 @@ Please take a look at our [migration guide](/self-hosting/advanced/migration) fo
    docker compose up -d
    ```
 
-## Optional: Adding MinIO for File Storage
+## Optional: Adding RustFS for File Storage
 
-MinIO provides S3-compatible object storage for file uploads in Formbricks. If you want to enable features like image uploads, file uploads in surveys, or custom logos, you can add MinIO to your Docker setup.
+RustFS provides S3-compatible object storage for file uploads in Formbricks. If you want to enable features
+like image uploads, survey file uploads, or custom logos, you can run RustFS alongside Formbricks while
+keeping the existing `S3_*` environment variables.
 
 <Note>
-  For detailed information about file storage options and configuration, see our [File Uploads
+  For a broader overview of file storage options and required environment variables, see our [File Uploads
   Configuration](/self-hosting/configuration/file-uploads) guide.
 </Note>
 
 <Warning>
   **For production deployments with HTTPS**, use the [one-click setup script](/self-hosting/setup/one-click)
-  which automatically configures MinIO with Traefik, SSL certificates, and a subdomain (required for MinIO in
-  production). The setups below are suitable for local development or testing only.
+  which automatically configures RustFS with Traefik, SSL certificates, a dedicated `files.` subdomain, and
+  least-privilege service credentials. The examples below are best suited for development, testing, or custom
+  local setups.
+</Warning>
+
+<Warning>
+  The bundled RustFS examples on this page are convenience-oriented single-server setups. They work well for
+  development, evaluation, and smaller self-hosted deployments, but they are not the ideal RustFS architecture
+  for high-availability or larger-scale production storage. For stricter production requirements, use external
+  object storage or run a dedicated RustFS deployment separately.
 </Warning>
 
 ### Quick Start: Using docker-compose.dev.yml
 
-The fastest way to test MinIO with Formbricks is to use the included `docker-compose.dev.yml` which already has MinIO pre-configured.
+The fastest way to test file uploads locally is to use the included `docker-compose.dev.yml`, which already
+starts RustFS and auto-creates the `formbricks` bucket.
 
-1. **Start MinIO and Services**
+1. **Start the local stack**
 
    From the repository root:
 
@@ -144,163 +155,202 @@ The fastest way to test MinIO with Formbricks is to use the included `docker-com
    docker compose -f docker-compose.dev.yml up -d
    ```
 
-   This starts PostgreSQL, Valkey (Redis), MinIO, and Mailhog.
+   This starts PostgreSQL, Valkey (Redis), Mailhog, RustFS, a permissions helper, and a one-time bucket
+   bootstrap job.
 
-2. **Access MinIO Console**
+2. **Access the RustFS console**
 
-   Open http://localhost:9001 in your browser.
+   Open http://localhost:9001 in your browser and sign in with:
+   - Username: `devrustfs`
+   - Password: `devrustfs123`
 
-   Login credentials:
+3. **Configure Formbricks**
 
-   - Username: `devminio`
-   - Password: `devminio123`
-
-3. **Create Bucket**
-
-   - Click "Buckets" in the left sidebar
-   - Click "Create Bucket"
-   - Name it: `formbricks`
-
-4. **Configure Formbricks**
-
-   Update your `.env` file or environment variables with MinIO configuration:
+   Update your `.env` file or environment variables:
 
    ```bash
-   # MinIO S3 Storage
-   S3_ACCESS_KEY="devminio"
-   S3_SECRET_KEY="devminio123"
+   S3_ACCESS_KEY="devrustfs"
+   S3_SECRET_KEY="devrustfs123"
    S3_REGION="us-east-1"
    S3_BUCKET_NAME="formbricks"
    S3_ENDPOINT_URL="http://localhost:9000"
    S3_FORCE_PATH_STYLE="1"
    ```
 
-5. **Verify in MinIO Console**
+4. **Verify uploads**
 
-   After uploading files in Formbricks, view them at http://localhost:9001:
-
-   - Navigate to Buckets → formbricks → Browse
-   - Your uploaded files will appear here
+   After uploading a file in Formbricks, open http://localhost:9001 and navigate to **Buckets → formbricks**
+   to confirm the object was stored successfully.
 
 <Note>
-  The `docker-compose.dev.yml` file includes MinIO with console access on port 9001, making it easy to
-  visually verify file uploads. This is the recommended approach for development and testing.
+  The development compose file also runs a `rustfs-init` job so you do not need to create the bucket manually.
 </Note>
 
-### Manual MinIO Setup (Custom Configuration)
+### Manual RustFS Setup (Custom Configuration)
 
 <Note>
-  <strong>Recommended:</strong> If you can, use <code>docker-compose.dev.yml</code> for the fastest path. Use
-  this manual approach only when you need to integrate MinIO into an existing <code>docker-compose.yml</code>{" "}
-  or customize settings.
+  <strong>Recommended:</strong> Prefer <code>docker-compose.dev.yml</code> for local development unless you
+  need to fold RustFS into an existing custom Compose stack.
 </Note>
 
-If you prefer to add MinIO to your own `docker-compose.yml`, follow these steps:
+If you want to add RustFS to your own `docker-compose.yml`, use a pinned RustFS image plus two helper
+services:
 
-1. **Add the MinIO service**
+```yaml
+services:
+  rustfs-perms:
+    image: busybox:1.36.1
+    user: "0:0"
+    command: ["sh", "-c", "mkdir -p /data && chown -R 10001:10001 /data"]
+    volumes:
+      - rustfs-data:/data
 
-   Add this service alongside your existing `formbricks` and `postgres` services:
+  rustfs:
+    image: rustfs/rustfs:1.0.0-alpha.93
+    restart: always
+    depends_on:
+      rustfs-perms:
+        condition: service_completed_successfully
+    command: /data
+    environment:
+      RUSTFS_ACCESS_KEY: "${FORMBRICKS_RUSTFS_ADMIN_USER}"
+      RUSTFS_SECRET_KEY: "${FORMBRICKS_RUSTFS_ADMIN_PASSWORD}"
+      RUSTFS_ADDRESS: ":9000"
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_CONSOLE_ADDRESS: ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - rustfs-data:/data
 
-   ```yaml
-   services:
-     # ... your existing services (formbricks, postgres, redis/valkey, etc.)
+  rustfs-init:
+    image: minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868
+    depends_on:
+      - rustfs
+    environment:
+      RUSTFS_ADMIN_USER: "${FORMBRICKS_RUSTFS_ADMIN_USER}"
+      RUSTFS_ADMIN_PASSWORD: "${FORMBRICKS_RUSTFS_ADMIN_PASSWORD}"
+      RUSTFS_SERVICE_USER: "${FORMBRICKS_RUSTFS_SERVICE_USER}"
+      RUSTFS_SERVICE_PASSWORD: "${FORMBRICKS_RUSTFS_SERVICE_PASSWORD}"
+      RUSTFS_BUCKET_NAME: "${FORMBRICKS_RUSTFS_BUCKET_NAME}"
+      RUSTFS_POLICY_NAME: "${FORMBRICKS_RUSTFS_POLICY_NAME}"
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        set -e
+        until mc alias set rustfs http://rustfs:9000 "$RUSTFS_ADMIN_USER" "$RUSTFS_ADMIN_PASSWORD" >/dev/null 2>&1 \
+          && mc ls rustfs >/dev/null 2>&1; do
+          sleep 2
+        done
+        mc mb rustfs/"$RUSTFS_BUCKET_NAME" --ignore-existing
+        cat > /tmp/formbricks-policy.json << EOF
+        {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": ["s3:DeleteObject", "s3:GetObject", "s3:PutObject"],
+              "Resource": ["arn:aws:s3:::$RUSTFS_BUCKET_NAME/*"]
+            },
+            {
+              "Effect": "Allow",
+              "Action": ["s3:ListBucket"],
+              "Resource": ["arn:aws:s3:::$RUSTFS_BUCKET_NAME"]
+            }
+          ]
+        }
+        EOF
+        if ! mc admin policy info rustfs "$RUSTFS_POLICY_NAME" >/dev/null 2>&1; then
+          mc admin policy create rustfs "$RUSTFS_POLICY_NAME" /tmp/formbricks-policy.json || \
+            mc admin policy add rustfs "$RUSTFS_POLICY_NAME" /tmp/formbricks-policy.json
+        fi
+        if ! mc admin user info rustfs "$RUSTFS_SERVICE_USER" >/dev/null 2>&1; then
+          mc admin user add rustfs "$RUSTFS_SERVICE_USER" "$RUSTFS_SERVICE_PASSWORD"
+        fi
+        mc admin policy attach rustfs "$RUSTFS_POLICY_NAME" --user "$RUSTFS_SERVICE_USER"
+```
 
-     minio:
-       image: minio/minio:latest
-       restart: always
-       command: server /data --console-address ":9001"
-       environment:
-         MINIO_ROOT_USER: "formbricks-root"
-         MINIO_ROOT_PASSWORD: "change-this-secure-password"
-       ports:
-         - "9000:9000" # S3 API
-         - "9001:9001" # Web console
-       volumes:
-         - minio-data:/data
-   ```
+Declare the corresponding volume:
 
-   <Note>
-     For production pinning, consider using a digest (e.g., <code>minio/minio@sha256:...</code>) and review
-     periodically with <code>docker inspect minio/minio:latest</code>.
-   </Note>
+```yaml
+volumes:
+  rustfs-data:
+    driver: local
+```
 
-2. **Declare the MinIO volume**
+Store the generated RustFS credentials in a local `.env` file next to your `docker-compose.yml` instead of
+hardcoding them in Compose:
 
-   Add (or extend) your `volumes` block:
+```bash
+FORMBRICKS_RUSTFS_ADMIN_USER=formbricks-root
+FORMBRICKS_RUSTFS_ADMIN_PASSWORD=change-this-secure-password
+FORMBRICKS_RUSTFS_SERVICE_USER=formbricks-service
+FORMBRICKS_RUSTFS_SERVICE_PASSWORD=change-this-service-password
+FORMBRICKS_RUSTFS_BUCKET_NAME=formbricks
+FORMBRICKS_RUSTFS_POLICY_NAME=formbricks-policy
+FORMBRICKS_RUSTFS_REGION=us-east-1
+```
 
-   ```yaml
-   volumes:
-     postgres:
-       driver: local
-     redis:
-       driver: local
-     minio-data:
-       driver: local
-   ```
+Then configure Formbricks to use the RustFS service credentials:
 
-3. **Start services**
+```bash
+S3_ACCESS_KEY="${FORMBRICKS_RUSTFS_SERVICE_USER}"
+S3_SECRET_KEY="${FORMBRICKS_RUSTFS_SERVICE_PASSWORD}"
+S3_REGION="${FORMBRICKS_RUSTFS_REGION}"
+S3_BUCKET_NAME="${FORMBRICKS_RUSTFS_BUCKET_NAME}"
+S3_ENDPOINT_URL="http://rustfs:9000"
+S3_FORCE_PATH_STYLE="1"
+```
 
-   ```bash
-   docker compose up -d
-   ```
-
-4. **Open the MinIO Console & Create a Bucket**
-
-   - Visit **http://localhost:9001**
-   - Log in with:
-     - **Username:** `formbricks-root`
-     - **Password:** `change-this-secure-password`
-   - Go to **Buckets → Create Bucket**
-   - Name it: **`formbricks`**
-
-5. **Configure Formbricks to use MinIO**
-
-   In your `.env` or `formbricks` service environment, set:
-
-   ```bash
-   # MinIO S3 Storage
-   S3_ACCESS_KEY="formbricks-root"
-   S3_SECRET_KEY="change-this-secure-password"
-   S3_REGION="us-east-1"
-   S3_BUCKET_NAME="formbricks"
-   S3_ENDPOINT_URL="http://minio:9000"
-   S3_FORCE_PATH_STYLE="1"
-   ```
-
-   <Note>
-     These credentials should match <code>MINIO_ROOT_USER</code> and <code>MINIO_ROOT_PASSWORD</code> above.
-     For local/dev this is fine. For production, create a dedicated MinIO user with restricted policies.
-   </Note>
-
-6. **Verify uploads**
-
-   After uploading a file in Formbricks, check **http://localhost:9001**:
-
-   - **Buckets → formbricks → Browse**  
-     You should see your uploaded files.
+<Note>
+  Restrict the `.env` file to `0600` and do not commit it to source control. For production, prefer the
+  [one-click setup script](/self-hosting/setup/one-click), which creates a separate least-privilege service
+  account automatically.
+</Note>
 
 #### Tips & Common Gotchas
 
-- **Connection refused**: Ensure the `minio` container is running and port **9000** is reachable from the Formbricks container (use the internal URL `http://minio:9000`).
-- **Bucket not found**: Create the `formbricks` bucket in the console before uploading.
-- **Auth failed**: Confirm `S3_ACCESS_KEY`/`S3_SECRET_KEY` match MinIO credentials.
+- **Permission denied on `/data`**: Ensure the mounted directory or volume is owned by UID `10001`. The
+  `rustfs-perms` helper handles this for Compose-managed volumes.
+- **Storage medium matters**: Prefer local SSD or NVMe storage for `rustfs-data`, use XFS on dedicated
+  host-managed disks where possible, and avoid NFS or other network filesystems for RustFS data.
+- **Connection refused**: Ensure the `rustfs` container is running and port `9000` is reachable from the
+  Formbricks container.
+- **Bucket not found**: Confirm that `rustfs-init` completed successfully or create the bucket manually with
+  `mc`.
+- **Auth failed**: Confirm that `S3_ACCESS_KEY` and `S3_SECRET_KEY` match the RustFS credentials configured on
+  the server.
+- **Backups**: Back up the `rustfs-data` volume regularly, especially for single-server deployments.
+- **Console exposure**: Do not expose the RustFS console port publicly in production. Keep it on a private
+  network or behind admin-only controls.
 - **Health check**: From the Formbricks container:
+
   ```bash
-  docker compose exec formbricks sh -c 'wget -O- http://minio:9000/minio/health/ready'
+  docker compose exec formbricks sh -c 'wget -O- http://rustfs:9000/health'
   ```
 
 ### Production Setup with Traefik
 
-For production deployments, use the [one-click setup script](/self-hosting/setup/one-click) which automatically configures:
+For production deployments, use the [one-click setup script](/self-hosting/setup/one-click), which
+automatically configures:
 
-- MinIO service with Traefik reverse proxy
-- Dedicated subdomain (e.g., `files.yourdomain.com`) - **required for production**
+- RustFS behind Traefik on a dedicated `files.yourdomain.com` subdomain
 - Automatic SSL certificate generation via Let's Encrypt
-- CORS configuration for your domain
+- CORS configuration scoped to your Formbricks domain
 - Rate limiting middleware
-- Secure credential generation
+- Separate RustFS admin and Formbricks service credentials
+- A `rustfs-init` job that creates the bucket and access policy
 
-The production setup from [formbricks.sh](https://github.com/formbricks/formbricks/blob/main/docker/formbricks.sh) includes advanced features not covered in this manual setup. For production use, we strongly recommend using the one-click installer.
+The production setup from [formbricks.sh](https://github.com/formbricks/formbricks/blob/main/docker/formbricks.sh)
+adds the reverse proxy wiring and bootstrap automation needed for long-lived deployments.
+
+<Note>
+  Even in the one-click flow, bundled RustFS remains a convenience-oriented single-server deployment. For
+  higher availability, stricter operational requirements, or larger storage footprints, prefer external object
+  storage or a dedicated RustFS deployment managed separately from Formbricks.
+</Note>
 
 ## Debug
 

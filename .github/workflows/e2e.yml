@@ -85,65 +85,48 @@ jobs:
           echo "S3_REGION=us-east-1" >> .env
           echo "S3_BUCKET_NAME=formbricks-e2e" >> .env
           echo "S3_ENDPOINT_URL=http://localhost:9000" >> .env
-          echo "S3_ACCESS_KEY=devminio" >> .env
-          echo "S3_SECRET_KEY=devminio123" >> .env
+          echo "S3_ACCESS_KEY=devrustfs-service" >> .env
+          echo "S3_SECRET_KEY=devrustfs-service123" >> .env
           echo "S3_FORCE_PATH_STYLE=1" >> .env
         shell: bash
 
-      - name: Install MinIO client (mc)
-        run: |
-          set -euo pipefail
-          MC_VERSION="RELEASE.2025-08-13T08-35-41Z"
-          MC_BASE="https://dl.min.io/client/mc/release/linux-amd64/archive"
-          MC_BIN="mc.${MC_VERSION}"
-          MC_SUM="${MC_BIN}.sha256sum"
-
-          curl -fsSL "${MC_BASE}/${MC_BIN}" -o "${MC_BIN}"
-          curl -fsSL "${MC_BASE}/${MC_SUM}" -o "${MC_SUM}"
-
-          sha256sum -c "${MC_SUM}"
-
-          chmod +x "${MC_BIN}"
-          sudo mv "${MC_BIN}" /usr/local/bin/mc
-
-      - name: Start MinIO Server
+      - name: Start RustFS Server
         run: |
           set -euo pipefail
 
-          # Start MinIO server in background
+          # Start RustFS server in background
           docker run -d \
-            --name minio-server \
+            --name rustfs-server \
             -p 9000:9000 \
             -p 9001:9001 \
-            -e MINIO_ROOT_USER=devminio \
-            -e MINIO_ROOT_PASSWORD=devminio123 \
-            minio/minio:RELEASE.2025-09-07T16-13-09Z \
-            server /data --console-address :9001
+            -e RUSTFS_ACCESS_KEY=devrustfs \
+            -e RUSTFS_SECRET_KEY=devrustfs123 \
+            -e RUSTFS_ADDRESS=:9000 \
+            -e RUSTFS_CONSOLE_ENABLE=true \
+            -e RUSTFS_CONSOLE_ADDRESS=:9001 \
+            rustfs/rustfs:1.0.0-alpha.93 \
+            /data
 
-          echo "MinIO server started"
+          echo "RustFS server started"
 
-      - name: Wait for MinIO and create S3 bucket
+      - name: Bootstrap RustFS bucket and browser upload CORS
         run: |
           set -euo pipefail
 
-          echo "Waiting for MinIO to be ready..."
-          ready=0
-          for i in {1..60}; do
-            if curl -fsS http://localhost:9000/minio/health/live >/dev/null; then
-              echo "MinIO is up after ${i} seconds"
-              ready=1
-              break
-            fi
-            sleep 1
-          done
-
-          if [ "$ready" -ne 1 ]; then
-            echo "::error::MinIO did not become ready within 60 seconds"
-            exit 1
-          fi
-
-          mc alias set local http://localhost:9000 devminio devminio123
-          mc mb --ignore-existing local/formbricks-e2e
+          docker run --rm \
+            --network host \
+            --entrypoint /bin/sh \
+            -e RUSTFS_ENDPOINT_URL=http://127.0.0.1:9000 \
+            -e RUSTFS_ADMIN_USER=devrustfs \
+            -e RUSTFS_ADMIN_PASSWORD=devrustfs123 \
+            -e RUSTFS_SERVICE_USER=devrustfs-service \
+            -e RUSTFS_SERVICE_PASSWORD=devrustfs-service123 \
+            -e RUSTFS_BUCKET_NAME=formbricks-e2e \
+            -e RUSTFS_POLICY_NAME=formbricks-e2e-policy \
+            -e RUSTFS_CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000 \
+            -v "$PWD/docker/rustfs-init.sh:/tmp/rustfs-init.sh:ro" \
+            minio/mc@sha256:95b5f3f7969a5c5a9f3a700ba72d5c84172819e13385aaf916e237cf111ab868 \
+            /tmp/rustfs-init.sh
 
       - name: Build App
         run: |
@@ -242,8 +225,14 @@ jobs:
         if: failure()
         with:
           name: app-logs
+          if-no-files-found: ignore
           path: app.log
 
       - name: Output App Logs
         if: failure()
-        run: cat app.log
+        run: |
+          if [ -f app.log ]; then
+            cat app.log
+          else
+            echo "app.log not found because the Run App step did not execute or failed before log creation."
+          fi

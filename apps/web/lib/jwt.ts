@@ -1,4 +1,4 @@
-import jwt, { JwtPayload } from "jsonwebtoken";
+import jwt, { JwtPayload, SignOptions } from "jsonwebtoken";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ENCRYPTION_KEY, NEXTAUTH_SECRET } from "@/lib/constants";
@@ -13,7 +13,39 @@ const decryptWithFallback = (encryptedText: string, key: string): string => {
   }
 };
 
-export const createToken = (userId: string, options = {}): string => {
+export const VERIFICATION_TOKEN_PURPOSES = ["email_verification", "sso_recovery"] as const;
+
+export type TVerificationTokenPurpose = (typeof VERIFICATION_TOKEN_PURPOSES)[number];
+
+export type TVerifyTokenPayload = JwtPayload & {
+  id: string;
+  email: string;
+  purpose: TVerificationTokenPurpose;
+};
+
+type TVerificationTokenOptions = SignOptions & {
+  purpose?: TVerificationTokenPurpose;
+};
+
+type TSsoRelinkIntentPayload = {
+  callbackUrl: string;
+  email: string;
+  provider: string;
+  providerAccountId: string;
+  userId: string;
+};
+
+const DEFAULT_VERIFICATION_TOKEN_PURPOSE: TVerificationTokenPurpose = "email_verification";
+
+const getVerificationTokenPurpose = (purpose: unknown): TVerificationTokenPurpose => {
+  if (purpose && VERIFICATION_TOKEN_PURPOSES.includes(purpose as TVerificationTokenPurpose)) {
+    return purpose as TVerificationTokenPurpose;
+  }
+
+  return DEFAULT_VERIFICATION_TOKEN_PURPOSE;
+};
+
+export const createToken = (userId: string, options: TVerificationTokenOptions = {}): string => {
   if (!NEXTAUTH_SECRET) {
     throw new Error("NEXTAUTH_SECRET is not set");
   }
@@ -23,7 +55,9 @@ export const createToken = (userId: string, options = {}): string => {
   }
 
   const encryptedUserId = symmetricEncrypt(userId, ENCRYPTION_KEY);
-  return jwt.sign({ id: encryptedUserId }, NEXTAUTH_SECRET, options);
+  const { purpose = DEFAULT_VERIFICATION_TOKEN_PURPOSE, ...jwtOptions } = options;
+
+  return jwt.sign({ id: encryptedUserId, purpose }, NEXTAUTH_SECRET, jwtOptions);
 };
 export const createTokenForLinkSurvey = (surveyId: string, userEmail: string): string => {
   if (!NEXTAUTH_SECRET) {
@@ -224,7 +258,72 @@ const getUserEmailForLegacyVerification = async (
   return { userId: decryptedId, userEmail: foundUser.email };
 };
 
-export const verifyToken = async (token: string): Promise<JwtPayload> => {
+const DEFAULT_SSO_RELINK_INTENT_OPTIONS: SignOptions = {
+  expiresIn: "15m",
+};
+
+export const createSsoRelinkIntent = (
+  payload: TSsoRelinkIntentPayload,
+  options: SignOptions = DEFAULT_SSO_RELINK_INTENT_OPTIONS
+): string => {
+  if (!NEXTAUTH_SECRET) {
+    throw new Error("NEXTAUTH_SECRET is not set");
+  }
+
+  if (!ENCRYPTION_KEY) {
+    throw new Error("ENCRYPTION_KEY is not set");
+  }
+
+  return jwt.sign(
+    {
+      userId: symmetricEncrypt(payload.userId, ENCRYPTION_KEY),
+      email: symmetricEncrypt(payload.email, ENCRYPTION_KEY),
+      provider: payload.provider,
+      providerAccountId: symmetricEncrypt(payload.providerAccountId, ENCRYPTION_KEY),
+      callbackUrl: symmetricEncrypt(payload.callbackUrl, ENCRYPTION_KEY),
+    },
+    NEXTAUTH_SECRET,
+    options
+  );
+};
+
+export const verifySsoRelinkIntent = (token: string): TSsoRelinkIntentPayload => {
+  if (!NEXTAUTH_SECRET) {
+    throw new Error("NEXTAUTH_SECRET is not set");
+  }
+
+  if (!ENCRYPTION_KEY) {
+    throw new Error("ENCRYPTION_KEY is not set");
+  }
+
+  const payload = jwt.verify(token, NEXTAUTH_SECRET, { algorithms: ["HS256"] }) as JwtPayload & {
+    userId: string;
+    email: string;
+    provider: string;
+    providerAccountId: string;
+    callbackUrl: string;
+  };
+
+  if (
+    !payload?.userId ||
+    !payload?.email ||
+    !payload?.provider ||
+    !payload?.providerAccountId ||
+    !payload?.callbackUrl
+  ) {
+    throw new Error("Token is invalid or missing required fields");
+  }
+
+  return {
+    userId: decryptWithFallback(payload.userId, ENCRYPTION_KEY),
+    email: decryptWithFallback(payload.email, ENCRYPTION_KEY),
+    provider: payload.provider,
+    providerAccountId: decryptWithFallback(payload.providerAccountId, ENCRYPTION_KEY),
+    callbackUrl: decryptWithFallback(payload.callbackUrl, ENCRYPTION_KEY),
+  };
+};
+
+export const verifyToken = async (token: string): Promise<TVerifyTokenPayload> => {
   if (!NEXTAUTH_SECRET) {
     throw new Error("NEXTAUTH_SECRET is not set");
   }
@@ -263,7 +362,11 @@ export const verifyToken = async (token: string): Promise<JwtPayload> => {
   // Get user email if we don't have it yet
   userData ??= await getUserEmailForLegacyVerification(token, payload.id);
 
-  return { id: userData.userId, email: userData.userEmail };
+  return {
+    id: userData.userId,
+    email: userData.userEmail,
+    purpose: getVerificationTokenPurpose(payload.purpose),
+  };
 };
 
 export const verifyInviteToken = (token: string): { inviteId: string; email: string } => {

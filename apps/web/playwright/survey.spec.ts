@@ -1,14 +1,28 @@
-import { expect } from "@playwright/test";
+import { type Locator, expect } from "@playwright/test";
 import { surveys } from "@/playwright/utils/mock";
 import { test } from "./lib/fixtures";
+import { gotoSurveyList } from "./lib/utils";
 import * as helper from "./utils/helper";
-import { createSurvey, createSurveyWithLogic, uploadFileForFileUploadQuestion } from "./utils/helper";
+import { createSurvey, createSurveyWithLogic, uploadImageChoicesForPictureSelection } from "./utils/helper";
 
 test.use({
   launchOptions: {
     slowMo: 150,
   },
 });
+
+test.beforeEach(async ({ page }) => {
+  await helper.mockStorageUploads(page);
+});
+
+const firstPictureChoiceAlt = "logo-transparent.png";
+const secondPictureChoiceAlt = "android-chrome-192x192.png";
+
+const selectPictureChoice = async (pictureSelectQuestion: Locator, choiceAlt: string) => {
+  const choiceImage = pictureSelectQuestion.getByRole("img", { name: choiceAlt });
+  await expect(choiceImage).toBeVisible();
+  await choiceImage.click();
+};
 
 test.describe("Survey Create & Submit Response without logic", async () => {
   // 5 minutes
@@ -20,7 +34,7 @@ test.describe("Survey Create & Submit Response without logic", async () => {
     const user = await users.create();
     await user.login();
 
-    await page.waitForURL(/\/environments\/[^/]+\/surveys/);
+    await gotoSurveyList(page);
 
     await test.step("Create Survey", async () => {
       await createSurvey(page, surveys.createAndSubmit);
@@ -156,12 +170,13 @@ test.describe("Survey Create & Submit Response without logic", async () => {
       // Picture Select Question
       await expect(page.getByText(surveys.createAndSubmit.pictureSelectQuestion.question)).toBeVisible();
       await expect(page.getByText(surveys.createAndSubmit.pictureSelectQuestion.description)).toBeVisible();
-      await expect(page.locator("#questionCard-7").getByRole("button", { name: "Next" })).toBeVisible();
-      await expect(page.locator("#questionCard-7").getByRole("button", { name: "Back" })).toBeVisible();
-      await expect(page.getByRole("img", { name: "puppy-1-small.jpg" })).toBeVisible();
-      await expect(page.getByRole("img", { name: "puppy-2-small.jpg" })).toBeVisible();
-      await page.getByRole("img", { name: "puppy-1-small.jpg" }).click();
-      await page.locator("#questionCard-7").getByRole("button", { name: "Next" }).click();
+      const pictureSelectQuestion = page.locator("#questionCard-7");
+      await expect(pictureSelectQuestion.getByRole("button", { name: "Next" })).toBeVisible();
+      await expect(pictureSelectQuestion.getByRole("button", { name: "Back" })).toBeVisible();
+      await expect(pictureSelectQuestion.getByRole("img", { name: firstPictureChoiceAlt })).toBeVisible();
+      await expect(pictureSelectQuestion.getByRole("img", { name: secondPictureChoiceAlt })).toBeVisible();
+      await selectPictureChoice(pictureSelectQuestion, firstPictureChoiceAlt);
+      await pictureSelectQuestion.getByRole("button", { name: "Next" }).click();
 
       // File Upload Question
       await expect(page.getByText(surveys.createAndSubmit.fileUploadQuestion.question)).toBeVisible();
@@ -245,7 +260,7 @@ test.describe("Multi Language Survey Create", async () => {
     const user = await users.create();
     await user.login();
 
-    await page.waitForURL(/\/environments\/[^/]+\/surveys/);
+    await gotoSurveyList(page);
 
     // Add workspace languages (English + German)
     await page.getByRole("link", { name: "Configuration" }).click();
@@ -304,8 +319,7 @@ test.describe("Multi Language Survey Create", async () => {
       surveys.createAndSubmit.pictureSelectQuestion.question
     );
 
-    // Handle file uploads
-    await uploadFileForFileUploadQuestion(page);
+    await uploadImageChoicesForPictureSelection(page);
 
     await page
       .locator("div")
@@ -710,7 +724,7 @@ test.describe("Testing Survey with advanced logic", async () => {
     const user = await users.create();
     await user.login();
 
-    await page.waitForURL(/\/environments\/[^/]+\/surveys/);
+    await gotoSurveyList(page);
 
     await test.step("Create Survey", async () => {
       await createSurveyWithLogic(page, surveys.createWithLogicAndSubmit);
@@ -810,12 +824,13 @@ test.describe("Testing Survey with advanced logic", async () => {
       await expect(
         page.getByText(surveys.createWithLogicAndSubmit.pictureSelectQuestion.description)
       ).toBeVisible();
-      await expect(page.locator("#questionCard-3").getByRole("button", { name: "Next" })).toBeVisible();
-      await expect(page.locator("#questionCard-3").getByRole("button", { name: "Back" })).toBeVisible();
-      await expect(page.getByRole("img", { name: "puppy-1-small.jpg" })).toBeVisible();
-      await expect(page.getByRole("img", { name: "puppy-2-small.jpg" })).toBeVisible();
-      await page.getByRole("img", { name: "puppy-1-small.jpg" }).click();
-      await page.locator("#questionCard-3").getByRole("button", { name: "Next" }).click();
+      const pictureSelectQuestion = page.locator("#questionCard-3");
+      await expect(pictureSelectQuestion.getByRole("button", { name: "Next" })).toBeVisible();
+      await expect(pictureSelectQuestion.getByRole("button", { name: "Back" })).toBeVisible();
+      await expect(pictureSelectQuestion.getByRole("img", { name: firstPictureChoiceAlt })).toBeVisible();
+      await expect(pictureSelectQuestion.getByRole("img", { name: secondPictureChoiceAlt })).toBeVisible();
+      await selectPictureChoice(pictureSelectQuestion, firstPictureChoiceAlt);
+      await pictureSelectQuestion.getByRole("button", { name: "Next" }).click();
 
       // Rating Question
       await expect(page.getByText(surveys.createWithLogicAndSubmit.ratingQuestion.question)).toBeVisible();

@@ -16,12 +16,18 @@ export const WebsiteEmbedTab = ({ surveyUrl }: WebsiteEmbedTabProps) => {
   const [embedModeEnabled, setEmbedModeEnabled] = useState(false);
   const { t } = useTranslation();
 
-  const iframeCode = `<div style="position: relative; height:80dvh; overflow:auto;"> 
-  <iframe 
-    src="${surveyUrl}${embedModeEnabled ? "?embed=true" : ""}" 
+  const separator = surveyUrl.includes("?") ? "&" : "?";
+
+  const iframeSrc = embedModeEnabled ? `${surveyUrl}${separator}embed=true` : surveyUrl;
+
+  const iframeCode = `<div style="position: relative; height:80dvh; overflow:auto;">
+  <iframe
+    src="${iframeSrc}"
     frameborder="0" style="position: absolute; left:0; top:0; width:100%; height:100%; border:0;">
   </iframe>
 </div>`;
+
+  const previewSrc = `${iframeSrc}${iframeSrc.includes("?") ? "&" : "?"}preview=true`;
 
   return (
     <>
@@ -48,6 +54,15 @@ export const WebsiteEmbedTab = ({ surveyUrl }: WebsiteEmbedTabProps) => {
         {t("common.copy_code")}
         <CopyIcon />
       </Button>
+
+      <p className="text-base font-medium text-slate-800">{t("common.preview")}</p>
+      <div className="relative h-[500px] w-full overflow-hidden rounded-lg border border-slate-300">
+        <iframe
+          title={t("common.preview")}
+          src={previewSrc}
+          className="absolute inset-0 h-full w-full border-0"
+        />
+      </div>
     </>
   );
 };
