@@ -13,6 +13,10 @@ const mockUser = {
   createdAt: new Date(),
   updatedAt: new Date(),
   isActive: true,
+  password: "$2b$12$hashedPassword",
+  twoFactorSecret: "encrypted-2fa-secret",
+  backupCodes: "encrypted-backup-codes",
+  identityProviderAccountId: "provider-account-id",
   role: "admin",
   memberships: [{ organizationId: "org456", role: "admin" }],
   teamUsers: [{ team: { name: "Test Team", id: "team123", projectTeams: [{ projectId: "proj789" }] } }],
@@ -60,6 +64,10 @@ describe("Users Lib", () => {
             updatedAt: expect.any(Date),
           },
         ]);
+        expect(result.data.data[0]).not.toHaveProperty("password");
+        expect(result.data.data[0]).not.toHaveProperty("twoFactorSecret");
+        expect(result.data.data[0]).not.toHaveProperty("backupCodes");
+        expect(result.data.data[0]).not.toHaveProperty("identityProviderAccountId");
       }
     });
 
@@ -84,6 +92,10 @@ describe("Users Lib", () => {
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.data.id).toBe(mockUser.id);
+        expect(result.data).not.toHaveProperty("password");
+        expect(result.data).not.toHaveProperty("twoFactorSecret");
+        expect(result.data).not.toHaveProperty("backupCodes");
+        expect(result.data).not.toHaveProperty("identityProviderAccountId");
       }
     });
 
@@ -148,6 +160,10 @@ describe("Users Lib", () => {
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.data.name).toBe("Updated User");
+        expect(result.data).not.toHaveProperty("password");
+        expect(result.data).not.toHaveProperty("twoFactorSecret");
+        expect(result.data).not.toHaveProperty("backupCodes");
+        expect(result.data).not.toHaveProperty("identityProviderAccountId");
       }
     });
 
