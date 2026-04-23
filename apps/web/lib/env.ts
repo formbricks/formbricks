@@ -20,6 +20,9 @@ const ZAIConfigurationEnv = z.object({
 
 type TAIConfigurationEnv = z.infer<typeof ZAIConfigurationEnv>;
 
+const isJsonObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
 const addEnvIssue = (ctx: z.RefinementCtx, path: keyof TAIConfigurationEnv, message: string): void => {
   ctx.addIssue({
     code: "custom",
@@ -75,12 +78,16 @@ const validateGoogleAIConfiguration = (values: TAIConfigurationEnv, ctx: z.Refin
 
   if (values.AI_GOOGLE_CLOUD_CREDENTIALS_JSON) {
     try {
-      JSON.parse(values.AI_GOOGLE_CLOUD_CREDENTIALS_JSON);
+      const parsedCredentials = JSON.parse(values.AI_GOOGLE_CLOUD_CREDENTIALS_JSON) as unknown;
+
+      if (!isJsonObject(parsedCredentials)) {
+        throw new Error("AI_GOOGLE_CLOUD_CREDENTIALS_JSON must be a JSON object");
+      }
     } catch {
       addEnvIssue(
         ctx,
         "AI_GOOGLE_CLOUD_CREDENTIALS_JSON",
-        "AI_GOOGLE_CLOUD_CREDENTIALS_JSON must be valid JSON"
+        "AI_GOOGLE_CLOUD_CREDENTIALS_JSON must be a valid JSON object"
       );
     }
   }

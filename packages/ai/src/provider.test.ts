@@ -159,6 +159,24 @@ describe("packages/ai provider helpers", () => {
     });
   });
 
+  test("treats the instance as not configured when Google Cloud credentials JSON is not an object", () => {
+    expect(
+      getAiConfigurationStatus({
+        AI_PROVIDER: "google",
+        AI_MODEL: "gemini-2.5-flash",
+        AI_GOOGLE_CLOUD_PROJECT: "test-project",
+        AI_GOOGLE_CLOUD_LOCATION: "us-central1",
+        AI_GOOGLE_CLOUD_CREDENTIALS_JSON: "[]",
+      })
+    ).toMatchObject({
+      provider: "google",
+      model: "gemini-2.5-flash",
+      isConfigured: false,
+      invalidFields: ["AI_GOOGLE_CLOUD_CREDENTIALS_JSON"],
+      errorCode: "providerNotConfigured",
+    });
+  });
+
   test("creates and caches a Google Cloud model with parsed JSON credentials", () => {
     const vertexProvider = createMockProvider("google");
     mocks.createVertex.mockReturnValue(vertexProvider);

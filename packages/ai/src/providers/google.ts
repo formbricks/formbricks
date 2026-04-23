@@ -6,6 +6,9 @@ import type { AIEnvironment } from "../types";
 
 type GoogleProviderSettings = NonNullable<Parameters<typeof createGoogleCloudProvider>[0]>;
 
+const isCredentialsObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
 const parseGoogleCredentialsJson = (value?: string | null): Record<string, unknown> | undefined => {
   const normalizedValue = normalizeValue(value);
 
@@ -13,7 +16,13 @@ const parseGoogleCredentialsJson = (value?: string | null): Record<string, unkno
     return undefined;
   }
 
-  return JSON.parse(normalizedValue) as Record<string, unknown>;
+  const parsedValue = JSON.parse(normalizedValue) as unknown;
+
+  if (!isCredentialsObject(parsedValue)) {
+    throw new Error("AI_GOOGLE_CLOUD_CREDENTIALS_JSON must be a JSON object");
+  }
+
+  return parsedValue;
 };
 
 export const googleProviderAdapter: AIProviderAdapter = {
@@ -87,7 +96,7 @@ export const googleProviderAdapter: AIProviderAdapter = {
       } catch {
         throw new AIConfigurationError(
           "providerNotConfigured",
-          "AI_GOOGLE_CLOUD_CREDENTIALS_JSON must be valid JSON",
+          "AI_GOOGLE_CLOUD_CREDENTIALS_JSON must be a valid JSON object",
           {
             provider: "google",
             invalidFields: ["AI_GOOGLE_CLOUD_CREDENTIALS_JSON"],
