@@ -149,12 +149,6 @@ export const OrganizationBreadcrumb = ({
       href: `${workspaceBasePath}/settings/teams`,
     },
     {
-      id: "feedback-record-directories",
-      label: t("workspace.settings.feedback_record_directories.nav_label"),
-      href: `${workspaceBasePath}/settings/feedback-record-directories`,
-      hidden: isMember,
-    },
-    {
       id: "api-keys",
       label: t("common.api_keys"),
       href: `${workspaceBasePath}/settings/api-keys`,

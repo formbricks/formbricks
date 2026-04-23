@@ -313,6 +313,15 @@ export const MainNavigation = ({
       href: `/workspaces/${workspace.id}/settings/enterprise`,
       hidden: isFormbricksCloud || isMember,
     },
+    {
+      id: "feedback-record-directories",
+      label: t("workspace.settings.feedback_record_directories.title"),
+      href: `/workspaces/${workspace.id}/settings/feedback-record-directories`,
+      disabled: isMembershipPending || isMember,
+      disabledMessage: isMembershipPending
+        ? t("common.loading")
+        : t("common.you_are_not_authorized_to_perform_this_action"),
+    },
   ];
 
   const loadWorkspaces = useCallback(async () => {
