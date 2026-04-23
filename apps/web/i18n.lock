@@ -1768,13 +1768,19 @@ checksums:
     workspace/api_keys/api_key_updated: 0e03754eb33742b4ee8d5fdad64c9b3f
     workspace/api_keys/delete_api_key_confirmation: b2f0342d4e55f0cb244fe121eeeb10a3
     workspace/api_keys/duplicate_access: 7ac7ac5ba755ce94e6fc81afa5a21997
+    workspace/api_keys/duplicate_directory_access: e112b756627f0b5e2551451274c3781f
+    workspace/api_keys/feedback_record_directory_access: 51babe735cb94388f68108555814b4f6
     workspace/api_keys/no_api_keys_yet: 58593ed9f7e507dcd7ca7fe069add599
+    workspace/api_keys/no_directory_permissions_found: ae55b273dd4c71d8431d64d99b39c59f
     workspace/api_keys/no_workspace_permissions_found: 1d719624828a9d3e433cdf6b387549f3
     workspace/api_keys/organization_access: 96a92fa907b15e0c0e47e33cac15be88
     workspace/api_keys/organization_access_description: 773dfeaf6ffbf34dd9a0a3d656a6d83c
     workspace/api_keys/permissions: 2160be68b1d6b6577e64634e9feba2ed
     workspace/api_keys/secret: f041e5eb96121c8b4f2b8af7e0f83a9b
+    workspace/api_keys/unable_to_copy_api_key: 148506832e31d033fa3569ce292d2120
     workspace/api_keys/unable_to_delete_api_key: 1fd76d9a22c5f5f8c241c4891fca8295
+    workspace/api_keys/unknown_directory: ed07f55f5dba1f451a45f2cf6e01c9a9
+    workspace/api_keys/unknown_workspace: 4b0df2d07ebc9ab084158b1b9525ae5e
     workspace/api_keys/workspace_access: b38cb73197ef5f5fa6653b88c68aa0bd
     workspace/app-connection/app_connection: 778d2305e1a9c8efe91c2c7b4af37ae4
     workspace/app-connection/app_connection_description: dde226414bd2265cbd0daf6635efcfdd

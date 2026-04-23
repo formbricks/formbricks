@@ -18,7 +18,7 @@ export async function loginAndGetApiKey(page: Page, users: UsersFixture) {
   await page.getByRole("button", { name: "Add API Key" }).waitFor({ state: "visible", timeout: 15000 });
   await page.getByRole("button", { name: "Add API Key" }).click();
   await page.getByPlaceholder("e.g. GitHub, PostHog, Slack").fill("E2E Test API Key");
-  await page.getByRole("button", { name: "+ Add permission" }).click();
+  await page.getByTestId("add_permission__button__test").click();
   await page.getByRole("button", { name: "read" }).click();
   await page.getByRole("menuitem", { name: "manage" }).click();
   await page.getByTestId("organization-access-accessControl-read").click();

@@ -757,18 +757,19 @@ model Invite {
 /// @property lastUsedAt - Timestamp of last usage
 /// @property apiKeyWorkspaces - Workspaces this key has access to
 model ApiKey {
-  id                 String            @id @default(cuid())
-  createdAt          DateTime          @default(now())
-  createdBy          String?
-  lastUsedAt         DateTime?
-  label              String
-  hashedKey          String
-  lookupHash         String?           @unique
-  organizationId     String
-  organization       Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  apiKeyWorkspaces   ApiKeyWorkspace[]
+  id                              String                          @id @default(cuid())
+  createdAt                       DateTime                        @default(now())
+  createdBy                       String?
+  lastUsedAt                      DateTime?
+  label                           String
+  hashedKey                       String
+  lookupHash                      String?                         @unique
+  organizationId                  String
+  organization                    Organization                    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  apiKeyWorkspaces                ApiKeyWorkspace[]
+  apiKeyFeedbackRecordDirectories ApiKeyFeedbackRecordDirectory[]
   /// [OrganizationAccess]
-  organizationAccess Json              @default("{}")
+  organizationAccess              Json                            @default("{}")
 
   @@index([organizationId])
 }
@@ -800,6 +801,27 @@ model ApiKeyWorkspace {
 
   @@unique([apiKeyId, workspaceId])
   @@index([workspaceId])
+}
+
+/// Links API keys to feedback record directories with specific permissions.
+/// Enables granular access control for API keys across feedback record directories (Hub API).
+///
+/// @property id - Unique identifier for the directory access entry
+/// @property apiKey - The associated API key
+/// @property feedbackRecordDirectory - The directory being accessed
+/// @property permission - Level of access granted
+model ApiKeyFeedbackRecordDirectory {
+  id                        String                  @id @default(cuid())
+  createdAt                 DateTime                @default(now())
+  updatedAt                 DateTime                @updatedAt
+  apiKeyId                  String
+  apiKey                    ApiKey                  @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
+  feedbackRecordDirectoryId String
+  feedbackRecordDirectory   FeedbackRecordDirectory @relation(fields: [feedbackRecordDirectoryId], references: [id], onDelete: Cascade)
+  permission                ApiKeyPermission
+
+  @@unique([apiKeyId, feedbackRecordDirectoryId])
+  @@index([feedbackRecordDirectoryId])
 }
 
 enum IdentityProvider {
@@ -1270,6 +1292,7 @@ model FeedbackRecordDirectory {
   workspaces     FeedbackRecordDirectoryWorkspace[]
   connectors     Connector[]
   charts         Chart[]
+  apiKeys        ApiKeyFeedbackRecordDirectory[]
 
   @@unique([organizationId, name])
 }
