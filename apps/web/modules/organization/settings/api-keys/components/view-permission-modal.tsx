@@ -66,10 +66,7 @@ export const ViewPermissionModal = ({
 
   const { t } = useTranslation();
   const organizationAccess = apiKey.organizationAccess as TOrganizationAccess;
-  const workspacePermissions = ("apiKeyWorkspaces" in apiKey ? apiKey.apiKeyWorkspaces : []) as Array<{
-    workspaceId: string;
-    permission: string;
-  }>;
+  const workspacePermissions = apiKey.apiKeyWorkspaces ?? [];
 
   const getWorkspaceName = (workspaceId: string) => {
     return workspaces.find((workspace) => workspace.id === workspaceId)?.name;
