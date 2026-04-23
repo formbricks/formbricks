@@ -3,6 +3,21 @@ import { prisma } from "@formbricks/database";
 import { publicUserSelect } from "@/lib/user/public-user";
 import { GET } from "./route";
 
+const expectedPublicUserSelect = {
+  id: true,
+  name: true,
+  email: true,
+  emailVerified: true,
+  createdAt: true,
+  updatedAt: true,
+  twoFactorEnabled: true,
+  identityProvider: true,
+  notificationSettings: true,
+  locale: true,
+  lastLoginAt: true,
+  isActive: true,
+} as const;
+
 const mocks = vi.hoisted(() => ({
   headers: vi.fn(),
   getSessionUser: vi.fn(),
@@ -112,9 +127,10 @@ describe("v1 management me route", () => {
     expect(responseBody).not.toHaveProperty("twoFactorSecret");
     expect(responseBody).not.toHaveProperty("backupCodes");
     expect(responseBody).not.toHaveProperty("identityProviderAccountId");
+    expect(publicUserSelect).toStrictEqual(expectedPublicUserSelect);
     expect(prisma.user.findUnique).toHaveBeenCalledWith({
       where: { id: publicUser.id },
-      select: publicUserSelect,
+      select: expectedPublicUserSelect,
     });
     expect(mocks.applyRateLimit).toHaveBeenCalledWith(expect.any(Object), publicUser.id);
   });

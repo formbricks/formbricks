@@ -15,7 +15,22 @@ test.describe("API Tests for Management Me", () => {
       expect(response.ok()).toBe(true);
 
       const responseBody = await response.json();
+      const allowedKeys = [
+        "id",
+        "name",
+        "email",
+        "emailVerified",
+        "createdAt",
+        "updatedAt",
+        "twoFactorEnabled",
+        "identityProvider",
+        "notificationSettings",
+        "locale",
+        "lastLoginAt",
+        "isActive",
+      ].sort();
 
+      expect(Object.keys(responseBody).sort()).toStrictEqual(allowedKeys);
       expect(responseBody).toMatchObject({
         id: expect.any(String),
         name,
@@ -26,10 +41,6 @@ test.describe("API Tests for Management Me", () => {
         locale: expect.any(String),
         isActive: expect.any(Boolean),
       });
-      expect(responseBody).not.toHaveProperty("password");
-      expect(responseBody).not.toHaveProperty("twoFactorSecret");
-      expect(responseBody).not.toHaveProperty("backupCodes");
-      expect(responseBody).not.toHaveProperty("identityProviderAccountId");
     } catch (error) {
       logger.error(error, "Error during management me API security test");
       throw error;
