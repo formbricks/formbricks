@@ -68,6 +68,7 @@ export const LanguageView = ({
 
   const [isMultiLanguageActivated, setIsMultiLanguageActivated] = useState(localSurvey.languages.length > 0);
   const [isAIAvailable, setIsAIAvailable] = useState(false);
+  const [aiUnavailableReason, setAiUnavailableReason] = useState<string | undefined>();
   const [confirmationModalInfo, setConfirmationModalInfo] = useState<ConfirmationModalInfo>({
     title: "",
     open: false,
@@ -96,6 +97,7 @@ export const LanguageView = ({
       .then((result) => {
         if (isCurrent) {
           setIsAIAvailable(result?.data?.available ?? false);
+          setAiUnavailableReason(result?.data?.available ? undefined : result?.data?.reason);
         }
       })
       .catch(() => {
@@ -146,7 +148,14 @@ export const LanguageView = ({
           buttonText: t("workspace.surveys.edit.remove_translations"),
           buttonVariant: "destructive",
           onConfirm: () => {
-            updateSurveyTranslations(localSurvey, []);
+            // Strip all non-default language keys from the survey data
+            let cleanedSurvey = localSurvey;
+            for (const lang of localSurvey.languages) {
+              if (!lang.default) {
+                cleanedSurvey = removeLanguageKeysFromSurvey(cleanedSurvey, lang.language.code);
+              }
+            }
+            setLocalSurvey({ ...cleanedSurvey, languages: [] });
             setIsMultiLanguageActivated(false);
             setConfirmationModalInfo((prev) => ({ ...prev, open: false }));
           },
@@ -524,6 +533,7 @@ export const LanguageView = ({
         }
         workspaceId={workspaceId}
         isAIAvailable={isAIAvailable}
+        aiUnavailableReason={aiUnavailableReason}
       />
     </div>
   );

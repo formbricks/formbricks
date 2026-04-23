@@ -44,6 +44,7 @@ interface ManageTranslationsModalProps {
   defaultLanguageName: string;
   workspaceId: string;
   isAIAvailable: boolean;
+  aiUnavailableReason?: string;
 }
 
 export const ManageTranslationsModal = ({
@@ -56,6 +57,7 @@ export const ManageTranslationsModal = ({
   defaultLanguageName,
   workspaceId,
   isAIAvailable,
+  aiUnavailableReason,
 }: ManageTranslationsModalProps) => {
   const { t } = useTranslation();
 
@@ -181,7 +183,7 @@ export const ManageTranslationsModal = ({
         return;
       }
 
-      setDraftTranslations((prev) => ({ ...prev, ...result.data.translations }));
+      setDraftTranslations((prev) => ({ ...prev, ...result.data?.translations }));
       toast.success(t("workspace.surveys.edit.ai_translation_complete"), { id: toastId });
     } catch {
       toast.error(t("workspace.surveys.edit.ai_translation_failed"), { id: toastId });
@@ -226,30 +228,39 @@ export const ManageTranslationsModal = ({
               </span>
             </div>
             <div className="flex items-center gap-2">
-              {isAIAvailable && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div>
-                        <Button
-                          size="sm"
-                          className="text-xs"
-                          onClick={handleTranslateWithAI}
-                          disabled={isTranslating || emptyFields.length === 0}
-                          loading={isTranslating}>
-                          <SparklesIcon className="mr-1 h-3.5 w-3.5" />
-                          {t("workspace.surveys.edit.ai_translate")}
-                        </Button>
-                      </div>
-                    </TooltipTrigger>
-                    {emptyFields.length === 0 && !isTranslating && (
-                      <TooltipContent>
-                        {t("workspace.surveys.edit.ai_translation_all_fields_populated")}
-                      </TooltipContent>
-                    )}
-                  </Tooltip>
-                </TooltipProvider>
-              )}
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <Button
+                        size="sm"
+                        className="text-xs"
+                        onClick={handleTranslateWithAI}
+                        disabled={!isAIAvailable || isTranslating || emptyFields.length === 0}
+                        loading={isTranslating}>
+                        <SparklesIcon className="mr-1 h-3.5 w-3.5" />
+                        {t("workspace.surveys.edit.ai_translate")}
+                      </Button>
+                    </div>
+                  </TooltipTrigger>
+                  {!isAIAvailable && !isTranslating && (
+                    <TooltipContent>
+                      {{
+                        not_enabled: t("workspace.surveys.edit.ai_translation_not_enabled"),
+                        instance_not_configured: t(
+                          "workspace.surveys.edit.ai_translation_instance_not_configured"
+                        ),
+                      }[aiUnavailableReason ?? ""] ??
+                        t("workspace.surveys.edit.ai_translation_not_available")}
+                    </TooltipContent>
+                  )}
+                  {isAIAvailable && emptyFields.length === 0 && !isTranslating && (
+                    <TooltipContent>
+                      {t("workspace.surveys.edit.ai_translation_all_fields_populated")}
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="secondary" size="sm" className="text-xs">

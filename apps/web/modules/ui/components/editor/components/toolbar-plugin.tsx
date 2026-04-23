@@ -321,8 +321,6 @@ export const ToolbarPlugin = (
   // Removed custom PASTE_COMMAND handler to allow Lexical's default paste handler
   // to properly preserve rich text formatting (bold, italic, links, etc.)
 
-  if (!props.editable) return <></>;
-
   const getLinkItemTooltipText = () => {
     if (!props.isExternalUrlsAllowed) {
       return t("workspace.surveys.edit.external_urls_paywall_tooltip");
@@ -338,7 +336,7 @@ export const ToolbarPlugin = (
       onClick: () => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold"),
       active: isBold,
       tooltipText: t("workspace.surveys.edit.bold"),
-      disabled: false,
+      disabled: !props.editable,
     },
     {
       key: "italic",
@@ -346,7 +344,7 @@ export const ToolbarPlugin = (
       onClick: () => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic"),
       active: isItalic,
       tooltipText: t("workspace.surveys.edit.italic"),
-      disabled: false,
+      disabled: !props.editable,
     },
     {
       key: "underline",
@@ -354,7 +352,7 @@ export const ToolbarPlugin = (
       onClick: () => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "underline"),
       active: isUnderline,
       tooltipText: t("workspace.surveys.edit.underline"),
-      disabled: false,
+      disabled: !props.editable,
     },
     {
       key: "link",
@@ -362,7 +360,7 @@ export const ToolbarPlugin = (
       onClick: insertLink,
       active: isLink,
       tooltipText: getLinkItemTooltipText(),
-      disabled: !props.isExternalUrlsAllowed || (!isLink && !hasTextSelection),
+      disabled: !props.editable || !props.isExternalUrlsAllowed || (!isLink && !hasTextSelection),
     },
     {
       key: "recall",
@@ -370,7 +368,7 @@ export const ToolbarPlugin = (
       onClick: () => props.setShowRecallItemSelect(true),
       active: false,
       tooltipText: t("workspace.surveys.edit.recall_data"),
-      disabled: false,
+      disabled: !props.editable,
     },
     {
       key: "editRecall",
@@ -378,7 +376,7 @@ export const ToolbarPlugin = (
       onClick: () => props.setShowFallbackInput(true),
       active: false,
       tooltipText: t("workspace.surveys.edit.edit_recall"),
-      disabled: !props.recallItemsCount || props.recallItemsCount === 0,
+      disabled: !props.editable || !props.recallItemsCount || props.recallItemsCount === 0,
     },
   ];
 
@@ -386,7 +384,7 @@ export const ToolbarPlugin = (
     <div className="toolbar flex" ref={toolbarRef}>
       {!props.excludedToolbarItems?.includes("blockType") && supportedBlockTypes.has(blockType) && (
         <DropdownMenu>
-          <DropdownMenuTrigger className="text-subtle" tabIndex={-1}>
+          <DropdownMenuTrigger className="text-subtle" tabIndex={-1} disabled={!props.editable}>
             <>
               <span className={cn("icon", blockType)} />
               <span className="text text-default hidden sm:flex">

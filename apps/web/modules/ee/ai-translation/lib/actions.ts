@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
-import { assertOrganizationAIConfigured } from "@/lib/ai/service";
+import { assertOrganizationAIConfigured, getOrganizationAIConfig } from "@/lib/ai/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import {
@@ -37,12 +37,21 @@ export const checkAITranslationAvailableAction = authenticatedActionClient
       ],
     });
 
-    try {
-      await assertOrganizationAIConfigured(organizationId, "smartTools");
-      return { available: true };
-    } catch {
-      return { available: false };
+    const aiConfig = await getOrganizationAIConfig(organizationId);
+
+    if (!aiConfig.isAISmartToolsEntitled) {
+      return { available: false, reason: "not_in_plan" as const };
     }
+
+    if (!aiConfig.isAISmartToolsEnabled) {
+      return { available: false, reason: "not_enabled" as const };
+    }
+
+    if (!aiConfig.isInstanceConfigured) {
+      return { available: false, reason: "instance_not_configured" as const };
+    }
+
+    return { available: true };
   });
 
 const ZTranslateSurveyFieldsAction = z.object({

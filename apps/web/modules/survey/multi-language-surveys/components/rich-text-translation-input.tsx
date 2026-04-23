@@ -51,7 +51,7 @@ export const RichTextTranslationInput = ({
         localSurvey={localSurvey}
         elementId={elementId}
         selectedLanguageCode={languageCode}
-        editable
+        editable={!disabled}
       />
     </div>
   );
