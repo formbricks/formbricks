@@ -1,240 +1,18 @@
 {
   "info": {
-    "description": "Formbricks offers two types of APIs: the **Public Client API** and the **Management API**. Each API serves a different purpose, has different authentication requirements, and provides access to different data and settings.\n\nCheckout the [API Key Setup](https://formbricks.com/docs/api/management/api-key-setup) - to access the Management APIs wit an API Key.\n\n> If you have forked the collection & running it, we recommend you to atleast update `apiKey` & `environmentId` the Collection variables as per your values! We also have a lot of post-run scripts written to help you navigate through auto-assigning variables when running scripts. \n  \n\nNeed more help, visit our: [Website](https://formbricks.com) or join our [Discord](https://formbricks.com/discord)!",
+    "description": "Formbricks offers two types of APIs: the **Public Client API** and the **Management API**. Each API serves a different purpose, has different authentication requirements, and provides access to different data and settings.\n\nCheckout the [API Key Setup](https://formbricks.com/docs/api/management/api-key-setup) - to access the Management APIs wit an API Key.\n\n> If you have forked the collection & running it, we recommend you to atleast update `apiKey` & `workspaceId` the Collection variables as per your values! We also have a lot of post-run scripts written to help you navigate through auto-assigning variables when running scripts. \n  \n\nNeed more help, visit our: [Website](https://formbricks.com) or join our [Discord](https://formbricks.com/discord)!",
     "title": "API Documentation",
     "version": "1.0.0"
   },
   "openapi": "3.0.0",
   "paths": {
-    "/api/v1/client/{environmentId}/contacts/{userId}/attributes": {
-      "put": {
-        "description": "Update a contact's attributes in Formbricks to keep them in sync with your app or when you want to set a custom attribute in Formbricks.",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "environmentId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
-            "name": "userId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "example": {
-                  "attributes": {
-                    "Created From": "API"
-                  }
-                },
-                "type": "object"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "examples": {
-                  "example-0": {
-                    "summary": "Success (New Attributes)",
-                    "value": {
-                      "data": {
-                        "changed": true,
-                        "message": "The person was successfully updated."
-                      }
-                    }
-                  },
-                  "example-1": {
-                    "summary": "Success (Same Attributes)",
-                    "value": {
-                      "data": {
-                        "changed": false,
-                        "message": "No updates were necessary; the person is already up to date."
-                      }
-                    }
-                  }
-                },
-                "schema": {
-                  "type": "object"
-                }
-              }
-            },
-            "description": "OK",
-            "headers": {
-              "Access-Control-Allow-Credentials": {
-                "schema": {
-                  "example": "true",
-                  "type": "boolean"
-                }
-              },
-              "Access-Control-Allow-Origin": {
-                "schema": {
-                  "example": "*",
-                  "type": "string"
-                }
-              },
-              "Connection": {
-                "schema": {
-                  "example": "keep-alive",
-                  "type": "string"
-                }
-              },
-              "Date": {
-                "schema": {
-                  "example": "Tue, 23 Apr 2024 07:42:32 GMT",
-                  "type": "string"
-                }
-              },
-              "Keep-Alive": {
-                "schema": {
-                  "example": "timeout=5",
-                  "type": "string"
-                }
-              },
-              "Transfer-Encoding": {
-                "schema": {
-                  "example": "chunked",
-                  "type": "string"
-                }
-              },
-              "access-control-allow-headers": {
-                "schema": {
-                  "example": "Content-Type, Authorization",
-                  "type": "string"
-                }
-              },
-              "access-control-allow-methods": {
-                "schema": {
-                  "example": "GET, POST, PUT, DELETE, OPTIONS",
-                  "type": "string"
-                }
-              },
-              "cache-control": {
-                "schema": {
-                  "example": "private, no-store",
-                  "type": "string"
-                }
-              },
-              "content-type": {
-                "schema": {
-                  "example": "application/json",
-                  "type": "string"
-                }
-              },
-              "vary": {
-                "schema": {
-                  "example": "RSC, Next-Router-State-Tree, Next-Router-Prefetch",
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "500": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "code": "internal_server_error",
-                  "details": {},
-                  "message": "Unable to complete request: Expected property name or '}' in JSON at position 29"
-                },
-                "schema": {
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Internal Server Error",
-            "headers": {
-              "Access-Control-Allow-Credentials": {
-                "schema": {
-                  "example": "true",
-                  "type": "boolean"
-                }
-              },
-              "Access-Control-Allow-Origin": {
-                "schema": {
-                  "example": "*",
-                  "type": "string"
-                }
-              },
-              "Connection": {
-                "schema": {
-                  "example": "keep-alive",
-                  "type": "string"
-                }
-              },
-              "Date": {
-                "schema": {
-                  "example": "Tue, 23 Apr 2024 07:43:29 GMT",
-                  "type": "string"
-                }
-              },
-              "Keep-Alive": {
-                "schema": {
-                  "example": "timeout=5",
-                  "type": "string"
-                }
-              },
-              "Transfer-Encoding": {
-                "schema": {
-                  "example": "chunked",
-                  "type": "string"
-                }
-              },
-              "access-control-allow-headers": {
-                "schema": {
-                  "example": "Content-Type, Authorization",
-                  "type": "string"
-                }
-              },
-              "access-control-allow-methods": {
-                "schema": {
-                  "example": "GET, POST, PUT, DELETE, OPTIONS",
-                  "type": "string"
-                }
-              },
-              "cache-control": {
-                "schema": {
-                  "example": "private, no-store",
-                  "type": "string"
-                }
-              },
-              "content-type": {
-                "schema": {
-                  "example": "application/json",
-                  "type": "string"
-                }
-              },
-              "vary": {
-                "schema": {
-                  "example": "RSC, Next-Router-State-Tree, Next-Router-Prefetch",
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Update Contact (Attributes)",
-        "tags": ["Client API - Contacts"]
-      }
-    },
-    "/api/v1/client/{environmentId}/displays": {
+    "/api/v1/client/{workspaceId}/displays": {
       "post": {
-        "description": "Create a new display for a valid survey ID. If a userId is passed, the display is linked to the user.",
+        "description": "Create a new display for a valid survey ID. If a userId is passed, the display is linked to the user. Note - Environments are deprecated. Use Workspace/workspaceId terminology.",
         "parameters": [
           {
             "in": "path",
-            "name": "environmentId",
+            "name": "workspaceId",
             "required": true,
             "schema": {
               "type": "string"
@@ -426,218 +204,14 @@
         "tags": ["Client API - Display"]
       }
     },
-    "/api/v1/client/{environmentId}/displays/{displayId}": {
-      "put": {
-        "description": "Update an Display for a user. A use case can be when a user submits a response & you want to link it to an existing display.",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "environmentId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "in": "path",
-            "name": "displayId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "example": {
-                  "responseId": "{{responseId}} (optional)",
-                  "userId": "{{userId}} (optional)"
-                },
-                "type": "object"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "data": {}
-                },
-                "schema": {
-                  "type": "object"
-                }
-              }
-            },
-            "description": "OK",
-            "headers": {
-              "Access-Control-Allow-Credentials": {
-                "schema": {
-                  "example": "true",
-                  "type": "boolean"
-                }
-              },
-              "Access-Control-Allow-Origin": {
-                "schema": {
-                  "example": "*",
-                  "type": "string"
-                }
-              },
-              "Connection": {
-                "schema": {
-                  "example": "keep-alive",
-                  "type": "string"
-                }
-              },
-              "Date": {
-                "schema": {
-                  "example": "Tue, 23 Apr 2024 07:26:39 GMT",
-                  "type": "string"
-                }
-              },
-              "Keep-Alive": {
-                "schema": {
-                  "example": "timeout=5",
-                  "type": "string"
-                }
-              },
-              "Transfer-Encoding": {
-                "schema": {
-                  "example": "chunked",
-                  "type": "string"
-                }
-              },
-              "access-control-allow-headers": {
-                "schema": {
-                  "example": "Content-Type, Authorization",
-                  "type": "string"
-                }
-              },
-              "access-control-allow-methods": {
-                "schema": {
-                  "example": "GET, POST, PUT, DELETE, OPTIONS",
-                  "type": "string"
-                }
-              },
-              "cache-control": {
-                "schema": {
-                  "example": "private, no-store",
-                  "type": "string"
-                }
-              },
-              "content-type": {
-                "schema": {
-                  "example": "application/json",
-                  "type": "string"
-                }
-              },
-              "vary": {
-                "schema": {
-                  "example": "RSC, Next-Router-State-Tree, Next-Router-Prefetch",
-                  "type": "string"
-                }
-              }
-            }
-          },
-          "500": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "code": "internal_server_error",
-                  "details": {},
-                  "message": "Person with ID 2 not found"
-                },
-                "schema": {
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Internal Server Error",
-            "headers": {
-              "Access-Control-Allow-Credentials": {
-                "schema": {
-                  "example": "true",
-                  "type": "boolean"
-                }
-              },
-              "Access-Control-Allow-Origin": {
-                "schema": {
-                  "example": "*",
-                  "type": "string"
-                }
-              },
-              "Connection": {
-                "schema": {
-                  "example": "keep-alive",
-                  "type": "string"
-                }
-              },
-              "Date": {
-                "schema": {
-                  "example": "Tue, 23 Apr 2024 07:26:06 GMT",
-                  "type": "string"
-                }
-              },
-              "Keep-Alive": {
-                "schema": {
-                  "example": "timeout=5",
-                  "type": "string"
-                }
-              },
-              "Transfer-Encoding": {
-                "schema": {
-                  "example": "chunked",
-                  "type": "string"
-                }
-              },
-              "access-control-allow-headers": {
-                "schema": {
-                  "example": "Content-Type, Authorization",
-                  "type": "string"
-                }
-              },
-              "access-control-allow-methods": {
-                "schema": {
-                  "example": "GET, POST, PUT, DELETE, OPTIONS",
-                  "type": "string"
-                }
-              },
-              "cache-control": {
-                "schema": {
-                  "example": "private, no-store",
-                  "type": "string"
-                }
-              },
-              "content-type": {
-                "schema": {
-                  "example": "application/json",
-                  "type": "string"
-                }
-              },
-              "vary": {
-                "schema": {
-                  "example": "RSC, Next-Router-State-Tree, Next-Router-Prefetch",
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Update Display",
-        "tags": ["Client API - Display"]
-      }
-    },
-    "/api/v1/client/{environmentId}/environment": {
+    "/api/v1/client/{workspaceId}/environment": {
       "get": {
-        "description": "Retrieves the environment state to be used in Formbricks SDKs **Cache Behavior**: This endpoint uses server-side caching with a **5-minute TTL (Time To Live)**. Any changes to surveys, action classes, project settings, or other environment data will take up to 5 minutes to reflect in the API response. This caching is implemented to improve performance for high-frequency SDK requests.",
+        "description": "Retrieves the workspace state to be used in Formbricks SDKs. Note - Environments are deprecated. Use Workspace/workspaceId terminology. **Cache Behavior**: This endpoint uses server-side caching with a **5-minute TTL (Time To Live)**. Any changes to surveys, action classes, workspace settings, or other workspace data will take up to 5 minutes to reflect in the API response. This caching is implemented to improve performance for high-frequency SDK requests.",
         "parameters": [
           {
-            "description": "The ID of the environment",
+            "description": "The ID of the workspace",
             "in": "path",
-            "name": "environmentId",
+            "name": "workspaceId",
             "required": true,
             "schema": {
               "type": "string"
@@ -747,7 +321,7 @@
                           "type": "object"
                         },
                         "surveys": {
-                          "description": "List of surveys in the environment",
+                          "description": "List of surveys in the workspace",
                           "items": {
                             "properties": {
                               "autoClose": {
@@ -1045,191 +619,17 @@
             "description": "Internal Server Error"
           }
         },
-        "summary": "Get Environment State",
+        "summary": "Get Workspace State",
         "tags": ["Client API - Environment"]
       }
     },
-    "/api/v1/client/{environmentId}/identify/contacts/{userId}": {
-      "get": {
-        "description": "Retrieves a contact's state including their segments, displays, responses and other tracking information. If the contact doesn't exist, it will be created.",
-        "parameters": [
-          {
-            "description": "The ID of the environment",
-            "in": "path",
-            "name": "environmentId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "description": "The user ID to identify the contact",
-            "in": "path",
-            "name": "userId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "example": {
-                    "displays": [
-                      {
-                        "createdAt": "2024-04-23T08:59:37.550Z",
-                        "surveyId": "pjogp5a1wyxon6umplmf49b8"
-                      }
-                    ],
-                    "lastDisplayAt": "2024-04-23T08:59:37.550Z",
-                    "responses": ["pjogp5a1wyxon6umplmf49b8"],
-                    "segments": ["fi8f9oekza95wwszrptidivq", "zgwrv8eg7vfavdhzv1s0po1w"],
-                    "userId": "user-123"
-                  },
-                  "properties": {
-                    "data": {
-                      "properties": {
-                        "displays": {
-                          "description": "List of survey displays for this contact",
-                          "items": {
-                            "properties": {
-                              "createdAt": {
-                                "format": "date-time",
-                                "type": "string"
-                              },
-                              "surveyId": {
-                                "type": "string"
-                              }
-                            },
-                            "type": "object"
-                          },
-                          "type": "array"
-                        },
-                        "lastDisplayAt": {
-                          "description": "Timestamp of the last survey display",
-                          "format": "date-time",
-                          "nullable": true,
-                          "type": "string"
-                        },
-                        "responses": {
-                          "description": "List of survey IDs the contact has responded to",
-                          "items": {
-                            "type": "string"
-                          },
-                          "type": "array"
-                        },
-                        "segments": {
-                          "description": "List of segment IDs the contact belongs to",
-                          "items": {
-                            "type": "string"
-                          },
-                          "type": "array"
-                        },
-                        "userId": {
-                          "description": "The user ID of the contact",
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    }
-                  },
-                  "type": "object"
-                }
-              }
-            },
-            "description": "OK"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "code": {
-                      "example": "forbidden",
-                      "type": "string"
-                    },
-                    "message": {
-                      "example": "User identification is only available for enterprise users.",
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Forbidden"
-          },
-          "404": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "code": {
-                      "example": "not_found",
-                      "type": "string"
-                    },
-                    "details": {
-                      "properties": {
-                        "resource_id": {
-                          "example": "tpywklouw2p7tebdu4zv01an",
-                          "type": "string"
-                        },
-                        "resource_type": {
-                          "example": "environment",
-                          "type": "string"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "message": {
-                      "example": "Environment not found",
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Not Found"
-          },
-          "500": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "properties": {
-                    "code": {
-                      "example": "internal_server_error",
-                      "type": "string"
-                    },
-                    "details": {
-                      "type": "object"
-                    },
-                    "message": {
-                      "example": "Unable to complete request: Expected property name or '}' in JSON at position 29",
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                }
-              }
-            },
-            "description": "Internal Server Error"
-          }
-        },
-        "summary": "Get Contact State",
-        "tags": ["Client API - Contacts"]
-      }
-    },
-    "/api/v1/client/{environmentId}/responses": {
+    "/api/v1/client/{workspaceId}/responses": {
       "post": {
-        "description": "Create a response for a survey and it's fields with the user's responses. The userId & meta here is optional",
+        "description": "Create a response for a survey and it's fields with the user's responses. The userId & meta here is optional. Note - Environments are deprecated. Use Workspace/workspaceId terminology.",
         "parameters": [
           {
             "in": "path",
-            "name": "environmentId",
+            "name": "workspaceId",
             "required": true,
             "schema": {
               "type": "string"
@@ -1552,9 +952,9 @@
         "tags": ["Client API - Response"]
       }
     },
-    "/api/v1/client/{environmentId}/responses/{responseId}": {
+    "/api/v1/client/{workspaceId}/responses/{responseId}": {
       "put": {
-        "description": "Update an existing response for example when you want to mark a response as finished or you want to change an existing response's value.",
+        "description": "Update an existing response for example when you want to mark a response as finished or you want to change an existing response's value. Note - Environments are deprecated. Use Workspace/workspaceId terminology.",
         "parameters": [
           {
             "in": "path",
@@ -1754,13 +1154,13 @@
         "tags": ["Client API - Response"]
       }
     },
-    "/api/v1/client/{environmentId}/user": {
+    "/api/v1/client/{workspaceId}/user": {
       "post": {
-        "description": "Endpoint for creating or identifying a user within the specified environment. If the user already exists, this will identify them and potentially update user attributes. If they don't exist, it will create a new user.\n",
+        "description": "Endpoint for creating or identifying a user within the specified workspace. If the user already exists, this will identify them and potentially update user attributes. If they don't exist, it will create a new user. Note - Environments are deprecated. Use Workspace/workspaceId terminology.\n",
         "parameters": [
           {
             "in": "path",
-            "name": "environmentId",
+            "name": "workspaceId",
             "required": true,
             "schema": {
               "type": "string"
@@ -2166,7 +1566,7 @@
     },
     "/api/v1/management/action-classes": {
       "get": {
-        "description": "Fetches all the action classes available in the environment",
+        "description": "Fetches all the action classes available in the workspace",
         "parameters": [
           {
             "example": "{{apiKey}}",
@@ -2187,62 +1587,62 @@
                     {
                       "createdAt": "2024-04-09T04:53:29.577Z",
                       "description": "Gets fired when a new session is created",
-                      "environmentId": "clurwouax000azffxt7n5unn3",
                       "id": "clurwouax000bzffxv3fqy6mt",
                       "name": "New Session",
                       "noCodeConfig": null,
                       "type": "automatic",
-                      "updatedAt": "2024-04-09T04:53:29.577Z"
+                      "updatedAt": "2024-04-09T04:53:29.577Z",
+                      "workspaceId": "clurwouax000azffxt7n5unn3"
                     },
                     {
                       "createdAt": "2024-04-09T04:53:29.577Z",
                       "description": "A user on Desktop leaves the website with the cursor.",
-                      "environmentId": "clurwouax000azffxt7n5unn3",
                       "id": "clurwouax000czffx4wj0qldi",
                       "name": "Exit Intent (Desktop)",
                       "noCodeConfig": null,
                       "type": "automatic",
-                      "updatedAt": "2024-04-09T04:53:29.577Z"
+                      "updatedAt": "2024-04-09T04:53:29.577Z",
+                      "workspaceId": "clurwouax000azffxt7n5unn3"
                     },
                     {
                       "createdAt": "2024-04-09T04:53:29.577Z",
                       "description": "A user scrolled 50% of the current page",
-                      "environmentId": "clurwouax000azffxt7n5unn3",
                       "id": "clurwouax000dzffx3dfxc91d",
                       "name": "50% Scroll",
                       "noCodeConfig": null,
                       "type": "automatic",
-                      "updatedAt": "2024-04-09T04:53:29.577Z"
+                      "updatedAt": "2024-04-09T04:53:29.577Z",
+                      "workspaceId": "clurwouax000azffxt7n5unn3"
                     },
                     {
                       "createdAt": "2024-04-22T08:59:01.144Z",
                       "description": "hhehe",
-                      "environmentId": "clurwouax000azffxt7n5unn3",
                       "id": "clvaq6nx40000mhqfuu74rv92",
                       "name": "new_action_v2",
                       "noCodeConfig": null,
                       "type": "code",
-                      "updatedAt": "2024-04-22T09:03:55.509Z"
+                      "updatedAt": "2024-04-22T09:03:55.509Z",
+                      "workspaceId": "clurwouax000azffxt7n5unn3"
                     },
                     {
                       "createdAt": "2024-04-22T09:04:30.756Z",
                       "description": null,
-                      "environmentId": "clurwouax000azffxt7n5unn3",
                       "id": "clvaqdq8z000bmhqfu0km5rv4",
                       "name": "new_action_v20",
                       "noCodeConfig": null,
                       "type": "code",
-                      "updatedAt": "2024-04-22T09:04:30.756Z"
+                      "updatedAt": "2024-04-22T09:04:30.756Z",
+                      "workspaceId": "clurwouax000azffxt7n5unn3"
                     },
                     {
                       "createdAt": "2024-04-23T07:11:17.032Z",
                       "description": null,
-                      "environmentId": "clurwouax000azffxt7n5unn3",
                       "id": "clvc1ryuf0001494jc8oesfwl",
                       "name": "new_action_v1",
                       "noCodeConfig": null,
                       "type": "code",
-                      "updatedAt": "2024-04-23T07:11:17.032Z"
+                      "updatedAt": "2024-04-23T07:11:17.032Z",
+                      "workspaceId": "clurwouax000azffxt7n5unn3"
                     }
                   ]
                 },
@@ -2375,18 +1775,14 @@
               "schema": {
                 "example": {
                   "description": "From API Docs (optional)",
-                  "environmentId": "{{environmentId}}",
                   "key": "my-action",
                   "name": "My Action from Postman",
-                  "type": "code"
+                  "type": "code",
+                  "workspaceId": "{{workspaceId}}"
                 },
                 "properties": {
                   "description": {
                     "description": "Optional description of the action class",
-                    "type": "string"
-                  },
-                  "environmentId": {
-                    "description": "The environment ID where the action class will be created",
                     "type": "string"
                   },
                   "key": {
@@ -2456,9 +1852,13 @@
                     "description": "Type of action class",
                     "enum": ["code", "noCode"],
                     "type": "string"
+                  },
+                  "workspaceId": {
+                    "description": "The workspace ID where the action class will be created",
+                    "type": "string"
                   }
                 },
-                "required": ["environmentId", "name", "type"],
+                "required": ["workspaceId", "name", "type"],
                 "type": "object"
               }
             }
@@ -2472,12 +1872,12 @@
                   "data": {
                     "createdAt": "2024-04-23T08:58:47.507Z",
                     "description": null,
-                    "environmentId": "clurwouax000azffxt7n5unn3",
                     "id": "clvc5m82c000z494jkvnw1gh0",
                     "name": "My Action from Postman",
                     "noCodeConfig": null,
                     "type": "code",
-                    "updatedAt": "2024-04-23T08:58:47.507Z"
+                    "updatedAt": "2024-04-23T08:58:47.507Z",
+                    "workspaceId": "clurwouax000azffxt7n5unn3"
                   }
                 },
                 "schema": {
@@ -2537,8 +1937,8 @@
                 "example": {
                   "code": "bad_request",
                   "details": {
-                    "environmentId": "Required",
-                    "key": "Required"
+                    "key": "Required",
+                    "workspaceId": "Required"
                   },
                   "message": "Fields are missing or incorrectly formatted"
                 },
@@ -2622,12 +2022,12 @@
                   "data": {
                     "createdAt": "2024-04-23T08:58:47.507Z",
                     "description": null,
-                    "environmentId": "clurwouax000azffxt7n5unn3",
                     "id": "clvc5m82c000z494jkvnw1gh0",
                     "name": "My Action from Postman",
                     "noCodeConfig": null,
                     "type": "code",
-                    "updatedAt": "2024-04-23T08:58:47.507Z"
+                    "updatedAt": "2024-04-23T08:58:47.507Z",
+                    "workspaceId": "clurwouax000azffxt7n5unn3"
                   }
                 },
                 "schema": {
@@ -2829,12 +2229,12 @@
                   "data": {
                     "createdAt": "2024-04-09T04:53:29.577Z",
                     "description": "Gets fired when a new session is created",
-                    "environmentId": "clurwouax000azffxt7n5unn3",
                     "id": "clurwouax000bzffxv3fqy6mt",
                     "name": "New Session",
                     "noCodeConfig": null,
                     "type": "automatic",
-                    "updatedAt": "2024-04-09T04:53:29.577Z"
+                    "updatedAt": "2024-04-09T04:53:29.577Z",
+                    "workspaceId": "clurwouax000azffxt7n5unn3"
                   }
                 },
                 "schema": {
@@ -2957,7 +2357,7 @@
     },
     "/api/v1/management/contact-attribute-keys": {
       "get": {
-        "description": "Retrieve a list of all contact attribute keys defined in the current environment",
+        "description": "Retrieve a list of all contact attribute keys defined in the current workspace",
         "parameters": [
           {
             "example": "{{apiKey}}",
@@ -2978,13 +2378,13 @@
                     {
                       "createdAt": "2024-11-07T12:25:48.589Z",
                       "description": "The email of the person",
-                      "environmentId": "cm37a748d0008hbwhqvvuba23",
                       "id": "cm37a748d000ahbwhd5bbwc09",
                       "isUnique": true,
                       "key": "email",
                       "name": "email",
                       "type": "default",
-                      "updatedAt": "2024-12-03T13:30:28.620Z"
+                      "updatedAt": "2024-12-03T13:30:28.620Z",
+                      "workspaceId": "cm37a748d0008hbwhqvvuba23"
                     }
                   ]
                 },
@@ -3040,7 +2440,7 @@
     },
     "/api/v1/management/contact-attribute-keys/{contactAttributeKeyId}": {
       "get": {
-        "description": "Retrieve a specific contact attribute key by its ID. This returns detailed information about how a particular attribute is defined in your environment.",
+        "description": "Retrieve a specific contact attribute key by its ID. This returns detailed information about how a particular attribute is defined in your workspace.",
         "parameters": [
           {
             "example": "{{apiKey}}",
@@ -3069,13 +2469,13 @@
                   "data": {
                     "createdAt": "2024-11-07T12:25:48.589Z",
                     "description": "The email of the person",
-                    "environmentId": "cm37a748d0008hbwhqvvuba23",
                     "id": "cm37a748d000ahbwhd5bbwc09",
                     "isUnique": true,
                     "key": "email",
                     "name": "email",
                     "type": "default",
-                    "updatedAt": "2024-12-03T13:30:28.620Z"
+                    "updatedAt": "2024-12-03T13:30:28.620Z",
+                    "workspaceId": "cm37a748d0008hbwhqvvuba23"
                   }
                 },
                 "schema": {
@@ -3089,10 +2489,6 @@
                         },
                         "description": {
                           "description": "Detailed description of what this attribute represents",
-                          "type": "string"
-                        },
-                        "environmentId": {
-                          "description": "ID of the environment this attribute key belongs to",
                           "type": "string"
                         },
                         "id": {
@@ -3118,6 +2514,10 @@
                         "updatedAt": {
                           "description": "Timestamp when the attribute key was last updated",
                           "format": "date-time",
+                          "type": "string"
+                        },
+                        "workspaceId": {
+                          "description": "ID of the workspace this attribute key belongs to",
                           "type": "string"
                         }
                       },
@@ -3191,7 +2591,7 @@
     },
     "/api/v1/management/contact-attributes": {
       "get": {
-        "description": "Retrieve a list of all contact attributes in the current environment",
+        "description": "Retrieve a list of all contact attributes in the current workspace",
         "parameters": [
           {
             "example": "{{apiKey}}",
@@ -3271,7 +2671,7 @@
     },
     "/api/v1/management/contacts": {
       "get": {
-        "description": "Retrieve a list of all contacts for the current environment",
+        "description": "Retrieve a list of all contacts for the current workspace",
         "parameters": [
           {
             "example": "{{apiKey}}",
@@ -3291,17 +2691,17 @@
                   "data": [
                     {
                       "createdAt": "2024-12-11T08:59:37.550Z",
-                      "environmentId": "cm37a748d0001hbwhqvvuba23",
                       "id": "cm4jnsxcd012fh3aqz1b6zox6",
                       "updatedAt": "2024-12-11T08:59:37.550Z",
-                      "userId": null
+                      "userId": null,
+                      "workspaceId": "cm37a748d0001hbwhqvvuba23"
                     },
                     {
                       "createdAt": "2024-12-12T12:09:46.859Z",
-                      "environmentId": "cm37a748d0001hbwhqvvuba23",
                       "id": "cm4la1bhn12g5cr5qh8p6v874",
                       "updatedAt": "2024-12-12T12:09:46.859Z",
-                      "userId": null
+                      "userId": null,
+                      "workspaceId": "cm37a748d0001hbwhqvvuba23"
                     }
                   ]
                 },
@@ -3385,10 +2785,10 @@
                 "example": {
                   "data": {
                     "createdAt": "2024-12-11T08:59:37.550Z",
-                    "environmentId": "cm37a748d0008hbwhqvvuba23",
                     "id": "cm4jnsxcd00ufh3aqz1b6zox6",
                     "updatedAt": "2024-12-11T08:59:37.550Z",
-                    "userId": null
+                    "userId": null,
+                    "workspaceId": "cm37a748d0008hbwhqvvuba23"
                   }
                 },
                 "schema": {
@@ -3611,10 +3011,10 @@
                           "created_from": "API"
                         },
                         "createdAt": "2024-04-23T07:39:22.696Z",
-                        "environmentId": "clurwouax000azffxt7n5unn3",
                         "id": "clvc2s3ig000k494jltkqkm2u",
                         "updatedAt": "2024-04-23T07:39:22.696Z",
-                        "userId": "THIS-IS-A-VVERY-LONG-USER-ID-FOR-TESTING"
+                        "userId": "THIS-IS-A-VVERY-LONG-USER-ID-FOR-TESTING",
+                        "workspaceId": "clurwouax000azffxt7n5unn3"
                       },
                       "personAttributes": {
                         "Created From": "API",
@@ -3644,10 +3044,10 @@
                           "created_from": "API"
                         },
                         "createdAt": "2024-04-23T07:39:22.696Z",
-                        "environmentId": "clurwouax000azffxt7n5unn3",
                         "id": "clvc2s3ig000k494jltkqkm2u",
                         "updatedAt": "2024-04-23T07:39:22.696Z",
-                        "userId": "THIS-IS-A-VVERY-LONG-USER-ID-FOR-TESTING"
+                        "userId": "THIS-IS-A-VVERY-LONG-USER-ID-FOR-TESTING",
+                        "workspaceId": "clurwouax000azffxt7n5unn3"
                       },
                       "personAttributes": {
                         "Created From": "API",
@@ -3677,10 +3077,10 @@
                           "created_from": "API"
                         },
                         "createdAt": "2024-04-23T07:39:22.696Z",
-                        "environmentId": "clurwouax000azffxt7n5unn3",
                         "id": "clvc2s3ig000k494jltkqkm2u",
                         "updatedAt": "2024-04-23T07:39:22.696Z",
-                        "userId": "THIS-IS-A-VVERY-LONG-USER-ID-FOR-TESTING"
+                        "userId": "THIS-IS-A-VVERY-LONG-USER-ID-FOR-TESTING",
+                        "workspaceId": "clurwouax000azffxt7n5unn3"
                       },
                       "personAttributes": {
                         "Created From": "API",
@@ -3710,10 +3110,10 @@
                           "created_from": "API"
                         },
                         "createdAt": "2024-04-23T07:39:22.696Z",
-                        "environmentId": "clurwouax000azffxt7n5unn3",
                         "id": "clvc2s3ig000k494jltkqkm2u",
                         "updatedAt": "2024-04-23T07:39:22.696Z",
-                        "userId": "THIS-IS-A-VVERY-LONG-USER-ID-FOR-TESTING"
+                        "userId": "THIS-IS-A-VVERY-LONG-USER-ID-FOR-TESTING",
+                        "workspaceId": "clurwouax000azffxt7n5unn3"
                       },
                       "personAttributes": {
                         "Created From": "API",
@@ -3743,10 +3143,10 @@
                           "created_from": "API"
                         },
                         "createdAt": "2024-04-23T07:39:22.696Z",
-                        "environmentId": "clurwouax000azffxt7n5unn3",
                         "id": "clvc2s3ig000k494jltkqkm2u",
                         "updatedAt": "2024-04-23T07:39:22.696Z",
-                        "userId": "THIS-IS-A-VVERY-LONG-USER-ID-FOR-TESTING"
+                        "userId": "THIS-IS-A-VVERY-LONG-USER-ID-FOR-TESTING",
+                        "workspaceId": "clurwouax000azffxt7n5unn3"
                       },
                       "personAttributes": {
                         "Created From": "API",
@@ -3776,10 +3176,10 @@
                           "created_from": "API"
                         },
                         "createdAt": "2024-04-23T07:39:22.696Z",
-                        "environmentId": "clurwouax000azffxt7n5unn3",
                         "id": "clvc2s3ig000k494jltkqkm2u",
                         "updatedAt": "2024-04-23T07:39:22.696Z",
-                        "userId": "THIS-IS-A-VVERY-LONG-USER-ID-FOR-TESTING"
+                        "userId": "THIS-IS-A-VVERY-LONG-USER-ID-FOR-TESTING",
+                        "workspaceId": "clurwouax000azffxt7n5unn3"
                       },
                       "personAttributes": {
                         "Created From": "API",
@@ -4074,10 +3474,10 @@
                         "created_from": "API"
                       },
                       "createdAt": "2024-04-23T07:39:22.696Z",
-                      "environmentId": "clurwouax000azffxt7n5unn3",
                       "id": "clvc2s3ig000k494jltkqkm2u",
                       "updatedAt": "2024-04-23T07:39:22.696Z",
-                      "userId": "THIS-IS-A-VVERY-LONG-USER-ID-FOR-TESTING"
+                      "userId": "THIS-IS-A-VVERY-LONG-USER-ID-FOR-TESTING",
+                      "workspaceId": "clurwouax000azffxt7n5unn3"
                     },
                     "personAttributes": {
                       "Created From": "API",
@@ -4254,10 +3654,10 @@
                         "created_from": "API"
                       },
                       "createdAt": "2024-04-23T07:39:22.696Z",
-                      "environmentId": "clurwouax000azffxt7n5unn3",
                       "id": "clvc2s3ig000k494jltkqkm2u",
                       "updatedAt": "2024-04-23T07:39:22.696Z",
-                      "userId": "THIS-IS-A-VVERY-LONG-USER-ID-FOR-TESTING"
+                      "userId": "THIS-IS-A-VVERY-LONG-USER-ID-FOR-TESTING",
+                      "workspaceId": "clurwouax000azffxt7n5unn3"
                     },
                     "personAttributes": {
                       "Created From": "API",
@@ -4428,10 +3828,10 @@
                         "created_from": "API"
                       },
                       "createdAt": "2024-04-23T07:39:22.696Z",
-                      "environmentId": "clurwouax000azffxt7n5unn3",
                       "id": "clvc2s3ig000k494jltkqkm2u",
                       "updatedAt": "2024-04-23T07:39:22.696Z",
-                      "userId": "THIS-IS-A-VVERY-LONG-USER-ID-FOR-TESTING"
+                      "userId": "THIS-IS-A-VVERY-LONG-USER-ID-FOR-TESTING",
+                      "workspaceId": "clurwouax000azffxt7n5unn3"
                     },
                     "personAttributes": {
                       "Created From": "API",
@@ -4621,10 +4021,10 @@
                         "created_from": "API"
                       },
                       "createdAt": "2024-04-23T07:39:22.696Z",
-                      "environmentId": "clurwouax000azffxt7n5unn3",
                       "id": "clvc2s3ig000k494jltkqkm2u",
                       "updatedAt": "2024-04-23T07:39:22.696Z",
-                      "userId": "THIS-IS-A-VVERY-LONG-USER-ID-FOR-TESTING"
+                      "userId": "THIS-IS-A-VVERY-LONG-USER-ID-FOR-TESTING",
+                      "workspaceId": "clurwouax000azffxt7n5unn3"
                     },
                     "personAttributes": {
                       "Created From": "API",
@@ -4752,7 +4152,7 @@
     },
     "/api/v1/management/storage": {
       "post": {
-        "description": "API endpoint for uploading public files. Uploaded files are public and accessible by anyone. This endpoint requires authentication and enforces a hard limit of 5 MB for all uploads. It accepts a JSON body with fileName, fileType, environmentId, and optionally allowedFileExtensions to restrict file types. On success, it returns a signed URL for uploading the file to S3.",
+        "description": "API endpoint for uploading public files. Uploaded files are public and accessible by anyone. This endpoint requires authentication and enforces a hard limit of 5 MB for all uploads. It accepts a JSON body with fileName, fileType, workspaceId, and optionally allowedFileExtensions to restrict file types. On success, it returns a signed URL for uploading the file to S3.",
         "parameters": [
           {
             "example": "{{apiKey}}",
@@ -4769,9 +4169,9 @@
             "application/json": {
               "example": {
                 "allowedFileExtensions": ["png", "jpg", "jpeg"],
-                "environmentId": "env123",
                 "fileName": "profile.png",
-                "fileType": "image/png"
+                "fileType": "image/png",
+                "workspaceId": "env123"
               },
               "schema": {
                 "properties": {
@@ -4810,10 +4210,6 @@
                     },
                     "type": "array"
                   },
-                  "environmentId": {
-                    "description": "The ID of the environment.",
-                    "type": "string"
-                  },
                   "fileName": {
                     "description": "The name of the file to be uploaded.",
                     "type": "string"
@@ -4821,9 +4217,13 @@
                   "fileType": {
                     "description": "The MIME type of the file.",
                     "type": "string"
+                  },
+                  "workspaceId": {
+                    "description": "The ID of the workspace.",
+                    "type": "string"
                   }
                 },
-                "required": ["fileName", "fileType", "environmentId"],
+                "required": ["fileName", "fileType", "workspaceId"],
                 "type": "object"
               }
             }
@@ -4937,7 +4337,7 @@
                 }
               }
             },
-            "description": "Forbidden - User does not have access to the specified environment."
+            "description": "Forbidden - User does not have access to the specified workspace."
           }
         },
         "summary": "Upload Public File",
@@ -4989,7 +4389,6 @@
                           "type": "endScreen"
                         }
                       ],
-                      "environmentId": "clygwxsbh01v5aga1sdien2th",
                       "hiddenFields": {
                         "enabled": false,
                         "fieldIds": []
@@ -5071,7 +4470,8 @@
                         },
                         "showResponseCount": false,
                         "timeToFinish": false
-                      }
+                      },
+                      "workspaceId": "clygwxsbh01v5aga1sdien2th"
                     }
                   ]
                 },
@@ -5172,7 +4572,6 @@
                         "type": "endScreen"
                       }
                     ],
-                    "environmentId": "{{environmentId}}",
                     "hiddenFields": {
                       "enabled": false,
                       "fieldIds": []
@@ -5252,7 +4651,8 @@
                       },
                       "showResponseCount": false,
                       "timeToFinish": false
-                    }
+                    },
+                    "workspaceId": "{{workspaceId}}"
                   }
                 }
               },
@@ -5260,9 +4660,6 @@
                 "properties": {
                   "displayOption": {
                     "enum": ["displayOnce", "displayMultiple", "respondMultiple", "displaySome"],
-                    "type": "string"
-                  },
-                  "environmentId": {
                     "type": "string"
                   },
                   "languages": {
@@ -5275,7 +4672,7 @@
                           "type": "boolean"
                         },
                         "language": {
-                          "description": "Language of the survey (This language should exist in your environment)",
+                          "description": "Language of the survey (This language should exist in your workspace)",
                           "enum": ["en", "de", "pt", "etc.."],
                           "type": "string"
                         }
@@ -5355,9 +4752,12 @@
                   "type": {
                     "enum": ["link", "app"],
                     "type": "string"
+                  },
+                  "workspaceId": {
+                    "type": "string"
                   }
                 },
-                "required": ["environmentId", "name", "type", "status"],
+                "required": ["workspaceId", "name", "type", "status"],
                 "type": "object"
               }
             }
@@ -5393,7 +4793,6 @@
                         "type": "endScreen"
                       }
                     ],
-                    "environmentId": "clygwxsbh01v5aga1sdien2th",
                     "hiddenFields": {
                       "enabled": false,
                       "fieldIds": []
@@ -5475,7 +4874,8 @@
                       },
                       "showResponseCount": false,
                       "timeToFinish": false
-                    }
+                    },
+                    "workspaceId": "clygwxsbh01v5aga1sdien2th"
                   }
                 },
                 "schema": {
@@ -5659,7 +5059,6 @@
                         "type": "endScreen"
                       }
                     ],
-                    "environmentId": "clygwxsbh01v5aga1sdien2th",
                     "hiddenFields": {
                       "enabled": false,
                       "fieldIds": []
@@ -5741,7 +5140,8 @@
                       },
                       "showResponseCount": false,
                       "timeToFinish": false
-                    }
+                    },
+                    "workspaceId": "clygwxsbh01v5aga1sdien2th"
                   }
                 },
                 "schema": {
@@ -5912,7 +5312,6 @@
                         "type": "endScreen"
                       }
                     ],
-                    "environmentId": "clygwxsbh01v5aga1sdien2th",
                     "hiddenFields": {
                       "enabled": false,
                       "fieldIds": []
@@ -5994,7 +5393,8 @@
                       },
                       "showResponseCount": false,
                       "timeToFinish": false
-                    }
+                    },
+                    "workspaceId": "clygwxsbh01v5aga1sdien2th"
                   }
                 },
                 "schema": {
@@ -6115,7 +5515,6 @@
                         "type": "endScreen"
                       }
                     ],
-                    "environmentId": "clygwxsbh01v5aga1sdien2th",
                     "hiddenFields": {
                       "enabled": false,
                       "fieldIds": []
@@ -6197,7 +5596,8 @@
                       },
                       "showResponseCount": false,
                       "timeToFinish": false
-                    }
+                    },
+                    "workspaceId": "clygwxsbh01v5aga1sdien2th"
                   }
                 },
                 "schema": {
@@ -6493,7 +5893,7 @@
     },
     "/api/v1/webhooks": {
       "get": {
-        "description": "Retrieve a list of all webhooks for the current environment",
+        "description": "Retrieve a list of all webhooks for the current workspace",
         "parameters": [
           {
             "example": "{{apiKey}}",
@@ -6513,36 +5913,36 @@
                   "data": [
                     {
                       "createdAt": "2024-04-23T12:35:45.326Z",
-                      "environmentId": "clurwouax000azffxt7n5unn3",
                       "id": "clvcdd8oe000nxz1zhz6q9z3l",
                       "name": null,
                       "source": "user",
                       "surveyIds": [],
                       "triggers": ["responseCreated", "responseUpdated", "responseFinished"],
                       "updatedAt": "2024-04-23T12:35:45.326Z",
-                      "url": "https://eoy8o887lmsqmhz.m.pipedream.net"
+                      "url": "https://eoy8o887lmsqmhz.m.pipedream.net",
+                      "workspaceId": "clurwouax000azffxt7n5unn3"
                     },
                     {
                       "createdAt": "2024-04-23T12:36:07.100Z",
-                      "environmentId": "clurwouax000azffxt7n5unn3",
                       "id": "clvcddph9000oxz1zsnjhvllw",
                       "name": null,
                       "source": "user",
                       "surveyIds": [],
                       "triggers": ["responseCreated", "responseUpdated", "responseFinished"],
                       "updatedAt": "2024-04-23T12:36:07.100Z",
-                      "url": "https://eoy8o887lmsqmhz.m.pipedream.net"
+                      "url": "https://eoy8o887lmsqmhz.m.pipedream.net",
+                      "workspaceId": "clurwouax000azffxt7n5unn3"
                     },
                     {
                       "createdAt": "2024-04-23T12:36:56.507Z",
-                      "environmentId": "clurwouax000azffxt7n5unn3",
                       "id": "clvcderln000pxz1z95jqj0qw",
                       "name": null,
                       "source": "user",
                       "surveyIds": [],
                       "triggers": ["responseCreated", "responseUpdated", "responseFinished"],
                       "updatedAt": "2024-04-23T12:36:56.507Z",
-                      "url": "https://eoy8o887lmsqmhz.m.pipedream.net"
+                      "url": "https://eoy8o887lmsqmhz.m.pipedream.net",
+                      "workspaceId": "clurwouax000azffxt7n5unn3"
                     }
                   ]
                 },
@@ -6658,14 +6058,14 @@
                 "example": {
                   "data": {
                     "createdAt": "2024-04-23T12:35:45.326Z",
-                    "environmentId": "clurwouax000azffxt7n5unn3",
                     "id": "clvcdd8oe000nxz1zhz6q9z3l",
                     "name": null,
                     "source": "user",
                     "surveyIds": [],
                     "triggers": ["responseCreated", "responseUpdated", "responseFinished"],
                     "updatedAt": "2024-04-23T12:35:45.326Z",
-                    "url": "https://eoy8o887lmsqmhz.m.pipedream.net"
+                    "url": "https://eoy8o887lmsqmhz.m.pipedream.net",
+                    "workspaceId": "clurwouax000azffxt7n5unn3"
                   }
                 },
                 "schema": {
@@ -6753,14 +6153,14 @@
                 "example": {
                   "data": {
                     "createdAt": "2024-04-23T12:35:45.326Z",
-                    "environmentId": "clurwouax000azffxt7n5unn3",
                     "id": "clvcdd8oe000nxz1zhz6q9z3l",
                     "name": null,
                     "source": "user",
                     "surveyIds": [],
                     "triggers": ["responseCreated", "responseUpdated", "responseFinished"],
                     "updatedAt": "2024-04-23T12:35:45.326Z",
-                    "url": "https://eoy8o887lmsqmhz.m.pipedream.net"
+                    "url": "https://eoy8o887lmsqmhz.m.pipedream.net",
+                    "workspaceId": "clurwouax000azffxt7n5unn3"
                   }
                 },
                 "schema": {
@@ -6908,14 +6308,14 @@
                 "example": {
                   "data": {
                     "createdAt": "2024-04-23T12:35:45.326Z",
-                    "environmentId": "clurwouax000azffxt7n5unn3",
                     "id": "clvcdd8oe000nxz1zhz6q9z3l",
                     "name": null,
                     "source": "user",
                     "surveyIds": [],
                     "triggers": ["responseCreated", "responseUpdated", "responseFinished"],
                     "updatedAt": "2024-04-23T12:35:45.326Z",
-                    "url": "https://eoy8o887lmsqmhz.m.pipedream.net"
+                    "url": "https://eoy8o887lmsqmhz.m.pipedream.net",
+                    "workspaceId": "clurwouax000azffxt7n5unn3"
                   }
                 },
                 "schema": {
@@ -7130,7 +6530,7 @@
   ],
   "tags": [
     {
-      "description": "The Public Client API is designed for the JavaScript SDK and does not require authentication. It's primarily used for creating persons, sessions, and responses within the Formbricks platform. This API is ideal for client-side interactions, as it doesn't expose sensitive information.\n- Displays API - Mark Survey as Displayed or Responded for a Person\n- Responses API - Create & update responses for a survey\n- Environment API - Get the environment state to be used in Formbricks SDKs\n- Contacts API - Identify & update contacts (e.g. attributes)\n- User API - Identify & track users based on their attributes, device type, etc.",
+      "description": "The Public Client API is designed for the JavaScript SDK and does not require authentication. It's primarily used for creating persons, sessions, and responses within the Formbricks platform. This API is ideal for client-side interactions, as it doesn't expose sensitive information.\n- Displays API - Mark Survey as Displayed or Responded for a Person\n- Responses API - Create & update responses for a survey\n- Workspace API - Get the workspace state to be used in Formbricks SDKs\n- Contacts API - Identify & update contacts (e.g. attributes)\n- User API - Identify & track users based on their attributes, device type, etc.",
       "name": "Client API"
     },
     {
@@ -7142,7 +6542,7 @@
       "name": "Client API - Response"
     },
     {
-      "description": "Get the environment state to be used in Formbricks SDKs",
+      "description": "Get the workspace state to be used in Formbricks SDKs",
       "name": "Client API - Environment"
     },
     {
@@ -7166,15 +6566,15 @@
       "name": "Management API - Attribute Class"
     },
     {
-      "description": "The Contacts API allows you to retrieve information about contacts in your environment. Contacts represent users who have interacted with your surveys or forms.",
+      "description": "The Contacts API allows you to retrieve information about contacts in your workspace. Contacts represent users who have interacted with your surveys or forms.",
       "name": "Management API - Contacts"
     },
     {
-      "description": "The Contact Attributes API allows you to retrieve information about attributes associated with contacts in your environment. These attributes can include custom properties and values assigned to your contacts.",
+      "description": "The Contact Attributes API allows you to retrieve information about attributes associated with contacts in your workspace. These attributes can include custom properties and values assigned to your contacts.",
       "name": "Management API - Contact Attributes"
     },
     {
-      "description": "The Contact Attribute Keys API allows you to retrieve information about the defined attribute keys in your environment. These keys define the structure and properties that can be assigned to contacts, such as email, name, or custom attributes.",
+      "description": "The Contact Attribute Keys API allows you to retrieve information about the defined attribute keys in your workspace. These keys define the structure and properties that can be assigned to contacts, such as email, name, or custom attributes.",
       "name": "Management API - Contact Attribute Keys"
     },
     {
@@ -7194,7 +6594,7 @@
       "name": "Management API - Survey"
     },
     {
-      "description": "Formbricks' Webhook API offers a powerful interface for interacting with webhooks. Webhooks allow you to receive real-time HTTP notifications of changes to specific objects in the Formbricks environment.\n\nThe behavior of the webhooks is determined by their trigger settings. The trigger determines which updates the webhook sends. Current available triggers include:\n\n- \"responseCreated\"\n    \n- \"responseUpdated\", and\n    \n- \"responseFinished\".\n    \n\nThese APIs are designed to facilitate seamless integration of Formbricks with third-party systems. By making use of our webhook API, you can automate the process of sending data to these systems whenever significant events occur within your Formbricks environment.\n\n  \n\nMethods allowed: Get All, Get ,Create, and Delete Webhooks",
+      "description": "Formbricks' Webhook API offers a powerful interface for interacting with webhooks. Webhooks allow you to receive real-time HTTP notifications of changes to specific objects in the Formbricks workspace.\n\nThe behavior of the webhooks is determined by their trigger settings. The trigger determines which updates the webhook sends. Current available triggers include:\n\n- \"responseCreated\"\n    \n- \"responseUpdated\", and\n    \n- \"responseFinished\".\n    \n\nThese APIs are designed to facilitate seamless integration of Formbricks with third-party systems. By making use of our webhook API, you can automate the process of sending data to these systems whenever significant events occur within your Formbricks workspace.\n\n  \n\nMethods allowed: Get All, Get ,Create, and Delete Webhooks",
       "name": "Management API - Webhook"
     }
   ]

@@ -55,7 +55,7 @@ describe("@formbricks/jobs processor registry", () => {
       processJob({
         attemptsMade: 0,
         data: {
-          environmentId: "env_123",
+          workspaceId: "cm8cmpnjj000108jfdr9dfqe8",
           event: "responseCreated",
           response: {
             contact: null,
@@ -74,7 +74,7 @@ describe("@formbricks/jobs processor registry", () => {
             updatedAt: new Date("2026-04-07T10:00:00.000Z"),
             variables: {},
           },
-          surveyId: "survey_123",
+          surveyId: "cm8cmpnjj000108jfdr9dfqe7",
         },
         id: "job-3",
         name: JOB_NAMES.responsePipeline,
@@ -85,10 +85,10 @@ describe("@formbricks/jobs processor registry", () => {
 
     expect(mockError).toHaveBeenCalledWith(
       expect.objectContaining({
-        environmentId: "env_123",
+        workspaceId: "cm8cmpnjj000108jfdr9dfqe8",
         jobId: "job-3",
         jobName: JOB_NAMES.responsePipeline,
-        surveyId: "survey_123",
+        surveyId: "cm8cmpnjj000108jfdr9dfqe7",
       }),
       "BullMQ response pipeline processor override is not registered"
     );
@@ -99,7 +99,7 @@ describe("@formbricks/jobs processor registry", () => {
     const job = {
       attemptsMade: 0,
       data: {
-        environmentId: "env_123",
+        workspaceId: "cm8cmpnjj000108jfdr9dfqe8",
         event: "responseCreated",
         response: {
           contact: null,
@@ -118,7 +118,7 @@ describe("@formbricks/jobs processor registry", () => {
           updatedAt: new Date("2026-04-07T10:00:00.000Z"),
           variables: {},
         },
-        surveyId: "survey_123",
+        surveyId: "cm8cmpnjj000108jfdr9dfqe7",
       },
       id: "job-override",
       name: JOB_NAMES.responsePipeline,
@@ -134,8 +134,8 @@ describe("@formbricks/jobs processor registry", () => {
 
     expect(overrideHandler).toHaveBeenCalledWith(
       expect.objectContaining({
-        environmentId: "env_123",
-        surveyId: "survey_123",
+        workspaceId: "cm8cmpnjj000108jfdr9dfqe8",
+        surveyId: "cm8cmpnjj000108jfdr9dfqe7",
       }),
       {
         attempt: 1,
@@ -155,7 +155,7 @@ describe("@formbricks/jobs processor registry", () => {
         {
           attemptsMade: 0,
           data: {
-            environmentId: "env_123",
+            workspaceId: "cm8cmpnjj000108jfdr9dfqe8",
             event: "responseCreated",
             response: {
               contact: null,
@@ -182,7 +182,7 @@ describe("@formbricks/jobs processor registry", () => {
               updatedAt: "2026-04-07T10:00:00.000Z",
               variables: {},
             },
-            surveyId: "survey_123",
+            surveyId: "cm8cmpnjj000108jfdr9dfqe7",
           },
           id: "job-serialized",
           name: JOB_NAMES.responsePipeline,

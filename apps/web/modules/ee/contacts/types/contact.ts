@@ -9,7 +9,7 @@ export const ZContact = z.object({
   id: z.cuid2(),
   createdAt: z.date(),
   updatedAt: z.date(),
-  workspaceId: z.string(),
+  workspaceId: z.cuid2(),
 });
 
 const ZContactTableAttributeData = z.object({
@@ -201,7 +201,7 @@ export const validateUniqueAttributeKeys = (
 };
 
 export const ZContactBulkUploadRequest = z.object({
-  workspaceId: z.string(),
+  workspaceId: z.cuid2(),
   contacts: z
     .array(ZContactBulkUploadContact)
     .max(250, {
@@ -285,7 +285,7 @@ export type TContactBulkUploadResponseSuccess = TContactBulkUploadResponseBase &
 
 // Schema for single contact creation - simplified with flat attributes
 export const ZContactCreateRequest = z.object({
-  workspaceId: z.string().min(1),
+  workspaceId: z.cuid2(),
   attributes: z.record(z.string(), z.string()).superRefine((attributes, ctx) => {
     // Check if email attribute exists and is valid
     const email = attributes.email;
@@ -313,7 +313,7 @@ export type TContactCreateRequest = z.infer<typeof ZContactCreateRequest>;
 export const ZContactResponse = z.object({
   id: z.cuid2(),
   createdAt: z.date(),
-  workspaceId: z.string().min(1),
+  workspaceId: z.cuid2(),
   attributes: z.record(z.string(), z.string()),
 });
 
