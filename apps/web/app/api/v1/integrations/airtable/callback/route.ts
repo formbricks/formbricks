@@ -1,11 +1,12 @@
 import * as z from "zod";
 import { logger } from "@formbricks/logger";
+import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
 import { responses } from "@/app/lib/api/response";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { fetchAirtableAuthToken } from "@/lib/airtable/service";
 import { AIRTABLE_CLIENT_ID, WEBAPP_URL } from "@/lib/constants";
 import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
-import { createOrUpdateIntegration } from "@/lib/integration/service";
+import { createOrUpdateIntegration, getIntegrationByType } from "@/lib/integration/service";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
 
@@ -78,12 +79,19 @@ export const GET = withV1ApiWrapper({
       }
       const email = await getEmail(key.access_token);
 
+      // Preserve existing integration data (survey-to-table mappings) when re-authorizing
+      const existingIntegration = (await getIntegrationByType(
+        environmentId,
+        "airtable"
+      )) as TIntegrationAirtable | null;
+      const existingData = existingIntegration?.config?.data ?? [];
+
       const airtableIntegrationInput = {
         type: "airtable" as "airtable",
         environment: environmentId,
         config: {
           key,
-          data: [],
+          data: existingData,
           email,
         },
       };

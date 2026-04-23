@@ -789,6 +789,9 @@ checksums:
     environments/integrations/notion/update_connection_tooltip: 2429919f575e47f5c76e54b4442ba706
     environments/integrations/notion_integration_description: 31a73dbe88fe18a078d6dc15f0c303e2
     environments/integrations/please_select_a_survey_error: 465aa7048773079c8ffdde8b333b78eb
+    environments/integrations/reconnect_button: 8992a0f250278c116cb26be448b68ba2
+    environments/integrations/reconnect_button_description: 01f79dc561ff87b5f2a80bf66e492844
+    environments/integrations/reconnect_button_tooltip: 5552effda9df8d6778dda1cf42e5d880
     environments/integrations/select_at_least_one_question_error: a3513cb02ab0de2a1531893ac0c7e089
     environments/integrations/slack/already_connected_another_survey: 4508f9e4a2915e3818ea5f9e2695e000
     environments/integrations/slack/channel_name: 1afcd1d0401850ff353f5ae27502b04a

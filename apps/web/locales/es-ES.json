@@ -833,6 +833,9 @@
       },
       "notion_integration_description": "Envía datos a tu base de datos de Notion",
       "please_select_a_survey_error": "Por favor, selecciona una encuesta",
+      "reconnect_button": "Reconectar",
+      "reconnect_button_description": "Tu conexión de integración ha caducado. Por favor, reconecta para seguir sincronizando las respuestas. Tus enlaces y datos existentes se conservarán.",
+      "reconnect_button_tooltip": "Reconecta la integración para actualizar tu acceso. Tus enlaces y datos existentes se conservarán.",
       "select_at_least_one_question_error": "Por favor, selecciona al menos una pregunta",
       "slack": {
         "already_connected_another_survey": "Ya has conectado otra encuesta a este canal.",

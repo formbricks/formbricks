@@ -833,6 +833,9 @@
       },
       "notion_integration_description": "Verzend gegevens naar uw Notion-database",
       "please_select_a_survey_error": "Selecteer een enquête",
+      "reconnect_button": "Opnieuw verbinden",
+      "reconnect_button_description": "Je integratieverbinding is verlopen. Maak opnieuw verbinding om door te gaan met het synchroniseren van reacties. Je bestaande links en gegevens blijven behouden.",
+      "reconnect_button_tooltip": "Verbind de integratie opnieuw om je toegang te vernieuwen. Je bestaande links en gegevens blijven behouden.",
       "select_at_least_one_question_error": "Selecteer minimaal één vraag",
       "slack": {
         "already_connected_another_survey": "U heeft al een andere enquête aan dit kanaal gekoppeld.",

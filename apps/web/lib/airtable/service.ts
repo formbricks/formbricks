@@ -24,6 +24,10 @@ export const getBases = async (key: string) => {
     },
   });
 
+  if (!req.ok) {
+    throw new Error(`Airtable API error fetching bases: ${req.status} ${req.statusText}`);
+  }
+
   const res = await req.json();
   return ZIntegrationAirtableBases.parse(res);
 };
@@ -34,6 +38,10 @@ const tableFetcher = async (key: TIntegrationAirtableCredential, baseId: string)
       Authorization: `Bearer ${key.access_token}`,
     },
   });
+
+  if (!req.ok) {
+    throw new Error(`Airtable API error fetching tables: ${req.status} ${req.statusText}`);
+  }
 
   const res = await req.json();
 

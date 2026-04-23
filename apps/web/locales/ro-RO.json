@@ -833,6 +833,9 @@
       },
       "notion_integration_description": "Trimiteți datele în baza de date Notion",
       "please_select_a_survey_error": "Vă rugăm să selectați un sondaj",
+      "reconnect_button": "Reconectează",
+      "reconnect_button_description": "Conexiunea integrării tale a expirat. Te rugăm să te reconectezi pentru a continua sincronizarea răspunsurilor. Linkurile și datele tale existente vor fi păstrate.",
+      "reconnect_button_tooltip": "Reconectează integrarea pentru a reîmprospăta accesul. Linkurile și datele tale existente vor fi păstrate.",
       "select_at_least_one_question_error": "Vă rugăm să selectați cel puțin o întrebare",
       "slack": {
         "already_connected_another_survey": "Ați conectat deja un alt chestionar la acest canal.",

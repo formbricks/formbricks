@@ -833,6 +833,9 @@
       },
       "notion_integration_description": "Send data to your Notion database",
       "please_select_a_survey_error": "Please select a survey",
+      "reconnect_button": "Reconnect",
+      "reconnect_button_description": "Your integration connection has expired. Please reconnect to continue syncing responses. Your existing links and data will be preserved.",
+      "reconnect_button_tooltip": "Reconnect the integration to refresh your access. Your existing links and data will be preserved.",
       "select_at_least_one_question_error": "Please select at least one question",
       "slack": {
         "already_connected_another_survey": "You have already connected another survey to this channel.",

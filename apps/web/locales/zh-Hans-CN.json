@@ -833,6 +833,9 @@
       },
       "notion_integration_description": "将 数据 发送到 您的 Notion 数据库",
       "please_select_a_survey_error": "请选择 一个 调查",
+      "reconnect_button": "重新连接",
+      "reconnect_button_description": "你的集成连接已过期。请重新连接以继续同步响应。你现有的链接和数据将被保留。",
+      "reconnect_button_tooltip": "重新连接集成以刷新你的访问权限。你现有的链接和数据将被保留。",
       "select_at_least_one_question_error": "请选择至少 一个问题",
       "slack": {
         "already_connected_another_survey": "您 已 经 将 另 一 个 调 查 连 接 到 此 频 道 。",

@@ -833,6 +833,9 @@
       },
       "notion_integration_description": "Verilerinizi Notion veritabanınıza gönderin",
       "please_select_a_survey_error": "Lütfen bir survey seçin",
+      "reconnect_button": "Yeniden Bağlan",
+      "reconnect_button_description": "Entegrasyon bağlantınızın süresi doldu. Yanıtları senkronize etmeye devam etmek için lütfen yeniden bağlanın. Mevcut bağlantılarınız ve verileriniz korunacaktır.",
+      "reconnect_button_tooltip": "Erişiminizi yenilemek için entegrasyonu yeniden bağlayın. Mevcut bağlantılarınız ve verileriniz korunacaktır.",
       "select_at_least_one_question_error": "Lütfen en az bir soru seçin",
       "slack": {
         "already_connected_another_survey": "Bu kanala zaten başka bir survey bağladınız.",
