@@ -15,7 +15,7 @@ overrides:
   hono: 4.12.14
   lodash: 4.18.1
   node-forge: 1.4.0
-  '@opentelemetry/otlp-transformer@0.212.0>protobufjs': 8.0.1
+  '@opentelemetry/otlp-transformer>protobufjs': 8.0.1
   tar: 7.5.13
 
 patchedDependencies:
@@ -14628,7 +14628,7 @@ snapshots:
       '@opentelemetry/sdk-logs': 0.208.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/sdk-metrics': 2.2.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/sdk-trace-base': 2.2.0(@opentelemetry/api@1.9.0)
-      protobufjs: 7.5.5
+      protobufjs: 8.0.1
 
   '@opentelemetry/otlp-transformer@0.212.0(@opentelemetry/api@1.9.0)':
     dependencies:
@@ -14650,7 +14650,7 @@ snapshots:
       '@opentelemetry/sdk-logs': 0.213.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/sdk-metrics': 2.6.0(@opentelemetry/api@1.9.0)
       '@opentelemetry/sdk-trace-base': 2.6.0(@opentelemetry/api@1.9.0)
-      protobufjs: 7.5.5
+      protobufjs: 8.0.1
 
   '@opentelemetry/propagator-b3@2.6.0(@opentelemetry/api@1.9.0)':
     dependencies:
