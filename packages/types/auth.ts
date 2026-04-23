@@ -15,9 +15,20 @@ export const ZAPIKeyWorkspacePermission = z.object({
 
 export type TAPIKeyWorkspacePermission = z.infer<typeof ZAPIKeyWorkspacePermission>;
 
+export const ZAPIKeyFeedbackRecordDirectoryPermission = z.object({
+  feedbackRecordDirectoryId: z.cuid2(),
+  feedbackRecordDirectoryName: z.string(),
+  permission: z.enum(ApiKeyPermission),
+});
+
+export type TAPIKeyFeedbackRecordDirectoryPermission = z.infer<
+  typeof ZAPIKeyFeedbackRecordDirectoryPermission
+>;
+
 export const ZAuthenticationApiKey = z.object({
   type: z.literal("apiKey"),
   workspacePermissions: z.array(ZAPIKeyWorkspacePermission),
+  feedbackRecordDirectoryPermissions: z.array(ZAPIKeyFeedbackRecordDirectoryPermission),
   apiKeyId: z.string(),
   organizationId: z.string(),
   organizationAccess: ZOrganizationAccess,

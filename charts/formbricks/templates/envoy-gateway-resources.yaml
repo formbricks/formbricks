@@ -8,6 +8,8 @@
 {{- $proxyName := include "formbricks.envoy.proxyName" . -}}
 {{- $proxyServiceName := include "formbricks.envoy.proxyServiceName" . -}}
 {{- $appServiceName := include "formbricks.name" . -}}
+{{- $hubServiceName := include "formbricks.hubname" . -}}
+{{- $hubSecretName := include "formbricks.hubSecretName" . -}}
 ---
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: EnvoyProxy
@@ -264,6 +266,135 @@ spec:
       backendRefs:
         - kind: Service
           name: {{ $appServiceName }}
+          port: 3000
+{{- end }}
+{{- if .Values.envoy.formbricks.routes.feedbackRecords }}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ printf "%s-feedback-records-token" $proxyServiceName }}
+  namespace: {{ $namespace }}
+  labels:
+    {{- include "formbricks.labels" . | nindent 4 }}
+spec:
+  parentRefs:
+    - name: {{ $gatewayName }}
+      sectionName: {{ .Values.envoy.formbricks.gateway.listenerName }}
+  rules:
+    - matches:
+        - path:
+            type: Exact
+            value: /api/v3/feedbackRecords/token
+      backendRefs:
+        - kind: Service
+          name: {{ $appServiceName }}
+          port: 3000
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: HTTPRouteFilter
+metadata:
+  name: {{ printf "%s-feedback-records-credential-injection" $proxyServiceName }}
+  namespace: {{ $namespace }}
+  labels:
+    {{- include "formbricks.labels" . | nindent 4 }}
+spec:
+  credentialInjection:
+    overwrite: true
+    credential:
+      valueRef:
+        name: {{ $hubSecretName }}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ printf "%s-feedback-records-v3" $proxyServiceName }}
+  namespace: {{ $namespace }}
+  labels:
+    {{- include "formbricks.labels" . | nindent 4 }}
+spec:
+  parentRefs:
+    - name: {{ $gatewayName }}
+      sectionName: {{ .Values.envoy.formbricks.gateway.listenerName }}
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /api/v3/feedbackRecords
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path:
+              type: ReplacePrefixMatch
+              replacePrefixMatch: /v1/feedback-records
+        - type: ExtensionRef
+          extensionRef:
+            group: gateway.envoyproxy.io
+            kind: HTTPRouteFilter
+            name: {{ printf "%s-feedback-records-credential-injection" $proxyServiceName }}
+      backendRefs:
+        - kind: Service
+          name: {{ $hubServiceName }}
+          port: 8080
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ printf "%s-feedback-records-sdk" $proxyServiceName }}
+  namespace: {{ $namespace }}
+  labels:
+    {{- include "formbricks.labels" . | nindent 4 }}
+spec:
+  parentRefs:
+    - name: {{ $gatewayName }}
+      sectionName: {{ .Values.envoy.formbricks.gateway.listenerName }}
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /v1/feedback-records
+      filters:
+        - type: ExtensionRef
+          extensionRef:
+            group: gateway.envoyproxy.io
+            kind: HTTPRouteFilter
+            name: {{ printf "%s-feedback-records-credential-injection" $proxyServiceName }}
+      backendRefs:
+        - kind: Service
+          name: {{ $hubServiceName }}
+          port: 8080
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: SecurityPolicy
+metadata:
+  name: {{ printf "%s-feedback-records-auth" $proxyServiceName }}
+  namespace: {{ $namespace }}
+  labels:
+    {{- include "formbricks.labels" . | nindent 4 }}
+spec:
+  targetRefs:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: {{ printf "%s-feedback-records-v3" $proxyServiceName }}
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      name: {{ printf "%s-feedback-records-sdk" $proxyServiceName }}
+  extAuth:
+    headersToExtAuth:
+      - authorization
+      - x-api-key
+      - cookie
+      - content-type
+      - x-request-id
+      - x-forwarded-for
+    bodyToExtAuth:
+      maxRequestBytes: 1048576
+    statusOnError: 503
+    failOpen: false
+    http:
+      path: /api/envoy-auth/feedback-records
+      backendRefs:
+        - name: {{ $appServiceName }}
           port: 3000
 {{- end }}
 {{- end }}

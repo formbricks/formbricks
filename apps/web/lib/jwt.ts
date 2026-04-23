@@ -4,6 +4,9 @@ import { logger } from "@formbricks/logger";
 import { ENCRYPTION_KEY, NEXTAUTH_SECRET } from "@/lib/constants";
 import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
 
+export const FEEDBACK_RECORDS_GATEWAY_TOKEN_PURPOSE = "feedback_records_gateway";
+const FEEDBACK_RECORDS_GATEWAY_TOKEN_TTL_SECONDS = 60 * 10;
+
 // Helper function to decrypt with fallback to plain text
 const decryptWithFallback = (encryptedText: string, key: string): string => {
   try {
@@ -24,6 +27,33 @@ export const createToken = (userId: string, options = {}): string => {
 
   const encryptedUserId = symmetricEncrypt(userId, ENCRYPTION_KEY);
   return jwt.sign({ id: encryptedUserId }, NEXTAUTH_SECRET, options);
+};
+
+export const createFeedbackRecordsGatewayToken = (
+  userId: string
+): {
+  token: string;
+  expiresAt: string;
+} => {
+  if (!NEXTAUTH_SECRET) {
+    throw new Error("NEXTAUTH_SECRET is not set");
+  }
+
+  const token = jwt.sign({ purpose: FEEDBACK_RECORDS_GATEWAY_TOKEN_PURPOSE }, NEXTAUTH_SECRET, {
+    algorithm: "HS256",
+    expiresIn: FEEDBACK_RECORDS_GATEWAY_TOKEN_TTL_SECONDS,
+    subject: userId,
+  });
+
+  const decodedToken = jwt.decode(token);
+  if (!decodedToken || typeof decodedToken !== "object" || typeof decodedToken.exp !== "number") {
+    throw new Error("Failed to create feedback records gateway token");
+  }
+
+  return {
+    token,
+    expiresAt: new Date(decodedToken.exp * 1000).toISOString(),
+  };
 };
 export const createTokenForLinkSurvey = (surveyId: string, userEmail: string): string => {
   if (!NEXTAUTH_SECRET) {
@@ -63,6 +93,29 @@ export const verifyEmailChangeToken = async (token: string): Promise<{ id: strin
   return {
     id: decryptedId,
     email: decryptedEmail,
+  };
+};
+
+export const verifyFeedbackRecordsGatewayToken = (
+  token: string
+): {
+  userId: string;
+} => {
+  if (!NEXTAUTH_SECRET) {
+    throw new Error("NEXTAUTH_SECRET is not set");
+  }
+
+  const payload = jwt.verify(token, NEXTAUTH_SECRET, { algorithms: ["HS256"] }) as JwtPayload & {
+    purpose?: string;
+    sub?: string;
+  };
+
+  if (payload.purpose !== FEEDBACK_RECORDS_GATEWAY_TOKEN_PURPOSE || !payload.sub) {
+    throw new Error("Invalid feedback records gateway token");
+  }
+
+  return {
+    userId: payload.sub,
   };
 };
 

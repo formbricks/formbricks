@@ -1,6 +1,8 @@
 import "server-only";
 import FormbricksHub from "@formbricks/hub";
+import { createCacheKey } from "@formbricks/cache";
 import { logger } from "@formbricks/logger";
+import { cache } from "@/lib/cache";
 import { getHubClient } from "./hub-client";
 import type {
   FeedbackRecordCreateParams,
@@ -51,6 +53,11 @@ export type ListFeedbackRecordsResult = {
   error: { status: number; message: string; detail: string } | null;
 };
 
+export type FeedbackRecordTenantResult = {
+  data: { tenantId: string } | null;
+  error: { status: number; message: string; detail: string } | null;
+};
+
 /**
  * List feedback records from the Hub with optional filters and pagination.
  */
@@ -66,6 +73,31 @@ export const listFeedbackRecords = async (
     return { data, error: null };
   } catch (err) {
     logger.warn({ err }, "Hub: listFeedbackRecords failed");
+    const status = err instanceof FormbricksHub.APIError ? err.status : 0;
+    const message = err instanceof Error ? err.message : String(err);
+    return { data: null, error: { status, message, detail: message } };
+  }
+};
+
+export const getFeedbackRecordTenant = async (recordId: string): Promise<FeedbackRecordTenantResult> => {
+  const client = getHubClient();
+  if (!client) {
+    return { data: null, error: { ...NO_CONFIG_ERROR } };
+  }
+
+  try {
+    const data = await cache.withCache(
+      async () => {
+        const feedbackRecord = await client.feedbackRecords.retrieve(recordId);
+        return { tenantId: feedbackRecord.tenant_id };
+      },
+      createCacheKey.custom("hub", recordId, "feedback_record_tenant"),
+      60_000
+    );
+
+    return { data, error: null };
+  } catch (err) {
+    logger.warn({ err, recordId }, "Hub: getFeedbackRecordTenant failed");
     const status = err instanceof FormbricksHub.APIError ? err.status : 0;
     const message = err instanceof Error ? err.message : String(err);
     return { data: null, error: { status, message, detail: message } };
