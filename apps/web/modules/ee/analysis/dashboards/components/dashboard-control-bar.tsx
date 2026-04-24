@@ -14,6 +14,7 @@ import { IconBar } from "@/modules/ui/components/iconbar";
 interface DashboardControlBarProps {
   workspaceId: string;
   dashboardId: string;
+  directories: { id: string; name: string }[];
   existingChartIds: string[];
   isEditing: boolean;
   isSaving: boolean;
@@ -28,6 +29,7 @@ interface DashboardControlBarProps {
 export const DashboardControlBar = ({
   workspaceId,
   dashboardId,
+  directories,
   existingChartIds,
   isEditing,
   isSaving,
@@ -124,6 +126,7 @@ export const DashboardControlBar = ({
         onOpenChange={setIsAddExistingDialogOpen}
         workspaceId={workspaceId}
         dashboardId={dashboardId}
+        directories={directories}
         existingChartIds={existingChartIds}
         onSuccess={() => {
           setIsAddExistingDialogOpen(false);

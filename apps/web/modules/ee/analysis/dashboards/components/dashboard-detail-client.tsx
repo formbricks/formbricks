@@ -28,6 +28,7 @@ interface DashboardDetailClientProps {
   workspaceId: string;
   dashboard: TDashboardDetail;
   widgetDataPromises: Map<string, Promise<{ data: TChartDataRow[]; query: TChartQuery } | { error: string }>>;
+  directories: { id: string; name: string }[];
   isReadOnly: boolean;
 }
 
@@ -144,6 +145,7 @@ export function DashboardDetailClient({
   workspaceId,
   dashboard,
   widgetDataPromises,
+  directories,
   isReadOnly,
 }: Readonly<DashboardDetailClientProps>) {
   const router = useRouter();
@@ -285,6 +287,7 @@ export function DashboardDetailClient({
           <DashboardControlBar
             workspaceId={workspaceId}
             dashboardId={dashboard.id}
+            directories={directories}
             existingChartIds={widgets.map((w) => w.chartId)}
             isEditing={isEditing}
             isSaving={isSaving}
