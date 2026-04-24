@@ -1144,7 +1144,7 @@ model DashboardWidget {
 }
 
 enum ConnectorType {
-  formbricks
+  formbricks_survey
   csv
 }
 
@@ -1171,7 +1171,7 @@ enum HubFieldType {
 ///
 /// @property id - Unique identifier for the connector
 /// @property name - Display name for the connector
-/// @property type - Type of connector (formbricks, webhook, csv, email, slack)
+/// @property type - Type of connector (formbricks_survey, webhook, csv, email, slack)
 /// @property status - Current state of the connector (active, paused)
 /// @property environment - The environment this connector belongs to
 /// @property config - Type-specific configuration (e.g., webhook secret, S3 config)

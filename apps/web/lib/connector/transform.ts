@@ -117,7 +117,7 @@ export function transformResponseToFeedbackRecords(
 
     const feedbackRecord = {
       collected_at: getCollectedAt(response),
-      source_type: "formbricks",
+      source_type: "formbricks_survey",
       submission_id: response.id,
       tenant_id: tenantId,
       field_id: mapping.elementId,
