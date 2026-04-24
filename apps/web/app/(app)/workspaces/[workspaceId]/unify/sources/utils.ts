@@ -2,8 +2,10 @@ import { TFunction } from "i18next";
 import { TConnectorType, THubFieldType } from "@formbricks/types/connector";
 import { FEEDBACK_RECORD_FIELDS, MAX_CSV_VALUES, TFieldMapping, TSourceField } from "./types";
 
+export type TConnectorOptionId = TConnectorType | "api_ingestion" | "feedback_record_mcp";
+
 export interface TConnectorOption {
-  id: TConnectorType;
+  id: TConnectorOptionId;
   name: string;
   description: string;
   disabled: boolean;
@@ -21,6 +23,18 @@ export const getConnectorOptions = (t: TFunction): TConnectorOption[] => [
     id: "csv",
     name: t("workspace.unify.csv_import"),
     description: t("workspace.unify.source_connect_csv_description"),
+    disabled: false,
+  },
+  {
+    id: "api_ingestion",
+    name: t("workspace.unify.api_ingestion"),
+    description: t("workspace.unify.api_ingestion_settings_description"),
+    disabled: false,
+  },
+  {
+    id: "feedback_record_mcp",
+    name: t("workspace.unify.feedback_record_mcp"),
+    description: t("workspace.unify.source_connect_feedback_record_mcp_description"),
     disabled: false,
   },
 ];
