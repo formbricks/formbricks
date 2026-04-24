@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurvey, TSurveyCreateInput } from "@formbricks/types/surveys/types";
 import {
   getOrganizationByEnvironmentId,
@@ -63,8 +64,8 @@ export const createSurvey = async (
     }
 
     // Validate and prepare blocks
-    if (data.blocks && data.blocks.length > 0) {
-      data.blocks = validateMediaAndPrepareBlocks(data.blocks);
+    if (Array.isArray(data.blocks) && data.blocks.length > 0) {
+      data.blocks = validateMediaAndPrepareBlocks(data.blocks as unknown as TSurveyBlock[]);
     }
 
     const survey = await prisma.survey.create({

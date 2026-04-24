@@ -268,12 +268,12 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       };
     }
 
-    const modifiedSurvey: TSurvey = {
+    const modifiedSurvey = {
       ...prismaSurvey, // Properties from prismaSurvey
       displayPercentage: Number(prismaSurvey.displayPercentage) || null,
       segment: surveySegment,
       customHeadScriptsMode: prismaSurvey.customHeadScriptsMode,
-    };
+    } as unknown as TSurvey;
 
     return modifiedSurvey;
   } catch (error) {
