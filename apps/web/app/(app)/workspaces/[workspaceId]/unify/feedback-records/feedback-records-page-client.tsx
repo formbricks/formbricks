@@ -9,33 +9,33 @@ import { FeedbackRecordsTable } from "./feedback-records-table";
 
 interface FeedbackRecordsPageClientProps {
   workspaceId: string;
-  directories: { id: string; name: string }[];
-  initialFrdId: string | null;
   initialRecords: FeedbackRecordData[];
-  initialNextCursor?: string;
+  frdMap: Record<string, string>;
+  csvSources: { id: string; name: string }[];
+  canWrite: boolean;
 }
 
 export function FeedbackRecordsPageClient({
   workspaceId,
-  directories,
-  initialFrdId,
   initialRecords,
-  initialNextCursor,
-}: FeedbackRecordsPageClientProps) {
+  frdMap,
+  csvSources,
+  canWrite,
+}: Readonly<FeedbackRecordsPageClientProps>) {
   const { t } = useTranslation();
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("workspace.unify.unify_feedback")}>
+      <PageHeader pageTitle={t("workspace.unify.feedback_records")}>
         <UnifyConfigNavigation workspaceId={workspaceId} activeId="feedback-records" />
       </PageHeader>
 
       <FeedbackRecordsTable
         workspaceId={workspaceId}
-        directories={directories}
-        initialFrdId={initialFrdId}
         initialRecords={initialRecords}
-        initialNextCursor={initialNextCursor}
+        frdMap={frdMap}
+        csvSources={csvSources}
+        canWrite={canWrite}
       />
     </PageContentWrapper>
   );
