@@ -12,9 +12,13 @@ import { Button } from "@/modules/ui/components/button";
 
 interface CreateDashboardButtonProps {
   workspaceId: string;
+  disabled?: boolean;
 }
 
-export const CreateDashboardButton = ({ workspaceId }: Readonly<CreateDashboardButtonProps>) => {
+export const CreateDashboardButton = ({
+  workspaceId,
+  disabled = false,
+}: Readonly<CreateDashboardButtonProps>) => {
   const { t } = useTranslation();
   const router = useRouter();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -59,7 +63,7 @@ export const CreateDashboardButton = ({ workspaceId }: Readonly<CreateDashboardB
 
   return (
     <>
-      <Button size="sm" onClick={() => handleOpenChange(true)}>
+      <Button size="sm" onClick={() => handleOpenChange(true)} disabled={disabled}>
         <PlusIcon className="mr-2 h-4 w-4" />
         {t("workspace.analysis.dashboards.create_dashboard")}
       </Button>
