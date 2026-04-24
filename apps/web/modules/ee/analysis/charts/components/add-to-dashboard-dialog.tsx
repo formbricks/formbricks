@@ -31,6 +31,7 @@ interface AddToDashboardDialogProps {
   onDashboardSelect: (id: string) => void;
   onConfirm: () => void;
   isSaving: boolean;
+  showChartNameField?: boolean;
 }
 
 export function AddToDashboardDialog({
@@ -43,6 +44,7 @@ export function AddToDashboardDialog({
   onDashboardSelect,
   onConfirm,
   isSaving,
+  showChartNameField = true,
 }: Readonly<AddToDashboardDialogProps>) {
   const { t } = useTranslation();
 
@@ -57,17 +59,19 @@ export function AddToDashboardDialog({
         </DialogHeader>
         <DialogBody>
           <div className="space-y-4">
-            <div>
-              <Label htmlFor="chart-name">{t("workspace.analysis.charts.chart_name")}</Label>
-              <Input
-                id="chart-name"
-                className="mt-2"
-                placeholder={t("workspace.analysis.charts.chart_name_placeholder")}
-                value={chartName}
-                onChange={(e) => onChartNameChange(e.target.value)}
-                maxLength={255}
-              />
-            </div>
+            {showChartNameField && (
+              <div>
+                <Label htmlFor="chart-name">{t("workspace.analysis.charts.chart_name")}</Label>
+                <Input
+                  id="chart-name"
+                  className="mt-2"
+                  placeholder={t("workspace.analysis.charts.chart_name_placeholder")}
+                  value={chartName}
+                  onChange={(e) => onChartNameChange(e.target.value)}
+                  maxLength={255}
+                />
+              </div>
+            )}
             <div>
               <Label htmlFor="dashboard-select">{t("workspace.analysis.charts.dashboard")}</Label>
               <Select value={selectedDashboardId} onValueChange={onDashboardSelect}>
@@ -103,7 +107,10 @@ export function AddToDashboardDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
             {t("common.cancel")}
           </Button>
-          <Button onClick={onConfirm} loading={isSaving} disabled={!selectedDashboardId || !chartName.trim()}>
+          <Button
+            onClick={onConfirm}
+            loading={isSaving}
+            disabled={!selectedDashboardId || (showChartNameField && !chartName.trim())}>
             {t("workspace.analysis.charts.add_to_dashboard")}
           </Button>
         </DialogFooter>
