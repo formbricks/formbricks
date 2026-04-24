@@ -1,9 +1,11 @@
 /// <reference types="vitest" />
 import { resolve } from "path";
+import dts from "vite-plugin-dts";
 import { defineConfig } from "vitest/config";
 import type { ViteUserConfig } from "vitest/config";
 import webPackageJson from "../../apps/web/package.json";
 import { copyCompiledAssetsPlugin } from "../vite-plugins/copy-compiled-assets";
+import { rewriteNodeNextDtsSpecifiers } from "../vite-plugins/node-next-dts";
 
 type VitestPluginOption = NonNullable<ViteUserConfig["plugins"]>[number];
 
@@ -29,6 +31,13 @@ export default defineConfig({
     },
   },
   plugins: [
+    dts({
+      rollupTypes: false,
+      insertTypesEntry: true,
+      include: ["src/**/*.ts"],
+      exclude: ["src/**/*.test.ts", "src/**/*.spec.ts", "src/**/tests/**", "vitest.setup.ts"],
+      beforeWriteFile: rewriteNodeNextDtsSpecifiers,
+    }) as VitestPluginOption,
     copyCompiledAssetsPlugin({
       filename: "formbricks",
       distDir: resolve(__dirname, "dist"),

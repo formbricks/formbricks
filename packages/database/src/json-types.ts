@@ -1,25 +1,29 @@
 /* eslint-disable import/no-relative-packages -- required for importing types */
 /* eslint-disable @typescript-eslint/no-namespace -- using namespaces is required for prisma-json-types-generator */
-import { type TActionClassNoCodeConfig } from "../types/action-classes";
-import type { TOrganizationAccess } from "../types/api-key";
-import { type TIntegrationConfig } from "../types/integration";
+import type {
+  TSurveyFollowUpAction,
+  TSurveyFollowUpTrigger,
+} from "@formbricks/database/types/survey-follow-up";
+import { type TActionClassNoCodeConfig } from "@formbricks/types/action-classes";
+import type { TOrganizationAccess } from "@formbricks/types/api-key";
+import { type TIntegrationConfig } from "@formbricks/types/integration";
 import {
   type TOrganizationBilling,
   type TOrganizationBillingPlanLimits,
   type TOrganizationStripeBilling,
   type TOrganizationWhitelabel,
-} from "../types/organizations";
-import { type TLogo, type TProjectConfig, type TProjectStyling } from "../types/project";
-import type { TSurveyQuotaLogic } from "../types/quota";
+} from "@formbricks/types/organizations";
+import { type TLogo, type TProjectConfig, type TProjectStyling } from "@formbricks/types/project";
+import type { TSurveyQuotaLogic } from "@formbricks/types/quota";
 import {
   type TResponseContactAttributes,
   type TResponseData,
   type TResponseMeta,
   type TResponseTtc,
   type TResponseVariables,
-} from "../types/responses";
-import { type TBaseFilters } from "../types/segment";
-import { type TSurveyBlocks } from "../types/surveys/blocks";
+} from "@formbricks/types/responses";
+import { type TBaseFilters } from "@formbricks/types/segment";
+import { type TSurveyBlocks } from "@formbricks/types/surveys/blocks";
 import {
   type TSurveyClosedMessage,
   type TSurveyEnding,
@@ -33,9 +37,8 @@ import {
   type TSurveyStyling,
   type TSurveyVariables,
   type TSurveyWelcomeCard,
-} from "../types/surveys/types";
-import type { TUserLocale, TUserNotificationSettings } from "../types/user";
-import type { TSurveyFollowUpAction, TSurveyFollowUpTrigger } from "./types/survey-follow-up";
+} from "@formbricks/types/surveys/types";
+import type { TUserLocale, TUserNotificationSettings } from "@formbricks/types/user";
 
 declare global {
   namespace PrismaJson {
@@ -77,3 +80,6 @@ declare global {
     export type SurveyQuotaLogic = TSurveyQuotaLogic;
   }
 }
+
+export type TPrismaJsonTypesLoaded = true;
+export {};

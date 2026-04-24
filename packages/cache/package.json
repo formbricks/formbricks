@@ -30,7 +30,7 @@
     "lint": "eslint . --ext .ts,.js",
     "lint:fix": "eslint . --ext .ts,.js --fix",
     "lint:report": "eslint . --format json --output-file ../../lint-results/cache.json",
-    "build": "vite build && tsc --project tsconfig.build.json",
+    "build": "vite build",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "go": "vite build --watch --mode dev"
@@ -46,6 +46,7 @@
     "@formbricks/eslint-config": "workspace:*",
     "@vitest/coverage-v8": "4.1.5",
     "vite": "7.3.2",
+    "vite-plugin-dts": "4.5.4",
     "vitest": "4.1.5"
   }
 }
