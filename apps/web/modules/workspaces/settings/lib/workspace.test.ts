@@ -40,6 +40,7 @@ vi.mock("@formbricks/database", () => ({
     },
     feedbackRecordDirectory: {
       upsert: vi.fn(),
+      findFirst: vi.fn(),
     },
     feedbackRecordDirectoryWorkspace: {
       count: vi.fn(),
@@ -136,6 +137,34 @@ describe("workspace lib", () => {
       });
     });
 
+    test("creates workspace and links selected feedback directory when provided", async () => {
+      const createdWorkspace = { ...baseWorkspace, id: "p-selected" };
+      vi.mocked(prisma.feedbackRecordDirectory.findFirst).mockResolvedValueOnce({
+        id: "frd-selected",
+      } as any);
+      vi.mocked(prisma.workspace.create).mockResolvedValueOnce(createdWorkspace as any);
+      vi.mocked(prisma.feedbackRecordDirectoryWorkspace.create).mockResolvedValueOnce({} as any);
+
+      const result = await createWorkspace("org1", {
+        name: "Workspace with Selected Directory",
+        feedbackRecordDirectoryId: "frd-selected",
+      });
+
+      expect(result).toEqual(createdWorkspace);
+      expect(prisma.feedbackRecordDirectory.findFirst).toHaveBeenCalledWith({
+        where: {
+          id: "frd-selected",
+          organizationId: "org1",
+          isArchived: false,
+        },
+        select: { id: true },
+      });
+      expect(prisma.feedbackRecordDirectoryWorkspace.create).toHaveBeenCalledWith({
+        data: { feedbackRecordDirectoryId: "frd-selected", workspaceId: "p-selected" },
+      });
+      expect(prisma.feedbackRecordDirectory.upsert).not.toHaveBeenCalled();
+    });
+
     test("skips FRD link when default FRD already has links", async () => {
       const createdWorkspace = { ...baseWorkspace, id: "p4" };
       vi.mocked(prisma.workspace.create).mockResolvedValueOnce(createdWorkspace as any);
@@ -145,6 +174,19 @@ describe("workspace lib", () => {
       await createWorkspace("org1", { name: "Second Workspace" });
 
       expect(prisma.feedbackRecordDirectoryWorkspace.create).not.toHaveBeenCalled();
+    });
+
+    test("throws InvalidInputError when selected feedback directory is invalid", async () => {
+      vi.mocked(prisma.feedbackRecordDirectory.findFirst).mockResolvedValueOnce(null);
+
+      await expect(
+        createWorkspace("org1", {
+          name: "Workspace with Invalid Directory",
+          feedbackRecordDirectoryId: "frd-missing",
+        })
+      ).rejects.toThrow(InvalidInputError);
+
+      expect(prisma.workspace.create).not.toHaveBeenCalled();
     });
 
     test("throws ValidationError if name is missing", async () => {

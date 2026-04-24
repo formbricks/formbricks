@@ -21,6 +21,7 @@ export const SettingsCard = ({
   beta,
   className,
   buttonInfo,
+  cta,
 }: {
   title: string;
   description: string;
@@ -30,6 +31,7 @@ export const SettingsCard = ({
   beta?: boolean;
   className?: string;
   buttonInfo?: ButtonInfo;
+  cta?: React.ReactNode;
 }) => {
   const { t } = useTranslation();
   return (
@@ -52,11 +54,12 @@ export const SettingsCard = ({
             {description}
           </Small>
         </div>
-        {buttonInfo && (
-          <Button type="button" onClick={buttonInfo?.onClick} variant={buttonInfo?.variant ?? "default"}>
-            {buttonInfo?.text}
-          </Button>
-        )}
+        {cta ??
+          (buttonInfo && (
+            <Button type="button" onClick={buttonInfo?.onClick} variant={buttonInfo?.variant ?? "default"}>
+              {buttonInfo?.text}
+            </Button>
+          ))}
       </div>
       <div className={cn(noPadding ? "" : "px-4 pt-4")}>{children}</div>
     </div>
