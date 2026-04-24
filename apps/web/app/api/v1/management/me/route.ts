@@ -4,6 +4,7 @@ import { getSessionUser } from "@/app/api/v1/management/me/lib/utils";
 import { responses } from "@/app/lib/api/response";
 import { CONTROL_HASH } from "@/lib/constants";
 import { hashSha256, parseApiKeyV2, verifySecret } from "@/lib/crypto";
+import { publicUserSelect } from "@/lib/user/public-user";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 
@@ -176,6 +177,7 @@ const handleSessionAuthentication = async () => {
 
   const user = await prisma.user.findUnique({
     where: { id: sessionUser.id },
+    select: publicUserSelect,
   });
 
   return Response.json(user);

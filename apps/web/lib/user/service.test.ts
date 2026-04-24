@@ -6,6 +6,7 @@ import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUserLocale, TUserUpdateInput } from "@formbricks/types/user";
 import { deleteOrganization, getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
+import { publicUserSelect } from "./public-user";
 import { deleteUser, getUser, getUserByEmail, getUsersWithOrganization, updateUser } from "./service";
 
 vi.mock("@formbricks/database", () => ({
@@ -47,11 +48,6 @@ describe("User Service", () => {
     locale: "en-US" as TUserLocale,
     lastLoginAt: new Date(),
     isActive: true,
-    twoFactorSecret: null,
-    backupCodes: null,
-    password: null,
-    identityProviderAccountId: null,
-    groupId: null,
   };
 
   const mockOrganizations: TOrganization[] = [
@@ -102,8 +98,12 @@ describe("User Service", () => {
       expect(result).toEqual(mockPrismaUser);
       expect(prisma.user.findUnique).toHaveBeenCalledWith({
         where: { id: "user1" },
-        select: expect.any(Object),
+        select: publicUserSelect,
       });
+      expect(result).not.toHaveProperty("password");
+      expect(result).not.toHaveProperty("twoFactorSecret");
+      expect(result).not.toHaveProperty("backupCodes");
+      expect(result).not.toHaveProperty("identityProviderAccountId");
     });
 
     test("should return null when user not found", async () => {
@@ -134,7 +134,7 @@ describe("User Service", () => {
       expect(result).toEqual(mockPrismaUser);
       expect(prisma.user.findFirst).toHaveBeenCalledWith({
         where: { email: "test@example.com" },
-        select: expect.any(Object),
+        select: publicUserSelect,
       });
     });
 
@@ -176,7 +176,7 @@ describe("User Service", () => {
       expect(prisma.user.update).toHaveBeenCalledWith({
         where: { id: "user1" },
         data: updateData,
-        select: expect.any(Object),
+        select: publicUserSelect,
       });
     });
 
@@ -204,7 +204,7 @@ describe("User Service", () => {
       expect(deleteOrganization).toHaveBeenCalledWith("org1");
       expect(prisma.user.delete).toHaveBeenCalledWith({
         where: { id: "user1" },
-        select: expect.any(Object),
+        select: publicUserSelect,
       });
     });
 
@@ -236,7 +236,7 @@ describe("User Service", () => {
             },
           },
         },
-        select: expect.any(Object),
+        select: publicUserSelect,
       });
     });
 
