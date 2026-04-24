@@ -6,7 +6,7 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { TOrganizationAccess } from "@formbricks/types/api-key";
 import { ZId } from "@formbricks/types/common";
-import { DatabaseError } from "@formbricks/types/errors";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { CONTROL_HASH } from "@/lib/constants";
 import { hashSecret, hashSha256, parseApiKeyV2, verifySecret } from "@/lib/crypto";
 import { validateInputs } from "@/lib/utils/validate";
@@ -38,6 +38,12 @@ export const getApiKeysWithEnvironmentPermissions = reactCache(
               workspaceId: true,
             },
           },
+          apiKeyFeedbackRecordDirectories: {
+            select: {
+              permission: true,
+              feedbackRecordDirectoryId: true,
+            },
+          },
         },
       });
       return apiKeys;
@@ -58,6 +64,16 @@ export const getApiKeyWithPermissions = reactCache(
         apiKeyWorkspaces: {
           include: {
             workspace: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+        apiKeyFeedbackRecordDirectories: {
+          include: {
+            feedbackRecordDirectory: {
               select: {
                 id: true,
                 name: true,
@@ -156,6 +172,10 @@ export const createApiKey = async (
       workspaceId: string;
       permission: ApiKeyPermission;
     }>;
+    feedbackRecordDirectoryPermissions?: Array<{
+      feedbackRecordDirectoryId: string;
+      permission: ApiKeyPermission;
+    }>;
     organizationAccess: TOrganizationAccess;
   }
 ): Promise<TApiKeyWithEnvironmentPermission & { actualKey: string }> => {
@@ -171,8 +191,22 @@ export const createApiKey = async (
     // 2. bcrypt hash
     const hashedKey = await hashSecret(secret, 12);
 
-    // Extract workspacePermissions from apiKeyData
-    const { workspacePermissions, organizationAccess, ...apiKeyDataWithoutPermissions } = apiKeyData;
+    const {
+      workspacePermissions,
+      feedbackRecordDirectoryPermissions,
+      organizationAccess,
+      ...apiKeyDataWithoutPermissions
+    } = apiKeyData;
+
+    if (feedbackRecordDirectoryPermissions && feedbackRecordDirectoryPermissions.length > 0) {
+      const directoryIds = feedbackRecordDirectoryPermissions.map((p) => p.feedbackRecordDirectoryId);
+      const ownedCount = await prisma.feedbackRecordDirectory.count({
+        where: { id: { in: directoryIds }, organizationId },
+      });
+      if (ownedCount !== directoryIds.length) {
+        throw new ResourceNotFoundError("FeedbackRecordDirectory", null);
+      }
+    }
 
     // Create the API key
     const result = await prisma.apiKey.create({
@@ -193,9 +227,20 @@ export const createApiKey = async (
               },
             }
           : {}),
+        ...(feedbackRecordDirectoryPermissions && feedbackRecordDirectoryPermissions.length > 0
+          ? {
+              apiKeyFeedbackRecordDirectories: {
+                create: feedbackRecordDirectoryPermissions.map((dirPerm) => ({
+                  permission: dirPerm.permission,
+                  feedbackRecordDirectoryId: dirPerm.feedbackRecordDirectoryId,
+                })),
+              },
+            }
+          : {}),
       },
       include: {
         apiKeyWorkspaces: true,
+        apiKeyFeedbackRecordDirectories: true,
       },
     });
 

@@ -10,6 +10,7 @@ import { TSurvey, TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
 import { addMultiLanguageLabels, extractLanguageCodes, getEnabledLanguages } from "@/lib/i18n/utils";
+import { checkAITranslationAvailableAction } from "@/modules/ee/ai-translation/lib/actions";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
@@ -66,6 +67,8 @@ export const LanguageView = ({
   const { workspaceId } = localSurvey;
 
   const [isMultiLanguageActivated, setIsMultiLanguageActivated] = useState(localSurvey.languages.length > 0);
+  const [isAIAvailable, setIsAIAvailable] = useState(false);
+  const [aiUnavailableReason, setAiUnavailableReason] = useState<string | undefined>();
   const [confirmationModalInfo, setConfirmationModalInfo] = useState<ConfirmationModalInfo>({
     title: "",
     open: false,
@@ -84,6 +87,29 @@ export const LanguageView = ({
   const translatableStrings = useMemo(() => extractTranslatableStrings(localSurvey, t), [localSurvey, t]);
 
   const enabledLanguages = getEnabledLanguages(localSurvey.languages);
+
+  // Check AI availability once on mount
+  useEffect(() => {
+    let isCurrent = true;
+    setIsAIAvailable(false);
+
+    checkAITranslationAvailableAction({ surveyId: localSurvey.id })
+      .then((result) => {
+        if (isCurrent) {
+          setIsAIAvailable(result?.data?.available ?? false);
+          setAiUnavailableReason(result?.data?.available ? undefined : result?.data?.reason);
+        }
+      })
+      .catch(() => {
+        if (isCurrent) {
+          setIsAIAvailable(false);
+        }
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [localSurvey.id]);
 
   // Sync multi-language state
   useEffect(() => {
@@ -122,7 +148,14 @@ export const LanguageView = ({
           buttonText: t("workspace.surveys.edit.remove_translations"),
           buttonVariant: "destructive",
           onConfirm: () => {
-            updateSurveyTranslations(localSurvey, []);
+            // Strip all non-default language keys from the survey data
+            let cleanedSurvey = localSurvey;
+            for (const lang of localSurvey.languages) {
+              if (!lang.default) {
+                cleanedSurvey = removeLanguageKeysFromSurvey(cleanedSurvey, lang.language.code);
+              }
+            }
+            setLocalSurvey({ ...cleanedSurvey, languages: [] });
             setIsMultiLanguageActivated(false);
             setConfirmationModalInfo((prev) => ({ ...prev, open: false }));
           },
@@ -498,6 +531,9 @@ export const LanguageView = ({
         defaultLanguageName={
           defaultLanguage ? (getLanguageLabel(defaultLanguage.code, locale) ?? defaultLanguage.code) : ""
         }
+        workspaceId={workspaceId}
+        isAIAvailable={isAIAvailable}
+        aiUnavailableReason={aiUnavailableReason}
       />
     </div>
   );
