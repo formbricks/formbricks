@@ -1198,7 +1198,7 @@
         "organization_invite_link_ready": "您的組織邀請連結已準備就緒！",
         "organization_name": "組織名稱",
         "organization_name_description": "為您的組織提供描述性名稱。",
-        "organization_name_placeholder": "例如：飛天小女警",
+        "organization_name_placeholder": "例如：Acme Inc.",
         "organization_name_updated_successfully": "組織名稱已成功更新",
         "organization_settings": "組織設定",
         "please_add_a_logo": "請新增標誌",

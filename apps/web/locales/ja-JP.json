@@ -1198,7 +1198,7 @@
         "organization_invite_link_ready": "組織の招待リンクが準備できました！",
         "organization_name": "組織名",
         "organization_name_description": "組織に分かりやすい名前を付けます。",
-        "organization_name_placeholder": "例: パワーパフガールズ",
+        "organization_name_placeholder": "例: Acme Inc.",
         "organization_name_updated_successfully": "組織名を正常に更新しました",
         "organization_settings": "組織設定",
         "please_add_a_logo": "ロゴを追加してください",

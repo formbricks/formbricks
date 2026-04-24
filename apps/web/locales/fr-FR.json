@@ -1198,7 +1198,7 @@
         "organization_invite_link_ready": "Le lien d'invitation de votre organisation est prêt !",
         "organization_name": "Nom de l'organisation",
         "organization_name_description": "Attribuez un nom descriptif à votre organisation.",
-        "organization_name_placeholder": "e.g. Power Puff Girls",
+        "organization_name_placeholder": "e.g. Acme Inc.",
         "organization_name_updated_successfully": "Nom de l'organisation mis à jour avec succès",
         "organization_settings": "Paramètres de l'organisation",
         "please_add_a_logo": "Veuillez ajouter un logo",

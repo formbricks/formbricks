@@ -1198,7 +1198,7 @@
         "organization_invite_link_ready": "A szervezete meghívási hivatkozása készen áll!",
         "organization_name": "Szervezet neve",
         "organization_name_description": "Adjon a szervezetének egy leíró nevet.",
-        "organization_name_placeholder": "például Pindúr pandúrok",
+        "organization_name_placeholder": "például Acme Inc.",
         "organization_name_updated_successfully": "A szervezet neve sikeresen frissítve",
         "organization_settings": "Szervezet beállításai",
         "please_add_a_logo": "Adjon hozzá egy logót",
