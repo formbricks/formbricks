@@ -116,15 +116,23 @@ const ZFormbricksSurveyMapping = z.object({
   elementIds: z.array(z.string()).min(1),
 });
 
+// Temporary compatibility to support legacy client payloads using `formbricks`.
+const ZConnectorCreateInputWithLegacyType = ZConnectorCreateInput.extend({
+  type: z.enum(["formbricks_survey", "csv", "formbricks"]),
+});
+
 const ZCreateConnectorWithMappingsAction = z
   .object({
     workspaceId: ZId,
-    connectorInput: ZConnectorCreateInput,
+    connectorInput: ZConnectorCreateInputWithLegacyType,
     formbricksMappings: z.array(ZFormbricksSurveyMapping).optional(),
     fieldMappings: z.array(ZConnectorFieldMappingCreateInput).optional(),
   })
   .superRefine((data, ctx) => {
-    if (data.connectorInput.type === "formbricks_survey") {
+    const normalizedType =
+      data.connectorInput.type === "formbricks" ? "formbricks_survey" : data.connectorInput.type;
+
+    if (normalizedType === "formbricks_survey") {
       if (!data.formbricksMappings?.length) {
         ctx.addIssue({
           code: "custom",
@@ -132,7 +140,7 @@ const ZCreateConnectorWithMappingsAction = z
           message: "At least one survey mapping is required for Formbricks connectors",
         });
       }
-    } else if (data.connectorInput.type === "csv") {
+    } else if (normalizedType === "csv") {
       if (!data.fieldMappings?.length) {
         ctx.addIssue({
           code: "custom",
@@ -146,6 +154,14 @@ const ZCreateConnectorWithMappingsAction = z
 export const createConnectorWithMappingsAction = authenticatedActionClient
   .inputSchema(ZCreateConnectorWithMappingsAction)
   .action(async ({ ctx, parsedInput }): Promise<TConnectorWithMappings> => {
+    const connectorInput = ZConnectorCreateInput.parse({
+      ...parsedInput.connectorInput,
+      type:
+        parsedInput.connectorInput.type === "formbricks"
+          ? "formbricks_survey"
+          : parsedInput.connectorInput.type,
+    });
+
     const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -165,7 +181,7 @@ export const createConnectorWithMappingsAction = authenticatedActionClient
 
     // Verify FRD belongs to same org
     const frd = await prisma.feedbackRecordDirectory.findUnique({
-      where: { id: parsedInput.connectorInput.feedbackRecordDirectoryId },
+      where: { id: connectorInput.feedbackRecordDirectoryId },
       select: { organizationId: true },
     });
     if (frd?.organizationId !== organizationId) {
@@ -193,7 +209,7 @@ export const createConnectorWithMappingsAction = authenticatedActionClient
 
     return createConnectorWithMappings(
       parsedInput.workspaceId,
-      { ...parsedInput.connectorInput, createdBy: ctx.user.id },
+      { ...connectorInput, createdBy: ctx.user.id },
       mappingsInput
     );
   });
