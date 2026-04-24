@@ -145,7 +145,9 @@ describe("FeedbackRecords envoy auth route", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(response.headers.get("x-envoy-auth-headers-to-remove")).toBe("x-api-key,cookie");
+    expect(response.headers.get("x-envoy-auth-headers-to-remove")).toBe(
+      "x-api-key,authorization,cookie"
+    );
     expect(mockCheckAuthorizationUpdated).not.toHaveBeenCalled();
   });
 
@@ -253,5 +255,32 @@ describe("FeedbackRecords envoy auth route", () => {
     );
 
     expect(response.status).toBe(403);
+  });
+
+  test("returns 400 for lookalike route prefixes that are not actual feedback-records paths", async () => {
+    mockGetApiKeyFromHeaders.mockReturnValue("fbk_test");
+    mockAuthenticateApiKeyFromHeaders.mockResolvedValue({
+      type: "apiKey",
+      apiKeyId: "key_1",
+      organizationId: "org_1",
+      organizationAccess: { accessControl: { read: true, write: true } },
+      workspacePermissions: [],
+      feedbackRecordDirectoryPermissions: [],
+    });
+
+    const response = await GET(
+      createRequest(
+        `http://localhost/api/envoy-auth/feedback-records/api/v3/feedbackRecordsFoo?tenant_id=${feedbackRecordDirectoryId}`,
+        {
+          headers: {
+            method: "GET",
+            path: `/api/v3/feedbackRecordsFoo?tenant_id=${feedbackRecordDirectoryId}`,
+            authorization: "Bearer fbk_test",
+          },
+        }
+      )
+    );
+
+    expect(response.status).toBe(400);
   });
 });

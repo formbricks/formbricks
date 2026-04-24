@@ -22,7 +22,7 @@ const FEEDBACK_RECORDS_V3_PREFIX = "/api/v3/feedbackRecords";
 const FEEDBACK_RECORDS_SDK_PREFIX = "/v1/feedback-records";
 const FEEDBACK_RECORDS_AUTH_PREFIX = "/api/envoy-auth/feedback-records";
 const ZFeedbackRecordId = z.string().uuid();
-const HEADERS_TO_REMOVE_ON_ALLOW = "x-api-key,cookie";
+const HEADERS_TO_REMOVE_ON_ALLOW = "x-api-key,authorization,cookie";
 
 type TFeedbackRecordsGatewayPermission = "read" | "write";
 type TFeedbackRecordsGatewayOperation =
@@ -108,7 +108,7 @@ const parseOriginalRequestMetadata = (
 
     return {
       method: originalMethod,
-      url: new URL(originalPath, "http://feedback-records-gateway.local"),
+      url: new URL(originalPath, "https://feedback-records-gateway.local"),
     };
   } catch {
     return {
@@ -117,13 +117,27 @@ const parseOriginalRequestMetadata = (
   }
 };
 
-const normalizeFeedbackRecordsPath = (pathname: string): string | null => {
-  if (pathname.startsWith(FEEDBACK_RECORDS_V3_PREFIX)) {
-    return pathname.slice(FEEDBACK_RECORDS_V3_PREFIX.length) || "/";
+const stripFeedbackRecordsPrefix = (pathname: string, prefix: string): string | null => {
+  if (pathname === prefix) {
+    return "/";
   }
 
-  if (pathname.startsWith(FEEDBACK_RECORDS_SDK_PREFIX)) {
-    return pathname.slice(FEEDBACK_RECORDS_SDK_PREFIX.length) || "/";
+  if (!pathname.startsWith(`${prefix}/`)) {
+    return null;
+  }
+
+  return pathname.slice(prefix.length) || "/";
+};
+
+const normalizeFeedbackRecordsPath = (pathname: string): string | null => {
+  const v3Path = stripFeedbackRecordsPrefix(pathname, FEEDBACK_RECORDS_V3_PREFIX);
+  if (v3Path) {
+    return v3Path;
+  }
+
+  const sdkPath = stripFeedbackRecordsPrefix(pathname, FEEDBACK_RECORDS_SDK_PREFIX);
+  if (sdkPath) {
+    return sdkPath;
   }
 
   return null;
