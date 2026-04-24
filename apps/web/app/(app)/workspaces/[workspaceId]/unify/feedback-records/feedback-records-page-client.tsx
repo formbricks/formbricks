@@ -11,22 +11,32 @@ interface FeedbackRecordsPageClientProps {
   workspaceId: string;
   initialRecords: FeedbackRecordData[];
   frdMap: Record<string, string>;
+  csvSources: { id: string; name: string }[];
+  canWrite: boolean;
 }
 
 export function FeedbackRecordsPageClient({
   workspaceId,
   initialRecords,
   frdMap,
-}: FeedbackRecordsPageClientProps) {
+  csvSources,
+  canWrite,
+}: Readonly<FeedbackRecordsPageClientProps>) {
   const { t } = useTranslation();
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("workspace.unify.unify_feedback")}>
+      <PageHeader pageTitle={t("workspace.unify.feedback_records")}>
         <UnifyConfigNavigation workspaceId={workspaceId} activeId="feedback-records" />
       </PageHeader>
 
-      <FeedbackRecordsTable workspaceId={workspaceId} initialRecords={initialRecords} frdMap={frdMap} />
+      <FeedbackRecordsTable
+        workspaceId={workspaceId}
+        initialRecords={initialRecords}
+        frdMap={frdMap}
+        csvSources={csvSources}
+        canWrite={canWrite}
+      />
     </PageContentWrapper>
   );
 }

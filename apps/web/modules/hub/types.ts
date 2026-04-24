@@ -4,3 +4,4 @@ export type FeedbackRecordCreateParams = FormbricksHub.FeedbackRecordCreateParam
 export type FeedbackRecordData = FormbricksHub.FeedbackRecordData;
 export type FeedbackRecordListParams = FormbricksHub.FeedbackRecordListParams;
 export type FeedbackRecordListResponse = FormbricksHub.FeedbackRecordListResponse;
+export type FeedbackRecordUpdateParams = FormbricksHub.FeedbackRecordUpdateParams;
