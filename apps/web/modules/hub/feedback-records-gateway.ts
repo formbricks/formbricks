@@ -382,6 +382,9 @@ const authorizeGatewayRequest = async (
   }
 
   try {
+    const minPermission: "read" | "readWrite" =
+      requiredPermission === "read" ? "read" : "readWrite";
+
     await checkAuthorizationUpdated({
       userId: principal.userId,
       organizationId: feedbackRecordDirectory.organizationId,
@@ -393,7 +396,7 @@ const authorizeGatewayRequest = async (
         ...feedbackRecordDirectory.workspaceIds.map((workspaceId) => ({
           type: "workspaceTeam" as const,
           workspaceId,
-          minPermission: requiredPermission === "read" ? "read" : "readWrite",
+          minPermission,
         })),
       ],
     });

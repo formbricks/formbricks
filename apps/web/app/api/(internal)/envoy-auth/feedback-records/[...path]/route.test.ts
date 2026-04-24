@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { GET, POST } from "./route";
+import { DELETE, GET, PATCH, POST } from "./route";
 
 const {
   mockAuthenticateApiKeyFromHeaders,
@@ -176,6 +176,18 @@ describe("FeedbackRecords envoy auth route", () => {
     expect(response.status).toBe(400);
   });
 
+  test("returns 400 when the original request method header is missing", async () => {
+    const response = await GET(
+      createRequest("http://localhost/api/envoy-auth/feedback-records/api/v3/feedbackRecords", {
+        headers: {
+          path: "/api/v3/feedbackRecords",
+        },
+      })
+    );
+
+    expect(response.status).toBe(400);
+  });
+
   test("returns 403 when record tenant lookup is not found", async () => {
     mockGetApiKeyFromHeaders.mockReturnValue("fbk_test");
     mockAuthenticateApiKeyFromHeaders.mockResolvedValue({
@@ -208,6 +220,38 @@ describe("FeedbackRecords envoy auth route", () => {
     expect(response.status).toBe(403);
   });
 
+  test("returns 503 when record tenant lookup fails upstream", async () => {
+    mockGetApiKeyFromHeaders.mockReturnValue("fbk_test");
+    mockAuthenticateApiKeyFromHeaders.mockResolvedValue({
+      type: "apiKey",
+      apiKeyId: "key_1",
+      organizationId: "org_1",
+      organizationAccess: { accessControl: { read: true, write: true } },
+      workspacePermissions: [],
+      feedbackRecordDirectoryPermissions: [],
+    });
+    mockGetFeedbackRecordTenant.mockResolvedValue({
+      data: null,
+      error: {
+        status: 503,
+        message: "Upstream failed",
+        detail: "Upstream failed",
+      },
+    });
+
+    const response = await GET(
+      createRequest(`http://localhost/api/envoy-auth/feedback-records/v1/feedback-records/${feedbackRecordId}`, {
+        headers: {
+          method: "GET",
+          path: `/v1/feedback-records/${feedbackRecordId}`,
+          "x-api-key": "fbk_test",
+        },
+      })
+    );
+
+    expect(response.status).toBe(503);
+  });
+
   test("returns 401 for invalid explicit JWT even when a session cookie exists", async () => {
     mockGetFeedbackRecordsGatewayJwtFromHeaders.mockReturnValue("header.payload.signature");
     mockGetProxySession.mockResolvedValue({
@@ -230,6 +274,103 @@ describe("FeedbackRecords envoy auth route", () => {
 
     expect(response.status).toBe(401);
     expect(mockGetProxySession).not.toHaveBeenCalled();
+  });
+
+  test("allows PATCH requests with a valid gateway JWT", async () => {
+    mockGetFeedbackRecordsGatewayJwtFromHeaders.mockReturnValue("header.payload.signature");
+    mockVerifyFeedbackRecordsGatewayToken.mockReturnValue({ userId: "user_1" });
+
+    const response = await PATCH(
+      createRequest(`http://localhost/api/envoy-auth/feedback-records/v1/feedback-records/${feedbackRecordId}`, {
+        method: "PATCH",
+        headers: {
+          method: "PATCH",
+          path: `/v1/feedback-records/${feedbackRecordId}`,
+          authorization: "Bearer header.payload.signature",
+        },
+      })
+    );
+
+    expect(response.status).toBe(200);
+    expect(mockCheckAuthorizationUpdated).toHaveBeenCalledWith({
+      userId: "user_1",
+      organizationId: "org_1",
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "workspaceTeam",
+          workspaceId: "workspace_1",
+          minPermission: "readWrite",
+        },
+      ],
+    });
+  });
+
+  test("allows session-authenticated list requests when no explicit credentials are present", async () => {
+    mockGetProxySession.mockResolvedValue({
+      userId: "user_2",
+    });
+
+    const response = await GET(
+      createRequest(
+        `http://localhost/api/envoy-auth/feedback-records/v1/feedback-records?tenant_id=${feedbackRecordDirectoryId}`,
+        {
+          headers: {
+            method: "GET",
+            path: `/v1/feedback-records?tenant_id=${feedbackRecordDirectoryId}`,
+            cookie: "next-auth.session-token=valid",
+          },
+        }
+      )
+    );
+
+    expect(response.status).toBe(200);
+    expect(mockCheckAuthorizationUpdated).toHaveBeenCalledWith({
+      userId: "user_2",
+      organizationId: "org_1",
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "workspaceTeam",
+          workspaceId: "workspace_1",
+          minPermission: "read",
+        },
+      ],
+    });
+  });
+
+  test("returns 403 when an API key lacks directory permission", async () => {
+    mockGetApiKeyFromHeaders.mockReturnValue("fbk_test");
+    mockAuthenticateApiKeyFromHeaders.mockResolvedValue({
+      type: "apiKey",
+      apiKeyId: "key_1",
+      organizationId: "org_1",
+      organizationAccess: { accessControl: { read: true, write: true } },
+      workspacePermissions: [],
+      feedbackRecordDirectoryPermissions: [],
+    });
+
+    const response = await DELETE(
+      createRequest(
+        `http://localhost/api/envoy-auth/feedback-records/v1/feedback-records?tenant_id=${feedbackRecordDirectoryId}`,
+        {
+          method: "DELETE",
+          headers: {
+            method: "DELETE",
+            path: `/v1/feedback-records?tenant_id=${feedbackRecordDirectoryId}`,
+            "x-api-key": "fbk_test",
+          },
+        }
+      )
+    );
+
+    expect(response.status).toBe(403);
   });
 
   test("returns 403 for archived directories", async () => {

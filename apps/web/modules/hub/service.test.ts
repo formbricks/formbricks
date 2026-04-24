@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { createCacheKey } from "@formbricks/cache";
 import type { FeedbackRecordCreateParams } from "./types";
 
 vi.mock("@formbricks/logger", () => ({
@@ -197,6 +198,22 @@ describe("hub service", () => {
   });
 
   describe("getFeedbackRecordTenant", () => {
+    test("returns config error when getHubClient returns null", async () => {
+      vi.mocked(getHubClient).mockReturnValue(null);
+
+      const result = await getFeedbackRecordTenant("0194d8a0-3d55-7ff4-9f62-8d02c3fbcfe8");
+
+      expect(result).toEqual({
+        data: null,
+        error: {
+          status: 0,
+          message: "HUB_API_KEY is not set; Hub integration is disabled.",
+          detail: "HUB_API_KEY is not set; Hub integration is disabled.",
+        },
+      });
+      expect(vi.mocked(cache.withCache)).not.toHaveBeenCalled();
+    });
+
     test("returns cached tenant data when retrieve succeeds", async () => {
       const retrieve = vi.fn().mockResolvedValue({
         id: "0194d8a0-3d55-7ff4-9f62-8d02c3fbcfe8",
@@ -213,6 +230,11 @@ describe("hub service", () => {
         error: null,
       });
       expect(vi.mocked(cache.withCache)).toHaveBeenCalledOnce();
+      expect(vi.mocked(cache.withCache)).toHaveBeenCalledWith(
+        expect.any(Function),
+        createCacheKey.custom("hub", "0194d8a0-3d55-7ff4-9f62-8d02c3fbcfe8", "feedback_record_tenant"),
+        60_000
+      );
       expect(retrieve).toHaveBeenCalledWith("0194d8a0-3d55-7ff4-9f62-8d02c3fbcfe8");
     });
 

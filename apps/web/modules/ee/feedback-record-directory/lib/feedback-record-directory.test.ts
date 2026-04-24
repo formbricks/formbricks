@@ -6,6 +6,7 @@ import {
   createFeedbackRecordDirectory,
   getFeedbackRecordDirectories,
   getFeedbackRecordDirectoriesByWorkspaceId,
+  getFeedbackRecordDirectoryAuthContext,
   getFeedbackRecordDirectoryDetails,
   getOrganizationIdFromDirectoryId,
   updateFeedbackRecordDirectory,
@@ -184,6 +185,54 @@ describe("FeedbackRecordDirectory Service", () => {
       vi.mocked(prisma.feedbackRecordDirectory.findUnique).mockRejectedValueOnce(prismaError);
 
       await expect(getFeedbackRecordDirectoryDetails(mockDirectoryId)).rejects.toThrow(DatabaseError);
+    });
+  });
+
+  describe("getFeedbackRecordDirectoryAuthContext", () => {
+    test("returns slim auth context with workspace ids", async () => {
+      vi.mocked(prisma.feedbackRecordDirectory.findUnique).mockResolvedValueOnce({
+        organizationId: mockOrganizationId,
+        isArchived: false,
+        workspaces: [{ workspaceId: mockWorkspaceId1 }, { workspaceId: mockWorkspaceId2 }],
+      } as any);
+
+      const result = await getFeedbackRecordDirectoryAuthContext(mockDirectoryId);
+
+      expect(result).toEqual({
+        organizationId: mockOrganizationId,
+        workspaceIds: [mockWorkspaceId1, mockWorkspaceId2],
+        isArchived: false,
+      });
+      expect(prisma.feedbackRecordDirectory.findUnique).toHaveBeenCalledWith({
+        where: { id: mockDirectoryId },
+        select: {
+          organizationId: true,
+          isArchived: true,
+          workspaces: {
+            select: {
+              workspaceId: true,
+            },
+          },
+        },
+      });
+    });
+
+    test("returns null when auth context directory is missing", async () => {
+      vi.mocked(prisma.feedbackRecordDirectory.findUnique).mockResolvedValueOnce(null);
+
+      const result = await getFeedbackRecordDirectoryAuthContext(mockDirectoryId);
+
+      expect(result).toBeNull();
+    });
+
+    test("throws DatabaseError when auth context lookup hits Prisma error", async () => {
+      const prismaError = new Prisma.PrismaClientKnownRequestError("Mock error", {
+        code: "P2010",
+        clientVersion: "0.0.1",
+      });
+      vi.mocked(prisma.feedbackRecordDirectory.findUnique).mockRejectedValueOnce(prismaError);
+
+      await expect(getFeedbackRecordDirectoryAuthContext(mockDirectoryId)).rejects.toThrow(DatabaseError);
     });
   });
 
