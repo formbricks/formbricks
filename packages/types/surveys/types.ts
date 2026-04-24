@@ -113,21 +113,21 @@ export const ZSurveyQuestionId = z.string().superRefine((id, ctx) => {
   if (FORBIDDEN_IDS.includes(id)) {
     ctx.addIssue({
       code: "custom",
-      message: `Question id is not allowed`,
+      message: "environments.surveys.edit.survey_validation.question_id_not_allowed",
     });
   }
 
   if (id.includes(" ")) {
     ctx.addIssue({
       code: "custom",
-      message: "Question id not allowed, avoid using spaces.",
+      message: "environments.surveys.edit.survey_validation.question_id_no_spaces",
     });
   }
 
   if (!/^[a-zA-Z0-9_-]+$/.test(id)) {
     ctx.addIssue({
       code: "custom",
-      message: "Question id not allowed, use only alphanumeric characters, hyphens, or underscores.",
+      message: "environments.surveys.edit.survey_validation.question_id_alphanumeric_only",
     });
   }
 });
@@ -149,7 +149,7 @@ export const ZSurveyWelcomeCard = z
     videoUrl: ZStorageUrl.optional(),
   })
   .refine((schema) => !(schema.enabled && !schema.headline), {
-    error: "Welcome card must have a headline",
+    error: "environments.surveys.edit.survey_validation.welcome_card_must_have_headline",
   });
 
 export type TSurveyWelcomeCard = z.infer<typeof ZSurveyWelcomeCard>;
@@ -162,22 +162,21 @@ export const ZSurveyHiddenFields = z.object({
         if (FORBIDDEN_IDS.includes(field)) {
           ctx.addIssue({
             code: "custom",
-            message: `Hidden field id is not allowed`,
+            message: "environments.surveys.edit.survey_validation.hidden_field_id_not_allowed",
           });
         }
 
         if (field.includes(" ")) {
           ctx.addIssue({
             code: "custom",
-            message: "Hidden field id not allowed, avoid using spaces.",
+            message: "environments.surveys.edit.survey_validation.hidden_field_id_no_spaces",
           });
         }
 
         if (!/^[a-zA-Z0-9_-]+$/.test(field)) {
           ctx.addIssue({
             code: "custom",
-            message:
-              "Hidden field id not allowed, use only alphanumeric characters, hyphens, or underscores.",
+            message: "environments.surveys.edit.survey_validation.hidden_field_id_alphanumeric_only",
           });
         }
       })
@@ -207,7 +206,7 @@ export const ZSurveyVariable = z
     if (!/^[a-z0-9_]+$/.test(data.name)) {
       ctx.addIssue({
         code: "custom",
-        message: "Variable name can only contain lowercase letters, numbers, and underscores",
+        message: "environments.surveys.edit.survey_validation.variable_name_invalid_chars",
         path: ["variables"],
       });
     }
@@ -219,7 +218,7 @@ export type TSurveyVariables = z.infer<typeof ZSurveyVariables>;
 
 export const ZSurveySlug = z
   .string()
-  .regex(/^[a-z0-9-]+$/, "Slug can only contain lowercase letters, numbers, and hyphens");
+  .regex(/^[a-z0-9-]+$/, "environments.surveys.edit.survey_validation.slug_invalid_chars");
 
 export type TSurveySlug = z.infer<typeof ZSurveySlug>;
 
@@ -325,9 +324,9 @@ export const ZActionCalculateText = ZActionCalculateBase.extend({
       type: z.literal("static"),
       value: z
         .string({
-          error: "Conditional Logic: Value must be a string for text variable",
+          error: "environments.surveys.edit.survey_validation.logic_value_must_be_string",
         })
-        .min(1, "Conditional Logic: Please enter a value in logic field"),
+        .min(1, "environments.surveys.edit.survey_validation.logic_enter_value"),
     }),
     ZDynamicLogicFieldValueDeprecated, // Accept both "question" and "element" for backward compatibility
   ]),
@@ -339,7 +338,7 @@ export const ZActionCalculateNumber = ZActionCalculateBase.extend({
     z.object({
       type: z.literal("static"),
       value: z.number({
-        error: "Conditional Logic: Value must be a number for number variable",
+        error: "environments.surveys.edit.survey_validation.logic_value_must_be_number",
       }),
     }),
     ZDynamicLogicFieldValueDeprecated, // Accept both "question" and "element" for backward compatibility
@@ -348,7 +347,7 @@ export const ZActionCalculateNumber = ZActionCalculateBase.extend({
   if (val.operator === "divide" && val.value.type === "static" && val.value.value === 0) {
     ctx.addIssue({
       code: "custom",
-      message: "Conditional Logic: Cannot divide by zero",
+      message: "environments.surveys.edit.survey_validation.logic_cannot_divide_by_zero",
       path: ["value", "value"],
     });
   }
@@ -360,7 +359,7 @@ export type TActionCalculate = z.infer<typeof ZActionCalculate>;
 
 const ZActionRequireAnswer = ZActionBase.extend({
   objective: z.literal("requireAnswer"),
-  target: z.string().min(1, "Conditional Logic: Target question id cannot be empty"),
+  target: z.string().min(1, "environments.surveys.edit.survey_validation.logic_target_question_empty"),
 });
 export type TActionRequireAnswer = z.infer<typeof ZActionRequireAnswer>;
 
@@ -369,7 +368,7 @@ export type TActionRequireAnswer = z.infer<typeof ZActionRequireAnswer>;
  */
 const ZActionJumpToQuestion = ZActionBase.extend({
   objective: z.literal("jumpToQuestion"),
-  target: z.string().min(1, "Conditional Logic: Target question id cannot be empty"),
+  target: z.string().min(1, "environments.surveys.edit.survey_validation.logic_target_question_empty"),
 });
 
 /**
@@ -444,7 +443,7 @@ export const ZSurveyOpenTextQuestion = ZSurveyQuestionBase.extend({
   if (data.charLimit.enabled && data.charLimit.min === undefined && data.charLimit.max === undefined) {
     ctx.addIssue({
       code: "custom",
-      message: "Enter the values for either minimum or maximum field",
+      message: "environments.surveys.edit.survey_validation.char_limit_enter_min_or_max",
     });
   }
 
@@ -454,7 +453,7 @@ export const ZSurveyOpenTextQuestion = ZSurveyQuestionBase.extend({
   ) {
     ctx.addIssue({
       code: "custom",
-      message: "The character limit values should be positive",
+      message: "environments.surveys.edit.survey_validation.char_limit_must_be_positive",
     });
   }
 
@@ -465,7 +464,7 @@ export const ZSurveyOpenTextQuestion = ZSurveyQuestionBase.extend({
   ) {
     ctx.addIssue({
       code: "custom",
-      message: "Minimum value cannot be greater than the maximum value",
+      message: "environments.surveys.edit.survey_validation.min_greater_than_max",
     });
   }
 });
@@ -507,7 +506,7 @@ export const ZSurveyMultipleChoiceQuestion = ZSurveyQuestionBase.extend({
     z.literal(TSurveyQuestionTypeEnum.MultipleChoiceMulti),
   ]),
   choices: z.array(ZSurveyQuestionChoice).min(2, {
-    error: "Multiple Choice Question must have at least two choices",
+    error: "environments.surveys.edit.survey_validation.multiple_choice_min_two_choices",
   }),
   shuffleOption: ZShuffleOption.optional(),
   otherOptionPlaceholder: ZI18nString.optional(),
@@ -586,7 +585,7 @@ export const ZSurveyPictureSelectionQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.PictureSelection),
   allowMulti: z.boolean().optional().prefault(false),
   choices: z.array(ZSurveyPictureChoice).min(2, {
-    error: "Picture Selection question must have atleast 2 choices",
+    error: "environments.surveys.edit.survey_validation.picture_selection_min_two_choices",
   }),
 });
 
@@ -616,7 +615,7 @@ export type TSurveyFileUploadQuestion = z.infer<typeof ZSurveyFileUploadQuestion
 export const ZSurveyCalQuestion = ZSurveyQuestionBase.extend({
   type: z.literal(TSurveyQuestionTypeEnum.Cal),
   calUserName: z.string().min(1, {
-    error: "Cal user name is required",
+    error: "environments.surveys.edit.survey_validation.cal_username_required",
   }),
   calHost: z.string().optional(),
 });
@@ -699,10 +698,10 @@ export const ZSurveyRankingQuestion = ZSurveyQuestionBase.extend({
   choices: z
     .array(ZSurveyQuestionChoice)
     .min(2, {
-      error: "Ranking Question must have at least two options",
+      error: "environments.surveys.edit.survey_validation.ranking_min_two_options",
     })
     .max(25, {
-      error: "Ranking Question can have at most 25 options",
+      error: "environments.surveys.edit.survey_validation.ranking_max_25_options",
     }),
   otherOptionPlaceholder: ZI18nString.optional(),
   shuffleOption: ZShuffleOption.optional(),
@@ -841,7 +840,7 @@ export const ZSurveyBase = z.object({
     if (uniqueQuestionIds.size !== questionIds.length) {
       ctx.addIssue({
         code: "custom",
-        message: "Question IDs must be unique",
+        message: "environments.surveys.edit.survey_validation.question_ids_must_be_unique",
         path: [questionIds.findIndex((id, index) => questionIds.indexOf(id) !== index), "id"],
       });
     }
@@ -852,7 +851,7 @@ export const ZSurveyBase = z.object({
     if (uniqueBlockIds.size !== blockIds.length) {
       ctx.addIssue({
         code: "custom",
-        message: "Block IDs must be unique",
+        message: "environments.surveys.edit.survey_validation.block_ids_must_be_unique",
         path: [blockIds.findIndex((id, index) => blockIds.indexOf(id) !== index), "id"],
       });
     }
@@ -863,7 +862,7 @@ export const ZSurveyBase = z.object({
     if (uniqueEndingIds.size !== endingIds.length) {
       ctx.addIssue({
         code: "custom",
-        message: "Ending IDs must be unique",
+        message: "environments.surveys.edit.survey_validation.ending_ids_must_be_unique",
         path: [endingIds.findIndex((id, index) => endingIds.indexOf(id) !== index), "id"],
       });
     }
@@ -876,7 +875,7 @@ export const ZSurveyBase = z.object({
     if (uniqueVariableIds.size !== variableIds.length) {
       ctx.addIssue({
         code: "custom",
-        message: "Variable IDs must be unique",
+        message: "environments.surveys.edit.survey_validation.variable_ids_must_be_unique",
         path: ["variables"],
       });
     }
@@ -887,7 +886,7 @@ export const ZSurveyBase = z.object({
     if (uniqueVariableNames.size !== variableNames.length) {
       ctx.addIssue({
         code: "custom",
-        message: "Variable names must be unique",
+        message: "environments.surveys.edit.survey_validation.variable_names_must_be_unique",
         path: ["variables"],
       });
     }
@@ -901,7 +900,7 @@ export const ZSurveyBase = z.object({
   autoComplete: z
     .number()
     .min(1, {
-      error: "Response limit must be greater than 0",
+      error: "environments.surveys.edit.survey_validation.response_limit_greater_than_zero",
     })
     .nullable(),
   projectOverwrites: ZSurveyProjectOverwrites.nullable(),
@@ -919,7 +918,7 @@ export const ZSurveyBase = z.object({
   pin: z
     .string()
     .length(4, {
-      error: "PIN must be a four digit number",
+      error: "environments.surveys.edit.survey_validation.pin_must_be_four_digits",
     })
     .nullish(),
   displayPercentage: z.number().min(0.01).max(100).nullable(),
@@ -940,7 +939,7 @@ export const surveyRefinement = (survey: z.infer<typeof ZSurveyBase>, ctx: z.Ref
   if (!hasQuestions && !hasBlocks) {
     ctx.addIssue({
       code: "custom",
-      message: "Survey must have either questions or blocks with elements",
+      message: "environments.surveys.edit.survey_validation.survey_must_have_questions_or_blocks",
       path: ["questions"],
     });
   }
@@ -948,7 +947,7 @@ export const surveyRefinement = (survey: z.infer<typeof ZSurveyBase>, ctx: z.Ref
   if (hasQuestions && hasBlocks) {
     ctx.addIssue({
       code: "custom",
-      message: "Survey cannot have both questions and blocks. Use one model.",
+      message: "environments.surveys.edit.survey_validation.survey_cannot_have_both_questions_and_blocks",
       path: ["blocks"],
     });
   }
@@ -1096,9 +1095,11 @@ export const surveyRefinement = (survey: z.infer<typeof ZSurveyBase>, ctx: z.Ref
 
           ctx.addIssue({
             code: "custom",
-            message: `Question ${String(questionIndex + 1)} has duplicate choice labels ${isDefaultOnly ? "" : "for the following languages:"}`,
+            message: `environments.surveys.edit.survey_validation.question_duplicate_choice_labels${isDefaultOnly ? "" : "-fLang-"}`,
             path: ["questions", questionIndex, "choices"],
-            params: isDefaultOnly ? undefined : { invalidLanguageCodes },
+            params: isDefaultOnly
+              ? { questionIndex: questionIndex + 1 }
+              : { questionIndex: questionIndex + 1, invalidLanguageCodes },
           });
         }
       }
@@ -1128,8 +1129,9 @@ export const surveyRefinement = (survey: z.infer<typeof ZSurveyBase>, ctx: z.Ref
           if (!question.buttonUrl || question.buttonUrl.trim() === "") {
             ctx.addIssue({
               code: "custom",
-              message: `Question ${String(questionIndex + 1)}: Button URL is required when external button is enabled`,
+              message: `environments.surveys.edit.survey_validation.question_button_url_required`,
               path: ["questions", questionIndex, "buttonUrl"],
+              params: { questionIndex: questionIndex + 1 },
             });
           } else {
             const parsedButtonUrl = getZSafeUrl.safeParse(question.buttonUrl);
@@ -1137,8 +1139,9 @@ export const surveyRefinement = (survey: z.infer<typeof ZSurveyBase>, ctx: z.Ref
               const errorMessage = parsedButtonUrl.error.issues[0].message;
               ctx.addIssue({
                 code: "custom",
-                message: `Question ${String(questionIndex + 1)}: ${errorMessage}`,
+                message: `environments.surveys.edit.survey_validation.question_button_url_invalid`,
                 path: ["questions", questionIndex, "buttonUrl"],
+                params: { questionIndex: questionIndex + 1, errorMessage },
               });
             }
           }
@@ -1192,9 +1195,11 @@ export const surveyRefinement = (survey: z.infer<typeof ZSurveyBase>, ctx: z.Ref
 
           ctx.addIssue({
             code: "custom",
-            message: `Question ${String(questionIndex + 1)} has duplicate row labels ${isDefaultOnly ? "" : "for the following languages:"}`,
+            message: `environments.surveys.edit.survey_validation.question_duplicate_row_labels${isDefaultOnly ? "" : "-fLang-"}`,
             path: ["questions", questionIndex, "rows"],
-            params: isDefaultOnly ? undefined : { invalidLanguageCodes },
+            params: isDefaultOnly
+              ? { questionIndex: questionIndex + 1 }
+              : { questionIndex: questionIndex + 1, invalidLanguageCodes },
           });
         }
 
@@ -1209,9 +1214,11 @@ export const surveyRefinement = (survey: z.infer<typeof ZSurveyBase>, ctx: z.Ref
 
           ctx.addIssue({
             code: "custom",
-            message: `Question ${String(questionIndex + 1)} has duplicate column labels ${isDefaultOnly ? "" : "for the following languages:"}`,
+            message: `environments.surveys.edit.survey_validation.question_duplicate_column_labels${isDefaultOnly ? "" : "-fLang-"}`,
             path: ["questions", questionIndex, "columns"],
-            params: isDefaultOnly ? undefined : { invalidLanguageCodes },
+            params: isDefaultOnly
+              ? { questionIndex: questionIndex + 1 }
+              : { questionIndex: questionIndex + 1, invalidLanguageCodes },
           });
         }
       }
@@ -1221,8 +1228,9 @@ export const surveyRefinement = (survey: z.infer<typeof ZSurveyBase>, ctx: z.Ref
         if (question.allowedFileExtensions && question.allowedFileExtensions.length === 0) {
           ctx.addIssue({
             code: "custom",
-            message: `Question ${String(questionIndex + 1)} must have atleast one allowed file extension`,
+            message: `environments.surveys.edit.survey_validation.question_file_extension_required`,
             path: ["questions", questionIndex, "allowedFileExtensions"],
+            params: { questionIndex: questionIndex + 1 },
           });
         }
       }
@@ -1233,8 +1241,9 @@ export const surveyRefinement = (survey: z.infer<typeof ZSurveyBase>, ctx: z.Ref
           if (!hostnameRegex.test(question.calHost)) {
             ctx.addIssue({
               code: "custom",
-              message: `Question ${String(questionIndex + 1)} must have a valid host name`,
+              message: `environments.surveys.edit.survey_validation.question_invalid_hostname`,
               path: ["questions", questionIndex, "calHost"],
+              params: { questionIndex: questionIndex + 1 },
             });
           }
         }
@@ -1253,7 +1262,7 @@ export const surveyRefinement = (survey: z.infer<typeof ZSurveyBase>, ctx: z.Ref
         if (fields.every((field) => !field.show)) {
           ctx.addIssue({
             code: "custom",
-            message: "At least one field must be shown in the Contact Info question",
+            message: "environments.surveys.edit.survey_validation.contact_info_at_least_one_field",
             path: ["questions", questionIndex],
           });
         }
@@ -1287,7 +1296,7 @@ export const surveyRefinement = (survey: z.infer<typeof ZSurveyBase>, ctx: z.Ref
         if (fields.every((field) => !field.show)) {
           ctx.addIssue({
             code: "custom",
-            message: "At least one field must be shown in the Address question",
+            message: "environments.surveys.edit.survey_validation.address_at_least_one_field",
             path: ["questions", questionIndex],
           });
         }
@@ -1322,8 +1331,9 @@ export const surveyRefinement = (survey: z.infer<typeof ZSurveyBase>, ctx: z.Ref
         const questionIndex = questions.findIndex((q) => q.id === questionId);
         ctx.addIssue({
           code: "custom",
-          message: `Conditional Logic: Cyclic logic detected 🔃 Please check the logic of question ${String(questionIndex + 1)}.`,
+          message: `environments.surveys.edit.survey_validation.logic_cyclic_detected`,
           path: ["questions", questionIndex, "logic"],
+          params: { questionIndex: questionIndex + 1 },
         });
       });
     }
@@ -1337,7 +1347,7 @@ export const surveyRefinement = (survey: z.infer<typeof ZSurveyBase>, ctx: z.Ref
     if (uniqueBlockIds.size !== blockIds.length) {
       ctx.addIssue({
         code: "custom",
-        message: "Block IDs must be unique",
+        message: "environments.surveys.edit.survey_validation.block_ids_must_be_unique",
         path: ["blocks", blockIds.findIndex((id, index) => blockIds.indexOf(id) !== index), "id"],
       });
     }
@@ -1349,8 +1359,9 @@ export const surveyRefinement = (survey: z.infer<typeof ZSurveyBase>, ctx: z.Ref
         if (allElements.has(element.id)) {
           ctx.addIssue({
             code: "custom",
-            message: `Element ID "${element.id}" is used in multiple blocks. Element IDs must be unique across all blocks.`,
+            message: `environments.surveys.edit.survey_validation.element_id_used_in_multiple_blocks`,
             path: ["blocks", blockIdx, "elements", elemIdx, "id"],
+            params: { elementId: element.id },
           });
         }
         allElements.set(element.id, { block: blockIdx, element: elemIdx, data: element });
@@ -1446,9 +1457,11 @@ export const surveyRefinement = (survey: z.infer<typeof ZSurveyBase>, ctx: z.Ref
 
             ctx.addIssue({
               code: "custom",
-              message: `Element ${String(elementIndex + 1)} in block ${String(blockIndex + 1)} has duplicate choice labels ${isDefaultOnly ? "" : "for the following languages:"}`,
+              message: `environments.surveys.edit.survey_validation.element_duplicate_choice_labels${isDefaultOnly ? "" : "-fLang-"}`,
               path: ["blocks", blockIndex, "elements", elementIndex, "choices"],
-              params: isDefaultOnly ? undefined : { invalidLanguageCodes },
+              params: isDefaultOnly
+                ? { elementIndex: elementIndex + 1, blockIndex: blockIndex + 1 }
+                : { elementIndex: elementIndex + 1, blockIndex: blockIndex + 1, invalidLanguageCodes },
             });
           }
         }
@@ -1492,8 +1505,9 @@ export const surveyRefinement = (survey: z.infer<typeof ZSurveyBase>, ctx: z.Ref
             if (!element.buttonUrl || element.buttonUrl.trim() === "") {
               ctx.addIssue({
                 code: "custom",
-                message: `Element ${String(elementIndex + 1)} in block ${String(blockIndex + 1)}: Button URL is required when external button is enabled`,
+                message: `environments.surveys.edit.survey_validation.element_button_url_required`,
                 path: ["blocks", blockIndex, "elements", elementIndex, "buttonUrl"],
+                params: { elementIndex: elementIndex + 1, blockIndex: blockIndex + 1 },
               });
             } else {
               const parsedButtonUrl = getZSafeUrl.safeParse(element.buttonUrl);
@@ -1501,8 +1515,9 @@ export const surveyRefinement = (survey: z.infer<typeof ZSurveyBase>, ctx: z.Ref
                 const errorMessage = parsedButtonUrl.error.issues[0].message;
                 ctx.addIssue({
                   code: "custom",
-                  message: `Element ${String(elementIndex + 1)} in block ${String(blockIndex + 1)}: ${errorMessage}`,
+                  message: `environments.surveys.edit.survey_validation.element_button_url_invalid`,
                   path: ["blocks", blockIndex, "elements", elementIndex, "buttonUrl"],
+                  params: { elementIndex: elementIndex + 1, blockIndex: blockIndex + 1, errorMessage },
                 });
               }
             }
@@ -1564,9 +1579,11 @@ export const surveyRefinement = (survey: z.infer<typeof ZSurveyBase>, ctx: z.Ref
 
             ctx.addIssue({
               code: "custom",
-              message: `Question ${String(elementIndex + 1)} in block ${String(blockIndex + 1)} has duplicate row labels ${isDefaultOnly ? "" : "for the following languages:"}`,
+              message: `environments.surveys.edit.survey_validation.element_duplicate_row_labels${isDefaultOnly ? "" : "-fLang-"}`,
               path: ["blocks", blockIndex, "elements", elementIndex, "rows"],
-              params: isDefaultOnly ? undefined : { invalidLanguageCodes },
+              params: isDefaultOnly
+                ? { elementIndex: elementIndex + 1, blockIndex: blockIndex + 1 }
+                : { elementIndex: elementIndex + 1, blockIndex: blockIndex + 1, invalidLanguageCodes },
             });
           }
 
@@ -1581,9 +1598,11 @@ export const surveyRefinement = (survey: z.infer<typeof ZSurveyBase>, ctx: z.Ref
 
             ctx.addIssue({
               code: "custom",
-              message: `Question ${String(elementIndex + 1)} in block ${String(blockIndex + 1)} has duplicate column labels ${isDefaultOnly ? "" : "for the following languages:"}`,
+              message: `environments.surveys.edit.survey_validation.element_duplicate_column_labels${isDefaultOnly ? "" : "-fLang-"}`,
               path: ["blocks", blockIndex, "elements", elementIndex, "columns"],
-              params: isDefaultOnly ? undefined : { invalidLanguageCodes },
+              params: isDefaultOnly
+                ? { elementIndex: elementIndex + 1, blockIndex: blockIndex + 1 }
+                : { elementIndex: elementIndex + 1, blockIndex: blockIndex + 1, invalidLanguageCodes },
             });
           }
         }
@@ -1592,8 +1611,9 @@ export const surveyRefinement = (survey: z.infer<typeof ZSurveyBase>, ctx: z.Ref
           if (element.allowedFileExtensions && element.allowedFileExtensions.length === 0) {
             ctx.addIssue({
               code: "custom",
-              message: `Question ${String(elementIndex + 1)} in block ${String(blockIndex + 1)} must have atleast one allowed file extension`,
+              message: `environments.surveys.edit.survey_validation.element_file_extension_required`,
               path: ["blocks", blockIndex, "elements", elementIndex, "allowedFileExtensions"],
+              params: { elementIndex: elementIndex + 1, blockIndex: blockIndex + 1 },
             });
           }
         }
@@ -1604,8 +1624,9 @@ export const surveyRefinement = (survey: z.infer<typeof ZSurveyBase>, ctx: z.Ref
             if (!hostnameRegex.test(element.calHost)) {
               ctx.addIssue({
                 code: "custom",
-                message: `Question ${String(elementIndex + 1)} in block ${String(blockIndex + 1)} must have a valid host name`,
+                message: `environments.surveys.edit.survey_validation.element_invalid_hostname`,
                 path: ["blocks", blockIndex, "elements", elementIndex, "calHost"],
+                params: { elementIndex: elementIndex + 1, blockIndex: blockIndex + 1 },
               });
             }
           }
@@ -1624,8 +1645,9 @@ export const surveyRefinement = (survey: z.infer<typeof ZSurveyBase>, ctx: z.Ref
           if (fields.every((field) => !field.show)) {
             ctx.addIssue({
               code: "custom",
-              message: `At least one field must be shown in the Contact Info question ${String(elementIndex + 1)} in block ${String(blockIndex + 1)}`,
+              message: `environments.surveys.edit.survey_validation.element_contact_info_at_least_one_field`,
               path: ["blocks", blockIndex, "elements", elementIndex],
+              params: { elementIndex: elementIndex + 1, blockIndex: blockIndex + 1 },
             });
           }
           fields.forEach((field) => {
@@ -1668,8 +1690,9 @@ export const surveyRefinement = (survey: z.infer<typeof ZSurveyBase>, ctx: z.Ref
           if (fields.every((field) => !field.show)) {
             ctx.addIssue({
               code: "custom",
-              message: `At least one field must be shown in the Address question ${String(elementIndex + 1)} in block ${String(blockIndex + 1)}`,
+              message: `environments.surveys.edit.survey_validation.element_address_at_least_one_field`,
               path: ["blocks", blockIndex, "elements", elementIndex],
+              params: { elementIndex: elementIndex + 1, blockIndex: blockIndex + 1 },
             });
           }
           fields.forEach((field) => {
@@ -1714,8 +1737,9 @@ export const surveyRefinement = (survey: z.infer<typeof ZSurveyBase>, ctx: z.Ref
         if (blockIndex !== -1) {
           ctx.addIssue({
             code: "custom",
-            message: `Conditional Logic: Cyclic logic detected in block ${String(blockIndex + 1)} (${blocks[blockIndex].name}).`,
+            message: `environments.surveys.edit.survey_validation.block_cyclic_logic_detected`,
             path: ["blocks", blockIndex, "logic"],
+            params: { blockIndex: blockIndex + 1, blockName: blocks[blockIndex].name },
           });
         }
       });
@@ -1755,8 +1779,9 @@ export const surveyRefinement = (survey: z.infer<typeof ZSurveyBase>, ctx: z.Ref
         if (!ending.buttonLabel) {
           ctx.addIssue({
             code: "custom",
-            message: `Ending card ${String(index + 1)}: Button label cannot be empty`,
+            message: `environments.surveys.edit.survey_validation.ending_card_button_label_empty`,
             path: ["endings", index, "buttonLabel"],
+            params: { cardIndex: index + 1 },
           });
         } else {
           const multiLangIssueInButtonLabel = validateCardFieldsForAllLanguages(
@@ -1774,8 +1799,9 @@ export const surveyRefinement = (survey: z.infer<typeof ZSurveyBase>, ctx: z.Ref
         if (!ending.buttonLink || ending.buttonLink.trim() === "") {
           ctx.addIssue({
             code: "custom",
-            message: `Ending card ${String(index + 1)}: Button link cannot be empty`,
+            message: `environments.surveys.edit.survey_validation.ending_card_button_link_empty`,
             path: ["endings", index, "buttonLink"],
+            params: { cardIndex: index + 1 },
           });
         } else {
           const parsedButtonLink = ZEndingCardUrl.safeParse(ending.buttonLink);
@@ -1783,8 +1809,9 @@ export const surveyRefinement = (survey: z.infer<typeof ZSurveyBase>, ctx: z.Ref
             const errorMessage = parsedButtonLink.error.issues[0].message;
             ctx.addIssue({
               code: "custom",
-              message: `Ending card ${String(index + 1)}: ${errorMessage}`,
+              message: `environments.surveys.edit.survey_validation.ending_card_button_link_invalid`,
               path: ["endings", index, "buttonLink"],
+              params: { cardIndex: index + 1, errorMessage },
             });
           }
         }
@@ -1794,8 +1821,9 @@ export const surveyRefinement = (survey: z.infer<typeof ZSurveyBase>, ctx: z.Ref
       if (!ending.label || ending.label.trim() === "") {
         ctx.addIssue({
           code: "custom",
-          message: `Redirect Url label cannot be empty for ending Card ${String(index + 1)}.`,
+          message: `environments.surveys.edit.survey_validation.redirect_url_label_empty`,
           path: ["endings", index, "label"],
+          params: { cardIndex: index + 1 },
         });
       }
 
@@ -1803,8 +1831,9 @@ export const surveyRefinement = (survey: z.infer<typeof ZSurveyBase>, ctx: z.Ref
       if (!ending.url || ending.url.trim() === "") {
         ctx.addIssue({
           code: "custom",
-          message: `Ending card ${String(index + 1)}: Redirect URL cannot be empty`,
+          message: `environments.surveys.edit.survey_validation.ending_card_redirect_url_empty`,
           path: ["endings", index, "url"],
+          params: { cardIndex: index + 1 },
         });
       } else {
         const parsedUrl = ZEndingCardUrl.safeParse(ending.url);
@@ -1812,8 +1841,9 @@ export const surveyRefinement = (survey: z.infer<typeof ZSurveyBase>, ctx: z.Ref
           const errorMessage = parsedUrl.error.issues[0].message;
           ctx.addIssue({
             code: "custom",
-            message: `Ending card ${String(index + 1)}: ${errorMessage}`,
+            message: `environments.surveys.edit.survey_validation.ending_card_redirect_url_invalid`,
             path: ["endings", index, "url"],
+            params: { cardIndex: index + 1, errorMessage },
           });
         }
       }
@@ -1853,8 +1883,9 @@ export const surveyRefinement = (survey: z.infer<typeof ZSurveyBase>, ctx: z.Ref
             if (!parsedEmailTo.success) {
               ctx.addIssue({
                 code: "custom",
-                message: `The action in follow up ${String(index + 1)} has an invalid email field`,
+                message: `environments.surveys.edit.survey_validation.follow_up_invalid_email`,
                 path: ["followUps"],
+                params: { followUpIndex: index + 1 },
               });
             }
           }
@@ -1864,8 +1895,9 @@ export const surveyRefinement = (survey: z.infer<typeof ZSurveyBase>, ctx: z.Ref
             if (!followUp.trigger.properties?.endingIds?.length) {
               ctx.addIssue({
                 code: "custom",
-                message: `The trigger in follow up ${String(index + 1)} has no ending selected`,
+                message: `environments.surveys.edit.survey_validation.follow_up_no_ending_selected`,
                 path: ["followUps"],
+                params: { followUpIndex: index + 1 },
               });
             }
           }
@@ -2119,15 +2151,17 @@ const validateConditions = (
       if (!question) {
         issues.push({
           code: "custom",
-          message: `Conditional Logic: Question ID ${questionId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+          message: "environments.surveys.edit.survey_validation.logic_question_id_not_exist",
           path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+          params: { questionId, logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
         });
         return;
       } else if (questionIndex < questionIdx) {
         issues.push({
           code: "custom",
-          message: `Conditional Logic: Question ${String(questionIndex + 1)} cannot refer to a question ${String(questionIdx + 1)} that appears later in the survey`,
+          message: "environments.surveys.edit.survey_validation.logic_question_refers_later",
           path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+          params: { questionIndex: questionIndex + 1, referredQuestionIndex: questionIdx + 1 },
         });
         return;
       }
@@ -2137,8 +2171,14 @@ const validateConditions = (
       if (isInvalidOperator) {
         issues.push({
           code: "custom",
-          message: `Conditional Logic: Invalid operator "${operator}" for question type "${question.type}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+          message: "environments.surveys.edit.survey_validation.logic_invalid_operator_for_question",
           path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+          params: {
+            operator,
+            questionType: question.type,
+            logicIndex: logicIndex + 1,
+            questionIndex: questionIndex + 1,
+          },
         });
       }
 
@@ -2159,8 +2199,9 @@ const validateConditions = (
         if (rightOperand !== undefined) {
           issues.push({
             code: "custom",
-            message: `Conditional Logic: Right operand should not be defined for operator "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+            message: "environments.surveys.edit.survey_validation.logic_right_operand_not_defined",
             path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            params: { operator, logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
           });
         }
         return;
@@ -2175,8 +2216,9 @@ const validateConditions = (
           if (!ques) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Question ID ${questionId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              message: "environments.surveys.edit.survey_validation.logic_question_id_not_exist",
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+              params: { questionId, logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
             });
           } else {
             const validQuestionTypes = [TSurveyQuestionTypeEnum.OpenText];
@@ -2200,8 +2242,14 @@ const validateConditions = (
             if (!validQuestionTypes.includes(ques.type)) {
               issues.push({
                 code: "custom",
-                message: `Conditional Logic: Invalid question type "${ques.type}" for right operand in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+                message:
+                  "environments.surveys.edit.survey_validation.logic_invalid_question_type_right_operand",
                 path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+                params: {
+                  questionType: ques.type,
+                  logicIndex: logicIndex + 1,
+                  questionIndex: questionIndex + 1,
+                },
               });
             }
           }
@@ -2212,8 +2260,9 @@ const validateConditions = (
           if (!variable) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Variable ID ${variableId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              message: "environments.surveys.edit.survey_validation.logic_variable_id_not_exist",
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+              params: { variableId, logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
             });
           }
         } else if (rightOperand?.type === "hiddenField") {
@@ -2223,16 +2272,18 @@ const validateConditions = (
           if (!field) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Hidden field ID ${fieldId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              message: "environments.surveys.edit.survey_validation.logic_hidden_field_not_exist",
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+              params: { fieldId, logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
             });
           }
         } else if (rightOperand?.type === "static") {
           if (!rightOperand.value) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Static value is required in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              message: "environments.surveys.edit.survey_validation.logic_static_value_required",
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+              params: { logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
             });
           }
         }
@@ -2240,22 +2291,25 @@ const validateConditions = (
         if (rightOperand?.type !== "static") {
           issues.push({
             code: "custom",
-            message: `Conditional Logic: Right operand should be a static value for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+            message: "environments.surveys.edit.survey_validation.logic_right_operand_static_required",
             path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            params: { operator, logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
           });
         } else if (condition.operator === "equals" || condition.operator === "doesNotEqual") {
           if (typeof rightOperand.value !== "string") {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Right operand should be a string for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              message: "environments.surveys.edit.survey_validation.logic_right_operand_string",
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+              params: { operator, logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
             });
           } else {
             const choice = question.choices.find((c) => c.id === rightOperand.value);
             if (!choice) {
               issues.push({
                 code: "custom",
-                message: `Conditional Logic: Choice with label "${rightOperand.value}" does not exist in question ${String(questionIndex + 1)}`,
+                message: "environments.surveys.edit.survey_validation.logic_choice_not_exist",
+                params: { choiceValue: rightOperand.value, questionIndex: questionIndex + 1 },
                 path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
               });
             }
@@ -2264,16 +2318,18 @@ const validateConditions = (
           if (!Array.isArray(rightOperand.value)) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Right operand should be an array for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              message: "environments.surveys.edit.survey_validation.logic_right_operand_array",
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+              params: { operator, logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
             });
           } else {
             rightOperand.value.forEach((value) => {
               if (typeof value !== "string") {
                 issues.push({
                   code: "custom",
-                  message: `Conditional Logic: Right operand should be an array of strings for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+                  message: "environments.surveys.edit.survey_validation.logic_right_operand_array_strings",
                   path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+                  params: { operator, logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
                 });
               }
             });
@@ -2283,8 +2339,9 @@ const validateConditions = (
             if (rightOperand.value.some((value) => !choices.includes(value))) {
               issues.push({
                 code: "custom",
-                message: `Conditional Logic: Choices selected in right operand does not exist in the choices of the question in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+                message: "environments.surveys.edit.survey_validation.logic_choices_not_exist",
                 path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+                params: { logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
               });
             }
           }
@@ -2296,22 +2353,25 @@ const validateConditions = (
         if (rightOperand?.type !== "static") {
           issues.push({
             code: "custom",
-            message: `Conditional Logic: Right operand should be amongst the choice values for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+            message: "environments.surveys.edit.survey_validation.logic_right_operand_choice_values",
             path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+            params: { operator, logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
           });
         } else if (condition.operator === "equals" || condition.operator === "doesNotEqual") {
           if (typeof rightOperand.value !== "string") {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Right operand should be a string for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              message: "environments.surveys.edit.survey_validation.logic_right_operand_string",
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+              params: { operator, logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
             });
           } else {
             const choice = question.choices.find((c) => c.id === rightOperand.value);
             if (!choice) {
               issues.push({
                 code: "custom",
-                message: `Conditional Logic: Choice with label "${rightOperand.value}" does not exist in question ${String(questionIndex + 1)}`,
+                message: "environments.surveys.edit.survey_validation.logic_choice_not_exist",
+                params: { choiceValue: rightOperand.value, questionIndex: questionIndex + 1 },
                 path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
               });
             }
@@ -2324,16 +2384,18 @@ const validateConditions = (
           if (!Array.isArray(rightOperand.value)) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Right operand should be an array for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              message: "environments.surveys.edit.survey_validation.logic_right_operand_array",
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+              params: { operator, logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
             });
           } else {
             rightOperand.value.forEach((value) => {
               if (typeof value !== "string") {
                 issues.push({
                   code: "custom",
-                  message: `Conditional Logic: Right operand should be an array of strings for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+                  message: "environments.surveys.edit.survey_validation.logic_right_operand_array_strings",
                   path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+                  params: { operator, logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
                 });
               }
             });
@@ -2343,8 +2405,9 @@ const validateConditions = (
             if (rightOperand.value.some((value) => !choices.includes(value))) {
               issues.push({
                 code: "custom",
-                message: `Conditional Logic: Choices selected in right operand does not exist in the choices of the question in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+                message: "environments.surveys.edit.survey_validation.logic_choices_not_exist",
                 path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
+                params: { logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
               });
             }
           }
@@ -2360,13 +2423,15 @@ const validateConditions = (
           if (!variable) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Variable ID ${variableId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              message: "environments.surveys.edit.survey_validation.logic_variable_id_not_exist",
+              params: { variableId, logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
           } else if (variable.type !== "number") {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Variable type should be number in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              message: "environments.surveys.edit.survey_validation.logic_variable_type_number",
+              params: { logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
           }
@@ -2374,28 +2439,37 @@ const validateConditions = (
           if (typeof rightOperand.value !== "number") {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Right operand should be a number for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              message: "environments.surveys.edit.survey_validation.logic_right_operand_number",
+              params: { operator, logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
           } else if (question.type === TSurveyQuestionTypeEnum.NPS) {
             if (rightOperand.value < 0 || rightOperand.value > 10) {
               issues.push({
                 code: "custom",
-                message: `Conditional Logic: NPS score should be between 0 and 10 for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+                message: "environments.surveys.edit.survey_validation.logic_nps_score_range",
+                params: { operator, logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
                 path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
               });
             }
           } else if (rightOperand.value < 1 || rightOperand.value > question.range) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Rating value should be between 1 and ${String(question.range)} for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              message: "environments.surveys.edit.survey_validation.logic_rating_value_range",
+              params: {
+                operator,
+                range: question.range,
+                logicIndex: logicIndex + 1,
+                questionIndex: questionIndex + 1,
+              },
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
           }
         } else {
           issues.push({
             code: "custom",
-            message: `Conditional Logic: Right operand should be a variable or a static value for "${operator}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+            message: "environments.surveys.edit.survey_validation.logic_right_operand_variable_or_static",
+            params: { operator, logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
             path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
           });
         }
@@ -2407,7 +2481,8 @@ const validateConditions = (
           if (!ques) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Question ID ${questionId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              message: "environments.surveys.edit.survey_validation.logic_question_id_not_exist",
+              params: { questionId, logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
           } else {
@@ -2415,7 +2490,13 @@ const validateConditions = (
             if (!validQuestionTypes.includes(question.type)) {
               issues.push({
                 code: "custom",
-                message: `Conditional Logic: Invalid question type "${question.type}" for right operand in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+                message:
+                  "environments.surveys.edit.survey_validation.logic_invalid_question_type_right_operand",
+                params: {
+                  questionType: question.type,
+                  logicIndex: logicIndex + 1,
+                  questionIndex: questionIndex + 1,
+                },
                 path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
               });
             }
@@ -2427,13 +2508,15 @@ const validateConditions = (
           if (!variable) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Variable ID ${variableId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              message: "environments.surveys.edit.survey_validation.logic_variable_id_not_exist",
+              params: { variableId, logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
           } else if (variable.type !== "text") {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Variable type should be text in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              message: "environments.surveys.edit.survey_validation.logic_variable_type_text",
+              params: { logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
           }
@@ -2444,7 +2527,8 @@ const validateConditions = (
           if (!doesFieldExists) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Hidden field ID ${fieldId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              message: "environments.surveys.edit.survey_validation.logic_hidden_field_not_exist",
+              params: { fieldId, logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
           }
@@ -2454,13 +2538,15 @@ const validateConditions = (
           if (!date) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Please select a date value in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              message: "environments.surveys.edit.survey_validation.logic_date_value_required",
+              params: { logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
           } else if (isNaN(new Date(date).getTime())) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Invalid date format for right operand in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              message: "environments.surveys.edit.survey_validation.logic_invalid_date_format",
+              params: { logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
           }
@@ -2471,14 +2557,16 @@ const validateConditions = (
           if (rightOperand?.value !== undefined) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Right operand is not allowed in matrix question in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              message: "environments.surveys.edit.survey_validation.logic_matrix_right_operand_not_allowed",
+              params: { logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
           }
           if (!["isPartiallySubmitted", "isCompletelySubmitted"].includes(operator)) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Operator "${operator}" is not allowed in matrix question in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              message: "environments.surveys.edit.survey_validation.logic_matrix_invalid_operator",
+              params: { operator, logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
           }
@@ -2486,7 +2574,8 @@ const validateConditions = (
           if (rightOperand === undefined) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Right operand is required in matrix question in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              message: "environments.surveys.edit.survey_validation.logic_matrix_right_operand_required",
+              params: { logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
           }
@@ -2494,7 +2583,8 @@ const validateConditions = (
             if (rightOperand.type !== "static") {
               issues.push({
                 code: "custom",
-                message: `Conditional Logic: Right operand should be a static value in matrix question in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+                message: "environments.surveys.edit.survey_validation.logic_matrix_right_operand_static",
+                params: { logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
                 path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
               });
             }
@@ -2502,7 +2592,8 @@ const validateConditions = (
             if (rowIndex < 0 || rowIndex >= question.rows.length) {
               issues.push({
                 code: "custom",
-                message: `Conditional Logic: Invalid row index in matrix question in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+                message: "environments.surveys.edit.survey_validation.logic_matrix_invalid_row_index",
+                params: { logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
                 path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
               });
             }
@@ -2515,7 +2606,8 @@ const validateConditions = (
       if (!variable) {
         issues.push({
           code: "custom",
-          message: `Conditional Logic: Variable ID ${variableId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+          message: "environments.surveys.edit.survey_validation.logic_variable_id_not_exist",
+          params: { variableId, logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
           path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
         });
       } else {
@@ -2524,7 +2616,14 @@ const validateConditions = (
         if (isInvalidOperator) {
           issues.push({
             code: "custom",
-            message: `Conditional Logic: Invalid operator "${operator}" for variable ${variable.name} of type "${variable.type}" in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+            message: "environments.surveys.edit.survey_validation.logic_invalid_operator_for_variable",
+            params: {
+              operator,
+              variableName: variable.name,
+              variableType: variable.type,
+              logicIndex: logicIndex + 1,
+              questionIndex: questionIndex + 1,
+            },
             path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
           });
         }
@@ -2537,7 +2636,8 @@ const validateConditions = (
           if (!question) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Question ID ${questionId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              message: "environments.surveys.edit.survey_validation.logic_question_id_not_exist",
+              params: { questionId, logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
           } else if (variable.type === "number") {
@@ -2549,7 +2649,13 @@ const validateConditions = (
             ) {
               issues.push({
                 code: "custom",
-                message: `Conditional Logic: Invalid question type "${question.type}" for right operand in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+                message:
+                  "environments.surveys.edit.survey_validation.logic_invalid_question_type_right_operand",
+                params: {
+                  questionType: question.type,
+                  logicIndex: logicIndex + 1,
+                  questionIndex: questionIndex + 1,
+                },
                 path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
               });
             }
@@ -2569,7 +2675,13 @@ const validateConditions = (
             if (!validQuestionTypes.includes(question.type)) {
               issues.push({
                 code: "custom",
-                message: `Conditional Logic: Invalid question type "${question.type}" for right operand in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+                message:
+                  "environments.surveys.edit.survey_validation.logic_invalid_question_type_right_operand",
+                params: {
+                  questionType: question.type,
+                  logicIndex: logicIndex + 1,
+                  questionIndex: questionIndex + 1,
+                },
                 path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
               });
             }
@@ -2581,13 +2693,15 @@ const validateConditions = (
           if (!foundVariable) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Variable ID ${variableId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              message: "environments.surveys.edit.survey_validation.logic_variable_id_not_exist",
+              params: { variableId, logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
           } else if (variable.type !== foundVariable.type) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Variable type mismatch in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              message: "environments.surveys.edit.survey_validation.logic_variable_type_mismatch",
+              params: { logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
           }
@@ -2598,7 +2712,8 @@ const validateConditions = (
           if (!field) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Hidden field ID ${fieldId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              message: "environments.surveys.edit.survey_validation.logic_hidden_field_not_exist",
+              params: { fieldId, logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
           }
@@ -2611,7 +2726,8 @@ const validateConditions = (
       if (!hiddenField) {
         issues.push({
           code: "custom",
-          message: `Conditional Logic: Hidden field ID ${hiddenFieldId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+          message: "environments.surveys.edit.survey_validation.logic_hidden_field_not_exist",
+          params: { fieldId: hiddenFieldId, logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
           path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
         });
       }
@@ -2621,7 +2737,8 @@ const validateConditions = (
       if (isInvalidOperator) {
         issues.push({
           code: "custom",
-          message: `Conditional Logic: Invalid operator "${operator}" for hidden field in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+          message: "environments.surveys.edit.survey_validation.logic_invalid_operator_for_hidden_field",
+          params: { operator, logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
           path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
         });
       }
@@ -2634,7 +2751,8 @@ const validateConditions = (
         if (!question) {
           issues.push({
             code: "custom",
-            message: `Conditional Logic: Question ID ${questionId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+            message: "environments.surveys.edit.survey_validation.logic_question_id_not_exist",
+            params: { questionId, logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
             path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
           });
         } else {
@@ -2653,7 +2771,13 @@ const validateConditions = (
           if (!validQuestionTypes.includes(question.type)) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Invalid question type "${question.type}" for right operand in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              message:
+                "environments.surveys.edit.survey_validation.logic_invalid_question_type_right_operand",
+              params: {
+                questionType: question.type,
+                logicIndex: logicIndex + 1,
+                questionIndex: questionIndex + 1,
+              },
               path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
             });
           }
@@ -2665,13 +2789,15 @@ const validateConditions = (
         if (!variable) {
           issues.push({
             code: "custom",
-            message: `Conditional Logic: Variable ID ${variableId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+            message: "environments.surveys.edit.survey_validation.logic_variable_id_not_exist",
+            params: { variableId, logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
             path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
           });
         } else if (variable.type !== "text") {
           issues.push({
             code: "custom",
-            message: `Conditional Logic: Variable type should be text in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+            message: "environments.surveys.edit.survey_validation.logic_variable_type_text",
+            params: { logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
             path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
           });
         }
@@ -2682,7 +2808,8 @@ const validateConditions = (
         if (!field) {
           issues.push({
             code: "custom",
-            message: `Conditional Logic: Hidden field ID ${fieldId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+            message: "environments.surveys.edit.survey_validation.logic_hidden_field_not_exist",
+            params: { fieldId, logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
             path: ["questions", questionIndex, "logic", logicIndex, "conditions"],
           });
         }
@@ -2723,7 +2850,12 @@ const validateActions = (
       if (!variable) {
         return {
           code: "custom",
-          message: `Conditional Logic: Variable ID ${action.variableId} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+          message: "environments.surveys.edit.survey_validation.logic_action_variable_not_exist",
+          params: {
+            variableId: action.variableId,
+            logicIndex: logicIndex + 1,
+            questionIndex: questionIndex + 1,
+          },
           path: ["questions", questionIndex, "logic", logicIndex],
         };
       }
@@ -2734,7 +2866,8 @@ const validateActions = (
         if (selectedVariable?.type !== variable.type) {
           return {
             code: "custom",
-            message: `Conditional Logic: Invalid variable type for variable in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+            message: "environments.surveys.edit.survey_validation.logic_action_invalid_variable_type",
+            params: { logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
             path: ["questions", questionIndex, "logic", logicIndex],
           };
         }
@@ -2764,7 +2897,8 @@ const validateActions = (
           if (!selectedQuestion || !allowedQuestions.includes(selectedQuestion.type)) {
             return {
               code: "custom",
-              message: `Conditional Logic: Invalid question type for text variable in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+              message: "environments.surveys.edit.survey_validation.logic_action_invalid_question_type_text",
+              params: { logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
               path: ["questions", questionIndex, "logic", logicIndex],
             };
           }
@@ -2795,7 +2929,8 @@ const validateActions = (
         ) {
           return {
             code: "custom",
-            message: `Conditional Logic: Invalid question type for number variable in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+            message: "environments.surveys.edit.survey_validation.logic_action_invalid_question_type_number",
+            params: { logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
             path: ["questions", questionIndex, "logic", logicIndex],
           };
         }
@@ -2809,7 +2944,8 @@ const validateActions = (
       if (!possibleQuestionIds.includes(action.target)) {
         return {
           code: "custom",
-          message: `Question ID ${action.target} does not exist in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+          message: "environments.surveys.edit.survey_validation.logic_action_question_id_not_exist",
+          params: { targetId: action.target, logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
           path: ["questions", questionIndex, "logic"],
         };
       }
@@ -2824,7 +2960,12 @@ const validateActions = (
 
           return {
             code: "custom",
-            message: `Question ${String(quesIdx + 1)} is already required in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+            message: "environments.surveys.edit.survey_validation.logic_action_question_already_required",
+            params: {
+              targetQuestionIndex: quesIdx + 1,
+              logicIndex: logicIndex + 1,
+              questionIndex: questionIndex + 1,
+            },
             path: ["questions", questionIndex, "logic", logicIndex],
           };
         }
@@ -2838,7 +2979,8 @@ const validateActions = (
   if (jumpToQuestionActions.length > 1) {
     actionIssues.push({
       code: "custom",
-      message: `Conditional Logic: Multiple jump actions are not allowed in logic no: ${String(logicIndex + 1)} of question ${String(questionIndex + 1)}`,
+      message: "environments.surveys.edit.survey_validation.logic_multiple_jump_actions",
+      params: { logicIndex: logicIndex + 1, questionIndex: questionIndex + 1 },
       path: ["questions", questionIndex, "logic"],
     });
   }
@@ -2856,7 +2998,8 @@ const validateLogicFallback = (survey: TSurvey, questionIdx: number): z.core.$Zo
     return [
       {
         code: "custom",
-        message: `Conditional Logic: Fallback logic is defined without any logic in question ${String(questionIdx + 1)}`,
+        message: "environments.surveys.edit.survey_validation.logic_fallback_without_logic",
+        params: { questionIndex: questionIdx + 1 },
         path: ["questions", questionIdx],
       },
     ];
@@ -2864,7 +3007,8 @@ const validateLogicFallback = (survey: TSurvey, questionIdx: number): z.core.$Zo
     return [
       {
         code: "custom",
-        message: `Conditional Logic: Fallback logic is defined with the same question in question ${String(questionIdx + 1)}`,
+        message: "environments.surveys.edit.survey_validation.logic_fallback_same_question",
+        params: { questionIndex: questionIdx + 1 },
         path: ["questions", questionIdx],
       },
     ];
@@ -2886,7 +3030,8 @@ const validateLogicFallback = (survey: TSurvey, questionIdx: number): z.core.$Zo
     return [
       {
         code: "custom",
-        message: `Conditional Logic: Fallback question ID ${question.logicFallback} does not exist in question ${String(questionIdx + 1)}`,
+        message: "environments.surveys.edit.survey_validation.logic_fallback_question_not_exist",
+        params: { fallbackId: question.logicFallback, questionIndex: questionIdx + 1 },
         path: ["questions", questionIdx],
       },
     ];
@@ -3080,15 +3225,17 @@ const validateBlockConditions = (
       if (!elementInfo) {
         issues.push({
           code: "custom",
-          message: `Conditional Logic: Element Id ${elementId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+          message: "environments.surveys.edit.survey_validation.block_logic_element_not_exist",
           path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+          params: { elementId, logicIndex: logicIndex + 1, blockIndex: blockIndex + 1 },
         });
         return;
       } else if (blockIndex < elementInfo.block) {
         issues.push({
           code: "custom",
-          message: `Conditional Logic: Block ${String(blockIndex + 1)} cannot refer to an element in block ${String(elementInfo.block + 1)} that appears later in the survey`,
+          message: "environments.surveys.edit.survey_validation.block_logic_element_refers_later",
           path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+          params: { blockIndex: blockIndex + 1, referredBlockIndex: elementInfo.block + 1 },
         });
         return;
       }
@@ -3100,8 +3247,14 @@ const validateBlockConditions = (
       if (isInvalidOperator) {
         issues.push({
           code: "custom",
-          message: `Conditional Logic: Invalid operator "${operator}" for element type "${element.type}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+          message: "environments.surveys.edit.survey_validation.block_logic_invalid_operator_for_element",
           path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+          params: {
+            operator,
+            elementType: element.type,
+            logicIndex: logicIndex + 1,
+            blockIndex: blockIndex + 1,
+          },
         });
       }
 
@@ -3109,8 +3262,9 @@ const validateBlockConditions = (
       if (element.type === TSurveyElementTypeEnum.CTA && !element.buttonExternal) {
         issues.push({
           code: "custom",
-          message: `Conditional Logic: CTA element "${elementId}" does not have an external button and cannot be used in logic conditions in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+          message: "environments.surveys.edit.survey_validation.block_logic_cta_no_external_button",
           path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
+          params: { elementId, logicIndex: logicIndex + 1, blockIndex: blockIndex + 1 },
         });
         return;
       }
@@ -3133,7 +3287,8 @@ const validateBlockConditions = (
         if (rightOperand !== undefined) {
           issues.push({
             code: "custom",
-            message: `Conditional Logic: Right operand should not be defined for operator "${operator}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+            message: "environments.surveys.edit.survey_validation.block_logic_right_operand_not_defined",
+            params: { operator, logicIndex: logicIndex + 1, blockIndex: blockIndex + 1 },
             path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
           });
         }
@@ -3149,7 +3304,8 @@ const validateBlockConditions = (
           if (!elem) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Element ID ${elemId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+              message: "environments.surveys.edit.survey_validation.block_logic_element_not_exist",
+              params: { elementId: elemId, logicIndex: logicIndex + 1, blockIndex: blockIndex + 1 },
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
           } else {
@@ -3174,7 +3330,13 @@ const validateBlockConditions = (
             if (!validElementTypes.includes(elem.data.type)) {
               issues.push({
                 code: "custom",
-                message: `Conditional Logic: Invalid element type "${elem.data.type}" for right operand in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+                message:
+                  "environments.surveys.edit.survey_validation.block_logic_invalid_element_type_right_operand",
+                params: {
+                  elementType: elem.data.type,
+                  logicIndex: logicIndex + 1,
+                  blockIndex: blockIndex + 1,
+                },
                 path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
               });
             }
@@ -3186,7 +3348,8 @@ const validateBlockConditions = (
           if (!variable) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Variable ID ${variableId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+              message: "environments.surveys.edit.survey_validation.block_logic_variable_not_exist",
+              params: { variableId, logicIndex: logicIndex + 1, blockIndex: blockIndex + 1 },
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
           }
@@ -3197,7 +3360,8 @@ const validateBlockConditions = (
           if (!field) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Hidden field ID ${fieldId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+              message: "environments.surveys.edit.survey_validation.block_logic_hidden_field_not_exist",
+              params: { fieldId, logicIndex: logicIndex + 1, blockIndex: blockIndex + 1 },
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
           }
@@ -3205,7 +3369,8 @@ const validateBlockConditions = (
           if (!rightOperand.value) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Static value is required in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+              message: "environments.surveys.edit.survey_validation.block_logic_static_value_required",
+              params: { logicIndex: logicIndex + 1, blockIndex: blockIndex + 1 },
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
           }
@@ -3214,14 +3379,16 @@ const validateBlockConditions = (
         if (rightOperand?.type !== "static") {
           issues.push({
             code: "custom",
-            message: `Conditional Logic: Right operand should be a static value for "${operator}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+            message: "environments.surveys.edit.survey_validation.block_logic_right_operand_static",
+            params: { operator, logicIndex: logicIndex + 1, blockIndex: blockIndex + 1 },
             path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
           });
         } else if (condition.operator === "equals" || condition.operator === "doesNotEqual") {
           if (typeof rightOperand.value !== "string") {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Right operand should be a string for "${operator}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+              message: "environments.surveys.edit.survey_validation.block_logic_right_operand_string",
+              params: { operator, logicIndex: logicIndex + 1, blockIndex: blockIndex + 1 },
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
           } else {
@@ -3230,7 +3397,12 @@ const validateBlockConditions = (
             if (!choiceMatch) {
               issues.push({
                 code: "custom",
-                message: `Conditional Logic: Choice "${rightOperand.value}" does not exist in element ${String(elementInfo.element + 1)} of block ${String(elementInfo.block + 1)}`,
+                message: "environments.surveys.edit.survey_validation.block_logic_choice_not_exist",
+                params: {
+                  choiceValue: rightOperand.value,
+                  elementIndex: elementInfo.element + 1,
+                  blockIndex: elementInfo.block + 1,
+                },
                 path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
               });
             }
@@ -3244,14 +3416,16 @@ const validateBlockConditions = (
         if (rightOperand?.type !== "static") {
           issues.push({
             code: "custom",
-            message: `Conditional Logic: Right operand should be a static value for "${operator}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+            message: "environments.surveys.edit.survey_validation.block_logic_right_operand_static",
+            params: { operator, logicIndex: logicIndex + 1, blockIndex: blockIndex + 1 },
             path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
           });
         } else if (condition.operator === "equals" || condition.operator === "doesNotEqual") {
           if (typeof rightOperand.value !== "string") {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Right operand should be a string for "${operator}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+              message: "environments.surveys.edit.survey_validation.block_logic_right_operand_string",
+              params: { operator, logicIndex: logicIndex + 1, blockIndex: blockIndex + 1 },
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
           } else {
@@ -3260,7 +3434,12 @@ const validateBlockConditions = (
             if (!choiceMatch) {
               issues.push({
                 code: "custom",
-                message: `Conditional Logic: Choice "${rightOperand.value}" does not exist in element ${String(elementInfo.element + 1)} of block ${String(elementInfo.block + 1)}`,
+                message: "environments.surveys.edit.survey_validation.block_logic_choice_not_exist",
+                params: {
+                  choiceValue: rightOperand.value,
+                  elementIndex: elementInfo.element + 1,
+                  blockIndex: elementInfo.block + 1,
+                },
                 path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
               });
             }
@@ -3273,7 +3452,8 @@ const validateBlockConditions = (
           if (!Array.isArray(rightOperand.value)) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Right operand should be an array for "${operator}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+              message: "environments.surveys.edit.survey_validation.block_logic_right_operand_array",
+              params: { operator, logicIndex: logicIndex + 1, blockIndex: blockIndex + 1 },
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
           } else {
@@ -3281,7 +3461,9 @@ const validateBlockConditions = (
               if (typeof value !== "string") {
                 issues.push({
                   code: "custom",
-                  message: `Conditional Logic: Each value in the right operand should be a string for "${operator}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+                  message:
+                    "environments.surveys.edit.survey_validation.block_logic_right_operand_array_strings",
+                  params: { operator, logicIndex: logicIndex + 1, blockIndex: blockIndex + 1 },
                   path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
                 });
               }
@@ -3292,7 +3474,8 @@ const validateBlockConditions = (
             if (rightOperand.value.some((value) => !choiceIds.includes(value))) {
               issues.push({
                 code: "custom",
-                message: `Conditional Logic: One or more choices selected in right operand do not exist in the element in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+                message: "environments.surveys.edit.survey_validation.block_logic_choices_not_exist",
+                params: { logicIndex: logicIndex + 1, blockIndex: blockIndex + 1 },
                 path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
               });
             }
@@ -3309,13 +3492,15 @@ const validateBlockConditions = (
           if (!variable) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Variable ID ${variableId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+              message: "environments.surveys.edit.survey_validation.block_logic_variable_not_exist",
+              params: { variableId, logicIndex: logicIndex + 1, blockIndex: blockIndex + 1 },
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
           } else if (variable.type !== "number") {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Variable type should be number in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+              message: "environments.surveys.edit.survey_validation.block_logic_variable_type_number",
+              params: { logicIndex: logicIndex + 1, blockIndex: blockIndex + 1 },
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
           }
@@ -3323,28 +3508,38 @@ const validateBlockConditions = (
           if (typeof rightOperand.value !== "number") {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Right operand should be a number for "${operator}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+              message: "environments.surveys.edit.survey_validation.block_logic_right_operand_number",
+              params: { operator, logicIndex: logicIndex + 1, blockIndex: blockIndex + 1 },
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
           } else if (element.type === TSurveyElementTypeEnum.NPS) {
             if (rightOperand.value < 0 || rightOperand.value > 10) {
               issues.push({
                 code: "custom",
-                message: `Conditional Logic: NPS score should be between 0 and 10 for "${operator}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+                message: "environments.surveys.edit.survey_validation.block_logic_nps_score_range",
+                params: { operator, logicIndex: logicIndex + 1, blockIndex: blockIndex + 1 },
                 path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
               });
             }
           } else if (rightOperand.value < 1 || rightOperand.value > element.range) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Rating value should be between 1 and ${String(element.range)} for "${operator}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+              message: "environments.surveys.edit.survey_validation.block_logic_rating_value_range",
+              params: {
+                operator,
+                range: element.range,
+                logicIndex: logicIndex + 1,
+                blockIndex: blockIndex + 1,
+              },
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
           }
         } else {
           issues.push({
             code: "custom",
-            message: `Conditional Logic: Right operand should be a variable or a static value for "${operator}" in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+            message:
+              "environments.surveys.edit.survey_validation.block_logic_right_operand_variable_or_static",
+            params: { operator, logicIndex: logicIndex + 1, blockIndex: blockIndex + 1 },
             path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
           });
         }
@@ -3356,7 +3551,8 @@ const validateBlockConditions = (
           if (!elem) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Element ID ${elemId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+              message: "environments.surveys.edit.survey_validation.block_logic_element_not_exist",
+              params: { elementId: elemId, logicIndex: logicIndex + 1, blockIndex: blockIndex + 1 },
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
           } else {
@@ -3367,7 +3563,13 @@ const validateBlockConditions = (
             if (!validElementTypes.includes(elem.data.type)) {
               issues.push({
                 code: "custom",
-                message: `Conditional Logic: Invalid element type "${elem.data.type}" for right operand in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+                message:
+                  "environments.surveys.edit.survey_validation.block_logic_invalid_element_type_right_operand",
+                params: {
+                  elementType: elem.data.type,
+                  logicIndex: logicIndex + 1,
+                  blockIndex: blockIndex + 1,
+                },
                 path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
               });
             }
@@ -3379,13 +3581,15 @@ const validateBlockConditions = (
           if (!variable) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Variable ID ${variableId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+              message: "environments.surveys.edit.survey_validation.block_logic_variable_not_exist",
+              params: { variableId, logicIndex: logicIndex + 1, blockIndex: blockIndex + 1 },
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
           } else if (variable.type !== "text") {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Variable type should be text in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+              message: "environments.surveys.edit.survey_validation.block_logic_variable_type_text",
+              params: { logicIndex: logicIndex + 1, blockIndex: blockIndex + 1 },
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
           }
@@ -3396,7 +3600,8 @@ const validateBlockConditions = (
           if (!doesFieldExists) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Hidden field ID ${fieldId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+              message: "environments.surveys.edit.survey_validation.block_logic_hidden_field_not_exist",
+              params: { fieldId, logicIndex: logicIndex + 1, blockIndex: blockIndex + 1 },
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
           }
@@ -3406,13 +3611,15 @@ const validateBlockConditions = (
           if (!date) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Please select a date value in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+              message: "environments.surveys.edit.survey_validation.block_logic_date_value_required",
+              params: { logicIndex: logicIndex + 1, blockIndex: blockIndex + 1 },
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
           } else if (isNaN(new Date(date).getTime())) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Invalid date format for right operand in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+              message: "environments.surveys.edit.survey_validation.block_logic_invalid_date_format",
+              params: { logicIndex: logicIndex + 1, blockIndex: blockIndex + 1 },
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
           }
@@ -3423,14 +3630,17 @@ const validateBlockConditions = (
           if (rightOperand?.value !== undefined) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Right operand is not allowed in matrix element in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+              message:
+                "environments.surveys.edit.survey_validation.block_logic_matrix_right_operand_not_allowed",
+              params: { logicIndex: logicIndex + 1, blockIndex: blockIndex + 1 },
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
           }
           if (!["isPartiallySubmitted", "isCompletelySubmitted"].includes(operator)) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Operator "${operator}" is not allowed in matrix element in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+              message: "environments.surveys.edit.survey_validation.block_logic_matrix_invalid_operator",
+              params: { operator, logicIndex: logicIndex + 1, blockIndex: blockIndex + 1 },
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
           }
@@ -3438,7 +3648,9 @@ const validateBlockConditions = (
           if (rightOperand === undefined) {
             issues.push({
               code: "custom",
-              message: `Conditional Logic: Right operand is required in matrix element in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+              message:
+                "environments.surveys.edit.survey_validation.block_logic_matrix_right_operand_required",
+              params: { logicIndex: logicIndex + 1, blockIndex: blockIndex + 1 },
               path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
             });
           }
@@ -3446,7 +3658,9 @@ const validateBlockConditions = (
             if (rightOperand.type !== "static") {
               issues.push({
                 code: "custom",
-                message: `Conditional Logic: Right operand should be a static value in matrix element in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+                message:
+                  "environments.surveys.edit.survey_validation.block_logic_matrix_right_operand_static",
+                params: { logicIndex: logicIndex + 1, blockIndex: blockIndex + 1 },
                 path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
               });
             }
@@ -3454,7 +3668,8 @@ const validateBlockConditions = (
             if (rowIndex < 0 || rowIndex >= element.rows.length) {
               issues.push({
                 code: "custom",
-                message: `Conditional Logic: Invalid row index in matrix element in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+                message: "environments.surveys.edit.survey_validation.block_logic_matrix_invalid_row_index",
+                params: { logicIndex: logicIndex + 1, blockIndex: blockIndex + 1 },
                 path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
               });
             }
@@ -3468,7 +3683,8 @@ const validateBlockConditions = (
       if (!variable) {
         issues.push({
           code: "custom",
-          message: `Conditional Logic: Variable ID ${variableId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+          message: "environments.surveys.edit.survey_validation.block_logic_variable_not_exist",
+          params: { variableId, logicIndex: logicIndex + 1, blockIndex: blockIndex + 1 },
           path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
         });
         return;
@@ -3481,7 +3697,8 @@ const validateBlockConditions = (
         if (!rightVariable) {
           issues.push({
             code: "custom",
-            message: `Conditional Logic: Variable ID ${rightVariableId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+            message: "environments.surveys.edit.survey_validation.block_logic_variable_not_exist",
+            params: { variableId: rightVariableId, logicIndex: logicIndex + 1, blockIndex: blockIndex + 1 },
             path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
           });
         }
@@ -3494,7 +3711,8 @@ const validateBlockConditions = (
       if (!field) {
         issues.push({
           code: "custom",
-          message: `Conditional Logic: Hidden field ID ${fieldId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+          message: "environments.surveys.edit.survey_validation.block_logic_hidden_field_not_exist",
+          params: { fieldId, logicIndex: logicIndex + 1, blockIndex: blockIndex + 1 },
           path: ["blocks", blockIndex, "logic", logicIndex, "conditions"],
         });
       }
@@ -3534,7 +3752,8 @@ const validateBlockActions = (
       if (!variable) {
         return {
           code: "custom",
-          message: `Conditional Logic: Variable ID ${action.variableId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+          message: "environments.surveys.edit.survey_validation.block_logic_action_variable_not_exist",
+          params: { variableId: action.variableId, logicIndex: logicIndex + 1, blockIndex: blockIndex + 1 },
           path: ["blocks", blockIndex, "logic", logicIndex],
         };
       }
@@ -3545,7 +3764,8 @@ const validateBlockActions = (
         if (selectedVariable?.type !== variable.type) {
           return {
             code: "custom",
-            message: `Conditional Logic: Invalid variable type for variable in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+            message: "environments.surveys.edit.survey_validation.block_logic_action_invalid_variable_type",
+            params: { logicIndex: logicIndex + 1, blockIndex: blockIndex + 1 },
             path: ["blocks", blockIndex, "logic", logicIndex],
           };
         }
@@ -3566,7 +3786,9 @@ const validateBlockActions = (
           if (!selectedElement || !allowedElements.includes(selectedElement.data.type)) {
             return {
               code: "custom",
-              message: `Conditional Logic: Invalid element type for text variable in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+              message:
+                "environments.surveys.edit.survey_validation.block_logic_action_invalid_element_type_text",
+              params: { logicIndex: logicIndex + 1, blockIndex: blockIndex + 1 },
               path: ["blocks", blockIndex, "logic", logicIndex],
             };
           }
@@ -3591,7 +3813,9 @@ const validateBlockActions = (
         ) {
           return {
             code: "custom",
-            message: `Conditional Logic: Invalid element type for number variable in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+            message:
+              "environments.surveys.edit.survey_validation.block_logic_action_invalid_element_type_number",
+            params: { logicIndex: logicIndex + 1, blockIndex: blockIndex + 1 },
             path: ["blocks", blockIndex, "logic", logicIndex],
           };
         }
@@ -3604,7 +3828,8 @@ const validateBlockActions = (
       if (!targetElementInfo) {
         return {
           code: "custom",
-          message: `Conditional Logic: Element ID ${targetElementId} does not exist for requireAnswer action in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+          message: "environments.surveys.edit.survey_validation.block_logic_action_element_not_exist",
+          params: { targetElementId, logicIndex: logicIndex + 1, blockIndex: blockIndex + 1 },
           path: ["blocks", blockIndex, "logic", logicIndex],
         };
       }
@@ -3613,7 +3838,8 @@ const validateBlockActions = (
       if (targetElementInfo.block === blockIndex) {
         return {
           code: "custom",
-          message: `Conditional Logic: Element ${targetElementId} cannot be in the current block for requireAnswer action in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}. RequireAnswer must target elements in other blocks.`,
+          message: "environments.surveys.edit.survey_validation.block_logic_action_element_same_block",
+          params: { targetElementId, logicIndex: logicIndex + 1, blockIndex: blockIndex + 1 },
           path: ["blocks", blockIndex, "logic", logicIndex],
         };
       }
@@ -3622,7 +3848,12 @@ const validateBlockActions = (
       if (targetElementInfo.block < blockIndex) {
         return {
           code: "custom",
-          message: `Conditional Logic: Element ${targetElementId} is in a previous block (block ${String(targetElementInfo.block + 1)}). RequireAnswer should target elements in future blocks after block ${String(blockIndex + 1)}.`,
+          message: "environments.surveys.edit.survey_validation.block_logic_action_element_previous_block",
+          params: {
+            targetElementId,
+            targetBlockIndex: targetElementInfo.block + 1,
+            blockIndex: blockIndex + 1,
+          },
           path: ["blocks", blockIndex, "logic", logicIndex],
         };
       }
@@ -3631,7 +3862,13 @@ const validateBlockActions = (
       if (targetElementInfo.data.required) {
         return {
           code: "custom",
-          message: `Conditional Logic: Element ${targetElementId} in block ${String(targetElementInfo.block + 1)} is already required in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+          message: "environments.surveys.edit.survey_validation.block_logic_action_element_already_required",
+          params: {
+            targetElementId,
+            targetBlockIndex: targetElementInfo.block + 1,
+            logicIndex: logicIndex + 1,
+            blockIndex: blockIndex + 1,
+          },
           path: ["blocks", blockIndex, "logic", logicIndex],
         };
       }
@@ -3645,7 +3882,8 @@ const validateBlockActions = (
       if (!possibleTargets.includes(targetBlockId)) {
         return {
           code: "custom",
-          message: `Conditional Logic: Block ID ${targetBlockId} does not exist in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+          message: "environments.surveys.edit.survey_validation.block_logic_action_block_not_exist",
+          params: { targetBlockId, logicIndex: logicIndex + 1, blockIndex: blockIndex + 1 },
           path: ["blocks", blockIndex, "logic", logicIndex],
         };
       }
@@ -3654,7 +3892,8 @@ const validateBlockActions = (
       if (targetBlockId === currentBlock.id) {
         return {
           code: "custom",
-          message: `Conditional Logic: Cannot jump to the current block in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+          message: "environments.surveys.edit.survey_validation.block_logic_action_jump_current_block",
+          params: { logicIndex: logicIndex + 1, blockIndex: blockIndex + 1 },
           path: ["blocks", blockIndex, "logic", logicIndex],
         };
       }
@@ -3667,7 +3906,8 @@ const validateBlockActions = (
   if (jumpToBlockActions.length > 1) {
     actionIssues.push({
       code: "custom",
-      message: `Conditional Logic: Multiple jump actions are not allowed in logic no: ${String(logicIndex + 1)} of block ${String(blockIndex + 1)}`,
+      message: "environments.surveys.edit.survey_validation.block_logic_multiple_jump_actions",
+      params: { logicIndex: logicIndex + 1, blockIndex: blockIndex + 1 },
       path: ["blocks", blockIndex, "logic"],
     });
   }
@@ -3687,7 +3927,8 @@ const validateBlockLogicFallback = (
     return [
       {
         code: "custom",
-        message: `Conditional Logic: Fallback logic is defined without any logic in block ${String(blockIndex + 1)}`,
+        message: "environments.surveys.edit.survey_validation.block_logic_fallback_without_logic",
+        params: { blockIndex: blockIndex + 1 },
         path: ["blocks", blockIndex],
       },
     ];
@@ -3695,7 +3936,8 @@ const validateBlockLogicFallback = (
     return [
       {
         code: "custom",
-        message: `Conditional Logic: Fallback logic is defined with the same block in block ${String(blockIndex + 1)}`,
+        message: "environments.surveys.edit.survey_validation.block_logic_fallback_same_block",
+        params: { blockIndex: blockIndex + 1 },
         path: ["blocks", blockIndex],
       },
     ];
@@ -3717,7 +3959,8 @@ const validateBlockLogicFallback = (
     return [
       {
         code: "custom",
-        message: `Conditional Logic: Fallback block ID ${block.logicFallback} does not exist in block ${String(blockIndex + 1)}`,
+        message: "environments.surveys.edit.survey_validation.block_logic_fallback_block_not_exist",
+        params: { fallbackId: block.logicFallback, blockIndex: blockIndex + 1 },
         path: ["blocks", blockIndex],
       },
     ];
@@ -3811,7 +4054,7 @@ export const ZSurveyCreateInput = makeSchemaOptional(ZSurveyBase)
     if (hasQuestions && hasBlocks) {
       ctx.addIssue({
         code: "custom",
-        message: "Cannot provide both questions and blocks. Please provide only one of these fields.",
+        message: "environments.surveys.edit.survey_validation.cannot_provide_both_questions_and_blocks",
         path: ["questions"],
       });
     }
@@ -3819,7 +4062,7 @@ export const ZSurveyCreateInput = makeSchemaOptional(ZSurveyBase)
     if (!hasQuestions && !hasBlocks) {
       ctx.addIssue({
         code: "custom",
-        message: "Must provide either questions or blocks. Both cannot be empty.",
+        message: "environments.surveys.edit.survey_validation.must_provide_questions_or_blocks",
         path: ["questions"],
       });
     }
@@ -3860,7 +4103,7 @@ export const ZSurveyCreateInputWithEnvironmentId = makeSchemaOptional(ZSurveyBas
     if (hasQuestions && hasBlocks) {
       ctx.addIssue({
         code: "custom",
-        message: "Cannot provide both questions and blocks. Please provide only one of these fields.",
+        message: "environments.surveys.edit.survey_validation.cannot_provide_both_questions_and_blocks",
         path: ["questions"],
       });
     }
@@ -3868,7 +4111,7 @@ export const ZSurveyCreateInputWithEnvironmentId = makeSchemaOptional(ZSurveyBas
     if (!hasQuestions && !hasBlocks) {
       ctx.addIssue({
         code: "custom",
-        message: "Must provide either questions or blocks. Both cannot be empty.",
+        message: "environments.surveys.edit.survey_validation.must_provide_questions_or_blocks",
         path: ["questions"],
       });
     }

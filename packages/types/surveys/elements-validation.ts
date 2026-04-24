@@ -62,8 +62,14 @@ export const validateElementLabels = (
       return {
         code: "custom",
         input: fieldLabel,
-        message: `The ${field} in question ${String(elementIndex + 1)} of block ${String(blockIndex + 1)} is not present for the following languages: ${language.language.code}`,
+        message: "environments.surveys.edit.survey_validation.element_field_not_present_for_languages",
         path: ["blocks", blockIndex, "elements", elementIndex, field],
+        params: {
+          field,
+          elementIndex: elementIndex + 1,
+          blockIndex: blockIndex + 1,
+          languageCode: language.language.code,
+        },
       };
     }
   }
@@ -71,13 +77,11 @@ export const validateElementLabels = (
   const invalidLanguageCodes = validateLabelForAllLanguages(fieldLabel, languages);
   const isDefaultOnly = invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
 
-  const messagePrefix = skipArticle ? "" : "The ";
   const messageField = ELEMENT_FIELD_TO_LABEL_MAP[field] ? ELEMENT_FIELD_TO_LABEL_MAP[field] : field;
-  const messageSuffix = isDefaultOnly ? " is missing" : " is missing for the following languages: ";
 
   const message = isDefaultOnly
-    ? `${messagePrefix}${messageField} in question ${String(elementIndex + 1)} of block ${String(blockIndex + 1)}${messageSuffix}`
-    : `${messagePrefix}${messageField} in question ${String(elementIndex + 1)} of block ${String(blockIndex + 1)}${messageSuffix} -fLang- ${invalidLanguageCodes.join()}`;
+    ? "environments.surveys.edit.survey_validation.element_field_missing"
+    : "environments.surveys.edit.survey_validation.element_field_missing-fLang-";
 
   if (invalidLanguageCodes.length) {
     return {
@@ -85,7 +89,15 @@ export const validateElementLabels = (
       input: fieldLabel,
       message,
       path: ["blocks", blockIndex, "elements", elementIndex, field],
-      params: isDefaultOnly ? undefined : { invalidLanguageCodes },
+      params: isDefaultOnly
+        ? { field: messageField, elementIndex: elementIndex + 1, blockIndex: blockIndex + 1, skipArticle }
+        : {
+            field: messageField,
+            elementIndex: elementIndex + 1,
+            blockIndex: blockIndex + 1,
+            skipArticle,
+            invalidLanguageCodes,
+          },
     };
   }
 

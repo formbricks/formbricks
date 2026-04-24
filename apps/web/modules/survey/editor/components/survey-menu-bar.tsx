@@ -243,11 +243,11 @@ export const SurveyMenuBar = ({
           );
 
           const messageSplit = firstError.message.split("-fLang-")[0];
-
-          toast.error(`${messageSplit} ${invalidLanguageLabels.join(", ")}`);
+          const translatedMessage = t(messageSplit, firstError.params as Record<string, unknown>);
+          toast.error(`${translatedMessage} ${invalidLanguageLabels.join(", ")}`);
           setActiveId("language");
         } else {
-          toast.error(firstError.message, {
+          toast.error(t(firstError.message, firstError.params as Record<string, unknown>), {
             className: "w-fit !max-w-md",
           });
         }
@@ -255,7 +255,7 @@ export const SurveyMenuBar = ({
         return false;
       }
 
-      toast.error(firstError.message);
+      toast.error(t(firstError.message, firstError.params as Record<string, unknown>));
       return false;
     }
 

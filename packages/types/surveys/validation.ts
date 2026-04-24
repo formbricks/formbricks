@@ -131,8 +131,9 @@ export const validateQuestionLabels = (
       return {
         code: "custom",
         input: fieldLabel,
-        message: `The ${field} in question ${String(questionIndex + 1)} is not present for the following languages: ${language.language.code}`,
+        message: "environments.surveys.edit.survey_validation.question_field_not_present_for_languages",
         path: ["questions", questionIndex, field],
+        params: { field, questionIndex: questionIndex + 1, languageCode: language.language.code },
       };
     }
   }
@@ -140,13 +141,11 @@ export const validateQuestionLabels = (
   const invalidLanguageCodes = validateLabelForAllLanguages(fieldLabel, languages);
   const isDefaultOnly = invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
 
-  const messagePrefix = skipArticle ? "" : "The ";
   const messageField = FIELD_TO_LABEL_MAP[field] ? FIELD_TO_LABEL_MAP[field] : field;
-  const messageSuffix = isDefaultOnly ? " is missing" : " is missing for the following languages: ";
 
   const message = isDefaultOnly
-    ? `${messagePrefix}${messageField} in question ${String(questionIndex + 1)}${messageSuffix}`
-    : `${messagePrefix}${messageField} in question ${String(questionIndex + 1)}${messageSuffix} -fLang- ${invalidLanguageCodes.join()}`;
+    ? "environments.surveys.edit.survey_validation.question_field_missing"
+    : "environments.surveys.edit.survey_validation.question_field_missing-fLang-";
 
   if (invalidLanguageCodes.length) {
     return {
@@ -154,7 +153,9 @@ export const validateQuestionLabels = (
       input: fieldLabel,
       message,
       path: ["questions", questionIndex, field],
-      params: isDefaultOnly ? undefined : { invalidLanguageCodes },
+      params: isDefaultOnly
+        ? { field: messageField, questionIndex: questionIndex + 1, skipArticle }
+        : { field: messageField, questionIndex: questionIndex + 1, skipArticle, invalidLanguageCodes },
     };
   }
 
@@ -186,8 +187,9 @@ export const validateCardFieldsForAllLanguages = (
       return {
         code: "custom",
         input: fieldLabel,
-        message: `The ${field} in ${cardTypeLabel} is not present for the following languages: ${language.language.code}`,
+        message: "environments.surveys.edit.survey_validation.card_field_not_present_for_languages",
         path,
+        params: { field, cardTypeLabel, languageCode: language.language.code },
       };
     }
   }
@@ -195,13 +197,11 @@ export const validateCardFieldsForAllLanguages = (
   const invalidLanguageCodes = validateLabelForAllLanguages(fieldLabel, languages);
   const isDefaultOnly = invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
 
-  const messagePrefix = skipArticle ? "" : "The ";
   const messageField = FIELD_TO_LABEL_MAP[field] ? FIELD_TO_LABEL_MAP[field] : field;
-  const messageSuffix = isDefaultOnly ? " is missing" : " is missing for the following languages: ";
 
   const message = isDefaultOnly
-    ? `${messagePrefix}${messageField} on the ${cardTypeLabel}${messageSuffix}`
-    : `${messagePrefix}${messageField} on the ${cardTypeLabel}${messageSuffix} -fLang- ${invalidLanguageCodes.join(", ")}`;
+    ? "environments.surveys.edit.survey_validation.card_field_missing"
+    : "environments.surveys.edit.survey_validation.card_field_missing-fLang-";
 
   if (invalidLanguageCodes.length) {
     return {
@@ -209,7 +209,9 @@ export const validateCardFieldsForAllLanguages = (
       input: fieldLabel,
       message,
       path,
-      params: isDefaultOnly ? undefined : { invalidLanguageCodes },
+      params: isDefaultOnly
+        ? { field: messageField, cardTypeLabel, skipArticle }
+        : { field: messageField, cardTypeLabel, skipArticle, invalidLanguageCodes },
     };
   }
 
