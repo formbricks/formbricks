@@ -5,7 +5,8 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ZId, ZOptionalNumber } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
+import { ZSegmentFilters } from "@formbricks/types/segment";
+import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurvey, TSurveyCreateInput, ZSurvey, ZSurveyCreateInput } from "@formbricks/types/surveys/types";
 import {
   getOrganizationByEnvironmentId,
@@ -558,22 +559,7 @@ export const updateSurveyInternal = async (
       select: selectSurvey,
     });
 
-    let surveySegment: TSegment | null = null;
-    if (prismaSurvey.segment) {
-      surveySegment = {
-        ...prismaSurvey.segment,
-        surveys: prismaSurvey.segment.surveys.map((survey) => survey.id),
-      };
-    }
-
-    const modifiedSurvey: TSurvey = {
-      ...prismaSurvey, // Properties from prismaSurvey
-      displayPercentage: Number(prismaSurvey.displayPercentage) || null,
-      segment: surveySegment,
-      customHeadScriptsMode: prismaSurvey.customHeadScriptsMode,
-    };
-
-    return modifiedSurvey;
+    return transformPrismaSurvey<TSurvey>(prismaSurvey);
   } catch (error) {
     logger.error(error, "Error updating survey");
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -648,8 +634,8 @@ export const createSurvey = async (
     }
 
     // Validate and prepare blocks for persistence
-    if (data.blocks && data.blocks.length > 0) {
-      data.blocks = validateMediaAndPrepareBlocks(data.blocks);
+    if (Array.isArray(data.blocks) && data.blocks.length > 0) {
+      data.blocks = validateMediaAndPrepareBlocks(data.blocks as unknown as TSurveyBlock[]);
     }
 
     const survey = await prisma.survey.create({
@@ -773,21 +759,7 @@ export const loadNewSegmentInSurvey = async (surveyId: string, newSegmentId: str
       });
     }
 
-    let surveySegment: TSegment | null = null;
-    if (prismaSurvey.segment) {
-      surveySegment = {
-        ...prismaSurvey.segment,
-        surveys: prismaSurvey.segment.surveys.map((survey) => survey.id),
-      };
-    }
-
-    const modifiedSurvey = {
-      ...prismaSurvey,
-      segment: surveySegment,
-      customHeadScriptsMode: prismaSurvey.customHeadScriptsMode,
-    };
-
-    return modifiedSurvey as TSurvey;
+    return transformPrismaSurvey<TSurvey>(prismaSurvey);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);

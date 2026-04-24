@@ -1029,9 +1029,6 @@ importers:
       '@formbricks/config-typescript':
         specifier: workspace:*
         version: link:../config-typescript
-      '@formbricks/database':
-        specifier: workspace:*
-        version: link:../database
 
   packages/vite-plugins:
     devDependencies:

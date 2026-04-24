@@ -1,8 +1,12 @@
 import { TResponseData } from "@formbricks/types/responses";
-import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
-import { TSurveyQuestionChoice } from "@formbricks/types/surveys/types";
 import { MAX_OTHER_OPTION_LENGTH } from "@/lib/constants";
 import { getLocalizedValue } from "@/lib/i18n/utils";
+
+type TQuestionWithOtherOptionValidation = {
+  id: string;
+  type: string;
+  choices?: unknown[];
+};
 
 /**
  * Helper function to check if a string value is a valid "other" option
@@ -10,13 +14,19 @@ import { getLocalizedValue } from "@/lib/i18n/utils";
  */
 export const validateOtherOptionLength = (
   value: string,
-  choices: TSurveyQuestionChoice[],
+  choices: unknown[],
   questionId: string,
   language?: string
 ): string | undefined => {
   // Check if this is an "other" option (not in predefined choices)
   const matchingChoice = choices.find(
-    (choice) => getLocalizedValue(choice.label, language ?? "default") === value
+    (choice) =>
+      typeof choice === "object" &&
+      choice !== null &&
+      "label" in choice &&
+      typeof choice.label === "object" &&
+      choice.label !== null &&
+      getLocalizedValue(choice.label as Record<string, string>, language ?? "default") === value
   );
 
   // If this is an "other" option with value that's too long, reject the response
@@ -31,7 +41,7 @@ export const validateOtherOptionLengthForMultipleChoice = ({
   responseLanguage,
 }: {
   responseData?: TResponseData;
-  surveyQuestions: TSurveyElement[];
+  surveyQuestions: TQuestionWithOtherOptionValidation[];
   responseLanguage?: string;
 }): string | undefined => {
   if (!responseData) return undefined;
@@ -39,11 +49,9 @@ export const validateOtherOptionLengthForMultipleChoice = ({
     const question = surveyQuestions.find((q) => q.id === questionId);
     if (!question) continue;
 
-    const isMultiChoice =
-      question.type === TSurveyElementTypeEnum.MultipleChoiceMulti ||
-      question.type === TSurveyElementTypeEnum.MultipleChoiceSingle;
+    const isMultiChoice = question.type === "multipleChoiceMulti" || question.type === "multipleChoiceSingle";
 
-    if (!isMultiChoice) continue;
+    if (!isMultiChoice || !question.choices) continue;
 
     const error = validateAnswer(answer, question.choices, questionId, responseLanguage);
     if (error) return error;
@@ -54,7 +62,7 @@ export const validateOtherOptionLengthForMultipleChoice = ({
 
 function validateAnswer(
   answer: unknown,
-  choices: TSurveyQuestionChoice[],
+  choices: unknown[],
   questionId: string,
   language?: string
 ): string | undefined {
