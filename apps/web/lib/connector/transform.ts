@@ -101,7 +101,7 @@ export function transformResponseToFeedbackRecords(
     const feedbackRecord = {
       collected_at:
         response.createdAt instanceof Date ? response.createdAt.toISOString() : String(response.createdAt),
-      source_type: "formbricks",
+      source_type: "formbricks_survey",
       submission_id: response.id,
       tenant_id: tenantId,
       field_id: mapping.elementId,

@@ -108,7 +108,7 @@ const resolveFormbricksMappingsInput = async (
   const allMappings = await Promise.all(
     entries.map(({ surveyId, elementIds }) => resolveSurveyMappings(surveyId, elementIds))
   );
-  return { type: "formbricks", mappings: allMappings.flat() };
+  return { type: "formbricks_survey", mappings: allMappings.flat() };
 };
 
 const ZFormbricksSurveyMapping = z.object({
@@ -124,7 +124,7 @@ const ZCreateConnectorWithMappingsAction = z
     fieldMappings: z.array(ZConnectorFieldMappingCreateInput).optional(),
   })
   .superRefine((data, ctx) => {
-    if (data.connectorInput.type === "formbricks") {
+    if (data.connectorInput.type === "formbricks_survey") {
       if (!data.formbricksMappings?.length) {
         ctx.addIssue({
           code: "custom",
@@ -298,9 +298,9 @@ export const duplicateConnectorAction = authenticatedActionClient
 
       let mappingsInput: TMappingsInput | undefined;
 
-      if (source.type === "formbricks" && source.formbricksMappings.length > 0) {
+      if (source.type === "formbricks_survey" && source.formbricksMappings.length > 0) {
         mappingsInput = {
-          type: "formbricks",
+          type: "formbricks_survey",
           mappings: source.formbricksMappings.map((m) => ({
             surveyId: m.surveyId,
             elementId: m.elementId,

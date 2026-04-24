@@ -123,7 +123,7 @@ describe("transformResponseToFeedbackRecords", () => {
     const result = transformResponseToFeedbackRecords(mockResponse, mockSurvey, mappings);
     expect(result).toHaveLength(1);
     expect(result[0]).toMatchObject({
-      source_type: "formbricks",
+      source_type: "formbricks_survey",
       field_id: "el-text",
       field_type: "text",
       field_label: "How can we improve?",

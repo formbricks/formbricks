@@ -47,7 +47,7 @@ const mockConnector = {
   createdAt: NOW,
   updatedAt: NOW,
   name: "Test Connector",
-  type: "formbricks" as const,
+  type: "formbricks_survey" as const,
   status: "active" as const,
   workspaceId: ENV_ID,
   lastSyncAt: null,
@@ -144,7 +144,7 @@ describe("getConnectorsBySurveyId", () => {
     expect(prisma.connector.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: {
-          type: "formbricks",
+          type: "formbricks_survey",
           status: "active",
           formbricksMappings: { some: { surveyId: SURVEY_ID } },
         },
@@ -303,13 +303,18 @@ describe("createConnectorWithMappings", () => {
 
     const result = await createConnectorWithMappings(ENV_ID, {
       name: "New",
-      type: "formbricks",
+      type: "formbricks_survey",
       feedbackRecordDirectoryId: FRD_ID,
     });
 
     expect(tx.connector.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: { name: "New", type: "formbricks", workspaceId: ENV_ID, feedbackRecordDirectoryId: FRD_ID },
+        data: {
+          name: "New",
+          type: "formbricks_survey",
+          workspaceId: ENV_ID,
+          feedbackRecordDirectoryId: FRD_ID,
+        },
       })
     );
     expect(tx.connectorFormbricksMapping.create).not.toHaveBeenCalled();
@@ -325,9 +330,9 @@ describe("createConnectorWithMappings", () => {
 
     await createConnectorWithMappings(
       ENV_ID,
-      { name: "FB", type: "formbricks", feedbackRecordDirectoryId: FRD_ID },
+      { name: "FB", type: "formbricks_survey", feedbackRecordDirectoryId: FRD_ID },
       {
-        type: "formbricks",
+        type: "formbricks_survey",
         mappings: [
           { surveyId: SURVEY_ID, elementId: "el-1", hubFieldType: "text" },
           { surveyId: SURVEY_ID, elementId: "el-2", hubFieldType: "nps" },
@@ -392,7 +397,7 @@ describe("createConnectorWithMappings", () => {
     await expect(
       createConnectorWithMappings(ENV_ID, {
         name: "Dup",
-        type: "formbricks",
+        type: "formbricks_survey",
         feedbackRecordDirectoryId: FRD_ID,
       })
     ).rejects.toThrow(InvalidInputError);
@@ -470,7 +475,7 @@ describe("updateConnectorWithMappings", () => {
       ENV_ID,
       { name: "Updated" },
       {
-        type: "formbricks",
+        type: "formbricks_survey",
         mappings: [{ surveyId: SURVEY_ID, elementId: "el-new", hubFieldType: "nps" }],
       }
     );

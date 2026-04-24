@@ -37,7 +37,7 @@ export const importHistoricalResponses = async (
   connector: TConnectorWithMappings,
   survey: TSurvey
 ): Promise<TImportResult> => {
-  if (connector.type !== "formbricks") {
+  if (connector.type !== "formbricks_survey") {
     throw new InvalidInputError("Historical import is only supported for Formbricks connectors");
   }
 

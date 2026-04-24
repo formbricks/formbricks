@@ -2,7 +2,7 @@ import { z } from "zod";
 import { TSurveyElementTypeEnum } from "./surveys/constants";
 
 // Connector type enum
-export const ZConnectorType = z.enum(["formbricks", "csv"]);
+export const ZConnectorType = z.enum(["formbricks_survey", "csv"]);
 export type TConnectorType = z.infer<typeof ZConnectorType>;
 
 // Connector status enum
