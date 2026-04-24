@@ -2,7 +2,10 @@ import { TOrganizationRole } from "@formbricks/types/memberships";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { getTranslate } from "@/lingodotdev/server";
 import { FeedbackRecordDirectoryTable } from "@/modules/ee/feedback-record-directory/components/feedback-record-directory-table";
-import { getFeedbackRecordDirectories } from "@/modules/ee/feedback-record-directory/lib/feedback-record-directory";
+import {
+  getFeedbackRecordDirectories,
+  getWorkspaceFeedbackRecordDirectoryAccess,
+} from "@/modules/ee/feedback-record-directory/lib/feedback-record-directory";
 import { getWorkspacesByOrganizationId } from "@/modules/ee/teams/team-list/lib/workspace";
 
 interface FeedbackRecordDirectoryViewProps {
@@ -16,9 +19,10 @@ export const FeedbackRecordDirectoryView = async ({
 }: FeedbackRecordDirectoryViewProps) => {
   const t = await getTranslate();
 
-  const [directories, orgWorkspaces] = await Promise.all([
+  const [directories, orgWorkspaces, workspaceAccessByWorkspace] = await Promise.all([
     getFeedbackRecordDirectories(organizationId),
     getWorkspacesByOrganizationId(organizationId),
+    getWorkspaceFeedbackRecordDirectoryAccess(organizationId),
   ]);
 
   return (
@@ -29,6 +33,7 @@ export const FeedbackRecordDirectoryView = async ({
         directories={directories}
         organizationId={organizationId}
         orgWorkspaces={orgWorkspaces}
+        workspaceAccessByWorkspace={workspaceAccessByWorkspace}
         membershipRole={membershipRole}
       />
     </SettingsCard>

@@ -15,6 +15,7 @@ import { FeedbackRecordDirectorySettingsModal } from "@/modules/ee/feedback-reco
 import {
   TFeedbackRecordDirectory,
   TFeedbackRecordDirectoryDetails,
+  TWorkspaceFeedbackRecordDirectoryAccess,
   getTranslatedFeedbackRecordDirectoryError,
 } from "@/modules/ee/feedback-record-directory/types/feedback-record-directory";
 import { TOrganizationWorkspace } from "@/modules/ee/teams/team-list/types/workspace";
@@ -27,6 +28,7 @@ interface FeedbackRecordDirectoryTableProps {
   directories: TFeedbackRecordDirectory[];
   organizationId: string;
   orgWorkspaces: TOrganizationWorkspace[];
+  workspaceAccessByWorkspace: TWorkspaceFeedbackRecordDirectoryAccess[];
   membershipRole: TOrganizationRole;
 }
 
@@ -34,8 +36,9 @@ export const FeedbackRecordDirectoryTable = ({
   directories,
   organizationId,
   orgWorkspaces,
+  workspaceAccessByWorkspace,
   membershipRole,
-}: FeedbackRecordDirectoryTableProps) => {
+}: Readonly<FeedbackRecordDirectoryTableProps>) => {
   const { t } = useTranslation();
   const [openCreateModal, setOpenCreateModal] = useState(false);
   const [openSettingsModal, setOpenSettingsModal] = useState(false);
@@ -67,6 +70,27 @@ export const FeedbackRecordDirectoryTable = ({
   const handleUnarchiveDirectory = async (directoryId: string) => {
     setLoadingDirectoryId(directoryId);
     try {
+      const directoryDetailsResponse = await getFeedbackRecordDirectoryDetailsAction({ directoryId });
+      if (!directoryDetailsResponse?.data) {
+        const errorCode = getFormattedErrorMessage(directoryDetailsResponse);
+        toast.error(getTranslatedFeedbackRecordDirectoryError(errorCode, t));
+        return;
+      }
+
+      const workspaceAccessMap = new Map(
+        workspaceAccessByWorkspace.map((assignment) => [assignment.workspaceId, assignment])
+      );
+
+      const hasConflicts = directoryDetailsResponse.data.workspaces.some((workspace) => {
+        const assignment = workspaceAccessMap.get(workspace.workspaceId);
+        return assignment && assignment.feedbackRecordDirectoryId !== directoryId;
+      });
+
+      if (hasConflicts) {
+        toast.error(t("workspace.settings.feedback_record_directories.unarchive_workspace_conflict"));
+        return;
+      }
+
       const response = await updateFeedbackRecordDirectoryAction({
         directoryId,
         data: { isArchived: false },
@@ -166,6 +190,7 @@ export const FeedbackRecordDirectoryTable = ({
           setOpen={setOpenCreateModal}
           organizationId={organizationId}
           orgWorkspaces={orgWorkspaces}
+          workspaceAccessByWorkspace={workspaceAccessByWorkspace}
           membershipRole={membershipRole}
         />
       )}
@@ -177,6 +202,7 @@ export const FeedbackRecordDirectoryTable = ({
           directory={selectedDirectory}
           organizationId={organizationId}
           orgWorkspaces={orgWorkspaces}
+          workspaceAccessByWorkspace={workspaceAccessByWorkspace}
           membershipRole={membershipRole}
         />
       )}
