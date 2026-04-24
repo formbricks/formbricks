@@ -17,7 +17,7 @@ vi.mock("./provider", () => ({
 describe("packages/ai text helpers", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.getAiModel.mockReturnValue({ providerName: "gcp", modelName: "gemini-2.5-flash" });
+    mocks.getAiModel.mockReturnValue({ providerName: "google", modelName: "gemini-2.5-flash" });
     mocks.generateText.mockResolvedValue({
       text: "translated text",
     });
@@ -25,7 +25,7 @@ describe("packages/ai text helpers", () => {
 
   test("uses the configured provider model automatically when generating text", async () => {
     const environment = {
-      AI_PROVIDER: "gcp",
+      AI_PROVIDER: "google",
       AI_MODEL: "gemini-2.5-flash",
     };
 
@@ -41,7 +41,7 @@ describe("packages/ai text helpers", () => {
     expect(mocks.generateText).toHaveBeenCalledWith({
       system: "Translate text.",
       prompt: "Hello world",
-      model: { providerName: "gcp", modelName: "gemini-2.5-flash" },
+      model: { providerName: "google", modelName: "gemini-2.5-flash" },
     });
     expect(result).toEqual({
       text: "translated text",
