@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
+import { Badge } from "@/modules/ui/components/badge";
 import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 
 interface UnifyConfigNavigationProps {
@@ -17,14 +18,23 @@ export const UnifyConfigNavigation = ({
   const { t } = useTranslation();
   const baseHref = `/workspaces/${workspaceId}/unify`;
 
-  const activeId = activeIdProp ?? "sources";
+  const activeId = activeIdProp ?? "feedback-records";
 
   const navigation = [
-    { id: "sources", label: t("workspace.unify.sources"), href: `${baseHref}/sources` },
     {
       id: "feedback-records",
       label: t("workspace.unify.feedback_records"),
       href: `${baseHref}/feedback-records`,
+    },
+    {
+      id: "topics-subtopics",
+      label: (
+        <span className="inline-flex items-center gap-2">
+          {t("workspace.unify.topics_and_subtopics")}
+          <Badge text={t("common.soon")} type="gray" size="tiny" />
+        </span>
+      ),
+      disabled: true,
     },
   ];
 
