@@ -35,6 +35,12 @@ export const ZFeedbackRecordDirectoryDetails = z.object({
 
 export type TFeedbackRecordDirectoryDetails = z.infer<typeof ZFeedbackRecordDirectoryDetails>;
 
+export interface TWorkspaceFeedbackRecordDirectoryAccess {
+  workspaceId: string;
+  feedbackRecordDirectoryId: string;
+  feedbackRecordDirectoryName: string;
+}
+
 export const ZFeedbackRecordDirectoryCreateInput = z.object({
   name: z.string().trim().min(1, "DIRECTORY_NAME_REQUIRED"),
   workspaceIds: z.array(ZId).optional(),
