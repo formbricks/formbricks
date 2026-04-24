@@ -172,65 +172,8 @@ export const EditAPIKeys = ({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border border-slate-200">
-        <div className="grid h-12 grid-cols-10 content-center rounded-t-lg bg-slate-100 px-6 text-left text-sm font-semibold text-slate-900">
-          <div className="col-span-4 sm:col-span-2">{t("common.label")}</div>
-          <div className="col-span-4 hidden sm:col-span-5 sm:block">{t("workspace.api_keys.api_key")}</div>
-          <div className="col-span-4 sm:col-span-2">{t("common.created_at")}</div>
-          <div></div>
-        </div>
-        <div className="grid-cols-9">
-          {apiKeysLocal?.length === 0 ? (
-            <div className="flex h-12 items-center justify-center whitespace-nowrap px-6 text-sm font-medium text-slate-400">
-              {t("workspace.api_keys.no_api_keys_yet")}
-            </div>
-          ) : (
-            apiKeysLocal?.map((apiKey) => (
-              <div
-                role="button"
-                className="grid h-12 w-full grid-cols-10 content-center items-center rounded-lg px-6 text-left text-sm text-slate-900 hover:bg-slate-50 focus:bg-slate-50 focus:outline-none"
-                onClick={() => {
-                  setActiveKey(apiKey);
-                  setViewPermissionsOpen(true);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    setActiveKey(apiKey);
-                    setViewPermissionsOpen(true);
-                  }
-                }}
-                tabIndex={0}
-                data-testid="api-key-row"
-                key={apiKey.id}>
-                <div className="col-span-4 font-semibold sm:col-span-2">{apiKey.label}</div>
-                <div className="col-span-4 hidden pr-4 sm:col-span-5 sm:block">
-                  <ApiKeyDisplay apiKey={apiKey.actualKey ?? ""} />
-                </div>
-                <div className="col-span-4 sm:col-span-2">
-                  {timeSince(apiKey.createdAt.toString(), locale)}
-                </div>
-                {!isReadOnly && (
-                  <div className="col-span-1 text-center">
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      onClick={(e) => {
-                        handleOpenDeleteKeyModal(e, apiKey);
-                        e.stopPropagation();
-                      }}>
-                      <TrashIcon />
-                    </Button>
-                  </div>
-                )}
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-
       {!isReadOnly && (
-        <div>
+        <div className="absolute right-4 top-4">
           <Button
             size="sm"
             onClick={() => {
@@ -240,6 +183,65 @@ export const EditAPIKeys = ({
           </Button>
         </div>
       )}
+
+      <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="grid h-12 grid-cols-10 content-center border-b border-slate-200 px-6 text-left text-sm font-semibold text-slate-900">
+          <div className="col-span-4 sm:col-span-2">{t("common.label")}</div>
+          <div className="col-span-4 hidden sm:col-span-5 sm:block">{t("workspace.api_keys.api_key")}</div>
+          <div className="col-span-4 sm:col-span-2">{t("common.created_at")}</div>
+          <div></div>
+        </div>
+        <div>
+          {apiKeysLocal?.length === 0 ? (
+            <div className="flex h-12 items-center justify-center whitespace-nowrap px-6 text-sm text-slate-400">
+              {t("workspace.api_keys.no_api_keys_yet")}
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {apiKeysLocal?.map((apiKey) => (
+                <div
+                  role="button"
+                  className="grid h-12 w-full grid-cols-10 content-center items-center px-6 text-left text-sm text-slate-900 transition-colors hover:bg-slate-50 focus:bg-slate-50 focus:outline-none"
+                  onClick={() => {
+                    setActiveKey(apiKey);
+                    setViewPermissionsOpen(true);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setActiveKey(apiKey);
+                      setViewPermissionsOpen(true);
+                    }
+                  }}
+                  tabIndex={0}
+                  data-testid="api-key-row"
+                  key={apiKey.id}>
+                  <div className="col-span-4 font-semibold sm:col-span-2">{apiKey.label}</div>
+                  <div className="col-span-4 hidden pr-4 sm:col-span-5 sm:block">
+                    <ApiKeyDisplay apiKey={apiKey.actualKey ?? ""} />
+                  </div>
+                  <div className="col-span-4 sm:col-span-2">
+                    {timeSince(apiKey.createdAt.toString(), locale)}
+                  </div>
+                  {!isReadOnly && (
+                    <div className="col-span-1 text-center">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={(e) => {
+                          handleOpenDeleteKeyModal(e, apiKey);
+                          e.stopPropagation();
+                        }}>
+                        <TrashIcon />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
       <AddApiKeyModal
         open={isAddAPIKeyModalOpen}
         setOpen={setIsAddAPIKeyModalOpen}
