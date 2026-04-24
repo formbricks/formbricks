@@ -12,7 +12,7 @@ import {
   ZConnectorUpdateInput,
   getHubFieldTypeFromElementType,
 } from "@formbricks/types/connector";
-import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { AuthorizationError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
@@ -86,20 +86,24 @@ const resolveSurveyMappings = async (
   const elements = getElementsFromBlocks(survey.blocks);
   const elementMap = new Map(elements.map((el) => [el.id, el]));
 
-  return elementIds
-    .filter((elementId) => {
-      if (elementMap.has(elementId)) return true;
+  return elementIds.flatMap((elementId) => {
+    const element = elementMap.get(elementId);
+    if (!element) {
       logger.warn({ surveyId, elementId }, "Skipping unknown elementId when building connector mappings");
-      return false;
-    })
-    .map((elementId) => {
-      const element = elementMap.get(elementId)!;
-      return {
-        surveyId,
-        elementId,
-        hubFieldType: getHubFieldTypeFromElementType(element.type),
-      };
-    });
+      return [];
+    }
+
+    const hubFieldType = getHubFieldTypeFromElementType(element.type);
+    if (!hubFieldType) {
+      logger.warn(
+        { surveyId, elementId, elementType: element.type },
+        "Skipping unmappable element type when building connector mappings"
+      );
+      return [];
+    }
+
+    return [{ surveyId, elementId, hubFieldType }];
+  });
 };
 
 const resolveFormbricksMappingsInput = async (
@@ -108,7 +112,12 @@ const resolveFormbricksMappingsInput = async (
   const allMappings = await Promise.all(
     entries.map(({ surveyId, elementIds }) => resolveSurveyMappings(surveyId, elementIds))
   );
-  return { type: "formbricks_survey", mappings: allMappings.flat() };
+  const flattenedMappings = allMappings.flat();
+  if (flattenedMappings.length === 0) {
+    throw new InvalidInputError("No supported survey questions selected for connector mapping");
+  }
+
+  return { type: "formbricks_survey", mappings: flattenedMappings };
 };
 
 const ZFormbricksSurveyMapping = z.object({
