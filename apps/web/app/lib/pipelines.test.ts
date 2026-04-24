@@ -1,10 +1,9 @@
 import { PipelineTriggers } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { getBackgroundJobProducer } from "@formbricks/jobs";
+import { TResponsePipelineJobData, getBackgroundJobProducer } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
 import { TResponse } from "@formbricks/types/responses";
 import { sendToPipeline } from "@/app/lib/pipelines";
-import { TPipelineInput } from "@/app/lib/types/pipelines";
 import { getJobsQueueingConfig } from "@/lib/jobs/config";
 
 const mockEnqueueResponsePipeline = vi.fn();
@@ -26,7 +25,7 @@ vi.mock("@formbricks/logger", () => ({
 }));
 
 describe("sendToPipeline", () => {
-  const testData: TPipelineInput = {
+  const testData: TResponsePipelineJobData = {
     event: PipelineTriggers.responseCreated,
     surveyId: "cm8ckvchx000008lb710n0gdn",
     workspaceId: "cm8cmp9hp000008jf7l570ml2",
@@ -77,7 +76,9 @@ describe("sendToPipeline", () => {
       redisUrl: null,
     });
 
-    await expect(sendToPipeline(testData)).rejects.toThrow("BullMQ response pipeline queueing is not enabled");
+    await expect(sendToPipeline(testData)).rejects.toThrow(
+      "BullMQ response pipeline queueing is not enabled"
+    );
     expect(getBackgroundJobProducer).not.toHaveBeenCalled();
   });
 });

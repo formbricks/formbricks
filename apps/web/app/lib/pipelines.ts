@@ -1,9 +1,8 @@
-import { getBackgroundJobProducer } from "@formbricks/jobs";
+import { TResponsePipelineJobData, getBackgroundJobProducer } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
-import { TPipelineInput } from "@/app/lib/types/pipelines";
 import { getJobsQueueingConfig } from "@/lib/jobs/config";
 
-export const sendToPipeline = async (job: TPipelineInput): Promise<void> => {
+export const sendToPipeline = async (job: TResponsePipelineJobData): Promise<void> => {
   try {
     const jobsQueueingConfig = getJobsQueueingConfig();
     if (!jobsQueueingConfig.enabled) {
