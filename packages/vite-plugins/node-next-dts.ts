@@ -1,13 +1,12 @@
-const RELATIVE_DTS_SPECIFIER = /((?:from|import)\s*["'])(\.\.?(?:\/[^"'()]+)+)(["'])/g;
-const DYNAMIC_IMPORT_DTS_SPECIFIER = /(import\(\s*["'])(\.\.?(?:\/[^"'()]+)+)(["']\s*\))/g;
+const RELATIVE_DTS_SPECIFIER = /((?:from|import)\s*["'])(\.\.?(?:\/[^\/"'()?#]+)+)((?:[?#][^"'()]*)?)(["'])/g;
+const DYNAMIC_IMPORT_DTS_SPECIFIER =
+  /(import\(\s*["'])(\.\.?(?:\/[^\/"'()?#]+)+)((?:[?#][^"'()]*)?)(["']\s*\))/g;
 
 const HAS_EXTENSION = /\.[a-z0-9]+$/i;
 
-const toNodeNextSpecifier = (specifier: string): string => {
-  const [pathPart, suffix = ""] = specifier.split(/([?#].*)/, 2);
-
+const toNodeNextSpecifier = (pathPart: string, suffix = ""): string => {
   if (!pathPart || HAS_EXTENSION.test(pathPart)) {
-    return specifier;
+    return `${pathPart}${suffix}`;
   }
 
   return `${pathPart}.js${suffix}`;
@@ -22,11 +21,11 @@ export const rewriteNodeNextDtsSpecifiers = (
   }
 
   const rewrittenContent = content
-    .replace(RELATIVE_DTS_SPECIFIER, (_, prefix, specifier, suffix) => {
-      return `${prefix}${toNodeNextSpecifier(specifier)}${suffix}`;
+    .replace(RELATIVE_DTS_SPECIFIER, (_, prefix, pathPart, suffix, quote) => {
+      return `${prefix}${toNodeNextSpecifier(pathPart, suffix)}${quote}`;
     })
-    .replace(DYNAMIC_IMPORT_DTS_SPECIFIER, (_, prefix, specifier, suffix) => {
-      return `${prefix}${toNodeNextSpecifier(specifier)}${suffix}`;
+    .replace(DYNAMIC_IMPORT_DTS_SPECIFIER, (_, prefix, pathPart, suffix, quote) => {
+      return `${prefix}${toNodeNextSpecifier(pathPart, suffix)}${quote}`;
     });
 
   return { filePath, content: rewrittenContent };
