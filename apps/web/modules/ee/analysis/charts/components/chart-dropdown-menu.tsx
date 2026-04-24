@@ -1,12 +1,14 @@
 "use client";
 
-import { CopyIcon, MoreVertical, SquarePenIcon, TrashIcon } from "lucide-react";
+import { CopyIcon, MoreVertical, PlusIcon, SquarePenIcon, TrashIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { deleteChartAction, duplicateChartAction } from "@/modules/ee/analysis/charts/actions";
+import { AddToDashboardDialog } from "@/modules/ee/analysis/charts/components/add-to-dashboard-dialog";
+import { addChartToDashboardAction, getDashboardsAction } from "@/modules/ee/analysis/dashboards/actions";
 import type { TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
@@ -31,6 +33,36 @@ export function ChartDropdownMenu({ workspaceId, chart, onEdit }: Readonly<Chart
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState(false);
   const [isDropDownOpen, setIsDropDownOpen] = useState(false);
+  const [isAddToDashboardDialogOpen, setIsAddToDashboardDialogOpen] = useState(false);
+  const [isAddingToDashboard, setIsAddingToDashboard] = useState(false);
+  const [dashboards, setDashboards] = useState<Array<{ id: string; name: string }>>([]);
+  const [selectedDashboardId, setSelectedDashboardId] = useState<string>();
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!isAddToDashboardDialogOpen) {
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    void getDashboardsAction({ workspaceId }).then((result) => {
+      if (cancelled) {
+        return;
+      }
+
+      if (result?.data) {
+        setDashboards(result.data.map((dashboard) => ({ id: dashboard.id, name: dashboard.name })));
+      } else {
+        toast.error(getFormattedErrorMessage(result));
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isAddToDashboardDialogOpen, workspaceId]);
 
   const handleDeleteChart = async () => {
     setIsDeleting(true);
@@ -70,6 +102,37 @@ export function ChartDropdownMenu({ workspaceId, chart, onEdit }: Readonly<Chart
     }
   };
 
+  const handleAddChartToDashboard = async () => {
+    if (!selectedDashboardId) {
+      toast.error(t("workspace.analysis.charts.please_select_dashboard"));
+      return;
+    }
+
+    setIsAddingToDashboard(true);
+
+    try {
+      const result = await addChartToDashboardAction({
+        workspaceId,
+        chartId: chart.id,
+        dashboardId: selectedDashboardId,
+      });
+
+      if (!result?.data) {
+        toast.error(
+          getFormattedErrorMessage(result) || t("workspace.analysis.charts.failed_to_add_chart_to_dashboard")
+        );
+        return;
+      }
+
+      toast.success(t("workspace.analysis.charts.chart_added_to_dashboard"));
+      setIsAddToDashboardDialogOpen(false);
+      setSelectedDashboardId(undefined);
+      router.refresh();
+    } finally {
+      setIsAddingToDashboard(false);
+    }
+  };
+
   return (
     <div id={`chart-${chart.id}-actions`} data-testid="chart-dropdown-menu">
       <DropdownMenu open={isDropDownOpen} onOpenChange={setIsDropDownOpen}>
@@ -103,6 +166,15 @@ export function ChartDropdownMenu({ workspaceId, chart, onEdit }: Readonly<Chart
             </DropdownMenuItem>
 
             <DropdownMenuItem
+              icon={<PlusIcon className="size-4" />}
+              onClick={() => {
+                setIsDropDownOpen(false);
+                setIsAddToDashboardDialogOpen(true);
+              }}>
+              {t("workspace.analysis.charts.add_to_dashboard")}
+            </DropdownMenuItem>
+
+            <DropdownMenuItem
               icon={<TrashIcon className="size-4" />}
               onClick={() => {
                 setIsDropDownOpen(false);
@@ -122,6 +194,23 @@ export function ChartDropdownMenu({ workspaceId, chart, onEdit }: Readonly<Chart
         onDelete={handleDeleteChart}
         text={t("workspace.analysis.charts.delete_chart_confirmation")}
         isDeleting={isDeleting}
+      />
+      <AddToDashboardDialog
+        isOpen={isAddToDashboardDialogOpen}
+        onOpenChange={(open) => {
+          setIsAddToDashboardDialogOpen(open);
+          if (!open) {
+            setSelectedDashboardId(undefined);
+          }
+        }}
+        chartName={chart.name}
+        onChartNameChange={() => {}}
+        dashboards={dashboards}
+        selectedDashboardId={selectedDashboardId}
+        onDashboardSelect={setSelectedDashboardId}
+        onConfirm={handleAddChartToDashboard}
+        isSaving={isAddingToDashboard}
+        showChartNameField={false}
       />
     </div>
   );

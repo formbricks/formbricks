@@ -9,6 +9,7 @@ import { Button, type ButtonProps } from "@/modules/ui/components/button";
 interface CreateChartButtonProps {
   workspaceId: string;
   directories: { id: string; name: string }[];
+  autoAddToDashboardId?: string;
   label?: string;
   onSuccess?: () => void;
   showIcon?: boolean;
@@ -18,6 +19,7 @@ interface CreateChartButtonProps {
 export function CreateChartButton({
   workspaceId,
   directories,
+  autoAddToDashboardId,
   label,
   onSuccess,
   showIcon = true,
@@ -36,6 +38,7 @@ export function CreateChartButton({
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         workspaceId={workspaceId}
+        autoAddToDashboardId={autoAddToDashboardId}
         directories={directories}
         onSuccess={onSuccess}
       />
