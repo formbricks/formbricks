@@ -247,7 +247,17 @@ export const SurveyMenuBar = ({
           toast.error(`${translatedMessage} ${invalidLanguageLabels.join(", ")}`);
           setActiveId("language");
         } else {
-          toast.error(t(firstError.message, firstError.params as Record<string, unknown>), {
+          // Resolve languageCode to human-readable label if present
+          const rawParams = (firstError.params as Record<string, unknown>) ?? {};
+          const resolvedParams = rawParams.languageCode
+            ? {
+                ...rawParams,
+                languageCode:
+                  getLanguageLabel(rawParams.languageCode as string, locale) ?? rawParams.languageCode,
+              }
+            : rawParams;
+
+          toast.error(t(firstError.message, resolvedParams), {
             className: "w-fit !max-w-md",
           });
         }
