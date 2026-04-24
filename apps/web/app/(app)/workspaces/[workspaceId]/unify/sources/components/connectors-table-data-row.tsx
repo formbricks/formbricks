@@ -1,9 +1,9 @@
 "use client";
 
-import { FileSpreadsheetIcon, FormIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { TConnectorStatus, TConnectorType, TConnectorWithMappings } from "@formbricks/types/connector";
 import { Badge } from "@/modules/ui/components/badge";
+import { getConnectorIcon, getConnectorTypeLabelKey } from "./connector-display";
 import { ConnectorRowDropdown } from "./connector-row-dropdown";
 
 const RELATIVE_TIME_DIVISIONS: { amount: number; unit: Intl.RelativeTimeFormatUnit }[] = [
@@ -39,17 +39,6 @@ interface ConnectorsTableDataRowProps {
   onDelete: () => Promise<void>;
 }
 
-function getConnectorIcon(type: TConnectorType) {
-  switch (type) {
-    case "formbricks":
-      return <FormIcon className="h-4 w-4 text-slate-500" />;
-    case "csv":
-      return <FileSpreadsheetIcon className="h-4 w-4 text-slate-500" />;
-    default:
-      return <FormIcon className="h-4 w-4 text-slate-500" />;
-  }
-}
-
 const STATUS_BADGE_TYPE: Record<TConnectorStatus, "success" | "warning" | "error"> = {
   active: "success",
   paused: "warning",
@@ -63,28 +52,28 @@ export function ConnectorsTableDataRow({
   onDuplicate,
   onToggleStatus,
   onDelete,
-}: ConnectorsTableDataRowProps) {
+}: Readonly<ConnectorsTableDataRowProps>) {
   const { t, i18n } = useTranslation();
+  const handleRowClick = () => {
+    if (connector.type === "csv" && onCsvImport) {
+      onCsvImport();
+      return;
+    }
 
-  const getStatusLabel = (s: TConnectorStatus) => {
+    onEdit();
+  };
+
+  const getStatusLabel = (s: TConnectorStatus, connectorType: TConnectorType) => {
     switch (s) {
       case "active":
-        return t("workspace.unify.status_active");
+        if (connectorType === "csv") {
+          return t("workspace.unify.status_ready");
+        }
+        return t("workspace.unify.status_live_sync");
       case "paused":
         return t("workspace.unify.status_paused");
       case "error":
         return t("workspace.unify.status_error");
-    }
-  };
-
-  const getConnectorTypeLabel = (connectorType: TConnectorType) => {
-    switch (connectorType) {
-      case "formbricks":
-        return t("workspace.unify.formbricks_surveys");
-      case "csv":
-        return t("workspace.unify.csv_import");
-      default:
-        return connectorType;
     }
   };
 
@@ -93,27 +82,26 @@ export function ConnectorsTableDataRow({
       role="button"
       tabIndex={0}
       className="grid h-12 min-h-12 cursor-pointer grid-cols-12 content-center p-2 text-left transition-colors ease-in-out hover:bg-slate-50"
-      onClick={onEdit}
+      onClick={handleRowClick}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
-          onEdit();
+          handleRowClick();
         }
       }}>
-      <div className="col-span-1 flex items-center gap-2 pl-4" title={getConnectorTypeLabel(connector.type)}>
-        {getConnectorIcon(connector.type)}
+      <div
+        className="col-span-1 flex items-center gap-2 pl-4"
+        title={t(getConnectorTypeLabelKey(connector.type))}>
+        {getConnectorIcon(connector.type, "h-4 w-4 text-slate-500")}
       </div>
-      <div className="col-span-3 flex items-center">
+      <div className="col-span-5 flex items-center">
         <span className="truncate text-sm font-medium text-slate-900">{connector.name}</span>
       </div>
       <div className="col-span-1 hidden items-center justify-center sm:flex">
         <Badge
-          text={getStatusLabel(connector.status)}
+          text={getStatusLabel(connector.status, connector.type)}
           type={STATUS_BADGE_TYPE[connector.status]}
           size="tiny"
         />
-      </div>
-      <div className="col-span-2 hidden items-center justify-center text-sm text-slate-500 sm:flex">
-        {getRelativeTime(connector.createdAt, i18n.language)}
       </div>
       <div className="col-span-2 hidden items-center justify-center text-sm text-slate-500 sm:flex">
         {getRelativeTime(connector.updatedAt, i18n.language)}

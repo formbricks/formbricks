@@ -1,9 +1,13 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2Icon, PlusIcon } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { z } from "zod";
 import { TConnectorType, UNSUPPORTED_CONNECTOR_ELEMENT_TYPES } from "@formbricks/types/connector";
 import {
   getResponseCountAction,
@@ -21,8 +25,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
+import {
+  FormControl,
+  FormError,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormProvider,
+} from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
-import { Label } from "@/modules/ui/components/label";
 import {
   Select,
   SelectContent,
@@ -30,17 +41,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
+import { Switch } from "@/modules/ui/components/switch";
+import { TCreateConnectorStep, TFieldMapping, TSourceField, TUnifySurvey } from "../types";
 import {
-  FEEDBACK_RECORD_FIELDS,
-  TCreateConnectorStep,
-  TFieldMapping,
-  TSourceField,
-  TUnifySurvey,
-} from "../types";
-import { TEnumValidationError, parseCSVColumnsToFields, validateEnumMappings } from "../utils";
+  TConnectorOptionId,
+  TEnumValidationError,
+  parseCSVColumnsToFields,
+  validateEnumMappings,
+} from "../utils";
+import { areAllRequiredFieldsMapped, isConnectorNameValid } from "./connector-form-utils";
 import { ConnectorTypeSelector } from "./connector-type-selector";
 import { CsvConnectorUI } from "./csv-connector-ui";
-import { FormbricksSurveySelector } from "./formbricks-survey-selector";
+import { FormbricksQuestionList } from "./formbricks-question-list";
 
 interface CreateConnectorModalProps {
   open: boolean;
@@ -59,101 +71,47 @@ interface CreateConnectorModalProps {
 
 const getDialogTitle = (
   step: TCreateConnectorStep,
-  type: TConnectorType | null,
+  type: TConnectorOptionId | null,
   t: (key: string) => string
 ): string => {
   if (step === "selectType") return t("workspace.unify.add_feedback_source");
-  if (type === "formbricks") return t("workspace.unify.select_survey_and_questions");
+  if (type === "formbricks_survey") return t("workspace.unify.select_survey_and_questions");
   if (type === "csv") return t("workspace.unify.import_csv_data");
   return t("workspace.unify.configure_mapping");
 };
 
 const getDialogDescription = (
   step: TCreateConnectorStep,
-  type: TConnectorType | null,
+  type: TConnectorOptionId | null,
   t: (key: string) => string
 ): string => {
   if (step === "selectType") return t("workspace.unify.select_source_type_description");
-  if (type === "formbricks") return t("workspace.unify.select_survey_questions_description");
+  if (type === "formbricks_survey") return t("workspace.unify.select_survey_questions_description");
   if (type === "csv") return t("workspace.unify.upload_csv_data_description");
   return t("workspace.unify.configure_mapping");
 };
 
-const getNextStepButtonLabel = (type: TConnectorType | null, t: (key: string) => string): string => {
-  if (type === "formbricks") return t("workspace.unify.select_questions");
+const getNextStepButtonLabel = (type: TConnectorOptionId | null, t: (key: string) => string): string => {
+  if (type === "formbricks_survey") return t("workspace.unify.select_questions");
   if (type === "csv") return t("workspace.unify.configure_import");
+  if (type === "api_ingestion") return t("workspace.unify.api_ingestion_manage_api_keys");
+  if (type === "feedback_record_mcp") return t("common.learn_more");
   return t("workspace.unify.create_mapping");
 };
 
-const getCreateDisabled = (
-  type: TConnectorType | null,
-  isFormbricksValid: boolean,
-  isCsvValid: boolean,
-  allRequiredMapped: boolean
-): boolean => {
-  if (type === "formbricks") return !isFormbricksValid;
-  if (type === "csv") return !isCsvValid || !allRequiredMapped;
-  return !allRequiredMapped;
-};
+const ZFormbricksConnectorForm = z.object({
+  sourceName: z.string().trim().min(1),
+  surveyId: z.string().min(1),
+  selectedQuestionIds: z.array(z.string()).min(1),
+  importHistorical: z.boolean(),
+});
 
-interface AggregateImportSectionProps {
-  surveyEntries: {
-    surveyId: string;
-    surveyName: string;
-    responseCount: number;
-    elementCount: number;
-    importHistorical: boolean;
-  }[];
-  onImportHistoricalChange: (surveyId: string, checked: boolean) => void;
-  t: (key: string, options?: Record<string, unknown>) => string;
-}
+type TFormbricksConnectorForm = z.infer<typeof ZFormbricksConnectorForm>;
 
-const AggregateImportSection = ({
-  surveyEntries,
-  onImportHistoricalChange,
-  t,
-}: AggregateImportSectionProps) => {
-  const totalRecords = surveyEntries.reduce((sum, e) => sum + e.responseCount * e.elementCount, 0);
-  const checkedCount = surveyEntries.filter((e) => e.importHistorical).length;
-
-  const checkedTotal = surveyEntries
-    .filter((e) => e.importHistorical)
-    .reduce((sum, e) => sum + e.responseCount * e.elementCount, 0);
-
-  return (
-    <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
-      <div className="space-y-2">
-        {surveyEntries.map((entry) => (
-          <label key={entry.surveyId} className="flex cursor-pointer items-center gap-2">
-            <input
-              type="checkbox"
-              checked={entry.importHistorical}
-              onChange={(e) => onImportHistoricalChange(entry.surveyId, e.target.checked)}
-              className="h-4 w-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500"
-            />
-            <span className="text-xs text-amber-800">
-              {t("workspace.unify.survey_import_line", {
-                surveyName: entry.surveyName,
-                responseCount: entry.responseCount,
-                questionCount: entry.elementCount,
-                total: entry.responseCount * entry.elementCount,
-              })}
-            </span>
-          </label>
-        ))}
-      </div>
-      {surveyEntries.length > 1 && (
-        <p className="mt-3 border-t border-amber-200 pt-2 text-xs font-medium text-amber-900">
-          {t("workspace.unify.total_feedback_records", {
-            checked: checkedTotal,
-            total: totalRecords,
-            surveyCount: checkedCount,
-          })}
-        </p>
-      )}
-    </div>
-  );
-};
+const getSelectableQuestionIds = (survey: TUnifySurvey): string[] =>
+  survey.elements
+    .filter((element) => !(UNSUPPORTED_CONNECTOR_ELEMENT_TYPES as readonly string[]).includes(element.type))
+    .map((element) => element.id);
 
 export const CreateConnectorModal = ({
   open,
@@ -164,33 +122,52 @@ export const CreateConnectorModal = ({
   directories,
 }: CreateConnectorModalProps) => {
   const { t } = useTranslation();
+  const router = useRouter();
 
-  const defaultConnectorName: Record<TConnectorType, string> = {
-    formbricks: t("workspace.unify.default_connector_name_formbricks"),
-    csv: t("workspace.unify.default_connector_name_csv"),
-  };
+  const defaultConnectorName = useMemo<Record<TConnectorType, string>>(
+    () => ({
+      formbricks_survey: t("workspace.unify.default_connector_name_formbricks"),
+      csv: t("workspace.unify.default_connector_name_csv"),
+    }),
+    [t]
+  );
+
+  const formbricksForm = useForm<TFormbricksConnectorForm>({
+    resolver: zodResolver(ZFormbricksConnectorForm),
+    defaultValues: {
+      sourceName: defaultConnectorName.formbricks_survey,
+      surveyId: "",
+      selectedQuestionIds: [],
+      importHistorical: true,
+    },
+    mode: "onChange",
+  });
+
   const [currentStep, setCurrentStep] = useState<TCreateConnectorStep>("selectType");
-  const [selectedType, setSelectedType] = useState<TConnectorType | null>(null);
-  const [connectorName, setConnectorName] = useState("");
+  const [selectedType, setSelectedType] = useState<TConnectorOptionId | null>(null);
   const [mappings, setMappings] = useState<TFieldMapping[]>([]);
   const [sourceFields, setSourceFields] = useState<TSourceField[]>([]);
-
-  const [selectedSurveyId, setSelectedSurveyId] = useState<string | null>(null);
-  const [elementIdsBySurvey, setElementIdsBySurvey] = useState<Record<string, string[]>>({});
-
   const [csvParsedData, setCsvParsedData] = useState<Record<string, string>[]>([]);
-
   const [enumValidationErrors, setEnumValidationErrors] = useState<TEnumValidationError[]>([]);
-
-  const selectedElementIds = selectedSurveyId ? (elementIdsBySurvey[selectedSurveyId] ?? []) : [];
-
+  const [csvConnectorName, setCsvConnectorName] = useState("");
   const [responseCountBySurvey, setResponseCountBySurvey] = useState<Record<string, number | null>>({});
-  const [importHistoricalBySurvey, setImportHistoricalBySurvey] = useState<Record<string, boolean>>({});
   const [isImporting, setIsImporting] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
-  const [selectedDirectoryId, setSelectedDirectoryId] = useState<string | null>(
-    directories.length === 1 ? directories[0].id : null
+  const [selectedDirectoryId, setSelectedDirectoryId] = useState<string | null>(directories[0]?.id ?? null);
+
+  const formbricksValues = formbricksForm.watch();
+  const selectedSurveyId = formbricksValues.surveyId;
+  const selectedQuestionIds = formbricksValues.selectedQuestionIds ?? [];
+
+  const selectedSurvey = useMemo(
+    () => surveys.find((survey) => survey.id === selectedSurveyId) ?? null,
+    [surveys, selectedSurveyId]
   );
+
+  const selectedSurveyResponseCount =
+    selectedSurveyId && responseCountBySurvey[selectedSurveyId] !== undefined
+      ? responseCountBySurvey[selectedSurveyId]
+      : null;
 
   const fetchResponseCount = useCallback(
     async (surveyId: string) => {
@@ -204,30 +181,50 @@ export const CreateConnectorModal = ({
         setResponseCountBySurvey((prev) => ({ ...prev, [surveyId]: null }));
       }
     },
-    [workspaceId, responseCountBySurvey]
+    [responseCountBySurvey, workspaceId]
   );
 
   useEffect(() => {
-    if (selectedSurveyId && selectedType === "formbricks") {
+    if (selectedSurveyId && currentStep === "mapping" && selectedType === "formbricks_survey") {
       fetchResponseCount(selectedSurveyId);
     }
-  }, [selectedSurveyId, selectedType, fetchResponseCount]);
+  }, [currentStep, fetchResponseCount, selectedSurveyId, selectedType]);
+
+  useEffect(() => {
+    if (currentStep !== "mapping" || selectedType !== "formbricks_survey" || !selectedSurveyId) {
+      return;
+    }
+
+    const survey = surveys.find((item) => item.id === selectedSurveyId);
+    const supportedElementIds = survey ? getSelectableQuestionIds(survey) : [];
+
+    formbricksForm.setValue("selectedQuestionIds", supportedElementIds, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    formbricksForm.setValue("importHistorical", true, {
+      shouldDirty: true,
+    });
+  }, [currentStep, formbricksForm, selectedSurveyId, selectedType, surveys]);
 
   const resetForm = () => {
     setCurrentStep("selectType");
     setSelectedType(null);
-    setConnectorName("");
+    formbricksForm.reset({
+      sourceName: defaultConnectorName.formbricks_survey,
+      surveyId: "",
+      selectedQuestionIds: [],
+      importHistorical: true,
+    });
     setMappings([]);
     setSourceFields([]);
     setCsvParsedData([]);
     setEnumValidationErrors([]);
-    setSelectedSurveyId(null);
-    setElementIdsBySurvey({});
     setResponseCountBySurvey({});
-    setImportHistoricalBySurvey({});
+    setCsvConnectorName("");
     setIsImporting(false);
     setIsCreating(false);
-    setSelectedDirectoryId(directories.length === 1 ? directories[0].id : null);
+    setSelectedDirectoryId(directories[0]?.id ?? null);
   };
 
   const handleOpenChange = (newOpen: boolean) => {
@@ -239,50 +236,31 @@ export const CreateConnectorModal = ({
   const handleNextStep = () => {
     if (currentStep !== "selectType" || !selectedType) return;
 
-    const selectedSurvey = surveys.find((s) => s.id === selectedSurveyId);
-    setConnectorName(
-      selectedType === "formbricks" && selectedSurvey
-        ? `${selectedSurvey.name} ${t("workspace.unify.connection")}`
-        : defaultConnectorName[selectedType]
-    );
-    setCurrentStep("mapping");
-  };
-
-  const handleSurveySelect = (surveyId: string | null) => {
-    setSelectedSurveyId(surveyId);
-  };
-
-  const handleElementToggle = (elementId: string) => {
-    if (!selectedSurveyId) return;
-    setElementIdsBySurvey((prev) => {
-      const current = prev[selectedSurveyId] ?? [];
-      return {
-        ...prev,
-        [selectedSurveyId]: current.includes(elementId)
-          ? current.filter((id) => id !== elementId)
-          : [...current, elementId],
-      };
-    });
-  };
-
-  const handleSelectAllElements = (surveyId: string) => {
-    const survey = surveys.find((s) => s.id === surveyId);
-    if (survey) {
-      setElementIdsBySurvey((prev) => ({
-        ...prev,
-        [surveyId]: survey.elements
-          .filter((e) => !(UNSUPPORTED_CONNECTOR_ELEMENT_TYPES as readonly string[]).includes(e.type))
-          .map((e) => e.id),
-      }));
+    if (selectedType === "api_ingestion") {
+      handleOpenChange(false);
+      router.push(`/workspaces/${workspaceId}/settings/api-keys`);
+      return;
     }
-  };
 
-  const handleDeselectAllElements = () => {
-    if (!selectedSurveyId) return;
-    setElementIdsBySurvey((prev) => ({
-      ...prev,
-      [selectedSurveyId]: [],
-    }));
+    if (selectedType === "feedback_record_mcp") {
+      window.open("https://formbricks.com/docs", "_blank", "noopener,noreferrer");
+      return;
+    }
+
+    if (selectedType === "formbricks_survey") {
+      formbricksForm.reset({
+        sourceName: defaultConnectorName.formbricks_survey,
+        surveyId: "",
+        selectedQuestionIds: [],
+        importHistorical: true,
+      });
+    }
+
+    if (selectedType === "csv") {
+      setCsvConnectorName(defaultConnectorName.csv);
+    }
+
+    setCurrentStep("mapping");
   };
 
   const handleBack = () => {
@@ -290,52 +268,31 @@ export const CreateConnectorModal = ({
       setCurrentStep("selectType");
       setMappings([]);
       setSourceFields([]);
+      setEnumValidationErrors([]);
     }
   };
 
-  const getSurveyMappings = () =>
-    Object.entries(elementIdsBySurvey)
-      .filter(([, ids]) => ids.length > 0)
-      .map(([surveyId, elementIds]) => ({ surveyId, elementIds }));
-
-  const handleHistoricalImports = async (connectorId: string) => {
-    const surveysToImport = Object.entries(importHistoricalBySurvey)
-      .filter(([surveyId, checked]) => checked && (elementIdsBySurvey[surveyId]?.length ?? 0) > 0)
-      .map(([surveyId]) => surveyId);
-
-    if (surveysToImport.length === 0) return;
-
+  const handleHistoricalImport = async (connectorId: string, surveyId: string) => {
+    const responseCount = responseCountBySurvey[surveyId] ?? 0;
+    if (responseCount <= 0) return;
     setIsImporting(true);
-    let totalSuccesses = 0;
-    let totalFailures = 0;
-    let totalSkipped = 0;
-
-    for (const surveyId of surveysToImport) {
-      const importResult = await importHistoricalResponsesAction({
-        connectorId,
-        workspaceId,
-        surveyId,
-      });
-
-      if (importResult?.data) {
-        totalSuccesses += importResult.data.successes;
-        totalFailures += importResult.data.failures;
-        totalSkipped += importResult.data.skipped;
-      } else {
-        toast.error(getFormattedErrorMessage(importResult));
-      }
-    }
-
+    const importResult = await importHistoricalResponsesAction({
+      connectorId,
+      workspaceId,
+      surveyId,
+    });
     setIsImporting(false);
 
-    if (totalSuccesses > 0 || totalFailures > 0) {
+    if (importResult?.data) {
       toast.success(
         t("workspace.unify.historical_import_complete", {
-          successes: totalSuccesses,
-          failures: totalFailures,
-          skipped: totalSkipped,
+          successes: importResult.data.successes,
+          failures: importResult.data.failures,
+          skipped: importResult.data.skipped,
         })
       );
+    } else {
+      toast.error(getFormattedErrorMessage(importResult));
     }
   };
 
@@ -361,10 +318,41 @@ export const CreateConnectorModal = ({
     }
   };
 
-  const handleCreate = async () => {
-    if (!selectedType || !connectorName.trim() || !selectedDirectoryId) return;
+  const handleFormbricksQuestionToggle = (questionId: string) => {
+    const currentSelection = formbricksForm.getValues("selectedQuestionIds");
+    const isSelected = currentSelection.includes(questionId);
+    const nextSelection = isSelected
+      ? currentSelection.filter((id) => id !== questionId)
+      : [...currentSelection, questionId];
+    formbricksForm.setValue("selectedQuestionIds", nextSelection, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+  };
 
-    if (selectedType === "csv" && csvParsedData.length > 0) {
+  const handleCreateFormbricksConnector = async (values: TFormbricksConnectorForm) => {
+    if (!selectedDirectoryId) return;
+    setIsCreating(true);
+
+    const connectorId = await onCreateConnector({
+      name: values.sourceName.trim(),
+      type: "formbricks_survey",
+      feedbackRecordDirectoryId: selectedDirectoryId,
+      surveyMappings: [{ surveyId: values.surveyId, elementIds: values.selectedQuestionIds }],
+    });
+
+    if (connectorId && values.importHistorical) {
+      await handleHistoricalImport(connectorId, values.surveyId);
+    }
+
+    setIsCreating(false);
+    resetForm();
+    onOpenChange(false);
+  };
+
+  const handleCreateCsvConnector = async () => {
+    if (!selectedDirectoryId || !isConnectorNameValid(csvConnectorName)) return;
+    if (csvParsedData.length > 0) {
       const errors = validateEnumMappings(mappings, csvParsedData);
       if (errors.length > 0) {
         setEnumValidationErrors(errors);
@@ -375,21 +363,14 @@ export const CreateConnectorModal = ({
 
     setIsCreating(true);
 
-    const surveyMappings = getSurveyMappings();
-
     const connectorId = await onCreateConnector({
-      name: connectorName.trim(),
-      type: selectedType,
+      name: csvConnectorName.trim(),
+      type: "csv",
       feedbackRecordDirectoryId: selectedDirectoryId,
-      surveyMappings: selectedType === "formbricks" && surveyMappings.length > 0 ? surveyMappings : undefined,
-      fieldMappings: selectedType !== "formbricks" && mappings.length > 0 ? mappings : undefined,
+      fieldMappings: mappings.length > 0 ? mappings : undefined,
     });
 
-    if (connectorId && selectedType === "formbricks") {
-      await handleHistoricalImports(connectorId);
-    }
-
-    if (connectorId && selectedType === "csv" && csvParsedData.length > 0) {
+    if (connectorId && csvParsedData.length > 0) {
       await handleCsvImport(connectorId);
     }
 
@@ -398,14 +379,8 @@ export const CreateConnectorModal = ({
     onOpenChange(false);
   };
 
-  const requiredFields = FEEDBACK_RECORD_FIELDS.filter((f) => f.required);
-  const allRequiredMapped = requiredFields.every((field) =>
-    mappings.some((m) => m.targetFieldId === field.id && (m.sourceFieldId || m.staticValue))
-  );
-
-  const hasAnyElementSelections = Object.values(elementIdsBySurvey).some((ids) => ids.length > 0);
-  const isFormbricksValid = selectedType === "formbricks" && hasAnyElementSelections;
   const isCsvValid = selectedType === "csv" && sourceFields.length > 0;
+  const areCsvRequiredFieldsMapped = areAllRequiredFieldsMapped(mappings);
 
   const handleLoadSourceFields = () => {
     if (selectedType === "csv") {
@@ -444,86 +419,118 @@ export const CreateConnectorModal = ({
               <ConnectorTypeSelector selectedType={selectedType} onSelectType={setSelectedType} />
             )}
 
-            {currentStep === "mapping" && selectedType === "formbricks" && (
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="connectorName">{t("workspace.unify.source_name")}</Label>
-                  <Input
-                    id="connectorName"
-                    value={connectorName}
-                    onChange={(e) => setConnectorName(e.target.value)}
-                    placeholder={t("workspace.unify.enter_name_for_source")}
+            {currentStep === "mapping" && selectedType === "formbricks_survey" && (
+              <FormProvider {...formbricksForm}>
+                <form className="space-y-4">
+                  <FormField
+                    control={formbricksForm.control}
+                    name="sourceName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("workspace.unify.source_name")}</FormLabel>
+                        <FormControl>
+                          <Input
+                            value={field.value}
+                            onChange={field.onChange}
+                            placeholder={t("workspace.unify.enter_name_for_source")}
+                          />
+                        </FormControl>
+                        <FormError />
+                      </FormItem>
+                    )}
                   />
-                </div>
 
-                <FrdPicker
-                  directories={directories}
-                  selectedDirectoryId={selectedDirectoryId}
-                  onChange={setSelectedDirectoryId}
-                  workspaceId={workspaceId}
-                  t={t}
-                />
+                  {directories.length === 0 && (
+                    <NoFeedbackRecordDirectoryAlert workspaceId={workspaceId} t={t} />
+                  )}
 
-                <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-                  <FormbricksSurveySelector
-                    surveys={surveys}
-                    selectedSurveyId={selectedSurveyId}
-                    selectedElementIds={selectedElementIds}
-                    onSurveySelect={handleSurveySelect}
-                    onElementToggle={handleElementToggle}
-                    onSelectAllElements={handleSelectAllElements}
-                    onDeselectAllElements={handleDeselectAllElements}
+                  <FormField
+                    control={formbricksForm.control}
+                    name="surveyId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t("workspace.unify.select_survey")}</FormLabel>
+                        <FormControl>
+                          <Select value={field.value} onValueChange={field.onChange}>
+                            <SelectTrigger>
+                              <SelectValue placeholder={t("workspace.unify.select_survey")} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {surveys.map((survey) => (
+                                <SelectItem key={survey.id} value={survey.id}>
+                                  {survey.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+                        <FormError />
+                      </FormItem>
+                    )}
                   />
-                </div>
 
-                {(() => {
-                  const entries = Object.entries(elementIdsBySurvey)
-                    .filter(([, ids]) => ids.length > 0)
-                    .map(([surveyId, ids]) => ({
-                      surveyId,
-                      surveyName: surveys.find((s) => s.id === surveyId)?.name ?? surveyId,
-                      responseCount: responseCountBySurvey[surveyId] ?? 0,
-                      elementCount: ids.length,
-                      importHistorical: importHistoricalBySurvey[surveyId] ?? false,
-                    }))
-                    .filter((e) => e.responseCount > 0);
+                  <FormField
+                    control={formbricksForm.control}
+                    name="selectedQuestionIds"
+                    render={() => (
+                      <FormItem>
+                        <FormLabel>{t("workspace.unify.select_questions")}</FormLabel>
+                        <FormControl>
+                          <div>
+                            <FormbricksQuestionList
+                              survey={selectedSurvey}
+                              selectedQuestionIds={selectedQuestionIds}
+                              onQuestionToggle={handleFormbricksQuestionToggle}
+                            />
+                          </div>
+                        </FormControl>
+                        <FormError />
+                      </FormItem>
+                    )}
+                  />
 
-                  if (entries.length === 0) return null;
-
-                  return (
-                    <AggregateImportSection
-                      surveyEntries={entries}
-                      onImportHistoricalChange={(surveyId, checked) => {
-                        setImportHistoricalBySurvey((prev) => ({ ...prev, [surveyId]: checked }));
-                      }}
-                      t={t}
+                  {selectedSurveyResponseCount !== null && selectedSurveyResponseCount > 0 && (
+                    <FormField
+                      control={formbricksForm.control}
+                      name="importHistorical"
+                      render={({ field }) => (
+                        <FormItem className="rounded-md border border-slate-200 p-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="space-y-1">
+                              <FormLabel>{t("workspace.unify.import_historical_responses")}</FormLabel>
+                              <p className="text-sm text-slate-500">
+                                {t("workspace.unify.import_historical_responses_description")}
+                              </p>
+                            </div>
+                            <Switch checked={field.value} onCheckedChange={field.onChange} />
+                          </div>
+                        </FormItem>
+                      )}
                     />
-                  );
-                })()}
-              </div>
+                  )}
+                </form>
+              </FormProvider>
             )}
 
             {currentStep === "mapping" && selectedType === "csv" && (
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="connectorName">{t("workspace.unify.source_name")}</Label>
+                  <label htmlFor="connectorName" className="text-sm font-medium text-slate-700">
+                    {t("workspace.unify.source_name")}
+                  </label>
                   <Input
                     id="connectorName"
-                    value={connectorName}
-                    onChange={(e) => setConnectorName(e.target.value)}
+                    value={csvConnectorName}
+                    onChange={(event) => setCsvConnectorName(event.target.value)}
                     placeholder={t("workspace.unify.enter_name_for_source")}
                   />
                 </div>
 
-                <FrdPicker
-                  directories={directories}
-                  selectedDirectoryId={selectedDirectoryId}
-                  onChange={setSelectedDirectoryId}
-                  workspaceId={workspaceId}
-                  t={t}
-                />
+                {directories.length === 0 && (
+                  <NoFeedbackRecordDirectoryAlert workspaceId={workspaceId} t={t} />
+                )}
 
-                <div className="max-h-[55vh] overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-4">
+                <div className="max-h-[55vh] overflow-y-auto rounded-lg border border-slate-200 p-4">
                   <CsvConnectorUI
                     sourceFields={sourceFields}
                     mappings={mappings}
@@ -582,13 +589,20 @@ export const CreateConnectorModal = ({
               </Button>
             ) : (
               <Button
-                onClick={handleCreate}
+                onClick={
+                  selectedType === "formbricks_survey"
+                    ? () => void formbricksForm.handleSubmit(handleCreateFormbricksConnector)()
+                    : handleCreateCsvConnector
+                }
                 disabled={
                   isCreating ||
                   isImporting ||
-                  !connectorName.trim() ||
                   !selectedDirectoryId ||
-                  getCreateDisabled(selectedType, !!isFormbricksValid, isCsvValid, allRequiredMapped)
+                  (selectedType === "formbricks_survey"
+                    ? !isConnectorNameValid(formbricksValues.sourceName ?? "") ||
+                      !formbricksValues.surveyId ||
+                      !formbricksValues.selectedQuestionIds?.length
+                    : !isConnectorNameValid(csvConnectorName) || !isCsvValid || !areCsvRequiredFieldsMapped)
                 }>
                 {isCreating && <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />}
                 {t("workspace.unify.setup_connection")}
@@ -601,52 +615,22 @@ export const CreateConnectorModal = ({
   );
 };
 
-interface FrdPickerProps {
-  directories: { id: string; name: string }[];
-  selectedDirectoryId: string | null;
-  onChange: (id: string) => void;
+interface NoFeedbackRecordDirectoryAlertProps {
   workspaceId: string;
   t: (key: string) => string;
 }
 
-const FrdPicker = ({ directories, selectedDirectoryId, onChange, workspaceId, t }: FrdPickerProps) => {
-  if (directories.length === 0) {
-    return (
-      <Alert variant="error" size="small">
-        <div>
-          <p>{t("workspace.unify.no_feedback_record_directory_available")}</p>
-          <a
-            className="mt-1 inline-block font-medium underline"
-            href={`/workspaces/${workspaceId}/settings/feedback-record-directories`}>
-            {t("workspace.unify.go_to_feedback_record_directories")}
-          </a>
-        </div>
-      </Alert>
-    );
-  }
-  if (directories.length === 1) {
-    return (
-      <div className="rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">
-        {t("workspace.unify.records_will_go_to")}{" "}
-        <span className="font-medium text-slate-900">{directories[0].name}</span>
-      </div>
-    );
-  }
+const NoFeedbackRecordDirectoryAlert = ({ workspaceId, t }: NoFeedbackRecordDirectoryAlertProps) => {
   return (
-    <div className="space-y-2">
-      <Label htmlFor="feedbackRecordDirectory">{t("workspace.unify.feedback_record_directory")}</Label>
-      <Select value={selectedDirectoryId ?? ""} onValueChange={onChange}>
-        <SelectTrigger id="feedbackRecordDirectory">
-          <SelectValue placeholder={t("workspace.unify.select_feedback_record_directory")} />
-        </SelectTrigger>
-        <SelectContent>
-          {directories.map((d) => (
-            <SelectItem key={d.id} value={d.id}>
-              {d.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
+    <Alert variant="error" size="small">
+      <div>
+        <p>{t("workspace.unify.no_feedback_record_directory_available")}</p>
+        <a
+          className="mt-1 inline-block font-medium underline"
+          href={`/workspaces/${workspaceId}/settings/feedback-record-directories`}>
+          {t("workspace.unify.go_to_feedback_record_directories")}
+        </a>
+      </div>
+    </Alert>
   );
 };
