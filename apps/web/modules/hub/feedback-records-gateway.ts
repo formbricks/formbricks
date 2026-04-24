@@ -20,6 +20,7 @@ import { getFeedbackRecordTenant } from "@/modules/hub/service";
 
 const FEEDBACK_RECORDS_V3_PREFIX = "/api/v3/feedbackRecords";
 const FEEDBACK_RECORDS_SDK_PREFIX = "/v1/feedback-records";
+const FEEDBACK_RECORDS_AUTH_PREFIX = "/api/envoy-auth/feedback-records";
 const ZFeedbackRecordId = z.string().uuid();
 const HEADERS_TO_REMOVE_ON_ALLOW = "x-api-key,cookie";
 
@@ -88,15 +89,23 @@ const parseOriginalRequestMetadata = (
   request: NextRequest
 ): { method: string; url: URL } | { errorResponse: Response } => {
   const originalMethod = request.headers.get("method")?.toUpperCase();
-  const originalPath = request.headers.get("path");
 
-  if (!originalMethod || !originalPath) {
+  if (!originalMethod) {
     return {
       errorResponse: buildStatusResponse(400, "Missing original request metadata"),
     };
   }
 
+  if (!request.nextUrl.pathname.startsWith(FEEDBACK_RECORDS_AUTH_PREFIX)) {
+    return {
+      errorResponse: buildStatusResponse(400, "Invalid FeedbackRecords auth request path"),
+    };
+  }
+
   try {
+    const originalPathname = request.nextUrl.pathname.slice(FEEDBACK_RECORDS_AUTH_PREFIX.length) || "/";
+    const originalPath = `${originalPathname}${request.nextUrl.search}`;
+
     return {
       method: originalMethod,
       url: new URL(originalPath, "http://feedback-records-gateway.local"),

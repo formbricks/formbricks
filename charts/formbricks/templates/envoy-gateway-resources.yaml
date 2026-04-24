@@ -7,9 +7,9 @@
 {{- $gatewayClassName := include "formbricks.envoy.gatewayClassName" . -}}
 {{- $proxyName := include "formbricks.envoy.proxyName" . -}}
 {{- $proxyServiceName := include "formbricks.envoy.proxyServiceName" . -}}
+{{- $appSecretName := include "formbricks.appSecretName" . -}}
 {{- $appServiceName := include "formbricks.name" . -}}
 {{- $hubServiceName := include "formbricks.hubname" . -}}
-{{- $hubSecretName := include "formbricks.hubSecretName" . -}}
 ---
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: EnvoyProxy
@@ -303,7 +303,7 @@ spec:
     overwrite: true
     credential:
       valueRef:
-        name: {{ $hubSecretName }}
+        name: {{ $appSecretName }}
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute

@@ -213,14 +213,17 @@ describe("FeedbackRecords envoy auth route", () => {
     });
 
     const response = await GET(
-      createRequest("http://localhost/api/envoy-auth/feedback-records/v1/feedback-records", {
+      createRequest(
+        `http://localhost/api/envoy-auth/feedback-records/v1/feedback-records?tenant_id=${feedbackRecordDirectoryId}`,
+        {
         headers: {
           method: "GET",
           path: `/v1/feedback-records?tenant_id=${feedbackRecordDirectoryId}`,
           authorization: "Bearer header.payload.signature",
           cookie: "next-auth.session-token=still-present",
         },
-      })
+      }
+      )
     );
 
     expect(response.status).toBe(401);
@@ -237,13 +240,16 @@ describe("FeedbackRecords envoy auth route", () => {
     });
 
     const response = await GET(
-      createRequest("http://localhost/api/envoy-auth/feedback-records/v1/feedback-records", {
+      createRequest(
+        `http://localhost/api/envoy-auth/feedback-records/v1/feedback-records?tenant_id=${feedbackRecordDirectoryId}`,
+        {
         headers: {
           method: "GET",
           path: `/v1/feedback-records?tenant_id=${feedbackRecordDirectoryId}`,
           authorization: "Bearer header.payload.signature",
         },
-      })
+      }
+      )
     );
 
     expect(response.status).toBe(403);

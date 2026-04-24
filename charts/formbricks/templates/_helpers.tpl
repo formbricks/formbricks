@@ -157,7 +157,7 @@ If `namespaceOverride` is provided, it will be used; otherwise, it defaults to `
 {{- end }}
 
 {{- define "formbricks.hubApiKey" -}}
-{{- $secret := (lookup "v1" "Secret" .Release.Namespace (include "formbricks.appSecretName" .)) }}
+{{- $secret := (lookup "v1" "Secret" .Release.Namespace (include "formbricks.hubSecretName" .)) }}
 {{- if and $secret (index $secret.data "HUB_API_KEY") }}
     {{- index $secret.data "HUB_API_KEY" | b64dec -}}
 {{- else }}
