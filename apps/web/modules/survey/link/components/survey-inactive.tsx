@@ -33,6 +33,14 @@ export const SurveyInactive = async ({
     "link expired": t("c.link_expired_description"),
   };
 
+  const headings = {
+    paused: t("s.paused"),
+    completed: t("s.completed"),
+    "link invalid": t("s.this_looks_fishy"),
+    "response submitted": t("s.survey_already_answered_heading"),
+    "link expired": t("c.link_expired_description"),
+  };
+
   const showCTA =
     status !== "link invalid" &&
     status !== "link expired" &&
@@ -47,7 +55,7 @@ export const SurveyInactive = async ({
         <h1 className="text-4xl font-bold text-slate-800">
           {(status === "completed" || status === "link expired") && surveyClosedMessage
             ? surveyClosedMessage.heading
-            : `${t("common.survey")} ${status}.`}
+            : headings[status]}
         </h1>
         <p className="text-lg leading-10 text-slate-500">
           {status === "completed" && surveyClosedMessage
