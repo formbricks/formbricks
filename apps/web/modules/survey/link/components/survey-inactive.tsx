@@ -34,11 +34,11 @@ export const SurveyInactive = async ({
   };
 
   const headings = {
-    paused: t("s.paused"),
-    completed: t("s.completed"),
+    paused: t("s.paused_heading"),
+    completed: t("s.completed_heading"),
     "link invalid": t("s.this_looks_fishy"),
     "response submitted": t("s.survey_already_answered_heading"),
-    "link expired": t("c.link_expired_description"),
+    "link expired": t("c.link_expired_heading"),
   };
 
   const showCTA =

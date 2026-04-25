@@ -111,7 +111,8 @@
   },
   "c": {
     "link_expired": "リンクの有効期限が切れています。",
-    "link_expired_description": "使用したリンクはすでに無効です。"
+    "link_expired_description": "使用したリンクはすでに無効です。",
+    "link_expired_heading": "リンクの有効期限が切れています。"
   },
   "common": {
     "accepted": "承認済み",
@@ -2445,7 +2446,9 @@
     "verify_email_before_submission": "回答するにはメールアドレスを認証してください",
     "verify_email_before_submission_button": "認証",
     "verify_email_before_submission_description": "このフォームに回答するには、メールアドレスを認証してください",
-    "want_to_respond": "回答しますか？"
+    "want_to_respond": "回答しますか？",
+    "paused_heading": "一時停止",
+    "completed_heading": "完了"
   },
   "setup": {
     "intro": {

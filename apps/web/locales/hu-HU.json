@@ -111,7 +111,8 @@
   },
   "c": {
     "link_expired": "A hivatkozása lejárt.",
-    "link_expired_description": "Az Ön által használt hivatkozás már nem érvényes."
+    "link_expired_description": "Az Ön által használt hivatkozás már nem érvényes.",
+    "link_expired_heading": "A hivatkozása lejárt."
   },
   "common": {
     "accepted": "Elfogadva",
@@ -2445,7 +2446,9 @@
     "verify_email_before_submission": "Ellenőrizze az e-mail-címét a válaszadáshoz",
     "verify_email_before_submission_button": "Ellenőrzés",
     "verify_email_before_submission_description": "A kérdőívre való válaszadáshoz ellenőrizze az e-mail-címét",
-    "want_to_respond": "Szeretne válaszolni?"
+    "want_to_respond": "Szeretne válaszolni?",
+    "paused_heading": "Szüneteltetve",
+    "completed_heading": "Befejezve"
   },
   "setup": {
     "intro": {

@@ -111,7 +111,8 @@
   },
   "c": {
     "link_expired": "Uw link is verlopen.",
-    "link_expired_description": "De link die u gebruikte is niet meer geldig."
+    "link_expired_description": "De link die u gebruikte is niet meer geldig.",
+    "link_expired_heading": "Uw link is verlopen."
   },
   "common": {
     "accepted": "Geaccepteerd",
@@ -2445,7 +2446,9 @@
     "verify_email_before_submission": "Verifieer uw e-mailadres om te reageren",
     "verify_email_before_submission_button": "Verifiëren",
     "verify_email_before_submission_description": "Om op deze enquête te reageren, dient u uw e-mailadres te verifiëren",
-    "want_to_respond": "Wilt u reageren?"
+    "want_to_respond": "Wilt u reageren?",
+    "paused_heading": "Gepauzeerd",
+    "completed_heading": "Voltooid"
   },
   "setup": {
     "intro": {

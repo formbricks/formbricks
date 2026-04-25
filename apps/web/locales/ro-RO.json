@@ -111,7 +111,8 @@
   },
   "c": {
     "link_expired": "Link-ul dumneavoastră a expirat.",
-    "link_expired_description": "Link-ul pe care l-ați utilizat nu mai este valabil."
+    "link_expired_description": "Link-ul pe care l-ați utilizat nu mai este valabil.",
+    "link_expired_heading": "Link-ul dumneavoastră a expirat."
   },
   "common": {
     "accepted": "Acceptat",
@@ -2445,7 +2446,9 @@
     "verify_email_before_submission": "Verificați-vă emailul pentru a răspunde",
     "verify_email_before_submission_button": "Verifică",
     "verify_email_before_submission_description": "Pentru a răspunde la acest sondaj, vă rugăm să vă verificați emailul",
-    "want_to_respond": "Dorești să răspunzi?"
+    "want_to_respond": "Dorești să răspunzi?",
+    "paused_heading": "Pauză",
+    "completed_heading": "Completat"
   },
   "setup": {
     "intro": {

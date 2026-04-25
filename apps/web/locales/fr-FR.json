@@ -111,7 +111,8 @@
   },
   "c": {
     "link_expired": "Votre lien est expiré.",
-    "link_expired_description": "Le lien que vous avez utilisé n'est plus valide."
+    "link_expired_description": "Le lien que vous avez utilisé n'est plus valide.",
+    "link_expired_heading": "Votre lien est expiré."
   },
   "common": {
     "accepted": "Accepté",
@@ -2445,7 +2446,9 @@
     "verify_email_before_submission": "Vérifiez votre email pour répondre.",
     "verify_email_before_submission_button": "Vérifier",
     "verify_email_before_submission_description": "Pour répondre à cette enquête, veuillez vérifier votre e-mail.",
-    "want_to_respond": "Voulez-vous répondre ?"
+    "want_to_respond": "Voulez-vous répondre ?",
+    "paused_heading": "En pause",
+    "completed_heading": "Terminé"
   },
   "setup": {
     "intro": {

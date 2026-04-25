@@ -111,7 +111,8 @@
   },
   "c": {
     "link_expired": "Ваша ссылка истекла.",
-    "link_expired_description": "Ссылка, которой вы воспользовались, больше не действительна."
+    "link_expired_description": "Ссылка, которой вы воспользовались, больше не действительна.",
+    "link_expired_heading": "Ваша ссылка истекла."
   },
   "common": {
     "accepted": "Принято",
@@ -2445,7 +2446,9 @@
     "verify_email_before_submission": "Подтвердите свой email, чтобы ответить",
     "verify_email_before_submission_button": "Подтвердить",
     "verify_email_before_submission_description": "Чтобы ответить на этот опрос, пожалуйста, подтвердите свой email",
-    "want_to_respond": "Хотите ответить?"
+    "want_to_respond": "Хотите ответить?",
+    "paused_heading": "Приостановлено",
+    "completed_heading": "Завершено"
   },
   "setup": {
     "intro": {

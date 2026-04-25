@@ -111,7 +111,8 @@
   },
   "c": {
     "link_expired": "Din länk har gått ut.",
-    "link_expired_description": "Länken du använde är inte längre giltig."
+    "link_expired_description": "Länken du använde är inte längre giltig.",
+    "link_expired_heading": "Din länk har gått ut."
   },
   "common": {
     "accepted": "Accepterad",
@@ -2445,7 +2446,9 @@
     "verify_email_before_submission": "Verifiera din e-post för att svara",
     "verify_email_before_submission_button": "Verifiera",
     "verify_email_before_submission_description": "För att svara på denna enkät, vänligen verifiera din e-post",
-    "want_to_respond": "Vill du svara?"
+    "want_to_respond": "Vill du svara?",
+    "paused_heading": "Pausad",
+    "completed_heading": "Slutförd"
   },
   "setup": {
     "intro": {

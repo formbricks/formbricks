@@ -111,7 +111,8 @@
   },
   "c": {
     "link_expired": "Bağlantınızın süresi doldu.",
-    "link_expired_description": "Kullandığınız bağlantı artık geçerli değil."
+    "link_expired_description": "Kullandığınız bağlantı artık geçerli değil.",
+    "link_expired_heading": "Bağlantınızın süresi doldu."
   },
   "common": {
     "accepted": "Kabul Edildi",
@@ -2445,7 +2446,9 @@
     "verify_email_before_submission": "Yanıtlamak için email adresinizi doğrulayın",
     "verify_email_before_submission_button": "Doğrula",
     "verify_email_before_submission_description": "Bu survey'e yanıt vermek için lütfen email adresinizi doğrulayın",
-    "want_to_respond": "Yanıtlamak ister misiniz?"
+    "want_to_respond": "Yanıtlamak ister misiniz?",
+    "paused_heading": "Duraklatıldı",
+    "completed_heading": "Tamamlandı"
   },
   "setup": {
     "intro": {

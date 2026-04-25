@@ -111,7 +111,8 @@
   },
   "c": {
     "link_expired": "Tu enlace ha caducado.",
-    "link_expired_description": "El enlace que has utilizado ya no es válido."
+    "link_expired_description": "El enlace que has utilizado ya no es válido.",
+    "link_expired_heading": "Tu enlace ha caducado."
   },
   "common": {
     "accepted": "Aceptado",
@@ -2445,7 +2446,9 @@
     "verify_email_before_submission": "Verifica tu correo electrónico para responder",
     "verify_email_before_submission_button": "Verificar",
     "verify_email_before_submission_description": "Para responder a esta encuesta, por favor verifica tu correo electrónico",
-    "want_to_respond": "¿Quieres responder?"
+    "want_to_respond": "¿Quieres responder?",
+    "paused_heading": "Pausado",
+    "completed_heading": "Completado"
   },
   "setup": {
     "intro": {

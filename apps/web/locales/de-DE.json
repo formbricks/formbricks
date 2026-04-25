@@ -111,7 +111,8 @@
   },
   "c": {
     "link_expired": "Dein Link ist abgelaufen.",
-    "link_expired_description": "Der von dir verwendete Link ist nicht mehr gültig."
+    "link_expired_description": "Der von dir verwendete Link ist nicht mehr gültig.",
+    "link_expired_heading": "Dein Link ist abgelaufen."
   },
   "common": {
     "accepted": "Akzeptiert",
@@ -2445,7 +2446,9 @@
     "verify_email_before_submission": "Bestätige deine E-Mail, um zu antworten",
     "verify_email_before_submission_button": "Überprüfen",
     "verify_email_before_submission_description": "Um an dieser Umfrage teilzunehmen, bitte bestätige deine E-Mail",
-    "want_to_respond": "Möchtest Du antworten?"
+    "want_to_respond": "Möchtest Du antworten?",
+    "paused_heading": "Pausiert",
+    "completed_heading": "Abgeschlossen"
   },
   "setup": {
     "intro": {

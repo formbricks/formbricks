@@ -111,7 +111,8 @@
   },
   "c": {
     "link_expired": "您 的 連結 已過期。",
-    "link_expired_description": "您 使用 的 連結 已無效。"
+    "link_expired_description": "您 使用 的 連結 已無效。",
+    "link_expired_heading": "您 的 連結 已過期。"
   },
   "common": {
     "accepted": "已接受",
@@ -2445,7 +2446,9 @@
     "verify_email_before_submission": "驗證您的電子郵件以回應",
     "verify_email_before_submission_button": "驗證",
     "verify_email_before_submission_description": "若要回應此問卷，請驗證您的電子郵件",
-    "want_to_respond": "想要回應嗎？"
+    "want_to_respond": "想要回應嗎？",
+    "paused_heading": "已暫停",
+    "completed_heading": "已完成"
   },
   "setup": {
     "intro": {

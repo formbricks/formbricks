@@ -111,7 +111,8 @@
   },
   "c": {
     "link_expired": "您的 链接 已过期。",
-    "link_expired_description": "您 使用 的 链接 已失效。"
+    "link_expired_description": "您 使用 的 链接 已失效。",
+    "link_expired_heading": "您的 链接 已过期。"
   },
   "common": {
     "accepted": "已接受",
@@ -2445,7 +2446,9 @@
     "verify_email_before_submission": "验证 您的 邮件 以 响应",
     "verify_email_before_submission_button": "验证",
     "verify_email_before_submission_description": "要 响应 此 调查，请 验证 您的 邮件",
-    "want_to_respond": "想要 参与 吗？"
+    "want_to_respond": "想要 参与 吗？",
+    "paused_heading": "暂停",
+    "completed_heading": "完成"
   },
   "setup": {
     "intro": {
