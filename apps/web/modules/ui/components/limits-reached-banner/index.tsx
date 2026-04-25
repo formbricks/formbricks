@@ -41,8 +41,9 @@ export const LimitsReachedBanner = ({
                     <p className="mt-1 text-sm text-slate-500">
                       {isResponseLimitReached ? (
                         <>
-                          {t("common.you_have_reached_your_monthly_response_limit_of")}{" "}
-                          {orgBillingResponseLimit}.{" "}
+                          {t("common.you_have_reached_your_monthly_response_limit_of_n", {
+                            limit: orgBillingResponseLimit,
+                          })}{" "}
                         </>
                       ) : null}
                     </p>

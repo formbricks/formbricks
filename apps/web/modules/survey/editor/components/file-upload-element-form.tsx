@@ -159,7 +159,7 @@ export const FileUploadElementForm = ({
 
                   if (isFormbricksCloud && parsedValue > maxSizeInMBLimit) {
                     toast.error(
-                      `${t("environments.surveys.edit.max_file_size_limit_is")} ${maxSizeInMBLimit} MB`
+                      t("environments.surveys.edit.max_file_size_limit_is_n_mb", { limit: maxSizeInMBLimit })
                     );
                     setIsMaxSizeError(true);
                     updateElement(elementIdx, { maxSizeInMB: maxSizeInMBLimit });
@@ -174,7 +174,7 @@ export const FileUploadElementForm = ({
             </p>
             {isMaxSizeError && (
               <p className="text-xs text-red-500">
-                {t("environments.surveys.edit.max_file_size_limit_is")} {maxSizeInMBLimit} MB.{" "}
+                {t("environments.surveys.edit.max_file_size_limit_is_n_mb", { limit: maxSizeInMBLimit })}{" "}
                 {t("environments.surveys.edit.if_you_need_more_please")}
                 <Link
                   className="underline"

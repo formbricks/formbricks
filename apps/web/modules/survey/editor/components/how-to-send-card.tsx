@@ -186,9 +186,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
                             {t("environments.surveys.edit.formbricks_sdk_is_not_connected")}
                           </AlertTitle>
                           <AlertDescription>
-                            {t("common.connect_formbricks") +
-                              " " +
-                              t("environments.surveys.edit.and_launch_surveys_in_your_website_or_app")}
+                            {t("environments.surveys.edit.connect_formbricks_and_launch_surveys")}
                           </AlertDescription>
                           <AlertButton
                             onClick={() =>
