@@ -32,10 +32,10 @@ export const GithubButton = ({ returnToUrl, lastUsed, source }: GithubButtonProp
       type="button"
       onClick={handleLogin}
       variant="secondary"
-      className="relative w-full justify-center">
+      className="w-full justify-center">
       {t("auth.continue_with_github")}
       <GithubIcon />
-      {lastUsed && <span className="absolute right-3 text-xs opacity-50">{t("auth.last_used")}</span>}
+      {lastUsed && <span className="ml-auto text-xs opacity-50">{t("auth.last_used")}</span>}
     </Button>
   );
 };
