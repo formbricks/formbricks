@@ -64,7 +64,7 @@ export const renderSurvey = async ({
   const langParam = searchParams.lang;
   const isEmbed = searchParams.embed === "true";
 
-  if (survey.status === "draft" || survey.type !== "link") {
+  if ((survey.status === "draft" && !isPreview) || survey.type !== "link") {
     notFound();
   }
 
