@@ -125,6 +125,7 @@
     "activity": "Activitate",
     "add": "Adaugă",
     "add_action": "Adăugați acțiune",
+    "add_chart": "Adăugați diagramă",
     "add_charts": "Adaugă grafice",
     "add_existing_chart_description": "Caută și selectează grafice pentru a le adăuga la acest panou de control.",
     "add_filter": "Adăugați filtru",
@@ -393,6 +394,7 @@
     "report_survey": "Raportează chestionarul",
     "request_trial_license": "Solicitați o licență de încercare",
     "reset_to_default": "Revino la implicit",
+    "resize": "Redimensionați",
     "response": "Răspuns",
     "response_id": "ID răspuns",
     "responses": "Răspunsuri",
@@ -1785,8 +1787,10 @@
         "please_select_dashboard": "Te rugăm să selectezi un tablou de bord",
         "predefined_measures": "Măsurători predefinite",
         "preset": "Presetare",
+        "preview_chart": "Previzualizare diagramă",
         "query_executed_successfully": "Interogarea a fost executată cu succes",
         "reset_to_ai_suggestion": "Resetează la sugestia AI",
+        "save_and_add_to_dashboard": "Salvați și adăugați în tabloul de bord",
         "save_chart": "Salvează graficul",
         "save_chart_dialog_title": "Salvează graficul",
         "select_data_source": "Select a data source",
@@ -1799,7 +1803,8 @@
         "start_date": "Data de început",
         "time_dimension": "Dimensiune temporală",
         "time_dimension_title": "Adaugă grupare pe bază de timp",
-        "time_dimension_toggle_description": "Monitorizează tendințele în timp."
+        "time_dimension_toggle_description": "Monitorizează tendințele în timp.",
+        "update_chart": "Actualizați diagrama"
       },
       "dashboards": {
         "add_count_charts": "Adaugă {count} grafic(e)",
@@ -1810,6 +1815,7 @@
         "create_dashboard": "Creează panou de control",
         "create_dashboard_description": "Introdu un nume pentru noul tău tablou de bord.",
         "create_failed": "Crearea tabloului de bord a eșuat",
+        "create_new_chart": "Creați o nouă diagramă",
         "create_success": "Tablou de bord creat cu succes!",
         "dashboard": "Panou de control",
         "dashboard_delete_confirmation": "Ești sigur că vrei să ștergi acest panou de control? Această acțiune nu poate fi anulată.",
@@ -1824,12 +1830,12 @@
         "duplicate_failed": "Duplicarea tabloului de bord a eșuat",
         "duplicate_success": "Tablou de bord duplicat cu succes!",
         "failed_to_load_chart_data": "Încărcarea datelor graficului a eșuat",
-        "no_charts_available_description": "Nu există grafice care pot fi adăugate la acest tablou de bord. Fie nu există încă grafice, fie toate graficele existente au fost deja adăugate. Mergi la pagina Grafice pentru a crea grafice noi.",
-        "no_charts_to_add_message": "Nu există grafice de adăugat la acest tablou de bord.",
         "no_dashboards_found": "Nu s-a găsit niciun tablou de bord.",
         "no_data_message": "Fără date. În prezent nu există informații de afișat. Adaugă grafice pentru a-ți construi tabloul de bord.",
         "please_enter_name": "Te rugăm să introduci un nume pentru tablou de bord"
-      }
+      },
+      "no_feedback_records_message": "Nu aveți înregistrări de feedback despre care să raportați. Configurați sursele de feedback pentru a introduce date în sistem.",
+      "setup_feedback_source": "Configurați sursele de feedback"
     },
     "api_keys": {
       "add_api_key": "Adaugă cheie API",

@@ -125,6 +125,7 @@
     "activity": "Aktivitet",
     "add": "Lägg till",
     "add_action": "Lägg till åtgärd",
+    "add_chart": "Lägg till diagram",
     "add_charts": "Lägg till diagram",
     "add_existing_chart_description": "Sök och välj diagram att lägga till i den här instrumentpanelen.",
     "add_filter": "Lägg till filter",
@@ -393,6 +394,7 @@
     "report_survey": "Rapportera enkät",
     "request_trial_license": "Begär provlicens",
     "reset_to_default": "Återställ till standard",
+    "resize": "Ändra storlek",
     "response": "Svar",
     "response_id": "Svar-ID",
     "responses": "Svar",
@@ -1785,8 +1787,10 @@
         "please_select_dashboard": "Välj en instrumentpanel",
         "predefined_measures": "Fördefinierade mått",
         "preset": "Förinställning",
+        "preview_chart": "Förhandsgranska diagram",
         "query_executed_successfully": "Frågan kördes utan problem",
         "reset_to_ai_suggestion": "Återställ till AI-förslag",
+        "save_and_add_to_dashboard": "Spara och lägg till i instrumentpanelen",
         "save_chart": "Spara diagram",
         "save_chart_dialog_title": "Spara diagram",
         "select_data_source": "Select a data source",
@@ -1799,7 +1803,8 @@
         "start_date": "Startdatum",
         "time_dimension": "Tidsdimension",
         "time_dimension_title": "Lägg till tidsbaserad gruppering",
-        "time_dimension_toggle_description": "Övervaka trender över tid."
+        "time_dimension_toggle_description": "Övervaka trender över tid.",
+        "update_chart": "Uppdatera diagram"
       },
       "dashboards": {
         "add_count_charts": "Lägg till {count} diagram",
@@ -1810,6 +1815,7 @@
         "create_dashboard": "Skapa instrumentpanel",
         "create_dashboard_description": "Ange ett namn för din nya instrumentpanel.",
         "create_failed": "Det gick inte att skapa instrumentpanelen",
+        "create_new_chart": "Skapa nytt diagram",
         "create_success": "Instrumentpanelen har skapats!",
         "dashboard": "Instrumentpanel",
         "dashboard_delete_confirmation": "Är du säker på att du vill ta bort den här instrumentpanelen? Den här åtgärden kan inte ångras.",
@@ -1824,12 +1830,12 @@
         "duplicate_failed": "Det gick inte att duplicera instrumentpanelen",
         "duplicate_success": "Instrumentpanelen har duplicerats!",
         "failed_to_load_chart_data": "Det gick inte att ladda diagramdata",
-        "no_charts_available_description": "Det finns inga diagram som kan läggas till på den här instrumentpanelen. Antingen finns inga diagram än, eller så har alla befintliga diagram redan lagts till. Gå till sidan Diagram för att skapa nya diagram.",
-        "no_charts_to_add_message": "Inga diagram att lägga till på den här instrumentpanelen.",
         "no_dashboards_found": "Inga instrumentpaneler hittades.",
         "no_data_message": "Ingen data. Det finns för närvarande ingen information att visa. Lägg till diagram för att bygga din instrumentpanel.",
         "please_enter_name": "Ange ett namn på instrumentpanelen"
-      }
+      },
+      "no_feedback_records_message": "Du har inga feedbackposter att rapportera om. Ställ in återkopplingskällor för att mata in data i systemet.",
+      "setup_feedback_source": "Ställ in feedbackkällor"
     },
     "api_keys": {
       "add_api_key": "Lägg till API-nyckel",

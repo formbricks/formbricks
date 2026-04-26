@@ -125,6 +125,7 @@
     "activity": "Actividad",
     "add": "Añadir",
     "add_action": "Añadir acción",
+    "add_chart": "Agregar gráfico",
     "add_charts": "Añadir gráficos",
     "add_existing_chart_description": "Busca y selecciona gráficos para añadir a este panel.",
     "add_filter": "Añadir filtro",
@@ -393,6 +394,7 @@
     "report_survey": "Reportar encuesta",
     "request_trial_license": "Solicitar licencia de prueba",
     "reset_to_default": "Restablecer a valores predeterminados",
+    "resize": "Cambiar tamaño",
     "response": "Respuesta",
     "response_id": "ID de respuesta",
     "responses": "Respuestas",
@@ -1785,8 +1787,10 @@
         "please_select_dashboard": "Selecciona un panel de control",
         "predefined_measures": "Medidas predefinidas",
         "preset": "Preajuste",
+        "preview_chart": "Vista previa del gráfico",
         "query_executed_successfully": "Consulta ejecutada correctamente",
         "reset_to_ai_suggestion": "Restablecer a sugerencia de IA",
+        "save_and_add_to_dashboard": "Guardar y agregar al panel",
         "save_chart": "Guardar gráfico",
         "save_chart_dialog_title": "Guardar gráfico",
         "select_data_source": "Select a data source",
@@ -1799,7 +1803,8 @@
         "start_date": "Fecha de inicio",
         "time_dimension": "Dimensión temporal",
         "time_dimension_title": "Añadir agrupación temporal",
-        "time_dimension_toggle_description": "Supervisa las tendencias a lo largo del tiempo."
+        "time_dimension_toggle_description": "Supervisa las tendencias a lo largo del tiempo.",
+        "update_chart": "Cuadro de actualización"
       },
       "dashboards": {
         "add_count_charts": "Añadir {count} gráfico(s)",
@@ -1810,6 +1815,7 @@
         "create_dashboard": "Crear panel",
         "create_dashboard_description": "Introduce un nombre para tu panel de control nuevo.",
         "create_failed": "Error al crear el panel de control",
+        "create_new_chart": "Crear nuevo gráfico",
         "create_success": "Panel de control creado correctamente",
         "dashboard": "Panel",
         "dashboard_delete_confirmation": "¿Estás seguro de que quieres eliminar este panel? Esta acción no se puede deshacer.",
@@ -1824,12 +1830,12 @@
         "duplicate_failed": "Error al duplicar el panel de control",
         "duplicate_success": "Panel de control duplicado correctamente",
         "failed_to_load_chart_data": "Error al cargar los datos del gráfico",
-        "no_charts_available_description": "No hay gráficos que se puedan añadir a este panel. O bien no existen gráficos todavía, o todos los gráficos existentes ya se han añadido. Ve a la página de Gráficos para crear nuevos gráficos.",
-        "no_charts_to_add_message": "No hay gráficos para añadir a este panel.",
         "no_dashboards_found": "No se han encontrado paneles de control.",
         "no_data_message": "Sin datos. Actualmente no hay información que mostrar. Añade gráficos para crear tu panel.",
         "please_enter_name": "Por favor, introduce un nombre para el panel de control"
-      }
+      },
+      "no_feedback_records_message": "No tienes registros de comentarios sobre los que informar. Configure fuentes de comentarios para introducir datos en el sistema.",
+      "setup_feedback_source": "Configurar fuentes de comentarios"
     },
     "api_keys": {
       "add_api_key": "Añadir clave API",

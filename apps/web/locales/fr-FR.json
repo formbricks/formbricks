@@ -125,6 +125,7 @@
     "activity": "Activité",
     "add": "Ajouter",
     "add_action": "Ajouter une action",
+    "add_chart": "Ajouter un graphique",
     "add_charts": "Ajouter des graphiques",
     "add_existing_chart_description": "Recherchez et sélectionnez des graphiques à ajouter à ce tableau de bord.",
     "add_filter": "Ajouter un filtre",
@@ -393,6 +394,7 @@
     "report_survey": "Rapport d'enquête",
     "request_trial_license": "Demander une licence d'essai",
     "reset_to_default": "Réinitialiser par défaut",
+    "resize": "Redimensionner",
     "response": "Réponse",
     "response_id": "ID de réponse",
     "responses": "Réponses",
@@ -1785,8 +1787,10 @@
         "please_select_dashboard": "Veuillez sélectionner un tableau de bord",
         "predefined_measures": "Mesures prédéfinies",
         "preset": "Préréglage",
+        "preview_chart": "Aperçu du graphique",
         "query_executed_successfully": "Requête exécutée avec succès",
         "reset_to_ai_suggestion": "Réinitialiser à la suggestion IA",
+        "save_and_add_to_dashboard": "Enregistrer et ajouter au tableau de bord",
         "save_chart": "Enregistrer le graphique",
         "save_chart_dialog_title": "Enregistrer le graphique",
         "select_data_source": "Select a data source",
@@ -1799,7 +1803,8 @@
         "start_date": "Date de début",
         "time_dimension": "Dimension temporelle",
         "time_dimension_title": "Ajouter un groupement temporel",
-        "time_dimension_toggle_description": "Surveille les tendances dans le temps."
+        "time_dimension_toggle_description": "Surveille les tendances dans le temps.",
+        "update_chart": "Mettre à jour le graphique"
       },
       "dashboards": {
         "add_count_charts": "Ajouter {count} graphique(s)",
@@ -1810,6 +1815,7 @@
         "create_dashboard": "Créer un tableau de bord",
         "create_dashboard_description": "Saisissez un nom pour votre nouveau tableau de bord.",
         "create_failed": "Échec de la création du tableau de bord",
+        "create_new_chart": "Créer un nouveau graphique",
         "create_success": "Tableau de bord créé avec succès !",
         "dashboard": "Tableau de bord",
         "dashboard_delete_confirmation": "Es-tu sûr(e) de vouloir supprimer ce tableau de bord ? Cette action est irréversible.",
@@ -1824,12 +1830,12 @@
         "duplicate_failed": "Échec de la duplication du tableau de bord",
         "duplicate_success": "Tableau de bord dupliqué avec succès !",
         "failed_to_load_chart_data": "Échec du chargement des données du graphique",
-        "no_charts_available_description": "Il n'y a aucun graphique pouvant être ajouté à ce tableau de bord. Soit aucun graphique n'existe encore, soit tous les graphiques existants ont déjà été ajoutés. Rendez-vous sur la page Graphiques pour créer de nouveaux graphiques.",
-        "no_charts_to_add_message": "Aucun graphique à ajouter à ce tableau de bord.",
         "no_dashboards_found": "Aucun tableau de bord trouvé.",
         "no_data_message": "Aucune donnée. Il n'y a actuellement aucune information à afficher. Ajoute des graphiques pour construire ton tableau de bord.",
         "please_enter_name": "Veuillez saisir un nom de tableau de bord"
-      }
+      },
+      "no_feedback_records_message": "Vous n'avez pas d'enregistrements de commentaires sur lesquels créer des rapports. Configurez des sources de commentaires pour introduire des données dans le système.",
+      "setup_feedback_source": "Configurer les sources de commentaires"
     },
     "api_keys": {
       "add_api_key": "Ajouter une clé API",
