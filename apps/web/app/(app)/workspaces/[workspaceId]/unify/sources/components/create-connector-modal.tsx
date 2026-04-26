@@ -57,6 +57,7 @@ import { FormbricksQuestionList } from "./formbricks-question-list";
 interface CreateConnectorModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  showTrigger?: boolean;
   onCreateConnector: (data: {
     name: string;
     type: TConnectorType;
@@ -116,6 +117,7 @@ const getSelectableQuestionIds = (survey: TUnifySurvey): string[] =>
 export const CreateConnectorModal = ({
   open,
   onOpenChange,
+  showTrigger = true,
   onCreateConnector,
   surveys,
   workspaceId,
@@ -391,10 +393,12 @@ export const CreateConnectorModal = ({
 
   return (
     <>
-      <Button onClick={() => onOpenChange(true)} size="sm">
-        {t("workspace.unify.add_source")}
-        <PlusIcon className="ml-2 h-4 w-4" />
-      </Button>
+      {showTrigger && (
+        <Button onClick={() => onOpenChange(true)} size="sm">
+          {t("workspace.unify.add_source")}
+          <PlusIcon className="ml-2 h-4 w-4" />
+        </Button>
+      )}
 
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogContent className="max-w-3xl">
