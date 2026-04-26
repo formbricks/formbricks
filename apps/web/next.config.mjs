@@ -88,6 +88,7 @@ const nextConfig = {
     formats: ["image/webp"], // WebP is faster to process and smaller than JPEG/PNG
     minimumCacheTTL: 60, // Cache optimized images for at least 60 seconds
     dangerouslyAllowSVG: true, // Allow SVG images
+    dangerouslyAllowLocalIP: process.env.IMAGES_DANGEROUSLY_ALLOW_LOCAL_IP === "1", // Allow local/private IP image sources (e.g. self-hosted S3/MinIO)
     remotePatterns: [
       {
         protocol: "https",
