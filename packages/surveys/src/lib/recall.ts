@@ -76,7 +76,7 @@ export const parseRecallInformation = (
   variables: TResponseVariables
 ): TSurveyElement => {
   const modifiedQuestion = JSON.parse(JSON.stringify(question));
-  if (question.headline[languageCode].includes("recall:")) {
+  if (getLocalizedValue(question.headline, languageCode).includes("recall:")) {
     modifiedQuestion.headline[languageCode] = replaceRecallInfo(
       getLocalizedValue(modifiedQuestion.headline, languageCode),
       responseData,
@@ -86,7 +86,7 @@ export const parseRecallInformation = (
   }
   if (
     question.subheader &&
-    question.subheader[languageCode].includes("recall:") &&
+    getLocalizedValue(question.subheader, languageCode).includes("recall:") &&
     modifiedQuestion.subheader
   ) {
     modifiedQuestion.subheader[languageCode] = replaceRecallInfo(
