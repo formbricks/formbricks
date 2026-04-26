@@ -256,12 +256,16 @@ export const isSurveyValid = (
   survey: TSurvey,
   selectedLanguageCode: string,
   t: TFunction,
-  responseCount?: number
+  responseCount?: number,
+  options?: { checkFallback?: boolean }
 ) => {
-  const questionWithEmptyFallback = checkForEmptyFallBackValue(survey, selectedLanguageCode);
-  if (questionWithEmptyFallback) {
-    toast.error(t("environments.surveys.edit.fallback_missing"));
-    return false;
+  const checkFallback = options?.checkFallback ?? true;
+  if (checkFallback) {
+    const questionWithEmptyFallback = checkForEmptyFallBackValue(survey, selectedLanguageCode);
+    if (questionWithEmptyFallback) {
+      toast.error(t("environments.surveys.edit.fallback_missing"));
+      return false;
+    }
   }
 
   if (survey.type === "app" && survey.segment?.id === "temp") {

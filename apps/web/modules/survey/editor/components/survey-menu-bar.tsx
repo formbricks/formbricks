@@ -360,7 +360,9 @@ export const SurveyMenuBar = ({
     }
 
     try {
-      const isSurveyValidResult = isSurveyValid(localSurvey, selectedLanguageCode, t, responseCount);
+      const isSurveyValidResult = isSurveyValid(localSurvey, selectedLanguageCode, t, responseCount, {
+        checkFallback: false,
+      });
       if (!isSurveyValidResult) {
         setIsSurveySaving(false);
         return false;
