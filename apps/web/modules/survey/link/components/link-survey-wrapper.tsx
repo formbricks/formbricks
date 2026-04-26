@@ -61,7 +61,7 @@ export const LinkSurveyWrapper = ({
     return (
       <div
         className={cn(
-          "h-full w-full overflow-clip",
+          "h-full w-full overflow-hidden",
           styling.cardArrangement?.linkSurveys === "straight" && "pt-6",
           styling.cardArrangement?.linkSurveys === "casual" && "px-6 py-10"
         )}>
@@ -84,7 +84,7 @@ export const LinkSurveyWrapper = ({
           surveyType={surveyType}
           styling={styling}
           onBackgroundLoaded={handleBackgroundLoaded}>
-          <div className="flex max-h-dvh min-h-dvh items-center justify-center overflow-clip">
+          <div className="flex max-h-dvh min-h-dvh items-center justify-center overflow-hidden">
             {!styling.isLogoHidden && (project.logo?.url || styling.logo?.url) && (
               <ClientLogo projectLogo={project.logo} surveyLogo={styling.logo} dir={dir} />
             )}
