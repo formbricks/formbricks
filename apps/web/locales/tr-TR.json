@@ -432,6 +432,7 @@
     "some_files_failed_to_upload": "Bazı dosyalar yüklenemedi",
     "something_went_wrong": "Bir şeyler ters gitti",
     "something_went_wrong_please_try_again": "Bir sorun oluştu. Lütfen tekrar deneyin.",
+    "soon": "Yakında",
     "sort_by": "Sıralama",
     "start_free_trial": "Ücretsiz denemeyi başlat",
     "status": "Durum",
@@ -2552,10 +2553,14 @@
         "nav_label": "Geri Bildirim Dizinleri",
         "no_access": "Geri bildirim kayıt dizinlerini yönetme izniniz yok.",
         "no_connectors": "Bu dizine henüz bağlı bağlayıcı yok.",
+        "pause_connectors_confirmation_description": "Bu bağlayıcıları duraklatırsanız yeni kayıtlar eklenmez.",
+        "pause_connectors_confirmation_title": "Bağlı bağlayıcılar duraklatılsın mı?",
         "select_workspaces_placeholder": "Çalışma alanlarını seç...",
         "show_archived": "Arşivlenmişleri göster",
         "title": "Geri Bildirim Kayıt Dizinleri",
-        "unarchive": "Arşivden çıkar"
+        "unarchive": "Arşivden çıkar",
+        "unarchive_workspace_conflict": "Atanmış çalışma alanlarından biri veya daha fazlası arşivlendiği için bu dizin arşivden çıkarılamaz.",
+        "workspace_access": "Çalışma alanı erişimi"
       },
       "general": {
         "ai_data_analysis_enabled": "Veri zenginleştirme ve analiz (Yapay Zeka)",
@@ -3721,6 +3726,7 @@
       "status_live_sync": "Live sync",
       "status_ready": "Ready",
       "survey_has_no_questions": "Bu ankette soru yok",
+      "topics_and_subtopics": "Konular ve alt konular",
       "unify_feedback": "Geri Bildirimleri Birleştir",
       "update_mapping_description": "Bu kaynak için eşleme yapılandırmasını güncelle.",
       "updated_at": "Güncellenme tarihi",

@@ -432,6 +432,7 @@
     "some_files_failed_to_upload": "部分檔案上傳失敗",
     "something_went_wrong": "發生錯誤",
     "something_went_wrong_please_try_again": "發生錯誤。請再試一次。",
+    "soon": "即將推出",
     "sort_by": "排序方式",
     "start_free_trial": "開始免費試用",
     "status": "狀態",
@@ -2552,10 +2553,14 @@
         "nav_label": "意見回饋目錄",
         "no_access": "您沒有權限管理意見回饋記錄目錄。",
         "no_connectors": "此目錄尚未連結任何連接器。",
+        "pause_connectors_confirmation_description": "暫停這些連接器後，將不會再新增新紀錄。",
+        "pause_connectors_confirmation_title": "暫停已連結的連接器？",
         "select_workspaces_placeholder": "選擇工作區...",
         "show_archived": "顯示已封存",
         "title": "意見回饋記錄目錄",
-        "unarchive": "取消封存"
+        "unarchive": "取消封存",
+        "unarchive_workspace_conflict": "無法取消封存此目錄，因為一個或多個已指派工作區已封存。",
+        "workspace_access": "工作區存取權限"
       },
       "general": {
         "ai_data_analysis_enabled": "資料增強與分析（AI）",
@@ -3721,6 +3726,7 @@
       "status_live_sync": "Live sync",
       "status_ready": "Ready",
       "survey_has_no_questions": "此問卷沒有任何題目",
+      "topics_and_subtopics": "主題與子主題",
       "unify_feedback": "整合回饋",
       "update_mapping_description": "更新此來源的對應設定。",
       "updated_at": "更新時間",

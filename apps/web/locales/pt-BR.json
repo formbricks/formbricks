@@ -432,6 +432,7 @@
     "some_files_failed_to_upload": "Alguns arquivos falharam ao enviar",
     "something_went_wrong": "Algo deu errado",
     "something_went_wrong_please_try_again": "Algo deu errado. Tente novamente.",
+    "soon": "Em breve",
     "sort_by": "Ordenar por",
     "start_free_trial": "Iniciar teste gratuito",
     "status": "status",
@@ -2552,10 +2553,14 @@
         "nav_label": "Diretórios de Feedback",
         "no_access": "Você não tem permissão para gerenciar diretórios de registros de feedback.",
         "no_connectors": "Nenhum conector vinculado a este diretório ainda.",
+        "pause_connectors_confirmation_description": "Ao pausar esses conectores, novos registros deixarão de ser adicionados.",
+        "pause_connectors_confirmation_title": "Pausar conectores vinculados?",
         "select_workspaces_placeholder": "Selecionar espaços de trabalho...",
         "show_archived": "Mostrar arquivados",
         "title": "Diretórios de Registros de Feedback",
-        "unarchive": "Desarquivar"
+        "unarchive": "Desarquivar",
+        "unarchive_workspace_conflict": "Não é possível desarquivar este diretório porque um ou mais workspaces atribuídos estão arquivados.",
+        "workspace_access": "Acesso ao workspace"
       },
       "general": {
         "ai_data_analysis_enabled": "Enriquecimento e análise de dados (IA)",
@@ -3721,6 +3726,7 @@
       "status_live_sync": "Sincronização ao vivo",
       "status_ready": "Pronto",
       "survey_has_no_questions": "Esta pesquisa não possui perguntas",
+      "topics_and_subtopics": "Tópicos e subtópicos",
       "unify_feedback": "Unificar feedback",
       "update_mapping_description": "Atualize a configuração de mapeamento para esta fonte.",
       "updated_at": "Atualizado em",

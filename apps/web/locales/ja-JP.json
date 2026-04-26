@@ -432,6 +432,7 @@
     "some_files_failed_to_upload": "一部のファイルのアップロードに失敗しました",
     "something_went_wrong": "問題が発生しました",
     "something_went_wrong_please_try_again": "問題が発生しました。もう一度お試しください。",
+    "soon": "近日公開",
     "sort_by": "並び替え",
     "start_free_trial": "無料トライアルを開始",
     "status": "ステータス",
@@ -2552,10 +2553,14 @@
         "nav_label": "フィードバックディレクトリ",
         "no_access": "フィードバック記録ディレクトリを管理する権限がありません。",
         "no_connectors": "このディレクトリにリンクされているコネクタはまだありません。",
+        "pause_connectors_confirmation_description": "これらのコネクタを一時停止すると、新しいレコードは追加されません。",
+        "pause_connectors_confirmation_title": "関連するコネクタを一時停止しますか？",
         "select_workspaces_placeholder": "ワークスペースを選択...",
         "show_archived": "アーカイブ済みを表示",
         "title": "フィードバック記録ディレクトリ",
-        "unarchive": "アーカイブ解除"
+        "unarchive": "アーカイブ解除",
+        "unarchive_workspace_conflict": "割り当てられているワークスペースの1つ以上がアーカイブされているため、このディレクトリをアーカイブ解除できません。",
+        "workspace_access": "ワークスペースアクセス"
       },
       "general": {
         "ai_data_analysis_enabled": "データエンリッチメントと分析（AI）",
@@ -3721,6 +3726,7 @@
       "status_live_sync": "リアルタイム同期",
       "status_ready": "準備完了",
       "survey_has_no_questions": "このアンケートには質問がありません",
+      "topics_and_subtopics": "トピックとサブトピック",
       "unify_feedback": "フィードバックを統合",
       "update_mapping_description": "このソースのマッピング設定を更新します。",
       "updated_at": "更新日時",

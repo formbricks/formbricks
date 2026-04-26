@@ -432,6 +432,7 @@
     "some_files_failed_to_upload": "Néhány fájlt nem sikerült feltölteni",
     "something_went_wrong": "Valami probléma történt",
     "something_went_wrong_please_try_again": "Valami probléma történt. Próbálja meg újra.",
+    "soon": "Hamarosan",
     "sort_by": "Rendezési sorrend",
     "start_free_trial": "Ingyenes próbaidőszak indítása",
     "status": "Állapot",
@@ -2552,10 +2553,14 @@
         "nav_label": "Visszajelzési könyvtárak",
         "no_access": "Nem rendelkezik jogosultsággal a visszajelzési nyilvántartási könyvtárak kezeléséhez.",
         "no_connectors": "Még nincsenek csatlakozók társítva ehhez a könyvtárhoz.",
+        "pause_connectors_confirmation_description": "Ha szünetelteti ezeket a csatlakozókat, nem kerülnek be új rekordok.",
+        "pause_connectors_confirmation_title": "Szünetelteti a kapcsolódó csatlakozókat?",
         "select_workspaces_placeholder": "Munkaterületek kiválasztása...",
         "show_archived": "Archivált elemek megjelenítése",
         "title": "Visszajelzési Nyilvántartási Könyvtárak",
-        "unarchive": "Archiválás visszavonása"
+        "unarchive": "Archiválás visszavonása",
+        "unarchive_workspace_conflict": "A könyvtár nem állítható vissza, mert egy vagy több hozzárendelt munkaterület archiválva van.",
+        "workspace_access": "Munkaterület-hozzáférés"
       },
       "general": {
         "ai_data_analysis_enabled": "Adatgazdagítás és elemzés (AI)",
@@ -3721,6 +3726,7 @@
       "status_live_sync": "Élő szinkronizálás",
       "status_ready": "Kész",
       "survey_has_no_questions": "Ez a felmérés nem tartalmaz kérdéseket",
+      "topics_and_subtopics": "Témák és altémák",
       "unify_feedback": "Visszajelzések egyesítése",
       "update_mapping_description": "Frissítse a leképezési konfigurációt ehhez a forráshoz.",
       "updated_at": "Frissítve",
