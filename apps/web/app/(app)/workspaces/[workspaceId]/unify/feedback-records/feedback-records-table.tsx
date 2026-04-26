@@ -124,21 +124,33 @@ export const FeedbackRecordsTable = ({
     setError(null);
 
     const toastId = toast.loading(t("workspace.unify.refreshing_feedback_records"));
+    const directoryIds = Object.keys(frdMap);
+    const results = await Promise.all(
+      directoryIds.map((frdId) =>
+        listFeedbackRecordsAction({
+          workspaceId,
+          frdId,
+          limit: RECORDS_PER_PAGE,
+        })
+      )
+    );
 
-    const result = await listFeedbackRecordsAction({
-      workspaceId,
-      limit: RECORDS_PER_PAGE,
-    });
+    const successfulRecords = results.flatMap((result) => result?.data?.data ?? []);
 
-    if (!result?.data) {
-      toast.error(getFormattedErrorMessage(result) ?? t("workspace.unify.failed_to_load_feedback_records"), {
+    if (directoryIds.length > 0 && successfulRecords.length === 0) {
+      const firstErrorResult = results.find((result) => !result?.data);
+      const errorMessage = firstErrorResult ? getFormattedErrorMessage(firstErrorResult) : undefined;
+      toast.error(errorMessage ?? t("workspace.unify.failed_to_load_feedback_records"), {
         id: toastId,
       });
       setIsRefreshing(false);
       return;
     }
 
-    setRecords(result.data.data);
+    const mergedRecords = successfulRecords
+      .sort((a, b) => (a.collected_at < b.collected_at ? 1 : -1))
+      .slice(0, RECORDS_PER_PAGE);
+    setRecords(mergedRecords);
     setIsRefreshing(false);
     toast.success(t("workspace.unify.feedback_records_refreshed"), { id: toastId });
   };
