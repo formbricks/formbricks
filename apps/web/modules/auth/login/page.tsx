@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import {
   AZURE_OAUTH_ENABLED,
   EMAIL_AUTH_ENABLED,
+  ENTERPRISE_LICENSE_KEY,
   GITHUB_OAUTH_ENABLED,
   GOOGLE_OAUTH_ENABLED,
   OIDC_DISPLAY_NAME,
@@ -43,6 +44,7 @@ export const LoginPage = async () => {
           googleOAuthEnabled={GOOGLE_OAUTH_ENABLED}
           githubOAuthEnabled={GITHUB_OAUTH_ENABLED}
           azureOAuthEnabled={AZURE_OAUTH_ENABLED}
+          azureNonEeEnabled={AZURE_OAUTH_ENABLED && !ENTERPRISE_LICENSE_KEY}
           oidcOAuthEnabled={OIDC_OAUTH_ENABLED}
           oidcDisplayName={OIDC_DISPLAY_NAME}
           isMultiOrgEnabled={isMultiOrgEnabled}

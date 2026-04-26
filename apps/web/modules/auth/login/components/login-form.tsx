@@ -13,6 +13,7 @@ import { cn } from "@/lib/cn";
 import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@/lib/localStorage";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createEmailTokenAction } from "@/modules/auth/actions";
+import { MicrosoftButton } from "@/modules/auth/login/components/microsoft-button";
 import { SSOOptions } from "@/modules/ee/sso/components/sso-options";
 import { TwoFactor } from "@/modules/ee/two-factor-auth/components/two-factor";
 import { TwoFactorBackup } from "@/modules/ee/two-factor-auth/components/two-factor-backup";
@@ -39,6 +40,7 @@ interface LoginFormProps {
   googleOAuthEnabled: boolean;
   githubOAuthEnabled: boolean;
   azureOAuthEnabled: boolean;
+  azureNonEeEnabled: boolean;
   oidcOAuthEnabled: boolean;
   oidcDisplayName?: string;
   isMultiOrgEnabled: boolean;
@@ -55,6 +57,7 @@ export const LoginForm = ({
   googleOAuthEnabled,
   githubOAuthEnabled,
   azureOAuthEnabled,
+  azureNonEeEnabled,
   oidcOAuthEnabled,
   oidcDisplayName,
   isMultiOrgEnabled,
@@ -248,6 +251,7 @@ export const LoginForm = ({
               </Button>
             )}
           </form>
+          {azureNonEeEnabled && !isSsoEnabled && <MicrosoftButton callbackUrl={callbackUrl} />}
           {isSsoEnabled && (
             <SSOOptions
               googleOAuthEnabled={googleOAuthEnabled}

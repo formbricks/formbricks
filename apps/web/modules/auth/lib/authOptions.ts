@@ -1,10 +1,15 @@
 import type { Account, NextAuthOptions } from "next-auth";
+import AzureADProvider from "next-auth/providers/azure-ad";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { cookies } from "next/headers";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { TUser } from "@formbricks/types/user";
 import {
+  AZUREAD_CLIENT_ID,
+  AZUREAD_CLIENT_SECRET,
+  AZUREAD_TENANT_ID,
+  AZURE_OAUTH_ENABLED,
   CONTROL_HASH,
   EMAIL_VERIFICATION_DISABLED,
   ENCRYPTION_KEY,
@@ -13,6 +18,7 @@ import {
 } from "@/lib/constants";
 import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
 import { verifyToken } from "@/lib/jwt";
+import { handleMicrosoftCallback } from "@/modules/auth/lib/microsoft-handler";
 import { getUserByEmail, updateUser, updateUserLastLoginAt } from "@/modules/auth/lib/user";
 import {
   logAuthAttempt,
@@ -306,6 +312,15 @@ export const authOptions: NextAuthOptions = {
         return user;
       },
     }),
+    ...(AZURE_OAUTH_ENABLED
+      ? [
+          AzureADProvider({
+            clientId: AZUREAD_CLIENT_ID || "",
+            clientSecret: AZUREAD_CLIENT_SECRET || "",
+            tenantId: AZUREAD_TENANT_ID || "",
+          }),
+        ]
+      : []),
     // Conditionally add enterprise SSO providers
     ...(ENTERPRISE_LICENSE_KEY ? getSSOProviders() : []),
   ],
@@ -353,6 +368,14 @@ export const authOptions: NextAuthOptions = {
         }
         await updateUserLastLoginAt(user.email);
         return true;
+      }
+      if (account?.provider === "azure-ad" && !ENTERPRISE_LICENSE_KEY) {
+        const result = await handleMicrosoftCallback({ user, account });
+
+        if (result) {
+          await updateUserLastLoginAt(user.email);
+        }
+        return result;
       }
       if (ENTERPRISE_LICENSE_KEY) {
         const result = await handleSsoCallback({ user, account, callbackUrl });
