@@ -3747,7 +3747,6 @@
       "source_name": "ソース名",
       "source_type": "ソースタイプ",
       "source_type_cannot_be_changed": "ソースタイプは変更できません",
-      "sources": "ソース",
       "status_error": "エラー",
       "status_live_sync": "リアルタイム同期",
       "status_paused": "一時停止",

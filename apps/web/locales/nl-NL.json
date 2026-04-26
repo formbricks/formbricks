@@ -3747,7 +3747,6 @@
       "source_name": "Bronnaam",
       "source_type": "Brontype",
       "source_type_cannot_be_changed": "Brontype kan niet worden gewijzigd",
-      "sources": "Bronnen",
       "status_error": "Fout",
       "status_live_sync": "Live synchronisatie",
       "status_paused": "Gepauzeerd",

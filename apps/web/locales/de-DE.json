@@ -3747,7 +3747,6 @@
       "source_name": "Quellenname",
       "source_type": "Quellentyp",
       "source_type_cannot_be_changed": "Quellentyp kann nicht geändert werden",
-      "sources": "Quellen",
       "status_error": "Fehler",
       "status_live_sync": "Live-Synchronisierung",
       "status_paused": "Pausiert",

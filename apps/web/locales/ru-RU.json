@@ -3747,7 +3747,6 @@
       "source_name": "Имя источника",
       "source_type": "Тип источника",
       "source_type_cannot_be_changed": "Тип источника нельзя изменить",
-      "sources": "Источники",
       "status_error": "Ошибка",
       "status_live_sync": "Синхронизация в реальном времени",
       "status_paused": "Приостановлен",
