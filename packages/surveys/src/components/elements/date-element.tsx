@@ -81,6 +81,7 @@ export function DateElement({
         dir={dir}
         imageUrl={element.imageUrl}
         videoUrl={element.videoUrl}
+        format={element.format}
       />
     </form>
   );
