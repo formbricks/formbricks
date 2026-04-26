@@ -320,6 +320,14 @@ const provisionNewSsoUser = async ({
   let organization: Organization | null = null;
 
   if (!isFirstUser && !isMultiOrgEnabled) {
+    if (SKIP_INVITE_FOR_SSO && !DEFAULT_TEAM_ID) {
+      contextLogger.debug(
+        { reason: "missing_default_team_id" },
+        "SSO callback rejected: AUTH_SKIP_INVITE_FOR_SSO is enabled but AUTH_SSO_DEFAULT_TEAM_ID is not configured"
+      );
+      return false;
+    }
+
     contextLogger.debug(
       {
         assignmentStrategy: SKIP_INVITE_FOR_SSO && DEFAULT_TEAM_ID ? "default_team" : "first_organization",
