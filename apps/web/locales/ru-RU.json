@@ -431,6 +431,7 @@
     "some_files_failed_to_upload": "Не удалось загрузить некоторые файлы",
     "something_went_wrong": "Что-то пошло не так",
     "something_went_wrong_please_try_again": "Что-то пошло не так. Пожалуйста, попробуйте ещё раз.",
+    "soon": "Скоро",
     "sort_by": "Сортировать по",
     "start_free_trial": "Начать бесплатный пробный период",
     "status": "Статус",
@@ -2548,10 +2549,14 @@
         "nav_label": "Каталоги отзывов",
         "no_access": "У тебя нет прав для управления каталогами записей отзывов.",
         "no_connectors": "К этому каталогу пока не привязано ни одного коннектора.",
+        "pause_connectors_confirmation_description": "Если приостановить эти коннекторы, новые записи больше не будут добавляться.",
+        "pause_connectors_confirmation_title": "Приостановить связанные коннекторы?",
         "select_workspaces_placeholder": "Выберите рабочие области...",
         "show_archived": "Показать архивные",
         "title": "Директории записей обратной связи",
-        "unarchive": "Разархивировать"
+        "unarchive": "Разархивировать",
+        "unarchive_workspace_conflict": "Невозможно разархивировать этот каталог, потому что один или несколько назначенных рабочих пространств архивированы.",
+        "workspace_access": "Доступ к рабочему пространству"
       },
       "general": {
         "ai_data_analysis_enabled": "Обогащение и анализ данных (ИИ)",
@@ -3718,6 +3723,7 @@
       "status_paused": "Приостановлен",
       "status_ready": "Готово",
       "survey_has_no_questions": "В этом опросе нет вопросов",
+      "topics_and_subtopics": "Темы и подтемы",
       "unify_feedback": "Обратная связь Unify",
       "update_mapping_description": "Обнови настройки сопоставления для этого источника.",
       "updated_at": "Обновлено",

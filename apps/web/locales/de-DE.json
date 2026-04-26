@@ -431,6 +431,7 @@
     "some_files_failed_to_upload": "Einige Dateien konnten nicht hochgeladen werden",
     "something_went_wrong": "Etwas ist schiefgelaufen",
     "something_went_wrong_please_try_again": "Etwas ist schiefgelaufen. Bitte versuche es erneut.",
+    "soon": "Bald",
     "sort_by": "Sortieren nach",
     "start_free_trial": "Kostenlose Testversion starten",
     "status": "Status",
@@ -2548,10 +2549,14 @@
         "nav_label": "Feedback-Verzeichnisse",
         "no_access": "Du hast keine Berechtigung, Feedback-Datensatz-Verzeichnisse zu verwalten.",
         "no_connectors": "Noch keine Connectoren mit diesem Verzeichnis verknüpft.",
+        "pause_connectors_confirmation_description": "Wenn du diese Connectoren pausierst, werden keine neuen Datensätze mehr hinzugefügt.",
+        "pause_connectors_confirmation_title": "Verknüpfte Connectoren pausieren?",
         "select_workspaces_placeholder": "Workspaces auswählen...",
         "show_archived": "Archivierte anzeigen",
         "title": "Feedback-Datensatz-Verzeichnisse",
-        "unarchive": "Aus Archiv wiederherstellen"
+        "unarchive": "Aus Archiv wiederherstellen",
+        "unarchive_workspace_conflict": "Dieses Verzeichnis kann nicht wiederhergestellt werden, weil ein oder mehrere zugewiesene Workspaces archiviert sind.",
+        "workspace_access": "Workspace-Zugriff"
       },
       "general": {
         "ai_data_analysis_enabled": "Datenanreicherung & -analyse (KI)",
@@ -3718,6 +3723,7 @@
       "status_paused": "Pausiert",
       "status_ready": "Bereit",
       "survey_has_no_questions": "Diese Umfrage hat keine Fragen",
+      "topics_and_subtopics": "Themen & Unterthemen",
       "unify_feedback": "Feedback vereinheitlichen",
       "update_mapping_description": "Aktualisiere die Zuordnungskonfiguration für diese Quelle.",
       "updated_at": "Aktualisiert am",

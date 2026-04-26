@@ -431,6 +431,7 @@
     "some_files_failed_to_upload": "Några filer misslyckades att laddas upp",
     "something_went_wrong": "Något gick fel",
     "something_went_wrong_please_try_again": "Något gick fel. Försök igen.",
+    "soon": "Snart",
     "sort_by": "Sortera efter",
     "start_free_trial": "Starta gratis provperiod",
     "status": "Status",
@@ -2548,10 +2549,14 @@
         "nav_label": "Feedbackkataloger",
         "no_access": "Du har inte behörighet att hantera kataloger för feedbackposter.",
         "no_connectors": "Inga kopplingar länkade till den här katalogen ännu.",
+        "pause_connectors_confirmation_description": "Om du pausar dessa kopplingar kommer inga nya poster att läggas till.",
+        "pause_connectors_confirmation_title": "Pausa länkade kopplingar?",
         "select_workspaces_placeholder": "Välj arbetsytor...",
         "show_archived": "Visa arkiverade",
         "title": "Feedbackkataloger",
-        "unarchive": "Avarkivera"
+        "unarchive": "Avarkivera",
+        "unarchive_workspace_conflict": "Den här katalogen kan inte avarkiveras eftersom en eller flera tilldelade arbetsytor är arkiverade.",
+        "workspace_access": "Arbetsyteåtkomst"
       },
       "general": {
         "ai_data_analysis_enabled": "Dataförbättring & analys (AI)",
@@ -3718,6 +3723,7 @@
       "status_paused": "Pausad",
       "status_ready": "Ready",
       "survey_has_no_questions": "Den här enkäten har inga frågor",
+      "topics_and_subtopics": "Ämnen och delämnen",
       "unify_feedback": "Samla feedback",
       "update_mapping_description": "Uppdatera mappningskonfigurationen för den här källan.",
       "updated_at": "Uppdaterad",

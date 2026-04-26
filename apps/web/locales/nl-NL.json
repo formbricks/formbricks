@@ -431,6 +431,7 @@
     "some_files_failed_to_upload": "Sommige bestanden konden niet worden geüpload",
     "something_went_wrong": "Er is iets misgegaan",
     "something_went_wrong_please_try_again": "Er is iets misgegaan. Probeer het opnieuw.",
+    "soon": "Binnenkort",
     "sort_by": "Sorteer op",
     "start_free_trial": "Start gratis proefperiode",
     "status": "Status",
@@ -2548,10 +2549,14 @@
         "nav_label": "Feedbackmappen",
         "no_access": "Je hebt geen toestemming om feedbackregistratiemappen te beheren.",
         "no_connectors": "Nog geen connectoren gekoppeld aan deze map.",
+        "pause_connectors_confirmation_description": "Als je deze connectoren pauzeert, worden er geen nieuwe records meer toegevoegd.",
+        "pause_connectors_confirmation_title": "Gekoppelde connectoren pauzeren?",
         "select_workspaces_placeholder": "Selecteer werkruimtes...",
         "show_archived": "Gearchiveerde weergeven",
         "title": "Feedbackregistratiemappen",
-        "unarchive": "Dearchiveren"
+        "unarchive": "Dearchiveren",
+        "unarchive_workspace_conflict": "Deze map kan niet worden gedearchiveerd omdat een of meer toegewezen workspaces zijn gearchiveerd.",
+        "workspace_access": "Workspace-toegang"
       },
       "general": {
         "ai_data_analysis_enabled": "Dataverrijking & analyse (AI)",
@@ -3718,6 +3723,7 @@
       "status_paused": "Gepauzeerd",
       "status_ready": "Klaar",
       "survey_has_no_questions": "Deze enquête heeft geen vragen",
+      "topics_and_subtopics": "Onderwerpen en subonderwerpen",
       "unify_feedback": "Feedback verenigen",
       "update_mapping_description": "Werk de mappingconfiguratie voor deze bron bij.",
       "updated_at": "Bijgewerkt op",

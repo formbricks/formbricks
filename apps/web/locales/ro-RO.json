@@ -431,6 +431,7 @@
     "some_files_failed_to_upload": "Unele fișiere nu au reușit să se încarce",
     "something_went_wrong": "Ceva nu a mers bine",
     "something_went_wrong_please_try_again": "Ceva nu a mers bine. Vă rugăm să încercați din nou.",
+    "soon": "În curând",
     "sort_by": "Sortare după",
     "start_free_trial": "Începe perioada de probă gratuită",
     "status": "Stare",
@@ -2548,10 +2549,14 @@
         "nav_label": "Directoare de feedback",
         "no_access": "Nu ai permisiunea de a gestiona directoarele de înregistrări de feedback.",
         "no_connectors": "Niciun conector asociat acestui director încă.",
+        "pause_connectors_confirmation_description": "Dacă pui pe pauză acești conectori, nu vor mai fi adăugate înregistrări noi.",
+        "pause_connectors_confirmation_title": "Pauzezi conectorii asociați?",
         "select_workspaces_placeholder": "Selectează spații de lucru...",
         "show_archived": "Afișează arhivate",
         "title": "Directoare de Înregistrări Feedback",
-        "unarchive": "Dezarhivează"
+        "unarchive": "Dezarhivează",
+        "unarchive_workspace_conflict": "Acest director nu poate fi dezarhivat deoarece unul sau mai multe spații de lucru alocate sunt arhivate.",
+        "workspace_access": "Acces la spațiul de lucru"
       },
       "general": {
         "ai_data_analysis_enabled": "Îmbogățire și analiză de date (AI)",
@@ -3718,6 +3723,7 @@
       "status_paused": "Pauzat",
       "status_ready": "Gata",
       "survey_has_no_questions": "Acest sondaj nu are întrebări",
+      "topics_and_subtopics": "Subiecte și subiecte secundare",
       "unify_feedback": "Unify Feedback",
       "update_mapping_description": "Actualizează configurația de mapare pentru această sursă.",
       "updated_at": "Actualizat la",

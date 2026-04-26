@@ -431,6 +431,7 @@
     "some_files_failed_to_upload": "某些文件上传失败",
     "something_went_wrong": "出错了",
     "something_went_wrong_please_try_again": "出错了 。请 尝试 再次 操作 。",
+    "soon": "即将推出",
     "sort_by": "排序 依据",
     "start_free_trial": "开始免费试用",
     "status": "状态",
@@ -2548,10 +2549,14 @@
         "nav_label": "反馈目录",
         "no_access": "你没有管理反馈记录目录的权限。",
         "no_connectors": "此目录尚未链接任何连接器。",
+        "pause_connectors_confirmation_description": "暂停这些连接器后，将不会再添加新记录。",
+        "pause_connectors_confirmation_title": "暂停已关联的连接器？",
         "select_workspaces_placeholder": "选择工作区...",
         "show_archived": "显示已归档",
         "title": "反馈记录目录",
-        "unarchive": "取消归档"
+        "unarchive": "取消归档",
+        "unarchive_workspace_conflict": "无法取消归档该目录，因为一个或多个已分配工作区已归档。",
+        "workspace_access": "工作区访问权限"
       },
       "general": {
         "ai_data_analysis_enabled": "数据增强与分析（AI）",
@@ -3718,6 +3723,7 @@
       "status_paused": "已暂停",
       "status_ready": "Ready",
       "survey_has_no_questions": "该调查没有任何问题",
+      "topics_and_subtopics": "主题和子主题",
       "unify_feedback": "统一反馈",
       "update_mapping_description": "更新此来源的映射配置。",
       "updated_at": "更新于",

@@ -431,6 +431,7 @@
     "some_files_failed_to_upload": "Certains fichiers n'ont pas pu être téléchargés",
     "something_went_wrong": "Quelque chose s'est mal passé.",
     "something_went_wrong_please_try_again": "Une erreur s'est produite. Veuillez réessayer.",
+    "soon": "Bientôt",
     "sort_by": "Trier par",
     "start_free_trial": "Commencer l'essai gratuit",
     "status": "Statut",
@@ -2548,10 +2549,14 @@
         "nav_label": "Répertoires de feedback",
         "no_access": "Tu n'as pas la permission de gérer les répertoires de feedback.",
         "no_connectors": "Aucun connecteur lié à ce répertoire pour le moment.",
+        "pause_connectors_confirmation_description": "Si vous mettez ces connecteurs en pause, aucun nouvel enregistrement ne sera ajouté.",
+        "pause_connectors_confirmation_title": "Mettre en pause les connecteurs liés ?",
         "select_workspaces_placeholder": "Sélectionner des espaces de travail...",
         "show_archived": "Afficher les éléments archivés",
         "title": "Répertoires d'enregistrement des retours",
-        "unarchive": "Désarchiver"
+        "unarchive": "Désarchiver",
+        "unarchive_workspace_conflict": "Impossible de désarchiver ce répertoire, car un ou plusieurs espaces de travail attribués sont archivés.",
+        "workspace_access": "Accès à l’espace de travail"
       },
       "general": {
         "ai_data_analysis_enabled": "Enrichissement et analyse des données (IA)",
@@ -3718,6 +3723,7 @@
       "status_paused": "En pause",
       "status_ready": "Prêt",
       "survey_has_no_questions": "Ce sondage n'a pas de questions",
+      "topics_and_subtopics": "Thèmes et sous-thèmes",
       "unify_feedback": "Unifier les retours",
       "update_mapping_description": "Mettre à jour la configuration de mappage pour cette source.",
       "updated_at": "Mis à jour à",
