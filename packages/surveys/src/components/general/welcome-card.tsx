@@ -173,7 +173,12 @@ export function WelcomeCard({
         />
         <div className="mt-4 flex gap-4 pt-4">
           <SubmitButton
-            buttonLabel={getLocalizedValue(buttonLabel, languageCode)}
+            buttonLabel={replaceRecallInfo(
+              getLocalizedValue(buttonLabel, languageCode),
+              responseData,
+              variablesData,
+              languageCode
+            )}
             isLastQuestion={false}
             focus={isCurrent ? autoFocusEnabled : false}
             tabIndex={isCurrent ? 0 : -1}
