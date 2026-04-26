@@ -125,6 +125,7 @@
     "activity": "Aktivität",
     "add": "Hinzufügen",
     "add_action": "Aktion hinzufügen",
+    "add_chart": "Diagramm hinzufügen",
     "add_charts": "Diagramme hinzufügen",
     "add_existing_chart_description": "Suche und wähle Diagramme aus, um sie zu diesem Dashboard hinzuzufügen.",
     "add_filter": "Filter hinzufügen",
@@ -391,6 +392,7 @@
     "report_survey": "Umfrage melden",
     "request_trial_license": "Testlizenz anfordern",
     "reset_to_default": "Auf Standard zurücksetzen",
+    "resize": "Größe ändern",
     "response": "Antwort",
     "response_id": "Antwort-ID",
     "responses": "Antworten",
@@ -1783,8 +1785,10 @@
         "please_select_dashboard": "Bitte wähle ein Dashboard aus",
         "predefined_measures": "Vordefinierte Kennzahlen",
         "preset": "Vorlage",
+        "preview_chart": "Vorschaudiagramm",
         "query_executed_successfully": "Abfrage erfolgreich ausgeführt",
         "reset_to_ai_suggestion": "Auf KI-Vorschlag zurücksetzen",
+        "save_and_add_to_dashboard": "Speichern und zum Dashboard hinzufügen",
         "save_chart": "Diagramm speichern",
         "save_chart_dialog_title": "Diagramm speichern",
         "select_data_source": "Select a data source",
@@ -1797,7 +1801,8 @@
         "start_date": "Startdatum",
         "time_dimension": "Zeitdimension",
         "time_dimension_title": "Zeitbasierte Gruppierung hinzufügen",
-        "time_dimension_toggle_description": "Beobachte Trends im Zeitverlauf."
+        "time_dimension_toggle_description": "Beobachte Trends im Zeitverlauf.",
+        "update_chart": "Diagramm aktualisieren"
       },
       "dashboards": {
         "add_count_charts": "{count} Diagramm(e) hinzufügen",
@@ -1808,6 +1813,7 @@
         "create_dashboard": "Dashboard erstellen",
         "create_dashboard_description": "Gib einen Namen für dein neues Dashboard ein.",
         "create_failed": "Dashboard konnte nicht erstellt werden",
+        "create_new_chart": "Neues Diagramm erstellen",
         "create_success": "Dashboard erfolgreich erstellt!",
         "dashboard": "Dashboard",
         "dashboard_delete_confirmation": "Bist du sicher, dass du dieses Dashboard löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.",
@@ -1822,12 +1828,12 @@
         "duplicate_failed": "Dashboard konnte nicht dupliziert werden",
         "duplicate_success": "Dashboard erfolgreich dupliziert!",
         "failed_to_load_chart_data": "Diagrammdaten konnten nicht geladen werden",
-        "no_charts_available_description": "Es gibt keine Diagramme, die zu diesem Dashboard hinzugefügt werden können. Entweder existieren noch keine Diagramme oder alle vorhandenen Diagramme wurden bereits hinzugefügt. Gehe zur Diagramm-Seite, um neue Diagramme zu erstellen.",
-        "no_charts_to_add_message": "Keine Diagramme zum Hinzufügen zu diesem Dashboard vorhanden.",
         "no_dashboards_found": "Keine Dashboards gefunden.",
         "no_data_message": "Keine Daten. Es gibt derzeit keine Informationen zum Anzeigen. Füge Diagramme hinzu, um dein Dashboard zu erstellen.",
         "please_enter_name": "Bitte gib einen Dashboard-Namen ein"
-      }
+      },
+      "no_feedback_records_message": "Sie haben keine Feedback-Datensätze, über die Sie berichten können. Richten Sie Feedbackquellen ein, um Daten in das System einzuspeisen.",
+      "setup_feedback_source": "Richten Sie Feedbackquellen ein"
     },
     "api_keys": {
       "add_api_key": "API-Key hinzufügen",

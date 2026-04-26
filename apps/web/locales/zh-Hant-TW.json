@@ -125,6 +125,7 @@
     "activity": "活動",
     "add": "新增",
     "add_action": "新增操作",
+    "add_chart": "新增圖表",
     "add_charts": "新增圖表",
     "add_existing_chart_description": "搜尋並選擇要新增至此儀表板的圖表。",
     "add_filter": "新增篩選器",
@@ -391,6 +392,7 @@
     "report_survey": "報告問卷",
     "request_trial_license": "請求試用授權",
     "reset_to_default": "重設為預設值",
+    "resize": "調整大小",
     "response": "回應",
     "response_id": "回應 ID",
     "responses": "回應",
@@ -1783,8 +1785,10 @@
         "please_select_dashboard": "請選擇一個儀表板",
         "predefined_measures": "預設指標",
         "preset": "預設",
+        "preview_chart": "預覽圖表",
         "query_executed_successfully": "查詢執行成功",
         "reset_to_ai_suggestion": "重設為 AI 建議",
+        "save_and_add_to_dashboard": "儲存並新增到儀表板",
         "save_chart": "儲存圖表",
         "save_chart_dialog_title": "儲存圖表",
         "select_data_source": "Select a data source",
@@ -1797,7 +1801,8 @@
         "start_date": "開始日期",
         "time_dimension": "時間維度",
         "time_dimension_title": "新增基於時間的分組",
-        "time_dimension_toggle_description": "監控隨時間變化的趨勢。"
+        "time_dimension_toggle_description": "監控隨時間變化的趨勢。",
+        "update_chart": "更新圖表"
       },
       "dashboards": {
         "add_count_charts": "新增 {count} 個圖表",
@@ -1808,6 +1813,7 @@
         "create_dashboard": "建立儀表板",
         "create_dashboard_description": "請輸入新儀表板的名稱。",
         "create_failed": "建立儀表板失敗",
+        "create_new_chart": "建立新圖表",
         "create_success": "儀表板建立成功！",
         "dashboard": "儀表板",
         "dashboard_delete_confirmation": "確定要刪除此儀表板嗎?此操作無法復原。",
@@ -1822,12 +1828,12 @@
         "duplicate_failed": "複製儀表板失敗",
         "duplicate_success": "儀表板複製成功！",
         "failed_to_load_chart_data": "載入圖表資料失敗",
-        "no_charts_available_description": "目前沒有可以新增到此儀表板的圖表。可能是尚未建立任何圖表，或所有現有圖表都已新增。請前往圖表頁面建立新的圖表。",
-        "no_charts_to_add_message": "沒有可新增到此儀表板的圖表。",
         "no_dashboards_found": "找不到儀表板。",
         "no_data_message": "無資料。目前沒有可顯示的資訊。請新增圖表來建立你的儀表板。",
         "please_enter_name": "請輸入儀表板名稱"
-      }
+      },
+      "no_feedback_records_message": "您沒有可供報告的回饋記錄。設定回饋來源以將資料輸入系統。",
+      "setup_feedback_source": "設定反饋源"
     },
     "api_keys": {
       "add_api_key": "新增 API 金鑰",

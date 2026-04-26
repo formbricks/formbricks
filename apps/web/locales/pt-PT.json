@@ -125,6 +125,7 @@
     "activity": "Atividade",
     "add": "Adicionar",
     "add_action": "Adicionar ação",
+    "add_chart": "Adicionar gráfico",
     "add_charts": "Adicionar gráficos",
     "add_existing_chart_description": "Pesquisa e seleciona gráficos para adicionar a este painel.",
     "add_filter": "Adicionar filtro",
@@ -391,6 +392,7 @@
     "report_survey": "Relatório de Inquérito",
     "request_trial_license": "Solicitar licença de teste",
     "reset_to_default": "Repor para o padrão",
+    "resize": "Redimensionar",
     "response": "Resposta",
     "response_id": "ID de resposta",
     "responses": "Respostas",
@@ -1783,8 +1785,10 @@
         "please_select_dashboard": "Por favor, seleciona um painel",
         "predefined_measures": "Medidas predefinidas",
         "preset": "Predefinição",
+        "preview_chart": "Visualizar gráfico",
         "query_executed_successfully": "Consulta executada com sucesso",
         "reset_to_ai_suggestion": "Repor sugestão da IA",
+        "save_and_add_to_dashboard": "Salvar e adicionar ao painel",
         "save_chart": "Guardar gráfico",
         "save_chart_dialog_title": "Guardar gráfico",
         "select_data_source": "Select a data source",
@@ -1797,7 +1801,8 @@
         "start_date": "Data de início",
         "time_dimension": "Dimensão temporal",
         "time_dimension_title": "Adicionar agrupamento temporal",
-        "time_dimension_toggle_description": "Monitoriza tendências ao longo do tempo."
+        "time_dimension_toggle_description": "Monitoriza tendências ao longo do tempo.",
+        "update_chart": "Atualizar gráfico"
       },
       "dashboards": {
         "add_count_charts": "Adicionar {count} gráfico(s)",
@@ -1808,6 +1813,7 @@
         "create_dashboard": "Criar painel",
         "create_dashboard_description": "Introduza um nome para o seu novo painel.",
         "create_failed": "Falha ao criar painel",
+        "create_new_chart": "Criar novo gráfico",
         "create_success": "Painel criado com sucesso!",
         "dashboard": "Painel",
         "dashboard_delete_confirmation": "Tens a certeza de que queres eliminar este painel? Esta ação não pode ser revertida.",
@@ -1822,12 +1828,12 @@
         "duplicate_failed": "Falha ao duplicar painel",
         "duplicate_success": "Painel duplicado com sucesso!",
         "failed_to_load_chart_data": "Falha ao carregar os dados do gráfico",
-        "no_charts_available_description": "Não há gráficos que possam ser adicionados a este painel. Ou ainda não existem gráficos, ou todos os gráficos existentes já foram adicionados. Vai à página de Gráficos para criar novos gráficos.",
-        "no_charts_to_add_message": "Não há gráficos para adicionar a este painel.",
         "no_dashboards_found": "Nenhum painel encontrado.",
         "no_data_message": "Sem Dados. Atualmente não há informação para apresentar. Adiciona gráficos para construir o teu painel.",
         "please_enter_name": "Por favor, introduza um nome para o painel"
-      }
+      },
+      "no_feedback_records_message": "Você não tem registros de feedback para relatar. Configure fontes de feedback para alimentar dados no sistema.",
+      "setup_feedback_source": "Configurar fontes de feedback"
     },
     "api_keys": {
       "add_api_key": "Adicionar chave API",

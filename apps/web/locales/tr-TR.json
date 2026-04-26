@@ -125,6 +125,7 @@
     "activity": "Etkinlik",
     "add": "Ekle",
     "add_action": "Eylem ekle",
+    "add_chart": "Grafik ekle",
     "add_charts": "Grafik ekle",
     "add_existing_chart_description": "Bu panoya eklemek için grafikleri ara ve seç.",
     "add_filter": "Filtre ekle",
@@ -391,6 +392,7 @@
     "report_survey": "Anketi Raporla",
     "request_trial_license": "Deneme lisansı iste",
     "reset_to_default": "Varsayılana sıfırla",
+    "resize": "Yeniden boyutlandır",
     "response": "Yanıt",
     "response_id": "Yanıt ID",
     "responses": "Yanıtlar",
@@ -1783,8 +1785,10 @@
         "please_select_dashboard": "Lütfen bir kontrol paneli seç",
         "predefined_measures": "Önceden Tanımlanmış Ölçümler",
         "preset": "Ön Ayar",
+        "preview_chart": "Grafiği önizleyin",
         "query_executed_successfully": "Sorgu başarıyla çalıştırıldı",
         "reset_to_ai_suggestion": "Yapay zeka önerisine sıfırla",
+        "save_and_add_to_dashboard": "Kaydet ve kontrol paneline ekle",
         "save_chart": "Grafiği Kaydet",
         "save_chart_dialog_title": "Grafiği Kaydet",
         "select_data_source": "Bir veri kaynağı seç",
@@ -1797,7 +1801,8 @@
         "start_date": "Başlangıç tarihi",
         "time_dimension": "Zaman Boyutu",
         "time_dimension_title": "Zaman tabanlı gruplama ekle",
-        "time_dimension_toggle_description": "Zaman içindeki eğilimleri izle."
+        "time_dimension_toggle_description": "Zaman içindeki eğilimleri izle.",
+        "update_chart": "Grafiği güncelle"
       },
       "dashboards": {
         "add_count_charts": "{count} grafik ekle",
@@ -1808,6 +1813,7 @@
         "create_dashboard": "Pano oluştur",
         "create_dashboard_description": "Yeni panon için bir isim gir.",
         "create_failed": "Pano oluşturulamadı",
+        "create_new_chart": "Yeni grafik oluştur",
         "create_success": "Pano başarıyla oluşturuldu!",
         "dashboard": "Pano",
         "dashboard_delete_confirmation": "Bu gösterge panelini silmek istediğinden emin misin? Bu işlem geri alınamaz.",
@@ -1822,12 +1828,12 @@
         "duplicate_failed": "Gösterge paneli kopyalanamadı",
         "duplicate_success": "Gösterge paneli başarıyla kopyalandı!",
         "failed_to_load_chart_data": "Grafik verileri yüklenemedi",
-        "no_charts_available_description": "Bu gösterge paneline eklenebilecek grafik bulunmuyor. Ya henüz hiç grafik oluşturulmadı ya da mevcut tüm grafikler zaten eklendi. Yeni grafikler oluşturmak için Grafikler sayfasına git.",
-        "no_charts_to_add_message": "Bu gösterge paneline eklenecek grafik yok.",
         "no_dashboards_found": "Gösterge paneli bulunamadı.",
         "no_data_message": "Veri Yok. Şu anda görüntülenecek bilgi bulunmuyor. Gösterge panelini oluşturmak için grafik ekle.",
         "please_enter_name": "Lütfen bir gösterge paneli adı gir"
-      }
+      },
+      "no_feedback_records_message": "Raporlayabileceğiniz Geri Bildirim Kayıtlarınız yok. Verileri sisteme beslemek için Geri Bildirim Kaynaklarını ayarlayın.",
+      "setup_feedback_source": "Geri bildirim kaynaklarını ayarlayın"
     },
     "api_keys": {
       "add_api_key": "API Anahtarı Ekle",
