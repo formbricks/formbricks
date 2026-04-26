@@ -1,9 +1,9 @@
 import { TFunction } from "i18next";
-import { THubFieldType } from "@formbricks/types/connector";
+import { TConnectorType, THubFieldType } from "@formbricks/types/connector";
 import { FEEDBACK_RECORD_FIELDS, MAX_CSV_VALUES, TFieldMapping, TSourceField } from "./types";
 
 export interface TConnectorOption {
-  id: string;
+  id: TConnectorType;
   name: string;
   description: string;
   disabled: boolean;
@@ -12,7 +12,7 @@ export interface TConnectorOption {
 
 export const getConnectorOptions = (t: TFunction): TConnectorOption[] => [
   {
-    id: "formbricks",
+    id: "formbricks_survey",
     name: t("workspace.unify.formbricks_surveys"),
     description: t("workspace.unify.source_connect_formbricks_description"),
     disabled: false,

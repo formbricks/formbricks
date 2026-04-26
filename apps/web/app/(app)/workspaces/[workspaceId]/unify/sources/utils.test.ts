@@ -8,7 +8,7 @@ describe("getConnectorOptions", () => {
   test("returns formbricks and csv options", () => {
     const options = getConnectorOptions(mockT as never);
     expect(options).toHaveLength(2);
-    expect(options[0].id).toBe("formbricks");
+    expect(options[0].id).toBe("formbricks_survey");
     expect(options[1].id).toBe("csv");
   });
 

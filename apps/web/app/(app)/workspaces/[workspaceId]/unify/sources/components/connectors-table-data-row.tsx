@@ -41,7 +41,7 @@ interface ConnectorsTableDataRowProps {
 
 function getConnectorIcon(type: TConnectorType) {
   switch (type) {
-    case "formbricks":
+    case "formbricks_survey":
       return <FormIcon className="h-4 w-4 text-slate-500" />;
     case "csv":
       return <FileSpreadsheetIcon className="h-4 w-4 text-slate-500" />;
@@ -79,7 +79,7 @@ export function ConnectorsTableDataRow({
 
   const getConnectorTypeLabel = (connectorType: TConnectorType) => {
     switch (connectorType) {
-      case "formbricks":
+      case "formbricks_survey":
         return t("workspace.unify.formbricks_surveys");
       case "csv":
         return t("workspace.unify.csv_import");

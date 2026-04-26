@@ -55,9 +55,9 @@ export function ConnectorsSection({
         feedbackRecordDirectoryId: data.feedbackRecordDirectoryId,
       },
       formbricksMappings:
-        data.type === "formbricks" && data.surveyMappings?.length ? data.surveyMappings : undefined,
+        data.type === "formbricks_survey" && data.surveyMappings?.length ? data.surveyMappings : undefined,
       fieldMappings:
-        data.type !== "formbricks" && data.fieldMappings?.length
+        data.type !== "formbricks_survey" && data.fieldMappings?.length
           ? data.fieldMappings.map((m) => ({
               sourceFieldId: m.sourceFieldId || "",
               targetFieldId: m.targetFieldId as THubTargetField,
