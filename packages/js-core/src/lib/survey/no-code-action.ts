@@ -274,17 +274,15 @@ const checkExitIntentWrapper = (e: MouseEvent): void => {
 };
 
 export const addExitIntentListener = (): void => {
-  if (typeof document !== "undefined" && !isExitIntentListenerAdded) {
-    document
-      .querySelector("body")
-      ?.addEventListener("mouseleave", checkExitIntentWrapper as unknown as EventListener);
+  if (typeof document !== "undefined" && document.body && !isExitIntentListenerAdded) {
+    document.body.addEventListener("mouseleave", checkExitIntentWrapper as unknown as EventListener);
     isExitIntentListenerAdded = true;
   }
 };
 
 export const removeExitIntentListener = (): void => {
-  if (isExitIntentListenerAdded) {
-    document.removeEventListener("mouseleave", checkExitIntentWrapper as unknown as EventListener);
+  if (isExitIntentListenerAdded && typeof document !== "undefined" && document.body) {
+    document.body.removeEventListener("mouseleave", checkExitIntentWrapper as unknown as EventListener);
     isExitIntentListenerAdded = false;
   }
 };
