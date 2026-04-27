@@ -52,16 +52,14 @@ export const DropdownSelector = ({
               <DropdownMenuContent
                 className="z-50 max-h-64 min-w-[220px] max-w-96 overflow-auto rounded-md bg-white text-sm text-slate-800 shadow-md"
                 align="start">
-                {items
-                  .sort((a, b) => a.name?.localeCompare(b.name))
-                  .map((item) => (
-                    <DropdownMenuItem
-                      key={item.id}
-                      className="flex cursor-pointer items-center p-3 hover:bg-slate-100 hover:outline-none data-[disabled]:cursor-default data-[disabled]:opacity-50"
-                      onSelect={() => setSelectedItem(item)}>
-                      {item.name}
-                    </DropdownMenuItem>
-                  ))}
+                {items.map((item) => (
+                  <DropdownMenuItem
+                    key={item.id}
+                    className="flex cursor-pointer items-center p-3 hover:bg-slate-100 hover:outline-none data-[disabled]:cursor-default data-[disabled]:opacity-50"
+                    onSelect={() => setSelectedItem(item)}>
+                    {item.name}
+                  </DropdownMenuItem>
+                ))}
               </DropdownMenuContent>
             </DropdownMenuPortal>
           )}
