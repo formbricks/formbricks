@@ -137,6 +137,10 @@ export class ApiClient {
 
     const { data } = json;
 
+    if (!data) {
+      throw new Error("Invalid response: missing data field");
+    }
+
     const { signedUrl, fileUrl, presignedFields } = data as {
       signedUrl: string;
       presignedFields: Record<string, string>;
