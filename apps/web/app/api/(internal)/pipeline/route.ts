@@ -91,10 +91,12 @@ export const POST = async (request: Request) => {
   const webhooks: Webhook[] = await getWebhooksForPipeline(environmentId, event, surveyId);
   // Prepare webhook and email promises
 
-  // Fetch with timeout of 5 seconds to prevent hanging
+  // Fetch with timeout of 5 seconds to prevent hanging.
+  // `redirect: "manual"` blocks SSRF via redirect: webhook URLs are validated against private/internal
+  // ranges before delivery, but redirect targets would otherwise bypass that check.
   const fetchWithTimeout = (url: string, options: RequestInit, timeout: number = 5000): Promise<Response> => {
     return Promise.race([
-      fetch(url, options),
+      fetch(url, { ...options, redirect: "manual" }),
       new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Timeout")), timeout)),
     ]);
   };

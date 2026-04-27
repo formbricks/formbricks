@@ -76,6 +76,23 @@ describe("testEndpoint", () => {
     expect(getTranslate).toHaveBeenCalled();
   });
 
+  test.each([301, 302, 303, 307, 308])(
+    "rejects %s redirects to prevent SSRF via redirect",
+    async (statusCode) => {
+      const fetchMock = vi.fn(async () => ({ status: statusCode }));
+      vi.stubGlobal("fetch", fetchMock);
+
+      await expect(testEndpoint("https://example.com/webhook")).rejects.toThrow(
+        "Webhook endpoint returned a redirect, which is not allowed"
+      );
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://example.com/webhook",
+        expect.objectContaining({ redirect: "manual" })
+      );
+    }
+  );
+
   test("allows non-blocked non-2xx statuses", async () => {
     vi.stubGlobal(
       "fetch",

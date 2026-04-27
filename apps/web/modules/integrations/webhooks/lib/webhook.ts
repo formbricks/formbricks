@@ -191,13 +191,25 @@ export const testEndpoint = async (url: string, secret?: string): Promise<boolea
       );
     }
 
+    // `redirect: "manual"` prevents SSRF via redirect — validateWebhookUrl only checks the
+    // initial URL, so following 30x to a private/internal host (e.g. cloud metadata) would bypass it.
     const response = await fetch(url, {
       method: "POST",
       body,
       headers: requestHeaders,
       signal: controller.signal,
+      redirect: "manual",
     });
+
     const statusCode = response.status;
+
+    // With `redirect: "manual"`, Node's undici returns the actual 30x response (not the spec's
+    // opaqueredirect filter). Treat any 30x as a redirect rejection so users get a clear error
+    // instead of a misleading success.
+    if (statusCode >= 300 && statusCode < 400) {
+      throw new InvalidInputError("Webhook endpoint returned a redirect, which is not allowed");
+    }
+
     const errorMessage = await getWebhookTestErrorMessage(statusCode);
 
     if (errorMessage) {
