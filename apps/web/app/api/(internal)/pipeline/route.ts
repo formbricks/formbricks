@@ -94,7 +94,7 @@ export const POST = async (request: Request) => {
   // Fetch with timeout of 5 seconds to prevent hanging
   const fetchWithTimeout = (url: string, options: RequestInit, timeout: number = 5000): Promise<Response> => {
     return Promise.race([
-      fetch(url, options),
+      fetch(url, { ...options, redirect: "manual" }),
       new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Timeout")), timeout)),
     ]);
   };
