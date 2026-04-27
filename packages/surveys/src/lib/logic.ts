@@ -481,8 +481,9 @@ const performCalculation = (
       if (typeof val === "number" || typeof val === "string") {
         if (variable.type === "number" && !isNaN(Number(val))) {
           operandValue = Number(val);
+        } else {
+          operandValue = val;
         }
-        operandValue = val;
       }
       break;
   }
