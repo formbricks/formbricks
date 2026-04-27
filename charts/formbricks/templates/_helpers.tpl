@@ -157,9 +157,12 @@ If `namespaceOverride` is provided, it will be used; otherwise, it defaults to `
 {{- end }}
 
 {{- define "formbricks.hubApiKey" -}}
-{{- $secret := (lookup "v1" "Secret" .Release.Namespace (include "formbricks.hubSecretName" .)) }}
+{{- $hubSecretName := include "formbricks.hubSecretName" . }}
+{{- $secret := (lookup "v1" "Secret" .Release.Namespace $hubSecretName) }}
 {{- if and $secret (index $secret.data "HUB_API_KEY") }}
     {{- index $secret.data "HUB_API_KEY" | b64dec -}}
+{{- else if .Values.hub.existingSecret }}
+    {{- fail (printf "hub.existingSecret %q must already exist in namespace %q and contain HUB_API_KEY when rendering the generated app secret. Disable secret.enabled and provide app-secrets externally, or pre-create the Hub secret." $hubSecretName .Release.Namespace) -}}
 {{- else }}
     {{- randAlphaNum 32 -}}
 {{- end -}}

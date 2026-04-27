@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { getApiKeyFromHeaders, getFeedbackRecordsGatewayJwtFromHeaders } from "./api-key-auth";
+import { getApiKeyFromHeaders, getBearerTokenFromHeaders } from "./api-key-auth";
 
 describe("api-key-auth helpers", () => {
   test("prefers x-api-key over bearer authorization", () => {
@@ -17,15 +17,24 @@ describe("api-key-auth helpers", () => {
     });
 
     expect(getApiKeyFromHeaders(headers)).toBe("fbk_from_bearer");
-    expect(getFeedbackRecordsGatewayJwtFromHeaders(headers)).toBeNull();
+    expect(getBearerTokenFromHeaders(headers)).toBe("fbk_from_bearer");
   });
 
-  test("treats jwt-shaped bearer tokens as gateway JWTs, not API keys", () => {
+  test("does not treat jwt-shaped bearer tokens as API keys", () => {
     const headers = new Headers({
       authorization: "Bearer header.payload.signature",
     });
 
     expect(getApiKeyFromHeaders(headers)).toBeNull();
-    expect(getFeedbackRecordsGatewayJwtFromHeaders(headers)).toBe("header.payload.signature");
+    expect(getBearerTokenFromHeaders(headers)).toBe("header.payload.signature");
+  });
+
+  test("does not treat opaque bearer tokens as API keys", () => {
+    const headers = new Headers({
+      authorization: "Bearer opaque_service_token",
+    });
+
+    expect(getApiKeyFromHeaders(headers)).toBeNull();
+    expect(getBearerTokenFromHeaders(headers)).toBe("opaque_service_token");
   });
 });

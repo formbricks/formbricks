@@ -9,7 +9,7 @@ import { AuthorizationError } from "@formbricks/types/errors";
 import { verifyFeedbackRecordsGatewayToken } from "@/lib/jwt";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import {
-  getFeedbackRecordsGatewayJwtFromHeaders,
+  getBearerTokenFromHeaders,
 } from "@/modules/api/lib/api-key-auth";
 import {
   buildAllowResponse,
@@ -163,6 +163,10 @@ const parseJsonBody = async (request: NextRequest): Promise<Record<string, unkno
   } catch {
     return null;
   }
+};
+
+const getFeedbackRecordsGatewayJwtFromHeaders = (headers: Headers): string | null => {
+  return getBearerTokenFromHeaders(headers);
 };
 
 const hasFeedbackRecordDirectoryPermission = (

@@ -1,11 +1,11 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { DELETE, GET, PATCH, POST } from "./route";
+import { DELETE, GET, HEAD, OPTIONS, PATCH, POST } from "./route";
 
 const {
   mockAuthenticateApiKeyFromHeaders,
   mockGetApiKeyFromHeaders,
-  mockGetFeedbackRecordsGatewayJwtFromHeaders,
+  mockGetBearerTokenFromHeaders,
   mockGetProxySession,
   mockVerifyFeedbackRecordsGatewayToken,
   mockGetFeedbackRecordDirectoryAuthContext,
@@ -15,7 +15,7 @@ const {
 } = vi.hoisted(() => ({
   mockAuthenticateApiKeyFromHeaders: vi.fn(),
   mockGetApiKeyFromHeaders: vi.fn(),
-  mockGetFeedbackRecordsGatewayJwtFromHeaders: vi.fn(),
+  mockGetBearerTokenFromHeaders: vi.fn(),
   mockGetProxySession: vi.fn(),
   mockVerifyFeedbackRecordsGatewayToken: vi.fn(),
   mockGetFeedbackRecordDirectoryAuthContext: vi.fn(),
@@ -27,7 +27,7 @@ const {
 vi.mock("@/modules/api/lib/api-key-auth", () => ({
   authenticateApiKeyFromHeaders: mockAuthenticateApiKeyFromHeaders,
   getApiKeyFromHeaders: mockGetApiKeyFromHeaders,
-  getFeedbackRecordsGatewayJwtFromHeaders: mockGetFeedbackRecordsGatewayJwtFromHeaders,
+  getBearerTokenFromHeaders: mockGetBearerTokenFromHeaders,
 }));
 
 vi.mock("@/modules/auth/lib/proxy-session", () => ({
@@ -95,7 +95,7 @@ describe("Envoy auth route", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     mockGetApiKeyFromHeaders.mockReturnValue(null);
-    mockGetFeedbackRecordsGatewayJwtFromHeaders.mockReturnValue(null);
+    mockGetBearerTokenFromHeaders.mockReturnValue(null);
     mockAuthenticateApiKeyFromHeaders.mockResolvedValue(null);
     mockGetProxySession.mockResolvedValue(null);
     mockVerifyFeedbackRecordsGatewayToken.mockImplementation(() => {
@@ -239,7 +239,7 @@ describe("Envoy auth route", () => {
   });
 
   test("returns 401 for invalid explicit JWT even when a session cookie exists", async () => {
-    mockGetFeedbackRecordsGatewayJwtFromHeaders.mockReturnValue("header.payload.signature");
+    mockGetBearerTokenFromHeaders.mockReturnValue("header.payload.signature");
     mockGetProxySession.mockResolvedValue({
       userId: "user_1",
     });
@@ -261,7 +261,7 @@ describe("Envoy auth route", () => {
   });
 
   test("allows PATCH requests with a valid gateway JWT", async () => {
-    mockGetFeedbackRecordsGatewayJwtFromHeaders.mockReturnValue("header.payload.signature");
+    mockGetBearerTokenFromHeaders.mockReturnValue("header.payload.signature");
     mockVerifyFeedbackRecordsGatewayToken.mockReturnValue({ userId: "user_1" });
 
     const response = await PATCH(
@@ -352,7 +352,7 @@ describe("Envoy auth route", () => {
   });
 
   test("returns 403 for archived directories", async () => {
-    mockGetFeedbackRecordsGatewayJwtFromHeaders.mockReturnValue("header.payload.signature");
+    mockGetBearerTokenFromHeaders.mockReturnValue("header.payload.signature");
     mockVerifyFeedbackRecordsGatewayToken.mockReturnValue({ userId: "user_1" });
     mockGetFeedbackRecordDirectoryAuthContext.mockResolvedValue({
       organizationId: "org_1",
@@ -394,6 +394,52 @@ describe("Envoy auth route", () => {
           },
         }
       )
+    );
+
+    expect(response.status).toBe(400);
+  });
+
+  test("handles HEAD requests through the generic route instead of 405ing at Next.js", async () => {
+    mockGetApiKeyFromHeaders.mockReturnValue("fbk_test");
+    mockAuthenticateApiKeyFromHeaders.mockResolvedValue({
+      type: "apiKey",
+      apiKeyId: "key_1",
+      organizationId: "org_1",
+      organizationAccess: { accessControl: { read: true, write: true } },
+      workspacePermissions: [],
+      feedbackRecordDirectoryPermissions: [],
+    });
+
+    const response = await HEAD(
+      createRequest(`http://localhost/api/envoy-auth/v1/feedback-records/${feedbackRecordId}`, {
+        method: "HEAD",
+        headers: {
+          "x-api-key": "fbk_test",
+        },
+      })
+    );
+
+    expect(response.status).toBe(400);
+  });
+
+  test("handles OPTIONS requests through the generic route instead of 405ing at Next.js", async () => {
+    mockGetApiKeyFromHeaders.mockReturnValue("fbk_test");
+    mockAuthenticateApiKeyFromHeaders.mockResolvedValue({
+      type: "apiKey",
+      apiKeyId: "key_1",
+      organizationId: "org_1",
+      organizationAccess: { accessControl: { read: true, write: true } },
+      workspacePermissions: [],
+      feedbackRecordDirectoryPermissions: [],
+    });
+
+    const response = await OPTIONS(
+      createRequest("http://localhost/api/envoy-auth/v1/feedback-records", {
+        method: "OPTIONS",
+        headers: {
+          authorization: "Bearer fbk_test",
+        },
+      })
     );
 
     expect(response.status).toBe(400);

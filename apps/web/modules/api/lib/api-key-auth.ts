@@ -1,11 +1,12 @@
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
+import { parseApiKeyV2 } from "@/lib/crypto";
 import { getApiKeyWithPermissions } from "@/modules/organization/settings/api-keys/lib/api-key";
 
 type THeadersLike = Pick<Headers, "get">;
 
 const BEARER_PREFIX = "bearer ";
 
-const getBearerToken = (headers: THeadersLike): string | null => {
+export const getBearerTokenFromHeaders = (headers: THeadersLike): string | null => {
   const authorizationHeader = headers.get("authorization")?.trim();
   if (!authorizationHeader) {
     return null;
@@ -19,29 +20,14 @@ const getBearerToken = (headers: THeadersLike): string | null => {
   const token = authorizationHeader.slice(BEARER_PREFIX.length).trim();
   return token.length > 0 ? token : null;
 };
-
-const isJwtLikeToken = (token: string): boolean => {
-  const segments = token.split(".");
-  return segments.length === 3 && segments.every((segment) => segment.length > 0);
-};
-
 export const getApiKeyFromHeaders = (headers: THeadersLike): string | null => {
   const apiKeyHeader = headers.get("x-api-key")?.trim();
   if (apiKeyHeader) {
     return apiKeyHeader;
   }
 
-  const bearerToken = getBearerToken(headers);
-  if (!bearerToken || isJwtLikeToken(bearerToken)) {
-    return null;
-  }
-
-  return bearerToken;
-};
-
-export const getFeedbackRecordsGatewayJwtFromHeaders = (headers: THeadersLike): string | null => {
-  const bearerToken = getBearerToken(headers);
-  if (!bearerToken || !isJwtLikeToken(bearerToken)) {
+  const bearerToken = getBearerTokenFromHeaders(headers);
+  if (!bearerToken || !parseApiKeyV2(bearerToken)) {
     return null;
   }
 

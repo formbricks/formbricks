@@ -574,6 +574,8 @@ hub:
   # Defaults to the generated app secret (<release>-app-secrets), which contains DATABASE_URL and HUB_API_KEY.
   # If you set this, the custom secret must provide DATABASE_URL and HUB_API_KEY.
   # The app secret still needs HUB_API_KEY as well because the web app talks to Hub directly.
+  # When secret.enabled=true, the custom Hub secret must already exist at render time so Helm can copy HUB_API_KEY
+  # into the generated app secret and Envoy credential.
   existingSecret: ""
 
   # Optional env vars (non-secret). Use existingSecret for secret values such as DATABASE_URL and HUB_API_KEY.
