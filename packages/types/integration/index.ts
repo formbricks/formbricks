@@ -1,8 +1,12 @@
 import { z } from "zod";
-import { ZIntegrationAirtableConfig, ZIntegrationAirtableInput } from "./airtable";
-import { ZIntegrationGoogleSheetsConfig, ZIntegrationGoogleSheetsInput } from "./google-sheet";
-import { ZIntegrationNotionConfig, ZIntegrationNotionInput } from "./notion";
-import { ZIntegrationSlackConfig, ZIntegrationSlackInput } from "./slack";
+import { type TIntegrationAirtable, ZIntegrationAirtableConfig, ZIntegrationAirtableInput } from "./airtable";
+import {
+  type TIntegrationGoogleSheets,
+  ZIntegrationGoogleSheetsConfig,
+  ZIntegrationGoogleSheetsInput,
+} from "./google-sheet";
+import { type TIntegrationNotion, ZIntegrationNotionConfig, ZIntegrationNotionInput } from "./notion";
+import { type TIntegrationSlack, ZIntegrationSlackConfig, ZIntegrationSlackInput } from "./slack";
 
 export const ZIntegrationType = z.enum(["googleSheets", "n8n", "airtable", "notion", "slack"]);
 export type TIntegrationType = z.infer<typeof ZIntegrationType>;
@@ -27,6 +31,16 @@ export const ZIntegration = ZIntegrationBase.extend({
 });
 
 export type TIntegration = z.infer<typeof ZIntegration>;
+
+export type TIntegrationByType<T extends TIntegrationType> = T extends "airtable"
+  ? TIntegrationAirtable
+  : T extends "googleSheets"
+    ? TIntegrationGoogleSheets
+    : T extends "notion"
+      ? TIntegrationNotion
+      : T extends "slack"
+        ? TIntegrationSlack
+        : TIntegration;
 
 export const ZIntegrationBaseSurveyData = z.object({
   createdAt: z.date(),
