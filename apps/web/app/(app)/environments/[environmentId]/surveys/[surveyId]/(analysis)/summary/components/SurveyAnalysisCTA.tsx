@@ -59,6 +59,7 @@ export const SurveyAnalysisCTA = ({
   });
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const { environment, project } = useEnvironment();
   const { survey } = useSurvey();
@@ -149,14 +150,19 @@ export const SurveyAnalysisCTA = ({
       icon: RefreshCcwIcon,
       tooltip: t("common.refresh"),
       onClick: async () => {
+        if (isRefreshing) return;
+        setIsRefreshing(true);
         try {
           await refreshAnalysisData();
           toast.success(t("common.data_refreshed_successfully"));
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : t("common.something_went_wrong");
           toast.error(errorMessage);
+        } finally {
+          setIsRefreshing(false);
         }
       },
+      disabled: isRefreshing,
       isVisible: true,
     },
     {

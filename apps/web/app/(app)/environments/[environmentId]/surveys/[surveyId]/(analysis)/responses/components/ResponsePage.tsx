@@ -2,6 +2,8 @@
 
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TResponseWithQuotas } from "@formbricks/types/responses";
@@ -48,7 +50,7 @@ export const ResponsePage = ({
   const [hasMore, setHasMore] = useState<boolean>(initialResponses.length >= responsesPerPage);
   const [isFetchingFirstPage, setIsFetchingFirstPage] = useState<boolean>(false);
   const { selectedFilter, dateRange, resetState, registerAnalysisRefreshHandler } = useResponseFilter();
-
+  const { t } = useTranslation();
   const filters = useMemo(
     () => getFormattedFilters(survey, selectedFilter, dateRange),
 
@@ -99,7 +101,7 @@ export const ResponsePage = ({
       });
 
       if (getResponsesActionResponse?.serverError) {
-        throw new Error(getFormattedErrorMessage(getResponsesActionResponse));
+        toast.error(getFormattedErrorMessage(getResponsesActionResponse) ?? t("common.something_went_wrong"));
       }
 
       const freshResponses = getResponsesActionResponse?.data ?? [];
