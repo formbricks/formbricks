@@ -1137,7 +1137,7 @@ checksums:
     environments/settings/general/organization_invite_link_ready: e54b37c4ec2e5a9ea9f6bc6e5b512b0b
     environments/settings/general/organization_name: 73c9b31c9032a22bd84a07881942bb04
     environments/settings/general/organization_name_description: ff517b4749a332b94a26110d7c7e771f
-    environments/settings/general/organization_name_placeholder: fc91de3ddc89ab77f30d555778312380
+    environments/settings/general/organization_name_placeholder: abcee7d91a848e573b63a763cfaf6a08
     environments/settings/general/organization_name_updated_successfully: d36ba3a4f614d30b10e696d25da22432
     environments/settings/general/organization_settings: d31952131ad5f0ec72ad96f1ed11bef6
     environments/settings/general/please_add_a_logo: 66d6f97a2e7b27efc04bd653240ee813
