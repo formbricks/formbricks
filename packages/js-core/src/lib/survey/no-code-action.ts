@@ -284,7 +284,9 @@ export const addExitIntentListener = (): void => {
 
 export const removeExitIntentListener = (): void => {
   if (isExitIntentListenerAdded) {
-    document.removeEventListener("mouseleave", checkExitIntentWrapper as unknown as EventListener);
+    document
+      .querySelector("body")
+      ?.removeEventListener("mouseleave", checkExitIntentWrapper as unknown as EventListener);
     isExitIntentListenerAdded = false;
   }
 };
