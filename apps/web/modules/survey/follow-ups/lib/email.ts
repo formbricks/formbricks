@@ -45,8 +45,10 @@ export const sendFollowUpEmail = async ({
 
   const t = await getTranslate();
 
+  const locale = response.language ?? "en-US";
+
   // Process body: parse recall tags and sanitize HTML
-  const processedBody = sanitizeHtml(parseRecallInfo(body, response.data, response.variables), {
+  const processedBody = sanitizeHtml(parseRecallInfo(body, response.data, response.variables, false, locale), {
     allowedTags: ["p", "span", "b", "strong", "i", "em", "a", "br"],
     allowedAttributes: {
       a: ["href", "rel", "target"],
