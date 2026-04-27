@@ -43,7 +43,14 @@ export const makeRequest = async <T>(
     });
   }
 
-  const successResponse = json as ApiSuccessResponse<T>;
+  const successResponse = json as ApiSuccessResponse<T> | null;
+  if (!successResponse || successResponse.data === undefined) {
+    return err({
+      code: "network_error",
+      status: 500,
+      message: "Invalid response format: missing data field",
+    });
+  }
   return ok(successResponse.data);
 };
 
