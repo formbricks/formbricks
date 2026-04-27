@@ -1,6 +1,6 @@
 "use client";
 
-import { Table } from "@tanstack/react-table";
+import { Row, Table } from "@tanstack/react-table";
 import { ArrowDownToLineIcon, Loader2Icon, Trash2Icon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
@@ -60,11 +60,28 @@ export const SelectedRowSettings = <T,>({
     setDecrementQuotas(hasQuotas);
   }, [hasQuotas]);
 
+  // Returns true when a response may be deleted immediately.
+  // Unfinished responses must be at least 5 minutes old (same guard as the modal view).
+  const isResponseDeletable = (row: Row<T>) => {
+    if (type !== "response") return true;
+    const response = row.original as TResponseWithQuotas;
+    if (response.finished) return true;
+    const updatedAt = new Date(response.updatedAt);
+    const diffMinutes = (Date.now() - updatedAt.getTime()) / (1000 * 60);
+    return diffMinutes > 5;
+  };
+
   // Handle deletion
   const handleDelete = async () => {
     try {
       setIsDeleting(true);
-      const rowsToBeDeleted = table.getFilteredSelectedRowModel().rows.map((row) => row.id);
+      const allRows = table.getFilteredSelectedRowModel().rows;
+
+      // For response tables, skip rows that are still in progress (unfinished & < 5 min old)
+      const deletableRows = allRows.filter(isResponseDeletable);
+      const skippedCount = allRows.length - deletableRows.length;
+
+      const rowsToBeDeleted = deletableRows.map((row) => row.id);
 
       const CHUNK_SIZE = 5;
       for (let i = 0; i < rowsToBeDeleted.length; i += CHUNK_SIZE) {
@@ -77,9 +94,17 @@ export const SelectedRowSettings = <T,>({
       }
 
       // Update the row list UI
-      updateRowList(rowsToBeDeleted);
-      const capitalizedType = type.charAt(0).toUpperCase() + type.slice(1);
-      toast.success(t("common.table_items_deleted_successfully", { type: capitalizedType }));
+      if (rowsToBeDeleted.length > 0) {
+        updateRowList(rowsToBeDeleted);
+        const capitalizedType = type.charAt(0).toUpperCase() + type.slice(1);
+        toast.success(t("common.table_items_deleted_successfully", { type: capitalizedType }));
+      }
+
+      if (skippedCount > 0) {
+        toast.error(
+          t("environments.surveys.responses.responses_in_progress_not_deleted", { count: skippedCount })
+        );
+      }
     } catch (error) {
       if (error instanceof Error) {
         toast.error(error.message);

@@ -1913,6 +1913,7 @@
         "survey_closed": "Survey closed",
         "tag_already_exists": "Tag already exists",
         "this_response_is_in_progress": "This response is in progress.",
+        "responses_in_progress_not_deleted": "{{count}} response(s) in progress were skipped — they can only be deleted 5 minutes after the last update.",
         "zip_post_code": "ZIP / Post code"
       },
       "search_by_survey_name": "Search by survey name",
