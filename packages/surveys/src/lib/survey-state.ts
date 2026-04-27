@@ -44,7 +44,9 @@ export class SurveyState {
       this.contactId ?? undefined
     );
     copyInstance.responseId = this.responseId;
+    copyInstance.displayId = this.displayId;
     copyInstance.responseAcc = this.responseAcc;
+    copyInstance.shouldCreateResponseFromState = this.shouldCreateResponseFromState;
     return copyInstance;
   }
 
