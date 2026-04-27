@@ -1,6 +1,6 @@
 "use client";
 
-import { BellRing, Eye, ListRestart, SquarePenIcon } from "lucide-react";
+import { BellRing, Eye, ListRestart, RefreshCcwIcon, SquarePenIcon } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import { TSegment } from "@formbricks/types/segment";
 import { TUser } from "@formbricks/types/user";
 import { useEnvironment } from "@/app/(app)/environments/[environmentId]/context/environment-context";
+import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
 import { SuccessMessage } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/SuccessMessage";
 import { ShareSurveyModal } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/share-survey-modal";
 import { SurveyStatusDropdown } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/SurveyStatusDropdown";
@@ -62,6 +63,7 @@ export const SurveyAnalysisCTA = ({
   const { environment, project } = useEnvironment();
   const { survey } = useSurvey();
   const { refreshSingleUseId } = useSingleUseId(survey, isReadOnly);
+  const { refreshAnalysisData } = useResponseFilter();
 
   const appSetupCompleted = survey.type === "app" && environment.appSetupCompleted;
 
@@ -73,7 +75,7 @@ export const SurveyAnalysisCTA = ({
   }, [searchParams]);
 
   const handleShareModalToggle = (open: boolean) => {
-    const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(globalThis.location.search);
     const currentShareParam = params.get("share") === "true";
 
     if (open && !currentShareParam) {
@@ -143,6 +145,20 @@ export const SurveyAnalysisCTA = ({
   };
 
   const iconActions = [
+    {
+      icon: RefreshCcwIcon,
+      tooltip: t("common.refresh"),
+      onClick: async () => {
+        try {
+          await refreshAnalysisData();
+          toast.success(t("common.data_refreshed_successfully"));
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : t("common.something_went_wrong");
+          toast.error(errorMessage);
+        }
+      },
+      isVisible: true,
+    },
     {
       icon: BellRing,
       tooltip: t("environments.surveys.summary.configure_alerts"),

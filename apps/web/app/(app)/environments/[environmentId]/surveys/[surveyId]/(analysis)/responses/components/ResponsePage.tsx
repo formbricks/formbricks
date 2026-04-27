@@ -2,7 +2,6 @@
 
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import toast from "react-hot-toast";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TResponseWithQuotas } from "@formbricks/types/responses";
@@ -48,7 +47,7 @@ export const ResponsePage = ({
   const [page, setPage] = useState<number | null>(null);
   const [hasMore, setHasMore] = useState<boolean>(initialResponses.length >= responsesPerPage);
   const [isFetchingFirstPage, setIsFetchingFirstPage] = useState<boolean>(false);
-  const { selectedFilter, dateRange, resetState } = useResponseFilter();
+  const { selectedFilter, dateRange, resetState, registerAnalysisRefreshHandler } = useResponseFilter();
 
   const filters = useMemo(
     () => getFormattedFilters(survey, selectedFilter, dateRange),
@@ -89,24 +88,32 @@ export const ResponsePage = ({
   };
 
   const refetchResponses = useCallback(async () => {
-    const getResponsesActionResponse = await getResponsesAction({
-      surveyId,
-      limit: responsesPerPage,
-      offset: 0,
-      filterCriteria: filters,
-    });
+    setIsFetchingFirstPage(true);
 
-    if (getResponsesActionResponse?.serverError) {
-      const errorMessage = getFormattedErrorMessage(getResponsesActionResponse);
-      toast.error(errorMessage ?? "Failed to refresh responses");
-      return;
+    try {
+      const getResponsesActionResponse = await getResponsesAction({
+        surveyId,
+        limit: responsesPerPage,
+        offset: 0,
+        filterCriteria: filters,
+      });
+
+      if (getResponsesActionResponse?.serverError) {
+        throw new Error(getFormattedErrorMessage(getResponsesActionResponse));
+      }
+
+      const freshResponses = getResponsesActionResponse?.data ?? [];
+      setResponses(freshResponses);
+      setPage(1);
+      setHasMore(freshResponses.length >= responsesPerPage);
+    } finally {
+      setIsFetchingFirstPage(false);
     }
-
-    const freshResponses = getResponsesActionResponse?.data ?? [];
-    setResponses(freshResponses);
-    setPage(1);
-    setHasMore(freshResponses.length >= responsesPerPage);
   }, [filters, responsesPerPage, surveyId]);
+
+  useEffect(() => {
+    return registerAnalysisRefreshHandler(refetchResponses);
+  }, [refetchResponses, registerAnalysisRefreshHandler]);
 
   const surveyMemoized = useMemo(() => {
     return replaceHeadlineRecall(survey, "default");
@@ -156,6 +163,8 @@ export const ResponsePage = ({
       }
     };
     fetchFilteredResponses();
+    // page is intentionally omitted to avoid refetching after the initial page setup.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters, responsesPerPage, selectedFilter, dateRange, surveyId]);
 
   return (
@@ -178,7 +187,6 @@ export const ResponsePage = ({
         locale={locale}
         isQuotasAllowed={isQuotasAllowed}
         quotas={quotas}
-        onRefresh={refetchResponses}
       />
     </>
   );

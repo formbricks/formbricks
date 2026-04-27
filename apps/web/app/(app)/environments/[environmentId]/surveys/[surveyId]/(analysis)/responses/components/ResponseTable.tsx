@@ -64,7 +64,6 @@ interface ResponseTableProps {
   quotas: TSurveyQuota[];
   selectedResponseId: string | null;
   setSelectedResponseId: (id: string | null) => void;
-  onRefresh?: () => Promise<void>;
 }
 
 export const ResponseTable = ({
@@ -85,7 +84,6 @@ export const ResponseTable = ({
   quotas,
   selectedResponseId,
   setSelectedResponseId,
-  onRefresh,
 }: ResponseTableProps) => {
   const { t } = useTranslation();
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -251,7 +249,6 @@ export const ResponseTable = ({
           deleteAction={deleteResponse}
           downloadRowsAction={downloadSelectedRows}
           isQuotasAllowed={isQuotasAllowed}
-          onRefresh={onRefresh}
         />
         <div className="w-fit max-w-full overflow-hidden overflow-x-auto rounded-xl border border-slate-200">
           <div className="w-full overflow-x-auto">

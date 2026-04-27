@@ -71,7 +71,7 @@ export const SummaryPage = ({
   const [tab, setTab] = useState<"dropOffs" | "quotas" | "impressions" | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(!initialSurveySummary);
 
-  const { selectedFilter, dateRange, resetState } = useResponseFilter();
+  const { selectedFilter, dateRange, resetState, registerAnalysisRefreshHandler } = useResponseFilter();
 
   const [displays, setDisplays] = useState<TDisplayWithContact[]>([]);
   const [isDisplaysLoading, setIsDisplaysLoading] = useState(false);
@@ -111,7 +111,7 @@ export const SummaryPage = ({
     } finally {
       setIsDisplaysLoading(false);
     }
-  }, [fetchDisplays, t]);
+  }, [fetchDisplays]);
 
   const handleLoadMoreDisplays = useCallback(async () => {
     try {
@@ -131,13 +131,39 @@ export const SummaryPage = ({
     }
   }, [tab, loadInitialDisplays]);
 
+  const fetchSummary = useCallback(async () => {
+    const currentFilters = getFormattedFilters(survey, selectedFilter, dateRange);
+    const updatedSurveySummary = await getSurveySummaryAction({
+      surveyId,
+      filterCriteria: currentFilters,
+    });
+
+    if (updatedSurveySummary?.serverError) {
+      throw new Error(getFormattedErrorMessage(updatedSurveySummary));
+    }
+
+    setSurveySummary(updatedSurveySummary?.data ?? defaultSurveySummary);
+  }, [dateRange, selectedFilter, survey, surveyId]);
+
+  const refreshSummary = useCallback(async () => {
+    setIsLoading(true);
+
+    try {
+      await Promise.all([fetchSummary(), tab === "impressions" ? loadInitialDisplays() : Promise.resolve()]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [fetchSummary, loadInitialDisplays, tab]);
+
+  useEffect(() => {
+    return registerAnalysisRefreshHandler(refreshSummary);
+  }, [refreshSummary, registerAnalysisRefreshHandler]);
+
   // Only fetch data when filters change or when there's no initial data
   useEffect(() => {
     // If we have initial data and no filters are applied, don't fetch
     const hasNoFilters =
-      (!selectedFilter ||
-        Object.keys(selectedFilter).length === 0 ||
-        (selectedFilter.filter && selectedFilter.filter.length === 0)) &&
+      (!selectedFilter || Object.keys(selectedFilter).length === 0 || selectedFilter.filter?.length === 0) &&
       (!dateRange || (!dateRange.from && !dateRange.to));
 
     if (initialSurveySummary && hasNoFilters) {
@@ -145,21 +171,11 @@ export const SummaryPage = ({
       return;
     }
 
-    const fetchSummary = async () => {
+    const fetchFilteredSummary = async () => {
       setIsLoading(true);
 
       try {
-        // Recalculate filters inside the effect to ensure we have the latest values
-        const currentFilters = getFormattedFilters(survey, selectedFilter, dateRange);
-        let updatedSurveySummary;
-
-        updatedSurveySummary = await getSurveySummaryAction({
-          surveyId,
-          filterCriteria: currentFilters,
-        });
-
-        const surveySummary = updatedSurveySummary?.data ?? defaultSurveySummary;
-        setSurveySummary(surveySummary);
+        await fetchSummary();
       } catch (error) {
         console.error(error);
       } finally {
@@ -167,8 +183,8 @@ export const SummaryPage = ({
       }
     };
 
-    fetchSummary();
-  }, [selectedFilter, dateRange, survey, surveyId, initialSurveySummary]);
+    fetchFilteredSummary();
+  }, [selectedFilter, dateRange, initialSurveySummary, fetchSummary]);
 
   const surveyMemoized = useMemo(() => {
     return replaceHeadlineRecall(survey, "default");

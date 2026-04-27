@@ -27,7 +27,6 @@ interface ResponseDataViewProps {
   locale: TUserLocale;
   isQuotasAllowed: boolean;
   quotas: TSurveyQuota[];
-  onRefresh?: () => Promise<void>;
 }
 
 // Helper function to format array values to record with specified keys
@@ -132,7 +131,6 @@ export const ResponseDataView: React.FC<ResponseDataViewProps> = ({
   locale,
   isQuotasAllowed,
   quotas,
-  onRefresh,
 }) => {
   const { t } = useTranslation();
   const [selectedResponseId, setSelectedResponseId] = React.useState<string | null>(null);
@@ -161,7 +159,6 @@ export const ResponseDataView: React.FC<ResponseDataViewProps> = ({
         quotas={quotas}
         selectedResponseId={selectedResponseId}
         setSelectedResponseId={setSelectedResponseIdTransition}
-        onRefresh={onRefresh}
       />
     </div>
   );
