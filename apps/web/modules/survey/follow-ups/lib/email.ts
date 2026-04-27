@@ -45,6 +45,9 @@ export const sendFollowUpEmail = async ({
 
   const t = await getTranslate();
 
+  // Process subject: parse recall tags so variables/question answers are substituted
+  const processedSubject = parseRecallInfo(subject, response.data, response.variables);
+
   // Process body: parse recall tags and sanitize HTML
   const processedBody = sanitizeHtml(parseRecallInfo(body, response.data, response.variables), {
     allowedTags: ["p", "span", "b", "strong", "i", "em", "a", "br"],
@@ -131,7 +134,7 @@ export const sendFollowUpEmail = async ({
   await sendEmail({
     to,
     replyTo: replyTo.join(", "),
-    subject,
+    subject: processedSubject,
     html: emailHtmlBody,
   });
 };
