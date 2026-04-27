@@ -6,23 +6,18 @@ import { type InviteWithCreator } from "@/modules/auth/invite/types/invites";
 
 export const deleteInvite = async (inviteId: string): Promise<boolean> => {
   try {
-    const invite = await prisma.invite.delete({
+    await prisma.invite.delete({
       where: {
         id: inviteId,
       },
-      select: {
-        id: true,
-        organizationId: true,
-      },
     });
-
-    if (!invite) {
-      throw new ResourceNotFoundError("Invite", inviteId);
-    }
 
     return true;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P2025") {
+        throw new ResourceNotFoundError("Invite", inviteId);
+      }
       throw new DatabaseError(error.message);
     }
 
