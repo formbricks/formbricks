@@ -46,9 +46,8 @@ export function AutoCloseWrapper({
     }, survey.autoClose * 1000);
   };
 
-  const stopCountdown = () => {
+  const cancelCountdownTimer = () => {
     setCountDownActive(false);
-    setHasInteracted(true); // Mark that user has interacted
 
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
@@ -56,9 +55,14 @@ export function AutoCloseWrapper({
     }
   };
 
+  const stopCountdown = () => {
+    cancelCountdownTimer();
+    setHasInteracted(true); // Mark that user has interacted
+  };
+
   useEffect(() => {
     startCountdown();
-    return stopCountdown;
+    return cancelCountdownTimer;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- we don't want to run this effect on every render
   }, [survey.autoClose]);
 
