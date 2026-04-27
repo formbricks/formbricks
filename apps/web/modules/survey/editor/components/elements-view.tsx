@@ -26,7 +26,7 @@ import { getDefaultEndingCard } from "@/app/lib/survey-builder";
 import { addMultiLanguageLabels, createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { isConditionGroup } from "@/lib/surveyLogic/utils";
-import { checkForEmptyFallBackValue } from "@/lib/utils/recall";
+import { checkForEmptyFallBackValue, extractFallbackValue, extractIds, extractRecallInfo } from "@/lib/utils/recall";
 import { AddElementButton } from "@/modules/survey/editor/components/add-element-button";
 import { AddEndingCardButton } from "@/modules/survey/editor/components/add-ending-card-button";
 import { BlocksDroppable } from "@/modules/survey/editor/components/blocks-droppable";
@@ -817,7 +817,51 @@ export const ElementsView = ({
       // Renumber blocks sequentially after drag-and-drop reordering
       const renumberedBlocks = renumberBlocks(blocks);
 
-      setLocalSurvey({ ...localSurvey, blocks: renumberedBlocks });
+      // Strip any recall references that now point forward (to an element that
+      // appears after the element that contains the recall token). This can happen
+      // when the user reorders blocks after setting up recall-based text.
+      const flatElementIds = renumberedBlocks.flatMap((b) => b.elements.map((e) => e.id));
+      const cleanedBlocks = renumberedBlocks.map((block) => ({
+        ...block,
+        elements: block.elements.map((element) => {
+          const currentIdx = flatElementIds.indexOf(element.id);
+          if (currentIdx === -1) return element;
+
+          // Helper: strip any recall tokens whose referenced element now comes after this element
+          const stripForwardRecalls = (text: string): string => {
+            let result = text;
+            const ids = extractIds(result);
+            for (const recalledId of ids) {
+              const recalledIdx = flatElementIds.indexOf(recalledId);
+              // If the recalled element is not before the current element, replace token with fallback
+              if (recalledIdx === -1 || recalledIdx >= currentIdx) {
+                const recallInfo = extractRecallInfo(result, recalledId);
+                if (recallInfo) {
+                  const fallback = extractFallbackValue(recallInfo).replace(/nbsp/g, " ").trim();
+                  result = result.replace(recallInfo, fallback);
+                }
+              }
+            }
+            return result;
+          };
+
+          // Apply to all language variants of headline and subheader
+          const updatedHeadline = Object.fromEntries(
+            Object.entries(element.headline).map(([lang, text]) => [lang, stripForwardRecalls(text)])
+          ) as typeof element.headline;
+
+          const updatedSubheader =
+            element.subheader !== undefined
+              ? (Object.fromEntries(
+                  Object.entries(element.subheader).map(([lang, text]) => [lang, stripForwardRecalls(text)])
+                ) as typeof element.subheader)
+              : element.subheader;
+
+          return { ...element, headline: updatedHeadline, subheader: updatedSubheader };
+        }),
+      }));
+
+      setLocalSurvey({ ...localSurvey, blocks: cleanedBlocks });
     }
   };
 
