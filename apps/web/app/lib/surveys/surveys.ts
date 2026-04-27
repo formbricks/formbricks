@@ -71,12 +71,14 @@ const getElementFilterOption = (
     case TSurveyElementTypeEnum.MultipleChoiceSingle:
       return {
         ...baseOption,
-        filterComboBoxOptions: element.choices?.map((c) => c.label) ?? [""],
+        filterComboBoxOptions: element.choices?.map((c) => getLocalizedValue(c.label, "default")) ?? [""],
       };
     case TSurveyElementTypeEnum.MultipleChoiceMulti:
       return {
         ...baseOption,
-        filterComboBoxOptions: element.choices?.filter((c) => c.id !== "other").map((c) => c.label) ?? [""],
+        filterComboBoxOptions:
+          element.choices?.filter((c) => c.id !== "other").map((c) => getLocalizedValue(c.label, "default")) ??
+          [""],
       };
     case TSurveyElementTypeEnum.PictureSelection:
       return {

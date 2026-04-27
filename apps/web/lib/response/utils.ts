@@ -503,24 +503,42 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
               );
             }
           } else {
+            // Expand each filter value to all language variants of the matching choice so
+            // that responses recorded in any survey language are matched correctly.
+            const getChoiceVariants = (filterValue: string | number): (string | number)[] => {
+              if (
+                element &&
+                (element.type === "multipleChoiceMulti" || element.type === "multipleChoiceSingle")
+              ) {
+                const matchingChoice = element.choices.find(
+                  (c) => c.id !== "other" && Object.values(c.label).includes(filterValue.toString())
+                );
+                if (matchingChoice) {
+                  const variants = Object.values(matchingChoice.label).filter(Boolean);
+                  return variants.length > 0 ? variants : [filterValue];
+                }
+              }
+              return [filterValue];
+            };
+
             data.push({
               OR: val.value.map((value: string | number) => ({
-                OR: [
+                OR: getChoiceVariants(value).flatMap((variant) => [
                   // for MultipleChoiceMulti
                   {
                     data: {
                       path: [key],
-                      array_contains: [value],
+                      array_contains: [variant],
                     },
                   },
                   // for MultipleChoiceSingle
                   {
                     data: {
                       path: [key],
-                      equals: value,
+                      equals: variant,
                     },
                   },
-                ],
+                ]),
               })),
             });
           }
