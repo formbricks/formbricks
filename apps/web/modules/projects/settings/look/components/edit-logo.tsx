@@ -2,6 +2,7 @@
 
 import { Project } from "@prisma/client";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { ChangeEvent, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -26,6 +27,7 @@ interface EditLogoProps {
 
 export const EditLogo = ({ project, environmentId, isReadOnly, isStorageConfigured }: EditLogoProps) => {
   const { t } = useTranslation();
+  const router = useRouter();
   const [logoUrl, setLogoUrl] = useState<string | undefined>(project.logo?.url || undefined);
   const [logoBgColor, setLogoBgColor] = useState<string | undefined>(project.logo?.bgColor || undefined);
   const [isBgColorEnabled, setIsBgColorEnabled] = useState<boolean>(!!project.logo?.bgColor);
@@ -77,6 +79,7 @@ export const EditLogo = ({ project, environmentId, isReadOnly, isStorageConfigur
       });
       if (updateProjectResponse?.data) {
         toast.success(t("environments.workspace.look.logo_updated_successfully"));
+        router.refresh();
       } else {
         const errorMessage = getFormattedErrorMessage(updateProjectResponse);
         toast.error(errorMessage);
@@ -107,6 +110,7 @@ export const EditLogo = ({ project, environmentId, isReadOnly, isStorageConfigur
       });
       if (updateProjectResponse?.data) {
         toast.success(t("environments.workspace.look.logo_removed_successfully"));
+        router.refresh();
       } else {
         const errorMessage = getFormattedErrorMessage(updateProjectResponse);
         toast.error(errorMessage);

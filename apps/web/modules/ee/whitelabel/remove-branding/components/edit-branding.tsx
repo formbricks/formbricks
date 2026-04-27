@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -18,6 +19,7 @@ interface EditBrandingProps {
 
 export const EditBranding = ({ type, isEnabled, projectId, isReadOnly }: EditBrandingProps) => {
   const { t } = useTranslation();
+  const router = useRouter();
   const [isBrandingEnabled, setIsBrandingEnabled] = useState(isEnabled);
   const [updatingBranding, setUpdatingBranding] = useState(false);
 
@@ -37,6 +39,7 @@ export const EditBranding = ({ type, isEnabled, projectId, isReadOnly }: EditBra
           ? t("environments.workspace.look.formbricks_branding_shown")
           : t("environments.workspace.look.formbricks_branding_hidden")
       );
+      router.refresh();
     } else {
       const errorMessage = getFormattedErrorMessage(updateBrandingResponse);
       toast.error(errorMessage);
