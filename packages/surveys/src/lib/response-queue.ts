@@ -336,10 +336,13 @@ export class ResponseQueue {
         queueLength: this.queue.length,
       });
 
-      // Exponential backoff: 1s, 2s, 4s, 8s
-      const backoffMs = 1000 * Math.pow(2, attempts);
-      await delay(backoffMs);
       attempts++;
+
+      // Exponential backoff: 1s, 2s, 4s, 8s — skip on the last attempt
+      if (attempts < this.config.retryAttempts) {
+        const backoffMs = 1000 * Math.pow(2, attempts - 1);
+        await delay(backoffMs);
+      }
     }
 
     console.error(`Formbricks: Failed to send response after ${this.config.retryAttempts} attempts`, {
