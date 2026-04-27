@@ -24,33 +24,117 @@ import { getLocalizedValue } from "@/lib/i18n/utils";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 
+/**
+ * Internal constant keys used for filter logic comparisons.
+ * These values are stored in state and compared in processXFilter functions.
+ * They must remain stable (not translated) so filter logic is language-independent.
+ */
+export const FILTER_CONDITION = {
+  IS: "is",
+  INCLUDES_EITHER: "Includes either",
+  INCLUDES_ALL: "Includes all",
+  IS_EQUAL_TO: "Is equal to",
+  IS_LESS_THAN: "Is less than",
+  IS_MORE_THAN: "Is more than",
+  SUBMITTED: "Submitted",
+  SKIPPED: "Skipped",
+  EQUALS: "Equals",
+  NOT_EQUALS: "Not equals",
+  STATUS: "Status",
+} as const;
+
+export const FILTER_VALUE = {
+  FILLED_OUT: "Filled out",
+  SKIPPED: "Skipped",
+  CLICKED: "Clicked",
+  DISMISSED: "Dismissed",
+  APPLIED: "Applied",
+  NOT_APPLIED: "Not applied",
+  ACCEPTED: "Accepted",
+  SCREENED_IN: "Screened in",
+  SCREENED_OUT_OVERQUOTA: "Screened out (overquota)",
+  NOT_IN_QUOTA: "Not in quota",
+} as const;
+
+/** i18n key map: internal constant value → translation key */
+export const CONDITION_I18N_KEYS: Record<string, string> = {
+  [FILTER_CONDITION.IS]: "environments.surveys.summary.filter_condition_is",
+  [FILTER_CONDITION.INCLUDES_EITHER]: "environments.surveys.summary.includes_either",
+  [FILTER_CONDITION.INCLUDES_ALL]: "environments.surveys.summary.includes_all",
+  [FILTER_CONDITION.IS_EQUAL_TO]: "environments.surveys.summary.is_equal_to",
+  [FILTER_CONDITION.IS_LESS_THAN]: "environments.surveys.summary.is_less_than",
+  [FILTER_CONDITION.IS_MORE_THAN]: "environments.surveys.summary.is_more_than",
+  [FILTER_CONDITION.SUBMITTED]: "environments.surveys.summary.filter_condition_submitted",
+  [FILTER_CONDITION.SKIPPED]: "environments.surveys.summary.filter_condition_skipped",
+  [FILTER_CONDITION.EQUALS]: "environments.surveys.summary.filter_condition_equals",
+  [FILTER_CONDITION.NOT_EQUALS]: "environments.surveys.summary.filter_condition_not_equals",
+  [FILTER_CONDITION.STATUS]: "environments.surveys.summary.filter_condition_status",
+};
+
+export const FILTER_VALUE_I18N_KEYS: Record<string, string> = {
+  [FILTER_VALUE.FILLED_OUT]: "environments.surveys.summary.filter_value_filled_out",
+  [FILTER_VALUE.SKIPPED]: "environments.surveys.summary.filter_value_skipped",
+  [FILTER_VALUE.CLICKED]: "environments.surveys.summary.filter_value_clicked",
+  [FILTER_VALUE.DISMISSED]: "environments.surveys.summary.filter_value_dismissed",
+  [FILTER_VALUE.APPLIED]: "environments.surveys.summary.filter_value_applied",
+  [FILTER_VALUE.NOT_APPLIED]: "environments.surveys.summary.filter_value_not_applied",
+  [FILTER_VALUE.ACCEPTED]: "environments.surveys.summary.filter_value_accepted",
+  [FILTER_VALUE.SCREENED_IN]: "environments.surveys.summary.filter_value_screened_in",
+  [FILTER_VALUE.SCREENED_OUT_OVERQUOTA]: "environments.surveys.summary.filter_value_screened_out_overquota",
+  [FILTER_VALUE.NOT_IN_QUOTA]: "environments.surveys.summary.filter_value_not_in_quota",
+};
+
+type TFunction = (key: string) => string;
+
+/**
+ * Translates a filter condition or value string using the provided t() function.
+ * Falls back to the original string if no translation key is found.
+ */
+const translateFilterString = (value: string, t: TFunction): string => {
+  const key = CONDITION_I18N_KEYS[value] ?? FILTER_VALUE_I18N_KEYS[value];
+  return key ? t(key) : value;
+};
+
 const conditionOptions: Record<string, string[]> = {
-  openText: ["is"],
-  multipleChoiceSingle: ["Includes either"],
-  multipleChoiceMulti: ["Includes all", "Includes either"],
-  nps: ["Is equal to", "Is less than", "Is more than", "Submitted", "Skipped", "Includes either"],
-  rating: ["Is equal to", "Is less than", "Is more than", "Submitted", "Skipped"],
-  cta: ["is"],
-  tags: ["is"],
-  languages: ["Equals", "Not equals"],
-  pictureSelection: ["Includes all", "Includes either"],
-  userAttributes: ["Equals", "Not equals"],
-  consent: ["is"],
+  openText: [FILTER_CONDITION.IS],
+  multipleChoiceSingle: [FILTER_CONDITION.INCLUDES_EITHER],
+  multipleChoiceMulti: [FILTER_CONDITION.INCLUDES_ALL, FILTER_CONDITION.INCLUDES_EITHER],
+  nps: [
+    FILTER_CONDITION.IS_EQUAL_TO,
+    FILTER_CONDITION.IS_LESS_THAN,
+    FILTER_CONDITION.IS_MORE_THAN,
+    FILTER_CONDITION.SUBMITTED,
+    FILTER_CONDITION.SKIPPED,
+    FILTER_CONDITION.INCLUDES_EITHER,
+  ],
+  rating: [
+    FILTER_CONDITION.IS_EQUAL_TO,
+    FILTER_CONDITION.IS_LESS_THAN,
+    FILTER_CONDITION.IS_MORE_THAN,
+    FILTER_CONDITION.SUBMITTED,
+    FILTER_CONDITION.SKIPPED,
+  ],
+  cta: [FILTER_CONDITION.IS],
+  tags: [FILTER_CONDITION.IS],
+  languages: [FILTER_CONDITION.EQUALS, FILTER_CONDITION.NOT_EQUALS],
+  pictureSelection: [FILTER_CONDITION.INCLUDES_ALL, FILTER_CONDITION.INCLUDES_EITHER],
+  userAttributes: [FILTER_CONDITION.EQUALS, FILTER_CONDITION.NOT_EQUALS],
+  consent: [FILTER_CONDITION.IS],
   matrix: [""],
-  address: ["is"],
-  contactInfo: ["is"],
-  ranking: ["is"],
+  address: [FILTER_CONDITION.IS],
+  contactInfo: [FILTER_CONDITION.IS],
+  ranking: [FILTER_CONDITION.IS],
 };
 const filterOptions: Record<string, string[]> = {
-  openText: ["Filled out", "Skipped"],
+  openText: [FILTER_VALUE.FILLED_OUT, FILTER_VALUE.SKIPPED],
   rating: ["1", "2", "3", "4", "5"],
   nps: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
-  cta: ["Clicked", "Dismissed"],
-  tags: ["Applied", "Not applied"],
-  consent: ["Accepted", "Dismissed"],
-  address: ["Filled out", "Skipped"],
-  contactInfo: ["Filled out", "Skipped"],
-  ranking: ["Filled out", "Skipped"],
+  cta: [FILTER_VALUE.CLICKED, FILTER_VALUE.DISMISSED],
+  tags: [FILTER_VALUE.APPLIED, FILTER_VALUE.NOT_APPLIED],
+  consent: [FILTER_VALUE.ACCEPTED, FILTER_VALUE.DISMISSED],
+  address: [FILTER_VALUE.FILLED_OUT, FILTER_VALUE.SKIPPED],
+  contactInfo: [FILTER_VALUE.FILLED_OUT, FILTER_VALUE.SKIPPED],
+  ranking: [FILTER_VALUE.FILLED_OUT, FILTER_VALUE.SKIPPED],
 };
 
 // Helper function to get filter options for a specific element type
@@ -152,12 +236,12 @@ export const generateElementAndFilterOptions = (
   });
   if (tagsOptions && tagsOptions?.length > 0) {
     elementOptions = [...elementOptions, { header: OptionsType.TAGS, option: tagsOptions }];
-    environmentTags?.forEach((t) => {
+    environmentTags?.forEach((tag) => {
       elementFilterOptions.push({
         type: "Tags",
         filterOptions: conditionOptions.tags,
         filterComboBoxOptions: filterOptions.tags,
-        id: t.id,
+        id: tag.id,
       });
     });
   }
@@ -195,7 +279,10 @@ export const generateElementAndFilterOptions = (
     Object.keys(meta).forEach((m) => {
       elementFilterOptions.push({
         type: "Meta",
-        filterOptions: m === "url" ? Object.keys(META_OP_MAP) : ["Equals", "Not equals"],
+        filterOptions:
+          m === "url"
+            ? Object.keys(META_OP_MAP)
+            : [FILTER_CONDITION.EQUALS, FILTER_CONDITION.NOT_EQUALS],
         filterComboBoxOptions: meta[m],
         id: m,
       });
@@ -215,7 +302,7 @@ export const generateElementAndFilterOptions = (
     Object.keys(hiddenFields).forEach((hiddenField) => {
       elementFilterOptions.push({
         type: "Hidden Fields",
-        filterOptions: ["Equals", "Not equals"],
+        filterOptions: [FILTER_CONDITION.EQUALS, FILTER_CONDITION.NOT_EQUALS],
         filterComboBoxOptions: hiddenFields[hiddenField],
         id: hiddenField,
       });
@@ -226,7 +313,7 @@ export const generateElementAndFilterOptions = (
 
   //can be extended to include more properties
   if (survey.languages?.length > 0) {
-    languageElement.push({ label: "Language", type: OptionsType.OTHERS, id: "language" });
+    languageElement.push({ label: "Language", type: OptionsType.OTHERS, id: "language" }); // "Language" label is translated in the component layer
     const languageOptions = survey.languages.map((sl) => sl.language.code);
     elementFilterOptions.push({
       type: OptionsType.OTHERS,
@@ -246,8 +333,12 @@ export const generateElementAndFilterOptions = (
     quotas.forEach((quota) => {
       elementFilterOptions.push({
         type: "Quotas",
-        filterOptions: ["Status"],
-        filterComboBoxOptions: ["Screened in", "Screened out (overquota)", "Not in quota"],
+        filterOptions: [FILTER_CONDITION.STATUS],
+        filterComboBoxOptions: [
+          FILTER_VALUE.SCREENED_IN,
+          FILTER_VALUE.SCREENED_OUT_OVERQUOTA,
+          FILTER_VALUE.NOT_IN_QUOTA,
+        ],
         id: quota.id,
       });
     });
