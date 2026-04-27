@@ -137,11 +137,11 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
   }
 
   // Parallel fetch of environment context and locale
-  const [environmentContext, locale, singleUseResponse] = await Promise.all([
+  // Note: we do NOT re-fetch the existing contact response here because the early-return
+  // check above (line ~107) already guarantees there is no existing response at this point.
+  const [environmentContext, locale] = await Promise.all([
     getEnvironmentContextForLinkSurvey(survey.environmentId),
     findMatchingLocale(),
-    // Fetch existing response for this contact
-    getExistingContactResponse(survey.id, contactId)(),
   ]);
 
   // Fetch responseCount only if needed
@@ -155,7 +155,6 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
     contactId,
     isPreview,
     singleUseId,
-    singleUseResponse,
     environmentContext,
     locale,
     responseCount,
