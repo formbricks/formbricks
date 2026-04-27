@@ -53,16 +53,6 @@ export const updateContactAttributeKey = async (
       data: updateData,
     });
 
-    await prisma.contactAttribute.findMany({
-      where: {
-        attributeKeyId: updatedKey.id,
-      },
-      select: {
-        id: true,
-        contactId: true,
-      },
-    });
-
     return ok(updatedKey);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -106,16 +96,6 @@ export const deleteContactAttributeKey = async (
     const deletedKey = await prisma.contactAttributeKey.delete({
       where: {
         id: contactAttributeKeyId,
-      },
-    });
-
-    await prisma.contactAttribute.findMany({
-      where: {
-        attributeKeyId: deletedKey.id,
-      },
-      select: {
-        id: true,
-        contactId: true,
       },
     });
 
