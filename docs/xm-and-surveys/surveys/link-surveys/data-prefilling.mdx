@@ -118,19 +118,18 @@ Single Select and Multi Select questions support prefilling with **option IDs** 
 - **Language-independent:** The same URL works across all survey languages.
 - **Reliable:** No brittle string matching and fewer URL-encoding issues.
 
-### One link per option (with `skipPrefilled=true`)
+### One link per option
 
-When you create one CTA link per answer option (for example in emails), use the option ID as value and append `skipPrefilled=true` so respondents are directly sent to the next question.
+When you create one CTA link per answer option (for example in emails), use the option ID as the parameter value:
 
-```sh Option-ID prefill with skipPrefilled
-https://app.formbricks.com/s/cmoh0584taxoxu501jyvk8tzn?tuk2i9ktui1lee0mfos82czb=e2r697fou23n7ba4vmt7you6&skipPrefilled=true
+```sh Option-ID prefill
+https://app.formbricks.com/s/cmoh0584taxoxu501jyvk8tzn?tuk2i9ktui1lee0mfos82czb=e2r697fou23n7ba4vmt7you6
 ```
 
 In this example:
 
 - `tuk2i9ktui1lee0mfos82czb` is the question ID.
 - `e2r697fou23n7ba4vmt7you6` is the selected option ID.
-- `skipPrefilled=true` skips that prefilled question.
 
 ### How to Find Option IDs
 
