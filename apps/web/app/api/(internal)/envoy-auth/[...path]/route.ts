@@ -1,8 +1,8 @@
 import { NextRequest } from "next/server";
-import { authorizeFeedbackRecordsGatewayRequest } from "@/modules/hub/feedback-records-gateway";
+import { authorizeEnvoyRequest } from "@/modules/envoy-auth/service";
 
 const handler = async (request: NextRequest): Promise<Response> => {
-  return await authorizeFeedbackRecordsGatewayRequest(request);
+  return await authorizeEnvoyRequest(request);
 };
 
 export const GET = handler;

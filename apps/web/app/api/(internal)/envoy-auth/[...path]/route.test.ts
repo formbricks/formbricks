@@ -91,7 +91,7 @@ const createRequest = (
     body,
   });
 
-describe("FeedbackRecords envoy auth route", () => {
+describe("Envoy auth route", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     mockGetApiKeyFromHeaders.mockReturnValue(null);
@@ -132,11 +132,9 @@ describe("FeedbackRecords envoy auth route", () => {
     });
 
     const response = await POST(
-      createRequest("http://localhost/api/envoy-auth/feedback-records/api/v3/feedbackRecords", {
+      createRequest("http://localhost/api/envoy-auth/api/v3/feedbackRecords", {
         method: "POST",
         headers: {
-          method: "POST",
-          path: "/api/v3/feedbackRecords",
           "content-type": "application/json",
           authorization: "Bearer fbk_test",
         },
@@ -163,11 +161,9 @@ describe("FeedbackRecords envoy auth route", () => {
     });
 
     const response = await GET(
-      createRequest("http://localhost/api/envoy-auth/feedback-records/v1/feedback-records", {
+      createRequest("http://localhost/api/envoy-auth/v1/feedback-records", {
         method: "DELETE",
         headers: {
-          method: "DELETE",
-          path: "/v1/feedback-records",
           "x-api-key": "fbk_test",
         },
       })
@@ -176,14 +172,8 @@ describe("FeedbackRecords envoy auth route", () => {
     expect(response.status).toBe(400);
   });
 
-  test("returns 400 when the original request method header is missing", async () => {
-    const response = await GET(
-      createRequest("http://localhost/api/envoy-auth/feedback-records/api/v3/feedbackRecords", {
-        headers: {
-          path: "/api/v3/feedbackRecords",
-        },
-      })
-    );
+  test("returns 400 for unsupported envoy auth routes", async () => {
+    const response = await GET(createRequest("http://localhost/api/envoy-auth/api/v1/test"));
 
     expect(response.status).toBe(400);
   });
@@ -208,10 +198,8 @@ describe("FeedbackRecords envoy auth route", () => {
     });
 
     const response = await GET(
-      createRequest(`http://localhost/api/envoy-auth/feedback-records/v1/feedback-records/${feedbackRecordId}`, {
+      createRequest(`http://localhost/api/envoy-auth/v1/feedback-records/${feedbackRecordId}`, {
         headers: {
-          method: "GET",
-          path: `/v1/feedback-records/${feedbackRecordId}`,
           "x-api-key": "fbk_test",
         },
       })
@@ -240,10 +228,8 @@ describe("FeedbackRecords envoy auth route", () => {
     });
 
     const response = await GET(
-      createRequest(`http://localhost/api/envoy-auth/feedback-records/v1/feedback-records/${feedbackRecordId}`, {
+      createRequest(`http://localhost/api/envoy-auth/v1/feedback-records/${feedbackRecordId}`, {
         headers: {
-          method: "GET",
-          path: `/v1/feedback-records/${feedbackRecordId}`,
           "x-api-key": "fbk_test",
         },
       })
@@ -260,15 +246,13 @@ describe("FeedbackRecords envoy auth route", () => {
 
     const response = await GET(
       createRequest(
-        `http://localhost/api/envoy-auth/feedback-records/v1/feedback-records?tenant_id=${feedbackRecordDirectoryId}`,
+        `http://localhost/api/envoy-auth/v1/feedback-records?tenant_id=${feedbackRecordDirectoryId}`,
         {
-        headers: {
-          method: "GET",
-          path: `/v1/feedback-records?tenant_id=${feedbackRecordDirectoryId}`,
-          authorization: "Bearer header.payload.signature",
-          cookie: "next-auth.session-token=still-present",
-        },
-      }
+          headers: {
+            authorization: "Bearer header.payload.signature",
+            cookie: "next-auth.session-token=still-present",
+          },
+        }
       )
     );
 
@@ -281,11 +265,9 @@ describe("FeedbackRecords envoy auth route", () => {
     mockVerifyFeedbackRecordsGatewayToken.mockReturnValue({ userId: "user_1" });
 
     const response = await PATCH(
-      createRequest(`http://localhost/api/envoy-auth/feedback-records/v1/feedback-records/${feedbackRecordId}`, {
+      createRequest(`http://localhost/api/envoy-auth/v1/feedback-records/${feedbackRecordId}`, {
         method: "PATCH",
         headers: {
-          method: "PATCH",
-          path: `/v1/feedback-records/${feedbackRecordId}`,
           authorization: "Bearer header.payload.signature",
         },
       })
@@ -316,11 +298,9 @@ describe("FeedbackRecords envoy auth route", () => {
 
     const response = await GET(
       createRequest(
-        `http://localhost/api/envoy-auth/feedback-records/v1/feedback-records?tenant_id=${feedbackRecordDirectoryId}`,
+        `http://localhost/api/envoy-auth/v1/feedback-records?tenant_id=${feedbackRecordDirectoryId}`,
         {
           headers: {
-            method: "GET",
-            path: `/v1/feedback-records?tenant_id=${feedbackRecordDirectoryId}`,
             cookie: "next-auth.session-token=valid",
           },
         }
@@ -358,12 +338,10 @@ describe("FeedbackRecords envoy auth route", () => {
 
     const response = await DELETE(
       createRequest(
-        `http://localhost/api/envoy-auth/feedback-records/v1/feedback-records?tenant_id=${feedbackRecordDirectoryId}`,
+        `http://localhost/api/envoy-auth/v1/feedback-records?tenant_id=${feedbackRecordDirectoryId}`,
         {
           method: "DELETE",
           headers: {
-            method: "DELETE",
-            path: `/v1/feedback-records?tenant_id=${feedbackRecordDirectoryId}`,
             "x-api-key": "fbk_test",
           },
         }
@@ -384,14 +362,12 @@ describe("FeedbackRecords envoy auth route", () => {
 
     const response = await GET(
       createRequest(
-        `http://localhost/api/envoy-auth/feedback-records/v1/feedback-records?tenant_id=${feedbackRecordDirectoryId}`,
+        `http://localhost/api/envoy-auth/v1/feedback-records?tenant_id=${feedbackRecordDirectoryId}`,
         {
-        headers: {
-          method: "GET",
-          path: `/v1/feedback-records?tenant_id=${feedbackRecordDirectoryId}`,
-          authorization: "Bearer header.payload.signature",
-        },
-      }
+          headers: {
+            authorization: "Bearer header.payload.signature",
+          },
+        }
       )
     );
 
@@ -411,11 +387,9 @@ describe("FeedbackRecords envoy auth route", () => {
 
     const response = await GET(
       createRequest(
-        `http://localhost/api/envoy-auth/feedback-records/api/v3/feedbackRecordsFoo?tenant_id=${feedbackRecordDirectoryId}`,
+        `http://localhost/api/envoy-auth/api/v3/feedbackRecordsFoo?tenant_id=${feedbackRecordDirectoryId}`,
         {
           headers: {
-            method: "GET",
-            path: `/api/v3/feedbackRecordsFoo?tenant_id=${feedbackRecordDirectoryId}`,
             authorization: "Bearer fbk_test",
           },
         }

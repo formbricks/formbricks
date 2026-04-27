@@ -392,7 +392,7 @@ spec:
     statusOnError: 503
     failOpen: false
     http:
-      path: /api/envoy-auth/feedback-records
+      path: /api/envoy-auth
       backendRefs:
         - name: {{ $appServiceName }}
           port: 3000
