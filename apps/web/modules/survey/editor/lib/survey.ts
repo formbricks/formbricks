@@ -79,7 +79,6 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       if (languagesToRemove.length > 0) {
         data.languages.deleteMany = languagesToRemove.map((languageId) => ({
           languageId: languageId,
-          enabled: enabledLanguageIds.includes(languageId),
         }));
       }
     }
