@@ -76,7 +76,7 @@ export const extractChoiceIdsFromResponse = (
       // Fall back to checking all language values
       return Object.values(c.label).includes(choiceLabel);
     });
-    return targetChoice?.id || "other";
+    return targetChoice?.id ?? null;
   };
 
   if (Array.isArray(responseValue)) {
