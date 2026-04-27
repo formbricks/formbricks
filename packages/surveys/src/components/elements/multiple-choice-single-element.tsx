@@ -70,8 +70,16 @@ export function MultipleChoiceSingleElement({
   const isOtherSelected = useMemo(() => {
     if (!otherOption) return false;
 
-    // Special-case: empty string means "other selected but not filled yet"
-    if (value === "") return true;
+    // Special-case: empty string means "other selected but not filled yet" —
+    // but only when no regular choice has an empty label in the current language.
+    // If a choice does have an empty label (e.g. not yet filled in the editor),
+    // the empty string belongs to that choice, not to the "Other" option.
+    if (value === "") {
+      const hasEmptyLabelChoice = elementChoices.some(
+        (c) => c && c.id !== "other" && getLocalizedValue(c.label, languageCode) === ""
+      );
+      return !hasEmptyLabelChoice;
+    }
     if (!value) return false;
 
     // Backwards-compat: if an ID was stored previously, treat it as a normal selection (if it matches)
@@ -136,8 +144,14 @@ export function MultipleChoiceSingleElement({
   const selectedValue = useMemo(() => {
     if (!value && value !== "") return undefined;
 
-    // Empty string => other selected (but not filled)
-    if (value === "" && otherOption) return otherOption.id;
+    // Empty string => other selected (but not filled), unless a regular choice
+    // has an empty label — in that case the label match below will resolve it.
+    if (value === "" && otherOption && !isOtherSelected) {
+      // isOtherSelected already accounts for empty-label choices; if it's false,
+      // fall through to the label-match path so the correct option is highlighted.
+    } else if (value === "" && otherOption) {
+      return otherOption.id;
+    }
 
     // Backwards-compat: if value is already an option ID, use it directly
     const idMatch = allOptions.find((opt) => opt.id === value);
