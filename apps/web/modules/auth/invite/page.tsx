@@ -82,11 +82,7 @@ export const InvitePage = async (props: InvitePageProps) => {
       );
     }
 
-    const createMembershipAction = async () => {
-      "use server";
-
-      if (!session || !user) return;
-
+    after(async () => {
       await createMembership(invite.organizationId, session.user.id, {
         accepted: true,
         role: invite.role,
@@ -120,10 +116,6 @@ export const InvitePage = async (props: InvitePageProps) => {
           ),
         },
       });
-    };
-
-    after(async () => {
-      await createMembershipAction();
     });
 
     return (
