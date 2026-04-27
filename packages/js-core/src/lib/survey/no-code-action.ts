@@ -348,6 +348,9 @@ export const removeScrollDepthListener = (): void => {
   if (scrollDepthListenerAdded) {
     window.removeEventListener("scroll", checkScrollDepthWrapper as EventListener);
     scrollDepthListenerAdded = false;
+    // Reset the triggered flag so the scroll action fires again if the listener
+    // is re-added (e.g. after teardown and re-setup).
+    scrollDepthTriggered = false;
   }
 };
 
