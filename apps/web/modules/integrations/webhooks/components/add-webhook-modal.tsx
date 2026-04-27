@@ -76,6 +76,7 @@ export const AddWebhookModal = ({
         url: testEndpointInput,
         secret: webhookSecret,
       });
+
       if (!testEndpointActionResult?.data) {
         const errorMessage = getFormattedErrorMessage(testEndpointActionResult);
         throw new Error(errorMessage);
