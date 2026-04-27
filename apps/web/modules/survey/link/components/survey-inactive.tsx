@@ -45,7 +45,7 @@ export const SurveyInactive = async ({
       <div className="my-auto flex flex-col items-center space-y-3 text-slate-300">
         {icons[status]}
         <h1 className="text-4xl font-bold text-slate-800">
-          {(status === "completed" || status === "link expired") && surveyClosedMessage
+          {status === "completed" && surveyClosedMessage
             ? surveyClosedMessage.heading
             : `${t("common.survey")} ${status}.`}
         </h1>
