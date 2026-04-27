@@ -8,7 +8,7 @@ import { sendTelemetryEvents } from "@/app/api/(internal)/pipeline/lib/telemetry
 import { ZPipelineInput } from "@/app/api/(internal)/pipeline/types/pipelines";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { CRON_SECRET, POSTHOG_KEY } from "@/lib/constants";
+import { CRON_SECRET, DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS, POSTHOG_KEY } from "@/lib/constants";
 import { generateStandardWebhookSignature } from "@/lib/crypto";
 import { getIntegrations } from "@/lib/integration/service";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
@@ -92,11 +92,14 @@ export const POST = async (request: Request) => {
   // Prepare webhook and email promises
 
   // Fetch with timeout of 5 seconds to prevent hanging.
-  // `redirect: "manual"` blocks SSRF via redirect: webhook URLs are validated against private/internal
-  // ranges before delivery, but redirect targets would otherwise bypass that check.
+  // `redirect: "manual"` blocks SSRF via redirect — webhook URLs are validated against private/internal
+  // ranges before delivery, but redirect targets would otherwise bypass that check. Gated on the same
+  // env var as `validateWebhookUrl`: self-hosters who opted into trusting internal URLs also get the
+  // pre-patch redirect-follow behavior for consistency.
+  const redirectMode: RequestRedirect = DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS ? "follow" : "manual";
   const fetchWithTimeout = (url: string, options: RequestInit, timeout: number = 5000): Promise<Response> => {
     return Promise.race([
-      fetch(url, { ...options, redirect: "manual" }),
+      fetch(url, { ...options, redirect: redirectMode }),
       new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Timeout")), timeout)),
     ]);
   };
