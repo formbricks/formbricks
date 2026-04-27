@@ -99,8 +99,8 @@ export function LanguageSwitch({
       {showLanguageDropdown ? (
         <div
           className={cn(
-            "bg-input-bg text-heading border-border absolute top-10 max-h-64 space-y-2 overflow-auto rounded-md border p-2 text-xs",
-            dir === "rtl" ? "left-8" : "right-8"
+            "bg-input-bg text-heading border-border absolute top-10 w-max max-w-48 max-h-64 space-y-2 overflow-auto rounded-md border p-2 text-xs",
+            dir === "rtl" ? "left-0" : "right-0"
           )}
           ref={languageDropdownRef}>
           {surveyLanguages.map((surveyLanguage) => {
@@ -109,7 +109,8 @@ export function LanguageSwitch({
               <button
                 key={surveyLanguage.language.id}
                 type="button"
-                className="hover:bg-brand hover:text-on-brand block w-full max-w-48 truncate rounded-md p-1.5 text-left"
+                title={getLanguageDisplayName(surveyLanguage.language.code)}
+                className="hover:bg-brand hover:text-on-brand block w-full truncate rounded-md p-1.5 text-left"
                 onClick={() => {
                   changeLanguage(surveyLanguage.language.code);
                 }}>
