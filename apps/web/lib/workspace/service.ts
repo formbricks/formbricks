@@ -12,6 +12,7 @@ const selectWorkspace = {
   id: true,
   createdAt: true,
   updatedAt: true,
+  legacyEnvironmentId: true,
   name: true,
   organizationId: true,
   languages: true,
