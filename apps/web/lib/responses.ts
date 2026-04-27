@@ -51,7 +51,7 @@ export const getElementResponseMapping = (
 
     elementResponseMapping.push({
       element: getTextContent(
-        parseRecallInfo(getLocalizedValue(element.headline, responseLanguageCode ?? "default"), response.data)
+        parseRecallInfo(getLocalizedValue(element.headline, responseLanguageCode ?? "default"), response.data, response.variables)
       ),
       response: convertResponseValue(answer, element),
       type: element.type,
