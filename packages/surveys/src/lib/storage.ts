@@ -4,17 +4,12 @@ export const getOriginalFileNameFromUrl = (fileURL: string): string => {
       ? fileURL.split("/").pop()
       : new URL(fileURL).pathname.split("/").pop();
 
-    const fileExt = fileNameFromURL?.split(".").pop() ?? "";
+    // The original file name is the portion before the "--fid--" marker.
+    // When a fid is present the segment already includes the file extension,
+    // so no further reconstruction is needed.
     const originalFileName = fileNameFromURL?.split("--fid--")[0] ?? "";
-    const fileId = fileNameFromURL?.split("--fid--")[1] ?? "";
 
-    if (!fileId) {
-      const fileName = originalFileName ? decodeURIComponent(originalFileName || "") : "";
-      return fileName;
-    }
-
-    const fileName = originalFileName ? decodeURIComponent(`${originalFileName}.${fileExt}` || "") : "";
-    return fileName;
+    return originalFileName ? decodeURIComponent(originalFileName) : "";
   } catch (error) {
     console.error(`Error parsing file URL: ${error}`);
     return "";
