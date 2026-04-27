@@ -1,5 +1,5 @@
-import { debounce } from "lodash";
 import { useState } from "react";
+import { debounce } from "@/lib/utils/debounce";
 
 interface AnimatedSurveyBgProps {
   handleBgChange: (bg: string, bgType: string) => void;

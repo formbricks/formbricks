@@ -1,7 +1,5 @@
 /// <reference types="vitest" />
 import { resolve } from "node:path";
-import { PluginOption } from "vite";
-import dts from "vite-plugin-dts";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
@@ -36,9 +34,4 @@ export default defineConfig({
       reporter: ["text", "json", "html", "lcov"],
     },
   },
-  plugins: [
-    dts({
-      rollupTypes: true,
-    }) as PluginOption,
-  ],
 });

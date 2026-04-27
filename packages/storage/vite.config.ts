@@ -1,7 +1,6 @@
 /// <reference types="vitest" />
 import { resolve } from "path";
-import { PluginOption, defineConfig } from "vite";
-import dts from "vite-plugin-dts";
+import { defineConfig } from "vite";
 
 export default defineConfig({
   build: {
@@ -29,5 +28,4 @@ export default defineConfig({
       include: ["src/**/*.ts"],
     },
   },
-  plugins: [dts({ rollupTypes: true }) as PluginOption],
 });

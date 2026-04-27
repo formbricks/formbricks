@@ -1,6 +1,6 @@
 "use client";
 
-import { Trash2Icon } from "lucide-react";
+import { RefreshCcwIcon, Trash2Icon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -12,9 +12,11 @@ import { deleteIntegrationAction } from "@/app/(app)/environments/[environmentId
 import { AddIntegrationModal } from "@/app/(app)/environments/[environmentId]/workspace/integrations/airtable/components/AddIntegrationModal";
 import { timeSince } from "@/lib/time";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { Alert, AlertButton, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { EmptyState } from "@/modules/ui/components/empty-state";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { IntegrationModalInputs } from "../lib/types";
 
 interface ManageIntegrationProps {
@@ -24,10 +26,20 @@ interface ManageIntegrationProps {
   surveys: TSurvey[];
   airtableArray: TIntegrationItem[];
   locale: TUserLocale;
+  showReconnectButton: boolean;
+  handleAirtableAuthorization: () => Promise<void>;
 }
 
-export const ManageIntegration = (props: ManageIntegrationProps) => {
-  const { airtableIntegration, environmentId, setIsConnected, surveys, airtableArray } = props;
+export const ManageIntegration = ({
+  airtableIntegration,
+  environmentId,
+  setIsConnected,
+  surveys,
+  airtableArray,
+  showReconnectButton,
+  handleAirtableAuthorization,
+  locale,
+}: ManageIntegrationProps) => {
   const { t } = useTranslation();
 
   const tableHeaders = [
@@ -73,15 +85,34 @@ export const ManageIntegration = (props: ManageIntegrationProps) => {
     : { isEditMode: false as const };
   return (
     <div className="mt-6 flex w-full flex-col items-center justify-center p-6">
-      <div className="flex w-full justify-end gap-x-6">
-        <div className="flex items-center">
+      {showReconnectButton && (
+        <Alert variant="warning" size="small" className="mb-4 w-full">
+          <AlertDescription>{t("environments.integrations.reconnect_button_description")}</AlertDescription>
+          <AlertButton onClick={handleAirtableAuthorization}>
+            {t("environments.integrations.reconnect_button")}
+          </AlertButton>
+        </Alert>
+      )}
+      <div className="flex w-full justify-end space-x-2">
+        <div className="mr-6 flex items-center">
           <span className="mr-4 h-4 w-4 rounded-full bg-green-600"></span>
-          <span className="cursor-pointer text-slate-500">
+          <span className="text-slate-500">
             {t("environments.integrations.connected_with_email", {
               email: airtableIntegration.config.email,
             })}
           </span>
         </div>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" onClick={handleAirtableAuthorization}>
+                <RefreshCcwIcon className="mr-2 h-4 w-4" />
+                {t("environments.integrations.reconnect_button")}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>{t("environments.integrations.reconnect_button_tooltip")}</TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
         <Button
           onClick={() => {
             setDefaultValues(null);
@@ -122,9 +153,7 @@ export const ManageIntegration = (props: ManageIntegrationProps) => {
               <div className="col-span-2 text-center">{data.surveyName}</div>
               <div className="col-span-2 text-center">{data.tableName}</div>
               <div className="col-span-2 text-center">{data.elements}</div>
-              <div className="col-span-2 text-center">
-                {timeSince(data.createdAt.toString(), props.locale)}
-              </div>
+              <div className="col-span-2 text-center">{timeSince(data.createdAt.toString(), locale)}</div>
             </button>
           ))}
         </div>

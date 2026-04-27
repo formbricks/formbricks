@@ -833,6 +833,9 @@
       },
       "notion_integration_description": "Envoyez des données à votre base de données Notion.",
       "please_select_a_survey_error": "Veuillez sélectionner une enquête.",
+      "reconnect_button": "Reconnecter",
+      "reconnect_button_description": "Ta connexion à l'intégration a expiré. Reconnecte-toi pour continuer à synchroniser les réponses. Tes liens et données existants seront conservés.",
+      "reconnect_button_tooltip": "Reconnecte l'intégration pour actualiser ton accès. Tes liens et données existants seront conservés.",
       "select_at_least_one_question_error": "Veuillez sélectionner au moins une question.",
       "slack": {
         "already_connected_another_survey": "Vous avez déjà connecté une autre enquête à ce canal.",

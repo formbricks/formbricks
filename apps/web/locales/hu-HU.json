@@ -833,6 +833,9 @@
       },
       "notion_integration_description": "Adatok küldése a Notion-adatbázisba",
       "please_select_a_survey_error": "Válasszon kérdőívet",
+      "reconnect_button": "Újracsatlakozás",
+      "reconnect_button_description": "Az integráció kapcsolata lejárt. Kérjük, csatlakozzon újra a válaszok szinkronizálásának folytatásához. A meglévő hivatkozások és adatok megmaradnak.",
+      "reconnect_button_tooltip": "Csatlakoztassa újra az integrációt a hozzáférés frissítéséhez. A meglévő hivatkozások és adatok megmaradnak.",
       "select_at_least_one_question_error": "Válasszon legalább egy kérdést",
       "slack": {
         "already_connected_another_survey": "Már hozzákapcsolt egy másik kérdőívet ehhez a csatornához.",

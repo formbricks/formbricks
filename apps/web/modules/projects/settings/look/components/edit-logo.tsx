@@ -68,7 +68,7 @@ export const EditLogo = ({ project, environmentId, isReadOnly, isStorageConfigur
 
     setIsLoading(true);
     try {
-      const updatedProject: Project["logo"] = {
+      const updatedProject = {
         logo: { url: logoUrl, bgColor: isBgColorEnabled ? logoBgColor : undefined },
       };
       const updateProjectResponse = await updateProjectAction({
@@ -98,7 +98,7 @@ export const EditLogo = ({ project, environmentId, isReadOnly, isStorageConfigur
 
     setIsLoading(true);
     try {
-      const updatedProject: Project["logo"] = {
+      const updatedProject = {
         logo: { url: undefined, bgColor: undefined },
       };
       const updateProjectResponse = await updateProjectAction({

@@ -833,6 +833,9 @@
       },
       "notion_integration_description": "Sende Daten an deine Notion Datenbank",
       "please_select_a_survey_error": "Bitte wähle eine Umfrage aus",
+      "reconnect_button": "Erneut verbinden",
+      "reconnect_button_description": "Deine Integrationsverbindung ist abgelaufen. Bitte verbinde dich erneut, um weiterhin Antworten zu synchronisieren. Deine bestehenden Links und Daten bleiben erhalten.",
+      "reconnect_button_tooltip": "Verbinde die Integration erneut, um deinen Zugriff zu aktualisieren. Deine bestehenden Links und Daten bleiben erhalten.",
       "select_at_least_one_question_error": "Bitte wähle mindestens eine Frage aus",
       "slack": {
         "already_connected_another_survey": "Du hast bereits eine andere Umfrage mit diesem Kanal verbunden.",

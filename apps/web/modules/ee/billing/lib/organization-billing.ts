@@ -884,7 +884,11 @@ export const switchOrganizationToCloudPlan = async (input: {
   const currentPlan = resolveCloudPlanFromSubscription(subscription);
   const currentInterval = resolveSubscriptionInterval(subscription);
 
-  const isImmediateUpgrade = CLOUD_PLAN_LEVEL[input.targetPlan] > CLOUD_PLAN_LEVEL[currentPlan];
+  // Non-standard plans (custom, unknown) don't follow the normal tier hierarchy,
+  // so any switch from them to a standard plan should apply immediately.
+  const isNonStandardCurrentPlan = currentPlan === "custom" || currentPlan === "unknown";
+  const isImmediateUpgrade =
+    isNonStandardCurrentPlan || CLOUD_PLAN_LEVEL[input.targetPlan] > CLOUD_PLAN_LEVEL[currentPlan];
   const isSameSelection = currentPlan === input.targetPlan && currentInterval === input.targetInterval;
 
   if (isSameSelection) {

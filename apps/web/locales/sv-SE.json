@@ -833,6 +833,9 @@
       },
       "notion_integration_description": "Skicka data till din Notion-databas",
       "please_select_a_survey_error": "Vänligen välj en enkät",
+      "reconnect_button": "Återanslut",
+      "reconnect_button_description": "Din integrationsanslutning har gått ut. Vänligen återanslut för att fortsätta synkronisera svar. Dina befintliga länkar och data kommer att bevaras.",
+      "reconnect_button_tooltip": "Återanslut integrationen för att uppdatera din åtkomst. Dina befintliga länkar och data kommer att bevaras.",
       "select_at_least_one_question_error": "Vänligen välj minst en fråga",
       "slack": {
         "already_connected_another_survey": "Du har redan anslutit en annan enkät till denna kanal.",

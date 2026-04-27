@@ -833,6 +833,9 @@
       },
       "notion_integration_description": "回答を直接Notionに送信します",
       "please_select_a_survey_error": "フォームを選択してください",
+      "reconnect_button": "再接続",
+      "reconnect_button_description": "統合の接続が期限切れになりました。回答の同期を続けるには再接続してください。既存のリンクとデータは保持されます。",
+      "reconnect_button_tooltip": "統合を再接続してアクセスを更新します。既存のリンクとデータは保持されます。",
       "select_at_least_one_question_error": "少なくとも1つの質問を選択してください",
       "slack": {
         "already_connected_another_survey": "このチャンネルには別のフォームがすでに接続されています。",

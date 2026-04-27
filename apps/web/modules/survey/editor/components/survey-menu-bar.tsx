@@ -1,7 +1,6 @@
 "use client";
 
 import { Project } from "@prisma/client";
-import { isEqual } from "lodash";
 import { ArrowLeftIcon, SettingsIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -18,6 +17,7 @@ import {
   ZSurveyRedirectUrlCard,
 } from "@formbricks/types/surveys/types";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { isDeepEqual } from "@/lib/utils/object";
 import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
 import { TSurveyDraft } from "@/modules/survey/editor/types/survey";
 import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
@@ -117,7 +117,7 @@ export const SurveyMenuBar = ({
         return;
       }
 
-      if (!isEqual(localSurvey, survey)) {
+      if (!isDeepEqual(localSurvey, survey)) {
         e.preventDefault();
         return (e.returnValue = warningText);
       }
@@ -156,7 +156,7 @@ export const SurveyMenuBar = ({
     const { updatedAt, ...localSurveyRest } = localSurvey;
     const { updatedAt: _, ...surveyRest } = survey;
 
-    if (!isEqual(localSurveyRest, surveyRest)) {
+    if (!isDeepEqual(localSurveyRest, surveyRest)) {
       setConfirmDialogOpen(true);
     } else {
       router.back();
@@ -279,7 +279,7 @@ export const SurveyMenuBar = ({
       const { updatedAt: surveyUpdatedAt, ...surveyRest } = surveyRef.current;
 
       // Skip if no changes
-      if (isEqual(localSurveyRest, surveyRest)) return;
+      if (isDeepEqual(localSurveyRest, surveyRest)) return;
 
       isAutoSavingRef.current = true;
 
@@ -296,7 +296,7 @@ export const SurveyMenuBar = ({
           // If the segment changed on the server (e.g., private segment was deleted when
           // switching from app to link type), update localSurvey to prevent stale segment
           // references when publishing
-          if (!isEqual(localSurveyRef.current.segment, savedData.segment)) {
+          if (!isDeepEqual(localSurveyRef.current.segment, savedData.segment)) {
             setLocalSurvey({ ...localSurveyRef.current, segment: savedData.segment });
           }
 

@@ -6,6 +6,7 @@ import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyFilterCriteria } from "@formbricks/types/surveys/types";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { checkForInvalidMediaInBlocks } from "@/lib/survey/utils";
@@ -473,7 +474,7 @@ export const copySurveyToOtherEnvironment = async (
     }
 
     if (surveyData.blocks) {
-      const result = checkForInvalidMediaInBlocks(surveyData.blocks);
+      const result = checkForInvalidMediaInBlocks(surveyData.blocks as unknown as TSurveyBlock[]);
       if (!result.ok) {
         throw new InvalidInputError(result.error.message);
       }

@@ -17,6 +17,14 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
+const constantsMock = vi.hoisted(() => ({ dangerouslyAllow: false }));
+
+vi.mock("@/lib/constants", () => ({
+  get DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS() {
+    return constantsMock.dangerouslyAllow;
+  },
+}));
+
 vi.mock("@/lib/crypto", () => ({
   generateStandardWebhookSignature: vi.fn(() => "signed-payload"),
   generateWebhookSecret: vi.fn(() => "generated-secret"),
@@ -41,6 +49,7 @@ vi.mock("uuid", () => ({
 describe("testEndpoint", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    constantsMock.dangerouslyAllow = false;
     vi.mocked(generateStandardWebhookSignature).mockReturnValue("signed-payload");
     vi.mocked(validateWebhookUrl).mockResolvedValue(undefined);
     vi.mocked(getTranslate).mockResolvedValue((key: string) => key);
@@ -74,6 +83,36 @@ describe("testEndpoint", () => {
     expect(validateWebhookUrl).toHaveBeenCalledWith("https://example.com/webhook");
     expect(generateStandardWebhookSignature).toHaveBeenCalled();
     expect(getTranslate).toHaveBeenCalled();
+  });
+
+  test.each([301, 302, 303, 307, 308])(
+    "rejects %s redirects to prevent SSRF via redirect",
+    async (statusCode) => {
+      const fetchMock = vi.fn(async () => ({ status: statusCode }));
+      vi.stubGlobal("fetch", fetchMock);
+
+      await expect(testEndpoint("https://example.com/webhook")).rejects.toThrow(
+        "Webhook endpoint returned a redirect, which is not allowed"
+      );
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://example.com/webhook",
+        expect.objectContaining({ redirect: "manual" })
+      );
+    }
+  );
+
+  test("follows redirects when DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS is enabled", async () => {
+    constantsMock.dangerouslyAllow = true;
+    const fetchMock = vi.fn(async () => ({ status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(testEndpoint("https://example.com/webhook")).resolves.toBe(true);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://example.com/webhook",
+      expect.objectContaining({ redirect: "follow" })
+    );
   });
 
   test("allows non-blocked non-2xx statuses", async () => {

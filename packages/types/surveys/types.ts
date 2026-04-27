@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { ZSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
 import { ZColor, ZEndingCardUrl, ZId, ZOverlay, ZPlacement, ZStorageUrl, getZSafeUrl } from "../common";
 import { ZContactAttributes } from "../contact-attribute";
@@ -29,6 +28,7 @@ import {
   ZSurveyRatingElement,
 } from "./elements";
 import { validateElementLabels } from "./elements-validation";
+import { ZSurveyFollowUp } from "./follow-up";
 import {
   type TConditionGroup,
   type TConditionGroupDeprecated,

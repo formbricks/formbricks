@@ -1,7 +1,6 @@
 /// <reference types="vitest" />
 import { resolve } from "node:path";
-import dts from "vite-plugin-dts";
-import { PluginOption, defineConfig } from "vitest/config";
+import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   build: {
@@ -21,9 +20,4 @@ export default defineConfig({
       reporter: ["text", "json", "html", "lcov"],
     },
   },
-  plugins: [
-    dts({
-      rollupTypes: false,
-    }) as PluginOption,
-  ],
 });

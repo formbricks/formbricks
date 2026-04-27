@@ -3,6 +3,11 @@
   "version": "0.0.0",
   "private": true,
   "main": "index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./integration": "./integration/index.ts",
+    "./*": "./*.ts"
+  },
   "sideEffects": false,
   "scripts": {
     "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
@@ -15,7 +20,6 @@
     "node-html-parser": "7.1.0"
   },
   "devDependencies": {
-    "@formbricks/config-typescript": "workspace:*",
-    "@formbricks/database": "workspace:*"
+    "@formbricks/config-typescript": "workspace:*"
   }
 }

@@ -331,7 +331,13 @@ export const getEnvironmentLayoutData = reactCache(
       user,
       environment,
       project,
-      organization,
+      organization: {
+        ...organization,
+        billing: {
+          ...organization.billing,
+          stripe: organization.billing.stripe ?? undefined,
+        },
+      },
       environments,
       membership,
       isAccessControlAllowed,

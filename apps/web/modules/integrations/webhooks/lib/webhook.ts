@@ -9,6 +9,7 @@ import {
   ResourceNotFoundError,
   UnknownError,
 } from "@formbricks/types/errors";
+import { DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS } from "@/lib/constants";
 import { generateStandardWebhookSignature, generateWebhookSecret } from "@/lib/crypto";
 import { validateInputs } from "@/lib/utils/validate";
 import { validateWebhookUrl } from "@/lib/utils/validate-webhook-url";
@@ -191,13 +192,29 @@ export const testEndpoint = async (url: string, secret?: string): Promise<boolea
       );
     }
 
+    // `redirect: "manual"` prevents SSRF via redirect — validateWebhookUrl only checks the
+    // initial URL, so following 30x to a private/internal host (e.g. cloud metadata) would bypass it.
+    // Gated on the same env var as validateWebhookUrl: self-hosters who opted into trusting internal
+    // URLs also get the pre-patch redirect-follow behavior for consistency.
+    const redirectMode: RequestRedirect = DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS ? "follow" : "manual";
     const response = await fetch(url, {
       method: "POST",
       body,
       headers: requestHeaders,
       signal: controller.signal,
+      redirect: redirectMode,
     });
+
     const statusCode = response.status;
+
+    // With `redirect: "manual"`, Node's undici returns the actual 30x response (not the spec's
+    // opaqueredirect filter). Treat any 30x as a redirect rejection so users get a clear error
+    // instead of a misleading success. With `redirect: "follow"`, fetch returns the final 2xx/4xx/5xx
+    // and this branch is unreachable.
+    if (statusCode >= 300 && statusCode < 400) {
+      throw new InvalidInputError("Webhook endpoint returned a redirect, which is not allowed");
+    }
+
     const errorMessage = await getWebhookTestErrorMessage(statusCode);
 
     if (errorMessage) {

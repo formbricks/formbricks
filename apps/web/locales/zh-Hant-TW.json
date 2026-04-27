@@ -833,6 +833,9 @@
       },
       "notion_integration_description": "將資料傳送至您的 Notion 資料庫",
       "please_select_a_survey_error": "請選取問卷",
+      "reconnect_button": "重新連接",
+      "reconnect_button_description": "您的整合連線已過期。請重新連接以繼續同步回應。您現有的連結和資料將會保留。",
+      "reconnect_button_tooltip": "重新連接整合以更新您的存取權限。您現有的連結和資料將會保留。",
       "select_at_least_one_question_error": "請選取至少一個問題",
       "slack": {
         "already_connected_another_survey": "您已將另一個問卷連線到此頻道。",
