@@ -4,6 +4,7 @@ import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { TUserLocale } from "@formbricks/types/user";
 import { TargetingCard } from "@/modules/ee/contacts/segments/components/targeting-card";
 import { QuotasCard } from "@/modules/ee/quotas/components/quotas-card";
 import { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
@@ -28,6 +29,7 @@ interface SettingsViewProps {
   isFormbricksCloud: boolean;
   isQuotasAllowed: boolean;
   quotas: TSurveyQuota[];
+  locale: TUserLocale;
 }
 
 export const SettingsView = ({
@@ -44,6 +46,7 @@ export const SettingsView = ({
   workspacePermission,
   isFormbricksCloud,
   quotas,
+  locale,
 }: SettingsViewProps) => {
   const isAppSurvey = localSurvey.type === "app";
 
@@ -94,6 +97,7 @@ export const SettingsView = ({
         setLocalSurvey={setLocalSurvey}
         responseCount={responseCount}
         isSpamProtectionAllowed={isSpamProtectionAllowed}
+        locale={locale}
       />
 
       <RecontactOptionsCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />

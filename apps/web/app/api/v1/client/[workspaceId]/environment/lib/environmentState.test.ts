@@ -33,10 +33,13 @@ vi.mock("@formbricks/logger", () => ({
 vi.mock("./data");
 vi.mock("@/app/lib/api/api-backwards-compat", () => ({
   addLegacyProjectOverwritesToList: vi.fn((surveys: unknown[]) =>
-    surveys.map((s: Record<string, unknown>) => ({
-      ...s,
-      projectOverwrites: s.workspaceOverwrites ?? null,
-    }))
+    surveys.map((survey) => {
+      const typedSurvey = survey as Record<string, unknown>;
+      return {
+        ...typedSurvey,
+        projectOverwrites: typedSurvey.workspaceOverwrites ?? null,
+      };
+    })
   ),
   addLegacyProjectToEnvironmentState: vi.fn((data: Record<string, unknown>) => ({
     ...data,
@@ -129,7 +132,7 @@ const mockActionClasses = [
     description: null,
     type: "code",
     noCodeConfig: null,
-    environmentId: workspaceId,
+    workspaceId,
     key: "action1",
   },
 ] as unknown as TActionClass[];

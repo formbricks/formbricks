@@ -4,10 +4,10 @@ x-environment: &environment
 
     # The url of your Formbricks instance used in the admin panel
     # Set this to your public-facing URL, e.g., example http://localhost:3000 or https://example.com
-    WEBAPP_URL: 
+    WEBAPP_URL:
 
     # Required for next-auth. Should be the same as WEBAPP_URL
-    NEXTAUTH_URL: 
+    NEXTAUTH_URL:
 
     # PostgreSQL DB for Formbricks to connect to
     DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/formbricks?schema=public"
@@ -15,15 +15,15 @@ x-environment: &environment
     # NextJS Auth
     # @see: https://next-auth.js.org/configuration/options#nextauth_secret
     # You can use: `openssl rand -hex 32` to generate one
-    NEXTAUTH_SECRET: 
+    NEXTAUTH_SECRET:
 
     # Encryption Key is used for 2FA & Single use URLs for Link Surveys
     # You can use: $(openssl rand -hex 32) to generate one
-    ENCRYPTION_KEY: 
+    ENCRYPTION_KEY:
 
     # API Secret for running cron jobs.
     # You can use: $(openssl rand -hex 32) to generate a secure one
-    CRON_SECRET: 
+    CRON_SECRET:
 
     # Redis URL for caching, rate limiting, and audit logging
     # To use external Redis/Valkey: remove the redis service below and update this URL
@@ -231,7 +231,7 @@ services:
   redis:
     restart: always
     image: valkey/valkey@sha256:12ba4f45a7c3e1d0f076acd616cb230834e75a77e8516dde382720af32832d6d
-    command: valkey-server --appendonly yes
+    command: valkey-server --appendonly yes --maxmemory-policy noeviction
     volumes:
       - redis:/data
     ports:
@@ -262,7 +262,10 @@ services:
     image: ghcr.io/formbricks/hub:latest
     restart: "no"
     entrypoint: ["sh", "-c"]
-    command: ["if [ -x /usr/local/bin/goose ] && [ -x /usr/local/bin/river ]; then /usr/local/bin/goose -dir /app/migrations postgres \"$$DATABASE_URL\" up && /usr/local/bin/river migrate-up --database-url \"$$DATABASE_URL\"; else echo 'Migration tools (goose/river) not in image.'; exit 1; fi"]
+    command:
+      [
+        'if [ -x /usr/local/bin/goose ] && [ -x /usr/local/bin/river ]; then /usr/local/bin/goose -dir /app/migrations postgres "$$DATABASE_URL" up && /usr/local/bin/river migrate-up --database-url "$$DATABASE_URL"; else echo ''Migration tools (goose/river) not in image.''; exit 1; fi',
+      ]
     environment:
       DATABASE_URL: ${HUB_DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/formbricks?sslmode=disable}
     depends_on:

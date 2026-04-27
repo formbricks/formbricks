@@ -2,6 +2,7 @@
 
 import {
   ArrowUpRightIcon,
+  BarChart3Icon,
   Building2Icon,
   ChevronRightIcon,
   Cog,
@@ -14,6 +15,7 @@ import {
   PlusIcon,
   RocketIcon,
   SettingsIcon,
+  Shapes,
   UserCircleIcon,
   UserIcon,
 } from "lucide-react";
@@ -165,6 +167,20 @@ export const MainNavigation = ({
         disabled: isMembershipPending || isBilling,
       },
       {
+        name: t("common.analysis"),
+        href: `/workspaces/${workspace.id}/dashboards`,
+        icon: BarChart3Icon,
+        isActive: pathname?.includes("/dashboards") || pathname?.includes("/charts"),
+        isHidden: false,
+        disabled: isMembershipPending || isBilling,
+      },
+      {
+        name: t("workspace.unify.unify_feedback"),
+        href: `/workspaces/${workspace.id}/unify/sources`,
+        icon: Shapes,
+        isActive: pathname?.includes("/unify"),
+      },
+      {
         name: t("common.configuration"),
         href: `/workspaces/${workspace.id}/general`,
         icon: Cog,
@@ -297,6 +313,15 @@ export const MainNavigation = ({
       href: `/workspaces/${workspace.id}/settings/enterprise`,
       hidden: isFormbricksCloud || isMember,
     },
+    {
+      id: "feedback-record-directories",
+      label: t("workspace.settings.feedback_record_directories.title"),
+      href: `/workspaces/${workspace.id}/settings/feedback-record-directories`,
+      disabled: isMembershipPending || isMember,
+      disabledMessage: isMembershipPending
+        ? t("common.loading")
+        : t("common.you_are_not_authorized_to_perform_this_action"),
+    },
   ];
 
   const loadWorkspaces = useCallback(async () => {
@@ -413,16 +438,22 @@ export const MainNavigation = ({
     : `/workspaces/${workspace.id}/surveys/`;
 
   const handleWorkspaceChange = (workspaceId: string) => {
-    if (workspaceId === workspace.id) return;
+    const targetPath =
+      workspaceId === workspace.id ? `/workspaces/${workspace.id}/surveys` : `/workspaces/${workspaceId}/`;
     startTransition(() => {
-      router.push(`/workspaces/${workspaceId}/`);
+      setIsWorkspaceDropdownOpen(false);
+      router.push(targetPath);
     });
   };
 
   const handleOrganizationChange = (organizationId: string) => {
-    if (organizationId === organization.id) return;
+    const targetPath =
+      organizationId === organization.id
+        ? `/workspaces/${workspace.id}/settings/general`
+        : `/organizations/${organizationId}/`;
     startTransition(() => {
-      router.push(`/organizations/${organizationId}/`);
+      setIsOrganizationDropdownOpen(false);
+      router.push(targetPath);
     });
   };
 
@@ -479,7 +510,7 @@ export const MainNavigation = ({
   );
 
   const switcherIconClasses =
-    "flex h-9 w-9 items-center justify-center rounded-full bg-slate-100 text-slate-600";
+    "flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600";
   const isInitialWorkspacesLoading =
     isWorkspaceDropdownOpen && !hasInitializedWorkspaces && !workspaceLoadError;
 

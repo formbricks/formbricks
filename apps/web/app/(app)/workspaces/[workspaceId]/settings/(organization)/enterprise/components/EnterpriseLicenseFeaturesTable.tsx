@@ -8,7 +8,7 @@ import type { TEnterpriseLicenseFeatures } from "@/modules/ee/license-check/type
 import { Badge } from "@/modules/ui/components/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
 
-type TPublicLicenseFeatureKey = Exclude<keyof TEnterpriseLicenseFeatures, "isMultiOrgEnabled" | "ai">;
+type TPublicLicenseFeatureKey = Exclude<keyof TEnterpriseLicenseFeatures, "isMultiOrgEnabled">;
 
 type TFeatureDefinition = {
   key: TPublicLicenseFeatureKey;
@@ -60,6 +60,16 @@ const getFeatureDefinitions = (t: TFunction): TFeatureDefinition[] => {
       key: "spamProtection",
       labelKey: t("workspace.settings.enterprise.license_feature_spam_protection"),
       docsUrl: "https://formbricks.com/docs/xm-and-surveys/surveys/general-features/spam-protection",
+    },
+    {
+      key: "aiSmartTools",
+      labelKey: t("workspace.settings.general.ai_smart_tools_enabled"),
+      docsUrl: "https://formbricks.com/docs/self-hosting/configuration/ai",
+    },
+    {
+      key: "aiDataAnalysis",
+      labelKey: t("workspace.settings.general.ai_data_analysis_enabled"),
+      docsUrl: "https://formbricks.com/docs/self-hosting/configuration/ai",
     },
     {
       key: "auditLogs",

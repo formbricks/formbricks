@@ -3,7 +3,9 @@ import type { TFunction } from "i18next";
 import type { TSurveyBlock, TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import type {
   TSurveyCTAElement,
+  TSurveyCesElement,
   TSurveyConsentElement,
+  TSurveyCsatElement,
   TSurveyElement,
   TSurveyMultipleChoiceElement,
   TSurveyNPSElement,
@@ -96,7 +98,8 @@ export const buildOpenTextElement = ({
   };
 };
 
-export const buildRatingElement = ({
+const buildScaleElement = <T extends TSurveyRatingElement | TSurveyCsatElement | TSurveyCesElement>({
+  type,
   id,
   headline,
   subheader,
@@ -107,6 +110,32 @@ export const buildRatingElement = ({
   required,
   isColorCodingEnabled = false,
 }: {
+  type: T["type"];
+  id?: string;
+  headline: string;
+  scale: T["scale"];
+  range: T["range"];
+  lowerLabel?: string;
+  upperLabel?: string;
+  subheader?: string;
+  required?: boolean;
+  isColorCodingEnabled?: boolean;
+}): T => {
+  return {
+    id: id ?? createId(),
+    type,
+    subheader: subheader ? createI18nString(subheader, []) : undefined,
+    headline: createI18nString(headline, []),
+    scale,
+    range,
+    required: required ?? false,
+    isColorCodingEnabled,
+    lowerLabel: lowerLabel ? createI18nString(lowerLabel, []) : undefined,
+    upperLabel: upperLabel ? createI18nString(upperLabel, []) : undefined,
+  } as T;
+};
+
+export const buildRatingElement = (params: {
   id?: string;
   headline: string;
   scale: TSurveyRatingElement["scale"];
@@ -116,20 +145,8 @@ export const buildRatingElement = ({
   subheader?: string;
   required?: boolean;
   isColorCodingEnabled?: boolean;
-}): TSurveyRatingElement => {
-  return {
-    id: id ?? createId(),
-    type: TSurveyElementTypeEnum.Rating,
-    subheader: subheader ? createI18nString(subheader, []) : undefined,
-    headline: createI18nString(headline, []),
-    scale,
-    range,
-    required: required ?? false,
-    isColorCodingEnabled,
-    lowerLabel: lowerLabel ? createI18nString(lowerLabel, []) : undefined,
-    upperLabel: upperLabel ? createI18nString(upperLabel, []) : undefined,
-  };
-};
+}): TSurveyRatingElement =>
+  buildScaleElement<TSurveyRatingElement>({ ...params, type: TSurveyElementTypeEnum.Rating });
 
 export const buildConsentElement = ({
   id,
@@ -211,6 +228,38 @@ export const buildNPSElement = ({
     upperLabel: upperLabel ? createI18nString(upperLabel, []) : undefined,
   };
 };
+
+export const buildCsatElement = ({
+  scale = "smiley",
+  ...params
+}: {
+  id?: string;
+  headline: string;
+  scale?: TSurveyCsatElement["scale"];
+  lowerLabel?: string;
+  upperLabel?: string;
+  subheader?: string;
+  required?: boolean;
+  isColorCodingEnabled?: boolean;
+}): TSurveyCsatElement =>
+  buildScaleElement<TSurveyCsatElement>({ ...params, scale, range: 5, type: TSurveyElementTypeEnum.CSAT });
+
+export const buildCesElement = ({
+  scale = "number",
+  range = 5,
+  ...params
+}: {
+  id?: string;
+  headline: string;
+  scale?: TSurveyCesElement["scale"];
+  range?: TSurveyCesElement["range"];
+  lowerLabel?: string;
+  upperLabel?: string;
+  subheader?: string;
+  required?: boolean;
+  isColorCodingEnabled?: boolean;
+}): TSurveyCesElement =>
+  buildScaleElement<TSurveyCesElement>({ ...params, scale, range, type: TSurveyElementTypeEnum.CES });
 
 // Helper function to create block-level jump logic based on operator
 export const createBlockJumpLogic = (

@@ -6,24 +6,32 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { updateOrganizationAISettingsAction } from "@/app/(app)/workspaces/[workspaceId]/settings/(organization)/general/actions";
 import { getDisplayedOrganizationAISettingValue, getOrganizationAIEnablementState } from "@/lib/ai/utils";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
+import { type ModalButton, UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 
 interface AISettingsToggleProps {
   organization: TOrganization;
   membershipRole?: TOrganizationRole;
   isInstanceAIConfigured: boolean;
+  hasAIPermission: boolean;
+  isFormbricksCloud: boolean;
 }
 
 export const AISettingsToggle = ({
   organization,
   membershipRole,
   isInstanceAIConfigured,
+  hasAIPermission,
+  isFormbricksCloud,
 }: Readonly<AISettingsToggleProps>) => {
+  const { workspace } = useWorkspace();
+  const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const [loadingField, setLoadingField] = useState<string | null>(null);
   const { t } = useTranslation();
   const router = useRouter();
@@ -77,6 +85,32 @@ export const AISettingsToggle = ({
       setLoadingField(null);
     }
   };
+
+  const upgradeButtons: [ModalButton, ModalButton] = [
+    {
+      text: isFormbricksCloud ? t("common.upgrade_plan") : t("common.request_trial_license"),
+      href: isFormbricksCloud
+        ? `${workspaceBasePath}/settings/billing`
+        : "https://formbricks.com/upgrade-self-hosting-license",
+    },
+    {
+      text: t("common.learn_more"),
+      href: isFormbricksCloud
+        ? `${workspaceBasePath}/settings/billing`
+        : "https://formbricks.com/learn-more-self-hosting-license",
+    },
+  ];
+
+  if (!hasAIPermission) {
+    return (
+      <UpgradePrompt
+        title={t("workspace.settings.general.unlock_ai_features_with_a_higher_plan")}
+        description={t("workspace.settings.general.unlock_ai_features_description")}
+        buttons={upgradeButtons}
+        feature="ai_features"
+      />
+    );
+  }
 
   return (
     <div className="space-y-4">

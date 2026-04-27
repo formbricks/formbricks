@@ -4578,3 +4578,611 @@ describe("Cal question type tests", () => {
     expect(summary[0].skipped.count).toBe(1); // Counted as skipped
   });
 });
+
+describe("CSAT question type tests", () => {
+  test("getElementSummary correctly processes CSAT question with valid responses", async () => {
+    const question = {
+      id: "csat-q1",
+      type: TSurveyElementTypeEnum.CSAT,
+      headline: { default: "How satisfied are you?" },
+      required: true,
+      scale: "smiley",
+      range: 5,
+      lowerLabel: { default: "Very unsatisfied" },
+      upperLabel: { default: "Very satisfied" },
+    };
+
+    const survey = {
+      id: "survey-1",
+      blocks: [{ id: "block1", name: "Block 1", elements: [question] }],
+      questions: [],
+      languages: [],
+      welcomeCard: { enabled: false },
+    } as unknown as TSurvey;
+
+    const responses = [
+      {
+        id: "response-1",
+        data: { "csat-q1": 5 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+      {
+        id: "response-2",
+        data: { "csat-q1": 4 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+      {
+        id: "response-3",
+        data: { "csat-q1": 2 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+      {
+        id: "response-4",
+        data: { "csat-q1": 1 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+    ];
+
+    const dropOff = [
+      { elementId: "csat-q1", impressions: 4, dropOffCount: 0, dropOffPercentage: 0 },
+    ] as unknown as TSurveySummary["dropOff"];
+
+    const summary: any = await getElementSummary(
+      survey,
+      getElementsFromBlocks(survey.blocks),
+      responses,
+      dropOff
+    );
+
+    expect(summary).toHaveLength(1);
+    expect(summary[0].type).toBe(TSurveyElementTypeEnum.CSAT);
+    expect(summary[0].responseCount).toBe(4);
+
+    // Average = (5 + 4 + 2 + 1) / 4 = 3.0
+    expect(summary[0].average).toBe(3);
+
+    // CSAT: satisfied = ratings 4 + 5 = 2 out of 4
+    expect(summary[0].csat.satisfiedCount).toBe(2);
+    expect(summary[0].csat.satisfiedPercentage).toBe(50);
+
+    // Verify choice distribution
+    const rating5 = summary[0].choices.find((c: any) => c.rating === 5);
+    expect(rating5.count).toBe(1);
+    expect(rating5.percentage).toBe(25);
+
+    const rating4 = summary[0].choices.find((c: any) => c.rating === 4);
+    expect(rating4.count).toBe(1);
+    expect(rating4.percentage).toBe(25);
+
+    const rating2 = summary[0].choices.find((c: any) => c.rating === 2);
+    expect(rating2.count).toBe(1);
+    expect(rating2.percentage).toBe(25);
+
+    const rating1 = summary[0].choices.find((c: any) => c.rating === 1);
+    expect(rating1.count).toBe(1);
+    expect(rating1.percentage).toBe(25);
+
+    expect(summary[0].dismissed.count).toBe(0);
+  });
+
+  test("getElementSummary handles CSAT question with dismissed responses", async () => {
+    const question = {
+      id: "csat-q1",
+      type: TSurveyElementTypeEnum.CSAT,
+      headline: { default: "How satisfied are you?" },
+      required: false,
+      scale: "smiley",
+      range: 5,
+      lowerLabel: { default: "Very unsatisfied" },
+      upperLabel: { default: "Very satisfied" },
+    };
+
+    const survey = {
+      id: "survey-1",
+      blocks: [{ id: "block1", name: "Block 1", elements: [question] }],
+      questions: [],
+      languages: [],
+      welcomeCard: { enabled: false },
+    } as unknown as TSurvey;
+
+    const responses = [
+      {
+        id: "response-1",
+        data: { "csat-q1": 5 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: { "csat-q1": 3 },
+        finished: true,
+      },
+      {
+        id: "response-2",
+        data: {},
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: { "csat-q1": 2 },
+        finished: true,
+      },
+      {
+        id: "response-3",
+        data: {},
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: { "csat-q1": 4 },
+        finished: true,
+      },
+    ] as any;
+
+    const dropOff = [
+      { elementId: "csat-q1", impressions: 3, dropOffCount: 0, dropOffPercentage: 0 },
+    ] as unknown as TSurveySummary["dropOff"];
+
+    const summary: any = await getElementSummary(
+      survey,
+      getElementsFromBlocks(survey.blocks),
+      responses,
+      dropOff
+    );
+
+    expect(summary).toHaveLength(1);
+    expect(summary[0].type).toBe(TSurveyElementTypeEnum.CSAT);
+    expect(summary[0].responseCount).toBe(1);
+    expect(summary[0].average).toBe(5);
+    expect(summary[0].dismissed.count).toBe(2);
+    expect(summary[0].csat.satisfiedCount).toBe(1);
+    expect(summary[0].csat.satisfiedPercentage).toBe(100);
+  });
+
+  test("getElementSummary handles CSAT question with no valid responses", async () => {
+    const question = {
+      id: "csat-q1",
+      type: TSurveyElementTypeEnum.CSAT,
+      headline: { default: "How satisfied are you?" },
+      required: true,
+      scale: "smiley",
+      range: 5,
+    };
+
+    const survey = {
+      id: "survey-1",
+      blocks: [{ id: "block1", name: "Block 1", elements: [question] }],
+      questions: [],
+      languages: [],
+      welcomeCard: { enabled: false },
+    } as unknown as TSurvey;
+
+    const responses = [
+      {
+        id: "response-1",
+        data: { "other-q": "value" },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+    ];
+
+    const dropOff = [
+      { elementId: "csat-q1", impressions: 1, dropOffCount: 1, dropOffPercentage: 100 },
+    ] as unknown as TSurveySummary["dropOff"];
+
+    const summary: any = await getElementSummary(
+      survey,
+      getElementsFromBlocks(survey.blocks),
+      responses,
+      dropOff
+    );
+
+    expect(summary).toHaveLength(1);
+    expect(summary[0].type).toBe(TSurveyElementTypeEnum.CSAT);
+    expect(summary[0].responseCount).toBe(0);
+    expect(summary[0].average).toBe(0);
+    expect(summary[0].csat.satisfiedCount).toBe(0);
+    expect(summary[0].csat.satisfiedPercentage).toBe(0);
+    expect(summary[0].choices.every((c: any) => c.count === 0)).toBe(true);
+  });
+
+  test("getElementSummary CSAT correctly identifies satisfied ratings (4 and 5 only)", async () => {
+    const question = {
+      id: "csat-q1",
+      type: TSurveyElementTypeEnum.CSAT,
+      headline: { default: "How satisfied are you?" },
+      required: true,
+      scale: "smiley",
+      range: 5,
+    };
+
+    const survey = {
+      id: "survey-1",
+      blocks: [{ id: "block1", name: "Block 1", elements: [question] }],
+      questions: [],
+      languages: [],
+      welcomeCard: { enabled: false },
+    } as unknown as TSurvey;
+
+    // 3 satisfied (4,5,5), 2 not satisfied (1,3)
+    const responses = [
+      {
+        id: "r1",
+        data: { "csat-q1": 5 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+      {
+        id: "r2",
+        data: { "csat-q1": 4 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+      {
+        id: "r3",
+        data: { "csat-q1": 3 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+      {
+        id: "r4",
+        data: { "csat-q1": 1 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+      {
+        id: "r5",
+        data: { "csat-q1": 5 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+    ];
+
+    const dropOff = [
+      { elementId: "csat-q1", impressions: 5, dropOffCount: 0, dropOffPercentage: 0 },
+    ] as unknown as TSurveySummary["dropOff"];
+
+    const summary: any = await getElementSummary(
+      survey,
+      getElementsFromBlocks(survey.blocks),
+      responses,
+      dropOff
+    );
+
+    // satisfied = ratings 4 and 5 = 3 out of 5
+    expect(summary[0].csat.satisfiedCount).toBe(3);
+    expect(summary[0].csat.satisfiedPercentage).toBe(60);
+  });
+});
+
+describe("CES question type tests", () => {
+  test("getElementSummary correctly processes CES question with valid responses (range 5)", async () => {
+    const question = {
+      id: "ces-q1",
+      type: TSurveyElementTypeEnum.CES,
+      headline: { default: "How easy was it?" },
+      required: true,
+      scale: "number",
+      range: 5,
+      lowerLabel: { default: "Very difficult" },
+      upperLabel: { default: "Very easy" },
+    };
+
+    const survey = {
+      id: "survey-1",
+      blocks: [{ id: "block1", name: "Block 1", elements: [question] }],
+      questions: [],
+      languages: [],
+      welcomeCard: { enabled: false },
+    } as unknown as TSurvey;
+
+    const responses = [
+      {
+        id: "response-1",
+        data: { "ces-q1": 5 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+      {
+        id: "response-2",
+        data: { "ces-q1": 4 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+      {
+        id: "response-3",
+        data: { "ces-q1": 2 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+      {
+        id: "response-4",
+        data: { "ces-q1": 3 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+    ];
+
+    const dropOff = [
+      { elementId: "ces-q1", impressions: 4, dropOffCount: 0, dropOffPercentage: 0 },
+    ] as unknown as TSurveySummary["dropOff"];
+
+    const summary: any = await getElementSummary(
+      survey,
+      getElementsFromBlocks(survey.blocks),
+      responses,
+      dropOff
+    );
+
+    expect(summary).toHaveLength(1);
+    expect(summary[0].type).toBe(TSurveyElementTypeEnum.CES);
+    expect(summary[0].responseCount).toBe(4);
+
+    // CES = average = (5 + 4 + 2 + 3) / 4 = 3.5
+    expect(summary[0].average).toBe(3.5);
+
+    // Verify choice distribution
+    const rating5 = summary[0].choices.find((c: any) => c.rating === 5);
+    expect(rating5.count).toBe(1);
+    expect(rating5.percentage).toBe(25);
+
+    const rating4 = summary[0].choices.find((c: any) => c.rating === 4);
+    expect(rating4.count).toBe(1);
+    expect(rating4.percentage).toBe(25);
+
+    const rating3 = summary[0].choices.find((c: any) => c.rating === 3);
+    expect(rating3.count).toBe(1);
+    expect(rating3.percentage).toBe(25);
+
+    const rating2 = summary[0].choices.find((c: any) => c.rating === 2);
+    expect(rating2.count).toBe(1);
+    expect(rating2.percentage).toBe(25);
+
+    expect(summary[0].dismissed.count).toBe(0);
+
+    // CES has no csat field
+    expect(summary[0].csat).toBeUndefined();
+  });
+
+  test("getElementSummary correctly processes CES question with range 7", async () => {
+    const question = {
+      id: "ces-q1",
+      type: TSurveyElementTypeEnum.CES,
+      headline: { default: "How easy was it?" },
+      required: true,
+      scale: "number",
+      range: 7,
+      lowerLabel: { default: "Very difficult" },
+      upperLabel: { default: "Very easy" },
+    };
+
+    const survey = {
+      id: "survey-1",
+      blocks: [{ id: "block1", name: "Block 1", elements: [question] }],
+      questions: [],
+      languages: [],
+      welcomeCard: { enabled: false },
+    } as unknown as TSurvey;
+
+    const responses = [
+      {
+        id: "r1",
+        data: { "ces-q1": 7 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+      {
+        id: "r2",
+        data: { "ces-q1": 6 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+      {
+        id: "r3",
+        data: { "ces-q1": 1 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+    ];
+
+    const dropOff = [
+      { elementId: "ces-q1", impressions: 3, dropOffCount: 0, dropOffPercentage: 0 },
+    ] as unknown as TSurveySummary["dropOff"];
+
+    const summary: any = await getElementSummary(
+      survey,
+      getElementsFromBlocks(survey.blocks),
+      responses,
+      dropOff
+    );
+
+    expect(summary).toHaveLength(1);
+    expect(summary[0].type).toBe(TSurveyElementTypeEnum.CES);
+    expect(summary[0].responseCount).toBe(3);
+
+    // CES average = (7 + 6 + 1) / 3 = 4.67
+    expect(summary[0].average).toBe(4.67);
+
+    // Verify 7 choices exist (range 7)
+    expect(summary[0].choices).toHaveLength(7);
+  });
+
+  test("getElementSummary handles CES question with dismissed responses", async () => {
+    const question = {
+      id: "ces-q1",
+      type: TSurveyElementTypeEnum.CES,
+      headline: { default: "How easy was it?" },
+      required: false,
+      scale: "number",
+      range: 5,
+    };
+
+    const survey = {
+      id: "survey-1",
+      blocks: [{ id: "block1", name: "Block 1", elements: [question] }],
+      questions: [],
+      languages: [],
+      welcomeCard: { enabled: false },
+    } as unknown as TSurvey;
+
+    const responses = [
+      {
+        id: "response-1",
+        data: { "ces-q1": 3 },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: { "ces-q1": 5 },
+        finished: true,
+      },
+      {
+        id: "response-2",
+        data: {},
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: { "ces-q1": 2 },
+        finished: true,
+      },
+    ] as any;
+
+    const dropOff = [
+      { elementId: "ces-q1", impressions: 2, dropOffCount: 0, dropOffPercentage: 0 },
+    ] as unknown as TSurveySummary["dropOff"];
+
+    const summary: any = await getElementSummary(
+      survey,
+      getElementsFromBlocks(survey.blocks),
+      responses,
+      dropOff
+    );
+
+    expect(summary).toHaveLength(1);
+    expect(summary[0].type).toBe(TSurveyElementTypeEnum.CES);
+    expect(summary[0].responseCount).toBe(1);
+    expect(summary[0].average).toBe(3);
+    expect(summary[0].dismissed.count).toBe(1);
+  });
+
+  test("getElementSummary handles CES question with no valid responses", async () => {
+    const question = {
+      id: "ces-q1",
+      type: TSurveyElementTypeEnum.CES,
+      headline: { default: "How easy was it?" },
+      required: true,
+      scale: "number",
+      range: 5,
+    };
+
+    const survey = {
+      id: "survey-1",
+      blocks: [{ id: "block1", name: "Block 1", elements: [question] }],
+      questions: [],
+      languages: [],
+      welcomeCard: { enabled: false },
+    } as unknown as TSurvey;
+
+    const responses = [
+      {
+        id: "response-1",
+        data: { "other-q": "value" },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      },
+    ];
+
+    const dropOff = [
+      { elementId: "ces-q1", impressions: 1, dropOffCount: 1, dropOffPercentage: 100 },
+    ] as unknown as TSurveySummary["dropOff"];
+
+    const summary: any = await getElementSummary(
+      survey,
+      getElementsFromBlocks(survey.blocks),
+      responses,
+      dropOff
+    );
+
+    expect(summary).toHaveLength(1);
+    expect(summary[0].type).toBe(TSurveyElementTypeEnum.CES);
+    expect(summary[0].responseCount).toBe(0);
+    expect(summary[0].average).toBe(0);
+    expect(summary[0].choices.every((c: any) => c.count === 0)).toBe(true);
+  });
+});

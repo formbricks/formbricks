@@ -105,23 +105,26 @@ async function buildMigrationPlans(tx: TxClient, devEnvs: DevEnvWithData[]): Pro
 
 // -- Step 3 --
 async function createWorkspaces(tx: TxClient, plans: MigrationPlan[]): Promise<void> {
-  for (const plan of plans) {
-    await tx.$executeRaw`
-      INSERT INTO "Workspace" (
-        "id", "created_at", "updated_at", "name", "organizationId",
-        "styling", "config", "recontactDays", "linkSurveyBranding",
-        "inAppSurveyBranding", "placement", "clickOutsideClose",
-        "overlay", "logo", "customHeadScripts"
-      )
-      SELECT
-        ${plan.newWorkspaceId}, NOW(), NOW(), ${plan.newWorkspaceName}, ${plan.organizationId},
-        w."styling", w."config", w."recontactDays", w."linkSurveyBranding",
-        w."inAppSurveyBranding", w."placement", w."clickOutsideClose",
-        w."overlay", w."logo", w."customHeadScripts"
-      FROM "Workspace" w
-      WHERE w."id" = ${plan.oldWorkspaceId}
-    `;
-  }
+  const newIds = plans.map((p) => p.newWorkspaceId);
+  const newNames = plans.map((p) => p.newWorkspaceName);
+  const orgIds = plans.map((p) => p.organizationId);
+  const oldWsIds = plans.map((p) => p.oldWorkspaceId);
+
+  await tx.$executeRaw`
+    INSERT INTO "Workspace" (
+      "id", "created_at", "updated_at", "name", "organizationId",
+      "styling", "config", "recontactDays", "linkSurveyBranding",
+      "inAppSurveyBranding", "placement", "clickOutsideClose",
+      "overlay", "logo", "customHeadScripts"
+    )
+    SELECT p.new_id, NOW(), NOW(), p.new_name, p.org_id,
+      w."styling", w."config", w."recontactDays", w."linkSurveyBranding",
+      w."inAppSurveyBranding", w."placement", w."clickOutsideClose",
+      w."overlay", w."logo", w."customHeadScripts"
+    FROM unnest(${newIds}::text[], ${newNames}::text[], ${orgIds}::text[], ${oldWsIds}::text[])
+      AS p(new_id, new_name, org_id, old_ws_id)
+    JOIN "Workspace" w ON w."id" = p.old_ws_id
+  `;
 
   logger.info(`Created ${plans.length.toString()} new workspace(s)`);
 }
@@ -130,31 +133,30 @@ async function createWorkspaces(tx: TxClient, plans: MigrationPlan[]): Promise<v
 // Move the existing dev environment into the new workspace and promote it to production.
 // This preserves the environment ID so existing API keys and SDK integrations continue to work.
 async function promoteEnvironments(tx: TxClient, plans: MigrationPlan[]): Promise<void> {
-  for (const plan of plans) {
-    await tx.$executeRaw`
-      UPDATE "Environment"
-      SET "workspaceId" = ${plan.newWorkspaceId}, "type" = 'production', "updated_at" = NOW()
-      WHERE "id" = ${plan.oldEnvId}
-    `;
-  }
+  const oldEnvIds = plans.map((p) => p.oldEnvId);
+  const newWsIds = plans.map((p) => p.newWorkspaceId);
+
+  await tx.$executeRaw`
+    UPDATE "Environment" e
+    SET "workspaceId" = p.new_ws_id, "type" = 'production', "updated_at" = NOW()
+    FROM unnest(${oldEnvIds}::text[], ${newWsIds}::text[]) AS p(old_env_id, new_ws_id)
+    WHERE e."id" = p.old_env_id
+  `;
 
   logger.info(`Promoted ${plans.length.toString()} dev environment(s) to production in new workspaces`);
 }
 
 // -- Step 5 --
 async function copyTeamAssignments(tx: TxClient, plans: MigrationPlan[]): Promise<void> {
-  let totalCopied = 0;
+  const oldWsIds = plans.map((p) => p.oldWorkspaceId);
+  const newWsIds = plans.map((p) => p.newWorkspaceId);
 
-  for (const plan of plans) {
-    const copied = await tx.$executeRaw`
-      INSERT INTO "WorkspaceTeam" ("created_at", "updated_at", "workspaceId", "teamId", "permission")
-      SELECT NOW(), NOW(), ${plan.newWorkspaceId}, wt."teamId", wt."permission"
-      FROM "WorkspaceTeam" wt
-      WHERE wt."workspaceId" = ${plan.oldWorkspaceId}
-    `;
-
-    totalCopied += copied;
-  }
+  const totalCopied = await tx.$executeRaw`
+    INSERT INTO "WorkspaceTeam" ("created_at", "updated_at", "workspaceId", "teamId", "permission")
+    SELECT NOW(), NOW(), p.new_ws_id, wt."teamId", wt."permission"
+    FROM unnest(${oldWsIds}::text[], ${newWsIds}::text[]) AS p(old_ws_id, new_ws_id)
+    JOIN "WorkspaceTeam" wt ON wt."workspaceId" = p.old_ws_id
+  `;
 
   logger.info(
     `Copied ${totalCopied.toString()} WorkspaceTeam assignment(s) across ${plans.length.toString()} workspace(s)`
@@ -163,92 +165,121 @@ async function copyTeamAssignments(tx: TxClient, plans: MigrationPlan[]): Promis
 
 // -- Step 6 --
 async function migrateLanguages(tx: TxClient, plans: MigrationPlan[]): Promise<void> {
-  for (const plan of plans) {
-    const referencedLanguages: { id: string; code: string; alias: string | null }[] = await tx.$queryRaw`
-      SELECT DISTINCT l."id", l."code", l."alias"
+  const oldEnvIds = plans.map((p) => p.oldEnvId);
+  const envToNewWs = new Map(plans.map((p) => [p.oldEnvId, p.newWorkspaceId]));
+
+  // Gather every referenced language across all promoted envs in one query
+  const refs: { oldEnvId: string; oldLangId: string; code: string; alias: string | null }[] =
+    await tx.$queryRaw`
+      SELECT DISTINCT s."environmentId" AS "oldEnvId", l."id" AS "oldLangId", l."code", l."alias"
       FROM "Language" l
       JOIN "SurveyLanguage" sl ON sl."languageId" = l."id"
       JOIN "Survey" s ON s."id" = sl."surveyId"
-      WHERE s."environmentId" = ${plan.oldEnvId}
+      WHERE s."environmentId" = ANY(${oldEnvIds}::text[])
     `;
 
-    if (referencedLanguages.length === 0) {
-      continue;
+  if (refs.length === 0) {
+    return;
+  }
+
+  // Dedupe by (newWorkspaceId, code); pre-mint cuid2 ids in JS
+  const keyOf = (ws: string, code: string) => `${ws}|${code}`;
+  const newLangRows = new Map<string, { id: string; code: string; alias: string | null; wsId: string }>();
+
+  for (const r of refs) {
+    const newWs = envToNewWs.get(r.oldEnvId);
+    if (!newWs) continue;
+    const k = keyOf(newWs, r.code);
+    if (!newLangRows.has(k)) {
+      newLangRows.set(k, { id: createId(), code: r.code, alias: r.alias, wsId: newWs });
     }
+  }
 
-    for (const lang of referencedLanguages) {
-      const newLangId = createId();
+  const rows = [...newLangRows.values()];
+  const langIds = rows.map((r) => r.id);
+  const langCodes = rows.map((r) => r.code);
+  const langAliases = rows.map((r) => r.alias);
+  const langWsIds = rows.map((r) => r.wsId);
 
-      // Insert with ON CONFLICT to handle duplicates (same code in same workspace)
-      await tx.$executeRawUnsafe(
-        `INSERT INTO "Language" ("id", "created_at", "updated_at", "code", "alias", "workspaceId")
-         VALUES ($1, NOW(), NOW(), $2, $3, $4)
-         ON CONFLICT ("workspaceId", "code") DO NOTHING`,
-        newLangId,
-        lang.code,
-        lang.alias,
-        plan.newWorkspaceId
-      );
-    }
+  // Bulk insert languages. New workspaces are freshly created so no existing rows;
+  // dedupe above guarantees no intra-batch conflicts either.
+  await tx.$executeRaw`
+    INSERT INTO "Language" ("id", "created_at", "updated_at", "code", "alias", "workspaceId")
+    SELECT p.id, NOW(), NOW(), p.code, p.alias, p.ws_id
+    FROM unnest(${langIds}::text[], ${langCodes}::text[], ${langAliases}::text[], ${langWsIds}::text[])
+      AS p(id, code, alias, ws_id)
+  `;
 
-    // For languages where ON CONFLICT was hit, find their actual IDs
-    const newWorkspaceLangs: { id: string; code: string }[] = await tx.$queryRaw`
-      SELECT "id", "code" FROM "Language" WHERE "workspaceId" = ${plan.newWorkspaceId}
+  // Build (oldEnvId, oldLangId, newLangId) triples and bulk UPDATE SurveyLanguage
+  const updEnvs: string[] = [];
+  const updOldLangs: string[] = [];
+  const updNewLangs: string[] = [];
+
+  for (const r of refs) {
+    const newWs = envToNewWs.get(r.oldEnvId);
+    if (!newWs) continue;
+    const newLangId = newLangRows.get(keyOf(newWs, r.code))?.id;
+    if (!newLangId || newLangId === r.oldLangId) continue;
+    updEnvs.push(r.oldEnvId);
+    updOldLangs.push(r.oldLangId);
+    updNewLangs.push(newLangId);
+  }
+
+  if (updEnvs.length > 0) {
+    await tx.$executeRaw`
+      UPDATE "SurveyLanguage" sl
+      SET "languageId" = m.new_lang_id
+      FROM unnest(${updEnvs}::text[], ${updOldLangs}::text[], ${updNewLangs}::text[])
+           AS m(old_env_id, old_lang_id, new_lang_id),
+           "Survey" s
+      WHERE s."id" = sl."surveyId"
+        AND s."environmentId" = m.old_env_id
+        AND sl."languageId" = m.old_lang_id
     `;
-
-    const codeToNewLangId = new Map<string, string>();
-    for (const lang of newWorkspaceLangs) {
-      codeToNewLangId.set(lang.code, lang.id);
-    }
-
-    // Update SurveyLanguage rows for promoted surveys to point to new Language IDs
-    for (const oldLang of referencedLanguages) {
-      const newLangId = codeToNewLangId.get(oldLang.code);
-      if (!newLangId || newLangId === oldLang.id) {
-        continue;
-      }
-
-      await tx.$executeRaw`
-        UPDATE "SurveyLanguage" sl
-        SET "languageId" = ${newLangId}
-        FROM "Survey" s
-        WHERE sl."surveyId" = s."id"
-          AND s."environmentId" = ${plan.oldEnvId}
-          AND sl."languageId" = ${oldLang.id}
-      `;
-    }
   }
 }
 
 // -- Step 7 --
 async function verifyMigration(tx: TxClient, plans: MigrationPlan[]): Promise<void> {
   const failures: string[] = [];
+  const oldEnvIds = plans.map((p) => p.oldEnvId);
+  const newWsIds = plans.map((p) => p.newWorkspaceId);
+
+  // Fetch all promoted envs in one query
+  const envs: { id: string; workspaceId: string; type: string }[] = await tx.$queryRaw`
+    SELECT "id", "workspaceId", "type" FROM "Environment"
+    WHERE "id" = ANY(${oldEnvIds}::text[])
+  `;
+  const envById = new Map(envs.map((e) => [e.id, e]));
+
+  // Count envs per new workspace in one query
+  const counts: { workspaceId: string; count: bigint }[] = await tx.$queryRaw`
+    SELECT "workspaceId", COUNT(*) AS count FROM "Environment"
+    WHERE "workspaceId" = ANY(${newWsIds}::text[])
+    GROUP BY "workspaceId"
+  `;
+  const countByWs = new Map(counts.map((c) => [c.workspaceId, c.count]));
 
   for (const plan of plans) {
-    // Verify the environment now belongs to the new workspace
-    const env: [{ workspaceId: string; type: string }] = await tx.$queryRaw`
-      SELECT "workspaceId", "type" FROM "Environment" WHERE "id" = ${plan.oldEnvId}
-    `;
+    const env = envById.get(plan.oldEnvId);
+    if (!env) {
+      failures.push(`Environment ${plan.oldEnvId} not found`);
+      continue;
+    }
 
-    if (env[0].workspaceId !== plan.newWorkspaceId) {
+    if (env.workspaceId !== plan.newWorkspaceId) {
       failures.push(
-        `Environment ${plan.oldEnvId} still points to workspace ${env[0].workspaceId} (expected ${plan.newWorkspaceId})`
+        `Environment ${plan.oldEnvId} still points to workspace ${env.workspaceId} (expected ${plan.newWorkspaceId})`
       );
     }
 
-    if (env[0].type !== "production") {
-      failures.push(`Environment ${plan.oldEnvId} type is "${env[0].type}" (expected "production")`);
+    if (env.type !== "production") {
+      failures.push(`Environment ${plan.oldEnvId} type is "${env.type}" (expected "production")`);
     }
 
-    // Verify exactly one environment exists in new workspace
-    const envCount: [{ count: bigint }] = await tx.$queryRaw`
-      SELECT COUNT(*) as count FROM "Environment" WHERE "workspaceId" = ${plan.newWorkspaceId}
-    `;
-
-    if (envCount[0].count !== 1n) {
-      failures.push(
-        `New workspace ${plan.newWorkspaceId} has ${envCount[0].count.toString()} environments (expected 1)`
-      );
+    const cnt = countByWs.get(plan.newWorkspaceId) ?? 0n;
+    if (cnt !== 1n) {
+      failures.push(`New workspace ${plan.newWorkspaceId} has ${cnt.toString()} environments (expected 1)`);
     }
   }
 
@@ -261,11 +292,26 @@ async function verifyMigration(tx: TxClient, plans: MigrationPlan[]): Promise<vo
 
 // -- Step 8 --
 async function deleteRemainingDevEnvironments(tx: TxClient): Promise<void> {
-  const deleted = await tx.$executeRaw`
-    DELETE FROM "Environment" WHERE "type" = 'development'
-  `;
+  const BATCH_SIZE = 500;
+  let total = 0;
+  let batch = 0;
 
-  logger.info(`Deleted ${deleted.toString()} remaining dev environment(s)`);
+  while (true) {
+    const deleted = await tx.$executeRaw`
+      DELETE FROM "Environment"
+      WHERE "id" IN (
+        SELECT "id" FROM "Environment"
+        WHERE "type" = 'development'
+        LIMIT ${BATCH_SIZE}
+      )
+    `;
+    if (deleted === 0) break;
+    total += deleted;
+    batch++;
+    logger.info({ batch, deleted, total }, "Deleted batch of remaining dev environments");
+  }
+
+  logger.info({ batches: batch, total }, "Finished deleting remaining dev environments");
 }
 
 // -- Migration entry point --

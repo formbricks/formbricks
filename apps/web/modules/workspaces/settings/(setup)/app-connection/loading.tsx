@@ -27,8 +27,8 @@ export const AppConnectionLoading = () => {
       ],
     },
     {
-      title: t("workspace.app-connection.environment_id"),
-      description: t("workspace.app-connection.environment_id_description"),
+      title: t("workspace.app-connection.workspace_id"),
+      description: t("workspace.app-connection.workspace_id_description"),
       skeletonLines: [{ classes: "h-12 w-4/6 rounded-lg" }],
     },
   ];

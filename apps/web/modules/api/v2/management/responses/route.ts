@@ -88,14 +88,13 @@ export const POST = async (request: Request) =>
         );
       }
 
-      // if there is a createdAt but no updatedAt, set updatedAt to createdAt
       if (body.createdAt && !body.updatedAt) {
         body.updatedAt = body.createdAt;
       }
 
       const surveyQuestions = await getSurveyQuestions(body.surveyId);
       if (!surveyQuestions.ok) {
-        return handleApiError(request, surveyQuestions.error as ApiErrorResponseV2, auditLog); // NOSONAR // We need to assert or we get a type error
+        return handleApiError(request, surveyQuestions.error as ApiErrorResponseV2, auditLog); // NOSONAR
       }
 
       if (!validateFileUploads(body.data, surveyQuestions.data.questions)) {
@@ -109,7 +108,6 @@ export const POST = async (request: Request) =>
         );
       }
 
-      // Validate response data for "other" options exceeding character limit
       const otherResponseInvalidQuestionId = validateOtherOptionLengthForMultipleChoice({
         responseData: body.data,
         surveyQuestions: surveyQuestions.data.questions,
@@ -131,7 +129,6 @@ export const POST = async (request: Request) =>
         });
       }
 
-      // Validate response data against validation rules
       const validationErrors = validateResponseData(
         surveyQuestions.data.blocks,
         body.data,
@@ -155,10 +152,9 @@ export const POST = async (request: Request) =>
         return handleApiError(request, createResponseResult.error, auditLog);
       }
 
-      // Fetch created response with relations for pipeline
       const createdResponseForPipeline = await getResponseForPipeline(createResponseResult.data.id);
       if (createdResponseForPipeline.ok) {
-        sendToPipeline({
+        await sendToPipeline({
           event: "responseCreated",
           workspaceId,
           surveyId: body.surveyId,
@@ -166,7 +162,7 @@ export const POST = async (request: Request) =>
         });
 
         if (createResponseResult.data.finished) {
-          sendToPipeline({
+          await sendToPipeline({
             event: "responseFinished",
             workspaceId,
             surveyId: body.surveyId,

@@ -9,14 +9,12 @@ interface ActionClassesTableProps {
   actionClasses: TActionClass[];
   children: [JSX.Element, JSX.Element[]];
   isReadOnly: boolean;
-  otherEnvActionClasses: TActionClass[];
 }
 
 export const ActionClassesTable = ({
   actionClasses,
   children: [TableHeading, actionRows],
   isReadOnly,
-  otherEnvActionClasses,
 }: ActionClassesTableProps) => {
   const { t } = useTranslation();
   const [isActionDetailModalOpen, setIsActionDetailModalOpen] = useState(false);
@@ -63,7 +61,6 @@ export const ActionClassesTable = ({
           actionClasses={actionClasses}
           actionClass={activeActionClass}
           isReadOnly={isReadOnly}
-          otherEnvActionClasses={otherEnvActionClasses}
         />
       )}
     </>

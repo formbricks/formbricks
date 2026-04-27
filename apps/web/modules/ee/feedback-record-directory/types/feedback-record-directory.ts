@@ -6,6 +6,7 @@ export const ZFeedbackRecordDirectory = z.object({
   name: z.string(),
   isArchived: z.boolean(),
   workspaceCount: z.number(),
+  connectorCount: z.number(),
 });
 
 export type TFeedbackRecordDirectory = z.infer<typeof ZFeedbackRecordDirectory>;
@@ -21,12 +22,22 @@ export const ZFeedbackRecordDirectoryDetails = z.object({
       workspaceName: z.string(),
     })
   ),
+  connectors: z.array(
+    z.object({
+      id: ZId,
+      name: z.string(),
+      type: z.string(),
+      workspaceId: ZId,
+      workspaceName: z.string(),
+    })
+  ),
 });
 
 export type TFeedbackRecordDirectoryDetails = z.infer<typeof ZFeedbackRecordDirectoryDetails>;
 
 export const ZFeedbackRecordDirectoryCreateInput = z.object({
   name: z.string().trim().min(1, "DIRECTORY_NAME_REQUIRED"),
+  workspaceIds: z.array(ZId).optional(),
 });
 
 export type TFeedbackRecordDirectoryCreateInput = z.infer<typeof ZFeedbackRecordDirectoryCreateInput>;
@@ -54,6 +65,8 @@ export const getTranslatedFeedbackRecordDirectoryError = (
       return t("workspace.settings.feedback_record_directories.error_directory_name_duplicate");
     case "DIRECTORY_PROJECTS_INVALID_ORG":
       return t("workspace.settings.feedback_record_directories.error_directory_workspaces_invalid_org");
+    case "DIRECTORY_HAS_CONNECTORS":
+      return t("workspace.settings.feedback_record_directories.error_directory_has_connectors");
     default:
       return errorCode;
   }

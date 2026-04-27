@@ -186,8 +186,7 @@
                 ]
               },
               "xm-and-surveys/core-features/styling-theme",
-              "xm-and-surveys/core-features/email-customization",
-              "xm-and-surveys/core-features/test-environment"
+              "xm-and-surveys/core-features/email-customization"
             ]
           },
           {
@@ -310,6 +309,7 @@
             "group": "Technical Handbook",
             "pages": [
               "development/technical-handbook/overview",
+              "development/technical-handbook/background-job-processing",
               "development/technical-handbook/database-model",
               "development/technical-handbook/tenant-separation"
             ]

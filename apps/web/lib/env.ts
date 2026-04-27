@@ -6,10 +6,10 @@ const ZActiveAIProvider = z.enum(AI_PROVIDERS);
 const ZAIConfigurationEnv = z.object({
   AI_PROVIDER: ZActiveAIProvider.optional(),
   AI_MODEL: z.string().optional(),
-  AI_GCP_PROJECT: z.string().optional(),
-  AI_GCP_LOCATION: z.string().optional(),
-  AI_GCP_CREDENTIALS_JSON: z.string().optional(),
-  AI_GCP_APPLICATION_CREDENTIALS: z.string().optional(),
+  AI_GOOGLE_CLOUD_PROJECT: z.string().optional(),
+  AI_GOOGLE_CLOUD_LOCATION: z.string().optional(),
+  AI_GOOGLE_CLOUD_CREDENTIALS_JSON: z.string().optional(),
+  AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS: z.string().optional(),
   AI_AWS_REGION: z.string().optional(),
   AI_AWS_ACCESS_KEY_ID: z.string().optional(),
   AI_AWS_SECRET_ACCESS_KEY: z.string().optional(),
@@ -19,6 +19,9 @@ const ZAIConfigurationEnv = z.object({
 });
 
 type TAIConfigurationEnv = z.infer<typeof ZAIConfigurationEnv>;
+
+const isJsonObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
 
 const addEnvIssue = (ctx: z.RefinementCtx, path: keyof TAIConfigurationEnv, message: string): void => {
   ctx.addIssue({
@@ -48,28 +51,44 @@ const validateAwsAIConfiguration = (values: TAIConfigurationEnv, ctx: z.Refineme
   }
 };
 
-const validateGcpAIConfiguration = (values: TAIConfigurationEnv, ctx: z.RefinementCtx): void => {
-  if (!values.AI_GCP_PROJECT) {
-    addEnvIssue(ctx, "AI_GCP_PROJECT", "AI_GCP_PROJECT is required when AI_PROVIDER=gcp");
-  }
-
-  if (!values.AI_GCP_LOCATION) {
-    addEnvIssue(ctx, "AI_GCP_LOCATION", "AI_GCP_LOCATION is required when AI_PROVIDER=gcp");
-  }
-
-  if (!values.AI_GCP_CREDENTIALS_JSON && !values.AI_GCP_APPLICATION_CREDENTIALS) {
+const validateGoogleAIConfiguration = (values: TAIConfigurationEnv, ctx: z.RefinementCtx): void => {
+  if (!values.AI_GOOGLE_CLOUD_PROJECT) {
     addEnvIssue(
       ctx,
-      "AI_GCP_CREDENTIALS_JSON",
-      "AI_GCP_CREDENTIALS_JSON or AI_GCP_APPLICATION_CREDENTIALS is required when AI_PROVIDER=gcp"
+      "AI_GOOGLE_CLOUD_PROJECT",
+      "AI_GOOGLE_CLOUD_PROJECT is required when AI_PROVIDER=google"
     );
   }
 
-  if (values.AI_GCP_CREDENTIALS_JSON) {
+  if (!values.AI_GOOGLE_CLOUD_LOCATION) {
+    addEnvIssue(
+      ctx,
+      "AI_GOOGLE_CLOUD_LOCATION",
+      "AI_GOOGLE_CLOUD_LOCATION is required when AI_PROVIDER=google"
+    );
+  }
+
+  if (!values.AI_GOOGLE_CLOUD_CREDENTIALS_JSON && !values.AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS) {
+    addEnvIssue(
+      ctx,
+      "AI_GOOGLE_CLOUD_CREDENTIALS_JSON",
+      "AI_GOOGLE_CLOUD_CREDENTIALS_JSON or AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS is required when AI_PROVIDER=google"
+    );
+  }
+
+  if (values.AI_GOOGLE_CLOUD_CREDENTIALS_JSON) {
     try {
-      JSON.parse(values.AI_GCP_CREDENTIALS_JSON);
+      const parsedCredentials = JSON.parse(values.AI_GOOGLE_CLOUD_CREDENTIALS_JSON) as unknown;
+
+      if (!isJsonObject(parsedCredentials)) {
+        throw new Error("AI_GOOGLE_CLOUD_CREDENTIALS_JSON must be a JSON object");
+      }
     } catch {
-      addEnvIssue(ctx, "AI_GCP_CREDENTIALS_JSON", "AI_GCP_CREDENTIALS_JSON must be valid JSON");
+      addEnvIssue(
+        ctx,
+        "AI_GOOGLE_CLOUD_CREDENTIALS_JSON",
+        "AI_GOOGLE_CLOUD_CREDENTIALS_JSON must be a valid JSON object"
+      );
     }
   }
 };
@@ -100,12 +119,28 @@ const validateActiveAIProviderConfiguration = (values: TAIConfigurationEnv, ctx:
     (values: TAIConfigurationEnv, ctx: z.RefinementCtx) => void
   > = {
     aws: validateAwsAIConfiguration,
-    gcp: validateGcpAIConfiguration,
+    google: validateGoogleAIConfiguration,
     azure: validateAzureAIConfiguration,
   };
 
   providerValidators[values.AI_PROVIDER](values, ctx);
 };
+
+const isValidIanaTimeZone = (value: string): boolean => {
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: value });
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const ZSurveySchedulingTimeZone = z.string().trim().min(1).refine(isValidIanaTimeZone, {
+  message: "NEXT_PUBLIC_SURVEY_SCHEDULING_TIME_ZONE must be a valid IANA time zone",
+});
+
+const ZSurveySchedulingLocalHour = z.coerce.number().int().min(0).max(23);
+const ZSurveySchedulingLocalMinute = z.coerce.number().int().min(0).max(59);
 
 const parsedEnv = createEnv({
   /*
@@ -124,10 +159,16 @@ const parsedEnv = createEnv({
     BREVO_LIST_ID: z.string().optional(),
     DATABASE_URL: z.url(),
     DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS: z.enum(["1", "0"]).optional(),
-    DEBUG: z.enum(["1", "0"]).optional(),
     DEBUG_SHOW_RESET_LINK: z.enum(["1", "0"]).optional(),
+    // DEBUG is a common ambient env var in CI/tooling, so we accept arbitrary strings here
+    // and only treat "1" as enabling Formbricks-specific debug behavior downstream.
+    DEBUG: z.string().optional(),
     AUTH_DEFAULT_TEAM_ID: z.string().optional(),
     AUTH_SKIP_INVITE_FOR_SSO: z.enum(["1", "0"]).optional(),
+    BULLMQ_WORKER_CONCURRENCY: z.coerce.number().int().min(1).optional(),
+    BULLMQ_WORKER_COUNT: z.coerce.number().int().min(1).optional(),
+    BULLMQ_EXTERNAL_WORKER_ENABLED: z.enum(["1", "0"]).optional(),
+    BULLMQ_WORKER_ENABLED: z.enum(["1", "0"]).optional(),
     E2E_TESTING: z.enum(["1", "0"]).optional(),
     EMAIL_AUTH_DISABLED: z.enum(["1", "0"]).optional(),
     EMAIL_VERIFICATION_DISABLED: z.enum(["1", "0"]).optional(),
@@ -138,10 +179,10 @@ const parsedEnv = createEnv({
     GITHUB_SECRET: z.string().optional(),
     GOOGLE_CLIENT_ID: z.string().optional(),
     GOOGLE_CLIENT_SECRET: z.string().optional(),
-    AI_GCP_PROJECT: z.string().optional(),
-    AI_GCP_LOCATION: z.string().optional(),
-    AI_GCP_CREDENTIALS_JSON: z.string().optional(),
-    AI_GCP_APPLICATION_CREDENTIALS: z.string().optional(),
+    AI_GOOGLE_CLOUD_PROJECT: z.string().optional(),
+    AI_GOOGLE_CLOUD_LOCATION: z.string().optional(),
+    AI_GOOGLE_CLOUD_CREDENTIALS_JSON: z.string().optional(),
+    AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS: z.string().optional(),
     GOOGLE_SHEETS_CLIENT_ID: z.string().optional(),
     GOOGLE_SHEETS_CLIENT_SECRET: z.string().optional(),
     GOOGLE_SHEETS_REDIRECT_URL: z.string().optional(),
@@ -251,6 +292,11 @@ const parsedEnv = createEnv({
       .optional(),
     SENTRY_ENVIRONMENT: z.string().optional(),
   },
+  client: {
+    NEXT_PUBLIC_SURVEY_SCHEDULING_TIME_ZONE: ZSurveySchedulingTimeZone.optional().default("Europe/Berlin"),
+    NEXT_PUBLIC_SURVEY_SCHEDULING_LOCAL_HOUR: ZSurveySchedulingLocalHour.optional().default(0),
+    NEXT_PUBLIC_SURVEY_SCHEDULING_LOCAL_MINUTE: ZSurveySchedulingLocalMinute.optional().default(0),
+  },
 
   /*
    * Due to how Next.js bundles environment variables on Edge and Client,
@@ -274,6 +320,10 @@ const parsedEnv = createEnv({
     DEBUG_SHOW_RESET_LINK: process.env.DEBUG_SHOW_RESET_LINK,
     AUTH_DEFAULT_TEAM_ID: process.env.AUTH_SSO_DEFAULT_TEAM_ID,
     AUTH_SKIP_INVITE_FOR_SSO: process.env.AUTH_SKIP_INVITE_FOR_SSO,
+    BULLMQ_EXTERNAL_WORKER_ENABLED: process.env.BULLMQ_EXTERNAL_WORKER_ENABLED,
+    BULLMQ_WORKER_CONCURRENCY: process.env.BULLMQ_WORKER_CONCURRENCY,
+    BULLMQ_WORKER_COUNT: process.env.BULLMQ_WORKER_COUNT,
+    BULLMQ_WORKER_ENABLED: process.env.BULLMQ_WORKER_ENABLED,
     E2E_TESTING: process.env.E2E_TESTING,
     EMAIL_AUTH_DISABLED: process.env.EMAIL_AUTH_DISABLED,
     EMAIL_VERIFICATION_DISABLED: process.env.EMAIL_VERIFICATION_DISABLED,
@@ -284,10 +334,10 @@ const parsedEnv = createEnv({
     GITHUB_SECRET: process.env.GITHUB_SECRET,
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
-    AI_GCP_PROJECT: process.env.AI_GCP_PROJECT,
-    AI_GCP_LOCATION: process.env.AI_GCP_LOCATION,
-    AI_GCP_CREDENTIALS_JSON: process.env.AI_GCP_CREDENTIALS_JSON,
-    AI_GCP_APPLICATION_CREDENTIALS: process.env.AI_GCP_APPLICATION_CREDENTIALS,
+    AI_GOOGLE_CLOUD_PROJECT: process.env.AI_GOOGLE_CLOUD_PROJECT,
+    AI_GOOGLE_CLOUD_LOCATION: process.env.AI_GOOGLE_CLOUD_LOCATION,
+    AI_GOOGLE_CLOUD_CREDENTIALS_JSON: process.env.AI_GOOGLE_CLOUD_CREDENTIALS_JSON,
+    AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS: process.env.AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS,
     GOOGLE_SHEETS_CLIENT_ID: process.env.GOOGLE_SHEETS_CLIENT_ID,
     GOOGLE_SHEETS_CLIENT_SECRET: process.env.GOOGLE_SHEETS_CLIENT_SECRET,
     GOOGLE_SHEETS_REDIRECT_URL: process.env.GOOGLE_SHEETS_REDIRECT_URL,
@@ -315,6 +365,9 @@ const parsedEnv = createEnv({
     MAIL_FROM_NAME: process.env.MAIL_FROM_NAME,
     NEXTAUTH_URL: process.env.NEXTAUTH_URL,
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
+    NEXT_PUBLIC_SURVEY_SCHEDULING_LOCAL_HOUR: process.env.NEXT_PUBLIC_SURVEY_SCHEDULING_LOCAL_HOUR,
+    NEXT_PUBLIC_SURVEY_SCHEDULING_LOCAL_MINUTE: process.env.NEXT_PUBLIC_SURVEY_SCHEDULING_LOCAL_MINUTE,
+    NEXT_PUBLIC_SURVEY_SCHEDULING_TIME_ZONE: process.env.NEXT_PUBLIC_SURVEY_SCHEDULING_TIME_ZONE,
     SENTRY_DSN: process.env.SENTRY_DSN,
     NOTION_OAUTH_CLIENT_ID: process.env.NOTION_OAUTH_CLIENT_ID,
     NOTION_OAUTH_CLIENT_SECRET: process.env.NOTION_OAUTH_CLIENT_SECRET,

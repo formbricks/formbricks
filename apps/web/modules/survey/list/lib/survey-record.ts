@@ -13,6 +13,7 @@ export const surveySelect = {
     },
   },
   status: true,
+  publishOn: true,
   singleUse: true,
   workspaceId: true,
   _count: {

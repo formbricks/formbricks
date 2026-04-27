@@ -6,6 +6,8 @@ import { parseRecallInfo } from "@/lib/utils/recall";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { getLanguageCode, getLocalizedValue } from "./i18n/utils";
 
+export type TElementResponseMappingSurvey = Pick<TSurvey, "blocks" | "languages">;
+
 // function to convert response value of type string | number | string[] or Record<string, string> to string | string[]
 export const convertResponseValue = (
   answer: TResponseDataValue,
@@ -34,7 +36,7 @@ export const convertResponseValue = (
 };
 
 export const getElementResponseMapping = (
-  survey: TSurvey,
+  survey: TElementResponseMappingSurvey,
   response: TResponse
 ): { element: string; response: string | string[]; type: TSurveyElementTypeEnum }[] => {
   const elementResponseMapping: {

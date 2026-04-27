@@ -90,8 +90,8 @@ When PUBLIC_URL is configured, the following routes are automatically served fro
 
 #### API Routes
 
-- `/api/v1/client/{environmentId}/*` - Client API endpoints (v1)
-- `/api/v2/client/{environmentId}/*` - Client API endpoints (v2)
+- `/api/v1/client/{workspaceId}/*` - Client API endpoints (v1)
+- `/api/v2/client/{workspaceId}/*` - Client API endpoints (v2)
 
 #### Static Assets & Next.js Routes
 
@@ -107,7 +107,7 @@ When PUBLIC_URL is configured, the following routes are automatically served fro
 
 #### Storage Routes
 
-- `/storage/{environmentId}/{accessType}/{fileName}` - Public file storage access
+- `/storage/{workspaceId}/{accessType}/{fileName}` - Public file storage access
 
 #### Health & Monitoring
 
@@ -119,7 +119,7 @@ When PUBLIC_URL is configured, the following routes are automatically served fro
 - Embed widget routes
 - Social sharing endpoints
 
-All other routes are restricted to the private domain (`WEBAPP_URL`) for security purposes. The admin domain can access the health endpoint (/health) and public file storage (`/storage/{environmentId}/{accessType}/{fileName}`), while all other public routes are exclusively accessible on the public domain (`PUBLIC_URL`) and will return a 404 error if accessed from the admin domain.
+All other routes are restricted to the private domain (`WEBAPP_URL`) for security purposes. The admin domain can access the health endpoint (/health) and public file storage (`/storage/{workspaceId}/{accessType}/{fileName}`), while all other public routes are exclusively accessible on the public domain (`PUBLIC_URL`) and will return a 404 error if accessed from the admin domain.
 
 ### App URL SDK Configuration
 
@@ -129,7 +129,7 @@ When using PUBLIC_URL (multi-domain setup), all SDK configurations must use the 
 
 ```js
 Formbricks.setup({
-  environmentId: "your-environment-id",
+  workspaceId: "your-workspace-id",
   appUrl: "https://surveys.example.com", // Use PUBLIC_URL domain
 });
 ```

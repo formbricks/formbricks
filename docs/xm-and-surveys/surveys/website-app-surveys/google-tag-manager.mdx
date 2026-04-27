@@ -7,7 +7,7 @@ icon: "tags"
 ## Prerequisites
 
 - [Google Tag Manager](https://tagmanager.google.com/) installed on your website
-- Your Formbricks **Environment ID** (Settings > Configuration > Website & App Connection)
+- Your Formbricks **Workspace ID** (Settings > Configuration > Website & App Connection)
 - Your **App URL**: `https://app.formbricks.com` (or your self-hosted URL)
 
 <Note>
@@ -20,7 +20,7 @@ icon: "tags"
   <Step title="Create a Custom HTML tag in GTM">
     1. Create a new tag with preferred name e.g. "Formbricks Intercept Surveys"
     2. Tag Type: Custom HTML
-    3. Paste the code from Step 2. Make sure to replace `<your-environment-id>` and if you self-host, replace `<your-app-url>`
+    3. Paste the code from Step 2. Make sure to replace `<your-workspace-id>` and if you self-host, replace `<your-app-url>`
   </Step>
 
   <Step title="Add initialization script">
@@ -29,14 +29,14 @@ icon: "tags"
 <script type="text/javascript">
 !function(){
     var appUrl = "https://app.formbricks.com"; // REPLACE ONLY IF YOUR SELF-HOST
-    var environmentId = "<your-environment-id>"; // REPLACE
+    var workspaceId = "<your-workspace-id>"; // REPLACE
     var t=document.createElement("script");
     t.type="text/javascript";
     t.async=!0;
     t.src=appUrl+"/js/formbricks.umd.cjs";
     t.onload=function(){
         window.formbricks && window.formbricks.setup({
-            environmentId: environmentId,
+            workspaceId: workspaceId,
             appUrl: appUrl
         });
     };

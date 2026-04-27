@@ -30,7 +30,6 @@ interface BulkEditOptionsModalProps {
   onSave: (updatedChoices: TSurveyMultipleChoiceElement["choices"]) => void;
   element: TSurveyMultipleChoiceElement;
   localSurvey: TSurvey;
-  selectedLanguageCode: string;
   surveyLanguageCodes: string[];
   locale: TUserLocale;
 }
@@ -67,10 +66,10 @@ export const BulkEditOptionsModal = ({
   onSave,
   element,
   localSurvey,
-  selectedLanguageCode,
   surveyLanguageCodes,
   locale,
 }: BulkEditOptionsModalProps): JSX.Element => {
+  const selectedLanguageCode = "default";
   const { t } = useTranslation();
   const [textareaValue, setTextareaValue] = useState("");
   const [validationError, setValidationError] = useState<string | null>(null);

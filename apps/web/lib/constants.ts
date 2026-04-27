@@ -43,6 +43,7 @@ export const GITHUB_ID = env.GITHUB_ID;
 export const GITHUB_SECRET = env.GITHUB_SECRET;
 export const GOOGLE_CLIENT_ID = env.GOOGLE_CLIENT_ID;
 export const GOOGLE_CLIENT_SECRET = env.GOOGLE_CLIENT_SECRET;
+
 export const HUB_API_URL = env.HUB_API_URL;
 export const HUB_API_KEY = env.HUB_API_KEY;
 
@@ -184,6 +185,7 @@ export const AVAILABLE_LOCALES: TUserLocale[] = [
   "ro-RO",
   "ru-RU",
   "sv-SE",
+  "tr-TR",
   "zh-Hans-CN",
   "zh-Hant-TW",
 ];

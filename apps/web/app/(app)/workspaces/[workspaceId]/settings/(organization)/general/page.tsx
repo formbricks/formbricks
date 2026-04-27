@@ -3,7 +3,12 @@ import { isInstanceAIConfigured } from "@/lib/ai/service";
 import { FB_LOGO_URL, IS_FORMBRICKS_CLOUD, IS_STORAGE_CONFIGURED } from "@/lib/constants";
 import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
-import { getIsMultiOrgEnabled, getWhiteLabelPermission } from "@/modules/ee/license-check/lib/utils";
+import {
+  getIsAIDataAnalysisEnabled,
+  getIsAISmartToolsEnabled,
+  getIsMultiOrgEnabled,
+  getWhiteLabelPermission,
+} from "@/modules/ee/license-check/lib/utils";
 import { EmailCustomizationSettings } from "@/modules/ee/whitelabel/email-customization/components/email-customization-settings";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { IdBadge } from "@/modules/ui/components/id-badge";
@@ -27,8 +32,14 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
 
   const user = session?.user?.id ? await getUser(session.user.id) : null;
 
-  const isMultiOrgEnabled = await getIsMultiOrgEnabled();
-  const hasWhiteLabelPermission = await getWhiteLabelPermission(organization.id);
+  const [isMultiOrgEnabled, hasWhiteLabelPermission, hasAISmartToolsPermission, hasAIDataAnalysisPermission] =
+    await Promise.all([
+      getIsMultiOrgEnabled(),
+      getWhiteLabelPermission(organization.id),
+      getIsAISmartToolsEnabled(organization.id),
+      getIsAIDataAnalysisEnabled(organization.id),
+    ]);
+  const hasAIPermission = hasAISmartToolsPermission || hasAIDataAnalysisPermission;
 
   const isDeleteDisabled = !isOwner || !isMultiOrgEnabled;
   const currentUserRole = currentUserMembership?.role;
@@ -64,6 +75,8 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
           organization={organization}
           membershipRole={currentUserMembership?.role}
           isInstanceAIConfigured={isInstanceAIConfigured()}
+          hasAIPermission={hasAIPermission}
+          isFormbricksCloud={IS_FORMBRICKS_CLOUD}
         />
       </SettingsCard>
       <EmailCustomizationSettings

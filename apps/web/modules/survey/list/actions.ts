@@ -2,7 +2,6 @@
 
 import { z } from "zod";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
-import { ZSurveyFilterCriteria } from "@formbricks/types/surveys/types";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import {
@@ -12,39 +11,7 @@ import {
 } from "@/lib/utils/helper";
 import { generateSurveySingleUseIds } from "@/lib/utils/single-use-surveys";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
-import {
-  copySurveyToOtherWorkspace,
-  deleteSurvey,
-  getSurvey,
-  getSurveys,
-} from "@/modules/survey/list/lib/survey";
-import { getUserWorkspaces } from "@/modules/survey/list/lib/workspace";
-
-const ZGetSurveyAction = z.object({
-  surveyId: z.cuid2(),
-});
-
-export const getSurveyAction = authenticatedActionClient
-  .inputSchema(ZGetSurveyAction)
-  .action(async ({ ctx, parsedInput }) => {
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          minPermission: "read",
-          workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
-        },
-      ],
-    });
-
-    return await getSurvey(parsedInput.surveyId);
-  });
+import { copySurveyToOtherWorkspace } from "@/modules/survey/list/lib/survey";
 
 const ZCopySurveyToOtherWorkspaceAction = z.object({
   surveyId: z.cuid2(),
@@ -111,62 +78,6 @@ export const copySurveyToOtherWorkspaceAction = authenticatedActionClient
     })
   );
 
-const ZGetWorkspacesByWorkspaceIdAction = z.object({
-  workspaceId: z.cuid2(),
-});
-
-export const getWorkspacesByWorkspaceIdAction = authenticatedActionClient
-  .inputSchema(ZGetWorkspacesByWorkspaceIdAction)
-  .action(async ({ ctx, parsedInput }) => {
-    const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          minPermission: "readWrite",
-          workspaceId: parsedInput.workspaceId,
-        },
-      ],
-    });
-
-    return await getUserWorkspaces(ctx.user.id, organizationId);
-  });
-
-const ZDeleteSurveyAction = z.object({
-  surveyId: z.cuid2(),
-});
-
-export const deleteSurveyAction = authenticatedActionClient.inputSchema(ZDeleteSurveyAction).action(
-  withAuditLogging("deleted", "survey", async ({ ctx, parsedInput }) => {
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
-          minPermission: "readWrite",
-        },
-      ],
-    });
-
-    ctx.auditLoggingCtx.organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
-    ctx.auditLoggingCtx.surveyId = parsedInput.surveyId;
-    ctx.auditLoggingCtx.oldObject = await getSurvey(parsedInput.surveyId);
-    return await deleteSurvey(parsedInput.surveyId);
-  })
-);
-
 const ZGenerateSingleUseIdAction = z.object({
   surveyId: z.cuid2(),
   isEncrypted: z.boolean(),
@@ -193,41 +104,4 @@ export const generateSingleUseIdsAction = authenticatedActionClient
     });
 
     return generateSurveySingleUseIds(parsedInput.count, parsedInput.isEncrypted);
-  });
-
-const ZGetSurveysAction = z.object({
-  workspaceId: z.cuid2(),
-  limit: z.number().optional(),
-  offset: z.number().optional(),
-  filterCriteria: ZSurveyFilterCriteria.optional(),
-});
-
-export const getSurveysAction = authenticatedActionClient
-  .inputSchema(ZGetSurveysAction)
-  .action(async ({ ctx, parsedInput }) => {
-    const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId,
-      access: [
-        {
-          data: parsedInput.filterCriteria,
-          schema: ZSurveyFilterCriteria,
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-        {
-          type: "workspaceTeam",
-          minPermission: "read",
-          workspaceId: parsedInput.workspaceId,
-        },
-      ],
-    });
-
-    return await getSurveys(
-      parsedInput.workspaceId,
-      parsedInput.limit,
-      parsedInput.offset,
-      parsedInput.filterCriteria
-    );
   });

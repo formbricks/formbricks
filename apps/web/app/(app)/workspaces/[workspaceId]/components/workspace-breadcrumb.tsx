@@ -138,6 +138,11 @@ export const WorkspaceBreadcrumb = ({
       label: t("common.tags"),
       href: `${workspaceBasePath}/tags`,
     },
+    {
+      id: "unify",
+      label: t("common.unify"),
+      href: `${workspaceBasePath}/workspace/unify`,
+    },
   ];
 
   const areWorkspaceSettingsDisabled = isMembershipPending || isBilling;
@@ -153,9 +158,13 @@ export const WorkspaceBreadcrumb = ({
   }
 
   const handleWorkspaceChange = (workspaceId: string) => {
-    if (workspaceId === currentWorkspaceId) return;
+    const targetPath =
+      workspaceId === currentWorkspaceId
+        ? `/workspaces/${currentWorkspaceId}/surveys`
+        : `/workspaces/${workspaceId}/`;
     startTransition(() => {
-      router.push(`/workspaces/${workspaceId}/`);
+      setIsWorkspaceDropdownOpen(false);
+      router.push(targetPath);
     });
   };
 

@@ -147,3 +147,27 @@ export function successListResponse<T, TMeta extends Record<string, unknown>>(
   }
   return Response.json({ data, meta }, { status: 200, headers });
 }
+
+export function successResponse<T>(
+  data: T,
+  options?: { requestId?: string; cache?: string; status?: number }
+): Response {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "Cache-Control": options?.cache ?? CACHE_NO_STORE,
+  };
+
+  if (options?.requestId) {
+    headers["X-Request-Id"] = options.requestId;
+  }
+
+  return Response.json(
+    {
+      data,
+    },
+    {
+      status: options?.status ?? 200,
+      headers,
+    }
+  );
+}

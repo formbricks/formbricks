@@ -1,14 +1,14 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
-import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey, TSurveyCreateInput } from "@formbricks/types/surveys/types";
 import { getOrganization, subscribeOrganizationMembersToSurveyResponses } from "@/lib/organization/service";
 import { validateMediaAndPrepareBlocks } from "@/lib/survey/utils";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
-import { TriggerUpdate } from "@/modules/survey/editor/types/survey-trigger";
 import { getActionClasses } from "@/modules/survey/lib/action-class";
 import { selectSurvey } from "@/modules/survey/lib/survey";
+import { handleTriggerUpdates } from "@/modules/survey/lib/trigger-updates";
 
 export const createSurvey = async (workspaceId: string, surveyBody: TSurveyCreateInput): Promise<TSurvey> => {
   try {
@@ -129,74 +129,4 @@ export const createSurvey = async (workspaceId: string, surveyBody: TSurveyCreat
     }
     throw error;
   }
-};
-
-const getTriggerIds = (triggers: unknown): string[] | null => {
-  if (!triggers) return null;
-  if (!Array.isArray(triggers)) {
-    throw new InvalidInputError("Invalid trigger id");
-  }
-
-  return triggers.map((trigger) => {
-    const actionClassId = (trigger as { actionClass?: { id?: unknown } })?.actionClass?.id;
-    if (typeof actionClassId !== "string") {
-      throw new InvalidInputError("Invalid trigger id");
-    }
-    return actionClassId;
-  });
-};
-
-const checkTriggersValidity = (triggers: unknown, actionClasses: Array<{ id: string }>) => {
-  const triggerIds = getTriggerIds(triggers);
-  if (!triggerIds) return;
-
-  // check if all the triggers are valid
-  triggerIds.forEach((triggerId) => {
-    if (!actionClasses.find((actionClass) => actionClass.id === triggerId)) {
-      throw new InvalidInputError("Invalid trigger id");
-    }
-  });
-
-  if (new Set(triggerIds).size !== triggerIds.length) {
-    throw new InvalidInputError("Duplicate trigger id");
-  }
-};
-
-export const handleTriggerUpdates = (
-  updatedTriggers: unknown,
-  currentTriggers: unknown,
-  actionClasses: Array<{ id: string }>
-) => {
-  const updatedTriggerIds = getTriggerIds(updatedTriggers);
-  if (!updatedTriggerIds) return {};
-
-  checkTriggersValidity(updatedTriggers, actionClasses);
-
-  const currentTriggerIds = getTriggerIds(currentTriggers) ?? [];
-
-  // added triggers are triggers that are not in the current triggers and are there in the new triggers
-  const addedTriggerIds = updatedTriggerIds.filter((triggerId) => !currentTriggerIds.includes(triggerId));
-
-  // deleted triggers are triggers that are not in the new triggers and are there in the current triggers
-  const deletedTriggerIds = currentTriggerIds.filter((triggerId) => !updatedTriggerIds.includes(triggerId));
-
-  // Construct the triggers update object
-  const triggersUpdate: TriggerUpdate = {};
-
-  if (addedTriggerIds.length > 0) {
-    triggersUpdate.create = addedTriggerIds.map((triggerId) => ({
-      actionClassId: triggerId,
-    }));
-  }
-
-  if (deletedTriggerIds.length > 0) {
-    // disconnect the public triggers from the survey
-    triggersUpdate.deleteMany = {
-      actionClassId: {
-        in: deletedTriggerIds,
-      },
-    };
-  }
-
-  return triggersUpdate;
 };

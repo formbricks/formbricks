@@ -117,8 +117,12 @@ export const OrganizationBreadcrumb = ({
   const workspaceBasePath = `/workspaces/${workspace?.id}`;
 
   const handleOrganizationChange = (organizationId: string) => {
-    if (organizationId === currentOrganizationId) return;
     startTransition(() => {
+      setIsOrganizationDropdownOpen(false);
+      if (organizationId === currentOrganizationId && currentWorkspaceId) {
+        router.push(`/workspaces/${currentWorkspaceId}/settings/general`);
+        return;
+      }
       router.push(`/organizations/${organizationId}/`);
     });
   };
@@ -143,12 +147,6 @@ export const OrganizationBreadcrumb = ({
       id: "teams",
       label: t("common.members_and_teams"),
       href: `${workspaceBasePath}/settings/teams`,
-    },
-    {
-      id: "feedback-record-directories",
-      label: t("workspace.settings.feedback_record_directories.nav_label"),
-      href: `${workspaceBasePath}/settings/feedback-record-directories`,
-      hidden: isMember,
     },
     {
       id: "api-keys",
@@ -176,6 +174,15 @@ export const OrganizationBreadcrumb = ({
       label: t("common.enterprise_license"),
       href: `${workspaceBasePath}/settings/enterprise`,
       hidden: isFormbricksCloud || isMember,
+      disabled: isMembershipPending || isMember,
+      disabledMessage: isMembershipPending
+        ? t("common.loading")
+        : t("common.you_are_not_authorized_to_perform_this_action"),
+    },
+    {
+      id: "feedback-record-directories",
+      label: t("workspace.settings.feedback_record_directories.title"),
+      href: `${workspaceBasePath}/settings/feedback-record-directories`,
       disabled: isMembershipPending || isMember,
       disabledMessage: isMembershipPending
         ? t("common.loading")

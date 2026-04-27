@@ -114,7 +114,6 @@ export const SurveyEditorPage = async (props: {
     <SurveyEditor
       survey={survey}
       workspace={workspaceWithTeamIds}
-      appSetupCompleted={workspace.appSetupCompleted}
       actionClasses={actionClasses}
       contactAttributeKeys={contactAttributeKeys}
       responseCount={responseCount}
