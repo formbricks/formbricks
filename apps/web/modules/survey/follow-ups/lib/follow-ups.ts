@@ -99,7 +99,7 @@ const evaluateFollowUp = async (
       }
 
       const parsedResult = z.email().safeParse(emailAddress);
-      if (parsedResult.data) {
+      if (parsedResult.success) {
         await sendFollowUpEmail({
           followUp,
           to: parsedResult.data,
