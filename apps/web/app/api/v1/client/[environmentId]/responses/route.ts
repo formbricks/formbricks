@@ -297,7 +297,7 @@ export const POST = withV1ApiWrapper({
       response: responseData,
     });
 
-    if (responseInput.finished) {
+    if (responseInputData.finished) {
       sendToPipeline({
         event: "responseFinished",
         environmentId: survey.environmentId,
