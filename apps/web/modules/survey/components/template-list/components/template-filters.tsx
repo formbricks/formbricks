@@ -8,13 +8,12 @@ import { getChannelMapping, getIndustryMapping, getRoleMapping } from "../lib/ut
 interface TemplateFiltersProps {
   selectedFilter: TTemplateFilter[];
   setSelectedFilter: (filter: TTemplateFilter[]) => void;
-  templateSearch?: string;
+  templateSearch?: string; // kept for API compatibility
 }
 
 export const TemplateFilters = ({
   selectedFilter,
   setSelectedFilter,
-  templateSearch,
 }: TemplateFiltersProps) => {
   const { t } = useTranslation();
   const handleFilterSelect = (filterValue: TTemplateFilter, index: number) => {
@@ -34,7 +33,6 @@ export const TemplateFilters = ({
             <button
               type="button"
               onClick={() => handleFilterSelect(null, index)}
-              disabled={templateSearch && templateSearch.length > 0 ? true : false}
               className={cn(
                 selectedFilter[index] === null
                   ? "bg-slate-800 font-semibold text-white"
@@ -52,7 +50,6 @@ export const TemplateFilters = ({
                 key={filter.value}
                 type="button"
                 onClick={() => handleFilterSelect(filter.value, index)}
-                disabled={templateSearch && templateSearch.length > 0 ? true : false}
                 className={cn(
                   selectedFilter[index] === filter.value
                     ? "bg-slate-800 font-semibold text-white"

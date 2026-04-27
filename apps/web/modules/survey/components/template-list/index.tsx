@@ -75,19 +75,18 @@ export const TemplateList = ({
 
   const filteredTemplates = () => {
     return templates(t).filter((template) => {
-      if (templateSearch) {
-        return template.name.toLowerCase().includes(templateSearch.toLowerCase());
-      }
+      // Apply text search filter
+      const searchMatch =
+        !templateSearch || template.name.toLowerCase().includes(templateSearch.toLowerCase());
 
-      // Parse and validate the filters
+      // Parse and validate the category filters
       const channelParseResult = ZProjectConfigChannel.nullable().safeParse(selectedFilter[0]);
       const industryParseResult = ZProjectConfigIndustry.nullable().safeParse(selectedFilter[1]);
       const roleParseResult = ZTemplateRole.nullable().safeParse(selectedFilter[2]);
 
-      // Ensure all validations are successful
+      // If any validation fails, only apply the search filter
       if (!channelParseResult.success || !industryParseResult.success || !roleParseResult.success) {
-        // If any validation fails, skip this template
-        return true;
+        return searchMatch;
       }
 
       // Access the validated data from the parse results
@@ -95,18 +94,18 @@ export const TemplateList = ({
       const validatedIndustry = industryParseResult.data;
       const validatedRole = roleParseResult.data;
 
-      // Perform the filtering
+      // Perform the category filtering
       const channelMatch = validatedChannel === null || template.channels?.includes(validatedChannel);
       const industryMatch = validatedIndustry === null || template.industries?.includes(validatedIndustry);
       const roleMatch = validatedRole === null || template.role === validatedRole;
 
-      return channelMatch && industryMatch && roleMatch;
+      return searchMatch && channelMatch && industryMatch && roleMatch;
     });
   };
 
   return (
     <main className="relative z-0 flex-1 overflow-y-auto px-6 pb-6 pt-2 focus:outline-none">
-      {showFilters && !templateSearch && (
+      {showFilters && (
         <TemplateFilters
           selectedFilter={selectedFilter}
           setSelectedFilter={setSelectedFilter}
