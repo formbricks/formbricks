@@ -17,6 +17,16 @@ import { addUserStateExpiryCheckListener, clearUserStateExpiryCheckListener } fr
 
 let areRemoveEventListenersAdded = false;
 
+const handleBeforeUnload = (): void => {
+  clearEnvironmentStateExpiryCheckListener();
+  clearUserStateExpiryCheckListener();
+  removePageUrlEventListeners();
+  removeClickEventListener();
+  removeExitIntentListener();
+  removeScrollDepthListener();
+  clearTimeOnPageTimers();
+};
+
 export const addEventListeners = (): void => {
   addEnvironmentStateExpiryCheckListener();
   addUserStateExpiryCheckListener();
@@ -28,29 +38,13 @@ export const addEventListeners = (): void => {
 
 export const addCleanupEventListeners = (): void => {
   if (areRemoveEventListenersAdded) return;
-  window.addEventListener("beforeunload", () => {
-    clearEnvironmentStateExpiryCheckListener();
-    clearUserStateExpiryCheckListener();
-    removePageUrlEventListeners();
-    removeClickEventListener();
-    removeExitIntentListener();
-    removeScrollDepthListener();
-    clearTimeOnPageTimers();
-  });
+  window.addEventListener("beforeunload", handleBeforeUnload);
   areRemoveEventListenersAdded = true;
 };
 
 export const removeCleanupEventListeners = (): void => {
   if (!areRemoveEventListenersAdded) return;
-  window.removeEventListener("beforeunload", () => {
-    clearEnvironmentStateExpiryCheckListener();
-    clearUserStateExpiryCheckListener();
-    removePageUrlEventListeners();
-    removeClickEventListener();
-    removeExitIntentListener();
-    removeScrollDepthListener();
-    clearTimeOnPageTimers();
-  });
+  window.removeEventListener("beforeunload", handleBeforeUnload);
   areRemoveEventListenersAdded = false;
 };
 
