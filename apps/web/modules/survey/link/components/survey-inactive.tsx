@@ -25,6 +25,14 @@ export const SurveyInactive = async ({
     "link expired": <CalendarClockIcon className="h-20 w-20" />,
   };
 
+  const headings = {
+    paused: t("s.paused_heading"),
+    completed: t("s.completed_heading"),
+    "link invalid": t("s.link_invalid_heading"),
+    "response submitted": t("s.response_submitted_heading"),
+    "link expired": t("s.link_expired_heading"),
+  };
+
   const descriptions = {
     paused: t("s.paused"),
     completed: t("s.completed"),
@@ -47,7 +55,7 @@ export const SurveyInactive = async ({
         <h1 className="text-4xl font-bold text-slate-800">
           {(status === "completed" || status === "link expired") && surveyClosedMessage
             ? surveyClosedMessage.heading
-            : `${t("common.survey")} ${status}.`}
+            : headings[status]}
         </h1>
         <p className="text-lg leading-10 text-slate-500">
           {status === "completed" && surveyClosedMessage

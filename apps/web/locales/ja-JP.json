@@ -2445,7 +2445,12 @@
     "verify_email_before_submission": "回答するにはメールアドレスを認証してください",
     "verify_email_before_submission_button": "認証",
     "verify_email_before_submission_description": "このフォームに回答するには、メールアドレスを認証してください",
-    "want_to_respond": "回答しますか？"
+    "want_to_respond": "回答しますか？",
+    "paused_heading": "Survey paused",
+    "completed_heading": "Survey completed",
+    "link_invalid_heading": "Survey link invalid",
+    "response_submitted_heading": "Response submitted",
+    "link_expired_heading": "Survey link expired"
   },
   "setup": {
     "intro": {

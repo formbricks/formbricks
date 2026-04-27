@@ -2445,7 +2445,12 @@
     "verify_email_before_submission": "Ellenőrizze az e-mail-címét a válaszadáshoz",
     "verify_email_before_submission_button": "Ellenőrzés",
     "verify_email_before_submission_description": "A kérdőívre való válaszadáshoz ellenőrizze az e-mail-címét",
-    "want_to_respond": "Szeretne válaszolni?"
+    "want_to_respond": "Szeretne válaszolni?",
+    "paused_heading": "Survey paused",
+    "completed_heading": "Survey completed",
+    "link_invalid_heading": "Survey link invalid",
+    "response_submitted_heading": "Response submitted",
+    "link_expired_heading": "Survey link expired"
   },
   "setup": {
     "intro": {

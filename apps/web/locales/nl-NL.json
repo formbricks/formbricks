@@ -2445,7 +2445,12 @@
     "verify_email_before_submission": "Verifieer uw e-mailadres om te reageren",
     "verify_email_before_submission_button": "Verifiëren",
     "verify_email_before_submission_description": "Om op deze enquête te reageren, dient u uw e-mailadres te verifiëren",
-    "want_to_respond": "Wilt u reageren?"
+    "want_to_respond": "Wilt u reageren?",
+    "paused_heading": "Survey paused",
+    "completed_heading": "Survey completed",
+    "link_invalid_heading": "Survey link invalid",
+    "response_submitted_heading": "Response submitted",
+    "link_expired_heading": "Survey link expired"
   },
   "setup": {
     "intro": {

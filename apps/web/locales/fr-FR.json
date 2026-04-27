@@ -2445,7 +2445,12 @@
     "verify_email_before_submission": "Vérifiez votre email pour répondre.",
     "verify_email_before_submission_button": "Vérifier",
     "verify_email_before_submission_description": "Pour répondre à cette enquête, veuillez vérifier votre e-mail.",
-    "want_to_respond": "Voulez-vous répondre ?"
+    "want_to_respond": "Voulez-vous répondre ?",
+    "paused_heading": "Survey paused",
+    "completed_heading": "Survey completed",
+    "link_invalid_heading": "Survey link invalid",
+    "response_submitted_heading": "Response submitted",
+    "link_expired_heading": "Survey link expired"
   },
   "setup": {
     "intro": {

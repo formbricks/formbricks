@@ -2445,7 +2445,12 @@
     "verify_email_before_submission": "Verificați-vă emailul pentru a răspunde",
     "verify_email_before_submission_button": "Verifică",
     "verify_email_before_submission_description": "Pentru a răspunde la acest sondaj, vă rugăm să vă verificați emailul",
-    "want_to_respond": "Dorești să răspunzi?"
+    "want_to_respond": "Dorești să răspunzi?",
+    "paused_heading": "Survey paused",
+    "completed_heading": "Survey completed",
+    "link_invalid_heading": "Survey link invalid",
+    "response_submitted_heading": "Response submitted",
+    "link_expired_heading": "Survey link expired"
   },
   "setup": {
     "intro": {

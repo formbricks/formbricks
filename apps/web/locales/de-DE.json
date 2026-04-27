@@ -2445,7 +2445,12 @@
     "verify_email_before_submission": "Bestätige deine E-Mail, um zu antworten",
     "verify_email_before_submission_button": "Überprüfen",
     "verify_email_before_submission_description": "Um an dieser Umfrage teilzunehmen, bitte bestätige deine E-Mail",
-    "want_to_respond": "Möchtest Du antworten?"
+    "want_to_respond": "Möchtest Du antworten?",
+    "paused_heading": "Survey paused",
+    "completed_heading": "Survey completed",
+    "link_invalid_heading": "Survey link invalid",
+    "response_submitted_heading": "Response submitted",
+    "link_expired_heading": "Survey link expired"
   },
   "setup": {
     "intro": {

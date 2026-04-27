@@ -2445,7 +2445,12 @@
     "verify_email_before_submission": "Yanıtlamak için email adresinizi doğrulayın",
     "verify_email_before_submission_button": "Doğrula",
     "verify_email_before_submission_description": "Bu survey'e yanıt vermek için lütfen email adresinizi doğrulayın",
-    "want_to_respond": "Yanıtlamak ister misiniz?"
+    "want_to_respond": "Yanıtlamak ister misiniz?",
+    "paused_heading": "Survey paused",
+    "completed_heading": "Survey completed",
+    "link_invalid_heading": "Survey link invalid",
+    "response_submitted_heading": "Response submitted",
+    "link_expired_heading": "Survey link expired"
   },
   "setup": {
     "intro": {

@@ -2445,7 +2445,12 @@
     "verify_email_before_submission": "驗證您的電子郵件以回應",
     "verify_email_before_submission_button": "驗證",
     "verify_email_before_submission_description": "若要回應此問卷，請驗證您的電子郵件",
-    "want_to_respond": "想要回應嗎？"
+    "want_to_respond": "想要回應嗎？",
+    "paused_heading": "Survey paused",
+    "completed_heading": "Survey completed",
+    "link_invalid_heading": "Survey link invalid",
+    "response_submitted_heading": "Response submitted",
+    "link_expired_heading": "Survey link expired"
   },
   "setup": {
     "intro": {

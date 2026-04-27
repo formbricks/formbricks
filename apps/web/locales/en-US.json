@@ -2445,7 +2445,12 @@
     "verify_email_before_submission": "Verify your email to respond",
     "verify_email_before_submission_button": "Verify",
     "verify_email_before_submission_description": "To respond to this survey, please verify your email",
-    "want_to_respond": "Want to respond?"
+    "want_to_respond": "Want to respond?",
+    "paused_heading": "Survey paused",
+    "completed_heading": "Survey completed",
+    "link_invalid_heading": "Survey link invalid",
+    "response_submitted_heading": "Response submitted",
+    "link_expired_heading": "Survey link expired"
   },
   "setup": {
     "intro": {
