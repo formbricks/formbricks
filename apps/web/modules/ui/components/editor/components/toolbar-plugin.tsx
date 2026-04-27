@@ -18,6 +18,7 @@ import {
   $createParagraphNode,
   $getRoot,
   $getSelection,
+  $isElementNode,
   $isRangeSelection,
   FORMAT_TEXT_COMMAND,
   SELECTION_CHANGE_COMMAND,
@@ -262,7 +263,17 @@ export const ToolbarPlugin = (
         const nodes = $generateNodesFromDOM(editor, dom);
         const root = $getRoot();
         root.clear();
-        root.append(...nodes);
+        // Root only accepts ElementNodes as direct children. Wrap any inline
+        // nodes (e.g. TextNode) that appear at the top level so that pasting
+        // or loading HTML containing bare text does not trigger Lexical
+        // invariant error #282 ("Node does not accept children").
+        const safeNodes = nodes.map((node) => {
+          if ($isElementNode(node)) return node;
+          const para = $createParagraphNode();
+          para.append(node);
+          return para;
+        });
+        root.append(...safeNodes);
       });
     }
 
