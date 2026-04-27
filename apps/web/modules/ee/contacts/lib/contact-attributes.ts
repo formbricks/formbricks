@@ -143,7 +143,7 @@ export const getDistinctAttributeValues = reactCache(
           value: true,
         },
         distinct: ["value"],
-        take: limit * 2, // Get more than needed to account for filtering
+        take: limit,
         orderBy: { value: "asc" },
       });
 
