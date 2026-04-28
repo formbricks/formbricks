@@ -185,6 +185,7 @@ checksums:
     common/delete_what: 718ddfcc1dec7f3e8b67856fba838267
     common/description: e17686a22ffad04cc7bb70524ed4478b
     common/disable: 81b754fd7962e0bd9b6ba87f3972e7fc
+    common/disabled: 0889a3dfd914a7ef638611796b17bf72
     common/disallow: 01c8ed3ce545ed836d3ccffc562c8a0c
     common/discard: de83a114a79d086e372c43dbfe9f47b4
     common/dismissed: f0e21b3fe28726c577a7238a63cc29c2
@@ -202,6 +203,7 @@ checksums:
     common/elements: 8cb054d952b341e5965284860d532bc7
     common/email: e7f34943a0c2fb849db1839ff6ef5cb5
     common/enable: 463972a7a95f50f3105d09b92508f2cd
+    common/enabled: 20236664b7e62df0e767921b4450205f
     common/ending_card: 16d30d3a36472159da8c2dbd374dfe22
     common/enter_url: 468c2276d0f2cb971ff5a47a20fa4b97
     common/enterprise_license: e81bf506f47968870c7bd07245648a0d
@@ -1786,6 +1788,9 @@ checksums:
     workspace/app-connection/app_connection_description: dde226414bd2265cbd0daf6635efcfdd
     workspace/app-connection/cache_update_delay_description: 3368e4a8090b7684117a16c94f0c409c
     workspace/app-connection/cache_update_delay_title: 60e4a0fcfbd8850bddf29b5c3f59550c
+    workspace/app-connection/environment_id_legacy: d5c701874d34b4591e780755f7ac7a58
+    workspace/app-connection/environment_id_legacy_alert: 09ac96821ff99fad4590c661503fa0cd
+    workspace/app-connection/environment_id_legacy_alert_link: 25c529078a115d1ff044a321dd8ee01b
     workspace/app-connection/formbricks_sdk_connected: 29e8a40ad6a7fdb5af5ee9451a70a9aa
     workspace/app-connection/formbricks_sdk_not_connected: 557c534e665750978ba6edb0eacb428e
     workspace/app-connection/formbricks_sdk_not_connected_description: 4ddbacae084238bd0cefeded0fe9dbb9

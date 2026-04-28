@@ -31,12 +31,12 @@ cube(`FeedbackRecords`, {
     npsScore: {
       type: `number`,
       sql: `
-        CASE 
+        CASE
           WHEN COUNT(*) = 0 THEN 0
           ELSE ROUND(
             (
-              (COUNT(CASE WHEN ${CUBE}.value_number >= 9 THEN 1 END)::numeric - 
-               COUNT(CASE WHEN ${CUBE}.value_number <= 6 THEN 1 END)::numeric) 
+              (COUNT(CASE WHEN ${CUBE}.value_number >= 9 THEN 1 END)::numeric -
+               COUNT(CASE WHEN ${CUBE}.value_number <= 6 THEN 1 END)::numeric)
               / COUNT(*)::numeric
             ) * 100,
             2
@@ -131,7 +131,7 @@ cube(`FeedbackRecords`, {
 
 cube(`TopicsUnnested`, {
   sql: `
-    SELECT 
+    SELECT
       fr.id as feedback_record_id,
       topic_elem.topic
     FROM feedback_records fr

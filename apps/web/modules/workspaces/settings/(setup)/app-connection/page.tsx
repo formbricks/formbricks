@@ -18,6 +18,10 @@ import { ActionSettingsCard } from "../components/action-settings-card";
 export const AppConnectionPage = async ({ params }: { params: Promise<{ workspaceId: string }> }) => {
   const t = await getTranslate();
   const { workspaceId } = await params;
+  const frameworkGuidesUrl =
+    "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/framework-guides";
+  const workspaceIdMigrationUrl =
+    "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/workspace-id-migration";
 
   const { isReadOnly, session, workspace } = await getWorkspaceAuth(workspaceId);
 
@@ -37,7 +41,26 @@ export const AppConnectionPage = async ({ params }: { params: Promise<{ workspac
           description={t("workspace.app-connection.sdk_connection_details_description")}>
           <div className="space-y-3">
             <IdBadge id={workspace.id} label={t("workspace.app-connection.workspace_id")} />
+            {workspace.legacyEnvironmentId && (
+              <IdBadge
+                id={workspace.legacyEnvironmentId}
+                label={t("workspace.app-connection.environment_id_legacy")}
+                copyDisabled
+              />
+            )}
             <IdBadge id={WEBAPP_URL} label={t("workspace.app-connection.webapp_url")} />
+            {workspace.legacyEnvironmentId && (
+              <Alert variant="info" size="small">
+                <AlertDescription>
+                  <p>
+                    {t("workspace.app-connection.environment_id_legacy_alert")}{" "}
+                    <Link href={workspaceIdMigrationUrl} target="_blank" rel="noopener noreferrer">
+                      {t("workspace.app-connection.environment_id_legacy_alert_link")}
+                    </Link>
+                  </p>
+                </AlertDescription>
+              </Alert>
+            )}
           </div>
         </SettingsCard>
         <SettingsCard
@@ -46,25 +69,22 @@ export const AppConnectionPage = async ({ params }: { params: Promise<{ workspac
           {workspace && (
             <div className="space-y-4">
               <WidgetStatusIndicator workspace={workspace} />
-              {!workspace.appSetupCompleted ? (
-                <Alert variant="info">
-                  <AlertTitle>{t("workspace.app-connection.setup_alert_title")}</AlertTitle>
-                  <AlertDescription>{t("workspace.app-connection.setup_alert_description")}</AlertDescription>
-                  <AlertButton asChild>
-                    <Link
-                      href="https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/framework-guides"
-                      target="_blank"
-                      rel="noopener noreferrer">
-                      {t("common.learn_more")}
-                    </Link>
-                  </AlertButton>
-                </Alert>
-              ) : (
+              {workspace.appSetupCompleted ? (
                 <Alert variant="warning">
                   <AlertTitle>{t("workspace.app-connection.cache_update_delay_title")}</AlertTitle>
                   <AlertDescription>
                     {t("workspace.app-connection.cache_update_delay_description")}
                   </AlertDescription>
+                </Alert>
+              ) : (
+                <Alert variant="info">
+                  <AlertTitle>{t("workspace.app-connection.setup_alert_title")}</AlertTitle>
+                  <AlertDescription>{t("workspace.app-connection.setup_alert_description")}</AlertDescription>
+                  <AlertButton asChild>
+                    <Link href={frameworkGuidesUrl} target="_blank" rel="noopener noreferrer">
+                      {t("common.learn_more")}
+                    </Link>
+                  </AlertButton>
                 </Alert>
               )}
             </div>

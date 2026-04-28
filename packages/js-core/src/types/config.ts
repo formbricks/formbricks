@@ -96,16 +96,66 @@ export interface TStylingColor {
   dark?: string | null | undefined;
 }
 
+type TDimension = number | string | null;
+
 export interface TBaseStyling {
   brandColor?: TStylingColor | null;
-  questionColor?: TStylingColor | null;
-  inputColor?: TStylingColor | null;
+  accentBgColor?: TStylingColor | null;
+  accentBgColorSelected?: TStylingColor | null;
+  fontFamily?: string | null;
+
+  // Buttons
+  buttonBgColor?: TStylingColor | null;
+  buttonTextColor?: TStylingColor | null;
+  buttonBorderRadius?: TDimension;
+  buttonHeight?: TDimension;
+  buttonFontSize?: TDimension;
+  buttonFontWeight?: TDimension;
+  buttonPaddingX?: TDimension;
+  buttonPaddingY?: TDimension;
+
+  // Inputs
+  inputBgColor?: TStylingColor | null;
   inputBorderColor?: TStylingColor | null;
+  inputBorderRadius?: TDimension;
+  inputHeight?: TDimension;
+  inputTextColor?: TStylingColor | null;
+  inputFontSize?: TDimension;
+  inputPlaceholderOpacity?: number | null;
+  inputPaddingX?: TDimension;
+  inputPaddingY?: TDimension;
+  inputShadow?: string | null;
+
+  // Options
+  optionBgColor?: TStylingColor | null;
+  optionLabelColor?: TStylingColor | null;
+  optionBorderColor?: TStylingColor | null;
+  optionBorderRadius?: TDimension;
+  optionPaddingX?: TDimension;
+  optionPaddingY?: TDimension;
+  optionFontSize?: TDimension;
+
+  // Headlines & Descriptions
+  elementHeadlineFontSize?: TDimension;
+  elementHeadlineFontWeight?: TDimension;
+  elementHeadlineColor?: TStylingColor | null;
+  elementDescriptionFontSize?: TDimension;
+  elementDescriptionFontWeight?: TDimension;
+  elementDescriptionColor?: TStylingColor | null;
+  elementUpperLabelFontSize?: TDimension;
+  elementUpperLabelColor?: TStylingColor | null;
+  elementUpperLabelFontWeight?: TDimension;
+
+  // Progress Bar
+  progressTrackHeight?: TDimension;
+  progressTrackBgColor?: TStylingColor | null;
+  progressIndicatorBgColor?: TStylingColor | null;
+
   cardBackgroundColor?: TStylingColor | null;
   cardBorderColor?: TStylingColor | null;
   highlightBorderColor?: TStylingColor | null;
   isDarkModeEnabled?: boolean | null;
-  roundness?: number | null;
+  roundness?: TDimension;
   cardArrangement?: {
     linkSurveys: "casual" | "straight" | "simple";
     appSurveys: "casual" | "straight" | "simple";

@@ -781,9 +781,7 @@ describe("processResponsePipelineJob", () => {
   });
 
   test("classifies database pool exhaustion as retryable and logs a warning", async () => {
-    const poolExhaustionError = new Error(
-      "Timed out fetching a new connection from the connection pool"
-    );
+    const poolExhaustionError = new Error("Timed out fetching a new connection from the connection pool");
     mockPrismaSurveyFindUnique.mockRejectedValue(poolExhaustionError);
 
     await expect(processResponsePipelineJob(baseData, baseContext)).rejects.toThrow(poolExhaustionError);
