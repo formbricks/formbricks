@@ -12,7 +12,6 @@ import { IdBadge } from "@/modules/ui/components/id-badge";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
-import { WorkspaceConfigNavigation } from "@/modules/workspaces/settings/components/workspace-config-navigation";
 import { ActionSettingsCard } from "../components/action-settings-card";
 
 export const AppConnectionPage = async ({ params }: { params: Promise<{ workspaceId: string }> }) => {
@@ -32,9 +31,7 @@ export const AppConnectionPage = async ({ params }: { params: Promise<{ workspac
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.workspace_configuration")}>
-        <WorkspaceConfigNavigation activeId="app-connection" />
-      </PageHeader>
+      <PageHeader pageTitle={t("common.website_and_app_connection")} />
       <div className="space-y-4">
         <SettingsCard
           title={t("workspace.app-connection.sdk_connection_details")}

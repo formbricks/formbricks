@@ -10,7 +10,6 @@ import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { RadioGroup, RadioGroupItem } from "@/modules/ui/components/radio-group";
 import { Switch } from "@/modules/ui/components/switch";
-import { WorkspaceConfigNavigation } from "@/modules/workspaces/settings/components/workspace-config-navigation";
 
 export const WorkspaceLookSettingsLoading = () => {
   const { t } = useTranslation();
@@ -24,9 +23,7 @@ export const WorkspaceLookSettingsLoading = () => {
   ];
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.workspace_configuration")}>
-        <WorkspaceConfigNavigation activeId="look" loading />
-      </PageHeader>
+      <PageHeader pageTitle={t("common.look_and_feel")} />
       <SettingsCard
         title={t("workspace.look.theme")}
         className="max-w-7xl"

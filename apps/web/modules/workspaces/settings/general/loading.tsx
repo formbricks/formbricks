@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next";
 import { LoadingCard } from "@/app/(app)/components/LoadingCard";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { WorkspaceConfigNavigation } from "@/modules/workspaces/settings/components/workspace-config-navigation";
 
 export const GeneralSettingsLoading = () => {
   const { t } = useTranslation();
@@ -28,9 +27,7 @@ export const GeneralSettingsLoading = () => {
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.workspace_configuration")}>
-        <WorkspaceConfigNavigation activeId="general" loading />
-      </PageHeader>
+      <PageHeader pageTitle={t("common.workspace_settings")} />
       {cards.map((card) => (
         <LoadingCard key={card.title} {...card} />
       ))}

@@ -470,7 +470,7 @@ export const LanguageView = ({
 
           {/* Manage workspace languages link */}
           <Button asChild size="sm" variant="secondary">
-            <Link href={`/workspaces/${workspaceId}/languages`} target="_blank">
+            <Link href={`/workspaces/${workspaceId}/settings/workspace/languages`} target="_blank">
               {t("workspace.surveys.edit.manage_languages")}
               <ArrowUpRight className="ml-1 h-4 w-4" />
             </Link>
@@ -498,7 +498,7 @@ export const LanguageView = ({
             {t("workspace.surveys.edit.no_languages_found_add_first_one_to_get_started")}
           </p>
           <Button asChild size="sm" variant="secondary" className="mt-3">
-            <Link href={`/workspaces/${workspaceId}/languages`} target="_blank">
+            <Link href={`/workspaces/${workspaceId}/settings/workspace/languages`} target="_blank">
               {t("workspace.surveys.edit.manage_languages")}
               <ArrowUpRight className="ml-1 h-4 w-4" />
             </Link>

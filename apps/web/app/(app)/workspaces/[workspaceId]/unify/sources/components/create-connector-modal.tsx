@@ -617,7 +617,7 @@ const FrdPicker = ({ directories, selectedDirectoryId, onChange, workspaceId, t 
           <p>{t("workspace.unify.no_feedback_record_directory_available")}</p>
           <a
             className="mt-1 inline-block font-medium underline"
-            href={`/workspaces/${workspaceId}/settings/feedback-record-directories`}>
+            href={`/workspaces/${workspaceId}/settings/organization/feedback-record-directories`}>
             {t("workspace.unify.go_to_feedback_record_directories")}
           </a>
         </div>

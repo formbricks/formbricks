@@ -11,7 +11,6 @@ import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
-import { WorkspaceConfigNavigation } from "@/modules/workspaces/settings/components/workspace-config-navigation";
 import { EditLogo } from "@/modules/workspaces/settings/look/components/edit-logo";
 import { EditPlacementForm } from "./components/edit-placement-form";
 import { ThemeStyling } from "./components/theme-styling";
@@ -33,9 +32,7 @@ export const WorkspaceLookSettingsPage = async (props: { params: Promise<{ works
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.workspace_configuration")}>
-        <WorkspaceConfigNavigation activeId="look" />
-      </PageHeader>
+      <PageHeader pageTitle={t("common.look_and_feel")} />
       {!IS_STORAGE_CONFIGURED && (
         <Alert variant="warning">
           <AlertDescription>{t("common.storage_not_configured")}</AlertDescription>

@@ -61,7 +61,7 @@ export const manageSubscriptionAction = authenticatedActionClient
       }
       const result = await createCustomerPortalSession(
         organization.billing.stripeCustomerId,
-        `${WEBAPP_URL}/workspaces/${workspace.id}/settings/billing`
+        `${WEBAPP_URL}/workspaces/${workspace.id}/settings/organization/billing`
       );
       ctx.auditLoggingCtx.newObject = { portalSessionCreated: true };
       return result;
@@ -183,7 +183,7 @@ export const createTrialPaymentCheckoutAction = authenticatedActionClient
       if (!workspace) {
         throw new ResourceNotFoundError("workspace", parsedInput.workspaceId);
       }
-      const returnUrl = `${WEBAPP_URL}/workspaces/${workspace.id}/settings/billing`;
+      const returnUrl = `${WEBAPP_URL}/workspaces/${workspace.id}/settings/organization/billing`;
       const checkoutUrl = await createSetupCheckoutSession(
         organization.billing.stripeCustomerId,
         subscriptionId,
