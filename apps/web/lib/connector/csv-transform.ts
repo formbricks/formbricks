@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { TConnectorFieldMapping, THubTargetField } from "@formbricks/types/connector";
 import { FeedbackRecordCreateParams } from "@/modules/hub";
 
@@ -50,8 +51,8 @@ const resolveValue = (
 /**
  * Transform a single CSV row into a FeedbackRecord using field mappings.
  *
- * Each mapping maps a CSV column (sourceFieldId) or a static value to a target field.
- * Returns null if required fields (source_type, field_id, field_type) are missing after mapping.
+ * Returns null if any of source_type, field_id, field_type, tenant_id are missing.
+ * submission_id falls back to a random UUID when unmapped.
  */
 export const transformCsvRowToFeedbackRecord = (
   row: Record<string, string>,
@@ -81,6 +82,14 @@ export const transformCsvRowToFeedbackRecord = (
 
   if (tenantId && !record.tenant_id) {
     record.tenant_id = tenantId;
+  }
+
+  if (!record.tenant_id) {
+    return null;
+  }
+
+  if (!record.submission_id) {
+    record.submission_id = randomUUID();
   }
 
   return record as unknown as FeedbackRecordCreateParams;
