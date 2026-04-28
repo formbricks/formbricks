@@ -71,12 +71,14 @@ export const DeleteAccountModal = ({
 
       if (!result?.data?.success) {
         const fallbackErrorMessage = t("common.something_went_wrong_please_try_again");
-        const errorMessage =
-          result?.serverError === DELETE_ACCOUNT_WRONG_PASSWORD_ERROR
-            ? t("environments.settings.profile.wrong_password")
-            : result
-              ? getFormattedErrorMessage(result)
-              : fallbackErrorMessage;
+        let errorMessage = fallbackErrorMessage;
+
+        if (result?.serverError === DELETE_ACCOUNT_WRONG_PASSWORD_ERROR) {
+          errorMessage = t("environments.settings.profile.wrong_password");
+        } else if (result) {
+          errorMessage = getFormattedErrorMessage(result);
+        }
+
         logger.error({ errorMessage }, "Account deletion action failed");
         toast.error(errorMessage || fallbackErrorMessage);
         return;
