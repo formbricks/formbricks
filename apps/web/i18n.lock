@@ -185,6 +185,7 @@ checksums:
     common/delete_what: 718ddfcc1dec7f3e8b67856fba838267
     common/description: e17686a22ffad04cc7bb70524ed4478b
     common/disable: 81b754fd7962e0bd9b6ba87f3972e7fc
+    common/disabled: b9f5c797ebbf55adccdd8539a65a0241
     common/disallow: 01c8ed3ce545ed836d3ccffc562c8a0c
     common/discard: de83a114a79d086e372c43dbfe9f47b4
     common/dismissed: f0e21b3fe28726c577a7238a63cc29c2
@@ -202,6 +203,7 @@ checksums:
     common/elements: 8cb054d952b341e5965284860d532bc7
     common/email: e7f34943a0c2fb849db1839ff6ef5cb5
     common/enable: 463972a7a95f50f3105d09b92508f2cd
+    common/enabled: 00d23a76e43b46dae9ec7aa9dcbebb32
     common/ending_card: 16d30d3a36472159da8c2dbd374dfe22
     common/enter_url: 468c2276d0f2cb971ff5a47a20fa4b97
     common/enterprise_license: e81bf506f47968870c7bd07245648a0d
