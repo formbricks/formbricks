@@ -44,7 +44,7 @@ interface EditConnectorModalProps {
 
 const getConnectorIcon = (type: TConnectorType) => {
   switch (type) {
-    case "formbricks":
+    case "formbricks_survey":
       return <GlobeIcon className="h-5 w-5 text-slate-500" />;
     case "csv":
       return <FileSpreadsheetIcon className="h-5 w-5 text-slate-500" />;
@@ -55,7 +55,7 @@ const getConnectorIcon = (type: TConnectorType) => {
 
 const getConnectorTypeLabelKey = (type: TConnectorType): string => {
   switch (type) {
-    case "formbricks":
+    case "formbricks_survey":
       return "workspace.unify.formbricks_surveys";
     case "csv":
       return "workspace.unify.csv_import";
@@ -103,7 +103,7 @@ export const EditConnectorModal = ({
     if (connector) {
       setConnectorName(connector.name);
 
-      if (connector.type === "formbricks") {
+      if (connector.type === "formbricks_survey") {
         const fbMappings = connector.formbricksMappings;
         setSelectedSurveyId(fbMappings.length > 0 ? fbMappings[0].surveyId : null);
         setElementIdsBySurvey(groupMappingsBySurvey(fbMappings));
@@ -198,8 +198,8 @@ export const EditConnectorModal = ({
       workspaceId: connector.workspaceId,
       name: connectorName.trim(),
       surveyMappings:
-        connector.type === "formbricks" && surveyMappings.length > 0 ? surveyMappings : undefined,
-      fieldMappings: connector.type !== "formbricks" && mappings.length > 0 ? mappings : undefined,
+        connector.type === "formbricks_survey" && surveyMappings.length > 0 ? surveyMappings : undefined,
+      fieldMappings: connector.type !== "formbricks_survey" && mappings.length > 0 ? mappings : undefined,
     });
     handleOpenChange(false);
   };
@@ -213,7 +213,7 @@ export const EditConnectorModal = ({
     if (!connector) return true;
     if (!connectorName.trim()) return true;
 
-    if (connector.type === "formbricks") {
+    if (connector.type === "formbricks_survey") {
       return !Object.values(elementIdsBySurvey).some((ids) => ids.length > 0);
     }
 
@@ -259,7 +259,7 @@ export const EditConnectorModal = ({
             <p className="mt-1 text-xs text-slate-400">{t("workspace.unify.frd_cannot_be_changed")}</p>
           </div>
 
-          {connector.type === "formbricks" ? (
+          {connector.type === "formbricks_survey" ? (
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
               <FormbricksSurveySelector
                 surveys={surveys}

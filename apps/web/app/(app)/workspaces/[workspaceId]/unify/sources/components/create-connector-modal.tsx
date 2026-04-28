@@ -63,7 +63,7 @@ const getDialogTitle = (
   t: (key: string) => string
 ): string => {
   if (step === "selectType") return t("workspace.unify.add_feedback_source");
-  if (type === "formbricks") return t("workspace.unify.select_survey_and_questions");
+  if (type === "formbricks_survey") return t("workspace.unify.select_survey_and_questions");
   if (type === "csv") return t("workspace.unify.import_csv_data");
   return t("workspace.unify.configure_mapping");
 };
@@ -74,13 +74,13 @@ const getDialogDescription = (
   t: (key: string) => string
 ): string => {
   if (step === "selectType") return t("workspace.unify.select_source_type_description");
-  if (type === "formbricks") return t("workspace.unify.select_survey_questions_description");
+  if (type === "formbricks_survey") return t("workspace.unify.select_survey_questions_description");
   if (type === "csv") return t("workspace.unify.upload_csv_data_description");
   return t("workspace.unify.configure_mapping");
 };
 
 const getNextStepButtonLabel = (type: TConnectorType | null, t: (key: string) => string): string => {
-  if (type === "formbricks") return t("workspace.unify.select_questions");
+  if (type === "formbricks_survey") return t("workspace.unify.select_questions");
   if (type === "csv") return t("workspace.unify.configure_import");
   return t("workspace.unify.create_mapping");
 };
@@ -91,7 +91,7 @@ const getCreateDisabled = (
   isCsvValid: boolean,
   allRequiredMapped: boolean
 ): boolean => {
-  if (type === "formbricks") return !isFormbricksValid;
+  if (type === "formbricks_survey") return !isFormbricksValid;
   if (type === "csv") return !isCsvValid || !allRequiredMapped;
   return !allRequiredMapped;
 };
@@ -166,7 +166,7 @@ export const CreateConnectorModal = ({
   const { t } = useTranslation();
 
   const defaultConnectorName: Record<TConnectorType, string> = {
-    formbricks: t("workspace.unify.default_connector_name_formbricks"),
+    formbricks_survey: t("workspace.unify.default_connector_name_formbricks"),
     csv: t("workspace.unify.default_connector_name_csv"),
   };
   const [currentStep, setCurrentStep] = useState<TCreateConnectorStep>("selectType");
@@ -208,7 +208,7 @@ export const CreateConnectorModal = ({
   );
 
   useEffect(() => {
-    if (selectedSurveyId && selectedType === "formbricks") {
+    if (selectedSurveyId && selectedType === "formbricks_survey") {
       fetchResponseCount(selectedSurveyId);
     }
   }, [selectedSurveyId, selectedType, fetchResponseCount]);
@@ -241,7 +241,7 @@ export const CreateConnectorModal = ({
 
     const selectedSurvey = surveys.find((s) => s.id === selectedSurveyId);
     setConnectorName(
-      selectedType === "formbricks" && selectedSurvey
+      selectedType === "formbricks_survey" && selectedSurvey
         ? `${selectedSurvey.name} ${t("workspace.unify.connection")}`
         : defaultConnectorName[selectedType]
     );
@@ -381,11 +381,12 @@ export const CreateConnectorModal = ({
       name: connectorName.trim(),
       type: selectedType,
       feedbackRecordDirectoryId: selectedDirectoryId,
-      surveyMappings: selectedType === "formbricks" && surveyMappings.length > 0 ? surveyMappings : undefined,
-      fieldMappings: selectedType !== "formbricks" && mappings.length > 0 ? mappings : undefined,
+      surveyMappings:
+        selectedType === "formbricks_survey" && surveyMappings.length > 0 ? surveyMappings : undefined,
+      fieldMappings: selectedType !== "formbricks_survey" && mappings.length > 0 ? mappings : undefined,
     });
 
-    if (connectorId && selectedType === "formbricks") {
+    if (connectorId && selectedType === "formbricks_survey") {
       await handleHistoricalImports(connectorId);
     }
 
@@ -404,7 +405,7 @@ export const CreateConnectorModal = ({
   );
 
   const hasAnyElementSelections = Object.values(elementIdsBySurvey).some((ids) => ids.length > 0);
-  const isFormbricksValid = selectedType === "formbricks" && hasAnyElementSelections;
+  const isFormbricksValid = selectedType === "formbricks_survey" && hasAnyElementSelections;
   const isCsvValid = selectedType === "csv" && sourceFields.length > 0;
 
   const handleLoadSourceFields = () => {
@@ -444,7 +445,7 @@ export const CreateConnectorModal = ({
               <ConnectorTypeSelector selectedType={selectedType} onSelectType={setSelectedType} />
             )}
 
-            {currentStep === "mapping" && selectedType === "formbricks" && (
+            {currentStep === "mapping" && selectedType === "formbricks_survey" && (
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="connectorName">{t("workspace.unify.source_name")}</Label>

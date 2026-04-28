@@ -147,7 +147,7 @@ describe("FeedbackRecordDirectory Service", () => {
           {
             id: "conn-1",
             name: "My Connector",
-            type: "formbricks",
+            type: "formbricks_survey",
             workspaceId: mockWorkspaceId1,
             workspace: { name: "Workspace A" },
           },
@@ -161,7 +161,7 @@ describe("FeedbackRecordDirectory Service", () => {
         {
           id: "conn-1",
           name: "My Connector",
-          type: "formbricks",
+          type: "formbricks_survey",
           workspaceId: mockWorkspaceId1,
           workspaceName: "Workspace A",
         },

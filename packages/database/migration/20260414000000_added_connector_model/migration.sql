@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "public"."ConnectorType" AS ENUM ('formbricks', 'csv');
+CREATE TYPE "public"."ConnectorType" AS ENUM ('formbricks_survey', 'csv');
 
 -- CreateEnum
 CREATE TYPE "public"."ConnectorStatus" AS ENUM ('active', 'paused', 'error');

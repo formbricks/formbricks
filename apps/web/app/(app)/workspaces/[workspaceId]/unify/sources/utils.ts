@@ -12,7 +12,7 @@ export interface TConnectorOption {
 
 export const getConnectorOptions = (t: TFunction): TConnectorOption[] => [
   {
-    id: "formbricks",
+    id: "formbricks_survey",
     name: t("workspace.unify.formbricks_surveys"),
     description: t("workspace.unify.source_connect_formbricks_description"),
     disabled: false,

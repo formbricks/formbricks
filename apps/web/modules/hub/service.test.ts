@@ -15,7 +15,7 @@ const { getHubClient } = await import("./hub-client");
 const sampleInput: FeedbackRecordCreateParams = {
   field_id: "el-1",
   field_type: "rating",
-  source_type: "formbricks",
+  source_type: "formbricks_survey",
   source_id: "survey-1",
   source_name: "Test Survey",
   field_label: "Question?",
