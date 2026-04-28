@@ -1,6 +1,6 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
-import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { POSTHOG_KEY } from "@/lib/constants";
 import { posthogServerClient } from "./server";
 import { TPostHogFeatureFlagContext, TPostHogFeatureFlagValue } from "./types";
 
@@ -18,7 +18,7 @@ export const getPostHogFeatureFlag = async (
   flagKey: string,
   context?: TPostHogFeatureFlagContext
 ): Promise<TPostHogFeatureFlagValue> => {
-  if (!IS_FORMBRICKS_CLOUD || !posthogServerClient) {
+  if (!POSTHOG_KEY || !posthogServerClient) {
     return false;
   }
 

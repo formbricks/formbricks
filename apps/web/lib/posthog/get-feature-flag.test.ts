@@ -11,12 +11,12 @@ describe("getPostHogFeatureFlag", () => {
     vi.resetModules();
   });
 
-  test("returns false when cloud mode is off", async () => {
+  test("returns false when PostHog is not configured", async () => {
     vi.doMock("server-only", () => ({}));
     vi.doMock("@formbricks/logger", () => ({
       logger: { warn: mocks.loggerWarn },
     }));
-    vi.doMock("@/lib/constants", () => ({ IS_FORMBRICKS_CLOUD: false }));
+    vi.doMock("@/lib/constants", () => ({ POSTHOG_KEY: undefined }));
     vi.doMock("./server", () => ({
       posthogServerClient: { getFeatureFlag: mocks.getFeatureFlag },
     }));
@@ -33,7 +33,7 @@ describe("getPostHogFeatureFlag", () => {
     vi.doMock("@formbricks/logger", () => ({
       logger: { warn: mocks.loggerWarn },
     }));
-    vi.doMock("@/lib/constants", () => ({ IS_FORMBRICKS_CLOUD: true }));
+    vi.doMock("@/lib/constants", () => ({ POSTHOG_KEY: "phc_test_key" }));
     vi.doMock("./server", () => ({
       posthogServerClient: null,
     }));
@@ -52,7 +52,7 @@ describe("getPostHogFeatureFlag", () => {
     vi.doMock("@formbricks/logger", () => ({
       logger: { warn: mocks.loggerWarn },
     }));
-    vi.doMock("@/lib/constants", () => ({ IS_FORMBRICKS_CLOUD: true }));
+    vi.doMock("@/lib/constants", () => ({ POSTHOG_KEY: "phc_test_key" }));
     vi.doMock("./server", () => ({
       posthogServerClient: { getFeatureFlag: mocks.getFeatureFlag },
     }));
@@ -81,7 +81,7 @@ describe("getPostHogFeatureFlag", () => {
     vi.doMock("@formbricks/logger", () => ({
       logger: { warn: mocks.loggerWarn },
     }));
-    vi.doMock("@/lib/constants", () => ({ IS_FORMBRICKS_CLOUD: true }));
+    vi.doMock("@/lib/constants", () => ({ POSTHOG_KEY: "phc_test_key" }));
     vi.doMock("./server", () => ({
       posthogServerClient: { getFeatureFlag: mocks.getFeatureFlag },
     }));
@@ -98,7 +98,7 @@ describe("getPostHogFeatureFlag", () => {
     vi.doMock("@formbricks/logger", () => ({
       logger: { warn: mocks.loggerWarn },
     }));
-    vi.doMock("@/lib/constants", () => ({ IS_FORMBRICKS_CLOUD: true }));
+    vi.doMock("@/lib/constants", () => ({ POSTHOG_KEY: "phc_test_key" }));
     vi.doMock("./server", () => ({
       posthogServerClient: { getFeatureFlag: mocks.getFeatureFlag },
     }));
@@ -115,7 +115,7 @@ describe("getPostHogFeatureFlag", () => {
     vi.doMock("@formbricks/logger", () => ({
       logger: { warn: mocks.loggerWarn },
     }));
-    vi.doMock("@/lib/constants", () => ({ IS_FORMBRICKS_CLOUD: true }));
+    vi.doMock("@/lib/constants", () => ({ POSTHOG_KEY: "phc_test_key" }));
     vi.doMock("./server", () => ({
       posthogServerClient: { getFeatureFlag: mocks.getFeatureFlag },
     }));
