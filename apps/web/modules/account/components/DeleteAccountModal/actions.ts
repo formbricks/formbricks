@@ -11,6 +11,7 @@ import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
+import { DELETE_ACCOUNT_WRONG_PASSWORD_ERROR } from "./constants";
 
 const ZDeleteUserConfirmation = z
   .object({
@@ -55,7 +56,7 @@ export const deleteUserAction = authenticatedActionClient.inputSchema(z.unknown(
 
       const isCorrectPassword = await verifyUserPassword(ctx.user.id, password);
       if (!isCorrectPassword) {
-        throw new AuthorizationError("Incorrect credentials");
+        throw new AuthorizationError(DELETE_ACCOUNT_WRONG_PASSWORD_ERROR);
       }
 
       const isMultiOrgEnabled = await getIsMultiOrgEnabled();

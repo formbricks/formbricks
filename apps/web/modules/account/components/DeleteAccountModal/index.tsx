@@ -13,6 +13,7 @@ import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { Input } from "@/modules/ui/components/input";
 import { PasswordInput } from "@/modules/ui/components/password-input";
 import { deleteUserAction } from "./actions";
+import { DELETE_ACCOUNT_WRONG_PASSWORD_ERROR } from "./constants";
 
 interface DeleteAccountModalProps {
   open: boolean;
@@ -69,11 +70,15 @@ export const DeleteAccountModal = ({
       });
 
       if (!result?.data?.success) {
-        const errorMessage = result
-          ? getFormattedErrorMessage(result)
-          : t("common.something_went_wrong_please_try_again");
+        const fallbackErrorMessage = t("common.something_went_wrong_please_try_again");
+        const errorMessage =
+          result?.serverError === DELETE_ACCOUNT_WRONG_PASSWORD_ERROR
+            ? t("environments.settings.profile.wrong_password")
+            : result
+              ? getFormattedErrorMessage(result)
+              : fallbackErrorMessage;
         logger.error({ errorMessage }, "Account deletion action failed");
-        toast.error(errorMessage || t("common.something_went_wrong_please_try_again"));
+        toast.error(errorMessage || fallbackErrorMessage);
         return;
       }
 

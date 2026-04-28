@@ -1257,7 +1257,8 @@
         "unlock_two_factor_authentication": "Lås upp tvåfaktorsautentisering med en högre plan",
         "update_personal_info": "Uppdatera din personliga information",
         "warning_cannot_delete_account": "Du är den enda ägaren av denna organisation. Vänligen överför ägarskapet till en annan medlem först.",
-        "warning_cannot_undo": "Detta kan inte ångras"
+        "warning_cannot_undo": "Detta kan inte ångras",
+        "wrong_password": "Fel lösenord"
       },
       "teams": {
         "add_members_description": "Lägg till medlemmar i teamet och bestäm deras roll.",

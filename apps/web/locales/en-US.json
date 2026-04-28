@@ -1257,7 +1257,8 @@
         "unlock_two_factor_authentication": "Unlock two-factor authentication with a higher plan",
         "update_personal_info": "Update your personal information",
         "warning_cannot_delete_account": "You are the only owner of this organization. Please transfer ownership to another member first.",
-        "warning_cannot_undo": "This cannot be undone"
+        "warning_cannot_undo": "This cannot be undone",
+        "wrong_password": "Wrong password"
       },
       "teams": {
         "add_members_description": "Add members to the team and determine their role.",

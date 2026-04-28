@@ -1257,7 +1257,8 @@
         "unlock_two_factor_authentication": "Deblocați autentificarea în doi pași cu un plan superior",
         "update_personal_info": "Actualizează informațiile tale personale",
         "warning_cannot_delete_account": "Ești singurul proprietar al acestei organizații. Te rugăm să transferi proprietatea către un alt membru mai întâi.",
-        "warning_cannot_undo": "Aceasta nu poate fi anulată"
+        "warning_cannot_undo": "Aceasta nu poate fi anulată",
+        "wrong_password": "Parolă greșită"
       },
       "teams": {
         "add_members_description": "Adaugă membri în echipă și stabilește rolul lor.",

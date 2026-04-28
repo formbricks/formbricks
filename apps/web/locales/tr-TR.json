@@ -1257,7 +1257,8 @@
         "unlock_two_factor_authentication": "Daha üst bir planla iki faktörlü kimlik doğrulamayı açın",
         "update_personal_info": "Kişisel bilgilerinizi güncelleyin",
         "warning_cannot_delete_account": "Bu organizasyonun tek sahibi sizsiniz. Lütfen önce sahipliği başka bir üyeye devredin.",
-        "warning_cannot_undo": "Bu işlem geri alınamaz"
+        "warning_cannot_undo": "Bu işlem geri alınamaz",
+        "wrong_password": "Yanlış parola"
       },
       "teams": {
         "add_members_description": "Takıma üyeler ekleyin ve rollerini belirleyin.",
