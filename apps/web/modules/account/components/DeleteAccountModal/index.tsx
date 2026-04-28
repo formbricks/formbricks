@@ -150,12 +150,12 @@ export const DeleteAccountModal = ({
               value={inputValue}
               onChange={handleInputChange}
               placeholder={user.email}
-              className="mt-5"
+              className="mt-2"
               type="text"
               id="deleteAccountConfirmation"
               name="deleteAccountConfirmation"
             />
-            <label htmlFor="deleteAccountPassword" className="mt-5 block">
+            <label htmlFor="deleteAccountPassword" className="mt-4 block">
               {t("common.password")}
             </label>
             <PasswordInput
@@ -164,7 +164,7 @@ export const DeleteAccountModal = ({
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
               className="pr-10"
-              containerClassName="mt-5"
+              containerClassName="mt-2"
               id="deleteAccountPassword"
               name="deleteAccountPassword"
               required
