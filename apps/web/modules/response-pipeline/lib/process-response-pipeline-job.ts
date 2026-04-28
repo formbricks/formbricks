@@ -68,9 +68,7 @@ const pipelineSurveySelect = {
 type TPipelineOrganization = Prisma.OrganizationGetPayload<{ select: typeof pipelineOrganizationSelect }>;
 type TPipelineSurvey = Prisma.SurveyGetPayload<{ select: typeof pipelineSurveySelect }>;
 
-const getOrganizationForPipeline = async (
-  workspaceId: string
-): Promise<TPipelineOrganization | null> =>
+const getOrganizationForPipeline = async (workspaceId: string): Promise<TPipelineOrganization | null> =>
   prisma.organization.findFirst({
     where: {
       workspaces: {
@@ -753,7 +751,7 @@ export const processResponsePipelineJob: JobHandler<TResponsePipelineJobData> = 
         logContext,
         organizationId: organization.id,
         survey,
-        stripeCustomerId: organization.billing.stripeCustomerId,
+        stripeCustomerId: organization.billing?.stripeCustomerId,
       });
     }
   } catch (error) {
