@@ -92,6 +92,31 @@ describe("transformCsvRowToFeedbackRecord", () => {
     expect(result!.submission_id).toBe("ORD-42");
   });
 
+  test("returns null when submission_id mapped but cell is empty", () => {
+    const mappings = [...baseMappings, makeMapping("order_id", "submission_id")];
+    const row = {
+      feedback_text: "x",
+      question: "q1",
+      timestamp: "2026-01-15",
+      order_id: "",
+    };
+
+    const result = transformCsvRowToFeedbackRecord(row, mappings, TENANT);
+    expect(result).toBeNull();
+  });
+
+  test("returns null when submission_id mapped but column missing from row", () => {
+    const mappings = [...baseMappings, makeMapping("order_id", "submission_id")];
+    const row = {
+      feedback_text: "x",
+      question: "q1",
+      timestamp: "2026-01-15",
+    };
+
+    const result = transformCsvRowToFeedbackRecord(row, mappings, TENANT);
+    expect(result).toBeNull();
+  });
+
   test("coerces value_number from string", () => {
     const mappings = [...baseMappings, makeMapping("rating", "value_number")];
     const row = {

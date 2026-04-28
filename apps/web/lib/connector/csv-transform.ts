@@ -51,8 +51,10 @@ const resolveValue = (
 /**
  * Transform a single CSV row into a FeedbackRecord using field mappings.
  *
- * Returns null if any of source_type, field_id, field_type, tenant_id are missing.
- * submission_id falls back to a random UUID when unmapped.
+ * Returns null if any of source_type, field_id, field_type, tenant_id are missing,
+ * or if submission_id is mapped but resolves empty for this row (would break
+ * idempotency on re-import). Falls back to a random UUID for submission_id only
+ * when no mapping for it exists.
  */
 export const transformCsvRowToFeedbackRecord = (
   row: Record<string, string>,
@@ -88,7 +90,11 @@ export const transformCsvRowToFeedbackRecord = (
     return null;
   }
 
-  if (!record.submission_id) {
+  if (!("submission_id" in record)) {
+    const submissionMapped = mappings.some((m) => m.targetFieldId === "submission_id");
+    if (submissionMapped) {
+      return null;
+    }
     record.submission_id = randomUUID();
   }
 
