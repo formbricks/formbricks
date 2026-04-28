@@ -3741,7 +3741,6 @@
       "source_name": "Källnamn",
       "source_type": "Källtyp",
       "source_type_cannot_be_changed": "Källtyp kan inte ändras",
-      "sources": "Källor",
       "status_error": "Fel",
       "status_live_sync": "Live sync",
       "status_paused": "Pausad",

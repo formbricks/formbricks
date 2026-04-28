@@ -6,8 +6,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { v7 as uuidv7 } from "uuid";
-import { z } from "zod";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import type { FeedbackRecordData } from "@/modules/hub/types";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
@@ -41,7 +39,24 @@ import {
   createFeedbackRecordAction,
   retrieveFeedbackRecordAction,
   updateFeedbackRecordAction,
-} from "./actions";
+} from "../actions";
+import {
+  FIELD_TYPE_OPTIONS,
+  SOURCE_TYPE_CUSTOM_VALUE,
+  SOURCE_TYPE_PRESET_OPTIONS,
+  type TFeedbackRecordFormValues,
+  ZFeedbackRecordFormValues,
+} from "../lib/types";
+import {
+  formatSourceType,
+  getCreateDefaults,
+  getReadOnlyMetadataEntries,
+  getValueFieldByType,
+  isPresetSourceType,
+  mapRecordToValues,
+  parseNumberValue,
+  toISOOrUndefined,
+} from "../lib/utils";
 
 type FeedbackRecordDrawerMode = "create" | "edit";
 
@@ -55,198 +70,6 @@ interface FeedbackRecordFormDrawerProps {
   recordId?: string;
   onSuccess: () => Promise<void> | void;
 }
-
-const FIELD_TYPE_OPTIONS = [
-  "text",
-  "categorical",
-  "nps",
-  "csat",
-  "ces",
-  "rating",
-  "number",
-  "boolean",
-  "date",
-] as const;
-
-const SOURCE_TYPE_PRESET_OPTIONS = [
-  "survey",
-  "review",
-  "feedback_form",
-  "support",
-  "social",
-  "interview",
-  "usability_test",
-  "nps_campaign",
-] as const;
-
-const SOURCE_TYPE_CUSTOM_VALUE = "__custom__";
-
-const ZMetadataEntry = z.object({
-  key: z.string().trim().min(1),
-  value: z.string(),
-});
-
-const ZFeedbackRecordFormValues = z.object({
-  id: z.string().optional(),
-  tenant_id: z.string().min(1),
-  submission_id: z.string().min(1),
-  collected_at: z.string().min(1),
-  created_at: z.string().optional(),
-  updated_at: z.string().optional(),
-  source_type: z.string().min(1),
-  source_id: z.string().optional(),
-  source_name: z.string().optional(),
-  field_id: z.string().min(1),
-  field_label: z.string().optional(),
-  field_type: z.enum(FIELD_TYPE_OPTIONS),
-  field_group_id: z.string().optional(),
-  field_group_label: z.string().optional(),
-  value_text: z.string().optional(),
-  value_number: z.string().optional(),
-  value_boolean: z.boolean().optional(),
-  value_date: z.string().optional(),
-  language: z.string().optional(),
-  user_identifier: z.string().optional(),
-  metadataEntries: z.array(ZMetadataEntry),
-});
-
-type TFeedbackRecordFormValues = z.infer<typeof ZFeedbackRecordFormValues>;
-
-const getValueFieldByType = (
-  fieldType: TFeedbackRecordFormValues["field_type"]
-): "value_text" | "value_number" | "value_boolean" | "value_date" => {
-  switch (fieldType) {
-    case "boolean":
-      return "value_boolean";
-    case "date":
-      return "value_date";
-    case "nps":
-    case "csat":
-    case "ces":
-    case "rating":
-    case "number":
-      return "value_number";
-    default:
-      return "value_text";
-  }
-};
-
-const toLocalDateTimeInput = (isoDate: string): string => {
-  const date = new Date(isoDate);
-  if (!Number.isFinite(date.getTime())) {
-    return "";
-  }
-
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  const hours = String(date.getHours()).padStart(2, "0");
-  const minutes = String(date.getMinutes()).padStart(2, "0");
-
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
-};
-
-const toISOOrUndefined = (dateTimeValue: string | undefined): string | undefined => {
-  if (!dateTimeValue) {
-    return undefined;
-  }
-
-  const parsed = new Date(dateTimeValue);
-  if (!Number.isFinite(parsed.getTime())) {
-    return undefined;
-  }
-
-  return parsed.toISOString();
-};
-
-const getCreateDefaults = (directories: { id: string; name: string }[]): TFeedbackRecordFormValues => {
-  const now = new Date();
-  const defaultDirectoryId = directories[0]?.id ?? "";
-
-  return {
-    id: "",
-    tenant_id: defaultDirectoryId,
-    submission_id: uuidv7(),
-    collected_at: toLocalDateTimeInput(now.toISOString()),
-    created_at: "",
-    updated_at: "",
-    source_type: "survey",
-    source_id: "",
-    source_name: "",
-    field_id: "",
-    field_label: "",
-    field_type: "text",
-    field_group_id: "",
-    field_group_label: "",
-    value_text: "",
-    value_number: "",
-    value_boolean: undefined,
-    value_date: "",
-    language: "",
-    user_identifier: "",
-    metadataEntries: [],
-  };
-};
-
-const mapRecordToValues = (record: FeedbackRecordData): TFeedbackRecordFormValues => {
-  const metadataEntries = Object.entries(record.metadata ?? {})
-    .filter(([, value]) => typeof value === "string")
-    .map(([key, value]) => ({
-      key,
-      value: value as string,
-    }));
-
-  return {
-    id: record.id,
-    tenant_id: record.tenant_id,
-    submission_id: record.submission_id,
-    collected_at: toLocalDateTimeInput(record.collected_at),
-    created_at: record.created_at ? toLocalDateTimeInput(record.created_at) : "",
-    updated_at: record.updated_at ? toLocalDateTimeInput(record.updated_at) : "",
-    source_type: record.source_type,
-    source_id: record.source_id ?? "",
-    source_name: record.source_name ?? "",
-    field_id: record.field_id,
-    field_label: record.field_label ?? "",
-    field_type: record.field_type,
-    field_group_id: record.field_group_id ?? "",
-    field_group_label: record.field_group_label ?? "",
-    value_text: record.value_text ?? "",
-    value_number: record.value_number == null ? "" : String(record.value_number),
-    value_boolean: record.value_boolean,
-    value_date: record.value_date ? toLocalDateTimeInput(record.value_date) : "",
-    language: record.language ?? "",
-    user_identifier: record.user_identifier ?? "",
-    metadataEntries,
-  };
-};
-
-const getReadOnlyMetadataEntries = (record: FeedbackRecordData): { key: string; value: string }[] => {
-  return Object.entries(record.metadata ?? {})
-    .filter(([, value]) => typeof value !== "string")
-    .map(([key, value]) => ({
-      key,
-      value: JSON.stringify(value),
-    }));
-};
-
-const parseNumberValue = (value: string): number | null => {
-  if (value.trim() === "") return null;
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : null;
-};
-
-const formatSourceType = (sourceType: string, t: (key: string) => string): string => {
-  switch (sourceType) {
-    case "formbricks":
-    case "formbricks_survey":
-      return t("workspace.unify.formbricks_surveys");
-    case "csv":
-      return t("workspace.unify.csv_import");
-    default:
-      return sourceType;
-  }
-};
 
 export const FeedbackRecordFormDrawer = ({
   mode,
@@ -316,14 +139,9 @@ export const FeedbackRecordFormDrawer = ({
 
       setRecord(result.data);
       form.reset(mapRecordToValues(result.data));
-      setSourceTypeMode(
-        SOURCE_TYPE_PRESET_OPTIONS.includes(result.data.source_type as never)
-          ? result.data.source_type
-          : SOURCE_TYPE_CUSTOM_VALUE
-      );
-      setCustomSourceType(
-        SOURCE_TYPE_PRESET_OPTIONS.includes(result.data.source_type as never) ? "" : result.data.source_type
-      );
+      const isPreset = isPresetSourceType(result.data.source_type);
+      setSourceTypeMode(isPreset ? result.data.source_type : SOURCE_TYPE_CUSTOM_VALUE);
+      setCustomSourceType(isPreset ? "" : result.data.source_type);
       setIsLoadingRecord(false);
     };
 
@@ -442,7 +260,15 @@ export const FeedbackRecordFormDrawer = ({
           Object.entries(record?.metadata ?? {}).filter(([, value]) => typeof value !== "string")
         );
 
-        const updatePayload: Record<string, unknown> = {
+        const updatePayload: {
+          language: string | null;
+          user_identifier: string | null;
+          metadata: Record<string, unknown>;
+          value_text?: string;
+          value_number?: number | null;
+          value_boolean?: boolean | null;
+          value_date?: string | null;
+        } = {
           language: values.language?.trim() || null,
           user_identifier: values.user_identifier?.trim() || null,
           metadata: { ...preservedMetadata, ...metadata },
@@ -461,7 +287,7 @@ export const FeedbackRecordFormDrawer = ({
         const updateResult = await updateFeedbackRecordAction({
           workspaceId,
           recordId,
-          updateInput: updatePayload as never,
+          updateInput: updatePayload,
         });
 
         if (!updateResult?.data) {

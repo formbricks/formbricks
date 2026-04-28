@@ -3741,7 +3741,6 @@
       "source_name": "Nom de la source",
       "source_type": "Type de source",
       "source_type_cannot_be_changed": "Le type de source ne peut pas être modifié",
-      "sources": "Sources",
       "status_error": "Erreur",
       "status_live_sync": "Synchronisation en direct",
       "status_paused": "En pause",

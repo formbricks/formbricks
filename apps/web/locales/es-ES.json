@@ -3741,7 +3741,6 @@
       "source_name": "Nombre de origen",
       "source_type": "Tipo de fuente",
       "source_type_cannot_be_changed": "El tipo de origen no se puede cambiar",
-      "sources": "Orígenes",
       "status_error": "Error",
       "status_live_sync": "Sincronización en vivo",
       "status_paused": "Pausado",

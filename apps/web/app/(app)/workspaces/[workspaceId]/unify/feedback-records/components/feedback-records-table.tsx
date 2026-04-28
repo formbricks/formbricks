@@ -29,7 +29,8 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
-import { CsvImportModal } from "../sources/components/csv-import-modal";
+import { CsvImportModal } from "../../sources/components/csv-import-modal";
+import { formatSourceType } from "../lib/utils";
 import { FeedbackRecordFormDrawer } from "./feedback-record-form-drawer";
 
 const RECORDS_PER_PAGE = 50;
@@ -52,18 +53,6 @@ const formatValue = (record: FeedbackRecordData, t: TFunction, locale: string): 
   if (record.value_boolean != null) return record.value_boolean ? t("common.yes") : t("common.no");
   if (record.value_date != null) return formatDateForDisplay(new Date(record.value_date), locale);
   return "—";
-};
-
-const formatSourceType = (sourceType: string, t: TFunction): string => {
-  switch (sourceType) {
-    case "formbricks":
-    case "formbricks_survey":
-      return t("workspace.unify.formbricks_surveys");
-    case "csv":
-      return t("workspace.unify.csv_import");
-    default:
-      return sourceType;
-  }
 };
 
 function truncate(str: string, maxLen: number): string {
@@ -102,22 +91,6 @@ export const FeedbackRecordsTable = ({
         .sort((a, b) => a.name.localeCompare(b.name)),
     [frdMap]
   );
-  const feedbackDirectoryName = useMemo(() => {
-    const directoryNames = Array.from(
-      new Set(
-        records
-          .map((record) => frdMap[record.tenant_id])
-          .filter((directoryName): directoryName is string => Boolean(directoryName))
-      )
-    );
-
-    if (directoryNames.length > 0) {
-      return directoryNames.join(", ");
-    }
-
-    return directories[0]?.name ?? "—";
-  }, [directories, frdMap, records]);
-
   const handleRefresh = async () => {
     if (isRefreshing) return;
     setIsRefreshing(true);
@@ -195,7 +168,6 @@ export const FeedbackRecordsTable = ({
             <p className="text-sm text-slate-500">
               {t("workspace.unify.showing_count_loaded", {
                 count: records.length,
-                directoryName: feedbackDirectoryName,
               })}
             </p>
           )}

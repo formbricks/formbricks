@@ -3741,7 +3741,6 @@
       "source_name": "Kaynak Adı",
       "source_type": "Kaynak Türü",
       "source_type_cannot_be_changed": "Kaynak türü değiştirilemez",
-      "sources": "Kaynaklar",
       "status_error": "Hata",
       "status_live_sync": "Live sync",
       "status_paused": "Duraklatıldı",

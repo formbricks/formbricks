@@ -3741,7 +3741,6 @@
       "source_name": "Nume sursă",
       "source_type": "Tip sursă",
       "source_type_cannot_be_changed": "Tipul sursei nu poate fi schimbat",
-      "sources": "Surse",
       "status_error": "Eroare",
       "status_live_sync": "Sincronizare în timp real",
       "status_paused": "Pauzat",

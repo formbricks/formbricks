@@ -3741,7 +3741,6 @@
       "source_name": "Forrásnév",
       "source_type": "Forrás típus",
       "source_type_cannot_be_changed": "A forrástípus nem módosítható",
-      "sources": "Források",
       "status_error": "Hiba",
       "status_live_sync": "Élő szinkronizálás",
       "status_paused": "Szüneteltetve",
