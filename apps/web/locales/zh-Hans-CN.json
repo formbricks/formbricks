@@ -3745,7 +3745,6 @@
       "source_name": "来源名称",
       "source_type": "来源类型",
       "source_type_cannot_be_changed": "来源类型无法更改",
-      "sources": "来源",
       "status_error": "错误",
       "status_live_sync": "Live sync",
       "status_ready": "Ready",

@@ -3745,7 +3745,6 @@
       "source_name": "來源名稱",
       "source_type": "來源類型",
       "source_type_cannot_be_changed": "來源類型無法變更",
-      "sources": "來源",
       "status_error": "錯誤",
       "status_live_sync": "Live sync",
       "status_ready": "Ready",

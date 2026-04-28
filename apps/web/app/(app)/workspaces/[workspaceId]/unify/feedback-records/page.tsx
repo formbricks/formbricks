@@ -4,7 +4,7 @@ import { getTranslate } from "@/lingodotdev/server";
 import { getFeedbackRecordDirectoriesByWorkspaceId } from "@/modules/ee/feedback-record-directory/lib/feedback-record-directory";
 import { listFeedbackRecords } from "@/modules/hub/service";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
-import { FeedbackRecordsPageClient } from "./feedback-records-page-client";
+import { FeedbackRecordsPageClient } from "./components/feedback-records-page-client";
 
 const INITIAL_PAGE_SIZE = 50;
 

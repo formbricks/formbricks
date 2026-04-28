@@ -3745,7 +3745,6 @@
       "source_name": "Nome da fonte",
       "source_type": "Tipo de fonte",
       "source_type_cannot_be_changed": "O tipo de fonte não pode ser alterado",
-      "sources": "Fontes",
       "status_error": "Erro",
       "status_live_sync": "Sincronização em direto",
       "status_ready": "Pronto",

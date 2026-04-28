@@ -2,7 +2,6 @@
 
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
-import { AuthorizationError } from "@formbricks/types/errors";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
@@ -107,9 +106,10 @@ const getWorkspaceDirectoryIds = async (workspaceId: string): Promise<Set<string
   return new Set(directories.map((directory) => directory.id));
 };
 
-const assertWorkspaceDirectoryAccess = (directoryIds: Set<string>, tenantId: string): void => {
+const assertRecordBelongsToWorkspace = (directoryIds: Set<string>, tenantId: string): void => {
   if (!directoryIds.has(tenantId)) {
-    throw new AuthorizationError("Invalid feedback record directory for this workspace");
+    // Throw a generic error indistinguishable from "not found" to prevent IDOR
+    throw new Error("Feedback record not found");
   }
 };
 
@@ -123,15 +123,17 @@ export const retrieveFeedbackRecordAction = authenticatedActionClient
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZRetrieveFeedbackRecordAction>;
     }) => {
-      await ensureAccess(ctx.user.id, parsedInput.workspaceId, "read");
+      const [, workspaceDirectoryIds] = await Promise.all([
+        ensureAccess(ctx.user.id, parsedInput.workspaceId, "read"),
+        getWorkspaceDirectoryIds(parsedInput.workspaceId),
+      ]);
 
       const recordResult = await retrieveFeedbackRecord(parsedInput.recordId);
       if (!recordResult.data || recordResult.error) {
-        throw new Error(recordResult.error?.message || "Failed to retrieve feedback record");
+        throw new Error("Feedback record not found");
       }
 
-      const workspaceDirectoryIds = await getWorkspaceDirectoryIds(parsedInput.workspaceId);
-      assertWorkspaceDirectoryAccess(workspaceDirectoryIds, recordResult.data.tenant_id);
+      assertRecordBelongsToWorkspace(workspaceDirectoryIds, recordResult.data.tenant_id);
 
       return recordResult.data;
     }
@@ -150,11 +152,31 @@ export const createFeedbackRecordAction = authenticatedActionClient
       await ensureAccess(ctx.user.id, parsedInput.workspaceId, "readWrite");
 
       const workspaceDirectoryIds = await getWorkspaceDirectoryIds(parsedInput.workspaceId);
-      assertWorkspaceDirectoryAccess(workspaceDirectoryIds, parsedInput.recordInput.tenant_id);
+      assertRecordBelongsToWorkspace(workspaceDirectoryIds, parsedInput.recordInput.tenant_id);
 
-      const createResult = await createFeedbackRecord(
-        parsedInput.recordInput as unknown as FeedbackRecordCreateParams
-      );
+      const { recordInput } = parsedInput;
+      const createParams: FeedbackRecordCreateParams = {
+        submission_id: recordInput.submission_id,
+        tenant_id: recordInput.tenant_id,
+        source_type: recordInput.source_type,
+        field_id: recordInput.field_id,
+        field_type: recordInput.field_type,
+        collected_at: recordInput.collected_at,
+        source_id: recordInput.source_id,
+        source_name: recordInput.source_name,
+        field_label: recordInput.field_label,
+        field_group_id: recordInput.field_group_id,
+        field_group_label: recordInput.field_group_label,
+        value_text: recordInput.value_text,
+        value_number: recordInput.value_number,
+        value_boolean: recordInput.value_boolean,
+        value_date: recordInput.value_date,
+        metadata: recordInput.metadata,
+        language: recordInput.language,
+        user_identifier: recordInput.user_identifier,
+      };
+
+      const createResult = await createFeedbackRecord(createParams);
       if (!createResult.data || createResult.error) {
         throw new Error(createResult.error?.message || "Failed to create feedback record");
       }
@@ -173,21 +195,36 @@ export const updateFeedbackRecordAction = authenticatedActionClient
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZUpdateFeedbackRecordAction>;
     }) => {
-      await ensureAccess(ctx.user.id, parsedInput.workspaceId, "readWrite");
+      const [, workspaceDirectoryIds] = await Promise.all([
+        ensureAccess(ctx.user.id, parsedInput.workspaceId, "readWrite"),
+        getWorkspaceDirectoryIds(parsedInput.workspaceId),
+      ]);
 
       const currentRecordResult = await retrieveFeedbackRecord(parsedInput.recordId);
       if (!currentRecordResult.data || currentRecordResult.error) {
-        throw new Error(currentRecordResult.error?.message || "Failed to retrieve feedback record");
+        throw new Error("Feedback record not found");
       }
 
-      const workspaceDirectoryIds = await getWorkspaceDirectoryIds(parsedInput.workspaceId);
-      assertWorkspaceDirectoryAccess(workspaceDirectoryIds, currentRecordResult.data.tenant_id);
+      assertRecordBelongsToWorkspace(workspaceDirectoryIds, currentRecordResult.data.tenant_id);
 
-      const updatePayload = Object.fromEntries(
-        Object.entries(parsedInput.updateInput).filter(([, value]) => value !== undefined)
-      ) as unknown as FeedbackRecordUpdateParams;
+      const { updateInput } = parsedInput;
+      const updateParams: FeedbackRecordUpdateParams = {
+        ...(updateInput.value_text !== undefined && { value_text: updateInput.value_text ?? undefined }),
+        ...(updateInput.value_number !== undefined && {
+          value_number: updateInput.value_number ?? undefined,
+        }),
+        ...(updateInput.value_boolean !== undefined && {
+          value_boolean: updateInput.value_boolean ?? undefined,
+        }),
+        ...(updateInput.value_date !== undefined && { value_date: updateInput.value_date ?? undefined }),
+        ...(updateInput.language !== undefined && { language: updateInput.language ?? undefined }),
+        ...(updateInput.metadata !== undefined && { metadata: updateInput.metadata }),
+        ...(updateInput.user_identifier !== undefined && {
+          user_identifier: updateInput.user_identifier ?? undefined,
+        }),
+      };
 
-      const updateResult = await updateFeedbackRecord(parsedInput.recordId, updatePayload);
+      const updateResult = await updateFeedbackRecord(parsedInput.recordId, updateParams);
       if (!updateResult.data || updateResult.error) {
         throw new Error(updateResult.error?.message || "Failed to update feedback record");
       }
