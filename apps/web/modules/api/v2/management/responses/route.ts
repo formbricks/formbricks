@@ -1,5 +1,6 @@
 import { Response } from "@prisma/client";
 import { NextRequest } from "next/server";
+import { logger } from "@formbricks/logger";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { formatValidationErrorsForV2Api, validateResponseData } from "@/modules/api/lib/validation";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
@@ -152,23 +153,27 @@ export const POST = async (request: Request) =>
         return handleApiError(request, createResponseResult.error, auditLog);
       }
 
-      const createdResponseForPipeline = await getResponseForPipeline(createResponseResult.data.id);
-      if (createdResponseForPipeline.ok) {
-        await sendToPipeline({
-          event: "responseCreated",
-          workspaceId,
-          surveyId: body.surveyId,
-          response: createdResponseForPipeline.data,
-        });
-
-        if (createResponseResult.data.finished) {
+      try {
+        const createdResponseForPipeline = await getResponseForPipeline(createResponseResult.data.id);
+        if (createdResponseForPipeline.ok) {
           await sendToPipeline({
-            event: "responseFinished",
+            event: "responseCreated",
             workspaceId,
             surveyId: body.surveyId,
             response: createdResponseForPipeline.data,
           });
+
+          if (createResponseResult.data.finished) {
+            await sendToPipeline({
+              event: "responseFinished",
+              workspaceId,
+              surveyId: body.surveyId,
+              response: createdResponseForPipeline.data,
+            });
+          }
         }
+      } catch (err) {
+        logger.error({ err }, "Pipeline dispatch failed");
       }
 
       if (auditLog) {
