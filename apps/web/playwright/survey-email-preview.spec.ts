@@ -114,7 +114,7 @@ test.describe("Survey Email Preview", () => {
 
     await page.goto(`/environments/${environmentId}/surveys/${survey.id}/summary`);
     await page.getByRole("button", { name: "Share survey" }).click();
-    await page.getByTestId("share-view-sidebar-tab-email").click();
+    await page.getByRole("button", { name: "Email embed" }).click();
 
     const previewShell = page.getByTestId("survey-email-preview-shell");
     const previewFrameElement = page.getByTestId("survey-email-preview-frame");
@@ -174,7 +174,7 @@ test.describe("Survey Email Preview", () => {
 
     await page.goto(`/environments/${environmentId}/surveys/${survey.id}/summary`);
     await page.getByRole("button", { name: "Share survey" }).click();
-    await page.getByTestId("share-view-sidebar-tab-email").click();
+    await page.getByRole("button", { name: "Email embed" }).click();
 
     const previewFrame = page.frameLocator('[data-testid="survey-email-preview-frame"]');
     const openTextLink = previewFrame.getByRole("link", { name: EMBED_SURVEY_PREVIEW_OPEN_TEXT_PLACEHOLDER });

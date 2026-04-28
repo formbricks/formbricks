@@ -108,7 +108,6 @@ export const ShareView = ({ tabs, activeId, setActiveId }: ShareViewProps) => {
                         <SidebarMenuItem key={tab.id}>
                           <SidebarMenuButton
                             onClick={() => setActiveId(tab.id)}
-                            data-testid={`share-view-sidebar-tab-${tab.id}`}
                             className={cn(
                               "flex w-full justify-start rounded-md p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900",
                               tab.id === activeId && !tab.disabled
@@ -139,7 +138,6 @@ export const ShareView = ({ tabs, activeId, setActiveId }: ShareViewProps) => {
                 <Button
                   variant="ghost"
                   onClick={() => setActiveId(tab.id)}
-                  data-testid={`share-view-mobile-tab-${tab.id}`}
                   disabled={tab.disabled}
                   className={cn(
                     "rounded-md px-4 py-2",
