@@ -1,5 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { createFeedbackRecord, createFeedbackRecordsBatch, listFeedbackRecords } from "./service";
+import {
+  createFeedbackRecord,
+  createFeedbackRecordsBatch,
+  listFeedbackRecords,
+  retrieveFeedbackRecord,
+  updateFeedbackRecord,
+} from "./service";
 import type { FeedbackRecordCreateParams } from "./types";
 
 vi.mock("@formbricks/logger", () => ({
@@ -118,6 +124,62 @@ describe("hub service", () => {
       expect(result.error).toBeNull();
       expect(result.data).toEqual(listResponse);
       expect(listFn).toHaveBeenCalledWith(undefined);
+    });
+  });
+
+  describe("retrieveFeedbackRecord", () => {
+    test("returns error when client is null", async () => {
+      vi.mocked(getHubClient).mockReturnValue(null);
+      const result = await retrieveFeedbackRecord("rec-1");
+      expect(result.data).toBeNull();
+      expect(result.error?.message).toContain("HUB_API_KEY");
+    });
+
+    test("returns data on success", async () => {
+      const record = { id: "rec-1", field_id: "f1" };
+      vi.mocked(getHubClient).mockReturnValue({
+        feedbackRecords: { retrieve: vi.fn().mockResolvedValue(record) },
+      } as any);
+      const result = await retrieveFeedbackRecord("rec-1");
+      expect(result.data).toEqual(record);
+      expect(result.error).toBeNull();
+    });
+
+    test("returns error on throw", async () => {
+      vi.mocked(getHubClient).mockReturnValue({
+        feedbackRecords: { retrieve: vi.fn().mockRejectedValue(new Error("Not found")) },
+      } as any);
+      const result = await retrieveFeedbackRecord("rec-1");
+      expect(result.data).toBeNull();
+      expect(result.error).toMatchObject({ message: "Not found" });
+    });
+  });
+
+  describe("updateFeedbackRecord", () => {
+    test("returns error when client is null", async () => {
+      vi.mocked(getHubClient).mockReturnValue(null);
+      const result = await updateFeedbackRecord("rec-1", { value_text: "new" });
+      expect(result.data).toBeNull();
+      expect(result.error?.message).toContain("HUB_API_KEY");
+    });
+
+    test("returns data on success", async () => {
+      const updated = { id: "rec-1", value_text: "new" };
+      vi.mocked(getHubClient).mockReturnValue({
+        feedbackRecords: { update: vi.fn().mockResolvedValue(updated) },
+      } as any);
+      const result = await updateFeedbackRecord("rec-1", { value_text: "new" });
+      expect(result.data).toEqual(updated);
+      expect(result.error).toBeNull();
+    });
+
+    test("returns error on throw", async () => {
+      vi.mocked(getHubClient).mockReturnValue({
+        feedbackRecords: { update: vi.fn().mockRejectedValue(new Error("Forbidden")) },
+      } as any);
+      const result = await updateFeedbackRecord("rec-1", { value_text: "new" });
+      expect(result.data).toBeNull();
+      expect(result.error).toMatchObject({ message: "Forbidden" });
     });
   });
 
