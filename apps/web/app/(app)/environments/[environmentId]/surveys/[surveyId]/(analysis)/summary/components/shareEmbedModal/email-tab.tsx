@@ -2,7 +2,7 @@
 
 import DOMPurify from "dompurify";
 import { CopyIcon, SendIcon } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { type SyntheticEvent, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { AuthenticationError } from "@formbricks/types/errors";
@@ -21,6 +21,7 @@ interface EmailTabProps {
 export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
   const [activeTab, setActiveTab] = useState("preview");
   const [emailHtmlPreview, setEmailHtmlPreview] = useState<string>("");
+  const [previewFrameHeight, setPreviewFrameHeight] = useState(560);
   const { t } = useTranslation();
 
   const emailHtml = useMemo(() => {
@@ -30,6 +31,40 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
       .replaceAll("?preview=true&;", "?")
       .replaceAll("?preview=true", "");
   }, [emailHtmlPreview]);
+
+  const sanitizedEmailHtml = useMemo(() => {
+    if (!emailHtmlPreview) return "";
+    return DOMPurify.sanitize(emailHtmlPreview, { ADD_ATTR: ["bgcolor", "target"] });
+  }, [emailHtmlPreview]);
+
+  const emailPreviewDocument = useMemo(() => {
+    if (!sanitizedEmailHtml) return "";
+
+    return `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="only light" />
+    <meta name="supported-color-schemes" content="light" />
+    <base target="_blank" />
+    <style>
+      :root {
+        color-scheme: only light;
+        supported-color-schemes: light;
+      }
+
+      html, body {
+        margin: 0;
+        padding: 0;
+        background: #ffffff;
+        color-scheme: only light;
+      }
+    </style>
+  </head>
+  <body>${sanitizedEmailHtml}</body>
+</html>`;
+  }, [sanitizedEmailHtml]);
 
   const tabs = [
     {
@@ -50,6 +85,25 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
 
     getData();
   }, [surveyId]);
+
+  useEffect(() => {
+    setPreviewFrameHeight(560);
+  }, [emailPreviewDocument]);
+
+  const handlePreviewFrameLoad = (event: SyntheticEvent<HTMLIFrameElement>) => {
+    const { contentDocument } = event.currentTarget;
+    if (!contentDocument) {
+      return;
+    }
+
+    const nextHeight = Math.max(
+      contentDocument.body.scrollHeight,
+      contentDocument.documentElement.scrollHeight,
+      560
+    );
+
+    setPreviewFrameHeight(nextHeight);
+  };
 
   const sendPreviewEmail = async () => {
     try {
@@ -73,7 +127,9 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
     if (activeTab === "preview") {
       return (
         <div className="space-y-4 pb-4">
-          <div className="flex-1 overflow-y-auto rounded-lg border border-slate-200 bg-white p-4">
+          <div
+            className="flex-1 overflow-y-auto rounded-lg border border-slate-200 bg-white p-4"
+            data-testid="survey-email-preview-shell">
             <div className="mb-6 flex gap-2">
               <div className="h-3 w-3 rounded-full bg-red-500" />
               <div className="h-3 w-3 rounded-full bg-amber-500" />
@@ -87,9 +143,17 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
                 {t("environments.surveys.share.send_email.email_subject_label")} :{" "}
                 {t("environments.surveys.share.send_email.formbricks_email_survey_preview")}
               </div>
-              <div className="p-2">
-                {emailHtml ? (
-                  <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(emailHtml) }} />
+              <div data-testid="survey-email-preview-content">
+                {emailPreviewDocument ? (
+                  <iframe
+                    className="mt-2 w-full rounded-md border-0 bg-white"
+                    data-testid="survey-email-preview-frame"
+                    onLoad={handlePreviewFrameLoad}
+                    sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin"
+                    srcDoc={emailPreviewDocument}
+                    style={{ height: `${previewFrameHeight}px` }}
+                    title={t("environments.surveys.share.send_email.email_preview_tab")}
+                  />
                 ) : (
                   <LoadingSpinner />
                 )}
