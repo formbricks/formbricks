@@ -1,9 +1,11 @@
 import { TFunction } from "i18next";
-import { THubFieldType } from "@formbricks/types/connector";
+import { TConnectorType, THubFieldType } from "@formbricks/types/connector";
 import { FEEDBACK_RECORD_FIELDS, MAX_CSV_VALUES, TFieldMapping, TSourceField } from "./types";
 
+export type TConnectorOptionId = TConnectorType | "api_ingestion" | "feedback_record_mcp";
+
 export interface TConnectorOption {
-  id: string;
+  id: TConnectorOptionId;
   name: string;
   description: string;
   disabled: boolean;
@@ -21,6 +23,18 @@ export const getConnectorOptions = (t: TFunction): TConnectorOption[] => [
     id: "csv",
     name: t("workspace.unify.csv_import"),
     description: t("workspace.unify.source_connect_csv_description"),
+    disabled: false,
+  },
+  {
+    id: "api_ingestion",
+    name: t("workspace.unify.api_ingestion"),
+    description: t("workspace.unify.api_ingestion_settings_description"),
+    disabled: false,
+  },
+  {
+    id: "feedback_record_mcp",
+    name: t("workspace.unify.feedback_record_mcp"),
+    description: t("workspace.unify.source_connect_feedback_record_mcp_description"),
     disabled: false,
   },
 ];
@@ -74,6 +88,32 @@ export const validateEnumMappings = (
   }
 
   return errors;
+};
+
+export const isConnectorNameValid = (name: string): boolean => name.trim().length > 0;
+
+export const areAllRequiredFieldsMapped = (mappings: TFieldMapping[]): boolean => {
+  const requiredFieldIds = new Set(
+    FEEDBACK_RECORD_FIELDS.filter((field) => field.required).map((field) => field.id)
+  );
+
+  for (const mapping of mappings) {
+    if (!requiredFieldIds.has(mapping.targetFieldId)) {
+      continue;
+    }
+
+    if (mapping.sourceFieldId || mapping.staticValue) {
+      requiredFieldIds.delete(mapping.targetFieldId);
+    }
+  }
+
+  return requiredFieldIds.size === 0;
+};
+
+export const toggleQuestionId = (currentSelection: string[], questionId: string): string[] => {
+  return currentSelection.includes(questionId)
+    ? currentSelection.filter((id) => id !== questionId)
+    : [...currentSelection, questionId];
 };
 
 export const validateCsvFile = (

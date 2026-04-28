@@ -210,3 +210,12 @@ export const createFeedbackCSVDataSchema = (t: TFunction) =>
 export type TFeedbackCSVData = z.infer<ReturnType<typeof createFeedbackCSVDataSchema>>;
 
 export type TCreateConnectorStep = "selectType" | "mapping";
+
+export const ZFormbricksConnectorForm = z.object({
+  sourceName: z.string().trim().min(1),
+  surveyId: z.string().min(1),
+  selectedQuestionIds: z.array(z.string()).min(1),
+  importHistorical: z.boolean(),
+});
+
+export type TFormbricksConnectorForm = z.infer<typeof ZFormbricksConnectorForm>;
