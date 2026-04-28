@@ -1251,7 +1251,8 @@
         "unlock_two_factor_authentication": "上位プランで二段階認証をアンロック",
         "update_personal_info": "個人情報を更新",
         "warning_cannot_delete_account": "あなたは、この組織の唯一のオーナーです。まず、別のメンバーにオーナーシップを譲渡してください。",
-        "warning_cannot_undo": "この操作は元に戻せません"
+        "warning_cannot_undo": "この操作は元に戻せません",
+        "wrong_password": "パスワードが間違っています"
       },
       "teams": {
         "add_members_description": "チームにメンバーを追加し、役割を決定します。",

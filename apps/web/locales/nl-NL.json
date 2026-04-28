@@ -1251,7 +1251,8 @@
         "unlock_two_factor_authentication": "Ontgrendel tweefactorauthenticatie met een hoger abonnement",
         "update_personal_info": "Update uw persoonlijke gegevens",
         "warning_cannot_delete_account": "U bent de enige eigenaar van deze organisatie. Draag het eigendom eerst over aan een ander lid.",
-        "warning_cannot_undo": "Dit kan niet ongedaan worden gemaakt"
+        "warning_cannot_undo": "Dit kan niet ongedaan worden gemaakt",
+        "wrong_password": "Verkeerd wachtwoord"
       },
       "teams": {
         "add_members_description": "Voeg leden toe aan het team en bepaal hun rol.",
