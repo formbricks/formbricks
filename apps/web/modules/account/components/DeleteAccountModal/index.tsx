@@ -3,11 +3,15 @@
 import { Dispatch, SetStateAction, useState } from "react";
 import toast from "react-hot-toast";
 import { Trans, useTranslation } from "react-i18next";
+import { logger } from "@formbricks/logger";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
+import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { Input } from "@/modules/ui/components/input";
+import { PasswordInput } from "@/modules/ui/components/password-input";
 import { deleteUserAction } from "./actions";
 
 interface DeleteAccountModalProps {
@@ -28,15 +32,50 @@ export const DeleteAccountModal = ({
   const { t } = useTranslation();
   const [deleting, setDeleting] = useState(false);
   const [inputValue, setInputValue] = useState("");
+  const [password, setPassword] = useState("");
   const { signOut: signOutWithAudit } = useSignOut({ id: user.id, email: user.email });
+  const isPasswordBackedAccount = user.identityProvider === "email";
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
   };
 
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      setInputValue("");
+      setPassword("");
+    }
+    setOpen(nextOpen);
+  };
+
+  const hasValidConfirmation =
+    inputValue.trim().toLowerCase() === user.email.toLowerCase() && password.length > 0;
+  const isDeleteDisabled = !isPasswordBackedAccount || !hasValidConfirmation;
+
   const deleteAccount = async () => {
     try {
+      if (!isPasswordBackedAccount) {
+        toast.error(t("environments.settings.profile.sso_account_deletion_not_available"));
+        return;
+      }
+
+      if (!hasValidConfirmation) {
+        return;
+      }
+
       setDeleting(true);
-      await deleteUserAction();
+      const result = await deleteUserAction({
+        confirmationEmail: inputValue,
+        password,
+      });
+
+      if (!result?.data?.success) {
+        const errorMessage = result
+          ? getFormattedErrorMessage(result)
+          : t("common.something_went_wrong_please_try_again");
+        logger.error({ errorMessage }, "Account deletion action failed");
+        toast.error(errorMessage || t("common.something_went_wrong_please_try_again"));
+        return;
+      }
 
       // Sign out with account deletion reason (no automatic redirect)
       await signOutWithAudit({
@@ -52,22 +91,22 @@ export const DeleteAccountModal = ({
         window.location.replace("/auth/login");
       }
     } catch (error) {
-      toast.error("Something went wrong");
+      logger.error({ error }, "Account deletion failed");
+      toast.error(t("common.something_went_wrong_please_try_again"));
     } finally {
       setDeleting(false);
-      setOpen(false);
     }
   };
 
   return (
     <DeleteDialog
       open={open}
-      setOpen={setOpen}
+      setOpen={handleOpenChange}
       deleteWhat={t("common.account")}
       onDelete={() => deleteAccount()}
       text={t("environments.settings.profile.account_deletion_consequences_warning")}
       isDeleting={deleting}
-      disabled={inputValue !== user.email}>
+      disabled={isDeleteDisabled}>
       <div className="py-5">
         <ul className="list-disc pb-6 pl-6">
           <li>
@@ -94,28 +133,50 @@ export const DeleteAccountModal = ({
           )}
           <li>{t("environments.settings.profile.warning_cannot_undo")}</li>
         </ul>
-        <form
-          data-testid="deleteAccountForm"
-          onSubmit={async (e) => {
-            e.preventDefault();
-            await deleteAccount();
-          }}>
-          <label htmlFor="deleteAccountConfirmation">
-            {t("environments.settings.profile.please_enter_email_to_confirm_account_deletion", {
-              email: user.email,
-            })}
-          </label>
-          <Input
-            data-testid="deleteAccountConfirmation"
-            value={inputValue}
-            onChange={handleInputChange}
-            placeholder={user.email}
-            className="mt-5"
-            type="text"
-            id="deleteAccountConfirmation"
-            name="deleteAccountConfirmation"
-          />
-        </form>
+        {isPasswordBackedAccount ? (
+          <form
+            data-testid="deleteAccountForm"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              await deleteAccount();
+            }}>
+            <label htmlFor="deleteAccountConfirmation">
+              {t("environments.settings.profile.please_enter_email_to_confirm_account_deletion", {
+                email: user.email,
+              })}
+            </label>
+            <Input
+              data-testid="deleteAccountConfirmation"
+              value={inputValue}
+              onChange={handleInputChange}
+              placeholder={user.email}
+              className="mt-5"
+              type="text"
+              id="deleteAccountConfirmation"
+              name="deleteAccountConfirmation"
+            />
+            <label htmlFor="deleteAccountPassword" className="mt-5 block">
+              {t("common.password")}
+            </label>
+            <PasswordInput
+              data-testid="deleteAccountPassword"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
+              className="pr-10"
+              containerClassName="mt-5"
+              id="deleteAccountPassword"
+              name="deleteAccountPassword"
+              required
+            />
+          </form>
+        ) : (
+          <Alert variant="warning">
+            <AlertDescription>
+              {t("environments.settings.profile.sso_account_deletion_not_available")}
+            </AlertDescription>
+          </Alert>
+        )}
       </div>
     </DeleteDialog>
   );
