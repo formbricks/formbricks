@@ -3,12 +3,16 @@
 import { Dispatch, SetStateAction, useState } from "react";
 import toast from "react-hot-toast";
 import { Trans, useTranslation } from "react-i18next";
+import { logger } from "@formbricks/logger";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { Input } from "@/modules/ui/components/input";
+import { PasswordInput } from "@/modules/ui/components/password-input";
 import { deleteUserAction } from "./actions";
+import { DELETE_ACCOUNT_WRONG_PASSWORD_ERROR } from "./constants";
 
 interface DeleteAccountModalProps {
   open: boolean;
@@ -28,15 +32,57 @@ export const DeleteAccountModal = ({
   const { t } = useTranslation();
   const [deleting, setDeleting] = useState(false);
   const [inputValue, setInputValue] = useState("");
+  const [password, setPassword] = useState("");
   const { signOut: signOutWithAudit } = useSignOut({ id: user.id, email: user.email });
+  const isPasswordBackedAccount = user.identityProvider === "email";
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
   };
 
+  const handleOpenChange = (nextOpen: boolean) => {
+    if (!nextOpen) {
+      setInputValue("");
+      setPassword("");
+    }
+    setOpen(nextOpen);
+  };
+
+  const hasValidEmailConfirmation = inputValue.trim().toLowerCase() === user.email.toLowerCase();
+  const hasValidConfirmation = hasValidEmailConfirmation && (!isPasswordBackedAccount || password.length > 0);
+  const isDeleteDisabled = !hasValidConfirmation;
+
   const deleteAccount = async () => {
     try {
+      if (!hasValidConfirmation) {
+        return;
+      }
+
       setDeleting(true);
-      await deleteUserAction();
+      const result = await deleteUserAction(
+        isPasswordBackedAccount
+          ? {
+              confirmationEmail: inputValue,
+              password,
+            }
+          : {
+              confirmationEmail: inputValue,
+            }
+      );
+
+      if (!result?.data?.success) {
+        const fallbackErrorMessage = t("common.something_went_wrong_please_try_again");
+        let errorMessage = fallbackErrorMessage;
+
+        if (result?.serverError === DELETE_ACCOUNT_WRONG_PASSWORD_ERROR) {
+          errorMessage = t("environments.settings.profile.wrong_password");
+        } else if (result) {
+          errorMessage = getFormattedErrorMessage(result);
+        }
+
+        logger.error({ errorMessage }, "Account deletion action failed");
+        toast.error(errorMessage || fallbackErrorMessage);
+        return;
+      }
 
       // Sign out with account deletion reason (no automatic redirect)
       await signOutWithAudit({
@@ -52,22 +98,22 @@ export const DeleteAccountModal = ({
         window.location.replace("/auth/login");
       }
     } catch (error) {
-      toast.error("Something went wrong");
+      logger.error({ error }, "Account deletion failed");
+      toast.error(t("common.something_went_wrong_please_try_again"));
     } finally {
       setDeleting(false);
-      setOpen(false);
     }
   };
 
   return (
     <DeleteDialog
       open={open}
-      setOpen={setOpen}
+      setOpen={handleOpenChange}
       deleteWhat={t("common.account")}
       onDelete={() => deleteAccount()}
       text={t("environments.settings.profile.account_deletion_consequences_warning")}
       isDeleting={deleting}
-      disabled={inputValue !== user.email}>
+      disabled={isDeleteDisabled}>
       <div className="py-5">
         <ul className="list-disc pb-6 pl-6">
           <li>
@@ -110,11 +156,29 @@ export const DeleteAccountModal = ({
             value={inputValue}
             onChange={handleInputChange}
             placeholder={user.email}
-            className="mt-5"
+            className="mt-2"
             type="text"
             id="deleteAccountConfirmation"
             name="deleteAccountConfirmation"
           />
+          {isPasswordBackedAccount && (
+            <>
+              <label htmlFor="deleteAccountPassword" className="mt-4 block">
+                {t("common.password")}
+              </label>
+              <PasswordInput
+                data-testid="deleteAccountPassword"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+                className="pr-10"
+                containerClassName="mt-2"
+                id="deleteAccountPassword"
+                name="deleteAccountPassword"
+                required
+              />
+            </>
+          )}
         </form>
       </div>
     </DeleteDialog>
