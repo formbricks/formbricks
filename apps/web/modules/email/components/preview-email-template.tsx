@@ -51,8 +51,13 @@ interface PreviewEmailStyleTokens {
 }
 
 interface PreviewFieldConfig {
-  id: string;
-  label: string;
+  readonly id: string;
+  readonly label: string;
+}
+
+interface PreviewChoiceConfig {
+  readonly id: string;
+  readonly label: Parameters<typeof getLocalizedValue>[0];
 }
 
 const EMAIL_PREVIEW_ACCENT_COLORS = {
@@ -69,6 +74,10 @@ const SINGLE_CHOICE_MARKER = "\u25EF";
 const PREVIEW_LINK_TARGET = "_blank";
 const SURVEY_EMAIL_FONT_FAMILY = "Inter, Helvetica, Arial, sans-serif";
 const FORCE_LIGHT_COLOR_SCHEME = "only light";
+const CHOICE_LINK_CLASSNAME = "block p-4 text-base font-normal leading-6 no-underline";
+const FIELD_LINK_CLASSNAME = "block w-full px-3 py-2.5 text-sm leading-5 no-underline";
+const SECONDARY_BUTTON_CLASSNAME = "inline-block px-6 py-3 text-sm font-medium leading-5 no-underline";
+const SCALE_BUTTON_CLASSNAME = "block w-full p-0 text-center text-sm font-medium no-underline";
 
 const important = (value: string): string => `${value} !important`;
 
@@ -199,14 +208,7 @@ const getChoiceBlockStyle = (styleTokens: PreviewEmailStyleTokens): React.CSSPro
 
 const getChoiceTextStyle = (styleTokens: PreviewEmailStyleTokens): React.CSSProperties => ({
   ...getForcedColorStyle(styleTokens.questionColor),
-  display: "block",
   fontFamily: styleTokens.fontFamily,
-  fontSize: "16px",
-  fontWeight: 400,
-  lineHeight: "24px",
-  margin: 0,
-  padding: "16px",
-  textDecoration: "none",
 });
 
 const getChoiceCardStyle = (styleTokens: PreviewEmailStyleTokens): React.CSSProperties => ({
@@ -214,24 +216,22 @@ const getChoiceCardStyle = (styleTokens: PreviewEmailStyleTokens): React.CSSProp
   ...getChoiceTextStyle(styleTokens),
 });
 
+const getFieldPlaceholderStyle = (styleTokens: PreviewEmailStyleTokens): React.CSSProperties => ({
+  ...getChoiceBlockStyle(styleTokens),
+  ...getForcedColorStyle("#94a3b8"),
+  fontFamily: styleTokens.fontFamily,
+});
+
 const getChoiceMarkerStyle = (styleTokens: PreviewEmailStyleTokens): React.CSSProperties => ({
   ...getForcedColorStyle(styleTokens.questionColor),
-  display: "inline-block",
   fontFamily: styleTokens.fontFamily,
-  minWidth: "20px",
 });
 
 const getSecondaryButtonStyle = (styleTokens: PreviewEmailStyleTokens): React.CSSProperties => ({
   border: important(`1px solid ${styleTokens.inputBorderColor}`),
   borderRadius: `${styleTokens.roundness}px`,
   ...getForcedColorStyle(styleTokens.questionColor),
-  display: "inline-block",
   fontFamily: styleTokens.fontFamily,
-  fontSize: "14px",
-  fontWeight: 500,
-  lineHeight: "20px",
-  padding: "12px 24px",
-  textDecoration: "none",
 });
 
 const getPrimaryButtonStyle = (
@@ -262,16 +262,9 @@ const getScaleOptionStyle = ({
   border: important(isTransparent ? "1px solid transparent" : `1px solid ${styleTokens.inputBorderColor}`),
   borderRadius: `${styleTokens.roundness}px`,
   ...getForcedColorStyle(styleTokens.questionColor),
-  display: "block",
   fontFamily: styleTokens.fontFamily,
-  fontSize: "14px",
-  fontWeight: 500,
   height: isCompact ? "40px" : "46px",
   lineHeight: isCompact ? "40px" : "46px",
-  padding: 0,
-  textAlign: "center",
-  textDecoration: "none",
-  width: "100%",
   ...(borderTopColor ? { borderTop: important(`6px solid ${borderTopColor}`) } : {}),
 });
 
@@ -282,9 +275,6 @@ const getLightModeTextStyle = (styleTokens: PreviewEmailStyleTokens): React.CSSP
 
 const getHelperLabelTextStyle = (styleTokens: PreviewEmailStyleTokens): React.CSSProperties => ({
   ...getLightModeTextStyle(styleTokens),
-  fontSize: "12px",
-  lineHeight: "18px",
-  margin: 0,
 });
 
 const getCenteredPlaceholderStyle = (
@@ -293,7 +283,6 @@ const getCenteredPlaceholderStyle = (
 ): React.CSSProperties => {
   const baseStyle: React.CSSProperties = {
     ...getChoiceBlockStyle(styleTokens),
-    marginTop: "16px",
   };
 
   return overrides ? { ...baseStyle, ...overrides } : baseStyle;
@@ -305,12 +294,15 @@ const getCenteredPlaceholderTextStyle = (
 ): React.CSSProperties => {
   const baseStyle: React.CSSProperties = {
     ...getChoiceTextStyle(styleTokens),
-    padding: "12px 16px",
-    textAlign: "center",
   };
 
   return overrides ? { ...baseStyle, ...overrides } : baseStyle;
 };
+
+const getScaleColumnStyle = (optionIndex: number, optionCount: number): React.CSSProperties => ({
+  paddingLeft: optionIndex === 0 ? "0" : "4px",
+  width: `${(100 / optionCount).toFixed(4)}%`,
+});
 
 const renderChoiceLabel = (
   marker: string,
@@ -318,7 +310,9 @@ const renderChoiceLabel = (
   styleTokens: PreviewEmailStyleTokens
 ): React.JSX.Element => (
   <>
-    <span style={getChoiceMarkerStyle(styleTokens)}>{marker}</span>
+    <span className="inline-block min-w-5" style={getChoiceMarkerStyle(styleTokens)}>
+      {marker}
+    </span>
     <span>{label}</span>
   </>
 );
@@ -483,74 +477,49 @@ export async function PreviewEmailTemplate({
         : "";
 
       return (
-        <EmailTemplateWrapper styling={styling}>
-          <PreviewElementHeader
-            headline={headline}
-            subheader={subheader}
-            className="mr-8"
-            styleTokens={styleTokens}
-          />
-          <Section style={{ width: "100%" }}>
+        <PreviewQuestionCard headline={headline} styleTokens={styleTokens} subheader={subheader} t={t}>
+          <Section className="w-full">
             <Link
+              className="mt-4 block min-h-20 no-underline"
               href={previewSurveyUrl}
               style={getCenteredPlaceholderStyle(styleTokens, {
                 ...getForcedBackgroundStyle("#f8fafc"),
-                display: "block",
-                minHeight: "80px",
-                textDecoration: "none",
               })}
               target={PREVIEW_LINK_TARGET}>
               <Text
+                className="m-0 px-4 py-7 text-left text-base font-normal leading-6"
                 style={getCenteredPlaceholderTextStyle(styleTokens, {
                   ...getForcedColorStyle("#94a3b8"),
-                  padding: "28px 16px",
-                  textAlign: "left",
                 })}>
                 {openTextPlaceholder || "\u00A0"}
               </Text>
             </Link>
           </Section>
-          <EmailFooter
-            fontFamily={styleTokens.fontFamily}
-            signatureColor={styleTokens.signatureColor}
-            t={t}
-          />
-        </EmailTemplateWrapper>
+        </PreviewQuestionCard>
       );
     }
     case TSurveyElementTypeEnum.Consent:
       return (
-        <EmailTemplateWrapper styling={styling}>
-          <PreviewElementHeader
-            headline={headline}
-            subheader={subheader}
-            className="mr-8"
-            styleTokens={styleTokens}
-          />
+        <PreviewQuestionCard headline={headline} styleTokens={styleTokens} subheader={subheader} t={t}>
           <Container
+            className="m-0 mt-4 w-full max-w-none p-4"
             bgcolor={styleTokens.inputColor}
             style={{
               ...getChoiceBlockStyle(styleTokens),
-              margin: "16px 0 0",
-              maxWidth: "none",
-              padding: "16px",
-              width: "100%",
             }}>
             <Text
+              className="m-0 text-base font-medium leading-6"
               style={{
                 ...getForcedColorStyle(styleTokens.questionColor),
                 fontFamily: styleTokens.fontFamily,
-                fontSize: "16px",
-                fontWeight: 500,
-                lineHeight: "24px",
-                margin: 0,
               }}>
               {getLocalizedValue(firstQuestion.label, defaultLanguageCode)}
             </Text>
           </Container>
-          <Section style={{ marginTop: "16px", textAlign: "right" }}>
+          <Section className="mt-4 text-right">
             {!firstQuestion.required && (
               <EmailButton
+                className={SECONDARY_BUTTON_CLASSNAME}
                 style={getSecondaryButtonStyle(styleTokens)}
                 href={getPrefilledSurveyUrl(surveyUrl, firstQuestion.id, "dismissed")}
                 target={PREVIEW_LINK_TARGET}>
@@ -558,6 +527,7 @@ export async function PreviewEmailTemplate({
               </EmailButton>
             )}
             <EmailButton
+              className={SECONDARY_BUTTON_CLASSNAME}
               style={{
                 ...getPrimaryButtonStyle(styleTokens, brandColor),
                 marginLeft: firstQuestion.required ? 0 : "8px",
@@ -567,85 +537,53 @@ export async function PreviewEmailTemplate({
               {t("emails.accept")}
             </EmailButton>
           </Section>
-          <EmailFooter
-            fontFamily={styleTokens.fontFamily}
-            signatureColor={styleTokens.signatureColor}
-            t={t}
-          />
-        </EmailTemplateWrapper>
+        </PreviewQuestionCard>
       );
     case TSurveyElementTypeEnum.NPS:
       return (
-        <EmailTemplateWrapper styling={styling}>
-          <Section style={{ width: "100%" }}>
+        <PreviewEmailCard styleTokens={styleTokens} t={t}>
+          <Section className="w-full">
             <PreviewElementHeader headline={headline} subheader={subheader} styleTokens={styleTokens} />
-            <Container style={{ margin: "16px 0 0", maxWidth: "none", width: "100%" }}>
-              <Section style={{ width: "100%" }}>
+            <Container className="mx-0 mt-4 w-full max-w-none">
+              <Section className="w-full">
                 <Row>
                   {Array.from({ length: 11 }, (_, i) => (
-                    <Column
+                    <PreviewScaleOptionColumn
                       key={i}
-                      style={{
-                        paddingLeft: i === 0 ? "0" : "4px",
-                        width: `${(100 / 11).toFixed(4)}%`,
-                      }}>
-                      <EmailButton
-                        href={getPrefilledSurveyUrl(surveyUrl, firstQuestion.id, i.toString())}
-                        style={getScaleOptionStyle({
-                          styleTokens,
-                          borderTopColor:
-                            firstQuestion.isColorCodingEnabled && firstQuestion.scale === "number"
-                              ? getPreviewAccentColor(getNPSOptionColor(i + 1))
-                              : undefined,
-                          isCompact: firstQuestion.scale !== "number",
-                        })}
-                        target={PREVIEW_LINK_TARGET}>
-                        {i}
-                      </EmailButton>
-                    </Column>
+                      href={getPrefilledSurveyUrl(surveyUrl, firstQuestion.id, i.toString())}
+                      optionCount={11}
+                      optionIndex={i}
+                      optionStyle={getScaleOptionStyle({
+                        styleTokens,
+                        borderTopColor:
+                          firstQuestion.isColorCodingEnabled && firstQuestion.scale === "number"
+                            ? getPreviewAccentColor(getNPSOptionColor(i + 1))
+                            : undefined,
+                        isCompact: firstQuestion.scale !== "number",
+                      })}>
+                      {i}
+                    </PreviewScaleOptionColumn>
                   ))}
                 </Row>
               </Section>
-              <Section style={{ marginTop: "8px", width: "100%" }}>
-                <Row>
-                  <Column>
-                    <Text style={getHelperLabelTextStyle(styleTokens)}>
-                      {getLocalizedValue(firstQuestion.lowerLabel, defaultLanguageCode)}
-                    </Text>
-                  </Column>
-                  <Column style={{ textAlign: "right" }}>
-                    <Text
-                      style={{
-                        ...getHelperLabelTextStyle(styleTokens),
-                        textAlign: "right",
-                      }}>
-                      {getLocalizedValue(firstQuestion.upperLabel, defaultLanguageCode)}
-                    </Text>
-                  </Column>
-                </Row>
-              </Section>
+              <PreviewScaleLabels
+                defaultLanguageCode={defaultLanguageCode}
+                lowerLabel={firstQuestion.lowerLabel}
+                styleTokens={styleTokens}
+                upperLabel={firstQuestion.upperLabel}
+              />
             </Container>
-            <EmailFooter
-              fontFamily={styleTokens.fontFamily}
-              signatureColor={styleTokens.signatureColor}
-              t={t}
-            />
           </Section>
-        </EmailTemplateWrapper>
+        </PreviewEmailCard>
       );
     case TSurveyElementTypeEnum.CTA: {
       const ctaElement = firstQuestion as TSurveyCTAElement;
       return (
-        <EmailTemplateWrapper styling={styling}>
-          <PreviewElementHeader
-            headline={headline}
-            subheader={subheader}
-            className="mr-8"
-            styleTokens={styleTokens}
-          />
+        <PreviewQuestionCard headline={headline} styleTokens={styleTokens} subheader={subheader} t={t}>
           {ctaElement.buttonExternal && ctaElement.ctaButtonLabel && ctaElement.buttonUrl && (
-            <Section style={{ marginTop: "16px", textAlign: "right" }}>
+            <Section className="mt-4 text-right">
               <EmailButton
+                className={SECONDARY_BUTTON_CLASSNAME}
                 style={getSecondaryButtonStyle(styleTokens)}
                 href={ctaElement.buttonUrl}
                 target={PREVIEW_LINK_TARGET}>
@@ -653,179 +591,89 @@ export async function PreviewEmailTemplate({
               </EmailButton>
             </Section>
           )}
-          <EmailFooter
-            fontFamily={styleTokens.fontFamily}
-            signatureColor={styleTokens.signatureColor}
-            t={t}
-          />
-        </EmailTemplateWrapper>
+        </PreviewQuestionCard>
       );
     }
     case TSurveyElementTypeEnum.Rating:
       return (
-        <EmailTemplateWrapper styling={styling}>
-          <Section style={{ width: "100%" }}>
+        <PreviewEmailCard styleTokens={styleTokens} t={t}>
+          <Section className="w-full">
             <PreviewElementHeader headline={headline} subheader={subheader} styleTokens={styleTokens} />
-            <Container style={{ margin: "16px 0 0", maxWidth: "none", width: "100%" }}>
-              <Section style={{ width: "100%" }}>
+            <Container className="mx-0 mt-4 w-full max-w-none">
+              <Section className="w-full">
                 <Row>
                   {Array.from({ length: firstQuestion.range }, (_, i) => (
-                    <Column
+                    <PreviewScaleOptionColumn
                       key={i}
-                      style={{
-                        paddingLeft: i === 0 ? "0" : "4px",
-                        width: `${(100 / firstQuestion.range).toFixed(4)}%`,
-                      }}>
-                      <EmailButton
-                        style={getScaleOptionStyle({
-                          styleTokens,
-                          borderTopColor:
-                            firstQuestion.isColorCodingEnabled && firstQuestion.scale === "number"
-                              ? getPreviewAccentColor(getRatingNumberOptionColor(firstQuestion.range, i + 1))
-                              : undefined,
-                          isTransparent: firstQuestion.scale === "star",
-                        })}
-                        href={getPrefilledSurveyUrl(surveyUrl, firstQuestion.id, (i + 1).toString())}
-                        target={PREVIEW_LINK_TARGET}>
-                        {getRatingContent(
-                          firstQuestion.scale,
-                          i,
-                          firstQuestion.range,
-                          firstQuestion.isColorCodingEnabled
-                        )}
-                      </EmailButton>
-                    </Column>
+                      href={getPrefilledSurveyUrl(surveyUrl, firstQuestion.id, (i + 1).toString())}
+                      optionCount={firstQuestion.range}
+                      optionIndex={i}
+                      optionStyle={getScaleOptionStyle({
+                        styleTokens,
+                        borderTopColor:
+                          firstQuestion.isColorCodingEnabled && firstQuestion.scale === "number"
+                            ? getPreviewAccentColor(getRatingNumberOptionColor(firstQuestion.range, i + 1))
+                            : undefined,
+                        isTransparent: firstQuestion.scale === "star",
+                      })}>
+                      {getRatingContent(
+                        firstQuestion.scale,
+                        i,
+                        firstQuestion.range,
+                        firstQuestion.isColorCodingEnabled
+                      )}
+                    </PreviewScaleOptionColumn>
                   ))}
                 </Row>
               </Section>
-              <Section style={{ marginTop: "8px", width: "100%" }}>
-                <Row>
-                  <Column>
-                    <Text style={getHelperLabelTextStyle(styleTokens)}>
-                      {getLocalizedValue(firstQuestion.lowerLabel, defaultLanguageCode)}
-                    </Text>
-                  </Column>
-                  <Column style={{ textAlign: "right" }}>
-                    <Text
-                      style={{
-                        ...getHelperLabelTextStyle(styleTokens),
-                        textAlign: "right",
-                      }}>
-                      {getLocalizedValue(firstQuestion.upperLabel, defaultLanguageCode)}
-                    </Text>
-                  </Column>
-                </Row>
-              </Section>
+              <PreviewScaleLabels
+                defaultLanguageCode={defaultLanguageCode}
+                lowerLabel={firstQuestion.lowerLabel}
+                styleTokens={styleTokens}
+                upperLabel={firstQuestion.upperLabel}
+              />
             </Container>
-            <EmailFooter
-              fontFamily={styleTokens.fontFamily}
-              signatureColor={styleTokens.signatureColor}
-              t={t}
-            />
           </Section>
-        </EmailTemplateWrapper>
+        </PreviewEmailCard>
       );
     case TSurveyElementTypeEnum.MultipleChoiceMulti:
       return (
-        <EmailTemplateWrapper styling={styling}>
-          <PreviewElementHeader
-            headline={headline}
-            subheader={subheader}
-            className="mr-8"
+        <PreviewQuestionCard headline={headline} styleTokens={styleTokens} subheader={subheader} t={t}>
+          <PreviewChoiceList
+            choices={firstQuestion.choices}
+            defaultLanguageCode={defaultLanguageCode}
+            getHref={(choiceId) => getPrefilledSurveyUrl(surveyUrl, firstQuestion.id, choiceId)}
+            marker={MULTI_CHOICE_MARKER}
             styleTokens={styleTokens}
           />
-          <Container className="mx-0 max-w-none">
-            {firstQuestion.choices.map((choice) => (
-              <Section key={choice.id} style={{ marginTop: "8px", width: "100%" }}>
-                <Link
-                  href={getPrefilledSurveyUrl(surveyUrl, firstQuestion.id, choice.id)}
-                  style={getChoiceCardStyle(styleTokens)}
-                  target={PREVIEW_LINK_TARGET}>
-                  {renderChoiceLabel(
-                    MULTI_CHOICE_MARKER,
-                    getLocalizedValue(choice.label, defaultLanguageCode),
-                    styleTokens
-                  )}
-                </Link>
-              </Section>
-            ))}
-          </Container>
-          <EmailFooter
-            fontFamily={styleTokens.fontFamily}
-            signatureColor={styleTokens.signatureColor}
-            t={t}
-          />
-        </EmailTemplateWrapper>
+        </PreviewQuestionCard>
       );
     case TSurveyElementTypeEnum.Ranking:
       return (
-        <EmailTemplateWrapper styling={styling}>
-          <PreviewElementHeader
-            headline={headline}
-            subheader={subheader}
-            className="mr-8"
+        <PreviewQuestionCard headline={headline} styleTokens={styleTokens} subheader={subheader} t={t}>
+          <PreviewChoiceList
+            choices={firstQuestion.choices}
+            defaultLanguageCode={defaultLanguageCode}
+            getHref={() => previewSurveyUrl}
             styleTokens={styleTokens}
           />
-          <Container className="mx-0 max-w-none">
-            {firstQuestion.choices.map((choice) => (
-              <Section key={choice.id} style={{ marginTop: "8px", width: "100%" }}>
-                <Link
-                  href={previewSurveyUrl}
-                  style={getChoiceCardStyle(styleTokens)}
-                  target={PREVIEW_LINK_TARGET}>
-                  {getLocalizedValue(choice.label, defaultLanguageCode)}
-                </Link>
-              </Section>
-            ))}
-          </Container>
-          <EmailFooter
-            fontFamily={styleTokens.fontFamily}
-            signatureColor={styleTokens.signatureColor}
-            t={t}
-          />
-        </EmailTemplateWrapper>
+        </PreviewQuestionCard>
       );
     case TSurveyElementTypeEnum.MultipleChoiceSingle:
       return (
-        <EmailTemplateWrapper styling={styling}>
-          <PreviewElementHeader
-            headline={headline}
-            subheader={subheader}
-            className="mr-8"
+        <PreviewQuestionCard headline={headline} styleTokens={styleTokens} subheader={subheader} t={t}>
+          <PreviewChoiceList
+            choices={firstQuestion.choices}
+            defaultLanguageCode={defaultLanguageCode}
+            getHref={(choiceId) => getPrefilledSurveyUrl(surveyUrl, firstQuestion.id, choiceId)}
+            marker={SINGLE_CHOICE_MARKER}
             styleTokens={styleTokens}
           />
-          <Container className="mx-0 max-w-none">
-            {firstQuestion.choices.map((choice) => (
-              <Section key={choice.id} style={{ marginTop: "8px", width: "100%" }}>
-                <Link
-                  href={getPrefilledSurveyUrl(surveyUrl, firstQuestion.id, choice.id)}
-                  style={getChoiceCardStyle(styleTokens)}
-                  target={PREVIEW_LINK_TARGET}>
-                  {renderChoiceLabel(
-                    SINGLE_CHOICE_MARKER,
-                    getLocalizedValue(choice.label, defaultLanguageCode),
-                    styleTokens
-                  )}
-                </Link>
-              </Section>
-            ))}
-          </Container>
-          <EmailFooter
-            fontFamily={styleTokens.fontFamily}
-            signatureColor={styleTokens.signatureColor}
-            t={t}
-          />
-        </EmailTemplateWrapper>
+        </PreviewQuestionCard>
       );
     case TSurveyElementTypeEnum.PictureSelection:
       return (
-        <EmailTemplateWrapper styling={styling}>
-          <PreviewElementHeader
-            headline={headline}
-            subheader={subheader}
-            className="mr-8"
-            styleTokens={styleTokens}
-          />
+        <PreviewQuestionCard headline={headline} styleTokens={styleTokens} subheader={subheader} t={t}>
           <Section className="mx-0 mt-4">
             {firstQuestion.choices.map((choice) => (
               <Link
@@ -837,20 +685,16 @@ export async function PreviewEmailTemplate({
               </Link>
             ))}
           </Section>
-          <EmailFooter
-            fontFamily={styleTokens.fontFamily}
-            signatureColor={styleTokens.signatureColor}
-            t={t}
-          />
-        </EmailTemplateWrapper>
+        </PreviewQuestionCard>
       );
     case TSurveyElementTypeEnum.Cal:
       return (
-        <EmailTemplateWrapper styling={styling}>
+        <PreviewEmailCard styleTokens={styleTokens} t={t}>
           <Container>
             <PreviewElementHeader headline={headline} subheader={subheader} styleTokens={styleTokens} />
-            <Section style={{ marginTop: "16px", textAlign: "center" }}>
+            <Section className="mt-4 text-center">
               <EmailButton
+                className={SECONDARY_BUTTON_CLASSNAME}
                 href={previewSurveyUrl}
                 style={getPrimaryButtonStyle(styleTokens, brandColor)}
                 target={PREVIEW_LINK_TARGET}>
@@ -858,54 +702,29 @@ export async function PreviewEmailTemplate({
               </EmailButton>
             </Section>
           </Container>
-          <EmailFooter
-            fontFamily={styleTokens.fontFamily}
-            signatureColor={styleTokens.signatureColor}
-            t={t}
-          />
-        </EmailTemplateWrapper>
+        </PreviewEmailCard>
       );
     case TSurveyElementTypeEnum.Date:
       return (
-        <EmailTemplateWrapper styling={styling}>
-          <PreviewElementHeader
-            headline={headline}
-            subheader={subheader}
-            className="mr-8"
-            styleTokens={styleTokens}
-          />
-          <Section style={{ width: "100%" }}>
+        <PreviewQuestionCard headline={headline} styleTokens={styleTokens} subheader={subheader} t={t}>
+          <Section className="w-full">
             <Link
+              className="mt-4 block no-underline"
               href={previewSurveyUrl}
-              style={getCenteredPlaceholderStyle(styleTokens, {
-                display: "block",
-                textDecoration: "none",
-              })}
+              style={getCenteredPlaceholderStyle(styleTokens)}
               target={PREVIEW_LINK_TARGET}>
               <Text
-                style={getCenteredPlaceholderTextStyle(styleTokens, {
-                  fontSize: "14px",
-                })}>
+                className="m-0 px-4 py-3 text-center text-sm leading-6"
+                style={getCenteredPlaceholderTextStyle(styleTokens)}>
                 {t("emails.select_a_date")}
               </Text>
             </Link>
           </Section>
-          <EmailFooter
-            fontFamily={styleTokens.fontFamily}
-            signatureColor={styleTokens.signatureColor}
-            t={t}
-          />
-        </EmailTemplateWrapper>
+        </PreviewQuestionCard>
       );
     case TSurveyElementTypeEnum.Matrix:
       return (
-        <EmailTemplateWrapper styling={styling}>
-          <PreviewElementHeader
-            headline={headline}
-            subheader={subheader}
-            className="mr-8"
-            styleTokens={styleTokens}
-          />
+        <PreviewQuestionCard headline={headline} styleTokens={styleTokens} subheader={subheader} t={t}>
           <Container className="mx-0">
             <Section className="w-full table-auto">
               <Row>
@@ -956,147 +775,231 @@ export async function PreviewEmailTemplate({
               })}
             </Section>
           </Container>
-          <Section style={{ marginTop: "16px", textAlign: "right" }}>
+          <Section className="mt-4 text-right">
             <EmailButton
+              className={SECONDARY_BUTTON_CLASSNAME}
               href={previewSurveyUrl}
               style={getSecondaryButtonStyle(styleTokens)}
               target={PREVIEW_LINK_TARGET}>
               {t("common.continue")}
             </EmailButton>
           </Section>
-          <EmailFooter
-            fontFamily={styleTokens.fontFamily}
-            signatureColor={styleTokens.signatureColor}
-            t={t}
-          />
-        </EmailTemplateWrapper>
+        </PreviewQuestionCard>
       );
     case TSurveyElementTypeEnum.Address: {
       const addressFields = getAddressPreviewFields(firstQuestion, defaultLanguageCode);
 
       return (
-        <EmailTemplateWrapper styling={styling}>
-          <PreviewElementHeader
-            headline={headline}
-            subheader={subheader}
-            className="mr-8"
-            styleTokens={styleTokens}
-          />
-          {addressFields.map((field) => (
-            <Section key={field.id} style={{ marginTop: "16px", width: "100%" }}>
-              <Link
-                href={previewSurveyUrl}
-                style={{
-                  ...getChoiceBlockStyle(styleTokens),
-                  ...getForcedColorStyle("#94a3b8"),
-                  display: "block",
-                  fontFamily: styleTokens.fontFamily,
-                  fontSize: "14px",
-                  lineHeight: "20px",
-                  padding: "10px 12px",
-                  textDecoration: "none",
-                  width: "100%",
-                }}
-                target={PREVIEW_LINK_TARGET}>
-                {field.label}
-              </Link>
-            </Section>
-          ))}
-          <EmailFooter
-            fontFamily={styleTokens.fontFamily}
-            signatureColor={styleTokens.signatureColor}
-            t={t}
-          />
-        </EmailTemplateWrapper>
+        <PreviewQuestionCard headline={headline} styleTokens={styleTokens} subheader={subheader} t={t}>
+          <PreviewFieldList fields={addressFields} href={previewSurveyUrl} styleTokens={styleTokens} />
+        </PreviewQuestionCard>
       );
     }
     case TSurveyElementTypeEnum.ContactInfo: {
       const contactFields = getContactPreviewFields(firstQuestion, defaultLanguageCode);
 
       return (
-        <EmailTemplateWrapper styling={styling}>
-          <PreviewElementHeader
-            headline={headline}
-            subheader={subheader}
-            className="mr-8"
-            styleTokens={styleTokens}
-          />
-          {contactFields.map((field) => (
-            <Section key={field.id} style={{ marginTop: "16px", width: "100%" }}>
-              <Link
-                href={previewSurveyUrl}
-                style={{
-                  ...getChoiceBlockStyle(styleTokens),
-                  ...getForcedColorStyle("#94a3b8"),
-                  display: "block",
-                  fontFamily: styleTokens.fontFamily,
-                  fontSize: "14px",
-                  lineHeight: "20px",
-                  padding: "10px 12px",
-                  textDecoration: "none",
-                  width: "100%",
-                }}
-                target={PREVIEW_LINK_TARGET}>
-                {field.label}
-              </Link>
-            </Section>
-          ))}
-          <EmailFooter
-            fontFamily={styleTokens.fontFamily}
-            signatureColor={styleTokens.signatureColor}
-            t={t}
-          />
-        </EmailTemplateWrapper>
+        <PreviewQuestionCard headline={headline} styleTokens={styleTokens} subheader={subheader} t={t}>
+          <PreviewFieldList fields={contactFields} href={previewSurveyUrl} styleTokens={styleTokens} />
+        </PreviewQuestionCard>
       );
     }
     case TSurveyElementTypeEnum.FileUpload:
       return (
-        <EmailTemplateWrapper styling={styling}>
-          <PreviewElementHeader
-            headline={headline}
-            subheader={subheader}
-            className="mr-8"
-            styleTokens={styleTokens}
-          />
-          <Section style={{ width: "100%" }}>
+        <PreviewQuestionCard headline={headline} styleTokens={styleTokens} subheader={subheader} t={t}>
+          <Section className="w-full">
             <Link
+              className="mt-4 block min-h-24 no-underline"
               href={previewSurveyUrl}
               style={getCenteredPlaceholderStyle(styleTokens, {
                 ...getForcedBackgroundStyle("#f8fafc"),
                 border: important(`1px dashed ${styleTokens.inputBorderColor}`),
-                display: "block",
-                minHeight: "96px",
-                textDecoration: "none",
               })}
               target={PREVIEW_LINK_TARGET}>
               <Text
+                className="m-0 px-4 py-3 text-center text-sm leading-6"
                 style={getCenteredPlaceholderTextStyle(styleTokens, {
                   ...getForcedColorStyle("#64748b"),
-                  fontSize: "14px",
-                  lineHeight: "24px",
                 })}>
                 {t("emails.click_or_drag_to_upload_files")}
               </Text>
             </Link>
           </Section>
-          <EmailFooter
-            fontFamily={styleTokens.fontFamily}
-            signatureColor={styleTokens.signatureColor}
-            t={t}
-          />
-        </EmailTemplateWrapper>
+        </PreviewQuestionCard>
       );
   }
 }
 
-function EmailTemplateWrapper({
+function PreviewQuestionCard({
   children,
-  styling,
+  headline,
+  styleTokens,
+  subheader,
+  t,
 }: Readonly<{
   children: React.ReactNode;
-  styling: TSurveyStyling;
+  headline: string;
+  styleTokens: PreviewEmailStyleTokens;
+  subheader?: string;
+  t: TFunction;
 }>): React.JSX.Element {
-  const styleTokens = getPreviewEmailStyleTokens(styling);
+  return (
+    <PreviewEmailCard styleTokens={styleTokens} t={t}>
+      <PreviewElementHeader
+        className="mr-8"
+        headline={headline}
+        styleTokens={styleTokens}
+        subheader={subheader}
+      />
+      {children}
+    </PreviewEmailCard>
+  );
+}
+
+function PreviewEmailCard({
+  children,
+  styleTokens,
+  t,
+}: Readonly<{
+  children: React.ReactNode;
+  styleTokens: PreviewEmailStyleTokens;
+  t: TFunction;
+}>): React.JSX.Element {
+  return (
+    <EmailTemplateWrapper styleTokens={styleTokens}>
+      {children}
+      <EmailFooter fontFamily={styleTokens.fontFamily} signatureColor={styleTokens.signatureColor} t={t} />
+    </EmailTemplateWrapper>
+  );
+}
+
+function PreviewChoiceList({
+  choices,
+  defaultLanguageCode,
+  getHref,
+  marker,
+  styleTokens,
+}: Readonly<{
+  choices: ReadonlyArray<PreviewChoiceConfig>;
+  defaultLanguageCode: string;
+  getHref: (choiceId: string) => string;
+  marker?: string;
+  styleTokens: PreviewEmailStyleTokens;
+}>): React.JSX.Element {
+  return (
+    <Container className="mx-0 max-w-none">
+      {choices.map((choice) => {
+        const label = getLocalizedValue(choice.label, defaultLanguageCode);
+
+        return (
+          <Section className="mt-2 w-full" key={choice.id}>
+            <Link
+              className={CHOICE_LINK_CLASSNAME}
+              href={getHref(choice.id)}
+              style={getChoiceCardStyle(styleTokens)}
+              target={PREVIEW_LINK_TARGET}>
+              {marker ? renderChoiceLabel(marker, label, styleTokens) : label}
+            </Link>
+          </Section>
+        );
+      })}
+    </Container>
+  );
+}
+
+function PreviewFieldList({
+  fields,
+  href,
+  styleTokens,
+}: Readonly<{
+  fields: ReadonlyArray<PreviewFieldConfig>;
+  href: string;
+  styleTokens: PreviewEmailStyleTokens;
+}>): React.JSX.Element {
+  return (
+    <>
+      {fields.map((field) => (
+        <Section className="mt-4 w-full" key={field.id}>
+          <Link
+            className={FIELD_LINK_CLASSNAME}
+            href={href}
+            style={getFieldPlaceholderStyle(styleTokens)}
+            target={PREVIEW_LINK_TARGET}>
+            {field.label}
+          </Link>
+        </Section>
+      ))}
+    </>
+  );
+}
+
+function PreviewScaleOptionColumn({
+  children,
+  href,
+  optionCount,
+  optionIndex,
+  optionStyle,
+}: Readonly<{
+  children: React.ReactNode;
+  href: string;
+  optionCount: number;
+  optionIndex: number;
+  optionStyle: React.CSSProperties;
+}>): React.JSX.Element {
+  return (
+    <Column style={getScaleColumnStyle(optionIndex, optionCount)}>
+      <EmailButton
+        className={SCALE_BUTTON_CLASSNAME}
+        href={href}
+        style={optionStyle}
+        target={PREVIEW_LINK_TARGET}>
+        {children}
+      </EmailButton>
+    </Column>
+  );
+}
+
+function PreviewScaleLabels({
+  defaultLanguageCode,
+  lowerLabel,
+  styleTokens,
+  upperLabel,
+}: Readonly<{
+  defaultLanguageCode: string;
+  lowerLabel: Parameters<typeof getLocalizedValue>[0];
+  styleTokens: PreviewEmailStyleTokens;
+  upperLabel: Parameters<typeof getLocalizedValue>[0];
+}>): React.JSX.Element {
+  return (
+    <Section className="mt-2 w-full">
+      <Row>
+        <Column>
+          <Text className="m-0 text-xs leading-[18px]" style={getHelperLabelTextStyle(styleTokens)}>
+            {getLocalizedValue(lowerLabel, defaultLanguageCode)}
+          </Text>
+        </Column>
+        <Column style={{ textAlign: "right" }}>
+          <Text
+            className="m-0 text-xs leading-[18px]"
+            style={{
+              ...getHelperLabelTextStyle(styleTokens),
+              textAlign: "right",
+            }}>
+            {getLocalizedValue(upperLabel, defaultLanguageCode)}
+          </Text>
+        </Column>
+      </Row>
+    </Section>
+  );
+}
+
+function EmailTemplateWrapper({
+  children,
+  styleTokens,
+}: Readonly<{
+  children: React.ReactNode;
+  styleTokens: PreviewEmailStyleTokens;
+}>): React.JSX.Element {
   const colors = {
     "brand-color": styleTokens.brandColor,
     "card-bg-color": styleTokens.cardBackgroundColor,
@@ -1128,9 +1031,6 @@ function EmailTemplateWrapper({
           borderRadius: `${styleTokens.roundness}px`,
           ...getForcedColorStyle(styleTokens.questionColor),
           fontFamily: styleTokens.fontFamily,
-          margin: "8px 0",
-          padding: "32px",
-          width: "100%",
         }}>
         {children}
       </Section>
@@ -1144,11 +1044,11 @@ function EmailFooter({
   t,
 }: Readonly<{ fontFamily: string; signatureColor: string; t: TFunction }>): React.JSX.Element {
   return (
-    <Container className="m-auto mt-8 text-center" style={{ margin: "32px auto 0", textAlign: "center" }}>
+    <Container className="mx-auto mt-8 text-center">
       <Link
         className="text-signature-color text-xs"
         href="https://formbricks.com?utm_source=email_branding"
-        style={{ ...getForcedColorStyle(signatureColor), fontFamily, fontSize: "12px" }}
+        style={{ ...getForcedColorStyle(signatureColor), fontFamily }}
         target={PREVIEW_LINK_TARGET}>
         {t("common.powered_by_formbricks")}
       </Link>

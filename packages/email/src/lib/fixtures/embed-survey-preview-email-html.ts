@@ -18,13 +18,11 @@ export const embedSurveyPreviewEmailHtml = `
       margin-top:0.5rem;
       border-style:solid;
       border-width:1px;
-      padding:32px;
+      padding:2rem;
       color-scheme:only light;
       color:#1f2937 !important;
       font-family:Inter, Helvetica, Arial, sans-serif;
-      border:1px solid #4a865f !important;
-      margin:8px 0;
-      width:100%">
+      border:1px solid #4a865f !important">
     <tbody>
       <tr>
         <td>
@@ -70,7 +68,7 @@ export const embedSurveyPreviewEmailHtml = `
                     cellpadding="0"
                     cellspacing="0"
                     role="presentation"
-                    style="margin-top:8px;width:100%">
+                    style="margin-top:0.5rem;width:100%">
                     <tbody>
                       <tr>
                         <td>
@@ -82,18 +80,16 @@ export const embedSurveyPreviewEmailHtml = `
                               border:1px solid #d6e4dc !important;
                               border-radius:8px;
                               color-scheme:only light;
-                              font-size:16px;
-                              line-height:24px;
+                              font-size:1rem;
+                              line-height:1.5rem;
                               color:#1f2937 !important;
                               text-decoration-line:none;
                               display:block;
                               font-family:Inter, Helvetica, Arial, sans-serif;
                               font-weight:400;
-                              margin:0;
-                              padding:16px;
-                              text-decoration:none"
+                              padding:1rem"
                             target="_blank">
-                            <span style="color-scheme:only light;color:#1f2937 !important;display:inline-block;font-family:Inter, Helvetica, Arial, sans-serif;min-width:20px">\u2610</span><span>Apples</span>
+                            <span style="color-scheme:only light;color:#1f2937 !important;display:inline-block;font-family:Inter, Helvetica, Arial, sans-serif;min-width:1.25rem">\u2610</span><span>Apples</span>
                           </a>
                         </td>
                       </tr>
@@ -106,7 +102,7 @@ export const embedSurveyPreviewEmailHtml = `
                     cellpadding="0"
                     cellspacing="0"
                     role="presentation"
-                    style="margin-top:8px;width:100%">
+                    style="margin-top:0.5rem;width:100%">
                     <tbody>
                       <tr>
                         <td>
@@ -118,18 +114,16 @@ export const embedSurveyPreviewEmailHtml = `
                               border:1px solid #d6e4dc !important;
                               border-radius:8px;
                               color-scheme:only light;
-                              font-size:16px;
-                              line-height:24px;
+                              font-size:1rem;
+                              line-height:1.5rem;
                               color:#1f2937 !important;
                               text-decoration-line:none;
                               display:block;
                               font-family:Inter, Helvetica, Arial, sans-serif;
                               font-weight:400;
-                              margin:0;
-                              padding:16px;
-                              text-decoration:none"
+                              padding:1rem"
                             target="_blank">
-                            <span style="color-scheme:only light;color:#1f2937 !important;display:inline-block;font-family:Inter, Helvetica, Arial, sans-serif;min-width:20px">\u2610</span><span>Bananas</span>
+                            <span style="color-scheme:only light;color:#1f2937 !important;display:inline-block;font-family:Inter, Helvetica, Arial, sans-serif;min-width:1.25rem">\u2610</span><span>Bananas</span>
                           </a>
                         </td>
                       </tr>
@@ -142,7 +136,7 @@ export const embedSurveyPreviewEmailHtml = `
                     cellpadding="0"
                     cellspacing="0"
                     role="presentation"
-                    style="margin-top:8px;width:100%">
+                    style="margin-top:0.5rem;width:100%">
                     <tbody>
                       <tr>
                         <td>
@@ -154,18 +148,16 @@ export const embedSurveyPreviewEmailHtml = `
                               border:1px solid #d6e4dc !important;
                               border-radius:8px;
                               color-scheme:only light;
-                              font-size:16px;
-                              line-height:24px;
+                              font-size:1rem;
+                              line-height:1.5rem;
                               color:#1f2937 !important;
                               text-decoration-line:none;
                               display:block;
                               font-family:Inter, Helvetica, Arial, sans-serif;
                               font-weight:400;
-                              margin:0;
-                              padding:16px;
-                              text-decoration:none"
+                              padding:1rem"
                             target="_blank">
-                            <span style="color-scheme:only light;color:#1f2937 !important;display:inline-block;font-family:Inter, Helvetica, Arial, sans-serif;min-width:20px">\u2610</span><span>Pineapples</span>
+                            <span style="color-scheme:only light;color:#1f2937 !important;display:inline-block;font-family:Inter, Helvetica, Arial, sans-serif;min-width:1.25rem">\u2610</span><span>Pineapples</span>
                           </a>
                         </td>
                       </tr>
@@ -182,13 +174,13 @@ export const embedSurveyPreviewEmailHtml = `
             cellpadding="0"
             cellspacing="0"
             role="presentation"
-            style="max-width:37.5em;margin:32px auto 0;margin-top:2rem;text-align:center">
+            style="max-width:37.5em;margin-left:auto;margin-right:auto;margin-top:2rem;text-align:center">
             <tbody>
               <tr style="width:100%">
                 <td>
                   <a
                     href="https://formbricks.com?utm_source=email_branding"
-                    style="color-scheme:only light;color:#4c545f !important;text-decoration-line:none;font-family:Inter, Helvetica, Arial, sans-serif;font-size:12px;line-height:1.3333333333333333"
+                    style="color-scheme:only light;color:#4c545f !important;text-decoration-line:none;font-family:Inter, Helvetica, Arial, sans-serif;font-size:0.75rem;line-height:1.3333333333333333"
                     target="_blank">
                     Powered by Formbricks
                   </a>
