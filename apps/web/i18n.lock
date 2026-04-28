@@ -1193,6 +1193,7 @@ checksums:
     environments/settings/profile/update_personal_info: 5806f9bae0248a604cf85a2d8790a606
     environments/settings/profile/warning_cannot_delete_account: 07c25c3829149cd7171e7ad88229deac
     environments/settings/profile/warning_cannot_undo: dd1b2a59ff244b362d1d0d4eb1dbf7c6
+    environments/settings/profile/wrong_password: e3523f78b302d11b33af6cc40d8df9da
     environments/settings/teams/add_members_description: 96e1e7125a0dfeaecc2c238eda3a216f
     environments/settings/teams/add_workspaces_description: f0f0cdd4d1032fbcb83d34a780bdfa52
     environments/settings/teams/all_members_added: 0541be1777b5c838f2e039035488506c
