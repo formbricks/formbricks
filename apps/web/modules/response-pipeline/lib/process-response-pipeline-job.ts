@@ -751,7 +751,7 @@ export const processResponsePipelineJob: JobHandler<TResponsePipelineJobData> = 
         logContext,
         organizationId: organization.id,
         survey,
-        stripeCustomerId: organization.billing.stripeCustomerId,
+        stripeCustomerId: organization.billing?.stripeCustomerId,
       });
     }
   } catch (error) {

@@ -658,6 +658,7 @@ async function main(): Promise<void> {
       name: "Responses Over Time",
       type: "line",
       workspaceId: workspace.id,
+      feedbackRecordDirectoryId: defaultFrd.id,
       createdBy: SEED_IDS.USER_ADMIN,
       query: {
         measures: ["FeedbackRecords.count"],
@@ -685,6 +686,7 @@ async function main(): Promise<void> {
       name: "Satisfaction Distribution",
       type: "pie",
       workspaceId: workspace.id,
+      feedbackRecordDirectoryId: defaultFrd.id,
       createdBy: SEED_IDS.USER_ADMIN,
       query: {
         measures: ["FeedbackRecords.count"],
@@ -706,6 +708,7 @@ async function main(): Promise<void> {
       name: "NPS Score",
       type: "big_number",
       workspaceId: workspace.id,
+      feedbackRecordDirectoryId: defaultFrd.id,
       createdBy: SEED_IDS.USER_ADMIN,
       query: {
         measures: ["FeedbackRecords.npsScore"],
@@ -731,6 +734,7 @@ async function main(): Promise<void> {
       name: "Survey Completion Rate",
       type: "bar",
       workspaceId: workspace.id,
+      feedbackRecordDirectoryId: defaultFrd.id,
       createdBy: SEED_IDS.USER_MANAGER,
       query: {
         measures: ["FeedbackRecords.count"],
@@ -760,6 +764,7 @@ async function main(): Promise<void> {
       name: "Responses by Channel",
       type: "area",
       workspaceId: workspace.id,
+      feedbackRecordDirectoryId: defaultFrd.id,
       createdBy: SEED_IDS.USER_ADMIN,
       query: {
         measures: ["FeedbackRecords.count"],

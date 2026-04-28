@@ -152,24 +152,27 @@ export const POST = async (request: Request) =>
         return handleApiError(request, createResponseResult.error, auditLog);
       }
 
-      const createdResponseForPipeline = await getResponseForPipeline(createResponseResult.data.id);
-      if (createdResponseForPipeline.ok) {
-        await sendToPipeline({
-          event: "responseCreated",
-          workspaceId,
-          surveyId: body.surveyId,
-          response: createdResponseForPipeline.data,
-        });
+      getResponseForPipeline(createResponseResult.data.id)
+        .then((createdResponseForPipeline) => {
+          if (createdResponseForPipeline.ok) {
+            sendToPipeline({
+              event: "responseCreated",
+              workspaceId,
+              surveyId: body.surveyId,
+              response: createdResponseForPipeline.data,
+            }).catch(() => {});
 
-        if (createResponseResult.data.finished) {
-          await sendToPipeline({
-            event: "responseFinished",
-            workspaceId,
-            surveyId: body.surveyId,
-            response: createdResponseForPipeline.data,
-          });
-        }
-      }
+            if (createResponseResult.data.finished) {
+              sendToPipeline({
+                event: "responseFinished",
+                workspaceId,
+                surveyId: body.surveyId,
+                response: createdResponseForPipeline.data,
+              }).catch(() => {});
+            }
+          }
+        })
+        .catch(() => {});
 
       if (auditLog) {
         auditLog.targetId = createResponseResult.data.id;
