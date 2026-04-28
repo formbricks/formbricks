@@ -1249,7 +1249,7 @@
         "save_the_following_backup_codes_in_a_safe_place": "Speichere die folgenden Backup-Codes an einem sicheren Ort.",
         "scan_the_qr_code_below_with_your_authenticator_app": "Scanne den QR-Code unten mit deiner Authentifizierungs-App.",
         "security_description": "Verwalte dein Passwort und andere Sicherheitseinstellungen wie Zwei-Faktor-Authentifizierung (2FA).",
-        "sso_account_deletion_not_available": "Das Löschen von SSO-Konten erfordert eine erneute Authentifizierung beim Identitätsanbieter und ist hier noch nicht verfügbar. Bitte wende dich an den Support, um dieses Konto zu löschen.",
+        "sso_account_deletion_not_available": "Das Löschen von Konten mit externer Anmeldung erfordert eine erneute Authentifizierung beim Identitätsanbieter und ist hier nicht verfügbar. Bitte wende dich an deinen Administrator oder den Support, um dieses Konto zu löschen.",
         "two_factor_authentication": "Zwei-Faktor-Authentifizierung",
         "two_factor_authentication_description": "Füge eine zusätzliche Sicherheitsebene zu deinem Konto hinzu, falls dein Passwort gestohlen wird.",
         "two_factor_authentication_enabled_please_enter_the_six_digit_code_from_your_authenticator_app": "Zwei-Faktor-Authentifizierung aktiviert. Bitte gib den sechsstelligen Code aus deiner Authentifizierungs-App ein.",

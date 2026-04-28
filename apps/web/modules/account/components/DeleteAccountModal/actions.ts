@@ -20,7 +20,7 @@ const ZDeleteUserConfirmation = z
   .strict();
 
 const SSO_ACCOUNT_DELETION_UNAVAILABLE_ERROR =
-  "Account deletion for SSO accounts requires identity-provider reauthentication and is not available here yet. Please contact support to delete this account.";
+  "Account deletion for external sign-in accounts requires reauthentication with the identity provider and is not available here. Please contact your administrator or support to delete this account.";
 
 const parseDeleteUserConfirmation = (input: unknown) => {
   const parsedInput = ZDeleteUserConfirmation.safeParse(input);
