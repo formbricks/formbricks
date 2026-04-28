@@ -166,7 +166,7 @@ describe("deleteUserAction", () => {
       password: "WrongPassword123",
     });
 
-    expect(result?.serverError).toBe("Incorrect credentials");
+    expect(result?.serverError).toBe("Wrong password");
     expect(verifyUserPassword).toHaveBeenCalledWith(mockUser.id, "WrongPassword123");
     expect(deleteUser).not.toHaveBeenCalled();
     expect(logger.error).toHaveBeenCalledWith(

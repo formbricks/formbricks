@@ -1252,7 +1252,8 @@
         "unlock_two_factor_authentication": "Desbloqueia a autenticação de dois fatores com um plano melhor",
         "update_personal_info": "Atualize suas informações pessoais",
         "warning_cannot_delete_account": "Você é o único dono desta organização. Transfere a propriedade para outra pessoa primeiro.",
-        "warning_cannot_undo": "Isso não pode ser desfeito"
+        "warning_cannot_undo": "Isso não pode ser desfeito",
+        "wrong_password": "Senha incorreta"
       },
       "teams": {
         "add_members_description": "Adicione membros à equipe e determine sua função.",

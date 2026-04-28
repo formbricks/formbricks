@@ -1252,7 +1252,8 @@
         "unlock_two_factor_authentication": "Zwei-Faktor-Authentifizierung mit einem höheren Plan freischalten",
         "update_personal_info": "Persönliche Daten aktualisieren",
         "warning_cannot_delete_account": "Du bist der einzige Besitzer dieser Organisation. Bitte übertrage das Eigentum zuerst an ein anderes Mitglied.",
-        "warning_cannot_undo": "Das kann nicht rückgängig gemacht werden"
+        "warning_cannot_undo": "Das kann nicht rückgängig gemacht werden",
+        "wrong_password": "Falsches Passwort"
       },
       "teams": {
         "add_members_description": "Füge Mitglieder zum Team hinzu und bestimme ihre Rolle.",

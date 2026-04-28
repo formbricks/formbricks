@@ -1252,7 +1252,8 @@
         "unlock_two_factor_authentication": "Débloquez l'authentification à deux facteurs avec une offre supérieure",
         "update_personal_info": "Mettez à jour vos informations personnelles",
         "warning_cannot_delete_account": "Tu es le seul propriétaire de cette organisation. Transfère la propriété à un autre membre d'abord.",
-        "warning_cannot_undo": "Cette opération est irréversible."
+        "warning_cannot_undo": "Cette opération est irréversible.",
+        "wrong_password": "Mot de passe incorrect"
       },
       "teams": {
         "add_members_description": "Ajoutez des membres à l'équipe et déterminez leur rôle.",

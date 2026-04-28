@@ -1252,7 +1252,8 @@
         "unlock_two_factor_authentication": "A kétfaktoros hitelesítés feloldása egy magasabb csomaggal",
         "update_personal_info": "Személyes információk frissítése",
         "warning_cannot_delete_account": "Ön az egyetlen tulajdonosa ennek a szervezetnek. Először adja át a tulajdonjogot egy másik tagnak.",
-        "warning_cannot_undo": "Ezt nem lehet visszavonni"
+        "warning_cannot_undo": "Ezt nem lehet visszavonni",
+        "wrong_password": "Hibás jelszó"
       },
       "teams": {
         "add_members_description": "Tagok hozzáadása a csapathoz és a szerepük meghatározása.",

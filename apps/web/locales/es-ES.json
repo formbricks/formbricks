@@ -1252,7 +1252,8 @@
         "unlock_two_factor_authentication": "Desbloquea la autenticación de dos factores con un plan superior",
         "update_personal_info": "Actualiza tu información personal",
         "warning_cannot_delete_account": "Eres el único propietario de esta organización. Por favor, transfiere la propiedad a otro miembro primero.",
-        "warning_cannot_undo": "Esto no se puede deshacer"
+        "warning_cannot_undo": "Esto no se puede deshacer",
+        "wrong_password": "Contraseña incorrecta"
       },
       "teams": {
         "add_members_description": "Añade miembros al equipo y determina su rol.",

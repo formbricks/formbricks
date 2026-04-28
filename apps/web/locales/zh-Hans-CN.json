@@ -1252,7 +1252,8 @@
         "unlock_two_factor_authentication": "使用 更高 级 方案 解锁 双 重 因素 验证",
         "update_personal_info": "更新你的个人信息",
         "warning_cannot_delete_account": "您 是 该 组织 的 唯一 拥有者 。 请 先 将 所有权 转移 给 其他 成员 。",
-        "warning_cannot_undo": "此 无法 撤销。"
+        "warning_cannot_undo": "此 无法 撤销。",
+        "wrong_password": "密码错误"
       },
       "teams": {
         "add_members_description": "将 成员 添加到 团队 ，并 确定 他们 的 角色",

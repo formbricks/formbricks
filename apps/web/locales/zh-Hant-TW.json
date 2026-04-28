@@ -1252,7 +1252,8 @@
         "unlock_two_factor_authentication": "使用更高等級的方案解鎖雙重驗證",
         "update_personal_info": "更新您的個人資訊",
         "warning_cannot_delete_account": "您是此組織的唯一擁有者。請先將所有權轉讓給其他成員。",
-        "warning_cannot_undo": "此操作無法復原"
+        "warning_cannot_undo": "此操作無法復原",
+        "wrong_password": "密碼錯誤"
       },
       "teams": {
         "add_members_description": "將成員新增至團隊並確定其角色。",
