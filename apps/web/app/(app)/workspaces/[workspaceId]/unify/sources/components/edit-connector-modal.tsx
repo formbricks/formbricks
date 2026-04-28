@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import { z } from "zod";
 import { TConnectorWithMappings } from "@formbricks/types/connector";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -24,6 +23,7 @@ import {
   FormProvider,
 } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
+import { Label } from "@/modules/ui/components/label";
 import {
   Select,
   SelectContent,
@@ -31,10 +31,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
-import { SAMPLE_CSV_COLUMNS, TFieldMapping, TSourceField, TUnifySurvey } from "../types";
-import { parseCSVColumnsToFields } from "../utils";
+import {
+  SAMPLE_CSV_COLUMNS,
+  TFieldMapping,
+  TFormbricksConnectorForm,
+  TSourceField,
+  TUnifySurvey,
+  ZFormbricksConnectorForm,
+} from "../types";
+import {
+  areAllRequiredFieldsMapped,
+  isConnectorNameValid,
+  parseCSVColumnsToFields,
+  toggleQuestionId,
+} from "../utils";
 import { getConnectorIcon, getConnectorTypeLabelKey } from "./connector-display";
-import { areAllRequiredFieldsMapped, isConnectorNameValid } from "./connector-form-utils";
 import { FormbricksQuestionList } from "./formbricks-question-list";
 import { MappingUI } from "./mapping-ui";
 
@@ -53,15 +64,6 @@ interface EditConnectorModalProps {
   onOpenCsvImport?: () => void;
 }
 
-const ZFormbricksEditConnectorForm = z.object({
-  sourceName: z.string().trim().min(1),
-  surveyId: z.string().min(1),
-  selectedQuestionIds: z.array(z.string()).min(1),
-  importHistorical: z.boolean(),
-});
-
-type TFormbricksEditConnectorForm = z.infer<typeof ZFormbricksEditConnectorForm>;
-
 export const EditConnectorModal = ({
   connector,
   open,
@@ -76,8 +78,8 @@ export const EditConnectorModal = ({
   const [sourceFields, setSourceFields] = useState<TSourceField[]>([]);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  const formbricksForm = useForm<TFormbricksEditConnectorForm>({
-    resolver: zodResolver(ZFormbricksEditConnectorForm),
+  const formbricksForm = useForm<TFormbricksConnectorForm>({
+    resolver: zodResolver(ZFormbricksConnectorForm),
     defaultValues: {
       sourceName: "",
       surveyId: "",
@@ -169,7 +171,7 @@ export const EditConnectorModal = ({
     onOpenChange(newOpen);
   };
 
-  const handleUpdateFormbricksConnector = async (values: TFormbricksEditConnectorForm) => {
+  const handleUpdateFormbricksConnector = async (values: TFormbricksConnectorForm) => {
     if (connector?.type !== "formbricks_survey") return;
     setIsUpdating(true);
     await onUpdateConnector({
@@ -198,11 +200,7 @@ export const EditConnectorModal = ({
   };
 
   const handleFormbricksQuestionToggle = (questionId: string) => {
-    const currentSelection = formbricksForm.getValues("selectedQuestionIds");
-    const isSelected = currentSelection.includes(questionId);
-    const nextSelection = isSelected
-      ? currentSelection.filter((id) => id !== questionId)
-      : [...currentSelection, questionId];
+    const nextSelection = toggleQuestionId(formbricksForm.getValues("selectedQuestionIds"), questionId);
     formbricksForm.setValue("selectedQuestionIds", nextSelection, {
       shouldDirty: true,
       shouldValidate: true,
@@ -324,9 +322,7 @@ export const EditConnectorModal = ({
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="editConnectorName" className="text-sm font-medium text-slate-700">
-                  {t("workspace.unify.source_name")}
-                </label>
+                <Label htmlFor="editConnectorName">{t("workspace.unify.source_name")}</Label>
                 <Input
                   id="editConnectorName"
                   value={csvConnectorName}

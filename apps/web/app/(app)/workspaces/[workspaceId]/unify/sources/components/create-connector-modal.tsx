@@ -7,7 +7,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { z } from "zod";
 import { TConnectorType, UNSUPPORTED_CONNECTOR_ELEMENT_TYPES } from "@formbricks/types/connector";
 import {
   getResponseCountAction,
@@ -34,6 +33,7 @@ import {
   FormProvider,
 } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
+import { Label } from "@/modules/ui/components/label";
 import {
   Select,
   SelectContent,
@@ -42,14 +42,23 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { Switch } from "@/modules/ui/components/switch";
-import { TCreateConnectorStep, TFieldMapping, TSourceField, TUnifySurvey } from "../types";
+import {
+  TCreateConnectorStep,
+  TFieldMapping,
+  TFormbricksConnectorForm,
+  TSourceField,
+  TUnifySurvey,
+  ZFormbricksConnectorForm,
+} from "../types";
 import {
   TConnectorOptionId,
   TEnumValidationError,
+  areAllRequiredFieldsMapped,
+  isConnectorNameValid,
   parseCSVColumnsToFields,
+  toggleQuestionId,
   validateEnumMappings,
 } from "../utils";
-import { areAllRequiredFieldsMapped, isConnectorNameValid } from "./connector-form-utils";
 import { ConnectorTypeSelector } from "./connector-type-selector";
 import { CsvConnectorUI } from "./csv-connector-ui";
 import { FormbricksQuestionList } from "./formbricks-question-list";
@@ -99,15 +108,6 @@ const getNextStepButtonLabel = (type: TConnectorOptionId | null, t: (key: string
   if (type === "feedback_record_mcp") return t("common.learn_more");
   return t("workspace.unify.create_mapping");
 };
-
-const ZFormbricksConnectorForm = z.object({
-  sourceName: z.string().trim().min(1),
-  surveyId: z.string().min(1),
-  selectedQuestionIds: z.array(z.string()).min(1),
-  importHistorical: z.boolean(),
-});
-
-type TFormbricksConnectorForm = z.infer<typeof ZFormbricksConnectorForm>;
 
 const getSelectableQuestionIds = (survey: TUnifySurvey): string[] =>
   survey.elements
@@ -321,11 +321,7 @@ export const CreateConnectorModal = ({
   };
 
   const handleFormbricksQuestionToggle = (questionId: string) => {
-    const currentSelection = formbricksForm.getValues("selectedQuestionIds");
-    const isSelected = currentSelection.includes(questionId);
-    const nextSelection = isSelected
-      ? currentSelection.filter((id) => id !== questionId)
-      : [...currentSelection, questionId];
+    const nextSelection = toggleQuestionId(formbricksForm.getValues("selectedQuestionIds"), questionId);
     formbricksForm.setValue("selectedQuestionIds", nextSelection, {
       shouldDirty: true,
       shouldValidate: true,
@@ -519,9 +515,7 @@ export const CreateConnectorModal = ({
             {currentStep === "mapping" && selectedType === "csv" && (
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <label htmlFor="connectorName" className="text-sm font-medium text-slate-700">
-                    {t("workspace.unify.source_name")}
-                  </label>
+                  <Label htmlFor="connectorName">{t("workspace.unify.source_name")}</Label>
                   <Input
                     id="connectorName"
                     value={csvConnectorName}
