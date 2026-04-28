@@ -1,21 +1,21 @@
 import "server-only";
-import { PipelineTriggers, type Webhook } from "@prisma/client";
-import { UnrecoverableError } from "bullmq";
+import { PipelineTriggers, Prisma, type Webhook } from "@prisma/client";
 import { createHash } from "node:crypto";
 import { prisma } from "@formbricks/database";
-import type { JobHandler, TResponsePipelineJobData } from "@formbricks/jobs";
+import { type JobHandler, type TResponsePipelineJobData, UnrecoverableError } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
+import { DatabaseError } from "@formbricks/types/errors";
 import { type TUserLocale, ZUserLocale } from "@formbricks/types/user";
+import { POSTHOG_KEY } from "@/lib/constants";
 import { generateStandardWebhookSignature } from "@/lib/crypto";
 import { getIntegrations } from "@/lib/integration/service";
-import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
-import { getSurvey, updateSurvey } from "@/lib/survey/service";
 import { validateWebhookUrl } from "@/lib/utils/validate-webhook-url";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
 import { type TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { recordResponseCreatedMeterEvent } from "@/modules/ee/billing/lib/metering";
 import { sendResponseFinishedEmail } from "@/modules/email";
+import { captureSurveyResponsePostHogEvent } from "@/modules/response-pipeline/lib/posthog";
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { sendFollowUpsForResponse } from "@/modules/survey/follow-ups/lib/follow-ups";
 import { FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
@@ -24,6 +24,69 @@ import { sendTelemetryEvents } from "./telemetry";
 
 const WEBHOOK_TIMEOUT_MS = 5_000;
 const DEFAULT_NOTIFICATION_LOCALE: TUserLocale = "en-US";
+
+const pipelineOrganizationSelect = {
+  id: true,
+  billing: {
+    select: {
+      stripeCustomerId: true,
+    },
+  },
+} satisfies Prisma.OrganizationSelect;
+
+const pipelineSurveySelect = {
+  id: true,
+  workspaceId: true,
+  name: true,
+  type: true,
+  status: true,
+  createdAt: true,
+  updatedAt: true,
+  blocks: true,
+  hiddenFields: true,
+  variables: true,
+  followUps: true,
+  autoComplete: true,
+  languages: {
+    select: {
+      default: true,
+      enabled: true,
+      language: {
+        select: {
+          id: true,
+          code: true,
+          alias: true,
+          createdAt: true,
+          updatedAt: true,
+          workspaceId: true,
+        },
+      },
+    },
+  },
+} satisfies Prisma.SurveySelect;
+
+type TPipelineOrganization = Prisma.OrganizationGetPayload<{ select: typeof pipelineOrganizationSelect }>;
+type TPipelineSurvey = Prisma.SurveyGetPayload<{ select: typeof pipelineSurveySelect }>;
+
+const getOrganizationForPipeline = async (workspaceId: string): Promise<TPipelineOrganization | null> =>
+  prisma.organization.findFirst({
+    where: {
+      workspaces: {
+        some: {
+          id: workspaceId,
+        },
+      },
+    },
+    select: pipelineOrganizationSelect,
+  });
+
+const getSurveyForPipeline = async (surveyId: string): Promise<TPipelineSurvey | null> =>
+  prisma.survey.findUnique({
+    where: {
+      id: surveyId,
+    },
+    select: pipelineSurveySelect,
+  });
 
 const getPipelineLogContext = (
   data: TResponsePipelineJobData,
@@ -46,6 +109,20 @@ const toError = (error: unknown, fallbackMessage: string): Error =>
 const toUserLocale = (locale: string): TUserLocale => {
   const parsedLocale = ZUserLocale.safeParse(locale);
   return parsedLocale.success ? parsedLocale.data : DEFAULT_NOTIFICATION_LOCALE;
+};
+
+export const isPipelinePoolExhaustionError = (error: unknown): boolean => {
+  if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2024") {
+    return true;
+  }
+
+  if (error instanceof DatabaseError || error instanceof Error) {
+    return /Timed out fetching a new connection from the connection pool|connection pool timeout/i.test(
+      error.message
+    );
+  }
+
+  return false;
 };
 
 const createWebhookMessageId = ({
@@ -103,7 +180,7 @@ const createWebhookDeliveryTask = async ({
 }: {
   webhook: Webhook;
   data: TResponsePipelineJobData;
-  survey: Awaited<ReturnType<typeof getSurvey>>;
+  survey: TPipelineSurvey;
   logContext: ReturnType<typeof getPipelineLogContext>;
 }): Promise<void> => {
   try {
@@ -176,7 +253,7 @@ const deliverWebhooks = async ({
 }: {
   data: TResponsePipelineJobData;
   logContext: ReturnType<typeof getPipelineLogContext>;
-  survey: NonNullable<Awaited<ReturnType<typeof getSurvey>>>;
+  survey: TPipelineSurvey;
   webhooks: Webhook[];
 }): Promise<void> => {
   const results = await Promise.allSettled(
@@ -277,9 +354,16 @@ const getUsersWithNotifications = async ({
         OR: [
           {
             memberships: {
-              every: {
+              some: {
                 role: {
                   in: ["owner", "manager"],
+                },
+                organization: {
+                  workspaces: {
+                    some: {
+                      id: workspaceId,
+                    },
+                  },
                 },
               },
             },
@@ -332,7 +416,7 @@ const handleFollowUpsSafely = async ({
 }: {
   data: TResponsePipelineJobData;
   logContext: ReturnType<typeof getPipelineLogContext>;
-  survey: NonNullable<Awaited<ReturnType<typeof getSurvey>>>;
+  survey: TPipelineSurvey;
 }): Promise<void> => {
   if (!survey.followUps?.length) {
     return;
@@ -371,7 +455,7 @@ const sendNotificationEmailsSafely = async ({
   data: TResponsePipelineJobData;
   logContext: ReturnType<typeof getPipelineLogContext>;
   responseCount: number | null;
-  survey: NonNullable<Awaited<ReturnType<typeof getSurvey>>>;
+  survey: TPipelineSurvey;
   usersWithNotifications: Array<{ email: string; locale: TUserLocale }>;
   workspaceId: string;
 }): Promise<void> => {
@@ -423,7 +507,7 @@ const handleSurveyAutoCompleteSafely = async ({
   logContext: ReturnType<typeof getPipelineLogContext>;
   organizationId: string;
   responseCount: number | null;
-  survey: NonNullable<Awaited<ReturnType<typeof getSurvey>>>;
+  survey: TPipelineSurvey;
 }): Promise<void> => {
   if (responseCount === null) {
     if (survey.autoComplete) {
@@ -446,9 +530,13 @@ const handleSurveyAutoCompleteSafely = async ({
   let logStatus: TAuditStatus = "success";
 
   try {
-    await updateSurvey({
-      ...survey,
-      status: "completed",
+    await prisma.survey.update({
+      where: {
+        id: survey.id,
+      },
+      data: {
+        status: "completed",
+      },
     });
   } catch (error) {
     logStatus = "failure";
@@ -500,14 +588,21 @@ const runResponseFinishedSideEffects = async ({
   data: TResponsePipelineJobData;
   logContext: ReturnType<typeof getPipelineLogContext>;
   organizationId: string;
-  survey: NonNullable<Awaited<ReturnType<typeof getSurvey>>>;
+  survey: TPipelineSurvey;
   workspaceId: string;
 }) => {
-  const { integrations, responseCount } = await loadResponseFinishedContext({
-    data,
-    logContext,
-    workspaceId,
-  });
+  const [{ integrations, responseCount }, usersWithNotifications] = await Promise.all([
+    loadResponseFinishedContext({
+      data,
+      logContext,
+      workspaceId,
+    }),
+    getUsersWithNotifications({
+      data,
+      logContext,
+      workspaceId,
+    }),
+  ]);
 
   if (integrations.length > 0) {
     try {
@@ -522,12 +617,6 @@ const runResponseFinishedSideEffects = async ({
       );
     }
   }
-
-  const usersWithNotifications = await getUsersWithNotifications({
-    data,
-    logContext,
-    workspaceId,
-  });
 
   await handleFollowUpsSafely({
     data,
@@ -555,10 +644,14 @@ const runResponseFinishedSideEffects = async ({
 const runResponseCreatedSideEffects = async ({
   data,
   logContext,
+  organizationId,
+  survey,
   stripeCustomerId,
 }: {
   data: TResponsePipelineJobData;
   logContext: ReturnType<typeof getPipelineLogContext>;
+  organizationId: string;
+  survey: TPipelineSurvey;
   stripeCustomerId: string | null | undefined;
 }) => {
   try {
@@ -575,6 +668,27 @@ const runResponseCreatedSideEffects = async ({
       },
       "Response pipeline meter event failed"
     );
+  }
+
+  if (POSTHOG_KEY) {
+    try {
+      const responseCount = await getResponseCountBySurveyId(data.surveyId);
+      captureSurveyResponsePostHogEvent({
+        organizationId,
+        surveyId: data.surveyId,
+        surveyType: survey.type,
+        workspaceId: data.workspaceId,
+        responseCount,
+      });
+    } catch (error) {
+      logger.error(
+        {
+          ...logContext,
+          err: error,
+        },
+        "Response pipeline PostHog capture failed"
+      );
+    }
   }
 
   try {
@@ -594,20 +708,26 @@ export const processResponsePipelineJob: JobHandler<TResponsePipelineJobData> = 
   const logContext = getPipelineLogContext(data, context);
 
   try {
-    const survey = await getSurvey(data.surveyId);
+    const [organization, survey, webhooks] = await Promise.all([
+      getOrganizationForPipeline(data.workspaceId),
+      getSurveyForPipeline(data.surveyId),
+      getWebhooksForPipeline(data.workspaceId, data.event as PipelineTriggers, data.surveyId),
+    ]);
+
     if (!survey) {
       throw new UnrecoverableError(`Survey ${data.surveyId} not found`);
     }
 
-    const workspaceId = survey.workspaceId;
-
-    const organization = await getOrganizationByWorkspaceId(workspaceId);
     if (!organization) {
-      throw new UnrecoverableError(`Organization not found for workspace ${workspaceId}`);
+      throw new UnrecoverableError(`Organization not found for workspace ${data.workspaceId}`);
     }
 
-    const event = data.event as PipelineTriggers;
-    const webhooks = await getWebhooksForPipeline(workspaceId, event, data.surveyId);
+    if (survey.workspaceId !== data.workspaceId) {
+      throw new UnrecoverableError(
+        `Survey ${data.surveyId} does not belong to workspace ${data.workspaceId}`
+      );
+    }
+
     await deliverWebhooks({
       data,
       logContext,
@@ -621,7 +741,7 @@ export const processResponsePipelineJob: JobHandler<TResponsePipelineJobData> = 
         logContext,
         organizationId: organization.id,
         survey,
-        workspaceId,
+        workspaceId: data.workspaceId,
       });
     }
 
@@ -629,10 +749,23 @@ export const processResponsePipelineJob: JobHandler<TResponsePipelineJobData> = 
       await runResponseCreatedSideEffects({
         data,
         logContext,
-        stripeCustomerId: organization.billing.stripeCustomerId,
+        organizationId: organization.id,
+        survey,
+        stripeCustomerId: organization.billing?.stripeCustomerId,
       });
     }
   } catch (error) {
+    if (isPipelinePoolExhaustionError(error)) {
+      logger.warn(
+        {
+          ...logContext,
+          err: error,
+        },
+        "Response pipeline job hit database pool exhaustion and will be retried"
+      );
+      throw error;
+    }
+
     logger.error(
       {
         ...logContext,

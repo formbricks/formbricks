@@ -40,7 +40,7 @@ import {
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { createEmailChangeToken, createInviteToken, createToken, createTokenForLinkSurvey } from "@/lib/jwt";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
-import { getElementResponseMapping } from "@/lib/responses";
+import { TElementResponseMappingSurvey, getElementResponseMapping } from "@/lib/responses";
 import { getTranslate } from "@/lingodotdev/server";
 import { buildVerificationLinks } from "@/modules/auth/lib/verification-links";
 import { resolveStorageUrl } from "@/modules/storage/utils";
@@ -61,6 +61,9 @@ interface SendEmailDataProps {
   text?: string;
   html: string;
 }
+
+export type TResponseFinishedEmailSurvey = TElementResponseMappingSurvey &
+  Pick<TSurvey, "id" | "name" | "variables" | "hiddenFields">;
 
 export const sendEmail = async (emailData: SendEmailDataProps): Promise<boolean> => {
   if (!IS_SMTP_CONFIGURED) {
@@ -236,7 +239,7 @@ export const sendResponseFinishedEmail = async (
   email: string,
   locale: TUserLocale,
   workspaceId: string,
-  survey: TSurvey,
+  survey: TResponseFinishedEmailSurvey,
   response: TResponse,
   responseCount: number
 ): Promise<void> => {

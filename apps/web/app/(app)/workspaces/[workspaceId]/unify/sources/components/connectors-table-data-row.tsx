@@ -69,9 +69,9 @@ export function ConnectorsTableDataRow({
   const getStatusLabel = (s: TConnectorStatus) => {
     switch (s) {
       case "active":
-        return t("workspace.unify.status_active");
+        return t("common.enabled");
       case "paused":
-        return t("workspace.unify.status_paused");
+        return t("common.disabled");
       case "error":
         return t("workspace.unify.status_error");
     }

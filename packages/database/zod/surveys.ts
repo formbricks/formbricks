@@ -114,8 +114,6 @@ const ZSurveyBase = z.object({
   styling: z
     .object({
       brandColor: ZStylingColor.nullish(),
-      questionColor: ZStylingColor.nullish(),
-      inputColor: ZStylingColor.nullish(),
       inputBorderColor: ZStylingColor.nullish(),
       cardBackgroundColor: ZStylingColor.nullish(),
       cardBorderColor: ZStylingColor.nullish(),

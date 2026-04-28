@@ -186,7 +186,7 @@ export const POST = withV1ApiWrapper({
 
     const { quotaFull, ...responseData } = response;
 
-    sendToPipeline({
+    await sendToPipeline({
       event: "responseCreated",
       workspaceId,
       surveyId: responseData.surveyId,
@@ -194,7 +194,7 @@ export const POST = withV1ApiWrapper({
     });
 
     if (responseInput.finished) {
-      sendToPipeline({
+      await sendToPipeline({
         event: "responseFinished",
         workspaceId,
         surveyId: responseData.surveyId,

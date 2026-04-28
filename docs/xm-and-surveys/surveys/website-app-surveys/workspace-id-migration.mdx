@@ -1,0 +1,73 @@
+---
+title: "Migrate to Workspace ID"
+description: "Learn why Environment IDs were deprecated, what still works today, and how to migrate your SDK setup to Workspace IDs."
+icon: "book"
+---
+
+Formbricks deprecated the legacy Environment ID for SDK setup and now uses **Workspace ID** as the primary identifier.
+
+<Info>
+  Existing SDK integrations that still use `environmentId` continue to work for now. New and updated integrations
+  should use `workspaceId`.
+</Info>
+
+## Why This Changed
+
+Formbricks moved from an environment-centric model to a workspace-centric model to simplify setup, reduce confusion,
+and align product terminology across the app, SDKs, and API surfaces.
+
+## Terms To Know
+
+- **Workspace ID**: The canonical identifier for SDK setup and current product workflows.
+- **Environment ID (legacy)**: A backward-compatible identifier that may still appear in older integrations.
+
+## What Still Works
+
+- SDK setups using `workspaceId` are the recommended and future-proof option.
+- SDK setups using `environmentId` are still accepted during the migration period.
+- If your app is already connected and sending data with a legacy Environment ID, no immediate outage is expected.
+
+## Recommended Migration
+
+<Steps>
+  <Step title="Open Website & App Connection">
+    In Formbricks, go to **Configuration → Website & App Connection**.
+  </Step>
+  <Step title="Copy Your Workspace ID">
+    Use the Workspace ID field as the canonical ID for all new SDK setup changes.
+  </Step>
+  <Step title="Update SDK Initialization">
+    Replace legacy `environmentId` config usage with `workspaceId` in your integration snippets.
+  </Step>
+  <Step title="Keep appUrl Unchanged">
+    Keep your existing `appUrl` value unless your hosting/domain setup changed.
+  </Step>
+</Steps>
+
+## SDK Example
+
+```javascript
+import formbricks from "@formbricks/js";
+
+formbricks.setup({
+  workspaceId: "<your-workspace-id>",
+  appUrl: "<your-app-url>",
+});
+```
+
+## FAQ
+
+### Do I Need To Rotate IDs Immediately?
+
+No. Legacy setups continue to work during the migration period. However, new implementations should always use
+`workspaceId`.
+
+### Do Test And Production Workflows Change?
+
+No. Your development/testing and production workflows remain the same. This migration only changes the canonical
+identifier you should use in SDK setup.
+
+### Where Can I Find Detailed Setup Guides?
+
+Use the [Framework Guides](https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/framework-guides)
+for framework-specific SDK instructions.

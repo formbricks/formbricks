@@ -39,12 +39,12 @@ vi.mock("@formbricks/logger", () => ({
 
 vi.mock("@/lib/env", () => ({
   env: {
-    AI_PROVIDER: "gcp",
+    AI_PROVIDER: "google",
     AI_MODEL: "gemini-2.5-flash",
-    AI_GCP_PROJECT: "vertex-project",
-    AI_GCP_LOCATION: "us-central1",
-    AI_GCP_CREDENTIALS_JSON: undefined,
-    AI_GCP_APPLICATION_CREDENTIALS: "/tmp/vertex.json",
+    AI_GOOGLE_CLOUD_PROJECT: "google-cloud-project",
+    AI_GOOGLE_CLOUD_LOCATION: "us-central1",
+    AI_GOOGLE_CLOUD_CREDENTIALS_JSON: undefined,
+    AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS: "/tmp/google-cloud.json",
     AI_AWS_REGION: "us-east-1",
     AI_AWS_ACCESS_KEY_ID: "aws-access-key-id",
     AI_AWS_SECRET_ACCESS_KEY: "aws-secret-access-key",
@@ -144,9 +144,9 @@ describe("AI organization service", () => {
         prompt: "Translate this survey",
       },
       expect.objectContaining({
-        AI_PROVIDER: "gcp",
+        AI_PROVIDER: "google",
         AI_MODEL: "gemini-2.5-flash",
-        AI_GCP_PROJECT: "vertex-project",
+        AI_GOOGLE_CLOUD_PROJECT: "google-cloud-project",
       })
     );
   });

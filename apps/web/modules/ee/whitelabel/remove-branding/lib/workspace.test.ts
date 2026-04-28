@@ -36,8 +36,6 @@ describe("updateWorkspaceBranding", () => {
       styling: {
         allowStyleOverwrite: true,
         brandColor: { light: "#64748b" },
-        questionColor: { light: "#2b2524" },
-        inputColor: { light: "#ffffff" },
         inputBorderColor: { light: "#cbd5e1" },
         cardBackgroundColor: { light: "#ffffff" },
         cardBorderColor: { light: "#f8fafc" },
