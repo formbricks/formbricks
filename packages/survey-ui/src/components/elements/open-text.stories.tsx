@@ -80,7 +80,7 @@ export const StylingPlayground: Story = {
     ...pickArgTypes(inputStylingArgTypes, [
       "inputBgColor",
       "inputBorderColor",
-      "inputColor",
+      "inputTextColor",
       "inputFontSize",
       "inputFontWeight",
       "inputWidth",
