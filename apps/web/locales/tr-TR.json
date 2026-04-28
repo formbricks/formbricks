@@ -1249,7 +1249,6 @@
         "save_the_following_backup_codes_in_a_safe_place": "Aşağıdaki yedek kodları güvenli bir yere kaydedin.",
         "scan_the_qr_code_below_with_your_authenticator_app": "Aşağıdaki QR kodunu kimlik doğrulama uygulamanızla tarayın.",
         "security_description": "Şifrenizi ve iki faktörlü kimlik doğrulama (2FA) gibi diğer güvenlik ayarlarını yönetin.",
-        "sso_account_deletion_not_available": "Harici oturum açma kullanan hesapların silinmesi, kimlik sağlayıcısında yeniden kimlik doğrulaması gerektirir ve burada kullanılamaz. Bu hesabı silmek için yöneticinizle veya destek ekibiyle iletişime geçin.",
         "two_factor_authentication": "İki faktörlü kimlik doğrulama",
         "two_factor_authentication_description": "Şifrenizin çalınması durumuna karşı hesabınıza ekstra bir güvenlik katmanı ekleyin.",
         "two_factor_authentication_enabled_please_enter_the_six_digit_code_from_your_authenticator_app": "İki faktörlü kimlik doğrulama etkinleştirildi. Lütfen kimlik doğrulama uygulamanızdaki altı haneli kodu girin.",

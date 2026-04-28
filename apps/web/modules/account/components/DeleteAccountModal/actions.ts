@@ -13,24 +13,32 @@ import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { DELETE_ACCOUNT_WRONG_PASSWORD_ERROR } from "./constants";
 
+const DELETE_USER_CONFIRMATION_REQUIRED_ERROR =
+  "Password and email confirmation are required to delete your account.";
+
 const ZDeleteUserConfirmation = z
   .object({
     confirmationEmail: z.string().trim().min(1).max(255),
-    password: z.string().min(1).max(128),
+    password: z.string().max(128).optional(),
   })
   .strict();
-
-const SSO_ACCOUNT_DELETION_UNAVAILABLE_ERROR =
-  "Account deletion for external sign-in accounts requires reauthentication with the identity provider and is not available here. Please contact your administrator or support to delete this account.";
 
 const parseDeleteUserConfirmation = (input: unknown) => {
   const parsedInput = ZDeleteUserConfirmation.safeParse(input);
 
   if (!parsedInput.success) {
-    throw new InvalidInputError("Password and email confirmation are required to delete your account.");
+    throw new InvalidInputError(DELETE_USER_CONFIRMATION_REQUIRED_ERROR);
   }
 
   return parsedInput.data;
+};
+
+const getPasswordOrThrow = (password?: string) => {
+  if (!password) {
+    throw new InvalidInputError(DELETE_USER_CONFIRMATION_REQUIRED_ERROR);
+  }
+
+  return password;
 };
 
 const logAccountDeletionError = (userId: string, error: unknown) => {
@@ -44,19 +52,18 @@ export const deleteUserAction = authenticatedActionClient.inputSchema(z.unknown(
     try {
       await applyRateLimit(rateLimitConfigs.actions.accountDeletion, ctx.user.id);
 
-      if (ctx.user.identityProvider !== "email") {
-        throw new OperationNotAllowedError(SSO_ACCOUNT_DELETION_UNAVAILABLE_ERROR);
-      }
-
+      const isPasswordBackedAccount = ctx.user.identityProvider === "email";
       const { confirmationEmail, password } = parseDeleteUserConfirmation(parsedInput);
 
       if (confirmationEmail.toLowerCase() !== ctx.user.email.toLowerCase()) {
         throw new AuthorizationError("Email confirmation does not match");
       }
 
-      const isCorrectPassword = await verifyUserPassword(ctx.user.id, password);
-      if (!isCorrectPassword) {
-        throw new AuthorizationError(DELETE_ACCOUNT_WRONG_PASSWORD_ERROR);
+      if (isPasswordBackedAccount) {
+        const isCorrectPassword = await verifyUserPassword(ctx.user.id, getPasswordOrThrow(password));
+        if (!isCorrectPassword) {
+          throw new AuthorizationError(DELETE_ACCOUNT_WRONG_PASSWORD_ERROR);
+        }
       }
 
       const isMultiOrgEnabled = await getIsMultiOrgEnabled();

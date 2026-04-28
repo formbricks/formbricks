@@ -8,7 +8,6 @@ import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
-import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { Input } from "@/modules/ui/components/input";
 import { PasswordInput } from "@/modules/ui/components/password-input";
@@ -48,26 +47,27 @@ export const DeleteAccountModal = ({
     setOpen(nextOpen);
   };
 
-  const hasValidConfirmation =
-    inputValue.trim().toLowerCase() === user.email.toLowerCase() && password.length > 0;
-  const isDeleteDisabled = !isPasswordBackedAccount || !hasValidConfirmation;
+  const hasValidEmailConfirmation = inputValue.trim().toLowerCase() === user.email.toLowerCase();
+  const hasValidConfirmation = hasValidEmailConfirmation && (!isPasswordBackedAccount || password.length > 0);
+  const isDeleteDisabled = !hasValidConfirmation;
 
   const deleteAccount = async () => {
     try {
-      if (!isPasswordBackedAccount) {
-        toast.error(t("environments.settings.profile.sso_account_deletion_not_available"));
-        return;
-      }
-
       if (!hasValidConfirmation) {
         return;
       }
 
       setDeleting(true);
-      const result = await deleteUserAction({
-        confirmationEmail: inputValue,
-        password,
-      });
+      const result = await deleteUserAction(
+        isPasswordBackedAccount
+          ? {
+              confirmationEmail: inputValue,
+              password,
+            }
+          : {
+              confirmationEmail: inputValue,
+            }
+      );
 
       if (!result?.data?.success) {
         const fallbackErrorMessage = t("common.something_went_wrong_please_try_again");
@@ -138,50 +138,46 @@ export const DeleteAccountModal = ({
           )}
           <li>{t("environments.settings.profile.warning_cannot_undo")}</li>
         </ul>
-        {isPasswordBackedAccount ? (
-          <form
-            data-testid="deleteAccountForm"
-            onSubmit={async (e) => {
-              e.preventDefault();
-              await deleteAccount();
-            }}>
-            <label htmlFor="deleteAccountConfirmation">
-              {t("environments.settings.profile.please_enter_email_to_confirm_account_deletion", {
-                email: user.email,
-              })}
-            </label>
-            <Input
-              data-testid="deleteAccountConfirmation"
-              value={inputValue}
-              onChange={handleInputChange}
-              placeholder={user.email}
-              className="mt-2"
-              type="text"
-              id="deleteAccountConfirmation"
-              name="deleteAccountConfirmation"
-            />
-            <label htmlFor="deleteAccountPassword" className="mt-4 block">
-              {t("common.password")}
-            </label>
-            <PasswordInput
-              data-testid="deleteAccountPassword"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
-              className="pr-10"
-              containerClassName="mt-2"
-              id="deleteAccountPassword"
-              name="deleteAccountPassword"
-              required
-            />
-          </form>
-        ) : (
-          <Alert variant="warning">
-            <AlertDescription>
-              {t("environments.settings.profile.sso_account_deletion_not_available")}
-            </AlertDescription>
-          </Alert>
-        )}
+        <form
+          data-testid="deleteAccountForm"
+          onSubmit={async (e) => {
+            e.preventDefault();
+            await deleteAccount();
+          }}>
+          <label htmlFor="deleteAccountConfirmation">
+            {t("environments.settings.profile.please_enter_email_to_confirm_account_deletion", {
+              email: user.email,
+            })}
+          </label>
+          <Input
+            data-testid="deleteAccountConfirmation"
+            value={inputValue}
+            onChange={handleInputChange}
+            placeholder={user.email}
+            className="mt-2"
+            type="text"
+            id="deleteAccountConfirmation"
+            name="deleteAccountConfirmation"
+          />
+          {isPasswordBackedAccount && (
+            <>
+              <label htmlFor="deleteAccountPassword" className="mt-4 block">
+                {t("common.password")}
+              </label>
+              <PasswordInput
+                data-testid="deleteAccountPassword"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+                className="pr-10"
+                containerClassName="mt-2"
+                id="deleteAccountPassword"
+                name="deleteAccountPassword"
+                required
+              />
+            </>
+          )}
+        </form>
       </div>
     </DeleteDialog>
   );

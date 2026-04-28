@@ -129,20 +129,12 @@ describe("deleteUserAction", () => {
     );
   });
 
-  test("blocks SSO users because provider reauthentication is not available", async () => {
-    vi.mocked(getUser).mockResolvedValue({
-      ...mockUser,
-      identityProvider: "google",
-    });
-
+  test("rejects password-backed users without password confirmation", async () => {
     const result = await deleteUserAction({
       confirmationEmail: "test@example.com",
-      password: "Password123",
     });
 
-    expect(result?.serverError).toBe(
-      "Account deletion for external sign-in accounts requires reauthentication with the identity provider and is not available here. Please contact your administrator or support to delete this account."
-    );
+    expect(result?.serverError).toBe("Password and email confirmation are required to delete your account.");
     expect(applyRateLimit).toHaveBeenCalledWith(
       expect.objectContaining({ namespace: "action:account-delete" }),
       mockUser.id
@@ -156,6 +148,26 @@ describe("deleteUserAction", () => {
       }),
       "Account deletion failed"
     );
+  });
+
+  test("deletes SSO users after email confirmation without password re-authentication", async () => {
+    vi.mocked(getUser).mockResolvedValue({
+      ...mockUser,
+      identityProvider: "google",
+    });
+
+    const result = await deleteUserAction({
+      confirmationEmail: "test@example.com",
+    });
+
+    expect(result?.data).toEqual({ success: true });
+    expect(applyRateLimit).toHaveBeenCalledWith(
+      expect.objectContaining({ namespace: "action:account-delete" }),
+      mockUser.id
+    );
+    expect(verifyUserPassword).not.toHaveBeenCalled();
+    expect(deleteUser).toHaveBeenCalledWith(mockUser.id);
+    expect(logger.error).not.toHaveBeenCalled();
   });
 
   test("rejects incorrect passwords", async () => {
