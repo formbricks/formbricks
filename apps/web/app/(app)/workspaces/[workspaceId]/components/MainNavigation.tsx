@@ -416,9 +416,9 @@ export const MainNavigation = ({
           )}>
           <div className={cn(isSettingsMode && "flex flex-1 flex-col overflow-hidden")}>
             {/* Top bar: Logo/Back + Toggle */}
-            <div className="flex items-center justify-between px-3 pb-4">
-              {isSettingsMode ? (
-                !effectiveIsCollapsed ? (
+            {!(isSettingsMode && isBilling) && (
+              <div className="flex items-center justify-between px-3 pb-4">
+                {isSettingsMode ? (
                   <Link
                     href={mainNavigationLink}
                     className={cn(
@@ -426,43 +426,37 @@ export const MainNavigation = ({
                       effectiveIsTextVisible ? "opacity-0" : "opacity-100"
                     )}>
                     <ArrowLeftIcon className="h-4 w-4" strokeWidth={1.5} />
-                    {t("common.back")}
+                    {!effectiveIsCollapsed && t("common.back")}
                   </Link>
                 ) : (
-                  <Link
-                    href={mainNavigationLink}
-                    className="flex items-center text-slate-600 hover:text-slate-900">
-                    <ArrowLeftIcon className="h-4 w-4" strokeWidth={1.5} />
-                  </Link>
-                )
-              ) : (
-                !effectiveIsCollapsed && (
-                  <Link
-                    href={mainNavigationLink}
-                    className={cn(
-                      "flex items-center justify-center transition-opacity duration-100",
-                      effectiveIsTextVisible ? "opacity-0" : "opacity-100"
-                    )}>
-                    <Image src={FBLogo} width={160} height={30} alt={t("workspace.formbricks_logo")} />
-                  </Link>
-                )
-              )}
-              {!isSettingsMode && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={toggleSidebar}
-                  className={cn(
-                    "rounded-xl bg-slate-50 p-1 text-slate-600 transition-all hover:bg-slate-100 focus:outline-none focus:ring-0 focus:ring-transparent"
-                  )}>
-                  {effectiveIsCollapsed ? (
-                    <PanelLeftOpenIcon strokeWidth={1.5} />
-                  ) : (
-                    <PanelLeftCloseIcon strokeWidth={1.5} />
-                  )}
-                </Button>
-              )}
-            </div>
+                  <>
+                    {!effectiveIsCollapsed && (
+                      <Link
+                        href={mainNavigationLink}
+                        className={cn(
+                          "flex items-center justify-center transition-opacity duration-100",
+                          effectiveIsTextVisible ? "opacity-0" : "opacity-100"
+                        )}>
+                        <Image src={FBLogo} width={160} height={30} alt={t("workspace.formbricks_logo")} />
+                      </Link>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={toggleSidebar}
+                      className={cn(
+                        "rounded-xl bg-slate-50 p-1 text-slate-600 transition-all hover:bg-slate-100 focus:outline-none focus:ring-0 focus:ring-transparent"
+                      )}>
+                      {effectiveIsCollapsed ? (
+                        <PanelLeftOpenIcon strokeWidth={1.5} />
+                      ) : (
+                        <PanelLeftCloseIcon strokeWidth={1.5} />
+                      )}
+                    </Button>
+                  </>
+                )}
+              </div>
+            )}
 
             {isSettingsMode ? (
               /* Settings Navigation */

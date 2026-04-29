@@ -240,7 +240,7 @@ export const SettingsSidebarContent = ({
 }: SettingsSidebarContentProps) => {
   const pathname = usePathname();
   const { t } = useTranslation();
-  const { isMember, isOwner, isManager } = getAccessFlags(membershipRole);
+  const { isMember, isBilling, isOwner, isManager } = getAccessFlags(membershipRole);
   const isOwnerOrManager = isOwner || isManager;
   const iconClassName = "h-4 w-4 shrink-0";
 
@@ -252,42 +252,49 @@ export const SettingsSidebarContent = ({
       label: t("common.general"),
       href: `${basePath}/workspace/general`,
       icon: <FoldersIcon className={iconClassName} />,
+      disabled: isBilling,
     },
     {
       id: "look",
       label: t("common.look_and_feel"),
       href: `${basePath}/workspace/look`,
       icon: <BrushIcon className={iconClassName} />,
+      disabled: isBilling,
     },
     {
       id: "app-connection",
       label: t("common.website_and_app_connection"),
       href: `${basePath}/workspace/app-connection`,
       icon: <ListChecksIcon className={iconClassName} />,
+      disabled: isBilling,
     },
     {
       id: "integrations",
       label: t("common.integrations"),
       href: `${basePath}/workspace/integrations`,
       icon: <BlocksIcon className={iconClassName} />,
+      disabled: isBilling,
     },
     {
       id: "teams",
       label: t("common.team_access"),
       href: `${basePath}/workspace/teams`,
       icon: <UsersIcon className={iconClassName} />,
+      disabled: isBilling,
     },
     {
       id: "languages",
       label: t("common.survey_languages"),
       href: `${basePath}/workspace/languages`,
       icon: <LanguagesIcon className={iconClassName} />,
+      disabled: isBilling,
     },
     {
       id: "tags",
       label: t("common.tags"),
       href: `${basePath}/workspace/tags`,
       icon: <TagIcon className={iconClassName} />,
+      disabled: isBilling,
     },
   ];
 
@@ -297,12 +304,14 @@ export const SettingsSidebarContent = ({
       label: t("common.general"),
       href: `${basePath}/organization/general`,
       icon: <Building2Icon className={iconClassName} />,
+      disabled: isBilling,
     },
     {
       id: "org-teams",
       label: t("common.members_and_teams"),
       href: `${basePath}/organization/teams`,
       icon: <UsersIcon className={iconClassName} />,
+      disabled: isBilling,
     },
     {
       id: "org-api-keys",
@@ -331,7 +340,7 @@ export const SettingsSidebarContent = ({
       href: `${basePath}/organization/enterprise`,
       icon: <ShieldIcon className={iconClassName} />,
       hidden: isFormbricksCloud,
-      disabled: isMember,
+      disabled: isMember || isBilling,
     },
   ];
 
