@@ -12,6 +12,7 @@ describe("captureSurveyResponsePostHogEvent", () => {
 
   const makeParams = (responseCount: number) => ({
     organizationId: "org-1",
+    workspaceId: "ws-1",
     surveyId: "survey-1",
     surveyType: "link",
     environmentId: "env-1",
@@ -23,15 +24,21 @@ describe("captureSurveyResponsePostHogEvent", () => {
 
     captureSurveyResponsePostHogEvent(makeParams(1));
 
-    expect(capturePostHogEvent).toHaveBeenCalledWith("org-1", "survey_response_received", {
-      survey_id: "survey-1",
-      survey_type: "link",
-      organization_id: "org-1",
-      environment_id: "env-1",
-      response_count: 1,
-      is_first_response: true,
-      milestone: "first",
-    });
+    expect(capturePostHogEvent).toHaveBeenCalledWith(
+      "org-1",
+      "survey_response_received",
+      {
+        survey_id: "survey-1",
+        survey_type: "link",
+        organization_id: "org-1",
+        workspace_id: "ws-1",
+        environment_id: "env-1",
+        response_count: 1,
+        is_first_response: true,
+        milestone: "first",
+      },
+      { organizationId: "org-1", workspaceId: "ws-1" }
+    );
   });
 
   test("fires on every 100th response", async () => {
@@ -75,7 +82,8 @@ describe("captureSurveyResponsePostHogEvent", () => {
       expect.objectContaining({
         is_first_response: false,
         milestone: "200",
-      })
+      }),
+      { organizationId: "org-1", workspaceId: "ws-1" }
     );
   });
 });

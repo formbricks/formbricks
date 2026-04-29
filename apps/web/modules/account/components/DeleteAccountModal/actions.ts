@@ -4,6 +4,7 @@ import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import { AuthorizationError, InvalidInputError, OperationNotAllowedError } from "@formbricks/types/errors";
 import { getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { verifyUserPassword } from "@/lib/user/password";
 import { deleteUser, getUser } from "@/lib/user/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
@@ -77,6 +78,8 @@ export const deleteUserAction = authenticatedActionClient.inputSchema(z.unknown(
       }
 
       ctx.auditLoggingCtx.oldObject = await getUser(ctx.user.id);
+
+      capturePostHogEvent(ctx.user.id, "delete_account");
 
       await deleteUser(ctx.user.id);
 

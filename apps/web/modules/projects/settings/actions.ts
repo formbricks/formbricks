@@ -6,6 +6,7 @@ import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/typ
 import { ZProjectUpdateInput } from "@formbricks/types/project";
 import { getTeamsByOrganizationId } from "@/app/(app)/(onboarding)/lib/onboarding";
 import { getOrganization } from "@/lib/organization/service";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { getProject } from "@/lib/project/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
@@ -72,6 +73,35 @@ export const updateProjectAction = authenticatedActionClient.inputSchema(ZUpdate
     const result = await updateProject(parsedInput.projectId, parsedInput.data);
     ctx.auditLoggingCtx.oldObject = oldObject;
     ctx.auditLoggingCtx.newObject = result;
+
+    const groupContext = { organizationId, workspaceId: parsedInput.projectId };
+
+    if (oldObject?.linkSurveyBranding === true && parsedInput.data.linkSurveyBranding === false) {
+      capturePostHogEvent(
+        ctx.user.id,
+        "remove_branding_enabled",
+        {
+          organization_id: organizationId,
+          workspace_id: parsedInput.projectId,
+          branding_type: "link",
+        },
+        groupContext
+      );
+    }
+
+    if (oldObject?.inAppSurveyBranding === true && parsedInput.data.inAppSurveyBranding === false) {
+      capturePostHogEvent(
+        ctx.user.id,
+        "remove_branding_enabled",
+        {
+          organization_id: organizationId,
+          workspace_id: parsedInput.projectId,
+          branding_type: "in_app",
+        },
+        groupContext
+      );
+    }
+
     return result;
   })
 );

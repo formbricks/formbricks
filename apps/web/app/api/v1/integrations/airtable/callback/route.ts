@@ -7,7 +7,7 @@ import { AIRTABLE_CLIENT_ID, WEBAPP_URL } from "@/lib/constants";
 import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { createOrUpdateIntegration, getIntegrationByType } from "@/lib/integration/service";
 import { capturePostHogEvent } from "@/lib/posthog";
-import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getOrganizationIdFromEnvironmentId, getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
 
 const getEmail = async (token: string) => {
   const req_ = await fetch("https://api.airtable.com/v0/meta/whoami", {
@@ -95,10 +95,18 @@ export const GET = withV1ApiWrapper({
 
       try {
         const organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
-        capturePostHogEvent(authentication.user.id, "integration_connected", {
-          integration_type: "airtable",
-          organization_id: organizationId,
-        });
+        const projectId = await getProjectIdFromEnvironmentId(environmentId);
+        capturePostHogEvent(
+          authentication.user.id,
+          "integration_connected",
+          {
+            integration_type: "airtable",
+            organization_id: organizationId,
+            workspace_id: projectId,
+            environment_id: environmentId,
+          },
+          { organizationId, workspaceId: projectId }
+        );
       } catch (err) {
         logger.error({ error: err }, "Failed to capture PostHog integration_connected event for airtable");
       }

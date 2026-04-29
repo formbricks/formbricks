@@ -10,6 +10,7 @@ import {
 import { ZProjectUpdateInput } from "@formbricks/types/project";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getOrganization } from "@/lib/organization/service";
+import { capturePostHogEvent, groupIdentifyPostHog } from "@/lib/posthog";
 import { getOrganizationProjectsCount } from "@/lib/project/service";
 import { updateUser } from "@/lib/user/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
@@ -79,6 +80,19 @@ export const createProjectAction = authenticatedActionClient.inputSchema(ZCreate
     await updateUser(user.id, {
       notificationSettings: updatedNotificationSettings,
     });
+
+    groupIdentifyPostHog("workspace", project.id, { name: project.name });
+
+    capturePostHogEvent(
+      user.id,
+      "workspace_created",
+      {
+        organization_id: organizationId,
+        workspace_id: project.id,
+        name: project.name,
+      },
+      { organizationId, workspaceId: project.id }
+    );
 
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.projectId = project.id;

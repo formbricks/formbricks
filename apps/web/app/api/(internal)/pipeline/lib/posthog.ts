@@ -2,6 +2,7 @@ import { capturePostHogEvent } from "@/lib/posthog";
 
 interface SurveyResponsePostHogEventParams {
   organizationId: string;
+  workspaceId: string;
   surveyId: string;
   surveyType: string;
   environmentId: string;
@@ -14,6 +15,7 @@ interface SurveyResponsePostHogEventParams {
  */
 export const captureSurveyResponsePostHogEvent = ({
   organizationId,
+  workspaceId,
   surveyId,
   surveyType,
   environmentId,
@@ -21,13 +23,19 @@ export const captureSurveyResponsePostHogEvent = ({
 }: SurveyResponsePostHogEventParams): void => {
   if (responseCount !== 1 && responseCount % 100 !== 0) return;
 
-  capturePostHogEvent(organizationId, "survey_response_received", {
-    survey_id: surveyId,
-    survey_type: surveyType,
-    organization_id: organizationId,
-    environment_id: environmentId,
-    response_count: responseCount,
-    is_first_response: responseCount === 1,
-    milestone: responseCount === 1 ? "first" : String(responseCount),
-  });
+  capturePostHogEvent(
+    organizationId,
+    "survey_response_received",
+    {
+      survey_id: surveyId,
+      survey_type: surveyType,
+      organization_id: organizationId,
+      workspace_id: workspaceId,
+      environment_id: environmentId,
+      response_count: responseCount,
+      is_first_response: responseCount === 1,
+      milestone: responseCount === 1 ? "first" : String(responseCount),
+    },
+    { organizationId, workspaceId }
+  );
 };

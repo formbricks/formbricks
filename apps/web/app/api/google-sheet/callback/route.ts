@@ -12,7 +12,7 @@ import {
 import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { createOrUpdateIntegration, getIntegrationByType } from "@/lib/integration/service";
 import { capturePostHogEvent } from "@/lib/posthog";
-import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getOrganizationIdFromEnvironmentId, getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 
 export const GET = async (req: Request) => {
@@ -87,10 +87,18 @@ export const GET = async (req: Request) => {
   if (result) {
     try {
       const organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
-      capturePostHogEvent(session.user.id, "integration_connected", {
-        integration_type: "googleSheets",
-        organization_id: organizationId,
-      });
+      const projectId = await getProjectIdFromEnvironmentId(environmentId);
+      capturePostHogEvent(
+        session.user.id,
+        "integration_connected",
+        {
+          integration_type: "googleSheets",
+          organization_id: organizationId,
+          workspace_id: projectId,
+          environment_id: environmentId,
+        },
+        { organizationId, workspaceId: projectId }
+      );
     } catch (err) {
       logger.error({ error: err }, "Failed to capture PostHog integration_connected event for googleSheets");
     }

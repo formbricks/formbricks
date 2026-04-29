@@ -1,9 +1,11 @@
 "use server";
 
 import { z } from "zod";
+import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/common";
 import { ZContactAttributesInput } from "@formbricks/types/contact-attribute";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import {
@@ -113,6 +115,10 @@ export const createContactsFromCSVAction = authenticatedActionClient
       });
 
       ctx.auditLoggingCtx.organizationId = organizationId;
+      const projectId = await getProjectIdFromEnvironmentId(parsedInput.environmentId);
+      const existingContactCount = await prisma.contact.count({
+        where: { environmentId: parsedInput.environmentId },
+      });
       const result = await createContactsFromCSV(
         parsedInput.csvData,
         parsedInput.environmentId,
@@ -124,6 +130,20 @@ export const createContactsFromCSVAction = authenticatedActionClient
         ctx.auditLoggingCtx.newObject = {
           contacts: result.contacts,
         };
+
+        capturePostHogEvent(
+          ctx.user.id,
+          "contact_created",
+          {
+            organization_id: organizationId,
+            workspace_id: projectId,
+            environment_id: parsedInput.environmentId,
+            existing_contact_count: existingContactCount,
+            creation_method: "import",
+            import_count: result.contacts.length,
+          },
+          { organizationId, workspaceId: projectId }
+        );
       }
 
       return result;

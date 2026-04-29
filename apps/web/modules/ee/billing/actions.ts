@@ -220,9 +220,14 @@ export const startHobbyAction = authenticatedActionClient
     await reconcileCloudStripeSubscriptionsForOrganization(parsedInput.organizationId);
     await syncOrganizationBillingFromStripe(parsedInput.organizationId);
 
-    capturePostHogEvent(ctx.user.id, "stayed_on_hobby_plan", {
-      organization_id: parsedInput.organizationId,
-    });
+    capturePostHogEvent(
+      ctx.user.id,
+      "stayed_on_hobby_plan",
+      {
+        organization_id: parsedInput.organizationId,
+      },
+      { organizationId: parsedInput.organizationId }
+    );
 
     return { success: true };
   });
@@ -257,15 +262,25 @@ export const startProTrialAction = authenticatedActionClient
     await reconcileCloudStripeSubscriptionsForOrganization(parsedInput.organizationId);
     await syncOrganizationBillingFromStripe(parsedInput.organizationId);
 
-    capturePostHogEvent(ctx.user.id, "free_trial_started", {
-      plan: "pro",
-      organization_id: parsedInput.organizationId,
-      trial_duration_days: 14,
-    });
+    capturePostHogEvent(
+      ctx.user.id,
+      "free_trial_started",
+      {
+        plan: "pro",
+        organization_id: parsedInput.organizationId,
+        trial_duration_days: 14,
+      },
+      { organizationId: parsedInput.organizationId }
+    );
 
-    capturePostHogEvent(ctx.user.id, "reverse_trial_started", {
-      organization_id: parsedInput.organizationId,
-    });
+    capturePostHogEvent(
+      ctx.user.id,
+      "reverse_trial_started",
+      {
+        organization_id: parsedInput.organizationId,
+      },
+      { organizationId: parsedInput.organizationId }
+    );
 
     return { success: true };
   });
