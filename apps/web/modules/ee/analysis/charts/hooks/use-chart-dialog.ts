@@ -26,6 +26,7 @@ export interface UseChartDialogProps {
   onOpenChange: (open: boolean) => void;
   workspaceId: string;
   chartId?: string;
+  autoAddToDashboardId?: string;
   /** Pre-loaded chart metadata; when provided for edit, skips getChartAction */
   initialChart?: TChartWithCreator;
   onSuccess?: () => void;
@@ -37,6 +38,7 @@ export function useChartDialog({
   onOpenChange,
   workspaceId,
   chartId,
+  autoAddToDashboardId,
   initialChart,
   onSuccess,
   directories,
@@ -45,7 +47,6 @@ export function useChartDialog({
   const router = useRouter();
   const [selectedChartType, setSelectedChartType] = useState<TChartType | undefined>();
   const [chartData, setChartData] = useState<AnalyticsResponse | null>(null);
-  const [isSaveDialogOpen, setIsSaveDialogOpen] = useState(false);
   const [isAddToDashboardDialogOpen, setIsAddToDashboardDialogOpen] = useState(false);
   const [chartName, setChartName] = useState("");
   const [dashboards, setDashboards] = useState<Array<{ id: string; name: string }>>([]);
@@ -54,9 +55,7 @@ export function useChartDialog({
   const [isLoadingChart, setIsLoadingChart] = useState(false);
   const [chartLoadError, setChartLoadError] = useState<string | null>(null);
   const [currentChartId, setCurrentChartId] = useState<string | undefined>(chartId);
-  const [selectedDirectoryId, setSelectedDirectoryId] = useState<string | null>(
-    directories?.length === 1 ? directories[0].id : null
-  );
+  const [selectedDirectoryId, setSelectedDirectoryId] = useState<string | null>(directories?.[0]?.id ?? null);
 
   useEffect(() => {
     let cancelled = false;
@@ -85,7 +84,7 @@ export function useChartDialog({
       setChartName("");
       setSelectedChartType(undefined);
       setCurrentChartId(undefined);
-      setSelectedDirectoryId(directories?.length === 1 ? directories[0].id : null);
+      setSelectedDirectoryId(directories?.[0]?.id ?? null);
       return;
     }
 
@@ -159,11 +158,6 @@ export function useChartDialog({
 
   const handleChartGenerated = (data: AnalyticsResponse) => {
     setChartData(data);
-    if (!currentChartId) {
-      setChartName(
-        data.chartType ? `${t("workspace.analysis.charts.chart")} ${new Date().toLocaleString()}` : ""
-      );
-    }
     setSelectedChartType(data.chartType);
   };
 
@@ -179,7 +173,10 @@ export function useChartDialog({
     }
 
     setIsSaving(true);
+    let newlyCreatedChartId: string | null = null;
     try {
+      let savedChartId = currentChartId;
+
       if (currentChartId) {
         const result = await updateChartAction({
           workspaceId,
@@ -218,17 +215,41 @@ export function useChartDialog({
         }
 
         setCurrentChartId(result.data.id);
+        savedChartId = result.data.id;
+        newlyCreatedChartId = result.data.id;
         toast.success(t("workspace.analysis.charts.chart_saved_successfully"));
       }
 
-      setIsSaveDialogOpen(false);
+      if (autoAddToDashboardId && savedChartId) {
+        const addResult = await addChartToDashboardAction({
+          workspaceId,
+          chartId: savedChartId,
+          dashboardId: autoAddToDashboardId,
+        });
+
+        if (!addResult?.data) {
+          toast.error(
+            getFormattedErrorMessage(addResult) ||
+              t("workspace.analysis.charts.failed_to_add_chart_to_dashboard")
+          );
+          if (newlyCreatedChartId) await cleanupOrphanChart(newlyCreatedChartId);
+          return;
+        }
+
+        toast.success(t("workspace.analysis.charts.chart_added_to_dashboard"));
+      }
+
       onOpenChange(false);
+      if (autoAddToDashboardId) {
+        router.push(`/workspaces/${workspaceId}/dashboards/${autoAddToDashboardId}`);
+      }
       router.refresh();
       onSuccess?.();
     } catch (error: unknown) {
       const message =
         error instanceof Error ? error.message : t("workspace.analysis.charts.failed_to_save_chart");
       toast.error(message);
+      if (autoAddToDashboardId && newlyCreatedChartId) await cleanupOrphanChart(newlyCreatedChartId);
     } finally {
       setIsSaving(false);
     }
@@ -328,7 +349,7 @@ export function useChartDialog({
       setSelectedChartType(undefined);
       setCurrentChartId(undefined);
       setChartLoadError(null);
-      setSelectedDirectoryId(directories?.length === 1 ? directories[0].id : null);
+      setSelectedDirectoryId(directories?.[0]?.id ?? null);
       onOpenChange(false);
     }
   };
@@ -349,8 +370,6 @@ export function useChartDialog({
     setSelectedChartType,
     currentChartId,
     setCurrentChartId,
-    isSaveDialogOpen,
-    setIsSaveDialogOpen,
     isAddToDashboardDialogOpen,
     setIsAddToDashboardDialogOpen,
     dashboards,

@@ -125,6 +125,7 @@
     "activity": "アクティビティ",
     "add": "追加",
     "add_action": "アクションを追加",
+    "add_chart": "チャートを追加",
     "add_charts": "グラフを追加",
     "add_existing_chart_description": "このダッシュボードに追加するグラフを検索して選択してください。",
     "add_filter": "フィルターを追加",
@@ -393,6 +394,7 @@
     "report_survey": "フォームを報告",
     "request_trial_license": "トライアルライセンスをリクエスト",
     "reset_to_default": "デフォルトにリセット",
+    "resize": "サイズ変更",
     "response": "回答",
     "response_id": "回答ID",
     "responses": "回答",
@@ -1724,6 +1726,7 @@
         "failed_to_execute_query": "クエリの実行に失敗しました",
         "failed_to_load_chart": "チャートの読み込みに失敗しました",
         "failed_to_load_chart_data": "チャートデータの読み込みに失敗しました",
+        "failed_to_load_dashboards": "Failed to load dashboards",
         "failed_to_save_chart": "チャートの保存に失敗しました",
         "field": "フィールド",
         "field_label_average_score": "平均スコア",
@@ -1785,8 +1788,10 @@
         "please_select_dashboard": "ダッシュボードを選択してください",
         "predefined_measures": "事前定義されたメジャー",
         "preset": "プリセット",
+        "preview_chart": "グラフのプレビュー",
         "query_executed_successfully": "クエリが正常に実行されました",
         "reset_to_ai_suggestion": "AIの提案にリセット",
+        "save_and_add_to_dashboard": "保存してダッシュボードに追加",
         "save_chart": "チャートを保存",
         "save_chart_dialog_title": "チャートを保存",
         "select_data_source": "Select a data source",
@@ -1799,7 +1804,8 @@
         "start_date": "開始日",
         "time_dimension": "時間ディメンション",
         "time_dimension_title": "時間ベースのグループ化を追加",
-        "time_dimension_toggle_description": "時間の経過に伴うトレンドを監視します。"
+        "time_dimension_toggle_description": "時間の経過に伴うトレンドを監視します。",
+        "update_chart": "チャートを更新"
       },
       "dashboards": {
         "add_count_charts": "{count}個のグラフを追加",
@@ -1810,6 +1816,7 @@
         "create_dashboard": "ダッシュボードを作成",
         "create_dashboard_description": "新しいダッシュボードの名前を入力してください。",
         "create_failed": "ダッシュボードの作成に失敗しました",
+        "create_new_chart": "新しいチャートを作成する",
         "create_success": "ダッシュボードを正常に作成しました！",
         "dashboard": "ダッシュボード",
         "dashboard_delete_confirmation": "このダッシュボードを削除してもよろしいですか?この操作は元に戻せません。",
@@ -1824,12 +1831,14 @@
         "duplicate_failed": "ダッシュボードの複製に失敗しました",
         "duplicate_success": "ダッシュボードを正常に複製しました！",
         "failed_to_load_chart_data": "チャートデータの読み込みに失敗しました",
-        "no_charts_available_description": "このダッシュボードに追加できるチャートがありません。チャートがまだ存在しないか、既存のチャートがすべて追加済みです。新しいチャートを作成するには、チャートページに移動してください。",
-        "no_charts_to_add_message": "このダッシュボードに追加するチャートがありません。",
         "no_dashboards_found": "ダッシュボードが見つかりません。",
         "no_data_message": "データがありません。現在表示する情報がありません。ダッシュボードを構築するにはチャートを追加してください。",
         "please_enter_name": "ダッシュボード名を入力してください"
-      }
+      },
+      "manage_feedback_sources": "Manage feedback sources",
+      "no_feedback_records_message": "レポートするフィードバック レコードがありません。データをシステムにフィードするためのフィードバック ソースをセットアップします。",
+      "no_feedback_records_with_sources_message": "No feedback records yet. Records will appear here once your feedback sources start sending data.",
+      "setup_feedback_source": "フィードバックソースのセットアップ"
     },
     "api_keys": {
       "add_api_key": "APIキーを追加",

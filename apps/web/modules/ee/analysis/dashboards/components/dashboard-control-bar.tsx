@@ -8,12 +8,14 @@ import { useTranslation } from "react-i18next";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { deleteDashboardAction } from "@/modules/ee/analysis/dashboards/actions";
 import { AddExistingChartsDialog } from "@/modules/ee/analysis/dashboards/components/add-existing-charts-dialog";
+import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { IconBar } from "@/modules/ui/components/iconbar";
 
 interface DashboardControlBarProps {
   workspaceId: string;
   dashboardId: string;
+  directories: { id: string; name: string }[];
   existingChartIds: string[];
   isEditing: boolean;
   isSaving: boolean;
@@ -28,6 +30,7 @@ interface DashboardControlBarProps {
 export const DashboardControlBar = ({
   workspaceId,
   dashboardId,
+  directories,
   existingChartIds,
   isEditing,
   isSaving,
@@ -83,12 +86,6 @@ export const DashboardControlBar = ({
 
   const viewModeActions = [
     {
-      icon: PlusIcon,
-      tooltip: t("common.add_charts"),
-      onClick: () => setIsAddExistingDialogOpen(true),
-      isVisible: !isReadOnly,
-    },
-    {
       icon: RefreshCwIcon,
       tooltip: t("common.refresh"),
       onClick: onRefresh,
@@ -110,7 +107,19 @@ export const DashboardControlBar = ({
 
   return (
     <>
-      <IconBar actions={isEditing ? editModeActions : viewModeActions} />
+      {isEditing ? (
+        <IconBar actions={editModeActions} />
+      ) : (
+        <div className="flex items-center gap-2">
+          {!isReadOnly && (
+            <Button onClick={() => setIsAddExistingDialogOpen(true)}>
+              <PlusIcon />
+              {t("common.add_charts")}
+            </Button>
+          )}
+          <IconBar actions={viewModeActions} />
+        </div>
+      )}
       <DeleteDialog
         deleteWhat={t("workspace.analysis.dashboards.dashboard")}
         open={isDeleteDialogOpen}
@@ -124,6 +133,7 @@ export const DashboardControlBar = ({
         onOpenChange={setIsAddExistingDialogOpen}
         workspaceId={workspaceId}
         dashboardId={dashboardId}
+        directories={directories}
         existingChartIds={existingChartIds}
         onSuccess={() => {
           setIsAddExistingDialogOpen(false);

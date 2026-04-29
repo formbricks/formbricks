@@ -125,6 +125,7 @@
     "activity": "Activiteit",
     "add": "Toevoegen",
     "add_action": "Actie toevoegen",
+    "add_chart": "Diagram toevoegen",
     "add_charts": "Grafieken toevoegen",
     "add_existing_chart_description": "Zoek en selecteer grafieken om toe te voegen aan dit dashboard.",
     "add_filter": "Filter toevoegen",
@@ -393,6 +394,7 @@
     "report_survey": "Enquête melden",
     "request_trial_license": "Proeflicentie aanvragen",
     "reset_to_default": "Resetten naar standaard",
+    "resize": "Formaat wijzigen",
     "response": "Antwoord",
     "response_id": "Antwoord-ID",
     "responses": "Reacties",
@@ -1724,6 +1726,7 @@
         "failed_to_execute_query": "Query uitvoeren mislukt",
         "failed_to_load_chart": "Diagram laden mislukt",
         "failed_to_load_chart_data": "Diagramdata laden mislukt",
+        "failed_to_load_dashboards": "Failed to load dashboards",
         "failed_to_save_chart": "Opslaan van diagram mislukt",
         "field": "Veld",
         "field_label_average_score": "Gemiddelde score",
@@ -1785,8 +1788,10 @@
         "please_select_dashboard": "Selecteer een dashboard",
         "predefined_measures": "Vooraf gedefinieerde metingen",
         "preset": "Voorinstelling",
+        "preview_chart": "Voorbeeldgrafiek",
         "query_executed_successfully": "Query succesvol uitgevoerd",
         "reset_to_ai_suggestion": "Herstel naar AI-suggestie",
+        "save_and_add_to_dashboard": "Opslaan en toevoegen aan dashboard",
         "save_chart": "Diagram opslaan",
         "save_chart_dialog_title": "Diagram opslaan",
         "select_data_source": "Select a data source",
@@ -1799,7 +1804,8 @@
         "start_date": "Startdatum",
         "time_dimension": "Tijdsdimensie",
         "time_dimension_title": "Tijdgebaseerde groepering toevoegen",
-        "time_dimension_toggle_description": "Volg trends over tijd."
+        "time_dimension_toggle_description": "Volg trends over tijd.",
+        "update_chart": "Diagram bijwerken"
       },
       "dashboards": {
         "add_count_charts": "{count} grafiek(en) toevoegen",
@@ -1810,6 +1816,7 @@
         "create_dashboard": "Dashboard maken",
         "create_dashboard_description": "Voer een naam in voor je nieuwe dashboard.",
         "create_failed": "Dashboard creëren mislukt",
+        "create_new_chart": "Maak een nieuw diagram",
         "create_success": "Dashboard succesvol aangemaakt!",
         "dashboard": "Dashboard",
         "dashboard_delete_confirmation": "Weet je zeker dat je dit dashboard wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.",
@@ -1824,12 +1831,14 @@
         "duplicate_failed": "Dashboard dupliceren mislukt",
         "duplicate_success": "Dashboard succesvol gedupliceerd!",
         "failed_to_load_chart_data": "Grafiekgegevens laden mislukt",
-        "no_charts_available_description": "Er zijn geen grafieken die aan dit dashboard kunnen worden toegevoegd. Er bestaan nog geen grafieken, of alle bestaande grafieken zijn al toegevoegd. Ga naar de pagina Grafieken om nieuwe grafieken te maken.",
-        "no_charts_to_add_message": "Geen grafieken om toe te voegen aan dit dashboard.",
         "no_dashboards_found": "Geen dashboards gevonden.",
         "no_data_message": "Geen gegevens. Er is momenteel geen informatie om weer te geven. Voeg grafieken toe om je dashboard op te bouwen.",
         "please_enter_name": "Voer een dashboardnaam in"
-      }
+      },
+      "manage_feedback_sources": "Manage feedback sources",
+      "no_feedback_records_message": "U heeft geen feedbackrecords om over te rapporteren. Stel feedbackbronnen in om gegevens in het systeem in te voeren.",
+      "no_feedback_records_with_sources_message": "No feedback records yet. Records will appear here once your feedback sources start sending data.",
+      "setup_feedback_source": "Feedbackbronnen instellen"
     },
     "api_keys": {
       "add_api_key": "API-sleutel toevoegen",

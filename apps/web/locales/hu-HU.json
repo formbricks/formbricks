@@ -125,6 +125,7 @@
     "activity": "Tevékenység",
     "add": "Hozzáadás",
     "add_action": "Művelet hozzáadása",
+    "add_chart": "Diagram hozzáadása",
     "add_charts": "Diagramok hozzáadása",
     "add_existing_chart_description": "Keressen és válasszon diagramokat a műszerfalhoz való hozzáadáshoz.",
     "add_filter": "Szűrő hozzáadása",
@@ -393,6 +394,7 @@
     "report_survey": "Kérdőív jelentése",
     "request_trial_license": "Próbaidőszaki licenc kérése",
     "reset_to_default": "Visszaállítás az alapértelmezettre",
+    "resize": "Átméretezés",
     "response": "Válasz",
     "response_id": "Válaszazonosító",
     "responses": "Válaszok",
@@ -1724,6 +1726,7 @@
         "failed_to_execute_query": "A lekérdezés végrehajtása sikertelen",
         "failed_to_load_chart": "A diagram betöltése sikertelen",
         "failed_to_load_chart_data": "A diagram adatainak betöltése sikertelen",
+        "failed_to_load_dashboards": "Failed to load dashboards",
         "failed_to_save_chart": "A diagram mentése sikertelen",
         "field": "Mező",
         "field_label_average_score": "Átlagos pontszám",
@@ -1785,8 +1788,10 @@
         "please_select_dashboard": "Kérjük, válassz egy vezérlőpultot",
         "predefined_measures": "Előre definiált mérőszámok",
         "preset": "Előbeállítás",
+        "preview_chart": "Előnézet diagram",
         "query_executed_successfully": "Lekérdezés sikeresen végrehajtva",
         "reset_to_ai_suggestion": "Visszaállítás AI javaslatra",
+        "save_and_add_to_dashboard": "Mentés és hozzáadása az irányítópulthoz",
         "save_chart": "Diagram mentése",
         "save_chart_dialog_title": "Diagram mentése",
         "select_data_source": "Select a data source",
@@ -1799,7 +1804,8 @@
         "start_date": "Kezdési dátum",
         "time_dimension": "Időbeli dimenzió",
         "time_dimension_title": "Időalapú csoportosítás hozzáadása",
-        "time_dimension_toggle_description": "Trendek figyelemmel kísérése az idő függvényében."
+        "time_dimension_toggle_description": "Trendek figyelemmel kísérése az idő függvényében.",
+        "update_chart": "Frissítse a diagramot"
       },
       "dashboards": {
         "add_count_charts": "{count} diagram hozzáadása",
@@ -1810,6 +1816,7 @@
         "create_dashboard": "Műszerfal létrehozása",
         "create_dashboard_description": "Adjon nevet az új vezérlőpultnak.",
         "create_failed": "A vezérlőpult létrehozása sikertelen",
+        "create_new_chart": "Új diagram létrehozása",
         "create_success": "A vezérlőpult sikeresen létrehozva!",
         "dashboard": "Műszerfal",
         "dashboard_delete_confirmation": "Biztos benne, hogy törölni kívánja ezt a műszerfalat? Ez a művelet nem vonható vissza.",
@@ -1824,12 +1831,14 @@
         "duplicate_failed": "A vezérlőpult másolása sikertelen",
         "duplicate_success": "A vezérlőpult sikeresen lemásolva!",
         "failed_to_load_chart_data": "A diagram adatainak betöltése sikertelen",
-        "no_charts_available_description": "Nincsenek diagramok, amelyek hozzáadhatók ehhez az irányítópulthoz. Vagy még nem léteznek diagramok, vagy az összes meglévő diagram már hozzá lett adva. Látogassa meg a Diagramok oldalt új diagramok létrehozásához.",
-        "no_charts_to_add_message": "Nincsenek hozzáadható diagramok ehhez az irányítópulthoz.",
         "no_dashboards_found": "Nem található vezérlőpult.",
         "no_data_message": "Nincsenek adatok. Jelenleg nincsenek megjeleníthető információk. Adjon hozzá diagramokat az irányítópult felépítéséhez.",
         "please_enter_name": "Kérjük, adjon nevet a vezérlőpultnak"
-      }
+      },
+      "manage_feedback_sources": "Manage feedback sources",
+      "no_feedback_records_message": "Nincsenek visszajelzési rekordjai, amelyekről jelentést tehetne. Állítsa be a visszacsatolási forrásokat, hogy adatokat tápláljon be a rendszerbe.",
+      "no_feedback_records_with_sources_message": "No feedback records yet. Records will appear here once your feedback sources start sending data.",
+      "setup_feedback_source": "Visszajelzési források beállítása"
     },
     "api_keys": {
       "add_api_key": "API-kulcs hozzáadása",

@@ -125,6 +125,7 @@
     "activity": "Atividade",
     "add": "Adicionar",
     "add_action": "Adicionar ação",
+    "add_chart": "Adicionar gráfico",
     "add_charts": "Adicionar gráficos",
     "add_existing_chart_description": "Pesquise e selecione gráficos para adicionar a este painel.",
     "add_filter": "Adicionar filtro",
@@ -393,6 +394,7 @@
     "report_survey": "Relatório de Pesquisa",
     "request_trial_license": "Pedir licença de teste",
     "reset_to_default": "Restaurar para o padrão",
+    "resize": "Redimensionar",
     "response": "Resposta",
     "response_id": "ID da resposta",
     "responses": "Respostas",
@@ -1724,6 +1726,7 @@
         "failed_to_execute_query": "Falha ao executar consulta",
         "failed_to_load_chart": "Falha ao carregar gráfico",
         "failed_to_load_chart_data": "Falha ao carregar dados do gráfico",
+        "failed_to_load_dashboards": "Failed to load dashboards",
         "failed_to_save_chart": "Falha ao salvar gráfico",
         "field": "Campo",
         "field_label_average_score": "Pontuação média",
@@ -1785,8 +1788,10 @@
         "please_select_dashboard": "Por favor, selecione um painel",
         "predefined_measures": "Medidas predefinidas",
         "preset": "Predefinição",
+        "preview_chart": "Visualizar gráfico",
         "query_executed_successfully": "Consulta executada com sucesso",
         "reset_to_ai_suggestion": "Redefinir para sugestão da IA",
+        "save_and_add_to_dashboard": "Salvar e adicionar ao painel",
         "save_chart": "Salvar gráfico",
         "save_chart_dialog_title": "Salvar gráfico",
         "select_data_source": "Select a data source",
@@ -1799,7 +1804,8 @@
         "start_date": "Data inicial",
         "time_dimension": "Dimensão temporal",
         "time_dimension_title": "Adicionar agrupamento por tempo",
-        "time_dimension_toggle_description": "Monitore tendências ao longo do tempo."
+        "time_dimension_toggle_description": "Monitore tendências ao longo do tempo.",
+        "update_chart": "Atualizar gráfico"
       },
       "dashboards": {
         "add_count_charts": "Adicionar {count} gráfico(s)",
@@ -1810,6 +1816,7 @@
         "create_dashboard": "Criar painel",
         "create_dashboard_description": "Digite um nome para o seu novo painel.",
         "create_failed": "Falha ao criar painel",
+        "create_new_chart": "Criar novo gráfico",
         "create_success": "Painel criado com sucesso!",
         "dashboard": "Painel",
         "dashboard_delete_confirmation": "Tem certeza de que deseja excluir este painel? Esta ação não pode ser desfeita.",
@@ -1824,12 +1831,14 @@
         "duplicate_failed": "Falha ao duplicar painel",
         "duplicate_success": "Painel duplicado com sucesso!",
         "failed_to_load_chart_data": "Falha ao carregar os dados do gráfico",
-        "no_charts_available_description": "Não há gráficos que possam ser adicionados a este painel. Ou nenhum gráfico existe ainda, ou todos os gráficos existentes já foram adicionados. Vá para a página de Gráficos para criar novos gráficos.",
-        "no_charts_to_add_message": "Nenhum gráfico para adicionar a este painel.",
         "no_dashboards_found": "Nenhum painel encontrado.",
         "no_data_message": "Sem Dados. Não há informações para exibir no momento. Adicione gráficos para construir seu painel.",
         "please_enter_name": "Por favor, digite um nome para o painel"
-      }
+      },
+      "manage_feedback_sources": "Manage feedback sources",
+      "no_feedback_records_message": "Você não tem registros de feedback para relatar. Configure fontes de feedback para alimentar dados no sistema.",
+      "no_feedback_records_with_sources_message": "No feedback records yet. Records will appear here once your feedback sources start sending data.",
+      "setup_feedback_source": "Configurar fontes de feedback"
     },
     "api_keys": {
       "add_api_key": "Adicionar chave de API",
