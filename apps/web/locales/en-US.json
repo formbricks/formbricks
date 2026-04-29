@@ -1553,7 +1553,7 @@
         "hide_question_settings": "Hide Question settings",
         "hostname": "Hostname",
         "if_you_need_more_please": "If you need more, please",
-        "if_you_really_want_that_answer_ask_until_you_get_it": "Keep showing whenever triggered until a response is submitted.",
+        "if_you_really_want_that_answer_ask_until_you_get_it": "Keep showing whenever triggered until a response or partial response is submitted.",
         "ignore_global_waiting_time": "Ignore Cooldown Period",
         "ignore_global_waiting_time_description": "This survey can show whenever its conditions are met, even if another survey was shown recently.",
         "image": "Image",
