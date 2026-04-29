@@ -4,12 +4,24 @@ import {
   createFeedbackRecordsBatch,
   listFeedbackRecords,
   retrieveFeedbackRecord,
+  semanticSearchFeedbackRecords,
   updateFeedbackRecord,
 } from "./service";
 import type { FeedbackRecordCreateParams } from "./types";
 
+const { mockEnv } = vi.hoisted(() => ({
+  mockEnv: {
+    HUB_API_KEY: "",
+    HUB_API_URL: "https://hub.test",
+  },
+}));
+
 vi.mock("@formbricks/logger", () => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
+}));
+
+vi.mock("@/lib/env", () => ({
+  env: mockEnv,
 }));
 
 vi.mock("./hub-client", () => ({
@@ -32,6 +44,9 @@ const sampleInput: FeedbackRecordCreateParams = {
 describe("hub service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.unstubAllGlobals();
+    mockEnv.HUB_API_KEY = "";
+    mockEnv.HUB_API_URL = "https://hub.test";
   });
 
   describe("createFeedbackRecord", () => {
@@ -152,6 +167,102 @@ describe("hub service", () => {
       const result = await retrieveFeedbackRecord("rec-1");
       expect(result.data).toBeNull();
       expect(result.error).toMatchObject({ message: "Not found" });
+    });
+  });
+
+  describe("semanticSearchFeedbackRecords", () => {
+    test("returns error result when HUB_API_KEY is not set", async () => {
+      const result = await semanticSearchFeedbackRecords({
+        tenant_id: "env-1",
+        query: "slow checkout",
+      });
+
+      expect(result.data).toBeNull();
+      expect(result.error).toMatchObject({
+        status: 0,
+        message: "HUB_API_KEY is not set; Hub integration is disabled.",
+      });
+    });
+
+    test("returns semantic search results when Hub succeeds", async () => {
+      mockEnv.HUB_API_KEY = "test-key";
+      const searchResponse = {
+        data: [
+          {
+            feedback_record_id: "018e1234-5678-9abc-def0-123456789abc",
+            score: 0.91,
+            field_label: "What can we improve?",
+            value_text: "Checkout feels slow.",
+          },
+        ],
+        limit: 10,
+      };
+      const fetchMock = vi.fn().mockResolvedValue({
+        ok: true,
+        json: vi.fn().mockResolvedValue(searchResponse),
+      });
+      vi.stubGlobal("fetch", fetchMock);
+
+      const result = await semanticSearchFeedbackRecords({
+        tenant_id: "env-1",
+        query: "slow checkout",
+        limit: 10,
+        min_score: 0.7,
+      });
+
+      expect(result.error).toBeNull();
+      expect(result.data).toEqual(searchResponse);
+      expect(fetchMock).toHaveBeenCalledWith(
+        new URL("https://hub.test/v1/feedback-records/search/semantic?limit=10&min_score=0.7"),
+        expect.objectContaining({
+          method: "POST",
+          headers: {
+            Authorization: "Bearer test-key",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            query: "slow checkout",
+            tenant_id: "env-1",
+          }),
+        })
+      );
+    });
+
+    test("returns unavailable error when Hub embeddings are not configured", async () => {
+      mockEnv.HUB_API_KEY = "test-key";
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          ok: false,
+          status: 503,
+          statusText: "Service Unavailable",
+          json: vi.fn().mockResolvedValue({ detail: "Embeddings are not configured" }),
+        })
+      );
+
+      const result = await semanticSearchFeedbackRecords({
+        tenant_id: "env-1",
+        query: "slow checkout",
+      });
+
+      expect(result.data).toBeNull();
+      expect(result.error).toMatchObject({
+        status: 503,
+        message: "Embeddings are not configured",
+      });
+    });
+
+    test("returns error result when fetch throws", async () => {
+      mockEnv.HUB_API_KEY = "test-key";
+      vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("Network error")));
+
+      const result = await semanticSearchFeedbackRecords({
+        tenant_id: "env-1",
+        query: "slow checkout",
+      });
+
+      expect(result.data).toBeNull();
+      expect(result.error).toMatchObject({ status: 0, message: "Network error" });
     });
   });
 
