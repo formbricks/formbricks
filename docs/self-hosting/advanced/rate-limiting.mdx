@@ -18,6 +18,11 @@ Starting with Formbricks v5, rate limiting is split across two layers:
   those routes will no longer be throttled by the application server after upgrading.
 </Warning>
 
+<Info>
+  For the full self-hosted upgrade checklist, use this page together with the
+  [v5 migration guide](/self-hosting/advanced/migration#v5).
+</Info>
+
 Rate limits are scoped by identifier, depending on the endpoint and enforcement layer:
 
 - IP hash (for unauthenticated/client-side routes and public actions)
@@ -36,7 +41,7 @@ Before upgrading to Formbricks v5:
 - expect covered routes to emit gateway `429`s instead of the legacy app JSON `429`s
 
 For the current source of truth on covered routes and thresholds, use this page together with your deployment
-configuration.
+configuration and the [v5 migration guide](/self-hosting/advanced/migration#v5).
 
 ## Envoy-Managed Limits
 
