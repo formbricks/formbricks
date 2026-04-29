@@ -47,17 +47,26 @@ export function ChartDropdownMenu({ workspaceId, chart, onEdit }: Readonly<Chart
       };
     }
 
-    void getDashboardsAction({ workspaceId }).then((result) => {
-      if (cancelled) {
-        return;
-      }
+    void getDashboardsAction({ workspaceId })
+      .then((result) => {
+        if (cancelled) {
+          return;
+        }
 
-      if (result?.data) {
-        setDashboards(result.data.map((dashboard) => ({ id: dashboard.id, name: dashboard.name })));
-      } else {
-        toast.error(getFormattedErrorMessage(result));
-      }
-    });
+        if (result?.data) {
+          setDashboards(result.data.map((dashboard) => ({ id: dashboard.id, name: dashboard.name })));
+        } else {
+          toast.error(getFormattedErrorMessage(result));
+        }
+      })
+      .catch((error) => {
+        if (cancelled) {
+          return;
+        }
+        const message =
+          error instanceof Error ? error.message : t("workspace.analysis.charts.failed_to_load_dashboards");
+        toast.error(message);
+      });
 
     return () => {
       cancelled = true;
@@ -128,6 +137,12 @@ export function ChartDropdownMenu({ workspaceId, chart, onEdit }: Readonly<Chart
       setIsAddToDashboardDialogOpen(false);
       setSelectedDashboardId(undefined);
       router.refresh();
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : t("workspace.analysis.charts.failed_to_add_chart_to_dashboard");
+      toast.error(message);
     } finally {
       setIsAddingToDashboard(false);
     }

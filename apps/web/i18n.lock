@@ -1661,6 +1661,7 @@ checksums:
     workspace/analysis/charts/failed_to_execute_query: d1153133aa4cd3d1cd02e39942413168
     workspace/analysis/charts/failed_to_load_chart: abea098fbf8e728f95414d3ae8bb63a4
     workspace/analysis/charts/failed_to_load_chart_data: ea980a6d12b1b1efed90d991dd0dd0fd
+    workspace/analysis/charts/failed_to_load_dashboards: 876c54d9cc69ceda6f808231e2557eb2
     workspace/analysis/charts/failed_to_save_chart: e237cf1a56a8f9ee30067fdb0757f7c5
     workspace/analysis/charts/field: cfd632297d7809a3539e90c9cd4728d9
     workspace/analysis/charts/field_label_average_score: 5b5aa7322549521d1e813b1c8312d443

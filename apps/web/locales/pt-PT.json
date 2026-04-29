@@ -1726,6 +1726,7 @@
         "failed_to_execute_query": "Falha ao executar consulta",
         "failed_to_load_chart": "Falha ao carregar gráfico",
         "failed_to_load_chart_data": "Falha ao carregar dados do gráfico",
+        "failed_to_load_dashboards": "Failed to load dashboards",
         "failed_to_save_chart": "Falha ao guardar gráfico",
         "field": "Campo",
         "field_label_average_score": "Pontuação média",

@@ -1726,6 +1726,7 @@
         "failed_to_execute_query": "Nu s-a putut executa interogarea",
         "failed_to_load_chart": "Nu s-a putut încărca graficul",
         "failed_to_load_chart_data": "Nu s-au putut încărca datele graficului",
+        "failed_to_load_dashboards": "Failed to load dashboards",
         "failed_to_save_chart": "Nu s-a putut salva graficul",
         "field": "Câmp",
         "field_label_average_score": "Scor mediu",

@@ -1726,6 +1726,7 @@
         "failed_to_execute_query": "A lekérdezés végrehajtása sikertelen",
         "failed_to_load_chart": "A diagram betöltése sikertelen",
         "failed_to_load_chart_data": "A diagram adatainak betöltése sikertelen",
+        "failed_to_load_dashboards": "Failed to load dashboards",
         "failed_to_save_chart": "A diagram mentése sikertelen",
         "field": "Mező",
         "field_label_average_score": "Átlagos pontszám",

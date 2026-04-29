@@ -1726,6 +1726,7 @@
         "failed_to_execute_query": "Échec de l'exécution de la requête",
         "failed_to_load_chart": "Échec du chargement du graphique",
         "failed_to_load_chart_data": "Échec du chargement des données du graphique",
+        "failed_to_load_dashboards": "Failed to load dashboards",
         "failed_to_save_chart": "Échec de l'enregistrement du graphique",
         "field": "Champ",
         "field_label_average_score": "Score moyen",

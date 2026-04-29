@@ -1,5 +1,4 @@
-"server-only";
-
+import "server-only";
 import { getFeedbackRecordDirectoriesByWorkspaceId } from "@/modules/ee/feedback-record-directory/lib/feedback-record-directory";
 import { listFeedbackRecords } from "@/modules/hub/service";
 

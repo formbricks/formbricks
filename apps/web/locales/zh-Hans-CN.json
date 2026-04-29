@@ -1726,6 +1726,7 @@
         "failed_to_execute_query": "查询执行失败",
         "failed_to_load_chart": "加载图表失败",
         "failed_to_load_chart_data": "加载图表数据失败",
+        "failed_to_load_dashboards": "Failed to load dashboards",
         "failed_to_save_chart": "图表保存失败",
         "field": "字段",
         "field_label_average_score": "平均分",

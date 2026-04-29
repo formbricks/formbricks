@@ -1726,6 +1726,7 @@
         "failed_to_execute_query": "Query uitvoeren mislukt",
         "failed_to_load_chart": "Diagram laden mislukt",
         "failed_to_load_chart_data": "Diagramdata laden mislukt",
+        "failed_to_load_dashboards": "Failed to load dashboards",
         "failed_to_save_chart": "Opslaan van diagram mislukt",
         "field": "Veld",
         "field_label_average_score": "Gemiddelde score",

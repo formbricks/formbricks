@@ -1726,6 +1726,7 @@
         "failed_to_execute_query": "Не удалось выполнить запрос",
         "failed_to_load_chart": "Не удалось загрузить график",
         "failed_to_load_chart_data": "Не удалось загрузить данные графика",
+        "failed_to_load_dashboards": "Failed to load dashboards",
         "failed_to_save_chart": "Не удалось сохранить график",
         "field": "Поле",
         "field_label_average_score": "Средний балл",

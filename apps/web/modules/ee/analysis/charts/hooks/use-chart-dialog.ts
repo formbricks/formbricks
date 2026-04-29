@@ -173,6 +173,7 @@ export function useChartDialog({
     }
 
     setIsSaving(true);
+    let newlyCreatedChartId: string | null = null;
     try {
       let savedChartId = currentChartId;
 
@@ -215,6 +216,7 @@ export function useChartDialog({
 
         setCurrentChartId(result.data.id);
         savedChartId = result.data.id;
+        newlyCreatedChartId = result.data.id;
         toast.success(t("workspace.analysis.charts.chart_saved_successfully"));
       }
 
@@ -230,6 +232,7 @@ export function useChartDialog({
             getFormattedErrorMessage(addResult) ||
               t("workspace.analysis.charts.failed_to_add_chart_to_dashboard")
           );
+          if (newlyCreatedChartId) await cleanupOrphanChart(newlyCreatedChartId);
           return;
         }
 
@@ -246,6 +249,7 @@ export function useChartDialog({
       const message =
         error instanceof Error ? error.message : t("workspace.analysis.charts.failed_to_save_chart");
       toast.error(message);
+      if (autoAddToDashboardId && newlyCreatedChartId) await cleanupOrphanChart(newlyCreatedChartId);
     } finally {
       setIsSaving(false);
     }

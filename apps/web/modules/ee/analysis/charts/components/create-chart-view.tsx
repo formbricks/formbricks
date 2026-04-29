@@ -107,7 +107,7 @@ export function CreateChartView({
     );
   }
 
-  const chartType = selectedChartType ?? (isEditing ? DEFAULT_CHART_TYPE : undefined);
+  const chartType = selectedChartType ?? (isEditing ? (initialChart?.type ?? DEFAULT_CHART_TYPE) : undefined);
   const hasSelectedDirectory = !!selectedDirectoryId;
 
   return (

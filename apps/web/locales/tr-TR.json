@@ -1726,6 +1726,7 @@
         "failed_to_execute_query": "Sorgu çalıştırılamadı",
         "failed_to_load_chart": "Grafik yüklenemedi",
         "failed_to_load_chart_data": "Grafik verileri yüklenemedi",
+        "failed_to_load_dashboards": "Failed to load dashboards",
         "failed_to_save_chart": "Grafik kaydedilemedi",
         "field": "Alan",
         "field_label_average_score": "Ortalama Puan",

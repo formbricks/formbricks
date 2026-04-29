@@ -1726,6 +1726,7 @@
         "failed_to_execute_query": "查詢執行失敗",
         "failed_to_load_chart": "載入圖表失敗",
         "failed_to_load_chart_data": "載入圖表資料失敗",
+        "failed_to_load_dashboards": "Failed to load dashboards",
         "failed_to_save_chart": "儲存圖表失敗",
         "field": "欄位",
         "field_label_average_score": "平均分數",

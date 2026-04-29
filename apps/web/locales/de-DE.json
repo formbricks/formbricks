@@ -1726,6 +1726,7 @@
         "failed_to_execute_query": "Abfrage konnte nicht ausgeführt werden",
         "failed_to_load_chart": "Diagramm konnte nicht geladen werden",
         "failed_to_load_chart_data": "Diagrammdaten konnten nicht geladen werden",
+        "failed_to_load_dashboards": "Failed to load dashboards",
         "failed_to_save_chart": "Diagramm konnte nicht gespeichert werden",
         "field": "Feld",
         "field_label_average_score": "Durchschnittliche Bewertung",

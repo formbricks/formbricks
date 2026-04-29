@@ -1726,6 +1726,7 @@
         "failed_to_execute_query": "Det gick inte att köra frågan",
         "failed_to_load_chart": "Det gick inte att ladda diagrammet",
         "failed_to_load_chart_data": "Det gick inte att ladda diagramdata",
+        "failed_to_load_dashboards": "Failed to load dashboards",
         "failed_to_save_chart": "Det gick inte att spara diagrammet",
         "field": "Fält",
         "field_label_average_score": "Genomsnittligt betyg",

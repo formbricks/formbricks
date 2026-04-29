@@ -1726,6 +1726,7 @@
         "failed_to_execute_query": "Failed to execute query",
         "failed_to_load_chart": "Failed to load chart",
         "failed_to_load_chart_data": "Failed to load chart data",
+        "failed_to_load_dashboards": "Failed to load dashboards",
         "failed_to_save_chart": "Failed to save chart",
         "field": "Field",
         "field_label_average_score": "Average Score",

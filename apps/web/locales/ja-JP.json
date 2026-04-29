@@ -1726,6 +1726,7 @@
         "failed_to_execute_query": "クエリの実行に失敗しました",
         "failed_to_load_chart": "チャートの読み込みに失敗しました",
         "failed_to_load_chart_data": "チャートデータの読み込みに失敗しました",
+        "failed_to_load_dashboards": "Failed to load dashboards",
         "failed_to_save_chart": "チャートの保存に失敗しました",
         "field": "フィールド",
         "field_label_average_score": "平均スコア",
