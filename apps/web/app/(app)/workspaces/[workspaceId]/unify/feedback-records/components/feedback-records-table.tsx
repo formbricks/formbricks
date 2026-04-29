@@ -121,7 +121,7 @@ export const FeedbackRecordsTable = ({
     }
 
     const mergedRecords = successfulRecords
-      .sort((a, b) => (a.collected_at < b.collected_at ? 1 : -1))
+      .toSorted((a, b) => (a.collected_at < b.collected_at ? 1 : -1))
       .slice(0, RECORDS_PER_PAGE);
     setRecords(mergedRecords);
     setIsRefreshing(false);
