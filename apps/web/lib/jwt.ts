@@ -5,8 +5,6 @@ import { ENCRYPTION_KEY, NEXTAUTH_SECRET } from "@/lib/constants";
 import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
 import { getGatewayAuthServiceTokenPurpose, TGatewayAuthService } from "@/modules/gateway-auth/lib/service";
 
-export const FEEDBACK_RECORDS_GATEWAY_TOKEN_PURPOSE =
-  getGatewayAuthServiceTokenPurpose("feedbackRecords");
 const FEEDBACK_RECORDS_GATEWAY_TOKEN_TTL_SECONDS = 60 * 10;
 
 // Helper function to decrypt with fallback to plain text

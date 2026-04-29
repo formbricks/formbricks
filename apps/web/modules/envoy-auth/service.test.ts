@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { DELETE, GET, HEAD, OPTIONS, PATCH, POST } from "./route";
+import { authorizeEnvoyRequest } from "./service";
 
 const {
   mockAuthenticateApiKeyFromHeaders,
@@ -91,7 +91,7 @@ const createRequest = (
     body,
   });
 
-describe("Envoy auth route", () => {
+describe("authorizeEnvoyRequest", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     mockGetApiKeyFromHeaders.mockReturnValue(null);
@@ -131,7 +131,7 @@ describe("Envoy auth route", () => {
       ],
     });
 
-    const response = await POST(
+    const response = await authorizeEnvoyRequest(
       createRequest("http://localhost/api/envoy-auth/api/v3/feedbackRecords", {
         method: "POST",
         headers: {
@@ -160,7 +160,7 @@ describe("Envoy auth route", () => {
       feedbackRecordDirectoryPermissions: [],
     });
 
-    const response = await GET(
+    const response = await authorizeEnvoyRequest(
       createRequest("http://localhost/api/envoy-auth/v1/feedback-records", {
         method: "DELETE",
         headers: {
@@ -173,7 +173,7 @@ describe("Envoy auth route", () => {
   });
 
   test("returns 400 for unsupported envoy auth routes", async () => {
-    const response = await GET(createRequest("http://localhost/api/envoy-auth/api/v1/test"));
+    const response = await authorizeEnvoyRequest(createRequest("http://localhost/api/envoy-auth/api/v1/test"));
 
     expect(response.status).toBe(400);
   });
@@ -197,7 +197,7 @@ describe("Envoy auth route", () => {
       },
     });
 
-    const response = await GET(
+    const response = await authorizeEnvoyRequest(
       createRequest(`http://localhost/api/envoy-auth/v1/feedback-records/${feedbackRecordId}`, {
         headers: {
           "x-api-key": "fbk_test",
@@ -227,7 +227,7 @@ describe("Envoy auth route", () => {
       },
     });
 
-    const response = await GET(
+    const response = await authorizeEnvoyRequest(
       createRequest(`http://localhost/api/envoy-auth/v1/feedback-records/${feedbackRecordId}`, {
         headers: {
           "x-api-key": "fbk_test",
@@ -244,7 +244,7 @@ describe("Envoy auth route", () => {
       userId: "user_1",
     });
 
-    const response = await GET(
+    const response = await authorizeEnvoyRequest(
       createRequest(
         `http://localhost/api/envoy-auth/v1/feedback-records?tenant_id=${feedbackRecordDirectoryId}`,
         {
@@ -264,7 +264,7 @@ describe("Envoy auth route", () => {
     mockGetBearerTokenFromHeaders.mockReturnValue("header.payload.signature");
     mockVerifyFeedbackRecordsGatewayToken.mockReturnValue({ userId: "user_1" });
 
-    const response = await PATCH(
+    const response = await authorizeEnvoyRequest(
       createRequest(`http://localhost/api/envoy-auth/v1/feedback-records/${feedbackRecordId}`, {
         method: "PATCH",
         headers: {
@@ -296,7 +296,7 @@ describe("Envoy auth route", () => {
       userId: "user_2",
     });
 
-    const response = await GET(
+    const response = await authorizeEnvoyRequest(
       createRequest(
         `http://localhost/api/envoy-auth/v1/feedback-records?tenant_id=${feedbackRecordDirectoryId}`,
         {
@@ -336,7 +336,7 @@ describe("Envoy auth route", () => {
       feedbackRecordDirectoryPermissions: [],
     });
 
-    const response = await DELETE(
+    const response = await authorizeEnvoyRequest(
       createRequest(
         `http://localhost/api/envoy-auth/v1/feedback-records?tenant_id=${feedbackRecordDirectoryId}`,
         {
@@ -360,7 +360,7 @@ describe("Envoy auth route", () => {
       isArchived: true,
     });
 
-    const response = await GET(
+    const response = await authorizeEnvoyRequest(
       createRequest(
         `http://localhost/api/envoy-auth/v1/feedback-records?tenant_id=${feedbackRecordDirectoryId}`,
         {
@@ -385,7 +385,7 @@ describe("Envoy auth route", () => {
       feedbackRecordDirectoryPermissions: [],
     });
 
-    const response = await GET(
+    const response = await authorizeEnvoyRequest(
       createRequest(
         `http://localhost/api/envoy-auth/api/v3/feedbackRecordsFoo?tenant_id=${feedbackRecordDirectoryId}`,
         {
@@ -399,7 +399,7 @@ describe("Envoy auth route", () => {
     expect(response.status).toBe(400);
   });
 
-  test("handles HEAD requests through the generic route instead of 405ing at Next.js", async () => {
+  test("handles HEAD requests through the generic service instead of 405ing at Next.js", async () => {
     mockGetApiKeyFromHeaders.mockReturnValue("fbk_test");
     mockAuthenticateApiKeyFromHeaders.mockResolvedValue({
       type: "apiKey",
@@ -410,7 +410,7 @@ describe("Envoy auth route", () => {
       feedbackRecordDirectoryPermissions: [],
     });
 
-    const response = await HEAD(
+    const response = await authorizeEnvoyRequest(
       createRequest(`http://localhost/api/envoy-auth/v1/feedback-records/${feedbackRecordId}`, {
         method: "HEAD",
         headers: {
@@ -422,7 +422,7 @@ describe("Envoy auth route", () => {
     expect(response.status).toBe(400);
   });
 
-  test("handles OPTIONS requests through the generic route instead of 405ing at Next.js", async () => {
+  test("handles OPTIONS requests through the generic service instead of 405ing at Next.js", async () => {
     mockGetApiKeyFromHeaders.mockReturnValue("fbk_test");
     mockAuthenticateApiKeyFromHeaders.mockResolvedValue({
       type: "apiKey",
@@ -433,7 +433,7 @@ describe("Envoy auth route", () => {
       feedbackRecordDirectoryPermissions: [],
     });
 
-    const response = await OPTIONS(
+    const response = await authorizeEnvoyRequest(
       createRequest("http://localhost/api/envoy-auth/v1/feedback-records", {
         method: "OPTIONS",
         headers: {

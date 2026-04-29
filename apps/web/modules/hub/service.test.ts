@@ -232,7 +232,7 @@ describe("hub service", () => {
       expect(vi.mocked(cache.withCache)).toHaveBeenCalledOnce();
       expect(vi.mocked(cache.withCache)).toHaveBeenCalledWith(
         expect.any(Function),
-        createCacheKey.custom("hub", "0194d8a0-3d55-7ff4-9f62-8d02c3fbcfe8", "feedback_record_tenant"),
+        createCacheKey.hub.feedbackRecordTenant("0194d8a0-3d55-7ff4-9f62-8d02c3fbcfe8"),
         60_000
       );
       expect(retrieve).toHaveBeenCalledWith("0194d8a0-3d55-7ff4-9f62-8d02c3fbcfe8");

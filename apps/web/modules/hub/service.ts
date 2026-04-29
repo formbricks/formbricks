@@ -91,7 +91,7 @@ export const getFeedbackRecordTenant = async (recordId: string): Promise<Feedbac
         const feedbackRecord = await client.feedbackRecords.retrieve(recordId);
         return { tenantId: feedbackRecord.tenant_id };
       },
-      createCacheKey.custom("hub", recordId, "feedback_record_tenant"),
+      createCacheKey.hub.feedbackRecordTenant(recordId),
       60_000
     );
 
