@@ -266,7 +266,7 @@ EOT
   echo "   If you skip this, the following features will be disabled:"
   echo "   - Adding images to surveys (e.g., in questions or as background)"
   echo "   - 'File Upload' and 'Picture Selection' question types"
-  echo "   - Project logos"
+  echo "   - Workspace logos"
   echo "   - Custom organization logo in emails"
   read -p "Configure file uploads now? [Y/n] " configure_uploads
   configure_uploads=$(echo "$configure_uploads" | tr '[:upper:]' '[:lower:]')

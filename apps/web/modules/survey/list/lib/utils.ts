@@ -27,9 +27,9 @@ function getNormalizedStatus(value: unknown): TSurveyOverviewFilters["status"] {
 
 function getNormalizedType(
   value: unknown,
-  currentProjectChannel?: TWorkspaceConfigChannel
+  currentWorkspaceChannel?: TWorkspaceConfigChannel
 ): TSurveyOverviewType[] {
-  if (currentProjectChannel === "link" || !Array.isArray(value)) {
+  if (currentWorkspaceChannel === "link" || !Array.isArray(value)) {
     return [];
   }
 
@@ -44,19 +44,19 @@ function getNormalizedSort(value: unknown): TSurveyOverviewSort {
 
 export function normalizeSurveyFilters(
   filters: Partial<TSurveyOverviewFilters> | null | undefined,
-  currentProjectChannel?: TWorkspaceConfigChannel
+  currentWorkspaceChannel?: TWorkspaceConfigChannel
 ): TSurveyOverviewFilters {
   return {
     name: typeof filters?.name === "string" ? filters.name.trim() : initialFilters.name,
     status: getNormalizedStatus(filters?.status),
-    type: getNormalizedType(filters?.type, currentProjectChannel),
+    type: getNormalizedType(filters?.type, currentWorkspaceChannel),
     sortBy: getNormalizedSort(filters?.sortBy),
   };
 }
 
 export function parseStoredSurveyFilters(
   storedValue: string | null,
-  currentProjectChannel?: TWorkspaceConfigChannel
+  currentWorkspaceChannel?: TWorkspaceConfigChannel
 ): TSurveyOverviewFilters | null {
   if (!storedValue) {
     return null;
@@ -65,7 +65,7 @@ export function parseStoredSurveyFilters(
   try {
     return normalizeSurveyFilters(
       JSON.parse(storedValue) as Partial<TSurveyOverviewFilters>,
-      currentProjectChannel
+      currentWorkspaceChannel
     );
   } catch {
     return null;

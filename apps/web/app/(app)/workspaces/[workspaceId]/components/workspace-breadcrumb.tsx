@@ -119,6 +119,11 @@ export const WorkspaceBreadcrumb = ({
       href: `${workspaceBasePath}/app-connection`,
     },
     {
+      id: "feedback-sources",
+      label: t("workspace.unify.feedback_sources"),
+      href: `${workspaceBasePath}/feedback-sources`,
+    },
+    {
       id: "integrations",
       label: t("common.integrations"),
       href: `${workspaceBasePath}/integrations`,

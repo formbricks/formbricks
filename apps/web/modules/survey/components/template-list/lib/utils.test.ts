@@ -42,14 +42,14 @@ describe("Template utils", () => {
     };
 
     const mockWorkspace = {
-      name: "TestProject",
+      name: "TestWorkspace",
     };
 
     const result = replacePresetPlaceholders(mockTemplate, mockWorkspace);
 
     expect(structuredClone).toHaveBeenCalledWith(mockTemplate.preset);
-    expect(result.preset.name).toBe("TestProject Feedback");
-    expect(result.preset.blocks[0].elements[0].headline?.default).toBe("How would you rate TestProject?");
+    expect(result.preset.name).toBe("TestWorkspace Feedback");
+    expect(result.preset.blocks[0].elements[0].headline?.default).toBe("How would you rate TestWorkspace?");
   });
 
   test("getChannelMapping returns correct channel mappings", () => {

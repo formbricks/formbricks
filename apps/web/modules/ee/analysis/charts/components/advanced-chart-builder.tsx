@@ -31,6 +31,7 @@ interface AdvancedChartBuilderProps {
   hidePreview?: boolean;
   onChartGenerated?: (data: AnalyticsResponse) => void;
   feedbackRecordDirectoryId: string | null;
+  runQueryCtaLabel?: string;
 }
 
 const ACTION = {
@@ -84,6 +85,7 @@ export function AdvancedChartBuilder({
   hidePreview = false,
   onChartGenerated,
   feedbackRecordDirectoryId,
+  runQueryCtaLabel,
 }: Readonly<AdvancedChartBuilderProps>) {
   const { t } = useTranslation();
   const parsedInitial = initialQuery ? parseQueryToState(initialQuery) : null;
@@ -151,11 +153,7 @@ export function AdvancedChartBuilder({
   return (
     <div className={hidePreview ? "space-y-2" : "grid gap-4 lg:grid-cols-2"}>
       <div className="mx-1 space-y-2">
-        {!hidePreview && (
-          <>
-            <ChartTypeSelector selectedChartType={chartType} onChartTypeSelect={() => {}} />
-          </>
-        )}
+        {!hidePreview && <ChartTypeSelector selectedChartType={chartType} onChartTypeSelect={() => {}} />}
 
         <div className="mt-4 flex w-full flex-col gap-3 overflow-hidden rounded-lg border bg-slate-50 p-4">
           <MeasuresPanel
@@ -249,7 +247,11 @@ export function AdvancedChartBuilder({
 
         <div className="flex justify-end">
           <Button onClick={handleRunQuery} disabled={isLoading || !hasConfigChanged}>
-            {isLoading ? <LoadingSpinner /> : t("workspace.analysis.charts.create_chart")}
+            {isLoading ? (
+              <LoadingSpinner />
+            ) : (
+              (runQueryCtaLabel ?? t("workspace.analysis.charts.create_chart"))
+            )}
           </Button>
         </div>
       </div>

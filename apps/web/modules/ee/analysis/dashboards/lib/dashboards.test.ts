@@ -419,7 +419,7 @@ describe("Dashboard Service", () => {
   });
 
   describe("getDashboards", () => {
-    test("returns all dashboards for a project with creator", async () => {
+    test("returns all dashboards for a workspace with creator", async () => {
       const dashboards = [
         { ...mockDashboard, creator: { name: "Alice" }, _count: { widgets: 3 } },
         { ...mockDashboard, id: "dash-2", name: "Dashboard 2", creator: null, _count: { widgets: 0 } },
