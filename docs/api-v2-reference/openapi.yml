@@ -3020,9 +3020,16 @@ paths:
           schema:
             type: string
         - in: query
-          name: projectId
+          name: workspaceId
           schema:
             type: string
+          description: The ID of the Workspace to filter by
+        - in: query
+          name: projectId
+          deprecated: true
+          schema:
+            type: string
+          description: Deprecated alias for workspaceId.
       responses:
         "200":
           description: Workspace teams retrieved successfully.
@@ -3044,9 +3051,13 @@ paths:
                           type: string
                           description: The date and time the Workspace team was last updated
                           example: 2021-01-01T00:00:00.000Z
-                        projectId:
+                        workspaceId:
                           type: string
                           description: The ID of the Workspace
+                        projectId:
+                          type: string
+                          deprecated: true
+                          description: Deprecated alias for workspaceId.
                         teamId:
                           type: string
                           description: The ID of the team
@@ -3090,9 +3101,13 @@ paths:
                 teamId:
                   type: string
                   description: The ID of the team
-                projectId:
+                workspaceId:
                   type: string
                   description: The ID of the Workspace
+                projectId:
+                  type: string
+                  deprecated: true
+                  description: Deprecated alias for workspaceId.
                 permission:
                   type: string
                   enum:
@@ -3102,7 +3117,6 @@ paths:
                   description: Level of access granted to the Workspace
               required:
                 - teamId
-                - projectId
                 - permission
       responses:
         "201":
@@ -3120,9 +3134,13 @@ paths:
                     type: string
                     description: The date and time the Workspace team was last updated
                     example: 2021-01-01T00:00:00.000Z
-                  projectId:
+                  workspaceId:
                     type: string
                     description: The ID of the Workspace
+                  projectId:
+                    type: string
+                    deprecated: true
+                    description: Deprecated alias for workspaceId.
                   teamId:
                     type: string
                     description: The ID of the team
@@ -3157,9 +3175,13 @@ paths:
                 teamId:
                   type: string
                   description: The ID of the team
-                projectId:
+                workspaceId:
                   type: string
                   description: The ID of the Workspace
+                projectId:
+                  type: string
+                  deprecated: true
+                  description: Deprecated alias for workspaceId.
                 permission:
                   type: string
                   enum:
@@ -3169,7 +3191,6 @@ paths:
                   description: Level of access granted to the Workspace
               required:
                 - teamId
-                - projectId
                 - permission
       responses:
         "200":
@@ -3187,9 +3208,13 @@ paths:
                     type: string
                     description: The date and time the Workspace team was last updated
                     example: 2021-01-01T00:00:00.000Z
-                  projectId:
+                  workspaceId:
                     type: string
                     description: The ID of the Workspace
+                  projectId:
+                    type: string
+                    deprecated: true
+                    description: Deprecated alias for workspaceId.
                   teamId:
                     type: string
                     description: The ID of the team
@@ -3219,10 +3244,16 @@ paths:
             type: string
           required: true
         - in: query
-          name: projectId
+          name: workspaceId
           schema:
             type: string
-          required: true
+          description: The ID of the Workspace
+        - in: query
+          name: projectId
+          deprecated: true
+          schema:
+            type: string
+          description: Deprecated alias for workspaceId.
       responses:
         "200":
           description: Workspace team deleted successfully.
@@ -3239,9 +3270,13 @@ paths:
                     type: string
                     description: The date and time the Workspace team was last updated
                     example: 2021-01-01T00:00:00.000Z
-                  projectId:
+                  workspaceId:
                     type: string
                     description: The ID of the Workspace
+                  projectId:
+                    type: string
+                    deprecated: true
+                    description: Deprecated alias for workspaceId.
                   teamId:
                     type: string
                     description: The ID of the team
@@ -5506,7 +5541,7 @@ components:
             - string
             - "null"
           description: ID of the segment
-        projectOverwrites:
+        workspaceOverwrites:
           type:
             - object
             - "null"
@@ -5790,7 +5825,7 @@ components:
         - delay
         - surveyClosedMessage
         - segmentId
-        - projectOverwrites
+        - workspaceOverwrites
         - styling
         - singleUse
         - isVerifyEmailEnabled
@@ -5897,9 +5932,13 @@ components:
           type: string
           description: The date and time the Workspace team was last updated
           example: 2021-01-01T00:00:00.000Z
-        projectId:
+        workspaceId:
           type: string
           description: The ID of the Workspace
+        projectId:
+          type: string
+          deprecated: true
+          description: Deprecated alias for workspaceId.
         teamId:
           type: string
           description: The ID of the team
@@ -5913,7 +5952,7 @@ components:
       required:
         - createdAt
         - updatedAt
-        - projectId
+        - workspaceId
         - teamId
         - permission
     user:

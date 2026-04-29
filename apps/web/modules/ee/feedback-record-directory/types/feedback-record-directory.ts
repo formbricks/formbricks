@@ -63,7 +63,7 @@ export const getTranslatedFeedbackRecordDirectoryError = (
       return t("workspace.settings.feedback_record_directories.error_directory_name_required");
     case "DIRECTORY_NAME_DUPLICATE":
       return t("workspace.settings.feedback_record_directories.error_directory_name_duplicate");
-    case "DIRECTORY_PROJECTS_INVALID_ORG":
+    case "DIRECTORY_WORKSPACES_INVALID_ORG":
       return t("workspace.settings.feedback_record_directories.error_directory_workspaces_invalid_org");
     case "DIRECTORY_HAS_CONNECTORS":
       return t("workspace.settings.feedback_record_directories.error_directory_has_connectors");
