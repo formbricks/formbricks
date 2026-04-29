@@ -99,6 +99,46 @@ const resolveOrganizationId = async (eventObject: Stripe.Event.Data.Object): Pro
   return await findOrganizationIdByStripeCustomerId(customerId);
 };
 
+/**
+ * Detects hobby subscription renewals that only roll the billing period forward.
+ * These $0 plan renewals generate ~10k events/month and don't change any meaningful
+ * billing state — skipping them avoids unnecessary processing and downstream webhook noise.
+ */
+export const isHobbySubscriptionRenewal = (event: Stripe.Event): boolean => {
+  if (event.type !== "customer.subscription.updated") return false;
+
+  const subscription = event.data.object;
+  const previousAttributes = (event.data as { previous_attributes?: Record<string, unknown> })
+    .previous_attributes;
+
+  if (!previousAttributes) return false;
+
+  // Check that every line item belongs to the hobby plan
+  const isHobbyPlan = subscription.items?.data?.every((item) => {
+    const product = item.price?.product;
+    if (!product || typeof product === "string" || product.deleted) return false;
+    return product.metadata?.formbricks_plan === "hobby";
+  });
+
+  if (!isHobbyPlan) return false;
+
+  // A pure renewal only touches billing period fields and latest_invoice.
+  // If items or status changed, this is a real update (upgrade, cancellation, etc.)
+  const changedKeys = new Set(Object.keys(previousAttributes));
+  const renewalOnlyKeys = new Set([
+    "current_period_start",
+    "current_period_end",
+    "latest_invoice",
+    "billing_cycle_anchor",
+  ]);
+
+  for (const key of changedKeys) {
+    if (!renewalOnlyKeys.has(key)) return false;
+  }
+
+  return true;
+};
+
 const getUnresolvedOrganizationResponse = (event: Stripe.Event) => {
   logger.warn(
     { eventType: event.type, eventId: event.id },
@@ -135,6 +175,11 @@ export const webhookHandler = async (requestBody: string, stripeSignature: strin
   }
 
   if (!relevantEvents.has(event.type)) {
+    return { status: 200, message: { received: true } };
+  }
+
+  if (isHobbySubscriptionRenewal(event)) {
+    logger.debug({ eventId: event.id }, "Skipping hobby subscription renewal");
     return { status: 200, message: { received: true } };
   }
 
