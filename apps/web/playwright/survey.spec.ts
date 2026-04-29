@@ -288,7 +288,7 @@ test.describe("Multi Language Survey Create", async () => {
     await page.waitForTimeout(2000);
 
     // Create survey and add all questions in English (default language)
-    await page.getByRole("link", { name: "Surveys" }).click();
+    await page.goto(`/workspaces/${workspaceId}/surveys`);
     await page.getByText("Start from scratch").click();
     await page.getByRole("button", { name: "Create survey", exact: true }).click();
 
