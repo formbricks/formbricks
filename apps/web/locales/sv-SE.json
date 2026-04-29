@@ -499,6 +499,7 @@
     "weeks": "veckor",
     "welcome_card": "Välkomstkort",
     "workspace": "Arbetsyta",
+    "workspace_configuration": "Arbetsytekonfiguration",
     "workspace_created_successfully": "Arbetsytan har skapats",
     "workspace_creation_description": "Organisera enkäter i arbetsytor för bättre åtkomstkontroll.",
     "workspace_id": "Arbetsyte-ID",

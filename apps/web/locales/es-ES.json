@@ -499,6 +499,7 @@
     "weeks": "semanas",
     "welcome_card": "Tarjeta de bienvenida",
     "workspace": "Espacio de trabajo",
+    "workspace_configuration": "Configuración del espacio de trabajo",
     "workspace_created_successfully": "Proyecto creado correctamente",
     "workspace_creation_description": "Organiza las encuestas en proyectos para un mejor control de acceso.",
     "workspace_id": "ID del proyecto",

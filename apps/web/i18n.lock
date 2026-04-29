@@ -472,6 +472,7 @@ checksums:
     common/weeks: 545de30df4f44d3f6d1d344af6a10815
     common/welcome_card: 76081ebd5b2e35da9b0f080323704ae7
     common/workspace: b63ef0e99ee6f7fef6cbe4971ca6cf0f
+    common/workspace_configuration: 81a0f4edd0678adacb8ed86f8b2c7f8f
     common/workspace_created_successfully: bf401ae83da954f1db48724e2a8e40f1
     common/workspace_creation_description: aea2f480ba0c54c5cabac72c9c900ddf
     common/workspace_id: bafef925e1b57b52a69844fdf47aac3c
