@@ -304,7 +304,9 @@ The script pulls the latest images, stops the running containers, and starts the
   `./formbricks.sh update` does **not** rewrite your existing `formbricks/docker-compose.yml`. For a major
   migration such as Formbricks 4.x to 5.0, follow the [migration guide](/self-hosting/advanced/migration#v5)
   first, merge the current v5 Compose changes into your existing deployment, confirm `HUB_API_KEY` is set, and
-  only then run the update command.
+  only then run the update command. If your older one-click install also uses bundled MinIO for file uploads,
+  review that storage path separately before the first v5 restart; newer self-hosting updates move the bundled
+  object-storage path to RustFS, while external S3-compatible storage keeps the same `S3_*` app contract.
 </Warning>
 
 ## Stop
