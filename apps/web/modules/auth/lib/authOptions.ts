@@ -117,7 +117,7 @@ export const authOptions: NextAuthOptions = {
 
         if (!user.password) {
           logAuthAttempt("no_password_set", "credentials", "password_validation", user.id, user.email);
-          throw new Error("User has no password stored");
+          throw new Error("Invalid credentials");
         }
 
         if (user.isActive === false) {

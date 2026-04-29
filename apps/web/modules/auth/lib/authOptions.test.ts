@@ -175,7 +175,7 @@ describe("authOptions", () => {
       );
     }, 15000);
 
-    test("should throw error if user has no password stored", async () => {
+    test("should throw generic invalid credentials error if user has no password stored", async () => {
       vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true }); // Rate limiting passes
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue({
         id: mockUser.id,
@@ -186,7 +186,7 @@ describe("authOptions", () => {
       const credentials = { email: mockUser.email, password: mockPassword };
 
       await expect(credentialsProvider.options.authorize(credentials, {})).rejects.toThrow(
-        "User has no password stored"
+        "Invalid credentials"
       );
     }, 15000);
 
