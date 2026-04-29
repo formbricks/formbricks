@@ -16,15 +16,19 @@ interface WidgetQueryResult {
 async function executeWidgetQuery(
   query: TChartQuery,
   feedbackRecordDirectoryId: string
-): Promise<WidgetQueryResult | null> {
+): Promise<WidgetQueryResult | { error: string }> {
   try {
     const scopedQuery = injectTenantFilter(query, feedbackRecordDirectoryId);
     const data = await executeQuery(scopedQuery as Record<string, unknown>);
     return { data: Array.isArray(data) ? data : [], query };
-  } catch {
-    return null;
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : "Failed to load chart data",
+    };
   }
 }
+
+type WidgetQueryPromiseResult = Promise<WidgetQueryResult | { error: string }>;
 
 export async function DashboardDetailPage({
   params,
@@ -44,7 +48,7 @@ export async function DashboardDetailPage({
     throw error;
   }
 
-  const widgetDataPromises = new Map<string, Promise<WidgetQueryResult>>();
+  const widgetDataPromises = new Map<string, WidgetQueryPromiseResult>();
   const widgetsWithCharts = dashboard.widgets.filter(
     (w): w is typeof w & { chart: NonNullable<typeof w.chart> } => !!w.chart
   );
@@ -54,10 +58,7 @@ export async function DashboardDetailPage({
   }));
   const results = await Promise.all(queryPromises.map((q) => q.promise));
   queryPromises.forEach(({ widgetId }, i: number) => {
-    const result = results[i];
-    if (result) {
-      widgetDataPromises.set(widgetId, Promise.resolve(result));
-    }
+    widgetDataPromises.set(widgetId, Promise.resolve(results[i]));
   });
 
   return (

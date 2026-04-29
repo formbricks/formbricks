@@ -84,31 +84,28 @@ services:
     image: cubejs/cube:v1.6.6
     env_file:
       - apps/web/.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      hub-migrate:
+        condition: service_completed_successfully
     ports:
       - 4000:4000
       - 4001:4001 # Cube Playground UI (dev only)
     environment:
       CUBEJS_DB_TYPE: postgres
-      CUBEJS_DB_HOST: ${CUBEJS_DB_HOST:-formbricks_hub_postgres}
-      CUBEJS_DB_NAME: ${CUBEJS_DB_NAME:-hub}
-      CUBEJS_DB_USER: ${CUBEJS_DB_USER:-formbricks}
-      CUBEJS_DB_PASS: ${CUBEJS_DB_PASS:-formbricks_dev}
+      CUBEJS_DB_HOST: ${CUBEJS_DB_HOST:-postgres}
+      CUBEJS_DB_NAME: ${CUBEJS_DB_NAME:-postgres}
+      CUBEJS_DB_USER: ${CUBEJS_DB_USER:-postgres}
+      CUBEJS_DB_PASS: ${CUBEJS_DB_PASS:-postgres}
       CUBEJS_DB_PORT: ${CUBEJS_DB_PORT:-5432}
       CUBEJS_DEV_MODE: "true"
-      CUBEJS_API_SECRET: ${CUBEJS_API_SECRET}
+      CUBEJS_API_SECRET: ${CUBEJS_API_SECRET:?CUBEJS_API_SECRET is required to run Cube}
       CUBEJS_CACHE_AND_QUEUE_DRIVER: memory
     volumes:
-      - ./cube/cube.js:/cube/conf/cube.js
-      - ./cube/schema:/cube/conf/model
+      - ./cube/cube.js:/cube/conf/cube.js:ro
+      - ./cube/schema:/cube/conf/model:ro
     restart: on-failure
-    networks:
-      - default
-      - hub
-
-networks:
-  hub:
-    external: true
-    name: superset_formbricks_hub
 
 volumes:
   postgres:

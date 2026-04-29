@@ -77,6 +77,27 @@ describe("env", () => {
     expect(env.DEBUG_SHOW_RESET_LINK).toBe("1");
   });
 
+  test("uses the configured Cube environment variables when provided", async () => {
+    setTestEnv({
+      CUBEJS_API_URL: "https://cube.formbricks.local",
+      CUBEJS_API_SECRET: "cube-secret",
+    });
+
+    const { env } = await import("./env");
+
+    expect(env.CUBEJS_API_URL).toBe("https://cube.formbricks.local");
+    expect(env.CUBEJS_API_SECRET).toBe("cube-secret");
+  });
+
+  test("fails to load when the Cube API URL is invalid", async () => {
+    setTestEnv({
+      CUBEJS_API_URL: "not-a-url",
+      CUBEJS_API_SECRET: "cube-secret",
+    });
+
+    await expect(import("./env")).rejects.toThrow("Invalid environment variables");
+  });
+
   test("uses the default survey scheduling configuration when env vars are not set", async () => {
     setTestEnv({
       NEXT_PUBLIC_SURVEY_SCHEDULING_LOCAL_HOUR: undefined,

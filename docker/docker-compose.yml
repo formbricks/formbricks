@@ -38,6 +38,10 @@ x-environment: &environment
     # Hub database URL (optional). Default: same Postgres as Formbricks. Set only if Hub uses a separate DB.
     # HUB_DATABASE_URL:
 
+    # Cube.js analytics for XM Suite v5. Cube runs inside this compose stack by default.
+    CUBEJS_API_URL: ${CUBEJS_API_URL:-http://cube:4000}
+    CUBEJS_API_SECRET: ${CUBEJS_API_SECRET:?CUBEJS_API_SECRET is required to run XM Suite v5 analytics}
+
     # Set the minimum log level(debug, info, warn, error, fatal)
     # LOG_LEVEL: info
 
@@ -284,6 +288,28 @@ services:
     environment:
       API_KEY: ${HUB_API_KEY:?HUB_API_KEY is required to run Hub}
       DATABASE_URL: ${HUB_DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/formbricks?sslmode=disable}
+
+  # Cube.js analytics service for XM Suite v5. Shares the Hub database by default.
+  cube:
+    restart: always
+    image: cubejs/cube:v1.6.6
+    depends_on:
+      hub-migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+    environment:
+      CUBEJS_DB_TYPE: postgres
+      CUBEJS_DB_HOST: ${CUBEJS_DB_HOST:-postgres}
+      CUBEJS_DB_NAME: ${CUBEJS_DB_NAME:-formbricks}
+      CUBEJS_DB_USER: ${CUBEJS_DB_USER:-postgres}
+      CUBEJS_DB_PASS: ${CUBEJS_DB_PASS:-postgres}
+      CUBEJS_DB_PORT: ${CUBEJS_DB_PORT:-5432}
+      CUBEJS_API_SECRET: ${CUBEJS_API_SECRET:?CUBEJS_API_SECRET is required to run Cube}
+      CUBEJS_CACHE_AND_QUEUE_DRIVER: memory
+    volumes:
+      - ./cube/cube.js:/cube/conf/cube.js:ro
+      - ./cube/schema:/cube/conf/model:ro
 
 volumes:
   postgres:

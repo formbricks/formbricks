@@ -95,7 +95,9 @@ deployment:
     #   type: secret
     #   nameSuffix: app-secrets
 
-  # Environment variables passed to the app container
+  # Environment variables passed to the app container.
+  # XM Suite v5 analytics requires an external Cube endpoint when using Helm:
+  # set deployment.env.CUBEJS_API_URL and provide CUBEJS_API_SECRET through a Secret referenced by envFrom/existingSecret.
   env: {}
 
   # Tolerations for scheduling pods on tainted nodes
@@ -576,6 +578,9 @@ hub:
 
   # Optional env vars (non-secret). Use existingSecret for secret values such as DATABASE_URL and HUB_API_KEY.
   env: {}
+
+  # Helm does not deploy Cube. XM Suite v5 analytics requires operators to provide an external Cube instance,
+  # set deployment.env.CUBEJS_API_URL, and supply CUBEJS_API_SECRET via an existing secret.
 
   # Upgrade migration job runs goose + river before Helm upgrades Hub resources.
   # Fresh installs run the same migrations through the Hub deployment init container.

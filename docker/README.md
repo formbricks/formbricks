@@ -28,12 +28,12 @@ The script will prompt you for the following information:
 
 That's it! After running the command and providing the required information, visit the domain name you entered, and you should see the Formbricks home wizard!
 
-## Formbricks Hub
+## Formbricks Hub and Cube
 
-The stack includes the [Formbricks Hub](https://github.com/formbricks/hub) API (`ghcr.io/formbricks/hub`). Hub shares the same database as Formbricks by default.
+The stack includes the [Formbricks Hub](https://github.com/formbricks/hub) API (`ghcr.io/formbricks/hub`) and a bundled Cube.js service for XM Suite v5 analytics. Hub and Cube share the same database as Formbricks by default.
 
 - **Migrations**: A `hub-migrate` service runs Hub's database migrations (goose + river) before the Hub API starts. It runs on every `docker compose up` and is idempotent.
-- **Production** (`docker/docker-compose.yml`): Set `HUB_API_KEY` (required). `HUB_API_URL` defaults to `http://hub:8080` so the Formbricks app can reach Hub inside the compose network. Override `HUB_DATABASE_URL` only if you want Hub to use a separate database.
-- **Development** (`docker-compose.dev.yml`): Hub uses the same Postgres database; `HUB_API_KEY` defaults to `dev-api-key` (override with `HUB_API_KEY`) and the local Hub URL is `http://localhost:8080`.
+- **Production** (`docker/docker-compose.yml`): Set `HUB_API_KEY` and `CUBEJS_API_SECRET` (required). `HUB_API_URL` defaults to `http://hub:8080` and `CUBEJS_API_URL` defaults to `http://cube:4000` so the Formbricks app can reach both services inside the compose network. Override `HUB_DATABASE_URL` and `CUBEJS_DB_*` only if Hub or Cube should use a separate database.
+- **Development** (`docker-compose.dev.yml`): Hub and Cube use the same local Postgres database. `HUB_API_KEY` defaults to `dev-api-key`, `CUBEJS_API_URL` defaults to `http://localhost:4000`, and `pnpm dev:setup` generates `CUBEJS_API_SECRET` in the repo root `.env`.
 
-In development, Hub is exposed locally on port **8080**. In production Docker Compose, Hub stays internal to the compose network and is reached via `http://hub:8080`.
+In development, Hub is exposed locally on port **8080** and Cube on **4000** (with the Cube playground on **4001**). In production Docker Compose, Hub and Cube stay internal to the compose network and are reached via `http://hub:8080` and `http://cube:4000`.

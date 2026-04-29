@@ -31,6 +31,14 @@ class ValidationError extends Error {
   }
 }
 
+class ConfigurationError extends Error {
+  statusCode = 503;
+  constructor(message: string) {
+    super(message);
+    this.name = "ConfigurationError";
+  }
+}
+
 class UnknownError extends Error {
   statusCode = 500;
   constructor(message: string) {
@@ -135,6 +143,7 @@ export {
   ResourceNotFoundError,
   InvalidInputError,
   ValidationError,
+  ConfigurationError,
   DatabaseError,
   UniqueConstraintError,
   UnknownError,
@@ -156,6 +165,7 @@ export const EXPECTED_ERROR_NAMES = new Set([
   "AuthorizationError",
   "InvalidInputError",
   "ValidationError",
+  "ConfigurationError",
   "AuthenticationError",
   "OperationNotAllowedError",
   "TooManyRequestsError",
