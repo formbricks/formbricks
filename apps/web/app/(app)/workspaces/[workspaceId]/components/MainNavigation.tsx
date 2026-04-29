@@ -327,8 +327,11 @@ export const MainNavigation = ({
     : `/workspaces/${workspace.id}/surveys/`;
 
   const handleWorkspaceChange = (workspaceId: string) => {
-    const targetPath =
-      workspaceId === workspace.id ? `/workspaces/${workspace.id}/surveys` : `/workspaces/${workspaceId}/`;
+    const targetPath = isSettingsMode
+      ? `/workspaces/${workspaceId}/settings/workspace/general`
+      : workspaceId === workspace.id
+        ? `/workspaces/${workspace.id}/surveys`
+        : `/workspaces/${workspaceId}/`;
     startTransition(() => {
       setIsWorkspaceDropdownOpen(false);
       router.push(targetPath);

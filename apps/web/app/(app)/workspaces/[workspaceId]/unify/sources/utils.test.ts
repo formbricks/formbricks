@@ -1,15 +1,24 @@
 import { describe, expect, test } from "vitest";
-import { MAX_CSV_VALUES, TSourceField } from "./types";
-import { getConnectorOptions, parseCSVColumnsToFields, validateCsvFile } from "./utils";
+import { MAX_CSV_VALUES, TFieldMapping, TSourceField } from "./types";
+import {
+  areAllRequiredFieldsMapped,
+  getConnectorOptions,
+  isConnectorNameValid,
+  parseCSVColumnsToFields,
+  toggleQuestionId,
+  validateCsvFile,
+} from "./utils";
 
 const mockT = (key: string) => key;
 
 describe("getConnectorOptions", () => {
-  test("returns formbricks and csv options", () => {
+  test("returns formbricks, csv, api ingestion, and mcp options", () => {
     const options = getConnectorOptions(mockT as never);
-    expect(options).toHaveLength(2);
-    expect(options[0].id).toBe("formbricks");
+    expect(options).toHaveLength(4);
+    expect(options[0].id).toBe("formbricks_survey");
     expect(options[1].id).toBe("csv");
+    expect(options[2].id).toBe("api_ingestion");
+    expect(options[3].id).toBe("feedback_record_mcp");
   });
 
   test("both options are enabled by default", () => {
@@ -23,6 +32,10 @@ describe("getConnectorOptions", () => {
     expect(options[0].description).toBe("workspace.unify.source_connect_formbricks_description");
     expect(options[1].name).toBe("workspace.unify.csv_import");
     expect(options[1].description).toBe("workspace.unify.source_connect_csv_description");
+    expect(options[2].name).toBe("workspace.unify.api_ingestion");
+    expect(options[2].description).toBe("workspace.unify.api_ingestion_settings_description");
+    expect(options[3].name).toBe("workspace.unify.feedback_record_mcp");
+    expect(options[3].description).toBe("workspace.unify.source_connect_feedback_record_mcp_description");
   });
 });
 
@@ -107,5 +120,113 @@ describe("validateCsvFile", () => {
     const file = createMockFile("data.txt", 100, "text/csv");
     const result = validateCsvFile(file, mockT as never);
     expect(result).toEqual({ valid: false, error: "workspace.unify.csv_files_only" });
+  });
+});
+
+describe("isConnectorNameValid", () => {
+  test("returns true for non-empty name", () => {
+    expect(isConnectorNameValid("My Connector")).toBe(true);
+  });
+
+  test("returns false for empty string", () => {
+    expect(isConnectorNameValid("")).toBe(false);
+  });
+
+  test("returns false for whitespace-only string", () => {
+    expect(isConnectorNameValid("   ")).toBe(false);
+    expect(isConnectorNameValid("\t\n  ")).toBe(false);
+  });
+
+  test("returns true for name with surrounding whitespace", () => {
+    expect(isConnectorNameValid("  name  ")).toBe(true);
+  });
+
+  test("returns true for single character", () => {
+    expect(isConnectorNameValid("a")).toBe(true);
+  });
+});
+
+describe("areAllRequiredFieldsMapped", () => {
+  const requiredMappings: TFieldMapping[] = [
+    { targetFieldId: "collected_at", sourceFieldId: "ts" },
+    { targetFieldId: "source_type", staticValue: "csv" },
+    { targetFieldId: "field_id", sourceFieldId: "qid" },
+    { targetFieldId: "field_type", staticValue: "text" },
+  ];
+
+  test("returns true when all required fields have a sourceFieldId or staticValue", () => {
+    expect(areAllRequiredFieldsMapped(requiredMappings)).toBe(true);
+  });
+
+  test("returns false when a required field is missing entirely", () => {
+    const missing = requiredMappings.slice(0, 3);
+    expect(areAllRequiredFieldsMapped(missing)).toBe(false);
+  });
+
+  test("returns false when a required mapping has neither sourceFieldId nor staticValue", () => {
+    const incomplete: TFieldMapping[] = [...requiredMappings.slice(0, 3), { targetFieldId: "field_type" }];
+    expect(areAllRequiredFieldsMapped(incomplete)).toBe(false);
+  });
+
+  test("ignores mappings for non-required target fields", () => {
+    const withOptionals: TFieldMapping[] = [
+      ...requiredMappings,
+      { targetFieldId: "tenant_id", sourceFieldId: "tenant" },
+      { targetFieldId: "unknown_field", sourceFieldId: "anything" },
+    ];
+    expect(areAllRequiredFieldsMapped(withOptionals)).toBe(true);
+  });
+
+  test("returns false for empty mappings array", () => {
+    expect(areAllRequiredFieldsMapped([])).toBe(false);
+  });
+
+  test("treats empty staticValue and missing sourceFieldId as unmapped", () => {
+    const incomplete: TFieldMapping[] = [
+      { targetFieldId: "collected_at", sourceFieldId: "ts" },
+      { targetFieldId: "source_type", sourceFieldId: "", staticValue: "" },
+      { targetFieldId: "field_id", sourceFieldId: "qid" },
+      { targetFieldId: "field_type", staticValue: "text" },
+    ];
+    expect(areAllRequiredFieldsMapped(incomplete)).toBe(false);
+  });
+
+  test("counts required field as mapped when only staticValue is set", () => {
+    const onlyStatic: TFieldMapping[] = [
+      { targetFieldId: "collected_at", staticValue: "2026-01-01" },
+      { targetFieldId: "source_type", staticValue: "csv" },
+      { targetFieldId: "field_id", staticValue: "id" },
+      { targetFieldId: "field_type", staticValue: "text" },
+    ];
+    expect(areAllRequiredFieldsMapped(onlyStatic)).toBe(true);
+  });
+});
+
+describe("toggleQuestionId", () => {
+  test("adds id when not present", () => {
+    expect(toggleQuestionId(["a", "b"], "c")).toEqual(["a", "b", "c"]);
+  });
+
+  test("removes id when present", () => {
+    expect(toggleQuestionId(["a", "b", "c"], "b")).toEqual(["a", "c"]);
+  });
+
+  test("adds to empty selection", () => {
+    expect(toggleQuestionId([], "x")).toEqual(["x"]);
+  });
+
+  test("returns empty when removing the only id", () => {
+    expect(toggleQuestionId(["only"], "only")).toEqual([]);
+  });
+
+  test("does not mutate the input array", () => {
+    const input = ["a", "b"];
+    const result = toggleQuestionId(input, "c");
+    expect(input).toEqual(["a", "b"]);
+    expect(result).not.toBe(input);
+  });
+
+  test("removes only the matching id when duplicates exist", () => {
+    expect(toggleQuestionId(["a", "b", "a"], "a")).toEqual(["b"]);
   });
 });

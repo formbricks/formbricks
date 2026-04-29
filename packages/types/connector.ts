@@ -2,7 +2,7 @@ import { z } from "zod";
 import { TSurveyElementTypeEnum } from "./surveys/constants";
 
 // Connector type enum
-export const ZConnectorType = z.enum(["formbricks", "csv"]);
+export const ZConnectorType = z.enum(["formbricks_survey", "csv"]);
 export type TConnectorType = z.infer<typeof ZConnectorType>;
 
 // Connector status enum
@@ -42,6 +42,7 @@ export const ZHubTargetField = z.enum([
   "metadata",
   "language",
   "user_identifier",
+  "submission_id",
 ]);
 export type THubTargetField = z.infer<typeof ZHubTargetField>;
 
@@ -139,6 +140,8 @@ export const UNSUPPORTED_CONNECTOR_ELEMENT_TYPES: readonly TSurveyElementTypeEnu
 export const ELEMENT_TYPE_TO_HUB_FIELD_TYPE: Record<string, THubFieldType> = {
   openText: "text",
   nps: "nps",
+  csat: "csat",
+  ces: "ces",
   rating: "rating",
   multipleChoiceSingle: "categorical",
   multipleChoiceMulti: "categorical",

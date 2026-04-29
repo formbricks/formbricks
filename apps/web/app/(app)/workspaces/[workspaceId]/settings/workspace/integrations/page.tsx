@@ -80,7 +80,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
       disabled: isReadOnly,
     },
     {
-      connectHref: `/workspaces/${params.workspaceId}/integrations/webhooks`,
+      connectHref: `/workspaces/${params.workspaceId}/settings/workspace/integrations/webhooks`,
       connectText: t("workspace.integrations.manage_webhooks"),
       connectNewTab: false,
       docsHref: "https://formbricks.com/docs/xm-and-surveys/core-features/integrations/webhooks",
@@ -94,7 +94,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
       disabled: false,
     },
     {
-      connectHref: `/workspaces/${params.workspaceId}/integrations/google-sheets`,
+      connectHref: `/workspaces/${params.workspaceId}/settings/workspace/integrations/google-sheets`,
       connectText: `${isGoogleSheetsIntegrationConnected ? t("common.manage") : t("common.connect")}`,
       connectNewTab: false,
       docsHref: "https://formbricks.com/docs/xm-and-surveys/core-features/integrations/google-sheets",
@@ -108,7 +108,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
       disabled: isReadOnly,
     },
     {
-      connectHref: `/workspaces/${params.workspaceId}/integrations/airtable`,
+      connectHref: `/workspaces/${params.workspaceId}/settings/workspace/integrations/airtable`,
       connectText: `${isAirtableIntegrationConnected ? t("common.manage") : t("common.connect")}`,
       connectNewTab: false,
       docsHref: "https://formbricks.com/docs/xm-and-surveys/core-features/integrations/airtable",
@@ -122,7 +122,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
       disabled: isReadOnly,
     },
     {
-      connectHref: `/workspaces/${params.workspaceId}/integrations/slack`,
+      connectHref: `/workspaces/${params.workspaceId}/settings/workspace/integrations/slack`,
       connectText: `${isSlackIntegrationConnected ? t("common.manage") : t("common.connect")}`,
       connectNewTab: false,
       docsHref: "https://formbricks.com/docs/xm-and-surveys/core-features/integrations/slack",
@@ -164,7 +164,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
       disabled: isReadOnly,
     },
     {
-      connectHref: `/workspaces/${params.workspaceId}/integrations/notion`,
+      connectHref: `/workspaces/${params.workspaceId}/settings/workspace/integrations/notion`,
       connectText: `${isNotionIntegrationConnected ? t("common.manage") : t("common.connect")}`,
       connectNewTab: false,
       docsHref: "https://formbricks.com/docs/xm-and-surveys/core-features/integrations/notion",
@@ -197,7 +197,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
     docsHref: "https://formbricks.com/docs/app-surveys/quickstart",
     docsText: t("common.docs"),
     docsNewTab: true,
-    connectHref: `/workspaces/${params.workspaceId}/app-connection`,
+    connectHref: `/workspaces/${params.workspaceId}/settings/workspace/app-connection`,
     connectText: t("common.connect"),
     connectNewTab: false,
     label: "Javascript SDK",
