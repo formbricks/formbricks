@@ -57,6 +57,7 @@ import {
   parseNumberValue,
   toISOOrUndefined,
 } from "../lib/utils";
+import { type TFeedbackRecordUpdateInput } from "../types";
 
 type FeedbackRecordDrawerMode = "create" | "edit";
 
@@ -179,124 +180,124 @@ export const FeedbackRecordFormDrawer = ({
     form.setError(selectedValueField, { type: "manual", message });
   };
 
-  const handleSubmit = form.handleSubmit(async (values) => {
-    form.clearErrors();
+  const isCreateValueFieldValid = (values: TFeedbackRecordFormValues): boolean => {
+    if (selectedValueField === "value_text") return Boolean(values.value_text?.trim());
+    if (selectedValueField === "value_number") return parseNumberValue(values.value_number ?? "") != null;
+    if (selectedValueField === "value_boolean") return values.value_boolean !== undefined;
+    if (selectedValueField === "value_date") return Boolean(toISOOrUndefined(values.value_date));
+    return true;
+  };
 
-    if (mode === "create") {
-      const requiredValueError = t("workspace.unify.feedback_record_value_required");
-      if (selectedValueField === "value_text" && !values.value_text?.trim()) {
-        setStrictValueValidationError(requiredValueError);
-        return;
-      }
-      if (selectedValueField === "value_number" && parseNumberValue(values.value_number ?? "") == null) {
-        setStrictValueValidationError(requiredValueError);
-        return;
-      }
-      if (selectedValueField === "value_boolean" && values.value_boolean === undefined) {
-        setStrictValueValidationError(requiredValueError);
-        return;
-      }
-      if (selectedValueField === "value_date" && !toISOOrUndefined(values.value_date)) {
-        setStrictValueValidationError(requiredValueError);
-        return;
-      }
-    }
-
-    const metadata = Object.fromEntries(
+  const buildMetadataMap = (values: TFeedbackRecordFormValues): Record<string, string> =>
+    Object.fromEntries(
       values.metadataEntries
-        .map((entry) => ({
-          key: entry.key.trim(),
-          value: entry.value,
-        }))
+        .map((entry) => ({ key: entry.key.trim(), value: entry.value }))
         .filter((entry) => entry.key.length > 0)
         .map((entry) => [entry.key, entry.value])
     );
 
+  const buildCreateValueFields = (values: TFeedbackRecordFormValues) => ({
+    value_text: selectedValueField === "value_text" ? (values.value_text ?? "") : null,
+    value_number:
+      selectedValueField === "value_number"
+        ? (parseNumberValue(values.value_number ?? "") ?? undefined)
+        : undefined,
+    value_boolean: selectedValueField === "value_boolean" ? values.value_boolean : undefined,
+    value_date: selectedValueField === "value_date" ? toISOOrUndefined(values.value_date) : undefined,
+  });
+
+  const getUpdateValueField = (
+    values: TFeedbackRecordFormValues
+  ): Pick<TFeedbackRecordUpdateInput, "value_text" | "value_number" | "value_boolean" | "value_date"> => {
+    if (selectedValueField === "value_text") return { value_text: values.value_text?.trim() ?? "" };
+    if (selectedValueField === "value_number") {
+      return { value_number: parseNumberValue(values.value_number ?? "") };
+    }
+    if (selectedValueField === "value_boolean") return { value_boolean: values.value_boolean ?? null };
+    if (selectedValueField === "value_date") {
+      return { value_date: toISOOrUndefined(values.value_date) ?? null };
+    }
+    return {};
+  };
+
+  const submitCreate = async (
+    values: TFeedbackRecordFormValues,
+    metadata: Record<string, string>
+  ): Promise<boolean> => {
+    const sourceTypeValue =
+      sourceTypeMode === SOURCE_TYPE_CUSTOM_VALUE ? customSourceType.trim() : values.source_type;
+
+    const result = await createFeedbackRecordAction({
+      workspaceId,
+      recordInput: {
+        submission_id: values.submission_id.trim(),
+        tenant_id: values.tenant_id,
+        source_type: sourceTypeValue,
+        source_id: values.source_id?.trim() ? values.source_id.trim() : null,
+        source_name: values.source_name?.trim() ? values.source_name.trim() : null,
+        field_id: values.field_id.trim(),
+        field_label: values.field_label?.trim() ? values.field_label.trim() : null,
+        field_type: values.field_type,
+        field_group_id: values.field_group_id?.trim() || undefined,
+        field_group_label: values.field_group_label?.trim() ? values.field_group_label.trim() : null,
+        collected_at: toISOOrUndefined(values.collected_at),
+        ...buildCreateValueFields(values),
+        metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
+        language: values.language?.trim() || undefined,
+        user_identifier: values.user_identifier?.trim() || undefined,
+      },
+    });
+
+    if (!result?.data) {
+      toast.error(getFormattedErrorMessage(result));
+      return false;
+    }
+    return true;
+  };
+
+  const submitUpdate = async (
+    values: TFeedbackRecordFormValues,
+    metadata: Record<string, string>
+  ): Promise<boolean> => {
+    if (!recordId) return false;
+
+    const preservedMetadata = Object.fromEntries(
+      Object.entries(record?.metadata ?? {}).filter(([, value]) => typeof value !== "string")
+    );
+
+    const result = await updateFeedbackRecordAction({
+      workspaceId,
+      recordId,
+      updateInput: {
+        language: values.language?.trim() || null,
+        user_identifier: values.user_identifier?.trim() || null,
+        metadata: { ...preservedMetadata, ...metadata },
+        ...getUpdateValueField(values),
+      },
+    });
+
+    if (!result?.data) {
+      toast.error(getFormattedErrorMessage(result));
+      return false;
+    }
+    return true;
+  };
+
+  const handleSubmit = form.handleSubmit(async (values) => {
+    form.clearErrors();
+
+    if (mode === "create" && !isCreateValueFieldValid(values)) {
+      setStrictValueValidationError(t("workspace.unify.feedback_record_value_required"));
+      return;
+    }
+
+    const metadata = buildMetadataMap(values);
+
     setIsSubmitting(true);
-
     try {
-      if (mode === "create") {
-        const sourceTypeValue =
-          sourceTypeMode === SOURCE_TYPE_CUSTOM_VALUE ? customSourceType.trim() : values.source_type;
-
-        const createResult = await createFeedbackRecordAction({
-          workspaceId,
-          recordInput: {
-            submission_id: values.submission_id.trim(),
-            tenant_id: values.tenant_id,
-            source_type: sourceTypeValue,
-            source_id: values.source_id?.trim() ? values.source_id.trim() : null,
-            source_name: values.source_name?.trim() ? values.source_name.trim() : null,
-            field_id: values.field_id.trim(),
-            field_label: values.field_label?.trim() ? values.field_label.trim() : null,
-            field_type: values.field_type,
-            field_group_id: values.field_group_id?.trim() || undefined,
-            field_group_label: values.field_group_label?.trim() ? values.field_group_label.trim() : null,
-            collected_at: toISOOrUndefined(values.collected_at),
-            value_text: selectedValueField === "value_text" ? (values.value_text ?? "") : null,
-            value_number:
-              selectedValueField === "value_number"
-                ? (parseNumberValue(values.value_number ?? "") ?? undefined)
-                : undefined,
-            value_boolean: selectedValueField === "value_boolean" ? values.value_boolean : undefined,
-            value_date: selectedValueField === "value_date" ? toISOOrUndefined(values.value_date) : undefined,
-            metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
-            language: values.language?.trim() || undefined,
-            user_identifier: values.user_identifier?.trim() || undefined,
-          },
-        });
-
-        if (!createResult?.data) {
-          toast.error(getFormattedErrorMessage(createResult));
-          setIsSubmitting(false);
-          return;
-        }
-      } else {
-        if (!recordId) {
-          setIsSubmitting(false);
-          return;
-        }
-
-        const preservedMetadata = Object.fromEntries(
-          Object.entries(record?.metadata ?? {}).filter(([, value]) => typeof value !== "string")
-        );
-
-        const updatePayload: {
-          language: string | null;
-          user_identifier: string | null;
-          metadata: Record<string, unknown>;
-          value_text?: string;
-          value_number?: number | null;
-          value_boolean?: boolean | null;
-          value_date?: string | null;
-        } = {
-          language: values.language?.trim() || null,
-          user_identifier: values.user_identifier?.trim() || null,
-          metadata: { ...preservedMetadata, ...metadata },
-        };
-
-        if (selectedValueField === "value_text") {
-          updatePayload.value_text = values.value_text?.trim() ?? "";
-        } else if (selectedValueField === "value_number") {
-          updatePayload.value_number = parseNumberValue(values.value_number ?? "");
-        } else if (selectedValueField === "value_boolean") {
-          updatePayload.value_boolean = values.value_boolean ?? null;
-        } else if (selectedValueField === "value_date") {
-          updatePayload.value_date = toISOOrUndefined(values.value_date) ?? null;
-        }
-
-        const updateResult = await updateFeedbackRecordAction({
-          workspaceId,
-          recordId,
-          updateInput: updatePayload,
-        });
-
-        if (!updateResult?.data) {
-          toast.error(getFormattedErrorMessage(updateResult));
-          setIsSubmitting(false);
-          return;
-        }
-      }
+      const ok =
+        mode === "create" ? await submitCreate(values, metadata) : await submitUpdate(values, metadata);
+      if (!ok) return;
 
       toast.success(
         mode === "create"
