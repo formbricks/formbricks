@@ -30,7 +30,7 @@ const mockConnector: TConnectorWithMappings = {
   createdAt: NOW,
   updatedAt: NOW,
   name: "Test Connector",
-  type: "formbricks",
+  type: "formbricks_survey",
   status: "active",
   workspaceId: ENV_ID,
   lastSyncAt: null,

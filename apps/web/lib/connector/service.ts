@@ -132,7 +132,7 @@ export const getConnectorsBySurveyId = reactCache(
     try {
       const connectors = await prisma.connector.findMany({
         where: {
-          type: "formbricks",
+          type: "formbricks_survey",
           status: "active",
           formbricksMappings: {
             some: {
@@ -213,7 +213,7 @@ export const deleteConnector = async (connectorId: string, workspaceId: string):
 // -- Composite functions --
 
 export type TFormbricksMappingsInput = {
-  type: "formbricks";
+  type: "formbricks_survey";
   mappings: TConnectorFormbricksMappingCreateInput[];
 };
 
@@ -243,7 +243,7 @@ export const createConnectorWithMappings = async (
         },
       });
 
-      if (mappingsInput?.type === "formbricks") {
+      if (mappingsInput?.type === "formbricks_survey") {
         await Promise.all(
           mappingsInput.mappings.map((mapping) =>
             tx.connectorFormbricksMapping.create({
@@ -311,7 +311,7 @@ export const updateConnectorWithMappings = async (
         },
       });
 
-      if (mappingsInput?.type === "formbricks") {
+      if (mappingsInput?.type === "formbricks_survey") {
         await tx.connectorFormbricksMapping.deleteMany({
           where: { connectorId, workspaceId },
         });

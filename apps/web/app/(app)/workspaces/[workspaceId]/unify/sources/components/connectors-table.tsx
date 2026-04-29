@@ -23,16 +23,15 @@ export function ConnectorsTable({
   onToggleStatus,
   onDelete,
   isLoading = false,
-}: ConnectorsTableProps) {
+}: Readonly<ConnectorsTableProps>) {
   const { t } = useTranslation();
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
       <div className="grid h-12 grid-cols-12 content-center border-b border-slate-200 text-left text-sm font-semibold text-slate-900">
         <div className="col-span-1 pl-6">{t("common.type")}</div>
-        <div className="col-span-3">{t("common.name")}</div>
+        <div className="col-span-5">{t("common.name")}</div>
         <div className="col-span-1 hidden text-center sm:block">{t("common.status")}</div>
-        <div className="col-span-2 hidden text-center sm:block">{t("common.created")}</div>
         <div className="col-span-2 hidden text-center sm:block">{t("workspace.unify.updated_at")}</div>
         <div className="col-span-2 hidden text-center sm:block">{t("workspace.unify.created_by")}</div>
         <div className="col-span-1" />
