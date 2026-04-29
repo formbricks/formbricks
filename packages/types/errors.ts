@@ -39,6 +39,14 @@ class ConfigurationError extends Error {
   }
 }
 
+class QueryExecutionError extends Error {
+  statusCode = 500;
+  constructor(message: string) {
+    super(message);
+    this.name = "QueryExecutionError";
+  }
+}
+
 class UnknownError extends Error {
   statusCode = 500;
   constructor(message: string) {
@@ -144,6 +152,7 @@ export {
   InvalidInputError,
   ValidationError,
   ConfigurationError,
+  QueryExecutionError,
   DatabaseError,
   UniqueConstraintError,
   UnknownError,
@@ -166,6 +175,7 @@ export const EXPECTED_ERROR_NAMES = new Set([
   "InvalidInputError",
   "ValidationError",
   "ConfigurationError",
+  "QueryExecutionError",
   "AuthenticationError",
   "OperationNotAllowedError",
   "TooManyRequestsError",

@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { logger } from "@formbricks/logger";
 import type { TChartQuery } from "@formbricks/types/analysis";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { executeQuery } from "@/modules/ee/analysis/api/lib/cube-client";
@@ -8,6 +9,7 @@ import { getFeedbackRecordDirectoriesByWorkspaceId } from "@/modules/ee/feedback
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { DashboardDetailClient } from "../components/dashboard-detail-client";
 import { getDashboard } from "../lib/dashboards";
+import { DASHBOARD_WIDGET_LOAD_ERROR, type TDashboardWidgetError } from "../lib/widget-errors";
 
 interface WidgetQueryResult {
   data: TChartDataRow[];
@@ -17,18 +19,18 @@ interface WidgetQueryResult {
 async function executeWidgetQuery(
   query: TChartQuery,
   feedbackRecordDirectoryId: string
-): Promise<WidgetQueryResult | { error: string }> {
+): Promise<WidgetQueryResult | { error: TDashboardWidgetError }> {
   try {
     const scopedQuery = injectTenantFilter(query, feedbackRecordDirectoryId);
     const data = await executeQuery(scopedQuery as Record<string, unknown>);
     return { data: Array.isArray(data) ? data : [], query };
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Failed to load chart data";
-    return { error: message };
+    logger.error(error, "Failed to load dashboard widget data");
+    return { error: DASHBOARD_WIDGET_LOAD_ERROR };
   }
 }
 
-type WidgetQueryPromiseResult = Promise<WidgetQueryResult | { error: string }>;
+type WidgetQueryPromiseResult = Promise<WidgetQueryResult | { error: TDashboardWidgetError }>;
 
 export async function DashboardDetailPage({
   params,
@@ -49,7 +51,7 @@ export async function DashboardDetailPage({
     throw error;
   }
 
-  const widgetDataPromises = new Map<string, Promise<WidgetQueryResult | { error: string }>>();
+  const widgetDataPromises = new Map<string, WidgetQueryPromiseResult>();
   const widgetsWithCharts = dashboard.widgets.filter(
     (w): w is typeof w & { chart: NonNullable<typeof w.chart> } => !!w.chart
   );

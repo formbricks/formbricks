@@ -27,6 +27,7 @@ describe("cube-config", () => {
 
     expect(config.apiUrl).toBe("https://cube.formbricks.local/cubejs-api/v1");
     expect(jwt.verify(config.token, "cube-secret")).toEqual({
+      exp: expect.any(Number),
       iat: expect.any(Number),
     });
   });

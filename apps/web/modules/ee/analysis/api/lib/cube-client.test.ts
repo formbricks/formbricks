@@ -71,7 +71,7 @@ describe("executeQuery", () => {
     );
   });
 
-  test("wraps Cube runtime failures in a configuration error with details", async () => {
+  test("wraps Cube runtime failures in a query execution error with details", async () => {
     mockLoad.mockRejectedValueOnce(new Error("connect ECONNREFUSED"));
     const { executeQuery } = await import("./cube-client");
 
