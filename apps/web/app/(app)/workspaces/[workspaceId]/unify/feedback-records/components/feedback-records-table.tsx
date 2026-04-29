@@ -108,9 +108,7 @@ export const FeedbackRecordsTable = ({
       )
     );
 
-    const successfulRecords = results.flatMap((result) => result?.data?.data ?? []);
-
-    if (directoryIds.length > 0 && successfulRecords.length === 0) {
+    if (results.some((result) => !result?.data)) {
       const firstErrorResult = results.find((result) => !result?.data);
       const errorMessage = firstErrorResult ? getFormattedErrorMessage(firstErrorResult) : undefined;
       toast.error(errorMessage ?? t("workspace.unify.failed_to_load_feedback_records"), {
@@ -119,6 +117,8 @@ export const FeedbackRecordsTable = ({
       setIsRefreshing(false);
       return;
     }
+
+    const successfulRecords = results.flatMap((result) => result?.data?.data ?? []);
 
     const mergedRecords = successfulRecords
       .toSorted((a, b) => (a.collected_at < b.collected_at ? 1 : -1))
@@ -311,8 +311,17 @@ const FeedbackRecordRow = ({
 
   return (
     <tr
-      className="cursor-pointer text-sm text-slate-700 transition-colors hover:bg-slate-50"
-      onClick={onClick}>
+      className="cursor-pointer text-sm text-slate-700 transition-colors focus-within:bg-slate-50 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+      tabIndex={0}
+      role="button"
+      aria-label={record.field_label ?? record.field_id}
+      onClick={onClick}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onClick();
+        }
+      }}>
       <td className="whitespace-nowrap px-4 py-3 text-slate-500">
         {formatDateTimeForDisplay(new Date(record.collected_at), locale)}
       </td>

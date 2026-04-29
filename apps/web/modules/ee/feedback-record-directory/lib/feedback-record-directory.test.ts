@@ -18,8 +18,8 @@ vi.mock("@/lib/utils/validate", () => ({
   validateInputs: vi.fn(),
 }));
 
-vi.mock("@formbricks/database", () => ({
-  prisma: {
+vi.mock("@formbricks/database", () => {
+  const prismaMock = {
     feedbackRecordDirectory: {
       findMany: vi.fn(),
       findUnique: vi.fn(),
@@ -28,6 +28,7 @@ vi.mock("@formbricks/database", () => ({
     },
     feedbackRecordDirectoryWorkspace: {
       findMany: vi.fn(),
+      findFirst: vi.fn().mockResolvedValue(null),
     },
     workspace: {
       count: vi.fn(),
@@ -36,8 +37,10 @@ vi.mock("@formbricks/database", () => ({
       count: vi.fn().mockResolvedValue(0),
       updateMany: vi.fn().mockResolvedValue({ count: 0 }),
     },
-  },
-}));
+    $transaction: vi.fn(async (cb: (tx: unknown) => Promise<unknown>) => cb(prismaMock)),
+  };
+  return { prisma: prismaMock };
+});
 
 const mockDirectoryId = "clj28r6va000409j3ep7h8xzk";
 const mockOrganizationId = "clj28r6va000409j3ep7h8xyz";

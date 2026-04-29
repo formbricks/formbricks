@@ -150,7 +150,7 @@ export const MainNavigation = ({
     () => [
       {
         id: "ask",
-        name: "Ask",
+        name: t("common.ask"),
         items: [
           {
             name: t("common.surveys"),

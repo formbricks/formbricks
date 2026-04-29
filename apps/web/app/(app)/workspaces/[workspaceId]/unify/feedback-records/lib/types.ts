@@ -26,7 +26,7 @@ export const SOURCE_TYPE_PRESET_OPTIONS = [
 export const SOURCE_TYPE_CUSTOM_VALUE = "__custom__";
 
 const ZMetadataEntry = z.object({
-  key: z.string().trim().min(1),
+  key: z.string().trim(),
   value: z.string(),
 });
 

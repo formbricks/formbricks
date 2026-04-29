@@ -81,6 +81,8 @@ export const CreateWorkspaceModal = ({
   const { getValues, setValue } = form;
 
   useEffect(() => {
+    if (!open) return;
+
     const fetchModalData = async () => {
       const [teamsResponse, directoriesResponse] = await Promise.all([
         getTeamsByOrganizationIdAction({ organizationId }),
@@ -112,7 +114,7 @@ export const CreateWorkspaceModal = ({
       }
     };
     fetchModalData();
-  }, [organizationId, getValues, setValue]);
+  }, [open, organizationId, getValues, setValue]);
 
   const { isSubmitting } = form.formState;
 

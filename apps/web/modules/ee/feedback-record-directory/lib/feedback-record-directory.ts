@@ -379,12 +379,16 @@ const getWorkspaceAssignmentUpdate = async (
   };
 };
 
-const pauseConnectorsInWorkspaces = async (directoryId: string, workspaceIds: string[]): Promise<void> => {
+const pauseConnectorsInWorkspaces = async (
+  tx: Prisma.TransactionClient,
+  directoryId: string,
+  workspaceIds: string[]
+): Promise<void> => {
   if (workspaceIds.length === 0) {
     return;
   }
 
-  await prisma.connector.updateMany({
+  await tx.connector.updateMany({
     where: {
       feedbackRecordDirectoryId: directoryId,
       workspaceId: { in: workspaceIds },
@@ -393,6 +397,31 @@ const pauseConnectorsInWorkspaces = async (directoryId: string, workspaceIds: st
       status: "paused",
     },
   });
+};
+
+/**
+ * Enforces the single-active-FRD-per-workspace invariant. The client UI prevents
+ * assigning a workspace to multiple active directories, but the server must also
+ * reject such payloads to keep this guarantee under direct API access.
+ */
+const assertWorkspacesNotAssignedElsewhere = async (
+  directoryId: string,
+  workspaceIds: string[]
+): Promise<void> => {
+  if (workspaceIds.length === 0) return;
+
+  const conflicting = await prisma.feedbackRecordDirectoryWorkspace.findFirst({
+    where: {
+      workspaceId: { in: workspaceIds },
+      feedbackRecordDirectoryId: { not: directoryId },
+      feedbackRecordDirectory: { isArchived: false },
+    },
+    select: { workspaceId: true },
+  });
+
+  if (conflicting) {
+    throw new InvalidInputError("WORKSPACE_ALREADY_ASSIGNED_TO_DIFFERENT_DIRECTORY");
+  }
 };
 
 /**
@@ -424,6 +453,10 @@ export const updateFeedbackRecordDirectory = async (
   try {
     const { name, workspaceIds, isArchived } = data;
 
+    if (workspaceIds !== undefined) {
+      await assertWorkspacesNotAssignedElsewhere(directoryId, workspaceIds);
+    }
+
     const archiveUpdate = await getArchiveUpdate(directoryId, isArchived);
     const workspaceAssignmentUpdate = await getWorkspaceAssignmentUpdate(
       directoryId,
@@ -437,14 +470,16 @@ export const updateFeedbackRecordDirectory = async (
       ...(workspaceAssignmentUpdate.workspaces ? { workspaces: workspaceAssignmentUpdate.workspaces } : {}),
     };
 
-    await prisma.feedbackRecordDirectory.update({
-      where: { id: directoryId },
-      data: payload,
-    });
+    await prisma.$transaction(async (tx) => {
+      await tx.feedbackRecordDirectory.update({
+        where: { id: directoryId },
+        data: payload,
+      });
 
-    if (options?.pauseConnectorsInRemovedWorkspaces) {
-      await pauseConnectorsInWorkspaces(directoryId, workspaceAssignmentUpdate.removedWorkspaceIds);
-    }
+      if (options?.pauseConnectorsInRemovedWorkspaces) {
+        await pauseConnectorsInWorkspaces(tx, directoryId, workspaceAssignmentUpdate.removedWorkspaceIds);
+      }
+    });
 
     return true;
   } catch (error) {

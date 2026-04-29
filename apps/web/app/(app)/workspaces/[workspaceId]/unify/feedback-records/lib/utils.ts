@@ -137,6 +137,22 @@ export const formatSourceType = (sourceType: string, t: TFunction): string => {
       return t("workspace.unify.formbricks_surveys");
     case "csv":
       return t("workspace.unify.csv_import");
+    case "survey":
+      return t("workspace.unify.source_type_label_survey");
+    case "review":
+      return t("workspace.unify.source_type_label_review");
+    case "feedback_form":
+      return t("workspace.unify.source_type_label_feedback_form");
+    case "support":
+      return t("workspace.unify.source_type_label_support");
+    case "social":
+      return t("workspace.unify.source_type_label_social");
+    case "interview":
+      return t("workspace.unify.source_type_label_interview");
+    case "usability_test":
+      return t("workspace.unify.source_type_label_usability_test");
+    case "nps_campaign":
+      return t("workspace.unify.source_type_label_nps_campaign");
     default:
       return sourceType;
   }

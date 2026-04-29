@@ -134,6 +134,7 @@ export const FeedbackRecordFormDrawer = ({
       if (!result?.data) {
         toast.error(getFormattedErrorMessage(result) || t("workspace.unify.failed_to_load_feedback_records"));
         setIsLoadingRecord(false);
+        onOpenChange(false);
         return;
       }
 
@@ -146,7 +147,7 @@ export const FeedbackRecordFormDrawer = ({
     };
 
     void loadRecord();
-  }, [form, mode, open, recordId, resetForCreate, t, workspaceId]);
+  }, [form, mode, onOpenChange, open, recordId, resetForCreate, t, workspaceId]);
 
   const requestClose = useCallback(() => {
     if (form.formState.isDirty && !isSubmitting) {
@@ -469,7 +470,7 @@ export const FeedbackRecordFormDrawer = ({
                       <SelectContent>
                         {SOURCE_TYPE_PRESET_OPTIONS.map((option) => (
                           <SelectItem key={option} value={option}>
-                            {option}
+                            {formatSourceType(option, t)}
                           </SelectItem>
                         ))}
                         <SelectItem value={SOURCE_TYPE_CUSTOM_VALUE}>
