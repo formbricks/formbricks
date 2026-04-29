@@ -1,4 +1,11 @@
 import { TFunction } from "i18next";
+import {
+  CalendarDaysIcon,
+  type LucideIcon,
+  SquareArrowOutUpRightIcon,
+  StarIcon,
+  UploadIcon,
+} from "lucide-react";
 import React from "react";
 import {
   Column,
@@ -22,7 +29,7 @@ import {
 import { type TSurvey, type TSurveyStyling } from "@formbricks/types/surveys/types";
 import { WEBAPP_URL } from "@/lib/constants";
 import { getLocalizedValue } from "@/lib/i18n/utils";
-import { COLOR_DEFAULTS } from "@/lib/styling/constants";
+import { COLOR_DEFAULTS, STYLE_DEFAULTS } from "@/lib/styling/constants";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { isLight, mixColor } from "@/lib/utils/colors";
 import { parseRecallInfo } from "@/lib/utils/recall";
@@ -39,12 +46,45 @@ interface PreviewEmailTemplateProps {
 }
 
 interface PreviewEmailStyleTokens {
+  accentBackgroundColor: string;
   brandColor: string;
+  buttonBackgroundColor: string;
+  buttonBorderRadius: string;
+  buttonFontSize: string;
+  buttonFontWeight: string;
+  buttonPaddingX: string;
+  buttonPaddingY: string;
+  buttonTextColor: string;
   cardBackgroundColor: string;
   cardBorderColor: string;
+  elementDescriptionColor: string;
+  elementDescriptionFontSize: string;
+  elementDescriptionFontWeight: string;
+  elementHeadlineColor: string;
+  elementHeadlineFontSize: string;
+  elementHeadlineFontWeight: string;
+  elementUpperLabelColor: string;
+  elementUpperLabelFontSize: string;
+  elementUpperLabelFontWeight: string;
   fontFamily: string;
+  inputBackgroundColor: string;
+  inputBorderRadius: string;
+  inputFontSize: string;
+  inputHeight: string;
+  inputPaddingX: string;
+  inputPaddingY: string;
+  inputPlaceholderEmailColor: string;
+  inputShadow: string;
+  inputTextColor: string;
   inputColor: string;
   inputBorderColor: string;
+  optionBackgroundColor: string;
+  optionBorderColor: string;
+  optionBorderRadius: string;
+  optionFontSize: string;
+  optionLabelColor: string;
+  optionPaddingX: string;
+  optionPaddingY: string;
   questionColor: string;
   roundness: number;
   signatureColor: string;
@@ -69,26 +109,83 @@ const EMAIL_PREVIEW_ACCENT_COLORS = {
   "rose-100": "#ffe4e6",
 } as const;
 
-const MULTI_CHOICE_MARKER = "\u2610";
-const SINGLE_CHOICE_MARKER = "\u25EF";
+type PreviewMarkerVariant = "checkbox" | "radio" | "ranking";
+type PreviewStyleValue = string | number | null | undefined;
+
 const PREVIEW_LINK_TARGET = "_blank";
 const SURVEY_EMAIL_FONT_FAMILY = "Inter, Helvetica, Arial, sans-serif";
 const FORCE_LIGHT_COLOR_SCHEME = "only light";
-const CHOICE_LINK_CLASSNAME = "block p-4 text-base font-normal leading-6 no-underline";
-const FIELD_LINK_CLASSNAME = "block w-full px-3 py-2.5 text-sm leading-5 no-underline";
-const SECONDARY_BUTTON_CLASSNAME = "inline-block px-6 py-3 text-sm font-medium leading-5 no-underline";
-const SCALE_BUTTON_CLASSNAME = "block w-full p-0 text-center text-sm font-medium no-underline";
+const CHOICE_LINK_CLASSNAME =
+  "bg-option-bg border-option-border text-option-label block rounded-option border border-solid px-option-x py-option-y font-survey text-option font-normal leading-5 no-underline";
+const SECONDARY_BUTTON_CLASSNAME =
+  "border-input-border inline-block rounded-button border border-solid px-button-x py-button-y font-survey text-button font-button leading-5 no-underline";
+const SCALE_BUTTON_CLASSNAME =
+  "border-input-border block w-full border border-solid p-0 text-center font-survey text-sm font-medium no-underline box-border";
+const CHOICE_MARKER_CLASSNAME = "inline-block h-4 w-4 box-border align-middle leading-4";
+const RICH_TEXT_PARAGRAPH_TAG_REGEX = /<p\b([^>]*)>/gi;
+const RICH_TEXT_STYLE_ATTRIBUTE_REGEX = /\sstyle=(["'])(.*?)\1/i;
+const importantStyle = (value: string): string => `${value} !important`;
 
-const important = (value: string): string => `${value} !important`;
+const normalizeRichTextSpacing = (html: string): string =>
+  html.replace(RICH_TEXT_PARAGRAPH_TAG_REGEX, (_tag, attributes: string = "") => {
+    if (RICH_TEXT_STYLE_ATTRIBUTE_REGEX.test(attributes)) {
+      return `<p${attributes.replace(
+        RICH_TEXT_STYLE_ATTRIBUTE_REGEX,
+        (_styleAttribute, quote: string, styleValue: string) =>
+          ` style=${quote}${styleValue.trim() ? `${styleValue.trim()};` : ""}margin:0${quote}`
+      )}>`;
+    }
+
+    return `<p${attributes} style="margin:0">`;
+  });
+
+const getPreviewDimension = (value: PreviewStyleValue, fallback: PreviewStyleValue): string => {
+  const resolvedValue = value ?? fallback;
+
+  if (resolvedValue === null || resolvedValue === undefined || resolvedValue === "") {
+    return "";
+  }
+
+  if (typeof resolvedValue === "number") {
+    return `${resolvedValue}px`;
+  }
+
+  if (typeof resolvedValue === "string" && !Number.isNaN(Number(resolvedValue))) {
+    return `${resolvedValue}px`;
+  }
+
+  return typeof resolvedValue === "string" ? resolvedValue : "";
+};
+
+const getPreviewFontWeight = (value: PreviewStyleValue, fallback: PreviewStyleValue): string => {
+  const resolvedValue = value ?? fallback;
+
+  if (resolvedValue === null || resolvedValue === undefined || resolvedValue === "") {
+    return "";
+  }
+
+  return typeof resolvedValue === "string" || typeof resolvedValue === "number"
+    ? resolvedValue.toString()
+    : "";
+};
+
+const getPreviewOpacity = (value: PreviewStyleValue, fallback: PreviewStyleValue): number => {
+  const resolvedValue = value ?? fallback;
+  const parsedValue = Number(resolvedValue);
+
+  if (!Number.isFinite(parsedValue)) return 1;
+
+  return Math.min(Math.max(parsedValue, 0), 1);
+};
 
 const getForcedBackgroundStyle = (color: string): React.CSSProperties => ({
-  background: important(color),
-  backgroundColor: important(color),
+  background: importantStyle(color),
+  backgroundColor: importantStyle(color),
   colorScheme: FORCE_LIGHT_COLOR_SCHEME,
 });
 
 const getForcedColorStyle = (color: string): React.CSSProperties => ({
-  color: important(color),
+  color: importantStyle(color),
   colorScheme: FORCE_LIGHT_COLOR_SCHEME,
 });
 
@@ -120,29 +217,21 @@ const getRatingContent = (scale: string, i: number, range: number, isColorCoding
     );
   }
   if (scale === "number") {
-    return (
-      <Text
-        style={{
-          height: "46px",
-          lineHeight: "46px",
-          margin: 0,
-          textAlign: "center",
-        }}>
-        {i + 1}
-      </Text>
-    );
+    return i + 1;
   }
   if (scale === "star") {
     return (
-      <Text
+      <StarIcon
+        color="#cbd5e1"
+        fill="#cbd5e1"
+        size={28}
+        strokeWidth={2}
         style={{
-          fontSize: "24px",
-          lineHeight: "46px",
-          margin: 0,
-          textAlign: "center",
-        }}>
-        ⭐
-      </Text>
+          display: "inline-block",
+          marginTop: "9px",
+          verticalAlign: "middle",
+        }}
+      />
     );
   }
   return null;
@@ -162,20 +251,119 @@ const getPreviewRoundness = (roundness: TSurveyStyling["roundness"]): number => 
 };
 
 const getPreviewEmailStyleTokens = (styling: TSurveyStyling): PreviewEmailStyleTokens => {
-  const questionColor = styling.questionColor?.light ?? COLOR_DEFAULTS.questionColor;
+  const questionColor =
+    styling.questionColor?.light ?? STYLE_DEFAULTS.questionColor?.light ?? COLOR_DEFAULTS.questionColor;
+  const brandColor =
+    styling.brandColor?.light ?? STYLE_DEFAULTS.brandColor?.light ?? COLOR_DEFAULTS.brandColor;
+  const inputTextColor = styling.inputTextColor?.light ?? questionColor;
+  const inputBackgroundColor =
+    styling.inputBgColor?.light ??
+    styling.inputColor?.light ??
+    STYLE_DEFAULTS.inputColor?.light ??
+    COLOR_DEFAULTS.inputColor;
+  const inputPlaceholderColor = mixColor(inputTextColor, "#ffffff", 0.3);
+  const inputPlaceholderOpacity = getPreviewOpacity(
+    styling.inputPlaceholderOpacity,
+    STYLE_DEFAULTS.inputPlaceholderOpacity ?? 0.5
+  );
+  const optionBackgroundColor =
+    styling.optionBgColor?.light ??
+    styling.inputColor?.light ??
+    STYLE_DEFAULTS.optionBgColor?.light ??
+    COLOR_DEFAULTS.inputColor;
+  const buttonBackgroundColor = styling.buttonBgColor?.light ?? brandColor;
+  const previewRoundness = getPreviewRoundness(styling.roundness);
   const signatureColor = isLight(questionColor)
     ? mixColor(questionColor, "#000000", 0.2)
     : mixColor(questionColor, "#ffffff", 0.2);
 
   return {
-    brandColor: styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor,
-    cardBackgroundColor: styling.cardBackgroundColor?.light ?? COLOR_DEFAULTS.cardBackgroundColor,
-    cardBorderColor: styling.cardBorderColor?.light ?? COLOR_DEFAULTS.cardBorderColor,
+    accentBackgroundColor: styling.accentBgColor?.light ?? mixColor(brandColor, "#ffffff", 0.8),
+    brandColor,
+    buttonBackgroundColor,
+    buttonBorderRadius: getPreviewDimension(
+      styling.buttonBorderRadius,
+      STYLE_DEFAULTS.buttonBorderRadius ?? previewRoundness
+    ),
+    buttonFontSize: getPreviewDimension(styling.buttonFontSize, STYLE_DEFAULTS.buttonFontSize),
+    buttonFontWeight: getPreviewFontWeight(styling.buttonFontWeight, STYLE_DEFAULTS.buttonFontWeight),
+    buttonPaddingX: getPreviewDimension(styling.buttonPaddingX, STYLE_DEFAULTS.buttonPaddingX),
+    buttonPaddingY: getPreviewDimension(styling.buttonPaddingY, STYLE_DEFAULTS.buttonPaddingY),
+    buttonTextColor:
+      styling.buttonTextColor?.light ?? (isLight(buttonBackgroundColor) ? "#0f172a" : "#ffffff"),
+    cardBackgroundColor:
+      styling.cardBackgroundColor?.light ??
+      STYLE_DEFAULTS.cardBackgroundColor?.light ??
+      COLOR_DEFAULTS.cardBackgroundColor,
+    cardBorderColor:
+      styling.cardBorderColor?.light ??
+      STYLE_DEFAULTS.cardBorderColor?.light ??
+      COLOR_DEFAULTS.cardBorderColor,
+    elementDescriptionColor: styling.elementDescriptionColor?.light ?? questionColor,
+    elementDescriptionFontSize: getPreviewDimension(
+      styling.elementDescriptionFontSize,
+      STYLE_DEFAULTS.elementDescriptionFontSize
+    ),
+    elementDescriptionFontWeight: getPreviewFontWeight(
+      styling.elementDescriptionFontWeight,
+      STYLE_DEFAULTS.elementDescriptionFontWeight
+    ),
+    elementHeadlineColor: styling.elementHeadlineColor?.light ?? questionColor,
+    elementHeadlineFontSize: getPreviewDimension(
+      styling.elementHeadlineFontSize,
+      STYLE_DEFAULTS.elementHeadlineFontSize
+    ),
+    elementHeadlineFontWeight: getPreviewFontWeight(
+      styling.elementHeadlineFontWeight,
+      STYLE_DEFAULTS.elementHeadlineFontWeight
+    ),
+    elementUpperLabelColor: styling.elementUpperLabelColor?.light ?? questionColor,
+    elementUpperLabelFontSize: getPreviewDimension(
+      styling.elementUpperLabelFontSize,
+      STYLE_DEFAULTS.elementUpperLabelFontSize
+    ),
+    elementUpperLabelFontWeight: getPreviewFontWeight(
+      styling.elementUpperLabelFontWeight,
+      STYLE_DEFAULTS.elementUpperLabelFontWeight
+    ),
     fontFamily: styling.fontFamily ?? SURVEY_EMAIL_FONT_FAMILY,
-    inputColor: styling.inputColor?.light ?? COLOR_DEFAULTS.inputColor,
-    inputBorderColor: styling.inputBorderColor?.light ?? COLOR_DEFAULTS.inputBorderColor,
+    inputBackgroundColor,
+    inputBorderColor:
+      styling.inputBorderColor?.light ??
+      STYLE_DEFAULTS.inputBorderColor?.light ??
+      COLOR_DEFAULTS.inputBorderColor,
+    inputBorderRadius: getPreviewDimension(
+      styling.inputBorderRadius,
+      STYLE_DEFAULTS.inputBorderRadius ?? previewRoundness
+    ),
+    inputColor: styling.inputColor?.light ?? STYLE_DEFAULTS.inputColor?.light ?? COLOR_DEFAULTS.inputColor,
+    inputFontSize: getPreviewDimension(styling.inputFontSize, STYLE_DEFAULTS.inputFontSize),
+    inputHeight: getPreviewDimension(styling.inputHeight, STYLE_DEFAULTS.inputHeight),
+    inputPaddingX: getPreviewDimension(styling.inputPaddingX, STYLE_DEFAULTS.inputPaddingX),
+    inputPaddingY: getPreviewDimension(styling.inputPaddingY, STYLE_DEFAULTS.inputPaddingY),
+    inputPlaceholderEmailColor: mixColor(
+      inputPlaceholderColor,
+      inputBackgroundColor,
+      1 - inputPlaceholderOpacity
+    ),
+    inputShadow: styling.inputShadow ?? STYLE_DEFAULTS.inputShadow ?? "",
+    inputTextColor,
+    optionBackgroundColor,
+    optionBorderColor:
+      styling.optionBorderColor?.light ??
+      styling.inputBorderColor?.light ??
+      STYLE_DEFAULTS.optionBorderColor?.light ??
+      COLOR_DEFAULTS.inputBorderColor,
+    optionBorderRadius: getPreviewDimension(
+      styling.optionBorderRadius,
+      STYLE_DEFAULTS.optionBorderRadius ?? previewRoundness
+    ),
+    optionFontSize: getPreviewDimension(styling.optionFontSize, STYLE_DEFAULTS.optionFontSize),
+    optionLabelColor: styling.optionLabelColor?.light ?? questionColor,
+    optionPaddingX: getPreviewDimension(styling.optionPaddingX, STYLE_DEFAULTS.optionPaddingX),
+    optionPaddingY: getPreviewDimension(styling.optionPaddingY, STYLE_DEFAULTS.optionPaddingY),
     questionColor,
-    roundness: getPreviewRoundness(styling.roundness),
+    roundness: previewRoundness,
     signatureColor,
   };
 };
@@ -201,80 +389,125 @@ const getPrefilledSurveyUrl = (surveyUrl: string, questionId: string, value: str
   ]);
 
 const getChoiceBlockStyle = (styleTokens: PreviewEmailStyleTokens): React.CSSProperties => ({
-  ...getForcedBackgroundStyle(styleTokens.inputColor),
-  border: important(`1px solid ${styleTokens.inputBorderColor}`),
-  borderRadius: `${styleTokens.roundness}px`,
+  ...getForcedBackgroundStyle(styleTokens.optionBackgroundColor),
+  border: importantStyle(`1px solid ${styleTokens.optionBorderColor}`),
 });
 
 const getChoiceTextStyle = (styleTokens: PreviewEmailStyleTokens): React.CSSProperties => ({
-  ...getForcedColorStyle(styleTokens.questionColor),
-  fontFamily: styleTokens.fontFamily,
+  ...getForcedColorStyle(styleTokens.optionLabelColor),
 });
 
 const getChoiceCardStyle = (styleTokens: PreviewEmailStyleTokens): React.CSSProperties => ({
   ...getChoiceBlockStyle(styleTokens),
   ...getChoiceTextStyle(styleTokens),
+  textDecoration: "none",
 });
 
 const getFieldPlaceholderStyle = (styleTokens: PreviewEmailStyleTokens): React.CSSProperties => ({
-  ...getChoiceBlockStyle(styleTokens),
-  ...getForcedColorStyle("#94a3b8"),
-  fontFamily: styleTokens.fontFamily,
+  ...getForcedBackgroundStyle(styleTokens.inputBackgroundColor),
+  ...getForcedColorStyle(styleTokens.inputPlaceholderEmailColor),
+  border: importantStyle(`1px solid ${styleTokens.inputBorderColor}`),
 });
 
-const getChoiceMarkerStyle = (styleTokens: PreviewEmailStyleTokens): React.CSSProperties => ({
+const getInputTextStyle = (styleTokens: PreviewEmailStyleTokens): React.CSSProperties => ({
+  ...getForcedColorStyle(styleTokens.inputTextColor),
+});
+
+const getFieldLabelStyle = (styleTokens: PreviewEmailStyleTokens): React.CSSProperties => ({
   ...getForcedColorStyle(styleTokens.questionColor),
   fontFamily: styleTokens.fontFamily,
 });
 
 const getSecondaryButtonStyle = (styleTokens: PreviewEmailStyleTokens): React.CSSProperties => ({
-  border: important(`1px solid ${styleTokens.inputBorderColor}`),
-  borderRadius: `${styleTokens.roundness}px`,
+  border: importantStyle(`1px solid ${styleTokens.inputBorderColor}`),
   ...getForcedColorStyle(styleTokens.questionColor),
-  fontFamily: styleTokens.fontFamily,
 });
 
-const getPrimaryButtonStyle = (
-  styleTokens: PreviewEmailStyleTokens,
-  brandColor: string
-): React.CSSProperties => ({
+const getPrimaryButtonStyle = (styleTokens: PreviewEmailStyleTokens): React.CSSProperties => ({
   ...getSecondaryButtonStyle(styleTokens),
-  ...getForcedBackgroundStyle(brandColor),
-  border: important(`1px solid ${brandColor}`),
-  ...getForcedColorStyle(isLight(brandColor) ? "#000000" : "#ffffff"),
+  ...getForcedBackgroundStyle(styleTokens.buttonBackgroundColor),
+  border: importantStyle(`1px solid ${styleTokens.buttonBackgroundColor}`),
+  ...getForcedColorStyle(styleTokens.buttonTextColor),
 });
 
 const getPreviewAccentColor = (token?: string): string | undefined =>
   token ? EMAIL_PREVIEW_ACCENT_COLORS[token as keyof typeof EMAIL_PREVIEW_ACCENT_COLORS] : undefined;
 
+const getConnectedScaleBorderRadius = (
+  styleTokens: PreviewEmailStyleTokens,
+  optionIndex: number,
+  optionCount: number
+): string => {
+  if (optionCount <= 1) return styleTokens.inputBorderRadius;
+
+  if (optionIndex === 0) return `${styleTokens.inputBorderRadius} 0 0 ${styleTokens.inputBorderRadius}`;
+  if (optionIndex === optionCount - 1)
+    return `0 ${styleTokens.inputBorderRadius} ${styleTokens.inputBorderRadius} 0`;
+
+  return "0";
+};
+
+const getScaleLineHeight = (height: string, hasColorStrip: boolean): string => {
+  if (!hasColorStrip || !height.endsWith("px")) return height;
+
+  const numericHeight = Number.parseFloat(height);
+
+  if (!Number.isFinite(numericHeight)) return height;
+
+  return `${Math.max(numericHeight - 6, 0).toString()}px`;
+};
+
 const getScaleOptionStyle = ({
   styleTokens,
   borderTopColor,
+  height,
+  isConnected = false,
   isCompact = false,
   isTransparent = false,
+  optionCount = 0,
+  optionIndex = 0,
 }: {
   styleTokens: PreviewEmailStyleTokens;
   borderTopColor?: string;
+  height?: string;
+  isConnected?: boolean;
   isCompact?: boolean;
   isTransparent?: boolean;
-}): React.CSSProperties => ({
-  ...getForcedBackgroundStyle(isTransparent ? "transparent" : styleTokens.inputColor),
-  border: important(isTransparent ? "1px solid transparent" : `1px solid ${styleTokens.inputBorderColor}`),
-  borderRadius: `${styleTokens.roundness}px`,
-  ...getForcedColorStyle(styleTokens.questionColor),
-  fontFamily: styleTokens.fontFamily,
-  height: isCompact ? "40px" : "46px",
-  lineHeight: isCompact ? "40px" : "46px",
-  ...(borderTopColor ? { borderTop: important(`6px solid ${borderTopColor}`) } : {}),
-});
+  optionCount?: number;
+  optionIndex?: number;
+}): React.CSSProperties => {
+  const optionHeight = height ?? (isCompact ? "40px" : "46px");
+  const optionLineHeight = getScaleLineHeight(optionHeight, Boolean(borderTopColor));
+  const shouldConnect = isConnected && optionCount > 0;
+
+  return {
+    ...getForcedBackgroundStyle(isTransparent ? "transparent" : styleTokens.inputBackgroundColor),
+    border: importantStyle(
+      isTransparent ? "1px solid transparent" : `1px solid ${styleTokens.inputBorderColor}`
+    ),
+    borderRadius: shouldConnect
+      ? getConnectedScaleBorderRadius(styleTokens, optionIndex, optionCount)
+      : styleTokens.inputBorderRadius,
+    ...(shouldConnect && optionIndex > 0 ? { borderLeft: importantStyle("0") } : {}),
+    ...getForcedColorStyle(styleTokens.inputTextColor),
+    height: optionHeight,
+    lineHeight: optionLineHeight,
+    ...(borderTopColor ? { borderTop: importantStyle(`6px solid ${borderTopColor}`) } : {}),
+  };
+};
 
 const getLightModeTextStyle = (styleTokens: PreviewEmailStyleTokens): React.CSSProperties => ({
-  ...getForcedColorStyle(styleTokens.questionColor),
+  ...getForcedColorStyle(styleTokens.elementHeadlineColor),
   fontFamily: styleTokens.fontFamily,
+  fontSize: styleTokens.elementHeadlineFontSize,
+  fontWeight: styleTokens.elementHeadlineFontWeight,
 });
 
 const getHelperLabelTextStyle = (styleTokens: PreviewEmailStyleTokens): React.CSSProperties => ({
-  ...getLightModeTextStyle(styleTokens),
+  ...getForcedColorStyle(styleTokens.elementUpperLabelColor),
+  fontFamily: styleTokens.fontFamily,
+  fontSize: styleTokens.elementUpperLabelFontSize,
+  fontWeight: styleTokens.elementUpperLabelFontWeight,
 });
 
 const getCenteredPlaceholderStyle = (
@@ -282,7 +515,7 @@ const getCenteredPlaceholderStyle = (
   overrides?: React.CSSProperties
 ): React.CSSProperties => {
   const baseStyle: React.CSSProperties = {
-    ...getChoiceBlockStyle(styleTokens),
+    ...getFieldPlaceholderStyle(styleTokens),
   };
 
   return overrides ? { ...baseStyle, ...overrides } : baseStyle;
@@ -293,27 +526,81 @@ const getCenteredPlaceholderTextStyle = (
   overrides?: React.CSSProperties
 ): React.CSSProperties => {
   const baseStyle: React.CSSProperties = {
-    ...getChoiceTextStyle(styleTokens),
+    ...getForcedColorStyle(styleTokens.inputPlaceholderEmailColor),
   };
 
   return overrides ? { ...baseStyle, ...overrides } : baseStyle;
 };
 
-const getScaleColumnStyle = (optionIndex: number, optionCount: number): React.CSSProperties => ({
-  paddingLeft: optionIndex === 0 ? "0" : "4px",
+const getInputShellStyle = (
+  styleTokens: PreviewEmailStyleTokens,
+  overrides?: React.CSSProperties
+): React.CSSProperties => ({
+  ...getCenteredPlaceholderStyle(styleTokens),
+  boxSizing: "border-box",
+  borderRadius: styleTokens.inputBorderRadius,
+  display: "block",
+  fontFamily: styleTokens.fontFamily,
+  fontSize: styleTokens.inputFontSize,
+  lineHeight: "20px",
+  overflow: "hidden",
+  padding: `${styleTokens.inputPaddingY} ${styleTokens.inputPaddingX}`,
+  width: "100%",
+  ...(overrides ?? {}),
+});
+
+const getInputShellLinkStyle = (
+  styleTokens: PreviewEmailStyleTokens,
+  overrides?: React.CSSProperties
+): React.CSSProperties => ({
+  ...getInputTextStyle(styleTokens),
+  display: "block",
+  fontFamily: styleTokens.fontFamily,
+  fontSize: styleTokens.inputFontSize,
+  fontWeight: 400,
+  lineHeight: "20px",
+  textDecoration: importantStyle("none"),
+  width: "100%",
+  ...(overrides ?? {}),
+});
+
+const getScaleColumnStyle = (_optionIndex: number, optionCount: number): React.CSSProperties => ({
   width: `${(100 / optionCount).toFixed(4)}%`,
 });
 
+const getChoiceMarkerStyle = (
+  marker: PreviewMarkerVariant,
+  styleTokens: PreviewEmailStyleTokens
+): React.CSSProperties => ({
+  ...(marker === "ranking"
+    ? {
+        background: importantStyle("transparent"),
+        backgroundColor: importantStyle("transparent"),
+        colorScheme: FORCE_LIGHT_COLOR_SCHEME,
+      }
+    : getForcedBackgroundStyle("#ffffff")),
+  border: importantStyle(
+    `${marker === "ranking" ? "1px dashed" : "1px solid"} ${
+      marker === "ranking" ? styleTokens.brandColor : styleTokens.inputBorderColor
+    }`
+  ),
+});
+
+const getChoiceMarkerClassName = (marker: PreviewMarkerVariant, withLabelGap = true): string =>
+  `${withLabelGap ? "mr-3 " : ""}${CHOICE_MARKER_CLASSNAME} ${
+    marker === "checkbox" ? "rounded" : "rounded-full"
+  }`;
+
 const renderChoiceLabel = (
-  marker: string,
+  marker: PreviewMarkerVariant,
   label: string,
   styleTokens: PreviewEmailStyleTokens
 ): React.JSX.Element => (
   <>
-    <span className="inline-block min-w-5" style={getChoiceMarkerStyle(styleTokens)}>
-      {marker}
+    <span className={getChoiceMarkerClassName(marker)} style={getChoiceMarkerStyle(marker, styleTokens)}>
+      {"\u00A0"}
     </span>
-    <span>{label}</span>
+    <span style={{ verticalAlign: "middle" }}>{label}</span>
   </>
 );
 
@@ -331,9 +618,14 @@ function PreviewElementHeader({
   return (
     <ElementHeader
       className={className}
-      headline={headline}
+      headline={normalizeRichTextSpacing(headline)}
       style={getLightModeTextStyle(styleTokens)}
-      subheader={subheader}
+      subheader={subheader ? normalizeRichTextSpacing(subheader) : undefined}
+      subheaderStyle={{
+        ...getForcedColorStyle(styleTokens.elementDescriptionColor),
+        fontSize: styleTokens.elementDescriptionFontSize,
+        fontWeight: styleTokens.elementDescriptionFontWeight,
+      }}
     />
   );
 }
@@ -468,32 +760,61 @@ export async function PreviewEmailTemplate({
     locale
   );
   const styleTokens = getPreviewEmailStyleTokens(styling);
-  const brandColor = styleTokens.brandColor;
 
   switch (firstQuestion.type) {
     case TSurveyElementTypeEnum.OpenText: {
       const openTextPlaceholder = firstQuestion.placeholder
         ? getLocalizedValue(firstQuestion.placeholder, defaultLanguageCode)
         : "";
+      const isLongAnswer = firstQuestion.longAnswer !== false;
+      const openTextInputHeightStyle = isLongAnswer
+        ? { height: "64px", minHeight: "64px" }
+        : {
+            minHeight: styleTokens.inputHeight,
+          };
+      const openTextInputShellStyle = getCenteredPlaceholderStyle(styleTokens, {
+        ...getInputShellStyle(styleTokens, openTextInputHeightStyle),
+        textAlign: "left",
+      });
+      const openTextPlaceholderStyle = getCenteredPlaceholderTextStyle(styleTokens, {
+        fontFamily: styleTokens.fontFamily,
+        fontSize: styleTokens.inputFontSize,
+        fontWeight: 400,
+        lineHeight: "20px",
+        textDecoration: importantStyle("none"),
+      });
 
       return (
         <PreviewQuestionCard headline={headline} styleTokens={styleTokens} subheader={subheader} t={t}>
           <Section className="w-full">
-            <Link
-              className="mt-4 block min-h-20 no-underline"
-              href={previewSurveyUrl}
-              style={getCenteredPlaceholderStyle(styleTokens, {
-                ...getForcedBackgroundStyle("#f8fafc"),
-              })}
-              target={PREVIEW_LINK_TARGET}>
-              <Text
-                className="m-0 px-4 py-7 text-left text-base font-normal leading-6"
-                style={getCenteredPlaceholderTextStyle(styleTokens, {
-                  ...getForcedColorStyle("#94a3b8"),
-                })}>
-                {openTextPlaceholder || "\u00A0"}
-              </Text>
-            </Link>
+            <table
+              border={0}
+              cellPadding="0"
+              cellSpacing="0"
+              role="presentation"
+              style={{
+                borderCollapse: "separate",
+                borderSpacing: 0,
+                marginTop: "1rem",
+                width: "100%",
+              }}
+              width="100%">
+              <tbody>
+                <tr>
+                  <td style={{ width: "100%" }}>
+                    <div style={openTextInputShellStyle}>
+                      <Link
+                        className="font-survey text-input text-input-placeholder no-underline"
+                        href={previewSurveyUrl}
+                        style={openTextPlaceholderStyle}
+                        target={PREVIEW_LINK_TARGET}>
+                        <span style={openTextPlaceholderStyle}>{openTextPlaceholder || "\u00A0"}</span>
+                      </Link>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </Section>
         </PreviewQuestionCard>
       );
@@ -501,21 +822,20 @@ export async function PreviewEmailTemplate({
     case TSurveyElementTypeEnum.Consent:
       return (
         <PreviewQuestionCard headline={headline} styleTokens={styleTokens} subheader={subheader} t={t}>
-          <Container
-            className="m-0 mt-4 w-full max-w-none p-4"
-            bgcolor={styleTokens.inputColor}
-            style={{
-              ...getChoiceBlockStyle(styleTokens),
-            }}>
-            <Text
-              className="m-0 text-base font-medium leading-6"
-              style={{
-                ...getForcedColorStyle(styleTokens.questionColor),
-                fontFamily: styleTokens.fontFamily,
-              }}>
-              {getLocalizedValue(firstQuestion.label, defaultLanguageCode)}
-            </Text>
-          </Container>
+          <Section className="mt-4 w-full">
+            <div style={getInputShellStyle(styleTokens)}>
+              <span
+                style={{
+                  ...getInputTextStyle(styleTokens),
+                  fontFamily: styleTokens.fontFamily,
+                  fontSize: "16px",
+                  fontWeight: 500,
+                  lineHeight: "24px",
+                }}>
+                {getLocalizedValue(firstQuestion.label, defaultLanguageCode)}
+              </span>
+            </div>
+          </Section>
           <Section className="mt-4 text-right">
             {!firstQuestion.required && (
               <EmailButton
@@ -529,7 +849,7 @@ export async function PreviewEmailTemplate({
             <EmailButton
               className={SECONDARY_BUTTON_CLASSNAME}
               style={{
-                ...getPrimaryButtonStyle(styleTokens, brandColor),
+                ...getPrimaryButtonStyle(styleTokens),
                 marginLeft: firstQuestion.required ? 0 : "8px",
               }}
               href={getPrefilledSurveyUrl(surveyUrl, firstQuestion.id, "accepted")}
@@ -539,7 +859,10 @@ export async function PreviewEmailTemplate({
           </Section>
         </PreviewQuestionCard>
       );
-    case TSurveyElementTypeEnum.NPS:
+    case TSurveyElementTypeEnum.NPS: {
+      const npsOptionCount = 11;
+      const npsOptionHeight = firstQuestion.isColorCodingEnabled ? "47px" : "41px";
+
       return (
         <PreviewEmailCard styleTokens={styleTokens} t={t}>
           <Section className="w-full">
@@ -547,19 +870,21 @@ export async function PreviewEmailTemplate({
             <Container className="mx-0 mt-4 w-full max-w-none">
               <Section className="w-full">
                 <Row>
-                  {Array.from({ length: 11 }, (_, i) => (
+                  {Array.from({ length: npsOptionCount }, (_, i) => (
                     <PreviewScaleOptionColumn
                       key={i}
                       href={getPrefilledSurveyUrl(surveyUrl, firstQuestion.id, i.toString())}
-                      optionCount={11}
+                      optionCount={npsOptionCount}
                       optionIndex={i}
                       optionStyle={getScaleOptionStyle({
                         styleTokens,
-                        borderTopColor:
-                          firstQuestion.isColorCodingEnabled && firstQuestion.scale === "number"
-                            ? getPreviewAccentColor(getNPSOptionColor(i + 1))
-                            : undefined,
-                        isCompact: firstQuestion.scale !== "number",
+                        borderTopColor: firstQuestion.isColorCodingEnabled
+                          ? getPreviewAccentColor(getNPSOptionColor(i))
+                          : undefined,
+                        height: npsOptionHeight,
+                        isConnected: true,
+                        optionCount: npsOptionCount,
+                        optionIndex: i,
                       })}>
                       {i}
                     </PreviewScaleOptionColumn>
@@ -576,25 +901,43 @@ export async function PreviewEmailTemplate({
           </Section>
         </PreviewEmailCard>
       );
+    }
     case TSurveyElementTypeEnum.CTA: {
       const ctaElement = firstQuestion as TSurveyCTAElement;
       return (
         <PreviewQuestionCard headline={headline} styleTokens={styleTokens} subheader={subheader} t={t}>
           {ctaElement.buttonExternal && ctaElement.ctaButtonLabel && ctaElement.buttonUrl && (
-            <Section className="mt-4 text-right">
+            <Section className="mt-4 text-left" style={{ textAlign: "left" }}>
               <EmailButton
                 className={SECONDARY_BUTTON_CLASSNAME}
-                style={getSecondaryButtonStyle(styleTokens)}
+                style={getPrimaryButtonStyle(styleTokens)}
                 href={ctaElement.buttonUrl}
                 target={PREVIEW_LINK_TARGET}>
-                {getLocalizedValue(ctaElement.ctaButtonLabel, defaultLanguageCode)} {"↗"}
+                {getLocalizedValue(ctaElement.ctaButtonLabel, defaultLanguageCode)}
+                <SquareArrowOutUpRightIcon
+                  color={styleTokens.buttonTextColor}
+                  size={16}
+                  strokeWidth={2}
+                  style={{
+                    display: "inline-block",
+                    marginLeft: "8px",
+                    verticalAlign: "text-bottom",
+                  }}
+                />
               </EmailButton>
             </Section>
           )}
         </PreviewQuestionCard>
       );
     }
-    case TSurveyElementTypeEnum.Rating:
+    case TSurveyElementTypeEnum.Rating: {
+      const isNumberRating = firstQuestion.scale === "number";
+      const ratingOptionHeight = isNumberRating
+        ? firstQuestion.isColorCodingEnabled
+          ? "47px"
+          : "41px"
+        : undefined;
+
       return (
         <PreviewEmailCard styleTokens={styleTokens} t={t}>
           <Section className="w-full">
@@ -611,10 +954,14 @@ export async function PreviewEmailTemplate({
                       optionStyle={getScaleOptionStyle({
                         styleTokens,
                         borderTopColor:
-                          firstQuestion.isColorCodingEnabled && firstQuestion.scale === "number"
+                          firstQuestion.isColorCodingEnabled && isNumberRating
                             ? getPreviewAccentColor(getRatingNumberOptionColor(firstQuestion.range, i + 1))
                             : undefined,
+                        height: ratingOptionHeight,
+                        isConnected: isNumberRating,
                         isTransparent: firstQuestion.scale === "star",
+                        optionCount: firstQuestion.range,
+                        optionIndex: i,
                       })}>
                       {getRatingContent(
                         firstQuestion.scale,
@@ -636,6 +983,7 @@ export async function PreviewEmailTemplate({
           </Section>
         </PreviewEmailCard>
       );
+    }
     case TSurveyElementTypeEnum.MultipleChoiceMulti:
       return (
         <PreviewQuestionCard headline={headline} styleTokens={styleTokens} subheader={subheader} t={t}>
@@ -643,7 +991,7 @@ export async function PreviewEmailTemplate({
             choices={firstQuestion.choices}
             defaultLanguageCode={defaultLanguageCode}
             getHref={(choiceId) => getPrefilledSurveyUrl(surveyUrl, firstQuestion.id, choiceId)}
-            marker={MULTI_CHOICE_MARKER}
+            marker="checkbox"
             styleTokens={styleTokens}
           />
         </PreviewQuestionCard>
@@ -655,6 +1003,7 @@ export async function PreviewEmailTemplate({
             choices={firstQuestion.choices}
             defaultLanguageCode={defaultLanguageCode}
             getHref={() => previewSurveyUrl}
+            marker="ranking"
             styleTokens={styleTokens}
           />
         </PreviewQuestionCard>
@@ -666,7 +1015,7 @@ export async function PreviewEmailTemplate({
             choices={firstQuestion.choices}
             defaultLanguageCode={defaultLanguageCode}
             getHref={(choiceId) => getPrefilledSurveyUrl(surveyUrl, firstQuestion.id, choiceId)}
-            marker={SINGLE_CHOICE_MARKER}
+            marker="radio"
             styleTokens={styleTokens}
           />
         </PreviewQuestionCard>
@@ -696,7 +1045,7 @@ export async function PreviewEmailTemplate({
               <EmailButton
                 className={SECONDARY_BUTTON_CLASSNAME}
                 href={previewSurveyUrl}
-                style={getPrimaryButtonStyle(styleTokens, brandColor)}
+                style={getPrimaryButtonStyle(styleTokens)}
                 target={PREVIEW_LINK_TARGET}>
                 {t("emails.schedule_your_meeting")}
               </EmailButton>
@@ -708,17 +1057,12 @@ export async function PreviewEmailTemplate({
       return (
         <PreviewQuestionCard headline={headline} styleTokens={styleTokens} subheader={subheader} t={t}>
           <Section className="w-full">
-            <Link
-              className="mt-4 block no-underline"
+            <PreviewInputLink
               href={previewSurveyUrl}
-              style={getCenteredPlaceholderStyle(styleTokens)}
-              target={PREVIEW_LINK_TARGET}>
-              <Text
-                className="m-0 px-4 py-3 text-center text-sm leading-6"
-                style={getCenteredPlaceholderTextStyle(styleTokens)}>
-                {t("emails.select_a_date")}
-              </Text>
-            </Link>
+              icon={CalendarDaysIcon}
+              label={t("emails.select_a_date")}
+              styleTokens={styleTokens}
+            />
           </Section>
         </PreviewQuestionCard>
       );
@@ -743,12 +1087,12 @@ export async function PreviewEmailTemplate({
               {firstQuestion.rows.map((row, rowIndex) => {
                 return (
                   <Row
-                    className={`${rowIndex % 2 === 0 ? "bg-input-color" : ""} rounded-custom`}
+                    className={rowIndex % 2 === 0 ? "bg-input-color" : ""}
                     key={row.id}
                     style={
                       rowIndex % 2 === 0
                         ? {
-                            ...getForcedBackgroundStyle(styleTokens.inputColor),
+                            ...getForcedBackgroundStyle(styleTokens.inputBackgroundColor),
                           }
                         : undefined
                     }>
@@ -758,15 +1102,14 @@ export async function PreviewEmailTemplate({
                     {firstQuestion.columns.map((column) => {
                       return (
                         <Column
-                          className="text-question-color px-4 py-2"
+                          className="text-question-color px-4 py-2 text-center"
                           key={column.id}
-                          style={getLightModeTextStyle(styleTokens)}>
-                          <Section
-                            className="bg-card-bg-color h-4 w-4 rounded-full p-2 outline"
-                            style={{
-                              ...getForcedBackgroundStyle(styleTokens.cardBackgroundColor),
-                            }}
-                          />
+                          style={{ ...getLightModeTextStyle(styleTokens), textAlign: "center" }}>
+                          <span
+                            className={getChoiceMarkerClassName("radio", false)}
+                            style={getChoiceMarkerStyle("radio", styleTokens)}>
+                            {"\u00A0"}
+                          </span>
                         </Column>
                       );
                     })}
@@ -779,7 +1122,7 @@ export async function PreviewEmailTemplate({
             <EmailButton
               className={SECONDARY_BUTTON_CLASSNAME}
               href={previewSurveyUrl}
-              style={getSecondaryButtonStyle(styleTokens)}
+              style={getPrimaryButtonStyle(styleTokens)}
               target={PREVIEW_LINK_TARGET}>
               {t("common.continue")}
             </EmailButton>
@@ -808,22 +1151,16 @@ export async function PreviewEmailTemplate({
       return (
         <PreviewQuestionCard headline={headline} styleTokens={styleTokens} subheader={subheader} t={t}>
           <Section className="w-full">
-            <Link
-              className="mt-4 block min-h-24 no-underline"
+            <PreviewInputLink
               href={previewSurveyUrl}
-              style={getCenteredPlaceholderStyle(styleTokens, {
-                ...getForcedBackgroundStyle("#f8fafc"),
-                border: important(`1px dashed ${styleTokens.inputBorderColor}`),
-              })}
-              target={PREVIEW_LINK_TARGET}>
-              <Text
-                className="m-0 px-4 py-3 text-center text-sm leading-6"
-                style={getCenteredPlaceholderTextStyle(styleTokens, {
-                  ...getForcedColorStyle("#64748b"),
-                })}>
-                {t("emails.click_or_drag_to_upload_files")}
-              </Text>
-            </Link>
+              icon={UploadIcon}
+              isAccent
+              isContentVerticallyCentered
+              isDashed
+              label={t("emails.click_or_drag_to_upload_files")}
+              minHeight="96px"
+              styleTokens={styleTokens}
+            />
           </Section>
         </PreviewQuestionCard>
       );
@@ -883,7 +1220,7 @@ function PreviewChoiceList({
   choices: ReadonlyArray<PreviewChoiceConfig>;
   defaultLanguageCode: string;
   getHref: (choiceId: string) => string;
-  marker?: string;
+  marker?: PreviewMarkerVariant;
   styleTokens: PreviewEmailStyleTokens;
 }>): React.JSX.Element {
   return (
@@ -907,6 +1244,79 @@ function PreviewChoiceList({
   );
 }
 
+function PreviewInputLink({
+  href,
+  icon: Icon,
+  isAccent = false,
+  isContentVerticallyCentered = false,
+  isDashed = false,
+  label,
+  minHeight,
+  styleTokens,
+}: Readonly<{
+  href: string;
+  icon?: LucideIcon;
+  isAccent?: boolean;
+  isContentVerticallyCentered?: boolean;
+  isDashed?: boolean;
+  label: string;
+  minHeight?: string;
+  styleTokens: PreviewEmailStyleTokens;
+}>): React.JSX.Element {
+  const shellStyle = getInputShellStyle(styleTokens, {
+    ...(isAccent ? getForcedBackgroundStyle(styleTokens.accentBackgroundColor) : {}),
+    ...(isDashed ? { border: importantStyle(`2px dashed ${styleTokens.inputBorderColor}`) } : {}),
+    marginTop: "1rem",
+    textAlign: "center",
+    ...(minHeight ? { minHeight } : {}),
+    ...(isContentVerticallyCentered && minHeight
+      ? { height: minHeight, paddingBottom: 0, paddingTop: 0 }
+      : {}),
+  });
+  const linkStyle = getInputShellLinkStyle(styleTokens, {
+    textAlign: "center",
+    ...(isContentVerticallyCentered && minHeight ? { height: minHeight, lineHeight: minHeight } : {}),
+  });
+
+  return (
+    <table
+      border={0}
+      cellPadding="0"
+      cellSpacing="0"
+      role="presentation"
+      style={{ borderCollapse: "separate", borderSpacing: 0, width: "100%" }}
+      width="100%">
+      <tbody>
+        <tr>
+          <td style={{ width: "100%" }}>
+            <div style={shellStyle}>
+              <Link
+                className="font-survey text-input text-input-text block w-full text-center font-normal no-underline"
+                href={href}
+                style={linkStyle}
+                target={PREVIEW_LINK_TARGET}>
+                {Icon ? (
+                  <Icon
+                    color={styleTokens.inputTextColor}
+                    size={18}
+                    strokeWidth={2}
+                    style={{
+                      display: "inline-block",
+                      marginRight: "8px",
+                      verticalAlign: "middle",
+                    }}
+                  />
+                ) : null}
+                <span style={{ verticalAlign: "middle" }}>{label}</span>
+              </Link>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  );
+}
+
 function PreviewFieldList({
   fields,
   href,
@@ -919,14 +1329,21 @@ function PreviewFieldList({
   return (
     <>
       {fields.map((field) => (
-        <Section className="mt-4 w-full" key={field.id}>
-          <Link
-            className={FIELD_LINK_CLASSNAME}
-            href={href}
-            style={getFieldPlaceholderStyle(styleTokens)}
-            target={PREVIEW_LINK_TARGET}>
+        <Section className="mt-3 w-full" key={field.id}>
+          <Text
+            className="text-question-color font-survey m-0 mb-2 text-sm font-normal leading-6"
+            style={getFieldLabelStyle(styleTokens)}>
             {field.label}
-          </Link>
+          </Text>
+          <div style={getInputShellStyle(styleTokens)}>
+            <Link
+              className="font-survey text-input text-input-placeholder block w-full no-underline"
+              href={href}
+              style={getInputShellLinkStyle(styleTokens)}
+              target={PREVIEW_LINK_TARGET}>
+              {"\u00A0"}
+            </Link>
+          </div>
         </Section>
       ))}
     </>
@@ -948,13 +1365,9 @@ function PreviewScaleOptionColumn({
 }>): React.JSX.Element {
   return (
     <Column style={getScaleColumnStyle(optionIndex, optionCount)}>
-      <EmailButton
-        className={SCALE_BUTTON_CLASSNAME}
-        href={href}
-        style={optionStyle}
-        target={PREVIEW_LINK_TARGET}>
+      <Link className={SCALE_BUTTON_CLASSNAME} href={href} style={optionStyle} target={PREVIEW_LINK_TARGET}>
         {children}
-      </EmailButton>
+      </Link>
     </Column>
   );
 }
@@ -1001,10 +1414,20 @@ function EmailTemplateWrapper({
   styleTokens: PreviewEmailStyleTokens;
 }>): React.JSX.Element {
   const colors = {
+    "accent-bg": styleTokens.accentBackgroundColor,
     "brand-color": styleTokens.brandColor,
+    "button-bg": styleTokens.buttonBackgroundColor,
+    "button-text": styleTokens.buttonTextColor,
     "card-bg-color": styleTokens.cardBackgroundColor,
     "input-color": styleTokens.inputColor,
+    "input-bg": styleTokens.inputBackgroundColor,
     "input-border-color": styleTokens.inputBorderColor,
+    "input-border": styleTokens.inputBorderColor,
+    "input-placeholder": styleTokens.inputPlaceholderEmailColor,
+    "input-text": styleTokens.inputTextColor,
+    "option-bg": styleTokens.optionBackgroundColor,
+    "option-border": styleTokens.optionBorderColor,
+    "option-label": styleTokens.optionLabelColor,
     "card-border-color": styleTokens.cardBorderColor,
     "question-color": styleTokens.questionColor,
     "signature-color": styleTokens.signatureColor,
@@ -1018,6 +1441,31 @@ function EmailTemplateWrapper({
             colors,
             borderRadius: {
               custom: `${styleTokens.roundness.toString()}px`,
+              button: styleTokens.buttonBorderRadius,
+              input: styleTokens.inputBorderRadius,
+              option: styleTokens.optionBorderRadius,
+            },
+            boxShadow: {
+              input: styleTokens.inputShadow,
+            },
+            fontFamily: {
+              survey: styleTokens.fontFamily,
+            },
+            fontSize: {
+              button: styleTokens.buttonFontSize,
+              input: styleTokens.inputFontSize,
+              option: styleTokens.optionFontSize,
+            },
+            fontWeight: {
+              button: styleTokens.buttonFontWeight,
+            },
+            spacing: {
+              "button-x": styleTokens.buttonPaddingX,
+              "button-y": styleTokens.buttonPaddingY,
+              "input-x": styleTokens.inputPaddingX,
+              "input-y": styleTokens.inputPaddingY,
+              "option-x": styleTokens.optionPaddingX,
+              "option-y": styleTokens.optionPaddingY,
             },
           },
         },
@@ -1027,7 +1475,7 @@ function EmailTemplateWrapper({
         className="bg-card-bg-color border-card-border-color rounded-custom mx-0 my-2 border border-solid p-8 text-inherit"
         style={{
           ...getForcedBackgroundStyle(styleTokens.cardBackgroundColor),
-          border: important(`1px solid ${styleTokens.cardBorderColor}`),
+          border: importantStyle(`1px solid ${styleTokens.cardBorderColor}`),
           borderRadius: `${styleTokens.roundness}px`,
           ...getForcedColorStyle(styleTokens.questionColor),
           fontFamily: styleTokens.fontFamily,

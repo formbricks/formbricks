@@ -127,16 +127,18 @@ test.describe("Survey Email Preview", () => {
     await expect(previewFrame.getByText("Bananas", { exact: true })).toBeVisible();
     await expect(previewFrame.getByText("Pineapples", { exact: true })).toBeVisible();
 
-    const firstChoiceLink = previewFrame
-      .locator(
-        `a[href*="skipPrefilled=true"][href*="${EMBED_SURVEY_PREVIEW_QUESTION_ID}=${encodeURIComponent(EMBED_SURVEY_PREVIEW_CHOICE_IDS.apples)}"]`
-      )
-      .first();
+    const firstChoiceLink = previewFrame.locator(
+      `a[href*="skipPrefilled=true"][href*="${EMBED_SURVEY_PREVIEW_QUESTION_ID}=${encodeURIComponent(EMBED_SURVEY_PREVIEW_CHOICE_IDS.apples)}"]`
+    );
+    const firstChoiceMarker = firstChoiceLink.locator('span[style*="border"]');
 
     await expect(previewFrame.locator(`a[href*="${EMBED_SURVEY_PREVIEW_QUESTION_ID}="]`)).toHaveCount(3);
-    await expect(firstChoiceLink).toContainText("☐");
+    await expect(firstChoiceLink).toHaveCount(1);
+    await expect(firstChoiceMarker).toHaveCount(1);
+    await expect(firstChoiceMarker).toHaveCSS("height", "16px");
+    await expect(firstChoiceMarker).toHaveCSS("border-top-left-radius", "4px");
     await expect(firstChoiceLink).toContainText("Apples");
-    await expect(firstChoiceLink).toHaveCSS("background-color", "rgb(255, 255, 255)");
+    await expect(firstChoiceLink).toHaveCSS("background-color", "rgb(243, 244, 246)");
     await expect(firstChoiceLink).toHaveCSS("border-top-left-radius", "8px");
     await expect(firstChoiceLink).toHaveCSS("font-family", /Inter/);
     await expect(firstChoiceLink).toHaveCSS("padding-top", "16px");
@@ -178,9 +180,14 @@ test.describe("Survey Email Preview", () => {
 
     const previewFrame = page.frameLocator('[data-testid="survey-email-preview-frame"]');
     const openTextLink = previewFrame.getByRole("link", { name: EMBED_SURVEY_PREVIEW_OPEN_TEXT_PLACEHOLDER });
+    const openTextInputShell = openTextLink.locator("xpath=..");
 
     await expect(previewFrame.getByText(EMBED_SURVEY_PREVIEW_HEADLINE)).toBeVisible();
     await expect(openTextLink).toBeVisible();
+    await expect(openTextInputShell).toHaveCSS("background-color", "rgb(243, 244, 246)");
+    await expect(openTextInputShell).toHaveCSS("border-top-left-radius", "8px");
+    await expect(openTextInputShell).toHaveCSS("padding-top", "8px");
+    await expect(openTextInputShell).toHaveCSS("padding-left", "8px");
     await expect(openTextLink).toHaveAttribute("href", /preview=true/);
     await expect(openTextLink).not.toHaveAttribute("href", /skipPrefilled=true/);
     await expect(openTextLink).toHaveAttribute("target", "_blank");
