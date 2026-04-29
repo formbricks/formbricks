@@ -234,7 +234,7 @@ describe("FeedbackRecordDirectory Service", () => {
 
       await expect(
         createFeedbackRecordDirectory(mockOrganizationId, "Bad Workspaces", [mockWorkspaceId1])
-      ).rejects.toThrow(new InvalidInputError("DIRECTORY_PROJECTS_INVALID_ORG"));
+      ).rejects.toThrow(new InvalidInputError("DIRECTORY_WORKSPACES_INVALID_ORG"));
     });
 
     test("throws InvalidInputError on duplicate name (unique constraint violation)", async () => {
@@ -370,7 +370,7 @@ describe("FeedbackRecordDirectory Service", () => {
         updateFeedbackRecordDirectory(mockDirectoryId, mockOrganizationId, {
           workspaceIds: [mockWorkspaceId1],
         })
-      ).rejects.toThrow(new InvalidInputError("DIRECTORY_PROJECTS_INVALID_ORG"));
+      ).rejects.toThrow(new InvalidInputError("DIRECTORY_WORKSPACES_INVALID_ORG"));
     });
 
     test("throws InvalidInputError on duplicate name (unique constraint violation)", async () => {

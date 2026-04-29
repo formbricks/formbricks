@@ -190,7 +190,7 @@ export const createFeedbackRecordDirectory = async (
         where: { id: { in: workspaceIds }, organizationId },
       });
       if (count !== workspaceIds.length) {
-        throw new InvalidInputError("DIRECTORY_PROJECTS_INVALID_ORG");
+        throw new InvalidInputError("DIRECTORY_WORKSPACES_INVALID_ORG");
       }
     }
 
@@ -247,7 +247,7 @@ const buildWorkspaceAssignmentPayload = async (
       },
     });
     if (orgWorkspacesCount !== workspaceIds.length) {
-      throw new InvalidInputError("DIRECTORY_PROJECTS_INVALID_ORG");
+      throw new InvalidInputError("DIRECTORY_WORKSPACES_INVALID_ORG");
     }
   }
 

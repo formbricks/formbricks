@@ -122,7 +122,7 @@ const defaultLanguage = {
     alias: null,
     createdAt: new Date(),
     updatedAt: new Date(),
-    projectId: "project12345678901234567",
+    workspaceId: "workspace12345678901234567",
   },
 };
 
@@ -166,7 +166,7 @@ const baseSurvey: TJsWorkspaceStateSurvey = {
   languages: [defaultLanguage],
   segment: null,
   hiddenFields: { enabled: false, fieldIds: [] },
-  projectOverwrites: null,
+  workspaceOverwrites: null,
   triggers: [],
   displayOption: "displayOnce",
   showLanguageSwitch: false,
