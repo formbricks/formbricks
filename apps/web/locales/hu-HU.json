@@ -1553,7 +1553,7 @@
         "hide_question_settings": "Kérdésbeállítások elrejtése",
         "hostname": "Gépnév",
         "if_you_need_more_please": "Ha többre van szüksége, akkor",
-        "if_you_really_want_that_answer_ask_until_you_get_it": "Maradjon megjelenítve bármikor is aktiválódott, amíg egy választ el nem küldenek.",
+        "if_you_really_want_that_answer_ask_until_you_get_it": "Továbbra is megjelenítés minden egyes aktiváláskor, amíg választ vagy részleges választ nem küldenek be.",
         "ignore_global_waiting_time": "Várakozási időszak figyelmen kívül hagyása",
         "ignore_global_waiting_time_description": "Ez a kérdőív akkor jelenhet meg, ha a feltételei teljesülnek, még akkor is, ha egy másik kérdőív jelent meg nemrég.",
         "image": "Kép",

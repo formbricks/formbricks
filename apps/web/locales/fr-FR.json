@@ -1553,7 +1553,7 @@
         "hide_question_settings": "Masquer les paramètres de la question",
         "hostname": "Nom d'hôte",
         "if_you_need_more_please": "Si vous avez besoin de plus, veuillez",
-        "if_you_really_want_that_answer_ask_until_you_get_it": "Continuer à afficher à chaque déclenchement jusqu'à ce qu'une réponse soit soumise.",
+        "if_you_really_want_that_answer_ask_until_you_get_it": "Continuer à afficher à chaque déclenchement jusqu'à ce qu'une réponse ou une réponse partielle soit soumise.",
         "ignore_global_waiting_time": "Ignorer la période de refroidissement",
         "ignore_global_waiting_time_description": "Cette enquête peut s'afficher chaque fois que ses conditions sont remplies, même si une autre enquête a été affichée récemment.",
         "image": "Image",

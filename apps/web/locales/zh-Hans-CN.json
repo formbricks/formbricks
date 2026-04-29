@@ -1553,7 +1553,7 @@
         "hide_question_settings": "隐藏问题设置",
         "hostname": "主 机 名",
         "if_you_need_more_please": "如果您需要更多，请",
-        "if_you_really_want_that_answer_ask_until_you_get_it": "每次触发时都会显示，直到提交回应为止。",
+        "if_you_really_want_that_answer_ask_until_you_get_it": "持续在触发时显示，直到提交响应或部分响应。",
         "ignore_global_waiting_time": "忽略冷却期",
         "ignore_global_waiting_time_description": "只要满足条件，此调查即可显示，即使最近刚显示过其他调查。",
         "image": "图片",

@@ -1553,7 +1553,7 @@
         "hide_question_settings": "Ascunde setările întrebării",
         "hostname": "Nume gazdă",
         "if_you_need_more_please": "Dacă aveți nevoie de mai mult, vă rugăm",
-        "if_you_really_want_that_answer_ask_until_you_get_it": "Continuă afișarea ori de câte ori este declanșat până când se trimite un răspuns.",
+        "if_you_really_want_that_answer_ask_until_you_get_it": "Continuă să afișezi de fiecare dată când este declanșat, până când se trimite un răspuns sau un răspuns parțial.",
         "ignore_global_waiting_time": "Ignoră perioada de răcire",
         "ignore_global_waiting_time_description": "Acest sondaj poate fi afișat ori de câte ori condițiile sale sunt îndeplinite, chiar dacă un alt sondaj a fost afișat recent.",
         "image": "Imagine",

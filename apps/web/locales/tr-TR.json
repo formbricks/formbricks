@@ -1553,7 +1553,7 @@
         "hide_question_settings": "Soru ayarlarını gizle",
         "hostname": "Ana bilgisayar adı",
         "if_you_need_more_please": "Daha fazlasına ihtiyacınız varsa lütfen",
-        "if_you_really_want_that_answer_ask_until_you_get_it": "Yanıt gönderilene kadar tetiklendiğinde göstermeye devam et.",
+        "if_you_really_want_that_answer_ask_until_you_get_it": "Bir yanıt veya kısmi yanıt gönderilene kadar her tetiklendiğinde göstermeye devam et.",
         "ignore_global_waiting_time": "Bekleme Süresini Yoksay",
         "ignore_global_waiting_time_description": "Bu survey, yakın zamanda başka bir survey gösterilmiş olsa bile koşulları sağlandığında gösterilebilir.",
         "image": "Görsel",

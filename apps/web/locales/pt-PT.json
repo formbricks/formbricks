@@ -1553,7 +1553,7 @@
         "hide_question_settings": "Ocultar definições da pergunta",
         "hostname": "Nome do host",
         "if_you_need_more_please": "Se precisar de mais, por favor",
-        "if_you_really_want_that_answer_ask_until_you_get_it": "Continuar a mostrar sempre que acionado até que uma resposta seja submetida.",
+        "if_you_really_want_that_answer_ask_until_you_get_it": "Continuar a mostrar sempre que acionado até que uma resposta ou resposta parcial seja submetida.",
         "ignore_global_waiting_time": "Ignorar período de espera",
         "ignore_global_waiting_time_description": "Este inquérito pode ser mostrado sempre que as suas condições forem cumpridas, mesmo que outro inquérito tenha sido mostrado recentemente.",
         "image": "Imagem",

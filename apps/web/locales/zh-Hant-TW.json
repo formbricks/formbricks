@@ -1553,7 +1553,7 @@
         "hide_question_settings": "隱藏問題設定",
         "hostname": "主機名稱",
         "if_you_need_more_please": "如果您需要更多，請",
-        "if_you_really_want_that_answer_ask_until_you_get_it": "每次觸發時都顯示，直到提交回應為止。",
+        "if_you_really_want_that_answer_ask_until_you_get_it": "持續顯示，直到使用者提交回應或部分回應為止。",
         "ignore_global_waiting_time": "忽略冷卻期",
         "ignore_global_waiting_time_description": "此問卷在符合條件時即可顯示，即使最近已顯示過其他問卷。",
         "image": "圖片",

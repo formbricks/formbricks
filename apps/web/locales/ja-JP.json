@@ -1553,7 +1553,7 @@
         "hide_question_settings": "質問設定を非表示",
         "hostname": "ホスト名",
         "if_you_need_more_please": "さらに必要な場合は、",
-        "if_you_really_want_that_answer_ask_until_you_get_it": "回答が提出されるまで、トリガーされるたびに表示し続けます。",
+        "if_you_really_want_that_answer_ask_until_you_get_it": "回答または一部の回答が送信されるまで、トリガーされるたびに表示し続けます。",
         "ignore_global_waiting_time": "クールダウン期間を無視",
         "ignore_global_waiting_time_description": "このフォームは、最近別のフォームが表示されていても、条件が満たされればいつでも表示できます。",
         "image": "画像",

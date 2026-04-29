@@ -1553,7 +1553,7 @@
         "hide_question_settings": "Dölj frågeinställningar",
         "hostname": "Värdnamn",
         "if_you_need_more_please": "Om du behöver mer, vänligen",
-        "if_you_really_want_that_answer_ask_until_you_get_it": "Fortsätt visa när villkoren är uppfyllda tills ett svar skickas in.",
+        "if_you_really_want_that_answer_ask_until_you_get_it": "Fortsätt visa varje gång det utlöses tills ett svar eller ett delsvar skickas in.",
         "ignore_global_waiting_time": "Ignorera väntetid",
         "ignore_global_waiting_time_description": "Denna enkät kan visas när dess villkor är uppfyllda, även om en annan enkät nyligen visats.",
         "image": "Bild",

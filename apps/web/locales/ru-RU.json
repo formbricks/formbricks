@@ -1553,7 +1553,7 @@
         "hide_question_settings": "Скрыть настройки вопроса",
         "hostname": "Имя хоста",
         "if_you_need_more_please": "Если вам нужно больше, пожалуйста",
-        "if_you_really_want_that_answer_ask_until_you_get_it": "Показывать каждый раз при срабатывании, пока не будет получен ответ.",
+        "if_you_really_want_that_answer_ask_until_you_get_it": "Продолжай показывать при каждом срабатывании триггера, пока не будет отправлен ответ или частичный ответ.",
         "ignore_global_waiting_time": "Игнорировать период ожидания",
         "ignore_global_waiting_time_description": "Этот опрос может отображаться при выполнении условий, даже если недавно уже был показан другой опрос.",
         "image": "Изображение",

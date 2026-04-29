@@ -1553,7 +1553,7 @@
         "hide_question_settings": "Ocultar ajustes de la pregunta",
         "hostname": "Nombre de host",
         "if_you_need_more_please": "Si necesitas más, por favor",
-        "if_you_really_want_that_answer_ask_until_you_get_it": "Seguir mostrando cuando se active hasta que se envíe una respuesta.",
+        "if_you_really_want_that_answer_ask_until_you_get_it": "Seguir mostrando cada vez que se active hasta que se envíe una respuesta o respuesta parcial.",
         "ignore_global_waiting_time": "Ignorar periodo de espera",
         "ignore_global_waiting_time_description": "Esta encuesta puede mostrarse siempre que se cumplan sus condiciones, incluso si otra encuesta se mostró recientemente.",
         "image": "Imagen",

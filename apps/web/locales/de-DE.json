@@ -1553,7 +1553,7 @@
         "hide_question_settings": "Frageeinstellungen ausblenden",
         "hostname": "Hostname",
         "if_you_need_more_please": "Wenn Sie mehr benötigen, bitte",
-        "if_you_really_want_that_answer_ask_until_you_get_it": "Weiterhin anzeigen, wenn ausgelöst, bis eine Antwort abgegeben wird.",
+        "if_you_really_want_that_answer_ask_until_you_get_it": "Immer anzeigen, wenn ausgelöst, bis eine Antwort oder Teilantwort übermittelt wurde.",
         "ignore_global_waiting_time": "Abkühlphase ignorieren",
         "ignore_global_waiting_time_description": "Diese Umfrage kann angezeigt werden, wenn ihre Bedingungen erfüllt sind, auch wenn kürzlich eine andere Umfrage angezeigt wurde.",
         "image": "Bild",
