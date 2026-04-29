@@ -1834,7 +1834,9 @@
         "no_data_message": "暂无数据。当前没有可显示的信息。请添加图表来构建你的仪表板。",
         "please_enter_name": "请输入 Dashboard 名称"
       },
+      "manage_feedback_sources": "Manage feedback sources",
       "no_feedback_records_message": "您没有可供报告的反馈记录。设置反馈源以将数据输入系统。",
+      "no_feedback_records_with_sources_message": "No feedback records yet. Records will appear here once your feedback sources start sending data.",
       "setup_feedback_source": "设置反馈源"
     },
     "api_keys": {

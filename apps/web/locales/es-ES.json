@@ -1834,7 +1834,9 @@
         "no_data_message": "Sin datos. Actualmente no hay información que mostrar. Añade gráficos para crear tu panel.",
         "please_enter_name": "Por favor, introduce un nombre para el panel de control"
       },
+      "manage_feedback_sources": "Manage feedback sources",
       "no_feedback_records_message": "No tienes registros de comentarios sobre los que informar. Configure fuentes de comentarios para introducir datos en el sistema.",
+      "no_feedback_records_with_sources_message": "No feedback records yet. Records will appear here once your feedback sources start sending data.",
       "setup_feedback_source": "Configurar fuentes de comentarios"
     },
     "api_keys": {

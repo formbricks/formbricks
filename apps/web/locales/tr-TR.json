@@ -1834,7 +1834,9 @@
         "no_data_message": "Veri Yok. Şu anda görüntülenecek bilgi bulunmuyor. Gösterge panelini oluşturmak için grafik ekle.",
         "please_enter_name": "Lütfen bir gösterge paneli adı gir"
       },
+      "manage_feedback_sources": "Manage feedback sources",
       "no_feedback_records_message": "Raporlayabileceğiniz Geri Bildirim Kayıtlarınız yok. Verileri sisteme beslemek için Geri Bildirim Kaynaklarını ayarlayın.",
+      "no_feedback_records_with_sources_message": "No feedback records yet. Records will appear here once your feedback sources start sending data.",
       "setup_feedback_source": "Geri bildirim kaynaklarını ayarlayın"
     },
     "api_keys": {

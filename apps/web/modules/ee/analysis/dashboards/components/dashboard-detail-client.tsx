@@ -127,7 +127,7 @@ const MemoizedWidgetItem = memo(function WidgetItem({
   onResize?: () => void;
   onRemove?: () => void;
 }>) {
-  const title = widget.chart.name;
+  const title = widget.chart?.name ?? "";
 
   return (
     <DashboardWidget
@@ -294,10 +294,7 @@ export function DashboardDetailClient({
             hasChanges={hasChanges}
             isReadOnly={isReadOnly}
             onRefresh={() => router.refresh()}
-            onEditToggle={() => {
-              setDraftWidgets(dashboard.widgets);
-              setIsEditing(true);
-            }}
+            onEditToggle={handleEnterEditMode}
             onSave={handleSave}
             onCancel={handleCancel}
           />

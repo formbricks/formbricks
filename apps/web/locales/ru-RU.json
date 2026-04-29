@@ -1834,7 +1834,9 @@
         "no_data_message": "Нет данных. В настоящее время нет информации для отображения. Добавьте графики, чтобы построить свой дашборд.",
         "please_enter_name": "Пожалуйста, введите название панели управления"
       },
+      "manage_feedback_sources": "Manage feedback sources",
       "no_feedback_records_message": "У вас нет записей обратной связи, о которых можно сообщить. Настройте источники обратной связи для подачи данных в систему.",
+      "no_feedback_records_with_sources_message": "No feedback records yet. Records will appear here once your feedback sources start sending data.",
       "setup_feedback_source": "Настройка источников обратной связи"
     },
     "api_keys": {

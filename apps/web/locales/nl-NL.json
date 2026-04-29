@@ -1834,7 +1834,9 @@
         "no_data_message": "Geen gegevens. Er is momenteel geen informatie om weer te geven. Voeg grafieken toe om je dashboard op te bouwen.",
         "please_enter_name": "Voer een dashboardnaam in"
       },
+      "manage_feedback_sources": "Manage feedback sources",
       "no_feedback_records_message": "U heeft geen feedbackrecords om over te rapporteren. Stel feedbackbronnen in om gegevens in het systeem in te voeren.",
+      "no_feedback_records_with_sources_message": "No feedback records yet. Records will appear here once your feedback sources start sending data.",
       "setup_feedback_source": "Feedbackbronnen instellen"
     },
     "api_keys": {

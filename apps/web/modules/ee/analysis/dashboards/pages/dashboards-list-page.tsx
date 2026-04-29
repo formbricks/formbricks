@@ -1,4 +1,5 @@
 import { use } from "react";
+import { getConnectorsWithMappings } from "@/lib/connector/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { AnalysisPageLayout } from "@/modules/ee/analysis/components/analysis-page-layout";
 import { NoFeedbackRecordsState } from "@/modules/ee/analysis/components/no-feedback-records-state";
@@ -33,7 +34,10 @@ export const DashboardsListPage = async ({ workspaceId }: Readonly<DashboardsLis
   const t = await getTranslate();
   const { isReadOnly } = await getWorkspaceAuth(workspaceId);
 
-  const hasFeedbackRecords = await hasWorkspaceFeedbackRecords(workspaceId);
+  const [hasFeedbackRecords, connectors] = await Promise.all([
+    hasWorkspaceFeedbackRecords(workspaceId),
+    getConnectorsWithMappings(workspaceId),
+  ]);
   const dashboardsPromise = hasFeedbackRecords ? getDashboards(workspaceId) : null;
 
   return (
@@ -52,7 +56,7 @@ export const DashboardsListPage = async ({ workspaceId }: Readonly<DashboardsLis
           isReadOnly={isReadOnly}
         />
       ) : (
-        <NoFeedbackRecordsState workspaceId={workspaceId} />
+        <NoFeedbackRecordsState workspaceId={workspaceId} hasFeedbackSources={connectors.length > 0} />
       )}
     </AnalysisPageLayout>
   );

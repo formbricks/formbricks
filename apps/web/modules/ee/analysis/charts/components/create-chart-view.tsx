@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { AdvancedChartBuilder } from "@/modules/ee/analysis/charts/components/advanced-chart-builder";
@@ -192,11 +193,11 @@ export function CreateChartView({
               <Alert variant="error" size="small">
                 <div>
                   <p>{t("workspace.analysis.charts.no_data_source_available")}</p>
-                  <a
+                  <Link
                     className="mt-1 inline-block font-medium underline"
                     href={`/workspaces/${workspaceId}/settings/feedback-record-directories`}>
                     {t("workspace.analysis.charts.go_to_feedback_record_directories")}
-                  </a>
+                  </Link>
                 </div>
               </Alert>
             )}

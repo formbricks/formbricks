@@ -1834,7 +1834,9 @@
         "no_data_message": "無資料。目前沒有可顯示的資訊。請新增圖表來建立你的儀表板。",
         "please_enter_name": "請輸入儀表板名稱"
       },
+      "manage_feedback_sources": "Manage feedback sources",
       "no_feedback_records_message": "您沒有可供報告的回饋記錄。設定回饋來源以將資料輸入系統。",
+      "no_feedback_records_with_sources_message": "No feedback records yet. Records will appear here once your feedback sources start sending data.",
       "setup_feedback_source": "設定反饋源"
     },
     "api_keys": {

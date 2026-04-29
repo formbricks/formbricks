@@ -1834,7 +1834,9 @@
         "no_data_message": "No Data. There is currently no information to display. Add charts to build your dashboard.",
         "please_enter_name": "Please enter a dashboard name"
       },
+      "manage_feedback_sources": "Manage feedback sources",
       "no_feedback_records_message": "You don't have Feedback Records to report on. Setup Feedback Sources to feed data into the system.",
+      "no_feedback_records_with_sources_message": "No feedback records yet. Records will appear here once your feedback sources start sending data.",
       "setup_feedback_source": "Setup feedback sources"
     },
     "api_keys": {

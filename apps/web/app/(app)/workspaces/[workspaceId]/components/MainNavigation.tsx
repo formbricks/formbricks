@@ -607,18 +607,20 @@ export const MainNavigation = ({
               ))}
 
               <li className={cn("mt-2 border-t border-slate-100 pt-2", isCollapsed && "border-t-0 pt-0")}>
-                <NavigationLink
-                  href={configurationNavigationItem.href}
-                  isActive={configurationNavigationItem.isActive}
-                  isCollapsed={isCollapsed}
-                  isTextVisible={isTextVisible}
-                  disabled={configurationNavigationItem.disabled}
-                  disabledMessage={
-                    configurationNavigationItem.disabled ? disabledNavigationMessage : undefined
-                  }
-                  linkText={configurationNavigationItem.name}>
-                  <configurationNavigationItem.icon strokeWidth={1.5} />
-                </NavigationLink>
+                <ul>
+                  <NavigationLink
+                    href={configurationNavigationItem.href}
+                    isActive={configurationNavigationItem.isActive}
+                    isCollapsed={isCollapsed}
+                    isTextVisible={isTextVisible}
+                    disabled={configurationNavigationItem.disabled}
+                    disabledMessage={
+                      configurationNavigationItem.disabled ? disabledNavigationMessage : undefined
+                    }
+                    linkText={configurationNavigationItem.name}>
+                    <configurationNavigationItem.icon strokeWidth={1.5} />
+                  </NavigationLink>
+                </ul>
               </li>
             </ul>
           </div>

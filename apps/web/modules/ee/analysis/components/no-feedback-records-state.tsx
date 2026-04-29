@@ -5,9 +5,13 @@ import { Button } from "@/modules/ui/components/button";
 
 interface NoFeedbackRecordsStateProps {
   workspaceId: string;
+  hasFeedbackSources?: boolean;
 }
 
-export const NoFeedbackRecordsState = async ({ workspaceId }: Readonly<NoFeedbackRecordsStateProps>) => {
+export const NoFeedbackRecordsState = async ({
+  workspaceId,
+  hasFeedbackSources = false,
+}: Readonly<NoFeedbackRecordsStateProps>) => {
   const t = await getTranslate();
 
   return (
@@ -15,11 +19,15 @@ export const NoFeedbackRecordsState = async ({ workspaceId }: Readonly<NoFeedbac
       <div className="mx-auto flex max-w-xl flex-col items-center gap-4 text-center">
         <MessageSquareDashedIcon className="h-8 w-8 text-slate-400" />
         <p className="text-balance text-sm text-slate-600">
-          {t("workspace.analysis.no_feedback_records_message")}
+          {hasFeedbackSources
+            ? t("workspace.analysis.no_feedback_records_with_sources_message")
+            : t("workspace.analysis.no_feedback_records_message")}
         </p>
         <Button asChild size="sm">
           <Link href={`/workspaces/${workspaceId}/feedback-sources`}>
-            {t("workspace.analysis.setup_feedback_source")}
+            {hasFeedbackSources
+              ? t("workspace.analysis.manage_feedback_sources")
+              : t("workspace.analysis.setup_feedback_source")}
           </Link>
         </Button>
       </div>
