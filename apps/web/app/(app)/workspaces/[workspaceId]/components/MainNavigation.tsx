@@ -10,12 +10,12 @@ import {
   Loader2,
   LogOutIcon,
   MessageCircle,
+  MessageSquareTextIcon,
   PanelLeftCloseIcon,
   PanelLeftOpenIcon,
   PlusIcon,
   RocketIcon,
   SettingsIcon,
-  Shapes,
   UserCircleIcon,
   UserIcon,
 } from "lucide-react";
@@ -146,55 +146,74 @@ export const MainNavigation = ({
     }
   }, [pathname]);
 
-  const mainNavigation = useMemo(
+  const mainNavigationSections = useMemo(
     () => [
       {
-        name: t("common.surveys"),
-        href: `/workspaces/${workspace.id}/surveys`,
-        icon: MessageCircle,
-        isActive: pathname?.includes("/surveys"),
-        isHidden: false,
-        disabled: isMembershipPending || isBilling,
+        id: "ask",
+        name: t("common.ask"),
+        items: [
+          {
+            name: t("common.surveys"),
+            href: `/workspaces/${workspace.id}/surveys`,
+            icon: MessageCircle,
+            isActive: pathname?.includes("/surveys"),
+            isHidden: false,
+            disabled: isMembershipPending || isBilling,
+          },
+          {
+            href: `/workspaces/${workspace.id}/contacts`,
+            name: t("common.contacts"),
+            icon: UserIcon,
+            isActive:
+              pathname?.includes("/contacts") ||
+              pathname?.includes("/segments") ||
+              pathname?.includes("/attributes"),
+            disabled: isMembershipPending || isBilling,
+          },
+        ],
       },
       {
-        href: `/workspaces/${workspace.id}/contacts`,
-        name: t("common.contacts"),
-        icon: UserIcon,
-        isActive:
-          pathname?.includes("/contacts") ||
-          pathname?.includes("/segments") ||
-          pathname?.includes("/attributes"),
-        disabled: isMembershipPending || isBilling,
-      },
-      {
-        name: t("common.analysis"),
-        href: `/workspaces/${workspace.id}/dashboards`,
-        icon: BarChart3Icon,
-        isActive: pathname?.includes("/dashboards") || pathname?.includes("/charts"),
-        isHidden: false,
-        disabled: isMembershipPending || isBilling,
-      },
-      {
+        id: "unify-feedback",
         name: t("workspace.unify.unify_feedback"),
-        href: `/workspaces/${workspace.id}/unify/sources`,
-        icon: Shapes,
-        isActive: pathname?.includes("/unify"),
-      },
-      {
-        name: t("common.configuration"),
-        href: `/workspaces/${workspace.id}/general`,
-        icon: Cog,
-        isActive:
-          pathname?.includes("/general") ||
-          pathname?.includes("/look") ||
-          pathname?.includes("/app-connection") ||
-          pathname?.includes("/integrations") ||
-          pathname?.includes("/teams") ||
-          pathname?.includes("/languages") ||
-          pathname?.includes("/tags"),
-        disabled: isMembershipPending || isBilling,
+        items: [
+          {
+            name: t("workspace.unify.feedback_records"),
+            href: `/workspaces/${workspace.id}/unify/feedback-records`,
+            icon: MessageSquareTextIcon,
+            isActive: pathname?.includes("/unify/feedback-records"),
+            isHidden: false,
+            disabled: isMembershipPending || isBilling,
+          },
+          {
+            name: t("common.dashboards"),
+            href: `/workspaces/${workspace.id}/dashboards`,
+            icon: BarChart3Icon,
+            isActive: pathname?.includes("/dashboards") || pathname?.includes("/charts"),
+            isHidden: false,
+            disabled: isMembershipPending || isBilling,
+          },
+        ],
       },
     ],
+    [t, workspace.id, pathname, isMembershipPending, isBilling]
+  );
+
+  const configurationNavigationItem = useMemo(
+    () => ({
+      name: t("common.configuration"),
+      href: `/workspaces/${workspace.id}/general`,
+      icon: Cog,
+      isActive:
+        pathname?.includes("/general") ||
+        pathname?.includes("/look") ||
+        pathname?.includes("/app-connection") ||
+        pathname?.includes("/feedback-sources") ||
+        pathname?.includes("/integrations") ||
+        pathname?.includes("/teams") ||
+        pathname?.includes("/languages") ||
+        pathname?.includes("/tags"),
+      disabled: isMembershipPending || isBilling,
+    }),
     [t, workspace.id, pathname, isMembershipPending, isBilling]
   );
 
@@ -255,6 +274,11 @@ export const MainNavigation = ({
       id: "app-connection",
       label: t("common.website_and_app_connection"),
       href: `/workspaces/${workspace.id}/app-connection`,
+    },
+    {
+      id: "feedback-sources",
+      label: t("workspace.unify.feedback_sources"),
+      href: `/workspaces/${workspace.id}/feedback-sources`,
     },
     {
       id: "integrations",
@@ -552,23 +576,50 @@ export const MainNavigation = ({
             </div>
 
             {/* Main Nav Switch */}
-            <ul>
-              {mainNavigation.map(
-                (item) =>
-                  !item.isHidden && (
-                    <NavigationLink
-                      key={item.name}
-                      href={item.href}
-                      isActive={item.isActive}
-                      isCollapsed={isCollapsed}
-                      isTextVisible={isTextVisible}
-                      disabled={item.disabled}
-                      disabledMessage={item.disabled ? disabledNavigationMessage : undefined}
-                      linkText={item.name}>
-                      <item.icon strokeWidth={1.5} />
-                    </NavigationLink>
-                  )
-              )}
+            <ul className="space-y-2">
+              {mainNavigationSections.map((section) => (
+                <li key={section.id}>
+                  {!isCollapsed && !isTextVisible && (
+                    <p className="px-4 pb-1 pt-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                      {section.name}
+                    </p>
+                  )}
+
+                  <ul>
+                    {section.items.map(
+                      (item) =>
+                        !item.isHidden && (
+                          <NavigationLink
+                            key={item.name}
+                            href={item.href}
+                            isActive={item.isActive}
+                            isCollapsed={isCollapsed}
+                            isTextVisible={isTextVisible}
+                            disabled={item.disabled}
+                            disabledMessage={item.disabled ? disabledNavigationMessage : undefined}
+                            linkText={item.name}>
+                            <item.icon strokeWidth={1.5} />
+                          </NavigationLink>
+                        )
+                    )}
+                  </ul>
+                </li>
+              ))}
+
+              <li className={cn("mt-2 border-t border-slate-100 pt-2", isCollapsed && "border-t-0 pt-0")}>
+                <NavigationLink
+                  href={configurationNavigationItem.href}
+                  isActive={configurationNavigationItem.isActive}
+                  isCollapsed={isCollapsed}
+                  isTextVisible={isTextVisible}
+                  disabled={configurationNavigationItem.disabled}
+                  disabledMessage={
+                    configurationNavigationItem.disabled ? disabledNavigationMessage : undefined
+                  }
+                  linkText={configurationNavigationItem.name}>
+                  <configurationNavigationItem.icon strokeWidth={1.5} />
+                </NavigationLink>
+              </li>
             </ul>
           </div>
 

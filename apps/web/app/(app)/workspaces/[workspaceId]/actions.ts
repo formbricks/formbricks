@@ -23,9 +23,13 @@ import { createWorkspace } from "@/modules/workspaces/settings/lib/workspace";
 import { getOrganizationsByUserId } from "./lib/organization";
 import { getWorkspacesByUserId } from "./lib/workspace";
 
+const ZCreateWorkspaceInput = ZWorkspaceUpdateInput.extend({
+  feedbackRecordDirectoryId: ZId.optional(),
+});
+
 const ZCreateWorkspaceAction = z.object({
   organizationId: ZId,
-  data: ZWorkspaceUpdateInput,
+  data: ZCreateWorkspaceInput,
 });
 
 export const createWorkspaceAction = authenticatedActionClient.inputSchema(ZCreateWorkspaceAction).action(
@@ -40,7 +44,7 @@ export const createWorkspaceAction = authenticatedActionClient.inputSchema(ZCrea
       access: [
         {
           data: parsedInput.data,
-          schema: ZWorkspaceUpdateInput,
+          schema: ZCreateWorkspaceInput,
           type: "organization",
           roles: ["owner", "manager"],
         },

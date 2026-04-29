@@ -8,6 +8,7 @@ import {
   getFeedbackRecordDirectoriesByWorkspaceId,
   getFeedbackRecordDirectoryDetails,
   getOrganizationIdFromDirectoryId,
+  getWorkspaceFeedbackRecordDirectoryAccess,
   updateFeedbackRecordDirectory,
 } from "./feedback-record-directory";
 
@@ -17,8 +18,8 @@ vi.mock("@/lib/utils/validate", () => ({
   validateInputs: vi.fn(),
 }));
 
-vi.mock("@formbricks/database", () => ({
-  prisma: {
+vi.mock("@formbricks/database", () => {
+  const prismaMock = {
     feedbackRecordDirectory: {
       findMany: vi.fn(),
       findUnique: vi.fn(),
@@ -27,15 +28,19 @@ vi.mock("@formbricks/database", () => ({
     },
     feedbackRecordDirectoryWorkspace: {
       findMany: vi.fn(),
+      findFirst: vi.fn().mockResolvedValue(null),
     },
     workspace: {
       count: vi.fn(),
     },
     connector: {
       count: vi.fn().mockResolvedValue(0),
+      updateMany: vi.fn().mockResolvedValue({ count: 0 }),
     },
-  },
-}));
+    $transaction: vi.fn(async (cb: (tx: unknown) => Promise<unknown>) => cb(prismaMock)),
+  };
+  return { prisma: prismaMock };
+});
 
 const mockDirectoryId = "clj28r6va000409j3ep7h8xzk";
 const mockOrganizationId = "clj28r6va000409j3ep7h8xyz";
@@ -345,6 +350,34 @@ describe("FeedbackRecordDirectory Service", () => {
       });
     });
 
+    test("pauses connectors in removed workspaces when requested", async () => {
+      vi.mocked(prisma.feedbackRecordDirectory.findUnique).mockResolvedValueOnce(
+        mockDirectoryDetailsDbRow as any
+      );
+      vi.mocked(prisma.workspace.count).mockResolvedValueOnce(1);
+      vi.mocked(prisma.feedbackRecordDirectory.update).mockResolvedValueOnce({} as any);
+
+      const result = await updateFeedbackRecordDirectory(
+        mockDirectoryId,
+        mockOrganizationId,
+        {
+          workspaceIds: [mockWorkspaceId1],
+        },
+        { pauseConnectorsInRemovedWorkspaces: true }
+      );
+
+      expect(result).toBe(true);
+      expect(prisma.connector.updateMany).toHaveBeenCalledWith({
+        where: {
+          feedbackRecordDirectoryId: mockDirectoryId,
+          workspaceId: { in: [mockWorkspaceId2] },
+        },
+        data: {
+          status: "paused",
+        },
+      });
+    });
+
     test("throws ResourceNotFoundError when directory does not exist (P2025)", async () => {
       const prismaError = new Prisma.PrismaClientKnownRequestError("Record not found", {
         code: "P2025",
@@ -443,6 +476,85 @@ describe("FeedbackRecordDirectory Service", () => {
       vi.mocked(prisma.feedbackRecordDirectoryWorkspace.findMany).mockRejectedValueOnce(error);
 
       await expect(getFeedbackRecordDirectoriesByWorkspaceId(mockWorkspaceId1)).rejects.toThrow(error);
+    });
+  });
+
+  describe("getWorkspaceFeedbackRecordDirectoryAccess", () => {
+    test("returns one active assignment per workspace with directory details", async () => {
+      vi.mocked(prisma.feedbackRecordDirectoryWorkspace.findMany).mockResolvedValueOnce([
+        {
+          workspaceId: mockWorkspaceId1,
+          feedbackRecordDirectory: { id: mockDirectoryId, name: "Directory A" },
+        },
+        {
+          workspaceId: mockWorkspaceId1,
+          feedbackRecordDirectory: { id: "clj28r6va000409j3ep7h8xy2", name: "Directory B" },
+        },
+        {
+          workspaceId: mockWorkspaceId2,
+          feedbackRecordDirectory: { id: "clj28r6va000409j3ep7h8xy3", name: "Directory C" },
+        },
+      ] as any);
+
+      const result = await getWorkspaceFeedbackRecordDirectoryAccess(mockOrganizationId);
+
+      expect(result).toEqual([
+        {
+          workspaceId: mockWorkspaceId1,
+          feedbackRecordDirectoryId: mockDirectoryId,
+          feedbackRecordDirectoryName: "Directory A",
+        },
+        {
+          workspaceId: mockWorkspaceId2,
+          feedbackRecordDirectoryId: "clj28r6va000409j3ep7h8xy3",
+          feedbackRecordDirectoryName: "Directory C",
+        },
+      ]);
+      expect(prisma.feedbackRecordDirectoryWorkspace.findMany).toHaveBeenCalledWith({
+        where: {
+          feedbackRecordDirectory: {
+            organizationId: mockOrganizationId,
+            isArchived: false,
+          },
+        },
+        select: {
+          workspaceId: true,
+          feedbackRecordDirectory: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+        orderBy: [{ workspaceId: "asc" }, { createdAt: "asc" }],
+      });
+    });
+
+    test("returns empty array when no active access assignments exist", async () => {
+      vi.mocked(prisma.feedbackRecordDirectoryWorkspace.findMany).mockResolvedValueOnce([]);
+
+      const result = await getWorkspaceFeedbackRecordDirectoryAccess(mockOrganizationId);
+
+      expect(result).toEqual([]);
+    });
+
+    test("throws DatabaseError on Prisma error", async () => {
+      const prismaError = new Prisma.PrismaClientKnownRequestError("DB error", {
+        code: "P2010",
+        clientVersion: "0.0.1",
+      });
+      vi.mocked(prisma.feedbackRecordDirectoryWorkspace.findMany).mockRejectedValueOnce(prismaError);
+
+      await expect(getWorkspaceFeedbackRecordDirectoryAccess(mockOrganizationId)).rejects.toThrow(
+        DatabaseError
+      );
+    });
+
+    test("re-throws unexpected errors", async () => {
+      const error = new Error("Unexpected");
+      vi.mocked(prisma.feedbackRecordDirectoryWorkspace.findMany).mockRejectedValueOnce(error);
+
+      await expect(getWorkspaceFeedbackRecordDirectoryAccess(mockOrganizationId)).rejects.toThrow(error);
     });
   });
 

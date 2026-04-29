@@ -29,6 +29,14 @@ const selectWorkspace = {
   customHeadScripts: true,
 };
 
+type TCreateWorkspaceInput = Partial<TWorkspaceUpdateInput> & {
+  feedbackRecordDirectoryId?: string;
+};
+
+const ZCreateWorkspaceInput = ZWorkspaceUpdateInput.partial().extend({
+  feedbackRecordDirectoryId: ZId.optional(),
+});
+
 export const updateWorkspace = async (
   workspaceId: string,
   inputWorkspace: TWorkspaceUpdateInput
@@ -56,17 +64,32 @@ export const updateWorkspace = async (
 
 export const createWorkspace = async (
   organizationId: string,
-  workspaceInput: Partial<TWorkspaceUpdateInput>
+  workspaceInput: TCreateWorkspaceInput
 ): Promise<TWorkspace> => {
-  validateInputs([organizationId, ZString], [workspaceInput, ZWorkspaceUpdateInput.partial()]);
+  validateInputs([organizationId, ZString], [workspaceInput, ZCreateWorkspaceInput]);
 
   if (!workspaceInput.name) {
     throw new ValidationError("Workspace Name is required");
   }
 
-  const { teamIds, ...data } = workspaceInput;
+  const { teamIds, feedbackRecordDirectoryId, ...data } = workspaceInput;
 
   try {
+    if (feedbackRecordDirectoryId) {
+      const feedbackDirectory = await prisma.feedbackRecordDirectory.findFirst({
+        where: {
+          id: feedbackRecordDirectoryId,
+          organizationId,
+          isArchived: false,
+        },
+        select: { id: true },
+      });
+
+      if (!feedbackDirectory) {
+        throw new InvalidInputError("FEEDBACK_RECORD_DIRECTORY_NOT_FOUND");
+      }
+    }
+
     const workspace = await prisma.workspace.create({
       data: {
         config: {
@@ -87,6 +110,17 @@ export const createWorkspace = async (
           teamId,
         })),
       });
+    }
+
+    if (feedbackRecordDirectoryId) {
+      await prisma.feedbackRecordDirectoryWorkspace.create({
+        data: {
+          feedbackRecordDirectoryId,
+          workspaceId: workspace.id,
+        },
+      });
+
+      return workspace;
     }
 
     // Ensure default FRD exists + link to first workspace atomically

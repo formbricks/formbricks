@@ -35,6 +35,12 @@ export const ZFeedbackRecordDirectoryDetails = z.object({
 
 export type TFeedbackRecordDirectoryDetails = z.infer<typeof ZFeedbackRecordDirectoryDetails>;
 
+export interface TWorkspaceFeedbackRecordDirectoryAccess {
+  workspaceId: string;
+  feedbackRecordDirectoryId: string;
+  feedbackRecordDirectoryName: string;
+}
+
 export const ZFeedbackRecordDirectoryCreateInput = z.object({
   name: z.string().trim().min(1, "DIRECTORY_NAME_REQUIRED"),
   workspaceIds: z.array(ZId).optional(),
@@ -67,6 +73,8 @@ export const getTranslatedFeedbackRecordDirectoryError = (
       return t("workspace.settings.feedback_record_directories.error_directory_workspaces_invalid_org");
     case "DIRECTORY_HAS_CONNECTORS":
       return t("workspace.settings.feedback_record_directories.error_directory_has_connectors");
+    case "WORKSPACE_ALREADY_ASSIGNED_TO_DIFFERENT_DIRECTORY":
+      return t("workspace.settings.feedback_record_directories.error_workspace_already_assigned");
     default:
       return errorCode;
   }
