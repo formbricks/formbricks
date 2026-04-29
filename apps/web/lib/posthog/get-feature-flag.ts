@@ -2,7 +2,7 @@ import "server-only";
 import { logger } from "@formbricks/logger";
 import { POSTHOG_KEY } from "@/lib/constants";
 import { posthogServerClient } from "./server";
-import { TPostHogFeatureFlagContext, TPostHogFeatureFlagValue } from "./types";
+import type { TPostHogFeatureFlagContext, TPostHogFeatureFlagValue } from "./types";
 
 const buildPostHogGroups = (context?: TPostHogFeatureFlagContext): Record<string, string> | undefined => {
   const groups = {
@@ -27,7 +27,7 @@ export const getPostHogFeatureFlag = async (
       groups: buildPostHogGroups(context),
     });
 
-    return featureFlagValue === undefined ? false : featureFlagValue;
+    return featureFlagValue ?? false;
   } catch (error) {
     logger.warn({ error, flagKey }, "Failed to evaluate PostHog feature flag");
     return false;

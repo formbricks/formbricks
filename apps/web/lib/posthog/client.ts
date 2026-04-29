@@ -1,7 +1,7 @@
 "use client";
 
 import posthog from "posthog-js";
-import { TPostHogFeatureFlagValue } from "./types";
+import type { TPostHogFeatureFlagValue } from "./types";
 
 export const getPostHogClientFeatureFlag = (flagKey: string): TPostHogFeatureFlagValue => {
   if (!posthog.__loaded) {
@@ -9,7 +9,7 @@ export const getPostHogClientFeatureFlag = (flagKey: string): TPostHogFeatureFla
   }
 
   const featureFlagValue = posthog.getFeatureFlag(flagKey);
-  return featureFlagValue === undefined ? false : featureFlagValue;
+  return featureFlagValue ?? false;
 };
 
 export type { TPostHogFeatureFlagContext, TPostHogFeatureFlagValue } from "./types";
