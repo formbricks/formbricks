@@ -16,7 +16,6 @@ export type HubFeedbackRecordResult = {
   data: FeedbackRecordData | null;
   error: HubError | null;
 };
-export type CreateFeedbackRecordResult = HubFeedbackRecordResult;
 
 const NO_CONFIG_ERROR = {
   status: 0,

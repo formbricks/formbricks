@@ -5,7 +5,6 @@ export {
   listFeedbackRecords,
   retrieveFeedbackRecord,
   updateFeedbackRecord,
-  type CreateFeedbackRecordResult,
   type HubFeedbackRecordResult,
   type ListFeedbackRecordsResult,
 } from "./service";

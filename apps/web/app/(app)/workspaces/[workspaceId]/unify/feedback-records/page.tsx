@@ -41,7 +41,7 @@ export default async function UnifyFeedbackRecordsPage(
 
   const merged = successfulResults
     .flatMap((r) => r.data?.data ?? [])
-    .sort((a, b) => (a.collected_at < b.collected_at ? 1 : -1))
+    .toSorted((a, b) => (a.collected_at < b.collected_at ? 1 : -1))
     .slice(0, INITIAL_PAGE_SIZE);
 
   const frdMap = Object.fromEntries(frds.map((f) => [f.id, f.name]));
