@@ -79,9 +79,9 @@ export const deleteUserAction = authenticatedActionClient.inputSchema(z.unknown(
 
       ctx.auditLoggingCtx.oldObject = await getUser(ctx.user.id);
 
-      capturePostHogEvent(ctx.user.id, "delete_account");
-
       await deleteUser(ctx.user.id);
+
+      capturePostHogEvent(ctx.user.id, "delete_account");
 
       return { success: true };
     } catch (error) {

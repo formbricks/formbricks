@@ -1,7 +1,7 @@
 "use client";
 
 import posthog from "posthog-js";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 interface PostHogGroupIdentifyProps {
   organizationId: string;
@@ -16,8 +16,10 @@ export const PostHogGroupIdentify = ({
   workspaceId,
   workspaceName,
 }: PostHogGroupIdentifyProps) => {
+  const cancelledRef = useRef(false);
+
   useEffect(() => {
-    let cancelled = false;
+    cancelledRef.current = false;
 
     const applyGroups = () => {
       posthog.group("organization", organizationId, { name: organizationName });
@@ -32,7 +34,7 @@ export const PostHogGroupIdentify = ({
     // PostHogIdentify (in app layout) initialises posthog from a sibling
     // useEffect; effect order isn't guaranteed, so poll briefly until loaded.
     const intervalId = setInterval(() => {
-      if (cancelled) return;
+      if (cancelledRef.current) return;
       if (posthog.__loaded) {
         applyGroups();
         clearInterval(intervalId);
@@ -40,12 +42,12 @@ export const PostHogGroupIdentify = ({
     }, 50);
 
     const timeoutId = setTimeout(() => {
-      cancelled = true;
+      cancelledRef.current = true;
       clearInterval(intervalId);
     }, 5000);
 
     return () => {
-      cancelled = true;
+      cancelledRef.current = true;
       clearInterval(intervalId);
       clearTimeout(timeoutId);
     };
