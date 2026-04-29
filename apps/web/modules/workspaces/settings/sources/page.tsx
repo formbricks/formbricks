@@ -7,7 +7,9 @@ import { getTranslate } from "@/lingodotdev/server";
 import { getFeedbackRecordDirectoriesByWorkspaceId } from "@/modules/ee/feedback-record-directory/lib/feedback-record-directory";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 
-export const WorkspaceSourcesPage = async (props: Readonly<{ params: Promise<{ workspaceId: string }> }>) => {
+export const WorkspaceFeedbackSourcesPage = async (
+  props: Readonly<{ params: Promise<{ workspaceId: string }> }>
+) => {
   const t = await getTranslate();
   const params = await props.params;
 

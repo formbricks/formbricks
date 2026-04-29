@@ -1,4 +1,5 @@
 /* v8 ignore start */
+export { UnrecoverableError } from "bullmq";
 export type {
   BackgroundJobProducer,
   EnqueuedJob,

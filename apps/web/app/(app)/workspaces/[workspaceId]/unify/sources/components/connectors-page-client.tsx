@@ -173,16 +173,11 @@ export function ConnectorsSection({
       <SettingsCard
         title={t("workspace.unify.feedback_sources")}
         description={t("workspace.unify.feedback_sources_settings_description")}
-        cta={
-          <CreateConnectorModal
-            open={isCreateModalOpen}
-            onOpenChange={setIsCreateModalOpen}
-            onCreateConnector={handleCreateConnector}
-            surveys={initialSurveys}
-            workspaceId={workspaceId}
-            directories={directories}
-          />
-        }>
+        buttonInfo={{
+          text: t("workspace.unify.add_source"),
+          onClick: () => setIsCreateModalOpen(true),
+          variant: "default",
+        }}>
         <ConnectorsTable
           connectors={initialConnectors}
           onConnectorClick={setEditingConnector}
@@ -203,6 +198,16 @@ export function ConnectorsSection({
           </Alert>
         )}
       </SettingsCard>
+
+      <CreateConnectorModal
+        open={isCreateModalOpen}
+        onOpenChange={setIsCreateModalOpen}
+        onCreateConnector={handleCreateConnector}
+        surveys={initialSurveys}
+        workspaceId={workspaceId}
+        directories={directories}
+        showTrigger={false}
+      />
 
       <EditConnectorModal
         connector={editingConnector}

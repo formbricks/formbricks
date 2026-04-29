@@ -42,14 +42,23 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { Switch } from "@/modules/ui/components/switch";
-import { TCreateConnectorStep, TFieldMapping, TSourceField, TUnifySurvey } from "../types";
+import {
+  TCreateConnectorStep,
+  TFieldMapping,
+  TFormbricksConnectorForm,
+  TSourceField,
+  TUnifySurvey,
+  ZFormbricksConnectorForm,
+} from "../types";
 import {
   TConnectorOptionId,
   TEnumValidationError,
+  areAllRequiredFieldsMapped,
+  isConnectorNameValid,
   parseCSVColumnsToFields,
+  toggleQuestionId,
   validateEnumMappings,
 } from "../utils";
-import { areAllRequiredFieldsMapped, isConnectorNameValid } from "./connector-form-utils";
 import { ConnectorTypeSelector } from "./connector-type-selector";
 import { CsvConnectorUI } from "./csv-connector-ui";
 import { FormbricksQuestionList } from "./formbricks-question-list";
@@ -57,6 +66,7 @@ import { FormbricksQuestionList } from "./formbricks-question-list";
 interface CreateConnectorModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  showTrigger?: boolean;
   onCreateConnector: (data: {
     name: string;
     type: TConnectorType;
@@ -99,15 +109,6 @@ const getNextStepButtonLabel = (type: TConnectorOptionId | null, t: (key: string
   return t("workspace.unify.create_mapping");
 };
 
-const ZFormbricksConnectorForm = z.object({
-  sourceName: z.string().trim().min(1),
-  surveyId: z.string().min(1),
-  selectedQuestionIds: z.array(z.string()).min(1),
-  importHistorical: z.boolean(),
-});
-
-type TFormbricksConnectorForm = z.infer<typeof ZFormbricksConnectorForm>;
-
 const getSelectableQuestionIds = (survey: TUnifySurvey): string[] =>
   survey.elements
     .filter((element) => !(UNSUPPORTED_CONNECTOR_ELEMENT_TYPES as readonly string[]).includes(element.type))
@@ -116,6 +117,7 @@ const getSelectableQuestionIds = (survey: TUnifySurvey): string[] =>
 export const CreateConnectorModal = ({
   open,
   onOpenChange,
+  showTrigger = true,
   onCreateConnector,
   surveys,
   workspaceId,
@@ -319,11 +321,7 @@ export const CreateConnectorModal = ({
   };
 
   const handleFormbricksQuestionToggle = (questionId: string) => {
-    const currentSelection = formbricksForm.getValues("selectedQuestionIds");
-    const isSelected = currentSelection.includes(questionId);
-    const nextSelection = isSelected
-      ? currentSelection.filter((id) => id !== questionId)
-      : [...currentSelection, questionId];
+    const nextSelection = toggleQuestionId(formbricksForm.getValues("selectedQuestionIds"), questionId);
     formbricksForm.setValue("selectedQuestionIds", nextSelection, {
       shouldDirty: true,
       shouldValidate: true,
@@ -391,10 +389,12 @@ export const CreateConnectorModal = ({
 
   return (
     <>
-      <Button onClick={() => onOpenChange(true)} size="sm">
-        {t("workspace.unify.add_source")}
-        <PlusIcon className="ml-2 h-4 w-4" />
-      </Button>
+      {showTrigger && (
+        <Button onClick={() => onOpenChange(true)} size="sm">
+          {t("workspace.unify.add_source")}
+          <PlusIcon className="ml-2 h-4 w-4" />
+        </Button>
+      )}
 
       <Dialog open={open} onOpenChange={handleOpenChange}>
         <DialogContent className="max-w-3xl">

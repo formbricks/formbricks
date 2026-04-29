@@ -6,10 +6,10 @@ const ZActiveAIProvider = z.enum(AI_PROVIDERS);
 const ZAIConfigurationEnv = z.object({
   AI_PROVIDER: ZActiveAIProvider.optional(),
   AI_MODEL: z.string().optional(),
-  AI_GCP_PROJECT: z.string().optional(),
-  AI_GCP_LOCATION: z.string().optional(),
-  AI_GCP_CREDENTIALS_JSON: z.string().optional(),
-  AI_GCP_APPLICATION_CREDENTIALS: z.string().optional(),
+  AI_GOOGLE_CLOUD_PROJECT: z.string().optional(),
+  AI_GOOGLE_CLOUD_LOCATION: z.string().optional(),
+  AI_GOOGLE_CLOUD_CREDENTIALS_JSON: z.string().optional(),
+  AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS: z.string().optional(),
   AI_AWS_REGION: z.string().optional(),
   AI_AWS_ACCESS_KEY_ID: z.string().optional(),
   AI_AWS_SECRET_ACCESS_KEY: z.string().optional(),
@@ -19,6 +19,9 @@ const ZAIConfigurationEnv = z.object({
 });
 
 type TAIConfigurationEnv = z.infer<typeof ZAIConfigurationEnv>;
+
+const isJsonObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
 
 const addEnvIssue = (ctx: z.RefinementCtx, path: keyof TAIConfigurationEnv, message: string): void => {
   ctx.addIssue({
@@ -48,28 +51,44 @@ const validateAwsAIConfiguration = (values: TAIConfigurationEnv, ctx: z.Refineme
   }
 };
 
-const validateGcpAIConfiguration = (values: TAIConfigurationEnv, ctx: z.RefinementCtx): void => {
-  if (!values.AI_GCP_PROJECT) {
-    addEnvIssue(ctx, "AI_GCP_PROJECT", "AI_GCP_PROJECT is required when AI_PROVIDER=gcp");
-  }
-
-  if (!values.AI_GCP_LOCATION) {
-    addEnvIssue(ctx, "AI_GCP_LOCATION", "AI_GCP_LOCATION is required when AI_PROVIDER=gcp");
-  }
-
-  if (!values.AI_GCP_CREDENTIALS_JSON && !values.AI_GCP_APPLICATION_CREDENTIALS) {
+const validateGoogleAIConfiguration = (values: TAIConfigurationEnv, ctx: z.RefinementCtx): void => {
+  if (!values.AI_GOOGLE_CLOUD_PROJECT) {
     addEnvIssue(
       ctx,
-      "AI_GCP_CREDENTIALS_JSON",
-      "AI_GCP_CREDENTIALS_JSON or AI_GCP_APPLICATION_CREDENTIALS is required when AI_PROVIDER=gcp"
+      "AI_GOOGLE_CLOUD_PROJECT",
+      "AI_GOOGLE_CLOUD_PROJECT is required when AI_PROVIDER=google"
     );
   }
 
-  if (values.AI_GCP_CREDENTIALS_JSON) {
+  if (!values.AI_GOOGLE_CLOUD_LOCATION) {
+    addEnvIssue(
+      ctx,
+      "AI_GOOGLE_CLOUD_LOCATION",
+      "AI_GOOGLE_CLOUD_LOCATION is required when AI_PROVIDER=google"
+    );
+  }
+
+  if (!values.AI_GOOGLE_CLOUD_CREDENTIALS_JSON && !values.AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS) {
+    addEnvIssue(
+      ctx,
+      "AI_GOOGLE_CLOUD_CREDENTIALS_JSON",
+      "AI_GOOGLE_CLOUD_CREDENTIALS_JSON or AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS is required when AI_PROVIDER=google"
+    );
+  }
+
+  if (values.AI_GOOGLE_CLOUD_CREDENTIALS_JSON) {
     try {
-      JSON.parse(values.AI_GCP_CREDENTIALS_JSON);
+      const parsedCredentials = JSON.parse(values.AI_GOOGLE_CLOUD_CREDENTIALS_JSON) as unknown;
+
+      if (!isJsonObject(parsedCredentials)) {
+        throw new Error("AI_GOOGLE_CLOUD_CREDENTIALS_JSON must be a JSON object");
+      }
     } catch {
-      addEnvIssue(ctx, "AI_GCP_CREDENTIALS_JSON", "AI_GCP_CREDENTIALS_JSON must be valid JSON");
+      addEnvIssue(
+        ctx,
+        "AI_GOOGLE_CLOUD_CREDENTIALS_JSON",
+        "AI_GOOGLE_CLOUD_CREDENTIALS_JSON must be a valid JSON object"
+      );
     }
   }
 };
@@ -100,7 +119,7 @@ const validateActiveAIProviderConfiguration = (values: TAIConfigurationEnv, ctx:
     (values: TAIConfigurationEnv, ctx: z.RefinementCtx) => void
   > = {
     aws: validateAwsAIConfiguration,
-    gcp: validateGcpAIConfiguration,
+    google: validateGoogleAIConfiguration,
     azure: validateAzureAIConfiguration,
   };
 
@@ -160,10 +179,10 @@ const parsedEnv = createEnv({
     GITHUB_SECRET: z.string().optional(),
     GOOGLE_CLIENT_ID: z.string().optional(),
     GOOGLE_CLIENT_SECRET: z.string().optional(),
-    AI_GCP_PROJECT: z.string().optional(),
-    AI_GCP_LOCATION: z.string().optional(),
-    AI_GCP_CREDENTIALS_JSON: z.string().optional(),
-    AI_GCP_APPLICATION_CREDENTIALS: z.string().optional(),
+    AI_GOOGLE_CLOUD_PROJECT: z.string().optional(),
+    AI_GOOGLE_CLOUD_LOCATION: z.string().optional(),
+    AI_GOOGLE_CLOUD_CREDENTIALS_JSON: z.string().optional(),
+    AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS: z.string().optional(),
     GOOGLE_SHEETS_CLIENT_ID: z.string().optional(),
     GOOGLE_SHEETS_CLIENT_SECRET: z.string().optional(),
     GOOGLE_SHEETS_REDIRECT_URL: z.string().optional(),
@@ -315,10 +334,10 @@ const parsedEnv = createEnv({
     GITHUB_SECRET: process.env.GITHUB_SECRET,
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
-    AI_GCP_PROJECT: process.env.AI_GCP_PROJECT,
-    AI_GCP_LOCATION: process.env.AI_GCP_LOCATION,
-    AI_GCP_CREDENTIALS_JSON: process.env.AI_GCP_CREDENTIALS_JSON,
-    AI_GCP_APPLICATION_CREDENTIALS: process.env.AI_GCP_APPLICATION_CREDENTIALS,
+    AI_GOOGLE_CLOUD_PROJECT: process.env.AI_GOOGLE_CLOUD_PROJECT,
+    AI_GOOGLE_CLOUD_LOCATION: process.env.AI_GOOGLE_CLOUD_LOCATION,
+    AI_GOOGLE_CLOUD_CREDENTIALS_JSON: process.env.AI_GOOGLE_CLOUD_CREDENTIALS_JSON,
+    AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS: process.env.AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS,
     GOOGLE_SHEETS_CLIENT_ID: process.env.GOOGLE_SHEETS_CLIENT_ID,
     GOOGLE_SHEETS_CLIENT_SECRET: process.env.GOOGLE_SHEETS_CLIENT_SECRET,
     GOOGLE_SHEETS_REDIRECT_URL: process.env.GOOGLE_SHEETS_REDIRECT_URL,

@@ -71,7 +71,7 @@ export function ConnectorsTableDataRow({
         }
         return t("workspace.unify.status_live_sync");
       case "paused":
-        return t("workspace.unify.status_paused");
+        return t("common.disabled");
       case "error":
         return t("workspace.unify.status_error");
     }

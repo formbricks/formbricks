@@ -5566,36 +5566,6 @@ components:
                   pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
               required:
                 - light
-            questionColor:
-              type:
-                - object
-                - "null"
-              properties:
-                light:
-                  type: string
-                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
-                dark:
-                  type:
-                    - string
-                    - "null"
-                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
-              required:
-                - light
-            inputColor:
-              type:
-                - object
-                - "null"
-              properties:
-                light:
-                  type: string
-                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
-                dark:
-                  type:
-                    - string
-                    - "null"
-                  pattern: ^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$
-              required:
-                - light
             inputBorderColor:
               type:
                 - object

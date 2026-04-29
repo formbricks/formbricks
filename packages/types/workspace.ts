@@ -51,6 +51,7 @@ export const ZWorkspace = z.object({
   id: z.cuid2(),
   createdAt: z.date(),
   updatedAt: z.date(),
+  legacyEnvironmentId: z.string().nullable().optional(),
   name: z.string().trim().min(1, {
     error: "Workspace name cannot be empty",
   }),

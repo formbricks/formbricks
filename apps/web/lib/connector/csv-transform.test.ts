@@ -3,6 +3,7 @@ import { TConnectorFieldMapping } from "@formbricks/types/connector";
 import { transformCsvRowToFeedbackRecord, transformCsvRowsToFeedbackRecords } from "./csv-transform";
 
 const NOW = new Date("2026-02-25T10:00:00.000Z");
+const TENANT = "tenant-test";
 
 const makeMapping = (
   sourceFieldId: string,
@@ -34,7 +35,7 @@ describe("transformCsvRowToFeedbackRecord", () => {
       timestamp: "2026-01-15T10:00:00Z",
     };
 
-    const result = transformCsvRowToFeedbackRecord(row, baseMappings);
+    const result = transformCsvRowToFeedbackRecord(row, baseMappings, TENANT);
 
     expect(result).not.toBeNull();
     expect(result!.source_type).toBe("survey");
@@ -42,13 +43,77 @@ describe("transformCsvRowToFeedbackRecord", () => {
     expect(result!.field_type).toBe("text");
     expect(result!.value_text).toBe("Great product!");
     expect(result!.collected_at).toBe("2026-01-15T10:00:00.000Z");
+    expect(result!.tenant_id).toBe(TENANT);
   });
 
   test("returns null when required fields are missing", () => {
     const row = { feedback_text: "Great product!" };
     const mappings = [makeMapping("feedback_text", "value_text")];
 
-    const result = transformCsvRowToFeedbackRecord(row, mappings);
+    const result = transformCsvRowToFeedbackRecord(row, mappings, TENANT);
+    expect(result).toBeNull();
+  });
+
+  test("returns null when tenant_id is missing", () => {
+    const row = {
+      feedback_text: "Great product!",
+      question: "q1",
+      timestamp: "2026-01-15T10:00:00Z",
+    };
+
+    const result = transformCsvRowToFeedbackRecord(row, baseMappings);
+    expect(result).toBeNull();
+  });
+
+  test("auto-generates submission_id as a UUID when unmapped", () => {
+    const row = {
+      feedback_text: "Great product!",
+      question: "q1",
+      timestamp: "2026-01-15T10:00:00Z",
+    };
+
+    const a = transformCsvRowToFeedbackRecord(row, baseMappings, TENANT);
+    const b = transformCsvRowToFeedbackRecord(row, baseMappings, TENANT);
+
+    expect(a!.submission_id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+    expect(b!.submission_id).not.toBe(a!.submission_id);
+  });
+
+  test("uses explicit submission_id mapping when provided", () => {
+    const mappings = [...baseMappings, makeMapping("order_id", "submission_id")];
+    const row = {
+      feedback_text: "x",
+      question: "q1",
+      timestamp: "2026-01-15",
+      order_id: "ORD-42",
+    };
+
+    const result = transformCsvRowToFeedbackRecord(row, mappings, TENANT);
+    expect(result!.submission_id).toBe("ORD-42");
+  });
+
+  test("returns null when submission_id mapped but cell is empty", () => {
+    const mappings = [...baseMappings, makeMapping("order_id", "submission_id")];
+    const row = {
+      feedback_text: "x",
+      question: "q1",
+      timestamp: "2026-01-15",
+      order_id: "",
+    };
+
+    const result = transformCsvRowToFeedbackRecord(row, mappings, TENANT);
+    expect(result).toBeNull();
+  });
+
+  test("returns null when submission_id mapped but column missing from row", () => {
+    const mappings = [...baseMappings, makeMapping("order_id", "submission_id")];
+    const row = {
+      feedback_text: "x",
+      question: "q1",
+      timestamp: "2026-01-15",
+    };
+
+    const result = transformCsvRowToFeedbackRecord(row, mappings, TENANT);
     expect(result).toBeNull();
   });
 
@@ -61,7 +126,7 @@ describe("transformCsvRowToFeedbackRecord", () => {
       rating: "4.5",
     };
 
-    const result = transformCsvRowToFeedbackRecord(row, mappings);
+    const result = transformCsvRowToFeedbackRecord(row, mappings, TENANT);
     expect(result!.value_number).toBe(4.5);
   });
 
@@ -74,7 +139,7 @@ describe("transformCsvRowToFeedbackRecord", () => {
       rating: "not-a-number",
     };
 
-    const result = transformCsvRowToFeedbackRecord(row, mappings);
+    const result = transformCsvRowToFeedbackRecord(row, mappings, TENANT);
     expect(result!.value_number).toBeUndefined();
   });
 
@@ -84,21 +149,24 @@ describe("transformCsvRowToFeedbackRecord", () => {
     expect(
       transformCsvRowToFeedbackRecord(
         { feedback_text: "x", question: "q1", timestamp: "2026-01-15", is_promoter: "true" },
-        mappings
+        mappings,
+        TENANT
       )!.value_boolean
     ).toBe(true);
 
     expect(
       transformCsvRowToFeedbackRecord(
         { feedback_text: "x", question: "q1", timestamp: "2026-01-15", is_promoter: "0" },
-        mappings
+        mappings,
+        TENANT
       )!.value_boolean
     ).toBe(false);
 
     expect(
       transformCsvRowToFeedbackRecord(
         { feedback_text: "x", question: "q1", timestamp: "2026-01-15", is_promoter: "yes" },
-        mappings
+        mappings,
+        TENANT
       )!.value_boolean
     ).toBe(true);
   });
@@ -114,7 +182,7 @@ describe("transformCsvRowToFeedbackRecord", () => {
       makeMapping("", "collected_at", "$now"),
     ];
 
-    const result = transformCsvRowToFeedbackRecord({ question: "q1" }, mappings);
+    const result = transformCsvRowToFeedbackRecord({ question: "q1" }, mappings, TENANT);
     expect(result!.collected_at).toBe(NOW.toISOString());
 
     vi.useRealTimers();
@@ -129,7 +197,7 @@ describe("transformCsvRowToFeedbackRecord", () => {
     ];
 
     const row = { question: "q1", type_column: "review", timestamp: "2026-01-15" };
-    const result = transformCsvRowToFeedbackRecord(row, mappings);
+    const result = transformCsvRowToFeedbackRecord(row, mappings, TENANT);
     expect(result!.source_type).toBe("always_survey");
   });
 
@@ -140,7 +208,7 @@ describe("transformCsvRowToFeedbackRecord", () => {
       timestamp: "2026-01-15T10:00:00Z",
     };
 
-    const result = transformCsvRowToFeedbackRecord(row, baseMappings);
+    const result = transformCsvRowToFeedbackRecord(row, baseMappings, TENANT);
     expect(result!.value_text).toBeUndefined();
   });
 
@@ -153,7 +221,7 @@ describe("transformCsvRowToFeedbackRecord", () => {
       meta: '{"device":"mobile","version":"2.1"}',
     };
 
-    const result = transformCsvRowToFeedbackRecord(row, mappings);
+    const result = transformCsvRowToFeedbackRecord(row, mappings, TENANT);
     expect(result!.metadata).toEqual({ device: "mobile", version: "2.1" });
   });
 
@@ -166,7 +234,7 @@ describe("transformCsvRowToFeedbackRecord", () => {
       meta: "just a string",
     };
 
-    const result = transformCsvRowToFeedbackRecord(row, mappings);
+    const result = transformCsvRowToFeedbackRecord(row, mappings, TENANT);
     expect(result!.metadata).toEqual({ raw: "just a string" });
   });
 
@@ -177,7 +245,7 @@ describe("transformCsvRowToFeedbackRecord", () => {
       timestamp: "not-a-date",
     };
 
-    const result = transformCsvRowToFeedbackRecord(row, baseMappings);
+    const result = transformCsvRowToFeedbackRecord(row, baseMappings, TENANT);
     expect(result!.collected_at).toBeUndefined();
   });
 });
@@ -198,16 +266,19 @@ describe("transformCsvRowsToFeedbackRecords", () => {
       makeMapping("timestamp", "collected_at"),
     ];
 
-    const { records, skipped } = transformCsvRowsToFeedbackRecords(rows, mappings);
+    const { records, skipped } = transformCsvRowsToFeedbackRecords(rows, mappings, TENANT);
 
     expect(records).toHaveLength(2);
     expect(skipped).toBe(1);
     expect(records[0].field_id).toBe("q1");
     expect(records[1].field_id).toBe("q2");
+    expect(records[0].submission_id).toBeTruthy();
+    expect(records[1].submission_id).toBeTruthy();
+    expect(records[0].submission_id).not.toBe(records[1].submission_id);
   });
 
   test("returns empty records for empty input", () => {
-    const { records, skipped } = transformCsvRowsToFeedbackRecords([], baseMappings);
+    const { records, skipped } = transformCsvRowsToFeedbackRecords([], baseMappings, TENANT);
     expect(records).toHaveLength(0);
     expect(skipped).toBe(0);
   });

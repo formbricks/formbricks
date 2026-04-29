@@ -11,12 +11,7 @@ import { TSurveyStyling, TSurveyType } from "@formbricks/types/surveys/types";
 import { TWorkspace } from "@formbricks/types/workspace";
 import { TWorkspaceStyling, ZWorkspaceStyling } from "@formbricks/types/workspace";
 import { previewSurvey } from "@/app/lib/templates";
-import {
-  COLOR_DEFAULTS,
-  STYLE_DEFAULTS,
-  deriveNewFieldsFromLegacy,
-  getSuggestedColors,
-} from "@/lib/styling/constants";
+import { COLOR_DEFAULTS, STYLE_DEFAULTS, getSuggestedColors } from "@/lib/styling/constants";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { FormStylingSettings } from "@/modules/survey/editor/components/form-styling-settings";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
@@ -67,10 +62,8 @@ export const ThemeStyling = ({
     ? Object.fromEntries(Object.entries(savedStyling).filter(([, v]) => v != null))
     : {};
 
-  const legacyFills = deriveNewFieldsFromLegacy(cleanSaved);
-
   const form = useForm<TWorkspaceStyling>({
-    defaultValues: { ...STYLE_DEFAULTS, ...legacyFills, ...cleanSaved },
+    defaultValues: { ...STYLE_DEFAULTS, ...cleanSaved },
     resolver: zodResolver(ZWorkspaceStyling),
   });
 
