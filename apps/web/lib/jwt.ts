@@ -3,8 +3,10 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ENCRYPTION_KEY, NEXTAUTH_SECRET } from "@/lib/constants";
 import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
+import { getGatewayAuthServiceTokenPurpose, TGatewayAuthService } from "@/modules/gateway-auth/lib/service";
 
-export const FEEDBACK_RECORDS_GATEWAY_TOKEN_PURPOSE = "feedback_records_gateway";
+export const FEEDBACK_RECORDS_GATEWAY_TOKEN_PURPOSE =
+  getGatewayAuthServiceTokenPurpose("feedbackRecords");
 const FEEDBACK_RECORDS_GATEWAY_TOKEN_TTL_SECONDS = 60 * 10;
 
 // Helper function to decrypt with fallback to plain text
@@ -29,9 +31,7 @@ export const createToken = (userId: string, options = {}): string => {
   return jwt.sign({ id: encryptedUserId }, NEXTAUTH_SECRET, options);
 };
 
-export const createFeedbackRecordsGatewayToken = (
-  userId: string
-): {
+export const createGatewayServiceToken = (userId: string, service: TGatewayAuthService): {
   token: string;
   expiresAt: string;
 } => {
@@ -39,7 +39,7 @@ export const createFeedbackRecordsGatewayToken = (
     throw new Error("NEXTAUTH_SECRET is not set");
   }
 
-  const token = jwt.sign({ purpose: FEEDBACK_RECORDS_GATEWAY_TOKEN_PURPOSE }, NEXTAUTH_SECRET, {
+  const token = jwt.sign({ purpose: getGatewayAuthServiceTokenPurpose(service) }, NEXTAUTH_SECRET, {
     algorithm: "HS256",
     expiresIn: FEEDBACK_RECORDS_GATEWAY_TOKEN_TTL_SECONDS,
     subject: userId,
@@ -55,6 +55,16 @@ export const createFeedbackRecordsGatewayToken = (
     expiresAt: new Date(decodedToken.exp * 1000).toISOString(),
   };
 };
+
+export const createFeedbackRecordsGatewayToken = (
+  userId: string
+): {
+  token: string;
+  expiresAt: string;
+} => {
+  return createGatewayServiceToken(userId, "feedbackRecords");
+};
+
 export const createTokenForLinkSurvey = (surveyId: string, userEmail: string): string => {
   if (!NEXTAUTH_SECRET) {
     throw new Error("NEXTAUTH_SECRET is not set");
@@ -96,9 +106,7 @@ export const verifyEmailChangeToken = async (token: string): Promise<{ id: strin
   };
 };
 
-export const verifyFeedbackRecordsGatewayToken = (
-  token: string
-): {
+export const verifyGatewayServiceToken = (token: string, service: TGatewayAuthService): {
   userId: string;
 } => {
   if (!NEXTAUTH_SECRET) {
@@ -110,13 +118,21 @@ export const verifyFeedbackRecordsGatewayToken = (
     sub?: string;
   };
 
-  if (payload.purpose !== FEEDBACK_RECORDS_GATEWAY_TOKEN_PURPOSE || !payload.sub) {
+  if (payload.purpose !== getGatewayAuthServiceTokenPurpose(service) || !payload.sub) {
     throw new Error("Invalid feedback records gateway token");
   }
 
   return {
     userId: payload.sub,
   };
+};
+
+export const verifyFeedbackRecordsGatewayToken = (
+  token: string
+): {
+  userId: string;
+} => {
+  return verifyGatewayServiceToken(token, "feedbackRecords");
 };
 
 export const createEmailChangeToken = (userId: string, email: string): string => {

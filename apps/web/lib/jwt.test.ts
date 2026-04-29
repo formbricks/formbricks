@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import * as crypto from "@/lib/crypto";
 import {
+  createGatewayServiceToken,
   createFeedbackRecordsGatewayToken,
   createEmailChangeToken,
   createEmailToken,
@@ -10,6 +11,7 @@ import {
   createToken,
   createTokenForLinkSurvey,
   getEmailFromEmailToken,
+  verifyGatewayServiceToken,
   verifyFeedbackRecordsGatewayToken,
   verifyEmailChangeToken,
   verifyInviteToken,
@@ -154,6 +156,14 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
   });
 
   describe("feedback records gateway tokens", () => {
+    test("creates and verifies a generic gateway token for feedbackRecords", () => {
+      const { token, expiresAt } = createGatewayServiceToken(mockUser.id, "feedbackRecords");
+
+      expect(token).toBeDefined();
+      expect(new Date(expiresAt).toString()).not.toBe("Invalid Date");
+      expect(verifyGatewayServiceToken(token, "feedbackRecords")).toEqual({ userId: mockUser.id });
+    });
+
     test("creates and verifies a feedback records gateway token", () => {
       const { token, expiresAt } = createFeedbackRecordsGatewayToken(mockUser.id);
 
