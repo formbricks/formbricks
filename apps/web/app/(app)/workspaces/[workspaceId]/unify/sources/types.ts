@@ -81,6 +81,14 @@ export const FEEDBACK_RECORD_FIELDS: TTargetField[] = [
     description: "Tenant/organization identifier for multi-tenant deployments",
   },
   {
+    id: "submission_id",
+    name: "Submission ID",
+    type: "string",
+    required: false,
+    description:
+      "Optional. Map to a stable column (e.g. order_id, ticket_id) to enable idempotent re-imports. Auto-generated UUID per row if unmapped.",
+  },
+  {
     id: "source_id",
     name: "Source ID",
     type: "string",

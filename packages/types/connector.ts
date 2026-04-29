@@ -42,6 +42,7 @@ export const ZHubTargetField = z.enum([
   "metadata",
   "language",
   "user_identifier",
+  "submission_id",
 ]);
 export type THubTargetField = z.infer<typeof ZHubTargetField>;
 
