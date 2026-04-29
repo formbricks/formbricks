@@ -169,7 +169,7 @@ export const PUT = withV1ApiWrapper({
         auditLog.newObject = updated;
       }
 
-      sendToPipeline({
+      await sendToPipeline({
         event: "responseUpdated",
         workspaceId: result.survey.workspaceId,
         surveyId: result.survey.id,
@@ -177,7 +177,7 @@ export const PUT = withV1ApiWrapper({
       });
 
       if (updated.finished) {
-        sendToPipeline({
+        await sendToPipeline({
           event: "responseFinished",
           workspaceId: result.survey.workspaceId,
           surveyId: result.survey.id,

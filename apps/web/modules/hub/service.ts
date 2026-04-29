@@ -9,11 +9,14 @@ import type {
   FeedbackRecordData,
   FeedbackRecordListParams,
   FeedbackRecordListResponse,
+  FeedbackRecordUpdateParams,
 } from "./types";
 
-export type CreateFeedbackRecordResult = {
+type HubError = { status: number; message: string; detail: string };
+
+export type HubFeedbackRecordResult = {
   data: FeedbackRecordData | null;
-  error: { status: number; message: string; detail: string } | null;
+  error: HubError | null;
 };
 
 const NO_CONFIG_ERROR = {
@@ -22,7 +25,7 @@ const NO_CONFIG_ERROR = {
   detail: "HUB_API_KEY is not set; Hub integration is disabled.",
 } as const;
 
-const createResultFromError = (err: unknown): CreateFeedbackRecordResult => {
+const createResultFromError = (err: unknown): HubFeedbackRecordResult => {
   const status = err instanceof FormbricksHub.APIError ? err.status : 0;
   const message = err instanceof Error ? err.message : String(err);
   return { data: null, error: { status, message, detail: message } };
@@ -34,7 +37,7 @@ const createResultFromError = (err: unknown): CreateFeedbackRecordResult => {
  */
 export const createFeedbackRecord = async (
   input: FeedbackRecordCreateParams
-): Promise<CreateFeedbackRecordResult> => {
+): Promise<HubFeedbackRecordResult> => {
   const client = getHubClient();
   if (!client) {
     return { data: null, error: { ...NO_CONFIG_ERROR } };
@@ -48,9 +51,48 @@ export const createFeedbackRecord = async (
   }
 };
 
+/**
+ * Retrieve a single feedback record from the Hub by id.
+ */
+export const retrieveFeedbackRecord = async (id: string): Promise<HubFeedbackRecordResult> => {
+  const client = getHubClient();
+  if (!client) {
+    return { data: null, error: { ...NO_CONFIG_ERROR } };
+  }
+
+  try {
+    const data = await client.feedbackRecords.retrieve(id);
+    return { data, error: null };
+  } catch (err) {
+    logger.warn({ err, id }, "Hub: retrieveFeedbackRecord failed");
+    return createResultFromError(err);
+  }
+};
+
+/**
+ * Update a single feedback record in the Hub by id.
+ */
+export const updateFeedbackRecord = async (
+  id: string,
+  input: FeedbackRecordUpdateParams
+): Promise<HubFeedbackRecordResult> => {
+  const client = getHubClient();
+  if (!client) {
+    return { data: null, error: { ...NO_CONFIG_ERROR } };
+  }
+
+  try {
+    const data = await client.feedbackRecords.update(id, input);
+    return { data, error: null };
+  } catch (err) {
+    logger.warn({ err, id }, "Hub: updateFeedbackRecord failed");
+    return createResultFromError(err);
+  }
+};
+
 export type ListFeedbackRecordsResult = {
   data: FeedbackRecordListResponse | null;
-  error: { status: number; message: string; detail: string } | null;
+  error: HubError | null;
 };
 
 export type FeedbackRecordTenantResult = {
@@ -62,7 +104,7 @@ export type FeedbackRecordTenantResult = {
  * List feedback records from the Hub with optional filters and pagination.
  */
 export const listFeedbackRecords = async (
-  params: FeedbackRecordListParams
+  params?: FeedbackRecordListParams
 ): Promise<ListFeedbackRecordsResult> => {
   const client = getHubClient();
   if (!client) {
@@ -110,7 +152,7 @@ export const getFeedbackRecordTenant = async (recordId: string): Promise<Feedbac
  */
 export const createFeedbackRecordsBatch = async (
   inputs: FeedbackRecordCreateParams[]
-): Promise<{ results: CreateFeedbackRecordResult[] }> => {
+): Promise<{ results: HubFeedbackRecordResult[] }> => {
   const client = getHubClient();
   if (!client) {
     return {
@@ -122,7 +164,7 @@ export const createFeedbackRecordsBatch = async (
     inputs.map(async (input) => {
       try {
         const data = await client.feedbackRecords.create(input);
-        return { data, error: null as CreateFeedbackRecordResult["error"] };
+        return { data, error: null as HubFeedbackRecordResult["error"] };
       } catch (err) {
         logger.warn({ err, fieldId: input.field_id }, "Hub: createFeedbackRecord failed");
         return createResultFromError(err);

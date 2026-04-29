@@ -34,7 +34,7 @@ const logFailedRecords = (
 const processConnector = async (
   connector: TConnectorWithMappings,
   response: TResponse,
-  survey: TSurvey,
+  survey: Pick<TSurvey, "id" | "name" | "blocks">,
   workspaceId: string
 ): Promise<void> => {
   const feedbackRecords = transformResponseToFeedbackRecords(
@@ -94,7 +94,7 @@ const processConnector = async (
  */
 export const handleConnectorPipeline = async (
   response: TResponse,
-  survey: TSurvey,
+  survey: Pick<TSurvey, "id" | "name" | "blocks">,
   workspaceId: string
 ): Promise<void> => {
   try {

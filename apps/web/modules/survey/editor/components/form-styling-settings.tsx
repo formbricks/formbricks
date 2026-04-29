@@ -181,7 +181,7 @@ export const FormStylingSettings = ({
             <div className="grid grid-cols-2 gap-4">
               <ColorField
                 form={form}
-                name="inputColor.light"
+                name="inputBgColor.light"
                 label={t("workspace.surveys.edit.input_color")}
                 description={t("workspace.surveys.edit.input_color_description")}
               />

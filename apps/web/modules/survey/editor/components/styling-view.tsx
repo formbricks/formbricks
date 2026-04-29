@@ -9,12 +9,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
-import {
-  COLOR_DEFAULTS,
-  STYLE_DEFAULTS,
-  deriveNewFieldsFromLegacy,
-  getSuggestedColors,
-} from "@/lib/styling/constants";
+import { COLOR_DEFAULTS, STYLE_DEFAULTS, getSuggestedColors } from "@/lib/styling/constants";
 import { FormStylingSettings } from "@/modules/survey/editor/components/form-styling-settings";
 import { LogoSettingsCard } from "@/modules/survey/editor/components/logo-settings-card";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
@@ -73,15 +68,10 @@ export const StylingView = ({
     ? Object.fromEntries(Object.entries(localSurvey.styling).filter(([, v]) => v != null))
     : {};
 
-  const workspaceLegacyFills = deriveNewFieldsFromLegacy(cleanWorkspace);
-  const surveyLegacyFills = deriveNewFieldsFromLegacy(cleanSurvey);
-
   const form = useForm<TSurveyStyling>({
     defaultValues: {
       ...STYLE_DEFAULTS,
-      ...workspaceLegacyFills,
       ...cleanWorkspace,
-      ...surveyLegacyFills,
       ...cleanSurvey,
     },
   });

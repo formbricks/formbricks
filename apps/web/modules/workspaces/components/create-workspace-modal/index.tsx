@@ -31,11 +31,22 @@ import {
 } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
 import { MultiSelect } from "@/modules/ui/components/multi-select";
-import { getTeamsByOrganizationIdAction } from "@/modules/workspaces/settings/actions";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/modules/ui/components/select";
+import {
+  getFeedbackRecordDirectoriesByOrganizationIdAction,
+  getTeamsByOrganizationIdAction,
+} from "@/modules/workspaces/settings/actions";
 
 const ZCreateWorkspaceForm = z.object({
   name: ZWorkspace.shape.name,
   teamIds: z.array(z.string()).optional(),
+  feedbackRecordDirectoryId: z.string().optional(),
 });
 
 type TCreateWorkspaceForm = z.infer<typeof ZCreateWorkspaceForm>;
@@ -57,27 +68,53 @@ export const CreateWorkspaceModal = ({
   const router = useRouter();
 
   const [organizationTeams, setOrganizationTeams] = useState<TOrganizationTeam[]>([]);
-
-  useEffect(() => {
-    const fetchOrganizationTeams = async () => {
-      const response = await getTeamsByOrganizationIdAction({ organizationId });
-      if (response?.data) {
-        setOrganizationTeams(response.data);
-      } else {
-        const errorMessage = getFormattedErrorMessage(response);
-        toast.error(errorMessage);
-      }
-    };
-    fetchOrganizationTeams();
-  }, [organizationId]);
+  const [feedbackDirectories, setFeedbackDirectories] = useState<{ id: string; name: string }[]>([]);
 
   const form = useForm<TCreateWorkspaceForm>({
     resolver: zodResolver(ZCreateWorkspaceForm),
     defaultValues: {
       name: "",
       teamIds: [],
+      feedbackRecordDirectoryId: undefined,
     },
   });
+  const { getValues, setValue } = form;
+
+  useEffect(() => {
+    if (!open) return;
+
+    const fetchModalData = async () => {
+      const [teamsResponse, directoriesResponse] = await Promise.all([
+        getTeamsByOrganizationIdAction({ organizationId }),
+        getFeedbackRecordDirectoriesByOrganizationIdAction({ organizationId }),
+      ]);
+
+      if (teamsResponse?.data) {
+        setOrganizationTeams(teamsResponse.data);
+      } else {
+        const errorMessage = getFormattedErrorMessage(teamsResponse);
+        toast.error(errorMessage);
+      }
+
+      if (directoriesResponse?.data) {
+        setFeedbackDirectories(directoriesResponse.data);
+        const selectedFeedbackDirectory = getValues("feedbackRecordDirectoryId");
+        const isSelectedDirectoryAvailable = directoriesResponse.data.some(
+          (directory) => directory.id === selectedFeedbackDirectory
+        );
+
+        if (directoriesResponse.data.length === 0) {
+          setValue("feedbackRecordDirectoryId", undefined);
+        } else if (!selectedFeedbackDirectory || !isSelectedDirectoryAvailable) {
+          setValue("feedbackRecordDirectoryId", directoriesResponse.data[0].id);
+        }
+      } else {
+        const errorMessage = getFormattedErrorMessage(directoriesResponse);
+        toast.error(errorMessage);
+      }
+    };
+    fetchModalData();
+  }, [open, organizationId, getValues, setValue]);
 
   const { isSubmitting } = form.formState;
 
@@ -92,6 +129,7 @@ export const CreateWorkspaceModal = ({
       data: {
         name: data.name,
         teamIds: data.teamIds || [],
+        feedbackRecordDirectoryId: data.feedbackRecordDirectoryId,
       },
     });
 
@@ -132,6 +170,40 @@ export const CreateWorkspaceModal = ({
                     <FormLabel>{t("common.workspace_name")}</FormLabel>
                     <FormControl>
                       <Input {...field} placeholder={t("common.workspace_name_placeholder")} autoFocus />
+                    </FormControl>
+                    {error?.message && <FormError className="text-left">{error.message}</FormError>}
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="feedbackRecordDirectoryId"
+                render={({ field, fieldState: { error } }) => (
+                  <FormItem>
+                    <FormLabel>{t("workspace.unify.feedback_record_directory")}</FormLabel>
+                    <FormControl>
+                      <Select
+                        value={field.value ?? ""}
+                        onValueChange={field.onChange}
+                        disabled={feedbackDirectories.length === 0}>
+                        <SelectTrigger>
+                          <SelectValue
+                            placeholder={
+                              feedbackDirectories.length > 0
+                                ? t("workspace.unify.select_feedback_record_directory")
+                                : t("workspace.unify.no_feedback_record_directory_available")
+                            }
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {feedbackDirectories.map((directory) => (
+                            <SelectItem key={directory.id} value={directory.id}>
+                              {directory.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </FormControl>
                     {error?.message && <FormError className="text-left">{error.message}</FormError>}
                   </FormItem>

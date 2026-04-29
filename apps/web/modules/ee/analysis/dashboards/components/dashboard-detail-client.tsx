@@ -10,6 +10,7 @@ import { useTranslation } from "react-i18next";
 import "react-resizable/css/styles.css";
 import type { TChartQuery } from "@formbricks/types/analysis";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { CreateChartDialog } from "@/modules/ee/analysis/charts/components/create-chart-dialog";
 import { DashboardControlBar } from "@/modules/ee/analysis/dashboards/components/dashboard-control-bar";
 import { DashboardPageHeader } from "@/modules/ee/analysis/dashboards/components/dashboard-page-header";
 import { DashboardWidget } from "@/modules/ee/analysis/dashboards/components/dashboard-widget";
@@ -27,6 +28,7 @@ interface DashboardDetailClientProps {
   workspaceId: string;
   dashboard: TDashboardDetail;
   widgetDataPromises: Map<string, Promise<{ data: TChartDataRow[]; query: TChartQuery } | { error: string }>>;
+  directories: { id: string; name: string }[];
   isReadOnly: boolean;
 }
 
@@ -114,17 +116,26 @@ const MemoizedWidgetItem = memo(function WidgetItem({
   widget,
   isEditing,
   dataPromise,
+  onEdit,
+  onResize,
   onRemove,
 }: Readonly<{
   widget: TDashboardWidget;
   isEditing: boolean;
   dataPromise?: Promise<{ data: TChartDataRow[]; query: TChartQuery } | { error: string }>;
+  onEdit?: () => void;
+  onResize?: () => void;
   onRemove?: () => void;
 }>) {
-  const title = widget.chart.name;
+  const title = widget.chart?.name ?? "";
 
   return (
-    <DashboardWidget title={title} isEditing={isEditing} onRemove={onRemove}>
+    <DashboardWidget
+      title={title}
+      isEditing={isEditing}
+      onEdit={onEdit}
+      onResize={onResize}
+      onRemove={onRemove}>
       <MemoizedWidgetContent widget={widget} dataPromise={dataPromise} />
     </DashboardWidget>
   );
@@ -134,6 +145,7 @@ export function DashboardDetailClient({
   workspaceId,
   dashboard,
   widgetDataPromises,
+  directories,
   isReadOnly,
 }: Readonly<DashboardDetailClientProps>) {
   const router = useRouter();
@@ -142,6 +154,7 @@ export function DashboardDetailClient({
 
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [editingChartId, setEditingChartId] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
   const [name, setName] = useState(dashboard.name);
@@ -169,6 +182,32 @@ export function DashboardDetailClient({
       setDraftWidgets((current) => (current ?? dashboard.widgets).filter((w) => w.id !== widgetId));
     },
     [dashboard.widgets]
+  );
+
+  const handleEnterEditMode = useCallback(() => {
+    if (isEditing) {
+      return;
+    }
+
+    setDraftWidgets((current) => current ?? dashboard.widgets);
+    setIsEditing(true);
+  }, [dashboard.widgets, isEditing]);
+
+  const handleEditChart = useCallback((chartId: string) => {
+    setEditingChartId(chartId);
+  }, []);
+
+  const handleRemoveWidgetFromMenu = useCallback(
+    (widgetId: string) => {
+      if (!isEditing) {
+        setDraftWidgets((current) => (current ?? dashboard.widgets).filter((w) => w.id !== widgetId));
+        setIsEditing(true);
+        return;
+      }
+
+      handleRemoveWidget(widgetId);
+    },
+    [dashboard.widgets, handleRemoveWidget, isEditing]
   );
 
   const handleCancel = useCallback(() => {
@@ -248,16 +287,14 @@ export function DashboardDetailClient({
           <DashboardControlBar
             workspaceId={workspaceId}
             dashboardId={dashboard.id}
+            directories={directories}
             existingChartIds={widgets.map((w) => w.chartId)}
             isEditing={isEditing}
             isSaving={isSaving}
             hasChanges={hasChanges}
             isReadOnly={isReadOnly}
             onRefresh={() => router.refresh()}
-            onEditToggle={() => {
-              setDraftWidgets(dashboard.widgets);
-              setIsEditing(true);
-            }}
+            onEditToggle={handleEnterEditMode}
             onSave={handleSave}
             onCancel={handleCancel}
           />
@@ -296,7 +333,9 @@ export function DashboardDetailClient({
                       widget={widget}
                       isEditing={isEditing}
                       dataPromise={widgetDataPromises.get(widget.id)}
-                      onRemove={isEditing ? () => handleRemoveWidget(widget.id) : undefined}
+                      onEdit={isReadOnly ? undefined : () => handleEditChart(widget.chartId)}
+                      onResize={isReadOnly ? undefined : handleEnterEditMode}
+                      onRemove={isReadOnly ? undefined : () => handleRemoveWidgetFromMenu(widget.id)}
                     />
                   </div>
                 ))}
@@ -305,6 +344,23 @@ export function DashboardDetailClient({
           )}
         </div>
       </section>
+      {!isReadOnly && (
+        <CreateChartDialog
+          open={editingChartId !== null}
+          onOpenChange={(open) => {
+            if (!open) {
+              setEditingChartId(null);
+            }
+          }}
+          workspaceId={workspaceId}
+          chartId={editingChartId ?? undefined}
+          onSuccess={() => {
+            setEditingChartId(null);
+            router.refresh();
+          }}
+          directories={directories}
+        />
+      )}
     </PageContentWrapper>
   );
 }

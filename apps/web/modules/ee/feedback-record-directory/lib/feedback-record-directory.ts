@@ -11,6 +11,7 @@ import {
   TFeedbackRecordDirectory,
   TFeedbackRecordDirectoryDetails,
   TFeedbackRecordDirectoryUpdateInput,
+  TWorkspaceFeedbackRecordDirectoryAccess,
   ZFeedbackRecordDirectoryUpdateInput,
 } from "@/modules/ee/feedback-record-directory/types/feedback-record-directory";
 
@@ -136,6 +137,55 @@ export const getFeedbackRecordDirectoryAuthContext = reactCache(
   }
 );
 
+/**
+ * Lists active feedback directory access assignments by workspace for an organization.
+ * Each workspace appears once with the first active directory assignment found.
+ */
+export const getWorkspaceFeedbackRecordDirectoryAccess = reactCache(
+  async (organizationId: string): Promise<TWorkspaceFeedbackRecordDirectoryAccess[]> => {
+    validateInputs([organizationId, ZId]);
+    try {
+      const rows = await prisma.feedbackRecordDirectoryWorkspace.findMany({
+        where: {
+          feedbackRecordDirectory: {
+            organizationId,
+            isArchived: false,
+          },
+        },
+        select: {
+          workspaceId: true,
+          feedbackRecordDirectory: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+        orderBy: [{ workspaceId: "asc" }, { createdAt: "asc" }],
+      });
+
+      const accessByWorkspaceId = new Map<string, TWorkspaceFeedbackRecordDirectoryAccess>();
+
+      for (const row of rows) {
+        if (!accessByWorkspaceId.has(row.workspaceId)) {
+          accessByWorkspaceId.set(row.workspaceId, {
+            workspaceId: row.workspaceId,
+            feedbackRecordDirectoryId: row.feedbackRecordDirectory.id,
+            feedbackRecordDirectoryName: row.feedbackRecordDirectory.name,
+          });
+        }
+      }
+
+      return Array.from(accessByWorkspaceId.values());
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+      throw error;
+    }
+  }
+);
+
 export const getFeedbackRecordDirectoryDetails = reactCache(
   async (directoryId: string): Promise<TFeedbackRecordDirectoryDetails | null> => {
     validateInputs([directoryId, ZId]);
@@ -227,7 +277,7 @@ export const createFeedbackRecordDirectory = async (
         where: { id: { in: workspaceIds }, organizationId },
       });
       if (count !== workspaceIds.length) {
-        throw new InvalidInputError("DIRECTORY_PROJECTS_INVALID_ORG");
+        throw new InvalidInputError("DIRECTORY_WORKSPACES_INVALID_ORG");
       }
     }
 
@@ -275,7 +325,10 @@ const buildWorkspaceAssignmentPayload = async (
   workspaceIds: string[],
   organizationId: string,
   currentWorkspaceIds: string[]
-): Promise<Prisma.FeedbackRecordDirectoryWorkspaceUpdateManyWithoutFeedbackRecordDirectoryNestedInput> => {
+): Promise<{
+  payload: Prisma.FeedbackRecordDirectoryWorkspaceUpdateManyWithoutFeedbackRecordDirectoryNestedInput;
+  deletedWorkspaceIds: string[];
+}> => {
   if (workspaceIds.length > 0) {
     const orgWorkspacesCount = await prismaClient.workspace.count({
       where: {
@@ -284,27 +337,128 @@ const buildWorkspaceAssignmentPayload = async (
       },
     });
     if (orgWorkspacesCount !== workspaceIds.length) {
-      throw new InvalidInputError("DIRECTORY_PROJECTS_INVALID_ORG");
+      throw new InvalidInputError("DIRECTORY_WORKSPACES_INVALID_ORG");
     }
   }
 
   const deletedWorkspaceIds = currentWorkspaceIds.filter((id) => !workspaceIds.includes(id));
 
   return {
-    deleteMany: {
-      workspaceId: { in: deletedWorkspaceIds },
-    },
-    upsert: workspaceIds.map((workspaceId) => ({
-      where: {
-        feedbackRecordDirectoryId_workspaceId: {
-          feedbackRecordDirectoryId: directoryId,
-          workspaceId,
-        },
+    payload: {
+      deleteMany: {
+        workspaceId: { in: deletedWorkspaceIds },
       },
-      update: {},
-      create: { workspaceId },
-    })),
+      upsert: workspaceIds.map((workspaceId) => ({
+        where: {
+          feedbackRecordDirectoryId_workspaceId: {
+            feedbackRecordDirectoryId: directoryId,
+            workspaceId,
+          },
+        },
+        update: {},
+        create: { workspaceId },
+      })),
+    },
+    deletedWorkspaceIds,
   };
+};
+
+interface UpdateFeedbackRecordDirectoryOptions {
+  pauseConnectorsInRemovedWorkspaces?: boolean;
+}
+
+const getArchiveUpdate = async (
+  directoryId: string,
+  isArchived: boolean | undefined
+): Promise<Pick<Prisma.FeedbackRecordDirectoryUpdateInput, "isArchived">> => {
+  if (isArchived === true) {
+    const connectorCount = await prisma.connector.count({
+      where: { feedbackRecordDirectoryId: directoryId },
+    });
+    if (connectorCount > 0) {
+      throw new InvalidInputError("DIRECTORY_HAS_CONNECTORS");
+    }
+    return { isArchived: true };
+  }
+
+  if (isArchived === false) {
+    return { isArchived: false };
+  }
+
+  return {};
+};
+
+const getWorkspaceAssignmentUpdate = async (
+  directoryId: string,
+  organizationId: string,
+  workspaceIds: string[] | undefined
+): Promise<{
+  workspaces?: Prisma.FeedbackRecordDirectoryWorkspaceUpdateManyWithoutFeedbackRecordDirectoryNestedInput;
+  removedWorkspaceIds: string[];
+}> => {
+  if (workspaceIds === undefined) {
+    return { removedWorkspaceIds: [] };
+  }
+
+  const currentDetails = await getFeedbackRecordDirectoryDetails(directoryId);
+  const currentWorkspaceIds = currentDetails?.workspaces.map((workspace) => workspace.workspaceId) ?? [];
+  const assignmentPayload = await buildWorkspaceAssignmentPayload(
+    prisma,
+    directoryId,
+    workspaceIds,
+    organizationId,
+    currentWorkspaceIds
+  );
+
+  return {
+    workspaces: assignmentPayload.payload,
+    removedWorkspaceIds: assignmentPayload.deletedWorkspaceIds,
+  };
+};
+
+const pauseConnectorsInWorkspaces = async (
+  tx: Prisma.TransactionClient,
+  directoryId: string,
+  workspaceIds: string[]
+): Promise<void> => {
+  if (workspaceIds.length === 0) {
+    return;
+  }
+
+  await tx.connector.updateMany({
+    where: {
+      feedbackRecordDirectoryId: directoryId,
+      workspaceId: { in: workspaceIds },
+    },
+    data: {
+      status: "paused",
+    },
+  });
+};
+
+/**
+ * Enforces the single-active-FRD-per-workspace invariant. The client UI prevents
+ * assigning a workspace to multiple active directories, but the server must also
+ * reject such payloads to keep this guarantee under direct API access.
+ */
+const assertWorkspacesNotAssignedElsewhere = async (
+  directoryId: string,
+  workspaceIds: string[]
+): Promise<void> => {
+  if (workspaceIds.length === 0) return;
+
+  const conflicting = await prisma.feedbackRecordDirectoryWorkspace.findFirst({
+    where: {
+      workspaceId: { in: workspaceIds },
+      feedbackRecordDirectoryId: { not: directoryId },
+      feedbackRecordDirectory: { isArchived: false },
+    },
+    select: { workspaceId: true },
+  });
+
+  if (conflicting) {
+    throw new InvalidInputError("WORKSPACE_ALREADY_ASSIGNED_TO_DIFFERENT_DIRECTORY");
+  }
 };
 
 /**
@@ -328,47 +482,40 @@ const buildWorkspaceAssignmentPayload = async (
 export const updateFeedbackRecordDirectory = async (
   directoryId: string,
   organizationId: string,
-  data: TFeedbackRecordDirectoryUpdateInput
+  data: TFeedbackRecordDirectoryUpdateInput,
+  options?: UpdateFeedbackRecordDirectoryOptions
 ): Promise<boolean> => {
   validateInputs([directoryId, ZId], [organizationId, ZId], [data, ZFeedbackRecordDirectoryUpdateInput]);
 
   try {
     const { name, workspaceIds, isArchived } = data;
 
-    const payload: Prisma.FeedbackRecordDirectoryUpdateInput = {};
-
-    if (name !== undefined) {
-      payload.name = name;
-    }
-
-    if (isArchived === true) {
-      const connectorCount = await prisma.connector.count({
-        where: { feedbackRecordDirectoryId: directoryId },
-      });
-      if (connectorCount > 0) {
-        throw new InvalidInputError("DIRECTORY_HAS_CONNECTORS");
-      }
-      payload.isArchived = true;
-    } else if (isArchived === false) {
-      payload.isArchived = false;
-    }
-
     if (workspaceIds !== undefined) {
-      const currentDetails = await getFeedbackRecordDirectoryDetails(directoryId);
-      const currentWorkspaceIds = currentDetails?.workspaces.map((p) => p.workspaceId) ?? [];
-
-      payload.workspaces = await buildWorkspaceAssignmentPayload(
-        prisma,
-        directoryId,
-        workspaceIds,
-        organizationId,
-        currentWorkspaceIds
-      );
+      await assertWorkspacesNotAssignedElsewhere(directoryId, workspaceIds);
     }
 
-    await prisma.feedbackRecordDirectory.update({
-      where: { id: directoryId },
-      data: payload,
+    const archiveUpdate = await getArchiveUpdate(directoryId, isArchived);
+    const workspaceAssignmentUpdate = await getWorkspaceAssignmentUpdate(
+      directoryId,
+      organizationId,
+      workspaceIds
+    );
+
+    const payload: Prisma.FeedbackRecordDirectoryUpdateInput = {
+      ...(name !== undefined ? { name } : {}),
+      ...archiveUpdate,
+      ...(workspaceAssignmentUpdate.workspaces ? { workspaces: workspaceAssignmentUpdate.workspaces } : {}),
+    };
+
+    await prisma.$transaction(async (tx) => {
+      await tx.feedbackRecordDirectory.update({
+        where: { id: directoryId },
+        data: payload,
+      });
+
+      if (options?.pauseConnectorsInRemovedWorkspaces) {
+        await pauseConnectorsInWorkspaces(tx, directoryId, workspaceAssignmentUpdate.removedWorkspaceIds);
+      }
     });
 
     return true;

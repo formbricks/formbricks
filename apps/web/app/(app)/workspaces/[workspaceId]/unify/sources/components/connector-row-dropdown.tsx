@@ -2,6 +2,7 @@
 
 import {
   CopyIcon,
+  EyeIcon,
   FileSpreadsheetIcon,
   MoreVertical,
   PauseIcon,
@@ -9,6 +10,7 @@ import {
   SquarePenIcon,
   TrashIcon,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TConnectorWithMappings } from "@formbricks/types/connector";
@@ -39,12 +41,15 @@ export function ConnectorRowDropdown({
   onToggleStatus,
   onDelete,
 }: ConnectorRowDropdownProps) {
+  const router = useRouter();
   const { t } = useTranslation();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDropDownOpen, setIsDropDownOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const isActive = connector.status === "active";
+  const linkedSurveyId =
+    connector.type === "formbricks_survey" ? connector.formbricksMappings[0]?.surveyId : undefined;
 
   const handleDelete = async () => {
     setIsDeleting(true);
@@ -83,6 +88,25 @@ export function ConnectorRowDropdown({
                     }}>
                     <FileSpreadsheetIcon className="mr-2 h-4 w-4" />
                     {t("workspace.unify.import_csv_data")}
+                  </button>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+              </>
+            )}
+
+            {linkedSurveyId && (
+              <>
+                <DropdownMenuItem>
+                  <button
+                    type="button"
+                    className="flex w-full items-center"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setIsDropDownOpen(false);
+                      router.push(`/workspaces/${connector.workspaceId}/surveys/${linkedSurveyId}/summary`);
+                    }}>
+                    <EyeIcon className="mr-2 h-4 w-4" />
+                    {`${t("common.view")} ${t("common.survey")}`}
                   </button>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />

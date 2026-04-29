@@ -1,6 +1,9 @@
 import { use } from "react";
+import { getConnectorsWithMappings } from "@/lib/connector/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { AnalysisPageLayout } from "@/modules/ee/analysis/components/analysis-page-layout";
+import { NoFeedbackRecordsState } from "@/modules/ee/analysis/components/no-feedback-records-state";
+import { hasWorkspaceFeedbackRecords } from "@/modules/ee/analysis/lib/feedback-records";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { TDashboardWithCount } from "../../types/analysis";
 import { CreateDashboardButton } from "../components/create-dashboard-button";
@@ -31,18 +34,30 @@ export const DashboardsListPage = async ({ workspaceId }: Readonly<DashboardsLis
   const t = await getTranslate();
   const { isReadOnly } = await getWorkspaceAuth(workspaceId);
 
-  const dashboardsPromise = getDashboards(workspaceId);
+  const [hasFeedbackRecords, connectors] = await Promise.all([
+    hasWorkspaceFeedbackRecords(workspaceId),
+    getConnectorsWithMappings(workspaceId),
+  ]);
+  const dashboardsPromise = hasFeedbackRecords ? getDashboards(workspaceId) : null;
 
   return (
     <AnalysisPageLayout
       pageTitle={t("common.analysis")}
       workspaceId={workspaceId}
-      cta={isReadOnly ? undefined : <CreateDashboardButton workspaceId={workspaceId} />}>
-      <DashboardsListContent
-        dashboardsPromise={dashboardsPromise}
-        workspaceId={workspaceId}
-        isReadOnly={isReadOnly}
-      />
+      cta={
+        isReadOnly ? undefined : (
+          <CreateDashboardButton workspaceId={workspaceId} disabled={!hasFeedbackRecords} />
+        )
+      }>
+      {hasFeedbackRecords && dashboardsPromise ? (
+        <DashboardsListContent
+          dashboardsPromise={dashboardsPromise}
+          workspaceId={workspaceId}
+          isReadOnly={isReadOnly}
+        />
+      ) : (
+        <NoFeedbackRecordsState workspaceId={workspaceId} hasFeedbackSources={connectors.length > 0} />
+      )}
     </AnalysisPageLayout>
   );
 };

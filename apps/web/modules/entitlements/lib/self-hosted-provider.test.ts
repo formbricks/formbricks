@@ -73,7 +73,7 @@ describe("getSelfHostedOrganizationEntitlementsContext", () => {
     expect(result.limits.workspaces).toBe(10);
   });
 
-  test("defaults projects to 3 when license is inactive", async () => {
+  test("defaults workspaces to 3 when license is inactive", async () => {
     mockGetOrg.mockResolvedValue({ id: "org1" } as any);
     mockGetLicense.mockResolvedValue({
       status: "expired",

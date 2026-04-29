@@ -57,7 +57,7 @@ describe("importCsvData", () => {
   });
 
   test("throws InvalidInputError for non-csv connector", async () => {
-    const connector = makeConnector({ type: "formbricks" });
+    const connector = makeConnector({ type: "formbricks_survey" });
     await expect(importCsvData(connector, [])).rejects.toThrow(InvalidInputError);
   });
 

@@ -36,13 +36,13 @@ describe("Template Utilities", () => {
       } as unknown as TSurveyElement;
 
       const workspace = {
-        name: "TestProject",
+        name: "TestWorkspace",
       } as unknown as TWorkspace;
 
       const result = replaceElementPresetPlaceholders(element, workspace);
 
       // The function directly replaces without calling getLocalizedValue in the test scenario
-      expect(result.headline?.default).toBe("How do you like TestProject?");
+      expect(result.headline?.default).toBe("How do you like TestWorkspace?");
     });
 
     test("replaces workspaceName placeholder in subheader", () => {
@@ -53,13 +53,13 @@ describe("Template Utilities", () => {
       } as unknown as TSurveyElement;
 
       const workspace = {
-        name: "TestProject",
+        name: "TestWorkspace",
       } as unknown as TWorkspace;
 
       const result = replaceElementPresetPlaceholders(element, workspace);
 
       expect(result.headline?.default).toBe("Question");
-      expect(result.subheader?.default).toBe("Subheader for TestProject");
+      expect(result.subheader?.default).toBe("Subheader for TestWorkspace");
     });
 
     test("handles missing headline and subheader", () => {
@@ -68,7 +68,7 @@ describe("Template Utilities", () => {
       } as unknown as TSurveyElement;
 
       const workspace = {
-        name: "TestProject",
+        name: "TestWorkspace",
       } as unknown as TWorkspace;
 
       const result = replaceElementPresetPlaceholders(element, workspace);
@@ -106,14 +106,14 @@ describe("Template Utilities", () => {
       } as unknown as TTemplate;
 
       const workspace = {
-        name: "TestProject",
+        name: "TestWorkspace",
       } as TWorkspace;
 
       const result = replacePresetPlaceholders(mockTemplate, workspace);
 
       expect(structuredClone).toHaveBeenCalledWith(mockTemplate.preset);
-      expect(result.preset.name).toBe("TestProject Feedback");
-      expect(result.preset.blocks[0].elements[0].headline?.default).toBe("How would you rate TestProject?");
+      expect(result.preset.name).toBe("TestWorkspace Feedback");
+      expect(result.preset.blocks[0].elements[0].headline?.default).toBe("How would you rate TestWorkspace?");
     });
   });
 });

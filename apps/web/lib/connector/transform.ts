@@ -14,6 +14,23 @@ const getHeadlineFromElement = (element?: TSurveyElement): string => {
   return getTextContent(raw) || "Untitled";
 };
 
+const toIsoTimestamp = (value: unknown): string | null => {
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value.toISOString();
+  }
+
+  if (typeof value === "string" || typeof value === "number") {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+  }
+
+  return null;
+};
+
+const getCollectedAt = (response: TResponse): string => {
+  return toIsoTimestamp(response.createdAt) ?? toIsoTimestamp(response.updatedAt) ?? new Date().toISOString();
+};
+
 function extractResponseValue(responseData: TResponseData, elementId: string): TResponseDataValue {
   if (!responseData || typeof responseData !== "object") return undefined;
   return responseData[elementId];
@@ -79,7 +96,7 @@ const convertValueToHubFields = (
  */
 export function transformResponseToFeedbackRecords(
   response: TResponse,
-  survey: TSurvey,
+  survey: Pick<TSurvey, "id" | "name" | "blocks">,
   mappings: TConnectorFormbricksMapping[],
   tenantId: string
 ): FeedbackRecordCreateParams[] {
@@ -99,9 +116,8 @@ export function transformResponseToFeedbackRecords(
     const valueFields = convertValueToHubFields(value, mapping.hubFieldType);
 
     const feedbackRecord = {
-      collected_at:
-        response.createdAt instanceof Date ? response.createdAt.toISOString() : String(response.createdAt),
-      source_type: "formbricks",
+      collected_at: getCollectedAt(response),
+      source_type: "formbricks_survey",
       submission_id: response.id,
       tenant_id: tenantId,
       field_id: mapping.elementId,

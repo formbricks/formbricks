@@ -95,9 +95,6 @@ export const ZBaseStyling = z.object({
   progressTrackBgColor: ZStylingColor.nullish(),
   progressIndicatorBgColor: ZStylingColor.nullish(),
 
-  questionColor: ZStylingColor.nullish(),
-  inputColor: ZStylingColor.nullish(), // legacy? keep for compat?
-  // inputBorderColor: ZStylingColor.nullish(), // defined above
   cardBackgroundColor: ZStylingColor.nullish(),
   cardBorderColor: ZStylingColor.nullish(),
   highlightBorderColor: ZStylingColor.nullish(),

@@ -11,6 +11,7 @@ import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-clie
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { getWorkspace } from "@/lib/workspace/service";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
+import { getFeedbackRecordDirectories } from "@/modules/ee/feedback-record-directory/lib/feedback-record-directory";
 import { getRemoveBrandingPermission } from "@/modules/ee/license-check/lib/utils";
 import { updateWorkspace } from "@/modules/workspaces/settings/lib/workspace";
 
@@ -95,4 +96,26 @@ export const getTeamsByOrganizationIdAction = authenticatedActionClient
     });
     const teams = await getTeamsByOrganizationId(parsedInput.organizationId);
     return teams;
+  });
+
+const ZGetFeedbackRecordDirectoriesByOrganizationIdAction = z.object({
+  organizationId: ZId,
+});
+
+export const getFeedbackRecordDirectoriesByOrganizationIdAction = authenticatedActionClient
+  .inputSchema(ZGetFeedbackRecordDirectoriesByOrganizationIdAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId: parsedInput.organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+      ],
+    });
+
+    const directories = await getFeedbackRecordDirectories(parsedInput.organizationId);
+    return directories.filter((directory) => !directory.isArchived).map(({ id, name }) => ({ id, name }));
   });

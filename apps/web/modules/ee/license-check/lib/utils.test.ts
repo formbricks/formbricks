@@ -433,7 +433,7 @@ describe("License Utils", () => {
   });
 
   describe("getOrganizationWorkspacesLimit", () => {
-    test("returns cloud projects limit when cloud license status allows usage", async () => {
+    test("returns cloud workspaces limit when cloud license status allows usage", async () => {
       vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
       vi.mocked(getOrganizationEntitlementsContext).mockResolvedValue({
         ...defaultEntitlementsContext,
@@ -446,7 +446,7 @@ describe("License Utils", () => {
       expect(result).toBe(10);
     });
 
-    test("returns Infinity when cloud projects limit is unbounded", async () => {
+    test("returns Infinity when cloud workspaces limit is unbounded", async () => {
       vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
       vi.mocked(getOrganizationEntitlementsContext).mockResolvedValue({
         ...defaultEntitlementsContext,

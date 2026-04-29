@@ -1,4 +1,3 @@
-import { UnrecoverableError } from "bullmq";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { TResponsePipelineJobData } from "@formbricks/jobs";
 import { FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
@@ -6,12 +5,15 @@ import { processResponsePipelineJob } from "./process-response-pipeline-job";
 
 const {
   mockFetch,
+  mockCaptureSurveyResponsePostHogEvent,
   mockGetIntegrations,
-  mockGetOrganizationByWorkspaceId,
   mockGetResponseCountBySurveyId,
-  mockGetSurvey,
   mockHandleIntegrations,
   mockLoggerError,
+  mockLoggerWarn,
+  mockPrismaOrganizationFindFirst,
+  mockPrismaSurveyFindUnique,
+  mockPrismaSurveyUpdate,
   mockPrismaUserFindMany,
   mockPrismaWebhookFindMany,
   mockQueueAuditEventWithoutRequest,
@@ -19,29 +21,41 @@ const {
   mockSendFollowUpsForResponse,
   mockSendResponseFinishedEmail,
   mockSendTelemetryEvents,
-  mockUpdateSurvey,
   mockValidateWebhookUrl,
-} = vi.hoisted(() => ({
-  mockFetch: vi.fn(),
-  mockGetIntegrations: vi.fn(),
-  mockGetOrganizationByWorkspaceId: vi.fn(),
-  mockGetResponseCountBySurveyId: vi.fn(),
-  mockGetSurvey: vi.fn(),
-  mockHandleIntegrations: vi.fn(),
-  mockLoggerError: vi.fn(),
-  mockPrismaUserFindMany: vi.fn(),
-  mockPrismaWebhookFindMany: vi.fn(),
-  mockQueueAuditEventWithoutRequest: vi.fn(),
-  mockRecordResponseCreatedMeterEvent: vi.fn(),
-  mockSendFollowUpsForResponse: vi.fn(),
-  mockSendResponseFinishedEmail: vi.fn(),
-  mockSendTelemetryEvents: vi.fn(),
-  mockUpdateSurvey: vi.fn(),
-  mockValidateWebhookUrl: vi.fn(),
-}));
+} = vi.hoisted(() => {
+  process.env.HUB_API_URL ??= "https://hub.test";
+
+  return {
+    mockFetch: vi.fn(),
+    mockCaptureSurveyResponsePostHogEvent: vi.fn(),
+    mockGetIntegrations: vi.fn(),
+    mockGetResponseCountBySurveyId: vi.fn(),
+    mockHandleIntegrations: vi.fn(),
+    mockLoggerError: vi.fn(),
+    mockLoggerWarn: vi.fn(),
+    mockPrismaOrganizationFindFirst: vi.fn(),
+    mockPrismaSurveyFindUnique: vi.fn(),
+    mockPrismaSurveyUpdate: vi.fn(),
+    mockPrismaUserFindMany: vi.fn(),
+    mockPrismaWebhookFindMany: vi.fn(),
+    mockQueueAuditEventWithoutRequest: vi.fn(),
+    mockRecordResponseCreatedMeterEvent: vi.fn(),
+    mockSendFollowUpsForResponse: vi.fn(),
+    mockSendResponseFinishedEmail: vi.fn(),
+    mockSendTelemetryEvents: vi.fn(),
+    mockValidateWebhookUrl: vi.fn(),
+  };
+});
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
+    organization: {
+      findFirst: mockPrismaOrganizationFindFirst,
+    },
+    survey: {
+      findUnique: mockPrismaSurveyFindUnique,
+      update: mockPrismaSurveyUpdate,
+    },
     webhook: {
       findMany: mockPrismaWebhookFindMany,
     },
@@ -51,16 +65,30 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
+vi.mock("@formbricks/jobs", () => ({
+  UnrecoverableError: class UnrecoverableError extends Error {
+    constructor(message: string) {
+      super(message);
+      this.name = "UnrecoverableError";
+    }
+  },
+}));
+
+vi.mock(import("@/lib/constants"), async (importOriginal) => {
+  const actual = await importOriginal();
+
+  return {
+    ...actual,
+    POSTHOG_KEY: undefined,
+  };
+});
+
 vi.mock("./handle-integrations", () => ({
   handleIntegrations: mockHandleIntegrations,
 }));
 
 vi.mock("./telemetry", () => ({
   sendTelemetryEvents: mockSendTelemetryEvents,
-}));
-
-vi.mock("@/lib/organization/service", () => ({
-  getOrganizationByWorkspaceId: mockGetOrganizationByWorkspaceId,
 }));
 
 vi.mock("@/lib/integration/service", () => ({
@@ -71,9 +99,8 @@ vi.mock("@/lib/response/service", () => ({
   getResponseCountBySurveyId: mockGetResponseCountBySurveyId,
 }));
 
-vi.mock("@/lib/survey/service", () => ({
-  getSurvey: mockGetSurvey,
-  updateSurvey: mockUpdateSurvey,
+vi.mock("./posthog", () => ({
+  captureSurveyResponsePostHogEvent: mockCaptureSurveyResponsePostHogEvent,
 }));
 
 vi.mock("@/lib/utils/validate-webhook-url", () => ({
@@ -101,12 +128,12 @@ vi.mock("@formbricks/logger", () => ({
     debug: vi.fn(),
     error: mockLoggerError,
     info: vi.fn(),
-    warn: vi.fn(),
+    warn: mockLoggerWarn,
   },
 }));
 
 const baseData: TResponsePipelineJobData = {
-  workspaceId: "ws_123",
+  workspaceId: "workspace_123",
   event: "responseCreated",
   response: {
     contact: null,
@@ -149,14 +176,20 @@ const organization = {
 };
 
 const survey = {
+  blocks: [],
   autoComplete: null,
   createdAt: new Date("2026-04-01T10:00:00.000Z"),
   followUps: [],
+  hiddenFields: {
+    fieldIds: [],
+  },
   id: "survey_123",
+  languages: [],
   name: "Test survey",
   status: "inProgress",
   type: "app",
   updatedAt: new Date("2026-04-01T10:00:00.000Z"),
+  variables: [],
   workspaceId: "workspace_123",
 };
 
@@ -165,8 +198,8 @@ const originalFetch = global.fetch;
 describe("processResponsePipelineJob", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetOrganizationByWorkspaceId.mockResolvedValue(organization);
-    mockGetSurvey.mockResolvedValue(survey);
+    mockPrismaOrganizationFindFirst.mockResolvedValue(organization);
+    mockPrismaSurveyFindUnique.mockResolvedValue(survey);
     mockGetIntegrations.mockResolvedValue([]);
     mockPrismaWebhookFindMany.mockResolvedValue([]);
     mockPrismaUserFindMany.mockResolvedValue([]);
@@ -178,7 +211,7 @@ describe("processResponsePipelineJob", () => {
     mockSendResponseFinishedEmail.mockResolvedValue(undefined);
     mockSendFollowUpsForResponse.mockResolvedValue({ ok: true, data: [] });
     mockSendTelemetryEvents.mockResolvedValue(undefined);
-    mockUpdateSurvey.mockResolvedValue(undefined);
+    mockPrismaSurveyUpdate.mockResolvedValue(undefined);
     mockFetch.mockResolvedValue({
       ok: true,
       status: 200,
@@ -252,7 +285,7 @@ describe("processResponsePipelineJob", () => {
 
   test("processes responseFinished jobs and preserves legacy side effects", async () => {
     mockGetIntegrations.mockResolvedValue([{ id: "integration_123", type: "slack" }]);
-    mockGetSurvey.mockResolvedValue({
+    mockPrismaSurveyFindUnique.mockResolvedValue({
       ...survey,
       autoComplete: 1,
       followUps: [{ id: "followup_123" }],
@@ -290,6 +323,59 @@ describe("processResponsePipelineJob", () => {
         followUps: [{ id: "followup_123" }],
       }
     );
+    expect(mockPrismaUserFindMany).toHaveBeenCalledWith({
+      select: { email: true, locale: true },
+      where: {
+        memberships: {
+          some: {
+            organization: {
+              workspaces: {
+                some: {
+                  id: "workspace_123",
+                },
+              },
+            },
+          },
+        },
+        notificationSettings: {
+          equals: true,
+          path: ["alert", "survey_123"],
+        },
+        OR: [
+          {
+            memberships: {
+              some: {
+                role: {
+                  in: ["owner", "manager"],
+                },
+                organization: {
+                  workspaces: {
+                    some: {
+                      id: "workspace_123",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          {
+            teamUsers: {
+              some: {
+                team: {
+                  workspaceTeams: {
+                    some: {
+                      workspace: {
+                        id: "workspace_123",
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        ],
+      },
+    });
     expect(mockSendFollowUpsForResponse).toHaveBeenCalledWith("response_123");
     expect(mockSendResponseFinishedEmail).toHaveBeenCalledWith(
       "owner@example.com",
@@ -299,12 +385,14 @@ describe("processResponsePipelineJob", () => {
       baseData.response,
       1
     );
-    expect(mockUpdateSurvey).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: "survey_123",
+    expect(mockPrismaSurveyUpdate).toHaveBeenCalledWith({
+      data: {
         status: "completed",
-      })
-    );
+      },
+      where: {
+        id: "survey_123",
+      },
+    });
     expect(mockQueueAuditEventWithoutRequest).toHaveBeenCalledWith(
       expect.objectContaining({
         action: "updated",
@@ -333,8 +421,8 @@ describe("processResponsePipelineJob", () => {
         message: "not allowed",
       },
     });
-    mockUpdateSurvey.mockRejectedValue(new Error("update failed"));
-    mockGetSurvey.mockResolvedValue({
+    mockPrismaSurveyUpdate.mockRejectedValue(new Error("update failed"));
+    mockPrismaSurveyFindUnique.mockResolvedValue({
       ...survey,
       autoComplete: 1,
       followUps: [{ id: "followup_123" }],
@@ -375,7 +463,7 @@ describe("processResponsePipelineJob", () => {
   test("fails the job before the final attempt when webhook delivery fails", async () => {
     const webhookError = new Error("invalid webhook");
     mockGetIntegrations.mockResolvedValue([{ id: "integration_123", type: "slack" }]);
-    mockGetSurvey.mockResolvedValue({
+    mockPrismaSurveyFindUnique.mockResolvedValue({
       ...survey,
       autoComplete: 1,
       followUps: [{ id: "followup_123" }],
@@ -408,7 +496,7 @@ describe("processResponsePipelineJob", () => {
     expect(mockHandleIntegrations).not.toHaveBeenCalled();
     expect(mockSendFollowUpsForResponse).not.toHaveBeenCalled();
     expect(mockSendResponseFinishedEmail).not.toHaveBeenCalled();
-    expect(mockUpdateSurvey).not.toHaveBeenCalled();
+    expect(mockPrismaSurveyUpdate).not.toHaveBeenCalled();
     expect(mockLoggerError).toHaveBeenCalledWith(
       expect.objectContaining({
         err: webhookError,
@@ -421,7 +509,7 @@ describe("processResponsePipelineJob", () => {
   test("continues responseFinished side effects on the final webhook attempt", async () => {
     const webhookError = new Error("invalid webhook");
     mockGetIntegrations.mockResolvedValue([{ id: "integration_123", type: "slack" }]);
-    mockGetSurvey.mockResolvedValue({
+    mockPrismaSurveyFindUnique.mockResolvedValue({
       ...survey,
       autoComplete: 1,
       followUps: [{ id: "followup_123" }],
@@ -454,7 +542,7 @@ describe("processResponsePipelineJob", () => {
     expect(mockHandleIntegrations).toHaveBeenCalledTimes(1);
     expect(mockSendFollowUpsForResponse).toHaveBeenCalledWith("response_123");
     expect(mockSendResponseFinishedEmail).toHaveBeenCalledTimes(1);
-    expect(mockUpdateSurvey).toHaveBeenCalledTimes(1);
+    expect(mockPrismaSurveyUpdate).toHaveBeenCalledTimes(1);
     expect(mockLoggerError).toHaveBeenCalledWith(
       expect.objectContaining({
         attempt: 3,
@@ -492,7 +580,7 @@ describe("processResponsePipelineJob", () => {
 
   test("does not retry a successful webhook when later responseFinished side effects fail", async () => {
     const auditError = new Error("audit offline");
-    mockGetSurvey.mockResolvedValue({
+    mockPrismaSurveyFindUnique.mockResolvedValue({
       ...survey,
       autoComplete: 1,
     });
@@ -655,19 +743,62 @@ describe("processResponsePipelineJob", () => {
   });
 
   test("fails fast when the workspace organization cannot be found", async () => {
-    mockGetOrganizationByWorkspaceId.mockResolvedValue(null);
+    mockPrismaOrganizationFindFirst.mockResolvedValue(null);
 
     await expect(processResponsePipelineJob(baseData, baseContext)).rejects.toThrow(
-      new UnrecoverableError("Organization not found for workspace workspace_123")
+      "Organization not found for workspace workspace_123"
     );
 
     expect(mockLoggerError).toHaveBeenCalledWith(
       expect.objectContaining({
-        workspaceId: "ws_123",
-        err: expect.any(UnrecoverableError),
+        workspaceId: "workspace_123",
+        err: expect.any(Error),
         jobId: "job_123",
         responseId: "response_123",
         surveyId: "survey_123",
+      }),
+      "Response pipeline job failed"
+    );
+  });
+
+  test("fails fast when the survey cannot be found", async () => {
+    mockPrismaSurveyFindUnique.mockResolvedValue(null);
+
+    await expect(processResponsePipelineJob(baseData, baseContext)).rejects.toThrow(
+      "Survey survey_123 not found"
+    );
+
+    expect(mockLoggerError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "workspace_123",
+        err: expect.any(Error),
+        jobId: "job_123",
+        responseId: "response_123",
+        surveyId: "survey_123",
+      }),
+      "Response pipeline job failed"
+    );
+  });
+
+  test("classifies database pool exhaustion as retryable and logs a warning", async () => {
+    const poolExhaustionError = new Error("Timed out fetching a new connection from the connection pool");
+    mockPrismaSurveyFindUnique.mockRejectedValue(poolExhaustionError);
+
+    await expect(processResponsePipelineJob(baseData, baseContext)).rejects.toThrow(poolExhaustionError);
+
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: "workspace_123",
+        err: poolExhaustionError,
+        jobId: "job_123",
+        responseId: "response_123",
+        surveyId: "survey_123",
+      }),
+      "Response pipeline job hit database pool exhaustion and will be retried"
+    );
+    expect(mockLoggerError).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        err: poolExhaustionError,
       }),
       "Response pipeline job failed"
     );
