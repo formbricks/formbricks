@@ -1832,7 +1832,9 @@
         "no_data_message": "Nincsenek adatok. Jelenleg nincsenek megjeleníthető információk. Adjon hozzá diagramokat az irányítópult felépítéséhez.",
         "please_enter_name": "Kérjük, adjon nevet a vezérlőpultnak"
       },
+      "manage_feedback_sources": "Manage feedback sources",
       "no_feedback_records_message": "Nincsenek visszajelzési rekordjai, amelyekről jelentést tehetne. Állítsa be a visszacsatolási forrásokat, hogy adatokat tápláljon be a rendszerbe.",
+      "no_feedback_records_with_sources_message": "No feedback records yet. Records will appear here once your feedback sources start sending data.",
       "setup_feedback_source": "Visszajelzési források beállítása"
     },
     "api_keys": {
@@ -3747,7 +3749,6 @@
       "source_name": "Forrásnév",
       "source_type": "Forrás típus",
       "source_type_cannot_be_changed": "A forrástípus nem módosítható",
-      "sources": "Források",
       "status_error": "Hiba",
       "status_live_sync": "Élő szinkronizálás",
       "status_paused": "Szüneteltetve",

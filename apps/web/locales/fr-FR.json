@@ -1832,7 +1832,9 @@
         "no_data_message": "Aucune donnée. Il n'y a actuellement aucune information à afficher. Ajoute des graphiques pour construire ton tableau de bord.",
         "please_enter_name": "Veuillez saisir un nom de tableau de bord"
       },
+      "manage_feedback_sources": "Manage feedback sources",
       "no_feedback_records_message": "Vous n'avez pas d'enregistrements de commentaires sur lesquels créer des rapports. Configurez des sources de commentaires pour introduire des données dans le système.",
+      "no_feedback_records_with_sources_message": "No feedback records yet. Records will appear here once your feedback sources start sending data.",
       "setup_feedback_source": "Configurer les sources de commentaires"
     },
     "api_keys": {
@@ -3747,7 +3749,6 @@
       "source_name": "Nom de la source",
       "source_type": "Type de source",
       "source_type_cannot_be_changed": "Le type de source ne peut pas être modifié",
-      "sources": "Sources",
       "status_error": "Erreur",
       "status_live_sync": "Synchronisation en direct",
       "status_paused": "En pause",

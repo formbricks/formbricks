@@ -1832,7 +1832,9 @@
         "no_data_message": "Sem Dados. Não há informações para exibir no momento. Adicione gráficos para construir seu painel.",
         "please_enter_name": "Por favor, digite um nome para o painel"
       },
+      "manage_feedback_sources": "Manage feedback sources",
       "no_feedback_records_message": "Você não tem registros de feedback para relatar. Configure fontes de feedback para alimentar dados no sistema.",
+      "no_feedback_records_with_sources_message": "No feedback records yet. Records will appear here once your feedback sources start sending data.",
       "setup_feedback_source": "Configurar fontes de feedback"
     },
     "api_keys": {
@@ -3747,7 +3749,6 @@
       "source_name": "Nome da origem",
       "source_type": "Tipo de fonte",
       "source_type_cannot_be_changed": "O tipo de origem não pode ser alterado",
-      "sources": "Origens",
       "status_error": "Erro",
       "status_live_sync": "Sincronização ao vivo",
       "status_paused": "Pausado",

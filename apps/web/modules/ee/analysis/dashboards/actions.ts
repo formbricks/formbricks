@@ -292,9 +292,6 @@ export const addChartToDashboardAction = authenticatedActionClient
           layout: parsedInput.layout,
         });
 
-        revalidatePath(`/workspaces/${workspaceId}/dashboards`);
-        revalidatePath(`/workspaces/${workspaceId}/dashboards/${parsedInput.dashboardId}`);
-
         ctx.auditLoggingCtx.organizationId = organizationId;
         ctx.auditLoggingCtx.workspaceId = workspaceId;
         ctx.auditLoggingCtx.dashboardWidgetId = widget.id;

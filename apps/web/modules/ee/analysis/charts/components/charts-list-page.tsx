@@ -1,4 +1,5 @@
 import { use } from "react";
+import { getConnectorsWithMappings } from "@/lib/connector/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { ChartsList } from "@/modules/ee/analysis/charts/components/charts-list";
 import { CreateChartButton } from "@/modules/ee/analysis/charts/components/create-chart-button";
@@ -37,7 +38,10 @@ interface ChartsListPageProps {
 export async function ChartsListPage({ workspaceId }: Readonly<ChartsListPageProps>) {
   const t = await getTranslate();
   const { isReadOnly } = await getWorkspaceAuth(workspaceId);
-  const directories = await getFeedbackRecordDirectoriesByWorkspaceId(workspaceId);
+  const [directories, connectors] = await Promise.all([
+    getFeedbackRecordDirectoriesByWorkspaceId(workspaceId),
+    getConnectorsWithMappings(workspaceId),
+  ]);
   const hasFeedbackRecords = await hasFeedbackRecordsInDirectories(
     directories.map((directory) => directory.id)
   );
@@ -64,7 +68,7 @@ export async function ChartsListPage({ workspaceId }: Readonly<ChartsListPagePro
           directories={directories}
         />
       ) : (
-        <NoFeedbackRecordsState workspaceId={workspaceId} />
+        <NoFeedbackRecordsState workspaceId={workspaceId} hasFeedbackSources={connectors.length > 0} />
       )}
     </AnalysisPageLayout>
   );

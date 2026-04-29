@@ -2,7 +2,7 @@
 
 import { Loader2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
@@ -53,13 +53,18 @@ export function AddExistingChartsDialog({
   const [isLoading, setIsLoading] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
 
+  const existingChartIdsRef = useRef(existingChartIds);
+  existingChartIdsRef.current = existingChartIds;
+
   const loadCharts = useCallback(async () => {
     setIsLoading(true);
     setSelectedChartIds([]);
     try {
       const result = await getChartsAction({ workspaceId });
       if (result?.data) {
-        const availableCharts = result.data.filter((chart) => !existingChartIds.includes(chart.id));
+        const availableCharts = result.data.filter(
+          (chart) => !existingChartIdsRef.current.includes(chart.id)
+        );
         setChartOptions(availableCharts.map((chart) => ({ value: chart.id, label: chart.name })));
       } else {
         const errorMessage = getFormattedErrorMessage(result);
@@ -70,7 +75,7 @@ export function AddExistingChartsDialog({
     } finally {
       setIsLoading(false);
     }
-  }, [workspaceId, existingChartIds, t]);
+  }, [workspaceId, t]);
 
   useEffect(() => {
     if (!open) return;
