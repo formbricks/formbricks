@@ -1,21 +1,16 @@
 import jwt from "jsonwebtoken";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-const ORIGINAL_ENV = process.env;
-
-const setTestEnv = (overrides: Record<string, string | undefined> = {}) => {
-  process.env = {
-    ...ORIGINAL_ENV,
-    NODE_ENV: "test",
-    DATABASE_URL: "https://example.com/db",
-    ENCRYPTION_KEY: "12345678901234567890123456789012",
-    HUB_API_URL: "https://hub.formbricks.local",
-    CUBEJS_API_URL: "https://cube.formbricks.local",
-    CUBEJS_API_SECRET: "cube-secret",
-    ...overrides,
-  };
+const mockCubeEnv = (overrides: { CUBEJS_API_URL?: string; CUBEJS_API_SECRET?: string } = {}) => {
+  vi.doMock("@/lib/env", () => ({
+    env: {
+      CUBEJS_API_URL: "https://cube.formbricks.local",
+      CUBEJS_API_SECRET: "cube-secret",
+      ...overrides,
+    },
+  }));
 };
 
 describe("cube-config", () => {
@@ -23,13 +18,8 @@ describe("cube-config", () => {
     vi.resetModules();
   });
 
-  afterEach(() => {
-    process.env = ORIGINAL_ENV;
-    vi.unstubAllEnvs();
-  });
-
   test("normalizes the Cube API URL and signs a JWT from CUBEJS_API_SECRET", async () => {
-    setTestEnv();
+    mockCubeEnv();
 
     const { getCubeApiConfig } = await import("./cube-config");
 
@@ -42,7 +32,7 @@ describe("cube-config", () => {
   });
 
   test("preserves a full Cube API URL when it already contains /cubejs-api/v1", async () => {
-    setTestEnv({
+    mockCubeEnv({
       CUBEJS_API_URL: "https://cube.formbricks.local/cubejs-api/v1",
     });
 
@@ -52,7 +42,7 @@ describe("cube-config", () => {
   });
 
   test("throws a configuration error when CUBEJS_API_URL is missing", async () => {
-    setTestEnv({
+    mockCubeEnv({
       CUBEJS_API_URL: undefined,
     });
 
@@ -62,7 +52,7 @@ describe("cube-config", () => {
   });
 
   test("throws a configuration error when CUBEJS_API_SECRET is missing", async () => {
-    setTestEnv({
+    mockCubeEnv({
       CUBEJS_API_SECRET: undefined,
     });
 

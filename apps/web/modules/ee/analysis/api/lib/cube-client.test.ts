@@ -15,6 +15,7 @@ describe("executeQuery", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.resetModules();
+    vi.doUnmock("@/lib/env");
     vi.stubEnv("NODE_ENV", "test");
     vi.stubEnv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/formbricks?schema=public");
     vi.stubEnv("ENCRYPTION_KEY", "12345678901234567890123456789012");
@@ -54,11 +55,14 @@ describe("executeQuery", () => {
   });
 
   test("throws a configuration error when Cube env is missing", async () => {
+    vi.resetModules();
     vi.unstubAllEnvs();
-    vi.stubEnv("NODE_ENV", "test");
-    vi.stubEnv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/formbricks?schema=public");
-    vi.stubEnv("ENCRYPTION_KEY", "12345678901234567890123456789012");
-    vi.stubEnv("HUB_API_URL", "https://hub.formbricks.local");
+    vi.doMock("@/lib/env", () => ({
+      env: {
+        CUBEJS_API_URL: undefined,
+        CUBEJS_API_SECRET: undefined,
+      },
+    }));
     const { CUBE_CONFIGURATION_ERROR_MESSAGE } = await import("./cube-config");
     const { executeQuery } = await import("./cube-client");
 

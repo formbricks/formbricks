@@ -9,6 +9,8 @@ const setTestEnv = (overrides: Record<string, string | undefined> = {}) => {
     DATABASE_URL: "https://example.com/db",
     ENCRYPTION_KEY: "12345678901234567890123456789012",
     HUB_API_URL: "https://hub.formbricks.local",
+    CUBEJS_API_URL: "https://cube.formbricks.local",
+    CUBEJS_API_SECRET: "cube-secret",
     ...overrides,
   };
 };
@@ -77,16 +79,28 @@ describe("env", () => {
     expect(env.DEBUG_SHOW_RESET_LINK).toBe("1");
   });
 
-  test("uses the configured Cube environment variables when provided", async () => {
-    setTestEnv({
-      CUBEJS_API_URL: "https://cube.formbricks.local",
-      CUBEJS_API_SECRET: "cube-secret",
-    });
-
+  test("uses the configured Cube environment variables", async () => {
+    setTestEnv();
     const { env } = await import("./env");
 
     expect(env.CUBEJS_API_URL).toBe("https://cube.formbricks.local");
     expect(env.CUBEJS_API_SECRET).toBe("cube-secret");
+  });
+
+  test("fails to load when the Cube API secret is missing", async () => {
+    setTestEnv({
+      CUBEJS_API_SECRET: undefined,
+    });
+
+    await expect(import("./env")).rejects.toThrow("Invalid environment variables");
+  });
+
+  test("fails to load when the Cube API URL is missing", async () => {
+    setTestEnv({
+      CUBEJS_API_URL: undefined,
+    });
+
+    await expect(import("./env")).rejects.toThrow("Invalid environment variables");
   });
 
   test("fails to load when the Cube API URL is invalid", async () => {
