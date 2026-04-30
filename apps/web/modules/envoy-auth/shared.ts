@@ -2,14 +2,11 @@ import "server-only";
 import { NextRequest } from "next/server";
 import { prisma } from "@formbricks/database";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
-import {
-  authenticateApiKeyFromHeaders,
-  getApiKeyFromHeaders,
-} from "@/modules/api/lib/api-key-auth";
+import { authenticateApiKeyFromHeaders, getApiKeyFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { getProxySession } from "@/modules/auth/lib/proxy-session";
 
-export const ENVOY_AUTH_PREFIX = "/api/envoy-auth";
-export const HEADERS_TO_REMOVE_ON_ALLOW = "x-api-key,authorization,cookie";
+const ENVOY_AUTH_PREFIX = "/api/envoy-auth";
+const HEADERS_TO_REMOVE_ON_ALLOW = "x-api-key,authorization,cookie";
 
 export type TEnvoyOriginalRequest = {
   method: string;
@@ -66,9 +63,7 @@ export const buildStatusResponse = (status: number, message: string): Response =
 
 export const parseEnvoyRequestMetadata = (
   request: NextRequest
-):
-  | { originalRequest: TEnvoyOriginalRequest }
-  | { errorResponse: Response } => {
+): { originalRequest: TEnvoyOriginalRequest } | { errorResponse: Response } => {
   if (!request.nextUrl.pathname.startsWith(`${ENVOY_AUTH_PREFIX}/`)) {
     return {
       errorResponse: buildStatusResponse(400, "Invalid Envoy auth request path"),
@@ -87,8 +82,7 @@ export const parseEnvoyRequestMetadata = (
   }
 
   try {
-    const originalPathname =
-      originalPathSegments.length > 0 ? `/${originalPathSegments.join("/")}` : "/";
+    const originalPathname = originalPathSegments.length > 0 ? `/${originalPathSegments.join("/")}` : "/";
     const originalPath = `${originalPathname}${request.nextUrl.search}`;
 
     return {
