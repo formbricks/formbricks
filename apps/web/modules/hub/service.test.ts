@@ -134,19 +134,6 @@ describe("hub service", () => {
       expect(result.error).toMatchObject({ status: 0, message: "Network error" });
     });
 
-    test("returns data when called without params", async () => {
-      const listResponse = { data: [], total: 0, limit: 50, offset: 0 };
-      const listFn = vi.fn().mockResolvedValue(listResponse);
-      vi.mocked(getHubClient).mockReturnValue({
-        feedbackRecords: { list: listFn },
-      } as any);
-
-      const result = await listFeedbackRecords();
-
-      expect(result.error).toBeNull();
-      expect(result.data).toEqual(listResponse);
-      expect(listFn).toHaveBeenCalledWith(undefined);
-    });
   });
 
   describe("retrieveFeedbackRecord", () => {

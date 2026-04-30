@@ -104,7 +104,7 @@ export type FeedbackRecordTenantResult = {
  * List feedback records from the Hub with optional filters and pagination.
  */
 export const listFeedbackRecords = async (
-  params?: FeedbackRecordListParams
+  params: FeedbackRecordListParams
 ): Promise<ListFeedbackRecordsResult> => {
   const client = getHubClient();
   if (!client) {
