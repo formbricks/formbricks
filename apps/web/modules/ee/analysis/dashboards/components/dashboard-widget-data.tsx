@@ -5,9 +5,10 @@ import { useTranslation } from "react-i18next";
 import { TChartQuery } from "@formbricks/types/analysis";
 import { ChartRenderer } from "@/modules/ee/analysis/charts/components/chart-renderer";
 import type { TChartDataRow, TChartType } from "@/modules/ee/analysis/types/analysis";
+import type { TDashboardWidgetError } from "../lib/widget-errors";
 
 interface DashboardWidgetDataProps {
-  dataPromise: Promise<{ data: TChartDataRow[] } | { error: string }>;
+  dataPromise: Promise<{ data: TChartDataRow[] } | { error: TDashboardWidgetError }>;
   chartType: TChartType;
   query: TChartQuery;
 }
@@ -18,7 +19,7 @@ export function DashboardWidgetData({ dataPromise, chartType, query }: Readonly<
 
   if ("error" in result) {
     return (
-      <div className="flex h-full items-center justify-center text-sm text-red-500">
+      <div className="flex h-full items-center justify-center text-center text-sm text-red-500">
         {t("workspace.analysis.dashboards.failed_to_load_chart_data")}
       </div>
     );

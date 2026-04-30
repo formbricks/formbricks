@@ -5,11 +5,13 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
   AuthenticationError,
   AuthorizationError,
+  ConfigurationError,
   EXPECTED_ERROR_NAMES,
   INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE,
   InvalidInputError,
   InvalidPasswordResetTokenError,
   OperationNotAllowedError,
+  QueryExecutionError,
   ResourceNotFoundError,
   TooManyRequestsError,
   UnknownError,
@@ -72,6 +74,8 @@ describe("isExpectedError (shared helper)", () => {
       "ValidationError",
       "AuthenticationError",
       "OperationNotAllowedError",
+      "ConfigurationError",
+      "QueryExecutionError",
       "TooManyRequestsError",
       "InvalidPasswordResetTokenError",
     ];
@@ -90,6 +94,8 @@ describe("isExpectedError (shared helper)", () => {
     { ErrorClass: InvalidInputError, args: ["Invalid input"] },
     { ErrorClass: ValidationError, args: ["Invalid data"] },
     { ErrorClass: OperationNotAllowedError, args: ["Not allowed"] },
+    { ErrorClass: ConfigurationError, args: ["Cube is not configured"] },
+    { ErrorClass: QueryExecutionError, args: ["Cube query failed. Details: connect ECONNREFUSED"] },
     { ErrorClass: InvalidPasswordResetTokenError, args: [INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE] },
   ])("returns true for $ErrorClass.name", ({ ErrorClass, args }) => {
     const error = new (ErrorClass as any)(...args);
@@ -176,6 +182,20 @@ describe("actionClient handleServerError", () => {
     test("OperationNotAllowedError returns its message and is not sent to Sentry", async () => {
       const result = await executeThrowingAction(new OperationNotAllowedError("Not allowed"));
       expect(result?.serverError).toBe("Not allowed");
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+    });
+
+    test("ConfigurationError returns its message and is not sent to Sentry", async () => {
+      const result = await executeThrowingAction(new ConfigurationError("Cube is not configured"));
+      expect(result?.serverError).toBe("Cube is not configured");
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+    });
+
+    test("QueryExecutionError returns its message and is not sent to Sentry", async () => {
+      const result = await executeThrowingAction(
+        new QueryExecutionError("Cube query failed. Details: connect ECONNREFUSED")
+      );
+      expect(result?.serverError).toBe("Cube query failed. Details: connect ECONNREFUSED");
       expect(Sentry.captureException).not.toHaveBeenCalled();
     });
 

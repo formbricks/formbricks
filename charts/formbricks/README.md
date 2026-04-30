@@ -46,6 +46,14 @@ The intended defaults are:
 - self-hosted / single-tenant clusters: bundled controller mode
 - shared clusters with an existing platform controller: external-controller mode
 
+## Cube.js for XM Suite v5
+
+This chart does not deploy Cube.js. XM Suite v5 dashboard and analysis features require an external Cube instance.
+
+- Set `deployment.env.CUBEJS_API_URL` to your Cube endpoint.
+- Provide `CUBEJS_API_SECRET` through your existing secret management flow, such as the generated app secret override or `deployment.envFrom`.
+- Keep Hub enabled. Cube should point at the same feedback records database that Hub writes to, unless you intentionally split that storage.
+
 ## Values
 
 | Key                                                                | Type   | Default                           | Description |

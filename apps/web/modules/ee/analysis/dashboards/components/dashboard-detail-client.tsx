@@ -21,13 +21,17 @@ import { EmptyState } from "@/modules/ui/components/empty-state";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { updateDashboardAction, updateWidgetLayoutsAction } from "../actions";
+import type { TDashboardWidgetError } from "../lib/widget-errors";
 
 const ROW_HEIGHT = 80;
 
 interface DashboardDetailClientProps {
   workspaceId: string;
   dashboard: TDashboardDetail;
-  widgetDataPromises: Map<string, Promise<{ data: TChartDataRow[]; query: TChartQuery } | { error: string }>>;
+  widgetDataPromises: Map<
+    string,
+    Promise<{ data: TChartDataRow[]; query: TChartQuery } | { error: TDashboardWidgetError }>
+  >;
   directories: { id: string; name: string }[];
   isReadOnly: boolean;
 }
@@ -96,7 +100,7 @@ const MemoizedWidgetContent = memo(function WidgetContent({
   dataPromise,
 }: Readonly<{
   widget: TDashboardWidget;
-  dataPromise?: Promise<{ data: TChartDataRow[]; query: TChartQuery } | { error: string }>;
+  dataPromise?: Promise<{ data: TChartDataRow[]; query: TChartQuery } | { error: TDashboardWidgetError }>;
 }>) {
   if (widget.chart && dataPromise) {
     return (
@@ -122,7 +126,7 @@ const MemoizedWidgetItem = memo(function WidgetItem({
 }: Readonly<{
   widget: TDashboardWidget;
   isEditing: boolean;
-  dataPromise?: Promise<{ data: TChartDataRow[]; query: TChartQuery } | { error: string }>;
+  dataPromise?: Promise<{ data: TChartDataRow[]; query: TChartQuery } | { error: TDashboardWidgetError }>;
   onEdit?: () => void;
   onResize?: () => void;
   onRemove?: () => void;
