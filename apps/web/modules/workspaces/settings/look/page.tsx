@@ -32,7 +32,7 @@ export const WorkspaceLookSettingsPage = async (props: { params: Promise<{ works
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.look_and_feel")} />
+      <PageHeader pageTitle={t("common.appearance")} />
       {!IS_STORAGE_CONFIGURED && (
         <Alert variant="warning">
           <AlertDescription>{t("common.storage_not_configured")}</AlertDescription>

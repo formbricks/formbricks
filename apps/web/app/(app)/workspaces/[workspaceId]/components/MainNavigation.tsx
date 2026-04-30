@@ -32,6 +32,7 @@ import {
   getWorkspacesForSwitcherAction,
 } from "@/app/(app)/workspaces/[workspaceId]/actions";
 import { NavigationLink } from "@/app/(app)/workspaces/[workspaceId]/components/NavigationLink";
+import { SettingsSidebarContent } from "@/app/(app)/workspaces/[workspaceId]/components/SettingsSidebarContent";
 import { isNewerVersion } from "@/app/(app)/workspaces/[workspaceId]/lib/utils";
 import FBLogo from "@/images/formbricks-wordmark.svg";
 import { cn } from "@/lib/cn";
@@ -52,6 +53,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
+import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { ModalButton } from "@/modules/ui/components/upgrade-prompt";
 import { CreateWorkspaceModal } from "@/modules/workspaces/components/create-workspace-modal";
 import { WorkspaceLimitModal } from "@/modules/workspaces/components/workspace-limit-modal";
@@ -73,22 +75,24 @@ interface NavigationProps {
 }
 
 const isActiveWorkspaceSetting = (pathname: string, settingId: string): boolean => {
-  if (pathname.includes("/settings/")) {
-    return false;
-  }
-
-  const pattern = new RegExp(`/workspace/${settingId}(?:/|$)`);
-  return pattern.test(pathname);
+  const segment = `/settings/workspace/${settingId}`;
+  return pathname.includes(segment + "/") || pathname.endsWith(segment);
 };
 
 const isActiveOrganizationSetting = (pathname: string, settingId: string): boolean => {
-  const accountSettingsPattern = /\/settings\/(profile|account|notifications|security|appearance)(?:\/|$)/;
-  if (accountSettingsPattern.test(pathname)) {
+  const accountPrefixes = [
+    "/settings/profile",
+    "/settings/account",
+    "/settings/notifications",
+    "/settings/security",
+    "/settings/appearance",
+  ];
+  if (accountPrefixes.some((prefix) => pathname.includes(prefix + "/") || pathname.endsWith(prefix))) {
     return false;
   }
 
-  const pattern = new RegExp(`/settings/${settingId}(?:/|$)`);
-  return pattern.test(pathname);
+  const segment = `/settings/${settingId}`;
+  return pathname.includes(segment + "/") || pathname.endsWith(segment);
 };
 
 export const MainNavigation = ({
@@ -120,6 +124,7 @@ export const MainNavigation = ({
     : t("common.you_are_not_authorized_to_perform_this_action");
 
   const isOwnerOrManager = isManager || isOwner;
+  const isSettingsMode = pathname?.includes("/settings");
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
@@ -138,13 +143,6 @@ export const MainNavigation = ({
     const timeoutId = setTimeout(toggleTextOpacity, 150);
     return () => clearTimeout(timeoutId);
   }, [isCollapsed]);
-
-  useEffect(() => {
-    // Auto collapse workspace navbar on org and account settings
-    if (pathname?.includes("/settings")) {
-      setIsCollapsed(true);
-    }
-  }, [pathname]);
 
   const mainNavigationSections = useMemo(
     () => [
@@ -198,29 +196,21 @@ export const MainNavigation = ({
     [t, workspace.id, pathname, isMembershipPending, isBilling]
   );
 
-  const configurationNavigationItem = useMemo(
+  const settingsNavigationItem = useMemo(
     () => ({
-      name: t("common.configuration"),
-      href: `/workspaces/${workspace.id}/general`,
-      icon: Cog,
-      isActive:
-        pathname?.includes("/general") ||
-        pathname?.includes("/look") ||
-        pathname?.includes("/app-connection") ||
-        pathname?.includes("/feedback-sources") ||
-        pathname?.includes("/integrations") ||
-        pathname?.includes("/teams") ||
-        pathname?.includes("/languages") ||
-        pathname?.includes("/tags"),
+      name: t("common.settings"),
+      href: `/workspaces/${workspace.id}/settings`,
+      icon: SettingsIcon,
+      isActive: isSettingsMode,
       disabled: isMembershipPending || isBilling,
     }),
-    [t, workspace.id, pathname, isMembershipPending, isBilling]
+    [t, workspace.id, isSettingsMode, isMembershipPending, isBilling]
   );
 
   const dropdownNavigation = [
     {
       label: t("common.account"),
-      href: `/workspaces/${workspace.id}/settings/profile`,
+      href: `/workspaces/${workspace.id}/settings/account/profile`,
       icon: UserCircleIcon,
     },
     {
@@ -263,17 +253,17 @@ export const MainNavigation = ({
     {
       id: "general",
       label: t("common.general"),
-      href: `/workspaces/${workspace.id}/general`,
+      href: `/workspaces/${workspace.id}/settings/workspace/general`,
     },
     {
       id: "look",
-      label: t("common.look_and_feel"),
-      href: `/workspaces/${workspace.id}/look`,
+      label: t("common.appearance"),
+      href: `/workspaces/${workspace.id}/settings/workspace/look`,
     },
     {
       id: "app-connection",
-      label: t("common.website_and_app_connection"),
-      href: `/workspaces/${workspace.id}/app-connection`,
+      label: t("common.connect_your_app"),
+      href: `/workspaces/${workspace.id}/settings/workspace/app-connection`,
     },
     {
       id: "feedback-sources",
@@ -283,22 +273,22 @@ export const MainNavigation = ({
     {
       id: "integrations",
       label: t("common.integrations"),
-      href: `/workspaces/${workspace.id}/integrations`,
+      href: `/workspaces/${workspace.id}/settings/workspace/integrations`,
     },
     {
       id: "teams",
       label: t("common.team_access"),
-      href: `/workspaces/${workspace.id}/teams`,
+      href: `/workspaces/${workspace.id}/settings/workspace/teams`,
     },
     {
       id: "languages",
       label: t("common.survey_languages"),
-      href: `/workspaces/${workspace.id}/languages`,
+      href: `/workspaces/${workspace.id}/settings/workspace/languages`,
     },
     {
       id: "tags",
       label: t("common.tags"),
-      href: `/workspaces/${workspace.id}/tags`,
+      href: `/workspaces/${workspace.id}/settings/workspace/tags`,
     },
   ];
 
@@ -310,7 +300,7 @@ export const MainNavigation = ({
     },
     {
       id: "teams",
-      label: t("common.members_and_teams"),
+      label: t("common.teams"),
       href: `/workspaces/${workspace.id}/settings/teams`,
     },
     {
@@ -528,6 +518,28 @@ export const MainNavigation = ({
     ];
   };
 
+  const handleSettingsWorkspaceChange = useCallback(
+    (id: string) => {
+      startTransition(() => {
+        router.push(`/workspaces/${id}/settings/workspace/general`);
+      });
+    },
+    [router]
+  );
+
+  const handleSettingsOrganizationChange = useCallback(
+    (id: string) => {
+      startTransition(() => {
+        if (id === organization.id) {
+          router.push(`/workspaces/${workspace.id}/settings/organization/general`);
+        } else {
+          router.push(`/organizations/${id}/`);
+        }
+      });
+    },
+    [router, organization.id, workspace.id]
+  );
+
   const switcherTriggerClasses = cn(
     "w-full border-t px-3 py-3 text-left transition-colors duration-200 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-inset",
     isCollapsed ? "flex items-center justify-center" : ""
@@ -544,353 +556,386 @@ export const MainNavigation = ({
         <aside
           className={cn(
             "z-40 flex flex-col justify-between rounded-r-xl border-r border-slate-200 bg-white pt-3 shadow-md transition-all duration-100",
-            isCollapsed ? "w-sidebar-expanded" : "w-sidebar-collapsed"
+            isSettingsMode || !isCollapsed ? "w-sidebar-collapsed" : "w-sidebar-expanded"
           )}>
-          <div>
-            {/* Logo and Toggle */}
+          {isSettingsMode ? (
+            <div className="flex flex-col overflow-hidden">
+              <div className="mb-2 px-3">
+                <GoBackButton url={`/workspaces/${workspace.id}/surveys`} />
+              </div>
 
-            <div className="flex items-center justify-between px-3 pb-4">
-              {!isCollapsed && (
-                <Link
-                  href={mainNavigationLink}
-                  className={cn(
-                    "flex items-center justify-center transition-opacity duration-100",
-                    isTextVisible ? "opacity-0" : "opacity-100"
-                  )}>
-                  <Image src={FBLogo} width={160} height={30} alt={t("workspace.formbricks_logo")} />
-                </Link>
-              )}
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={toggleSidebar}
-                className={cn(
-                  "rounded-xl bg-slate-50 p-1 text-slate-600 transition-all hover:bg-slate-100 focus:outline-none focus:ring-0 focus:ring-transparent"
-                )}>
-                {isCollapsed ? (
-                  <PanelLeftOpenIcon strokeWidth={1.5} />
-                ) : (
-                  <PanelLeftCloseIcon strokeWidth={1.5} />
-                )}
-              </Button>
+              {/* Settings sidebar content */}
+              <SettingsSidebarContent
+                workspaceId={workspace.id}
+                workspaceName={workspace.name}
+                organizationId={organization.id}
+                organizationName={organization.name}
+                membershipRole={membershipRole}
+                isFormbricksCloud={isFormbricksCloud}
+                isCollapsed={false}
+                isTextVisible={false}
+                workspaces={workspaces}
+                isLoadingWorkspaces={isLoadingWorkspaces}
+                onWorkspaceChange={handleSettingsWorkspaceChange}
+                onWorkspaceDropdownOpen={loadWorkspaces}
+                organizations={organizations}
+                isLoadingOrganizations={isLoadingOrganizations}
+                onOrganizationChange={handleSettingsOrganizationChange}
+                onOrganizationDropdownOpen={loadOrganizations}
+              />
             </div>
+          ) : (
+            <div>
+              {/* Logo and Toggle */}
 
-            {/* Main Nav Switch */}
-            <ul className="space-y-2">
-              {mainNavigationSections.map((section) => (
-                <li key={section.id}>
-                  {!isCollapsed && !isTextVisible && (
-                    <p className="px-4 pb-1 pt-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                      {section.name}
-                    </p>
+              <div className="flex items-center justify-between px-3 pb-4">
+                {!isCollapsed && (
+                  <Link
+                    href={mainNavigationLink}
+                    className={cn(
+                      "flex items-center justify-center transition-opacity duration-100",
+                      isTextVisible ? "opacity-0" : "opacity-100"
+                    )}>
+                    <Image src={FBLogo} width={160} height={30} alt={t("workspace.formbricks_logo")} />
+                  </Link>
+                )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleSidebar}
+                  className={cn(
+                    "rounded-xl bg-slate-50 p-1 text-slate-600 transition-all hover:bg-slate-100 focus:outline-none focus:ring-0 focus:ring-transparent"
+                  )}>
+                  {isCollapsed ? (
+                    <PanelLeftOpenIcon strokeWidth={1.5} />
+                  ) : (
+                    <PanelLeftCloseIcon strokeWidth={1.5} />
                   )}
+                </Button>
+              </div>
 
-                  <ul>
-                    {section.items.map(
-                      (item) =>
-                        !item.isHidden && (
-                          <NavigationLink
-                            key={item.name}
-                            href={item.href}
-                            isActive={item.isActive}
-                            isCollapsed={isCollapsed}
-                            isTextVisible={isTextVisible}
-                            disabled={item.disabled}
-                            disabledMessage={item.disabled ? disabledNavigationMessage : undefined}
-                            linkText={item.name}>
-                            <item.icon strokeWidth={1.5} />
-                          </NavigationLink>
-                        )
+              {/* Main Nav */}
+              <ul className="space-y-2">
+                {mainNavigationSections.map((section) => (
+                  <li key={section.id}>
+                    {!isCollapsed && !isTextVisible && (
+                      <p className="px-4 pb-1 pt-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                        {section.name}
+                      </p>
                     )}
+
+                    <ul>
+                      {section.items.map(
+                        (item) =>
+                          !item.isHidden && (
+                            <NavigationLink
+                              key={item.name}
+                              href={item.href}
+                              isActive={item.isActive}
+                              isCollapsed={isCollapsed}
+                              isTextVisible={isTextVisible}
+                              disabled={item.disabled}
+                              disabledMessage={item.disabled ? disabledNavigationMessage : undefined}
+                              linkText={item.name}>
+                              <item.icon strokeWidth={1.5} />
+                            </NavigationLink>
+                          )
+                      )}
+                    </ul>
+                  </li>
+                ))}
+
+                <li className={cn("mt-2 border-t border-slate-100 pt-2", isCollapsed && "border-t-0 pt-0")}>
+                  <ul>
+                    <NavigationLink
+                      href={settingsNavigationItem.href}
+                      isActive={settingsNavigationItem.isActive}
+                      isCollapsed={isCollapsed}
+                      isTextVisible={isTextVisible}
+                      disabled={settingsNavigationItem.disabled}
+                      disabledMessage={
+                        settingsNavigationItem.disabled ? disabledNavigationMessage : undefined
+                      }
+                      linkText={settingsNavigationItem.name}>
+                      <settingsNavigationItem.icon strokeWidth={1.5} />
+                    </NavigationLink>
                   </ul>
                 </li>
-              ))}
+              </ul>
+            </div>
+          )}
 
-              <li className={cn("mt-2 border-t border-slate-100 pt-2", isCollapsed && "border-t-0 pt-0")}>
-                <ul>
-                  <NavigationLink
-                    href={configurationNavigationItem.href}
-                    isActive={configurationNavigationItem.isActive}
-                    isCollapsed={isCollapsed}
-                    isTextVisible={isTextVisible}
-                    disabled={configurationNavigationItem.disabled}
-                    disabledMessage={
-                      configurationNavigationItem.disabled ? disabledNavigationMessage : undefined
-                    }
-                    linkText={configurationNavigationItem.name}>
-                    <configurationNavigationItem.icon strokeWidth={1.5} />
-                  </NavigationLink>
-                </ul>
-              </li>
-            </ul>
-          </div>
+          {!isSettingsMode && (
+            <div>
+              {/* New Version Available */}
+              {!isCollapsed && isOwnerOrManager && latestVersion && !isFormbricksCloud && !isDevelopment && (
+                <Link
+                  href="https://github.com/formbricks/formbricks/releases"
+                  target="_blank"
+                  className="m-2 flex items-center space-x-4 rounded-lg border border-slate-200 bg-slate-100 p-2 text-sm text-slate-800 hover:border-slate-300 hover:bg-slate-200">
+                  <p className="flex items-center justify-center gap-x-2 text-xs">
+                    <RocketIcon strokeWidth={1.5} className="mx-1 h-6 w-6 text-slate-900" />
+                    {t("common.new_version_available", { version: latestVersion })}
+                  </p>
+                </Link>
+              )}
 
-          <div>
-            {/* New Version Available */}
-            {!isCollapsed && isOwnerOrManager && latestVersion && !isFormbricksCloud && !isDevelopment && (
-              <Link
-                href="https://github.com/formbricks/formbricks/releases"
-                target="_blank"
-                className="m-2 flex items-center space-x-4 rounded-lg border border-slate-200 bg-slate-100 p-2 text-sm text-slate-800 hover:border-slate-300 hover:bg-slate-200">
-                <p className="flex items-center justify-center gap-x-2 text-xs">
-                  <RocketIcon strokeWidth={1.5} className="mx-1 h-6 w-6 text-slate-900" />
-                  {t("common.new_version_available", { version: latestVersion })}
-                </p>
-              </Link>
-            )}
+              {/* Trial Days Remaining */}
+              {!isCollapsed && isFormbricksCloud && trialDaysRemaining !== null && (
+                <Link href={`/workspaces/${workspace.id}/settings/billing`} className="m-2 block">
+                  <TrialAlert trialDaysRemaining={trialDaysRemaining} size="small" />
+                </Link>
+              )}
 
-            {/* Trial Days Remaining */}
-            {!isCollapsed && isFormbricksCloud && trialDaysRemaining !== null && (
-              <Link href={`/workspaces/${workspace.id}/settings/billing`} className="m-2 block">
-                <TrialAlert trialDaysRemaining={trialDaysRemaining} size="small" />
-              </Link>
-            )}
-
-            <div className="flex flex-col">
-              <DropdownMenu onOpenChange={setIsWorkspaceDropdownOpen}>
-                <DropdownMenuTrigger asChild id="workspaceDropdownTrigger" className={switcherTriggerClasses}>
-                  <button
-                    type="button"
-                    aria-label={isCollapsed ? t("common.change_workspace") : undefined}
-                    className={cn("flex w-full items-center gap-3", isCollapsed && "justify-center")}>
-                    <span className={switcherIconClasses}>
-                      <FoldersIcon className="h-4 w-4" strokeWidth={1.5} />
-                    </span>
-                    {!isCollapsed && !isTextVisible && (
+              <div className="flex flex-col">
+                <DropdownMenu onOpenChange={setIsWorkspaceDropdownOpen}>
+                  <DropdownMenuTrigger
+                    asChild
+                    id="workspaceDropdownTrigger"
+                    className={switcherTriggerClasses}>
+                    <button
+                      type="button"
+                      aria-label={isCollapsed ? t("common.change_workspace") : undefined}
+                      className={cn("flex w-full items-center gap-3", isCollapsed && "justify-center")}>
+                      <span className={switcherIconClasses}>
+                        <FoldersIcon className="h-4 w-4" strokeWidth={1.5} />
+                      </span>
+                      {!isCollapsed && !isTextVisible && (
+                        <>
+                          <div className="grow overflow-hidden">
+                            <p className="truncate text-sm font-bold text-slate-700">{workspace.name}</p>
+                            <p className="text-sm text-slate-500">{t("common.workspace")}</p>
+                          </div>
+                          {isPending && (
+                            <Loader2 className="h-4 w-4 animate-spin text-slate-600" strokeWidth={1.5} />
+                          )}
+                          <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-600" strokeWidth={1.5} />
+                        </>
+                      )}
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent side="right" sideOffset={10} alignOffset={5} align="end">
+                    <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
+                      <FoldersIcon className="mr-2 inline h-4 w-4" strokeWidth={1.5} />
+                      {t("common.change_workspace")}
+                    </div>
+                    {(isLoadingWorkspaces || isInitialWorkspacesLoading) && (
+                      <div className="flex items-center justify-center py-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      </div>
+                    )}
+                    {!isLoadingWorkspaces &&
+                      !isInitialWorkspacesLoading &&
+                      workspaceLoadError &&
+                      renderSwitcherError(
+                        workspaceLoadError,
+                        () => {
+                          setWorkspaceLoadError(null);
+                          setWorkspaces([]);
+                        },
+                        t("common.try_again")
+                      )}
+                    {!isLoadingWorkspaces && !isInitialWorkspacesLoading && !workspaceLoadError && (
                       <>
-                        <div className="grow overflow-hidden">
-                          <p className="truncate text-sm font-bold text-slate-700">{workspace.name}</p>
-                          <p className="text-sm text-slate-500">{t("common.workspace")}</p>
-                        </div>
-                        {isPending && (
-                          <Loader2 className="h-4 w-4 animate-spin text-slate-600" strokeWidth={1.5} />
+                        <DropdownMenuGroup className="max-h-[300px] overflow-y-auto">
+                          {workspaces.map((proj) => (
+                            <DropdownMenuCheckboxItem
+                              key={proj.id}
+                              checked={proj.id === workspace.id}
+                              onClick={() => handleWorkspaceChange(proj.id)}
+                              className="cursor-pointer">
+                              {proj.name}
+                            </DropdownMenuCheckboxItem>
+                          ))}
+                        </DropdownMenuGroup>
+                        {isOwnerOrManager && (
+                          <DropdownMenuCheckboxItem
+                            onClick={handleWorkspaceCreate}
+                            className="w-full cursor-pointer justify-between">
+                            <span>{t("common.add_new_workspace")}</span>
+                            <PlusIcon className="ml-2 h-4 w-4" strokeWidth={1.5} />
+                          </DropdownMenuCheckboxItem>
                         )}
-                        <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-600" strokeWidth={1.5} />
                       </>
                     )}
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent side="right" sideOffset={10} alignOffset={5} align="end">
-                  <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
-                    <FoldersIcon className="mr-2 inline h-4 w-4" strokeWidth={1.5} />
-                    {t("common.change_workspace")}
-                  </div>
-                  {(isLoadingWorkspaces || isInitialWorkspacesLoading) && (
-                    <div className="flex items-center justify-center py-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    </div>
-                  )}
-                  {!isLoadingWorkspaces &&
-                    !isInitialWorkspacesLoading &&
-                    workspaceLoadError &&
-                    renderSwitcherError(
-                      workspaceLoadError,
-                      () => {
-                        setWorkspaceLoadError(null);
-                        setWorkspaces([]);
-                      },
-                      t("common.try_again")
-                    )}
-                  {!isLoadingWorkspaces && !isInitialWorkspacesLoading && !workspaceLoadError && (
-                    <>
-                      <DropdownMenuGroup className="max-h-[300px] overflow-y-auto">
-                        {workspaces.map((proj) => (
-                          <DropdownMenuCheckboxItem
-                            key={proj.id}
-                            checked={proj.id === workspace.id}
-                            onClick={() => handleWorkspaceChange(proj.id)}
-                            className="cursor-pointer">
-                            {proj.name}
-                          </DropdownMenuCheckboxItem>
-                        ))}
-                      </DropdownMenuGroup>
-                      {isOwnerOrManager && (
-                        <DropdownMenuCheckboxItem
-                          onClick={handleWorkspaceCreate}
-                          className="w-full cursor-pointer justify-between">
-                          <span>{t("common.add_new_workspace")}</span>
-                          <PlusIcon className="ml-2 h-4 w-4" strokeWidth={1.5} />
-                        </DropdownMenuCheckboxItem>
-                      )}
-                    </>
-                  )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuGroup>
-                    <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
-                      <Cog className="mr-2 inline h-4 w-4" strokeWidth={1.5} />
-                      {t("common.workspace_configuration")}
-                    </div>
-                    {workspaceSettings.map((setting) => (
-                      <DropdownMenuCheckboxItem
-                        key={setting.id}
-                        checked={isActiveWorkspaceSetting(pathname, setting.id)}
-                        onClick={() => handleSettingNavigation(setting.href)}
-                        className="cursor-pointer">
-                        {setting.label}
-                      </DropdownMenuCheckboxItem>
-                    ))}
-                  </DropdownMenuGroup>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              <DropdownMenu onOpenChange={setIsOrganizationDropdownOpen}>
-                <DropdownMenuTrigger
-                  asChild
-                  id="organizationDropdownTriggerSidebar"
-                  className={switcherTriggerClasses}>
-                  <button
-                    type="button"
-                    aria-label={isCollapsed ? t("common.change_organization") : undefined}
-                    className={cn("flex w-full items-center gap-3", isCollapsed && "justify-center")}>
-                    <span className={switcherIconClasses}>
-                      <Building2Icon className="h-4 w-4" strokeWidth={1.5} />
-                    </span>
-                    {!isCollapsed && !isTextVisible && (
-                      <>
-                        <div className="grow overflow-hidden">
-                          <p className="truncate text-sm font-bold text-slate-700">{organization.name}</p>
-                          <p className="text-sm text-slate-500">{t("common.organization")}</p>
-                        </div>
-                        {isPending && (
-                          <Loader2 className="h-4 w-4 animate-spin text-slate-600" strokeWidth={1.5} />
-                        )}
-                        <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-600" strokeWidth={1.5} />
-                      </>
-                    )}
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent side="right" sideOffset={10} alignOffset={5} align="end">
-                  <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
-                    <Building2Icon className="mr-2 inline h-4 w-4" strokeWidth={1.5} />
-                    {t("common.change_organization")}
-                  </div>
-                  {isLoadingOrganizations && (
-                    <div className="flex items-center justify-center py-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    </div>
-                  )}
-                  {!isLoadingOrganizations &&
-                    organizationLoadError &&
-                    renderSwitcherError(
-                      organizationLoadError,
-                      () => {
-                        setOrganizationLoadError(null);
-                        setOrganizations([]);
-                      },
-                      t("common.try_again")
-                    )}
-                  {!isLoadingOrganizations && !organizationLoadError && (
-                    <>
-                      <DropdownMenuGroup className="max-h-[300px] overflow-y-auto">
-                        {organizations.map((org) => (
-                          <DropdownMenuCheckboxItem
-                            key={org.id}
-                            checked={org.id === organization.id}
-                            onClick={() => handleOrganizationChange(org.id)}
-                            className="cursor-pointer">
-                            {org.name}
-                          </DropdownMenuCheckboxItem>
-                        ))}
-                      </DropdownMenuGroup>
-                      {isMultiOrgEnabled && (
-                        <DropdownMenuCheckboxItem
-                          onClick={() => setOpenCreateOrganizationModal(true)}
-                          className="w-full cursor-pointer justify-between">
-                          <span>{t("common.create_new_organization")}</span>
-                          <PlusIcon className="ml-2 h-4 w-4" strokeWidth={1.5} />
-                        </DropdownMenuCheckboxItem>
-                      )}
-                    </>
-                  )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuGroup>
-                    <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
-                      <SettingsIcon className="mr-2 inline h-4 w-4" strokeWidth={1.5} />
-                      {t("common.organization_settings")}
-                    </div>
-                    {organizationSettings.map((setting) => {
-                      if (setting.hidden) return null;
-                      return (
+                    <DropdownMenuSeparator />
+                    <DropdownMenuGroup>
+                      <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
+                        <Cog className="mr-2 inline h-4 w-4" strokeWidth={1.5} />
+                        {t("common.workspace_configuration")}
+                      </div>
+                      {workspaceSettings.map((setting) => (
                         <DropdownMenuCheckboxItem
                           key={setting.id}
-                          checked={isActiveOrganizationSetting(pathname, setting.id)}
+                          checked={isActiveWorkspaceSetting(pathname, setting.id)}
                           onClick={() => handleSettingNavigation(setting.href)}
                           className="cursor-pointer">
                           {setting.label}
                         </DropdownMenuCheckboxItem>
-                      );
-                    })}
-                  </DropdownMenuGroup>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                      ))}
+                    </DropdownMenuGroup>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  asChild
-                  id="userDropdownTrigger"
-                  className={cn(switcherTriggerClasses, "rounded-br-xl")}>
-                  <button
-                    type="button"
-                    aria-label={isCollapsed ? t("common.account_settings") : undefined}
-                    className={cn("flex w-full items-center gap-3", isCollapsed && "justify-center")}>
-                    <span className={switcherIconClasses}>
-                      <ProfileAvatar userId={user.id} />
-                    </span>
-                    {!isCollapsed && !isTextVisible && (
+                <DropdownMenu onOpenChange={setIsOrganizationDropdownOpen}>
+                  <DropdownMenuTrigger
+                    asChild
+                    id="organizationDropdownTriggerSidebar"
+                    className={switcherTriggerClasses}>
+                    <button
+                      type="button"
+                      aria-label={isCollapsed ? t("common.change_organization") : undefined}
+                      className={cn("flex w-full items-center gap-3", isCollapsed && "justify-center")}>
+                      <span className={switcherIconClasses}>
+                        <Building2Icon className="h-4 w-4" strokeWidth={1.5} />
+                      </span>
+                      {!isCollapsed && !isTextVisible && (
+                        <>
+                          <div className="grow overflow-hidden">
+                            <p className="truncate text-sm font-bold text-slate-700">{organization.name}</p>
+                            <p className="text-sm text-slate-500">{t("common.organization")}</p>
+                          </div>
+                          {isPending && (
+                            <Loader2 className="h-4 w-4 animate-spin text-slate-600" strokeWidth={1.5} />
+                          )}
+                          <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-600" strokeWidth={1.5} />
+                        </>
+                      )}
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent side="right" sideOffset={10} alignOffset={5} align="end">
+                    <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
+                      <Building2Icon className="mr-2 inline h-4 w-4" strokeWidth={1.5} />
+                      {t("common.change_organization")}
+                    </div>
+                    {isLoadingOrganizations && (
+                      <div className="flex items-center justify-center py-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      </div>
+                    )}
+                    {!isLoadingOrganizations &&
+                      organizationLoadError &&
+                      renderSwitcherError(
+                        organizationLoadError,
+                        () => {
+                          setOrganizationLoadError(null);
+                          setOrganizations([]);
+                        },
+                        t("common.try_again")
+                      )}
+                    {!isLoadingOrganizations && !organizationLoadError && (
                       <>
-                        <div className="grow overflow-hidden">
-                          <p
-                            title={user?.email}
-                            className="ph-no-capture ph-no-capture -mb-0.5 truncate text-sm font-bold text-slate-700">
-                            {user?.name ? <span>{user?.name}</span> : <span>{user?.email}</span>}
-                          </p>
-                          <p className="text-sm text-slate-500">{t("common.account")}</p>
-                        </div>
-                        <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-600" strokeWidth={1.5} />
+                        <DropdownMenuGroup className="max-h-[300px] overflow-y-auto">
+                          {organizations.map((org) => (
+                            <DropdownMenuCheckboxItem
+                              key={org.id}
+                              checked={org.id === organization.id}
+                              onClick={() => handleOrganizationChange(org.id)}
+                              className="cursor-pointer">
+                              {org.name}
+                            </DropdownMenuCheckboxItem>
+                          ))}
+                        </DropdownMenuGroup>
+                        {isMultiOrgEnabled && (
+                          <DropdownMenuCheckboxItem
+                            onClick={() => setOpenCreateOrganizationModal(true)}
+                            className="w-full cursor-pointer justify-between">
+                            <span>{t("common.create_new_organization")}</span>
+                            <PlusIcon className="ml-2 h-4 w-4" strokeWidth={1.5} />
+                          </DropdownMenuCheckboxItem>
+                        )}
                       </>
                     )}
-                  </button>
-                </DropdownMenuTrigger>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuGroup>
+                      <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
+                        <SettingsIcon className="mr-2 inline h-4 w-4" strokeWidth={1.5} />
+                        {t("common.organization_settings")}
+                      </div>
+                      {organizationSettings.map((setting) => {
+                        if (setting.hidden) return null;
+                        return (
+                          <DropdownMenuCheckboxItem
+                            key={setting.id}
+                            checked={isActiveOrganizationSetting(pathname, setting.id)}
+                            onClick={() => handleSettingNavigation(setting.href)}
+                            className="cursor-pointer">
+                            {setting.label}
+                          </DropdownMenuCheckboxItem>
+                        );
+                      })}
+                    </DropdownMenuGroup>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
-                <DropdownMenuContent
-                  id="userDropdownInnerContentWrapper"
-                  side="right"
-                  sideOffset={10}
-                  alignOffset={5}
-                  align="end">
-                  {dropdownNavigation.map((link) => (
-                    <Link
-                      href={link.href}
-                      target={link.target}
-                      className="flex w-full items-center"
-                      key={link.label}
-                      rel={link.target === "_blank" ? "noopener noreferrer" : undefined}>
-                      <DropdownMenuItem>
-                        <link.icon className="mr-2 h-4 w-4" strokeWidth={1.5} />
-                        {link.label}
-                      </DropdownMenuItem>
-                    </Link>
-                  ))}
-                  <DropdownMenuItem
-                    onClick={async () => {
-                      const loginUrl = `${publicDomain}/auth/login`;
-                      const route = await signOutWithAudit({
-                        reason: "user_initiated",
-                        redirectUrl: loginUrl,
-                        organizationId: organization.id,
-                        redirect: false,
-                        callbackUrl: loginUrl,
-                        clearWorkspaceId: true,
-                      });
-                      router.push(route?.url || loginUrl); // NOSONAR // We want to check for empty strings
-                    }}
-                    icon={<LogOutIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />}>
-                    {t("common.logout")}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    asChild
+                    id="userDropdownTrigger"
+                    className={cn(switcherTriggerClasses, "rounded-br-xl")}>
+                    <button
+                      type="button"
+                      aria-label={isCollapsed ? t("common.account_settings") : undefined}
+                      className={cn("flex w-full items-center gap-3", isCollapsed && "justify-center")}>
+                      <span className={switcherIconClasses}>
+                        <ProfileAvatar userId={user.id} />
+                      </span>
+                      {!isCollapsed && !isTextVisible && (
+                        <>
+                          <div className="grow overflow-hidden">
+                            <p
+                              title={user?.email}
+                              className="ph-no-capture -mb-0.5 truncate text-sm font-bold text-slate-700">
+                              {user?.name ? <span>{user?.name}</span> : <span>{user?.email}</span>}
+                            </p>
+                            <p className="text-sm text-slate-500">{t("common.account")}</p>
+                          </div>
+                          <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-600" strokeWidth={1.5} />
+                        </>
+                      )}
+                    </button>
+                  </DropdownMenuTrigger>
+
+                  <DropdownMenuContent
+                    id="userDropdownInnerContentWrapper"
+                    side="right"
+                    sideOffset={10}
+                    alignOffset={5}
+                    align="end">
+                    {dropdownNavigation.map((link) => (
+                      <Link
+                        href={link.href}
+                        target={link.target}
+                        className="flex w-full items-center"
+                        key={link.label}
+                        rel={link.target === "_blank" ? "noopener noreferrer" : undefined}>
+                        <DropdownMenuItem>
+                          <link.icon className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                          {link.label}
+                        </DropdownMenuItem>
+                      </Link>
+                    ))}
+                    <DropdownMenuItem
+                      onClick={async () => {
+                        const loginUrl = `${publicDomain}/auth/login`;
+                        const route = await signOutWithAudit({
+                          reason: "user_initiated",
+                          redirectUrl: loginUrl,
+                          organizationId: organization.id,
+                          redirect: false,
+                          callbackUrl: loginUrl,
+                          clearWorkspaceId: true,
+                        });
+                        router.push(route?.url || loginUrl);
+                      }}
+                      icon={<LogOutIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />}>
+                      {t("common.logout")}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             </div>
-          </div>
+          )}
         </aside>
       )}
       {openWorkspaceLimitModal && (

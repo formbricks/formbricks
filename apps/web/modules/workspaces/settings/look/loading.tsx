@@ -23,7 +23,7 @@ export const WorkspaceLookSettingsLoading = () => {
   ];
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.look_and_feel")} />
+      <PageHeader pageTitle={t("common.appearance")} />
       <SettingsCard
         title={t("workspace.look.theme")}
         className="max-w-7xl"

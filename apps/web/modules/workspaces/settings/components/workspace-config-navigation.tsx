@@ -35,14 +35,14 @@ export const WorkspaceConfigNavigation = ({ activeId, loading }: WorkspaceConfig
     },
     {
       id: "look",
-      label: t("common.look_and_feel"),
+      label: t("common.appearance"),
       icon: <BrushIcon className="h-5 w-5" />,
       href: `${workspaceBasePath}/settings/workspace/look`,
       current: pathname?.includes("/look"),
     },
     {
       id: "app-connection",
-      label: t("common.website_and_app_connection"),
+      label: t("common.connect_your_app"),
       icon: <ListChecksIcon className="h-5 w-5" />,
       href: `${workspaceBasePath}/settings/workspace/app-connection`,
       current: pathname?.includes("/app-connection"),

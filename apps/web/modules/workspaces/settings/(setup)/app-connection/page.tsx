@@ -3,16 +3,13 @@
 import Link from "next/link";
 import { WidgetStatusIndicator } from "@/app/(app)/workspaces/[workspaceId]/components/WidgetStatusIndicator";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
-import { getActionClasses } from "@/lib/actionClass/service";
-import { DEFAULT_LOCALE, WEBAPP_URL } from "@/lib/constants";
-import { getUserLocale } from "@/lib/user/service";
+import { WEBAPP_URL } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
-import { ActionSettingsCard } from "../components/action-settings-card";
 
 export const AppConnectionPage = async ({ params }: { params: Promise<{ workspaceId: string }> }) => {
   const t = await getTranslate();
@@ -22,16 +19,11 @@ export const AppConnectionPage = async ({ params }: { params: Promise<{ workspac
   const workspaceIdMigrationUrl =
     "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/workspace-id-migration";
 
-  const { isReadOnly, session, workspace } = await getWorkspaceAuth(workspaceId);
-
-  const [actionClasses, locale] = await Promise.all([
-    getActionClasses(workspace.id),
-    getUserLocale(session.user.id),
-  ]);
+  const { workspace } = await getWorkspaceAuth(workspaceId);
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.website_and_app_connection")} />
+      <PageHeader pageTitle={t("common.connect_your_app")} />
       <div className="space-y-4">
         <SettingsCard
           title={t("workspace.app-connection.sdk_connection_details")}
@@ -87,12 +79,6 @@ export const AppConnectionPage = async ({ params }: { params: Promise<{ workspac
             </div>
           )}
         </SettingsCard>
-        <ActionSettingsCard
-          workspaceId={workspace.id}
-          actionClasses={actionClasses}
-          isReadOnly={isReadOnly}
-          locale={locale ?? DEFAULT_LOCALE}
-        />
       </div>
     </PageContentWrapper>
   );

@@ -255,15 +255,22 @@ export const SettingsSidebarContent = ({
       disabled: isBilling,
     },
     {
-      id: "look",
-      label: t("common.look_and_feel"),
-      href: `${basePath}/workspace/look`,
-      icon: <BrushIcon className={iconClassName} />,
+      id: "teams",
+      label: t("common.team_access"),
+      href: `${basePath}/workspace/teams`,
+      icon: <UsersIcon className={iconClassName} />,
+      disabled: isBilling,
+    },
+    {
+      id: "languages",
+      label: t("common.survey_languages"),
+      href: `${basePath}/workspace/languages`,
+      icon: <LanguagesIcon className={iconClassName} />,
       disabled: isBilling,
     },
     {
       id: "app-connection",
-      label: t("common.website_and_app_connection"),
+      label: t("common.connect_your_app"),
       href: `${basePath}/workspace/app-connection`,
       icon: <ListChecksIcon className={iconClassName} />,
       disabled: isBilling,
@@ -276,17 +283,17 @@ export const SettingsSidebarContent = ({
       disabled: isBilling,
     },
     {
-      id: "teams",
-      label: t("common.team_access"),
-      href: `${basePath}/workspace/teams`,
-      icon: <UsersIcon className={iconClassName} />,
+      id: "look",
+      label: t("common.appearance"),
+      href: `${basePath}/workspace/look`,
+      icon: <BrushIcon className={iconClassName} />,
       disabled: isBilling,
     },
     {
-      id: "languages",
-      label: t("common.survey_languages"),
-      href: `${basePath}/workspace/languages`,
-      icon: <LanguagesIcon className={iconClassName} />,
+      id: "user-actions",
+      label: t("common.user_actions"),
+      href: `${basePath}/workspace/user-actions`,
+      icon: <ListChecksIcon className={iconClassName} />,
       disabled: isBilling,
     },
     {
@@ -308,7 +315,7 @@ export const SettingsSidebarContent = ({
     },
     {
       id: "org-teams",
-      label: t("common.members_and_teams"),
+      label: t("common.teams"),
       href: `${basePath}/organization/teams`,
       icon: <UsersIcon className={iconClassName} />,
       disabled: isBilling,
@@ -347,7 +354,7 @@ export const SettingsSidebarContent = ({
   const accountItems: NavItem[] = [
     {
       id: "profile",
-      label: t("common.profile"),
+      label: t("common.your_profile"),
       href: `${basePath}/account/profile`,
       icon: <UserCircleIcon className={iconClassName} />,
     },
@@ -380,42 +387,48 @@ export const SettingsSidebarContent = ({
   };
 
   return (
-    <div className="flex flex-col gap-1 overflow-y-auto">
-      <SectionHeader
-        icon={<FoldersIcon className="h-4 w-4" />}
-        label={t("common.workspace")}
-        isCollapsed={isCollapsed}
-        isTextVisible={isTextVisible}
-        switcherName={workspaceName}
-        switcherItems={workspaces}
-        isLoadingSwitcher={isLoadingWorkspaces}
-        currentId={workspaceId}
-        onSwitcherChange={onWorkspaceChange}
-        onSwitcherOpen={onWorkspaceDropdownOpen}
-      />
-      {renderSection(workspaceItems)}
+    <div className="flex flex-col overflow-y-auto">
+      <div>
+        <SectionHeader
+          icon={<FoldersIcon className="h-4 w-4" />}
+          label={t("common.workspace")}
+          isCollapsed={isCollapsed}
+          isTextVisible={isTextVisible}
+          switcherName={workspaceName}
+          switcherItems={workspaces}
+          isLoadingSwitcher={isLoadingWorkspaces}
+          currentId={workspaceId}
+          onSwitcherChange={onWorkspaceChange}
+          onSwitcherOpen={onWorkspaceDropdownOpen}
+        />
+        {renderSection(workspaceItems)}
+      </div>
 
-      <SectionHeader
-        icon={<Building2Icon className="h-4 w-4" />}
-        label={t("common.organization")}
-        isCollapsed={isCollapsed}
-        isTextVisible={isTextVisible}
-        switcherName={organizationName}
-        switcherItems={organizations}
-        isLoadingSwitcher={isLoadingOrganizations}
-        currentId={organizationId}
-        onSwitcherChange={onOrganizationChange}
-        onSwitcherOpen={onOrganizationDropdownOpen}
-      />
-      {renderSection(organizationItems)}
+      <div>
+        <SectionHeader
+          icon={<Building2Icon className="h-4 w-4" />}
+          label={t("common.organization")}
+          isCollapsed={isCollapsed}
+          isTextVisible={isTextVisible}
+          switcherName={organizationName}
+          switcherItems={organizations}
+          isLoadingSwitcher={isLoadingOrganizations}
+          currentId={organizationId}
+          onSwitcherChange={onOrganizationChange}
+          onSwitcherOpen={onOrganizationDropdownOpen}
+        />
+        {renderSection(organizationItems)}
+      </div>
 
-      <SectionHeader
-        icon={<UserCircleIcon className="h-4 w-4" />}
-        label={t("common.account")}
-        isCollapsed={isCollapsed}
-        isTextVisible={isTextVisible}
-      />
-      {renderSection(accountItems)}
+      <div>
+        <SectionHeader
+          icon={<UserCircleIcon className="h-4 w-4" />}
+          label={t("common.account")}
+          isCollapsed={isCollapsed}
+          isTextVisible={isTextVisible}
+        />
+        {renderSection(accountItems)}
+      </div>
     </div>
   );
 };

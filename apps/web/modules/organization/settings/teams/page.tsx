@@ -33,7 +33,7 @@ export const TeamsPage = async (props: { params: Promise<{ workspaceId: string }
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.members_and_teams")} />
+      <PageHeader pageTitle={t("common.teams")} />
       <MembersView
         membershipRole={currentUserMembership?.role}
         organization={organization}

@@ -37,16 +37,6 @@ interface WorkspaceBreadcrumbProps {
   isMembershipPending: boolean;
 }
 
-const isActiveWorkspaceSetting = (pathname: string, settingId: string): boolean => {
-  // Match /{settingId} or /{settingId}/... but exclude settings paths
-  if (pathname.includes("/settings/")) {
-    return false;
-  }
-  // Check if path matches /workspaces/{id}/{settingId} (with optional trailing path)
-  const pattern = new RegExp(`/workspaces/[^/]+/${settingId}(?:/|$)`);
-  return pattern.test(pathname);
-};
-
 export const WorkspaceBreadcrumb = ({
   currentWorkspaceId,
   currentWorkspaceName,
@@ -106,17 +96,17 @@ export const WorkspaceBreadcrumb = ({
     {
       id: "general",
       label: t("common.general"),
-      href: `${workspaceBasePath}/general`,
+      href: `${workspaceBasePath}/settings/workspace/general`,
     },
     {
       id: "look",
-      label: t("common.look_and_feel"),
-      href: `${workspaceBasePath}/look`,
+      label: t("common.appearance"),
+      href: `${workspaceBasePath}/settings/workspace/look`,
     },
     {
       id: "app-connection",
-      label: t("common.website_and_app_connection"),
-      href: `${workspaceBasePath}/app-connection`,
+      label: t("common.connect_your_app"),
+      href: `${workspaceBasePath}/settings/workspace/app-connection`,
     },
     {
       id: "feedback-sources",
@@ -126,27 +116,27 @@ export const WorkspaceBreadcrumb = ({
     {
       id: "integrations",
       label: t("common.integrations"),
-      href: `${workspaceBasePath}/integrations`,
+      href: `${workspaceBasePath}/settings/workspace/integrations`,
     },
     {
       id: "teams",
       label: t("common.team_access"),
-      href: `${workspaceBasePath}/teams`,
+      href: `${workspaceBasePath}/settings/workspace/teams`,
     },
     {
       id: "languages",
       label: t("common.survey_languages"),
-      href: `${workspaceBasePath}/languages`,
+      href: `${workspaceBasePath}/settings/workspace/languages`,
     },
     {
       id: "tags",
       label: t("common.tags"),
-      href: `${workspaceBasePath}/tags`,
+      href: `${workspaceBasePath}/settings/workspace/tags`,
     },
     {
       id: "unify",
       label: t("common.unify"),
-      href: `${workspaceBasePath}/workspace/unify`,
+      href: `${workspaceBasePath}/settings/workspace/unify`,
     },
   ];
 
@@ -181,9 +171,9 @@ export const WorkspaceBreadcrumb = ({
     setOpenCreateWorkspaceModal(true);
   };
 
-  const handleWorkspaceSettingsNavigation = (settingId: string) => {
+  const handleWorkspaceSettingsNavigation = (href: string) => {
     startTransition(() => {
-      router.push(`${workspaceBasePath}/${settingId}`);
+      router.push(href);
     });
   };
 
@@ -320,8 +310,8 @@ export const WorkspaceBreadcrumb = ({
                   </Popover>
                 ) : (
                   <DropdownMenuCheckboxItem
-                    checked={isActiveWorkspaceSetting(pathname, setting.id)}
-                    onClick={() => handleWorkspaceSettingsNavigation(setting.id)}
+                    checked={pathname.includes(setting.href)}
+                    onClick={() => handleWorkspaceSettingsNavigation(setting.href)}
                     className="cursor-pointer">
                     {setting.label}
                   </DropdownMenuCheckboxItem>
