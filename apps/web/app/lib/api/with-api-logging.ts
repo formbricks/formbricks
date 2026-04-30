@@ -5,6 +5,7 @@ import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { reportApiError } from "@/app/lib/api/api-error-reporter";
 import { responses } from "@/app/lib/api/response";
+import { getApiKeyFromHeaders } from "@/modules/api/lib/api-key-auth";
 import {
   AuthenticationMethod,
   isClientSideApiRoute,
@@ -183,8 +184,11 @@ const handleAuthentication = async (
     case AuthenticationMethod.Session:
       return await getServerSession(authOptions);
     case AuthenticationMethod.Both: {
-      const session = await getServerSession(authOptions);
-      return session ?? (await authenticateRequest(req));
+      if (getApiKeyFromHeaders(req.headers)) {
+        return await authenticateRequest(req);
+      }
+
+      return await getServerSession(authOptions);
     }
     case AuthenticationMethod.None:
       return null;

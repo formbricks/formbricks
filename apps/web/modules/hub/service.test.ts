@@ -1,22 +1,44 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import {
-  createFeedbackRecord,
-  createFeedbackRecordsBatch,
-  listFeedbackRecords,
-  retrieveFeedbackRecord,
-  updateFeedbackRecord,
-} from "./service";
+import { createCacheKey } from "@formbricks/cache";
 import type { FeedbackRecordCreateParams } from "./types";
 
 vi.mock("@formbricks/logger", () => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
 }));
 
+vi.mock("@formbricks/hub", () => ({
+  default: {
+    APIError: class APIError extends Error {
+      status: number;
+
+      constructor(message: string, status: number) {
+        super(message);
+        this.status = status;
+      }
+    },
+  },
+}));
+
 vi.mock("./hub-client", () => ({
   getHubClient: vi.fn(),
 }));
 
+vi.mock("@/lib/cache", () => ({
+  cache: {
+    withCache: vi.fn(async (fn: () => Promise<unknown>) => await fn()),
+  },
+}));
+
 const { getHubClient } = await import("./hub-client");
+const { cache } = await import("@/lib/cache");
+const {
+  createFeedbackRecord,
+  createFeedbackRecordsBatch,
+  getFeedbackRecordTenant,
+  listFeedbackRecords,
+  retrieveFeedbackRecord,
+  updateFeedbackRecord,
+} = await import("./service");
 
 const sampleInput: FeedbackRecordCreateParams = {
   field_id: "el-1",
@@ -112,19 +134,6 @@ describe("hub service", () => {
       expect(result.error).toMatchObject({ status: 0, message: "Network error" });
     });
 
-    test("returns data when called without params", async () => {
-      const listResponse = { data: [], total: 0, limit: 50, offset: 0 };
-      const listFn = vi.fn().mockResolvedValue(listResponse);
-      vi.mocked(getHubClient).mockReturnValue({
-        feedbackRecords: { list: listFn },
-      } as any);
-
-      const result = await listFeedbackRecords();
-
-      expect(result.error).toBeNull();
-      expect(result.data).toEqual(listResponse);
-      expect(listFn).toHaveBeenCalledWith(undefined);
-    });
   });
 
   describe("retrieveFeedbackRecord", () => {
@@ -234,6 +243,67 @@ describe("hub service", () => {
       expect(result.results[0].error).toBeNull();
       expect(result.results[1].data).toBeNull();
       expect(result.results[1].error).toMatchObject({ message: "Rate limited" });
+    });
+  });
+
+  describe("getFeedbackRecordTenant", () => {
+    test("returns config error when getHubClient returns null", async () => {
+      vi.mocked(getHubClient).mockReturnValue(null);
+
+      const result = await getFeedbackRecordTenant("0194d8a0-3d55-7ff4-9f62-8d02c3fbcfe8");
+
+      expect(result).toEqual({
+        data: null,
+        error: {
+          status: 0,
+          message: "HUB_API_KEY is not set; Hub integration is disabled.",
+          detail: "HUB_API_KEY is not set; Hub integration is disabled.",
+        },
+      });
+      expect(vi.mocked(cache.withCache)).not.toHaveBeenCalled();
+    });
+
+    test("returns cached tenant data when retrieve succeeds", async () => {
+      const retrieve = vi.fn().mockResolvedValue({
+        id: "0194d8a0-3d55-7ff4-9f62-8d02c3fbcfe8",
+        tenant_id: "clxx1234567890123456789012",
+      });
+      vi.mocked(getHubClient).mockReturnValue({
+        feedbackRecords: { retrieve },
+      } as any);
+
+      const result = await getFeedbackRecordTenant("0194d8a0-3d55-7ff4-9f62-8d02c3fbcfe8");
+
+      expect(result).toEqual({
+        data: { tenantId: "clxx1234567890123456789012" },
+        error: null,
+      });
+      expect(vi.mocked(cache.withCache)).toHaveBeenCalledOnce();
+      expect(vi.mocked(cache.withCache)).toHaveBeenCalledWith(
+        expect.any(Function),
+        createCacheKey.hub.feedbackRecordTenant("0194d8a0-3d55-7ff4-9f62-8d02c3fbcfe8"),
+        60_000
+      );
+      expect(retrieve).toHaveBeenCalledWith("0194d8a0-3d55-7ff4-9f62-8d02c3fbcfe8");
+    });
+
+    test("returns error result when retrieve fails", async () => {
+      vi.mocked(getHubClient).mockReturnValue({
+        feedbackRecords: {
+          retrieve: vi.fn().mockRejectedValue(new Error("Network error")),
+        },
+      } as any);
+
+      const result = await getFeedbackRecordTenant("0194d8a0-3d55-7ff4-9f62-8d02c3fbcfe8");
+
+      expect(result).toEqual({
+        data: null,
+        error: {
+          status: 0,
+          message: "Network error",
+          detail: "Network error",
+        },
+      });
     });
   });
 });

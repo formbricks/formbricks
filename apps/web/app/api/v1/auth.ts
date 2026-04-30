@@ -2,32 +2,10 @@ import { NextRequest } from "next/server";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { responses } from "@/app/lib/api/response";
-import { getApiKeyWithPermissions } from "@/modules/organization/settings/api-keys/lib/api-key";
+import { authenticateApiKeyFromHeaders } from "@/modules/api/lib/api-key-auth";
 
 export const authenticateRequest = async (request: NextRequest): Promise<TAuthenticationApiKey | null> => {
-  const apiKey = request.headers.get("x-api-key");
-  if (!apiKey) return null;
-
-  // Get API key with permissions
-  const apiKeyData = await getApiKeyWithPermissions(apiKey);
-  if (!apiKeyData) return null;
-
-  // In the route handlers, we'll do more specific permission checks
-  if (apiKeyData.apiKeyWorkspaces.length === 0) return null;
-
-  const authentication: TAuthenticationApiKey = {
-    type: "apiKey",
-    workspacePermissions: apiKeyData.apiKeyWorkspaces.map((env) => ({
-      permission: env.permission,
-      workspaceId: env.workspaceId,
-      workspaceName: env.workspace.name,
-    })),
-    apiKeyId: apiKeyData.id,
-    organizationId: apiKeyData.organizationId,
-    organizationAccess: apiKeyData.organizationAccess,
-  };
-
-  return authentication;
+  return await authenticateApiKeyFromHeaders(request.headers);
 };
 
 export const handleErrorResponse = (error: any): Response => {

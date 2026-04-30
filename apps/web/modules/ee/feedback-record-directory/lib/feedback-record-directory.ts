@@ -100,6 +100,43 @@ export const getFeedbackRecordDirectoriesByWorkspaceId = reactCache(
   }
 );
 
+export const getFeedbackRecordDirectoryAuthContext = reactCache(
+  async (
+    directoryId: string
+  ): Promise<{ organizationId: string; workspaceIds: string[]; isArchived: boolean } | null> => {
+    validateInputs([directoryId, ZId]);
+    try {
+      const directory = await prisma.feedbackRecordDirectory.findUnique({
+        where: { id: directoryId },
+        select: {
+          organizationId: true,
+          isArchived: true,
+          workspaces: {
+            select: {
+              workspaceId: true,
+            },
+          },
+        },
+      });
+
+      if (!directory) {
+        return null;
+      }
+
+      return {
+        organizationId: directory.organizationId,
+        workspaceIds: directory.workspaces.map((workspace) => workspace.workspaceId),
+        isArchived: directory.isArchived,
+      };
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+      throw error;
+    }
+  }
+);
+
 /**
  * Lists active feedback directory access assignments by workspace for an organization.
  * Each workspace appears once with the first active directory assignment found.
