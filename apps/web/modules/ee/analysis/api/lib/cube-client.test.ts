@@ -141,6 +141,8 @@ describe("executeTenantScopedQuery", () => {
     vi.stubEnv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/formbricks?schema=public");
     vi.stubEnv("ENCRYPTION_KEY", "12345678901234567890123456789012");
     vi.stubEnv("HUB_API_URL", "https://hub.formbricks.local");
+    vi.stubEnv("CUBEJS_API_URL", undefined);
+    vi.stubEnv("CUBEJS_API_SECRET", undefined);
     const { CUBE_CONFIGURATION_ERROR_MESSAGE } = await import("./cube-config");
     const { executeTenantScopedQuery } = await import("./cube-client");
 
