@@ -1,9 +1,9 @@
-import { ActionClass } from "@prisma/client";
+import { ActionClass, Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TActionClassInput } from "@formbricks/types/action-classes";
-import { DatabaseError } from "@formbricks/types/errors";
+import { DatabaseError, UniqueConstraintError } from "@formbricks/types/errors";
 import { createActionClass } from "./action-class";
 
 vi.mock("@formbricks/database", () => ({
@@ -99,14 +99,19 @@ describe("createActionClass", () => {
     expect(result).toEqual(createdAction);
   });
 
-  test("should throw DatabaseError for unique constraint violation", async () => {
-    const prismaError = {
-      code: PrismaErrorType.UniqueConstraintViolation,
-      meta: { target: ["name"] },
-    };
+  test("should throw UniqueConstraintError for unique constraint violation", async () => {
+    const prismaError = Object.assign(
+      new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+        code: PrismaErrorType.UniqueConstraintViolation,
+        clientVersion: "test",
+      }),
+      { meta: { target: ["name"] } }
+    );
     vi.mocked(prisma.actionClass.create).mockRejectedValue(prismaError);
 
-    await expect(createActionClass(mockEnvironmentId, mockCodeActionInput)).rejects.toThrow(DatabaseError);
+    await expect(createActionClass(mockEnvironmentId, mockCodeActionInput)).rejects.toThrow(
+      UniqueConstraintError
+    );
   });
 
   test("should throw DatabaseError for other database errors", async () => {

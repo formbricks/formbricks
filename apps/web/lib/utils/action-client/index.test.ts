@@ -12,6 +12,7 @@ import {
   OperationNotAllowedError,
   ResourceNotFoundError,
   TooManyRequestsError,
+  UniqueConstraintError,
   UnknownError,
   ValidationError,
   isExpectedError,
@@ -74,6 +75,7 @@ describe("isExpectedError (shared helper)", () => {
       "OperationNotAllowedError",
       "TooManyRequestsError",
       "InvalidPasswordResetTokenError",
+      "UniqueConstraintError",
     ];
 
     expect(EXPECTED_ERROR_NAMES.size).toBe(expected.length);
@@ -91,6 +93,7 @@ describe("isExpectedError (shared helper)", () => {
     { ErrorClass: ValidationError, args: ["Invalid data"] },
     { ErrorClass: OperationNotAllowedError, args: ["Not allowed"] },
     { ErrorClass: InvalidPasswordResetTokenError, args: [INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE] },
+    { ErrorClass: UniqueConstraintError, args: ["Already exists"] },
   ])("returns true for $ErrorClass.name", ({ ErrorClass, args }) => {
     const error = new (ErrorClass as any)(...args);
     expect(isExpectedError(error)).toBe(true);
@@ -184,6 +187,14 @@ describe("actionClient handleServerError", () => {
         new InvalidPasswordResetTokenError(INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE)
       );
       expect(result?.serverError).toBe(INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE);
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+    });
+
+    test("UniqueConstraintError returns its message and is not sent to Sentry", async () => {
+      const result = await executeThrowingAction(
+        new UniqueConstraintError("Action with name foo already exists")
+      );
+      expect(result?.serverError).toBe("Action with name foo already exists");
       expect(Sentry.captureException).not.toHaveBeenCalled();
     });
   });

@@ -160,6 +160,7 @@ export const EXPECTED_ERROR_NAMES = new Set([
   "OperationNotAllowedError",
   "TooManyRequestsError",
   "InvalidPasswordResetTokenError",
+  "UniqueConstraintError",
 ]);
 
 /**
