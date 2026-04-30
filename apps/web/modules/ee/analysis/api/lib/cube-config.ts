@@ -16,7 +16,7 @@ export const normalizeCubeApiUrl = (baseUrl: string): string => {
   return `${baseUrl.replace(/\/$/, "")}/cubejs-api/v1`;
 };
 
-export const getCubeApiConfig = () => {
+export const getCubeApiCredentials = () => {
   if (!env.CUBEJS_API_URL || !env.CUBEJS_API_SECRET) {
     throw new ConfigurationError(CUBE_CONFIGURATION_ERROR_MESSAGE);
   }
@@ -24,9 +24,27 @@ export const getCubeApiConfig = () => {
   return {
     apiUrl: normalizeCubeApiUrl(env.CUBEJS_API_URL),
     apiSecret: env.CUBEJS_API_SECRET,
-    token: jwt.sign({}, env.CUBEJS_API_SECRET, {
+  };
+};
+
+export const createCubeApiToken = (apiSecret: string) => {
+  const tokenIssuedAtMs = Date.now();
+
+  return {
+    token: jwt.sign({}, apiSecret, {
       algorithm: "HS256",
       expiresIn: CUBE_API_TOKEN_TTL_SECONDS,
     }),
+    tokenExpiresAtMs: tokenIssuedAtMs + CUBE_API_TOKEN_TTL_SECONDS * 1000,
+  };
+};
+
+export const getCubeApiConfig = () => {
+  const { apiSecret, apiUrl } = getCubeApiCredentials();
+
+  return {
+    apiUrl,
+    apiSecret,
+    ...createCubeApiToken(apiSecret),
   };
 };

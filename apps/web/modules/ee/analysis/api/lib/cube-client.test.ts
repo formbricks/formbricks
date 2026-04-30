@@ -4,6 +4,11 @@ vi.mock("server-only", () => ({}));
 
 const mockLoad = vi.fn();
 const mockTablePivot = vi.fn();
+const globalForCube = globalThis as unknown as {
+  formbricksCubeClient: unknown;
+  formbricksCubeClientCacheKey: string | undefined;
+  formbricksCubeClientTokenExpiresAtMs: number | undefined;
+};
 
 vi.mock("@cubejs-client/core", () => ({
   default: vi.fn(() => ({
@@ -13,6 +18,7 @@ vi.mock("@cubejs-client/core", () => ({
 
 describe("executeQuery", () => {
   beforeEach(() => {
+    vi.restoreAllMocks();
     vi.clearAllMocks();
     vi.resetModules();
     vi.doUnmock("@/lib/env");
@@ -22,6 +28,9 @@ describe("executeQuery", () => {
     vi.stubEnv("HUB_API_URL", "https://hub.formbricks.local");
     vi.stubEnv("CUBEJS_API_URL", "https://cube.example.com");
     vi.stubEnv("CUBEJS_API_SECRET", "cube-secret");
+    globalForCube.formbricksCubeClient = undefined;
+    globalForCube.formbricksCubeClientCacheKey = undefined;
+    globalForCube.formbricksCubeClientTokenExpiresAtMs = undefined;
     const resultSet = { tablePivot: mockTablePivot };
     mockLoad.mockResolvedValue(resultSet);
     mockTablePivot.mockReturnValue([{ id: "1", count: 42 }]);
@@ -52,6 +61,35 @@ describe("executeQuery", () => {
     const cubejs = ((await vi.importMock("@cubejs-client/core")) as any).default;
     expect(cubejs).toHaveBeenCalledWith(expect.any(String), { apiUrl: fullUrl });
     vi.unstubAllEnvs();
+  });
+
+  test("reuses the cached Cube client across queries while the JWT is still fresh", async () => {
+    let nowMs = 1_700_000_000_000;
+    vi.spyOn(Date, "now").mockImplementation(() => nowMs);
+    const { executeQuery } = await import("./cube-client");
+
+    await executeQuery({ measures: ["FeedbackRecords.count"] });
+    nowMs += 5 * 60 * 1000;
+    await executeQuery({ measures: ["FeedbackRecords.count"] });
+
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const cubejs = ((await vi.importMock("@cubejs-client/core")) as any).default;
+    expect(cubejs).toHaveBeenCalledTimes(1);
+  });
+
+  test("refreshes the cached Cube client once the JWT reaches the refresh window", async () => {
+    let nowMs = 1_700_000_000_000;
+    vi.spyOn(Date, "now").mockImplementation(() => nowMs);
+    const { CUBE_API_TOKEN_TTL_SECONDS } = await import("./cube-config");
+    const { executeQuery } = await import("./cube-client");
+
+    await executeQuery({ measures: ["FeedbackRecords.count"] });
+    nowMs += CUBE_API_TOKEN_TTL_SECONDS * 1000;
+    await executeQuery({ measures: ["FeedbackRecords.count"] });
+
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const cubejs = ((await vi.importMock("@cubejs-client/core")) as any).default;
+    expect(cubejs).toHaveBeenCalledTimes(2);
   });
 
   test("throws a configuration error when Cube env is missing", async () => {

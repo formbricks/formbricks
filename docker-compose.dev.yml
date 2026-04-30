@@ -103,8 +103,8 @@ services:
       CUBEJS_API_SECRET: ${CUBEJS_API_SECRET:?CUBEJS_API_SECRET is required to run Cube}
       CUBEJS_CACHE_AND_QUEUE_DRIVER: memory
     volumes:
-      - ./cube/cube.js:/cube/conf/cube.js:ro
-      - ./cube/schema:/cube/conf/model:ro
+      - ./docker/cube/cube.js:/cube/conf/cube.js:ro
+      - ./docker/cube/schema:/cube/conf/model:ro
     restart: on-failure
 
 volumes:
