@@ -66,7 +66,6 @@ interface FeedbackRecordFormDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   workspaceId: string;
-  directories: { id: string; name: string }[];
   canWrite: boolean;
   recordId?: string;
   onSuccess: () => Promise<void> | void;
@@ -77,7 +76,6 @@ export const FeedbackRecordFormDrawer = ({
   open,
   onOpenChange,
   workspaceId,
-  directories,
   canWrite,
   recordId,
   onSuccess,
@@ -88,7 +86,7 @@ export const FeedbackRecordFormDrawer = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDiscardDialogOpen, setIsDiscardDialogOpen] = useState(false);
 
-  const defaultValues = useMemo(() => getCreateDefaults(directories), [directories]);
+  const defaultValues = useMemo(() => getCreateDefaults(workspaceId), [workspaceId]);
 
   const form = useForm<TFeedbackRecordFormValues>({
     resolver: zodResolver(ZFeedbackRecordFormValues),
@@ -111,12 +109,12 @@ export const FeedbackRecordFormDrawer = ({
   const readOnlyMetadataEntries = useMemo(() => (record ? getReadOnlyMetadataEntries(record) : []), [record]);
 
   const resetForCreate = useCallback(() => {
-    const nextDefaults = getCreateDefaults(directories);
+    const nextDefaults = getCreateDefaults(workspaceId);
     form.reset(nextDefaults);
     setRecord(null);
     setSourceTypeMode(nextDefaults.source_type);
     setCustomSourceType("");
-  }, [directories, form]);
+  }, [workspaceId, form]);
 
   useEffect(() => {
     if (!open) return;
@@ -361,22 +359,9 @@ export const FeedbackRecordFormDrawer = ({
                     name="tenant_id"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t("workspace.unify.feedback_record_directory")}</FormLabel>
+                        <FormLabel>{t("workspace.unify.workspace")}</FormLabel>
                         <FormControl>
-                          <Select value={field.value} onValueChange={field.onChange} disabled>
-                            <SelectTrigger>
-                              <SelectValue
-                                placeholder={t("workspace.unify.select_feedback_record_directory")}
-                              />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {directories.map((directory) => (
-                                <SelectItem key={directory.id} value={directory.id}>
-                                  {directory.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <Input {...field} disabled />
                         </FormControl>
                         <FormError />
                       </FormItem>

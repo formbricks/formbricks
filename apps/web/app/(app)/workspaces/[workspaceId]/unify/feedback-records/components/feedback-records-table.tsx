@@ -12,7 +12,7 @@ import {
   TypeIcon,
 } from "lucide-react";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { listFeedbackRecordsAction } from "@/lib/connector/actions";
@@ -63,7 +63,6 @@ function truncate(str: string, maxLen: number): string {
 interface FeedbackRecordsTableProps {
   workspaceId: string;
   initialRecords: FeedbackRecordData[];
-  frdMap: Record<string, string>;
   csvSources: { id: string; name: string }[];
   canWrite: boolean;
 }
@@ -71,7 +70,6 @@ interface FeedbackRecordsTableProps {
 export const FeedbackRecordsTable = ({
   workspaceId,
   initialRecords,
-  frdMap,
   csvSources,
   canWrite,
 }: Readonly<FeedbackRecordsTableProps>) => {
@@ -84,33 +82,19 @@ export const FeedbackRecordsTable = ({
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [csvImportSource, setCsvImportSource] = useState<{ id: string; name: string } | null>(null);
 
-  const directories = useMemo(
-    () =>
-      Object.entries(frdMap)
-        .map(([id, name]) => ({ id, name }))
-        .sort((a, b) => a.name.localeCompare(b.name)),
-    [frdMap]
-  );
   const handleRefresh = async () => {
     if (isRefreshing) return;
     setIsRefreshing(true);
     setError(null);
 
     const toastId = toast.loading(t("workspace.unify.refreshing_feedback_records"));
-    const directoryIds = Object.keys(frdMap);
-    const results = await Promise.all(
-      directoryIds.map((frdId) =>
-        listFeedbackRecordsAction({
-          workspaceId,
-          frdId,
-          limit: RECORDS_PER_PAGE,
-        })
-      )
-    );
+    const result = await listFeedbackRecordsAction({
+      workspaceId,
+      limit: RECORDS_PER_PAGE,
+    });
 
-    if (results.some((result) => !result?.data)) {
-      const firstErrorResult = results.find((result) => !result?.data);
-      const errorMessage = firstErrorResult ? getFormattedErrorMessage(firstErrorResult) : undefined;
+    if (!result?.data) {
+      const errorMessage = getFormattedErrorMessage(result);
       toast.error(errorMessage ?? t("workspace.unify.failed_to_load_feedback_records"), {
         id: toastId,
       });
@@ -118,9 +102,7 @@ export const FeedbackRecordsTable = ({
       return;
     }
 
-    const successfulRecords = results.flatMap((result) => result?.data?.data ?? []);
-
-    const mergedRecords = successfulRecords
+    const mergedRecords = (result.data.data ?? [])
       .toSorted((a, b) => (a.collected_at < b.collected_at ? 1 : -1))
       .slice(0, RECORDS_PER_PAGE);
     setRecords(mergedRecords);
@@ -268,7 +250,6 @@ export const FeedbackRecordsTable = ({
         open={isDrawerOpen}
         onOpenChange={setIsDrawerOpen}
         workspaceId={workspaceId}
-        directories={directories}
         canWrite={canWrite}
         recordId={drawerMode === "edit" ? drawerRecordId : undefined}
         onSuccess={handleRefresh}

@@ -57,7 +57,6 @@ vi.mock("next/navigation", () => ({
 const { useChartDialog } = await import("./use-chart-dialog");
 
 const WORKSPACE_ID = "ws-123";
-const DIRECTORY_ID = "frd-1";
 const CHART_ID = "chart-1";
 const NEW_CHART_ID = "chart-new";
 const DASHBOARD_ID = "dash-1";
@@ -66,7 +65,6 @@ const baseProps = {
   open: true,
   onOpenChange: vi.fn(),
   workspaceId: WORKSPACE_ID,
-  directories: [{ id: DIRECTORY_ID, name: "Dir 1" }],
 };
 
 const sampleChartData = {
@@ -286,29 +284,6 @@ describe("useChartDialog", () => {
 
       expect(mockToastError).toHaveBeenCalledWith("workspace.analysis.charts.please_select_dashboard");
       expect(mockAddChartToDashboardAction).not.toHaveBeenCalled();
-    });
-
-    test("toasts when no directory available for new chart creation", async () => {
-      const { result } = renderHook(() =>
-        useChartDialog({
-          open: true,
-          onOpenChange: vi.fn(),
-          workspaceId: WORKSPACE_ID,
-          directories: [],
-        })
-      );
-
-      await setHookReady(result);
-      await act(async () => {
-        result.current.setSelectedDashboardId(DASHBOARD_ID);
-      });
-
-      await act(async () => {
-        await result.current.handleAddToDashboard();
-      });
-
-      expect(mockToastError).toHaveBeenCalledWith("workspace.analysis.charts.select_data_source_first");
-      expect(mockCreateChartAction).not.toHaveBeenCalled();
     });
   });
 

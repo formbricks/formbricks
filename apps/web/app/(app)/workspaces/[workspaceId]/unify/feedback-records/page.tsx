@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import { getConnectorsWithMappings } from "@/lib/connector/service";
 import { getTranslate } from "@/lingodotdev/server";
-import { getFeedbackRecordDirectoriesByWorkspaceId } from "@/modules/ee/feedback-record-directory/lib/feedback-record-directory";
 import { listFeedbackRecords } from "@/modules/hub/service";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { FeedbackRecordsPageClient } from "./components/feedback-records-page-client";
@@ -27,24 +26,14 @@ export default async function UnifyFeedbackRecordsPage(
     return notFound();
   }
 
-  const [frds, connectors] = await Promise.all([
-    getFeedbackRecordDirectoriesByWorkspaceId(params.workspaceId),
+  const [recordsResult, connectors] = await Promise.all([
+    listFeedbackRecords({ tenant_id: params.workspaceId, limit: INITIAL_PAGE_SIZE }),
     getConnectorsWithMappings(params.workspaceId),
   ]);
 
-  const results = await Promise.all(
-    frds.map((frd) => listFeedbackRecords({ tenant_id: frd.id, limit: INITIAL_PAGE_SIZE }))
-  );
-
   // Don't crash if Hub is unreachable — show empty state
-  const successfulResults = results.filter((r) => !r.error);
+  const initialRecords = recordsResult.error ? [] : (recordsResult.data?.data ?? []);
 
-  const merged = successfulResults
-    .flatMap((r) => r.data?.data ?? [])
-    .toSorted((a, b) => (a.collected_at < b.collected_at ? 1 : -1))
-    .slice(0, INITIAL_PAGE_SIZE);
-
-  const frdMap = Object.fromEntries(frds.map((f) => [f.id, f.name]));
   const csvSources = connectors
     .filter((connector) => connector.type === "csv")
     .map((connector) => ({ id: connector.id, name: connector.name }));
@@ -52,8 +41,7 @@ export default async function UnifyFeedbackRecordsPage(
   return (
     <FeedbackRecordsPageClient
       workspaceId={params.workspaceId}
-      initialRecords={merged}
-      frdMap={frdMap}
+      initialRecords={initialRecords}
       csvSources={csvSources}
       canWrite={canWrite}
     />

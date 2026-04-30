@@ -70,13 +70,11 @@ interface CreateConnectorModalProps {
   onCreateConnector: (data: {
     name: string;
     type: TConnectorType;
-    feedbackRecordDirectoryId: string;
     surveyMappings?: { surveyId: string; elementIds: string[] }[];
     fieldMappings?: TFieldMapping[];
   }) => Promise<string | undefined>;
   surveys: TUnifySurvey[];
   workspaceId: string;
-  directories: { id: string; name: string }[];
 }
 
 const getDialogTitle = (
@@ -121,7 +119,6 @@ export const CreateConnectorModal = ({
   onCreateConnector,
   surveys,
   workspaceId,
-  directories,
 }: CreateConnectorModalProps) => {
   const { t } = useTranslation();
   const router = useRouter();
@@ -155,7 +152,6 @@ export const CreateConnectorModal = ({
   const [responseCountBySurvey, setResponseCountBySurvey] = useState<Record<string, number | null>>({});
   const [isImporting, setIsImporting] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
-  const [selectedDirectoryId, setSelectedDirectoryId] = useState<string | null>(directories[0]?.id ?? null);
 
   const formbricksValues = formbricksForm.watch();
   const selectedSurveyId = formbricksValues.surveyId;
@@ -226,7 +222,6 @@ export const CreateConnectorModal = ({
     setCsvConnectorName("");
     setIsImporting(false);
     setIsCreating(false);
-    setSelectedDirectoryId(directories[0]?.id ?? null);
   };
 
   const handleOpenChange = (newOpen: boolean) => {
@@ -329,13 +324,11 @@ export const CreateConnectorModal = ({
   };
 
   const handleCreateFormbricksConnector = async (values: TFormbricksConnectorForm) => {
-    if (!selectedDirectoryId) return;
     setIsCreating(true);
 
     const connectorId = await onCreateConnector({
       name: values.sourceName.trim(),
       type: "formbricks_survey",
-      feedbackRecordDirectoryId: selectedDirectoryId,
       surveyMappings: [{ surveyId: values.surveyId, elementIds: values.selectedQuestionIds }],
     });
 
@@ -349,7 +342,7 @@ export const CreateConnectorModal = ({
   };
 
   const handleCreateCsvConnector = async () => {
-    if (!selectedDirectoryId || !isConnectorNameValid(csvConnectorName)) return;
+    if (!isConnectorNameValid(csvConnectorName)) return;
     if (csvParsedData.length > 0) {
       const errors = validateEnumMappings(mappings, csvParsedData);
       if (errors.length > 0) {
@@ -364,7 +357,6 @@ export const CreateConnectorModal = ({
     const connectorId = await onCreateConnector({
       name: csvConnectorName.trim(),
       type: "csv",
-      feedbackRecordDirectoryId: selectedDirectoryId,
       fieldMappings: mappings.length > 0 ? mappings : undefined,
     });
 
@@ -439,10 +431,6 @@ export const CreateConnectorModal = ({
                       </FormItem>
                     )}
                   />
-
-                  {directories.length === 0 && (
-                    <NoFeedbackRecordDirectoryAlert workspaceId={workspaceId} t={t} />
-                  )}
 
                   <FormField
                     control={formbricksForm.control}
@@ -524,10 +512,6 @@ export const CreateConnectorModal = ({
                   />
                 </div>
 
-                {directories.length === 0 && (
-                  <NoFeedbackRecordDirectoryAlert workspaceId={workspaceId} t={t} />
-                )}
-
                 <div className="max-h-[55vh] overflow-y-auto rounded-lg border border-slate-200 p-4">
                   <CsvConnectorUI
                     sourceFields={sourceFields}
@@ -595,7 +579,6 @@ export const CreateConnectorModal = ({
                 disabled={
                   isCreating ||
                   isImporting ||
-                  !selectedDirectoryId ||
                   (selectedType === "formbricks_survey"
                     ? !isConnectorNameValid(formbricksValues.sourceName ?? "") ||
                       !formbricksValues.surveyId ||
@@ -610,25 +593,5 @@ export const CreateConnectorModal = ({
         </DialogContent>
       </Dialog>
     </>
-  );
-};
-
-interface NoFeedbackRecordDirectoryAlertProps {
-  workspaceId: string;
-  t: (key: string) => string;
-}
-
-const NoFeedbackRecordDirectoryAlert = ({ workspaceId, t }: NoFeedbackRecordDirectoryAlertProps) => {
-  return (
-    <Alert variant="error" size="small">
-      <div>
-        <p>{t("workspace.unify.no_feedback_record_directory_available")}</p>
-        <a
-          className="mt-1 inline-block font-medium underline"
-          href={`/workspaces/${workspaceId}/settings/feedback-record-directories`}>
-          {t("workspace.unify.go_to_feedback_record_directories")}
-        </a>
-      </div>
-    </Alert>
   );
 };

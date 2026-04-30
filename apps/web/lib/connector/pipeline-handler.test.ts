@@ -56,7 +56,6 @@ function createConnector(
     type: "formbricks_survey",
     status: "active",
     workspaceId: "env-1",
-    feedbackRecordDirectoryId: "frd-1",
     lastSyncAt: null,
     formbricksMappings: [
       {
@@ -120,7 +119,7 @@ describe("handleConnectorPipeline", () => {
       mockResponse,
       mockSurvey,
       connector.formbricksMappings,
-      "frd-1"
+      "env-1"
     );
     expect(mockCreateFeedbackRecordsBatch).not.toHaveBeenCalled();
     expect(updateConnector).not.toHaveBeenCalled();

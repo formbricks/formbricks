@@ -10,7 +10,6 @@ import { FeedbackRecordsTable } from "./feedback-records-table";
 interface FeedbackRecordsPageClientProps {
   workspaceId: string;
   initialRecords: FeedbackRecordData[];
-  frdMap: Record<string, string>;
   csvSources: { id: string; name: string }[];
   canWrite: boolean;
 }
@@ -18,7 +17,6 @@ interface FeedbackRecordsPageClientProps {
 export function FeedbackRecordsPageClient({
   workspaceId,
   initialRecords,
-  frdMap,
   csvSources,
   canWrite,
 }: Readonly<FeedbackRecordsPageClientProps>) {
@@ -33,7 +31,6 @@ export function FeedbackRecordsPageClient({
       <FeedbackRecordsTable
         workspaceId={workspaceId}
         initialRecords={initialRecords}
-        frdMap={frdMap}
         csvSources={csvSources}
         canWrite={canWrite}
       />

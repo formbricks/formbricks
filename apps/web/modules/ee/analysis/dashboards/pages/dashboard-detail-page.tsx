@@ -4,7 +4,6 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { executeQuery } from "@/modules/ee/analysis/api/lib/cube-client";
 import { injectTenantFilter } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
-import { getFeedbackRecordDirectoriesByWorkspaceId } from "@/modules/ee/feedback-record-directory/lib/feedback-record-directory";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { DashboardDetailClient } from "../components/dashboard-detail-client";
 import { getDashboard } from "../lib/dashboards";
@@ -16,10 +15,10 @@ interface WidgetQueryResult {
 
 async function executeWidgetQuery(
   query: TChartQuery,
-  feedbackRecordDirectoryId: string
+  workspaceId: string
 ): Promise<WidgetQueryResult | { error: string }> {
   try {
-    const scopedQuery = injectTenantFilter(query, feedbackRecordDirectoryId);
+    const scopedQuery = injectTenantFilter(query, workspaceId);
     const data = await executeQuery(scopedQuery as Record<string, unknown>);
     return { data: Array.isArray(data) ? data : [], query };
   } catch (error) {
@@ -35,7 +34,6 @@ export async function DashboardDetailPage({
 }>) {
   const { workspaceId, dashboardId } = await params;
   const { isReadOnly } = await getWorkspaceAuth(workspaceId);
-  const directories = await getFeedbackRecordDirectoriesByWorkspaceId(workspaceId);
 
   let dashboard;
   try {
@@ -52,10 +50,7 @@ export async function DashboardDetailPage({
     (w): w is typeof w & { chart: NonNullable<typeof w.chart> } => !!w.chart
   );
   for (const widget of widgetsWithCharts) {
-    widgetDataPromises.set(
-      widget.id,
-      executeWidgetQuery(widget.chart.query, widget.chart.feedbackRecordDirectoryId)
-    );
+    widgetDataPromises.set(widget.id, executeWidgetQuery(widget.chart.query, workspaceId));
   }
 
   return (
@@ -63,7 +58,6 @@ export async function DashboardDetailPage({
       workspaceId={workspaceId}
       dashboard={dashboard}
       widgetDataPromises={widgetDataPromises}
-      directories={directories}
       isReadOnly={isReadOnly}
     />
   );

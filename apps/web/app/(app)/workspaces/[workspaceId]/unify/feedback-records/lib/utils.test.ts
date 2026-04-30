@@ -73,17 +73,16 @@ describe("toISOOrUndefined", () => {
 });
 
 describe("getCreateDefaults", () => {
-  test("uses first directory as tenant_id", () => {
-    const dirs = [{ id: "dir-1", name: "Dir 1" }];
-    const result = getCreateDefaults(dirs);
-    expect(result.tenant_id).toBe("dir-1");
+  test("uses workspaceId as tenant_id", () => {
+    const result = getCreateDefaults("ws-1");
+    expect(result.tenant_id).toBe("ws-1");
     expect(result.submission_id).toBe("mock-uuid-v7");
     expect(result.field_type).toBe("text");
     expect(result.metadataEntries).toEqual([]);
   });
 
-  test("handles empty directories", () => {
-    const result = getCreateDefaults([]);
+  test("returns empty string for empty workspaceId", () => {
+    const result = getCreateDefaults("");
     expect(result.tenant_id).toBe("");
   });
 });

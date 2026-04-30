@@ -13,7 +13,6 @@ import { ViewPermissionModal } from "@/modules/organization/settings/api-keys/co
 import {
   TApiKeyUpdateInput,
   TApiKeyWithEnvironmentPermission,
-  TOrganizationFeedbackRecordDirectory,
   TOrganizationWorkspace,
 } from "@/modules/organization/settings/api-keys/types/api-keys";
 import { Button } from "@/modules/ui/components/button";
@@ -27,7 +26,6 @@ interface EditAPIKeysProps {
   locale: TUserLocale;
   isReadOnly: boolean;
   workspaces: TOrganizationWorkspace[];
-  feedbackRecordDirectories: TOrganizationFeedbackRecordDirectory[];
 }
 
 export const EditAPIKeys = ({
@@ -36,7 +34,6 @@ export const EditAPIKeys = ({
   locale,
   isReadOnly,
   workspaces,
-  feedbackRecordDirectories,
 }: EditAPIKeysProps) => {
   const { t } = useTranslation();
   const [isAddAPIKeyModalOpen, setIsAddAPIKeyModalOpen] = useState(false);
@@ -76,10 +73,6 @@ export const EditAPIKeys = ({
       permission: ApiKeyPermission;
       workspaceId: string;
     }>;
-    feedbackRecordDirectoryPermissions: Array<{
-      permission: ApiKeyPermission;
-      feedbackRecordDirectoryId: string;
-    }>;
     organizationAccess: TOrganizationAccess;
   }): Promise<void> => {
     setIsLoading(true);
@@ -88,7 +81,6 @@ export const EditAPIKeys = ({
       apiKeyData: {
         label: data.label,
         workspacePermissions: data.workspacePermissions,
-        feedbackRecordDirectoryPermissions: data.feedbackRecordDirectoryPermissions,
         organizationAccess: data.organizationAccess,
       },
     });
@@ -245,7 +237,6 @@ export const EditAPIKeys = ({
         setOpen={setIsAddAPIKeyModalOpen}
         onSubmit={handleAddAPIKey}
         workspaces={workspaces}
-        feedbackRecordDirectories={feedbackRecordDirectories}
         isCreatingAPIKey={isLoading}
       />
       {activeKey && (
@@ -255,7 +246,6 @@ export const EditAPIKeys = ({
           onSubmit={handleUpdateAPIKey}
           apiKey={activeKey}
           workspaces={workspaces}
-          feedbackRecordDirectories={feedbackRecordDirectories}
           isUpdating={isLoading}
         />
       )}

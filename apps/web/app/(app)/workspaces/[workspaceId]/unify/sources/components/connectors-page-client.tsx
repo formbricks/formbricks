@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
@@ -14,7 +13,6 @@ import {
   updateConnectorWithMappingsAction,
 } from "@/lib/connector/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { Alert, AlertButton, AlertDescription } from "@/modules/ui/components/alert";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { WorkspaceConfigNavigation } from "@/modules/workspaces/settings/components/workspace-config-navigation";
@@ -28,34 +26,22 @@ interface ConnectorsSectionProps {
   workspaceId: string;
   initialConnectors: TConnectorWithMappings[];
   initialSurveys: TUnifySurvey[];
-  directories: { id: string; name: string }[];
 }
 
 export function ConnectorsSection({
   workspaceId,
   initialConnectors,
   initialSurveys,
-  directories,
 }: Readonly<ConnectorsSectionProps>) {
   const { t } = useTranslation();
   const router = useRouter();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingConnector, setEditingConnector] = useState<TConnectorWithMappings | null>(null);
   const [csvImportConnector, setCsvImportConnector] = useState<TConnectorWithMappings | null>(null);
-  const directoryNames = directories.map((directory) => directory.name).join(", ");
-  const feedbackDirectoryAccessText =
-    directories.length === 1
-      ? t("workspace.unify.feedback_sources_directory_access_single", {
-          directoryNames,
-        })
-      : t("workspace.unify.feedback_sources_directory_access_multiple", {
-          directoryNames,
-        });
 
   const handleCreateConnector = async (data: {
     name: string;
     type: TConnectorType;
-    feedbackRecordDirectoryId: string;
     surveyMappings?: { surveyId: string; elementIds: string[] }[];
     fieldMappings?: TFieldMapping[];
   }): Promise<string | undefined> => {
@@ -64,7 +50,6 @@ export function ConnectorsSection({
       connectorInput: {
         name: data.name,
         type: data.type,
-        feedbackRecordDirectoryId: data.feedbackRecordDirectoryId,
       },
       formbricksMappings:
         data.type === "formbricks_survey" && data.surveyMappings?.length ? data.surveyMappings : undefined,
@@ -187,16 +172,6 @@ export function ConnectorsSection({
           onDelete={handleDeleteConnector}
           isLoading={false}
         />
-        {directories.length > 0 && (
-          <Alert size="small" className="mt-4">
-            <AlertDescription>{feedbackDirectoryAccessText}</AlertDescription>
-            <AlertButton asChild>
-              <Link href={`/workspaces/${workspaceId}/settings/feedback-record-directories`}>
-                {t("workspace.unify.manage_directories")}
-              </Link>
-            </AlertButton>
-          </Alert>
-        )}
       </SettingsCard>
 
       <CreateConnectorModal
@@ -205,7 +180,6 @@ export function ConnectorsSection({
         onCreateConnector={handleCreateConnector}
         surveys={initialSurveys}
         workspaceId={workspaceId}
-        directories={directories}
         showTrigger={false}
       />
 

@@ -8,16 +8,10 @@ export const ZApiKeyWorkspacePermission = z.object({
   permission: z.enum(ApiKeyPermission),
 });
 
-export const ZApiKeyFeedbackRecordDirectoryPermission = z.object({
-  feedbackRecordDirectoryId: z.string(),
-  permission: z.enum(ApiKeyPermission),
-});
-
 export const ZApiKeyCreateInput = z
   .object({
     label: z.string(),
     workspacePermissions: z.array(ZApiKeyWorkspacePermission).optional(),
-    feedbackRecordDirectoryPermissions: z.array(ZApiKeyFeedbackRecordDirectoryPermission).optional(),
     organizationAccess: ZOrganizationAccess,
   })
   .refine(
@@ -27,17 +21,6 @@ export const ZApiKeyCreateInput = z
       return new Set(ids).size === ids.length;
     },
     { message: "Duplicate workspace permissions are not allowed", path: ["workspacePermissions"] }
-  )
-  .refine(
-    (data) => {
-      if (!data.feedbackRecordDirectoryPermissions) return true;
-      const ids = data.feedbackRecordDirectoryPermissions.map((p) => p.feedbackRecordDirectoryId);
-      return new Set(ids).size === ids.length;
-    },
-    {
-      message: "Duplicate feedback record directory permissions are not allowed",
-      path: ["feedbackRecordDirectoryPermissions"],
-    }
   );
 
 export type TApiKeyCreateInput = z.infer<typeof ZApiKeyCreateInput>;
@@ -61,24 +44,12 @@ export type TOrganizationWorkspace = z.infer<typeof OrganizationWorkspace>;
 
 export type TApiKeyWorkspacePermission = z.infer<typeof ZApiKeyWorkspacePermission>;
 
-export type TApiKeyFeedbackRecordDirectoryPermission = z.infer<
-  typeof ZApiKeyFeedbackRecordDirectoryPermission
->;
-
 export interface TApiKeyWithEnvironmentPermission extends Pick<
   ApiKey,
   "id" | "label" | "createdAt" | "organizationAccess"
 > {
   apiKeyWorkspaces: TApiKeyWorkspacePermission[];
-  apiKeyFeedbackRecordDirectories: TApiKeyFeedbackRecordDirectoryPermission[];
 }
-
-export const OrganizationFeedbackRecordDirectory = z.object({
-  id: z.string(),
-  name: z.string(),
-});
-
-export type TOrganizationFeedbackRecordDirectory = z.infer<typeof OrganizationFeedbackRecordDirectory>;
 
 const ZApiKeyWorkspaceWithWorkspace = z.object({
   id: z.string(),
@@ -88,19 +59,6 @@ const ZApiKeyWorkspaceWithWorkspace = z.object({
   workspaceId: z.string(),
   permission: z.enum(ApiKeyPermission),
   workspace: ZWorkspace.pick({ id: true, name: true }),
-});
-
-const ZApiKeyFeedbackRecordDirectoryWithDirectory = z.object({
-  id: z.string(),
-  createdAt: z.date(),
-  updatedAt: z.date(),
-  apiKeyId: z.string(),
-  feedbackRecordDirectoryId: z.string(),
-  permission: z.enum(ApiKeyPermission),
-  feedbackRecordDirectory: z.object({
-    id: z.string(),
-    name: z.string(),
-  }),
 });
 
 const ZApiKey = z.object({
@@ -118,7 +76,6 @@ const ZApiKey = z.object({
 
 export const ZApiKeyWithEnvironmentAndWorkspace = ZApiKey.extend({
   apiKeyWorkspaces: z.array(ZApiKeyWorkspaceWithWorkspace),
-  apiKeyFeedbackRecordDirectories: z.array(ZApiKeyFeedbackRecordDirectoryWithDirectory),
 });
 
 export type TApiKeyWithEnvironmentAndWorkspace = z.infer<typeof ZApiKeyWithEnvironmentAndWorkspace>;

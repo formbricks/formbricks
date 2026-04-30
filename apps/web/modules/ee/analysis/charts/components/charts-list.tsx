@@ -6,15 +6,9 @@ interface ChartsListProps {
   charts: TChartWithCreator[];
   workspaceId: string;
   isReadOnly: boolean;
-  directories: { id: string; name: string }[];
 }
 
-export const ChartsList = async ({
-  charts,
-  workspaceId,
-  isReadOnly,
-  directories,
-}: Readonly<ChartsListProps>) => {
+export const ChartsList = async ({ charts, workspaceId, isReadOnly }: Readonly<ChartsListProps>) => {
   const t = await getTranslate();
 
   return (
@@ -32,13 +26,7 @@ export const ChartsList = async ({
         </p>
       ) : (
         charts.map((chart) => (
-          <ChartRow
-            key={chart.id}
-            chart={chart}
-            workspaceId={workspaceId}
-            isReadOnly={isReadOnly}
-            directories={directories}
-          />
+          <ChartRow key={chart.id} chart={chart} workspaceId={workspaceId} isReadOnly={isReadOnly} />
         ))
       )}
     </div>

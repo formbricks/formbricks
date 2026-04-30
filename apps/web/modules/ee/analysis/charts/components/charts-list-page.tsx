@@ -6,29 +6,20 @@ import { CreateChartButton } from "@/modules/ee/analysis/charts/components/creat
 import { getChartsWithCreator } from "@/modules/ee/analysis/charts/lib/charts";
 import { AnalysisPageLayout } from "@/modules/ee/analysis/components/analysis-page-layout";
 import { NoFeedbackRecordsState } from "@/modules/ee/analysis/components/no-feedback-records-state";
-import { hasFeedbackRecordsInDirectories } from "@/modules/ee/analysis/lib/feedback-records";
+import { hasWorkspaceFeedbackRecords } from "@/modules/ee/analysis/lib/feedback-records";
 import type { TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
-import { getFeedbackRecordDirectoriesByWorkspaceId } from "@/modules/ee/feedback-record-directory/lib/feedback-record-directory";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 
 interface ChartsListContentProps {
   chartsPromise: Promise<TChartWithCreator[]>;
   workspaceId: string;
   isReadOnly: boolean;
-  directories: { id: string; name: string }[];
 }
 
-const ChartsListContent = ({
-  chartsPromise,
-  workspaceId,
-  isReadOnly,
-  directories,
-}: Readonly<ChartsListContentProps>) => {
+const ChartsListContent = ({ chartsPromise, workspaceId, isReadOnly }: Readonly<ChartsListContentProps>) => {
   const charts = use(chartsPromise);
 
-  return (
-    <ChartsList charts={charts} workspaceId={workspaceId} isReadOnly={isReadOnly} directories={directories} />
-  );
+  return <ChartsList charts={charts} workspaceId={workspaceId} isReadOnly={isReadOnly} />;
 };
 
 interface ChartsListPageProps {
@@ -38,13 +29,10 @@ interface ChartsListPageProps {
 export async function ChartsListPage({ workspaceId }: Readonly<ChartsListPageProps>) {
   const t = await getTranslate();
   const { isReadOnly } = await getWorkspaceAuth(workspaceId);
-  const [directories, connectors] = await Promise.all([
-    getFeedbackRecordDirectoriesByWorkspaceId(workspaceId),
+  const [hasFeedbackRecords, connectors] = await Promise.all([
+    hasWorkspaceFeedbackRecords(workspaceId),
     getConnectorsWithMappings(workspaceId),
   ]);
-  const hasFeedbackRecords = await hasFeedbackRecordsInDirectories(
-    directories.map((directory) => directory.id)
-  );
   const chartsPromise = hasFeedbackRecords ? getChartsWithCreator(workspaceId) : null;
 
   return (
@@ -53,20 +41,11 @@ export async function ChartsListPage({ workspaceId }: Readonly<ChartsListPagePro
       workspaceId={workspaceId}
       cta={
         isReadOnly ? undefined : (
-          <CreateChartButton
-            workspaceId={workspaceId}
-            directories={directories}
-            buttonProps={{ disabled: !hasFeedbackRecords }}
-          />
+          <CreateChartButton workspaceId={workspaceId} buttonProps={{ disabled: !hasFeedbackRecords }} />
         )
       }>
       {hasFeedbackRecords && chartsPromise ? (
-        <ChartsListContent
-          chartsPromise={chartsPromise}
-          workspaceId={workspaceId}
-          isReadOnly={isReadOnly}
-          directories={directories}
-        />
+        <ChartsListContent chartsPromise={chartsPromise} workspaceId={workspaceId} isReadOnly={isReadOnly} />
       ) : (
         <NoFeedbackRecordsState workspaceId={workspaceId} hasFeedbackSources={connectors.length > 0} />
       )}

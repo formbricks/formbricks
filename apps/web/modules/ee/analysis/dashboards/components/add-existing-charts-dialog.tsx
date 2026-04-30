@@ -27,7 +27,6 @@ interface AddExistingChartsDialogProps {
   onOpenChange: (open: boolean) => void;
   workspaceId: string;
   dashboardId: string;
-  directories: { id: string; name: string }[];
   existingChartIds: string[];
   onSuccess: () => void;
 }
@@ -42,7 +41,6 @@ export function AddExistingChartsDialog({
   onOpenChange,
   workspaceId,
   dashboardId,
-  directories,
   existingChartIds,
   onSuccess,
 }: Readonly<AddExistingChartsDialogProps>) {
@@ -151,7 +149,6 @@ export function AddExistingChartsDialog({
         <DialogFooter className="sm:justify-between">
           <CreateChartButton
             workspaceId={workspaceId}
-            directories={directories}
             autoAddToDashboardId={dashboardId}
             label={t("workspace.analysis.dashboards.create_new_chart")}
             onSuccess={() => {

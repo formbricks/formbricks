@@ -3,7 +3,6 @@ import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/comp
 import { DEFAULT_LOCALE, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
-import { getFeedbackRecordDirectoriesByOrganizationId } from "@/modules/organization/settings/api-keys/lib/feedback-record-directories";
 import { getWorkspacesByOrganizationId } from "@/modules/organization/settings/api-keys/lib/workspaces";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -16,9 +15,8 @@ export const APIKeysPage = async (props: { params: Promise<{ workspaceId: string
 
   const { currentUserMembership, organization, session } = await getWorkspaceAuth(params.workspaceId);
 
-  const [workspaces, feedbackRecordDirectories, locale] = await Promise.all([
+  const [workspaces, locale] = await Promise.all([
     getWorkspacesByOrganizationId(organization.id),
-    getFeedbackRecordDirectoriesByOrganizationId(organization.id),
     getUserLocale(session.user.id),
   ]);
 
@@ -43,7 +41,6 @@ export const APIKeysPage = async (props: { params: Promise<{ workspaceId: string
           locale={locale ?? DEFAULT_LOCALE}
           isReadOnly={!canAccessApiKeys}
           workspaces={workspaces}
-          feedbackRecordDirectories={feedbackRecordDirectories}
         />
       </SettingsCard>
     </PageContentWrapper>

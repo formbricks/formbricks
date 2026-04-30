@@ -39,7 +39,6 @@ vi.mock("@/lib/utils/validate", () => ({
 const ENV_ID = "clxxxxxxxxxxxxxxxx001";
 const CONNECTOR_ID = "clxxxxxxxxxxxxxxxx002";
 const SURVEY_ID = "clxxxxxxxxxxxxxxxx003";
-const FRD_ID = "clxxxxxxxxxxxxxxxx004";
 const NOW = new Date("2026-02-24T10:00:00.000Z");
 
 const mockConnector = {
@@ -304,7 +303,6 @@ describe("createConnectorWithMappings", () => {
     const result = await createConnectorWithMappings(ENV_ID, {
       name: "New",
       type: "formbricks_survey",
-      feedbackRecordDirectoryId: FRD_ID,
     });
 
     expect(tx.connector.create).toHaveBeenCalledWith(
@@ -313,7 +311,6 @@ describe("createConnectorWithMappings", () => {
           name: "New",
           type: "formbricks_survey",
           workspaceId: ENV_ID,
-          feedbackRecordDirectoryId: FRD_ID,
         },
       })
     );
@@ -330,7 +327,7 @@ describe("createConnectorWithMappings", () => {
 
     await createConnectorWithMappings(
       ENV_ID,
-      { name: "FB", type: "formbricks_survey", feedbackRecordDirectoryId: FRD_ID },
+      { name: "FB", type: "formbricks_survey" },
       {
         type: "formbricks_survey",
         mappings: [
@@ -366,7 +363,7 @@ describe("createConnectorWithMappings", () => {
 
     await createConnectorWithMappings(
       ENV_ID,
-      { name: "CSV", type: "csv", feedbackRecordDirectoryId: FRD_ID },
+      { name: "CSV", type: "csv" },
       {
         type: "field",
         mappings: [{ sourceFieldId: "col-1", targetFieldId: "value_text" }],
@@ -398,7 +395,6 @@ describe("createConnectorWithMappings", () => {
       createConnectorWithMappings(ENV_ID, {
         name: "Dup",
         type: "formbricks_survey",
-        feedbackRecordDirectoryId: FRD_ID,
       })
     ).rejects.toThrow(InvalidInputError);
   });
@@ -411,9 +407,9 @@ describe("createConnectorWithMappings", () => {
       })
     );
 
-    await expect(
-      createConnectorWithMappings(ENV_ID, { name: "Fail", type: "csv", feedbackRecordDirectoryId: FRD_ID })
-    ).rejects.toThrow(DatabaseError);
+    await expect(createConnectorWithMappings(ENV_ID, { name: "Fail", type: "csv" })).rejects.toThrow(
+      DatabaseError
+    );
   });
 });
 

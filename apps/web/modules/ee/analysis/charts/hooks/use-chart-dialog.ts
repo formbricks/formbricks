@@ -30,7 +30,6 @@ export interface UseChartDialogProps {
   /** Pre-loaded chart metadata; when provided for edit, skips getChartAction */
   initialChart?: TChartWithCreator;
   onSuccess?: () => void;
-  directories?: { id: string; name: string }[];
 }
 
 export function useChartDialog({
@@ -41,7 +40,6 @@ export function useChartDialog({
   autoAddToDashboardId,
   initialChart,
   onSuccess,
-  directories,
 }: Readonly<UseChartDialogProps>) {
   const { t } = useTranslation();
   const router = useRouter();
@@ -55,7 +53,6 @@ export function useChartDialog({
   const [isLoadingChart, setIsLoadingChart] = useState(false);
   const [chartLoadError, setChartLoadError] = useState<string | null>(null);
   const [currentChartId, setCurrentChartId] = useState<string | undefined>(chartId);
-  const [selectedDirectoryId, setSelectedDirectoryId] = useState<string | null>(directories?.[0]?.id ?? null);
 
   useEffect(() => {
     let cancelled = false;
@@ -84,7 +81,6 @@ export function useChartDialog({
       setChartName("");
       setSelectedChartType(undefined);
       setCurrentChartId(undefined);
-      setSelectedDirectoryId(directories?.[0]?.id ?? null);
       return;
     }
 
@@ -109,12 +105,10 @@ export function useChartDialog({
         setChartName(chart.name);
         setSelectedChartType(resolveChartType(chart.type));
         setCurrentChartId(chart.id);
-        setSelectedDirectoryId(chart.feedbackRecordDirectoryId);
 
         const queryResult = await executeQueryAction({
           workspaceId,
           query: chart.query,
-          feedbackRecordDirectoryId: chart.feedbackRecordDirectoryId,
         });
         if (cancelled) return;
 
@@ -167,11 +161,6 @@ export function useChartDialog({
       return;
     }
 
-    if (!selectedDirectoryId) {
-      toast.error(t("workspace.analysis.charts.select_data_source_first"));
-      return;
-    }
-
     setIsSaving(true);
     let newlyCreatedChartId: string | null = null;
     try {
@@ -204,7 +193,6 @@ export function useChartDialog({
             type: chartData.chartType,
             query: chartData.query,
             config: {},
-            feedbackRecordDirectoryId: selectedDirectoryId,
           },
         });
 
@@ -264,11 +252,6 @@ export function useChartDialog({
   const ensureChartForDashboard = async (data: AnalyticsResponse): Promise<string | null> => {
     if (currentChartId) return currentChartId;
 
-    if (!selectedDirectoryId) {
-      toast.error(t("workspace.analysis.charts.select_data_source_first"));
-      return null;
-    }
-
     const chartResult = await createChartAction({
       workspaceId,
       chartInput: {
@@ -276,7 +259,6 @@ export function useChartDialog({
         type: data.chartType,
         query: data.query,
         config: {},
-        feedbackRecordDirectoryId: selectedDirectoryId,
       },
     });
 
@@ -349,7 +331,6 @@ export function useChartDialog({
       setSelectedChartType(undefined);
       setCurrentChartId(undefined);
       setChartLoadError(null);
-      setSelectedDirectoryId(directories?.[0]?.id ?? null);
       onOpenChange(false);
     }
   };
@@ -378,8 +359,6 @@ export function useChartDialog({
     isSaving,
     isLoadingChart,
     chartLoadError,
-    selectedDirectoryId,
-    setSelectedDirectoryId,
     handleChartGenerated,
     handleSaveChart,
     handleAddToDashboard,

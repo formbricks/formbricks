@@ -50,13 +50,12 @@ export const toISOOrUndefined = (dateTimeValue: string | undefined): string | un
   return parsed.toISOString();
 };
 
-export const getCreateDefaults = (directories: { id: string; name: string }[]): TFeedbackRecordFormValues => {
+export const getCreateDefaults = (workspaceId: string): TFeedbackRecordFormValues => {
   const now = new Date();
-  const defaultDirectoryId = directories[0]?.id ?? "";
 
   return {
     id: "",
-    tenant_id: defaultDirectoryId,
+    tenant_id: workspaceId,
     submission_id: uuidv7(),
     collected_at: toLocalDateTimeInput(now.toISOString()),
     created_at: "",

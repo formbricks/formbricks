@@ -1,5 +1,6 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
+import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { logger } from "@formbricks/logger";
@@ -30,11 +31,11 @@ const selectWorkspace = {
 };
 
 type TCreateWorkspaceInput = Partial<TWorkspaceUpdateInput> & {
-  feedbackRecordDirectoryId?: string;
+  teamIds?: string[];
 };
 
 const ZCreateWorkspaceInput = ZWorkspaceUpdateInput.partial().extend({
-  feedbackRecordDirectoryId: ZId.optional(),
+  teamIds: z.array(ZId).optional(),
 });
 
 export const updateWorkspace = async (
@@ -72,24 +73,9 @@ export const createWorkspace = async (
     throw new ValidationError("Workspace Name is required");
   }
 
-  const { teamIds, feedbackRecordDirectoryId, ...data } = workspaceInput;
+  const { teamIds, ...data } = workspaceInput;
 
   try {
-    if (feedbackRecordDirectoryId) {
-      const feedbackDirectory = await prisma.feedbackRecordDirectory.findFirst({
-        where: {
-          id: feedbackRecordDirectoryId,
-          organizationId,
-          isArchived: false,
-        },
-        select: { id: true },
-      });
-
-      if (!feedbackDirectory) {
-        throw new InvalidInputError("FEEDBACK_RECORD_DIRECTORY_NOT_FOUND");
-      }
-    }
-
     const workspace = await prisma.workspace.create({
       data: {
         config: {
@@ -109,41 +95,6 @@ export const createWorkspace = async (
           workspaceId: workspace.id,
           teamId,
         })),
-      });
-    }
-
-    if (feedbackRecordDirectoryId) {
-      await prisma.feedbackRecordDirectoryWorkspace.create({
-        data: {
-          feedbackRecordDirectoryId,
-          workspaceId: workspace.id,
-        },
-      });
-
-      return workspace;
-    }
-
-    // Ensure default FRD exists + link to first workspace atomically
-    const defaultFrd = await prisma.feedbackRecordDirectory.upsert({
-      where: {
-        organizationId_name: { organizationId, name: "Default Feedback Record Directory" },
-      },
-      create: { name: "Default Feedback Record Directory", organizationId },
-      update: {},
-      select: { id: true },
-    });
-
-    // Link only if this is the first workspace (no existing links for this FRD)
-    const existingLinks = await prisma.feedbackRecordDirectoryWorkspace.count({
-      where: { feedbackRecordDirectoryId: defaultFrd.id },
-    });
-
-    if (existingLinks === 0) {
-      await prisma.feedbackRecordDirectoryWorkspace.create({
-        data: {
-          feedbackRecordDirectoryId: defaultFrd.id,
-          workspaceId: workspace.id,
-        },
       });
     }
 

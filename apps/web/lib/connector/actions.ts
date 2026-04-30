@@ -1,7 +1,6 @@
 "use server";
 
 import { z } from "zod";
-import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import {
@@ -24,7 +23,6 @@ import {
   getOrganizationIdFromSurveyId,
   getOrganizationIdFromWorkspaceId,
 } from "@/lib/utils/helper";
-import { getFeedbackRecordDirectoriesByWorkspaceId } from "@/modules/ee/feedback-record-directory/lib/feedback-record-directory";
 import { listFeedbackRecords } from "@/modules/hub/service";
 import type { FeedbackRecordListParams, FeedbackRecordListResponse } from "@/modules/hub/types";
 import { importCsvData } from "./csv-import";
@@ -171,15 +169,6 @@ export const createConnectorWithMappingsAction = authenticatedActionClient
         },
       ],
     });
-
-    // Verify FRD belongs to same org
-    const frd = await prisma.feedbackRecordDirectory.findUnique({
-      where: { id: parsedInput.connectorInput.feedbackRecordDirectoryId },
-      select: { organizationId: true },
-    });
-    if (frd?.organizationId !== organizationId) {
-      throw new AuthorizationError("Invalid feedback record directory");
-    }
 
     let mappingsInput: TMappingsInput | undefined;
 
@@ -333,7 +322,6 @@ export const duplicateConnectorAction = authenticatedActionClient
         {
           name: `${source.name} (copy)`,
           type: source.type,
-          feedbackRecordDirectoryId: source.feedbackRecordDirectoryId,
           createdBy: ctx.user.id,
         },
         mappingsInput
@@ -476,7 +464,6 @@ export const importCsvDataAction = authenticatedActionClient
 
 const ZListFeedbackRecordsAction = z.object({
   workspaceId: ZId,
-  frdId: ZId,
   limit: z.number().min(1).max(1000).optional(),
   cursor: z.string().optional(),
   sourceType: z.string().optional(),
@@ -514,14 +501,8 @@ export const listFeedbackRecordsAction = authenticatedActionClient
         ],
       });
 
-      // Verify FRD belongs to workspace's accessible FRDs
-      const frds = await getFeedbackRecordDirectoriesByWorkspaceId(parsedInput.workspaceId);
-      if (!frds.some((f) => f.id === parsedInput.frdId)) {
-        throw new Error("Feedback record directory not accessible");
-      }
-
       const params: FeedbackRecordListParams = {
-        tenant_id: parsedInput.frdId,
+        tenant_id: parsedInput.workspaceId,
         limit: parsedInput.limit ?? 50,
       };
       if (parsedInput.cursor) params.cursor = parsedInput.cursor;

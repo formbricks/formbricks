@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { AdvancedChartBuilder } from "@/modules/ee/analysis/charts/components/advanced-chart-builder";
@@ -12,7 +11,6 @@ import { ManualChartBuilder } from "@/modules/ee/analysis/charts/components/manu
 import { useChartDialog } from "@/modules/ee/analysis/charts/hooks/use-chart-dialog";
 import { DEFAULT_CHART_TYPE } from "@/modules/ee/analysis/charts/lib/chart-types";
 import type { TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
-import { Alert } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -33,7 +31,6 @@ interface CreateChartViewProps {
   initialChart?: TChartWithCreator;
   autoAddToDashboardId?: string;
   onSuccess?: () => void;
-  directories: { id: string; name: string }[];
 }
 
 export function CreateChartView({
@@ -44,7 +41,6 @@ export function CreateChartView({
   initialChart,
   autoAddToDashboardId,
   onSuccess,
-  directories,
 }: Readonly<CreateChartViewProps>) {
   const { t } = useTranslation();
   const isEditing = !!chartId;
@@ -61,7 +57,6 @@ export function CreateChartView({
     handleChartGenerated,
     handleSaveChart,
     isSaving,
-    selectedDirectoryId,
     handleClose,
   } = useChartDialog({
     open,
@@ -71,7 +66,6 @@ export function CreateChartView({
     initialChart,
     autoAddToDashboardId,
     onSuccess,
-    directories,
   });
 
   const chartPreviewRef = useRef<HTMLDivElement>(null);
@@ -108,7 +102,6 @@ export function CreateChartView({
   }
 
   const chartType = selectedChartType ?? (isEditing ? (initialChart?.type ?? DEFAULT_CHART_TYPE) : undefined);
-  const hasSelectedDirectory = !!selectedDirectoryId;
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
@@ -130,76 +123,56 @@ export function CreateChartView({
         </DialogHeader>
         <DialogBody>
           <div className="grid gap-4">
-            {hasSelectedDirectory ? (
+            <div className="space-y-2">
+              <Label htmlFor="create-chart-name">{t("workspace.analysis.charts.chart_name")}</Label>
+              <Input
+                id="create-chart-name"
+                value={chartName}
+                onChange={(event) => setChartName(event.target.value)}
+                placeholder={t("workspace.analysis.charts.chart_name_placeholder")}
+                maxLength={255}
+                required
+              />
+            </div>
+
+            {!isEditing && (
               <>
-                <div className="space-y-2">
-                  <Label htmlFor="create-chart-name">{t("workspace.analysis.charts.chart_name")}</Label>
-                  <Input
-                    id="create-chart-name"
-                    value={chartName}
-                    onChange={(event) => setChartName(event.target.value)}
-                    placeholder={t("workspace.analysis.charts.chart_name_placeholder")}
-                    maxLength={255}
-                    required
-                  />
-                </div>
+                <AIQuerySection workspaceId={workspaceId} onChartGenerated={handleChartGenerated} />
 
-                {!isEditing && (
-                  <>
-                    <AIQuerySection
-                      workspaceId={workspaceId}
-                      onChartGenerated={handleChartGenerated}
-                      feedbackRecordDirectoryId={selectedDirectoryId}
-                    />
-
-                    <div className="relative">
-                      <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                        <div className="w-full border-t border-gray-200" />
-                      </div>
-                      <div className="relative flex justify-center">
-                        <span className="bg-white px-2 text-sm text-gray-500">
-                          {t("workspace.analysis.charts.OR")}
-                        </span>
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                <ManualChartBuilder selectedChartType={chartType} onChartTypeSelect={handleChartTypeChange} />
-
-                {chartType && (
-                  <AdvancedChartBuilder
-                    workspaceId={workspaceId}
-                    chartType={chartType}
-                    initialQuery={chartData?.query ?? initialQuery}
-                    hidePreview={true}
-                    onChartGenerated={handleChartGenerated}
-                    feedbackRecordDirectoryId={selectedDirectoryId}
-                    runQueryCtaLabel={
-                      chartData
-                        ? t("workspace.analysis.charts.update_chart")
-                        : t("workspace.analysis.charts.preview_chart")
-                    }
-                  />
-                )}
-
-                {(isEditing || chartData) && (
-                  <div ref={chartPreviewRef}>
-                    <ChartPreview chartData={chartData} isLoading={isLoadingChart} error={chartLoadError} />
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                    <div className="w-full border-t border-gray-200" />
                   </div>
-                )}
-              </>
-            ) : (
-              <Alert variant="error" size="small">
-                <div>
-                  <p>{t("workspace.analysis.charts.no_data_source_available")}</p>
-                  <Link
-                    className="mt-1 inline-block font-medium underline"
-                    href={`/workspaces/${workspaceId}/settings/feedback-record-directories`}>
-                    {t("workspace.analysis.charts.go_to_feedback_record_directories")}
-                  </Link>
+                  <div className="relative flex justify-center">
+                    <span className="bg-white px-2 text-sm text-gray-500">
+                      {t("workspace.analysis.charts.OR")}
+                    </span>
+                  </div>
                 </div>
-              </Alert>
+              </>
+            )}
+
+            <ManualChartBuilder selectedChartType={chartType} onChartTypeSelect={handleChartTypeChange} />
+
+            {chartType && (
+              <AdvancedChartBuilder
+                workspaceId={workspaceId}
+                chartType={chartType}
+                initialQuery={chartData?.query ?? initialQuery}
+                hidePreview={true}
+                onChartGenerated={handleChartGenerated}
+                runQueryCtaLabel={
+                  chartData
+                    ? t("workspace.analysis.charts.update_chart")
+                    : t("workspace.analysis.charts.preview_chart")
+                }
+              />
+            )}
+
+            {(isEditing || chartData) && (
+              <div ref={chartPreviewRef}>
+                <ChartPreview chartData={chartData} isLoading={isLoadingChart} error={chartLoadError} />
+              </div>
             )}
           </div>
         </DialogBody>

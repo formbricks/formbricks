@@ -13,11 +13,7 @@ export interface QueryResult {
   data: TChartDataRow[];
 }
 
-export function useChartQuery(
-  workspaceId: string,
-  feedbackRecordDirectoryId: string | null,
-  initialQuery?: TChartQuery
-) {
+export function useChartQuery(workspaceId: string, initialQuery?: TChartQuery) {
   const { t } = useTranslation();
   const [chartData, setChartData] = useState<TChartDataRow[] | null>(null);
   const [query, setQuery] = useState<TChartQuery | null>(initialQuery ?? null);
@@ -25,12 +21,6 @@ export function useChartQuery(
   const [error, setError] = useState<string | null>(null);
 
   const runQuery = async (cubeQuery: TChartQuery): Promise<QueryResult | null> => {
-    if (!feedbackRecordDirectoryId) {
-      const msg = t("workspace.analysis.charts.select_data_source_first");
-      toast.error(msg);
-      return null;
-    }
-
     setIsLoading(true);
     setError(null);
 
@@ -38,7 +28,6 @@ export function useChartQuery(
       const result = await executeQueryAction({
         workspaceId,
         query: cubeQuery,
-        feedbackRecordDirectoryId,
       });
 
       if (result?.serverError) {

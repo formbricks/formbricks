@@ -30,7 +30,6 @@ interface AdvancedChartBuilderProps {
   initialQuery?: TChartQuery;
   hidePreview?: boolean;
   onChartGenerated?: (data: AnalyticsResponse) => void;
-  feedbackRecordDirectoryId: string | null;
   runQueryCtaLabel?: string;
 }
 
@@ -84,7 +83,6 @@ export function AdvancedChartBuilder({
   initialQuery,
   hidePreview = false,
   onChartGenerated,
-  feedbackRecordDirectoryId,
   runQueryCtaLabel,
 }: Readonly<AdvancedChartBuilderProps>) {
   const { t } = useTranslation();
@@ -95,11 +93,7 @@ export function AdvancedChartBuilder({
     initialQuery ? { ...initialState, ...parsedInitial } : initialState
   );
 
-  const { chartData, query, isLoading, error, runQuery } = useChartQuery(
-    workspaceId,
-    feedbackRecordDirectoryId,
-    initialQuery
-  );
+  const { chartData, query, isLoading, error, runQuery } = useChartQuery(workspaceId, initialQuery);
 
   const currentQuery = useMemo(() => buildCubeQuery(state), [state]);
   const hasConfigChanged = useMemo(() => {

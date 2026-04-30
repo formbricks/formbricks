@@ -11,7 +11,6 @@ export interface CreateChartDialogProps {
   autoAddToDashboardId?: string;
   initialChart?: TChartWithCreator;
   onSuccess?: () => void;
-  directories: { id: string; name: string }[];
 }
 
 export function CreateChartDialog({
@@ -22,7 +21,6 @@ export function CreateChartDialog({
   autoAddToDashboardId,
   initialChart,
   onSuccess,
-  directories,
 }: Readonly<CreateChartDialogProps>) {
   return (
     <CreateChartView
@@ -33,7 +31,6 @@ export function CreateChartDialog({
       initialChart={initialChart}
       autoAddToDashboardId={autoAddToDashboardId}
       onSuccess={onSuccess}
-      directories={directories}
     />
   );
 }

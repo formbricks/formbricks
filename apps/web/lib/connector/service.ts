@@ -26,7 +26,6 @@ const selectConnectorWithMappings = {
   type: true,
   status: true,
   workspaceId: true,
-  feedbackRecordDirectoryId: true,
   lastSyncAt: true,
   createdBy: true,
   creator: { select: { name: true } },
@@ -63,7 +62,6 @@ const selectConnector = {
   type: true,
   status: true,
   workspaceId: true,
-  feedbackRecordDirectoryId: true,
   lastSyncAt: true,
   createdBy: true,
 } satisfies Prisma.ConnectorSelect;
@@ -238,7 +236,6 @@ export const createConnectorWithMappings = async (
           name: data.name,
           type: data.type,
           workspaceId,
-          feedbackRecordDirectoryId: data.feedbackRecordDirectoryId,
           createdBy: data.createdBy,
         },
       });

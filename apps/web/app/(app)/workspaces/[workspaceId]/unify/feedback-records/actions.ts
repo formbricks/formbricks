@@ -4,7 +4,6 @@ import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
-import { getFeedbackRecordDirectoriesByWorkspaceId } from "@/modules/ee/feedback-record-directory/lib/feedback-record-directory";
 import { createFeedbackRecord, retrieveFeedbackRecord, updateFeedbackRecord } from "@/modules/hub/service";
 import type { FeedbackRecordCreateParams, FeedbackRecordUpdateParams } from "@/modules/hub/types";
 import {
@@ -39,13 +38,8 @@ const ensureAccess = async (
   });
 };
 
-const getWorkspaceDirectoryIds = async (workspaceId: string): Promise<Set<string>> => {
-  const directories = await getFeedbackRecordDirectoriesByWorkspaceId(workspaceId);
-  return new Set(directories.map((directory) => directory.id));
-};
-
-const assertRecordBelongsToWorkspace = (directoryIds: Set<string>, tenantId: string): void => {
-  if (!directoryIds.has(tenantId)) {
+const assertRecordBelongsToWorkspace = (workspaceId: string, tenantId: string): void => {
+  if (tenantId !== workspaceId) {
     // Throw a generic error indistinguishable from "not found" to prevent IDOR
     throw new Error("Feedback record not found");
   }
@@ -61,17 +55,14 @@ export const retrieveFeedbackRecordAction = authenticatedActionClient
       ctx: AuthenticatedActionClientCtx;
       parsedInput: TRetrieveFeedbackRecordAction;
     }) => {
-      const [, workspaceDirectoryIds] = await Promise.all([
-        ensureAccess(ctx.user.id, parsedInput.workspaceId, "read"),
-        getWorkspaceDirectoryIds(parsedInput.workspaceId),
-      ]);
+      await ensureAccess(ctx.user.id, parsedInput.workspaceId, "read");
 
       const recordResult = await retrieveFeedbackRecord(parsedInput.recordId);
       if (!recordResult.data || recordResult.error) {
         throw new Error("Feedback record not found");
       }
 
-      assertRecordBelongsToWorkspace(workspaceDirectoryIds, recordResult.data.tenant_id);
+      assertRecordBelongsToWorkspace(parsedInput.workspaceId, recordResult.data.tenant_id);
 
       return recordResult.data;
     }
@@ -89,8 +80,7 @@ export const createFeedbackRecordAction = authenticatedActionClient
     }) => {
       await ensureAccess(ctx.user.id, parsedInput.workspaceId, "readWrite");
 
-      const workspaceDirectoryIds = await getWorkspaceDirectoryIds(parsedInput.workspaceId);
-      assertRecordBelongsToWorkspace(workspaceDirectoryIds, parsedInput.recordInput.tenant_id);
+      assertRecordBelongsToWorkspace(parsedInput.workspaceId, parsedInput.recordInput.tenant_id);
 
       const { recordInput } = parsedInput;
       const createParams: FeedbackRecordCreateParams = {
@@ -133,17 +123,14 @@ export const updateFeedbackRecordAction = authenticatedActionClient
       ctx: AuthenticatedActionClientCtx;
       parsedInput: TUpdateFeedbackRecordAction;
     }) => {
-      const [, workspaceDirectoryIds] = await Promise.all([
-        ensureAccess(ctx.user.id, parsedInput.workspaceId, "readWrite"),
-        getWorkspaceDirectoryIds(parsedInput.workspaceId),
-      ]);
+      await ensureAccess(ctx.user.id, parsedInput.workspaceId, "readWrite");
 
       const currentRecordResult = await retrieveFeedbackRecord(parsedInput.recordId);
       if (!currentRecordResult.data || currentRecordResult.error) {
         throw new Error("Feedback record not found");
       }
 
-      assertRecordBelongsToWorkspace(workspaceDirectoryIds, currentRecordResult.data.tenant_id);
+      assertRecordBelongsToWorkspace(parsedInput.workspaceId, currentRecordResult.data.tenant_id);
 
       const { updateInput } = parsedInput;
       const updateParams: FeedbackRecordUpdateParams = {
