@@ -22,7 +22,7 @@ import { getFeedbackRecordTenant } from "@/modules/hub/service";
 
 const FEEDBACK_RECORDS_V3_PREFIX = "/api/v3/feedbackRecords";
 const FEEDBACK_RECORDS_SDK_PREFIX = "/v1/feedback-records";
-const ZFeedbackRecordId = z.string().uuid();
+const ZFeedbackRecordId = z.uuid();
 
 type TFeedbackRecordsGatewayPermission = "read" | "write";
 type TFeedbackRecordsGatewayOperation =
