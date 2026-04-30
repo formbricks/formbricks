@@ -74,27 +74,6 @@ interface NavigationProps {
   isAccessControlAllowed: boolean;
 }
 
-const isActiveWorkspaceSetting = (pathname: string, settingId: string): boolean => {
-  const segment = `/settings/workspace/${settingId}`;
-  return pathname.includes(segment + "/") || pathname.endsWith(segment);
-};
-
-const isActiveOrganizationSetting = (pathname: string, settingId: string): boolean => {
-  const accountPrefixes = [
-    "/settings/profile",
-    "/settings/account",
-    "/settings/notifications",
-    "/settings/security",
-    "/settings/appearance",
-  ];
-  if (accountPrefixes.some((prefix) => pathname.includes(prefix + "/") || pathname.endsWith(prefix))) {
-    return false;
-  }
-
-  const segment = `/settings/${settingId}`;
-  return pathname.includes(segment + "/") || pathname.endsWith(segment);
-};
-
 export const MainNavigation = ({
   organization,
   user,
@@ -117,7 +96,7 @@ export const MainNavigation = ({
   const { signOut: signOutWithAudit } = useSignOut({ id: user.id, email: user.email });
 
   const [isPending, startTransition] = useTransition();
-  const { isManager, isOwner, isBilling, isMember } = getAccessFlags(membershipRole);
+  const { isManager, isOwner, isBilling } = getAccessFlags(membershipRole);
   const isMembershipPending = membershipRole === undefined;
   const disabledNavigationMessage = isMembershipPending
     ? t("common.loading")
@@ -248,95 +227,6 @@ export const MainNavigation = ({
       </button>
     </div>
   );
-
-  const workspaceSettings = [
-    {
-      id: "general",
-      label: t("common.general"),
-      href: `/workspaces/${workspace.id}/settings/workspace/general`,
-    },
-    {
-      id: "look",
-      label: t("common.appearance"),
-      href: `/workspaces/${workspace.id}/settings/workspace/look`,
-    },
-    {
-      id: "app-connection",
-      label: t("common.connect_your_app"),
-      href: `/workspaces/${workspace.id}/settings/workspace/app-connection`,
-    },
-    {
-      id: "feedback-sources",
-      label: t("workspace.unify.feedback_sources"),
-      href: `/workspaces/${workspace.id}/feedback-sources`,
-    },
-    {
-      id: "integrations",
-      label: t("common.integrations"),
-      href: `/workspaces/${workspace.id}/settings/workspace/integrations`,
-    },
-    {
-      id: "teams",
-      label: t("common.team_access"),
-      href: `/workspaces/${workspace.id}/settings/workspace/teams`,
-    },
-    {
-      id: "languages",
-      label: t("common.survey_languages"),
-      href: `/workspaces/${workspace.id}/settings/workspace/languages`,
-    },
-    {
-      id: "tags",
-      label: t("common.tags"),
-      href: `/workspaces/${workspace.id}/settings/workspace/tags`,
-    },
-  ];
-
-  const organizationSettings = [
-    {
-      id: "general",
-      label: t("common.general"),
-      href: `/workspaces/${workspace.id}/settings/general`,
-    },
-    {
-      id: "teams",
-      label: t("common.teams"),
-      href: `/workspaces/${workspace.id}/settings/teams`,
-    },
-    {
-      id: "api-keys",
-      label: t("common.api_keys"),
-      href: `/workspaces/${workspace.id}/settings/api-keys`,
-      hidden: !isOwnerOrManager,
-    },
-    {
-      id: "domain",
-      label: t("common.domain"),
-      href: `/workspaces/${workspace.id}/settings/domain`,
-      hidden: isFormbricksCloud,
-    },
-    {
-      id: "billing",
-      label: t("common.billing"),
-      href: `/workspaces/${workspace.id}/settings/billing`,
-      hidden: !isFormbricksCloud,
-    },
-    {
-      id: "enterprise",
-      label: t("common.enterprise_license"),
-      href: `/workspaces/${workspace.id}/settings/enterprise`,
-      hidden: isFormbricksCloud || isMember,
-    },
-    {
-      id: "feedback-record-directories",
-      label: t("workspace.settings.feedback_record_directories.title"),
-      href: `/workspaces/${workspace.id}/settings/feedback-record-directories`,
-      disabled: isMembershipPending || isMember,
-      disabledMessage: isMembershipPending
-        ? t("common.loading")
-        : t("common.you_are_not_authorized_to_perform_this_action"),
-    },
-  ];
 
   const loadWorkspaces = useCallback(async () => {
     setIsLoadingWorkspaces(true);
@@ -759,21 +649,14 @@ export const MainNavigation = ({
                       </>
                     )}
                     <DropdownMenuSeparator />
-                    <DropdownMenuGroup>
-                      <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
-                        <Cog className="mr-2 inline h-4 w-4" strokeWidth={1.5} />
-                        {t("common.workspace_configuration")}
-                      </div>
-                      {workspaceSettings.map((setting) => (
-                        <DropdownMenuCheckboxItem
-                          key={setting.id}
-                          checked={isActiveWorkspaceSetting(pathname, setting.id)}
-                          onClick={() => handleSettingNavigation(setting.href)}
-                          className="cursor-pointer">
-                          {setting.label}
-                        </DropdownMenuCheckboxItem>
-                      ))}
-                    </DropdownMenuGroup>
+                    <DropdownMenuCheckboxItem
+                      onClick={() =>
+                        handleSettingNavigation(`/workspaces/${workspace.id}/settings/workspace/general`)
+                      }
+                      className="cursor-pointer">
+                      <Cog className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                      {t("common.settings")}
+                    </DropdownMenuCheckboxItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
 
@@ -847,24 +730,14 @@ export const MainNavigation = ({
                       </>
                     )}
                     <DropdownMenuSeparator />
-                    <DropdownMenuGroup>
-                      <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
-                        <SettingsIcon className="mr-2 inline h-4 w-4" strokeWidth={1.5} />
-                        {t("common.organization_settings")}
-                      </div>
-                      {organizationSettings.map((setting) => {
-                        if (setting.hidden) return null;
-                        return (
-                          <DropdownMenuCheckboxItem
-                            key={setting.id}
-                            checked={isActiveOrganizationSetting(pathname, setting.id)}
-                            onClick={() => handleSettingNavigation(setting.href)}
-                            className="cursor-pointer">
-                            {setting.label}
-                          </DropdownMenuCheckboxItem>
-                        );
-                      })}
-                    </DropdownMenuGroup>
+                    <DropdownMenuCheckboxItem
+                      onClick={() =>
+                        handleSettingNavigation(`/workspaces/${workspace.id}/settings/organization/general`)
+                      }
+                      className="cursor-pointer">
+                      <SettingsIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                      {t("common.settings")}
+                    </DropdownMenuCheckboxItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
 

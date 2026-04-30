@@ -4,9 +4,9 @@ import {
   BlocksIcon,
   BrushIcon,
   LanguagesIcon,
-  ListChecksIcon,
   ShapesIcon,
   TagIcon,
+  UnplugIcon,
   UsersIcon,
 } from "lucide-react";
 import { usePathname } from "next/navigation";
@@ -43,7 +43,7 @@ export const WorkspaceConfigNavigation = ({ activeId, loading }: WorkspaceConfig
     {
       id: "app-connection",
       label: t("common.connect_your_app"),
-      icon: <ListChecksIcon className="h-5 w-5" />,
+      icon: <UnplugIcon className="h-5 w-5" />,
       href: `${workspaceBasePath}/settings/workspace/app-connection`,
       current: pathname?.includes("/app-connection"),
     },

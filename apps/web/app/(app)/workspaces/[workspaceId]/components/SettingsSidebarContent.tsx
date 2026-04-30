@@ -15,6 +15,7 @@ import {
   Loader2,
   ShieldIcon,
   TagIcon,
+  UnplugIcon,
   UserCircleIcon,
   UsersIcon,
 } from "lucide-react";
@@ -272,7 +273,7 @@ export const SettingsSidebarContent = ({
       id: "app-connection",
       label: t("common.connect_your_app"),
       href: `${basePath}/workspace/app-connection`,
-      icon: <ListChecksIcon className={iconClassName} />,
+      icon: <UnplugIcon className={iconClassName} />,
       disabled: isBilling,
     },
     {
