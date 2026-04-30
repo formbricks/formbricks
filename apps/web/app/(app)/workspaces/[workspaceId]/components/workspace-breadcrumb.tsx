@@ -33,7 +33,6 @@ interface WorkspaceBreadcrumbProps {
   currentOrganizationId: string;
   isAccessControlAllowed: boolean;
   isEnvironmentBreadcrumbVisible: boolean;
-  isBilling: boolean;
   isMembershipPending: boolean;
 }
 
@@ -47,7 +46,6 @@ export const WorkspaceBreadcrumb = ({
   currentOrganizationId,
   isAccessControlAllowed,
   isEnvironmentBreadcrumbVisible,
-  isBilling,
   isMembershipPending,
 }: WorkspaceBreadcrumbProps) => {
   const { t } = useTranslation();

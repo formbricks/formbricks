@@ -16,7 +16,6 @@ interface WorkspaceAndOrgSwitchProps {
   isOwnerOrManager: boolean;
   isAccessControlAllowed: boolean;
   isMembershipPending: boolean;
-  isBilling: boolean;
 }
 
 export const WorkspaceAndOrgSwitch = ({
@@ -31,7 +30,6 @@ export const WorkspaceAndOrgSwitch = ({
   isOwnerOrManager,
   isAccessControlAllowed,
   isMembershipPending,
-  isBilling,
 }: WorkspaceAndOrgSwitchProps) => {
   return (
     <Breadcrumb>
@@ -54,7 +52,6 @@ export const WorkspaceAndOrgSwitch = ({
             isAccessControlAllowed={isAccessControlAllowed}
             isEnvironmentBreadcrumbVisible={false}
             isMembershipPending={isMembershipPending}
-            isBilling={isBilling}
           />
         )}
       </BreadcrumbList>

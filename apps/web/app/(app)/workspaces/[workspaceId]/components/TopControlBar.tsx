@@ -3,7 +3,6 @@
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { WorkspaceAndOrgSwitch } from "@/app/(app)/workspaces/[workspaceId]/components/workspace-and-org-switch";
 import { useWorkspaceContext } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
-import { getAccessFlags } from "@/lib/membership/utils";
 
 interface TopControlBarProps {
   currentOrganizationId: string;
@@ -28,7 +27,6 @@ export const TopControlBar = ({
 }: TopControlBarProps) => {
   const { workspace } = useWorkspaceContext();
   const isMembershipPending = membershipRole === undefined;
-  const { isBilling } = getAccessFlags(membershipRole);
 
   return (
     <div
@@ -44,7 +42,6 @@ export const TopControlBar = ({
         isOwnerOrManager={isOwnerOrManager}
         isMembershipPending={isMembershipPending}
         isAccessControlAllowed={isAccessControlAllowed}
-        isBilling={isBilling}
       />
     </div>
   );
