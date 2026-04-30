@@ -17,7 +17,7 @@ const createNoCodeClickAction = async ({
   await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
   const workspaceId = /\/workspaces\/([^/]+)\//.exec(page.url())?.[1];
   await page.goto(`/workspaces/${workspaceId}/settings/workspace/user-actions`);
-  await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/app-connection/);
+  await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/user-actions/);
 
   // Add Action button
   await page.getByRole("button", { name: "Add Action" }).click();
@@ -66,7 +66,7 @@ const createNoCodePageViewAction = async ({
   await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
   const workspaceId = /\/workspaces\/([^/]+)\//.exec(page.url())?.[1];
   await page.goto(`/workspaces/${workspaceId}/settings/workspace/user-actions`);
-  await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/app-connection/);
+  await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/user-actions/);
 
   // Add Action button
   await page.getByRole("button", { name: "Add Action" }).click();
@@ -116,7 +116,7 @@ const createNoCodeAction = async ({
   await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
   const workspaceId = /\/workspaces\/([^/]+)\//.exec(page.url())?.[1];
   await page.goto(`/workspaces/${workspaceId}/settings/workspace/user-actions`);
-  await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/app-connection/);
+  await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/user-actions/);
 
   // Add Action button
   await page.getByRole("button", { name: "Add Action" }).click();
@@ -154,7 +154,7 @@ const createCodeAction = async ({
 }) => {
   const workspaceId = /\/workspaces\/([^/]+)\//.exec(page.url())?.[1];
   await page.goto(`/workspaces/${workspaceId}/settings/workspace/user-actions`);
-  await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/app-connection/);
+  await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/user-actions/);
 
   // Add Action button
   await page.getByRole("button", { name: "Add Action" }).click();
@@ -195,7 +195,7 @@ test.describe("Create and Edit No Code Click Action", async () => {
     await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
     const workspaceId = /\/workspaces\/([^/]+)\//.exec(page.url())?.[1];
     await page.goto(`/workspaces/${workspaceId}/settings/workspace/user-actions`);
-    await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/app-connection/);
+    await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/user-actions/);
   });
 
   test("Create and Edit No Code Click Action by CSS Selector", async ({ page }) => {
@@ -253,7 +253,7 @@ test.describe("Create and Edit No Code Page view Action", async () => {
     await test.step("Edit No Code Page view Action", async () => {
       const workspaceId = /\/workspaces\/([^/]+)\//.exec(page.url())?.[1];
       await page.goto(`/workspaces/${workspaceId}/settings/workspace/user-actions`);
-      await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/app-connection/);
+      await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/user-actions/);
 
       const actionButton = getActionButtonLocator(page, actions.create.noCode.pageView.name);
       await expect(actionButton).toBeVisible();
@@ -306,7 +306,7 @@ test.describe("Create and Edit No Code Exit Intent Action", async () => {
     await test.step("Edit No Code Exit Intent Action", async () => {
       const workspaceId = /\/workspaces\/([^/]+)\//.exec(page.url())?.[1];
       await page.goto(`/workspaces/${workspaceId}/settings/workspace/user-actions`);
-      await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/app-connection/);
+      await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/user-actions/);
 
       const actionButton = getActionButtonLocator(page, actions.create.noCode.exitIntent.name);
       await expect(actionButton).toBeVisible();
@@ -333,7 +333,7 @@ test.describe("Create and Edit No Code 50% scroll Action", async () => {
     await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
     const workspaceId = /\/workspaces\/([^/]+)\//.exec(page.url())?.[1];
     await page.goto(`/workspaces/${workspaceId}/settings/workspace/user-actions`);
-    await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/app-connection/);
+    await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/user-actions/);
   });
 
   test("Create and Edit No Code 50% scroll Action", async ({ page }) => {
@@ -349,7 +349,7 @@ test.describe("Create and Edit No Code 50% scroll Action", async () => {
     await test.step("Edit No Code 50% scroll Action", async () => {
       const workspaceId = /\/workspaces\/([^/]+)\//.exec(page.url())?.[1];
       await page.goto(`/workspaces/${workspaceId}/settings/workspace/user-actions`);
-      await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/app-connection/);
+      await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/user-actions/);
 
       const actionButton = getActionButtonLocator(page, actions.create.noCode["fiftyPercentScroll"].name);
       await expect(actionButton).toBeVisible();
@@ -376,7 +376,7 @@ test.describe("Create and Edit Code Action", async () => {
     await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
     const workspaceId = /\/workspaces\/([^/]+)\//.exec(page.url())?.[1];
     await page.goto(`/workspaces/${workspaceId}/settings/workspace/user-actions`);
-    await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/app-connection/);
+    await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/user-actions/);
   });
 
   test("Create and Edit Code Action", async ({ page }) => {
@@ -392,7 +392,7 @@ test.describe("Create and Edit Code Action", async () => {
     await test.step("Edit Code Action", async () => {
       const workspaceId = /\/workspaces\/([^/]+)\//.exec(page.url())?.[1];
       await page.goto(`/workspaces/${workspaceId}/settings/workspace/user-actions`);
-      await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/app-connection/);
+      await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/user-actions/);
 
       const actionButton = getActionButtonLocator(page, actions.create.code.name);
       await expect(actionButton).toBeVisible();
@@ -416,7 +416,7 @@ test.describe("Create and Delete Action", async () => {
     await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
     const workspaceId = /\/workspaces\/([^/]+)\//.exec(page.url())?.[1];
     await page.goto(`/workspaces/${workspaceId}/settings/workspace/user-actions`);
-    await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/app-connection/);
+    await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/user-actions/);
   });
 
   test("Create and Delete Action", async ({ page }) => {
@@ -432,7 +432,7 @@ test.describe("Create and Delete Action", async () => {
     await test.step("Delete Action", async () => {
       const workspaceId = /\/workspaces\/([^/]+)\//.exec(page.url())?.[1];
       await page.goto(`/workspaces/${workspaceId}/settings/workspace/user-actions`);
-      await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/app-connection/);
+      await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/user-actions/);
 
       const actionButton = getActionButtonLocator(page, actions.delete.noCode.name);
       await expect(actionButton).toBeVisible();
