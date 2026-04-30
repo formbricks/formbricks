@@ -108,11 +108,14 @@ function assertNoCallerTenantMember(query) {
   }
 }
 
-function logCubeQueryAuditEvent(context, query) {
+function logCubeQueryAuditEvent(context, query, { error, status = "success" } = {}) {
+  const errorName = error instanceof Error ? error.name : undefined;
+
   console.log(
     JSON.stringify({
       type: "audit",
       event: "cube.query",
+      status,
       timestamp: new Date().toISOString(),
       tenantId: context.tenantId,
       workspaceId: context.workspaceId,
@@ -121,6 +124,7 @@ function logCubeQueryAuditEvent(context, query) {
       requestId: context.requestId,
       source: context.source,
       members: collectQueryMembers(query),
+      ...(errorName ? { errorName } : {}),
     })
   );
 }
@@ -129,7 +133,12 @@ function queryRewrite(query, rewriteContext) {
   const cubeQuery = query ?? {};
   const context = assertValidSecurityContext(rewriteContext?.securityContext);
 
-  assertNoCallerTenantMember(cubeQuery);
+  try {
+    assertNoCallerTenantMember(cubeQuery);
+  } catch (error) {
+    logCubeQueryAuditEvent(context, cubeQuery, { error, status: "failure" });
+    throw error;
+  }
 
   const rewrittenQuery = {
     ...cubeQuery,

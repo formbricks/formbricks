@@ -82,6 +82,35 @@ describe("cube queryRewrite", () => {
     ).toThrow(/tenant filters are enforced by Cube/);
   });
 
+  test("logs sanitized failure audit metadata for rejected tenant filters", () => {
+    expect(() =>
+      queryRewrite(
+        {
+          measures: ["FeedbackRecords.count"],
+          filters: [{ member: "FeedbackRecords.tenantId", operator: "equals", values: ["secret-value"] }],
+        },
+        { securityContext }
+      )
+    ).toThrow(/tenant filters are enforced by Cube/);
+
+    const logPayload = vi.mocked(console.log).mock.calls[0][0];
+    const parsed = JSON.parse(logPayload);
+    expect(parsed).toMatchObject({
+      type: "audit",
+      event: "cube.query",
+      status: "failure",
+      tenantId: "workspace-1",
+      workspaceId: "workspace-1",
+      organizationId: "organization-1",
+      userId: "user-1",
+      requestId: "request-1",
+      source: "charts.executeQueryAction",
+      errorName: "Error",
+    });
+    expect(parsed.members).toContain("FeedbackRecords.tenantId");
+    expect(logPayload).not.toContain("secret-value");
+  });
+
   test("rejects deprecated dimension tenant filters", () => {
     expect(() =>
       queryRewrite(
@@ -166,7 +195,9 @@ describe("cube queryRewrite", () => {
     expect(parsed).toMatchObject({
       type: "audit",
       event: "cube.query",
+      status: "success",
       tenantId: "workspace-1",
+      workspaceId: "workspace-1",
       organizationId: "organization-1",
       userId: "user-1",
       requestId: "request-1",
