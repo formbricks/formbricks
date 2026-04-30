@@ -114,11 +114,14 @@ export const isHobbySubscriptionRenewal = (event: Stripe.Event): boolean => {
   if (!previousAttributes) return false;
 
   // Check that every line item belongs to the hobby plan
-  const isHobbyPlan = subscription.items?.data?.every((item) => {
-    const product = item.price?.product;
-    if (!product || typeof product === "string" || product.deleted) return false;
-    return product.metadata?.formbricks_plan === "hobby";
-  });
+  const items = subscription.items?.data;
+  const isHobbyPlan =
+    items?.length &&
+    items.every((item) => {
+      const product = item.price?.product;
+      if (!product || typeof product === "string" || product.deleted) return false;
+      return product.metadata?.formbricks_plan === "hobby";
+    });
 
   if (!isHobbyPlan) return false;
 
