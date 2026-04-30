@@ -348,7 +348,7 @@ describe("Chart Service", () => {
   });
 
   describe("getCharts", () => {
-    test("returns all charts for a project", async () => {
+    test("returns all charts for a workspace", async () => {
       const chartsFromDb = [
         { ...mockChart, creator: { name: "User 1" } },
         { ...mockChart, id: "chart-2", name: "Chart 2", creator: { name: null } },

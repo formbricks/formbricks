@@ -96,7 +96,7 @@ const convertValueToHubFields = (
  */
 export function transformResponseToFeedbackRecords(
   response: TResponse,
-  survey: TSurvey,
+  survey: Pick<TSurvey, "id" | "name" | "blocks">,
   mappings: TConnectorFormbricksMapping[],
   tenantId: string
 ): FeedbackRecordCreateParams[] {

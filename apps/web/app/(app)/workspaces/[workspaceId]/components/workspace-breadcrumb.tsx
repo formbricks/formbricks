@@ -1,15 +1,8 @@
 "use client";
 
 import * as Sentry from "@sentry/nextjs";
-import {
-  ChevronDownIcon,
-  ChevronRightIcon,
-  FoldersIcon,
-  Loader2,
-  PlusIcon,
-  SettingsIcon,
-} from "lucide-react";
-import { useRouter } from "next/navigation";
+import { ChevronDownIcon, ChevronRightIcon, CogIcon, FoldersIcon, Loader2, PlusIcon } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
@@ -40,8 +33,19 @@ interface WorkspaceBreadcrumbProps {
   currentOrganizationId: string;
   isAccessControlAllowed: boolean;
   isEnvironmentBreadcrumbVisible: boolean;
+  isBilling: boolean;
   isMembershipPending: boolean;
 }
+
+const isActiveWorkspaceSetting = (pathname: string, settingId: string): boolean => {
+  // Match /{settingId} or /{settingId}/... but exclude settings paths
+  if (pathname.includes("/settings/")) {
+    return false;
+  }
+  // Check if path matches /workspaces/{id}/{settingId} (with optional trailing path)
+  const pattern = new RegExp(`/workspaces/[^/]+/${settingId}(?:/|$)`);
+  return pattern.test(pathname);
+};
 
 export const WorkspaceBreadcrumb = ({
   currentWorkspaceId,
@@ -53,6 +57,7 @@ export const WorkspaceBreadcrumb = ({
   currentOrganizationId,
   isAccessControlAllowed,
   isEnvironmentBreadcrumbVisible,
+  isBilling,
   isMembershipPending,
 }: WorkspaceBreadcrumbProps) => {
   const { t } = useTranslation();
@@ -64,6 +69,7 @@ export const WorkspaceBreadcrumb = ({
   const [workspaces, setWorkspaces] = useState<{ id: string; name: string }[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+  const pathname = usePathname();
 
   // Get current workspace name from context OR prop
   // Context is preferred, but prop is fallback for pages without EnvironmentContextWrapper
@@ -96,6 +102,59 @@ export const WorkspaceBreadcrumb = ({
     }
   }, [isWorkspaceDropdownOpen, currentOrganizationId, workspaces.length, isLoadingWorkspaces, loadError, t]);
 
+  const workspaceSettings = [
+    {
+      id: "general",
+      label: t("common.general"),
+      href: `${workspaceBasePath}/general`,
+    },
+    {
+      id: "look",
+      label: t("common.look_and_feel"),
+      href: `${workspaceBasePath}/look`,
+    },
+    {
+      id: "app-connection",
+      label: t("common.website_and_app_connection"),
+      href: `${workspaceBasePath}/app-connection`,
+    },
+    {
+      id: "feedback-sources",
+      label: t("workspace.unify.feedback_sources"),
+      href: `${workspaceBasePath}/feedback-sources`,
+    },
+    {
+      id: "integrations",
+      label: t("common.integrations"),
+      href: `${workspaceBasePath}/integrations`,
+    },
+    {
+      id: "teams",
+      label: t("common.team_access"),
+      href: `${workspaceBasePath}/teams`,
+    },
+    {
+      id: "languages",
+      label: t("common.survey_languages"),
+      href: `${workspaceBasePath}/languages`,
+    },
+    {
+      id: "tags",
+      label: t("common.tags"),
+      href: `${workspaceBasePath}/tags`,
+    },
+    {
+      id: "unify",
+      label: t("common.unify"),
+      href: `${workspaceBasePath}/workspace/unify`,
+    },
+  ];
+
+  const areWorkspaceSettingsDisabled = isMembershipPending || isBilling;
+  const workspaceSettingsDisabledMessage = isMembershipPending
+    ? t("common.loading")
+    : t("common.you_are_not_authorized_to_perform_this_action");
+
   if (!currentWorkspace) {
     const errorMessage = `Workspace not found for workspace id: ${currentWorkspaceId}`;
     logger.error(errorMessage);
@@ -124,7 +183,7 @@ export const WorkspaceBreadcrumb = ({
 
   const handleWorkspaceSettingsNavigation = (settingId: string) => {
     startTransition(() => {
-      router.push(`${workspaceBasePath}/settings/workspace/${settingId}`);
+      router.push(`${workspaceBasePath}/${settingId}`);
     });
   };
 
@@ -133,7 +192,7 @@ export const WorkspaceBreadcrumb = ({
       return [
         {
           text: t("workspace.settings.billing.upgrade"),
-          href: `${workspaceBasePath}/settings/organization/billing`,
+          href: `${workspaceBasePath}/settings/billing`,
         },
         {
           text: t("common.cancel"),
@@ -146,7 +205,7 @@ export const WorkspaceBreadcrumb = ({
       {
         text: t("workspace.settings.billing.upgrade"),
         href: isLicenseActive
-          ? `${workspaceBasePath}/settings/organization/enterprise`
+          ? `${workspaceBasePath}/settings/enterprise`
           : "https://formbricks.com/upgrade-self-hosted-license",
       },
       {
@@ -237,13 +296,39 @@ export const WorkspaceBreadcrumb = ({
               )}
             </>
           )}
-          <DropdownMenuSeparator />
-          <DropdownMenuCheckboxItem
-            onClick={() => handleWorkspaceSettingsNavigation("general")}
-            className="cursor-pointer">
-            <SettingsIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />
-            {t("common.settings")}
-          </DropdownMenuCheckboxItem>
+          <DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
+              <CogIcon className="mr-2 inline h-4 w-4" strokeWidth={1.5} />
+              {t("common.workspace_configuration")}
+            </div>
+            {workspaceSettings.map((setting) => (
+              <div key={setting.id}>
+                {areWorkspaceSettingsDisabled ? (
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        aria-disabled="true"
+                        className="relative flex w-full cursor-not-allowed select-none items-center rounded-lg py-1.5 pl-8 pr-2 text-sm font-medium text-slate-400">
+                        {setting.label}
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-fit max-w-72 px-3 py-2 text-sm text-slate-700">
+                      {workspaceSettingsDisabledMessage}
+                    </PopoverContent>
+                  </Popover>
+                ) : (
+                  <DropdownMenuCheckboxItem
+                    checked={isActiveWorkspaceSetting(pathname, setting.id)}
+                    onClick={() => handleWorkspaceSettingsNavigation(setting.id)}
+                    className="cursor-pointer">
+                    {setting.label}
+                  </DropdownMenuCheckboxItem>
+                )}
+              </div>
+            ))}
+          </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>
       {/* Modals */}

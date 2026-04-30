@@ -25,12 +25,26 @@ Make sure Docker and Docker Compose are installed on your system. These are usua
    mkdir formbricks-quickstart && cd formbricks-quickstart
    ```
 
-1. **Download the Docker-Compose File**
+1. **Download the Docker Files**
 
-   Get the docker-compose file from the Formbricks repository by running:
+   Get the Docker Compose file plus the Cube.js configuration shipped with the XM Suite v5 stack:
 
    ```bash
+   mkdir -p cube/schema
    curl -o docker-compose.yml https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/docker-compose.yml
+   curl -o cube/cube.js https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/cube/cube.js
+   curl -o cube/schema/FeedbackRecords.js https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/cube/schema/FeedbackRecords.js
+   ```
+
+1. **Generate Hub and Cube Secrets**
+
+   XM Suite v5 analytics requires Formbricks Hub and Cube.js. Create a local `.env` file for the required shared secrets:
+
+   ```bash
+   cat <<EOF > .env
+   HUB_API_KEY=$(openssl rand -hex 32)
+   CUBEJS_API_SECRET=$(openssl rand -hex 32)
+   EOF
    ```
 
 1. **Generate NextAuth Secret**
@@ -83,7 +97,7 @@ Make sure Docker and Docker Compose are installed on your system. These are usua
 
 1. **Start the Docker Setup**
 
-   Now, you're ready to run Formbricks with Docker. Use the command below to start Formbricks along with a PostgreSQL database using Docker Compose:
+   Now, you're ready to run Formbricks with Docker. Use the command below to start Formbricks together with PostgreSQL, Redis, Formbricks Hub, and Cube.js:
 
    ```bash
    docker compose up -d
@@ -94,6 +108,11 @@ Make sure Docker and Docker Compose are installed on your system. These are usua
 1. **Open Formbricks in Your Browser**
 
    Once the setup is running, open [**http://localhost:3000**](http://localhost:3000) in your browser to access Formbricks. The first time you visit, you'll see a setup wizard. Follow the steps to create your first user and start using Formbricks.
+
+<Note>
+  The bundled Docker stack keeps Formbricks Hub and Cube.js internal to the compose network. The app reaches
+  them through `http://hub:8080` and `http://cube:4000`.
+</Note>
 
 ## Update
 
@@ -151,12 +170,10 @@ The fastest way to test MinIO with Formbricks is to use the included `docker-com
    Open http://localhost:9001 in your browser.
 
    Login credentials:
-
    - Username: `devminio`
    - Password: `devminio123`
 
 3. **Create Bucket**
-
    - Click "Buckets" in the left sidebar
    - Click "Create Bucket"
    - Name it: `formbricks`
@@ -178,7 +195,6 @@ The fastest way to test MinIO with Formbricks is to use the included `docker-com
 5. **Verify in MinIO Console**
 
    After uploading files in Formbricks, view them at http://localhost:9001:
-
    - Navigate to Buckets → formbricks → Browse
    - Your uploaded files will appear here
 
@@ -245,7 +261,6 @@ If you prefer to add MinIO to your own `docker-compose.yml`, follow these steps:
    ```
 
 4. **Open the MinIO Console & Create a Bucket**
-
    - Visit **http://localhost:9001**
    - Log in with:
      - **Username:** `formbricks-root`
@@ -275,7 +290,6 @@ If you prefer to add MinIO to your own `docker-compose.yml`, follow these steps:
 6. **Verify uploads**
 
    After uploading a file in Formbricks, check **http://localhost:9001**:
-
    - **Buckets → formbricks → Browse**  
      You should see your uploaded files.
 

@@ -18,7 +18,7 @@ cube(`FeedbackRecords`, {
 
     detractorCount: {
       type: `count`,
-      filters: [{ sql: `${CUBE}.value_number <= 6` }],
+      filters: [{ sql: `${CUBE}.value_number >= 0 AND ${CUBE}.value_number <= 6` }],
       description: `Number of detractors (NPS score 0-6)`,
     },
 
@@ -146,7 +146,7 @@ cube(`TopicsUnnested`, {
 
   dimensions: {
     id: {
-      sql: `feedback_record_id || '-' || topic`,
+      sql: `md5(feedback_record_id || '::' || topic)`,
       type: `string`,
       primaryKey: true,
     },

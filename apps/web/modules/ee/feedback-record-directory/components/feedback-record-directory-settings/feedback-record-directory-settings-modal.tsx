@@ -1,8 +1,9 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { CircleAlert } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -17,6 +18,7 @@ import { ArchiveFeedbackRecordDirectory } from "@/modules/ee/feedback-record-dir
 import {
   TFeedbackRecordDirectoryDetails,
   TFeedbackRecordDirectoryUpdateInput,
+  TWorkspaceFeedbackRecordDirectoryAccess,
   ZFeedbackRecordDirectoryUpdateInput,
   getTranslatedFeedbackRecordDirectoryError,
 } from "@/modules/ee/feedback-record-directory/types/feedback-record-directory";
@@ -43,6 +45,7 @@ interface FeedbackRecordDirectorySettingsModalProps {
   directory?: TFeedbackRecordDirectoryDetails;
   organizationId: string;
   orgWorkspaces: TOrganizationWorkspace[];
+  workspaceAccessByWorkspace: TWorkspaceFeedbackRecordDirectoryAccess[];
   membershipRole: TOrganizationRole;
 }
 
@@ -52,24 +55,47 @@ export const FeedbackRecordDirectorySettingsModal = ({
   directory,
   organizationId,
   orgWorkspaces,
+  workspaceAccessByWorkspace,
   membershipRole,
-}: FeedbackRecordDirectorySettingsModalProps) => {
+}: Readonly<FeedbackRecordDirectorySettingsModalProps>) => {
   const { t } = useTranslation();
   const { isOwner, isManager } = getAccessFlags(membershipRole);
   const isOwnerOrManager = isOwner || isManager;
   const router = useRouter();
   const isEdit = !!directory;
 
+  const [confirmPauseDialogOpen, setConfirmPauseDialogOpen] = useState(false);
+  const [pendingSubmitData, setPendingSubmitData] = useState<TFeedbackRecordDirectoryUpdateInput | null>(
+    null
+  );
+  const [connectorsToPauseCount, setConnectorsToPauseCount] = useState(0);
+
+  const workspaceAccessMap = useMemo(
+    () => new Map(workspaceAccessByWorkspace.map((assignment) => [assignment.workspaceId, assignment])),
+    [workspaceAccessByWorkspace]
+  );
+
   const workspaceOptions = useMemo(
     () =>
       orgWorkspaces
-        .map((p) => ({ value: p.id, label: p.name }))
+        .map((workspace) => {
+          const assignment = workspaceAccessMap.get(workspace.id);
+          const isAssignedToDifferentDirectory = Boolean(
+            assignment && assignment.feedbackRecordDirectoryId !== directory?.id
+          );
+
+          return {
+            value: workspace.id,
+            label: workspace.name,
+            disabled: isAssignedToDifferentDirectory,
+          };
+        })
         .sort((a, b) => a.label.localeCompare(b.label, undefined, { sensitivity: "base" })),
-    [orgWorkspaces]
+    [orgWorkspaces, workspaceAccessMap, directory?.id]
   );
 
   const initialWorkspaceIds = useMemo(
-    () => directory?.workspaces.map((p) => p.workspaceId) ?? [],
+    () => directory?.workspaces.map((workspace) => workspace.workspaceId) ?? [],
     [directory?.workspaces]
   );
 
@@ -91,21 +117,29 @@ export const FeedbackRecordDirectorySettingsModal = ({
   } = form;
 
   const closeModal = () => {
+    setConfirmPauseDialogOpen(false);
+    setPendingSubmitData(null);
+    setConnectorsToPauseCount(0);
     reset();
     setOpen(false);
   };
 
-  const handleSubmitForm: SubmitHandler<TFeedbackRecordDirectoryUpdateInput> = async (data) => {
-    const response = isEdit
-      ? await updateFeedbackRecordDirectoryAction({
-          directoryId: directory.id,
-          data: { name: data.name, workspaceIds: data.workspaceIds },
-        })
-      : await createFeedbackRecordDirectoryAction({
-          organizationId,
-          name: data.name ?? "",
-          workspaceIds: data.workspaceIds,
-        });
+  const submitDirectory = async (
+    data: TFeedbackRecordDirectoryUpdateInput,
+    pauseConnectorsInRemovedWorkspaces: boolean
+  ) => {
+    const response =
+      isEdit && directory
+        ? await updateFeedbackRecordDirectoryAction({
+            directoryId: directory.id,
+            data: { name: data.name, workspaceIds: data.workspaceIds },
+            pauseConnectorsInRemovedWorkspaces,
+          })
+        : await createFeedbackRecordDirectoryAction({
+            organizationId,
+            name: data.name ?? "",
+            workspaceIds: data.workspaceIds,
+          });
 
     if (response?.data) {
       toast.success(
@@ -115,10 +149,52 @@ export const FeedbackRecordDirectorySettingsModal = ({
       );
       closeModal();
       router.refresh();
+      return true;
     } else {
       const errorCode = getFormattedErrorMessage(response);
       toast.error(getTranslatedFeedbackRecordDirectoryError(errorCode, t));
+      return false;
     }
+  };
+
+  const handleConfirmPauseAndSubmit = async () => {
+    if (!pendingSubmitData) {
+      return;
+    }
+
+    const wasSuccessful = await submitDirectory(pendingSubmitData, true);
+    if (wasSuccessful) {
+      setConfirmPauseDialogOpen(false);
+      setPendingSubmitData(null);
+      setConnectorsToPauseCount(0);
+    }
+  };
+
+  const handleSubmitForm: SubmitHandler<TFeedbackRecordDirectoryUpdateInput> = async (data) => {
+    if (!isEdit || !directory) {
+      await submitDirectory(data, false);
+      return;
+    }
+
+    const updatedWorkspaceIds = data.workspaceIds ?? [];
+    const removedWorkspaceIds = initialWorkspaceIds.filter(
+      (workspaceId) => !updatedWorkspaceIds.includes(workspaceId)
+    );
+
+    if (removedWorkspaceIds.length > 0) {
+      const affectedConnectors = directory.connectors.filter((connector) =>
+        removedWorkspaceIds.includes(connector.workspaceId)
+      );
+
+      if (affectedConnectors.length > 0) {
+        setPendingSubmitData(data);
+        setConnectorsToPauseCount(affectedConnectors.length);
+        setConfirmPauseDialogOpen(true);
+        return;
+      }
+    }
+
+    await submitDirectory(data, false);
   };
 
   return (
@@ -157,21 +233,17 @@ export const FeedbackRecordDirectorySettingsModal = ({
                         disabled={!isOwnerOrManager}
                       />
                     </FormControl>
-                    {error?.message && <FormError className="text-left">{error.message}</FormError>}
+                    {error?.message && (
+                      <FormError className="text-left">
+                        {getTranslatedFeedbackRecordDirectoryError(error.message, t)}
+                      </FormError>
+                    )}
                   </FormItem>
                 )}
               />
 
-              {isEdit && (
-                <IdBadge
-                  id={directory.id}
-                  label={t("workspace.settings.feedback_record_directories.directory_id")}
-                  variant="column"
-                />
-              )}
-
               <div className="space-y-2">
-                <FormLabel>{t("common.workspaces")}</FormLabel>
+                <FormLabel>{t("workspace.settings.feedback_record_directories.workspace_access")}</FormLabel>
                 <Muted className="block text-slate-500">
                   {t("workspace.settings.feedback_record_directories.assign_workspaces_description")}
                 </Muted>
@@ -213,7 +285,7 @@ export const FeedbackRecordDirectorySettingsModal = ({
                           </div>
                           <a
                             className="text-xs font-medium text-slate-700 hover:text-slate-900 hover:underline"
-                            href={`/workspaces/${c.workspaceId}/unify/sources`}>
+                            href={`/workspaces/${c.workspaceId}/feedback-sources`}>
                             {t("common.view")}
                           </a>
                         </li>
@@ -221,6 +293,14 @@ export const FeedbackRecordDirectorySettingsModal = ({
                     </ul>
                   )}
                 </div>
+              )}
+
+              {isEdit && (
+                <IdBadge
+                  id={directory.id}
+                  label={t("workspace.settings.feedback_record_directories.directory_id")}
+                  variant="column"
+                />
               )}
             </DialogBody>
             <DialogFooter>
@@ -243,6 +323,46 @@ export const FeedbackRecordDirectorySettingsModal = ({
           </form>
         </FormProvider>
       </DialogContent>
+
+      {confirmPauseDialogOpen && (
+        <Dialog open={confirmPauseDialogOpen} onOpenChange={setConfirmPauseDialogOpen}>
+          <DialogContent width="narrow" hideCloseButton={true} disableCloseOnOutsideClick={true}>
+            <DialogHeader>
+              <div className="flex items-center gap-2">
+                <CircleAlert className="h-4 w-4" />
+                <DialogTitle>
+                  {t("workspace.settings.feedback_record_directories.pause_connectors_confirmation_title")}
+                </DialogTitle>
+              </div>
+            </DialogHeader>
+            <DialogBody>
+              <p>
+                {t(
+                  "workspace.settings.feedback_record_directories.pause_connectors_confirmation_description",
+                  {
+                    count: connectorsToPauseCount,
+                  }
+                )}
+              </p>
+            </DialogBody>
+            <DialogFooter>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setConfirmPauseDialogOpen(false);
+                  setPendingSubmitData(null);
+                  setConnectorsToPauseCount(0);
+                }}
+                disabled={isSubmitting}>
+                {t("common.cancel")}
+              </Button>
+              <Button onClick={handleConfirmPauseAndSubmit} loading={isSubmitting}>
+                {t("common.continue")}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </Dialog>
   );
 };

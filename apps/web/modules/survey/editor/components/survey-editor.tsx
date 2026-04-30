@@ -243,7 +243,7 @@ export const SurveyEditor = ({
             <LanguageView
               localSurvey={localSurvey}
               setLocalSurvey={setLocalSurveyNonNull}
-              projectLanguages={localWorkspaceLanguages}
+              workspaceLanguages={localWorkspaceLanguages}
               locale={locale}
               setHasIncompleteTranslations={setHasIncompleteTranslations}
             />

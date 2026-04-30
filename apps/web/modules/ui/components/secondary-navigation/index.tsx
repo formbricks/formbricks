@@ -4,7 +4,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components
 
 interface TSecondaryNavItem {
   id: string;
-  label: string;
+  label: React.ReactNode;
   href?: string;
   onClick?: (event: React.MouseEvent<HTMLElement>) => void;
   hidden?: boolean;

@@ -42,7 +42,7 @@ import { ManageTranslationsModal } from "./manage-translations-modal";
 interface LanguageViewProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey) => void;
-  projectLanguages: Language[];
+  workspaceLanguages: Language[];
   locale: TUserLocale;
   setHasIncompleteTranslations: (has: boolean) => void;
 }
@@ -59,7 +59,7 @@ interface ConfirmationModalInfo {
 export const LanguageView = ({
   localSurvey,
   setLocalSurvey,
-  projectLanguages,
+  workspaceLanguages,
   locale,
   setHasIncompleteTranslations,
 }: LanguageViewProps) => {
@@ -169,7 +169,7 @@ export const LanguageView = ({
   };
 
   const handleDefaultLanguageChange = (languageCode: string) => {
-    const language = projectLanguages.find((lang) => lang.code === languageCode);
+    const language = workspaceLanguages.find((lang) => lang.code === languageCode);
     if (!language) return;
 
     let languageExists = false;
@@ -218,7 +218,7 @@ export const LanguageView = ({
       }
     } else {
       // Language not in survey — add it with enabled: true
-      const language = projectLanguages.find((l) => l.code === code);
+      const language = workspaceLanguages.find((l) => l.code === code);
       if (language) {
         const updatedLanguages: TSurveyLanguage[] = [
           ...localSurvey.languages,
@@ -273,7 +273,7 @@ export const LanguageView = ({
   return (
     <div className="mt-12 space-y-3 p-5">
       {/* Activation toggle — only show when workspace has languages */}
-      {projectLanguages.length > 0 && (
+      {workspaceLanguages.length > 0 && (
         <div className="flex items-center gap-4 rounded-lg border border-slate-300 bg-white p-4">
           <Switch
             checked={isMultiLanguageActivated}
@@ -298,7 +298,7 @@ export const LanguageView = ({
           </div>
 
           {/* Default language select — only show when no default is set yet */}
-          {projectLanguages.length > 0 && !defaultLanguage && (
+          {workspaceLanguages.length > 0 && !defaultLanguage && (
             <div className="space-y-2">
               <Label>{t("workspace.surveys.edit.default_language")}</Label>
               <div className="w-56">
@@ -322,7 +322,7 @@ export const LanguageView = ({
                     <SelectValue placeholder={t("common.select_language")} />
                   </SelectTrigger>
                   <SelectContent>
-                    {projectLanguages.map((lang) => (
+                    {workspaceLanguages.map((lang) => (
                       <SelectItem key={lang.id} value={lang.code}>
                         {getLanguageLabel(lang.code, locale)} ({lang.code})
                       </SelectItem>
@@ -334,7 +334,7 @@ export const LanguageView = ({
           )}
 
           {/* Languages table — show all workspace languages */}
-          {defaultLanguage && projectLanguages.length > 0 && (
+          {defaultLanguage && workspaceLanguages.length > 0 && (
             <div className="overflow-hidden rounded-lg border border-slate-300">
               <table className="w-full text-sm">
                 <thead className="bg-slate-50">
@@ -386,7 +386,7 @@ export const LanguageView = ({
                   </tr>
 
                   {/* Non-default language rows — all workspace languages except default */}
-                  {projectLanguages
+                  {workspaceLanguages
                     .filter((pl) => pl.code !== defaultLanguage.code)
                     .map((pl) => {
                       const surveyLang = localSurvey.languages.find((sl) => sl.language.code === pl.code);
@@ -492,7 +492,7 @@ export const LanguageView = ({
         </div>
       )}
 
-      {projectLanguages.length === 0 && (
+      {workspaceLanguages.length === 0 && (
         <div className="rounded-lg border border-slate-300 bg-white p-6 text-center">
           <p className="text-sm text-slate-500">
             {t("workspace.surveys.edit.no_languages_found_add_first_one_to_get_started")}

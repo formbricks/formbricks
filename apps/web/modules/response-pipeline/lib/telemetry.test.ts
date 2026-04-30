@@ -356,7 +356,7 @@ describe("sendTelemetryEvents", () => {
         organizationCount: BigInt(1),
         userCount: BigInt(5),
         teamCount: BigInt(2),
-        projectCount: BigInt(3),
+        workspaceCount: BigInt(3),
         surveyCount: BigInt(10),
         inProgressSurveyCount: BigInt(4),
         completedSurveyCount: BigInt(6),

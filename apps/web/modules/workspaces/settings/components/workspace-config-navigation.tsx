@@ -1,6 +1,14 @@
 "use client";
 
-import { BlocksIcon, BrushIcon, LanguagesIcon, ListChecksIcon, TagIcon, UsersIcon } from "lucide-react";
+import {
+  BlocksIcon,
+  BrushIcon,
+  LanguagesIcon,
+  ListChecksIcon,
+  ShapesIcon,
+  TagIcon,
+  UsersIcon,
+} from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
@@ -38,6 +46,13 @@ export const WorkspaceConfigNavigation = ({ activeId, loading }: WorkspaceConfig
       icon: <ListChecksIcon className="h-5 w-5" />,
       href: `${workspaceBasePath}/settings/workspace/app-connection`,
       current: pathname?.includes("/app-connection"),
+    },
+    {
+      id: "feedback-sources",
+      label: t("workspace.unify.feedback_sources"),
+      icon: <ShapesIcon className="h-5 w-5" />,
+      href: `${workspaceBasePath}/feedback-sources`,
+      current: pathname?.includes("/feedback-sources"),
     },
     {
       id: "integrations",

@@ -1,12 +1,15 @@
 import { notFound } from "next/navigation";
+import { logger } from "@formbricks/logger";
 import type { TChartQuery } from "@formbricks/types/analysis";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { executeQuery } from "@/modules/ee/analysis/api/lib/cube-client";
 import { injectTenantFilter } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
+import { getFeedbackRecordDirectoriesByWorkspaceId } from "@/modules/ee/feedback-record-directory/lib/feedback-record-directory";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { DashboardDetailClient } from "../components/dashboard-detail-client";
 import { getDashboard } from "../lib/dashboards";
+import { DASHBOARD_WIDGET_LOAD_ERROR, type TDashboardWidgetError } from "../lib/widget-errors";
 
 interface WidgetQueryResult {
   data: TChartDataRow[];
@@ -16,15 +19,18 @@ interface WidgetQueryResult {
 async function executeWidgetQuery(
   query: TChartQuery,
   feedbackRecordDirectoryId: string
-): Promise<WidgetQueryResult | null> {
+): Promise<WidgetQueryResult | { error: TDashboardWidgetError }> {
   try {
     const scopedQuery = injectTenantFilter(query, feedbackRecordDirectoryId);
     const data = await executeQuery(scopedQuery as Record<string, unknown>);
     return { data: Array.isArray(data) ? data : [], query };
-  } catch {
-    return null;
+  } catch (error) {
+    logger.error(error, "Failed to load dashboard widget data");
+    return { error: DASHBOARD_WIDGET_LOAD_ERROR };
   }
 }
+
+type WidgetQueryPromiseResult = Promise<WidgetQueryResult | { error: TDashboardWidgetError }>;
 
 export async function DashboardDetailPage({
   params,
@@ -33,6 +39,7 @@ export async function DashboardDetailPage({
 }>) {
   const { workspaceId, dashboardId } = await params;
   const { isReadOnly } = await getWorkspaceAuth(workspaceId);
+  const directories = await getFeedbackRecordDirectoriesByWorkspaceId(workspaceId);
 
   let dashboard;
   try {
@@ -44,27 +51,23 @@ export async function DashboardDetailPage({
     throw error;
   }
 
-  const widgetDataPromises = new Map<string, Promise<WidgetQueryResult>>();
+  const widgetDataPromises = new Map<string, WidgetQueryPromiseResult>();
   const widgetsWithCharts = dashboard.widgets.filter(
     (w): w is typeof w & { chart: NonNullable<typeof w.chart> } => !!w.chart
   );
-  const queryPromises = widgetsWithCharts.map((widget) => ({
-    widgetId: widget.id,
-    promise: executeWidgetQuery(widget.chart.query, widget.chart.feedbackRecordDirectoryId),
-  }));
-  const results = await Promise.all(queryPromises.map((q) => q.promise));
-  queryPromises.forEach(({ widgetId }, i: number) => {
-    const result = results[i];
-    if (result) {
-      widgetDataPromises.set(widgetId, Promise.resolve(result));
-    }
-  });
+  for (const widget of widgetsWithCharts) {
+    widgetDataPromises.set(
+      widget.id,
+      executeWidgetQuery(widget.chart.query, widget.chart.feedbackRecordDirectoryId)
+    );
+  }
 
   return (
     <DashboardDetailClient
       workspaceId={workspaceId}
       dashboard={dashboard}
       widgetDataPromises={widgetDataPromises}
+      directories={directories}
       isReadOnly={isReadOnly}
     />
   );

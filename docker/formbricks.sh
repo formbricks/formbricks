@@ -266,7 +266,7 @@ EOT
   echo "   If you skip this, the following features will be disabled:"
   echo "   - Adding images to surveys (e.g., in questions or as background)"
   echo "   - 'File Upload' and 'Picture Selection' question types"
-  echo "   - Project logos"
+  echo "   - Workspace logos"
   echo "   - Custom organization logo in emails"
   read -p "Configure file uploads now? [Y/n] " configure_uploads
   configure_uploads=$(echo "$configure_uploads" | tr '[:upper:]' '[:lower:]')
@@ -313,6 +313,10 @@ EOT
 
   echo "📥 Downloading docker-compose.yml from Formbricks GitHub repository..."
   curl -fsSL -o docker-compose.yml https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/docker-compose.yml
+  mkdir -p cube/schema
+  echo "📥 Downloading Cube.js configuration for XM Suite v5 analytics..."
+  curl -fsSL -o cube/cube.js https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/cube/cube.js
+  curl -fsSL -o cube/schema/FeedbackRecords.js https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/cube/schema/FeedbackRecords.js
 
   echo "🚙 Updating docker-compose.yml with your custom inputs..."
   sed -i "/WEBAPP_URL:/s|WEBAPP_URL:.*|WEBAPP_URL: \"https://$domain_name\"|" docker-compose.yml
@@ -326,6 +330,14 @@ EOT
 
   cron_secret=$(openssl rand -hex 32) && sed -i "/CRON_SECRET:$/s/CRON_SECRET:.*/CRON_SECRET: $cron_secret/" docker-compose.yml	
   echo "🚗 CRON_SECRET updated successfully!"
+
+  hub_api_key=$(openssl rand -hex 32)
+  cubejs_api_secret=$(openssl rand -hex 32)
+  cat <<EOF > .env
+HUB_API_KEY=$hub_api_key
+CUBEJS_API_SECRET=$cubejs_api_secret
+EOF
+  echo "🚗 Generated Hub and Cube secrets in .env successfully!"
   
   if [[ -n $mail_from ]]; then
     sed -i "s|# MAIL_FROM:|MAIL_FROM: \"$mail_from\"|" docker-compose.yml
