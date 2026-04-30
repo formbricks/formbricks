@@ -39,7 +39,7 @@ test.describe("Survey Styling", async () => {
     const user = await users.create();
     await user.login();
 
-    // Navigate to Look & Feel settings
+    // Navigate to Appearance settings
     await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
     const workspaceId = /\/workspaces\/([^/]+)\//.exec(page.url())?.[1];
     await page.goto(`/workspaces/${workspaceId}/settings/workspace/look`);
@@ -173,7 +173,7 @@ test.describe("Survey Styling", async () => {
     const user = await users.create();
     await user.login();
 
-    // Navigate to Look & Feel settings
+    // Navigate to Appearance settings
     await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
     const workspaceId = /\/workspaces\/([^/]+)\//.exec(page.url())?.[1];
     await page.goto(`/workspaces/${workspaceId}/settings/workspace/look`);
@@ -263,7 +263,7 @@ test.describe("Survey Styling", async () => {
     const user = await users.create();
     await user.login();
 
-    // Navigate to Look & Feel settings
+    // Navigate to Appearance settings
     await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
     const workspaceId = /\/workspaces\/([^/]+)\//.exec(page.url())?.[1];
     await page.goto(`/workspaces/${workspaceId}/settings/workspace/look`);
