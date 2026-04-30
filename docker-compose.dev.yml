@@ -101,6 +101,9 @@ services:
       CUBEJS_DB_PORT: ${CUBEJS_DB_PORT:-5432}
       CUBEJS_DEV_MODE: "true"
       CUBEJS_API_SECRET: ${CUBEJS_API_SECRET:?CUBEJS_API_SECRET is required to run Cube}
+      CUBEJS_JWT_ISSUER: ${CUBEJS_JWT_ISSUER:-formbricks-web}
+      CUBEJS_JWT_AUDIENCE: ${CUBEJS_JWT_AUDIENCE:-formbricks-cube}
+      CUBEJS_DEFAULT_API_SCOPES: meta,data
       CUBEJS_CACHE_AND_QUEUE_DRIVER: memory
     volumes:
       - ./docker/cube/cube.js:/cube/conf/cube.js:ro

@@ -1,5 +1,4 @@
 import { format, isValid, parseISO } from "date-fns";
-import type { TChartQuery, TCubeFilter } from "@formbricks/types/analysis";
 import type { TChartDataRow, TChartType } from "@/modules/ee/analysis/types/analysis";
 import { ZChartType } from "@/modules/ee/analysis/types/analysis";
 
@@ -16,7 +15,7 @@ export const CHART_MEASURE_COLORS = [
   "#14b8a6", // teal
 ];
 
-/** Validate a chart type string, defaulting to "bar" if unrecognised. */
+/** Validate a chart type string, defaulting to "bar" if unrecognized. */
 export const resolveChartType = (raw: string): TChartType => {
   const parsed = ZChartType.safeParse(raw);
   return parsed.success ? parsed.data : "bar";
@@ -73,62 +72,4 @@ export function formatCellValue(value: unknown): string {
   if (typeof value === "object") return JSON.stringify(value);
   if (typeof value === "boolean" || typeof value === "bigint") return String(value);
   return "";
-}
-
-const ALLOWED_CUBE_PREFIXES = ["FeedbackRecords.", "TopicsUnnested."];
-
-function validateMember(member: string): boolean {
-  return ALLOWED_CUBE_PREFIXES.some((prefix) => member.startsWith(prefix));
-}
-
-/**
- * Validates that all measures, dimensions, segments, timeDimensions, and filters
- * use only members from FeedbackRecords or joined cubes (e.g. TopicsUnnested).
- * @throws Error if any member is invalid
- */
-export function validateQueryMembers(query: TChartQuery): void {
-  const invalid: string[] = [];
-  for (const m of query.measures ?? []) {
-    if (!validateMember(m)) invalid.push(m);
-  }
-  for (const d of query.dimensions ?? []) {
-    if (!validateMember(d)) invalid.push(d);
-  }
-  for (const s of query.segments ?? []) {
-    if (!validateMember(s)) invalid.push(s);
-  }
-  for (const td of query.timeDimensions ?? []) {
-    if (!validateMember(td.dimension)) invalid.push(td.dimension);
-  }
-  const checkFilters = (f: TCubeFilter[]): void => {
-    for (const item of f) {
-      if ("member" in item && typeof item.member === "string" && !validateMember(item.member)) {
-        invalid.push(item.member);
-      }
-      if ("and" in item && Array.isArray(item.and)) checkFilters(item.and);
-      if ("or" in item && Array.isArray(item.or)) checkFilters(item.or);
-    }
-  };
-  if (query.filters) checkFilters(query.filters);
-  if (invalid.length > 0) {
-    throw new Error(
-      `Invalid query members (must start with FeedbackRecords. or TopicsUnnested.): ${invalid.join(", ")}`
-    );
-  }
-}
-
-/**
- * Injects a tenant_id filter into a Cube.js query to scope results to a specific
- * FeedbackRecordDirectory. Called server-side before every query execution.
- */
-export function injectTenantFilter(query: TChartQuery, tenantId: string): TChartQuery {
-  const tenantFilter: TCubeFilter = {
-    member: "FeedbackRecords.tenantId",
-    operator: "equals",
-    values: [tenantId],
-  };
-  return {
-    ...query,
-    filters: [...(query.filters ?? []), tenantFilter],
-  };
 }

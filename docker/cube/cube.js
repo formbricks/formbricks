@@ -1,12 +1,148 @@
+/* eslint-env es2022 */
+
+const TENANT_MEMBER = "FeedbackRecords.tenantId";
+const REQUIRED_SCOPE = "xm:cube:query";
+
+function getStringClaim(securityContext, claim) {
+  const value = securityContext?.[claim];
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const trimmedValue = value.trim();
+  return trimmedValue.length > 0 ? trimmedValue : null;
+}
+
+function getRequiredStringClaim(securityContext, claim) {
+  const value = getStringClaim(securityContext, claim);
+
+  if (!value) {
+    throw new Error(`Cube query rejected: missing ${claim} security context`);
+  }
+
+  return value;
+}
+
+function collectFilterMembers(filters) {
+  if (!Array.isArray(filters)) {
+    return [];
+  }
+
+  return filters.flatMap((filter) => [
+    ...(typeof filter?.member === "string" ? [filter.member] : []),
+    ...(typeof filter?.dimension === "string" ? [filter.dimension] : []),
+    ...collectFilterMembers(filter?.and),
+    ...collectFilterMembers(filter?.or),
+  ]);
+}
+
+function collectOrderMembers(order) {
+  if (!order) {
+    return [];
+  }
+
+  if (Array.isArray(order)) {
+    return order
+      .map((orderEntry) => (Array.isArray(orderEntry) ? orderEntry[0] : null))
+      .filter((member) => typeof member === "string");
+  }
+
+  if (typeof order === "object") {
+    return Object.keys(order);
+  }
+
+  return [];
+}
+
+function collectTimeDimensionMembers(timeDimensions) {
+  if (!Array.isArray(timeDimensions)) {
+    return [];
+  }
+
+  return timeDimensions
+    .map((timeDimension) => timeDimension?.dimension)
+    .filter((dimension) => typeof dimension === "string");
+}
+
+function collectQueryMembers(query) {
+  const cubeQuery = query ?? {};
+  const members = [
+    ...(Array.isArray(cubeQuery.measures) ? cubeQuery.measures : []),
+    ...(Array.isArray(cubeQuery.dimensions) ? cubeQuery.dimensions : []),
+    ...(Array.isArray(cubeQuery.segments) ? cubeQuery.segments : []),
+    ...collectTimeDimensionMembers(cubeQuery.timeDimensions),
+    ...collectFilterMembers(cubeQuery.filters),
+    ...collectOrderMembers(cubeQuery.order),
+  ].filter((member) => typeof member === "string");
+
+  return Array.from(new Set(members)).sort((a, b) => a.localeCompare(b));
+}
+
+function assertValidSecurityContext(securityContext) {
+  const tenantId = getRequiredStringClaim(securityContext, "tenantId");
+  const scope = getRequiredStringClaim(securityContext, "scope");
+
+  if (scope !== REQUIRED_SCOPE) {
+    throw new Error("Cube query rejected: invalid Cube query scope");
+  }
+
+  return {
+    tenantId,
+    workspaceId: getRequiredStringClaim(securityContext, "workspaceId"),
+    organizationId: getRequiredStringClaim(securityContext, "organizationId"),
+    userId: getRequiredStringClaim(securityContext, "userId"),
+    requestId: getRequiredStringClaim(securityContext, "jti"),
+    source: getRequiredStringClaim(securityContext, "source"),
+  };
+}
+
+function assertNoCallerTenantMember(query) {
+  for (const member of collectQueryMembers(query)) {
+    if (member === TENANT_MEMBER) {
+      throw new Error("Cube query rejected: tenant filters are enforced by Cube");
+    }
+  }
+}
+
+function logCubeQueryAuditEvent(context, query) {
+  console.log(
+    JSON.stringify({
+      type: "audit",
+      event: "cube.query",
+      timestamp: new Date().toISOString(),
+      tenantId: context.tenantId,
+      workspaceId: context.workspaceId,
+      organizationId: context.organizationId,
+      userId: context.userId,
+      requestId: context.requestId,
+      source: context.source,
+      members: collectQueryMembers(query),
+    })
+  );
+}
+
+function queryRewrite(query, rewriteContext) {
+  const cubeQuery = query ?? {};
+  const context = assertValidSecurityContext(rewriteContext?.securityContext);
+
+  assertNoCallerTenantMember(cubeQuery);
+
+  const rewrittenQuery = {
+    ...cubeQuery,
+    filters: [
+      ...(Array.isArray(cubeQuery.filters) ? cubeQuery.filters : []),
+      {
+        member: TENANT_MEMBER,
+        operator: "equals",
+        values: [context.tenantId],
+      },
+    ],
+  };
+
+  logCubeQueryAuditEvent(context, rewrittenQuery);
+  return rewrittenQuery;
+}
+
 module.exports = {
-  // queryRewrite runs before every Cube query. Use it to enforce row-level security (RLS)
-  // by injecting filters based on the caller's identity (e.g. organizationId, projectId).
-  //
-  // The securityContext is populated from the decoded JWT passed via the API token.
-  // Currently a passthrough because access control is handled in the Next.js API layer
-  // before reaching Cube. When Cube is exposed more broadly or multi-tenancy enforcement
-  // is needed at the Cube level, add filters here based on securityContext claims.
-  queryRewrite: (query, { securityContext }) => {
-    return query;
-  },
+  queryRewrite,
 };

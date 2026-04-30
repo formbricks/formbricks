@@ -1,0 +1,44 @@
+---
+title: "Cube Tenant Isolation"
+description: "Threat model and controls for XM analytics tenant isolation in Cube"
+icon: "shield-check"
+---
+
+## Context
+
+XM analytics reads Hub feedback records through Cube. Hub stores all tenants in a shared `feedback_records`
+table and uses `tenant_id` to separate rows. For XM v5, the authoritative tenant boundary is the workspace
+ID, so every Cube query must be scoped to the authenticated workspace before data leaves Cube.
+
+## Threat Model
+
+The main risk is cross-tenant read access through an unscoped Cube query. The attacker could be a regression in
+server code, an AI-generated query that includes malicious filters, a copied static token, or a direct request to
+Cube from inside the deployment network.
+
+The controls assume query bodies are attacker-influenced. Tenant identity is never trusted from the query JSON.
+
+## Enforcement Flow
+
+1. Server actions and server components authorize workspace access in the Next.js app.
+2. The app validates the Cube query and rejects any `FeedbackRecords.tenantId` member supplied by users, saved
+   charts, or AI output, including filters, dimensions, time dimensions, and order clauses.
+3. The app mints a short-lived JWT per Cube request with `tenantId`, `workspaceId`, `organizationId`, `userId`,
+   `scope`, `iss`, `aud`, `jti`, and `exp` claims.
+4. Cube verifies the JWT and exposes the claims through `securityContext`.
+5. Cube `queryRewrite` rejects missing tenant context, rejects caller-supplied tenant member usage, and appends
+   `FeedbackRecords.tenantId = securityContext.tenantId` to every query.
+
+## Audit Evidence
+
+The app records a sanitized `cubeQuery` audit event for each Cube query attempt, keyed by the JWT `jti`. Cube also
+emits a structured audit log line from `queryRewrite` with tenant, workspace, organization, user, request ID,
+source, and queried member names. Raw filter values are intentionally omitted from both logs.
+
+## Operational Notes
+
+`CUBEJS_API_SECRET` is a signing secret, not an access token. Do not pass it to clients or reuse it as a bearer
+token. Set `CUBEJS_JWT_ISSUER` and `CUBEJS_JWT_AUDIENCE` consistently for the web app and Cube so Cube rejects
+tokens minted for any other audience or issuer. Set `CUBEJS_DEFAULT_API_SCOPES=meta,data` for Cube deployments so
+GraphQL, SQL, and orchestration APIs are not exposed unless explicitly needed. Network isolation for Cube remains
+recommended, but JWT-backed `queryRewrite` is the mandatory data boundary.
