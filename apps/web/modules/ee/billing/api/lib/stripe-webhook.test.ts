@@ -17,26 +17,20 @@ vi.mock("./stripe-client", () => ({
 }));
 
 const hobbyProduct = {
-  id: "prod_hobby",
+  id: "prod_U8jd2XNJgewiiA",
   metadata: { formbricks_plan: "hobby" },
+  deleted: false,
+} as Stripe.Product;
+
+const legacyFreeProduct = {
+  id: "prod_U8jeQdtjaUrVUf",
+  metadata: { formbricks_plan: "custom" },
   deleted: false,
 } as Stripe.Product;
 
 const proProduct = {
   id: "prod_pro",
   metadata: { formbricks_plan: "pro" },
-  deleted: false,
-} as Stripe.Product;
-
-const legacyFreeProduct = {
-  id: "prod_legacy_free",
-  metadata: { formbricks_plan: "free" },
-  deleted: false,
-} as Stripe.Product;
-
-const legacyStartupProduct = {
-  id: "prod_legacy_startup",
-  metadata: { formbricks_plan: "startup" },
   deleted: false,
 } as Stripe.Product;
 
@@ -86,18 +80,6 @@ describe("isFreePlanSubscriptionRenewal", () => {
   test("returns true for legacy free subscription renewal", () => {
     const event = makeSubscriptionUpdatedEvent({
       product: legacyFreeProduct,
-      previousAttributes: {
-        current_period_start: 1710000000,
-        current_period_end: 1712678400,
-      },
-    });
-
-    expect(isFreePlanSubscriptionRenewal(event)).toBe(true);
-  });
-
-  test("returns true for legacy startup subscription renewal", () => {
-    const event = makeSubscriptionUpdatedEvent({
-      product: legacyStartupProduct,
       previousAttributes: {
         current_period_start: 1710000000,
         current_period_end: 1712678400,
@@ -170,7 +152,7 @@ describe("isFreePlanSubscriptionRenewal", () => {
       type: "customer.subscription.updated",
       data: {
         object: {
-          items: { data: [{ price: { product: "prod_hobby" } }] },
+          items: { data: [{ price: { product: "prod_U8jd2XNJgewiiA" } }] },
         },
         previous_attributes: { current_period_start: 1710000000 },
       },
@@ -193,6 +175,21 @@ describe("isFreePlanSubscriptionRenewal", () => {
   test("returns false for mixed free and pro items", () => {
     const event = makeSubscriptionUpdatedEvent({
       product: [hobbyProduct, proProduct],
+      previousAttributes: { current_period_start: 1710000000 },
+    });
+
+    expect(isFreePlanSubscriptionRenewal(event)).toBe(false);
+  });
+
+  test("returns false for unknown product ID", () => {
+    const unknownProduct = {
+      id: "prod_unknown",
+      metadata: { formbricks_plan: "hobby" },
+      deleted: false,
+    } as Stripe.Product;
+
+    const event = makeSubscriptionUpdatedEvent({
+      product: unknownProduct,
       previousAttributes: { current_period_start: 1710000000 },
     });
 

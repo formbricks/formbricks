@@ -99,13 +99,13 @@ const resolveOrganizationId = async (eventObject: Stripe.Event.Data.Object): Pro
   return await findOrganizationIdByStripeCustomerId(customerId);
 };
 
-const PAID_PLANS = new Set(["pro", "scale", "custom"]);
+const FREE_PLAN_PRODUCT_IDS = new Set(["prod_U8jd2XNJgewiiA", "prod_U8jeQdtjaUrVUf"]);
 
 /**
  * Detects free-tier subscription renewals that only roll the billing period forward.
- * These $0 plan renewals (hobby, legacy free, legacy startup) generate ~10k events/month
- * and don't change any meaningful billing state — skipping them avoids unnecessary
- * processing and downstream webhook noise.
+ * These $0 plan renewals (hobby, legacy free) generate ~10k events/month and don't
+ * change any meaningful billing state — skipping them avoids unnecessary processing
+ * and downstream webhook noise.
  */
 export const isFreePlanSubscriptionRenewal = (event: Stripe.Event): boolean => {
   if (event.type !== "customer.subscription.updated") return false;
@@ -116,18 +116,17 @@ export const isFreePlanSubscriptionRenewal = (event: Stripe.Event): boolean => {
 
   if (!previousAttributes) return false;
 
-  // Check that every line item can be confirmed as a non-paid plan.
-  // If any product is unexpanded (string), deleted, or belongs to a paid plan, don't skip.
+  // Check that every line item belongs to a known free plan product
   const items = subscription.items?.data;
   if (!items?.length) return false;
 
-  const allConfirmedFree = items.every((item) => {
+  const allFreePlan = items.every((item) => {
     const product = item.price?.product;
     if (!product || typeof product === "string" || product.deleted) return false;
-    return !PAID_PLANS.has(product.metadata?.formbricks_plan);
+    return FREE_PLAN_PRODUCT_IDS.has(product.id);
   });
 
-  if (!allConfirmedFree) return false;
+  if (!allFreePlan) return false;
 
   // A pure renewal only touches billing period fields and latest_invoice.
   // If items or status changed, this is a real update (upgrade, cancellation, etc.)
