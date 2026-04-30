@@ -1,9 +1,15 @@
 import { NextRequest } from "next/server";
 import { describe, expect, test, vi } from "vitest";
 import { TAPIKeyEnvironmentPermission } from "@formbricks/types/auth";
+import {
+  DatabaseError,
+  InvalidInputError,
+  ResourceNotFoundError,
+  UniqueConstraintError,
+} from "@formbricks/types/errors";
 import { getApiKeyWithPermissions } from "@/modules/organization/settings/api-keys/lib/api-key";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
-import { authenticateRequest } from "./auth";
+import { authenticateRequest, handleErrorResponse } from "./auth";
 
 vi.mock("@/modules/organization/settings/api-keys/lib/api-key", () => ({
   getApiKeyWithPermissions: vi.fn(),
@@ -191,5 +197,55 @@ describe("authenticateRequest", () => {
 
     const result = await authenticateRequest(request);
     expect(result).toBeNull();
+  });
+});
+
+describe("handleErrorResponse", () => {
+  test("returns 401 notAuthenticated for 'NotAuthenticated' message", async () => {
+    const response = handleErrorResponse(new Error("NotAuthenticated"));
+    expect(response.status).toBe(401);
+    const body = await response.json();
+    expect(body.code).toBe("not_authenticated");
+  });
+
+  test("returns 401 unauthorized for 'Unauthorized' message", async () => {
+    const response = handleErrorResponse(new Error("Unauthorized"));
+    expect(response.status).toBe(401);
+    const body = await response.json();
+    expect(body.code).toBe("unauthorized");
+  });
+
+  test("returns 409 conflict for UniqueConstraintError", async () => {
+    const response = handleErrorResponse(new UniqueConstraintError("Action with name foo already exists"));
+    expect(response.status).toBe(409);
+    const body = await response.json();
+    expect(body.code).toBe("conflict");
+    expect(body.message).toBe("Action with name foo already exists");
+  });
+
+  test("returns 400 badRequest for DatabaseError", async () => {
+    const response = handleErrorResponse(new DatabaseError("db boom"));
+    expect(response.status).toBe(400);
+    const body = await response.json();
+    expect(body.message).toBe("db boom");
+  });
+
+  test("returns 400 badRequest for InvalidInputError", async () => {
+    const response = handleErrorResponse(new InvalidInputError("bad input"));
+    expect(response.status).toBe(400);
+    const body = await response.json();
+    expect(body.message).toBe("bad input");
+  });
+
+  test("returns 400 badRequest for ResourceNotFoundError", async () => {
+    const response = handleErrorResponse(new ResourceNotFoundError("Survey", "id-1"));
+    expect(response.status).toBe(400);
+  });
+
+  test("returns 500 internalServerError for unknown errors", async () => {
+    const response = handleErrorResponse(new Error("something else"));
+    expect(response.status).toBe(500);
+    const body = await response.json();
+    expect(body.message).toBe("Some error occurred");
   });
 });
