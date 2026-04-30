@@ -31,6 +31,23 @@ type TCollectedFilterMembers = TCollectedMembers & {
   count: number;
 };
 
+type TFilterCollectionCounter = {
+  value: number;
+};
+
+type TFilterCollectionState = {
+  members: string[];
+  filterCount: TFilterCollectionCounter;
+  invalidMemberCount: TFilterCollectionCounter;
+};
+
+type TFilterShape = {
+  hasMember: boolean;
+  hasDimension: boolean;
+  hasAnd: boolean;
+  hasOr: boolean;
+};
+
 const uniqueSorted = (values: string[]): string[] =>
   Array.from(new Set(values)).sort((a, b) => a.localeCompare(b));
 
@@ -85,71 +102,119 @@ const collectOrderMembers = (order: unknown): TCollectedMembers => {
   return { members, invalidMemberCount: 1 };
 };
 
+const createFilterCollectionState = (
+  members: string[],
+  count?: TFilterCollectionCounter,
+  invalidCount?: TFilterCollectionCounter
+): TFilterCollectionState => ({
+  members,
+  filterCount: count ?? { value: 0 },
+  invalidMemberCount: invalidCount ?? { value: 0 },
+});
+
+const toCollectedFilterMembers = ({
+  members,
+  filterCount,
+  invalidMemberCount,
+}: TFilterCollectionState): TCollectedFilterMembers => ({
+  members,
+  count: filterCount.value,
+  invalidMemberCount: invalidMemberCount.value,
+});
+
+const markInvalidFilterMember = (state: TFilterCollectionState): void => {
+  state.invalidMemberCount.value += 1;
+};
+
+const getFilterShape = (filter: Record<string, unknown>): TFilterShape => ({
+  hasMember: Object.hasOwn(filter, "member"),
+  hasDimension: Object.hasOwn(filter, "dimension"),
+  hasAnd: Object.hasOwn(filter, "and"),
+  hasOr: Object.hasOwn(filter, "or"),
+});
+
+const hasInvalidDirectFilterMember = (
+  filter: Record<string, unknown>,
+  { hasMember, hasDimension }: TFilterShape
+): boolean =>
+  (hasMember && typeof filter.member !== "string") || (hasDimension && typeof filter.dimension !== "string");
+
+const hasAnyFilterShapeProperty = ({ hasMember, hasDimension, hasAnd, hasOr }: TFilterShape): boolean =>
+  hasMember || hasDimension || hasAnd || hasOr;
+
+const collectDirectFilterMembers = (filter: Record<string, unknown>, state: TFilterCollectionState): void => {
+  for (const member of [filter.member, filter.dimension]) {
+    if (typeof member === "string") {
+      state.members.push(member);
+      state.filterCount.value += 1;
+    }
+  }
+};
+
+const collectNestedFilterMembers = (
+  filter: Record<string, unknown>,
+  property: "and" | "or",
+  state: TFilterCollectionState
+): void => {
+  if (!Object.hasOwn(filter, property)) {
+    return;
+  }
+
+  const nestedFilters = filter[property];
+  if (Array.isArray(nestedFilters)) {
+    collectFilterMemberNodes(nestedFilters, state);
+    return;
+  }
+
+  markInvalidFilterMember(state);
+};
+
+const collectFilterMemberNode = (filter: unknown, state: TFilterCollectionState): void => {
+  if (!isRecord(filter)) {
+    markInvalidFilterMember(state);
+    return;
+  }
+
+  const filterShape = getFilterShape(filter);
+  collectDirectFilterMembers(filter, state);
+
+  if (hasInvalidDirectFilterMember(filter, filterShape)) {
+    markInvalidFilterMember(state);
+  }
+
+  collectNestedFilterMembers(filter, "and", state);
+  collectNestedFilterMembers(filter, "or", state);
+
+  if (!hasAnyFilterShapeProperty(filterShape)) {
+    markInvalidFilterMember(state);
+  }
+};
+
+function collectFilterMemberNodes(filters: unknown[], state: TFilterCollectionState): void {
+  for (const filter of filters) {
+    collectFilterMemberNode(filter, state);
+  }
+}
+
 const collectFilterMembers = (
   filters: unknown,
   members: string[] = [],
   count?: { value: number },
   invalidCount?: { value: number }
 ): TCollectedFilterMembers => {
-  const filterCount = count ?? { value: 0 };
-  const invalidMemberCount = invalidCount ?? { value: 0 };
+  const state = createFilterCollectionState(members, count, invalidCount);
 
   if (filters === undefined) {
-    return { members, count: filterCount.value, invalidMemberCount: invalidMemberCount.value };
+    return toCollectedFilterMembers(state);
   }
 
   if (!Array.isArray(filters)) {
-    invalidMemberCount.value += 1;
-    return { members, count: filterCount.value, invalidMemberCount: invalidMemberCount.value };
+    markInvalidFilterMember(state);
+    return toCollectedFilterMembers(state);
   }
 
-  for (const filter of filters) {
-    if (!isRecord(filter)) {
-      invalidMemberCount.value += 1;
-      continue;
-    }
-
-    const hasMember = Object.hasOwn(filter, "member");
-    const hasDimension = Object.hasOwn(filter, "dimension");
-    const hasAnd = Object.hasOwn(filter, "and");
-    const hasOr = Object.hasOwn(filter, "or");
-
-    for (const member of [filter.member, filter.dimension]) {
-      if (typeof member === "string") {
-        members.push(member);
-        filterCount.value += 1;
-      }
-    }
-
-    if (
-      (hasMember && typeof filter.member !== "string") ||
-      (hasDimension && typeof filter.dimension !== "string")
-    ) {
-      invalidMemberCount.value += 1;
-    }
-
-    if (hasAnd) {
-      if (Array.isArray(filter.and)) {
-        collectFilterMembers(filter.and, members, filterCount, invalidMemberCount);
-      } else {
-        invalidMemberCount.value += 1;
-      }
-    }
-
-    if (hasOr) {
-      if (Array.isArray(filter.or)) {
-        collectFilterMembers(filter.or, members, filterCount, invalidMemberCount);
-      } else {
-        invalidMemberCount.value += 1;
-      }
-    }
-
-    if (!hasMember && !hasDimension && !hasAnd && !hasOr) {
-      invalidMemberCount.value += 1;
-    }
-  }
-
-  return { members, count: filterCount.value, invalidMemberCount: invalidMemberCount.value };
+  collectFilterMemberNodes(filters, state);
+  return toCollectedFilterMembers(state);
 };
 
 const addValidatedMember = (member: string, result: TMemberValidationResult): void => {
