@@ -122,6 +122,21 @@ describe("executeTenantScopedQuery", () => {
 
     const cubejs = await getCubeJsMock();
     expect(cubejs).not.toHaveBeenCalled();
+    expect(mockQueueAuditEventWithoutRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "queried",
+        targetType: "cubeQuery",
+        status: "failure",
+        newObject: expect.objectContaining({
+          tenantId: "workspace-1",
+          query: expect.objectContaining({
+            filterMembers: ["FeedbackRecords.tenantId"],
+            filterCount: 1,
+          }),
+          errorName: "Error",
+        }),
+      })
+    );
   });
 
   test("preserves API URL when it already contains /cubejs-api/v1", async () => {

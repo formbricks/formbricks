@@ -35,7 +35,6 @@ describe("cube-config", () => {
 
     const { CUBE_API_TOKEN_TTL_SECONDS, CUBE_QUERY_SCOPE, getCubeApiConfig } = await import("./cube-config");
     const config = getCubeApiConfig({
-      tenantId: "workspace-1",
       workspaceId: "workspace-1",
       organizationId: "organization-1",
       userId: "user-1",
@@ -60,6 +59,27 @@ describe("cube-config", () => {
       jti: config.requestId,
     });
     expect(payload.exp! - payload.iat!).toBe(CUBE_API_TOKEN_TTL_SECONDS);
+  });
+
+  test("derives the Cube tenant ID from workspaceId instead of trusting caller input", async () => {
+    setTestEnv();
+
+    const { getCubeApiConfig } = await import("./cube-config");
+    const config = getCubeApiConfig({
+      tenantId: "workspace-2",
+      workspaceId: "workspace-1",
+      organizationId: "organization-1",
+      userId: "user-1",
+      source: "charts.executeQueryAction",
+    } as unknown as Parameters<typeof getCubeApiConfig>[0]);
+
+    const payload = jwt.verify(config.token, "cube-secret", {
+      audience: "formbricks-cube-test",
+      issuer: "formbricks-web-test",
+    }) as jwt.JwtPayload;
+
+    expect(payload.tenantId).toBe("workspace-1");
+    expect(payload.workspaceId).toBe("workspace-1");
   });
 
   test("preserves a full Cube API URL when it already contains /cubejs-api/v1", async () => {

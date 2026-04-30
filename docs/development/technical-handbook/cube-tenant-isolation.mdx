@@ -20,14 +20,26 @@ The controls assume query bodies are attacker-influenced. Tenant identity is nev
 
 ## Enforcement Flow
 
-1. Server actions and server components authorize workspace access in the Next.js app.
-2. The app validates the Cube query and rejects any `FeedbackRecords.tenantId` member supplied by users, saved
-   charts, or AI output, including filters, dimensions, time dimensions, and order clauses.
-3. The app mints a short-lived JWT per Cube request with `tenantId`, `workspaceId`, `organizationId`, `userId`,
-   `scope`, `iss`, `aud`, `jti`, and `exp` claims.
-4. Cube verifies the JWT and exposes the claims through `securityContext`.
-5. Cube `queryRewrite` rejects missing tenant context, rejects caller-supplied tenant member usage, and appends
-   `FeedbackRecords.tenantId = securityContext.tenantId` to every query.
+<Steps>
+  <Step title="Authorize workspace access">
+    Server actions and server components authorize workspace access in the Next.js app.
+  </Step>
+  <Step title="Validate the Cube query">
+    The app validates the Cube query and rejects any `FeedbackRecords.tenantId` member supplied by users,
+    saved charts, or AI output, including filters, dimensions, time dimensions, and order clauses.
+  </Step>
+  <Step title="Mint a short-lived JWT">
+    The app mints a short-lived JWT per Cube request with `tenantId`, `workspaceId`, `organizationId`,
+    `userId`, `scope`, `iss`, `aud`, `jti`, and `exp` claims.
+  </Step>
+  <Step title="Verify the JWT in Cube">
+    Cube verifies the JWT and exposes the claims through `securityContext`.
+  </Step>
+  <Step title="Enforce the tenant filter">
+    Cube `queryRewrite` rejects missing tenant context, rejects caller-supplied tenant member usage, and
+    appends `FeedbackRecords.tenantId = securityContext.tenantId` to every query.
+  </Step>
+</Steps>
 
 ## Audit Evidence
 

@@ -85,6 +85,19 @@ describe("cube-query", () => {
         })
       ).toThrow(/Tenant filters are enforced by Cube/);
     });
+
+    test("rejects malformed member references without throwing runtime type errors", () => {
+      expect(() =>
+        validateCubeQueryMembers({
+          measures: ["FeedbackRecords.count", null],
+          dimensions: [{ member: "FeedbackRecords.sentiment" }],
+          segments: [0],
+          timeDimensions: [null, { dimension: null }],
+          filters: [null, { member: { name: "FeedbackRecords.sourceType" } }, { and: [0] }, { or: "bad" }],
+          order: [[null, "asc"], null],
+        } as unknown as TChartQuery)
+      ).toThrow(/Invalid query members.*invalid member reference/);
+    });
   });
 
   test("summarizes query members without raw filter values", () => {
@@ -105,6 +118,34 @@ describe("cube-query", () => {
       filterCount: 1,
       orderMembers: ["FeedbackRecords.collectedAt"],
       limit: 50,
+    });
+    expect(JSON.stringify(summary)).not.toContain("secret-value");
+  });
+
+  test("summarizes only valid member names from malformed query shapes", () => {
+    const summary = getCubeQueryAuditSummary({
+      measures: ["FeedbackRecords.count", null],
+      dimensions: [{ member: "FeedbackRecords.sentiment" }],
+      timeDimensions: [null, { dimension: "FeedbackRecords.collectedAt" }],
+      filters: [
+        null,
+        { member: "FeedbackRecords.sourceType", operator: "equals", values: ["secret-value"] },
+        { and: [0, { member: "FeedbackRecords.sentiment", operator: "equals", values: ["positive"] }] },
+      ],
+      order: [
+        [null, "asc"],
+        ["FeedbackRecords.collectedAt", "desc"],
+      ],
+    } as unknown as TChartQuery);
+
+    expect(summary).toEqual({
+      measures: ["FeedbackRecords.count"],
+      dimensions: [],
+      segments: [],
+      timeDimensions: ["FeedbackRecords.collectedAt"],
+      filterMembers: ["FeedbackRecords.sentiment", "FeedbackRecords.sourceType"],
+      filterCount: 2,
+      orderMembers: ["FeedbackRecords.collectedAt"],
     });
     expect(JSON.stringify(summary)).not.toContain("secret-value");
   });

@@ -61,6 +61,15 @@ describe("cube queryRewrite", () => {
     ).toThrow(/invalid Cube query scope/);
   });
 
+  test("rejects tenantId and workspaceId claim mismatches", () => {
+    expect(() =>
+      queryRewrite(
+        { measures: ["FeedbackRecords.count"] },
+        { securityContext: { ...securityContext, tenantId: "workspace-2" } }
+      )
+    ).toThrow(/tenantId\/workspaceId mismatch/);
+  });
+
   test("rejects caller-supplied tenant filters", () => {
     expect(() =>
       queryRewrite(

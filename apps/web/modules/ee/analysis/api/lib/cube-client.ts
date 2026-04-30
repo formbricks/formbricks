@@ -1,5 +1,6 @@
 import "server-only";
 import cubejs, { type Query } from "@cubejs-client/core";
+import { randomUUID } from "node:crypto";
 import { logger } from "@formbricks/logger";
 import type { TChartQuery } from "@formbricks/types/analysis";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
@@ -57,10 +58,14 @@ const queueCubeQueryAuditEvent = ({
 };
 
 export async function executeTenantScopedQuery(input: TScopedCubeQueryInput) {
-  validateCubeQueryMembers(input.query);
+  try {
+    validateCubeQueryMembers(input.query);
+  } catch (error) {
+    queueCubeQueryAuditEvent({ error, input, requestId: randomUUID(), status: "failure" });
+    throw error;
+  }
 
   const tenantScope = {
-    tenantId: input.workspaceId,
     workspaceId: input.workspaceId,
     organizationId: input.organizationId,
     userId: input.userId,

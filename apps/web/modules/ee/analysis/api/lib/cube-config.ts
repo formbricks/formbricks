@@ -17,7 +17,6 @@ export type TCubeQuerySource =
   | "dashboards.widget";
 
 export type TCubeTenantScope = {
-  tenantId: string;
   workspaceId: string;
   organizationId: string;
   userId: string;
@@ -52,6 +51,8 @@ export const getCubeApiCredentials = () => {
   };
 };
 
+const deriveTenantIdFromWorkspace = (workspaceId: string): string => workspaceId;
+
 export const createCubeApiToken = (
   apiSecret: string,
   tenantScope: TCubeTenantScope,
@@ -64,11 +65,12 @@ export const createCubeApiToken = (
   } = {}
 ): TCubeApiToken => {
   const requestId = randomUUID();
+  const tenantId = deriveTenantIdFromWorkspace(tenantScope.workspaceId);
 
   return {
     token: jwt.sign(
       {
-        tenantId: tenantScope.tenantId,
+        tenantId,
         workspaceId: tenantScope.workspaceId,
         organizationId: tenantScope.organizationId,
         userId: tenantScope.userId,

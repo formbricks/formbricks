@@ -79,16 +79,20 @@ function collectQueryMembers(query) {
 }
 
 function assertValidSecurityContext(securityContext) {
-  const tenantId = getRequiredStringClaim(securityContext, "tenantId");
+  const tenantIdClaim = getRequiredStringClaim(securityContext, "tenantId");
+  const workspaceId = getRequiredStringClaim(securityContext, "workspaceId");
   const scope = getRequiredStringClaim(securityContext, "scope");
 
   if (scope !== REQUIRED_SCOPE) {
     throw new Error("Cube query rejected: invalid Cube query scope");
   }
+  if (tenantIdClaim !== workspaceId) {
+    throw new Error("Cube query rejected: tenantId/workspaceId mismatch");
+  }
 
   return {
-    tenantId,
-    workspaceId: getRequiredStringClaim(securityContext, "workspaceId"),
+    tenantId: workspaceId,
+    workspaceId,
     organizationId: getRequiredStringClaim(securityContext, "organizationId"),
     userId: getRequiredStringClaim(securityContext, "userId"),
     requestId: getRequiredStringClaim(securityContext, "jti"),
@@ -134,7 +138,7 @@ function queryRewrite(query, rewriteContext) {
       {
         member: TENANT_MEMBER,
         operator: "equals",
-        values: [context.tenantId],
+        values: [context.workspaceId],
       },
     ],
   };

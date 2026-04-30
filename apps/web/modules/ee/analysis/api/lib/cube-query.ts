@@ -4,6 +4,7 @@ import type { TChartQuery } from "@formbricks/types/analysis";
 export const TENANT_MEMBER = "FeedbackRecords.tenantId";
 
 const ALLOWED_CUBE_PREFIXES = ["FeedbackRecords.", "TopicsUnnested."];
+const INVALID_MEMBER_REFERENCE = "invalid member reference";
 
 type TQueryAuditSummary = {
   measures: string[];
@@ -21,56 +22,134 @@ type TMemberValidationResult = {
   tenantMembers: string[];
 };
 
+type TCollectedMembers = {
+  members: string[];
+  invalidMemberCount: number;
+};
+
+type TCollectedFilterMembers = TCollectedMembers & {
+  count: number;
+};
+
 const uniqueSorted = (values: string[]): string[] =>
   Array.from(new Set(values)).sort((a, b) => a.localeCompare(b));
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  value !== null && typeof value === "object" && !Array.isArray(value);
+
+const collectStringMembers = (values: unknown): string[] => {
+  if (!Array.isArray(values)) {
+    return [];
+  }
+
+  return values.filter((value): value is string => typeof value === "string");
+};
+
+const collectTimeDimensionMembers = (timeDimensions: unknown): string[] => {
+  if (!Array.isArray(timeDimensions)) {
+    return [];
+  }
+
+  return timeDimensions
+    .map((timeDimension) => (isRecord(timeDimension) ? timeDimension.dimension : null))
+    .filter((dimension): dimension is string => typeof dimension === "string");
+};
 
 const validateMemberPrefix = (member: string): boolean =>
   ALLOWED_CUBE_PREFIXES.some((prefix) => member.startsWith(prefix));
 
-const collectOrderMembers = (order: TChartQuery["order"]): string[] => {
-  if (!order) {
-    return [];
+const collectOrderMembers = (order: unknown): TCollectedMembers => {
+  const members: string[] = [];
+  let invalidMemberCount = 0;
+
+  if (order === undefined || order === null) {
+    return { members, invalidMemberCount };
   }
 
   if (Array.isArray(order)) {
-    return order.map(([member]) => member).filter((member): member is string => typeof member === "string");
+    for (const orderEntry of order) {
+      if (Array.isArray(orderEntry) && typeof orderEntry[0] === "string") {
+        members.push(orderEntry[0]);
+      } else {
+        invalidMemberCount += 1;
+      }
+    }
+
+    return { members, invalidMemberCount };
   }
 
-  return Object.keys(order);
+  if (isRecord(order)) {
+    return { members: Object.keys(order), invalidMemberCount };
+  }
+
+  return { members, invalidMemberCount: 1 };
 };
 
 const collectFilterMembers = (
-  filters: TChartQuery["filters"],
+  filters: unknown,
   members: string[] = [],
-  count?: { value: number }
-): { members: string[]; count: number } => {
+  count?: { value: number },
+  invalidCount?: { value: number }
+): TCollectedFilterMembers => {
   const filterCount = count ?? { value: 0 };
+  const invalidMemberCount = invalidCount ?? { value: 0 };
+
+  if (filters === undefined) {
+    return { members, count: filterCount.value, invalidMemberCount: invalidMemberCount.value };
+  }
 
   if (!Array.isArray(filters)) {
-    return { members, count: filterCount.value };
+    invalidMemberCount.value += 1;
+    return { members, count: filterCount.value, invalidMemberCount: invalidMemberCount.value };
   }
 
   for (const filter of filters) {
-    const filterRecord = filter as { member?: unknown; dimension?: unknown };
-    const filterMembers = [
-      ...(typeof filterRecord.member === "string" ? [filterRecord.member] : []),
-      ...(typeof filterRecord.dimension === "string" ? [filterRecord.dimension] : []),
-    ];
-
-    for (const member of filterMembers) {
-      members.push(member);
-      filterCount.value += 1;
+    if (!isRecord(filter)) {
+      invalidMemberCount.value += 1;
+      continue;
     }
 
-    if ("and" in filter && Array.isArray(filter.and)) {
-      collectFilterMembers(filter.and, members, filterCount);
+    const hasMember = Object.hasOwn(filter, "member");
+    const hasDimension = Object.hasOwn(filter, "dimension");
+    const hasAnd = Object.hasOwn(filter, "and");
+    const hasOr = Object.hasOwn(filter, "or");
+
+    for (const member of [filter.member, filter.dimension]) {
+      if (typeof member === "string") {
+        members.push(member);
+        filterCount.value += 1;
+      }
     }
-    if ("or" in filter && Array.isArray(filter.or)) {
-      collectFilterMembers(filter.or, members, filterCount);
+
+    if (
+      (hasMember && typeof filter.member !== "string") ||
+      (hasDimension && typeof filter.dimension !== "string")
+    ) {
+      invalidMemberCount.value += 1;
+    }
+
+    if (hasAnd) {
+      if (Array.isArray(filter.and)) {
+        collectFilterMembers(filter.and, members, filterCount, invalidMemberCount);
+      } else {
+        invalidMemberCount.value += 1;
+      }
+    }
+
+    if (hasOr) {
+      if (Array.isArray(filter.or)) {
+        collectFilterMembers(filter.or, members, filterCount, invalidMemberCount);
+      } else {
+        invalidMemberCount.value += 1;
+      }
+    }
+
+    if (!hasMember && !hasDimension && !hasAnd && !hasOr) {
+      invalidMemberCount.value += 1;
     }
   }
 
-  return { members, count: filterCount.value };
+  return { members, count: filterCount.value, invalidMemberCount: invalidMemberCount.value };
 };
 
 const addValidatedMember = (member: string, result: TMemberValidationResult): void => {
@@ -78,6 +157,56 @@ const addValidatedMember = (member: string, result: TMemberValidationResult): vo
     result.tenantMembers.push(member);
   } else if (!validateMemberPrefix(member)) {
     result.invalidMembers.push(member);
+  }
+};
+
+const addInvalidMemberReferences = (result: TMemberValidationResult, count = 1): void => {
+  for (let index = 0; index < count; index += 1) {
+    result.invalidMembers.push(INVALID_MEMBER_REFERENCE);
+  }
+};
+
+const addValidatedMemberReference = (member: unknown, result: TMemberValidationResult): void => {
+  if (typeof member === "string") {
+    addValidatedMember(member, result);
+    return;
+  }
+
+  addInvalidMemberReferences(result);
+};
+
+const addValidatedMemberArray = (members: unknown, result: TMemberValidationResult): void => {
+  if (members === undefined) {
+    return;
+  }
+
+  if (!Array.isArray(members)) {
+    addInvalidMemberReferences(result);
+    return;
+  }
+
+  for (const member of members) {
+    addValidatedMemberReference(member, result);
+  }
+};
+
+const addValidatedTimeDimensions = (timeDimensions: unknown, result: TMemberValidationResult): void => {
+  if (timeDimensions === undefined) {
+    return;
+  }
+
+  if (!Array.isArray(timeDimensions)) {
+    addInvalidMemberReferences(result);
+    return;
+  }
+
+  for (const timeDimension of timeDimensions) {
+    if (isRecord(timeDimension) && typeof timeDimension.dimension === "string") {
+      addValidatedMember(timeDimension.dimension, result);
+      continue;
+    }
+
+    addInvalidMemberReferences(result);
   }
 };
 
@@ -90,13 +219,21 @@ export const validateCubeQueryMembers = (query: TChartQuery): void => {
     invalidMembers: [],
     tenantMembers: [],
   };
+  const cubeQuery = isRecord(query) ? query : {};
+  if (!isRecord(query)) {
+    addInvalidMemberReferences(result);
+  }
 
-  for (const member of query.measures ?? []) addValidatedMember(member, result);
-  for (const member of query.dimensions ?? []) addValidatedMember(member, result);
-  for (const member of query.segments ?? []) addValidatedMember(member, result);
-  for (const timeDimension of query.timeDimensions ?? []) addValidatedMember(timeDimension.dimension, result);
-  for (const member of collectFilterMembers(query.filters).members) addValidatedMember(member, result);
-  for (const member of collectOrderMembers(query.order)) addValidatedMember(member, result);
+  const filters = collectFilterMembers(cubeQuery.filters);
+  const order = collectOrderMembers(cubeQuery.order);
+
+  addValidatedMemberArray(cubeQuery.measures, result);
+  addValidatedMemberArray(cubeQuery.dimensions, result);
+  addValidatedMemberArray(cubeQuery.segments, result);
+  addValidatedTimeDimensions(cubeQuery.timeDimensions, result);
+  for (const member of filters.members) addValidatedMember(member, result);
+  for (const member of order.members) addValidatedMember(member, result);
+  addInvalidMemberReferences(result, filters.invalidMemberCount + order.invalidMemberCount);
 
   if (result.tenantMembers.length > 0) {
     throw new Error(
@@ -116,16 +253,18 @@ export const validateCubeQueryMembers = (query: TChartQuery): void => {
 };
 
 export const getCubeQueryAuditSummary = (query: TChartQuery): TQueryAuditSummary => {
-  const filters = collectFilterMembers(query.filters);
+  const cubeQuery = isRecord(query) ? query : {};
+  const filters = collectFilterMembers(cubeQuery.filters);
+  const order = collectOrderMembers(cubeQuery.order);
 
   return {
-    measures: uniqueSorted(query.measures ?? []),
-    dimensions: uniqueSorted(query.dimensions ?? []),
-    segments: uniqueSorted(query.segments ?? []),
-    timeDimensions: uniqueSorted((query.timeDimensions ?? []).map(({ dimension }) => dimension)),
+    measures: uniqueSorted(collectStringMembers(cubeQuery.measures)),
+    dimensions: uniqueSorted(collectStringMembers(cubeQuery.dimensions)),
+    segments: uniqueSorted(collectStringMembers(cubeQuery.segments)),
+    timeDimensions: uniqueSorted(collectTimeDimensionMembers(cubeQuery.timeDimensions)),
     filterMembers: uniqueSorted(filters.members),
     filterCount: filters.count,
-    orderMembers: uniqueSorted(collectOrderMembers(query.order)),
-    ...(typeof query.limit === "number" ? { limit: query.limit } : {}),
+    orderMembers: uniqueSorted(order.members),
+    ...(typeof cubeQuery.limit === "number" ? { limit: cubeQuery.limit } : {}),
   };
 };
