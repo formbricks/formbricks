@@ -28,8 +28,20 @@ const proProduct = {
   deleted: false,
 } as Stripe.Product;
 
+const legacyFreeProduct = {
+  id: "prod_legacy_free",
+  metadata: { formbricks_plan: "free" },
+  deleted: false,
+} as Stripe.Product;
+
+const legacyStartupProduct = {
+  id: "prod_legacy_startup",
+  metadata: { formbricks_plan: "startup" },
+  deleted: false,
+} as Stripe.Product;
+
 const makeSubscriptionUpdatedEvent = (opts: {
-  product: Stripe.Product;
+  product: Stripe.Product | Stripe.Product[];
   previousAttributes: Record<string, unknown>;
 }): Stripe.Event =>
   ({
@@ -37,7 +49,9 @@ const makeSubscriptionUpdatedEvent = (opts: {
     data: {
       object: {
         items: {
-          data: [{ price: { product: opts.product } }],
+          data: Array.isArray(opts.product)
+            ? opts.product.map((p) => ({ price: { product: p } }))
+            : [{ price: { product: opts.product } }],
         },
       },
       previous_attributes: opts.previousAttributes,
@@ -48,12 +62,12 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-describe("isHobbySubscriptionRenewal", () => {
-  let isHobbySubscriptionRenewal: (event: Stripe.Event) => boolean;
+describe("isFreePlanSubscriptionRenewal", () => {
+  let isFreePlanSubscriptionRenewal: (event: Stripe.Event) => boolean;
 
   beforeAll(async () => {
     const mod = await import("./stripe-webhook");
-    isHobbySubscriptionRenewal = mod.isHobbySubscriptionRenewal;
+    isFreePlanSubscriptionRenewal = mod.isFreePlanSubscriptionRenewal;
   });
 
   test("returns true for hobby subscription with only billing period changes", () => {
@@ -66,7 +80,31 @@ describe("isHobbySubscriptionRenewal", () => {
       },
     });
 
-    expect(isHobbySubscriptionRenewal(event)).toBe(true);
+    expect(isFreePlanSubscriptionRenewal(event)).toBe(true);
+  });
+
+  test("returns true for legacy free subscription renewal", () => {
+    const event = makeSubscriptionUpdatedEvent({
+      product: legacyFreeProduct,
+      previousAttributes: {
+        current_period_start: 1710000000,
+        current_period_end: 1712678400,
+      },
+    });
+
+    expect(isFreePlanSubscriptionRenewal(event)).toBe(true);
+  });
+
+  test("returns true for legacy startup subscription renewal", () => {
+    const event = makeSubscriptionUpdatedEvent({
+      product: legacyStartupProduct,
+      previousAttributes: {
+        current_period_start: 1710000000,
+        current_period_end: 1712678400,
+      },
+    });
+
+    expect(isFreePlanSubscriptionRenewal(event)).toBe(true);
   });
 
   test("returns false for pro subscription renewal", () => {
@@ -78,7 +116,7 @@ describe("isHobbySubscriptionRenewal", () => {
       },
     });
 
-    expect(isHobbySubscriptionRenewal(event)).toBe(false);
+    expect(isFreePlanSubscriptionRenewal(event)).toBe(false);
   });
 
   test("returns false when items changed (plan upgrade)", () => {
@@ -90,7 +128,7 @@ describe("isHobbySubscriptionRenewal", () => {
       },
     });
 
-    expect(isHobbySubscriptionRenewal(event)).toBe(false);
+    expect(isFreePlanSubscriptionRenewal(event)).toBe(false);
   });
 
   test("returns false when status changed (cancellation)", () => {
@@ -102,7 +140,7 @@ describe("isHobbySubscriptionRenewal", () => {
       },
     });
 
-    expect(isHobbySubscriptionRenewal(event)).toBe(false);
+    expect(isFreePlanSubscriptionRenewal(event)).toBe(false);
   });
 
   test("returns false for non-subscription-updated events", () => {
@@ -111,7 +149,7 @@ describe("isHobbySubscriptionRenewal", () => {
       data: { object: {}, previous_attributes: {} },
     } as unknown as Stripe.Event;
 
-    expect(isHobbySubscriptionRenewal(event)).toBe(false);
+    expect(isFreePlanSubscriptionRenewal(event)).toBe(false);
   });
 
   test("returns false when previous_attributes is missing", () => {
@@ -124,7 +162,7 @@ describe("isHobbySubscriptionRenewal", () => {
       },
     } as unknown as Stripe.Event;
 
-    expect(isHobbySubscriptionRenewal(event)).toBe(false);
+    expect(isFreePlanSubscriptionRenewal(event)).toBe(false);
   });
 
   test("returns false when product is a string (not expanded)", () => {
@@ -138,7 +176,7 @@ describe("isHobbySubscriptionRenewal", () => {
       },
     } as unknown as Stripe.Event;
 
-    expect(isHobbySubscriptionRenewal(event)).toBe(false);
+    expect(isFreePlanSubscriptionRenewal(event)).toBe(false);
   });
 
   test("returns true when only billing_cycle_anchor changes", () => {
@@ -149,22 +187,15 @@ describe("isHobbySubscriptionRenewal", () => {
       },
     });
 
-    expect(isHobbySubscriptionRenewal(event)).toBe(true);
+    expect(isFreePlanSubscriptionRenewal(event)).toBe(true);
   });
 
-  test("returns false for mixed hobby and pro items", () => {
-    const event = {
-      type: "customer.subscription.updated",
-      data: {
-        object: {
-          items: {
-            data: [{ price: { product: hobbyProduct } }, { price: { product: proProduct } }],
-          },
-        },
-        previous_attributes: { current_period_start: 1710000000 },
-      },
-    } as unknown as Stripe.Event;
+  test("returns false for mixed free and pro items", () => {
+    const event = makeSubscriptionUpdatedEvent({
+      product: [hobbyProduct, proProduct],
+      previousAttributes: { current_period_start: 1710000000 },
+    });
 
-    expect(isHobbySubscriptionRenewal(event)).toBe(false);
+    expect(isFreePlanSubscriptionRenewal(event)).toBe(false);
   });
 });

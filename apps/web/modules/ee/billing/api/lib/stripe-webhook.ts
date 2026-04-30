@@ -99,12 +99,15 @@ const resolveOrganizationId = async (eventObject: Stripe.Event.Data.Object): Pro
   return await findOrganizationIdByStripeCustomerId(customerId);
 };
 
+const PAID_PLANS = new Set(["pro", "scale", "custom"]);
+
 /**
- * Detects hobby subscription renewals that only roll the billing period forward.
- * These $0 plan renewals generate ~10k events/month and don't change any meaningful
- * billing state — skipping them avoids unnecessary processing and downstream webhook noise.
+ * Detects free-tier subscription renewals that only roll the billing period forward.
+ * These $0 plan renewals (hobby, legacy free, legacy startup) generate ~10k events/month
+ * and don't change any meaningful billing state — skipping them avoids unnecessary
+ * processing and downstream webhook noise.
  */
-export const isHobbySubscriptionRenewal = (event: Stripe.Event): boolean => {
+export const isFreePlanSubscriptionRenewal = (event: Stripe.Event): boolean => {
   if (event.type !== "customer.subscription.updated") return false;
 
   const subscription = event.data.object;
@@ -113,17 +116,18 @@ export const isHobbySubscriptionRenewal = (event: Stripe.Event): boolean => {
 
   if (!previousAttributes) return false;
 
-  // Check that every line item belongs to the hobby plan
+  // Check that every line item can be confirmed as a non-paid plan.
+  // If any product is unexpanded (string), deleted, or belongs to a paid plan, don't skip.
   const items = subscription.items?.data;
-  const isHobbyPlan =
-    items?.length &&
-    items.every((item) => {
-      const product = item.price?.product;
-      if (!product || typeof product === "string" || product.deleted) return false;
-      return product.metadata?.formbricks_plan === "hobby";
-    });
+  if (!items?.length) return false;
 
-  if (!isHobbyPlan) return false;
+  const allConfirmedFree = items.every((item) => {
+    const product = item.price?.product;
+    if (!product || typeof product === "string" || product.deleted) return false;
+    return !PAID_PLANS.has(product.metadata?.formbricks_plan);
+  });
+
+  if (!allConfirmedFree) return false;
 
   // A pure renewal only touches billing period fields and latest_invoice.
   // If items or status changed, this is a real update (upgrade, cancellation, etc.)
@@ -181,8 +185,8 @@ export const webhookHandler = async (requestBody: string, stripeSignature: strin
     return { status: 200, message: { received: true } };
   }
 
-  if (isHobbySubscriptionRenewal(event)) {
-    logger.debug({ eventId: event.id }, "Skipping hobby subscription renewal");
+  if (isFreePlanSubscriptionRenewal(event)) {
+    logger.debug({ eventId: event.id }, "Skipping free plan subscription renewal");
     return { status: 200, message: { received: true } };
   }
 
