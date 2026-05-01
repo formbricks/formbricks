@@ -155,3 +155,28 @@ jobs:
       commit_sha: ${{ github.sha }}
       is_prerelease: ${{ github.event.release.prerelease }}
       make_latest: ${{ needs.check-latest-release.outputs.is_latest == 'true' }}
+
+  linear-release-complete:
+    name: Mark Linear release as complete
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs:
+      - docker-build-community
+    if: ${{ !github.event.release.prerelease }}
+    steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Complete Linear release
+        uses: linear/linear-release-action@v0
+        with:
+          access_key: ${{ secrets.LINEAR_ACCESS_KEY }}
+          command: complete
+          version: ${{ github.event.release.tag_name }}
