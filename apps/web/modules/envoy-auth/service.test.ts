@@ -12,6 +12,7 @@ const {
   mockGetFeedbackRecordTenant,
   mockCheckAuthorizationUpdated,
   mockUserFindUnique,
+  mockGetIsUnifyFeedbackEnabled,
 } = vi.hoisted(() => ({
   mockAuthenticateApiKeyFromHeaders: vi.fn(),
   mockGetApiKeyFromHeaders: vi.fn(),
@@ -22,6 +23,7 @@ const {
   mockGetFeedbackRecordTenant: vi.fn(),
   mockCheckAuthorizationUpdated: vi.fn(),
   mockUserFindUnique: vi.fn(),
+  mockGetIsUnifyFeedbackEnabled: vi.fn(),
 }));
 
 vi.mock("@/modules/api/lib/api-key-auth", () => ({
@@ -52,6 +54,10 @@ vi.mock("@formbricks/database", () => ({
 
 vi.mock("@/modules/ee/feedback-record-directory/lib/feedback-record-directory", () => ({
   getFeedbackRecordDirectoryAuthContext: mockGetFeedbackRecordDirectoryAuthContext,
+}));
+
+vi.mock("@/modules/ee/license-check/lib/utils", () => ({
+  getIsUnifyFeedbackEnabled: mockGetIsUnifyFeedbackEnabled,
 }));
 
 vi.mock("@/modules/hub/service", () => ({
@@ -112,6 +118,7 @@ describe("authorizeEnvoyRequest", () => {
     });
     mockCheckAuthorizationUpdated.mockResolvedValue(true);
     mockUserFindUnique.mockResolvedValue({ id: "user_1", isActive: true });
+    mockGetIsUnifyFeedbackEnabled.mockResolvedValue(true);
   });
 
   test("allows create requests with an API key and body tenant_id", async () => {
@@ -143,9 +150,7 @@ describe("authorizeEnvoyRequest", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(response.headers.get("x-envoy-auth-headers-to-remove")).toBe(
-      "x-api-key,authorization,cookie"
-    );
+    expect(response.headers.get("x-envoy-auth-headers-to-remove")).toBe("x-api-key,authorization,cookie");
     expect(mockCheckAuthorizationUpdated).not.toHaveBeenCalled();
   });
 
@@ -173,7 +178,9 @@ describe("authorizeEnvoyRequest", () => {
   });
 
   test("returns 400 for unsupported envoy auth routes", async () => {
-    const response = await authorizeEnvoyRequest(createRequest("http://localhost/api/envoy-auth/api/v1/test"));
+    const response = await authorizeEnvoyRequest(
+      createRequest("http://localhost/api/envoy-auth/api/v1/test")
+    );
 
     expect(response.status).toBe(400);
   });
@@ -349,6 +356,39 @@ describe("authorizeEnvoyRequest", () => {
     );
 
     expect(response.status).toBe(403);
+  });
+
+  test("returns 403 when unify feedback entitlement is disabled", async () => {
+    mockGetIsUnifyFeedbackEnabled.mockResolvedValue(false);
+    mockGetApiKeyFromHeaders.mockReturnValue("fbk_test");
+    mockAuthenticateApiKeyFromHeaders.mockResolvedValue({
+      type: "apiKey",
+      apiKeyId: "key_1",
+      organizationId: "org_1",
+      organizationAccess: { accessControl: { read: true, write: true } },
+      workspacePermissions: [],
+      feedbackRecordDirectoryPermissions: [
+        {
+          feedbackRecordDirectoryId,
+          feedbackRecordDirectoryName: "Directory 1",
+          permission: "write",
+        },
+      ],
+    });
+
+    const response = await authorizeEnvoyRequest(
+      createRequest(
+        `http://localhost/api/envoy-auth/v1/feedback-records?tenant_id=${feedbackRecordDirectoryId}`,
+        {
+          headers: {
+            "x-api-key": "fbk_test",
+          },
+        }
+      )
+    );
+
+    expect(response.status).toBe(403);
+    expect(mockGetIsUnifyFeedbackEnabled).toHaveBeenCalledWith("org_1");
   });
 
   test("returns 403 for archived directories", async () => {

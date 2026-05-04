@@ -51,8 +51,8 @@ export async function DashboardDetailPage({
     return (
       <AnalysisPageLayout pageTitle={t("common.analysis")} workspaceId={workspaceId}>
         <UpgradePrompt
-          title={t("workspace.dashboards.upgrade_prompt_title")}
-          description={t("workspace.dashboards.upgrade_prompt_description")}
+          title={t("workspace.analysis.dashboards.upgrade_prompt_title")}
+          description={t("workspace.analysis.dashboards.upgrade_prompt_description")}
           feature="dashboards"
           buttons={[
             {
