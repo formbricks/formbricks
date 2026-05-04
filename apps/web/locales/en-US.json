@@ -1833,7 +1833,9 @@
         "failed_to_load_chart_data": "Failed to load chart data",
         "no_dashboards_found": "No dashboards found.",
         "no_data_message": "No Data. There is currently no information to display. Add charts to build your dashboard.",
-        "please_enter_name": "Please enter a dashboard name"
+        "please_enter_name": "Please enter a dashboard name",
+        "upgrade_prompt_description": "Build insights dashboards from your feedback data. Available on the Pro and Scale plans.",
+        "upgrade_prompt_title": "Upgrade to unlock Dashboards"
       },
       "manage_feedback_sources": "Manage feedback sources",
       "no_feedback_records_message": "You don't have Feedback Records to report on. Setup Feedback Sources to feed data into the system.",
@@ -2448,10 +2450,13 @@
         "trial_feature_api_access": "API Access",
         "trial_feature_attribute_segmentation": "Attribute-based Segmentation",
         "trial_feature_contact_segment_management": "Contact & Segment Management",
+        "trial_feature_dashboards": "Insights Dashboards",
         "trial_feature_email_followups": "Email Follow-ups",
+        "trial_feature_feedback_record_directories": "Feedback Record Directories",
         "trial_feature_hide_branding": "Hide Formbricks Branding",
         "trial_feature_mobile_sdks": "iOS & Android SDKs",
         "trial_feature_respondent_identification": "Respondent Identification",
+        "trial_feature_unify_feedback": "Unify Feedback Inbox",
         "trial_feature_unlimited_seats": "Unlimited Seats",
         "trial_feature_webhooks": "Custom Webhooks",
         "trial_no_credit_card": "14 days trial, no credit card required",
@@ -2572,6 +2577,8 @@
         "title": "Feedback Record Directories",
         "unarchive": "Unarchive",
         "unarchive_workspace_conflict": "Cannot unarchive this directory because one or more assigned workspaces are archived.",
+        "upgrade_prompt_description": "Organize feedback records into directories and route data to the right workspace. Available on the Pro and Scale plans.",
+        "upgrade_prompt_title": "Upgrade to unlock Feedback Record Directories",
         "workspace_access": "Workspace access"
       },
       "general": {
@@ -3773,6 +3780,8 @@
       "unify_feedback": "Unify Feedback",
       "update_mapping_description": "Update the mapping configuration for this source.",
       "updated_at": "Updated at",
+      "upgrade_prompt_description": "Unify customer feedback from every source in one inbox. Available on the Pro and Scale plans.",
+      "upgrade_prompt_title": "Upgrade to unlock Unify Feedback",
       "upload_csv_data_description": "Upload a CSV file to import feedback data.",
       "upload_csv_file": "Upload CSV File",
       "user_identifier": "User",

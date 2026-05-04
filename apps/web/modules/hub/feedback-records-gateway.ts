@@ -8,16 +8,15 @@ import { ZId } from "@formbricks/types/common";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { verifyFeedbackRecordsGatewayToken } from "@/lib/jwt";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
+import { getBearerTokenFromHeaders } from "@/modules/api/lib/api-key-auth";
+import { getFeedbackRecordDirectoryAuthContext } from "@/modules/ee/feedback-record-directory/lib/feedback-record-directory";
+import { getIsUnifyFeedbackEnabled } from "@/modules/ee/license-check/lib/utils";
 import {
-  getBearerTokenFromHeaders,
-} from "@/modules/api/lib/api-key-auth";
-import {
-  buildAllowResponse,
-  buildStatusResponse,
   TEnvoyAuthenticatedPrincipal,
   TEnvoyRequestAuthorizer,
+  buildAllowResponse,
+  buildStatusResponse,
 } from "@/modules/envoy-auth/shared";
-import { getFeedbackRecordDirectoryAuthContext } from "@/modules/ee/feedback-record-directory/lib/feedback-record-directory";
 import { getFeedbackRecordTenant } from "@/modules/hub/service";
 
 const FEEDBACK_RECORDS_V3_PREFIX = "/api/v3/feedbackRecords";
@@ -79,10 +78,7 @@ const normalizeFeedbackRecordsPath = (pathname: string): string | null => {
   return null;
 };
 
-const parseFeedbackRecordsGatewayRoute = (
-  method: string,
-  pathname: string
-): TParsedGatewayRoute | null => {
+const parseFeedbackRecordsGatewayRoute = (method: string, pathname: string): TParsedGatewayRoute | null => {
   const normalizedPath = normalizeFeedbackRecordsPath(pathname);
   if (!normalizedPath) {
     return null;
@@ -220,7 +216,10 @@ const resolveTenantId = async (
   const tenantLookup = await getFeedbackRecordTenant(route.recordId!);
   if (tenantLookup.error) {
     if (tenantLookup.error.status === 404) {
-      logger.warn({ requestId, recordId: route.recordId }, "Feedback record tenant lookup returned not found");
+      logger.warn(
+        { requestId, recordId: route.recordId },
+        "Feedback record tenant lookup returned not found"
+      );
       return {
         errorResponse: buildStatusResponse(403, "Forbidden"),
       };
@@ -237,7 +236,10 @@ const resolveTenantId = async (
 
   const tenantId = parseTenantId(tenantLookup.data?.tenantId ?? null);
   if (!tenantId) {
-    logger.warn({ requestId, recordId: route.recordId }, "Feedback record tenant lookup returned invalid tenant");
+    logger.warn(
+      { requestId, recordId: route.recordId },
+      "Feedback record tenant lookup returned invalid tenant"
+    );
     return {
       errorResponse: buildStatusResponse(503, "Feedback record lookup failed"),
     };
@@ -256,6 +258,11 @@ const authorizeGatewayRequest = async (
     return { allowed: false };
   }
 
+  const isUnifyFeedbackAllowed = await getIsUnifyFeedbackEnabled(feedbackRecordDirectory.organizationId);
+  if (!isUnifyFeedbackAllowed) {
+    return { allowed: false };
+  }
+
   if (principal.type === "apiKey") {
     return hasFeedbackRecordDirectoryPermission(
       principal.authentication,
@@ -267,8 +274,7 @@ const authorizeGatewayRequest = async (
   }
 
   try {
-    const minPermission: "read" | "readWrite" =
-      requiredPermission === "read" ? "read" : "readWrite";
+    const minPermission: "read" | "readWrite" = requiredPermission === "read" ? "read" : "readWrite";
 
     await checkAuthorizationUpdated({
       userId: principal.userId,

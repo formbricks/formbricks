@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
+import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
@@ -12,6 +13,14 @@ import {
   updateFeedbackRecordDirectory,
 } from "@/modules/ee/feedback-record-directory/lib/feedback-record-directory";
 import { ZFeedbackRecordDirectoryUpdateInput } from "@/modules/ee/feedback-record-directory/types/feedback-record-directory";
+import { getIsFeedbackRecordDirectoriesEnabled } from "@/modules/ee/license-check/lib/utils";
+
+const checkFeedbackRecordDirectoriesEnabled = async (organizationId: string) => {
+  const isAllowed = await getIsFeedbackRecordDirectoriesEnabled(organizationId);
+  if (!isAllowed) {
+    throw new OperationNotAllowedError("Feedback Record Directories are not enabled for this organization");
+  }
+};
 
 const ZCreateFeedbackRecordDirectoryAction = z.object({
   organizationId: ZId,
@@ -23,6 +32,7 @@ export const createFeedbackRecordDirectoryAction = authenticatedActionClient
   .inputSchema(ZCreateFeedbackRecordDirectoryAction)
   .action(
     withAuditLogging("created", "feedbackRecordDirectory", async ({ ctx, parsedInput }) => {
+      await checkFeedbackRecordDirectoriesEnabled(parsedInput.organizationId);
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
         organizationId: parsedInput.organizationId,
@@ -56,6 +66,7 @@ export const getFeedbackRecordDirectoryDetailsAction = authenticatedActionClient
   .inputSchema(ZGetFeedbackRecordDirectoryDetailsAction)
   .action(async ({ parsedInput, ctx }) => {
     const organizationId = await getOrganizationIdFromDirectoryId(parsedInput.directoryId);
+    await checkFeedbackRecordDirectoriesEnabled(organizationId);
 
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -82,6 +93,7 @@ export const updateFeedbackRecordDirectoryAction = authenticatedActionClient
   .action(
     withAuditLogging("updated", "feedbackRecordDirectory", async ({ ctx, parsedInput }) => {
       const organizationId = await getOrganizationIdFromDirectoryId(parsedInput.directoryId);
+      await checkFeedbackRecordDirectoriesEnabled(organizationId);
 
       await checkAuthorizationUpdated({
         userId: ctx.user.id,

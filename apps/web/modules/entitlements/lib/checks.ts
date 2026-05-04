@@ -12,6 +12,9 @@ const LICENSE_GUARDED_ENTITLEMENTS: Partial<Record<string, keyof TEnterpriseLice
   contacts: "contacts",
   "ai-smart-tools": "aiSmartTools",
   "ai-data-analysis": "aiDataAnalysis",
+  "unify-feedback": "unifyFeedback",
+  "feedback-record-directories": "feedbackRecordDirectories",
+  dashboards: "dashboards",
 };
 
 const TRIAL_RESTRICTED_ENTITLEMENT_KEYS = [

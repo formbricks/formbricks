@@ -1,10 +1,12 @@
 "use server";
 
+import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { getFeedbackRecordDirectoriesByWorkspaceId } from "@/modules/ee/feedback-record-directory/lib/feedback-record-directory";
+import { getIsUnifyFeedbackEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createFeedbackRecord, retrieveFeedbackRecord, updateFeedbackRecord } from "@/modules/hub/service";
 import type { FeedbackRecordCreateParams, FeedbackRecordUpdateParams } from "@/modules/hub/types";
 import {
@@ -22,6 +24,10 @@ const ensureAccess = async (
   minPermission: "read" | "readWrite"
 ): Promise<void> => {
   const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
+  const isUnifyFeedbackAllowed = await getIsUnifyFeedbackEnabled(organizationId);
+  if (!isUnifyFeedbackAllowed) {
+    throw new OperationNotAllowedError("Unify Feedback is not enabled for this organization");
+  }
   await checkAuthorizationUpdated({
     userId,
     organizationId,

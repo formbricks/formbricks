@@ -151,6 +151,9 @@ describe("License Core Logic", () => {
       auditLogs: true,
       accessControl: true,
       quotas: true,
+      unifyFeedback: false,
+      feedbackRecordDirectories: false,
+      dashboards: false,
     };
     const mockFetchedLicenseDetails: TEnterpriseLicenseDetails = {
       status: "active",
@@ -289,6 +292,9 @@ describe("License Core Logic", () => {
             auditLogs: false,
             accessControl: false,
             quotas: false,
+            unifyFeedback: false,
+            feedbackRecordDirectories: false,
+            dashboards: false,
           },
           lastChecked: expect.any(Date),
         },
@@ -311,6 +317,9 @@ describe("License Core Logic", () => {
           auditLogs: false,
           accessControl: false,
           quotas: false,
+          unifyFeedback: false,
+          feedbackRecordDirectories: false,
+          dashboards: false,
         },
         lastChecked: expect.any(Date),
         isPendingDowngrade: false,
@@ -342,6 +351,9 @@ describe("License Core Logic", () => {
         auditLogs: false,
         accessControl: false,
         quotas: false,
+        unifyFeedback: false,
+        feedbackRecordDirectories: false,
+        dashboards: false,
       };
       expect(mockCache.set).toHaveBeenCalledWith(
         expect.stringContaining("fb:license:"),
@@ -530,6 +542,9 @@ describe("License Core Logic", () => {
           auditLogs: true,
           accessControl: true,
           quotas: true,
+          unifyFeedback: false,
+          feedbackRecordDirectories: false,
+          dashboards: false,
         },
       };
 
@@ -595,6 +610,9 @@ describe("License Core Logic", () => {
           auditLogs: true,
           accessControl: true,
           quotas: true,
+          unifyFeedback: false,
+          feedbackRecordDirectories: false,
+          dashboards: false,
         },
       };
 
@@ -651,6 +669,9 @@ describe("License Core Logic", () => {
           auditLogs: true,
           accessControl: true,
           quotas: true,
+          unifyFeedback: false,
+          feedbackRecordDirectories: false,
+          dashboards: false,
         },
       };
 
@@ -855,6 +876,9 @@ describe("License Core Logic", () => {
                   auditLogs: false,
                   accessControl: false,
                   quotas: false,
+                  unifyFeedback: false,
+                  feedbackRecordDirectories: false,
+                  dashboards: false,
                 },
               },
             },
@@ -1037,6 +1061,9 @@ describe("License Core Logic", () => {
           auditLogs: true,
           accessControl: true,
           quotas: true,
+          unifyFeedback: false,
+          feedbackRecordDirectories: false,
+          dashboards: false,
         },
       };
 
@@ -1164,6 +1191,9 @@ describe("License Core Logic", () => {
         auditLogs: true,
         accessControl: true,
         quotas: true,
+        unifyFeedback: false,
+        feedbackRecordDirectories: false,
+        dashboards: false,
       },
     };
 

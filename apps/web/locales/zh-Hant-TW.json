@@ -1833,7 +1833,9 @@
         "failed_to_load_chart_data": "載入圖表資料失敗",
         "no_dashboards_found": "找不到儀表板。",
         "no_data_message": "無資料。目前沒有可顯示的資訊。請新增圖表來建立你的儀表板。",
-        "please_enter_name": "請輸入儀表板名稱"
+        "please_enter_name": "請輸入儀表板名稱",
+        "upgrade_prompt_description": "從您的回饋資料建立洞察儀表板。專業版和企業版方案提供此功能。",
+        "upgrade_prompt_title": "升級以解鎖儀表板功能"
       },
       "manage_feedback_sources": "Manage feedback sources",
       "no_feedback_records_message": "您沒有可供報告的回饋記錄。設定回饋來源以將資料輸入系統。",
@@ -2448,10 +2450,13 @@
         "trial_feature_api_access": "API 存取",
         "trial_feature_attribute_segmentation": "基於屬性的分群",
         "trial_feature_contact_segment_management": "聯絡人與分群管理",
+        "trial_feature_dashboards": "洞察儀表板",
         "trial_feature_email_followups": "電子郵件追蹤",
+        "trial_feature_feedback_record_directories": "回饋記錄目錄",
         "trial_feature_hide_branding": "隱藏 Formbricks 品牌標識",
         "trial_feature_mobile_sdks": "iOS 與 Android SDK",
         "trial_feature_respondent_identification": "受訪者識別",
+        "trial_feature_unify_feedback": "統一回饋收件匣",
         "trial_feature_unlimited_seats": "無限座位數",
         "trial_feature_webhooks": "自訂 Webhook",
         "trial_no_credit_card": "14 天試用,無需信用卡",
@@ -2572,6 +2577,8 @@
         "title": "意見回饋記錄目錄",
         "unarchive": "取消封存",
         "unarchive_workspace_conflict": "無法取消封存此目錄，因為一個或多個已指派工作區已封存。",
+        "upgrade_prompt_description": "將回饋記錄整理至目錄中，並將資料導向正確的工作區。專業版和企業版方案提供此功能。",
+        "upgrade_prompt_title": "升級以解鎖回饋記錄目錄功能",
         "workspace_access": "工作區存取權限"
       },
       "general": {
@@ -3773,6 +3780,8 @@
       "unify_feedback": "整合回饋",
       "update_mapping_description": "更新此來源的對應設定。",
       "updated_at": "更新時間",
+      "upgrade_prompt_description": "將來自各個來源的顧客回饋統一在單一收件匣中。專業版和企業版方案提供此功能。",
+      "upgrade_prompt_title": "升級以解鎖統一回饋功能",
       "upload_csv_data_description": "上傳 CSV 檔案以匯入回饋資料。",
       "upload_csv_file": "上傳 CSV 檔案",
       "user_identifier": "使用者",

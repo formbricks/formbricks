@@ -2,10 +2,15 @@ import { notFound } from "next/navigation";
 import { logger } from "@formbricks/logger";
 import type { TChartQuery } from "@formbricks/types/analysis";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { getTranslate } from "@/lingodotdev/server";
 import { executeQuery } from "@/modules/ee/analysis/api/lib/cube-client";
 import { injectTenantFilter } from "@/modules/ee/analysis/charts/lib/chart-utils";
+import { AnalysisPageLayout } from "@/modules/ee/analysis/components/analysis-page-layout";
 import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
 import { getFeedbackRecordDirectoriesByWorkspaceId } from "@/modules/ee/feedback-record-directory/lib/feedback-record-directory";
+import { getIsDashboardsEnabled } from "@/modules/ee/license-check/lib/utils";
+import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { DashboardDetailClient } from "../components/dashboard-detail-client";
 import { getDashboard } from "../lib/dashboards";
@@ -37,8 +42,37 @@ export async function DashboardDetailPage({
 }: Readonly<{
   params: Promise<{ workspaceId: string; dashboardId: string }>;
 }>) {
+  const t = await getTranslate();
   const { workspaceId, dashboardId } = await params;
-  const { isReadOnly } = await getWorkspaceAuth(workspaceId);
+  const { isReadOnly, organization } = await getWorkspaceAuth(workspaceId);
+
+  const isDashboardsAllowed = await getIsDashboardsEnabled(organization.id);
+  if (!isDashboardsAllowed) {
+    return (
+      <AnalysisPageLayout pageTitle={t("common.analysis")} workspaceId={workspaceId}>
+        <UpgradePrompt
+          title={t("workspace.dashboards.upgrade_prompt_title")}
+          description={t("workspace.dashboards.upgrade_prompt_description")}
+          feature="dashboards"
+          buttons={[
+            {
+              text: IS_FORMBRICKS_CLOUD ? t("common.upgrade_plan") : t("common.request_trial_license"),
+              href: IS_FORMBRICKS_CLOUD
+                ? `/workspaces/${workspaceId}/settings/billing`
+                : "https://formbricks.com/upgrade-self-hosting-license",
+            },
+            {
+              text: t("common.learn_more"),
+              href: IS_FORMBRICKS_CLOUD
+                ? `/workspaces/${workspaceId}/settings/billing`
+                : "https://formbricks.com/learn-more-self-hosting-license",
+            },
+          ]}
+        />
+      </AnalysisPageLayout>
+    );
+  }
+
   const directories = await getFeedbackRecordDirectoriesByWorkspaceId(workspaceId);
 
   let dashboard;

@@ -13,12 +13,15 @@ import {
   getIsAISmartToolsEnabled,
   getIsAuditLogsEnabled,
   getIsContactsEnabled,
+  getIsDashboardsEnabled,
+  getIsFeedbackRecordDirectoriesEnabled,
   getIsMultiOrgEnabled,
   getIsQuotasEnabled,
   getIsSamlSsoEnabled,
   getIsSpamProtectionEnabled,
   getIsSsoEnabled,
   getIsTwoFactorAuthEnabled,
+  getIsUnifyFeedbackEnabled,
   getOrganizationWorkspacesLimit,
   getRemoveBrandingPermission,
   getWhiteLabelPermission,
@@ -62,6 +65,9 @@ const defaultFeatures: TEnterpriseLicenseFeatures = {
   auditLogs: false,
   accessControl: false,
   quotas: false,
+  unifyFeedback: false,
+  feedbackRecordDirectories: false,
+  dashboards: false,
 };
 
 const defaultLicense = {
@@ -263,6 +269,86 @@ describe("License Utils", () => {
 
       expect(smartTools).toBe(false);
       expect(dataAnalysis).toBe(false);
+    });
+
+    test("uses cloud unify feedback entitlement", async () => {
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
+      vi.mocked(hasOrganizationEntitlementWithLicenseGuard).mockResolvedValueOnce(true);
+
+      const result = await getIsUnifyFeedbackEnabled("org_1");
+
+      expect(result).toBe(true);
+      expect(hasOrganizationEntitlementWithLicenseGuard).toHaveBeenCalledWith(
+        "org_1",
+        CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.UNIFY_FEEDBACK
+      );
+    });
+
+    test("uses cloud feedback record directories entitlement", async () => {
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
+      vi.mocked(hasOrganizationEntitlementWithLicenseGuard).mockResolvedValueOnce(true);
+
+      const result = await getIsFeedbackRecordDirectoriesEnabled("org_1");
+
+      expect(result).toBe(true);
+      expect(hasOrganizationEntitlementWithLicenseGuard).toHaveBeenCalledWith(
+        "org_1",
+        CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.FEEDBACK_RECORD_DIRECTORIES
+      );
+    });
+
+    test("uses cloud dashboards entitlement", async () => {
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
+      vi.mocked(hasOrganizationEntitlementWithLicenseGuard).mockResolvedValueOnce(true);
+
+      const result = await getIsDashboardsEnabled("org_1");
+
+      expect(result).toBe(true);
+      expect(hasOrganizationEntitlementWithLicenseGuard).toHaveBeenCalledWith(
+        "org_1",
+        CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.DASHBOARDS
+      );
+    });
+
+    test("returns self-hosted unify feedback / FRD / dashboards from license", async () => {
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = false;
+      vi.mocked(getEnterpriseLicense).mockResolvedValue({
+        ...defaultLicense,
+        features: {
+          ...defaultFeatures,
+          unifyFeedback: true,
+          feedbackRecordDirectories: true,
+          dashboards: true,
+        },
+      });
+
+      const [unify, frd, dashboards] = await Promise.all([
+        getIsUnifyFeedbackEnabled("org_1"),
+        getIsFeedbackRecordDirectoriesEnabled("org_1"),
+        getIsDashboardsEnabled("org_1"),
+      ]);
+
+      expect(unify).toBe(true);
+      expect(frd).toBe(true);
+      expect(dashboards).toBe(true);
+    });
+
+    test("returns false for self-hosted unify feedback / FRD / dashboards when not enabled", async () => {
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = false;
+      vi.mocked(getEnterpriseLicense).mockResolvedValue({
+        ...defaultLicense,
+        features: defaultFeatures,
+      });
+
+      const [unify, frd, dashboards] = await Promise.all([
+        getIsUnifyFeedbackEnabled("org_1"),
+        getIsFeedbackRecordDirectoriesEnabled("org_1"),
+        getIsDashboardsEnabled("org_1"),
+      ]);
+
+      expect(unify).toBe(false);
+      expect(frd).toBe(false);
+      expect(dashboards).toBe(false);
     });
   });
 

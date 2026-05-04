@@ -1833,7 +1833,9 @@
         "failed_to_load_chart_data": "チャートデータの読み込みに失敗しました",
         "no_dashboards_found": "ダッシュボードが見つかりません。",
         "no_data_message": "データがありません。現在表示する情報がありません。ダッシュボードを構築するにはチャートを追加してください。",
-        "please_enter_name": "ダッシュボード名を入力してください"
+        "please_enter_name": "ダッシュボード名を入力してください",
+        "upgrade_prompt_description": "フィードバックデータからインサイトダッシュボードを構築できます。ProプランおよびScaleプランでご利用いただけます。",
+        "upgrade_prompt_title": "アップグレードしてダッシュボードを利用"
       },
       "manage_feedback_sources": "Manage feedback sources",
       "no_feedback_records_message": "レポートするフィードバック レコードがありません。データをシステムにフィードするためのフィードバック ソースをセットアップします。",
@@ -2448,10 +2450,13 @@
         "trial_feature_api_access": "APIアクセス",
         "trial_feature_attribute_segmentation": "属性ベースのセグメンテーション",
         "trial_feature_contact_segment_management": "連絡先とセグメントの管理",
+        "trial_feature_dashboards": "インサイトダッシュボード",
         "trial_feature_email_followups": "メールフォローアップ",
+        "trial_feature_feedback_record_directories": "フィードバックレコードディレクトリ",
         "trial_feature_hide_branding": "Formbricksブランディングを非表示",
         "trial_feature_mobile_sdks": "iOS & Android SDK",
         "trial_feature_respondent_identification": "回答者の識別",
+        "trial_feature_unify_feedback": "フィードバック統合インボックス",
         "trial_feature_unlimited_seats": "無制限のシート数",
         "trial_feature_webhooks": "カスタムWebhook",
         "trial_no_credit_card": "14日間トライアル、クレジットカード不要",
@@ -2572,6 +2577,8 @@
         "title": "フィードバック記録ディレクトリ",
         "unarchive": "アーカイブ解除",
         "unarchive_workspace_conflict": "割り当てられているワークスペースの1つ以上がアーカイブされているため、このディレクトリをアーカイブ解除できません。",
+        "upgrade_prompt_description": "フィードバックレコードをディレクトリで整理し、適切なワークスペースにデータを振り分けられます。ProプランおよびScaleプランでご利用いただけます。",
+        "upgrade_prompt_title": "アップグレードしてフィードバックレコードディレクトリを利用",
         "workspace_access": "ワークスペースアクセス"
       },
       "general": {
@@ -3773,6 +3780,8 @@
       "unify_feedback": "フィードバックを統合",
       "update_mapping_description": "このソースのマッピング設定を更新します。",
       "updated_at": "更新日時",
+      "upgrade_prompt_description": "あらゆるソースからの顧客フィードバックを1つのインボックスに統合できます。ProプランおよびScaleプランでご利用いただけます。",
+      "upgrade_prompt_title": "アップグレードしてフィードバック統合を利用",
       "upload_csv_data_description": "CSVファイルをアップロードして、フィードバックデータをインポートします。",
       "upload_csv_file": "CSVファイルをアップロード",
       "user_identifier": "ユーザー",

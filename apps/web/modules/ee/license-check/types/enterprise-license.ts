@@ -19,6 +19,9 @@ const ZEnterpriseLicenseFeatures = z.object({
   auditLogs: z.boolean(),
   accessControl: z.boolean(),
   quotas: z.boolean(),
+  unifyFeedback: z.boolean().default(false),
+  feedbackRecordDirectories: z.boolean().default(false),
+  dashboards: z.boolean().default(false),
 });
 
 export type TEnterpriseLicenseFeatures = z.infer<typeof ZEnterpriseLicenseFeatures>;

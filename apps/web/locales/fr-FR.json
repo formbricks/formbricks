@@ -1833,7 +1833,9 @@
         "failed_to_load_chart_data": "Échec du chargement des données du graphique",
         "no_dashboards_found": "Aucun tableau de bord trouvé.",
         "no_data_message": "Aucune donnée. Il n'y a actuellement aucune information à afficher. Ajoute des graphiques pour construire ton tableau de bord.",
-        "please_enter_name": "Veuillez saisir un nom de tableau de bord"
+        "please_enter_name": "Veuillez saisir un nom de tableau de bord",
+        "upgrade_prompt_description": "Créez des tableaux de bord d'insights à partir de vos données de feedback. Disponible avec les forfaits Pro et Scale.",
+        "upgrade_prompt_title": "Passez à un forfait supérieur pour débloquer les Tableaux de bord"
       },
       "manage_feedback_sources": "Manage feedback sources",
       "no_feedback_records_message": "Vous n'avez pas d'enregistrements de commentaires sur lesquels créer des rapports. Configurez des sources de commentaires pour introduire des données dans le système.",
@@ -2448,10 +2450,13 @@
         "trial_feature_api_access": "Accès API",
         "trial_feature_attribute_segmentation": "Segmentation basée sur les attributs",
         "trial_feature_contact_segment_management": "Gestion des contacts et segments",
+        "trial_feature_dashboards": "Tableaux de bord d'insights",
         "trial_feature_email_followups": "Relances par e-mail",
+        "trial_feature_feedback_record_directories": "Répertoires d'enregistrements de feedback",
         "trial_feature_hide_branding": "Masquer l'image de marque Formbricks",
         "trial_feature_mobile_sdks": "SDKs iOS et Android",
         "trial_feature_respondent_identification": "Identification des répondants",
+        "trial_feature_unify_feedback": "Boîte de réception Unify Feedback",
         "trial_feature_unlimited_seats": "Places illimitées",
         "trial_feature_webhooks": "Webhooks personnalisés",
         "trial_no_credit_card": "Essai de 14 jours, aucune carte bancaire requise",
@@ -2572,6 +2577,8 @@
         "title": "Répertoires d'enregistrement des retours",
         "unarchive": "Désarchiver",
         "unarchive_workspace_conflict": "Impossible de désarchiver ce répertoire, car un ou plusieurs espaces de travail attribués sont archivés.",
+        "upgrade_prompt_description": "Organisez les enregistrements de feedback dans des répertoires et dirigez les données vers le bon espace de travail. Disponible avec les forfaits Pro et Scale.",
+        "upgrade_prompt_title": "Passez à un forfait supérieur pour débloquer les Répertoires d'enregistrements de feedback",
         "workspace_access": "Accès à l’espace de travail"
       },
       "general": {
@@ -3773,6 +3780,8 @@
       "unify_feedback": "Unifier les retours",
       "update_mapping_description": "Mettre à jour la configuration de mappage pour cette source.",
       "updated_at": "Mis à jour à",
+      "upgrade_prompt_description": "Centralisez tous les feedbacks clients de toutes les sources dans une seule boîte de réception. Disponible avec les forfaits Pro et Scale.",
+      "upgrade_prompt_title": "Passez à un forfait supérieur pour débloquer Unify Feedback",
       "upload_csv_data_description": "Téléchargez un fichier CSV pour importer des données de feedback.",
       "upload_csv_file": "Télécharger un fichier CSV",
       "user_identifier": "Utilisateur",

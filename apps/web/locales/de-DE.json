@@ -1833,7 +1833,9 @@
         "failed_to_load_chart_data": "Diagrammdaten konnten nicht geladen werden",
         "no_dashboards_found": "Keine Dashboards gefunden.",
         "no_data_message": "Keine Daten. Es gibt derzeit keine Informationen zum Anzeigen. Füge Diagramme hinzu, um dein Dashboard zu erstellen.",
-        "please_enter_name": "Bitte gib einen Dashboard-Namen ein"
+        "please_enter_name": "Bitte gib einen Dashboard-Namen ein",
+        "upgrade_prompt_description": "Erstelle Insights-Dashboards aus deinen Feedback-Daten. Verfügbar in den Pro- und Scale-Plänen.",
+        "upgrade_prompt_title": "Upgrade durchführen, um Dashboards freizuschalten"
       },
       "manage_feedback_sources": "Manage feedback sources",
       "no_feedback_records_message": "Sie haben keine Feedback-Datensätze, über die Sie berichten können. Richten Sie Feedbackquellen ein, um Daten in das System einzuspeisen.",
@@ -2448,10 +2450,13 @@
         "trial_feature_api_access": "API-Zugriff",
         "trial_feature_attribute_segmentation": "Attributbasierte Segmentierung",
         "trial_feature_contact_segment_management": "Kontakt- & Segmentverwaltung",
+        "trial_feature_dashboards": "Insights-Dashboards",
         "trial_feature_email_followups": "E-Mail-Follow-ups",
+        "trial_feature_feedback_record_directories": "Feedback-Datensatz-Verzeichnisse",
         "trial_feature_hide_branding": "Formbricks-Branding ausblenden",
         "trial_feature_mobile_sdks": "iOS- & Android-SDKs",
         "trial_feature_respondent_identification": "Teilnehmer-Identifikation",
+        "trial_feature_unify_feedback": "Unify-Feedback-Posteingang",
         "trial_feature_unlimited_seats": "Unbegrenzte Plätze",
         "trial_feature_webhooks": "Benutzerdefinierte Webhooks",
         "trial_no_credit_card": "14 Tage Testphase, keine Kreditkarte erforderlich",
@@ -2572,6 +2577,8 @@
         "title": "Feedback-Datensatz-Verzeichnisse",
         "unarchive": "Aus Archiv wiederherstellen",
         "unarchive_workspace_conflict": "Dieses Verzeichnis kann nicht wiederhergestellt werden, weil ein oder mehrere zugewiesene Workspaces archiviert sind.",
+        "upgrade_prompt_description": "Organisiere Feedback-Datensätze in Verzeichnissen und leite Daten zum richtigen Workspace weiter. Verfügbar in den Pro- und Scale-Plänen.",
+        "upgrade_prompt_title": "Upgrade durchführen, um Feedback-Datensatz-Verzeichnisse freizuschalten",
         "workspace_access": "Workspace-Zugriff"
       },
       "general": {
@@ -3773,6 +3780,8 @@
       "unify_feedback": "Feedback vereinheitlichen",
       "update_mapping_description": "Aktualisiere die Zuordnungskonfiguration für diese Quelle.",
       "updated_at": "Aktualisiert am",
+      "upgrade_prompt_description": "Vereinheitliche Kundenfeedback aus jeder Quelle in einem Posteingang. Verfügbar in den Pro- und Scale-Plänen.",
+      "upgrade_prompt_title": "Upgrade durchführen, um Unify Feedback freizuschalten",
       "upload_csv_data_description": "Lade eine CSV-Datei hoch, um Feedback-Daten zu importieren.",
       "upload_csv_file": "CSV-Datei hochladen",
       "user_identifier": "Benutzer",

@@ -4,10 +4,12 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { ZWidgetLayout } from "@formbricks/types/analysis";
 import { ZId } from "@formbricks/types/common";
+import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { checkWorkspaceAccess } from "@/modules/ee/analysis/lib/access";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
+import { getIsDashboardsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { ZDashboardUpdateInput } from "../types/analysis";
 import {
   addChartToDashboard,
@@ -19,6 +21,13 @@ import {
   updateDashboard,
   updateWidgetLayouts,
 } from "./lib/dashboards";
+
+const checkDashboardsEnabled = async (organizationId: string) => {
+  const isAllowed = await getIsDashboardsEnabled(organizationId);
+  if (!isAllowed) {
+    throw new OperationNotAllowedError("Dashboards are not enabled for this organization");
+  }
+};
 
 const ZCreateDashboardAction = z.object({
   workspaceId: ZId,
@@ -41,6 +50,7 @@ export const createDashboardAction = authenticatedActionClient.inputSchema(ZCrea
         parsedInput.workspaceId,
         "readWrite"
       );
+      await checkDashboardsEnabled(organizationId);
 
       const dashboard = await createDashboard({
         workspaceId,
@@ -82,6 +92,7 @@ export const updateDashboardAction = authenticatedActionClient.inputSchema(ZUpda
         parsedInput.workspaceId,
         "readWrite"
       );
+      await checkDashboardsEnabled(organizationId);
 
       const { dashboard, updatedDashboard } = await updateDashboard(parsedInput.dashboardId, workspaceId, {
         name: parsedInput.name,
@@ -129,6 +140,7 @@ export const updateWidgetLayoutsAction = authenticatedActionClient
           parsedInput.workspaceId,
           "readWrite"
         );
+        await checkDashboardsEnabled(organizationId);
 
         const dashboard = await getDashboard(parsedInput.dashboardId, workspaceId);
 
@@ -167,6 +179,7 @@ export const deleteDashboardAction = authenticatedActionClient.inputSchema(ZDele
         parsedInput.workspaceId,
         "readWrite"
       );
+      await checkDashboardsEnabled(organizationId);
 
       const dashboard = await deleteDashboard(parsedInput.dashboardId, workspaceId);
 
@@ -204,6 +217,7 @@ export const duplicateDashboardAction = authenticatedActionClient
           parsedInput.workspaceId,
           "readWrite"
         );
+        await checkDashboardsEnabled(organizationId);
 
         const dashboard = await duplicateDashboard(parsedInput.dashboardId, workspaceId, ctx.user.id);
 
@@ -232,7 +246,12 @@ export const getDashboardsAction = authenticatedActionClient
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZGetDashboardsAction>;
     }) => {
-      const { workspaceId } = await checkWorkspaceAccess(ctx.user.id, parsedInput.workspaceId, "read");
+      const { organizationId, workspaceId } = await checkWorkspaceAccess(
+        ctx.user.id,
+        parsedInput.workspaceId,
+        "read"
+      );
+      await checkDashboardsEnabled(organizationId);
 
       return getDashboards(workspaceId);
     }
@@ -253,7 +272,12 @@ export const getDashboardAction = authenticatedActionClient
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZGetDashboardAction>;
     }) => {
-      const { workspaceId } = await checkWorkspaceAccess(ctx.user.id, parsedInput.workspaceId, "read");
+      const { organizationId, workspaceId } = await checkWorkspaceAccess(
+        ctx.user.id,
+        parsedInput.workspaceId,
+        "read"
+      );
+      await checkDashboardsEnabled(organizationId);
 
       return getDashboard(parsedInput.dashboardId, workspaceId);
     }
@@ -284,6 +308,7 @@ export const addChartToDashboardAction = authenticatedActionClient
           parsedInput.workspaceId,
           "readWrite"
         );
+        await checkDashboardsEnabled(organizationId);
 
         const widget = await addChartToDashboard({
           dashboardId: parsedInput.dashboardId,

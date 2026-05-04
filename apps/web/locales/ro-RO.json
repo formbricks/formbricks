@@ -1833,7 +1833,9 @@
         "failed_to_load_chart_data": "Încărcarea datelor graficului a eșuat",
         "no_dashboards_found": "Nu s-a găsit niciun tablou de bord.",
         "no_data_message": "Fără date. În prezent nu există informații de afișat. Adaugă grafice pentru a-ți construi tabloul de bord.",
-        "please_enter_name": "Te rugăm să introduci un nume pentru tablou de bord"
+        "please_enter_name": "Te rugăm să introduci un nume pentru tablou de bord",
+        "upgrade_prompt_description": "Construiește dashboarduri de analiză din datele tale de feedback. Disponibile în planurile Pro și Scale.",
+        "upgrade_prompt_title": "Actualizează pentru a debloca Dashboardurile"
       },
       "manage_feedback_sources": "Manage feedback sources",
       "no_feedback_records_message": "Nu aveți înregistrări de feedback despre care să raportați. Configurați sursele de feedback pentru a introduce date în sistem.",
@@ -2448,10 +2450,13 @@
         "trial_feature_api_access": "Acces API",
         "trial_feature_attribute_segmentation": "Segmentare bazată pe atribute",
         "trial_feature_contact_segment_management": "Gestionare contacte și segmente",
+        "trial_feature_dashboards": "Dashboarduri de Analiză",
         "trial_feature_email_followups": "Urmăriri prin email",
+        "trial_feature_feedback_record_directories": "Directoare pentru Înregistrări de Feedback",
         "trial_feature_hide_branding": "Ascunde branding-ul Formbricks",
         "trial_feature_mobile_sdks": "SDK-uri iOS și Android",
         "trial_feature_respondent_identification": "Identificarea respondenților",
+        "trial_feature_unify_feedback": "Inbox Unificat de Feedback",
         "trial_feature_unlimited_seats": "Locuri nelimitate",
         "trial_feature_webhooks": "Webhook-uri personalizate",
         "trial_no_credit_card": "14 zile de probă, fără card necesar",
@@ -2572,6 +2577,8 @@
         "title": "Directoare de Înregistrări Feedback",
         "unarchive": "Dezarhivează",
         "unarchive_workspace_conflict": "Acest director nu poate fi dezarhivat deoarece unul sau mai multe spații de lucru alocate sunt arhivate.",
+        "upgrade_prompt_description": "Organizează înregistrările de feedback în directoare și direcționează datele către workspace-ul potrivit. Disponibile în planurile Pro și Scale.",
+        "upgrade_prompt_title": "Actualizează pentru a debloca Directoarele pentru Înregistrări de Feedback",
         "workspace_access": "Acces la spațiul de lucru"
       },
       "general": {
@@ -3773,6 +3780,8 @@
       "unify_feedback": "Unify Feedback",
       "update_mapping_description": "Actualizează configurația de mapare pentru această sursă.",
       "updated_at": "Actualizat la",
+      "upgrade_prompt_description": "Unifică feedback-ul clienților din toate sursele într-un singur inbox. Disponibil în planurile Pro și Scale.",
+      "upgrade_prompt_title": "Actualizează pentru a debloca Unify Feedback",
       "upload_csv_data_description": "Încarcă un fișier CSV pentru a importa date de feedback.",
       "upload_csv_file": "Încarcă fișier CSV",
       "user_identifier": "Utilizator",

@@ -1833,7 +1833,9 @@
         "failed_to_load_chart_data": "Grafiekgegevens laden mislukt",
         "no_dashboards_found": "Geen dashboards gevonden.",
         "no_data_message": "Geen gegevens. Er is momenteel geen informatie om weer te geven. Voeg grafieken toe om je dashboard op te bouwen.",
-        "please_enter_name": "Voer een dashboardnaam in"
+        "please_enter_name": "Voer een dashboardnaam in",
+        "upgrade_prompt_description": "Bouw inzichtelijke dashboards op basis van je feedbackgegevens. Beschikbaar op de Pro- en Scale-abonnementen.",
+        "upgrade_prompt_title": "Upgrade om Dashboards te ontgrendelen"
       },
       "manage_feedback_sources": "Manage feedback sources",
       "no_feedback_records_message": "U heeft geen feedbackrecords om over te rapporteren. Stel feedbackbronnen in om gegevens in het systeem in te voeren.",
@@ -2448,10 +2450,13 @@
         "trial_feature_api_access": "API-toegang",
         "trial_feature_attribute_segmentation": "Segmentatie op basis van attributen",
         "trial_feature_contact_segment_management": "Contact- en segmentbeheer",
+        "trial_feature_dashboards": "Inzichten Dashboards",
         "trial_feature_email_followups": "E-mail follow-ups",
+        "trial_feature_feedback_record_directories": "Feedbackrecord Mappen",
         "trial_feature_hide_branding": "Verberg Formbricks-branding",
         "trial_feature_mobile_sdks": "iOS- en Android-SDK's",
         "trial_feature_respondent_identification": "Identificatie van respondenten",
+        "trial_feature_unify_feedback": "Unify Feedback Inbox",
         "trial_feature_unlimited_seats": "Onbeperkt aantal gebruikers",
         "trial_feature_webhooks": "Aangepaste webhooks",
         "trial_no_credit_card": "14 dagen proefperiode, geen creditcard vereist",
@@ -2572,6 +2577,8 @@
         "title": "Feedbackregistratiemappen",
         "unarchive": "Dearchiveren",
         "unarchive_workspace_conflict": "Deze map kan niet worden gedearchiveerd omdat een of meer toegewezen workspaces zijn gearchiveerd.",
+        "upgrade_prompt_description": "Organiseer feedbackrecords in mappen en routeer gegevens naar de juiste workspace. Beschikbaar op de Pro- en Scale-abonnementen.",
+        "upgrade_prompt_title": "Upgrade om Feedbackrecord Mappen te ontgrendelen",
         "workspace_access": "Workspace-toegang"
       },
       "general": {
@@ -3773,6 +3780,8 @@
       "unify_feedback": "Feedback verenigen",
       "update_mapping_description": "Werk de mappingconfiguratie voor deze bron bij.",
       "updated_at": "Bijgewerkt op",
+      "upgrade_prompt_description": "Bundel klantfeedback uit elke bron in één inbox. Beschikbaar op de Pro- en Scale-abonnementen.",
+      "upgrade_prompt_title": "Upgrade om Unify Feedback te ontgrendelen",
       "upload_csv_data_description": "Upload een CSV-bestand om feedbackgegevens te importeren.",
       "upload_csv_file": "CSV-bestand uploaden",
       "user_identifier": "Gebruiker",

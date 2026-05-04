@@ -29,8 +29,8 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
-import { CsvImportModal } from "../../sources/components/csv-import-modal";
 import { formatSourceType } from "../lib/utils";
+import { CsvImportModal } from "../sources/components/csv-import-modal";
 import { FeedbackRecordFormDrawer } from "./feedback-record-form-drawer";
 
 const RECORDS_PER_PAGE = 50;
