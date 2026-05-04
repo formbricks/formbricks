@@ -33,7 +33,6 @@ import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { parseRecallInfo } from "@/lib/utils/recall";
 import { RatingSmiley } from "@/modules/analysis/components/RatingSmiley";
 import { resolveStorageUrl } from "@/modules/storage/utils";
-import { getNPSOptionColor, getRatingNumberOptionColor } from "../lib/utils";
 import {
   CHOICE_LINK_CLASSNAME,
   PREVIEW_LINK_TARGET,
@@ -64,7 +63,8 @@ import {
   getSecondaryButtonStyle,
   importantStyle,
   normalizeRichTextSpacing,
-} from "./preview-email-template-styles";
+} from "../lib/preview-email-template-styles";
+import { getNPSOptionColor, getRatingNumberOptionColor } from "../lib/utils";
 
 interface PreviewEmailTemplateProps {
   survey: TSurvey;
