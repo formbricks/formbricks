@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
+import { ENTERPRISE_LICENSE_REQUEST_FORM_URL } from "@/lib/constants";
 import { TFollowUpEmailToUser } from "@/modules/survey/editor/types/survey-follow-up";
 import { FollowUpItem } from "@/modules/survey/follow-ups/components/follow-up-item";
 import { FollowUpModal } from "@/modules/survey/follow-ups/components/follow-up-modal";
@@ -54,7 +55,7 @@ export const FollowUpsView = ({
                 : t("common.request_trial_license"),
               href: isFormbricksCloud
                 ? `/environments/${localSurvey.environmentId}/settings/billing`
-                : "https://formbricks.com/docs/self-hosting/license",
+                : ENTERPRISE_LICENSE_REQUEST_FORM_URL,
             },
             {
               text: t("common.learn_more"),

@@ -10,6 +10,7 @@ import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { TOrganizationRole, ZOrganizationRole } from "@formbricks/types/memberships";
 import { ZUserName } from "@formbricks/types/user";
+import { ENTERPRISE_LICENSE_REQUEST_FORM_URL } from "@/lib/constants";
 import { AddMemberRole } from "@/modules/ee/role-management/components/add-member-role";
 import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
@@ -191,7 +192,7 @@ export const IndividualInviteTab = ({
                 href={
                   isFormbricksCloud
                     ? `/environments/${environmentId}/settings/billing`
-                    : "https://formbricks.com/upgrade-self-hosting-license"
+                    : ENTERPRISE_LICENSE_REQUEST_FORM_URL
                 }>
                 {t("common.upgrade_plan")}
               </Link>

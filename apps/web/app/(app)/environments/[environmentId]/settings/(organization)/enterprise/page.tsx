@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { EnterpriseLicenseStatus } from "@/app/(app)/environments/[environmentId]/settings/(organization)/enterprise/components/EnterpriseLicenseStatus";
-import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { GRACE_PERIOD_MS, getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
@@ -173,7 +173,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
               </p>
               <Button asChild>
                 <Link
-                  href="https://app.formbricks.com/s/clvupq3y205i5yrm3sm9v1xt5"
+                  href={ENTERPRISE_LICENSE_REQUEST_FORM_URL}
                   target="_blank"
                   rel="noopener noreferrer nofollow"
                   referrerPolicy="no-referrer">
