@@ -120,12 +120,21 @@ vi.mock("@formbricks/logger", () => ({
   },
 }));
 
+const constantsOverrides = vi.hoisted(() => ({
+  SKIP_INVITE_FOR_SSO: false as boolean,
+  DEFAULT_TEAM_ID: "team-123" as string | undefined,
+}));
+
 vi.mock("@/lib/constants", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/constants")>();
   return {
     ...actual,
-    SKIP_INVITE_FOR_SSO: 0,
-    DEFAULT_TEAM_ID: "team-123",
+    get SKIP_INVITE_FOR_SSO() {
+      return constantsOverrides.SKIP_INVITE_FOR_SSO;
+    },
+    get DEFAULT_TEAM_ID() {
+      return constantsOverrides.DEFAULT_TEAM_ID;
+    },
   };
 });
 
@@ -147,6 +156,8 @@ const transactionUser = {
 describe("handleSsoCallback", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    constantsOverrides.SKIP_INVITE_FOR_SSO = false;
+    constantsOverrides.DEFAULT_TEAM_ID = "team-123";
 
     vi.mocked(prisma.$transaction).mockImplementation(
       async (callback: (tx: any) => unknown) =>
@@ -703,6 +714,80 @@ describe("handleSsoCallback", () => {
 
     expect(result).toBe(false);
     expect(createUser).not.toHaveBeenCalled();
+  });
+
+  test("rejects auto-provisioning when SKIP_INVITE_FOR_SSO is enabled but DEFAULT_TEAM_ID is missing", async () => {
+    vi.mocked(prisma.account.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+    vi.mocked(getIsFreshInstance).mockResolvedValue(false);
+    vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
+    constantsOverrides.SKIP_INVITE_FOR_SSO = true;
+    constantsOverrides.DEFAULT_TEAM_ID = undefined;
+
+    const result = await handleSsoCallback({
+      user: mockUser,
+      account: mockAccount,
+      callbackUrl: "http://localhost:3000",
+    });
+
+    expect(result).toBe(false);
+    expect(getFirstOrganization).not.toHaveBeenCalled();
+    expect(getOrganizationByTeamId).not.toHaveBeenCalled();
+    expect(createUser).not.toHaveBeenCalled();
+    expect(createMembership).not.toHaveBeenCalled();
+  });
+
+  test("rejects auto-provisioning when DEFAULT_TEAM_ID is empty string", async () => {
+    vi.mocked(prisma.account.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+    vi.mocked(getIsFreshInstance).mockResolvedValue(false);
+    vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
+    constantsOverrides.SKIP_INVITE_FOR_SSO = true;
+    constantsOverrides.DEFAULT_TEAM_ID = "";
+
+    const result = await handleSsoCallback({
+      user: mockUser,
+      account: mockAccount,
+      callbackUrl: "http://localhost:3000",
+    });
+
+    expect(result).toBe(false);
+    expect(getFirstOrganization).not.toHaveBeenCalled();
+    expect(createUser).not.toHaveBeenCalled();
+  });
+
+  test("allows auto-provisioning when SKIP_INVITE_FOR_SSO and DEFAULT_TEAM_ID are both set", async () => {
+    vi.mocked(prisma.account.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
+    vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+    vi.mocked(getIsFreshInstance).mockResolvedValue(false);
+    vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
+    constantsOverrides.SKIP_INVITE_FOR_SSO = true;
+    constantsOverrides.DEFAULT_TEAM_ID = "team-123";
+    vi.mocked(createUser).mockResolvedValue(
+      mockCreatedUser("Auto Provisioned User") as typeof mockUser & {
+        notificationSettings: { alert: Record<string, never>; unsubscribedOrganizationIds: string[] };
+      }
+    );
+    transactionAccount.findUnique.mockResolvedValue(null);
+
+    const result = await handleSsoCallback({
+      user: mockUser,
+      account: mockAccount,
+      callbackUrl: "http://localhost:3000",
+    });
+
+    expect(result).toBe(true);
+    expect(getOrganizationByTeamId).toHaveBeenCalledWith("team-123");
+    expect(getFirstOrganization).not.toHaveBeenCalled();
+    expect(createMembership).toHaveBeenCalledWith(
+      mockOrganization.id,
+      mockUser.id,
+      { role: "member", accepted: true },
+      expect.anything()
+    );
   });
 
   test("assigns invited SSO users into the resolved organization and syncs notification settings", async () => {
