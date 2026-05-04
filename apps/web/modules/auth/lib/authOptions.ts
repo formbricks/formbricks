@@ -77,7 +77,7 @@ const handleCredentialsOrTokenSignIn = async ({
   userId: string;
 }) => {
   if (account.provider === "token" && getAuthFlowPurpose(user) === "sso_recovery") {
-    return true;
+    return;
   }
 
   assertCredentialsUserCanSignIn(user);
@@ -87,7 +87,6 @@ const handleCredentialsOrTokenSignIn = async ({
     email: userEmail,
     provider: account.provider,
   });
-  return true;
 };
 
 const maybeValidateAccountDeletionSsoReauth = async ({
@@ -470,15 +469,17 @@ export const authOptions: NextAuthOptions = {
         getAccountDeletionSsoReauthIntentFromCallbackUrl(callbackUrl);
 
       const userEmail = user.email ?? "";
-      const userId = user.id as string;
+      const userId = user.id;
 
       if (isCredentialsOrTokenProvider(account)) {
-        return handleCredentialsOrTokenSignIn({
+        handleCredentialsOrTokenSignIn({
           account,
           user,
           userEmail,
           userId,
         });
+
+        return true;
       }
 
       if (ENTERPRISE_LICENSE_KEY && account) {

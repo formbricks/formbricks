@@ -12,6 +12,8 @@ type TSamlAuthnInstantCacheValue = {
 };
 type TSamlConnection = Awaited<ReturnType<IConnectionAPIController["getConnections"]>>[number];
 
+const authnInstantRegex = /<[\w:-]*AuthnStatement\b[^>]*\bAuthnInstant\s*=\s*["']([^"']+)["']/;
+
 const getSamlAuthnInstantCacheKey = (code: string) => createCacheKey.custom("saml", "authn_instant", code);
 
 const isSamlConnection = (connection: TSamlConnection): connection is SAMLSSORecord =>
@@ -26,9 +28,9 @@ const getCodeFromRedirectUrl = (redirectUrl: string) => {
 };
 
 export const getSamlAuthnInstantFromXml = (samlXml: string): string | null => {
-  const authnInstant = samlXml.match(
-    /<[\w:-]*AuthnStatement\b[^>]*\bAuthnInstant\s*=\s*["']([^"']+)["']/
-  )?.[1];
+  // Use .exec() instead of .match()
+  const match = authnInstantRegex.exec(samlXml);
+  const authnInstant = match?.[1];
 
   if (!authnInstant) {
     return null;
