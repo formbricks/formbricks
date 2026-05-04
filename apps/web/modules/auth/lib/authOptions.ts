@@ -76,17 +76,19 @@ const handleCredentialsOrTokenSignIn = async ({
   userEmail: string;
   userId: string;
 }) => {
-  if (account.provider === "token" && getAuthFlowPurpose(user) === "sso_recovery") {
-    return;
+  const isSsoRecovery = account.provider === "token" && getAuthFlowPurpose(user) === "sso_recovery";
+
+  if (!isSsoRecovery) {
+    assertCredentialsUserCanSignIn(user);
+
+    await finalizeSuccessfulSignIn({
+      userId,
+      email: userEmail,
+      provider: account.provider,
+    });
   }
 
-  assertCredentialsUserCanSignIn(user);
-
-  await finalizeSuccessfulSignIn({
-    userId,
-    email: userEmail,
-    provider: account.provider,
-  });
+  return true;
 };
 
 const maybeValidateAccountDeletionSsoReauth = async ({
@@ -472,14 +474,12 @@ export const authOptions: NextAuthOptions = {
       const userId = user.id;
 
       if (isCredentialsOrTokenProvider(account)) {
-        handleCredentialsOrTokenSignIn({
+        return handleCredentialsOrTokenSignIn({
           account,
           user,
           userEmail,
           userId,
         });
-
-        return true;
       }
 
       if (ENTERPRISE_LICENSE_KEY && account) {
