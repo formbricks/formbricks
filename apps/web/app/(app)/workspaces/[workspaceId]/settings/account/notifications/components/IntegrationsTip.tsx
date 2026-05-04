@@ -14,7 +14,7 @@ export const IntegrationsTip = () => {
         <p className="text-sm">
           {t("workspace.settings.notifications.need_slack_or_discord_notifications")}?
           <a
-            href={`/workspaces/${workspace?.id}/integrations`}
+            href={`/workspaces/${workspace?.id}/settings/workspace/integrations`}
             className="ml-1 cursor-pointer text-sm underline">
             {t("workspace.settings.notifications.use_the_integration")}
           </a>

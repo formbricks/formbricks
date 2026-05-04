@@ -353,7 +353,7 @@ export const MainNavigation = ({
   const handleOrganizationChange = (organizationId: string) => {
     const targetPath =
       organizationId === organization.id
-        ? `/workspaces/${workspace.id}/settings/general`
+        ? `/workspaces/${workspace.id}/settings/organization/general`
         : `/organizations/${organizationId}/`;
     startTransition(() => {
       setIsOrganizationDropdownOpen(false);
@@ -385,7 +385,7 @@ export const MainNavigation = ({
       return [
         {
           text: t("workspace.settings.billing.upgrade"),
-          href: `/workspaces/${workspace.id}/settings/billing`,
+          href: `/workspaces/${workspace.id}/settings/organization/billing`,
         },
         {
           text: t("common.cancel"),
@@ -398,7 +398,7 @@ export const MainNavigation = ({
       {
         text: t("workspace.settings.billing.upgrade"),
         href: isLicenseActive
-          ? `/workspaces/${workspace.id}/settings/enterprise`
+          ? `/workspaces/${workspace.id}/settings/organization/enterprise`
           : "https://formbricks.com/upgrade-self-hosted-license",
       },
       {
@@ -572,7 +572,9 @@ export const MainNavigation = ({
 
               {/* Trial Days Remaining */}
               {!isCollapsed && isFormbricksCloud && trialDaysRemaining !== null && (
-                <Link href={`/workspaces/${workspace.id}/settings/billing`} className="m-2 block">
+                <Link
+                  href={`/workspaces/${workspace.id}/settings/organization/billing`}
+                  className="m-2 block">
                   <TrialAlert trialDaysRemaining={trialDaysRemaining} size="small" />
                 </Link>
               )}

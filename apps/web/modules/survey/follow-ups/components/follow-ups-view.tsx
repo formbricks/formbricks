@@ -56,7 +56,7 @@ export const FollowUpsView = ({
                 ? t("workspace.settings.billing.upgrade")
                 : t("common.request_trial_license"),
               href: isFormbricksCloud
-                ? `${workspaceBasePath}/settings/billing`
+                ? `${workspaceBasePath}/settings/organization/billing`
                 : "https://formbricks.com/docs/self-hosting/license",
             },
             {
