@@ -525,7 +525,7 @@ describe("API Key Management", () => {
       });
 
       expect(prisma.feedbackDirectory.count).toHaveBeenCalledWith({
-        where: { id: { in: ["dir1", "dir2"] }, organizationId: "org123" },
+        where: { id: { in: ["dir1", "dir2"] }, organizationId: "org123", isArchived: false },
       });
 
       expect(prisma.apiKey.create).toHaveBeenCalledWith({
@@ -596,7 +596,7 @@ describe("API Key Management", () => {
       ).rejects.toThrow(ResourceNotFoundError);
 
       expect(prisma.feedbackDirectory.count).toHaveBeenCalledWith({
-        where: { id: { in: ["dir1", "foreign-dir"] }, organizationId: "org123" },
+        where: { id: { in: ["dir1", "foreign-dir"] }, organizationId: "org123", isArchived: false },
       });
       expect(prisma.apiKey.create).not.toHaveBeenCalled();
     });

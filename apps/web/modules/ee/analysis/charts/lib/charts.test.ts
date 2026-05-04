@@ -35,6 +35,12 @@ vi.mock("@/lib/utils/validate", () => ({
   validateInputs: vi.fn(),
 }));
 
+vi.mock("@/modules/ee/analysis/types/analysis", async () => {
+  const actual =
+    await vi.importActual<typeof import("@/modules/ee/analysis/types/analysis")>("../../types/analysis");
+  return actual;
+});
+
 const mockChartId = "chart-abc-123";
 const mockWorkspaceId = "workspace-abc-123";
 const mockUserId = "user-abc-123";
