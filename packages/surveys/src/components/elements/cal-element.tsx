@@ -63,7 +63,11 @@ export function CalElement({
           elementId={element.id}
         />
         <CalEmbed key={element.id} element={element} onSuccessfulBooking={onSuccessfulBooking} />
-        {errorMessage ? <span className="text-red-500">{errorMessage}</span> : null}
+        {errorMessage ? (
+          <span className="text-red-500" role="alert" aria-live="assertive" aria-atomic="true">
+            {errorMessage}
+          </span>
+        ) : null}
       </div>
     </form>
   );
