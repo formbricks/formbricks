@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { ErrorCode } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
 import { AuthorizationError, InvalidInputError } from "@formbricks/types/errors";
 import { cache } from "@/lib/cache";
@@ -64,6 +65,7 @@ const mockPrismaUserFindFirst = vi.mocked(prisma.user.findFirst);
 const mockCreateAccountDeletionSsoReauthIntent = vi.mocked(createAccountDeletionSsoReauthIntent);
 const mockVerifyAccountDeletionSsoReauthIntent = vi.mocked(verifyAccountDeletionSsoReauthIntent);
 const mockGetUserAuthenticationData = vi.mocked(getUserAuthenticationData);
+const cacheError = { code: ErrorCode.Unknown };
 
 const intent = {
   id: "intent-id",
@@ -82,7 +84,21 @@ const storedIntent = {
   userId: intent.userId,
 };
 
+const samlIntent = {
+  ...intent,
+  provider: "saml",
+  providerAccountId: "saml-account-id",
+};
+
+const storedSamlIntent = {
+  id: samlIntent.id,
+  provider: samlIntent.provider,
+  providerAccountId: samlIntent.providerAccountId,
+  userId: samlIntent.userId,
+};
+
 const createIdToken = (authTime: number) => jwt.sign({ auth_time: authTime }, "test-secret");
+const createAuthnInstant = (authTime: number) => new Date(authTime * 1000).toISOString();
 
 describe("account deletion SSO reauthentication", () => {
   beforeEach(() => {
@@ -289,7 +305,7 @@ describe("account deletion SSO reauthentication", () => {
       identityProviderAccountId: intent.providerAccountId,
       password: null,
     } as any);
-    mockCache.set.mockResolvedValueOnce({ ok: false, error: new Error("cache failed") });
+    mockCache.set.mockResolvedValueOnce({ ok: false, error: cacheError });
 
     await expect(
       startAccountDeletionSsoReauthentication({
@@ -302,7 +318,7 @@ describe("account deletion SSO reauthentication", () => {
     expect(mockCreateAccountDeletionSsoReauthIntent).not.toHaveBeenCalled();
   });
 
-  test("fails SSO completion when the callback provider does not match the intent", async () => {
+  test("fails SSO completion without consuming the intent when the callback provider does not match", async () => {
     mockVerifyAccountDeletionSsoReauthIntent.mockReturnValue(intent);
     mockCache.get.mockResolvedValue({ ok: true, data: storedIntent });
 
@@ -317,7 +333,8 @@ describe("account deletion SSO reauthentication", () => {
       })
     ).rejects.toThrow(AuthorizationError);
 
-    expect(mockCache.del).toHaveBeenCalled();
+    expect(mockCache.del).not.toHaveBeenCalled();
+    expect(mockPrismaAccountFindUnique).not.toHaveBeenCalled();
   });
 
   test("rejects a mismatched SSO callback before reading or consuming the intent", async () => {
@@ -414,6 +431,64 @@ describe("account deletion SSO reauthentication", () => {
     expect(mockCache.get).not.toHaveBeenCalled();
   });
 
+  test("validates a fresh SAML callback with an AuthnInstant", async () => {
+    const nowInSeconds = Math.floor(Date.now() / 1000);
+    mockVerifyAccountDeletionSsoReauthIntent.mockReturnValue(samlIntent);
+    mockCache.get.mockResolvedValue({ ok: true, data: storedSamlIntent });
+
+    await expect(
+      validateAccountDeletionSsoReauthenticationCallback({
+        account: {
+          authn_instant: createAuthnInstant(nowInSeconds),
+          provider: "saml",
+          providerAccountId: samlIntent.providerAccountId,
+          type: "oauth",
+        } as any,
+        intentToken: "intent-token",
+      })
+    ).resolves.toBeUndefined();
+
+    expect(mockCache.get).toHaveBeenCalled();
+    expect(mockCache.del).not.toHaveBeenCalled();
+  });
+
+  test("rejects SAML callbacks without an AuthnInstant", async () => {
+    mockVerifyAccountDeletionSsoReauthIntent.mockReturnValue(samlIntent);
+
+    await expect(
+      validateAccountDeletionSsoReauthenticationCallback({
+        account: {
+          provider: "saml",
+          providerAccountId: samlIntent.providerAccountId,
+          type: "oauth",
+        } as any,
+        intentToken: "intent-token",
+      })
+    ).rejects.toThrow(AuthorizationError);
+
+    expect(mockCache.get).not.toHaveBeenCalled();
+  });
+
+  test("rejects stale SAML AuthnInstant values without consuming the intent", async () => {
+    const nowInSeconds = Math.floor(Date.now() / 1000);
+    mockVerifyAccountDeletionSsoReauthIntent.mockReturnValue(samlIntent);
+
+    await expect(
+      completeAccountDeletionSsoReauthentication({
+        account: {
+          authn_instant: createAuthnInstant(nowInSeconds - 10 * 60),
+          provider: "saml",
+          providerAccountId: samlIntent.providerAccountId,
+          type: "oauth",
+        } as any,
+        intentToken: "intent-token",
+      })
+    ).rejects.toThrow(AuthorizationError);
+
+    expect(mockCache.del).not.toHaveBeenCalled();
+    expect(mockPrismaAccountFindUnique).not.toHaveBeenCalled();
+  });
+
   test("rejects stale OIDC auth_time claims", async () => {
     const nowInSeconds = Math.floor(Date.now() / 1000);
     mockVerifyAccountDeletionSsoReauthIntent.mockReturnValue(intent);
@@ -477,6 +552,30 @@ describe("account deletion SSO reauthentication", () => {
     );
   });
 
+  test("stores a deletion marker after fresh SAML reauthentication", async () => {
+    const nowInSeconds = Math.floor(Date.now() / 1000);
+    mockVerifyAccountDeletionSsoReauthIntent.mockReturnValue(samlIntent);
+    mockCache.get.mockResolvedValue({ ok: true, data: storedSamlIntent });
+    mockPrismaAccountFindUnique.mockResolvedValue({ userId: samlIntent.userId } as any);
+
+    await completeAccountDeletionSsoReauthentication({
+      account: {
+        authn_instant: createAuthnInstant(nowInSeconds),
+        provider: "saml",
+        providerAccountId: samlIntent.providerAccountId,
+        type: "oauth",
+      } as any,
+      intentToken: "intent-token",
+    });
+
+    expect(mockCache.del).toHaveBeenCalled();
+    expect(mockCache.set).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining(storedSamlIntent),
+      5 * 60 * 1000
+    );
+  });
+
   test("stores a deletion marker when the linked account is found through legacy user fields", async () => {
     const nowInSeconds = Math.floor(Date.now() / 1000);
     mockVerifyAccountDeletionSsoReauthIntent.mockReturnValue(intent);
@@ -527,6 +626,8 @@ describe("account deletion SSO reauthentication", () => {
         intentToken: "intent-token",
       })
     ).rejects.toThrow(AuthorizationError);
+
+    expect(mockCache.del).not.toHaveBeenCalled();
   });
 
   test("fails SSO completion when the cached intent does not match the signed intent", async () => {
@@ -553,13 +654,14 @@ describe("account deletion SSO reauthentication", () => {
     ).rejects.toThrow(AuthorizationError);
 
     expect(mockPrismaAccountFindUnique).not.toHaveBeenCalled();
+    expect(mockCache.del).not.toHaveBeenCalled();
   });
 
   test("fails SSO completion when the deletion marker cannot be cached", async () => {
     const nowInSeconds = Math.floor(Date.now() / 1000);
     mockVerifyAccountDeletionSsoReauthIntent.mockReturnValue(intent);
     mockCache.get.mockResolvedValue({ ok: true, data: storedIntent });
-    mockCache.set.mockResolvedValueOnce({ ok: false, error: new Error("cache failed") });
+    mockCache.set.mockResolvedValueOnce({ ok: false, error: cacheError });
     mockPrismaAccountFindUnique.mockResolvedValue({ userId: intent.userId } as any);
 
     await expect(
@@ -578,7 +680,7 @@ describe("account deletion SSO reauthentication", () => {
   test("surfaces cache read failures while validating callbacks", async () => {
     const nowInSeconds = Math.floor(Date.now() / 1000);
     mockVerifyAccountDeletionSsoReauthIntent.mockReturnValue(intent);
-    mockCache.get.mockResolvedValue({ ok: false, error: new Error("cache read failed") });
+    mockCache.get.mockResolvedValue({ ok: false, error: cacheError });
 
     await expect(
       validateAccountDeletionSsoReauthenticationCallback({
@@ -665,7 +767,7 @@ describe("account deletion SSO reauthentication", () => {
   });
 
   test("surfaces cache read failures while consuming a marker", async () => {
-    mockCache.get.mockResolvedValue({ ok: false, error: new Error("cache read failed") });
+    mockCache.get.mockResolvedValue({ ok: false, error: cacheError });
 
     await expect(
       consumeAccountDeletionSsoReauthentication({
@@ -684,7 +786,7 @@ describe("account deletion SSO reauthentication", () => {
         completedAt: Date.now(),
       },
     });
-    mockCache.del.mockResolvedValueOnce({ ok: false, error: new Error("cache delete failed") });
+    mockCache.del.mockResolvedValueOnce({ ok: false, error: cacheError });
 
     await expect(
       consumeAccountDeletionSsoReauthentication({

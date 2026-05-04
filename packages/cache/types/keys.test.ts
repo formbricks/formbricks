@@ -96,9 +96,11 @@ describe("@formbricks/cache types/keys", () => {
       const accountDeletionNamespace: CustomCacheNamespace = "account_deletion";
       const analyticsNamespace: CustomCacheNamespace = "analytics";
       const billingNamespace: CustomCacheNamespace = "billing";
+      const samlNamespace: CustomCacheNamespace = "saml";
       expect(accountDeletionNamespace).toBe("account_deletion");
       expect(analyticsNamespace).toBe("analytics");
       expect(billingNamespace).toBe("billing");
+      expect(samlNamespace).toBe("saml");
     });
 
     test("should be usable in cache key construction", () => {

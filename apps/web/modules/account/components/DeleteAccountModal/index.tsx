@@ -57,7 +57,7 @@ export const DeleteAccountModal = ({
   const startSsoReauthentication = async () => {
     const result = await startAccountDeletionSsoReauthenticationAction({
       confirmationEmail: inputValue,
-      returnToUrl: window.location.href,
+      returnToUrl: globalThis.location.href,
     });
 
     if (!result?.data) {
@@ -124,9 +124,9 @@ export const DeleteAccountModal = ({
 
       // Manual redirect after signOut completes
       if (isFormbricksCloud) {
-        window.location.replace("https://app.formbricks.com/s/clri52y3z8f221225wjdhsoo2");
+        globalThis.location.replace("https://app.formbricks.com/s/clri52y3z8f221225wjdhsoo2");
       } else {
-        window.location.replace("/auth/login");
+        globalThis.location.replace("/auth/login");
       }
     } catch (error) {
       logger.error({ error }, "Account deletion failed");

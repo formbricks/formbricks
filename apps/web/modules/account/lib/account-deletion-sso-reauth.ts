@@ -1,6 +1,6 @@
 import "server-only";
 import type { IdentityProvider } from "@prisma/client";
-import jwt, { type JwtPayload } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import type { Account } from "next-auth";
 import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
@@ -22,10 +22,13 @@ import {
 
 const ACCOUNT_DELETION_SSO_REAUTH_INTENT_TTL_MS = 10 * 60 * 1000;
 const ACCOUNT_DELETION_SSO_REAUTH_MARKER_TTL_MS = 5 * 60 * 1000;
-const OIDC_AUTH_TIME_MAX_AGE_SECONDS = 5 * 60;
-const OIDC_AUTH_TIME_FUTURE_SKEW_SECONDS = 60;
+const SSO_AUTH_TIME_MAX_AGE_SECONDS = 5 * 60;
+const SSO_AUTH_TIME_FUTURE_SKEW_SECONDS = 60;
 
 type TSsoIdentityProvider = Exclude<IdentityProvider, "email">;
+type TAccountWithSamlAuthnInstant = Account & {
+  authn_instant?: unknown;
+};
 
 type TStoredAccountDeletionSsoReauthIntent = {
   id: string;
@@ -234,10 +237,9 @@ const assertStoredAccountDeletionSsoReauthIntentMatches = (
   intent: TStoredAccountDeletionSsoReauthIntent
 ) => {
   if (
-    !cachedIntent ||
-    cachedIntent.userId !== intent.userId ||
-    cachedIntent.provider !== intent.provider ||
-    cachedIntent.providerAccountId !== intent.providerAccountId
+    cachedIntent?.userId !== intent.userId ||
+    cachedIntent?.provider !== intent.provider ||
+    cachedIntent?.providerAccountId !== intent.providerAccountId
   ) {
     throw new AuthorizationError(DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR);
   }
@@ -309,6 +311,16 @@ const findLinkedSsoUserId = async ({
   return legacyUser?.id ?? null;
 };
 
+const assertFreshAuthTime = (authTimeInSeconds: number) => {
+  const nowInSeconds = Math.floor(Date.now() / 1000);
+  const isTooOld = nowInSeconds - authTimeInSeconds > SSO_AUTH_TIME_MAX_AGE_SECONDS;
+  const isFromTheFuture = authTimeInSeconds - nowInSeconds > SSO_AUTH_TIME_FUTURE_SKEW_SECONDS;
+
+  if (isTooOld || isFromTheFuture) {
+    throw new AuthorizationError(DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR);
+  }
+};
+
 const assertFreshOidcAuthTime = (provider: TSsoIdentityProvider, idToken?: string) => {
   if (!OIDC_REAUTH_PROVIDERS.has(provider)) {
     return;
@@ -318,7 +330,7 @@ const assertFreshOidcAuthTime = (provider: TSsoIdentityProvider, idToken?: strin
     throw new AuthorizationError(DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR);
   }
 
-  const decodedToken = jwt.decode(idToken) as JwtPayload | string | null;
+  const decodedToken = jwt.decode(idToken);
 
   if (!decodedToken || typeof decodedToken === "string") {
     throw new AuthorizationError(DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR);
@@ -330,13 +342,33 @@ const assertFreshOidcAuthTime = (provider: TSsoIdentityProvider, idToken?: strin
     throw new AuthorizationError(DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR);
   }
 
-  const nowInSeconds = Math.floor(Date.now() / 1000);
-  const isTooOld = nowInSeconds - authTime > OIDC_AUTH_TIME_MAX_AGE_SECONDS;
-  const isFromTheFuture = authTime - nowInSeconds > OIDC_AUTH_TIME_FUTURE_SKEW_SECONDS;
+  assertFreshAuthTime(authTime);
+};
 
-  if (isTooOld || isFromTheFuture) {
+const assertFreshSamlAuthnInstant = (
+  provider: TSsoIdentityProvider,
+  account: TAccountWithSamlAuthnInstant
+) => {
+  if (provider !== "saml") {
+    return;
+  }
+
+  if (typeof account.authn_instant !== "string") {
     throw new AuthorizationError(DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR);
   }
+
+  const authnInstantTimestamp = Date.parse(account.authn_instant);
+
+  if (Number.isNaN(authnInstantTimestamp)) {
+    throw new AuthorizationError(DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR);
+  }
+
+  assertFreshAuthTime(Math.floor(authnInstantTimestamp / 1000));
+};
+
+const assertFreshSsoAuthentication = (provider: TSsoIdentityProvider, account: Account) => {
+  assertFreshOidcAuthTime(provider, account.id_token);
+  assertFreshSamlAuthnInstant(provider, account);
 };
 
 const getVerifiedAccountDeletionSsoReauthIntent = (intentToken: string) => {
@@ -443,7 +475,6 @@ export const completeAccountDeletionSsoReauthentication = async ({
   const { intent, storedIntent } = getVerifiedAccountDeletionSsoReauthIntent(intentToken);
   const normalizedProvider = getNormalizedSsoProviderFromAccount(account);
 
-  await consumeStoredAccountDeletionSsoReauthIntent(storedIntent);
   assertAccountMatchesIntent({
     account,
     intentProvider: intent.provider,
@@ -451,7 +482,8 @@ export const completeAccountDeletionSsoReauthentication = async ({
     providerAccountId: intent.providerAccountId,
   });
 
-  assertFreshOidcAuthTime(normalizedProvider, account.id_token);
+  assertFreshSsoAuthentication(normalizedProvider, account);
+  await assertStoredAccountDeletionSsoReauthIntentExists(storedIntent);
 
   const linkedUserId = await findLinkedSsoUserId({
     provider: normalizedProvider,
@@ -461,6 +493,8 @@ export const completeAccountDeletionSsoReauthentication = async ({
   if (linkedUserId !== intent.userId) {
     throw new AuthorizationError(DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR);
   }
+
+  await consumeStoredAccountDeletionSsoReauthIntent(storedIntent);
 
   await storeAccountDeletionSsoReauthMarker({
     completedAt: Date.now(),
@@ -487,7 +521,7 @@ export const validateAccountDeletionSsoReauthenticationCallback = async ({
     provider: normalizedProvider,
     providerAccountId: intent.providerAccountId,
   });
-  assertFreshOidcAuthTime(normalizedProvider, account.id_token);
+  assertFreshSsoAuthentication(normalizedProvider, account);
   await assertStoredAccountDeletionSsoReauthIntentExists(storedIntent);
 };
 
@@ -510,11 +544,10 @@ export const consumeAccountDeletionSsoReauthentication = async ({
   );
 
   if (
-    !marker ||
-    marker.userId !== userId ||
-    marker.provider !== provider ||
-    marker.providerAccountId !== ssoProviderAccountId ||
-    Date.now() - marker.completedAt > ACCOUNT_DELETION_SSO_REAUTH_MARKER_TTL_MS
+    marker?.userId !== userId ||
+    marker?.provider !== provider ||
+    marker?.providerAccountId !== ssoProviderAccountId ||
+    Date.now() - (marker?.completedAt ?? 0) > ACCOUNT_DELETION_SSO_REAUTH_MARKER_TTL_MS
   ) {
     throw new AuthorizationError(DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR);
   }
