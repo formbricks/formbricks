@@ -117,27 +117,27 @@ const captureSurveyEditDiffEvents = (
         { ...baseLanguageProps, language_code: first.language.code },
         groupContext
       );
-      for (const lang of rest) {
+      for (let i = 0; i < rest.length; i++) {
         capturePostHogEvent(
           context.userId,
           "multi_language_created",
           {
             ...baseLanguageProps,
-            language_code: lang.language.code,
-            existing_language_count: oldLanguages.length,
+            language_code: rest[i].language.code,
+            existing_language_count: oldLanguages.length + 1 + i,
           },
           groupContext
         );
       }
     } else {
-      for (const lang of addedLanguages) {
+      for (let i = 0; i < addedLanguages.length; i++) {
         capturePostHogEvent(
           context.userId,
           "multi_language_created",
           {
             ...baseLanguageProps,
-            language_code: lang.language.code,
-            existing_language_count: oldLanguages.length,
+            language_code: addedLanguages[i].language.code,
+            existing_language_count: oldLanguages.length + i,
           },
           groupContext
         );
@@ -177,6 +177,7 @@ export const updateSurveyDraftAction = authenticatedActionClient.inputSchema(ZSu
     const survey = parsedInput as TSurvey;
 
     const organizationId = await getOrganizationIdFromSurveyId(survey.id);
+    const projectId = await getProjectIdFromSurveyId(survey.id);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId,
@@ -187,7 +188,7 @@ export const updateSurveyDraftAction = authenticatedActionClient.inputSchema(ZSu
         },
         {
           type: "projectTeam",
-          projectId: await getProjectIdFromSurveyId(survey.id),
+          projectId,
           minPermission: "readWrite",
         },
       ],
@@ -219,7 +220,6 @@ export const updateSurveyDraftAction = authenticatedActionClient.inputSchema(ZSu
     ctx.auditLoggingCtx.newObject = result;
 
     if (POSTHOG_KEY) {
-      const projectId = await getProjectIdFromSurveyId(survey.id);
       captureSurveyEditDiffEvents(oldObject, result, {
         userId: ctx.user.id,
         surveyId: result.id,

@@ -60,6 +60,7 @@ export const createSegmentAction = authenticatedActionClient.inputSchema(ZSegmen
 
     // Set the organizationId in the context to be used in the audit log
     ctx.auditLoggingCtx.organizationId = organizationId;
+    const projectId = await getProjectIdFromEnvironmentId(parsedInput.environmentId);
 
     await checkAuthorizationUpdated({
       userId: ctx.user?.id ?? "",
@@ -72,7 +73,7 @@ export const createSegmentAction = authenticatedActionClient.inputSchema(ZSegmen
         {
           type: "projectTeam",
           minPermission: "readWrite",
-          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
+          projectId,
         },
       ],
     });
@@ -93,7 +94,6 @@ export const createSegmentAction = authenticatedActionClient.inputSchema(ZSegmen
     ctx.auditLoggingCtx.segmentId = segment.id;
     ctx.auditLoggingCtx.newObject = segment;
 
-    const projectId = await getProjectIdFromEnvironmentId(parsedInput.environmentId);
     capturePostHogEvent(
       ctx.user?.id ?? "",
       "segment_created",

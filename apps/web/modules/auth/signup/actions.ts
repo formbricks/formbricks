@@ -116,9 +116,13 @@ async function handleInviteAcceptance(
     role: invite.role,
   });
 
-  const invitedOrganization = await getOrganization(invite.organizationId);
-  if (invitedOrganization) {
-    groupIdentifyPostHog("organization", invitedOrganization.id, { name: invitedOrganization.name });
+  try {
+    const invitedOrganization = await getOrganization(invite.organizationId);
+    if (invitedOrganization) {
+      groupIdentifyPostHog("organization", invitedOrganization.id, { name: invitedOrganization.name });
+    }
+  } catch (error) {
+    logger.warn({ error, organizationId: invite.organizationId }, "Failed to identify org group in PostHog");
   }
 
   if (invite.teamIds) {
