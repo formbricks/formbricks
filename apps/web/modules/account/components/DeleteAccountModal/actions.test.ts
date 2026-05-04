@@ -150,6 +150,20 @@ describe("delete account actions", () => {
     expect(mocks.deleteUser).not.toHaveBeenCalled();
   });
 
+  test("rejects deletion when the confirmation email does not match the authenticated user", async () => {
+    await expect(
+      deleteUserAction({
+        ctx: createActionContext(),
+        parsedInput: { confirmationEmail: "attacker@example.com", password: "correct-password" },
+      } as any)
+    ).rejects.toThrow(AuthorizationError);
+
+    expect(mocks.getUserAuthenticationData).not.toHaveBeenCalled();
+    expect(mocks.verifyUserPassword).not.toHaveBeenCalled();
+    expect(mocks.consumeAccountDeletionSsoReauthentication).not.toHaveBeenCalled();
+    expect(mocks.deleteUser).not.toHaveBeenCalled();
+  });
+
   test("returns the wrong password error for password-backed users with an invalid password", async () => {
     mocks.verifyUserPassword.mockResolvedValueOnce(false);
 
@@ -250,5 +264,38 @@ describe("delete account actions", () => {
     ).rejects.toThrow(TooManyRequestsError);
 
     expect(mocks.startAccountDeletionSsoReauthentication).not.toHaveBeenCalled();
+  });
+
+  test("rejects malformed SSO reauthentication start payloads after rate limiting", async () => {
+    await expect(
+      startAccountDeletionSsoReauthenticationAction({
+        ctx: createActionContext(),
+        parsedInput: { confirmationEmail: user.email },
+      } as any)
+    ).rejects.toThrow(InvalidInputError);
+
+    expect(mocks.applyRateLimit).toHaveBeenCalled();
+    expect(mocks.startAccountDeletionSsoReauthentication).not.toHaveBeenCalled();
+  });
+
+  test("starts SSO reauthentication with the authenticated user id", async () => {
+    const result = await startAccountDeletionSsoReauthenticationAction({
+      ctx: createActionContext(),
+      parsedInput: {
+        confirmationEmail: user.email.toUpperCase(),
+        returnToUrl: "http://localhost:3000/environments/env-1/settings/profile",
+      },
+    } as any);
+
+    expect(mocks.startAccountDeletionSsoReauthentication).toHaveBeenCalledWith({
+      confirmationEmail: user.email.toUpperCase(),
+      returnToUrl: "http://localhost:3000/environments/env-1/settings/profile",
+      userId: user.id,
+    });
+    expect(result).toEqual({
+      authorizationParams: { login_hint: user.email, max_age: "0", prompt: "login" },
+      callbackUrl: "http://localhost:3000/auth/account-deletion/sso/complete?intent=intent-token",
+      provider: "google",
+    });
   });
 });

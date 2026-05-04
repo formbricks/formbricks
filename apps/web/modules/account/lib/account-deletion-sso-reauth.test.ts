@@ -8,6 +8,7 @@ import { getUserAuthenticationData } from "@/lib/user/password";
 import {
   completeAccountDeletionSsoReauthentication,
   consumeAccountDeletionSsoReauthentication,
+  getAccountDeletionSsoReauthIntentFromCallbackUrl,
   startAccountDeletionSsoReauthentication,
   validateAccountDeletionSsoReauthenticationCallback,
 } from "./account-deletion-sso-reauth";
@@ -129,6 +130,101 @@ describe("account deletion SSO reauthentication", () => {
     });
   });
 
+  test("extracts reauth intents only from the expected callback URL", () => {
+    expect(
+      getAccountDeletionSsoReauthIntentFromCallbackUrl(
+        "http://localhost:3000/auth/account-deletion/sso/complete?intent=intent-token"
+      )
+    ).toBe("intent-token");
+    expect(
+      getAccountDeletionSsoReauthIntentFromCallbackUrl("http://localhost:3000/auth/login?intent=intent-token")
+    ).toBeNull();
+    expect(
+      getAccountDeletionSsoReauthIntentFromCallbackUrl(
+        "https://evil.example/auth/account-deletion/sso/complete?intent=intent-token"
+      )
+    ).toBeNull();
+  });
+
+  test("starts SAML reauthentication with forced-authentication params", async () => {
+    mockGetUserAuthenticationData.mockResolvedValue({
+      email: intent.email,
+      identityProvider: "saml",
+      identityProviderAccountId: intent.providerAccountId,
+      password: null,
+    } as any);
+    mockCreateAccountDeletionSsoReauthIntent.mockReturnValue("intent-token");
+
+    const result = await startAccountDeletionSsoReauthentication({
+      confirmationEmail: intent.email,
+      returnToUrl: "/environments/env-1/settings/profile",
+      userId: intent.userId,
+    });
+
+    expect(result).toEqual({
+      authorizationParams: {
+        forceAuthn: "true",
+        product: "formbricks",
+        provider: "saml",
+        tenant: "formbricks.com",
+      },
+      callbackUrl: "http://localhost:3000/auth/account-deletion/sso/complete?intent=intent-token",
+      provider: "saml",
+    });
+  });
+
+  test("starts non-OIDC OAuth reauthentication with provider-specific login params", async () => {
+    mockGetUserAuthenticationData.mockResolvedValue({
+      email: intent.email,
+      identityProvider: "github",
+      identityProviderAccountId: "github-account-id",
+      password: null,
+    } as any);
+    mockCreateAccountDeletionSsoReauthIntent.mockReturnValue("intent-token");
+
+    const result = await startAccountDeletionSsoReauthentication({
+      confirmationEmail: intent.email,
+      returnToUrl: "/environments/env-1/settings/profile",
+      userId: intent.userId,
+    });
+
+    expect(result).toMatchObject({
+      authorizationParams: {
+        login: intent.email,
+        prompt: "login",
+      },
+      provider: "github",
+    });
+    expect(mockCreateAccountDeletionSsoReauthIntent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        provider: "github",
+        providerAccountId: "github-account-id",
+      })
+    );
+  });
+
+  test("falls back to the web app URL when the return URL is unsafe", async () => {
+    mockGetUserAuthenticationData.mockResolvedValue({
+      email: intent.email,
+      identityProvider: "google",
+      identityProviderAccountId: intent.providerAccountId,
+      password: null,
+    } as any);
+    mockCreateAccountDeletionSsoReauthIntent.mockReturnValue("intent-token");
+
+    await startAccountDeletionSsoReauthentication({
+      confirmationEmail: intent.email,
+      returnToUrl: "https://evil.example/phish",
+      userId: intent.userId,
+    });
+
+    expect(mockCreateAccountDeletionSsoReauthIntent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        returnToUrl: "http://localhost:3000",
+      })
+    );
+  });
+
   test("does not start SSO reauthentication for password-backed users", async () => {
     mockGetUserAuthenticationData.mockResolvedValue({
       email: intent.email,
@@ -146,6 +242,64 @@ describe("account deletion SSO reauthentication", () => {
     ).rejects.toThrow(InvalidInputError);
 
     expect(mockCache.set).not.toHaveBeenCalled();
+  });
+
+  test("does not start SSO reauthentication when the confirmation email mismatches", async () => {
+    mockGetUserAuthenticationData.mockResolvedValue({
+      email: intent.email,
+      identityProvider: "google",
+      identityProviderAccountId: intent.providerAccountId,
+      password: null,
+    } as any);
+
+    await expect(
+      startAccountDeletionSsoReauthentication({
+        confirmationEmail: "attacker@example.com",
+        returnToUrl: "/environments/env-1/settings/profile",
+        userId: intent.userId,
+      })
+    ).rejects.toThrow(AuthorizationError);
+
+    expect(mockCache.set).not.toHaveBeenCalled();
+  });
+
+  test("does not start SSO reauthentication without a linked SSO provider account", async () => {
+    mockGetUserAuthenticationData.mockResolvedValue({
+      email: intent.email,
+      identityProvider: "google",
+      identityProviderAccountId: null,
+      password: null,
+    } as any);
+
+    await expect(
+      startAccountDeletionSsoReauthentication({
+        confirmationEmail: intent.email,
+        returnToUrl: "/environments/env-1/settings/profile",
+        userId: intent.userId,
+      })
+    ).rejects.toThrow(AuthorizationError);
+
+    expect(mockCache.set).not.toHaveBeenCalled();
+  });
+
+  test("fails SSO start when the intent cannot be cached", async () => {
+    mockGetUserAuthenticationData.mockResolvedValue({
+      email: intent.email,
+      identityProvider: "google",
+      identityProviderAccountId: intent.providerAccountId,
+      password: null,
+    } as any);
+    mockCache.set.mockResolvedValueOnce({ ok: false, error: new Error("cache failed") });
+
+    await expect(
+      startAccountDeletionSsoReauthentication({
+        confirmationEmail: intent.email,
+        returnToUrl: "/environments/env-1/settings/profile",
+        userId: intent.userId,
+      })
+    ).rejects.toThrow("Unable to start account deletion SSO reauthentication");
+
+    expect(mockCreateAccountDeletionSsoReauthIntent).not.toHaveBeenCalled();
   });
 
   test("fails SSO completion when the callback provider does not match the intent", async () => {
@@ -184,6 +338,43 @@ describe("account deletion SSO reauthentication", () => {
     expect(mockCache.del).not.toHaveBeenCalled();
   });
 
+  test("rejects callbacks when the signed intent is not for an SSO provider", async () => {
+    mockVerifyAccountDeletionSsoReauthIntent.mockReturnValue({
+      ...intent,
+      provider: "email",
+    });
+
+    await expect(
+      validateAccountDeletionSsoReauthenticationCallback({
+        account: {
+          provider: "google",
+          providerAccountId: intent.providerAccountId,
+          type: "oauth",
+        } as any,
+        intentToken: "intent-token",
+      })
+    ).rejects.toThrow(AuthorizationError);
+
+    expect(mockCache.get).not.toHaveBeenCalled();
+  });
+
+  test("rejects callbacks from unsupported account providers", async () => {
+    mockVerifyAccountDeletionSsoReauthIntent.mockReturnValue(intent);
+
+    await expect(
+      validateAccountDeletionSsoReauthenticationCallback({
+        account: {
+          provider: "credentials",
+          providerAccountId: intent.providerAccountId,
+          type: "credentials",
+        } as any,
+        intentToken: "intent-token",
+      })
+    ).rejects.toThrow(AuthorizationError);
+
+    expect(mockCache.get).not.toHaveBeenCalled();
+  });
+
   test("validates a fresh SSO callback before the normal SSO handler runs", async () => {
     const nowInSeconds = Math.floor(Date.now() / 1000);
     mockVerifyAccountDeletionSsoReauthIntent.mockReturnValue(intent);
@@ -205,6 +396,24 @@ describe("account deletion SSO reauthentication", () => {
     expect(mockCache.del).not.toHaveBeenCalled();
   });
 
+  test("rejects OIDC callbacks without an auth_time claim", async () => {
+    mockVerifyAccountDeletionSsoReauthIntent.mockReturnValue(intent);
+
+    await expect(
+      validateAccountDeletionSsoReauthenticationCallback({
+        account: {
+          id_token: jwt.sign({}, "test-secret"),
+          provider: "google",
+          providerAccountId: intent.providerAccountId,
+          type: "oauth",
+        } as any,
+        intentToken: "intent-token",
+      })
+    ).rejects.toThrow(AuthorizationError);
+
+    expect(mockCache.get).not.toHaveBeenCalled();
+  });
+
   test("rejects stale OIDC auth_time claims", async () => {
     const nowInSeconds = Math.floor(Date.now() / 1000);
     mockVerifyAccountDeletionSsoReauthIntent.mockReturnValue(intent);
@@ -214,6 +423,26 @@ describe("account deletion SSO reauthentication", () => {
       completeAccountDeletionSsoReauthentication({
         account: {
           id_token: createIdToken(nowInSeconds - 10 * 60),
+          provider: "google",
+          providerAccountId: intent.providerAccountId,
+          type: "oauth",
+        } as any,
+        intentToken: "intent-token",
+      })
+    ).rejects.toThrow(AuthorizationError);
+
+    expect(mockPrismaAccountFindUnique).not.toHaveBeenCalled();
+  });
+
+  test("rejects OIDC auth_time claims too far in the future", async () => {
+    const nowInSeconds = Math.floor(Date.now() / 1000);
+    mockVerifyAccountDeletionSsoReauthIntent.mockReturnValue(intent);
+    mockCache.get.mockResolvedValue({ ok: true, data: storedIntent });
+
+    await expect(
+      completeAccountDeletionSsoReauthentication({
+        account: {
+          id_token: createIdToken(nowInSeconds + 2 * 60),
           provider: "google",
           providerAccountId: intent.providerAccountId,
           type: "oauth",
@@ -248,6 +477,39 @@ describe("account deletion SSO reauthentication", () => {
     );
   });
 
+  test("stores a deletion marker when the linked account is found through legacy user fields", async () => {
+    const nowInSeconds = Math.floor(Date.now() / 1000);
+    mockVerifyAccountDeletionSsoReauthIntent.mockReturnValue(intent);
+    mockCache.get.mockResolvedValue({ ok: true, data: storedIntent });
+    mockPrismaAccountFindUnique.mockResolvedValue(null);
+    mockPrismaUserFindFirst.mockResolvedValue({ id: intent.userId } as any);
+
+    await completeAccountDeletionSsoReauthentication({
+      account: {
+        id_token: createIdToken(nowInSeconds),
+        provider: "google",
+        providerAccountId: intent.providerAccountId,
+        type: "oauth",
+      } as any,
+      intentToken: "intent-token",
+    });
+
+    expect(mockPrismaUserFindFirst).toHaveBeenCalledWith({
+      where: {
+        identityProvider: "google",
+        identityProviderAccountId: intent.providerAccountId,
+      },
+      select: {
+        id: true,
+      },
+    });
+    expect(mockCache.set).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining(storedIntent),
+      5 * 60 * 1000
+    );
+  });
+
   test("fails SSO completion when the provider account belongs to another user", async () => {
     const nowInSeconds = Math.floor(Date.now() / 1000);
     mockVerifyAccountDeletionSsoReauthIntent.mockReturnValue(intent);
@@ -265,6 +527,70 @@ describe("account deletion SSO reauthentication", () => {
         intentToken: "intent-token",
       })
     ).rejects.toThrow(AuthorizationError);
+  });
+
+  test("fails SSO completion when the cached intent does not match the signed intent", async () => {
+    const nowInSeconds = Math.floor(Date.now() / 1000);
+    mockVerifyAccountDeletionSsoReauthIntent.mockReturnValue(intent);
+    mockCache.get.mockResolvedValue({
+      ok: true,
+      data: {
+        ...storedIntent,
+        providerAccountId: "different-provider-account-id",
+      },
+    });
+
+    await expect(
+      completeAccountDeletionSsoReauthentication({
+        account: {
+          id_token: createIdToken(nowInSeconds),
+          provider: "google",
+          providerAccountId: intent.providerAccountId,
+          type: "oauth",
+        } as any,
+        intentToken: "intent-token",
+      })
+    ).rejects.toThrow(AuthorizationError);
+
+    expect(mockPrismaAccountFindUnique).not.toHaveBeenCalled();
+  });
+
+  test("fails SSO completion when the deletion marker cannot be cached", async () => {
+    const nowInSeconds = Math.floor(Date.now() / 1000);
+    mockVerifyAccountDeletionSsoReauthIntent.mockReturnValue(intent);
+    mockCache.get.mockResolvedValue({ ok: true, data: storedIntent });
+    mockCache.set.mockResolvedValueOnce({ ok: false, error: new Error("cache failed") });
+    mockPrismaAccountFindUnique.mockResolvedValue({ userId: intent.userId } as any);
+
+    await expect(
+      completeAccountDeletionSsoReauthentication({
+        account: {
+          id_token: createIdToken(nowInSeconds),
+          provider: "google",
+          providerAccountId: intent.providerAccountId,
+          type: "oauth",
+        } as any,
+        intentToken: "intent-token",
+      })
+    ).rejects.toThrow("Unable to complete account deletion SSO reauthentication");
+  });
+
+  test("surfaces cache read failures while validating callbacks", async () => {
+    const nowInSeconds = Math.floor(Date.now() / 1000);
+    mockVerifyAccountDeletionSsoReauthIntent.mockReturnValue(intent);
+    mockCache.get.mockResolvedValue({ ok: false, error: new Error("cache read failed") });
+
+    await expect(
+      validateAccountDeletionSsoReauthenticationCallback({
+        account: {
+          id_token: createIdToken(nowInSeconds),
+          provider: "google",
+          providerAccountId: intent.providerAccountId,
+          type: "oauth",
+        } as any,
+        intentToken: "intent-token",
+      })
+    ).rejects.toThrow("Unable to read account deletion SSO reauth value");
   });
 
   test("requires a completed SSO reauthentication marker before deleting an SSO account", async () => {
@@ -295,6 +621,97 @@ describe("account deletion SSO reauthentication", () => {
         userId: intent.userId,
       })
     ).resolves.toBeUndefined();
+
+    expect(mockCache.del).toHaveBeenCalled();
+  });
+
+  test("atomically consumes a valid SSO reauthentication marker from Redis", async () => {
+    const redisEval = vi.fn().mockResolvedValue(
+      JSON.stringify({
+        ...storedIntent,
+        completedAt: Date.now(),
+      })
+    );
+    mockCache.getRedisClient.mockResolvedValueOnce({ eval: redisEval } as any);
+
+    await expect(
+      consumeAccountDeletionSsoReauthentication({
+        identityProvider: "google",
+        providerAccountId: intent.providerAccountId,
+        userId: intent.userId,
+      })
+    ).resolves.toBeUndefined();
+
+    expect(redisEval).toHaveBeenCalledWith(expect.any(String), {
+      arguments: [],
+      keys: [expect.any(String)],
+    });
+    expect(mockCache.get).not.toHaveBeenCalled();
+    expect(mockCache.del).not.toHaveBeenCalled();
+  });
+
+  test("rejects unexpected Redis values while consuming a marker", async () => {
+    mockCache.getRedisClient.mockResolvedValueOnce({
+      eval: vi.fn().mockResolvedValue(42),
+    } as any);
+
+    await expect(
+      consumeAccountDeletionSsoReauthentication({
+        identityProvider: "google",
+        providerAccountId: intent.providerAccountId,
+        userId: intent.userId,
+      })
+    ).rejects.toThrow("Unexpected cached account deletion SSO reauth value");
+  });
+
+  test("surfaces cache read failures while consuming a marker", async () => {
+    mockCache.get.mockResolvedValue({ ok: false, error: new Error("cache read failed") });
+
+    await expect(
+      consumeAccountDeletionSsoReauthentication({
+        identityProvider: "google",
+        providerAccountId: intent.providerAccountId,
+        userId: intent.userId,
+      })
+    ).rejects.toThrow("Unable to read account deletion SSO reauth value");
+  });
+
+  test("surfaces cache delete failures while consuming a marker", async () => {
+    mockCache.get.mockResolvedValue({
+      ok: true,
+      data: {
+        ...storedIntent,
+        completedAt: Date.now(),
+      },
+    });
+    mockCache.del.mockResolvedValueOnce({ ok: false, error: new Error("cache delete failed") });
+
+    await expect(
+      consumeAccountDeletionSsoReauthentication({
+        identityProvider: "google",
+        providerAccountId: intent.providerAccountId,
+        userId: intent.userId,
+      })
+    ).rejects.toThrow("Unable to consume account deletion SSO reauth value");
+  });
+
+  test("rejects a marker for a different provider account", async () => {
+    mockCache.get.mockResolvedValue({
+      ok: true,
+      data: {
+        ...storedIntent,
+        completedAt: Date.now(),
+        providerAccountId: "different-provider-account-id",
+      },
+    });
+
+    await expect(
+      consumeAccountDeletionSsoReauthentication({
+        identityProvider: "google",
+        providerAccountId: intent.providerAccountId,
+        userId: intent.userId,
+      })
+    ).rejects.toThrow(AuthorizationError);
 
     expect(mockCache.del).toHaveBeenCalled();
   });
