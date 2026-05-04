@@ -35,6 +35,16 @@ type TSsoRelinkIntentPayload = {
   userId: string;
 };
 
+type TAccountDeletionSsoReauthIntentPayload = {
+  id: string;
+  email: string;
+  provider: string;
+  providerAccountId: string;
+  purpose: "account_deletion_sso_reauth";
+  returnToUrl: string;
+  userId: string;
+};
+
 const DEFAULT_VERIFICATION_TOKEN_PURPOSE: TVerificationTokenPurpose = "email_verification";
 
 const getVerificationTokenPurpose = (purpose: unknown): TVerificationTokenPurpose => {
@@ -262,6 +272,10 @@ const DEFAULT_SSO_RELINK_INTENT_OPTIONS: SignOptions = {
   expiresIn: "15m",
 };
 
+const DEFAULT_ACCOUNT_DELETION_SSO_REAUTH_INTENT_OPTIONS: SignOptions = {
+  expiresIn: "10m",
+};
+
 export const createSsoRelinkIntent = (
   payload: TSsoRelinkIntentPayload,
   options: SignOptions = DEFAULT_SSO_RELINK_INTENT_OPTIONS
@@ -320,6 +334,77 @@ export const verifySsoRelinkIntent = (token: string): TSsoRelinkIntentPayload =>
     provider: payload.provider,
     providerAccountId: decryptWithFallback(payload.providerAccountId, ENCRYPTION_KEY),
     callbackUrl: decryptWithFallback(payload.callbackUrl, ENCRYPTION_KEY),
+  };
+};
+
+export const createAccountDeletionSsoReauthIntent = (
+  payload: TAccountDeletionSsoReauthIntentPayload,
+  options: SignOptions = DEFAULT_ACCOUNT_DELETION_SSO_REAUTH_INTENT_OPTIONS
+): string => {
+  if (!NEXTAUTH_SECRET) {
+    throw new Error("NEXTAUTH_SECRET is not set");
+  }
+
+  if (!ENCRYPTION_KEY) {
+    throw new Error("ENCRYPTION_KEY is not set");
+  }
+
+  return jwt.sign(
+    {
+      id: symmetricEncrypt(payload.id, ENCRYPTION_KEY),
+      userId: symmetricEncrypt(payload.userId, ENCRYPTION_KEY),
+      email: symmetricEncrypt(payload.email, ENCRYPTION_KEY),
+      provider: payload.provider,
+      providerAccountId: symmetricEncrypt(payload.providerAccountId, ENCRYPTION_KEY),
+      purpose: payload.purpose,
+      returnToUrl: symmetricEncrypt(payload.returnToUrl, ENCRYPTION_KEY),
+    },
+    NEXTAUTH_SECRET,
+    options
+  );
+};
+
+export const verifyAccountDeletionSsoReauthIntent = (
+  token: string
+): TAccountDeletionSsoReauthIntentPayload => {
+  if (!NEXTAUTH_SECRET) {
+    throw new Error("NEXTAUTH_SECRET is not set");
+  }
+
+  if (!ENCRYPTION_KEY) {
+    throw new Error("ENCRYPTION_KEY is not set");
+  }
+
+  const payload = jwt.verify(token, NEXTAUTH_SECRET, { algorithms: ["HS256"] }) as JwtPayload & {
+    id: string;
+    userId: string;
+    email: string;
+    provider: string;
+    providerAccountId: string;
+    purpose: string;
+    returnToUrl: string;
+  };
+
+  if (
+    !payload?.id ||
+    !payload?.userId ||
+    !payload?.email ||
+    !payload?.provider ||
+    !payload?.providerAccountId ||
+    payload?.purpose !== "account_deletion_sso_reauth" ||
+    !payload?.returnToUrl
+  ) {
+    throw new Error("Token is invalid or missing required fields");
+  }
+
+  return {
+    id: decryptWithFallback(payload.id, ENCRYPTION_KEY),
+    userId: decryptWithFallback(payload.userId, ENCRYPTION_KEY),
+    email: decryptWithFallback(payload.email, ENCRYPTION_KEY),
+    provider: payload.provider,
+    providerAccountId: decryptWithFallback(payload.providerAccountId, ENCRYPTION_KEY),
+    purpose: "account_deletion_sso_reauth",
+    returnToUrl: decryptWithFallback(payload.returnToUrl, ENCRYPTION_KEY),
   };
 };
 

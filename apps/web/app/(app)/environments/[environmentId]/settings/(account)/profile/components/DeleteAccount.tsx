@@ -9,19 +9,23 @@ import { DeleteAccountModal } from "@/modules/account/components/DeleteAccountMo
 import { Button } from "@/modules/ui/components/button";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
+type TDeleteAccountProps = {
+  session: Session | null;
+  IS_FORMBRICKS_CLOUD: boolean;
+  user: TUser;
+  organizationsWithSingleOwner: TOrganization[];
+  isMultiOrgEnabled: boolean;
+  requiresPasswordConfirmation: boolean;
+};
+
 export const DeleteAccount = ({
   session,
   IS_FORMBRICKS_CLOUD,
   user,
   organizationsWithSingleOwner,
   isMultiOrgEnabled,
-}: {
-  session: Session | null;
-  IS_FORMBRICKS_CLOUD: boolean;
-  user: TUser;
-  organizationsWithSingleOwner: TOrganization[];
-  isMultiOrgEnabled: boolean;
-}) => {
+  requiresPasswordConfirmation,
+}: Readonly<TDeleteAccountProps>) => {
   const [isModalOpen, setModalOpen] = useState(false);
   const isDeleteDisabled = !isMultiOrgEnabled && organizationsWithSingleOwner.length > 0;
   const { t } = useTranslation();
@@ -32,6 +36,7 @@ export const DeleteAccount = ({
   return (
     <div>
       <DeleteAccountModal
+        requiresPasswordConfirmation={requiresPasswordConfirmation}
         open={isModalOpen}
         setOpen={setModalOpen}
         user={user}

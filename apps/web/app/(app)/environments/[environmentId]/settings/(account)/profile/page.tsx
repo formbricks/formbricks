@@ -5,6 +5,7 @@ import { EMAIL_VERIFICATION_DISABLED, IS_FORMBRICKS_CLOUD, PASSWORD_RESET_DISABL
 import { getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
+import { getAccountDeletionAuthRequirements } from "@/modules/account/lib/account-deletion-auth";
 import { getIsMultiOrgEnabled, getIsTwoFactorAuthEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { IdBadge } from "@/modules/ui/components/id-badge";
@@ -32,6 +33,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
     throw new AuthenticationError(t("common.not_authenticated"));
   }
 
+  const accountDeletionAuthRequirements = await getAccountDeletionAuthRequirements(user.id);
   const isPasswordResetEnabled = !PASSWORD_RESET_DISABLED && user.identityProvider === "email";
 
   return (
@@ -90,6 +92,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
               user={user}
               organizationsWithSingleOwner={organizationsWithSingleOwner}
               isMultiOrgEnabled={isMultiOrgEnabled}
+              requiresPasswordConfirmation={accountDeletionAuthRequirements.requiresPasswordConfirmation}
             />
           </SettingsCard>
           <IdBadge id={user.id} label={t("common.profile_id")} variant="column" />

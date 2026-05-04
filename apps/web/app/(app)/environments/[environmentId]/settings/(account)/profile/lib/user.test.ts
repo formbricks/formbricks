@@ -40,7 +40,7 @@ describe("User Library Tests", () => {
       expect(result).toBe(true);
       expect(mockPrismaUserFindUnique).toHaveBeenCalledWith({
         where: { id: userId },
-        select: { password: true, identityProvider: true },
+        select: { email: true, password: true, identityProvider: true, identityProviderAccountId: true },
       });
       expect(mockVerifyPasswordUtil).toHaveBeenCalledWith(password, "hashed-password");
     });
@@ -56,7 +56,7 @@ describe("User Library Tests", () => {
       expect(result).toBe(false);
       expect(mockPrismaUserFindUnique).toHaveBeenCalledWith({
         where: { id: userId },
-        select: { password: true, identityProvider: true },
+        select: { email: true, password: true, identityProvider: true, identityProviderAccountId: true },
       });
       expect(mockVerifyPasswordUtil).toHaveBeenCalledWith(password, "hashed-password");
     });
@@ -68,27 +68,29 @@ describe("User Library Tests", () => {
       await expect(verifyUserPassword(userId, password)).rejects.toThrow(`user with ID ${userId} not found`);
       expect(mockPrismaUserFindUnique).toHaveBeenCalledWith({
         where: { id: userId },
-        select: { password: true, identityProvider: true },
+        select: { email: true, password: true, identityProvider: true, identityProviderAccountId: true },
       });
       expect(mockVerifyPasswordUtil).not.toHaveBeenCalled();
     });
 
-    test("should throw InvalidInputError if identityProvider is not email", async () => {
+    test("should verify passwords for users with a password regardless of identity provider", async () => {
       mockPrismaUserFindUnique.mockResolvedValue({
         password: "hashed-password",
-        identityProvider: "google", // Not 'email'
+        identityProvider: "google",
       } as any);
+      mockVerifyPasswordUtil.mockResolvedValue(true);
 
-      await expect(verifyUserPassword(userId, password)).rejects.toThrow(InvalidInputError);
-      await expect(verifyUserPassword(userId, password)).rejects.toThrow("Password is not set for this user");
+      const result = await verifyUserPassword(userId, password);
+
+      expect(result).toBe(true);
       expect(mockPrismaUserFindUnique).toHaveBeenCalledWith({
         where: { id: userId },
-        select: { password: true, identityProvider: true },
+        select: { email: true, password: true, identityProvider: true, identityProviderAccountId: true },
       });
-      expect(mockVerifyPasswordUtil).not.toHaveBeenCalled();
+      expect(mockVerifyPasswordUtil).toHaveBeenCalledWith(password, "hashed-password");
     });
 
-    test("should throw InvalidInputError if password is not set for email provider", async () => {
+    test("should throw InvalidInputError if password is not set", async () => {
       mockPrismaUserFindUnique.mockResolvedValue({
         password: null, // Password not set
         identityProvider: "email",
@@ -98,7 +100,7 @@ describe("User Library Tests", () => {
       await expect(verifyUserPassword(userId, password)).rejects.toThrow("Password is not set for this user");
       expect(mockPrismaUserFindUnique).toHaveBeenCalledWith({
         where: { id: userId },
-        select: { password: true, identityProvider: true },
+        select: { email: true, password: true, identityProvider: true, identityProviderAccountId: true },
       });
       expect(mockVerifyPasswordUtil).not.toHaveBeenCalled();
     });

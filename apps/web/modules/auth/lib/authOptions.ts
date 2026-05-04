@@ -16,6 +16,11 @@ import {
 import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
 import { verifyToken } from "@/lib/jwt";
 import { getValidatedCallbackUrl } from "@/lib/utils/url";
+import {
+  completeAccountDeletionSsoReauthentication,
+  getAccountDeletionSsoReauthIntentFromCallbackUrl,
+  validateAccountDeletionSsoReauthenticationCallback,
+} from "@/modules/account/lib/account-deletion-sso-reauth";
 import { getAuthCallbackUrlFromCookies } from "@/modules/auth/lib/callback-url";
 import { finalizeSuccessfulSignIn } from "@/modules/auth/lib/sign-in-tracking";
 import { updateUser } from "@/modules/auth/lib/user";
@@ -345,6 +350,8 @@ export const authOptions: NextAuthOptions = {
       // get callback url from the cookie store,
       const callbackUrl =
         getValidatedCallbackUrl(getAuthCallbackUrlFromCookies(cookieStore), WEBAPP_URL) ?? "";
+      const accountDeletionSsoReauthIntentToken =
+        getAccountDeletionSsoReauthIntentFromCallbackUrl(callbackUrl);
 
       const userEmail = user.email ?? "";
       const userId = user.id as string;
@@ -372,6 +379,13 @@ export const authOptions: NextAuthOptions = {
         return true;
       }
       if (ENTERPRISE_LICENSE_KEY && account) {
+        if (accountDeletionSsoReauthIntentToken) {
+          await validateAccountDeletionSsoReauthenticationCallback({
+            account,
+            intentToken: accountDeletionSsoReauthIntentToken,
+          });
+        }
+
         const result = await handleSsoCallback({
           user: user as TUser,
           account,
@@ -379,6 +393,13 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (result === true) {
+          if (accountDeletionSsoReauthIntentToken) {
+            await completeAccountDeletionSsoReauthentication({
+              account,
+              intentToken: accountDeletionSsoReauthIntentToken,
+            });
+          }
+
           await finalizeSuccessfulSignIn({
             userId,
             email: userEmail,

@@ -1,5 +1,6 @@
 "use client";
 
+import { signIn } from "next-auth/react";
 import { Dispatch, SetStateAction, useState } from "react";
 import toast from "react-hot-toast";
 import { Trans, useTranslation } from "react-i18next";
@@ -11,10 +12,11 @@ import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { Input } from "@/modules/ui/components/input";
 import { PasswordInput } from "@/modules/ui/components/password-input";
-import { deleteUserAction } from "./actions";
-import { DELETE_ACCOUNT_WRONG_PASSWORD_ERROR } from "./constants";
+import { deleteUserAction, startAccountDeletionSsoReauthenticationAction } from "./actions";
+import { DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR, DELETE_ACCOUNT_WRONG_PASSWORD_ERROR } from "./constants";
 
 interface DeleteAccountModalProps {
+  requiresPasswordConfirmation: boolean;
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
   user: TUser;
@@ -23,18 +25,18 @@ interface DeleteAccountModalProps {
 }
 
 export const DeleteAccountModal = ({
+  requiresPasswordConfirmation,
   setOpen,
   open,
   user,
   isFormbricksCloud,
   organizationsWithSingleOwner,
-}: DeleteAccountModalProps) => {
+}: Readonly<DeleteAccountModalProps>) => {
   const { t } = useTranslation();
   const [deleting, setDeleting] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [password, setPassword] = useState("");
   const { signOut: signOutWithAudit } = useSignOut({ id: user.id, email: user.email });
-  const isPasswordBackedAccount = user.identityProvider === "email";
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
   };
@@ -48,8 +50,34 @@ export const DeleteAccountModal = ({
   };
 
   const hasValidEmailConfirmation = inputValue.trim().toLowerCase() === user.email.toLowerCase();
-  const hasValidConfirmation = hasValidEmailConfirmation && (!isPasswordBackedAccount || password.length > 0);
+  const hasValidConfirmation =
+    hasValidEmailConfirmation && (!requiresPasswordConfirmation || password.length > 0);
   const isDeleteDisabled = !hasValidConfirmation;
+
+  const startSsoReauthentication = async () => {
+    const result = await startAccountDeletionSsoReauthenticationAction({
+      confirmationEmail: inputValue,
+      returnToUrl: window.location.href,
+    });
+
+    if (!result?.data) {
+      const fallbackErrorMessage = t("common.something_went_wrong_please_try_again");
+      const errorMessage = result ? getFormattedErrorMessage(result) : fallbackErrorMessage;
+
+      logger.error({ errorMessage }, "Account deletion SSO reauthentication action failed");
+      toast.error(fallbackErrorMessage);
+      return;
+    }
+
+    await signIn(
+      result.data.provider,
+      {
+        callbackUrl: result.data.callbackUrl,
+        redirect: true,
+      },
+      result.data.authorizationParams
+    );
+  };
 
   const deleteAccount = async () => {
     try {
@@ -59,7 +87,7 @@ export const DeleteAccountModal = ({
 
       setDeleting(true);
       const result = await deleteUserAction(
-        isPasswordBackedAccount
+        requiresPasswordConfirmation
           ? {
               confirmationEmail: inputValue,
               password,
@@ -75,6 +103,9 @@ export const DeleteAccountModal = ({
 
         if (result?.serverError === DELETE_ACCOUNT_WRONG_PASSWORD_ERROR) {
           errorMessage = t("environments.settings.profile.wrong_password");
+        } else if (result?.serverError === DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR) {
+          await startSsoReauthentication();
+          return;
         } else if (result) {
           errorMessage = getFormattedErrorMessage(result);
         }
@@ -161,7 +192,7 @@ export const DeleteAccountModal = ({
             id="deleteAccountConfirmation"
             name="deleteAccountConfirmation"
           />
-          {isPasswordBackedAccount && (
+          {requiresPasswordConfirmation && (
             <>
               <label htmlFor="deleteAccountPassword" className="mt-4 block">
                 {t("common.password")}

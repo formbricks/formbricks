@@ -1,1 +1,4 @@
-export const DELETE_ACCOUNT_WRONG_PASSWORD_ERROR = "Wrong password";
+export {
+  DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR,
+  DELETE_ACCOUNT_WRONG_PASSWORD_ERROR,
+} from "@/modules/account/constants";
