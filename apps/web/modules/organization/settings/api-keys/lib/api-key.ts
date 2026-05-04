@@ -201,7 +201,7 @@ export const createApiKey = async (
     if (feedbackDirectoryPermissions && feedbackDirectoryPermissions.length > 0) {
       const directoryIds = feedbackDirectoryPermissions.map((p) => p.feedbackDirectoryId);
       const ownedCount = await prisma.feedbackDirectory.count({
-        where: { id: { in: directoryIds }, organizationId },
+        where: { id: { in: directoryIds }, organizationId, isArchived: false },
       });
       if (ownedCount !== directoryIds.length) {
         throw new ResourceNotFoundError("FeedbackDirectory", null);

@@ -17,7 +17,7 @@ import {
   getCharts,
   updateChart,
 } from "@/modules/ee/analysis/charts/lib/charts";
-import { checkWorkspaceAccess } from "@/modules/ee/analysis/lib/access";
+import { checkWorkspaceAccess, verifyFeedbackDirectoryAccess } from "@/modules/ee/analysis/lib/access";
 import { generateSchemaContext } from "@/modules/ee/analysis/lib/ai-schema-context";
 import { ZChartCreateInput, ZChartType, ZChartUpdateInput } from "@/modules/ee/analysis/types/analysis";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
@@ -226,7 +226,8 @@ export const executeQueryAction = authenticatedActionClient
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZExecuteQueryAction>;
     }) => {
-      await checkWorkspaceAccess(ctx.user.id, parsedInput.workspaceId, "read");
+      const { workspaceId } = await checkWorkspaceAccess(ctx.user.id, parsedInput.workspaceId, "read");
+      await verifyFeedbackDirectoryAccess(parsedInput.feedbackDirectoryId, workspaceId);
 
       validateQueryMembers(parsedInput.query);
 
@@ -293,7 +294,8 @@ export const generateAIChartAction = authenticatedActionClient
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZGenerateAIChartAction>;
     }) => {
-      await checkWorkspaceAccess(ctx.user.id, parsedInput.workspaceId, "read");
+      const { workspaceId } = await checkWorkspaceAccess(ctx.user.id, parsedInput.workspaceId, "read");
+      await verifyFeedbackDirectoryAccess(parsedInput.feedbackDirectoryId, workspaceId);
 
       if (!process.env.OPENAI_API_KEY) {
         throw new Error("OPENAI_API_KEY is not configured");
