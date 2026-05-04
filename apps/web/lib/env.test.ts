@@ -109,9 +109,29 @@ describe("env", () => {
     expect(env.CUBEJS_API_SECRET).toBeUndefined();
   });
 
+  test("treats an empty Cube API secret from Docker Compose as omitted", async () => {
+    setTestEnv({
+      CUBEJS_API_SECRET: "",
+    });
+
+    const { env } = await import("./env");
+
+    expect(env.CUBEJS_API_SECRET).toBeUndefined();
+  });
+
   test("allows the Cube API URL to be omitted until analytics is used", async () => {
     setTestEnv({
       CUBEJS_API_URL: undefined,
+    });
+
+    const { env } = await import("./env");
+
+    expect(env.CUBEJS_API_URL).toBeUndefined();
+  });
+
+  test("treats an empty Cube API URL as omitted", async () => {
+    setTestEnv({
+      CUBEJS_API_URL: "",
     });
 
     const { env } = await import("./env");

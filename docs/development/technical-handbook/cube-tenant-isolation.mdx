@@ -37,7 +37,7 @@ The controls assume query bodies are attacker-influenced. Tenant identity is nev
   </Step>
   <Step title="Enforce the tenant filter">
     Cube `queryRewrite` rejects missing tenant context, rejects caller-supplied tenant member usage, and
-    appends `FeedbackRecords.tenantId = securityContext.tenantId` to every query.
+    appends `FeedbackRecords.tenantId = securityContext.workspaceId` to every query.
   </Step>
 </Steps>
 

@@ -2,7 +2,10 @@ import { createRequire } from "node:module";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 const require = createRequire(import.meta.url);
-const { queryRewrite } = require("../../../../../../../docker/cube/cube.js") as {
+const cubeConfigPath = require.resolve("../../../../../../../docker/cube/cube.js");
+process.env.CUBEJS_API_SECRET = process.env.CUBEJS_API_SECRET || "cube-secret";
+
+const { queryRewrite } = require(cubeConfigPath) as {
   queryRewrite: (
     query: Record<string, unknown>,
     context: { securityContext?: Record<string, unknown> }
@@ -32,6 +35,17 @@ describe("cube queryRewrite", () => {
     expect(() => queryRewrite({ measures: ["FeedbackRecords.count"] }, {})).toThrow(
       /missing tenantId security context/
     );
+  });
+
+  test("rejects Cube startup without an API secret", () => {
+    const originalSecret = process.env.CUBEJS_API_SECRET;
+    delete process.env.CUBEJS_API_SECRET;
+    delete require.cache[cubeConfigPath];
+
+    expect(() => require(cubeConfigPath)).toThrow(/CUBEJS_API_SECRET is required to run Cube/);
+
+    process.env.CUBEJS_API_SECRET = originalSecret || "cube-secret";
+    delete require.cache[cubeConfigPath];
   });
 
   test("rejects queries without a rewrite context", () => {

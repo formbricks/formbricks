@@ -3,6 +3,16 @@
 const TENANT_MEMBER = "FeedbackRecords.tenantId";
 const REQUIRED_SCOPE = "xm:cube:query";
 
+function assertRequiredEnvironmentVariable(name) {
+  const value = process.env[name];
+
+  if (typeof value !== "string" || value.trim().length === 0) {
+    throw new Error(`${name} is required to run Cube`);
+  }
+}
+
+assertRequiredEnvironmentVariable("CUBEJS_API_SECRET");
+
 function getStringClaim(securityContext, claim) {
   const value = securityContext?.[claim];
   if (typeof value !== "string") {

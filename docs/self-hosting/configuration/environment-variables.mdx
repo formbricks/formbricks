@@ -99,6 +99,7 @@ For `AI_PROVIDER=google`, use a Gemini model ID such as `gemini-2.5-flash` toget
 #### Formbricks Hub
 
 When running the stack with [Formbricks Hub](https://github.com/formbricks/hub) (for example via Docker Compose or Helm), the following variables apply:
+The bundled Docker Compose stack starts Hub by default.
 
 | Variable         | Description                                                                        | Required | Default                                             |
 | ---------------- | ---------------------------------------------------------------------------------- | -------- | --------------------------------------------------- |
@@ -110,6 +111,7 @@ When running the stack with [Formbricks Hub](https://github.com/formbricks/hub) 
 
 XM Suite v5 dashboard and analysis features require a reachable Cube.js instance. Formbricks generates the backend
 Cube JWT from `CUBEJS_API_SECRET`, so `CUBEJS_API_TOKEN` is not part of the supported setup contract.
+If you do not use XM Suite v5 analytics, omit the Cube variables and leave the bundled Docker `xm` profile disabled.
 
 | Variable                  | Description                                                                                            | Required                           | Default                              |
 | ------------------------- | ------------------------------------------------------------------------------------------------------ | ---------------------------------- | ------------------------------------ |
