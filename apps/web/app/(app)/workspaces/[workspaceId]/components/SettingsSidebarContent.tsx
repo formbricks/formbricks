@@ -13,6 +13,7 @@ import {
   LanguagesIcon,
   ListChecksIcon,
   Loader2,
+  ShapesIcon,
   ShieldIcon,
   TagIcon,
   UnplugIcon,
@@ -274,6 +275,13 @@ export const SettingsSidebarContent = ({
       label: t("common.connect_your_app"),
       href: `${basePath}/workspace/app-connection`,
       icon: <UnplugIcon className={iconClassName} />,
+      disabled: isBilling,
+    },
+    {
+      id: "feedback-sources",
+      label: t("workspace.unify.feedback_sources"),
+      href: `${basePath}/workspace/feedback-sources`,
+      icon: <ShapesIcon className={iconClassName} />,
       disabled: isBilling,
     },
     {
