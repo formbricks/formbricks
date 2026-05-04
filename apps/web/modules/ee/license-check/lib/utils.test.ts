@@ -282,6 +282,7 @@ describe("License Utils", () => {
         "org_1",
         CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.UNIFY_FEEDBACK
       );
+      expect(getEnterpriseLicense).not.toHaveBeenCalled();
     });
 
     test("uses cloud feedback record directories entitlement", async () => {
@@ -295,6 +296,7 @@ describe("License Utils", () => {
         "org_1",
         CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.FEEDBACK_RECORD_DIRECTORIES
       );
+      expect(getEnterpriseLicense).not.toHaveBeenCalled();
     });
 
     test("uses cloud dashboards entitlement", async () => {
@@ -308,6 +310,7 @@ describe("License Utils", () => {
         "org_1",
         CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.DASHBOARDS
       );
+      expect(getEnterpriseLicense).not.toHaveBeenCalled();
     });
 
     test("returns self-hosted unify feedback / FRD / dashboards from license", async () => {
@@ -331,6 +334,7 @@ describe("License Utils", () => {
       expect(unify).toBe(true);
       expect(frd).toBe(true);
       expect(dashboards).toBe(true);
+      expect(hasOrganizationEntitlementWithLicenseGuard).not.toHaveBeenCalled();
     });
 
     test("returns false for self-hosted unify feedback / FRD / dashboards when not enabled", async () => {
@@ -349,6 +353,7 @@ describe("License Utils", () => {
       expect(unify).toBe(false);
       expect(frd).toBe(false);
       expect(dashboards).toBe(false);
+      expect(hasOrganizationEntitlementWithLicenseGuard).not.toHaveBeenCalled();
     });
   });
 
