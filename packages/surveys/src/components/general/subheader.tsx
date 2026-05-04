@@ -4,9 +4,10 @@ import { isValidHTML, stripInlineStyles } from "@/lib/html-utils";
 interface SubheaderProps {
   subheader?: string;
   elementId: string;
+  id?: string;
 }
 
-export function Subheader({ subheader, elementId }: SubheaderProps) {
+export function Subheader({ subheader, elementId, id = `${elementId}-description` }: SubheaderProps) {
   // Strip inline styles BEFORE parsing to avoid CSP violations
   const strippedSubheader = subheader ? stripInlineStyles(subheader) : "";
   const isHtml = strippedSubheader ? isValidHTML(strippedSubheader) : false;
@@ -21,8 +22,8 @@ export function Subheader({ subheader, elementId }: SubheaderProps) {
   if (!subheader) return null;
 
   return (
-    <label
-      htmlFor={elementId}
+    <div
+      id={id}
       className="text-subheading label-description block text-sm leading-6 font-normal wrap-break-word"
       data-testid="subheader"
       dir="auto">
@@ -31,6 +32,6 @@ export function Subheader({ subheader, elementId }: SubheaderProps) {
       ) : (
         <span>{subheader}</span>
       )}
-    </label>
+    </div>
   );
 }

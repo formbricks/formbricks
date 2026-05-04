@@ -6,9 +6,10 @@ import { cn } from "@/lib/utils";
 interface CalEmbedProps {
   element: TSurveyCalElement;
   onSuccessfulBooking: () => void;
+  ariaDescribedBy?: string;
 }
 
-export function CalEmbed({ element, onSuccessfulBooking }: CalEmbedProps) {
+export function CalEmbed({ element, onSuccessfulBooking, ariaDescribedBy }: CalEmbedProps) {
   const cal = useMemo(() => {
     const calInline = snippet("https://cal.com/embed.js");
 
@@ -54,7 +55,7 @@ export function CalEmbed({ element, onSuccessfulBooking }: CalEmbedProps) {
   }, [cal, element.calHost, element.calUserName]);
 
   return (
-    <div className="relative mt-4 overflow-auto">
+    <div className="relative mt-4 overflow-auto" aria-describedby={ariaDescribedBy}>
       <div id="cal-embed" className={cn("border-border rounded-input border")} />
     </div>
   );

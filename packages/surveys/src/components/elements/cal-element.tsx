@@ -31,6 +31,8 @@ export function CalElement({
 }: Readonly<CalElementProps>) {
   const [startTime, setStartTime] = useState(performance.now());
   const isMediaAvailable = element.imageUrl || element.videoUrl;
+  const subheader = element.subheader ? getLocalizedValue(element.subheader, languageCode) : "";
+  const subheaderId = subheader ? `${element.id}-description` : undefined;
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, element.id === currentElementId);
 
   const onSuccessfulBooking = useCallback(() => {
@@ -58,11 +60,13 @@ export function CalElement({
           elementId={element.id}
           required={element.required}
         />
-        <Subheader
-          subheader={element.subheader ? getLocalizedValue(element.subheader, languageCode) : ""}
-          elementId={element.id}
+        <Subheader subheader={subheader} elementId={element.id} id={subheaderId} />
+        <CalEmbed
+          key={element.id}
+          element={element}
+          onSuccessfulBooking={onSuccessfulBooking}
+          ariaDescribedBy={subheaderId}
         />
-        <CalEmbed key={element.id} element={element} onSuccessfulBooking={onSuccessfulBooking} />
         {errorMessage ? (
           <span className="text-red-500" role="alert" aria-live="assertive" aria-atomic="true">
             {errorMessage}
