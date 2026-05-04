@@ -310,7 +310,6 @@
             "pages": [
               "development/technical-handbook/overview",
               "development/technical-handbook/background-job-processing",
-              "development/technical-handbook/cube-tenant-isolation",
               "development/technical-handbook/database-model",
               "development/technical-handbook/tenant-separation"
             ]
