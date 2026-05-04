@@ -37,7 +37,7 @@ spec:
       {{- end }}
       containers:
         - name: hub-migrate
-          image: {{ .Values.hub.image.repository }}:{{ .Values.hub.image.tag | default "latest" }}
+          image: {{ include "formbricks.hubImage" . }}
           imagePullPolicy: {{ .Values.hub.image.pullPolicy }}
           securityContext:
             readOnlyRootFilesystem: true
