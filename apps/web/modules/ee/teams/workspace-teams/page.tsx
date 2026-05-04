@@ -4,7 +4,6 @@ import { AccessView } from "@/modules/ee/teams/workspace-teams/components/access
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
-import { WorkspaceConfigNavigation } from "@/modules/workspaces/settings/components/workspace-config-navigation";
 import { getTeamsByWorkspaceId } from "./lib/team";
 
 export const WorkspaceTeams = async (props: { params: Promise<{ workspaceId: string }> }) => {
@@ -21,9 +20,7 @@ export const WorkspaceTeams = async (props: { params: Promise<{ workspaceId: str
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.workspace_configuration")}>
-        <WorkspaceConfigNavigation activeId="teams" />
-      </PageHeader>
+      <PageHeader pageTitle={t("common.team_access")} />
       <AccessView teams={teams} />
     </PageContentWrapper>
   );

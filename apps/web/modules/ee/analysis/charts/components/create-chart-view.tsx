@@ -195,7 +195,7 @@ export function CreateChartView({
                   <p>{t("workspace.analysis.charts.no_data_source_available")}</p>
                   <Link
                     className="mt-1 inline-block font-medium underline"
-                    href={`/workspaces/${workspaceId}/settings/feedback-record-directories`}>
+                    href={`/workspaces/${workspaceId}/settings/organization/feedback-record-directories`}>
                     {t("workspace.analysis.charts.go_to_feedback_record_directories")}
                   </Link>
                 </div>

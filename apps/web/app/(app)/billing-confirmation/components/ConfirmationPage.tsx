@@ -39,7 +39,10 @@ export const ConfirmationPage = () => {
           </p>
         </div>
         <Button asChild className="w-full justify-center">
-          <Link href={resolvedWorkspaceId ? `/workspaces/${resolvedWorkspaceId}/settings/billing` : "/"}>
+          <Link
+            href={
+              resolvedWorkspaceId ? `/workspaces/${resolvedWorkspaceId}/settings/organization/billing` : "/"
+            }>
             {t("billing_confirmation.back_to_billing_overview")}
           </Link>
         </Button>

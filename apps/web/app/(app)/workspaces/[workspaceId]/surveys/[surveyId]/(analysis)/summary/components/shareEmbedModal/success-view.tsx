@@ -74,13 +74,13 @@ export const SuccessView: React.FC<SuccessViewProps> = ({
             <Badge size="normal" type="success" className="absolute right-3 top-3" text={t("common.new")} />
           </button>
           <Link
-            href={`/workspaces/${workspace?.id}/settings/notifications`}
+            href={`/workspaces/${workspace?.id}/settings/account/notifications`}
             className="flex flex-col items-center gap-3 rounded-lg border border-slate-100 bg-white p-4 text-center text-sm text-slate-900 hover:border-slate-200 md:p-8">
             <BellRing className="h-8 w-8 stroke-1 text-slate-900" />
             {t("workspace.surveys.summary.configure_alerts")}
           </Link>
           <Link
-            href={`/workspaces/${workspace?.id}/integrations`}
+            href={`/workspaces/${workspace?.id}/settings/workspace/integrations`}
             className="flex flex-col items-center gap-3 rounded-lg border border-slate-100 bg-white p-4 text-center text-sm text-slate-900 hover:border-slate-200 md:p-8">
             <BlocksIcon className="h-8 w-8 stroke-1 text-slate-900" />
             {t("workspace.surveys.summary.setup_integrations")}

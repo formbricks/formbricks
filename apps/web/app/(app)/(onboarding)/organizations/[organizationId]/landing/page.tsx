@@ -3,7 +3,6 @@ import { LandingSidebar } from "@/app/(app)/(onboarding)/organizations/[organiza
 import { WorkspaceAndOrgSwitch } from "@/app/(app)/workspaces/[workspaceId]/components/workspace-and-org-switch";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
-import { getAccessFlags } from "@/lib/membership/utils";
 import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -26,12 +25,11 @@ const Page = async (props: { params: Promise<{ organizationId: string }> }) => {
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
 
   const membership = await getMembershipByUserIdOrganizationId(session.user.id, organization.id);
-  const { isMember, isBilling } = getAccessFlags(membership?.role);
   const isMembershipPending = membership?.role === undefined;
 
   return (
     <div className="flex min-h-full min-w-full flex-row">
-      <LandingSidebar user={user} organization={organization} />
+      <LandingSidebar user={user} organization={organization} isMultiOrgEnabled={isMultiOrgEnabled} />
       <div className="flex-1">
         <div className="flex h-full flex-col">
           <div className="p-6">
@@ -45,8 +43,6 @@ const Page = async (props: { params: Promise<{ organizationId: string }> }) => {
               isLicenseActive={false}
               isOwnerOrManager={false}
               isAccessControlAllowed={false}
-              isMember={isMember}
-              isBilling={isBilling}
               isMembershipPending={isMembershipPending}
             />
           </div>

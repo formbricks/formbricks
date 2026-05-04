@@ -191,7 +191,7 @@ export function ConnectorsSection({
           <Alert size="small" className="mt-4">
             <AlertDescription>{feedbackDirectoryAccessText}</AlertDescription>
             <AlertButton asChild>
-              <Link href={`/workspaces/${workspaceId}/settings/feedback-record-directories`}>
+              <Link href={`/workspaces/${workspaceId}/settings/organization/feedback-record-directories`}>
                 {t("workspace.unify.manage_directories")}
               </Link>
             </AlertButton>

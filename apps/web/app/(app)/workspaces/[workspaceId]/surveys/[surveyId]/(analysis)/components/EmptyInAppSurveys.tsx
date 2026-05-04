@@ -24,7 +24,7 @@ export const EmptyAppSurveys = () => {
           {t("workspace.surveys.summary.connect_your_website_or_app_with_formbricks_to_get_started")}
         </p>
 
-        <Link className="mt-2" href={`/workspaces/${workspace?.id}/app-connection`}>
+        <Link className="mt-2" href={`/workspaces/${workspace?.id}/settings/workspace/app-connection`}>
           <Button size="sm" className="flex w-[120px] justify-center">
             {t("common.connect")}
           </Button>
