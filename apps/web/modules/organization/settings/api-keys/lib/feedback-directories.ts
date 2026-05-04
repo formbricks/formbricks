@@ -3,12 +3,12 @@ import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
-import { TOrganizationFeedbackRecordDirectory } from "@/modules/organization/settings/api-keys/types/api-keys";
+import { TOrganizationFeedbackDirectory } from "@/modules/organization/settings/api-keys/types/api-keys";
 
-export const getFeedbackRecordDirectoriesByOrganizationId = reactCache(
-  async (organizationId: string): Promise<TOrganizationFeedbackRecordDirectory[]> => {
+export const getFeedbackDirectoriesByOrganizationId = reactCache(
+  async (organizationId: string): Promise<TOrganizationFeedbackDirectory[]> => {
     try {
-      const directories = await prisma.feedbackRecordDirectory.findMany({
+      const directories = await prisma.feedbackDirectory.findMany({
         where: {
           organizationId,
           isArchived: false,

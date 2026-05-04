@@ -8,7 +8,7 @@ import { AnalysisPageLayout } from "@/modules/ee/analysis/components/analysis-pa
 import { NoFeedbackRecordsState } from "@/modules/ee/analysis/components/no-feedback-records-state";
 import { hasFeedbackRecordsInDirectories } from "@/modules/ee/analysis/lib/feedback-records";
 import type { TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
-import { getFeedbackRecordDirectoriesByWorkspaceId } from "@/modules/ee/feedback-record-directory/lib/feedback-record-directory";
+import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 
 interface ChartsListContentProps {
@@ -39,7 +39,7 @@ export async function ChartsListPage({ workspaceId }: Readonly<ChartsListPagePro
   const t = await getTranslate();
   const { isReadOnly } = await getWorkspaceAuth(workspaceId);
   const [directories, connectors] = await Promise.all([
-    getFeedbackRecordDirectoriesByWorkspaceId(workspaceId),
+    getFeedbackDirectoriesByWorkspaceId(workspaceId),
     getConnectorsWithMappings(workspaceId),
   ]);
   const hasFeedbackRecords = await hasFeedbackRecordsInDirectories(

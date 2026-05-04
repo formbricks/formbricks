@@ -1,35 +1,35 @@
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { getTranslate } from "@/lingodotdev/server";
-import { FeedbackRecordDirectoryTable } from "@/modules/ee/feedback-record-directory/components/feedback-record-directory-table";
+import { FeedbackDirectoryTable } from "@/modules/ee/feedback-directory/components/feedback-directory-table";
 import {
-  getFeedbackRecordDirectories,
-  getWorkspaceFeedbackRecordDirectoryAccess,
-} from "@/modules/ee/feedback-record-directory/lib/feedback-record-directory";
+  getFeedbackDirectories,
+  getWorkspaceFeedbackDirectoryAccess,
+} from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getWorkspacesByOrganizationId } from "@/modules/ee/teams/team-list/lib/workspace";
 
-interface FeedbackRecordDirectoryViewProps {
+interface FeedbackDirectoryViewProps {
   organizationId: string;
   membershipRole: TOrganizationRole;
 }
 
-export const FeedbackRecordDirectoryView = async ({
+export const FeedbackDirectoryView = async ({
   organizationId,
   membershipRole,
-}: FeedbackRecordDirectoryViewProps) => {
+}: FeedbackDirectoryViewProps) => {
   const t = await getTranslate();
 
   const [directories, orgWorkspaces, workspaceAccessByWorkspace] = await Promise.all([
-    getFeedbackRecordDirectories(organizationId),
+    getFeedbackDirectories(organizationId),
     getWorkspacesByOrganizationId(organizationId),
-    getWorkspaceFeedbackRecordDirectoryAccess(organizationId),
+    getWorkspaceFeedbackDirectoryAccess(organizationId),
   ]);
 
   return (
     <SettingsCard
-      title={t("workspace.settings.feedback_record_directories.title")}
-      description={t("workspace.settings.feedback_record_directories.description")}>
-      <FeedbackRecordDirectoryTable
+      title={t("workspace.settings.feedback_directories.title")}
+      description={t("workspace.settings.feedback_directories.description")}>
+      <FeedbackDirectoryTable
         directories={directories}
         organizationId={organizationId}
         orgWorkspaces={orgWorkspaces}

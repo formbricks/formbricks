@@ -338,9 +338,9 @@ export const MainNavigation = ({
       hidden: isFormbricksCloud || isMember,
     },
     {
-      id: "feedback-record-directories",
-      label: t("workspace.settings.feedback_record_directories.title"),
-      href: `/workspaces/${workspace.id}/settings/feedback-record-directories`,
+      id: "feedback-directories",
+      label: t("workspace.settings.feedback_directories.title"),
+      href: `/workspaces/${workspace.id}/settings/feedback-directories`,
       disabled: isMembershipPending || isMember,
       disabledMessage: isMembershipPending
         ? t("common.loading")

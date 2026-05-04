@@ -596,32 +596,32 @@ enum SurveyOverlay {
 /// @property recontactDays - Default recontact delay for surveys
 /// @property placement - Default widget placement for in-app surveys
 model Workspace {
-  id                                String                             @id @default(cuid())
-  createdAt                         DateTime                           @default(now()) @map(name: "created_at")
-  updatedAt                         DateTime                           @updatedAt @map(name: "updated_at")
-  name                              String
-  legacyEnvironmentId               String?                            @unique
-  organization                      Organization                       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  organizationId                    String
+  id                          String                       @id @default(cuid())
+  createdAt                   DateTime                     @default(now()) @map(name: "created_at")
+  updatedAt                   DateTime                     @updatedAt @map(name: "updated_at")
+  name                        String
+  legacyEnvironmentId         String?                      @unique
+  organization                Organization                 @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId              String
   /// [Styling]
-  styling                           Json                               @default("{\"allowStyleOverwrite\":true}")
+  styling                     Json                         @default("{\"allowStyleOverwrite\":true}")
   /// [WorkspaceConfig]
-  config                            Json                               @default("{}")
-  recontactDays                     Int                                @default(7)
-  linkSurveyBranding                Boolean                            @default(true) // Determines if the survey branding should be displayed in link surveys
-  inAppSurveyBranding               Boolean                            @default(true) // Determines if the survey branding should be displayed in in-app surveys
-  placement                         WidgetPlacement                    @default(bottomRight)
-  clickOutsideClose                 Boolean                            @default(true)
-  overlay                           SurveyOverlay                      @default(none)
-  languages                         Language[]
+  config                      Json                         @default("{}")
+  recontactDays               Int                          @default(7)
+  linkSurveyBranding          Boolean                      @default(true) // Determines if the survey branding should be displayed in link surveys
+  inAppSurveyBranding         Boolean                      @default(true) // Determines if the survey branding should be displayed in in-app surveys
+  placement                   WidgetPlacement              @default(bottomRight)
+  clickOutsideClose           Boolean                      @default(true)
+  overlay                     SurveyOverlay                @default(none)
+  languages                   Language[]
   /// [Logo]
-  logo                              Json?
-  workspaceTeams                    WorkspaceTeam[]
-  appSetupCompleted                 Boolean                            @default(false)
-  customHeadScripts                 String? // Custom HTML scripts for link surveys (self-hosted only)
-  feedbackRecordDirectoryWorkspaces FeedbackRecordDirectoryWorkspace[]
-  charts                            Chart[]
-  dashboards                        Dashboard[]
+  logo                        Json?
+  workspaceTeams              WorkspaceTeam[]
+  appSetupCompleted           Boolean                      @default(false)
+  customHeadScripts           String? // Custom HTML scripts for link surveys (self-hosted only)
+  feedbackDirectoryWorkspaces FeedbackDirectoryWorkspace[]
+  charts                      Chart[]
+  dashboards                  Dashboard[]
 
   surveys              Survey[]
   contacts             Contact[]
@@ -650,21 +650,21 @@ model Workspace {
 /// @property isAISmartToolsEnabled - Controls access to AI smart tools (e.g. translations) that never touch collected data
 /// @property isAIDataAnalysisEnabled - Controls access to AI data analysis features that touch experience data
 model Organization {
-  id                        String                    @id @default(cuid())
-  createdAt                 DateTime                  @default(now()) @map(name: "created_at")
-  updatedAt                 DateTime                  @updatedAt @map(name: "updated_at")
-  name                      String
-  memberships               Membership[]
-  workspaces                Workspace[]
-  billing                   OrganizationBilling?
+  id                      String               @id @default(cuid())
+  createdAt               DateTime             @default(now()) @map(name: "created_at")
+  updatedAt               DateTime             @updatedAt @map(name: "updated_at")
+  name                    String
+  memberships             Membership[]
+  workspaces              Workspace[]
+  billing                 OrganizationBilling?
   /// [OrganizationWhitelabel]
-  whitelabel                Json                      @default("{}")
-  invites                   Invite[]
-  isAISmartToolsEnabled     Boolean                   @default(false)
-  isAIDataAnalysisEnabled   Boolean                   @default(false)
-  teams                     Team[]
-  apiKeys                   ApiKey[]
-  feedbackRecordDirectories FeedbackRecordDirectory[]
+  whitelabel              Json                 @default("{}")
+  invites                 Invite[]
+  isAISmartToolsEnabled   Boolean              @default(false)
+  isAIDataAnalysisEnabled Boolean              @default(false)
+  teams                   Team[]
+  apiKeys                 ApiKey[]
+  feedbackDirectories     FeedbackDirectory[]
 }
 
 /// Stores billing and Stripe synchronization data for an organization.
@@ -757,19 +757,19 @@ model Invite {
 /// @property lastUsedAt - Timestamp of last usage
 /// @property apiKeyWorkspaces - Workspaces this key has access to
 model ApiKey {
-  id                              String                          @id @default(cuid())
-  createdAt                       DateTime                        @default(now())
-  createdBy                       String?
-  lastUsedAt                      DateTime?
-  label                           String
-  hashedKey                       String
-  lookupHash                      String?                         @unique
-  organizationId                  String
-  organization                    Organization                    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  apiKeyWorkspaces                ApiKeyWorkspace[]
-  apiKeyFeedbackRecordDirectories ApiKeyFeedbackRecordDirectory[]
+  id                        String                    @id @default(cuid())
+  createdAt                 DateTime                  @default(now())
+  createdBy                 String?
+  lastUsedAt                DateTime?
+  label                     String
+  hashedKey                 String
+  lookupHash                String?                   @unique
+  organizationId            String
+  organization              Organization              @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  apiKeyWorkspaces          ApiKeyWorkspace[]
+  apiKeyFeedbackDirectories ApiKeyFeedbackDirectory[]
   /// [OrganizationAccess]
-  organizationAccess              Json                            @default("{}")
+  organizationAccess        Json                      @default("{}")
 
   @@index([organizationId])
 }
@@ -803,25 +803,25 @@ model ApiKeyWorkspace {
   @@index([workspaceId])
 }
 
-/// Links API keys to feedback record directories with specific permissions.
-/// Enables granular access control for API keys across feedback record directories (Hub API).
+/// Links API keys to feedback directories with specific permissions.
+/// Enables granular access control for API keys across feedback directories (Hub API).
 ///
 /// @property id - Unique identifier for the directory access entry
 /// @property apiKey - The associated API key
-/// @property feedbackRecordDirectory - The directory being accessed
+/// @property feedbackDirectory - The directory being accessed
 /// @property permission - Level of access granted
-model ApiKeyFeedbackRecordDirectory {
-  id                        String                  @id @default(cuid())
-  createdAt                 DateTime                @default(now())
-  updatedAt                 DateTime                @updatedAt
-  apiKeyId                  String
-  apiKey                    ApiKey                  @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
-  feedbackRecordDirectoryId String
-  feedbackRecordDirectory   FeedbackRecordDirectory @relation(fields: [feedbackRecordDirectoryId], references: [id], onDelete: Cascade)
-  permission                ApiKeyPermission
+model ApiKeyFeedbackDirectory {
+  id                  String            @id @default(cuid())
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+  apiKeyId            String
+  apiKey              ApiKey            @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
+  feedbackDirectoryId String
+  feedbackDirectory   FeedbackDirectory @relation(fields: [feedbackDirectoryId], references: [id], onDelete: Cascade)
+  permission          ApiKeyPermission
 
-  @@unique([apiKeyId, feedbackRecordDirectoryId])
-  @@index([feedbackRecordDirectoryId])
+  @@unique([apiKeyId, feedbackDirectoryId])
+  @@index([feedbackDirectoryId])
 }
 
 enum IdentityProvider {
@@ -1101,26 +1101,26 @@ enum ChartType {
 /// @property createdBy - User who created the chart
 /// @property dashboards - Dashboards that use this chart
 model Chart {
-  id                        String                  @id @default(cuid())
-  createdAt                 DateTime                @default(now()) @map(name: "created_at")
-  updatedAt                 DateTime                @updatedAt @map(name: "updated_at")
-  name                      String
-  type                      ChartType
-  workspace                 Workspace               @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId               String
+  id                  String            @id @default(cuid())
+  createdAt           DateTime          @default(now()) @map(name: "created_at")
+  updatedAt           DateTime          @updatedAt @map(name: "updated_at")
+  name                String
+  type                ChartType
+  workspace           Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId         String
   /// [ChartQuery] - Cube.js query configuration
-  query                     Json                    @default("{}")
+  query               Json              @default("{}")
   /// [ChartConfig] - Visualization configuration (colors, labels, formatting)
-  config                    Json                    @default("{}")
-  creator                   User?                   @relation("chartCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
-  createdBy                 String?
-  feedbackRecordDirectory   FeedbackRecordDirectory @relation(fields: [feedbackRecordDirectoryId], references: [id])
-  feedbackRecordDirectoryId String
-  widgets                   DashboardWidget[]
+  config              Json              @default("{}")
+  creator             User?             @relation("chartCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  createdBy           String?
+  feedbackDirectory   FeedbackDirectory @relation(fields: [feedbackDirectoryId], references: [id])
+  feedbackDirectoryId String
+  widgets             DashboardWidget[]
 
   @@unique([workspaceId, name])
   @@index([workspaceId, createdAt])
-  @@index([feedbackRecordDirectoryId])
+  @@index([feedbackDirectoryId])
 }
 
 /// Represents a dashboard containing multiple charts.
@@ -1204,26 +1204,26 @@ enum HubFieldType {
 /// @property formbricksMappings - Element mappings for Formbricks connectors
 /// @property fieldMappings - Field mappings for other connector types
 model Connector {
-  id                        String                       @id @default(cuid())
-  createdAt                 DateTime                     @default(now()) @map(name: "created_at")
-  updatedAt                 DateTime                     @updatedAt @map(name: "updated_at")
-  name                      String
-  type                      ConnectorType
-  status                    ConnectorStatus              @default(active)
-  workspaceId               String
-  workspace                 Workspace                    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  feedbackRecordDirectoryId String
-  feedbackRecordDirectory   FeedbackRecordDirectory      @relation(fields: [feedbackRecordDirectoryId], references: [id], onDelete: Cascade)
-  formbricksMappings        ConnectorFormbricksMapping[]
-  fieldMappings             ConnectorFieldMapping[]
-  lastSyncAt                DateTime?                    @map(name: "last_sync_at")
-  createdBy                 String?                      @map(name: "created_by")
-  creator                   User?                        @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+  id                  String                       @id @default(cuid())
+  createdAt           DateTime                     @default(now()) @map(name: "created_at")
+  updatedAt           DateTime                     @updatedAt @map(name: "updated_at")
+  name                String
+  type                ConnectorType
+  status              ConnectorStatus              @default(active)
+  workspaceId         String
+  workspace           Workspace                    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  feedbackDirectoryId String
+  feedbackDirectory   FeedbackDirectory            @relation(fields: [feedbackDirectoryId], references: [id], onDelete: Cascade)
+  formbricksMappings  ConnectorFormbricksMapping[]
+  fieldMappings       ConnectorFieldMapping[]
+  lastSyncAt          DateTime?                    @map(name: "last_sync_at")
+  createdBy           String?                      @map(name: "created_by")
+  creator             User?                        @relation(fields: [createdBy], references: [id], onDelete: SetNull)
 
   @@unique([id, workspaceId])
   @@unique([workspaceId, name])
   @@index([type])
-  @@index([feedbackRecordDirectoryId])
+  @@index([feedbackDirectoryId])
 }
 
 /// Maps survey elements to Hub FeedbackRecords for Formbricks connectors.
@@ -1273,7 +1273,7 @@ model ConnectorFieldMapping {
   @@unique([workspaceId, connectorId, sourceFieldId, targetFieldId])
 }
 
-/// Represents a feedback record directory (Hub tenant) owned by an organization.
+/// Represents a feedback directory (Hub tenant) owned by an organization.
 /// Directories group feedback data and are assigned to workspaces for access control.
 ///
 /// @property id - Unique identifier for the directory
@@ -1281,35 +1281,35 @@ model ConnectorFieldMapping {
 /// @property isArchived - Soft delete flag
 /// @property organization - The parent organization
 /// @property workspaces - Workspaces assigned to this directory
-model FeedbackRecordDirectory {
-  id             String                             @id @default(cuid())
-  createdAt      DateTime                           @default(now()) @map(name: "created_at")
-  updatedAt      DateTime                           @updatedAt @map(name: "updated_at")
+model FeedbackDirectory {
+  id             String                       @id @default(cuid())
+  createdAt      DateTime                     @default(now()) @map(name: "created_at")
+  updatedAt      DateTime                     @updatedAt @map(name: "updated_at")
   name           String
-  isArchived     Boolean                            @default(false)
+  isArchived     Boolean                      @default(false)
   organizationId String
-  organization   Organization                       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  workspaces     FeedbackRecordDirectoryWorkspace[]
+  organization   Organization                 @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  workspaces     FeedbackDirectoryWorkspace[]
   connectors     Connector[]
   charts         Chart[]
-  apiKeys        ApiKeyFeedbackRecordDirectory[]
+  apiKeys        ApiKeyFeedbackDirectory[]
 
   @@unique([organizationId, name])
 }
 
-/// Links feedback record directories to workspaces (workspaces).
+/// Links feedback directories to workspaces (workspaces).
 /// Manages which workspaces can access a given directory.
 ///
-/// @property feedbackRecordDirectory - The directory being accessed
+/// @property feedbackDirectory - The directory being accessed
 /// @property workspace - The workspace receiving access
-model FeedbackRecordDirectoryWorkspace {
-  createdAt                 DateTime                @default(now()) @map(name: "created_at")
-  updatedAt                 DateTime                @updatedAt @map(name: "updated_at")
-  feedbackRecordDirectoryId String
-  feedbackRecordDirectory   FeedbackRecordDirectory @relation(fields: [feedbackRecordDirectoryId], references: [id], onDelete: Cascade)
-  workspaceId               String
-  workspace                 Workspace               @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+model FeedbackDirectoryWorkspace {
+  createdAt           DateTime          @default(now()) @map(name: "created_at")
+  updatedAt           DateTime          @updatedAt @map(name: "updated_at")
+  feedbackDirectoryId String
+  feedbackDirectory   FeedbackDirectory @relation(fields: [feedbackDirectoryId], references: [id], onDelete: Cascade)
+  workspaceId         String
+  workspace           Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
 
-  @@id([feedbackRecordDirectoryId, workspaceId])
+  @@id([feedbackDirectoryId, workspaceId])
   @@index([workspaceId])
 }

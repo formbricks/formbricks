@@ -221,7 +221,7 @@ describe("withV3ApiWrapper", () => {
       organizationId: "org_1",
       organizationAccess: { accessControl: { read: true, write: false } },
       workspacePermissions: [],
-      feedbackRecordDirectoryPermissions: [],
+      feedbackDirectoryPermissions: [],
     });
 
     const handler = vi.fn(async ({ authentication }) => {
@@ -260,7 +260,7 @@ describe("withV3ApiWrapper", () => {
       organizationId: "org_1",
       organizationAccess: { accessControl: { read: true, write: true } },
       workspacePermissions: [],
-      feedbackRecordDirectoryPermissions: [],
+      feedbackDirectoryPermissions: [],
     });
 
     const wrapped = withV3ApiWrapper({

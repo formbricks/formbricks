@@ -3,15 +3,15 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
-  createFeedbackRecordDirectory,
-  getFeedbackRecordDirectories,
-  getFeedbackRecordDirectoriesByWorkspaceId,
-  getFeedbackRecordDirectoryAuthContext,
-  getFeedbackRecordDirectoryDetails,
+  createFeedbackDirectory,
+  getFeedbackDirectories,
+  getFeedbackDirectoriesByWorkspaceId,
+  getFeedbackDirectoryAuthContext,
+  getFeedbackDirectoryDetails,
   getOrganizationIdFromDirectoryId,
-  getWorkspaceFeedbackRecordDirectoryAccess,
-  updateFeedbackRecordDirectory,
-} from "./feedback-record-directory";
+  getWorkspaceFeedbackDirectoryAccess,
+  updateFeedbackDirectory,
+} from "./feedback-directory";
 
 vi.mock("server-only", () => ({}));
 
@@ -21,13 +21,13 @@ vi.mock("@/lib/utils/validate", () => ({
 
 vi.mock("@formbricks/database", () => {
   const prismaMock = {
-    feedbackRecordDirectory: {
+    feedbackDirectory: {
       findMany: vi.fn(),
       findUnique: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
     },
-    feedbackRecordDirectoryWorkspace: {
+    feedbackDirectoryWorkspace: {
       findMany: vi.fn(),
       findFirst: vi.fn().mockResolvedValue(null),
     },
@@ -67,16 +67,16 @@ const mockDirectoryDetailsDbRow = {
   connectors: [],
 };
 
-describe("FeedbackRecordDirectory Service", () => {
+describe("FeedbackDirectory Service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  describe("getFeedbackRecordDirectories", () => {
+  describe("getFeedbackDirectories", () => {
     test("returns directories with workspace counts", async () => {
-      vi.mocked(prisma.feedbackRecordDirectory.findMany).mockResolvedValueOnce([mockDirectoryDbRow] as any);
+      vi.mocked(prisma.feedbackDirectory.findMany).mockResolvedValueOnce([mockDirectoryDbRow] as any);
 
-      const result = await getFeedbackRecordDirectories(mockOrganizationId);
+      const result = await getFeedbackDirectories(mockOrganizationId);
 
       expect(result).toEqual([
         {
@@ -87,7 +87,7 @@ describe("FeedbackRecordDirectory Service", () => {
           connectorCount: 1,
         },
       ]);
-      expect(prisma.feedbackRecordDirectory.findMany).toHaveBeenCalledWith({
+      expect(prisma.feedbackDirectory.findMany).toHaveBeenCalledWith({
         where: { organizationId: mockOrganizationId },
         select: {
           id: true,
@@ -100,9 +100,9 @@ describe("FeedbackRecordDirectory Service", () => {
     });
 
     test("returns empty array when no directories exist", async () => {
-      vi.mocked(prisma.feedbackRecordDirectory.findMany).mockResolvedValueOnce([]);
+      vi.mocked(prisma.feedbackDirectory.findMany).mockResolvedValueOnce([]);
 
-      const result = await getFeedbackRecordDirectories(mockOrganizationId);
+      const result = await getFeedbackDirectories(mockOrganizationId);
 
       expect(result).toEqual([]);
     });
@@ -112,26 +112,24 @@ describe("FeedbackRecordDirectory Service", () => {
         code: "P2010",
         clientVersion: "0.0.1",
       });
-      vi.mocked(prisma.feedbackRecordDirectory.findMany).mockRejectedValueOnce(prismaError);
+      vi.mocked(prisma.feedbackDirectory.findMany).mockRejectedValueOnce(prismaError);
 
-      await expect(getFeedbackRecordDirectories(mockOrganizationId)).rejects.toThrow(DatabaseError);
+      await expect(getFeedbackDirectories(mockOrganizationId)).rejects.toThrow(DatabaseError);
     });
 
     test("re-throws unexpected errors", async () => {
       const error = new Error("Unexpected error");
-      vi.mocked(prisma.feedbackRecordDirectory.findMany).mockRejectedValueOnce(error);
+      vi.mocked(prisma.feedbackDirectory.findMany).mockRejectedValueOnce(error);
 
-      await expect(getFeedbackRecordDirectories(mockOrganizationId)).rejects.toThrow(error);
+      await expect(getFeedbackDirectories(mockOrganizationId)).rejects.toThrow(error);
     });
   });
 
-  describe("getFeedbackRecordDirectoryDetails", () => {
+  describe("getFeedbackDirectoryDetails", () => {
     test("returns directory details with workspace assignments", async () => {
-      vi.mocked(prisma.feedbackRecordDirectory.findUnique).mockResolvedValueOnce(
-        mockDirectoryDetailsDbRow as any
-      );
+      vi.mocked(prisma.feedbackDirectory.findUnique).mockResolvedValueOnce(mockDirectoryDetailsDbRow as any);
 
-      const result = await getFeedbackRecordDirectoryDetails(mockDirectoryId);
+      const result = await getFeedbackDirectoryDetails(mockDirectoryId);
 
       expect(result).toEqual({
         id: mockDirectoryId,
@@ -159,9 +157,9 @@ describe("FeedbackRecordDirectory Service", () => {
           },
         ],
       };
-      vi.mocked(prisma.feedbackRecordDirectory.findUnique).mockResolvedValueOnce(dbRowWithConnectors as any);
+      vi.mocked(prisma.feedbackDirectory.findUnique).mockResolvedValueOnce(dbRowWithConnectors as any);
 
-      const result = await getFeedbackRecordDirectoryDetails(mockDirectoryId);
+      const result = await getFeedbackDirectoryDetails(mockDirectoryId);
 
       expect(result?.connectors).toEqual([
         {
@@ -175,9 +173,9 @@ describe("FeedbackRecordDirectory Service", () => {
     });
 
     test("returns null when directory not found", async () => {
-      vi.mocked(prisma.feedbackRecordDirectory.findUnique).mockResolvedValueOnce(null);
+      vi.mocked(prisma.feedbackDirectory.findUnique).mockResolvedValueOnce(null);
 
-      const result = await getFeedbackRecordDirectoryDetails(mockDirectoryId);
+      const result = await getFeedbackDirectoryDetails(mockDirectoryId);
 
       expect(result).toBeNull();
     });
@@ -187,28 +185,28 @@ describe("FeedbackRecordDirectory Service", () => {
         code: "P2010",
         clientVersion: "0.0.1",
       });
-      vi.mocked(prisma.feedbackRecordDirectory.findUnique).mockRejectedValueOnce(prismaError);
+      vi.mocked(prisma.feedbackDirectory.findUnique).mockRejectedValueOnce(prismaError);
 
-      await expect(getFeedbackRecordDirectoryDetails(mockDirectoryId)).rejects.toThrow(DatabaseError);
+      await expect(getFeedbackDirectoryDetails(mockDirectoryId)).rejects.toThrow(DatabaseError);
     });
   });
 
-  describe("getFeedbackRecordDirectoryAuthContext", () => {
+  describe("getFeedbackDirectoryAuthContext", () => {
     test("returns slim auth context with workspace ids", async () => {
-      vi.mocked(prisma.feedbackRecordDirectory.findUnique).mockResolvedValueOnce({
+      vi.mocked(prisma.feedbackDirectory.findUnique).mockResolvedValueOnce({
         organizationId: mockOrganizationId,
         isArchived: false,
         workspaces: [{ workspaceId: mockWorkspaceId1 }, { workspaceId: mockWorkspaceId2 }],
       } as any);
 
-      const result = await getFeedbackRecordDirectoryAuthContext(mockDirectoryId);
+      const result = await getFeedbackDirectoryAuthContext(mockDirectoryId);
 
       expect(result).toEqual({
         organizationId: mockOrganizationId,
         workspaceIds: [mockWorkspaceId1, mockWorkspaceId2],
         isArchived: false,
       });
-      expect(prisma.feedbackRecordDirectory.findUnique).toHaveBeenCalledWith({
+      expect(prisma.feedbackDirectory.findUnique).toHaveBeenCalledWith({
         where: { id: mockDirectoryId },
         select: {
           organizationId: true,
@@ -223,9 +221,9 @@ describe("FeedbackRecordDirectory Service", () => {
     });
 
     test("returns null when auth context directory is missing", async () => {
-      vi.mocked(prisma.feedbackRecordDirectory.findUnique).mockResolvedValueOnce(null);
+      vi.mocked(prisma.feedbackDirectory.findUnique).mockResolvedValueOnce(null);
 
-      const result = await getFeedbackRecordDirectoryAuthContext(mockDirectoryId);
+      const result = await getFeedbackDirectoryAuthContext(mockDirectoryId);
 
       expect(result).toBeNull();
     });
@@ -235,22 +233,22 @@ describe("FeedbackRecordDirectory Service", () => {
         code: "P2010",
         clientVersion: "0.0.1",
       });
-      vi.mocked(prisma.feedbackRecordDirectory.findUnique).mockRejectedValueOnce(prismaError);
+      vi.mocked(prisma.feedbackDirectory.findUnique).mockRejectedValueOnce(prismaError);
 
-      await expect(getFeedbackRecordDirectoryAuthContext(mockDirectoryId)).rejects.toThrow(DatabaseError);
+      await expect(getFeedbackDirectoryAuthContext(mockDirectoryId)).rejects.toThrow(DatabaseError);
     });
   });
 
-  describe("createFeedbackRecordDirectory", () => {
+  describe("createFeedbackDirectory", () => {
     test("creates a directory and returns its ID", async () => {
-      vi.mocked(prisma.feedbackRecordDirectory.create).mockResolvedValueOnce({
+      vi.mocked(prisma.feedbackDirectory.create).mockResolvedValueOnce({
         id: mockDirectoryId,
       } as any);
 
-      const result = await createFeedbackRecordDirectory(mockOrganizationId, "New Directory");
+      const result = await createFeedbackDirectory(mockOrganizationId, "New Directory");
 
       expect(result).toBe(mockDirectoryId);
-      expect(prisma.feedbackRecordDirectory.create).toHaveBeenCalledWith({
+      expect(prisma.feedbackDirectory.create).toHaveBeenCalledWith({
         data: { name: "New Directory", organizationId: mockOrganizationId },
         select: { id: true },
       });
@@ -258,11 +256,11 @@ describe("FeedbackRecordDirectory Service", () => {
 
     test("creates a directory with workspace links", async () => {
       vi.mocked(prisma.workspace.count).mockResolvedValueOnce(2);
-      vi.mocked(prisma.feedbackRecordDirectory.create).mockResolvedValueOnce({
+      vi.mocked(prisma.feedbackDirectory.create).mockResolvedValueOnce({
         id: mockDirectoryId,
       } as any);
 
-      const result = await createFeedbackRecordDirectory(mockOrganizationId, "With Workspaces", [
+      const result = await createFeedbackDirectory(mockOrganizationId, "With Workspaces", [
         mockWorkspaceId1,
         mockWorkspaceId2,
       ]);
@@ -271,7 +269,7 @@ describe("FeedbackRecordDirectory Service", () => {
       expect(prisma.workspace.count).toHaveBeenCalledWith({
         where: { id: { in: [mockWorkspaceId1, mockWorkspaceId2] }, organizationId: mockOrganizationId },
       });
-      expect(prisma.feedbackRecordDirectory.create).toHaveBeenCalledWith({
+      expect(prisma.feedbackDirectory.create).toHaveBeenCalledWith({
         data: {
           name: "With Workspaces",
           organizationId: mockOrganizationId,
@@ -287,7 +285,7 @@ describe("FeedbackRecordDirectory Service", () => {
       vi.mocked(prisma.workspace.count).mockResolvedValueOnce(0);
 
       await expect(
-        createFeedbackRecordDirectory(mockOrganizationId, "Bad Workspaces", [mockWorkspaceId1])
+        createFeedbackDirectory(mockOrganizationId, "Bad Workspaces", [mockWorkspaceId1])
       ).rejects.toThrow(new InvalidInputError("DIRECTORY_WORKSPACES_INVALID_ORG"));
     });
 
@@ -296,9 +294,9 @@ describe("FeedbackRecordDirectory Service", () => {
         code: "P2002",
         clientVersion: "0.0.1",
       });
-      vi.mocked(prisma.feedbackRecordDirectory.create).mockRejectedValueOnce(prismaError);
+      vi.mocked(prisma.feedbackDirectory.create).mockRejectedValueOnce(prismaError);
 
-      await expect(createFeedbackRecordDirectory(mockOrganizationId, "Duplicate")).rejects.toThrow(
+      await expect(createFeedbackDirectory(mockOrganizationId, "Duplicate")).rejects.toThrow(
         new InvalidInputError("DIRECTORY_NAME_DUPLICATE")
       );
     });
@@ -308,29 +306,29 @@ describe("FeedbackRecordDirectory Service", () => {
         code: "P2010",
         clientVersion: "0.0.1",
       });
-      vi.mocked(prisma.feedbackRecordDirectory.create).mockRejectedValueOnce(prismaError);
+      vi.mocked(prisma.feedbackDirectory.create).mockRejectedValueOnce(prismaError);
 
-      await expect(createFeedbackRecordDirectory(mockOrganizationId, "Test")).rejects.toThrow(DatabaseError);
+      await expect(createFeedbackDirectory(mockOrganizationId, "Test")).rejects.toThrow(DatabaseError);
     });
 
     test("re-throws unexpected errors", async () => {
       const error = new Error("Unexpected");
-      vi.mocked(prisma.feedbackRecordDirectory.create).mockRejectedValueOnce(error);
+      vi.mocked(prisma.feedbackDirectory.create).mockRejectedValueOnce(error);
 
-      await expect(createFeedbackRecordDirectory(mockOrganizationId, "Test")).rejects.toThrow(error);
+      await expect(createFeedbackDirectory(mockOrganizationId, "Test")).rejects.toThrow(error);
     });
   });
 
-  describe("updateFeedbackRecordDirectory", () => {
+  describe("updateFeedbackDirectory", () => {
     test("updates directory name", async () => {
-      vi.mocked(prisma.feedbackRecordDirectory.update).mockResolvedValueOnce({} as any);
+      vi.mocked(prisma.feedbackDirectory.update).mockResolvedValueOnce({} as any);
 
-      const result = await updateFeedbackRecordDirectory(mockDirectoryId, mockOrganizationId, {
+      const result = await updateFeedbackDirectory(mockDirectoryId, mockOrganizationId, {
         name: "Updated Name",
       });
 
       expect(result).toBe(true);
-      expect(prisma.feedbackRecordDirectory.update).toHaveBeenCalledWith({
+      expect(prisma.feedbackDirectory.update).toHaveBeenCalledWith({
         where: { id: mockDirectoryId },
         data: { name: "Updated Name" },
       });
@@ -338,17 +336,17 @@ describe("FeedbackRecordDirectory Service", () => {
 
     test("archives directory when no connectors linked", async () => {
       vi.mocked(prisma.connector.count).mockResolvedValueOnce(0);
-      vi.mocked(prisma.feedbackRecordDirectory.update).mockResolvedValueOnce({} as any);
+      vi.mocked(prisma.feedbackDirectory.update).mockResolvedValueOnce({} as any);
 
-      const result = await updateFeedbackRecordDirectory(mockDirectoryId, mockOrganizationId, {
+      const result = await updateFeedbackDirectory(mockDirectoryId, mockOrganizationId, {
         isArchived: true,
       });
 
       expect(result).toBe(true);
       expect(prisma.connector.count).toHaveBeenCalledWith({
-        where: { feedbackRecordDirectoryId: mockDirectoryId },
+        where: { feedbackDirectoryId: mockDirectoryId },
       });
-      expect(prisma.feedbackRecordDirectory.update).toHaveBeenCalledWith({
+      expect(prisma.feedbackDirectory.update).toHaveBeenCalledWith({
         where: { id: mockDirectoryId },
         data: { isArchived: true },
       });
@@ -358,35 +356,33 @@ describe("FeedbackRecordDirectory Service", () => {
       vi.mocked(prisma.connector.count).mockResolvedValueOnce(2);
 
       await expect(
-        updateFeedbackRecordDirectory(mockDirectoryId, mockOrganizationId, { isArchived: true })
+        updateFeedbackDirectory(mockDirectoryId, mockOrganizationId, { isArchived: true })
       ).rejects.toThrow(new InvalidInputError("DIRECTORY_HAS_CONNECTORS"));
     });
 
     test("unarchives directory", async () => {
-      vi.mocked(prisma.feedbackRecordDirectory.update).mockResolvedValueOnce({} as any);
+      vi.mocked(prisma.feedbackDirectory.update).mockResolvedValueOnce({} as any);
 
-      const result = await updateFeedbackRecordDirectory(mockDirectoryId, mockOrganizationId, {
+      const result = await updateFeedbackDirectory(mockDirectoryId, mockOrganizationId, {
         isArchived: false,
       });
 
       expect(result).toBe(true);
-      expect(prisma.feedbackRecordDirectory.update).toHaveBeenCalledWith({
+      expect(prisma.feedbackDirectory.update).toHaveBeenCalledWith({
         where: { id: mockDirectoryId },
         data: { isArchived: false },
       });
     });
 
     test("updates workspace assignments with diff", async () => {
-      // getFeedbackRecordDirectoryDetails call
-      vi.mocked(prisma.feedbackRecordDirectory.findUnique).mockResolvedValueOnce(
-        mockDirectoryDetailsDbRow as any
-      );
+      // getFeedbackDirectoryDetails call
+      vi.mocked(prisma.feedbackDirectory.findUnique).mockResolvedValueOnce(mockDirectoryDetailsDbRow as any);
 
       vi.mocked(prisma.workspace.count).mockResolvedValueOnce(1);
-      vi.mocked(prisma.feedbackRecordDirectory.update).mockResolvedValueOnce({} as any);
+      vi.mocked(prisma.feedbackDirectory.update).mockResolvedValueOnce({} as any);
 
       // Keep workspace1, remove workspace2 (by not including it)
-      const result = await updateFeedbackRecordDirectory(mockDirectoryId, mockOrganizationId, {
+      const result = await updateFeedbackDirectory(mockDirectoryId, mockOrganizationId, {
         workspaceIds: [mockWorkspaceId1],
       });
 
@@ -400,13 +396,11 @@ describe("FeedbackRecordDirectory Service", () => {
     });
 
     test("pauses connectors in removed workspaces when requested", async () => {
-      vi.mocked(prisma.feedbackRecordDirectory.findUnique).mockResolvedValueOnce(
-        mockDirectoryDetailsDbRow as any
-      );
+      vi.mocked(prisma.feedbackDirectory.findUnique).mockResolvedValueOnce(mockDirectoryDetailsDbRow as any);
       vi.mocked(prisma.workspace.count).mockResolvedValueOnce(1);
-      vi.mocked(prisma.feedbackRecordDirectory.update).mockResolvedValueOnce({} as any);
+      vi.mocked(prisma.feedbackDirectory.update).mockResolvedValueOnce({} as any);
 
-      const result = await updateFeedbackRecordDirectory(
+      const result = await updateFeedbackDirectory(
         mockDirectoryId,
         mockOrganizationId,
         {
@@ -418,7 +412,7 @@ describe("FeedbackRecordDirectory Service", () => {
       expect(result).toBe(true);
       expect(prisma.connector.updateMany).toHaveBeenCalledWith({
         where: {
-          feedbackRecordDirectoryId: mockDirectoryId,
+          feedbackDirectoryId: mockDirectoryId,
           workspaceId: { in: [mockWorkspaceId2] },
         },
         data: {
@@ -432,24 +426,22 @@ describe("FeedbackRecordDirectory Service", () => {
         code: "P2025",
         clientVersion: "0.0.1",
       });
-      vi.mocked(prisma.feedbackRecordDirectory.update).mockRejectedValueOnce(prismaError);
+      vi.mocked(prisma.feedbackDirectory.update).mockRejectedValueOnce(prismaError);
 
       await expect(
-        updateFeedbackRecordDirectory(mockDirectoryId, mockOrganizationId, { name: "Test" })
+        updateFeedbackDirectory(mockDirectoryId, mockOrganizationId, { name: "Test" })
       ).rejects.toThrow(ResourceNotFoundError);
     });
 
     test("throws InvalidInputError when workspaces belong to different org", async () => {
-      // getFeedbackRecordDirectoryDetails call
-      vi.mocked(prisma.feedbackRecordDirectory.findUnique).mockResolvedValueOnce(
-        mockDirectoryDetailsDbRow as any
-      );
+      // getFeedbackDirectoryDetails call
+      vi.mocked(prisma.feedbackDirectory.findUnique).mockResolvedValueOnce(mockDirectoryDetailsDbRow as any);
 
       // count returns 0 — none of the workspaces belong to this org
       vi.mocked(prisma.workspace.count).mockResolvedValueOnce(0);
 
       await expect(
-        updateFeedbackRecordDirectory(mockDirectoryId, mockOrganizationId, {
+        updateFeedbackDirectory(mockDirectoryId, mockOrganizationId, {
           workspaceIds: [mockWorkspaceId1],
         })
       ).rejects.toThrow(new InvalidInputError("DIRECTORY_WORKSPACES_INVALID_ORG"));
@@ -460,10 +452,10 @@ describe("FeedbackRecordDirectory Service", () => {
         code: "P2002",
         clientVersion: "0.0.1",
       });
-      vi.mocked(prisma.feedbackRecordDirectory.update).mockRejectedValueOnce(prismaError);
+      vi.mocked(prisma.feedbackDirectory.update).mockRejectedValueOnce(prismaError);
 
       await expect(
-        updateFeedbackRecordDirectory(mockDirectoryId, mockOrganizationId, { name: "Duplicate" })
+        updateFeedbackDirectory(mockDirectoryId, mockOrganizationId, { name: "Duplicate" })
       ).rejects.toThrow(InvalidInputError);
     });
 
@@ -472,38 +464,38 @@ describe("FeedbackRecordDirectory Service", () => {
         code: "P2010",
         clientVersion: "0.0.1",
       });
-      vi.mocked(prisma.feedbackRecordDirectory.update).mockRejectedValueOnce(prismaError);
+      vi.mocked(prisma.feedbackDirectory.update).mockRejectedValueOnce(prismaError);
 
       await expect(
-        updateFeedbackRecordDirectory(mockDirectoryId, mockOrganizationId, { name: "Test" })
+        updateFeedbackDirectory(mockDirectoryId, mockOrganizationId, { name: "Test" })
       ).rejects.toThrow(DatabaseError);
     });
   });
 
-  describe("getFeedbackRecordDirectoriesByWorkspaceId", () => {
+  describe("getFeedbackDirectoriesByWorkspaceId", () => {
     test("returns directories assigned to workspace", async () => {
-      vi.mocked(prisma.feedbackRecordDirectoryWorkspace.findMany).mockResolvedValueOnce([
-        { feedbackRecordDirectory: { id: mockDirectoryId, name: "Test Directory" } },
+      vi.mocked(prisma.feedbackDirectoryWorkspace.findMany).mockResolvedValueOnce([
+        { feedbackDirectory: { id: mockDirectoryId, name: "Test Directory" } },
       ] as any);
 
-      const result = await getFeedbackRecordDirectoriesByWorkspaceId(mockWorkspaceId1);
+      const result = await getFeedbackDirectoriesByWorkspaceId(mockWorkspaceId1);
 
       expect(result).toEqual([{ id: mockDirectoryId, name: "Test Directory" }]);
-      expect(prisma.feedbackRecordDirectoryWorkspace.findMany).toHaveBeenCalledWith({
+      expect(prisma.feedbackDirectoryWorkspace.findMany).toHaveBeenCalledWith({
         where: {
           workspaceId: mockWorkspaceId1,
-          feedbackRecordDirectory: { isArchived: false },
+          feedbackDirectory: { isArchived: false },
         },
         select: {
-          feedbackRecordDirectory: { select: { id: true, name: true } },
+          feedbackDirectory: { select: { id: true, name: true } },
         },
       });
     });
 
     test("returns empty array when no directories assigned", async () => {
-      vi.mocked(prisma.feedbackRecordDirectoryWorkspace.findMany).mockResolvedValueOnce([]);
+      vi.mocked(prisma.feedbackDirectoryWorkspace.findMany).mockResolvedValueOnce([]);
 
-      const result = await getFeedbackRecordDirectoriesByWorkspaceId(mockWorkspaceId1);
+      const result = await getFeedbackDirectoriesByWorkspaceId(mockWorkspaceId1);
 
       expect(result).toEqual([]);
     });
@@ -513,62 +505,60 @@ describe("FeedbackRecordDirectory Service", () => {
         code: "P2010",
         clientVersion: "0.0.1",
       });
-      vi.mocked(prisma.feedbackRecordDirectoryWorkspace.findMany).mockRejectedValueOnce(prismaError);
+      vi.mocked(prisma.feedbackDirectoryWorkspace.findMany).mockRejectedValueOnce(prismaError);
 
-      await expect(getFeedbackRecordDirectoriesByWorkspaceId(mockWorkspaceId1)).rejects.toThrow(
-        DatabaseError
-      );
+      await expect(getFeedbackDirectoriesByWorkspaceId(mockWorkspaceId1)).rejects.toThrow(DatabaseError);
     });
 
     test("re-throws unexpected errors", async () => {
       const error = new Error("Unexpected");
-      vi.mocked(prisma.feedbackRecordDirectoryWorkspace.findMany).mockRejectedValueOnce(error);
+      vi.mocked(prisma.feedbackDirectoryWorkspace.findMany).mockRejectedValueOnce(error);
 
-      await expect(getFeedbackRecordDirectoriesByWorkspaceId(mockWorkspaceId1)).rejects.toThrow(error);
+      await expect(getFeedbackDirectoriesByWorkspaceId(mockWorkspaceId1)).rejects.toThrow(error);
     });
   });
 
-  describe("getWorkspaceFeedbackRecordDirectoryAccess", () => {
+  describe("getWorkspaceFeedbackDirectoryAccess", () => {
     test("returns one active assignment per workspace with directory details", async () => {
-      vi.mocked(prisma.feedbackRecordDirectoryWorkspace.findMany).mockResolvedValueOnce([
+      vi.mocked(prisma.feedbackDirectoryWorkspace.findMany).mockResolvedValueOnce([
         {
           workspaceId: mockWorkspaceId1,
-          feedbackRecordDirectory: { id: mockDirectoryId, name: "Directory A" },
+          feedbackDirectory: { id: mockDirectoryId, name: "Directory A" },
         },
         {
           workspaceId: mockWorkspaceId1,
-          feedbackRecordDirectory: { id: "clj28r6va000409j3ep7h8xy2", name: "Directory B" },
+          feedbackDirectory: { id: "clj28r6va000409j3ep7h8xy2", name: "Directory B" },
         },
         {
           workspaceId: mockWorkspaceId2,
-          feedbackRecordDirectory: { id: "clj28r6va000409j3ep7h8xy3", name: "Directory C" },
+          feedbackDirectory: { id: "clj28r6va000409j3ep7h8xy3", name: "Directory C" },
         },
       ] as any);
 
-      const result = await getWorkspaceFeedbackRecordDirectoryAccess(mockOrganizationId);
+      const result = await getWorkspaceFeedbackDirectoryAccess(mockOrganizationId);
 
       expect(result).toEqual([
         {
           workspaceId: mockWorkspaceId1,
-          feedbackRecordDirectoryId: mockDirectoryId,
-          feedbackRecordDirectoryName: "Directory A",
+          feedbackDirectoryId: mockDirectoryId,
+          feedbackDirectoryName: "Directory A",
         },
         {
           workspaceId: mockWorkspaceId2,
-          feedbackRecordDirectoryId: "clj28r6va000409j3ep7h8xy3",
-          feedbackRecordDirectoryName: "Directory C",
+          feedbackDirectoryId: "clj28r6va000409j3ep7h8xy3",
+          feedbackDirectoryName: "Directory C",
         },
       ]);
-      expect(prisma.feedbackRecordDirectoryWorkspace.findMany).toHaveBeenCalledWith({
+      expect(prisma.feedbackDirectoryWorkspace.findMany).toHaveBeenCalledWith({
         where: {
-          feedbackRecordDirectory: {
+          feedbackDirectory: {
             organizationId: mockOrganizationId,
             isArchived: false,
           },
         },
         select: {
           workspaceId: true,
-          feedbackRecordDirectory: {
+          feedbackDirectory: {
             select: {
               id: true,
               name: true,
@@ -580,9 +570,9 @@ describe("FeedbackRecordDirectory Service", () => {
     });
 
     test("returns empty array when no active access assignments exist", async () => {
-      vi.mocked(prisma.feedbackRecordDirectoryWorkspace.findMany).mockResolvedValueOnce([]);
+      vi.mocked(prisma.feedbackDirectoryWorkspace.findMany).mockResolvedValueOnce([]);
 
-      const result = await getWorkspaceFeedbackRecordDirectoryAccess(mockOrganizationId);
+      const result = await getWorkspaceFeedbackDirectoryAccess(mockOrganizationId);
 
       expect(result).toEqual([]);
     });
@@ -592,38 +582,36 @@ describe("FeedbackRecordDirectory Service", () => {
         code: "P2010",
         clientVersion: "0.0.1",
       });
-      vi.mocked(prisma.feedbackRecordDirectoryWorkspace.findMany).mockRejectedValueOnce(prismaError);
+      vi.mocked(prisma.feedbackDirectoryWorkspace.findMany).mockRejectedValueOnce(prismaError);
 
-      await expect(getWorkspaceFeedbackRecordDirectoryAccess(mockOrganizationId)).rejects.toThrow(
-        DatabaseError
-      );
+      await expect(getWorkspaceFeedbackDirectoryAccess(mockOrganizationId)).rejects.toThrow(DatabaseError);
     });
 
     test("re-throws unexpected errors", async () => {
       const error = new Error("Unexpected");
-      vi.mocked(prisma.feedbackRecordDirectoryWorkspace.findMany).mockRejectedValueOnce(error);
+      vi.mocked(prisma.feedbackDirectoryWorkspace.findMany).mockRejectedValueOnce(error);
 
-      await expect(getWorkspaceFeedbackRecordDirectoryAccess(mockOrganizationId)).rejects.toThrow(error);
+      await expect(getWorkspaceFeedbackDirectoryAccess(mockOrganizationId)).rejects.toThrow(error);
     });
   });
 
   describe("getOrganizationIdFromDirectoryId", () => {
     test("returns organization ID for a valid directory", async () => {
-      vi.mocked(prisma.feedbackRecordDirectory.findUnique).mockResolvedValueOnce({
+      vi.mocked(prisma.feedbackDirectory.findUnique).mockResolvedValueOnce({
         organizationId: mockOrganizationId,
       } as any);
 
       const result = await getOrganizationIdFromDirectoryId(mockDirectoryId);
 
       expect(result).toBe(mockOrganizationId);
-      expect(prisma.feedbackRecordDirectory.findUnique).toHaveBeenCalledWith({
+      expect(prisma.feedbackDirectory.findUnique).toHaveBeenCalledWith({
         where: { id: mockDirectoryId },
         select: { organizationId: true },
       });
     });
 
     test("throws ResourceNotFoundError when directory does not exist", async () => {
-      vi.mocked(prisma.feedbackRecordDirectory.findUnique).mockResolvedValueOnce(null);
+      vi.mocked(prisma.feedbackDirectory.findUnique).mockResolvedValueOnce(null);
 
       await expect(getOrganizationIdFromDirectoryId(mockDirectoryId)).rejects.toThrow(ResourceNotFoundError);
     });

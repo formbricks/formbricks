@@ -304,7 +304,7 @@ describe("createConnectorWithMappings", () => {
     const result = await createConnectorWithMappings(ENV_ID, {
       name: "New",
       type: "formbricks_survey",
-      feedbackRecordDirectoryId: FRD_ID,
+      feedbackDirectoryId: FRD_ID,
     });
 
     expect(tx.connector.create).toHaveBeenCalledWith(
@@ -313,7 +313,7 @@ describe("createConnectorWithMappings", () => {
           name: "New",
           type: "formbricks_survey",
           workspaceId: ENV_ID,
-          feedbackRecordDirectoryId: FRD_ID,
+          feedbackDirectoryId: FRD_ID,
         },
       })
     );
@@ -330,7 +330,7 @@ describe("createConnectorWithMappings", () => {
 
     await createConnectorWithMappings(
       ENV_ID,
-      { name: "FB", type: "formbricks_survey", feedbackRecordDirectoryId: FRD_ID },
+      { name: "FB", type: "formbricks_survey", feedbackDirectoryId: FRD_ID },
       {
         type: "formbricks_survey",
         mappings: [
@@ -366,7 +366,7 @@ describe("createConnectorWithMappings", () => {
 
     await createConnectorWithMappings(
       ENV_ID,
-      { name: "CSV", type: "csv", feedbackRecordDirectoryId: FRD_ID },
+      { name: "CSV", type: "csv", feedbackDirectoryId: FRD_ID },
       {
         type: "field",
         mappings: [{ sourceFieldId: "col-1", targetFieldId: "value_text" }],
@@ -398,7 +398,7 @@ describe("createConnectorWithMappings", () => {
       createConnectorWithMappings(ENV_ID, {
         name: "Dup",
         type: "formbricks_survey",
-        feedbackRecordDirectoryId: FRD_ID,
+        feedbackDirectoryId: FRD_ID,
       })
     ).rejects.toThrow(InvalidInputError);
   });
@@ -412,7 +412,7 @@ describe("createConnectorWithMappings", () => {
     );
 
     await expect(
-      createConnectorWithMappings(ENV_ID, { name: "Fail", type: "csv", feedbackRecordDirectoryId: FRD_ID })
+      createConnectorWithMappings(ENV_ID, { name: "Fail", type: "csv", feedbackDirectoryId: FRD_ID })
     ).rejects.toThrow(DatabaseError);
   });
 });

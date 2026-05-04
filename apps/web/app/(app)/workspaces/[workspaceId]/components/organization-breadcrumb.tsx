@@ -180,9 +180,9 @@ export const OrganizationBreadcrumb = ({
         : t("common.you_are_not_authorized_to_perform_this_action"),
     },
     {
-      id: "feedback-record-directories",
-      label: t("workspace.settings.feedback_record_directories.title"),
-      href: `${workspaceBasePath}/settings/feedback-record-directories`,
+      id: "feedback-directories",
+      label: t("workspace.settings.feedback_directories.title"),
+      href: `${workspaceBasePath}/settings/feedback-directories`,
       disabled: isMembershipPending || isMember,
       disabledMessage: isMembershipPending
         ? t("common.loading")

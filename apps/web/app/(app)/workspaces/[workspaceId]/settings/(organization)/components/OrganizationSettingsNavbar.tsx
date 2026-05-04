@@ -43,10 +43,10 @@ export const OrganizationSettingsNavbar = ({
       current: pathname?.includes("/teams"),
     },
     {
-      id: "feedback-record-directories",
-      label: t("workspace.settings.feedback_record_directories.nav_label"),
-      href: `${workspaceBasePath}/settings/feedback-record-directories`,
-      current: pathname?.includes("/feedback-record-directories"),
+      id: "feedback-directories",
+      label: t("workspace.settings.feedback_directories.nav_label"),
+      href: `${workspaceBasePath}/settings/feedback-directories`,
+      current: pathname?.includes("/feedback-directories"),
       hidden: isMember,
     },
     {

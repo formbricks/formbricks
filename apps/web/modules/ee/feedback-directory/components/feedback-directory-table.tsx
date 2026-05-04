@@ -8,41 +8,41 @@ import { TOrganizationRole } from "@formbricks/types/memberships";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import {
-  getFeedbackRecordDirectoryDetailsAction,
-  updateFeedbackRecordDirectoryAction,
-} from "@/modules/ee/feedback-record-directory/actions";
-import { FeedbackRecordDirectorySettingsModal } from "@/modules/ee/feedback-record-directory/components/feedback-record-directory-settings/feedback-record-directory-settings-modal";
+  getFeedbackDirectoryDetailsAction,
+  updateFeedbackDirectoryAction,
+} from "@/modules/ee/feedback-directory/actions";
+import { FeedbackDirectorySettingsModal } from "@/modules/ee/feedback-directory/components/feedback-directory-settings/feedback-directory-settings-modal";
 import {
-  TFeedbackRecordDirectory,
-  TFeedbackRecordDirectoryDetails,
-  TWorkspaceFeedbackRecordDirectoryAccess,
-  getTranslatedFeedbackRecordDirectoryError,
-} from "@/modules/ee/feedback-record-directory/types/feedback-record-directory";
+  TFeedbackDirectory,
+  TFeedbackDirectoryDetails,
+  TWorkspaceFeedbackDirectoryAccess,
+  getTranslatedFeedbackDirectoryError,
+} from "@/modules/ee/feedback-directory/types/feedback-directory";
 import { TOrganizationWorkspace } from "@/modules/ee/teams/team-list/types/workspace";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import { Switch } from "@/modules/ui/components/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
 
-interface FeedbackRecordDirectoryTableProps {
-  directories: TFeedbackRecordDirectory[];
+interface FeedbackDirectoryTableProps {
+  directories: TFeedbackDirectory[];
   organizationId: string;
   orgWorkspaces: TOrganizationWorkspace[];
-  workspaceAccessByWorkspace: TWorkspaceFeedbackRecordDirectoryAccess[];
+  workspaceAccessByWorkspace: TWorkspaceFeedbackDirectoryAccess[];
   membershipRole: TOrganizationRole;
 }
 
-export const FeedbackRecordDirectoryTable = ({
+export const FeedbackDirectoryTable = ({
   directories,
   organizationId,
   orgWorkspaces,
   workspaceAccessByWorkspace,
   membershipRole,
-}: Readonly<FeedbackRecordDirectoryTableProps>) => {
+}: Readonly<FeedbackDirectoryTableProps>) => {
   const { t } = useTranslation();
   const [openCreateModal, setOpenCreateModal] = useState(false);
   const [openSettingsModal, setOpenSettingsModal] = useState(false);
-  const [selectedDirectory, setSelectedDirectory] = useState<TFeedbackRecordDirectoryDetails>();
+  const [selectedDirectory, setSelectedDirectory] = useState<TFeedbackDirectoryDetails>();
   const [showArchived, setShowArchived] = useState(false);
   const [loadingDirectoryId, setLoadingDirectoryId] = useState<string | null>(null);
   const router = useRouter();
@@ -53,14 +53,14 @@ export const FeedbackRecordDirectoryTable = ({
   const handleManageDirectory = async (directoryId: string) => {
     setLoadingDirectoryId(directoryId);
     try {
-      const response = await getFeedbackRecordDirectoryDetailsAction({ directoryId });
+      const response = await getFeedbackDirectoryDetailsAction({ directoryId });
 
       if (response?.data) {
         setSelectedDirectory(response.data);
         setOpenSettingsModal(true);
       } else {
         const errorCode = getFormattedErrorMessage(response);
-        toast.error(getTranslatedFeedbackRecordDirectoryError(errorCode, t));
+        toast.error(getTranslatedFeedbackDirectoryError(errorCode, t));
       }
     } finally {
       setLoadingDirectoryId(null);
@@ -70,10 +70,10 @@ export const FeedbackRecordDirectoryTable = ({
   const handleUnarchiveDirectory = async (directoryId: string) => {
     setLoadingDirectoryId(directoryId);
     try {
-      const directoryDetailsResponse = await getFeedbackRecordDirectoryDetailsAction({ directoryId });
+      const directoryDetailsResponse = await getFeedbackDirectoryDetailsAction({ directoryId });
       if (!directoryDetailsResponse?.data) {
         const errorCode = getFormattedErrorMessage(directoryDetailsResponse);
-        toast.error(getTranslatedFeedbackRecordDirectoryError(errorCode, t));
+        toast.error(getTranslatedFeedbackDirectoryError(errorCode, t));
         return;
       }
 
@@ -83,24 +83,24 @@ export const FeedbackRecordDirectoryTable = ({
 
       const hasConflicts = directoryDetailsResponse.data.workspaces.some((workspace) => {
         const assignment = workspaceAccessMap.get(workspace.workspaceId);
-        return assignment && assignment.feedbackRecordDirectoryId !== directoryId;
+        return assignment && assignment.feedbackDirectoryId !== directoryId;
       });
 
       if (hasConflicts) {
-        toast.error(t("workspace.settings.feedback_record_directories.unarchive_workspace_conflict"));
+        toast.error(t("workspace.settings.feedback_directories.unarchive_workspace_conflict"));
         return;
       }
 
-      const response = await updateFeedbackRecordDirectoryAction({
+      const response = await updateFeedbackDirectoryAction({
         directoryId,
         data: { isArchived: false },
       });
       if (response?.data) {
-        toast.success(t("workspace.settings.feedback_record_directories.directory_unarchived_successfully"));
+        toast.success(t("workspace.settings.feedback_directories.directory_unarchived_successfully"));
         router.refresh();
       } else {
         const errorCode = getFormattedErrorMessage(response);
-        toast.error(getTranslatedFeedbackRecordDirectoryError(errorCode, t));
+        toast.error(getTranslatedFeedbackDirectoryError(errorCode, t));
       }
     } finally {
       setLoadingDirectoryId(null);
@@ -116,21 +116,21 @@ export const FeedbackRecordDirectoryTable = ({
           <div className="flex items-center gap-2">
             <Switch checked={showArchived} onCheckedChange={setShowArchived} />
             <span className="text-sm text-slate-500">
-              {t("workspace.settings.feedback_record_directories.show_archived")}
+              {t("workspace.settings.feedback_directories.show_archived")}
             </span>
           </div>
           <Button size="sm" onClick={() => setOpenCreateModal(true)}>
-            {t("workspace.settings.feedback_record_directories.create_feedback_directory")}
+            {t("workspace.settings.feedback_directories.create_feedback_directory")}
           </Button>
         </div>
       )}
 
-      <div className="overflow-hidden rounded-lg border" aria-label="Feedback record directories list">
+      <div className="overflow-hidden rounded-lg border" aria-label="Feedback directories list">
         <Table>
           <TableHeader role="rowgroup">
             <TableRow className="bg-slate-100" role="row">
               <TableHead className="font-medium text-slate-500">
-                {t("workspace.settings.feedback_record_directories.directory_name")}
+                {t("workspace.settings.feedback_directories.directory_name")}
               </TableHead>
               <TableHead className="font-medium text-slate-500">{t("common.workspaces")}</TableHead>
               <TableHead className="font-medium text-slate-500">{t("common.status")}</TableHead>
@@ -141,7 +141,7 @@ export const FeedbackRecordDirectoryTable = ({
             {filteredDirectories.length === 0 && (
               <TableRow>
                 <TableCell colSpan={4} className="text-center hover:bg-transparent">
-                  {t("workspace.settings.feedback_record_directories.empty_state")}
+                  {t("workspace.settings.feedback_directories.empty_state")}
                 </TableCell>
               </TableRow>
             )}
@@ -174,7 +174,7 @@ export const FeedbackRecordDirectoryTable = ({
                       loading={loadingDirectoryId === directory.id}
                       disabled={loadingDirectoryId !== null}
                       onClick={() => handleUnarchiveDirectory(directory.id)}>
-                      {t("workspace.settings.feedback_record_directories.unarchive")}
+                      {t("workspace.settings.feedback_directories.unarchive")}
                     </Button>
                   )}
                 </TableCell>
@@ -185,7 +185,7 @@ export const FeedbackRecordDirectoryTable = ({
       </div>
 
       {openCreateModal && (
-        <FeedbackRecordDirectorySettingsModal
+        <FeedbackDirectorySettingsModal
           open={openCreateModal}
           setOpen={setOpenCreateModal}
           organizationId={organizationId}
@@ -196,7 +196,7 @@ export const FeedbackRecordDirectoryTable = ({
       )}
 
       {openSettingsModal && selectedDirectory && (
-        <FeedbackRecordDirectorySettingsModal
+        <FeedbackDirectorySettingsModal
           open={openSettingsModal}
           setOpen={setOpenSettingsModal}
           directory={selectedDirectory}

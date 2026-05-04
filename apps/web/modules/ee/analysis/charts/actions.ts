@@ -213,7 +213,7 @@ export const getChartsAction = authenticatedActionClient
 const ZExecuteQueryAction = z.object({
   workspaceId: ZId,
   query: ZChartQuery,
-  feedbackRecordDirectoryId: ZId,
+  feedbackDirectoryId: ZId,
 });
 
 export const executeQueryAction = authenticatedActionClient
@@ -230,7 +230,7 @@ export const executeQueryAction = authenticatedActionClient
 
       validateQueryMembers(parsedInput.query);
 
-      const scopedQuery = injectTenantFilter(parsedInput.query, parsedInput.feedbackRecordDirectoryId);
+      const scopedQuery = injectTenantFilter(parsedInput.query, parsedInput.feedbackDirectoryId);
 
       try {
         return await executeQuery(scopedQuery as Record<string, unknown>);
@@ -280,7 +280,7 @@ const ZGenerateAIQueryResponse = z.object({
 const ZGenerateAIChartAction = z.object({
   workspaceId: ZId,
   prompt: z.string().min(1).max(2000),
-  feedbackRecordDirectoryId: ZId,
+  feedbackDirectoryId: ZId,
 });
 
 export const generateAIChartAction = authenticatedActionClient
@@ -335,10 +335,7 @@ export const generateAIChartAction = authenticatedActionClient
 
       validateQueryMembers(cleanQuery as TChartQuery);
 
-      const scopedQuery = injectTenantFilter(
-        cleanQuery as TChartQuery,
-        parsedInput.feedbackRecordDirectoryId
-      );
+      const scopedQuery = injectTenantFilter(cleanQuery as TChartQuery, parsedInput.feedbackDirectoryId);
 
       const data = await executeQuery(scopedQuery as Record<string, unknown>);
 

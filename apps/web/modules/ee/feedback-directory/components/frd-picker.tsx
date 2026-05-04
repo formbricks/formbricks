@@ -28,8 +28,8 @@ export const FrdPicker = ({ directories, selectedDirectoryId, onChange, workspac
           <p>{t("workspace.analysis.charts.no_data_source_available")}</p>
           <a
             className="mt-1 inline-block font-medium underline"
-            href={`/workspaces/${workspaceId}/settings/feedback-record-directories`}>
-            {t("workspace.analysis.charts.go_to_feedback_record_directories")}
+            href={`/workspaces/${workspaceId}/settings/feedback-directories`}>
+            {t("workspace.analysis.charts.go_to_feedback_directories")}
           </a>
         </div>
       </Alert>
@@ -49,9 +49,9 @@ export const FrdPicker = ({ directories, selectedDirectoryId, onChange, workspac
 
   return (
     <div className="space-y-2 p-1">
-      <Label htmlFor="feedbackRecordDirectory">{t("workspace.analysis.charts.data_source")}</Label>
+      <Label htmlFor="feedbackDirectory">{t("workspace.analysis.charts.data_source")}</Label>
       <Select value={selectedDirectoryId ?? ""} onValueChange={onChange}>
-        <SelectTrigger id="feedbackRecordDirectory">
+        <SelectTrigger id="feedbackDirectory">
           <SelectValue placeholder={t("workspace.analysis.charts.select_data_source")} />
         </SelectTrigger>
         <SelectContent>

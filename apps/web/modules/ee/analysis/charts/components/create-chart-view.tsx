@@ -149,7 +149,7 @@ export function CreateChartView({
                     <AIQuerySection
                       workspaceId={workspaceId}
                       onChartGenerated={handleChartGenerated}
-                      feedbackRecordDirectoryId={selectedDirectoryId}
+                      feedbackDirectoryId={selectedDirectoryId}
                     />
 
                     <div className="relative">
@@ -174,7 +174,7 @@ export function CreateChartView({
                     initialQuery={chartData?.query ?? initialQuery}
                     hidePreview={true}
                     onChartGenerated={handleChartGenerated}
-                    feedbackRecordDirectoryId={selectedDirectoryId}
+                    feedbackDirectoryId={selectedDirectoryId}
                     runQueryCtaLabel={
                       chartData
                         ? t("workspace.analysis.charts.update_chart")
@@ -195,8 +195,8 @@ export function CreateChartView({
                   <p>{t("workspace.analysis.charts.no_data_source_available")}</p>
                   <Link
                     className="mt-1 inline-block font-medium underline"
-                    href={`/workspaces/${workspaceId}/settings/feedback-record-directories`}>
-                    {t("workspace.analysis.charts.go_to_feedback_record_directories")}
+                    href={`/workspaces/${workspaceId}/settings/feedback-directories`}>
+                    {t("workspace.analysis.charts.go_to_feedback_directories")}
                   </Link>
                 </div>
               </Alert>

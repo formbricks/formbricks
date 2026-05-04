@@ -361,13 +361,11 @@ export const FeedbackRecordFormDrawer = ({
                     name="tenant_id"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t("workspace.unify.feedback_record_directory")}</FormLabel>
+                        <FormLabel>{t("workspace.unify.feedback_directory")}</FormLabel>
                         <FormControl>
                           <Select value={field.value} onValueChange={field.onChange} disabled>
                             <SelectTrigger>
-                              <SelectValue
-                                placeholder={t("workspace.unify.select_feedback_record_directory")}
-                              />
+                              <SelectValue placeholder={t("workspace.unify.select_feedback_directory")} />
                             </SelectTrigger>
                             <SelectContent>
                               {directories.map((directory) => (
