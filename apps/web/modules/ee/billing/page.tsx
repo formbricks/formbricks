@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import { OrganizationSettingsNavbar } from "@/app/(app)/workspaces/[workspaceId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getMonthlyOrganizationResponseCount } from "@/lib/organization/service";
 import { getOrganizationWorkspacesCount } from "@/lib/workspace/service";
@@ -15,7 +14,7 @@ export const PricingPage = async (props: { params: Promise<{ workspaceId: string
   const params = await props.params;
   const t = await getTranslate();
 
-  const { organization, isMember, currentUserMembership } = await getWorkspaceAuth(params.workspaceId);
+  const { organization, isMember } = await getWorkspaceAuth(params.workspaceId);
 
   if (!IS_FORMBRICKS_CLOUD) {
     notFound();
@@ -40,13 +39,7 @@ export const PricingPage = async (props: { params: Promise<{ workspaceId: string
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("workspace.settings.general.organization_settings")}>
-        <OrganizationSettingsNavbar
-          isFormbricksCloud={IS_FORMBRICKS_CLOUD}
-          membershipRole={currentUserMembership?.role}
-          activeId="billing"
-        />
-      </PageHeader>
+      <PageHeader pageTitle={t("common.billing")} />
 
       <PricingTable
         organization={organizationWithSyncedBilling}

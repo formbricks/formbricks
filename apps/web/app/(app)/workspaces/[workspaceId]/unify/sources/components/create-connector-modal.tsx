@@ -240,7 +240,7 @@ export const CreateConnectorModal = ({
 
     if (selectedType === "api_ingestion") {
       handleOpenChange(false);
-      router.push(`/workspaces/${workspaceId}/settings/api-keys`);
+      router.push(`/workspaces/${workspaceId}/settings/organization/api-keys`);
       return;
     }
 
@@ -621,7 +621,7 @@ const NoFeedbackDirectoryAlert = ({ workspaceId, t }: NoFeedbackDirectoryAlertPr
         <p>{t("workspace.unify.no_feedback_directory_available")}</p>
         <a
           className="mt-1 inline-block font-medium underline"
-          href={`/workspaces/${workspaceId}/settings/feedback-directories`}>
+          href={`/workspaces/${workspaceId}/settings/organization/feedback-directories`}>
           {t("workspace.unify.go_to_feedback_directories")}
         </a>
       </div>

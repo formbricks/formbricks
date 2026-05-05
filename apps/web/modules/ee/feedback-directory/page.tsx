@@ -1,5 +1,3 @@
-import { OrganizationSettingsNavbar } from "@/app/(app)/workspaces/[workspaceId]/settings/(organization)/components/OrganizationSettingsNavbar";
-import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getTranslate } from "@/lingodotdev/server";
 import { FeedbackDirectoryView } from "@/modules/ee/feedback-directory/components/feedback-directory-view";
@@ -18,13 +16,7 @@ export const FeedbackDirectoriesPage = async (props: { params: Promise<{ workspa
   if (!isOwner && !isManager) {
     return (
       <PageContentWrapper>
-        <PageHeader pageTitle={t("workspace.settings.general.organization_settings")}>
-          <OrganizationSettingsNavbar
-            isFormbricksCloud={IS_FORMBRICKS_CLOUD}
-            membershipRole={currentUserMembership.role}
-            activeId="feedback-directories"
-          />
-        </PageHeader>
+        <PageHeader pageTitle={t("workspace.settings.general.organization_settings")} />
         <p className="text-sm text-slate-500">{t("workspace.settings.feedback_directories.no_access")}</p>
       </PageContentWrapper>
     );
@@ -32,13 +24,7 @@ export const FeedbackDirectoriesPage = async (props: { params: Promise<{ workspa
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("workspace.settings.general.organization_settings")}>
-        <OrganizationSettingsNavbar
-          isFormbricksCloud={IS_FORMBRICKS_CLOUD}
-          membershipRole={currentUserMembership.role}
-          activeId="feedback-directories"
-        />
-      </PageHeader>
+      <PageHeader pageTitle={t("workspace.settings.general.organization_settings")} />
       <FeedbackDirectoryView organizationId={organization.id} membershipRole={currentUserMembership.role} />
     </PageContentWrapper>
   );

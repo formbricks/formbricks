@@ -281,7 +281,7 @@ export const StylingView = ({
               <p className="text-sm text-slate-500">
                 {t("workspace.surveys.edit.adjust_the_theme_in_the")}{" "}
                 <Link href={`${workspaceBasePath}/look`} target="_blank" className="font-semibold underline">
-                  {t("common.look_and_feel")}
+                  {t("common.appearance")}
                 </Link>{" "}
                 {t("common.settings")}
               </p>

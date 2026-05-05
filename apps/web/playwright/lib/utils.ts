@@ -13,7 +13,9 @@ export async function loginAndGetApiKey(page: Page, users: UsersFixture) {
       throw new Error("Unable to parse workspaceId from URL");
     })();
 
-  await page.goto(`/workspaces/${workspaceId}/settings/api-keys`, { waitUntil: "domcontentloaded" });
+  await page.goto(`/workspaces/${workspaceId}/settings/organization/api-keys`, {
+    waitUntil: "domcontentloaded",
+  });
 
   await page.getByRole("button", { name: "Add API Key" }).waitFor({ state: "visible", timeout: 15000 });
   await page.getByRole("button", { name: "Add API Key" }).click();

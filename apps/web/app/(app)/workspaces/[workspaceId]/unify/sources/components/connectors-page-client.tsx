@@ -17,7 +17,6 @@ import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Alert, AlertButton, AlertDescription } from "@/modules/ui/components/alert";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { WorkspaceConfigNavigation } from "@/modules/workspaces/settings/components/workspace-config-navigation";
 import { TFieldMapping, TUnifySurvey } from "../types";
 import { ConnectorsTable } from "./connectors-table";
 import { CreateConnectorModal } from "./create-connector-modal";
@@ -166,9 +165,7 @@ export function ConnectorsSection({
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.workspace_configuration")}>
-        <WorkspaceConfigNavigation activeId="feedback-sources" />
-      </PageHeader>
+      <PageHeader pageTitle={t("workspace.unify.feedback_sources")} />
 
       <SettingsCard
         title={t("workspace.unify.feedback_sources")}
@@ -191,7 +188,7 @@ export function ConnectorsSection({
           <Alert size="small" className="mt-4">
             <AlertDescription>{feedbackDirectoryAccessText}</AlertDescription>
             <AlertButton asChild>
-              <Link href={`/workspaces/${workspaceId}/settings/feedback-directories`}>
+              <Link href={`/workspaces/${workspaceId}/settings/organization/feedback-directories`}>
                 {t("workspace.unify.manage_directories")}
               </Link>
             </AlertButton>

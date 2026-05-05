@@ -28,7 +28,7 @@ export const FrdPicker = ({ directories, selectedDirectoryId, onChange, workspac
           <p>{t("workspace.analysis.charts.no_data_source_available")}</p>
           <a
             className="mt-1 inline-block font-medium underline"
-            href={`/workspaces/${workspaceId}/settings/feedback-directories`}>
+            href={`/workspaces/${workspaceId}/settings/organization/feedback-directories`}>
             {t("workspace.analysis.charts.go_to_feedback_directories")}
           </a>
         </div>
