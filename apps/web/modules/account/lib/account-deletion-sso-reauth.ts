@@ -17,14 +17,13 @@ import { createAccountDeletionSsoReauthIntent, verifyAccountDeletionSsoReauthInt
 import { getUserAuthenticationData } from "@/lib/user/password";
 import { getValidatedCallbackUrl } from "@/lib/utils/url";
 import {
+  ACCOUNT_DELETION_CONFIRMATION_REQUIRED_ERROR_CODE,
+  ACCOUNT_DELETION_EMAIL_MISMATCH_ERROR_CODE,
   ACCOUNT_DELETION_GOOGLE_REAUTH_NOT_CONFIGURED_ERROR_CODE,
   ACCOUNT_DELETION_SSO_REAUTH_CALLBACK_PATH,
   ACCOUNT_DELETION_SSO_REAUTH_ERROR_QUERY_PARAM,
   ACCOUNT_DELETION_SSO_REAUTH_FAILED_ERROR_CODE,
-  DELETE_ACCOUNT_EMAIL_CONFIRMATION_MISMATCH_ERROR,
-  DELETE_ACCOUNT_GOOGLE_REAUTH_NOT_CONFIGURED_ERROR,
   DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR,
-  DELETE_USER_CONFIRMATION_REQUIRED_ERROR,
 } from "@/modules/account/constants";
 import {
   getSsoProviderLookupCandidates,
@@ -35,7 +34,6 @@ const ACCOUNT_DELETION_SSO_REAUTH_INTENT_TTL_MS = 10 * 60 * 1000;
 const ACCOUNT_DELETION_SSO_REAUTH_MARKER_TTL_MS = 5 * 60 * 1000;
 const SSO_AUTH_TIME_MAX_AGE_SECONDS = 5 * 60;
 const SSO_AUTH_TIME_FUTURE_SKEW_SECONDS = 60;
-const cacheConsumeLocks = new Map<string, Promise<void>>();
 
 type TSsoIdentityProvider = Exclude<IdentityProvider, "email">;
 type TAccountWithSamlAuthnInstant = Account & {
@@ -154,7 +152,7 @@ const createAccountDeletionSsoReauthCallbackUrl = (intentToken: string) => {
 };
 
 const getAccountDeletionSsoReauthErrorCode = (error: unknown) => {
-  if (error instanceof Error && error.message === DELETE_ACCOUNT_GOOGLE_REAUTH_NOT_CONFIGURED_ERROR) {
+  if (error instanceof Error && error.message === ACCOUNT_DELETION_GOOGLE_REAUTH_NOT_CONFIGURED_ERROR_CODE) {
     return ACCOUNT_DELETION_GOOGLE_REAUTH_NOT_CONFIGURED_ERROR_CODE;
   }
 
@@ -234,27 +232,6 @@ const storeAccountDeletionSsoReauthMarker = async (marker: TAccountDeletionSsoRe
   }
 };
 
-const withLocalCacheConsumeLock = async <TValue>(key: string, consume: () => Promise<TValue>) => {
-  const previousLock = cacheConsumeLocks.get(key) ?? Promise.resolve();
-  let releaseLock: () => void = () => {};
-  const currentLock = new Promise<void>((resolve) => {
-    releaseLock = resolve;
-  });
-  const queuedLock = previousLock.catch(() => undefined).then(() => currentLock);
-
-  cacheConsumeLocks.set(key, queuedLock);
-  await previousLock.catch(() => undefined);
-
-  try {
-    return await consume();
-  } finally {
-    releaseLock();
-    if (cacheConsumeLocks.get(key) === queuedLock) {
-      cacheConsumeLocks.delete(key);
-    }
-  }
-};
-
 const consumeCachedJsonValue = async <TValue>(key: string, logContext: Record<string, unknown>) => {
   let redis;
 
@@ -265,62 +242,40 @@ const consumeCachedJsonValue = async <TValue>(key: string, logContext: Record<st
     throw error;
   }
 
-  if (redis) {
-    try {
-      const serializedValue = await redis.eval(
-        `
-          local value = redis.call("GET", KEYS[1])
-          if value then
-            redis.call("DEL", KEYS[1])
-          end
-          return value
-        `,
-        {
-          arguments: [],
-          keys: [key],
-        }
-      );
-
-      if (serializedValue === null) {
-        return null;
-      }
-
-      if (typeof serializedValue !== "string") {
-        logger.error({ ...logContext, key, serializedValue }, "Unexpected cached SSO reauth value");
-        throw new Error("Unexpected cached account deletion SSO reauth value");
-      }
-
-      return JSON.parse(serializedValue) as TValue;
-    } catch (error) {
-      logger.error({ ...logContext, error, key }, "Failed to atomically consume SSO reauth cache value");
-      throw error;
-    }
+  if (!redis) {
+    logger.error({ ...logContext, key }, "Redis is required to atomically consume SSO reauth cache value");
+    throw new Error("Unable to consume account deletion SSO reauth value");
   }
 
-  return withLocalCacheConsumeLock(key, async () => {
-    const cacheResult = await cache.get<TValue>(key);
+  try {
+    const serializedValue = await redis.eval(
+      `
+        local value = redis.call("GET", KEYS[1])
+        if value then
+          redis.call("DEL", KEYS[1])
+        end
+        return value
+      `,
+      {
+        arguments: [],
+        keys: [key],
+      }
+    );
 
-    if (!cacheResult.ok) {
-      logger.error({ ...logContext, error: cacheResult.error, key }, "Failed to read SSO reauth cache value");
-      throw new Error("Unable to read account deletion SSO reauth value");
-    }
-
-    if (!cacheResult.data) {
+    if (serializedValue === null) {
       return null;
     }
 
-    const deleteResult = await cache.del([key]);
-
-    if (!deleteResult.ok) {
-      logger.error(
-        { ...logContext, error: deleteResult.error, key },
-        "Failed to consume SSO reauth cache value"
-      );
-      throw new Error("Unable to consume account deletion SSO reauth value");
+    if (typeof serializedValue !== "string") {
+      logger.error({ ...logContext, key, serializedValue }, "Unexpected cached SSO reauth value");
+      throw new Error("Unexpected cached account deletion SSO reauth value");
     }
 
-    return cacheResult.data;
-  });
+    return JSON.parse(serializedValue) as TValue;
+  } catch (error) {
+    logger.error({ ...logContext, error, key }, "Failed to atomically consume SSO reauth cache value");
+    throw error;
+  }
 };
 
 const getCachedJsonValue = async <TValue>(key: string, logContext: Record<string, unknown>) => {
@@ -458,7 +413,7 @@ const assertFreshOidcAuthTime = (provider: TSsoIdentityProvider, idToken?: strin
       "OIDC account deletion reauthentication callback is missing numeric auth_time"
     );
     if (provider === "google") {
-      throw new AuthorizationError(DELETE_ACCOUNT_GOOGLE_REAUTH_NOT_CONFIGURED_ERROR);
+      throw new AuthorizationError(ACCOUNT_DELETION_GOOGLE_REAUTH_NOT_CONFIGURED_ERROR_CODE);
     }
 
     throw new AuthorizationError(DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR);
@@ -573,11 +528,11 @@ export const startAccountDeletionSsoReauthentication = async ({
   const userAuthenticationData = await getUserAuthenticationData(userId);
 
   if (confirmationEmail.toLowerCase() !== userAuthenticationData.email.toLowerCase()) {
-    throw new AuthorizationError(DELETE_ACCOUNT_EMAIL_CONFIRMATION_MISMATCH_ERROR);
+    throw new AuthorizationError(ACCOUNT_DELETION_EMAIL_MISMATCH_ERROR_CODE);
   }
 
   if (userAuthenticationData.password) {
-    throw new InvalidInputError(DELETE_USER_CONFIRMATION_REQUIRED_ERROR);
+    throw new InvalidInputError(ACCOUNT_DELETION_CONFIRMATION_REQUIRED_ERROR_CODE);
   }
 
   const { provider, providerAccountId } = getSsoIdentityProviderOrThrow(

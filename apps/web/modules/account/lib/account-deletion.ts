@@ -7,9 +7,9 @@ import { getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/servi
 import { getUserAuthenticationData, verifyUserPassword } from "@/lib/user/password";
 import { deleteUser, getUser } from "@/lib/user/service";
 import {
-  DELETE_ACCOUNT_EMAIL_CONFIRMATION_MISMATCH_ERROR,
+  ACCOUNT_DELETION_CONFIRMATION_REQUIRED_ERROR_CODE,
+  ACCOUNT_DELETION_EMAIL_MISMATCH_ERROR_CODE,
   DELETE_ACCOUNT_WRONG_PASSWORD_ERROR,
-  DELETE_USER_CONFIRMATION_REQUIRED_ERROR,
 } from "@/modules/account/constants";
 import { requiresPasswordConfirmationForAccountDeletion } from "@/modules/account/lib/account-deletion-auth";
 import { consumeAccountDeletionSsoReauthentication } from "@/modules/account/lib/account-deletion-sso-reauth";
@@ -17,7 +17,7 @@ import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 
 const getPasswordOrThrow = (password?: string) => {
   if (!password) {
-    throw new InvalidInputError(DELETE_USER_CONFIRMATION_REQUIRED_ERROR);
+    throw new InvalidInputError(ACCOUNT_DELETION_CONFIRMATION_REQUIRED_ERROR_CODE);
   }
 
   return password;
@@ -25,7 +25,7 @@ const getPasswordOrThrow = (password?: string) => {
 
 const assertConfirmationEmailMatches = (confirmationEmail: string, expectedEmail: string) => {
   if (confirmationEmail.toLowerCase() !== expectedEmail.toLowerCase()) {
-    throw new AuthorizationError(DELETE_ACCOUNT_EMAIL_CONFIRMATION_MISMATCH_ERROR);
+    throw new AuthorizationError(ACCOUNT_DELETION_EMAIL_MISMATCH_ERROR_CODE);
   }
 };
 

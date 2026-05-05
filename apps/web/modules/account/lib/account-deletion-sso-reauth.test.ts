@@ -9,7 +9,6 @@ import { getUserAuthenticationData } from "@/lib/user/password";
 import {
   ACCOUNT_DELETION_GOOGLE_REAUTH_NOT_CONFIGURED_ERROR_CODE,
   ACCOUNT_DELETION_SSO_REAUTH_ERROR_QUERY_PARAM,
-  DELETE_ACCOUNT_GOOGLE_REAUTH_NOT_CONFIGURED_ERROR,
   DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR,
 } from "@/modules/account/constants";
 import {
@@ -109,6 +108,11 @@ const storedSamlIntent = {
 
 const createIdToken = (authTime: number) => jwt.sign({ auth_time: authTime }, "test-secret");
 const createAuthnInstant = (authTime: number) => new Date(authTime * 1000).toISOString();
+const mockRedisConsume = (value: unknown) => {
+  const redisEval = vi.fn().mockResolvedValue(value === null ? null : JSON.stringify(value));
+  mockCache.getRedisClient.mockResolvedValueOnce({ eval: redisEval } as any);
+  return redisEval;
+};
 
 describe("account deletion SSO reauthentication", () => {
   beforeEach(() => {
@@ -206,7 +210,7 @@ describe("account deletion SSO reauthentication", () => {
 
     expect(
       getAccountDeletionSsoReauthFailureRedirectUrl({
-        error: new AuthorizationError(DELETE_ACCOUNT_GOOGLE_REAUTH_NOT_CONFIGURED_ERROR),
+        error: new AuthorizationError(ACCOUNT_DELETION_GOOGLE_REAUTH_NOT_CONFIGURED_ERROR_CODE),
         intentToken: "intent-token",
       })
     ).toBe(
@@ -490,7 +494,7 @@ describe("account deletion SSO reauthentication", () => {
         } as any,
         intentToken: "intent-token",
       })
-    ).rejects.toThrow(DELETE_ACCOUNT_GOOGLE_REAUTH_NOT_CONFIGURED_ERROR);
+    ).rejects.toThrow(ACCOUNT_DELETION_GOOGLE_REAUTH_NOT_CONFIGURED_ERROR_CODE);
 
     expect(mockCache.get).not.toHaveBeenCalled();
   });
@@ -597,6 +601,7 @@ describe("account deletion SSO reauthentication", () => {
     const nowInSeconds = Math.floor(Date.now() / 1000);
     mockVerifyAccountDeletionSsoReauthIntent.mockReturnValue(intent);
     mockCache.get.mockResolvedValue({ ok: true, data: storedIntent });
+    mockRedisConsume(storedIntent);
     mockPrismaAccountFindUnique.mockResolvedValue({ userId: intent.userId } as any);
 
     await completeAccountDeletionSsoReauthentication({
@@ -620,6 +625,7 @@ describe("account deletion SSO reauthentication", () => {
     const nowInSeconds = Math.floor(Date.now() / 1000);
     mockVerifyAccountDeletionSsoReauthIntent.mockReturnValue(samlIntent);
     mockCache.get.mockResolvedValue({ ok: true, data: storedSamlIntent });
+    mockRedisConsume(storedSamlIntent);
     mockPrismaAccountFindUnique.mockResolvedValue({ userId: samlIntent.userId } as any);
 
     await completeAccountDeletionSsoReauthentication({
@@ -632,7 +638,6 @@ describe("account deletion SSO reauthentication", () => {
       intentToken: "intent-token",
     });
 
-    expect(mockCache.del).toHaveBeenCalled();
     expect(mockCache.set).toHaveBeenCalledWith(
       expect.any(String),
       expect.objectContaining(storedSamlIntent),
@@ -644,6 +649,7 @@ describe("account deletion SSO reauthentication", () => {
     const nowInSeconds = Math.floor(Date.now() / 1000);
     mockVerifyAccountDeletionSsoReauthIntent.mockReturnValue(intent);
     mockCache.get.mockResolvedValue({ ok: true, data: storedIntent });
+    mockRedisConsume(storedIntent);
     mockPrismaAccountFindUnique.mockResolvedValue(null);
     mockPrismaUserFindFirst.mockResolvedValue({ id: intent.userId } as any);
 
@@ -725,6 +731,7 @@ describe("account deletion SSO reauthentication", () => {
     const nowInSeconds = Math.floor(Date.now() / 1000);
     mockVerifyAccountDeletionSsoReauthIntent.mockReturnValue(intent);
     mockCache.get.mockResolvedValue({ ok: true, data: storedIntent });
+    mockRedisConsume(storedIntent);
     mockCache.set.mockResolvedValueOnce({ ok: false, error: cacheError });
     mockPrismaAccountFindUnique.mockResolvedValue({ userId: intent.userId } as any);
 
@@ -760,7 +767,7 @@ describe("account deletion SSO reauthentication", () => {
   });
 
   test("requires a completed SSO reauthentication marker before deleting an SSO account", async () => {
-    mockCache.get.mockResolvedValue({ ok: true, data: null });
+    mockRedisConsume(null);
 
     await expect(
       consumeAccountDeletionSsoReauthentication({
@@ -772,12 +779,9 @@ describe("account deletion SSO reauthentication", () => {
   });
 
   test("consumes a valid SSO reauthentication marker", async () => {
-    mockCache.get.mockResolvedValue({
-      ok: true,
-      data: {
-        ...storedIntent,
-        completedAt: Date.now(),
-      },
+    const redisEval = mockRedisConsume({
+      ...storedIntent,
+      completedAt: Date.now(),
     });
 
     await expect(
@@ -788,35 +792,25 @@ describe("account deletion SSO reauthentication", () => {
       })
     ).resolves.toBeUndefined();
 
-    expect(mockCache.del).toHaveBeenCalled();
+    expect(redisEval).toHaveBeenCalledWith(expect.any(String), {
+      arguments: [],
+      keys: [expect.any(String)],
+    });
+    expect(mockCache.get).not.toHaveBeenCalled();
+    expect(mockCache.del).not.toHaveBeenCalled();
   });
 
-  test("serializes non-Redis marker consumption so a marker cannot be replayed concurrently", async () => {
-    let cachedMarker: (typeof storedIntent & { completedAt: number }) | null = {
-      ...storedIntent,
-      completedAt: Date.now(),
-    };
-    mockCache.get.mockImplementation(async () => ({
-      ok: true,
-      data: cachedMarker,
-    }));
-    mockCache.del.mockImplementation(async () => {
-      cachedMarker = null;
-      return { ok: true, data: undefined };
-    });
-
-    const consumeMarker = () =>
+  test("fails closed when atomic Redis consumption is unavailable", async () => {
+    await expect(
       consumeAccountDeletionSsoReauthentication({
         identityProvider: "google",
         providerAccountId: intent.providerAccountId,
         userId: intent.userId,
-      });
+      })
+    ).rejects.toThrow("Unable to consume account deletion SSO reauth value");
 
-    const results = await Promise.allSettled([consumeMarker(), consumeMarker()]);
-
-    expect(results.filter((result) => result.status === "fulfilled")).toHaveLength(1);
-    expect(results.filter((result) => result.status === "rejected")).toHaveLength(1);
-    expect(mockCache.del).toHaveBeenCalledTimes(1);
+    expect(mockCache.get).not.toHaveBeenCalled();
+    expect(mockCache.del).not.toHaveBeenCalled();
   });
 
   test("atomically consumes a valid SSO reauthentication marker from Redis", async () => {
@@ -858,8 +852,10 @@ describe("account deletion SSO reauthentication", () => {
     ).rejects.toThrow("Unexpected cached account deletion SSO reauth value");
   });
 
-  test("surfaces cache read failures while consuming a marker", async () => {
-    mockCache.get.mockResolvedValue({ ok: false, error: cacheError });
+  test("surfaces atomic Redis failures while consuming a marker", async () => {
+    mockCache.getRedisClient.mockResolvedValueOnce({
+      eval: vi.fn().mockRejectedValue(new Error("Redis consume failed")),
+    } as any);
 
     await expect(
       consumeAccountDeletionSsoReauthentication({
@@ -867,36 +863,14 @@ describe("account deletion SSO reauthentication", () => {
         providerAccountId: intent.providerAccountId,
         userId: intent.userId,
       })
-    ).rejects.toThrow("Unable to read account deletion SSO reauth value");
-  });
-
-  test("surfaces cache delete failures while consuming a marker", async () => {
-    mockCache.get.mockResolvedValue({
-      ok: true,
-      data: {
-        ...storedIntent,
-        completedAt: Date.now(),
-      },
-    });
-    mockCache.del.mockResolvedValueOnce({ ok: false, error: cacheError });
-
-    await expect(
-      consumeAccountDeletionSsoReauthentication({
-        identityProvider: "google",
-        providerAccountId: intent.providerAccountId,
-        userId: intent.userId,
-      })
-    ).rejects.toThrow("Unable to consume account deletion SSO reauth value");
+    ).rejects.toThrow("Redis consume failed");
   });
 
   test("rejects a marker for a different provider account", async () => {
-    mockCache.get.mockResolvedValue({
-      ok: true,
-      data: {
-        ...storedIntent,
-        completedAt: Date.now(),
-        providerAccountId: "different-provider-account-id",
-      },
+    mockRedisConsume({
+      ...storedIntent,
+      completedAt: Date.now(),
+      providerAccountId: "different-provider-account-id",
     });
 
     await expect(
@@ -907,16 +881,14 @@ describe("account deletion SSO reauthentication", () => {
       })
     ).rejects.toThrow(AuthorizationError);
 
-    expect(mockCache.del).toHaveBeenCalled();
+    expect(mockCache.get).not.toHaveBeenCalled();
+    expect(mockCache.del).not.toHaveBeenCalled();
   });
 
   test("rejects an expired SSO reauthentication marker", async () => {
-    mockCache.get.mockResolvedValue({
-      ok: true,
-      data: {
-        ...storedIntent,
-        completedAt: Date.now() - 6 * 60 * 1000,
-      },
+    mockRedisConsume({
+      ...storedIntent,
+      completedAt: Date.now() - 6 * 60 * 1000,
     });
 
     await expect(
@@ -927,6 +899,7 @@ describe("account deletion SSO reauthentication", () => {
       })
     ).rejects.toThrow(AuthorizationError);
 
-    expect(mockCache.del).toHaveBeenCalled();
+    expect(mockCache.get).not.toHaveBeenCalled();
+    expect(mockCache.del).not.toHaveBeenCalled();
   });
 });

@@ -9,7 +9,7 @@ import { startAccountDeletionSsoReauthentication } from "@/modules/account/lib/a
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
-import { DELETE_USER_CONFIRMATION_REQUIRED_ERROR } from "./constants";
+import { ACCOUNT_DELETION_CONFIRMATION_REQUIRED_ERROR_CODE } from "./constants";
 
 const ZDeleteUserConfirmation = z
   .object({
@@ -29,7 +29,7 @@ const parseDeleteUserConfirmation = (input: unknown) => {
   const parsedInput = ZDeleteUserConfirmation.safeParse(input);
 
   if (!parsedInput.success) {
-    throw new InvalidInputError(DELETE_USER_CONFIRMATION_REQUIRED_ERROR);
+    throw new InvalidInputError(ACCOUNT_DELETION_CONFIRMATION_REQUIRED_ERROR_CODE);
   }
 
   return parsedInput.data;
@@ -39,7 +39,7 @@ const parseStartAccountDeletionSsoReauthInput = (input: unknown) => {
   const parsedInput = ZStartAccountDeletionSsoReauth.safeParse(input);
 
   if (!parsedInput.success) {
-    throw new InvalidInputError(DELETE_USER_CONFIRMATION_REQUIRED_ERROR);
+    throw new InvalidInputError(ACCOUNT_DELETION_CONFIRMATION_REQUIRED_ERROR_CODE);
   }
 
   return parsedInput.data;

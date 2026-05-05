@@ -14,11 +14,11 @@ import { Input } from "@/modules/ui/components/input";
 import { PasswordInput } from "@/modules/ui/components/password-input";
 import { deleteUserAction, startAccountDeletionSsoReauthenticationAction } from "./actions";
 import {
-  DELETE_ACCOUNT_EMAIL_CONFIRMATION_MISMATCH_ERROR,
-  DELETE_ACCOUNT_GOOGLE_REAUTH_NOT_CONFIGURED_ERROR,
+  ACCOUNT_DELETION_CONFIRMATION_REQUIRED_ERROR_CODE,
+  ACCOUNT_DELETION_EMAIL_MISMATCH_ERROR_CODE,
+  ACCOUNT_DELETION_GOOGLE_REAUTH_NOT_CONFIGURED_ERROR_CODE,
   DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR,
   DELETE_ACCOUNT_WRONG_PASSWORD_ERROR,
-  DELETE_USER_CONFIRMATION_REQUIRED_ERROR,
   FORMBRICKS_CLOUD_ACCOUNT_DELETION_SURVEY_URL,
 } from "./constants";
 
@@ -65,15 +65,15 @@ export const DeleteAccountModal = ({
       return t("environments.settings.profile.wrong_password");
     }
 
-    if (serverError === DELETE_ACCOUNT_GOOGLE_REAUTH_NOT_CONFIGURED_ERROR) {
+    if (serverError === ACCOUNT_DELETION_GOOGLE_REAUTH_NOT_CONFIGURED_ERROR_CODE) {
       return t("environments.settings.profile.google_sso_account_deletion_requires_setup");
     }
 
-    if (serverError === DELETE_ACCOUNT_EMAIL_CONFIRMATION_MISMATCH_ERROR) {
+    if (serverError === ACCOUNT_DELETION_EMAIL_MISMATCH_ERROR_CODE) {
       return t("environments.settings.profile.email_confirmation_does_not_match");
     }
 
-    if (serverError === DELETE_USER_CONFIRMATION_REQUIRED_ERROR) {
+    if (serverError === ACCOUNT_DELETION_CONFIRMATION_REQUIRED_ERROR_CODE) {
       return t("environments.settings.profile.delete_account_confirmation_required");
     }
 
