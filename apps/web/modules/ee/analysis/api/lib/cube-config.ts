@@ -1,5 +1,4 @@
 import "server-only";
-
 import jwt from "jsonwebtoken";
 import { ConfigurationError } from "@formbricks/types/errors";
 import { env } from "@/lib/env";

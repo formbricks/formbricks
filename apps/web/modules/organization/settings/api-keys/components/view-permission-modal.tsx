@@ -9,7 +9,7 @@ import { type TOrganizationWorkspace } from "@/modules/ee/teams/team-list/types/
 import {
   type TApiKeyUpdateInput,
   type TApiKeyWithEnvironmentPermission,
-  TOrganizationFeedbackRecordDirectory,
+  TOrganizationFeedbackDirectory,
   ZApiKeyUpdateInput,
 } from "@/modules/organization/settings/api-keys/types/api-keys";
 import { Button } from "@/modules/ui/components/button";
@@ -32,7 +32,7 @@ interface ViewPermissionModalProps {
   onSubmit: (data: TApiKeyUpdateInput) => Promise<void>;
   apiKey: TApiKeyWithEnvironmentPermission;
   workspaces: TOrganizationWorkspace[];
-  feedbackRecordDirectories: TOrganizationFeedbackRecordDirectory[];
+  feedbackDirectories: TOrganizationFeedbackDirectory[];
   isUpdating: boolean;
 }
 
@@ -42,7 +42,7 @@ export const ViewPermissionModal = ({
   onSubmit,
   apiKey,
   workspaces,
-  feedbackRecordDirectories,
+  feedbackDirectories,
   isUpdating,
 }: ViewPermissionModalProps) => {
   const { register, getValues, handleSubmit, reset, watch } = useForm<TApiKeyUpdateInput>({
@@ -77,7 +77,7 @@ export const ViewPermissionModal = ({
   };
 
   const getDirectoryName = (directoryId: string) => {
-    const name = feedbackRecordDirectories.find((d) => d.id === directoryId)?.name;
+    const name = feedbackDirectories.find((d) => d.id === directoryId)?.name;
     return name ?? `${t("workspace.api_keys.unknown_directory")} (${directoryId})`;
   };
 
@@ -155,15 +155,15 @@ export const ViewPermissionModal = ({
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>{t("workspace.api_keys.feedback_record_directory_access")}</Label>
-                {apiKey.apiKeyFeedbackRecordDirectories?.length === 0 && (
+                <Label>{t("workspace.api_keys.feedback_directory_access")}</Label>
+                {apiKey.apiKeyFeedbackDirectories?.length === 0 && (
                   <div className="text-center text-sm">
                     {t("workspace.api_keys.no_directory_permissions_found")}
                   </div>
                 )}
                 <div className="space-y-2">
-                  {apiKey.apiKeyFeedbackRecordDirectories?.map((permission) => (
-                    <div key={permission.feedbackRecordDirectoryId} className="flex items-center gap-2">
+                  {apiKey.apiKeyFeedbackDirectories?.map((permission) => (
+                    <div key={permission.feedbackDirectoryId} className="flex items-center gap-2">
                       <div className="w-1/2">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -172,7 +172,7 @@ export const ViewPermissionModal = ({
                               className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none">
                               <span className="flex w-4/5 flex-1">
                                 <span className="w-full truncate text-left">
-                                  {getDirectoryName(permission.feedbackRecordDirectoryId)}
+                                  {getDirectoryName(permission.feedbackDirectoryId)}
                                 </span>
                               </span>
                             </button>

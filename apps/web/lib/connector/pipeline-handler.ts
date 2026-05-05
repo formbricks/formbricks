@@ -41,7 +41,7 @@ const processConnector = async (
     response,
     survey,
     connector.formbricksMappings,
-    connector.feedbackRecordDirectoryId
+    connector.feedbackDirectoryId
   );
 
   if (feedbackRecords.length === 0) {

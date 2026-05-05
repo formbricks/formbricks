@@ -36,8 +36,8 @@ const mapLicenseFeaturesToEntitlements = (
   if (features.unifyFeedback) {
     entitlementKeys.push(CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.UNIFY_FEEDBACK);
   }
-  if (features.feedbackRecordDirectories) {
-    entitlementKeys.push(CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.FEEDBACK_RECORD_DIRECTORIES);
+  if (features.feedbackDirectories) {
+    entitlementKeys.push(CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.FEEDBACK_DIRECTORIES);
   }
   if (features.dashboards) {
     entitlementKeys.push(CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.DASHBOARDS);

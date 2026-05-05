@@ -39,14 +39,14 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import {
-  getFeedbackRecordDirectoriesByOrganizationIdAction,
+  getFeedbackDirectoriesByOrganizationIdAction,
   getTeamsByOrganizationIdAction,
 } from "@/modules/workspaces/settings/actions";
 
 const ZCreateWorkspaceForm = z.object({
   name: ZWorkspace.shape.name,
   teamIds: z.array(z.string()).optional(),
-  feedbackRecordDirectoryId: z.string().optional(),
+  feedbackDirectoryId: z.string().optional(),
 });
 
 type TCreateWorkspaceForm = z.infer<typeof ZCreateWorkspaceForm>;
@@ -75,7 +75,7 @@ export const CreateWorkspaceModal = ({
     defaultValues: {
       name: "",
       teamIds: [],
-      feedbackRecordDirectoryId: undefined,
+      feedbackDirectoryId: undefined,
     },
   });
   const { getValues, setValue } = form;
@@ -86,7 +86,7 @@ export const CreateWorkspaceModal = ({
     const fetchModalData = async () => {
       const [teamsResponse, directoriesResponse] = await Promise.all([
         getTeamsByOrganizationIdAction({ organizationId }),
-        getFeedbackRecordDirectoriesByOrganizationIdAction({ organizationId }),
+        getFeedbackDirectoriesByOrganizationIdAction({ organizationId }),
       ]);
 
       if (teamsResponse?.data) {
@@ -98,15 +98,15 @@ export const CreateWorkspaceModal = ({
 
       if (directoriesResponse?.data) {
         setFeedbackDirectories(directoriesResponse.data);
-        const selectedFeedbackDirectory = getValues("feedbackRecordDirectoryId");
+        const selectedFeedbackDirectory = getValues("feedbackDirectoryId");
         const isSelectedDirectoryAvailable = directoriesResponse.data.some(
           (directory) => directory.id === selectedFeedbackDirectory
         );
 
         if (directoriesResponse.data.length === 0) {
-          setValue("feedbackRecordDirectoryId", undefined);
+          setValue("feedbackDirectoryId", undefined);
         } else if (!selectedFeedbackDirectory || !isSelectedDirectoryAvailable) {
-          setValue("feedbackRecordDirectoryId", directoriesResponse.data[0].id);
+          setValue("feedbackDirectoryId", directoriesResponse.data[0].id);
         }
       } else {
         const errorMessage = getFormattedErrorMessage(directoriesResponse);
@@ -129,7 +129,7 @@ export const CreateWorkspaceModal = ({
       data: {
         name: data.name,
         teamIds: data.teamIds || [],
-        feedbackRecordDirectoryId: data.feedbackRecordDirectoryId,
+        feedbackDirectoryId: data.feedbackDirectoryId,
       },
     });
 
@@ -178,10 +178,10 @@ export const CreateWorkspaceModal = ({
 
               <FormField
                 control={form.control}
-                name="feedbackRecordDirectoryId"
+                name="feedbackDirectoryId"
                 render={({ field, fieldState: { error } }) => (
                   <FormItem>
-                    <FormLabel>{t("workspace.unify.feedback_record_directory")}</FormLabel>
+                    <FormLabel>{t("workspace.unify.feedback_directory")}</FormLabel>
                     <FormControl>
                       <Select
                         value={field.value ?? ""}
@@ -191,8 +191,8 @@ export const CreateWorkspaceModal = ({
                           <SelectValue
                             placeholder={
                               feedbackDirectories.length > 0
-                                ? t("workspace.unify.select_feedback_record_directory")
-                                : t("workspace.unify.no_feedback_record_directory_available")
+                                ? t("workspace.unify.select_feedback_directory")
+                                : t("workspace.unify.no_feedback_directory_available")
                             }
                           />
                         </SelectTrigger>

@@ -205,7 +205,7 @@ export const FeedbackRecordsTable = ({
                 </Button>
               ))}
             <Button size="sm" asChild>
-              <Link href={`/workspaces/${workspaceId}/feedback-sources`}>
+              <Link href={`/workspaces/${workspaceId}/settings/workspace/feedback-sources`}>
                 {t("workspace.unify.manage_feedback_sources")}
               </Link>
             </Button>

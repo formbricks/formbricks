@@ -85,7 +85,7 @@ const LicenseFeaturesSchema = z.object({
   accessControl: z.boolean(),
   quotas: z.boolean(),
   unifyFeedback: z.boolean().default(false),
-  feedbackRecordDirectories: z.boolean().default(false),
+  feedbackDirectories: z.boolean().default(false),
   dashboards: z.boolean().default(false),
 });
 
@@ -156,7 +156,7 @@ const DEFAULT_FEATURES: TEnterpriseLicenseFeatures = {
   accessControl: false,
   quotas: false,
   unifyFeedback: false,
-  feedbackRecordDirectories: false,
+  feedbackDirectories: false,
   dashboards: false,
 };
 

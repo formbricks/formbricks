@@ -12,15 +12,11 @@ test.describe("Invite, accept and remove organization member", async () => {
 
   test("Invite organization member", async ({ page }) => {
     await test.step("Invite User", async () => {
-      const organizationDropdownTrigger = page.locator("#organizationDropdownTrigger");
-      await expect(organizationDropdownTrigger).toBeVisible();
-      await organizationDropdownTrigger.click();
-      await page.getByRole("menuitemcheckbox", { name: "General" }).click();
-      await page.waitForURL(/\/workspaces\/[^/]+\/settings\/general/);
+      const workspaceId = /\/workspaces\/([^/]+)\//.exec(page.url())?.[1];
+      await page.goto(`/workspaces/${workspaceId}/settings/organization/teams`);
+      await page.waitForURL(/\/workspaces\/[^/]+\/settings\/organization\/teams/);
 
       await page.locator('[data-testid="members-loading-card"]:first-child').waitFor({ state: "hidden" });
-
-      await page.getByRole("link", { name: "Members & Teams" }).click();
 
       // Add member button
       await expect(page.getByRole("button", { name: "Invite member" })).toBeVisible();
@@ -124,16 +120,9 @@ test.describe("Create, update and delete team", async () => {
   });
 
   test("Create and update team", async ({ page }) => {
-    const organizationDropdownTrigger = page.locator("#organizationDropdownTrigger");
-    await expect(organizationDropdownTrigger).toBeVisible();
-    await organizationDropdownTrigger.click();
-    await page.getByRole("menuitemcheckbox", { name: "General" }).click();
-    await page.waitForURL(/\/workspaces\/[^/]+\/settings\/general/);
-
-    await page.waitForTimeout(2000);
-    await expect(page.getByText("Members & Teams")).toBeVisible();
-    await page.getByText("Members & Teams").click();
-    await page.waitForURL(/\/workspaces\/[^/]+\/settings\/teams/);
+    const workspaceId = /\/workspaces\/([^/]+)\//.exec(page.url())?.[1];
+    await page.goto(`/workspaces/${workspaceId}/settings/organization/teams`);
+    await page.waitForURL(/\/workspaces\/[^/]+\/settings\/organization\/teams/);
     await expect(page.getByRole("button", { name: "Create new team" })).toBeVisible();
     await page.getByRole("button", { name: "Create new team" }).click();
     await page.locator("#team-name").fill("E2E");
@@ -166,7 +155,7 @@ test.describe("Create, update and delete team", async () => {
 
     await page.getByRole("button", { name: "Delete", exact: true }).click();
 
-    await expect(page.getByRole("heading", { name: "Organization Settings" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Teams", level: 1 })).toBeVisible();
 
     await expect(page.getByRole("cell", { name: "E2E Updated" })).not.toBeVisible();
   });

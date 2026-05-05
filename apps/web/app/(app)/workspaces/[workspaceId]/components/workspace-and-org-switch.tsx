@@ -14,9 +14,7 @@ interface WorkspaceAndOrgSwitchProps {
   isFormbricksCloud: boolean;
   isLicenseActive: boolean;
   isOwnerOrManager: boolean;
-  isMember: boolean;
   isAccessControlAllowed: boolean;
-  isBilling: boolean;
   isMembershipPending: boolean;
 }
 
@@ -31,8 +29,6 @@ export const WorkspaceAndOrgSwitch = ({
   isLicenseActive,
   isOwnerOrManager,
   isAccessControlAllowed,
-  isMember,
-  isBilling,
   isMembershipPending,
 }: WorkspaceAndOrgSwitchProps) => {
   return (
@@ -43,10 +39,6 @@ export const WorkspaceAndOrgSwitch = ({
           currentOrganizationName={currentOrganizationName}
           currentWorkspaceId={currentWorkspaceId}
           isMultiOrgEnabled={isMultiOrgEnabled}
-          isFormbricksCloud={isFormbricksCloud}
-          isMember={isMember}
-          isOwnerOrManager={isOwnerOrManager}
-          isMembershipPending={isMembershipPending}
         />
         {currentWorkspaceId && (
           <WorkspaceBreadcrumb
@@ -59,7 +51,6 @@ export const WorkspaceAndOrgSwitch = ({
             isLicenseActive={isLicenseActive}
             isAccessControlAllowed={isAccessControlAllowed}
             isEnvironmentBreadcrumbVisible={false}
-            isBilling={isBilling}
             isMembershipPending={isMembershipPending}
           />
         )}

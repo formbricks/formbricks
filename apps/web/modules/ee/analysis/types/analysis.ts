@@ -15,7 +15,7 @@ export const ZChartCreateInput = z.object({
   query: ZChartQuery,
   config: ZChartConfig,
   createdBy: ZId,
-  feedbackRecordDirectoryId: ZId,
+  feedbackDirectoryId: ZId,
 });
 export type TChartCreateInput = z.infer<typeof ZChartCreateInput>;
 
@@ -35,7 +35,7 @@ export const ZChart = z.object({
   type: ZChartType,
   query: ZChartQuery,
   config: ZChartConfig,
-  feedbackRecordDirectoryId: ZId,
+  feedbackDirectoryId: ZId,
   createdAt: z.date(),
   updatedAt: z.date(),
 });

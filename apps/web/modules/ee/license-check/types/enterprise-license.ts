@@ -20,7 +20,7 @@ const ZEnterpriseLicenseFeatures = z.object({
   accessControl: z.boolean(),
   quotas: z.boolean(),
   unifyFeedback: z.boolean().default(false),
-  feedbackRecordDirectories: z.boolean().default(false),
+  feedbackDirectories: z.boolean().default(false),
   dashboards: z.boolean().default(false),
 });
 

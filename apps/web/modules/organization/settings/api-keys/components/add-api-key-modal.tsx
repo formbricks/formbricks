@@ -8,7 +8,7 @@ import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TOrganizationAccess } from "@formbricks/types/api-key";
 import {
-  TOrganizationFeedbackRecordDirectory,
+  TOrganizationFeedbackDirectory,
   TOrganizationWorkspace,
 } from "@/modules/organization/settings/api-keys/types/api-keys";
 import { Alert, AlertTitle } from "@/modules/ui/components/alert";
@@ -40,14 +40,14 @@ interface AddApiKeyModalProps {
       permission: ApiKeyPermission;
       workspaceId: string;
     }>;
-    feedbackRecordDirectoryPermissions: Array<{
+    feedbackDirectoryPermissions: Array<{
       permission: ApiKeyPermission;
-      feedbackRecordDirectoryId: string;
+      feedbackDirectoryId: string;
     }>;
     organizationAccess: TOrganizationAccess;
   }) => Promise<void>;
   workspaces: TOrganizationWorkspace[];
-  feedbackRecordDirectories: TOrganizationFeedbackRecordDirectory[];
+  feedbackDirectories: TOrganizationFeedbackDirectory[];
   isCreatingAPIKey: boolean;
 }
 
@@ -56,7 +56,7 @@ interface WorkspaceOption {
   name: string;
 }
 
-interface FeedbackRecordDirectoryOption {
+interface FeedbackDirectoryOption {
   id: string;
   name: string;
 }
@@ -68,9 +68,9 @@ interface PermissionRecord {
 }
 
 interface DirectoryPermissionRecord {
-  feedbackRecordDirectoryId: string;
+  feedbackDirectoryId: string;
   permission: ApiKeyPermission;
-  feedbackRecordDirectoryName: string;
+  feedbackDirectoryName: string;
 }
 
 const permissionOptions = [ApiKeyPermission.read, ApiKeyPermission.write, ApiKeyPermission.manage];
@@ -80,7 +80,7 @@ export const AddApiKeyModal = ({
   setOpen,
   onSubmit,
   workspaces,
-  feedbackRecordDirectories,
+  feedbackDirectories,
   isCreatingAPIKey,
 }: AddApiKeyModalProps) => {
   const { t } = useTranslation();
@@ -110,11 +110,11 @@ export const AddApiKeyModal = ({
   };
 
   const getInitialDirectoryPermission = (): DirectoryPermissionRecord | null => {
-    if (feedbackRecordDirectories.length > 0) {
+    if (feedbackDirectories.length > 0) {
       return {
-        feedbackRecordDirectoryId: feedbackRecordDirectories[0].id,
+        feedbackDirectoryId: feedbackDirectories[0].id,
         permission: ApiKeyPermission.read,
-        feedbackRecordDirectoryName: feedbackRecordDirectories[0].name,
+        feedbackDirectoryName: feedbackDirectories[0].name,
       };
     }
     return null;
@@ -132,7 +132,7 @@ export const AddApiKeyModal = ({
     name: workspace.name,
   }));
 
-  const directoryOptions: FeedbackRecordDirectoryOption[] = feedbackRecordDirectories.map((directory) => ({
+  const directoryOptions: FeedbackDirectoryOption[] = feedbackDirectories.map((directory) => ({
     id: directory.id,
     name: directory.name,
   }));
@@ -207,14 +207,14 @@ export const AddApiKeyModal = ({
   };
 
   const updateDirectorySelection = (key: string, directoryId: string) => {
-    const directory = feedbackRecordDirectories.find((d) => d.id === directoryId);
+    const directory = feedbackDirectories.find((d) => d.id === directoryId);
     if (directory) {
       setSelectedDirectoryPermissions({
         ...selectedDirectoryPermissions,
         [key]: {
           ...selectedDirectoryPermissions[key],
-          feedbackRecordDirectoryId: directoryId,
-          feedbackRecordDirectoryName: directory.name,
+          feedbackDirectoryId: directoryId,
+          feedbackDirectoryName: directory.name,
         },
       });
     }
@@ -228,7 +228,7 @@ export const AddApiKeyModal = ({
 
   const checkForDuplicateDirectoryPermissions = () => {
     const permissions = Object.values(selectedDirectoryPermissions);
-    const unique = new Set(permissions.map((p) => p.feedbackRecordDirectoryId));
+    const unique = new Set(permissions.map((p) => p.feedbackDirectoryId));
     return unique.size !== permissions.length;
   };
 
@@ -251,15 +251,15 @@ export const AddApiKeyModal = ({
       workspaceId: permission.workspaceId,
     }));
 
-    const feedbackRecordDirectoryPermissions = Object.values(selectedDirectoryPermissions).map((p) => ({
+    const feedbackDirectoryPermissions = Object.values(selectedDirectoryPermissions).map((p) => ({
       permission: p.permission,
-      feedbackRecordDirectoryId: p.feedbackRecordDirectoryId,
+      feedbackDirectoryId: p.feedbackDirectoryId,
     }));
 
     await onSubmit({
       label: data.label,
       workspacePermissions,
-      feedbackRecordDirectoryPermissions,
+      feedbackDirectoryPermissions,
       organizationAccess: selectedOrganizationAccess,
     });
 
@@ -404,7 +404,7 @@ export const AddApiKeyModal = ({
             </div>
 
             <div className="space-y-2">
-              <Label>{t("workspace.api_keys.feedback_record_directory_access")}</Label>
+              <Label>{t("workspace.api_keys.feedback_directory_access")}</Label>
               <div className="space-y-2">
                 {Object.keys(selectedDirectoryPermissions).map((key) => {
                   const permission = selectedDirectoryPermissions[key];
@@ -419,7 +419,7 @@ export const AddApiKeyModal = ({
                               className="flex h-10 w-full rounded-md border border-slate-300 bg-transparent px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none">
                               <span className="flex w-4/5 flex-1">
                                 <span className="w-full truncate text-left">
-                                  {permission.feedbackRecordDirectoryName}
+                                  {permission.feedbackDirectoryName}
                                 </span>
                               </span>
                               <span className="flex h-full items-center border-l pl-3">
@@ -485,7 +485,7 @@ export const AddApiKeyModal = ({
                   type="button"
                   variant="outline"
                   onClick={addDirectoryPermission}
-                  disabled={feedbackRecordDirectories.length === 0}
+                  disabled={feedbackDirectories.length === 0}
                   data-testid="add_directory_permission__button__test">
                   <span className="mr-2">+</span> {t("workspace.settings.api_keys.add_permission")}
                 </Button>

@@ -30,7 +30,7 @@ interface AdvancedChartBuilderProps {
   initialQuery?: TChartQuery;
   hidePreview?: boolean;
   onChartGenerated?: (data: AnalyticsResponse) => void;
-  feedbackRecordDirectoryId: string | null;
+  feedbackDirectoryId: string | null;
   runQueryCtaLabel?: string;
 }
 
@@ -84,7 +84,7 @@ export function AdvancedChartBuilder({
   initialQuery,
   hidePreview = false,
   onChartGenerated,
-  feedbackRecordDirectoryId,
+  feedbackDirectoryId,
   runQueryCtaLabel,
 }: Readonly<AdvancedChartBuilderProps>) {
   const { t } = useTranslation();
@@ -97,7 +97,7 @@ export function AdvancedChartBuilder({
 
   const { chartData, query, isLoading, error, runQuery } = useChartQuery(
     workspaceId,
-    feedbackRecordDirectoryId,
+    feedbackDirectoryId,
     initialQuery
   );
 

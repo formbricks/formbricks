@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { getConnectorsWithMappings } from "@/lib/connector/service";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
-import { getFeedbackRecordDirectoriesByWorkspaceId } from "@/modules/ee/feedback-record-directory/lib/feedback-record-directory";
+import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getIsUnifyFeedbackEnabled } from "@/modules/ee/license-check/lib/utils";
 import { listFeedbackRecords } from "@/modules/hub/service";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
@@ -59,7 +59,7 @@ export const UnifyFeedbackRecordsPage = async (
   }
 
   const [frds, connectors] = await Promise.all([
-    getFeedbackRecordDirectoriesByWorkspaceId(params.workspaceId),
+    getFeedbackDirectoriesByWorkspaceId(params.workspaceId),
     getConnectorsWithMappings(params.workspaceId),
   ]);
 

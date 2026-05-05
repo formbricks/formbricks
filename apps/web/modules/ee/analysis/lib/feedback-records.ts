@@ -1,5 +1,5 @@
 import "server-only";
-import { getFeedbackRecordDirectoriesByWorkspaceId } from "@/modules/ee/feedback-record-directory/lib/feedback-record-directory";
+import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { listFeedbackRecords } from "@/modules/hub/service";
 
 export const hasFeedbackRecordsInDirectories = async (directoryIds: string[]): Promise<boolean> => {
@@ -23,7 +23,7 @@ export const hasFeedbackRecordsInDirectories = async (directoryIds: string[]): P
 };
 
 export const hasWorkspaceFeedbackRecords = async (workspaceId: string): Promise<boolean> => {
-  const directories = await getFeedbackRecordDirectoriesByWorkspaceId(workspaceId);
+  const directories = await getFeedbackDirectoriesByWorkspaceId(workspaceId);
 
   return hasFeedbackRecordsInDirectories(directories.map((directory) => directory.id));
 };

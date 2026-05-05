@@ -177,7 +177,10 @@ export const FileUploadElementForm = ({
               <p className="text-xs text-red-500">
                 {t("workspace.surveys.edit.max_file_size_limit_is")} {maxSizeInMBLimit} MB.{" "}
                 {t("workspace.surveys.edit.if_you_need_more_please")}
-                <Link className="underline" target="_blank" href={`${workspaceBasePath}/settings/billing`}>
+                <Link
+                  className="underline"
+                  target="_blank"
+                  href={`${workspaceBasePath}/settings/organization/billing`}>
                   {t("common.please_upgrade_your_plan")}
                 </Link>
               </p>

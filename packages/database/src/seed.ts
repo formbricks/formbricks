@@ -378,13 +378,13 @@ async function main(): Promise<void> {
     },
   });
 
-  const defaultFrd = await prisma.feedbackRecordDirectory.upsert({
+  const defaultFrd = await prisma.feedbackDirectory.upsert({
     where: {
-      organizationId_name: { organizationId: organization.id, name: "Default Feedback Record Directory" },
+      organizationId_name: { organizationId: organization.id, name: "Default Feedback Directory" },
     },
     update: {},
     create: {
-      name: "Default Feedback Record Directory",
+      name: "Default Feedback Directory",
       organizationId: organization.id,
     },
     select: { id: true },
@@ -462,16 +462,16 @@ async function main(): Promise<void> {
   });
 
   // Link default FRD to workspace
-  await prisma.feedbackRecordDirectoryWorkspace.upsert({
+  await prisma.feedbackDirectoryWorkspace.upsert({
     where: {
-      feedbackRecordDirectoryId_workspaceId: {
-        feedbackRecordDirectoryId: defaultFrd.id,
+      feedbackDirectoryId_workspaceId: {
+        feedbackDirectoryId: defaultFrd.id,
         workspaceId: workspace.id,
       },
     },
     update: {},
     create: {
-      feedbackRecordDirectoryId: defaultFrd.id,
+      feedbackDirectoryId: defaultFrd.id,
       workspaceId: workspace.id,
     },
   });
@@ -658,7 +658,7 @@ async function main(): Promise<void> {
       name: "Responses Over Time",
       type: "line",
       workspaceId: workspace.id,
-      feedbackRecordDirectoryId: defaultFrd.id,
+      feedbackDirectoryId: defaultFrd.id,
       createdBy: SEED_IDS.USER_ADMIN,
       query: {
         measures: ["FeedbackRecords.count"],
@@ -686,7 +686,7 @@ async function main(): Promise<void> {
       name: "Satisfaction Distribution",
       type: "pie",
       workspaceId: workspace.id,
-      feedbackRecordDirectoryId: defaultFrd.id,
+      feedbackDirectoryId: defaultFrd.id,
       createdBy: SEED_IDS.USER_ADMIN,
       query: {
         measures: ["FeedbackRecords.count"],
@@ -708,7 +708,7 @@ async function main(): Promise<void> {
       name: "NPS Score",
       type: "big_number",
       workspaceId: workspace.id,
-      feedbackRecordDirectoryId: defaultFrd.id,
+      feedbackDirectoryId: defaultFrd.id,
       createdBy: SEED_IDS.USER_ADMIN,
       query: {
         measures: ["FeedbackRecords.npsScore"],
@@ -734,7 +734,7 @@ async function main(): Promise<void> {
       name: "Survey Completion Rate",
       type: "bar",
       workspaceId: workspace.id,
-      feedbackRecordDirectoryId: defaultFrd.id,
+      feedbackDirectoryId: defaultFrd.id,
       createdBy: SEED_IDS.USER_MANAGER,
       query: {
         measures: ["FeedbackRecords.count"],
@@ -764,7 +764,7 @@ async function main(): Promise<void> {
       name: "Responses by Channel",
       type: "area",
       workspaceId: workspace.id,
-      feedbackRecordDirectoryId: defaultFrd.id,
+      feedbackDirectoryId: defaultFrd.id,
       createdBy: SEED_IDS.USER_ADMIN,
       query: {
         measures: ["FeedbackRecords.count"],

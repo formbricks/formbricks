@@ -12,6 +12,6 @@ export const CLOUD_STRIPE_FEATURE_LOOKUP_KEYS = {
   AI_SMART_TOOLS: "ai-smart-tools",
   AI_DATA_ANALYSIS: "ai-data-analysis",
   UNIFY_FEEDBACK: "unify-feedback",
-  FEEDBACK_RECORD_DIRECTORIES: "feedback-record-directories",
+  FEEDBACK_DIRECTORIES: "feedback-directories",
   DASHBOARDS: "dashboards",
 } as const;

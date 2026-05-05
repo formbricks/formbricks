@@ -54,7 +54,7 @@ export const importHistoricalResponses = async (
       responses,
       survey,
       connector.formbricksMappings,
-      connector.feedbackRecordDirectoryId
+      connector.feedbackDirectoryId
     );
     successes += batch.successes;
     failures += batch.failures;

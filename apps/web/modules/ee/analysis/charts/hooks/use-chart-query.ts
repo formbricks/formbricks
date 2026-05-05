@@ -15,7 +15,7 @@ export interface QueryResult {
 
 export function useChartQuery(
   workspaceId: string,
-  feedbackRecordDirectoryId: string | null,
+  feedbackDirectoryId: string | null,
   initialQuery?: TChartQuery
 ) {
   const { t } = useTranslation();
@@ -25,7 +25,7 @@ export function useChartQuery(
   const [error, setError] = useState<string | null>(null);
 
   const runQuery = async (cubeQuery: TChartQuery): Promise<QueryResult | null> => {
-    if (!feedbackRecordDirectoryId) {
+    if (!feedbackDirectoryId) {
       const msg = t("workspace.analysis.charts.select_data_source_first");
       toast.error(msg);
       return null;
@@ -38,7 +38,7 @@ export function useChartQuery(
       const result = await executeQueryAction({
         workspaceId,
         query: cubeQuery,
-        feedbackRecordDirectoryId,
+        feedbackDirectoryId,
       });
 
       if (result?.serverError) {

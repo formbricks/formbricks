@@ -8,7 +8,7 @@ import { executeQuery } from "@/modules/ee/analysis/api/lib/cube-client";
 import { injectTenantFilter } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import { AnalysisPageLayout } from "@/modules/ee/analysis/components/analysis-page-layout";
 import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
-import { getFeedbackRecordDirectoriesByWorkspaceId } from "@/modules/ee/feedback-record-directory/lib/feedback-record-directory";
+import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getIsDashboardsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
@@ -23,10 +23,10 @@ interface WidgetQueryResult {
 
 async function executeWidgetQuery(
   query: TChartQuery,
-  feedbackRecordDirectoryId: string
+  feedbackDirectoryId: string
 ): Promise<WidgetQueryResult | { error: TDashboardWidgetError }> {
   try {
-    const scopedQuery = injectTenantFilter(query, feedbackRecordDirectoryId);
+    const scopedQuery = injectTenantFilter(query, feedbackDirectoryId);
     const data = await executeQuery(scopedQuery as Record<string, unknown>);
     return { data: Array.isArray(data) ? data : [], query };
   } catch (error) {
@@ -73,7 +73,7 @@ export async function DashboardDetailPage({
     );
   }
 
-  const directories = await getFeedbackRecordDirectoriesByWorkspaceId(workspaceId);
+  const directories = await getFeedbackDirectoriesByWorkspaceId(workspaceId);
 
   let dashboard;
   try {
@@ -92,7 +92,7 @@ export async function DashboardDetailPage({
   for (const widget of widgetsWithCharts) {
     widgetDataPromises.set(
       widget.id,
-      executeWidgetQuery(widget.chart.query, widget.chart.feedbackRecordDirectoryId)
+      executeWidgetQuery(widget.chart.query, widget.chart.feedbackDirectoryId)
     );
   }
 

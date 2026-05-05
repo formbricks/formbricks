@@ -3,16 +3,13 @@
 import { useTranslation } from "react-i18next";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { WorkspaceConfigNavigation } from "@/modules/workspaces/settings/components/workspace-config-navigation";
 
 export const TeamsLoading = () => {
   const { t } = useTranslation();
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.workspace_configuration")}>
-        <WorkspaceConfigNavigation activeId="teams" loading />
-      </PageHeader>
+      <PageHeader pageTitle={t("common.team_access")} />
       <div className="p-4">
         <div className="mb-4">
           <div className="h-6 w-1/3 animate-pulse rounded bg-slate-200" />

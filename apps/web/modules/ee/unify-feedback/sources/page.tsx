@@ -3,7 +3,7 @@ import { getConnectorsWithMappings } from "@/lib/connector/service";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getSurveys } from "@/lib/survey/service";
 import { getTranslate } from "@/lingodotdev/server";
-import { getFeedbackRecordDirectoriesByWorkspaceId } from "@/modules/ee/feedback-record-directory/lib/feedback-record-directory";
+import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getIsUnifyFeedbackEnabled } from "@/modules/ee/license-check/lib/utils";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
@@ -59,7 +59,7 @@ export const WorkspaceFeedbackSourcesPage = async (
   const [connectors, surveys, directories] = await Promise.all([
     getConnectorsWithMappings(params.workspaceId),
     getSurveys(params.workspaceId),
-    getFeedbackRecordDirectoriesByWorkspaceId(params.workspaceId),
+    getFeedbackDirectoriesByWorkspaceId(params.workspaceId),
   ]);
 
   const unifySurveys = surveys.map(transformToUnifySurvey);

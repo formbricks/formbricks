@@ -153,21 +153,21 @@ describe("getSelfHostedOrganizationEntitlementsContext", () => {
     const result = await getSelfHostedOrganizationEntitlementsContext("org1");
 
     expect(result.features).toContain("unify-feedback");
-    expect(result.features).not.toContain("feedback-record-directories");
+    expect(result.features).not.toContain("feedback-directories");
     expect(result.features).not.toContain("dashboards");
   });
 
-  test("maps feedbackRecordDirectories feature to feedback-record-directories entitlement", async () => {
+  test("maps feedbackDirectories feature to feedback-directories entitlement", async () => {
     mockGetOrg.mockResolvedValue({ id: "org1" } as any);
     mockGetLicense.mockResolvedValue({
       status: "active",
       active: true,
-      features: { feedbackRecordDirectories: true },
+      features: { feedbackDirectories: true },
     } as any);
 
     const result = await getSelfHostedOrganizationEntitlementsContext("org1");
 
-    expect(result.features).toContain("feedback-record-directories");
+    expect(result.features).toContain("feedback-directories");
     expect(result.features).not.toContain("unify-feedback");
     expect(result.features).not.toContain("dashboards");
   });
@@ -184,7 +184,7 @@ describe("getSelfHostedOrganizationEntitlementsContext", () => {
 
     expect(result.features).toContain("dashboards");
     expect(result.features).not.toContain("unify-feedback");
-    expect(result.features).not.toContain("feedback-record-directories");
+    expect(result.features).not.toContain("feedback-directories");
   });
 
   test("maps all three Hub features when all enabled", async () => {
@@ -192,13 +192,13 @@ describe("getSelfHostedOrganizationEntitlementsContext", () => {
     mockGetLicense.mockResolvedValue({
       status: "active",
       active: true,
-      features: { unifyFeedback: true, feedbackRecordDirectories: true, dashboards: true },
+      features: { unifyFeedback: true, feedbackDirectories: true, dashboards: true },
     } as any);
 
     const result = await getSelfHostedOrganizationEntitlementsContext("org1");
 
     expect(result.features).toContain("unify-feedback");
-    expect(result.features).toContain("feedback-record-directories");
+    expect(result.features).toContain("feedback-directories");
     expect(result.features).toContain("dashboards");
   });
 
@@ -207,7 +207,7 @@ describe("getSelfHostedOrganizationEntitlementsContext", () => {
     mockGetLicense.mockResolvedValue({
       status: "expired",
       active: false,
-      features: { unifyFeedback: true, feedbackRecordDirectories: true, dashboards: true },
+      features: { unifyFeedback: true, feedbackDirectories: true, dashboards: true },
     } as any);
 
     const result = await getSelfHostedOrganizationEntitlementsContext("org1");

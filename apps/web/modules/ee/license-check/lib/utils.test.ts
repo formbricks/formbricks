@@ -14,7 +14,7 @@ import {
   getIsAuditLogsEnabled,
   getIsContactsEnabled,
   getIsDashboardsEnabled,
-  getIsFeedbackRecordDirectoriesEnabled,
+  getIsFeedbackDirectoriesEnabled,
   getIsMultiOrgEnabled,
   getIsQuotasEnabled,
   getIsSamlSsoEnabled,
@@ -66,7 +66,7 @@ const defaultFeatures: TEnterpriseLicenseFeatures = {
   accessControl: false,
   quotas: false,
   unifyFeedback: false,
-  feedbackRecordDirectories: false,
+  feedbackDirectories: false,
   dashboards: false,
 };
 
@@ -289,12 +289,12 @@ describe("License Utils", () => {
       vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
       vi.mocked(hasOrganizationEntitlementWithLicenseGuard).mockResolvedValueOnce(true);
 
-      const result = await getIsFeedbackRecordDirectoriesEnabled("org_1");
+      const result = await getIsFeedbackDirectoriesEnabled("org_1");
 
       expect(result).toBe(true);
       expect(hasOrganizationEntitlementWithLicenseGuard).toHaveBeenCalledWith(
         "org_1",
-        CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.FEEDBACK_RECORD_DIRECTORIES
+        CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.FEEDBACK_DIRECTORIES
       );
       expect(getEnterpriseLicense).not.toHaveBeenCalled();
     });
@@ -320,14 +320,14 @@ describe("License Utils", () => {
         features: {
           ...defaultFeatures,
           unifyFeedback: true,
-          feedbackRecordDirectories: true,
+          feedbackDirectories: true,
           dashboards: true,
         },
       });
 
       const [unify, frd, dashboards] = await Promise.all([
         getIsUnifyFeedbackEnabled("org_1"),
-        getIsFeedbackRecordDirectoriesEnabled("org_1"),
+        getIsFeedbackDirectoriesEnabled("org_1"),
         getIsDashboardsEnabled("org_1"),
       ]);
 
@@ -346,7 +346,7 @@ describe("License Utils", () => {
 
       const [unify, frd, dashboards] = await Promise.all([
         getIsUnifyFeedbackEnabled("org_1"),
-        getIsFeedbackRecordDirectoriesEnabled("org_1"),
+        getIsFeedbackDirectoriesEnabled("org_1"),
         getIsDashboardsEnabled("org_1"),
       ]);
 

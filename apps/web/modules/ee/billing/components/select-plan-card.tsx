@@ -46,7 +46,7 @@ export const SelectPlanCard = ({ nextUrl, organizationId }: SelectPlanCardProps)
     t("workspace.settings.billing.trial_feature_webhooks"),
     t("workspace.settings.billing.trial_feature_api_access"),
     t("workspace.settings.billing.trial_feature_unify_feedback"),
-    t("workspace.settings.billing.trial_feature_feedback_record_directories"),
+    t("workspace.settings.billing.trial_feature_feedback_directories"),
     t("workspace.settings.billing.trial_feature_dashboards"),
   ] as const;
 

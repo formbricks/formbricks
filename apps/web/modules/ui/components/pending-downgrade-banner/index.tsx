@@ -87,7 +87,7 @@ export const PendingDowngradeBanner = ({
                     </p>
                     <p className="mt-1 text-sm text-slate-500">{getDescription()}</p>
 
-                    <Link href={`${workspaceBasePath}/settings/enterprise`}>
+                    <Link href={`${workspaceBasePath}/settings/organization/enterprise`}>
                       <span className="text-sm text-slate-900">{t("common.learn_more")}</span>
                     </Link>
                   </div>

@@ -152,7 +152,7 @@ describe("License Core Logic", () => {
       accessControl: true,
       quotas: true,
       unifyFeedback: false,
-      feedbackRecordDirectories: false,
+      feedbackDirectories: false,
       dashboards: false,
     };
     const mockFetchedLicenseDetails: TEnterpriseLicenseDetails = {
@@ -293,7 +293,7 @@ describe("License Core Logic", () => {
             accessControl: false,
             quotas: false,
             unifyFeedback: false,
-            feedbackRecordDirectories: false,
+            feedbackDirectories: false,
             dashboards: false,
           },
           lastChecked: expect.any(Date),
@@ -318,7 +318,7 @@ describe("License Core Logic", () => {
           accessControl: false,
           quotas: false,
           unifyFeedback: false,
-          feedbackRecordDirectories: false,
+          feedbackDirectories: false,
           dashboards: false,
         },
         lastChecked: expect.any(Date),
@@ -352,7 +352,7 @@ describe("License Core Logic", () => {
         accessControl: false,
         quotas: false,
         unifyFeedback: false,
-        feedbackRecordDirectories: false,
+        feedbackDirectories: false,
         dashboards: false,
       };
       expect(mockCache.set).toHaveBeenCalledWith(
@@ -543,7 +543,7 @@ describe("License Core Logic", () => {
           accessControl: true,
           quotas: true,
           unifyFeedback: false,
-          feedbackRecordDirectories: false,
+          feedbackDirectories: false,
           dashboards: false,
         },
       };
@@ -611,7 +611,7 @@ describe("License Core Logic", () => {
           accessControl: true,
           quotas: true,
           unifyFeedback: false,
-          feedbackRecordDirectories: false,
+          feedbackDirectories: false,
           dashboards: false,
         },
       };
@@ -670,7 +670,7 @@ describe("License Core Logic", () => {
           accessControl: true,
           quotas: true,
           unifyFeedback: false,
-          feedbackRecordDirectories: false,
+          feedbackDirectories: false,
           dashboards: false,
         },
       };
@@ -877,7 +877,7 @@ describe("License Core Logic", () => {
                   accessControl: false,
                   quotas: false,
                   unifyFeedback: false,
-                  feedbackRecordDirectories: false,
+                  feedbackDirectories: false,
                   dashboards: false,
                 },
               },
@@ -1062,7 +1062,7 @@ describe("License Core Logic", () => {
           accessControl: true,
           quotas: true,
           unifyFeedback: false,
-          feedbackRecordDirectories: false,
+          feedbackDirectories: false,
           dashboards: false,
         },
       };
@@ -1192,7 +1192,7 @@ describe("License Core Logic", () => {
         accessControl: true,
         quotas: true,
         unifyFeedback: false,
-        feedbackRecordDirectories: false,
+        feedbackDirectories: false,
         dashboards: false,
       },
     };

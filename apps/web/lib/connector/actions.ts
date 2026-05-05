@@ -24,7 +24,7 @@ import {
   getOrganizationIdFromSurveyId,
   getOrganizationIdFromWorkspaceId,
 } from "@/lib/utils/helper";
-import { getFeedbackRecordDirectoriesByWorkspaceId } from "@/modules/ee/feedback-record-directory/lib/feedback-record-directory";
+import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { listFeedbackRecords } from "@/modules/hub/service";
 import type { FeedbackRecordListParams, FeedbackRecordListResponse } from "@/modules/hub/types";
 import { importCsvData } from "./csv-import";
@@ -173,12 +173,12 @@ export const createConnectorWithMappingsAction = authenticatedActionClient
     });
 
     // Verify FRD belongs to same org
-    const frd = await prisma.feedbackRecordDirectory.findUnique({
-      where: { id: parsedInput.connectorInput.feedbackRecordDirectoryId },
+    const frd = await prisma.feedbackDirectory.findUnique({
+      where: { id: parsedInput.connectorInput.feedbackDirectoryId },
       select: { organizationId: true },
     });
     if (frd?.organizationId !== organizationId) {
-      throw new AuthorizationError("Invalid feedback record directory");
+      throw new AuthorizationError("Invalid feedback directory");
     }
 
     let mappingsInput: TMappingsInput | undefined;
@@ -333,7 +333,7 @@ export const duplicateConnectorAction = authenticatedActionClient
         {
           name: `${source.name} (copy)`,
           type: source.type,
-          feedbackRecordDirectoryId: source.feedbackRecordDirectoryId,
+          feedbackDirectoryId: source.feedbackDirectoryId,
           createdBy: ctx.user.id,
         },
         mappingsInput
@@ -515,9 +515,9 @@ export const listFeedbackRecordsAction = authenticatedActionClient
       });
 
       // Verify FRD belongs to workspace's accessible FRDs
-      const frds = await getFeedbackRecordDirectoriesByWorkspaceId(parsedInput.workspaceId);
+      const frds = await getFeedbackDirectoriesByWorkspaceId(parsedInput.workspaceId);
       if (!frds.some((f) => f.id === parsedInput.frdId)) {
-        throw new Error("Feedback record directory not accessible");
+        throw new Error("Feedback directory not accessible");
       }
 
       const params: FeedbackRecordListParams = {

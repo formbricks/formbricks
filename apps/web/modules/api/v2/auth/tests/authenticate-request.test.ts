@@ -74,7 +74,7 @@ describe("authenticateRequest", () => {
             workspaceName: "Workspace 2",
           },
         ],
-        feedbackRecordDirectoryPermissions: [],
+        feedbackDirectoryPermissions: [],
         apiKeyId: "api-key-id",
         organizationId: "org-id",
         organizationAccess: {
@@ -120,7 +120,7 @@ describe("authenticateRequest", () => {
       expect(result.data).toEqual({
         type: "apiKey",
         workspacePermissions: [],
-        feedbackRecordDirectoryPermissions: [],
+        feedbackDirectoryPermissions: [],
         apiKeyId: "org-api-key-id",
         organizationId: "org-id",
         organizationAccess: {
@@ -201,12 +201,12 @@ describe("authenticateRequest", () => {
         },
       },
       apiKeyWorkspaces: [],
-      apiKeyFeedbackRecordDirectories: [
+      apiKeyFeedbackDirectories: [
         {
-          feedbackRecordDirectoryId: "clxx1234567890123456789012",
+          feedbackDirectoryId: "clxx1234567890123456789012",
           apiKeyId: "bearer-api-key-id",
           permission: "read",
-          feedbackRecordDirectory: {
+          feedbackDirectory: {
             id: "clxx1234567890123456789012",
             name: "Directory 1",
           },
@@ -221,10 +221,10 @@ describe("authenticateRequest", () => {
       expect(result.data).toEqual({
         type: "apiKey",
         workspacePermissions: [],
-        feedbackRecordDirectoryPermissions: [
+        feedbackDirectoryPermissions: [
           {
-            feedbackRecordDirectoryId: "clxx1234567890123456789012",
-            feedbackRecordDirectoryName: "Directory 1",
+            feedbackDirectoryId: "clxx1234567890123456789012",
+            feedbackDirectoryName: "Directory 1",
             permission: "read",
           },
         ],

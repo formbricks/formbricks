@@ -37,7 +37,7 @@ const getCustomPlanFeaturePermission = async (
     | "aiSmartTools"
     | "aiDataAnalysis"
     | "unifyFeedback"
-    | "feedbackRecordDirectories"
+    | "feedbackDirectories"
     | "dashboards"
   >
 ): Promise<boolean> => {
@@ -49,7 +49,7 @@ const getCustomPlanFeaturePermission = async (
       aiSmartTools: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.AI_SMART_TOOLS,
       aiDataAnalysis: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.AI_DATA_ANALYSIS,
       unifyFeedback: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.UNIFY_FEEDBACK,
-      feedbackRecordDirectories: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.FEEDBACK_RECORD_DIRECTORIES,
+      feedbackDirectories: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.FEEDBACK_DIRECTORIES,
       dashboards: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.DASHBOARDS,
     };
     const lookupKey = featureLookupKeyMap[featureKey];
@@ -168,8 +168,8 @@ export const getIsUnifyFeedbackEnabled = async (organizationId: string): Promise
   return getCustomPlanFeaturePermission(organizationId, "unifyFeedback");
 };
 
-export const getIsFeedbackRecordDirectoriesEnabled = async (organizationId: string): Promise<boolean> => {
-  return getCustomPlanFeaturePermission(organizationId, "feedbackRecordDirectories");
+export const getIsFeedbackDirectoriesEnabled = async (organizationId: string): Promise<boolean> => {
+  return getCustomPlanFeaturePermission(organizationId, "feedbackDirectories");
 };
 
 export const getIsDashboardsEnabled = async (organizationId: string): Promise<boolean> => {

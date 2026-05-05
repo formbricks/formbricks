@@ -54,13 +54,11 @@ export const authenticateApiKeyFromHeaders = async (
       workspaceId: workspacePermission.workspaceId,
       workspaceName: workspacePermission.workspace.name,
     })),
-    feedbackRecordDirectoryPermissions: (apiKeyData.apiKeyFeedbackRecordDirectories ?? []).map(
-      (directoryPermission) => ({
-        permission: directoryPermission.permission,
-        feedbackRecordDirectoryId: directoryPermission.feedbackRecordDirectoryId,
-        feedbackRecordDirectoryName: directoryPermission.feedbackRecordDirectory.name,
-      })
-    ),
+    feedbackDirectoryPermissions: (apiKeyData.apiKeyFeedbackDirectories ?? []).map((directoryPermission) => ({
+      permission: directoryPermission.permission,
+      feedbackDirectoryId: directoryPermission.feedbackDirectoryId,
+      feedbackDirectoryName: directoryPermission.feedbackDirectory.name,
+    })),
     apiKeyId: apiKeyData.id,
     organizationId: apiKeyData.organizationId,
     organizationAccess: apiKeyData.organizationAccess,
