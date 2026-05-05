@@ -7,7 +7,6 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSegment } from "@formbricks/types/segment";
 import { DocumentationLinks } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/documentation-links";
-import { ENTERPRISE_LICENSE_REQUEST_FORM_URL } from "@/lib/constants";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Button } from "@/modules/ui/components/button";
 import { DatePicker } from "@/modules/ui/components/date-picker";
@@ -35,6 +34,7 @@ interface PersonalLinksTabProps {
   segments: TSegment[];
   isContactsEnabled: boolean;
   isFormbricksCloud: boolean;
+  enterpriseLicenseRequestFormUrl: string;
 }
 
 interface PersonalLinksFormData {
@@ -75,6 +75,7 @@ export const PersonalLinksTab = ({
   surveyId,
   isContactsEnabled,
   isFormbricksCloud,
+  enterpriseLicenseRequestFormUrl,
 }: PersonalLinksTabProps) => {
   const { t } = useTranslation();
 
@@ -170,7 +171,7 @@ export const PersonalLinksTab = ({
             text: isFormbricksCloud ? t("common.upgrade_plan") : t("common.request_trial_license"),
             href: isFormbricksCloud
               ? `/environments/${environmentId}/settings/billing`
-              : ENTERPRISE_LICENSE_REQUEST_FORM_URL,
+              : enterpriseLicenseRequestFormUrl,
           },
           {
             text: t("common.learn_more"),

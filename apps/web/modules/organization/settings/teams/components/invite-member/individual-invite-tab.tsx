@@ -10,7 +10,6 @@ import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { TOrganizationRole, ZOrganizationRole } from "@formbricks/types/memberships";
 import { ZUserName } from "@formbricks/types/user";
-import { ENTERPRISE_LICENSE_REQUEST_FORM_URL } from "@/lib/constants";
 import { AddMemberRole } from "@/modules/ee/role-management/components/add-member-role";
 import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
@@ -30,6 +29,7 @@ interface IndividualInviteTabProps {
   environmentId: string;
   membershipRole?: TOrganizationRole;
   showTeamAdminRestrictions: boolean;
+  enterpriseLicenseRequestFormUrl: string;
 }
 
 export const IndividualInviteTab = ({
@@ -41,6 +41,7 @@ export const IndividualInviteTab = ({
   environmentId,
   membershipRole,
   showTeamAdminRestrictions,
+  enterpriseLicenseRequestFormUrl,
 }: IndividualInviteTabProps) => {
   const ZFormSchema = z.object({
     name: ZUserName,
@@ -192,7 +193,7 @@ export const IndividualInviteTab = ({
                 href={
                   isFormbricksCloud
                     ? `/environments/${environmentId}/settings/billing`
-                    : ENTERPRISE_LICENSE_REQUEST_FORM_URL
+                    : enterpriseLicenseRequestFormUrl
                 }>
                 {t("common.upgrade_plan")}
               </Link>

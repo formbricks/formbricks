@@ -10,7 +10,6 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurveyQuota, TSurveyQuotaInput } from "@formbricks/types/quota";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { ENTERPRISE_LICENSE_REQUEST_FORM_URL } from "@/lib/constants";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import {
   createQuotaAction,
@@ -30,6 +29,7 @@ interface QuotasCardProps {
   isFormbricksCloud?: boolean;
   quotas: TSurveyQuota[];
   hasResponses: boolean;
+  enterpriseLicenseRequestFormUrl: string;
 }
 
 const AddQuotaButton = ({
@@ -68,6 +68,7 @@ export const QuotasCard = ({
   isFormbricksCloud,
   quotas,
   hasResponses,
+  enterpriseLicenseRequestFormUrl,
 }: QuotasCardProps) => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -178,7 +179,7 @@ export const QuotasCard = ({
                     text: isFormbricksCloud ? t("common.upgrade_plan") : t("common.request_trial_license"),
                     href: isFormbricksCloud
                       ? `/environments/${environmentId}/settings/billing`
-                      : ENTERPRISE_LICENSE_REQUEST_FORM_URL,
+                      : enterpriseLicenseRequestFormUrl,
                   },
                   {
                     text: t("common.learn_more"),

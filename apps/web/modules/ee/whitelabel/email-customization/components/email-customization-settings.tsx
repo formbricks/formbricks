@@ -11,7 +11,6 @@ import { TAllowedFileExtension } from "@formbricks/types/storage";
 import { TUser } from "@formbricks/types/user";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
 import { cn } from "@/lib/cn";
-import { ENTERPRISE_LICENSE_REQUEST_FORM_URL } from "@/lib/constants";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import {
   removeOrganizationEmailLogoUrlAction,
@@ -37,6 +36,7 @@ interface EmailCustomizationSettingsProps {
   user: TUser | null;
   fbLogoUrl: string;
   isStorageConfigured: boolean;
+  enterpriseLicenseRequestFormUrl: string;
 }
 
 export const EmailCustomizationSettings = ({
@@ -48,6 +48,7 @@ export const EmailCustomizationSettings = ({
   user,
   fbLogoUrl,
   isStorageConfigured,
+  enterpriseLicenseRequestFormUrl,
 }: EmailCustomizationSettingsProps) => {
   const { t } = useTranslation();
 
@@ -185,7 +186,7 @@ export const EmailCustomizationSettings = ({
       text: isFormbricksCloud ? t("common.upgrade_plan") : t("common.request_trial_license"),
       href: isFormbricksCloud
         ? `/environments/${environmentId}/settings/billing`
-        : ENTERPRISE_LICENSE_REQUEST_FORM_URL,
+        : enterpriseLicenseRequestFormUrl,
     },
     {
       text: t("common.learn_more"),
