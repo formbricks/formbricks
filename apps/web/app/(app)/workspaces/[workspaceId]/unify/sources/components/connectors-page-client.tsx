@@ -17,7 +17,6 @@ import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Alert, AlertButton, AlertDescription } from "@/modules/ui/components/alert";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { WorkspaceConfigNavigation } from "@/modules/workspaces/settings/components/workspace-config-navigation";
 import { TFieldMapping, TUnifySurvey } from "../types";
 import { ConnectorsTable } from "./connectors-table";
 import { CreateConnectorModal } from "./create-connector-modal";
@@ -55,7 +54,7 @@ export function ConnectorsSection({
   const handleCreateConnector = async (data: {
     name: string;
     type: TConnectorType;
-    feedbackRecordDirectoryId: string;
+    feedbackDirectoryId: string;
     surveyMappings?: { surveyId: string; elementIds: string[] }[];
     fieldMappings?: TFieldMapping[];
   }): Promise<string | undefined> => {
@@ -64,7 +63,7 @@ export function ConnectorsSection({
       connectorInput: {
         name: data.name,
         type: data.type,
-        feedbackRecordDirectoryId: data.feedbackRecordDirectoryId,
+        feedbackDirectoryId: data.feedbackDirectoryId,
       },
       formbricksMappings:
         data.type === "formbricks_survey" && data.surveyMappings?.length ? data.surveyMappings : undefined,
@@ -166,9 +165,7 @@ export function ConnectorsSection({
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.workspace_configuration")}>
-        <WorkspaceConfigNavigation activeId="feedback-sources" />
-      </PageHeader>
+      <PageHeader pageTitle={t("workspace.unify.feedback_sources")} />
 
       <SettingsCard
         title={t("workspace.unify.feedback_sources")}
@@ -191,7 +188,7 @@ export function ConnectorsSection({
           <Alert size="small" className="mt-4">
             <AlertDescription>{feedbackDirectoryAccessText}</AlertDescription>
             <AlertButton asChild>
-              <Link href={`/workspaces/${workspaceId}/settings/feedback-record-directories`}>
+              <Link href={`/workspaces/${workspaceId}/settings/organization/feedback-directories`}>
                 {t("workspace.unify.manage_directories")}
               </Link>
             </AlertButton>

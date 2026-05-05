@@ -16,7 +16,7 @@ import {
   getCharts,
   updateChart,
 } from "@/modules/ee/analysis/charts/lib/charts";
-import { checkFeedbackRecordDirectoryAccess, checkWorkspaceAccess } from "@/modules/ee/analysis/lib/access";
+import { checkFeedbackDirectoryAccess, checkWorkspaceAccess } from "@/modules/ee/analysis/lib/access";
 import { generateSchemaContext } from "@/modules/ee/analysis/lib/ai-schema-context";
 import { ZChartCreateInput, ZChartType, ZChartUpdateInput } from "@/modules/ee/analysis/types/analysis";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
@@ -45,8 +45,8 @@ export const createChartAction = authenticatedActionClient.inputSchema(ZCreateCh
         parsedInput.workspaceId,
         "readWrite"
       );
-      await checkFeedbackRecordDirectoryAccess({
-        feedbackRecordDirectoryId: parsedInput.chartInput.feedbackRecordDirectoryId,
+      await checkFeedbackDirectoryAccess({
+        feedbackDirectoryId: parsedInput.chartInput.feedbackDirectoryId,
         organizationId,
         workspaceId,
         userId: ctx.user.id,
@@ -219,7 +219,7 @@ export const getChartsAction = authenticatedActionClient
 const ZExecuteQueryAction = z.object({
   workspaceId: ZId,
   query: ZChartQuery,
-  feedbackRecordDirectoryId: ZId,
+  feedbackDirectoryId: ZId,
 });
 
 export const executeQueryAction = authenticatedActionClient
@@ -237,8 +237,8 @@ export const executeQueryAction = authenticatedActionClient
         parsedInput.workspaceId,
         "read"
       );
-      const { feedbackRecordDirectoryId } = await checkFeedbackRecordDirectoryAccess({
-        feedbackRecordDirectoryId: parsedInput.feedbackRecordDirectoryId,
+      const { feedbackDirectoryId } = await checkFeedbackDirectoryAccess({
+        feedbackDirectoryId: parsedInput.feedbackDirectoryId,
         organizationId,
         workspaceId,
         userId: ctx.user.id,
@@ -247,7 +247,7 @@ export const executeQueryAction = authenticatedActionClient
 
       return executeTenantScopedQuery({
         query: parsedInput.query,
-        feedbackRecordDirectoryId,
+        feedbackDirectoryId,
         workspaceId,
         organizationId,
         userId: ctx.user.id,
@@ -296,7 +296,7 @@ const ZGenerateAIQueryResponse = z.object({
 const ZGenerateAIChartAction = z.object({
   workspaceId: ZId,
   prompt: z.string().min(1).max(2000),
-  feedbackRecordDirectoryId: ZId,
+  feedbackDirectoryId: ZId,
 });
 
 export const generateAIChartAction = authenticatedActionClient
@@ -314,8 +314,8 @@ export const generateAIChartAction = authenticatedActionClient
         parsedInput.workspaceId,
         "read"
       );
-      const { feedbackRecordDirectoryId } = await checkFeedbackRecordDirectoryAccess({
-        feedbackRecordDirectoryId: parsedInput.feedbackRecordDirectoryId,
+      const { feedbackDirectoryId } = await checkFeedbackDirectoryAccess({
+        feedbackDirectoryId: parsedInput.feedbackDirectoryId,
         organizationId,
         workspaceId,
         userId: ctx.user.id,
@@ -363,7 +363,7 @@ export const generateAIChartAction = authenticatedActionClient
 
       const data = await executeTenantScopedQuery({
         query: cleanQuery,
-        feedbackRecordDirectoryId,
+        feedbackDirectoryId,
         workspaceId,
         organizationId,
         userId: ctx.user.id,

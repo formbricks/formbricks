@@ -5,7 +5,6 @@ import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/comp
 import { LanguageLabels } from "@/modules/survey/multi-language-surveys/components/language-labels";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { WorkspaceConfigNavigation } from "@/modules/workspaces/settings/components/workspace-config-navigation";
 
 export const LanguagesLoading = () => {
   const { t } = useTranslation();
@@ -17,9 +16,7 @@ export const LanguagesLoading = () => {
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.workspace_configuration")}>
-        <WorkspaceConfigNavigation activeId="languages" loading />
-      </PageHeader>
+      <PageHeader pageTitle={t("common.survey_languages")} />
       <SettingsCard
         title={t("workspace.languages.multi_language_surveys")}
         description={t("workspace.languages.multi_language_surveys_description")}>

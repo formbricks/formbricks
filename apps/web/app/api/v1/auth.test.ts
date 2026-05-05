@@ -123,7 +123,7 @@ describe("authenticateRequest", () => {
           workspaceName: "Workspace 1",
         },
       ],
-      feedbackRecordDirectoryPermissions: [],
+      feedbackDirectoryPermissions: [],
       apiKeyId: "api-key-id",
       organizationId: "org-id",
       organizationAccess: "all",
@@ -162,7 +162,7 @@ describe("authenticateRequest", () => {
       lastUsedAt: null,
       label: "Test API Key",
       apiKeyWorkspaces: [],
-      apiKeyFeedbackRecordDirectories: [],
+      apiKeyFeedbackDirectories: [],
     };
 
     vi.mocked(getApiKeyWithPermissions).mockResolvedValue(mockApiKeyData as any);
@@ -171,7 +171,7 @@ describe("authenticateRequest", () => {
     expect(result).toEqual({
       type: "apiKey",
       workspacePermissions: [],
-      feedbackRecordDirectoryPermissions: [],
+      feedbackDirectoryPermissions: [],
       apiKeyId: "api-key-id",
       organizationId: "org-id",
       organizationAccess: "all",
@@ -192,11 +192,11 @@ describe("authenticateRequest", () => {
       lastUsedAt: null,
       label: "Test API Key",
       apiKeyWorkspaces: [],
-      apiKeyFeedbackRecordDirectories: [
+      apiKeyFeedbackDirectories: [
         {
-          feedbackRecordDirectoryId: "clxx1234567890123456789012",
+          feedbackDirectoryId: "clxx1234567890123456789012",
           permission: "write" as const,
-          feedbackRecordDirectory: {
+          feedbackDirectory: {
             id: "clxx1234567890123456789012",
             name: "Directory 1",
           },
@@ -209,10 +209,10 @@ describe("authenticateRequest", () => {
     expect(result).toEqual({
       type: "apiKey",
       workspacePermissions: [],
-      feedbackRecordDirectoryPermissions: [
+      feedbackDirectoryPermissions: [
         {
-          feedbackRecordDirectoryId: "clxx1234567890123456789012",
-          feedbackRecordDirectoryName: "Directory 1",
+          feedbackDirectoryId: "clxx1234567890123456789012",
+          feedbackDirectoryName: "Directory 1",
           permission: "write",
         },
       ],

@@ -191,7 +191,7 @@ export const IndividualInviteTab = ({
                 target="_blank"
                 href={
                   isFormbricksCloud
-                    ? `${workspaceBasePath}/settings/billing`
+                    ? `${workspaceBasePath}/settings/organization/billing`
                     : "https://formbricks.com/upgrade-self-hosting-license"
                 }>
                 {t("common.upgrade_plan")}

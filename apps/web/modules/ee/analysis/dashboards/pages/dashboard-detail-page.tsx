@@ -3,9 +3,9 @@ import { logger } from "@formbricks/logger";
 import type { TChartQuery } from "@formbricks/types/analysis";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { executeTenantScopedQuery } from "@/modules/ee/analysis/api/lib/cube-client";
-import { checkFeedbackRecordDirectoryAccess } from "@/modules/ee/analysis/lib/access";
+import { checkFeedbackDirectoryAccess } from "@/modules/ee/analysis/lib/access";
 import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
-import { getFeedbackRecordDirectoriesByWorkspaceId } from "@/modules/ee/feedback-record-directory/lib/feedback-record-directory";
+import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { DashboardDetailClient } from "../components/dashboard-detail-client";
 import { getDashboard } from "../lib/dashboards";
@@ -22,14 +22,14 @@ interface WidgetQueryResult {
 
 async function executeWidgetQuery(
   query: TChartQuery,
-  feedbackRecordDirectoryId: string,
+  feedbackDirectoryId: string,
   workspaceId: string,
   organizationId: string,
   userId: string
 ): Promise<WidgetQueryResult | { error: TDashboardWidgetError }> {
   try {
-    const tenant = await checkFeedbackRecordDirectoryAccess({
-      feedbackRecordDirectoryId,
+    const tenant = await checkFeedbackDirectoryAccess({
+      feedbackDirectoryId,
       organizationId,
       workspaceId,
       userId,
@@ -37,7 +37,7 @@ async function executeWidgetQuery(
     });
     const data = await executeTenantScopedQuery({
       query,
-      feedbackRecordDirectoryId: tenant.feedbackRecordDirectoryId,
+      feedbackDirectoryId: tenant.feedbackDirectoryId,
       workspaceId,
       organizationId,
       userId,
@@ -59,7 +59,7 @@ export async function DashboardDetailPage({
 }>) {
   const { workspaceId, dashboardId } = await params;
   const { isReadOnly, organization, session } = await getWorkspaceAuth(workspaceId);
-  const directories = await getFeedbackRecordDirectoriesByWorkspaceId(workspaceId);
+  const directories = await getFeedbackDirectoriesByWorkspaceId(workspaceId);
 
   let dashboard;
   try {
@@ -80,7 +80,7 @@ export async function DashboardDetailPage({
       widget.id,
       executeWidgetQuery(
         widget.chart.query,
-        widget.chart.feedbackRecordDirectoryId,
+        widget.chart.feedbackDirectoryId,
         workspaceId,
         organization.id,
         session.user.id

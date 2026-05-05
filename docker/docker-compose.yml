@@ -264,8 +264,11 @@ services:
     <<: *environment
 
   # Run Hub DB migrations (goose + river) before the API starts. Uses same image; migrations are idempotent.
+  # Default tracks :latest so self-host updates (compose pull) advance Hub alongside the app image.
+  # Operators who want an immutable pin can set HUB_IMAGE_REF in docker/.env to either ":<tag>"
+  # (e.g. ":0.2.0") or "@sha256:<digest>". hub and hub-migrate share the same value — no drift.
   hub-migrate:
-    image: ghcr.io/formbricks/hub:latest
+    image: ghcr.io/formbricks/hub${HUB_IMAGE_REF:-:latest}
     restart: "no"
     entrypoint: ["sh", "-c"]
     command:
@@ -281,7 +284,7 @@ services:
   # Formbricks Hub API (ghcr.io/formbricks/hub). Set HUB_API_KEY. By default shares the Formbricks database; set HUB_DATABASE_URL to use a separate DB.
   hub:
     restart: always
-    image: ghcr.io/formbricks/hub:latest
+    image: ghcr.io/formbricks/hub${HUB_IMAGE_REF:-:latest}
     depends_on:
       hub-migrate:
         condition: service_completed_successfully

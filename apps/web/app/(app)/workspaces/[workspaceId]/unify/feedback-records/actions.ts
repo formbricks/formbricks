@@ -4,7 +4,7 @@ import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
-import { getFeedbackRecordDirectoriesByWorkspaceId } from "@/modules/ee/feedback-record-directory/lib/feedback-record-directory";
+import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { createFeedbackRecord, retrieveFeedbackRecord, updateFeedbackRecord } from "@/modules/hub/service";
 import type { FeedbackRecordCreateParams, FeedbackRecordUpdateParams } from "@/modules/hub/types";
 import {
@@ -40,7 +40,7 @@ const ensureAccess = async (
 };
 
 const getWorkspaceDirectoryIds = async (workspaceId: string): Promise<Set<string>> => {
-  const directories = await getFeedbackRecordDirectoriesByWorkspaceId(workspaceId);
+  const directories = await getFeedbackDirectoriesByWorkspaceId(workspaceId);
   return new Set(directories.map((directory) => directory.id));
 };
 

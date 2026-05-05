@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { getConnectorsWithMappings } from "@/lib/connector/service";
 import { getTranslate } from "@/lingodotdev/server";
-import { getFeedbackRecordDirectoriesByWorkspaceId } from "@/modules/ee/feedback-record-directory/lib/feedback-record-directory";
+import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { listFeedbackRecords } from "@/modules/hub/service";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { FeedbackRecordsPageClient } from "./components/feedback-records-page-client";
@@ -28,7 +28,7 @@ export default async function UnifyFeedbackRecordsPage(
   }
 
   const [frds, connectors] = await Promise.all([
-    getFeedbackRecordDirectoriesByWorkspaceId(params.workspaceId),
+    getFeedbackDirectoriesByWorkspaceId(params.workspaceId),
     getConnectorsWithMappings(params.workspaceId),
   ]);
 

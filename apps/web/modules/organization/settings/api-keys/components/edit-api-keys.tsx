@@ -13,7 +13,7 @@ import { ViewPermissionModal } from "@/modules/organization/settings/api-keys/co
 import {
   TApiKeyUpdateInput,
   TApiKeyWithEnvironmentPermission,
-  TOrganizationFeedbackRecordDirectory,
+  TOrganizationFeedbackDirectory,
   TOrganizationWorkspace,
 } from "@/modules/organization/settings/api-keys/types/api-keys";
 import { Button } from "@/modules/ui/components/button";
@@ -27,7 +27,7 @@ interface EditAPIKeysProps {
   locale: TUserLocale;
   isReadOnly: boolean;
   workspaces: TOrganizationWorkspace[];
-  feedbackRecordDirectories: TOrganizationFeedbackRecordDirectory[];
+  feedbackDirectories: TOrganizationFeedbackDirectory[];
 }
 
 export const EditAPIKeys = ({
@@ -36,7 +36,7 @@ export const EditAPIKeys = ({
   locale,
   isReadOnly,
   workspaces,
-  feedbackRecordDirectories,
+  feedbackDirectories,
 }: EditAPIKeysProps) => {
   const { t } = useTranslation();
   const [isAddAPIKeyModalOpen, setIsAddAPIKeyModalOpen] = useState(false);
@@ -76,9 +76,9 @@ export const EditAPIKeys = ({
       permission: ApiKeyPermission;
       workspaceId: string;
     }>;
-    feedbackRecordDirectoryPermissions: Array<{
+    feedbackDirectoryPermissions: Array<{
       permission: ApiKeyPermission;
-      feedbackRecordDirectoryId: string;
+      feedbackDirectoryId: string;
     }>;
     organizationAccess: TOrganizationAccess;
   }): Promise<void> => {
@@ -88,7 +88,7 @@ export const EditAPIKeys = ({
       apiKeyData: {
         label: data.label,
         workspacePermissions: data.workspacePermissions,
-        feedbackRecordDirectoryPermissions: data.feedbackRecordDirectoryPermissions,
+        feedbackDirectoryPermissions: data.feedbackDirectoryPermissions,
         organizationAccess: data.organizationAccess,
       },
     });
@@ -245,7 +245,7 @@ export const EditAPIKeys = ({
         setOpen={setIsAddAPIKeyModalOpen}
         onSubmit={handleAddAPIKey}
         workspaces={workspaces}
-        feedbackRecordDirectories={feedbackRecordDirectories}
+        feedbackDirectories={feedbackDirectories}
         isCreatingAPIKey={isLoading}
       />
       {activeKey && (
@@ -255,7 +255,7 @@ export const EditAPIKeys = ({
           onSubmit={handleUpdateAPIKey}
           apiKey={activeKey}
           workspaces={workspaces}
-          feedbackRecordDirectories={feedbackRecordDirectories}
+          feedbackDirectories={feedbackDirectories}
           isUpdating={isLoading}
         />
       )}

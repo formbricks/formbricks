@@ -52,13 +52,13 @@ export const ContactsPageLayout = async ({
               {
                 text: IS_FORMBRICKS_CLOUD ? t("common.upgrade_plan") : t("common.request_trial_license"),
                 href: IS_FORMBRICKS_CLOUD
-                  ? `${workspaceBasePath}/settings/billing`
+                  ? `${workspaceBasePath}/settings/organization/billing`
                   : "https://formbricks.com/upgrade-self-hosting-license",
               },
               {
                 text: t("common.learn_more"),
                 href: IS_FORMBRICKS_CLOUD
-                  ? `${workspaceBasePath}/settings/billing`
+                  ? `${workspaceBasePath}/settings/organization/billing`
                   : "https://formbricks.com/learn-more-self-hosting-license",
               },
             ]}

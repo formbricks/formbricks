@@ -8,16 +8,14 @@ import { ZId } from "@formbricks/types/common";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { verifyFeedbackRecordsGatewayToken } from "@/lib/jwt";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
+import { getBearerTokenFromHeaders } from "@/modules/api/lib/api-key-auth";
+import { getFeedbackDirectoryAuthContext } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import {
-  getBearerTokenFromHeaders,
-} from "@/modules/api/lib/api-key-auth";
-import {
-  buildAllowResponse,
-  buildStatusResponse,
   TEnvoyAuthenticatedPrincipal,
   TEnvoyRequestAuthorizer,
+  buildAllowResponse,
+  buildStatusResponse,
 } from "@/modules/envoy-auth/shared";
-import { getFeedbackRecordDirectoryAuthContext } from "@/modules/ee/feedback-record-directory/lib/feedback-record-directory";
 import { getFeedbackRecordTenant } from "@/modules/hub/service";
 
 const FEEDBACK_RECORDS_V3_PREFIX = "/api/v3/feedbackRecords";
@@ -79,10 +77,7 @@ const normalizeFeedbackRecordsPath = (pathname: string): string | null => {
   return null;
 };
 
-const parseFeedbackRecordsGatewayRoute = (
-  method: string,
-  pathname: string
-): TParsedGatewayRoute | null => {
+const parseFeedbackRecordsGatewayRoute = (method: string, pathname: string): TParsedGatewayRoute | null => {
   const normalizedPath = normalizeFeedbackRecordsPath(pathname);
   if (!normalizedPath) {
     return null;
@@ -169,21 +164,21 @@ const getFeedbackRecordsGatewayJwtFromHeaders = (headers: Headers): string | nul
   return getBearerTokenFromHeaders(headers);
 };
 
-const hasFeedbackRecordDirectoryPermission = (
+const hasFeedbackDirectoryPermission = (
   authentication: TAuthenticationApiKey,
-  feedbackRecordDirectoryId: string,
+  feedbackDirectoryId: string,
   requiredPermission: TFeedbackRecordsGatewayPermission
 ): boolean => {
-  const feedbackRecordDirectoryPermission = authentication.feedbackRecordDirectoryPermissions.find(
-    (permission) => permission.feedbackRecordDirectoryId === feedbackRecordDirectoryId
+  const feedbackDirectoryPermission = authentication.feedbackDirectoryPermissions.find(
+    (permission) => permission.feedbackDirectoryId === feedbackDirectoryId
   );
 
-  if (!feedbackRecordDirectoryPermission) {
+  if (!feedbackDirectoryPermission) {
     return false;
   }
 
   return (
-    apiKeyPermissionWeight[feedbackRecordDirectoryPermission.permission] >=
+    apiKeyPermissionWeight[feedbackDirectoryPermission.permission] >=
     gatewayPermissionToApiKeyPermissionWeight[requiredPermission]
   );
 };
@@ -220,7 +215,10 @@ const resolveTenantId = async (
   const tenantLookup = await getFeedbackRecordTenant(route.recordId!);
   if (tenantLookup.error) {
     if (tenantLookup.error.status === 404) {
-      logger.warn({ requestId, recordId: route.recordId }, "Feedback record tenant lookup returned not found");
+      logger.warn(
+        { requestId, recordId: route.recordId },
+        "Feedback record tenant lookup returned not found"
+      );
       return {
         errorResponse: buildStatusResponse(403, "Forbidden"),
       };
@@ -237,7 +235,10 @@ const resolveTenantId = async (
 
   const tenantId = parseTenantId(tenantLookup.data?.tenantId ?? null);
   if (!tenantId) {
-    logger.warn({ requestId, recordId: route.recordId }, "Feedback record tenant lookup returned invalid tenant");
+    logger.warn(
+      { requestId, recordId: route.recordId },
+      "Feedback record tenant lookup returned invalid tenant"
+    );
     return {
       errorResponse: buildStatusResponse(503, "Feedback record lookup failed"),
     };
@@ -248,37 +249,32 @@ const resolveTenantId = async (
 
 const authorizeGatewayRequest = async (
   principal: TAuthenticatedGatewayPrincipal,
-  feedbackRecordDirectoryId: string,
+  feedbackDirectoryId: string,
   requiredPermission: TFeedbackRecordsGatewayPermission
 ): Promise<{ allowed: true } | { allowed: false }> => {
-  const feedbackRecordDirectory = await getFeedbackRecordDirectoryAuthContext(feedbackRecordDirectoryId);
-  if (!feedbackRecordDirectory || feedbackRecordDirectory.isArchived) {
+  const feedbackDirectory = await getFeedbackDirectoryAuthContext(feedbackDirectoryId);
+  if (!feedbackDirectory || feedbackDirectory.isArchived) {
     return { allowed: false };
   }
 
   if (principal.type === "apiKey") {
-    return hasFeedbackRecordDirectoryPermission(
-      principal.authentication,
-      feedbackRecordDirectoryId,
-      requiredPermission
-    )
+    return hasFeedbackDirectoryPermission(principal.authentication, feedbackDirectoryId, requiredPermission)
       ? { allowed: true }
       : { allowed: false };
   }
 
   try {
-    const minPermission: "read" | "readWrite" =
-      requiredPermission === "read" ? "read" : "readWrite";
+    const minPermission: "read" | "readWrite" = requiredPermission === "read" ? "read" : "readWrite";
 
     await checkAuthorizationUpdated({
       userId: principal.userId,
-      organizationId: feedbackRecordDirectory.organizationId,
+      organizationId: feedbackDirectory.organizationId,
       access: [
         {
           type: "organization",
           roles: ["owner", "manager"],
         },
-        ...feedbackRecordDirectory.workspaceIds.map((workspaceId) => ({
+        ...feedbackDirectory.workspaceIds.map((workspaceId) => ({
           type: "workspaceTeam" as const,
           workspaceId,
           minPermission,
@@ -324,7 +320,7 @@ export const feedbackRecordsEnvoyAuthorizer: TEnvoyRequestAuthorizer = {
           requestId,
           principalType: principal.type,
           operation: route.operation,
-          feedbackRecordDirectoryId: tenantResolution.tenantId,
+          feedbackDirectoryId: tenantResolution.tenantId,
           verdict: "deny",
         },
         "Feedback records gateway authorization denied"
@@ -337,7 +333,7 @@ export const feedbackRecordsEnvoyAuthorizer: TEnvoyRequestAuthorizer = {
         requestId,
         operation: route.operation,
         principalType: principal.type,
-        feedbackRecordDirectoryId: tenantResolution.tenantId,
+        feedbackDirectoryId: tenantResolution.tenantId,
         verdict: "allow",
       },
       "Feedback records gateway authorization allowed"

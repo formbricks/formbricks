@@ -41,7 +41,7 @@ export const TeamsView = async ({
     {
       text: IS_FORMBRICKS_CLOUD ? t("common.upgrade_plan") : t("common.request_trial_license"),
       href: IS_FORMBRICKS_CLOUD
-        ? `${workspaceBasePath}/settings/billing`
+        ? `${workspaceBasePath}/settings/organization/billing`
         : "https://formbricks.com/docs/self-hosting/license#30-day-trial-license-request",
     },
     {

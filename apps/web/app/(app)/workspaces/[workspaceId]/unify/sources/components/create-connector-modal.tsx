@@ -70,7 +70,7 @@ interface CreateConnectorModalProps {
   onCreateConnector: (data: {
     name: string;
     type: TConnectorType;
-    feedbackRecordDirectoryId: string;
+    feedbackDirectoryId: string;
     surveyMappings?: { surveyId: string; elementIds: string[] }[];
     fieldMappings?: TFieldMapping[];
   }) => Promise<string | undefined>;
@@ -240,7 +240,7 @@ export const CreateConnectorModal = ({
 
     if (selectedType === "api_ingestion") {
       handleOpenChange(false);
-      router.push(`/workspaces/${workspaceId}/settings/api-keys`);
+      router.push(`/workspaces/${workspaceId}/settings/organization/api-keys`);
       return;
     }
 
@@ -335,7 +335,7 @@ export const CreateConnectorModal = ({
     const connectorId = await onCreateConnector({
       name: values.sourceName.trim(),
       type: "formbricks_survey",
-      feedbackRecordDirectoryId: selectedDirectoryId,
+      feedbackDirectoryId: selectedDirectoryId,
       surveyMappings: [{ surveyId: values.surveyId, elementIds: values.selectedQuestionIds }],
     });
 
@@ -364,7 +364,7 @@ export const CreateConnectorModal = ({
     const connectorId = await onCreateConnector({
       name: csvConnectorName.trim(),
       type: "csv",
-      feedbackRecordDirectoryId: selectedDirectoryId,
+      feedbackDirectoryId: selectedDirectoryId,
       fieldMappings: mappings.length > 0 ? mappings : undefined,
     });
 
@@ -440,9 +440,7 @@ export const CreateConnectorModal = ({
                     )}
                   />
 
-                  {directories.length === 0 && (
-                    <NoFeedbackRecordDirectoryAlert workspaceId={workspaceId} t={t} />
-                  )}
+                  {directories.length === 0 && <NoFeedbackDirectoryAlert workspaceId={workspaceId} t={t} />}
 
                   <FormField
                     control={formbricksForm.control}
@@ -524,9 +522,7 @@ export const CreateConnectorModal = ({
                   />
                 </div>
 
-                {directories.length === 0 && (
-                  <NoFeedbackRecordDirectoryAlert workspaceId={workspaceId} t={t} />
-                )}
+                {directories.length === 0 && <NoFeedbackDirectoryAlert workspaceId={workspaceId} t={t} />}
 
                 <div className="max-h-[55vh] overflow-y-auto rounded-lg border border-slate-200 p-4">
                   <CsvConnectorUI
@@ -613,20 +609,20 @@ export const CreateConnectorModal = ({
   );
 };
 
-interface NoFeedbackRecordDirectoryAlertProps {
+interface NoFeedbackDirectoryAlertProps {
   workspaceId: string;
   t: (key: string) => string;
 }
 
-const NoFeedbackRecordDirectoryAlert = ({ workspaceId, t }: NoFeedbackRecordDirectoryAlertProps) => {
+const NoFeedbackDirectoryAlert = ({ workspaceId, t }: NoFeedbackDirectoryAlertProps) => {
   return (
     <Alert variant="error" size="small">
       <div>
-        <p>{t("workspace.unify.no_feedback_record_directory_available")}</p>
+        <p>{t("workspace.unify.no_feedback_directory_available")}</p>
         <a
           className="mt-1 inline-block font-medium underline"
-          href={`/workspaces/${workspaceId}/settings/feedback-record-directories`}>
-          {t("workspace.unify.go_to_feedback_record_directories")}
+          href={`/workspaces/${workspaceId}/settings/organization/feedback-directories`}>
+          {t("workspace.unify.go_to_feedback_directories")}
         </a>
       </div>
     </Alert>

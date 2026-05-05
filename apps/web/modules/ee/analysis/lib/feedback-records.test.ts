@@ -3,15 +3,14 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 vi.mock("server-only", () => ({}));
 
 const mockListFeedbackRecords = vi.fn();
-const mockGetFeedbackRecordDirectoriesByWorkspaceId = vi.fn();
+const mockGetFeedbackDirectoriesByWorkspaceId = vi.fn();
 
 vi.mock("@/modules/hub/service", () => ({
   listFeedbackRecords: (...args: any[]) => mockListFeedbackRecords(...args),
 }));
 
-vi.mock("@/modules/ee/feedback-record-directory/lib/feedback-record-directory", () => ({
-  getFeedbackRecordDirectoriesByWorkspaceId: (...args: any[]) =>
-    mockGetFeedbackRecordDirectoriesByWorkspaceId(...args),
+vi.mock("@/modules/ee/feedback-directory/lib/feedback-directory", () => ({
+  getFeedbackDirectoriesByWorkspaceId: (...args: any[]) => mockGetFeedbackDirectoriesByWorkspaceId(...args),
 }));
 
 const mockWorkspaceId = "workspace-abc-123";
@@ -131,18 +130,18 @@ describe("hasWorkspaceFeedbackRecords", () => {
   });
 
   test("returns false when the workspace has no directories", async () => {
-    mockGetFeedbackRecordDirectoriesByWorkspaceId.mockResolvedValueOnce([]);
+    mockGetFeedbackDirectoriesByWorkspaceId.mockResolvedValueOnce([]);
     const { hasWorkspaceFeedbackRecords } = await import("./feedback-records");
 
     const result = await hasWorkspaceFeedbackRecords(mockWorkspaceId);
 
     expect(result).toBe(false);
-    expect(mockGetFeedbackRecordDirectoriesByWorkspaceId).toHaveBeenCalledWith(mockWorkspaceId);
+    expect(mockGetFeedbackDirectoriesByWorkspaceId).toHaveBeenCalledWith(mockWorkspaceId);
     expect(mockListFeedbackRecords).not.toHaveBeenCalled();
   });
 
   test("returns true when at least one workspace directory has records", async () => {
-    mockGetFeedbackRecordDirectoriesByWorkspaceId.mockResolvedValueOnce([
+    mockGetFeedbackDirectoriesByWorkspaceId.mockResolvedValueOnce([
       { id: mockDirectoryId1, name: "Dir 1" },
       { id: mockDirectoryId2, name: "Dir 2" },
     ]);
@@ -155,9 +154,7 @@ describe("hasWorkspaceFeedbackRecords", () => {
   });
 
   test("returns false when all workspace directories are empty", async () => {
-    mockGetFeedbackRecordDirectoriesByWorkspaceId.mockResolvedValueOnce([
-      { id: mockDirectoryId1, name: "Dir 1" },
-    ]);
+    mockGetFeedbackDirectoriesByWorkspaceId.mockResolvedValueOnce([{ id: mockDirectoryId1, name: "Dir 1" }]);
     mockListFeedbackRecords.mockResolvedValueOnce(recordsResult(0));
     const { hasWorkspaceFeedbackRecords } = await import("./feedback-records");
 
@@ -167,9 +164,7 @@ describe("hasWorkspaceFeedbackRecords", () => {
   });
 
   test("propagates the hub-error fallback (returns true) for known directories", async () => {
-    mockGetFeedbackRecordDirectoriesByWorkspaceId.mockResolvedValueOnce([
-      { id: mockDirectoryId1, name: "Dir 1" },
-    ]);
+    mockGetFeedbackDirectoriesByWorkspaceId.mockResolvedValueOnce([{ id: mockDirectoryId1, name: "Dir 1" }]);
     mockListFeedbackRecords.mockResolvedValueOnce(errorResult());
     const { hasWorkspaceFeedbackRecords } = await import("./feedback-records");
 

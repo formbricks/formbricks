@@ -4,15 +4,12 @@ import { useTranslation } from "react-i18next";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { WorkspaceConfigNavigation } from "@/modules/workspaces/settings/components/workspace-config-navigation";
 
 export const TagsLoading = () => {
   const { t } = useTranslation();
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.workspace_configuration")}>
-        <WorkspaceConfigNavigation activeId="tags" loading />
-      </PageHeader>
+      <PageHeader pageTitle={t("common.tags")} />
       <SettingsCard
         title={t("workspace.tags.manage_tags")}
         description={t("workspace.tags.manage_tags_description")}>

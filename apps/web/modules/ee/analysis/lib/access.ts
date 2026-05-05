@@ -3,7 +3,7 @@ import { logger } from "@formbricks/logger";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
-import { getFeedbackRecordDirectoryAuthContext } from "@/modules/ee/feedback-record-directory/lib/feedback-record-directory";
+import { getFeedbackDirectoryAuthContext } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import type { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
 
 export const checkWorkspaceAccess = async (
@@ -25,29 +25,29 @@ export const checkWorkspaceAccess = async (
   return { organizationId, workspaceId };
 };
 
-type TFeedbackRecordDirectoryAccessSource =
+type TFeedbackDirectoryAccessSource =
   | "charts.createChartAction"
   | "charts.executeQueryAction"
   | "charts.generateAIChartAction"
   | "dashboards.widget";
 
-type TCheckFeedbackRecordDirectoryAccessInput = {
-  feedbackRecordDirectoryId: string;
+type TCheckFeedbackDirectoryAccessInput = {
+  feedbackDirectoryId: string;
   organizationId: string;
   workspaceId: string;
   userId: string;
-  source: TFeedbackRecordDirectoryAccessSource;
+  source: TFeedbackDirectoryAccessSource;
 };
 
-export const checkFeedbackRecordDirectoryAccess = async ({
-  feedbackRecordDirectoryId,
+export const checkFeedbackDirectoryAccess = async ({
+  feedbackDirectoryId,
   organizationId,
   workspaceId,
   userId,
   source,
-}: TCheckFeedbackRecordDirectoryAccessInput): Promise<{ feedbackRecordDirectoryId: string }> => {
+}: TCheckFeedbackDirectoryAccessInput): Promise<{ feedbackDirectoryId: string }> => {
   try {
-    const directory = await getFeedbackRecordDirectoryAuthContext(feedbackRecordDirectoryId);
+    const directory = await getFeedbackDirectoryAuthContext(feedbackDirectoryId);
     const isAccessible =
       directory?.organizationId === organizationId &&
       directory.workspaceIds.includes(workspaceId) &&
@@ -56,18 +56,18 @@ export const checkFeedbackRecordDirectoryAccess = async ({
     if (!isAccessible) {
       logger.warn(
         {
-          feedbackRecordDirectoryId,
+          feedbackDirectoryId,
           organizationId,
           workspaceId,
           userId,
           source,
         },
-        "Feedback record directory access denied for Cube query"
+        "Feedback directory access denied for Cube query"
       );
-      throw new AuthorizationError("Feedback record directory is not accessible from this workspace");
+      throw new AuthorizationError("Feedback directory is not accessible from this workspace");
     }
 
-    return { feedbackRecordDirectoryId };
+    return { feedbackDirectoryId };
   } catch (error) {
     if (error instanceof AuthorizationError) {
       throw error;
@@ -76,13 +76,13 @@ export const checkFeedbackRecordDirectoryAccess = async ({
     logger.error(
       {
         error,
-        feedbackRecordDirectoryId,
+        feedbackDirectoryId,
         organizationId,
         workspaceId,
         userId,
         source,
       },
-      "Failed to verify feedback record directory access for Cube query"
+      "Failed to verify feedback directory access for Cube query"
     );
     throw error;
   }
