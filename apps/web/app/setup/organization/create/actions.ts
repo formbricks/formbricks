@@ -4,7 +4,7 @@ import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
-import { gethasNoOrganizations } from "@/lib/instance/service";
+import { getHasNoOrganizations } from "@/lib/instance/service";
 import { createMembership } from "@/lib/membership/service";
 import { createOrganization } from "@/lib/organization/service";
 import { capturePostHogEvent } from "@/lib/posthog";
@@ -21,7 +21,7 @@ export const createOrganizationAction = authenticatedActionClient
   .inputSchema(ZCreateOrganizationAction)
   .action(
     withAuditLogging("created", "organization", async ({ ctx, parsedInput }) => {
-      const hasNoOrganizations = await gethasNoOrganizations();
+      const hasNoOrganizations = await getHasNoOrganizations();
       const isMultiOrgEnabled = await getIsMultiOrgEnabled();
 
       if (!hasNoOrganizations && !isMultiOrgEnabled) {

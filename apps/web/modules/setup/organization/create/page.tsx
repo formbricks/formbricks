@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { notFound } from "next/navigation";
 import { AuthenticationError } from "@formbricks/types/errors";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
-import { gethasNoOrganizations } from "@/lib/instance/service";
+import { getHasNoOrganizations } from "@/lib/instance/service";
 import { getOrganizationsByUserId } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
@@ -29,7 +29,7 @@ export const CreateOrganizationPage = async () => {
     return <ClientLogout />;
   }
 
-  const hasNoOrganizations = await gethasNoOrganizations();
+  const hasNoOrganizations = await getHasNoOrganizations();
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
   const userOrganizations = await getOrganizationsByUserId(session.user.id);
 
