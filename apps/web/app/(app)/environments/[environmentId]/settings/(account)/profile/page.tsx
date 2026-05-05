@@ -16,10 +16,14 @@ import { SettingsCard } from "../../components/SettingsCard";
 import { DeleteAccount } from "./components/DeleteAccount";
 import { EditProfileDetailsForm } from "./components/EditProfileDetailsForm";
 
-const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
+const Page = async (props: {
+  params: Promise<{ environmentId: string }>;
+  searchParams: Promise<{ accountDeletionError?: string | string[] }>;
+}) => {
   const isTwoFactorAuthEnabled = await getIsTwoFactorAuthEnabled();
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
   const params = await props.params;
+  const searchParams = await props.searchParams;
   const t = await getTranslate();
   const { environmentId } = params;
 
@@ -92,6 +96,7 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
               user={user}
               organizationsWithSingleOwner={organizationsWithSingleOwner}
               isMultiOrgEnabled={isMultiOrgEnabled}
+              accountDeletionError={searchParams.accountDeletionError}
               requiresPasswordConfirmation={accountDeletionAuthRequirements.requiresPasswordConfirmation}
             />
           </SettingsCard>

@@ -2,24 +2,14 @@
 
 import { z } from "zod";
 import { logger } from "@formbricks/logger";
-import { AuthorizationError, InvalidInputError, OperationNotAllowedError } from "@formbricks/types/errors";
-import { getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
-import { getUserAuthenticationData, verifyUserPassword } from "@/lib/user/password";
-import { deleteUser, getUser } from "@/lib/user/service";
+import { InvalidInputError } from "@formbricks/types/errors";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { requiresPasswordConfirmationForAccountDeletion } from "@/modules/account/lib/account-deletion-auth";
-import {
-  consumeAccountDeletionSsoReauthentication,
-  startAccountDeletionSsoReauthentication,
-} from "@/modules/account/lib/account-deletion-sso-reauth";
+import { deleteUserWithAccountDeletionAuthorization } from "@/modules/account/lib/account-deletion";
+import { startAccountDeletionSsoReauthentication } from "@/modules/account/lib/account-deletion-sso-reauth";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
-import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
-import { DELETE_ACCOUNT_WRONG_PASSWORD_ERROR } from "./constants";
-
-const DELETE_USER_CONFIRMATION_REQUIRED_ERROR =
-  "Password and email confirmation are required to delete your account.";
+import { DELETE_USER_CONFIRMATION_REQUIRED_ERROR } from "./constants";
 
 const ZDeleteUserConfirmation = z
   .object({
@@ -55,14 +45,6 @@ const parseStartAccountDeletionSsoReauthInput = (input: unknown) => {
   return parsedInput.data;
 };
 
-const getPasswordOrThrow = (password?: string) => {
-  if (!password) {
-    throw new InvalidInputError(DELETE_USER_CONFIRMATION_REQUIRED_ERROR);
-  }
-
-  return password;
-};
-
 const logAccountDeletionError = (userId: string, error: unknown) => {
   logger.error({ error, userId }, "Account deletion failed");
 };
@@ -95,38 +77,13 @@ export const deleteUserAction = authenticatedActionClient.inputSchema(z.unknown(
 
       const { confirmationEmail, password } = parseDeleteUserConfirmation(parsedInput);
 
-      if (confirmationEmail.toLowerCase() !== ctx.user.email.toLowerCase()) {
-        throw new AuthorizationError("Email confirmation does not match");
-      }
-
-      const userAuthenticationData = await getUserAuthenticationData(ctx.user.id);
-
-      if (requiresPasswordConfirmationForAccountDeletion(userAuthenticationData)) {
-        const isCorrectPassword = await verifyUserPassword(ctx.user.id, getPasswordOrThrow(password));
-        if (!isCorrectPassword) {
-          throw new AuthorizationError(DELETE_ACCOUNT_WRONG_PASSWORD_ERROR);
-        }
-      } else {
-        await consumeAccountDeletionSsoReauthentication({
-          identityProvider: userAuthenticationData.identityProvider,
-          providerAccountId: userAuthenticationData.identityProviderAccountId,
-          userId: ctx.user.id,
-        });
-      }
-
-      const isMultiOrgEnabled = await getIsMultiOrgEnabled();
-      if (!isMultiOrgEnabled) {
-        const organizationsWithSingleOwner = await getOrganizationsWhereUserIsSingleOwner(ctx.user.id);
-        if (organizationsWithSingleOwner.length > 0) {
-          throw new OperationNotAllowedError(
-            "You are the only owner of this organization. Please transfer ownership to another member first."
-          );
-        }
-      }
-
-      ctx.auditLoggingCtx.oldObject = await getUser(ctx.user.id);
-
-      await deleteUser(ctx.user.id);
+      const { oldUser } = await deleteUserWithAccountDeletionAuthorization({
+        confirmationEmail,
+        password,
+        userEmail: ctx.user.email,
+        userId: ctx.user.id,
+      });
+      ctx.auditLoggingCtx.oldObject = oldUser;
 
       return { success: true };
     } catch (error) {

@@ -13,7 +13,12 @@ import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { Input } from "@/modules/ui/components/input";
 import { PasswordInput } from "@/modules/ui/components/password-input";
 import { deleteUserAction, startAccountDeletionSsoReauthenticationAction } from "./actions";
-import { DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR, DELETE_ACCOUNT_WRONG_PASSWORD_ERROR } from "./constants";
+import {
+  DELETE_ACCOUNT_GOOGLE_REAUTH_NOT_CONFIGURED_ERROR,
+  DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR,
+  DELETE_ACCOUNT_WRONG_PASSWORD_ERROR,
+  FORMBRICKS_CLOUD_ACCOUNT_DELETION_SURVEY_URL,
+} from "./constants";
 
 interface DeleteAccountModalProps {
   requiresPasswordConfirmation: boolean;
@@ -65,7 +70,7 @@ export const DeleteAccountModal = ({
       const errorMessage = result ? getFormattedErrorMessage(result) : fallbackErrorMessage;
 
       logger.error({ errorMessage }, "Account deletion SSO reauthentication action failed");
-      toast.error(fallbackErrorMessage);
+      toast.error(errorMessage || fallbackErrorMessage);
       return;
     }
 
@@ -103,6 +108,8 @@ export const DeleteAccountModal = ({
 
         if (result?.serverError === DELETE_ACCOUNT_WRONG_PASSWORD_ERROR) {
           errorMessage = t("environments.settings.profile.wrong_password");
+        } else if (result?.serverError === DELETE_ACCOUNT_GOOGLE_REAUTH_NOT_CONFIGURED_ERROR) {
+          errorMessage = result.serverError;
         } else if (result?.serverError === DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR) {
           await startSsoReauthentication();
           return;
@@ -124,7 +131,7 @@ export const DeleteAccountModal = ({
 
       // Manual redirect after signOut completes
       if (isFormbricksCloud) {
-        globalThis.location.replace("https://app.formbricks.com/s/clri52y3z8f221225wjdhsoo2");
+        globalThis.location.replace(FORMBRICKS_CLOUD_ACCOUNT_DELETION_SURVEY_URL);
       } else {
         globalThis.location.replace("/auth/login");
       }
@@ -192,6 +199,11 @@ export const DeleteAccountModal = ({
             id="deleteAccountConfirmation"
             name="deleteAccountConfirmation"
           />
+          {!requiresPasswordConfirmation && (
+            <p className="mt-2 text-sm text-slate-600">
+              {t("environments.settings.profile.sso_reauthentication_may_be_required_for_deletion")}
+            </p>
+          )}
           {requiresPasswordConfirmation && (
             <>
               <label htmlFor="deleteAccountPassword" className="mt-4 block">

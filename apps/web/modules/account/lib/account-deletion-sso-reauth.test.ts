@@ -7,8 +7,15 @@ import { cache } from "@/lib/cache";
 import { createAccountDeletionSsoReauthIntent, verifyAccountDeletionSsoReauthIntent } from "@/lib/jwt";
 import { getUserAuthenticationData } from "@/lib/user/password";
 import {
+  ACCOUNT_DELETION_GOOGLE_REAUTH_NOT_CONFIGURED_ERROR_CODE,
+  ACCOUNT_DELETION_SSO_REAUTH_ERROR_QUERY_PARAM,
+  DELETE_ACCOUNT_GOOGLE_REAUTH_NOT_CONFIGURED_ERROR,
+  DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR,
+} from "@/modules/account/constants";
+import {
   completeAccountDeletionSsoReauthentication,
   consumeAccountDeletionSsoReauthentication,
+  getAccountDeletionSsoReauthFailureRedirectUrl,
   getAccountDeletionSsoReauthIntentFromCallbackUrl,
   startAccountDeletionSsoReauthentication,
   validateAccountDeletionSsoReauthenticationCallback,
@@ -28,6 +35,8 @@ vi.mock("@formbricks/database", () => ({
 vi.mock("@formbricks/logger", () => ({
   logger: {
     error: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
   },
 }));
 
@@ -44,6 +53,7 @@ vi.mock("@/lib/constants", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/constants")>();
   return {
     ...actual,
+    GOOGLE_ACCOUNT_DELETION_REAUTH_ENABLED: true,
     SAML_PRODUCT: "formbricks",
     SAML_TENANT: "formbricks.com",
     WEBAPP_URL: "http://localhost:3000",
@@ -137,13 +147,42 @@ describe("account deletion SSO reauthentication", () => {
     });
     expect(result).toEqual({
       authorizationParams: {
+        claims: JSON.stringify({
+          id_token: {
+            auth_time: {
+              essential: true,
+            },
+          },
+        }),
         login_hint: intent.email,
         max_age: "0",
-        prompt: "login",
       },
       callbackUrl: "http://localhost:3000/auth/account-deletion/sso/complete?intent=intent-token",
       provider: "google",
     });
+  });
+
+  test("starts Azure AD reauthentication with standard OIDC step-up params", async () => {
+    mockGetUserAuthenticationData.mockResolvedValue({
+      email: intent.email,
+      identityProvider: "azuread",
+      identityProviderAccountId: intent.providerAccountId,
+      password: null,
+    } as any);
+    mockCreateAccountDeletionSsoReauthIntent.mockReturnValue("intent-token");
+
+    const result = await startAccountDeletionSsoReauthentication({
+      confirmationEmail: intent.email,
+      returnToUrl: "/environments/env-1/settings/profile",
+      userId: intent.userId,
+    });
+
+    expect(result.authorizationParams).toEqual({
+      login_hint: intent.email,
+      max_age: "0",
+      prompt: "login",
+    });
+    expect(result.provider).toBe("azure-ad");
   });
 
   test("extracts reauth intents only from the expected callback URL", () => {
@@ -160,6 +199,19 @@ describe("account deletion SSO reauthentication", () => {
         "https://evil.example/auth/account-deletion/sso/complete?intent=intent-token"
       )
     ).toBeNull();
+  });
+
+  test("builds a safe profile redirect for SSO reauthentication callback failures", () => {
+    mockVerifyAccountDeletionSsoReauthIntent.mockReturnValue(intent);
+
+    expect(
+      getAccountDeletionSsoReauthFailureRedirectUrl({
+        error: new AuthorizationError(DELETE_ACCOUNT_GOOGLE_REAUTH_NOT_CONFIGURED_ERROR),
+        intentToken: "intent-token",
+      })
+    ).toBe(
+      `http://localhost:3000/environments/env-1/settings/profile?${ACCOUNT_DELETION_SSO_REAUTH_ERROR_QUERY_PARAM}=${ACCOUNT_DELETION_GOOGLE_REAUTH_NOT_CONFIGURED_ERROR_CODE}`
+    );
   });
 
   test("starts SAML reauthentication with forced-authentication params", async () => {
@@ -203,7 +255,7 @@ describe("account deletion SSO reauthentication", () => {
         returnToUrl: "/environments/env-1/settings/profile",
         userId: intent.userId,
       })
-    ).rejects.toThrow(AuthorizationError);
+    ).rejects.toThrow(DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR);
 
     expect(mockCache.set).not.toHaveBeenCalled();
     expect(mockCreateAccountDeletionSsoReauthIntent).not.toHaveBeenCalled();
@@ -438,7 +490,7 @@ describe("account deletion SSO reauthentication", () => {
         } as any,
         intentToken: "intent-token",
       })
-    ).rejects.toThrow(AuthorizationError);
+    ).rejects.toThrow(DELETE_ACCOUNT_GOOGLE_REAUTH_NOT_CONFIGURED_ERROR);
 
     expect(mockCache.get).not.toHaveBeenCalled();
   });

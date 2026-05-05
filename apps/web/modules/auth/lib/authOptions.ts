@@ -18,6 +18,7 @@ import { verifyToken } from "@/lib/jwt";
 import { getValidatedCallbackUrl } from "@/lib/utils/url";
 import {
   completeAccountDeletionSsoReauthentication,
+  getAccountDeletionSsoReauthFailureRedirectUrl,
   getAccountDeletionSsoReauthIntentFromCallbackUrl,
   validateAccountDeletionSsoReauthenticationCallback,
 } from "@/modules/account/lib/account-deletion-sso-reauth";
@@ -483,14 +484,27 @@ export const authOptions: NextAuthOptions = {
       }
 
       if (ENTERPRISE_LICENSE_KEY && account) {
-        return handleEnterpriseSsoSignIn({
-          account,
-          callbackUrl,
-          intentToken: accountDeletionSsoReauthIntentToken,
-          user,
-          userEmail,
-          userId,
-        });
+        try {
+          return await handleEnterpriseSsoSignIn({
+            account,
+            callbackUrl,
+            intentToken: accountDeletionSsoReauthIntentToken,
+            user,
+            userEmail,
+            userId,
+          });
+        } catch (error) {
+          const failureRedirectUrl = getAccountDeletionSsoReauthFailureRedirectUrl({
+            error,
+            intentToken: accountDeletionSsoReauthIntentToken,
+          });
+
+          if (failureRedirectUrl) {
+            return failureRedirectUrl;
+          }
+
+          throw error;
+        }
       }
 
       await finalizeSuccessfulSignIn({
