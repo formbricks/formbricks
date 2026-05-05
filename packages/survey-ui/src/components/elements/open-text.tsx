@@ -67,12 +67,15 @@ function OpenText({
     );
   };
 
+  const descriptionId = description ? `${inputId}-description` : undefined;
+
   return (
     <div className="w-full space-y-4" id={elementId} dir={dir}>
       {/* Headline */}
       <ElementHeader
         headline={headline}
         description={description}
+        descriptionId={descriptionId}
         required={required}
         requiredLabel={requiredLabel}
         htmlFor={inputId}
@@ -90,6 +93,7 @@ function OpenText({
               value={value}
               onChange={handleChange}
               aria-required={required}
+              aria-describedby={descriptionId}
               dir={dir}
               rows={rows}
               disabled={disabled}
@@ -105,6 +109,7 @@ function OpenText({
               value={value}
               onChange={handleChange}
               aria-required={required}
+              aria-describedby={descriptionId}
               dir={dir}
               disabled={disabled}
               errorMessage={errorMessage}

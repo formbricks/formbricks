@@ -7,6 +7,7 @@ import { cn, stripInlineStyles } from "@/lib/utils";
 interface ElementHeaderProps extends React.ComponentProps<"div"> {
   headline: string;
   description?: string;
+  descriptionId?: string;
   required?: boolean;
   /** Custom label for the required indicator. Defaults to "Required" */
   requiredLabel?: string;
@@ -44,6 +45,7 @@ const isValidHTML = (str: string): boolean => {
 function ElementHeader({
   headline,
   description,
+  descriptionId,
   required = false,
   requiredLabel = "Required",
   htmlFor,
@@ -91,7 +93,7 @@ function ElementHeader({
 
       {/* Description/Subheader */}
       {description ? (
-        <Label htmlFor={htmlFor} variant="description">
+        <Label id={descriptionId} variant="description">
           {description}
         </Label>
       ) : null}
