@@ -64,7 +64,6 @@ export function RenderSurvey(props: SurveyContainerProps) {
       onClose={close}
       isOpen={isOpen}
       dir={dir}>
-      {/* @ts-expect-error -- TODO: fix this */}
       <Survey
         {...props}
         clickOutside={hasOverlay ? props.clickOutside : true}
