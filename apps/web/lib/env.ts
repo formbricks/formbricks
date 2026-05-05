@@ -68,14 +68,6 @@ const validateGoogleAIConfiguration = (values: TAIConfigurationEnv, ctx: z.Refin
     );
   }
 
-  if (!values.AI_GOOGLE_CLOUD_CREDENTIALS_JSON && !values.AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS) {
-    addEnvIssue(
-      ctx,
-      "AI_GOOGLE_CLOUD_CREDENTIALS_JSON",
-      "AI_GOOGLE_CLOUD_CREDENTIALS_JSON or AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS is required when AI_PROVIDER=google"
-    );
-  }
-
   if (values.AI_GOOGLE_CLOUD_CREDENTIALS_JSON) {
     try {
       const parsedCredentials = JSON.parse(values.AI_GOOGLE_CLOUD_CREDENTIALS_JSON) as unknown;

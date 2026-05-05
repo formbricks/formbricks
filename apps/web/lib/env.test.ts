@@ -79,6 +79,35 @@ describe("env", () => {
     expect(env.DEBUG_SHOW_RESET_LINK).toBe("1");
   });
 
+  test("allows Google Cloud AI configuration to rely on ADC credentials", async () => {
+    setTestEnv({
+      AI_PROVIDER: "google",
+      AI_MODEL: "gemini-2.5-flash",
+      AI_GOOGLE_CLOUD_PROJECT: "test-project",
+      AI_GOOGLE_CLOUD_LOCATION: "us-central1",
+      AI_GOOGLE_CLOUD_CREDENTIALS_JSON: undefined,
+      AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS: undefined,
+    });
+
+    const { env } = await import("./env");
+
+    expect(env.AI_PROVIDER).toBe("google");
+    expect(env.AI_GOOGLE_CLOUD_PROJECT).toBe("test-project");
+    expect(env.AI_GOOGLE_CLOUD_LOCATION).toBe("us-central1");
+  });
+
+  test("fails to load when Google Cloud credentials JSON is invalid", async () => {
+    setTestEnv({
+      AI_PROVIDER: "google",
+      AI_MODEL: "gemini-2.5-flash",
+      AI_GOOGLE_CLOUD_PROJECT: "test-project",
+      AI_GOOGLE_CLOUD_LOCATION: "us-central1",
+      AI_GOOGLE_CLOUD_CREDENTIALS_JSON: "{not-json}",
+    });
+
+    await expect(import("./env")).rejects.toThrow("AI_GOOGLE_CLOUD_CREDENTIALS_JSON");
+  });
+
   test("uses the configured Cube environment variables", async () => {
     setTestEnv();
     const { env } = await import("./env");
