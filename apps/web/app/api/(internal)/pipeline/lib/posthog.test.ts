@@ -51,10 +51,20 @@ describe("captureSurveyResponsePostHogEvent", () => {
     expect(capturePostHogEvent).toHaveBeenCalledTimes(6);
   });
 
-  test("does NOT fire for 2nd through 99th responses", async () => {
+  test("fires on every 10th response up to 100", async () => {
     const { capturePostHogEvent } = await import("@/lib/posthog");
 
-    for (const count of [2, 5, 10, 50, 99]) {
+    for (const count of [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]) {
+      captureSurveyResponsePostHogEvent(makeParams(count));
+    }
+
+    expect(capturePostHogEvent).toHaveBeenCalledTimes(10);
+  });
+
+  test("does NOT fire for non-milestone responses under 100", async () => {
+    const { capturePostHogEvent } = await import("@/lib/posthog");
+
+    for (const count of [2, 5, 11, 25, 49, 51, 99]) {
       captureSurveyResponsePostHogEvent(makeParams(count));
     }
 
