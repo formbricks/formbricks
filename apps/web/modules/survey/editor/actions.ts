@@ -144,6 +144,20 @@ const captureSurveyEditDiffEvents = (
       }
     }
   }
+
+  // follow_up_added
+  const oldFollowUpIds = new Set((oldSurvey.followUps ?? []).map((f) => f.id));
+  const newFollowUps = (newSurvey.followUps ?? []).filter((f) => !f.deleted);
+  for (const followUp of newFollowUps) {
+    if (!oldFollowUpIds.has(followUp.id)) {
+      capturePostHogEvent(
+        context.userId,
+        "follow_up_added",
+        { ...baseProps, follow_up_id: followUp.id },
+        groupContext
+      );
+    }
+  }
 };
 
 /**
