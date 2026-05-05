@@ -16,7 +16,7 @@ import {
   getCharts,
   updateChart,
 } from "@/modules/ee/analysis/charts/lib/charts";
-import { checkWorkspaceAccess } from "@/modules/ee/analysis/lib/access";
+import { checkFeedbackRecordDirectoryAccess, checkWorkspaceAccess } from "@/modules/ee/analysis/lib/access";
 import { generateSchemaContext } from "@/modules/ee/analysis/lib/ai-schema-context";
 import { ZChartCreateInput, ZChartType, ZChartUpdateInput } from "@/modules/ee/analysis/types/analysis";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
@@ -45,6 +45,13 @@ export const createChartAction = authenticatedActionClient.inputSchema(ZCreateCh
         parsedInput.workspaceId,
         "readWrite"
       );
+      await checkFeedbackRecordDirectoryAccess({
+        feedbackRecordDirectoryId: parsedInput.chartInput.feedbackRecordDirectoryId,
+        organizationId,
+        workspaceId,
+        userId: ctx.user.id,
+        source: "charts.createChartAction",
+      });
 
       const chart = await createChart({
         ...parsedInput.chartInput,
@@ -230,9 +237,17 @@ export const executeQueryAction = authenticatedActionClient
         parsedInput.workspaceId,
         "read"
       );
+      const { feedbackRecordDirectoryId } = await checkFeedbackRecordDirectoryAccess({
+        feedbackRecordDirectoryId: parsedInput.feedbackRecordDirectoryId,
+        organizationId,
+        workspaceId,
+        userId: ctx.user.id,
+        source: "charts.executeQueryAction",
+      });
 
       return executeTenantScopedQuery({
         query: parsedInput.query,
+        feedbackRecordDirectoryId,
         workspaceId,
         organizationId,
         userId: ctx.user.id,
@@ -299,6 +314,13 @@ export const generateAIChartAction = authenticatedActionClient
         parsedInput.workspaceId,
         "read"
       );
+      const { feedbackRecordDirectoryId } = await checkFeedbackRecordDirectoryAccess({
+        feedbackRecordDirectoryId: parsedInput.feedbackRecordDirectoryId,
+        organizationId,
+        workspaceId,
+        userId: ctx.user.id,
+        source: "charts.generateAIChartAction",
+      });
 
       if (!process.env.OPENAI_API_KEY) {
         throw new Error("OPENAI_API_KEY is not configured");
@@ -341,6 +363,7 @@ export const generateAIChartAction = authenticatedActionClient
 
       const data = await executeTenantScopedQuery({
         query: cleanQuery,
+        feedbackRecordDirectoryId,
         workspaceId,
         organizationId,
         userId: ctx.user.id,

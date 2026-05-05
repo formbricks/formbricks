@@ -13,6 +13,7 @@ const CUBE_QUERY_ERROR_MESSAGE =
 
 type TScopedCubeQueryInput = {
   query: TChartQuery;
+  feedbackRecordDirectoryId: string;
   workspaceId: string;
   organizationId: string;
   userId: string;
@@ -43,7 +44,8 @@ const queueCubeQueryAuditEvent = ({
     eventId: requestId,
     newObject: {
       requestId,
-      tenantId: input.workspaceId,
+      tenantId: input.feedbackRecordDirectoryId,
+      feedbackRecordDirectoryId: input.feedbackRecordDirectoryId,
       workspaceId: input.workspaceId,
       organizationId: input.organizationId,
       userId: input.userId,
@@ -62,16 +64,28 @@ export async function executeTenantScopedQuery(input: TScopedCubeQueryInput) {
     validateCubeQueryMembers(input.query);
   } catch (error) {
     queueCubeQueryAuditEvent({ error, input, requestId: randomUUID(), status: "failure" });
+    logger.warn(error, "Cube query validation failed");
     throw error;
   }
 
   const tenantScope = {
+    feedbackRecordDirectoryId: input.feedbackRecordDirectoryId,
     workspaceId: input.workspaceId,
     organizationId: input.organizationId,
     userId: input.userId,
     source: input.source,
   };
-  const { apiUrl, requestId, token } = getCubeApiConfig(tenantScope);
+  let apiUrl: string;
+  let requestId: string;
+  let token: string;
+
+  try {
+    ({ apiUrl, requestId, token } = getCubeApiConfig(tenantScope));
+  } catch (error) {
+    queueCubeQueryAuditEvent({ error, input, requestId: randomUUID(), status: "failure" });
+    logger.error(error, "Cube query configuration failed");
+    throw error;
+  }
 
   try {
     const client = cubejs(token, { apiUrl });

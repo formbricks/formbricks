@@ -3,6 +3,7 @@ import { logger } from "@formbricks/logger";
 import type { TChartQuery } from "@formbricks/types/analysis";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { executeTenantScopedQuery } from "@/modules/ee/analysis/api/lib/cube-client";
+import { checkFeedbackRecordDirectoryAccess } from "@/modules/ee/analysis/lib/access";
 import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
 import { getFeedbackRecordDirectoriesByWorkspaceId } from "@/modules/ee/feedback-record-directory/lib/feedback-record-directory";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
@@ -21,13 +22,22 @@ interface WidgetQueryResult {
 
 async function executeWidgetQuery(
   query: TChartQuery,
+  feedbackRecordDirectoryId: string,
   workspaceId: string,
   organizationId: string,
   userId: string
 ): Promise<WidgetQueryResult | { error: TDashboardWidgetError }> {
   try {
+    const tenant = await checkFeedbackRecordDirectoryAccess({
+      feedbackRecordDirectoryId,
+      organizationId,
+      workspaceId,
+      userId,
+      source: "dashboards.widget",
+    });
     const data = await executeTenantScopedQuery({
       query,
+      feedbackRecordDirectoryId: tenant.feedbackRecordDirectoryId,
       workspaceId,
       organizationId,
       userId,
@@ -68,7 +78,13 @@ export async function DashboardDetailPage({
   for (const widget of widgetsWithCharts) {
     widgetDataPromises.set(
       widget.id,
-      executeWidgetQuery(widget.chart.query, workspaceId, organization.id, session.user.id)
+      executeWidgetQuery(
+        widget.chart.query,
+        widget.chart.feedbackRecordDirectoryId,
+        workspaceId,
+        organization.id,
+        session.user.id
+      )
     );
   }
 

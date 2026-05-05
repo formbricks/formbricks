@@ -3,12 +3,14 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-const { mockLoad, mockLoggerError, mockQueueAuditEventWithoutRequest, mockTablePivot } = vi.hoisted(() => ({
-  mockLoad: vi.fn(),
-  mockLoggerError: vi.fn(),
-  mockQueueAuditEventWithoutRequest: vi.fn(),
-  mockTablePivot: vi.fn(),
-}));
+const { mockLoad, mockLoggerError, mockLoggerWarn, mockQueueAuditEventWithoutRequest, mockTablePivot } =
+  vi.hoisted(() => ({
+    mockLoad: vi.fn(),
+    mockLoggerError: vi.fn(),
+    mockLoggerWarn: vi.fn(),
+    mockQueueAuditEventWithoutRequest: vi.fn(),
+    mockTablePivot: vi.fn(),
+  }));
 
 vi.mock("@cubejs-client/core", () => ({
   default: vi.fn(() => ({
@@ -19,7 +21,7 @@ vi.mock("@cubejs-client/core", () => ({
 vi.mock("@formbricks/logger", () => ({
   logger: {
     error: mockLoggerError,
-    warn: vi.fn(),
+    warn: mockLoggerWarn,
   },
 }));
 
@@ -29,6 +31,7 @@ vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
 
 const scopedInput = {
   query: { measures: ["FeedbackRecords.count"] },
+  feedbackRecordDirectoryId: "frd-1",
   workspaceId: "workspace-1",
   organizationId: "organization-1",
   userId: "user-1",
@@ -86,7 +89,8 @@ describe("executeTenantScopedQuery", () => {
       apiUrl: "https://cube.example.com/cubejs-api/v1",
     });
     expect(payload).toMatchObject({
-      tenantId: "workspace-1",
+      tenantId: "frd-1",
+      feedbackRecordDirectoryId: "frd-1",
       workspaceId: "workspace-1",
       organizationId: "organization-1",
       userId: "user-1",
@@ -100,7 +104,7 @@ describe("executeTenantScopedQuery", () => {
     const { executeTenantScopedQuery } = await import("./cube-client");
 
     await executeTenantScopedQuery(scopedInput);
-    await executeTenantScopedQuery({ ...scopedInput, workspaceId: "workspace-2" });
+    await executeTenantScopedQuery({ ...scopedInput, feedbackRecordDirectoryId: "frd-2" });
 
     const cubejs = await getCubeJsMock();
     expect(cubejs).toHaveBeenCalledTimes(2);
@@ -128,7 +132,9 @@ describe("executeTenantScopedQuery", () => {
         targetType: "cubeQuery",
         status: "failure",
         newObject: expect.objectContaining({
-          tenantId: "workspace-1",
+          tenantId: "frd-1",
+          feedbackRecordDirectoryId: "frd-1",
+          workspaceId: "workspace-1",
           query: expect.objectContaining({
             filterMembers: ["FeedbackRecords.tenantId"],
             filterCount: 1,
@@ -162,6 +168,20 @@ describe("executeTenantScopedQuery", () => {
     const { executeTenantScopedQuery } = await import("./cube-client");
 
     await expect(executeTenantScopedQuery(scopedInput)).rejects.toThrow(CUBE_CONFIGURATION_ERROR_MESSAGE);
+    expect(mockLoggerError).toHaveBeenCalledWith(expect.any(Error), "Cube query configuration failed");
+    expect(mockQueueAuditEventWithoutRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "queried",
+        targetType: "cubeQuery",
+        status: "failure",
+        newObject: expect.objectContaining({
+          tenantId: "frd-1",
+          feedbackRecordDirectoryId: "frd-1",
+          workspaceId: "workspace-1",
+          errorName: "ConfigurationError",
+        }),
+      })
+    );
   });
 
   test("logs Cube runtime failures and returns a generic query execution error", async () => {

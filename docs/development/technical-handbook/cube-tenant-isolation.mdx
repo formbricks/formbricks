@@ -7,8 +7,9 @@ icon: "shield-check"
 ## Context
 
 XM analytics reads Hub feedback records through Cube. Hub stores all tenants in a shared `feedback_records`
-table and uses `tenant_id` to separate rows. For XM v5, the authoritative tenant boundary is the workspace
-ID, so every Cube query must be scoped to the authenticated workspace before data leaves Cube.
+table and uses `tenant_id` to separate rows. Workspace access is the application authorization boundary. In the
+current Hub schema, `tenant_id` stores the authorized FeedbackRecordDirectory ID, so every Cube query must be
+scoped to a directory that the authenticated workspace can access before data leaves Cube.
 
 ## Threat Model
 
@@ -29,23 +30,24 @@ The controls assume query bodies are attacker-influenced. Tenant identity is nev
     saved charts, or AI output, including filters, dimensions, time dimensions, and order clauses.
   </Step>
   <Step title="Mint a short-lived JWT">
-    The app mints a short-lived JWT per Cube request with `tenantId`, `workspaceId`, `organizationId`,
-    `userId`, `scope`, `iss`, `aud`, `jti`, and `exp` claims.
+    The app mints a short-lived JWT per Cube request with `tenantId`, `feedbackRecordDirectoryId`,
+    `workspaceId`, `organizationId`, `userId`, `scope`, `iss`, `aud`, `jti`, and `exp` claims.
   </Step>
   <Step title="Verify the JWT in Cube">
     Cube verifies the JWT and exposes the claims through `securityContext`.
   </Step>
   <Step title="Enforce the tenant filter">
     Cube `queryRewrite` rejects missing tenant context, rejects caller-supplied tenant member usage, and
-    appends `FeedbackRecords.tenantId = securityContext.workspaceId` to every query.
+    appends `FeedbackRecords.tenantId = securityContext.tenantId` to every query.
   </Step>
 </Steps>
 
 ## Audit Evidence
 
 The app records a sanitized `cubeQuery` audit event for each Cube query attempt, keyed by the JWT `jti`. Cube also
-emits a structured audit log line from `queryRewrite` with tenant, workspace, organization, user, request ID,
-source, and queried member names. Raw filter values are intentionally omitted from both logs.
+emits a structured audit log line from `queryRewrite` with tenant, feedback record directory, workspace,
+organization, user, request ID, source, and queried member names. Raw filter values are intentionally omitted from
+both logs.
 
 ## Operational Notes
 

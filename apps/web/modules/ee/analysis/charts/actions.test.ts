@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => {
     actionClientAction,
     actionClientInputSchema: vi.fn(() => ({ action: actionClientAction })),
     checkWorkspaceAccess: vi.fn(),
+    checkFeedbackRecordDirectoryAccess: vi.fn(),
     createChart: vi.fn(),
     createOpenAI: vi.fn(),
     executeTenantScopedQuery: vi.fn(),
@@ -50,6 +51,7 @@ vi.mock("@/modules/ee/analysis/charts/lib/charts", () => ({
 }));
 
 vi.mock("@/modules/ee/analysis/lib/access", () => ({
+  checkFeedbackRecordDirectoryAccess: mocks.checkFeedbackRecordDirectoryAccess,
   checkWorkspaceAccess: mocks.checkWorkspaceAccess,
 }));
 
@@ -83,6 +85,9 @@ describe("chart Cube actions", () => {
       organizationId: "organization-1",
       workspaceId: "workspace-1",
     });
+    mocks.checkFeedbackRecordDirectoryAccess.mockResolvedValue({
+      feedbackRecordDirectoryId: "frd-1",
+    });
     mocks.createOpenAI.mockReturnValue(() => "model");
     mocks.createChart.mockResolvedValue({
       id: "chart-1",
@@ -112,8 +117,16 @@ describe("chart Cube actions", () => {
 
     expect(result).toEqual([{ "FeedbackRecords.count": 1 }]);
     expect(mocks.checkWorkspaceAccess).toHaveBeenCalledWith("user-1", "workspace-1", "read");
+    expect(mocks.checkFeedbackRecordDirectoryAccess).toHaveBeenCalledWith({
+      feedbackRecordDirectoryId: "frd-1",
+      organizationId: "organization-1",
+      workspaceId: "workspace-1",
+      userId: "user-1",
+      source: "charts.executeQueryAction",
+    });
     expect(mocks.executeTenantScopedQuery).toHaveBeenCalledWith({
       query,
+      feedbackRecordDirectoryId: "frd-1",
       workspaceId: "workspace-1",
       organizationId: "organization-1",
       userId: "user-1",
@@ -136,6 +149,7 @@ describe("chart Cube actions", () => {
     ).rejects.toThrow("forbidden");
 
     expect(mocks.executeTenantScopedQuery).not.toHaveBeenCalled();
+    expect(mocks.checkFeedbackRecordDirectoryAccess).not.toHaveBeenCalled();
   });
 
   test("generateAIChartAction delegates clean AI queries to the tenant-scoped Cube helper", async () => {
@@ -167,6 +181,7 @@ describe("chart Cube actions", () => {
         measures: ["FeedbackRecords.count"],
         dimensions: ["FeedbackRecords.sentiment"],
       },
+      feedbackRecordDirectoryId: "frd-1",
       workspaceId: "workspace-1",
       organizationId: "organization-1",
       userId: "user-1",

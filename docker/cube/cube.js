@@ -89,19 +89,21 @@ function collectQueryMembers(query) {
 }
 
 function assertValidSecurityContext(securityContext) {
-  const tenantIdClaim = getRequiredStringClaim(securityContext, "tenantId");
+  const tenantId = getRequiredStringClaim(securityContext, "tenantId");
+  const feedbackRecordDirectoryId = getRequiredStringClaim(securityContext, "feedbackRecordDirectoryId");
   const workspaceId = getRequiredStringClaim(securityContext, "workspaceId");
   const scope = getRequiredStringClaim(securityContext, "scope");
 
   if (scope !== REQUIRED_SCOPE) {
     throw new Error("Cube query rejected: invalid Cube query scope");
   }
-  if (tenantIdClaim !== workspaceId) {
-    throw new Error("Cube query rejected: tenantId/workspaceId mismatch");
+  if (tenantId !== feedbackRecordDirectoryId) {
+    throw new Error("Cube query rejected: tenantId/feedbackRecordDirectoryId mismatch");
   }
 
   return {
-    tenantId: workspaceId,
+    tenantId,
+    feedbackRecordDirectoryId,
     workspaceId,
     organizationId: getRequiredStringClaim(securityContext, "organizationId"),
     userId: getRequiredStringClaim(securityContext, "userId"),
@@ -128,6 +130,7 @@ function logCubeQueryAuditEvent(context, query, { error, status = "success" } = 
       status,
       timestamp: new Date().toISOString(),
       tenantId: context.tenantId,
+      feedbackRecordDirectoryId: context.feedbackRecordDirectoryId,
       workspaceId: context.workspaceId,
       organizationId: context.organizationId,
       userId: context.userId,
@@ -157,7 +160,7 @@ function queryRewrite(query, rewriteContext) {
       {
         member: TENANT_MEMBER,
         operator: "equals",
-        values: [context.workspaceId],
+        values: [context.tenantId],
       },
     ],
   };

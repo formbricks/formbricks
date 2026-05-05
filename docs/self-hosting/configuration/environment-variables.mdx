@@ -119,12 +119,15 @@ If you do not use XM Suite v5 analytics, omit the Cube variables and leave the b
 | CUBEJS_API_SECRET         | Shared secret Formbricks uses to sign Cube API JWTs. Generate with `openssl rand -hex 32`.             | required for XM Suite v5 analytics |                                      |
 | CUBEJS_JWT_ISSUER         | JWT issuer expected by Cube and used by Formbricks when signing per-request Cube tokens.               | optional                           | `formbricks-web`                     |
 | CUBEJS_JWT_AUDIENCE       | JWT audience expected by Cube and used by Formbricks when signing per-request Cube tokens.             | optional                           | `formbricks-cube`                    |
-| CUBEJS_DEFAULT_API_SCOPES | Cube API surface enabled for the bundled Cube service. Keep this to `meta,data` unless extending Cube. | optional                           | `meta,data`                          |
 | CUBEJS_DB_HOST            | Database host for the Cube service. Only needed when you run Cube yourself and override defaults.      | optional                           | Depends on your Cube deployment      |
 | CUBEJS_DB_PORT            | Database port for the Cube service. Only needed when you run Cube yourself and override defaults.      | optional                           | Depends on your Cube deployment      |
 | CUBEJS_DB_NAME            | Database name for the Cube service. Only needed when you run Cube yourself and override defaults.      | optional                           | Depends on your Cube deployment      |
 | CUBEJS_DB_USER            | Database user for the Cube service. Only needed when you run Cube yourself and override defaults.      | optional                           | Depends on your Cube deployment      |
 | CUBEJS_DB_PASS            | Database password for the Cube service. Only needed when you run Cube yourself and override defaults.  | optional                           | Depends on your Cube deployment      |
+
+The bundled Docker Compose Cube service sets `CUBEJS_DEFAULT_API_SCOPES=meta,data` directly on the Cube
+container. If you run Cube outside the bundled Compose stack, configure the equivalent Cube service environment
+there rather than adding it to the Formbricks app environment.
 
 For Helm deployments, Formbricks does not deploy Cube for you in this chart. Provide an external Cube endpoint with
 `CUBEJS_API_URL` and supply `CUBEJS_API_SECRET` through your existing secret management setup.

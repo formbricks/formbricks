@@ -13,7 +13,8 @@ const { queryRewrite } = require(cubeConfigPath) as {
 };
 
 const securityContext = {
-  tenantId: "workspace-1",
+  tenantId: "frd-1",
+  feedbackRecordDirectoryId: "frd-1",
   workspaceId: "workspace-1",
   organizationId: "organization-1",
   userId: "user-1",
@@ -75,13 +76,13 @@ describe("cube queryRewrite", () => {
     ).toThrow(/invalid Cube query scope/);
   });
 
-  test("rejects tenantId and workspaceId claim mismatches", () => {
+  test("rejects mismatched tenant and feedback record directory claims", () => {
     expect(() =>
       queryRewrite(
         { measures: ["FeedbackRecords.count"] },
-        { securityContext: { ...securityContext, tenantId: "workspace-2" } }
+        { securityContext: { ...securityContext, feedbackRecordDirectoryId: "frd-2" } }
       )
-    ).toThrow(/tenantId\/workspaceId mismatch/);
+    ).toThrow(/tenantId\/feedbackRecordDirectoryId mismatch/);
   });
 
   test("rejects caller-supplied tenant filters", () => {
@@ -113,7 +114,8 @@ describe("cube queryRewrite", () => {
       type: "audit",
       event: "cube.query",
       status: "failure",
-      tenantId: "workspace-1",
+      tenantId: "frd-1",
+      feedbackRecordDirectoryId: "frd-1",
       workspaceId: "workspace-1",
       organizationId: "organization-1",
       userId: "user-1",
@@ -190,7 +192,7 @@ describe("cube queryRewrite", () => {
 
     expect(rewrittenQuery.filters).toEqual([
       { member: "FeedbackRecords.sentiment", operator: "equals", values: ["positive"] },
-      { member: "FeedbackRecords.tenantId", operator: "equals", values: ["workspace-1"] },
+      { member: "FeedbackRecords.tenantId", operator: "equals", values: ["frd-1"] },
     ]);
     expect(query.filters).toHaveLength(1);
   });
@@ -210,7 +212,8 @@ describe("cube queryRewrite", () => {
       type: "audit",
       event: "cube.query",
       status: "success",
-      tenantId: "workspace-1",
+      tenantId: "frd-1",
+      feedbackRecordDirectoryId: "frd-1",
       workspaceId: "workspace-1",
       organizationId: "organization-1",
       userId: "user-1",

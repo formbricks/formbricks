@@ -35,6 +35,7 @@ describe("cube-config", () => {
 
     const { CUBE_API_TOKEN_TTL_SECONDS, CUBE_QUERY_SCOPE, getCubeApiConfig } = await import("./cube-config");
     const config = getCubeApiConfig({
+      feedbackRecordDirectoryId: "frd-1",
       workspaceId: "workspace-1",
       organizationId: "organization-1",
       userId: "user-1",
@@ -50,7 +51,8 @@ describe("cube-config", () => {
     expect(payload).toMatchObject({
       aud: "formbricks-cube-test",
       iss: "formbricks-web-test",
-      tenantId: "workspace-1",
+      tenantId: "frd-1",
+      feedbackRecordDirectoryId: "frd-1",
       workspaceId: "workspace-1",
       organizationId: "organization-1",
       userId: "user-1",
@@ -61,12 +63,13 @@ describe("cube-config", () => {
     expect(payload.exp! - payload.iat!).toBe(CUBE_API_TOKEN_TTL_SECONDS);
   });
 
-  test("derives the Cube tenant ID from workspaceId instead of trusting caller input", async () => {
+  test("uses feedbackRecordDirectoryId as the Cube tenant ID without accepting a tenantId input", async () => {
     setTestEnv();
 
     const { getCubeApiConfig } = await import("./cube-config");
     const config = getCubeApiConfig({
-      tenantId: "workspace-2",
+      tenantId: "malicious-tenant",
+      feedbackRecordDirectoryId: "frd-1",
       workspaceId: "workspace-1",
       organizationId: "organization-1",
       userId: "user-1",
@@ -78,7 +81,8 @@ describe("cube-config", () => {
       issuer: "formbricks-web-test",
     }) as jwt.JwtPayload;
 
-    expect(payload.tenantId).toBe("workspace-1");
+    expect(payload.tenantId).toBe("frd-1");
+    expect(payload.feedbackRecordDirectoryId).toBe("frd-1");
     expect(payload.workspaceId).toBe("workspace-1");
   });
 
