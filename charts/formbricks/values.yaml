@@ -568,8 +568,13 @@ hub:
 
   image:
     repository: "ghcr.io/formbricks/hub"
-    # Pin to a semver tag for reproducible deployments; update on each Hub release.
-    tag: "1.0.0"
+    # Pinned by digest for immutable, reproducible deployments. When digest is set it takes
+    # precedence over tag, and deployment, init container, and migration job all resolve to the
+    # same immutable image. Update on each Hub release.
+    # Current digest corresponds to ghcr.io/formbricks/hub:0.2.0.
+    digest: "sha256:14db7b3d285b6e9165b55693f9b83d08beff840a255fd77dd12882ee0a62f5cb"
+    # Tag is a fallback for dev/non-prod when digest is cleared; keep aligned with the digest above.
+    tag: "0.2.0"
     pullPolicy: IfNotPresent
 
   # Optional override for the secret Hub reads from.

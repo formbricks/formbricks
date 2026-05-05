@@ -101,6 +101,19 @@ If `namespaceOverride` is provided, it will be used; otherwise, it defaults to `
 {{- default (include "formbricks.appSecretName" .) .Values.hub.existingSecret -}}
 {{- end }}
 
+{{/*
+Hub image reference. Pin by digest in production (hub.image.digest = "sha256:..."); falls back to
+hub.image.tag for local/dev. All Hub workloads (deployment, init container, migration job, future
+hub-worker) must use this helper so they cannot drift apart.
+*/}}
+{{- define "formbricks.hubImage" -}}
+{{- if .Values.hub.image.digest -}}
+{{- printf "%s@%s" .Values.hub.image.repository .Values.hub.image.digest -}}
+{{- else -}}
+{{- printf "%s:%s" .Values.hub.image.repository (.Values.hub.image.tag | default "latest") -}}
+{{- end -}}
+{{- end }}
+
 
 {{- define "formbricks.postgresAdminPassword" -}}
 {{- $secret := (lookup "v1" "Secret" .Release.Namespace (include "formbricks.appSecretName" .)) }}

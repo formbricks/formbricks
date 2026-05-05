@@ -5,7 +5,6 @@ import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { reportApiError } from "@/app/lib/api/api-error-reporter";
 import { responses } from "@/app/lib/api/response";
-import { getApiKeyFromHeaders } from "@/modules/api/lib/api-key-auth";
 import {
   AuthenticationMethod,
   isClientSideApiRoute,
@@ -13,6 +12,7 @@ import {
   isManagementApiRoute,
 } from "@/app/middleware/endpoint-validator";
 import { AUDIT_LOG_ENABLED } from "@/lib/constants";
+import { getApiKeyFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import {
   TEnvoyRateLimitAuthType,

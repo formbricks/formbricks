@@ -142,9 +142,10 @@ This chart does not deploy Cube.js. XM Suite v5 dashboard and analysis features 
 | hub.enabled                                                        | bool   | `true`                            |             |
 | hub.env                                                            | object | `{}`                              |             |
 | hub.existingSecret                                                 | string | `""`                              |             |
+| hub.image.digest                                                   | string | `"sha256:14db7b3d285b6e9165b55693f9b83d08beff840a255fd77dd12882ee0a62f5cb"` | When set, takes precedence over tag (immutable pin). |
 | hub.image.pullPolicy                                               | string | `"IfNotPresent"`                  |             |
 | hub.image.repository                                               | string | `"ghcr.io/formbricks/hub"`        |             |
-| hub.image.tag                                                      | string | `"1.0.0"`                         |             |
+| hub.image.tag                                                      | string | `"0.2.0"`                         | Fallback when digest is empty. |
 | hub.migration.activeDeadlineSeconds                                | int    | `900`                             |             |
 | hub.migration.backoffLimit                                         | int    | `3`                               |             |
 | hub.migration.ttlSecondsAfterFinished                              | int    | `300`                             |             |
