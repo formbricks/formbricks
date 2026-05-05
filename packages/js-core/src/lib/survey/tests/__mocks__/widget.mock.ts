@@ -8,7 +8,6 @@ export const mockEnvironmentId = "n48a66c01dz05k1297vq06pu";
 
 export const mockSurvey: TEnvironmentStateSurvey = {
   id: mockSurveyId,
-  name: "Test Survey",
   welcomeCard: {
     enabled: false,
     timeToFinish: false,

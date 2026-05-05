@@ -123,8 +123,7 @@ export const filterSurveys = (
   if (!userId) {
     // exclude surveys that have a segment with filters
     return filteredSurveys.filter((survey) => {
-      const segmentFiltersLength = survey.segment?.filters.length ?? 0;
-      return segmentFiltersLength === 0;
+      return !(survey.segment?.hasFilters ?? false);
     });
   }
 

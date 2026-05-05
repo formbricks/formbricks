@@ -89,7 +89,7 @@ describe("widget-file", () => {
     await widget.triggerSurvey(mockSurvey);
 
     expect(mockLogger.debug).toHaveBeenCalledWith(
-      `Survey display of "${mockSurvey.name}" skipped based on displayPercentage.`
+      `Survey display of "${mockSurvey.id}" skipped based on displayPercentage.`
     );
   });
 
@@ -145,7 +145,7 @@ describe("widget-file", () => {
     await widget.renderWidget(mockSurvey);
 
     expect(mockLogger.debug).toHaveBeenCalledWith(
-      `Delaying survey "${mockSurvey.name}" by ${mockSurvey.delay.toString()} seconds.`
+      `Delaying survey "${mockSurvey.id}" by ${mockSurvey.delay.toString()} seconds.`
     );
 
     vi.advanceTimersByTime(mockSurvey.delay * 1000);
@@ -209,7 +209,7 @@ describe("widget-file", () => {
     await widget.renderWidget(mockSurveyNoDelay as unknown as TEnvironmentStateSurvey);
 
     expect(mockLogger.debug).toHaveBeenCalledWith(
-      `Survey "${mockSurvey.name}" is not available in specified language.`
+      `Survey "${mockSurvey.id}" is not available in specified language.`
     );
   });
 
@@ -456,7 +456,7 @@ describe("widget-file", () => {
     await widget.renderWidget({
       ...mockSurvey,
       delay: 0,
-      segment: { id: "seg_1", filters: [{ type: "attribute", value: "plan" }] },
+      segment: { id: "seg_1", hasFilters: true },
     } as unknown as TEnvironmentStateSurvey);
 
     expect(mockUpdateQueue.waitForPendingWork).toHaveBeenCalled();
