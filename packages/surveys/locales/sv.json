@@ -27,6 +27,7 @@
     "select_option": "Välj ett alternativ",
     "select_options": "Välj alternativ",
     "sending_responses": "Skickar svar...",
+    "survey_dialog": "Enkätdialog",
     "takes_less_than_x_minutes": "{count, plural, one {Tar mindre än 1 minut} other {Tar mindre än {count} minuter}}",
     "takes_x_minutes": "{count, plural, one {Tar 1 minut} other {Tar {count} minuter}}",
     "takes_x_plus_minutes": "Tar {count}+ minuter",

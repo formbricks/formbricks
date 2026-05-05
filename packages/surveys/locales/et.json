@@ -27,6 +27,7 @@
     "select_option": "Vali variant",
     "select_options": "Vali variandid",
     "sending_responses": "Vastuste saatmine…",
+    "survey_dialog": "Küsitluse dialoog",
     "takes_less_than_x_minutes": "{count, plural, one {Võtab vähem kui 1 minuti} other {Võtab vähem kui {count} minutit}}",
     "takes_x_minutes": "{count, plural, one {Võtab 1 minuti} other {Võtab {count} minutit}}",
     "takes_x_plus_minutes": "Võtab {count}+ minutit",

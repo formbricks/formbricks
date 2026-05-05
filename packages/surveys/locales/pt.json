@@ -27,6 +27,7 @@
     "select_option": "Selecione uma opção",
     "select_options": "Selecione opções",
     "sending_responses": "Enviando respostas...",
+    "survey_dialog": "Caixa de diálogo da pesquisa",
     "takes_less_than_x_minutes": "{count, plural, one {Leva menos de 1 minuto} other {Leva menos de {count} minutos}}",
     "takes_x_minutes": "{count, plural, one {Leva 1 minuto} other {Leva {count} minutos}}",
     "takes_x_plus_minutes": "Leva {count}+ minutos",

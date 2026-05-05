@@ -27,6 +27,7 @@
     "select_option": "请选择一个选项",
     "select_options": "请选择多个选项",
     "sending_responses": "正在发送响应...",
+    "survey_dialog": "调查对话框",
     "takes_less_than_x_minutes": "{count, plural, one {少于 1 分钟} other {少于 {count} 分钟}}",
     "takes_x_minutes": "{count, plural, one {1 分钟} other {{count} 分钟}}",
     "takes_x_plus_minutes": "{count}+ 分钟",

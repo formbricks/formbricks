@@ -27,6 +27,7 @@
     "select_option": "Vælg en mulighed",
     "select_options": "Vælg muligheder",
     "sending_responses": "Sender svar…",
+    "survey_dialog": "Undersøgelsesdialog",
     "takes_less_than_x_minutes": "{count, plural, one {Tager mindre end 1 minut} other {Tager mindre end {count} minutter}}",
     "takes_x_minutes": "{count, plural, one {Tager 1 minut} other {Tager {count} minutter}}",
     "takes_x_plus_minutes": "Tager {count}+ minutter",

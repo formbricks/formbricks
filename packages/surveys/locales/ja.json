@@ -27,6 +27,7 @@
     "select_option": "オプションを選択",
     "select_options": "オプションを選択",
     "sending_responses": "回答を送信中...",
+    "survey_dialog": "アンケートダイアログ",
     "takes_less_than_x_minutes": "{count, plural, one {1分未満} other {{count}分未満}}",
     "takes_x_minutes": "{count, plural, one {1分} other {{count}分}}",
     "takes_x_plus_minutes": "{count}分以上",

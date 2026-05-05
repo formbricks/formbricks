@@ -27,6 +27,7 @@
     "select_option": "एक विकल्प चुनें",
     "select_options": "विकल्प चुनें",
     "sending_responses": "प्रतिक्रियाएँ भेज रहे हैं...",
+    "survey_dialog": "सर्वेक्षण संवाद",
     "takes_less_than_x_minutes": "{count, plural, one {1 मिनट से कम लगता है} other {{count} मिनट से कम लगता है}}",
     "takes_x_minutes": "{count, plural, one {1 मिनट लगता है} other {{count} मिनट लगते हैं}}",
     "takes_x_plus_minutes": "{count}+ मिनट लगते हैं",

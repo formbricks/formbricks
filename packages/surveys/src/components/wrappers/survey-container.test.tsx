@@ -1,7 +1,13 @@
 // @vitest-environment happy-dom
 import { cleanup, render, screen } from "@testing-library/preact";
-import { afterEach, describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { SurveyContainer } from "./survey-container";
+
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
+    t: (key: string) => (key === "common.survey_dialog" ? "Survey Dialog" : key),
+  }),
+}));
 
 describe("SurveyContainer", () => {
   afterEach(() => {
@@ -15,7 +21,7 @@ describe("SurveyContainer", () => {
       </SurveyContainer>
     );
 
-    const dialog = screen.getByRole("dialog", { name: "Dialog" });
+    const dialog = screen.getByRole("dialog", { name: "Survey Dialog" });
 
     expect(dialog.getAttribute("aria-modal")).toBe("true");
   });
@@ -37,7 +43,7 @@ describe("SurveyContainer", () => {
       </SurveyContainer>
     );
 
-    const dialog = screen.getByRole("dialog", { name: "Dialog" });
+    const dialog = screen.getByRole("dialog", { name: "Survey Dialog" });
 
     expect(dialog.contains(screen.getByRole("button", { name: "Start" }))).toBe(true);
   });

@@ -27,6 +27,7 @@
     "select_option": "Wähle eine Option",
     "select_options": "Wähle Optionen",
     "sending_responses": "Antworten werden gesendet...",
+    "survey_dialog": "Umfragedialog",
     "takes_less_than_x_minutes": "{count, plural, one {Dauert weniger als 1 Minute} other {Dauert weniger als {count} Minuten}}",
     "takes_x_minutes": "{count, plural, one {Dauert 1 Minute} other {Dauert {count} Minuten}}",
     "takes_x_plus_minutes": "Dauert {count}+ Minuten",

@@ -27,6 +27,7 @@
     "select_option": "Selecteer een optie",
     "select_options": "Selecteer opties",
     "sending_responses": "Reacties verzenden...",
+    "survey_dialog": "Enquête-dialoogvenster",
     "takes_less_than_x_minutes": "{count, plural, one {Duurt minder dan 1 minuut} other {Duurt minder dan {count} minuten}}",
     "takes_x_minutes": "{count, plural, one {Duurt 1 minuut} other {Duurt {count} minuten}}",
     "takes_x_plus_minutes": "Duurt {count}+ minuten",

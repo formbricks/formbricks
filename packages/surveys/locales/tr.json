@@ -27,6 +27,7 @@
     "select_option": "Bir seçenek seçin",
     "select_options": "Seçenekleri seçin",
     "sending_responses": "Yanıtlar gönderiliyor…",
+    "survey_dialog": "Anket iletişim kutusu",
     "takes_less_than_x_minutes": "{count, plural, one {1 dakikadan az sürer} other {{count} dakikadan az sürer}}",
     "takes_x_minutes": "{count, plural, one {1 dakika sürer} other {{count} dakika sürer}}",
     "takes_x_plus_minutes": "{count}+ dakika sürer",

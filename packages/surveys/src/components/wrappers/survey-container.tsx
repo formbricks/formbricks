@@ -1,5 +1,6 @@
 import { type ComponentChildren } from "preact";
 import { useEffect } from "preact/hooks";
+import { useTranslation } from "react-i18next";
 import { type TOverlay, type TPlacement } from "@formbricks/types/common";
 import { useFocusTrap } from "@/lib/use-focus-trap";
 import { cn } from "@/lib/utils";
@@ -26,6 +27,7 @@ export function SurveyContainer({
   dir = "auto",
 }: Readonly<SurveyContainerProps>) {
   const isModal = mode === "modal";
+  const { t } = useTranslation();
   const modalRef = useFocusTrap<HTMLDivElement>({ enabled: isModal && isOpen, onEscapeKeyDown: onClose });
   const hasOverlay = overlay !== "none";
 
@@ -96,7 +98,7 @@ export function SurveyContainer({
             ref={modalRef}
             role="dialog"
             aria-modal="true"
-            aria-label="Dialog"
+            aria-label={t("common.survey_dialog")}
             tabIndex={-1}
             className={cn(
               getPlacementStyle(placement),
