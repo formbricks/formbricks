@@ -1,7 +1,6 @@
 import "server-only";
 import FormbricksHub from "@formbricks/hub";
 import { logger } from "@formbricks/logger";
-import { env } from "@/lib/env";
 import { getHubClient } from "./hub-client";
 import type {
   FeedbackRecordCreateParams,
@@ -131,44 +130,18 @@ export const listFeedbackRecords = async (
 export const semanticSearchFeedbackRecords = async (
   input: SemanticSearchInput
 ): Promise<SemanticSearchFeedbackRecordsResult> => {
-  const apiKey = env.HUB_API_KEY;
-  if (!apiKey) {
+  const client = getHubClient();
+  if (!client) {
     return { data: null, error: { ...NO_CONFIG_ERROR } };
   }
-
-  const url = new URL("/v1/feedback-records/search/semantic", env.HUB_API_URL);
-  if (input.limit !== undefined) url.searchParams.set("limit", String(input.limit));
-  if (input.cursor) url.searchParams.set("cursor", input.cursor);
-  if (input.min_score !== undefined) url.searchParams.set("min_score", String(input.min_score));
-
   try {
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        query: input.query,
-        tenant_id: input.tenant_id,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorBody = (await response.json().catch(() => null)) as {
-        detail?: string;
-        title?: string;
-      } | null;
-      const message = errorBody?.detail ?? errorBody?.title ?? response.statusText;
-      return { data: null, error: { status: response.status, message, detail: message } };
-    }
-
-    const data = (await response.json()) as SemanticSearchResponse;
+    const data = await client.feedbackRecords.search.performSemanticSearch(input);
     return { data, error: null };
   } catch (err) {
     logger.warn({ err, tenantId: input.tenant_id }, "Hub: semanticSearchFeedbackRecords failed");
+    const status = err instanceof FormbricksHub.APIError ? err.status : 0;
     const message = getErrorMessage(err);
-    return { data: null, error: { status: 0, message, detail: message } };
+    return { data: null, error: { status, message, detail: message } };
   }
 };
 

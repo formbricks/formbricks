@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import FormbricksHub from "@formbricks/hub";
 import {
   createFeedbackRecord,
   createFeedbackRecordsBatch,
@@ -9,19 +10,8 @@ import {
 } from "./service";
 import type { FeedbackRecordCreateParams } from "./types";
 
-const { mockEnv } = vi.hoisted(() => ({
-  mockEnv: {
-    HUB_API_KEY: "",
-    HUB_API_URL: "https://hub.test",
-  },
-}));
-
 vi.mock("@formbricks/logger", () => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
-}));
-
-vi.mock("@/lib/env", () => ({
-  env: mockEnv,
 }));
 
 vi.mock("./hub-client", () => ({
@@ -39,14 +29,13 @@ const sampleInput: FeedbackRecordCreateParams = {
   field_label: "Question?",
   value_number: 5,
   collected_at: "2026-02-24T10:00:00.000Z",
+  submission_id: "sub-1",
+  tenant_id: "tenant-1",
 };
 
 describe("hub service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.unstubAllGlobals();
-    mockEnv.HUB_API_KEY = "";
-    mockEnv.HUB_API_URL = "https://hub.test";
   });
 
   describe("createFeedbackRecord", () => {
@@ -110,7 +99,7 @@ describe("hub service", () => {
         feedbackRecords: { list: vi.fn().mockResolvedValue(listResponse) },
       } as any);
 
-      const result = await listFeedbackRecords({ tenant_id: "env-1", limit: 50, offset: 0 });
+      const result = await listFeedbackRecords({ tenant_id: "env-1", limit: 50 });
 
       expect(result.error).toBeNull();
       expect(result.data).toEqual(listResponse);
@@ -125,20 +114,6 @@ describe("hub service", () => {
 
       expect(result.data).toBeNull();
       expect(result.error).toMatchObject({ status: 0, message: "Network error" });
-    });
-
-    test("returns data when called without params", async () => {
-      const listResponse = { data: [], total: 0, limit: 50, offset: 0 };
-      const listFn = vi.fn().mockResolvedValue(listResponse);
-      vi.mocked(getHubClient).mockReturnValue({
-        feedbackRecords: { list: listFn },
-      } as any);
-
-      const result = await listFeedbackRecords();
-
-      expect(result.error).toBeNull();
-      expect(result.data).toEqual(listResponse);
-      expect(listFn).toHaveBeenCalledWith(undefined);
     });
   });
 
@@ -171,7 +146,9 @@ describe("hub service", () => {
   });
 
   describe("semanticSearchFeedbackRecords", () => {
-    test("returns error result when HUB_API_KEY is not set", async () => {
+    test("returns error result when getHubClient returns null", async () => {
+      vi.mocked(getHubClient).mockReturnValue(null);
+
       const result = await semanticSearchFeedbackRecords({
         tenant_id: "env-1",
         query: "slow checkout",
@@ -184,8 +161,7 @@ describe("hub service", () => {
       });
     });
 
-    test("returns semantic search results when Hub succeeds", async () => {
-      mockEnv.HUB_API_KEY = "test-key";
+    test("returns data when client.search.performSemanticSearch succeeds", async () => {
       const searchResponse = {
         data: [
           {
@@ -197,48 +173,34 @@ describe("hub service", () => {
         ],
         limit: 10,
       };
-      const fetchMock = vi.fn().mockResolvedValue({
-        ok: true,
-        json: vi.fn().mockResolvedValue(searchResponse),
-      });
-      vi.stubGlobal("fetch", fetchMock);
+      const performSemanticSearch = vi.fn().mockResolvedValue(searchResponse);
+      vi.mocked(getHubClient).mockReturnValue({
+        feedbackRecords: { search: { performSemanticSearch } },
+      } as any);
 
-      const result = await semanticSearchFeedbackRecords({
+      const input = {
         tenant_id: "env-1",
         query: "slow checkout",
         limit: 10,
         min_score: 0.7,
-      });
+      };
+      const result = await semanticSearchFeedbackRecords(input);
 
       expect(result.error).toBeNull();
       expect(result.data).toEqual(searchResponse);
-      expect(fetchMock).toHaveBeenCalledWith(
-        new URL("https://hub.test/v1/feedback-records/search/semantic?limit=10&min_score=0.7"),
-        expect.objectContaining({
-          method: "POST",
-          headers: {
-            Authorization: "Bearer test-key",
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            query: "slow checkout",
-            tenant_id: "env-1",
-          }),
-        })
-      );
+      expect(performSemanticSearch).toHaveBeenCalledWith(input);
     });
 
-    test("returns unavailable error when Hub embeddings are not configured", async () => {
-      mockEnv.HUB_API_KEY = "test-key";
-      vi.stubGlobal(
-        "fetch",
-        vi.fn().mockResolvedValue({
-          ok: false,
-          status: 503,
-          statusText: "Service Unavailable",
-          json: vi.fn().mockResolvedValue({ detail: "Embeddings are not configured" }),
-        })
+    test("returns error with status when client.search.performSemanticSearch throws APIError", async () => {
+      const apiError = Object.assign(
+        new FormbricksHub.APIError(503, undefined, "Embeddings are not configured", undefined),
+        {}
       );
+      vi.mocked(getHubClient).mockReturnValue({
+        feedbackRecords: {
+          search: { performSemanticSearch: vi.fn().mockRejectedValue(apiError) },
+        },
+      } as any);
 
       const result = await semanticSearchFeedbackRecords({
         tenant_id: "env-1",
@@ -248,13 +210,16 @@ describe("hub service", () => {
       expect(result.data).toBeNull();
       expect(result.error).toMatchObject({
         status: 503,
-        message: "Embeddings are not configured",
+        message: "503 Embeddings are not configured",
       });
     });
 
-    test("returns error result when fetch throws", async () => {
-      mockEnv.HUB_API_KEY = "test-key";
-      vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("Network error")));
+    test("returns error result when call throws non-API error", async () => {
+      vi.mocked(getHubClient).mockReturnValue({
+        feedbackRecords: {
+          search: { performSemanticSearch: vi.fn().mockRejectedValue(new Error("Network error")) },
+        },
+      } as any);
 
       const result = await semanticSearchFeedbackRecords({
         tenant_id: "env-1",
