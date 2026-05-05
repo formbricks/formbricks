@@ -162,6 +162,9 @@ jobs:
     timeout-minutes: 5
     needs:
       - docker-build-community
+      - docker-build-cloud
+      - helm-chart-release
+      - move-stable-tag
     if: ${{ !github.event.release.prerelease }}
     steps:
       - name: Harden the runner
@@ -175,7 +178,7 @@ jobs:
           fetch-depth: 0
 
       - name: Complete Linear release
-        uses: linear/linear-release-action@v0
+        uses: linear/linear-release-action@0353b5fa8c00326913966f00557d68f8f30b8b6b # v0.7.0
         with:
           access_key: ${{ secrets.LINEAR_ACCESS_KEY }}
           command: complete
