@@ -24,6 +24,7 @@ import {
   DELETE_ACCOUNT_EMAIL_CONFIRMATION_MISMATCH_ERROR,
   DELETE_ACCOUNT_GOOGLE_REAUTH_NOT_CONFIGURED_ERROR,
   DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR,
+  DELETE_USER_CONFIRMATION_REQUIRED_ERROR,
 } from "@/modules/account/constants";
 import {
   getSsoProviderLookupCandidates,
@@ -34,6 +35,7 @@ const ACCOUNT_DELETION_SSO_REAUTH_INTENT_TTL_MS = 10 * 60 * 1000;
 const ACCOUNT_DELETION_SSO_REAUTH_MARKER_TTL_MS = 5 * 60 * 1000;
 const SSO_AUTH_TIME_MAX_AGE_SECONDS = 5 * 60;
 const SSO_AUTH_TIME_FUTURE_SKEW_SECONDS = 60;
+const cacheConsumeLocks = new Map<string, Promise<void>>();
 
 type TSsoIdentityProvider = Exclude<IdentityProvider, "email">;
 type TAccountWithSamlAuthnInstant = Account & {
@@ -232,6 +234,27 @@ const storeAccountDeletionSsoReauthMarker = async (marker: TAccountDeletionSsoRe
   }
 };
 
+const withLocalCacheConsumeLock = async <TValue>(key: string, consume: () => Promise<TValue>) => {
+  const previousLock = cacheConsumeLocks.get(key) ?? Promise.resolve();
+  let releaseLock: () => void = () => {};
+  const currentLock = new Promise<void>((resolve) => {
+    releaseLock = resolve;
+  });
+  const queuedLock = previousLock.catch(() => undefined).then(() => currentLock);
+
+  cacheConsumeLocks.set(key, queuedLock);
+  await previousLock.catch(() => undefined);
+
+  try {
+    return await consume();
+  } finally {
+    releaseLock();
+    if (cacheConsumeLocks.get(key) === queuedLock) {
+      cacheConsumeLocks.delete(key);
+    }
+  }
+};
+
 const consumeCachedJsonValue = async <TValue>(key: string, logContext: Record<string, unknown>) => {
   let redis;
 
@@ -274,28 +297,30 @@ const consumeCachedJsonValue = async <TValue>(key: string, logContext: Record<st
     }
   }
 
-  const cacheResult = await cache.get<TValue>(key);
+  return withLocalCacheConsumeLock(key, async () => {
+    const cacheResult = await cache.get<TValue>(key);
 
-  if (!cacheResult.ok) {
-    logger.error({ ...logContext, error: cacheResult.error, key }, "Failed to read SSO reauth cache value");
-    throw new Error("Unable to read account deletion SSO reauth value");
-  }
+    if (!cacheResult.ok) {
+      logger.error({ ...logContext, error: cacheResult.error, key }, "Failed to read SSO reauth cache value");
+      throw new Error("Unable to read account deletion SSO reauth value");
+    }
 
-  if (!cacheResult.data) {
-    return null;
-  }
+    if (!cacheResult.data) {
+      return null;
+    }
 
-  const deleteResult = await cache.del([key]);
+    const deleteResult = await cache.del([key]);
 
-  if (!deleteResult.ok) {
-    logger.error(
-      { ...logContext, error: deleteResult.error, key },
-      "Failed to consume SSO reauth cache value"
-    );
-    throw new Error("Unable to consume account deletion SSO reauth value");
-  }
+    if (!deleteResult.ok) {
+      logger.error(
+        { ...logContext, error: deleteResult.error, key },
+        "Failed to consume SSO reauth cache value"
+      );
+      throw new Error("Unable to consume account deletion SSO reauth value");
+    }
 
-  return cacheResult.data;
+    return cacheResult.data;
+  });
 };
 
 const getCachedJsonValue = async <TValue>(key: string, logContext: Record<string, unknown>) => {
@@ -552,7 +577,7 @@ export const startAccountDeletionSsoReauthentication = async ({
   }
 
   if (userAuthenticationData.password) {
-    throw new InvalidInputError("Password confirmation is required to delete this account");
+    throw new InvalidInputError(DELETE_USER_CONFIRMATION_REQUIRED_ERROR);
   }
 
   const { provider, providerAccountId } = getSsoIdentityProviderOrThrow(

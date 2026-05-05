@@ -135,7 +135,7 @@ export const storeSamlAuthnInstantFromSamlResponse = async ({
     connectionController,
     samlResponse,
   }).catch((error: unknown) => {
-    logger.error({ code, error }, "Failed to extract SAML AuthnInstant");
+    logger.error({ error }, "Failed to extract SAML AuthnInstant");
     return null;
   });
 
@@ -150,7 +150,7 @@ export const storeSamlAuthnInstantFromSamlResponse = async ({
   );
 
   if (!result.ok) {
-    logger.error({ code, error: result.error }, "Failed to store SAML AuthnInstant");
+    logger.error({ error: result.error }, "Failed to store SAML AuthnInstant");
   }
 };
 
@@ -163,7 +163,7 @@ export const consumeSamlAuthnInstantForCode = async (code: unknown): Promise<str
   const result = await cache.get<TSamlAuthnInstantCacheValue>(cacheKey);
 
   if (!result.ok) {
-    logger.error({ code, error: result.error }, "Failed to read SAML AuthnInstant");
+    logger.error({ error: result.error }, "Failed to read SAML AuthnInstant");
     return null;
   }
 
@@ -174,7 +174,7 @@ export const consumeSamlAuthnInstantForCode = async (code: unknown): Promise<str
   const deleteResult = await cache.del([cacheKey]);
 
   if (!deleteResult.ok) {
-    logger.error({ code, error: deleteResult.error }, "Failed to consume SAML AuthnInstant");
+    logger.error({ error: deleteResult.error }, "Failed to consume SAML AuthnInstant");
   }
 
   return result.data.authnInstant;

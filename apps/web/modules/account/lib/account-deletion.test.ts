@@ -97,6 +97,8 @@ describe("deleteUserWithAccountDeletionAuthorization", () => {
       providerAccountId: "google-account-id",
       userId: user.id,
     });
+    expect(mocks.getUser).toHaveBeenCalledBefore(mocks.consumeAccountDeletionSsoReauthentication);
+    expect(mocks.consumeAccountDeletionSsoReauthentication).toHaveBeenCalledBefore(mocks.deleteUser);
     expect(mocks.deleteUser).toHaveBeenCalledWith(user.id);
   });
 
@@ -144,5 +146,22 @@ describe("deleteUserWithAccountDeletionAuthorization", () => {
     expect(mocks.verifyUserPassword).toHaveBeenCalledWith(user.id, "correct-password");
     expect(mocks.consumeAccountDeletionSsoReauthentication).not.toHaveBeenCalled();
     expect(mocks.deleteUser).toHaveBeenCalledWith(user.id);
+  });
+
+  test("does not consume the SSO marker when organization checks reject deletion", async () => {
+    mocks.getIsMultiOrgEnabled.mockResolvedValueOnce(false);
+    mocks.getOrganizationsWhereUserIsSingleOwner.mockResolvedValueOnce([{ id: "organization-id" }]);
+    const { deleteUserWithAccountDeletionAuthorization } = await loadAccountDeletionModule();
+
+    await expect(
+      deleteUserWithAccountDeletionAuthorization({
+        confirmationEmail: user.email,
+        userEmail: user.email,
+        userId: user.id,
+      })
+    ).rejects.toThrow("You are the only owner of this organization");
+
+    expect(mocks.consumeAccountDeletionSsoReauthentication).not.toHaveBeenCalled();
+    expect(mocks.deleteUser).not.toHaveBeenCalled();
   });
 });

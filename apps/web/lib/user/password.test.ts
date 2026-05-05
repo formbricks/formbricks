@@ -68,6 +68,20 @@ describe("user password helpers", () => {
     expect(mockVerifyPassword).toHaveBeenCalledWith("plain-password", "hashed-password");
   });
 
+  test("returns false when the password does not match the stored hash", async () => {
+    mockPrismaUserFindUnique.mockResolvedValue({
+      email: "password-user@example.com",
+      identityProvider: "email",
+      identityProviderAccountId: null,
+      password: "hashed-password",
+    } as any);
+    mockVerifyPassword.mockResolvedValue(false);
+
+    await expect(verifyUserPassword("password-user", "wrong-password")).resolves.toBe(false);
+
+    expect(mockVerifyPassword).toHaveBeenCalledWith("wrong-password", "hashed-password");
+  });
+
   test("rejects password verification for users without a password", async () => {
     mockPrismaUserFindUnique.mockResolvedValue({
       email: "sso-user@example.com",

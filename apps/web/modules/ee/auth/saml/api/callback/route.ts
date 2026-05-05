@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { logger } from "@formbricks/logger";
 import { responses } from "@/app/lib/api/response";
 import { storeSamlAuthnInstantFromSamlResponse } from "@/modules/ee/auth/saml/lib/authn-instant";
 import jackson from "@/modules/ee/auth/saml/lib/jackson";
@@ -29,11 +30,15 @@ export const POST = async (req: Request) => {
     return responses.internalServerErrorResponse("Failed to get redirect URL");
   }
 
-  await storeSamlAuthnInstantFromSamlResponse({
-    connectionController,
-    redirectUrl: redirect_url,
-    samlResponse: SAMLResponse,
-  });
+  try {
+    await storeSamlAuthnInstantFromSamlResponse({
+      connectionController,
+      redirectUrl: redirect_url,
+      samlResponse: SAMLResponse,
+    });
+  } catch (error) {
+    logger.error({ error }, "Failed to persist SAML AuthnInstant");
+  }
 
   return redirect(redirect_url);
 };

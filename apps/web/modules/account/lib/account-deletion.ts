@@ -32,6 +32,30 @@ const assertConfirmationEmailMatches = (confirmationEmail: string, expectedEmail
 const canBypassSsoReauthentication = (identityProvider: IdentityProvider) =>
   DISABLE_ACCOUNT_DELETION_SSO_REAUTH && identityProvider !== "email";
 
+const assertAccountDeletionSsoReauthentication = async ({
+  identityProvider,
+  providerAccountId,
+  userId,
+}: {
+  identityProvider: IdentityProvider;
+  providerAccountId: string | null;
+  userId: string;
+}) => {
+  if (canBypassSsoReauthentication(identityProvider)) {
+    logger.warn(
+      { identityProvider, userId },
+      "Account deletion SSO reauthentication bypassed by environment configuration"
+    );
+    return;
+  }
+
+  await consumeAccountDeletionSsoReauthentication({
+    identityProvider,
+    providerAccountId,
+    userId,
+  });
+};
+
 export const deleteUserWithAccountDeletionAuthorization = async ({
   confirmationEmail,
   password,
@@ -53,17 +77,6 @@ export const deleteUserWithAccountDeletionAuthorization = async ({
     if (!isCorrectPassword) {
       throw new AuthorizationError(DELETE_ACCOUNT_WRONG_PASSWORD_ERROR);
     }
-  } else if (canBypassSsoReauthentication(userAuthenticationData.identityProvider)) {
-    logger.warn(
-      { identityProvider: userAuthenticationData.identityProvider, userId },
-      "Account deletion SSO reauthentication bypassed by environment configuration"
-    );
-  } else {
-    await consumeAccountDeletionSsoReauthentication({
-      identityProvider: userAuthenticationData.identityProvider,
-      providerAccountId: userAuthenticationData.identityProviderAccountId,
-      userId,
-    });
   }
 
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
@@ -79,6 +92,14 @@ export const deleteUserWithAccountDeletionAuthorization = async ({
   const oldUser = await getUser(userId);
   if (!oldUser) {
     throw new AuthorizationError("User not found");
+  }
+
+  if (!requiresPasswordConfirmationForAccountDeletion(userAuthenticationData)) {
+    await assertAccountDeletionSsoReauthentication({
+      identityProvider: userAuthenticationData.identityProvider,
+      providerAccountId: userAuthenticationData.identityProviderAccountId,
+      userId,
+    });
   }
 
   await deleteUser(userId);

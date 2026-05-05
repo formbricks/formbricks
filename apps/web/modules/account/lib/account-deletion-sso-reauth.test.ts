@@ -791,6 +791,34 @@ describe("account deletion SSO reauthentication", () => {
     expect(mockCache.del).toHaveBeenCalled();
   });
 
+  test("serializes non-Redis marker consumption so a marker cannot be replayed concurrently", async () => {
+    let cachedMarker: (typeof storedIntent & { completedAt: number }) | null = {
+      ...storedIntent,
+      completedAt: Date.now(),
+    };
+    mockCache.get.mockImplementation(async () => ({
+      ok: true,
+      data: cachedMarker,
+    }));
+    mockCache.del.mockImplementation(async () => {
+      cachedMarker = null;
+      return { ok: true, data: undefined };
+    });
+
+    const consumeMarker = () =>
+      consumeAccountDeletionSsoReauthentication({
+        identityProvider: "google",
+        providerAccountId: intent.providerAccountId,
+        userId: intent.userId,
+      });
+
+    const results = await Promise.allSettled([consumeMarker(), consumeMarker()]);
+
+    expect(results.filter((result) => result.status === "fulfilled")).toHaveLength(1);
+    expect(results.filter((result) => result.status === "rejected")).toHaveLength(1);
+    expect(mockCache.del).toHaveBeenCalledTimes(1);
+  });
+
   test("atomically consumes a valid SSO reauthentication marker from Redis", async () => {
     const redisEval = vi.fn().mockResolvedValue(
       JSON.stringify({

@@ -1101,6 +1101,8 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
 
         expect(verifyAccountDeletionSsoReauthIntent(token)).toEqual(accountDeletionIntent);
         expect(mockSymmetricEncrypt).toHaveBeenCalledWith(accountDeletionIntent.id, TEST_ENCRYPTION_KEY);
+        expect(mockSymmetricEncrypt).toHaveBeenCalledWith(accountDeletionIntent.userId, TEST_ENCRYPTION_KEY);
+        expect(mockSymmetricEncrypt).toHaveBeenCalledWith(accountDeletionIntent.email, TEST_ENCRYPTION_KEY);
         expect(mockSymmetricEncrypt).toHaveBeenCalledWith(
           accountDeletionIntent.providerAccountId,
           TEST_ENCRYPTION_KEY

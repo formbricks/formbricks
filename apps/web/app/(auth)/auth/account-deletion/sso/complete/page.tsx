@@ -57,6 +57,7 @@ export default async function AccountDeletionSsoReauthCompletePage({
         userEmail: session.user.email,
         userId: session.user.id,
       });
+      redirectPath = getPostDeletionRedirectPath();
       await queueAuditEventBackground({
         action: "deleted",
         targetType: "user",
@@ -68,7 +69,6 @@ export default async function AccountDeletionSsoReauthCompletePage({
         status: "success",
       });
       logger.info({ userId: session.user.id }, "Completed account deletion after SSO reauth");
-      redirectPath = getPostDeletionRedirectPath();
     } catch (error) {
       logger.error({ error }, "Failed to complete account deletion after SSO reauth");
     }
