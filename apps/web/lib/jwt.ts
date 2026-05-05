@@ -3,7 +3,7 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ENCRYPTION_KEY, NEXTAUTH_SECRET } from "@/lib/constants";
 import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
-import { getGatewayAuthServiceTokenPurpose, TGatewayAuthService } from "@/modules/gateway-auth/lib/service";
+import { TGatewayAuthService, getGatewayAuthServiceTokenPurpose } from "@/modules/gateway-auth/lib/service";
 
 const FEEDBACK_RECORDS_GATEWAY_TOKEN_TTL_SECONDS = 60 * 10;
 
@@ -29,7 +29,10 @@ export const createToken = (userId: string, options = {}): string => {
   return jwt.sign({ id: encryptedUserId }, NEXTAUTH_SECRET, options);
 };
 
-export const createGatewayServiceToken = (userId: string, service: TGatewayAuthService): {
+export const createGatewayServiceToken = (
+  userId: string,
+  service: TGatewayAuthService
+): {
   token: string;
   expiresAt: string;
 } => {
@@ -104,7 +107,10 @@ export const verifyEmailChangeToken = async (token: string): Promise<{ id: strin
   };
 };
 
-export const verifyGatewayServiceToken = (token: string, service: TGatewayAuthService): {
+export const verifyGatewayServiceToken = (
+  token: string,
+  service: TGatewayAuthService
+): {
   userId: string;
 } => {
   if (!NEXTAUTH_SECRET) {
