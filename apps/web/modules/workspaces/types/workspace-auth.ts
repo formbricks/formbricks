@@ -55,9 +55,6 @@ export type TWorkspaceLayoutData = {
   organization: TOrganization;
   membership: TMembership;
   isAccessControlAllowed: boolean;
-  isUnifyFeedbackAllowed: boolean;
-  isFeedbackDirectoriesAllowed: boolean;
-  isDashboardsAllowed: boolean;
   workspacePermission: TTeamPermission | null;
   license: TEnterpriseLicense;
   responseCount: number;

@@ -45,8 +45,6 @@ interface SettingsSidebarContentProps {
   isFormbricksCloud: boolean;
   isCollapsed: boolean;
   isTextVisible: boolean;
-  isUnifyFeedbackAllowed: boolean;
-  isFeedbackDirectoriesAllowed: boolean;
   // Workspace switcher
   workspaces: { id: string; name: string }[];
   isLoadingWorkspaces: boolean;
@@ -233,8 +231,6 @@ export const SettingsSidebarContent = ({
   isFormbricksCloud,
   isCollapsed,
   isTextVisible,
-  isUnifyFeedbackAllowed,
-  isFeedbackDirectoriesAllowed,
   workspaces,
   isLoadingWorkspaces,
   onWorkspaceChange,
@@ -287,7 +283,6 @@ export const SettingsSidebarContent = ({
       href: `${basePath}/workspace/feedback-sources`,
       icon: <ShapesIcon className={iconClassName} />,
       disabled: isBilling,
-      hidden: !isUnifyFeedbackAllowed,
     },
     {
       id: "integrations",
@@ -339,7 +334,7 @@ export const SettingsSidebarContent = ({
       label: t("workspace.settings.feedback_directories.nav_label"),
       href: `${basePath}/organization/feedback-directories`,
       icon: <FoldersIcon className={iconClassName} />,
-      hidden: isMember || !isFeedbackDirectoriesAllowed,
+      hidden: isMember,
     },
     {
       id: "org-api-keys",

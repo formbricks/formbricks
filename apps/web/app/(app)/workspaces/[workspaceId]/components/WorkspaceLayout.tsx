@@ -26,9 +26,6 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
     membership,
     workspace, // Current workspace details
     isAccessControlAllowed,
-    isUnifyFeedbackAllowed,
-    isFeedbackDirectoriesAllowed,
-    isDashboardsAllowed,
     workspacePermission,
     license,
     responseCount,
@@ -74,9 +71,6 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
           organizationWorkspacesLimit={organizationWorkspacesLimit}
           isLicenseActive={active}
           isAccessControlAllowed={isAccessControlAllowed}
-          isUnifyFeedbackAllowed={isUnifyFeedbackAllowed}
-          isFeedbackDirectoriesAllowed={isFeedbackDirectoriesAllowed}
-          isDashboardsAllowed={isDashboardsAllowed}
         />
         <div id="mainContent" className="flex flex-1 flex-col overflow-hidden bg-slate-50">
           <TopControlBar

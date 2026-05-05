@@ -72,9 +72,6 @@ interface NavigationProps {
   organizationWorkspacesLimit: number;
   isLicenseActive: boolean;
   isAccessControlAllowed: boolean;
-  isUnifyFeedbackAllowed: boolean;
-  isFeedbackDirectoriesAllowed: boolean;
-  isDashboardsAllowed: boolean;
 }
 
 export const MainNavigation = ({
@@ -89,9 +86,6 @@ export const MainNavigation = ({
   organizationWorkspacesLimit,
   isLicenseActive,
   isAccessControlAllowed,
-  isUnifyFeedbackAllowed,
-  isFeedbackDirectoriesAllowed,
-  isDashboardsAllowed,
 }: NavigationProps) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -164,7 +158,7 @@ export const MainNavigation = ({
             href: `/workspaces/${workspace.id}/unify/feedback-records`,
             icon: MessageSquareTextIcon,
             isActive: pathname?.includes("/unify/feedback-records"),
-            isHidden: !isUnifyFeedbackAllowed,
+            isHidden: false,
             disabled: isMembershipPending || isBilling,
           },
           {
@@ -172,13 +166,13 @@ export const MainNavigation = ({
             href: `/workspaces/${workspace.id}/dashboards`,
             icon: BarChart3Icon,
             isActive: pathname?.includes("/dashboards") || pathname?.includes("/charts"),
-            isHidden: !isDashboardsAllowed,
+            isHidden: false,
             disabled: isMembershipPending || isBilling,
           },
         ],
       },
     ],
-    [t, workspace.id, pathname, isMembershipPending, isBilling, isUnifyFeedbackAllowed, isDashboardsAllowed]
+    [t, workspace.id, pathname, isMembershipPending, isBilling]
   );
 
   const settingsNavigationItem = useMemo(
@@ -470,8 +464,6 @@ export const MainNavigation = ({
                 isFormbricksCloud={isFormbricksCloud}
                 isCollapsed={false}
                 isTextVisible={false}
-                isUnifyFeedbackAllowed={isUnifyFeedbackAllowed}
-                isFeedbackDirectoriesAllowed={isFeedbackDirectoriesAllowed}
                 workspaces={workspaces}
                 isLoadingWorkspaces={isLoadingWorkspaces}
                 onWorkspaceChange={handleSettingsWorkspaceChange}
@@ -514,36 +506,34 @@ export const MainNavigation = ({
 
               {/* Main Nav */}
               <ul className="space-y-2">
-                {mainNavigationSections
-                  .filter((section) => section.items.some((item) => !item.isHidden))
-                  .map((section) => (
-                    <li key={section.id}>
-                      {!isCollapsed && !isTextVisible && (
-                        <p className="px-4 pb-1 pt-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                          {section.name}
-                        </p>
-                      )}
+                {mainNavigationSections.map((section) => (
+                  <li key={section.id}>
+                    {!isCollapsed && !isTextVisible && (
+                      <p className="px-4 pb-1 pt-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                        {section.name}
+                      </p>
+                    )}
 
-                      <ul>
-                        {section.items.map(
-                          (item) =>
-                            !item.isHidden && (
-                              <NavigationLink
-                                key={item.name}
-                                href={item.href}
-                                isActive={item.isActive}
-                                isCollapsed={isCollapsed}
-                                isTextVisible={isTextVisible}
-                                disabled={item.disabled}
-                                disabledMessage={item.disabled ? disabledNavigationMessage : undefined}
-                                linkText={item.name}>
-                                <item.icon strokeWidth={1.5} />
-                              </NavigationLink>
-                            )
-                        )}
-                      </ul>
-                    </li>
-                  ))}
+                    <ul>
+                      {section.items.map(
+                        (item) =>
+                          !item.isHidden && (
+                            <NavigationLink
+                              key={item.name}
+                              href={item.href}
+                              isActive={item.isActive}
+                              isCollapsed={isCollapsed}
+                              isTextVisible={isTextVisible}
+                              disabled={item.disabled}
+                              disabledMessage={item.disabled ? disabledNavigationMessage : undefined}
+                              linkText={item.name}>
+                              <item.icon strokeWidth={1.5} />
+                            </NavigationLink>
+                          )
+                      )}
+                    </ul>
+                  </li>
+                ))}
 
                 <li className={cn("mt-2 border-t border-slate-100 pt-2", isCollapsed && "border-t-0 pt-0")}>
                   <ul>
