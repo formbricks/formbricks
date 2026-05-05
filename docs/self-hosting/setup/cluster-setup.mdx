@@ -1,128 +1,112 @@
 ---
 title: "Cluster Setup"
-description: "How to set up Formbricks in a High-Availability Cluster"
+description: "Run Formbricks in a high-availability cluster."
 icon: "circle-nodes"
 ---
 
 ## Overview
 
-Running Formbricks as a cluster of multiple instances offers several key advantages:
+Running Formbricks as a cluster of multiple instances gives you:
 
-- **High Availability**: Ensure your surveys remain accessible even if some instances fail
-
-- **Load Distribution**: Handle higher traffic by distributing requests across multiple instances
-
-- **Scalability**: Easily scale horizontally by adding more instances as your needs grow
-
-- **Zero-Downtime Updates**: Rolling updates without service interruption
+- **High Availability**: surveys remain accessible even if one app pod becomes unavailable
+- **Load Distribution**: traffic can be spread across multiple stateless Formbricks app instances
+- **Scalability**: you can scale app replicas horizontally as usage grows
+- **Zero-Downtime Updates**: rolling deployments are possible with the right orchestration setup
 
 ## Requirements
 
-To run Formbricks in a cluster setup, you'll need:
+For a Formbricks v5 cluster setup, plan for:
 
-- Shared PostgreSQL database
-
-- Shared Redis cache for session management and caching
-
-- Load balancer to distribute traffic
+- shared PostgreSQL for Formbricks and Hub, with `pgvector` support if Hub shares the same database
+- shared Redis/Valkey for caching, rate limiting, and audit-related flows
+- shared S3-compatible storage if you use file uploads or organization branding assets
+- a load balancer or ingress layer in front of the app
+- Formbricks Hub as part of the runtime
+- Envoy Gateway or an equivalent external edge rate limiter for the v5-covered public and API-key routes
 
 ## Architecture
 
-The Formbricks cluster setup consists of multiple components working together to provide a scalable and highly available system. Here's a detailed overview of the architecture:
-
 ```mermaid
 graph TD
-    subgraph Load Balancer
-        LB[Load Balancer/Ingress]
+    subgraph Edge
+        LB["Load Balancer / Ingress"]
+        RL["Envoy Or Equivalent Edge Rate Limiter"]
     end
 
     subgraph Formbricks Cluster
-        FB1[Formbricks Instance 1]
-        FB2[Formbricks Instance 2]
-        FB3[Formbricks Instance n]
+        FB1["Formbricks App 1"]
+        FB2["Formbricks App 2"]
+        FB3["Formbricks App n"]
+        HUB["Formbricks Hub"]
     end
 
     subgraph Data Storage
-        subgraph PostgreSQL HA
-            PSQL_P[(PostgreSQL Primary)]
-            PSQL_R[(PostgreSQL Replica)]
-        end
-
-        subgraph Redis Cluster
-            RC_P[(Redis Primary)]
-            RC_R[(Redis Replica)]
-        end
-
-        S3[S3 Compatible Storage]
+        PSQL["PostgreSQL"]
+        REDIS["Redis / Valkey"]
+        S3["S3 Compatible Storage"]
     end
 
-    %% Connections
-    LB --> FB1
-    LB --> FB2
-    LB --> FB3
+    LB --> RL
+    RL --> FB1
+    RL --> FB2
+    RL --> FB3
 
-    FB1 --> PSQL_P
-    FB2 --> PSQL_P
-    FB3 --> PSQL_P
-    PSQL_P --> PSQL_R
+    FB1 --> PSQL
+    FB2 --> PSQL
+    FB3 --> PSQL
+    HUB --> PSQL
 
-    FB1 --> RC_P
-    FB2 --> RC_P
-    FB3 --> RC_P
-    RC_P --> RC_R
+    FB1 --> REDIS
+    FB2 --> REDIS
+    FB3 --> REDIS
+
+    FB1 --> HUB
+    FB2 --> HUB
+    FB3 --> HUB
 
     FB1 --> S3
     FB2 --> S3
     FB3 --> S3
-
-    style PSQL_P fill:#00C4B8,color:#ffffff
-    style PSQL_R fill:#00C4B8,color:#ffffff
-    style RC_P fill:#FF6B6B,color:#ffffff
-    style RC_R fill:#FF6B6B,color:#ffffff
-    style S3 fill:#FFA94D,color:#ffffff
-    style FB1,FB2,FB3 fill:#0D9373,color:#ffffff
-    style LB fill:#4C6EF5,color:#ffffff
 ```
 
 ### Component Description
 
-1. **Formbricks Cluster**
+1. **Formbricks App Replicas**
 
-   - Multiple Formbricks instances (1..n) running in parallel
-   - Each instance is stateless and can handle any incoming request
-   - Automatic failover if any instance becomes unavailable
+   - stateless application instances that serve the UI, APIs, and survey flows
+   - can be scaled horizontally behind a load balancer
 
-2. **PostgreSQL Database**
+2. **Formbricks Hub**
 
-   - Primary database storing all survey, response, and contact data
-   - Optional high-availability setup with primary-replica configuration
-   - Handles all persistent data storage needs
+   - required in Formbricks v5
+   - stores and serves Hub-backed feedback record data
+   - can share the same PostgreSQL database as the main app when configured that way
 
-3. **Redis Cluster**
+3. **PostgreSQL**
 
-   - Acts as a distributed cache layer
-   - Improves performance by caching frequently accessed data
-   - Can be configured in HA mode with primary-replica setup
-   - Handles session management and real-time features
+   - primary persistent store for the Formbricks app and, by default, Hub
+   - should be backed up and monitored like any other stateful production dependency
 
-4. **S3 Compatible Storage**
+4. **Redis / Valkey**
 
-   - Stores file uploads and attachments
-   - Can be any S3-compatible storage service (AWS S3, MinIO, etc.)
-   - Provides reliable and scalable file storage
+   - required for caching, remaining application-enforced rate limits, and audit-related flows
+   - should be shared across all app replicas
 
-5. **Load Balancer**
-   - Distributes incoming traffic across all Formbricks instances
-   - Performs health checks and removes unhealthy instances
-   - Ensures even load distribution and high availability
+5. **S3-Compatible Storage**
+
+   - used for file uploads and media-related features
+   - should be shared across all replicas
+
+6. **Edge Layer**
+
+   - terminates or routes incoming traffic
+   - enforces rate limiting for the route groups that moved out of the application server in v5
 
 ## Redis Configuration
 
 <Note>
-  Redis is required for Formbricks to function. The application will not start without a Redis URL configured.
+  Redis/Valkey is required for Formbricks to function. The application will not start without `REDIS_URL`.
 </Note>
-
-Configure Redis by adding the following **required** environment variable to your instances:
 
 ```sh env
 REDIS_URL=redis://your-redis-host:6379
@@ -130,68 +114,49 @@ REDIS_URL=redis://your-redis-host:6379
 
 ## S3 Configuration
 
-Configure S3 storage by adding the following environment variables to your instances:
-
 ```sh env
-# Required for file uploads in serverless environments
 S3_ACCESS_KEY=your-access-key
 S3_SECRET_KEY=your-secret-key
 S3_REGION=your-region
 S3_BUCKET_NAME=your-bucket-name
-
-# For S3-compatible storage (e.g., StorJ, MinIO)
-# Leave empty for Amazon S3
 S3_ENDPOINT_URL=https://your-s3-compatible-endpoint
-
-# Enable for S3-compatible storage that requires path style
-# 0 for disabled, 1 for enabled
 S3_FORCE_PATH_STYLE=0
 ```
 
-When using S3 in a cluster setup, ensure that:
+When using S3 in a cluster setup, ensure:
 
-- All Formbricks instances have access to the same S3 bucket
-- The bucket has appropriate CORS settings configured
-- IAM roles/users have sufficient permissions for read/write operations
+- all replicas use the same bucket
+- the bucket has the required CORS settings
+- the credentials have read/write access for the assets you expect Formbricks to manage
+
+## v5 Cluster Notes
+
+### Hub Is Mandatory
+
+Formbricks v5 self-hosting requires Hub. Do not plan a cluster upgrade that keeps Hub disabled.
+
+### Edge Rate Limiting Must Exist Somewhere
+
+You do not have to use the Formbricks Helm chart's Envoy bundle, but you do need equivalent edge protection for
+the v5-covered public and API-key routes. Use the
+[rate-limiting guide](/self-hosting/advanced/rate-limiting) for the exact route coverage.
+
+### Cube Is Optional
+
+Cube is only needed for analytics dashboards or other analysis flows that depend on Cube queries. It is not part
+of the baseline Formbricks v5 cluster runtime.
 
 ## Kubernetes Setup
 
-Formbricks provides an official Helm chart for deploying the entire cluster stack on Kubernetes. The Helm chart is available in the [Formbricks GitHub repository](https://github.com/formbricks/formbricks/tree/main/helm-chart).
-
-### Features of the Helm Chart
-
-The Helm chart provides a complete deployment solution that includes:
-
-- Formbricks application with configurable replicas
-- PostgreSQL database (with optional HA configuration)
-- Redis cluster for caching
-- Optional Traefik ingress controller for routing and SSL termination
-- Automatic configuration of dependencies and networking
-
-### Installation Steps
-
-1. Add the Formbricks Helm repository:
+The current Kubernetes deployment path uses the OCI chart published from
+[`charts/formbricks`](https://github.com/formbricks/formbricks/tree/main/charts/formbricks):
 
 ```sh
-helm repo add formbricks https://raw.githubusercontent.com/formbricks/formbricks/main/helm-chart
-helm repo update
+helm install formbricks oci://ghcr.io/formbricks/helm-charts/formbricks \
+  -n formbricks \
+  --create-namespace \
+  -f values.yaml
 ```
 
-2. Install the chart:
-
-```sh
-helm install formbricks formbricks/formbricks
-```
-
-### Configuration Options
-
-The Helm chart can be customized using a `values.yaml` file to configure:
-
-- Number of Formbricks replicas
-- Resource limits and requests
-- Database configuration
-- Redis settings
-- Ingress rules and TLS
-- Environment variables and secrets
-
-Refer to the [Helm chart documentation](https://github.com/formbricks/formbricks/tree/main/helm-chart) for detailed configuration options and examples.
+For the Kubernetes-specific installation flow, mandatory Hub behavior, and Envoy bundle modes, use the dedicated
+[Kubernetes deployment guide](/self-hosting/setup/kubernetes).

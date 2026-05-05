@@ -15,6 +15,13 @@ Make sure Docker and Docker Compose are installed on your system. These are usua
   Docker documentation.
 </Note>
 
+<Info>
+  Starting with Formbricks v5, the production Docker Compose stack includes Formbricks Hub and the XM Suite v5
+  Cube.js services. Generate `HUB_API_KEY` and `CUBEJS_API_SECRET` during setup, keep `HUB_API_URL` at its
+  internal default unless Hub runs elsewhere, and use the [migration guide](/self-hosting/advanced/migration#v5)
+  when upgrading an existing 4.x instance.
+</Info>
+
 ## Start
 
 1. **Create a New Directory for Formbricks**
@@ -95,6 +102,29 @@ Make sure Docker and Docker Compose are installed on your system. These are usua
    sed -i '' "s/CRON_SECRET:.*/CRON_SECRET: $(openssl rand -hex 32)/" docker-compose.yml
    ```
 
+1. **Generate Hub API Key**
+
+   Formbricks v5 requires a Hub API key for the bundled Hub service.
+
+   For Linux:
+
+   ```bash
+   sed -i "/HUB_API_KEY:$/s/HUB_API_KEY:.*/HUB_API_KEY: $(openssl rand -hex 32)/" docker-compose.yml
+   ```
+
+   For macOS:
+
+   ```bash
+   sed -i '' "s/HUB_API_KEY:.*/HUB_API_KEY: $(openssl rand -hex 32)/" docker-compose.yml
+   ```
+
+   <Info>
+     The bundled production stack already sets <code>HUB_API_URL</code> to <code>http://hub:8080</code>. Only
+     change that value if your Formbricks app needs to reach Hub at a different address. If your deployment also
+     resolves Compose variables from a shell environment or <code>.env</code> file, keep the same
+     <code>HUB_API_KEY</code> available there as well.
+   </Info>
+
 1. **Start the Docker Setup**
 
    Now, you're ready to run Formbricks with Docker. Use the command below to start Formbricks together with PostgreSQL, Redis, Formbricks Hub, and Cube.js:
@@ -117,6 +147,12 @@ Make sure Docker and Docker Compose are installed on your system. These are usua
 ## Update
 
 Please take a look at our [migration guide](/self-hosting/advanced/migration) for version specific steps to update Formbricks.
+
+<Info>
+  For a major migration such as Formbricks 4.x to 5.0, update your compose structure and configuration first.
+  Pulling images alone is not enough if your stack does not yet include Hub, `HUB_API_KEY`, the bundled
+  `cube/` config files plus `CUBEJS_API_SECRET`, or the new edge rate-limiting setup.
+</Info>
 
 1. Pull the latest Formbricks image
 
@@ -163,7 +199,8 @@ The fastest way to test MinIO with Formbricks is to use the included `docker-com
    docker compose -f docker-compose.dev.yml up -d
    ```
 
-   This starts PostgreSQL, Valkey (Redis), MinIO, and Mailhog.
+   This starts PostgreSQL, Valkey (Redis), MinIO, Mailhog, Formbricks Hub, and a local Cube instance for
+   analytics testing.
 
 2. **Access MinIO Console**
 
