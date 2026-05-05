@@ -68,9 +68,6 @@ const isHidden = (node: HTMLElement, upTo: HTMLElement) => {
   return false;
 };
 
-const findVisible = (elements: HTMLElement[], container: HTMLElement) =>
-  elements.find((element) => !isHidden(element, container));
-
 const isDisabledFormControl = (element: HTMLElement) =>
   (element instanceof HTMLButtonElement ||
     element instanceof HTMLInputElement ||
@@ -106,8 +103,8 @@ const getTabbableCandidates = (container: HTMLElement) => {
 
 const getTabbableEdges = (container: HTMLElement) => {
   const candidates = getTabbableCandidates(container);
-  const first = findVisible(candidates, container);
-  const last = findVisible([...candidates].reverse(), container);
+  const first = candidates[0];
+  const last = candidates.at(-1);
 
   return [first, last] as const;
 };
@@ -117,6 +114,7 @@ export const useFocusTrap = <TElement extends HTMLElement>(
 ): MutableRef<TElement | null> => {
   const containerRef = useRef<TElement>(null);
   const lastFocusedElementRef = useRef<HTMLElement | null>(null);
+  const onEscapeKeyDownRef = useRef(onEscapeKeyDown);
   const focusScopeRef = useRef<FocusScope>({
     paused: false,
     pause() {
@@ -126,6 +124,11 @@ export const useFocusTrap = <TElement extends HTMLElement>(
       this.paused = false;
     },
   });
+
+  useEffect(() => {
+    // Keep the latest escape handler without re-running the main trap effect.
+    onEscapeKeyDownRef.current = onEscapeKeyDown;
+  }, [onEscapeKeyDown]);
 
   useEffect(() => {
     if (!enabled) return;
@@ -158,7 +161,12 @@ export const useFocusTrap = <TElement extends HTMLElement>(
 
     const focusLastElementInsideContainer = () => {
       const [firstFocusableElement] = getTabbableEdges(container);
-      focus(lastFocusedElementRef.current ?? firstFocusableElement ?? container, { select: true });
+      const lastFocusedElement =
+        lastFocusedElementRef.current && container.contains(lastFocusedElementRef.current)
+          ? lastFocusedElementRef.current
+          : null;
+
+      focus(lastFocusedElement ?? firstFocusableElement ?? container, { select: true });
     };
 
     const handleFocusIn = (event: FocusEvent) => {
@@ -201,9 +209,9 @@ export const useFocusTrap = <TElement extends HTMLElement>(
       if (focusScope.paused) return;
 
       const hasModifierKey = event.altKey || event.ctrlKey || event.metaKey;
-      if (event.key === "Escape" && !hasModifierKey && onEscapeKeyDown) {
+      if (event.key === "Escape" && !hasModifierKey && onEscapeKeyDownRef.current) {
         event.preventDefault();
-        onEscapeKeyDown();
+        onEscapeKeyDownRef.current();
         return;
       }
 
@@ -257,7 +265,7 @@ export const useFocusTrap = <TElement extends HTMLElement>(
         }
       }, 0);
     };
-  }, [enabled, onEscapeKeyDown]);
+  }, [enabled]);
 
   return containerRef;
 };

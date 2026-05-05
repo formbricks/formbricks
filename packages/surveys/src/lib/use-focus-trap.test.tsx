@@ -27,6 +27,23 @@ const FocusTrapFixture = ({
   );
 };
 
+const FocusTrapUnmountFixture = ({
+  showTrap,
+  onEscapeKeyDown,
+}: {
+  showTrap: boolean;
+  onEscapeKeyDown?: () => void;
+}) => (
+  <>
+    <button>External host button</button>
+    {showTrap ? (
+      <FocusTrapFixture onEscapeKeyDown={onEscapeKeyDown}>
+        <button>Survey action</button>
+      </FocusTrapFixture>
+    ) : null}
+  </>
+);
+
 describe("useFocusTrap", () => {
   afterEach(() => {
     cleanup();
@@ -131,6 +148,33 @@ describe("useFocusTrap", () => {
     expect(handleEscapeKeyDown).toHaveBeenCalledTimes(1);
   });
 
+  test("restores focus to the previously focused element on unmount", async () => {
+    const initialEscapeHandler = vi.fn();
+    const updatedEscapeHandler = vi.fn();
+    const { rerender } = render(
+      <FocusTrapUnmountFixture showTrap={false} onEscapeKeyDown={initialEscapeHandler} />
+    );
+
+    const hostButton = screen.getByRole("button", { name: "External host button" });
+
+    hostButton.focus();
+
+    rerender(<FocusTrapUnmountFixture showTrap={true} onEscapeKeyDown={initialEscapeHandler} />);
+
+    const trappedButton = screen.getByRole("button", { name: "Survey action" });
+
+    await waitFor(() => {
+      expect(document.activeElement).toBe(trappedButton);
+    });
+
+    rerender(<FocusTrapUnmountFixture showTrap={true} onEscapeKeyDown={updatedEscapeHandler} />);
+    rerender(<FocusTrapUnmountFixture showTrap={false} onEscapeKeyDown={updatedEscapeHandler} />);
+
+    await waitFor(() => {
+      expect(document.activeElement).toBe(screen.getByRole("button", { name: "External host button" }));
+    });
+  });
+
   test("re-traps focus when focusout has no related target", async () => {
     render(
       <FocusTrapFixture>
@@ -150,6 +194,41 @@ describe("useFocusTrap", () => {
 
     await waitFor(() => {
       expect(document.activeElement).toBe(trappedButton);
+    });
+  });
+
+  test("falls back to a connected element when the last focused node was removed", async () => {
+    const { rerender } = render(
+      <FocusTrapFixture>
+        <button>First action</button>
+        <button>Last action</button>
+      </FocusTrapFixture>
+    );
+
+    const firstButton = screen.getByRole("button", { name: "First action" });
+    const lastButton = screen.getByRole("button", { name: "Last action" });
+    const hostPageButton = screen.getByRole("button", { name: "Host page button" });
+
+    await waitFor(() => {
+      expect(document.activeElement).toBe(firstButton);
+    });
+
+    lastButton.focus();
+
+    await waitFor(() => {
+      expect(document.activeElement).toBe(lastButton);
+    });
+
+    rerender(
+      <FocusTrapFixture>
+        <button>First action</button>
+      </FocusTrapFixture>
+    );
+
+    hostPageButton.focus();
+
+    await waitFor(() => {
+      expect(document.activeElement).toBe(firstButton);
     });
   });
 
