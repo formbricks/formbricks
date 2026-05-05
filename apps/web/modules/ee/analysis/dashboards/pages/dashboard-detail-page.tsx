@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { logger } from "@formbricks/logger";
 import type { TChartQuery } from "@formbricks/types/analysis";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { type TOrganizationAIConfig, getOrganizationAIConfig } from "@/lib/ai/service";
+import { getAIDataAnalysisUnavailableReason, getOrganizationAIConfig } from "@/lib/ai/service";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { executeTenantScopedQuery } from "@/modules/ee/analysis/api/lib/cube-client";
@@ -16,15 +16,6 @@ import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { DashboardDetailClient } from "../components/dashboard-detail-client";
 import { getDashboard } from "../lib/dashboards";
 import { DASHBOARD_WIDGET_LOAD_ERROR, type TDashboardWidgetError } from "../lib/widget-errors";
-
-const getAIUnavailableReason = (
-  aiConfig: TOrganizationAIConfig
-): "not_in_plan" | "not_enabled" | "instance_not_configured" | undefined => {
-  if (!aiConfig.isAIDataAnalysisEntitled) return "not_in_plan";
-  if (!aiConfig.isAIDataAnalysisEnabled) return "not_enabled";
-  if (!aiConfig.isInstanceConfigured) return "instance_not_configured";
-  return undefined;
-};
 
 type TDashboardDetail = Awaited<ReturnType<typeof getDashboard>>;
 type TDashboardWidget = TDashboardDetail["widgets"][number];
@@ -110,7 +101,7 @@ export async function DashboardDetailPage({
     getFeedbackDirectoriesByWorkspaceId(workspaceId),
     getOrganizationAIConfig(organization.id),
   ]);
-  const aiUnavailableReason = getAIUnavailableReason(aiConfig);
+  const aiUnavailableReason = getAIDataAnalysisUnavailableReason(aiConfig);
   const isAIAvailable = !aiUnavailableReason;
 
   let dashboard;
