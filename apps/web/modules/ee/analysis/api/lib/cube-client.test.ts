@@ -31,7 +31,7 @@ vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
 
 const scopedInput = {
   query: { measures: ["FeedbackRecords.count"] },
-  feedbackRecordDirectoryId: "frd-1",
+  feedbackDirectoryId: "frd-1",
   workspaceId: "workspace-1",
   organizationId: "organization-1",
   userId: "user-1",
@@ -90,7 +90,7 @@ describe("executeTenantScopedQuery", () => {
     });
     expect(payload).toMatchObject({
       tenantId: "frd-1",
-      feedbackRecordDirectoryId: "frd-1",
+      feedbackDirectoryId: "frd-1",
       workspaceId: "workspace-1",
       organizationId: "organization-1",
       userId: "user-1",
@@ -104,7 +104,7 @@ describe("executeTenantScopedQuery", () => {
     const { executeTenantScopedQuery } = await import("./cube-client");
 
     await executeTenantScopedQuery(scopedInput);
-    await executeTenantScopedQuery({ ...scopedInput, feedbackRecordDirectoryId: "frd-2" });
+    await executeTenantScopedQuery({ ...scopedInput, feedbackDirectoryId: "frd-2" });
 
     const cubejs = await getCubeJsMock();
     expect(cubejs).toHaveBeenCalledTimes(2);
@@ -133,7 +133,7 @@ describe("executeTenantScopedQuery", () => {
         status: "failure",
         newObject: expect.objectContaining({
           tenantId: "frd-1",
-          feedbackRecordDirectoryId: "frd-1",
+          feedbackDirectoryId: "frd-1",
           workspaceId: "workspace-1",
           query: expect.objectContaining({
             filterMembers: ["FeedbackRecords.tenantId"],
@@ -176,7 +176,7 @@ describe("executeTenantScopedQuery", () => {
         status: "failure",
         newObject: expect.objectContaining({
           tenantId: "frd-1",
-          feedbackRecordDirectoryId: "frd-1",
+          feedbackDirectoryId: "frd-1",
           workspaceId: "workspace-1",
           errorName: "ConfigurationError",
         }),

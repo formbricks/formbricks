@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { AuthorizationError } from "@formbricks/types/errors";
-import { checkFeedbackRecordDirectoryAccess, checkWorkspaceAccess } from "./access";
+import { checkFeedbackDirectoryAccess, checkWorkspaceAccess } from "./access";
 
 vi.mock("server-only", () => ({}));
 
 const mocks = vi.hoisted(() => ({
   checkAuthorizationUpdated: vi.fn(),
-  getFeedbackRecordDirectoryAuthContext: vi.fn(),
+  getFeedbackDirectoryAuthContext: vi.fn(),
   getOrganizationIdFromWorkspaceId: vi.fn(),
   loggerError: vi.fn(),
   loggerWarn: vi.fn(),
@@ -27,12 +27,12 @@ vi.mock("@/lib/utils/helper", () => ({
   getOrganizationIdFromWorkspaceId: mocks.getOrganizationIdFromWorkspaceId,
 }));
 
-vi.mock("@/modules/ee/feedback-record-directory/lib/feedback-record-directory", () => ({
-  getFeedbackRecordDirectoryAuthContext: mocks.getFeedbackRecordDirectoryAuthContext,
+vi.mock("@/modules/ee/feedback-directory/lib/feedback-directory", () => ({
+  getFeedbackDirectoryAuthContext: mocks.getFeedbackDirectoryAuthContext,
 }));
 
 const accessInput = {
-  feedbackRecordDirectoryId: "frd-1",
+  feedbackDirectoryId: "frd-1",
   organizationId: "organization-1",
   workspaceId: "workspace-1",
   userId: "user-1",
@@ -85,54 +85,54 @@ describe("checkWorkspaceAccess", () => {
   });
 });
 
-describe("checkFeedbackRecordDirectoryAccess", () => {
-  test("returns the feedback record directory ID when it belongs to the authorized workspace", async () => {
-    mocks.getFeedbackRecordDirectoryAuthContext.mockResolvedValue({
+describe("checkFeedbackDirectoryAccess", () => {
+  test("returns the feedback directory ID when it belongs to the authorized workspace", async () => {
+    mocks.getFeedbackDirectoryAuthContext.mockResolvedValue({
       organizationId: "organization-1",
       workspaceIds: ["workspace-1"],
       isArchived: false,
     });
 
-    await expect(checkFeedbackRecordDirectoryAccess(accessInput)).resolves.toEqual({
-      feedbackRecordDirectoryId: "frd-1",
+    await expect(checkFeedbackDirectoryAccess(accessInput)).resolves.toEqual({
+      feedbackDirectoryId: "frd-1",
     });
   });
 
   test("rejects inaccessible feedback record directories with an audit-safe warning", async () => {
-    mocks.getFeedbackRecordDirectoryAuthContext.mockResolvedValue({
+    mocks.getFeedbackDirectoryAuthContext.mockResolvedValue({
       organizationId: "organization-1",
       workspaceIds: ["workspace-2"],
       isArchived: false,
     });
 
-    await expect(checkFeedbackRecordDirectoryAccess(accessInput)).rejects.toBeInstanceOf(AuthorizationError);
+    await expect(checkFeedbackDirectoryAccess(accessInput)).rejects.toBeInstanceOf(AuthorizationError);
     expect(mocks.loggerWarn).toHaveBeenCalledWith(
       expect.objectContaining({
-        feedbackRecordDirectoryId: "frd-1",
+        feedbackDirectoryId: "frd-1",
         organizationId: "organization-1",
         workspaceId: "workspace-1",
         userId: "user-1",
         source: "charts.executeQueryAction",
       }),
-      "Feedback record directory access denied for Cube query"
+      "Feedback directory access denied for Cube query"
     );
   });
 
   test("logs unexpected lookup failures before rethrowing", async () => {
     const error = new Error("database unavailable");
-    mocks.getFeedbackRecordDirectoryAuthContext.mockRejectedValue(error);
+    mocks.getFeedbackDirectoryAuthContext.mockRejectedValue(error);
 
-    await expect(checkFeedbackRecordDirectoryAccess(accessInput)).rejects.toThrow("database unavailable");
+    await expect(checkFeedbackDirectoryAccess(accessInput)).rejects.toThrow("database unavailable");
     expect(mocks.loggerError).toHaveBeenCalledWith(
       expect.objectContaining({
         error,
-        feedbackRecordDirectoryId: "frd-1",
+        feedbackDirectoryId: "frd-1",
         organizationId: "organization-1",
         workspaceId: "workspace-1",
         userId: "user-1",
         source: "charts.executeQueryAction",
       }),
-      "Failed to verify feedback record directory access for Cube query"
+      "Failed to verify feedback directory access for Cube query"
     );
   });
 });

@@ -8,7 +8,7 @@ const mocks = vi.hoisted(() => {
     actionClientAction,
     actionClientInputSchema: vi.fn(() => ({ action: actionClientAction })),
     checkWorkspaceAccess: vi.fn(),
-    checkFeedbackRecordDirectoryAccess: vi.fn(),
+    checkFeedbackDirectoryAccess: vi.fn(),
     createChart: vi.fn(),
     createOpenAI: vi.fn(),
     executeTenantScopedQuery: vi.fn(),
@@ -51,7 +51,7 @@ vi.mock("@/modules/ee/analysis/charts/lib/charts", () => ({
 }));
 
 vi.mock("@/modules/ee/analysis/lib/access", () => ({
-  checkFeedbackRecordDirectoryAccess: mocks.checkFeedbackRecordDirectoryAccess,
+  checkFeedbackDirectoryAccess: mocks.checkFeedbackDirectoryAccess,
   checkWorkspaceAccess: mocks.checkWorkspaceAccess,
 }));
 
@@ -85,8 +85,8 @@ describe("chart Cube actions", () => {
       organizationId: "organization-1",
       workspaceId: "workspace-1",
     });
-    mocks.checkFeedbackRecordDirectoryAccess.mockResolvedValue({
-      feedbackRecordDirectoryId: "frd-1",
+    mocks.checkFeedbackDirectoryAccess.mockResolvedValue({
+      feedbackDirectoryId: "frd-1",
     });
     mocks.createOpenAI.mockReturnValue(() => "model");
     mocks.createChart.mockResolvedValue({
@@ -112,13 +112,13 @@ describe("chart Cube actions", () => {
 
     const result = await executeQueryAction({
       ctx,
-      parsedInput: { workspaceId: "workspace-1", query, feedbackRecordDirectoryId: "frd-1" },
+      parsedInput: { workspaceId: "workspace-1", query, feedbackDirectoryId: "frd-1" },
     } as any);
 
     expect(result).toEqual([{ "FeedbackRecords.count": 1 }]);
     expect(mocks.checkWorkspaceAccess).toHaveBeenCalledWith("user-1", "workspace-1", "read");
-    expect(mocks.checkFeedbackRecordDirectoryAccess).toHaveBeenCalledWith({
-      feedbackRecordDirectoryId: "frd-1",
+    expect(mocks.checkFeedbackDirectoryAccess).toHaveBeenCalledWith({
+      feedbackDirectoryId: "frd-1",
       organizationId: "organization-1",
       workspaceId: "workspace-1",
       userId: "user-1",
@@ -126,7 +126,7 @@ describe("chart Cube actions", () => {
     });
     expect(mocks.executeTenantScopedQuery).toHaveBeenCalledWith({
       query,
-      feedbackRecordDirectoryId: "frd-1",
+      feedbackDirectoryId: "frd-1",
       workspaceId: "workspace-1",
       organizationId: "organization-1",
       userId: "user-1",
@@ -143,13 +143,13 @@ describe("chart Cube actions", () => {
         parsedInput: {
           workspaceId: "workspace-1",
           query: { measures: ["FeedbackRecords.count"] },
-          feedbackRecordDirectoryId: "frd-1",
+          feedbackDirectoryId: "frd-1",
         },
       } as any)
     ).rejects.toThrow("forbidden");
 
     expect(mocks.executeTenantScopedQuery).not.toHaveBeenCalled();
-    expect(mocks.checkFeedbackRecordDirectoryAccess).not.toHaveBeenCalled();
+    expect(mocks.checkFeedbackDirectoryAccess).not.toHaveBeenCalled();
   });
 
   test("generateAIChartAction delegates clean AI queries to the tenant-scoped Cube helper", async () => {
@@ -168,7 +168,7 @@ describe("chart Cube actions", () => {
       parsedInput: {
         workspaceId: "workspace-1",
         prompt: "responses by sentiment",
-        feedbackRecordDirectoryId: "frd-1",
+        feedbackDirectoryId: "frd-1",
       },
     } as any);
 
@@ -181,7 +181,7 @@ describe("chart Cube actions", () => {
         measures: ["FeedbackRecords.count"],
         dimensions: ["FeedbackRecords.sentiment"],
       },
-      feedbackRecordDirectoryId: "frd-1",
+      feedbackDirectoryId: "frd-1",
       workspaceId: "workspace-1",
       organizationId: "organization-1",
       userId: "user-1",

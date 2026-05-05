@@ -120,7 +120,7 @@ describe("Chart Service", () => {
             filters: [{ member: "FeedbackRecords.tenantId", operator: "equals", values: ["workspace-2"] }],
           },
           config: {},
-          feedbackRecordDirectoryId: mockFeedbackRecordDirectoryId,
+          feedbackDirectoryId: mockFeedbackDirectoryId,
           createdBy: mockUserId,
         })
       ).rejects.toThrow(/Tenant filters are enforced by Cube/);

@@ -17,7 +17,7 @@ export type TCubeQuerySource =
   | "dashboards.widget";
 
 export type TCubeTenantScope = {
-  feedbackRecordDirectoryId: string;
+  feedbackDirectoryId: string;
   workspaceId: string;
   organizationId: string;
   userId: string;
@@ -68,8 +68,8 @@ export const createCubeApiToken = (
   return {
     token: jwt.sign(
       {
-        tenantId: tenantScope.feedbackRecordDirectoryId,
-        feedbackRecordDirectoryId: tenantScope.feedbackRecordDirectoryId,
+        tenantId: tenantScope.feedbackDirectoryId,
+        feedbackDirectoryId: tenantScope.feedbackDirectoryId,
         workspaceId: tenantScope.workspaceId,
         organizationId: tenantScope.organizationId,
         userId: tenantScope.userId,

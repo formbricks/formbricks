@@ -8,7 +8,7 @@ icon: "shield-check"
 
 XM analytics reads Hub feedback records through Cube. Hub stores all tenants in a shared `feedback_records`
 table and uses `tenant_id` to separate rows. Workspace access is the application authorization boundary. In the
-current Hub schema, `tenant_id` stores the authorized FeedbackRecordDirectory ID, so every Cube query must be
+current Hub schema, `tenant_id` stores the authorized FeedbackDirectory ID, so every Cube query must be
 scoped to a directory that the authenticated workspace can access before data leaves Cube.
 
 ## Threat Model
@@ -30,7 +30,7 @@ The controls assume query bodies are attacker-influenced. Tenant identity is nev
     saved charts, or AI output, including filters, dimensions, time dimensions, and order clauses.
   </Step>
   <Step title="Mint a short-lived JWT">
-    The app mints a short-lived JWT per Cube request with `tenantId`, `feedbackRecordDirectoryId`,
+    The app mints a short-lived JWT per Cube request with `tenantId`, `feedbackDirectoryId`,
     `workspaceId`, `organizationId`, `userId`, `scope`, `iss`, `aud`, `jti`, and `exp` claims.
   </Step>
   <Step title="Verify the JWT in Cube">
@@ -45,7 +45,7 @@ The controls assume query bodies are attacker-influenced. Tenant identity is nev
 ## Audit Evidence
 
 The app records a sanitized `cubeQuery` audit event for each Cube query attempt, keyed by the JWT `jti`. Cube also
-emits a structured audit log line from `queryRewrite` with tenant, feedback record directory, workspace,
+emits a structured audit log line from `queryRewrite` with tenant, feedback directory, workspace,
 organization, user, request ID, source, and queried member names. Raw filter values are intentionally omitted from
 both logs.
 

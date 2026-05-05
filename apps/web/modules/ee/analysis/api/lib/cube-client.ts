@@ -13,7 +13,7 @@ const CUBE_QUERY_ERROR_MESSAGE =
 
 type TScopedCubeQueryInput = {
   query: TChartQuery;
-  feedbackRecordDirectoryId: string;
+  feedbackDirectoryId: string;
   workspaceId: string;
   organizationId: string;
   userId: string;
@@ -44,8 +44,8 @@ const queueCubeQueryAuditEvent = ({
     eventId: requestId,
     newObject: {
       requestId,
-      tenantId: input.feedbackRecordDirectoryId,
-      feedbackRecordDirectoryId: input.feedbackRecordDirectoryId,
+      tenantId: input.feedbackDirectoryId,
+      feedbackDirectoryId: input.feedbackDirectoryId,
       workspaceId: input.workspaceId,
       organizationId: input.organizationId,
       userId: input.userId,
@@ -69,7 +69,7 @@ export async function executeTenantScopedQuery(input: TScopedCubeQueryInput) {
   }
 
   const tenantScope = {
-    feedbackRecordDirectoryId: input.feedbackRecordDirectoryId,
+    feedbackDirectoryId: input.feedbackDirectoryId,
     workspaceId: input.workspaceId,
     organizationId: input.organizationId,
     userId: input.userId,

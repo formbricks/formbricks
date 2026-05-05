@@ -14,7 +14,7 @@ const { queryRewrite } = require(cubeConfigPath) as {
 
 const securityContext = {
   tenantId: "frd-1",
-  feedbackRecordDirectoryId: "frd-1",
+  feedbackDirectoryId: "frd-1",
   workspaceId: "workspace-1",
   organizationId: "organization-1",
   userId: "user-1",
@@ -76,13 +76,13 @@ describe("cube queryRewrite", () => {
     ).toThrow(/invalid Cube query scope/);
   });
 
-  test("rejects mismatched tenant and feedback record directory claims", () => {
+  test("rejects mismatched tenant and feedback directory claims", () => {
     expect(() =>
       queryRewrite(
         { measures: ["FeedbackRecords.count"] },
-        { securityContext: { ...securityContext, feedbackRecordDirectoryId: "frd-2" } }
+        { securityContext: { ...securityContext, feedbackDirectoryId: "frd-2" } }
       )
-    ).toThrow(/tenantId\/feedbackRecordDirectoryId mismatch/);
+    ).toThrow(/tenantId\/feedbackDirectoryId mismatch/);
   });
 
   test("rejects caller-supplied tenant filters", () => {
@@ -115,7 +115,7 @@ describe("cube queryRewrite", () => {
       event: "cube.query",
       status: "failure",
       tenantId: "frd-1",
-      feedbackRecordDirectoryId: "frd-1",
+      feedbackDirectoryId: "frd-1",
       workspaceId: "workspace-1",
       organizationId: "organization-1",
       userId: "user-1",
@@ -213,7 +213,7 @@ describe("cube queryRewrite", () => {
       event: "cube.query",
       status: "success",
       tenantId: "frd-1",
-      feedbackRecordDirectoryId: "frd-1",
+      feedbackDirectoryId: "frd-1",
       workspaceId: "workspace-1",
       organizationId: "organization-1",
       userId: "user-1",
