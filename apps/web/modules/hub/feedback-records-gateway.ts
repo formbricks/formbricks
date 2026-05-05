@@ -10,6 +10,7 @@ import { verifyFeedbackRecordsGatewayToken } from "@/lib/jwt";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getBearerTokenFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { getFeedbackDirectoryAuthContext } from "@/modules/ee/feedback-directory/lib/feedback-directory";
+import { getIsUnifyFeedbackEnabled } from "@/modules/ee/license-check/lib/utils";
 import {
   TEnvoyAuthenticatedPrincipal,
   TEnvoyRequestAuthorizer,
@@ -254,6 +255,11 @@ const authorizeGatewayRequest = async (
 ): Promise<{ allowed: true } | { allowed: false }> => {
   const feedbackDirectory = await getFeedbackDirectoryAuthContext(feedbackDirectoryId);
   if (!feedbackDirectory || feedbackDirectory.isArchived) {
+    return { allowed: false };
+  }
+
+  const isUnifyFeedbackAllowed = await getIsUnifyFeedbackEnabled(feedbackDirectory.organizationId);
+  if (!isUnifyFeedbackAllowed) {
     return { allowed: false };
   }
 

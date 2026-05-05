@@ -1830,7 +1830,9 @@
         "failed_to_load_chart_data": "Det gick inte att ladda diagramdata",
         "no_dashboards_found": "Inga instrumentpaneler hittades.",
         "no_data_message": "Ingen data. Det finns för närvarande ingen information att visa. Lägg till diagram för att bygga din instrumentpanel.",
-        "please_enter_name": "Ange ett namn på instrumentpanelen"
+        "please_enter_name": "Ange ett namn på instrumentpanelen",
+        "upgrade_prompt_description": "Skapa insiktsdashboards från din feedbackdata. Tillgängligt på Pro- och Scale-planerna.",
+        "upgrade_prompt_title": "Uppgradera för att låsa upp Dashboards"
       },
       "manage_feedback_sources": "Manage feedback sources",
       "no_feedback_records_message": "Du har inga feedbackposter att rapportera om. Ställ in återkopplingskällor för att mata in data i systemet.",
@@ -2445,10 +2447,13 @@
         "trial_feature_api_access": "API-åtkomst",
         "trial_feature_attribute_segmentation": "Attributbaserad segmentering",
         "trial_feature_contact_segment_management": "Kontakt- och segmenthantering",
+        "trial_feature_dashboards": "Insiktsdashboards",
         "trial_feature_email_followups": "E-postuppföljningar",
+        "trial_feature_feedback_directories": "Feedbackkataloger",
         "trial_feature_hide_branding": "Dölj Formbricks-branding",
         "trial_feature_mobile_sdks": "iOS- och Android-SDK:er",
         "trial_feature_respondent_identification": "Respondentidentifiering",
+        "trial_feature_unify_feedback": "Unify Feedback-inkorg",
         "trial_feature_unlimited_seats": "Obegränsade platser",
         "trial_feature_webhooks": "Anpassade webhooks",
         "trial_no_credit_card": "14 dagars provperiod, inget kreditkort krävs",
@@ -2569,6 +2574,8 @@
         "title": "Feedback-kataloger",
         "unarchive": "Avarkivera",
         "unarchive_workspace_conflict": "Den här katalogen kan inte avarkiveras eftersom en eller flera tilldelade arbetsytor är arkiverade.",
+        "upgrade_prompt_description": "Organisera feedbackposter i kataloger och dirigera data till rätt arbetsyta. Tillgängligt på Pro- och Scale-planerna.",
+        "upgrade_prompt_title": "Uppgradera för att låsa upp Feedbackpostkataloger",
         "workspace_access": "Arbetsyteåtkomst"
       },
       "general": {
@@ -3786,6 +3793,8 @@
       "unify_feedback": "Samla feedback",
       "update_mapping_description": "Uppdatera mappningskonfigurationen för den här källan.",
       "updated_at": "Uppdaterad",
+      "upgrade_prompt_description": "Samla kundfeedback från alla källor i en inkorg. Tillgängligt på Pro- och Scale-planerna.",
+      "upgrade_prompt_title": "Uppgradera för att låsa upp Unify Feedback",
       "upload_csv_data_description": "Ladda upp en CSV-fil för att importera feedbackdata.",
       "upload_csv_file": "Ladda upp CSV-fil",
       "user_identifier": "Användare",

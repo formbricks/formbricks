@@ -1830,7 +1830,9 @@
         "failed_to_load_chart_data": "Grafik verileri yüklenemedi",
         "no_dashboards_found": "Gösterge paneli bulunamadı.",
         "no_data_message": "Veri Yok. Şu anda görüntülenecek bilgi bulunmuyor. Gösterge panelini oluşturmak için grafik ekle.",
-        "please_enter_name": "Lütfen bir gösterge paneli adı gir"
+        "please_enter_name": "Lütfen bir gösterge paneli adı gir",
+        "upgrade_prompt_description": "Geri bildirim verilerinizden içgörü panoları oluşturun. Pro ve Scale planlarında kullanılabilir.",
+        "upgrade_prompt_title": "Panoların Kilidini Açmak İçin Yükseltin"
       },
       "manage_feedback_sources": "Manage feedback sources",
       "no_feedback_records_message": "Raporlayabileceğiniz Geri Bildirim Kayıtlarınız yok. Verileri sisteme beslemek için Geri Bildirim Kaynaklarını ayarlayın.",
@@ -2445,10 +2447,13 @@
         "trial_feature_api_access": "API Erişimi",
         "trial_feature_attribute_segmentation": "Özellik Tabanlı Segmentasyon",
         "trial_feature_contact_segment_management": "İletişim ve Segment Yönetimi",
+        "trial_feature_dashboards": "İçgörü Panoları",
         "trial_feature_email_followups": "E-posta Takipleri",
+        "trial_feature_feedback_directories": "Geri Bildirim Dizinleri",
         "trial_feature_hide_branding": "Formbricks Markasını Gizle",
         "trial_feature_mobile_sdks": "iOS ve Android SDK'ları",
         "trial_feature_respondent_identification": "Katılımcı Kimlik Tespiti",
+        "trial_feature_unify_feedback": "Geri Bildirimi Birleştir Gelen Kutusu",
         "trial_feature_unlimited_seats": "Sınırsız Kullanıcı",
         "trial_feature_webhooks": "Özel Webhook'lar",
         "trial_no_credit_card": "14 günlük deneme, kredi kartı gerekmez",
@@ -2569,6 +2574,8 @@
         "title": "Geri Bildirim Dizinleri",
         "unarchive": "Arşivden çıkar",
         "unarchive_workspace_conflict": "Atanmış çalışma alanlarından biri veya daha fazlası arşivlendiği için bu dizin arşivden çıkarılamaz.",
+        "upgrade_prompt_description": "Geri bildirim kayıtlarını dizinler halinde düzenleyin ve verileri doğru çalışma alanına yönlendirin. Pro ve Scale planlarında kullanılabilir.",
+        "upgrade_prompt_title": "Geri Bildirim Kayıt Dizinlerinin Kilidini Açmak İçin Yükseltin",
         "workspace_access": "Çalışma alanı erişimi"
       },
       "general": {
@@ -3786,6 +3793,8 @@
       "unify_feedback": "Geri Bildirimleri Birleştir",
       "update_mapping_description": "Bu kaynak için eşleme yapılandırmasını güncelle.",
       "updated_at": "Güncellenme tarihi",
+      "upgrade_prompt_description": "Her kaynaktan gelen müşteri geri bildirimlerini tek bir gelen kutusunda birleştirin. Pro ve Scale planlarında kullanılabilir.",
+      "upgrade_prompt_title": "Geri Bildirimi Birleştir'in Kilidini Açmak İçin Yükseltin",
       "upload_csv_data_description": "Geri bildirim verilerini içe aktarmak için bir CSV dosyası yükle.",
       "upload_csv_file": "CSV Dosyası Yükle",
       "user_identifier": "Kullanıcı",

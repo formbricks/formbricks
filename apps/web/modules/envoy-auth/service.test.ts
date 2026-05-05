@@ -12,6 +12,7 @@ const {
   mockGetFeedbackRecordTenant,
   mockCheckAuthorizationUpdated,
   mockUserFindUnique,
+  mockGetIsUnifyFeedbackEnabled,
 } = vi.hoisted(() => ({
   mockAuthenticateApiKeyFromHeaders: vi.fn(),
   mockGetApiKeyFromHeaders: vi.fn(),
@@ -22,6 +23,7 @@ const {
   mockGetFeedbackRecordTenant: vi.fn(),
   mockCheckAuthorizationUpdated: vi.fn(),
   mockUserFindUnique: vi.fn(),
+  mockGetIsUnifyFeedbackEnabled: vi.fn(),
 }));
 
 vi.mock("@/modules/api/lib/api-key-auth", () => ({
@@ -52,6 +54,10 @@ vi.mock("@formbricks/database", () => ({
 
 vi.mock("@/modules/ee/feedback-directory/lib/feedback-directory", () => ({
   getFeedbackDirectoryAuthContext: mockGetFeedbackDirectoryAuthContext,
+}));
+
+vi.mock("@/modules/ee/license-check/lib/utils", () => ({
+  getIsUnifyFeedbackEnabled: mockGetIsUnifyFeedbackEnabled,
 }));
 
 vi.mock("@/modules/hub/service", () => ({
@@ -112,6 +118,7 @@ describe("authorizeEnvoyRequest", () => {
     });
     mockCheckAuthorizationUpdated.mockResolvedValue(true);
     mockUserFindUnique.mockResolvedValue({ id: "user_1", isActive: true });
+    mockGetIsUnifyFeedbackEnabled.mockResolvedValue(true);
   });
 
   test("allows create requests with an API key and body tenant_id", async () => {
@@ -340,6 +347,36 @@ describe("authorizeEnvoyRequest", () => {
     );
 
     expect(response.status).toBe(403);
+  });
+
+  test("returns 403 when unify feedback entitlement is disabled", async () => {
+    mockGetIsUnifyFeedbackEnabled.mockResolvedValue(false);
+    mockGetApiKeyFromHeaders.mockReturnValue("fbk_test");
+    mockAuthenticateApiKeyFromHeaders.mockResolvedValue({
+      type: "apiKey",
+      apiKeyId: "key_1",
+      organizationId: "org_1",
+      organizationAccess: { accessControl: { read: true, write: true } },
+      workspacePermissions: [],
+      feedbackDirectoryPermissions: [
+        {
+          feedbackDirectoryId,
+          feedbackDirectoryName: "Directory 1",
+          permission: "write",
+        },
+      ],
+    });
+
+    const response = await authorizeEnvoyRequest(
+      createRequest(`http://localhost/api/envoy-auth/v1/feedback-records?tenant_id=${feedbackDirectoryId}`, {
+        headers: {
+          "x-api-key": "fbk_test",
+        },
+      })
+    );
+
+    expect(response.status).toBe(403);
+    expect(mockGetIsUnifyFeedbackEnabled).toHaveBeenCalledWith("org_1");
   });
 
   test("returns 403 for archived directories", async () => {

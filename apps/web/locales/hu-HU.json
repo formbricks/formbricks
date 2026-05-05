@@ -1830,7 +1830,9 @@
         "failed_to_load_chart_data": "A diagram adatainak betöltése sikertelen",
         "no_dashboards_found": "Nem található vezérlőpult.",
         "no_data_message": "Nincsenek adatok. Jelenleg nincsenek megjeleníthető információk. Adjon hozzá diagramokat az irányítópult felépítéséhez.",
-        "please_enter_name": "Kérjük, adjon nevet a vezérlőpultnak"
+        "please_enter_name": "Kérjük, adjon nevet a vezérlőpultnak",
+        "upgrade_prompt_description": "Hozzon létre betekintési irányítópultokat a visszajelzési adataiból. A Pro és Scale csomagokban érhető el.",
+        "upgrade_prompt_title": "Frissítsen a csomagon, hogy feloldja az Irányítópultokat"
       },
       "manage_feedback_sources": "Manage feedback sources",
       "no_feedback_records_message": "Nincsenek visszajelzési rekordjai, amelyekről jelentést tehetne. Állítsa be a visszacsatolási forrásokat, hogy adatokat tápláljon be a rendszerbe.",
@@ -2445,10 +2447,13 @@
         "trial_feature_api_access": "API-hozzáférés",
         "trial_feature_attribute_segmentation": "Attribútumalapú szakaszolás",
         "trial_feature_contact_segment_management": "Partner- és szakaszkezelés",
+        "trial_feature_dashboards": "Betekintési Irányítópultok",
         "trial_feature_email_followups": "E-mailes utókövetések",
+        "trial_feature_feedback_directories": "Visszajelzési könyvtárak",
         "trial_feature_hide_branding": "Formbricks márkajel elrejtése",
         "trial_feature_mobile_sdks": "iOS és Android SDK-k",
         "trial_feature_respondent_identification": "Válaszadó-azonosítás",
+        "trial_feature_unify_feedback": "Egyesített Visszajelzési Postaláda",
         "trial_feature_unlimited_seats": "Korlátlan számú hely",
         "trial_feature_webhooks": "Egyéni webhorgok",
         "trial_no_credit_card": "14 napos próbaidőszak, nincs szükség hitelkártyára",
@@ -2569,6 +2574,8 @@
         "title": "Visszajelzési könyvtárak",
         "unarchive": "Archiválás visszavonása",
         "unarchive_workspace_conflict": "A könyvtár nem állítható vissza, mert egy vagy több hozzárendelt munkaterület archiválva van.",
+        "upgrade_prompt_description": "Szervezze a visszajelzési rekordokat könyvtárakba, és irányítsa az adatokat a megfelelő munkaterületre. A Pro és Scale csomagokban érhető el.",
+        "upgrade_prompt_title": "Frissítsen a csomagon, hogy feloldja a Visszajelzési Rekord Könyvtárakat",
         "workspace_access": "Munkaterület-hozzáférés"
       },
       "general": {
@@ -3786,6 +3793,8 @@
       "unify_feedback": "Visszajelzések egyesítése",
       "update_mapping_description": "Frissítse a leképezési konfigurációt ehhez a forráshoz.",
       "updated_at": "Frissítve",
+      "upgrade_prompt_description": "Egyesítse az ügyfelek visszajelzéseit minden forrásból egyetlen postaládában. A Pro és Scale csomagokban érhető el.",
+      "upgrade_prompt_title": "Frissítsen a csomagon, hogy feloldja az Egyesített Visszajelzési Postaládát",
       "upload_csv_data_description": "Tölts fel egy CSV fájlt a visszajelzési adatok importálásához.",
       "upload_csv_file": "CSV fájl feltöltése",
       "user_identifier": "Felhasználó",

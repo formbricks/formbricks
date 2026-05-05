@@ -2,11 +2,13 @@
 
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
+import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
+import { getIsUnifyFeedbackEnabled } from "@/modules/ee/license-check/lib/utils";
 import { semanticSearchFeedbackRecords } from "@/modules/hub/service";
 import type { SemanticSearchResultItem } from "@/modules/hub/types";
 
@@ -33,6 +35,10 @@ export type TTopicsPreviewSearchActionResult = {
 
 const ensureReadAccess = async (userId: string, workspaceId: string): Promise<void> => {
   const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
+  const isUnifyFeedbackAllowed = await getIsUnifyFeedbackEnabled(organizationId);
+  if (!isUnifyFeedbackAllowed) {
+    throw new OperationNotAllowedError("Unify Feedback is not enabled for this organization");
+  }
   await checkAuthorizationUpdated({
     userId,
     organizationId,

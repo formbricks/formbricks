@@ -1764,6 +1764,8 @@ checksums:
     workspace/analysis/dashboards/no_dashboards_found: e049ec0356009c3a0aa2c729d916efc6
     workspace/analysis/dashboards/no_data_message: 464d50cf30281a5b6af2726846eb14b4
     workspace/analysis/dashboards/please_enter_name: b9211ed8a0882c0e0109beba48685d68
+    workspace/analysis/dashboards/upgrade_prompt_description: 6558780dd4cf1cb2faaa889ed5aaa5e7
+    workspace/analysis/dashboards/upgrade_prompt_title: eef434745b5ef7ecc7f49a16e67e5a7a
     workspace/analysis/manage_feedback_sources: 6aa6a82334ab680b5aa187b7245e8ec8
     workspace/analysis/no_feedback_records_message: 67d6ebb9c040304789017d795ca474fc
     workspace/analysis/no_feedback_records_with_sources_message: 4b72636a55afb4dcf977161ad5a15467
@@ -2344,10 +2346,13 @@ checksums:
     workspace/settings/billing/trial_feature_api_access: 8c6d03728c3d9470616eb5cee5f9f65d
     workspace/settings/billing/trial_feature_attribute_segmentation: 90087da973ae48e32ec6d863516fc8c9
     workspace/settings/billing/trial_feature_contact_segment_management: 27f17a039ebed6413811ab3a461db2f4
+    workspace/settings/billing/trial_feature_dashboards: 04e267e196068634607d701fb7346d30
     workspace/settings/billing/trial_feature_email_followups: 0cc02dc14aa28ce94ca6153c306924e5
+    workspace/settings/billing/trial_feature_feedback_directories: cf9a57b3cbac0f04b98e06fb693e986e
     workspace/settings/billing/trial_feature_hide_branding: b8dbcb24e50e0eb4aeb0c97891cac61d
     workspace/settings/billing/trial_feature_mobile_sdks: 0963480a27df49657c1b7507adec9a06
     workspace/settings/billing/trial_feature_respondent_identification: a82e24ab4c27c5e485326678d9b7bd79
+    workspace/settings/billing/trial_feature_unify_feedback: e56481905ea1cf0e47dc30cf0fac6d22
     workspace/settings/billing/trial_feature_unlimited_seats: a3257d5b6a23bfbc4b7fd1108087a823
     workspace/settings/billing/trial_feature_webhooks: 5ead39fba97fbd37835a476ee67fdd94
     workspace/settings/billing/trial_no_credit_card: 01c70aa6e1001815a9a11951394923ca
@@ -2462,6 +2467,8 @@ checksums:
     workspace/settings/feedback_directories/title: cf9a57b3cbac0f04b98e06fb693e986e
     workspace/settings/feedback_directories/unarchive: 671fc7e9d7c8cb4d182a25a46551c168
     workspace/settings/feedback_directories/unarchive_workspace_conflict: 82f4b8ebaf41589cfb96e6398dafcc76
+    workspace/settings/feedback_directories/upgrade_prompt_description: eb8a4bf60bcae458899e1ea94094789d
+    workspace/settings/feedback_directories/upgrade_prompt_title: 0a7b67ccf15a0aa8c64e5da7feb6e532
     workspace/settings/feedback_directories/workspace_access: 32407b39cf878fb579559c1ed3660892
     workspace/settings/general/ai_data_analysis_enabled: 45fabb594da6851f73fef50ca40fe525
     workspace/settings/general/ai_data_analysis_enabled_description: 46d4f0bdf4ebf89e78f79cc961a2de83
@@ -3626,6 +3633,8 @@ checksums:
     workspace/unify/unify_feedback: cd68c8ce0445767e7dcfb4de789903d5
     workspace/unify/update_mapping_description: 58d5966c0c9b406c037dff3aa8bcb396
     workspace/unify/updated_at: 8fdb85248e591254973403755dcc3724
+    workspace/unify/upgrade_prompt_description: 0105e2b7182b9680c179156ce16b6819
+    workspace/unify/upgrade_prompt_title: b2c005dc39a22108daf68f9c134bbba9
     workspace/unify/upload_csv_data_description: 7fab46222ab05a4424db90a7cc96cdf5
     workspace/unify/upload_csv_file: b77797b68cb46a614b3adaa4db24d4c2
     workspace/unify/user_identifier: 61073457a5c3901084b557d065f876be

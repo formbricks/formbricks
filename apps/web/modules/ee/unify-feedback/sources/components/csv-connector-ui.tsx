@@ -142,7 +142,7 @@ export function CsvConnectorUI({
                 <thead className="bg-slate-50">
                   <tr>
                     {csvPreview[0]?.map((header, i) => (
-                      <th key={i} className="px-3 py-2 text-left font-medium text-slate-700">
+                      <th key={`${header}-${i}`} className="px-3 py-2 text-left font-medium text-slate-700">
                         {header}
                       </th>
                     ))}
@@ -150,9 +150,11 @@ export function CsvConnectorUI({
                 </thead>
                 <tbody>
                   {csvPreview.slice(1, 4).map((row, rowIndex) => (
-                    <tr key={rowIndex} className="border-t border-slate-100">
+                    <tr key={`${rowIndex}-${row.join("|")}`} className="border-t border-slate-100">
                       {row.map((cell, cellIndex) => (
-                        <td key={cellIndex} className="px-3 py-2 text-slate-600">
+                        <td
+                          key={`${csvPreview[0]?.[cellIndex] ?? cellIndex}-${cellIndex}`}
+                          className="px-3 py-2 text-slate-600">
                           {cell || <span className="text-slate-300">—</span>}
                         </td>
                       ))}

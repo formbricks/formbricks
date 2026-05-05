@@ -1830,7 +1830,9 @@
         "failed_to_load_chart_data": "Falha ao carregar os dados do gráfico",
         "no_dashboards_found": "Nenhum painel encontrado.",
         "no_data_message": "Sem Dados. Atualmente não há informação para apresentar. Adiciona gráficos para construir o teu painel.",
-        "please_enter_name": "Por favor, introduza um nome para o painel"
+        "please_enter_name": "Por favor, introduza um nome para o painel",
+        "upgrade_prompt_description": "Cria dashboards de insights a partir dos teus dados de feedback. Disponível nos planos Pro e Scale.",
+        "upgrade_prompt_title": "Faz upgrade para desbloquear Dashboards"
       },
       "manage_feedback_sources": "Manage feedback sources",
       "no_feedback_records_message": "Você não tem registros de feedback para relatar. Configure fontes de feedback para alimentar dados no sistema.",
@@ -2445,10 +2447,13 @@
         "trial_feature_api_access": "Acesso à API",
         "trial_feature_attribute_segmentation": "Segmentação Baseada em Atributos",
         "trial_feature_contact_segment_management": "Gestão de Contactos e Segmentos",
+        "trial_feature_dashboards": "Dashboards de Insights",
         "trial_feature_email_followups": "Seguimentos por E-mail",
+        "trial_feature_feedback_directories": "Diretórios de Feedback",
         "trial_feature_hide_branding": "Ocultar Marca Formbricks",
         "trial_feature_mobile_sdks": "SDKs para iOS e Android",
         "trial_feature_respondent_identification": "Identificação de Inquiridos",
+        "trial_feature_unify_feedback": "Unify Feedback Inbox",
         "trial_feature_unlimited_seats": "Lugares Ilimitados",
         "trial_feature_webhooks": "Webhooks Personalizados",
         "trial_no_credit_card": "14 dias de teste, sem necessidade de cartão de crédito",
@@ -2569,6 +2574,8 @@
         "title": "Diretórios de Feedback",
         "unarchive": "Desarquivar",
         "unarchive_workspace_conflict": "Não é possível desarquivar este diretório porque um ou mais workspaces atribuídos estão arquivados.",
+        "upgrade_prompt_description": "Organiza os registos de feedback em diretórios e encaminha os dados para o workspace certo. Disponível nos planos Pro e Scale.",
+        "upgrade_prompt_title": "Faz upgrade para desbloquear Diretórios de Registos de Feedback",
         "workspace_access": "Acesso ao workspace"
       },
       "general": {
@@ -3786,6 +3793,8 @@
       "unify_feedback": "Unificar feedback",
       "update_mapping_description": "Atualiza a configuração de mapeamento para esta origem.",
       "updated_at": "Atualizado em",
+      "upgrade_prompt_description": "Unifica o feedback dos clientes de todas as fontes numa única inbox. Disponível nos planos Pro e Scale.",
+      "upgrade_prompt_title": "Faz upgrade para desbloquear Unify Feedback",
       "upload_csv_data_description": "Carrega um ficheiro CSV para importar dados de feedback.",
       "upload_csv_file": "Carregar ficheiro CSV",
       "user_identifier": "Utilizador",

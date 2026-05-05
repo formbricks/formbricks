@@ -5,6 +5,7 @@ import { Output, generateText } from "ai";
 import { z } from "zod";
 import { type TChartQuery, ZChartQuery } from "@formbricks/types/analysis";
 import { ZId } from "@formbricks/types/common";
+import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { executeTenantScopedQuery } from "@/modules/ee/analysis/api/lib/cube-client";
@@ -20,6 +21,14 @@ import { checkFeedbackDirectoryAccess, checkWorkspaceAccess } from "@/modules/ee
 import { generateSchemaContext } from "@/modules/ee/analysis/lib/ai-schema-context";
 import { ZChartCreateInput, ZChartType, ZChartUpdateInput } from "@/modules/ee/analysis/types/analysis";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
+import { getIsDashboardsEnabled } from "@/modules/ee/license-check/lib/utils";
+
+const checkDashboardsEnabled = async (organizationId: string) => {
+  const isAllowed = await getIsDashboardsEnabled(organizationId);
+  if (!isAllowed) {
+    throw new OperationNotAllowedError("Dashboards are not enabled for this organization");
+  }
+};
 
 /** Client-facing chart input (workspaceId and createdBy are resolved server-side) */
 const ZChartCreateInputClient = ZChartCreateInput.omit({ workspaceId: true, createdBy: true });
@@ -45,6 +54,8 @@ export const createChartAction = authenticatedActionClient.inputSchema(ZCreateCh
         parsedInput.workspaceId,
         "readWrite"
       );
+      await checkDashboardsEnabled(organizationId);
+
       await checkFeedbackDirectoryAccess({
         feedbackDirectoryId: parsedInput.chartInput.feedbackDirectoryId,
         organizationId,
@@ -90,6 +101,7 @@ export const updateChartAction = authenticatedActionClient.inputSchema(ZUpdateCh
         parsedInput.workspaceId,
         "readWrite"
       );
+      await checkDashboardsEnabled(organizationId);
 
       const { chart, updatedChart } = await updateChart(
         parsedInput.chartId,
@@ -128,6 +140,7 @@ export const duplicateChartAction = authenticatedActionClient.inputSchema(ZDupli
         parsedInput.workspaceId,
         "readWrite"
       );
+      await checkDashboardsEnabled(organizationId);
 
       const duplicatedChart = await duplicateChart(parsedInput.chartId, workspaceId, ctx.user.id);
 
@@ -161,6 +174,7 @@ export const deleteChartAction = authenticatedActionClient.inputSchema(ZDeleteCh
         parsedInput.workspaceId,
         "readWrite"
       );
+      await checkDashboardsEnabled(organizationId);
 
       const chart = await deleteChart(parsedInput.chartId, workspaceId);
 
@@ -188,7 +202,12 @@ export const getChartAction = authenticatedActionClient
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZGetChartAction>;
     }) => {
-      const { workspaceId } = await checkWorkspaceAccess(ctx.user.id, parsedInput.workspaceId, "read");
+      const { organizationId, workspaceId } = await checkWorkspaceAccess(
+        ctx.user.id,
+        parsedInput.workspaceId,
+        "read"
+      );
+      await checkDashboardsEnabled(organizationId);
 
       return getChart(parsedInput.chartId, workspaceId);
     }
@@ -208,7 +227,12 @@ export const getChartsAction = authenticatedActionClient
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZGetChartsAction>;
     }) => {
-      const { workspaceId } = await checkWorkspaceAccess(ctx.user.id, parsedInput.workspaceId, "read");
+      const { organizationId, workspaceId } = await checkWorkspaceAccess(
+        ctx.user.id,
+        parsedInput.workspaceId,
+        "read"
+      );
+      await checkDashboardsEnabled(organizationId);
       const charts = await getCharts(workspaceId);
       return charts;
     }
@@ -237,6 +261,9 @@ export const executeQueryAction = authenticatedActionClient
         parsedInput.workspaceId,
         "read"
       );
+
+      await checkDashboardsEnabled(organizationId);
+
       const { feedbackDirectoryId } = await checkFeedbackDirectoryAccess({
         feedbackDirectoryId: parsedInput.feedbackDirectoryId,
         organizationId,
@@ -314,6 +341,9 @@ export const generateAIChartAction = authenticatedActionClient
         parsedInput.workspaceId,
         "read"
       );
+
+      await checkDashboardsEnabled(organizationId);
+
       const { feedbackDirectoryId } = await checkFeedbackDirectoryAccess({
         feedbackDirectoryId: parsedInput.feedbackDirectoryId,
         organizationId,

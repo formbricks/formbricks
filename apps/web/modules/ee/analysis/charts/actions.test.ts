@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => {
     actionClientInputSchema: vi.fn(() => ({ action: actionClientAction })),
     checkWorkspaceAccess: vi.fn(),
     checkFeedbackDirectoryAccess: vi.fn(),
+    getIsDashboardsEnabled: vi.fn(),
     createChart: vi.fn(),
     createOpenAI: vi.fn(),
     executeTenantScopedQuery: vi.fn(),
@@ -55,6 +56,10 @@ vi.mock("@/modules/ee/analysis/lib/access", () => ({
   checkWorkspaceAccess: mocks.checkWorkspaceAccess,
 }));
 
+vi.mock("@/modules/ee/license-check/lib/utils", () => ({
+  getIsDashboardsEnabled: mocks.getIsDashboardsEnabled,
+}));
+
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
   withAuditLogging: vi.fn((_eventName, _objectType, fn) => fn),
 }));
@@ -81,6 +86,7 @@ describe("chart Cube actions", () => {
     vi.stubEnv("OPENAI_API_KEY", "openai-key");
     mocks.actionClientAction.mockImplementation((fn) => fn);
     mocks.actionClientInputSchema.mockReturnValue({ action: mocks.actionClientAction });
+    mocks.getIsDashboardsEnabled.mockResolvedValue(true);
     mocks.checkWorkspaceAccess.mockResolvedValue({
       organizationId: "organization-1",
       workspaceId: "workspace-1",
