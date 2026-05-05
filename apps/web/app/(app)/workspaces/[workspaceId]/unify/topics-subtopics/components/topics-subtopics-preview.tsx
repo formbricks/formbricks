@@ -14,12 +14,6 @@ import { UnifyConfigNavigation } from "../../components/UnifyConfigNavigation";
 import { semanticSearchFeedbackRecordsAction } from "../actions";
 import type { TTopicsPreviewSearchResult } from "../actions";
 
-const EXAMPLE_SEARCH_KEYS = [
-  "workspace.unify.semantic_topics_example_slow_checkout",
-  "workspace.unify.semantic_topics_example_pricing_complaints",
-  "workspace.unify.semantic_topics_example_confusing_onboarding",
-] as const;
-
 interface TopicsSubtopicsPreviewProps {
   workspaceId: string;
   directoryMap: Record<string, string>;
@@ -38,6 +32,12 @@ export const TopicsSubtopicsPreview = ({
   const [unavailableMessage, setUnavailableMessage] = useState<string | null>(null);
 
   const hasDirectories = Object.keys(directoryMap).length > 0;
+
+  const exampleSearches = [
+    t("workspace.unify.semantic_topics_example_slow_checkout"),
+    t("workspace.unify.semantic_topics_example_pricing_complaints"),
+    t("workspace.unify.semantic_topics_example_confusing_onboarding"),
+  ];
 
   const runSearch = async (searchQuery: string) => {
     const trimmedQuery = searchQuery.trim();
@@ -116,20 +116,17 @@ export const TopicsSubtopicsPreview = ({
 
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <span className="text-xs text-slate-500">{t("workspace.unify.try_searching_for")}</span>
-            {EXAMPLE_SEARCH_KEYS.map((key) => {
-              const label = t(key);
-              return (
-                <Button
-                  key={key}
-                  type="button"
-                  size="sm"
-                  variant="secondary"
-                  disabled={!hasDirectories || isSearching}
-                  onClick={() => runSearch(label)}>
-                  {label}
-                </Button>
-              );
-            })}
+            {exampleSearches.map((label) => (
+              <Button
+                key={label}
+                type="button"
+                size="sm"
+                variant="secondary"
+                disabled={!hasDirectories || isSearching}
+                onClick={() => runSearch(label)}>
+                {label}
+              </Button>
+            ))}
           </div>
         </div>
 
