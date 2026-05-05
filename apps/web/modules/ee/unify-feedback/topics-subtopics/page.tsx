@@ -1,17 +1,16 @@
 import { notFound } from "next/navigation";
-import { getConnectorsWithMappings } from "@/lib/connector/service";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
-import { getSurveys } from "@/lib/survey/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getIsUnifyFeedbackEnabled } from "@/modules/ee/license-check/lib/utils";
+import { UnifyConfigNavigation } from "@/modules/ee/unify-feedback/components/unify-config-navigation";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
+import { PageHeader } from "@/modules/ui/components/page-header";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
-import { ConnectorsSection } from "./components/connectors-page-client";
-import { transformToUnifySurvey } from "./lib";
+import { TopicsSubtopicsPreview } from "./components/topics-subtopics-preview";
 
-export const WorkspaceFeedbackSourcesPage = async (
+export const UnifyTopicsSubtopicsPage = async (
   props: Readonly<{ params: Promise<{ workspaceId: string }> }>
 ) => {
   const t = await getTranslate();
@@ -33,6 +32,9 @@ export const WorkspaceFeedbackSourcesPage = async (
   if (!isUnifyFeedbackAllowed) {
     return (
       <PageContentWrapper>
+        <PageHeader pageTitle={t("workspace.unify.feedback_records")}>
+          <UnifyConfigNavigation workspaceId={params.workspaceId} activeId="topics-subtopics" />
+        </PageHeader>
         <div className="flex items-center justify-center">
           <UpgradePrompt
             title={t("workspace.unify.upgrade_prompt_title")}
@@ -58,20 +60,8 @@ export const WorkspaceFeedbackSourcesPage = async (
     );
   }
 
-  const [connectors, surveys, directories] = await Promise.all([
-    getConnectorsWithMappings(params.workspaceId),
-    getSurveys(params.workspaceId),
-    getFeedbackDirectoriesByWorkspaceId(params.workspaceId),
-  ]);
+  const directories = await getFeedbackDirectoriesByWorkspaceId(params.workspaceId);
+  const directoryMap = Object.fromEntries(directories.map((directory) => [directory.id, directory.name]));
 
-  const unifySurveys = surveys.map(transformToUnifySurvey);
-
-  return (
-    <ConnectorsSection
-      workspaceId={params.workspaceId}
-      initialConnectors={connectors}
-      initialSurveys={unifySurveys}
-      directories={directories}
-    />
-  );
+  return <TopicsSubtopicsPreview workspaceId={params.workspaceId} directoryMap={directoryMap} />;
 };

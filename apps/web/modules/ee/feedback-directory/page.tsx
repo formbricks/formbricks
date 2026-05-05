@@ -19,25 +19,27 @@ export const FeedbackDirectoriesPage = async (props: { params: Promise<{ workspa
   if (!isFeedbackDirectoriesAllowed) {
     return (
       <PageContentWrapper>
-        <UpgradePrompt
-          title={t("workspace.settings.feedback_directories.upgrade_prompt_title")}
-          description={t("workspace.settings.feedback_directories.upgrade_prompt_description")}
-          feature="feedback-directories"
-          buttons={[
-            {
-              text: IS_FORMBRICKS_CLOUD ? t("common.upgrade_plan") : t("common.request_trial_license"),
-              href: IS_FORMBRICKS_CLOUD
-                ? `/workspaces/${params.workspaceId}/settings/billing`
-                : "https://formbricks.com/upgrade-self-hosting-license",
-            },
-            {
-              text: t("common.learn_more"),
-              href: IS_FORMBRICKS_CLOUD
-                ? `/workspaces/${params.workspaceId}/settings/billing`
-                : "https://formbricks.com/learn-more-self-hosting-license",
-            },
-          ]}
-        />
+        <div className="flex items-center justify-center">
+          <UpgradePrompt
+            title={t("workspace.settings.feedback_directories.upgrade_prompt_title")}
+            description={t("workspace.settings.feedback_directories.upgrade_prompt_description")}
+            feature="feedback-directories"
+            buttons={[
+              {
+                text: IS_FORMBRICKS_CLOUD ? t("common.upgrade_plan") : t("common.request_trial_license"),
+                href: IS_FORMBRICKS_CLOUD
+                  ? `/workspaces/${params.workspaceId}/settings/organization/billing`
+                  : "https://formbricks.com/upgrade-self-hosting-license",
+              },
+              {
+                text: t("common.learn_more"),
+                href: IS_FORMBRICKS_CLOUD
+                  ? `/workspaces/${params.workspaceId}/settings/organization/billing`
+                  : "https://formbricks.com/learn-more-self-hosting-license",
+              },
+            ]}
+          />
+        </div>
       </PageContentWrapper>
     );
   }

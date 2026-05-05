@@ -6,9 +6,11 @@ import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-direc
 import { getIsUnifyFeedbackEnabled } from "@/modules/ee/license-check/lib/utils";
 import { listFeedbackRecords } from "@/modules/hub/service";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
+import { PageHeader } from "@/modules/ui/components/page-header";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { FeedbackRecordsPageClient } from "./components/feedback-records-page-client";
+import { UnifyConfigNavigation } from "./components/unify-config-navigation";
 
 const INITIAL_PAGE_SIZE = 50;
 
@@ -35,25 +37,30 @@ export const UnifyFeedbackRecordsPage = async (
   if (!isUnifyFeedbackAllowed) {
     return (
       <PageContentWrapper>
-        <UpgradePrompt
-          title={t("workspace.unify.upgrade_prompt_title")}
-          description={t("workspace.unify.upgrade_prompt_description")}
-          feature="unify-feedback"
-          buttons={[
-            {
-              text: IS_FORMBRICKS_CLOUD ? t("common.upgrade_plan") : t("common.request_trial_license"),
-              href: IS_FORMBRICKS_CLOUD
-                ? `/workspaces/${params.workspaceId}/settings/billing`
-                : "https://formbricks.com/upgrade-self-hosting-license",
-            },
-            {
-              text: t("common.learn_more"),
-              href: IS_FORMBRICKS_CLOUD
-                ? `/workspaces/${params.workspaceId}/settings/billing`
-                : "https://formbricks.com/learn-more-self-hosting-license",
-            },
-          ]}
-        />
+        <PageHeader pageTitle={t("workspace.unify.feedback_records")}>
+          <UnifyConfigNavigation workspaceId={params.workspaceId} activeId="feedback-records" />
+        </PageHeader>
+        <div className="flex items-center justify-center">
+          <UpgradePrompt
+            title={t("workspace.unify.upgrade_prompt_title")}
+            description={t("workspace.unify.upgrade_prompt_description")}
+            feature="unify-feedback"
+            buttons={[
+              {
+                text: IS_FORMBRICKS_CLOUD ? t("common.upgrade_plan") : t("common.request_trial_license"),
+                href: IS_FORMBRICKS_CLOUD
+                  ? `/workspaces/${params.workspaceId}/settings/organization/billing`
+                  : "https://formbricks.com/upgrade-self-hosting-license",
+              },
+              {
+                text: t("common.learn_more"),
+                href: IS_FORMBRICKS_CLOUD
+                  ? `/workspaces/${params.workspaceId}/settings/organization/billing`
+                  : "https://formbricks.com/learn-more-self-hosting-license",
+              },
+            ]}
+          />
+        </div>
       </PageContentWrapper>
     );
   }

@@ -10,7 +10,7 @@ import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { UnifyConfigNavigation } from "../../components/UnifyConfigNavigation";
+import { UnifyConfigNavigation } from "../../components/unify-config-navigation";
 import { semanticSearchFeedbackRecordsAction } from "../actions";
 import type { TTopicsPreviewSearchResult } from "../actions";
 

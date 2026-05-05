@@ -41,25 +41,27 @@ export const DashboardsListPage = async ({ workspaceId }: Readonly<DashboardsLis
   if (!isDashboardsAllowed) {
     return (
       <AnalysisPageLayout pageTitle={t("common.analysis")} workspaceId={workspaceId}>
-        <UpgradePrompt
-          title={t("workspace.analysis.dashboards.upgrade_prompt_title")}
-          description={t("workspace.analysis.dashboards.upgrade_prompt_description")}
-          feature="dashboards"
-          buttons={[
-            {
-              text: IS_FORMBRICKS_CLOUD ? t("common.upgrade_plan") : t("common.request_trial_license"),
-              href: IS_FORMBRICKS_CLOUD
-                ? `/workspaces/${workspaceId}/settings/billing`
-                : "https://formbricks.com/upgrade-self-hosting-license",
-            },
-            {
-              text: t("common.learn_more"),
-              href: IS_FORMBRICKS_CLOUD
-                ? `/workspaces/${workspaceId}/settings/billing`
-                : "https://formbricks.com/learn-more-self-hosting-license",
-            },
-          ]}
-        />
+        <div className="flex items-center justify-center">
+          <UpgradePrompt
+            title={t("workspace.analysis.dashboards.upgrade_prompt_title")}
+            description={t("workspace.analysis.dashboards.upgrade_prompt_description")}
+            feature="dashboards"
+            buttons={[
+              {
+                text: IS_FORMBRICKS_CLOUD ? t("common.upgrade_plan") : t("common.request_trial_license"),
+                href: IS_FORMBRICKS_CLOUD
+                  ? `/workspaces/${workspaceId}/settings/organization/billing`
+                  : "https://formbricks.com/upgrade-self-hosting-license",
+              },
+              {
+                text: t("common.learn_more"),
+                href: IS_FORMBRICKS_CLOUD
+                  ? `/workspaces/${workspaceId}/settings/organization/billing`
+                  : "https://formbricks.com/learn-more-self-hosting-license",
+              },
+            ]}
+          />
+        </div>
       </AnalysisPageLayout>
     );
   }

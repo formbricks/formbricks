@@ -21,7 +21,12 @@ import { getWorkspace } from "@/lib/workspace/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getEnterpriseLicense } from "@/modules/ee/license-check/lib/license";
-import { getAccessControlPermission } from "@/modules/ee/license-check/lib/utils";
+import {
+  getAccessControlPermission,
+  getIsDashboardsEnabled,
+  getIsFeedbackDirectoriesEnabled,
+  getIsUnifyFeedbackEnabled,
+} from "@/modules/ee/license-check/lib/utils";
 import { getWorkspacePermissionByUserId } from "@/modules/ee/teams/lib/roles";
 import { getTeamPermissionFlags } from "@/modules/ee/teams/utils/teams";
 import { TWorkspaceAuth, TWorkspaceLayoutData } from "@/modules/workspaces/types/workspace-auth";
@@ -278,8 +283,18 @@ export const getWorkspaceLayoutData = reactCache(
       throw new AuthorizationError(t("common.membership_not_found"));
     }
 
-    const [isAccessControlAllowed, workspacePermission, license] = await Promise.all([
+    const [
+      isAccessControlAllowed,
+      isUnifyFeedbackAllowed,
+      isFeedbackDirectoriesAllowed,
+      isDashboardsAllowed,
+      workspacePermission,
+      license,
+    ] = await Promise.all([
       getAccessControlPermission(organization.id),
+      getIsUnifyFeedbackEnabled(organization.id),
+      getIsFeedbackDirectoriesEnabled(organization.id),
+      getIsDashboardsEnabled(organization.id),
       getWorkspacePermissionByUserId(userId, workspace.id),
       getEnterpriseLicense(),
     ]);
@@ -296,6 +311,9 @@ export const getWorkspaceLayoutData = reactCache(
       organization,
       membership,
       isAccessControlAllowed,
+      isUnifyFeedbackAllowed,
+      isFeedbackDirectoriesAllowed,
+      isDashboardsAllowed,
       workspacePermission,
       license,
       responseCount,
