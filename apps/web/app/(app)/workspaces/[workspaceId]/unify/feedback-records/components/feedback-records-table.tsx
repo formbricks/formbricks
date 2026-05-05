@@ -17,6 +17,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { listFeedbackRecordsAction } from "@/lib/connector/actions";
 import { formatDateForDisplay, formatDateTimeForDisplay } from "@/lib/utils/datetime";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import type { FeedbackRecordData } from "@/modules/hub/types";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
@@ -97,13 +98,17 @@ export const FeedbackRecordsTable = ({
     [frdMap]
   );
 
-  const fetchRecords = async (
-    mode: "refresh" | "loadMore"
-  ): Promise<{ records: FeedbackRecordData[]; newCursors: Record<string, string> } | null> => {
+  type FetchResult =
+    | { ok: true; records: FeedbackRecordData[]; newCursors: Record<string, string> }
+    | { ok: false; errorMessage: string };
+
+  const fetchRecords = async (mode: "refresh" | "loadMore"): Promise<FetchResult> => {
     const directoryIds = Object.keys(frdMap);
     const frdIdsToFetch = mode === "refresh" ? directoryIds : directoryIds.filter((id) => cursors[id]);
 
-    if (frdIdsToFetch.length === 0) return null;
+    if (frdIdsToFetch.length === 0) {
+      return { ok: true, records: [], newCursors: {} };
+    }
 
     const results = await Promise.all(
       frdIdsToFetch.map((frdId) =>
@@ -116,8 +121,13 @@ export const FeedbackRecordsTable = ({
       )
     );
 
-    if (results.some((result) => !result?.data)) {
-      return null;
+    const firstFailure = results.find((result) => !result?.data);
+    if (firstFailure) {
+      return {
+        ok: false,
+        errorMessage:
+          getFormattedErrorMessage(firstFailure) ?? t("workspace.unify.failed_to_load_feedback_records"),
+      };
     }
 
     const fetchedRecords = results.flatMap((result) => result?.data?.data ?? []);
@@ -130,26 +140,24 @@ export const FeedbackRecordsTable = ({
       }
     }
 
-    return { records: fetchedRecords, newCursors };
+    return { ok: true, records: fetchedRecords, newCursors };
   };
 
   const handleRefresh = async () => {
-    if (isRefreshing) return;
+    if (isRefreshing || isLoadingMore) return;
     setIsRefreshing(true);
     setError(null);
 
     const toastId = toast.loading(t("workspace.unify.refreshing_feedback_records"));
     const result = await fetchRecords("refresh");
 
-    if (!result) {
-      toast.error(t("workspace.unify.failed_to_load_feedback_records"), { id: toastId });
+    if (!result.ok) {
+      toast.error(result.errorMessage, { id: toastId });
       setIsRefreshing(false);
       return;
     }
 
-    const mergedRecords = result.records
-      .toSorted((a, b) => (a.collected_at < b.collected_at ? 1 : -1))
-      .slice(0, RECORDS_PER_PAGE);
+    const mergedRecords = result.records.toSorted((a, b) => (a.collected_at < b.collected_at ? 1 : -1));
     setRecords(mergedRecords);
     setCursors(result.newCursors);
     setIsRefreshing(false);
@@ -157,13 +165,13 @@ export const FeedbackRecordsTable = ({
   };
 
   const handleLoadMore = async () => {
-    if (isLoadingMore || !hasMore) return;
+    if (isLoadingMore || isRefreshing || !hasMore) return;
     setIsLoadingMore(true);
 
     const result = await fetchRecords("loadMore");
 
-    if (!result) {
-      toast.error(t("workspace.unify.failed_to_load_feedback_records"));
+    if (!result.ok) {
+      toast.error(result.errorMessage);
       setIsLoadingMore(false);
       return;
     }
@@ -260,7 +268,7 @@ export const FeedbackRecordsTable = ({
               variant="secondary"
               size="sm"
               onClick={handleRefresh}
-              disabled={isRefreshing}
+              disabled={isRefreshing || isLoadingMore}
               aria-label={t("workspace.unify.refresh_feedback_records")}>
               <RefreshCwIcon className="h-3.5 w-3.5" aria-hidden="true" />
             </Button>
@@ -315,7 +323,7 @@ export const FeedbackRecordsTable = ({
               variant="secondary"
               size="sm"
               onClick={handleLoadMore}
-              disabled={isLoadingMore}
+              disabled={isLoadingMore || isRefreshing}
               loading={isLoadingMore}>
               {t("common.load_more")}
             </Button>

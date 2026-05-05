@@ -41,8 +41,7 @@ export default async function UnifyFeedbackRecordsPage(
 
   const merged = successfulResults
     .flatMap((r) => r.data?.data ?? [])
-    .toSorted((a, b) => (a.collected_at < b.collected_at ? 1 : -1))
-    .slice(0, INITIAL_PAGE_SIZE);
+    .toSorted((a, b) => (a.collected_at < b.collected_at ? 1 : -1));
 
   // Build per-FRD cursor map so the client can paginate
   const initialCursors: Record<string, string> = {};
