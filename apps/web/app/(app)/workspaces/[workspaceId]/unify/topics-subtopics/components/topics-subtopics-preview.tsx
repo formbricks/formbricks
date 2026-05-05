@@ -14,7 +14,11 @@ import { UnifyConfigNavigation } from "../../components/UnifyConfigNavigation";
 import { semanticSearchFeedbackRecordsAction } from "../actions";
 import type { TTopicsPreviewSearchResult } from "../actions";
 
-const EXAMPLE_SEARCHES = ["slow checkout", "pricing complaints", "confusing onboarding"];
+const EXAMPLE_SEARCH_KEYS = [
+  "workspace.unify.semantic_topics_example_slow_checkout",
+  "workspace.unify.semantic_topics_example_pricing_complaints",
+  "workspace.unify.semantic_topics_example_confusing_onboarding",
+] as const;
 
 interface TopicsSubtopicsPreviewProps {
   workspaceId: string;
@@ -45,22 +49,27 @@ export const TopicsSubtopicsPreview = ({
     setError(null);
     setUnavailableMessage(null);
 
-    const response = await semanticSearchFeedbackRecordsAction({
-      workspaceId,
-      query: trimmedQuery,
-      limit: 10,
-      minScore: 0.7,
-    });
+    try {
+      const response = await semanticSearchFeedbackRecordsAction({
+        workspaceId,
+        query: trimmedQuery,
+        limit: 10,
+        minScore: 0.7,
+      });
 
-    if (response?.data) {
-      setResults(response.data.results);
-      setUnavailableMessage(response.data.unavailable ? (response.data.unavailableMessage ?? "") : null);
-    } else {
+      if (response?.data) {
+        setResults(response.data.results);
+        setUnavailableMessage(response.data.unavailable ? (response.data.unavailableMessage ?? "") : null);
+      } else {
+        setResults([]);
+        setError(getFormattedErrorMessage(response) ?? t("workspace.unify.semantic_search_failed"));
+      }
+    } catch {
       setResults([]);
-      setError(getFormattedErrorMessage(response) ?? t("workspace.unify.semantic_search_failed"));
+      setError(t("workspace.unify.semantic_search_failed"));
+    } finally {
+      setIsSearching(false);
     }
-
-    setIsSearching(false);
   };
 
   const handleSubmit = async (event: { preventDefault: () => void }) => {
@@ -107,17 +116,20 @@ export const TopicsSubtopicsPreview = ({
 
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <span className="text-xs text-slate-500">{t("workspace.unify.try_searching_for")}</span>
-            {EXAMPLE_SEARCHES.map((example) => (
-              <Button
-                key={example}
-                type="button"
-                size="sm"
-                variant="secondary"
-                disabled={!hasDirectories || isSearching}
-                onClick={() => runSearch(example)}>
-                {example}
-              </Button>
-            ))}
+            {EXAMPLE_SEARCH_KEYS.map((key) => {
+              const label = t(key);
+              return (
+                <Button
+                  key={key}
+                  type="button"
+                  size="sm"
+                  variant="secondary"
+                  disabled={!hasDirectories || isSearching}
+                  onClick={() => runSearch(label)}>
+                  {label}
+                </Button>
+              );
+            })}
           </div>
         </div>
 

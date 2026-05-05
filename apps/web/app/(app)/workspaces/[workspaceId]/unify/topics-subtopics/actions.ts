@@ -6,11 +6,12 @@ import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
-import { getFeedbackRecordDirectoriesByWorkspaceId } from "@/modules/ee/feedback-record-directory/lib/feedback-record-directory";
+import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { semanticSearchFeedbackRecords } from "@/modules/hub/service";
 import type { SemanticSearchResultItem } from "@/modules/hub/types";
 
 const TOPICS_PREVIEW_LIMIT = 10;
+const SEARCH_CONCURRENCY = 4;
 
 const ZSemanticSearchFeedbackRecordsAction = z.object({
   workspaceId: ZId,
@@ -61,24 +62,31 @@ export const semanticSearchFeedbackRecordsAction = authenticatedActionClient
     }): Promise<TTopicsPreviewSearchActionResult> => {
       await ensureReadAccess(ctx.user.id, parsedInput.workspaceId);
 
-      const directories = await getFeedbackRecordDirectoriesByWorkspaceId(parsedInput.workspaceId);
+      const directories = await getFeedbackDirectoriesByWorkspaceId(parsedInput.workspaceId);
       if (directories.length === 0) {
         return { results: [], unavailable: false };
       }
 
       const limit = parsedInput.limit ?? TOPICS_PREVIEW_LIMIT;
-      const searches = await Promise.all(
-        directories.map(async (directory) => {
-          const result = await semanticSearchFeedbackRecords({
-            tenant_id: directory.id,
-            query: parsedInput.query,
-            limit,
-            min_score: parsedInput.minScore,
-          });
-
-          return { directory, result };
-        })
-      );
+      const searches: {
+        directory: (typeof directories)[number];
+        result: Awaited<ReturnType<typeof semanticSearchFeedbackRecords>>;
+      }[] = [];
+      for (let i = 0; i < directories.length; i += SEARCH_CONCURRENCY) {
+        const chunk = directories.slice(i, i + SEARCH_CONCURRENCY);
+        const chunkResults = await Promise.all(
+          chunk.map(async (directory) => {
+            const result = await semanticSearchFeedbackRecords({
+              tenant_id: directory.id,
+              query: parsedInput.query,
+              limit,
+              min_score: parsedInput.minScore,
+            });
+            return { directory, result };
+          })
+        );
+        searches.push(...chunkResults);
+      }
 
       const successfulResults = searches.flatMap(({ directory, result }) =>
         (result.data?.data ?? []).map((item) => ({

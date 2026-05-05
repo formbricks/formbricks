@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { getTranslate } from "@/lingodotdev/server";
-import { getFeedbackRecordDirectoriesByWorkspaceId } from "@/modules/ee/feedback-record-directory/lib/feedback-record-directory";
+import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { TopicsSubtopicsPreview } from "./components/topics-subtopics-preview";
 
@@ -22,7 +22,7 @@ export default async function UnifyTopicsSubtopicsPage(
     return notFound();
   }
 
-  const directories = await getFeedbackRecordDirectoriesByWorkspaceId(params.workspaceId);
+  const directories = await getFeedbackDirectoriesByWorkspaceId(params.workspaceId);
   const directoryMap = Object.fromEntries(directories.map((directory) => [directory.id, directory.name]));
 
   return <TopicsSubtopicsPreview workspaceId={params.workspaceId} directoryMap={directoryMap} />;
