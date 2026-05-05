@@ -504,18 +504,40 @@ const getNormalizedSsoProviderFromAccount = (account: Account) => {
 
 const assertAccountMatchesIntent = ({
   account,
-  intentProvider,
+  expectedProvider,
+  expectedProviderAccountId,
   provider,
-  providerAccountId,
 }: {
   account: Account;
-  intentProvider: string;
+  expectedProvider: TSsoIdentityProvider;
+  expectedProviderAccountId: string;
   provider: TSsoIdentityProvider;
-  providerAccountId: string;
 }) => {
-  if (provider !== intentProvider || account.providerAccountId !== providerAccountId) {
+  if (provider !== expectedProvider || account.providerAccountId !== expectedProviderAccountId) {
     throw new AuthorizationError(DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR);
   }
+};
+
+const validateAccountDeletionSsoReauthenticationCallbackContext = async ({
+  account,
+  intentToken,
+}: {
+  account: Account;
+  intentToken: string;
+}) => {
+  const { intent, storedIntent } = getVerifiedAccountDeletionSsoReauthIntent(intentToken);
+  const normalizedProvider = getNormalizedSsoProviderFromAccount(account);
+
+  assertAccountMatchesIntent({
+    account,
+    expectedProvider: storedIntent.provider,
+    expectedProviderAccountId: storedIntent.providerAccountId,
+    provider: normalizedProvider,
+  });
+  assertFreshSsoAuthentication(normalizedProvider, account);
+  await assertStoredAccountDeletionSsoReauthIntentExists(storedIntent);
+
+  return { intent, normalizedProvider, storedIntent };
 };
 
 export const startAccountDeletionSsoReauthentication = async ({
@@ -577,18 +599,11 @@ export const completeAccountDeletionSsoReauthentication = async ({
   account: Account;
   intentToken: string;
 }) => {
-  const { intent, storedIntent } = getVerifiedAccountDeletionSsoReauthIntent(intentToken);
-  const normalizedProvider = getNormalizedSsoProviderFromAccount(account);
-
-  assertAccountMatchesIntent({
-    account,
-    intentProvider: intent.provider,
-    provider: normalizedProvider,
-    providerAccountId: intent.providerAccountId,
-  });
-
-  assertFreshSsoAuthentication(normalizedProvider, account);
-  await assertStoredAccountDeletionSsoReauthIntentExists(storedIntent);
+  const { intent, normalizedProvider, storedIntent } =
+    await validateAccountDeletionSsoReauthenticationCallbackContext({
+      account,
+      intentToken,
+    });
 
   const linkedUserId = await findLinkedSsoUserId({
     provider: normalizedProvider,
@@ -621,17 +636,10 @@ export const validateAccountDeletionSsoReauthenticationCallback = async ({
   account: Account;
   intentToken: string;
 }) => {
-  const { intent, storedIntent } = getVerifiedAccountDeletionSsoReauthIntent(intentToken);
-  const normalizedProvider = getNormalizedSsoProviderFromAccount(account);
-
-  assertAccountMatchesIntent({
+  await validateAccountDeletionSsoReauthenticationCallbackContext({
     account,
-    intentProvider: intent.provider,
-    provider: normalizedProvider,
-    providerAccountId: intent.providerAccountId,
+    intentToken,
   });
-  assertFreshSsoAuthentication(normalizedProvider, account);
-  await assertStoredAccountDeletionSsoReauthIntentExists(storedIntent);
 };
 
 export const consumeAccountDeletionSsoReauthentication = async ({

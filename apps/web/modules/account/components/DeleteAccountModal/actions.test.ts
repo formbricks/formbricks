@@ -17,6 +17,7 @@ const mocks = vi.hoisted(() => ({
   getUser: vi.fn(),
   getUserAuthenticationData: vi.fn(),
   loggerError: vi.fn(),
+  loggerWarn: vi.fn(),
   startAccountDeletionSsoReauthentication: vi.fn(),
   verifyUserPassword: vi.fn(),
 }));
@@ -24,7 +25,12 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@formbricks/logger", () => ({
   logger: {
     error: mocks.loggerError,
+    warn: mocks.loggerWarn,
   },
+}));
+
+vi.mock("@/lib/constants", () => ({
+  DISABLE_ACCOUNT_DELETION_SSO_REAUTH: false,
 }));
 
 vi.mock("@/lib/organization/service", () => ({
