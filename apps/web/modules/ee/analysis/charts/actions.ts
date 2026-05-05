@@ -7,8 +7,7 @@ import { type TChartQuery, ZChartQuery } from "@formbricks/types/analysis";
 import { ZId } from "@formbricks/types/common";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
-import { executeQuery } from "@/modules/ee/analysis/api/lib/cube-client";
-import { injectTenantFilter, validateQueryMembers } from "@/modules/ee/analysis/charts/lib/chart-utils";
+import { executeTenantScopedQuery } from "@/modules/ee/analysis/api/lib/cube-client";
 import {
   createChart,
   deleteChart,
@@ -17,7 +16,7 @@ import {
   getCharts,
   updateChart,
 } from "@/modules/ee/analysis/charts/lib/charts";
-import { checkWorkspaceAccess, verifyFeedbackDirectoryAccess } from "@/modules/ee/analysis/lib/access";
+import { checkFeedbackDirectoryAccess, checkWorkspaceAccess } from "@/modules/ee/analysis/lib/access";
 import { generateSchemaContext } from "@/modules/ee/analysis/lib/ai-schema-context";
 import { ZChartCreateInput, ZChartType, ZChartUpdateInput } from "@/modules/ee/analysis/types/analysis";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
@@ -46,6 +45,13 @@ export const createChartAction = authenticatedActionClient.inputSchema(ZCreateCh
         parsedInput.workspaceId,
         "readWrite"
       );
+      await checkFeedbackDirectoryAccess({
+        feedbackDirectoryId: parsedInput.chartInput.feedbackDirectoryId,
+        organizationId,
+        workspaceId,
+        userId: ctx.user.id,
+        source: "charts.createChartAction",
+      });
 
       const chart = await createChart({
         ...parsedInput.chartInput,
@@ -226,18 +232,27 @@ export const executeQueryAction = authenticatedActionClient
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZExecuteQueryAction>;
     }) => {
-      const { workspaceId } = await checkWorkspaceAccess(ctx.user.id, parsedInput.workspaceId, "read");
-      await verifyFeedbackDirectoryAccess(parsedInput.feedbackDirectoryId, workspaceId);
+      const { organizationId, workspaceId } = await checkWorkspaceAccess(
+        ctx.user.id,
+        parsedInput.workspaceId,
+        "read"
+      );
+      const { feedbackDirectoryId } = await checkFeedbackDirectoryAccess({
+        feedbackDirectoryId: parsedInput.feedbackDirectoryId,
+        organizationId,
+        workspaceId,
+        userId: ctx.user.id,
+        source: "charts.executeQueryAction",
+      });
 
-      validateQueryMembers(parsedInput.query);
-
-      const scopedQuery = injectTenantFilter(parsedInput.query, parsedInput.feedbackDirectoryId);
-
-      try {
-        return await executeQuery(scopedQuery as Record<string, unknown>);
-      } catch (error) {
-        throw error instanceof Error ? error : new Error("Failed to execute query");
-      }
+      return executeTenantScopedQuery({
+        query: parsedInput.query,
+        feedbackDirectoryId,
+        workspaceId,
+        organizationId,
+        userId: ctx.user.id,
+        source: "charts.executeQueryAction",
+      });
     }
   );
 
@@ -294,8 +309,18 @@ export const generateAIChartAction = authenticatedActionClient
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZGenerateAIChartAction>;
     }) => {
-      const { workspaceId } = await checkWorkspaceAccess(ctx.user.id, parsedInput.workspaceId, "read");
-      await verifyFeedbackDirectoryAccess(parsedInput.feedbackDirectoryId, workspaceId);
+      const { organizationId, workspaceId } = await checkWorkspaceAccess(
+        ctx.user.id,
+        parsedInput.workspaceId,
+        "read"
+      );
+      const { feedbackDirectoryId } = await checkFeedbackDirectoryAccess({
+        feedbackDirectoryId: parsedInput.feedbackDirectoryId,
+        organizationId,
+        workspaceId,
+        userId: ctx.user.id,
+        source: "charts.generateAIChartAction",
+      });
 
       if (!process.env.OPENAI_API_KEY) {
         throw new Error("OPENAI_API_KEY is not configured");
@@ -314,32 +339,36 @@ export const generateAIChartAction = authenticatedActionClient
       const measures = output.measures.length > 0 ? output.measures : [`${CUBE_NAME}.count`];
 
       const { chartType, ...cubeQuery } = { ...output, measures };
+      const cleanQuery: TChartQuery = { measures: cubeQuery.measures };
 
-      // Strip nulls/empty arrays so Cube.js receives only present fields
-      const cleanQuery: Record<string, unknown> = {
-        measures: cubeQuery.measures,
-        ...(cubeQuery.dimensions?.length && { dimensions: cubeQuery.dimensions }),
-        ...(cubeQuery.filters?.length && {
-          filters: cubeQuery.filters.map(({ member, operator, values }) => ({
-            member,
-            operator,
-            ...(values != null && { values }),
-          })),
-        }),
-        ...(cubeQuery.timeDimensions?.length && {
-          timeDimensions: cubeQuery.timeDimensions.map(({ dimension, granularity, dateRange }) => ({
-            dimension,
-            ...(granularity != null && { granularity }),
-            ...(dateRange != null && { dateRange }),
-          })),
-        }),
-      };
+      if (cubeQuery.dimensions?.length) {
+        cleanQuery.dimensions = cubeQuery.dimensions;
+      }
 
-      validateQueryMembers(cleanQuery as TChartQuery);
+      if (cubeQuery.filters?.length) {
+        cleanQuery.filters = cubeQuery.filters.map(({ member, operator, values }) => ({
+          member,
+          operator,
+          ...(values == null ? {} : { values }),
+        }));
+      }
 
-      const scopedQuery = injectTenantFilter(cleanQuery as TChartQuery, parsedInput.feedbackDirectoryId);
+      if (cubeQuery.timeDimensions?.length) {
+        cleanQuery.timeDimensions = cubeQuery.timeDimensions.map(({ dimension, granularity, dateRange }) => ({
+          dimension,
+          ...(granularity == null ? {} : { granularity }),
+          ...(dateRange == null ? {} : { dateRange }),
+        }));
+      }
 
-      const data = await executeQuery(scopedQuery as Record<string, unknown>);
+      const data = await executeTenantScopedQuery({
+        query: cleanQuery,
+        feedbackDirectoryId,
+        workspaceId,
+        organizationId,
+        userId: ctx.user.id,
+        source: "charts.generateAIChartAction",
+      });
 
       return {
         query: cleanQuery,

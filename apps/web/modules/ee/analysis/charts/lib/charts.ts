@@ -6,6 +6,7 @@ import { ZChartConfig, ZChartQuery } from "@formbricks/types/analysis";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
+import { validateCubeQueryMembers } from "@/modules/ee/analysis/api/lib/cube-query";
 import {
   TChart,
   TChartCreateInput,
@@ -29,6 +30,7 @@ export const selectChart = {
 
 export const createChart = async (data: TChartCreateInput): Promise<TChart> => {
   validateInputs([data, ZChartCreateInput]);
+  validateCubeQueryMembers(data.query);
 
   try {
     return await prisma.chart.create({
@@ -60,6 +62,9 @@ export const updateChart = async (
   data: TChartUpdateInput
 ): Promise<{ chart: TChart; updatedChart: TChart }> => {
   validateInputs([chartId, ZId], [workspaceId, ZId], [data, ZChartUpdateInput]);
+  if (data.query) {
+    validateCubeQueryMembers(data.query);
+  }
 
   try {
     return await prisma.$transaction(async (tx) => {

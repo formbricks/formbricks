@@ -1,14 +1,16 @@
+import jwt from "jsonwebtoken";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
-const mockLoad = vi.fn();
-const mockTablePivot = vi.fn();
-const globalForCube = globalThis as unknown as {
-  formbricksCubeClient: unknown;
-  formbricksCubeClientCacheKey: string | undefined;
-  formbricksCubeClientTokenExpiresAtMs: number | undefined;
-};
+const { mockLoad, mockLoggerError, mockLoggerWarn, mockQueueAuditEventWithoutRequest, mockTablePivot } =
+  vi.hoisted(() => ({
+    mockLoad: vi.fn(),
+    mockLoggerError: vi.fn(),
+    mockLoggerWarn: vi.fn(),
+    mockQueueAuditEventWithoutRequest: vi.fn(),
+    mockTablePivot: vi.fn(),
+  }));
 
 vi.mock("@cubejs-client/core", () => ({
   default: vi.fn(() => ({
@@ -16,23 +18,51 @@ vi.mock("@cubejs-client/core", () => ({
   })),
 }));
 
-describe("executeQuery", () => {
+vi.mock("@formbricks/logger", () => ({
+  logger: {
+    error: mockLoggerError,
+    warn: mockLoggerWarn,
+  },
+}));
+
+vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
+  queueAuditEventWithoutRequest: mockQueueAuditEventWithoutRequest,
+}));
+
+const scopedInput = {
+  query: { measures: ["FeedbackRecords.count"] },
+  feedbackDirectoryId: "frd-1",
+  workspaceId: "workspace-1",
+  organizationId: "organization-1",
+  userId: "user-1",
+  source: "charts.executeQueryAction" as const,
+};
+
+type TCubeJsMock = {
+  mock: { calls: [string, { apiUrl: string }][] };
+  (...args: [string, { apiUrl: string }]): unknown;
+};
+
+const getCubeJsMock = async (): Promise<TCubeJsMock> => {
+  const cubeModule = (await vi.importMock("@cubejs-client/core")) as { default: TCubeJsMock };
+  return cubeModule.default;
+};
+
+describe("executeTenantScopedQuery", () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     vi.clearAllMocks();
     vi.resetModules();
-    vi.doUnmock("@/lib/env");
     vi.stubEnv("NODE_ENV", "test");
     vi.stubEnv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/formbricks?schema=public");
     vi.stubEnv("ENCRYPTION_KEY", "12345678901234567890123456789012");
     vi.stubEnv("HUB_API_URL", "https://hub.formbricks.local");
     vi.stubEnv("CUBEJS_API_URL", "https://cube.example.com");
     vi.stubEnv("CUBEJS_API_SECRET", "cube-secret");
-    globalForCube.formbricksCubeClient = undefined;
-    globalForCube.formbricksCubeClientCacheKey = undefined;
-    globalForCube.formbricksCubeClientTokenExpiresAtMs = undefined;
-    const resultSet = { tablePivot: mockTablePivot };
-    mockLoad.mockResolvedValue(resultSet);
+    vi.stubEnv("CUBEJS_JWT_AUDIENCE", "formbricks-cube-test");
+    vi.stubEnv("CUBEJS_JWT_ISSUER", "formbricks-web-test");
+    mockLoad.mockResolvedValue({ tablePivot: mockTablePivot });
+    mockQueueAuditEventWithoutRequest.mockResolvedValue(undefined);
     mockTablePivot.mockReturnValue([{ id: "1", count: 42 }]);
   });
 
@@ -40,81 +70,167 @@ describe("executeQuery", () => {
     vi.unstubAllEnvs();
   });
 
-  test("loads query and returns tablePivot result", async () => {
-    const { executeQuery } = await import("./cube-client");
-    const query = { measures: ["FeedbackRecords.count"] };
-    const result = await executeQuery(query);
+  test("loads query with a per-request tenant scoped token and returns tablePivot result", async () => {
+    const { executeTenantScopedQuery } = await import("./cube-client");
+    const result = await executeTenantScopedQuery(scopedInput);
 
-    expect(mockLoad).toHaveBeenCalledWith(query);
+    expect(mockLoad).toHaveBeenCalledWith(scopedInput.query);
     expect(mockTablePivot).toHaveBeenCalled();
     expect(result).toEqual([{ id: "1", count: 42 }]);
+
+    const cubejs = await getCubeJsMock();
+    const token = cubejs.mock.calls[0][0] as string;
+    const payload = jwt.verify(token, "cube-secret", {
+      audience: "formbricks-cube-test",
+      issuer: "formbricks-web-test",
+    }) as jwt.JwtPayload;
+
+    expect(cubejs).toHaveBeenCalledWith(expect.any(String), {
+      apiUrl: "https://cube.example.com/cubejs-api/v1",
+    });
+    expect(payload).toMatchObject({
+      tenantId: "frd-1",
+      feedbackDirectoryId: "frd-1",
+      workspaceId: "workspace-1",
+      organizationId: "organization-1",
+      userId: "user-1",
+      scope: "xm:cube:query",
+      source: "charts.executeQueryAction",
+    });
+    expect(typeof payload.jti).toBe("string");
+  });
+
+  test("does not cache tenant-bearing Cube clients or tokens", async () => {
+    const { executeTenantScopedQuery } = await import("./cube-client");
+
+    await executeTenantScopedQuery(scopedInput);
+    await executeTenantScopedQuery({ ...scopedInput, feedbackDirectoryId: "frd-2" });
+
+    const cubejs = await getCubeJsMock();
+    expect(cubejs).toHaveBeenCalledTimes(2);
+    expect(cubejs.mock.calls[0][0]).not.toBe(cubejs.mock.calls[1][0]);
+  });
+
+  test("rejects caller-supplied tenant filters before creating a Cube client", async () => {
+    const { executeTenantScopedQuery } = await import("./cube-client");
+
+    await expect(
+      executeTenantScopedQuery({
+        ...scopedInput,
+        query: {
+          measures: ["FeedbackRecords.count"],
+          filters: [{ member: "FeedbackRecords.tenantId", operator: "equals", values: ["workspace-2"] }],
+        },
+      })
+    ).rejects.toThrow(/Tenant filters are enforced by Cube/);
+
+    const cubejs = await getCubeJsMock();
+    expect(cubejs).not.toHaveBeenCalled();
+    expect(mockQueueAuditEventWithoutRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "queried",
+        targetType: "cubeQuery",
+        status: "failure",
+        newObject: expect.objectContaining({
+          tenantId: "frd-1",
+          feedbackDirectoryId: "frd-1",
+          workspaceId: "workspace-1",
+          query: expect.objectContaining({
+            filterMembers: ["FeedbackRecords.tenantId"],
+            filterCount: 1,
+          }),
+          errorName: "Error",
+        }),
+      })
+    );
   });
 
   test("preserves API URL when it already contains /cubejs-api/v1", async () => {
     const fullUrl = "https://cube.example.com/cubejs-api/v1";
     vi.stubEnv("CUBEJS_API_URL", fullUrl);
-    const { executeQuery } = await import("./cube-client");
+    const { executeTenantScopedQuery } = await import("./cube-client");
 
-    await executeQuery({ measures: ["FeedbackRecords.count"] });
+    await executeTenantScopedQuery(scopedInput);
 
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const cubejs = ((await vi.importMock("@cubejs-client/core")) as any).default;
+    const cubejs = await getCubeJsMock();
     expect(cubejs).toHaveBeenCalledWith(expect.any(String), { apiUrl: fullUrl });
-    vi.unstubAllEnvs();
-  });
-
-  test("reuses the cached Cube client across queries while the JWT is still fresh", async () => {
-    let nowMs = 1_700_000_000_000;
-    vi.spyOn(Date, "now").mockImplementation(() => nowMs);
-    const { executeQuery } = await import("./cube-client");
-
-    await executeQuery({ measures: ["FeedbackRecords.count"] });
-    nowMs += 5 * 60 * 1000;
-    await executeQuery({ measures: ["FeedbackRecords.count"] });
-
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const cubejs = ((await vi.importMock("@cubejs-client/core")) as any).default;
-    expect(cubejs).toHaveBeenCalledTimes(1);
-  });
-
-  test("refreshes the cached Cube client once the JWT reaches the refresh window", async () => {
-    let nowMs = 1_700_000_000_000;
-    vi.spyOn(Date, "now").mockImplementation(() => nowMs);
-    const { CUBE_API_TOKEN_TTL_SECONDS } = await import("./cube-config");
-    const { executeQuery } = await import("./cube-client");
-
-    await executeQuery({ measures: ["FeedbackRecords.count"] });
-    nowMs += CUBE_API_TOKEN_TTL_SECONDS * 1000;
-    await executeQuery({ measures: ["FeedbackRecords.count"] });
-
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const cubejs = ((await vi.importMock("@cubejs-client/core")) as any).default;
-    expect(cubejs).toHaveBeenCalledTimes(2);
   });
 
   test("throws a configuration error when Cube env is missing", async () => {
-    vi.resetModules();
     vi.unstubAllEnvs();
-    vi.doMock("@/lib/env", () => ({
-      env: {
-        CUBEJS_API_URL: undefined,
-        CUBEJS_API_SECRET: undefined,
-      },
-    }));
+    vi.stubEnv("NODE_ENV", "test");
+    vi.stubEnv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/formbricks?schema=public");
+    vi.stubEnv("ENCRYPTION_KEY", "12345678901234567890123456789012");
+    vi.stubEnv("HUB_API_URL", "https://hub.formbricks.local");
+    vi.stubEnv("CUBEJS_API_URL", undefined);
+    vi.stubEnv("CUBEJS_API_SECRET", undefined);
     const { CUBE_CONFIGURATION_ERROR_MESSAGE } = await import("./cube-config");
-    const { executeQuery } = await import("./cube-client");
+    const { executeTenantScopedQuery } = await import("./cube-client");
 
-    await expect(executeQuery({ measures: ["FeedbackRecords.count"] })).rejects.toThrow(
-      CUBE_CONFIGURATION_ERROR_MESSAGE
+    await expect(executeTenantScopedQuery(scopedInput)).rejects.toThrow(CUBE_CONFIGURATION_ERROR_MESSAGE);
+    expect(mockLoggerError).toHaveBeenCalledWith(expect.any(Error), "Cube query configuration failed");
+    expect(mockQueueAuditEventWithoutRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "queried",
+        targetType: "cubeQuery",
+        status: "failure",
+        newObject: expect.objectContaining({
+          tenantId: "frd-1",
+          feedbackDirectoryId: "frd-1",
+          workspaceId: "workspace-1",
+          errorName: "ConfigurationError",
+        }),
+      })
     );
   });
 
-  test("wraps Cube runtime failures in a query execution error with details", async () => {
+  test("logs Cube runtime failures and returns a generic query execution error", async () => {
     mockLoad.mockRejectedValueOnce(new Error("connect ECONNREFUSED"));
-    const { executeQuery } = await import("./cube-client");
+    const { executeTenantScopedQuery } = await import("./cube-client");
 
-    await expect(executeQuery({ measures: ["FeedbackRecords.count"] })).rejects.toThrow(
-      /Cube query failed\..*connect ECONNREFUSED/
+    await expect(executeTenantScopedQuery(scopedInput)).rejects.toThrow(
+      "Cube query failed. Verify CUBEJS_API_URL and CUBEJS_API_SECRET, and ensure the Cube service is running."
     );
+    expect(mockLoggerError).toHaveBeenCalledWith(expect.any(Error), "Cube query failed");
+  });
+
+  test("records sanitized audit metadata without raw filter values", async () => {
+    const { executeTenantScopedQuery } = await import("./cube-client");
+
+    await executeTenantScopedQuery({
+      ...scopedInput,
+      query: {
+        measures: ["FeedbackRecords.count"],
+        filters: [{ member: "FeedbackRecords.sentiment", operator: "equals", values: ["secret-value"] }],
+      },
+    });
+
+    expect(mockQueueAuditEventWithoutRequest).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "queried",
+        targetType: "cubeQuery",
+        newObject: expect.objectContaining({
+          query: expect.objectContaining({
+            filterMembers: ["FeedbackRecords.sentiment"],
+            filterCount: 1,
+          }),
+        }),
+      })
+    );
+    expect(JSON.stringify(mockQueueAuditEventWithoutRequest.mock.calls[0][0])).not.toContain("secret-value");
+  });
+
+  test("handles audit logging failures without failing the Cube query", async () => {
+    mockQueueAuditEventWithoutRequest.mockRejectedValueOnce(new Error("audit unavailable"));
+    const { executeTenantScopedQuery } = await import("./cube-client");
+
+    await expect(executeTenantScopedQuery(scopedInput)).resolves.toEqual([{ id: "1", count: 42 }]);
+
+    await vi.waitFor(() => {
+      expect(mockLoggerError).toHaveBeenCalledWith(
+        expect.any(Error),
+        "Failed to queue Cube query audit event"
+      );
+    });
   });
 });

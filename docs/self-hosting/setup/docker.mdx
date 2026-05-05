@@ -43,14 +43,19 @@ Make sure Docker and Docker Compose are installed on your system. These are usua
    curl -o cube/schema/FeedbackRecords.js https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/cube/schema/FeedbackRecords.js
    ```
 
-1. **Generate Hub and Cube Secrets**
+1. **Generate Hub Secret and Optional Cube Secret**
 
-   XM Suite v5 analytics requires Formbricks Hub and Cube.js. Create a local `.env` file for the required shared secrets:
+   Formbricks Hub requires an API key. XM Suite v5 analytics also requires Cube.js; set the optional `xm`
+   Compose profile and Cube secret when you want to run the bundled Cube service. For a Hub-only stack, create
+   `.env` with just `HUB_API_KEY` and omit `COMPOSE_PROFILES` and `CUBEJS_API_SECRET`.
 
    ```bash
    cat <<EOF > .env
+   COMPOSE_PROFILES=xm
    HUB_API_KEY=$(openssl rand -hex 32)
    CUBEJS_API_SECRET=$(openssl rand -hex 32)
+   CUBEJS_JWT_ISSUER=formbricks-web
+   CUBEJS_JWT_AUDIENCE=formbricks-cube
    EOF
    ```
 
@@ -127,7 +132,9 @@ Make sure Docker and Docker Compose are installed on your system. These are usua
 
 1. **Start the Docker Setup**
 
-   Now, you're ready to run Formbricks with Docker. Use the command below to start Formbricks together with PostgreSQL, Redis, Formbricks Hub, and Cube.js:
+   Now, you're ready to run Formbricks with Docker. Use the command below to start Formbricks together with
+   PostgreSQL, Redis, and Formbricks Hub. If the `xm` profile is set in `.env`, Docker Compose also starts Cube.js
+   for XM Suite v5 analytics.
 
    ```bash
    docker compose up -d
@@ -140,8 +147,8 @@ Make sure Docker and Docker Compose are installed on your system. These are usua
    Once the setup is running, open [**http://localhost:3000**](http://localhost:3000) in your browser to access Formbricks. The first time you visit, you'll see a setup wizard. Follow the steps to create your first user and start using Formbricks.
 
 <Note>
-  The bundled Docker stack keeps Formbricks Hub and Cube.js internal to the compose network. The app reaches
-  them through `http://hub:8080` and `http://cube:4000`.
+  The bundled Docker stack keeps Formbricks Hub internal to the compose network. When the `xm` profile is
+  enabled, Cube.js is internal too. The app reaches them through `http://hub:8080` and `http://cube:4000`.
 </Note>
 
 ## Update
