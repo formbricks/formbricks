@@ -33,11 +33,25 @@ export const getEnvironmentState = async (
         });
 
         if (POSTHOG_KEY) {
-          capturePostHogEvent(environmentId, "app_connected", {
-            num_surveys: surveys.length,
-            num_code_actions: actionClasses.filter((ac) => ac.type === "code").length,
-            num_no_code_actions: actionClasses.filter((ac) => ac.type === "noCode").length,
+          const workspaceId = environment.project.id;
+          const project = await prisma.project.findUnique({
+            where: { id: workspaceId },
+            select: { organizationId: true },
           });
+          const organizationId = project?.organizationId;
+
+          capturePostHogEvent(
+            environmentId,
+            "app_connected",
+            {
+              num_surveys: surveys.length,
+              num_code_actions: actionClasses.filter((ac) => ac.type === "code").length,
+              num_no_code_actions: actionClasses.filter((ac) => ac.type === "noCode").length,
+              organization_id: organizationId ?? "",
+              workspace_id: workspaceId,
+            },
+            organizationId ? { organizationId, workspaceId } : undefined
+          );
         }
       }
 

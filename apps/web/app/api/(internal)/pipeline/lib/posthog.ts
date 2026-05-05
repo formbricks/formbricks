@@ -11,7 +11,8 @@ interface SurveyResponsePostHogEventParams {
 
 /**
  * Captures a PostHog event for survey responses at milestones:
- * 1st response, then every 100th (100, 200, 300, ...).
+ * 1st response, every 10th for the first 100 (10, 20, ..., 100),
+ * then every 100th (200, 300, 400, ...).
  */
 export const captureSurveyResponsePostHogEvent = ({
   organizationId,
@@ -21,7 +22,11 @@ export const captureSurveyResponsePostHogEvent = ({
   environmentId,
   responseCount,
 }: SurveyResponsePostHogEventParams): void => {
-  if (responseCount !== 1 && responseCount % 100 !== 0) return;
+  const isFirst = responseCount === 1;
+  const isEvery10thUnder100 = responseCount <= 100 && responseCount % 10 === 0;
+  const isEvery100thAbove100 = responseCount > 100 && responseCount % 100 === 0;
+
+  if (!isFirst && !isEvery10thUnder100 && !isEvery100thAbove100) return;
 
   capturePostHogEvent(
     organizationId,

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { generateWebhookSecret } from "@/lib/crypto";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import {
@@ -31,6 +32,7 @@ const ZCreateWebhookAction = z.object({
 export const createWebhookAction = authenticatedActionClient.inputSchema(ZCreateWebhookAction).action(
   withAuditLogging("created", "webhook", async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
+    const projectId = await getProjectIdFromEnvironmentId(parsedInput.environmentId);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId,
@@ -42,7 +44,7 @@ export const createWebhookAction = authenticatedActionClient.inputSchema(ZCreate
         {
           type: "projectTeam",
           minPermission: "read",
-          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
+          projectId,
         },
       ],
     });
@@ -53,6 +55,19 @@ export const createWebhookAction = authenticatedActionClient.inputSchema(ZCreate
     );
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.newObject = parsedInput.webhookInput;
+
+    capturePostHogEvent(
+      ctx.user.id,
+      "integration_connected",
+      {
+        integration_type: "webhook",
+        organization_id: organizationId,
+        workspace_id: projectId,
+        environment_id: parsedInput.environmentId,
+      },
+      { organizationId, workspaceId: projectId }
+    );
+
     return webhook;
   })
 );
