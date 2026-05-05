@@ -6,7 +6,6 @@ import { EditLanguage } from "@/modules/survey/multi-language-surveys/components
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
-import { WorkspaceConfigNavigation } from "@/modules/workspaces/settings/components/workspace-config-navigation";
 
 export const LanguagesPage = async (props: { params: Promise<{ workspaceId: string }> }) => {
   const params = await props.params;
@@ -22,9 +21,7 @@ export const LanguagesPage = async (props: { params: Promise<{ workspaceId: stri
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.workspace_configuration")}>
-        <WorkspaceConfigNavigation activeId="languages" />
-      </PageHeader>
+      <PageHeader pageTitle={t("common.survey_languages")} />
       <SettingsCard
         title={t("workspace.languages.multi_language_surveys")}
         description={t("workspace.languages.multi_language_surveys_description")}>

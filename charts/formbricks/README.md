@@ -46,6 +46,14 @@ The intended defaults are:
 - self-hosted / single-tenant clusters: bundled controller mode
 - shared clusters with an existing platform controller: external-controller mode
 
+## Cube.js for XM Suite v5
+
+This chart does not deploy Cube.js. XM Suite v5 dashboard and analysis features require an external Cube instance.
+
+- Set `deployment.env.CUBEJS_API_URL` to your Cube endpoint.
+- Provide `CUBEJS_API_SECRET` through your existing secret management flow, such as the generated app secret override or `deployment.envFrom`.
+- Keep Hub enabled. Cube should point at the same feedback records database that Hub writes to, unless you intentionally split that storage.
+
 ## Values
 
 | Key                                                                | Type   | Default                           | Description |
@@ -134,9 +142,10 @@ The intended defaults are:
 | hub.enabled                                                        | bool   | `true`                            |             |
 | hub.env                                                            | object | `{}`                              |             |
 | hub.existingSecret                                                 | string | `""`                              |             |
+| hub.image.digest                                                   | string | `"sha256:14db7b3d285b6e9165b55693f9b83d08beff840a255fd77dd12882ee0a62f5cb"` | When set, takes precedence over tag (immutable pin). |
 | hub.image.pullPolicy                                               | string | `"IfNotPresent"`                  |             |
 | hub.image.repository                                               | string | `"ghcr.io/formbricks/hub"`        |             |
-| hub.image.tag                                                      | string | `"1.0.0"`                         |             |
+| hub.image.tag                                                      | string | `"0.2.0"`                         | Fallback when digest is empty. |
 | hub.migration.activeDeadlineSeconds                                | int    | `900`                             |             |
 | hub.migration.backoffLimit                                         | int    | `3`                               |             |
 | hub.migration.ttlSecondsAfterFinished                              | int    | `300`                             |             |

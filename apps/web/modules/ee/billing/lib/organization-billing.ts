@@ -592,7 +592,7 @@ export const createPaidPlanCheckoutSession = async (input: {
       name: "auto",
     },
     success_url: `${WEBAPP_URL}/billing-confirmation?workspaceId=${input.workspaceId}&checkout_success=1`,
-    cancel_url: `${WEBAPP_URL}/workspaces/${workspace.id}/settings/billing`,
+    cancel_url: `${WEBAPP_URL}/workspaces/${workspace.id}/settings/organization/billing`,
     metadata: {
       organizationId: input.organizationId,
       targetPlan: input.plan,

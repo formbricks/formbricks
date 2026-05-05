@@ -13,13 +13,13 @@ import { Input } from "@/modules/ui/components/input";
 interface AIQuerySectionProps {
   workspaceId: string;
   onChartGenerated: (data: AnalyticsResponse) => void;
-  feedbackRecordDirectoryId: string;
+  feedbackDirectoryId: string;
 }
 
 export function AIQuerySection({
   workspaceId,
   onChartGenerated,
-  feedbackRecordDirectoryId,
+  feedbackDirectoryId,
 }: Readonly<AIQuerySectionProps>) {
   const [userQuery, setUserQuery] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -33,7 +33,7 @@ export function AIQuerySection({
       const result = await generateAIChartAction({
         workspaceId,
         prompt: userQuery.trim(),
-        feedbackRecordDirectoryId,
+        feedbackDirectoryId,
       });
 
       if (result?.data) {

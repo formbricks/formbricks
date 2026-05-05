@@ -8,6 +8,11 @@ icon: "code"
 
 These variables are present inside your machine's docker-compose file. Restart the docker containers if you change any variables for them to take effect.
 
+<Note>
+  Upgrading from Formbricks 4.x to 5.0? Read the [migration guide](/self-hosting/advanced/migration#v5) first.
+  Formbricks v5 makes Hub part of the standard self-hosted runtime and changes how rate limiting is enforced.
+</Note>
+
 For `AI_PROVIDER=google`, use a Gemini model ID such as `gemini-2.5-flash` together with Google Cloud credentials. Formbricks uses Google Cloud naming here, even though the underlying SDK still talks to Vertex AI endpoints for Gemini model access.
 
 | Variable                                | Description                                                                                                                                                                                     | Required                                                                                 | Default                                                                   |
@@ -34,7 +39,7 @@ For `AI_PROVIDER=google`, use a Gemini model ID such as `gemini-2.5-flash` toget
 | PASSWORD_RESET_DISABLED                 | Disables password reset functionality if set to 1.                                                                                                                                              | optional                                                                                 |                                                                           |
 | PASSWORD_RESET_TOKEN_LIFETIME_MINUTES   | Configures how long password reset links remain valid in minutes. Accepted values are integers from 5 to 120.                                                                                   | optional                                                                                 | 30                                                                        |
 | EMAIL_VERIFICATION_DISABLED             | Disables email verification if set to 1.                                                                                                                                                        | optional                                                                                 |                                                                           |
-| RATE_LIMITING_DISABLED                  | Disables rate limiting if set to 1.                                                                                                                                                             | optional                                                                                 |                                                                           |
+| RATE_LIMITING_DISABLED                  | Disables only the application-level rate limiter if set to 1. It does not disable Envoy or an equivalent edge rate limiter.                                                                   | optional                                                                                 |                                                                           |
 | TELEMETRY_DISABLED                      | Disables telemetry reporting if set to 1. Ignored when an Enterprise License is active.                                                                                                         | optional                                                                                 |                                                                           |
 | DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS | Allows webhook URLs to point to internal/private network addresses (e.g. localhost, 192.168.x.x) if set to 1. Useful for self-hosted instances that need to send webhooks to internal services. | optional                                                                                 |                                                                           |
 | INVITE_DISABLED                         | Disables the ability for invited users to create an account if set to 1.                                                                                                                        | optional                                                                                 |                                                                           |
@@ -65,8 +70,8 @@ For `AI_PROVIDER=google`, use a Gemini model ID such as `gemini-2.5-flash` toget
 | AI_AWS_ACCESS_KEY_ID                    | AWS access key ID for Amazon Bedrock.                                                                                                                                                           | optional (required if `AI_PROVIDER=aws`)                                                 |                                                                           |
 | AI_AWS_SECRET_ACCESS_KEY                | AWS secret access key for Amazon Bedrock.                                                                                                                                                       | optional (required if `AI_PROVIDER=aws`)                                                 |                                                                           |
 | AI_AWS_SESSION_TOKEN                    | AWS session token for Amazon Bedrock temporary credentials.                                                                                                                                     | optional                                                                                 |                                                                           |
-| AI_AZURE_BASE_URL                       | Azure OpenAI / Foundry base URL. When set, this is preferred over `AI_AZURE_RESOURCE_NAME`.                                                                                                     | optional                                                                                 |                                                                           |
-| AI_AZURE_RESOURCE_NAME                  | Azure resource name used to assemble the Azure OpenAI URL.                                                                                                                                      | optional                                                                                 |                                                                           |
+| AI_AZURE_BASE_URL                       | Azure OpenAI / Foundry base URL. When set, this is preferred over `AI_AZURE_RESOURCE_NAME`.                                                                                                     | optional (one of this or `AI_AZURE_RESOURCE_NAME` required if `AI_PROVIDER=azure`)       |                                                                           |
+| AI_AZURE_RESOURCE_NAME                  | Azure resource name used to assemble the Azure OpenAI URL.                                                                                                                                      | optional (one of this or `AI_AZURE_BASE_URL` required if `AI_PROVIDER=azure`)            |                                                                           |
 | AI_AZURE_API_KEY                        | API key for Azure OpenAI / Foundry.                                                                                                                                                             | optional (required if `AI_PROVIDER=azure`)                                               |                                                                           |
 | AI_AZURE_API_VERSION                    | Azure API version for OpenAI-compatible calls.                                                                                                                                                  | optional                                                                                 | v1                                                                        |
 | STRIPE_SECRET_KEY                       | Secret key for Stripe integration.                                                                                                                                                              | optional                                                                                 |                                                                           |
@@ -98,12 +103,31 @@ For `AI_PROVIDER=google`, use a Gemini model ID such as `gemini-2.5-flash` toget
 
 #### Formbricks Hub
 
-When running the stack with [Formbricks Hub](https://github.com/formbricks/hub) (for example via Docker Compose or Helm), the following variables apply:
+Starting with Formbricks v5, Hub is part of the standard self-hosted runtime. When you run Formbricks with the
+bundled Docker Compose or Helm assets, the following variables apply:
 
 | Variable         | Description                                                                        | Required | Default                                             |
 | ---------------- | ---------------------------------------------------------------------------------- | -------- | --------------------------------------------------- |
-| HUB_API_KEY      | API key used by the Formbricks Hub API (port 8080).                                | required | (e.g. `openssl rand -hex 32`)                       |
-| HUB_API_URL      | Base URL the Formbricks app uses to call Hub. Use `http://localhost:8080` locally. | required | `http://localhost:8080` in local dev                |
+| HUB_API_KEY      | API key used by the Formbricks Hub API. Generate a strong secret and use the same value wherever your deployment supplies Hub auth configuration. | required | (e.g. `openssl rand -hex 32`)                       |
+| HUB_API_URL      | Base URL the Formbricks app uses to call Hub. With the bundled Docker stack, keep this at `http://hub:8080` unless Hub runs elsewhere.             | required | `http://hub:8080` (bundled Docker), `http://localhost:8080` (local dev) |
 | HUB_DATABASE_URL | PostgreSQL connection URL for Hub. Omit to use the same database as Formbricks.    | optional | Same as Formbricks `DATABASE_URL` (shared database) |
+
+#### Cube.js Analytics for XM Suite v5
+
+XM Suite v5 dashboard and analysis features require a reachable Cube.js instance. Formbricks generates the backend
+Cube JWT from `CUBEJS_API_SECRET`, so `CUBEJS_API_TOKEN` is not part of the supported setup contract.
+
+| Variable          | Description                                                                                           | Required                           | Default                              |
+| ----------------- | ----------------------------------------------------------------------------------------------------- | ---------------------------------- | ------------------------------------ |
+| CUBEJS_API_URL    | Base URL the Formbricks app uses to call Cube. Use `http://localhost:4000` locally.                  | required for XM Suite v5 analytics | `http://localhost:4000` in local dev |
+| CUBEJS_API_SECRET | Shared secret Formbricks uses to sign Cube API JWTs. Generate with `openssl rand -hex 32`.           | required for XM Suite v5 analytics |                                      |
+| CUBEJS_DB_HOST    | Database host for the Cube service. Only needed when you run Cube yourself and override defaults.     | optional                           | Depends on your Cube deployment      |
+| CUBEJS_DB_PORT    | Database port for the Cube service. Only needed when you run Cube yourself and override defaults.     | optional                           | Depends on your Cube deployment      |
+| CUBEJS_DB_NAME    | Database name for the Cube service. Only needed when you run Cube yourself and override defaults.     | optional                           | Depends on your Cube deployment      |
+| CUBEJS_DB_USER    | Database user for the Cube service. Only needed when you run Cube yourself and override defaults.     | optional                           | Depends on your Cube deployment      |
+| CUBEJS_DB_PASS    | Database password for the Cube service. Only needed when you run Cube yourself and override defaults. | optional                           | Depends on your Cube deployment      |
+
+For Helm deployments, Formbricks does not deploy Cube for you in this chart. Provide an external Cube endpoint with
+`CUBEJS_API_URL` and supply `CUBEJS_API_SECRET` through your existing secret management setup.
 
 Note: If you want to configure something that is not possible via above, please open an issue on our GitHub repo here or reach out to us on Github Discussions and we'll try our best to work out a solution with you.

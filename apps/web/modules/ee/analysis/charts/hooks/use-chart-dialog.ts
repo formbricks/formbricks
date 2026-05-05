@@ -109,12 +109,12 @@ export function useChartDialog({
         setChartName(chart.name);
         setSelectedChartType(resolveChartType(chart.type));
         setCurrentChartId(chart.id);
-        setSelectedDirectoryId(chart.feedbackRecordDirectoryId);
+        setSelectedDirectoryId(chart.feedbackDirectoryId);
 
         const queryResult = await executeQueryAction({
           workspaceId,
           query: chart.query,
-          feedbackRecordDirectoryId: chart.feedbackRecordDirectoryId,
+          feedbackDirectoryId: chart.feedbackDirectoryId,
         });
         if (cancelled) return;
 
@@ -204,7 +204,7 @@ export function useChartDialog({
             type: chartData.chartType,
             query: chartData.query,
             config: {},
-            feedbackRecordDirectoryId: selectedDirectoryId,
+            feedbackDirectoryId: selectedDirectoryId,
           },
         });
 
@@ -276,7 +276,7 @@ export function useChartDialog({
         type: data.chartType,
         query: data.query,
         config: {},
-        feedbackRecordDirectoryId: selectedDirectoryId,
+        feedbackDirectoryId: selectedDirectoryId,
       },
     });
 

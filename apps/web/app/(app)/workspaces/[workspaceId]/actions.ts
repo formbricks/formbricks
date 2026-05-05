@@ -24,7 +24,7 @@ import { getOrganizationsByUserId } from "./lib/organization";
 import { getWorkspacesByUserId } from "./lib/workspace";
 
 const ZCreateWorkspaceInput = ZWorkspaceUpdateInput.extend({
-  feedbackRecordDirectoryId: ZId.optional(),
+  feedbackDirectoryId: ZId.optional(),
 });
 
 const ZCreateWorkspaceAction = z.object({

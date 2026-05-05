@@ -153,11 +153,11 @@ export const FaviconCustomizationSettings = ({
   const buttons: [ModalButton, ModalButton] = [
     {
       text: t("common.upgrade_plan"),
-      href: `${workspaceBasePath}/settings/billing`,
+      href: `${workspaceBasePath}/settings/organization/billing`,
     },
     {
       text: t("common.learn_more"),
-      href: `${workspaceBasePath}/settings/billing`,
+      href: `${workspaceBasePath}/settings/organization/billing`,
     },
   ];
 

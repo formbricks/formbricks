@@ -39,10 +39,11 @@ test.describe("Survey Styling", async () => {
     const user = await users.create();
     await user.login();
 
-    // Navigate to Look & Feel settings
-    await page.getByRole("link", { name: "Configure" }).click();
-    await page.getByRole("link", { name: "Look & Feel" }).click();
-    await page.waitForURL(/\/workspaces\/[^/]+\/look/);
+    // Navigate to Appearance settings
+    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
+    const workspaceId = /\/workspaces\/([^/]+)\//.exec(page.url())?.[1];
+    await page.goto(`/workspaces/${workspaceId}/settings/workspace/look`);
+    await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/look/);
 
     // Toggle "Enable custom styling"
     const addCustomStyles = page.getByLabel("Enable custom styling");
@@ -172,10 +173,11 @@ test.describe("Survey Styling", async () => {
     const user = await users.create();
     await user.login();
 
-    // Navigate to Look & Feel settings
-    await page.getByRole("link", { name: "Configure" }).click();
-    await page.getByRole("link", { name: "Look & Feel" }).click();
-    await page.waitForURL(/\/workspaces\/[^/]+\/look/);
+    // Navigate to Appearance settings
+    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
+    const workspaceId = /\/workspaces\/([^/]+)\//.exec(page.url())?.[1];
+    await page.goto(`/workspaces/${workspaceId}/settings/workspace/look`);
+    await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/look/);
 
     // Toggle "Enable custom styling"
     const addCustomStyles = page.getByLabel("Enable custom styling");
@@ -261,10 +263,11 @@ test.describe("Survey Styling", async () => {
     const user = await users.create();
     await user.login();
 
-    // Navigate to Look & Feel settings
-    await page.getByRole("link", { name: "Configure" }).click();
-    await page.getByRole("link", { name: "Look & Feel" }).click();
-    await page.waitForURL(/\/workspaces\/[^/]+\/look/);
+    // Navigate to Appearance settings
+    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
+    const workspaceId = /\/workspaces\/([^/]+)\//.exec(page.url())?.[1];
+    await page.goto(`/workspaces/${workspaceId}/settings/workspace/look`);
+    await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/look/);
 
     // Toggle "Enable custom styling"
     const addCustomStyles = page.getByLabel("Enable custom styling");

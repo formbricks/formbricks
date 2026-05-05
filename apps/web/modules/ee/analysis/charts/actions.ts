@@ -17,7 +17,7 @@ import {
   getCharts,
   updateChart,
 } from "@/modules/ee/analysis/charts/lib/charts";
-import { checkWorkspaceAccess } from "@/modules/ee/analysis/lib/access";
+import { checkWorkspaceAccess, verifyFeedbackDirectoryAccess } from "@/modules/ee/analysis/lib/access";
 import { generateSchemaContext } from "@/modules/ee/analysis/lib/ai-schema-context";
 import { ZChartCreateInput, ZChartType, ZChartUpdateInput } from "@/modules/ee/analysis/types/analysis";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
@@ -213,7 +213,7 @@ export const getChartsAction = authenticatedActionClient
 const ZExecuteQueryAction = z.object({
   workspaceId: ZId,
   query: ZChartQuery,
-  feedbackRecordDirectoryId: ZId,
+  feedbackDirectoryId: ZId,
 });
 
 export const executeQueryAction = authenticatedActionClient
@@ -226,11 +226,12 @@ export const executeQueryAction = authenticatedActionClient
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZExecuteQueryAction>;
     }) => {
-      await checkWorkspaceAccess(ctx.user.id, parsedInput.workspaceId, "read");
+      const { workspaceId } = await checkWorkspaceAccess(ctx.user.id, parsedInput.workspaceId, "read");
+      await verifyFeedbackDirectoryAccess(parsedInput.feedbackDirectoryId, workspaceId);
 
       validateQueryMembers(parsedInput.query);
 
-      const scopedQuery = injectTenantFilter(parsedInput.query, parsedInput.feedbackRecordDirectoryId);
+      const scopedQuery = injectTenantFilter(parsedInput.query, parsedInput.feedbackDirectoryId);
 
       try {
         return await executeQuery(scopedQuery as Record<string, unknown>);
@@ -280,7 +281,7 @@ const ZGenerateAIQueryResponse = z.object({
 const ZGenerateAIChartAction = z.object({
   workspaceId: ZId,
   prompt: z.string().min(1).max(2000),
-  feedbackRecordDirectoryId: ZId,
+  feedbackDirectoryId: ZId,
 });
 
 export const generateAIChartAction = authenticatedActionClient
@@ -293,7 +294,8 @@ export const generateAIChartAction = authenticatedActionClient
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZGenerateAIChartAction>;
     }) => {
-      await checkWorkspaceAccess(ctx.user.id, parsedInput.workspaceId, "read");
+      const { workspaceId } = await checkWorkspaceAccess(ctx.user.id, parsedInput.workspaceId, "read");
+      await verifyFeedbackDirectoryAccess(parsedInput.feedbackDirectoryId, workspaceId);
 
       if (!process.env.OPENAI_API_KEY) {
         throw new Error("OPENAI_API_KEY is not configured");
@@ -335,10 +337,7 @@ export const generateAIChartAction = authenticatedActionClient
 
       validateQueryMembers(cleanQuery as TChartQuery);
 
-      const scopedQuery = injectTenantFilter(
-        cleanQuery as TChartQuery,
-        parsedInput.feedbackRecordDirectoryId
-      );
+      const scopedQuery = injectTenantFilter(cleanQuery as TChartQuery, parsedInput.feedbackDirectoryId);
 
       const data = await executeQuery(scopedQuery as Record<string, unknown>);
 

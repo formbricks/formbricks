@@ -12,6 +12,7 @@ import {
   isManagementApiRoute,
 } from "@/app/middleware/endpoint-validator";
 import { AUDIT_LOG_ENABLED } from "@/lib/constants";
+import { getApiKeyFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import {
   TEnvoyRateLimitAuthType,
@@ -183,8 +184,11 @@ const handleAuthentication = async (
     case AuthenticationMethod.Session:
       return await getServerSession(authOptions);
     case AuthenticationMethod.Both: {
-      const session = await getServerSession(authOptions);
-      return session ?? (await authenticateRequest(req));
+      if (getApiKeyFromHeaders(req.headers)) {
+        return await authenticateRequest(req);
+      }
+
+      return await getServerSession(authOptions);
     }
     case AuthenticationMethod.None:
       return null;

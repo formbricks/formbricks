@@ -56,7 +56,7 @@ function createConnector(
     type: "formbricks_survey",
     status: "active",
     workspaceId: "env-1",
-    feedbackRecordDirectoryId: "frd-1",
+    feedbackDirectoryId: "frd-1",
     lastSyncAt: null,
     formbricksMappings: [
       {

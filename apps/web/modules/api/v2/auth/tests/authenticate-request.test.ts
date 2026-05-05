@@ -74,6 +74,7 @@ describe("authenticateRequest", () => {
             workspaceName: "Workspace 2",
           },
         ],
+        feedbackDirectoryPermissions: [],
         apiKeyId: "api-key-id",
         organizationId: "org-id",
         organizationAccess: {
@@ -119,6 +120,7 @@ describe("authenticateRequest", () => {
       expect(result.data).toEqual({
         type: "apiKey",
         workspacePermissions: [],
+        feedbackDirectoryPermissions: [],
         apiKeyId: "org-api-key-id",
         organizationId: "org-id",
         organizationAccess: {
@@ -177,5 +179,66 @@ describe("authenticateRequest", () => {
 
     // Should not call getApiKeyWithPermissions for empty string
     expect(getApiKeyWithPermissions).not.toHaveBeenCalled();
+  });
+
+  test("should authenticate bearer API keys", async () => {
+    const request = new Request("http://localhost", {
+      headers: { authorization: "Bearer fbk_validBearerKey123" },
+    });
+
+    vi.mocked(getApiKeyWithPermissions).mockResolvedValue({
+      id: "bearer-api-key-id",
+      organizationId: "org-id",
+      createdAt: new Date(),
+      createdBy: "user-id",
+      lastUsedAt: null,
+      label: "Bearer API Key",
+      hashedKey: "hashed-key",
+      organizationAccess: {
+        accessControl: {
+          read: true,
+          write: true,
+        },
+      },
+      apiKeyWorkspaces: [],
+      apiKeyFeedbackDirectories: [
+        {
+          feedbackDirectoryId: "clxx1234567890123456789012",
+          apiKeyId: "bearer-api-key-id",
+          permission: "read",
+          feedbackDirectory: {
+            id: "clxx1234567890123456789012",
+            name: "Directory 1",
+          },
+        },
+      ],
+    } as unknown as TApiKeyWithEnvironmentAndWorkspace);
+
+    const result = await authenticateRequest(request);
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data).toEqual({
+        type: "apiKey",
+        workspacePermissions: [],
+        feedbackDirectoryPermissions: [
+          {
+            feedbackDirectoryId: "clxx1234567890123456789012",
+            feedbackDirectoryName: "Directory 1",
+            permission: "read",
+          },
+        ],
+        apiKeyId: "bearer-api-key-id",
+        organizationId: "org-id",
+        organizationAccess: {
+          accessControl: {
+            read: true,
+            write: true,
+          },
+        },
+      });
+    }
+
+    expect(getApiKeyWithPermissions).toHaveBeenCalledWith("fbk_validBearerKey123");
   });
 });

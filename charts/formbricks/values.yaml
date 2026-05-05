@@ -95,7 +95,9 @@ deployment:
     #   type: secret
     #   nameSuffix: app-secrets
 
-  # Environment variables passed to the app container
+  # Environment variables passed to the app container.
+  # XM Suite v5 analytics requires an external Cube endpoint when using Helm:
+  # set deployment.env.CUBEJS_API_URL and provide CUBEJS_API_SECRET through a Secret referenced by envFrom/existingSecret.
   env: {}
 
   # Tolerations for scheduling pods on tainted nodes
@@ -435,6 +437,7 @@ envoy:
       v2Client: true
       v1Management: true
       v1Webhooks: true
+      feedbackRecords: false
       storage: true
     policies:
       enabled: false
@@ -565,17 +568,28 @@ hub:
 
   image:
     repository: "ghcr.io/formbricks/hub"
-    # Pin to a semver tag for reproducible deployments; update on each Hub release.
-    tag: "1.0.0"
+    # Pinned by digest for immutable, reproducible deployments. When digest is set it takes
+    # precedence over tag, and deployment, init container, and migration job all resolve to the
+    # same immutable image. Update on each Hub release.
+    # Current digest corresponds to ghcr.io/formbricks/hub:0.2.0.
+    digest: "sha256:14db7b3d285b6e9165b55693f9b83d08beff840a255fd77dd12882ee0a62f5cb"
+    # Tag is a fallback for dev/non-prod when digest is cleared; keep aligned with the digest above.
+    tag: "0.2.0"
     pullPolicy: IfNotPresent
 
   # Optional override for the secret Hub reads from.
   # Defaults to the generated app secret (<release>-app-secrets), which contains DATABASE_URL and HUB_API_KEY.
   # If you set this, the custom secret must provide DATABASE_URL and HUB_API_KEY.
+  # The app secret still needs HUB_API_KEY as well because the web app talks to Hub directly.
+  # When secret.enabled=true, the custom Hub secret must already exist at render time so Helm can copy HUB_API_KEY
+  # into the generated app secret and Envoy credential.
   existingSecret: ""
 
   # Optional env vars (non-secret). Use existingSecret for secret values such as DATABASE_URL and HUB_API_KEY.
   env: {}
+
+  # Helm does not deploy Cube. XM Suite v5 analytics requires operators to provide an external Cube instance,
+  # set deployment.env.CUBEJS_API_URL, and supply CUBEJS_API_SECRET via an existing secret.
 
   # Upgrade migration job runs goose + river before Helm upgrades Hub resources.
   # Fresh installs run the same migrations through the Hub deployment init container.

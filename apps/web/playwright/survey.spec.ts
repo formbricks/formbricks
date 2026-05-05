@@ -269,8 +269,8 @@ test.describe("Multi Language Survey Create", async () => {
     test.skip(!storageConfigured, "Storage-dependent survey E2E requires configured file storage.");
 
     // Add workspace languages (English + German)
-    await page.getByRole("link", { name: "Configure" }).click();
-    await page.getByRole("link", { name: "Survey Languages" }).click();
+    await page.goto(`/workspaces/${workspaceId}/settings/workspace/languages`);
+    await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/languages/);
     await page.getByRole("button", { name: "Edit languages" }).click();
     await page.getByRole("button", { name: "Add language" }).click();
     await page.getByRole("button", { name: "Select" }).click();
@@ -288,7 +288,7 @@ test.describe("Multi Language Survey Create", async () => {
     await page.waitForTimeout(2000);
 
     // Create survey and add all questions in English (default language)
-    await page.getByRole("link", { name: "Surveys" }).click();
+    await page.goto(`/workspaces/${workspaceId}/surveys`);
     await page.getByText("Start from scratch").click();
     await page.getByRole("button", { name: "Create survey", exact: true }).click();
 

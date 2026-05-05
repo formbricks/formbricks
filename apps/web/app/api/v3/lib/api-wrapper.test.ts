@@ -221,6 +221,7 @@ describe("withV3ApiWrapper", () => {
       organizationId: "org_1",
       organizationAccess: { accessControl: { read: true, write: false } },
       workspacePermissions: [],
+      feedbackDirectoryPermissions: [],
     });
 
     const handler = vi.fn(async ({ authentication }) => {
@@ -245,6 +246,40 @@ describe("withV3ApiWrapper", () => {
       expect.objectContaining({ namespace: "api:v3" }),
       "key_1"
     );
+    expect(mockGetServerSession).not.toHaveBeenCalled();
+  });
+
+  test("uses bearer API keys before session auth in both mode", async () => {
+    mockGetServerSession.mockResolvedValue({
+      user: { id: "user_1", name: "Test", email: "t@example.com" },
+      expires: "2026-01-01",
+    });
+    mockAuthenticateRequest.mockResolvedValue({
+      type: "apiKey",
+      apiKeyId: "key_2",
+      organizationId: "org_1",
+      organizationAccess: { accessControl: { read: true, write: true } },
+      workspacePermissions: [],
+      feedbackDirectoryPermissions: [],
+    });
+
+    const wrapped = withV3ApiWrapper({
+      auth: "both",
+      handler: async ({ authentication }) => {
+        expect(authentication).toMatchObject({ apiKeyId: "key_2" });
+        return Response.json({ ok: true });
+      },
+    });
+
+    const response = await wrapped(
+      new NextRequest("http://localhost/api/v3/surveys", {
+        headers: { authorization: "Bearer fbk_test" },
+      }),
+      {} as never
+    );
+
+    expect(response.status).toBe(200);
+    expect(mockAuthenticateRequest).toHaveBeenCalledOnce();
     expect(mockGetServerSession).not.toHaveBeenCalled();
   });
 

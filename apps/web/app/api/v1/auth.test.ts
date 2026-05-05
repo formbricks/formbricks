@@ -123,6 +123,7 @@ describe("authenticateRequest", () => {
           workspaceName: "Workspace 1",
         },
       ],
+      feedbackDirectoryPermissions: [],
       apiKeyId: "api-key-id",
       organizationId: "org-id",
       organizationAccess: "all",
@@ -147,7 +148,7 @@ describe("authenticateRequest", () => {
     expect(result).toBeNull();
   });
 
-  test("returns null when API key has no workspace permissions", async () => {
+  test("returns authentication data when API key has no workspace permissions", async () => {
     const request = new NextRequest("http://localhost", {
       headers: { "x-api-key": "valid-api-key" },
     });
@@ -161,11 +162,64 @@ describe("authenticateRequest", () => {
       lastUsedAt: null,
       label: "Test API Key",
       apiKeyWorkspaces: [],
+      apiKeyFeedbackDirectories: [],
     };
 
     vi.mocked(getApiKeyWithPermissions).mockResolvedValue(mockApiKeyData as any);
 
     const result = await authenticateRequest(request);
-    expect(result).toBeNull();
+    expect(result).toEqual({
+      type: "apiKey",
+      workspacePermissions: [],
+      feedbackDirectoryPermissions: [],
+      apiKeyId: "api-key-id",
+      organizationId: "org-id",
+      organizationAccess: "all",
+    });
+  });
+
+  test("returns authentication data for bearer API keys", async () => {
+    const request = new NextRequest("http://localhost", {
+      headers: { authorization: "Bearer fbk_valid_bearer_key" },
+    });
+
+    vi.mocked(getApiKeyWithPermissions).mockResolvedValue({
+      id: "api-key-id",
+      organizationId: "org-id",
+      organizationAccess: "all" as const,
+      createdAt: new Date(),
+      createdBy: "user-id",
+      lastUsedAt: null,
+      label: "Test API Key",
+      apiKeyWorkspaces: [],
+      apiKeyFeedbackDirectories: [
+        {
+          feedbackDirectoryId: "clxx1234567890123456789012",
+          permission: "write" as const,
+          feedbackDirectory: {
+            id: "clxx1234567890123456789012",
+            name: "Directory 1",
+          },
+        },
+      ],
+    } as any);
+
+    const result = await authenticateRequest(request);
+
+    expect(result).toEqual({
+      type: "apiKey",
+      workspacePermissions: [],
+      feedbackDirectoryPermissions: [
+        {
+          feedbackDirectoryId: "clxx1234567890123456789012",
+          feedbackDirectoryName: "Directory 1",
+          permission: "write",
+        },
+      ],
+      apiKeyId: "api-key-id",
+      organizationId: "org-id",
+      organizationAccess: "all",
+    });
+    expect(getApiKeyWithPermissions).toHaveBeenCalledWith("fbk_valid_bearer_key");
   });
 });

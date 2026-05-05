@@ -17,15 +17,6 @@ Hub resource name: base name truncated to 59 chars then "-hub" so the suffix is 
 
 
 {{/*
-Hub resource name: base name truncated to 59 chars then "-hub" so the suffix is never lost (63 char limit).
-*/}}
-{{- define "formbricks.hubname" -}}
-{{- $base := include "formbricks.name" . | trunc 59 | trimSuffix "-" }}
-{{- printf "%s-hub" $base | trimSuffix "-" }}
-{{- end }}
-
-
-{{/*
 Define the application version to be used in labels.
 The version is taken from `.Values.deployment.image.tag` if provided, otherwise it defaults to `.Chart.Version`.
 It ensures the version only contains alphanumeric characters, underscores, dots, or hyphens, replacing any invalid characters with a hyphen.
@@ -110,6 +101,19 @@ If `namespaceOverride` is provided, it will be used; otherwise, it defaults to `
 {{- default (include "formbricks.appSecretName" .) .Values.hub.existingSecret -}}
 {{- end }}
 
+{{/*
+Hub image reference. Pin by digest in production (hub.image.digest = "sha256:..."); falls back to
+hub.image.tag for local/dev. All Hub workloads (deployment, init container, migration job, future
+hub-worker) must use this helper so they cannot drift apart.
+*/}}
+{{- define "formbricks.hubImage" -}}
+{{- if .Values.hub.image.digest -}}
+{{- printf "%s@%s" .Values.hub.image.repository .Values.hub.image.digest -}}
+{{- else -}}
+{{- printf "%s:%s" .Values.hub.image.repository (.Values.hub.image.tag | default "latest") -}}
+{{- end -}}
+{{- end }}
+
 
 {{- define "formbricks.postgresAdminPassword" -}}
 {{- $secret := (lookup "v1" "Secret" .Release.Namespace (include "formbricks.appSecretName" .)) }}
@@ -166,9 +170,12 @@ If `namespaceOverride` is provided, it will be used; otherwise, it defaults to `
 {{- end }}
 
 {{- define "formbricks.hubApiKey" -}}
-{{- $secret := (lookup "v1" "Secret" .Release.Namespace (include "formbricks.appSecretName" .)) }}
+{{- $hubSecretName := include "formbricks.hubSecretName" . }}
+{{- $secret := (lookup "v1" "Secret" .Release.Namespace $hubSecretName) }}
 {{- if and $secret (index $secret.data "HUB_API_KEY") }}
     {{- index $secret.data "HUB_API_KEY" | b64dec -}}
+{{- else if .Values.hub.existingSecret }}
+    {{- fail (printf "hub.existingSecret %q must already exist in namespace %q and contain HUB_API_KEY when rendering the generated app secret. Disable secret.enabled and provide app-secrets externally, or pre-create the Hub secret." $hubSecretName .Release.Namespace) -}}
 {{- else }}
     {{- randAlphaNum 32 -}}
 {{- end -}}
