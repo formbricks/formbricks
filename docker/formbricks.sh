@@ -333,9 +333,12 @@ EOT
 
   hub_api_key=$(openssl rand -hex 32)
   cubejs_api_secret=$(openssl rand -hex 32)
-  cat <<EOF > .env
+cat <<EOF > .env
+COMPOSE_PROFILES=xm
 HUB_API_KEY=$hub_api_key
 CUBEJS_API_SECRET=$cubejs_api_secret
+CUBEJS_JWT_ISSUER=formbricks-web
+CUBEJS_JWT_AUDIENCE=formbricks-cube
 EOF
   echo "🚗 Generated Hub and Cube secrets in .env successfully!"
   

@@ -87,20 +87,56 @@ describe("env", () => {
     expect(env.CUBEJS_API_SECRET).toBe("cube-secret");
   });
 
-  test("fails to load when the Cube API secret is missing", async () => {
+  test("accepts Cube JWT issuer and audience configuration", async () => {
+    setTestEnv({
+      CUBEJS_JWT_AUDIENCE: "formbricks-cube",
+      CUBEJS_JWT_ISSUER: "formbricks-web",
+    });
+
+    const { env } = await import("./env");
+
+    expect(env.CUBEJS_JWT_AUDIENCE).toBe("formbricks-cube");
+    expect(env.CUBEJS_JWT_ISSUER).toBe("formbricks-web");
+  });
+
+  test("allows the Cube API secret to be omitted until analytics is used", async () => {
     setTestEnv({
       CUBEJS_API_SECRET: undefined,
     });
 
-    await expect(import("./env")).rejects.toThrow("Invalid environment variables");
+    const { env } = await import("./env");
+
+    expect(env.CUBEJS_API_SECRET).toBeUndefined();
   });
 
-  test("fails to load when the Cube API URL is missing", async () => {
+  test("treats an empty Cube API secret from Docker Compose as omitted", async () => {
+    setTestEnv({
+      CUBEJS_API_SECRET: "",
+    });
+
+    const { env } = await import("./env");
+
+    expect(env.CUBEJS_API_SECRET).toBeUndefined();
+  });
+
+  test("allows the Cube API URL to be omitted until analytics is used", async () => {
     setTestEnv({
       CUBEJS_API_URL: undefined,
     });
 
-    await expect(import("./env")).rejects.toThrow("Invalid environment variables");
+    const { env } = await import("./env");
+
+    expect(env.CUBEJS_API_URL).toBeUndefined();
+  });
+
+  test("treats an empty Cube API URL as omitted", async () => {
+    setTestEnv({
+      CUBEJS_API_URL: "",
+    });
+
+    const { env } = await import("./env");
+
+    expect(env.CUBEJS_API_URL).toBeUndefined();
   });
 
   test("fails to load when the Cube API URL is invalid", async () => {
