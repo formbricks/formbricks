@@ -11,7 +11,8 @@ const mocks = vi.hoisted(() => {
     checkFeedbackDirectoryAccess: vi.fn(),
     getIsDashboardsEnabled: vi.fn(),
     createChart: vi.fn(),
-    createOpenAI: vi.fn(),
+    getAiModel: vi.fn(),
+    assertOrganizationAIConfigured: vi.fn(),
     executeTenantScopedQuery: vi.fn(),
     generateText: vi.fn(),
     updateChart: vi.fn(),
@@ -64,8 +65,20 @@ vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
   withAuditLogging: vi.fn((_eventName, _objectType, fn) => fn),
 }));
 
-vi.mock("@ai-sdk/openai", () => ({
-  createOpenAI: mocks.createOpenAI,
+vi.mock("@formbricks/ai", () => ({
+  getAiModel: mocks.getAiModel,
+}));
+
+vi.mock("@/lib/ai/service", () => ({
+  assertOrganizationAIConfigured: mocks.assertOrganizationAIConfigured,
+}));
+
+vi.mock("@/lib/env", () => ({
+  env: {},
+}));
+
+vi.mock("@/modules/ee/analysis/lib/ai-schema-context", () => ({
+  generateSchemaContext: vi.fn(() => "schema context"),
 }));
 
 vi.mock("ai", () => ({
@@ -83,7 +96,6 @@ const ctx = {
 describe("chart Cube actions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.stubEnv("OPENAI_API_KEY", "openai-key");
     mocks.actionClientAction.mockImplementation((fn) => fn);
     mocks.actionClientInputSchema.mockReturnValue({ action: mocks.actionClientAction });
     mocks.getIsDashboardsEnabled.mockResolvedValue(true);
@@ -94,7 +106,8 @@ describe("chart Cube actions", () => {
     mocks.checkFeedbackDirectoryAccess.mockResolvedValue({
       feedbackDirectoryId: "frd-1",
     });
-    mocks.createOpenAI.mockReturnValue(() => "model");
+    mocks.assertOrganizationAIConfigured.mockResolvedValue(undefined);
+    mocks.getAiModel.mockReturnValue("model");
     mocks.createChart.mockResolvedValue({
       id: "chart-1",
       name: "Chart",
@@ -110,7 +123,7 @@ describe("chart Cube actions", () => {
   });
 
   afterEach(() => {
-    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
   });
 
   test("executeQueryAction delegates to the tenant-scoped Cube helper after authorization", async () => {

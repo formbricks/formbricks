@@ -1,4 +1,6 @@
 import { use } from "react";
+import { getOrganizationAIConfig } from "@/lib/ai/service";
+import type { TOrganizationAIConfig } from "@/lib/ai/service";
 import { getConnectorsWithMappings } from "@/lib/connector/service";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
@@ -13,6 +15,15 @@ import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-direc
 import { getIsDashboardsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
+
+const getAIUnavailableReason = (
+  aiConfig: TOrganizationAIConfig
+): "not_in_plan" | "not_enabled" | "instance_not_configured" | undefined => {
+  if (!aiConfig.isAIDataAnalysisEntitled) return "not_in_plan";
+  if (!aiConfig.isAIDataAnalysisEnabled) return "not_enabled";
+  if (!aiConfig.isInstanceConfigured) return "instance_not_configured";
+  return undefined;
+};
 
 interface ChartsListContentProps {
   chartsPromise: Promise<TChartWithCreator[]>;
@@ -71,10 +82,13 @@ export async function ChartsListPage({ workspaceId }: Readonly<ChartsListPagePro
     );
   }
 
-  const [directories, connectors] = await Promise.all([
+  const [directories, connectors, aiConfig] = await Promise.all([
     getFeedbackDirectoriesByWorkspaceId(workspaceId),
     getConnectorsWithMappings(workspaceId),
+    getOrganizationAIConfig(organization.id),
   ]);
+  const aiUnavailableReason = getAIUnavailableReason(aiConfig);
+  const isAIAvailable = !aiUnavailableReason;
   const hasFeedbackRecords = await hasFeedbackRecordsInDirectories(
     directories.map((directory) => directory.id)
   );
@@ -90,6 +104,8 @@ export async function ChartsListPage({ workspaceId }: Readonly<ChartsListPagePro
             workspaceId={workspaceId}
             directories={directories}
             buttonProps={{ disabled: !hasFeedbackRecords }}
+            isAIAvailable={isAIAvailable}
+            aiUnavailableReason={aiUnavailableReason}
           />
         )
       }>

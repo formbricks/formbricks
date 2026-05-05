@@ -9,17 +9,22 @@ import { generateAIChartAction } from "@/modules/ee/analysis/charts/actions";
 import type { AnalyticsResponse } from "@/modules/ee/analysis/types/analysis";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 
 interface AIQuerySectionProps {
   workspaceId: string;
   onChartGenerated: (data: AnalyticsResponse) => void;
   feedbackDirectoryId: string;
+  isAIAvailable?: boolean;
+  aiUnavailableReason?: string;
 }
 
 export function AIQuerySection({
   workspaceId,
   onChartGenerated,
   feedbackDirectoryId,
+  isAIAvailable = true,
+  aiUnavailableReason,
 }: Readonly<AIQuerySectionProps>) {
   const [userQuery, setUserQuery] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -70,16 +75,34 @@ export function AIQuerySection({
           value={userQuery}
           onChange={(e) => setUserQuery(e.target.value)}
           maxLength={2000}
-          disabled={isGenerating}
+          disabled={!isAIAvailable || isGenerating}
         />
-        <Button
-          type="submit"
-          variant="default"
-          disabled={!userQuery.trim() || isGenerating}
-          loading={isGenerating}>
-          <WandSparklesIcon className="h-4 w-4" />
-          {t("workspace.analysis.charts.create_chart_with_ai")}
-        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div>
+                <Button
+                  type="submit"
+                  variant="default"
+                  className="w-full"
+                  disabled={!isAIAvailable || !userQuery.trim() || isGenerating}
+                  loading={isGenerating}>
+                  <WandSparklesIcon className="h-4 w-4" />
+                  {t("workspace.analysis.charts.create_chart_with_ai")}
+                </Button>
+              </div>
+            </TooltipTrigger>
+            {!isAIAvailable && (
+              <TooltipContent>
+                {{
+                  not_in_plan: t("workspace.analysis.charts.ai_not_in_plan"),
+                  not_enabled: t("workspace.analysis.charts.ai_not_enabled"),
+                  instance_not_configured: t("workspace.analysis.charts.ai_instance_not_configured"),
+                }[aiUnavailableReason ?? ""] ?? t("workspace.analysis.charts.ai_not_available")}
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
       </form>
     </div>
   );

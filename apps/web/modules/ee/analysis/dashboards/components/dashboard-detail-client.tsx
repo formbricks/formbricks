@@ -34,6 +34,8 @@ interface DashboardDetailClientProps {
   >;
   directories: { id: string; name: string }[];
   isReadOnly: boolean;
+  isAIAvailable: boolean;
+  aiUnavailableReason?: string;
 }
 
 const widgetsToLayout = (widgets: TDashboardWidget[]): LayoutItem[] => {
@@ -151,6 +153,8 @@ export function DashboardDetailClient({
   widgetDataPromises,
   directories,
   isReadOnly,
+  isAIAvailable,
+  aiUnavailableReason,
 }: Readonly<DashboardDetailClientProps>) {
   const router = useRouter();
   const { t } = useTranslation();
@@ -297,6 +301,8 @@ export function DashboardDetailClient({
             isSaving={isSaving}
             hasChanges={hasChanges}
             isReadOnly={isReadOnly}
+            isAIAvailable={isAIAvailable}
+            aiUnavailableReason={aiUnavailableReason}
             onRefresh={() => router.refresh()}
             onEditToggle={handleEnterEditMode}
             onSave={handleSave}
@@ -363,6 +369,8 @@ export function DashboardDetailClient({
             router.refresh();
           }}
           directories={directories}
+          isAIAvailable={isAIAvailable}
+          aiUnavailableReason={aiUnavailableReason}
         />
       )}
     </PageContentWrapper>
