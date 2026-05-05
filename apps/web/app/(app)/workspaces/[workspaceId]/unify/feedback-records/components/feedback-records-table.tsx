@@ -17,7 +17,6 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { listFeedbackRecordsAction } from "@/lib/connector/actions";
 import { formatDateForDisplay, formatDateTimeForDisplay } from "@/lib/utils/datetime";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import type { FeedbackRecordData } from "@/modules/hub/types";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
@@ -63,6 +62,7 @@ function truncate(str: string, maxLen: number): string {
 interface FeedbackRecordsTableProps {
   workspaceId: string;
   initialRecords: FeedbackRecordData[];
+  initialCursors: Record<string, string>;
   frdMap: Record<string, string>;
   csvSources: { id: string; name: string }[];
   canWrite: boolean;
@@ -71,18 +71,23 @@ interface FeedbackRecordsTableProps {
 export const FeedbackRecordsTable = ({
   workspaceId,
   initialRecords,
+  initialCursors,
   frdMap,
   csvSources,
   canWrite,
 }: Readonly<FeedbackRecordsTableProps>) => {
   const { t, i18n } = useTranslation();
   const [records, setRecords] = useState<FeedbackRecordData[]>(initialRecords);
+  const [cursors, setCursors] = useState<Record<string, string>>(initialCursors);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [drawerMode, setDrawerMode] = useState<"create" | "edit">("edit");
   const [drawerRecordId, setDrawerRecordId] = useState<string | undefined>();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [csvImportSource, setCsvImportSource] = useState<{ id: string; name: string } | null>(null);
+
+  const hasMore = Object.keys(cursors).length > 0;
 
   const directories = useMemo(
     () =>
@@ -91,41 +96,83 @@ export const FeedbackRecordsTable = ({
         .sort((a, b) => a.name.localeCompare(b.name)),
     [frdMap]
   );
+
+  const fetchRecords = async (
+    mode: "refresh" | "loadMore"
+  ): Promise<{ records: FeedbackRecordData[]; newCursors: Record<string, string> } | null> => {
+    const directoryIds = Object.keys(frdMap);
+    const frdIdsToFetch = mode === "refresh" ? directoryIds : directoryIds.filter((id) => cursors[id]);
+
+    if (frdIdsToFetch.length === 0) return null;
+
+    const results = await Promise.all(
+      frdIdsToFetch.map((frdId) =>
+        listFeedbackRecordsAction({
+          workspaceId,
+          frdId,
+          limit: RECORDS_PER_PAGE,
+          ...(mode === "loadMore" && cursors[frdId] ? { cursor: cursors[frdId] } : {}),
+        })
+      )
+    );
+
+    if (results.some((result) => !result?.data)) {
+      return null;
+    }
+
+    const fetchedRecords = results.flatMap((result) => result?.data?.data ?? []);
+
+    const newCursors: Record<string, string> = {};
+    for (let i = 0; i < frdIdsToFetch.length; i++) {
+      const nextCursor = results[i]?.data?.next_cursor;
+      if (nextCursor) {
+        newCursors[frdIdsToFetch[i]] = nextCursor;
+      }
+    }
+
+    return { records: fetchedRecords, newCursors };
+  };
+
   const handleRefresh = async () => {
     if (isRefreshing) return;
     setIsRefreshing(true);
     setError(null);
 
     const toastId = toast.loading(t("workspace.unify.refreshing_feedback_records"));
-    const directoryIds = Object.keys(frdMap);
-    const results = await Promise.all(
-      directoryIds.map((frdId) =>
-        listFeedbackRecordsAction({
-          workspaceId,
-          frdId,
-          limit: RECORDS_PER_PAGE,
-        })
-      )
-    );
+    const result = await fetchRecords("refresh");
 
-    if (results.some((result) => !result?.data)) {
-      const firstErrorResult = results.find((result) => !result?.data);
-      const errorMessage = firstErrorResult ? getFormattedErrorMessage(firstErrorResult) : undefined;
-      toast.error(errorMessage ?? t("workspace.unify.failed_to_load_feedback_records"), {
-        id: toastId,
-      });
+    if (!result) {
+      toast.error(t("workspace.unify.failed_to_load_feedback_records"), { id: toastId });
       setIsRefreshing(false);
       return;
     }
 
-    const successfulRecords = results.flatMap((result) => result?.data?.data ?? []);
-
-    const mergedRecords = successfulRecords
+    const mergedRecords = result.records
       .toSorted((a, b) => (a.collected_at < b.collected_at ? 1 : -1))
       .slice(0, RECORDS_PER_PAGE);
     setRecords(mergedRecords);
+    setCursors(result.newCursors);
     setIsRefreshing(false);
     toast.success(t("workspace.unify.feedback_records_refreshed"), { id: toastId });
+  };
+
+  const handleLoadMore = async () => {
+    if (isLoadingMore || !hasMore) return;
+    setIsLoadingMore(true);
+
+    const result = await fetchRecords("loadMore");
+
+    if (!result) {
+      toast.error(t("workspace.unify.failed_to_load_feedback_records"));
+      setIsLoadingMore(false);
+      return;
+    }
+
+    setRecords((prev) =>
+      [...prev, ...result.records].toSorted((a, b) => (a.collected_at < b.collected_at ? 1 : -1))
+    );
+    setCursors(result.newCursors);
+    setIsLoadingMore(false);
   };
 
   if (error) {
@@ -261,6 +308,19 @@ export const FeedbackRecordsTable = ({
             </table>
           </div>
         </div>
+
+        {hasMore && (
+          <div className="flex justify-center">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleLoadMore}
+              disabled={isLoadingMore}
+              loading={isLoadingMore}>
+              {t("common.load_more")}
+            </Button>
+          </div>
+        )}
       </div>
 
       <FeedbackRecordFormDrawer

@@ -44,6 +44,15 @@ export default async function UnifyFeedbackRecordsPage(
     .toSorted((a, b) => (a.collected_at < b.collected_at ? 1 : -1))
     .slice(0, INITIAL_PAGE_SIZE);
 
+  // Build per-FRD cursor map so the client can paginate
+  const initialCursors: Record<string, string> = {};
+  for (let i = 0; i < frds.length; i++) {
+    const cursor = results[i]?.data?.next_cursor;
+    if (cursor) {
+      initialCursors[frds[i].id] = cursor;
+    }
+  }
+
   const frdMap = Object.fromEntries(frds.map((f) => [f.id, f.name]));
   const csvSources = connectors
     .filter((connector) => connector.type === "csv")
@@ -53,6 +62,7 @@ export default async function UnifyFeedbackRecordsPage(
     <FeedbackRecordsPageClient
       workspaceId={params.workspaceId}
       initialRecords={merged}
+      initialCursors={initialCursors}
       frdMap={frdMap}
       csvSources={csvSources}
       canWrite={canWrite}
