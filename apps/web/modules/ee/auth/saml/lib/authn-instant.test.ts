@@ -17,9 +17,14 @@ vi.mock("@/lib/cache", () => ({
 
 vi.mock("@boxyhq/saml20", () => ({
   default: {
+    decryptXml: vi.fn(),
     parseIssuer: vi.fn(),
     validateSignature: vi.fn(),
   },
+}));
+
+vi.mock("@boxyhq/saml-jackson/dist/saml/x509", () => ({
+  getDefaultCertificate: vi.fn(),
 }));
 
 vi.mock("@formbricks/logger", () => ({
@@ -29,8 +34,10 @@ vi.mock("@formbricks/logger", () => ({
 }));
 
 const saml20 = await import("@boxyhq/saml20");
+const x509 = await import("@boxyhq/saml-jackson/dist/saml/x509");
 const mockCache = vi.mocked(cache);
 const mockSaml20 = vi.mocked(saml20.default);
+const mockGetDefaultCertificate = vi.mocked(x509.getDefaultCertificate);
 const connectionController = {
   getConnections: vi.fn(),
 };
@@ -46,7 +53,12 @@ describe("SAML AuthnInstant handoff", () => {
     vi.resetAllMocks();
     mockCache.set.mockResolvedValue({ ok: true, data: undefined });
     mockCache.del.mockResolvedValue({ ok: true, data: undefined });
+    mockGetDefaultCertificate.mockResolvedValue({
+      privateKey: "sp-private-key",
+      publicKey: "sp-public-key",
+    });
     mockSaml20.parseIssuer.mockReturnValue("https://idp.example.com/metadata");
+    mockSaml20.decryptXml.mockReturnValue({ assertion: signedSamlResponse, decrypted: true });
     mockSaml20.validateSignature.mockReturnValue(signedSamlResponse);
     connectionController.getConnections.mockResolvedValue([
       {
@@ -77,6 +89,35 @@ describe("SAML AuthnInstant handoff", () => {
       })
     ).resolves.toBe("2026-05-04T12:30:00.000Z");
     expect(mockSaml20.validateSignature).toHaveBeenCalledWith(samlResponse, "trusted-public-key", null);
+  });
+
+  test("extracts AuthnInstant from encrypted signature-validated SAML responses", async () => {
+    const encryptedSignedResponse = `
+      <samlp:Response>
+        <saml:EncryptedAssertion>encrypted-assertion</saml:EncryptedAssertion>
+      </samlp:Response>
+    `;
+    const decryptedSignedResponse = `
+      <samlp:Response>
+        <saml:Assertion>
+          <saml:AuthnStatement AuthnInstant="2026-05-04T12:45:00Z" />
+        </saml:Assertion>
+      </samlp:Response>
+    `;
+    mockSaml20.validateSignature.mockReturnValue(encryptedSignedResponse);
+    mockSaml20.decryptXml.mockReturnValue({ assertion: decryptedSignedResponse, decrypted: true });
+
+    await expect(
+      getSamlAuthnInstantFromResponse({
+        connectionController: connectionController as any,
+        samlResponse: encodeSamlResponse(encryptedSignedResponse),
+      })
+    ).resolves.toBe("2026-05-04T12:45:00.000Z");
+
+    expect(mockGetDefaultCertificate).toHaveBeenCalled();
+    expect(mockSaml20.decryptXml).toHaveBeenCalledWith(encryptedSignedResponse, {
+      privateKey: "sp-private-key",
+    });
   });
 
   test("stores signed AuthnInstant by the one-time OAuth code from the Jackson redirect", async () => {

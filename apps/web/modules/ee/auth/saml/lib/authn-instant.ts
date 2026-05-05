@@ -1,6 +1,7 @@
 import "server-only";
 import saml20 from "@boxyhq/saml20";
 import type { IConnectionAPIController, SAMLSSORecord } from "@boxyhq/saml-jackson";
+import { getDefaultCertificate } from "@boxyhq/saml-jackson/dist/saml/x509";
 import { createCacheKey } from "@formbricks/cache";
 import { logger } from "@formbricks/logger";
 import { cache } from "@/lib/cache";
@@ -13,6 +14,7 @@ type TSamlAuthnInstantCacheValue = {
 type TSamlConnection = Awaited<ReturnType<IConnectionAPIController["getConnections"]>>[number];
 
 const authnInstantRegex = /<[\w:-]*AuthnStatement\b[^>]*\bAuthnInstant\s*=\s*["']([^"']+)["']/;
+const encryptedAssertionRegex = /<[\w:-]*EncryptedAssertion\b/;
 
 const getSamlAuthnInstantCacheKey = (code: string) => createCacheKey.custom("saml", "authn_instant", code);
 
@@ -85,6 +87,15 @@ const getSignedSamlXml = async ({
   return null;
 };
 
+const getReadableSignedSamlXml = async (signedSamlXml: string) => {
+  if (!encryptedAssertionRegex.test(signedSamlXml)) {
+    return signedSamlXml;
+  }
+
+  const { privateKey } = await getDefaultCertificate();
+  return saml20.decryptXml(signedSamlXml, { privateKey }).assertion;
+};
+
 export const getSamlAuthnInstantFromResponse = async ({
   connectionController,
   samlResponse,
@@ -98,7 +109,11 @@ export const getSamlAuthnInstantFromResponse = async ({
     decodedSamlResponse,
   });
 
-  return signedSamlXml ? getSamlAuthnInstantFromXml(signedSamlXml) : null;
+  if (!signedSamlXml) {
+    return null;
+  }
+
+  return getSamlAuthnInstantFromXml(await getReadableSignedSamlXml(signedSamlXml));
 };
 
 export const storeSamlAuthnInstantFromSamlResponse = async ({

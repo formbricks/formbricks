@@ -61,7 +61,8 @@ const NEXT_AUTH_PROVIDER_BY_IDENTITY_PROVIDER = {
   saml: "saml",
 } as const satisfies Record<TSsoIdentityProvider, string>;
 
-const OIDC_REAUTH_PROVIDERS = new Set<IdentityProvider>(["azuread", "google", "openid"]);
+const OIDC_REAUTH_PROVIDERS = new Set<TSsoIdentityProvider>(["azuread", "google", "openid"]);
+const FRESH_SSO_REAUTH_PROVIDERS = new Set<TSsoIdentityProvider>([...OIDC_REAUTH_PROVIDERS, "saml"]);
 
 const getAccountDeletionSsoReauthIntentKey = (intentId: string) =>
   createCacheKey.custom("account_deletion", "sso_reauth_intent", intentId);
@@ -78,6 +79,12 @@ const getSsoIdentityProviderOrThrow = (
   }
 
   return { provider: identityProvider, providerAccountId };
+};
+
+const assertSsoProviderSupportsFreshReauthentication = (provider: TSsoIdentityProvider) => {
+  if (!FRESH_SSO_REAUTH_PROVIDERS.has(provider)) {
+    throw new AuthorizationError(DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR);
+  }
 };
 
 const getAccountDeletionSsoReauthAuthorizationParams = (
@@ -101,10 +108,7 @@ const getAccountDeletionSsoReauthAuthorizationParams = (
     };
   }
 
-  return {
-    login: email,
-    prompt: "login",
-  };
+  throw new AuthorizationError(DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR);
 };
 
 const createAccountDeletionSsoReauthCallbackUrl = (intentToken: string) => {
@@ -367,6 +371,7 @@ const assertFreshSamlAuthnInstant = (
 };
 
 const assertFreshSsoAuthentication = (provider: TSsoIdentityProvider, account: Account) => {
+  assertSsoProviderSupportsFreshReauthentication(provider);
   assertFreshOidcAuthTime(provider, account.id_token);
   assertFreshSamlAuthnInstant(provider, account);
 };
@@ -378,6 +383,8 @@ const getVerifiedAccountDeletionSsoReauthIntent = (intentToken: string) => {
   if (!provider || provider === "email") {
     throw new AuthorizationError(DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR);
   }
+
+  assertSsoProviderSupportsFreshReauthentication(provider);
 
   return {
     intent,
@@ -435,6 +442,8 @@ export const startAccountDeletionSsoReauthentication = async ({
     userAuthenticationData.identityProvider,
     userAuthenticationData.identityProviderAccountId
   );
+  assertSsoProviderSupportsFreshReauthentication(provider);
+
   const intentId = crypto.randomUUID();
   const validatedReturnToUrl = getValidatedCallbackUrl(returnToUrl, WEBAPP_URL) ?? WEBAPP_URL;
 
@@ -538,6 +547,8 @@ export const consumeAccountDeletionSsoReauthentication = async ({
     identityProvider,
     providerAccountId
   );
+  assertSsoProviderSupportsFreshReauthentication(provider);
+
   const marker = await consumeCachedJsonValue<TAccountDeletionSsoReauthMarker>(
     getAccountDeletionSsoReauthMarkerKey(userId),
     { userId }

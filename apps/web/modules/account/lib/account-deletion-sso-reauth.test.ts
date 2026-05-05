@@ -189,34 +189,24 @@ describe("account deletion SSO reauthentication", () => {
     });
   });
 
-  test("starts non-OIDC OAuth reauthentication with provider-specific login params", async () => {
+  test("does not start SSO reauthentication for providers without verifiable freshness", async () => {
     mockGetUserAuthenticationData.mockResolvedValue({
       email: intent.email,
       identityProvider: "github",
       identityProviderAccountId: "github-account-id",
       password: null,
     } as any);
-    mockCreateAccountDeletionSsoReauthIntent.mockReturnValue("intent-token");
 
-    const result = await startAccountDeletionSsoReauthentication({
-      confirmationEmail: intent.email,
-      returnToUrl: "/environments/env-1/settings/profile",
-      userId: intent.userId,
-    });
-
-    expect(result).toMatchObject({
-      authorizationParams: {
-        login: intent.email,
-        prompt: "login",
-      },
-      provider: "github",
-    });
-    expect(mockCreateAccountDeletionSsoReauthIntent).toHaveBeenCalledWith(
-      expect.objectContaining({
-        provider: "github",
-        providerAccountId: "github-account-id",
+    await expect(
+      startAccountDeletionSsoReauthentication({
+        confirmationEmail: intent.email,
+        returnToUrl: "/environments/env-1/settings/profile",
+        userId: intent.userId,
       })
-    );
+    ).rejects.toThrow(AuthorizationError);
+
+    expect(mockCache.set).not.toHaveBeenCalled();
+    expect(mockCreateAccountDeletionSsoReauthIntent).not.toHaveBeenCalled();
   });
 
   test("falls back to the web app URL when the return URL is unsafe", async () => {
@@ -373,6 +363,28 @@ describe("account deletion SSO reauthentication", () => {
     ).rejects.toThrow(AuthorizationError);
 
     expect(mockCache.get).not.toHaveBeenCalled();
+  });
+
+  test("rejects callbacks when the signed intent is for an unverifiable SSO provider", async () => {
+    mockVerifyAccountDeletionSsoReauthIntent.mockReturnValue({
+      ...intent,
+      provider: "github",
+      providerAccountId: "github-account-id",
+    });
+
+    await expect(
+      validateAccountDeletionSsoReauthenticationCallback({
+        account: {
+          provider: "github",
+          providerAccountId: "github-account-id",
+          type: "oauth",
+        } as any,
+        intentToken: "intent-token",
+      })
+    ).rejects.toThrow(AuthorizationError);
+
+    expect(mockCache.get).not.toHaveBeenCalled();
+    expect(mockCache.del).not.toHaveBeenCalled();
   });
 
   test("rejects callbacks from unsupported account providers", async () => {
