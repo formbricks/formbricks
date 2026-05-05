@@ -114,7 +114,7 @@ This keeps Envoy rate-limiting state separate from the application's own Redis t
 Cube is only needed for analytics dashboards or other analysis flows that depend on Cube queries.
 
 - deploy Cube separately when you need it
-- configure `CUBEJS_API_URL` and `CUBEJS_API_TOKEN` for the Formbricks app
+- configure `CUBEJS_API_URL` and `CUBEJS_API_SECRET` for the Formbricks app
 - do not expect the main Formbricks chart to provision Cube automatically
 
 ## 4. Upgrade The Deployment

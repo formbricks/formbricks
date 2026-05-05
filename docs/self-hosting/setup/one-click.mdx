@@ -33,11 +33,11 @@ curl -fsSL https://raw.githubusercontent.com/formbricks/formbricks/stable/docker
 ```
 
 <Info>
-  The current v5 one-click stack is based on the production Docker Compose file and includes Formbricks Hub.
-  Ensure your generated `formbricks/docker-compose.yml` contains a non-empty `HUB_API_KEY` before treating the
-  v5 stack as ready. If it is still blank after the script finishes, add one manually and reuse the same value
-  wherever your deployment resolves Hub auth configuration. `HUB_API_URL` should normally stay at
-  `http://hub:8080`.
+  The current v5 one-click stack is based on the production Docker Compose file and includes Formbricks Hub plus
+  the bundled XM Suite v5 Cube.js files under `formbricks/cube/`. Ensure your generated
+  `formbricks/docker-compose.yml` contains a non-empty `HUB_API_KEY` and that `formbricks/.env` contains
+  `CUBEJS_API_SECRET` before treating the v5 stack as ready. If either value is missing after the script
+  finishes, add it manually. `HUB_API_URL` should normally stay at `http://hub:8080`.
 </Info>
 
 ### Script Prompts

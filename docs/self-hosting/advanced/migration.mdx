@@ -15,8 +15,8 @@ deployment, review this section before starting the new version.
 - **Edge rate limiting is now required** for specific public and API-key routes. Those routes are no longer
   throttled inside the application server.
 - **AI features are configured at the instance level** via `AI_*` environment variables.
-- **Cube is feature-scoped**. It is only required when you use analytics dashboards or other analysis flows
-  that depend on Cube queries.
+- **XM Suite v5 analytics depends on Cube.js**. The Docker and one-click stack bundle it, while Helm
+  deployments still need a separate reachable Cube.js instance and `CUBEJS_API_SECRET`.
 
 <Warning>
   Formbricks v5 removes application-level rate limiting for several routes that are now expected to be
@@ -75,14 +75,14 @@ enterprise functionality.
 - `AI_PROVIDER=azure` requires `AI_AZURE_API_KEY` and either `AI_AZURE_BASE_URL` or
   `AI_AZURE_RESOURCE_NAME`
 
-#### Cube
+#### Cube.js Analytics
 
-Cube is not a blanket v5 requirement for every self-hosted deployment.
+XM Suite v5 dashboard and analysis features require Cube.js.
 
-- configure Cube only if you use analytics dashboards or other analysis flows that depend on it
-- the current production Docker Compose and Helm deployment assets do **not** provision Cube automatically
-- when you do run Cube, the Formbricks app expects `CUBEJS_API_URL` and `CUBEJS_API_TOKEN`; the Cube service
-  itself also needs its own Cube configuration such as `CUBEJS_API_SECRET`
+- the Docker and one-click stack bundle the `cube` service and expect `CUBEJS_API_SECRET`
+- Helm deployments still need a separate reachable Cube.js instance
+- the Formbricks app expects `CUBEJS_API_URL` and `CUBEJS_API_SECRET`
+- if you run Cube yourself, you may also need to override `CUBEJS_DB_*` values for the Cube service
 
 ### Upgrade Steps By Deployment Type
 
@@ -142,11 +142,15 @@ Cube is not a blanket v5 requirement for every self-hosted deployment.
     - add a non-empty `HUB_API_KEY` and reuse the same value wherever your deployment resolves Hub auth
     - keep `HUB_API_URL` at `http://hub:8080` unless Hub runs elsewhere
     - include the bundled `hub-migrate` and `hub` services
+    - if you use the bundled XM Suite v5 analytics stack, sync `formbricks/cube/cube.js` and
+      `formbricks/cube/schema/FeedbackRecords.js` from the current release and ensure
+      `formbricks/.env` contains `CUBEJS_API_SECRET`
     - if your older setup still uses bundled MinIO for uploads, review that storage path separately before the
       first v5 restart; newer self-hosting updates move the bundled object-storage path to RustFS, while
       external S3-compatible storage keeps the same `S3_*` app contract
     - add any `AI_*` variables you need
-    - configure Cube separately only if this instance needs analytics dashboards or analysis queries
+    - if you do not run the bundled Docker analytics path, point `CUBEJS_API_URL` at your external Cube.js
+      instance and provide the matching `CUBEJS_API_SECRET`
 
     After the compose file is updated and your edge rate limiter is in place:
 
@@ -167,11 +171,15 @@ Cube is not a blanket v5 requirement for every self-hosted deployment.
     - `HUB_API_KEY` is configured and the same value is available wherever your deployment resolves Hub auth
     - `HUB_API_URL` points to the Hub service the app can reach
     - the compose stack includes `hub-migrate` and `hub`
+    - the XM Suite v5 Docker stack also includes `cube`, `cube/cube.js`, and
+      `cube/schema/FeedbackRecords.js`, with `CUBEJS_API_SECRET` available through your `.env` or shell
+      environment
     - if your legacy Compose file still includes bundled MinIO for uploads, treat that as a separate storage
       review when comparing files; newer bundled storage guidance uses RustFS, while external S3-compatible
       storage keeps the same `S3_*` app contract
     - any `AI_*` variables you need are set
-    - Cube is configured separately only if you need analytics dashboards or analysis queries
+    - if you override the bundled analytics path, point `CUBEJS_API_URL` at your external Cube.js instance and
+      supply the matching `CUBEJS_API_SECRET`
 
     Then restart the stack:
 
@@ -182,7 +190,8 @@ Cube is not a blanket v5 requirement for every self-hosted deployment.
     ```
 
     <Info>
-      The production Docker Compose stack bundles Hub, but it does not provision Cube for you.
+      The XM Suite v5 Docker Compose stack bundles Hub and Cube.js. Keep the bundled `cube/` config files in
+      sync with `docker-compose.yml` when you update this path.
     </Info>
   </Tab>
   <Tab title="Kubernetes">
@@ -202,7 +211,8 @@ Cube is not a blanket v5 requirement for every self-hosted deployment.
       - `envoy.controller.enabled=false` when the cluster already has a compatible Envoy Gateway controller
     - if you use bundled Envoy rate limiting, enable a dedicated backend with `envoyRedis.enabled=true`
     - if you already have an equivalent edge rate limiter outside the chart, keep that protection in place
-    - configure Cube separately only if the instance needs analytics dashboards or analysis queries
+    - if the instance needs XM Suite v5 analytics or dashboards, provide `CUBEJS_API_URL` and
+      `CUBEJS_API_SECRET` for the external Cube.js deployment
   </Tab>
 </Tabs>
 
@@ -215,7 +225,8 @@ After the upgrade:
 - verify any Hub-backed connector or feedback flows you use
 - verify covered routes are rate-limited at the edge layer
 - verify AI features only if you configured the required `AI_*` variables
-- verify dashboards and analysis flows only if you configured Cube
+- verify dashboards and analysis flows only if your deployment path includes Cube.js or points to an external
+  Cube.js instance
 
 ### Troubleshooting And Rollback
 
