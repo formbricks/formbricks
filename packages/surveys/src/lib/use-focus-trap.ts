@@ -109,9 +109,10 @@ const getTabbableEdges = (container: HTMLElement) => {
   return [first, last] as const;
 };
 
-export const useFocusTrap = <TElement extends HTMLElement>(
-  { enabled, onEscapeKeyDown }: UseFocusTrapOptions = { enabled: true }
-): MutableRef<TElement | null> => {
+export const useFocusTrap = <TElement extends HTMLElement>({
+  enabled,
+  onEscapeKeyDown,
+}: UseFocusTrapOptions): MutableRef<TElement | null> => {
   const containerRef = useRef<TElement>(null);
   const lastFocusedElementRef = useRef<HTMLElement | null>(null);
   const onEscapeKeyDownRef = useRef(onEscapeKeyDown);
