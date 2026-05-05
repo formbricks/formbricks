@@ -54,7 +54,7 @@ export function ConnectorsSection({
   const handleCreateConnector = async (data: {
     name: string;
     type: TConnectorType;
-    feedbackRecordDirectoryId: string;
+    feedbackDirectoryId: string;
     surveyMappings?: { surveyId: string; elementIds: string[] }[];
     fieldMappings?: TFieldMapping[];
   }): Promise<string | undefined> => {
@@ -63,7 +63,7 @@ export function ConnectorsSection({
       connectorInput: {
         name: data.name,
         type: data.type,
-        feedbackRecordDirectoryId: data.feedbackRecordDirectoryId,
+        feedbackDirectoryId: data.feedbackDirectoryId,
       },
       formbricksMappings:
         data.type === "formbricks_survey" && data.surveyMappings?.length ? data.surveyMappings : undefined,
@@ -188,7 +188,7 @@ export function ConnectorsSection({
           <Alert size="small" className="mt-4">
             <AlertDescription>{feedbackDirectoryAccessText}</AlertDescription>
             <AlertButton asChild>
-              <Link href={`/workspaces/${workspaceId}/settings/organization/feedback-record-directories`}>
+              <Link href={`/workspaces/${workspaceId}/settings/organization/feedback-directories`}>
                 {t("workspace.unify.manage_directories")}
               </Link>
             </AlertButton>

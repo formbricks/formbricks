@@ -330,9 +330,9 @@ export const SettingsSidebarContent = ({
       disabled: isBilling,
     },
     {
-      id: "org-feedback-record-directories",
-      label: t("workspace.settings.feedback_record_directories.nav_label"),
-      href: `${basePath}/organization/feedback-record-directories`,
+      id: "org-feedback-directories",
+      label: t("workspace.settings.feedback_directories.nav_label"),
+      href: `${basePath}/organization/feedback-directories`,
       icon: <FoldersIcon className={iconClassName} />,
       hidden: isMember,
     },

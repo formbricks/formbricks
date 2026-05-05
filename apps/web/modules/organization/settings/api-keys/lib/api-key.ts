@@ -38,10 +38,10 @@ export const getApiKeysWithEnvironmentPermissions = reactCache(
               workspaceId: true,
             },
           },
-          apiKeyFeedbackRecordDirectories: {
+          apiKeyFeedbackDirectories: {
             select: {
               permission: true,
-              feedbackRecordDirectoryId: true,
+              feedbackDirectoryId: true,
             },
           },
         },
@@ -71,9 +71,9 @@ export const getApiKeyWithPermissions = reactCache(
             },
           },
         },
-        apiKeyFeedbackRecordDirectories: {
+        apiKeyFeedbackDirectories: {
           include: {
-            feedbackRecordDirectory: {
+            feedbackDirectory: {
               select: {
                 id: true,
                 name: true,
@@ -172,8 +172,8 @@ export const createApiKey = async (
       workspaceId: string;
       permission: ApiKeyPermission;
     }>;
-    feedbackRecordDirectoryPermissions?: Array<{
-      feedbackRecordDirectoryId: string;
+    feedbackDirectoryPermissions?: Array<{
+      feedbackDirectoryId: string;
       permission: ApiKeyPermission;
     }>;
     organizationAccess: TOrganizationAccess;
@@ -193,18 +193,18 @@ export const createApiKey = async (
 
     const {
       workspacePermissions,
-      feedbackRecordDirectoryPermissions,
+      feedbackDirectoryPermissions,
       organizationAccess,
       ...apiKeyDataWithoutPermissions
     } = apiKeyData;
 
-    if (feedbackRecordDirectoryPermissions && feedbackRecordDirectoryPermissions.length > 0) {
-      const directoryIds = feedbackRecordDirectoryPermissions.map((p) => p.feedbackRecordDirectoryId);
-      const ownedCount = await prisma.feedbackRecordDirectory.count({
-        where: { id: { in: directoryIds }, organizationId },
+    if (feedbackDirectoryPermissions && feedbackDirectoryPermissions.length > 0) {
+      const directoryIds = feedbackDirectoryPermissions.map((p) => p.feedbackDirectoryId);
+      const ownedCount = await prisma.feedbackDirectory.count({
+        where: { id: { in: directoryIds }, organizationId, isArchived: false },
       });
       if (ownedCount !== directoryIds.length) {
-        throw new ResourceNotFoundError("FeedbackRecordDirectory", null);
+        throw new ResourceNotFoundError("FeedbackDirectory", null);
       }
     }
 
@@ -227,12 +227,12 @@ export const createApiKey = async (
               },
             }
           : {}),
-        ...(feedbackRecordDirectoryPermissions && feedbackRecordDirectoryPermissions.length > 0
+        ...(feedbackDirectoryPermissions && feedbackDirectoryPermissions.length > 0
           ? {
-              apiKeyFeedbackRecordDirectories: {
-                create: feedbackRecordDirectoryPermissions.map((dirPerm) => ({
+              apiKeyFeedbackDirectories: {
+                create: feedbackDirectoryPermissions.map((dirPerm) => ({
                   permission: dirPerm.permission,
-                  feedbackRecordDirectoryId: dirPerm.feedbackRecordDirectoryId,
+                  feedbackDirectoryId: dirPerm.feedbackDirectoryId,
                 })),
               },
             }
@@ -240,7 +240,7 @@ export const createApiKey = async (
       },
       include: {
         apiKeyWorkspaces: true,
-        apiKeyFeedbackRecordDirectories: true,
+        apiKeyFeedbackDirectories: true,
       },
     });
 

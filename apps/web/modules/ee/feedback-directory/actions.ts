@@ -6,23 +6,23 @@ import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import {
-  createFeedbackRecordDirectory,
-  getFeedbackRecordDirectoryDetails,
+  createFeedbackDirectory,
+  getFeedbackDirectoryDetails,
   getOrganizationIdFromDirectoryId,
-  updateFeedbackRecordDirectory,
-} from "@/modules/ee/feedback-record-directory/lib/feedback-record-directory";
-import { ZFeedbackRecordDirectoryUpdateInput } from "@/modules/ee/feedback-record-directory/types/feedback-record-directory";
+  updateFeedbackDirectory,
+} from "@/modules/ee/feedback-directory/lib/feedback-directory";
+import { ZFeedbackDirectoryUpdateInput } from "@/modules/ee/feedback-directory/types/feedback-directory";
 
-const ZCreateFeedbackRecordDirectoryAction = z.object({
+const ZCreateFeedbackDirectoryAction = z.object({
   organizationId: ZId,
   name: z.string().trim().min(1, "DIRECTORY_NAME_REQUIRED"),
   workspaceIds: z.array(ZId).optional(),
 });
 
-export const createFeedbackRecordDirectoryAction = authenticatedActionClient
-  .inputSchema(ZCreateFeedbackRecordDirectoryAction)
+export const createFeedbackDirectoryAction = authenticatedActionClient
+  .inputSchema(ZCreateFeedbackDirectoryAction)
   .action(
-    withAuditLogging("created", "feedbackRecordDirectory", async ({ ctx, parsedInput }) => {
+    withAuditLogging("created", "feedbackDirectory", async ({ ctx, parsedInput }) => {
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
         organizationId: parsedInput.organizationId,
@@ -34,26 +34,26 @@ export const createFeedbackRecordDirectoryAction = authenticatedActionClient
         ],
       });
 
-      const result = await createFeedbackRecordDirectory(
+      const result = await createFeedbackDirectory(
         parsedInput.organizationId,
         parsedInput.name,
         parsedInput.workspaceIds
       );
       ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
-      ctx.auditLoggingCtx.feedbackRecordDirectoryId = result;
+      ctx.auditLoggingCtx.feedbackDirectoryId = result;
       ctx.auditLoggingCtx.newObject = {
-        ...(await getFeedbackRecordDirectoryDetails(result)),
+        ...(await getFeedbackDirectoryDetails(result)),
       };
       return result;
     })
   );
 
-const ZGetFeedbackRecordDirectoryDetailsAction = z.object({
+const ZGetFeedbackDirectoryDetailsAction = z.object({
   directoryId: ZId,
 });
 
-export const getFeedbackRecordDirectoryDetailsAction = authenticatedActionClient
-  .inputSchema(ZGetFeedbackRecordDirectoryDetailsAction)
+export const getFeedbackDirectoryDetailsAction = authenticatedActionClient
+  .inputSchema(ZGetFeedbackDirectoryDetailsAction)
   .action(async ({ parsedInput, ctx }) => {
     const organizationId = await getOrganizationIdFromDirectoryId(parsedInput.directoryId);
 
@@ -68,19 +68,19 @@ export const getFeedbackRecordDirectoryDetailsAction = authenticatedActionClient
       ],
     });
 
-    return await getFeedbackRecordDirectoryDetails(parsedInput.directoryId);
+    return await getFeedbackDirectoryDetails(parsedInput.directoryId);
   });
 
-const ZUpdateFeedbackRecordDirectoryAction = z.object({
+const ZUpdateFeedbackDirectoryAction = z.object({
   directoryId: ZId,
-  data: ZFeedbackRecordDirectoryUpdateInput,
+  data: ZFeedbackDirectoryUpdateInput,
   pauseConnectorsInRemovedWorkspaces: z.boolean().optional(),
 });
 
-export const updateFeedbackRecordDirectoryAction = authenticatedActionClient
-  .inputSchema(ZUpdateFeedbackRecordDirectoryAction)
+export const updateFeedbackDirectoryAction = authenticatedActionClient
+  .inputSchema(ZUpdateFeedbackDirectoryAction)
   .action(
-    withAuditLogging("updated", "feedbackRecordDirectory", async ({ ctx, parsedInput }) => {
+    withAuditLogging("updated", "feedbackDirectory", async ({ ctx, parsedInput }) => {
       const organizationId = await getOrganizationIdFromDirectoryId(parsedInput.directoryId);
 
       await checkAuthorizationUpdated({
@@ -95,9 +95,9 @@ export const updateFeedbackRecordDirectoryAction = authenticatedActionClient
       });
 
       ctx.auditLoggingCtx.organizationId = organizationId;
-      ctx.auditLoggingCtx.feedbackRecordDirectoryId = parsedInput.directoryId;
-      const oldObject = await getFeedbackRecordDirectoryDetails(parsedInput.directoryId);
-      const result = await updateFeedbackRecordDirectory(
+      ctx.auditLoggingCtx.feedbackDirectoryId = parsedInput.directoryId;
+      const oldObject = await getFeedbackDirectoryDetails(parsedInput.directoryId);
+      const result = await updateFeedbackDirectory(
         parsedInput.directoryId,
         organizationId,
         parsedInput.data,
@@ -106,7 +106,7 @@ export const updateFeedbackRecordDirectoryAction = authenticatedActionClient
         }
       );
       ctx.auditLoggingCtx.oldObject = oldObject;
-      ctx.auditLoggingCtx.newObject = await getFeedbackRecordDirectoryDetails(parsedInput.directoryId);
+      ctx.auditLoggingCtx.newObject = await getFeedbackDirectoryDetails(parsedInput.directoryId);
       return result;
     })
   );

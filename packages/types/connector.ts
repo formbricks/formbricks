@@ -55,7 +55,7 @@ export const ZConnector = z.object({
   type: ZConnectorType,
   status: ZConnectorStatus,
   workspaceId: z.cuid2(),
-  feedbackRecordDirectoryId: z.cuid2(),
+  feedbackDirectoryId: z.cuid2(),
   lastSyncAt: z.date().nullable(),
   createdBy: z.string().nullable(),
 });
@@ -96,7 +96,7 @@ export type TConnectorWithMappings = z.infer<typeof ZConnectorWithMappings>;
 export const ZConnectorCreateInput = z.object({
   name: z.string().min(1),
   type: ZConnectorType,
-  feedbackRecordDirectoryId: z.cuid2(),
+  feedbackDirectoryId: z.cuid2(),
   createdBy: z.cuid2().optional(),
 });
 export type TConnectorCreateInput = z.infer<typeof ZConnectorCreateInput>;

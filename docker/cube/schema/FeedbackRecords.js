@@ -117,7 +117,7 @@ cube(`FeedbackRecords`, {
     tenantId: {
       sql: `tenant_id`,
       type: `string`,
-      description: `Tenant ID linking to FeedbackRecordDirectory`,
+      description: `Tenant ID linking to FeedbackDirectory`,
     },
   },
 

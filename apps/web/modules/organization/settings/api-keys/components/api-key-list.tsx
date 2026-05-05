@@ -1,7 +1,7 @@
 import { TUserLocale } from "@formbricks/types/user";
 import { getApiKeysWithEnvironmentPermissions } from "@/modules/organization/settings/api-keys/lib/api-key";
 import {
-  TOrganizationFeedbackRecordDirectory,
+  TOrganizationFeedbackDirectory,
   TOrganizationWorkspace,
 } from "@/modules/organization/settings/api-keys/types/api-keys";
 import { EditAPIKeys } from "./edit-api-keys";
@@ -11,7 +11,7 @@ interface ApiKeyListProps {
   locale: TUserLocale;
   isReadOnly: boolean;
   workspaces: TOrganizationWorkspace[];
-  feedbackRecordDirectories: TOrganizationFeedbackRecordDirectory[];
+  feedbackDirectories: TOrganizationFeedbackDirectory[];
 }
 
 export const ApiKeyList = async ({
@@ -19,7 +19,7 @@ export const ApiKeyList = async ({
   locale,
   isReadOnly,
   workspaces,
-  feedbackRecordDirectories,
+  feedbackDirectories,
 }: ApiKeyListProps) => {
   const apiKeys = await getApiKeysWithEnvironmentPermissions(organizationId);
 
@@ -30,7 +30,7 @@ export const ApiKeyList = async ({
       locale={locale}
       isReadOnly={isReadOnly}
       workspaces={workspaces}
-      feedbackRecordDirectories={feedbackRecordDirectories}
+      feedbackDirectories={feedbackDirectories}
     />
   );
 };

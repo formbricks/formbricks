@@ -2,10 +2,10 @@ import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
-import { TOrganizationFeedbackRecordDirectory } from "../types/api-keys";
-import { getFeedbackRecordDirectoriesByOrganizationId } from "./feedback-record-directories";
+import { TOrganizationFeedbackDirectory } from "../types/api-keys";
+import { getFeedbackDirectoriesByOrganizationId } from "./feedback-directories";
 
-const mockDirectories: TOrganizationFeedbackRecordDirectory[] = [
+const mockDirectories: TOrganizationFeedbackDirectory[] = [
   {
     id: "dir1",
     name: "Directory 1",
@@ -18,27 +18,27 @@ const mockDirectories: TOrganizationFeedbackRecordDirectory[] = [
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
-    feedbackRecordDirectory: {
+    feedbackDirectory: {
       findMany: vi.fn(),
     },
   },
 }));
 
-describe("Feedback Record Directories Management", () => {
+describe("Feedback Directories Management", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  describe("getFeedbackRecordDirectoriesByOrganizationId", () => {
+  describe("getFeedbackDirectoriesByOrganizationId", () => {
     test("retrieves non-archived directories by organization ID successfully", async () => {
-      vi.mocked(prisma.feedbackRecordDirectory.findMany).mockResolvedValueOnce(
-        mockDirectories as unknown as Awaited<ReturnType<typeof prisma.feedbackRecordDirectory.findMany>>
+      vi.mocked(prisma.feedbackDirectory.findMany).mockResolvedValueOnce(
+        mockDirectories as unknown as Awaited<ReturnType<typeof prisma.feedbackDirectory.findMany>>
       );
 
-      const result = await getFeedbackRecordDirectoriesByOrganizationId("org123");
+      const result = await getFeedbackDirectoriesByOrganizationId("org123");
 
       expect(result).toEqual(mockDirectories);
-      expect(prisma.feedbackRecordDirectory.findMany).toHaveBeenCalledWith({
+      expect(prisma.feedbackDirectory.findMany).toHaveBeenCalledWith({
         where: {
           organizationId: "org123",
           isArchived: false,
@@ -54,12 +54,12 @@ describe("Feedback Record Directories Management", () => {
     });
 
     test("returns empty array when no directories exist", async () => {
-      vi.mocked(prisma.feedbackRecordDirectory.findMany).mockResolvedValueOnce([]);
+      vi.mocked(prisma.feedbackDirectory.findMany).mockResolvedValueOnce([]);
 
-      const result = await getFeedbackRecordDirectoriesByOrganizationId("org123");
+      const result = await getFeedbackDirectoriesByOrganizationId("org123");
 
       expect(result).toEqual([]);
-      expect(prisma.feedbackRecordDirectory.findMany).toHaveBeenCalledWith({
+      expect(prisma.feedbackDirectory.findMany).toHaveBeenCalledWith({
         where: {
           organizationId: "org123",
           isArchived: false,
@@ -79,16 +79,16 @@ describe("Feedback Record Directories Management", () => {
         code: "P2002",
         clientVersion: "0.0.1",
       });
-      vi.mocked(prisma.feedbackRecordDirectory.findMany).mockRejectedValueOnce(errToThrow);
+      vi.mocked(prisma.feedbackDirectory.findMany).mockRejectedValueOnce(errToThrow);
 
-      await expect(getFeedbackRecordDirectoriesByOrganizationId("org123")).rejects.toThrow(DatabaseError);
+      await expect(getFeedbackDirectoriesByOrganizationId("org123")).rejects.toThrow(DatabaseError);
     });
 
     test("bubbles up unexpected errors", async () => {
       const unexpectedError = new Error("Unexpected error");
-      vi.mocked(prisma.feedbackRecordDirectory.findMany).mockRejectedValueOnce(unexpectedError);
+      vi.mocked(prisma.feedbackDirectory.findMany).mockRejectedValueOnce(unexpectedError);
 
-      await expect(getFeedbackRecordDirectoriesByOrganizationId("org123")).rejects.toThrow(unexpectedError);
+      await expect(getFeedbackDirectoriesByOrganizationId("org123")).rejects.toThrow(unexpectedError);
     });
   });
 });

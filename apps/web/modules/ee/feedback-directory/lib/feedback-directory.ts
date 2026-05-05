@@ -8,27 +8,27 @@ import { ZId } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
 import {
-  TFeedbackRecordDirectory,
-  TFeedbackRecordDirectoryDetails,
-  TFeedbackRecordDirectoryUpdateInput,
-  TWorkspaceFeedbackRecordDirectoryAccess,
-  ZFeedbackRecordDirectoryUpdateInput,
-} from "@/modules/ee/feedback-record-directory/types/feedback-record-directory";
+  TFeedbackDirectory,
+  TFeedbackDirectoryDetails,
+  TFeedbackDirectoryUpdateInput,
+  TWorkspaceFeedbackDirectoryAccess,
+  ZFeedbackDirectoryUpdateInput,
+} from "@/modules/ee/feedback-directory/types/feedback-directory";
 
 /**
- * Retrieves all feedback record directories for a given organization.
+ * Retrieves all feedback directories for a given organization.
  *
  * @param organizationId - The ID of the organization to fetch directories for.
- * @returns An array of feedback record directories with their id, name, archive status, and assigned workspace count.
+ * @returns An array of feedback directories with their id, name, archive status, and assigned workspace count.
  * @throws {ValidationError} If the organizationId fails input validation.
  * @throws {DatabaseError} If a Prisma database error occurs.
  * @throws Re-throws any other unexpected errors.
  */
-export const getFeedbackRecordDirectories = reactCache(
-  async (organizationId: string): Promise<TFeedbackRecordDirectory[]> => {
+export const getFeedbackDirectories = reactCache(
+  async (organizationId: string): Promise<TFeedbackDirectory[]> => {
     validateInputs([organizationId, ZId]);
     try {
-      const directories = await prisma.feedbackRecordDirectory.findMany({
+      const directories = await prisma.feedbackDirectory.findMany({
         where: {
           organizationId,
         },
@@ -65,7 +65,7 @@ export const getFeedbackRecordDirectories = reactCache(
 );
 
 /**
- * Retrieves the full details of a feedback record directory, including its assigned workspaces.
+ * Retrieves the full details of a feedback directory, including its assigned workspaces.
  *
  * @param directoryId - The ID of the directory to fetch.
  * @returns The directory details with workspace assignments, or `null` if not found.
@@ -74,23 +74,23 @@ export const getFeedbackRecordDirectories = reactCache(
  * @throws Re-throws any other unexpected errors.
  */
 /**
- * Lists feedback record directories assigned to a workspace.
- * Used by connector creation to pick an FRD.
+ * Lists feedback directories assigned to a workspace.
+ * Used by connector creation to pick a feedback directory.
  */
-export const getFeedbackRecordDirectoriesByWorkspaceId = reactCache(
+export const getFeedbackDirectoriesByWorkspaceId = reactCache(
   async (workspaceId: string): Promise<{ id: string; name: string }[]> => {
     validateInputs([workspaceId, ZId]);
     try {
-      const rows = await prisma.feedbackRecordDirectoryWorkspace.findMany({
+      const rows = await prisma.feedbackDirectoryWorkspace.findMany({
         where: {
           workspaceId,
-          feedbackRecordDirectory: { isArchived: false },
+          feedbackDirectory: { isArchived: false },
         },
         select: {
-          feedbackRecordDirectory: { select: { id: true, name: true } },
+          feedbackDirectory: { select: { id: true, name: true } },
         },
       });
-      return rows.map((r) => r.feedbackRecordDirectory);
+      return rows.map((r) => r.feedbackDirectory);
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);
@@ -100,13 +100,13 @@ export const getFeedbackRecordDirectoriesByWorkspaceId = reactCache(
   }
 );
 
-export const getFeedbackRecordDirectoryAuthContext = reactCache(
+export const getFeedbackDirectoryAuthContext = reactCache(
   async (
     directoryId: string
   ): Promise<{ organizationId: string; workspaceIds: string[]; isArchived: boolean } | null> => {
     validateInputs([directoryId, ZId]);
     try {
-      const directory = await prisma.feedbackRecordDirectory.findUnique({
+      const directory = await prisma.feedbackDirectory.findUnique({
         where: { id: directoryId },
         select: {
           organizationId: true,
@@ -141,20 +141,20 @@ export const getFeedbackRecordDirectoryAuthContext = reactCache(
  * Lists active feedback directory access assignments by workspace for an organization.
  * Each workspace appears once with the first active directory assignment found.
  */
-export const getWorkspaceFeedbackRecordDirectoryAccess = reactCache(
-  async (organizationId: string): Promise<TWorkspaceFeedbackRecordDirectoryAccess[]> => {
+export const getWorkspaceFeedbackDirectoryAccess = reactCache(
+  async (organizationId: string): Promise<TWorkspaceFeedbackDirectoryAccess[]> => {
     validateInputs([organizationId, ZId]);
     try {
-      const rows = await prisma.feedbackRecordDirectoryWorkspace.findMany({
+      const rows = await prisma.feedbackDirectoryWorkspace.findMany({
         where: {
-          feedbackRecordDirectory: {
+          feedbackDirectory: {
             organizationId,
             isArchived: false,
           },
         },
         select: {
           workspaceId: true,
-          feedbackRecordDirectory: {
+          feedbackDirectory: {
             select: {
               id: true,
               name: true,
@@ -164,14 +164,14 @@ export const getWorkspaceFeedbackRecordDirectoryAccess = reactCache(
         orderBy: [{ workspaceId: "asc" }, { createdAt: "asc" }],
       });
 
-      const accessByWorkspaceId = new Map<string, TWorkspaceFeedbackRecordDirectoryAccess>();
+      const accessByWorkspaceId = new Map<string, TWorkspaceFeedbackDirectoryAccess>();
 
       for (const row of rows) {
         if (!accessByWorkspaceId.has(row.workspaceId)) {
           accessByWorkspaceId.set(row.workspaceId, {
             workspaceId: row.workspaceId,
-            feedbackRecordDirectoryId: row.feedbackRecordDirectory.id,
-            feedbackRecordDirectoryName: row.feedbackRecordDirectory.name,
+            feedbackDirectoryId: row.feedbackDirectory.id,
+            feedbackDirectoryName: row.feedbackDirectory.name,
           });
         }
       }
@@ -186,11 +186,11 @@ export const getWorkspaceFeedbackRecordDirectoryAccess = reactCache(
   }
 );
 
-export const getFeedbackRecordDirectoryDetails = reactCache(
-  async (directoryId: string): Promise<TFeedbackRecordDirectoryDetails | null> => {
+export const getFeedbackDirectoryDetails = reactCache(
+  async (directoryId: string): Promise<TFeedbackDirectoryDetails | null> => {
     validateInputs([directoryId, ZId]);
     try {
-      const directory = await prisma.feedbackRecordDirectory.findUnique({
+      const directory = await prisma.feedbackDirectory.findUnique({
         where: {
           id: directoryId,
         },
@@ -253,7 +253,7 @@ export const getFeedbackRecordDirectoryDetails = reactCache(
 );
 
 /**
- * Creates a new feedback record directory within an organization.
+ * Creates a new feedback directory within an organization.
  *
  * @param organizationId - The ID of the organization to create the directory in.
  * @param name - The name for the new directory.
@@ -264,7 +264,7 @@ export const getFeedbackRecordDirectoryDetails = reactCache(
  * @throws {DatabaseError} If a Prisma database error occurs.
  * @throws Re-throws any other unexpected errors.
  */
-export const createFeedbackRecordDirectory = async (
+export const createFeedbackDirectory = async (
   organizationId: string,
   name: string,
   workspaceIds?: string[]
@@ -281,7 +281,7 @@ export const createFeedbackRecordDirectory = async (
       }
     }
 
-    const directory = await prisma.feedbackRecordDirectory.create({
+    const directory = await prisma.feedbackDirectory.create({
       data: {
         name,
         organizationId,
@@ -326,7 +326,7 @@ const buildWorkspaceAssignmentPayload = async (
   organizationId: string,
   currentWorkspaceIds: string[]
 ): Promise<{
-  payload: Prisma.FeedbackRecordDirectoryWorkspaceUpdateManyWithoutFeedbackRecordDirectoryNestedInput;
+  payload: Prisma.FeedbackDirectoryWorkspaceUpdateManyWithoutFeedbackDirectoryNestedInput;
   deletedWorkspaceIds: string[];
 }> => {
   if (workspaceIds.length > 0) {
@@ -350,8 +350,8 @@ const buildWorkspaceAssignmentPayload = async (
       },
       upsert: workspaceIds.map((workspaceId) => ({
         where: {
-          feedbackRecordDirectoryId_workspaceId: {
-            feedbackRecordDirectoryId: directoryId,
+          feedbackDirectoryId_workspaceId: {
+            feedbackDirectoryId: directoryId,
             workspaceId,
           },
         },
@@ -363,17 +363,17 @@ const buildWorkspaceAssignmentPayload = async (
   };
 };
 
-interface UpdateFeedbackRecordDirectoryOptions {
+interface UpdateFeedbackDirectoryOptions {
   pauseConnectorsInRemovedWorkspaces?: boolean;
 }
 
 const getArchiveUpdate = async (
   directoryId: string,
   isArchived: boolean | undefined
-): Promise<Pick<Prisma.FeedbackRecordDirectoryUpdateInput, "isArchived">> => {
+): Promise<Pick<Prisma.FeedbackDirectoryUpdateInput, "isArchived">> => {
   if (isArchived === true) {
     const connectorCount = await prisma.connector.count({
-      where: { feedbackRecordDirectoryId: directoryId },
+      where: { feedbackDirectoryId: directoryId },
     });
     if (connectorCount > 0) {
       throw new InvalidInputError("DIRECTORY_HAS_CONNECTORS");
@@ -393,14 +393,14 @@ const getWorkspaceAssignmentUpdate = async (
   organizationId: string,
   workspaceIds: string[] | undefined
 ): Promise<{
-  workspaces?: Prisma.FeedbackRecordDirectoryWorkspaceUpdateManyWithoutFeedbackRecordDirectoryNestedInput;
+  workspaces?: Prisma.FeedbackDirectoryWorkspaceUpdateManyWithoutFeedbackDirectoryNestedInput;
   removedWorkspaceIds: string[];
 }> => {
   if (workspaceIds === undefined) {
     return { removedWorkspaceIds: [] };
   }
 
-  const currentDetails = await getFeedbackRecordDirectoryDetails(directoryId);
+  const currentDetails = await getFeedbackDirectoryDetails(directoryId);
   const currentWorkspaceIds = currentDetails?.workspaces.map((workspace) => workspace.workspaceId) ?? [];
   const assignmentPayload = await buildWorkspaceAssignmentPayload(
     prisma,
@@ -427,7 +427,7 @@ const pauseConnectorsInWorkspaces = async (
 
   await tx.connector.updateMany({
     where: {
-      feedbackRecordDirectoryId: directoryId,
+      feedbackDirectoryId: directoryId,
       workspaceId: { in: workspaceIds },
     },
     data: {
@@ -447,11 +447,11 @@ const assertWorkspacesNotAssignedElsewhere = async (
 ): Promise<void> => {
   if (workspaceIds.length === 0) return;
 
-  const conflicting = await prisma.feedbackRecordDirectoryWorkspace.findFirst({
+  const conflicting = await prisma.feedbackDirectoryWorkspace.findFirst({
     where: {
       workspaceId: { in: workspaceIds },
-      feedbackRecordDirectoryId: { not: directoryId },
-      feedbackRecordDirectory: { isArchived: false },
+      feedbackDirectoryId: { not: directoryId },
+      feedbackDirectory: { isArchived: false },
     },
     select: { workspaceId: true },
   });
@@ -462,7 +462,7 @@ const assertWorkspacesNotAssignedElsewhere = async (
 };
 
 /**
- * Updates a feedback record directory. Supports partial updates for name, workspace
+ * Updates a feedback directory. Supports partial updates for name, workspace
  * assignments, and archive status.
  *
  * When `workspaceIds` is provided, performs a diff against current assignments: removes
@@ -479,13 +479,13 @@ const assertWorkspacesNotAssignedElsewhere = async (
  * @throws {DatabaseError} If a Prisma database error occurs.
  * @throws Re-throws any other unexpected errors.
  */
-export const updateFeedbackRecordDirectory = async (
+export const updateFeedbackDirectory = async (
   directoryId: string,
   organizationId: string,
-  data: TFeedbackRecordDirectoryUpdateInput,
-  options?: UpdateFeedbackRecordDirectoryOptions
+  data: TFeedbackDirectoryUpdateInput,
+  options?: UpdateFeedbackDirectoryOptions
 ): Promise<boolean> => {
-  validateInputs([directoryId, ZId], [organizationId, ZId], [data, ZFeedbackRecordDirectoryUpdateInput]);
+  validateInputs([directoryId, ZId], [organizationId, ZId], [data, ZFeedbackDirectoryUpdateInput]);
 
   try {
     const { name, workspaceIds, isArchived } = data;
@@ -501,14 +501,14 @@ export const updateFeedbackRecordDirectory = async (
       workspaceIds
     );
 
-    const payload: Prisma.FeedbackRecordDirectoryUpdateInput = {
+    const payload: Prisma.FeedbackDirectoryUpdateInput = {
       ...(name !== undefined ? { name } : {}),
       ...archiveUpdate,
       ...(workspaceAssignmentUpdate.workspaces ? { workspaces: workspaceAssignmentUpdate.workspaces } : {}),
     };
 
     await prisma.$transaction(async (tx) => {
-      await tx.feedbackRecordDirectory.update({
+      await tx.feedbackDirectory.update({
         where: { id: directoryId },
         data: payload,
       });
@@ -525,7 +525,7 @@ export const updateFeedbackRecordDirectory = async (
         throw new InvalidInputError("DIRECTORY_NAME_DUPLICATE");
       }
       if (error.code === PrismaErrorType.RelatedRecordDoesNotExist) {
-        throw new ResourceNotFoundError("FeedbackRecordDirectory", directoryId);
+        throw new ResourceNotFoundError("FeedbackDirectory", directoryId);
       }
       throw new DatabaseError(error.message);
     }
@@ -545,13 +545,13 @@ export const updateFeedbackRecordDirectory = async (
  */
 export const getOrganizationIdFromDirectoryId = async (directoryId: string): Promise<string> => {
   validateInputs([directoryId, ZId]);
-  const directory = await prisma.feedbackRecordDirectory.findUnique({
+  const directory = await prisma.feedbackDirectory.findUnique({
     where: { id: directoryId },
     select: { organizationId: true },
   });
 
   if (!directory) {
-    throw new ResourceNotFoundError("FeedbackRecordDirectory", directoryId);
+    throw new ResourceNotFoundError("FeedbackDirectory", directoryId);
   }
 
   return directory.organizationId;

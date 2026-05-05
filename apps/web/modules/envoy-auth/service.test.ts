@@ -8,7 +8,7 @@ const {
   mockGetBearerTokenFromHeaders,
   mockGetProxySession,
   mockVerifyFeedbackRecordsGatewayToken,
-  mockGetFeedbackRecordDirectoryAuthContext,
+  mockGetFeedbackDirectoryAuthContext,
   mockGetFeedbackRecordTenant,
   mockCheckAuthorizationUpdated,
   mockUserFindUnique,
@@ -18,7 +18,7 @@ const {
   mockGetBearerTokenFromHeaders: vi.fn(),
   mockGetProxySession: vi.fn(),
   mockVerifyFeedbackRecordsGatewayToken: vi.fn(),
-  mockGetFeedbackRecordDirectoryAuthContext: vi.fn(),
+  mockGetFeedbackDirectoryAuthContext: vi.fn(),
   mockGetFeedbackRecordTenant: vi.fn(),
   mockCheckAuthorizationUpdated: vi.fn(),
   mockUserFindUnique: vi.fn(),
@@ -50,8 +50,8 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-vi.mock("@/modules/ee/feedback-record-directory/lib/feedback-record-directory", () => ({
-  getFeedbackRecordDirectoryAuthContext: mockGetFeedbackRecordDirectoryAuthContext,
+vi.mock("@/modules/ee/feedback-directory/lib/feedback-directory", () => ({
+  getFeedbackDirectoryAuthContext: mockGetFeedbackDirectoryAuthContext,
 }));
 
 vi.mock("@/modules/hub/service", () => ({
@@ -70,7 +70,7 @@ vi.mock("@formbricks/logger", () => ({
   },
 }));
 
-const feedbackRecordDirectoryId = "clxx1234567890123456789012";
+const feedbackDirectoryId = "clxx1234567890123456789012";
 const feedbackRecordId = "0194d8a0-3d55-7ff4-9f62-8d02c3fbcfe8";
 
 const createRequest = (
@@ -101,13 +101,13 @@ describe("authorizeEnvoyRequest", () => {
     mockVerifyFeedbackRecordsGatewayToken.mockImplementation(() => {
       throw new Error("invalid token");
     });
-    mockGetFeedbackRecordDirectoryAuthContext.mockResolvedValue({
+    mockGetFeedbackDirectoryAuthContext.mockResolvedValue({
       organizationId: "org_1",
       workspaceIds: ["workspace_1"],
       isArchived: false,
     });
     mockGetFeedbackRecordTenant.mockResolvedValue({
-      data: { tenantId: feedbackRecordDirectoryId },
+      data: { tenantId: feedbackDirectoryId },
       error: null,
     });
     mockCheckAuthorizationUpdated.mockResolvedValue(true);
@@ -122,10 +122,10 @@ describe("authorizeEnvoyRequest", () => {
       organizationId: "org_1",
       organizationAccess: { accessControl: { read: true, write: true } },
       workspacePermissions: [],
-      feedbackRecordDirectoryPermissions: [
+      feedbackDirectoryPermissions: [
         {
-          feedbackRecordDirectoryId,
-          feedbackRecordDirectoryName: "Directory 1",
+          feedbackDirectoryId,
+          feedbackDirectoryName: "Directory 1",
           permission: "write",
         },
       ],
@@ -138,14 +138,12 @@ describe("authorizeEnvoyRequest", () => {
           "content-type": "application/json",
           authorization: "Bearer fbk_test",
         },
-        body: JSON.stringify({ tenant_id: feedbackRecordDirectoryId }),
+        body: JSON.stringify({ tenant_id: feedbackDirectoryId }),
       })
     );
 
     expect(response.status).toBe(200);
-    expect(response.headers.get("x-envoy-auth-headers-to-remove")).toBe(
-      "x-api-key,authorization,cookie"
-    );
+    expect(response.headers.get("x-envoy-auth-headers-to-remove")).toBe("x-api-key,authorization,cookie");
     expect(mockCheckAuthorizationUpdated).not.toHaveBeenCalled();
   });
 
@@ -157,7 +155,7 @@ describe("authorizeEnvoyRequest", () => {
       organizationId: "org_1",
       organizationAccess: { accessControl: { read: true, write: true } },
       workspacePermissions: [],
-      feedbackRecordDirectoryPermissions: [],
+      feedbackDirectoryPermissions: [],
     });
 
     const response = await authorizeEnvoyRequest(
@@ -173,7 +171,9 @@ describe("authorizeEnvoyRequest", () => {
   });
 
   test("returns 400 for unsupported envoy auth routes", async () => {
-    const response = await authorizeEnvoyRequest(createRequest("http://localhost/api/envoy-auth/api/v1/test"));
+    const response = await authorizeEnvoyRequest(
+      createRequest("http://localhost/api/envoy-auth/api/v1/test")
+    );
 
     expect(response.status).toBe(400);
   });
@@ -186,7 +186,7 @@ describe("authorizeEnvoyRequest", () => {
       organizationId: "org_1",
       organizationAccess: { accessControl: { read: true, write: true } },
       workspacePermissions: [],
-      feedbackRecordDirectoryPermissions: [],
+      feedbackDirectoryPermissions: [],
     });
     mockGetFeedbackRecordTenant.mockResolvedValue({
       data: null,
@@ -216,7 +216,7 @@ describe("authorizeEnvoyRequest", () => {
       organizationId: "org_1",
       organizationAccess: { accessControl: { read: true, write: true } },
       workspacePermissions: [],
-      feedbackRecordDirectoryPermissions: [],
+      feedbackDirectoryPermissions: [],
     });
     mockGetFeedbackRecordTenant.mockResolvedValue({
       data: null,
@@ -245,15 +245,12 @@ describe("authorizeEnvoyRequest", () => {
     });
 
     const response = await authorizeEnvoyRequest(
-      createRequest(
-        `http://localhost/api/envoy-auth/v1/feedback-records?tenant_id=${feedbackRecordDirectoryId}`,
-        {
-          headers: {
-            authorization: "Bearer header.payload.signature",
-            cookie: "next-auth.session-token=still-present",
-          },
-        }
-      )
+      createRequest(`http://localhost/api/envoy-auth/v1/feedback-records?tenant_id=${feedbackDirectoryId}`, {
+        headers: {
+          authorization: "Bearer header.payload.signature",
+          cookie: "next-auth.session-token=still-present",
+        },
+      })
     );
 
     expect(response.status).toBe(401);
@@ -297,14 +294,11 @@ describe("authorizeEnvoyRequest", () => {
     });
 
     const response = await authorizeEnvoyRequest(
-      createRequest(
-        `http://localhost/api/envoy-auth/v1/feedback-records?tenant_id=${feedbackRecordDirectoryId}`,
-        {
-          headers: {
-            cookie: "next-auth.session-token=valid",
-          },
-        }
-      )
+      createRequest(`http://localhost/api/envoy-auth/v1/feedback-records?tenant_id=${feedbackDirectoryId}`, {
+        headers: {
+          cookie: "next-auth.session-token=valid",
+        },
+      })
     );
 
     expect(response.status).toBe(200);
@@ -333,19 +327,16 @@ describe("authorizeEnvoyRequest", () => {
       organizationId: "org_1",
       organizationAccess: { accessControl: { read: true, write: true } },
       workspacePermissions: [],
-      feedbackRecordDirectoryPermissions: [],
+      feedbackDirectoryPermissions: [],
     });
 
     const response = await authorizeEnvoyRequest(
-      createRequest(
-        `http://localhost/api/envoy-auth/v1/feedback-records?tenant_id=${feedbackRecordDirectoryId}`,
-        {
-          method: "DELETE",
-          headers: {
-            "x-api-key": "fbk_test",
-          },
-        }
-      )
+      createRequest(`http://localhost/api/envoy-auth/v1/feedback-records?tenant_id=${feedbackDirectoryId}`, {
+        method: "DELETE",
+        headers: {
+          "x-api-key": "fbk_test",
+        },
+      })
     );
 
     expect(response.status).toBe(403);
@@ -354,21 +345,18 @@ describe("authorizeEnvoyRequest", () => {
   test("returns 403 for archived directories", async () => {
     mockGetBearerTokenFromHeaders.mockReturnValue("header.payload.signature");
     mockVerifyFeedbackRecordsGatewayToken.mockReturnValue({ userId: "user_1" });
-    mockGetFeedbackRecordDirectoryAuthContext.mockResolvedValue({
+    mockGetFeedbackDirectoryAuthContext.mockResolvedValue({
       organizationId: "org_1",
       workspaceIds: ["workspace_1"],
       isArchived: true,
     });
 
     const response = await authorizeEnvoyRequest(
-      createRequest(
-        `http://localhost/api/envoy-auth/v1/feedback-records?tenant_id=${feedbackRecordDirectoryId}`,
-        {
-          headers: {
-            authorization: "Bearer header.payload.signature",
-          },
-        }
-      )
+      createRequest(`http://localhost/api/envoy-auth/v1/feedback-records?tenant_id=${feedbackDirectoryId}`, {
+        headers: {
+          authorization: "Bearer header.payload.signature",
+        },
+      })
     );
 
     expect(response.status).toBe(403);
@@ -382,12 +370,12 @@ describe("authorizeEnvoyRequest", () => {
       organizationId: "org_1",
       organizationAccess: { accessControl: { read: true, write: true } },
       workspacePermissions: [],
-      feedbackRecordDirectoryPermissions: [],
+      feedbackDirectoryPermissions: [],
     });
 
     const response = await authorizeEnvoyRequest(
       createRequest(
-        `http://localhost/api/envoy-auth/api/v3/feedbackRecordsFoo?tenant_id=${feedbackRecordDirectoryId}`,
+        `http://localhost/api/envoy-auth/api/v3/feedbackRecordsFoo?tenant_id=${feedbackDirectoryId}`,
         {
           headers: {
             authorization: "Bearer fbk_test",
@@ -407,7 +395,7 @@ describe("authorizeEnvoyRequest", () => {
       organizationId: "org_1",
       organizationAccess: { accessControl: { read: true, write: true } },
       workspacePermissions: [],
-      feedbackRecordDirectoryPermissions: [],
+      feedbackDirectoryPermissions: [],
     });
 
     const response = await authorizeEnvoyRequest(
@@ -430,7 +418,7 @@ describe("authorizeEnvoyRequest", () => {
       organizationId: "org_1",
       organizationAccess: { accessControl: { read: true, write: true } },
       workspacePermissions: [],
-      feedbackRecordDirectoryPermissions: [],
+      feedbackDirectoryPermissions: [],
     });
 
     const response = await authorizeEnvoyRequest(
