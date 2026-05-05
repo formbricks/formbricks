@@ -285,7 +285,7 @@ export const FeedbackRecordDirectorySettingsModal = ({
                           </div>
                           <a
                             className="text-xs font-medium text-slate-700 hover:text-slate-900 hover:underline"
-                            href={`/workspaces/${c.workspaceId}/feedback-sources`}>
+                            href={`/workspaces/${c.workspaceId}/settings/workspace/feedback-sources`}>
                             {t("common.view")}
                           </a>
                         </li>

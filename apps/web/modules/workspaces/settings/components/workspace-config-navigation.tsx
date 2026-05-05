@@ -51,7 +51,7 @@ export const WorkspaceConfigNavigation = ({ activeId, loading }: WorkspaceConfig
       id: "feedback-sources",
       label: t("workspace.unify.feedback_sources"),
       icon: <ShapesIcon className="h-5 w-5" />,
-      href: `${workspaceBasePath}/feedback-sources`,
+      href: `${workspaceBasePath}/settings/workspace/feedback-sources`,
       current: pathname?.includes("/feedback-sources"),
     },
     {
