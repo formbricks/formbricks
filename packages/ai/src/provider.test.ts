@@ -83,6 +83,30 @@ describe("packages/ai provider helpers", () => {
     });
   });
 
+  test("reports a fully configured Google Cloud instance when ADC provides credentials", () => {
+    expect(
+      getAiConfigurationStatus({
+        AI_PROVIDER: "google",
+        AI_MODEL: "gemini-2.5-flash",
+        AI_GOOGLE_CLOUD_PROJECT: "test-project",
+        AI_GOOGLE_CLOUD_LOCATION: "us-central1",
+      })
+    ).toEqual({
+      provider: "google",
+      model: "gemini-2.5-flash",
+      isConfigured: true,
+      missingFields: [],
+      invalidFields: [],
+      providerStatus: {
+        provider: "google",
+        model: "gemini-2.5-flash",
+        isConfigured: true,
+        missingFields: [],
+        invalidFields: [],
+      },
+    });
+  });
+
   test("treats the instance as not configured when AI_PROVIDER is missing", () => {
     expect(
       isAiConfigured({
@@ -205,6 +229,48 @@ describe("packages/ai provider helpers", () => {
     });
     expect(vertexProvider).toHaveBeenCalledWith("gemini-2.5-flash");
     expect(mocks.createVertex).toHaveBeenCalledTimes(1);
+  });
+
+  test("creates a Google Cloud model with application credentials file", () => {
+    const vertexProvider = createMockProvider("google");
+    mocks.createVertex.mockReturnValue(vertexProvider);
+
+    const model = getAiModel({
+      AI_PROVIDER: "google",
+      AI_MODEL: "gemini-2.5-flash",
+      AI_GOOGLE_CLOUD_PROJECT: "test-project",
+      AI_GOOGLE_CLOUD_LOCATION: "us-central1",
+      AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS: "/tmp/google-cloud.json",
+    });
+
+    expect(model).toEqual({ providerName: "google", modelName: "gemini-2.5-flash" });
+    expect(mocks.createVertex).toHaveBeenCalledWith({
+      project: "test-project",
+      location: "us-central1",
+      googleAuthOptions: {
+        keyFilename: "/tmp/google-cloud.json",
+      },
+    });
+    expect(vertexProvider).toHaveBeenCalledWith("gemini-2.5-flash");
+  });
+
+  test("creates a Google Cloud model using ADC when no credential override is configured", () => {
+    const vertexProvider = createMockProvider("google");
+    mocks.createVertex.mockReturnValue(vertexProvider);
+
+    const model = getAiModel({
+      AI_PROVIDER: "google",
+      AI_MODEL: "gemini-2.5-flash",
+      AI_GOOGLE_CLOUD_PROJECT: "test-project",
+      AI_GOOGLE_CLOUD_LOCATION: "us-central1",
+    });
+
+    expect(model).toEqual({ providerName: "google", modelName: "gemini-2.5-flash" });
+    expect(mocks.createVertex).toHaveBeenCalledWith({
+      project: "test-project",
+      location: "us-central1",
+    });
+    expect(vertexProvider).toHaveBeenCalledWith("gemini-2.5-flash");
   });
 
   test("creates an AWS model with explicit AWS credentials", () => {

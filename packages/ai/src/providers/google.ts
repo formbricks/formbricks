@@ -39,11 +39,6 @@ export const googleProviderAdapter: AIProviderAdapter = {
     }
 
     const credentialsJson = normalizeValue(environment.AI_GOOGLE_CLOUD_CREDENTIALS_JSON);
-    const applicationCredentials = normalizeValue(environment.AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS);
-
-    if (!credentialsJson && !applicationCredentials) {
-      missingFields.push("AI_GOOGLE_CLOUD_CREDENTIALS_JSON or AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS");
-    }
 
     if (credentialsJson) {
       try {
@@ -73,15 +68,12 @@ export const googleProviderAdapter: AIProviderAdapter = {
     const credentialsJson = normalizeValue(environment.AI_GOOGLE_CLOUD_CREDENTIALS_JSON);
     const applicationCredentials = normalizeValue(environment.AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS);
 
-    if (!project || !location || (!credentialsJson && !applicationCredentials)) {
-      throw new AIConfigurationError("providerNotConfigured", "Google Cloud AI credentials are incomplete", {
+    if (!project || !location) {
+      throw new AIConfigurationError("providerNotConfigured", "Google Cloud AI configuration is incomplete", {
         provider: "google",
         missingFields: [
           ...(!project ? ["AI_GOOGLE_CLOUD_PROJECT"] : []),
           ...(!location ? ["AI_GOOGLE_CLOUD_LOCATION"] : []),
-          ...(!credentialsJson && !applicationCredentials
-            ? ["AI_GOOGLE_CLOUD_CREDENTIALS_JSON or AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS"]
-            : []),
         ],
       });
     }
