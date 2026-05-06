@@ -9,7 +9,7 @@ import { getUserAuthenticationData } from "@/lib/user/password";
 import {
   ACCOUNT_DELETION_GOOGLE_REAUTH_NOT_CONFIGURED_ERROR_CODE,
   ACCOUNT_DELETION_SSO_REAUTH_ERROR_QUERY_PARAM,
-  DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR,
+  ACCOUNT_DELETION_SSO_REAUTH_REQUIRED_ERROR_CODE,
 } from "@/modules/account/constants";
 import {
   completeAccountDeletionSsoReauthentication,
@@ -259,7 +259,7 @@ describe("account deletion SSO reauthentication", () => {
         returnToUrl: "/environments/env-1/settings/profile",
         userId: intent.userId,
       })
-    ).rejects.toThrow(DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR);
+    ).rejects.toThrow(ACCOUNT_DELETION_SSO_REAUTH_REQUIRED_ERROR_CODE);
 
     expect(mockCache.set).not.toHaveBeenCalled();
     expect(mockCreateAccountDeletionSsoReauthIntent).not.toHaveBeenCalled();
@@ -290,8 +290,8 @@ describe("account deletion SSO reauthentication", () => {
   test("does not start SSO reauthentication for password-backed users", async () => {
     mockGetUserAuthenticationData.mockResolvedValue({
       email: intent.email,
-      identityProvider: "google",
-      identityProviderAccountId: intent.providerAccountId,
+      identityProvider: "email",
+      identityProviderAccountId: null,
       password: "hashed-password",
     } as any);
 

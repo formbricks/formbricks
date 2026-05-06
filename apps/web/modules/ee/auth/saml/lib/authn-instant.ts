@@ -2,6 +2,7 @@ import "server-only";
 import saml20 from "@boxyhq/saml20";
 import type { IConnectionAPIController, SAMLSSORecord } from "@boxyhq/saml-jackson";
 import { getDefaultCertificate } from "@boxyhq/saml-jackson/dist/saml/x509";
+import { createHash } from "node:crypto";
 import { createCacheKey } from "@formbricks/cache";
 import { logger } from "@formbricks/logger";
 import { cache } from "@/lib/cache";
@@ -16,7 +17,10 @@ type TSamlConnection = Awaited<ReturnType<IConnectionAPIController["getConnectio
 const authnInstantRegex = /<[\w:-]*AuthnStatement\b[^>]*\bAuthnInstant\s*=\s*["']([^"']+)["']/;
 const encryptedAssertionRegex = /<[\w:-]*EncryptedAssertion\b/;
 
-const getSamlAuthnInstantCacheKey = (code: string) => createCacheKey.custom("saml", "authn_instant", code);
+const getSamlCodeHash = (code: string) => createHash("sha256").update(code).digest("hex");
+
+const getSamlAuthnInstantCacheKey = (code: string) =>
+  createCacheKey.custom("account_deletion", "saml_authn_instant", getSamlCodeHash(code));
 
 const isSamlConnection = (connection: TSamlConnection): connection is SAMLSSORecord =>
   "idpMetadata" in connection;

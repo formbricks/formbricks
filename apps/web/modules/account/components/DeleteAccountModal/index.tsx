@@ -8,19 +8,19 @@ import { logger } from "@formbricks/logger";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import {
+  ACCOUNT_DELETION_CONFIRMATION_REQUIRED_ERROR_CODE,
+  ACCOUNT_DELETION_EMAIL_MISMATCH_ERROR_CODE,
+  ACCOUNT_DELETION_GOOGLE_REAUTH_NOT_CONFIGURED_ERROR_CODE,
+  ACCOUNT_DELETION_SSO_REAUTH_REQUIRED_ERROR_CODE,
+  DELETE_ACCOUNT_WRONG_PASSWORD_ERROR,
+  FORMBRICKS_CLOUD_ACCOUNT_DELETION_SURVEY_URL,
+} from "@/modules/account/constants";
 import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { Input } from "@/modules/ui/components/input";
 import { PasswordInput } from "@/modules/ui/components/password-input";
 import { deleteUserAction, startAccountDeletionSsoReauthenticationAction } from "./actions";
-import {
-  ACCOUNT_DELETION_CONFIRMATION_REQUIRED_ERROR_CODE,
-  ACCOUNT_DELETION_EMAIL_MISMATCH_ERROR_CODE,
-  ACCOUNT_DELETION_GOOGLE_REAUTH_NOT_CONFIGURED_ERROR_CODE,
-  DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR,
-  DELETE_ACCOUNT_WRONG_PASSWORD_ERROR,
-  FORMBRICKS_CLOUD_ACCOUNT_DELETION_SURVEY_URL,
-} from "./constants";
 
 interface DeleteAccountModalProps {
   requiresPasswordConfirmation: boolean;
@@ -77,6 +77,10 @@ export const DeleteAccountModal = ({
       return t("environments.settings.profile.delete_account_confirmation_required");
     }
 
+    if (serverError === ACCOUNT_DELETION_SSO_REAUTH_REQUIRED_ERROR_CODE) {
+      return t("environments.settings.profile.sso_reauthentication_failed");
+    }
+
     return null;
   };
 
@@ -129,7 +133,7 @@ export const DeleteAccountModal = ({
         const fallbackErrorMessage = t("common.something_went_wrong_please_try_again");
         let errorMessage = getLocalizedDeletionErrorMessage(result?.serverError) ?? fallbackErrorMessage;
 
-        if (result?.serverError === DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR) {
+        if (result?.serverError === ACCOUNT_DELETION_SSO_REAUTH_REQUIRED_ERROR_CODE) {
           await startSsoReauthentication();
           return;
         } else if (result) {

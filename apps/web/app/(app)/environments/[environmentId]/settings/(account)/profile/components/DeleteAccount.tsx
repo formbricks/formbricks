@@ -14,7 +14,7 @@ import {
 import { Button } from "@/modules/ui/components/button";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
-type TDeleteAccountProps = {
+interface DeleteAccountProps {
   session: Session | null;
   IS_FORMBRICKS_CLOUD: boolean;
   user: TUser;
@@ -22,7 +22,7 @@ type TDeleteAccountProps = {
   accountDeletionError?: string | string[];
   isMultiOrgEnabled: boolean;
   requiresPasswordConfirmation: boolean;
-};
+}
 
 export const DeleteAccount = ({
   session,
@@ -32,7 +32,7 @@ export const DeleteAccount = ({
   accountDeletionError,
   isMultiOrgEnabled,
   requiresPasswordConfirmation,
-}: Readonly<TDeleteAccountProps>) => {
+}: Readonly<DeleteAccountProps>) => {
   const [isModalOpen, setModalOpen] = useState(false);
   const isDeleteDisabled = !isMultiOrgEnabled && organizationsWithSingleOwner.length > 0;
   const { t } = useTranslation();

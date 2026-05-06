@@ -126,8 +126,8 @@ describe("deleteUserWithAccountDeletionAuthorization", () => {
   test("still requires password confirmation for password-backed users when the SSO bypass is enabled", async () => {
     mocks.getUserAuthenticationData.mockResolvedValueOnce({
       email: user.email,
-      identityProvider: "google",
-      identityProviderAccountId: "google-account-id",
+      identityProvider: "email",
+      identityProviderAccountId: null,
       password: "hashed-password",
     });
     const { deleteUserWithAccountDeletionAuthorization } = await loadAccountDeletionModule({

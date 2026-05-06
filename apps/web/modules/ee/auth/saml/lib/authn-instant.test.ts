@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { cache } from "@/lib/cache";
 import {
@@ -42,6 +43,7 @@ const connectionController = {
   getConnections: vi.fn(),
 };
 const encodeSamlResponse = (xml: string) => Buffer.from(xml, "utf8").toString("base64");
+const getSamlCodeHash = (code: string) => createHash("sha256").update(code).digest("hex");
 const signedSamlResponse = `
   <saml:Assertion>
     <saml:AuthnStatement AuthnInstant="2026-05-04T12:30:00Z" />
@@ -140,6 +142,9 @@ describe("SAML AuthnInstant handoff", () => {
       { authnInstant: "2026-05-04T12:30:00.000Z" },
       5 * 60 * 1000
     );
+    const cacheKey = mockCache.set.mock.calls[0][0] as string;
+    expect(cacheKey).toContain(getSamlCodeHash("oauth-code"));
+    expect(cacheKey).not.toContain("oauth-code");
   });
 
   test("does not store when the signed SAML XML has no AuthnInstant", async () => {
@@ -176,6 +181,9 @@ describe("SAML AuthnInstant handoff", () => {
 
     await expect(consumeSamlAuthnInstantForCode("oauth-code")).resolves.toBe("2026-05-04T12:30:00.000Z");
 
-    expect(mockCache.del).toHaveBeenCalledWith([expect.any(String)]);
+    const cacheKey = mockCache.get.mock.calls[0][0] as string;
+    expect(cacheKey).toContain(getSamlCodeHash("oauth-code"));
+    expect(cacheKey).not.toContain("oauth-code");
+    expect(mockCache.del).toHaveBeenCalledWith([cacheKey]);
   });
 });

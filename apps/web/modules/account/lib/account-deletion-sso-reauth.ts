@@ -23,8 +23,9 @@ import {
   ACCOUNT_DELETION_SSO_REAUTH_CALLBACK_PATH,
   ACCOUNT_DELETION_SSO_REAUTH_ERROR_QUERY_PARAM,
   ACCOUNT_DELETION_SSO_REAUTH_FAILED_ERROR_CODE,
-  DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR,
+  ACCOUNT_DELETION_SSO_REAUTH_REQUIRED_ERROR_CODE,
 } from "@/modules/account/constants";
+import { requiresPasswordConfirmationForAccountDeletion } from "@/modules/account/lib/account-deletion-auth";
 import {
   getSsoProviderLookupCandidates,
   normalizeSsoProvider,
@@ -76,6 +77,8 @@ const OIDC_REAUTH_PROVIDERS = new Set<TSsoIdentityProvider>([
   ...(GOOGLE_ACCOUNT_DELETION_REAUTH_ENABLED ? (["google"] as const) : []),
   "openid",
 ]);
+// GitHub OAuth does not return a verifiable auth_time/max_age proof, so it cannot secure this
+// destructive action without another app-controlled step-up.
 const FRESH_SSO_REAUTH_PROVIDERS = new Set<TSsoIdentityProvider>([...OIDC_REAUTH_PROVIDERS, "saml"]);
 // Google only returns auth_time when it is explicitly requested as an ID token claim.
 const GOOGLE_AUTH_TIME_CLAIMS_REQUEST = JSON.stringify({
@@ -97,19 +100,27 @@ const getSsoIdentityProviderOrThrow = (
   providerAccountId: string | null
 ): { provider: TSsoIdentityProvider; providerAccountId: string } => {
   if (identityProvider === "email" || !providerAccountId) {
-    throw new AuthorizationError(DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR);
+    throw new AuthorizationError(ACCOUNT_DELETION_SSO_REAUTH_REQUIRED_ERROR_CODE);
   }
 
   return { provider: identityProvider, providerAccountId };
 };
 
 const assertSsoProviderSupportsFreshReauthentication = (provider: TSsoIdentityProvider) => {
+  if (provider === "google" && !GOOGLE_ACCOUNT_DELETION_REAUTH_ENABLED) {
+    logger.warn(
+      { googleAccountDeletionReauthEnabled: GOOGLE_ACCOUNT_DELETION_REAUTH_ENABLED, provider },
+      "Google SSO account deletion reauthentication is not enabled"
+    );
+    throw new AuthorizationError(ACCOUNT_DELETION_GOOGLE_REAUTH_NOT_CONFIGURED_ERROR_CODE);
+  }
+
   if (!FRESH_SSO_REAUTH_PROVIDERS.has(provider)) {
     logger.warn(
       { googleAccountDeletionReauthEnabled: GOOGLE_ACCOUNT_DELETION_REAUTH_ENABLED, provider },
       "SSO provider does not support verifiable account deletion reauthentication"
     );
-    throw new AuthorizationError(DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR);
+    throw new AuthorizationError(ACCOUNT_DELETION_SSO_REAUTH_REQUIRED_ERROR_CODE);
   }
 };
 
@@ -142,7 +153,7 @@ const getAccountDeletionSsoReauthAuthorizationParams = (
     };
   }
 
-  throw new AuthorizationError(DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR);
+  throw new AuthorizationError(ACCOUNT_DELETION_SSO_REAUTH_REQUIRED_ERROR_CODE);
 };
 
 const createAccountDeletionSsoReauthCallbackUrl = (intentToken: string) => {
@@ -298,7 +309,7 @@ const assertStoredAccountDeletionSsoReauthIntentMatches = (
     cachedIntent?.provider !== intent.provider ||
     cachedIntent?.providerAccountId !== intent.providerAccountId
   ) {
-    throw new AuthorizationError(DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR);
+    throw new AuthorizationError(ACCOUNT_DELETION_SSO_REAUTH_REQUIRED_ERROR_CODE);
   }
 };
 
@@ -384,7 +395,7 @@ const assertFreshAuthTime = (authTimeInSeconds: number, logContext: Record<strin
       },
       "SSO account deletion reauthentication timestamp is not fresh"
     );
-    throw new AuthorizationError(DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR);
+    throw new AuthorizationError(ACCOUNT_DELETION_SSO_REAUTH_REQUIRED_ERROR_CODE);
   }
 };
 
@@ -395,14 +406,14 @@ const assertFreshOidcAuthTime = (provider: TSsoIdentityProvider, idToken?: strin
 
   if (!idToken) {
     logger.warn({ provider }, "OIDC account deletion reauthentication callback is missing an ID token");
-    throw new AuthorizationError(DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR);
+    throw new AuthorizationError(ACCOUNT_DELETION_SSO_REAUTH_REQUIRED_ERROR_CODE);
   }
 
   const decodedToken = jwt.decode(idToken);
 
   if (!decodedToken || typeof decodedToken === "string") {
     logger.warn({ provider }, "OIDC account deletion reauthentication callback has an invalid ID token");
-    throw new AuthorizationError(DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR);
+    throw new AuthorizationError(ACCOUNT_DELETION_SSO_REAUTH_REQUIRED_ERROR_CODE);
   }
 
   const { auth_time: authTime } = decodedToken;
@@ -416,7 +427,7 @@ const assertFreshOidcAuthTime = (provider: TSsoIdentityProvider, idToken?: strin
       throw new AuthorizationError(ACCOUNT_DELETION_GOOGLE_REAUTH_NOT_CONFIGURED_ERROR_CODE);
     }
 
-    throw new AuthorizationError(DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR);
+    throw new AuthorizationError(ACCOUNT_DELETION_SSO_REAUTH_REQUIRED_ERROR_CODE);
   }
 
   assertFreshAuthTime(authTime, { claim: "auth_time", provider });
@@ -432,14 +443,14 @@ const assertFreshSamlAuthnInstant = (
 
   if (typeof account.authn_instant !== "string") {
     logger.warn({ provider }, "SAML account deletion reauthentication callback is missing AuthnInstant");
-    throw new AuthorizationError(DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR);
+    throw new AuthorizationError(ACCOUNT_DELETION_SSO_REAUTH_REQUIRED_ERROR_CODE);
   }
 
   const authnInstantTimestamp = Date.parse(account.authn_instant);
 
   if (Number.isNaN(authnInstantTimestamp)) {
     logger.warn({ provider }, "SAML account deletion reauthentication callback has invalid AuthnInstant");
-    throw new AuthorizationError(DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR);
+    throw new AuthorizationError(ACCOUNT_DELETION_SSO_REAUTH_REQUIRED_ERROR_CODE);
   }
 
   assertFreshAuthTime(Math.floor(authnInstantTimestamp / 1000), { claim: "authn_instant", provider });
@@ -456,7 +467,7 @@ const getVerifiedAccountDeletionSsoReauthIntent = (intentToken: string) => {
   const provider = normalizeSsoProvider(intent.provider);
 
   if (!provider || provider === "email") {
-    throw new AuthorizationError(DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR);
+    throw new AuthorizationError(ACCOUNT_DELETION_SSO_REAUTH_REQUIRED_ERROR_CODE);
   }
 
   assertSsoProviderSupportsFreshReauthentication(provider);
@@ -476,7 +487,7 @@ const getNormalizedSsoProviderFromAccount = (account: Account) => {
   const normalizedProvider = normalizeSsoProvider(account.provider);
 
   if (!normalizedProvider || normalizedProvider === "email") {
-    throw new AuthorizationError(DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR);
+    throw new AuthorizationError(ACCOUNT_DELETION_SSO_REAUTH_REQUIRED_ERROR_CODE);
   }
 
   return normalizedProvider;
@@ -494,7 +505,7 @@ const assertAccountMatchesIntent = ({
   provider: TSsoIdentityProvider;
 }) => {
   if (provider !== expectedProvider || account.providerAccountId !== expectedProviderAccountId) {
-    throw new AuthorizationError(DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR);
+    throw new AuthorizationError(ACCOUNT_DELETION_SSO_REAUTH_REQUIRED_ERROR_CODE);
   }
 };
 
@@ -531,7 +542,7 @@ export const startAccountDeletionSsoReauthentication = async ({
     throw new AuthorizationError(ACCOUNT_DELETION_EMAIL_MISMATCH_ERROR_CODE);
   }
 
-  if (userAuthenticationData.password) {
+  if (requiresPasswordConfirmationForAccountDeletion(userAuthenticationData)) {
     throw new InvalidInputError(ACCOUNT_DELETION_CONFIRMATION_REQUIRED_ERROR_CODE);
   }
 
@@ -591,7 +602,7 @@ export const completeAccountDeletionSsoReauthentication = async ({
   });
 
   if (linkedUserId !== intent.userId) {
-    throw new AuthorizationError(DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR);
+    throw new AuthorizationError(ACCOUNT_DELETION_SSO_REAUTH_REQUIRED_ERROR_CODE);
   }
 
   await consumeStoredAccountDeletionSsoReauthIntent(storedIntent);
@@ -648,6 +659,6 @@ export const consumeAccountDeletionSsoReauthentication = async ({
     marker?.providerAccountId !== ssoProviderAccountId ||
     Date.now() - (marker?.completedAt ?? 0) > ACCOUNT_DELETION_SSO_REAUTH_MARKER_TTL_MS
   ) {
-    throw new AuthorizationError(DELETE_ACCOUNT_SSO_REAUTH_REQUIRED_ERROR);
+    throw new AuthorizationError(ACCOUNT_DELETION_SSO_REAUTH_REQUIRED_ERROR_CODE);
   }
 };
