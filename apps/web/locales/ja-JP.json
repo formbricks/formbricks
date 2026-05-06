@@ -3728,6 +3728,7 @@
       "missing_feedback_source_title": "フィードバックソースが見つかりませんか?",
       "no_feedback_directory_available": "このワークスペースにはフィードバックディレクトリが割り当てられていません。まずディレクトリを作成または割り当ててください。",
       "no_feedback_records": "フィードバックレコードはまだありません。コネクタがデータの送信を開始すると、ここにレコードが表示されます。",
+      "no_formbricks_surveys_available_description": "このワークスペースにはまだフォームがありません。フィードバックソースとして使用するには<link></link>してください。",
       "no_source_fields_loaded": "ソースフィールドがまだ読み込まれていません",
       "no_sources_connected": "ソースがまだ接続されていません。開始するにはソースを追加してください。",
       "optional": "任意",

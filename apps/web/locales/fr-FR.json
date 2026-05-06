@@ -3728,6 +3728,7 @@
       "missing_feedback_source_title": "Il manque une source de feedback ?",
       "no_feedback_directory_available": "Aucun répertoire de retours attribué à cet espace de travail. Crée-en un ou attribue-en un d'abord.",
       "no_feedback_records": "Aucun enregistrement de feedback pour le moment. Les enregistrements apparaîtront ici une fois que vos connecteurs commenceront à envoyer des données.",
+      "no_formbricks_surveys_available_description": "Il n’y a pas encore de sondages dans cet espace de travail. <link></link> pour en utiliser un comme source de feedback.",
       "no_source_fields_loaded": "Aucun champ source chargé pour le moment",
       "no_sources_connected": "Aucune source connectée pour le moment. Ajoutez une source pour commencer.",
       "optional": "Facultatif",

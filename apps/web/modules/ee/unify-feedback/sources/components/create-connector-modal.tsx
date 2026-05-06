@@ -416,7 +416,12 @@ export const CreateConnectorModal = ({
 
           <div className="py-4">
             {currentStep === "selectType" && (
-              <ConnectorTypeSelector selectedType={selectedType} onSelectType={setSelectedType} />
+              <ConnectorTypeSelector
+                selectedType={selectedType}
+                onSelectType={setSelectedType}
+                formbricksSurveyCount={surveys.length}
+                workspaceId={workspaceId}
+              />
             )}
 
             {currentStep === "mapping" && selectedType === "formbricks_survey" && (
@@ -578,7 +583,9 @@ export const CreateConnectorModal = ({
               </Button>
             )}
             {currentStep === "selectType" ? (
-              <Button onClick={handleNextStep} disabled={!selectedType}>
+              <Button
+                onClick={handleNextStep}
+                disabled={!selectedType || (selectedType === "formbricks_survey" && surveys.length === 0)}>
                 {getNextStepButtonLabel(selectedType, t)}
               </Button>
             ) : (

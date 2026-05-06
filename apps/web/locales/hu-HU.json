@@ -3728,6 +3728,7 @@
       "missing_feedback_source_title": "Hiányzik egy visszajelzési forrás?",
       "no_feedback_directory_available": "Ehhez a munkaterülethez nincs visszajelzési könyvtár hozzárendelve. Hozzon létre vagy rendeljen hozzá egyet először.",
       "no_feedback_records": "Még nincsenek visszajelzési rekordok. A rekordok itt fognak megjelenni, amint a csatlakozók elkezdik küldeni az adatokat.",
+      "no_formbricks_surveys_available_description": "Ebben a munkaterületen még nincsenek kérdőívek. <link></link>, hogy visszajelzési forrásként használhass egyet.",
       "no_source_fields_loaded": "Még nincsenek forrás mezők betöltve",
       "no_sources_connected": "Még nincsenek források csatlakoztatva. Adj hozzá egy forrást a kezdéshez.",
       "optional": "Elhagyható",

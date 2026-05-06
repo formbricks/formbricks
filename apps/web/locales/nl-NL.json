@@ -3728,6 +3728,7 @@
       "missing_feedback_source_title": "Mis je een feedbackbron?",
       "no_feedback_directory_available": "Geen feedbackmap toegewezen aan deze workspace. Maak er eerst een aan of wijs er een toe.",
       "no_feedback_records": "Nog geen feedbackrecords. Records verschijnen hier zodra je connectoren gegevens beginnen te verzenden.",
+      "no_formbricks_surveys_available_description": "Er zijn nog geen enquêtes in deze werkruimte. <link></link> om er een als feedbackbron te gebruiken.",
       "no_source_fields_loaded": "Nog geen bronvelden geladen",
       "no_sources_connected": "Nog geen bronnen verbonden. Voeg een bron toe om te beginnen.",
       "optional": "Optioneel",
