@@ -3728,7 +3728,7 @@
       "missing_feedback_source_title": "Missing feedback source?",
       "no_feedback_directory_available": "Ingen feedback-katalog är tilldelad till denna arbetsyta. Skapa eller tilldela en först.",
       "no_feedback_records": "Inga feedbackposter ännu. Poster visas här när dina connectors börjar skicka data.",
-      "no_formbricks_surveys_available_description": "Det finns inga enkäter i denna arbetsyta ännu. <link></link> för att använda en som feedbackkälla.",
+      "no_formbricks_surveys_available_description": "Det finns inga enkäter i denna arbetsyta ännu. <surveyLink>Skapa en ny enkät</surveyLink> för att använda en som feedbackkälla.",
       "no_source_fields_loaded": "Inga källfält har laddats än",
       "no_sources_connected": "Inga källor är anslutna än. Lägg till en källa för att komma igång.",
       "optional": "Valfritt",

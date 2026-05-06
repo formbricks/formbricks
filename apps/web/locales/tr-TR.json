@@ -3728,7 +3728,7 @@
       "missing_feedback_source_title": "Missing feedback source?",
       "no_feedback_directory_available": "Bu çalışma alanına atanmış geri bildirim dizini yok. Önce bir tane oluştur veya ata.",
       "no_feedback_records": "Henüz geri bildirim kaydı yok. Bağlayıcıların veri göndermeye başlamasıyla kayıtlar burada görünecek.",
-      "no_formbricks_surveys_available_description": "Bu çalışma alanında henüz anket yok. Geri bildirim kaynağı olarak kullanmak için <link></link>.",
+      "no_formbricks_surveys_available_description": "Bu çalışma alanında henüz anket yok. Geri bildirim kaynağı olarak kullanmak için <surveyLink>Yeni bir anket oluştur</surveyLink>.",
       "no_source_fields_loaded": "Henüz kaynak alan yüklenmedi",
       "no_sources_connected": "Henüz bağlı kaynak yok. Başlamak için bir kaynak ekle.",
       "optional": "İsteğe bağlı",

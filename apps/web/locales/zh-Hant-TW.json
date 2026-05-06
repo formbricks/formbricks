@@ -3728,7 +3728,7 @@
       "missing_feedback_source_title": "Missing feedback source?",
       "no_feedback_directory_available": "此工作區未指派意見回饋目錄。請先建立或指派一個。",
       "no_feedback_records": "目前尚無回饋紀錄。當你的連接器開始傳送資料時，紀錄會顯示在這裡。",
-      "no_formbricks_surveys_available_description": "此工作區尚無問卷。<link></link>，以將其用作回饋來源。",
+      "no_formbricks_surveys_available_description": "此工作區尚無問卷。<surveyLink>建立新問卷</surveyLink>，以將其用作回饋來源。",
       "no_source_fields_loaded": "尚未載入來源欄位",
       "no_sources_connected": "尚未連接任何來源。請新增來源以開始使用。",
       "optional": "選填",

@@ -3728,7 +3728,7 @@
       "missing_feedback_source_title": "Lipsește o sursă de feedback?",
       "no_feedback_directory_available": "Niciun director de feedback nu este atribuit acestui spațiu de lucru. Creează sau atribuie unul mai întâi.",
       "no_feedback_records": "Nu există încă înregistrări de feedback. Înregistrările vor apărea aici după ce conectorii tăi vor începe să trimită date.",
-      "no_formbricks_surveys_available_description": "Nu există încă chestionare în acest spațiu de lucru. <link></link> pentru a folosi unul ca sursă de feedback.",
+      "no_formbricks_surveys_available_description": "Nu există încă chestionare în acest spațiu de lucru. <surveyLink>Creează un chestionar nou</surveyLink> pentru a folosi unul ca sursă de feedback.",
       "no_source_fields_loaded": "Nu au fost încă încărcate câmpuri sursă",
       "no_sources_connected": "Nicio sursă conectată încă. Adaugă o sursă pentru a începe.",
       "optional": "Opțional",

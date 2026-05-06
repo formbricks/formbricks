@@ -3728,7 +3728,7 @@
       "missing_feedback_source_title": "Feedback-Quelle fehlt?",
       "no_feedback_directory_available": "Diesem Workspace ist kein Feedback-Verzeichnis zugewiesen. Erstelle oder weise zuerst eins zu.",
       "no_feedback_records": "Noch keine Feedback-Einträge vorhanden. Einträge erscheinen hier, sobald deine Konnektoren Daten senden.",
-      "no_formbricks_surveys_available_description": "In diesem Workspace gibt es noch keine Umfragen. <link></link>, um eine als Feedback-Quelle zu verwenden.",
+      "no_formbricks_surveys_available_description": "In diesem Workspace gibt es noch keine Umfragen. <surveyLink>Erstelle eine neue Umfrage</surveyLink>, um eine als Feedback-Quelle zu verwenden.",
       "no_source_fields_loaded": "Noch keine Quellfelder geladen",
       "no_sources_connected": "Noch keine Quellen verbunden. Füge eine Quelle hinzu, um loszulegen.",
       "optional": "Optional",

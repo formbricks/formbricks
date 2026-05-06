@@ -3728,7 +3728,7 @@
       "missing_feedback_source_title": "Missing feedback source?",
       "no_feedback_directory_available": "此工作区未分配反馈目录。请先创建或分配一个。",
       "no_feedback_records": "暂无反馈记录。当你的连接器开始发送数据后，记录会显示在这里。",
-      "no_formbricks_surveys_available_description": "此工作区还没有调查。<link></link>，以将其用作反馈来源。",
+      "no_formbricks_surveys_available_description": "此工作区还没有调查。<surveyLink>创建新调查</surveyLink>，以将其用作反馈来源。",
       "no_source_fields_loaded": "尚未加载源字段",
       "no_sources_connected": "还没有连接数据源。添加一个数据源开始吧。",
       "optional": "可选",

@@ -103,20 +103,12 @@ const NoFormbricksSurveysAlert = ({ workspaceId }: Readonly<{ workspaceId: strin
         <Trans
           i18nKey="workspace.unify.no_formbricks_surveys_available_description"
           components={{
-            link: <CreateSurveyCtaLink workspaceId={workspaceId} />,
+            surveyLink: (
+              <Link href={`/workspaces/${workspaceId}/surveys/templates`} className="font-medium underline" />
+            ),
           }}
         />
       </AlertDescription>
     </Alert>
-  );
-};
-
-const CreateSurveyCtaLink = ({ workspaceId }: Readonly<{ workspaceId: string }>) => {
-  const { t } = useTranslation();
-
-  return (
-    <Link href={`/workspaces/${workspaceId}/surveys/templates`} className="font-medium underline">
-      {t("workspace.surveys.templates.create_a_new_survey")}
-    </Link>
   );
 };

@@ -3728,7 +3728,7 @@
       "missing_feedback_source_title": "Missing feedback source?",
       "no_feedback_directory_available": "No feedback directory assigned to this workspace. Create or assign one first.",
       "no_feedback_records": "No feedback records yet. Records will appear here once your connectors start sending data.",
-      "no_formbricks_surveys_available_description": "There are no surveys in this workspace yet. <link></link> to use it as a feedback source.",
+      "no_formbricks_surveys_available_description": "There are no surveys in this workspace yet. <surveyLink>Create a new survey</surveyLink> to use it as a feedback source.",
       "no_source_fields_loaded": "No source fields loaded yet",
       "no_sources_connected": "No sources connected yet. Add a source to get started.",
       "optional": "Optional",

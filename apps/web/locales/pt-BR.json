@@ -3728,7 +3728,7 @@
       "missing_feedback_source_title": "Faltando alguma fonte de feedback?",
       "no_feedback_directory_available": "Nenhum diretório de feedback atribuído a este workspace. Crie ou atribua um primeiro.",
       "no_feedback_records": "Nenhum registro de feedback ainda. Os registros aparecerão aqui assim que seus conectores começarem a enviar dados.",
-      "no_formbricks_surveys_available_description": "Ainda não há pesquisas neste workspace. <link></link> para usar uma como fonte de feedback.",
+      "no_formbricks_surveys_available_description": "Ainda não há pesquisas neste workspace. <surveyLink>Crie uma nova pesquisa</surveyLink> para usar uma como fonte de feedback.",
       "no_source_fields_loaded": "Nenhum campo de origem carregado ainda",
       "no_sources_connected": "Nenhuma origem conectada ainda. Adicione uma origem para começar.",
       "optional": "Opcional",
