@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { TProjectStyling } from "@formbricks/types/project";
 import { TResponseData } from "@formbricks/types/responses";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
+import { toJsEnvironmentStateSurvey } from "@/lib/survey/client-utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { CustomScriptsInjector } from "@/modules/survey/link/components/custom-scripts-injector";
 import { LinkSurveyWrapper } from "@/modules/survey/link/components/link-survey-wrapper";
@@ -133,11 +134,13 @@ export const SurveyClientWrapper = ({
     }
     setResponseData({});
   };
+  const jsSurvey = useMemo(() => toJsEnvironmentStateSurvey(survey), [survey]);
+
   // Determine text direction based on language code for logo positioning only
   // which checks both language code and survey content. This is only for logo UI positioning.
   const logoDir = useMemo(() => {
-    return isRTLLanguage(survey, languageCode) ? "rtl" : "auto";
-  }, [languageCode, survey]);
+    return isRTLLanguage(jsSurvey, languageCode) ? "rtl" : "auto";
+  }, [languageCode, jsSurvey]);
 
   return (
     <>
@@ -169,7 +172,7 @@ export const SurveyClientWrapper = ({
           appUrl={publicDomain}
           environmentId={survey.environmentId}
           isPreviewMode={isPreview}
-          survey={survey}
+          survey={jsSurvey}
           styling={styling}
           languageCode={languageCode}
           isBrandingEnabled={project.linkSurveyBranding}
