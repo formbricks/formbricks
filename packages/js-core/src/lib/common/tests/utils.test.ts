@@ -279,6 +279,52 @@ describe("utils.ts", () => {
       expect(result).toHaveLength(1);
     });
 
+    test("anonymous user: excludes segment-targeted surveys (new shape: hasFilters=true)", () => {
+      environment.data.surveys = [
+        {
+          ...baseSurvey,
+          id: mockSurveyId1,
+          segment: { id: mockSegmentId1, hasFilters: true },
+          displayOption: "respondMultiple",
+        } as TEnvironmentStateSurvey,
+        {
+          ...baseSurvey,
+          id: mockSurveyId2,
+          segment: { id: mockSegmentId2, hasFilters: false },
+          displayOption: "respondMultiple",
+        } as TEnvironmentStateSurvey,
+      ];
+
+      const result = filterSurveys(environment, user);
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe(mockSurveyId2);
+    });
+
+    test("anonymous user: excludes segment-targeted surveys when cached payload uses legacy shape (filters array)", () => {
+      // Simulates a localStorage payload written by an older SDK version that
+      // still has `segment.filters` and no `hasFilters`. The defensive check
+      // must fall back to the legacy shape so anonymous users don't receive
+      // segment-targeted surveys.
+      environment.data.surveys = [
+        {
+          ...baseSurvey,
+          id: mockSurveyId1,
+          segment: { id: mockSegmentId1, filters: [{ type: "attribute", value: "plan" }] },
+          displayOption: "respondMultiple",
+        } as unknown as TEnvironmentStateSurvey,
+        {
+          ...baseSurvey,
+          id: mockSurveyId2,
+          segment: { id: mockSegmentId2, filters: [] },
+          displayOption: "respondMultiple",
+        } as unknown as TEnvironmentStateSurvey,
+      ];
+
+      const result = filterSurveys(environment, user);
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe(mockSurveyId2);
+    });
+
     test("filters by segment if userId is set and user has segments", () => {
       user.data.userId = "user_abc";
       user.data.segments = [mockSegmentId1];

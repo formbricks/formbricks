@@ -10,6 +10,7 @@ import {
   getStyling,
   handleHiddenFields,
   shouldDisplayBasedOnPercentage,
+  surveyHasSegmentFilters,
 } from "@/lib/common/utils";
 import { UpdateQueue } from "@/lib/user/update-queue";
 import { type TEnvironmentStateSurvey, type TUserState } from "@/types/config";
@@ -67,7 +68,7 @@ export const renderWidget = async (
     logger.debug("Waiting for pending user identification before rendering survey");
     const identificationSucceeded = await updateQueue.waitForPendingWork();
     if (!identificationSucceeded) {
-      const hasSegmentFilters = survey.segment?.hasFilters ?? false;
+      const hasSegmentFilters = surveyHasSegmentFilters(survey);
 
       if (hasSegmentFilters) {
         logger.debug("User identification failed. Skipping survey with segment filters.");
