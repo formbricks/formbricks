@@ -41,7 +41,7 @@ const captureSurveyEditDiffEvents = (
   newSurvey: TSurvey,
   context: SurveyEditDiffContext
 ): void => {
-  if (!POSTHOG_KEY || !oldSurvey) return;
+  if (!oldSurvey) return;
 
   const groupContext = { organizationId: context.organizationId, workspaceId: context.workspaceId };
   const baseProps = {
@@ -96,7 +96,7 @@ const captureSurveyEditDiffEvents = (
     }
   }
 
-  // multi_language_enabled / multi_language_created
+  // survey_language_enabled / survey_language_added
   const oldLanguages = oldSurvey.languages ?? [];
   const newLanguages = newSurvey.languages ?? [];
   const oldLanguageCodes = new Set(oldLanguages.map((l) => l.language.code));
@@ -104,43 +104,43 @@ const captureSurveyEditDiffEvents = (
 
   if (addedLanguages.length > 0) {
     const wasMultiLangBefore = oldLanguages.length > 1;
-    const baseLanguageProps = {
-      organization_id: context.organizationId,
-      workspace_id: context.workspaceId,
-    };
+    let currentCount = oldLanguages.length;
 
     if (!wasMultiLangBefore) {
       const [first, ...rest] = addedLanguages;
       capturePostHogEvent(
         context.userId,
-        "multi_language_enabled",
-        { ...baseLanguageProps, language_code: first.language.code },
+        "survey_language_enabled",
+        { ...baseProps, language_code: first.language.code, existing_language_count: currentCount },
         groupContext
       );
-      for (let i = 0; i < rest.length; i++) {
+      currentCount++;
+      for (const lang of rest) {
         capturePostHogEvent(
           context.userId,
-          "multi_language_created",
+          "survey_language_added",
           {
-            ...baseLanguageProps,
-            language_code: rest[i].language.code,
-            existing_language_count: oldLanguages.length + 1 + i,
+            ...baseProps,
+            language_code: lang.language.code,
+            existing_language_count: currentCount,
           },
           groupContext
         );
+        currentCount++;
       }
     } else {
-      for (let i = 0; i < addedLanguages.length; i++) {
+      for (const lang of addedLanguages) {
         capturePostHogEvent(
           context.userId,
-          "multi_language_created",
+          "survey_language_added",
           {
-            ...baseLanguageProps,
-            language_code: addedLanguages[i].language.code,
-            existing_language_count: oldLanguages.length + i,
+            ...baseProps,
+            language_code: lang.language.code,
+            existing_language_count: currentCount,
           },
           groupContext
         );
+        currentCount++;
       }
     }
   }
@@ -233,15 +233,13 @@ export const updateSurveyDraftAction = authenticatedActionClient.inputSchema(ZSu
     ctx.auditLoggingCtx.oldObject = oldObject;
     ctx.auditLoggingCtx.newObject = result;
 
-    if (POSTHOG_KEY) {
-      captureSurveyEditDiffEvents(oldObject, result, {
-        userId: ctx.user.id,
-        surveyId: result.id,
-        organizationId,
-        workspaceId: projectId,
-        environmentId: result.environmentId,
-      });
-    }
+    captureSurveyEditDiffEvents(oldObject, result, {
+      userId: ctx.user.id,
+      surveyId: result.id,
+      organizationId,
+      workspaceId: projectId,
+      environmentId: result.environmentId,
+    });
 
     revalidatePath(`/environments/${result.environmentId}/surveys/${result.id}`);
 
@@ -291,17 +289,17 @@ export const updateSurveyAction = authenticatedActionClient.inputSchema(ZSurvey)
     ctx.auditLoggingCtx.oldObject = oldObject;
     ctx.auditLoggingCtx.newObject = result;
 
+    const projectId = await getProjectIdFromSurveyId(parsedInput.id);
+
+    captureSurveyEditDiffEvents(oldObject, result, {
+      userId: ctx.user.id,
+      surveyId: result.id,
+      organizationId,
+      workspaceId: projectId,
+      environmentId: result.environmentId,
+    });
+
     if (POSTHOG_KEY) {
-      const projectId = await getProjectIdFromSurveyId(parsedInput.id);
-
-      captureSurveyEditDiffEvents(oldObject, result, {
-        userId: ctx.user.id,
-        surveyId: result.id,
-        organizationId,
-        workspaceId: projectId,
-        environmentId: result.environmentId,
-      });
-
       if (result.status !== "draft") {
         const isPublish = oldObject?.status === "draft" && result.status === "inProgress";
 

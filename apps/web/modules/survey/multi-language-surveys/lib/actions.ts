@@ -10,6 +10,7 @@ import {
   getSurveysUsingGivenLanguage,
   updateLanguage,
 } from "@/lib/language/service";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import {
@@ -50,6 +51,18 @@ export const createLanguageAction = authenticatedActionClient.inputSchema(ZCreat
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.languageId = result.id;
     ctx.auditLoggingCtx.newObject = result;
+
+    capturePostHogEvent(
+      ctx.user.id,
+      "workspace_language_created",
+      {
+        organization_id: organizationId,
+        workspace_id: parsedInput.projectId,
+        language_code: result.code,
+      },
+      { organizationId, workspaceId: parsedInput.projectId }
+    );
+
     return result;
   })
 );
