@@ -55,7 +55,7 @@ const Page = async (props: ProjectSettingsPageProps) => {
   if (searchParams.mode === "cx") {
     capturePostHogEvent(
       session.user.id,
-      "workspace_mode_selected",
+      "organization_mode_selected",
       {
         organization_id: params.organizationId,
         mode: "cx",
