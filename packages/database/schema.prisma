@@ -757,19 +757,18 @@ model Invite {
 /// @property lastUsedAt - Timestamp of last usage
 /// @property apiKeyWorkspaces - Workspaces this key has access to
 model ApiKey {
-  id                        String                    @id @default(cuid())
-  createdAt                 DateTime                  @default(now())
-  createdBy                 String?
-  lastUsedAt                DateTime?
-  label                     String
-  hashedKey                 String
-  lookupHash                String?                   @unique
-  organizationId            String
-  organization              Organization              @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  apiKeyWorkspaces          ApiKeyWorkspace[]
-  apiKeyFeedbackDirectories ApiKeyFeedbackDirectory[]
+  id                 String            @id @default(cuid())
+  createdAt          DateTime          @default(now())
+  createdBy          String?
+  lastUsedAt         DateTime?
+  label              String
+  hashedKey          String
+  lookupHash         String?           @unique
+  organizationId     String
+  organization       Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  apiKeyWorkspaces   ApiKeyWorkspace[]
   /// [OrganizationAccess]
-  organizationAccess        Json                      @default("{}")
+  organizationAccess Json              @default("{}")
 
   @@index([organizationId])
 }
@@ -801,27 +800,6 @@ model ApiKeyWorkspace {
 
   @@unique([apiKeyId, workspaceId])
   @@index([workspaceId])
-}
-
-/// Links API keys to feedback directories with specific permissions.
-/// Enables granular access control for API keys across feedback directories (Hub API).
-///
-/// @property id - Unique identifier for the directory access entry
-/// @property apiKey - The associated API key
-/// @property feedbackDirectory - The directory being accessed
-/// @property permission - Level of access granted
-model ApiKeyFeedbackDirectory {
-  id                  String            @id @default(cuid())
-  createdAt           DateTime          @default(now())
-  updatedAt           DateTime          @updatedAt
-  apiKeyId            String
-  apiKey              ApiKey            @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
-  feedbackDirectoryId String
-  feedbackDirectory   FeedbackDirectory @relation(fields: [feedbackDirectoryId], references: [id], onDelete: Cascade)
-  permission          ApiKeyPermission
-
-  @@unique([apiKeyId, feedbackDirectoryId])
-  @@index([feedbackDirectoryId])
 }
 
 enum IdentityProvider {
@@ -1292,7 +1270,6 @@ model FeedbackDirectory {
   workspaces     FeedbackDirectoryWorkspace[]
   connectors     Connector[]
   charts         Chart[]
-  apiKeys        ApiKeyFeedbackDirectory[]
 
   @@unique([organizationId, name])
 }

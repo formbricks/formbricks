@@ -1854,10 +1854,7 @@
       "api_key_updated": "Clave API actualizada",
       "delete_api_key_confirmation": "Cualquier aplicación que use esta clave ya no podrá acceder a tus datos de Formbricks.",
       "duplicate_access": "No se permite el acceso duplicado al espacio de trabajo",
-      "duplicate_directory_access": "No se permite el acceso duplicado al directorio de feedback",
-      "feedback_directory_access": "Acceso al directorio de feedback",
       "no_api_keys_yet": "Aún no tienes ninguna clave API",
-      "no_directory_permissions_found": "No se encontraron permisos para el directorio de feedback",
       "no_workspace_permissions_found": "No se encontraron permisos del espacio de trabajo",
       "organization_access": "Acceso a la organización",
       "organization_access_description": "Selecciona privilegios de lectura o escritura para recursos de toda la organización.",
@@ -1865,7 +1862,6 @@
       "secret": "Secreto",
       "unable_to_copy_api_key": "No se puede copiar la clave de API",
       "unable_to_delete_api_key": "No se puede eliminar la clave API",
-      "unknown_directory": "Directorio desconocido",
       "unknown_workspace": "Espacio de trabajo desconocido",
       "workspace_access": "Acceso al espacio de trabajo"
     },

@@ -1854,10 +1854,7 @@
       "api_key_updated": "API-ключ обновлён",
       "delete_api_key_confirmation": "Любые приложения, использующие этот ключ, больше не смогут получить доступ к вашим данным Formbricks.",
       "duplicate_access": "Дублированный доступ к рабочему пространству не разрешён",
-      "duplicate_directory_access": "Дублирование доступа к директории обратной связи запрещено",
-      "feedback_directory_access": "Доступ к директории обратной связи",
       "no_api_keys_yet": "У вас ещё нет API-ключей",
-      "no_directory_permissions_found": "Разрешения для директорий обратной связи не найдены",
       "no_workspace_permissions_found": "Разрешения для рабочего пространства не найдены",
       "organization_access": "Доступ к организации",
       "organization_access_description": "Выберите права на чтение или запись для ресурсов всей организации.",
@@ -1865,7 +1862,6 @@
       "secret": "Секрет",
       "unable_to_copy_api_key": "Не удалось скопировать API-ключ",
       "unable_to_delete_api_key": "Не удалось удалить API-ключ",
-      "unknown_directory": "Неизвестный каталог",
       "unknown_workspace": "Неизвестное рабочее пространство",
       "workspace_access": "Доступ к рабочему пространству"
     },

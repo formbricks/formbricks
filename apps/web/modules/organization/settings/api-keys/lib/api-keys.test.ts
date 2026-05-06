@@ -1,7 +1,7 @@
 import { ApiKey, ApiKeyPermission, Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { DatabaseError } from "@formbricks/types/errors";
 import { TApiKeyWithEnvironmentPermission } from "../types/api-keys";
 import {
   createApiKey,
@@ -36,7 +36,6 @@ const mockApiKeyWithEnvironments: TApiKeyWithEnvironmentPermission = {
       permission: ApiKeyPermission.manage,
     },
   ],
-  apiKeyFeedbackDirectories: [],
 };
 
 // Mock modules before tests
@@ -49,9 +48,6 @@ vi.mock("@formbricks/database", () => ({
       delete: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
-    },
-    feedbackDirectory: {
-      count: vi.fn(),
     },
   },
 }));
@@ -117,12 +113,6 @@ describe("API Key Management", () => {
             select: {
               permission: true,
               workspaceId: true,
-            },
-          },
-          apiKeyFeedbackDirectories: {
-            select: {
-              permission: true,
-              feedbackDirectoryId: true,
             },
           },
           createdAt: true,
@@ -340,7 +330,7 @@ describe("API Key Management", () => {
       await expect(getApiKeyWithPermissions("fbk_testSecret123")).rejects.toThrow(errToThrow);
     });
 
-    test("includes apiKeyFeedbackDirectories with nested directory in v2 lookup", async () => {
+    test("uses workspace include without feedback directory relations in v2 lookup", async () => {
       vi.mocked(prisma.apiKey.findUnique).mockResolvedValueOnce({
         ...mockApiKey,
         lastUsedAt: new Date(Date.now() - 1000 * 10),
@@ -358,18 +348,11 @@ describe("API Key Management", () => {
               },
             },
           },
-          apiKeyFeedbackDirectories: {
-            include: {
-              feedbackDirectory: {
-                select: { id: true, name: true },
-              },
-            },
-          },
         },
       });
     });
 
-    test("includes apiKeyFeedbackDirectories with nested directory in legacy lookup", async () => {
+    test("uses workspace include without feedback directory relations in legacy lookup", async () => {
       vi.mocked(prisma.apiKey.findFirst).mockResolvedValueOnce({
         ...mockApiKey,
         lastUsedAt: new Date(Date.now() - 1000 * 10),
@@ -387,39 +370,8 @@ describe("API Key Management", () => {
               },
             },
           },
-          apiKeyFeedbackDirectories: {
-            include: {
-              feedbackDirectory: {
-                select: { id: true, name: true },
-              },
-            },
-          },
         },
       });
-    });
-
-    test("returns directory permissions on the api key payload", async () => {
-      const payload = {
-        ...mockApiKey,
-        lastUsedAt: new Date(Date.now() - 1000 * 10),
-        apiKeyWorkspaces: [],
-        apiKeyFeedbackDirectories: [
-          {
-            id: "dir-perm-1",
-            apiKeyId: "apikey123",
-            feedbackDirectoryId: "dir1",
-            permission: ApiKeyPermission.read,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            feedbackDirectory: { id: "dir1", name: "Directory 1" },
-          },
-        ],
-      };
-      vi.mocked(prisma.apiKey.findUnique).mockResolvedValueOnce(payload as any);
-
-      const result = await getApiKeyWithPermissions("fbk_testSecret123");
-
-      expect(result?.apiKeyFeedbackDirectories).toEqual(payload.apiKeyFeedbackDirectories);
     });
   });
 
@@ -495,7 +447,6 @@ describe("API Key Management", () => {
         }),
         include: {
           apiKeyWorkspaces: true,
-          apiKeyFeedbackDirectories: true,
         },
       });
     });
@@ -510,108 +461,6 @@ describe("API Key Management", () => {
 
       expect(result).toEqual({ ...mockApiKeyWithEnvironments, actualKey: "fbk_testSecret123" });
       expect(prisma.apiKey.create).toHaveBeenCalled();
-    });
-
-    test("creates an API key with feedback directory permissions", async () => {
-      vi.mocked(prisma.feedbackDirectory.count).mockResolvedValueOnce(2);
-      vi.mocked(prisma.apiKey.create).mockResolvedValueOnce(mockApiKey);
-
-      await createApiKey("org123", "user123", {
-        ...mockApiKeyData,
-        feedbackDirectoryPermissions: [
-          { feedbackDirectoryId: "dir1", permission: ApiKeyPermission.read },
-          { feedbackDirectoryId: "dir2", permission: ApiKeyPermission.write },
-        ],
-      });
-
-      expect(prisma.feedbackDirectory.count).toHaveBeenCalledWith({
-        where: { id: { in: ["dir1", "dir2"] }, organizationId: "org123", isArchived: false },
-      });
-
-      expect(prisma.apiKey.create).toHaveBeenCalledWith({
-        data: expect.objectContaining({
-          apiKeyFeedbackDirectories: {
-            create: [
-              { feedbackDirectoryId: "dir1", permission: ApiKeyPermission.read },
-              { feedbackDirectoryId: "dir2", permission: ApiKeyPermission.write },
-            ],
-          },
-        }),
-        include: {
-          apiKeyWorkspaces: true,
-          apiKeyFeedbackDirectories: true,
-        },
-      });
-    });
-
-    test("omits apiKeyFeedbackDirectories when feedbackDirectoryPermissions is empty", async () => {
-      vi.mocked(prisma.apiKey.create).mockResolvedValueOnce(mockApiKey);
-
-      await createApiKey("org123", "user123", {
-        ...mockApiKeyData,
-        feedbackDirectoryPermissions: [],
-      });
-
-      const callArg = vi.mocked(prisma.apiKey.create).mock.calls[0][0] as { data: Record<string, unknown> };
-      expect(callArg.data.apiKeyFeedbackDirectories).toBeUndefined();
-    });
-
-    test("creates an API key with both workspace and directory permissions", async () => {
-      vi.mocked(prisma.feedbackDirectory.count).mockResolvedValueOnce(1);
-      vi.mocked(prisma.apiKey.create).mockResolvedValueOnce(mockApiKey);
-
-      await createApiKey("org123", "user123", {
-        ...mockApiKeyData,
-        workspacePermissions: [{ workspaceId: "workspace123", permission: ApiKeyPermission.manage }],
-        feedbackDirectoryPermissions: [{ feedbackDirectoryId: "dir1", permission: ApiKeyPermission.manage }],
-      });
-
-      expect(prisma.apiKey.create).toHaveBeenCalledWith({
-        data: expect.objectContaining({
-          apiKeyWorkspaces: {
-            create: [{ workspaceId: "workspace123", permission: ApiKeyPermission.manage }],
-          },
-          apiKeyFeedbackDirectories: {
-            create: [{ feedbackDirectoryId: "dir1", permission: ApiKeyPermission.manage }],
-          },
-        }),
-        include: {
-          apiKeyWorkspaces: true,
-          apiKeyFeedbackDirectories: true,
-        },
-      });
-    });
-
-    test("rejects when a feedbackDirectoryId is not owned by the organization", async () => {
-      vi.mocked(prisma.feedbackDirectory.count).mockResolvedValueOnce(1);
-
-      await expect(
-        createApiKey("org123", "user123", {
-          ...mockApiKeyData,
-          feedbackDirectoryPermissions: [
-            { feedbackDirectoryId: "dir1", permission: ApiKeyPermission.read },
-            { feedbackDirectoryId: "foreign-dir", permission: ApiKeyPermission.read },
-          ],
-        })
-      ).rejects.toThrow(ResourceNotFoundError);
-
-      expect(prisma.feedbackDirectory.count).toHaveBeenCalledWith({
-        where: { id: { in: ["dir1", "foreign-dir"] }, organizationId: "org123", isArchived: false },
-      });
-      expect(prisma.apiKey.create).not.toHaveBeenCalled();
-    });
-
-    test("rejects create input with duplicate feedbackDirectoryId", async () => {
-      await expect(
-        createApiKey("org123", "user123", {
-          ...mockApiKeyData,
-          feedbackDirectoryPermissions: [
-            { feedbackDirectoryId: "dir1", permission: ApiKeyPermission.read },
-            { feedbackDirectoryId: "dir1", permission: ApiKeyPermission.manage },
-          ],
-        })
-      ).rejects.toThrow();
-      expect(prisma.apiKey.create).not.toHaveBeenCalled();
     });
 
     test("rejects create input with duplicate workspaceId", async () => {
