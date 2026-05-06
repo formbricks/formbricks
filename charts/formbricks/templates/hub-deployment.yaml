@@ -14,7 +14,9 @@ metadata:
     app.kubernetes.io/managed-by: {{ .Release.Service }}
     app.kubernetes.io/part-of: {{ .Values.partOfOverride | default (include "formbricks.name" .) }}
 spec:
+  {{- if not .Values.hub.autoscaling.enabled }}
   replicas: {{ .Values.hub.replicas | default 1 }}
+  {{- end }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "formbricks.hubname" . }}
@@ -66,9 +68,12 @@ spec:
                 secretKeyRef:
                   name: {{ include "formbricks.hubSecretName" . }}
                   key: HUB_API_KEY
+            {{- include "formbricks.hubEmbeddingEnv" (dict "root" $ "env" .Values.hub.env) | nindent 12 }}
             {{- range $key, $value := .Values.hub.env }}
+            {{- if not (and $.Values.hub.embeddings.enabled (include "formbricks.hubEmbeddingEnvManaged" (dict "key" $key))) }}
             - name: {{ $key }}
               value: {{ $value | quote }}
+            {{- end }}
             {{- end }}
           {{- if .Values.hub.resources }}
           resources:

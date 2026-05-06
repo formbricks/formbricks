@@ -54,6 +54,38 @@ This chart does not deploy Cube.js. XM Suite v5 dashboard and analysis features 
 - Provide `CUBEJS_API_SECRET` through your existing secret management flow, such as the generated app secret override or `deployment.envFrom`.
 - Keep Hub enabled. Cube should point at the same feedback records database that Hub writes to, unless you intentionally split that storage.
 
+## Hub worker and self-hosted embeddings
+
+The chart deploys Hub API and, by default, a `hub-worker` deployment. Hub API is insert-only for River jobs; webhook dispatch and embedding jobs are processed by `hub-worker`.
+
+Self-hosted embeddings are disabled by default. Set `hub.embeddings.enabled=true` to deploy an internal Hugging Face Text Embeddings Inference (TEI) service and wire Hub API plus Hub worker to it through the OpenAI-compatible endpoint added in Hub:
+
+```yaml
+hub:
+  worker:
+    enabled: true
+
+  embeddings:
+    enabled: true
+    model: google/embeddinggemma-300m
+    servedModelName: google/embeddinggemma-300m
+    huggingFace:
+      token: hf_...
+```
+
+The generated Hub embedding configuration is:
+
+- `EMBEDDING_PROVIDER=openai`
+- `EMBEDDING_MODEL=<hub.embeddings.servedModelName or hub.embeddings.model>`
+- `EMBEDDING_BASE_URL=http://<release>-hub-embeddings:8080/v1`
+- `EMBEDDING_PROVIDER_API_KEY` from a dedicated embeddings Secret
+
+The TEI service is internal-only (`ClusterIP`) and not exposed through ingress. For gated models such as `google/embeddinggemma-300m`, provide `hub.embeddings.huggingFace.token` or set `hub.embeddings.huggingFace.existingSecret`.
+
+When TEI auth is enabled, configure the shared key through `hub.embeddings.auth.apiKey` or `hub.embeddings.auth.existingSecret`; the chart manages both TEI `API_KEY` and Hub `EMBEDDING_PROVIDER_API_KEY` from that source.
+
+Autoscaling is opt-in for Hub API, Hub worker, and the embeddings runtime. If you scale the embeddings runtime above one replica while persistence is enabled, the cache PVC must support `ReadWriteMany`; otherwise set `hub.embeddings.persistence.enabled=false` or provide a compatible `existingClaim`.
+
 ## Values
 
 | Key                                                                | Type   | Default                           | Description |
@@ -139,7 +171,40 @@ This chart does not deploy Cube.js. XM Suite v5 dashboard and analysis features 
 | externalSecret.secretStore.name                                    | string | `"aws-secrets-manager"`           |             |
 | formbricks.publicUrl                                               | string | `""`                              |             |
 | formbricks.webappUrl                                               | string | `""`                              |             |
+| hub.autoscaling.enabled                                            | bool   | `false`                           |             |
+| hub.autoscaling.maxReplicas                                        | int    | `3`                               |             |
+| hub.autoscaling.minReplicas                                        | int    | `1`                               |             |
 | hub.enabled                                                        | bool   | `true`                            |             |
+| hub.embeddings.auth.enabled                                        | bool   | `true`                            |             |
+| hub.embeddings.auth.existingSecret                                 | string | `""`                              |             |
+| hub.embeddings.auth.secretKey                                      | string | `"EMBEDDING_PROVIDER_API_KEY"`    |             |
+| hub.embeddings.autoscaling.enabled                                 | bool   | `false`                           |             |
+| hub.embeddings.autoscaling.maxReplicas                             | int    | `2`                               |             |
+| hub.embeddings.autoscaling.minReplicas                             | int    | `1`                               |             |
+| hub.embeddings.baseUrl                                             | string | `""`                              | Defaults to the internal TEI service URL ending in `/v1`. |
+| hub.embeddings.enabled                                             | bool   | `false`                           |             |
+| hub.embeddings.huggingFace.existingSecret                          | string | `""`                              |             |
+| hub.embeddings.huggingFace.token                                   | string | `""`                              |             |
+| hub.embeddings.huggingFace.tokenKey                                | string | `"HF_TOKEN"`                      |             |
+| hub.embeddings.image.pullPolicy                                    | string | `"IfNotPresent"`                  |             |
+| hub.embeddings.image.repository                                    | string | `"ghcr.io/huggingface/text-embeddings-inference"` |             |
+| hub.embeddings.image.tag                                           | string | `"cpu-1.9"`                       |             |
+| hub.embeddings.maxConcurrent                                       | string | `"5"`                             |             |
+| hub.embeddings.model                                               | string | `"google/embeddinggemma-300m"`    |             |
+| hub.embeddings.persistence.enabled                                 | bool   | `true`                            |             |
+| hub.embeddings.persistence.mountPath                               | string | `"/data"`                         |             |
+| hub.embeddings.persistence.size                                    | string | `"10Gi"`                          |             |
+| hub.embeddings.pdb.enabled                                         | bool   | `false`                           |             |
+| hub.embeddings.port                                                | int    | `8080`                            |             |
+| hub.embeddings.prometheusPort                                      | int    | `9000`                            |             |
+| hub.embeddings.replicas                                            | int    | `1`                               |             |
+| hub.embeddings.resources.limits.memory                             | string | `"8Gi"`                           |             |
+| hub.embeddings.resources.requests.cpu                              | string | `"4"`                             |             |
+| hub.embeddings.resources.requests.memory                           | string | `"8Gi"`                           |             |
+| hub.embeddings.runtime                                             | string | `"tei"`                           |             |
+| hub.embeddings.servedModelName                                     | string | `""`                              | Defaults to `hub.embeddings.model`. |
+| hub.embeddings.service.port                                        | int    | `8080`                            |             |
+| hub.embeddings.service.type                                        | string | `"ClusterIP"`                     |             |
 | hub.env                                                            | object | `{}`                              |             |
 | hub.existingSecret                                                 | string | `""`                              |             |
 | hub.image.digest                                                   | string | `"sha256:14db7b3d285b6e9165b55693f9b83d08beff840a255fd77dd12882ee0a62f5cb"` | When set, takes precedence over tag (immutable pin). |
@@ -149,10 +214,21 @@ This chart does not deploy Cube.js. XM Suite v5 dashboard and analysis features 
 | hub.migration.activeDeadlineSeconds                                | int    | `900`                             |             |
 | hub.migration.backoffLimit                                         | int    | `3`                               |             |
 | hub.migration.ttlSecondsAfterFinished                              | int    | `300`                             |             |
+| hub.pdb.enabled                                                    | bool   | `false`                           |             |
 | hub.replicas                                                       | int    | `1`                               |             |
 | hub.resources.limits.memory                                        | string | `"512Mi"`                         |             |
 | hub.resources.requests.cpu                                         | string | `"100m"`                          |             |
 | hub.resources.requests.memory                                      | string | `"256Mi"`                         |             |
+| hub.worker.autoscaling.enabled                                     | bool   | `false`                           |             |
+| hub.worker.autoscaling.maxReplicas                                 | int    | `5`                               |             |
+| hub.worker.autoscaling.minReplicas                                 | int    | `1`                               |             |
+| hub.worker.enabled                                                 | bool   | `true`                            |             |
+| hub.worker.env                                                     | object | `{}`                              |             |
+| hub.worker.pdb.enabled                                             | bool   | `false`                           |             |
+| hub.worker.replicas                                                | int    | `1`                               |             |
+| hub.worker.resources.limits.memory                                 | string | `"512Mi"`                         |             |
+| hub.worker.resources.requests.cpu                                  | string | `"100m"`                          |             |
+| hub.worker.resources.requests.memory                               | string | `"256Mi"`                         |             |
 | ingress.annotations                                                | object | `{}`                              |             |
 | ingress.enabled                                                    | bool   | `false`                           |             |
 | ingress.hosts[0].host                                              | string | `"k8s.formbricks.com"`            |             |
