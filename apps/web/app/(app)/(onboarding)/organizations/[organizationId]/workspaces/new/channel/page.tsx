@@ -44,7 +44,7 @@ const Page = async (props: ChannelPageProps) => {
 
   capturePostHogEvent(
     session.user.id,
-    "workspace_mode_selected",
+    "organization_mode_selected",
     {
       organization_id: params.organizationId,
       mode: "surveys",
