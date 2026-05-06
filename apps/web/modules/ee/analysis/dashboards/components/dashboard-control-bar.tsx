@@ -21,6 +21,8 @@ interface DashboardControlBarProps {
   isSaving: boolean;
   hasChanges: boolean;
   isReadOnly: boolean;
+  isAIAvailable?: boolean;
+  aiUnavailableReason?: string;
   onRefresh: () => void;
   onEditToggle: () => void;
   onSave: () => void;
@@ -36,6 +38,8 @@ export const DashboardControlBar = ({
   isSaving,
   hasChanges,
   isReadOnly,
+  isAIAvailable,
+  aiUnavailableReason,
   onRefresh,
   onEditToggle,
   onSave,
@@ -139,6 +143,8 @@ export const DashboardControlBar = ({
           setIsAddExistingDialogOpen(false);
           router.refresh();
         }}
+        isAIAvailable={isAIAvailable}
+        aiUnavailableReason={aiUnavailableReason}
       />
     </>
   );

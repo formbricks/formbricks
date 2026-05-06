@@ -12,6 +12,8 @@ export interface CreateChartDialogProps {
   initialChart?: TChartWithCreator;
   onSuccess?: () => void;
   directories: { id: string; name: string }[];
+  isAIAvailable?: boolean;
+  aiUnavailableReason?: string;
 }
 
 export function CreateChartDialog({
@@ -23,6 +25,8 @@ export function CreateChartDialog({
   initialChart,
   onSuccess,
   directories,
+  isAIAvailable,
+  aiUnavailableReason,
 }: Readonly<CreateChartDialogProps>) {
   return (
     <CreateChartView
@@ -34,6 +38,8 @@ export function CreateChartDialog({
       autoAddToDashboardId={autoAddToDashboardId}
       onSuccess={onSuccess}
       directories={directories}
+      isAIAvailable={isAIAvailable}
+      aiUnavailableReason={aiUnavailableReason}
     />
   );
 }

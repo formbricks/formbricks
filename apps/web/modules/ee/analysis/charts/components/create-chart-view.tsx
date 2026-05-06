@@ -34,6 +34,8 @@ interface CreateChartViewProps {
   autoAddToDashboardId?: string;
   onSuccess?: () => void;
   directories: { id: string; name: string }[];
+  isAIAvailable?: boolean;
+  aiUnavailableReason?: string;
 }
 
 export function CreateChartView({
@@ -45,6 +47,8 @@ export function CreateChartView({
   autoAddToDashboardId,
   onSuccess,
   directories,
+  isAIAvailable,
+  aiUnavailableReason,
 }: Readonly<CreateChartViewProps>) {
   const { t } = useTranslation();
   const isEditing = !!chartId;
@@ -150,6 +154,8 @@ export function CreateChartView({
                       workspaceId={workspaceId}
                       onChartGenerated={handleChartGenerated}
                       feedbackDirectoryId={selectedDirectoryId}
+                      isAIAvailable={isAIAvailable}
+                      aiUnavailableReason={aiUnavailableReason}
                     />
 
                     <div className="relative">

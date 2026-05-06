@@ -30,6 +30,8 @@ interface AddExistingChartsDialogProps {
   directories: { id: string; name: string }[];
   existingChartIds: string[];
   onSuccess: () => void;
+  isAIAvailable?: boolean;
+  aiUnavailableReason?: string;
 }
 
 interface ChartOption {
@@ -45,6 +47,8 @@ export function AddExistingChartsDialog({
   directories,
   existingChartIds,
   onSuccess,
+  isAIAvailable,
+  aiUnavailableReason,
 }: Readonly<AddExistingChartsDialogProps>) {
   const { t } = useTranslation();
   const router = useRouter();
@@ -160,6 +164,8 @@ export function AddExistingChartsDialog({
               onSuccess();
             }}
             buttonProps={{ variant: "secondary", size: "default", disabled: isAdding }}
+            isAIAvailable={isAIAvailable}
+            aiUnavailableReason={aiUnavailableReason}
           />
           <div className="flex flex-col-reverse gap-2 sm:flex-row">
             <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isAdding}>

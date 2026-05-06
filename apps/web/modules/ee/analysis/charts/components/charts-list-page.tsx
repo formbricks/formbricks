@@ -1,4 +1,5 @@
 import { use } from "react";
+import { getAIDataAnalysisUnavailableReason, getOrganizationAIConfig } from "@/lib/ai/service";
 import { getConnectorsWithMappings } from "@/lib/connector/service";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
@@ -71,10 +72,13 @@ export async function ChartsListPage({ workspaceId }: Readonly<ChartsListPagePro
     );
   }
 
-  const [directories, connectors] = await Promise.all([
+  const [directories, connectors, aiConfig] = await Promise.all([
     getFeedbackDirectoriesByWorkspaceId(workspaceId),
     getConnectorsWithMappings(workspaceId),
+    getOrganizationAIConfig(organization.id),
   ]);
+  const aiUnavailableReason = getAIDataAnalysisUnavailableReason(aiConfig);
+  const isAIAvailable = !aiUnavailableReason;
   const hasFeedbackRecords = await hasFeedbackRecordsInDirectories(
     directories.map((directory) => directory.id)
   );
@@ -90,6 +94,8 @@ export async function ChartsListPage({ workspaceId }: Readonly<ChartsListPagePro
             workspaceId={workspaceId}
             directories={directories}
             buttonProps={{ disabled: !hasFeedbackRecords }}
+            isAIAvailable={isAIAvailable}
+            aiUnavailableReason={aiUnavailableReason}
           />
         )
       }>

@@ -1,11 +1,13 @@
 "use server";
 
-import { createOpenAI } from "@ai-sdk/openai";
 import { Output, generateText } from "ai";
 import { z } from "zod";
+import { getAiModel } from "@formbricks/ai";
 import { type TChartQuery, ZChartQuery } from "@formbricks/types/analysis";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
+import { assertOrganizationAIConfigured } from "@/lib/ai/service";
+import { env } from "@/lib/env";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { executeTenantScopedQuery } from "@/modules/ee/analysis/api/lib/cube-client";
@@ -344,6 +346,9 @@ export const generateAIChartAction = authenticatedActionClient
 
       await checkDashboardsEnabled(organizationId);
 
+      // Verify AI is entitled, enabled at org level, and configured at instance level
+      await assertOrganizationAIConfigured(organizationId, "dataAnalysis");
+
       const { feedbackDirectoryId } = await checkFeedbackDirectoryAccess({
         feedbackDirectoryId: parsedInput.feedbackDirectoryId,
         organizationId,
@@ -352,15 +357,10 @@ export const generateAIChartAction = authenticatedActionClient
         source: "charts.generateAIChartAction",
       });
 
-      if (!process.env.OPENAI_API_KEY) {
-        throw new Error("OPENAI_API_KEY is not configured");
-      }
-
-      const openai = createOpenAI({ apiKey: process.env.OPENAI_API_KEY });
       const schemaContext = generateSchemaContext();
 
       const { output } = await generateText({
-        model: openai("gpt-4o-mini"),
+        model: getAiModel(env),
         output: Output.object({ schema: ZGenerateAIQueryResponse }),
         system: schemaContext,
         prompt: `User request: "${parsedInput.prompt}"`,
