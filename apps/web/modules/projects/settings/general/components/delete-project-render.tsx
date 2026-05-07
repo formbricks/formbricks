@@ -60,10 +60,8 @@ export const DeleteProjectRender = ({
           localStorage.removeItem(FORMBRICKS_ENVIRONMENT_ID_LS);
         } else if (organizationProjects.length > 1) {
           // prevents changing of organization when deleting project
-          const remainingProjects = organizationProjects.filter(
-            (project) => project.id !== currentProject.id
-          );
-          const productionEnvironment = remainingProjects[0].environments.find(
+          const remainingProject = organizationProjects.find((project) => project.id !== currentProject.id);
+          const productionEnvironment = remainingProject?.environments.find(
             (environment) => environment.type === "production"
           );
           if (productionEnvironment) {

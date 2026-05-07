@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
+import { InvalidInputError } from "@formbricks/types/errors";
 import { deleteProjectAction } from "./actions";
 
 const mocks = vi.hoisted(() => ({
@@ -89,5 +90,22 @@ describe("deleteProjectAction", () => {
       { error, userId: ctx.user.id, projectId: baseProject.id },
       "Workspace deletion failed"
     );
+  });
+
+  test("does not error-log expected deletion failures", async () => {
+    const error = new InvalidInputError("Workspace name confirmation does not match");
+    mocks.deleteProjectWithConfirmation.mockRejectedValueOnce(error);
+
+    await expect(
+      deleteProjectAction({
+        ctx,
+        parsedInput: {
+          projectId: baseProject.id,
+          confirmationName: "Other Workspace",
+        },
+      } as any)
+    ).rejects.toThrow(error);
+
+    expect(logger.error).not.toHaveBeenCalled();
   });
 });
