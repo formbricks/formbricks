@@ -2564,6 +2564,9 @@
         "error_directory_name_required": "Numele directorului este obligatoriu.",
         "error_directory_workspaces_invalid_org": "Unele spații de lucru specificate nu aparțin acestei organizații.",
         "error_workspace_already_assigned": "One or more workspaces are already linked to a different active directory. Reassign them first.",
+        "grant_access_confirm": "Acordă acces la spațiul de lucru",
+        "grant_workspace_access_title": "Confirmă acordarea accesului la spațiul de lucru",
+        "grant_workspace_access_warning": "Toți membrii actuali și viitori ai spațiilor de lucru de mai jos vor primi acces de citire la toate datele de feedback direcționate către \"{directoryName}\", inclusiv datele ingerate de conectorii altor spații de lucru conectate. Această modificare nu poate fi anulată în mod discret.",
         "nav_label": "Directoare de feedback",
         "no_access": "Nu ai permisiunea de a gestiona directoarele de feedback.",
         "no_connectors": "Niciun conector asociat acestui director încă.",
@@ -2576,7 +2579,9 @@
         "unarchive_workspace_conflict": "Acest director nu poate fi dezarhivat deoarece unul sau mai multe spații de lucru alocate sunt arhivate.",
         "upgrade_prompt_description": "Organizează înregistrările de feedback în directoare și direcționează datele către workspace-ul potrivit. Disponibile în planurile Pro și Scale.",
         "upgrade_prompt_title": "Actualizează pentru a debloca Directoarele pentru Înregistrări de Feedback",
-        "workspace_access": "Acces la spațiul de lucru"
+        "workspace_access": "Acces la spațiul de lucru",
+        "workspaces_already_linked": "Spații de lucru deja conectate",
+        "workspaces_being_added": "Spații de lucru cărora li se acordă acces"
       },
       "general": {
         "ai_data_analysis_enabled": "Îmbogățire și analiză de date (AI)",
@@ -3727,6 +3732,9 @@
       "metadata_value": "Valoarea metadatelor",
       "missing_feedback_source_title": "Lipsește o sursă de feedback?",
       "no_feedback_directory_available": "Niciun director de feedback nu este atribuit acestui spațiu de lucru. Creează sau atribuie unul mai întâi.",
+      "no_feedback_directory_linked_admin_description": "Directoarele de feedback agregă înregistrări de la spațiile de lucru conectate. Niciun director nu este conectat la acest spațiu de lucru încă — atribuie unul din setările Directorului de feedback pentru a începe colectarea înregistrărilor.",
+      "no_feedback_directory_linked_member_description": "Trebuie configurat un director de feedback pentru acest spațiu de lucru înainte ca această funcționalitate să fie disponibilă. Solicită unui proprietar sau manager al organizației să atribuie unul.",
+      "no_feedback_directory_linked_title": "Niciun director de feedback conectat",
       "no_feedback_records": "Nu există încă înregistrări de feedback. Înregistrările vor apărea aici după ce conectorii tăi vor începe să trimită date.",
       "no_source_fields_loaded": "Nu au fost încă încărcate câmpuri sursă",
       "no_sources_connected": "Nicio sursă conectată încă. Adaugă o sursă pentru a începe.",

@@ -2564,6 +2564,9 @@
         "error_directory_name_required": "El nombre del directorio es obligatorio.",
         "error_directory_workspaces_invalid_org": "Algunos de los espacios de trabajo especificados no pertenecen a esta organización.",
         "error_workspace_already_assigned": "One or more workspaces are already linked to a different active directory. Reassign them first.",
+        "grant_access_confirm": "Conceder acceso al espacio de trabajo",
+        "grant_workspace_access_title": "Confirmar concesión de acceso al espacio de trabajo",
+        "grant_workspace_access_warning": "Todos los miembros actuales y futuros de los espacios de trabajo siguientes obtendrán acceso de lectura a todos los datos de feedback dirigidos a \"{directoryName}\", incluidos los datos ingeridos por los conectores de otros espacios de trabajo vinculados. Este cambio no se puede deshacer de forma silenciosa.",
         "nav_label": "Directorios de Feedback",
         "no_access": "No tienes permiso para gestionar directorios de feedback.",
         "no_connectors": "Aún no hay conectores vinculados a este directorio.",
@@ -2576,7 +2579,9 @@
         "unarchive_workspace_conflict": "No se puede desarchivar este directorio porque uno o más espacios de trabajo asignados están archivados.",
         "upgrade_prompt_description": "Organiza los registros de feedback en directorios y dirige los datos al espacio de trabajo adecuado. Disponible en los planes Pro y Scale.",
         "upgrade_prompt_title": "Mejora tu plan para desbloquear los Directorios de Registros de Feedback",
-        "workspace_access": "Acceso al espacio de trabajo"
+        "workspace_access": "Acceso al espacio de trabajo",
+        "workspaces_already_linked": "Espacios de trabajo ya vinculados",
+        "workspaces_being_added": "Espacios de trabajo a los que se concede acceso"
       },
       "general": {
         "ai_data_analysis_enabled": "Enriquecimiento y análisis de datos (IA)",
@@ -3727,6 +3732,9 @@
       "metadata_value": "Valor de metadatos",
       "missing_feedback_source_title": "¿Falta alguna fuente de feedback?",
       "no_feedback_directory_available": "No hay ningún directorio de feedback asignado a este espacio de trabajo. Primero crea o asigna uno.",
+      "no_feedback_directory_linked_admin_description": "Los directorios de feedback agregan registros de espacios de trabajo conectados. Todavía no hay ningún directorio vinculado a este espacio de trabajo: asigna uno desde la configuración de Directorio de feedback para empezar a recopilar registros.",
+      "no_feedback_directory_linked_member_description": "Es necesario configurar un directorio de feedback para este espacio de trabajo antes de que esta funcionalidad esté disponible. Solicita a un propietario o gestor de la organización que asigne uno.",
+      "no_feedback_directory_linked_title": "No hay ningún directorio de feedback vinculado",
       "no_feedback_records": "Aún no hay registros de comentarios. Los registros aparecerán aquí una vez que tus conectores empiecen a enviar datos.",
       "no_source_fields_loaded": "Aún no se han cargado campos de origen",
       "no_sources_connected": "Aún no hay fuentes conectadas. Añade una fuente para empezar.",

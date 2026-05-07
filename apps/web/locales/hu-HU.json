@@ -2564,6 +2564,9 @@
         "error_directory_name_required": "A könyvtár neve kötelező megadni.",
         "error_directory_workspaces_invalid_org": "Egyes megadott munkaterületek nem ehhez a szervezethez tartoznak.",
         "error_workspace_already_assigned": "One or more workspaces are already linked to a different active directory. Reassign them first.",
+        "grant_access_confirm": "Munkaterület-hozzáférés megadása",
+        "grant_workspace_access_title": "Munkaterület-hozzáférés megadásának megerősítése",
+        "grant_workspace_access_warning": "Az alább felsorolt munkaterületek összes jelenlegi és jövőbeli tagja olvasási hozzáférést kap a \"{directoryName}\" könyvtárba irányított összes visszajelzési adathoz, beleértve a más kapcsolt munkaterületek összekötői által betöltött adatokat is. Ezt a módosítást nem lehet észrevétlenül visszavonni.",
         "nav_label": "Visszajelzési könyvtárak",
         "no_access": "Önnek nincs jogosultsága a visszajelzési könyvtárak kezeléséhez.",
         "no_connectors": "Még nincsenek csatlakozók társítva ehhez a könyvtárhoz.",
@@ -2576,7 +2579,9 @@
         "unarchive_workspace_conflict": "A könyvtár nem állítható vissza, mert egy vagy több hozzárendelt munkaterület archiválva van.",
         "upgrade_prompt_description": "Szervezze a visszajelzési rekordokat könyvtárakba, és irányítsa az adatokat a megfelelő munkaterületre. A Pro és Scale csomagokban érhető el.",
         "upgrade_prompt_title": "Frissítsen a csomagon, hogy feloldja a Visszajelzési Rekord Könyvtárakat",
-        "workspace_access": "Munkaterület-hozzáférés"
+        "workspace_access": "Munkaterület-hozzáférés",
+        "workspaces_already_linked": "Már kapcsolt munkaterületek",
+        "workspaces_being_added": "Hozzáférést kapó munkaterületek"
       },
       "general": {
         "ai_data_analysis_enabled": "Adatgazdagítás és elemzés (AI)",
@@ -3727,6 +3732,9 @@
       "metadata_value": "A metaadat értéke",
       "missing_feedback_source_title": "Hiányzik egy visszajelzési forrás?",
       "no_feedback_directory_available": "Ehhez a munkaterülethez nincs visszajelzési könyvtár hozzárendelve. Hozzon létre vagy rendeljen hozzá egyet először.",
+      "no_feedback_directory_linked_admin_description": "A visszajelzési könyvtárak a kapcsolt munkaterületekről származó rekordokat összesítik. Ehhez a munkaterülethez még nincs könyvtár kapcsolva — rendeljen hozzá egyet a Visszajelzési könyvtár beállításokban a rekordok gyűjtésének megkezdéséhez.",
+      "no_feedback_directory_linked_member_description": "Ehhez a munkaterülethez be kell állítani egy visszajelzési könyvtárat, mielőtt ez a funkció elérhetővé válna. Kérje meg a szervezet tulajdonosát vagy vezetőjét, hogy rendeljen hozzá egyet.",
+      "no_feedback_directory_linked_title": "Nincs visszajelzési könyvtár kapcsolva",
       "no_feedback_records": "Még nincsenek visszajelzési rekordok. A rekordok itt fognak megjelenni, amint a csatlakozók elkezdik küldeni az adatokat.",
       "no_source_fields_loaded": "Még nincsenek forrás mezők betöltve",
       "no_sources_connected": "Még nincsenek források csatlakoztatva. Adj hozzá egy forrást a kezdéshez.",

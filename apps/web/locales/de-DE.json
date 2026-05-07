@@ -2564,6 +2564,9 @@
         "error_directory_name_required": "Verzeichnisname ist erforderlich.",
         "error_directory_workspaces_invalid_org": "Einige der angegebenen Workspaces gehören nicht zu dieser Organisation.",
         "error_workspace_already_assigned": "One or more workspaces are already linked to a different active directory. Reassign them first.",
+        "grant_access_confirm": "Workspace-Zugriff gewähren",
+        "grant_workspace_access_title": "Workspace-Zugriff bestätigen",
+        "grant_workspace_access_warning": "Alle aktuellen und zukünftigen Mitglieder der unten aufgeführten Workspaces erhalten Lesezugriff auf alle Feedback-Daten, die in \"{directoryName}\" geleitet werden – einschließlich Daten, die von Connectors anderer verknüpfter Workspaces erfasst wurden. Diese Änderung kann nicht unbemerkt rückgängig gemacht werden.",
         "nav_label": "Feedback-Verzeichnisse",
         "no_access": "Du hast keine Berechtigung, Feedback-Verzeichnisse zu verwalten.",
         "no_connectors": "Noch keine Connectoren mit diesem Verzeichnis verknüpft.",
@@ -2576,7 +2579,9 @@
         "unarchive_workspace_conflict": "Dieses Verzeichnis kann nicht wiederhergestellt werden, weil ein oder mehrere zugewiesene Workspaces archiviert sind.",
         "upgrade_prompt_description": "Organisiere Feedback-Datensätze in Verzeichnissen und leite Daten zum richtigen Workspace weiter. Verfügbar in den Pro- und Scale-Plänen.",
         "upgrade_prompt_title": "Upgrade durchführen, um Feedback-Datensatz-Verzeichnisse freizuschalten",
-        "workspace_access": "Workspace-Zugriff"
+        "workspace_access": "Workspace-Zugriff",
+        "workspaces_already_linked": "Bereits verknüpfte Workspaces",
+        "workspaces_being_added": "Workspaces, denen Zugriff gewährt wird"
       },
       "general": {
         "ai_data_analysis_enabled": "Datenanreicherung & -analyse (KI)",
@@ -3727,6 +3732,9 @@
       "metadata_value": "Metadatenwert",
       "missing_feedback_source_title": "Feedback-Quelle fehlt?",
       "no_feedback_directory_available": "Diesem Workspace ist kein Feedback-Verzeichnis zugewiesen. Erstelle oder weise zuerst eins zu.",
+      "no_feedback_directory_linked_admin_description": "Feedback-Verzeichnisse aggregieren Einträge aus verbundenen Workspaces. Diesem Workspace ist noch kein Verzeichnis zugeordnet – weise eins in den Einstellungen für Feedback-Verzeichnisse zu, um mit dem Sammeln von Einträgen zu beginnen.",
+      "no_feedback_directory_linked_member_description": "Für diesen Workspace muss ein Feedback-Verzeichnis eingerichtet werden, bevor diese Funktion verfügbar ist. Bitte einen Organisationsinhaber oder Manager, eins zuzuweisen.",
+      "no_feedback_directory_linked_title": "Kein Feedback-Verzeichnis verknüpft",
       "no_feedback_records": "Noch keine Feedback-Einträge vorhanden. Einträge erscheinen hier, sobald deine Konnektoren Daten senden.",
       "no_source_fields_loaded": "Noch keine Quellfelder geladen",
       "no_sources_connected": "Noch keine Quellen verbunden. Füge eine Quelle hinzu, um loszulegen.",

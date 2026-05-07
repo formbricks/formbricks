@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
+import { NoFeedbackDirectoryEmptyState } from "@/modules/ee/feedback-directory/components/no-feedback-directory-empty-state";
 import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getIsUnifyFeedbackEnabled } from "@/modules/ee/license-check/lib/utils";
 import { UnifyConfigNavigation } from "@/modules/ee/unify-feedback/components/unify-config-navigation";
@@ -61,6 +62,21 @@ export const UnifyTopicsSubtopicsPage = async (
   }
 
   const directories = await getFeedbackDirectoriesByWorkspaceId(params.workspaceId);
+
+  if (directories.length === 0) {
+    return (
+      <PageContentWrapper>
+        <PageHeader pageTitle={t("workspace.unify.feedback_records")}>
+          <UnifyConfigNavigation workspaceId={params.workspaceId} activeId="topics-subtopics" />
+        </PageHeader>
+        <NoFeedbackDirectoryEmptyState
+          workspaceId={params.workspaceId}
+          isOwnerOrManager={isOwner || isManager}
+        />
+      </PageContentWrapper>
+    );
+  }
+
   const directoryMap = Object.fromEntries(directories.map((directory) => [directory.id, directory.name]));
 
   return <TopicsSubtopicsPreview workspaceId={params.workspaceId} directoryMap={directoryMap} />;

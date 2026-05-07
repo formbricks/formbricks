@@ -2564,6 +2564,9 @@
         "error_directory_name_required": "目錄名稱為必填項目。",
         "error_directory_workspaces_invalid_org": "部分指定的工作區不屬於此組織。",
         "error_workspace_already_assigned": "One or more workspaces are already linked to a different active directory. Reassign them first.",
+        "grant_access_confirm": "授予工作區存取權限",
+        "grant_workspace_access_title": "確認授予工作區存取權限",
+        "grant_workspace_access_warning": "以下工作區的所有現有及未來成員將獲得對導入「{directoryName}」的所有意見回饋資料的讀取權限,包括其他已連結工作區的連接器所擷取的資料。此變更無法在不留痕跡的情況下撤銷。",
         "nav_label": "意見回饋目錄",
         "no_access": "你沒有權限管理意見回饋目錄。",
         "no_connectors": "此目錄尚未連結任何連接器。",
@@ -2576,7 +2579,9 @@
         "unarchive_workspace_conflict": "無法取消封存此目錄，因為一個或多個已指派工作區已封存。",
         "upgrade_prompt_description": "將回饋記錄整理至目錄中，並將資料導向正確的工作區。專業版和企業版方案提供此功能。",
         "upgrade_prompt_title": "升級以解鎖回饋記錄目錄功能",
-        "workspace_access": "工作區存取權限"
+        "workspace_access": "工作區存取權限",
+        "workspaces_already_linked": "已連結的工作區",
+        "workspaces_being_added": "正在授予存取權限的工作區"
       },
       "general": {
         "ai_data_analysis_enabled": "資料增強與分析（AI）",
@@ -3727,6 +3732,9 @@
       "metadata_value": "元資料值",
       "missing_feedback_source_title": "Missing feedback source?",
       "no_feedback_directory_available": "此工作區未指派意見回饋目錄。請先建立或指派一個。",
+      "no_feedback_directory_linked_admin_description": "意見回饋目錄會彙整來自已連接工作區的記錄。此工作區尚未連結任何目錄 — 請從意見回饋目錄設定中指定一個目錄,以開始收集記錄。",
+      "no_feedback_directory_linked_member_description": "此工作區需要先設定意見回饋目錄,才能使用此功能。請請組織擁有者或管理員指定一個目錄。",
+      "no_feedback_directory_linked_title": "未連結意見回饋目錄",
       "no_feedback_records": "目前尚無回饋紀錄。當你的連接器開始傳送資料時，紀錄會顯示在這裡。",
       "no_source_fields_loaded": "尚未載入來源欄位",
       "no_sources_connected": "尚未連接任何來源。請新增來源以開始使用。",

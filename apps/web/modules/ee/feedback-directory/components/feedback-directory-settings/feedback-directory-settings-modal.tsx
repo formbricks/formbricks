@@ -68,6 +68,10 @@ export const FeedbackDirectorySettingsModal = ({
   const [pendingSubmitData, setPendingSubmitData] = useState<TFeedbackDirectoryUpdateInput | null>(null);
   const [connectorsToPauseCount, setConnectorsToPauseCount] = useState(0);
 
+  const [confirmAddDialogOpen, setConfirmAddDialogOpen] = useState(false);
+  const [pendingAddData, setPendingAddData] = useState<TFeedbackDirectoryUpdateInput | null>(null);
+  const [addedWorkspaceIds, setAddedWorkspaceIds] = useState<string[]>([]);
+
   const workspaceAccessMap = useMemo(
     () => new Map(workspaceAccessByWorkspace.map((assignment) => [assignment.workspaceId, assignment])),
     [workspaceAccessByWorkspace]
@@ -114,10 +118,23 @@ export const FeedbackDirectorySettingsModal = ({
     reset,
   } = form;
 
+  const workspaceNameById = useMemo(() => {
+    const map = new Map(orgWorkspaces.map((workspace) => [workspace.id, workspace.name]));
+    directory?.workspaces.forEach((workspace) => {
+      if (!map.has(workspace.workspaceId)) {
+        map.set(workspace.workspaceId, workspace.workspaceName);
+      }
+    });
+    return map;
+  }, [orgWorkspaces, directory?.workspaces]);
+
   const closeModal = () => {
     setConfirmPauseDialogOpen(false);
     setPendingSubmitData(null);
     setConnectorsToPauseCount(0);
+    setConfirmAddDialogOpen(false);
+    setPendingAddData(null);
+    setAddedWorkspaceIds([]);
     reset();
     setOpen(false);
   };
@@ -168,7 +185,7 @@ export const FeedbackDirectorySettingsModal = ({
     }
   };
 
-  const handleSubmitForm: SubmitHandler<TFeedbackDirectoryUpdateInput> = async (data) => {
+  const proceedAfterAddConfirm = async (data: TFeedbackDirectoryUpdateInput) => {
     if (!isEdit || !directory) {
       await submitDirectory(data, false);
       return;
@@ -193,6 +210,34 @@ export const FeedbackDirectorySettingsModal = ({
     }
 
     await submitDirectory(data, false);
+  };
+
+  const handleConfirmAddAndContinue = async () => {
+    if (!pendingAddData) return;
+
+    setConfirmAddDialogOpen(false);
+    setAddedWorkspaceIds([]);
+
+    const data = pendingAddData;
+    setPendingAddData(null);
+
+    await proceedAfterAddConfirm(data);
+  };
+
+  const handleSubmitForm: SubmitHandler<TFeedbackDirectoryUpdateInput> = async (data) => {
+    const updatedWorkspaceIds = data.workspaceIds ?? [];
+    const newlyAddedWorkspaceIds = updatedWorkspaceIds.filter(
+      (workspaceId) => !initialWorkspaceIds.includes(workspaceId)
+    );
+
+    if (newlyAddedWorkspaceIds.length > 0) {
+      setPendingAddData(data);
+      setAddedWorkspaceIds(newlyAddedWorkspaceIds);
+      setConfirmAddDialogOpen(true);
+      return;
+    }
+
+    await proceedAfterAddConfirm(data);
   };
 
   return (
@@ -317,6 +362,65 @@ export const FeedbackDirectorySettingsModal = ({
           </form>
         </FormProvider>
       </DialogContent>
+
+      {confirmAddDialogOpen && (
+        <Dialog open={confirmAddDialogOpen} onOpenChange={setConfirmAddDialogOpen}>
+          <DialogContent width="narrow" hideCloseButton={true} disableCloseOnOutsideClick={true}>
+            <DialogHeader>
+              <div className="flex items-center gap-2">
+                <CircleAlert className="h-4 w-4 text-red-600" />
+                <DialogTitle>
+                  {t("workspace.settings.feedback_directories.grant_workspace_access_title")}
+                </DialogTitle>
+              </div>
+            </DialogHeader>
+            <DialogBody className="space-y-3">
+              <p className="text-sm text-slate-700">
+                {t("workspace.settings.feedback_directories.grant_workspace_access_warning", {
+                  directoryName: form.watch("name") || directory?.name || "",
+                })}
+              </p>
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-slate-900">
+                  {t("workspace.settings.feedback_directories.workspaces_being_added")}
+                </p>
+                <ul className="list-disc space-y-0.5 pl-5 text-sm text-slate-700">
+                  {addedWorkspaceIds.map((id) => (
+                    <li key={id}>{workspaceNameById.get(id) ?? id}</li>
+                  ))}
+                </ul>
+              </div>
+              {isEdit && initialWorkspaceIds.length > 0 && (
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-slate-900">
+                    {t("workspace.settings.feedback_directories.workspaces_already_linked")}
+                  </p>
+                  <ul className="list-disc space-y-0.5 pl-5 text-sm text-slate-700">
+                    {initialWorkspaceIds.map((id) => (
+                      <li key={id}>{workspaceNameById.get(id) ?? id}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </DialogBody>
+            <DialogFooter>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setConfirmAddDialogOpen(false);
+                  setPendingAddData(null);
+                  setAddedWorkspaceIds([]);
+                }}
+                disabled={isSubmitting}>
+                {t("common.cancel")}
+              </Button>
+              <Button variant="destructive" onClick={handleConfirmAddAndContinue} loading={isSubmitting}>
+                {t("workspace.settings.feedback_directories.grant_access_confirm")}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {confirmPauseDialogOpen && (
         <Dialog open={confirmPauseDialogOpen} onOpenChange={setConfirmPauseDialogOpen}>

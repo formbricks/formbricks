@@ -2564,6 +2564,9 @@
         "error_directory_name_required": "Katalognamn krävs.",
         "error_directory_workspaces_invalid_org": "Vissa angivna arbetsytor tillhör inte denna organisation.",
         "error_workspace_already_assigned": "One or more workspaces are already linked to a different active directory. Reassign them first.",
+        "grant_access_confirm": "Bevilja arbetsyteåtkomst",
+        "grant_workspace_access_title": "Bekräfta beviljande av arbetsyteåtkomst",
+        "grant_workspace_access_warning": "Alla nuvarande och framtida medlemmar i arbetsytorna nedan får läsåtkomst till all feedbackdata som dirigeras till \"{directoryName}\", inklusive data som samlas in av andra länkade arbetsytors anslutningar. Denna ändring kan inte ångras tyst.",
         "nav_label": "Feedbackkataloger",
         "no_access": "Du har inte behörighet att hantera feedback-kataloger.",
         "no_connectors": "Inga kopplingar länkade till den här katalogen ännu.",
@@ -2576,7 +2579,9 @@
         "unarchive_workspace_conflict": "Den här katalogen kan inte avarkiveras eftersom en eller flera tilldelade arbetsytor är arkiverade.",
         "upgrade_prompt_description": "Organisera feedbackposter i kataloger och dirigera data till rätt arbetsyta. Tillgängligt på Pro- och Scale-planerna.",
         "upgrade_prompt_title": "Uppgradera för att låsa upp Feedbackpostkataloger",
-        "workspace_access": "Arbetsyteåtkomst"
+        "workspace_access": "Arbetsyteåtkomst",
+        "workspaces_already_linked": "Redan länkade arbetsytor",
+        "workspaces_being_added": "Arbetsytor som beviljas åtkomst"
       },
       "general": {
         "ai_data_analysis_enabled": "Dataförbättring & analys (AI)",
@@ -3727,6 +3732,9 @@
       "metadata_value": "Metadatavärde",
       "missing_feedback_source_title": "Missing feedback source?",
       "no_feedback_directory_available": "Ingen feedback-katalog är tilldelad till denna arbetsyta. Skapa eller tilldela en först.",
+      "no_feedback_directory_linked_admin_description": "Feedbackkataloger samlar poster från anslutna arbetsytor. Ingen katalog är länkad till denna arbetsyta ännu — tilldela en från inställningarna för feedbackkatalog för att börja samla in poster.",
+      "no_feedback_directory_linked_member_description": "En feedbackkatalog måste konfigureras för denna arbetsyta innan den här funktionen blir tillgänglig. Be en organisationsägare eller chef att tilldela en.",
+      "no_feedback_directory_linked_title": "Ingen feedbackkatalog länkad",
       "no_feedback_records": "Inga feedbackposter ännu. Poster visas här när dina connectors börjar skicka data.",
       "no_source_fields_loaded": "Inga källfält har laddats än",
       "no_sources_connected": "Inga källor är anslutna än. Lägg till en källa för att komma igång.",
