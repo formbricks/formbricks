@@ -3653,7 +3653,6 @@
       "api_ingestion_settings_description": "Send feedback records using the Management API.",
       "auto_generated": "Auto-generated",
       "change_file": "Change file",
-      "click_load_sample_csv": "Click 'Load sample CSV' to see columns",
       "click_to_upload": "Click to upload",
       "collected_at": "Collected At",
       "configure_import": "Configure import",
