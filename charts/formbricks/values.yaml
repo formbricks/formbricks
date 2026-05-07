@@ -687,7 +687,7 @@ hub:
     # Optional self-hosted OpenAI-compatible embeddings runtime for Hub.
     enabled: false
     runtime: tei
-    model: google/embeddinggemma-300m
+    model: Alibaba-NLP/gte-multilingual-base
     revision: ""
     # Defaults to `model` when empty. Used by TEI OpenAI-compatible responses
     # and as Hub's EMBEDDING_MODEL.
@@ -707,7 +707,9 @@ hub:
     # When empty, the chart renders TEI args from model, servedModelName, port,
     # revision, and persistence.mountPath. Set this to fully override args.
     args: []
-    extraArgs: []
+    extraArgs:
+      - --dtype
+      - float16
     env: {}
 
     port: 8080
@@ -729,8 +731,7 @@ hub:
       apiKey: ""
 
     huggingFace:
-      # Required for gated models such as google/embeddinggemma-300m unless the
-      # model is pre-cached or a different ungated model is configured.
+      # Required only for private/gated models unless the model is pre-cached.
       existingSecret: ""
       tokenKey: HF_TOKEN
       token: ""

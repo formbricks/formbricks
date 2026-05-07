@@ -67,10 +67,8 @@ hub:
 
   embeddings:
     enabled: true
-    model: google/embeddinggemma-300m
-    servedModelName: google/embeddinggemma-300m
-    huggingFace:
-      token: hf_...
+    model: Alibaba-NLP/gte-multilingual-base
+    servedModelName: Alibaba-NLP/gte-multilingual-base
 ```
 
 The generated Hub embedding configuration is:
@@ -80,7 +78,7 @@ The generated Hub embedding configuration is:
 - `EMBEDDING_BASE_URL=http://<release>-hub-embeddings:8080/v1`
 - `EMBEDDING_PROVIDER_API_KEY` from a dedicated embeddings Secret
 
-The TEI service is internal-only (`ClusterIP`) and not exposed through ingress. For gated models such as `google/embeddinggemma-300m`, provide `hub.embeddings.huggingFace.token` or set `hub.embeddings.huggingFace.existingSecret`.
+The TEI service is internal-only (`ClusterIP`) and not exposed through ingress. For private or gated models, provide `hub.embeddings.huggingFace.token` or set `hub.embeddings.huggingFace.existingSecret`.
 
 When TEI auth is enabled, configure the shared key through `hub.embeddings.auth.apiKey` or `hub.embeddings.auth.existingSecret`; the chart manages both TEI `API_KEY` and Hub `EMBEDDING_PROVIDER_API_KEY` from that source.
 
@@ -190,7 +188,7 @@ Autoscaling is opt-in for Hub API, Hub worker, and the embeddings runtime. If yo
 | hub.embeddings.image.repository                                    | string | `"ghcr.io/huggingface/text-embeddings-inference"` |             |
 | hub.embeddings.image.tag                                           | string | `"cpu-1.9"`                       |             |
 | hub.embeddings.maxConcurrent                                       | string | `"5"`                             |             |
-| hub.embeddings.model                                               | string | `"google/embeddinggemma-300m"`    |             |
+| hub.embeddings.model                                               | string | `"Alibaba-NLP/gte-multilingual-base"` |             |
 | hub.embeddings.persistence.enabled                                 | bool   | `true`                            |             |
 | hub.embeddings.persistence.mountPath                               | string | `"/data"`                         |             |
 | hub.embeddings.persistence.size                                    | string | `"10Gi"`                          |             |
