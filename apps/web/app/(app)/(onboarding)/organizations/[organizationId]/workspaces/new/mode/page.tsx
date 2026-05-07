@@ -2,6 +2,7 @@ import { HeartIcon, ListTodoIcon, XIcon } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizations/components/OnboardingOptionsContainer";
+import { posthogServerClient } from "@/lib/posthog/server";
 import { getUserProjects } from "@/lib/project/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
@@ -12,15 +13,28 @@ interface ModePageProps {
   params: Promise<{
     organizationId: string;
   }>;
+  searchParams: Promise<{
+    experiment_variant?: string;
+  }>;
 }
 
 const Page = async (props: ModePageProps) => {
   const params = await props.params;
+  const searchParams = await props.searchParams;
 
   const { session } = await getOrganizationAuth(params.organizationId);
 
   if (!session?.user) {
     return redirect(`/auth/login`);
+  }
+
+  const experimentVariant =
+    searchParams.experiment_variant ??
+    (await posthogServerClient?.getFeatureFlag("onboarding-mode-experiment", session.user.id)) ??
+    "control";
+
+  if (experimentVariant === "remove-cx-and-surveys-mode") {
+    return redirect(`/organizations/${params.organizationId}/workspaces/new/channel`);
   }
 
   const t = await getTranslate();
