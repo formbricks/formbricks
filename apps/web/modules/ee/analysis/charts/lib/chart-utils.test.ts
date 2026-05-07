@@ -4,10 +4,8 @@ import {
   CHART_MEASURE_COLORS,
   formatCellValue,
   formatXAxisTick,
-  injectTenantFilter,
   preparePieData,
   resolveChartType,
-  validateQueryMembers,
 } from "./chart-utils";
 
 describe("chart-utils", () => {
@@ -97,89 +95,6 @@ describe("chart-utils", () => {
     test("converts boolean and bigint", () => {
       expect(formatCellValue(true)).toBe("true");
       expect(formatCellValue(123n)).toBe("123");
-    });
-  });
-
-  describe("validateQueryMembers", () => {
-    test("does not throw for valid query", () => {
-      expect(() =>
-        validateQueryMembers({
-          measures: ["FeedbackRecords.count"],
-          dimensions: ["FeedbackRecords.sentiment"],
-          timeDimensions: [{ dimension: "FeedbackRecords.collectedAt" }],
-          filters: [{ member: "FeedbackRecords.sourceType", operator: "equals", values: ["survey"] }],
-        })
-      ).not.toThrow();
-    });
-
-    test("throws for invalid measure", () => {
-      expect(() => validateQueryMembers({ measures: ["Other.count"] })).toThrow(
-        /Invalid query members.*Other\.count/
-      );
-    });
-
-    test("allows TopicsUnnested dimensions (joined cube)", () => {
-      expect(() => validateQueryMembers({ dimensions: ["TopicsUnnested.topic"] })).not.toThrow();
-    });
-
-    test("throws for invalid dimension", () => {
-      expect(() => validateQueryMembers({ dimensions: ["OtherCube.field"] })).toThrow(
-        /Invalid query members.*OtherCube\.field/
-      );
-    });
-
-    test("throws for invalid filter member", () => {
-      expect(() =>
-        validateQueryMembers({
-          filters: [{ member: "Invalid.field", operator: "equals", values: ["x"] }],
-        })
-      ).toThrow(/Invalid query members/);
-    });
-  });
-
-  describe("injectTenantFilter", () => {
-    test("appends tenant filter to query with no existing filters", () => {
-      const query = { measures: ["FeedbackRecords.count"] };
-      const result = injectTenantFilter(query, "tenant-123");
-
-      expect(result.filters).toHaveLength(1);
-      expect(result.filters![0]).toEqual({
-        member: "FeedbackRecords.tenantId",
-        operator: "equals",
-        values: ["tenant-123"],
-      });
-      expect(result.measures).toEqual(["FeedbackRecords.count"]);
-    });
-
-    test("appends tenant filter to query with existing filters", () => {
-      const query = {
-        measures: ["FeedbackRecords.count"],
-        filters: [{ member: "FeedbackRecords.sentiment", operator: "equals" as const, values: ["positive"] }],
-      };
-      const result = injectTenantFilter(query, "tenant-456");
-
-      expect(result.filters).toHaveLength(2);
-      expect(result.filters![0]).toEqual({
-        member: "FeedbackRecords.sentiment",
-        operator: "equals",
-        values: ["positive"],
-      });
-      expect(result.filters![1]).toEqual({
-        member: "FeedbackRecords.tenantId",
-        operator: "equals",
-        values: ["tenant-456"],
-      });
-    });
-
-    test("does not mutate the original query", () => {
-      const query = {
-        measures: ["FeedbackRecords.count"],
-        filters: [{ member: "FeedbackRecords.sentiment", operator: "equals" as const, values: ["positive"] }],
-      };
-      const result = injectTenantFilter(query, "tenant-789");
-
-      expect(query.filters).toHaveLength(1);
-      expect(result.filters).toHaveLength(2);
     });
   });
 

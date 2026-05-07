@@ -79,6 +79,35 @@ describe("env", () => {
     expect(env.DEBUG_SHOW_RESET_LINK).toBe("1");
   });
 
+  test("allows Google Cloud AI configuration to rely on ADC credentials", async () => {
+    setTestEnv({
+      AI_PROVIDER: "google",
+      AI_MODEL: "gemini-2.5-flash",
+      AI_GOOGLE_CLOUD_PROJECT: "test-project",
+      AI_GOOGLE_CLOUD_LOCATION: "us-central1",
+      AI_GOOGLE_CLOUD_CREDENTIALS_JSON: undefined,
+      AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS: undefined,
+    });
+
+    const { env } = await import("./env");
+
+    expect(env.AI_PROVIDER).toBe("google");
+    expect(env.AI_GOOGLE_CLOUD_PROJECT).toBe("test-project");
+    expect(env.AI_GOOGLE_CLOUD_LOCATION).toBe("us-central1");
+  });
+
+  test("fails to load when Google Cloud credentials JSON is invalid", async () => {
+    setTestEnv({
+      AI_PROVIDER: "google",
+      AI_MODEL: "gemini-2.5-flash",
+      AI_GOOGLE_CLOUD_PROJECT: "test-project",
+      AI_GOOGLE_CLOUD_LOCATION: "us-central1",
+      AI_GOOGLE_CLOUD_CREDENTIALS_JSON: "{not-json}",
+    });
+
+    await expect(import("./env")).rejects.toThrow("AI_GOOGLE_CLOUD_CREDENTIALS_JSON");
+  });
+
   test("uses the configured Cube environment variables", async () => {
     setTestEnv();
     const { env } = await import("./env");
@@ -87,20 +116,56 @@ describe("env", () => {
     expect(env.CUBEJS_API_SECRET).toBe("cube-secret");
   });
 
-  test("fails to load when the Cube API secret is missing", async () => {
+  test("accepts Cube JWT issuer and audience configuration", async () => {
+    setTestEnv({
+      CUBEJS_JWT_AUDIENCE: "formbricks-cube",
+      CUBEJS_JWT_ISSUER: "formbricks-web",
+    });
+
+    const { env } = await import("./env");
+
+    expect(env.CUBEJS_JWT_AUDIENCE).toBe("formbricks-cube");
+    expect(env.CUBEJS_JWT_ISSUER).toBe("formbricks-web");
+  });
+
+  test("allows the Cube API secret to be omitted until analytics is used", async () => {
     setTestEnv({
       CUBEJS_API_SECRET: undefined,
     });
 
-    await expect(import("./env")).rejects.toThrow("Invalid environment variables");
+    const { env } = await import("./env");
+
+    expect(env.CUBEJS_API_SECRET).toBeUndefined();
   });
 
-  test("fails to load when the Cube API URL is missing", async () => {
+  test("treats an empty Cube API secret from Docker Compose as omitted", async () => {
+    setTestEnv({
+      CUBEJS_API_SECRET: "",
+    });
+
+    const { env } = await import("./env");
+
+    expect(env.CUBEJS_API_SECRET).toBeUndefined();
+  });
+
+  test("allows the Cube API URL to be omitted until analytics is used", async () => {
     setTestEnv({
       CUBEJS_API_URL: undefined,
     });
 
-    await expect(import("./env")).rejects.toThrow("Invalid environment variables");
+    const { env } = await import("./env");
+
+    expect(env.CUBEJS_API_URL).toBeUndefined();
+  });
+
+  test("treats an empty Cube API URL as omitted", async () => {
+    setTestEnv({
+      CUBEJS_API_URL: "",
+    });
+
+    const { env } = await import("./env");
+
+    expect(env.CUBEJS_API_URL).toBeUndefined();
   });
 
   test("fails to load when the Cube API URL is invalid", async () => {

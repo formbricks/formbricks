@@ -1,6 +1,6 @@
 import "server-only";
-import FormbricksHub from "@formbricks/hub";
 import { createCacheKey } from "@formbricks/cache";
+import FormbricksHub from "@formbricks/hub";
 import { logger } from "@formbricks/logger";
 import { cache } from "@/lib/cache";
 import { getHubClient } from "./hub-client";
@@ -10,6 +10,8 @@ import type {
   FeedbackRecordListParams,
   FeedbackRecordListResponse,
   FeedbackRecordUpdateParams,
+  SemanticSearchInput,
+  SemanticSearchResponse,
 } from "./types";
 
 type HubError = { status: number; message: string; detail: string };
@@ -25,9 +27,15 @@ const NO_CONFIG_ERROR = {
   detail: "HUB_API_KEY is not set; Hub integration is disabled.",
 } as const;
 
+const getErrorMessage = (err: unknown): string => {
+  if (err instanceof Error) return err.message;
+  if (typeof err === "string") return err;
+  return "Unknown error";
+};
+
 const createResultFromError = (err: unknown): HubFeedbackRecordResult => {
   const status = err instanceof FormbricksHub.APIError ? err.status : 0;
-  const message = err instanceof Error ? err.message : String(err);
+  const message = getErrorMessage(err);
   return { data: null, error: { status, message, detail: message } };
 };
 
@@ -95,6 +103,11 @@ export type ListFeedbackRecordsResult = {
   error: HubError | null;
 };
 
+export type SemanticSearchFeedbackRecordsResult = {
+  data: SemanticSearchResponse | null;
+  error: HubError | null;
+};
+
 export type FeedbackRecordTenantResult = {
   data: { tenantId: string } | null;
   error: { status: number; message: string; detail: string } | null;
@@ -116,7 +129,25 @@ export const listFeedbackRecords = async (
   } catch (err) {
     logger.warn({ err }, "Hub: listFeedbackRecords failed");
     const status = err instanceof FormbricksHub.APIError ? err.status : 0;
-    const message = err instanceof Error ? err.message : String(err);
+    const message = getErrorMessage(err);
+    return { data: null, error: { status, message, detail: message } };
+  }
+};
+
+export const semanticSearchFeedbackRecords = async (
+  input: SemanticSearchInput
+): Promise<SemanticSearchFeedbackRecordsResult> => {
+  const client = getHubClient();
+  if (!client) {
+    return { data: null, error: { ...NO_CONFIG_ERROR } };
+  }
+  try {
+    const data = await client.feedbackRecords.search.performSemanticSearch(input);
+    return { data, error: null };
+  } catch (err) {
+    logger.warn({ err, tenantId: input.tenant_id }, "Hub: semanticSearchFeedbackRecords failed");
+    const status = err instanceof FormbricksHub.APIError ? err.status : 0;
+    const message = getErrorMessage(err);
     return { data: null, error: { status, message, detail: message } };
   }
 };

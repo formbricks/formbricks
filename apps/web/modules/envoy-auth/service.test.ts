@@ -12,6 +12,7 @@ const {
   mockGetFeedbackRecordTenant,
   mockCheckAuthorizationUpdated,
   mockUserFindUnique,
+  mockGetIsUnifyFeedbackEnabled,
 } = vi.hoisted(() => ({
   mockAuthenticateApiKeyFromHeaders: vi.fn(),
   mockGetApiKeyFromHeaders: vi.fn(),
@@ -22,6 +23,7 @@ const {
   mockGetFeedbackRecordTenant: vi.fn(),
   mockCheckAuthorizationUpdated: vi.fn(),
   mockUserFindUnique: vi.fn(),
+  mockGetIsUnifyFeedbackEnabled: vi.fn(),
 }));
 
 vi.mock("@/modules/api/lib/api-key-auth", () => ({
@@ -52,6 +54,10 @@ vi.mock("@formbricks/database", () => ({
 
 vi.mock("@/modules/ee/feedback-directory/lib/feedback-directory", () => ({
   getFeedbackDirectoryAuthContext: mockGetFeedbackDirectoryAuthContext,
+}));
+
+vi.mock("@/modules/ee/license-check/lib/utils", () => ({
+  getIsUnifyFeedbackEnabled: mockGetIsUnifyFeedbackEnabled,
 }));
 
 vi.mock("@/modules/hub/service", () => ({
@@ -112,6 +118,7 @@ describe("authorizeEnvoyRequest", () => {
     });
     mockCheckAuthorizationUpdated.mockResolvedValue(true);
     mockUserFindUnique.mockResolvedValue({ id: "user_1", isActive: true });
+    mockGetIsUnifyFeedbackEnabled.mockResolvedValue(true);
   });
 
   test("allows create requests with an API key and body tenant_id", async () => {
@@ -122,13 +129,6 @@ describe("authorizeEnvoyRequest", () => {
       organizationId: "org_1",
       organizationAccess: { accessControl: { read: true, write: true } },
       workspacePermissions: [],
-      feedbackDirectoryPermissions: [
-        {
-          feedbackDirectoryId,
-          feedbackDirectoryName: "Directory 1",
-          permission: "write",
-        },
-      ],
     });
 
     const response = await authorizeEnvoyRequest(
@@ -155,7 +155,6 @@ describe("authorizeEnvoyRequest", () => {
       organizationId: "org_1",
       organizationAccess: { accessControl: { read: true, write: true } },
       workspacePermissions: [],
-      feedbackDirectoryPermissions: [],
     });
 
     const response = await authorizeEnvoyRequest(
@@ -186,7 +185,6 @@ describe("authorizeEnvoyRequest", () => {
       organizationId: "org_1",
       organizationAccess: { accessControl: { read: true, write: true } },
       workspacePermissions: [],
-      feedbackDirectoryPermissions: [],
     });
     mockGetFeedbackRecordTenant.mockResolvedValue({
       data: null,
@@ -216,7 +214,6 @@ describe("authorizeEnvoyRequest", () => {
       organizationId: "org_1",
       organizationAccess: { accessControl: { read: true, write: true } },
       workspacePermissions: [],
-      feedbackDirectoryPermissions: [],
     });
     mockGetFeedbackRecordTenant.mockResolvedValue({
       data: null,
@@ -319,15 +316,14 @@ describe("authorizeEnvoyRequest", () => {
     });
   });
 
-  test("returns 403 when an API key lacks directory permission", async () => {
+  test("returns 403 when an API key has no matching workspace or org-level access", async () => {
     mockGetApiKeyFromHeaders.mockReturnValue("fbk_test");
     mockAuthenticateApiKeyFromHeaders.mockResolvedValue({
       type: "apiKey",
       apiKeyId: "key_1",
       organizationId: "org_1",
-      organizationAccess: { accessControl: { read: true, write: true } },
+      organizationAccess: { accessControl: { read: false, write: false } },
       workspacePermissions: [],
-      feedbackDirectoryPermissions: [],
     });
 
     const response = await authorizeEnvoyRequest(
@@ -340,6 +336,147 @@ describe("authorizeEnvoyRequest", () => {
     );
 
     expect(response.status).toBe(403);
+  });
+
+  test("allows API key with workspace write permission on a linked workspace", async () => {
+    mockGetApiKeyFromHeaders.mockReturnValue("fbk_test");
+    mockAuthenticateApiKeyFromHeaders.mockResolvedValue({
+      type: "apiKey",
+      apiKeyId: "key_1",
+      organizationId: "org_1",
+      organizationAccess: { accessControl: { read: false, write: false } },
+      workspacePermissions: [
+        {
+          workspaceId: "workspace_1",
+          workspaceName: "Workspace 1",
+          permission: "write",
+        },
+      ],
+    });
+
+    const response = await authorizeEnvoyRequest(
+      createRequest(`http://localhost/api/envoy-auth/v1/feedback-records?tenant_id=${feedbackDirectoryId}`, {
+        method: "POST",
+        headers: {
+          "x-api-key": "fbk_test",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ tenant_id: feedbackDirectoryId }),
+      })
+    );
+
+    expect(response.status).toBe(200);
+  });
+
+  test("returns 403 when API key has read-only workspace permission for a write op", async () => {
+    mockGetApiKeyFromHeaders.mockReturnValue("fbk_test");
+    mockAuthenticateApiKeyFromHeaders.mockResolvedValue({
+      type: "apiKey",
+      apiKeyId: "key_1",
+      organizationId: "org_1",
+      organizationAccess: { accessControl: { read: false, write: false } },
+      workspacePermissions: [
+        {
+          workspaceId: "workspace_1",
+          workspaceName: "Workspace 1",
+          permission: "read",
+        },
+      ],
+    });
+
+    const response = await authorizeEnvoyRequest(
+      createRequest("http://localhost/api/envoy-auth/api/v3/feedbackRecords", {
+        method: "POST",
+        headers: {
+          "x-api-key": "fbk_test",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ tenant_id: feedbackDirectoryId }),
+      })
+    );
+
+    expect(response.status).toBe(403);
+  });
+
+  test("returns 403 when FRD has no workspace links and API key has no org-level access", async () => {
+    mockGetFeedbackDirectoryAuthContext.mockResolvedValue({
+      organizationId: "org_1",
+      workspaceIds: [],
+      isArchived: false,
+    });
+    mockGetApiKeyFromHeaders.mockReturnValue("fbk_test");
+    mockAuthenticateApiKeyFromHeaders.mockResolvedValue({
+      type: "apiKey",
+      apiKeyId: "key_1",
+      organizationId: "org_1",
+      organizationAccess: { accessControl: { read: false, write: false } },
+      workspacePermissions: [
+        {
+          workspaceId: "workspace_1",
+          workspaceName: "Workspace 1",
+          permission: "manage",
+        },
+      ],
+    });
+
+    const response = await authorizeEnvoyRequest(
+      createRequest(`http://localhost/api/envoy-auth/v1/feedback-records?tenant_id=${feedbackDirectoryId}`, {
+        headers: {
+          "x-api-key": "fbk_test",
+        },
+      })
+    );
+
+    expect(response.status).toBe(403);
+  });
+
+  test("allows API key with org-level read access for a read op even without workspace match", async () => {
+    mockGetFeedbackDirectoryAuthContext.mockResolvedValue({
+      organizationId: "org_1",
+      workspaceIds: [],
+      isArchived: false,
+    });
+    mockGetApiKeyFromHeaders.mockReturnValue("fbk_test");
+    mockAuthenticateApiKeyFromHeaders.mockResolvedValue({
+      type: "apiKey",
+      apiKeyId: "key_1",
+      organizationId: "org_1",
+      organizationAccess: { accessControl: { read: true, write: false } },
+      workspacePermissions: [],
+    });
+
+    const response = await authorizeEnvoyRequest(
+      createRequest(`http://localhost/api/envoy-auth/v1/feedback-records?tenant_id=${feedbackDirectoryId}`, {
+        headers: {
+          "x-api-key": "fbk_test",
+        },
+      })
+    );
+
+    expect(response.status).toBe(200);
+  });
+
+  test("returns 403 when unify feedback entitlement is disabled", async () => {
+    mockGetIsUnifyFeedbackEnabled.mockResolvedValue(false);
+    mockGetApiKeyFromHeaders.mockReturnValue("fbk_test");
+    mockAuthenticateApiKeyFromHeaders.mockResolvedValue({
+      type: "apiKey",
+      apiKeyId: "key_1",
+      organizationId: "org_1",
+      organizationAccess: { accessControl: { read: true, write: true } },
+      workspacePermissions: [],
+    });
+
+    const response = await authorizeEnvoyRequest(
+      createRequest(`http://localhost/api/envoy-auth/v1/feedback-records?tenant_id=${feedbackDirectoryId}`, {
+        headers: {
+          "x-api-key": "fbk_test",
+        },
+      })
+    );
+
+    expect(response.status).toBe(403);
+    expect(mockGetIsUnifyFeedbackEnabled).toHaveBeenCalledWith("org_1");
   });
 
   test("returns 403 for archived directories", async () => {
@@ -370,7 +507,6 @@ describe("authorizeEnvoyRequest", () => {
       organizationId: "org_1",
       organizationAccess: { accessControl: { read: true, write: true } },
       workspacePermissions: [],
-      feedbackDirectoryPermissions: [],
     });
 
     const response = await authorizeEnvoyRequest(
@@ -395,7 +531,6 @@ describe("authorizeEnvoyRequest", () => {
       organizationId: "org_1",
       organizationAccess: { accessControl: { read: true, write: true } },
       workspacePermissions: [],
-      feedbackDirectoryPermissions: [],
     });
 
     const response = await authorizeEnvoyRequest(
@@ -418,7 +553,6 @@ describe("authorizeEnvoyRequest", () => {
       organizationId: "org_1",
       organizationAccess: { accessControl: { read: true, write: true } },
       workspacePermissions: [],
-      feedbackDirectoryPermissions: [],
     });
 
     const response = await authorizeEnvoyRequest(

@@ -1,60 +1,102 @@
-import cubejs, { type CubeApi, type Query } from "@cubejs-client/core";
-import { ConfigurationError, QueryExecutionError } from "@formbricks/types/errors";
-import { createCubeApiToken, getCubeApiCredentials } from "./cube-config";
+import "server-only";
+import cubejs, { type Query } from "@cubejs-client/core";
+import { randomUUID } from "node:crypto";
+import { logger } from "@formbricks/logger";
+import type { TChartQuery } from "@formbricks/types/analysis";
+import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
+import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
+import { type TCubeQuerySource, getCubeApiConfig } from "./cube-config";
+import { getCubeQueryAuditSummary, validateCubeQueryMembers } from "./cube-query";
 
 const CUBE_QUERY_ERROR_MESSAGE =
   "Cube query failed. Verify CUBEJS_API_URL and CUBEJS_API_SECRET, and ensure the Cube service is running.";
-const CUBE_CLIENT_REFRESH_BUFFER_MS = 60 * 1000;
 
-const globalForCube = globalThis as unknown as {
-  formbricksCubeClient: CubeApi | undefined;
-  formbricksCubeClientCacheKey: string | undefined;
-  formbricksCubeClientTokenExpiresAtMs: number | undefined;
+type TScopedCubeQueryInput = {
+  query: TChartQuery;
+  feedbackDirectoryId: string;
+  workspaceId: string;
+  organizationId: string;
+  userId: string;
+  source: TCubeQuerySource;
 };
 
-let cubeClient: CubeApi | null = globalForCube.formbricksCubeClient ?? null;
-let cubeClientCacheKey: string | null = globalForCube.formbricksCubeClientCacheKey ?? null;
-let cubeClientTokenExpiresAtMs = globalForCube.formbricksCubeClientTokenExpiresAtMs ?? 0;
+const queueCubeQueryAuditEvent = ({
+  error,
+  input,
+  requestId,
+  status,
+}: {
+  error?: unknown;
+  input: TScopedCubeQueryInput;
+  requestId: string;
+  status: "success" | "failure";
+}) => {
+  const errorName = error instanceof Error ? error.name : undefined;
 
-const isCachedClientReusable = (cacheKey: string, nowMs: number): boolean =>
-  cubeClient !== null &&
-  cubeClientCacheKey === cacheKey &&
-  cubeClientTokenExpiresAtMs > nowMs + CUBE_CLIENT_REFRESH_BUFFER_MS;
-
-const cacheCubeClient = (client: CubeApi, cacheKey: string, tokenExpiresAtMs: number): CubeApi => {
-  cubeClient = client;
-  cubeClientCacheKey = cacheKey;
-  cubeClientTokenExpiresAtMs = tokenExpiresAtMs;
-  globalForCube.formbricksCubeClient = client;
-  globalForCube.formbricksCubeClientCacheKey = cacheKey;
-  globalForCube.formbricksCubeClientTokenExpiresAtMs = tokenExpiresAtMs;
-  return client;
+  void queueAuditEventWithoutRequest({
+    action: "queried",
+    targetType: "cubeQuery",
+    userId: input.userId,
+    userType: "user",
+    targetId: requestId,
+    organizationId: input.organizationId,
+    status,
+    eventId: requestId,
+    newObject: {
+      requestId,
+      tenantId: input.feedbackDirectoryId,
+      feedbackDirectoryId: input.feedbackDirectoryId,
+      workspaceId: input.workspaceId,
+      organizationId: input.organizationId,
+      userId: input.userId,
+      source: input.source,
+      query: getCubeQueryAuditSummary(input.query),
+      ...(errorName ? { errorName } : {}),
+    },
+    ipAddress: UNKNOWN_DATA,
+  }).catch((auditError) => {
+    logger.error(auditError, "Failed to queue Cube query audit event");
+  });
 };
 
-function getCubeClient(): CubeApi {
-  const { apiSecret, apiUrl } = getCubeApiCredentials();
-  const nowMs = Date.now();
-  const cacheKey = `${apiUrl}:${apiSecret}`;
-
-  if (isCachedClientReusable(cacheKey, nowMs)) {
-    return cubeClient as CubeApi;
+export async function executeTenantScopedQuery(input: TScopedCubeQueryInput) {
+  try {
+    validateCubeQueryMembers(input.query);
+  } catch (error) {
+    queueCubeQueryAuditEvent({ error, input, requestId: randomUUID(), status: "failure" });
+    logger.warn(error, "Cube query validation failed");
+    throw error;
   }
 
-  const { token, tokenExpiresAtMs } = createCubeApiToken(apiSecret);
-  return cacheCubeClient(cubejs(token, { apiUrl }), cacheKey, tokenExpiresAtMs);
-}
+  const tenantScope = {
+    feedbackDirectoryId: input.feedbackDirectoryId,
+    workspaceId: input.workspaceId,
+    organizationId: input.organizationId,
+    userId: input.userId,
+    source: input.source,
+  };
+  let apiUrl: string;
+  let requestId: string;
+  let token: string;
 
-export async function executeQuery(query: Query) {
   try {
-    const client = getCubeClient();
-    const resultSet = await client.load(query);
-    return resultSet.tablePivot();
+    ({ apiUrl, requestId, token } = getCubeApiConfig(tenantScope));
   } catch (error) {
-    if (error instanceof ConfigurationError) {
-      throw error;
-    }
+    queueCubeQueryAuditEvent({ error, input, requestId: randomUUID(), status: "failure" });
+    logger.error(error, "Cube query configuration failed");
+    throw error;
+  }
 
-    const detail = error instanceof Error && error.message ? ` Details: ${error.message}` : "";
-    throw new QueryExecutionError(`${CUBE_QUERY_ERROR_MESSAGE}${detail}`);
+  try {
+    const client = cubejs(token, { apiUrl });
+    const resultSet = await client.load(input.query as Query);
+    const result = resultSet.tablePivot();
+    queueCubeQueryAuditEvent({ input, requestId, status: "success" });
+    return result;
+  } catch (error) {
+    queueCubeQueryAuditEvent({ error, input, requestId, status: "failure" });
+    logger.error(error, "Cube query failed");
+
+    throw new Error(CUBE_QUERY_ERROR_MESSAGE);
   }
 }

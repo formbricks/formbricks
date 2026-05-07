@@ -1,5 +1,7 @@
 import { use } from "react";
+import { getAIDataAnalysisUnavailableReason, getOrganizationAIConfig } from "@/lib/ai/service";
 import { getConnectorsWithMappings } from "@/lib/connector/service";
+import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { ChartsList } from "@/modules/ee/analysis/charts/components/charts-list";
 import { CreateChartButton } from "@/modules/ee/analysis/charts/components/create-chart-button";
@@ -9,6 +11,8 @@ import { NoFeedbackRecordsState } from "@/modules/ee/analysis/components/no-feed
 import { hasFeedbackRecordsInDirectories } from "@/modules/ee/analysis/lib/feedback-records";
 import type { TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
 import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
+import { getIsDashboardsEnabled } from "@/modules/ee/license-check/lib/utils";
+import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 
 interface ChartsListContentProps {
@@ -37,11 +41,44 @@ interface ChartsListPageProps {
 
 export async function ChartsListPage({ workspaceId }: Readonly<ChartsListPageProps>) {
   const t = await getTranslate();
-  const { isReadOnly } = await getWorkspaceAuth(workspaceId);
-  const [directories, connectors] = await Promise.all([
+  const { isReadOnly, organization } = await getWorkspaceAuth(workspaceId);
+
+  const isDashboardsAllowed = await getIsDashboardsEnabled(organization.id);
+  if (!isDashboardsAllowed) {
+    return (
+      <AnalysisPageLayout pageTitle={t("common.analysis")} workspaceId={workspaceId}>
+        <div className="flex items-center justify-center">
+          <UpgradePrompt
+            title={t("workspace.analysis.dashboards.upgrade_prompt_title")}
+            description={t("workspace.analysis.dashboards.upgrade_prompt_description")}
+            feature="dashboards"
+            buttons={[
+              {
+                text: IS_FORMBRICKS_CLOUD ? t("common.upgrade_plan") : t("common.request_trial_license"),
+                href: IS_FORMBRICKS_CLOUD
+                  ? `/workspaces/${workspaceId}/settings/organization/billing`
+                  : "https://formbricks.com/upgrade-self-hosting-license",
+              },
+              {
+                text: t("common.learn_more"),
+                href: IS_FORMBRICKS_CLOUD
+                  ? `/workspaces/${workspaceId}/settings/organization/billing`
+                  : "https://formbricks.com/learn-more-self-hosting-license",
+              },
+            ]}
+          />
+        </div>
+      </AnalysisPageLayout>
+    );
+  }
+
+  const [directories, connectors, aiConfig] = await Promise.all([
     getFeedbackDirectoriesByWorkspaceId(workspaceId),
     getConnectorsWithMappings(workspaceId),
+    getOrganizationAIConfig(organization.id),
   ]);
+  const aiUnavailableReason = getAIDataAnalysisUnavailableReason(aiConfig);
+  const isAIAvailable = !aiUnavailableReason;
   const hasFeedbackRecords = await hasFeedbackRecordsInDirectories(
     directories.map((directory) => directory.id)
   );
@@ -57,6 +94,8 @@ export async function ChartsListPage({ workspaceId }: Readonly<ChartsListPagePro
             workspaceId={workspaceId}
             directories={directories}
             buttonProps={{ disabled: !hasFeedbackRecords }}
+            isAIAvailable={isAIAvailable}
+            aiUnavailableReason={aiUnavailableReason}
           />
         )
       }>

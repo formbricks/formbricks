@@ -14,6 +14,8 @@ interface CreateChartButtonProps {
   onSuccess?: () => void;
   showIcon?: boolean;
   buttonProps?: Omit<ButtonProps, "onClick" | "children">;
+  isAIAvailable?: boolean;
+  aiUnavailableReason?: string;
 }
 
 export function CreateChartButton({
@@ -24,6 +26,8 @@ export function CreateChartButton({
   onSuccess,
   showIcon = true,
   buttonProps,
+  isAIAvailable,
+  aiUnavailableReason,
 }: Readonly<CreateChartButtonProps>) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { t } = useTranslation();
@@ -41,6 +45,8 @@ export function CreateChartButton({
         autoAddToDashboardId={autoAddToDashboardId}
         directories={directories}
         onSuccess={onSuccess}
+        isAIAvailable={isAIAvailable}
+        aiUnavailableReason={aiUnavailableReason}
       />
     </>
   );

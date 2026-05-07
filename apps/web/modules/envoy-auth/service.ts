@@ -2,10 +2,10 @@ import "server-only";
 import { NextRequest } from "next/server";
 import { feedbackRecordsEnvoyAuthorizer } from "@/modules/hub/feedback-records-gateway";
 import {
+  TEnvoyRequestAuthorizer,
   authenticateEnvoyRequest,
   buildStatusResponse,
   parseEnvoyRequestMetadata,
-  TEnvoyRequestAuthorizer,
 } from "./shared";
 
 const envoyAuthorizers: TEnvoyRequestAuthorizer[] = [feedbackRecordsEnvoyAuthorizer];
@@ -16,9 +16,7 @@ export const authorizeEnvoyRequest = async (request: NextRequest): Promise<Respo
     return requestMetadata.errorResponse;
   }
 
-  const authorizer = envoyAuthorizers.find((candidate) =>
-    candidate.matches(requestMetadata.originalRequest)
-  );
+  const authorizer = envoyAuthorizers.find((candidate) => candidate.matches(requestMetadata.originalRequest));
   if (!authorizer) {
     return buildStatusResponse(400, "Unsupported Envoy auth route");
   }

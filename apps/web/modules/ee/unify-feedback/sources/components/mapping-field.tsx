@@ -20,6 +20,12 @@ interface DraggableSourceFieldProps {
   isMapped: boolean;
 }
 
+const getSourceFieldStateClass = (isDragging: boolean, isMapped: boolean): string => {
+  if (isDragging) return "border-brand-dark bg-slate-100 opacity-50";
+  if (isMapped) return "border-green-300 bg-green-50 text-green-800";
+  return "border-slate-200 bg-white hover:border-slate-300";
+};
+
 export const DraggableSourceField = ({ field, isMapped }: DraggableSourceFieldProps) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: field.id,
@@ -38,13 +44,7 @@ export const DraggableSourceField = ({ field, isMapped }: DraggableSourceFieldPr
       style={style}
       {...listeners}
       {...attributes}
-      className={`flex cursor-grab items-center gap-2 rounded-md border p-2 text-sm transition-colors ${
-        isDragging
-          ? "border-brand-dark bg-slate-100 opacity-50"
-          : isMapped
-            ? "border-green-300 bg-green-50 text-green-800"
-            : "border-slate-200 bg-white hover:border-slate-300"
-      }`}>
+      className={`flex cursor-grab items-center gap-2 rounded-md border p-2 text-sm transition-colors ${getSourceFieldStateClass(isDragging, isMapped)}`}>
       <GripVerticalIcon className="h-4 w-4 text-slate-400" />
       <div className="flex-1 truncate">
         <span className="font-medium">{field.name}</span>

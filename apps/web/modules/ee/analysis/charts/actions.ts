@@ -1,14 +1,16 @@
 "use server";
 
-import { createOpenAI } from "@ai-sdk/openai";
 import { Output, generateText } from "ai";
 import { z } from "zod";
+import { getAiModel } from "@formbricks/ai";
 import { type TChartQuery, ZChartQuery } from "@formbricks/types/analysis";
 import { ZId } from "@formbricks/types/common";
+import { OperationNotAllowedError } from "@formbricks/types/errors";
+import { assertOrganizationAIConfigured } from "@/lib/ai/service";
+import { env } from "@/lib/env";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
-import { executeQuery } from "@/modules/ee/analysis/api/lib/cube-client";
-import { injectTenantFilter, validateQueryMembers } from "@/modules/ee/analysis/charts/lib/chart-utils";
+import { executeTenantScopedQuery } from "@/modules/ee/analysis/api/lib/cube-client";
 import {
   createChart,
   deleteChart,
@@ -17,10 +19,18 @@ import {
   getCharts,
   updateChart,
 } from "@/modules/ee/analysis/charts/lib/charts";
-import { checkWorkspaceAccess, verifyFeedbackDirectoryAccess } from "@/modules/ee/analysis/lib/access";
+import { checkFeedbackDirectoryAccess, checkWorkspaceAccess } from "@/modules/ee/analysis/lib/access";
 import { generateSchemaContext } from "@/modules/ee/analysis/lib/ai-schema-context";
 import { ZChartCreateInput, ZChartType, ZChartUpdateInput } from "@/modules/ee/analysis/types/analysis";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
+import { getIsDashboardsEnabled } from "@/modules/ee/license-check/lib/utils";
+
+const checkDashboardsEnabled = async (organizationId: string) => {
+  const isAllowed = await getIsDashboardsEnabled(organizationId);
+  if (!isAllowed) {
+    throw new OperationNotAllowedError("Dashboards are not enabled for this organization");
+  }
+};
 
 /** Client-facing chart input (workspaceId and createdBy are resolved server-side) */
 const ZChartCreateInputClient = ZChartCreateInput.omit({ workspaceId: true, createdBy: true });
@@ -46,6 +56,15 @@ export const createChartAction = authenticatedActionClient.inputSchema(ZCreateCh
         parsedInput.workspaceId,
         "readWrite"
       );
+      await checkDashboardsEnabled(organizationId);
+
+      await checkFeedbackDirectoryAccess({
+        feedbackDirectoryId: parsedInput.chartInput.feedbackDirectoryId,
+        organizationId,
+        workspaceId,
+        userId: ctx.user.id,
+        source: "charts.createChartAction",
+      });
 
       const chart = await createChart({
         ...parsedInput.chartInput,
@@ -84,6 +103,7 @@ export const updateChartAction = authenticatedActionClient.inputSchema(ZUpdateCh
         parsedInput.workspaceId,
         "readWrite"
       );
+      await checkDashboardsEnabled(organizationId);
 
       const { chart, updatedChart } = await updateChart(
         parsedInput.chartId,
@@ -122,6 +142,7 @@ export const duplicateChartAction = authenticatedActionClient.inputSchema(ZDupli
         parsedInput.workspaceId,
         "readWrite"
       );
+      await checkDashboardsEnabled(organizationId);
 
       const duplicatedChart = await duplicateChart(parsedInput.chartId, workspaceId, ctx.user.id);
 
@@ -155,6 +176,7 @@ export const deleteChartAction = authenticatedActionClient.inputSchema(ZDeleteCh
         parsedInput.workspaceId,
         "readWrite"
       );
+      await checkDashboardsEnabled(organizationId);
 
       const chart = await deleteChart(parsedInput.chartId, workspaceId);
 
@@ -182,7 +204,12 @@ export const getChartAction = authenticatedActionClient
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZGetChartAction>;
     }) => {
-      const { workspaceId } = await checkWorkspaceAccess(ctx.user.id, parsedInput.workspaceId, "read");
+      const { organizationId, workspaceId } = await checkWorkspaceAccess(
+        ctx.user.id,
+        parsedInput.workspaceId,
+        "read"
+      );
+      await checkDashboardsEnabled(organizationId);
 
       return getChart(parsedInput.chartId, workspaceId);
     }
@@ -202,7 +229,12 @@ export const getChartsAction = authenticatedActionClient
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZGetChartsAction>;
     }) => {
-      const { workspaceId } = await checkWorkspaceAccess(ctx.user.id, parsedInput.workspaceId, "read");
+      const { organizationId, workspaceId } = await checkWorkspaceAccess(
+        ctx.user.id,
+        parsedInput.workspaceId,
+        "read"
+      );
+      await checkDashboardsEnabled(organizationId);
       const charts = await getCharts(workspaceId);
       return charts;
     }
@@ -226,18 +258,30 @@ export const executeQueryAction = authenticatedActionClient
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZExecuteQueryAction>;
     }) => {
-      const { workspaceId } = await checkWorkspaceAccess(ctx.user.id, parsedInput.workspaceId, "read");
-      await verifyFeedbackDirectoryAccess(parsedInput.feedbackDirectoryId, workspaceId);
+      const { organizationId, workspaceId } = await checkWorkspaceAccess(
+        ctx.user.id,
+        parsedInput.workspaceId,
+        "read"
+      );
 
-      validateQueryMembers(parsedInput.query);
+      await checkDashboardsEnabled(organizationId);
 
-      const scopedQuery = injectTenantFilter(parsedInput.query, parsedInput.feedbackDirectoryId);
+      const { feedbackDirectoryId } = await checkFeedbackDirectoryAccess({
+        feedbackDirectoryId: parsedInput.feedbackDirectoryId,
+        organizationId,
+        workspaceId,
+        userId: ctx.user.id,
+        source: "charts.executeQueryAction",
+      });
 
-      try {
-        return await executeQuery(scopedQuery as Record<string, unknown>);
-      } catch (error) {
-        throw error instanceof Error ? error : new Error("Failed to execute query");
-      }
+      return executeTenantScopedQuery({
+        query: parsedInput.query,
+        feedbackDirectoryId,
+        workspaceId,
+        organizationId,
+        userId: ctx.user.id,
+        source: "charts.executeQueryAction",
+      });
     }
   );
 
@@ -294,18 +338,29 @@ export const generateAIChartAction = authenticatedActionClient
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZGenerateAIChartAction>;
     }) => {
-      const { workspaceId } = await checkWorkspaceAccess(ctx.user.id, parsedInput.workspaceId, "read");
-      await verifyFeedbackDirectoryAccess(parsedInput.feedbackDirectoryId, workspaceId);
+      const { organizationId, workspaceId } = await checkWorkspaceAccess(
+        ctx.user.id,
+        parsedInput.workspaceId,
+        "read"
+      );
 
-      if (!process.env.OPENAI_API_KEY) {
-        throw new Error("OPENAI_API_KEY is not configured");
-      }
+      await checkDashboardsEnabled(organizationId);
 
-      const openai = createOpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      // Verify AI is entitled, enabled at org level, and configured at instance level
+      await assertOrganizationAIConfigured(organizationId, "dataAnalysis");
+
+      const { feedbackDirectoryId } = await checkFeedbackDirectoryAccess({
+        feedbackDirectoryId: parsedInput.feedbackDirectoryId,
+        organizationId,
+        workspaceId,
+        userId: ctx.user.id,
+        source: "charts.generateAIChartAction",
+      });
+
       const schemaContext = generateSchemaContext();
 
       const { output } = await generateText({
-        model: openai("gpt-4o-mini"),
+        model: getAiModel(env),
         output: Output.object({ schema: ZGenerateAIQueryResponse }),
         system: schemaContext,
         prompt: `User request: "${parsedInput.prompt}"`,
@@ -314,32 +369,36 @@ export const generateAIChartAction = authenticatedActionClient
       const measures = output.measures.length > 0 ? output.measures : [`${CUBE_NAME}.count`];
 
       const { chartType, ...cubeQuery } = { ...output, measures };
+      const cleanQuery: TChartQuery = { measures: cubeQuery.measures };
 
-      // Strip nulls/empty arrays so Cube.js receives only present fields
-      const cleanQuery: Record<string, unknown> = {
-        measures: cubeQuery.measures,
-        ...(cubeQuery.dimensions?.length && { dimensions: cubeQuery.dimensions }),
-        ...(cubeQuery.filters?.length && {
-          filters: cubeQuery.filters.map(({ member, operator, values }) => ({
-            member,
-            operator,
-            ...(values != null && { values }),
-          })),
-        }),
-        ...(cubeQuery.timeDimensions?.length && {
-          timeDimensions: cubeQuery.timeDimensions.map(({ dimension, granularity, dateRange }) => ({
-            dimension,
-            ...(granularity != null && { granularity }),
-            ...(dateRange != null && { dateRange }),
-          })),
-        }),
-      };
+      if (cubeQuery.dimensions?.length) {
+        cleanQuery.dimensions = cubeQuery.dimensions;
+      }
 
-      validateQueryMembers(cleanQuery as TChartQuery);
+      if (cubeQuery.filters?.length) {
+        cleanQuery.filters = cubeQuery.filters.map(({ member, operator, values }) => ({
+          member,
+          operator,
+          ...(values == null ? {} : { values }),
+        }));
+      }
 
-      const scopedQuery = injectTenantFilter(cleanQuery as TChartQuery, parsedInput.feedbackDirectoryId);
+      if (cubeQuery.timeDimensions?.length) {
+        cleanQuery.timeDimensions = cubeQuery.timeDimensions.map(({ dimension, granularity, dateRange }) => ({
+          dimension,
+          ...(granularity == null ? {} : { granularity }),
+          ...(dateRange == null ? {} : { dateRange }),
+        }));
+      }
 
-      const data = await executeQuery(scopedQuery as Record<string, unknown>);
+      const data = await executeTenantScopedQuery({
+        query: cleanQuery,
+        feedbackDirectoryId,
+        workspaceId,
+        organizationId,
+        userId: ctx.user.id,
+        source: "charts.generateAIChartAction",
+      });
 
       return {
         query: cleanQuery,

@@ -31,10 +31,10 @@ export const UnifyConfigNavigation = ({
       label: (
         <span className="inline-flex items-center gap-2">
           {t("workspace.unify.topics_and_subtopics")}
-          <Badge text={t("common.soon")} type="gray" size="tiny" />
+          <Badge text={t("common.preview")} type="gray" size="tiny" />
         </span>
       ),
-      disabled: true,
+      href: `${baseHref}/topics-subtopics`,
     },
   ];
 

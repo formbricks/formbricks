@@ -1,1 +1,1 @@
-export { WorkspaceFeedbackSourcesPage as default } from "@/modules/workspaces/settings/sources/page";
+export { WorkspaceFeedbackSourcesPage as default } from "@/modules/ee/unify-feedback/sources/page";

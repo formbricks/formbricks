@@ -62,7 +62,7 @@ const mockChart = {
   id: mockChartId,
   name: "Test Chart",
   type: "bar",
-  query: { measures: ["Responses.count"] },
+  query: { measures: ["FeedbackRecords.count"] },
   config: { showLegend: true },
   feedbackDirectoryId: mockFeedbackDirectoryId,
   createdAt: new Date("2025-01-01"),
@@ -86,7 +86,7 @@ describe("Chart Service", () => {
         workspaceId: mockWorkspaceId,
         name: "Test Chart",
         type: "bar",
-        query: { measures: ["Responses.count"] },
+        query: { measures: ["FeedbackRecords.count"] },
         config: { showLegend: true },
         feedbackDirectoryId: mockFeedbackDirectoryId,
         createdBy: mockUserId,
@@ -98,13 +98,34 @@ describe("Chart Service", () => {
           name: "Test Chart",
           type: "bar",
           workspaceId: mockWorkspaceId,
-          query: { measures: ["Responses.count"] },
+          query: { measures: ["FeedbackRecords.count"] },
           config: { showLegend: true },
           feedbackDirectoryId: mockFeedbackDirectoryId,
           createdBy: mockUserId,
         },
         select: selectChart,
       });
+    });
+
+    test("rejects tenant filters before saving chart JSON", async () => {
+      const { createChart } = await import("./charts");
+
+      await expect(
+        createChart({
+          workspaceId: mockWorkspaceId,
+          name: "Cross tenant chart",
+          type: "bar",
+          query: {
+            measures: ["FeedbackRecords.count"],
+            filters: [{ member: "FeedbackRecords.tenantId", operator: "equals", values: ["workspace-2"] }],
+          },
+          config: {},
+          feedbackDirectoryId: mockFeedbackDirectoryId,
+          createdBy: mockUserId,
+        })
+      ).rejects.toThrow(/Tenant filters are enforced by Cube/);
+
+      expect(prisma.chart.create).not.toHaveBeenCalled();
     });
 
     test("throws InvalidInputError on unique constraint violation", async () => {
@@ -167,6 +188,22 @@ describe("Chart Service", () => {
         data: { name: "Updated Chart", type: undefined, query: undefined, config: undefined },
         select: selectChart,
       });
+    });
+
+    test("rejects tenant filters before updating chart JSON", async () => {
+      const { updateChart } = await import("./charts");
+
+      await expect(
+        updateChart(mockChartId, mockWorkspaceId, {
+          query: {
+            measures: ["FeedbackRecords.count"],
+            order: { "FeedbackRecords.tenantId": "asc" },
+          },
+        })
+      ).rejects.toThrow(/Tenant filters are enforced by Cube/);
+
+      expect(mockTxChart.findFirst).not.toHaveBeenCalled();
+      expect(mockTxChart.update).not.toHaveBeenCalled();
     });
 
     test("throws ResourceNotFoundError when chart does not exist", async () => {
@@ -276,6 +313,24 @@ describe("Chart Service", () => {
         resourceType: "Chart",
         resourceId: mockChartId,
       });
+    });
+
+    test("rejects legacy charts with tenant filters before duplicating", async () => {
+      vi.mocked(prisma.chart.findFirst).mockResolvedValue({
+        ...mockChart,
+        query: {
+          measures: ["FeedbackRecords.count"],
+          filters: [{ member: "FeedbackRecords.tenantId", operator: "equals", values: ["workspace-2"] }],
+        },
+      } as any);
+      vi.mocked(prisma.chart.findMany).mockResolvedValue([]);
+      const { duplicateChart } = await import("./charts");
+
+      await expect(duplicateChart(mockChartId, mockWorkspaceId, mockUserId)).rejects.toThrow(
+        /Tenant filters are enforced by Cube/
+      );
+
+      expect(prisma.chart.create).not.toHaveBeenCalled();
     });
   });
 

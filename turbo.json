@@ -213,6 +213,8 @@
         "CRON_SECRET",
         "CUBEJS_API_SECRET",
         "CUBEJS_API_URL",
+        "CUBEJS_JWT_AUDIENCE",
+        "CUBEJS_JWT_ISSUER",
         "DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS",
         "DATABASE_URL",
         "DEBUG",

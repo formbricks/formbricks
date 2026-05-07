@@ -48,6 +48,17 @@ export const getOrganizationAIConfig = async (organizationId: string): Promise<T
   };
 };
 
+export type TAIUnavailableReason = "not_in_plan" | "not_enabled" | "instance_not_configured";
+
+export const getAIDataAnalysisUnavailableReason = (
+  aiConfig: TOrganizationAIConfig
+): TAIUnavailableReason | undefined => {
+  if (!aiConfig.isAIDataAnalysisEntitled) return "not_in_plan";
+  if (!aiConfig.isAIDataAnalysisEnabled) return "not_enabled";
+  if (!aiConfig.isInstanceConfigured) return "instance_not_configured";
+  return undefined;
+};
+
 export const assertOrganizationAIConfigured = async (
   organizationId: string,
   capability: "smartTools" | "dataAnalysis"

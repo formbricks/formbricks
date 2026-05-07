@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { getGatewayAuthServiceTokenPurpose, ZGatewayAuthService } from "./service";
+import { ZGatewayAuthService, getGatewayAuthServiceTokenPurpose } from "./service";
 
 describe("gateway auth service registry", () => {
   test("returns the configured token purpose for feedbackRecords", () => {

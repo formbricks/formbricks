@@ -3,6 +3,7 @@ import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/typ
 import {
   assertOrganizationAIConfigured,
   generateOrganizationAIText,
+  getAIDataAnalysisUnavailableReason,
   getOrganizationAIConfig,
   isInstanceAIConfigured,
 } from "./service";
@@ -172,5 +173,38 @@ describe("AI organization service", () => {
       },
       "Failed to generate organization AI text"
     );
+  });
+
+  describe("getAIDataAnalysisUnavailableReason", () => {
+    const baseConfig = {
+      organizationId: "org_1",
+      isAISmartToolsEntitled: true,
+      isAISmartToolsEnabled: true,
+      isAIDataAnalysisEntitled: true,
+      isAIDataAnalysisEnabled: true,
+      isInstanceConfigured: true,
+    };
+
+    test("returns undefined when all checks pass", () => {
+      expect(getAIDataAnalysisUnavailableReason(baseConfig)).toBeUndefined();
+    });
+
+    test("returns not_in_plan when not entitled", () => {
+      expect(getAIDataAnalysisUnavailableReason({ ...baseConfig, isAIDataAnalysisEntitled: false })).toBe(
+        "not_in_plan"
+      );
+    });
+
+    test("returns not_enabled when disabled at org level", () => {
+      expect(getAIDataAnalysisUnavailableReason({ ...baseConfig, isAIDataAnalysisEnabled: false })).toBe(
+        "not_enabled"
+      );
+    });
+
+    test("returns instance_not_configured when instance AI is missing", () => {
+      expect(getAIDataAnalysisUnavailableReason({ ...baseConfig, isInstanceConfigured: false })).toBe(
+        "instance_not_configured"
+      );
+    });
   });
 });

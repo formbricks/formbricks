@@ -10,6 +10,7 @@ import { verifyFeedbackRecordsGatewayToken } from "@/lib/jwt";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getBearerTokenFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { getFeedbackDirectoryAuthContext } from "@/modules/ee/feedback-directory/lib/feedback-directory";
+import { getIsUnifyFeedbackEnabled } from "@/modules/ee/license-check/lib/utils";
 import {
   TEnvoyAuthenticatedPrincipal,
   TEnvoyRequestAuthorizer,
@@ -164,23 +165,29 @@ const getFeedbackRecordsGatewayJwtFromHeaders = (headers: Headers): string | nul
   return getBearerTokenFromHeaders(headers);
 };
 
-const hasFeedbackDirectoryPermission = (
+const hasApiKeyImplicitFeedbackDirectoryAccess = (
   authentication: TAuthenticationApiKey,
-  feedbackDirectoryId: string,
+  workspaceIds: string[],
   requiredPermission: TFeedbackRecordsGatewayPermission
 ): boolean => {
-  const feedbackDirectoryPermission = authentication.feedbackDirectoryPermissions.find(
-    (permission) => permission.feedbackDirectoryId === feedbackDirectoryId
-  );
+  const orgAccessControl = authentication.organizationAccess?.accessControl;
+  if (orgAccessControl?.write) {
+    return true;
+  }
+  if (orgAccessControl?.read && requiredPermission === "read") {
+    return true;
+  }
 
-  if (!feedbackDirectoryPermission) {
+  const matchingWeights = authentication.workspacePermissions
+    .filter((permission) => workspaceIds.includes(permission.workspaceId))
+    .map((permission) => apiKeyPermissionWeight[permission.permission]);
+
+  if (matchingWeights.length === 0) {
     return false;
   }
 
-  return (
-    apiKeyPermissionWeight[feedbackDirectoryPermission.permission] >=
-    gatewayPermissionToApiKeyPermissionWeight[requiredPermission]
-  );
+  const maxWeight = Math.max(...matchingWeights);
+  return maxWeight >= gatewayPermissionToApiKeyPermissionWeight[requiredPermission];
 };
 
 const resolveTenantId = async (
@@ -257,8 +264,17 @@ const authorizeGatewayRequest = async (
     return { allowed: false };
   }
 
+  const isUnifyFeedbackAllowed = await getIsUnifyFeedbackEnabled(feedbackDirectory.organizationId);
+  if (!isUnifyFeedbackAllowed) {
+    return { allowed: false };
+  }
+
   if (principal.type === "apiKey") {
-    return hasFeedbackDirectoryPermission(principal.authentication, feedbackDirectoryId, requiredPermission)
+    return hasApiKeyImplicitFeedbackDirectoryAccess(
+      principal.authentication,
+      feedbackDirectory.workspaceIds,
+      requiredPermission
+    )
       ? { allowed: true }
       : { allowed: false };
   }

@@ -3,17 +3,17 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import * as crypto from "@/lib/crypto";
 import {
-  createGatewayServiceToken,
-  createFeedbackRecordsGatewayToken,
   createEmailChangeToken,
   createEmailToken,
+  createFeedbackRecordsGatewayToken,
+  createGatewayServiceToken,
   createInviteToken,
   createToken,
   createTokenForLinkSurvey,
   getEmailFromEmailToken,
-  verifyGatewayServiceToken,
-  verifyFeedbackRecordsGatewayToken,
   verifyEmailChangeToken,
+  verifyFeedbackRecordsGatewayToken,
+  verifyGatewayServiceToken,
   verifyInviteToken,
   verifyToken,
   verifyTokenForLinkSurvey,

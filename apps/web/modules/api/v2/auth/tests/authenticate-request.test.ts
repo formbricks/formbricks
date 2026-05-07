@@ -74,7 +74,6 @@ describe("authenticateRequest", () => {
             workspaceName: "Workspace 2",
           },
         ],
-        feedbackDirectoryPermissions: [],
         apiKeyId: "api-key-id",
         organizationId: "org-id",
         organizationAccess: {
@@ -120,7 +119,6 @@ describe("authenticateRequest", () => {
       expect(result.data).toEqual({
         type: "apiKey",
         workspacePermissions: [],
-        feedbackDirectoryPermissions: [],
         apiKeyId: "org-api-key-id",
         organizationId: "org-id",
         organizationAccess: {
@@ -201,17 +199,6 @@ describe("authenticateRequest", () => {
         },
       },
       apiKeyWorkspaces: [],
-      apiKeyFeedbackDirectories: [
-        {
-          feedbackDirectoryId: "clxx1234567890123456789012",
-          apiKeyId: "bearer-api-key-id",
-          permission: "read",
-          feedbackDirectory: {
-            id: "clxx1234567890123456789012",
-            name: "Directory 1",
-          },
-        },
-      ],
     } as unknown as TApiKeyWithEnvironmentAndWorkspace);
 
     const result = await authenticateRequest(request);
@@ -221,13 +208,6 @@ describe("authenticateRequest", () => {
       expect(result.data).toEqual({
         type: "apiKey",
         workspacePermissions: [],
-        feedbackDirectoryPermissions: [
-          {
-            feedbackDirectoryId: "clxx1234567890123456789012",
-            feedbackDirectoryName: "Directory 1",
-            permission: "read",
-          },
-        ],
         apiKeyId: "bearer-api-key-id",
         organizationId: "org-id",
         organizationAccess: {
