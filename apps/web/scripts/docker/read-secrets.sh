@@ -7,6 +7,7 @@ set -eu
 DEFAULT_DATABASE_URL="postgresql://test:test@localhost:5432/formbricks"
 DEFAULT_ENCRYPTION_KEY="0123456789abcdef0123456789abcdef"
 DEFAULT_REDIS_URL="redis://localhost:6379"
+DEFAULT_HUB_API_URL="http://localhost:4000"
 
 if [ -f "/run/secrets/database_url" ]; then
   IFS= read -r DATABASE_URL < /run/secrets/database_url || true
@@ -34,6 +35,15 @@ if [ -z "${REDIS_URL:-}" ]; then
   echo "⚠️  REDIS_URL secret not found or empty. Using build-time fallback value."
 fi
 export REDIS_URL
+
+if [ -f "/run/secrets/hub_api_url" ]; then
+  IFS= read -r HUB_API_URL < /run/secrets/hub_api_url || true
+fi
+if [ -z "${HUB_API_URL:-}" ]; then
+  HUB_API_URL="${DEFAULT_HUB_API_URL}"
+  echo "⚠️  HUB_API_URL secret not found or empty. Using build-time fallback value."
+fi
+export HUB_API_URL
 
 if [ -f "/run/secrets/posthog_key" ]; then
   IFS= read -r POSTHOG_KEY < /run/secrets/posthog_key || true
@@ -68,6 +78,7 @@ fi
 echo "  DATABASE_URL: $([ -n "${DATABASE_URL:-}" ] && printf '[SET]' || printf '[NOT SET]')"
 echo "  ENCRYPTION_KEY: $([ -n "${ENCRYPTION_KEY:-}" ] && printf '[SET]' || printf '[NOT SET]')"
 echo "  REDIS_URL: $([ -n "${REDIS_URL:-}" ] && printf '[SET]' || printf '[NOT SET]')"
+echo "  HUB_API_URL: $([ -n "${HUB_API_URL:-}" ] && printf '[SET]' || printf '[NOT SET]')"
 echo "  SENTRY_AUTH_TOKEN: $([ -n "${SENTRY_AUTH_TOKEN:-}" ] && printf '[SET]' || printf '[NOT SET]')"
 echo "  POSTHOG_KEY: $([ -n "${POSTHOG_KEY:-}" ] && printf '[SET]' || printf '[NOT SET]')"
 echo "  TARGETARCH: $([ -n "${TARGETARCH:-}" ] && printf '%s' "${TARGETARCH}" || printf '[NOT SET]')"

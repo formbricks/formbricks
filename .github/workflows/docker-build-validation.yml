@@ -73,6 +73,7 @@ jobs:
             database_url=${{ secrets.DUMMY_DATABASE_URL }}
             encryption_key=${{ secrets.DUMMY_ENCRYPTION_KEY }}
             redis_url=redis://localhost:6379
+            hub_api_url=http://localhost:4000
 
       - name: Verify and Initialize PostgreSQL
         run: |
