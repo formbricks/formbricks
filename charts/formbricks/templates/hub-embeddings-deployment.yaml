@@ -1,7 +1,7 @@
 {{- if and .Values.hub.enabled .Values.hub.embeddings.enabled }}
 {{- $embeddingsReplicas := int (.Values.hub.embeddings.replicas | default 1) -}}
 {{- $embeddingsMaxReplicas := int (.Values.hub.embeddings.autoscaling.maxReplicas | default 1) -}}
-{{- if and .Values.hub.embeddings.persistence.enabled (not (has "ReadWriteMany" .Values.hub.embeddings.persistence.accessModes)) (or (gt $embeddingsReplicas 1) (and .Values.hub.embeddings.autoscaling.enabled (gt $embeddingsMaxReplicas 1))) }}
+{{- if and .Values.hub.embeddings.persistence.enabled (not .Values.hub.embeddings.persistence.existingClaim) (not (has "ReadWriteMany" .Values.hub.embeddings.persistence.accessModes)) (or (gt $embeddingsReplicas 1) (and .Values.hub.embeddings.autoscaling.enabled (gt $embeddingsMaxReplicas 1))) }}
   {{- fail "hub.embeddings persistence with multiple replicas requires persistence.accessModes to include ReadWriteMany, or set hub.embeddings.persistence.enabled=false/use a ReadWriteMany existingClaim" }}
 {{- end }}
 {{- if and .Values.hub.embeddings.auth.existingSecret .Values.hub.embeddings.huggingFace.token (not .Values.hub.embeddings.huggingFace.existingSecret) }}
@@ -20,6 +20,16 @@ metadata:
     app.kubernetes.io/managed-by: {{ .Release.Service }}
     app.kubernetes.io/part-of: {{ .Values.partOfOverride | default (include "formbricks.name" .) }}
 spec:
+  {{- if and .Values.hub.embeddings.persistence.enabled (not (has "ReadWriteMany" .Values.hub.embeddings.persistence.accessModes)) }}
+  strategy:
+    type: Recreate
+  {{- else }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  {{- end }}
   {{- if not .Values.hub.embeddings.autoscaling.enabled }}
   replicas: {{ .Values.hub.embeddings.replicas | default 1 }}
   {{- end }}
@@ -108,14 +118,14 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: {{ include "formbricks.hubEmbeddingsSecretName" . }}
-                  key: {{ .Values.hub.embeddings.auth.secretKey | default "EMBEDDING_PROVIDER_API_KEY" }}
+                  key: {{ .Values.hub.embeddings.auth.secretKey | default "EMBEDDING_PROVIDER_API_KEY" | quote }}
             {{- end }}
             {{- if or .Values.hub.embeddings.huggingFace.existingSecret .Values.hub.embeddings.huggingFace.token }}
             - name: HF_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: {{ include "formbricks.hubEmbeddingsHuggingFaceSecretName" . }}
-                  key: {{ .Values.hub.embeddings.huggingFace.tokenKey | default "HF_TOKEN" }}
+                  key: {{ .Values.hub.embeddings.huggingFace.tokenKey | default "HF_TOKEN" | quote }}
             {{- end }}
             {{- range $key, $value := .Values.hub.embeddings.env }}
             {{- if not (or (and $.Values.hub.embeddings.auth.enabled (eq $key "API_KEY")) (and (or $.Values.hub.embeddings.huggingFace.existingSecret $.Values.hub.embeddings.huggingFace.token) (eq $key "HF_TOKEN"))) }}

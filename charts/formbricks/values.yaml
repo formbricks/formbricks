@@ -629,6 +629,12 @@ hub:
     # Optional env vars (non-secret) added only to hub-worker.
     env: {}
 
+    waitForApi:
+      # Avoid starting workers before the API service is healthy during installs/upgrades.
+      enabled: true
+      # 120 attempts * 5 seconds = 10 minutes.
+      maxAttempts: 120
+
     resources:
       limits:
         memory: 512Mi

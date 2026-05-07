@@ -46,6 +46,7 @@ spec:
       imagePullSecrets:
         {{- toYaml .Values.deployment.imagePullSecrets | nindent 8 }}
       {{- end }}
+      {{- if .Values.hub.worker.waitForApi.enabled }}
       initContainers:
         - name: wait-for-hub-api
           image: {{ include "formbricks.hubImage" . }}
@@ -57,10 +58,18 @@ spec:
             - sh
             - -c
             - |
+              attempts=0
+              max_attempts={{ .Values.hub.worker.waitForApi.maxAttempts | default 120 }}
               until wget --no-verbose --tries=1 --spider http://{{ include "formbricks.hubname" . }}:8080/health; do
+                attempts=$((attempts+1))
+                if [ "$attempts" -ge "$max_attempts" ]; then
+                  echo "Hub API health check timed out after $((max_attempts * 5)) seconds"
+                  exit 1
+                fi
                 echo "Waiting for Hub API migrations and health check..."
                 sleep 5
               done
+      {{- end }}
       containers:
         - name: hub-worker
           image: {{ include "formbricks.hubImage" . }}

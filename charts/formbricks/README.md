@@ -227,6 +227,8 @@ Autoscaling is opt-in for Hub API, Hub worker, and the embeddings runtime. If yo
 | hub.worker.resources.limits.memory                                 | string | `"512Mi"`                         |             |
 | hub.worker.resources.requests.cpu                                  | string | `"100m"`                          |             |
 | hub.worker.resources.requests.memory                               | string | `"256Mi"`                         |             |
+| hub.worker.waitForApi.enabled                                      | bool   | `true`                            |             |
+| hub.worker.waitForApi.maxAttempts                                  | int    | `120`                             | 120 attempts at 5s intervals = 10 minutes. |
 | ingress.annotations                                                | object | `{}`                              |             |
 | ingress.enabled                                                    | bool   | `false`                           |             |
 | ingress.hosts[0].host                                              | string | `"k8s.formbricks.com"`            |             |

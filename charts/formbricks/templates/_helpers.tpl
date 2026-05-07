@@ -243,8 +243,10 @@ true
 
 {{- define "formbricks.cronSecret" -}}
 {{- $secret := (lookup "v1" "Secret" .Release.Namespace (include "formbricks.appSecretName" .)) }}
-{{- if $secret }}
+{{- if and $secret (index $secret.data "CRON_SECRET") }}
     {{- index $secret.data "CRON_SECRET" | b64dec -}}
+{{- else if $secret }}
+    {{- fail (printf "Secret %q exists in namespace %q but is missing CRON_SECRET" (include "formbricks.appSecretName" .) .Release.Namespace) -}}
 {{- else }}
     {{- randAlphaNum 32 -}}
 {{- end -}}
