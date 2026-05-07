@@ -126,7 +126,7 @@ export function transformResponseToFeedbackRecords(
       source_name: survey.name,
       field_label: fieldLabel,
       ...(response.language && response.language !== "default" ? { language: response.language } : {}),
-      ...(response.contact?.userId ? { user_identifier: response.contact.userId } : {}),
+      ...(response.contact?.userId ? { user_id: response.contact.userId } : {}),
       ...valueFields,
     };
 

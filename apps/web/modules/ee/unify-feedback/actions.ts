@@ -117,7 +117,7 @@ export const createFeedbackRecordAction = authenticatedActionClient
         value_date: recordInput.value_date,
         metadata: recordInput.metadata,
         language: recordInput.language,
-        user_identifier: recordInput.user_identifier,
+        user_id: recordInput.user_id,
       };
 
       const createResult = await createFeedbackRecord(createParams);
@@ -163,8 +163,8 @@ export const updateFeedbackRecordAction = authenticatedActionClient
         ...(updateInput.value_date !== undefined && { value_date: updateInput.value_date ?? undefined }),
         ...(updateInput.language !== undefined && { language: updateInput.language ?? undefined }),
         ...(updateInput.metadata !== undefined && { metadata: updateInput.metadata }),
-        ...(updateInput.user_identifier !== undefined && {
-          user_identifier: updateInput.user_identifier ?? undefined,
+        ...(updateInput.user_id !== undefined && {
+          user_id: updateInput.user_id ?? undefined,
         }),
       };
 

@@ -266,7 +266,7 @@ services:
   # Run Hub DB migrations (goose + river) before the API starts. Uses same image; migrations are idempotent.
   # Default tracks :latest so self-host updates (compose pull) advance Hub alongside the app image.
   # Operators who want an immutable pin can set HUB_IMAGE_REF in docker/.env to either ":<tag>"
-  # (e.g. ":0.2.0") or "@sha256:<digest>". hub and hub-migrate share the same value — no drift.
+  # (e.g. ":0.3.0") or "@sha256:<digest>". hub and hub-migrate share the same value — no drift.
   hub-migrate:
     image: ghcr.io/formbricks/hub${HUB_IMAGE_REF:-:latest}
     restart: "no"

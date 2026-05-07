@@ -35,7 +35,7 @@ export const ZFeedbackRecordCreateInput = z.object({
   value_date: z.iso.datetime().optional(),
   metadata: ZFeedbackRecordMetadata.optional(),
   language: z.string().optional(),
-  user_identifier: z.string().optional(),
+  user_id: z.string().optional(),
 });
 
 export type TFeedbackRecordCreateInput = z.infer<typeof ZFeedbackRecordCreateInput>;
@@ -48,7 +48,7 @@ export const ZFeedbackRecordUpdateInput = z
     value_date: z.iso.datetime().optional().nullable(),
     language: z.string().optional().nullable(),
     metadata: ZFeedbackRecordMetadata.optional(),
-    user_identifier: z.string().optional().nullable(),
+    user_id: z.string().optional().nullable(),
   })
   .refine(
     (value) => Object.values(value).some((entry) => entry !== undefined),

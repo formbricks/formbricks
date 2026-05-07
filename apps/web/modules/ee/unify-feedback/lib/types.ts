@@ -50,7 +50,7 @@ export const ZFeedbackRecordFormValues = z.object({
   value_boolean: z.boolean().optional(),
   value_date: z.string().optional(),
   language: z.string().optional(),
-  user_identifier: z.string().optional(),
+  user_id: z.string().optional(),
   metadataEntries: z.array(ZMetadataEntry),
 });
 
