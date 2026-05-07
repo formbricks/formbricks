@@ -48,10 +48,14 @@ The intended defaults are:
 
 ## Cube.js for XM Suite v5
 
-This chart does not deploy Cube.js. XM Suite v5 dashboard and analysis features require an external Cube instance.
+XM Suite v5 dashboard and analysis features require Cube.js. Set `cube.enabled=true` to deploy an
+internal Cube service from this chart, or provide an external Cube endpoint.
 
-- Set `deployment.env.CUBEJS_API_URL` to your Cube endpoint.
+- For chart-managed Cube, set `deployment.env.CUBEJS_API_URL` to `http://formbricks-cube:4000`
+  when using the default release name.
+- For external Cube, set `deployment.env.CUBEJS_API_URL` to your Cube endpoint.
 - Provide `CUBEJS_API_SECRET` through your existing secret management flow, such as the generated app secret override or `deployment.envFrom`.
+- Provide `CUBEJS_DB_*` connection variables to the Cube deployment through `cube.envFrom` or `cube.env`.
 - Keep Hub enabled. Cube should point at the same feedback records database that Hub writes to, unless you intentionally split that storage.
 
 ## Hub worker and self-hosted embeddings

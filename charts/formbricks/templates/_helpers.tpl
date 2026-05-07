@@ -15,6 +15,14 @@ Hub resource name: base name truncated to 59 chars then "-hub" so the suffix is 
 {{- printf "%s-hub" $base | trimSuffix "-" }}
 {{- end }}
 
+{{/*
+Cube.js resource name.
+*/}}
+{{- define "formbricks.cubeName" -}}
+{{- $base := include "formbricks.name" . | trunc 58 | trimSuffix "-" }}
+{{- printf "%s-cube" $base | trimSuffix "-" }}
+{{- end }}
+
 
 {{/*
 Define the application version to be used in labels.
