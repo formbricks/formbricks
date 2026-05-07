@@ -13,14 +13,10 @@ interface ModePageProps {
   params: Promise<{
     organizationId: string;
   }>;
-  searchParams: Promise<{
-    experiment_variant?: string;
-  }>;
 }
 
 const Page = async (props: ModePageProps) => {
   const params = await props.params;
-  const searchParams = await props.searchParams;
 
   const { session } = await getOrganizationAuth(params.organizationId);
 
@@ -29,9 +25,7 @@ const Page = async (props: ModePageProps) => {
   }
 
   const experimentVariant =
-    searchParams.experiment_variant ??
-    (await posthogServerClient?.getFeatureFlag("onboarding-mode-experiment", session.user.id)) ??
-    "control";
+    (await posthogServerClient?.getFeatureFlag("onboarding-mode-experiment", session.user.id)) ?? "control";
 
   if (experimentVariant === "remove-cx-and-surveys-mode") {
     return redirect(`/organizations/${params.organizationId}/workspaces/new/channel`);
