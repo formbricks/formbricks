@@ -8,10 +8,13 @@ import { ProjectSettings } from "@/app/(app)/(onboarding)/organizations/[organiz
 import { DEFAULT_BRAND_COLOR } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { getPostHogFeatureFlag } from "@/lib/posthog/get-feature-flag";
 import { getUserProjects } from "@/lib/project/service";
+import { buildStylingFromBrandColor } from "@/lib/styling/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { getAccessControlPermission } from "@/modules/ee/license-check/lib/utils";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
+import { createProject } from "@/modules/projects/settings/lib/project";
 import { Button } from "@/modules/ui/components/button";
 import { Header } from "@/modules/ui/components/header";
 
@@ -40,6 +43,25 @@ const Page = async (props: ProjectSettingsPageProps) => {
   const channel = searchParams.channel ?? null;
   const industry = searchParams.industry ?? null;
   const mode = searchParams.mode ?? "surveys";
+
+  const experimentVariant =
+    (await getPostHogFeatureFlag(session.user.id, "onboarding-theme-experiment")) || "control";
+
+  if (experimentVariant === "remove-theme") {
+    const project = await createProject(params.organizationId, {
+      name: organization.name,
+      styling: buildStylingFromBrandColor(DEFAULT_BRAND_COLOR),
+      config: { channel, industry },
+    });
+    const productionEnv = project.environments.find((e) => e.type === "production");
+    if (channel === "app" || channel === "website") {
+      return redirect(`/environments/${productionEnv?.id}/connect`);
+    } else if (channel === "link") {
+      return redirect(`/environments/${productionEnv?.id}/surveys`);
+    }
+    return redirect(`/environments/${productionEnv?.id}/xm-templates`);
+  }
+
   const projects = await getUserProjects(session.user.id, params.organizationId);
 
   const organizationTeams = await getTeamsByOrganizationId(params.organizationId);
