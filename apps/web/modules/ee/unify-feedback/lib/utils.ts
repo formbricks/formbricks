@@ -74,7 +74,7 @@ export const getCreateDefaults = (directories: { id: string; name: string }[]): 
     value_boolean: undefined,
     value_date: "",
     language: "",
-    user_identifier: "",
+    user_id: "",
     metadataEntries: [],
   };
 };
@@ -107,7 +107,7 @@ export const mapRecordToValues = (record: FeedbackRecordData): TFeedbackRecordFo
     value_boolean: record.value_boolean,
     value_date: record.value_date ? toLocalDateTimeInput(record.value_date) : "",
     language: record.language ?? "",
-    user_identifier: record.user_identifier ?? "",
+    user_id: record.user_id ?? "",
     metadataEntries,
   };
 };

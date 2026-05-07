@@ -365,8 +365,8 @@ const FeedbackRecordRow = ({
           <span>{value}</span>
         )}
       </td>
-      <td className="max-w-[120px] truncate px-4 py-3 text-slate-500" title={record.user_identifier}>
-        {record.user_identifier ?? "—"}
+      <td className="max-w-[120px] truncate px-4 py-3 text-slate-500" title={record.user_id}>
+        {record.user_id ?? "—"}
       </td>
     </tr>
   );

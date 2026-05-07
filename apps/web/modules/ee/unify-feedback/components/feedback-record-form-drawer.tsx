@@ -244,7 +244,7 @@ export const FeedbackRecordFormDrawer = ({
         ...buildCreateValueFields(values),
         metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
         language: values.language?.trim() || undefined,
-        user_identifier: values.user_identifier?.trim() || undefined,
+        user_id: values.user_id?.trim() || undefined,
       },
     });
 
@@ -270,7 +270,7 @@ export const FeedbackRecordFormDrawer = ({
       recordId,
       updateInput: {
         language: values.language?.trim() || null,
-        user_identifier: values.user_identifier?.trim() || null,
+        user_id: values.user_id?.trim() || null,
         metadata: { ...preservedMetadata, ...metadata },
         ...getUpdateValueField(values),
       },
@@ -694,7 +694,7 @@ export const FeedbackRecordFormDrawer = ({
                   />
                   <FormField
                     control={form.control}
-                    name="user_identifier"
+                    name="user_id"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>{t("workspace.unify.user_identifier")}</FormLabel>
