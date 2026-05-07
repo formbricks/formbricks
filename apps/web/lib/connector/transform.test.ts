@@ -131,7 +131,7 @@ describe("transformResponseToFeedbackRecords", () => {
       source_name: "Product Feedback",
       value_text: "Great product!",
       language: "en",
-      user_identifier: "user-42",
+      user_id: "user-42",
     });
   });
 
@@ -222,11 +222,11 @@ describe("transformResponseToFeedbackRecords", () => {
     expect(result[0].language).toBeUndefined();
   });
 
-  test("omits user_identifier when contact has no userId", () => {
+  test("omits user_id when contact has no userId", () => {
     const response = { ...mockResponse, contact: null } as unknown as TResponse;
     const mappings = [createMapping({ elementId: "el-text", hubFieldType: "text" })];
     const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings);
-    expect(result[0].user_identifier).toBeUndefined();
+    expect(result[0].user_id).toBeUndefined();
   });
 
   test("transforms all mappings in a single call", () => {

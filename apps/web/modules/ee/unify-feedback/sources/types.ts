@@ -167,7 +167,7 @@ export const FEEDBACK_RECORD_FIELDS: TTargetField[] = [
     exampleStaticValues: ["en", "de", "fr", "es", "pt", "ja", "zh"],
   },
   {
-    id: "user_identifier",
+    id: "user_id",
     name: "User Identifier",
     type: "string",
     required: false,

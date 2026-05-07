@@ -595,7 +595,7 @@ async function main(): Promise<void> {
       collected_at TIMESTAMPTZ,
       value_number DOUBLE PRECISION,
       response_id TEXT,
-      user_identifier TEXT,
+      user_id TEXT,
       emotion TEXT,
       metadata JSONB DEFAULT '{}'::jsonb
     )
@@ -628,18 +628,18 @@ async function main(): Promise<void> {
     const collectedAt = new Date(Date.now() - daysAgo * 86400000).toISOString();
     const valueNumber = Math.floor(Math.random() * 11);
     const responseId = `resp_seed_${String(i).padStart(3, "0")}`;
-    const userIdentifier = userIds[i % userIds.length];
+    const userId = userIds[i % userIds.length];
     const emotion = emotions[i % emotions.length];
     const topicList = topics[i % topics.length];
     const metadata = JSON.stringify({ topics: topicList }).replace(/'/g, "''");
 
     feedbackValues.push(
-      `('${id}','${sentiment}','${sourceType}','${sourceName}','${fieldType}','${collectedAt}',${String(valueNumber)},'${responseId}','${userIdentifier}','${emotion}','${metadata}'::jsonb)`
+      `('${id}','${sentiment}','${sourceType}','${sourceName}','${fieldType}','${collectedAt}',${String(valueNumber)},'${responseId}','${userId}','${emotion}','${metadata}'::jsonb)`
     );
   }
 
   await prisma.$executeRawUnsafe(
-    `INSERT INTO feedback_records (id, sentiment, source_type, source_name, field_type, collected_at, value_number, response_id, user_identifier, emotion, metadata) VALUES ${feedbackValues.join(",\n")} ON CONFLICT (id) DO NOTHING`
+    `INSERT INTO feedback_records (id, sentiment, source_type, source_name, field_type, collected_at, value_number, response_id, user_id, emotion, metadata) VALUES ${feedbackValues.join(",\n")} ON CONFLICT (id) DO NOTHING`
   );
 
   // Charts & Dashboards

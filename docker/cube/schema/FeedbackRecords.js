@@ -102,8 +102,8 @@ cube(`FeedbackRecords`, {
       description: `Unique identifier linking related feedback records`,
     },
 
-    userIdentifier: {
-      sql: `user_identifier`,
+    userId: {
+      sql: `user_id`,
       type: `string`,
       description: `Identifier of the user who provided feedback`,
     },
