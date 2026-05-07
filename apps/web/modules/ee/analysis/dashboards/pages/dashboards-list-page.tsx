@@ -4,7 +4,9 @@ import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { AnalysisPageLayout } from "@/modules/ee/analysis/components/analysis-page-layout";
 import { NoFeedbackRecordsState } from "@/modules/ee/analysis/components/no-feedback-records-state";
-import { hasWorkspaceFeedbackRecords } from "@/modules/ee/analysis/lib/feedback-records";
+import { hasFeedbackRecordsInDirectories } from "@/modules/ee/analysis/lib/feedback-records";
+import { NoFeedbackDirectoryEmptyState } from "@/modules/ee/feedback-directory/components/no-feedback-directory-empty-state";
+import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getIsDashboardsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
@@ -35,7 +37,7 @@ interface DashboardsListPageProps {
 
 export const DashboardsListPage = async ({ workspaceId }: Readonly<DashboardsListPageProps>) => {
   const t = await getTranslate();
-  const { isReadOnly, organization } = await getWorkspaceAuth(workspaceId);
+  const { isReadOnly, organization, isOwner, isManager } = await getWorkspaceAuth(workspaceId);
 
   const isDashboardsAllowed = await getIsDashboardsEnabled(organization.id);
   if (!isDashboardsAllowed) {
@@ -66,10 +68,23 @@ export const DashboardsListPage = async ({ workspaceId }: Readonly<DashboardsLis
     );
   }
 
-  const [hasFeedbackRecords, connectors] = await Promise.all([
-    hasWorkspaceFeedbackRecords(workspaceId),
+  const [frds, connectors] = await Promise.all([
+    getFeedbackDirectoriesByWorkspaceId(workspaceId),
     getConnectorsWithMappings(workspaceId),
   ]);
+
+  if (frds.length === 0) {
+    return (
+      <AnalysisPageLayout
+        pageTitle={t("common.analysis")}
+        workspaceId={workspaceId}
+        cta={isReadOnly ? undefined : <CreateDashboardButton workspaceId={workspaceId} disabled={true} />}>
+        <NoFeedbackDirectoryEmptyState workspaceId={workspaceId} isOwnerOrManager={isOwner || isManager} />
+      </AnalysisPageLayout>
+    );
+  }
+
+  const hasFeedbackRecords = await hasFeedbackRecordsInDirectories(frds.map((frd) => frd.id));
   const dashboardsPromise = hasFeedbackRecords ? getDashboards(workspaceId) : null;
 
   return (

@@ -29,14 +29,6 @@ const selectWorkspace = {
   customHeadScripts: true,
 };
 
-type TCreateWorkspaceInput = Partial<TWorkspaceUpdateInput> & {
-  feedbackDirectoryId?: string;
-};
-
-const ZCreateWorkspaceInput = ZWorkspaceUpdateInput.partial().extend({
-  feedbackDirectoryId: ZId.optional(),
-});
-
 export const updateWorkspace = async (
   workspaceId: string,
   inputWorkspace: TWorkspaceUpdateInput
@@ -64,32 +56,17 @@ export const updateWorkspace = async (
 
 export const createWorkspace = async (
   organizationId: string,
-  workspaceInput: TCreateWorkspaceInput
+  workspaceInput: TWorkspaceUpdateInput
 ): Promise<TWorkspace> => {
-  validateInputs([organizationId, ZString], [workspaceInput, ZCreateWorkspaceInput]);
+  validateInputs([organizationId, ZString], [workspaceInput, ZWorkspaceUpdateInput]);
 
   if (!workspaceInput.name) {
     throw new ValidationError("Workspace Name is required");
   }
 
-  const { teamIds, feedbackDirectoryId, ...data } = workspaceInput;
+  const { teamIds, ...data } = workspaceInput;
 
   try {
-    if (feedbackDirectoryId) {
-      const feedbackDirectory = await prisma.feedbackDirectory.findFirst({
-        where: {
-          id: feedbackDirectoryId,
-          organizationId,
-          isArchived: false,
-        },
-        select: { id: true },
-      });
-
-      if (!feedbackDirectory) {
-        throw new InvalidInputError("FEEDBACK_DIRECTORY_NOT_FOUND");
-      }
-    }
-
     const workspace = await prisma.workspace.create({
       data: {
         config: {
@@ -109,41 +86,6 @@ export const createWorkspace = async (
           workspaceId: workspace.id,
           teamId,
         })),
-      });
-    }
-
-    if (feedbackDirectoryId) {
-      await prisma.feedbackDirectoryWorkspace.create({
-        data: {
-          feedbackDirectoryId,
-          workspaceId: workspace.id,
-        },
-      });
-
-      return workspace;
-    }
-
-    // Ensure default FRD exists + link to first workspace atomically
-    const defaultFrd = await prisma.feedbackDirectory.upsert({
-      where: {
-        organizationId_name: { organizationId, name: "Default Feedback Directory" },
-      },
-      create: { name: "Default Feedback Directory", organizationId },
-      update: {},
-      select: { id: true },
-    });
-
-    // Link only if this is the first workspace (no existing links for this FRD)
-    const existingLinks = await prisma.feedbackDirectoryWorkspace.count({
-      where: { feedbackDirectoryId: defaultFrd.id },
-    });
-
-    if (existingLinks === 0) {
-      await prisma.feedbackDirectoryWorkspace.create({
-        data: {
-          feedbackDirectoryId: defaultFrd.id,
-          workspaceId: workspace.id,
-        },
       });
     }
 

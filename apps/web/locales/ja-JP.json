@@ -2564,6 +2564,9 @@
         "error_directory_name_required": "ディレクトリ名は必須です。",
         "error_directory_workspaces_invalid_org": "指定されたワークスペースの一部がこの組織に属していません。",
         "error_workspace_already_assigned": "One or more workspaces are already linked to a different active directory. Reassign them first.",
+        "grant_access_confirm": "ワークスペースのアクセス権を付与",
+        "grant_workspace_access_title": "ワークスペースのアクセス権付与を確認",
+        "grant_workspace_access_warning": "以下のワークスペースの現在および今後のメンバー全員が、他のリンクされたワークスペースのコネクタによって取り込まれたデータを含む、\"{directoryName}\"にルーティングされるすべてのフィードバックデータへの読み取りアクセス権を取得します。この変更は通知なしに元に戻すことはできません。",
         "nav_label": "フィードバックディレクトリ",
         "no_access": "フィードバックディレクトリを管理する権限がありません。",
         "no_connectors": "このディレクトリにリンクされているコネクタはまだありません。",
@@ -2576,7 +2579,9 @@
         "unarchive_workspace_conflict": "割り当てられているワークスペースの1つ以上がアーカイブされているため、このディレクトリをアーカイブ解除できません。",
         "upgrade_prompt_description": "フィードバックレコードをディレクトリで整理し、適切なワークスペースにデータを振り分けられます。ProプランおよびScaleプランでご利用いただけます。",
         "upgrade_prompt_title": "アップグレードしてフィードバックレコードディレクトリを利用",
-        "workspace_access": "ワークスペースアクセス"
+        "workspace_access": "ワークスペースアクセス",
+        "workspaces_already_linked": "既にリンクされているワークスペース",
+        "workspaces_being_added": "アクセス権が付与されるワークスペース"
       },
       "general": {
         "ai_data_analysis_enabled": "データエンリッチメントと分析（AI）",
@@ -3727,6 +3732,9 @@
       "metadata_value": "メタデータ値",
       "missing_feedback_source_title": "フィードバックソースが見つかりませんか?",
       "no_feedback_directory_available": "このワークスペースにはフィードバックディレクトリが割り当てられていません。まずディレクトリを作成または割り当ててください。",
+      "no_feedback_directory_linked_admin_description": "フィードバックディレクトリは、接続されたワークスペースからレコードを集約します。このワークスペースにはまだディレクトリがリンクされていません。レコードの収集を開始するには、フィードバックディレクトリ設定から割り当ててください。",
+      "no_feedback_directory_linked_member_description": "この機能を利用するには、このワークスペースにフィードバックディレクトリを設定する必要があります。組織のオーナーまたはマネージャーに割り当てを依頼してください。",
+      "no_feedback_directory_linked_title": "フィードバックディレクトリが未リンク",
       "no_feedback_records": "フィードバックレコードはまだありません。コネクタがデータの送信を開始すると、ここにレコードが表示されます。",
       "no_source_fields_loaded": "ソースフィールドがまだ読み込まれていません",
       "no_sources_connected": "ソースがまだ接続されていません。開始するにはソースを追加してください。",

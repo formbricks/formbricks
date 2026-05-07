@@ -2564,6 +2564,9 @@
         "error_directory_name_required": "目录名称为必填项。",
         "error_directory_workspaces_invalid_org": "某些指定的工作区不属于此组织。",
         "error_workspace_already_assigned": "One or more workspaces are already linked to a different active directory. Reassign them first.",
+        "grant_access_confirm": "授权工作区访问权限",
+        "grant_workspace_access_title": "确认授权工作区访问",
+        "grant_workspace_access_warning": "下方所有当前及未来的工作区成员都将获得对“{directoryName}”中所有反馈数据的读取权限，包括其他已关联工作区连接器导入的数据。此更改无法静默撤销。",
         "nav_label": "反馈目录",
         "no_access": "你没有管理反馈目录的权限。",
         "no_connectors": "此目录尚未链接任何连接器。",
@@ -2576,7 +2579,9 @@
         "unarchive_workspace_conflict": "无法取消归档该目录，因为一个或多个已分配工作区已归档。",
         "upgrade_prompt_description": "将反馈记录整理到目录中,并将数据路由到正确的工作空间。专业版和规模版方案可用。",
         "upgrade_prompt_title": "升级以解锁反馈记录目录",
-        "workspace_access": "工作区访问权限"
+        "workspace_access": "工作区访问权限",
+        "workspaces_already_linked": "已关联的工作区",
+        "workspaces_being_added": "将被授权访问的工作区"
       },
       "general": {
         "ai_data_analysis_enabled": "数据增强与分析（AI）",
@@ -3727,6 +3732,9 @@
       "metadata_value": "元数据值",
       "missing_feedback_source_title": "Missing feedback source?",
       "no_feedback_directory_available": "此工作区未分配反馈目录。请先创建或分配一个。",
+      "no_feedback_directory_linked_admin_description": "反馈目录会汇总已连接工作区的记录。此工作区尚未关联任何目录，请在反馈目录设置中分配，以开始收集记录。",
+      "no_feedback_directory_linked_member_description": "在该功能可用前，需要先为此工作区设置反馈目录。请联系组织所有者或管理员进行分配。",
+      "no_feedback_directory_linked_title": "未关联反馈目录",
       "no_feedback_records": "暂无反馈记录。当你的连接器开始发送数据后，记录会显示在这里。",
       "no_source_fields_loaded": "尚未加载源字段",
       "no_sources_connected": "还没有连接数据源。添加一个数据源开始吧。",

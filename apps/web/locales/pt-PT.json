@@ -2564,6 +2564,9 @@
         "error_directory_name_required": "O nome do diretório é obrigatório.",
         "error_directory_workspaces_invalid_org": "Algumas áreas de trabalho especificadas não pertencem a esta organização.",
         "error_workspace_already_assigned": "One or more workspaces are already linked to a different active directory. Reassign them first.",
+        "grant_access_confirm": "Conceder acesso ao workspace",
+        "grant_workspace_access_title": "Confirmar concessão de acesso ao workspace",
+        "grant_workspace_access_warning": "Todos os membros atuais e futuros dos workspaces abaixo obterão acesso de leitura a todos os dados de feedback encaminhados para \"{directoryName}\", incluindo dados ingeridos por conectores de outros workspaces vinculados. Esta alteração não pode ser desfeita silenciosamente.",
         "nav_label": "Diretórios de Feedback",
         "no_access": "Não tens permissão para gerir diretórios de feedback.",
         "no_connectors": "Ainda não há conectores associados a este diretório.",
@@ -2576,7 +2579,9 @@
         "unarchive_workspace_conflict": "Não é possível desarquivar este diretório porque um ou mais workspaces atribuídos estão arquivados.",
         "upgrade_prompt_description": "Organiza os registos de feedback em diretórios e encaminha os dados para o workspace certo. Disponível nos planos Pro e Scale.",
         "upgrade_prompt_title": "Faz upgrade para desbloquear Diretórios de Registos de Feedback",
-        "workspace_access": "Acesso ao workspace"
+        "workspace_access": "Acesso ao workspace",
+        "workspaces_already_linked": "Workspaces já vinculados",
+        "workspaces_being_added": "Workspaces a receber acesso"
       },
       "general": {
         "ai_data_analysis_enabled": "Enriquecimento e análise de dados (IA)",
@@ -3727,6 +3732,9 @@
       "metadata_value": "Valor dos metadados",
       "missing_feedback_source_title": "Falta alguma fonte de feedback?",
       "no_feedback_directory_available": "Nenhum diretório de feedback atribuído a este workspace. Cria ou atribui um primeiro.",
+      "no_feedback_directory_linked_admin_description": "Os diretórios de feedback agregam registos de workspaces conectados. Ainda não há nenhum diretório vinculado a este workspace — atribui um nas definições de Diretório de Feedback para começares a recolher registos.",
+      "no_feedback_directory_linked_member_description": "É necessário configurar um diretório de feedback para este workspace antes de esta funcionalidade estar disponível. Pede a um proprietário ou gestor da organização para atribuir um.",
+      "no_feedback_directory_linked_title": "Nenhum diretório de feedback vinculado",
       "no_feedback_records": "Ainda não há registos de feedback. Os registos aparecerão aqui assim que os teus conectores começarem a enviar dados.",
       "no_source_fields_loaded": "Ainda não foram carregados campos de origem",
       "no_sources_connected": "Ainda não há origens ligadas. Adicione uma origem para começar.",

@@ -2457,6 +2457,9 @@ checksums:
     workspace/settings/feedback_directories/error_directory_name_required: 0f42d7292979006a1069063ab213b8e3
     workspace/settings/feedback_directories/error_directory_workspaces_invalid_org: 477b5c1a466c4194668544ffd42ec9bf
     workspace/settings/feedback_directories/error_workspace_already_assigned: 6f851ad28a4e91e48fe13da917ea1ae0
+    workspace/settings/feedback_directories/grant_access_confirm: 0b040e675cf418d8051d7ad92096ccdd
+    workspace/settings/feedback_directories/grant_workspace_access_title: e959a57192546b1d5ea7062b0ace6aec
+    workspace/settings/feedback_directories/grant_workspace_access_warning: 09470da541a8b5b221d49aed69bd6739
     workspace/settings/feedback_directories/nav_label: cf9a57b3cbac0f04b98e06fb693e986e
     workspace/settings/feedback_directories/no_access: 707627df25fbaa28f18aa0f0d03dcb81
     workspace/settings/feedback_directories/no_connectors: b1becb4fe4e2ba7c5d277db149f092ff
@@ -2470,6 +2473,8 @@ checksums:
     workspace/settings/feedback_directories/upgrade_prompt_description: eb8a4bf60bcae458899e1ea94094789d
     workspace/settings/feedback_directories/upgrade_prompt_title: 0a7b67ccf15a0aa8c64e5da7feb6e532
     workspace/settings/feedback_directories/workspace_access: 32407b39cf878fb579559c1ed3660892
+    workspace/settings/feedback_directories/workspaces_already_linked: ef6248289707611a44950c3406aec0ec
+    workspace/settings/feedback_directories/workspaces_being_added: e01628710aff05c5172f2f43aab1f6fb
     workspace/settings/general/ai_data_analysis_enabled: 45fabb594da6851f73fef50ca40fe525
     workspace/settings/general/ai_data_analysis_enabled_description: 46d4f0bdf4ebf89e78f79cc961a2de83
     workspace/settings/general/ai_enabled: 3cb1fce89c525e754448d5bd143eb6b5
@@ -3567,6 +3572,9 @@ checksums:
     workspace/unify/metadata_value: 8d69be1f5a20d9473a33c35670dff216
     workspace/unify/missing_feedback_source_title: 9ab1b8d54b4da72dd00ce03fe3b698b5
     workspace/unify/no_feedback_directory_available: b9854a7e35eb20c157f994d23149f36c
+    workspace/unify/no_feedback_directory_linked_admin_description: 527a4782b743f3d3ad620e5702ff4768
+    workspace/unify/no_feedback_directory_linked_member_description: e799b17da03899cabd125c3cf672c10d
+    workspace/unify/no_feedback_directory_linked_title: b01a53d508aeeb1c8ad080ee07efcd04
     workspace/unify/no_feedback_records: 16a905c40f6d47a5e8f93b3d8c6f6693
     workspace/unify/no_source_fields_loaded: a597b1d16262cbe897001046eb3ff640
     workspace/unify/no_sources_connected: 0e8a5612530bfc82091091f40f95012f

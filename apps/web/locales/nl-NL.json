@@ -2564,6 +2564,9 @@
         "error_directory_name_required": "Mapnaam is verplicht.",
         "error_directory_workspaces_invalid_org": "Sommige opgegeven werkruimtes behoren niet tot deze organisatie.",
         "error_workspace_already_assigned": "One or more workspaces are already linked to a different active directory. Reassign them first.",
+        "grant_access_confirm": "Werkruimtetoegang verlenen",
+        "grant_workspace_access_title": "Bevestig verlenen van werkruimtetoegang",
+        "grant_workspace_access_warning": "Alle huidige en toekomstige leden van onderstaande werkruimtes krijgen leestoegang tot alle feedbackgegevens die naar \"{directoryName}\" worden doorgestuurd, inclusief gegevens die door connectoren van andere gekoppelde werkruimtes zijn ingevoerd. Deze wijziging kan niet ongemerkt ongedaan worden gemaakt.",
         "nav_label": "Feedbackmappen",
         "no_access": "Je hebt geen toestemming om feedbackmappen te beheren.",
         "no_connectors": "Nog geen connectoren gekoppeld aan deze map.",
@@ -2576,7 +2579,9 @@
         "unarchive_workspace_conflict": "Deze map kan niet worden gedearchiveerd omdat een of meer toegewezen workspaces zijn gearchiveerd.",
         "upgrade_prompt_description": "Organiseer feedbackrecords in mappen en routeer gegevens naar de juiste workspace. Beschikbaar op de Pro- en Scale-abonnementen.",
         "upgrade_prompt_title": "Upgrade om Feedbackrecord Mappen te ontgrendelen",
-        "workspace_access": "Workspace-toegang"
+        "workspace_access": "Workspace-toegang",
+        "workspaces_already_linked": "Reeds gekoppelde werkruimtes",
+        "workspaces_being_added": "Werkruimtes die toegang krijgen"
       },
       "general": {
         "ai_data_analysis_enabled": "Dataverrijking & analyse (AI)",
@@ -3727,6 +3732,9 @@
       "metadata_value": "Metagegevenswaarde",
       "missing_feedback_source_title": "Mis je een feedbackbron?",
       "no_feedback_directory_available": "Geen feedbackmap toegewezen aan deze workspace. Maak er eerst een aan of wijs er een toe.",
+      "no_feedback_directory_linked_admin_description": "Feedbackmappen bundelen records van verbonden werkruimtes. Er is nog geen map gekoppeld aan deze werkruimte — wijs er een toe vanuit de instellingen voor feedbackmappen om records te verzamelen.",
+      "no_feedback_directory_linked_member_description": "Er moet eerst een feedbackmap worden ingesteld voor deze werkruimte voordat deze functionaliteit beschikbaar is. Vraag een organisatie-eigenaar of manager om er een toe te wijzen.",
+      "no_feedback_directory_linked_title": "Geen feedbackmap gekoppeld",
       "no_feedback_records": "Nog geen feedbackrecords. Records verschijnen hier zodra je connectoren gegevens beginnen te verzenden.",
       "no_source_fields_loaded": "Nog geen bronvelden geladen",
       "no_sources_connected": "Nog geen bronnen verbonden. Voeg een bron toe om te beginnen.",

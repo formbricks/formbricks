@@ -1,8 +1,15 @@
 import { notFound } from "next/navigation";
 import { getConnectorsWithMappings } from "@/lib/connector/service";
+import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
+import { NoFeedbackDirectoryEmptyState } from "@/modules/ee/feedback-directory/components/no-feedback-directory-empty-state";
 import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
+import { getIsUnifyFeedbackEnabled } from "@/modules/ee/license-check/lib/utils";
+import { UnifyConfigNavigation } from "@/modules/ee/unify-feedback/components/unify-config-navigation";
 import { listFeedbackRecords } from "@/modules/hub/service";
+import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
+import { PageHeader } from "@/modules/ui/components/page-header";
+import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { FeedbackRecordsPageClient } from "./components/feedback-records-page-client";
 
@@ -14,7 +21,7 @@ export default async function UnifyFeedbackRecordsPage(
   const t = await getTranslate();
   const params = await props.params;
 
-  const { isOwner, isManager, hasReadAccess, hasReadWriteAccess, hasManageAccess, session } =
+  const { isOwner, isManager, hasReadAccess, hasReadWriteAccess, hasManageAccess, session, organization } =
     await getWorkspaceAuth(params.workspaceId);
 
   if (!session) {
@@ -27,10 +34,56 @@ export default async function UnifyFeedbackRecordsPage(
     return notFound();
   }
 
+  const isUnifyFeedbackAllowed = await getIsUnifyFeedbackEnabled(organization.id);
+  if (!isUnifyFeedbackAllowed) {
+    return (
+      <PageContentWrapper>
+        <PageHeader pageTitle={t("workspace.unify.feedback_records")}>
+          <UnifyConfigNavigation workspaceId={params.workspaceId} activeId="feedback-records" />
+        </PageHeader>
+        <div className="flex items-center justify-center">
+          <UpgradePrompt
+            title={t("workspace.unify.upgrade_prompt_title")}
+            description={t("workspace.unify.upgrade_prompt_description")}
+            feature="unify-feedback"
+            buttons={[
+              {
+                text: IS_FORMBRICKS_CLOUD ? t("common.upgrade_plan") : t("common.request_trial_license"),
+                href: IS_FORMBRICKS_CLOUD
+                  ? `/workspaces/${params.workspaceId}/settings/organization/billing`
+                  : "https://formbricks.com/upgrade-self-hosting-license",
+              },
+              {
+                text: t("common.learn_more"),
+                href: IS_FORMBRICKS_CLOUD
+                  ? `/workspaces/${params.workspaceId}/settings/organization/billing`
+                  : "https://formbricks.com/learn-more-self-hosting-license",
+              },
+            ]}
+          />
+        </div>
+      </PageContentWrapper>
+    );
+  }
+
   const [frds, connectors] = await Promise.all([
     getFeedbackDirectoriesByWorkspaceId(params.workspaceId),
     getConnectorsWithMappings(params.workspaceId),
   ]);
+
+  if (frds.length === 0) {
+    return (
+      <PageContentWrapper>
+        <PageHeader pageTitle={t("workspace.unify.feedback_records")}>
+          <UnifyConfigNavigation workspaceId={params.workspaceId} activeId="feedback-records" />
+        </PageHeader>
+        <NoFeedbackDirectoryEmptyState
+          workspaceId={params.workspaceId}
+          isOwnerOrManager={isOwner || isManager}
+        />
+      </PageContentWrapper>
+    );
+  }
 
   const results = await Promise.all(
     frds.map((frd) => listFeedbackRecords({ tenant_id: frd.id, limit: INITIAL_PAGE_SIZE }))

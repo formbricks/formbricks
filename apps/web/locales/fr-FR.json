@@ -2564,6 +2564,9 @@
         "error_directory_name_required": "Le nom du répertoire est requis.",
         "error_directory_workspaces_invalid_org": "Certains espaces de travail spécifiés n'appartiennent pas à cette organisation.",
         "error_workspace_already_assigned": "One or more workspaces are already linked to a different active directory. Reassign them first.",
+        "grant_access_confirm": "Accorder l'accès à l'espace de travail",
+        "grant_workspace_access_title": "Confirmer l'octroi d'accès à l'espace de travail",
+        "grant_workspace_access_warning": "Tous les membres actuels et futurs des espaces de travail ci-dessous obtiendront un accès en lecture à toutes les données de feedback acheminées vers \"{directoryName}\", y compris les données ingérées par les connecteurs d'autres espaces de travail liés. Cette modification ne peut pas être annulée discrètement.",
         "nav_label": "Répertoires de feedback",
         "no_access": "Tu n'as pas la permission de gérer les répertoires de retours.",
         "no_connectors": "Aucun connecteur lié à ce répertoire pour le moment.",
@@ -2576,7 +2579,9 @@
         "unarchive_workspace_conflict": "Impossible de désarchiver ce répertoire, car un ou plusieurs espaces de travail attribués sont archivés.",
         "upgrade_prompt_description": "Organisez les enregistrements de feedback dans des répertoires et dirigez les données vers le bon espace de travail. Disponible avec les forfaits Pro et Scale.",
         "upgrade_prompt_title": "Passez à un forfait supérieur pour débloquer les Répertoires d'enregistrements de feedback",
-        "workspace_access": "Accès à l’espace de travail"
+        "workspace_access": "Accès à l’espace de travail",
+        "workspaces_already_linked": "Espaces de travail déjà liés",
+        "workspaces_being_added": "Espaces de travail en cours d'ajout"
       },
       "general": {
         "ai_data_analysis_enabled": "Enrichissement et analyse des données (IA)",
@@ -3727,6 +3732,9 @@
       "metadata_value": "Valeur des métadonnées",
       "missing_feedback_source_title": "Il manque une source de feedback ?",
       "no_feedback_directory_available": "Aucun répertoire de retours attribué à cet espace de travail. Crée-en un ou attribue-en un d'abord.",
+      "no_feedback_directory_linked_admin_description": "Les répertoires de feedback regroupent les enregistrements provenant des espaces de travail connectés. Aucun répertoire n'est encore lié à cet espace de travail — attribue-en un depuis les paramètres du répertoire de feedback pour commencer à collecter des enregistrements.",
+      "no_feedback_directory_linked_member_description": "Un répertoire de feedback doit être configuré pour cet espace de travail avant que cette fonctionnalité ne soit disponible. Demande à un propriétaire ou un gestionnaire de l'organisation d'en attribuer un.",
+      "no_feedback_directory_linked_title": "Aucun répertoire de feedback lié",
       "no_feedback_records": "Aucun enregistrement de feedback pour le moment. Les enregistrements apparaîtront ici une fois que vos connecteurs commenceront à envoyer des données.",
       "no_source_fields_loaded": "Aucun champ source chargé pour le moment",
       "no_sources_connected": "Aucune source connectée pour le moment. Ajoutez une source pour commencer.",
