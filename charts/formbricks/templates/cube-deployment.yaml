@@ -1,3 +1,7 @@
+{{- $cubeCacheDriver := get (.Values.cube.env | default dict) "CUBEJS_CACHE_AND_QUEUE_DRIVER" | default "" | toString }}
+{{- if and .Values.cube.enabled (gt (int .Values.cube.replicas) 1) (eq $cubeCacheDriver "memory") }}
+{{- fail "cube.env.CUBEJS_CACHE_AND_QUEUE_DRIVER=memory is only supported when cube.replicas=1. Use Cube Store for multiple Cube replicas." }}
+{{- end }}
 {{- if .Values.cube.enabled }}
 ---
 apiVersion: apps/v1
@@ -26,9 +30,9 @@ spec:
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/cube-configmap.yaml") . | sha256sum }}
     spec:
-      {{- if .Values.deployment.imagePullSecrets }}
+      {{- if .Values.cube.imagePullSecrets }}
       imagePullSecrets:
-        {{- toYaml .Values.deployment.imagePullSecrets | nindent 8 }}
+        {{- toYaml .Values.cube.imagePullSecrets | nindent 8 }}
       {{- end }}
       {{- with .Values.cube.nodeSelector }}
       nodeSelector:
@@ -50,10 +54,22 @@ spec:
         - name: cube
           image: "{{ .Values.cube.image.repository }}:{{ .Values.cube.image.tag }}"
           imagePullPolicy: {{ .Values.cube.image.pullPolicy }}
+          {{- with .Values.cube.containerSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           ports:
             - name: http
               containerPort: {{ .Values.cube.port }}
               protocol: TCP
+          {{- with .Values.cube.livenessProbe }}
+          livenessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.cube.readinessProbe }}
+          readinessProbe:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           {{- if .Values.cube.envFrom }}
           envFrom:
             {{- range $value := .Values.cube.envFrom }}
