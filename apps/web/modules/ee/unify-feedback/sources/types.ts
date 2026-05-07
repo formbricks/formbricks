@@ -175,9 +175,6 @@ export const FEEDBACK_RECORD_FIELDS: TTargetField[] = [
   },
 ];
 
-// Synthetic CSV-only target field. The CSV mapping UI exposes a single `response_value` control
-// instead of the four `value_*` targets; csv-transform.ts routes it to the correct value_* based
-// on the row's resolved field_type.
 export const CSV_RESPONSE_VALUE_TARGET: TTargetField = {
   id: "response_value",
   name: "Response",
@@ -187,8 +184,6 @@ export const CSV_RESPONSE_VALUE_TARGET: TTargetField = {
     "The user's actual answer or value. We'll store it in the right format (text, number, boolean, or date) based on Field Type.",
 };
 
-// Target fields visible in the CSV mapping UI. Excludes tenant_id (backend-backfilled),
-// source_type (static "csv", hidden) and the four value_* targets (replaced by response_value).
 const CSV_HIDDEN_TARGET_IDS = [
   "tenant_id",
   "source_type",
@@ -215,14 +210,10 @@ export const CSV_FIELD_GROUPS = {
   ],
 } as const;
 
-// Mappings always merged into a CSV connector's persisted mappings on save. Keeps internal
-// fields off the wire from the user.
 export const CSV_HIDDEN_STATIC_MAPPINGS: TFieldMapping[] = [
-  { targetFieldId: "source_type", staticValue: "csv" },
+  { sourceFieldId: "", targetFieldId: "source_type", staticValue: "csv" },
 ];
 
-// Fields the CSV UI requires the user to resolve before saving. collected_at is excluded
-// because it falls back to "$now" automatically.
 export const CSV_REQUIRED_UI_FIELDS = ["field_id", "field_label", "field_type", "response_value"];
 
 export const SAMPLE_CSV_COLUMNS = "timestamp,customer_id,rating,feedback_text,category";

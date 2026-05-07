@@ -165,15 +165,15 @@ export const getAccessControlPermission = async (organizationId: string): Promis
 };
 
 export const getIsUnifyFeedbackEnabled = async (organizationId: string): Promise<boolean> => {
-  return true; //getCustomPlanFeaturePermission(organizationId, "unifyFeedback");
+  return getCustomPlanFeaturePermission(organizationId, "unifyFeedback");
 };
 
 export const getIsFeedbackDirectoriesEnabled = async (organizationId: string): Promise<boolean> => {
-  return true; // getCustomPlanFeaturePermission(organizationId, "feedbackDirectories");
+  return getCustomPlanFeaturePermission(organizationId, "feedbackDirectories");
 };
 
 export const getIsDashboardsEnabled = async (organizationId: string): Promise<boolean> => {
-  return true; //getCustomPlanFeaturePermission(organizationId, "dashboards");
+  return getCustomPlanFeaturePermission(organizationId, "dashboards");
 };
 
 export const getOrganizationWorkspacesLimit = async (organizationId: string): Promise<number> => {

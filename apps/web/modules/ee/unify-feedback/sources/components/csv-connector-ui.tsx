@@ -44,8 +44,6 @@ export function CsvConnectorUI({
   const [previewOpen, setPreviewOpen] = useState(true);
   const [sampleRow, setSampleRow] = useState<Record<string, string> | undefined>(undefined);
 
-  // Track whether the user has manually edited the source_name mapping after auto-population.
-  // On re-upload, only overwrite source_name if the user hasn't touched it.
   const userEditedSourceNameRef = useRef(false);
   const lastAutoSourceNameRef = useRef<string | undefined>(undefined);
 
@@ -68,10 +66,6 @@ export function CsvConnectorUI({
     }
   };
 
-  // User-driven mapping changes clear the auto-map badge for any target whose mapping changed,
-  // so the badge sticks until auto-map runs again. Even if the user picks the same value back,
-  // the field is now "user-confirmed" rather than "auto-mapped". Auto-map itself bypasses this
-  // wrapper and uses `onMappingsChange` directly.
   const handleUserMappingsChange = (newMappings: TFieldMapping[]) => {
     const oldByTarget = new Map(mappings.map((m) => [m.targetFieldId, m]));
     const newByTarget = new Map(newMappings.map((m) => [m.targetFieldId, m]));
@@ -106,7 +100,6 @@ export function CsvConnectorUI({
 
     const autoSourceNameStatic = autoMappings.find((m) => m.targetFieldId === "source_name")?.staticValue;
 
-    // Preserve a user-edited source_name mapping across re-uploads.
     if (userEditedSourceNameRef.current) {
       const existingSourceName = mappings.find((m) => m.targetFieldId === "source_name");
       if (existingSourceName) {
@@ -206,7 +199,6 @@ export function CsvConnectorUI({
     onSourceFieldsChange(fields);
     onParsedDataChange?.([]);
     setSampleRow(synthSampleRow);
-    // Build a synthetic 1-row preview so the data preview block has something to render.
     setCsvPreview([fields.map((f) => f.id), fields.map((f) => f.sampleValue ?? "")]);
     setCsvTotalRows(1);
     applyAutoMapping(fields, synthSampleRow, "sample-feedback.csv");

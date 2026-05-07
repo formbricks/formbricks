@@ -97,7 +97,6 @@ export function MappingUI({
     );
   }
 
-  // Survey (and other future) connectors keep the DnD layout.
   const requiredFields = FEEDBACK_RECORD_FIELDS.filter((f) => f.required);
   const optionalFields = FEEDBACK_RECORD_FIELDS.filter((f) => !f.required);
 

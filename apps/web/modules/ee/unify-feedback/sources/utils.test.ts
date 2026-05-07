@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { ZHubFieldType } from "@formbricks/types/connector";
-import { MAX_CSV_VALUES, TFieldMapping, TSourceField } from "./types";
+import { CSV_HIDDEN_STATIC_MAPPINGS, MAX_CSV_VALUES, TFieldMapping, TSourceField } from "./types";
 import {
   areAllRequiredCsvFieldsMapped,
   autoMapCsvSourceFields,
@@ -181,8 +181,24 @@ describe("areAllRequiredCsvFieldsMapped", () => {
     expect(areAllRequiredCsvFieldsMapped(incomplete).missing).toContain("field_type");
   });
 
+  test("treats invalid static field_type as unmapped", () => {
+    const invalidFieldType: TFieldMapping[] = [
+      ...fullMappings.filter((m) => m.targetFieldId !== "field_type"),
+      { targetFieldId: "field_type", staticValue: "not_a_field_type" },
+    ];
+    expect(areAllRequiredCsvFieldsMapped(invalidFieldType).missing).toContain("field_type");
+  });
+
   test("does not require collected_at (defaults to $now)", () => {
     expect(areAllRequiredCsvFieldsMapped(fullMappings).missing).not.toContain("collected_at");
+  });
+});
+
+describe("CSV_HIDDEN_STATIC_MAPPINGS", () => {
+  test("persists source_type=csv with a valid static mapping shape", () => {
+    expect(CSV_HIDDEN_STATIC_MAPPINGS).toEqual([
+      { sourceFieldId: "", targetFieldId: "source_type", staticValue: "csv" },
+    ]);
   });
 });
 
@@ -267,7 +283,6 @@ describe("routeResponseValueTarget", () => {
 
   test("covers every THubFieldType enum value", () => {
     for (const fieldType of ZHubFieldType.options) {
-      // Throws if any enum member is unhandled.
       expect(() => routeResponseValueTarget(fieldType)).not.toThrow();
     }
   });
@@ -321,9 +336,17 @@ describe("autoMapCsvSourceFields", () => {
     expect(result.confidence.source_name).toBe("high");
   });
 
+  test("keeps source_name filename-derived even when the CSV has a source_name column", () => {
+    const result = autoMapCsvSourceFields({
+      sourceFields: buildSourceFields(["source_name", "question", "answer"]),
+      sampleRow: { source_name: "malicious", question: "q1", answer: "yes" },
+      fileName: "trusted-file.csv",
+    });
+    const mapping = result.mappings.find((m) => m.targetFieldId === "source_name");
+    expect(mapping).toEqual({ targetFieldId: "source_name", staticValue: "Trusted File" });
+  });
+
   test("ambiguous column claimed by highest-confidence target", () => {
-    // 'id' matches both field_id (medium) and... only field_id. Add a high-confidence
-    // alternative claim to verify higher confidence wins.
     const result = autoMapCsvSourceFields({
       sourceFields: buildSourceFields(["question_id", "id"]),
       sampleRow: { question_id: "q1", id: "u1" },
@@ -334,18 +357,34 @@ describe("autoMapCsvSourceFields", () => {
     expect(result.confidence.field_id).toBe("high");
   });
 
+  test("maps realistic QA headers without leaving required basics unresolved", () => {
+    const result = autoMapCsvSourceFields({
+      sourceFields: buildSourceFields(["timestamp", "email", "question", "answer", "language", "score"]),
+      sampleRow: {
+        timestamp: "2026-01-01",
+        email: "person@example.com",
+        question: "How satisfied are you?",
+        answer: "Great",
+        language: "en",
+        score: "9",
+      },
+      fileName: "google-forms-export.csv",
+    });
+
+    const validation = areAllRequiredCsvFieldsMapped(result.mappings);
+    expect(validation).toEqual({ valid: true, missing: [] });
+    expect(result.mappings.find((m) => m.targetFieldId === "field_id")?.sourceFieldId).toBe("question");
+    expect(result.mappings.find((m) => m.targetFieldId === "field_label")?.sourceFieldId).toBe("question");
+    expect(result.confidence.field_id).toBe("low");
+  });
+
   test("infers field_type as static via sample sniffing when name has no hint", () => {
-    // "result" doesn't match any FIELD_TYPE_NAME_HINTS pattern, but it does match the response_value
-    // medium alias /^(score|rating|feedback)$/i? No — let's use a generic name. Use "result"
-    // (matches nothing in CSV_COLUMN_ALIASES high tier; falls through to fuzzy substring as low).
     const result = autoMapCsvSourceFields({
       sourceFields: buildSourceFields(["question", "value"]),
-      // "value" matches response_value high-confidence; sample is numeric.
       sampleRow: { question: "q1", value: "42" },
       fileName: "x.csv",
     });
     const fieldTypeMapping = result.mappings.find((m) => m.targetFieldId === "field_type");
-    // Column name "value" has no FIELD_TYPE_NAME_HINTS match, so we fall back to sample sniffing.
     expect(fieldTypeMapping?.staticValue).toBe("number");
     expect(result.confidence.field_type).toBe("medium");
   });

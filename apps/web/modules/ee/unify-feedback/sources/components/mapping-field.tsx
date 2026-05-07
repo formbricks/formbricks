@@ -359,7 +359,6 @@ export const DroppableTargetField = ({
     );
   }
 
-  // Helper to get display label for static values
   const getStaticValueLabel = (value: string) => {
     if (value === "$now") return t("workspace.unify.feedback_date");
     return value;
@@ -422,17 +421,13 @@ const SENTINEL = {
   CLEAR: "__clear__",
 } as const;
 
-// Section header inside a Select dropdown (e.g. "CSV Columns") — small, uppercase, muted; reads
-// as a label rather than a clickable option. Sized to match secondary text (text-xs).
 const GROUP_LABEL_CLASS = "px-2 pb-1 pt-2 text-xs font-semibold uppercase tracking-wide text-slate-500";
 
 interface FormTargetFieldProps {
   field: TTargetField;
   mapping: TFieldMapping | null;
   sourceFields: TSourceField[];
-  /** All current mappings — used to flag columns already mapped to a different target. */
   allMappings: TFieldMapping[];
-  /** Lookup of target-field id → display name, for the "Mapped to: …" indicator. */
   targetNameById: Record<string, string>;
   onChange: (next: TFieldMapping | null) => void;
   autoMapState?: TAutoMapState;
@@ -459,9 +454,6 @@ export const FormTargetField = ({
   const isEnum = field.type === "enum" && Boolean(field.enumValues?.length);
   const isTimestamp = field.type === "timestamp";
 
-  // For each column, the name of another target it's mapped to (excluding this row's target).
-  // Used to render a "Mapped to: …" badge on column options so the user can tell at a glance which
-  // columns are already in use elsewhere.
   const otherUsageByColumn = useMemo(() => {
     const map: Record<string, string> = {};
     for (const m of allMappings) {
@@ -476,8 +468,6 @@ export const FormTargetField = ({
     if (mapping?.sourceFieldId) return `${SENTINEL.COLUMN_PREFIX}${mapping.sourceFieldId}`;
     if (mapping?.staticValue === "$now") return SENTINEL.STATIC_NOW;
     if (isEnum && mapping?.staticValue) return `${SENTINEL.ENUM_PREFIX}${mapping.staticValue}`;
-    // Fixed value (non-$now, non-enum) maps to the EDIT_FIXED sentinel so the trigger renders the
-    // EDIT_FIXED item's "Edit fixed value: …" label.
     if (mapping?.staticValue !== undefined && mapping?.staticValue !== "") {
       return SENTINEL.EDIT_FIXED;
     }
