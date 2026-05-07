@@ -2212,6 +2212,7 @@
         "custom_scripts_warning": "Os scripts são executados com acesso total ao navegador. Adicione apenas scripts de fontes fidedignas.",
         "delete_workspace": "Eliminar projeto",
         "delete_workspace_confirmation": "Tem a certeza de que pretende eliminar {projectName}? Esta ação não pode ser desfeita.",
+        "delete_workspace_confirmation_name": "Por favor, insira {projectName} no campo seguinte para confirmar a eliminação definitiva deste projeto:",
         "delete_workspace_name_includes_surveys_responses_people_and_more": "Eliminar {projectName} incluindo todos os inquéritos, respostas, pessoas, ações e atributos.",
         "delete_workspace_settings_description": "Eliminar projeto com todos os inquéritos, respostas, pessoas, ações e atributos. Isto não pode ser desfeito.",
         "error_saving_workspace_information": "Erro ao guardar informações do projeto",
@@ -2429,11 +2430,13 @@
   "s": {
     "check_inbox_or_spam": "Por favor, verifique também a sua pasta de spam se não vir o email na sua caixa de entrada.",
     "completed": "Este inquérito está encerrado.",
+    "completed_heading": "Concluído",
     "create_your_own": "Crie o seu próprio inquérito de código aberto",
     "enter_pin": "Este inquérito está protegido. Introduza o PIN abaixo.",
     "just_curious": "Só por curiosidade?",
     "link_invalid": "Este inquérito só pode ser respondido por convite.",
     "paused": "Este inquérito está temporariamente suspenso.",
+    "paused_heading": "Em pausa",
     "please_try_again_with_the_original_link": "Por favor, tente novamente com o link original",
     "preview_survey_questions": "Pré-visualizar perguntas do inquérito.",
     "question_preview": "Pré-visualização da Pergunta",
@@ -2447,9 +2450,7 @@
     "verify_email_before_submission": "Verifique o seu email para responder",
     "verify_email_before_submission_button": "Verificar",
     "verify_email_before_submission_description": "Para responder a este questionário, por favor verifique o seu email",
-    "want_to_respond": "Quer responder?",
-    "paused_heading": "Em pausa",
-    "completed_heading": "Concluído"
+    "want_to_respond": "Quer responder?"
   },
   "setup": {
     "intro": {

@@ -2212,6 +2212,7 @@
         "custom_scripts_warning": "Scripts worden uitgevoerd met volledige browsertoegang. Voeg alleen scripts toe van vertrouwde bronnen.",
         "delete_workspace": "Project verwijderen",
         "delete_workspace_confirmation": "Weet u zeker dat u {projectName} wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.",
+        "delete_workspace_confirmation_name": "Voer {projectName} in het volgende veld in om de definitieve verwijdering van dit project te bevestigen:",
         "delete_workspace_name_includes_surveys_responses_people_and_more": "Verwijder {projectName} incl. alle enquêtes, reacties, mensen, acties en attributen.",
         "delete_workspace_settings_description": "Verwijder project met alle enquêtes, reacties, mensen, acties en attributen. Dit kan niet ongedaan worden gemaakt.",
         "error_saving_workspace_information": "Fout bij opslaan van projectinformatie",
@@ -2429,11 +2430,13 @@
   "s": {
     "check_inbox_or_spam": "Controleer ook uw spammap als u de e-mail niet in uw inbox ziet.",
     "completed": "Deze enquête is gesloten.",
+    "completed_heading": "Voltooid",
     "create_your_own": "Creëer uw eigen open source-enquête",
     "enter_pin": "Deze enquête is beveiligd. Voer hieronder de pincode in.",
     "just_curious": "Gewoon nieuwsgierig?",
     "link_invalid": "Aan deze enquête kan alleen op uitnodiging worden deelgenomen.",
     "paused": "Deze enquête is tijdelijk onderbroken.",
+    "paused_heading": "Gepauzeerd",
     "please_try_again_with_the_original_link": "Probeer het opnieuw met de originele link",
     "preview_survey_questions": "Bekijk enquêtevragen.",
     "question_preview": "Vraagvoorbeeld",
@@ -2447,9 +2450,7 @@
     "verify_email_before_submission": "Verifieer uw e-mailadres om te reageren",
     "verify_email_before_submission_button": "Verifiëren",
     "verify_email_before_submission_description": "Om op deze enquête te reageren, dient u uw e-mailadres te verifiëren",
-    "want_to_respond": "Wilt u reageren?",
-    "paused_heading": "Gepauzeerd",
-    "completed_heading": "Voltooid"
+    "want_to_respond": "Wilt u reageren?"
   },
   "setup": {
     "intro": {

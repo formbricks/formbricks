@@ -2212,6 +2212,7 @@
         "custom_scripts_warning": "Les scripts s'exécutent avec un accès complet au navigateur. Ajoutez uniquement des scripts provenant de sources fiables.",
         "delete_workspace": "Supprimer le projet",
         "delete_workspace_confirmation": "Êtes-vous sûr de vouloir supprimer {projectName} ? Cette action ne peut pas être annulée.",
+        "delete_workspace_confirmation_name": "Veuillez entrer {projectName} dans le champ suivant pour confirmer la suppression définitive de ce projet :",
         "delete_workspace_name_includes_surveys_responses_people_and_more": "Supprimer {projectName} y compris toutes les enquêtes, réponses, personnes, actions et attributs.",
         "delete_workspace_settings_description": "Supprimer le projet avec toutes les enquêtes, réponses, personnes, actions et attributs. Cette opération est irréversible.",
         "error_saving_workspace_information": "Erreur lors de l'enregistrement des informations du projet",
@@ -2429,11 +2430,13 @@
   "s": {
     "check_inbox_or_spam": "Veuillez également vérifier votre dossier de spam si vous ne voyez pas l'e-mail dans votre boîte de réception.",
     "completed": "Cette enquête gratuite et open-source a été fermée.",
+    "completed_heading": "Terminé",
     "create_your_own": "Créez le vôtre",
     "enter_pin": "Ce sondage est protégé. Entrez le code PIN ci-dessous.",
     "just_curious": "Juste curieux ?",
     "link_invalid": "Cette enquête ne peut être réalisée que sur invitation.",
     "paused": "Cette enquête gratuite et open-source est temporairement suspendue.",
+    "paused_heading": "En pause",
     "please_try_again_with_the_original_link": "Veuillez réessayer avec le lien d'origine.",
     "preview_survey_questions": "Aperçu des questions de l'enquête.",
     "question_preview": "Aperçu de la question",
@@ -2447,9 +2450,7 @@
     "verify_email_before_submission": "Vérifiez votre email pour répondre.",
     "verify_email_before_submission_button": "Vérifier",
     "verify_email_before_submission_description": "Pour répondre à cette enquête, veuillez vérifier votre e-mail.",
-    "want_to_respond": "Voulez-vous répondre ?",
-    "paused_heading": "En pause",
-    "completed_heading": "Terminé"
+    "want_to_respond": "Voulez-vous répondre ?"
   },
   "setup": {
     "intro": {

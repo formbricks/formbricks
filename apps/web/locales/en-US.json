@@ -2212,6 +2212,7 @@
         "custom_scripts_warning": "Scripts execute with full browser access. Only add scripts from trusted sources.",
         "delete_workspace": "Delete Workspace",
         "delete_workspace_confirmation": "Are you sure you want to delete {projectName}? This action cannot be undone.",
+        "delete_workspace_confirmation_name": "Please enter {projectName} in the following field to confirm the definitive deletion of this workspace:",
         "delete_workspace_name_includes_surveys_responses_people_and_more": "Delete {projectName} including all surveys, responses, people, actions and attributes.",
         "delete_workspace_settings_description": "Delete workspace with all surveys, responses, people, actions and attributes. This cannot be undone.",
         "error_saving_workspace_information": "Error saving workspace information",
@@ -2429,11 +2430,13 @@
   "s": {
     "check_inbox_or_spam": "Please also check your spam folder if you do not see the email in your inbox.",
     "completed": "This survey is closed.",
+    "completed_heading": "Completed",
     "create_your_own": "Create your own open-source survey",
     "enter_pin": "This survey is protected. Enter the PIN below.",
     "just_curious": "Just curious?",
     "link_invalid": "This survey can only be taken by invitation.",
     "paused": "This survey is temporarily paused.",
+    "paused_heading": "Paused",
     "please_try_again_with_the_original_link": "Please try again with the original link",
     "preview_survey_questions": "Preview survey questions.",
     "question_preview": "Question Preview",
@@ -2447,9 +2450,7 @@
     "verify_email_before_submission": "Verify your email to respond",
     "verify_email_before_submission_button": "Verify",
     "verify_email_before_submission_description": "To respond to this survey, please verify your email",
-    "want_to_respond": "Want to respond?",
-    "paused_heading": "Paused",
-    "completed_heading": "Completed"
+    "want_to_respond": "Want to respond?"
   },
   "setup": {
     "intro": {

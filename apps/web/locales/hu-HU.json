@@ -2212,6 +2212,7 @@
         "custom_scripts_warning": "A parancsfájlok teljes böngésző-hozzáféréssel kerülnek végrehajtásra. Csak megbízható forrásokból származó parancsfájlokat adjon hozzá.",
         "delete_workspace": "Munkaterület törlése",
         "delete_workspace_confirmation": "Biztosan törölni szeretné a(z) {projectName} munkaterületet? Ezt a műveletet nem lehet visszavonni.",
+        "delete_workspace_confirmation_name": "Adja meg a(z) {projectName} munkaterület nevét a következő mezőben a munkaterület végleges törlésének megerősítéséhez:",
         "delete_workspace_name_includes_surveys_responses_people_and_more": "A(z) {projectName} munkaterület törlése, beleértve az összes kérdőívet, választ, személyt, műveletet és attribútumot is.",
         "delete_workspace_settings_description": "A munkaterület törlése az összes kérdőívvel, válasszal, személlyel, művelettel és attribútummal együtt. Ezt nem lehet visszavonni.",
         "error_saving_workspace_information": "Hiba a munkaterület-információk mentésekor",
@@ -2429,11 +2430,13 @@
   "s": {
     "check_inbox_or_spam": "Nézze meg a levélszemét mappát is, ha nem találja az e-mailt a beérkező levelek között.",
     "completed": "Ez a kérdőív le van zárva.",
+    "completed_heading": "Befejezve",
     "create_your_own": "Saját nyílt forráskódú kérdőív létrehozása",
     "enter_pin": "Ez a kérdőív védett. Adja meg a PIN-kódot lent.",
     "just_curious": "Csak kíváncsi?",
     "link_invalid": "Ez a kérdőív csak meghívás útján tölthető ki.",
     "paused": "Ez a kérdőív átmenetileg szüneteltetve van.",
+    "paused_heading": "Szüneteltetve",
     "please_try_again_with_the_original_link": "Próbálja meg újra az eredeti hivatkozással",
     "preview_survey_questions": "Kérdőív kérdéseinek előnézete.",
     "question_preview": "Kérdés előnézete",
@@ -2447,9 +2450,7 @@
     "verify_email_before_submission": "Ellenőrizze az e-mail-címét a válaszadáshoz",
     "verify_email_before_submission_button": "Ellenőrzés",
     "verify_email_before_submission_description": "A kérdőívre való válaszadáshoz ellenőrizze az e-mail-címét",
-    "want_to_respond": "Szeretne válaszolni?",
-    "paused_heading": "Szüneteltetve",
-    "completed_heading": "Befejezve"
+    "want_to_respond": "Szeretne válaszolni?"
   },
   "setup": {
     "intro": {

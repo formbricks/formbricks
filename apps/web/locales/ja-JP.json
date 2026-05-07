@@ -2212,6 +2212,7 @@
         "custom_scripts_warning": "スクリプトはブラウザへの完全なアクセス権で実行されます。信頼できるソースからのスクリプトのみを追加してください。",
         "delete_workspace": "ワークスペースを削除",
         "delete_workspace_confirmation": "{projectName}を削除してもよろしいですか？このアクションは元に戻せません。",
+        "delete_workspace_confirmation_name": "このワークスペースの完全な削除を確認するには、以下のフィールドに {projectName} と入力してください:",
         "delete_workspace_name_includes_surveys_responses_people_and_more": "{projectName}をすべてのフォーム、回答、人物、アクション、属性を含めて削除します。",
         "delete_workspace_settings_description": "すべてのフォーム、回答、人物、アクション、属性を含むワークスペースを削除します。この操作は元に戻せません。",
         "error_saving_workspace_information": "ワークスペース情報の保存中にエラーが発生しました",
@@ -2429,11 +2430,13 @@
   "s": {
     "check_inbox_or_spam": "受信トレイにメールがない場合は、迷惑メールフォルダも確認してください。",
     "completed": "このフォームはクローズしました。",
+    "completed_heading": "完了",
     "create_your_own": "独自のオープンソースフォームを作成",
     "enter_pin": "このアンケートは保護されています。以下にPINを入力してください。",
     "just_curious": "ただ興味があるだけですか？",
     "link_invalid": "このフォームは招待によってのみ回答できます。",
     "paused": "このフォームは一時的に一時停止されています。",
+    "paused_heading": "一時停止",
     "please_try_again_with_the_original_link": "元のリンクでもう一度お試しください",
     "preview_survey_questions": "フォームの質問をプレビュー。",
     "question_preview": "質問プレビュー",
@@ -2447,9 +2450,7 @@
     "verify_email_before_submission": "回答するにはメールアドレスを認証してください",
     "verify_email_before_submission_button": "認証",
     "verify_email_before_submission_description": "このフォームに回答するには、メールアドレスを認証してください",
-    "want_to_respond": "回答しますか？",
-    "paused_heading": "一時停止",
-    "completed_heading": "完了"
+    "want_to_respond": "回答しますか？"
   },
   "setup": {
     "intro": {

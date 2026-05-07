@@ -2212,6 +2212,7 @@
         "custom_scripts_warning": "Skripte werden mit vollem Browser-Zugriff ausgeführt. Fügen Sie nur Skripte aus vertrauenswürdigen Quellen hinzu.",
         "delete_workspace": "Projekt löschen",
         "delete_workspace_confirmation": "Sind Sie sicher, dass Sie {projectName} löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.",
+        "delete_workspace_confirmation_name": "Bitte gib {projectName} in das folgende Feld ein, um die endgültige Löschung dieses Projekts zu bestätigen:",
         "delete_workspace_name_includes_surveys_responses_people_and_more": "{projectName} inkl. aller Umfragen, Antworten, Personen, Aktionen und Attribute löschen.",
         "delete_workspace_settings_description": "Projekt mit allen Umfragen, Antworten, Personen, Aktionen und Attributen löschen. Das kann nicht rückgängig gemacht werden.",
         "error_saving_workspace_information": "Fehler beim Speichern der Projektinformationen",
@@ -2429,11 +2430,13 @@
   "s": {
     "check_inbox_or_spam": "Bitte überprüfe auch deinen Spam-Ordner, falls Du die E-Mail nicht in deinem Posteingang siehst.",
     "completed": "Diese kostenlose und quelloffene Umfrage wurde geschlossen.",
+    "completed_heading": "Abgeschlossen",
     "create_your_own": "Erstelle deine eigene",
     "enter_pin": "Diese Umfrage ist geschützt. Gib die PIN unten ein.",
     "just_curious": "Einfach neugierig?",
     "link_invalid": "Diese Umfrage kann nur auf Einladung durchgeführt werden.",
     "paused": "Diese Umfrage ist vorübergehend pausiert.",
+    "paused_heading": "Pausiert",
     "please_try_again_with_the_original_link": "Bitte versuche es nochmal mit dem ursprünglichen Link",
     "preview_survey_questions": "Vorschau der Fragen.",
     "question_preview": "Vorschau der Frage",
@@ -2447,9 +2450,7 @@
     "verify_email_before_submission": "Bestätige deine E-Mail, um zu antworten",
     "verify_email_before_submission_button": "Überprüfen",
     "verify_email_before_submission_description": "Um an dieser Umfrage teilzunehmen, bitte bestätige deine E-Mail",
-    "want_to_respond": "Möchtest Du antworten?",
-    "paused_heading": "Pausiert",
-    "completed_heading": "Abgeschlossen"
+    "want_to_respond": "Möchtest Du antworten?"
   },
   "setup": {
     "intro": {

@@ -2212,6 +2212,7 @@
         "custom_scripts_warning": "腳本將以完整瀏覽器權限執行。請僅加入來自可信來源的腳本。",
         "delete_workspace": "刪除工作區",
         "delete_workspace_confirmation": "您確定要刪除 {projectName} 嗎？此操作無法復原。",
+        "delete_workspace_confirmation_name": "請在下列欄位中輸入 {projectName} 以確認永久刪除此工作區：",
         "delete_workspace_name_includes_surveys_responses_people_and_more": "刪除 {projectName}（包含所有問卷、回應、人員、操作和屬性）。",
         "delete_workspace_settings_description": "刪除工作區及其所有問卷、回應、人員、操作和屬性。此操作無法復原。",
         "error_saving_workspace_information": "儲存工作區資訊時發生錯誤",
@@ -2429,11 +2430,13 @@
   "s": {
     "check_inbox_or_spam": "如果您的收件匣中沒有看到電子郵件，也請檢查您的垃圾郵件資料夾。",
     "completed": "此免費且開源的問卷已關閉。",
+    "completed_heading": "已完成",
     "create_your_own": "建立您自己的",
     "enter_pin": "此問卷已受保護。請在下方輸入 PIN 碼。",
     "just_curious": "只是好奇？",
     "link_invalid": "此問卷只能透過邀請填寫。",
     "paused": "此免費且開源的問卷已暫時暫停。",
+    "paused_heading": "已暫停",
     "please_try_again_with_the_original_link": "請使用原始連結再試一次",
     "preview_survey_questions": "預覽問卷問題。",
     "question_preview": "問題預覽",
@@ -2447,9 +2450,7 @@
     "verify_email_before_submission": "驗證您的電子郵件以回應",
     "verify_email_before_submission_button": "驗證",
     "verify_email_before_submission_description": "若要回應此問卷，請驗證您的電子郵件",
-    "want_to_respond": "想要回應嗎？",
-    "paused_heading": "已暫停",
-    "completed_heading": "已完成"
+    "want_to_respond": "想要回應嗎？"
   },
   "setup": {
     "intro": {

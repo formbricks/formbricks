@@ -2212,6 +2212,7 @@
         "custom_scripts_warning": "Скрипты выполняются с полным доступом к браузеру. Добавляйте только скрипты из доверенных источников.",
         "delete_workspace": "Удалить рабочий проект",
         "delete_workspace_confirmation": "Вы уверены, что хотите удалить {projectName}? Это действие необратимо.",
+        "delete_workspace_confirmation_name": "Пожалуйста, введите {projectName} в поле ниже для подтверждения окончательного удаления этого рабочего проекта:",
         "delete_workspace_name_includes_surveys_responses_people_and_more": "Удалить {projectName} вместе со всеми опросами, ответами, пользователями, действиями и атрибутами.",
         "delete_workspace_settings_description": "Удалить рабочий проект со всеми опросами, ответами, пользователями, действиями и атрибутами. Это действие необратимо.",
         "error_saving_workspace_information": "Ошибка при сохранении информации о рабочем проекте",
@@ -2429,11 +2430,13 @@
   "s": {
     "check_inbox_or_spam": "Если вы не видите письмо во входящих, проверьте папку со спамом.",
     "completed": "Этот опрос закрыт.",
+    "completed_heading": "Завершено",
     "create_your_own": "Создайте свой собственный опрос с открытым исходным кодом",
     "enter_pin": "Этот опрос защищён. Введите PIN ниже.",
     "just_curious": "Просто интересно?",
     "link_invalid": "Пройти этот опрос можно только по приглашению.",
     "paused": "Этот опрос временно приостановлен.",
+    "paused_heading": "Приостановлено",
     "please_try_again_with_the_original_link": "Пожалуйста, попробуйте снова, используя оригинальную ссылку",
     "preview_survey_questions": "Просмотреть вопросы опроса.",
     "question_preview": "Предпросмотр вопроса",
@@ -2447,9 +2450,7 @@
     "verify_email_before_submission": "Подтвердите свой email, чтобы ответить",
     "verify_email_before_submission_button": "Подтвердить",
     "verify_email_before_submission_description": "Чтобы ответить на этот опрос, пожалуйста, подтвердите свой email",
-    "want_to_respond": "Хотите ответить?",
-    "paused_heading": "Приостановлено",
-    "completed_heading": "Завершено"
+    "want_to_respond": "Хотите ответить?"
   },
   "setup": {
     "intro": {

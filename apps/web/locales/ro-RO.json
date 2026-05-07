@@ -2212,6 +2212,7 @@
         "custom_scripts_warning": "Scripturile se execută cu acces complet la browser. Adaugă doar scripturi din surse de încredere.",
         "delete_workspace": "Șterge proiectul",
         "delete_workspace_confirmation": "Sigur vrei să ștergi {projectName}? Această acțiune nu poate fi anulată.",
+        "delete_workspace_confirmation_name": "Vă rugăm să introduceți {projectName} în câmpul următor pentru a confirma ștergerea definitivă a acestui proiect:",
         "delete_workspace_name_includes_surveys_responses_people_and_more": "Șterge {projectName} incl. toate sondajele, răspunsurile, persoanele, acțiunile și atributele.",
         "delete_workspace_settings_description": "Șterge proiectul cu toate sondajele, răspunsurile, persoanele, acțiunile și atributele. Aceasta nu poate fi anulată.",
         "error_saving_workspace_information": "Eroare la salvarea informațiilor despre proiect",
@@ -2429,11 +2430,13 @@
   "s": {
     "check_inbox_or_spam": "Vă rugăm să verificați și folderul de spam dacă nu vedeți emailul în inbox.",
     "completed": "Acest chestionar este închis.",
+    "completed_heading": "Completat",
     "create_your_own": "Creează-ți propriul chestionar open-source",
     "enter_pin": "Acest sondaj este protejat. Introduceți PIN-ul mai jos.",
     "just_curious": "Doar curios?",
     "link_invalid": "Acest sondaj poate fi completat doar pe bază de invitație.",
     "paused": "Acest sondaj este temporar întrerupt.",
+    "paused_heading": "Pauză",
     "please_try_again_with_the_original_link": "Vă rugăm să încercați din nou cu linkul original",
     "preview_survey_questions": "Previzualizare întrebări chestionar",
     "question_preview": "Previzualizare Întrebare",
@@ -2447,9 +2450,7 @@
     "verify_email_before_submission": "Verificați-vă emailul pentru a răspunde",
     "verify_email_before_submission_button": "Verifică",
     "verify_email_before_submission_description": "Pentru a răspunde la acest sondaj, vă rugăm să vă verificați emailul",
-    "want_to_respond": "Dorești să răspunzi?",
-    "paused_heading": "Pauză",
-    "completed_heading": "Completat"
+    "want_to_respond": "Dorești să răspunzi?"
   },
   "setup": {
     "intro": {

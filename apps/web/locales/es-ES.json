@@ -2212,6 +2212,7 @@
         "custom_scripts_warning": "Los scripts se ejecutan con acceso completo al navegador. Solo añade scripts de fuentes confiables.",
         "delete_workspace": "Eliminar proyecto",
         "delete_workspace_confirmation": "¿Estás seguro de que quieres eliminar {projectName}? Esta acción no se puede deshacer.",
+        "delete_workspace_confirmation_name": "Por favor, introduce {projectName} en el siguiente campo para confirmar la eliminación definitiva de este proyecto:",
         "delete_workspace_name_includes_surveys_responses_people_and_more": "Eliminar {projectName} incluyendo todas las encuestas, respuestas, personas, acciones y atributos.",
         "delete_workspace_settings_description": "Eliminar proyecto con todas las encuestas, respuestas, personas, acciones y atributos. Esto no se puede deshacer.",
         "error_saving_workspace_information": "Error al guardar la información del proyecto",
@@ -2429,11 +2430,13 @@
   "s": {
     "check_inbox_or_spam": "Por favor, comprueba también tu carpeta de spam si no ves el correo electrónico en tu bandeja de entrada.",
     "completed": "Esta encuesta está cerrada.",
+    "completed_heading": "Completado",
     "create_your_own": "Crea tu propia encuesta de código abierto",
     "enter_pin": "Esta encuesta está protegida. Introduce el PIN a continuación.",
     "just_curious": "¿Solo tienes curiosidad?",
     "link_invalid": "Esta encuesta solo se puede realizar por invitación.",
     "paused": "Esta encuesta está temporalmente pausada.",
+    "paused_heading": "Pausado",
     "please_try_again_with_the_original_link": "Por favor, inténtalo de nuevo con el enlace original",
     "preview_survey_questions": "Vista previa de las preguntas de la encuesta.",
     "question_preview": "Vista previa de la pregunta",
@@ -2447,9 +2450,7 @@
     "verify_email_before_submission": "Verifica tu correo electrónico para responder",
     "verify_email_before_submission_button": "Verificar",
     "verify_email_before_submission_description": "Para responder a esta encuesta, por favor verifica tu correo electrónico",
-    "want_to_respond": "¿Quieres responder?",
-    "paused_heading": "Pausado",
-    "completed_heading": "Completado"
+    "want_to_respond": "¿Quieres responder?"
   },
   "setup": {
     "intro": {

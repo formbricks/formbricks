@@ -2212,6 +2212,7 @@
         "custom_scripts_warning": "Betikler tam tarayıcı erişimiyle çalışır. Yalnızca güvenilir kaynaklardan betik ekleyin.",
         "delete_workspace": "Çalışma Alanını Sil",
         "delete_workspace_confirmation": "{projectName} öğesini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+        "delete_workspace_confirmation_name": "Bu çalışma alanının kesin olarak silinmesini onaylamak için lütfen aşağıdaki alana {projectName} yazın:",
         "delete_workspace_name_includes_surveys_responses_people_and_more": "Tüm survey, yanıt, kişi, eylem ve nitelikleri dahil {projectName} öğesini silin.",
         "delete_workspace_settings_description": "Tüm survey, yanıt, kişi, eylem ve nitelikleriyle birlikte çalışma alanını silin. Bu işlem geri alınamaz.",
         "error_saving_workspace_information": "Çalışma alanı bilgileri kaydedilirken hata oluştu",
@@ -2429,11 +2430,13 @@
   "s": {
     "check_inbox_or_spam": "Email'i gelen kutunuzda görmüyorsanız lütfen spam klasörünüzü de kontrol edin.",
     "completed": "Bu survey kapatılmıştır.",
+    "completed_heading": "Tamamlandı",
     "create_your_own": "Kendi açık kaynak survey'inizi oluşturun",
     "enter_pin": "Bu survey korumalıdır. Aşağıya PIN girin.",
     "just_curious": "Sadece merak mı ediyorsunuz?",
     "link_invalid": "Bu survey yalnızca davet ile katılıma açıktır.",
     "paused": "Bu survey geçici olarak duraklatılmıştır.",
+    "paused_heading": "Duraklatıldı",
     "please_try_again_with_the_original_link": "Lütfen orijinal bağlantıyla tekrar deneyin",
     "preview_survey_questions": "Survey sorularını önizleyin.",
     "question_preview": "Soru Önizlemesi",
@@ -2447,9 +2450,7 @@
     "verify_email_before_submission": "Yanıtlamak için email adresinizi doğrulayın",
     "verify_email_before_submission_button": "Doğrula",
     "verify_email_before_submission_description": "Bu survey'e yanıt vermek için lütfen email adresinizi doğrulayın",
-    "want_to_respond": "Yanıtlamak ister misiniz?",
-    "paused_heading": "Duraklatıldı",
-    "completed_heading": "Tamamlandı"
+    "want_to_respond": "Yanıtlamak ister misiniz?"
   },
   "setup": {
     "intro": {

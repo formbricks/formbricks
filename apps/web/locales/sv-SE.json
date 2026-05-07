@@ -2212,6 +2212,7 @@
         "custom_scripts_warning": "Skript körs med full åtkomst till webbläsaren. Lägg endast till skript från betrodda källor.",
         "delete_workspace": "Ta bort arbetsyta",
         "delete_workspace_confirmation": "Är du säker på att du vill ta bort {projectName}? Denna åtgärd kan inte ångras.",
+        "delete_workspace_confirmation_name": "Vänligen ange {projectName} i följande fält för att bekräfta den definitiva borttagningen av denna arbetsyta:",
         "delete_workspace_name_includes_surveys_responses_people_and_more": "Ta bort {projectName} inkl. alla enkäter, svar, personer, åtgärder och attribut.",
         "delete_workspace_settings_description": "Ta bort arbetsyta med alla enkäter, svar, personer, åtgärder och attribut. Detta kan inte ångras.",
         "error_saving_workspace_information": "Fel vid sparande av arbetsytans information",
@@ -2429,11 +2430,13 @@
   "s": {
     "check_inbox_or_spam": "Vänligen kontrollera även din skräppost om du inte ser e-postmeddelandet i din inkorg.",
     "completed": "Denna enkät är stängd.",
+    "completed_heading": "Slutförd",
     "create_your_own": "Skapa din egen öppenkällkodsenkät",
     "enter_pin": "Denna undersökning är skyddad. Ange PIN-koden nedan.",
     "just_curious": "Bara nyfiken?",
     "link_invalid": "Denna enkät kan endast tas via inbjudan.",
     "paused": "Denna enkät är tillfälligt pausad.",
+    "paused_heading": "Pausad",
     "please_try_again_with_the_original_link": "Vänligen försök igen med den ursprungliga länken",
     "preview_survey_questions": "Förhandsgranska enkätfrågor.",
     "question_preview": "Frågeförhandsgranskning",
@@ -2447,9 +2450,7 @@
     "verify_email_before_submission": "Verifiera din e-post för att svara",
     "verify_email_before_submission_button": "Verifiera",
     "verify_email_before_submission_description": "För att svara på denna enkät, vänligen verifiera din e-post",
-    "want_to_respond": "Vill du svara?",
-    "paused_heading": "Pausad",
-    "completed_heading": "Slutförd"
+    "want_to_respond": "Vill du svara?"
   },
   "setup": {
     "intro": {
