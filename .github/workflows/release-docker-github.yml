@@ -105,5 +105,5 @@ jobs:
           DUMMY_DATABASE_URL: ${{ secrets.DUMMY_DATABASE_URL }}
           DUMMY_ENCRYPTION_KEY: ${{ secrets.DUMMY_ENCRYPTION_KEY }}
           DUMMY_REDIS_URL: ${{ secrets.DUMMY_REDIS_URL }}
-          DUMMY_HUB_API_URL: "http://localhost:4000"
+          DUMMY_HUB_API_URL: ${{ secrets.DUMMY_HUB_API_URL }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
