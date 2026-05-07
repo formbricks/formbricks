@@ -39,6 +39,7 @@ spec:
           securityContext:
             readOnlyRootFilesystem: true
             runAsNonRoot: true
+            runAsUser: 1000
           command:
             - sh
             - -c
@@ -55,6 +56,7 @@ spec:
           securityContext:
             readOnlyRootFilesystem: true
             runAsNonRoot: true
+            runAsUser: 1000
           ports:
             - name: http
               containerPort: 8080
