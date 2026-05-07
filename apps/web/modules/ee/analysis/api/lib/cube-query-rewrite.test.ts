@@ -36,6 +36,16 @@ describe("cube queryRewrite", () => {
     expect(() => queryRewrite({ measures: ["FeedbackRecords.count"] }, {})).toThrow(
       /missing tenantId security context/
     );
+
+    const logPayload = vi.mocked(console.log).mock.calls[0][0];
+    const parsed = JSON.parse(logPayload);
+    expect(parsed).toMatchObject({
+      type: "audit",
+      event: "cube.query",
+      status: "failure",
+      errorName: "Error",
+      errorMessage: "Cube query rejected: missing tenantId security context",
+    });
   });
 
   test("rejects Cube startup without an API secret", () => {
@@ -91,6 +101,18 @@ describe("cube queryRewrite", () => {
         {
           measures: ["FeedbackRecords.count"],
           filters: [{ member: "FeedbackRecords.tenantId", operator: "equals", values: ["workspace-2"] }],
+        },
+        { securityContext }
+      )
+    ).toThrow(/tenant filters are enforced by Cube/);
+  });
+
+  test("rejects caller-supplied TopicsUnnested tenant filters", () => {
+    expect(() =>
+      queryRewrite(
+        {
+          measures: ["TopicsUnnested.count"],
+          filters: [{ member: "TopicsUnnested.tenantId", operator: "equals", values: ["workspace-2"] }],
         },
         { securityContext }
       )
@@ -193,6 +215,7 @@ describe("cube queryRewrite", () => {
     expect(rewrittenQuery.filters).toEqual([
       { member: "FeedbackRecords.sentiment", operator: "equals", values: ["positive"] },
       { member: "FeedbackRecords.tenantId", operator: "equals", values: ["frd-1"] },
+      { member: "TopicsUnnested.tenantId", operator: "equals", values: ["frd-1"] },
     ]);
     expect(query.filters).toHaveLength(1);
   });
@@ -221,6 +244,7 @@ describe("cube queryRewrite", () => {
       source: "charts.executeQueryAction",
     });
     expect(parsed.members).toContain("FeedbackRecords.tenantId");
+    expect(parsed.members).toContain("TopicsUnnested.tenantId");
     expect(logPayload).not.toContain("secret-value");
   });
 });
