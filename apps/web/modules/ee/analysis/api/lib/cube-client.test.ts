@@ -57,6 +57,7 @@ describe("executeTenantScopedQuery", () => {
     vi.stubEnv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/formbricks?schema=public");
     vi.stubEnv("ENCRYPTION_KEY", "12345678901234567890123456789012");
     vi.stubEnv("HUB_API_URL", "https://hub.formbricks.local");
+    vi.stubEnv("HUB_API_KEY", "test-hub-api-key");
     vi.stubEnv("CUBEJS_API_URL", "https://cube.example.com");
     vi.stubEnv("CUBEJS_API_SECRET", "cube-secret");
     vi.stubEnv("CUBEJS_JWT_AUDIENCE", "formbricks-cube-test");
@@ -156,32 +157,17 @@ describe("executeTenantScopedQuery", () => {
     expect(cubejs).toHaveBeenCalledWith(expect.any(String), { apiUrl: fullUrl });
   });
 
-  test("throws a configuration error when Cube env is missing", async () => {
+  test("fails at env validation when Cube env is missing", async () => {
     vi.unstubAllEnvs();
     vi.stubEnv("NODE_ENV", "test");
     vi.stubEnv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/formbricks?schema=public");
     vi.stubEnv("ENCRYPTION_KEY", "12345678901234567890123456789012");
     vi.stubEnv("HUB_API_URL", "https://hub.formbricks.local");
+    vi.stubEnv("HUB_API_KEY", "test-hub-api-key");
     vi.stubEnv("CUBEJS_API_URL", undefined);
     vi.stubEnv("CUBEJS_API_SECRET", undefined);
-    const { CUBE_CONFIGURATION_ERROR_MESSAGE } = await import("./cube-config");
-    const { executeTenantScopedQuery } = await import("./cube-client");
 
-    await expect(executeTenantScopedQuery(scopedInput)).rejects.toThrow(CUBE_CONFIGURATION_ERROR_MESSAGE);
-    expect(mockLoggerError).toHaveBeenCalledWith(expect.any(Error), "Cube query configuration failed");
-    expect(mockQueueAuditEventWithoutRequest).toHaveBeenCalledWith(
-      expect.objectContaining({
-        action: "queried",
-        targetType: "cubeQuery",
-        status: "failure",
-        newObject: expect.objectContaining({
-          tenantId: "frd-1",
-          feedbackDirectoryId: "frd-1",
-          workspaceId: "workspace-1",
-          errorName: "ConfigurationError",
-        }),
-      })
-    );
+    await expect(import("./cube-client")).rejects.toThrow("Invalid environment variables");
   });
 
   test("logs Cube runtime failures and returns a generic query execution error", async () => {

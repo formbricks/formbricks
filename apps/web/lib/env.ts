@@ -136,7 +136,6 @@ const ZSurveySchedulingLocalMinute = z.coerce.number().int().min(0).max(59);
 const emptyStringToUndefined = (value: unknown) =>
   typeof value === "string" && value.trim() === "" ? undefined : value;
 const ZOptionalNonEmptyString = z.preprocess(emptyStringToUndefined, z.string().trim().min(1).optional());
-const ZOptionalUrl = z.preprocess(emptyStringToUndefined, z.url().optional());
 
 const parsedEnv = createEnv({
   /*
@@ -190,14 +189,14 @@ const parsedEnv = createEnv({
     AI_AZURE_API_KEY: z.string().optional(),
     AI_AZURE_API_VERSION: z.string().optional(),
     AI_AZURE_RESOURCE_NAME: z.string().optional(),
-    CUBEJS_API_SECRET: ZOptionalNonEmptyString,
-    CUBEJS_API_URL: ZOptionalUrl,
+    CUBEJS_API_SECRET: z.string().trim().min(1),
+    CUBEJS_API_URL: z.url(),
     CUBEJS_JWT_AUDIENCE: ZOptionalNonEmptyString,
     CUBEJS_JWT_ISSUER: ZOptionalNonEmptyString,
     HTTP_PROXY: z.url().optional(),
     HTTPS_PROXY: z.url().optional(),
     HUB_API_URL: z.url(),
-    HUB_API_KEY: z.string().optional(),
+    HUB_API_KEY: z.string().trim().min(1),
     IMPRINT_URL: z
       .url()
       .optional()
