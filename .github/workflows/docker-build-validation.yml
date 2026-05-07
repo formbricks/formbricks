@@ -74,6 +74,8 @@ jobs:
             encryption_key=${{ secrets.DUMMY_ENCRYPTION_KEY }}
             redis_url=redis://localhost:6379
             hub_api_url=http://localhost:4000
+            cubejs_api_url=http://localhost:4000
+            cubejs_api_secret=build-time-placeholder
 
       - name: Verify and Initialize PostgreSQL
         run: |

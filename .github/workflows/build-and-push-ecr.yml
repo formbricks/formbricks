@@ -92,5 +92,7 @@ jobs:
           DUMMY_ENCRYPTION_KEY: ${{ secrets.DUMMY_ENCRYPTION_KEY }}
           DUMMY_REDIS_URL: ${{ secrets.DUMMY_REDIS_URL }}
           DUMMY_HUB_API_URL: ${{ secrets.DUMMY_HUB_API_URL }}
+          DUMMY_CUBEJS_API_URL: ${{ secrets.DUMMY_CUBEJS_API_URL }}
+          DUMMY_CUBEJS_API_SECRET: ${{ secrets.DUMMY_CUBEJS_API_SECRET }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           POSTHOG_KEY: ${{ secrets.POSTHOG_KEY }}

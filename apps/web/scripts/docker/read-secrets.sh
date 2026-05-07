@@ -8,6 +8,8 @@ DEFAULT_DATABASE_URL="postgresql://test:test@localhost:5432/formbricks"
 DEFAULT_ENCRYPTION_KEY="0123456789abcdef0123456789abcdef"
 DEFAULT_REDIS_URL="redis://localhost:6379"
 DEFAULT_HUB_API_URL="http://localhost:4000"
+DEFAULT_CUBEJS_API_URL="http://localhost:4000"
+DEFAULT_CUBEJS_API_SECRET="build-time-placeholder"
 
 if [ -f "/run/secrets/database_url" ]; then
   IFS= read -r DATABASE_URL < /run/secrets/database_url || true
@@ -45,6 +47,24 @@ if [ -z "${HUB_API_URL:-}" ]; then
 fi
 export HUB_API_URL
 
+if [ -f "/run/secrets/cubejs_api_url" ]; then
+  IFS= read -r CUBEJS_API_URL < /run/secrets/cubejs_api_url || true
+fi
+if [ -z "${CUBEJS_API_URL:-}" ]; then
+  CUBEJS_API_URL="${DEFAULT_CUBEJS_API_URL}"
+  echo "⚠️  CUBEJS_API_URL secret not found or empty. Using build-time fallback value."
+fi
+export CUBEJS_API_URL
+
+if [ -f "/run/secrets/cubejs_api_secret" ]; then
+  IFS= read -r CUBEJS_API_SECRET < /run/secrets/cubejs_api_secret || true
+fi
+if [ -z "${CUBEJS_API_SECRET:-}" ]; then
+  CUBEJS_API_SECRET="${DEFAULT_CUBEJS_API_SECRET}"
+  echo "⚠️  CUBEJS_API_SECRET secret not found or empty. Using build-time fallback value."
+fi
+export CUBEJS_API_SECRET
+
 if [ -f "/run/secrets/posthog_key" ]; then
   IFS= read -r POSTHOG_KEY < /run/secrets/posthog_key || true
 fi
@@ -79,6 +99,8 @@ echo "  DATABASE_URL: $([ -n "${DATABASE_URL:-}" ] && printf '[SET]' || printf '
 echo "  ENCRYPTION_KEY: $([ -n "${ENCRYPTION_KEY:-}" ] && printf '[SET]' || printf '[NOT SET]')"
 echo "  REDIS_URL: $([ -n "${REDIS_URL:-}" ] && printf '[SET]' || printf '[NOT SET]')"
 echo "  HUB_API_URL: $([ -n "${HUB_API_URL:-}" ] && printf '[SET]' || printf '[NOT SET]')"
+echo "  CUBEJS_API_URL: $([ -n "${CUBEJS_API_URL:-}" ] && printf '[SET]' || printf '[NOT SET]')"
+echo "  CUBEJS_API_SECRET: $([ -n "${CUBEJS_API_SECRET:-}" ] && printf '[SET]' || printf '[NOT SET]')"
 echo "  SENTRY_AUTH_TOKEN: $([ -n "${SENTRY_AUTH_TOKEN:-}" ] && printf '[SET]' || printf '[NOT SET]')"
 echo "  POSTHOG_KEY: $([ -n "${POSTHOG_KEY:-}" ] && printf '[SET]' || printf '[NOT SET]')"
 echo "  TARGETARCH: $([ -n "${TARGETARCH:-}" ] && printf '%s' "${TARGETARCH}" || printf '[NOT SET]')"
