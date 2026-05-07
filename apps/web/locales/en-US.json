@@ -3673,7 +3673,7 @@
       "csv_at_least_one_row": "CSV must contain at least one data row.",
       "csv_auto_mapped": "Auto-mapped",
       "csv_auto_mapped_tooltip": "We mapped this from \"{column}\" because the header looked similar. Confirm or change it.",
-      "csv_auto_mapped_verify": "Auto-mapped — please verify",
+      "csv_auto_mapped_verify": "Auto-mapped (needs review)",
       "csv_basic_required": "Basic (required)",
       "csv_basic_required_hint": "Pick a CSV column, or set a fixed value applied to every row.",
       "csv_column_used_by": "Mapped to: {target}",

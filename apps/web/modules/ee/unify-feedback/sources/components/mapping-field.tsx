@@ -288,9 +288,17 @@ export const AutoMappedBadge = ({ state, sourceColumn }: AutoMappedBadgeProps) =
   );
   const label = isHigh ? t("workspace.unify.csv_auto_mapped") : t("workspace.unify.csv_auto_mapped_verify");
 
+  if (!sourceColumn) {
+    return (
+      <span className={className}>
+        <Icon className="h-3 w-3" />
+        {label}
+      </span>
+    );
+  }
+
   return (
-    <TooltipRenderer
-      tooltipContent={t("workspace.unify.csv_auto_mapped_tooltip", { column: sourceColumn ?? "—" })}>
+    <TooltipRenderer tooltipContent={t("workspace.unify.csv_auto_mapped_tooltip", { column: sourceColumn })}>
       <span className={className}>
         <Icon className="h-3 w-3" />
         {label}
