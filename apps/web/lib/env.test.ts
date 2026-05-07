@@ -9,6 +9,7 @@ const setTestEnv = (overrides: Record<string, string | undefined> = {}) => {
     DATABASE_URL: "https://example.com/db",
     ENCRYPTION_KEY: "12345678901234567890123456789012",
     HUB_API_URL: "https://hub.formbricks.local",
+    HUB_API_KEY: "test-hub-api-key",
     CUBEJS_API_URL: "https://cube.formbricks.local",
     CUBEJS_API_SECRET: "cube-secret",
     ...overrides,
@@ -128,44 +129,36 @@ describe("env", () => {
     expect(env.CUBEJS_JWT_ISSUER).toBe("formbricks-web");
   });
 
-  test("allows the Cube API secret to be omitted until analytics is used", async () => {
+  test("fails to load when the Cube API secret is missing", async () => {
     setTestEnv({
       CUBEJS_API_SECRET: undefined,
     });
 
-    const { env } = await import("./env");
-
-    expect(env.CUBEJS_API_SECRET).toBeUndefined();
+    await expect(import("./env")).rejects.toThrow("Invalid environment variables");
   });
 
-  test("treats an empty Cube API secret from Docker Compose as omitted", async () => {
+  test("fails to load when the Cube API secret is empty", async () => {
     setTestEnv({
       CUBEJS_API_SECRET: "",
     });
 
-    const { env } = await import("./env");
-
-    expect(env.CUBEJS_API_SECRET).toBeUndefined();
+    await expect(import("./env")).rejects.toThrow("Invalid environment variables");
   });
 
-  test("allows the Cube API URL to be omitted until analytics is used", async () => {
+  test("fails to load when the Cube API URL is missing", async () => {
     setTestEnv({
       CUBEJS_API_URL: undefined,
     });
 
-    const { env } = await import("./env");
-
-    expect(env.CUBEJS_API_URL).toBeUndefined();
+    await expect(import("./env")).rejects.toThrow("Invalid environment variables");
   });
 
-  test("treats an empty Cube API URL as omitted", async () => {
+  test("fails to load when the Cube API URL is empty", async () => {
     setTestEnv({
       CUBEJS_API_URL: "",
     });
 
-    const { env } = await import("./env");
-
-    expect(env.CUBEJS_API_URL).toBeUndefined();
+    await expect(import("./env")).rejects.toThrow("Invalid environment variables");
   });
 
   test("fails to load when the Cube API URL is invalid", async () => {

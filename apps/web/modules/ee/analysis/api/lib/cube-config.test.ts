@@ -12,6 +12,7 @@ const setTestEnv = (overrides: Record<string, string | undefined> = {}) => {
     DATABASE_URL: "https://example.com/db",
     ENCRYPTION_KEY: "12345678901234567890123456789012",
     HUB_API_URL: "https://hub.formbricks.local",
+    HUB_API_KEY: "test-hub-api-key",
     CUBEJS_API_URL: "https://cube.formbricks.local",
     CUBEJS_API_SECRET: "cube-secret",
     CUBEJS_JWT_AUDIENCE: "formbricks-cube-test",
@@ -96,23 +97,19 @@ describe("cube-config", () => {
     expect(getCubeApiCredentials().apiUrl).toBe("https://cube.formbricks.local/cubejs-api/v1");
   });
 
-  test("throws a configuration error when CUBEJS_API_URL is missing", async () => {
+  test("fails at env validation when CUBEJS_API_URL is missing", async () => {
     setTestEnv({
       CUBEJS_API_URL: undefined,
     });
 
-    const { CUBE_CONFIGURATION_ERROR_MESSAGE, getCubeApiCredentials } = await import("./cube-config");
-
-    expect(() => getCubeApiCredentials()).toThrow(CUBE_CONFIGURATION_ERROR_MESSAGE);
+    await expect(import("./cube-config")).rejects.toThrow("Invalid environment variables");
   });
 
-  test("throws a configuration error when CUBEJS_API_SECRET is missing", async () => {
+  test("fails at env validation when CUBEJS_API_SECRET is missing", async () => {
     setTestEnv({
       CUBEJS_API_SECRET: undefined,
     });
 
-    const { CUBE_CONFIGURATION_ERROR_MESSAGE, getCubeApiCredentials } = await import("./cube-config");
-
-    expect(() => getCubeApiCredentials()).toThrow(CUBE_CONFIGURATION_ERROR_MESSAGE);
+    await expect(import("./cube-config")).rejects.toThrow("Invalid environment variables");
   });
 });
