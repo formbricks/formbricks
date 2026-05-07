@@ -1,0 +1,108 @@
+{{- if .Values.cube.enabled }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "formbricks.cubeName" . }}
+  labels:
+    helm.sh/chart: {{ include "formbricks.chart" . }}
+    app.kubernetes.io/name: {{ include "formbricks.cubeName" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: cube
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/part-of: {{ .Values.partOfOverride | default (include "formbricks.name" .) }}
+spec:
+  replicas: {{ .Values.cube.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "formbricks.cubeName" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "formbricks.cubeName" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: cube
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/cube-configmap.yaml") . | sha256sum }}
+    spec:
+      {{- if .Values.deployment.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml .Values.deployment.imagePullSecrets | nindent 8 }}
+      {{- end }}
+      {{- with .Values.cube.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.cube.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.cube.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.cube.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: cube
+          image: "{{ .Values.cube.image.repository }}:{{ .Values.cube.image.tag }}"
+          imagePullPolicy: {{ .Values.cube.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.cube.port }}
+              protocol: TCP
+          {{- if .Values.cube.envFrom }}
+          envFrom:
+            {{- range $value := .Values.cube.envFrom }}
+            {{- if (eq .type "configmap") }}
+            - configMapRef:
+                {{- if .name }}
+                name: {{ include "formbricks.tplvalues.render" ( dict "value" $value.name "context" $ ) }}
+                {{- else if .nameSuffix }}
+                name: {{ template "formbricks.name" $ }}-{{ include "formbricks.tplvalues.render" ( dict "value" $value.nameSuffix "context" $ ) }}
+                {{- else }}
+                name: {{ template "formbricks.name" $ }}
+                {{- end }}
+            {{- end }}
+            {{- if (eq .type "secret") }}
+            - secretRef:
+                {{- if .name }}
+                name: {{ include "formbricks.tplvalues.render" ( dict "value" $value.name "context" $ ) }}
+                {{- else if .nameSuffix }}
+                name: {{ template "formbricks.name" $ }}-{{ include "formbricks.tplvalues.render" ( dict "value" $value.nameSuffix "context" $ ) }}
+                {{- else }}
+                name: {{ template "formbricks.name" $ }}
+                {{- end }}
+            {{- end }}
+            {{- end }}
+          {{- end }}
+          env:
+            {{- range $key, $value := .Values.cube.env }}
+            - name: {{ include "formbricks.tplvalues.render" ( dict "value" $key "context" $ ) }}
+              {{- if kindIs "string" $value }}
+              value: {{ include "formbricks.tplvalues.render" ( dict "value" $value "context" $ ) | quote }}
+              {{- else }}
+              {{- toYaml $value | nindent 14 }}
+              {{- end }}
+            {{- end }}
+          volumeMounts:
+            - name: cube-config
+              mountPath: /cube/conf/cube.js
+              subPath: cube.js
+              readOnly: true
+            - name: cube-config
+              mountPath: /cube/conf/model/FeedbackRecords.js
+              subPath: FeedbackRecords.js
+              readOnly: true
+          {{- if .Values.cube.resources }}
+          resources:
+            {{- toYaml .Values.cube.resources | nindent 12 }}
+          {{- end }}
+      volumes:
+        - name: cube-config
+          configMap:
+            name: {{ include "formbricks.cubeName" . }}-config
+{{- end }}

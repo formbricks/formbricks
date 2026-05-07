@@ -558,6 +558,48 @@ serviceMonitor:
       port: metrics
 
 ##########################################################
+# Cube.js Analytics Configuration
+##########################################################
+cube:
+  # Optional internal Cube.js service for XM Suite v5 analytics.
+  enabled: false
+  replicas: 1
+
+  image:
+    repository: "cubejs/cube"
+    tag: "v1.6.6"
+    pullPolicy: IfNotPresent
+
+  port: 4000
+
+  service:
+    type: ClusterIP
+    port: 4000
+
+  # Secret values such as CUBEJS_API_SECRET and CUBEJS_DB_* should be supplied
+  # through envFrom or another secret-management flow.
+  envFrom: []
+
+  env:
+    CUBEJS_DB_TYPE: "postgres"
+    CUBEJS_DEFAULT_API_SCOPES: "meta,data"
+    CUBEJS_CACHE_AND_QUEUE_DRIVER: "memory"
+    CUBEJS_JWT_ISSUER: "formbricks-web"
+    CUBEJS_JWT_AUDIENCE: "formbricks-cube"
+
+  resources:
+    limits:
+      memory: 1Gi
+    requests:
+      memory: 512Mi
+      cpu: "250m"
+
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  topologySpreadConstraints: []
+
+##########################################################
 # Hub API Configuration
 # Formbricks Hub image: ghcr.io/formbricks/hub
 ##########################################################
@@ -830,8 +872,9 @@ hub:
     affinity: {}
     topologySpreadConstraints: []
 
-  # Helm does not deploy Cube. XM Suite v5 analytics requires operators to provide an external Cube instance,
-  # set deployment.env.CUBEJS_API_URL, and supply CUBEJS_API_SECRET via an existing secret.
+  # XM Suite v5 analytics also requires Cube. Use cube.enabled=true to deploy
+  # the internal chart-managed Cube service, or set deployment.env.CUBEJS_API_URL
+  # to an operator-managed Cube endpoint.
 
   # Upgrade migration job runs goose + river before Helm upgrades Hub resources.
   # Fresh installs run the same migrations through the Hub deployment init container.

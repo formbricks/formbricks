@@ -1,0 +1,24 @@
+{{- if .Values.cube.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "formbricks.cubeName" . }}
+  labels:
+    helm.sh/chart: {{ include "formbricks.chart" . }}
+    app.kubernetes.io/name: {{ include "formbricks.cubeName" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: cube
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/part-of: {{ .Values.partOfOverride | default (include "formbricks.name" .) }}
+spec:
+  type: {{ .Values.cube.service.type }}
+  selector:
+    app.kubernetes.io/name: {{ include "formbricks.cubeName" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  ports:
+    - name: http
+      port: {{ .Values.cube.service.port }}
+      targetPort: http
+      protocol: TCP
+{{- end }}
