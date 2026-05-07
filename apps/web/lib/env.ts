@@ -196,7 +196,7 @@ const parsedEnv = createEnv({
     CUBEJS_JWT_ISSUER: ZOptionalNonEmptyString,
     HTTP_PROXY: z.url().optional(),
     HTTPS_PROXY: z.url().optional(),
-    HUB_API_URL: z.url(),
+    HUB_API_URL: z.url().optional(),
     HUB_API_KEY: z.string().optional(),
     IMPRINT_URL: z
       .url()
