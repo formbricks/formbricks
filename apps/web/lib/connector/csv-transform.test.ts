@@ -283,3 +283,134 @@ describe("transformCsvRowsToFeedbackRecords", () => {
     expect(skipped).toBe(0);
   });
 });
+
+describe("response_value routing", () => {
+  const responseMappings = (fieldType: string): TConnectorFieldMapping[] => [
+    makeMapping("answer", "response_value"),
+    makeMapping("question", "field_id"),
+    makeMapping("", "source_type", "csv"),
+    makeMapping("", "field_type", fieldType),
+    makeMapping("timestamp", "collected_at"),
+  ];
+
+  test("text routes to value_text", () => {
+    const result = transformCsvRowToFeedbackRecord(
+      { answer: "great service", question: "q1", timestamp: "2026-01-15" },
+      responseMappings("text"),
+      TENANT
+    );
+    expect(result!.value_text).toBe("great service");
+    expect(result!.value_number).toBeUndefined();
+  });
+
+  test("categorical routes to value_text", () => {
+    const result = transformCsvRowToFeedbackRecord(
+      { answer: "option_a", question: "q1", timestamp: "2026-01-15" },
+      responseMappings("categorical"),
+      TENANT
+    );
+    expect(result!.value_text).toBe("option_a");
+  });
+
+  test.each(["number", "nps", "csat", "ces", "rating"])("%s routes to value_number", (fieldType) => {
+    const result = transformCsvRowToFeedbackRecord(
+      { answer: "9", question: "q1", timestamp: "2026-01-15" },
+      responseMappings(fieldType),
+      TENANT
+    );
+    expect(result!.value_number).toBe(9);
+    expect(result!.value_text).toBeUndefined();
+  });
+
+  test("boolean routes to value_boolean", () => {
+    const result = transformCsvRowToFeedbackRecord(
+      { answer: "true", question: "q1", timestamp: "2026-01-15" },
+      responseMappings("boolean"),
+      TENANT
+    );
+    expect(result!.value_boolean).toBe(true);
+  });
+
+  test("date routes to value_date", () => {
+    const result = transformCsvRowToFeedbackRecord(
+      { answer: "2026-03-01", question: "q1", timestamp: "2026-01-15" },
+      responseMappings("date"),
+      TENANT
+    );
+    expect(result!.value_date).toBe("2026-03-01T00:00:00.000Z");
+  });
+
+  test("invalid field_type causes the row to be skipped", () => {
+    const mappings: TConnectorFieldMapping[] = [
+      makeMapping("answer", "response_value"),
+      makeMapping("question", "field_id"),
+      makeMapping("", "source_type", "csv"),
+      makeMapping("", "field_type", "not_a_real_enum"),
+      makeMapping("timestamp", "collected_at"),
+    ];
+    const result = transformCsvRowToFeedbackRecord(
+      { answer: "x", question: "q1", timestamp: "2026-01-15" },
+      mappings,
+      TENANT
+    );
+    expect(result).toBeNull();
+  });
+
+  test("missing field_type causes the row to be skipped", () => {
+    const mappings: TConnectorFieldMapping[] = [
+      makeMapping("answer", "response_value"),
+      makeMapping("question", "field_id"),
+      makeMapping("", "source_type", "csv"),
+      makeMapping("timestamp", "collected_at"),
+    ];
+    const result = transformCsvRowToFeedbackRecord(
+      { answer: "x", question: "q1", timestamp: "2026-01-15" },
+      mappings,
+      TENANT
+    );
+    expect(result).toBeNull();
+  });
+});
+
+describe("tenant_id defense-in-depth", () => {
+  test("ignores a user-supplied tenant_id mapping and uses the connector value", () => {
+    const mappings: TConnectorFieldMapping[] = [
+      makeMapping("malicious", "tenant_id"),
+      makeMapping("feedback_text", "value_text"),
+      makeMapping("question", "field_id"),
+      makeMapping("", "source_type", "csv"),
+      makeMapping("", "field_type", "text"),
+      makeMapping("timestamp", "collected_at"),
+    ];
+
+    const row = {
+      malicious: "stolen-tenant",
+      feedback_text: "x",
+      question: "q1",
+      timestamp: "2026-01-15",
+    };
+    const result = transformCsvRowToFeedbackRecord(row, mappings, TENANT);
+
+    expect(result!.tenant_id).toBe(TENANT);
+    expect(result!.tenant_id).not.toBe("stolen-tenant");
+  });
+
+  test("ignores a static tenant_id mapping", () => {
+    const mappings: TConnectorFieldMapping[] = [
+      makeMapping("", "tenant_id", "stolen-tenant"),
+      makeMapping("feedback_text", "value_text"),
+      makeMapping("question", "field_id"),
+      makeMapping("", "source_type", "csv"),
+      makeMapping("", "field_type", "text"),
+      makeMapping("timestamp", "collected_at"),
+    ];
+
+    const result = transformCsvRowToFeedbackRecord(
+      { feedback_text: "x", question: "q1", timestamp: "2026-01-15" },
+      mappings,
+      TENANT
+    );
+
+    expect(result!.tenant_id).toBe(TENANT);
+  });
+});

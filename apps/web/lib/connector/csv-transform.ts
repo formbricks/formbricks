@@ -1,5 +1,11 @@
 import { randomUUID } from "crypto";
-import { TConnectorFieldMapping, THubTargetField } from "@formbricks/types/connector";
+import {
+  TConnectorFieldMapping,
+  THubFieldType,
+  THubTargetField,
+  ZHubFieldType,
+} from "@formbricks/types/connector";
+import { routeResponseValueTarget } from "@/modules/ee/unify-feedback/sources/utils";
 import { FeedbackRecordCreateParams } from "@/modules/hub";
 
 const NUMERIC_FIELDS = new Set<THubTargetField>(["value_number"]);
@@ -33,19 +39,36 @@ const coerceValue = (value: string, targetField: THubTargetField): string | numb
 
 const resolveValue = (
   row: Record<string, string>,
-  mapping: TConnectorFieldMapping
+  mapping: TConnectorFieldMapping,
+  effectiveTargetFieldId: THubTargetField
 ): string | number | boolean | undefined => {
   if (mapping.staticValue) {
-    if (mapping.staticValue === "$now" && TIMESTAMP_FIELDS.has(mapping.targetFieldId)) {
+    if (mapping.staticValue === "$now" && TIMESTAMP_FIELDS.has(effectiveTargetFieldId)) {
       return new Date().toISOString();
     }
-    return coerceValue(mapping.staticValue, mapping.targetFieldId);
+    return coerceValue(mapping.staticValue, effectiveTargetFieldId);
   }
 
   const rawValue = row[mapping.sourceFieldId];
   if (rawValue === undefined || rawValue === null) return undefined;
 
-  return coerceValue(rawValue, mapping.targetFieldId);
+  return coerceValue(rawValue, effectiveTargetFieldId);
+};
+
+// Resolve the row's field_type up front so response_value routing is consistent for the row.
+// Returns null if no valid field_type is available (row is then skipped).
+const resolveFieldTypeForRow = (
+  row: Record<string, string>,
+  mappings: TConnectorFieldMapping[]
+): THubFieldType | null => {
+  const mapping = mappings.find((m) => m.targetFieldId === "field_type");
+  if (!mapping) return null;
+
+  const raw = mapping.staticValue ?? row[mapping.sourceFieldId];
+  if (!raw) return null;
+
+  const parsed = ZHubFieldType.safeParse(raw.trim());
+  return parsed.success ? parsed.data : null;
 };
 
 /**
@@ -63,18 +86,38 @@ export const transformCsvRowToFeedbackRecord = (
 ): FeedbackRecordCreateParams | null => {
   const record: Record<string, string | number | boolean | Record<string, unknown> | undefined> = {};
 
-  for (const mapping of mappings) {
-    const value = resolveValue(row, mapping);
-    if (value === undefined) continue;
+  // Defense-in-depth: never honor a user-supplied tenant_id mapping. The UI hides this field, but
+  // a hand-crafted payload could still include one. Backfill from the connector authoritatively.
+  const safeMappings = mappings.filter((m) => m.targetFieldId !== "tenant_id");
 
-    if (JSON_FIELDS.has(mapping.targetFieldId)) {
+  // Resolve field_type once per row; response_value routing depends on it.
+  const fieldType = resolveFieldTypeForRow(row, safeMappings);
+  if (!fieldType) return null;
+
+  for (const mapping of safeMappings) {
+    let effectiveTargetFieldId: THubTargetField;
+    if (mapping.targetFieldId === "response_value") {
       try {
-        record[mapping.targetFieldId] = typeof value === "string" ? JSON.parse(value) : value;
+        effectiveTargetFieldId = routeResponseValueTarget(fieldType);
       } catch {
-        record[mapping.targetFieldId] = { raw: value };
+        // routing is exhaustive; fail closed if THubFieldType ever drifts.
+        return null;
       }
     } else {
-      record[mapping.targetFieldId] = value;
+      effectiveTargetFieldId = mapping.targetFieldId;
+    }
+
+    const value = resolveValue(row, mapping, effectiveTargetFieldId);
+    if (value === undefined) continue;
+
+    if (JSON_FIELDS.has(effectiveTargetFieldId)) {
+      try {
+        record[effectiveTargetFieldId] = typeof value === "string" ? JSON.parse(value) : value;
+      } catch {
+        record[effectiveTargetFieldId] = { raw: value };
+      }
+    } else {
+      record[effectiveTargetFieldId] = value;
     }
   }
 
@@ -91,7 +134,7 @@ export const transformCsvRowToFeedbackRecord = (
   }
 
   if (!("submission_id" in record)) {
-    const submissionMapped = mappings.some((m) => m.targetFieldId === "submission_id");
+    const submissionMapped = safeMappings.some((m) => m.targetFieldId === "submission_id");
     if (submissionMapped) {
       return null;
     }

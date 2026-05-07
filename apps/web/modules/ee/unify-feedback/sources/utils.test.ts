@@ -1,10 +1,15 @@
 import { describe, expect, test } from "vitest";
+import { ZHubFieldType } from "@formbricks/types/connector";
 import { MAX_CSV_VALUES, TFieldMapping, TSourceField } from "./types";
 import {
-  areAllRequiredFieldsMapped,
+  areAllRequiredCsvFieldsMapped,
+  autoMapCsvSourceFields,
   getConnectorOptions,
+  inferFieldType,
   isConnectorNameValid,
   parseCSVColumnsToFields,
+  routeResponseValueTarget,
+  titleizeFromFileName,
   toggleQuestionId,
   validateCsvFile,
 } from "./utils";
@@ -146,59 +151,214 @@ describe("isConnectorNameValid", () => {
   });
 });
 
-describe("areAllRequiredFieldsMapped", () => {
-  const requiredMappings: TFieldMapping[] = [
-    { targetFieldId: "collected_at", sourceFieldId: "ts" },
-    { targetFieldId: "source_type", staticValue: "csv" },
+describe("areAllRequiredCsvFieldsMapped", () => {
+  const fullMappings: TFieldMapping[] = [
     { targetFieldId: "field_id", sourceFieldId: "qid" },
+    { targetFieldId: "field_label", sourceFieldId: "label" },
     { targetFieldId: "field_type", staticValue: "text" },
+    { targetFieldId: "response_value", sourceFieldId: "answer" },
   ];
 
-  test("returns true when all required fields have a sourceFieldId or staticValue", () => {
-    expect(areAllRequiredFieldsMapped(requiredMappings)).toBe(true);
+  test("returns valid=true and missing=[] when every required UI field is resolved", () => {
+    expect(areAllRequiredCsvFieldsMapped(fullMappings)).toEqual({ valid: true, missing: [] });
   });
 
-  test("returns false when a required field is missing entirely", () => {
-    const missing = requiredMappings.slice(0, 3);
-    expect(areAllRequiredFieldsMapped(missing)).toBe(false);
-  });
+  test.each(["field_id", "field_label", "field_type", "response_value"])(
+    "returns valid=false and lists %s when missing",
+    (missingId) => {
+      const partial = fullMappings.filter((m) => m.targetFieldId !== missingId);
+      const result = areAllRequiredCsvFieldsMapped(partial);
+      expect(result.valid).toBe(false);
+      expect(result.missing).toContain(missingId);
+    }
+  );
 
-  test("returns false when a required mapping has neither sourceFieldId nor staticValue", () => {
-    const incomplete: TFieldMapping[] = [...requiredMappings.slice(0, 3), { targetFieldId: "field_type" }];
-    expect(areAllRequiredFieldsMapped(incomplete)).toBe(false);
-  });
-
-  test("ignores mappings for non-required target fields", () => {
-    const withOptionals: TFieldMapping[] = [
-      ...requiredMappings,
-      { targetFieldId: "tenant_id", sourceFieldId: "tenant" },
-      { targetFieldId: "unknown_field", sourceFieldId: "anything" },
-    ];
-    expect(areAllRequiredFieldsMapped(withOptionals)).toBe(true);
-  });
-
-  test("returns false for empty mappings array", () => {
-    expect(areAllRequiredFieldsMapped([])).toBe(false);
-  });
-
-  test("treats empty staticValue and missing sourceFieldId as unmapped", () => {
+  test("treats whitespace-only staticValue as unmapped", () => {
     const incomplete: TFieldMapping[] = [
-      { targetFieldId: "collected_at", sourceFieldId: "ts" },
-      { targetFieldId: "source_type", sourceFieldId: "", staticValue: "" },
-      { targetFieldId: "field_id", sourceFieldId: "qid" },
-      { targetFieldId: "field_type", staticValue: "text" },
+      ...fullMappings.filter((m) => m.targetFieldId !== "field_type"),
+      { targetFieldId: "field_type", staticValue: "   " },
     ];
-    expect(areAllRequiredFieldsMapped(incomplete)).toBe(false);
+    expect(areAllRequiredCsvFieldsMapped(incomplete).missing).toContain("field_type");
   });
 
-  test("counts required field as mapped when only staticValue is set", () => {
-    const onlyStatic: TFieldMapping[] = [
-      { targetFieldId: "collected_at", staticValue: "2026-01-01" },
-      { targetFieldId: "source_type", staticValue: "csv" },
-      { targetFieldId: "field_id", staticValue: "id" },
-      { targetFieldId: "field_type", staticValue: "text" },
-    ];
-    expect(areAllRequiredFieldsMapped(onlyStatic)).toBe(true);
+  test("does not require collected_at (defaults to $now)", () => {
+    expect(areAllRequiredCsvFieldsMapped(fullMappings).missing).not.toContain("collected_at");
+  });
+});
+
+describe("titleizeFromFileName", () => {
+  test.each([
+    ["feedback.csv", "Feedback"],
+    ["q1-2026-survey.csv", "Q1 2026 Survey"],
+    ["customer_feedback_data.csv", "Customer Feedback Data"],
+    ["Mixed Case File.CSV", "Mixed Case File"],
+    ["nps results", "Nps Results"],
+    ["", ""],
+  ])("titleizes %s to %s", (input, expected) => {
+    expect(titleizeFromFileName(input)).toBe(expected);
+  });
+});
+
+describe("inferFieldType", () => {
+  test("detects integer numbers from samples", () => {
+    expect(inferFieldType({ samples: ["3", "5", "10"] })).toBe("number");
+  });
+
+  test("detects floating-point numbers from samples", () => {
+    expect(inferFieldType({ samples: ["3.14", "-2.5"] })).toBe("number");
+  });
+
+  test("detects booleans from samples", () => {
+    expect(inferFieldType({ samples: ["true", "false", "yes", "no"] })).toBe("boolean");
+  });
+
+  test("detects ISO dates from samples", () => {
+    expect(inferFieldType({ samples: ["2026-01-01", "2026-02-15T10:00:00Z"] })).toBe("date");
+  });
+
+  test("falls back to text for arbitrary strings", () => {
+    expect(inferFieldType({ samples: ["hello", "world"] })).toBe("text");
+  });
+
+  test("returns text for empty samples", () => {
+    expect(inferFieldType({ samples: [] })).toBe("text");
+    expect(inferFieldType({ samples: ["", "  "] })).toBe("text");
+  });
+
+  test("name hint wins over sample sniff (rating column with garbage samples)", () => {
+    expect(inferFieldType({ columnName: "rating", samples: ["asdf", "qwer"] })).toBe("rating");
+  });
+
+  test.each([
+    ["nps", "nps"],
+    ["nps_score", "nps"],
+    ["csat", "csat"],
+    ["ces", "ces"],
+    ["stars", "rating"],
+    ["score", "rating"],
+    ["comment", "text"],
+    ["category", "categorical"],
+    ["is_promoter", "boolean"],
+    ["has_responded", "boolean"],
+    ["submitted_at", "date"],
+  ])("name hint %s → %s", (columnName, expected) => {
+    expect(inferFieldType({ columnName, samples: [] })).toBe(expected);
+  });
+
+  test("name with no hint falls back to sample sniffing", () => {
+    expect(inferFieldType({ columnName: "anonymous", samples: ["42"] })).toBe("number");
+  });
+});
+
+describe("routeResponseValueTarget", () => {
+  test.each([
+    ["text", "value_text"],
+    ["categorical", "value_text"],
+    ["number", "value_number"],
+    ["nps", "value_number"],
+    ["csat", "value_number"],
+    ["ces", "value_number"],
+    ["rating", "value_number"],
+    ["boolean", "value_boolean"],
+    ["date", "value_date"],
+  ] as const)("routes %s to %s", (fieldType, expected) => {
+    expect(routeResponseValueTarget(fieldType)).toBe(expected);
+  });
+
+  test("covers every THubFieldType enum value", () => {
+    for (const fieldType of ZHubFieldType.options) {
+      // Throws if any enum member is unhandled.
+      expect(() => routeResponseValueTarget(fieldType)).not.toThrow();
+    }
+  });
+});
+
+describe("autoMapCsvSourceFields", () => {
+  const buildSourceFields = (names: string[]): TSourceField[] =>
+    names.map((name) => ({ id: name, name, type: "string", sampleValue: "" }));
+
+  test("maps timestamp column to collected_at with high confidence", () => {
+    const result = autoMapCsvSourceFields({
+      sourceFields: buildSourceFields(["timestamp", "answer"]),
+      sampleRow: { timestamp: "2026-01-01", answer: "yes" },
+      fileName: "feedback.csv",
+    });
+    const mapping = result.mappings.find((m) => m.targetFieldId === "collected_at");
+    expect(mapping?.sourceFieldId).toBe("timestamp");
+    expect(result.confidence.collected_at).toBe("high");
+  });
+
+  test("falls back to $now when no timestamp column is present", () => {
+    const result = autoMapCsvSourceFields({
+      sourceFields: buildSourceFields(["question", "answer"]),
+      sampleRow: { question: "q1", answer: "yes" },
+      fileName: "feedback.csv",
+    });
+    const mapping = result.mappings.find((m) => m.targetFieldId === "collected_at");
+    expect(mapping?.staticValue).toBe("$now");
+    expect(result.confidence.collected_at).toBe("high");
+  });
+
+  test("maps email to user_identifier with medium confidence", () => {
+    const result = autoMapCsvSourceFields({
+      sourceFields: buildSourceFields(["email", "answer"]),
+      sampleRow: { email: "x@y.com", answer: "yes" },
+      fileName: "feedback.csv",
+    });
+    const mapping = result.mappings.find((m) => m.targetFieldId === "user_identifier");
+    expect(mapping?.sourceFieldId).toBe("email");
+    expect(result.confidence.user_identifier).toBe("medium");
+  });
+
+  test("prepopulates source_name from titleized filename", () => {
+    const result = autoMapCsvSourceFields({
+      sourceFields: buildSourceFields(["question", "answer"]),
+      sampleRow: { question: "q1", answer: "yes" },
+      fileName: "Q1-2026-survey.csv",
+    });
+    const mapping = result.mappings.find((m) => m.targetFieldId === "source_name");
+    expect(mapping?.staticValue).toBe("Q1 2026 Survey");
+    expect(result.confidence.source_name).toBe("high");
+  });
+
+  test("ambiguous column claimed by highest-confidence target", () => {
+    // 'id' matches both field_id (medium) and... only field_id. Add a high-confidence
+    // alternative claim to verify higher confidence wins.
+    const result = autoMapCsvSourceFields({
+      sourceFields: buildSourceFields(["question_id", "id"]),
+      sampleRow: { question_id: "q1", id: "u1" },
+      fileName: "x.csv",
+    });
+    const fieldIdMapping = result.mappings.find((m) => m.targetFieldId === "field_id");
+    expect(fieldIdMapping?.sourceFieldId).toBe("question_id");
+    expect(result.confidence.field_id).toBe("high");
+  });
+
+  test("infers field_type as static via sample sniffing when name has no hint", () => {
+    // "result" doesn't match any FIELD_TYPE_NAME_HINTS pattern, but it does match the response_value
+    // medium alias /^(score|rating|feedback)$/i? No — let's use a generic name. Use "result"
+    // (matches nothing in CSV_COLUMN_ALIASES high tier; falls through to fuzzy substring as low).
+    const result = autoMapCsvSourceFields({
+      sourceFields: buildSourceFields(["question", "value"]),
+      // "value" matches response_value high-confidence; sample is numeric.
+      sampleRow: { question: "q1", value: "42" },
+      fileName: "x.csv",
+    });
+    const fieldTypeMapping = result.mappings.find((m) => m.targetFieldId === "field_type");
+    // Column name "value" has no FIELD_TYPE_NAME_HINTS match, so we fall back to sample sniffing.
+    expect(fieldTypeMapping?.staticValue).toBe("number");
+    expect(result.confidence.field_type).toBe("medium");
+  });
+
+  test("infers field_type as 'rating' (high confidence) when response_value column is named 'rating'", () => {
+    const result = autoMapCsvSourceFields({
+      sourceFields: buildSourceFields(["question", "rating"]),
+      sampleRow: { question: "q1", rating: "garbage" },
+      fileName: "x.csv",
+    });
+    const mapping = result.mappings.find((m) => m.targetFieldId === "field_type");
+    expect(mapping?.staticValue).toBe("rating");
+    expect(result.confidence.field_type).toBe("high");
   });
 });
 

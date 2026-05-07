@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TConnectorWithMappings } from "@formbricks/types/connector";
 import { Button } from "@/modules/ui/components/button";
@@ -32,6 +33,7 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import {
+  CSV_HIDDEN_STATIC_MAPPINGS,
   SAMPLE_CSV_COLUMNS,
   TFieldMapping,
   TFormbricksConnectorForm,
@@ -41,7 +43,7 @@ import {
   getTranslatedConnectorError,
 } from "../types";
 import {
-  areAllRequiredFieldsMapped,
+  areAllRequiredCsvFieldsMapped,
   isConnectorNameValid,
   parseCSVColumnsToFields,
   toggleQuestionId,
@@ -192,13 +194,26 @@ export const EditConnectorModal = ({
 
   const handleUpdateCsvConnector = async () => {
     if (connector?.type !== "csv" || !isConnectorNameValid(csvConnectorName)) return;
+
+    const requiredCheck = areAllRequiredCsvFieldsMapped(mappings);
+    if (!requiredCheck.valid) {
+      toast.error(
+        t("workspace.unify.csv_required_fields_missing", { fields: requiredCheck.missing.join(", ") })
+      );
+      return;
+    }
+
     setIsUpdating(true);
+    const protectedIds = ["tenant_id", "source_type"];
+    const userMappings = mappings.filter((m) => protectedIds.every((id) => m.targetFieldId !== id));
+    const fieldMappings = [...userMappings, ...CSV_HIDDEN_STATIC_MAPPINGS];
+
     const success = await onUpdateConnector({
       connectorId: connector.id,
       workspaceId: connector.workspaceId,
       name: csvConnectorName.trim(),
       surveyMappings: undefined,
-      fieldMappings: mappings.length > 0 ? mappings : undefined,
+      fieldMappings,
     });
     setIsUpdating(false);
     if (success) {
@@ -227,7 +242,7 @@ export const EditConnectorModal = ({
     }
 
     if (connector.type === "csv") {
-      return !isConnectorNameValid(csvConnectorName) || !areAllRequiredFieldsMapped(mappings);
+      return !isConnectorNameValid(csvConnectorName) || !areAllRequiredCsvFieldsMapped(mappings).valid;
     }
 
     return true;

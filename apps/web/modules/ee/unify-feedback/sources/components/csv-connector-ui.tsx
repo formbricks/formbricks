@@ -1,14 +1,20 @@
 "use client";
 
 import { parse } from "csv-parse/sync";
-import { ArrowUpFromLineIcon } from "lucide-react";
-import { useState } from "react";
+import { ArrowUpFromLineIcon, ChevronDownIcon, ChevronRightIcon } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Alert } from "@/modules/ui/components/alert";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
-import { TFieldMapping, TSourceField, createFeedbackCSVDataSchema } from "../types";
-import { validateCsvFile } from "../utils";
+import { SAMPLE_CSV_COLUMNS, TFieldMapping, TSourceField, createFeedbackCSVDataSchema } from "../types";
+import {
+  TMappingConfidence,
+  autoMapCsvSourceFields,
+  parseCSVColumnsToFields,
+  titleizeFromFileName,
+  validateCsvFile,
+} from "../utils";
 import { MappingUI } from "./mapping-ui";
 
 interface CsvConnectorUIProps {
@@ -16,8 +22,8 @@ interface CsvConnectorUIProps {
   mappings: TFieldMapping[];
   onMappingsChange: (mappings: TFieldMapping[]) => void;
   onSourceFieldsChange: (fields: TSourceField[]) => void;
-  onLoadSampleCSV: () => void;
   onParsedDataChange?: (data: Record<string, string>[]) => void;
+  onSuggestConnectorName?: (name: string) => void;
 }
 
 export function CsvConnectorUI({
@@ -25,20 +31,101 @@ export function CsvConnectorUI({
   mappings,
   onMappingsChange,
   onSourceFieldsChange,
-  onLoadSampleCSV,
   onParsedDataChange,
-}: CsvConnectorUIProps) {
+  onSuggestConnectorName,
+}: Readonly<CsvConnectorUIProps>) {
   const { t } = useTranslation();
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [csvPreview, setCsvPreview] = useState<string[][]>([]);
+  const [csvTotalRows, setCsvTotalRows] = useState(0);
   const [showMapping, setShowMapping] = useState(false);
   const [csvError, setCsvError] = useState("");
+  const [confidenceByTargetId, setConfidenceByTargetId] = useState<Record<string, TMappingConfidence>>({});
+  const [previewOpen, setPreviewOpen] = useState(true);
+  const [sampleRow, setSampleRow] = useState<Record<string, string> | undefined>(undefined);
+
+  // Track whether the user has manually edited the source_name mapping after auto-population.
+  // On re-upload, only overwrite source_name if the user hasn't touched it.
+  const userEditedSourceNameRef = useRef(false);
+  const lastAutoSourceNameRef = useRef<string | undefined>(undefined);
+
+  useEffect(() => {
+    const sourceNameMapping = mappings.find((m) => m.targetFieldId === "source_name");
+    const current = sourceNameMapping?.staticValue ?? sourceNameMapping?.sourceFieldId;
+    if (
+      lastAutoSourceNameRef.current !== undefined &&
+      current !== undefined &&
+      current !== lastAutoSourceNameRef.current
+    ) {
+      userEditedSourceNameRef.current = true;
+    }
+  }, [mappings]);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target?.files?.[0];
     if (file) {
       processCSVFile(file);
     }
+  };
+
+  // User-driven mapping changes clear the auto-map badge for any target whose mapping changed,
+  // so the badge sticks until auto-map runs again. Even if the user picks the same value back,
+  // the field is now "user-confirmed" rather than "auto-mapped". Auto-map itself bypasses this
+  // wrapper and uses `onMappingsChange` directly.
+  const handleUserMappingsChange = (newMappings: TFieldMapping[]) => {
+    const oldByTarget = new Map(mappings.map((m) => [m.targetFieldId, m]));
+    const newByTarget = new Map(newMappings.map((m) => [m.targetFieldId, m]));
+    const changedIds = new Set<string>();
+    for (const [id, m] of newByTarget) {
+      const prev = oldByTarget.get(id);
+      if (!prev || prev.sourceFieldId !== m.sourceFieldId || prev.staticValue !== m.staticValue) {
+        changedIds.add(id);
+      }
+    }
+    for (const id of oldByTarget.keys()) {
+      if (!newByTarget.has(id)) changedIds.add(id);
+    }
+
+    if (changedIds.size > 0) {
+      setConfidenceByTargetId((prev) => {
+        const next = { ...prev };
+        for (const id of changedIds) delete next[id];
+        return next;
+      });
+    }
+
+    onMappingsChange(newMappings);
+  };
+
+  const applyAutoMapping = (fields: TSourceField[], sampleRow: Record<string, string>, fileName: string) => {
+    const { mappings: autoMappings, confidence } = autoMapCsvSourceFields({
+      sourceFields: fields,
+      sampleRow,
+      fileName,
+    });
+
+    const autoSourceNameStatic = autoMappings.find((m) => m.targetFieldId === "source_name")?.staticValue;
+
+    // Preserve a user-edited source_name mapping across re-uploads.
+    if (userEditedSourceNameRef.current) {
+      const existingSourceName = mappings.find((m) => m.targetFieldId === "source_name");
+      if (existingSourceName) {
+        const filtered = autoMappings.filter((m) => m.targetFieldId !== "source_name");
+        onMappingsChange([...filtered, existingSourceName]);
+        const nextConfidence = { ...confidence };
+        delete nextConfidence.source_name;
+        setConfidenceByTargetId(nextConfidence);
+      } else {
+        onMappingsChange(autoMappings);
+        setConfidenceByTargetId(confidence);
+      }
+    } else {
+      onMappingsChange(autoMappings);
+      setConfidenceByTargetId(confidence);
+    }
+
+    lastAutoSourceNameRef.current = autoSourceNameStatic;
+    onSuggestConnectorName?.(titleizeFromFileName(fileName));
   };
 
   const processCSVFile = (file: File) => {
@@ -73,6 +160,7 @@ export function CsvConnectorUI({
         ];
         setCsvFile(file);
         setCsvPreview(preview);
+        setCsvTotalRows(validRecords.length);
 
         const fields: TSourceField[] = headers.map((header) => ({
           id: header,
@@ -82,6 +170,10 @@ export function CsvConnectorUI({
         }));
         onSourceFieldsChange(fields);
         onParsedDataChange?.(validRecords);
+        setSampleRow(validRecords[0]);
+
+        applyAutoMapping(fields, validRecords[0], file.name);
+
         setShowMapping(true);
       } catch (error) {
         const message = error instanceof Error ? error.message : t("common.failed_to_parse_csv");
@@ -106,67 +198,103 @@ export function CsvConnectorUI({
   };
 
   const handleLoadSample = () => {
-    onLoadSampleCSV();
+    const fields = parseCSVColumnsToFields(SAMPLE_CSV_COLUMNS);
+    const synthSampleRow = Object.fromEntries(fields.map((f) => [f.id, f.sampleValue ?? ""])) as Record<
+      string,
+      string
+    >;
+    onSourceFieldsChange(fields);
+    onParsedDataChange?.([]);
+    setSampleRow(synthSampleRow);
+    // Build a synthetic 1-row preview so the data preview block has something to render.
+    setCsvPreview([fields.map((f) => f.id), fields.map((f) => f.sampleValue ?? "")]);
+    setCsvTotalRows(1);
+    applyAutoMapping(fields, synthSampleRow, "sample-feedback.csv");
     setShowMapping(true);
   };
 
   if (showMapping && sourceFields.length > 0) {
+    const sourceLabel = csvFile?.name ?? t("workspace.unify.csv_sample_label");
     return (
       <div className="space-y-4">
-        {csvFile && (
-          <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-4 py-2">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-slate-800">{csvFile.name}</span>
-              <Badge text={`${csvPreview.length - 1} rows`} type="gray" size="tiny" />
-            </div>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => {
-                setCsvFile(null);
-                setCsvPreview([]);
-                setCsvError("");
-                setShowMapping(false);
-                onSourceFieldsChange([]);
-                onParsedDataChange?.([]);
-              }}>
-              {t("workspace.unify.change_file")}
-            </Button>
+        <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-4 py-2">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-slate-800">{sourceLabel}</span>
+            <Badge text={`${csvTotalRows} rows`} type="gray" size="tiny" />
           </div>
-        )}
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              setCsvFile(null);
+              setCsvPreview([]);
+              setCsvTotalRows(0);
+              setCsvError("");
+              setShowMapping(false);
+              setConfidenceByTargetId({});
+              setSampleRow(undefined);
+              userEditedSourceNameRef.current = false;
+              lastAutoSourceNameRef.current = undefined;
+              onSourceFieldsChange([]);
+              onParsedDataChange?.([]);
+            }}>
+            {t("workspace.unify.change_file")}
+          </Button>
+        </div>
 
         {csvPreview.length > 0 && (
           <div className="overflow-hidden rounded-lg border border-slate-200">
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-sm">
-                <thead className="bg-slate-50">
-                  <tr>
-                    {csvPreview[0]?.map((header, i) => (
-                      <th key={`${header}-${i}`} className="px-3 py-2 text-left font-medium text-slate-700">
-                        {header}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {csvPreview.slice(1, 4).map((row, rowIndex) => (
-                    <tr key={`${rowIndex}-${row.join("|")}`} className="border-t border-slate-100">
-                      {row.map((cell, cellIndex) => (
-                        <td
-                          key={`${csvPreview[0]?.[cellIndex] ?? cellIndex}-${cellIndex}`}
-                          className="px-3 py-2 text-slate-600">
-                          {cell || <span className="text-slate-300">—</span>}
-                        </td>
+            <button
+              type="button"
+              onClick={() => setPreviewOpen((v) => !v)}
+              className="flex w-full items-center gap-1 bg-slate-50 px-3 py-2 text-left text-xs font-medium text-slate-700 hover:bg-slate-100">
+              {previewOpen ? (
+                <ChevronDownIcon className="h-3 w-3" />
+              ) : (
+                <ChevronRightIcon className="h-3 w-3" />
+              )}
+              {t("workspace.unify.csv_data_preview")}
+              {(() => {
+                const visible = Math.min(3, Math.max(csvPreview.length - 1, 0));
+                if (visible >= csvTotalRows) return null;
+                return (
+                  <span className="text-slate-500">
+                    ({t("workspace.unify.showing_rows", { visible, total: csvTotalRows })})
+                  </span>
+                );
+              })()}
+            </button>
+            {previewOpen && (
+              <>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-sm">
+                    <thead className="bg-slate-50">
+                      <tr>
+                        {csvPreview[0]?.map((header, i) => (
+                          <th
+                            key={`${header}-${i}`}
+                            className="px-3 py-2 text-left font-medium text-slate-700">
+                            {header}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {csvPreview.slice(1, 4).map((row, rowIndex) => (
+                        <tr key={`${rowIndex}-${row.join("|")}`} className="border-t border-slate-100">
+                          {row.map((cell, cellIndex) => (
+                            <td
+                              key={`${csvPreview[0]?.[cellIndex] ?? cellIndex}-${cellIndex}`}
+                              className="px-3 py-2 text-slate-600">
+                              {cell || <span className="text-slate-300">—</span>}
+                            </td>
+                          ))}
+                        </tr>
                       ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            {csvPreview.length > 4 && (
-              <div className="border-t border-slate-100 bg-slate-50 px-3 py-1.5 text-center text-xs text-slate-500">
-                {t("workspace.unify.showing_rows", { count: csvPreview.length - 1 })}
-              </div>
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </div>
         )}
@@ -174,9 +302,13 @@ export function CsvConnectorUI({
         <MappingUI
           sourceFields={sourceFields}
           mappings={mappings}
-          onMappingsChange={onMappingsChange}
+          onMappingsChange={handleUserMappingsChange}
           connectorType="csv"
+          confidenceByTargetId={confidenceByTargetId}
+          sampleRow={sampleRow}
         />
+
+        <UnmappedColumnsFooter sourceFields={sourceFields} mappings={mappings} />
       </div>
     );
   }
@@ -220,3 +352,27 @@ export function CsvConnectorUI({
     </div>
   );
 }
+
+interface UnmappedColumnsFooterProps {
+  sourceFields: TSourceField[];
+  mappings: TFieldMapping[];
+}
+
+const UnmappedColumnsFooter = ({ sourceFields, mappings }: Readonly<UnmappedColumnsFooterProps>) => {
+  const { t } = useTranslation();
+  const claimed = new Set(mappings.map((m) => m.sourceFieldId).filter((id): id is string => Boolean(id)));
+  const unmapped = sourceFields.filter((f) => !claimed.has(f.id));
+  if (unmapped.length === 0) return null;
+
+  return (
+    <div className="rounded-md border border-dashed border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+      <p className="font-medium">
+        {t("workspace.unify.csv_unmapped_columns", {
+          count: unmapped.length,
+          columns: unmapped.map((c) => c.name).join(", "),
+        })}
+      </p>
+      <p className="mt-0.5 text-slate-500">{t("workspace.unify.csv_unmapped_columns_explainer")}</p>
+    </div>
+  );
+};

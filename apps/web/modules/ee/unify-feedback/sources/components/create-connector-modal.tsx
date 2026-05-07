@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2Icon, PlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -43,6 +43,7 @@ import {
 } from "@/modules/ui/components/select";
 import { Switch } from "@/modules/ui/components/switch";
 import {
+  CSV_HIDDEN_STATIC_MAPPINGS,
   TCreateConnectorStep,
   TFieldMapping,
   TFormbricksConnectorForm,
@@ -54,9 +55,8 @@ import {
 import {
   TConnectorOptionId,
   TEnumValidationError,
-  areAllRequiredFieldsMapped,
+  areAllRequiredCsvFieldsMapped,
   isConnectorNameValid,
-  parseCSVColumnsToFields,
   toggleQuestionId,
   validateEnumMappings,
 } from "../utils";
@@ -157,6 +157,7 @@ export const CreateConnectorModal = ({
   const [isImporting, setIsImporting] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [selectedDirectoryId, setSelectedDirectoryId] = useState<string | null>(directories[0]?.id ?? null);
+  const userEditedConnectorNameRef = useRef(false);
 
   const formbricksValues = formbricksForm.watch();
   const selectedSurveyId = formbricksValues.surveyId;
@@ -225,6 +226,7 @@ export const CreateConnectorModal = ({
     setEnumValidationErrors([]);
     setResponseCountBySurvey({});
     setCsvConnectorName("");
+    userEditedConnectorNameRef.current = false;
     setIsImporting(false);
     setIsCreating(false);
     setSelectedDirectoryId(directories[0]?.id ?? null);
@@ -356,6 +358,15 @@ export const CreateConnectorModal = ({
 
   const handleCreateCsvConnector = async () => {
     if (!selectedDirectoryId || !isConnectorNameValid(csvConnectorName)) return;
+
+    const requiredCheck = areAllRequiredCsvFieldsMapped(mappings);
+    if (!requiredCheck.valid) {
+      toast.error(
+        t("workspace.unify.csv_required_fields_missing", { fields: requiredCheck.missing.join(", ") })
+      );
+      return;
+    }
+
     if (csvParsedData.length > 0) {
       const errors = validateEnumMappings(mappings, csvParsedData);
       if (errors.length > 0) {
@@ -367,11 +378,16 @@ export const CreateConnectorModal = ({
 
     setIsCreating(true);
 
+    // Strip any user-supplied tenant_id and merge hidden static mappings (source_type=csv).
+    const protectedIds = ["tenant_id", "source_type"];
+    const userMappings = mappings.filter((m) => protectedIds.every((id) => m.targetFieldId !== id));
+    const fieldMappings = [...userMappings, ...CSV_HIDDEN_STATIC_MAPPINGS];
+
     const connectorId = await onCreateConnector({
       name: csvConnectorName.trim(),
       type: "csv",
       feedbackDirectoryId: selectedDirectoryId,
-      fieldMappings: mappings.length > 0 ? mappings : undefined,
+      fieldMappings,
     });
 
     if (!connectorId) {
@@ -389,13 +405,16 @@ export const CreateConnectorModal = ({
   };
 
   const isCsvValid = selectedType === "csv" && sourceFields.length > 0;
-  const areCsvRequiredFieldsMapped = areAllRequiredFieldsMapped(mappings);
+  const areCsvRequiredFieldsMapped = areAllRequiredCsvFieldsMapped(mappings).valid;
 
-  const handleLoadSourceFields = () => {
-    if (selectedType === "csv") {
-      const fields = parseCSVColumnsToFields("timestamp,customer_id,rating,feedback_text,category");
-      setSourceFields(fields);
-    }
+  const handleSuggestConnectorName = (name: string) => {
+    if (userEditedConnectorNameRef.current) return;
+    setCsvConnectorName(name);
+  };
+
+  const handleCsvConnectorNameChange = (value: string) => {
+    userEditedConnectorNameRef.current = true;
+    setCsvConnectorName(value);
   };
 
   return (
@@ -537,13 +556,14 @@ export const CreateConnectorModal = ({
             {currentStep === "mapping" && selectedType === "csv" && (
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="connectorName">{t("workspace.unify.source_name")}</Label>
+                  <Label htmlFor="connectorName">{t("workspace.unify.connector_name")}</Label>
                   <Input
                     id="connectorName"
                     value={csvConnectorName}
-                    onChange={(event) => setCsvConnectorName(event.target.value)}
+                    onChange={(event) => handleCsvConnectorNameChange(event.target.value)}
                     placeholder={t("workspace.unify.enter_name_for_source")}
                   />
+                  <p className="text-xs text-slate-500">{t("workspace.unify.connector_name_hint")}</p>
                 </div>
 
                 {directories.length === 0 && <NoFeedbackDirectoryAlert workspaceId={workspaceId} t={t} />}
@@ -557,8 +577,8 @@ export const CreateConnectorModal = ({
                       setEnumValidationErrors([]);
                     }}
                     onSourceFieldsChange={setSourceFields}
-                    onLoadSampleCSV={handleLoadSourceFields}
                     onParsedDataChange={setCsvParsedData}
+                    onSuggestConnectorName={handleSuggestConnectorName}
                   />
                 </div>
 
