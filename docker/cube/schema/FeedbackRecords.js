@@ -36,7 +36,7 @@ cube(`FeedbackRecords`, {
           ELSE ROUND(
             (
               (COUNT(CASE WHEN ${CUBE}.value_number >= 9 THEN 1 END)::numeric -
-               COUNT(CASE WHEN ${CUBE}.value_number <= 6 THEN 1 END)::numeric)
+               COUNT(CASE WHEN ${CUBE}.value_number >= 0 AND ${CUBE}.value_number <= 6 THEN 1 END)::numeric)
               / COUNT(*)::numeric
             ) * 100,
             2
@@ -133,6 +133,7 @@ cube(`TopicsUnnested`, {
   sql: `
     SELECT
       fr.id as feedback_record_id,
+      fr.tenant_id,
       topic_elem.topic
     FROM feedback_records fr
     CROSS JOIN LATERAL jsonb_array_elements_text(COALESCE(fr.metadata->'topics', '[]'::jsonb)) AS topic_elem(topic)
@@ -154,6 +155,12 @@ cube(`TopicsUnnested`, {
     feedbackRecordId: {
       sql: `feedback_record_id`,
       type: `string`,
+    },
+
+    tenantId: {
+      sql: `tenant_id`,
+      type: `string`,
+      description: `Tenant ID for row-level security scoping`,
     },
 
     topic: {

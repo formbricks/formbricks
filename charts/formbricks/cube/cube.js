@@ -1,6 +1,6 @@
 /* eslint-env es2022 */
 
-const TENANT_MEMBER = "FeedbackRecords.tenantId";
+const TENANT_MEMBERS = ["FeedbackRecords.tenantId", "TopicsUnnested.tenantId"];
 const REQUIRED_SCOPE = "xm:cube:query";
 
 function assertRequiredEnvironmentVariable(name) {
@@ -114,7 +114,7 @@ function assertValidSecurityContext(securityContext) {
 
 function assertNoCallerTenantMember(query) {
   for (const member of collectQueryMembers(query)) {
-    if (member === TENANT_MEMBER) {
+    if (TENANT_MEMBERS.includes(member)) {
       throw new Error("Cube query rejected: tenant filters are enforced by Cube");
     }
   }
@@ -122,6 +122,7 @@ function assertNoCallerTenantMember(query) {
 
 function logCubeQueryAuditEvent(context, query, { error, status = "success" } = {}) {
   const errorName = error instanceof Error ? error.name : undefined;
+  const errorMessage = error instanceof Error ? error.message : error ? String(error) : undefined;
 
   console.log(
     JSON.stringify({
@@ -138,13 +139,35 @@ function logCubeQueryAuditEvent(context, query, { error, status = "success" } = 
       source: context.source,
       members: collectQueryMembers(query),
       ...(errorName ? { errorName } : {}),
+      ...(errorMessage ? { errorMessage } : {}),
+    })
+  );
+}
+
+function logCubeQuerySecurityContextFailure(query, error) {
+  console.log(
+    JSON.stringify({
+      type: "audit",
+      event: "cube.query",
+      status: "failure",
+      timestamp: new Date().toISOString(),
+      members: collectQueryMembers(query),
+      errorName: error instanceof Error ? error.name : undefined,
+      errorMessage: error instanceof Error ? error.message : String(error),
     })
   );
 }
 
 function queryRewrite(query, rewriteContext) {
   const cubeQuery = query ?? {};
-  const context = assertValidSecurityContext(rewriteContext?.securityContext);
+  let context;
+
+  try {
+    context = assertValidSecurityContext(rewriteContext?.securityContext);
+  } catch (error) {
+    logCubeQuerySecurityContextFailure(cubeQuery, error);
+    throw error;
+  }
 
   try {
     assertNoCallerTenantMember(cubeQuery);
@@ -153,15 +176,18 @@ function queryRewrite(query, rewriteContext) {
     throw error;
   }
 
+  const queriedCubePrefixes = new Set(collectQueryMembers(cubeQuery).map((member) => member.split(".")[0]));
   const rewrittenQuery = {
     ...cubeQuery,
     filters: [
       ...(Array.isArray(cubeQuery.filters) ? cubeQuery.filters : []),
-      {
-        member: TENANT_MEMBER,
-        operator: "equals",
-        values: [context.tenantId],
-      },
+      ...TENANT_MEMBERS.filter((member) => queriedCubePrefixes.has(member.split(".")[0])).map(
+        (member) => ({
+          member,
+          operator: "equals",
+          values: [context.tenantId],
+        })
+      ),
     ],
   };
 
