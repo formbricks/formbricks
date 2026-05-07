@@ -10,6 +10,7 @@ import { UnifyConfigNavigation } from "./unify-config-navigation";
 interface FeedbackRecordsPageClientProps {
   workspaceId: string;
   initialRecords: FeedbackRecordData[];
+  initialCursors: Record<string, string>;
   frdMap: Record<string, string>;
   csvSources: { id: string; name: string }[];
   canWrite: boolean;
@@ -18,6 +19,7 @@ interface FeedbackRecordsPageClientProps {
 export function FeedbackRecordsPageClient({
   workspaceId,
   initialRecords,
+  initialCursors,
   frdMap,
   csvSources,
   canWrite,
@@ -33,6 +35,7 @@ export function FeedbackRecordsPageClient({
       <FeedbackRecordsTable
         workspaceId={workspaceId}
         initialRecords={initialRecords}
+        initialCursors={initialCursors}
         frdMap={frdMap}
         csvSources={csvSources}
         canWrite={canWrite}

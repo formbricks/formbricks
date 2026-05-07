@@ -1,1 +1,1 @@
-export { UnifyFeedbackRecordsPage as default } from "@/modules/ee/unify-feedback/page";
+export { default } from "@/modules/ee/unify-feedback/page";
