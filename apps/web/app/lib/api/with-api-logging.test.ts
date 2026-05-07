@@ -98,7 +98,6 @@ function createMockRequest({ method = "GET", url = "https://api.test/endpoint", 
 const mockApiAuthentication = {
   type: "apiKey" as const,
   workspacePermissions: [],
-  feedbackDirectoryPermissions: [],
   apiKeyId: "api-key-1",
   organizationId: "org-1",
   organizationAccess: "all" as const,

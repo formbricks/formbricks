@@ -1854,10 +1854,7 @@
       "api_key_updated": "Cheie API actualizată",
       "delete_api_key_confirmation": "Orice aplicație care folosește această cheie nu va mai putea accesa datele dumneavoastră Formbricks.",
       "duplicate_access": "Acces duplicat la spațiul de lucru nu este permis",
-      "duplicate_directory_access": "Accesul duplicat la directorul de feedback nu este permis",
-      "feedback_directory_access": "Acces la Directorul de Feedback",
       "no_api_keys_yet": "Nu ai încă nicio cheie API",
-      "no_directory_permissions_found": "Nu au fost găsite permisiuni pentru directoare de feedback",
       "no_workspace_permissions_found": "Nu s-au găsit permisiuni pentru Workspace",
       "organization_access": "Acces organizație",
       "organization_access_description": "Selectează privilegii de citire sau scriere pentru resursele la nivel de organizație.",
@@ -1865,7 +1862,6 @@
       "secret": "Secret",
       "unable_to_copy_api_key": "Nu se poate copia cheia API",
       "unable_to_delete_api_key": "Nu se poate șterge cheia API",
-      "unknown_directory": "Director necunoscut",
       "unknown_workspace": "Spațiu de lucru necunoscut",
       "workspace_access": "Acces spațiu de lucru"
     },

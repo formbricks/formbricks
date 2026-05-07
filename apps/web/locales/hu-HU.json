@@ -1854,10 +1854,7 @@
       "api_key_updated": "API-kulcs frissítve",
       "delete_api_key_confirmation": "Az ezt a kulcsot használó bármely alkalmazás többé nem fog tudni hozzáférni a Formbricks adataihoz.",
       "duplicate_access": "A kettőzött munkaterület-hozzáférés nem engedélyezett",
-      "duplicate_directory_access": "Duplikált visszajelzési könyvtár hozzáférés nem engedélyezett",
-      "feedback_directory_access": "Visszajelzési könyvtár hozzáférés",
       "no_api_keys_yet": "Még nincs semmilyen API-kulcsa",
-      "no_directory_permissions_found": "Nem találhatók visszajelzési könyvtár jogosultságok",
       "no_workspace_permissions_found": "Nem találhatók munkaterület-jogosultságok",
       "organization_access": "Szervezeti hozzáférés",
       "organization_access_description": "Olvasási vagy írási jogosultságok kiválasztása a teljes szervezetre vonatkozó erőforrásokhoz.",
@@ -1865,7 +1862,6 @@
       "secret": "Titok",
       "unable_to_copy_api_key": "Az API kulcs másolása nem lehetséges",
       "unable_to_delete_api_key": "Nem lehet törölni az API-kulcsot",
-      "unknown_directory": "Ismeretlen könyvtár",
       "unknown_workspace": "Ismeretlen munkaterület",
       "workspace_access": "Munkaterület-hozzáférés"
     },

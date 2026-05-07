@@ -1854,10 +1854,7 @@
       "api_key_updated": "API-sleutel bijgewerkt",
       "delete_api_key_confirmation": "Alle applicaties die deze sleutel gebruiken, hebben geen toegang meer tot uw Formbricks-gegevens.",
       "duplicate_access": "Dubbele workspace-toegang niet toegestaan",
-      "duplicate_directory_access": "Dubbele feedbackmaptoegang niet toegestaan",
-      "feedback_directory_access": "Feedbackmaptoegang",
       "no_api_keys_yet": "U heeft nog geen API-sleutels",
-      "no_directory_permissions_found": "Geen feedbackmaprechten gevonden",
       "no_workspace_permissions_found": "Geen Workspace-rechten gevonden",
       "organization_access": "Organisatietoegang",
       "organization_access_description": "Selecteer lees- of schrijfrechten voor organisatiebrede bronnen.",
@@ -1865,7 +1862,6 @@
       "secret": "Geheim",
       "unable_to_copy_api_key": "Kan API-sleutel niet kopiëren",
       "unable_to_delete_api_key": "Kan API-sleutel niet verwijderen",
-      "unknown_directory": "Onbekende map",
       "unknown_workspace": "Onbekende workspace",
       "workspace_access": "Workspace-toegang"
     },
