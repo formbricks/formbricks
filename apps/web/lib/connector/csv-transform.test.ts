@@ -38,7 +38,7 @@ describe("transformCsvRowToFeedbackRecord", () => {
     const result = transformCsvRowToFeedbackRecord(row, baseMappings, TENANT);
 
     expect(result).not.toBeNull();
-    expect(result!.source_type).toBe("survey");
+    expect(result!.source_type).toBe("csv");
     expect(result!.field_id).toBe("q1");
     expect(result!.field_type).toBe("text");
     expect(result!.value_text).toBe("Great product!");
@@ -188,7 +188,7 @@ describe("transformCsvRowToFeedbackRecord", () => {
     vi.useRealTimers();
   });
 
-  test("uses static value over source field", () => {
+  test("ignores source_type mappings and uses csv", () => {
     const mappings: TConnectorFieldMapping[] = [
       makeMapping("question", "field_id"),
       makeMapping("type_column", "source_type", "always_survey"),
@@ -198,7 +198,7 @@ describe("transformCsvRowToFeedbackRecord", () => {
 
     const row = { question: "q1", type_column: "review", timestamp: "2026-01-15" };
     const result = transformCsvRowToFeedbackRecord(row, mappings, TENANT);
-    expect(result!.source_type).toBe("always_survey");
+    expect(result!.source_type).toBe("csv");
   });
 
   test("skips empty string values", () => {

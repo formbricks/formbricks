@@ -55,8 +55,6 @@ const resolveValue = (
   return coerceValue(rawValue, effectiveTargetFieldId);
 };
 
-// Resolve the row's field_type up front so response_value routing is consistent for the row.
-// Returns null if no valid field_type is available (row is then skipped).
 const resolveFieldTypeForRow = (
   row: Record<string, string>,
   mappings: TConnectorFieldMapping[]
@@ -74,10 +72,8 @@ const resolveFieldTypeForRow = (
 /**
  * Transform a single CSV row into a FeedbackRecord using field mappings.
  *
- * Returns null if any of source_type, field_id, field_type, tenant_id are missing,
- * or if submission_id is mapped but resolves empty for this row (would break
- * idempotency on re-import). Falls back to a random UUID for submission_id only
- * when no mapping for it exists.
+ * Returns null if field_id, field_type, or tenant_id are missing, or if a mapped submission_id
+ * resolves empty. Falls back to a random UUID for submission_id only when no mapping exists.
  */
 export const transformCsvRowToFeedbackRecord = (
   row: Record<string, string>,
@@ -86,11 +82,11 @@ export const transformCsvRowToFeedbackRecord = (
 ): FeedbackRecordCreateParams | null => {
   const record: Record<string, string | number | boolean | Record<string, unknown> | undefined> = {};
 
-  // Defense-in-depth: never honor a user-supplied tenant_id mapping. The UI hides this field, but
-  // a hand-crafted payload could still include one. Backfill from the connector authoritatively.
-  const safeMappings = mappings.filter((m) => m.targetFieldId !== "tenant_id");
+  const safeMappings = mappings.filter(
+    (m) => m.targetFieldId !== "tenant_id" && m.targetFieldId !== "source_type"
+  );
+  record.source_type = "csv";
 
-  // Resolve field_type once per row; response_value routing depends on it.
   const fieldType = resolveFieldTypeForRow(row, safeMappings);
   if (!fieldType) return null;
 
@@ -100,7 +96,6 @@ export const transformCsvRowToFeedbackRecord = (
       try {
         effectiveTargetFieldId = routeResponseValueTarget(fieldType);
       } catch {
-        // routing is exhaustive; fail closed if THubFieldType ever drifts.
         return null;
       }
     } else {

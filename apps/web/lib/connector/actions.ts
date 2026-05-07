@@ -28,6 +28,7 @@ import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-direc
 import { listFeedbackRecords } from "@/modules/hub/service";
 import type { FeedbackRecordListParams, FeedbackRecordListResponse } from "@/modules/hub/types";
 import { importCsvData } from "./csv-import";
+import { sanitizeCsvFieldMappings } from "./csv-mapping";
 import { importHistoricalResponses } from "./import";
 import {
   TMappingsInput,
@@ -197,7 +198,13 @@ export const createConnectorWithMappingsAction = authenticatedActionClient
 
       mappingsInput = await resolveFormbricksMappingsInput(formbricksMappings);
     } else if (fieldMappings?.length) {
-      mappingsInput = { type: "field", mappings: fieldMappings };
+      mappingsInput = {
+        type: "field",
+        mappings:
+          parsedInput.connectorInput.type === "csv"
+            ? (sanitizeCsvFieldMappings(fieldMappings) ?? [])
+            : fieldMappings,
+      };
     }
 
     return createConnectorWithMappings(
@@ -256,7 +263,21 @@ export const updateConnectorWithMappingsAction = authenticatedActionClient
 
         mappingsInput = await resolveFormbricksMappingsInput(parsedInput.formbricksMappings);
       } else if (parsedInput.fieldMappings && parsedInput.fieldMappings.length > 0) {
-        mappingsInput = { type: "field", mappings: parsedInput.fieldMappings };
+        const connector = await prisma.connector.findUnique({
+          where: { id: parsedInput.connectorId, workspaceId: parsedInput.workspaceId },
+          select: { type: true },
+        });
+        if (!connector) {
+          throw new ResourceNotFoundError("Connector", parsedInput.connectorId);
+        }
+
+        mappingsInput = {
+          type: "field",
+          mappings:
+            connector.type === "csv"
+              ? (sanitizeCsvFieldMappings(parsedInput.fieldMappings) ?? [])
+              : parsedInput.fieldMappings,
+        };
       }
 
       return updateConnectorWithMappings(
