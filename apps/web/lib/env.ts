@@ -136,7 +136,6 @@ const ZSurveySchedulingLocalMinute = z.coerce.number().int().min(0).max(59);
 const emptyStringToUndefined = (value: unknown) =>
   typeof value === "string" && value.trim() === "" ? undefined : value;
 const ZOptionalNonEmptyString = z.preprocess(emptyStringToUndefined, z.string().trim().min(1).optional());
-const ZOptionalUrl = z.preprocess(emptyStringToUndefined, z.url().optional());
 
 const parsedEnv = createEnv({
   /*
