@@ -197,7 +197,7 @@ const parsedEnv = createEnv({
     HTTP_PROXY: z.url().optional(),
     HTTPS_PROXY: z.url().optional(),
     HUB_API_URL: z.url(),
-    HUB_API_KEY: z.string().optional(),
+    HUB_API_KEY: z.string().trim().min(1),
     IMPRINT_URL: z
       .url()
       .optional()

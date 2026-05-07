@@ -67,6 +67,7 @@ RUN --mount=type=secret,id=database_url \
     --mount=type=secret,id=encryption_key \
     --mount=type=secret,id=redis_url \
     --mount=type=secret,id=hub_api_url \
+    --mount=type=secret,id=hub_api_key \
     --mount=type=secret,id=cubejs_api_url \
     --mount=type=secret,id=cubejs_api_secret \
     --mount=type=secret,id=sentry_auth_token \

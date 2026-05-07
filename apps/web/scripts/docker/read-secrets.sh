@@ -8,6 +8,7 @@ DEFAULT_DATABASE_URL="postgresql://test:test@localhost:5432/formbricks"
 DEFAULT_ENCRYPTION_KEY="0123456789abcdef0123456789abcdef"
 DEFAULT_REDIS_URL="redis://localhost:6379"
 DEFAULT_HUB_API_URL="http://localhost:4000"
+DEFAULT_HUB_API_KEY="build-time-placeholder"
 DEFAULT_CUBEJS_API_URL="http://localhost:4000"
 DEFAULT_CUBEJS_API_SECRET="build-time-placeholder"
 
@@ -46,6 +47,15 @@ if [ -z "${HUB_API_URL:-}" ]; then
   echo "⚠️  HUB_API_URL secret not found or empty. Using build-time fallback value."
 fi
 export HUB_API_URL
+
+if [ -f "/run/secrets/hub_api_key" ]; then
+  IFS= read -r HUB_API_KEY < /run/secrets/hub_api_key || true
+fi
+if [ -z "${HUB_API_KEY:-}" ]; then
+  HUB_API_KEY="${DEFAULT_HUB_API_KEY}"
+  echo "⚠️  HUB_API_KEY secret not found or empty. Using build-time fallback value."
+fi
+export HUB_API_KEY
 
 if [ -f "/run/secrets/cubejs_api_url" ]; then
   IFS= read -r CUBEJS_API_URL < /run/secrets/cubejs_api_url || true
@@ -99,6 +109,7 @@ echo "  DATABASE_URL: $([ -n "${DATABASE_URL:-}" ] && printf '[SET]' || printf '
 echo "  ENCRYPTION_KEY: $([ -n "${ENCRYPTION_KEY:-}" ] && printf '[SET]' || printf '[NOT SET]')"
 echo "  REDIS_URL: $([ -n "${REDIS_URL:-}" ] && printf '[SET]' || printf '[NOT SET]')"
 echo "  HUB_API_URL: $([ -n "${HUB_API_URL:-}" ] && printf '[SET]' || printf '[NOT SET]')"
+echo "  HUB_API_KEY: $([ -n "${HUB_API_KEY:-}" ] && printf '[SET]' || printf '[NOT SET]')"
 echo "  CUBEJS_API_URL: $([ -n "${CUBEJS_API_URL:-}" ] && printf '[SET]' || printf '[NOT SET]')"
 echo "  CUBEJS_API_SECRET: $([ -n "${CUBEJS_API_SECRET:-}" ] && printf '[SET]' || printf '[NOT SET]')"
 echo "  SENTRY_AUTH_TOKEN: $([ -n "${SENTRY_AUTH_TOKEN:-}" ] && printf '[SET]' || printf '[NOT SET]')"
