@@ -419,7 +419,7 @@ export const CreateConnectorModal = ({
               <ConnectorTypeSelector
                 selectedType={selectedType}
                 onSelectType={setSelectedType}
-                formbricksSurveyCount={surveys.length}
+                surveyCount={surveys.length}
                 workspaceId={workspaceId}
               />
             )}

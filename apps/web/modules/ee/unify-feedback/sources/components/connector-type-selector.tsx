@@ -10,7 +10,7 @@ interface ConnectorTypeSelectorProps {
   selectedType: TConnectorOptionId | null;
   onSelectType: (type: TConnectorOptionId) => void;
   workspaceId: string;
-  formbricksSurveyCount: number;
+  surveyCount: number;
 }
 
 const getOptionClassName = (
@@ -33,7 +33,7 @@ export function ConnectorTypeSelector({
   selectedType,
   onSelectType,
   workspaceId,
-  formbricksSurveyCount,
+  surveyCount,
 }: Readonly<ConnectorTypeSelectorProps>) {
   const { t } = useTranslation();
   const connectorOptions = getConnectorOptions(t);
@@ -42,10 +42,8 @@ export function ConnectorTypeSelector({
     <div className="space-y-3">
       <div className="space-y-2">
         {connectorOptions.map((option) => {
-          const showNoFormbricksSurveysAlert =
-            formbricksSurveyCount === 0 &&
-            option.id === "formbricks_survey" &&
-            selectedType === "formbricks_survey";
+          const showNoSurveysAlert =
+            surveyCount === 0 && option.id === "formbricks_survey" && selectedType === "formbricks_survey";
           return (
             <div key={option.id} className="space-y-2">
               <button
@@ -75,7 +73,7 @@ export function ConnectorTypeSelector({
                   )}
                 </div>
               </button>
-              {showNoFormbricksSurveysAlert && <NoFormbricksSurveysAlert workspaceId={workspaceId} />}
+              {showNoSurveysAlert && <NoFormbricksSurveysAlert workspaceId={workspaceId} />}
             </div>
           );
         })}
@@ -99,7 +97,7 @@ export function ConnectorTypeSelector({
 const NoFormbricksSurveysAlert = ({ workspaceId }: Readonly<{ workspaceId: string }>) => {
   return (
     <Alert variant="info" size="small">
-      <AlertDescription className="overflow-visible text-clip whitespace-normal">
+      <AlertDescription className="overflow-visible whitespace-normal">
         <Trans
           i18nKey="workspace.unify.no_formbricks_surveys_available_description"
           components={{
