@@ -12,7 +12,11 @@ import {
 import { DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS } from "@/lib/constants";
 import { generateStandardWebhookSignature, generateWebhookSecret } from "@/lib/crypto";
 import { validateInputs } from "@/lib/utils/validate";
-import { validateWebhookUrl } from "@/lib/utils/validate-webhook-url";
+import {
+  createPinnedDispatcher,
+  validateAndResolveWebhookUrl,
+  validateWebhookUrl,
+} from "@/lib/utils/validate-webhook-url";
 import { getTranslate } from "@/lingodotdev/server";
 import { isDiscordWebhook } from "@/modules/integrations/webhooks/lib/utils";
 import { TWebhookInput } from "../types/webhooks";
@@ -163,7 +167,7 @@ export const getWebhooks = async (environmentId: string): Promise<Webhook[]> => 
 };
 
 export const testEndpoint = async (url: string, secret?: string): Promise<boolean> => {
-  await validateWebhookUrl(url);
+  const address = await validateAndResolveWebhookUrl(url);
 
   if (isDiscordWebhook(url)) {
     throw new UnknownError("Discord webhooks are currently not supported.");
@@ -197,13 +201,17 @@ export const testEndpoint = async (url: string, secret?: string): Promise<boolea
     // Gated on the same env var as validateWebhookUrl: self-hosters who opted into trusting internal
     // URLs also get the pre-patch redirect-follow behavior for consistency.
     const redirectMode: RequestRedirect = DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS ? "follow" : "manual";
+    // Pin TCP connect to the validated IP — closes DNS-rebinding TOCTOU between
+    // validation and fetch (undici otherwise resolves the hostname a second time).
+    const dispatcher = address ? createPinnedDispatcher(address) : undefined;
     const response = await fetch(url, {
       method: "POST",
       body,
       headers: requestHeaders,
       signal: controller.signal,
       redirect: redirectMode,
-    });
+      dispatcher,
+    } as RequestInit & { dispatcher?: ReturnType<typeof createPinnedDispatcher> });
 
     const statusCode = response.status;
 

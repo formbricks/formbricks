@@ -1,7 +1,11 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { generateStandardWebhookSignature } from "@/lib/crypto";
-import { validateWebhookUrl } from "@/lib/utils/validate-webhook-url";
+import {
+  createPinnedDispatcher,
+  validateAndResolveWebhookUrl,
+  validateWebhookUrl,
+} from "@/lib/utils/validate-webhook-url";
 import { getTranslate } from "@/lingodotdev/server";
 import { isDiscordWebhook } from "@/modules/integrations/webhooks/lib/utils";
 import { testEndpoint } from "./webhook";
@@ -32,6 +36,8 @@ vi.mock("@/lib/crypto", () => ({
 
 vi.mock("@/lib/utils/validate-webhook-url", () => ({
   validateWebhookUrl: vi.fn(async () => undefined),
+  validateAndResolveWebhookUrl: vi.fn(async () => ({ ip: "93.184.216.34", family: 4 })),
+  createPinnedDispatcher: vi.fn(() => ({ __pinned: true })),
 }));
 
 vi.mock("@/lingodotdev/server", () => ({
@@ -52,6 +58,8 @@ describe("testEndpoint", () => {
     constantsMock.dangerouslyAllow = false;
     vi.mocked(generateStandardWebhookSignature).mockReturnValue("signed-payload");
     vi.mocked(validateWebhookUrl).mockResolvedValue(undefined);
+    vi.mocked(validateAndResolveWebhookUrl).mockResolvedValue({ ip: "93.184.216.34", family: 4 });
+    vi.mocked(createPinnedDispatcher).mockReturnValue({ __pinned: true } as never);
     vi.mocked(getTranslate).mockResolvedValue((key: string) => key);
     vi.mocked(isDiscordWebhook).mockReturnValue(false);
   });
@@ -80,7 +88,7 @@ describe("testEndpoint", () => {
       new InvalidInputError(messageKey)
     );
 
-    expect(validateWebhookUrl).toHaveBeenCalledWith("https://example.com/webhook");
+    expect(validateAndResolveWebhookUrl).toHaveBeenCalledWith("https://example.com/webhook");
     expect(generateStandardWebhookSignature).toHaveBeenCalled();
     expect(getTranslate).toHaveBeenCalled();
   });

@@ -1,5 +1,6 @@
 import { PipelineTriggers, Webhook } from "@prisma/client";
 import { headers } from "next/headers";
+import type { Agent } from "undici";
 import { v7 as uuidv7 } from "uuid";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
@@ -16,7 +17,7 @@ import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
 import { convertDatesInObject } from "@/lib/time";
 import { getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
-import { validateWebhookUrl } from "@/lib/utils/validate-webhook-url";
+import { createPinnedDispatcher, validateAndResolveWebhookUrl } from "@/lib/utils/validate-webhook-url";
 import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
 import { TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { recordResponseCreatedMeterEvent } from "@/modules/ee/billing/lib/metering";
@@ -98,9 +99,13 @@ export const POST = async (request: Request) => {
   // env var as `validateWebhookUrl`: self-hosters who opted into trusting internal URLs also get the
   // pre-patch redirect-follow behavior for consistency.
   const redirectMode: RequestRedirect = DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS ? "follow" : "manual";
-  const fetchWithTimeout = (url: string, options: RequestInit, timeout: number = 5000): Promise<Response> => {
+  const fetchWithTimeout = (
+    url: string,
+    options: RequestInit & { dispatcher?: Agent },
+    timeout: number = 5000
+  ): Promise<Response> => {
     return Promise.race([
-      fetch(url, { ...options, redirect: redirectMode }),
+      fetch(url, { ...options, redirect: redirectMode } as RequestInit & { dispatcher?: Agent }),
       new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Timeout")), timeout)),
     ]);
   };
@@ -144,14 +149,19 @@ export const POST = async (request: Request) => {
       );
     }
 
-    return validateWebhookUrl(webhook.url)
-      .then(() =>
-        fetchWithTimeout(webhook.url, {
+    return validateAndResolveWebhookUrl(webhook.url)
+      .then((address) => {
+        // Pin TCP connect to the validated IP. Without this, undici resolves DNS
+        // again at fetch time and an attacker-controlled domain can rebind to a
+        // private/internal IP after validation passed (TOCTOU SSRF).
+        const dispatcher = address ? createPinnedDispatcher(address) : undefined;
+        return fetchWithTimeout(webhook.url, {
           method: "POST",
           headers: requestHeaders,
           body,
-        })
-      )
+          dispatcher,
+        });
+      })
       .catch((error) => {
         logger.error({ error, url: request.url }, `Webhook call to ${webhook.url} failed`);
       });
