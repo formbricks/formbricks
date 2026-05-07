@@ -160,6 +160,7 @@ cube(`TopicsUnnested`, {
     tenantId: {
       sql: `tenant_id`,
       type: `string`,
+      description: `Tenant ID for row-level security scoping`,
     },
 
     topic: {

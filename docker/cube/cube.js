@@ -122,6 +122,7 @@ function assertNoCallerTenantMember(query) {
 
 function logCubeQueryAuditEvent(context, query, { error, status = "success" } = {}) {
   const errorName = error instanceof Error ? error.name : undefined;
+  const errorMessage = error instanceof Error ? error.message : error ? String(error) : undefined;
 
   console.log(
     JSON.stringify({
@@ -138,6 +139,7 @@ function logCubeQueryAuditEvent(context, query, { error, status = "success" } = 
       source: context.source,
       members: collectQueryMembers(query),
       ...(errorName ? { errorName } : {}),
+      ...(errorMessage ? { errorMessage } : {}),
     })
   );
 }
@@ -174,15 +176,18 @@ function queryRewrite(query, rewriteContext) {
     throw error;
   }
 
+  const queriedCubePrefixes = new Set(collectQueryMembers(cubeQuery).map((member) => member.split(".")[0]));
   const rewrittenQuery = {
     ...cubeQuery,
     filters: [
       ...(Array.isArray(cubeQuery.filters) ? cubeQuery.filters : []),
-      ...TENANT_MEMBERS.map((member) => ({
-        member,
-        operator: "equals",
-        values: [context.tenantId],
-      })),
+      ...TENANT_MEMBERS.filter((member) => queriedCubePrefixes.has(member.split(".")[0])).map(
+        (member) => ({
+          member,
+          operator: "equals",
+          values: [context.tenantId],
+        })
+      ),
     ],
   };
 

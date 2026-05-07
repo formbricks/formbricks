@@ -1,4 +1,4 @@
-{{- $cubeCacheDriver := get (.Values.cube.env | default dict) "CUBEJS_CACHE_AND_QUEUE_DRIVER" | default "" | toString }}
+{{- $cubeCacheDriver := get (.Values.cube.env | default dict) "CUBEJS_CACHE_AND_QUEUE_DRIVER" | default "" | toString | trim | lower }}
 {{- if and .Values.cube.enabled (gt (int .Values.cube.replicas) 1) (eq $cubeCacheDriver "memory") }}
 {{- fail "cube.env.CUBEJS_CACHE_AND_QUEUE_DRIVER=memory is only supported when cube.replicas=1. Use Cube Store for multiple Cube replicas." }}
 {{- end }}

@@ -215,9 +215,21 @@ describe("cube queryRewrite", () => {
     expect(rewrittenQuery.filters).toEqual([
       { member: "FeedbackRecords.sentiment", operator: "equals", values: ["positive"] },
       { member: "FeedbackRecords.tenantId", operator: "equals", values: ["frd-1"] },
-      { member: "TopicsUnnested.tenantId", operator: "equals", values: ["frd-1"] },
     ]);
     expect(query.filters).toHaveLength(1);
+  });
+
+  test("appends only the TopicsUnnested tenant filter for TopicsUnnested queries", () => {
+    const query = {
+      measures: ["TopicsUnnested.count"],
+      dimensions: ["TopicsUnnested.topic"],
+    };
+
+    const rewrittenQuery = queryRewrite(query, { securityContext });
+
+    expect(rewrittenQuery.filters).toEqual([
+      { member: "TopicsUnnested.tenantId", operator: "equals", values: ["frd-1"] },
+    ]);
   });
 
   test("logs sanitized Cube audit metadata without raw filter values", () => {
@@ -244,7 +256,7 @@ describe("cube queryRewrite", () => {
       source: "charts.executeQueryAction",
     });
     expect(parsed.members).toContain("FeedbackRecords.tenantId");
-    expect(parsed.members).toContain("TopicsUnnested.tenantId");
+    expect(parsed.members).not.toContain("TopicsUnnested.tenantId");
     expect(logPayload).not.toContain("secret-value");
   });
 });
