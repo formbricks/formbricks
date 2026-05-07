@@ -2,7 +2,7 @@ import { HeartIcon, ListTodoIcon, XIcon } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizations/components/OnboardingOptionsContainer";
-import { posthogServerClient } from "@/lib/posthog/server";
+import { getPostHogFeatureFlag } from "@/lib/posthog/get-feature-flag";
 import { getUserProjects } from "@/lib/project/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
@@ -25,7 +25,7 @@ const Page = async (props: ModePageProps) => {
   }
 
   const experimentVariant =
-    (await posthogServerClient?.getFeatureFlag("onboarding-mode-experiment", session.user.id)) ?? "control";
+    (await getPostHogFeatureFlag(session.user.id, "onboarding-mode-experiment")) || "control";
 
   if (experimentVariant === "remove-cx-and-surveys-mode") {
     return redirect(`/organizations/${params.organizationId}/workspaces/new/channel`);
