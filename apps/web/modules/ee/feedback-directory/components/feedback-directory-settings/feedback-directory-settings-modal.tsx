@@ -118,10 +118,15 @@ export const FeedbackDirectorySettingsModal = ({
     reset,
   } = form;
 
-  const workspaceNameById = useMemo(
-    () => new Map(orgWorkspaces.map((workspace) => [workspace.id, workspace.name])),
-    [orgWorkspaces]
-  );
+  const workspaceNameById = useMemo(() => {
+    const map = new Map(orgWorkspaces.map((workspace) => [workspace.id, workspace.name]));
+    directory?.workspaces.forEach((workspace) => {
+      if (!map.has(workspace.workspaceId)) {
+        map.set(workspace.workspaceId, workspace.workspaceName);
+      }
+    });
+    return map;
+  }, [orgWorkspaces, directory?.workspaces]);
 
   const closeModal = () => {
     setConfirmPauseDialogOpen(false);
