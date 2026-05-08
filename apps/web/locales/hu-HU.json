@@ -3692,6 +3692,7 @@
       "csv_pick_column_placeholder": "Válasszon oszlopot vagy állítson be értéket…",
       "csv_required_fields_missing": "Kérjük, a mentés előtt képezze le a kötelező mezőket: {fields}",
       "csv_response_preview": "Minta: \"{sample}\" → tárolva mint {target}.",
+      "csv_rows_count": "{count, plural, one {# sor} other {# sor}}",
       "csv_sample_label": "Minta CSV",
       "csv_source_context": "Forráskontextus",
       "csv_source_context_hint": "Meghatározza, honnan származik ez a visszajelzési köteg.",
@@ -3738,6 +3739,12 @@
       "field_id": "Mezőazonosító",
       "field_label": "Mező címke",
       "field_type": "Mező típus",
+      "fields": {
+        "boolean": "Logikai érték",
+        "date": "Dátum",
+        "number": "Szám",
+        "text": "Szöveg"
+      },
       "formbricks_surveys": "Formbricks kérdőívek",
       "go_to_feedback_directories": "Ugrás a könyvtárbeállításokhoz",
       "historical_import_complete": "Importálás befejezve: {successes} sikeres, {failures} sikertelen, {skipped} kihagyva (nincs adat)",

@@ -3692,6 +3692,7 @@
       "csv_pick_column_placeholder": "列を選択するか値を設定…",
       "csv_required_fields_missing": "保存する前に必須フィールドをマッピングしてください: {fields}",
       "csv_response_preview": "サンプル: 「{sample}」→ {target} として保存されます。",
+      "csv_rows_count": "{count, plural, other {# 行}}",
       "csv_sample_label": "CSVサンプル",
       "csv_source_context": "ソースコンテキスト",
       "csv_source_context_hint": "このフィードバックのバッチがどこから来たかを識別します。",
@@ -3738,6 +3739,12 @@
       "field_id": "フィールドID",
       "field_label": "フィールドラベル",
       "field_type": "フィールドタイプ",
+      "fields": {
+        "boolean": "ブール値",
+        "date": "日付",
+        "number": "数値",
+        "text": "テキスト"
+      },
       "formbricks_surveys": "Formbricks フォーム",
       "go_to_feedback_directories": "ディレクトリ設定へ移動",
       "historical_import_complete": "インポート完了: {successes}件成功、{failures}件失敗、{skipped}件スキップ（データなし）",

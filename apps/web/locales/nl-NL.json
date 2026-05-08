@@ -3692,6 +3692,7 @@
       "csv_pick_column_placeholder": "Kies een kolom of stel een waarde in…",
       "csv_required_fields_missing": "Koppel de verplichte velden voordat je opslaat: {fields}",
       "csv_response_preview": "Voorbeeld: \"{sample}\" → opgeslagen als {target}.",
+      "csv_rows_count": "{count, plural, one {# rij} other {# rijen}}",
       "csv_sample_label": "Voorbeeld-CSV",
       "csv_source_context": "Broncontext",
       "csv_source_context_hint": "Geeft aan waar deze batch feedback vandaan komt.",
@@ -3738,6 +3739,12 @@
       "field_id": "Veld-ID",
       "field_label": "Veldlabel",
       "field_type": "Veldtype",
+      "fields": {
+        "boolean": "Boolean",
+        "date": "Datum",
+        "number": "Getal",
+        "text": "Tekst"
+      },
       "formbricks_surveys": "Formbricks Surveys",
       "go_to_feedback_directories": "Ga naar map-instellingen",
       "historical_import_complete": "Import voltooid: {successes} geslaagd, {failures} mislukt, {skipped} overgeslagen (geen data)",

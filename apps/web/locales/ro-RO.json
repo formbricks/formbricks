@@ -3692,6 +3692,7 @@
       "csv_pick_column_placeholder": "Alege o coloană sau setează o valoare…",
       "csv_required_fields_missing": "Te rugăm să mapezi câmpurile obligatorii înainte de salvare: {fields}",
       "csv_response_preview": "Exemplu: \"{sample}\" → stocat ca {target}.",
+      "csv_rows_count": "{count, plural, one {# rând} few {# rânduri} other {# de rânduri}}",
       "csv_sample_label": "Exemplu CSV",
       "csv_source_context": "Contextul sursei",
       "csv_source_context_hint": "Identifică de unde provine acest lot de feedback.",
@@ -3738,6 +3739,12 @@
       "field_id": "ID-ul câmpului",
       "field_label": "Etichetă câmp",
       "field_type": "Tip câmp",
+      "fields": {
+        "boolean": "Boolean",
+        "date": "Dată",
+        "number": "Număr",
+        "text": "Text"
+      },
       "formbricks_surveys": "Chestionare Formbricks",
       "go_to_feedback_directories": "Mergi la setările directoarelor",
       "historical_import_complete": "Import finalizat: {successes} reușite, {failures} eșuate, {skipped} omise (fără date)",

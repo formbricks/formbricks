@@ -3692,6 +3692,7 @@
       "csv_pick_column_placeholder": "Bir sütun seç veya değer belirle…",
       "csv_required_fields_missing": "Kaydetmeden önce lütfen gerekli alanları eşle: {fields}",
       "csv_response_preview": "Örnek: \"{sample}\" → {target} olarak saklandı.",
+      "csv_rows_count": "{count, plural, one {# satır} other {# satır}}",
       "csv_sample_label": "Örnek CSV",
       "csv_source_context": "Kaynak Bağlamı",
       "csv_source_context_hint": "Bu geri bildirim grubunun nereden geldiğini tanımlar.",
@@ -3738,6 +3739,12 @@
       "field_id": "Alan Kimliği",
       "field_label": "Alan Etiketi",
       "field_type": "Alan Türü",
+      "fields": {
+        "boolean": "Mantıksal",
+        "date": "Tarih",
+        "number": "Sayı",
+        "text": "Metin"
+      },
       "formbricks_surveys": "Formbricks Anketleri",
       "go_to_feedback_directories": "Dizin ayarlarına git",
       "historical_import_complete": "İçe aktarma tamamlandı: {successes} başarılı, {failures} başarısız, {skipped} atlandı (veri yok)",

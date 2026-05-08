@@ -3692,6 +3692,7 @@
       "csv_pick_column_placeholder": "选择列或设置值…",
       "csv_required_fields_missing": "请在保存前映射必填字段：{fields}",
       "csv_response_preview": "示例：“{sample}” → 存储为 {target}。",
+      "csv_rows_count": "{count, plural, other {# 行}}",
       "csv_sample_label": "CSV 示例",
       "csv_source_context": "来源上下文",
       "csv_source_context_hint": "标识这批反馈的来源。",
@@ -3738,6 +3739,12 @@
       "field_id": "字段ID",
       "field_label": "字段标签",
       "field_type": "字段类型",
+      "fields": {
+        "boolean": "布尔值",
+        "date": "日期",
+        "number": "数字",
+        "text": "文本"
+      },
       "formbricks_surveys": "Formbricks Surveys",
       "go_to_feedback_directories": "前往目录设置",
       "historical_import_complete": "导入完成：{successes} 个成功，{failures} 个失败，{skipped} 个跳过（无数据）",

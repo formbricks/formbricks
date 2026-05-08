@@ -3692,6 +3692,7 @@
       "csv_pick_column_placeholder": "Выбери столбец или задай значение…",
       "csv_required_fields_missing": "Пожалуйста, сопоставь обязательные поля перед сохранением: {fields}",
       "csv_response_preview": "Пример: \"{sample}\" → сохранено как {target}.",
+      "csv_rows_count": "{count, plural, one {# строка} few {# строки} many {# строк} other {# строк}}",
       "csv_sample_label": "Пример CSV",
       "csv_source_context": "Исходный контекст",
       "csv_source_context_hint": "Указывает, откуда пришёл этот набор отзывов.",
@@ -3738,6 +3739,12 @@
       "field_id": "Идентификатор поля",
       "field_label": "Метка поля",
       "field_type": "Тип поля",
+      "fields": {
+        "boolean": "Булево значение",
+        "date": "Дата",
+        "number": "Число",
+        "text": "Текст"
+      },
       "formbricks_surveys": "Formbricks Surveys",
       "go_to_feedback_directories": "Перейти к настройкам каталогов",
       "historical_import_complete": "Импорт завершён: {successes} успешно, {failures} с ошибками, {skipped} пропущено (нет данных)",

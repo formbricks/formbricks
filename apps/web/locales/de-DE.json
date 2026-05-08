@@ -3692,6 +3692,7 @@
       "csv_pick_column_placeholder": "Spalte wählen oder Wert festlegen…",
       "csv_required_fields_missing": "Bitte ordne die erforderlichen Felder zu, bevor du speicherst: {fields}",
       "csv_response_preview": "Beispiel: \"{sample}\" → gespeichert als {target}.",
+      "csv_rows_count": "{count, plural, one {# Zeile} other {# Zeilen}}",
       "csv_sample_label": "CSV-Beispiel",
       "csv_source_context": "Quellkontext",
       "csv_source_context_hint": "Zeigt an, woher dieser Feedback-Stapel stammt.",
@@ -3738,6 +3739,12 @@
       "field_id": "Feld-ID",
       "field_label": "Feldbezeichnung",
       "field_type": "Feldtyp",
+      "fields": {
+        "boolean": "Boolean",
+        "date": "Datum",
+        "number": "Zahl",
+        "text": "Text"
+      },
       "formbricks_surveys": "Formbricks-Umfragen",
       "go_to_feedback_directories": "Zu den Verzeichnis-Einstellungen",
       "historical_import_complete": "Import abgeschlossen: {successes} erfolgreich, {failures} fehlgeschlagen, {skipped} übersprungen (keine Daten)",

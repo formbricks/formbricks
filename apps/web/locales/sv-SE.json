@@ -3692,6 +3692,7 @@
       "csv_pick_column_placeholder": "Välj en kolumn eller ange ett värde…",
       "csv_required_fields_missing": "Vänligen mappa obligatoriska fält innan du sparar: {fields}",
       "csv_response_preview": "Exempel: \"{sample}\" → lagras som {target}.",
+      "csv_rows_count": "{count, plural, one {# rad} other {# rader}}",
       "csv_sample_label": "Exempel-CSV",
       "csv_source_context": "Källkontext",
       "csv_source_context_hint": "Identifierar var denna batch av feedback kom ifrån.",
@@ -3738,6 +3739,12 @@
       "field_id": "Fält-ID",
       "field_label": "Fältetikett",
       "field_type": "Fälttyp",
+      "fields": {
+        "boolean": "Booleskt värde",
+        "date": "Datum",
+        "number": "Nummer",
+        "text": "Text"
+      },
       "formbricks_surveys": "Formbricks Surveys",
       "go_to_feedback_directories": "Gå till kataloginställningar",
       "historical_import_complete": "Importen klar: {successes} lyckades, {failures} misslyckades, {skipped} hoppades över (ingen data)",

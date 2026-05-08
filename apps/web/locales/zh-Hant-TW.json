@@ -3692,6 +3692,7 @@
       "csv_pick_column_placeholder": "選擇欄位或設定值…",
       "csv_required_fields_missing": "請在儲存前對應必填欄位：{fields}",
       "csv_response_preview": "範例：「{sample}」→ 儲存為 {target}。",
+      "csv_rows_count": "{count, plural, other {# 列}}",
       "csv_sample_label": "CSV 範例",
       "csv_source_context": "來源情境",
       "csv_source_context_hint": "識別這批意見回饋的來源。",
@@ -3738,6 +3739,12 @@
       "field_id": "欄位ID",
       "field_label": "欄位標籤",
       "field_type": "欄位類型",
+      "fields": {
+        "boolean": "布林值",
+        "date": "日期",
+        "number": "數字",
+        "text": "文字"
+      },
       "formbricks_surveys": "Formbricks 問卷",
       "go_to_feedback_directories": "前往目錄設定",
       "historical_import_complete": "匯入完成：{successes} 筆成功，{failures} 筆失敗，{skipped} 筆略過（無資料）",

@@ -3692,6 +3692,7 @@
       "csv_pick_column_placeholder": "Elige una columna o establece un valor…",
       "csv_required_fields_missing": "Por favor, mapea los campos obligatorios antes de guardar: {fields}",
       "csv_response_preview": "Ejemplo: \"{sample}\" → almacenado como {target}.",
+      "csv_rows_count": "{count, plural, one {# fila} other {# filas}}",
       "csv_sample_label": "CSV de ejemplo",
       "csv_source_context": "Contexto de origen",
       "csv_source_context_hint": "Identifica de dónde proviene este lote de feedback.",
@@ -3738,6 +3739,12 @@
       "field_id": "ID de campo",
       "field_label": "Etiqueta de campo",
       "field_type": "Tipo de campo",
+      "fields": {
+        "boolean": "Booleano",
+        "date": "Fecha",
+        "number": "Número",
+        "text": "Texto"
+      },
       "formbricks_surveys": "Formbricks Surveys",
       "go_to_feedback_directories": "Ir a la configuración de directorios",
       "historical_import_complete": "Importación completada: {successes} correctas, {failures} fallidas, {skipped} omitidas (sin datos)",
