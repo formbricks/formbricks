@@ -1,5 +1,6 @@
 "use client";
 
+import { signIn } from "next-auth/react";
 import { Dispatch, SetStateAction, useState } from "react";
 import toast from "react-hot-toast";
 import { Trans, useTranslation } from "react-i18next";
@@ -7,14 +8,22 @@ import { logger } from "@formbricks/logger";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import {
+  ACCOUNT_DELETION_CONFIRMATION_REQUIRED_ERROR_CODE,
+  ACCOUNT_DELETION_EMAIL_MISMATCH_ERROR_CODE,
+  ACCOUNT_DELETION_GOOGLE_REAUTH_NOT_CONFIGURED_ERROR_CODE,
+  ACCOUNT_DELETION_SSO_REAUTH_REQUIRED_ERROR_CODE,
+  DELETE_ACCOUNT_WRONG_PASSWORD_ERROR,
+  FORMBRICKS_CLOUD_ACCOUNT_DELETION_SURVEY_URL,
+} from "@/modules/account/constants";
 import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { Input } from "@/modules/ui/components/input";
 import { PasswordInput } from "@/modules/ui/components/password-input";
-import { deleteUserAction } from "./actions";
-import { DELETE_ACCOUNT_WRONG_PASSWORD_ERROR } from "./constants";
+import { deleteUserAction, startAccountDeletionSsoReauthenticationAction } from "./actions";
 
 interface DeleteAccountModalProps {
+  requiresPasswordConfirmation: boolean;
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
   user: TUser;
@@ -23,18 +32,18 @@ interface DeleteAccountModalProps {
 }
 
 export const DeleteAccountModal = ({
+  requiresPasswordConfirmation,
   setOpen,
   open,
   user,
   isFormbricksCloud,
   organizationsWithSingleOwner,
-}: DeleteAccountModalProps) => {
+}: Readonly<DeleteAccountModalProps>) => {
   const { t } = useTranslation();
   const [deleting, setDeleting] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [password, setPassword] = useState("");
   const { signOut: signOutWithAudit } = useSignOut({ id: user.id, email: user.email });
-  const isPasswordBackedAccount = user.identityProvider === "email";
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
   };
@@ -48,8 +57,59 @@ export const DeleteAccountModal = ({
   };
 
   const hasValidEmailConfirmation = inputValue.trim().toLowerCase() === user.email.toLowerCase();
-  const hasValidConfirmation = hasValidEmailConfirmation && (!isPasswordBackedAccount || password.length > 0);
+  const hasValidConfirmation =
+    hasValidEmailConfirmation && (!requiresPasswordConfirmation || password.length > 0);
   const isDeleteDisabled = !hasValidConfirmation;
+  const getLocalizedDeletionErrorMessage = (serverError?: string) => {
+    if (serverError === DELETE_ACCOUNT_WRONG_PASSWORD_ERROR) {
+      return t("environments.settings.profile.wrong_password");
+    }
+
+    if (serverError === ACCOUNT_DELETION_GOOGLE_REAUTH_NOT_CONFIGURED_ERROR_CODE) {
+      return t("environments.settings.profile.google_sso_account_deletion_requires_setup");
+    }
+
+    if (serverError === ACCOUNT_DELETION_EMAIL_MISMATCH_ERROR_CODE) {
+      return t("environments.settings.profile.email_confirmation_does_not_match");
+    }
+
+    if (serverError === ACCOUNT_DELETION_CONFIRMATION_REQUIRED_ERROR_CODE) {
+      return t("environments.settings.profile.delete_account_confirmation_required");
+    }
+
+    if (serverError === ACCOUNT_DELETION_SSO_REAUTH_REQUIRED_ERROR_CODE) {
+      return t("environments.settings.profile.sso_reauthentication_failed");
+    }
+
+    return null;
+  };
+
+  const startSsoReauthentication = async () => {
+    const result = await startAccountDeletionSsoReauthenticationAction({
+      confirmationEmail: inputValue,
+      returnToUrl: globalThis.location.href,
+    });
+
+    if (!result?.data) {
+      const fallbackErrorMessage = t("common.something_went_wrong_please_try_again");
+      const errorMessage =
+        getLocalizedDeletionErrorMessage(result?.serverError) ??
+        (result ? getFormattedErrorMessage(result) : fallbackErrorMessage);
+
+      logger.error({ errorMessage }, "Account deletion SSO reauthentication action failed");
+      toast.error(errorMessage || fallbackErrorMessage);
+      return;
+    }
+
+    await signIn(
+      result.data.provider,
+      {
+        callbackUrl: result.data.callbackUrl,
+        redirect: true,
+      },
+      result.data.authorizationParams
+    );
+  };
 
   const deleteAccount = async () => {
     try {
@@ -59,7 +119,7 @@ export const DeleteAccountModal = ({
 
       setDeleting(true);
       const result = await deleteUserAction(
-        isPasswordBackedAccount
+        requiresPasswordConfirmation
           ? {
               confirmationEmail: inputValue,
               password,
@@ -71,12 +131,14 @@ export const DeleteAccountModal = ({
 
       if (!result?.data?.success) {
         const fallbackErrorMessage = t("common.something_went_wrong_please_try_again");
-        let errorMessage = fallbackErrorMessage;
+        let errorMessage = getLocalizedDeletionErrorMessage(result?.serverError) ?? fallbackErrorMessage;
 
-        if (result?.serverError === DELETE_ACCOUNT_WRONG_PASSWORD_ERROR) {
-          errorMessage = t("environments.settings.profile.wrong_password");
+        if (result?.serverError === ACCOUNT_DELETION_SSO_REAUTH_REQUIRED_ERROR_CODE) {
+          await startSsoReauthentication();
+          return;
         } else if (result) {
-          errorMessage = getFormattedErrorMessage(result);
+          errorMessage =
+            getLocalizedDeletionErrorMessage(result.serverError) ?? getFormattedErrorMessage(result);
         }
 
         logger.error({ errorMessage }, "Account deletion action failed");
@@ -93,9 +155,9 @@ export const DeleteAccountModal = ({
 
       // Manual redirect after signOut completes
       if (isFormbricksCloud) {
-        window.location.replace("https://app.formbricks.com/s/clri52y3z8f221225wjdhsoo2");
+        globalThis.location.replace(FORMBRICKS_CLOUD_ACCOUNT_DELETION_SURVEY_URL);
       } else {
-        window.location.replace("/auth/login");
+        globalThis.location.replace("/auth/login");
       }
     } catch (error) {
       logger.error({ error }, "Account deletion failed");
@@ -161,7 +223,12 @@ export const DeleteAccountModal = ({
             id="deleteAccountConfirmation"
             name="deleteAccountConfirmation"
           />
-          {isPasswordBackedAccount && (
+          {!requiresPasswordConfirmation && (
+            <p className="mt-2 text-sm text-slate-600">
+              {t("environments.settings.profile.sso_reauthentication_may_be_required_for_deletion")}
+            </p>
+          )}
+          {requiresPasswordConfirmation && (
             <>
               <label htmlFor="deleteAccountPassword" className="mt-4 block">
                 {t("common.password")}

@@ -16,6 +16,12 @@ import {
 import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
 import { verifyToken } from "@/lib/jwt";
 import { getValidatedCallbackUrl } from "@/lib/utils/url";
+import {
+  completeAccountDeletionSsoReauthentication,
+  getAccountDeletionSsoReauthFailureRedirectUrl,
+  getAccountDeletionSsoReauthIntentFromCallbackUrl,
+  validateAccountDeletionSsoReauthenticationCallback,
+} from "@/modules/account/lib/account-deletion-sso-reauth";
 import { getAuthCallbackUrlFromCookies } from "@/modules/auth/lib/callback-url";
 import { finalizeSuccessfulSignIn } from "@/modules/auth/lib/sign-in-tracking";
 import { updateUser } from "@/modules/auth/lib/user";
@@ -34,6 +40,127 @@ import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { getSSOProviders } from "@/modules/ee/sso/lib/providers";
 import { handleSsoCallback } from "@/modules/ee/sso/lib/sso-handlers";
 import { createBrevoCustomer } from "./brevo";
+
+type TSignInCallbackParams = Parameters<NonNullable<NonNullable<NextAuthOptions["callbacks"]>["signIn"]>>[0];
+type TSignInUser = TSignInCallbackParams["user"];
+type TSignInAccount = TSignInCallbackParams["account"];
+type TCredentialsOrTokenAccount = NonNullable<TSignInAccount> & { provider: "credentials" | "token" };
+
+const getValidatedAuthCallbackUrl = async () => {
+  const cookieStore = await cookies();
+  return getValidatedCallbackUrl(getAuthCallbackUrlFromCookies(cookieStore), WEBAPP_URL) ?? "";
+};
+
+const getAuthFlowPurpose = (user: TSignInUser) => {
+  const authFlowPurpose = "authFlowPurpose" in user ? user.authFlowPurpose : undefined;
+  return typeof authFlowPurpose === "string" ? authFlowPurpose : undefined;
+};
+
+const isCredentialsOrTokenProvider = (account: TSignInAccount): account is TCredentialsOrTokenAccount =>
+  account?.provider === "credentials" || account?.provider === "token";
+
+const assertCredentialsUserCanSignIn = (user: TSignInUser) => {
+  if ("emailVerified" in user && !user.emailVerified && !EMAIL_VERIFICATION_DISABLED) {
+    logger.error("Email Verification is Pending");
+    throw new Error("Email Verification is Pending");
+  }
+};
+
+const handleCredentialsOrTokenSignIn = async ({
+  account,
+  user,
+  userEmail,
+  userId,
+}: {
+  account: TCredentialsOrTokenAccount;
+  user: TSignInUser;
+  userEmail: string;
+  userId: string;
+}) => {
+  const isSsoRecovery = account.provider === "token" && getAuthFlowPurpose(user) === "sso_recovery";
+
+  if (!isSsoRecovery) {
+    assertCredentialsUserCanSignIn(user);
+
+    await finalizeSuccessfulSignIn({
+      userId,
+      email: userEmail,
+      provider: account.provider,
+    });
+  }
+
+  return true;
+};
+
+const maybeValidateAccountDeletionSsoReauth = async ({
+  account,
+  intentToken,
+}: {
+  account: NonNullable<TSignInAccount>;
+  intentToken: string | null;
+}) => {
+  if (!intentToken) {
+    return;
+  }
+
+  await validateAccountDeletionSsoReauthenticationCallback({
+    account,
+    intentToken,
+  });
+};
+
+const maybeCompleteAccountDeletionSsoReauth = async ({
+  account,
+  intentToken,
+}: {
+  account: NonNullable<TSignInAccount>;
+  intentToken: string | null;
+}) => {
+  if (!intentToken) {
+    return;
+  }
+
+  await completeAccountDeletionSsoReauthentication({
+    account,
+    intentToken,
+  });
+};
+
+const handleEnterpriseSsoSignIn = async ({
+  account,
+  callbackUrl,
+  intentToken,
+  user,
+  userEmail,
+  userId,
+}: {
+  account: NonNullable<TSignInAccount>;
+  callbackUrl: string;
+  intentToken: string | null;
+  user: TSignInUser;
+  userEmail: string;
+  userId: string;
+}) => {
+  await maybeValidateAccountDeletionSsoReauth({ account, intentToken });
+
+  const result = await handleSsoCallback({
+    user: user as TUser,
+    account,
+    callbackUrl,
+  });
+
+  if (result === true) {
+    await maybeCompleteAccountDeletionSsoReauth({ account, intentToken });
+
+    await finalizeSuccessfulSignIn({
+      userId,
+      email: userEmail,
+      provider: account.provider,
+    });
+  }
+
+  return result;
+};
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -340,53 +467,46 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async signIn({ user, account }) {
-      const cookieStore = await cookies();
-
-      // get callback url from the cookie store,
-      const callbackUrl =
-        getValidatedCallbackUrl(getAuthCallbackUrlFromCookies(cookieStore), WEBAPP_URL) ?? "";
+      const callbackUrl = await getValidatedAuthCallbackUrl();
+      const accountDeletionSsoReauthIntentToken =
+        getAccountDeletionSsoReauthIntentFromCallbackUrl(callbackUrl);
 
       const userEmail = user.email ?? "";
-      const userId = user.id as string;
-      const authFlowPurpose =
-        "authFlowPurpose" in user && typeof user.authFlowPurpose === "string"
-          ? user.authFlowPurpose
-          : undefined;
+      const userId = user.id;
 
-      if (account?.provider === "credentials" || account?.provider === "token") {
-        if (account.provider === "token" && authFlowPurpose === "sso_recovery") {
-          return true;
-        }
-
-        // check if user's email is verified or not
-        if ("emailVerified" in user && !user.emailVerified && !EMAIL_VERIFICATION_DISABLED) {
-          logger.error("Email Verification is Pending");
-          throw new Error("Email Verification is Pending");
-        }
-
-        await finalizeSuccessfulSignIn({
-          userId,
-          email: userEmail,
-          provider: account.provider,
-        });
-        return true;
-      }
-      if (ENTERPRISE_LICENSE_KEY && account) {
-        const result = await handleSsoCallback({
-          user: user as TUser,
+      if (isCredentialsOrTokenProvider(account)) {
+        return handleCredentialsOrTokenSignIn({
           account,
-          callbackUrl,
+          user,
+          userEmail,
+          userId,
         });
-
-        if (result === true) {
-          await finalizeSuccessfulSignIn({
-            userId,
-            email: userEmail,
-            provider: account.provider,
-          });
-        }
-        return result;
       }
+
+      if (ENTERPRISE_LICENSE_KEY && account) {
+        try {
+          return await handleEnterpriseSsoSignIn({
+            account,
+            callbackUrl,
+            intentToken: accountDeletionSsoReauthIntentToken,
+            user,
+            userEmail,
+            userId,
+          });
+        } catch (error) {
+          const failureRedirectUrl = getAccountDeletionSsoReauthFailureRedirectUrl({
+            error,
+            intentToken: accountDeletionSsoReauthIntentToken,
+          });
+
+          if (failureRedirectUrl) {
+            return failureRedirectUrl;
+          }
+
+          throw error;
+        }
+      }
+
       await finalizeSuccessfulSignIn({
         userId,
         email: userEmail,

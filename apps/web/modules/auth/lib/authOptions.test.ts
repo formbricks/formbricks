@@ -53,6 +53,13 @@ vi.mock("@/lib/jwt", () => ({
   verifyToken: vi.fn(),
 }));
 
+vi.mock("@/modules/account/lib/account-deletion-sso-reauth", () => ({
+  completeAccountDeletionSsoReauthentication: vi.fn(),
+  getAccountDeletionSsoReauthFailureRedirectUrl: vi.fn(),
+  getAccountDeletionSsoReauthIntentFromCallbackUrl: vi.fn(),
+  validateAccountDeletionSsoReauthenticationCallback: vi.fn(),
+}));
+
 // Mock rate limiting dependencies
 vi.mock("@/modules/core/rate-limit/helpers", () => ({
   applyIPRateLimit: vi.fn(),
@@ -690,6 +697,159 @@ describe("authOptions", () => {
 
       expect(mockHandleSsoCallback).toHaveBeenCalled();
       expect(mockUpdateUserLastLoginAt).toHaveBeenCalledWith(user.email);
+    });
+
+    test("should complete account deletion SSO reauthentication before finalizing sign-in", async () => {
+      vi.resetModules();
+
+      const mockHandleSsoCallback = vi.fn().mockResolvedValueOnce(true);
+      const mockUpdateUserLastLoginAt = vi.fn();
+      const mockCapturePostHogEvent = vi.fn();
+      const mockCompleteAccountDeletionSsoReauthentication = vi.fn().mockResolvedValueOnce(undefined);
+      const mockGetAccountDeletionSsoReauthIntentFromCallbackUrl = vi
+        .fn()
+        .mockReturnValueOnce("intent-token");
+      const mockValidateAccountDeletionSsoReauthenticationCallback = vi.fn().mockResolvedValueOnce(undefined);
+
+      vi.doMock("@/lib/constants", async (importOriginal) => {
+        const actual = await importOriginal<typeof import("@/lib/constants")>();
+        return {
+          ...actual,
+          EMAIL_VERIFICATION_DISABLED: false,
+          SESSION_MAX_AGE: 86400,
+          NEXTAUTH_SECRET: "test-secret",
+          WEBAPP_URL: "http://localhost:3000",
+          ENCRYPTION_KEY: "12345678901234567890123456789012",
+          REDIS_URL: undefined,
+          AUDIT_LOG_ENABLED: false,
+          AUDIT_LOG_GET_USER_IP: false,
+          ENTERPRISE_LICENSE_KEY: "test-enterprise-license",
+          SENTRY_DSN: undefined,
+          BREVO_API_KEY: undefined,
+          RATE_LIMITING_DISABLED: false,
+          CONTROL_HASH: "$2b$12$fzHf9le13Ss9UJ04xzmsjODXpFJxz6vsnupoepF5FiqDECkX2BH5q",
+          POSTHOG_KEY: "phc_test_key",
+        };
+      });
+      vi.doMock("@/modules/ee/sso/lib/providers", () => ({
+        getSSOProviders: vi.fn(() => []),
+      }));
+      vi.doMock("@/modules/ee/sso/lib/sso-handlers", () => ({
+        handleSsoCallback: mockHandleSsoCallback,
+      }));
+      vi.doMock("@/modules/auth/lib/user", () => ({
+        updateUser: vi.fn(),
+        updateUserLastLoginAt: mockUpdateUserLastLoginAt,
+      }));
+      vi.doMock("@/lib/posthog", () => ({
+        capturePostHogEvent: mockCapturePostHogEvent,
+      }));
+      vi.doMock("@/modules/account/lib/account-deletion-sso-reauth", () => ({
+        completeAccountDeletionSsoReauthentication: mockCompleteAccountDeletionSsoReauthentication,
+        getAccountDeletionSsoReauthIntentFromCallbackUrl:
+          mockGetAccountDeletionSsoReauthIntentFromCallbackUrl,
+        validateAccountDeletionSsoReauthenticationCallback:
+          mockValidateAccountDeletionSsoReauthenticationCallback,
+      }));
+
+      const { authOptions: enterpriseAuthOptions } = await import("./authOptions");
+      const user = { ...mockUser, emailVerified: new Date() };
+      const account = { provider: "google", type: "oauth", providerAccountId: "provider-123" } as any;
+
+      await expect(enterpriseAuthOptions.callbacks?.signIn?.({ user, account } as any)).resolves.toBe(true);
+
+      expect(mockHandleSsoCallback).toHaveBeenCalled();
+      expect(mockGetAccountDeletionSsoReauthIntentFromCallbackUrl).toHaveBeenCalled();
+      expect(mockValidateAccountDeletionSsoReauthenticationCallback).toHaveBeenCalledWith({
+        account,
+        intentToken: "intent-token",
+      });
+      expect(mockCompleteAccountDeletionSsoReauthentication).toHaveBeenCalledWith({
+        account,
+        intentToken: "intent-token",
+      });
+      expect(mockUpdateUserLastLoginAt).toHaveBeenCalledWith(user.email);
+    });
+
+    test("should redirect account deletion SSO reauthentication failures back to the profile page", async () => {
+      vi.resetModules();
+
+      const mockHandleSsoCallback = vi.fn();
+      const mockUpdateUserLastLoginAt = vi.fn();
+      const mockCapturePostHogEvent = vi.fn();
+      const mockCompleteAccountDeletionSsoReauthentication = vi.fn();
+      const mockGetAccountDeletionSsoReauthFailureRedirectUrl = vi
+        .fn()
+        .mockReturnValueOnce(
+          "http://localhost:3000/environments/env-id/settings/profile?accountDeletionError=google_reauth_not_configured"
+        );
+      const mockGetAccountDeletionSsoReauthIntentFromCallbackUrl = vi
+        .fn()
+        .mockReturnValueOnce("intent-token");
+      const reauthError = new Error(
+        "Google account deletion requires Google Auth Platform Session age claims to be enabled."
+      );
+      const mockValidateAccountDeletionSsoReauthenticationCallback = vi
+        .fn()
+        .mockRejectedValueOnce(reauthError);
+
+      vi.doMock("@/lib/constants", async (importOriginal) => {
+        const actual = await importOriginal<typeof import("@/lib/constants")>();
+        return {
+          ...actual,
+          EMAIL_VERIFICATION_DISABLED: false,
+          SESSION_MAX_AGE: 86400,
+          NEXTAUTH_SECRET: "test-secret",
+          WEBAPP_URL: "http://localhost:3000",
+          ENCRYPTION_KEY: "12345678901234567890123456789012",
+          REDIS_URL: undefined,
+          AUDIT_LOG_ENABLED: false,
+          AUDIT_LOG_GET_USER_IP: false,
+          ENTERPRISE_LICENSE_KEY: "test-enterprise-license",
+          SENTRY_DSN: undefined,
+          BREVO_API_KEY: undefined,
+          RATE_LIMITING_DISABLED: false,
+          CONTROL_HASH: "$2b$12$fzHf9le13Ss9UJ04xzmsjODXpFJxz6vsnupoepF5FiqDECkX2BH5q",
+          POSTHOG_KEY: "phc_test_key",
+        };
+      });
+      vi.doMock("@/modules/ee/sso/lib/providers", () => ({
+        getSSOProviders: vi.fn(() => []),
+      }));
+      vi.doMock("@/modules/ee/sso/lib/sso-handlers", () => ({
+        handleSsoCallback: mockHandleSsoCallback,
+      }));
+      vi.doMock("@/modules/auth/lib/user", () => ({
+        updateUser: vi.fn(),
+        updateUserLastLoginAt: mockUpdateUserLastLoginAt,
+      }));
+      vi.doMock("@/lib/posthog", () => ({
+        capturePostHogEvent: mockCapturePostHogEvent,
+      }));
+      vi.doMock("@/modules/account/lib/account-deletion-sso-reauth", () => ({
+        completeAccountDeletionSsoReauthentication: mockCompleteAccountDeletionSsoReauthentication,
+        getAccountDeletionSsoReauthFailureRedirectUrl: mockGetAccountDeletionSsoReauthFailureRedirectUrl,
+        getAccountDeletionSsoReauthIntentFromCallbackUrl:
+          mockGetAccountDeletionSsoReauthIntentFromCallbackUrl,
+        validateAccountDeletionSsoReauthenticationCallback:
+          mockValidateAccountDeletionSsoReauthenticationCallback,
+      }));
+
+      const { authOptions: enterpriseAuthOptions } = await import("./authOptions");
+      const user = { ...mockUser, emailVerified: new Date() };
+      const account = { provider: "google", type: "oauth", providerAccountId: "provider-123" } as any;
+
+      await expect(enterpriseAuthOptions.callbacks?.signIn?.({ user, account } as any)).resolves.toBe(
+        "http://localhost:3000/environments/env-id/settings/profile?accountDeletionError=google_reauth_not_configured"
+      );
+
+      expect(mockGetAccountDeletionSsoReauthFailureRedirectUrl).toHaveBeenCalledWith({
+        error: reauthError,
+        intentToken: "intent-token",
+      });
+      expect(mockHandleSsoCallback).not.toHaveBeenCalled();
+      expect(mockCompleteAccountDeletionSsoReauthentication).not.toHaveBeenCalled();
+      expect(mockUpdateUserLastLoginAt).not.toHaveBeenCalled();
     });
   });
 

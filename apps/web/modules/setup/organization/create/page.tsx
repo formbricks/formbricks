@@ -7,6 +7,7 @@ import { getHasNoOrganizations } from "@/lib/instance/service";
 import { getOrganizationsByUserId } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
+import { requiresPasswordConfirmationForAccountDeletion } from "@/modules/account/lib/account-deletion-auth";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { RemovedFromOrganization } from "@/modules/setup/organization/create/components/removed-from-organization";
@@ -38,7 +39,13 @@ export const CreateOrganizationPage = async () => {
   }
 
   if (userOrganizations.length === 0) {
-    return <RemovedFromOrganization user={user} isFormbricksCloud={IS_FORMBRICKS_CLOUD} />;
+    return (
+      <RemovedFromOrganization
+        user={user}
+        isFormbricksCloud={IS_FORMBRICKS_CLOUD}
+        requiresPasswordConfirmation={requiresPasswordConfirmationForAccountDeletion(user)}
+      />
+    );
   }
 
   return notFound();
