@@ -284,7 +284,10 @@ That is an intentional trade-off in the current branch, not an accident.
 The queue remains intentionally small:
 
 - queue name: `background-jobs`
-- prefix: `formbricks:jobs`
+- prefix: `{formbricks:jobs}`
+
+The prefix uses a Redis Cluster hash tag so all BullMQ keys for this queue land in the same hash slot.
+
 - job names:
   - `system.test-log`
   - `response-pipeline.process`
