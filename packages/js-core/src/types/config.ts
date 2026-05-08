@@ -1,10 +1,10 @@
 /* eslint-disable import/no-extraneous-dependencies -- required for Prisma types */
-import type { ActionClass, Language, Project, Segment, Survey, SurveyLanguage } from "@prisma/client";
+import type { ActionClass, Language, Project, Survey, SurveyLanguage } from "@prisma/client";
 
 export type TEnvironmentStateSurvey = Pick<
   Survey,
   | "id"
-  | "name"
+  // name intentionally omitted — internal label, not needed by SDK
   | "welcomeCard"
   | "questions"
   | "variables"
@@ -25,7 +25,8 @@ export type TEnvironmentStateSurvey = Pick<
 > & {
   languages: (SurveyLanguage & { language: Language })[];
   triggers: { actionClass: ActionClass }[];
-  segment?: Segment;
+  // Minimal segment shape — full filter logic is evaluated server-side and must not reach the browser
+  segment?: { id: string; hasFilters: boolean };
   displayPercentage: number;
   type: "link" | "app";
   styling?: TSurveyStyling;

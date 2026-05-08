@@ -2,6 +2,7 @@ import { PictureInPicture2Icon, SendIcon, XIcon } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizations/components/OnboardingOptionsContainer";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { getUserProjects } from "@/lib/project/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
@@ -40,6 +41,16 @@ const Page = async (props: ChannelPageProps) => {
   ];
 
   const projects = await getUserProjects(session.user.id, params.organizationId);
+
+  capturePostHogEvent(
+    session.user.id,
+    "organization_mode_selected",
+    {
+      organization_id: params.organizationId,
+      mode: "surveys",
+    },
+    { organizationId: params.organizationId }
+  );
 
   return (
     <div className="flex min-h-full min-w-full flex-col items-center justify-center space-y-12">

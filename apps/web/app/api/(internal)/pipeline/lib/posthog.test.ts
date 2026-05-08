@@ -12,6 +12,7 @@ describe("captureSurveyResponsePostHogEvent", () => {
 
   const makeParams = (responseCount: number) => ({
     organizationId: "org-1",
+    workspaceId: "ws-1",
     surveyId: "survey-1",
     surveyType: "link",
     environmentId: "env-1",
@@ -23,15 +24,21 @@ describe("captureSurveyResponsePostHogEvent", () => {
 
     captureSurveyResponsePostHogEvent(makeParams(1));
 
-    expect(capturePostHogEvent).toHaveBeenCalledWith("org-1", "survey_response_received", {
-      survey_id: "survey-1",
-      survey_type: "link",
-      organization_id: "org-1",
-      environment_id: "env-1",
-      response_count: 1,
-      is_first_response: true,
-      milestone: "first",
-    });
+    expect(capturePostHogEvent).toHaveBeenCalledWith(
+      "org-1",
+      "survey_response_received",
+      {
+        survey_id: "survey-1",
+        survey_type: "link",
+        organization_id: "org-1",
+        workspace_id: "ws-1",
+        environment_id: "env-1",
+        response_count: 1,
+        is_first_response: true,
+        milestone: "first",
+      },
+      { organizationId: "org-1", workspaceId: "ws-1" }
+    );
   });
 
   test("fires on every 100th response", async () => {
@@ -44,10 +51,20 @@ describe("captureSurveyResponsePostHogEvent", () => {
     expect(capturePostHogEvent).toHaveBeenCalledTimes(6);
   });
 
-  test("does NOT fire for 2nd through 99th responses", async () => {
+  test("fires on every 10th response up to 100", async () => {
     const { capturePostHogEvent } = await import("@/lib/posthog");
 
-    for (const count of [2, 5, 10, 50, 99]) {
+    for (const count of [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]) {
+      captureSurveyResponsePostHogEvent(makeParams(count));
+    }
+
+    expect(capturePostHogEvent).toHaveBeenCalledTimes(10);
+  });
+
+  test("does NOT fire for non-milestone responses under 100", async () => {
+    const { capturePostHogEvent } = await import("@/lib/posthog");
+
+    for (const count of [2, 5, 11, 25, 49, 51, 99]) {
       captureSurveyResponsePostHogEvent(makeParams(count));
     }
 
@@ -75,7 +92,8 @@ describe("captureSurveyResponsePostHogEvent", () => {
       expect.objectContaining({
         is_first_response: false,
         milestone: "200",
-      })
+      }),
+      { organizationId: "org-1", workspaceId: "ws-1" }
     );
   });
 });

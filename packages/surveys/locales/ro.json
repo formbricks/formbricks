@@ -27,6 +27,7 @@
     "select_option": "Selectează o opțiune",
     "select_options": "Selectează opțiuni",
     "sending_responses": "Trimiterea răspunsurilor...",
+    "survey_dialog": "Dialog sondaj",
     "takes_less_than_x_minutes": "{count, plural, one {Durează mai puțin de 1 minut} few {Durează mai puțin de {count} minute} other {Durează mai puțin de {count} de minute}}",
     "takes_x_minutes": "{count, plural, one {Durează 1 minut} few {Durează {count} minute} other {Durează {count} de minute}}",
     "takes_x_plus_minutes": "Durează peste {count} minute",

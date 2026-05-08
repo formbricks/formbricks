@@ -7,6 +7,7 @@ import { getTeamsByOrganizationId } from "@/app/(app)/(onboarding)/lib/onboardin
 import { ProjectSettings } from "@/app/(app)/(onboarding)/organizations/[organizationId]/workspaces/new/settings/components/ProjectSettings";
 import { DEFAULT_BRAND_COLOR } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { getUserProjects } from "@/lib/project/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getAccessControlPermission } from "@/modules/ee/license-check/lib/utils";
@@ -50,6 +51,18 @@ const Page = async (props: ProjectSettingsPageProps) => {
   }
 
   const publicDomain = getPublicDomain();
+
+  if (searchParams.mode === "cx") {
+    capturePostHogEvent(
+      session.user.id,
+      "organization_mode_selected",
+      {
+        organization_id: params.organizationId,
+        mode: "cx",
+      },
+      { organizationId: params.organizationId }
+    );
+  }
 
   return (
     <div className="flex min-h-full min-w-full flex-col items-center justify-center space-y-12">

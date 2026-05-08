@@ -13,8 +13,8 @@ import {
 } from "@/lib/constants";
 import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
-import { createOrganization } from "@/lib/organization/service";
-import { capturePostHogEvent } from "@/lib/posthog";
+import { createOrganization, getOrganization } from "@/lib/organization/service";
+import { capturePostHogEvent, groupIdentifyPostHog } from "@/lib/posthog";
 import { actionClient } from "@/lib/utils/action-client";
 import { ActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { createUser, updateUser } from "@/modules/auth/lib/user";
@@ -116,6 +116,15 @@ async function handleInviteAcceptance(
     role: invite.role,
   });
 
+  try {
+    const invitedOrganization = await getOrganization(invite.organizationId);
+    if (invitedOrganization) {
+      groupIdentifyPostHog("organization", invitedOrganization.id, { name: invitedOrganization.name });
+    }
+  } catch (error) {
+    logger.warn({ error, organizationId: invite.organizationId }, "Failed to identify org group in PostHog");
+  }
+
   if (invite.teamIds) {
     await createTeamMembership(
       {
@@ -166,10 +175,17 @@ async function handleOrganizationCreation(ctx: ActionClientCtx, user: TCreatedUs
     });
   }
 
-  capturePostHogEvent(user.id, "organization_created", {
-    organization_id: organization.id,
-    is_first_org: true,
-  });
+  groupIdentifyPostHog("organization", organization.id, { name: organization.name });
+
+  capturePostHogEvent(
+    user.id,
+    "organization_created",
+    {
+      organization_id: organization.id,
+      is_first_org: true,
+    },
+    { organizationId: organization.id }
+  );
 
   await updateUser(user.id, {
     notificationSettings: {
@@ -236,12 +252,19 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
         subscribeToProductUpdates: parsedInput.subscribeToProductUpdates,
       });
 
-      capturePostHogEvent(user.id, "user_signed_up", {
-        auth_provider: "credentials",
-        email_domain: user.email.split("@")[1],
-        signup_source: parsedInput.inviteToken ? "invite" : "direct",
-        invite_organization_id: ctx.auditLoggingCtx.organizationId ?? null,
-      });
+      capturePostHogEvent(
+        user.id,
+        "user_signed_up",
+        {
+          auth_provider: "credentials",
+          email_domain: user.email.split("@")[1],
+          signup_source: parsedInput.inviteToken ? "invite" : "direct",
+          invite_organization_id: ctx.auditLoggingCtx.organizationId ?? null,
+        },
+        ctx.auditLoggingCtx.organizationId
+          ? { organizationId: ctx.auditLoggingCtx.organizationId }
+          : undefined
+      );
     }
 
     if (user) {

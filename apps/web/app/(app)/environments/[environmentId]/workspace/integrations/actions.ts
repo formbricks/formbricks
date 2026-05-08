@@ -43,14 +43,22 @@ export const createOrUpdateIntegrationAction = authenticatedActionClient
       });
 
       ctx.auditLoggingCtx.organizationId = organizationId;
+      const projectId = await getProjectIdFromEnvironmentId(parsedInput.environmentId);
       const result = await createOrUpdateIntegration(parsedInput.environmentId, parsedInput.integrationData);
       ctx.auditLoggingCtx.integrationId = result.id;
       ctx.auditLoggingCtx.newObject = result;
 
-      capturePostHogEvent(ctx.user.id, "integration_connected", {
-        integration_type: parsedInput.integrationData.type,
-        organization_id: organizationId,
-      });
+      capturePostHogEvent(
+        ctx.user.id,
+        "integration_connected",
+        {
+          integration_type: parsedInput.integrationData.type,
+          organization_id: organizationId,
+          workspace_id: projectId,
+          environment_id: parsedInput.environmentId,
+        },
+        { organizationId, workspaceId: projectId }
+      );
 
       return result;
     })

@@ -27,6 +27,7 @@
     "select_option": "Выбери вариант",
     "select_options": "Выбери варианты",
     "sending_responses": "Отправка ответов...",
+    "survey_dialog": "Диалог опроса",
     "takes_less_than_x_minutes": "{count, plural, one {Займёт меньше 1 минуты} few {Займёт меньше {count} минут} many {Займёт меньше {count} минут} other {Займёт меньше {count} минуты}}",
     "takes_x_minutes": "{count, plural, one {Займёт 1 минуту} few {Займёт {count} минуты} many {Займёт {count} минут} other {Займёт {count} минуты}}",
     "takes_x_plus_minutes": "Займёт {count}+ минут",

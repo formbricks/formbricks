@@ -4,6 +4,7 @@ import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { getOrganization } from "@/lib/organization/service";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromProjectId } from "@/lib/utils/helper";
@@ -64,9 +65,39 @@ export const updateProjectBrandingAction = authenticatedActionClient.inputSchema
 
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.projectId = parsedInput.projectId;
-    ctx.auditLoggingCtx.oldObject = await getProject(parsedInput.projectId);
+    const oldProject = await getProject(parsedInput.projectId);
+    ctx.auditLoggingCtx.oldObject = oldProject;
     const result = await updateProjectBranding(parsedInput.projectId, parsedInput.data);
     ctx.auditLoggingCtx.newObject = await getProject(parsedInput.projectId);
+
+    const groupContext = { organizationId, workspaceId: parsedInput.projectId };
+
+    if (oldProject?.linkSurveyBranding === true && parsedInput.data.linkSurveyBranding === false) {
+      capturePostHogEvent(
+        ctx.user.id,
+        "remove_branding_enabled",
+        {
+          organization_id: organizationId,
+          workspace_id: parsedInput.projectId,
+          branding_type: "link",
+        },
+        groupContext
+      );
+    }
+
+    if (oldProject?.inAppSurveyBranding === true && parsedInput.data.inAppSurveyBranding === false) {
+      capturePostHogEvent(
+        ctx.user.id,
+        "remove_branding_enabled",
+        {
+          organization_id: organizationId,
+          workspace_id: parsedInput.projectId,
+          branding_type: "in_app",
+        },
+        groupContext
+      );
+    }
+
     return result;
   })
 );

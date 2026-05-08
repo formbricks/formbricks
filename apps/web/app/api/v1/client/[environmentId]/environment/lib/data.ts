@@ -80,7 +80,7 @@ export const getEnvironmentStateData = async (environmentId: string): Promise<En
           select: {
             id: true,
             welcomeCard: true,
-            name: true,
+            // name intentionally omitted — internal label not needed by the SDK
             questions: true,
             blocks: true,
             variables: true,
@@ -107,13 +107,13 @@ export const getEnvironmentStateData = async (environmentId: string): Promise<En
             styling: true,
             status: true,
             recaptcha: true,
+            // Fetch only what's needed to compute the minimal segment shape.
+            // Titles, descriptions, and filter conditions are evaluated server-side
+            // and must not be sent to the browser.
             segment: {
-              include: {
-                surveys: {
-                  select: {
-                    id: true,
-                  },
-                },
+              select: {
+                id: true,
+                filters: true,
               },
             },
             recontactDays: true,
@@ -147,10 +147,28 @@ export const getEnvironmentStateData = async (environmentId: string): Promise<En
       throw new ResourceNotFoundError("project", null);
     }
 
-    // Transform surveys using existing utility
-    const transformedSurveys = environmentData.surveys.map((survey) =>
-      transformPrismaSurvey<TJsEnvironmentStateSurvey>(survey)
-    );
+    // Transform surveys using the shared utility, then replace the segment with
+    // the minimal public shape (id + hasFilters). We null out segment before
+    // calling transformPrismaSurvey because that function expects a surveys[]
+    // relation on the segment object (used by the management API), which we
+    // intentionally don't fetch here.
+    const transformedSurveys = environmentData.surveys.map((survey) => {
+      const minimalSegment = survey.segment
+        ? {
+            id: survey.segment.id,
+            hasFilters:
+              Array.isArray(survey.segment.filters) && (survey.segment.filters as unknown[]).length > 0,
+          }
+        : null;
+
+      const { segment: _segment, ...surveyWithoutSegment } = survey;
+      const transformed = transformPrismaSurvey<TJsEnvironmentStateSurvey>({
+        ...surveyWithoutSegment,
+        segment: null,
+      });
+
+      return { ...transformed, segment: minimalSegment };
+    });
 
     return {
       environment: {

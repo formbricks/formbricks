@@ -5,6 +5,7 @@ import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZSegmentCreateInput, ZSegmentFilters, ZSegmentUpdateInput } from "@formbricks/types/segment";
 import { getOrganization } from "@/lib/organization/service";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { loadNewSegmentInSurvey } from "@/lib/survey/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
@@ -59,6 +60,7 @@ export const createSegmentAction = authenticatedActionClient.inputSchema(ZSegmen
 
     // Set the organizationId in the context to be used in the audit log
     ctx.auditLoggingCtx.organizationId = organizationId;
+    const projectId = await getProjectIdFromEnvironmentId(parsedInput.environmentId);
 
     await checkAuthorizationUpdated({
       userId: ctx.user?.id ?? "",
@@ -71,7 +73,7 @@ export const createSegmentAction = authenticatedActionClient.inputSchema(ZSegmen
         {
           type: "projectTeam",
           minPermission: "readWrite",
-          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
+          projectId,
         },
       ],
     });
@@ -91,6 +93,18 @@ export const createSegmentAction = authenticatedActionClient.inputSchema(ZSegmen
     // Set the segmentId in the context to be used in the audit log
     ctx.auditLoggingCtx.segmentId = segment.id;
     ctx.auditLoggingCtx.newObject = segment;
+
+    capturePostHogEvent(
+      ctx.user?.id ?? "",
+      "segment_created",
+      {
+        organization_id: organizationId,
+        workspace_id: projectId,
+        environment_id: parsedInput.environmentId,
+        is_private: parsedInput.isPrivate ?? false,
+      },
+      { organizationId, workspaceId: projectId }
+    );
 
     return segment;
   })

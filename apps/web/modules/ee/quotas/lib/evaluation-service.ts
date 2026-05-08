@@ -3,6 +3,7 @@ import { Prisma, Response } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { TSurveyQuota } from "@formbricks/types/quota";
+import { toJsEnvironmentStateSurvey } from "@/lib/survey/client-utils";
 import { getSurvey } from "@/lib/survey/service";
 import { getQuotas } from "./quotas";
 import { evaluateQuotas, handleQuotas } from "./utils";
@@ -52,7 +53,13 @@ export const evaluateResponseQuotas = async (input: QuotaEvaluationInput): Promi
       return { shouldEndSurvey: false };
     }
     const isDefaultLanguage = survey.languages.find((lang) => lang.default)?.language.code === language;
-    const result = evaluateQuotas(survey, data, variables, quotas, isDefaultLanguage ? "default" : language);
+    const result = evaluateQuotas(
+      toJsEnvironmentStateSurvey(survey),
+      data,
+      variables,
+      quotas,
+      isDefaultLanguage ? "default" : language
+    );
 
     const quotaFull = await handleQuotas(surveyId, responseId, result, responseFinished, prismaClient);
 

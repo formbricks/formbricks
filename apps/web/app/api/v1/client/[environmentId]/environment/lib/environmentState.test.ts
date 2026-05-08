@@ -10,6 +10,11 @@ import { capturePostHogEvent } from "@/lib/posthog";
 import { EnvironmentStateData, getEnvironmentStateData } from "./data";
 import { getEnvironmentState } from "./environmentState";
 
+vi.mock("server-only", () => ({}));
+vi.mock("@/lib/utils/validate", () => ({ validateInputs: vi.fn() }));
+vi.mock("@/modules/storage/utils", () => ({ resolveStorageUrlsInObject: vi.fn((obj: unknown) => obj) }));
+vi.mock("@/modules/survey/lib/utils", () => ({ transformPrismaSurvey: vi.fn() }));
+
 // Mock dependencies
 vi.mock("@/lib/cache", () => ({
   cache: {
@@ -21,6 +26,9 @@ vi.mock("@formbricks/database", () => ({
   prisma: {
     environment: {
       update: vi.fn(),
+    },
+    project: {
+      findUnique: vi.fn(),
     },
   },
 }));
@@ -163,6 +171,7 @@ describe("getEnvironmentState", () => {
 
     // Default mocks for successful retrieval
     vi.mocked(getEnvironmentStateData).mockResolvedValue(mockEnvironmentStateData);
+    vi.mocked(prisma.project.findUnique).mockResolvedValue({ organizationId: "test-org-id" });
   });
 
   afterEach(() => {
@@ -329,11 +338,18 @@ describe("getEnvironmentState", () => {
 
     await getEnvironmentState(environmentId);
 
-    expect(capturePostHogEvent).toHaveBeenCalledWith(environmentId, "app_connected", {
-      num_surveys: 1,
-      num_code_actions: 1,
-      num_no_code_actions: 1,
-    });
+    expect(capturePostHogEvent).toHaveBeenCalledWith(
+      environmentId,
+      "app_connected",
+      {
+        num_surveys: 1,
+        num_code_actions: 1,
+        num_no_code_actions: 1,
+        organization_id: "test-org-id",
+        workspace_id: "test-project-id",
+      },
+      { organizationId: "test-org-id", workspaceId: "test-project-id" }
+    );
   });
 
   test("should not capture app_connected event when app setup already completed", async () => {

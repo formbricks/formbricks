@@ -4,6 +4,7 @@ import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError, ResourceNotFoundError, UnknownError } from "@formbricks/types/errors";
 import { getEmailTemplateHtml } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/summary/lib/emailTemplate";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
@@ -146,6 +147,7 @@ export const generatePersonalLinksAction = authenticatedActionClient
   .inputSchema(ZGeneratePersonalLinksAction)
   .action(async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
+    const projectId = await getProjectIdFromSurveyId(parsedInput.surveyId);
     const isContactsEnabled = await getIsContactsEnabled(organizationId);
     if (!isContactsEnabled) {
       throw new OperationNotAllowedError("Contacts are not enabled for this environment");
@@ -153,7 +155,7 @@ export const generatePersonalLinksAction = authenticatedActionClient
 
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      organizationId,
       access: [
         {
           type: "organization",
@@ -161,7 +163,7 @@ export const generatePersonalLinksAction = authenticatedActionClient
         },
         {
           type: "projectTeam",
-          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
+          projectId,
           minPermission: "readWrite",
         },
       ],
@@ -177,6 +179,18 @@ export const generatePersonalLinksAction = authenticatedActionClient
     if (!contactsResult || contactsResult.length === 0) {
       throw new UnknownError("No contacts found for the selected segment");
     }
+
+    capturePostHogEvent(
+      ctx.user.id,
+      "personal_link_created",
+      {
+        organization_id: organizationId,
+        workspace_id: projectId,
+        survey_id: parsedInput.surveyId,
+        link_count: contactsResult.length,
+      },
+      { organizationId, workspaceId: projectId }
+    );
 
     // Prepare CSV data with the specified headers and order
     const csvHeaders = [

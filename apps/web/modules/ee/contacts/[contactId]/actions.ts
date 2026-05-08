@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromContactId, getProjectIdFromContactId } from "@/lib/utils/helper";
@@ -53,6 +54,17 @@ export const generatePersonalSurveyLinkAction = authenticatedActionClient
       const errorMessage = result.error.details?.[0]?.issue || "Failed to generate personal survey link";
       throw new InvalidInputError(errorMessage);
     }
+
+    capturePostHogEvent(
+      ctx.user.id,
+      "personal_link_created",
+      {
+        organization_id: organizationId,
+        workspace_id: projectId,
+        survey_id: parsedInput.surveyId,
+      },
+      { organizationId, workspaceId: projectId }
+    );
 
     return {
       surveyUrl: result.data,

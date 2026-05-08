@@ -66,18 +66,26 @@ export const createSurveyAction = authenticatedActionClient.inputSchema(ZCreateS
       await checkSurveyFollowUpsPermission(organizationId);
     }
 
+    const projectId = await getProjectIdFromEnvironmentId(parsedInput.environmentId);
     const result = await createSurvey(parsedInput.environmentId, parsedInput.surveyBody);
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.surveyId = result.id;
     ctx.auditLoggingCtx.newObject = result;
 
-    capturePostHogEvent(ctx.user.id, "survey_created", {
-      survey_id: result.id,
-      survey_type: result.type,
-      organization_id: organizationId,
-      question_count: result.questions?.length ?? 0,
-      created_from: parsedInput.createdFrom ?? "template",
-    });
+    capturePostHogEvent(
+      ctx.user.id,
+      "survey_created",
+      {
+        survey_id: result.id,
+        survey_type: result.type,
+        organization_id: organizationId,
+        workspace_id: projectId,
+        environment_id: parsedInput.environmentId,
+        question_count: result.questions?.length ?? 0,
+        created_from: parsedInput.createdFrom ?? "template",
+      },
+      { organizationId, workspaceId: projectId }
+    );
 
     return result;
   })

@@ -2,12 +2,13 @@ import { z } from "zod";
 import { ZActionClass } from "./action-classes";
 import { ZId } from "./common";
 import { ZProject } from "./project";
+import { ZJsEnvironmentStateSegment } from "./segment";
 import { ZUploadFileConfig } from "./storage";
 import { ZSurveyBase, surveyRefinement } from "./surveys/types";
 
 export const ZJsEnvironmentStateSurvey = ZSurveyBase.pick({
   id: true,
-  name: true,
+  // name intentionally omitted — internal label, not needed by SDK
   welcomeCard: true,
   questions: true,
   blocks: true,
@@ -19,7 +20,7 @@ export const ZJsEnvironmentStateSurvey = ZSurveyBase.pick({
   autoClose: true,
   styling: true,
   status: true,
-  segment: true,
+  // segment intentionally omitted from pick — replaced with minimal shape below
   recontactDays: true,
   displayLimit: true,
   displayOption: true,
@@ -31,9 +32,16 @@ export const ZJsEnvironmentStateSurvey = ZSurveyBase.pick({
   isBackButtonHidden: true,
   isAutoProgressingEnabled: true,
   recaptcha: true,
-}).superRefine((survey, ctx) => {
-  surveyRefinement(survey as z.infer<typeof ZSurveyBase>, ctx);
-});
+})
+  .extend({
+    // Only expose what the SDK needs: segment ID for membership check + whether any filters exist.
+    // Full filter logic (titles, descriptions, conditions) is evaluated server-side and must not
+    // be sent to the browser to avoid leaking sensitive targeting data.
+    segment: ZJsEnvironmentStateSegment.nullable(),
+  })
+  .superRefine((survey, ctx) => {
+    surveyRefinement(survey as z.infer<typeof ZSurveyBase>, ctx);
+  });
 
 export type TJsEnvironmentStateSurvey = z.infer<typeof ZJsEnvironmentStateSurvey>;
 

@@ -15,6 +15,7 @@ import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
 import { convertDatesInObject } from "@/lib/time";
+import { getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
 import { validateWebhookUrl } from "@/lib/utils/validate-webhook-url";
 import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
 import { TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
@@ -307,9 +308,11 @@ export const POST = async (request: Request) => {
 
     if (POSTHOG_KEY) {
       const responseCount = await getResponseCountBySurveyId(surveyId);
+      const workspaceId = await getProjectIdFromEnvironmentId(environmentId);
 
       captureSurveyResponsePostHogEvent({
         organizationId: organization.id,
+        workspaceId,
         surveyId,
         surveyType: survey.type,
         environmentId,

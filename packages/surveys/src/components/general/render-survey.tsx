@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
 import { isRTLLanguage } from "@/lib/utils";
 import { SurveyContainer } from "../wrappers/survey-container";
@@ -8,6 +8,7 @@ export function RenderSurvey(props: SurveyContainerProps) {
   const [isOpen, setIsOpen] = useState(true);
   const onFinishedTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const { onClose } = props;
   const isRTL = isRTLLanguage(props.survey, props.languageCode);
   const [dir, setDir] = useState<"ltr" | "rtl" | "auto">(isRTL ? "rtl" : "ltr");
 
@@ -17,7 +18,7 @@ export function RenderSurvey(props: SurveyContainerProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- Only recalculate direction when languageCode changes, not on survey auto-save
   }, [props.languageCode]);
 
-  const close = () => {
+  const close = useCallback(() => {
     if (onFinishedTimeoutRef.current) {
       clearTimeout(onFinishedTimeoutRef.current);
       onFinishedTimeoutRef.current = null;
@@ -31,11 +32,9 @@ export function RenderSurvey(props: SurveyContainerProps) {
     setIsOpen(false);
 
     closeTimeoutRef.current = setTimeout(() => {
-      if (props.onClose) {
-        props.onClose();
-      }
+      onClose?.();
     }, 1000);
-  };
+  }, [onClose]);
 
   useEffect(() => {
     return () => {
@@ -64,7 +63,6 @@ export function RenderSurvey(props: SurveyContainerProps) {
       onClose={close}
       isOpen={isOpen}
       dir={dir}>
-      {/* @ts-expect-error -- TODO: fix this */}
       <Survey
         {...props}
         clickOutside={hasOverlay ? props.clickOutside : true}

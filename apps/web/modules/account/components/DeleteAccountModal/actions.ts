@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import { ZUserEmail } from "@formbricks/types/user";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { deleteUserWithAccountDeletionAuthorization } from "@/modules/account/lib/account-deletion";
 import { startAccountDeletionSsoReauthentication } from "@/modules/account/lib/account-deletion-sso-reauth";
@@ -63,6 +64,8 @@ export const deleteUserAction = authenticatedActionClient.inputSchema(ZDeleteUse
         userId: ctx.user.id,
       });
       ctx.auditLoggingCtx.oldObject = oldUser;
+
+      capturePostHogEvent(ctx.user.id, "delete_account");
 
       return { success: true };
     } catch (error) {

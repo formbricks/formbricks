@@ -10,6 +10,7 @@ import { TProjectStyling } from "@formbricks/types/project";
 import { TSurvey, TSurveyLanguage, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { cn } from "@/lib/cn";
+import { toJsEnvironmentStateSurvey } from "@/lib/survey/client-utils";
 import { ClientLogo } from "@/modules/ui/components/client-logo";
 import {
   DropdownMenu,
@@ -272,7 +273,7 @@ export const PreviewSurvey = ({
                   <SurveyInline
                     appUrl={publicDomain}
                     isPreviewMode={true}
-                    survey={survey}
+                    survey={toJsEnvironmentStateSurvey(survey)}
                     isBrandingEnabled={project.inAppSurveyBranding}
                     isRedirectDisabled={true}
                     languageCode={languageCode}
@@ -303,7 +304,7 @@ export const PreviewSurvey = ({
                     <SurveyInline
                       appUrl={publicDomain}
                       isPreviewMode={true}
-                      survey={{ ...survey, type: "link" }}
+                      survey={toJsEnvironmentStateSurvey({ ...survey, type: "link" })}
                       isBrandingEnabled={project.linkSurveyBranding}
                       languageCode={languageCode}
                       responseCount={42}
@@ -388,7 +389,7 @@ export const PreviewSurvey = ({
                 <SurveyInline
                   appUrl={publicDomain}
                   isPreviewMode={true}
-                  survey={survey}
+                  survey={toJsEnvironmentStateSurvey(survey)}
                   isBrandingEnabled={project.inAppSurveyBranding}
                   isRedirectDisabled={true}
                   languageCode={languageCode}
@@ -423,7 +424,7 @@ export const PreviewSurvey = ({
                   <SurveyInline
                     appUrl={publicDomain}
                     isPreviewMode={true}
-                    survey={{ ...survey, type: "link" }}
+                    survey={toJsEnvironmentStateSurvey({ ...survey, type: "link" })}
                     isBrandingEnabled={project.linkSurveyBranding}
                     isRedirectDisabled={true}
                     languageCode={languageCode}

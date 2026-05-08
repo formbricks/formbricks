@@ -54,6 +54,19 @@ export const wrapThrowsAsync =
   };
 
 /**
+ * Detect whether a survey's segment has filters. Handles both the current
+ * minimal shape (`{ id, hasFilters }`) and the legacy shape with a `filters`
+ * array — older SDKs cached the full segment in localStorage and may still be
+ * read back here within the cache window after an SDK upgrade.
+ */
+export const surveyHasSegmentFilters = (survey: TEnvironmentStateSurvey): boolean => {
+  const segment = survey.segment as { hasFilters?: boolean; filters?: unknown[] } | null | undefined;
+  if (!segment) return false;
+  if (typeof segment.hasFilters === "boolean") return segment.hasFilters;
+  return Array.isArray(segment.filters) && segment.filters.length > 0;
+};
+
+/**
  * Filters surveys based on the displayOption, recontactDays, and segments
  * @param environmentSate -  The environment state
  * @param userState - The user state
@@ -123,8 +136,7 @@ export const filterSurveys = (
   if (!userId) {
     // exclude surveys that have a segment with filters
     return filteredSurveys.filter((survey) => {
-      const segmentFiltersLength = survey.segment?.filters.length ?? 0;
-      return segmentFiltersLength === 0;
+      return !surveyHasSegmentFilters(survey);
     });
   }
 
