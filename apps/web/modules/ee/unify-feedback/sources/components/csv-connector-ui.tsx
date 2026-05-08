@@ -50,11 +50,7 @@ export function CsvConnectorUI({
   useEffect(() => {
     const sourceNameMapping = mappings.find((m) => m.targetFieldId === "source_name");
     const current = sourceNameMapping?.staticValue ?? sourceNameMapping?.sourceFieldId;
-    if (
-      lastAutoSourceNameRef.current !== undefined &&
-      current !== undefined &&
-      current !== lastAutoSourceNameRef.current
-    ) {
+    if (lastAutoSourceNameRef.current !== undefined && current !== lastAutoSourceNameRef.current) {
       userEditedSourceNameRef.current = true;
     }
   }, [mappings]);
@@ -212,7 +208,11 @@ export function CsvConnectorUI({
         <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-4 py-2">
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium text-slate-800">{sourceLabel}</span>
-            <Badge text={`${csvTotalRows} rows`} type="gray" size="tiny" />
+            <Badge
+              text={t("workspace.unify.csv_rows_count", { count: csvTotalRows })}
+              type="gray"
+              size="tiny"
+            />
           </div>
           <Button
             variant="secondary"

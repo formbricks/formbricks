@@ -312,9 +312,9 @@ const computeResponseValuePreview = ({
     sampleRow?.[responseValueMapping.sourceFieldId] ??
     sourceFields.find((f) => f.id === responseValueMapping.sourceFieldId)?.sampleValue ??
     "";
-  const targetLabel = target.replace("value_", "");
+  const localizedTarget = t(`workspace.unify.fields.${target.replace("value_", "")}`);
   return t("workspace.unify.csv_response_preview", {
     sample,
-    target: targetLabel.charAt(0).toUpperCase() + targetLabel.slice(1),
+    target: localizedTarget,
   });
 };

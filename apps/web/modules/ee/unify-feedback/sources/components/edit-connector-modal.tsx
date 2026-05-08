@@ -34,6 +34,7 @@ import {
 } from "@/modules/ui/components/select";
 import {
   CSV_HIDDEN_STATIC_MAPPINGS,
+  CSV_PROTECTED_TARGET_IDS,
   SAMPLE_CSV_COLUMNS,
   TFieldMapping,
   TFormbricksConnectorForm,
@@ -204,8 +205,9 @@ export const EditConnectorModal = ({
     }
 
     setIsUpdating(true);
-    const protectedIds = ["tenant_id", "source_type"];
-    const userMappings = mappings.filter((m) => protectedIds.every((id) => m.targetFieldId !== id));
+    const userMappings = mappings.filter((m) =>
+      CSV_PROTECTED_TARGET_IDS.every((id) => m.targetFieldId !== id)
+    );
     const fieldMappings = [...userMappings, ...CSV_HIDDEN_STATIC_MAPPINGS];
 
     const success = await onUpdateConnector({

@@ -339,13 +339,14 @@ export const duplicateConnectorAction = authenticatedActionClient
           })),
         };
       } else if (source.fieldMappings.length > 0) {
+        const projected = source.fieldMappings.map((m) => ({
+          sourceFieldId: m.sourceFieldId,
+          targetFieldId: m.targetFieldId,
+          staticValue: m.staticValue ?? undefined,
+        }));
         mappingsInput = {
           type: "field",
-          mappings: source.fieldMappings.map((m) => ({
-            sourceFieldId: m.sourceFieldId,
-            targetFieldId: m.targetFieldId,
-            staticValue: m.staticValue ?? undefined,
-          })),
+          mappings: source.type === "csv" ? (sanitizeCsvFieldMappings(projected) ?? []) : projected,
         };
       }
 

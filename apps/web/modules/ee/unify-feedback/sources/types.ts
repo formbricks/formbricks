@@ -210,6 +210,8 @@ export const CSV_FIELD_GROUPS = {
   ],
 } as const;
 
+export const CSV_PROTECTED_TARGET_IDS = ["tenant_id", "source_type"] as const;
+
 export const CSV_HIDDEN_STATIC_MAPPINGS: TFieldMapping[] = [
   { sourceFieldId: "", targetFieldId: "source_type", staticValue: "csv" },
 ];

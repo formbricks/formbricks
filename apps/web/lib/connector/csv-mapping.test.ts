@@ -20,4 +20,15 @@ describe("sanitizeCsvFieldMappings", () => {
     expect(sanitizeCsvFieldMappings(undefined)).toBeUndefined();
     expect(sanitizeCsvFieldMappings([])).toBeUndefined();
   });
+
+  test("returns only the static csv source_type mapping when input is all-protected", () => {
+    const mappings: TConnectorFieldMappingCreateInput[] = [
+      { sourceFieldId: "tenant", targetFieldId: "tenant_id" },
+      { sourceFieldId: "type", targetFieldId: "source_type" },
+    ];
+
+    expect(sanitizeCsvFieldMappings(mappings)).toEqual([
+      { sourceFieldId: "", targetFieldId: "source_type", staticValue: "csv" },
+    ]);
+  });
 });

@@ -44,6 +44,7 @@ import {
 import { Switch } from "@/modules/ui/components/switch";
 import {
   CSV_HIDDEN_STATIC_MAPPINGS,
+  CSV_PROTECTED_TARGET_IDS,
   TCreateConnectorStep,
   TFieldMapping,
   TFormbricksConnectorForm,
@@ -379,8 +380,9 @@ export const CreateConnectorModal = ({
     setIsCreating(true);
 
     // Strip any user-supplied tenant_id and merge hidden static mappings (source_type=csv).
-    const protectedIds = ["tenant_id", "source_type"];
-    const userMappings = mappings.filter((m) => protectedIds.every((id) => m.targetFieldId !== id));
+    const userMappings = mappings.filter((m) =>
+      CSV_PROTECTED_TARGET_IDS.every((id) => m.targetFieldId !== id)
+    );
     const fieldMappings = [...userMappings, ...CSV_HIDDEN_STATIC_MAPPINGS];
 
     const connectorId = await onCreateConnector({
