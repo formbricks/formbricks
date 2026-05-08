@@ -62,6 +62,56 @@ describe("GET /api/v1/management/surveys", () => {
     expect(getSurveys).toHaveBeenCalledWith(["env-1", "env-2"], undefined, undefined);
   });
 
+  test("returns an empty survey list for an organization-read API key when the organization has no environments", async () => {
+    vi.mocked(getEnvironmentIdsByOrganizationId).mockResolvedValue([]);
+    vi.mocked(getApiKeyWithPermissions).mockResolvedValue({
+      id: "api-key-id",
+      organizationId: "org-id",
+      organizationAccess: {
+        accessControl: {
+          read: true,
+          write: false,
+        },
+      },
+      apiKeyEnvironments: [],
+    } as any);
+
+    const request = new NextRequest("http://localhost/api/v1/management/surveys", {
+      headers: { "x-api-key": "read-only-org-api-key" },
+    });
+
+    const response = await GET(request, {} as any);
+
+    expect(response.status).toBe(200);
+    expect(getEnvironmentIdsByOrganizationId).toHaveBeenCalledWith("org-id");
+    expect(getSurveys).toHaveBeenCalledWith([], undefined, undefined);
+  });
+
+  test("rejects an organization-only API key without readable organization access", async () => {
+    vi.mocked(getApiKeyWithPermissions).mockResolvedValue({
+      id: "api-key-id",
+      organizationId: "org-id",
+      organizationAccess: {
+        accessControl: {
+          read: false,
+          write: false,
+        },
+      },
+      apiKeyEnvironments: [],
+    } as any);
+
+    const request = new NextRequest("http://localhost/api/v1/management/surveys", {
+      headers: { "x-api-key": "no-access-org-api-key" },
+    });
+
+    const response = await GET(request, {} as any);
+
+    expect(response.status).toBe(401);
+    expect(await response.json()).toMatchObject({ code: "unauthorized" });
+    expect(getEnvironmentIdsByOrganizationId).not.toHaveBeenCalled();
+    expect(getSurveys).not.toHaveBeenCalled();
+  });
+
   test("uses explicit readable environment permissions without organization read access", async () => {
     vi.mocked(getApiKeyWithPermissions).mockResolvedValue({
       id: "api-key-id",

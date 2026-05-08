@@ -30,6 +30,9 @@ export const GET = withV1ApiWrapper({
       const offset = searchParams.has("offset") ? Number(searchParams.get("offset")) : undefined;
 
       const environmentIds = await getReadableEnvironmentIds(authentication);
+      if (!environmentIds) {
+        return { response: responses.unauthorizedResponse() };
+      }
 
       const surveys = await getSurveys(environmentIds, limit, offset);
 

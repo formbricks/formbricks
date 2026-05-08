@@ -53,6 +53,23 @@ describe("getReadableEnvironmentIds", () => {
     expect(getEnvironmentIdsByOrganizationId).toHaveBeenCalledWith("org-id");
   });
 
+  test("returns an empty list when an organization-read API key belongs to an organization without environments", async () => {
+    vi.mocked(getEnvironmentIdsByOrganizationId).mockResolvedValue([]);
+
+    const result = await getReadableEnvironmentIds({
+      ...baseAuthentication,
+      organizationAccess: {
+        accessControl: {
+          read: true,
+          write: false,
+        },
+      },
+    });
+
+    expect(result).toEqual([]);
+    expect(getEnvironmentIdsByOrganizationId).toHaveBeenCalledWith("org-id");
+  });
+
   test("returns all organization environments when API key has organization write access", async () => {
     vi.mocked(getEnvironmentIdsByOrganizationId).mockResolvedValue(["env-1"]);
 
@@ -85,10 +102,10 @@ describe("getReadableEnvironmentIds", () => {
     expect(getEnvironmentIdsByOrganizationId).not.toHaveBeenCalled();
   });
 
-  test("returns an empty list when the API key has no readable access", async () => {
+  test("returns null when the API key has no readable access", async () => {
     const result = await getReadableEnvironmentIds(baseAuthentication);
 
-    expect(result).toEqual([]);
+    expect(result).toBeNull();
     expect(getEnvironmentIdsByOrganizationId).not.toHaveBeenCalled();
   });
 });
