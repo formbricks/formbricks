@@ -39,10 +39,11 @@ test.describe("Survey Styling", async () => {
     const user = await users.create();
     await user.login();
 
-    // Navigate to Look & Feel settings
-    await page.getByRole("link", { name: "Configuration" }).click();
-    await page.getByRole("link", { name: "Look & Feel" }).click();
-    await page.waitForURL(/\/workspaces\/[^/]+\/look/);
+    // Navigate to Appearance settings
+    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
+    const workspaceId = /\/workspaces\/([^/]+)\//.exec(page.url())?.[1];
+    await page.goto(`/workspaces/${workspaceId}/settings/workspace/look`);
+    await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/look/);
 
     // Toggle "Enable custom styling"
     const addCustomStyles = page.getByLabel("Enable custom styling");
@@ -60,9 +61,9 @@ test.describe("Survey Styling", async () => {
     await setDimension(page, "Headline Font Size", "24");
     await setDimension(page, "Description Font Size", "18");
     await setDimension(page, "Headline Font Weight", "700");
-    await setColor(page, "Headline Label Color", "0000aa"); // Blue-ish
-    await setDimension(page, "Headline Label Font Size", "14");
-    await setDimension(page, "Headline Label Font Weight", "600");
+    await setColor(page, "Label Color", "0000aa"); // Blue-ish
+    await setDimension(page, "Label Font Size", "14");
+    await setDimension(page, "Label Font Weight", "600");
 
     // Verify Typography Variables
     await page.waitForTimeout(1000);
@@ -172,10 +173,11 @@ test.describe("Survey Styling", async () => {
     const user = await users.create();
     await user.login();
 
-    // Navigate to Look & Feel settings
-    await page.getByRole("link", { name: "Configuration" }).click();
-    await page.getByRole("link", { name: "Look & Feel" }).click();
-    await page.waitForURL(/\/workspaces\/[^/]+\/look/);
+    // Navigate to Appearance settings
+    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
+    const workspaceId = /\/workspaces\/([^/]+)\//.exec(page.url())?.[1];
+    await page.goto(`/workspaces/${workspaceId}/settings/workspace/look`);
+    await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/look/);
 
     // Toggle "Enable custom styling"
     const addCustomStyles = page.getByLabel("Enable custom styling");
@@ -206,8 +208,8 @@ test.describe("Survey Styling", async () => {
     await setColor(page, "Brand color", "e11d48");
     await page.waitForTimeout(500);
 
-    // Click "Suggest colors" button
-    await page.getByRole("button", { name: "Suggest colors" }).click();
+    // Click "Suggest colors" button (the top-level one, not the disabled one inside FormStylingSettings)
+    await page.getByRole("button", { name: "Suggest colors" }).first().click();
 
     // Confirm the dialog
     await page.getByRole("button", { name: "Generate" }).click();
@@ -261,10 +263,11 @@ test.describe("Survey Styling", async () => {
     const user = await users.create();
     await user.login();
 
-    // Navigate to Look & Feel settings
-    await page.getByRole("link", { name: "Configuration" }).click();
-    await page.getByRole("link", { name: "Look & Feel" }).click();
-    await page.waitForURL(/\/workspaces\/[^/]+\/look/);
+    // Navigate to Appearance settings
+    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
+    const workspaceId = /\/workspaces\/([^/]+)\//.exec(page.url())?.[1];
+    await page.goto(`/workspaces/${workspaceId}/settings/workspace/look`);
+    await page.waitForURL(/\/workspaces\/[^/]+\/settings\/workspace\/look/);
 
     // Toggle "Enable custom styling"
     const addCustomStyles = page.getByLabel("Enable custom styling");

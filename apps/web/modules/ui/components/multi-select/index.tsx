@@ -11,6 +11,7 @@ import { cn } from "@/modules/ui/lib/utils";
 interface TOption<T> {
   value: T;
   label: string;
+  disabled?: boolean;
 }
 
 interface MultiSelectProps<T extends string, K extends TOption<T>["value"][]> {
@@ -220,22 +221,23 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
               width: `${position.width}px`,
             }}>
             <CommandList className="border-0">
-              <div className="text-popover-foreground animate-in max-h-32 w-full overflow-auto rounded-md border border-slate-300 bg-white shadow-md outline-none">
+              <div className="text-popover-foreground max-h-32 w-full overflow-auto rounded-md border border-slate-300 bg-white shadow-md outline-none animate-in">
                 <CommandGroup className="h-full overflow-auto">
                   {selectableOptions.map((option) => (
                     <CommandItem
                       key={option.value}
+                      disabled={option.disabled}
                       onMouseDown={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
                       }}
                       onSelect={() => {
-                        if (disabled) return;
+                        if (disabled || option.disabled) return;
                         isUserInitiatedRef.current = true; // Mark as user-initiated
                         setSelected((prev) => [...prev, option]);
                         setInputValue("");
                       }}
-                      className="cursor-pointer">
+                      className={option.disabled ? "cursor-not-allowed" : "cursor-pointer"}>
                       {option.label}
                     </CommandItem>
                   ))}

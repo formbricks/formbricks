@@ -9,7 +9,7 @@ import {
   PlusIcon,
   SettingsIcon,
 } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
@@ -25,7 +25,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
-import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
 import { useOrganization, useWorkspace } from "../context/workspace-context";
 
 interface OrganizationBreadcrumbProps {
@@ -33,37 +32,17 @@ interface OrganizationBreadcrumbProps {
   currentOrganizationName?: string; // Optional: pass directly if context not available
   isMultiOrgEnabled: boolean;
   currentWorkspaceId?: string;
-  isFormbricksCloud: boolean;
-  isMember: boolean;
-  isOwnerOrManager: boolean;
-  isMembershipPending: boolean;
 }
-
-const isActiveOrganizationSetting = (pathname: string, settingId: string): boolean => {
-  // Match /settings/{settingId} or /settings/{settingId}/... but exclude account settings
-  // Exclude paths with /(account)/
-  if (pathname.includes("/(account)/")) {
-    return false;
-  }
-  // Check if path matches /settings/{settingId} (with optional trailing path)
-  const pattern = new RegExp(`/settings/${settingId}(?:/|$)`);
-  return pattern.test(pathname);
-};
 
 export const OrganizationBreadcrumb = ({
   currentOrganizationId,
   currentOrganizationName,
   isMultiOrgEnabled,
   currentWorkspaceId,
-  isFormbricksCloud,
-  isMember,
-  isOwnerOrManager,
-  isMembershipPending,
 }: OrganizationBreadcrumbProps) => {
   const { t } = useTranslation();
   const [isOrganizationDropdownOpen, setIsOrganizationDropdownOpen] = useState(false);
   const [openCreateOrganizationModal, setOpenCreateOrganizationModal] = useState(false);
-  const pathname = usePathname();
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isLoadingOrganizations, setIsLoadingOrganizations] = useState(false);
@@ -117,8 +96,12 @@ export const OrganizationBreadcrumb = ({
   const workspaceBasePath = `/workspaces/${workspace?.id}`;
 
   const handleOrganizationChange = (organizationId: string) => {
-    if (organizationId === currentOrganizationId) return;
     startTransition(() => {
+      setIsOrganizationDropdownOpen(false);
+      if (organizationId === currentOrganizationId && currentWorkspaceId) {
+        router.push(`/workspaces/${currentWorkspaceId}/settings/organization/general`);
+        return;
+      }
       router.push(`/organizations/${organizationId}/`);
     });
   };
@@ -132,56 +115,6 @@ export const OrganizationBreadcrumb = ({
       router.push(href);
     });
   };
-
-  const organizationSettings = [
-    {
-      id: "general",
-      label: t("common.general"),
-      href: `${workspaceBasePath}/settings/general`,
-    },
-    {
-      id: "teams",
-      label: t("common.members_and_teams"),
-      href: `${workspaceBasePath}/settings/teams`,
-    },
-    {
-      id: "feedback-record-directories",
-      label: t("workspace.settings.feedback_record_directories.nav_label"),
-      href: `${workspaceBasePath}/settings/feedback-record-directories`,
-      hidden: isMember,
-    },
-    {
-      id: "api-keys",
-      label: t("common.api_keys"),
-      href: `${workspaceBasePath}/settings/api-keys`,
-      disabled: isMembershipPending || !isOwnerOrManager,
-      disabledMessage: isMembershipPending
-        ? t("common.loading")
-        : t("common.you_are_not_authorized_to_perform_this_action"),
-    },
-    {
-      id: "domain",
-      label: t("common.domain"),
-      href: `${workspaceBasePath}/settings/domain`,
-      hidden: isFormbricksCloud,
-    },
-    {
-      id: "billing",
-      label: t("common.billing"),
-      href: `${workspaceBasePath}/settings/billing`,
-      hidden: !isFormbricksCloud,
-    },
-    {
-      id: "enterprise",
-      label: t("common.enterprise_license"),
-      href: `${workspaceBasePath}/settings/enterprise`,
-      hidden: isFormbricksCloud || isMember,
-      disabled: isMembershipPending || isMember,
-      disabledMessage: isMembershipPending
-        ? t("common.loading")
-        : t("common.you_are_not_authorized_to_perform_this_action"),
-    },
-  ];
 
   return (
     <BreadcrumbItem isActive={isOrganizationDropdownOpen}>
@@ -252,42 +185,15 @@ export const OrganizationBreadcrumb = ({
             </>
           )}
           {currentWorkspaceId && (
-            <div>
+            <>
               {showOrganizationDropdown && <DropdownMenuSeparator />}
-              <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
-                <SettingsIcon className="mr-2 inline h-4 w-4" />
-                {t("common.organization_settings")}
-              </div>
-
-              {organizationSettings.map((setting) => {
-                return setting.hidden ? null : (
-                  <div key={setting.id}>
-                    {setting.disabled ? (
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <button
-                            type="button"
-                            aria-disabled="true"
-                            className="relative flex w-full cursor-not-allowed select-none items-center rounded-lg py-1.5 pl-8 pr-2 text-sm font-medium text-slate-400">
-                            {setting.label}
-                          </button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-fit max-w-72 px-3 py-2 text-sm text-slate-700">
-                          {setting.disabledMessage}
-                        </PopoverContent>
-                      </Popover>
-                    ) : (
-                      <DropdownMenuCheckboxItem
-                        checked={isActiveOrganizationSetting(pathname, setting.id)}
-                        onClick={() => handleSettingChange(setting.href)}
-                        className="cursor-pointer">
-                        {setting.label}
-                      </DropdownMenuCheckboxItem>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+              <DropdownMenuCheckboxItem
+                onClick={() => handleSettingChange(`${workspaceBasePath}/settings/organization/general`)}
+                className="cursor-pointer">
+                <SettingsIcon className="mr-2 h-4 w-4" />
+                {t("common.settings")}
+              </DropdownMenuCheckboxItem>
+            </>
           )}
         </DropdownMenuContent>
       </DropdownMenu>

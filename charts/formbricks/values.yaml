@@ -17,7 +17,7 @@ formbricks:
   # REQUIRED: Base URL of the site (e.g., https://formbricks.example.com)
   # This is used for WEBAPP_URL and NEXTAUTH_URL
   webappUrl: ""
-  
+
   # Optional: Public URL for surveys (defaults to webappUrl if not set)
   publicUrl: ""
 
@@ -95,7 +95,9 @@ deployment:
     #   type: secret
     #   nameSuffix: app-secrets
 
-  # Environment variables passed to the app container
+  # Environment variables passed to the app container.
+  # XM Suite v5 analytics requires an external Cube endpoint when using Helm:
+  # set deployment.env.CUBEJS_API_URL and provide CUBEJS_API_SECRET through a Secret referenced by envFrom/existingSecret.
   env: {}
 
   # Tolerations for scheduling pods on tainted nodes
@@ -435,6 +437,7 @@ envoy:
       v2Client: true
       v1Management: true
       v1Webhooks: true
+      feedbackRecords: false
       storage: true
     policies:
       enabled: false
@@ -555,6 +558,75 @@ serviceMonitor:
       port: metrics
 
 ##########################################################
+# Cube.js Analytics Configuration
+##########################################################
+cube:
+  # Optional internal Cube.js service for XM Suite v5 analytics.
+  enabled: false
+  replicas: 1
+
+  image:
+    repository: "cubejs/cube"
+    tag: "v1.6.6"
+    pullPolicy: IfNotPresent
+
+  imagePullSecrets: []
+
+  port: 4000
+
+  service:
+    type: ClusterIP
+    port: 4000
+
+  # Secret values such as CUBEJS_API_SECRET and CUBEJS_DB_* should be supplied
+  # through envFrom or another secret-management flow.
+  envFrom: []
+
+  env:
+    CUBEJS_DB_TYPE: "postgres"
+    CUBEJS_DEFAULT_API_SCOPES: "meta,data"
+    # Keep the in-memory cache/queue driver at one Cube replica only. The chart
+    # fails rendering when this remains "memory" and cube.replicas is greater than 1.
+    CUBEJS_CACHE_AND_QUEUE_DRIVER: "memory"
+    CUBEJS_JWT_ISSUER: "formbricks-web"
+    CUBEJS_JWT_AUDIENCE: "formbricks-cube"
+
+  containerSecurityContext:
+    readOnlyRootFilesystem: false
+    runAsNonRoot: true
+    runAsUser: 1000
+
+  livenessProbe:
+    httpGet:
+      path: /readyz
+      port: http
+    initialDelaySeconds: 20
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+
+  readinessProbe:
+    httpGet:
+      path: /readyz
+      port: http
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+
+  resources:
+    limits:
+      memory: 1Gi
+    requests:
+      memory: 512Mi
+      cpu: "250m"
+
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  topologySpreadConstraints: []
+
+##########################################################
 # Hub API Configuration
 # Formbricks Hub image: ghcr.io/formbricks/hub
 ##########################################################
@@ -565,17 +637,271 @@ hub:
 
   image:
     repository: "ghcr.io/formbricks/hub"
-    # Pin to a semver tag for reproducible deployments; update on each Hub release.
-    tag: "1.0.0"
+    # Pinned by digest for immutable, reproducible deployments. When digest is set it takes
+    # precedence over tag, and deployment, init container, and migration job all resolve to the
+    # same immutable image. Update on each Hub release.
+    # Current digest corresponds to ghcr.io/formbricks/hub:0.3.0.
+    digest: "sha256:6c39b1143527137e881df785a5b668625a1fe3edb05485bb5ded19f813c8de88"
+    # Tag is a fallback for dev/non-prod when digest is cleared; keep aligned with the digest above.
+    tag: "0.3.0"
     pullPolicy: IfNotPresent
 
   # Optional override for the secret Hub reads from.
   # Defaults to the generated app secret (<release>-app-secrets), which contains DATABASE_URL and HUB_API_KEY.
   # If you set this, the custom secret must provide DATABASE_URL and HUB_API_KEY.
+  # The app secret still needs HUB_API_KEY as well because the web app talks to Hub directly.
+  # When secret.enabled=true, the custom Hub secret must already exist at render time so Helm can copy HUB_API_KEY
+  # into the generated app secret and Envoy credential.
   existingSecret: ""
 
   # Optional env vars (non-secret). Use existingSecret for secret values such as DATABASE_URL and HUB_API_KEY.
   env: {}
+
+  # Optional autoscaling for the Hub API deployment.
+  autoscaling:
+    enabled: false
+    additionalLabels: {}
+    annotations: {}
+    minReplicas: 1
+    maxReplicas: 3
+    metrics:
+      - type: Resource
+        resource:
+          name: cpu
+          target:
+            type: Utilization
+            averageUtilization: 70
+      - type: Resource
+        resource:
+          name: memory
+          target:
+            type: Utilization
+            averageUtilization: 80
+    behavior: {}
+
+  # Optional PDB for the Hub API deployment. Disabled by default because a single
+  # Hub replica with minAvailable: 1 blocks voluntary node drains.
+  pdb:
+    enabled: false
+    additionalLabels: {}
+    annotations: {}
+    minAvailable: 1
+    # maxUnavailable: 1
+    # unhealthyPodEvictionPolicy: AlwaysAllow
+
+  worker:
+    # Hub async jobs (webhook dispatch, embeddings) run in hub-worker. Keep this
+    # enabled unless another worker deployment processes the same River queues.
+    enabled: true
+    replicas: 1
+
+    # Optional env vars (non-secret) added only to hub-worker.
+    env: {}
+
+    waitForApi:
+      # Avoid starting workers before the API service is healthy during installs/upgrades.
+      enabled: true
+      # 120 attempts * 5 seconds = 10 minutes.
+      maxAttempts: 120
+
+    resources:
+      limits:
+        memory: 512Mi
+      requests:
+        memory: 256Mi
+        cpu: "100m"
+
+    autoscaling:
+      enabled: false
+      additionalLabels: {}
+      annotations: {}
+      minReplicas: 1
+      maxReplicas: 5
+      metrics:
+        - type: Resource
+          resource:
+            name: cpu
+            target:
+              type: Utilization
+              averageUtilization: 70
+        - type: Resource
+          resource:
+            name: memory
+            target:
+              type: Utilization
+              averageUtilization: 80
+      behavior:
+        scaleDown:
+          stabilizationWindowSeconds: 300
+          policies:
+            - type: Pods
+              value: 1
+              periodSeconds: 120
+        scaleUp:
+          stabilizationWindowSeconds: 60
+          policies:
+            - type: Pods
+              value: 2
+              periodSeconds: 60
+
+    # Disabled by default because the default worker replica count is 1.
+    pdb:
+      enabled: false
+      additionalLabels: {}
+      annotations: {}
+      minAvailable: 1
+      # maxUnavailable: 1
+      # unhealthyPodEvictionPolicy: AlwaysAllow
+
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+    topologySpreadConstraints: []
+
+  embeddings:
+    # Optional self-hosted OpenAI-compatible embeddings runtime for Hub.
+    enabled: false
+    runtime: tei
+    model: Alibaba-NLP/gte-multilingual-base
+    revision: ""
+    # Defaults to `model` when empty. Used by TEI OpenAI-compatible responses
+    # and as Hub's EMBEDDING_MODEL.
+    servedModelName: ""
+    # Defaults to http://<release>-hub-embeddings:<service.port>/v1 when empty.
+    baseUrl: ""
+    maxConcurrent: "5"
+    normalize: "false"
+    replicas: 1
+
+    image:
+      repository: "ghcr.io/huggingface/text-embeddings-inference"
+      tag: "cpu-1.9"
+      pullPolicy: IfNotPresent
+
+    command: []
+    # When empty, the chart renders TEI args from model, servedModelName, port,
+    # revision, and persistence.mountPath. Set this to fully override args.
+    args: []
+    extraArgs:
+      - --dtype
+      - float16
+    env: {}
+
+    port: 8080
+    prometheusPort: 9000
+
+    service:
+      type: ClusterIP
+      port: 8080
+      annotations: {}
+      additionalLabels: {}
+
+    auth:
+      # TEI can enforce bearer-token auth with API_KEY. Hub always receives the
+      # same key as EMBEDDING_PROVIDER_API_KEY because the OpenAI-compatible Hub
+      # provider requires an API key.
+      enabled: true
+      existingSecret: ""
+      secretKey: EMBEDDING_PROVIDER_API_KEY
+      apiKey: ""
+
+    huggingFace:
+      # Required only for private/gated models unless the model is pre-cached.
+      existingSecret: ""
+      tokenKey: HF_TOKEN
+      token: ""
+
+    persistence:
+      enabled: true
+      existingClaim: ""
+      storageClass: ""
+      accessModes:
+        - ReadWriteOnce
+      size: 10Gi
+      mountPath: /data
+
+    resources:
+      requests:
+        cpu: "4"
+        memory: 8Gi
+      limits:
+        memory: 8Gi
+
+    autoscaling:
+      enabled: false
+      additionalLabels: {}
+      annotations: {}
+      minReplicas: 1
+      maxReplicas: 2
+      metrics:
+        - type: Resource
+          resource:
+            name: cpu
+            target:
+              type: Utilization
+              averageUtilization: 70
+        - type: Resource
+          resource:
+            name: memory
+            target:
+              type: Utilization
+              averageUtilization: 80
+      behavior:
+        scaleDown:
+          stabilizationWindowSeconds: 600
+          policies:
+            - type: Pods
+              value: 1
+              periodSeconds: 300
+        scaleUp:
+          stabilizationWindowSeconds: 120
+          policies:
+            - type: Pods
+              value: 1
+              periodSeconds: 120
+
+    # Disabled by default because the default embeddings replica count is 1.
+    pdb:
+      enabled: false
+      additionalLabels: {}
+      annotations: {}
+      minAvailable: 1
+      # maxUnavailable: 1
+      # unhealthyPodEvictionPolicy: AlwaysAllow
+
+    probes:
+      startupProbe:
+        failureThreshold: 60
+        periodSeconds: 10
+        tcpSocket:
+          port: http
+      readinessProbe:
+        failureThreshold: 6
+        periodSeconds: 10
+        timeoutSeconds: 5
+        tcpSocket:
+          port: http
+      livenessProbe:
+        failureThreshold: 6
+        periodSeconds: 20
+        timeoutSeconds: 5
+        tcpSocket:
+          port: http
+
+    podAnnotations: {}
+    podLabels: {}
+    podSecurityContext: {}
+    # Keep empty by default because upstream model-serving images may define
+    # their own user and need write access to the model cache path.
+    securityContext: {}
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+    topologySpreadConstraints: []
+
+  # XM Suite v5 analytics also requires Cube. Use cube.enabled=true to deploy
+  # the internal chart-managed Cube service, or set deployment.env.CUBEJS_API_URL
+  # to an operator-managed Cube endpoint.
 
   # Upgrade migration job runs goose + river before Helm upgrades Hub resources.
   # Fresh installs run the same migrations through the Hub deployment init container.

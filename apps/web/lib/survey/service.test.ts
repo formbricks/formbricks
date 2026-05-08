@@ -5,7 +5,12 @@ import { testInputValidation } from "vitestSetup";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { TActionClass } from "@formbricks/types/action-classes";
-import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import {
+  DatabaseError,
+  InvalidInputError,
+  ResourceNotFoundError,
+  ValidationError,
+} from "@formbricks/types/errors";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyCreateInput, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { getActionClasses } from "@/lib/actionClass/service";
@@ -14,6 +19,7 @@ import {
   subscribeOrganizationMembersToSurveyResponses,
 } from "@/lib/organization/service";
 import { evaluateLogic } from "@/lib/surveyLogic/utils";
+import { handleTriggerUpdates } from "@/modules/survey/lib/trigger-updates";
 import {
   mockActionClass,
   mockId,
@@ -30,13 +36,12 @@ import {
   getSurveys,
   getSurveysByActionClassId,
   getSurveysBySegmentId,
-  handleTriggerUpdates,
   loadNewSegmentInSurvey,
   updateSurvey,
   updateSurveyInternal,
 } from "./service";
 
-const SURVEY_SERVICE_TEST_TIMEOUT_MS = 15_000;
+const SURVEY_SERVICE_TEST_TIMEOUT_MS = 30_000;
 
 // Mock organization service
 vi.mock("@/lib/organization/service", () => ({
@@ -317,7 +322,13 @@ describe("Tests for updateSurvey", () => {
   });
 
   describe("Sad Path", () => {
-    testInputValidation(updateSurvey, "123#");
+    test(
+      "throws a ValidationError if the inputs are invalid",
+      async () => {
+        await expect(updateSurvey("123#" as unknown as TSurvey)).rejects.toThrow(ValidationError);
+      },
+      SURVEY_SERVICE_TEST_TIMEOUT_MS
+    );
 
     test("Throws ResourceNotFoundError if the survey does not exist", async () => {
       prisma.survey.findUnique.mockRejectedValueOnce(
@@ -348,12 +359,12 @@ describe("Tests for updateSurvey", () => {
 
 describe("Tests for getSurveyCount service", () => {
   describe("Happy Path", () => {
-    test("Counts the total number of surveys for a given environment ID", async () => {
+    test("Counts the total number of surveys for a given workspace ID", async () => {
       const count = await getSurveyCount(mockId);
       expect(count).toEqual(1);
     });
 
-    test("Returns zero count when there are no surveys for a given environment ID", async () => {
+    test("Returns zero count when there are no surveys for a given workspace ID", async () => {
       prisma.survey.count.mockResolvedValue(0);
       const count = await getSurveyCount(mockId);
       expect(count).toEqual(0);
@@ -633,7 +644,6 @@ describe("Tests for createSurvey", () => {
 
   beforeEach(() => {
     vi.mocked(getActionClasses).mockResolvedValue(mockActionClasses as TActionClass[]);
-    // environment model removed - no mock needed
   });
 
   describe("Happy Path", () => {

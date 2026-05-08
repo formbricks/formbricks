@@ -194,6 +194,46 @@ describe("withV1ApiWrapper", () => {
     );
   });
 
+  test("prefers bearer API keys over session auth on both-auth routes", async () => {
+    const { authenticateRequest } = await import("@/app/api/v1/auth");
+    const { getServerSession } = await import("next-auth");
+    const { isClientSideApiRoute, isManagementApiRoute, isIntegrationRoute } =
+      await import("@/app/middleware/endpoint-validator");
+
+    vi.mocked(authenticateRequest).mockResolvedValue(mockApiAuthentication);
+    vi.mocked(getServerSession).mockResolvedValue({
+      user: { id: "session-user-id" },
+      expires: "2026-01-01",
+    } as any);
+    vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: false, isRateLimited: true });
+    vi.mocked(isManagementApiRoute).mockReturnValue({
+      isManagementApi: true,
+      authenticationMethod: AuthMethod.Both,
+    });
+    vi.mocked(isIntegrationRoute).mockReturnValue(false);
+
+    const handler = vi.fn().mockResolvedValue({
+      response: new Response("ok", { status: 200 }),
+    });
+
+    const req = createMockRequest({
+      url: V1_MANAGEMENT_SURVEYS_URL,
+      headers: new Map([["authorization", "Bearer fbk_test"]]),
+    });
+    const { withV1ApiWrapper } = await import("./with-api-logging");
+    const wrapped = withV1ApiWrapper({ handler });
+
+    await wrapped(req, undefined);
+
+    expect(authenticateRequest).toHaveBeenCalledOnce();
+    expect(getServerSession).not.toHaveBeenCalled();
+    expect(handler).toHaveBeenCalledWith(
+      expect.objectContaining({
+        authentication: expect.objectContaining({ apiKeyId: "api-key-1" }),
+      })
+    );
+  });
+
   test("does not log Sentry if not 500", async () => {
     const { queueAuditEvent: mockedQueueAuditEvent } =
       (await import("@/modules/ee/audit-logs/lib/handler")) as unknown as { queueAuditEvent: Mock };

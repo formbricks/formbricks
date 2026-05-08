@@ -8,11 +8,20 @@ export const ZApiKeyWorkspacePermission = z.object({
   permission: z.enum(ApiKeyPermission),
 });
 
-export const ZApiKeyCreateInput = z.object({
-  label: z.string(),
-  workspacePermissions: z.array(ZApiKeyWorkspacePermission).optional(),
-  organizationAccess: ZOrganizationAccess,
-});
+export const ZApiKeyCreateInput = z
+  .object({
+    label: z.string(),
+    workspacePermissions: z.array(ZApiKeyWorkspacePermission).optional(),
+    organizationAccess: ZOrganizationAccess,
+  })
+  .refine(
+    (data) => {
+      if (!data.workspacePermissions) return true;
+      const ids = data.workspacePermissions.map((p) => p.workspaceId);
+      return new Set(ids).size === ids.length;
+    },
+    { message: "Duplicate workspace permissions are not allowed", path: ["workspacePermissions"] }
+  );
 
 export type TApiKeyCreateInput = z.infer<typeof ZApiKeyCreateInput>;
 
@@ -33,12 +42,7 @@ export const OrganizationWorkspace = z.object({
 
 export type TOrganizationWorkspace = z.infer<typeof OrganizationWorkspace>;
 
-export const TApiKeyWorkspacePermission = z.object({
-  workspaceId: z.string(),
-  permission: z.enum(ApiKeyPermission),
-});
-
-export type TApiKeyWorkspacePermission = z.infer<typeof TApiKeyWorkspacePermission>;
+export type TApiKeyWorkspacePermission = z.infer<typeof ZApiKeyWorkspacePermission>;
 
 export interface TApiKeyWithEnvironmentPermission extends Pick<
   ApiKey,

@@ -38,8 +38,23 @@ vi.mock("@formbricks/database", () => ({
     workspaceTeam: {
       createMany: vi.fn(),
     },
+    feedbackDirectory: {
+      upsert: vi.fn(),
+      findFirst: vi.fn(),
+    },
+    feedbackDirectoryWorkspace: {
+      count: vi.fn(),
+      create: vi.fn(),
+    },
   },
 }));
+
+const expectNoFrdSideEffects = () => {
+  expect(prisma.feedbackDirectory.upsert).not.toHaveBeenCalled();
+  expect(prisma.feedbackDirectory.findFirst).not.toHaveBeenCalled();
+  expect(prisma.feedbackDirectoryWorkspace.count).not.toHaveBeenCalled();
+  expect(prisma.feedbackDirectoryWorkspace.create).not.toHaveBeenCalled();
+};
 
 vi.mock("@formbricks/logger", () => ({
   logger: {
@@ -90,14 +105,38 @@ describe("workspace lib", () => {
   });
 
   describe("createWorkspace", () => {
-    test("creates workspace and revalidates cache", async () => {
+    test("creates workspace with team links and no FRD side-effects", async () => {
       const createdWorkspace = { ...baseWorkspace, id: "p2" };
       vi.mocked(prisma.workspace.create).mockResolvedValueOnce(createdWorkspace as any);
       vi.mocked(prisma.workspaceTeam.createMany).mockResolvedValueOnce({} as any);
+
       const result = await createWorkspace("org1", { name: "Workspace 1", teamIds: ["t1"] });
+
       expect(result).toEqual(createdWorkspace);
       expect(prisma.workspace.create).toHaveBeenCalled();
       expect(prisma.workspaceTeam.createMany).toHaveBeenCalled();
+      expectNoFrdSideEffects();
+    });
+
+    test("creates workspace without teams and does not auto-link any FRD", async () => {
+      const createdWorkspace = { ...baseWorkspace, id: "p3" };
+      vi.mocked(prisma.workspace.create).mockResolvedValueOnce(createdWorkspace as any);
+
+      const result = await createWorkspace("org1", { name: "Workspace No Teams" });
+
+      expect(result).toEqual(createdWorkspace);
+      expect(prisma.workspaceTeam.createMany).not.toHaveBeenCalled();
+      expectNoFrdSideEffects();
+    });
+
+    test("does not upsert a Default Feedback Directory under any flow", async () => {
+      const createdWorkspace = { ...baseWorkspace, id: "p4" };
+      vi.mocked(prisma.workspace.create).mockResolvedValueOnce(createdWorkspace as any);
+
+      await createWorkspace("org1", { name: "Second Workspace" });
+
+      expect(prisma.feedbackDirectory.upsert).not.toHaveBeenCalled();
+      expect(prisma.feedbackDirectoryWorkspace.create).not.toHaveBeenCalled();
     });
 
     test("throws ValidationError if name is missing", async () => {

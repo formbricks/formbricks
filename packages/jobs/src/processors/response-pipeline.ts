@@ -7,7 +7,7 @@ export const processResponsePipelineJob: JobHandler<TResponsePipelineJobData> = 
   logger.error(
     {
       attempt: context.attempt,
-      environmentId: data.environmentId,
+      workspaceId: data.workspaceId,
       surveyId: data.surveyId,
       event: data.event,
       jobId: context.jobId,
@@ -18,6 +18,6 @@ export const processResponsePipelineJob: JobHandler<TResponsePipelineJobData> = 
   );
 
   throw new Error(
-    `BullMQ response pipeline processor override missing for job ${context.jobId} (${data.environmentId}/${data.surveyId})`
+    `BullMQ response pipeline processor override missing for job ${context.jobId} (${data.workspaceId}/${data.surveyId})`
   );
 };

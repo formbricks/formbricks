@@ -132,7 +132,7 @@ const mockActionClasses = [
     description: null,
     type: "code",
     noCodeConfig: null,
-    environmentId: workspaceId,
+    workspaceId,
     key: "action1",
   },
 ] as unknown as TActionClass[];

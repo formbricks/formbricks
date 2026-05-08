@@ -40,6 +40,12 @@ export const createCacheKey = {
     countBySurveyId: (surveyId: string): CacheKey => makeCacheKey("response", surveyId, "count"),
   },
 
+  // Hub-related keys
+  hub: {
+    feedbackRecordTenant: (recordId: string): CacheKey =>
+      makeCacheKey("hub", recordId, "feedback_record_tenant"),
+  },
+
   // Rate limiting and security
   rateLimit: {
     core: (namespace: string, identifier: string, windowStart: number): CacheKey =>

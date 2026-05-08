@@ -14,7 +14,9 @@ metadata:
     app.kubernetes.io/managed-by: {{ .Release.Service }}
     app.kubernetes.io/part-of: {{ .Values.partOfOverride | default (include "formbricks.name" .) }}
 spec:
+  {{- if not .Values.hub.autoscaling.enabled }}
   replicas: {{ .Values.hub.replicas | default 1 }}
+  {{- end }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "formbricks.hubname" . }}
@@ -32,11 +34,12 @@ spec:
       {{- end }}
       initContainers:
         - name: hub-migrate
-          image: {{ .Values.hub.image.repository }}:{{ .Values.hub.image.tag | default "latest" }}
+          image: {{ include "formbricks.hubImage" . }}
           imagePullPolicy: {{ .Values.hub.image.pullPolicy }}
           securityContext:
             readOnlyRootFilesystem: true
             runAsNonRoot: true
+            runAsUser: 1000
           command:
             - sh
             - -c
@@ -48,11 +51,12 @@ spec:
                 name: {{ include "formbricks.hubSecretName" . }}
       containers:
         - name: hub
-          image: {{ .Values.hub.image.repository }}:{{ .Values.hub.image.tag | default "latest" }}
+          image: {{ include "formbricks.hubImage" . }}
           imagePullPolicy: {{ .Values.hub.image.pullPolicy }}
           securityContext:
             readOnlyRootFilesystem: true
             runAsNonRoot: true
+            runAsUser: 1000
           ports:
             - name: http
               containerPort: 8080
@@ -66,9 +70,12 @@ spec:
                 secretKeyRef:
                   name: {{ include "formbricks.hubSecretName" . }}
                   key: HUB_API_KEY
+            {{- include "formbricks.hubEmbeddingEnv" (dict "root" $ "env" .Values.hub.env) | nindent 12 }}
             {{- range $key, $value := .Values.hub.env }}
+            {{- if not (and $.Values.hub.embeddings.enabled (include "formbricks.hubEmbeddingEnvManaged" (dict "key" $key))) }}
             - name: {{ $key }}
               value: {{ $value | quote }}
+            {{- end }}
             {{- end }}
           {{- if .Values.hub.resources }}
           resources:

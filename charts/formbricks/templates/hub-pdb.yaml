@@ -1,0 +1,129 @@
+{{- if and .Values.hub.enabled .Values.hub.pdb.enabled }}
+{{- $hasMinAvailable := not (kindIs "invalid" .Values.hub.pdb.minAvailable) -}}
+{{- $hasMaxUnavailable := not (kindIs "invalid" .Values.hub.pdb.maxUnavailable) -}}
+{{- if and $hasMinAvailable $hasMaxUnavailable }}
+  {{- fail "hub.pdb.minAvailable and hub.pdb.maxUnavailable are mutually exclusive; set only one" }}
+{{- end }}
+{{- if not (or $hasMinAvailable $hasMaxUnavailable) }}
+  {{- fail "hub.pdb.enabled is true but neither hub.pdb.minAvailable nor hub.pdb.maxUnavailable is set; set exactly one" }}
+{{- end }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "formbricks.hubname" . }}
+  labels:
+    helm.sh/chart: {{ include "formbricks.chart" . }}
+    app.kubernetes.io/name: {{ include "formbricks.hubname" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: hub
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/part-of: {{ .Values.partOfOverride | default (include "formbricks.name" .) }}
+    {{- with .Values.hub.pdb.additionalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.hub.pdb.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if $hasMinAvailable }}
+  minAvailable: {{ .Values.hub.pdb.minAvailable }}
+  {{- end }}
+  {{- if $hasMaxUnavailable }}
+  maxUnavailable: {{ .Values.hub.pdb.maxUnavailable }}
+  {{- end }}
+  {{- with .Values.hub.pdb.unhealthyPodEvictionPolicy }}
+  unhealthyPodEvictionPolicy: {{ . }}
+  {{- end }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "formbricks.hubname" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
+{{- if and .Values.hub.enabled .Values.hub.worker.enabled .Values.hub.worker.pdb.enabled }}
+{{- $hasMinAvailable := not (kindIs "invalid" .Values.hub.worker.pdb.minAvailable) -}}
+{{- $hasMaxUnavailable := not (kindIs "invalid" .Values.hub.worker.pdb.maxUnavailable) -}}
+{{- if and $hasMinAvailable $hasMaxUnavailable }}
+  {{- fail "hub.worker.pdb.minAvailable and hub.worker.pdb.maxUnavailable are mutually exclusive; set only one" }}
+{{- end }}
+{{- if not (or $hasMinAvailable $hasMaxUnavailable) }}
+  {{- fail "hub.worker.pdb.enabled is true but neither hub.worker.pdb.minAvailable nor hub.worker.pdb.maxUnavailable is set; set exactly one" }}
+{{- end }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "formbricks.hubWorkerName" . }}
+  labels:
+    helm.sh/chart: {{ include "formbricks.chart" . }}
+    app.kubernetes.io/name: {{ include "formbricks.hubWorkerName" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: hub-worker
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/part-of: {{ .Values.partOfOverride | default (include "formbricks.name" .) }}
+    {{- with .Values.hub.worker.pdb.additionalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.hub.worker.pdb.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if $hasMinAvailable }}
+  minAvailable: {{ .Values.hub.worker.pdb.minAvailable }}
+  {{- end }}
+  {{- if $hasMaxUnavailable }}
+  maxUnavailable: {{ .Values.hub.worker.pdb.maxUnavailable }}
+  {{- end }}
+  {{- with .Values.hub.worker.pdb.unhealthyPodEvictionPolicy }}
+  unhealthyPodEvictionPolicy: {{ . }}
+  {{- end }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "formbricks.hubWorkerName" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
+{{- if and .Values.hub.enabled .Values.hub.embeddings.enabled .Values.hub.embeddings.pdb.enabled }}
+{{- $hasMinAvailable := not (kindIs "invalid" .Values.hub.embeddings.pdb.minAvailable) -}}
+{{- $hasMaxUnavailable := not (kindIs "invalid" .Values.hub.embeddings.pdb.maxUnavailable) -}}
+{{- if and $hasMinAvailable $hasMaxUnavailable }}
+  {{- fail "hub.embeddings.pdb.minAvailable and hub.embeddings.pdb.maxUnavailable are mutually exclusive; set only one" }}
+{{- end }}
+{{- if not (or $hasMinAvailable $hasMaxUnavailable) }}
+  {{- fail "hub.embeddings.pdb.enabled is true but neither hub.embeddings.pdb.minAvailable nor hub.embeddings.pdb.maxUnavailable is set; set exactly one" }}
+{{- end }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "formbricks.hubEmbeddingsName" . }}
+  labels:
+    helm.sh/chart: {{ include "formbricks.chart" . }}
+    app.kubernetes.io/name: {{ include "formbricks.hubEmbeddingsName" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: hub-embeddings
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/part-of: {{ .Values.partOfOverride | default (include "formbricks.name" .) }}
+    {{- with .Values.hub.embeddings.pdb.additionalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.hub.embeddings.pdb.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if $hasMinAvailable }}
+  minAvailable: {{ .Values.hub.embeddings.pdb.minAvailable }}
+  {{- end }}
+  {{- if $hasMaxUnavailable }}
+  maxUnavailable: {{ .Values.hub.embeddings.pdb.maxUnavailable }}
+  {{- end }}
+  {{- with .Values.hub.embeddings.pdb.unhealthyPodEvictionPolicy }}
+  unhealthyPodEvictionPolicy: {{ . }}
+  {{- end }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "formbricks.hubEmbeddingsName" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}

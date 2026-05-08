@@ -5,7 +5,7 @@ readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 readonly REPO_ROOT="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
 readonly ENV_TEMPLATE_PATH="${REPO_ROOT}/.env.example"
 readonly ENV_PATH="${REPO_ROOT}/.env"
-readonly REQUIRED_GENERATED_KEYS=("ENCRYPTION_KEY" "NEXTAUTH_SECRET" "CRON_SECRET")
+readonly REQUIRED_GENERATED_KEYS=("ENCRYPTION_KEY" "NEXTAUTH_SECRET" "CRON_SECRET" "CUBEJS_API_SECRET")
 
 TEMP_FILE=""
 

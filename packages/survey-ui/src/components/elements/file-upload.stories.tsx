@@ -50,7 +50,7 @@ const meta: Meta<StoryProps> = {
     ...pickArgTypes(inputStylingArgTypes, [
       "inputBgColor",
       "inputBorderColor",
-      "inputColor",
+      "inputTextColor",
       "inputFontSize",
       "inputFontWeight",
       "inputWidth",

@@ -8,6 +8,7 @@ export const ZSurvey = z.object({
   workspaceId: z.string(),
   type: z.enum(["link", "app", "website", "web"]), //we can replace this with ZSurveyType after we remove "web" from schema
   status: ZSurveyStatus,
+  publishOn: z.date().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
   responseCount: z.number(),
@@ -25,17 +26,6 @@ export const ZSurvey = z.object({
 });
 
 export type TSurvey = z.infer<typeof ZSurvey>;
-
-export const ZSurveyCopyFormValidation = z.object({
-  workspaces: z.array(
-    z.object({
-      workspace: z.string(),
-      environments: z.array(z.string()),
-    })
-  ),
-});
-
-export type TSurveyCopyFormData = z.infer<typeof ZSurveyCopyFormValidation>;
 
 export interface TWorkspaceWithLanguages extends Pick<Workspace, "id"> {
   languages: Pick<Language, "code" | "alias">[];

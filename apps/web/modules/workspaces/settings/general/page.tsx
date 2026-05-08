@@ -6,7 +6,6 @@ import { IdBadge } from "@/modules/ui/components/id-badge";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
-import { WorkspaceConfigNavigation } from "@/modules/workspaces/settings/components/workspace-config-navigation";
 import { CustomScriptsForm } from "./components/custom-scripts-form";
 import { DeleteWorkspace } from "./components/delete-workspace";
 import { EditWaitingTimeForm } from "./components/edit-waiting-time-form";
@@ -26,9 +25,7 @@ export const GeneralSettingsPage = async (props: { params: Promise<{ workspaceId
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("common.workspace_configuration")}>
-        <WorkspaceConfigNavigation activeId="general" />
-      </PageHeader>
+      <PageHeader pageTitle={t("common.workspace_settings")} />
       <SettingsCard
         title={t("common.workspace_name")}
         description={t("workspace.general.workspace_name_settings_description")}>

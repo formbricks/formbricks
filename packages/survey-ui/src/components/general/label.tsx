@@ -4,7 +4,7 @@ import { cn, stripInlineStyles } from "@/lib/utils";
 
 interface LabelProps extends React.ComponentProps<"label"> {
   /** Label variant for different styling contexts */
-  variant?: "default" | "headline" | "description";
+  variant?: "default" | "headline" | "description" | "card";
 }
 
 /**
@@ -51,6 +51,8 @@ function Label({
     variantClass = "label-headline";
   } else if (variant === "description") {
     variantClass = "label-description";
+  } else if (variant === "card") {
+    variantClass = "label-card";
   }
 
   // Base classes - use flex-col for HTML content to allow line breaks, flex items-center for non-HTML

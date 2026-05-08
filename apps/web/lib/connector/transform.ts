@@ -1,0 +1,137 @@
+import "server-only";
+import { TConnectorFormbricksMapping, THubFieldType } from "@formbricks/types/connector";
+import { TResponse, TResponseData, TResponseDataValue } from "@formbricks/types/responses";
+import { TSurveyElement } from "@formbricks/types/surveys/elements";
+import { TSurvey } from "@formbricks/types/surveys/types";
+import { getTextContent } from "@formbricks/types/surveys/validation";
+import { getLocalizedValue } from "@/lib/i18n/utils";
+import { getElementsFromBlocks } from "@/lib/survey/utils";
+import type { FeedbackRecordCreateParams } from "@/modules/hub";
+
+const getHeadlineFromElement = (element?: TSurveyElement): string => {
+  if (!element?.headline) return "Untitled";
+  const raw = getLocalizedValue(element.headline, "default");
+  return getTextContent(raw) || "Untitled";
+};
+
+const toIsoTimestamp = (value: unknown): string | null => {
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value.toISOString();
+  }
+
+  if (typeof value === "string" || typeof value === "number") {
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+  }
+
+  return null;
+};
+
+const getCollectedAt = (response: TResponse): string => {
+  return toIsoTimestamp(response.createdAt) ?? toIsoTimestamp(response.updatedAt) ?? new Date().toISOString();
+};
+
+function extractResponseValue(responseData: TResponseData, elementId: string): TResponseDataValue {
+  if (!responseData || typeof responseData !== "object") return undefined;
+  return responseData[elementId];
+}
+
+const convertValueToHubFields = (
+  value: TResponseDataValue,
+  hubFieldType: THubFieldType
+): Partial<
+  Pick<FeedbackRecordCreateParams, "value_text" | "value_number" | "value_boolean" | "value_date">
+> => {
+  if (value === undefined || value === null) {
+    return {};
+  }
+
+  switch (hubFieldType) {
+    case "text":
+      if (typeof value === "string") return { value_text: value };
+      if (Array.isArray(value)) return { value_text: value.join(", ") };
+      if (typeof value === "object") return { value_text: JSON.stringify(value) };
+      return { value_text: String(value) };
+
+    case "number":
+    case "rating":
+    case "nps":
+    case "csat":
+    case "ces":
+      if (typeof value === "number") return { value_number: value };
+      if (typeof value === "string") {
+        const parsed = Number.parseFloat(value);
+        if (!Number.isNaN(parsed)) return { value_number: parsed };
+      }
+      return {};
+
+    case "boolean":
+      if (typeof value === "boolean") return { value_boolean: value };
+      if (typeof value === "string") {
+        return { value_boolean: value.toLowerCase() === "true" || value === "1" };
+      }
+      return {};
+
+    case "date":
+      if (typeof value === "string") {
+        const date = new Date(value);
+        if (!Number.isNaN(date.getTime())) return { value_date: date.toISOString() };
+      }
+      if (value instanceof Date) return { value_date: value.toISOString() };
+      return {};
+
+    case "categorical":
+      if (typeof value === "string") return { value_text: value };
+      if (Array.isArray(value)) return { value_text: value.join(", ") };
+      return { value_text: String(value) };
+
+    default:
+      return { value_text: typeof value === "string" ? value : String(value) };
+  }
+};
+
+/**
+ * Transform a Formbricks survey response into FeedbackRecord payloads.
+ * Called from the pipeline handler when a response is created/finished.
+ */
+export function transformResponseToFeedbackRecords(
+  response: TResponse,
+  survey: Pick<TSurvey, "id" | "name" | "blocks">,
+  mappings: TConnectorFormbricksMapping[],
+  tenantId: string
+): FeedbackRecordCreateParams[] {
+  const responseData = response.data;
+  if (!responseData) return [];
+
+  const surveyMappings = mappings.filter((m) => m.surveyId === survey.id);
+  const elements = getElementsFromBlocks(survey.blocks);
+  const elementMap = new Map(elements.map((el) => [el.id, el]));
+  const feedbackRecords: FeedbackRecordCreateParams[] = [];
+
+  for (const mapping of surveyMappings) {
+    const value = extractResponseValue(responseData, mapping.elementId);
+    if (value === undefined || value === null || value === "") continue;
+
+    const fieldLabel = mapping.customFieldLabel || getHeadlineFromElement(elementMap.get(mapping.elementId));
+    const valueFields = convertValueToHubFields(value, mapping.hubFieldType);
+
+    const feedbackRecord = {
+      collected_at: getCollectedAt(response),
+      source_type: "formbricks_survey",
+      submission_id: response.id,
+      tenant_id: tenantId,
+      field_id: mapping.elementId,
+      field_type: mapping.hubFieldType,
+      source_id: survey.id,
+      source_name: survey.name,
+      field_label: fieldLabel,
+      ...(response.language && response.language !== "default" ? { language: response.language } : {}),
+      ...(response.contact?.userId ? { user_id: response.contact.userId } : {}),
+      ...valueFields,
+    };
+
+    feedbackRecords.push(feedbackRecord as FeedbackRecordCreateParams);
+  }
+
+  return feedbackRecords;
+}

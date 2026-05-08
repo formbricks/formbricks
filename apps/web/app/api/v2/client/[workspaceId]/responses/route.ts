@@ -1,5 +1,5 @@
 import { UAParser } from "ua-parser-js";
-import { InvalidInputError } from "@formbricks/types/errors";
+import { InvalidInputError, UniqueConstraintError } from "@formbricks/types/errors";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { checkSurveyValidity } from "@/app/api/v2/client/[workspaceId]/responses/lib/utils";
 import { reportApiError } from "@/app/lib/api/api-error-reporter";
@@ -164,6 +164,10 @@ const createResponseForRequest = async ({
       return responses.badRequestResponse(error.message, undefined, true);
     }
 
+    if (error instanceof UniqueConstraintError) {
+      return responses.conflictResponse(error.message, undefined, true);
+    }
+
     const response = getUnexpectedPublicErrorResponse();
     reportApiError({
       request,
@@ -233,7 +237,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
     }
     const { quotaFull, ...responseData } = createdResponse;
 
-    sendToPipeline({
+    await sendToPipeline({
       event: "responseCreated",
       workspaceId,
       surveyId: responseData.surveyId,
@@ -241,7 +245,7 @@ export const POST = async (request: Request, context: Context): Promise<Response
     });
 
     if (responseData.finished) {
-      sendToPipeline({
+      await sendToPipeline({
         event: "responseFinished",
         workspaceId,
         surveyId: responseData.surveyId,

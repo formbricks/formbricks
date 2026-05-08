@@ -29,6 +29,7 @@ import {
   type SerializedSurveyState,
   clearSurveyProgress,
   getSurveyProgress,
+  patchSurveyProgressSnapshot,
   saveSurveyProgress,
 } from "@/lib/offline-storage";
 import { parseRecallInformation } from "@/lib/recall";
@@ -38,13 +39,28 @@ import { useOnlineStatus } from "@/lib/use-online-status";
 import { cn, findBlockByElementId, getDefaultLanguageCode, getElementsFromSurveyBlocks } from "@/lib/utils";
 import { TResponseErrorCodesEnum } from "@/types/response-error-codes";
 
-const restoreSurveyStateFromSnapshot = (surveyState: SurveyState, snapshot: SerializedSurveyState): void => {
+const restoreSurveyStateFromSnapshot = (
+  surveyState: SurveyState,
+  snapshot: SerializedSurveyState,
+  progress: {
+    responseData: TResponseData;
+    ttc: TResponseTtc;
+    currentVariables: TResponseVariables;
+  }
+): void => {
   if (snapshot.responseId) surveyState.updateResponseId(snapshot.responseId);
   if (snapshot.displayId) surveyState.updateDisplayId(snapshot.displayId);
   if (snapshot.userId) surveyState.updateUserId(snapshot.userId);
   if (snapshot.contactId) surveyState.updateContactId(snapshot.contactId);
   if (snapshot.singleUseId) surveyState.singleUseId = snapshot.singleUseId;
-  surveyState.responseAcc = snapshot.responseAcc;
+  surveyState.disableBootstrapResponseCreate();
+  surveyState.responseAcc = {
+    ...snapshot.responseAcc,
+    data: progress.responseData,
+    ttc: progress.ttc,
+    variables: progress.currentVariables,
+    displayId: snapshot.displayId ?? snapshot.responseAcc.displayId,
+  };
 };
 
 interface VariableStackEntry {
@@ -126,6 +142,14 @@ export function Survey({
   const isLinkSurvey = survey.type === "link";
   const offlinePersistEnabled = offlineSupport && isLinkSurvey && !isPreviewMode && !!appUrl && !!workspaceId;
 
+  const persistSurveyStateSnapshot = useCallback(
+    async (snapshotPatch: Partial<SerializedSurveyState>) => {
+      if (!offlinePersistEnabled) return;
+      await patchSurveyProgressSnapshot(survey.id, snapshotPatch);
+    },
+    [offlinePersistEnabled, survey.id]
+  );
+
   const responseQueue = useMemo(() => {
     if (appUrl && workspaceId && surveyState) {
       return new ResponseQueue(
@@ -159,6 +183,9 @@ export function Survey({
               setBlockId(quotaInfo.endingCardId);
             }
           },
+          onResponseCreated: (responseId) => {
+            void persistSurveyStateSnapshot({ responseId });
+          },
         },
         surveyState
       );
@@ -172,6 +199,7 @@ export function Survey({
     getSetIsResponseSendingFinished,
     surveyState,
     offlinePersistEnabled,
+    persistSurveyStateSnapshot,
     survey.id,
   ]);
 
@@ -318,6 +346,7 @@ export function Survey({
 
         surveyState.updateDisplayId(display.data.id);
         responseQueue.updateSurveyState(surveyState);
+        await persistSurveyStateSnapshot({ displayId: display.data.id });
 
         if (onDisplayCreated) {
           onDisplayCreated();
@@ -336,6 +365,7 @@ export function Survey({
     onDisplayCreated,
     isPreviewMode,
     onDisplay,
+    persistSurveyStateSnapshot,
   ]);
 
   // Create display on mount. When offline persistence is enabled, wait for progress
@@ -457,7 +487,36 @@ export function Survey({
 
         // Restore survey state from snapshot
         if (surveyState && progress.surveyStateSnapshot) {
-          restoreSurveyStateFromSnapshot(surveyState, progress.surveyStateSnapshot);
+          restoreSurveyStateFromSnapshot(surveyState, progress.surveyStateSnapshot, progress);
+
+          if (pendingCount === 0 && !progress.surveyStateSnapshot.responseId) {
+            if (progress.surveyStateSnapshot.displayId && apiClient) {
+              const responseLookup = await apiClient.getResponseIdByDisplayId(
+                progress.surveyStateSnapshot.displayId
+              );
+
+              if (responseLookup.ok && responseLookup.data.responseId) {
+                surveyState.updateResponseId(responseLookup.data.responseId);
+                await persistSurveyStateSnapshot({ responseId: responseLookup.data.responseId });
+              } else if (responseLookup.ok) {
+                surveyState.enableBootstrapResponseCreate();
+              } else if (responseLookup.error.status === 404) {
+                surveyState.updateDisplayId(null);
+                surveyState.enableBootstrapResponseCreate();
+                await persistSurveyStateSnapshot({ displayId: null });
+              } else {
+                console.error("Formbricks: Failed to recover responseId from displayId", {
+                  displayId: progress.surveyStateSnapshot.displayId,
+                  error: responseLookup.error,
+                });
+                surveyState.enableBootstrapResponseCreate();
+              }
+            } else {
+              surveyState.enableBootstrapResponseCreate();
+            }
+          }
+
+          responseQueue?.updateSurveyState(surveyState);
         }
       } else {
         // Block no longer exists (survey structure changed) — discard UI progress
@@ -465,7 +524,8 @@ export function Survey({
         await clearSurveyProgress(survey.id);
 
         if (surveyState && progress.surveyStateSnapshot) {
-          restoreSurveyStateFromSnapshot(surveyState, progress.surveyStateSnapshot);
+          restoreSurveyStateFromSnapshot(surveyState, progress.surveyStateSnapshot, progress);
+          responseQueue?.updateSurveyState(surveyState);
         }
       }
 
@@ -1119,7 +1179,7 @@ export function Survey({
                       survey={localSurvey}
                       surveyLanguages={localSurvey.languages}
                       setSelectedLanguageCode={setSelectedLanguage}
-                      hoverColor={styling.inputColor?.light ?? "#f8fafc"}
+                      hoverColor={styling.inputBgColor?.light ?? "#f8fafc"}
                       borderRadius={styling.roundness ?? 8}
                       setDir={setDir}
                       dir={dir}
@@ -1132,7 +1192,7 @@ export function Survey({
                   {isCloseButtonVisible && (
                     <SurveyCloseButton
                       onClose={onClose}
-                      hoverColor={styling.inputColor?.light ?? "#f8fafc"}
+                      hoverColor={styling.inputBgColor?.light ?? "#f8fafc"}
                       borderRadius={styling.roundness ?? 8}
                     />
                   )}

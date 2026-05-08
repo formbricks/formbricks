@@ -3,7 +3,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { logger } from "@formbricks/logger";
-import { ZId, ZString } from "@formbricks/types/common";
+import { ZId } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ValidationError } from "@formbricks/types/errors";
 import { TWorkspace, TWorkspaceUpdateInput, ZWorkspaceUpdateInput } from "@formbricks/types/workspace";
 import { validateInputs } from "@/lib/utils/validate";
@@ -56,9 +56,9 @@ export const updateWorkspace = async (
 
 export const createWorkspace = async (
   organizationId: string,
-  workspaceInput: Partial<TWorkspaceUpdateInput>
+  workspaceInput: TWorkspaceUpdateInput
 ): Promise<TWorkspace> => {
-  validateInputs([organizationId, ZString], [workspaceInput, ZWorkspaceUpdateInput.partial()]);
+  validateInputs([organizationId, ZId], [workspaceInput, ZWorkspaceUpdateInput]);
 
   if (!workspaceInput.name) {
     throw new ValidationError("Workspace Name is required");

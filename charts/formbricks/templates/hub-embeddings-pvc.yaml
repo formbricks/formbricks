@@ -1,0 +1,23 @@
+{{- if and .Values.hub.enabled .Values.hub.embeddings.enabled .Values.hub.embeddings.persistence.enabled (not .Values.hub.embeddings.persistence.existingClaim) }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "formbricks.hubEmbeddingsName" . }}
+  labels:
+    helm.sh/chart: {{ include "formbricks.chart" . }}
+    app.kubernetes.io/name: {{ include "formbricks.hubEmbeddingsName" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: hub-embeddings
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/part-of: {{ .Values.partOfOverride | default (include "formbricks.name" .) }}
+spec:
+  accessModes:
+    {{- toYaml .Values.hub.embeddings.persistence.accessModes | nindent 4 }}
+  resources:
+    requests:
+      storage: {{ .Values.hub.embeddings.persistence.size }}
+  {{- with .Values.hub.embeddings.persistence.storageClass }}
+  storageClassName: {{ . | quote }}
+  {{- end }}
+{{- end }}

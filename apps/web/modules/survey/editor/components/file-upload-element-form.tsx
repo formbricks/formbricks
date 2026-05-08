@@ -24,8 +24,6 @@ interface FileUploadFormProps {
   element: TSurveyFileUploadElement;
   elementIdx: number;
   updateElement: (elementIdx: number, updatedAttributes: Partial<TSurveyElement>) => void;
-  selectedLanguageCode: string;
-  setSelectedLanguageCode: (languageCode: string) => void;
   isInvalid: boolean;
   isFormbricksCloud: boolean;
   locale: TUserLocale;
@@ -40,8 +38,6 @@ export const FileUploadElementForm = ({
   updateElement,
   isInvalid,
   workspace,
-  selectedLanguageCode,
-  setSelectedLanguageCode,
   isFormbricksCloud,
   locale,
   isStorageConfigured = true,
@@ -92,8 +88,6 @@ export const FileUploadElementForm = ({
         elementIdx={elementIdx}
         isInvalid={isInvalid}
         updateElement={updateElement}
-        selectedLanguageCode={selectedLanguageCode}
-        setSelectedLanguageCode={setSelectedLanguageCode}
         locale={locale}
         isStorageConfigured={isStorageConfigured}
         autoFocus={!element.headline?.default || element.headline.default.trim() === ""}
@@ -111,8 +105,6 @@ export const FileUploadElementForm = ({
                 elementIdx={elementIdx}
                 isInvalid={isInvalid}
                 updateElement={updateElement}
-                selectedLanguageCode={selectedLanguageCode}
-                setSelectedLanguageCode={setSelectedLanguageCode}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
                 autoFocus={!element.subheader?.default || element.subheader.default.trim() === ""}
@@ -185,7 +177,10 @@ export const FileUploadElementForm = ({
               <p className="text-xs text-red-500">
                 {t("workspace.surveys.edit.max_file_size_limit_is")} {maxSizeInMBLimit} MB.{" "}
                 {t("workspace.surveys.edit.if_you_need_more_please")}
-                <Link className="underline" target="_blank" href={`${workspaceBasePath}/settings/billing`}>
+                <Link
+                  className="underline"
+                  target="_blank"
+                  href={`${workspaceBasePath}/settings/organization/billing`}>
                   {t("common.please_upgrade_your_plan")}
                 </Link>
               </p>

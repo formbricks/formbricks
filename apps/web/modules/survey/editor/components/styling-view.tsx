@@ -1,7 +1,7 @@
 "use client";
 
 import { Workspace } from "@prisma/client";
-import { RotateCcwIcon, SparklesIcon } from "lucide-react";
+import { RotateCcwIcon } from "lucide-react";
 import Link from "next/link";
 import React, { useEffect, useMemo, useState } from "react";
 import { UseFormReturn, useForm } from "react-hook-form";
@@ -9,19 +9,13 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
-import {
-  COLOR_DEFAULTS,
-  STYLE_DEFAULTS,
-  deriveNewFieldsFromLegacy,
-  getSuggestedColors,
-} from "@/lib/styling/constants";
+import { COLOR_DEFAULTS, STYLE_DEFAULTS, getSuggestedColors } from "@/lib/styling/constants";
 import { FormStylingSettings } from "@/modules/survey/editor/components/form-styling-settings";
 import { LogoSettingsCard } from "@/modules/survey/editor/components/logo-settings-card";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { BackgroundStylingCard } from "@/modules/ui/components/background-styling-card";
 import { Button } from "@/modules/ui/components/button";
 import { CardStylingSettings } from "@/modules/ui/components/card-styling-settings";
-import { ColorPicker } from "@/modules/ui/components/color-picker";
 import {
   FormControl,
   FormDescription,
@@ -74,15 +68,10 @@ export const StylingView = ({
     ? Object.fromEntries(Object.entries(localSurvey.styling).filter(([, v]) => v != null))
     : {};
 
-  const workspaceLegacyFills = deriveNewFieldsFromLegacy(cleanWorkspace);
-  const surveyLegacyFills = deriveNewFieldsFromLegacy(cleanSurvey);
-
   const form = useForm<TSurveyStyling>({
     defaultValues: {
       ...STYLE_DEFAULTS,
-      ...workspaceLegacyFills,
       ...cleanWorkspace,
-      ...surveyLegacyFills,
       ...cleanSurvey,
     },
   });
@@ -205,12 +194,12 @@ export const StylingView = ({
       <form onSubmit={(e) => e.preventDefault()}>
         <div className="mt-12 space-y-3 p-5">
           {!isCxMode && (
-            <div className="flex items-center gap-4 py-4">
+            <div className="flex items-center gap-4 rounded-lg border border-slate-300 bg-white p-4">
               <FormField
                 control={form.control}
                 name="overwriteThemeStyling"
                 render={({ field }) => (
-                  <FormItem className="flex items-center gap-2 space-y-0">
+                  <FormItem className="flex items-center gap-4 space-y-0">
                     <FormControl>
                       <Switch
                         id="overwrite-theme-styling"
@@ -225,7 +214,7 @@ export const StylingView = ({
                         className="text-base font-semibold text-slate-900">
                         {t("workspace.surveys.edit.add_custom_styles")}
                       </FormLabel>
-                      <FormDescription className="text-sm text-slate-800">
+                      <FormDescription className="text-sm text-slate-500">
                         {t("workspace.surveys.edit.override_theme_with_individual_styles_for_this_survey")}
                       </FormDescription>
                     </div>
@@ -235,41 +224,12 @@ export const StylingView = ({
             </div>
           )}
 
-          {overwriteThemeStyling && (
-            <div className="grid grid-cols-2 items-end gap-4 rounded-lg border border-slate-300 bg-white p-4">
-              <FormField
-                control={form.control}
-                name="brandColor.light"
-                render={({ field }) => (
-                  <FormItem className="space-y-1">
-                    <FormLabel>{t("workspace.surveys.edit.brand_color")}</FormLabel>
-                    <FormDescription>{t("workspace.surveys.edit.brand_color_description")}</FormDescription>
-                    <FormControl>
-                      <ColorPicker
-                        color={field.value ?? STYLE_DEFAULTS.brandColor?.light ?? COLOR_DEFAULTS.brandColor}
-                        onChange={(color) => field.onChange(color)}
-                        containerClass="w-full"
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-              <Button
-                type="button"
-                variant="default"
-                className="h-10 justify-center gap-1"
-                onClick={() => setConfirmSuggestColorsOpen(true)}>
-                <SparklesIcon className="mr-2 h-4 w-4" />
-                {t("workspace.look.suggest_colors")}
-              </Button>
-            </div>
-          )}
-
           <FormStylingSettings
             open={formStylingOpen}
             setOpen={setFormStylingOpen}
             disabled={!overwriteThemeStyling}
             form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
+            onSuggestColorsClick={() => setConfirmSuggestColorsOpen(true)}
           />
 
           <CardStylingSettings
@@ -321,7 +281,7 @@ export const StylingView = ({
               <p className="text-sm text-slate-500">
                 {t("workspace.surveys.edit.adjust_the_theme_in_the")}{" "}
                 <Link href={`${workspaceBasePath}/look`} target="_blank" className="font-semibold underline">
-                  {t("common.look_and_feel")}
+                  {t("common.appearance")}
                 </Link>{" "}
                 {t("common.settings")}
               </p>

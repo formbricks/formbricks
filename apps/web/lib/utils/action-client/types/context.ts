@@ -22,7 +22,10 @@ export type AuditLoggingCtx = {
   quotaId?: string;
   teamId?: string;
   integrationId?: string;
-  feedbackRecordDirectoryId?: string;
+  chartId?: string;
+  dashboardId?: string;
+  dashboardWidgetId?: string;
+  feedbackDirectoryId?: string;
 };
 
 export type ActionClientCtx = {

@@ -90,19 +90,16 @@ test.describe("JS Package Test", async () => {
     await page.locator('[data-testid="recontact-option-respondMultiple"]').click();
     await page.locator('[data-testid="waiting-time-option-ignore"]').click();
 
-    await page.getByRole("button", { name: "Publish" }).click();
+    await page.getByRole("button", { name: "Save as draft", exact: true }).click();
+    await expect(page.getByText("Changes saved.")).toBeVisible();
 
-    await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/summary/);
+    await Promise.all([
+      page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/summary/, { timeout: 120000 }),
+      page.getByRole("button", { name: "Publish", exact: true }).click(),
+    ]);
 
-    // No need for file operations anymore, just use the server
     await page.goto("http://localhost:3004");
-
-    const syncApi = await page.waitForResponse((response) => response.url().includes("/environment"), {
-      timeout: 120000,
-    });
-    expect(syncApi.status()).toBe(200);
-
-    await expect(page.locator("#formbricks-modal-container")).toHaveCount(1);
+    await expect(page.locator("#formbricks-modal-container")).toHaveCount(1, { timeout: 120000 });
     await expect(
       page.locator("#questionCard-0").getByRole("link", { name: "Powered by Formbricks" })
     ).toBeVisible();

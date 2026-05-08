@@ -117,7 +117,7 @@ const ZGetWorkspacesForSwitcherAction = z.object({
 });
 
 /**
- * Fetches projects list for switcher dropdown.
+ * Fetches workspaces list for switcher dropdown.
  * Called on-demand when user opens the workspace switcher.
  */
 export const getWorkspacesForSwitcherAction = authenticatedActionClient

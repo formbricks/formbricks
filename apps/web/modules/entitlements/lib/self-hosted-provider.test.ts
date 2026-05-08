@@ -73,7 +73,7 @@ describe("getSelfHostedOrganizationEntitlementsContext", () => {
     expect(result.limits.workspaces).toBe(10);
   });
 
-  test("defaults projects to 3 when license is inactive", async () => {
+  test("defaults workspaces to 3 when license is inactive", async () => {
     mockGetOrg.mockResolvedValue({ id: "org1" } as any);
     mockGetLicense.mockResolvedValue({
       status: "expired",
@@ -140,5 +140,78 @@ describe("getSelfHostedOrganizationEntitlementsContext", () => {
 
     expect(result.features).toContain("ai-smart-tools");
     expect(result.features).toContain("ai-data-analysis");
+  });
+
+  test("maps unifyFeedback feature to unify-feedback entitlement", async () => {
+    mockGetOrg.mockResolvedValue({ id: "org1" } as any);
+    mockGetLicense.mockResolvedValue({
+      status: "active",
+      active: true,
+      features: { unifyFeedback: true },
+    } as any);
+
+    const result = await getSelfHostedOrganizationEntitlementsContext("org1");
+
+    expect(result.features).toContain("unify-feedback");
+    expect(result.features).not.toContain("feedback-directories");
+    expect(result.features).not.toContain("dashboards");
+  });
+
+  test("maps feedbackDirectories feature to feedback-directories entitlement", async () => {
+    mockGetOrg.mockResolvedValue({ id: "org1" } as any);
+    mockGetLicense.mockResolvedValue({
+      status: "active",
+      active: true,
+      features: { feedbackDirectories: true },
+    } as any);
+
+    const result = await getSelfHostedOrganizationEntitlementsContext("org1");
+
+    expect(result.features).toContain("feedback-directories");
+    expect(result.features).not.toContain("unify-feedback");
+    expect(result.features).not.toContain("dashboards");
+  });
+
+  test("maps dashboards feature to dashboards entitlement", async () => {
+    mockGetOrg.mockResolvedValue({ id: "org1" } as any);
+    mockGetLicense.mockResolvedValue({
+      status: "active",
+      active: true,
+      features: { dashboards: true },
+    } as any);
+
+    const result = await getSelfHostedOrganizationEntitlementsContext("org1");
+
+    expect(result.features).toContain("dashboards");
+    expect(result.features).not.toContain("unify-feedback");
+    expect(result.features).not.toContain("feedback-directories");
+  });
+
+  test("maps all three Hub features when all enabled", async () => {
+    mockGetOrg.mockResolvedValue({ id: "org1" } as any);
+    mockGetLicense.mockResolvedValue({
+      status: "active",
+      active: true,
+      features: { unifyFeedback: true, feedbackDirectories: true, dashboards: true },
+    } as any);
+
+    const result = await getSelfHostedOrganizationEntitlementsContext("org1");
+
+    expect(result.features).toContain("unify-feedback");
+    expect(result.features).toContain("feedback-directories");
+    expect(result.features).toContain("dashboards");
+  });
+
+  test("does not map Hub features when license inactive even if flags are true", async () => {
+    mockGetOrg.mockResolvedValue({ id: "org1" } as any);
+    mockGetLicense.mockResolvedValue({
+      status: "expired",
+      active: false,
+      features: { unifyFeedback: true, feedbackDirectories: true, dashboards: true },
+    } as any);
+
+    const result = await getSelfHostedOrganizationEntitlementsContext("org1");
+
+    expect(result.features).toEqual([]);
   });
 });

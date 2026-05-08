@@ -132,9 +132,13 @@ export const EditAPIKeys = ({
   };
 
   const ApiKeyDisplay = ({ apiKey }: { apiKey: string }) => {
-    const copyToClipboard = () => {
-      navigator.clipboard.writeText(apiKey);
-      toast.success(t("workspace.api_keys.api_key_copied_to_clipboard"));
+    const copyToClipboard = async () => {
+      try {
+        await navigator.clipboard.writeText(apiKey);
+        toast.success(t("workspace.api_keys.api_key_copied_to_clipboard"));
+      } catch {
+        toast.error(t("workspace.api_keys.unable_to_copy_api_key"));
+      }
     };
 
     if (!apiKey) {
@@ -149,7 +153,7 @@ export const EditAPIKeys = ({
             className="h-4 w-4 cursor-pointer"
             onClick={(e) => {
               e.stopPropagation();
-              copyToClipboard();
+              void copyToClipboard();
             }}
             data-testid="copy-button"
           />

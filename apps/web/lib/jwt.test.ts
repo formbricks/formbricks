@@ -5,11 +5,15 @@ import * as crypto from "@/lib/crypto";
 import {
   createEmailChangeToken,
   createEmailToken,
+  createFeedbackRecordsGatewayToken,
+  createGatewayServiceToken,
   createInviteToken,
   createToken,
   createTokenForLinkSurvey,
   getEmailFromEmailToken,
   verifyEmailChangeToken,
+  verifyFeedbackRecordsGatewayToken,
+  verifyGatewayServiceToken,
   verifyInviteToken,
   verifyToken,
   verifyTokenForLinkSurvey,
@@ -148,6 +152,43 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
         testNextAuthSecret: true,
         testEncryptionKey: false,
       });
+    });
+  });
+
+  describe("feedback records gateway tokens", () => {
+    test("creates and verifies a generic gateway token for feedbackRecords", () => {
+      const { token, expiresAt } = createGatewayServiceToken(mockUser.id, "feedbackRecords");
+
+      expect(token).toBeDefined();
+      expect(new Date(expiresAt).toString()).not.toBe("Invalid Date");
+      expect(verifyGatewayServiceToken(token, "feedbackRecords")).toEqual({ userId: mockUser.id });
+    });
+
+    test("creates and verifies a feedback records gateway token", () => {
+      const { token, expiresAt } = createFeedbackRecordsGatewayToken(mockUser.id);
+
+      expect(token).toBeDefined();
+      expect(new Date(expiresAt).toString()).not.toBe("Invalid Date");
+      expect(verifyFeedbackRecordsGatewayToken(token)).toEqual({ userId: mockUser.id });
+    });
+
+    test("rejects feedback records gateway tokens with the wrong purpose", () => {
+      const token = jwt.sign({ purpose: "wrong_purpose" }, TEST_NEXTAUTH_SECRET, {
+        subject: mockUser.id,
+      });
+
+      expect(() => verifyFeedbackRecordsGatewayToken(token)).toThrow(
+        "Invalid feedback records gateway token"
+      );
+    });
+
+    test("rejects expired feedback records gateway tokens", () => {
+      const expiredToken = jwt.sign({ purpose: "feedback_records_gateway" }, TEST_NEXTAUTH_SECRET, {
+        subject: mockUser.id,
+        expiresIn: -1,
+      });
+
+      expect(() => verifyFeedbackRecordsGatewayToken(expiredToken)).toThrow();
     });
   });
 

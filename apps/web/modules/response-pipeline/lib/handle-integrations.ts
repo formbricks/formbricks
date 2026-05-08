@@ -5,7 +5,7 @@ import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
 import { TIntegrationGoogleSheets } from "@formbricks/types/integration/google-sheet";
 import { TIntegrationNotion, TIntegrationNotionConfigData } from "@formbricks/types/integration/notion";
 import { TIntegrationSlack } from "@formbricks/types/integration/slack";
-import { TResponseDataValue, TResponseMeta } from "@formbricks/types/responses";
+import { TResponse, TResponseDataValue, TResponseMeta } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
@@ -21,6 +21,12 @@ import { getFormattedDateTimeString } from "@/lib/utils/datetime";
 import { parseRecallInfo } from "@/lib/utils/recall";
 import { truncateText } from "@/lib/utils/strings";
 import { resolveStorageUrlAuto } from "@/modules/storage/utils";
+
+type TIntegrationPipelineData = {
+  response: Pick<TResponse, "createdAt" | "data" | "meta" | "variables">;
+  surveyId: string;
+};
+type TPipelineIntegrationSurvey = Pick<TSurvey, "blocks" | "hiddenFields" | "variables" | "name">;
 
 const convertMetaObjectToString = (metadata: TResponseMeta): string => {
   let result: string[] = [];
@@ -45,16 +51,6 @@ interface TIntegrationFieldSelection {
   includeVariables: boolean;
 }
 
-type TIntegrationPipelineData = {
-  surveyId: string;
-  response: {
-    createdAt: Date;
-    data: Record<string, TResponseDataValue>;
-    meta: TResponseMeta;
-    variables: Record<string, string | number>;
-  };
-};
-
 const toIntegrationFieldSelection = (config: {
   elementIds: string[];
   includeCreatedAt?: boolean | null;
@@ -72,7 +68,7 @@ const toIntegrationFieldSelection = (config: {
 const processDataForIntegration = async (
   integrationType: TIntegrationType,
   data: TIntegrationPipelineData,
-  survey: TSurvey,
+  survey: TPipelineIntegrationSurvey,
   selection: TIntegrationFieldSelection
 ): Promise<{
   responses: string[];
@@ -113,7 +109,7 @@ const processDataForIntegration = async (
 export const handleIntegrations = async (
   integrations: TIntegration[],
   data: TIntegrationPipelineData,
-  survey: TSurvey
+  survey: TPipelineIntegrationSurvey
 ) => {
   for (const integration of integrations) {
     switch (integration.type) {
@@ -160,7 +156,7 @@ export const handleIntegrations = async (
 const handleAirtableIntegration = async (
   integration: TIntegrationAirtable,
   data: TIntegrationPipelineData,
-  survey: TSurvey
+  survey: TPipelineIntegrationSurvey
 ): Promise<Result<void, Error>> => {
   try {
     if (integration.config.data.length > 0) {
@@ -192,7 +188,7 @@ const handleAirtableIntegration = async (
 const handleGoogleSheetsIntegration = async (
   integration: TIntegrationGoogleSheets,
   data: TIntegrationPipelineData,
-  survey: TSurvey
+  survey: TPipelineIntegrationSurvey
 ): Promise<Result<void, Error>> => {
   try {
     if (integration.config.data.length > 0) {
@@ -229,7 +225,7 @@ const handleGoogleSheetsIntegration = async (
 const handleSlackIntegration = async (
   integration: TIntegrationSlack,
   data: TIntegrationPipelineData,
-  survey: TSurvey
+  survey: TPipelineIntegrationSurvey
 ): Promise<Result<void, Error>> => {
   try {
     if (integration.config.data.length > 0) {
@@ -305,7 +301,7 @@ const extractResponses = async (
   integrationType: TIntegrationType,
   pipelineData: TIntegrationPipelineData,
   elementIds: string[],
-  survey: TSurvey
+  survey: TPipelineIntegrationSurvey
 ): Promise<{
   responses: string[];
   elements: string[];
@@ -350,7 +346,7 @@ const extractResponses = async (
 const handleNotionIntegration = async (
   integration: TIntegrationNotion,
   data: TIntegrationPipelineData,
-  surveyData: TSurvey
+  surveyData: TPipelineIntegrationSurvey
 ): Promise<Result<void, Error>> => {
   try {
     if (integration.config.data.length > 0) {
@@ -377,7 +373,7 @@ const handleNotionIntegration = async (
 const buildNotionPayloadProperties = (
   mapping: TIntegrationNotionConfigData["mapping"],
   data: TIntegrationPipelineData,
-  surveyData: TSurvey
+  surveyData: TPipelineIntegrationSurvey
 ) => {
   const properties: any = {};
   const normalizedResponses = { ...data.response.data };

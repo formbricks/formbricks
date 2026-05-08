@@ -25,7 +25,11 @@ export const ZAuditTarget = z.enum([
   "integration",
   "file",
   "quota",
-  "feedbackRecordDirectory",
+  "chart",
+  "dashboard",
+  "dashboardWidget",
+  "cubeQuery",
+  "feedbackDirectory",
 ]);
 export const ZAuditAction = z.enum([
   "created",
@@ -53,6 +57,7 @@ export const ZAuditAction = z.enum([
   "userSignedOut",
   "passwordReset",
   "bulkCreated",
+  "queried",
 ]);
 export const ZActor = z.enum(["user", "api", "system"]);
 export const ZAuditStatus = z.enum(["success", "failure"]);

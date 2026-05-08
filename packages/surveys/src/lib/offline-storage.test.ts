@@ -8,6 +8,7 @@ import {
   countPendingResponses,
   getPendingResponses,
   getSurveyProgress,
+  patchSurveyProgressSnapshot,
   removePendingResponse,
   saveSurveyProgress,
 } from "./offline-storage";
@@ -211,6 +212,34 @@ describe("offline-storage (IndexedDB)", () => {
 
       const result = await getSurveyProgress("survey-1");
       expect(result?.blockId).toBe("block-2");
+    });
+
+    test("patchSurveyProgressSnapshot updates only the saved snapshot anchors", async () => {
+      await saveSurveyProgress({
+        surveyId: "survey-1",
+        ...makeProgress({
+          surveyStateSnapshot: makeSurveyStateSnapshot({
+            responseId: null,
+            displayId: "display-1",
+            responseAcc: { finished: false, data: { q1: "answer" }, ttc: { q1: 1500 }, variables: {} },
+          }),
+        }),
+      });
+
+      await patchSurveyProgressSnapshot("survey-1", { responseId: "response-1" });
+
+      const result = await getSurveyProgress("survey-1");
+      expect(result?.blockId).toBe("block-1");
+      expect(result?.responseData).toEqual({ q1: "answer" });
+      expect(result?.surveyStateSnapshot.responseId).toBe("response-1");
+      expect(result?.surveyStateSnapshot.displayId).toBe("display-1");
+    });
+
+    test("patchSurveyProgressSnapshot is a no-op when survey progress does not exist", async () => {
+      await expect(patchSurveyProgressSnapshot("missing-survey", { responseId: "response-1" })).resolves.toBe(
+        undefined
+      );
+      expect(await getSurveyProgress("missing-survey")).toBeUndefined();
     });
 
     test("getSurveyProgress returns undefined for non-existent surveyId", async () => {

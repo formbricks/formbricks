@@ -400,7 +400,12 @@ export const getMatchValueProps = (
       const allowedElementTypes = [TSurveyElementTypeEnum.OpenText];
 
       if (selectedElement.inputType === "number") {
-        allowedElementTypes.push(TSurveyElementTypeEnum.Rating, TSurveyElementTypeEnum.NPS);
+        allowedElementTypes.push(
+          TSurveyElementTypeEnum.Rating,
+          TSurveyElementTypeEnum.NPS,
+          TSurveyElementTypeEnum.CSAT,
+          TSurveyElementTypeEnum.CES
+        );
       }
 
       if (["equals", "doesNotEqual"].includes(condition.operator)) {
@@ -533,7 +538,11 @@ export const getMatchValueProps = (
         showInput: false,
         options: [{ label: t("common.choices"), value: "choices", options: choices }],
       };
-    } else if (selectedElement?.type === TSurveyElementTypeEnum.Rating) {
+    } else if (
+      selectedElement?.type === TSurveyElementTypeEnum.Rating ||
+      selectedElement?.type === TSurveyElementTypeEnum.CSAT ||
+      selectedElement?.type === TSurveyElementTypeEnum.CES
+    ) {
       const choices = Array.from({ length: selectedElement.range }, (_, idx) => {
         return {
           label: `${idx + 1}`,
@@ -801,7 +810,12 @@ export const getMatchValueProps = (
     } else if (selectedVariable?.type === "number") {
       const allowedElements = elements.filter(
         (element) =>
-          [TSurveyElementTypeEnum.Rating, TSurveyElementTypeEnum.NPS].includes(element.type) ||
+          [
+            TSurveyElementTypeEnum.Rating,
+            TSurveyElementTypeEnum.NPS,
+            TSurveyElementTypeEnum.CSAT,
+            TSurveyElementTypeEnum.CES,
+          ].includes(element.type) ||
           (element.type === TSurveyElementTypeEnum.OpenText && element.inputType === "number")
       );
 
@@ -1121,6 +1135,8 @@ export const getActionValueOptions = (
         TSurveyElementTypeEnum.MultipleChoiceSingle,
         TSurveyElementTypeEnum.Rating,
         TSurveyElementTypeEnum.NPS,
+        TSurveyElementTypeEnum.CSAT,
+        TSurveyElementTypeEnum.CES,
         TSurveyElementTypeEnum.Date,
       ].includes(element.type)
     );
@@ -1179,7 +1195,12 @@ export const getActionValueOptions = (
   } else if (selectedVariable.type === "number") {
     const allowedElements = allElements.filter(
       (element) =>
-        [TSurveyElementTypeEnum.Rating, TSurveyElementTypeEnum.NPS].includes(element.type) ||
+        [
+          TSurveyElementTypeEnum.Rating,
+          TSurveyElementTypeEnum.NPS,
+          TSurveyElementTypeEnum.CSAT,
+          TSurveyElementTypeEnum.CES,
+        ].includes(element.type) ||
         (element.type === TSurveyElementTypeEnum.OpenText && element.inputType === "number")
     );
 

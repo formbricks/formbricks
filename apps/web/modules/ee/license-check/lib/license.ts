@@ -84,6 +84,9 @@ const LicenseFeaturesSchema = z.object({
   auditLogs: z.boolean(),
   accessControl: z.boolean(),
   quotas: z.boolean(),
+  unifyFeedback: z.boolean().default(false),
+  feedbackDirectories: z.boolean().default(false),
+  dashboards: z.boolean().default(false),
 });
 
 const LicenseDetailsSchema = z.object({
@@ -152,6 +155,9 @@ const DEFAULT_FEATURES: TEnterpriseLicenseFeatures = {
   auditLogs: false,
   accessControl: false,
   quotas: false,
+  unifyFeedback: false,
+  feedbackDirectories: false,
+  dashboards: false,
 };
 
 // Helper functions

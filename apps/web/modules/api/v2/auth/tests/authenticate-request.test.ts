@@ -178,4 +178,47 @@ describe("authenticateRequest", () => {
     // Should not call getApiKeyWithPermissions for empty string
     expect(getApiKeyWithPermissions).not.toHaveBeenCalled();
   });
+
+  test("should authenticate bearer API keys", async () => {
+    const request = new Request("http://localhost", {
+      headers: { authorization: "Bearer fbk_validBearerKey123" },
+    });
+
+    vi.mocked(getApiKeyWithPermissions).mockResolvedValue({
+      id: "bearer-api-key-id",
+      organizationId: "org-id",
+      createdAt: new Date(),
+      createdBy: "user-id",
+      lastUsedAt: null,
+      label: "Bearer API Key",
+      hashedKey: "hashed-key",
+      organizationAccess: {
+        accessControl: {
+          read: true,
+          write: true,
+        },
+      },
+      apiKeyWorkspaces: [],
+    } as unknown as TApiKeyWithEnvironmentAndWorkspace);
+
+    const result = await authenticateRequest(request);
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.data).toEqual({
+        type: "apiKey",
+        workspacePermissions: [],
+        apiKeyId: "bearer-api-key-id",
+        organizationId: "org-id",
+        organizationAccess: {
+          accessControl: {
+            read: true,
+            write: true,
+          },
+        },
+      });
+    }
+
+    expect(getApiKeyWithPermissions).toHaveBeenCalledWith("fbk_validBearerKey123");
+  });
 });

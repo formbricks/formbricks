@@ -291,7 +291,12 @@ export const AddApiKeyModal = ({
                 })}
 
                 {/* Add permission button */}
-                <Button type="button" variant="outline" onClick={addPermission}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={addPermission}
+                  id="add_permission__button"
+                  data-testid="add_permission__button__test">
                   <span className="mr-2">+</span> {t("workspace.settings.api_keys.add_permission")}
                 </Button>
               </div>

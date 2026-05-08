@@ -7,7 +7,9 @@ import type { TTemplate } from "@formbricks/types/templates";
 import {
   buildBlock,
   buildCTAElement,
+  buildCesElement,
   buildConsentElement,
+  buildCsatElement,
   buildMultipleChoiceElement,
   buildNPSElement,
   buildOpenTextElement,
@@ -971,13 +973,13 @@ const improveTrialConversion = (t: TFunction): TTemplate => {
           elements: [
             buildOpenTextElement({
               id: reusableElementIds[2],
-              headline: t("templates.improve_trial_conversion_question_2_headline"),
+              headline: t("templates.improve_trial_conversion_question_3_headline"),
               required: true,
               inputType: "text",
             }),
           ],
           logic: [createBlockJumpLogic(reusableElementIds[2], block6Id, "isSubmitted")],
-          buttonLabel: t("templates.improve_trial_conversion_question_2_button_label"),
+          buttonLabel: t("templates.improve_trial_conversion_question_3_button_label"),
           t,
         }),
         buildBlock({
@@ -1319,8 +1321,7 @@ const employeeSatisfaction = (t: TFunction): TTemplate => {
         buildBlock({
           name: t("templates.block_1"),
           elements: [
-            buildRatingElement({
-              range: 5,
+            buildCsatElement({
               scale: "star",
               headline: t("templates.employee_satisfaction_question_1_headline"),
               required: true,
@@ -1647,14 +1648,14 @@ const identifyCustomerGoals = (t: TFunction): TTemplate => {
           elements: [
             buildMultipleChoiceElement({
               type: TSurveyElementTypeEnum.MultipleChoiceSingle,
-              headline: "What's your primary goal for using $[workspaceName]?",
+              headline: t("templates.identify_customer_goals_question_1_headline"),
               required: true,
               shuffleOption: "none",
               choices: [
-                "Understand my user base deeply",
-                "Identify upselling opportunities",
-                "Build the best possible product",
-                "Rule the world to make everyone breakfast brussels sprouts.",
+                t("templates.identify_customer_goals_question_1_choice_1"),
+                t("templates.identify_customer_goals_question_1_choice_2"),
+                t("templates.identify_customer_goals_question_1_choice_3"),
+                t("templates.identify_customer_goals_question_1_choice_4"),
               ],
             }),
           ],
@@ -2723,7 +2724,7 @@ const customerEffortScore = (t: TFunction): TTemplate => {
         buildBlock({
           name: t("templates.block_1"),
           elements: [
-            buildRatingElement({
+            buildCesElement({
               range: 5,
               scale: "number",
               headline: t("templates.customer_effort_score_question_1_headline"),
@@ -3828,9 +3829,8 @@ const improveNewsletterContent = (t: TFunction): TTemplate => {
         buildBlock({
           name: t("templates.block_1"),
           elements: [
-            buildRatingElement({
+            buildCsatElement({
               id: reusableElementIds[0],
-              range: 5,
               scale: "smiley",
               headline: t("templates.improve_newsletter_content_question_1_headline"),
               required: true,
@@ -4409,8 +4409,7 @@ const longTermRetentionCheckIn = (t: TFunction): TTemplate => {
         buildBlock({
           name: t("templates.block_9"),
           elements: [
-            buildRatingElement({
-              range: 5,
+            buildCsatElement({
               scale: "smiley",
               headline: t("templates.long_term_retention_check_in_question_9_headline"),
               required: true,
@@ -4825,6 +4824,8 @@ export const previewSurvey = (workspaceName: string, t: TFunction): TSurvey => {
     workspaceId: "cmnh38nzx00003b6r3svd9pv2",
     createdBy: "cltwumfbz0000echxysz6ptvq",
     status: "inProgress" as const,
+    publishOn: null,
+    closeOn: null,
     welcomeCard: {
       enabled: false,
       headline: createI18nString(t("templates.preview_survey_welcome_card_headline"), []),

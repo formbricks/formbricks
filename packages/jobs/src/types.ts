@@ -28,8 +28,14 @@ const ZResponsePipelineJobResponse = ZResponse.extend({
 export const ZResponsePipelineJobData = z.object({
   event: ZResponsePipelineEvent,
   response: ZResponsePipelineJobResponse,
-  environmentId: z.string().min(1),
-  surveyId: z.string().min(1),
+  workspaceId: z.cuid2(),
+  surveyId: z.cuid2(),
 });
 
 export type TResponsePipelineJobData = z.infer<typeof ZResponsePipelineJobData>;
+
+export const ZSurveySchedulingJobData = z.object({
+  scope: z.literal("global"),
+});
+
+export type TSurveySchedulingJobData = z.infer<typeof ZSurveySchedulingJobData>;

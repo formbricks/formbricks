@@ -44,7 +44,7 @@ export const LimitsReachedBanner = ({ organization, responseCount }: LimitsReach
                         </>
                       ) : null}
                     </p>
-                    <Link href={`${workspaceBasePath}/settings/billing`}>
+                    <Link href={`${workspaceBasePath}/settings/organization/billing`}>
                       <span className="text-sm text-slate-900">{t("common.learn_more")}</span>
                     </Link>
                   </div>

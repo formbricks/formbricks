@@ -211,6 +211,8 @@ export async function PreviewEmailTemplate({
       );
     }
     case TSurveyElementTypeEnum.Rating:
+    case TSurveyElementTypeEnum.CSAT:
+    case TSurveyElementTypeEnum.CES:
       return (
         <EmailTemplateWrapper styling={styling} surveyUrl={url}>
           <Section className="w-full">
@@ -453,10 +455,10 @@ function EmailTemplateWrapper({
   const colors = {
     "brand-color": styling.brandColor?.light ?? COLOR_DEFAULTS.brandColor,
     "card-bg-color": styling.cardBackgroundColor?.light ?? COLOR_DEFAULTS.cardBackgroundColor,
-    "input-color": styling.inputColor?.light ?? COLOR_DEFAULTS.inputColor,
+    "input-color": styling.inputBgColor?.light ?? COLOR_DEFAULTS.inputBgColor,
     "input-border-color": styling.inputBorderColor?.light ?? COLOR_DEFAULTS.inputBorderColor,
     "card-border-color": styling.cardBorderColor?.light ?? COLOR_DEFAULTS.cardBorderColor,
-    "question-color": styling.questionColor?.light ?? COLOR_DEFAULTS.questionColor,
+    "question-color": styling.elementHeadlineColor?.light ?? COLOR_DEFAULTS.elementHeadlineColor,
   };
 
   if (isLight(colors["question-color"])) {

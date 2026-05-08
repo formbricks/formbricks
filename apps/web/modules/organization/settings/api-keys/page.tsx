@@ -1,6 +1,5 @@
-import { OrganizationSettingsNavbar } from "@/app/(app)/workspaces/[workspaceId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
-import { DEFAULT_LOCALE, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { DEFAULT_LOCALE } from "@/lib/constants";
 import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getWorkspacesByOrganizationId } from "@/modules/organization/settings/api-keys/lib/workspaces";
@@ -26,13 +25,7 @@ export const APIKeysPage = async (props: { params: Promise<{ workspaceId: string
 
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("workspace.settings.general.organization_settings")}>
-        <OrganizationSettingsNavbar
-          isFormbricksCloud={IS_FORMBRICKS_CLOUD}
-          membershipRole={currentUserMembership?.role}
-          activeId="api-keys"
-        />
-      </PageHeader>
+      <PageHeader pageTitle={t("common.api_keys")} />
       <SettingsCard
         title={t("common.api_keys")}
         description={t("workspace.settings.api_keys.api_keys_description")}>

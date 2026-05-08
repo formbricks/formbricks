@@ -30,7 +30,7 @@ describe("ActionClass Service", () => {
   });
 
   describe("getActionClasses", () => {
-    test("should return action classes for environment", async () => {
+    test("should return action classes for workspace", async () => {
       const mockActionClasses: TActionClass[] = [
         {
           id: "id1",
@@ -41,15 +41,15 @@ describe("ActionClass Service", () => {
           type: "code",
           key: "key1",
           noCodeConfig: null,
-          workspaceId: "env1",
+          workspaceId: "ws1",
         },
       ];
       vi.mocked(prisma.actionClass.findMany).mockResolvedValue(mockActionClasses);
 
-      const result = await getActionClasses("env1");
+      const result = await getActionClasses("ws1");
       expect(result).toEqual(mockActionClasses);
       expect(prisma.actionClass.findMany).toHaveBeenCalledWith({
-        where: { workspaceId: "env1" },
+        where: { workspaceId: "ws1" },
         select: expect.any(Object),
         take: undefined,
         skip: undefined,
@@ -59,7 +59,7 @@ describe("ActionClass Service", () => {
 
     test("should throw DatabaseError when prisma throws", async () => {
       vi.mocked(prisma.actionClass.findMany).mockRejectedValue(new Error("fail"));
-      await expect(getActionClasses("env1")).rejects.toThrow(DatabaseError);
+      await expect(getActionClasses("ws1")).rejects.toThrow(DatabaseError);
     });
   });
 
@@ -78,15 +78,15 @@ describe("ActionClass Service", () => {
           elementSelector: { cssSelector: "button" },
           urlFilters: [],
         },
-        workspaceId: "env2",
+        workspaceId: "ws2",
       };
       if (!prisma.actionClass.findFirst) prisma.actionClass.findFirst = vi.fn();
       vi.mocked(prisma.actionClass.findFirst).mockResolvedValue(mockActionClass);
 
-      const result = await getActionClassByWorkspaceIdAndName("env2", "Action 2");
+      const result = await getActionClassByWorkspaceIdAndName("ws2", "Action 2");
       expect(result).toEqual(mockActionClass);
       expect(prisma.actionClass.findFirst).toHaveBeenCalledWith({
-        where: { name: "Action 2", workspaceId: "env2" },
+        where: { name: "Action 2", workspaceId: "ws2" },
         select: expect.any(Object),
       });
     });
@@ -94,14 +94,14 @@ describe("ActionClass Service", () => {
     test("should return null when not found", async () => {
       if (!prisma.actionClass.findFirst) prisma.actionClass.findFirst = vi.fn();
       vi.mocked(prisma.actionClass.findFirst).mockResolvedValue(null);
-      const result = await getActionClassByWorkspaceIdAndName("env2", "Action 2");
+      const result = await getActionClassByWorkspaceIdAndName("ws2", "Action 2");
       expect(result).toBeNull();
     });
 
     test("should throw DatabaseError when prisma throws", async () => {
       if (!prisma.actionClass.findFirst) prisma.actionClass.findFirst = vi.fn();
       vi.mocked(prisma.actionClass.findFirst).mockRejectedValue(new Error("fail"));
-      await expect(getActionClassByWorkspaceIdAndName("env2", "Action 2")).rejects.toThrow(DatabaseError);
+      await expect(getActionClassByWorkspaceIdAndName("ws2", "Action 2")).rejects.toThrow(DatabaseError);
     });
   });
 
@@ -116,7 +116,7 @@ describe("ActionClass Service", () => {
         type: "code",
         key: "key3",
         noCodeConfig: null,
-        workspaceId: "env3",
+        workspaceId: "ws3",
       };
       if (!prisma.actionClass.findUnique) prisma.actionClass.findUnique = vi.fn();
       vi.mocked(prisma.actionClass.findUnique).mockResolvedValue(mockActionClass);

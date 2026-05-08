@@ -1,8 +1,10 @@
 import { createId } from "@paralleldrive/cuid2";
 import { type Prisma, PrismaClient } from "@prisma/client";
-import bcrypt from "bcryptjs";
+import bcryptjs from "bcryptjs";
 import { logger } from "@formbricks/logger";
 import { SEED_CREDENTIALS, SEED_IDS } from "./seed/constants";
+
+const hashPassword = bcryptjs.hash;
 
 const prisma = new PrismaClient();
 
@@ -93,6 +95,9 @@ async function deleteData(): Promise<void> {
     "segment",
     "webhook",
     "integration",
+    "dashboardWidget",
+    "chart",
+    "dashboard",
     "workspaceTeam",
     "teamUser",
     "team",
@@ -374,7 +379,7 @@ async function main(): Promise<void> {
   });
 
   // Users
-  const passwordHash = await bcrypt.hash(SEED_CREDENTIALS.ADMIN.password, 10);
+  const passwordHash = await hashPassword(SEED_CREDENTIALS.ADMIN.password, 10);
 
   await prisma.user.upsert({
     where: { id: SEED_IDS.USER_ADMIN },
@@ -551,7 +556,7 @@ async function main(): Promise<void> {
   await generateResponses(SEED_IDS.SURVEY_COMPLETED, 50);
 
   logger.info(`\n${"=".repeat(50)}`);
-  logger.info("🚀 SEEDING COMPLETED SUCCESSFULLY");
+  logger.info("SEEDING COMPLETED SUCCESSFULLY");
   logger.info("=".repeat(50));
   logger.info("\nLog in with the following credentials:");
   logger.info(`\n  Admin (Owner):`);

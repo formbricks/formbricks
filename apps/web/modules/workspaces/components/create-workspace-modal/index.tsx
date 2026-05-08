@@ -58,19 +58,6 @@ export const CreateWorkspaceModal = ({
 
   const [organizationTeams, setOrganizationTeams] = useState<TOrganizationTeam[]>([]);
 
-  useEffect(() => {
-    const fetchOrganizationTeams = async () => {
-      const response = await getTeamsByOrganizationIdAction({ organizationId });
-      if (response?.data) {
-        setOrganizationTeams(response.data);
-      } else {
-        const errorMessage = getFormattedErrorMessage(response);
-        toast.error(errorMessage);
-      }
-    };
-    fetchOrganizationTeams();
-  }, [organizationId]);
-
   const form = useForm<TCreateWorkspaceForm>({
     resolver: zodResolver(ZCreateWorkspaceForm),
     defaultValues: {
@@ -78,6 +65,22 @@ export const CreateWorkspaceModal = ({
       teamIds: [],
     },
   });
+
+  useEffect(() => {
+    if (!open) return;
+
+    const fetchModalData = async () => {
+      const teamsResponse = await getTeamsByOrganizationIdAction({ organizationId });
+
+      if (teamsResponse?.data) {
+        setOrganizationTeams(teamsResponse.data);
+      } else {
+        const errorMessage = getFormattedErrorMessage(teamsResponse);
+        toast.error(errorMessage);
+      }
+    };
+    fetchModalData();
+  }, [open, organizationId]);
 
   const { isSubmitting } = form.formState;
 

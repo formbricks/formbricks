@@ -60,8 +60,8 @@ const mockTemplate: TXMTemplate = {
   ],
   styling: {
     brandColor: { light: "#0000FF" },
-    questionColor: { light: "#00FF00" },
-    inputColor: { light: "#FF0000" },
+    elementHeadlineColor: { light: "#00FF00" },
+    inputBgColor: { light: "#FF0000" },
   },
 };
 

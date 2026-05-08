@@ -12,20 +12,19 @@ The following diagram shows the core entities and their relationships in the For
 
 ```mermaid
 erDiagram
-    Organization ||--o{ Project : "has many"
+    Organization ||--o{ Workspace : "has many"
     Organization ||--o{ Membership : "has many"
     Organization ||--o{ Team : "has many"
     Organization ||--o{ Invite : "sends"
 
-    Project ||--o{ Environment : "has two"
-    Project ||--o{ Language : "supports"
-    Project ||--o{ ProjectTeam : "has"
+    Workspace ||--o{ Language : "supports"
+    Workspace ||--o{ WorkspaceTeam : "has"
 
-    Environment ||--o{ Survey : "contains"
-    Environment ||--o{ Contact : "tracks"
-    Environment ||--o{ ActionClass : "defines"
-    Environment ||--o{ ApiKey : "has"
-    Environment ||--o{ Integration : "configures"
+    Workspace ||--o{ Survey : "contains"
+    Workspace ||--o{ Contact : "tracks"
+    Workspace ||--o{ ActionClass : "defines"
+    Workspace ||--o{ ApiKeyWorkspace : "has"
+    Workspace ||--o{ Integration : "configures"
 
     Survey ||--o{ Response : "receives"
     Survey ||--o{ Display : "tracks"
@@ -42,7 +41,8 @@ erDiagram
     User ||--o{ TeamUser : "member of"
 
     Team ||--o{ TeamUser : "includes"
-    Team ||--o{ ProjectTeam : "has access to"
+    Team ||--o{ WorkspaceTeam : "has access to"
+    ApiKey ||--o{ ApiKeyWorkspace : "scopes"
 
 
     Response ||--o{ TagsOnResponses : "tagged with"
@@ -57,24 +57,24 @@ erDiagram
 
 ## Core Models
 
-### Organization & Project Management
+### Organization & Workspace Management
 
 1. **Organization**
 
    - Top-level entity for multi-tenancy
-   - Contains multiple projects and team members
+   - Contains multiple Workspaces and team members
    - Manages billing and whitelabel settings
 
-2. **Project**
+2. **Workspace**
 
-   - Groups related surveys and configurations
-   - Has two environments (production/development)
+   - Main grouping mechanism for surveys and related configuration
+   - Belongs to a single organization
    - Controls branding and display settings
 
-3. **Environment**
-   - Isolates production and development resources
-   - Contains surveys, contacts, and actions
-   - Manages API keys and integrations
+3. **WorkspaceTeam**
+   - Maps teams to Workspaces
+   - Controls Workspace-level access permissions
+   - Enables scoped collaboration across teams
 
 ### Survey Management
 
@@ -111,7 +111,7 @@ erDiagram
 
 3. **Team**
    - Groups users within organizations
-   - Controls project access permissions
+   - Controls Workspace access permissions
    - Facilitates collaborative survey management
 
 ## Data Isolation
@@ -120,20 +120,22 @@ The database schema ensures proper data isolation through:
 
 1. **Organization-level isolation**
 
-   - Each organization has its own projects
+   - Each organization has its own Workspaces
    - Users can belong to multiple organizations
    - Resources are scoped to organizations
 
-2. **Environment-level isolation**
+2. **Workspace-level isolation**
 
-   - Separate production and development environments
-   - Independent surveys, contacts, and actions
-   - Isolated API keys and integrations
+   - Independent surveys, contacts, action classes, and integrations
+   - Isolated API key Workspace assignments
+   - Workspace-specific configuration and styling defaults
 
-3. **Project-level isolation**
-   - Project-specific configurations
-   - Separate language settings
-   - Team-based access control
+3. **Team-based access isolation**
+
+   - Teams are linked to Workspaces through `WorkspaceTeam`
+   - Permissions are scoped per Workspace
+   - Access can be delegated without exposing all organization resources
+
 
 ## Schema Management
 
@@ -155,20 +157,19 @@ Formbricks stores all data in PostgreSQL tables. Here's a comprehensive list of 
 | --------------------- | ---------------------------------------------------------------------- |
 | Account               | Stores third-party authentication accounts (OAuth) and their tokens    |
 | ActionClass           | Defines triggerable events that can launch surveys                     |
-| ApiKey                | Stores API authentication keys for environment-specific access         |
+| ApiKey                | Stores API authentication keys for organization-level access          |
+| ApiKeyWorkspace       | Maps API keys to the Workspaces they can access                      |
 | Contact               | Records information about user that can receive and respond to surveys |
 | ContactAttribute      | Stores attribute values for contacts (e.g., role, company size)        |
 | ContactAttributeKey   | Defines available attribute types for contacts                         |
 | DataMigration         | Tracks the status of database schema migrations                        |
 | Display               | Records when and to whom surveys were shown                            |
-| Environment           | Manages production/development environments within projects            |
+| Workspace             | Main container for surveys, contacts, actions, integrations, and settings |
 | Integration           | Stores configuration for third-party service integrations              |
 | Invite                | Manages pending invitations to join organizations                      |
 | Language              | Defines supported languages for multi-lingual surveys                  |
 | Membership            | Links users to organizations with specific roles                       |
-| Organization          | Top-level container for projects and team management                   |
-| Project               | Groups related surveys and environments                                |
-| ProjectTeam           | Manages team access permissions to projects                            |
+| Organization          | Top-level container for Workspaces and team management                |
 | Response              | Stores survey responses and associated metadata                        |
 | Segment               | Defines groups of contacts based on attributes                         |
 | Survey                | Stores survey configurations, questions, and display rules             |
@@ -180,6 +181,7 @@ Formbricks stores all data in PostgreSQL tables. Here's a comprehensive list of 
 | TagsOnResponses       | Junction table linking tags to responses                               |
 | Team                  | Groups users within organizations                                      |
 | TeamUser              | Links users to teams with specific roles                               |
+| WorkspaceTeam         | Manages team access permissions to Workspaces                          |
 | User                  | Stores user account information and preferences                        |
 | Webhook               | Manages webhook endpoints for event notifications                      |
 

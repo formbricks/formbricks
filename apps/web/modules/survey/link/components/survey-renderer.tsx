@@ -72,11 +72,13 @@ export const renderSurvey = async ({
   const { workspace } = workspaceContext;
 
   const isSpamProtectionEnabled = Boolean(IS_RECAPTCHA_CONFIGURED && survey.recaptcha?.enabled);
+  const isScheduled = survey.status === "paused" && survey.publishOn !== null;
 
   if (survey.status !== "inProgress") {
     return (
       <SurveyInactive
         status={survey.status}
+        isScheduled={isScheduled}
         surveyClosedMessage={survey.surveyClosedMessage}
         workspace={workspace}
       />

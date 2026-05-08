@@ -1,8 +1,1 @@
-export interface TriggerUpdate {
-  create?: Array<{ actionClassId: string }>;
-  deleteMany?: {
-    actionClassId: {
-      in: string[];
-    };
-  };
-}
+export type { TriggerUpdate } from "@/modules/survey/lib/trigger-updates";
