@@ -132,6 +132,10 @@ describe("@formbricks/jobs queue helpers", () => {
     );
   });
 
+  test("uses a Redis Cluster hash-tagged prefix for BullMQ keys", () => {
+    expect(JOBS_PREFIX).toBe("{formbricks:jobs}");
+  });
+
   test("memoizes the producer queue", async () => {
     const first = await getJobsQueue();
     const second = await getJobsQueue();

@@ -1,7 +1,7 @@
 import type { JobSchedulerTemplateOptions, JobsOptions } from "bullmq";
 
 export const JOBS_QUEUE_NAME = "background-jobs";
-export const JOBS_PREFIX = "formbricks:jobs";
+export const JOBS_PREFIX = "{formbricks:jobs}";
 
 export const JOB_NAMES = {
   testLog: "system.test-log",
