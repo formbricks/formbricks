@@ -175,6 +175,10 @@ export const testEndpoint = async (url: string, secret?: string): Promise<boolea
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 5000);
+  // Hoisted out of the try so the finally can close it on every path.
+  // Pin TCP connect to the validated IP — closes DNS-rebinding TOCTOU between
+  // validation and fetch (undici otherwise resolves the hostname a second time).
+  const dispatcher = address ? createPinnedDispatcher(address) : undefined;
 
   try {
     const webhookMessageId = uuidv7();
@@ -201,9 +205,6 @@ export const testEndpoint = async (url: string, secret?: string): Promise<boolea
     // Gated on the same env var as validateWebhookUrl: self-hosters who opted into trusting internal
     // URLs also get the pre-patch redirect-follow behavior for consistency.
     const redirectMode: RequestRedirect = DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS ? "follow" : "manual";
-    // Pin TCP connect to the validated IP — closes DNS-rebinding TOCTOU between
-    // validation and fetch (undici otherwise resolves the hostname a second time).
-    const dispatcher = address ? createPinnedDispatcher(address) : undefined;
     const response = await fetch(url, {
       method: "POST",
       body,
@@ -244,5 +245,7 @@ export const testEndpoint = async (url: string, secret?: string): Promise<boolea
     );
   } finally {
     clearTimeout(timeout);
+    // Free the pinned Agent's socket pool so the test endpoint doesn't accumulate sockets.
+    await dispatcher?.close();
   }
 };

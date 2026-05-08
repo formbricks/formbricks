@@ -1,4 +1,5 @@
 import dns from "node:dns";
+import type { Agent } from "undici";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import {
   createPinnedDispatcher,

@@ -150,17 +150,23 @@ export const POST = async (request: Request) => {
     }
 
     return validateAndResolveWebhookUrl(webhook.url)
-      .then((address) => {
+      .then(async (address) => {
         // Pin TCP connect to the validated IP. Without this, undici resolves DNS
         // again at fetch time and an attacker-controlled domain can rebind to a
         // private/internal IP after validation passed (TOCTOU SSRF).
         const dispatcher = address ? createPinnedDispatcher(address) : undefined;
-        return fetchWithTimeout(webhook.url, {
-          method: "POST",
-          headers: requestHeaders,
-          body,
-          dispatcher,
-        });
+        try {
+          return await fetchWithTimeout(webhook.url, {
+            method: "POST",
+            headers: requestHeaders,
+            body,
+            dispatcher,
+          });
+        } finally {
+          // Each pinned Agent owns a keep-alive socket pool; close it so we
+          // don't leak sockets across the per-webhook fan-out on every response.
+          await dispatcher?.close();
+        }
       })
       .catch((error) => {
         logger.error({ error, url: request.url }, `Webhook call to ${webhook.url} failed`);
