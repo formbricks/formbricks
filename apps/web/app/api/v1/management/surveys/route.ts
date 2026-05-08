@@ -14,6 +14,7 @@ import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { createSurvey } from "@/lib/survey/service";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
+import { getReadableEnvironmentIds } from "./lib/access";
 import { getSurveys } from "./lib/surveys";
 
 export const GET = withV1ApiWrapper({
@@ -27,9 +28,7 @@ export const GET = withV1ApiWrapper({
       const limit = searchParams.has("limit") ? Number(searchParams.get("limit")) : undefined;
       const offset = searchParams.has("offset") ? Number(searchParams.get("offset")) : undefined;
 
-      const environmentIds = authentication.environmentPermissions.map(
-        (permission) => permission.environmentId
-      );
+      const environmentIds = await getReadableEnvironmentIds(authentication);
 
       const surveys = await getSurveys(environmentIds, limit, offset);
 
