@@ -3736,6 +3736,7 @@
       "no_feedback_directory_linked_member_description": "Trebuie configurat un director de feedback pentru acest spațiu de lucru înainte ca această funcționalitate să fie disponibilă. Solicită unui proprietar sau manager al organizației să atribuie unul.",
       "no_feedback_directory_linked_title": "Niciun director de feedback conectat",
       "no_feedback_records": "Nu există încă înregistrări de feedback. Înregistrările vor apărea aici după ce conectorii tăi vor începe să trimită date.",
+      "no_formbricks_surveys_available_description": "Nu există încă chestionare în acest spațiu de lucru. <surveyLink>Creează un chestionar nou</surveyLink> pentru a folosi unul ca sursă de feedback.",
       "no_source_fields_loaded": "Nu au fost încă încărcate câmpuri sursă",
       "no_sources_connected": "Nicio sursă conectată încă. Adaugă o sursă pentru a începe.",
       "optional": "Opțional",

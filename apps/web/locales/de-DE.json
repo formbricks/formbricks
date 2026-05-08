@@ -3736,6 +3736,7 @@
       "no_feedback_directory_linked_member_description": "Für diesen Workspace muss ein Feedback-Verzeichnis eingerichtet werden, bevor diese Funktion verfügbar ist. Bitte einen Organisationsinhaber oder Manager, eins zuzuweisen.",
       "no_feedback_directory_linked_title": "Kein Feedback-Verzeichnis verknüpft",
       "no_feedback_records": "Noch keine Feedback-Einträge vorhanden. Einträge erscheinen hier, sobald deine Konnektoren Daten senden.",
+      "no_formbricks_surveys_available_description": "In diesem Workspace gibt es noch keine Umfragen. <surveyLink>Erstelle eine neue Umfrage</surveyLink>, um eine als Feedback-Quelle zu verwenden.",
       "no_source_fields_loaded": "Noch keine Quellfelder geladen",
       "no_sources_connected": "Noch keine Quellen verbunden. Füge eine Quelle hinzu, um loszulegen.",
       "optional": "Optional",

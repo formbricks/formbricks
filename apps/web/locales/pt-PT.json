@@ -3736,6 +3736,7 @@
       "no_feedback_directory_linked_member_description": "É necessário configurar um diretório de feedback para este workspace antes de esta funcionalidade estar disponível. Pede a um proprietário ou gestor da organização para atribuir um.",
       "no_feedback_directory_linked_title": "Nenhum diretório de feedback vinculado",
       "no_feedback_records": "Ainda não há registos de feedback. Os registos aparecerão aqui assim que os teus conectores começarem a enviar dados.",
+      "no_formbricks_surveys_available_description": "Ainda não há inquéritos neste workspace. <surveyLink>Cria um novo inquérito</surveyLink> para usar um como fonte de feedback.",
       "no_source_fields_loaded": "Ainda não foram carregados campos de origem",
       "no_sources_connected": "Ainda não há origens ligadas. Adicione uma origem para começar.",
       "optional": "Opcional",

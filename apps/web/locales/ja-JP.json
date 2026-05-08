@@ -3736,6 +3736,7 @@
       "no_feedback_directory_linked_member_description": "この機能を利用するには、このワークスペースにフィードバックディレクトリを設定する必要があります。組織のオーナーまたはマネージャーに割り当てを依頼してください。",
       "no_feedback_directory_linked_title": "フィードバックディレクトリが未リンク",
       "no_feedback_records": "フィードバックレコードはまだありません。コネクタがデータの送信を開始すると、ここにレコードが表示されます。",
+      "no_formbricks_surveys_available_description": "このワークスペースにはまだフォームがありません。フィードバックソースとして使用するには<surveyLink>新しいフォームを作成</surveyLink>してください。",
       "no_source_fields_loaded": "ソースフィールドがまだ読み込まれていません",
       "no_sources_connected": "ソースがまだ接続されていません。開始するにはソースを追加してください。",
       "optional": "任意",

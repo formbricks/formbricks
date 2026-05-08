@@ -3736,6 +3736,7 @@
       "no_feedback_directory_linked_member_description": "Um diretório de feedback precisa ser configurado para este workspace antes que esta funcionalidade esteja disponível. Peça a um proprietário ou gerente da organização para configurar um.",
       "no_feedback_directory_linked_title": "Nenhum diretório de feedback vinculado",
       "no_feedback_records": "Nenhum registro de feedback ainda. Os registros aparecerão aqui assim que seus conectores começarem a enviar dados.",
+      "no_formbricks_surveys_available_description": "Ainda não há pesquisas neste workspace. <surveyLink>Crie uma nova pesquisa</surveyLink> para usar uma como fonte de feedback.",
       "no_source_fields_loaded": "Nenhum campo de origem carregado ainda",
       "no_sources_connected": "Nenhuma origem conectada ainda. Adicione uma origem para começar.",
       "optional": "Opcional",

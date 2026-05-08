@@ -3736,6 +3736,7 @@
       "no_feedback_directory_linked_member_description": "Er moet eerst een feedbackmap worden ingesteld voor deze werkruimte voordat deze functionaliteit beschikbaar is. Vraag een organisatie-eigenaar of manager om er een toe te wijzen.",
       "no_feedback_directory_linked_title": "Geen feedbackmap gekoppeld",
       "no_feedback_records": "Nog geen feedbackrecords. Records verschijnen hier zodra je connectoren gegevens beginnen te verzenden.",
+      "no_formbricks_surveys_available_description": "Er zijn nog geen enquêtes in deze werkruimte. <surveyLink>Maak een nieuwe enquête</surveyLink> om er een als feedbackbron te gebruiken.",
       "no_source_fields_loaded": "Nog geen bronvelden geladen",
       "no_sources_connected": "Nog geen bronnen verbonden. Voeg een bron toe om te beginnen.",
       "optional": "Optioneel",

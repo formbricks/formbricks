@@ -3736,6 +3736,7 @@
       "no_feedback_directory_linked_member_description": "A feedback directory needs to be set up for this workspace before this functionality is available. Ask an organization owner or manager to assign one.",
       "no_feedback_directory_linked_title": "No feedback directory linked",
       "no_feedback_records": "No feedback records yet. Records will appear here once your connectors start sending data.",
+      "no_formbricks_surveys_available_description": "There are no surveys in this workspace yet. <surveyLink>Create a new survey</surveyLink> to use it as a feedback source.",
       "no_source_fields_loaded": "No source fields loaded yet",
       "no_sources_connected": "No sources connected yet. Add a source to get started.",
       "optional": "Optional",

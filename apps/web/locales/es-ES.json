@@ -3736,6 +3736,7 @@
       "no_feedback_directory_linked_member_description": "Es necesario configurar un directorio de feedback para este espacio de trabajo antes de que esta funcionalidad esté disponible. Solicita a un propietario o gestor de la organización que asigne uno.",
       "no_feedback_directory_linked_title": "No hay ningún directorio de feedback vinculado",
       "no_feedback_records": "Aún no hay registros de comentarios. Los registros aparecerán aquí una vez que tus conectores empiecen a enviar datos.",
+      "no_formbricks_surveys_available_description": "Todavía no hay encuestas en este espacio de trabajo. <surveyLink>Crea una nueva encuesta</surveyLink> para usar una como fuente de feedback.",
       "no_source_fields_loaded": "Aún no se han cargado campos de origen",
       "no_sources_connected": "Aún no hay fuentes conectadas. Añade una fuente para empezar.",
       "optional": "Opcional",

@@ -3736,6 +3736,7 @@
       "no_feedback_directory_linked_member_description": "Bu işlevin kullanılabilmesi için önce bu çalışma alanı için bir geri bildirim dizini kurulması gerekiyor. Bir organizasyon sahibinden veya yöneticisinden bir tane atamasını iste.",
       "no_feedback_directory_linked_title": "Bağlı geri bildirim dizini yok",
       "no_feedback_records": "Henüz geri bildirim kaydı yok. Bağlayıcıların veri göndermeye başlamasıyla kayıtlar burada görünecek.",
+      "no_formbricks_surveys_available_description": "Bu çalışma alanında henüz anket yok. Geri bildirim kaynağı olarak kullanmak için <surveyLink>Yeni bir anket oluştur</surveyLink>.",
       "no_source_fields_loaded": "Henüz kaynak alan yüklenmedi",
       "no_sources_connected": "Henüz bağlı kaynak yok. Başlamak için bir kaynak ekle.",
       "optional": "İsteğe bağlı",

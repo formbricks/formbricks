@@ -3736,6 +3736,7 @@
       "no_feedback_directory_linked_member_description": "在该功能可用前，需要先为此工作区设置反馈目录。请联系组织所有者或管理员进行分配。",
       "no_feedback_directory_linked_title": "未关联反馈目录",
       "no_feedback_records": "暂无反馈记录。当你的连接器开始发送数据后，记录会显示在这里。",
+      "no_formbricks_surveys_available_description": "此工作区还没有调查。<surveyLink>创建新调查</surveyLink>，以将其用作反馈来源。",
       "no_source_fields_loaded": "尚未加载源字段",
       "no_sources_connected": "还没有连接数据源。添加一个数据源开始吧。",
       "optional": "可选",

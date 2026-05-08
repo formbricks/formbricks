@@ -3736,6 +3736,7 @@
       "no_feedback_directory_linked_member_description": "Ehhez a munkaterülethez be kell állítani egy visszajelzési könyvtárat, mielőtt ez a funkció elérhetővé válna. Kérje meg a szervezet tulajdonosát vagy vezetőjét, hogy rendeljen hozzá egyet.",
       "no_feedback_directory_linked_title": "Nincs visszajelzési könyvtár kapcsolva",
       "no_feedback_records": "Még nincsenek visszajelzési rekordok. A rekordok itt fognak megjelenni, amint a csatlakozók elkezdik küldeni az adatokat.",
+      "no_formbricks_surveys_available_description": "Ebben a munkaterületen még nincsenek kérdőívek. <surveyLink>Hozz létre egy új kérdőívet</surveyLink>, hogy visszajelzési forrásként használhass egyet.",
       "no_source_fields_loaded": "Még nincsenek forrás mezők betöltve",
       "no_sources_connected": "Még nincsenek források csatlakoztatva. Adj hozzá egy forrást a kezdéshez.",
       "optional": "Elhagyható",
