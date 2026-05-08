@@ -18,6 +18,7 @@ import { getReadableEnvironmentIds } from "./lib/access";
 import { getSurveys } from "./lib/surveys";
 
 export const GET = withV1ApiWrapper({
+  allowOrganizationOnlyApiKey: true,
   handler: async ({ req, authentication }) => {
     if (!authentication || !("apiKeyId" in authentication)) {
       return { response: responses.notAuthenticatedResponse() };

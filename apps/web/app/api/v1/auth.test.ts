@@ -177,7 +177,7 @@ describe("authenticateRequest", () => {
     expect(result).toBeNull();
   });
 
-  test("authenticates a valid API key with no environment permissions", async () => {
+  test("returns null by default when API key has no environment permissions", async () => {
     const request = new NextRequest("http://localhost", {
       headers: { "x-api-key": "valid-api-key" },
     });
@@ -196,6 +196,28 @@ describe("authenticateRequest", () => {
     vi.mocked(getApiKeyWithPermissions).mockResolvedValue(mockApiKeyData as any);
 
     const result = await authenticateRequest(request);
+    expect(result).toBeNull();
+  });
+
+  test("authenticates a valid API key with no environment permissions when explicitly allowed", async () => {
+    const request = new NextRequest("http://localhost", {
+      headers: { "x-api-key": "valid-api-key" },
+    });
+
+    const mockApiKeyData = {
+      id: "api-key-id",
+      organizationId: "org-id",
+      organizationAccess: "all" as const,
+      createdAt: new Date(),
+      createdBy: "user-id",
+      lastUsedAt: null,
+      label: "Test API Key",
+      apiKeyEnvironments: [],
+    };
+
+    vi.mocked(getApiKeyWithPermissions).mockResolvedValue(mockApiKeyData as any);
+
+    const result = await authenticateRequest(request, { allowOrganizationOnlyApiKey: true });
     expect(result).toEqual({
       type: "apiKey",
       environmentPermissions: [],
@@ -228,7 +250,7 @@ describe("authenticateRequest", () => {
 
     vi.mocked(getApiKeyWithPermissions).mockResolvedValue(mockApiKeyData as any);
 
-    const result = await authenticateRequest(request);
+    const result = await authenticateRequest(request, { allowOrganizationOnlyApiKey: true });
     expect(result).toEqual({
       type: "apiKey",
       environmentPermissions: [],

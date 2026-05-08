@@ -71,7 +71,9 @@ describe("GET /api/v1/management/me", () => {
         },
       },
     });
-    expect(authenticateApiKey).toHaveBeenCalledWith("read-only-org-api-key");
+    expect(authenticateApiKey).toHaveBeenCalledWith("read-only-org-api-key", {
+      allowOrganizationOnlyApiKey: true,
+    });
     expect(applyRateLimit).toHaveBeenCalledWith(expect.any(Object), "api-key-id");
   });
 

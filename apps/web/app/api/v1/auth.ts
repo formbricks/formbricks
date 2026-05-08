@@ -9,9 +9,20 @@ import {
 import { responses } from "@/app/lib/api/response";
 import { getApiKeyWithPermissions } from "@/modules/organization/settings/api-keys/lib/api-key";
 
-export const authenticateApiKey = async (apiKey: string): Promise<TAuthenticationApiKey | null> => {
+type AuthenticateApiKeyOptions = {
+  allowOrganizationOnlyApiKey?: boolean;
+};
+
+export const authenticateApiKey = async (
+  apiKey: string,
+  options: AuthenticateApiKeyOptions = {}
+): Promise<TAuthenticationApiKey | null> => {
   const apiKeyData = await getApiKeyWithPermissions(apiKey);
   if (!apiKeyData) return null;
+
+  if (!options.allowOrganizationOnlyApiKey && apiKeyData.apiKeyEnvironments.length === 0) {
+    return null;
+  }
 
   // In the route handlers, we'll do more specific permission checks
   const authentication: TAuthenticationApiKey = {
@@ -31,11 +42,14 @@ export const authenticateApiKey = async (apiKey: string): Promise<TAuthenticatio
   return authentication;
 };
 
-export const authenticateRequest = async (request: NextRequest): Promise<TAuthenticationApiKey | null> => {
+export const authenticateRequest = async (
+  request: NextRequest,
+  options: AuthenticateApiKeyOptions = {}
+): Promise<TAuthenticationApiKey | null> => {
   const apiKey = request.headers.get("x-api-key");
   if (!apiKey) return null;
 
-  return authenticateApiKey(apiKey);
+  return authenticateApiKey(apiKey, options);
 };
 
 export const handleErrorResponse = (error: any): Response => {

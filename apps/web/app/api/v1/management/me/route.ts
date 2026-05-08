@@ -20,7 +20,7 @@ const checkRateLimit = async (userId: string) => {
 };
 
 const handleApiKeyAuthentication = async (apiKey: string) => {
-  const authentication = await authenticateApiKey(apiKey);
+  const authentication = await authenticateApiKey(apiKey, { allowOrganizationOnlyApiKey: true });
 
   if (!authentication) {
     return responses.notAuthenticatedResponse();

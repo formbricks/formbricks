@@ -46,6 +46,11 @@ export interface TWithV1ApiWrapperParams<
    * the legacy JSON 401. Use this to return a custom response (e.g. RFC 9457 problem+json for V3).
    */
   unauthenticatedResponse?: (req: NextRequest) => Response;
+  /**
+   * Most v1 management routes are environment-scoped. Enable this only for routes that explicitly
+   * support organization-only API keys.
+   */
+  allowOrganizationOnlyApiKey?: boolean;
 }
 
 enum ApiV1RouteTypeEnum {
@@ -142,16 +147,17 @@ const setupAuditLog = (
  */
 const handleAuthentication = async (
   authenticationMethod: AuthenticationMethod,
-  req: NextRequest
+  req: NextRequest,
+  allowOrganizationOnlyApiKey = false
 ): Promise<TApiV1Authentication> => {
   switch (authenticationMethod) {
     case AuthenticationMethod.ApiKey:
-      return await authenticateRequest(req);
+      return await authenticateRequest(req, { allowOrganizationOnlyApiKey });
     case AuthenticationMethod.Session:
       return await getServerSession(authOptions);
     case AuthenticationMethod.Both: {
       const session = await getServerSession(authOptions);
-      return session ?? (await authenticateRequest(req));
+      return session ?? (await authenticateRequest(req, { allowOrganizationOnlyApiKey }));
     }
     case AuthenticationMethod.None:
       return null;
@@ -251,7 +257,14 @@ const getRouteType = (
 export const withV1ApiWrapper = <TResult extends { response: Response; error?: unknown }, TProps = unknown>(
   params: TWithV1ApiWrapperParams<TResult, TProps>
 ): ((req: NextRequest, props: TProps) => Promise<Response>) => {
-  const { handler, action, targetType, customRateLimitConfig, unauthenticatedResponse } = params;
+  const {
+    handler,
+    action,
+    targetType,
+    customRateLimitConfig,
+    unauthenticatedResponse,
+    allowOrganizationOnlyApiKey,
+  } = params;
   return async (req: NextRequest, props: TProps): Promise<Response> => {
     // === Audit Log Setup ===
     const saveAuditLog = action && targetType;
@@ -270,7 +283,7 @@ export const withV1ApiWrapper = <TResult extends { response: Response; error?: u
     }
 
     // === Authentication ===
-    const authentication = await handleAuthentication(authenticationMethod, req);
+    const authentication = await handleAuthentication(authenticationMethod, req, allowOrganizationOnlyApiKey);
 
     if (!authentication && routeType !== ApiV1RouteTypeEnum.Client) {
       if (unauthenticatedResponse) {

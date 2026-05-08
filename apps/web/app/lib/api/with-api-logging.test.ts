@@ -587,6 +587,56 @@ describe("withV1ApiWrapper", () => {
     });
     expect(mockedQueueAuditEvent).not.toHaveBeenCalled();
   });
+
+  test("does not allow organization-only API keys by default", async () => {
+    const { authenticateRequest } = await import("@/app/api/v1/auth");
+    const { isClientSideApiRoute, isManagementApiRoute, isIntegrationRoute } =
+      await import("@/app/middleware/endpoint-validator");
+
+    vi.mocked(authenticateRequest).mockResolvedValue(null);
+    vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: false, isRateLimited: true });
+    vi.mocked(isManagementApiRoute).mockReturnValue({
+      isManagementApi: true,
+      authenticationMethod: AuthenticationMethod.ApiKey,
+    });
+    vi.mocked(isIntegrationRoute).mockReturnValue(false);
+
+    const handler = vi.fn();
+    const req = createMockRequest({ url: "https://api.test/api/v1/management/action-classes" });
+    const { withV1ApiWrapper } = await import("./with-api-logging");
+    const wrapped = withV1ApiWrapper({ handler });
+    const response = await wrapped(req, undefined);
+
+    expect(response.status).toBe(401);
+    expect(handler).not.toHaveBeenCalled();
+    expect(authenticateRequest).toHaveBeenCalledWith(req, { allowOrganizationOnlyApiKey: false });
+  });
+
+  test("allows organization-only API keys when the route opts in", async () => {
+    const { authenticateRequest } = await import("@/app/api/v1/auth");
+    const { isClientSideApiRoute, isManagementApiRoute, isIntegrationRoute } =
+      await import("@/app/middleware/endpoint-validator");
+
+    vi.mocked(authenticateRequest).mockResolvedValue(mockApiAuthentication);
+    vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: false, isRateLimited: true });
+    vi.mocked(isManagementApiRoute).mockReturnValue({
+      isManagementApi: true,
+      authenticationMethod: AuthenticationMethod.ApiKey,
+    });
+    vi.mocked(isIntegrationRoute).mockReturnValue(false);
+
+    const handler = vi.fn().mockResolvedValue({
+      response: responses.successResponse({ data: "test" }),
+    });
+    const req = createMockRequest({ url: V1_MANAGEMENT_SURVEYS_URL });
+    const { withV1ApiWrapper } = await import("./with-api-logging");
+    const wrapped = withV1ApiWrapper({ handler, allowOrganizationOnlyApiKey: true });
+    const response = await wrapped(req, undefined);
+
+    expect(response.status).toBe(200);
+    expect(handler).toHaveBeenCalled();
+    expect(authenticateRequest).toHaveBeenCalledWith(req, { allowOrganizationOnlyApiKey: true });
+  });
 });
 
 describe("buildAuditLogBaseObject", () => {
