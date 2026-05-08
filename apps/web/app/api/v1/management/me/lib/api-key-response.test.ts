@@ -139,6 +139,45 @@ describe("buildApiKeyMeResponse", () => {
     expect(getEnvironment).toHaveBeenCalledWith("env-id");
   });
 
+  test("returns the legacy environment response for an organization-read API key with one environment", async () => {
+    const createdAt = new Date("2026-01-01T00:00:00.000Z");
+    const updatedAt = new Date("2026-01-02T00:00:00.000Z");
+
+    vi.mocked(getEnvironment).mockResolvedValue({
+      id: "env-id",
+      type: EnvironmentType.development,
+      createdAt,
+      updatedAt,
+      projectId: "project-id",
+      appSetupCompleted: true,
+    });
+
+    const response = await buildApiKeyMeResponse({
+      ...baseAuthentication,
+      organizationAccess: {
+        accessControl: {
+          read: true,
+          write: false,
+        },
+      },
+      environmentPermissions: [environmentPermission("env-id", "read")],
+    });
+
+    expect(response?.status).toBe(200);
+    expect(await response?.json()).toEqual({
+      id: "env-id",
+      type: EnvironmentType.development,
+      createdAt: createdAt.toISOString(),
+      updatedAt: updatedAt.toISOString(),
+      appSetupCompleted: true,
+      project: {
+        id: "project-id",
+        name: "Project Name",
+      },
+    });
+    expect(getEnvironment).toHaveBeenCalledWith("env-id");
+  });
+
   test("returns null when an API key has neither organization read nor exactly one environment", async () => {
     const response = await buildApiKeyMeResponse(baseAuthentication);
 

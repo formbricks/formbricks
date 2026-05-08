@@ -18,13 +18,13 @@ const buildApiKeyMetadataResponse = (authentication: TAuthenticationApiKey) => (
 export const buildApiKeyMeResponse = async (
   authentication: TAuthenticationApiKey
 ): Promise<Response | null> => {
-  if (hasOrganizationAccess(authentication, OrganizationAccessType.Read)) {
-    if (authentication.environmentPermissions.length !== 1) {
+  const environmentPermissionCount = authentication.environmentPermissions.length;
+
+  if (environmentPermissionCount !== 1) {
+    if (hasOrganizationAccess(authentication, OrganizationAccessType.Read)) {
       return Response.json(buildApiKeyMetadataResponse(authentication));
     }
-  }
 
-  if (authentication.environmentPermissions.length !== 1) {
     return null;
   }
 
