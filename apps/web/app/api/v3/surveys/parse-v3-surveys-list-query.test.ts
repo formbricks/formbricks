@@ -34,7 +34,7 @@ describe("parseV3SurveysListQuery", () => {
       expect(r.invalid_params[0]).toEqual({
         name: "foo",
         reason:
-          "Unsupported query parameter. Use only workspaceId, limit, cursor, filter[name][contains], filter[status][in], filter[type][in], sortBy.",
+          "Unsupported query parameter. Use only workspaceId, limit, cursor, includeTotalCount, filter[name][contains], filter[status][in], filter[type][in], sortBy.",
       });
   });
 
@@ -45,7 +45,7 @@ describe("parseV3SurveysListQuery", () => {
       expect(r.invalid_params[0]).toEqual({
         name: "after",
         reason:
-          "Unsupported query parameter. Use only workspaceId, limit, cursor, filter[name][contains], filter[status][in], filter[type][in], sortBy.",
+          "Unsupported query parameter. Use only workspaceId, limit, cursor, includeTotalCount, filter[name][contains], filter[status][in], filter[type][in], sortBy.",
       });
     }
   });
@@ -57,7 +57,7 @@ describe("parseV3SurveysListQuery", () => {
       expect(r.invalid_params[0]).toEqual({
         name: "name",
         reason:
-          "Unsupported query parameter. Use only workspaceId, limit, cursor, filter[name][contains], filter[status][in], filter[type][in], sortBy.",
+          "Unsupported query parameter. Use only workspaceId, limit, cursor, includeTotalCount, filter[name][contains], filter[status][in], filter[type][in], sortBy.",
       });
     }
   });
@@ -68,8 +68,17 @@ describe("parseV3SurveysListQuery", () => {
     if (r.ok) {
       expect(r.limit).toBe(20);
       expect(r.cursor).toBeNull();
+      expect(r.includeTotalCount).toBe(true);
       expect(r.sortBy).toBe("updatedAt");
       expect(r.filterCriteria).toBeUndefined();
+    }
+  });
+
+  test("parses includeTotalCount=false", () => {
+    const r = parseV3SurveysListQuery(params(`workspaceId=${wid}&includeTotalCount=false`));
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.includeTotalCount).toBe(false);
     }
   });
 
@@ -102,7 +111,7 @@ describe("parseV3SurveysListQuery", () => {
       expect(r.invalid_params[0]).toEqual({
         name: "filter[createdBy][in]",
         reason:
-          "Unsupported query parameter. Use only workspaceId, limit, cursor, filter[name][contains], filter[status][in], filter[type][in], sortBy.",
+          "Unsupported query parameter. Use only workspaceId, limit, cursor, includeTotalCount, filter[name][contains], filter[status][in], filter[type][in], sortBy.",
       });
     }
   });

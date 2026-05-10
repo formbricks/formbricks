@@ -6,6 +6,8 @@ import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import { buildWhereClause } from "@/modules/survey/lib/utils";
 import { decodeSurveyListPageCursor, encodeSurveyListPageCursor, getSurveyListPage } from "./survey-page";
 
+vi.mock("server-only", () => ({}));
+
 vi.mock("@/modules/survey/lib/utils", () => ({
   buildWhereClause: vi.fn(() => ({ AND: [] })),
 }));
@@ -14,6 +16,9 @@ vi.mock("@formbricks/database", () => ({
   prisma: {
     survey: {
       findMany: vi.fn(),
+    },
+    response: {
+      groupBy: vi.fn(),
     },
   },
 }));
@@ -37,7 +42,6 @@ function makeSurveyRow(overrides: Record<string, unknown> = {}) {
     updatedAt: new Date("2025-01-02T00:00:00.000Z"),
     creator: { name: "Alice" },
     singleUse: null,
-    _count: { responses: 3 },
     ...overrides,
   };
 }
@@ -74,12 +78,17 @@ describe("survey-page cursor helpers", () => {
 describe("getSurveyListPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(prisma.survey.findMany).mockReset();
+    vi.mocked(prisma.response.groupBy).mockReset();
   });
 
   test("uses a stable updatedAt order with a next cursor", async () => {
     vi.mocked(prisma.survey.findMany).mockResolvedValue([
       makeSurveyRow({ id: "survey_2", updatedAt: new Date("2025-01-03T00:00:00.000Z") }),
       makeSurveyRow({ id: "survey_1", updatedAt: new Date("2025-01-02T00:00:00.000Z") }),
+    ] as never);
+    vi.mocked(prisma.response.groupBy).mockResolvedValue([
+      { surveyId: "survey_2", _count: { _all: 3 } },
     ] as never);
 
     const page = await getSurveyListPage(environmentId, {
@@ -121,6 +130,9 @@ describe("getSurveyListPage", () => {
     vi.mocked(prisma.survey.findMany).mockResolvedValue([
       makeSurveyRow({ id: "survey_c", name: "Charlie" }),
     ] as never);
+    vi.mocked(prisma.response.groupBy).mockResolvedValue([
+      { surveyId: "survey_c", _count: { _all: 3 } },
+    ] as never);
 
     await getSurveyListPage(environmentId, {
       limit: 2,
@@ -161,6 +173,10 @@ describe("getSurveyListPage", () => {
           updatedAt: new Date("2025-01-01T00:00:00.000Z"),
         }),
       ] as never);
+    vi.mocked(prisma.response.groupBy).mockResolvedValue([
+      { surveyId: "survey_in_progress", _count: { _all: 3 } },
+      { surveyId: "survey_other_1", _count: { _all: 2 } },
+    ] as never);
 
     const page = await getSurveyListPage(environmentId, {
       limit: 2,
@@ -214,6 +230,9 @@ describe("getSurveyListPage", () => {
           updatedAt: new Date("2025-01-02T00:00:00.000Z"),
         }),
       ] as never);
+    vi.mocked(prisma.response.groupBy).mockResolvedValue([
+      { surveyId: "survey_in_progress", _count: { _all: 3 } },
+    ] as never);
 
     const page = await getSurveyListPage(environmentId, {
       limit: 1,
@@ -249,6 +268,9 @@ describe("getSurveyListPage", () => {
         status: "completed",
         updatedAt: new Date("2025-01-01T00:00:00.000Z"),
       }),
+    ] as never);
+    vi.mocked(prisma.response.groupBy).mockResolvedValue([
+      { surveyId: "survey_other_2", _count: { _all: 3 } },
     ] as never);
 
     const page = await getSurveyListPage(environmentId, {

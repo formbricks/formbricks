@@ -197,6 +197,7 @@
     "created_by": "Oluşturan",
     "customer_success": "Müşteri Başarısı",
     "dark_overlay": "Koyu kaplama",
+    "data_refreshed_successfully": "Veriler başarıyla yenilendi",
     "date": "Tarih",
     "date_picker": {
       "clear_date": "Clear date",
@@ -378,6 +379,7 @@
     "quotas_description": "Belirli kriterleri karşılayan katılımcılardan aldığınız yanıt miktarını sınırlayın.",
     "read_docs": "Dokümanları oku",
     "recipients": "Alıcılar",
+    "refresh": "Yenile",
     "remove": "Kaldır",
     "remove_from_team": "Takımdan çıkar",
     "reorder_and_hide_columns": "Sütunları yeniden sırala ve gizle",
@@ -679,8 +681,6 @@
       "attributes_msg_new_attribute_created": "\"{key}\" adında \"{dataType}\" türünde yeni özellik oluşturuldu",
       "attributes_msg_userid_already_exists": "Kullanıcı kimliği bu ortamda zaten mevcut ve güncellenmedi.",
       "contact_deleted_successfully": "Contact başarıyla silindi",
-      "contacts_table_refresh": "Kişileri yenile",
-      "contacts_table_refresh_success": "Kişiler başarıyla yenilendi",
       "create_attribute": "Özellik oluştur",
       "create_new_attribute": "Yeni özellik oluştur",
       "create_new_attribute_description": "Segmentasyon amacıyla yeni bir özellik oluşturun.",
@@ -1203,7 +1203,7 @@
         "organization_invite_link_ready": "Kuruluş davet bağlantınız hazır!",
         "organization_name": "Kuruluş Adı",
         "organization_name_description": "Kuruluşunuza açıklayıcı bir ad verin.",
-        "organization_name_placeholder": "ör. Power Puff Girls",
+        "organization_name_placeholder": "ör. Acme Inc.",
         "organization_name_updated_successfully": "Organization name başarıyla güncellendi",
         "organization_settings": "Kuruluş Ayarları",
         "please_add_a_logo": "Lütfen bir logo ekleyin",
@@ -1261,7 +1261,8 @@
         "unlock_two_factor_authentication": "Daha üst bir planla iki faktörlü kimlik doğrulamayı açın",
         "update_personal_info": "Kişisel bilgilerinizi güncelleyin",
         "warning_cannot_delete_account": "Bu organizasyonun tek sahibi sizsiniz. Lütfen önce sahipliği başka bir üyeye devredin.",
-        "warning_cannot_undo": "Bu işlem geri alınamaz"
+        "warning_cannot_undo": "Bu işlem geri alınamaz",
+        "wrong_password": "Yanlış parola"
       },
       "teams": {
         "add_members_description": "Takıma üyeler ekleyin ve rollerini belirleyin.",

@@ -197,6 +197,7 @@
     "created_by": "Gemaakt door",
     "customer_success": "Klant succes",
     "dark_overlay": "Donkere overlay",
+    "data_refreshed_successfully": "Gegevens succesvol vernieuwd",
     "date": "Datum",
     "date_picker": {
       "clear_date": "Clear date",
@@ -378,6 +379,7 @@
     "quotas_description": "Beperk het aantal reacties dat u ontvangt van deelnemers die aan bepaalde criteria voldoen.",
     "read_docs": "Documentatie lezen",
     "recipients": "Ontvangers",
+    "refresh": "Vernieuwen",
     "remove": "Verwijderen",
     "remove_from_team": "Verwijderen uit team",
     "reorder_and_hide_columns": "Kolommen opnieuw rangschikken en verbergen",
@@ -679,8 +681,6 @@
       "attributes_msg_new_attribute_created": "Nieuw attribuut “{key}” aangemaakt met type “{dataType}”",
       "attributes_msg_userid_already_exists": "De gebruikers-ID bestaat al voor deze omgeving en is niet bijgewerkt.",
       "contact_deleted_successfully": "Contact succesvol verwijderd",
-      "contacts_table_refresh": "Vernieuw contacten",
-      "contacts_table_refresh_success": "Contacten zijn vernieuwd",
       "create_attribute": "Attribuut aanmaken",
       "create_new_attribute": "Nieuw attribuut aanmaken",
       "create_new_attribute_description": "Maak een nieuw attribuut aan voor segmentatiedoeleinden.",
@@ -1203,7 +1203,7 @@
         "organization_invite_link_ready": "De uitnodigingslink voor uw organisatie is gereed!",
         "organization_name": "Organisatienaam",
         "organization_name_description": "Geef uw organisatie een beschrijvende naam.",
-        "organization_name_placeholder": "bijv. Power Puff-meisjes",
+        "organization_name_placeholder": "bijv. Acme Inc.",
         "organization_name_updated_successfully": "Organisatienaam is succesvol bijgewerkt",
         "organization_settings": "Organisatie-instellingen",
         "please_add_a_logo": "Voeg een logo toe",
@@ -1261,7 +1261,8 @@
         "unlock_two_factor_authentication": "Ontgrendel tweefactorauthenticatie met een hoger abonnement",
         "update_personal_info": "Update uw persoonlijke gegevens",
         "warning_cannot_delete_account": "U bent de enige eigenaar van deze organisatie. Draag het eigendom eerst over aan een ander lid.",
-        "warning_cannot_undo": "Dit kan niet ongedaan worden gemaakt"
+        "warning_cannot_undo": "Dit kan niet ongedaan worden gemaakt",
+        "wrong_password": "Verkeerd wachtwoord"
       },
       "teams": {
         "add_members_description": "Voeg leden toe aan het team en bepaal hun rol.",

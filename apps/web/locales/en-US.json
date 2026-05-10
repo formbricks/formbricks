@@ -197,6 +197,7 @@
     "created_by": "Created by",
     "customer_success": "Customer Success",
     "dark_overlay": "Dark overlay",
+    "data_refreshed_successfully": "Data refreshed successfully",
     "date": "Date",
     "date_picker": {
       "clear_date": "Clear date",
@@ -378,6 +379,7 @@
     "quotas_description": "Limit the amount of responses you receive from participants who meet certain criteria.",
     "read_docs": "Read docs",
     "recipients": "Recipients",
+    "refresh": "Refresh",
     "remove": "Remove",
     "remove_from_team": "Remove from team",
     "reorder_and_hide_columns": "Reorder and hide columns",
@@ -679,8 +681,6 @@
       "attributes_msg_new_attribute_created": "Created new attribute “{key}” with type “{dataType}”",
       "attributes_msg_userid_already_exists": "The user ID already exists for this environment and was not updated.",
       "contact_deleted_successfully": "Contact deleted successfully",
-      "contacts_table_refresh": "Refresh contacts",
-      "contacts_table_refresh_success": "Contacts refreshed successfully",
       "create_attribute": "Create attribute",
       "create_new_attribute": "Create new attribute",
       "create_new_attribute_description": "Create a new attribute for segmentation purposes.",
@@ -1203,7 +1203,7 @@
         "organization_invite_link_ready": "Your organization invite link is ready!",
         "organization_name": "Organization Name",
         "organization_name_description": "Give your organization a descriptive name.",
-        "organization_name_placeholder": "e.g. Power Puff Girls",
+        "organization_name_placeholder": "e.g. Acme Inc.",
         "organization_name_updated_successfully": "Organization name updated successfully",
         "organization_settings": "Organization Settings",
         "please_add_a_logo": "Please add a logo",
@@ -1261,7 +1261,8 @@
         "unlock_two_factor_authentication": "Unlock two-factor authentication with a higher plan",
         "update_personal_info": "Update your personal information",
         "warning_cannot_delete_account": "You are the only owner of this organization. Please transfer ownership to another member first.",
-        "warning_cannot_undo": "This cannot be undone"
+        "warning_cannot_undo": "This cannot be undone",
+        "wrong_password": "Wrong password"
       },
       "teams": {
         "add_members_description": "Add members to the team and determine their role.",

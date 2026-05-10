@@ -46,21 +46,22 @@ export const GET = withV3ApiWrapper({
 
       const { environmentId } = authResult;
 
-      const [{ surveys, nextCursor }, totalCount] = await Promise.all([
-        getSurveyListPage(environmentId, {
-          limit: parsed.limit,
-          cursor: parsed.cursor,
-          sortBy: parsed.sortBy,
-          filterCriteria: parsed.filterCriteria,
-        }),
-        getSurveyCount(environmentId, parsed.filterCriteria),
-      ]);
+      const surveyPagePromise = getSurveyListPage(environmentId, {
+        limit: parsed.limit,
+        cursor: parsed.cursor,
+        sortBy: parsed.sortBy,
+        filterCriteria: parsed.filterCriteria,
+      });
+      const totalCountPromise = parsed.includeTotalCount
+        ? getSurveyCount(environmentId, parsed.filterCriteria)
+        : Promise.resolve(null);
+      const [surveyPage, totalCount] = await Promise.all([surveyPagePromise, totalCountPromise]);
 
       return successListResponse(
-        surveys.map(serializeV3SurveyListItem),
+        surveyPage.surveys.map(serializeV3SurveyListItem),
         {
           limit: parsed.limit,
-          nextCursor,
+          nextCursor: surveyPage.nextCursor,
           totalCount,
         },
         { requestId, cache: "private, no-store" }

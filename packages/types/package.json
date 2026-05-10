@@ -14,7 +14,7 @@
     "clean": "rimraf node_modules .turbo"
   },
   "dependencies": {
-    "@prisma/client": "6.19.2",
+    "@prisma/client": "6.19.3",
     "zod": "4.3.6",
     "zod-openapi": "5.4.6",
     "node-html-parser": "7.1.0"

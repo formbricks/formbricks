@@ -197,6 +197,7 @@
     "created_by": "Erstellt von",
     "customer_success": "Kundenerfolg",
     "dark_overlay": "Dunkle Überlagerung",
+    "data_refreshed_successfully": "Daten erfolgreich aktualisiert",
     "date": "Datum",
     "date_picker": {
       "clear_date": "Clear date",
@@ -378,6 +379,7 @@
     "quotas_description": "Begrenze die Anzahl der Antworten, die du von Teilnehmern erhältst, die bestimmte Kriterien erfüllen.",
     "read_docs": "Dokumentation lesen",
     "recipients": "Empfänger",
+    "refresh": "Aktualisieren",
     "remove": "Entfernen",
     "remove_from_team": "Aus Team entfernen",
     "reorder_and_hide_columns": "Spalten neu anordnen und ausblenden",
@@ -679,8 +681,6 @@
       "attributes_msg_new_attribute_created": "Neues Attribut “{key}” mit Typ “{dataType}” erstellt",
       "attributes_msg_userid_already_exists": "Die Benutzer-ID existiert bereits für diese Umgebung und wurde nicht aktualisiert.",
       "contact_deleted_successfully": "Kontakt erfolgreich gelöscht",
-      "contacts_table_refresh": "Kontakte aktualisieren",
-      "contacts_table_refresh_success": "Kontakte erfolgreich aktualisiert",
       "create_attribute": "Attribut erstellen",
       "create_new_attribute": "Neues Attribut erstellen",
       "create_new_attribute_description": "Erstellen Sie ein neues Attribut für Segmentierungszwecke.",
@@ -1203,7 +1203,7 @@
         "organization_invite_link_ready": "Dein Einladungslink für die Organisation ist fertig!",
         "organization_name": "Organisationsname",
         "organization_name_description": "Gib deiner Organisation einen Namen.",
-        "organization_name_placeholder": "z. B. Powerpuff Girls",
+        "organization_name_placeholder": "z. B. Acme Inc.",
         "organization_name_updated_successfully": "Organisationsname erfolgreich aktualisiert",
         "organization_settings": "Organisationseinstellungen",
         "please_add_a_logo": "Bitte füge ein Logo hinzu",
@@ -1261,7 +1261,8 @@
         "unlock_two_factor_authentication": "Zwei-Faktor-Authentifizierung mit einem höheren Plan freischalten",
         "update_personal_info": "Persönliche Daten aktualisieren",
         "warning_cannot_delete_account": "Du bist der einzige Besitzer dieser Organisation. Bitte übertrage das Eigentum zuerst an ein anderes Mitglied.",
-        "warning_cannot_undo": "Das kann nicht rückgängig gemacht werden"
+        "warning_cannot_undo": "Das kann nicht rückgängig gemacht werden",
+        "wrong_password": "Falsches Passwort"
       },
       "teams": {
         "add_members_description": "Füge Mitglieder zum Team hinzu und bestimme ihre Rolle.",

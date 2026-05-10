@@ -197,6 +197,7 @@
     "created_by": "建立者",
     "customer_success": "客戶成功",
     "dark_overlay": "深色覆蓋",
+    "data_refreshed_successfully": "資料已成功重新整理",
     "date": "日期",
     "date_picker": {
       "clear_date": "Clear date",
@@ -378,6 +379,7 @@
     "quotas_description": "限制 擁有 特定 條件 的 參與者 所 提供 的 回應 數量。",
     "read_docs": "閱讀文件",
     "recipients": "收件者",
+    "refresh": "重新整理",
     "remove": "移除",
     "remove_from_team": "從團隊中移除",
     "reorder_and_hide_columns": "重新排序和隱藏欄位",
@@ -679,8 +681,6 @@
       "attributes_msg_new_attribute_created": "已建立新屬性「{key}」，型別為「{dataType}」",
       "attributes_msg_userid_already_exists": "此環境已存在該使用者 ID，未進行更新。",
       "contact_deleted_successfully": "聯絡人已成功刪除",
-      "contacts_table_refresh": "重新整理聯絡人",
-      "contacts_table_refresh_success": "聯絡人已成功重新整理",
       "create_attribute": "建立屬性",
       "create_new_attribute": "建立新屬性",
       "create_new_attribute_description": "建立新屬性以進行分群用途。",
@@ -1203,7 +1203,7 @@
         "organization_invite_link_ready": "您的組織邀請連結已準備就緒！",
         "organization_name": "組織名稱",
         "organization_name_description": "為您的組織提供描述性名稱。",
-        "organization_name_placeholder": "例如：飛天小女警",
+        "organization_name_placeholder": "例如：Acme Inc.",
         "organization_name_updated_successfully": "組織名稱已成功更新",
         "organization_settings": "組織設定",
         "please_add_a_logo": "請新增標誌",
@@ -1261,7 +1261,8 @@
         "unlock_two_factor_authentication": "使用更高等級的方案解鎖雙重驗證",
         "update_personal_info": "更新您的個人資訊",
         "warning_cannot_delete_account": "您是此組織的唯一擁有者。請先將所有權轉讓給其他成員。",
-        "warning_cannot_undo": "此操作無法復原"
+        "warning_cannot_undo": "此操作無法復原",
+        "wrong_password": "密碼錯誤"
       },
       "teams": {
         "add_members_description": "將成員新增至團隊並確定其角色。",

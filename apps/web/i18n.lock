@@ -170,6 +170,7 @@ checksums:
     common/created_by: 6775c2fa7d495fea48f1ad816daea93b
     common/customer_success: 2b0c99a5f57e1d16cf0a998f9bb116c4
     common/dark_overlay: 173e84b526414dbc70dbf9737e443b60
+    common/data_refreshed_successfully: 85728c61a9e1a16e46af69ddf0dbcda6
     common/date: 56f41c5d30a76295bb087b20b7bee4c3
     common/days: c95fe8aedde21a0b5653dbd0b3c58b48
     common/default: d9c6dc5c412fe94143dfd1d332ec81d4
@@ -346,6 +347,7 @@ checksums:
     common/quotas_description: a2caa44fa74664b3b6007e813f31a754
     common/read_docs: d06513c266fdd9056e0500eab838ebac
     common/recipients: f90e7f266be3f5a724858f21a9fd855e
+    common/refresh: c0aec3f31be4c984bae9a482572d2857
     common/remove: dba2fe5fe9f83f8078c687f28cba4b52
     common/remove_from_team: 69bcc7a1001c3017f9de578ee22cffd6
     common/reorder_and_hide_columns: a5e3d7c0c7ef879211d05a37be1c5069
@@ -638,8 +640,6 @@ checksums:
     environments/contacts/attributes_msg_new_attribute_created: 5cba6158c4305c05104814ec1479267c
     environments/contacts/attributes_msg_userid_already_exists: 9c695538befc152806c460f52a73821a
     environments/contacts/contact_deleted_successfully: c5b64a42a50e055f9e27ec49e20e03fa
-    environments/contacts/contacts_table_refresh: 6a959475991dd4ab28ad881bae569a09
-    environments/contacts/contacts_table_refresh_success: 40951396e88e5c8fdafa0b3bb4fadca8
     environments/contacts/create_attribute: 87320615901f95b4f35ee83c290a3a6c
     environments/contacts/create_new_attribute: c17d407dacd0b90f360f9f5e899d662f
     environments/contacts/create_new_attribute_description: cc19d76bb6940537bbe3461191f25d26
@@ -1137,7 +1137,7 @@ checksums:
     environments/settings/general/organization_invite_link_ready: e54b37c4ec2e5a9ea9f6bc6e5b512b0b
     environments/settings/general/organization_name: 73c9b31c9032a22bd84a07881942bb04
     environments/settings/general/organization_name_description: ff517b4749a332b94a26110d7c7e771f
-    environments/settings/general/organization_name_placeholder: fc91de3ddc89ab77f30d555778312380
+    environments/settings/general/organization_name_placeholder: abcee7d91a848e573b63a763cfaf6a08
     environments/settings/general/organization_name_updated_successfully: d36ba3a4f614d30b10e696d25da22432
     environments/settings/general/organization_settings: d31952131ad5f0ec72ad96f1ed11bef6
     environments/settings/general/please_add_a_logo: 66d6f97a2e7b27efc04bd653240ee813

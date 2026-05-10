@@ -75,6 +75,7 @@ describe("rateLimitConfigs", () => {
       const actionConfigs = Object.keys(rateLimitConfigs.actions);
       expect(actionConfigs).toEqual([
         "emailUpdate",
+        "accountDeletion",
         "surveyFollowUp",
         "sendLinkSurveyEmail",
         "licenseRecheck",
@@ -139,6 +140,7 @@ describe("rateLimitConfigs", () => {
         { config: rateLimitConfigs.api.v3, identifier: "api-v3-key" },
         { config: rateLimitConfigs.api.client, identifier: "client-api-key" },
         { config: rateLimitConfigs.actions.emailUpdate, identifier: "user-profile" },
+        { config: rateLimitConfigs.actions.accountDeletion, identifier: "user-account-delete" },
         { config: rateLimitConfigs.storage.upload, identifier: "storage-upload" },
         { config: rateLimitConfigs.storage.delete, identifier: "storage-delete" },
       ];

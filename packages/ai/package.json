@@ -36,19 +36,19 @@
   },
   "author": "Formbricks <hola@formbricks.com>",
   "dependencies": {
-    "@ai-sdk/amazon-bedrock": "4.0.83",
-    "@ai-sdk/azure": "3.0.49",
-    "@ai-sdk/google-vertex": "4.0.95",
+    "@ai-sdk/amazon-bedrock": "4.0.96",
+    "@ai-sdk/azure": "3.0.54",
+    "@ai-sdk/google-vertex": "4.0.112",
     "@aws-sdk/credential-providers": "3.1017.0",
     "@formbricks/logger": "workspace:*",
     "@formbricks/types": "workspace:*",
-    "ai": "6.0.138"
+    "ai": "6.0.168"
   },
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/eslint-config": "workspace:*",
     "@vitest/coverage-v8": "4.1.5",
-    "vite": "8.0.5",
+    "vite": "8.0.10",
     "vitest": "4.1.5"
   }
 }

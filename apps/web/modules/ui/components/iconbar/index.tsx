@@ -7,6 +7,7 @@ interface IconAction {
   tooltip: string;
   onClick?: () => void;
   isVisible?: boolean;
+  disabled?: boolean;
 }
 
 interface IconBarProps {
@@ -32,6 +33,7 @@ export const IconBar = ({ actions }: IconBarProps) => {
                 className="border-none hover:bg-slate-50"
                 size="icon"
                 onClick={action.onClick}
+                disabled={action.disabled}
                 aria-label={action.tooltip}>
                 <action.icon />
               </Button>

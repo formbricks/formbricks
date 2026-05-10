@@ -197,6 +197,7 @@
     "created_by": "作成者",
     "customer_success": "カスタマーサクセス",
     "dark_overlay": "暗いオーバーレイ",
+    "data_refreshed_successfully": "データが正常に更新されました",
     "date": "日付",
     "date_picker": {
       "clear_date": "Clear date",
@@ -378,6 +379,7 @@
     "quotas_description": "特定の基準を満たす参加者からの回答数を制限する",
     "read_docs": "ドキュメントを読む",
     "recipients": "受信者",
+    "refresh": "更新",
     "remove": "削除",
     "remove_from_team": "チームから削除",
     "reorder_and_hide_columns": "列の並び替えと非表示",
@@ -679,8 +681,6 @@
       "attributes_msg_new_attribute_created": "新しい属性“{key}”を型“{dataType}”で作成しました",
       "attributes_msg_userid_already_exists": "この環境にはすでにユーザーIDが存在するため、更新されませんでした。",
       "contact_deleted_successfully": "連絡先を正常に削除しました",
-      "contacts_table_refresh": "連絡先を更新",
-      "contacts_table_refresh_success": "連絡先を正常に更新しました",
       "create_attribute": "属性を作成",
       "create_new_attribute": "新しい属性を作成",
       "create_new_attribute_description": "セグメンテーション用の新しい属性を作成します。",
@@ -1203,7 +1203,7 @@
         "organization_invite_link_ready": "組織の招待リンクが準備できました！",
         "organization_name": "組織名",
         "organization_name_description": "組織に分かりやすい名前を付けます。",
-        "organization_name_placeholder": "例: パワーパフガールズ",
+        "organization_name_placeholder": "例: Acme Inc.",
         "organization_name_updated_successfully": "組織名を正常に更新しました",
         "organization_settings": "組織設定",
         "please_add_a_logo": "ロゴを追加してください",
@@ -1261,7 +1261,8 @@
         "unlock_two_factor_authentication": "上位プランで二段階認証をアンロック",
         "update_personal_info": "個人情報を更新",
         "warning_cannot_delete_account": "あなたは、この組織の唯一のオーナーです。まず、別のメンバーにオーナーシップを譲渡してください。",
-        "warning_cannot_undo": "この操作は元に戻せません"
+        "warning_cannot_undo": "この操作は元に戻せません",
+        "wrong_password": "パスワードが間違っています"
       },
       "teams": {
         "add_members_description": "チームにメンバーを追加し、役割を決定します。",

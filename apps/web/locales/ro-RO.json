@@ -197,6 +197,7 @@
     "created_by": "Creat de",
     "customer_success": "Succesul Clientului",
     "dark_overlay": "Suprapunere întunecată",
+    "data_refreshed_successfully": "Datele au fost actualizate cu succes",
     "date": "Dată",
     "date_picker": {
       "clear_date": "Clear date",
@@ -378,6 +379,7 @@
     "quotas_description": "Limitați numărul de răspunsuri primite de la participanții care îndeplinesc anumite criterii.",
     "read_docs": "Citește documentația",
     "recipients": "Destinatari",
+    "refresh": "Actualizează",
     "remove": "Șterge",
     "remove_from_team": "Elimină din echipă",
     "reorder_and_hide_columns": "Reordonați și ascundeți coloanele",
@@ -679,8 +681,6 @@
       "attributes_msg_new_attribute_created": "A fost creat un nou atribut „{key}” cu tipul „{dataType}”",
       "attributes_msg_userid_already_exists": "ID-ul de utilizator există deja pentru acest mediu și nu a fost actualizat.",
       "contact_deleted_successfully": "Contact șters cu succes",
-      "contacts_table_refresh": "Reîmprospătare contacte",
-      "contacts_table_refresh_success": "Contactele au fost actualizate cu succes",
       "create_attribute": "Creează atribut",
       "create_new_attribute": "Creează atribut nou",
       "create_new_attribute_description": "Creează un atribut nou pentru segmentare.",
@@ -1203,7 +1203,7 @@
         "organization_invite_link_ready": "Linkul de invitație al organizației tale este gata!",
         "organization_name": "Nume Organizație",
         "organization_name_description": "Oferiți organizației dumneavoastră un nume descriptiv.",
-        "organization_name_placeholder": "ex. Power Puff Girls",
+        "organization_name_placeholder": "ex. Acme Inc.",
         "organization_name_updated_successfully": "Numele organizației actualizat cu succes",
         "organization_settings": "Setări Organizație",
         "please_add_a_logo": "Adaugă un logo",
@@ -1261,7 +1261,8 @@
         "unlock_two_factor_authentication": "Deblocați autentificarea în doi pași cu un plan superior",
         "update_personal_info": "Actualizează informațiile tale personale",
         "warning_cannot_delete_account": "Ești singurul proprietar al acestei organizații. Te rugăm să transferi proprietatea către un alt membru mai întâi.",
-        "warning_cannot_undo": "Aceasta nu poate fi anulată"
+        "warning_cannot_undo": "Aceasta nu poate fi anulată",
+        "wrong_password": "Parolă greșită"
       },
       "teams": {
         "add_members_description": "Adaugă membri în echipă și stabilește rolul lor.",

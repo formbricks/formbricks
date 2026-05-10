@@ -197,6 +197,7 @@
     "created_by": "Criado por",
     "customer_success": "Sucesso do Cliente",
     "dark_overlay": "sobreposição escura",
+    "data_refreshed_successfully": "Dados atualizados com sucesso",
     "date": "Encontro",
     "date_picker": {
       "clear_date": "Clear date",
@@ -378,6 +379,7 @@
     "quotas_description": "Limite a quantidade de respostas que você recebe de participantes que atendem a determinados critérios.",
     "read_docs": "Ler documentação",
     "recipients": "Destinatários",
+    "refresh": "Atualizar",
     "remove": "remover",
     "remove_from_team": "Remover da equipe",
     "reorder_and_hide_columns": "Reordenar e ocultar colunas",
@@ -679,8 +681,6 @@
       "attributes_msg_new_attribute_created": "Novo atributo “{key}” criado com tipo “{dataType}”",
       "attributes_msg_userid_already_exists": "O ID de usuário já existe para este ambiente e não foi atualizado.",
       "contact_deleted_successfully": "Contato excluído com sucesso",
-      "contacts_table_refresh": "Atualizar contatos",
-      "contacts_table_refresh_success": "Contatos atualizados com sucesso",
       "create_attribute": "Criar atributo",
       "create_new_attribute": "Criar novo atributo",
       "create_new_attribute_description": "Crie um novo atributo para fins de segmentação.",
@@ -1203,7 +1203,7 @@
         "organization_invite_link_ready": "O link de convite da sua organização está pronto!",
         "organization_name": "Nome da Organização",
         "organization_name_description": "Dê um nome descritivo pra sua organização.",
-        "organization_name_placeholder": "por exemplo, Meninas Superpoderosas",
+        "organization_name_placeholder": "por exemplo, Acme Inc.",
         "organization_name_updated_successfully": "Nome da organização atualizado com sucesso",
         "organization_settings": "Configurações da Organização",
         "please_add_a_logo": "Por favor, adicione um logo",
@@ -1261,7 +1261,8 @@
         "unlock_two_factor_authentication": "Desbloqueia a autenticação de dois fatores com um plano melhor",
         "update_personal_info": "Atualize suas informações pessoais",
         "warning_cannot_delete_account": "Você é o único dono desta organização. Transfere a propriedade para outra pessoa primeiro.",
-        "warning_cannot_undo": "Isso não pode ser desfeito"
+        "warning_cannot_undo": "Isso não pode ser desfeito",
+        "wrong_password": "Senha incorreta"
       },
       "teams": {
         "add_members_description": "Adicione membros à equipe e determine sua função.",

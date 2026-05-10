@@ -197,6 +197,7 @@
     "created_by": "Létrehozta",
     "customer_success": "Ügyfélsiker",
     "dark_overlay": "Sötét rávetítés",
+    "data_refreshed_successfully": "Az adatok sikeresen frissítve lettek",
     "date": "Dátum",
     "date_picker": {
       "clear_date": "Clear date",
@@ -378,6 +379,7 @@
     "quotas_description": "A bizonyos feltételeknek megfelelő résztvevőktől kapott válaszok számának korlátozása.",
     "read_docs": "Dokumentáció elolvasása",
     "recipients": "Címzettek",
+    "refresh": "Frissítés",
     "remove": "Eltávolítás",
     "remove_from_team": "Eltávolítás a csapatból",
     "reorder_and_hide_columns": "Oszlopok átrendezése és elrejtése",
@@ -679,8 +681,6 @@
       "attributes_msg_new_attribute_created": "Az új „{dataType}” típusú „{key}” attribútum létrehozva",
       "attributes_msg_userid_already_exists": "A felhasználó-azonosító már létezik ennél a környezetnél, és nem lett frissítve.",
       "contact_deleted_successfully": "A partner sikeresen törölve",
-      "contacts_table_refresh": "Partnerek frissítése",
-      "contacts_table_refresh_success": "A partnerek sikeresen frissítve",
       "create_attribute": "Attribútum létrehozása",
       "create_new_attribute": "Új attribútum létrehozása",
       "create_new_attribute_description": "Új attribútum létrehozása szakaszolási célokhoz.",
@@ -1203,7 +1203,7 @@
         "organization_invite_link_ready": "A szervezete meghívási hivatkozása készen áll!",
         "organization_name": "Szervezet neve",
         "organization_name_description": "Adjon a szervezetének egy leíró nevet.",
-        "organization_name_placeholder": "például Pindúr pandúrok",
+        "organization_name_placeholder": "például Acme Inc.",
         "organization_name_updated_successfully": "A szervezet neve sikeresen frissítve",
         "organization_settings": "Szervezet beállításai",
         "please_add_a_logo": "Adjon hozzá egy logót",
@@ -1261,7 +1261,8 @@
         "unlock_two_factor_authentication": "A kétfaktoros hitelesítés feloldása egy magasabb csomaggal",
         "update_personal_info": "Személyes információk frissítése",
         "warning_cannot_delete_account": "Ön az egyetlen tulajdonosa ennek a szervezetnek. Először adja át a tulajdonjogot egy másik tagnak.",
-        "warning_cannot_undo": "Ezt nem lehet visszavonni"
+        "warning_cannot_undo": "Ezt nem lehet visszavonni",
+        "wrong_password": "Hibás jelszó"
       },
       "teams": {
         "add_members_description": "Tagok hozzáadása a csapathoz és a szerepük meghatározása.",

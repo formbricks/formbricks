@@ -197,6 +197,7 @@
     "created_by": "Skapad av",
     "customer_success": "Kundframgång",
     "dark_overlay": "Mörkt överlägg",
+    "data_refreshed_successfully": "Data uppdaterades",
     "date": "Datum",
     "date_picker": {
       "clear_date": "Clear date",
@@ -378,6 +379,7 @@
     "quotas_description": "Begränsa antalet svar du får från deltagare som uppfyller vissa kriterier.",
     "read_docs": "Läs dokumentation",
     "recipients": "Mottagare",
+    "refresh": "Uppdatera",
     "remove": "Ta bort",
     "remove_from_team": "Ta bort från teamet",
     "reorder_and_hide_columns": "Ordna om och dölj kolumner",
@@ -679,8 +681,6 @@
       "attributes_msg_new_attribute_created": "Nytt attribut ”{key}” med typen ”{dataType}” har skapats",
       "attributes_msg_userid_already_exists": "Användar-ID finns redan för denna miljö och uppdaterades inte.",
       "contact_deleted_successfully": "Kontakt borttagen",
-      "contacts_table_refresh": "Uppdatera kontakter",
-      "contacts_table_refresh_success": "Kontakter uppdaterade",
       "create_attribute": "Skapa attribut",
       "create_new_attribute": "Skapa nytt attribut",
       "create_new_attribute_description": "Skapa ett nytt attribut för segmenteringsändamål.",
@@ -1203,7 +1203,7 @@
         "organization_invite_link_ready": "Din organisationsinbjudningslänk är redo!",
         "organization_name": "Organisationsnamn",
         "organization_name_description": "Ge din organisation ett beskrivande namn.",
-        "organization_name_placeholder": "t.ex. Power Puff Girls",
+        "organization_name_placeholder": "t.ex. Acme Inc.",
         "organization_name_updated_successfully": "Organisationsnamn uppdaterat",
         "organization_settings": "Organisationsinställningar",
         "please_add_a_logo": "Vänligen lägg till en logotyp",
@@ -1261,7 +1261,8 @@
         "unlock_two_factor_authentication": "Lås upp tvåfaktorsautentisering med en högre plan",
         "update_personal_info": "Uppdatera din personliga information",
         "warning_cannot_delete_account": "Du är den enda ägaren av denna organisation. Vänligen överför ägarskapet till en annan medlem först.",
-        "warning_cannot_undo": "Detta kan inte ångras"
+        "warning_cannot_undo": "Detta kan inte ångras",
+        "wrong_password": "Fel lösenord"
       },
       "teams": {
         "add_members_description": "Lägg till medlemmar i teamet och bestäm deras roll.",

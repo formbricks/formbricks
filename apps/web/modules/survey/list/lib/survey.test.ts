@@ -10,6 +10,7 @@ import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { checkForInvalidMediaInBlocks } from "@/lib/survey/utils";
 import { validateInputs } from "@/lib/utils/validate";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
 import { buildOrderByClause, buildWhereClause } from "@/modules/survey/lib/utils";
 import { doesEnvironmentExist } from "@/modules/survey/list/lib/environment";
 import { getProjectWithLanguagesByEnvironmentId } from "@/modules/survey/list/lib/project";
@@ -23,6 +24,8 @@ import {
   getSurveysSortedByRelevance,
 } from "./survey";
 import { surveySelect } from "./survey-record";
+
+vi.mock("server-only", () => ({}));
 
 vi.mock("react", async (importOriginal) => {
   const actual = await importOriginal<typeof import("react")>();
@@ -65,6 +68,10 @@ vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getIsQuotasEnabled: vi.fn(),
 }));
 
+vi.mock("@/modules/ee/quotas/lib/quotas", () => ({
+  getQuotas: vi.fn(),
+}));
+
 vi.mock("@/lingodotdev/server", () => ({
   getTranslate: async () => (key: string, params?: Record<string, unknown>) => {
     if (key === "common.duplicate_copy") return "(copy)";
@@ -85,6 +92,9 @@ vi.mock("@formbricks/database", () => ({
     segment: {
       delete: vi.fn(),
       findFirst: vi.fn(),
+    },
+    response: {
+      groupBy: vi.fn(),
     },
     language: {
       // Added for language connectOrCreate in copySurvey
@@ -127,7 +137,9 @@ const resetMocks = () => {
   vi.mocked(prisma.survey.create).mockReset();
   vi.mocked(prisma.segment.delete).mockReset();
   vi.mocked(prisma.segment.findFirst).mockReset();
+  vi.mocked(prisma.response.groupBy).mockReset();
   vi.mocked(prisma.actionClass.findMany).mockReset();
+  vi.mocked(getQuotas).mockReset();
   vi.mocked(logger.error).mockClear();
 };
 
@@ -153,7 +165,6 @@ const mockSurveyPrisma = {
   status: "draft" as any,
   singleUse: null,
   environmentId,
-  _count: { responses: 10 },
 };
 
 describe("getSurveyCount", () => {
@@ -191,8 +202,9 @@ describe("getSurvey", () => {
   });
 
   test("should return a survey if found", async () => {
-    const prismaSurvey = { ...mockSurveyPrisma, _count: { responses: 5 } };
+    const prismaSurvey = { ...mockSurveyPrisma };
     vi.mocked(prisma.survey.findUnique).mockResolvedValue(prismaSurvey as any);
+    vi.mocked(prisma.response.groupBy).mockResolvedValue([{ surveyId, _count: { _all: 5 } }] as any);
 
     const survey = await getSurvey(surveyId);
 
@@ -228,6 +240,15 @@ describe("getSurvey", () => {
     expect(logger.error).toHaveBeenCalledWith(prismaError, "Error getting survey");
   });
 
+  test("should throw DatabaseError when response count lookup fails", async () => {
+    const prismaError = makePrismaKnownError();
+    vi.mocked(prisma.survey.findUnique).mockResolvedValue({ ...mockSurveyPrisma } as any);
+    vi.mocked(prisma.response.groupBy).mockRejectedValue(prismaError);
+
+    await expect(getSurvey(surveyId)).rejects.toThrow(DatabaseError);
+    expect(logger.error).toHaveBeenCalledWith(prismaError, "Error getting survey");
+  });
+
   test("should rethrow unknown error", async () => {
     const unknownError = new Error("Unknown error");
     vi.mocked(prisma.survey.findUnique).mockRejectedValue(unknownError);
@@ -241,24 +262,42 @@ describe("getSurveys", () => {
   });
 
   const mockPrismaSurveys = [
-    { ...mockSurveyPrisma, id: "s1", name: "Survey 1", _count: { responses: 1 } },
-    { ...mockSurveyPrisma, id: "s2", name: "Survey 2", _count: { responses: 2 } },
+    { ...mockSurveyPrisma, id: "s1", name: "Survey 1" },
+    { ...mockSurveyPrisma, id: "s2", name: "Survey 2" },
   ];
-  const expectedSurveys: TSurvey[] = mockPrismaSurveys.map((s) => ({
-    id: s.id,
-    createdAt: s.createdAt,
-    updatedAt: s.updatedAt,
-    name: s.name,
-    type: s.type,
-    creator: s.creator,
-    status: s.status,
-    singleUse: s.singleUse,
-    environmentId: s.environmentId,
-    responseCount: s._count.responses,
-  }));
+  const expectedSurveys: TSurvey[] = [
+    {
+      id: "s1",
+      createdAt: mockPrismaSurveys[0].createdAt,
+      updatedAt: mockPrismaSurveys[0].updatedAt,
+      name: "Survey 1",
+      type: mockPrismaSurveys[0].type,
+      creator: mockPrismaSurveys[0].creator,
+      status: mockPrismaSurveys[0].status,
+      singleUse: mockPrismaSurveys[0].singleUse,
+      environmentId: mockPrismaSurveys[0].environmentId,
+      responseCount: 1,
+    },
+    {
+      id: "s2",
+      createdAt: mockPrismaSurveys[1].createdAt,
+      updatedAt: mockPrismaSurveys[1].updatedAt,
+      name: "Survey 2",
+      type: mockPrismaSurveys[1].type,
+      creator: mockPrismaSurveys[1].creator,
+      status: mockPrismaSurveys[1].status,
+      singleUse: mockPrismaSurveys[1].singleUse,
+      environmentId: mockPrismaSurveys[1].environmentId,
+      responseCount: 2,
+    },
+  ];
 
   test("should return surveys with default parameters", async () => {
     vi.mocked(prisma.survey.findMany).mockResolvedValue(mockPrismaSurveys as any);
+    vi.mocked(prisma.response.groupBy).mockResolvedValue([
+      { surveyId: "s1", _count: { _all: 1 } },
+      { surveyId: "s2", _count: { _all: 2 } },
+    ] as any);
     const surveys = await getSurveys(environmentId);
 
     expect(surveys).toEqual(expectedSurveys);
@@ -274,6 +313,7 @@ describe("getSurveys", () => {
 
   test("should return surveys with limit and offset", async () => {
     vi.mocked(prisma.survey.findMany).mockResolvedValue([mockPrismaSurveys[0]] as any);
+    vi.mocked(prisma.response.groupBy).mockResolvedValue([{ surveyId: "s1", _count: { _all: 1 } }] as any);
     const surveys = await getSurveys(environmentId, 1, 1);
 
     expect(surveys).toEqual([expectedSurveys[0]]);
@@ -291,6 +331,10 @@ describe("getSurveys", () => {
     vi.mocked(buildWhereClause).mockReturnValue({ AND: [{ name: { contains: "Test" } }] }); // Mock correct return type
     vi.mocked(buildOrderByClause).mockReturnValue([{ createdAt: "desc" }]); // Mock specific return
     vi.mocked(prisma.survey.findMany).mockResolvedValue(mockPrismaSurveys as any);
+    vi.mocked(prisma.response.groupBy).mockResolvedValue([
+      { surveyId: "s1", _count: { _all: 1 } },
+      { surveyId: "s2", _count: { _all: 2 } },
+    ] as any);
 
     const surveys = await getSurveys(environmentId, undefined, undefined, filterCriteria);
 
@@ -328,13 +372,11 @@ describe("getSurveysSortedByRelevance", () => {
     ...mockSurveyPrisma,
     id: "s_inprog",
     status: "inProgress" as any,
-    _count: { responses: 3 },
   };
   const mockOtherPrisma = {
     ...mockSurveyPrisma,
     id: "s_other",
     status: "completed" as any,
-    _count: { responses: 5 },
   };
 
   const expectedInProgressSurvey: TSurvey = {
@@ -367,6 +409,10 @@ describe("getSurveysSortedByRelevance", () => {
     vi.mocked(prisma.survey.findMany)
       .mockResolvedValueOnce([mockInProgressPrisma] as any) // In-progress surveys
       .mockResolvedValueOnce([mockOtherPrisma] as any); // Additional surveys
+    vi.mocked(prisma.response.groupBy).mockResolvedValue([
+      { surveyId: "s_inprog", _count: { _all: 3 } },
+      { surveyId: "s_other", _count: { _all: 5 } },
+    ] as any);
 
     const surveys = await getSurveysSortedByRelevance(environmentId, 2, 0);
 
@@ -394,6 +440,9 @@ describe("getSurveysSortedByRelevance", () => {
   test("should only fetch inProgress surveys if limit is met", async () => {
     vi.mocked(prisma.survey.count).mockResolvedValue(1);
     vi.mocked(prisma.survey.findMany).mockResolvedValueOnce([mockInProgressPrisma] as any);
+    vi.mocked(prisma.response.groupBy).mockResolvedValue([
+      { surveyId: "s_inprog", _count: { _all: 3 } },
+    ] as any);
 
     const surveys = await getSurveysSortedByRelevance(environmentId, 1, 0);
     expect(surveys).toEqual([expectedInProgressSurvey]);
@@ -507,7 +556,7 @@ describe("copySurveyToOtherEnvironment", () => {
     vi.mocked(prisma.survey.create).mockResolvedValue(mockNewSurveyResult as any);
     vi.mocked(prisma.segment.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.actionClass.findMany).mockResolvedValue([]);
-    vi.mocked(prisma.surveyQuota.findMany).mockResolvedValue([]);
+    vi.mocked(getQuotas).mockResolvedValue([]);
     vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue({
       billing: {},
       id: "org_123",
@@ -645,6 +694,12 @@ describe("copySurveyToOtherEnvironment", () => {
     vi.mocked(prisma.survey.create).mockResolvedValue(mockNewSurveyResult as any);
     vi.mocked(prisma.segment.findFirst).mockResolvedValue(null); // No existing public segment with same title in target
     vi.mocked(prisma.actionClass.findMany).mockResolvedValue([]);
+    vi.mocked(getQuotas).mockResolvedValue([]);
+    vi.mocked(getIsQuotasEnabled).mockResolvedValue(true);
+    vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue({
+      billing: {},
+      id: "org_123",
+    } as any);
 
     // Case 2: Different environment, segment with same title does not exist in target
     await copySurveyToOtherEnvironment(environmentId, surveyId, targetEnvironmentId, userId);
@@ -679,6 +734,12 @@ describe("copySurveyToOtherEnvironment", () => {
     vi.mocked(prisma.survey.create).mockResolvedValue(mockNewSurveyResult as any);
     vi.mocked(prisma.segment.findFirst).mockResolvedValue({ id: "existing_target_seg" } as any); // Segment with same title EXISTS
     vi.mocked(prisma.actionClass.findMany).mockResolvedValue([]);
+    vi.mocked(getQuotas).mockResolvedValue([]);
+    vi.mocked(getIsQuotasEnabled).mockResolvedValue(true);
+    vi.mocked(getOrganizationByEnvironmentId).mockResolvedValue({
+      billing: {},
+      id: "org_123",
+    } as any);
     const dateNowSpy = vi.spyOn(Date, "now").mockReturnValue(1234567890);
 
     await copySurveyToOtherEnvironment(environmentId, surveyId, targetEnvironmentId, userId);

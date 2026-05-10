@@ -2,6 +2,8 @@
 
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
 import { TEnvironment } from "@formbricks/types/environment";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TResponseWithQuotas } from "@formbricks/types/responses";
@@ -13,6 +15,7 @@ import { useResponseFilter } from "@/app/(app)/environments/[environmentId]/surv
 import { ResponseDataView } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/responses/components/ResponseDataView";
 import { CustomFilter } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/CustomFilter";
 import { getFormattedFilters } from "@/app/lib/surveys/surveys";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { replaceHeadlineRecall } from "@/lib/utils/recall";
 
 interface ResponsePageProps {
@@ -46,8 +49,8 @@ export const ResponsePage = ({
   const [page, setPage] = useState<number | null>(null);
   const [hasMore, setHasMore] = useState<boolean>(initialResponses.length >= responsesPerPage);
   const [isFetchingFirstPage, setIsFetchingFirstPage] = useState<boolean>(false);
-  const { selectedFilter, dateRange, resetState } = useResponseFilter();
-
+  const { selectedFilter, dateRange, resetState, registerAnalysisRefreshHandler } = useResponseFilter();
+  const { t } = useTranslation();
   const filters = useMemo(
     () => getFormattedFilters(survey, selectedFilter, dateRange),
 
@@ -85,6 +88,34 @@ export const ResponsePage = ({
   const updateResponse = (responseId: string, updatedResponse: TResponseWithQuotas) => {
     setResponses((prev) => prev.map((r) => (r.id === responseId ? updatedResponse : r)));
   };
+
+  const refetchResponses = useCallback(async () => {
+    setIsFetchingFirstPage(true);
+
+    try {
+      const getResponsesActionResponse = await getResponsesAction({
+        surveyId,
+        limit: responsesPerPage,
+        offset: 0,
+        filterCriteria: filters,
+      });
+
+      if (getResponsesActionResponse?.serverError) {
+        toast.error(getFormattedErrorMessage(getResponsesActionResponse) ?? t("common.something_went_wrong"));
+      }
+
+      const freshResponses = getResponsesActionResponse?.data ?? [];
+      setResponses(freshResponses);
+      setPage(1);
+      setHasMore(freshResponses.length >= responsesPerPage);
+    } finally {
+      setIsFetchingFirstPage(false);
+    }
+  }, [filters, responsesPerPage, surveyId]);
+
+  useEffect(() => {
+    return registerAnalysisRefreshHandler(refetchResponses);
+  }, [refetchResponses, registerAnalysisRefreshHandler]);
 
   const surveyMemoized = useMemo(() => {
     return replaceHeadlineRecall(survey, "default");
@@ -134,6 +165,8 @@ export const ResponsePage = ({
       }
     };
     fetchFilteredResponses();
+    // page is intentionally omitted to avoid refetching after the initial page setup.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters, responsesPerPage, selectedFilter, dateRange, surveyId]);
 
   return (

@@ -8143,7 +8143,7 @@
       "url": "https://{baseurl}",
       "variables": {
         "baseurl": {
-          "default": "localhost:3000"
+          "default": "app.formbricks.com"
         }
       }
     }
@@ -8174,7 +8174,7 @@
       "name": "Client API - User"
     },
     {
-      "description": "The Management API provides access to all data and settings that are visible in the Formbricks App. This API requires a personal API Key for authentication, which can be generated in the Settings section of the Formbricks App. With the Management API, you can manage your Formbricks account programmatically, accessing and modifying data and settings as needed.\n\n> **For Auth:** we use the `x-api-key` header \n  \n\nAPI requests made to the Management API are authorized using a personal API key. This key grants the same rights and access as if you were logged in at formbricks.com. It's essential to keep your API key secure and not share it with others.\n\nTo generate, store, or delete an API key, follow the instructions provided on the following page [API Key](https://formbricks.com/docs/api/management/api-key-setup).",
+      "description": "The Management API provides access to all data and settings that are visible in the Formbricks App. This API requires a personal API Key for authentication, which can be generated in the Settings section of the Formbricks App. With the Management API, you can manage your Formbricks account programmatically, accessing and modifying data and settings as needed.\n\n> **For Auth:** we use the `x-api-key` header \n  \n\nAPI requests made to the Management API are authorized using a personal API key. This key grants the same rights and access as if you were logged in at app.formbricks.com. It's essential to keep your API key secure and not share it with others.\n\nTo generate, store, or delete an API key, follow the instructions provided on the following page [API Key](https://formbricks.com/docs/api/management/api-key-setup).",
       "name": "Management API"
     },
     {

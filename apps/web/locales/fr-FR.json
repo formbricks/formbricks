@@ -197,6 +197,7 @@
     "created_by": "Créé par",
     "customer_success": "Succès Client",
     "dark_overlay": "Foncée",
+    "data_refreshed_successfully": "Données actualisées avec succès",
     "date": "Date",
     "date_picker": {
       "clear_date": "Clear date",
@@ -378,6 +379,7 @@
     "quotas_description": "Limitez le nombre de réponses que vous recevez de la part des participants répondant à certains critères.",
     "read_docs": "Lire la documentation",
     "recipients": "Destinataires",
+    "refresh": "Actualiser",
     "remove": "Retirer",
     "remove_from_team": "Retirer de l'équipe",
     "reorder_and_hide_columns": "Réorganiser et masquer des colonnes",
@@ -679,8 +681,6 @@
       "attributes_msg_new_attribute_created": "Nouvel attribut “{key}” créé avec le type “{dataType}”",
       "attributes_msg_userid_already_exists": "L'identifiant utilisateur existe déjà pour cet environnement et n'a pas été mis à jour.",
       "contact_deleted_successfully": "Contact supprimé avec succès",
-      "contacts_table_refresh": "Actualiser les contacts",
-      "contacts_table_refresh_success": "Contacts rafraîchis avec succès",
       "create_attribute": "Créer un attribut",
       "create_new_attribute": "Créer un nouvel attribut",
       "create_new_attribute_description": "Créez un nouvel attribut à des fins de segmentation.",
@@ -1203,7 +1203,7 @@
         "organization_invite_link_ready": "Le lien d'invitation de votre organisation est prêt !",
         "organization_name": "Nom de l'organisation",
         "organization_name_description": "Attribuez un nom descriptif à votre organisation.",
-        "organization_name_placeholder": "e.g. Power Puff Girls",
+        "organization_name_placeholder": "e.g. Acme Inc.",
         "organization_name_updated_successfully": "Nom de l'organisation mis à jour avec succès",
         "organization_settings": "Paramètres de l'organisation",
         "please_add_a_logo": "Veuillez ajouter un logo",
@@ -1261,7 +1261,8 @@
         "unlock_two_factor_authentication": "Débloquez l'authentification à deux facteurs avec une offre supérieure",
         "update_personal_info": "Mettez à jour vos informations personnelles",
         "warning_cannot_delete_account": "Tu es le seul propriétaire de cette organisation. Transfère la propriété à un autre membre d'abord.",
-        "warning_cannot_undo": "Cette opération est irréversible."
+        "warning_cannot_undo": "Cette opération est irréversible.",
+        "wrong_password": "Mot de passe incorrect"
       },
       "teams": {
         "add_members_description": "Ajoutez des membres à l'équipe et déterminez leur rôle.",

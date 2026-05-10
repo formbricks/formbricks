@@ -74,6 +74,13 @@ paths:
           description: |
             Opaque cursor returned as `meta.nextCursor` from the previous page. Omit on the first request.
         - in: query
+          name: includeTotalCount
+          schema:
+            type: boolean
+            default: true
+          description: |
+            Whether to calculate `meta.totalCount` for this request. Set to `false` on cursor-pagination follow-up requests to skip the extra count query; in that case `meta.totalCount` is `null`.
+        - in: query
           name: filter[name][contains]
           schema:
             type: string
@@ -137,8 +144,9 @@ paths:
                         description: Opaque cursor for the next page. `null` when there are no more results.
                       totalCount:
                         type: integer
+                        nullable: true
                         minimum: 0
-                        description: Total number of surveys matching the current filters across all pages.
+                        description: Total number of surveys matching the current filters across all pages. `null` when `includeTotalCount=false`.
         "400":
           description: Bad Request
           content:

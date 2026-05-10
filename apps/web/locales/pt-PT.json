@@ -197,6 +197,7 @@
     "created_by": "Criado por",
     "customer_success": "Sucesso do Cliente",
     "dark_overlay": "Sobreposição escura",
+    "data_refreshed_successfully": "Dados atualizados com sucesso",
     "date": "Data",
     "date_picker": {
       "clear_date": "Clear date",
@@ -378,6 +379,7 @@
     "quotas_description": "Limitar a quantidade de respostas recebidas de participantes que atendem a certos critérios.",
     "read_docs": "Ler documentação",
     "recipients": "Destinatários",
+    "refresh": "Atualizar",
     "remove": "Remover",
     "remove_from_team": "Remover da equipa",
     "reorder_and_hide_columns": "Reordenar e ocultar colunas",
@@ -679,8 +681,6 @@
       "attributes_msg_new_attribute_created": "Criado novo atributo “{key}” com tipo “{dataType}”",
       "attributes_msg_userid_already_exists": "O ID de utilizador já existe para este ambiente e não foi atualizado.",
       "contact_deleted_successfully": "Contacto eliminado com sucesso",
-      "contacts_table_refresh": "Atualizar contactos",
-      "contacts_table_refresh_success": "Contactos atualizados com sucesso",
       "create_attribute": "Criar atributo",
       "create_new_attribute": "Criar novo atributo",
       "create_new_attribute_description": "Crie um novo atributo para fins de segmentação.",
@@ -1203,7 +1203,7 @@
         "organization_invite_link_ready": "O link de convite da sua organização está pronto!",
         "organization_name": "Nome da Organização",
         "organization_name_description": "Dê à sua organização um nome descritivo.",
-        "organization_name_placeholder": "por exemplo, Power Puff Girls",
+        "organization_name_placeholder": "por exemplo, Acme Inc.",
         "organization_name_updated_successfully": "Nome da organização atualizado com sucesso",
         "organization_settings": "Configurações da organização",
         "please_add_a_logo": "Por favor, adicione um logótipo",
@@ -1261,7 +1261,8 @@
         "unlock_two_factor_authentication": "Desbloqueie a autenticação de dois fatores com um plano superior",
         "update_personal_info": "Atualize as suas informações pessoais",
         "warning_cannot_delete_account": "É o único proprietário desta organização. Transfira a propriedade para outro membro primeiro.",
-        "warning_cannot_undo": "Isto não pode ser desfeito"
+        "warning_cannot_undo": "Isto não pode ser desfeito",
+        "wrong_password": "Palavra-passe incorreta"
       },
       "teams": {
         "add_members_description": "Adicionar membros à equipa e determinar o seu papel.",

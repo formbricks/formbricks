@@ -197,6 +197,7 @@
     "created_by": "Creado por",
     "customer_success": "Éxito del cliente",
     "dark_overlay": "Superposición oscura",
+    "data_refreshed_successfully": "Datos actualizados correctamente",
     "date": "Fecha",
     "date_picker": {
       "clear_date": "Clear date",
@@ -378,6 +379,7 @@
     "quotas_description": "Limita la cantidad de respuestas que recibes de participantes que cumplen ciertos criterios.",
     "read_docs": "Leer documentación",
     "recipients": "Destinatarios",
+    "refresh": "Actualizar",
     "remove": "Eliminar",
     "remove_from_team": "Eliminar del equipo",
     "reorder_and_hide_columns": "Reordenar y ocultar columnas",
@@ -679,8 +681,6 @@
       "attributes_msg_new_attribute_created": "Se creó el atributo nuevo “{key}” con el tipo “{dataType}”",
       "attributes_msg_userid_already_exists": "El ID de usuario ya existe para este entorno y no se actualizó.",
       "contact_deleted_successfully": "Contacto eliminado correctamente",
-      "contacts_table_refresh": "Actualizar contactos",
-      "contacts_table_refresh_success": "Contactos actualizados correctamente",
       "create_attribute": "Crear atributo",
       "create_new_attribute": "Crear atributo nuevo",
       "create_new_attribute_description": "Crea un atributo nuevo para fines de segmentación.",
@@ -1203,7 +1203,7 @@
         "organization_invite_link_ready": "¡Tu enlace de invitación a la organización está listo!",
         "organization_name": "Nombre de la organización",
         "organization_name_description": "Dale a tu organización un nombre descriptivo.",
-        "organization_name_placeholder": "p. ej. Power Puff Girls",
+        "organization_name_placeholder": "p. ej. Acme Inc.",
         "organization_name_updated_successfully": "Nombre de la organización actualizado correctamente",
         "organization_settings": "Configuración de la organización",
         "please_add_a_logo": "Por favor, añade un logotipo",
@@ -1261,7 +1261,8 @@
         "unlock_two_factor_authentication": "Desbloquea la autenticación de dos factores con un plan superior",
         "update_personal_info": "Actualiza tu información personal",
         "warning_cannot_delete_account": "Eres el único propietario de esta organización. Por favor, transfiere la propiedad a otro miembro primero.",
-        "warning_cannot_undo": "Esto no se puede deshacer"
+        "warning_cannot_undo": "Esto no se puede deshacer",
+        "wrong_password": "Contraseña incorrecta"
       },
       "teams": {
         "add_members_description": "Añade miembros al equipo y determina su rol.",

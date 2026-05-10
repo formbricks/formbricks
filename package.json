@@ -46,11 +46,11 @@
     "dev:setup": "bash scripts/setup-dev-env.sh"
   },
   "dependencies": {
-    "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react": "19.2.5",
+    "react-dom": "19.2.5"
   },
   "devDependencies": {
-    "@azure/playwright": "1.1.2",
+    "@azure/playwright": "1.1.5",
     "@formbricks/eslint-config": "workspace:*",
     "@playwright/test": "1.58.2",
     "eslint": "8.57.1",
@@ -58,7 +58,7 @@
     "lint-staged": "16.4.0",
     "rimraf": "6.1.3",
     "tsx": "4.21.0",
-    "turbo": "2.8.16"
+    "turbo": "2.8.21"
   },
   "lint-staged": {
     "(apps|packages)/**/*.{js,ts,jsx,tsx}": [

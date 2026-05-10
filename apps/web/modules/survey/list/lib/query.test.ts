@@ -63,4 +63,25 @@ describe("removeSurveyFromInfiniteData", () => {
   test("returns the original cache when the survey is not present", () => {
     expect(removeSurveyFromInfiniteData(baseData, "missing_survey")).toBe(baseData);
   });
+
+  test("preserves null totalCount for pages that skipped the count query", () => {
+    const dataWithNullTotalCount: InfiniteData<TSurveyListPage> = {
+      ...baseData,
+      pages: [
+        baseData.pages[0],
+        {
+          ...baseData.pages[1],
+          meta: {
+            ...baseData.pages[1].meta,
+            totalCount: null,
+          },
+        },
+      ],
+    };
+
+    const nextData = removeSurveyFromInfiniteData(dataWithNullTotalCount, "survey_a");
+
+    expect(nextData?.pages[0]?.meta.totalCount).toBe(1);
+    expect(nextData?.pages[1]?.meta.totalCount).toBeNull();
+  });
 });
