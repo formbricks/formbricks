@@ -66,3 +66,13 @@ i18n.cache
 stats.html
 # next-agents-md
 .next-docs/
+
+# Debug / temp outputs
+*_output.txt
+*_debug.txt
+i18n_results*
+recent_commits.txt
+
+# Local scripts
+mimic-scanner.mjs
+fix-locale-nesting.mjs
