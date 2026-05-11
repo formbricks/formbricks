@@ -782,9 +782,7 @@ hub:
     # When empty, the chart renders TEI args from model, servedModelName, port,
     # revision, and persistence.mountPath. Set this to fully override args.
     args: []
-    extraArgs:
-      - --dtype
-      - float16
+    extraArgs: []
     env: {}
 
     port: 8080
