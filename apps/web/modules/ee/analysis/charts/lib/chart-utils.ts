@@ -58,38 +58,6 @@ export function formatXAxisTick(value: unknown): string {
 }
 
 /**
- * True when every numeric value across the given keys is a whole number.
- * Used to decide whether the y-axis should hide fractional ticks for integer
- * measures like COUNT (otherwise Recharts auto-generates ticks like 0.5, 1.5).
- * Empty data is treated as non-integer so we don't lock the axis prematurely.
- */
-export function allValuesAreIntegers(data: TChartDataRow[], dataKeys: string[]): boolean {
-  if (data.length === 0 || dataKeys.length === 0) return false;
-  let sawAny = false;
-  for (const row of data) {
-    for (const key of dataKeys) {
-      const raw = row[key];
-      if (raw == null || raw === "") continue;
-      const num = Number(raw);
-      if (!Number.isFinite(num)) continue;
-      if (!Number.isInteger(num)) return false;
-      sawAny = true;
-    }
-  }
-  return sawAny;
-}
-
-/** Y-axis tick formatter: integers get thousand separators, decimals keep up to two places. */
-export function formatYAxisTick(value: unknown): string {
-  if (typeof value === "number" && Number.isFinite(value)) {
-    if (Number.isInteger(value)) return value.toLocaleString();
-    return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
-  }
-  if (typeof value === "string") return value;
-  return "";
-}
-
-/**
  * Format a cell value for display in tables and tooltips.
  * ISO date strings become "MMM d, yyyy"; numbers stay as-is (formatted); objects are stringified.
  */

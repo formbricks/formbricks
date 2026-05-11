@@ -2,10 +2,8 @@ import { describe, expect, test } from "vitest";
 import {
   CHART_BRAND_DARK,
   CHART_MEASURE_COLORS,
-  allValuesAreIntegers,
   formatCellValue,
   formatXAxisTick,
-  formatYAxisTick,
   preparePieData,
   resolveChartType,
 } from "./chart-utils";
@@ -97,68 +95,6 @@ describe("chart-utils", () => {
     test("converts boolean and bigint", () => {
       expect(formatCellValue(true)).toBe("true");
       expect(formatCellValue(123n)).toBe("123");
-    });
-  });
-
-  describe("allValuesAreIntegers", () => {
-    test("returns false for empty data or empty keys", () => {
-      expect(allValuesAreIntegers([], ["count"])).toBe(false);
-      expect(allValuesAreIntegers([{ count: 1 }], [])).toBe(false);
-    });
-
-    test("returns true when every value across keys is a whole number", () => {
-      const data = [
-        { source: "a", count: 2 },
-        { source: "b", count: 5 },
-      ];
-      expect(allValuesAreIntegers(data, ["count"])).toBe(true);
-    });
-
-    test("treats numeric strings as their parsed value", () => {
-      const data = [{ count: "12" }, { count: "8" }];
-      expect(allValuesAreIntegers(data, ["count"])).toBe(true);
-    });
-
-    test("returns false when any value has a fractional part", () => {
-      const data = [{ avg: 3.5 }, { avg: 4 }];
-      expect(allValuesAreIntegers(data, ["avg"])).toBe(false);
-    });
-
-    test("skips null/undefined/empty-string but still counts other rows", () => {
-      const data = [{ count: null }, { count: "" }, { count: 7 }];
-      expect(allValuesAreIntegers(data, ["count"])).toBe(true);
-    });
-
-    test("returns false when every value is null (nothing to lock the axis on)", () => {
-      const data = [{ count: null }, { count: undefined }];
-      expect(allValuesAreIntegers(data, ["count"])).toBe(false);
-    });
-
-    test("requires all listed keys to be integers, not just one", () => {
-      const data = [{ count: 5, avg: 3.2 }];
-      expect(allValuesAreIntegers(data, ["count", "avg"])).toBe(false);
-      expect(allValuesAreIntegers(data, ["count"])).toBe(true);
-    });
-  });
-
-  describe("formatYAxisTick", () => {
-    test("integers get thousand separators", () => {
-      expect(formatYAxisTick(1000)).toBe("1,000");
-      expect(formatYAxisTick(2)).toBe("2");
-    });
-
-    test("decimals preserve up to two fraction digits", () => {
-      expect(formatYAxisTick(3.14159)).toBe("3.14");
-    });
-
-    test("non-finite numbers and non-strings render as empty", () => {
-      expect(formatYAxisTick(null)).toBe("");
-      expect(formatYAxisTick(Number.NaN)).toBe("");
-      expect(formatYAxisTick({})).toBe("");
-    });
-
-    test("string values pass through unchanged", () => {
-      expect(formatYAxisTick("abc")).toBe("abc");
     });
   });
 

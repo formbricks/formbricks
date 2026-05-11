@@ -5,10 +5,8 @@ import { useTranslation } from "react-i18next";
 import { CartesianGrid, XAxis, YAxis } from "recharts";
 import {
   CHART_BRAND_DARK,
-  allValuesAreIntegers,
   formatCellValue,
   formatXAxisTick,
-  formatYAxisTick,
 } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import { formatCubeColumnHeader } from "@/modules/ee/analysis/lib/schema-definition";
 import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
@@ -95,10 +93,6 @@ export function CartesianChart({
     <SingleMeasureTooltip dataKey={dataKeys[0]} />
   );
 
-  // For integer-only measures (e.g. COUNT) Recharts otherwise generates fractional ticks like
-  // 0.5, 1.5, which is meaningless for a discrete count.
-  const integerAxis = useMemo(() => allValuesAreIntegers(data, dataKeys), [data, dataKeys]);
-
   return (
     <div className="h-64 w-full">
       <ChartContainer config={chartConfig} className="h-full w-full">
@@ -111,12 +105,7 @@ export function CartesianChart({
             axisLine={false}
             tickFormatter={formatXAxisTick}
           />
-          <YAxis
-            tickLine={false}
-            axisLine={false}
-            allowDecimals={!integerAxis}
-            tickFormatter={formatYAxisTick}
-          />
+          <YAxis tickLine={false} axisLine={false} />
           <ChartTooltip content={tooltipContent} />
           {showLegend && <ChartLegend content={<ChartLegendContent />} verticalAlign="top" height={36} />}
           {children}
