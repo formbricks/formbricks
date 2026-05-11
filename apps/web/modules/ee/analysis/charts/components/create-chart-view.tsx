@@ -147,7 +147,16 @@ export function CreateChartView({
                   <Input
                     id="create-chart-name"
                     value={chartName}
-                    onChange={(event) => setChartName(event.target.value)}
+                    onChange={(event) => {
+                      // Clear any prior custom validity once the user starts typing so the form can submit again.
+                      event.target.setCustomValidity("");
+                      setChartName(event.target.value);
+                    }}
+                    onInvalid={(event) => {
+                      event.currentTarget.setCustomValidity(
+                        t("workspace.analysis.charts.please_enter_chart_name")
+                      );
+                    }}
                     placeholder={t("workspace.analysis.charts.chart_name_placeholder")}
                     maxLength={255}
                     required
