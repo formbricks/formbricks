@@ -43,6 +43,7 @@ import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
 import { TrialAlert } from "@/modules/ee/billing/components/trial-alert";
 import { CreateOrganizationModal } from "@/modules/organization/components/CreateOrganizationModal";
 import { ProfileAvatar } from "@/modules/ui/components/avatars";
+import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import {
   DropdownMenu,
@@ -151,7 +152,17 @@ export const MainNavigation = ({
       },
       {
         id: "unify-feedback",
-        name: t("workspace.unify.unify_feedback"),
+        name: (
+          <span className="inline-flex items-center gap-2">
+            <span>{t("workspace.unify.unify_feedback")}</span>
+            <Badge
+              text="Beta"
+              type="gray"
+              size="tiny"
+              className="normal-case text-[10px] font-semibold tracking-normal"
+            />
+          </span>
+        ),
         items: [
           {
             name: t("workspace.unify.feedback_records"),
