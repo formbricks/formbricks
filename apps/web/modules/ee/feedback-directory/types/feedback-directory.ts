@@ -67,9 +67,7 @@ export const getTranslatedFeedbackDirectoryError = (
   errorCode: string,
   t: (key: string) => string
 ): string => {
-  const normalizedCode = errorCode.includes(": ") ? (errorCode.split(": ").at(-1) ?? errorCode) : errorCode;
-
-  switch (normalizedCode) {
+  switch (errorCode) {
     case "DIRECTORY_NAME_REQUIRED":
       return t("workspace.settings.feedback_directories.error_directory_name_required");
     case "DIRECTORY_NAME_DUPLICATE":
