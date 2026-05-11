@@ -21,6 +21,20 @@ const formatPieLabel = ({ name, percent }: { name: string; percent?: number }): 
   return `${formatXAxisTick(name)}: ${(percent * 100).toFixed(0)}%`;
 };
 
+/** Pie tooltip row defined at module scope so it isn't a nested component in ChartRenderer (sonar S6478). */
+const PieTooltipRow = ({ value, name }: Readonly<{ value: unknown; name: string }>) => {
+  const { t } = useTranslation();
+  return (
+    <>
+      {formatCellValue(value)} {formatCubeColumnHeader(name, t)}
+    </>
+  );
+};
+
+const pieTooltipFormatter = (value: unknown, name: string | number) => (
+  <PieTooltipRow value={value} name={String(name)} />
+);
+
 interface ChartRendererProps {
   chartType: TChartType;
   data: TChartDataRow[];
@@ -166,17 +180,7 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
                   return <Cell key={uniqueKey} fill={colors[index] || CHART_BRAND_DARK} />;
                 })}
               </Pie>
-              <ChartTooltip
-                content={
-                  <ChartTooltipContent
-                    formatter={(value, name) => (
-                      <>
-                        {formatCellValue(value)} {formatCubeColumnHeader(String(name), t)}
-                      </>
-                    )}
-                  />
-                }
-              />
+              <ChartTooltip content={<ChartTooltipContent formatter={pieTooltipFormatter} />} />
             </PieChart>
           </ChartContainer>
         </div>
