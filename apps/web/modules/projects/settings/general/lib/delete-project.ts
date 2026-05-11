@@ -65,6 +65,8 @@ export const deleteProjectWithConfirmation = async ({
     throw new ResourceNotFoundError("project", projectId);
   }
 
+  assertMatchingWorkspaceDeleteConfirmation(confirmationName, project.name);
+
   const organizationId = project.organizationId;
 
   await checkAuthorizationUpdated({
@@ -83,8 +85,6 @@ export const deleteProjectWithConfirmation = async ({
   if (availableProjects.length <= 1) {
     throw new OperationNotAllowedError("You can't delete the last project in the environment.");
   }
-
-  assertMatchingWorkspaceDeleteConfirmation(confirmationName, project.name);
 
   auditLoggingCtx.organizationId = organizationId;
   auditLoggingCtx.projectId = projectId;

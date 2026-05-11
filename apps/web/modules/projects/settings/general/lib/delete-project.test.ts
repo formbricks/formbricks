@@ -113,13 +113,13 @@ describe("deleteProjectWithConfirmation", () => {
   });
 
   test("does not delete when the confirmation name does not match", async () => {
-    await expect(callDeleteProjectWithConfirmation({ confirmationName: "Other Workspace" })).rejects.toThrow(
-      InvalidInputError
-    );
-    await expect(callDeleteProjectWithConfirmation({ confirmationName: "Other Workspace" })).rejects.toThrow(
-      WORKSPACE_DELETE_CONFIRMATION_ERROR
-    );
+    const deleteAttempt = callDeleteProjectWithConfirmation({ confirmationName: "Other Workspace" });
 
+    await expect(deleteAttempt).rejects.toThrow(InvalidInputError);
+    await expect(deleteAttempt).rejects.toThrow(WORKSPACE_DELETE_CONFIRMATION_ERROR);
+
+    expect(mocks.checkAuthorizationUpdated).not.toHaveBeenCalled();
+    expect(mocks.getUserProjects).not.toHaveBeenCalled();
     expect(mocks.deleteProject).not.toHaveBeenCalled();
   });
 
