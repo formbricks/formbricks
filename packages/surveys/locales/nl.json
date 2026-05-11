@@ -50,6 +50,7 @@
       "only_one_file_can_be_uploaded_at_a_time": "Er kan slechts één bestand tegelijk worden geüpload.",
       "placeholder_text": "Klik of sleep bestanden om te uploaden",
       "upload_failed": "Uploaden mislukt! Probeer het opnieuw.",
+      "upload_service_unavailable": "File upload service is unavailable. Please try again later or contact the survey owner.",
       "uploading": "Uploaden...",
       "you_can_only_upload_a_maximum_of_files": "Je kunt maximaal {FILE_LIMIT} bestanden uploaden."
     },

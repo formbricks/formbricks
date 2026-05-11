@@ -50,6 +50,7 @@
       "only_one_file_can_be_uploaded_at_a_time": "Es kann nur eine Datei gleichzeitig hochgeladen werden.",
       "placeholder_text": "Klicke oder ziehe Dateien hierher zum Hochladen",
       "upload_failed": "Upload fehlgeschlagen! Bitte versuchen Sie es erneut.",
+      "upload_service_unavailable": "File upload service is unavailable. Please try again later or contact the survey owner.",
       "uploading": "Wird hochgeladen...",
       "you_can_only_upload_a_maximum_of_files": "Sie können maximal {FILE_LIMIT} Dateien hochladen."
     },

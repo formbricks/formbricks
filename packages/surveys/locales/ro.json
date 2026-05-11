@@ -50,6 +50,7 @@
       "only_one_file_can_be_uploaded_at_a_time": "Poți încărca doar un singur fișier odată.",
       "placeholder_text": "Apasă sau trage pentru a încărca fișiere",
       "upload_failed": "Încărcarea a eșuat! Te rugăm să încerci din nou.",
+      "upload_service_unavailable": "File upload service is unavailable. Please try again later or contact the survey owner.",
       "uploading": "Se încarcă...",
       "you_can_only_upload_a_maximum_of_files": "Poți încărca un număr maxim de {FILE_LIMIT} fișiere."
     },

@@ -18,6 +18,7 @@ import {
   updateOrganizationEmailLogoUrlAction,
 } from "@/modules/ee/whitelabel/email-customization/actions";
 import { handleFileUpload } from "@/modules/storage/file-upload";
+import { showFileUploadErrorToast } from "@/modules/storage/file-upload-error";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Uploader } from "@/modules/ui/components/file-input/components/uploader";
@@ -136,7 +137,7 @@ export const EmailCustomizationSettings = ({
     const { url, error } = await handleFileUpload(logoFile, environmentId, allowedFileExtensions);
 
     if (error) {
-      toast.error(error);
+      showFileUploadErrorToast(error, t);
       setIsSaving(false);
       return;
     }

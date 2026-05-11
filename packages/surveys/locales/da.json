@@ -50,6 +50,7 @@
       "only_one_file_can_be_uploaded_at_a_time": "Du kan kun uploade én fil ad gangen.",
       "placeholder_text": "Klik eller træk for at uploade filer",
       "upload_failed": "Upload mislykkedes! Prøv venligst igen.",
+      "upload_service_unavailable": "File upload service is unavailable. Please try again later or contact the survey owner.",
       "uploading": "Uploader...",
       "you_can_only_upload_a_maximum_of_files": "Du kan maksimalt uploade {FILE_LIMIT} filer."
     },

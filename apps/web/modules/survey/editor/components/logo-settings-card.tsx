@@ -12,6 +12,7 @@ import { TProjectStyling } from "@formbricks/types/project";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
 import { handleFileUpload } from "@/modules/storage/file-upload";
+import { showFileUploadErrorToast } from "@/modules/storage/file-upload-error";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Button } from "@/modules/ui/components/button";
 import { ColorPicker } from "@/modules/ui/components/color-picker";
@@ -81,7 +82,7 @@ export const LogoSettingsCard = ({
     try {
       const uploadResult = await handleFileUpload(file, environmentId);
       if (uploadResult.error) {
-        toast.error(t("common.upload_failed"));
+        showFileUploadErrorToast(uploadResult.error, t);
         return;
       }
       setLogoUrl(uploadResult.url);

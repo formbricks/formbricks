@@ -50,6 +50,7 @@
       "only_one_file_can_be_uploaded_at_a_time": "Un seul fichier peut être téléchargé à la fois.",
       "placeholder_text": "Cliquez ou glissez pour télécharger des fichiers",
       "upload_failed": "Échec du téléchargement ! Veuillez réessayer.",
+      "upload_service_unavailable": "File upload service is unavailable. Please try again later or contact the survey owner.",
       "uploading": "Téléchargement en cours...",
       "you_can_only_upload_a_maximum_of_files": "Vous ne pouvez télécharger qu'un maximum de {FILE_LIMIT} fichiers."
     },

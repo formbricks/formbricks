@@ -50,6 +50,7 @@
       "only_one_file_can_be_uploaded_at_a_time": "Egyszerre csak egy fájl tölthető fel.",
       "placeholder_text": "Kattintson vagy húzza ide a fájlok feltöltéséhez",
       "upload_failed": "A feltöltés nem sikerült! Próbálja meg újra.",
+      "upload_service_unavailable": "File upload service is unavailable. Please try again later or contact the survey owner.",
       "uploading": "Feltöltés…",
       "you_can_only_upload_a_maximum_of_files": "Legfeljebb csak {FILE_LIMIT} fájlt tölthet fel."
     },

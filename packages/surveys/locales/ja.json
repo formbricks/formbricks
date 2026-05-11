@@ -50,6 +50,7 @@
       "only_one_file_can_be_uploaded_at_a_time": "一度にアップロードできるファイルは1つだけです。",
       "placeholder_text": "クリックまたはドラッグしてファイルをアップロード",
       "upload_failed": "アップロードに失敗しました！もう一度お試しください。",
+      "upload_service_unavailable": "File upload service is unavailable. Please try again later or contact the survey owner.",
       "uploading": "アップロード中...",
       "you_can_only_upload_a_maximum_of_files": "アップロードできるファイルは最大{FILE_LIMIT}個までです。"
     },

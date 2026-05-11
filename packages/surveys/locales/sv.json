@@ -50,6 +50,7 @@
       "only_one_file_can_be_uploaded_at_a_time": "Endast en fil kan laddas upp åt gången.",
       "placeholder_text": "Klicka eller dra för att ladda upp filer",
       "upload_failed": "Uppladdning misslyckades! Försök igen.",
+      "upload_service_unavailable": "File upload service is unavailable. Please try again later or contact the survey owner.",
       "uploading": "Laddar upp...",
       "you_can_only_upload_a_maximum_of_files": "Du kan ladda upp maximalt {FILE_LIMIT} filer."
     },

@@ -14,6 +14,7 @@ import {
   updateOrganizationFaviconUrlAction,
 } from "@/modules/ee/whitelabel/favicon-customization/actions";
 import { handleFileUpload } from "@/modules/storage/file-upload";
+import { showFileUploadErrorToast } from "@/modules/storage/file-upload-error";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { FileInput } from "@/modules/ui/components/file-input";
@@ -58,7 +59,7 @@ export const FaviconCustomizationSettings = ({
     try {
       const uploadResult = await handleFileUpload(file, environmentId, allowedFileExtensions);
       if (uploadResult.error) {
-        toast.error(uploadResult.error);
+        showFileUploadErrorToast(uploadResult.error, t);
         return;
       }
       setFaviconUrl(uploadResult.url);

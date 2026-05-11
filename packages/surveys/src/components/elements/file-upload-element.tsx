@@ -288,6 +288,8 @@ export function FileUploadElement({
           setFileErrorMessage(err.message);
         } else if (err?.name === "InvalidFileNameError") {
           setFileErrorMessage(t("errors.file_input.upload_failed"));
+        } else if (err?.name === "StorageNotConfiguredError" || err?.name === "StorageUploadFailedError") {
+          setFileErrorMessage(t("errors.file_input.upload_service_unavailable"));
         } else {
           setFileErrorMessage(t("errors.file_input.upload_failed"));
         }

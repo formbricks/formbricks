@@ -50,6 +50,7 @@
       "only_one_file_can_be_uploaded_at_a_time": "Aynı anda yalnızca bir dosya yüklenebilir.",
       "placeholder_text": "Dosyaları yüklemek için tıklayın veya sürükleyin",
       "upload_failed": "Yükleme başarısız oldu! Lütfen tekrar deneyin.",
+      "upload_service_unavailable": "File upload service is unavailable. Please try again later or contact the survey owner.",
       "uploading": "Yükleniyor...",
       "you_can_only_upload_a_maximum_of_files": "En fazla {FILE_LIMIT} dosya yükleyebilirsiniz."
     },

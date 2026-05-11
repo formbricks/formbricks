@@ -23,6 +23,23 @@ type TResponseCreateResponse = {
 
 type TResponseUpdateResponse = Record<string, unknown> & TResponseQuota;
 
+type TUploadApiErrorResponse = ApiErrorResponse & {
+  details?: ApiErrorResponse["details"] & {
+    storage_error_code?: string;
+    fileName?: string;
+  };
+};
+
+const storageConfigurationErrorCodes = new Set(["s3_credentials_error", "s3_client_error"]);
+
+const parseUploadErrorResponse = async (response: Response): Promise<TUploadApiErrorResponse | undefined> => {
+  try {
+    return (await response.json()) as TUploadApiErrorResponse;
+  } catch {
+    return undefined;
+  }
+};
+
 // Simple API client using fetch
 export class ApiClient {
   readonly appUrl: string;
@@ -121,13 +138,22 @@ export class ApiClient {
     });
 
     if (!response.ok) {
-      if (response.status === 400) {
-        const json = (await response.json()) as ApiErrorResponse;
-        if (json.details?.fileName) {
-          const err = new Error("Invalid file name");
-          err.name = "InvalidFileNameError";
-          throw err;
-        }
+      const json = await parseUploadErrorResponse(response);
+
+      if (response.status === 400 && json?.details?.fileName) {
+        const err = new Error("Invalid file name");
+        err.name = "InvalidFileNameError";
+        throw err;
+      }
+
+      if (
+        response.status >= 500 &&
+        json?.details?.storage_error_code &&
+        storageConfigurationErrorCodes.has(json.details.storage_error_code)
+      ) {
+        const err = new Error("File upload service is not configured");
+        err.name = "StorageNotConfiguredError";
+        throw err;
       }
 
       throw new Error(`Upload failed with status: ${String(response.status)}`);
@@ -173,7 +199,9 @@ export class ApiClient {
       });
     } catch (err) {
       console.error("Error uploading file", err);
-      throw new Error("Network error while uploading file");
+      const error = new Error("File upload service is unavailable");
+      error.name = "StorageUploadFailedError";
+      throw error;
     }
 
     if (!uploadResponse.ok) {
@@ -185,7 +213,9 @@ export class ApiClient {
         throw error;
       }
 
-      throw new Error(`Upload failed with status: ${String(uploadResponse.status)}`);
+      const error = new Error(`Upload failed with status: ${String(uploadResponse.status)}`);
+      error.name = "StorageUploadFailedError";
+      throw error;
     }
 
     return fileUrl;

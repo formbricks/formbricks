@@ -50,6 +50,7 @@
       "only_one_file_can_be_uploaded_at_a_time": "Apenas um arquivo pode ser carregado de cada vez.",
       "placeholder_text": "Clique ou arraste para enviar ficheiros",
       "upload_failed": "Falha no carregamento! Por favor, tente novamente.",
+      "upload_service_unavailable": "File upload service is unavailable. Please try again later or contact the survey owner.",
       "uploading": "A enviar...",
       "you_can_only_upload_a_maximum_of_files": "Você só pode carregar um máximo de {FILE_LIMIT} arquivos."
     },

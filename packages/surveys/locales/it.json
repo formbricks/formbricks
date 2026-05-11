@@ -50,6 +50,7 @@
       "only_one_file_can_be_uploaded_at_a_time": "È possibile caricare solo un file alla volta.",
       "placeholder_text": "Clicca o trascina per caricare i file",
       "upload_failed": "Caricamento fallito! Riprova.",
+      "upload_service_unavailable": "File upload service is unavailable. Please try again later or contact the survey owner.",
       "uploading": "Caricamento in corso...",
       "you_can_only_upload_a_maximum_of_files": "Puoi caricare un massimo di {FILE_LIMIT} file."
     },

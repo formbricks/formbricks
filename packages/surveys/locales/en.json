@@ -50,6 +50,7 @@
       "only_one_file_can_be_uploaded_at_a_time": "Only one file can be uploaded at a time.",
       "placeholder_text": "Click or drag to upload files",
       "upload_failed": "Upload failed! Please try again.",
+      "upload_service_unavailable": "File upload service is unavailable. Please try again later or contact the survey owner.",
       "uploading": "Uploading...",
       "you_can_only_upload_a_maximum_of_files": "You can only upload a maximum of {FILE_LIMIT} files."
     },
