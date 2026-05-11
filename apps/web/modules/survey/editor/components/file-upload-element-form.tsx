@@ -6,7 +6,7 @@ import { PlusIcon } from "lucide-react";
 import Link from "next/link";
 import { type JSX, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import type { TSurveyElement, TSurveyFileUploadElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
@@ -148,40 +148,53 @@ export const FileUploadElementForm = ({
           customContainerClass="p-0">
           <label htmlFor="autoCompleteResponses" className="cursor-pointer bg-slate-50 p-4">
             <p className="text-sm font-semibold text-slate-700">
-              {t("environments.surveys.edit.limit_upload_file_size_to")}
-              <Input
-                autoFocus
-                type="number"
-                id="fileSizeLimit"
-                value={element.maxSizeInMB}
-                onChange={(e) => {
-                  const parsedValue = Number.parseInt(e.target.value, 10);
+              <Trans
+                i18nKey="environments.surveys.edit.limit_upload_file_size_to_mb"
+                components={{
+                  fileSizeInput: (
+                    <Input
+                      autoFocus
+                      type="number"
+                      id="fileSizeLimit"
+                      value={element.maxSizeInMB}
+                      onChange={(e) => {
+                        const parsedValue = Number.parseInt(e.target.value, 10);
 
-                  if (isFormbricksCloud && parsedValue > maxSizeInMBLimit) {
-                    toast.error(
-                      `${t("environments.surveys.edit.max_file_size_limit_is")} ${maxSizeInMBLimit} MB`
-                    );
-                    setIsMaxSizeError(true);
-                    updateElement(elementIdx, { maxSizeInMB: maxSizeInMBLimit });
-                    return;
-                  }
+                        if (isFormbricksCloud && parsedValue > maxSizeInMBLimit) {
+                          toast.error(
+                            t("environments.surveys.edit.max_file_size_limit_is_mb", {
+                              maxSize: maxSizeInMBLimit,
+                            })
+                          );
+                          setIsMaxSizeError(true);
+                          updateElement(elementIdx, { maxSizeInMB: maxSizeInMBLimit });
+                          return;
+                        }
 
-                  updateElement(elementIdx, { maxSizeInMB: Number.parseInt(e.target.value, 10) });
+                        updateElement(elementIdx, { maxSizeInMB: Number.parseInt(e.target.value, 10) });
+                      }}
+                      className="ml-2 mr-2 inline w-20 bg-white text-center text-sm"
+                    />
+                  ),
                 }}
-                className="ml-2 mr-2 inline w-20 bg-white text-center text-sm"
               />
-              MB
             </p>
             {isMaxSizeError && (
               <p className="text-xs text-red-500">
-                {t("environments.surveys.edit.max_file_size_limit_is")} {maxSizeInMBLimit} MB.{" "}
-                {t("environments.surveys.edit.if_you_need_more_please")}
-                <Link
-                  className="underline"
-                  target="_blank"
-                  href={`/environments/${localSurvey.environmentId}/settings/billing`}>
-                  {t("common.please_upgrade_your_plan")}
-                </Link>
+                <Trans
+                  i18nKey="environments.surveys.edit.max_file_size_limit_is_mb_upgrade"
+                  values={{ maxSize: maxSizeInMBLimit }}
+                  components={{
+                    upgradeLink: (
+                      <Link
+                        className="underline"
+                        target="_blank"
+                        href={`/environments/${localSurvey.environmentId}/settings/billing`}>
+                        link
+                      </Link>
+                    ),
+                  }}
+                />
               </p>
             )}
           </label>

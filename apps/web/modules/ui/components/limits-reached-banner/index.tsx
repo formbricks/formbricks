@@ -39,12 +39,11 @@ export const LimitsReachedBanner = ({
                   <div className="ml-3 w-0 flex-1">
                     <p className="text-base font-medium text-slate-900">{t("common.limits_reached")}</p>
                     <p className="mt-1 text-sm text-slate-500">
-                      {isResponseLimitReached ? (
-                        <>
-                          {t("common.you_have_reached_your_monthly_response_limit_of")}{" "}
-                          {orgBillingResponseLimit}.{" "}
-                        </>
-                      ) : null}
+                      {isResponseLimitReached
+                        ? t("common.you_have_reached_your_monthly_response_limit_of_count", {
+                            count: orgBillingResponseLimit,
+                          })
+                        : null}
                     </p>
                     <Link href={`/environments/${environmentId}/settings/billing`}>
                       <span className="text-sm text-slate-900">{t("common.learn_more")}</span>

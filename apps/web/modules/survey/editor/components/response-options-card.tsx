@@ -5,7 +5,7 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon } from "lucide-react";
 import { KeyboardEventHandler, useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
@@ -243,18 +243,23 @@ export const ResponseOptionsCard = ({
             childBorder={true}>
             <label htmlFor="autoCompleteResponses" className="cursor-pointer bg-slate-50 p-4">
               <p className="text-sm font-semibold text-slate-700">
-                {t("environments.surveys.edit.automatically_mark_the_survey_as_complete_after")}
-                <Input
-                  autoFocus
-                  type="number"
-                  min={responseCount ? (responseCount + 1).toString() : "1"}
-                  id="autoCompleteResponses"
-                  value={localSurvey.autoComplete?.toString()}
-                  onChange={handleInputResponse}
-                  onBlur={handleInputResponseBlur}
-                  className="ml-2 mr-2 inline w-20 bg-white text-center text-sm"
+                <Trans
+                  i18nKey="environments.surveys.edit.automatically_mark_complete_after_n_responses"
+                  components={{
+                    autoCompleteInput: (
+                      <Input
+                        autoFocus
+                        type="number"
+                        min={responseCount ? (responseCount + 1).toString() : "1"}
+                        id="autoCompleteResponses"
+                        value={localSurvey.autoComplete?.toString()}
+                        onChange={handleInputResponse}
+                        onBlur={handleInputResponseBlur}
+                        className="ml-2 mr-2 inline w-20 bg-white text-center text-sm"
+                      />
+                    ),
+                  }}
                 />
-                {t("environments.surveys.edit.completed_responses")}
               </p>
             </label>
           </AdvancedOptionToggle>

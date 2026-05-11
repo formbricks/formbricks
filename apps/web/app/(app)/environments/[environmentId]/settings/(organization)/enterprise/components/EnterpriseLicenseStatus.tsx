@@ -5,7 +5,7 @@ import { RotateCcwIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { formatDateForDisplay, formatDateTimeForDisplay } from "@/lib/utils/datetime";
 import { recheckLicenseAction } from "@/modules/ee/license-check/actions";
 import type { TLicenseStatus } from "@/modules/ee/license-check/types/enterprise-license";
@@ -151,12 +151,18 @@ export const EnterpriseLicenseStatus = ({
           </Alert>
         )}
         <p className="border-t border-slate-100 pt-4 text-sm text-slate-500">
-          {t("environments.settings.enterprise.questions_please_reach_out_to")}{" "}
-          <a
-            className="font-medium text-slate-700 underline hover:text-slate-900"
-            href="mailto:hola@formbricks.com">
-            hola@formbricks.com
-          </a>
+          <Trans
+            i18nKey="environments.settings.enterprise.questions_please_reach_out_to_email"
+            components={{
+              contactLink: (
+                <a
+                  className="font-medium text-slate-700 underline hover:text-slate-900"
+                  href="mailto:hola@formbricks.com">
+                  link
+                </a>
+              ),
+            }}
+          />
         </p>
       </div>
     </SettingsCard>

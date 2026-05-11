@@ -5,7 +5,7 @@ import { ActionClass, OrganizationRole } from "@prisma/client";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { TTeamPermission } from "@/modules/ee/teams/project-teams/types/team";
@@ -245,16 +245,21 @@ export const WhenToSendCard = ({
               <div className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4">
                 <div>
                   <p className="text-sm font-semibold text-slate-700">
-                    {t("environments.surveys.edit.wait")}
-                    <Input
-                      type="number"
-                      min="0"
-                      id="triggerDelay"
-                      value={localSurvey.delay.toString()}
-                      onChange={(e) => handleTriggerDelay(e)}
-                      className="ml-2 mr-2 inline w-16 bg-white text-center text-sm"
+                    <Trans
+                      i18nKey="environments.surveys.edit.wait_n_seconds_before_showing_the_survey"
+                      components={{
+                        delayInput: (
+                          <Input
+                            type="number"
+                            min="0"
+                            id="triggerDelay"
+                            value={localSurvey.delay.toString()}
+                            onChange={(e) => handleTriggerDelay(e)}
+                            className="ml-2 mr-2 inline w-16 bg-white text-center text-sm"
+                          />
+                        ),
+                      }}
                     />
-                    {t("environments.surveys.edit.seconds_before_showing_the_survey")}
                   </p>
                 </div>
               </div>
@@ -270,18 +275,21 @@ export const WhenToSendCard = ({
               childBorder={true}>
               <label htmlFor="autoCloseSeconds" className="cursor-pointer p-4">
                 <p className="text-sm font-semibold text-slate-700">
-                  {t("environments.surveys.edit.automatically_close_survey_after")}
-                  <Input
-                    type="number"
-                    min="1"
-                    id="autoCloseSeconds"
-                    value={localSurvey.autoClose?.toString()}
-                    onChange={(e) => handleInputSeconds(e)}
-                    className="mx-2 inline w-16 bg-white text-center text-sm"
+                  <Trans
+                    i18nKey="environments.surveys.edit.automatically_close_survey_after_n_seconds_if_no_response"
+                    components={{
+                      autoCloseInput: (
+                        <Input
+                          type="number"
+                          min="1"
+                          id="autoCloseSeconds"
+                          value={localSurvey.autoClose?.toString()}
+                          onChange={(e) => handleInputSeconds(e)}
+                          className="mx-2 inline w-16 bg-white text-center text-sm"
+                        />
+                      ),
+                    }}
                   />
-                  {t(
-                    "environments.surveys.edit.seconds_after_trigger_the_survey_will_be_closed_if_no_response"
-                  )}
                 </p>
               </label>
             </AdvancedOptionToggle>

@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import type {
   TBaseFilter,
@@ -355,13 +355,19 @@ export function TargetingCard({
                 {isSegmentUsedInOtherSurveys ? (
                   <p className="mt-1 flex items-center text-xs text-slate-500">
                     <AlertCircle className="mr-1 inline h-3 w-3" />
-                    {t("environments.segments.this_segment_is_used_in_other_surveys")}
-                    <Link
-                      className="ml-1 underline"
-                      href={`/environments/${environmentId}/segments`}
-                      target="_blank">
-                      {t("environments.segments.here")}
-                    </Link>
+                    <Trans
+                      i18nKey="environments.segments.segment_used_in_other_surveys_make_changes_here"
+                      components={{
+                        segmentsLink: (
+                          <Link
+                            className="ml-1 underline"
+                            href={`/environments/${environmentId}/segments`}
+                            target="_blank">
+                            link
+                          </Link>
+                        ),
+                      }}
+                    />
                   </p>
                 ) : null}
               </div>
@@ -430,14 +436,19 @@ export function TargetingCard({
           <Alert className="flex items-center rounded-none bg-slate-50">
             <AlertDescription className="ml-2">
               <span className="mr-1 text-slate-600">
-                {t("environments.segments.user_targeting_is_currently_only_available_when")}{" "}
-                <Link
-                  href="https://formbricks.com//docs/app-surveys/user-identification"
-                  target="blank"
-                  className="underline">
-                  {t("environments.segments.identifying_users")}
-                </Link>{" "}
-                {t("environments.segments.with_the_formbricks_sdk")}.
+                <Trans
+                  i18nKey="environments.segments.user_targeting_only_available_when_identifying_users"
+                  components={{
+                    docsLink: (
+                      <Link
+                        href="https://formbricks.com/docs/app-surveys/user-identification"
+                        target="blank"
+                        className="underline">
+                        link
+                      </Link>
+                    ),
+                  }}
+                />
               </span>
             </AlertDescription>
           </Alert>

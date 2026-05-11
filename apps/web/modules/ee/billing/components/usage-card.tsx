@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslation } from "react-i18next";
+import { Trans } from "react-i18next";
 import { Badge } from "@/modules/ui/components/badge";
 import { BillingSlider } from "./billing-slider";
 
@@ -13,8 +13,6 @@ interface UsageCardProps {
 }
 
 export const UsageCard = ({ metric, currentCount, limit, isUnlimited, unlimitedLabel }: UsageCardProps) => {
-  const { t } = useTranslation();
-
   if (isUnlimited) {
     return (
       <div className="flex items-center justify-between">
@@ -31,8 +29,11 @@ export const UsageCard = ({ metric, currentCount, limit, isUnlimited, unlimitedL
       <div className="flex items-center justify-between">
         <p className="text-sm font-semibold text-slate-700">{metric}</p>
         <p className="text-sm text-slate-600">
-          {currentCount.toLocaleString()} / {limit.toLocaleString()}{" "}
-          <span className="text-slate-400">{t("environments.settings.billing.used")}</span>
+          <Trans
+            i18nKey="environments.settings.billing.usage_count_of_limit_used"
+            values={{ current: currentCount.toLocaleString(), limit: limit.toLocaleString() }}
+            components={{ muted: <span className="text-slate-400" /> }}
+          />
         </p>
       </div>
       <BillingSlider value={currentCount} max={limit} />
