@@ -38,6 +38,7 @@ import {
   TSourceField,
   TUnifySurvey,
   ZFormbricksConnectorForm,
+  getTranslatedConnectorError,
 } from "../types";
 import {
   areAllRequiredFieldsMapped,
@@ -59,7 +60,7 @@ interface EditConnectorModalProps {
     name: string;
     surveyMappings?: { surveyId: string; elementIds: string[] }[];
     fieldMappings?: TFieldMapping[];
-  }) => Promise<void>;
+  }) => Promise<boolean>;
   surveys: TUnifySurvey[];
   onOpenCsvImport?: () => void;
 }
@@ -174,7 +175,7 @@ export const EditConnectorModal = ({
   const handleUpdateFormbricksConnector = async (values: TFormbricksConnectorForm) => {
     if (connector?.type !== "formbricks_survey") return;
     setIsUpdating(true);
-    await onUpdateConnector({
+    const success = await onUpdateConnector({
       connectorId: connector.id,
       workspaceId: connector.workspaceId,
       name: values.sourceName.trim(),
@@ -182,13 +183,15 @@ export const EditConnectorModal = ({
       fieldMappings: undefined,
     });
     setIsUpdating(false);
-    handleOpenChange(false);
+    if (success) {
+      handleOpenChange(false);
+    }
   };
 
   const handleUpdateCsvConnector = async () => {
     if (connector?.type !== "csv" || !isConnectorNameValid(csvConnectorName)) return;
     setIsUpdating(true);
-    await onUpdateConnector({
+    const success = await onUpdateConnector({
       connectorId: connector.id,
       workspaceId: connector.workspaceId,
       name: csvConnectorName.trim(),
@@ -196,7 +199,9 @@ export const EditConnectorModal = ({
       fieldMappings: mappings.length > 0 ? mappings : undefined,
     });
     setIsUpdating(false);
-    handleOpenChange(false);
+    if (success) {
+      handleOpenChange(false);
+    }
   };
 
   const handleFormbricksQuestionToggle = (questionId: string) => {
@@ -239,11 +244,13 @@ export const EditConnectorModal = ({
         <div className="space-y-4 py-4">
           {connector.type === "formbricks_survey" ? (
             <FormProvider {...formbricksForm}>
-              <form className="space-y-4">
+              <form
+                className="space-y-4"
+                onSubmit={formbricksForm.handleSubmit(handleUpdateFormbricksConnector)}>
                 <FormField
                   control={formbricksForm.control}
                   name="sourceName"
-                  render={({ field }) => (
+                  render={({ field, fieldState: { error } }) => (
                     <FormItem>
                       <FormLabel>{t("workspace.unify.source_name")}</FormLabel>
                       <FormControl>
@@ -253,7 +260,9 @@ export const EditConnectorModal = ({
                           placeholder={t("workspace.unify.enter_name_for_source")}
                         />
                       </FormControl>
-                      <FormError />
+                      {error?.message && (
+                        <FormError>{getTranslatedConnectorError(error.message, t)}</FormError>
+                      )}
                     </FormItem>
                   )}
                 />
@@ -261,7 +270,7 @@ export const EditConnectorModal = ({
                 <FormField
                   control={formbricksForm.control}
                   name="surveyId"
-                  render={({ field }) => (
+                  render={({ field, fieldState: { error } }) => (
                     <FormItem>
                       <FormLabel>{t("workspace.unify.select_survey")}</FormLabel>
                       <FormControl>
@@ -281,7 +290,9 @@ export const EditConnectorModal = ({
                           </SelectContent>
                         </Select>
                       </FormControl>
-                      <FormError />
+                      {error?.message && (
+                        <FormError>{getTranslatedConnectorError(error.message, t)}</FormError>
+                      )}
                     </FormItem>
                   )}
                 />
@@ -289,7 +300,7 @@ export const EditConnectorModal = ({
                 <FormField
                   control={formbricksForm.control}
                   name="selectedQuestionIds"
-                  render={() => (
+                  render={({ fieldState: { error } }) => (
                     <FormItem>
                       <FormLabel>{t("workspace.unify.select_questions")}</FormLabel>
                       <FormControl>
@@ -301,7 +312,9 @@ export const EditConnectorModal = ({
                           />
                         </div>
                       </FormControl>
-                      <FormError />
+                      {error?.message && (
+                        <FormError>{getTranslatedConnectorError(error.message, t)}</FormError>
+                      )}
                     </FormItem>
                   )}
                 />

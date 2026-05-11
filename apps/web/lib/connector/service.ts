@@ -212,6 +212,18 @@ export const deleteConnector = async (connectorId: string, workspaceId: string):
 
 // -- Composite functions --
 
+const mapUniqueConstraintError = (error: Prisma.PrismaClientKnownRequestError): InvalidInputError => {
+  const target = error.meta?.target;
+  const targetFields = Array.isArray(target) ? (target as string[]) : [];
+  if (targetFields.includes("elementId") || targetFields.includes("surveyId")) {
+    return new InvalidInputError("CONNECTOR_FORMBRICKS_MAPPING_DUPLICATE");
+  }
+  if (targetFields.includes("sourceFieldId") || targetFields.includes("targetFieldId")) {
+    return new InvalidInputError("CONNECTOR_FIELD_MAPPING_DUPLICATE");
+  }
+  return new InvalidInputError("CONNECTOR_NAME_DUPLICATE");
+};
+
 export type TFormbricksMappingsInput = {
   type: "formbricks_survey";
   mappings: TConnectorFormbricksMappingCreateInput[];
@@ -284,7 +296,7 @@ export const createConnectorWithMappings = async (
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === PrismaErrorType.UniqueConstraintViolation) {
-        throw new InvalidInputError(`Connector with name ${data.name} already exists`);
+        throw mapUniqueConstraintError(error);
       }
       throw new DatabaseError(error.message);
     }
@@ -359,6 +371,9 @@ export const updateConnectorWithMappings = async (
     return mapConnectorWithMappings(result);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === PrismaErrorType.UniqueConstraintViolation) {
+        throw mapUniqueConstraintError(error);
+      }
       if (error.code === PrismaErrorType.RecordDoesNotExist) {
         throw new ResourceNotFoundError("Connector", connectorId);
       }
