@@ -62,6 +62,7 @@ interface EditConnectorModalProps {
   }) => Promise<void>;
   surveys: TUnifySurvey[];
   onOpenCsvImport?: () => void;
+  isReadOnly?: boolean;
 }
 
 export const EditConnectorModal = ({
@@ -71,6 +72,7 @@ export const EditConnectorModal = ({
   onUpdateConnector,
   surveys,
   onOpenCsvImport,
+  isReadOnly = false,
 }: EditConnectorModalProps) => {
   const { t } = useTranslation();
   const [csvConnectorName, setCsvConnectorName] = useState("");
@@ -251,6 +253,7 @@ export const EditConnectorModal = ({
                           value={field.value}
                           onChange={field.onChange}
                           placeholder={t("workspace.unify.enter_name_for_source")}
+                          disabled={isReadOnly}
                         />
                       </FormControl>
                       <FormError />
@@ -293,7 +296,7 @@ export const EditConnectorModal = ({
                     <FormItem>
                       <FormLabel>{t("workspace.unify.select_questions")}</FormLabel>
                       <FormControl>
-                        <div>
+                        <div className={isReadOnly ? "pointer-events-none opacity-70" : undefined}>
                           <FormbricksQuestionList
                             survey={selectedSurvey}
                             selectedQuestionIds={selectedQuestionIds}
@@ -328,10 +331,14 @@ export const EditConnectorModal = ({
                   value={csvConnectorName}
                   onChange={(event) => setCsvConnectorName(event.target.value)}
                   placeholder={t("workspace.unify.enter_name_for_source")}
+                  disabled={isReadOnly}
                 />
               </div>
 
-              <div className="max-h-[40vh] overflow-y-auto rounded-lg border border-slate-200 p-4">
+              <div
+                className={`max-h-[40vh] overflow-y-auto rounded-lg border border-slate-200 p-4 ${
+                  isReadOnly ? "pointer-events-none opacity-70" : ""
+                }`}>
                 <MappingUI
                   sourceFields={sourceFields}
                   mappings={mappings}
@@ -344,25 +351,33 @@ export const EditConnectorModal = ({
         </div>
 
         <DialogFooter>
-          {connector.type === "csv" && (
-            <Button
-              variant="secondary"
-              onClick={() => {
-                handleOpenChange(false);
-                onOpenCsvImport?.();
-              }}>
-              {t("workspace.unify.import_feedback")}
+          {isReadOnly ? (
+            <Button variant="secondary" onClick={() => handleOpenChange(false)}>
+              {t("common.close")}
             </Button>
+          ) : (
+            <>
+              {connector.type === "csv" && (
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    handleOpenChange(false);
+                    onOpenCsvImport?.();
+                  }}>
+                  {t("workspace.unify.import_feedback")}
+                </Button>
+              )}
+              <Button
+                onClick={
+                  connector.type === "formbricks_survey"
+                    ? () => void formbricksForm.handleSubmit(handleUpdateFormbricksConnector)()
+                    : handleUpdateCsvConnector
+                }
+                disabled={saveChangesDisabled}>
+                {t("workspace.unify.save_changes")}
+              </Button>
+            </>
           )}
-          <Button
-            onClick={
-              connector.type === "formbricks_survey"
-                ? () => void formbricksForm.handleSubmit(handleUpdateFormbricksConnector)()
-                : handleUpdateCsvConnector
-            }
-            disabled={saveChangesDisabled}>
-            {t("workspace.unify.save_changes")}
-          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

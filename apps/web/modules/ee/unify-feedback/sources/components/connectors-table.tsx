@@ -13,6 +13,7 @@ interface ConnectorsTableProps {
   onToggleStatus: (connector: TConnectorWithMappings) => Promise<void>;
   onDelete: (connectorId: string) => Promise<void>;
   isLoading?: boolean;
+  isReadOnly?: boolean;
 }
 
 export function ConnectorsTable({
@@ -23,6 +24,7 @@ export function ConnectorsTable({
   onToggleStatus,
   onDelete,
   isLoading = false,
+  isReadOnly = false,
 }: Readonly<ConnectorsTableProps>) {
   const { t } = useTranslation();
 
@@ -48,6 +50,7 @@ export function ConnectorsTable({
           onDuplicate={onDuplicate}
           onToggleStatus={onToggleStatus}
           onDelete={onDelete}
+          isReadOnly={isReadOnly}
         />
       )}
     </div>

@@ -28,6 +28,7 @@ interface ConnectorsSectionProps {
   initialConnectors: TConnectorWithMappings[];
   initialSurveys: TUnifySurvey[];
   directories: { id: string; name: string }[];
+  isReadOnly: boolean;
 }
 
 export function ConnectorsSection({
@@ -35,6 +36,7 @@ export function ConnectorsSection({
   initialConnectors,
   initialSurveys,
   directories,
+  isReadOnly,
 }: Readonly<ConnectorsSectionProps>) {
   const { t } = useTranslation();
   const router = useRouter();
@@ -170,11 +172,15 @@ export function ConnectorsSection({
       <SettingsCard
         title={t("workspace.unify.feedback_sources")}
         description={t("workspace.unify.feedback_sources_settings_description")}
-        buttonInfo={{
-          text: t("workspace.unify.add_source"),
-          onClick: () => setIsCreateModalOpen(true),
-          variant: "default",
-        }}>
+        buttonInfo={
+          isReadOnly
+            ? undefined
+            : {
+                text: t("workspace.unify.add_source"),
+                onClick: () => setIsCreateModalOpen(true),
+                variant: "default",
+              }
+        }>
         <ConnectorsTable
           connectors={initialConnectors}
           onConnectorClick={setEditingConnector}
@@ -183,6 +189,7 @@ export function ConnectorsSection({
           onToggleStatus={handleToggleStatus}
           onDelete={handleDeleteConnector}
           isLoading={false}
+          isReadOnly={isReadOnly}
         />
         {directories.length > 0 && (
           <Alert size="small" className="mt-4">
@@ -208,6 +215,7 @@ export function ConnectorsSection({
 
       <EditConnectorModal
         connector={editingConnector}
+        isReadOnly={isReadOnly}
         open={editingConnector !== null}
         onOpenChange={(open) => !open && setEditingConnector(null)}
         onUpdateConnector={handleUpdateConnector}
