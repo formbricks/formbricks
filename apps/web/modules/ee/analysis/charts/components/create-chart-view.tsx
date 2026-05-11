@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/cn";
 import { AdvancedChartBuilder } from "@/modules/ee/analysis/charts/components/advanced-chart-builder";
 import { AIQuerySection } from "@/modules/ee/analysis/charts/components/ai-query-section";
 import { ChartDialogFooter } from "@/modules/ee/analysis/charts/components/chart-dialog-footer";
@@ -80,6 +81,7 @@ export function CreateChartView({
 
   const chartPreviewRef = useRef<HTMLDivElement>(null);
   const CREATE_CHART_FORM_ID = "create-chart-form";
+  const [chartNameError, setChartNameError] = useState<string | null>(null);
 
   useEffect(() => {
     if (chartData) {
@@ -87,8 +89,9 @@ export function CreateChartView({
     }
   }, [chartData]);
 
-  const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleFormSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setChartNameError(null);
     return handleSaveChart();
   };
 
@@ -143,24 +146,29 @@ export function CreateChartView({
             {hasSelectedDirectory ? (
               <>
                 <form id={CREATE_CHART_FORM_ID} onSubmit={handleFormSubmit} className="space-y-2">
-                  <Label htmlFor="create-chart-name">{t("workspace.analysis.charts.chart_name")}</Label>
+                  <Label htmlFor="create-chart-name" className={cn(chartNameError && "text-red-500")}>
+                    {t("workspace.analysis.charts.chart_name")}
+                  </Label>
                   <Input
                     id="create-chart-name"
                     value={chartName}
                     onChange={(event) => {
-                      // Clear any prior custom validity once the user starts typing so the form can submit again.
-                      event.target.setCustomValidity("");
+                      if (chartNameError) setChartNameError(null);
                       setChartName(event.target.value);
                     }}
                     onInvalid={(event) => {
-                      event.currentTarget.setCustomValidity(
-                        t("workspace.analysis.charts.please_enter_chart_name")
-                      );
+                      // Suppress the browser tooltip and render our inline message instead.
+                      event.preventDefault();
+                      event.currentTarget.scrollIntoView({ behavior: "smooth", block: "center" });
+                      event.currentTarget.focus();
+                      setChartNameError(t("workspace.analysis.charts.please_enter_chart_name"));
                     }}
                     placeholder={t("workspace.analysis.charts.chart_name_placeholder")}
                     maxLength={255}
                     required
+                    isInvalid={!!chartNameError}
                   />
+                  {chartNameError && <p className="text-sm text-red-500">{chartNameError}</p>}
                 </form>
 
                 {!isEditing && (
