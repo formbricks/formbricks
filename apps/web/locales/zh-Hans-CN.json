@@ -3689,6 +3689,8 @@
       "enter_name_for_source": "为此来源输入名称",
       "enter_value": "请输入值...",
       "enum": "枚举",
+      "error_connector_field_mapping_duplicate": "此来源存在重复的字段映射",
+      "error_connector_formbricks_mapping_duplicate": "此来源存在重复的问题映射",
       "error_connector_name_duplicate": "该名称的数据源已存在",
       "error_connector_name_required": "数据源名称为必填项",
       "error_connector_questions_required": "请至少选择一个问题",

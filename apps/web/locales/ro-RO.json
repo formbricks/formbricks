@@ -3689,6 +3689,8 @@
       "enter_name_for_source": "Introdu un nume pentru această sursă",
       "enter_value": "Introdu valoarea...",
       "enum": "enum",
+      "error_connector_field_mapping_duplicate": "Mapare duplicată a câmpului pentru această sursă",
+      "error_connector_formbricks_mapping_duplicate": "Mapare duplicată a întrebării pentru această sursă",
       "error_connector_name_duplicate": "Există deja o sursă cu acest nume",
       "error_connector_name_required": "Numele sursei este obligatoriu",
       "error_connector_questions_required": "Selectează cel puțin o întrebare",

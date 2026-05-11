@@ -3689,6 +3689,8 @@
       "enter_name_for_source": "Gib einen Namen für diese Quelle ein",
       "enter_value": "Wert eingeben...",
       "enum": "Aufzählung",
+      "error_connector_field_mapping_duplicate": "Doppelte Feldzuordnung für diese Quelle",
+      "error_connector_formbricks_mapping_duplicate": "Doppelte Fragenzuordnung für diese Quelle",
       "error_connector_name_duplicate": "Eine Quelle mit diesem Namen existiert bereits",
       "error_connector_name_required": "Quellenname ist erforderlich",
       "error_connector_questions_required": "Wähle mindestens eine Frage aus",

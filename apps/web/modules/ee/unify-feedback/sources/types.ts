@@ -232,6 +232,10 @@ export const getTranslatedConnectorError = (errorCode: string, t: TFunction): st
   switch (errorCode) {
     case "CONNECTOR_NAME_DUPLICATE":
       return t("workspace.unify.error_connector_name_duplicate");
+    case "CONNECTOR_FORMBRICKS_MAPPING_DUPLICATE":
+      return t("workspace.unify.error_connector_formbricks_mapping_duplicate");
+    case "CONNECTOR_FIELD_MAPPING_DUPLICATE":
+      return t("workspace.unify.error_connector_field_mapping_duplicate");
     case "CONNECTOR_NAME_REQUIRED":
       return t("workspace.unify.error_connector_name_required");
     case "CONNECTOR_SURVEY_REQUIRED":

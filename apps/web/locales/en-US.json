@@ -3689,6 +3689,8 @@
       "enter_name_for_source": "Enter a name for this source",
       "enter_value": "Enter value...",
       "enum": "enum",
+      "error_connector_field_mapping_duplicate": "Duplicate field mapping for this source",
+      "error_connector_formbricks_mapping_duplicate": "Duplicate question mapping for this source",
       "error_connector_name_duplicate": "A source with this name already exists",
       "error_connector_name_required": "Source name is required",
       "error_connector_questions_required": "Select at least one question",

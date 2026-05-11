@@ -3689,6 +3689,8 @@
       "enter_name_for_source": "Ange ett namn för denna källa",
       "enter_value": "Ange värde...",
       "enum": "enum",
+      "error_connector_field_mapping_duplicate": "Duplicerad fältmappning för denna källa",
+      "error_connector_formbricks_mapping_duplicate": "Duplicerad frågemappning för denna källa",
       "error_connector_name_duplicate": "En källa med det här namnet finns redan",
       "error_connector_name_required": "Källnamn krävs",
       "error_connector_questions_required": "Välj minst en fråga",

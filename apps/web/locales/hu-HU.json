@@ -3689,6 +3689,8 @@
       "enter_name_for_source": "Adj nevet ennek a forrásnak",
       "enter_value": "Érték megadása...",
       "enum": "felsorolás",
+      "error_connector_field_mapping_duplicate": "Duplikált mezőleképezés ehhez a forráshoz",
+      "error_connector_formbricks_mapping_duplicate": "Duplikált kérdésleképezés ehhez a forráshoz",
       "error_connector_name_duplicate": "Már létezik forrás ezzel a névvel",
       "error_connector_name_required": "A forrás neve kötelező",
       "error_connector_questions_required": "Válasszon ki legalább egy kérdést",

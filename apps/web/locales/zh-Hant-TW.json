@@ -3689,6 +3689,8 @@
       "enter_name_for_source": "請輸入此來源的名稱",
       "enter_value": "請輸入值……",
       "enum": "enum",
+      "error_connector_field_mapping_duplicate": "此來源的欄位對應重複",
+      "error_connector_formbricks_mapping_duplicate": "此來源的問題對應重複",
       "error_connector_name_duplicate": "已存在使用此名稱的來源",
       "error_connector_name_required": "來源名稱為必填項目",
       "error_connector_questions_required": "請至少選擇一個問題",

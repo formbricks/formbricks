@@ -3529,6 +3529,8 @@ checksums:
     workspace/unify/enter_name_for_source: de6d02a0a8ccc99204ad831ca6dcdbd3
     workspace/unify/enter_value: 4f068bb59617975c1e546218373122cd
     workspace/unify/enum: 96fc644f35edd6b1c09d1d503f078acc
+    workspace/unify/error_connector_field_mapping_duplicate: 4e507ae4a99f53dfa75d849d32566bf2
+    workspace/unify/error_connector_formbricks_mapping_duplicate: 48524e22fa33bd0b2829f7aea49c711b
     workspace/unify/error_connector_name_duplicate: 56a1a05212e87dff21261d1db90fdb11
     workspace/unify/error_connector_name_required: b2d5f79f6126e23128d7bef0c1736ff2
     workspace/unify/error_connector_questions_required: d7d8e388959ab83a9195ba63bebf6516

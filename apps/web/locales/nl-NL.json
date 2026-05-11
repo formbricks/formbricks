@@ -3689,6 +3689,8 @@
       "enter_name_for_source": "Voer een naam in voor deze bron",
       "enter_value": "Voer waarde in...",
       "enum": "enum",
+      "error_connector_field_mapping_duplicate": "Dubbele veldkoppeling voor deze bron",
+      "error_connector_formbricks_mapping_duplicate": "Dubbele vraagkoppeling voor deze bron",
       "error_connector_name_duplicate": "Er bestaat al een bron met deze naam",
       "error_connector_name_required": "Bronnaam is verplicht",
       "error_connector_questions_required": "Selecteer minimaal één vraag",

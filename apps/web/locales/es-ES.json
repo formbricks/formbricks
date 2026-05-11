@@ -3689,6 +3689,8 @@
       "enter_name_for_source": "Introduce un nombre para este origen",
       "enter_value": "Introduce un valor...",
       "enum": "enum",
+      "error_connector_field_mapping_duplicate": "Mapeo de campo duplicado para esta fuente",
+      "error_connector_formbricks_mapping_duplicate": "Mapeo de pregunta duplicado para esta fuente",
       "error_connector_name_duplicate": "Ya existe una fuente con este nombre",
       "error_connector_name_required": "El nombre de origen es obligatorio",
       "error_connector_questions_required": "Selecciona al menos una pregunta",

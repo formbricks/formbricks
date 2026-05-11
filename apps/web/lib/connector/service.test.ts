@@ -386,11 +386,12 @@ describe("createConnectorWithMappings", () => {
     );
   });
 
-  test("throws InvalidInputError on unique constraint violation", async () => {
+  test("throws CONNECTOR_NAME_DUPLICATE on Connector name unique violation", async () => {
     vi.mocked(prisma.$transaction).mockRejectedValue(
       new Prisma.PrismaClientKnownRequestError("Unique constraint", {
         code: "P2002",
         clientVersion: "5.0.0",
+        meta: { target: ["workspaceId", "name"] },
       })
     );
 
@@ -400,7 +401,43 @@ describe("createConnectorWithMappings", () => {
         type: "formbricks_survey",
         feedbackDirectoryId: FRD_ID,
       })
-    ).rejects.toThrow(InvalidInputError);
+    ).rejects.toThrow(new InvalidInputError("CONNECTOR_NAME_DUPLICATE"));
+  });
+
+  test("throws CONNECTOR_FORMBRICKS_MAPPING_DUPLICATE on mapping unique violation", async () => {
+    vi.mocked(prisma.$transaction).mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Unique constraint", {
+        code: "P2002",
+        clientVersion: "5.0.0",
+        meta: { target: ["workspaceId", "connectorId", "surveyId", "elementId"] },
+      })
+    );
+
+    await expect(
+      createConnectorWithMappings(ENV_ID, {
+        name: "Dup mapping",
+        type: "formbricks_survey",
+        feedbackDirectoryId: FRD_ID,
+      })
+    ).rejects.toThrow(new InvalidInputError("CONNECTOR_FORMBRICKS_MAPPING_DUPLICATE"));
+  });
+
+  test("throws CONNECTOR_FIELD_MAPPING_DUPLICATE on field mapping unique violation", async () => {
+    vi.mocked(prisma.$transaction).mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Unique constraint", {
+        code: "P2002",
+        clientVersion: "5.0.0",
+        meta: { target: ["workspaceId", "connectorId", "sourceFieldId", "targetFieldId"] },
+      })
+    );
+
+    await expect(
+      createConnectorWithMappings(ENV_ID, {
+        name: "Dup field mapping",
+        type: "csv",
+        feedbackDirectoryId: FRD_ID,
+      })
+    ).rejects.toThrow(new InvalidInputError("CONNECTOR_FIELD_MAPPING_DUPLICATE"));
   });
 
   test("throws DatabaseError on generic Prisma error", async () => {
@@ -523,6 +560,48 @@ describe("updateConnectorWithMappings", () => {
 
     await expect(updateConnectorWithMappings(CONNECTOR_ID, ENV_ID, { name: "x" })).rejects.toThrow(
       ResourceNotFoundError
+    );
+  });
+
+  test("throws CONNECTOR_NAME_DUPLICATE on Connector name unique violation", async () => {
+    vi.mocked(prisma.$transaction).mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Unique constraint", {
+        code: "P2002",
+        clientVersion: "5.0.0",
+        meta: { target: ["workspaceId", "name"] },
+      })
+    );
+
+    await expect(updateConnectorWithMappings(CONNECTOR_ID, ENV_ID, { name: "Dup" })).rejects.toThrow(
+      new InvalidInputError("CONNECTOR_NAME_DUPLICATE")
+    );
+  });
+
+  test("throws CONNECTOR_FORMBRICKS_MAPPING_DUPLICATE on formbricks mapping unique violation", async () => {
+    vi.mocked(prisma.$transaction).mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Unique constraint", {
+        code: "P2002",
+        clientVersion: "5.0.0",
+        meta: { target: ["workspaceId", "connectorId", "surveyId", "elementId"] },
+      })
+    );
+
+    await expect(updateConnectorWithMappings(CONNECTOR_ID, ENV_ID, { name: "x" })).rejects.toThrow(
+      new InvalidInputError("CONNECTOR_FORMBRICKS_MAPPING_DUPLICATE")
+    );
+  });
+
+  test("throws CONNECTOR_FIELD_MAPPING_DUPLICATE on field mapping unique violation", async () => {
+    vi.mocked(prisma.$transaction).mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Unique constraint", {
+        code: "P2002",
+        clientVersion: "5.0.0",
+        meta: { target: ["workspaceId", "connectorId", "sourceFieldId", "targetFieldId"] },
+      })
+    );
+
+    await expect(updateConnectorWithMappings(CONNECTOR_ID, ENV_ID, { name: "x" })).rejects.toThrow(
+      new InvalidInputError("CONNECTOR_FIELD_MAPPING_DUPLICATE")
     );
   });
 
