@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { type FormEvent, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { AdvancedChartBuilder } from "@/modules/ee/analysis/charts/components/advanced-chart-builder";
@@ -89,12 +89,6 @@ export function CreateChartView({
     }
   }, [chartData]);
 
-  const handleFormSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setChartNameError(null);
-    return handleSaveChart();
-  };
-
   if (isLoadingChart && isEditing && !initialChart) {
     return <ChartDialogLoadingView open={open} onClose={handleClose} />;
   }
@@ -145,7 +139,14 @@ export function CreateChartView({
           <div className="grid gap-4">
             {hasSelectedDirectory ? (
               <>
-                <form id={CREATE_CHART_FORM_ID} onSubmit={handleFormSubmit} className="space-y-2">
+                <form
+                  id={CREATE_CHART_FORM_ID}
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    setChartNameError(null);
+                    return handleSaveChart();
+                  }}
+                  className="space-y-2">
                   <Label htmlFor="create-chart-name" className={cn(chartNameError && "text-red-500")}>
                     {t("workspace.analysis.charts.chart_name")}
                   </Label>
