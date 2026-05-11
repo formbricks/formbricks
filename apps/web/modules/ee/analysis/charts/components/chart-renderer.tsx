@@ -169,10 +169,11 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
               <ChartTooltip
                 content={
                   <ChartTooltipContent
-                    formatter={(value, name) => [
-                      formatCellValue(value),
-                      formatCubeColumnHeader(String(name), t),
-                    ]}
+                    formatter={(value, name) => (
+                      <>
+                        {formatCellValue(value)} {formatCubeColumnHeader(String(name), t)}
+                      </>
+                    )}
                   />
                 }
               />
