@@ -279,6 +279,7 @@ export const createFeedbackDirectory = async (
       if (count !== workspaceIds.length) {
         throw new InvalidInputError("DIRECTORY_WORKSPACES_INVALID_ORG");
       }
+      await assertWorkspacesNotAssignedElsewhere(undefined, workspaceIds);
     }
 
     const directory = await prisma.feedbackDirectory.create({
@@ -440,9 +441,12 @@ const pauseConnectorsInWorkspaces = async (
  * Enforces the single-active-FRD-per-workspace invariant. The client UI prevents
  * assigning a workspace to multiple active directories, but the server must also
  * reject such payloads to keep this guarantee under direct API access.
+ *
+ * Pass `directoryId` when updating an existing directory to exclude it from the
+ * conflict check. Omit it on create — every active directory is a conflict.
  */
 const assertWorkspacesNotAssignedElsewhere = async (
-  directoryId: string,
+  directoryId: string | undefined,
   workspaceIds: string[]
 ): Promise<void> => {
   if (workspaceIds.length === 0) return;
@@ -450,7 +454,7 @@ const assertWorkspacesNotAssignedElsewhere = async (
   const conflicting = await prisma.feedbackDirectoryWorkspace.findFirst({
     where: {
       workspaceId: { in: workspaceIds },
-      feedbackDirectoryId: { not: directoryId },
+      ...(directoryId === undefined ? {} : { feedbackDirectoryId: { not: directoryId } }),
       feedbackDirectory: { isArchived: false },
     },
     select: { workspaceId: true },

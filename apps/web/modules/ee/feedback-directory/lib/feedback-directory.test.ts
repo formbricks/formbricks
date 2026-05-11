@@ -289,6 +289,47 @@ describe("FeedbackDirectory Service", () => {
       ).rejects.toThrow(new InvalidInputError("DIRECTORY_WORKSPACES_INVALID_ORG"));
     });
 
+    test("throws InvalidInputError when a workspace is already assigned to another active directory", async () => {
+      vi.mocked(prisma.workspace.count).mockResolvedValueOnce(1);
+      vi.mocked(prisma.feedbackDirectoryWorkspace.findFirst).mockResolvedValueOnce({
+        workspaceId: mockWorkspaceId1,
+      } as any);
+
+      await expect(
+        createFeedbackDirectory(mockOrganizationId, "Conflicting", [mockWorkspaceId1])
+      ).rejects.toThrow(new InvalidInputError("WORKSPACE_ALREADY_ASSIGNED_TO_DIFFERENT_DIRECTORY"));
+
+      expect(prisma.feedbackDirectoryWorkspace.findFirst).toHaveBeenCalledWith({
+        where: {
+          workspaceId: { in: [mockWorkspaceId1] },
+          feedbackDirectory: { isArchived: false },
+        },
+        select: { workspaceId: true },
+      });
+      expect(prisma.feedbackDirectory.create).not.toHaveBeenCalled();
+    });
+
+    test("allows creation when workspace is only assigned to archived directory", async () => {
+      vi.mocked(prisma.workspace.count).mockResolvedValueOnce(1);
+      vi.mocked(prisma.feedbackDirectoryWorkspace.findFirst).mockResolvedValueOnce(null);
+      vi.mocked(prisma.feedbackDirectory.create).mockResolvedValueOnce({
+        id: mockDirectoryId,
+      } as any);
+
+      const result = await createFeedbackDirectory(mockOrganizationId, "ArchivedOnly", [mockWorkspaceId1]);
+
+      expect(prisma.feedbackDirectoryWorkspace.findFirst).toHaveBeenCalledWith({
+        where: {
+          workspaceId: { in: [mockWorkspaceId1] },
+          feedbackDirectory: { isArchived: false },
+        },
+        select: { workspaceId: true },
+      });
+
+      expect(prisma.feedbackDirectory.create).toHaveBeenCalled();
+      expect(result).toBe(mockDirectoryId);
+    });
+
     test("throws InvalidInputError on duplicate name (unique constraint violation)", async () => {
       const prismaError = new Prisma.PrismaClientKnownRequestError("Unique constraint", {
         code: "P2002",
