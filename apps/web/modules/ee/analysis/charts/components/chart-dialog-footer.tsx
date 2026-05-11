@@ -6,9 +6,7 @@ import { Button } from "@/modules/ui/components/button";
 import { DialogFooter } from "@/modules/ui/components/dialog";
 
 interface ChartDialogFooterProps {
-  /** Pass either an explicit click handler for a non-form Save button… */
   onSaveClick?: () => void;
-  /** …or a form id to make Save submit that form (preferred, so native HTML validation runs). */
   formId?: string;
   onAddToDashboardClick?: () => void;
   isSaving: boolean;
