@@ -79,12 +79,22 @@ export function CreateChartView({
   });
 
   const chartPreviewRef = useRef<HTMLDivElement>(null);
+  const chartNameInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (chartData) {
       chartPreviewRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
   }, [chartData]);
+
+  const handleSaveClick = () => {
+    // Bring the empty name field into view (and focus it) so the user sees the cause of the toast.
+    if (!chartName.trim()) {
+      chartNameInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      chartNameInputRef.current?.focus();
+    }
+    return handleSaveChart();
+  };
 
   if (isLoadingChart && isEditing && !initialChart) {
     return <ChartDialogLoadingView open={open} onClose={handleClose} />;
@@ -139,6 +149,7 @@ export function CreateChartView({
                 <div className="space-y-2">
                   <Label htmlFor="create-chart-name">{t("workspace.analysis.charts.chart_name")}</Label>
                   <Input
+                    ref={chartNameInputRef}
                     id="create-chart-name"
                     value={chartName}
                     onChange={(event) => setChartName(event.target.value)}
@@ -212,7 +223,7 @@ export function CreateChartView({
 
         {chartData && (
           <ChartDialogFooter
-            onSaveClick={handleSaveChart}
+            onSaveClick={handleSaveClick}
             isSaving={isSaving}
             showAddToDashboard={false}
             saveLabel={
