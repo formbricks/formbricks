@@ -1,4 +1,3 @@
-import { randomUUID } from "crypto";
 import {
   TConnectorFieldMapping,
   THubFieldType,
@@ -84,8 +83,7 @@ const resolveFieldTypeForRow = (
 /**
  * Transform a single CSV row into a FeedbackRecord using field mappings.
  *
- * Returns null if field_id, field_type, or tenant_id are missing, or if a mapped submission_id
- * resolves empty. Falls back to a random UUID for submission_id only when no mapping exists.
+ * Returns null if field_id, field_type, tenant_id, or submission_id are missing.
  */
 export const transformCsvRowToFeedbackRecord = (
   row: Record<string, string>,
@@ -140,12 +138,8 @@ export const transformCsvRowToFeedbackRecord = (
     return null;
   }
 
-  if (!("submission_id" in record)) {
-    const submissionMapped = safeMappings.some((m) => m.targetFieldId === "submission_id");
-    if (submissionMapped) {
-      return null;
-    }
-    record.submission_id = randomUUID();
+  if (!record.submission_id) {
+    return null;
   }
 
   return record as unknown as FeedbackRecordCreateParams;

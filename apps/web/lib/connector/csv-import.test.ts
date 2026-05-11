@@ -24,6 +24,7 @@ const makeConnector = (overrides?: Partial<TConnectorWithMappings>): TConnectorW
   type: "csv",
   status: "active",
   workspaceId: "env-1",
+  feedbackDirectoryId: "tenant-test",
   lastSyncAt: null,
   createdBy: null,
   creatorName: null,
@@ -34,12 +35,48 @@ const makeConnector = (overrides?: Partial<TConnectorWithMappings>): TConnectorW
       createdAt: NOW,
       connectorId: "conn-1",
       workspaceId: "env-1",
-      sourceFieldId: "feedback",
-      targetFieldId: "value_text",
+      sourceFieldId: "response_id",
+      targetFieldId: "submission_id",
       staticValue: null,
     },
     {
       id: "fm-2",
+      createdAt: NOW,
+      connectorId: "conn-1",
+      workspaceId: "env-1",
+      sourceFieldId: "question_id",
+      targetFieldId: "field_id",
+      staticValue: null,
+    },
+    {
+      id: "fm-3",
+      createdAt: NOW,
+      connectorId: "conn-1",
+      workspaceId: "env-1",
+      sourceFieldId: "question",
+      targetFieldId: "field_label",
+      staticValue: null,
+    },
+    {
+      id: "fm-4",
+      createdAt: NOW,
+      connectorId: "conn-1",
+      workspaceId: "env-1",
+      sourceFieldId: "",
+      targetFieldId: "field_type",
+      staticValue: "text",
+    },
+    {
+      id: "fm-5",
+      createdAt: NOW,
+      connectorId: "conn-1",
+      workspaceId: "env-1",
+      sourceFieldId: "feedback",
+      targetFieldId: "response_value",
+      staticValue: null,
+    },
+    {
+      id: "fm-6",
       createdAt: NOW,
       connectorId: "conn-1",
       workspaceId: "env-1",
@@ -66,6 +103,17 @@ describe("importCsvData", () => {
     await expect(importCsvData(connector, [{ feedback: "test" }])).rejects.toThrow(InvalidInputError);
   });
 
+  test("throws InvalidInputError when submission_id is not mapped", async () => {
+    const connector = makeConnector({
+      fieldMappings: makeConnector().fieldMappings.filter(
+        (mapping) => mapping.targetFieldId !== "submission_id"
+      ),
+    });
+
+    await expect(importCsvData(connector, [{ feedback: "test" }])).rejects.toThrow(InvalidInputError);
+    expect(transformCsvRowsToFeedbackRecords).not.toHaveBeenCalled();
+  });
+
   test("returns zeros when all rows are skipped", async () => {
     transformCsvRowsToFeedbackRecords.mockReturnValue({ records: [], skipped: 3 });
 
@@ -78,8 +126,22 @@ describe("importCsvData", () => {
   test("sends transformed records to Hub and counts results", async () => {
     transformCsvRowsToFeedbackRecords.mockReturnValue({
       records: [
-        { source_type: "csv", field_id: "q1", field_type: "text" as const, value_text: "Good" },
-        { source_type: "csv", field_id: "q2", field_type: "text" as const, value_text: "Bad" },
+        {
+          source_type: "csv",
+          tenant_id: "tenant-test",
+          submission_id: "resp-1",
+          field_id: "q1",
+          field_type: "text" as const,
+          value_text: "Good",
+        },
+        {
+          source_type: "csv",
+          tenant_id: "tenant-test",
+          submission_id: "resp-2",
+          field_id: "q2",
+          field_type: "text" as const,
+          value_text: "Bad",
+        },
       ],
       skipped: 1,
     });
@@ -99,6 +161,8 @@ describe("importCsvData", () => {
   test("processes records in batches of 50", async () => {
     const records = Array.from({ length: 120 }, (_, i) => ({
       source_type: "csv",
+      tenant_id: "tenant-test",
+      submission_id: `resp-${i}`,
       field_id: `q${i}`,
       field_type: "text" as const,
       value_text: `row ${i}`,

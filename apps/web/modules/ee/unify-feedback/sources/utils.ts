@@ -46,10 +46,18 @@ export const getConnectorOptions = (t: TFunction): TConnectorOption[] => [
   },
 ];
 
-export const parseCSVColumnsToFields = (columns: string): TSourceField[] => {
+export const parseCSVColumnsToFields = (
+  columns: string,
+  { includeSampleValues = true }: { includeSampleValues?: boolean } = {}
+): TSourceField[] => {
   return columns.split(",").map((col) => {
     const trimmed = col.trim();
-    return { id: trimmed, name: trimmed, type: "string", sampleValue: `Sample ${trimmed}` };
+    return {
+      id: trimmed,
+      name: trimmed,
+      type: "string",
+      sampleValue: includeSampleValues ? `Sample ${trimmed}` : undefined,
+    };
   });
 };
 
@@ -147,11 +155,17 @@ export const CSV_COLUMN_ALIASES: Record<string, { high: RegExp[]; medium: RegExp
     high: [/^(source_id|survey_id|form_id)$/i],
     medium: [],
   },
+  submission_id: {
+    high: [
+      /^(submission_id|submissionid|response_id|responseid|record_id|recordid|ticket_id|ticketid|order_id|orderid|request_id|requestid|case_id|caseid)$/i,
+    ],
+    medium: [/^(submission|record|ticket|order|request|case)$/i],
+  },
   language: {
     high: [/^(language|lang|locale)$/i],
     medium: [],
   },
-  user_identifier: {
+  user_id: {
     high: [/^(user_id|user_identifier|customer_id)$/i],
     medium: [/^(email|user|customer)$/i],
   },

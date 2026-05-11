@@ -2,6 +2,7 @@ import "server-only";
 import { TConnectorWithMappings } from "@formbricks/types/connector";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { createFeedbackRecordsBatch } from "@/modules/hub";
+import { getMissingRequiredCsvFieldMappings } from "./csv-mapping";
 import { transformCsvRowsToFeedbackRecords } from "./csv-transform";
 import { TImportResult } from "./import";
 
@@ -17,6 +18,11 @@ export const importCsvData = async (
 
   if (connector.fieldMappings.length === 0) {
     throw new InvalidInputError("Connector has no field mappings configured");
+  }
+
+  const missing = getMissingRequiredCsvFieldMappings(connector.fieldMappings);
+  if (missing.length > 0) {
+    throw new InvalidInputError(`Missing required CSV field mappings: ${missing.join(", ")}`);
   }
 
   const { records, skipped } = transformCsvRowsToFeedbackRecords(

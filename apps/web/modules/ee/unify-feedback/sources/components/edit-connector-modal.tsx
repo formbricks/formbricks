@@ -127,8 +127,8 @@ export const EditConnectorModal = ({
         ];
         setSourceFields(
           columnsFromMappings.length > 0
-            ? parseCSVColumnsToFields(columnsFromMappings.join(","))
-            : parseCSVColumnsToFields(SAMPLE_CSV_COLUMNS)
+            ? parseCSVColumnsToFields(columnsFromMappings.join(","), { includeSampleValues: false })
+            : parseCSVColumnsToFields(SAMPLE_CSV_COLUMNS, { includeSampleValues: false })
         );
         setMappings(
           connector.fieldMappings.map((m) => ({

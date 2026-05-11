@@ -84,9 +84,9 @@ export const FEEDBACK_RECORD_FIELDS: TTargetField[] = [
     id: "submission_id",
     name: "Submission ID",
     type: "string",
-    required: false,
+    required: true,
     description:
-      "Optional. Map to a stable column (e.g. order_id, ticket_id) to enable idempotent re-imports. Auto-generated UUID per row if unmapped.",
+      "Map to a stable column (e.g. response_id, order_id, ticket_id) to enable idempotent re-imports.",
   },
   {
     id: "source_id",
@@ -198,16 +198,9 @@ export const CSV_TARGET_FIELDS: TTargetField[] = [
 ];
 
 export const CSV_FIELD_GROUPS = {
-  basic: ["collected_at", "field_id", "field_label", "field_type", "response_value"],
+  basic: ["submission_id", "collected_at", "field_id", "field_label", "field_type", "response_value"],
   sourceContext: ["source_id", "source_name"],
-  advanced: [
-    "submission_id",
-    "field_group_id",
-    "field_group_label",
-    "language",
-    "user_identifier",
-    "metadata",
-  ],
+  advanced: ["field_group_id", "field_group_label", "language", "user_id", "metadata"],
 } as const;
 
 export const CSV_PROTECTED_TARGET_IDS = ["tenant_id", "source_type"] as const;
@@ -216,9 +209,15 @@ export const CSV_HIDDEN_STATIC_MAPPINGS: TFieldMapping[] = [
   { sourceFieldId: "", targetFieldId: "source_type", staticValue: "csv" },
 ];
 
-export const CSV_REQUIRED_UI_FIELDS = ["field_id", "field_label", "field_type", "response_value"];
+export const CSV_REQUIRED_UI_FIELDS = [
+  "submission_id",
+  "field_id",
+  "field_label",
+  "field_type",
+  "response_value",
+];
 
-export const SAMPLE_CSV_COLUMNS = "timestamp,customer_id,rating,feedback_text,category";
+export const SAMPLE_CSV_COLUMNS = "timestamp,response_id,customer_id,rating,feedback_text,category";
 
 export const MAX_CSV_VALUES = {
   FILE_SIZE: 2_097_152, // 2MB (2 * 1024 * 1024)

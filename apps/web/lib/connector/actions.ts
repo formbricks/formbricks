@@ -28,7 +28,7 @@ import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-direc
 import { listFeedbackRecords } from "@/modules/hub/service";
 import type { FeedbackRecordListParams, FeedbackRecordListResponse } from "@/modules/hub/types";
 import { importCsvData } from "./csv-import";
-import { sanitizeCsvFieldMappings } from "./csv-mapping";
+import { getMissingRequiredCsvFieldMappings, sanitizeCsvFieldMappings } from "./csv-mapping";
 import { importHistoricalResponses } from "./import";
 import {
   TMappingsInput,
@@ -126,6 +126,19 @@ const ZFormbricksSurveyMapping = z.object({
   elementIds: z.array(z.string()).min(1),
 });
 
+const sanitizeAndValidateCsvFieldMappings = (
+  fieldMappings: z.infer<typeof ZConnectorFieldMappingCreateInput>[]
+) => {
+  const sanitized = sanitizeCsvFieldMappings(fieldMappings) ?? [];
+  const missing = getMissingRequiredCsvFieldMappings(sanitized);
+
+  if (missing.length > 0) {
+    throw new InvalidInputError(`Missing required CSV field mappings: ${missing.join(", ")}`);
+  }
+
+  return sanitized;
+};
+
 const ZCreateConnectorWithMappingsAction = z
   .object({
     workspaceId: ZId,
@@ -202,7 +215,7 @@ export const createConnectorWithMappingsAction = authenticatedActionClient
         type: "field",
         mappings:
           parsedInput.connectorInput.type === "csv"
-            ? (sanitizeCsvFieldMappings(fieldMappings) ?? [])
+            ? sanitizeAndValidateCsvFieldMappings(fieldMappings)
             : fieldMappings,
       };
     }
@@ -275,7 +288,7 @@ export const updateConnectorWithMappingsAction = authenticatedActionClient
           type: "field",
           mappings:
             connector.type === "csv"
-              ? (sanitizeCsvFieldMappings(parsedInput.fieldMappings) ?? [])
+              ? sanitizeAndValidateCsvFieldMappings(parsedInput.fieldMappings)
               : parsedInput.fieldMappings,
         };
       }
@@ -346,7 +359,7 @@ export const duplicateConnectorAction = authenticatedActionClient
         }));
         mappingsInput = {
           type: "field",
-          mappings: source.type === "csv" ? (sanitizeCsvFieldMappings(projected) ?? []) : projected,
+          mappings: source.type === "csv" ? sanitizeAndValidateCsvFieldMappings(projected) : projected,
         };
       }
 

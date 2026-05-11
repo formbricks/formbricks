@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { TConnectorFieldMappingCreateInput } from "@formbricks/types/connector";
-import { sanitizeCsvFieldMappings } from "./csv-mapping";
+import { getMissingRequiredCsvFieldMappings, sanitizeCsvFieldMappings } from "./csv-mapping";
 
 describe("sanitizeCsvFieldMappings", () => {
   test("drops user-controlled tenant_id and source_type mappings", () => {
@@ -30,5 +30,34 @@ describe("sanitizeCsvFieldMappings", () => {
     expect(sanitizeCsvFieldMappings(mappings)).toEqual([
       { sourceFieldId: "", targetFieldId: "source_type", staticValue: "csv" },
     ]);
+  });
+});
+
+describe("getMissingRequiredCsvFieldMappings", () => {
+  const requiredMappings: TConnectorFieldMappingCreateInput[] = [
+    { sourceFieldId: "response_id", targetFieldId: "submission_id" },
+    { sourceFieldId: "question_id", targetFieldId: "field_id" },
+    { sourceFieldId: "question", targetFieldId: "field_label" },
+    { sourceFieldId: "", targetFieldId: "field_type", staticValue: "text" },
+    { sourceFieldId: "answer", targetFieldId: "response_value" },
+  ];
+
+  test("returns no missing fields when all required CSV mappings are present", () => {
+    expect(getMissingRequiredCsvFieldMappings(requiredMappings)).toEqual([]);
+  });
+
+  test("requires submission_id but not source_id", () => {
+    const mappings = requiredMappings.filter((mapping) => mapping.targetFieldId !== "submission_id");
+
+    expect(getMissingRequiredCsvFieldMappings(mappings)).toEqual(["submission_id"]);
+    expect(getMissingRequiredCsvFieldMappings(requiredMappings)).not.toContain("source_id");
+  });
+
+  test("treats an invalid static field_type as missing", () => {
+    const mappings = requiredMappings.map((mapping) =>
+      mapping.targetFieldId === "field_type" ? { ...mapping, staticValue: "invalid_type" } : mapping
+    );
+
+    expect(getMissingRequiredCsvFieldMappings(mappings)).toContain("field_type");
   });
 });

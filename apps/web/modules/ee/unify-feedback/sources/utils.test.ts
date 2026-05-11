@@ -153,6 +153,7 @@ describe("isConnectorNameValid", () => {
 
 describe("areAllRequiredCsvFieldsMapped", () => {
   const fullMappings: TFieldMapping[] = [
+    { targetFieldId: "submission_id", sourceFieldId: "response_id" },
     { targetFieldId: "field_id", sourceFieldId: "qid" },
     { targetFieldId: "field_label", sourceFieldId: "label" },
     { targetFieldId: "field_type", staticValue: "text" },
@@ -163,7 +164,7 @@ describe("areAllRequiredCsvFieldsMapped", () => {
     expect(areAllRequiredCsvFieldsMapped(fullMappings)).toEqual({ valid: true, missing: [] });
   });
 
-  test.each(["field_id", "field_label", "field_type", "response_value"])(
+  test.each(["submission_id", "field_id", "field_label", "field_type", "response_value"])(
     "returns valid=false and lists %s when missing",
     (missingId) => {
       const partial = fullMappings.filter((m) => m.targetFieldId !== missingId);
@@ -191,6 +192,10 @@ describe("areAllRequiredCsvFieldsMapped", () => {
 
   test("does not require collected_at (defaults to $now)", () => {
     expect(areAllRequiredCsvFieldsMapped(fullMappings).missing).not.toContain("collected_at");
+  });
+
+  test("does not require source_id", () => {
+    expect(areAllRequiredCsvFieldsMapped(fullMappings).missing).not.toContain("source_id");
   });
 });
 
@@ -314,16 +319,30 @@ describe("autoMapCsvSourceFields", () => {
     expect(result.confidence.collected_at).toBe("high");
   });
 
-  test("maps email to user_identifier with medium confidence", () => {
+  test("maps email to user_id with medium confidence", () => {
     const result = autoMapCsvSourceFields({
       sourceFields: buildSourceFields(["email", "answer"]),
       sampleRow: { email: "x@y.com", answer: "yes" },
       fileName: "feedback.csv",
     });
-    const mapping = result.mappings.find((m) => m.targetFieldId === "user_identifier");
+    const mapping = result.mappings.find((m) => m.targetFieldId === "user_id");
     expect(mapping?.sourceFieldId).toBe("email");
-    expect(result.confidence.user_identifier).toBe("medium");
+    expect(result.confidence.user_id).toBe("medium");
   });
+
+  test.each(["submission_id", "response_id", "record_id", "ticket_id", "order_id"])(
+    "maps %s to submission_id with high confidence",
+    (columnName) => {
+      const result = autoMapCsvSourceFields({
+        sourceFields: buildSourceFields([columnName, "question", "answer"]),
+        sampleRow: { [columnName]: "stable-1", question: "q1", answer: "yes" },
+        fileName: "feedback.csv",
+      });
+      const mapping = result.mappings.find((m) => m.targetFieldId === "submission_id");
+      expect(mapping?.sourceFieldId).toBe(columnName);
+      expect(result.confidence.submission_id).toBe("high");
+    }
+  );
 
   test("prepopulates source_name from titleized filename", () => {
     const result = autoMapCsvSourceFields({
@@ -359,9 +378,18 @@ describe("autoMapCsvSourceFields", () => {
 
   test("maps realistic QA headers without leaving required basics unresolved", () => {
     const result = autoMapCsvSourceFields({
-      sourceFields: buildSourceFields(["timestamp", "email", "question", "answer", "language", "score"]),
+      sourceFields: buildSourceFields([
+        "timestamp",
+        "response_id",
+        "email",
+        "question",
+        "answer",
+        "language",
+        "score",
+      ]),
       sampleRow: {
         timestamp: "2026-01-01",
+        response_id: "resp-1",
         email: "person@example.com",
         question: "How satisfied are you?",
         answer: "Great",
