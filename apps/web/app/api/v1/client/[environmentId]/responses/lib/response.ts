@@ -6,6 +6,10 @@ import { DatabaseError, ResourceNotFoundError, UniqueConstraintError } from "@fo
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
+import {
+  isPrismaKnownRequestError,
+  isSingleUseIdUniqueConstraintError,
+} from "@/app/api/client/[environmentId]/responses/lib/prisma-error";
 import { buildPrismaResponseData } from "@/app/api/v1/lib/utils";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { calculateTtcTotal } from "@/lib/response/utils";
@@ -120,12 +124,9 @@ export const createResponse = async (
 
     return response;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === "P2002") {
-        const target = (error.meta?.target as string[]) ?? [];
-        if (target?.includes("singleUseId")) {
-          throw new UniqueConstraintError("Response already submitted for this single-use link");
-        }
+    if (isPrismaKnownRequestError(error)) {
+      if (isSingleUseIdUniqueConstraintError(error)) {
+        throw new UniqueConstraintError("Response already submitted for this single-use link");
       }
 
       throw new DatabaseError(error.message);
