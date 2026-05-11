@@ -284,7 +284,7 @@ export const createConnectorWithMappings = async (
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === PrismaErrorType.UniqueConstraintViolation) {
-        throw new InvalidInputError(`Connector with name ${data.name} already exists`);
+        throw new InvalidInputError("CONNECTOR_NAME_DUPLICATE");
       }
       throw new DatabaseError(error.message);
     }
@@ -359,6 +359,9 @@ export const updateConnectorWithMappings = async (
     return mapConnectorWithMappings(result);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === PrismaErrorType.UniqueConstraintViolation) {
+        throw new InvalidInputError("CONNECTOR_NAME_DUPLICATE");
+      }
       if (error.code === PrismaErrorType.RecordDoesNotExist) {
         throw new ResourceNotFoundError("Connector", connectorId);
       }

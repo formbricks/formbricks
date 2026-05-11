@@ -49,6 +49,7 @@ import {
   TSourceField,
   TUnifySurvey,
   ZFormbricksConnectorForm,
+  getTranslatedConnectorError,
 } from "../types";
 import {
   TConnectorOptionId,
@@ -339,7 +340,12 @@ export const CreateConnectorModal = ({
       surveyMappings: [{ surveyId: values.surveyId, elementIds: values.selectedQuestionIds }],
     });
 
-    if (connectorId && values.importHistorical) {
+    if (!connectorId) {
+      setIsCreating(false);
+      return;
+    }
+
+    if (values.importHistorical) {
       await handleHistoricalImport(connectorId, values.surveyId);
     }
 
@@ -368,7 +374,12 @@ export const CreateConnectorModal = ({
       fieldMappings: mappings.length > 0 ? mappings : undefined,
     });
 
-    if (connectorId && csvParsedData.length > 0) {
+    if (!connectorId) {
+      setIsCreating(false);
+      return;
+    }
+
+    if (csvParsedData.length > 0) {
       await handleCsvImport(connectorId);
     }
 
@@ -426,11 +437,13 @@ export const CreateConnectorModal = ({
 
             {currentStep === "mapping" && selectedType === "formbricks_survey" && (
               <FormProvider {...formbricksForm}>
-                <form className="space-y-4">
+                <form
+                  className="space-y-4"
+                  onSubmit={formbricksForm.handleSubmit(handleCreateFormbricksConnector)}>
                   <FormField
                     control={formbricksForm.control}
                     name="sourceName"
-                    render={({ field }) => (
+                    render={({ field, fieldState: { error } }) => (
                       <FormItem>
                         <FormLabel>{t("workspace.unify.source_name")}</FormLabel>
                         <FormControl>
@@ -440,7 +453,9 @@ export const CreateConnectorModal = ({
                             placeholder={t("workspace.unify.enter_name_for_source")}
                           />
                         </FormControl>
-                        <FormError />
+                        {error?.message && (
+                          <FormError>{getTranslatedConnectorError(error.message, t)}</FormError>
+                        )}
                       </FormItem>
                     )}
                   />
@@ -450,7 +465,7 @@ export const CreateConnectorModal = ({
                   <FormField
                     control={formbricksForm.control}
                     name="surveyId"
-                    render={({ field }) => (
+                    render={({ field, fieldState: { error } }) => (
                       <FormItem>
                         <FormLabel>{t("workspace.unify.select_survey")}</FormLabel>
                         <FormControl>
@@ -467,7 +482,9 @@ export const CreateConnectorModal = ({
                             </SelectContent>
                           </Select>
                         </FormControl>
-                        <FormError />
+                        {error?.message && (
+                          <FormError>{getTranslatedConnectorError(error.message, t)}</FormError>
+                        )}
                       </FormItem>
                     )}
                   />
@@ -475,7 +492,7 @@ export const CreateConnectorModal = ({
                   <FormField
                     control={formbricksForm.control}
                     name="selectedQuestionIds"
-                    render={() => (
+                    render={({ fieldState: { error } }) => (
                       <FormItem>
                         <FormLabel>{t("workspace.unify.select_questions")}</FormLabel>
                         <FormControl>
@@ -487,7 +504,9 @@ export const CreateConnectorModal = ({
                             />
                           </div>
                         </FormControl>
-                        <FormError />
+                        {error?.message && (
+                          <FormError>{getTranslatedConnectorError(error.message, t)}</FormError>
+                        )}
                       </FormItem>
                     )}
                   />

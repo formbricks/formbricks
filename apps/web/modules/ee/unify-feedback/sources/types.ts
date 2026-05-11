@@ -220,10 +220,25 @@ export type TFeedbackCSVData = z.infer<ReturnType<typeof createFeedbackCSVDataSc
 export type TCreateConnectorStep = "selectType" | "mapping";
 
 export const ZFormbricksConnectorForm = z.object({
-  sourceName: z.string().trim().min(1),
-  surveyId: z.string().min(1),
-  selectedQuestionIds: z.array(z.string()).min(1),
+  sourceName: z.string().trim().min(1, "CONNECTOR_NAME_REQUIRED"),
+  surveyId: z.string().min(1, "CONNECTOR_SURVEY_REQUIRED"),
+  selectedQuestionIds: z.array(z.string()).min(1, "CONNECTOR_QUESTIONS_REQUIRED"),
   importHistorical: z.boolean(),
 });
 
 export type TFormbricksConnectorForm = z.infer<typeof ZFormbricksConnectorForm>;
+
+export const getTranslatedConnectorError = (errorCode: string, t: TFunction): string => {
+  switch (errorCode) {
+    case "CONNECTOR_NAME_DUPLICATE":
+      return t("workspace.unify.error_connector_name_duplicate");
+    case "CONNECTOR_NAME_REQUIRED":
+      return t("workspace.unify.error_connector_name_required");
+    case "CONNECTOR_SURVEY_REQUIRED":
+      return t("workspace.unify.error_connector_survey_required");
+    case "CONNECTOR_QUESTIONS_REQUIRED":
+      return t("workspace.unify.error_connector_questions_required");
+    default:
+      return errorCode;
+  }
+};
