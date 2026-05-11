@@ -2563,7 +2563,6 @@
         "error_directory_name_duplicate": "A feedback directory with this name already exists.",
         "error_directory_name_required": "Directory name is required.",
         "error_directory_workspaces_invalid_org": "Some specified workspaces do not belong to this organization.",
-        "error_directory_workspaces_required": "Assign at least one workspace to the directory.",
         "error_workspace_already_assigned": "One or more workspaces are already linked to a different active directory. Reassign them first.",
         "grant_access_confirm": "Grant workspace access",
         "grant_workspace_access_title": "Confirm workspace access grant",

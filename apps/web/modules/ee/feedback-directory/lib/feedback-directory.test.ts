@@ -240,6 +240,20 @@ describe("FeedbackDirectory Service", () => {
   });
 
   describe("createFeedbackDirectory", () => {
+    test("creates a directory and returns its ID", async () => {
+      vi.mocked(prisma.feedbackDirectory.create).mockResolvedValueOnce({
+        id: mockDirectoryId,
+      } as any);
+
+      const result = await createFeedbackDirectory(mockOrganizationId, "New Directory");
+
+      expect(result).toBe(mockDirectoryId);
+      expect(prisma.feedbackDirectory.create).toHaveBeenCalledWith({
+        data: { name: "New Directory", organizationId: mockOrganizationId },
+        select: { id: true },
+      });
+    });
+
     test("creates a directory with workspace links", async () => {
       vi.mocked(prisma.workspace.count).mockResolvedValueOnce(2);
       vi.mocked(prisma.feedbackDirectory.create).mockResolvedValueOnce({
@@ -267,23 +281,6 @@ describe("FeedbackDirectory Service", () => {
       });
     });
 
-    test("throws InvalidInputError when no workspaceIds are provided", async () => {
-      await expect(createFeedbackDirectory(mockOrganizationId, "No Workspaces")).rejects.toThrow(
-        new InvalidInputError("DIRECTORY_WORKSPACES_REQUIRED")
-      );
-
-      expect(prisma.workspace.count).not.toHaveBeenCalled();
-      expect(prisma.feedbackDirectory.create).not.toHaveBeenCalled();
-    });
-
-    test("throws InvalidInputError when workspaceIds is an empty array", async () => {
-      await expect(createFeedbackDirectory(mockOrganizationId, "Empty Workspaces", [])).rejects.toThrow(
-        new InvalidInputError("DIRECTORY_WORKSPACES_REQUIRED")
-      );
-
-      expect(prisma.feedbackDirectory.create).not.toHaveBeenCalled();
-    });
-
     test("throws InvalidInputError when workspaceIds belong to different org", async () => {
       vi.mocked(prisma.workspace.count).mockResolvedValueOnce(0);
 
@@ -293,39 +290,32 @@ describe("FeedbackDirectory Service", () => {
     });
 
     test("throws InvalidInputError on duplicate name (unique constraint violation)", async () => {
-      vi.mocked(prisma.workspace.count).mockResolvedValueOnce(1);
       const prismaError = new Prisma.PrismaClientKnownRequestError("Unique constraint", {
         code: "P2002",
         clientVersion: "0.0.1",
       });
       vi.mocked(prisma.feedbackDirectory.create).mockRejectedValueOnce(prismaError);
 
-      await expect(
-        createFeedbackDirectory(mockOrganizationId, "Duplicate", [mockWorkspaceId1])
-      ).rejects.toThrow(new InvalidInputError("DIRECTORY_NAME_DUPLICATE"));
+      await expect(createFeedbackDirectory(mockOrganizationId, "Duplicate")).rejects.toThrow(
+        new InvalidInputError("DIRECTORY_NAME_DUPLICATE")
+      );
     });
 
     test("throws DatabaseError on other Prisma errors", async () => {
-      vi.mocked(prisma.workspace.count).mockResolvedValueOnce(1);
       const prismaError = new Prisma.PrismaClientKnownRequestError("Mock error", {
         code: "P2010",
         clientVersion: "0.0.1",
       });
       vi.mocked(prisma.feedbackDirectory.create).mockRejectedValueOnce(prismaError);
 
-      await expect(createFeedbackDirectory(mockOrganizationId, "Test", [mockWorkspaceId1])).rejects.toThrow(
-        DatabaseError
-      );
+      await expect(createFeedbackDirectory(mockOrganizationId, "Test")).rejects.toThrow(DatabaseError);
     });
 
     test("re-throws unexpected errors", async () => {
-      vi.mocked(prisma.workspace.count).mockResolvedValueOnce(1);
       const error = new Error("Unexpected");
       vi.mocked(prisma.feedbackDirectory.create).mockRejectedValueOnce(error);
 
-      await expect(createFeedbackDirectory(mockOrganizationId, "Test", [mockWorkspaceId1])).rejects.toThrow(
-        error
-      );
+      await expect(createFeedbackDirectory(mockOrganizationId, "Test")).rejects.toThrow(error);
     });
   });
 

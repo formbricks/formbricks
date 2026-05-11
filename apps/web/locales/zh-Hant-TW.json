@@ -2563,7 +2563,6 @@
         "error_directory_name_duplicate": "已存在同名的意見回饋目錄。",
         "error_directory_name_required": "目錄名稱為必填項目。",
         "error_directory_workspaces_invalid_org": "部分指定的工作區不屬於此組織。",
-        "error_directory_workspaces_required": "請至少將一個工作區指派至目錄。",
         "error_workspace_already_assigned": "One or more workspaces are already linked to a different active directory. Reassign them first.",
         "grant_access_confirm": "授予工作區存取權限",
         "grant_workspace_access_title": "確認授予工作區存取權限",

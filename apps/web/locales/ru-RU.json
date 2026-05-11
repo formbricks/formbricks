@@ -2563,7 +2563,6 @@
         "error_directory_name_duplicate": "Директория обратной связи с таким названием уже существует.",
         "error_directory_name_required": "Необходимо указать имя директории.",
         "error_directory_workspaces_invalid_org": "Некоторые указанные рабочие пространства не принадлежат этой организации.",
-        "error_directory_workspaces_required": "Назначьте директории хотя бы одно рабочее пространство.",
         "error_workspace_already_assigned": "One or more workspaces are already linked to a different active directory. Reassign them first.",
         "grant_access_confirm": "Предоставить доступ к рабочему пространству",
         "grant_workspace_access_title": "Подтверди предоставление доступа к рабочему пространству",

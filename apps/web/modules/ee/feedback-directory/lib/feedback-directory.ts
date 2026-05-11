@@ -271,24 +271,23 @@ export const createFeedbackDirectory = async (
 ): Promise<string> => {
   validateInputs([organizationId, ZId], [name, z.string().trim().min(1, "DIRECTORY_NAME_REQUIRED")]);
   try {
-    // A feedback directory without workspaces serves no purpose, so creating one is rejected.
-    if (!workspaceIds?.length) {
-      throw new InvalidInputError("DIRECTORY_WORKSPACES_REQUIRED");
-    }
-
     // Verify workspaces belong to same org
-    const count = await prisma.workspace.count({
-      where: { id: { in: workspaceIds }, organizationId },
-    });
-    if (count !== workspaceIds.length) {
-      throw new InvalidInputError("DIRECTORY_WORKSPACES_INVALID_ORG");
+    if (workspaceIds?.length) {
+      const count = await prisma.workspace.count({
+        where: { id: { in: workspaceIds }, organizationId },
+      });
+      if (count !== workspaceIds.length) {
+        throw new InvalidInputError("DIRECTORY_WORKSPACES_INVALID_ORG");
+      }
     }
 
     const directory = await prisma.feedbackDirectory.create({
       data: {
         name,
         organizationId,
-        workspaces: { create: workspaceIds.map((workspaceId) => ({ workspaceId })) },
+        workspaces: workspaceIds?.length
+          ? { create: workspaceIds.map((workspaceId) => ({ workspaceId })) }
+          : undefined,
       },
       select: {
         id: true,

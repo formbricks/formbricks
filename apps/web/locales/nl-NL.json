@@ -2563,7 +2563,6 @@
         "error_directory_name_duplicate": "Er bestaat al een feedbackmap met deze naam.",
         "error_directory_name_required": "Mapnaam is verplicht.",
         "error_directory_workspaces_invalid_org": "Sommige opgegeven werkruimtes behoren niet tot deze organisatie.",
-        "error_directory_workspaces_required": "Wijs ten minste één werkruimte toe aan de map.",
         "error_workspace_already_assigned": "One or more workspaces are already linked to a different active directory. Reassign them first.",
         "grant_access_confirm": "Werkruimtetoegang verlenen",
         "grant_workspace_access_title": "Bevestig verlenen van werkruimtetoegang",

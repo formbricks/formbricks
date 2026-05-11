@@ -2563,7 +2563,6 @@
         "error_directory_name_duplicate": "En feedback-katalog med detta namn finns redan.",
         "error_directory_name_required": "Katalognamn krävs.",
         "error_directory_workspaces_invalid_org": "Vissa angivna arbetsytor tillhör inte denna organisation.",
-        "error_directory_workspaces_required": "Tilldela minst en arbetsyta till katalogen.",
         "error_workspace_already_assigned": "One or more workspaces are already linked to a different active directory. Reassign them first.",
         "grant_access_confirm": "Bevilja arbetsyteåtkomst",
         "grant_workspace_access_title": "Bekräfta beviljande av arbetsyteåtkomst",

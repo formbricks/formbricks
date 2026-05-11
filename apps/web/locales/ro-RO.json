@@ -2563,7 +2563,6 @@
         "error_directory_name_duplicate": "Există deja un director de feedback cu acest nume.",
         "error_directory_name_required": "Numele directorului este obligatoriu.",
         "error_directory_workspaces_invalid_org": "Unele spații de lucru specificate nu aparțin acestei organizații.",
-        "error_directory_workspaces_required": "Atribuiți cel puțin un spațiu de lucru directorului.",
         "error_workspace_already_assigned": "One or more workspaces are already linked to a different active directory. Reassign them first.",
         "grant_access_confirm": "Acordă acces la spațiul de lucru",
         "grant_workspace_access_title": "Confirmă acordarea accesului la spațiul de lucru",

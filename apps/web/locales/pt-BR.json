@@ -2563,7 +2563,6 @@
         "error_directory_name_duplicate": "Já existe um diretório de feedback com este nome.",
         "error_directory_name_required": "O nome do diretório é obrigatório.",
         "error_directory_workspaces_invalid_org": "Alguns espaços de trabalho especificados não pertencem a esta organização.",
-        "error_directory_workspaces_required": "Atribua pelo menos um espaço de trabalho ao diretório.",
         "error_workspace_already_assigned": "One or more workspaces are already linked to a different active directory. Reassign them first.",
         "grant_access_confirm": "Conceder acesso ao workspace",
         "grant_workspace_access_title": "Confirmar concessão de acesso ao workspace",

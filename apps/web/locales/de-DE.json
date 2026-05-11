@@ -2563,7 +2563,6 @@
         "error_directory_name_duplicate": "Ein Feedback-Verzeichnis mit diesem Namen existiert bereits.",
         "error_directory_name_required": "Verzeichnisname ist erforderlich.",
         "error_directory_workspaces_invalid_org": "Einige der angegebenen Workspaces gehören nicht zu dieser Organisation.",
-        "error_directory_workspaces_required": "Weisen Sie dem Verzeichnis mindestens einen Workspace zu.",
         "error_workspace_already_assigned": "One or more workspaces are already linked to a different active directory. Reassign them first.",
         "grant_access_confirm": "Workspace-Zugriff gewähren",
         "grant_workspace_access_title": "Workspace-Zugriff bestätigen",

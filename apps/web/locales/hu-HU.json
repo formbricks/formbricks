@@ -2563,7 +2563,6 @@
         "error_directory_name_duplicate": "Már létezik visszajelzési könyvtár ezzel a névvel.",
         "error_directory_name_required": "A könyvtár neve kötelező megadni.",
         "error_directory_workspaces_invalid_org": "Egyes megadott munkaterületek nem ehhez a szervezethez tartoznak.",
-        "error_directory_workspaces_required": "Rendeljen legalább egy munkaterületet a könyvtárhoz.",
         "error_workspace_already_assigned": "One or more workspaces are already linked to a different active directory. Reassign them first.",
         "grant_access_confirm": "Munkaterület-hozzáférés megadása",
         "grant_workspace_access_title": "Munkaterület-hozzáférés megadásának megerősítése",
