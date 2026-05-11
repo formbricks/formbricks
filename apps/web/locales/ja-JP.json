@@ -2563,6 +2563,7 @@
         "error_directory_name_duplicate": "この名前のフィードバックディレクトリはすでに存在します。",
         "error_directory_name_required": "ディレクトリ名は必須です。",
         "error_directory_workspaces_invalid_org": "指定されたワークスペースの一部がこの組織に属していません。",
+        "error_directory_workspaces_required": "ディレクトリには少なくとも1つのワークスペースを割り当ててください。",
         "error_workspace_already_assigned": "One or more workspaces are already linked to a different active directory. Reassign them first.",
         "grant_access_confirm": "ワークスペースのアクセス権を付与",
         "grant_workspace_access_title": "ワークスペースのアクセス権付与を確認",

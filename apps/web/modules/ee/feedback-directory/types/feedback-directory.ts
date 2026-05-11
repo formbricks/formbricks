@@ -59,16 +59,23 @@ export type TFeedbackDirectoryUpdateInput = z.infer<typeof ZFeedbackDirectoryUpd
 /**
  * Translates a feedback directory error code using the provided `t` function.
  * Returns the translated message, or the raw error code if no mapping exists.
+ *
+ * Validation errors arrive as `"<field>: <CODE>"` (e.g. `"name: DIRECTORY_NAME_REQUIRED"`);
+ * the field prefix is stripped before the lookup so the raw machine code never reaches the toast.
  */
 export const getTranslatedFeedbackDirectoryError = (
   errorCode: string,
   t: (key: string) => string
 ): string => {
-  switch (errorCode) {
+  const normalizedCode = errorCode.includes(": ") ? errorCode.split(": ").slice(-1)[0] : errorCode;
+
+  switch (normalizedCode) {
     case "DIRECTORY_NAME_REQUIRED":
       return t("workspace.settings.feedback_directories.error_directory_name_required");
     case "DIRECTORY_NAME_DUPLICATE":
       return t("workspace.settings.feedback_directories.error_directory_name_duplicate");
+    case "DIRECTORY_WORKSPACES_REQUIRED":
+      return t("workspace.settings.feedback_directories.error_directory_workspaces_required");
     case "DIRECTORY_WORKSPACES_INVALID_ORG":
       return t("workspace.settings.feedback_directories.error_directory_workspaces_invalid_org");
     case "DIRECTORY_HAS_CONNECTORS":

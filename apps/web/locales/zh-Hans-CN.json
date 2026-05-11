@@ -2563,6 +2563,7 @@
         "error_directory_name_duplicate": "已存在使用此名称的反馈目录。",
         "error_directory_name_required": "目录名称为必填项。",
         "error_directory_workspaces_invalid_org": "某些指定的工作区不属于此组织。",
+        "error_directory_workspaces_required": "请至少将一个工作区分配到此目录。",
         "error_workspace_already_assigned": "One or more workspaces are already linked to a different active directory. Reassign them first.",
         "grant_access_confirm": "授权工作区访问权限",
         "grant_workspace_access_title": "确认授权工作区访问",

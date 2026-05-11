@@ -2563,6 +2563,7 @@
         "error_directory_name_duplicate": "Bu adda bir geri bildirim dizini zaten mevcut.",
         "error_directory_name_required": "Dizin adı gereklidir.",
         "error_directory_workspaces_invalid_org": "Belirtilen çalışma alanlarından bazıları bu organizasyona ait değil.",
+        "error_directory_workspaces_required": "Dizine en az bir çalışma alanı atayın.",
         "error_workspace_already_assigned": "One or more workspaces are already linked to a different active directory. Reassign them first.",
         "grant_access_confirm": "Çalışma alanı erişimi ver",
         "grant_workspace_access_title": "Çalışma alanı erişim iznini onayla",

@@ -2563,6 +2563,7 @@
         "error_directory_name_duplicate": "Un répertoire de retours avec ce nom existe déjà.",
         "error_directory_name_required": "Le nom du répertoire est requis.",
         "error_directory_workspaces_invalid_org": "Certains espaces de travail spécifiés n'appartiennent pas à cette organisation.",
+        "error_directory_workspaces_required": "Assignez au moins un espace de travail au répertoire.",
         "error_workspace_already_assigned": "One or more workspaces are already linked to a different active directory. Reassign them first.",
         "grant_access_confirm": "Accorder l'accès à l'espace de travail",
         "grant_workspace_access_title": "Confirmer l'octroi d'accès à l'espace de travail",
