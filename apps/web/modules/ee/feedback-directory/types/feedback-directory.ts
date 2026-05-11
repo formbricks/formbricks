@@ -67,7 +67,7 @@ export const getTranslatedFeedbackDirectoryError = (
   errorCode: string,
   t: (key: string) => string
 ): string => {
-  const normalizedCode = errorCode.includes(": ") ? errorCode.split(": ").slice(-1)[0] : errorCode;
+  const normalizedCode = errorCode.includes(": ") ? (errorCode.split(": ").at(-1) ?? errorCode) : errorCode;
 
   switch (normalizedCode) {
     case "DIRECTORY_NAME_REQUIRED":
