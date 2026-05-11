@@ -1925,8 +1925,10 @@
       "search_by_survey_name": "フォーム名で検索",
       "share": {
         "anonymous_links": {
-          "custom_single_use_id_description": "シングルユースIDを暗号化しない場合、「suid=...」の任意の値で1回の回答が可能になります。",
-          "custom_single_use_id_title": "URLで任意の値を単一使用IDとして設定できます。",
+          "custom_single_use_id_description": "Create a readable single-use ID and copy a signed link for it.",
+          "custom_single_use_id_placeholder": "CUSTOM-ID",
+          "custom_single_use_id_required": "Enter a custom single-use ID.",
+          "custom_single_use_id_title": "Use a custom single-use ID in the URL.",
           "custom_start_point": "カスタム開始点",
           "data_prefilling": "データの事前入力",
           "description": "これらのリンクからの回答は匿名になります",

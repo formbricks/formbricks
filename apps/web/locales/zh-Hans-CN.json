@@ -1925,8 +1925,10 @@
       "search_by_survey_name": "按 调查 名称 搜索",
       "share": {
         "anonymous_links": {
-          "custom_single_use_id_description": "如果您未加密一次性 ID，任何 “suid=...” 的值都可用于一次答复。",
-          "custom_single_use_id_title": "您 可以 在 URL 中 设置 任意 值 作为 一次性 ID。",
+          "custom_single_use_id_description": "Create a readable single-use ID and copy a signed link for it.",
+          "custom_single_use_id_placeholder": "CUSTOM-ID",
+          "custom_single_use_id_required": "Enter a custom single-use ID.",
+          "custom_single_use_id_title": "Use a custom single-use ID in the URL.",
           "custom_start_point": "自定义 起点",
           "data_prefilling": "数据 预填充",
           "description": "来自 这些 link 的 响应 将是 匿名 的",

@@ -1925,8 +1925,10 @@
       "search_by_survey_name": "Buscar por nombre de encuesta",
       "share": {
         "anonymous_links": {
-          "custom_single_use_id_description": "Si no cifras el ID de un solo uso, cualquier valor para “suid=...” funciona para una respuesta.",
-          "custom_single_use_id_title": "Puedes establecer cualquier valor como ID de uso único en la URL.",
+          "custom_single_use_id_description": "Create a readable single-use ID and copy a signed link for it.",
+          "custom_single_use_id_placeholder": "CUSTOM-ID",
+          "custom_single_use_id_required": "Enter a custom single-use ID.",
+          "custom_single_use_id_title": "Use a custom single-use ID in the URL.",
           "custom_start_point": "Punto de inicio personalizado",
           "data_prefilling": "Prellenado de datos",
           "description": "Las respuestas procedentes de estos enlaces serán anónimas",

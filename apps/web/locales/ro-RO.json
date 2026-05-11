@@ -1925,8 +1925,10 @@
       "search_by_survey_name": "Căutare după nume chestionar",
       "share": {
         "anonymous_links": {
-          "custom_single_use_id_description": "Dacă nu criptați ID-ul de unică folosință, orice valoare pentru “suid=...” funcționează pentru un singur răspuns.",
-          "custom_single_use_id_title": "Puteți seta orice valoare ca ID unic în URL",
+          "custom_single_use_id_description": "Create a readable single-use ID and copy a signed link for it.",
+          "custom_single_use_id_placeholder": "CUSTOM-ID",
+          "custom_single_use_id_required": "Enter a custom single-use ID.",
+          "custom_single_use_id_title": "Use a custom single-use ID in the URL.",
           "custom_start_point": "Punct de start personalizat",
           "data_prefilling": "Precompletare date",
           "description": "Răspunsurile provenite de la aceste linkuri vor fi anonime",

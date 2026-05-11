@@ -1925,8 +1925,10 @@
       "search_by_survey_name": "Buscar pelo nome da pesquisa",
       "share": {
         "anonymous_links": {
-          "custom_single_use_id_description": "Se você não criptografar o ID de uso único, qualquer valor para “suid=...” funciona para uma resposta.",
-          "custom_single_use_id_title": "Você pode definir qualquer valor como ID de uso único na URL.",
+          "custom_single_use_id_description": "Create a readable single-use ID and copy a signed link for it.",
+          "custom_single_use_id_placeholder": "CUSTOM-ID",
+          "custom_single_use_id_required": "Enter a custom single-use ID.",
+          "custom_single_use_id_title": "Use a custom single-use ID in the URL.",
           "custom_start_point": "Ponto de início personalizado",
           "data_prefilling": "preenchimento automático de dados",
           "description": "Respostas vindas desses links serão anônimas",

@@ -1925,8 +1925,10 @@
       "search_by_survey_name": "Nach Umfragenamen suchen",
       "share": {
         "anonymous_links": {
-          "custom_single_use_id_description": "Wenn du die Einmal-ID nicht verschlüsselst, funktioniert jeder Wert für “suid=...” für eine Antwort.",
-          "custom_single_use_id_title": "Sie können im URL beliebige Werte als Einmal-ID festlegen.",
+          "custom_single_use_id_description": "Create a readable single-use ID and copy a signed link for it.",
+          "custom_single_use_id_placeholder": "CUSTOM-ID",
+          "custom_single_use_id_required": "Enter a custom single-use ID.",
+          "custom_single_use_id_title": "Use a custom single-use ID in the URL.",
           "custom_start_point": "Benutzerdefinierter Startpunkt",
           "data_prefilling": "Daten-Prefilling",
           "description": "Antworten, die von diesen Links kommen, werden anonym",

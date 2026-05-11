@@ -1925,8 +1925,10 @@
       "search_by_survey_name": "Zoek op enquêtenaam",
       "share": {
         "anonymous_links": {
-          "custom_single_use_id_description": "Als u de eenmalige ID niet versleutelt, werkt elke waarde voor “suid=...” voor één antwoord.",
-          "custom_single_use_id_title": "U kunt elke waarde instellen als ID voor eenmalig gebruik in de URL.",
+          "custom_single_use_id_description": "Create a readable single-use ID and copy a signed link for it.",
+          "custom_single_use_id_placeholder": "CUSTOM-ID",
+          "custom_single_use_id_required": "Enter a custom single-use ID.",
+          "custom_single_use_id_title": "Use a custom single-use ID in the URL.",
           "custom_start_point": "Aangepast startpunt",
           "data_prefilling": "Gegevens vooraf invullen",
           "description": "Reacties afkomstig van deze links zijn anoniem",
