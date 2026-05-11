@@ -309,6 +309,27 @@ describe("FeedbackDirectory Service", () => {
       expect(prisma.feedbackDirectory.create).not.toHaveBeenCalled();
     });
 
+    test("allows creation when workspace is only assigned to archived directory", async () => {
+      vi.mocked(prisma.workspace.count).mockResolvedValueOnce(1);
+      vi.mocked(prisma.feedbackDirectoryWorkspace.findFirst).mockResolvedValueOnce(null);
+      vi.mocked(prisma.feedbackDirectory.create).mockResolvedValueOnce({
+        id: mockDirectoryId,
+      } as any);
+
+      const result = await createFeedbackDirectory(mockOrganizationId, "ArchivedOnly", [mockWorkspaceId1]);
+
+      expect(prisma.feedbackDirectoryWorkspace.findFirst).toHaveBeenCalledWith({
+        where: {
+          workspaceId: { in: [mockWorkspaceId1] },
+          feedbackDirectory: { isArchived: false },
+        },
+        select: { workspaceId: true },
+      });
+
+      expect(prisma.feedbackDirectory.create).toHaveBeenCalled();
+      expect(result).toBe(mockDirectoryId);
+    });
+
     test("throws InvalidInputError on duplicate name (unique constraint violation)", async () => {
       const prismaError = new Prisma.PrismaClientKnownRequestError("Unique constraint", {
         code: "P2002",
