@@ -4,7 +4,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 import { ENCRYPTION_KEY } from "@/lib/constants";
 import * as crypto from "@/lib/crypto";
 import { getPublicDomain } from "@/lib/getPublicUrl";
-import { generateSurveySingleUseId } from "@/lib/utils/single-use-surveys";
+import { generateSurveySingleUseLinkParams } from "@/lib/utils/single-use-surveys";
 import { getSurvey } from "@/modules/survey/lib/survey";
 import * as contactSurveyLink from "./contact-survey-link";
 
@@ -41,7 +41,7 @@ vi.mock("@/modules/survey/lib/survey", () => ({
 }));
 
 vi.mock("@/lib/utils/single-use-surveys", () => ({
-  generateSurveySingleUseId: vi.fn(),
+  generateSurveySingleUseLinkParams: vi.fn(),
 }));
 
 describe("Contact Survey Link", () => {
@@ -51,7 +51,7 @@ describe("Contact Survey Link", () => {
   const mockEncryptedContactId = "encrypted-contact-id";
   const mockEncryptedSurveyId = "encrypted-survey-id";
   const mockedGetSurvey = vi.mocked(getSurvey);
-  const mockedGenerateSurveySingleUseId = vi.mocked(generateSurveySingleUseId);
+  const mockedGenerateSurveySingleUseLinkParams = vi.mocked(generateSurveySingleUseLinkParams);
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -78,7 +78,10 @@ describe("Contact Survey Link", () => {
       id: mockSurveyId,
       singleUse: { enabled: false, isEncrypted: false },
     } as TSurvey);
-    mockedGenerateSurveySingleUseId.mockReturnValue("single-use-id");
+    mockedGenerateSurveySingleUseLinkParams.mockReturnValue({
+      suId: "single-use-id",
+      suToken: "signed-token",
+    });
   });
 
   describe("getContactSurveyLink", () => {
@@ -105,7 +108,7 @@ describe("Contact Survey Link", () => {
         data: `${getPublicDomain()}/c/${mockToken}`,
       });
 
-      expect(mockedGenerateSurveySingleUseId).not.toHaveBeenCalled();
+      expect(mockedGenerateSurveySingleUseLinkParams).not.toHaveBeenCalled();
     });
 
     test("adds expiration to the token when expirationDays is provided", async () => {
@@ -144,14 +147,17 @@ describe("Contact Survey Link", () => {
         id: mockSurveyId,
         singleUse: { enabled: true, isEncrypted: false },
       } as TSurvey);
-      mockedGenerateSurveySingleUseId.mockReturnValue("suId-unencrypted");
+      mockedGenerateSurveySingleUseLinkParams.mockReturnValue({
+        suId: "suId-unencrypted",
+        suToken: "signed-token",
+      });
 
       const result = await contactSurveyLink.getContactSurveyLink(mockContactId, mockSurveyId);
 
-      expect(mockedGenerateSurveySingleUseId).toHaveBeenCalledWith(false);
+      expect(mockedGenerateSurveySingleUseLinkParams).toHaveBeenCalledWith(mockSurveyId, false);
       expect(result).toEqual({
         ok: true,
-        data: `${getPublicDomain()}/c/${mockToken}?suId=suId-unencrypted`,
+        data: `${getPublicDomain()}/c/${mockToken}?suId=suId-unencrypted&suToken=signed-token`,
       });
     });
 
@@ -160,11 +166,11 @@ describe("Contact Survey Link", () => {
         id: mockSurveyId,
         singleUse: { enabled: true, isEncrypted: true },
       } as TSurvey);
-      mockedGenerateSurveySingleUseId.mockReturnValue("suId-encrypted");
+      mockedGenerateSurveySingleUseLinkParams.mockReturnValue({ suId: "suId-encrypted" });
 
       const result = await contactSurveyLink.getContactSurveyLink(mockContactId, mockSurveyId);
 
-      expect(mockedGenerateSurveySingleUseId).toHaveBeenCalledWith(true);
+      expect(mockedGenerateSurveySingleUseLinkParams).toHaveBeenCalledWith(mockSurveyId, true);
       expect(result).toEqual({
         ok: true,
         data: `${getPublicDomain()}/c/${mockToken}?suId=suId-encrypted`,
