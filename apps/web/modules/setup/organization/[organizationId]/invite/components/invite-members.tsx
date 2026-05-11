@@ -49,7 +49,7 @@ export const InviteMembers = ({ IS_SMTP_CONFIGURED, organizationId }: InviteMemb
           const errorMessage = getFormattedErrorMessage(inviteResponse);
           toast.error(errorMessage);
         }
-      } catch (error) {
+      } catch {
         toast.error(`${t("setup.invite.failed_to_invite")} ${member.email}.`);
       }
     }

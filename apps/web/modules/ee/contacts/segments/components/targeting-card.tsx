@@ -442,7 +442,8 @@ export function TargetingCard({
                     docsLink: (
                       <Link
                         href="https://formbricks.com/docs/app-surveys/user-identification"
-                        target="blank"
+                        target="_blank"
+                        rel="noreferrer"
                         className="underline">
                         link
                       </Link>
