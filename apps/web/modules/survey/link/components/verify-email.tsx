@@ -26,6 +26,7 @@ interface VerifyEmailProps {
   survey: TSurvey;
   isErrorComponent?: boolean;
   singleUseId?: string;
+  singleUseToken?: string;
   languageCode: string;
   styling: TProjectStyling;
   locale: TUserLocale;
@@ -40,6 +41,7 @@ export const VerifyEmail = ({
   survey,
   isErrorComponent,
   singleUseId,
+  singleUseToken,
   languageCode,
   styling,
   locale,
@@ -94,6 +96,7 @@ export const VerifyEmail = ({
       email: email,
       surveyName: localSurvey.name,
       suId: singleUseId ?? "",
+      suToken: singleUseToken,
       locale,
     };
 

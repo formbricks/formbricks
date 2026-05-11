@@ -1,11 +1,10 @@
 import { logger } from "@formbricks/logger";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { validateSingleUseResponseInput } from "@/app/api/client/[environmentId]/responses/lib/single-use";
 import { getOrganizationBillingByEnvironmentId } from "@/app/api/v2/client/[environmentId]/responses/lib/organization";
 import { verifyRecaptchaToken } from "@/app/api/v2/client/[environmentId]/responses/lib/recaptcha";
 import { TResponseInputV2 } from "@/app/api/v2/client/[environmentId]/responses/types/response";
 import { responses } from "@/app/lib/api/response";
-import { ENCRYPTION_KEY } from "@/lib/constants";
-import { symmetricDecrypt } from "@/lib/crypto";
 import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
 import { getIsSpamProtectionEnabled } from "@/modules/ee/license-check/lib/utils";
 
@@ -20,53 +19,12 @@ export const checkSurveyValidity = async (
     return responses.badRequestResponse("Survey does not belong to this environment", undefined, true);
   }
 
-  if (survey.type === "link" && survey.singleUse?.enabled) {
-    if (!responseInput.singleUseId) {
-      return responses.badRequestResponse("Missing single use id", {
-        surveyId: survey.id,
-        environmentId,
-      });
+  const singleUseValidationResult = validateSingleUseResponseInput(survey, environmentId, responseInput);
+  if (singleUseValidationResult) {
+    if ("response" in singleUseValidationResult) {
+      return singleUseValidationResult.response;
     }
-
-    if (!responseInput.meta?.url) {
-      return responses.badRequestResponse("Missing or invalid URL in response metadata", {
-        surveyId: survey.id,
-        environmentId,
-      });
-    }
-
-    let url;
-    try {
-      url = new URL(responseInput.meta.url);
-    } catch (error) {
-      return responses.badRequestResponse("Invalid URL in response metadata", {
-        surveyId: survey.id,
-        environmentId,
-        error: error instanceof Error ? error.message : "Unknown error occurred",
-      });
-    }
-    const suId = url.searchParams.get("suId");
-    if (!suId) {
-      return responses.badRequestResponse("Missing single use id", {
-        surveyId: survey.id,
-        environmentId,
-      });
-    }
-
-    if (survey.singleUse.isEncrypted) {
-      const decryptedSuId = symmetricDecrypt(suId, ENCRYPTION_KEY);
-      if (decryptedSuId !== responseInput.singleUseId) {
-        return responses.badRequestResponse("Invalid single use id", {
-          surveyId: survey.id,
-          environmentId,
-        });
-      }
-    } else if (responseInput.singleUseId !== suId) {
-      return responses.badRequestResponse("Invalid single use id", {
-        surveyId: survey.id,
-        environmentId,
-      });
-    }
+    responseInput.singleUseId = singleUseValidationResult.singleUseId;
   }
 
   if (survey.recaptcha?.enabled) {

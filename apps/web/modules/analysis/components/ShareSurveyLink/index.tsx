@@ -43,9 +43,12 @@ export const ShareSurveyLink = ({
     const previewUrl = new URL(surveyUrl);
 
     if (survey.singleUse?.enabled) {
-      const newId = await refreshSingleUseId();
-      if (newId) {
-        previewUrl.searchParams.set("suId", newId);
+      const singleUseLinkParams = await refreshSingleUseId();
+      if (singleUseLinkParams) {
+        previewUrl.searchParams.set("suId", singleUseLinkParams.suId);
+        if (singleUseLinkParams.suToken) {
+          previewUrl.searchParams.set("suToken", singleUseLinkParams.suToken);
+        }
       }
     }
 

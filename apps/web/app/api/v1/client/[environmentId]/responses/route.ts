@@ -2,16 +2,15 @@ import { headers } from "next/headers";
 import { UAParser } from "ua-parser-js";
 import { logger } from "@formbricks/logger";
 import { ZEnvironmentId } from "@formbricks/types/environment";
-import { InvalidInputError } from "@formbricks/types/errors";
+import { InvalidInputError, UniqueConstraintError } from "@formbricks/types/errors";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { TResponseInput, ZResponseInput } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { validateSingleUseResponseInput } from "@/app/api/client/[environmentId]/responses/lib/single-use";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { sendToPipeline } from "@/app/lib/pipelines";
-import { ENCRYPTION_KEY } from "@/lib/constants";
-import { symmetricDecrypt } from "@/lib/crypto";
 import { getSurvey } from "@/lib/survey/service";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
@@ -129,112 +128,16 @@ export const POST = withV1ApiWrapper({
       };
     }
 
-    if (survey.type === "link" && survey.singleUse?.enabled) {
-      if (!responseInputData.singleUseId) {
-        return {
-          response: responses.badRequestResponse(
-            "Missing single use id",
-            {
-              surveyId: survey.id,
-              environmentId,
-            },
-            true
-          ),
-        };
+    const singleUseValidationResult = validateSingleUseResponseInput(
+      survey,
+      environmentId,
+      responseInputData
+    );
+    if (singleUseValidationResult) {
+      if ("response" in singleUseValidationResult) {
+        return { response: singleUseValidationResult.response };
       }
-
-      if (!responseInputData.meta?.url) {
-        return {
-          response: responses.badRequestResponse(
-            "Missing or invalid URL in response metadata",
-            {
-              surveyId: survey.id,
-              environmentId,
-            },
-            true
-          ),
-        };
-      }
-
-      let url: URL;
-      try {
-        url = new URL(responseInputData.meta.url);
-      } catch (error) {
-        return {
-          response: responses.badRequestResponse(
-            "Invalid URL in response metadata",
-            {
-              surveyId: survey.id,
-              environmentId,
-              error: error instanceof Error ? error.message : "Unknown error occurred",
-            },
-            true
-          ),
-        };
-      }
-
-      const suId = url.searchParams.get("suId");
-      if (!suId) {
-        return {
-          response: responses.badRequestResponse(
-            "Missing single use id",
-            {
-              surveyId: survey.id,
-              environmentId,
-            },
-            true
-          ),
-        };
-      }
-
-      if (survey.singleUse.isEncrypted) {
-        if (!ENCRYPTION_KEY) {
-          logger.error({ url: req.url, surveyId: survey.id, environmentId }, "ENCRYPTION_KEY is not set");
-          return {
-            response: responses.internalServerErrorResponse("An unexpected error occurred.", true),
-          };
-        }
-
-        let decryptedSuId: string;
-        try {
-          decryptedSuId = symmetricDecrypt(suId, ENCRYPTION_KEY);
-        } catch {
-          return {
-            response: responses.badRequestResponse(
-              "Invalid single use id",
-              {
-                surveyId: survey.id,
-                environmentId,
-              },
-              true
-            ),
-          };
-        }
-
-        if (decryptedSuId !== responseInputData.singleUseId) {
-          return {
-            response: responses.badRequestResponse(
-              "Invalid single use id",
-              {
-                surveyId: survey.id,
-                environmentId,
-              },
-              true
-            ),
-          };
-        }
-      } else if (responseInputData.singleUseId !== suId) {
-        return {
-          response: responses.badRequestResponse(
-            "Invalid single use id",
-            {
-              surveyId: survey.id,
-              environmentId,
-            },
-            true
-          ),
-        };
-      }
+      responseInputData.singleUseId = singleUseValidationResult.singleUseId;
     }
 
     if (!validateFileUploads(responseInputData.data, survey.questions)) {
@@ -277,6 +180,10 @@ export const POST = withV1ApiWrapper({
       if (error instanceof InvalidInputError) {
         return {
           response: responses.badRequestResponse(error.message),
+        };
+      } else if (error instanceof UniqueConstraintError) {
+        return {
+          response: responses.conflictResponse(error.message, undefined, true),
         };
       } else {
         logger.error({ error, url: req.url }, "Error creating response");

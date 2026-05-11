@@ -9,6 +9,7 @@ import { TResponseInputV2 } from "@/app/api/v2/client/[environmentId]/responses/
 import { responses } from "@/app/lib/api/response";
 import { symmetricDecrypt } from "@/lib/crypto";
 import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
+import { generateSurveySingleUseSignature } from "@/lib/utils/single-use-surveys";
 import { getIsSpamProtectionEnabled } from "@/modules/ee/license-check/lib/utils";
 
 vi.mock("@/lib/i18n/utils", () => ({
@@ -52,6 +53,11 @@ vi.mock("@/lib/crypto", () => ({
 vi.mock("@/lib/constants", () => ({
   ENCRYPTION_KEY: "test-key",
 }));
+vi.mock("@/lib/env", () => ({
+  env: {
+    ENCRYPTION_KEY: "test-key",
+  },
+}));
 
 const mockSurvey: TSurvey = {
   id: "survey-1",
@@ -90,6 +96,7 @@ const mockSurvey: TSurvey = {
   showLanguageSwitch: false,
   blocks: [],
   isCaptureIpEnabled: false,
+  isAutoProgressingEnabled: false,
   metadata: {},
   slug: null,
 };
@@ -111,6 +118,7 @@ const mockBillingData: TOrganizationBilling = {
   usageCycleAnchor: new Date(),
   stripeCustomerId: "mock-stripe-customer-id",
 };
+const validSingleUseId = "cm8f4x9mm0001gx9h5b7d7h3q";
 
 describe("checkSurveyValidity", () => {
   beforeEach(() => {
@@ -222,10 +230,14 @@ describe("checkSurveyValidity", () => {
     const result = await checkSurveyValidity(survey, "env-1", { ...mockResponseInput });
     expect(result).toBeInstanceOf(Response);
     expect(result?.status).toBe(400);
-    expect(responses.badRequestResponse).toHaveBeenCalledWith("Missing single use id", {
-      surveyId: survey.id,
-      environmentId: "env-1",
-    });
+    expect(responses.badRequestResponse).toHaveBeenCalledWith(
+      "Missing single use id",
+      {
+        surveyId: survey.id,
+        environmentId: "env-1",
+      },
+      true
+    );
   });
 
   test("should return badRequestResponse if singleUse is enabled and meta.url is missing", async () => {
@@ -237,10 +249,14 @@ describe("checkSurveyValidity", () => {
     });
     expect(result).toBeInstanceOf(Response);
     expect(result?.status).toBe(400);
-    expect(responses.badRequestResponse).toHaveBeenCalledWith("Missing or invalid URL in response metadata", {
-      surveyId: survey.id,
-      environmentId: "env-1",
-    });
+    expect(responses.badRequestResponse).toHaveBeenCalledWith(
+      "Missing or invalid URL in response metadata",
+      {
+        surveyId: survey.id,
+        environmentId: "env-1",
+      },
+      true
+    );
   });
 
   test("should return badRequestResponse if meta.url is invalid", async () => {
@@ -254,7 +270,8 @@ describe("checkSurveyValidity", () => {
     expect(result?.status).toBe(400);
     expect(responses.badRequestResponse).toHaveBeenCalledWith(
       "Invalid URL in response metadata",
-      expect.objectContaining({ surveyId: survey.id, environmentId: "env-1" })
+      expect.objectContaining({ surveyId: survey.id, environmentId: "env-1" }),
+      true
     );
   });
 
@@ -268,16 +285,20 @@ describe("checkSurveyValidity", () => {
     });
     expect(result).toBeInstanceOf(Response);
     expect(result?.status).toBe(400);
-    expect(responses.badRequestResponse).toHaveBeenCalledWith("Missing single use id", {
-      surveyId: survey.id,
-      environmentId: "env-1",
-    });
+    expect(responses.badRequestResponse).toHaveBeenCalledWith(
+      "Missing single use id",
+      {
+        surveyId: survey.id,
+        environmentId: "env-1",
+      },
+      true
+    );
   });
 
   test("should return badRequestResponse if isEncrypted and decrypted suId does not match singleUseId", async () => {
     const survey = { ...mockSurvey, singleUse: { enabled: true, isEncrypted: true } };
     const url = "https://example.com/?suId=encrypted-id";
-    vi.mocked(symmetricDecrypt).mockReturnValue("decrypted-id");
+    vi.mocked(symmetricDecrypt).mockReturnValue(validSingleUseId);
     const resultEncryptedMismatch = await checkSurveyValidity(survey, "env-1", {
       ...mockResponseInput,
       singleUseId: "su-1",
@@ -286,15 +307,20 @@ describe("checkSurveyValidity", () => {
     expect(symmetricDecrypt).toHaveBeenCalledWith("encrypted-id", "test-key");
     expect(resultEncryptedMismatch).toBeInstanceOf(Response);
     expect(resultEncryptedMismatch?.status).toBe(400);
-    expect(responses.badRequestResponse).toHaveBeenCalledWith("Invalid single use id", {
-      surveyId: survey.id,
-      environmentId: "env-1",
-    });
+    expect(responses.badRequestResponse).toHaveBeenCalledWith(
+      "Invalid single use id",
+      {
+        surveyId: survey.id,
+        environmentId: "env-1",
+      },
+      true
+    );
   });
 
   test("should return badRequestResponse if not encrypted and suId does not match singleUseId", async () => {
     const survey = { ...mockSurvey, singleUse: { enabled: true, isEncrypted: false } };
-    const url = "https://example.com/?suId=su-2";
+    const suToken = generateSurveySingleUseSignature(survey.id, "su-2");
+    const url = `https://example.com/?suId=su-2&suToken=${suToken}`;
     const result = await checkSurveyValidity(survey, "env-1", {
       ...mockResponseInput,
       singleUseId: "su-1",
@@ -302,13 +328,17 @@ describe("checkSurveyValidity", () => {
     });
     expect(result).toBeInstanceOf(Response);
     expect(result?.status).toBe(400);
-    expect(responses.badRequestResponse).toHaveBeenCalledWith("Invalid single use id", {
-      surveyId: survey.id,
-      environmentId: "env-1",
-    });
+    expect(responses.badRequestResponse).toHaveBeenCalledWith(
+      "Invalid single use id",
+      {
+        surveyId: survey.id,
+        environmentId: "env-1",
+      },
+      true
+    );
   });
 
-  test("should return null if singleUse is enabled, not encrypted, and suId matches singleUseId", async () => {
+  test("should return badRequestResponse if not encrypted and suToken is missing", async () => {
     const survey = { ...mockSurvey, singleUse: { enabled: true, isEncrypted: false } };
     const url = "https://example.com/?suId=su-1";
     const result = await checkSurveyValidity(survey, "env-1", {
@@ -316,16 +346,39 @@ describe("checkSurveyValidity", () => {
       singleUseId: "su-1",
       meta: { url },
     });
+    expect(result).toBeInstanceOf(Response);
+    expect(result?.status).toBe(400);
+    expect(responses.badRequestResponse).toHaveBeenCalledWith(
+      "Invalid single use id",
+      {
+        surveyId: survey.id,
+        environmentId: "env-1",
+      },
+      true
+    );
+  });
+
+  test("should return null if singleUse is enabled, not encrypted, and signed suId matches singleUseId", async () => {
+    const survey = { ...mockSurvey, singleUse: { enabled: true, isEncrypted: false } };
+    const suToken = generateSurveySingleUseSignature(survey.id, "su-1");
+    const url = `https://example.com/?suId=su-1&suToken=${suToken}`;
+    const responseInput = {
+      ...mockResponseInput,
+      singleUseId: "su-1",
+      meta: { url },
+    };
+    const result = await checkSurveyValidity(survey, "env-1", responseInput);
     expect(result).toBeNull();
+    expect(responseInput.singleUseId).toBe("su-1");
   });
 
   test("should return null if singleUse is enabled, encrypted, and decrypted suId matches singleUseId", async () => {
     const survey = { ...mockSurvey, singleUse: { enabled: true, isEncrypted: true } };
     const url = "https://example.com/?suId=encrypted-id";
-    vi.mocked(symmetricDecrypt).mockReturnValue("su-1");
+    vi.mocked(symmetricDecrypt).mockReturnValue(validSingleUseId);
     const _resultEncryptedMatch = await checkSurveyValidity(survey, "env-1", {
       ...mockResponseInput,
-      singleUseId: "su-1",
+      singleUseId: validSingleUseId,
       meta: { url },
     });
     expect(symmetricDecrypt).toHaveBeenCalledWith("encrypted-id", "test-key");

@@ -2,7 +2,13 @@ import * as cuid2 from "@paralleldrive/cuid2";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import * as crypto from "@/lib/crypto";
 import { env } from "@/lib/env";
-import { generateSurveySingleUseId, generateSurveySingleUseIds } from "./single-use-surveys";
+import {
+  generateSurveySingleUseId,
+  generateSurveySingleUseIds,
+  generateSurveySingleUseLinkParams,
+  validateSurveySingleUseLinkParams,
+  validateSurveySingleUseSignature,
+} from "./single-use-surveys";
 
 vi.mock("@/lib/crypto", () => ({
   symmetricEncrypt: vi.fn(),
@@ -110,6 +116,38 @@ describe("Single Use Surveys", () => {
 
       expect(result).toEqual([]);
       expect(createIdMock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("signed single-use links", () => {
+    beforeEach(() => {
+      vi.mocked(env).ENCRYPTION_KEY = "test-encryption-key";
+    });
+
+    test("generates and validates signed custom single-use IDs", () => {
+      const params = generateSurveySingleUseLinkParams("survey-1", false, "CUSTOM-ID");
+
+      expect(params.suId).toBe("CUSTOM-ID");
+      expect(params.suToken).toBeDefined();
+      expect(validateSurveySingleUseSignature("survey-1", params.suId, params.suToken)).toBe(true);
+      expect(
+        validateSurveySingleUseLinkParams({
+          surveyId: "survey-1",
+          suId: params.suId,
+          suToken: params.suToken,
+          isEncrypted: false,
+          decrypt: vi.fn(),
+        })
+      ).toBe("CUSTOM-ID");
+    });
+
+    test("rejects tampered signed custom single-use IDs", () => {
+      const params = generateSurveySingleUseLinkParams("survey-1", false, "CUSTOM-ID");
+
+      expect(validateSurveySingleUseSignature("survey-2", params.suId, params.suToken)).toBe(false);
+      expect(validateSurveySingleUseSignature("survey-1", "OTHER-ID", params.suToken)).toBe(false);
+      expect(validateSurveySingleUseSignature("survey-1", params.suId, "invalid-token")).toBe(false);
+      expect(validateSurveySingleUseSignature("survey-1", params.suId)).toBe(false);
     });
   });
 });

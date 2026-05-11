@@ -10,7 +10,10 @@ import {
   getOrganizationIdFromSurveyId,
   getProjectIdFromSurveyId,
 } from "@/lib/utils/helper";
-import { generateSurveySingleUseIds } from "@/lib/utils/single-use-surveys";
+import {
+  generateSurveySingleUseLinkParams,
+  generateSurveySingleUseLinkParamsList,
+} from "@/lib/utils/single-use-surveys";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getProjectIdIfEnvironmentExists } from "@/modules/survey/list/lib/environment";
 import { copySurveyToOtherEnvironment } from "@/modules/survey/list/lib/survey";
@@ -93,11 +96,16 @@ export const copySurveyToOtherEnvironmentAction = authenticatedActionClient
     })
   );
 
-const ZGenerateSingleUseIdAction = z.object({
-  surveyId: z.cuid2(),
-  isEncrypted: z.boolean(),
-  count: z.number().min(1).max(5000).prefault(1),
-});
+const ZGenerateSingleUseIdAction = z
+  .object({
+    surveyId: z.cuid2(),
+    isEncrypted: z.boolean(),
+    count: z.number().min(1).max(5000).prefault(1),
+    singleUseId: z.string().trim().min(1).max(255).optional(),
+  })
+  .refine((data) => !data.singleUseId || (!data.isEncrypted && data.count === 1), {
+    message: "Custom single-use IDs can only be generated one at a time without encryption",
+  });
 
 export const generateSingleUseIdsAction = authenticatedActionClient
   .inputSchema(ZGenerateSingleUseIdAction)
@@ -118,5 +126,13 @@ export const generateSingleUseIdsAction = authenticatedActionClient
       ],
     });
 
-    return generateSurveySingleUseIds(parsedInput.count, parsedInput.isEncrypted);
+    if (parsedInput.singleUseId) {
+      return [generateSurveySingleUseLinkParams(parsedInput.surveyId, false, parsedInput.singleUseId)];
+    }
+
+    return generateSurveySingleUseLinkParamsList(
+      parsedInput.count,
+      parsedInput.surveyId,
+      parsedInput.isEncrypted
+    );
   });
