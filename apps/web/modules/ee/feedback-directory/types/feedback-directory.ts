@@ -59,9 +59,6 @@ export type TFeedbackDirectoryUpdateInput = z.infer<typeof ZFeedbackDirectoryUpd
 /**
  * Translates a feedback directory error code using the provided `t` function.
  * Returns the translated message, or the raw error code if no mapping exists.
- *
- * Validation errors arrive as `"<field>: <CODE>"` (e.g. `"name: DIRECTORY_NAME_REQUIRED"`);
- * the field prefix is stripped before the lookup so the raw machine code never reaches the toast.
  */
 export const getTranslatedFeedbackDirectoryError = (
   errorCode: string,
