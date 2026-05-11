@@ -7,6 +7,7 @@ import { CartesianChart } from "@/modules/ee/analysis/charts/components/cartesia
 import {
   CHART_BRAND_DARK,
   CHART_MEASURE_COLORS,
+  formatCellValue,
   formatXAxisTick,
   preparePieData,
 } from "@/modules/ee/analysis/charts/lib/chart-utils";
@@ -168,7 +169,10 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
               <ChartTooltip
                 content={
                   <ChartTooltipContent
-                    formatter={(value, name) => [String(value), formatCubeColumnHeader(String(name), t)]}
+                    formatter={(value, name) => [
+                      formatCellValue(value),
+                      formatCubeColumnHeader(String(name), t),
+                    ]}
                   />
                 }
               />
