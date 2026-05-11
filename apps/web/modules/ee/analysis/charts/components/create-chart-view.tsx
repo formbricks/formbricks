@@ -79,7 +79,7 @@ export function CreateChartView({
   });
 
   const chartPreviewRef = useRef<HTMLDivElement>(null);
-  const chartNameInputRef = useRef<HTMLInputElement>(null);
+  const CREATE_CHART_FORM_ID = "create-chart-form";
 
   useEffect(() => {
     if (chartData) {
@@ -87,12 +87,8 @@ export function CreateChartView({
     }
   }, [chartData]);
 
-  const handleSaveClick = () => {
-    // Bring the empty name field into view (and focus it) so the user sees the cause of the toast.
-    if (!chartName.trim()) {
-      chartNameInputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-      chartNameInputRef.current?.focus();
-    }
+  const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     return handleSaveChart();
   };
 
@@ -146,10 +142,9 @@ export function CreateChartView({
           <div className="grid gap-4">
             {hasSelectedDirectory ? (
               <>
-                <div className="space-y-2">
+                <form id={CREATE_CHART_FORM_ID} onSubmit={handleFormSubmit} className="space-y-2">
                   <Label htmlFor="create-chart-name">{t("workspace.analysis.charts.chart_name")}</Label>
                   <Input
-                    ref={chartNameInputRef}
                     id="create-chart-name"
                     value={chartName}
                     onChange={(event) => setChartName(event.target.value)}
@@ -157,7 +152,7 @@ export function CreateChartView({
                     maxLength={255}
                     required
                   />
-                </div>
+                </form>
 
                 {!isEditing && (
                   <>
@@ -223,7 +218,7 @@ export function CreateChartView({
 
         {chartData && (
           <ChartDialogFooter
-            onSaveClick={handleSaveClick}
+            formId={CREATE_CHART_FORM_ID}
             isSaving={isSaving}
             showAddToDashboard={false}
             saveLabel={

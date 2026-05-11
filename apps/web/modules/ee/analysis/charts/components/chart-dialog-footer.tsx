@@ -6,7 +6,10 @@ import { Button } from "@/modules/ui/components/button";
 import { DialogFooter } from "@/modules/ui/components/dialog";
 
 interface ChartDialogFooterProps {
-  onSaveClick: () => void;
+  /** Pass either an explicit click handler for a non-form Save button… */
+  onSaveClick?: () => void;
+  /** …or a form id to make Save submit that form (preferred, so native HTML validation runs). */
+  formId?: string;
   onAddToDashboardClick?: () => void;
   isSaving: boolean;
   saveLabel?: string;
@@ -15,6 +18,7 @@ interface ChartDialogFooterProps {
 
 export function ChartDialogFooter({
   onSaveClick,
+  formId,
   onAddToDashboardClick,
   isSaving,
   saveLabel,
@@ -24,12 +28,16 @@ export function ChartDialogFooter({
   return (
     <DialogFooter>
       {showAddToDashboard && onAddToDashboardClick && (
-        <Button variant="outline" onClick={onAddToDashboardClick} disabled={isSaving}>
+        <Button variant="outline" type="button" onClick={onAddToDashboardClick} disabled={isSaving}>
           <PlusIcon className="mr-2 h-4 w-4" />
           {t("workspace.analysis.charts.add_to_dashboard")}
         </Button>
       )}
-      <Button onClick={onSaveClick} disabled={isSaving}>
+      <Button
+        type={formId ? "submit" : "button"}
+        form={formId}
+        onClick={formId ? undefined : onSaveClick}
+        disabled={isSaving}>
         <SaveIcon className="mr-2 h-4 w-4" />
         {saveLabel ?? t("workspace.analysis.charts.save_chart")}
       </Button>
