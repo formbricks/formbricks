@@ -229,69 +229,68 @@ export const FormTargetField = ({
                   />
                 </SelectTrigger>
                 <SelectContent>
-                  {isEnum && field.enumValues ? (
-                    field.enumValues.map((enumValue) => (
+                  {isEnum &&
+                    field.enumValues?.map((enumValue) => (
                       <SelectItem key={enumValue} value={`${SENTINEL.ENUM_PREFIX}${enumValue}`}>
                         {enumValue}
                       </SelectItem>
-                    ))
-                  ) : (
-                    <>
-                      {sourceFields.length > 0 && (
-                        <SelectGroup>
-                          <SelectLabel className={GROUP_LABEL_CLASS}>
-                            {t("workspace.unify.csv_columns")}
-                          </SelectLabel>
-                          {sourceFields.map((column) => {
-                            const otherUsage = otherUsageByColumn[column.id];
-                            return (
-                              <SelectItem key={column.id} value={`${SENTINEL.COLUMN_PREFIX}${column.id}`}>
-                                <span className="flex w-full items-center gap-2">
-                                  <span className="text-slate-900">{column.name}</span>
-                                  {otherUsage && (
-                                    <span className="ml-auto rounded bg-slate-100 px-1.5 py-0.5 text-xs font-normal text-slate-500">
-                                      {t("workspace.unify.csv_column_used_by", { target: otherUsage })}
-                                    </span>
-                                  )}
+                    ))}
+                  {isEnum && Boolean(field.enumValues?.length) && sourceFields.length > 0 && (
+                    <SelectSeparator />
+                  )}
+                  {sourceFields.length > 0 && (
+                    <SelectGroup>
+                      <SelectLabel className={GROUP_LABEL_CLASS}>
+                        {t("workspace.unify.csv_columns")}
+                      </SelectLabel>
+                      {sourceFields.map((column) => {
+                        const otherUsage = otherUsageByColumn[column.id];
+                        return (
+                          <SelectItem key={column.id} value={`${SENTINEL.COLUMN_PREFIX}${column.id}`}>
+                            <span className="flex w-full items-center gap-2">
+                              <span className="text-slate-900">{column.name}</span>
+                              {otherUsage && (
+                                <span className="ml-auto rounded bg-slate-100 px-1.5 py-0.5 text-xs font-normal text-slate-500">
+                                  {t("workspace.unify.csv_column_used_by", { target: otherUsage })}
                                 </span>
-                              </SelectItem>
-                            );
-                          })}
-                        </SelectGroup>
-                      )}
-                      {isTimestamp && (
-                        <>
-                          <SelectSeparator />
-                          <SelectItem value={SENTINEL.STATIC_NOW}>
-                            <span className="inline-flex items-center gap-2 text-slate-900">
-                              <ClockIcon className="h-3.5 w-3.5" />
-                              {t("workspace.unify.csv_now_label")}
+                              )}
                             </span>
                           </SelectItem>
-                        </>
-                      )}
+                        );
+                      })}
+                    </SelectGroup>
+                  )}
+                  {isTimestamp && (
+                    <>
                       <SelectSeparator />
-                      <SelectItem value={SENTINEL.EDIT_FIXED}>
+                      <SelectItem value={SENTINEL.STATIC_NOW}>
                         <span className="inline-flex items-center gap-2 text-slate-900">
-                          <TextCursorInputIcon className="h-3.5 w-3.5" />
-                          {mapping?.staticValue && mapping.staticValue !== "$now"
-                            ? t("workspace.unify.csv_fixed_value_label", {
-                                value: truncate(mapping.staticValue, 40),
-                              })
-                            : t("workspace.unify.csv_fixed_value_action")}
+                          <ClockIcon className="h-3.5 w-3.5" />
+                          {t("workspace.unify.csv_now_label")}
                         </span>
                       </SelectItem>
-                      {!field.required && hasMapping && (
-                        <>
-                          <SelectSeparator />
-                          <SelectItem value={SENTINEL.CLEAR}>
-                            <span className="inline-flex items-center gap-2 text-slate-900">
-                              <MinusCircleIcon className="h-3.5 w-3.5" />
-                              {t("workspace.unify.dont_include")}
-                            </span>
-                          </SelectItem>
-                        </>
-                      )}
+                    </>
+                  )}
+                  <SelectSeparator />
+                  <SelectItem value={SENTINEL.EDIT_FIXED}>
+                    <span className="inline-flex items-center gap-2 text-slate-900">
+                      <TextCursorInputIcon className="h-3.5 w-3.5" />
+                      {mapping?.staticValue && mapping.staticValue !== "$now"
+                        ? t("workspace.unify.csv_fixed_value_label", {
+                            value: truncate(mapping.staticValue, 40),
+                          })
+                        : t("workspace.unify.csv_fixed_value_action")}
+                    </span>
+                  </SelectItem>
+                  {!field.required && hasMapping && (
+                    <>
+                      <SelectSeparator />
+                      <SelectItem value={SENTINEL.CLEAR}>
+                        <span className="inline-flex items-center gap-2 text-slate-900">
+                          <MinusCircleIcon className="h-3.5 w-3.5" />
+                          {t("workspace.unify.dont_include")}
+                        </span>
+                      </SelectItem>
                     </>
                   )}
                 </SelectContent>

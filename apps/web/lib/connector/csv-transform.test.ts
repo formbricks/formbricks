@@ -248,11 +248,33 @@ describe("transformCsvRowToFeedbackRecord", () => {
     const result = transformCsvRowToFeedbackRecord(row, baseMappings, TENANT);
     expect(result!.collected_at).toBeUndefined();
   });
+
+  test("rejects parseable non-ISO timestamp strings", () => {
+    const row = {
+      feedback_text: "test",
+      question: "q1",
+      timestamp: "01/15/2026",
+    };
+
+    const result = transformCsvRowToFeedbackRecord(row, baseMappings, TENANT);
+    expect(result!.collected_at).toBeUndefined();
+  });
+
+  test("rejects ISO-shaped timestamp strings with invalid dates", () => {
+    const row = {
+      feedback_text: "test",
+      question: "q1",
+      timestamp: "2026-02-31",
+    };
+
+    const result = transformCsvRowToFeedbackRecord(row, baseMappings, TENANT);
+    expect(result!.collected_at).toBeUndefined();
+  });
 });
 
 describe("transformCsvRowsToFeedbackRecords", () => {
   test("transforms multiple rows and counts skipped", () => {
-    const rows = [
+    const rows: Record<string, string>[] = [
       { feedback_text: "Good", question: "q1", timestamp: "2026-01-15" },
       { feedback_text: "Bad", question: "q2", timestamp: "2026-01-16" },
       { feedback_text: "No question field" },
@@ -338,6 +360,15 @@ describe("response_value routing", () => {
       TENANT
     );
     expect(result!.value_date).toBe("2026-03-01T00:00:00.000Z");
+  });
+
+  test("date response rejects parseable non-ISO strings", () => {
+    const result = transformCsvRowToFeedbackRecord(
+      { answer: "March 1, 2026", question: "q1", timestamp: "2026-01-15" },
+      responseMappings("date"),
+      TENANT
+    );
+    expect(result!.value_date).toBeUndefined();
   });
 
   test("invalid field_type causes the row to be skipped", () => {

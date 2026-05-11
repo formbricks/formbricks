@@ -12,6 +12,17 @@ const NUMERIC_FIELDS = new Set<THubTargetField>(["value_number"]);
 const BOOLEAN_FIELDS = new Set<THubTargetField>(["value_boolean"]);
 const TIMESTAMP_FIELDS = new Set<THubTargetField>(["collected_at", "value_date"]);
 const JSON_FIELDS = new Set<THubTargetField>(["metadata"]);
+const ISO_DATE_OR_TIMESTAMP_REGEX =
+  /^(\d{4})-(\d{2})-(\d{2})(?:T(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d{1,9})?)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d))?$/;
+
+const isValidIsoDateOrTimestamp = (value: string): boolean => {
+  const match = ISO_DATE_OR_TIMESTAMP_REGEX.exec(value);
+  if (!match) return false;
+
+  const [, year, month, day] = match.map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
+};
 
 const coerceValue = (value: string, targetField: THubTargetField): string | number | boolean | undefined => {
   const trimmed = value.trim();
@@ -30,6 +41,7 @@ const coerceValue = (value: string, targetField: THubTargetField): string | numb
   }
 
   if (TIMESTAMP_FIELDS.has(targetField)) {
+    if (!isValidIsoDateOrTimestamp(trimmed)) return undefined;
     const date = new Date(trimmed);
     return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
   }
