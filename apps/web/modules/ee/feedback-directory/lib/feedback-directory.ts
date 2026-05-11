@@ -454,7 +454,7 @@ const assertWorkspacesNotAssignedElsewhere = async (
   const conflicting = await prisma.feedbackDirectoryWorkspace.findFirst({
     where: {
       workspaceId: { in: workspaceIds },
-      ...(directoryId !== undefined ? { feedbackDirectoryId: { not: directoryId } } : {}),
+      ...(directoryId === undefined ? {} : { feedbackDirectoryId: { not: directoryId } }),
       feedbackDirectory: { isArchived: false },
     },
     select: { workspaceId: true },
