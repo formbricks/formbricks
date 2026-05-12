@@ -344,6 +344,18 @@ export const addChartToDashboard = async (data: TAddWidgetInput) => {
           throw new ResourceNotFoundError("Dashboard", data.dashboardId);
         }
 
+        const existingWidget = await tx.dashboardWidget.findFirst({
+          where: {
+            dashboardId: data.dashboardId,
+            chartId: data.chartId,
+          },
+          select: { id: true },
+        });
+
+        if (existingWidget) {
+          throw new InvalidInputError("This chart is already on the dashboard");
+        }
+
         const [maxOrder, existingWidgets] = await Promise.all([
           tx.dashboardWidget.aggregate({
             where: { dashboardId: data.dashboardId },
@@ -375,7 +387,7 @@ export const addChartToDashboard = async (data: TAddWidgetInput) => {
       { isolationLevel: "Serializable" }
     );
   } catch (error) {
-    if (error instanceof ResourceNotFoundError) {
+    if (error instanceof ResourceNotFoundError || error instanceof InvalidInputError) {
       throw error;
     }
     if (error instanceof Prisma.PrismaClientKnownRequestError) {

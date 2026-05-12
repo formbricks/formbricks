@@ -98,6 +98,7 @@ const makePrismaError = (code: string) =>
 describe("Dashboard Service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockTxWidget.findFirst.mockResolvedValue(null);
   });
 
   describe("createDashboard", () => {
@@ -651,6 +652,26 @@ describe("Dashboard Service", () => {
         resourceType: "Dashboard",
         resourceId: mockDashboardId,
       });
+      expect(mockTxWidget.create).not.toHaveBeenCalled();
+    });
+
+    test("throws InvalidInputError when chart is already on the dashboard", async () => {
+      mockTxChart.findFirst.mockResolvedValue({ id: mockChartId });
+      mockTxDashboard.findFirst.mockResolvedValue(mockDashboard);
+      mockTxWidget.findFirst.mockResolvedValue({ id: "existing-widget-abc-123" });
+      const { addChartToDashboard } = await import("./dashboards");
+
+      await expect(
+        addChartToDashboard({
+          dashboardId: mockDashboardId,
+          chartId: mockChartId,
+          workspaceId: mockWorkspaceId,
+          layout: mockLayout,
+        })
+      ).rejects.toMatchObject({
+        name: "InvalidInputError",
+      });
+      expect(mockTxWidget.aggregate).not.toHaveBeenCalled();
       expect(mockTxWidget.create).not.toHaveBeenCalled();
     });
 

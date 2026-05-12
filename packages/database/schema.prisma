@@ -1144,6 +1144,7 @@ model DashboardWidget {
   layout      Json      @default("{\"x\":0,\"y\":0,\"w\":4,\"h\":3}")
   order       Int       @default(0)
 
+  @@unique([dashboardId, chartId])
   @@index([dashboardId, order])
 }
 
