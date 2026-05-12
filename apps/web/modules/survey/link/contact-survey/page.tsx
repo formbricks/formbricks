@@ -17,17 +17,19 @@ import {
 import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
 import { getWorkspaceById } from "@/modules/survey/link/lib/workspace";
 
+type TContactSurveyPageSearchParams = {
+  suId?: string;
+  verify?: string;
+  lang?: string;
+  embed?: string;
+  preview?: string;
+} & Record<string, string | string[] | undefined>;
+
 interface ContactSurveyPageProps {
   params: Promise<{
     jwt: string;
   }>;
-  searchParams: Promise<{
-    suId?: string;
-    verify?: string;
-    lang?: string;
-    embed?: string;
-    preview?: string;
-  }>;
+  searchParams: Promise<TContactSurveyPageSearchParams>;
 }
 
 export const generateMetadata = async (props: ContactSurveyPageProps): Promise<Metadata> => {
