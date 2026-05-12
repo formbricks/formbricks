@@ -40,6 +40,8 @@ const mockSurvey = {
   ],
 } as unknown as TSurvey;
 
+const mockTenantId = "cmp2f6428000504la7iyh87h1";
+
 const mockResponse = {
   id: "resp-1",
   createdAt: NOW,
@@ -84,13 +86,18 @@ describe("transformResponseToFeedbackRecords", () => {
 
   test("returns empty array when response has no data", () => {
     const emptyResponse = { ...mockResponse, data: null } as unknown as TResponse;
-    const result = transformResponseToFeedbackRecords(emptyResponse, mockSurvey, allMappings);
+    const result = transformResponseToFeedbackRecords(emptyResponse, mockSurvey, allMappings, mockTenantId);
     expect(result).toEqual([]);
   });
 
   test("returns empty array when no mappings match the survey", () => {
     const otherSurveyMappings = allMappings.map((m) => ({ ...m, surveyId: "other-survey" }));
-    const result = transformResponseToFeedbackRecords(mockResponse, mockSurvey, otherSurveyMappings);
+    const result = transformResponseToFeedbackRecords(
+      mockResponse,
+      mockSurvey,
+      otherSurveyMappings,
+      mockTenantId
+    );
     expect(result).toEqual([]);
   });
 
@@ -100,7 +107,7 @@ describe("transformResponseToFeedbackRecords", () => {
       data: { "el-text": "" },
     } as unknown as TResponse;
     const mappings = [createMapping({ elementId: "el-text", hubFieldType: "text" })];
-    const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings);
+    const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings, mockTenantId);
     expect(result).toEqual([]);
   });
 
@@ -113,14 +120,14 @@ describe("transformResponseToFeedbackRecords", () => {
       createMapping({ elementId: "el-text", hubFieldType: "text" }),
       createMapping({ elementId: "el-nps", hubFieldType: "nps" }),
     ];
-    const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings);
+    const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings, mockTenantId);
     expect(result).toHaveLength(1);
     expect(result[0].field_id).toBe("el-nps");
   });
 
   test("transforms text field correctly", () => {
     const mappings = [createMapping({ elementId: "el-text", hubFieldType: "text" })];
-    const result = transformResponseToFeedbackRecords(mockResponse, mockSurvey, mappings);
+    const result = transformResponseToFeedbackRecords(mockResponse, mockSurvey, mappings, mockTenantId);
     expect(result).toHaveLength(1);
     expect(result[0]).toMatchObject({
       source_type: "formbricks_survey",
@@ -137,7 +144,7 @@ describe("transformResponseToFeedbackRecords", () => {
 
   test("transforms nps field correctly", () => {
     const mappings = [createMapping({ elementId: "el-nps", hubFieldType: "nps" })];
-    const result = transformResponseToFeedbackRecords(mockResponse, mockSurvey, mappings);
+    const result = transformResponseToFeedbackRecords(mockResponse, mockSurvey, mappings, mockTenantId);
     expect(result).toHaveLength(1);
     expect(result[0].value_number).toBe(9);
     expect(result[0].field_type).toBe("nps");
@@ -145,28 +152,28 @@ describe("transformResponseToFeedbackRecords", () => {
 
   test("transforms rating field correctly", () => {
     const mappings = [createMapping({ elementId: "el-rating", hubFieldType: "rating" })];
-    const result = transformResponseToFeedbackRecords(mockResponse, mockSurvey, mappings);
+    const result = transformResponseToFeedbackRecords(mockResponse, mockSurvey, mappings, mockTenantId);
     expect(result).toHaveLength(1);
     expect(result[0].value_number).toBe(4);
   });
 
   test("transforms date field to ISO string", () => {
     const mappings = [createMapping({ elementId: "el-date", hubFieldType: "date" })];
-    const result = transformResponseToFeedbackRecords(mockResponse, mockSurvey, mappings);
+    const result = transformResponseToFeedbackRecords(mockResponse, mockSurvey, mappings, mockTenantId);
     expect(result).toHaveLength(1);
     expect(result[0].value_date).toBe(new Date("2026-01-15").toISOString());
   });
 
   test("transforms boolean field correctly", () => {
     const mappings = [createMapping({ elementId: "el-bool", hubFieldType: "boolean" })];
-    const result = transformResponseToFeedbackRecords(mockResponse, mockSurvey, mappings);
+    const result = transformResponseToFeedbackRecords(mockResponse, mockSurvey, mappings, mockTenantId);
     expect(result).toHaveLength(1);
     expect(result[0].value_boolean).toBe(true);
   });
 
   test("transforms categorical (multi-select) field to comma-separated text", () => {
     const mappings = [createMapping({ elementId: "el-multi", hubFieldType: "categorical" })];
-    const result = transformResponseToFeedbackRecords(mockResponse, mockSurvey, mappings);
+    const result = transformResponseToFeedbackRecords(mockResponse, mockSurvey, mappings, mockTenantId);
     expect(result).toHaveLength(1);
     expect(result[0].value_text).toBe("feat-a, feat-b");
   });
@@ -175,13 +182,13 @@ describe("transformResponseToFeedbackRecords", () => {
     const mappings = [
       createMapping({ elementId: "el-text", hubFieldType: "text", customFieldLabel: "Custom Label" }),
     ];
-    const result = transformResponseToFeedbackRecords(mockResponse, mockSurvey, mappings);
+    const result = transformResponseToFeedbackRecords(mockResponse, mockSurvey, mappings, mockTenantId);
     expect(result[0].field_label).toBe("Custom Label");
   });
 
   test("sets collected_at from response createdAt", () => {
     const mappings = [createMapping({ elementId: "el-text", hubFieldType: "text" })];
-    const result = transformResponseToFeedbackRecords(mockResponse, mockSurvey, mappings);
+    const result = transformResponseToFeedbackRecords(mockResponse, mockSurvey, mappings, mockTenantId);
     expect(result[0].collected_at).toBe(NOW.toISOString());
   });
 
@@ -189,7 +196,7 @@ describe("transformResponseToFeedbackRecords", () => {
     const updatedAt = new Date("2026-02-25T10:00:00.000Z");
     const response = { ...mockResponse, createdAt: undefined, updatedAt } as unknown as TResponse;
     const mappings = [createMapping({ elementId: "el-text", hubFieldType: "text" })];
-    const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings);
+    const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings, mockTenantId);
     expect(result[0].collected_at).toBe(updatedAt.toISOString());
   });
 
@@ -199,7 +206,7 @@ describe("transformResponseToFeedbackRecords", () => {
       createdAt: "2026-02-26T10:00:00.000Z",
     } as unknown as TResponse;
     const mappings = [createMapping({ elementId: "el-text", hubFieldType: "text" })];
-    const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings);
+    const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings, mockTenantId);
     expect(result[0].collected_at).toBe("2026-02-26T10:00:00.000Z");
   });
 
@@ -209,28 +216,22 @@ describe("transformResponseToFeedbackRecords", () => {
     expect(result[0].tenant_id).toBe("tenant-abc");
   });
 
-  test("omits tenant_id when not provided", () => {
-    const mappings = [createMapping({ elementId: "el-text", hubFieldType: "text" })];
-    const result = transformResponseToFeedbackRecords(mockResponse, mockSurvey, mappings);
-    expect(result[0].tenant_id).toBeUndefined();
-  });
-
   test("omits language when response language is 'default'", () => {
     const response = { ...mockResponse, language: "default" } as unknown as TResponse;
     const mappings = [createMapping({ elementId: "el-text", hubFieldType: "text" })];
-    const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings);
+    const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings, mockTenantId);
     expect(result[0].language).toBeUndefined();
   });
 
   test("omits user_id when contact has no userId", () => {
     const response = { ...mockResponse, contact: null } as unknown as TResponse;
     const mappings = [createMapping({ elementId: "el-text", hubFieldType: "text" })];
-    const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings);
+    const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings, mockTenantId);
     expect(result[0].user_id).toBeUndefined();
   });
 
   test("transforms all mappings in a single call", () => {
-    const result = transformResponseToFeedbackRecords(mockResponse, mockSurvey, allMappings);
+    const result = transformResponseToFeedbackRecords(mockResponse, mockSurvey, allMappings, mockTenantId);
     expect(result).toHaveLength(6);
     const fieldIds = result.map((r) => r.field_id);
     expect(fieldIds).toEqual(["el-text", "el-nps", "el-rating", "el-date", "el-bool", "el-multi"]);
@@ -246,7 +247,7 @@ describe("transformResponseToFeedbackRecords", () => {
       data: { "el-bare": "some text" },
     } as unknown as TResponse;
     const mappings = [createMapping({ elementId: "el-bare", hubFieldType: "text" })];
-    const result = transformResponseToFeedbackRecords(response, survey, mappings);
+    const result = transformResponseToFeedbackRecords(response, survey, mappings, mockTenantId);
     expect(result[0].field_label).toBe("Untitled");
   });
 
@@ -257,7 +258,7 @@ describe("transformResponseToFeedbackRecords", () => {
         data: { "el-nps": "7" },
       } as unknown as TResponse;
       const mappings = [createMapping({ elementId: "el-nps", hubFieldType: "nps" })];
-      const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings);
+      const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings, mockTenantId);
       expect(result[0].value_number).toBe(7);
     });
 
@@ -267,7 +268,7 @@ describe("transformResponseToFeedbackRecords", () => {
         data: { "el-nps": "not-a-number" },
       } as unknown as TResponse;
       const mappings = [createMapping({ elementId: "el-nps", hubFieldType: "nps" })];
-      const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings);
+      const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings, mockTenantId);
       expect(result[0].value_number).toBeUndefined();
     });
 
@@ -277,7 +278,7 @@ describe("transformResponseToFeedbackRecords", () => {
         data: { "el-text": { nested: "value" } },
       } as unknown as TResponse;
       const mappings = [createMapping({ elementId: "el-text", hubFieldType: "text" })];
-      const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings);
+      const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings, mockTenantId);
       expect(result[0].value_text).toBe(JSON.stringify({ nested: "value" }));
     });
 
@@ -287,7 +288,7 @@ describe("transformResponseToFeedbackRecords", () => {
         data: { "el-date": "not-a-date" },
       } as unknown as TResponse;
       const mappings = [createMapping({ elementId: "el-date", hubFieldType: "date" })];
-      const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings);
+      const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings, mockTenantId);
       expect(result[0].value_date).toBeUndefined();
     });
 
@@ -297,7 +298,7 @@ describe("transformResponseToFeedbackRecords", () => {
         data: { "el-bool": "1" },
       } as unknown as TResponse;
       const mappings = [createMapping({ elementId: "el-bool", hubFieldType: "boolean" })];
-      const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings);
+      const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings, mockTenantId);
       expect(result[0].value_boolean).toBe(true);
     });
 
@@ -307,7 +308,7 @@ describe("transformResponseToFeedbackRecords", () => {
         data: { "el-bool": "false" },
       } as unknown as TResponse;
       const mappings = [createMapping({ elementId: "el-bool", hubFieldType: "boolean" })];
-      const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings);
+      const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings, mockTenantId);
       expect(result[0].value_boolean).toBe(false);
     });
 
@@ -317,7 +318,7 @@ describe("transformResponseToFeedbackRecords", () => {
         data: { "el-text": ["a", "b", "c"] },
       } as unknown as TResponse;
       const mappings = [createMapping({ elementId: "el-text", hubFieldType: "text" })];
-      const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings);
+      const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings, mockTenantId);
       expect(result[0].value_text).toBe("a, b, c");
     });
 
@@ -327,7 +328,7 @@ describe("transformResponseToFeedbackRecords", () => {
         data: { "el-multi": "single-choice" },
       } as unknown as TResponse;
       const mappings = [createMapping({ elementId: "el-multi", hubFieldType: "categorical" })];
-      const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings);
+      const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings, mockTenantId);
       expect(result[0].value_text).toBe("single-choice");
     });
 
@@ -337,7 +338,7 @@ describe("transformResponseToFeedbackRecords", () => {
         data: { "el-multi": { row1: "col1", row2: "col2" } },
       } as unknown as TResponse;
       const mappings = [createMapping({ elementId: "el-multi", hubFieldType: "categorical" })];
-      const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings);
+      const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings, mockTenantId);
       expect(result[0].value_text).toBe(JSON.stringify({ row1: "col1", row2: "col2" }));
       expect(result[0].value_text).not.toBe("[object Object]");
     });
@@ -348,7 +349,7 @@ describe("transformResponseToFeedbackRecords", () => {
         data: { "el-multi": ["LabelA", "LabelB", "LabelC"] },
       } as unknown as TResponse;
       const mappings = [createMapping({ elementId: "el-multi", hubFieldType: "categorical" })];
-      const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings);
+      const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings, mockTenantId);
       expect(result).toHaveLength(1);
       expect(result[0].field_id).toBe("el-multi");
       expect(result[0].value_text).toBe("LabelA, LabelB, LabelC");
@@ -360,7 +361,7 @@ describe("transformResponseToFeedbackRecords", () => {
         data: { "el-multi": [] },
       } as unknown as TResponse;
       const mappings = [createMapping({ elementId: "el-multi", hubFieldType: "categorical" })];
-      const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings);
+      const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings, mockTenantId);
       expect(result).toHaveLength(1);
       expect(result[0].value_text).toBe("");
     });
@@ -376,7 +377,7 @@ describe("transformResponseToFeedbackRecords", () => {
           hubFieldType: "unknown-type" as TConnectorFormbricksMapping["hubFieldType"],
         }),
       ];
-      const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings);
+      const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings, mockTenantId);
       expect(result[0].value_text).toBe(JSON.stringify({ row1: "col1" }));
       expect(result[0].value_text).not.toBe("[object Object]");
     });
@@ -417,7 +418,7 @@ describe("transformResponseToFeedbackRecords", () => {
       } as unknown as TResponse;
       const mappings = [createMapping({ elementId: "el-matrix", hubFieldType: "categorical" })];
 
-      const result = transformResponseToFeedbackRecords(response, matrixSurvey, mappings);
+      const result = transformResponseToFeedbackRecords(response, matrixSurvey, mappings, mockTenantId);
 
       expect(result).toHaveLength(2);
       expect(result.every((r) => r.field_group_id === "el-matrix")).toBe(true);
@@ -446,7 +447,7 @@ describe("transformResponseToFeedbackRecords", () => {
       } as unknown as TResponse;
       const mappings = [createMapping({ elementId: "el-matrix", hubFieldType: "categorical" })];
 
-      const result = transformResponseToFeedbackRecords(response, matrixSurvey, mappings);
+      const result = transformResponseToFeedbackRecords(response, matrixSurvey, mappings, mockTenantId);
 
       expect(result).toHaveLength(1);
       expect(result[0].field_id).toBe("el-matrix__row-1");
@@ -460,10 +461,33 @@ describe("transformResponseToFeedbackRecords", () => {
       } as unknown as TResponse;
       const mappings = [createMapping({ elementId: "el-matrix", hubFieldType: "categorical" })];
 
-      const result = transformResponseToFeedbackRecords(response, matrixSurvey, mappings);
+      const result = transformResponseToFeedbackRecords(response, matrixSurvey, mappings, mockTenantId);
 
       expect(result).toHaveLength(1);
       expect(result[0].field_id).toBe("el-matrix__row-2");
+    });
+
+    test("JSON-stringifies non-string matrix cell value (regression for ENG-891)", () => {
+      const cellObject = { a: 1 };
+      const response = {
+        id: "resp-matrix-obj",
+        createdAt: NOW,
+        data: { "el-matrix": { Speed: cellObject } },
+      } as unknown as TResponse;
+      const mappings = [createMapping({ elementId: "el-matrix", hubFieldType: "categorical" })];
+
+      const result = transformResponseToFeedbackRecords(response, matrixSurvey, mappings, mockTenantId);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        field_id: "el-matrix__row-1",
+        field_label: "Speed",
+        field_group_id: "el-matrix",
+        field_group_label: "Rate each feature",
+        metadata: { question_type: "matrix" },
+        value_text: JSON.stringify(cellObject),
+      });
+      expect(result[0].value_text).not.toBe("[object Object]");
     });
 
     test("emits no records for empty matrix response", () => {
@@ -474,7 +498,7 @@ describe("transformResponseToFeedbackRecords", () => {
       } as unknown as TResponse;
       const mappings = [createMapping({ elementId: "el-matrix", hubFieldType: "categorical" })];
 
-      const result = transformResponseToFeedbackRecords(response, matrixSurvey, mappings);
+      const result = transformResponseToFeedbackRecords(response, matrixSurvey, mappings, mockTenantId);
 
       expect(result).toEqual([]);
     });
@@ -512,7 +536,7 @@ describe("transformResponseToFeedbackRecords", () => {
       } as unknown as TResponse;
       const mappings = [createMapping({ elementId: "el-ranking", hubFieldType: "categorical" })];
 
-      const result = transformResponseToFeedbackRecords(response, rankingSurvey, mappings);
+      const result = transformResponseToFeedbackRecords(response, rankingSurvey, mappings, mockTenantId);
 
       expect(result).toHaveLength(3);
       expect(result.every((r) => r.field_group_id === "el-ranking")).toBe(true);
@@ -546,7 +570,7 @@ describe("transformResponseToFeedbackRecords", () => {
       } as unknown as TResponse;
       const mappings = [createMapping({ elementId: "el-ranking", hubFieldType: "categorical" })];
 
-      const result = transformResponseToFeedbackRecords(response, rankingSurvey, mappings);
+      const result = transformResponseToFeedbackRecords(response, rankingSurvey, mappings, mockTenantId);
 
       expect(result).toEqual([]);
     });
@@ -559,7 +583,7 @@ describe("transformResponseToFeedbackRecords", () => {
       } as unknown as TResponse;
       const mappings = [createMapping({ elementId: "el-ranking", hubFieldType: "categorical" })];
 
-      const result = transformResponseToFeedbackRecords(response, rankingSurvey, mappings);
+      const result = transformResponseToFeedbackRecords(response, rankingSurvey, mappings, mockTenantId);
 
       expect(result).toHaveLength(1);
       expect(result[0].field_id).toBe("el-ranking__ch-1");

@@ -154,8 +154,7 @@ const expandMatrixToRecords = (
     const row = findChoiceByLabel<TSurveyMatrixElementChoice>(element.rows, rowLabel, language);
     if (!row) continue;
 
-    const cellValue = typeof columnLabel === "string" ? columnLabel : String(columnLabel);
-    const valueFields = convertValueToHubFields(cellValue, mapping.hubFieldType);
+    const valueFields = convertValueToHubFields(columnLabel as TResponseDataValue, mapping.hubFieldType);
 
     records.push({
       ...baseFields,
