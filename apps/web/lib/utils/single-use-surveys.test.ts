@@ -150,4 +150,55 @@ describe("Single Use Surveys", () => {
       expect(validateSurveySingleUseSignature("survey-1", params.suId)).toBe(false);
     });
   });
+
+  describe("validateSurveySingleUseLinkParams", () => {
+    test("returns decrypted CUID for encrypted single-use IDs", () => {
+      const decrypt = vi.fn().mockReturnValue("decrypted-cuid");
+      vi.mocked(cuid2.isCuid).mockReturnValueOnce(true);
+
+      const result = validateSurveySingleUseLinkParams({
+        surveyId: "survey-1",
+        suId: "encrypted-cuid",
+        isEncrypted: true,
+        decrypt,
+      });
+
+      expect(result).toBe("decrypted-cuid");
+      expect(decrypt).toHaveBeenCalledWith("encrypted-cuid");
+      expect(cuid2.isCuid).toHaveBeenCalledWith("decrypted-cuid");
+    });
+
+    test("rejects encrypted single-use IDs that decrypt to invalid CUIDs", () => {
+      const decrypt = vi.fn().mockReturnValue("invalid-id");
+      vi.mocked(cuid2.isCuid).mockReturnValueOnce(false);
+
+      const result = validateSurveySingleUseLinkParams({
+        surveyId: "survey-1",
+        suId: "encrypted-cuid",
+        isEncrypted: true,
+        decrypt,
+      });
+
+      expect(result).toBeNull();
+      expect(decrypt).toHaveBeenCalledWith("encrypted-cuid");
+      expect(cuid2.isCuid).toHaveBeenCalledWith("invalid-id");
+    });
+
+    test("rejects encrypted single-use IDs when decryption fails", () => {
+      const decrypt = vi.fn(() => {
+        throw new Error("Invalid encrypted payload");
+      });
+
+      const result = validateSurveySingleUseLinkParams({
+        surveyId: "survey-1",
+        suId: "malformed-encrypted-cuid",
+        isEncrypted: true,
+        decrypt,
+      });
+
+      expect(result).toBeNull();
+      expect(decrypt).toHaveBeenCalledWith("malformed-encrypted-cuid");
+      expect(cuid2.isCuid).not.toHaveBeenCalled();
+    });
+  });
 });

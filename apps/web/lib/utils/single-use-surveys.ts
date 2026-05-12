@@ -116,8 +116,12 @@ export const validateSurveySingleUseLinkParams = ({
   }
 
   if (isEncrypted) {
-    const decryptedSingleUseId = decrypt(trimmedSuId);
-    return isCuid(decryptedSingleUseId) ? decryptedSingleUseId : null;
+    try {
+      const decryptedSingleUseId = decrypt(trimmedSuId);
+      return isCuid(decryptedSingleUseId) ? decryptedSingleUseId : null;
+    } catch {
+      return null;
+    }
   }
 
   return validateSurveySingleUseSignature(surveyId, trimmedSuId, suToken) ? trimmedSuId : null;

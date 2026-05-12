@@ -41,7 +41,7 @@ export const AnonymousLinksTab = ({
   const [isSingleUseLink, setIsSingleUseLink] = useState(survey.singleUse?.enabled ?? false);
   const [singleUseEncryption, setSingleUseEncryption] = useState(survey.singleUse?.isEncrypted ?? false);
   const [numberOfLinks, setNumberOfLinks] = useState<number | string>(1);
-  const [customSingleUseId, setCustomSingleUseId] = useState("CUSTOM-ID");
+  const [customSingleUseId, setCustomSingleUseId] = useState("");
 
   const [disableLinkModal, setDisableLinkModal] = useState<{
     open: boolean;
@@ -322,6 +322,7 @@ export const AnonymousLinksTab = ({
 
                     <Button
                       variant="secondary"
+                      disabled={!customSingleUseId.trim()}
                       onClick={handleCopyCustomSingleUseLink}
                       className="col-span-1 gap-1 text-sm">
                       {t("common.copy")}
