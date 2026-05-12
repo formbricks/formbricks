@@ -98,7 +98,7 @@ describe("storage utils", () => {
         );
       const spyISE = vi
         .spyOn(responseMod.responses, "internalServerErrorResponse")
-        .mockImplementation((msg: string, _public?: boolean, _cache?: string, details = {}) =>
+        .mockImplementation((msg: string, _public?: boolean, details = {}) =>
           Response.json({ code: "internal_server_error", message: msg, details }, { status: 500 })
         );
 

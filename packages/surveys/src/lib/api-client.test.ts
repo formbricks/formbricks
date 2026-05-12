@@ -1,4 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { FILE_UPLOAD_ERROR_NAMES } from "@formbricks/types/errors";
+import { STORAGE_ERROR_CODES } from "@formbricks/types/storage";
 import { ApiClient } from "./api-client";
 
 describe("ApiClient", () => {
@@ -209,7 +211,7 @@ describe("ApiClient", () => {
         json: async () => ({
           code: "internal_server_error",
           message: "File storage is not configured correctly. Please check your file upload settings.",
-          details: { storage_error_code: "s3_client_error" },
+          details: { storage_error_code: STORAGE_ERROR_CODES.S3_CLIENT_ERROR },
         }),
       } as unknown as Response);
 
@@ -219,7 +221,7 @@ describe("ApiClient", () => {
           name: "test.jpg",
           type: "image/jpeg",
         })
-      ).rejects.toMatchObject({ name: "StorageNotConfiguredError" });
+      ).rejects.toMatchObject({ name: FILE_UPLOAD_ERROR_NAMES.STORAGE_NOT_CONFIGURED });
     });
 
     test("throws an error if actual upload fails", async () => {
@@ -272,7 +274,7 @@ describe("ApiClient", () => {
           name: "test.jpg",
           type: "image/jpeg",
         })
-      ).rejects.toMatchObject({ name: "StorageUploadFailedError" });
+      ).rejects.toMatchObject({ name: FILE_UPLOAD_ERROR_NAMES.STORAGE_UPLOAD_FAILED });
     });
 
     test('throws "Error uploading file" if base64 is invalid', async () => {

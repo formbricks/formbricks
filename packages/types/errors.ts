@@ -147,6 +147,13 @@ export {
 };
 export type { NetworkError, ForbiddenError };
 
+export const FILE_UPLOAD_ERROR_NAMES = {
+  INVALID_FILE_NAME: "InvalidFileNameError",
+  STORAGE_NOT_CONFIGURED: "StorageNotConfiguredError",
+  STORAGE_UPLOAD_FAILED: "StorageUploadFailedError",
+  FILE_TOO_LARGE: "FileTooLargeError",
+} as const;
+
 /**
  * Error names that represent expected business-logic failures.
  * These are handled gracefully in the UI and should NOT be reported to Sentry.

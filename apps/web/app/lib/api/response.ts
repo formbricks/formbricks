@@ -217,8 +217,8 @@ const successResponse = (data: Object, cors: boolean = false, cache: string = "p
 const internalServerErrorResponse = (
   message: string,
   cors: boolean = false,
-  cache: string = "private, no-store",
-  details: ApiErrorResponse["details"] = {}
+  details: ApiErrorResponse["details"] = {},
+  cache: string = "private, no-store"
 ) => {
   const headers = {
     ...(cors && corsHeaders),

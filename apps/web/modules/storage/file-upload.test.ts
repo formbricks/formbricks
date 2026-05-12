@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { STORAGE_ERROR_CODES } from "@formbricks/types/storage";
 import * as fileUploadModule from "./file-upload";
 
 // Mock global fetch
@@ -80,7 +81,7 @@ describe("fileUpload", () => {
       json: async () => ({
         code: "internal_server_error",
         message: "File storage is not configured correctly. Please check your file upload settings.",
-        details: { storage_error_code: "s3_credentials_error" },
+        details: { storage_error_code: STORAGE_ERROR_CODES.S3_CREDENTIALS_ERROR },
       }),
     });
 

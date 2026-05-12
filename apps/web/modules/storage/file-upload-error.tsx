@@ -15,6 +15,10 @@ export const getFileUploadErrorMessage = (error: FileUploadError, t: TFunction):
       return t("common.file_size_must_be_less_than_5_mb");
     case FileUploadError.INVALID_FILE_NAME:
       return t("common.invalid_file_name");
+    case FileUploadError.STORAGE_NOT_CONFIGURED:
+      return t("common.storage_not_configured");
+    case FileUploadError.STORAGE_UPLOAD_FAILED:
+      return t("common.file_upload_service_unavailable");
     case FileUploadError.UPLOAD_FAILED:
     default:
       return t("common.upload_failed");

@@ -1,3 +1,5 @@
+import { STORAGE_CONFIGURATION_ERROR_CODES, type TStorageApiErrorDetails } from "@formbricks/types/storage";
+
 export enum FileUploadError {
   NO_FILE = "no_file",
   INVALID_FILE_TYPE = "invalid_file_type",
@@ -9,13 +11,8 @@ export enum FileUploadError {
 }
 
 type UploadApiErrorResponse = {
-  details?: {
-    fileName?: string;
-    storage_error_code?: string;
-  };
+  details?: TStorageApiErrorDetails;
 };
-
-const storageConfigurationErrorCodes = new Set(["s3_credentials_error", "s3_client_error"]);
 
 const parseUploadApiError = async (response: Response): Promise<UploadApiErrorResponse | undefined> => {
   try {
@@ -35,7 +32,7 @@ const getFileUploadErrorFromResponse = async (response: Response): Promise<FileU
   if (
     response.status >= 500 &&
     json?.details?.storage_error_code &&
-    storageConfigurationErrorCodes.has(json.details.storage_error_code)
+    STORAGE_CONFIGURATION_ERROR_CODES.has(json.details.storage_error_code)
   ) {
     return FileUploadError.STORAGE_NOT_CONFIGURED;
   }
