@@ -1810,6 +1810,7 @@
       },
       "dashboards": {
         "add_count_charts": "Add {count} chart(s)",
+        "chart_removed": "Chart removed from dashboard",
         "charts_add_failed": "Failed to add charts to dashboard",
         "charts_add_partial_failure": "Failed to add {count} chart(s)",
         "charts_added_to_dashboard": "Charts added to dashboard",

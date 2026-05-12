@@ -1810,6 +1810,7 @@
       },
       "dashboards": {
         "add_count_charts": "Добавить {count} график(ов)",
+        "chart_removed": "График удалён с панели",
         "charts_add_failed": "Не удалось добавить графики на дашборд",
         "charts_add_partial_failure": "Не удалось добавить {count} график(ов)",
         "charts_added_to_dashboard": "Графики добавлены на дашборд",

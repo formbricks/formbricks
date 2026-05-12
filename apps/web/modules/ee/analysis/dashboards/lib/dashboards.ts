@@ -301,6 +301,31 @@ export const updateWidgetLayouts = async (
   }
 };
 
+export const removeWidgetFromDashboard = async (
+  dashboardId: string,
+  workspaceId: string,
+  widgetId: string
+) => {
+  validateInputs([dashboardId, ZId], [workspaceId, ZId], [widgetId, ZId]);
+
+  try {
+    const widget = await prisma.dashboardWidget.findFirst({
+      where: { id: widgetId, dashboard: { id: dashboardId, workspaceId } },
+    });
+
+    if (!widget) {
+      throw new ResourceNotFoundError("DashboardWidget", widgetId);
+    }
+
+    return await prisma.dashboardWidget.delete({ where: { id: widgetId } });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
+  }
+};
+
 export const addChartToDashboard = async (data: TAddWidgetInput) => {
   validateInputs([data, ZAddWidgetInput]);
 

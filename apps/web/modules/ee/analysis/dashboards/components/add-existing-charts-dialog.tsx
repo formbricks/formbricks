@@ -134,7 +134,7 @@ export function AddExistingChartsDialog({
           <DialogTitle>{t("common.add_charts")}</DialogTitle>
           <DialogDescription>{t("common.add_existing_chart_description")}</DialogDescription>
         </DialogHeader>
-        <DialogBody>
+        <DialogBody className="p-1">
           {isLoading ? (
             <div className="flex items-center justify-center rounded-md border px-3 py-2">
               <Loader2Icon className="h-5 w-5 animate-spin text-slate-400" />
