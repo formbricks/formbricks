@@ -307,13 +307,13 @@ export const EditConnectorModal = ({
                     <FormItem>
                       <FormLabel>{t("workspace.unify.select_questions")}</FormLabel>
                       <FormControl>
-                        <div className={isReadOnly ? "pointer-events-none opacity-70" : undefined}>
+                        <fieldset className={isReadOnly ? "opacity-70" : undefined} disabled={isReadOnly}>
                           <FormbricksQuestionList
                             survey={selectedSurvey}
                             selectedQuestionIds={selectedQuestionIds}
                             onQuestionToggle={handleFormbricksQuestionToggle}
                           />
-                        </div>
+                        </fieldset>
                       </FormControl>
                       {error?.message && (
                         <FormError>{getTranslatedConnectorError(error.message, t)}</FormError>
@@ -348,9 +348,10 @@ export const EditConnectorModal = ({
                 />
               </div>
 
-              <div
+              <fieldset
+                disabled={isReadOnly}
                 className={`max-h-[40vh] overflow-y-auto rounded-lg border border-slate-200 p-4 ${
-                  isReadOnly ? "pointer-events-none opacity-70" : ""
+                  isReadOnly ? "opacity-70" : ""
                 }`}>
                 <MappingUI
                   sourceFields={sourceFields}
@@ -358,7 +359,7 @@ export const EditConnectorModal = ({
                   onMappingsChange={setMappings}
                   connectorType={connector.type}
                 />
-              </div>
+              </fieldset>
             </>
           )}
         </div>
