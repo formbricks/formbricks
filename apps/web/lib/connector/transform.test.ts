@@ -330,5 +330,240 @@ describe("transformResponseToFeedbackRecords", () => {
       const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings);
       expect(result[0].value_text).toBe("single-choice");
     });
+
+    test("JSON-stringifies object value for categorical field (matrix/ranking responses)", () => {
+      const response = {
+        ...mockResponse,
+        data: { "el-multi": { row1: "col1", row2: "col2" } },
+      } as unknown as TResponse;
+      const mappings = [createMapping({ elementId: "el-multi", hubFieldType: "categorical" })];
+      const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings);
+      expect(result[0].value_text).toBe(JSON.stringify({ row1: "col1", row2: "col2" }));
+      expect(result[0].value_text).not.toBe("[object Object]");
+    });
+
+    test("creates a record for a ranking response (string array)", () => {
+      const response = {
+        ...mockResponse,
+        data: { "el-multi": ["LabelA", "LabelB", "LabelC"] },
+      } as unknown as TResponse;
+      const mappings = [createMapping({ elementId: "el-multi", hubFieldType: "categorical" })];
+      const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings);
+      expect(result).toHaveLength(1);
+      expect(result[0].field_id).toBe("el-multi");
+      expect(result[0].value_text).toBe("LabelA, LabelB, LabelC");
+    });
+
+    test("creates a record for an empty ranking response (empty array)", () => {
+      const response = {
+        ...mockResponse,
+        data: { "el-multi": [] },
+      } as unknown as TResponse;
+      const mappings = [createMapping({ elementId: "el-multi", hubFieldType: "categorical" })];
+      const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings);
+      expect(result).toHaveLength(1);
+      expect(result[0].value_text).toBe("");
+    });
+
+    test("JSON-stringifies object value for unknown hubFieldType (default branch)", () => {
+      const response = {
+        ...mockResponse,
+        data: { "el-multi": { row1: "col1" } },
+      } as unknown as TResponse;
+      const mappings = [
+        createMapping({
+          elementId: "el-multi",
+          hubFieldType: "unknown-type" as TConnectorFormbricksMapping["hubFieldType"],
+        }),
+      ];
+      const result = transformResponseToFeedbackRecords(response, mockSurvey, mappings);
+      expect(result[0].value_text).toBe(JSON.stringify({ row1: "col1" }));
+      expect(result[0].value_text).not.toBe("[object Object]");
+    });
+  });
+
+  describe("matrix expansion", () => {
+    const matrixSurvey = {
+      id: "survey-1",
+      name: "Matrix Survey",
+      blocks: [
+        {
+          elements: [
+            {
+              id: "el-matrix",
+              type: "matrix",
+              headline: { default: "Rate each feature" },
+              rows: [
+                { id: "row-1", label: { default: "Speed" } },
+                { id: "row-2", label: { default: "Quality" } },
+              ],
+              columns: [
+                { id: "col-1", label: { default: "Good" } },
+                { id: "col-2", label: { default: "Bad" } },
+              ],
+            },
+          ],
+        },
+      ],
+    } as unknown as TSurvey;
+
+    test("emits one record per answered row with shared field_group_id", () => {
+      const response = {
+        id: "resp-matrix",
+        createdAt: NOW,
+        data: { "el-matrix": { Speed: "Good", Quality: "Bad" } },
+        language: "default",
+        contact: { userId: "user-42" },
+      } as unknown as TResponse;
+      const mappings = [createMapping({ elementId: "el-matrix", hubFieldType: "categorical" })];
+
+      const result = transformResponseToFeedbackRecords(response, matrixSurvey, mappings);
+
+      expect(result).toHaveLength(2);
+      expect(result.every((r) => r.field_group_id === "el-matrix")).toBe(true);
+      expect(result.every((r) => r.field_group_label === "Rate each feature")).toBe(true);
+      expect(result.every((r) => r.submission_id === "resp-matrix")).toBe(true);
+      expect(result.every((r) => r.metadata?.question_type === "matrix")).toBe(true);
+
+      expect(result[0]).toMatchObject({
+        field_id: "el-matrix__row-1",
+        field_label: "Speed",
+        field_type: "categorical",
+        value_text: "Good",
+      });
+      expect(result[1]).toMatchObject({
+        field_id: "el-matrix__row-2",
+        field_label: "Quality",
+        value_text: "Bad",
+      });
+    });
+
+    test("skips matrix rows with empty cell value", () => {
+      const response = {
+        id: "resp-matrix-partial",
+        createdAt: NOW,
+        data: { "el-matrix": { Speed: "Good", Quality: "" } },
+      } as unknown as TResponse;
+      const mappings = [createMapping({ elementId: "el-matrix", hubFieldType: "categorical" })];
+
+      const result = transformResponseToFeedbackRecords(response, matrixSurvey, mappings);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].field_id).toBe("el-matrix__row-1");
+    });
+
+    test("skips matrix rows whose label does not match any row choice", () => {
+      const response = {
+        id: "resp-matrix-stale",
+        createdAt: NOW,
+        data: { "el-matrix": { "Old Row Label": "Good", Quality: "Bad" } },
+      } as unknown as TResponse;
+      const mappings = [createMapping({ elementId: "el-matrix", hubFieldType: "categorical" })];
+
+      const result = transformResponseToFeedbackRecords(response, matrixSurvey, mappings);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].field_id).toBe("el-matrix__row-2");
+    });
+
+    test("emits no records for empty matrix response", () => {
+      const response = {
+        id: "resp-empty",
+        createdAt: NOW,
+        data: { "el-matrix": {} },
+      } as unknown as TResponse;
+      const mappings = [createMapping({ elementId: "el-matrix", hubFieldType: "categorical" })];
+
+      const result = transformResponseToFeedbackRecords(response, matrixSurvey, mappings);
+
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe("ranking expansion", () => {
+    const rankingSurvey = {
+      id: "survey-1",
+      name: "Ranking Survey",
+      blocks: [
+        {
+          elements: [
+            {
+              id: "el-ranking",
+              type: "ranking",
+              headline: { default: "Rank these features" },
+              choices: [
+                { id: "ch-1", label: { default: "Reports" } },
+                { id: "ch-2", label: { default: "Dashboards" } },
+                { id: "ch-3", label: { default: "Alerts" } },
+              ],
+            },
+          ],
+        },
+      ],
+    } as unknown as TSurvey;
+
+    test("emits one record per ranked item with rank as value_number", () => {
+      const response = {
+        id: "resp-ranking",
+        createdAt: NOW,
+        data: { "el-ranking": ["Dashboards", "Reports", "Alerts"] },
+        language: "default",
+        contact: { userId: "user-42" },
+      } as unknown as TResponse;
+      const mappings = [createMapping({ elementId: "el-ranking", hubFieldType: "categorical" })];
+
+      const result = transformResponseToFeedbackRecords(response, rankingSurvey, mappings);
+
+      expect(result).toHaveLength(3);
+      expect(result.every((r) => r.field_group_id === "el-ranking")).toBe(true);
+      expect(result.every((r) => r.field_group_label === "Rank these features")).toBe(true);
+      expect(result.every((r) => r.field_type === "number")).toBe(true);
+      expect(result.every((r) => r.metadata?.question_type === "ranking")).toBe(true);
+      expect(result.every((r) => r.metadata?.total_items === 3)).toBe(true);
+
+      expect(result[0]).toMatchObject({
+        field_id: "el-ranking__ch-2",
+        field_label: "Dashboards",
+        value_number: 1,
+      });
+      expect(result[1]).toMatchObject({
+        field_id: "el-ranking__ch-1",
+        field_label: "Reports",
+        value_number: 2,
+      });
+      expect(result[2]).toMatchObject({
+        field_id: "el-ranking__ch-3",
+        field_label: "Alerts",
+        value_number: 3,
+      });
+    });
+
+    test("emits no records for empty ranking response", () => {
+      const response = {
+        id: "resp-empty",
+        createdAt: NOW,
+        data: { "el-ranking": [] },
+      } as unknown as TResponse;
+      const mappings = [createMapping({ elementId: "el-ranking", hubFieldType: "categorical" })];
+
+      const result = transformResponseToFeedbackRecords(response, rankingSurvey, mappings);
+
+      expect(result).toEqual([]);
+    });
+
+    test("skips ranking items whose label does not match any choice", () => {
+      const response = {
+        id: "resp-ranking-stale",
+        createdAt: NOW,
+        data: { "el-ranking": ["Reports", "Removed Option"] },
+      } as unknown as TResponse;
+      const mappings = [createMapping({ elementId: "el-ranking", hubFieldType: "categorical" })];
+
+      const result = transformResponseToFeedbackRecords(response, rankingSurvey, mappings);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].field_id).toBe("el-ranking__ch-1");
+      expect(result[0].value_number).toBe(1);
+    });
   });
 });
