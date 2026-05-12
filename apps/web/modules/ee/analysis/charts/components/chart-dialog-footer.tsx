@@ -6,7 +6,8 @@ import { Button } from "@/modules/ui/components/button";
 import { DialogFooter } from "@/modules/ui/components/dialog";
 
 interface ChartDialogFooterProps {
-  onSaveClick: () => void;
+  onSaveClick?: () => void;
+  formId?: string;
   onAddToDashboardClick?: () => void;
   isSaving: boolean;
   saveLabel?: string;
@@ -15,6 +16,7 @@ interface ChartDialogFooterProps {
 
 export function ChartDialogFooter({
   onSaveClick,
+  formId,
   onAddToDashboardClick,
   isSaving,
   saveLabel,
@@ -24,12 +26,16 @@ export function ChartDialogFooter({
   return (
     <DialogFooter>
       {showAddToDashboard && onAddToDashboardClick && (
-        <Button variant="outline" onClick={onAddToDashboardClick} disabled={isSaving}>
+        <Button variant="outline" type="button" onClick={onAddToDashboardClick} disabled={isSaving}>
           <PlusIcon className="mr-2 h-4 w-4" />
           {t("workspace.analysis.charts.add_to_dashboard")}
         </Button>
       )}
-      <Button onClick={onSaveClick} disabled={isSaving}>
+      <Button
+        type={formId ? "submit" : "button"}
+        form={formId}
+        onClick={formId ? undefined : onSaveClick}
+        disabled={isSaving}>
         <SaveIcon className="mr-2 h-4 w-4" />
         {saveLabel ?? t("workspace.analysis.charts.save_chart")}
       </Button>

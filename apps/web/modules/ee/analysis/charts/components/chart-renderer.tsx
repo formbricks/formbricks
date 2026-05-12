@@ -7,6 +7,7 @@ import { CartesianChart } from "@/modules/ee/analysis/charts/components/cartesia
 import {
   CHART_BRAND_DARK,
   CHART_MEASURE_COLORS,
+  formatCellValue,
   formatXAxisTick,
   preparePieData,
 } from "@/modules/ee/analysis/charts/lib/chart-utils";
@@ -19,6 +20,19 @@ const formatPieLabel = ({ name, percent }: { name: string; percent?: number }): 
   if (percent == null) return "";
   return `${formatXAxisTick(name)}: ${(percent * 100).toFixed(0)}%`;
 };
+
+const PieTooltipRow = ({ value, name }: Readonly<{ value: unknown; name: string }>) => {
+  const { t } = useTranslation();
+  return (
+    <>
+      {formatCellValue(value)} {formatCubeColumnHeader(name, t)}
+    </>
+  );
+};
+
+const pieTooltipFormatter = (value: unknown, name: string | number) => (
+  <PieTooltipRow value={value} name={String(name)} />
+);
 
 interface ChartRendererProps {
   chartType: TChartType;
@@ -165,13 +179,7 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
                   return <Cell key={uniqueKey} fill={colors[index] || CHART_BRAND_DARK} />;
                 })}
               </Pie>
-              <ChartTooltip
-                content={
-                  <ChartTooltipContent
-                    formatter={(value, name) => [String(value), formatCubeColumnHeader(String(name), t)]}
-                  />
-                }
-              />
+              <ChartTooltip content={<ChartTooltipContent formatter={pieTooltipFormatter} />} />
             </PieChart>
           </ChartContainer>
         </div>

@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/cn";
 import { AdvancedChartBuilder } from "@/modules/ee/analysis/charts/components/advanced-chart-builder";
 import { AIQuerySection } from "@/modules/ee/analysis/charts/components/ai-query-section";
 import { ChartDialogFooter } from "@/modules/ee/analysis/charts/components/chart-dialog-footer";
@@ -79,6 +80,8 @@ export function CreateChartView({
   });
 
   const chartPreviewRef = useRef<HTMLDivElement>(null);
+  const CREATE_CHART_FORM_ID = "create-chart-form";
+  const [chartNameError, setChartNameError] = useState<string | null>(null);
 
   useEffect(() => {
     if (chartData) {
@@ -136,17 +139,38 @@ export function CreateChartView({
           <div className="grid gap-4">
             {hasSelectedDirectory ? (
               <>
-                <div className="space-y-2">
-                  <Label htmlFor="create-chart-name">{t("workspace.analysis.charts.chart_name")}</Label>
+                <form
+                  id={CREATE_CHART_FORM_ID}
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    setChartNameError(null);
+                    return handleSaveChart();
+                  }}
+                  className="space-y-2">
+                  <Label htmlFor="create-chart-name" className={cn(chartNameError && "text-red-500")}>
+                    {t("workspace.analysis.charts.chart_name")}
+                  </Label>
                   <Input
                     id="create-chart-name"
                     value={chartName}
-                    onChange={(event) => setChartName(event.target.value)}
+                    onChange={(event) => {
+                      if (chartNameError) setChartNameError(null);
+                      setChartName(event.target.value);
+                    }}
+                    onInvalid={(event) => {
+                      // Suppress the browser tooltip and render our inline message instead.
+                      event.preventDefault();
+                      event.currentTarget.scrollIntoView({ behavior: "smooth", block: "center" });
+                      event.currentTarget.focus();
+                      setChartNameError(t("workspace.analysis.charts.please_enter_chart_name"));
+                    }}
                     placeholder={t("workspace.analysis.charts.chart_name_placeholder")}
                     maxLength={255}
                     required
+                    isInvalid={!!chartNameError}
                   />
-                </div>
+                  {chartNameError && <p className="text-sm text-red-500">{chartNameError}</p>}
+                </form>
 
                 {!isEditing && (
                   <>
@@ -212,7 +236,7 @@ export function CreateChartView({
 
         {chartData && (
           <ChartDialogFooter
-            onSaveClick={handleSaveChart}
+            formId={CREATE_CHART_FORM_ID}
             isSaving={isSaving}
             showAddToDashboard={false}
             saveLabel={
