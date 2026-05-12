@@ -1810,6 +1810,7 @@
       },
       "dashboards": {
         "add_count_charts": "{count} diagram hozzáadása",
+        "chart_removed": "A diagram eltávolítva a műszerfalról",
         "charts_add_failed": "A diagramok műszerfalhoz való hozzáadása sikertelen",
         "charts_add_partial_failure": "{count} diagram hozzáadása sikertelen",
         "charts_added_to_dashboard": "Diagramok hozzáadva a műszerfalhoz",

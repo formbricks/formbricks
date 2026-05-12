@@ -1810,6 +1810,7 @@
       },
       "dashboards": {
         "add_count_charts": "{count} grafik ekle",
+        "chart_removed": "Grafik gösterge panosundan kaldırıldı",
         "charts_add_failed": "Grafikler panoya eklenemedi",
         "charts_add_partial_failure": "{count} grafik eklenemedi",
         "charts_added_to_dashboard": "Grafikler panoya eklendi",

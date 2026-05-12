@@ -18,9 +18,11 @@ var mockTxChart: { findFirst: ReturnType<typeof vi.fn> }; // NOSONAR / test code
 var mockTxWidget: {
   // NOSONAR / test code
   aggregate: ReturnType<typeof vi.fn>;
+  findFirst: ReturnType<typeof vi.fn>;
   findMany: ReturnType<typeof vi.fn>;
   create: ReturnType<typeof vi.fn>;
   update: ReturnType<typeof vi.fn>;
+  delete: ReturnType<typeof vi.fn>;
   deleteMany: ReturnType<typeof vi.fn>;
 };
 
@@ -29,9 +31,11 @@ vi.mock("@formbricks/database", () => {
   const txChart = { findFirst: vi.fn() };
   const txWidget = {
     aggregate: vi.fn(),
+    findFirst: vi.fn(),
     findMany: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
+    delete: vi.fn(),
     deleteMany: vi.fn(),
   };
   mockTxDashboard = txDash;
@@ -670,6 +674,35 @@ describe("Dashboard Service", () => {
       ).rejects.toMatchObject({
         name: "InvalidInputError",
       });
+    });
+  });
+
+  describe("removeWidgetFromDashboard", () => {
+    const mockWidgetId = "widget-abc-123";
+
+    test("deletes a widget that belongs to the dashboard", async () => {
+      const mockWidget = { id: mockWidgetId, dashboardId: mockDashboardId, chartId: mockChartId };
+      mockTxWidget.findFirst.mockResolvedValue(mockWidget);
+      mockTxWidget.delete.mockResolvedValue(mockWidget);
+      const { removeWidgetFromDashboard } = await import("./dashboards");
+
+      const result = await removeWidgetFromDashboard(mockDashboardId, mockWorkspaceId, mockWidgetId);
+
+      expect(result).toEqual(mockWidget);
+      expect(mockTxWidget.findFirst).toHaveBeenCalledWith({
+        where: { id: mockWidgetId, dashboard: { id: mockDashboardId, workspaceId: mockWorkspaceId } },
+      });
+      expect(mockTxWidget.delete).toHaveBeenCalledWith({ where: { id: mockWidgetId } });
+    });
+
+    test("throws ResourceNotFoundError when the widget is not on the dashboard", async () => {
+      mockTxWidget.findFirst.mockResolvedValue(null);
+      const { removeWidgetFromDashboard } = await import("./dashboards");
+
+      await expect(
+        removeWidgetFromDashboard(mockDashboardId, mockWorkspaceId, mockWidgetId)
+      ).rejects.toMatchObject({ name: "ResourceNotFoundError", resourceType: "DashboardWidget" });
+      expect(mockTxWidget.delete).not.toHaveBeenCalled();
     });
   });
 });

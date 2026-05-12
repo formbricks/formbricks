@@ -1810,6 +1810,7 @@
       },
       "dashboards": {
         "add_count_charts": "Adaugă {count} grafic(e)",
+        "chart_removed": "Graficul a fost eliminat din tabloul de bord",
         "charts_add_failed": "Nu s-au putut adăuga graficele la panoul de control",
         "charts_add_partial_failure": "Nu s-au putut adăuga {count} grafic(e)",
         "charts_added_to_dashboard": "Grafice adăugate la panoul de control",

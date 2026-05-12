@@ -1810,6 +1810,7 @@
       },
       "dashboards": {
         "add_count_charts": "{count}個のグラフを追加",
+        "chart_removed": "チャートがダッシュボードから削除されました",
         "charts_add_failed": "ダッシュボードへのグラフの追加に失敗しました",
         "charts_add_partial_failure": "{count}個のグラフの追加に失敗しました",
         "charts_added_to_dashboard": "グラフをダッシュボードに追加しました",

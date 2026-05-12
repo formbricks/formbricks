@@ -18,6 +18,7 @@ import {
   duplicateDashboard,
   getDashboard,
   getDashboards,
+  removeWidgetFromDashboard,
   updateDashboard,
   updateWidgetLayouts,
 } from "./lib/dashboards";
@@ -111,15 +112,13 @@ export const updateDashboardAction = authenticatedActionClient.inputSchema(ZUpda
 const ZUpdateWidgetLayoutsAction = z.object({
   workspaceId: ZId,
   dashboardId: ZId,
-  widgets: z
-    .array(
-      z.object({
-        id: ZId,
-        layout: ZWidgetLayout,
-        order: z.number().int().nonnegative(),
-      })
-    )
-    .min(1),
+  widgets: z.array(
+    z.object({
+      id: ZId,
+      layout: ZWidgetLayout,
+      order: z.number().int().nonnegative(),
+    })
+  ),
 });
 
 export const updateWidgetLayoutsAction = authenticatedActionClient
@@ -322,6 +321,47 @@ export const addChartToDashboardAction = authenticatedActionClient
         ctx.auditLoggingCtx.dashboardWidgetId = widget.id;
         ctx.auditLoggingCtx.newObject = widget;
         return widget;
+      }
+    )
+  );
+
+const ZRemoveWidgetFromDashboardAction = z.object({
+  workspaceId: ZId,
+  dashboardId: ZId,
+  widgetId: ZId,
+});
+
+export const removeWidgetFromDashboardAction = authenticatedActionClient
+  .inputSchema(ZRemoveWidgetFromDashboardAction)
+  .action(
+    withAuditLogging(
+      "deleted",
+      "dashboardWidget",
+      async ({
+        ctx,
+        parsedInput,
+      }: {
+        ctx: AuthenticatedActionClientCtx;
+        parsedInput: z.infer<typeof ZRemoveWidgetFromDashboardAction>;
+      }) => {
+        const { organizationId, workspaceId } = await checkWorkspaceAccess(
+          ctx.user.id,
+          parsedInput.workspaceId,
+          "readWrite"
+        );
+        await checkDashboardsEnabled(organizationId);
+
+        const widget = await removeWidgetFromDashboard(
+          parsedInput.dashboardId,
+          workspaceId,
+          parsedInput.widgetId
+        );
+
+        ctx.auditLoggingCtx.organizationId = organizationId;
+        ctx.auditLoggingCtx.workspaceId = workspaceId;
+        ctx.auditLoggingCtx.dashboardWidgetId = widget.id;
+        ctx.auditLoggingCtx.oldObject = widget;
+        return { success: true };
       }
     )
   );

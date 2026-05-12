@@ -1810,6 +1810,7 @@
       },
       "dashboards": {
         "add_count_charts": "Lägg till {count} diagram",
+        "chart_removed": "Diagram borttaget från instrumentpanelen",
         "charts_add_failed": "Misslyckades med att lägga till diagram i instrumentpanelen",
         "charts_add_partial_failure": "Misslyckades med att lägga till {count} diagram",
         "charts_added_to_dashboard": "Diagram tillagda i instrumentpanelen",
