@@ -2,14 +2,14 @@ import "server-only";
 import { TConnectorFormbricksMapping, THubFieldType } from "@formbricks/types/connector";
 import { TResponse, TResponseData, TResponseDataValue } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
-import {
+import type {
   TSurveyElement,
   TSurveyElementChoice,
   TSurveyMatrixElement,
   TSurveyMatrixElementChoice,
   TSurveyRankingElement,
 } from "@formbricks/types/surveys/elements";
-import { TSurvey } from "@formbricks/types/surveys/types";
+import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
@@ -160,7 +160,7 @@ const expandMatrixToRecords = (
       ...baseFields,
       field_id: `${element.id}__${row.id}`,
       field_type: mapping.hubFieldType,
-      field_label: getChoiceLabel(row, language),
+      field_label: getChoiceLabel(row, "default"),
       field_group_id: element.id,
       field_group_label: groupLabel,
       metadata: { question_type: "matrix" },
@@ -193,7 +193,7 @@ const expandRankingToRecords = (
       ...baseFields,
       field_id: `${element.id}__${choice.id}`,
       field_type: "number",
-      field_label: getChoiceLabel(choice, language),
+      field_label: getChoiceLabel(choice, "default"),
       field_group_id: element.id,
       field_group_label: groupLabel,
       metadata: { question_type: "ranking", total_items: value.length },
