@@ -61,7 +61,7 @@ cube(`FeedbackRecords`, {
     },
 
     sentiment: {
-      sql: `sentiment`,
+      sql: `${CUBE}.metadata->>'sentiment'`,
       type: `string`,
       description: `Sentiment extracted from metadata JSONB field`,
     },
@@ -97,9 +97,9 @@ cube(`FeedbackRecords`, {
     },
 
     responseId: {
-      sql: `response_id`,
+      sql: `submission_id`,
       type: `string`,
-      description: `Unique identifier linking related feedback records`,
+      description: `Unique identifier linking related feedback records (submission_id in Hub)`,
     },
 
     userId: {
@@ -109,7 +109,7 @@ cube(`FeedbackRecords`, {
     },
 
     emotion: {
-      sql: `emotion`,
+      sql: `${CUBE}.metadata->>'emotion'`,
       type: `string`,
       description: `Emotion extracted from metadata JSONB field`,
     },

@@ -64,10 +64,13 @@ export function buildCubeQuery(config: ChartBuilderState): TChartQuery {
       timeDim.dateRange = config.timeDimension.dateRange;
     } else if (Array.isArray(config.timeDimension.dateRange)) {
       const [startDate, endDate] = config.timeDimension.dateRange;
-      const formatDate = (date: Date) => {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, "0");
-        const day = String(date.getDate()).padStart(2, "0");
+      const formatDate = (date: Date | string) => {
+        // dateRange round-trips through JSON (saved chart → parseQueryToState), so the array
+        // elements may already be ISO strings — coerce before formatting.
+        const d = date instanceof Date ? date : new Date(date);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
         return `${year}-${month}-${day}`;
       };
       timeDim.dateRange = [formatDate(startDate), formatDate(endDate)];
@@ -137,7 +140,12 @@ export function parseQueryToState(query: TChartQuery): Partial<ChartBuilderState
       config.granularity = timeDim.granularity;
     }
     if (timeDim.dateRange) {
-      config.dateRange = timeDim.dateRange as TimeDimensionConfig["dateRange"];
+      if (typeof timeDim.dateRange === "string") {
+        config.dateRange = timeDim.dateRange;
+      } else if (Array.isArray(timeDim.dateRange) && timeDim.dateRange.length === 2) {
+        // Stored as [isoString, isoString]; lift back into Date objects for the date-picker UI.
+        config.dateRange = [new Date(timeDim.dateRange[0]), new Date(timeDim.dateRange[1])];
+      }
     }
     state.timeDimension = config;
   }
