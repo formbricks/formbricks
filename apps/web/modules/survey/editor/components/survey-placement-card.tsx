@@ -148,9 +148,8 @@ export const SurveyPlacementCard = ({
                       <Link
                         href={`/environments/${environmentId}/workspace/look`}
                         target="_blank"
-                        className="underline">
-                        link
-                      </Link>
+                        className="underline"
+                      />
                     ),
                   }}
                 />

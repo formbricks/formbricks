@@ -65,11 +65,7 @@ export const ConnectIntegration = ({
             <Trans
               i18nKey="environments.integrations.follow_these_docs_to_configure_it"
               components={{
-                docsLink: (
-                  <Link href={integrationDetails?.docsLink ?? ""} className="underline">
-                    link
-                  </Link>
-                ),
+                docsLink: <Link href={integrationDetails?.docsLink ?? ""} className="underline" />,
               }}
             />
           </p>

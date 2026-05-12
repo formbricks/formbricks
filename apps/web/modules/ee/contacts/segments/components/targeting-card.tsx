@@ -362,9 +362,8 @@ export function TargetingCard({
                           <Link
                             className="ml-1 underline"
                             href={`/environments/${environmentId}/segments`}
-                            target="_blank">
-                            link
-                          </Link>
+                            target="_blank"
+                          />
                         ),
                       }}
                     />
@@ -444,9 +443,8 @@ export function TargetingCard({
                         href="https://formbricks.com/docs/app-surveys/user-identification"
                         target="_blank"
                         rel="noreferrer"
-                        className="underline">
-                        link
-                      </Link>
+                        className="underline"
+                      />
                     ),
                   }}
                 />

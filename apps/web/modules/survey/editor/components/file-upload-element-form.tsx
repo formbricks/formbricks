@@ -189,9 +189,8 @@ export const FileUploadElementForm = ({
                       <Link
                         className="underline"
                         target="_blank"
-                        href={`/environments/${localSurvey.environmentId}/settings/billing`}>
-                        link
-                      </Link>
+                        href={`/environments/${localSurvey.environmentId}/settings/billing`}
+                      />
                     ),
                   }}
                 />

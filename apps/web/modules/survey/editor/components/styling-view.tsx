@@ -295,9 +295,8 @@ export const StylingView = ({
                       <Link
                         href={`/environments/${environmentId}/workspace/look`}
                         target="_blank"
-                        className="font-semibold underline">
-                        link
-                      </Link>
+                        className="font-semibold underline"
+                      />
                     ),
                   }}
                 />
