@@ -72,14 +72,15 @@ const NEXT_AUTH_PROVIDER_BY_IDENTITY_PROVIDER = {
   saml: "saml",
 } as const satisfies Record<TSsoIdentityProvider, string>;
 
-const OIDC_REAUTH_PROVIDERS = new Set<TSsoIdentityProvider>([
-  "azuread",
-  ...(GOOGLE_ACCOUNT_DELETION_REAUTH_ENABLED ? (["google"] as const) : []),
-  "openid",
-]);
+const getOidcReauthProviders = () =>
+  new Set<TSsoIdentityProvider>([
+    "azuread",
+    ...(GOOGLE_ACCOUNT_DELETION_REAUTH_ENABLED ? (["google"] as const) : []),
+    "openid",
+  ]);
 // GitHub OAuth does not return a verifiable auth_time/max_age proof, so it cannot secure this
 // destructive action without another app-controlled step-up.
-const FRESH_SSO_REAUTH_PROVIDERS = new Set<TSsoIdentityProvider>([...OIDC_REAUTH_PROVIDERS, "saml"]);
+const getFreshSsoReauthProviders = () => new Set<TSsoIdentityProvider>([...getOidcReauthProviders(), "saml"]);
 // Google only returns auth_time when it is explicitly requested as an ID token claim.
 const GOOGLE_AUTH_TIME_CLAIMS_REQUEST = JSON.stringify({
   id_token: {
@@ -115,7 +116,7 @@ const assertSsoProviderSupportsFreshReauthentication = (provider: TSsoIdentityPr
     throw new AuthorizationError(ACCOUNT_DELETION_GOOGLE_REAUTH_NOT_CONFIGURED_ERROR_CODE);
   }
 
-  if (!FRESH_SSO_REAUTH_PROVIDERS.has(provider)) {
+  if (!getFreshSsoReauthProviders().has(provider)) {
     logger.warn(
       { googleAccountDeletionReauthEnabled: GOOGLE_ACCOUNT_DELETION_REAUTH_ENABLED, provider },
       "SSO provider does not support verifiable account deletion reauthentication"
@@ -137,7 +138,7 @@ const getAccountDeletionSsoReauthAuthorizationParams = (
     };
   }
 
-  if (OIDC_REAUTH_PROVIDERS.has(provider)) {
+  if (getOidcReauthProviders().has(provider)) {
     if (provider === "google") {
       return {
         claims: GOOGLE_AUTH_TIME_CLAIMS_REQUEST,
@@ -400,7 +401,7 @@ const assertFreshAuthTime = (authTimeInSeconds: number, logContext: Record<strin
 };
 
 const assertFreshOidcAuthTime = (provider: TSsoIdentityProvider, idToken?: string) => {
-  if (!OIDC_REAUTH_PROVIDERS.has(provider)) {
+  if (!getOidcReauthProviders().has(provider)) {
     return;
   }
 

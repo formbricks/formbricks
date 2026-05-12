@@ -42,163 +42,6 @@ import { getSSOProviders } from "@/modules/ee/sso/lib/providers";
 import { handleSsoCallback } from "@/modules/ee/sso/lib/sso-handlers";
 import { createBrevoCustomer } from "./brevo";
 
-type TSignInCallbackParams = Parameters<NonNullable<NonNullable<NextAuthOptions["callbacks"]>["signIn"]>>[0];
-type TSignInUser = TSignInCallbackParams["user"];
-type TSignInAccount = TSignInCallbackParams["account"];
-type TCredentialsOrTokenAccount = NonNullable<TSignInAccount> & { provider: "credentials" | "token" };
-
-const getValidatedAuthCallbackUrl = async () => {
-  const cookieStore = await cookies();
-  return getValidatedCallbackUrl(getAuthCallbackUrlFromCookies(cookieStore), WEBAPP_URL) ?? "";
-};
-
-const getAuthFlowPurpose = (user: TSignInUser) => {
-  const authFlowPurpose = "authFlowPurpose" in user ? user.authFlowPurpose : undefined;
-  return typeof authFlowPurpose === "string" ? authFlowPurpose : undefined;
-};
-
-const isCredentialsOrTokenProvider = (account: TSignInAccount): account is TCredentialsOrTokenAccount =>
-  account?.provider === "credentials" || account?.provider === "token";
-
-const assertCredentialsUserCanSignIn = (user: TSignInUser) => {
-  if ("emailVerified" in user && !user.emailVerified && !EMAIL_VERIFICATION_DISABLED) {
-    logger.error("Email Verification is Pending");
-    throw new Error("Email Verification is Pending");
-  }
-};
-
-const captureSignIn = async (userId: string, provider: string) => {
-  if (!POSTHOG_KEY) {
-    return;
-  }
-
-  try {
-    const [membershipCount, userData] = await Promise.all([
-      prisma.membership.count({ where: { userId } }),
-      prisma.user.findUnique({ where: { id: userId }, select: { lastLoginAt: true } }),
-    ]);
-    const isFirstLoginToday =
-      userData?.lastLoginAt?.toISOString().slice(0, 10) !== new Date().toISOString().slice(0, 10);
-
-    capturePostHogEvent(userId, "user_signed_in", {
-      auth_provider: provider,
-      organization_count: membershipCount,
-      is_first_login_today: isFirstLoginToday,
-    });
-  } catch (error) {
-    logger.warn({ error }, "Failed to capture PostHog sign-in event");
-  }
-};
-
-const finalizeSuccessfulSignIn = async ({
-  userId,
-  email,
-  provider,
-}: {
-  userId: string;
-  email: string;
-  provider: string;
-}) => {
-  void captureSignIn(userId, provider);
-  await updateUserLastLoginAt(email);
-};
-
-const handleCredentialsOrTokenSignIn = async ({
-  account,
-  user,
-  userEmail,
-  userId,
-}: {
-  account: TCredentialsOrTokenAccount;
-  user: TSignInUser;
-  userEmail: string;
-  userId: string;
-}) => {
-  const isSsoRecovery = account.provider === "token" && getAuthFlowPurpose(user) === "sso_recovery";
-
-  if (!isSsoRecovery) {
-    assertCredentialsUserCanSignIn(user);
-
-    await finalizeSuccessfulSignIn({
-      userId,
-      email: userEmail,
-      provider: account.provider,
-    });
-  }
-
-  return true;
-};
-
-const maybeValidateAccountDeletionSsoReauth = async ({
-  account,
-  intentToken,
-}: {
-  account: NonNullable<TSignInAccount>;
-  intentToken: string | null;
-}) => {
-  if (!intentToken) {
-    return;
-  }
-
-  await validateAccountDeletionSsoReauthenticationCallback({
-    account,
-    intentToken,
-  });
-};
-
-const maybeCompleteAccountDeletionSsoReauth = async ({
-  account,
-  intentToken,
-}: {
-  account: NonNullable<TSignInAccount>;
-  intentToken: string | null;
-}) => {
-  if (!intentToken) {
-    return;
-  }
-
-  await completeAccountDeletionSsoReauthentication({
-    account,
-    intentToken,
-  });
-};
-
-const handleEnterpriseSsoSignIn = async ({
-  account,
-  callbackUrl,
-  intentToken,
-  user,
-  userEmail,
-  userId,
-}: {
-  account: NonNullable<TSignInAccount>;
-  callbackUrl: string;
-  intentToken: string | null;
-  user: TSignInUser;
-  userEmail: string;
-  userId: string;
-}) => {
-  await maybeValidateAccountDeletionSsoReauth({ account, intentToken });
-
-  const result = await handleSsoCallback({
-    user: user as TUser,
-    account,
-    callbackUrl,
-  });
-
-  if (result === true) {
-    await maybeCompleteAccountDeletionSsoReauth({ account, intentToken });
-
-    await finalizeSuccessfulSignIn({
-      userId,
-      email: userEmail,
-      provider: account.provider,
-    });
-  }
-
-  return result;
-};
-
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
@@ -281,7 +124,7 @@ export const authOptions: NextAuthOptions = {
 
         if (!user.password) {
           logAuthAttempt("no_password_set", "credentials", "password_validation", user.id, user.email);
-          throw new Error("Invalid credentials");
+          throw new Error("User has no password stored");
         }
 
         if (user.isActive === false) {
@@ -430,13 +273,12 @@ export const authOptions: NextAuthOptions = {
             throw new Error("Token not found");
           }
 
-          const { id, purpose } = await verifyToken(credentials?.token);
-          const foundUser = await prisma.user.findUnique({
+          const { id } = await verifyToken(credentials?.token);
+          user = await prisma.user.findUnique({
             where: {
               id: id,
             },
           });
-          user = foundUser ? { ...foundUser, authFlowPurpose: purpose } : null;
         } catch (e) {
           logger.error(e, "Error in CredentialsProvider authorize");
 
@@ -455,10 +297,7 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Either a user does not match the provided token or the token is invalid");
         }
 
-        const authFlowPurpose = user.authFlowPurpose ?? "email_verification";
-        const isSsoRecovery = authFlowPurpose === "sso_recovery";
-
-        if (user.emailVerified && !isSsoRecovery) {
+        if (user.emailVerified) {
           logEmailVerificationAttempt(false, "email_already_verified", user.id, user.email);
           throw new Error("Email already verified");
         }
@@ -468,20 +307,14 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Your account is currently inactive. Please contact the organization admin.");
         }
 
-        if (!user.emailVerified && !isSsoRecovery) {
-          const updatedUser = await updateUser(user.id, { emailVerified: new Date() });
-          user = {
-            ...updatedUser,
-            authFlowPurpose,
-          };
+        user = await updateUser(user.id, { emailVerified: new Date() });
 
-          logEmailVerificationAttempt(true, undefined, user.id, user.email, {
-            emailVerifiedAt: user.emailVerified,
-          });
+        logEmailVerificationAttempt(true, undefined, user.id, user.email, {
+          emailVerifiedAt: user.emailVerified,
+        });
 
-          // send new user to brevo after email verification
-          createBrevoCustomer({ id: user.id, email: user.email });
-        }
+        // send new user to brevo after email verification
+        createBrevoCustomer({ id: user.id, email: user.email });
 
         return user;
       },
@@ -504,32 +337,76 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async signIn({ user, account }) {
-      const callbackUrl = await getValidatedAuthCallbackUrl();
+      const cookieStore = await cookies();
+
+      // get callback url from the cookie store,
+      const callbackUrl =
+        getValidatedCallbackUrl(getAuthCallbackUrlFromCookies(cookieStore), WEBAPP_URL) ?? "";
       const accountDeletionSsoReauthIntentToken =
         getAccountDeletionSsoReauthIntentFromCallbackUrl(callbackUrl);
 
       const userEmail = user.email ?? "";
-      const userId = user.id;
+      const userId = user.id as string;
 
-      if (isCredentialsOrTokenProvider(account)) {
-        return handleCredentialsOrTokenSignIn({
-          account,
-          user,
-          userEmail,
-          userId,
-        });
+      // Capture sign-in event for PostHog (query BEFORE updating lastLoginAt)
+      const captureSignIn = async (provider: string) => {
+        if (!POSTHOG_KEY) return;
+
+        try {
+          const [membershipCount, userData] = await Promise.all([
+            prisma.membership.count({ where: { userId } }),
+            prisma.user.findUnique({ where: { id: userId }, select: { lastLoginAt: true } }),
+          ]);
+          const isFirstLoginToday =
+            userData?.lastLoginAt?.toISOString().slice(0, 10) !== new Date().toISOString().slice(0, 10);
+
+          capturePostHogEvent(userId, "user_signed_in", {
+            auth_provider: provider,
+            organization_count: membershipCount,
+            is_first_login_today: isFirstLoginToday,
+          });
+        } catch (error) {
+          logger.warn({ error }, "Failed to capture PostHog sign-in event");
+        }
+      };
+
+      if (account?.provider === "credentials" || account?.provider === "token") {
+        // check if user's email is verified or not
+        if ("emailVerified" in user && !user.emailVerified && !EMAIL_VERIFICATION_DISABLED) {
+          logger.error("Email Verification is Pending");
+          throw new Error("Email Verification is Pending");
+        }
+        void captureSignIn(account.provider);
+        await updateUserLastLoginAt(userEmail);
+        return true;
       }
-
       if (ENTERPRISE_LICENSE_KEY && account) {
         try {
-          return await handleEnterpriseSsoSignIn({
+          if (accountDeletionSsoReauthIntentToken) {
+            await validateAccountDeletionSsoReauthenticationCallback({
+              account,
+              intentToken: accountDeletionSsoReauthIntentToken,
+            });
+          }
+
+          const result = await handleSsoCallback({
+            user: user as TUser,
             account,
             callbackUrl,
-            intentToken: accountDeletionSsoReauthIntentToken,
-            user,
-            userEmail,
-            userId,
           });
+
+          if (result) {
+            if (accountDeletionSsoReauthIntentToken) {
+              await completeAccountDeletionSsoReauthentication({
+                account,
+                intentToken: accountDeletionSsoReauthIntentToken,
+              });
+            }
+
+            void captureSignIn(account.provider);
+            await updateUserLastLoginAt(userEmail);
+          }
+          return result;
         } catch (error) {
           const failureRedirectUrl = getAccountDeletionSsoReauthFailureRedirectUrl({
             error,
@@ -543,12 +420,8 @@ export const authOptions: NextAuthOptions = {
           throw error;
         }
       }
-
-      await finalizeSuccessfulSignIn({
-        userId,
-        email: userEmail,
-        provider: account?.provider ?? "unknown",
-      });
+      void captureSignIn(account?.provider ?? "unknown");
+      await updateUserLastLoginAt(userEmail);
       return true;
     },
   },

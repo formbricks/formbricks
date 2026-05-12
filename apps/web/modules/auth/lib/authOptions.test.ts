@@ -3,11 +3,8 @@ import { Provider } from "next-auth/providers/index";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { EMAIL_VERIFICATION_DISABLED } from "@/lib/constants";
-import { verifyToken } from "@/lib/jwt";
 import { capturePostHogEvent } from "@/lib/posthog";
-import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
 // Import mocked rate limiting functions
-import { updateUser, updateUserLastLoginAt } from "@/modules/auth/lib/user";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { authOptions } from "./authOptions";
@@ -51,13 +48,6 @@ vi.mock("@/lib/crypto", async (importOriginal) => {
 // Mock JWT
 vi.mock("@/lib/jwt", () => ({
   verifyToken: vi.fn(),
-}));
-
-vi.mock("@/modules/account/lib/account-deletion-sso-reauth", () => ({
-  completeAccountDeletionSsoReauthentication: vi.fn(),
-  getAccountDeletionSsoReauthFailureRedirectUrl: vi.fn(),
-  getAccountDeletionSsoReauthIntentFromCallbackUrl: vi.fn(),
-  validateAccountDeletionSsoReauthenticationCallback: vi.fn(),
 }));
 
 // Mock rate limiting dependencies
@@ -143,10 +133,6 @@ vi.mock("@/lib/posthog", () => ({
   capturePostHogEvent: vi.fn(),
 }));
 
-vi.mock("@/modules/auth/lib/brevo", () => ({
-  createBrevoCustomer: vi.fn(),
-}));
-
 // Helper to get the provider by id from authOptions.providers.
 function getProviderById(id: string): Provider {
   const provider = authOptions.providers.find((p) => p.options.id === id);
@@ -182,7 +168,7 @@ describe("authOptions", () => {
       );
     }, 15000);
 
-    test("should throw generic invalid credentials error if user has no password stored", async () => {
+    test("should throw error if user has no password stored", async () => {
       vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true }); // Rate limiting passes
       vi.spyOn(prisma.user, "findUnique").mockResolvedValue({
         id: mockUser.id,
@@ -193,7 +179,7 @@ describe("authOptions", () => {
       const credentials = { email: mockUser.email, password: mockPassword };
 
       await expect(credentialsProvider.options.authorize(credentials, {})).rejects.toThrow(
-        "Invalid credentials"
+        "User has no password stored"
       );
     }, 15000);
 
@@ -329,105 +315,6 @@ describe("authOptions", () => {
       );
     });
 
-    test("allows verified users through the token provider when the token purpose is sso_recovery", async () => {
-      vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
-      vi.mocked(verifyToken).mockResolvedValue({
-        id: mockUser.id,
-        email: mockUser.email,
-        purpose: "sso_recovery",
-      } as any);
-      vi.spyOn(prisma.user, "findUnique").mockResolvedValue({
-        ...mockUser,
-        emailVerified: new Date(),
-      } as any);
-
-      const result = await tokenProvider.options.authorize({ token: "recovery-token" }, {});
-
-      expect(result).toEqual(
-        expect.objectContaining({
-          id: mockUser.id,
-          email: mockUser.email,
-          authFlowPurpose: "sso_recovery",
-        })
-      );
-    });
-
-    test("defers verification side effects for unverified users when the token purpose is sso_recovery", async () => {
-      vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
-      vi.mocked(verifyToken).mockResolvedValue({
-        id: mockUser.id,
-        email: mockUser.email,
-        purpose: "sso_recovery",
-      } as any);
-      vi.spyOn(prisma.user, "findUnique").mockResolvedValue({
-        ...mockUser,
-        emailVerified: null,
-      } as any);
-
-      const result = await tokenProvider.options.authorize({ token: "recovery-token" }, {});
-
-      expect(result).toEqual(
-        expect.objectContaining({
-          id: mockUser.id,
-          email: mockUser.email,
-          emailVerified: null,
-          authFlowPurpose: "sso_recovery",
-        })
-      );
-      expect(updateUser).not.toHaveBeenCalled();
-    });
-
-    test("verifies unverified users during the standard email verification flow", async () => {
-      vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
-      vi.mocked(verifyToken).mockResolvedValue({
-        id: mockUser.id,
-        email: mockUser.email,
-        purpose: "email_verification",
-      } as any);
-      vi.spyOn(prisma.user, "findUnique").mockResolvedValue({
-        ...mockUser,
-        emailVerified: null,
-      } as any);
-      vi.mocked(updateUser).mockResolvedValue({
-        ...mockUser,
-        emailVerified: new Date("2026-04-16T00:00:00.000Z"),
-      } as any);
-
-      const result = await tokenProvider.options.authorize({ token: "verify-token" }, {});
-
-      expect(updateUser).toHaveBeenCalledWith(mockUser.id, { emailVerified: expect.any(Date) });
-      expect(createBrevoCustomer).toHaveBeenCalledWith({ id: mockUser.id, email: mockUser.email });
-      expect(result).toEqual(
-        expect.objectContaining({
-          id: mockUser.id,
-          email: mockUser.email,
-          authFlowPurpose: "email_verification",
-          emailVerified: new Date("2026-04-16T00:00:00.000Z"),
-        })
-      );
-    });
-
-    test("rejects inactive users even when the verification token is otherwise valid", async () => {
-      vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
-      vi.mocked(verifyToken).mockResolvedValue({
-        id: mockUser.id,
-        email: mockUser.email,
-        purpose: "email_verification",
-      } as any);
-      vi.spyOn(prisma.user, "findUnique").mockResolvedValue({
-        ...mockUser,
-        emailVerified: null,
-        isActive: false,
-      } as any);
-
-      await expect(tokenProvider.options.authorize({ token: "inactive-token" }, {})).rejects.toThrow(
-        "Your account is currently inactive. Please contact the organization admin."
-      );
-
-      expect(updateUser).not.toHaveBeenCalled();
-      expect(createBrevoCustomer).not.toHaveBeenCalled();
-    });
-
     describe("Rate Limiting", () => {
       test("should apply rate limiting before token verification", async () => {
         vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
@@ -545,51 +432,6 @@ describe("authOptions", () => {
           expect(capturePostHogEvent).not.toHaveBeenCalled();
         }
       });
-
-      test("should not record a completed sign-in while the recovery token is only proving inbox ownership", async () => {
-        const user = {
-          ...mockUser,
-          emailVerified: new Date(),
-          authFlowPurpose: "sso_recovery",
-        };
-        const account = { provider: "token" } as any;
-
-        if (authOptions.callbacks?.signIn) {
-          const result = await authOptions.callbacks.signIn({ user, account } as any);
-
-          expect(result).toBe(true);
-          expect(updateUserLastLoginAt).not.toHaveBeenCalled();
-          expect(capturePostHogEvent).not.toHaveBeenCalled();
-        }
-      });
-
-      test("should allow an unverified recovery session through until SSO completion finishes the reclaim", async () => {
-        const user = {
-          ...mockUser,
-          emailVerified: null,
-          authFlowPurpose: "sso_recovery",
-        };
-        const account = { provider: "token" } as any;
-
-        if (authOptions.callbacks?.signIn) {
-          const result = await authOptions.callbacks.signIn({ user, account } as any);
-
-          expect(result).toBe(true);
-          expect(updateUserLastLoginAt).not.toHaveBeenCalled();
-          expect(capturePostHogEvent).not.toHaveBeenCalled();
-        }
-      });
-
-      test("should finalize successful sign-in when no provider information is available", async () => {
-        const user = { ...mockUser, emailVerified: new Date() };
-
-        if (authOptions.callbacks?.signIn) {
-          const result = await authOptions.callbacks.signIn({ user, account: undefined } as any);
-
-          expect(result).toBe(true);
-          expect(updateUserLastLoginAt).toHaveBeenCalledWith(user.email);
-        }
-      });
     });
   });
 
@@ -646,210 +488,6 @@ describe("authOptions", () => {
       expect(mockHandleSsoCallback).toHaveBeenCalled();
       expect(mockUpdateUserLastLoginAt).not.toHaveBeenCalled();
       expect(mockCapturePostHogEvent).not.toHaveBeenCalled();
-    });
-
-    test("should finalize successful sign-in after a successful enterprise SSO callback", async () => {
-      vi.resetModules();
-
-      const mockHandleSsoCallback = vi.fn().mockResolvedValueOnce(true);
-      const mockUpdateUserLastLoginAt = vi.fn();
-      const mockCapturePostHogEvent = vi.fn();
-
-      vi.doMock("@/lib/constants", async (importOriginal) => {
-        const actual = await importOriginal<typeof import("@/lib/constants")>();
-        return {
-          ...actual,
-          EMAIL_VERIFICATION_DISABLED: false,
-          SESSION_MAX_AGE: 86400,
-          NEXTAUTH_SECRET: "test-secret",
-          WEBAPP_URL: "http://localhost:3000",
-          ENCRYPTION_KEY: "12345678901234567890123456789012",
-          REDIS_URL: undefined,
-          AUDIT_LOG_ENABLED: false,
-          AUDIT_LOG_GET_USER_IP: false,
-          ENTERPRISE_LICENSE_KEY: "test-enterprise-license",
-          SENTRY_DSN: undefined,
-          BREVO_API_KEY: undefined,
-          RATE_LIMITING_DISABLED: false,
-          CONTROL_HASH: "$2b$12$fzHf9le13Ss9UJ04xzmsjODXpFJxz6vsnupoepF5FiqDECkX2BH5q",
-          POSTHOG_KEY: "phc_test_key",
-        };
-      });
-      vi.doMock("@/modules/ee/sso/lib/providers", () => ({
-        getSSOProviders: vi.fn(() => []),
-      }));
-      vi.doMock("@/modules/ee/sso/lib/sso-handlers", () => ({
-        handleSsoCallback: mockHandleSsoCallback,
-      }));
-      vi.doMock("@/modules/auth/lib/user", () => ({
-        updateUser: vi.fn(),
-        updateUserLastLoginAt: mockUpdateUserLastLoginAt,
-      }));
-      vi.doMock("@/lib/posthog", () => ({
-        capturePostHogEvent: mockCapturePostHogEvent,
-      }));
-
-      const { authOptions: enterpriseAuthOptions } = await import("./authOptions");
-      const user = { ...mockUser, emailVerified: new Date() };
-      const account = { provider: "google", type: "oauth", providerAccountId: "provider-123" } as any;
-
-      await expect(enterpriseAuthOptions.callbacks?.signIn?.({ user, account } as any)).resolves.toBe(true);
-
-      expect(mockHandleSsoCallback).toHaveBeenCalled();
-      expect(mockUpdateUserLastLoginAt).toHaveBeenCalledWith(user.email);
-    });
-
-    test("should complete account deletion SSO reauthentication before finalizing sign-in", async () => {
-      vi.resetModules();
-
-      const mockHandleSsoCallback = vi.fn().mockResolvedValueOnce(true);
-      const mockUpdateUserLastLoginAt = vi.fn();
-      const mockCapturePostHogEvent = vi.fn();
-      const mockCompleteAccountDeletionSsoReauthentication = vi.fn().mockResolvedValueOnce(undefined);
-      const mockGetAccountDeletionSsoReauthIntentFromCallbackUrl = vi
-        .fn()
-        .mockReturnValueOnce("intent-token");
-      const mockValidateAccountDeletionSsoReauthenticationCallback = vi.fn().mockResolvedValueOnce(undefined);
-
-      vi.doMock("@/lib/constants", async (importOriginal) => {
-        const actual = await importOriginal<typeof import("@/lib/constants")>();
-        return {
-          ...actual,
-          EMAIL_VERIFICATION_DISABLED: false,
-          SESSION_MAX_AGE: 86400,
-          NEXTAUTH_SECRET: "test-secret",
-          WEBAPP_URL: "http://localhost:3000",
-          ENCRYPTION_KEY: "12345678901234567890123456789012",
-          REDIS_URL: undefined,
-          AUDIT_LOG_ENABLED: false,
-          AUDIT_LOG_GET_USER_IP: false,
-          ENTERPRISE_LICENSE_KEY: "test-enterprise-license",
-          SENTRY_DSN: undefined,
-          BREVO_API_KEY: undefined,
-          RATE_LIMITING_DISABLED: false,
-          CONTROL_HASH: "$2b$12$fzHf9le13Ss9UJ04xzmsjODXpFJxz6vsnupoepF5FiqDECkX2BH5q",
-          POSTHOG_KEY: "phc_test_key",
-        };
-      });
-      vi.doMock("@/modules/ee/sso/lib/providers", () => ({
-        getSSOProviders: vi.fn(() => []),
-      }));
-      vi.doMock("@/modules/ee/sso/lib/sso-handlers", () => ({
-        handleSsoCallback: mockHandleSsoCallback,
-      }));
-      vi.doMock("@/modules/auth/lib/user", () => ({
-        updateUser: vi.fn(),
-        updateUserLastLoginAt: mockUpdateUserLastLoginAt,
-      }));
-      vi.doMock("@/lib/posthog", () => ({
-        capturePostHogEvent: mockCapturePostHogEvent,
-      }));
-      vi.doMock("@/modules/account/lib/account-deletion-sso-reauth", () => ({
-        completeAccountDeletionSsoReauthentication: mockCompleteAccountDeletionSsoReauthentication,
-        getAccountDeletionSsoReauthIntentFromCallbackUrl:
-          mockGetAccountDeletionSsoReauthIntentFromCallbackUrl,
-        validateAccountDeletionSsoReauthenticationCallback:
-          mockValidateAccountDeletionSsoReauthenticationCallback,
-      }));
-
-      const { authOptions: enterpriseAuthOptions } = await import("./authOptions");
-      const user = { ...mockUser, emailVerified: new Date() };
-      const account = { provider: "google", type: "oauth", providerAccountId: "provider-123" } as any;
-
-      await expect(enterpriseAuthOptions.callbacks?.signIn?.({ user, account } as any)).resolves.toBe(true);
-
-      expect(mockHandleSsoCallback).toHaveBeenCalled();
-      expect(mockGetAccountDeletionSsoReauthIntentFromCallbackUrl).toHaveBeenCalled();
-      expect(mockValidateAccountDeletionSsoReauthenticationCallback).toHaveBeenCalledWith({
-        account,
-        intentToken: "intent-token",
-      });
-      expect(mockCompleteAccountDeletionSsoReauthentication).toHaveBeenCalledWith({
-        account,
-        intentToken: "intent-token",
-      });
-      expect(mockUpdateUserLastLoginAt).toHaveBeenCalledWith(user.email);
-    });
-
-    test("should redirect account deletion SSO reauthentication failures back to the profile page", async () => {
-      vi.resetModules();
-
-      const mockHandleSsoCallback = vi.fn();
-      const mockUpdateUserLastLoginAt = vi.fn();
-      const mockCapturePostHogEvent = vi.fn();
-      const mockCompleteAccountDeletionSsoReauthentication = vi.fn();
-      const mockGetAccountDeletionSsoReauthFailureRedirectUrl = vi
-        .fn()
-        .mockReturnValueOnce(
-          "http://localhost:3000/environments/env-id/settings/profile?accountDeletionError=google_reauth_not_configured"
-        );
-      const mockGetAccountDeletionSsoReauthIntentFromCallbackUrl = vi
-        .fn()
-        .mockReturnValueOnce("intent-token");
-      const reauthError = new Error(
-        "Google account deletion requires Google Auth Platform Session age claims to be enabled."
-      );
-      const mockValidateAccountDeletionSsoReauthenticationCallback = vi
-        .fn()
-        .mockRejectedValueOnce(reauthError);
-
-      vi.doMock("@/lib/constants", async (importOriginal) => {
-        const actual = await importOriginal<typeof import("@/lib/constants")>();
-        return {
-          ...actual,
-          EMAIL_VERIFICATION_DISABLED: false,
-          SESSION_MAX_AGE: 86400,
-          NEXTAUTH_SECRET: "test-secret",
-          WEBAPP_URL: "http://localhost:3000",
-          ENCRYPTION_KEY: "12345678901234567890123456789012",
-          REDIS_URL: undefined,
-          AUDIT_LOG_ENABLED: false,
-          AUDIT_LOG_GET_USER_IP: false,
-          ENTERPRISE_LICENSE_KEY: "test-enterprise-license",
-          SENTRY_DSN: undefined,
-          BREVO_API_KEY: undefined,
-          RATE_LIMITING_DISABLED: false,
-          CONTROL_HASH: "$2b$12$fzHf9le13Ss9UJ04xzmsjODXpFJxz6vsnupoepF5FiqDECkX2BH5q",
-          POSTHOG_KEY: "phc_test_key",
-        };
-      });
-      vi.doMock("@/modules/ee/sso/lib/providers", () => ({
-        getSSOProviders: vi.fn(() => []),
-      }));
-      vi.doMock("@/modules/ee/sso/lib/sso-handlers", () => ({
-        handleSsoCallback: mockHandleSsoCallback,
-      }));
-      vi.doMock("@/modules/auth/lib/user", () => ({
-        updateUser: vi.fn(),
-        updateUserLastLoginAt: mockUpdateUserLastLoginAt,
-      }));
-      vi.doMock("@/lib/posthog", () => ({
-        capturePostHogEvent: mockCapturePostHogEvent,
-      }));
-      vi.doMock("@/modules/account/lib/account-deletion-sso-reauth", () => ({
-        completeAccountDeletionSsoReauthentication: mockCompleteAccountDeletionSsoReauthentication,
-        getAccountDeletionSsoReauthFailureRedirectUrl: mockGetAccountDeletionSsoReauthFailureRedirectUrl,
-        getAccountDeletionSsoReauthIntentFromCallbackUrl:
-          mockGetAccountDeletionSsoReauthIntentFromCallbackUrl,
-        validateAccountDeletionSsoReauthenticationCallback:
-          mockValidateAccountDeletionSsoReauthenticationCallback,
-      }));
-
-      const { authOptions: enterpriseAuthOptions } = await import("./authOptions");
-      const user = { ...mockUser, emailVerified: new Date() };
-      const account = { provider: "google", type: "oauth", providerAccountId: "provider-123" } as any;
-
-      await expect(enterpriseAuthOptions.callbacks?.signIn?.({ user, account } as any)).resolves.toBe(
-        "http://localhost:3000/environments/env-id/settings/profile?accountDeletionError=google_reauth_not_configured"
-      );
-
-      expect(mockGetAccountDeletionSsoReauthFailureRedirectUrl).toHaveBeenCalledWith({
-        error: reauthError,
-        intentToken: "intent-token",
-      });
-      expect(mockHandleSsoCallback).not.toHaveBeenCalled();
-      expect(mockCompleteAccountDeletionSsoReauthentication).not.toHaveBeenCalled();
-      expect(mockUpdateUserLastLoginAt).not.toHaveBeenCalled();
     });
   });
 

@@ -13,49 +13,7 @@ const decryptWithFallback = (encryptedText: string, key: string): string => {
   }
 };
 
-export const VERIFICATION_TOKEN_PURPOSES = ["email_verification", "sso_recovery"] as const;
-
-export type TVerificationTokenPurpose = (typeof VERIFICATION_TOKEN_PURPOSES)[number];
-
-export type TVerifyTokenPayload = JwtPayload & {
-  id: string;
-  email: string;
-  purpose: TVerificationTokenPurpose;
-};
-
-type TVerificationTokenOptions = SignOptions & {
-  purpose?: TVerificationTokenPurpose;
-};
-
-type TSsoRelinkIntentPayload = {
-  callbackUrl: string;
-  email: string;
-  provider: string;
-  providerAccountId: string;
-  userId: string;
-};
-
-type TAccountDeletionSsoReauthIntentPayload = {
-  id: string;
-  email: string;
-  provider: string;
-  providerAccountId: string;
-  purpose: "account_deletion_sso_reauth";
-  returnToUrl: string;
-  userId: string;
-};
-
-const DEFAULT_VERIFICATION_TOKEN_PURPOSE: TVerificationTokenPurpose = "email_verification";
-
-const getVerificationTokenPurpose = (purpose: unknown): TVerificationTokenPurpose => {
-  if (purpose && VERIFICATION_TOKEN_PURPOSES.includes(purpose as TVerificationTokenPurpose)) {
-    return purpose as TVerificationTokenPurpose;
-  }
-
-  return DEFAULT_VERIFICATION_TOKEN_PURPOSE;
-};
-
-export const createToken = (userId: string, options: TVerificationTokenOptions = {}): string => {
+export const createToken = (userId: string, options = {}): string => {
   if (!NEXTAUTH_SECRET) {
     throw new Error("NEXTAUTH_SECRET is not set");
   }
@@ -65,9 +23,7 @@ export const createToken = (userId: string, options: TVerificationTokenOptions =
   }
 
   const encryptedUserId = symmetricEncrypt(userId, ENCRYPTION_KEY);
-  const { purpose = DEFAULT_VERIFICATION_TOKEN_PURPOSE, ...jwtOptions } = options;
-
-  return jwt.sign({ id: encryptedUserId, purpose }, NEXTAUTH_SECRET, jwtOptions);
+  return jwt.sign({ id: encryptedUserId }, NEXTAUTH_SECRET, options);
 };
 export const createTokenForLinkSurvey = (surveyId: string, userEmail: string): string => {
   if (!NEXTAUTH_SECRET) {
@@ -268,73 +224,60 @@ const getUserEmailForLegacyVerification = async (
   return { userId: decryptedId, userEmail: foundUser.email };
 };
 
-const DEFAULT_SSO_RELINK_INTENT_OPTIONS: SignOptions = {
-  expiresIn: "15m",
+export const verifyToken = async (token: string): Promise<JwtPayload> => {
+  if (!NEXTAUTH_SECRET) {
+    throw new Error("NEXTAUTH_SECRET is not set");
+  }
+
+  let payload: JwtPayload & { id: string };
+  let userData: { userId: string; userEmail: string } | null = null;
+
+  // Try new method first, with smart fallback to legacy
+  try {
+    payload = jwt.verify(token, NEXTAUTH_SECRET, { algorithms: ["HS256"] }) as JwtPayload & {
+      id: string;
+    };
+  } catch (newMethodError) {
+    logger.error(newMethodError, "Token verification failed with new method");
+
+    // Get user email for legacy verification
+    userData = await getUserEmailForLegacyVerification(token);
+
+    // Try legacy verification with email-based secret
+    try {
+      payload = jwt.verify(token, NEXTAUTH_SECRET + userData.userEmail, {
+        algorithms: ["HS256"],
+      }) as JwtPayload & {
+        id: string;
+      };
+    } catch (legacyMethodError) {
+      logger.error(legacyMethodError, "Token verification failed with legacy method");
+      throw new Error("Invalid token");
+    }
+  }
+
+  if (!payload?.id) {
+    throw new Error("Invalid token");
+  }
+
+  // Get user email if we don't have it yet
+  userData ??= await getUserEmailForLegacyVerification(token, payload.id);
+
+  return { id: userData.userId, email: userData.userEmail };
+};
+
+type TAccountDeletionSsoReauthIntentPayload = {
+  id: string;
+  email: string;
+  provider: string;
+  providerAccountId: string;
+  purpose: "account_deletion_sso_reauth";
+  returnToUrl: string;
+  userId: string;
 };
 
 const DEFAULT_ACCOUNT_DELETION_SSO_REAUTH_INTENT_OPTIONS: SignOptions = {
   expiresIn: "10m",
-};
-
-export const createSsoRelinkIntent = (
-  payload: TSsoRelinkIntentPayload,
-  options: SignOptions = DEFAULT_SSO_RELINK_INTENT_OPTIONS
-): string => {
-  if (!NEXTAUTH_SECRET) {
-    throw new Error("NEXTAUTH_SECRET is not set");
-  }
-
-  if (!ENCRYPTION_KEY) {
-    throw new Error("ENCRYPTION_KEY is not set");
-  }
-
-  return jwt.sign(
-    {
-      userId: symmetricEncrypt(payload.userId, ENCRYPTION_KEY),
-      email: symmetricEncrypt(payload.email, ENCRYPTION_KEY),
-      provider: payload.provider,
-      providerAccountId: symmetricEncrypt(payload.providerAccountId, ENCRYPTION_KEY),
-      callbackUrl: symmetricEncrypt(payload.callbackUrl, ENCRYPTION_KEY),
-    },
-    NEXTAUTH_SECRET,
-    options
-  );
-};
-
-export const verifySsoRelinkIntent = (token: string): TSsoRelinkIntentPayload => {
-  if (!NEXTAUTH_SECRET) {
-    throw new Error("NEXTAUTH_SECRET is not set");
-  }
-
-  if (!ENCRYPTION_KEY) {
-    throw new Error("ENCRYPTION_KEY is not set");
-  }
-
-  const payload = jwt.verify(token, NEXTAUTH_SECRET, { algorithms: ["HS256"] }) as JwtPayload & {
-    userId: string;
-    email: string;
-    provider: string;
-    providerAccountId: string;
-    callbackUrl: string;
-  };
-
-  if (
-    !payload?.userId ||
-    !payload?.email ||
-    !payload?.provider ||
-    !payload?.providerAccountId ||
-    !payload?.callbackUrl
-  ) {
-    throw new Error("Token is invalid or missing required fields");
-  }
-
-  return {
-    userId: decryptWithFallback(payload.userId, ENCRYPTION_KEY),
-    email: decryptWithFallback(payload.email, ENCRYPTION_KEY),
-    provider: payload.provider,
-    providerAccountId: decryptWithFallback(payload.providerAccountId, ENCRYPTION_KEY),
-    callbackUrl: decryptWithFallback(payload.callbackUrl, ENCRYPTION_KEY),
-  };
 };
 
 export const createAccountDeletionSsoReauthIntent = (
@@ -405,52 +348,6 @@ export const verifyAccountDeletionSsoReauthIntent = (
     providerAccountId: decryptWithFallback(payload.providerAccountId, ENCRYPTION_KEY),
     purpose: "account_deletion_sso_reauth",
     returnToUrl: decryptWithFallback(payload.returnToUrl, ENCRYPTION_KEY),
-  };
-};
-
-export const verifyToken = async (token: string): Promise<TVerifyTokenPayload> => {
-  if (!NEXTAUTH_SECRET) {
-    throw new Error("NEXTAUTH_SECRET is not set");
-  }
-
-  let payload: JwtPayload & { id: string };
-  let userData: { userId: string; userEmail: string } | null = null;
-
-  // Try new method first, with smart fallback to legacy
-  try {
-    payload = jwt.verify(token, NEXTAUTH_SECRET, { algorithms: ["HS256"] }) as JwtPayload & {
-      id: string;
-    };
-  } catch (newMethodError) {
-    logger.error(newMethodError, "Token verification failed with new method");
-
-    // Get user email for legacy verification
-    userData = await getUserEmailForLegacyVerification(token);
-
-    // Try legacy verification with email-based secret
-    try {
-      payload = jwt.verify(token, NEXTAUTH_SECRET + userData.userEmail, {
-        algorithms: ["HS256"],
-      }) as JwtPayload & {
-        id: string;
-      };
-    } catch (legacyMethodError) {
-      logger.error(legacyMethodError, "Token verification failed with legacy method");
-      throw new Error("Invalid token");
-    }
-  }
-
-  if (!payload?.id) {
-    throw new Error("Invalid token");
-  }
-
-  // Get user email if we don't have it yet
-  userData ??= await getUserEmailForLegacyVerification(token, payload.id);
-
-  return {
-    id: userData.userId,
-    email: userData.userEmail,
-    purpose: getVerificationTokenPurpose(payload.purpose),
   };
 };
 
