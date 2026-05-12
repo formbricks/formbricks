@@ -37,7 +37,11 @@ vi.mock("@/lib/crypto", () => ({
 vi.mock("@/lib/utils/validate-webhook-url", () => ({
   validateWebhookUrl: vi.fn(async () => undefined),
   validateAndResolveWebhookUrl: vi.fn(async () => ({ ip: "93.184.216.34", family: 4 })),
-  createPinnedDispatcher: vi.fn(() => ({ __pinned: true, close: vi.fn(async () => undefined) })),
+  createPinnedDispatcher: vi.fn(() => ({
+    __pinned: true,
+    close: vi.fn(async () => undefined),
+    destroy: vi.fn(async () => undefined),
+  })),
 }));
 
 vi.mock("@/lingodotdev/server", () => ({
@@ -62,6 +66,7 @@ describe("testEndpoint", () => {
     vi.mocked(createPinnedDispatcher).mockReturnValue({
       __pinned: true,
       close: vi.fn(async () => undefined),
+      destroy: vi.fn(async () => undefined),
     } as never);
     vi.mocked(getTranslate).mockResolvedValue((key: string) => key);
     vi.mocked(isDiscordWebhook).mockReturnValue(false);

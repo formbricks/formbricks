@@ -245,7 +245,9 @@ export const testEndpoint = async (url: string, secret?: string): Promise<boolea
     );
   } finally {
     clearTimeout(timeout);
-    // Free the pinned Agent's socket pool so the test endpoint doesn't accumulate sockets.
-    await dispatcher?.close();
+    // destroy() — not close() — force-kills sockets. close() drains gracefully and
+    // would deadlock if the endpoint accepted TCP but never responded (controller.abort()
+    // above cancels fetch, but destroy is the belt-and-suspenders cleanup).
+    await dispatcher?.destroy();
   }
 };

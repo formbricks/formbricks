@@ -99,15 +99,19 @@ export const POST = async (request: Request) => {
   // env var as `validateWebhookUrl`: self-hosters who opted into trusting internal URLs also get the
   // pre-patch redirect-follow behavior for consistency.
   const redirectMode: RequestRedirect = DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS ? "follow" : "manual";
+  // Uses AbortSignal to actually cancel the underlying fetch when the timer fires —
+  // a Promise.race would only reject the wrapper while the fetch keeps the socket
+  // open, which then deadlocks dispatcher.close() (graceful drain waits for it).
   const fetchWithTimeout = (
     url: string,
     options: RequestInit & { dispatcher?: Agent },
     timeout: number = 5000
   ): Promise<Response> => {
-    return Promise.race([
-      fetch(url, { ...options, redirect: redirectMode } as RequestInit & { dispatcher?: Agent }),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Timeout")), timeout)),
-    ]);
+    return fetch(url, {
+      ...options,
+      redirect: redirectMode,
+      signal: AbortSignal.timeout(timeout),
+    } as RequestInit & { dispatcher?: Agent });
   };
 
   const resolvedResponseData = resolveStorageUrlsInObject(response.data);
@@ -163,9 +167,8 @@ export const POST = async (request: Request) => {
             dispatcher,
           });
         } finally {
-          // Each pinned Agent owns a keep-alive socket pool; close it so we
-          // don't leak sockets across the per-webhook fan-out on every response.
-          await dispatcher?.close();
+          // destroy() — not close() — force-kills sockets and rejects any in-flight request
+          await dispatcher?.destroy();
         }
       })
       .catch((error) => {
