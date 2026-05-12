@@ -195,11 +195,13 @@ export function ConnectorsSection({
         {directories.length > 0 && (
           <Alert size="small" className="mt-4">
             <AlertDescription>{feedbackDirectoryAccessText}</AlertDescription>
-            <AlertButton asChild>
-              <Link href={`/workspaces/${workspaceId}/settings/organization/feedback-directories`}>
-                {t("workspace.unify.manage_directories")}
-              </Link>
-            </AlertButton>
+            {!isReadOnly && (
+              <AlertButton asChild>
+                <Link href={`/workspaces/${workspaceId}/settings/organization/feedback-directories`}>
+                  {t("workspace.unify.manage_directories")}
+                </Link>
+              </AlertButton>
+            )}
           </Alert>
         )}
       </SettingsCard>
