@@ -3,12 +3,14 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import * as crypto from "@/lib/crypto";
 import {
+  createAccountDeletionSsoReauthIntent,
   createEmailChangeToken,
   createEmailToken,
   createInviteToken,
   createToken,
   createTokenForLinkSurvey,
   getEmailFromEmailToken,
+  verifyAccountDeletionSsoReauthIntent,
   verifyEmailChangeToken,
   verifyInviteToken,
   verifyToken,
@@ -1003,6 +1005,64 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
         expect(results.length).toBe(100);
         expect(results.every((result: any) => result.id === mockUser.id)).toBe(true); // Returns decrypted user ID
       });
+    });
+  });
+
+  describe("account deletion SSO reauthentication intents", () => {
+    const accountDeletionIntent = {
+      id: "intent-id",
+      userId: mockUser.id,
+      email: mockUser.email,
+      provider: "google",
+      providerAccountId: "provider-123",
+      purpose: "account_deletion_sso_reauth" as const,
+      returnToUrl: "http://localhost:3000/environments/env-1/settings/profile",
+    };
+
+    test("round-trips encrypted account deletion reauth intents", () => {
+      const token = createAccountDeletionSsoReauthIntent(accountDeletionIntent);
+
+      expect(verifyAccountDeletionSsoReauthIntent(token)).toEqual(accountDeletionIntent);
+      expect(mockSymmetricEncrypt).toHaveBeenCalledWith(accountDeletionIntent.id, TEST_ENCRYPTION_KEY);
+      expect(mockSymmetricEncrypt).toHaveBeenCalledWith(accountDeletionIntent.userId, TEST_ENCRYPTION_KEY);
+      expect(mockSymmetricEncrypt).toHaveBeenCalledWith(accountDeletionIntent.email, TEST_ENCRYPTION_KEY);
+      expect(mockSymmetricEncrypt).toHaveBeenCalledWith(
+        accountDeletionIntent.providerAccountId,
+        TEST_ENCRYPTION_KEY
+      );
+      expect(mockSymmetricEncrypt).toHaveBeenCalledWith(
+        accountDeletionIntent.returnToUrl,
+        TEST_ENCRYPTION_KEY
+      );
+    });
+
+    test("creates account deletion reauth intents with a ten minute default expiry", () => {
+      const token = createAccountDeletionSsoReauthIntent(accountDeletionIntent);
+      const decoded = jwt.decode(token) as jwt.JwtPayload;
+
+      expect(decoded.exp! - decoded.iat!).toBe(10 * 60);
+    });
+
+    test("rejects account deletion reauth intents with the wrong purpose", () => {
+      const token = jwt.sign(
+        {
+          id: crypto.symmetricEncrypt(accountDeletionIntent.id, TEST_ENCRYPTION_KEY),
+          userId: crypto.symmetricEncrypt(accountDeletionIntent.userId, TEST_ENCRYPTION_KEY),
+          email: crypto.symmetricEncrypt(accountDeletionIntent.email, TEST_ENCRYPTION_KEY),
+          provider: accountDeletionIntent.provider,
+          providerAccountId: crypto.symmetricEncrypt(
+            accountDeletionIntent.providerAccountId,
+            TEST_ENCRYPTION_KEY
+          ),
+          purpose: "email_verification",
+          returnToUrl: crypto.symmetricEncrypt(accountDeletionIntent.returnToUrl, TEST_ENCRYPTION_KEY),
+        },
+        TEST_NEXTAUTH_SECRET
+      );
+
+      expect(() => verifyAccountDeletionSsoReauthIntent(token)).toThrow(
+        "Token is invalid or missing required fields"
+      );
     });
   });
 });
