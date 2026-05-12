@@ -188,7 +188,7 @@ install_formbricks() {
     if docker info >/dev/null 2>&1 || sudo docker info >/dev/null 2>&1; then
       echo "✅ Docker daemon is reachable. Reusing the existing Docker installation."
 
-      if docker compose version >/dev/null 2>&1; then
+      if docker compose version >/dev/null 2>&1 || sudo docker compose version >/dev/null 2>&1; then
         echo "✅ Docker Compose is available."
       else
         echo "❌ Docker Compose is not available on this system."
@@ -203,8 +203,17 @@ install_formbricks() {
     fi
   else
     # Remove old Docker packages only when Docker is not installed at all.
-    echo "🧹 Removing old Docker installations."
-    sudo apt-get remove docker docker-engine docker.io containerd runc >/dev/null 2>&1 || true
+    echo "⚠️ Legacy Docker-related packages may conflict with Docker CE."
+    echo "These packages can also be used outside Docker, so they will only be removed with your consent."
+    read -p "Remove legacy packages (docker/docker-engine/docker.io/containerd/runc)? [y/N] " remove_legacy_docker_pkgs
+    remove_legacy_docker_pkgs=$(echo "$remove_legacy_docker_pkgs" | tr '[:upper:]' '[:lower:]')
+    if [[ "$remove_legacy_docker_pkgs" == "y" || "$remove_legacy_docker_pkgs" == "yes" ]]; then
+      echo "🧹 Removing old Docker installations."
+      sudo apt-get remove docker docker-engine docker.io containerd runc >/dev/null 2>&1 || true
+    else
+      echo "⏭️ Skipping legacy package removal."
+      echo "If Docker installation fails due to conflicting packages, rerun the script and allow the removal step."
+    fi
 
     echo "📦 Installing Docker-specific dependencies."
     sudo apt-get install -y gnupg >/dev/null 2>&1
