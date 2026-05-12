@@ -21,7 +21,6 @@ const formatPieLabel = ({ name, percent }: { name: string; percent?: number }): 
   return `${formatXAxisTick(name)}: ${(percent * 100).toFixed(0)}%`;
 };
 
-/** Pie tooltip row defined at module scope so it isn't a nested component in ChartRenderer (sonar S6478). */
 const PieTooltipRow = ({ value, name }: Readonly<{ value: unknown; name: string }>) => {
   const { t } = useTranslation();
   return (
