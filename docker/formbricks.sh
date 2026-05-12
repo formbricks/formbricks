@@ -170,10 +170,6 @@ install_formbricks() {
   echo "🛸 Fasten your seatbelts! We're setting up your Formbricks environment on your $ubuntu_version server."
   echo ""
 
-  # Remove any old Docker installations, without stopping the script if they're not found
-  echo "🧹 Time to sweep away any old Docker installations."
-  sudo apt-get remove docker docker-engine docker.io containerd runc >/dev/null 2>&1 || true
-
   # Update package list
   echo "🔄 Updating your package list."
   sudo apt-get update >/dev/null 2>&1
@@ -183,32 +179,60 @@ install_formbricks() {
   sudo apt-get install -y \
     ca-certificates \
     curl \
-    gnupg \
     lsb-release >/dev/null 2>&1
 
-  # Set up Docker's official GPG key & stable repository
-  echo "🔑 Adding Docker's official GPG key and setting up the stable repository."
-  sudo mkdir -m 0755 -p /etc/apt/keyrings >/dev/null 2>&1
-  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg >/dev/null 2>&1
-  echo \
-    "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null 2>&1
+  # Reuse an existing Docker installation instead of replacing it implicitly.
+  if command -v docker >/dev/null 2>&1; then
+    echo "✅ Docker is already installed."
 
-  # Update package list again
-  echo "🔄 Updating your package list again."
-  sudo apt-get update >/dev/null 2>&1
+    if docker info >/dev/null 2>&1 || sudo docker info >/dev/null 2>&1; then
+      echo "✅ Docker daemon is reachable. Reusing the existing Docker installation."
 
-  # Install Docker
-  echo "🐳 Installing Docker."
-  sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin >/dev/null 2>&1
-
-  # Test Docker installation
-  echo "🚀 Testing your Docker installation."
-  if docker --version >/dev/null 2>&1; then
-    echo "🎉 Docker is installed!"
+      if docker compose version >/dev/null 2>&1; then
+        echo "✅ Docker Compose is available."
+      else
+        echo "❌ Docker Compose is not available on this system."
+        echo "Please install Docker Compose or upgrade Docker so 'docker compose' works, then rerun this script."
+        exit 1
+      fi
+    else
+      echo "❌ Docker is installed, but the daemon is not reachable."
+      echo "Please start or fix Docker and rerun this script."
+      echo "To avoid modifying an existing Docker setup without your consent, this script will not remove or reinstall Docker automatically."
+      exit 1
+    fi
   else
-    echo "❌ Docker is not installed. Please install Docker before proceeding."
-    exit 1
+    # Remove old Docker packages only when Docker is not installed at all.
+    echo "🧹 Removing old Docker installations."
+    sudo apt-get remove docker docker-engine docker.io containerd runc >/dev/null 2>&1 || true
+
+    echo "📦 Installing Docker-specific dependencies."
+    sudo apt-get install -y gnupg >/dev/null 2>&1
+
+    # Set up Docker's official GPG key & stable repository.
+    echo "🔑 Adding Docker's official GPG key and setting up the stable repository."
+    sudo mkdir -m 0755 -p /etc/apt/keyrings >/dev/null 2>&1
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg >/dev/null 2>&1
+    echo \
+      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+    $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null 2>&1
+
+    # Update package list again after adding the Docker repository.
+    echo "🔄 Updating your package list again."
+    sudo apt-get update >/dev/null 2>&1
+
+    # Install Docker only when it is not already present on the system.
+    echo "🐳 Installing Docker."
+    sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin >/dev/null 2>&1
+
+    # Test Docker installation.
+    echo "🚀 Testing your Docker installation."
+    if docker --version >/dev/null 2>&1; then
+      echo "🎉 Docker is installed!"
+    else
+      echo "❌ Docker is not installed. Please install Docker before proceeding."
+      exit 1
+    fi
   fi
 
   # Adding your user to the Docker group
