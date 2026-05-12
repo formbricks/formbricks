@@ -4193,19 +4193,123 @@
           "200": {
             "content": {
               "application/json": {
-                "example": {
-                  "appSetupCompleted": true,
-                  "createdAt": "2024-04-09T04:53:29.577Z",
-                  "id": "clurwouax000azffxt7n5unn3",
-                  "product": {
-                    "id": "clurwouaj0003zffx0hu6bonm",
-                    "name": "My Product"
+                "examples": {
+                  "apiKeyWithSingleEnvironment": {
+                    "summary": "API key with one environment permission",
+                    "value": {
+                      "appSetupCompleted": true,
+                      "createdAt": "2024-04-09T04:53:29.577Z",
+                      "id": "clurwouax000azffxt7n5unn3",
+                      "project": {
+                        "id": "clurwouaj0003zffx0hu6bonm",
+                        "name": "My Project"
+                      },
+                      "type": "production",
+                      "updatedAt": "2024-04-09T14:14:49.256Z"
+                    }
                   },
-                  "type": "production",
-                  "updatedAt": "2024-04-09T14:14:49.256Z"
+                  "organizationReadApiKey": {
+                    "summary": "Organization-read API key without a single environment",
+                    "value": {
+                      "environmentPermissions": [],
+                      "organizationAccess": {
+                        "accessControl": {
+                          "read": true,
+                          "write": false
+                        }
+                      },
+                      "organizationId": "clurwouaj0003zffx0hu6bonm"
+                    }
+                  }
                 },
                 "schema": {
-                  "type": "object"
+                  "oneOf": [
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "appSetupCompleted": {
+                          "type": "boolean"
+                        },
+                        "createdAt": {
+                          "format": "date-time",
+                          "type": "string"
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "project": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "required": ["id", "name"],
+                          "type": "object"
+                        },
+                        "type": {
+                          "enum": ["production", "development"],
+                          "type": "string"
+                        },
+                        "updatedAt": {
+                          "format": "date-time",
+                          "type": "string"
+                        }
+                      },
+                      "required": ["id", "type", "createdAt", "updatedAt", "appSetupCompleted", "project"],
+                      "type": "object"
+                    },
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "environmentPermissions": {
+                          "items": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "environmentId": {
+                                "type": "string"
+                              },
+                              "environmentType": {
+                                "enum": ["production", "development"],
+                                "type": "string"
+                              },
+                              "permissions": {
+                                "enum": ["read", "write", "manage"],
+                                "type": "string"
+                              },
+                              "projectId": {
+                                "type": "string"
+                              },
+                              "projectName": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "environmentId",
+                              "environmentType",
+                              "permissions",
+                              "projectId",
+                              "projectName"
+                            ],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        },
+                        "organizationAccess": {
+                          "additionalProperties": true,
+                          "type": "object"
+                        },
+                        "organizationId": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["environmentPermissions", "organizationId", "organizationAccess"],
+                      "type": "object"
+                    }
+                  ]
                 }
               }
             },
