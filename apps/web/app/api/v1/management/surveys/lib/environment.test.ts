@@ -2,7 +2,7 @@ import { Prisma } from "@prisma/client";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
-import { getEnvironmentIdsByOrganizationId } from "./organization";
+import { getEnvironmentIdsByOrganizationId } from "./environment";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {

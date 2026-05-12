@@ -1,7 +1,10 @@
 import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
 import { ZSurveyCreateInputWithEnvironmentId } from "@formbricks/types/surveys/types";
-import { checkFeaturePermissions } from "@/app/api/v1/management/surveys/lib/utils";
+import {
+  checkFeaturePermissions,
+  getReadableEnvironmentIds,
+} from "@/app/api/v1/management/surveys/lib/utils";
 import { responses } from "@/app/lib/api/response";
 import {
   transformBlocksToQuestions,
@@ -14,7 +17,6 @@ import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { createSurvey } from "@/lib/survey/service";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
-import { getReadableEnvironmentIds } from "./lib/access";
 import { getSurveys } from "./lib/surveys";
 
 export const GET = withV1ApiWrapper({
