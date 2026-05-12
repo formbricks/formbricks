@@ -334,34 +334,24 @@ const ZRemoveWidgetFromDashboardAction = z.object({
 export const removeWidgetFromDashboardAction = authenticatedActionClient
   .inputSchema(ZRemoveWidgetFromDashboardAction)
   .action(
-    withAuditLogging(
-      "deleted",
-      "dashboardWidget",
-      async ({
-        ctx,
-        parsedInput,
-      }: {
-        ctx: AuthenticatedActionClientCtx;
-        parsedInput: z.infer<typeof ZRemoveWidgetFromDashboardAction>;
-      }) => {
-        const { organizationId, workspaceId } = await checkWorkspaceAccess(
-          ctx.user.id,
-          parsedInput.workspaceId,
-          "readWrite"
-        );
-        await checkDashboardsEnabled(organizationId);
+    withAuditLogging("deleted", "dashboardWidget", async ({ ctx, parsedInput }) => {
+      const { organizationId, workspaceId } = await checkWorkspaceAccess(
+        ctx.user.id,
+        parsedInput.workspaceId,
+        "readWrite"
+      );
+      await checkDashboardsEnabled(organizationId);
 
-        const widget = await removeWidgetFromDashboard(
-          parsedInput.dashboardId,
-          workspaceId,
-          parsedInput.widgetId
-        );
+      const widget = await removeWidgetFromDashboard(
+        parsedInput.dashboardId,
+        workspaceId,
+        parsedInput.widgetId
+      );
 
-        ctx.auditLoggingCtx.organizationId = organizationId;
-        ctx.auditLoggingCtx.workspaceId = workspaceId;
-        ctx.auditLoggingCtx.dashboardWidgetId = widget.id;
-        ctx.auditLoggingCtx.oldObject = widget;
-        return { success: true };
-      }
-    )
+      ctx.auditLoggingCtx.organizationId = organizationId;
+      ctx.auditLoggingCtx.workspaceId = workspaceId;
+      ctx.auditLoggingCtx.dashboardWidgetId = widget.id;
+      ctx.auditLoggingCtx.oldObject = widget;
+      return { success: true };
+    })
   );

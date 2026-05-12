@@ -48,6 +48,7 @@ vi.mock("@formbricks/database", () => {
         findFirst: vi.fn(),
         findMany: vi.fn(),
       },
+      dashboardWidget: txWidget,
       $transaction: vi.fn((cb: any) => cb({ dashboard: txDash, chart: txChart, dashboardWidget: txWidget })),
     },
   };
@@ -703,6 +704,25 @@ describe("Dashboard Service", () => {
         removeWidgetFromDashboard(mockDashboardId, mockWorkspaceId, mockWidgetId)
       ).rejects.toMatchObject({ name: "ResourceNotFoundError", resourceType: "DashboardWidget" });
       expect(mockTxWidget.delete).not.toHaveBeenCalled();
+    });
+
+    test("wraps Prisma errors in DatabaseError", async () => {
+      mockTxWidget.findFirst.mockRejectedValue(makePrismaError("P9999"));
+      const { removeWidgetFromDashboard } = await import("./dashboards");
+
+      await expect(
+        removeWidgetFromDashboard(mockDashboardId, mockWorkspaceId, mockWidgetId)
+      ).rejects.toMatchObject({ name: "DatabaseError" });
+    });
+
+    test("rethrows unknown errors", async () => {
+      const error = new Error("boom");
+      mockTxWidget.findFirst.mockRejectedValue(error);
+      const { removeWidgetFromDashboard } = await import("./dashboards");
+
+      await expect(removeWidgetFromDashboard(mockDashboardId, mockWorkspaceId, mockWidgetId)).rejects.toBe(
+        error
+      );
     });
   });
 });
