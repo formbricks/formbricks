@@ -17,7 +17,7 @@ import { getContact } from "./contact";
 export const createResponseWithQuotaEvaluation = async (
   responseInput: TResponseInputV2
 ): Promise<TResponseWithQuotaFull> => {
-  const txResponse = await prisma.$transaction(async (tx) => {
+  const txResponse = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     const response = await createResponse(responseInput, tx);
 
     const quotaResult = await evaluateResponseQuotas({
@@ -101,7 +101,7 @@ export const createResponse = async (
     }
 
     if (contactId) {
-      contact = await getContact(contactId);
+      contact = await getContact(contactId, environmentId);
     }
 
     const ttc = initialTtc ? (finished ? calculateTtcTotal(initialTtc) : initialTtc) : {};

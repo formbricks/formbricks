@@ -21,6 +21,7 @@ vi.mock("react", async () => {
 });
 
 const contactId = "test-contact-id";
+const environmentId = "test-env-id";
 
 describe("doesContactExist", () => {
   afterEach(() => {
@@ -35,23 +36,23 @@ describe("doesContactExist", () => {
       environmentId: "test-env",
     });
 
-    const result = await doesContactExist(contactId);
+    const result = await doesContactExist(contactId, environmentId);
 
     expect(result).toBe(true);
     expect(prisma.contact.findFirst).toHaveBeenCalledWith({
-      where: { id: contactId },
+      where: { id: contactId, environmentId },
       select: { id: true },
     });
   });
 
-  test("should return false if contact does not exist", async () => {
+  test("should return false if contact does not exist in the environment", async () => {
     vi.mocked(prisma.contact.findFirst).mockResolvedValue(null);
 
-    const result = await doesContactExist(contactId);
+    const result = await doesContactExist(contactId, environmentId);
 
     expect(result).toBe(false);
     expect(prisma.contact.findFirst).toHaveBeenCalledWith({
-      where: { id: contactId },
+      where: { id: contactId, environmentId },
       select: { id: true },
     });
   });
