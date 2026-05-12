@@ -3,7 +3,7 @@ import type { TChartQuery } from "@formbricks/types/analysis";
 
 export const TENANT_MEMBER = "FeedbackRecords.tenantId";
 
-const ALLOWED_CUBE_PREFIXES = ["FeedbackRecords.", "TopicsUnnested."];
+const ALLOWED_CUBE_PREFIXES = ["FeedbackRecords."];
 const INVALID_MEMBER_REFERENCE = "invalid member reference";
 
 type TQueryAuditSummary = {
@@ -310,9 +310,9 @@ export const validateCubeQueryMembers = (query: TChartQuery): void => {
 
   if (result.invalidMembers.length > 0) {
     throw new Error(
-      `Invalid query members (must start with FeedbackRecords. or TopicsUnnested.): ${uniqueSorted(
-        result.invalidMembers
-      ).join(", ")}`
+      `Invalid query members (must start with FeedbackRecords.): ${uniqueSorted(result.invalidMembers).join(
+        ", "
+      )}`
     );
   }
 };

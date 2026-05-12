@@ -10,16 +10,12 @@ describe("cube-query", () => {
       expect(() =>
         validateCubeQueryMembers({
           measures: ["FeedbackRecords.count"],
-          dimensions: ["FeedbackRecords.sentiment"],
+          dimensions: ["FeedbackRecords.sourceType"],
           timeDimensions: [{ dimension: "FeedbackRecords.collectedAt" }],
           filters: [{ member: "FeedbackRecords.sourceType", operator: "equals", values: ["survey"] }],
           order: { "FeedbackRecords.collectedAt": "desc" },
         })
       ).not.toThrow();
-    });
-
-    test("allows TopicsUnnested dimensions from joined cube", () => {
-      expect(() => validateCubeQueryMembers({ dimensions: ["TopicsUnnested.topic"] })).not.toThrow();
     });
 
     test("throws for invalid members across query sections", () => {
@@ -57,7 +53,7 @@ describe("cube-query", () => {
           filters: [
             {
               or: [
-                { member: "FeedbackRecords.sentiment", operator: "equals", values: ["positive"] },
+                { member: "FeedbackRecords.sourceType", operator: "equals", values: ["positive"] },
                 {
                   and: [{ member: "FeedbackRecords.tenantId", operator: "equals", values: ["workspace-2"] }],
                 },
@@ -90,7 +86,7 @@ describe("cube-query", () => {
       expect(() =>
         validateCubeQueryMembers({
           measures: ["FeedbackRecords.count", null],
-          dimensions: [{ member: "FeedbackRecords.sentiment" }],
+          dimensions: [{ member: "FeedbackRecords.sourceType" }],
           segments: [0],
           timeDimensions: [null, { dimension: null }],
           filters: [null, { member: { name: "FeedbackRecords.sourceType" } }, { and: [0] }, { or: "bad" }],
@@ -103,7 +99,7 @@ describe("cube-query", () => {
   test("summarizes query members without raw filter values", () => {
     const summary = getCubeQueryAuditSummary({
       measures: ["FeedbackRecords.count"],
-      dimensions: ["FeedbackRecords.sentiment"],
+      dimensions: ["FeedbackRecords.sourceType"],
       filters: [{ member: "FeedbackRecords.sourceType", operator: "equals", values: ["secret-value"] }],
       order: [["FeedbackRecords.collectedAt", "desc"]],
       limit: 50,
@@ -111,7 +107,7 @@ describe("cube-query", () => {
 
     expect(summary).toEqual({
       measures: ["FeedbackRecords.count"],
-      dimensions: ["FeedbackRecords.sentiment"],
+      dimensions: ["FeedbackRecords.sourceType"],
       segments: [],
       timeDimensions: [],
       filterMembers: ["FeedbackRecords.sourceType"],
@@ -125,12 +121,12 @@ describe("cube-query", () => {
   test("summarizes only valid member names from malformed query shapes", () => {
     const summary = getCubeQueryAuditSummary({
       measures: ["FeedbackRecords.count", null],
-      dimensions: [{ member: "FeedbackRecords.sentiment" }],
+      dimensions: [{ member: "FeedbackRecords.sourceType" }],
       timeDimensions: [null, { dimension: "FeedbackRecords.collectedAt" }],
       filters: [
         null,
         { member: "FeedbackRecords.sourceType", operator: "equals", values: ["secret-value"] },
-        { and: [0, { member: "FeedbackRecords.sentiment", operator: "equals", values: ["positive"] }] },
+        { and: [0, { member: "FeedbackRecords.sourceType", operator: "equals", values: ["positive"] }] },
       ],
       order: [
         [null, "asc"],
@@ -143,7 +139,7 @@ describe("cube-query", () => {
       dimensions: [],
       segments: [],
       timeDimensions: ["FeedbackRecords.collectedAt"],
-      filterMembers: ["FeedbackRecords.sentiment", "FeedbackRecords.sourceType"],
+      filterMembers: ["FeedbackRecords.sourceType", "FeedbackRecords.sourceType"],
       filterCount: 2,
       orderMembers: ["FeedbackRecords.collectedAt"],
     });

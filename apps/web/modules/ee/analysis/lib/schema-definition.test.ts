@@ -32,9 +32,9 @@ describe("schema-definition", () => {
 
   describe("getFieldById", () => {
     test("returns dimension by id", () => {
-      const field = getFieldById("FeedbackRecords.sentiment");
+      const field = getFieldById("FeedbackRecords.sourceType");
       expect(field).toBeDefined();
-      expect(field?.label).toBe("Sentiment");
+      expect(field?.label).toBe("Source Type");
       expect(field?.type).toBe("string");
     });
 
@@ -56,7 +56,7 @@ describe("schema-definition", () => {
     });
 
     test("returns field label for known dimension/measure", () => {
-      expect(formatCubeColumnHeader("FeedbackRecords.sentiment")).toBe("Sentiment");
+      expect(formatCubeColumnHeader("FeedbackRecords.sourceType")).toBe("Source Type");
       expect(formatCubeColumnHeader("FeedbackRecords.count")).toBe("Count");
     });
 

@@ -1,6 +1,5 @@
 // This schema maps to the `feedback_records` table owned by the Formbricks Hub Postgres.
-// If the Hub changes column names, types, or the metadata JSONB shape (e.g. the `topics` array),
-// this schema must be updated to match.
+// If the Hub changes column names or types, this schema must be updated to match.
 cube(`FeedbackRecords`, {
   sql: `SELECT * FROM feedback_records`,
 
@@ -77,6 +76,18 @@ cube(`FeedbackRecords`, {
       description: `Number of satisfied CSAT responses (top-2-box on the 1-5 scale)`,
     },
 
+    csatDissatisfiedCount: {
+      type: `count`,
+      filters: [{ sql: `${CUBE}.field_type = 'csat' AND ${CUBE}.value_number BETWEEN 1 AND 2` }],
+      description: `Number of dissatisfied CSAT responses (bottom-2-box on the 1-5 scale)`,
+    },
+
+    csatNeutralCount: {
+      type: `count`,
+      filters: [{ sql: `${CUBE}.field_type = 'csat' AND ${CUBE}.value_number = 3` }],
+      description: `Number of neutral CSAT responses (middle box on the 1-5 scale)`,
+    },
+
     csatScore: {
       type: `number`,
       sql: `
@@ -122,12 +133,6 @@ cube(`FeedbackRecords`, {
       primaryKey: true,
     },
 
-    sentiment: {
-      sql: `${CUBE}.metadata->>'sentiment'`,
-      type: `string`,
-      description: `Sentiment extracted from metadata JSONB field`,
-    },
-
     sourceType: {
       sql: `source_type`,
       type: `string`,
@@ -146,10 +151,40 @@ cube(`FeedbackRecords`, {
       description: `Type of feedback field (e.g., nps, text, rating)`,
     },
 
+    fieldLabel: {
+      sql: `field_label`,
+      type: `string`,
+      description: `Human-readable label of the question/field (e.g., "How satisfied are you with support?")`,
+    },
+
+    fieldGroupLabel: {
+      sql: `field_group_label`,
+      type: `string`,
+      description: `Label of the parent composite question for matrix/ranking rows`,
+    },
+
+    language: {
+      sql: `language`,
+      type: `string`,
+      description: `Response language code (e.g., "en", "de"). NULL when language is "default".`,
+    },
+
     collectedAt: {
       sql: `collected_at`,
       type: `time`,
       description: `Timestamp when the feedback was collected`,
+    },
+
+    createdAt: {
+      sql: `created_at`,
+      type: `time`,
+      description: `Timestamp when the feedback record was created in Hub`,
+    },
+
+    updatedAt: {
+      sql: `updated_at`,
+      type: `time`,
+      description: `Timestamp when the feedback record was last updated in Hub`,
     },
 
     valueNumber: {
@@ -164,6 +199,18 @@ cube(`FeedbackRecords`, {
       description: `Text answer value (open text, or the label of a multiple-choice / categorical answer). Pair with a fieldType filter to keep types consistent.`,
     },
 
+    valueBoolean: {
+      sql: `value_boolean`,
+      type: `boolean`,
+      description: `Boolean answer value (yes/no questions). Pair with a fieldType filter.`,
+    },
+
+    valueDate: {
+      sql: `value_date`,
+      type: `time`,
+      description: `Date answer value (e.g., "preferred meeting date"). Pair with a fieldType filter.`,
+    },
+
     responseId: {
       sql: `submission_id`,
       type: `string`,
@@ -176,65 +223,10 @@ cube(`FeedbackRecords`, {
       description: `Identifier of the user who provided feedback`,
     },
 
-    emotion: {
-      sql: `${CUBE}.metadata->>'emotion'`,
-      type: `string`,
-      description: `Emotion extracted from metadata JSONB field`,
-    },
-
     tenantId: {
       sql: `tenant_id`,
       type: `string`,
       description: `Tenant ID linking to FeedbackDirectory`,
-    },
-  },
-
-  joins: {
-    TopicsUnnested: {
-      sql: `${CUBE}.id = ${TopicsUnnested}.feedback_record_id`,
-      relationship: `hasMany`,
-    },
-  },
-});
-
-cube(`TopicsUnnested`, {
-  sql: `
-    SELECT
-      fr.id as feedback_record_id,
-      fr.tenant_id,
-      topic_elem.topic
-    FROM feedback_records fr
-    CROSS JOIN LATERAL jsonb_array_elements_text(COALESCE(fr.metadata->'topics', '[]'::jsonb)) AS topic_elem(topic)
-  `,
-
-  measures: {
-    count: {
-      type: `count`,
-    },
-  },
-
-  dimensions: {
-    id: {
-      sql: `md5(feedback_record_id || '::' || topic)`,
-      type: `string`,
-      primaryKey: true,
-    },
-
-    feedbackRecordId: {
-      sql: `feedback_record_id`,
-      type: `string`,
-    },
-
-    tenantId: {
-      sql: `tenant_id`,
-      type: `string`,
-      description: `Tenant ID for row-level security scoping`,
-    },
-
-    topic: {
-      sql: `topic`,
-      type: `string`,
-      description: `Individual topic from the topics array`,
     },
   },
 });

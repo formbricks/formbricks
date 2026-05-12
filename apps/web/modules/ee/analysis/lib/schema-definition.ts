@@ -7,7 +7,7 @@ import type { TFunction } from "i18next";
 export interface FieldDefinition {
   id: string;
   label: string;
-  type: "string" | "number" | "time";
+  type: "string" | "number" | "time" | "boolean";
   description?: string;
 }
 
@@ -20,12 +20,6 @@ export interface MeasureDefinition {
 
 export const FEEDBACK_FIELDS = {
   dimensions: [
-    {
-      id: "FeedbackRecords.sentiment",
-      label: "Sentiment",
-      type: "string",
-      description: "Sentiment extracted from feedback",
-    },
     {
       id: "FeedbackRecords.sourceType",
       label: "Source Type",
@@ -45,10 +39,22 @@ export const FEEDBACK_FIELDS = {
       description: "Type of feedback field (e.g., nps, text, rating)",
     },
     {
-      id: "FeedbackRecords.emotion",
-      label: "Emotion",
+      id: "FeedbackRecords.fieldLabel",
+      label: "Question",
       type: "string",
-      description: "Emotion extracted from metadata JSONB field",
+      description: "Human-readable label of the question/field",
+    },
+    {
+      id: "FeedbackRecords.fieldGroupLabel",
+      label: "Question Group",
+      type: "string",
+      description: "Label of the parent composite question for matrix/ranking rows",
+    },
+    {
+      id: "FeedbackRecords.language",
+      label: "Language",
+      type: "string",
+      description: 'Response language code (e.g., "en", "de")',
     },
     {
       id: "FeedbackRecords.userId",
@@ -77,16 +83,34 @@ export const FEEDBACK_FIELDS = {
         "Text answer value (open text, or the label of a multiple-choice/categorical answer). Pair with a fieldType filter to keep types consistent.",
     },
     {
+      id: "FeedbackRecords.valueBoolean",
+      label: "Value (Boolean)",
+      type: "boolean",
+      description: "Boolean answer value (yes/no). Pair with a fieldType filter.",
+    },
+    {
+      id: "FeedbackRecords.valueDate",
+      label: "Value (Date)",
+      type: "time",
+      description: "Date answer value. Pair with a fieldType filter.",
+    },
+    {
       id: "FeedbackRecords.collectedAt",
       label: "Collected At",
       type: "time",
       description: "Timestamp when the feedback was collected",
     },
     {
-      id: "TopicsUnnested.topic",
-      label: "Topic",
-      type: "string",
-      description: "Individual topic from the topics array",
+      id: "FeedbackRecords.createdAt",
+      label: "Created At",
+      type: "time",
+      description: "Timestamp when the feedback record was created in Hub",
+    },
+    {
+      id: "FeedbackRecords.updatedAt",
+      label: "Updated At",
+      type: "time",
+      description: "Timestamp when the feedback record was last updated in Hub",
     },
   ] as FieldDefinition[],
   measures: [
@@ -157,6 +181,18 @@ export const FEEDBACK_FIELDS = {
       description: "Number of satisfied CSAT responses (top-2-box on the 1-5 scale)",
     },
     {
+      id: "FeedbackRecords.csatDissatisfiedCount",
+      label: "CSAT Dissatisfied Count",
+      type: "count",
+      description: "Number of dissatisfied CSAT responses (bottom-2-box on the 1-5 scale)",
+    },
+    {
+      id: "FeedbackRecords.csatNeutralCount",
+      label: "CSAT Neutral Count",
+      type: "count",
+      description: "Number of neutral CSAT responses (middle box on the 1-5 scale)",
+    },
+    {
       id: "FeedbackRecords.csatCount",
       label: "CSAT Count",
       type: "count",
@@ -201,6 +237,7 @@ export const FILTER_OPERATORS: Record<string, FilterOperator[]> = {
   string: ["equals", "notEquals", "contains", "notContains", "set", "notSet"],
   number: ["equals", "notEquals", "gt", "gte", "lt", "lte", "set", "notSet"],
   time: ["equals", "notEquals", "gt", "gte", "lt", "lte", "set", "notSet"],
+  boolean: ["equals", "notEquals", "set", "notSet"],
 };
 
 export const TIME_GRANULARITIES = ["hour", "day", "week", "month", "quarter", "year"] as const;
@@ -230,7 +267,7 @@ export const DATE_PRESETS = [
 /**
  * Get filter operators for a given field type.
  */
-export function getFilterOperatorsForType(type: "string" | "number" | "time"): FilterOperator[] {
+export function getFilterOperatorsForType(type: "string" | "number" | "time" | "boolean"): FilterOperator[] {
   return FILTER_OPERATORS[type] || FILTER_OPERATORS.string;
 }
 
@@ -248,17 +285,21 @@ export function getFieldById(id: string): FieldDefinition | MeasureDefinition | 
  */
 export function getTranslatedFieldLabel(id: string, t: TFunction): string {
   const labels: Record<string, string> = {
-    "FeedbackRecords.sentiment": t("workspace.analysis.charts.field_label_sentiment"),
     "FeedbackRecords.sourceType": t("workspace.analysis.charts.field_label_source_type"),
     "FeedbackRecords.sourceName": t("workspace.analysis.charts.field_label_source_name"),
     "FeedbackRecords.fieldType": t("workspace.analysis.charts.field_label_field_type"),
-    "FeedbackRecords.emotion": t("workspace.analysis.charts.field_label_emotion"),
+    "FeedbackRecords.fieldLabel": t("workspace.analysis.charts.field_label_question"),
+    "FeedbackRecords.fieldGroupLabel": t("workspace.analysis.charts.field_label_question_group"),
+    "FeedbackRecords.language": t("workspace.analysis.charts.field_label_language"),
     "FeedbackRecords.userId": t("workspace.analysis.charts.field_label_user_identifier"),
     "FeedbackRecords.responseId": t("workspace.analysis.charts.field_label_response_id"),
     "FeedbackRecords.valueNumber": t("workspace.analysis.charts.field_label_value_number"),
     "FeedbackRecords.valueText": t("workspace.analysis.charts.field_label_value_text"),
+    "FeedbackRecords.valueBoolean": t("workspace.analysis.charts.field_label_value_boolean"),
+    "FeedbackRecords.valueDate": t("workspace.analysis.charts.field_label_value_date"),
     "FeedbackRecords.collectedAt": t("workspace.analysis.charts.field_label_collected_at"),
-    "TopicsUnnested.topic": t("workspace.analysis.charts.field_label_topic"),
+    "FeedbackRecords.createdAt": t("workspace.analysis.charts.field_label_created_at"),
+    "FeedbackRecords.updatedAt": t("workspace.analysis.charts.field_label_updated_at"),
     "FeedbackRecords.count": t("workspace.analysis.charts.field_label_count"),
     "FeedbackRecords.uniqueRespondents": t("workspace.analysis.charts.field_label_unique_respondents"),
     "FeedbackRecords.uniqueResponses": t("workspace.analysis.charts.field_label_unique_responses"),
@@ -270,6 +311,10 @@ export function getTranslatedFieldLabel(id: string, t: TFunction): string {
     "FeedbackRecords.csatScore": t("workspace.analysis.charts.field_label_csat_score"),
     "FeedbackRecords.csatAverage": t("workspace.analysis.charts.field_label_csat_average"),
     "FeedbackRecords.csatSatisfiedCount": t("workspace.analysis.charts.field_label_csat_satisfied_count"),
+    "FeedbackRecords.csatDissatisfiedCount": t(
+      "workspace.analysis.charts.field_label_csat_dissatisfied_count"
+    ),
+    "FeedbackRecords.csatNeutralCount": t("workspace.analysis.charts.field_label_csat_neutral_count"),
     "FeedbackRecords.csatCount": t("workspace.analysis.charts.field_label_csat_count"),
     "FeedbackRecords.cesAverage": t("workspace.analysis.charts.field_label_ces_average"),
     "FeedbackRecords.cesCount": t("workspace.analysis.charts.field_label_ces_count"),

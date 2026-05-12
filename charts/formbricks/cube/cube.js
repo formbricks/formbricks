@@ -1,6 +1,6 @@
 /* eslint-env es2022 */
 
-const TENANT_MEMBERS = ["FeedbackRecords.tenantId", "TopicsUnnested.tenantId"];
+const TENANT_MEMBERS = ["FeedbackRecords.tenantId"];
 const REQUIRED_SCOPE = "xm:cube:query";
 
 function assertRequiredEnvironmentVariable(name) {
