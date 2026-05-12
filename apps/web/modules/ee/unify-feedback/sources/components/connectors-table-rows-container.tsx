@@ -9,6 +9,7 @@ interface ConnectorsTableRowsContainerProps {
   onDuplicate: (connector: TConnectorWithMappings) => Promise<void>;
   onToggleStatus: (connector: TConnectorWithMappings) => Promise<void>;
   onDelete: (connectorId: string) => Promise<void>;
+  isReadOnly?: boolean;
 }
 
 export const ConnectorsTableRowsContainer = ({
@@ -18,6 +19,7 @@ export const ConnectorsTableRowsContainer = ({
   onDuplicate,
   onToggleStatus,
   onDelete,
+  isReadOnly = false,
 }: ConnectorsTableRowsContainerProps) => {
   const { t } = useTranslation();
 
@@ -40,6 +42,7 @@ export const ConnectorsTableRowsContainer = ({
           onDuplicate={() => onDuplicate(connector)}
           onToggleStatus={() => onToggleStatus(connector)}
           onDelete={() => onDelete(connector.id)}
+          isReadOnly={isReadOnly}
         />
       ))}
     </div>

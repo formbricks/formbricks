@@ -37,6 +37,7 @@ interface ConnectorsTableDataRowProps {
   onDuplicate: () => Promise<void>;
   onToggleStatus: () => Promise<void>;
   onDelete: () => Promise<void>;
+  isReadOnly?: boolean;
 }
 
 const STATUS_BADGE_TYPE: Record<TConnectorStatus, "success" | "warning" | "error"> = {
@@ -52,10 +53,11 @@ export function ConnectorsTableDataRow({
   onDuplicate,
   onToggleStatus,
   onDelete,
+  isReadOnly = false,
 }: Readonly<ConnectorsTableDataRowProps>) {
   const { t, i18n } = useTranslation();
   const handleRowClick = () => {
-    if (connector.type === "csv" && onCsvImport) {
+    if (!isReadOnly && connector.type === "csv" && onCsvImport) {
       onCsvImport();
       return;
     }
@@ -110,14 +112,16 @@ export function ConnectorsTableDataRow({
         <span className="truncate">{connector.creatorName ?? "—"}</span>
       </div>
       <div className="col-span-1 flex items-center justify-end pr-2">
-        <ConnectorRowDropdown
-          connector={connector}
-          onEdit={onEdit}
-          onCsvImport={onCsvImport}
-          onDuplicate={onDuplicate}
-          onToggleStatus={onToggleStatus}
-          onDelete={onDelete}
-        />
+        {!isReadOnly && (
+          <ConnectorRowDropdown
+            connector={connector}
+            onEdit={onEdit}
+            onCsvImport={onCsvImport}
+            onDuplicate={onDuplicate}
+            onToggleStatus={onToggleStatus}
+            onDelete={onDelete}
+          />
+        )}
       </div>
     </div>
   );

@@ -17,8 +17,16 @@ export const WorkspaceFeedbackSourcesPage = async (
   const t = await getTranslate();
   const params = await props.params;
 
-  const { isOwner, isManager, hasReadAccess, hasReadWriteAccess, hasManageAccess, session, organization } =
-    await getWorkspaceAuth(params.workspaceId);
+  const {
+    isOwner,
+    isManager,
+    hasReadAccess,
+    hasReadWriteAccess,
+    hasManageAccess,
+    isReadOnly,
+    session,
+    organization,
+  } = await getWorkspaceAuth(params.workspaceId);
 
   if (!session) {
     throw new Error(t("common.session_not_found"));
@@ -72,6 +80,7 @@ export const WorkspaceFeedbackSourcesPage = async (
       initialConnectors={connectors}
       initialSurveys={unifySurveys}
       directories={directories}
+      isReadOnly={isReadOnly}
     />
   );
 };
