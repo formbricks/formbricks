@@ -95,10 +95,10 @@ export function ConnectorsTableDataRow({
         title={t(getConnectorTypeLabelKey(connector.type))}>
         {getConnectorIcon(connector.type, "h-4 w-4 text-slate-500")}
       </div>
-      <div className="col-span-5 flex items-center">
+      <div className="col-span-4 flex items-center">
         <span className="truncate text-sm font-medium text-slate-900">{connector.name}</span>
       </div>
-      <div className="col-span-1 hidden items-center justify-center sm:flex">
+      <div className="col-span-2 hidden items-center justify-center sm:flex">
         <Badge
           text={getStatusLabel(connector.status, connector.type)}
           type={STATUS_BADGE_TYPE[connector.status]}

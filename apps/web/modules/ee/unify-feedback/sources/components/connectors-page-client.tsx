@@ -17,7 +17,7 @@ import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Alert, AlertButton, AlertDescription } from "@/modules/ui/components/alert";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { TFieldMapping, TUnifySurvey } from "../types";
+import { TFieldMapping, TUnifySurvey, getTranslatedConnectorError } from "../types";
 import { ConnectorsTable } from "./connectors-table";
 import { CreateConnectorModal } from "./create-connector-modal";
 import { CsvImportModal } from "./csv-import-modal";
@@ -80,7 +80,7 @@ export function ConnectorsSection({
     });
 
     if (!result?.data) {
-      toast.error(getFormattedErrorMessage(result));
+      toast.error(getTranslatedConnectorError(getFormattedErrorMessage(result), t));
       return undefined;
     }
 
@@ -95,7 +95,7 @@ export function ConnectorsSection({
     name: string;
     surveyMappings?: { surveyId: string; elementIds: string[] }[];
     fieldMappings?: TFieldMapping[];
-  }) => {
+  }): Promise<boolean> => {
     const result = await updateConnectorWithMappingsAction({
       connectorId: data.connectorId,
       workspaceId: workspaceId,
@@ -113,19 +113,20 @@ export function ConnectorsSection({
     });
 
     if (!result?.data) {
-      toast.error(getFormattedErrorMessage(result));
-      return;
+      toast.error(getTranslatedConnectorError(getFormattedErrorMessage(result), t));
+      return false;
     }
 
     toast.success(t("workspace.unify.connector_updated_successfully"));
     router.refresh();
+    return true;
   };
 
   const handleDeleteConnector = async (connectorId: string): Promise<void> => {
     const result = await deleteConnectorAction({ connectorId, workspaceId: workspaceId });
 
     if (!result?.data) {
-      toast.error(getFormattedErrorMessage(result));
+      toast.error(getTranslatedConnectorError(getFormattedErrorMessage(result), t));
       return;
     }
 
@@ -140,7 +141,7 @@ export function ConnectorsSection({
     });
 
     if (!result?.data) {
-      toast.error(getFormattedErrorMessage(result));
+      toast.error(getTranslatedConnectorError(getFormattedErrorMessage(result), t));
       return;
     }
 
@@ -157,7 +158,7 @@ export function ConnectorsSection({
     });
 
     if (!result?.data) {
-      toast.error(getFormattedErrorMessage(result));
+      toast.error(getTranslatedConnectorError(getFormattedErrorMessage(result), t));
       return;
     }
 
