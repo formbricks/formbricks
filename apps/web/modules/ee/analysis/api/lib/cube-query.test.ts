@@ -139,7 +139,7 @@ describe("cube-query", () => {
       dimensions: [],
       segments: [],
       timeDimensions: ["FeedbackRecords.collectedAt"],
-      filterMembers: ["FeedbackRecords.sourceType", "FeedbackRecords.sourceType"],
+      filterMembers: ["FeedbackRecords.sourceType"],
       filterCount: 2,
       orderMembers: ["FeedbackRecords.collectedAt"],
     });
