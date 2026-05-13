@@ -782,7 +782,10 @@ hub:
     # When empty, the chart renders TEI args from model, servedModelName, port,
     # revision, and persistence.mountPath. Set this to fully override args.
     args: []
-    extraArgs: []
+    # Keeps the default GTE CPU runtime within the default memory budget.
+    extraArgs:
+      - --dtype
+      - float16
     env: {}
 
     port: 8080
