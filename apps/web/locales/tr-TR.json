@@ -3684,6 +3684,7 @@
       "delete_feedback_record": "Geri bildirim kaydını sil",
       "delete_feedback_record_confirmation": "Bu işlem geri bildirim kaydını kalıcı olarak silecek ve bağlı dizinden kaldıracaktır.",
       "delete_feedback_records_confirmation": "Bu işlem {count} geri bildirim kaydını kalıcı olarak silecek ve bağlı dizinden kaldıracaktır.",
+      "delete_source_confirmation": "Bu kaynağı silmek, gelecekteki içe aktarmaları durduracak ve kayıtlı eşleştirmesini kaldıracak. Mevcut geri bildirim kayıtları erişilebilir durumda kalacak.",
       "discard_feedback_record_changes_description": "Bu çekmeceyi kapatırsanız değişiklikleriniz kaybolacak.",
       "discard_feedback_record_changes_title": "Kaydedilmemiş değişiklikler silinsin mi?",
       "drop_a_field_here": "Buraya bir alan bırakın",

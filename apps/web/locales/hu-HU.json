@@ -3684,6 +3684,7 @@
       "delete_feedback_record": "Visszajelzési bejegyzés törlése",
       "delete_feedback_record_confirmation": "Ez véglegesen törli a visszajelzési bejegyzést, és eltávolítja a csatlakoztatott könyvtárból.",
       "delete_feedback_records_confirmation": "Ez véglegesen töröl {count} visszajelzési bejegyzést, és eltávolítja őket a csatlakoztatott könyvtárból.",
+      "delete_source_confirmation": "Ezen forrás törlésével leállítja a jövőbeli importálásokat, és eltávolítja annak mentett leképezését. A meglévő visszajelzési rekordok továbbra is elérhetők maradnak.",
       "discard_feedback_record_changes_description": "A módosítások elvesznek, ha bezárja ezt a fiókot.",
       "discard_feedback_record_changes_title": "Elveti a nem mentett módosításokat?",
       "drop_a_field_here": "Húzz ide egy mezőt",

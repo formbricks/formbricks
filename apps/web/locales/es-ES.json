@@ -3684,6 +3684,7 @@
       "delete_feedback_record": "Eliminar registro de comentarios",
       "delete_feedback_record_confirmation": "Esto eliminará permanentemente el registro de comentarios y lo quitará del directorio conectado.",
       "delete_feedback_records_confirmation": "Esto eliminará permanentemente {count} registros de comentarios y los quitará del directorio conectado.",
+      "delete_source_confirmation": "Eliminar esta fuente detendrá futuras importaciones y eliminará su mapeo guardado. Los registros de comentarios existentes seguirán estando disponibles.",
       "discard_feedback_record_changes_description": "Sus cambios se perderán si cierra este cajón.",
       "discard_feedback_record_changes_title": "¿Descartar los cambios no guardados?",
       "drop_a_field_here": "Suelta un campo aquí",

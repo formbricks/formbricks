@@ -3684,6 +3684,7 @@
       "delete_feedback_record": "刪除意見回饋記錄",
       "delete_feedback_record_confirmation": "這將永久刪除此意見回饋記錄，並從已連結的目錄中移除。",
       "delete_feedback_records_confirmation": "這將永久刪除 {count} 筆意見回饋記錄，並從已連結的目錄中移除。",
+      "delete_source_confirmation": "刪除此來源將停止未來的匯入並移除其已儲存的對應設定。現有的意見回饋記錄將保持可用。",
       "discard_feedback_record_changes_description": "如果關閉此抽屜，您的變更將會遺失。",
       "discard_feedback_record_changes_title": "放棄未儲存的變更？",
       "drop_a_field_here": "請將欄位拖曳到這裡",

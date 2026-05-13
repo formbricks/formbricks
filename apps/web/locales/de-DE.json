@@ -3684,6 +3684,7 @@
       "delete_feedback_record": "Feedback-Eintrag löschen",
       "delete_feedback_record_confirmation": "Dadurch wird der Feedback-Eintrag dauerhaft gelöscht und aus dem verbundenen Verzeichnis entfernt.",
       "delete_feedback_records_confirmation": "Dadurch werden {count} Feedback-Einträge dauerhaft gelöscht und aus dem verbundenen Verzeichnis entfernt.",
+      "delete_source_confirmation": "Wenn du diese Quelle löschst, werden zukünftige Importe gestoppt und das gespeicherte Mapping entfernt. Vorhandene Feedback-Datensätze bleiben weiterhin verfügbar.",
       "discard_feedback_record_changes_description": "Ihre Änderungen gehen verloren, wenn Sie diese Schublade schließen.",
       "discard_feedback_record_changes_title": "Nicht gespeicherte Änderungen verwerfen?",
       "drop_a_field_here": "Ziehe ein Feld hierher",

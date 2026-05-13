@@ -3684,6 +3684,7 @@
       "delete_feedback_record": "Ta bort feedbackpost",
       "delete_feedback_record_confirmation": "Detta kommer permanent ta bort feedbackposten och radera den från den anslutna katalogen.",
       "delete_feedback_records_confirmation": "Detta kommer permanent ta bort {count} feedbackposter och radera dem från den anslutna katalogen.",
+      "delete_source_confirmation": "Att ta bort den här källan kommer att stoppa framtida importer och ta bort dess sparade mappning. Befintliga feedbackposter kommer att förbli tillgängliga.",
       "discard_feedback_record_changes_description": "Dina ändringar kommer att gå förlorade om du stänger den här lådan.",
       "discard_feedback_record_changes_title": "Vill du ignorera osparade ändringar?",
       "drop_a_field_here": "Släpp ett fält här",

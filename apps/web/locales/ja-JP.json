@@ -3684,6 +3684,7 @@
       "delete_feedback_record": "フィードバック記録を削除",
       "delete_feedback_record_confirmation": "この操作により、フィードバック記録が完全に削除され、接続されているディレクトリから削除されます。",
       "delete_feedback_records_confirmation": "この操作により、{count}件のフィードバック記録が完全に削除され、接続されているディレクトリから削除されます。",
+      "delete_source_confirmation": "このソースを削除すると、今後のインポートが停止され、保存されたマッピングが削除されます。既存のフィードバック記録は引き続き利用可能です。",
       "discard_feedback_record_changes_description": "このドロワーを閉じると、変更内容は失われます。",
       "discard_feedback_record_changes_title": "保存されていない変更を破棄しますか?",
       "drop_a_field_here": "ここにフィールドをドロップ",
