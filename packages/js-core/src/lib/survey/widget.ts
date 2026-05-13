@@ -17,7 +17,7 @@ import { type TTrackProperties } from "@/types/survey";
 
 let isSurveyRunning = false;
 
-const getBrowserLanguageCodes = (): string[] => {
+export const getBrowserLanguageCodes = (): string[] => {
   if (typeof navigator === "undefined") return [];
   if (navigator.languages.length > 0) return [...navigator.languages];
   if (navigator.language) return [navigator.language];
