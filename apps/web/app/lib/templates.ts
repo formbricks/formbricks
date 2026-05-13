@@ -4925,6 +4925,7 @@ export const previewSurvey = (workspaceName: string, t: TFunction): TSurvey => {
     languages: [],
     triggers: [],
     showLanguageSwitch: false,
+    autoSelectLanguage: false,
     followUps: [],
     isBackButtonHidden: false,
     isAutoProgressingEnabled: true,

@@ -24,6 +24,7 @@ export const mockSurvey: TWorkspaceStateSurvey = {
   },
   type: "app", // "link" or "app"
   showLanguageSwitch: true,
+  autoSelectLanguage: false,
   endings: [],
   autoClose: 5,
   status: "inProgress", // whatever statuses you use

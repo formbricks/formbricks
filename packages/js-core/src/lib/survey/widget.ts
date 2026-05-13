@@ -17,6 +17,15 @@ import { type TTrackProperties } from "@/types/survey";
 
 let isSurveyRunning = false;
 
+const getBrowserLanguageCodes = (): string[] => {
+  if (typeof navigator === "undefined") return [];
+  return navigator.languages?.length
+    ? [...navigator.languages]
+    : navigator.language
+      ? [navigator.language]
+      : [];
+};
+
 export const setIsSurveyRunning = (value: boolean): void => {
   isSurveyRunning = value;
 };
@@ -90,7 +99,11 @@ export const renderWidget = async (
   let languageCode = "default";
 
   if (isMultiLanguageSurvey) {
-    const displayLanguage = getLanguageCode(survey, language);
+    const displayLanguage = getLanguageCode(
+      survey,
+      language,
+      survey.autoSelectLanguage ? getBrowserLanguageCodes() : []
+    );
     //if survey is not available in selected language, survey wont be shown
     if (!displayLanguage) {
       logger.debug(`Survey "${survey.name}" is not available in specified language.`);

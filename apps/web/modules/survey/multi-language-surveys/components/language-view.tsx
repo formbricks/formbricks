@@ -265,6 +265,10 @@ export const LanguageView = ({
     setLocalSurvey({ ...localSurvey, showLanguageSwitch: !localSurvey.showLanguageSwitch });
   };
 
+  const handleAutoSelectLanguageToggle = () => {
+    setLocalSurvey({ ...localSurvey, autoSelectLanguage: !localSurvey.autoSelectLanguage });
+  };
+
   const openTranslationModal = (code: string) => {
     setActiveLanguageCode(code);
     setTranslationModalOpen(true);
@@ -487,6 +491,16 @@ export const LanguageView = ({
             description={t(
               "workspace.surveys.edit.enable_participants_to_switch_the_survey_language_at_any_point_during_the_survey"
             )}
+            childBorder={true}
+          />
+          <AdvancedOptionToggle
+            customContainerClass="px-0 pt-0"
+            htmlId="autoSelectLanguage"
+            disabled={enabledLanguages.length <= 1}
+            isChecked={!!localSurvey.autoSelectLanguage}
+            onToggle={handleAutoSelectLanguageToggle}
+            title={t("environments.surveys.edit.auto_select_browser_language")}
+            description={t("environments.surveys.edit.auto_select_browser_language_description")}
             childBorder={true}
           />
         </div>

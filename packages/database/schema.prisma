@@ -404,6 +404,7 @@ model Survey {
   displayPercentage               Decimal?
   languages                       SurveyLanguage[]
   showLanguageSwitch              Boolean?
+  autoSelectLanguage              Boolean?
   followUps                       SurveyFollowUp[]
   /// [SurveyRecaptcha]
   recaptcha                       Json?                        @default("{\"enabled\": false, \"threshold\":0.1}")

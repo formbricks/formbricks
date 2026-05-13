@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { findMatchingLocale } from "@/lib/utils/locale";
+import { findMatchingBrowserLanguageCodes, findMatchingLocale } from "@/lib/utils/locale";
 import { getTranslate } from "@/lingodotdev/server";
 import { verifyContactSurveyToken } from "@/modules/ee/contacts/lib/contact-survey-link";
 import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
@@ -136,10 +136,11 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
     singleUseId = validatedSingleUseId;
   }
 
-  // Parallel fetch of environment context and locale
-  const [workspaceContext, locale, singleUseResponse] = await Promise.all([
+  // Parallel fetch of workspace context, locale, browser language, and contact response
+  const [workspaceContext, locale, browserLanguageCodes, singleUseResponse] = await Promise.all([
     getWorkspaceContextForLinkSurvey(survey.workspaceId),
     findMatchingLocale(),
+    findMatchingBrowserLanguageCodes(),
     // Fetch existing response for this contact
     getExistingContactResponse(survey.id, contactId)(),
   ]);
@@ -158,6 +159,7 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
     singleUseResponse,
     workspaceContext,
     locale,
+    browserLanguageCodes,
     responseCount,
   });
 };
