@@ -22,6 +22,8 @@ import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import type { FeedbackRecordData } from "@/modules/hub/types";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
+import { Checkbox } from "@/modules/ui/components/checkbox";
+import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,9 +32,11 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
+import { deleteFeedbackRecordAction } from "../actions";
 import { formatSourceType } from "../lib/utils";
 import { CsvImportModal } from "../sources/components/csv-import-modal";
 import { FeedbackRecordFormDrawer } from "./feedback-record-form-drawer";
+import { FeedbackRecordsTableToolbarLeft } from "./feedback-records-table-toolbar-left";
 
 const RECORDS_PER_PAGE = 50;
 
@@ -92,8 +96,41 @@ export const FeedbackRecordsTable = ({
     name: string;
     fieldMappings: TConnectorFieldMapping[];
   } | null>(null);
+  const [csvImportSource, setCsvImportSource] = useState<{ id: string; name: string } | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+  const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const hasMore = Object.keys(cursors).length > 0;
+  const selectedCount = selectedIds.size;
+  const allOnPageSelected = records.length > 0 && records.every((record) => selectedIds.has(record.id));
+  const someOnPageSelected = records.some((record) => selectedIds.has(record.id));
+
+  const toggleAllOnPage = (checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) {
+        records.forEach((record) => next.add(record.id));
+      } else {
+        records.forEach((record) => next.delete(record.id));
+      }
+      return next;
+    });
+  };
+
+  const toggleOne = (recordId: string, checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) {
+        next.add(recordId);
+      } else {
+        next.delete(recordId);
+      }
+      return next;
+    });
+  };
+
+  const clearSelection = () => setSelectedIds(new Set());
 
   const directories = useMemo(
     () =>
@@ -165,6 +202,7 @@ export const FeedbackRecordsTable = ({
     const mergedRecords = result.records.toSorted((a, b) => (a.collected_at < b.collected_at ? 1 : -1));
     setRecords(mergedRecords);
     setCursors(result.newCursors);
+    setSelectedIds(new Set());
     setIsRefreshing(false);
     toast.success(t("workspace.unify.feedback_records_refreshed"), { id: toastId });
   };
@@ -204,6 +242,56 @@ export const FeedbackRecordsTable = ({
 
   const isEmpty = records.length === 0 && !isRefreshing;
 
+  const handleBulkDelete = async () => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    setIsDeleting(true);
+    const CHUNK_SIZE = 5;
+    const failedIds: string[] = [];
+    try {
+      for (let i = 0; i < ids.length; i += CHUNK_SIZE) {
+        const chunk = ids.slice(i, i + CHUNK_SIZE);
+        const results = await Promise.all(
+          chunk.map(async (recordId) => ({
+            recordId,
+            result: await deleteFeedbackRecordAction({ workspaceId, recordId }),
+          }))
+        );
+        results.forEach(({ recordId, result }) => {
+          if (!result?.data) failedIds.push(recordId);
+        });
+      }
+
+      const succeeded = ids.filter((id) => !failedIds.includes(id));
+      if (succeeded.length > 0) {
+        setRecords((prev) => prev.filter((record) => !succeeded.includes(record.id)));
+        setSelectedIds((prev) => {
+          const next = new Set(prev);
+          succeeded.forEach((id) => next.delete(id));
+          return next;
+        });
+      }
+
+      if (failedIds.length === 0) {
+        toast.success(
+          t("workspace.unify.feedback_records_deleted_successfully", { count: succeeded.length })
+        );
+      } else if (succeeded.length === 0) {
+        toast.error(t("workspace.unify.failed_to_delete_feedback_records"));
+      } else {
+        toast.error(
+          t("workspace.unify.feedback_records_partially_deleted", {
+            succeeded: succeeded.length,
+            total: ids.length,
+          })
+        );
+      }
+    } finally {
+      setIsDeleting(false);
+      setIsBulkDeleteDialogOpen(false);
+    }
+  };
+
   const openEditDrawer = (recordId: string) => {
     setDrawerMode("edit");
     setDrawerRecordId(recordId);
@@ -218,19 +306,24 @@ export const FeedbackRecordsTable = ({
 
   const hasCsvSources = csvSources.length > 0;
 
+  let headerCheckboxChecked: boolean | "indeterminate" = false;
+  if (allOnPageSelected) {
+    headerCheckboxChecked = true;
+  } else if (someOnPageSelected) {
+    headerCheckboxChecked = "indeterminate";
+  }
+
   return (
     <>
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          {isEmpty ? (
-            <span />
-          ) : (
-            <p className="text-sm text-slate-500">
-              {t("workspace.unify.showing_count_loaded", {
-                count: records.length,
-              })}
-            </p>
-          )}
+          <FeedbackRecordsTableToolbarLeft
+            selectedCount={selectedCount}
+            recordsCount={records.length}
+            isEmpty={isEmpty}
+            onClearSelection={clearSelection}
+            onBulkDelete={() => setIsBulkDeleteDialogOpen(true)}
+          />
           <div className="flex items-center gap-2">
             {canWrite &&
               (hasCsvSources ? (
@@ -285,6 +378,13 @@ export const FeedbackRecordsTable = ({
             <table className="w-full min-w-[900px]">
               <thead>
                 <tr className="border-b border-slate-200 text-left text-sm text-slate-900 [&>th]:font-semibold">
+                  <th className="w-10 px-4 py-3">
+                    <Checkbox
+                      aria-label={t("common.select_all")}
+                      checked={headerCheckboxChecked}
+                      onCheckedChange={(checked) => toggleAllOnPage(checked === true)}
+                    />
+                  </th>
                   <th className="whitespace-nowrap px-4 py-3">{t("workspace.unify.collected_at")}</th>
                   <th className="whitespace-nowrap px-4 py-3">{t("workspace.unify.source_type")}</th>
                   <th className="whitespace-nowrap px-4 py-3">{t("workspace.unify.source_name")}</th>
@@ -297,7 +397,7 @@ export const FeedbackRecordsTable = ({
               {isEmpty ? (
                 <tbody>
                   <tr>
-                    <td colSpan={7}>
+                    <td colSpan={8}>
                       <div className="flex h-32 items-center justify-center">
                         <p className="text-sm text-slate-500">{t("workspace.unify.no_feedback_records")}</p>
                       </div>
@@ -313,6 +413,8 @@ export const FeedbackRecordsTable = ({
                       workspaceId={workspaceId}
                       locale={i18n.resolvedLanguage ?? i18n.language ?? "en-US"}
                       t={t}
+                      isSelected={selectedIds.has(record.id)}
+                      onSelectChange={(checked) => toggleOne(record.id, checked)}
                       onClick={() => openEditDrawer(record.id)}
                     />
                   ))}
@@ -347,6 +449,15 @@ export const FeedbackRecordsTable = ({
         onSuccess={handleRefresh}
       />
 
+      <DeleteDialog
+        open={isBulkDeleteDialogOpen}
+        setOpen={setIsBulkDeleteDialogOpen}
+        deleteWhat={t("workspace.unify.feedback_records")}
+        text={t("workspace.unify.delete_feedback_records_confirmation", { count: selectedCount })}
+        onDelete={handleBulkDelete}
+        isDeleting={isDeleting}
+      />
+
       {csvImportSource && (
         <CsvImportModal
           open={csvImportSource !== null}
@@ -369,12 +480,16 @@ const FeedbackRecordRow = ({
   workspaceId,
   locale,
   t,
+  isSelected,
+  onSelectChange,
   onClick,
 }: {
   record: FeedbackRecordData;
   workspaceId: string;
   locale: string;
   t: TFunction;
+  isSelected: boolean;
+  onSelectChange: (checked: boolean) => void;
   onClick: () => void;
 }) => {
   const value = formatValue(record, t, locale);
@@ -385,10 +500,10 @@ const FeedbackRecordRow = ({
 
   return (
     <tr
-      className="cursor-pointer text-sm text-slate-700 transition-colors focus-within:bg-slate-50 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+      className={`cursor-pointer text-sm text-slate-700 transition-colors focus-within:bg-slate-50 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 ${isSelected ? "bg-slate-50" : ""}`}
       tabIndex={0}
-      role="button"
       aria-label={record.field_label ?? record.field_id}
+      aria-selected={isSelected}
       onClick={onClick}
       onKeyDown={(event) => {
         if (event.key === "Enter" || event.key === " ") {
@@ -396,6 +511,16 @@ const FeedbackRecordRow = ({
           onClick();
         }
       }}>
+      <td
+        className="w-10 px-4 py-3"
+        onClick={(event) => event.stopPropagation()}
+        onKeyDown={(event) => event.stopPropagation()}>
+        <Checkbox
+          aria-label={record.field_label ?? record.field_id}
+          checked={isSelected}
+          onCheckedChange={(checked) => onSelectChange(checked === true)}
+        />
+      </td>
       <td className="whitespace-nowrap px-4 py-3 text-slate-500">
         {formatDateTimeForDisplay(new Date(record.collected_at), locale)}
       </td>

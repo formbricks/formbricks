@@ -1,19 +1,25 @@
 "use server";
 
-import { OperationNotAllowedError } from "@formbricks/types/errors";
+import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getIsUnifyFeedbackEnabled } from "@/modules/ee/license-check/lib/utils";
-import { createFeedbackRecord, retrieveFeedbackRecord, updateFeedbackRecord } from "@/modules/hub/service";
+import {
+  createFeedbackRecord,
+  deleteFeedbackRecord,
+  retrieveFeedbackRecord,
+  updateFeedbackRecord,
+} from "@/modules/hub/service";
 import type { FeedbackRecordCreateParams, FeedbackRecordUpdateParams } from "@/modules/hub/types";
 import {
   TCreateFeedbackRecordAction,
   TRetrieveFeedbackRecordAction,
   TUpdateFeedbackRecordAction,
   ZCreateFeedbackRecordAction,
+  ZDeleteFeedbackRecordAction,
   ZRetrieveFeedbackRecordAction,
   ZUpdateFeedbackRecordAction,
 } from "./types";
@@ -50,10 +56,14 @@ const getWorkspaceDirectoryIds = async (workspaceId: string): Promise<Set<string
   return new Set(directories.map((directory) => directory.id));
 };
 
-const assertRecordBelongsToWorkspace = (directoryIds: Set<string>, tenantId: string): void => {
+const assertRecordBelongsToWorkspace = (
+  directoryIds: Set<string>,
+  tenantId: string,
+  recordId: string | null
+): void => {
   if (!directoryIds.has(tenantId)) {
-    // Throw a generic error indistinguishable from "not found" to prevent IDOR
-    throw new Error("Feedback record not found");
+    // Same error shape as a genuine "not found" to prevent IDOR via response differences
+    throw new ResourceNotFoundError("Feedback record", recordId);
   }
 };
 
@@ -74,10 +84,14 @@ export const retrieveFeedbackRecordAction = authenticatedActionClient
 
       const recordResult = await retrieveFeedbackRecord(parsedInput.recordId);
       if (!recordResult.data || recordResult.error) {
-        throw new Error("Feedback record not found");
+        throw new ResourceNotFoundError("Feedback record", parsedInput.recordId);
       }
 
-      assertRecordBelongsToWorkspace(workspaceDirectoryIds, recordResult.data.tenant_id);
+      assertRecordBelongsToWorkspace(
+        workspaceDirectoryIds,
+        recordResult.data.tenant_id,
+        parsedInput.recordId
+      );
 
       return recordResult.data;
     }
@@ -96,7 +110,7 @@ export const createFeedbackRecordAction = authenticatedActionClient
       await ensureAccess(ctx.user.id, parsedInput.workspaceId, "readWrite");
 
       const workspaceDirectoryIds = await getWorkspaceDirectoryIds(parsedInput.workspaceId);
-      assertRecordBelongsToWorkspace(workspaceDirectoryIds, parsedInput.recordInput.tenant_id);
+      assertRecordBelongsToWorkspace(workspaceDirectoryIds, parsedInput.recordInput.tenant_id, null);
 
       const { recordInput } = parsedInput;
       const createParams: FeedbackRecordCreateParams = {
@@ -146,10 +160,14 @@ export const updateFeedbackRecordAction = authenticatedActionClient
 
       const currentRecordResult = await retrieveFeedbackRecord(parsedInput.recordId);
       if (!currentRecordResult.data || currentRecordResult.error) {
-        throw new Error("Feedback record not found");
+        throw new ResourceNotFoundError("Feedback record", parsedInput.recordId);
       }
 
-      assertRecordBelongsToWorkspace(workspaceDirectoryIds, currentRecordResult.data.tenant_id);
+      assertRecordBelongsToWorkspace(
+        workspaceDirectoryIds,
+        currentRecordResult.data.tenant_id,
+        parsedInput.recordId
+      );
 
       const { updateInput } = parsedInput;
       const updateParams: FeedbackRecordUpdateParams = {
@@ -176,3 +194,30 @@ export const updateFeedbackRecordAction = authenticatedActionClient
       return updateResult.data;
     }
   );
+
+export const deleteFeedbackRecordAction = authenticatedActionClient
+  .inputSchema(ZDeleteFeedbackRecordAction)
+  .action(async ({ ctx, parsedInput }) => {
+    const [, workspaceDirectoryIds] = await Promise.all([
+      ensureAccess(ctx.user.id, parsedInput.workspaceId, "readWrite"),
+      getWorkspaceDirectoryIds(parsedInput.workspaceId),
+    ]);
+
+    const currentRecordResult = await retrieveFeedbackRecord(parsedInput.recordId);
+    if (!currentRecordResult.data || currentRecordResult.error) {
+      throw new ResourceNotFoundError("Feedback record", parsedInput.recordId);
+    }
+
+    assertRecordBelongsToWorkspace(
+      workspaceDirectoryIds,
+      currentRecordResult.data.tenant_id,
+      parsedInput.recordId
+    );
+
+    const deleteResult = await deleteFeedbackRecord(parsedInput.recordId);
+    if (!deleteResult.data || deleteResult.error) {
+      throw new Error(deleteResult.error?.message || "Failed to delete feedback record");
+    }
+
+    return { recordId: parsedInput.recordId };
+  });

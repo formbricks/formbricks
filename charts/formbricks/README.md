@@ -186,6 +186,7 @@ Autoscaling is opt-in for Hub API, Hub worker, and the embeddings runtime. If yo
 | hub.embeddings.autoscaling.minReplicas                             | int    | `1`                               |             |
 | hub.embeddings.baseUrl                                             | string | `""`                              | Defaults to the internal TEI service URL ending in `/v1`. |
 | hub.embeddings.enabled                                             | bool   | `false`                           |             |
+| hub.embeddings.extraArgs                                           | list   | `["--dtype","float16"]`           | Additional args appended to the generated TEI args. |
 | hub.embeddings.huggingFace.existingSecret                          | string | `""`                              |             |
 | hub.embeddings.huggingFace.token                                   | string | `""`                              |             |
 | hub.embeddings.huggingFace.tokenKey                                | string | `"HF_TOKEN"`                      |             |

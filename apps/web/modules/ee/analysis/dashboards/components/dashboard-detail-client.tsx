@@ -17,10 +17,15 @@ import { DashboardWidget } from "@/modules/ee/analysis/dashboards/components/das
 import { DashboardWidgetData } from "@/modules/ee/analysis/dashboards/components/dashboard-widget-data";
 import { DashboardWidgetSkeleton } from "@/modules/ee/analysis/dashboards/components/dashboard-widget-skeleton";
 import type { TChartDataRow, TDashboardDetail, TDashboardWidget } from "@/modules/ee/analysis/types/analysis";
+import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { EmptyState } from "@/modules/ui/components/empty-state";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
-import { updateDashboardAction, updateWidgetLayoutsAction } from "../actions";
+import {
+  removeWidgetFromDashboardAction,
+  updateDashboardAction,
+  updateWidgetLayoutsAction,
+} from "../actions";
 import type { TDashboardWidgetError } from "../lib/widget-errors";
 
 const ROW_HEIGHT = 80;
@@ -163,6 +168,8 @@ export function DashboardDetailClient({
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [editingChartId, setEditingChartId] = useState<string | null>(null);
+  const [widgetIdToRemove, setWidgetIdToRemove] = useState<string | null>(null);
+  const [isRemovingWidget, setIsRemovingWidget] = useState(false);
   const [, startTransition] = useTransition();
 
   const [name, setName] = useState(dashboard.name);
@@ -207,16 +214,35 @@ export function DashboardDetailClient({
 
   const handleRemoveWidgetFromMenu = useCallback(
     (widgetId: string) => {
-      if (!isEditing) {
-        setDraftWidgets((current) => (current ?? dashboard.widgets).filter((w) => w.id !== widgetId));
-        setIsEditing(true);
+      if (isEditing) {
+        handleRemoveWidget(widgetId);
         return;
       }
-
-      handleRemoveWidget(widgetId);
+      setWidgetIdToRemove(widgetId);
     },
-    [dashboard.widgets, handleRemoveWidget, isEditing]
+    [handleRemoveWidget, isEditing]
   );
+
+  const handleConfirmRemoveWidget = useCallback(async () => {
+    if (!widgetIdToRemove) return;
+    setIsRemovingWidget(true);
+    try {
+      const result = await removeWidgetFromDashboardAction({
+        workspaceId,
+        dashboardId: dashboard.id,
+        widgetId: widgetIdToRemove,
+      });
+      if (!result?.data) {
+        toast.error(getFormattedErrorMessage(result));
+        return;
+      }
+      toast.success(t("workspace.analysis.dashboards.chart_removed"));
+      setWidgetIdToRemove(null);
+      startTransition(() => router.refresh());
+    } finally {
+      setIsRemovingWidget(false);
+    }
+  }, [widgetIdToRemove, workspaceId, dashboard.id, router, t, startTransition]);
 
   const handleCancel = useCallback(() => {
     setName(dashboard.name);
@@ -371,6 +397,17 @@ export function DashboardDetailClient({
           directories={directories}
           isAIAvailable={isAIAvailable}
           aiUnavailableReason={aiUnavailableReason}
+        />
+      )}
+      {!isReadOnly && (
+        <DeleteDialog
+          open={widgetIdToRemove !== null}
+          setOpen={(open) => {
+            if (!open) setWidgetIdToRemove(null);
+          }}
+          deleteWhat={t("common.chart")}
+          onDelete={handleConfirmRemoveWidget}
+          isDeleting={isRemovingWidget}
         />
       )}
     </PageContentWrapper>
