@@ -300,38 +300,50 @@ export const FeedbackRecordsTable = ({
 
   const hasCsvSources = csvSources.length > 0;
 
+  let headerCheckboxChecked: boolean | "indeterminate" = false;
+  if (allOnPageSelected) {
+    headerCheckboxChecked = true;
+  } else if (someOnPageSelected) {
+    headerCheckboxChecked = "indeterminate";
+  }
+
+  let toolbarLeftContent: React.ReactNode;
+  if (selectedCount > 0) {
+    toolbarLeftContent = (
+      <div className="flex items-center gap-x-2 rounded-md bg-primary p-1 px-2 text-xs text-white">
+        <span className="lowercase">
+          {`${selectedCount} ${t("workspace.unify.feedback_records").toLowerCase()} ${t("common.selected")}`}
+        </span>
+        <span>|</span>
+        <Button variant="outline" size="sm" className="h-6 border-none px-2" onClick={clearSelection}>
+          {t("common.clear_selection")}
+        </Button>
+        <span>|</span>
+        <Button
+          variant="secondary"
+          size="sm"
+          className="h-6 gap-1 px-2"
+          onClick={() => setIsBulkDeleteDialogOpen(true)}>
+          {t("common.delete")}
+          <Trash2Icon />
+        </Button>
+      </div>
+    );
+  } else if (isEmpty) {
+    toolbarLeftContent = <span />;
+  } else {
+    toolbarLeftContent = (
+      <p className="text-sm text-slate-500">
+        {t("workspace.unify.showing_count_loaded", { count: records.length })}
+      </p>
+    );
+  }
+
   return (
     <>
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          {selectedCount > 0 ? (
-            <div className="flex items-center gap-x-2 rounded-md bg-primary p-1 px-2 text-xs text-white">
-              <span className="lowercase">
-                {`${selectedCount} ${t("workspace.unify.feedback_records").toLowerCase()} ${t("common.selected")}`}
-              </span>
-              <span>|</span>
-              <Button variant="outline" size="sm" className="h-6 border-none px-2" onClick={clearSelection}>
-                {t("common.clear_selection")}
-              </Button>
-              <span>|</span>
-              <Button
-                variant="secondary"
-                size="sm"
-                className="h-6 gap-1 px-2"
-                onClick={() => setIsBulkDeleteDialogOpen(true)}>
-                {t("common.delete")}
-                <Trash2Icon />
-              </Button>
-            </div>
-          ) : isEmpty ? (
-            <span />
-          ) : (
-            <p className="text-sm text-slate-500">
-              {t("workspace.unify.showing_count_loaded", {
-                count: records.length,
-              })}
-            </p>
-          )}
+          {toolbarLeftContent}
           <div className="flex items-center gap-2">
             {canWrite &&
               (hasCsvSources ? (
@@ -389,7 +401,7 @@ export const FeedbackRecordsTable = ({
                   <th className="w-10 px-4 py-3">
                     <Checkbox
                       aria-label={t("common.select_all")}
-                      checked={allOnPageSelected ? true : someOnPageSelected ? "indeterminate" : false}
+                      checked={headerCheckboxChecked}
                       onCheckedChange={(checked) => toggleAllOnPage(checked === true)}
                     />
                   </th>
@@ -509,7 +521,6 @@ const FeedbackRecordRow = ({
     <tr
       className={`cursor-pointer text-sm text-slate-700 transition-colors focus-within:bg-slate-50 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 ${isSelected ? "bg-slate-50" : ""}`}
       tabIndex={0}
-      role="button"
       aria-label={record.field_label ?? record.field_id}
       aria-selected={isSelected}
       onClick={onClick}
