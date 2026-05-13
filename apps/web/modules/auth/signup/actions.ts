@@ -201,8 +201,7 @@ async function handleOrganizationCreation(ctx: ActionClientCtx, user: TCreatedUs
 async function handlePostUserCreation(
   ctx: ActionClientCtx,
   user: TCreatedUser,
-  inviteToken: string | undefined,
-  emailVerificationDisabled: boolean | undefined
+  inviteToken: string | undefined
 ): Promise<void> {
   if (inviteToken) {
     await handleInviteAcceptance(ctx, inviteToken, user);
@@ -210,7 +209,7 @@ async function handlePostUserCreation(
     await handleOrganizationCreation(ctx, user);
   }
 
-  if (!emailVerificationDisabled) {
+  if (!EMAIL_VERIFICATION_DISABLED) {
     let inviteCallbackUrl: string | undefined;
 
     if (inviteToken) {
@@ -242,7 +241,7 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
     );
 
     if (!userAlreadyExisted && user) {
-      await handlePostUserCreation(ctx, user, parsedInput.inviteToken, EMAIL_VERIFICATION_DISABLED);
+      await handlePostUserCreation(ctx, user, parsedInput.inviteToken);
 
       await subscribeUserToMailingList({
         email: user.email,
