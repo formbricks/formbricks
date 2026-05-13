@@ -1,11 +1,11 @@
-type TSurveyLanguageLike = {
+interface TSurveyLanguageLike {
   default?: boolean | null;
   enabled?: boolean | null;
   language: {
     code: string;
     alias?: string | null;
   };
-};
+}
 
 interface ResolveSurveyLanguageInput<T extends TSurveyLanguageLike> {
   languages: T[];
@@ -77,7 +77,7 @@ export const matchSurveyLanguage = <T extends TSurveyLanguageLike>(
 
 /**
  * Resolves survey language precedence without coupling callers to a delivery channel:
- * explicit language (URL or SDK/user setting) -> browser languages when enabled -> survey default.
+ * explicit language (URL or SDK/user setting) -\> browser languages when enabled -\> survey default.
  */
 export const resolveSurveyLanguage = <T extends TSurveyLanguageLike>({
   languages,
