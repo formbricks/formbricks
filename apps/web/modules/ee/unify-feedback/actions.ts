@@ -1,19 +1,25 @@
 "use server";
 
-import { OperationNotAllowedError } from "@formbricks/types/errors";
+import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getIsUnifyFeedbackEnabled } from "@/modules/ee/license-check/lib/utils";
-import { createFeedbackRecord, retrieveFeedbackRecord, updateFeedbackRecord } from "@/modules/hub/service";
+import {
+  createFeedbackRecord,
+  deleteFeedbackRecord,
+  retrieveFeedbackRecord,
+  updateFeedbackRecord,
+} from "@/modules/hub/service";
 import type { FeedbackRecordCreateParams, FeedbackRecordUpdateParams } from "@/modules/hub/types";
 import {
   TCreateFeedbackRecordAction,
   TRetrieveFeedbackRecordAction,
   TUpdateFeedbackRecordAction,
   ZCreateFeedbackRecordAction,
+  ZDeleteFeedbackRecordAction,
   ZRetrieveFeedbackRecordAction,
   ZUpdateFeedbackRecordAction,
 } from "./types";
@@ -176,3 +182,26 @@ export const updateFeedbackRecordAction = authenticatedActionClient
       return updateResult.data;
     }
   );
+
+export const deleteFeedbackRecordAction = authenticatedActionClient
+  .inputSchema(ZDeleteFeedbackRecordAction)
+  .action(async ({ ctx, parsedInput }) => {
+    const [, workspaceDirectoryIds] = await Promise.all([
+      ensureAccess(ctx.user.id, parsedInput.workspaceId, "readWrite"),
+      getWorkspaceDirectoryIds(parsedInput.workspaceId),
+    ]);
+
+    const currentRecordResult = await retrieveFeedbackRecord(parsedInput.recordId);
+    if (!currentRecordResult.data || currentRecordResult.error) {
+      throw new ResourceNotFoundError("Feedback record", parsedInput.recordId);
+    }
+
+    assertRecordBelongsToWorkspace(workspaceDirectoryIds, currentRecordResult.data.tenant_id);
+
+    const deleteResult = await deleteFeedbackRecord(parsedInput.recordId);
+    if (!deleteResult.ok || deleteResult.error) {
+      throw new Error(deleteResult.error?.message || "Failed to delete feedback record");
+    }
+
+    return { recordId: parsedInput.recordId };
+  });

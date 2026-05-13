@@ -98,6 +98,31 @@ export const updateFeedbackRecord = async (
   }
 };
 
+export type HubFeedbackRecordDeleteResult = {
+  ok: boolean;
+  error: HubError | null;
+};
+
+/**
+ * Delete a single feedback record in the Hub by id.
+ */
+export const deleteFeedbackRecord = async (id: string): Promise<HubFeedbackRecordDeleteResult> => {
+  const client = getHubClient();
+  if (!client) {
+    return { ok: false, error: { ...NO_CONFIG_ERROR } };
+  }
+
+  try {
+    await client.feedbackRecords.delete(id);
+    return { ok: true, error: null };
+  } catch (err) {
+    logger.warn({ err, id }, "Hub: deleteFeedbackRecord failed");
+    const status = err instanceof FormbricksHub.APIError ? err.status : 0;
+    const message = getErrorMessage(err);
+    return { ok: false, error: { status, message, detail: message } };
+  }
+};
+
 export type ListFeedbackRecordsResult = {
   data: FeedbackRecordListResponse | null;
   error: HubError | null;

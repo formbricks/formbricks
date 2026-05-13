@@ -78,3 +78,10 @@ export const ZUpdateFeedbackRecordAction = z.object({
 });
 
 export type TUpdateFeedbackRecordAction = z.infer<typeof ZUpdateFeedbackRecordAction>;
+
+export const ZDeleteFeedbackRecordAction = z.object({
+  workspaceId: ZId,
+  recordId: ZFeedbackRecordId,
+});
+
+export type TDeleteFeedbackRecordAction = z.infer<typeof ZDeleteFeedbackRecordAction>;

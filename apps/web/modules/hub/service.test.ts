@@ -4,6 +4,7 @@ import FormbricksHub from "@formbricks/hub";
 import {
   createFeedbackRecord,
   createFeedbackRecordsBatch,
+  deleteFeedbackRecord,
   getFeedbackRecordTenant,
   listFeedbackRecords,
   retrieveFeedbackRecord,
@@ -275,6 +276,53 @@ describe("hub service", () => {
       const result = await updateFeedbackRecord("rec-1", { value_text: "new" });
       expect(result.data).toBeNull();
       expect(result.error).toMatchObject({ message: "Forbidden" });
+    });
+  });
+
+  describe("deleteFeedbackRecord", () => {
+    test("returns config error when getHubClient returns null", async () => {
+      vi.mocked(getHubClient).mockReturnValue(null);
+
+      const result = await deleteFeedbackRecord("rec-1");
+
+      expect(result.ok).toBe(false);
+      expect(result.error?.message).toContain("HUB_API_KEY");
+    });
+
+    test("returns ok when client.delete resolves", async () => {
+      const deleteSpy = vi.fn().mockResolvedValue(undefined);
+      vi.mocked(getHubClient).mockReturnValue({
+        feedbackRecords: { delete: deleteSpy },
+      } as any);
+
+      const result = await deleteFeedbackRecord("rec-1");
+
+      expect(deleteSpy).toHaveBeenCalledWith("rec-1");
+      expect(result.ok).toBe(true);
+      expect(result.error).toBeNull();
+    });
+
+    test("returns error when client.delete throws APIError", async () => {
+      const apiError = new (FormbricksHub as any).APIError("Forbidden", 403);
+      vi.mocked(getHubClient).mockReturnValue({
+        feedbackRecords: { delete: vi.fn().mockRejectedValue(apiError) },
+      } as any);
+
+      const result = await deleteFeedbackRecord("rec-1");
+
+      expect(result.ok).toBe(false);
+      expect(result.error).toMatchObject({ status: 403, message: "Forbidden" });
+    });
+
+    test("returns error when client.delete throws non-API error", async () => {
+      vi.mocked(getHubClient).mockReturnValue({
+        feedbackRecords: { delete: vi.fn().mockRejectedValue(new Error("network")) },
+      } as any);
+
+      const result = await deleteFeedbackRecord("rec-1");
+
+      expect(result.ok).toBe(false);
+      expect(result.error).toMatchObject({ status: 0, message: "network" });
     });
   });
 
