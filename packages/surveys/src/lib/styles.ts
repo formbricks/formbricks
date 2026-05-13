@@ -17,6 +17,10 @@ let styleNonce: string | undefined;
 export const setStyleNonce = (nonce: string | undefined): void => {
   styleNonce = nonce;
 
+  if (!document?.getElementById) {
+    return;
+  }
+
   // Update existing style elements if they exist
   const existingStyleElement = document.getElementById("formbricks__css");
   if (existingStyleElement && nonce) {
@@ -34,6 +38,11 @@ export const getStyleNonce = (): string | undefined => {
 };
 
 export const addStylesToDom = () => {
+  if (!document.head) {
+    console.warn("addStylesToDom: document.head is not available yet");
+    return;
+  }
+
   if (document.getElementById("formbricks__css") === null) {
     const styleElement = document.createElement("style");
     styleElement.id = "formbricks__css";
@@ -56,6 +65,11 @@ export const addStylesToDom = () => {
 };
 
 export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TSurveyStyling }): void => {
+  if (!document.head) {
+    console.warn("addCustomThemeToDom: document.head is not available yet");
+    return;
+  }
+
   // Check if the style element already exists
   let styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement | null;
 

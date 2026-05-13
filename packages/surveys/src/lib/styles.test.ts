@@ -109,6 +109,28 @@ describe("setStyleNonce and getStyleNonce", () => {
     expect(getStyleNonce()).toBe(nonce);
     // Should not throw and should store the nonce for future use
   });
+
+  test("should not throw error when document.getElementById is not available", () => {
+    const originalGetElementById = document.getElementById;
+
+    // Mock document.getElementById to be undefined
+    Object.defineProperty(document, "getElementById", {
+      get: () => undefined,
+      configurable: true,
+    });
+
+    const nonce = "test-nonce-safe";
+
+    // Should not throw error
+    expect(() => setStyleNonce(nonce)).not.toThrow();
+    expect(getStyleNonce()).toBe(nonce);
+
+    // Restore original getElementById
+    Object.defineProperty(document, "getElementById", {
+      get: () => originalGetElementById,
+      configurable: true,
+    });
+  });
 });
 
 describe("addStylesToDom", () => {
@@ -205,6 +227,27 @@ describe("addStylesToDom", () => {
 
     // setStyleNonce directly updates the nonce attribute
     expect(existingElement.getAttribute("nonce")).toBe(newNonce);
+  });
+
+  test("should not throw error when document.head is null", () => {
+    const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const originalHead = document.head;
+
+    // Mock document.head to be null
+    Object.defineProperty(document, "head", {
+      get: () => null,
+      configurable: true,
+    });
+
+    // Should not throw error
+    expect(() => addStylesToDom()).not.toThrow();
+    expect(consoleWarnSpy).toHaveBeenCalledWith("addStylesToDom: document.head is not available yet");
+
+    // Restore original head
+    Object.defineProperty(document, "head", {
+      get: () => originalHead,
+      configurable: true,
+    });
   });
 });
 
@@ -605,6 +648,29 @@ describe("addCustomThemeToDom", () => {
 
     // setStyleNonce directly updates the nonce attribute
     expect(existingElement.getAttribute("nonce")).toBe(newNonce);
+  });
+
+  test("should not throw error when document.head is null", () => {
+    const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const originalHead = document.head;
+
+    // Mock document.head to be null
+    Object.defineProperty(document, "head", {
+      get: () => null,
+      configurable: true,
+    });
+
+    const styling = getBaseProjectStyling({ brandColor: { light: "#FF0000" } });
+
+    // Should not throw error
+    expect(() => addCustomThemeToDom({ styling })).not.toThrow();
+    expect(consoleWarnSpy).toHaveBeenCalledWith("addCustomThemeToDom: document.head is not available yet");
+
+    // Restore original head
+    Object.defineProperty(document, "head", {
+      get: () => originalHead,
+      configurable: true,
+    });
   });
 });
 
