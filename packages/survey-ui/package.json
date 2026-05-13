@@ -85,21 +85,21 @@
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/eslint-config": "workspace:*",
-    "@storybook/react": "10.3.5",
-    "@storybook/react-vite": "10.3.5",
+    "@storybook/react": "10.3.6",
+    "@storybook/react-vite": "10.3.6",
     "@tailwindcss/postcss": "4.2.4",
     "@tailwindcss/vite": "4.2.4",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
     "@vitejs/plugin-react": "5.1.4",
-    "@vitest/coverage-v8": "4.1.5",
-    "react": "19.2.5",
-    "react-dom": "19.2.5",
+    "@vitest/coverage-v8": "4.1.6",
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
     "rimraf": "6.1.3",
     "tailwindcss": "4.2.4",
-    "vite": "7.3.2",
+    "vite": "7.3.3",
     "vite-plugin-dts": "4.5.4",
     "vite-tsconfig-paths": "6.1.1",
-    "vitest": "4.1.5"
+    "vitest": "4.1.6"
   }
 }

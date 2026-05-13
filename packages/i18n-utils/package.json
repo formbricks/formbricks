@@ -42,7 +42,7 @@
     "@formbricks/eslint-config": "workspace:*",
     "@types/node": "^25.4.0",
     "tsx": "^4.21.0",
-    "vite": "7.3.2",
-    "vitest": "4.1.5"
+    "vite": "7.3.3",
+    "vitest": "4.1.6"
   }
 }

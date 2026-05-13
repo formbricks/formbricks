@@ -65,10 +65,10 @@
     "concurrently": "9.2.1",
     "fake-indexeddb": "6.2.5",
     "happy-dom": "20.8.9",
-    "postcss": "8.5.12",
+    "postcss": "8.5.14",
     "rollup-plugin-visualizer": "7.0.1",
     "tailwindcss": "4.2.4",
-    "vite": "7.3.2",
+    "vite": "7.3.3",
     "vite-tsconfig-paths": "6.1.1"
   }
 }

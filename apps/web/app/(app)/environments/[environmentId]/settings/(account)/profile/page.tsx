@@ -1,7 +1,12 @@
 import { AuthenticationError } from "@formbricks/types/errors";
 import { AccountSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(account)/components/AccountSettingsNavbar";
 import { AccountSecurity } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/components/AccountSecurity";
-import { EMAIL_VERIFICATION_DISABLED, IS_FORMBRICKS_CLOUD, PASSWORD_RESET_DISABLED } from "@/lib/constants";
+import {
+  EMAIL_VERIFICATION_DISABLED,
+  ENTERPRISE_LICENSE_REQUEST_FORM_URL,
+  IS_FORMBRICKS_CLOUD,
+  PASSWORD_RESET_DISABLED,
+} from "@/lib/constants";
 import { getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
@@ -71,7 +76,7 @@ const Page = async (props: {
                         : t("common.request_trial_license"),
                       href: IS_FORMBRICKS_CLOUD
                         ? `/environments/${params.environmentId}/settings/billing`
-                        : "https://formbricks.com/upgrade-self-hosting-license",
+                        : ENTERPRISE_LICENSE_REQUEST_FORM_URL,
                     },
                     {
                       text: t("common.learn_more"),

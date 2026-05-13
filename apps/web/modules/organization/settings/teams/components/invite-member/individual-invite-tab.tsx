@@ -29,6 +29,7 @@ interface IndividualInviteTabProps {
   environmentId: string;
   membershipRole?: TOrganizationRole;
   showTeamAdminRestrictions: boolean;
+  enterpriseLicenseRequestFormUrl: string;
 }
 
 export const IndividualInviteTab = ({
@@ -40,6 +41,7 @@ export const IndividualInviteTab = ({
   environmentId,
   membershipRole,
   showTeamAdminRestrictions,
+  enterpriseLicenseRequestFormUrl,
 }: IndividualInviteTabProps) => {
   const ZFormSchema = z.object({
     name: ZUserName,
@@ -191,7 +193,7 @@ export const IndividualInviteTab = ({
                 href={
                   isFormbricksCloud
                     ? `/environments/${environmentId}/settings/billing`
-                    : "https://formbricks.com/upgrade-self-hosting-license"
+                    : enterpriseLicenseRequestFormUrl
                 }>
                 {t("common.upgrade_plan")}
               </Link>

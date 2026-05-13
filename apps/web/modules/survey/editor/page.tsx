@@ -1,6 +1,7 @@
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   DEFAULT_LOCALE,
+  ENTERPRISE_LICENSE_REQUEST_FORM_URL,
   IS_FORMBRICKS_CLOUD,
   IS_STORAGE_CONFIGURED,
   MAIL_FROM,
@@ -138,6 +139,7 @@ export const SurveyEditorPage = async (props: {
       quotas={quotas}
       isExternalUrlsAllowed={isExternalUrlsAllowed}
       publicDomain={publicDomain}
+      enterpriseLicenseRequestFormUrl={ENTERPRISE_LICENSE_REQUEST_FORM_URL}
     />
   );
 };

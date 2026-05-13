@@ -3,16 +3,16 @@
   "version": "0.0.0",
   "private": true,
   "devDependencies": {
-    "@next/eslint-plugin-next": "15.5.15",
+    "@next/eslint-plugin-next": "15.5.18",
     "@typescript-eslint/eslint-plugin": "8.57.2",
     "@typescript-eslint/parser": "8.57.2",
     "@vercel/style-guide": "6.0.0",
-    "eslint-config-next": "15.5.15",
+    "eslint-config-next": "15.5.18",
     "eslint-config-prettier": "10.1.8",
     "eslint-config-turbo": "2.8.21",
     "eslint-plugin-react": "7.37.5",
     "eslint-plugin-react-hooks": "5.2.0",
     "eslint-plugin-react-refresh": "0.5.2",
-    "@vitest/eslint-plugin": "1.6.16"
+    "@vitest/eslint-plugin": "1.6.17"
   }
 }

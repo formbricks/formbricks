@@ -36,6 +36,7 @@ interface EmailCustomizationSettingsProps {
   user: TUser | null;
   fbLogoUrl: string;
   isStorageConfigured: boolean;
+  enterpriseLicenseRequestFormUrl: string;
 }
 
 export const EmailCustomizationSettings = ({
@@ -47,6 +48,7 @@ export const EmailCustomizationSettings = ({
   user,
   fbLogoUrl,
   isStorageConfigured,
+  enterpriseLicenseRequestFormUrl,
 }: EmailCustomizationSettingsProps) => {
   const { t } = useTranslation();
 
@@ -184,7 +186,7 @@ export const EmailCustomizationSettings = ({
       text: isFormbricksCloud ? t("common.upgrade_plan") : t("common.request_trial_license"),
       href: isFormbricksCloud
         ? `/environments/${environmentId}/settings/billing`
-        : "https://formbricks.com/upgrade-self-hosting-license",
+        : enterpriseLicenseRequestFormUrl,
     },
     {
       text: t("common.learn_more"),

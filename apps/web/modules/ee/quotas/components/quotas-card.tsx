@@ -29,6 +29,7 @@ interface QuotasCardProps {
   isFormbricksCloud?: boolean;
   quotas: TSurveyQuota[];
   hasResponses: boolean;
+  enterpriseLicenseRequestFormUrl: string;
 }
 
 const AddQuotaButton = ({
@@ -67,6 +68,7 @@ export const QuotasCard = ({
   isFormbricksCloud,
   quotas,
   hasResponses,
+  enterpriseLicenseRequestFormUrl,
 }: QuotasCardProps) => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -177,7 +179,7 @@ export const QuotasCard = ({
                     text: isFormbricksCloud ? t("common.upgrade_plan") : t("common.request_trial_license"),
                     href: isFormbricksCloud
                       ? `/environments/${environmentId}/settings/billing`
-                      : "https://formbricks.com/upgrade-self-hosting-license",
+                      : enterpriseLicenseRequestFormUrl,
                   },
                   {
                     text: t("common.learn_more"),

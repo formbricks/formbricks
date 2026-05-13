@@ -979,7 +979,7 @@ export const getSurveySummary = reactCache(
       const elements = getElementsFromBlocks(survey.blocks);
 
       const batchSize = 5000;
-      const hasFilter = Object.keys(filterCriteria ?? {}).length > 0;
+      const hasFilter = Object.keys(filterCriteria ?? {}).some((filterKey) => filterKey !== "createdAt");
 
       // Use cursor-based pagination instead of count + offset to avoid expensive queries
       const responses: TSurveySummaryResponse[] = [];

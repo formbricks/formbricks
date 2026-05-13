@@ -31,6 +31,7 @@ interface SurveyAnalysisCTAProps {
   isContactsEnabled: boolean;
   isFormbricksCloud: boolean;
   isStorageConfigured: boolean;
+  enterpriseLicenseRequestFormUrl: string;
 }
 
 interface ModalState {
@@ -47,6 +48,7 @@ export const SurveyAnalysisCTA = ({
   isContactsEnabled,
   isFormbricksCloud,
   isStorageConfigured,
+  enterpriseLicenseRequestFormUrl,
 }: SurveyAnalysisCTAProps) => {
   const { t } = useTranslation();
   const router = useRouter();
@@ -231,6 +233,7 @@ export const SurveyAnalysisCTA = ({
           isReadOnly={isReadOnly}
           isStorageConfigured={isStorageConfigured}
           projectCustomScripts={project.customHeadScripts}
+          enterpriseLicenseRequestFormUrl={enterpriseLicenseRequestFormUrl}
         />
       )}
       <SuccessMessage />

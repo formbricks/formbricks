@@ -1106,6 +1106,21 @@ describe("getSurveySummary", () => {
       expect.objectContaining({ responseIds: expect.any(Array) })
     );
   });
+
+  test("does not pass responseIds for date-only filterCriteria", async () => {
+    const filterCriteria: TResponseFilterCriteria = {
+      createdAt: {
+        min: new Date("2024-01-01T00:00:00.000Z"),
+        max: new Date("2024-01-31T23:59:59.999Z"),
+      },
+    };
+
+    await getSurveySummary(mockSurveyId, filterCriteria);
+
+    expect(getDisplayCountBySurveyId).toHaveBeenCalledWith(mockSurveyId, {
+      createdAt: filterCriteria.createdAt,
+    });
+  });
 });
 
 describe("getResponsesForSummary", () => {

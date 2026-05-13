@@ -1,7 +1,7 @@
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
-import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { TeamsTable } from "@/modules/ee/teams/team-list/components/teams-table";
 import { getProjectsByOrganizationId } from "@/modules/ee/teams/team-list/lib/project";
@@ -41,7 +41,7 @@ export const TeamsView = async ({
       text: IS_FORMBRICKS_CLOUD ? t("common.upgrade_plan") : t("common.request_trial_license"),
       href: IS_FORMBRICKS_CLOUD
         ? `/environments/${environmentId}/settings/billing`
-        : "https://formbricks.com/docs/self-hosting/license#30-day-trial-license-request",
+        : ENTERPRISE_LICENSE_REQUEST_FORM_URL,
     },
     {
       text: t("common.learn_more"),

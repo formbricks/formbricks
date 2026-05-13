@@ -34,6 +34,7 @@ interface PersonalLinksTabProps {
   segments: TSegment[];
   isContactsEnabled: boolean;
   isFormbricksCloud: boolean;
+  enterpriseLicenseRequestFormUrl: string;
 }
 
 interface PersonalLinksFormData {
@@ -74,6 +75,7 @@ export const PersonalLinksTab = ({
   surveyId,
   isContactsEnabled,
   isFormbricksCloud,
+  enterpriseLicenseRequestFormUrl,
 }: PersonalLinksTabProps) => {
   const { t } = useTranslation();
 
@@ -169,7 +171,7 @@ export const PersonalLinksTab = ({
             text: isFormbricksCloud ? t("common.upgrade_plan") : t("common.request_trial_license"),
             href: isFormbricksCloud
               ? `/environments/${environmentId}/settings/billing`
-              : "https://formbricks.com/upgrade-self-hosting-license",
+              : enterpriseLicenseRequestFormUrl,
           },
           {
             text: t("common.learn_more"),
