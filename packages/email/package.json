@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "email dev --port 3456",
     "build": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint src --fix --ext .ts,.tsx",
     "clean": "rimraf .turbo node_modules dist"
   },

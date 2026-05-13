@@ -154,7 +154,7 @@ describe("widget-file", () => {
 
     vi.advanceTimersByTime(mockSurvey.delay * 1000);
 
-    expect(window.formbricksSurveys.renderSurvey).toHaveBeenCalledWith(
+    expect(window.formbricksSurveys!.renderSurvey).toHaveBeenCalledWith(
       expect.objectContaining({
         survey: mockSurvey,
         appUrl: "https://fake.app",
@@ -319,7 +319,7 @@ describe("widget-file", () => {
 
     vi.advanceTimersByTime(0);
 
-    expect(window.formbricksSurveys.renderSurvey).toHaveBeenCalledWith(
+    expect(window.formbricksSurveys!.renderSurvey).toHaveBeenCalledWith(
       expect.objectContaining({
         contactId: "contact_abc",
       })
@@ -378,7 +378,7 @@ describe("widget-file", () => {
     expect(mockUpdateQueue.waitForPendingWork).not.toHaveBeenCalled();
 
     vi.advanceTimersByTime(0);
-    expect(window.formbricksSurveys.renderSurvey).toHaveBeenCalled();
+    expect(window.formbricksSurveys!.renderSurvey).toHaveBeenCalled();
 
     vi.useRealTimers();
   });
@@ -437,7 +437,7 @@ describe("widget-file", () => {
     vi.advanceTimersByTime(0);
 
     // The contactId passed to renderSurvey should be read after the wait
-    expect(window.formbricksSurveys.renderSurvey).toHaveBeenCalledWith(
+    expect(window.formbricksSurveys!.renderSurvey).toHaveBeenCalledWith(
       expect.objectContaining({
         contactId: "contact_after_identification",
       })
@@ -467,7 +467,7 @@ describe("widget-file", () => {
     expect(mockLogger.debug).toHaveBeenCalledWith(
       "User identification failed. Skipping survey with segment filters."
     );
-    expect(window.formbricksSurveys.renderSurvey).not.toHaveBeenCalled();
+    expect(window.formbricksSurveys!.renderSurvey).not.toHaveBeenCalled();
   });
 
   describe("loadFormbricksSurveysExternally and waitForSurveysGlobal", () => {
@@ -598,7 +598,6 @@ describe("widget-file", () => {
       (scriptEl.onload as () => void)();
 
       // Set the global after script "loads" — simulates browser finishing execution
-      // @ts-expect-error -- mock window.formbricksSurveys
       window.formbricksSurveys = { renderSurvey: vi.fn(), setNonce: vi.fn() };
 
       // Advance one polling interval for waitForSurveysGlobal to find it
@@ -609,8 +608,8 @@ describe("widget-file", () => {
       // Run remaining timers for survey.delay setTimeout
       vi.runAllTimers();
 
-      expect(window.formbricksSurveys.setNonce).toHaveBeenCalledWith("test-nonce-123");
-      expect(window.formbricksSurveys.renderSurvey).toHaveBeenCalledWith(
+      expect(window.formbricksSurveys!.setNonce).toHaveBeenCalledWith("test-nonce-123");
+      expect(window.formbricksSurveys!.renderSurvey).toHaveBeenCalledWith(
         expect.objectContaining({
           appUrl: "https://fake.app",
           workspaceId: "env_123",
@@ -629,12 +628,10 @@ describe("widget-file", () => {
       // After the previous successful test, surveysLoadPromise holds a resolved promise.
       // Calling renderWidget again (without formbricksSurveys on window, but with cached promise)
       // should reuse the cached promise rather than creating a new script element.
-      // @ts-expect-error -- cleaning up mock to force dedup path
       delete window.formbricksSurveys;
 
       const appendChildSpy = vi.spyOn(document.head, "appendChild");
 
-      // @ts-expect-error -- mock window.formbricksSurveys
       window.formbricksSurveys = { renderSurvey: vi.fn(), setNonce: vi.fn() };
 
       vi.useFakeTimers();
@@ -653,7 +650,7 @@ describe("widget-file", () => {
       });
       expect(scriptAppendCalls.length).toBe(0);
 
-      expect(window.formbricksSurveys.renderSurvey).toHaveBeenCalled();
+      expect(window.formbricksSurveys!.renderSurvey).toHaveBeenCalled();
 
       vi.useRealTimers();
     });
@@ -731,7 +728,7 @@ describe("widget-file", () => {
     );
 
     vi.advanceTimersByTime(0);
-    expect(window.formbricksSurveys.renderSurvey).toHaveBeenCalled();
+    expect(window.formbricksSurveys!.renderSurvey).toHaveBeenCalled();
 
     vi.useRealTimers();
   });

@@ -24,6 +24,9 @@
         "@formbricks/logger#build"
       ]
     },
+    "@formbricks/ai#typecheck": {
+      "dependsOn": ["@formbricks/logger#build"]
+    },
     "@formbricks/cache#build": {
       "dependsOn": [
         "@formbricks/logger#build"
@@ -52,6 +55,9 @@
         "@formbricks/logger#build"
       ]
     },
+    "@formbricks/cache#typecheck": {
+      "dependsOn": ["@formbricks/logger#build"]
+    },
     "@formbricks/database#build": {
       "dependsOn": [
         "^build"
@@ -66,6 +72,9 @@
         "@formbricks/logger#build",
         "@formbricks/database#build"
       ]
+    },
+    "@formbricks/database#typecheck": {
+      "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/email#build": {
       "dependsOn": [
@@ -135,6 +144,9 @@
         "@formbricks/database#build"
       ]
     },
+    "@formbricks/js-core#typecheck": {
+      "dependsOn": ["@formbricks/database#build"]
+    },
     "@formbricks/logger#build": {
       "dependsOn": [
         "^build"
@@ -172,6 +184,9 @@
       "dependsOn": [
         "@formbricks/logger#build"
       ]
+    },
+    "@formbricks/storage#typecheck": {
+      "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/survey-ui#build": {
       "dependsOn": [
@@ -233,6 +248,9 @@
         "@formbricks/survey-ui#build"
       ]
     },
+    "@formbricks/surveys#typecheck": {
+      "dependsOn": ["@formbricks/i18n-utils#build", "@formbricks/survey-ui#build"]
+    },
     "@formbricks/web#dev": {
       "cache": false,
       "dependsOn": [
@@ -277,6 +295,16 @@
         "@formbricks/storage#build",
         "@formbricks/cache#build",
         "@formbricks/jobs#build",
+        "@formbricks/surveys#build"
+      ]
+    },
+    "@formbricks/web#typecheck": {
+      "dependsOn": [
+        "@formbricks/ai#build",
+        "@formbricks/cache#build",
+        "@formbricks/database#build",
+        "@formbricks/logger#build",
+        "@formbricks/storage#build",
         "@formbricks/surveys#build"
       ]
     },
@@ -514,6 +542,10 @@
       "outputs": []
     },
     "test:coverage": {
+      "outputs": []
+    },
+    "typecheck": {
+      "dependsOn": ["@formbricks/database#generate", "^typecheck"],
       "outputs": []
     }
   },

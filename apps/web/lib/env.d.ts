@@ -1,1 +1,1 @@
-declare module "*";
+// Reserved for app-wide ambient declarations.

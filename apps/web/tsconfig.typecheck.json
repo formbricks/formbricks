@@ -1,0 +1,27 @@
+{
+  "exclude": [
+    "../../.env",
+    ".next",
+    "node_modules",
+    "playwright",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/tests/**",
+    "**/__mocks__/**",
+    "**/__tests__/**"
+  ],
+  "extends": "./tsconfig.json",
+  "include": [
+    "next-env.d.ts",
+    "assets.d.ts",
+    "**/*.d.ts",
+    "app/**/*.ts",
+    "app/**/*.tsx",
+    "lib/**/*.ts",
+    "lib/**/*.tsx",
+    "modules/**/*.ts",
+    "modules/**/*.tsx",
+    "scripts/**/*.ts",
+    "../../packages/types/*.d.ts"
+  ]
+}

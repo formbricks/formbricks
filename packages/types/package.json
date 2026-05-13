@@ -11,6 +11,7 @@
   "sideEffects": false,
   "scripts": {
     "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
+    "typecheck": "tsc --noEmit",
     "clean": "rimraf node_modules .turbo"
   },
   "dependencies": {
