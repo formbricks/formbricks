@@ -85,26 +85,6 @@ export const extractTranslatableStrings = (survey: TSurvey, t: TFunction): Trans
     );
   }
 
-  // Link survey metadata
-  pushIfI18n(
-    result,
-    survey.metadata,
-    "title",
-    "metadata",
-    "M",
-    t("environments.surveys.share.link_settings.link_title"),
-    "metadata"
-  );
-  pushIfI18n(
-    result,
-    survey.metadata,
-    "description",
-    "metadata",
-    "M",
-    t("environments.surveys.share.link_settings.link_description"),
-    "metadata"
-  );
-
   // Blocks → elements
   survey.blocks.forEach((block, blockIdx) => {
     // Block-level fields

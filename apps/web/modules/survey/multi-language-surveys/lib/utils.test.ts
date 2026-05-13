@@ -10,8 +10,6 @@ const t = ((key: string, options?: Record<string, unknown>) => {
     "common.headline": "Headline",
     "common.other_placeholder": "Other Placeholder",
     "environments.surveys.edit.please_specify": "Please specify",
-    "environments.surveys.share.link_settings.link_description": "Link description",
-    "environments.surveys.share.link_settings.link_title": "Link title",
   };
 
   return translations[key] ?? key;
@@ -140,30 +138,6 @@ describe("multi-language survey utils", () => {
         (string) => string.path === "blocks.0.elements.0.otherOptionPlaceholder"
       )
     ).toBe(false);
-  });
-
-  test("extracts link metadata title and description", () => {
-    const survey = createSurvey({
-      metadata: {
-        title: { default: "Customer feedback" },
-        description: { default: "Tell us what you think" },
-      },
-    });
-
-    expect(extractTranslatableStrings(survey, t)).toEqual([
-      expect.objectContaining({
-        path: "metadata.title",
-        displayId: "M",
-        fieldLabel: "Link title",
-        value: { default: "Customer feedback" },
-      }),
-      expect.objectContaining({
-        path: "metadata.description",
-        displayId: "M",
-        fieldLabel: "Link description",
-        value: { default: "Tell us what you think" },
-      }),
-    ]);
   });
 
   test("creates a missing translatable field when saving a translation with a default value", () => {
