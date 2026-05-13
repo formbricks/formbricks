@@ -18,6 +18,7 @@ import { Alert } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -425,7 +426,7 @@ export const CreateConnectorModal = ({
             <DialogDescription>{getDialogDescription(currentStep, selectedType, t)}</DialogDescription>
           </DialogHeader>
 
-          <div className="py-4">
+          <DialogBody className="min-h-0 min-w-0 overflow-y-auto py-4">
             {currentStep === "selectType" && (
               <ConnectorTypeSelector
                 selectedType={selectedType}
@@ -593,7 +594,7 @@ export const CreateConnectorModal = ({
                 )}
               </div>
             )}
-          </div>
+          </DialogBody>
 
           <DialogFooter>
             {currentStep === "mapping" && (
