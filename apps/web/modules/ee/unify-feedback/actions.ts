@@ -215,7 +215,7 @@ export const deleteFeedbackRecordAction = authenticatedActionClient
     );
 
     const deleteResult = await deleteFeedbackRecord(parsedInput.recordId);
-    if (!deleteResult.ok || deleteResult.error) {
+    if (!deleteResult.data || deleteResult.error) {
       throw new Error(deleteResult.error?.message || "Failed to delete feedback record");
     }
 

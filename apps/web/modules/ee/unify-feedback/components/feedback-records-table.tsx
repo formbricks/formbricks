@@ -271,9 +271,14 @@ export const FeedbackRecordsTable = ({
           t("workspace.unify.feedback_records_deleted_successfully", { count: succeeded.length })
         );
       } else if (succeeded.length === 0) {
-        toast.error(t("workspace.unify.failed_to_load_feedback_records"));
+        toast.error(t("workspace.unify.failed_to_delete_feedback_records"));
       } else {
-        toast.error(`${succeeded.length}/${ids.length} deleted`);
+        toast.error(
+          t("workspace.unify.feedback_records_partially_deleted", {
+            succeeded: succeeded.length,
+            total: ids.length,
+          })
+        );
       }
     } finally {
       setIsDeleting(false);

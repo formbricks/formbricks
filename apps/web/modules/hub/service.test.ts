@@ -285,11 +285,11 @@ describe("hub service", () => {
 
       const result = await deleteFeedbackRecord("rec-1");
 
-      expect(result.ok).toBe(false);
+      expect(result.data).toBeNull();
       expect(result.error?.message).toContain("HUB_API_KEY");
     });
 
-    test("returns ok when client.delete resolves", async () => {
+    test("returns data when client.delete resolves", async () => {
       const deleteSpy = vi.fn().mockResolvedValue(undefined);
       vi.mocked(getHubClient).mockReturnValue({
         feedbackRecords: { delete: deleteSpy },
@@ -298,7 +298,7 @@ describe("hub service", () => {
       const result = await deleteFeedbackRecord("rec-1");
 
       expect(deleteSpy).toHaveBeenCalledWith("rec-1");
-      expect(result.ok).toBe(true);
+      expect(result.data).toEqual({ deleted: true });
       expect(result.error).toBeNull();
     });
 
@@ -310,7 +310,7 @@ describe("hub service", () => {
 
       const result = await deleteFeedbackRecord("rec-1");
 
-      expect(result.ok).toBe(false);
+      expect(result.data).toBeNull();
       expect(result.error).toMatchObject({ status: 403, message: "Forbidden" });
     });
 
@@ -321,7 +321,7 @@ describe("hub service", () => {
 
       const result = await deleteFeedbackRecord("rec-1");
 
-      expect(result.ok).toBe(false);
+      expect(result.data).toBeNull();
       expect(result.error).toMatchObject({ status: 0, message: "network" });
     });
   });

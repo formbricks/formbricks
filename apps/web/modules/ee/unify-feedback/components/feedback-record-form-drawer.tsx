@@ -819,11 +819,14 @@ export const FeedbackRecordFormDrawer = ({
               <span />
             )}
             <div className="flex gap-2">
-              <Button variant="outline" onClick={requestClose} disabled={isSubmitting}>
+              <Button variant="outline" onClick={requestClose} disabled={isSubmitting || isDeleting}>
                 {t("common.cancel")}
               </Button>
               {canWrite && (
-                <Button onClick={handleSubmit} loading={isSubmitting} disabled={isLoadingRecord}>
+                <Button
+                  onClick={handleSubmit}
+                  loading={isSubmitting}
+                  disabled={isLoadingRecord || isDeleting}>
                   {mode === "create" ? t("workspace.unify.add_feedback_record") : t("common.save")}
                 </Button>
               )}
