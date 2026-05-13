@@ -13,7 +13,6 @@
   "extends": "./tsconfig.json",
   "include": [
     "next-env.d.ts",
-    "assets.d.ts",
     "**/*.d.ts",
     "app/**/*.ts",
     "app/**/*.tsx",
