@@ -2833,6 +2833,8 @@
         "auto_save_disabled": "Guardar automático desativado",
         "auto_save_disabled_tooltip": "O seu inquérito só é guardado automaticamente quando está em rascunho. Isto garante que os inquéritos públicos não sejam atualizados involuntariamente.",
         "auto_save_on": "Guardar automático ativado",
+        "auto_select_browser_language": "Usar o idioma do navegador por predefinição",
+        "auto_select_browser_language_description": "Abre automaticamente o inquérito no idioma do navegador do respondente quando esse idioma está ativo. Caso contrário, usa o idioma predefinido.",
         "automatically_close_survey_after": "Fechar automaticamente o inquérito após",
         "automatically_close_the_survey_after_a_certain_number_of_responses": "Fechar automaticamente o inquérito após um certo número de respostas",
         "automatically_close_the_survey_if_the_user_does_not_respond_after_certain_number_of_seconds": "Fechar automaticamente o inquérito se o utilizador não responder após um certo número de segundos.",

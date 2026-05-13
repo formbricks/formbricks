@@ -2833,6 +2833,8 @@
         "auto_save_disabled": "Az automatikus mentés letiltva",
         "auto_save_disabled_tooltip": "A kérdőív csak akkor kerül automatikusan mentésre, ha piszkozatban van. Ez biztosítja, hogy a nyilvános kérdőívek ne legyenek véletlenül frissítve.",
         "auto_save_on": "Automatikus mentés bekapcsolva",
+        "auto_select_browser_language": "A böngésző nyelvének használata alapértelmezésként",
+        "auto_select_browser_language_description": "Automatikusan a válaszadó böngészőnyelvén nyitja meg a kérdőívet, ha ez a nyelv aktív. Ellenkező esetben az alapértelmezett nyelvre vált.",
         "automatically_close_survey_after": "Kérdőív automatikus lezárása ezután:",
         "automatically_close_the_survey_after_a_certain_number_of_responses": "A kérdőív automatikus lezárása egy bizonyos számú válasz után.",
         "automatically_close_the_survey_if_the_user_does_not_respond_after_certain_number_of_seconds": "A kérdőív automatikus lezárása, ha a felhasználó nem válaszol egy bizonyos másodpercnyi idő után.",

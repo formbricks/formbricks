@@ -2833,6 +2833,8 @@
         "auto_save_disabled": "Автосохранение отключено",
         "auto_save_disabled_tooltip": "Ваш опрос автоматически сохраняется только в режиме черновика. Это гарантирует, что публичные опросы не будут случайно обновлены.",
         "auto_save_on": "Автосохранение включено",
+        "auto_select_browser_language": "Использовать язык браузера по умолчанию",
+        "auto_select_browser_language_description": "Автоматически открывает опрос на языке браузера респондента, если этот язык активен. В противном случае используется язык по умолчанию.",
         "automatically_close_survey_after": "Автоматически закрыть опрос через",
         "automatically_close_the_survey_after_a_certain_number_of_responses": "Автоматически закрывать опрос после определённого количества ответов.",
         "automatically_close_the_survey_if_the_user_does_not_respond_after_certain_number_of_seconds": "Автоматически закрывать опрос, если пользователь не ответил за определённое количество секунд.",

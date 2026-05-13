@@ -588,6 +588,8 @@
     "verification_security_notice": "Bu email değişikliğini siz istemediyseniz, lütfen bu email'i dikkate almayın veya hemen destek ile iletişime geçin.",
     "verified_link_survey_email_subject": "Survey'iniz doldurulmaya hazır."
   },
+        "auto_select_browser_language": "Varsayılan olarak tarayıcı dilini kullan",
+        "auto_select_browser_language_description": "Bu dil aktif olduğunda anketi otomatik olarak yanıtlayıcının tarayıcı dilinde açar. Eşleşme yoksa varsayılan dile döner.",
   "organizations": {
     "landing": {
       "no_workspaces_warning_subtitle": "Çalışma alanlarına erişim sağlamak için organizasyon sahibinizle iletişime geçin. Veya başlamak için kendi organizasyonunuzu oluşturun.",
