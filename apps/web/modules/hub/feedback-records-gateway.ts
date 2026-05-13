@@ -12,11 +12,11 @@ import { getBearerTokenFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { getFeedbackDirectoryAuthContext } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getIsUnifyFeedbackEnabled } from "@/modules/ee/license-check/lib/utils";
 import {
-  TEnvoyAuthenticatedPrincipal,
-  TEnvoyRequestAuthorizer,
-  buildAllowResponse,
-  buildStatusResponse,
-} from "@/modules/envoy-auth/shared";
+  TGatewayAuthenticatedPrincipal,
+  TGatewayRequestAuthorizer,
+  allowGatewayRequest,
+  buildGatewayStatusResponse,
+} from "@/modules/gateway-auth/lib/request";
 import { getFeedbackRecordTenant } from "@/modules/hub/service";
 
 const FEEDBACK_RECORDS_V3_PREFIX = "/api/v3/feedbackRecords";
@@ -137,7 +137,7 @@ const parseFeedbackRecordsGatewayRoute = (method: string, pathname: string): TPa
   return null;
 };
 
-type TAuthenticatedGatewayPrincipal = TEnvoyAuthenticatedPrincipal;
+type TAuthenticatedGatewayPrincipal = TGatewayAuthenticatedPrincipal;
 
 const parseTenantId = (tenantId: string | null): string | null => {
   if (!tenantId) {
@@ -200,7 +200,7 @@ const resolveTenantId = async (
     const tenantId = parseTenantId(originalUrl.searchParams.get("tenant_id"));
     if (!tenantId) {
       return {
-        errorResponse: buildStatusResponse(400, "Invalid or missing tenant_id"),
+        errorResponse: buildGatewayStatusResponse(400, "Invalid or missing tenant_id"),
       };
     }
 
@@ -212,7 +212,7 @@ const resolveTenantId = async (
     const tenantId = parseTenantId(typeof body?.tenant_id === "string" ? body.tenant_id : null);
     if (!tenantId) {
       return {
-        errorResponse: buildStatusResponse(400, "Invalid or missing tenant_id"),
+        errorResponse: buildGatewayStatusResponse(400, "Invalid or missing tenant_id"),
       };
     }
 
@@ -227,7 +227,7 @@ const resolveTenantId = async (
         "Feedback record tenant lookup returned not found"
       );
       return {
-        errorResponse: buildStatusResponse(403, "Forbidden"),
+        errorResponse: buildGatewayStatusResponse(403, "Forbidden"),
       };
     }
 
@@ -236,7 +236,7 @@ const resolveTenantId = async (
       "Feedback record tenant lookup failed"
     );
     return {
-      errorResponse: buildStatusResponse(503, "Feedback record lookup failed"),
+      errorResponse: buildGatewayStatusResponse(503, "Feedback record lookup failed"),
     };
   }
 
@@ -247,14 +247,14 @@ const resolveTenantId = async (
       "Feedback record tenant lookup returned invalid tenant"
     );
     return {
-      errorResponse: buildStatusResponse(503, "Feedback record lookup failed"),
+      errorResponse: buildGatewayStatusResponse(503, "Feedback record lookup failed"),
     };
   }
 
   return { tenantId };
 };
 
-const authorizeGatewayRequest = async (
+const authorizeFeedbackRecordsGatewayRequest = async (
   principal: TAuthenticatedGatewayPrincipal,
   feedbackDirectoryId: string,
   requiredPermission: TFeedbackRecordsGatewayPermission
@@ -308,7 +308,7 @@ const authorizeGatewayRequest = async (
   }
 };
 
-export const feedbackRecordsEnvoyAuthorizer: TEnvoyRequestAuthorizer = {
+export const feedbackRecordsGatewayAuthorizer: TGatewayRequestAuthorizer = {
   matches: (originalRequest) => normalizeFeedbackRecordsPath(originalRequest.url.pathname) !== null,
   gatewayToken: {
     getTokenFromHeaders: getFeedbackRecordsGatewayJwtFromHeaders,
@@ -317,15 +317,21 @@ export const feedbackRecordsEnvoyAuthorizer: TEnvoyRequestAuthorizer = {
   authorize: async ({ request, originalRequest, principal, requestId }) => {
     const route = parseFeedbackRecordsGatewayRoute(originalRequest.method, originalRequest.url.pathname);
     if (!route) {
-      return buildStatusResponse(400, "Unsupported FeedbackRecords route");
+      return {
+        status: "deny",
+        response: buildGatewayStatusResponse(400, "Unsupported FeedbackRecords route"),
+      };
     }
 
     const tenantResolution = await resolveTenantId(request, route, originalRequest.url, requestId);
     if ("errorResponse" in tenantResolution) {
-      return tenantResolution.errorResponse;
+      return {
+        status: "deny",
+        response: tenantResolution.errorResponse,
+      };
     }
 
-    const authorizationResult = await authorizeGatewayRequest(
+    const authorizationResult = await authorizeFeedbackRecordsGatewayRequest(
       principal,
       tenantResolution.tenantId,
       route.requiredPermission
@@ -341,7 +347,10 @@ export const feedbackRecordsEnvoyAuthorizer: TEnvoyRequestAuthorizer = {
         },
         "Feedback records gateway authorization denied"
       );
-      return buildStatusResponse(403, "Forbidden");
+      return {
+        status: "deny",
+        response: buildGatewayStatusResponse(403, "Forbidden"),
+      };
     }
 
     logger.info(
@@ -355,6 +364,6 @@ export const feedbackRecordsEnvoyAuthorizer: TEnvoyRequestAuthorizer = {
       "Feedback records gateway authorization allowed"
     );
 
-    return buildAllowResponse();
+    return allowGatewayRequest();
   },
 };

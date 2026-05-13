@@ -309,6 +309,7 @@
             "group": "Technical Handbook",
             "pages": [
               "development/technical-handbook/overview",
+              "development/technical-handbook/api-gateway",
               "development/technical-handbook/background-job-processing",
               "development/technical-handbook/cube-tenant-isolation",
               "development/technical-handbook/database-model",

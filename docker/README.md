@@ -37,3 +37,8 @@ The stack includes the [Formbricks Hub](https://github.com/formbricks/hub) API (
 - **Development** (`docker-compose.dev.yml`): Hub uses the same local Postgres database and `HUB_API_KEY` defaults to `dev-api-key`. Cube is behind the `xm` profile, `CUBEJS_API_URL` defaults to `http://localhost:4000`, and `pnpm dev:setup` generates `CUBEJS_API_SECRET` in the repo root `.env`. The Hub image is pinned to a semver tag (`hub` and `hub-migrate` share the same value); override `HUB_IMAGE_TAG` in the repo root `.env` to test a specific Hub release.
 
 In development, Hub is exposed locally on port **8080**. When the `xm` profile is enabled, Cube is exposed on **4000** (with the Cube playground on **4001**). In production Docker Compose, Hub stays internal to the compose network at `http://hub:8080`; Cube also stays internal at `http://cube:4000` when enabled.
+
+The one-click Traefik installer exposes Hub-backed FeedbackRecords on the Formbricks origin at
+`/api/v3/feedbackRecords` and `/v1/feedback-records`. Traefik uses Formbricks gateway auth, rewrites the v3
+path to Hub's `/v1/feedback-records`, injects `Authorization: Bearer ${HUB_API_KEY}` for Hub, and strips client
+API key/cookie headers before the Hub hop.

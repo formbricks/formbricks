@@ -2,10 +2,10 @@ import "server-only";
 import { NextRequest } from "next/server";
 import { gatewayRequestAuthorizers } from "@/modules/gateway-auth/lib/authorizers";
 import { authorizeGatewayRequest } from "@/modules/gateway-auth/lib/request";
-import { buildEnvoyAllowResponse, parseEnvoyRequestMetadata } from "./shared";
+import { buildTraefikAllowResponse, parseTraefikRequestMetadata } from "./shared";
 
-export const authorizeEnvoyRequest = async (request: NextRequest): Promise<Response> => {
-  const requestMetadata = parseEnvoyRequestMetadata(request);
+export const authorizeTraefikRequest = async (request: NextRequest): Promise<Response> => {
+  const requestMetadata = parseTraefikRequestMetadata(request);
   if ("errorResponse" in requestMetadata) {
     return requestMetadata.errorResponse;
   }
@@ -14,8 +14,8 @@ export const authorizeEnvoyRequest = async (request: NextRequest): Promise<Respo
     request,
     originalRequest: requestMetadata.originalRequest,
     authorizers: gatewayRequestAuthorizers,
-    requestId: request.headers.get("x-request-id") ?? "unknown",
-    buildAllowResponse: buildEnvoyAllowResponse,
-    unsupportedRouteMessage: "Unsupported Envoy auth route",
+    requestId: request.headers.get("x-request-id") ?? request.headers.get("x-forwarded-for") ?? "unknown",
+    buildAllowResponse: buildTraefikAllowResponse,
+    unsupportedRouteMessage: "Unsupported Traefik auth route",
   });
 };
