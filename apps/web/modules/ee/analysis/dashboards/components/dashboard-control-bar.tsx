@@ -72,7 +72,7 @@ export const DashboardControlBar = ({
 
   const editModeActions = [
     {
-      icon: CheckIcon,
+      icon: isSaving ? null : CheckIcon,
       tooltip: hasChanges ? t("common.save") : t("common.no_changes"),
       onClick: onSave,
       isVisible: true,
