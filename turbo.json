@@ -74,7 +74,7 @@
       ]
     },
     "@formbricks/database#typecheck": {
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": ["@formbricks/logger#build", "@formbricks/database#generate"]
     },
     "@formbricks/email#build": {
       "dependsOn": [
