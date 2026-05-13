@@ -96,7 +96,6 @@ export const FeedbackRecordsTable = ({
     name: string;
     fieldMappings: TConnectorFieldMapping[];
   } | null>(null);
-  const [csvImportSource, setCsvImportSource] = useState<{ id: string; name: string } | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
