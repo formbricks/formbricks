@@ -328,6 +328,10 @@
                                 "example": null,
                                 "type": "boolean"
                               },
+                              "autoSelectLanguage": {
+                                "example": null,
+                                "type": "boolean"
+                              },
                               "delay": {
                                 "example": 0,
                                 "type": "integer"
@@ -4367,6 +4371,7 @@
                     {
                       "autoClose": null,
                       "autoComplete": null,
+                      "autoSelectLanguage": null,
                       "createdAt": "2024-08-05T11:08:27.042Z",
                       "createdBy": "clfv1zvij0000ru0gunwpy43a",
                       "delay": 0,
@@ -4551,6 +4556,7 @@
                   "value": {
                     "autoClose": null,
                     "autoComplete": null,
+                    "autoSelectLanguage": null,
                     "createdBy": null,
                     "delay": 0,
                     "displayLimit": null,
@@ -4771,6 +4777,7 @@
                   "data": {
                     "autoClose": null,
                     "autoComplete": null,
+                    "autoSelectLanguage": null,
                     "createdAt": "2024-08-05T11:08:27.042Z",
                     "createdBy": "clfv1zvij0000ru0gunwpy43a",
                     "delay": 0,
@@ -5037,6 +5044,7 @@
                   "data": {
                     "autoClose": null,
                     "autoComplete": null,
+                    "autoSelectLanguage": null,
                     "createdAt": "2024-08-05T11:08:27.042Z",
                     "createdBy": "clfv1zvij0000ru0gunwpy43a",
                     "delay": 0,
@@ -5290,6 +5298,7 @@
                   "data": {
                     "autoClose": null,
                     "autoComplete": null,
+                    "autoSelectLanguage": null,
                     "createdAt": "2024-08-05T11:08:27.042Z",
                     "createdBy": "clfv1zvij0000ru0gunwpy43a",
                     "delay": 0,
@@ -5493,6 +5502,7 @@
                   "data": {
                     "autoClose": null,
                     "autoComplete": null,
+                    "autoSelectLanguage": null,
                     "createdAt": "2024-08-05T11:08:27.042Z",
                     "createdBy": "clfv1zvij0000ru0gunwpy43a",
                     "delay": 0,

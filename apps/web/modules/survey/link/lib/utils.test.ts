@@ -147,6 +147,28 @@ describe("getSurveyLanguageCode", () => {
     expect(getSurveyLanguageCode(undefined, survey, ["es-MX", "en-US"])).toBe("es-ES");
   });
 
+  test("uses aliases and ignores disabled languages", () => {
+    const survey = {
+      ...createMockSurvey([
+        language("en", { default: true }),
+        language("de", { enabled: false }),
+        language("fr-FR", {
+          language: {
+            id: "lang-fr-FR",
+            code: "fr-FR",
+            alias: "fr",
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            projectId: "p1",
+          },
+        }),
+      ]),
+      autoSelectLanguage: true,
+    };
+
+    expect(getSurveyLanguageCode(undefined, survey, ["de-DE", "fr-CA"])).toBe("fr-FR");
+  });
+
   test("falls back to default language when auto-selection is disabled or unmatched", () => {
     const survey = createMockSurvey([language("en", { default: true }), language("de")]);
 

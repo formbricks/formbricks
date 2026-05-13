@@ -631,6 +631,7 @@ export const createSurvey = async (workspaceId: string, surveyBody: TSurveyCreat
     const { createdBy, languages, ...restSurveyBody } = parsedSurveyBody;
     const normalizedCloseOn = restSurveyBody.closeOn instanceof Date ? restSurveyBody.closeOn : null;
     const normalizedPublishOn = restSurveyBody.publishOn instanceof Date ? restSurveyBody.publishOn : null;
+    const hasMultipleEnabledLanguages = (languages ?? []).filter((language) => language.enabled).length > 1;
 
     const actionClasses = await getActionClasses(parsedWorkspaceId);
 
@@ -641,6 +642,8 @@ export const createSurvey = async (workspaceId: string, surveyBody: TSurveyCreat
         publishOn: normalizedPublishOn,
         status: restSurveyBody.status ?? "draft",
       }),
+      autoSelectLanguage:
+        restSurveyBody.autoSelectLanguage ?? (hasMultipleEnabledLanguages ? true : undefined),
       // @ts-expect-error - languages would be undefined in case of empty array
       languages: languages?.length ? languages : undefined,
       triggers: restSurveyBody.triggers

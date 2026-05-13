@@ -41,6 +41,9 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"
   },
+  "dependencies": {
+    "@formbricks/types": "workspace:*"
+  },
   "author": "Formbricks <hola@formbricks.com>",
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",

@@ -456,6 +456,18 @@ describe("utils.ts", () => {
       expect(getLanguageCode(survey, undefined, ["de-DE", "en-US"])).toBe("de");
       expect(getLanguageCode({ ...survey, autoSelectLanguage: false }, undefined, ["de-DE"])).toBe("default");
     });
+
+    test("does not fall back to browser language when an explicit user language is unavailable", () => {
+      const survey = {
+        autoSelectLanguage: true,
+        languages: [
+          { language: { code: "en" }, default: true, enabled: true },
+          { language: { code: "de" }, default: false, enabled: true },
+        ],
+      } as unknown as TEnvironmentStateSurvey;
+
+      expect(getLanguageCode(survey, "fr", ["de-DE"])).toBeUndefined();
+    });
   });
 
   // ---------------------------------------------------------------------------------

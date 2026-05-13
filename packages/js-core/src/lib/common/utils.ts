@@ -1,3 +1,4 @@
+import { resolveSurveyLanguage } from "@formbricks/types/surveys/language";
 import { Logger } from "@/lib/common/logger";
 import type {
   TSurveyStyling,
@@ -161,79 +162,18 @@ export const getDefaultLanguageCode = (survey: TWorkspaceStateSurvey): string | 
   if (defaultSurveyLanguage) return defaultSurveyLanguage.language.code;
 };
 
-const normalizeLanguageCode = (languageCode: string): string =>
-  languageCode.trim().split(";")[0].replace("_", "-").toLowerCase();
-
-const getBaseLanguageCode = (languageCode: string): string =>
-  normalizeLanguageCode(languageCode).split("-")[0];
-
-const getSelectableLanguageCode = (surveyLanguage: TWorkspaceStateSurvey["languages"][number]) => {
-  if (surveyLanguage.default) {
-    return "default";
-  }
-  if (!surveyLanguage.enabled) {
-    return undefined;
-  }
-  return surveyLanguage.language.code;
-};
-
-const findExactLanguageMatch = (survey: TWorkspaceStateSurvey, language: string): string | undefined => {
-  const normalizedLanguageCode = normalizeLanguageCode(language);
-
-  const selectedLanguage = survey.languages.find((surveyLanguage) => {
-    return (
-      normalizeLanguageCode(surveyLanguage.language.code) === normalizedLanguageCode ||
-      (surveyLanguage.language.alias
-        ? normalizeLanguageCode(surveyLanguage.language.alias) === normalizedLanguageCode
-        : false)
-    );
-  });
-
-  return selectedLanguage ? getSelectableLanguageCode(selectedLanguage) : undefined;
-};
-
-const findLooseLanguageMatch = (survey: TWorkspaceStateSurvey, language: string): string | undefined => {
-  const baseLanguageCode = getBaseLanguageCode(language);
-
-  for (const surveyLanguage of survey.languages) {
-    const selectableLanguageCode = getSelectableLanguageCode(surveyLanguage);
-    if (!selectableLanguageCode) continue;
-
-    const languageBaseCode = getBaseLanguageCode(surveyLanguage.language.code);
-    const aliasBaseCode = surveyLanguage.language.alias
-      ? getBaseLanguageCode(surveyLanguage.language.alias)
-      : undefined;
-
-    if (languageBaseCode === baseLanguageCode || aliasBaseCode === baseLanguageCode) {
-      return selectableLanguageCode;
-    }
-  }
-
-  return undefined;
-};
-
 export const getLanguageCode = (
   survey: TWorkspaceStateSurvey,
   language?: string,
   fallbackLanguages: string[] = []
 ): string | undefined => {
-  if (language) {
-    return findExactLanguageMatch(survey, language) ?? findLooseLanguageMatch(survey, language);
-  }
-
-  if (!survey.autoSelectLanguage) return "default";
-
-  for (const fallbackLanguage of fallbackLanguages) {
-    const exactMatch = findExactLanguageMatch(survey, fallbackLanguage);
-    if (exactMatch) return exactMatch;
-  }
-
-  for (const fallbackLanguage of fallbackLanguages) {
-    const looseMatch = findLooseLanguageMatch(survey, fallbackLanguage);
-    if (looseMatch) return looseMatch;
-  }
-
-  return "default";
+  return resolveSurveyLanguage({
+    languages: survey.languages,
+    explicitLanguageCode: language,
+    browserLanguageCodes: fallbackLanguages,
+    autoSelectLanguage: survey.autoSelectLanguage,
+    unmatchedExplicitLanguageBehavior: "undefined",
+  });
 };
 
 export const getSecureRandom = (): number => {
