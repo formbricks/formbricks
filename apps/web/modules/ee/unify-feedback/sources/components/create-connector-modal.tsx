@@ -320,7 +320,7 @@ export const CreateConnectorModal = ({
         })
       );
     } else {
-      toast.error(getFormattedErrorMessage(importResult));
+      toast.error(getTranslatedConnectorError(getFormattedErrorMessage(importResult), t));
     }
   };
 

@@ -4,8 +4,9 @@ import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TConnectorType, THubFieldType, ZHubFieldType } from "@formbricks/types/connector";
+import { routeResponseValueTarget } from "@/lib/connector/utils";
 import { CSV_FIELD_GROUPS, CSV_TARGET_FIELDS, TFieldMapping, TSourceField, TTargetField } from "../types";
-import { TMappingConfidence, routeResponseValueTarget } from "../utils";
+import { TMappingConfidence } from "../utils";
 import { FormTargetField, TAutoMapState } from "./mapping-field";
 
 interface MappingUIProps {

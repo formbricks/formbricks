@@ -24,6 +24,8 @@ export interface TFieldMapping {
   staticValue?: string;
 }
 
+export const CSV_IMPORT_MISSING_COLUMNS_ERROR_CODE = "CSV_IMPORT_MISSING_COLUMNS";
+
 export type TTargetFieldType = "string" | "enum" | "timestamp" | "float64" | "boolean" | "jsonb" | "string[]";
 
 export interface TTargetField {
@@ -209,13 +211,7 @@ export const CSV_HIDDEN_STATIC_MAPPINGS: TFieldMapping[] = [
   { sourceFieldId: "", targetFieldId: "source_type", staticValue: "csv" },
 ];
 
-export const CSV_REQUIRED_UI_FIELDS = [
-  "submission_id",
-  "field_id",
-  "field_label",
-  "field_type",
-  "response_value",
-];
+export const CSV_REQUIRED_UI_FIELDS = ["submission_id", "field_id", "field_type", "response_value"];
 
 export const SAMPLE_CSV_COLUMNS = "timestamp,response_id,customer_id,rating,feedback_text,category";
 
@@ -278,6 +274,8 @@ export const getTranslatedConnectorError = (errorCode: string, t: TFunction): st
       return t("workspace.unify.error_connector_formbricks_mapping_duplicate");
     case "CONNECTOR_FIELD_MAPPING_DUPLICATE":
       return t("workspace.unify.error_connector_field_mapping_duplicate");
+    case CSV_IMPORT_MISSING_COLUMNS_ERROR_CODE:
+      return t("workspace.unify.csv_saved_mapping_missing_columns");
     case "CONNECTOR_NAME_REQUIRED":
       return t("workspace.unify.error_connector_name_required");
     case "CONNECTOR_SURVEY_REQUIRED":

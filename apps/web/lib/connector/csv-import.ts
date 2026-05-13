@@ -1,10 +1,15 @@
 import "server-only";
 import { TConnectorWithMappings } from "@formbricks/types/connector";
 import { InvalidInputError } from "@formbricks/types/errors";
+import { CSV_IMPORT_MISSING_COLUMNS_ERROR_CODE } from "@/modules/ee/unify-feedback/sources/types";
 import { createFeedbackRecordsBatch } from "@/modules/hub";
-import { getMissingRequiredCsvFieldMappings } from "./csv-mapping";
 import { transformCsvRowsToFeedbackRecords } from "./csv-transform";
 import { TImportResult } from "./import";
+import {
+  formatMissingRequiredCsvFieldMappingsMessage,
+  getMissingCsvMappedSourceColumns,
+  getMissingRequiredCsvFieldMappings,
+} from "./utils";
 
 const CSV_BATCH_SIZE = 50;
 
@@ -20,9 +25,17 @@ export const importCsvData = async (
     throw new InvalidInputError("Connector has no field mappings configured");
   }
 
+  const missingMappedColumns = getMissingCsvMappedSourceColumns(
+    connector.fieldMappings,
+    Object.keys(csvRows[0] ?? {})
+  );
+  if (missingMappedColumns.length > 0) {
+    throw new InvalidInputError(CSV_IMPORT_MISSING_COLUMNS_ERROR_CODE);
+  }
+
   const missing = getMissingRequiredCsvFieldMappings(connector.fieldMappings);
   if (missing.length > 0) {
-    throw new InvalidInputError(`Missing required CSV field mappings: ${missing.join(", ")}`);
+    throw new InvalidInputError(formatMissingRequiredCsvFieldMappingsMessage());
   }
 
   const { records, skipped } = transformCsvRowsToFeedbackRecords(

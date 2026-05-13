@@ -4,8 +4,8 @@ import {
   THubTargetField,
   ZHubFieldType,
 } from "@formbricks/types/connector";
-import { routeResponseValueTarget } from "@/modules/ee/unify-feedback/sources/utils";
 import { FeedbackRecordCreateParams } from "@/modules/hub";
+import { routeResponseValueTarget } from "./utils";
 
 const NUMERIC_FIELDS = new Set<THubTargetField>(["value_number"]);
 const BOOLEAN_FIELDS = new Set<THubTargetField>(["value_boolean"]);

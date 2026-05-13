@@ -1,5 +1,4 @@
 import { describe, expect, test } from "vitest";
-import { ZHubFieldType } from "@formbricks/types/connector";
 import { CSV_HIDDEN_STATIC_MAPPINGS, MAX_CSV_VALUES, TFieldMapping, TSourceField } from "./types";
 import {
   areAllRequiredCsvFieldsMapped,
@@ -8,7 +7,6 @@ import {
   inferFieldType,
   isConnectorNameValid,
   parseCSVColumnsToFields,
-  routeResponseValueTarget,
   titleizeFromFileName,
   toggleQuestionId,
   validateCsvFile,
@@ -164,7 +162,7 @@ describe("areAllRequiredCsvFieldsMapped", () => {
     expect(areAllRequiredCsvFieldsMapped(fullMappings)).toEqual({ valid: true, missing: [] });
   });
 
-  test.each(["submission_id", "field_id", "field_label", "field_type", "response_value"])(
+  test.each(["submission_id", "field_id", "field_type", "response_value"])(
     "returns valid=false and lists %s when missing",
     (missingId) => {
       const partial = fullMappings.filter((m) => m.targetFieldId !== missingId);
@@ -196,6 +194,12 @@ describe("areAllRequiredCsvFieldsMapped", () => {
 
   test("does not require source_id", () => {
     expect(areAllRequiredCsvFieldsMapped(fullMappings).missing).not.toContain("source_id");
+  });
+
+  test("does not require field_label", () => {
+    const withoutFieldLabel = fullMappings.filter((m) => m.targetFieldId !== "field_label");
+
+    expect(areAllRequiredCsvFieldsMapped(withoutFieldLabel)).toEqual({ valid: true, missing: [] });
   });
 });
 
@@ -268,28 +272,6 @@ describe("inferFieldType", () => {
 
   test("name with no hint falls back to sample sniffing", () => {
     expect(inferFieldType({ columnName: "anonymous", samples: ["42"] })).toBe("number");
-  });
-});
-
-describe("routeResponseValueTarget", () => {
-  test.each([
-    ["text", "value_text"],
-    ["categorical", "value_text"],
-    ["number", "value_number"],
-    ["nps", "value_number"],
-    ["csat", "value_number"],
-    ["ces", "value_number"],
-    ["rating", "value_number"],
-    ["boolean", "value_boolean"],
-    ["date", "value_date"],
-  ] as const)("routes %s to %s", (fieldType, expected) => {
-    expect(routeResponseValueTarget(fieldType)).toBe(expected);
-  });
-
-  test("covers every THubFieldType enum value", () => {
-    for (const fieldType of ZHubFieldType.options) {
-      expect(() => routeResponseValueTarget(fieldType)).not.toThrow();
-    }
   });
 });
 

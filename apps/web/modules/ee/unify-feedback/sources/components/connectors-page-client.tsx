@@ -236,6 +236,7 @@ export function ConnectorsSection({
           onOpenChange={(open) => !open && setCsvImportConnector(null)}
           connectorId={csvImportConnector.id}
           workspaceId={csvImportConnector.workspaceId}
+          fieldMappings={csvImportConnector.fieldMappings}
           onOpenEditConnector={() => {
             setEditingConnector(csvImportConnector);
           }}

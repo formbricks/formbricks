@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { TConnectorWithMappings } from "@formbricks/types/connector";
+import type { TConnectorWithMappings } from "@formbricks/types/connector";
 import { InvalidInputError } from "@formbricks/types/errors";
+import { CSV_IMPORT_MISSING_COLUMNS_ERROR_CODE } from "@/modules/ee/unify-feedback/sources/types";
 import { importCsvData } from "./csv-import";
 
 vi.mock("@/modules/hub", () => ({
@@ -15,6 +16,13 @@ const { createFeedbackRecordsBatch } = vi.mocked(await import("@/modules/hub"));
 const { transformCsvRowsToFeedbackRecords } = vi.mocked(await import("./csv-transform"));
 
 const NOW = new Date("2026-02-25T10:00:00.000Z");
+
+const matchingCsvRow = {
+  response_id: "resp-1",
+  question_id: "q1",
+  question: "Question?",
+  feedback: "Great",
+};
 
 const makeConnector = (overrides?: Partial<TConnectorWithMappings>): TConnectorWithMappings => ({
   id: "conn-1",
@@ -110,14 +118,33 @@ describe("importCsvData", () => {
       ),
     });
 
-    await expect(importCsvData(connector, [{ feedback: "test" }])).rejects.toThrow(InvalidInputError);
+    await expect(importCsvData(connector, [matchingCsvRow])).rejects.toThrow(
+      "This saved CSV mapping is incomplete"
+    );
+    expect(transformCsvRowsToFeedbackRecords).not.toHaveBeenCalled();
+  });
+
+  test("throws InvalidInputError when uploaded CSV is missing a mapped source column", async () => {
+    const connector = makeConnector({
+      fieldMappings: makeConnector().fieldMappings.map((mapping) =>
+        mapping.targetFieldId === "submission_id" ? { ...mapping, sourceFieldId: "source_id" } : mapping
+      ),
+    });
+
+    await expect(importCsvData(connector, [matchingCsvRow])).rejects.toThrow(
+      CSV_IMPORT_MISSING_COLUMNS_ERROR_CODE
+    );
     expect(transformCsvRowsToFeedbackRecords).not.toHaveBeenCalled();
   });
 
   test("returns zeros when all rows are skipped", async () => {
     transformCsvRowsToFeedbackRecords.mockReturnValue({ records: [], skipped: 3 });
 
-    const result = await importCsvData(makeConnector(), [{ a: "1" }, { a: "2" }, { a: "3" }]);
+    const result = await importCsvData(makeConnector(), [
+      matchingCsvRow,
+      { ...matchingCsvRow, response_id: "resp-2" },
+      { ...matchingCsvRow, response_id: "resp-3" },
+    ]);
 
     expect(result).toEqual({ successes: 0, failures: 0, skipped: 3 });
     expect(createFeedbackRecordsBatch).not.toHaveBeenCalled();
@@ -153,7 +180,11 @@ describe("importCsvData", () => {
       ],
     } as never);
 
-    const result = await importCsvData(makeConnector(), [{}, {}, {}]);
+    const result = await importCsvData(makeConnector(), [
+      matchingCsvRow,
+      { ...matchingCsvRow, response_id: "resp-2" },
+      { ...matchingCsvRow, response_id: "resp-3" },
+    ]);
 
     expect(result).toEqual({ successes: 1, failures: 1, skipped: 1 });
   });
@@ -175,7 +206,7 @@ describe("importCsvData", () => {
 
     await importCsvData(
       makeConnector(),
-      Array.from({ length: 120 }, () => ({}))
+      Array.from({ length: 120 }, (_, i) => ({ ...matchingCsvRow, response_id: `resp-${i}` }))
     );
 
     expect(createFeedbackRecordsBatch).toHaveBeenCalledTimes(3);

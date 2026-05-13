@@ -215,30 +215,6 @@ export const inferFieldType = ({
   return "text";
 };
 
-export const routeResponseValueTarget = (
-  fieldType: THubFieldType
-): "value_text" | "value_number" | "value_boolean" | "value_date" => {
-  switch (fieldType) {
-    case "text":
-    case "categorical":
-      return "value_text";
-    case "number":
-    case "nps":
-    case "csat":
-    case "ces":
-    case "rating":
-      return "value_number";
-    case "boolean":
-      return "value_boolean";
-    case "date":
-      return "value_date";
-    default: {
-      const _exhaustive: never = fieldType;
-      throw new Error(`Unhandled field_type for response_value routing: ${String(_exhaustive)}`);
-    }
-  }
-};
-
 interface TAutoMapResult {
   mappings: TFieldMapping[];
   confidence: Record<string, TMappingConfidence>;

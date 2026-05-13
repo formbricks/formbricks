@@ -28,7 +28,6 @@ import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-direc
 import { listFeedbackRecords } from "@/modules/hub/service";
 import type { FeedbackRecordListParams, FeedbackRecordListResponse } from "@/modules/hub/types";
 import { importCsvData } from "./csv-import";
-import { getMissingRequiredCsvFieldMappings, sanitizeCsvFieldMappings } from "./csv-mapping";
 import { importHistoricalResponses } from "./import";
 import {
   TMappingsInput,
@@ -38,6 +37,11 @@ import {
   updateConnector,
   updateConnectorWithMappings,
 } from "./service";
+import {
+  formatMissingRequiredCsvFieldMappingsMessage,
+  getMissingRequiredCsvFieldMappings,
+  sanitizeCsvFieldMappings,
+} from "./utils";
 
 const ZDeleteConnectorAction = z.object({
   connectorId: ZId,
@@ -133,7 +137,7 @@ const sanitizeAndValidateCsvFieldMappings = (
   const missing = getMissingRequiredCsvFieldMappings(sanitized);
 
   if (missing.length > 0) {
-    throw new InvalidInputError(`Missing required CSV field mappings: ${missing.join(", ")}`);
+    throw new InvalidInputError(formatMissingRequiredCsvFieldMappingsMessage());
   }
 
   return sanitized;
