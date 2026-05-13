@@ -56,10 +56,14 @@ const getWorkspaceDirectoryIds = async (workspaceId: string): Promise<Set<string
   return new Set(directories.map((directory) => directory.id));
 };
 
-const assertRecordBelongsToWorkspace = (directoryIds: Set<string>, tenantId: string): void => {
+const assertRecordBelongsToWorkspace = (
+  directoryIds: Set<string>,
+  tenantId: string,
+  recordId: string | null
+): void => {
   if (!directoryIds.has(tenantId)) {
-    // Throw a generic error indistinguishable from "not found" to prevent IDOR
-    throw new Error("Feedback record not found");
+    // Same error shape as a genuine "not found" to prevent IDOR via response differences
+    throw new ResourceNotFoundError("Feedback record", recordId);
   }
 };
 
@@ -80,10 +84,14 @@ export const retrieveFeedbackRecordAction = authenticatedActionClient
 
       const recordResult = await retrieveFeedbackRecord(parsedInput.recordId);
       if (!recordResult.data || recordResult.error) {
-        throw new Error("Feedback record not found");
+        throw new ResourceNotFoundError("Feedback record", parsedInput.recordId);
       }
 
-      assertRecordBelongsToWorkspace(workspaceDirectoryIds, recordResult.data.tenant_id);
+      assertRecordBelongsToWorkspace(
+        workspaceDirectoryIds,
+        recordResult.data.tenant_id,
+        parsedInput.recordId
+      );
 
       return recordResult.data;
     }
@@ -102,7 +110,7 @@ export const createFeedbackRecordAction = authenticatedActionClient
       await ensureAccess(ctx.user.id, parsedInput.workspaceId, "readWrite");
 
       const workspaceDirectoryIds = await getWorkspaceDirectoryIds(parsedInput.workspaceId);
-      assertRecordBelongsToWorkspace(workspaceDirectoryIds, parsedInput.recordInput.tenant_id);
+      assertRecordBelongsToWorkspace(workspaceDirectoryIds, parsedInput.recordInput.tenant_id, null);
 
       const { recordInput } = parsedInput;
       const createParams: FeedbackRecordCreateParams = {
@@ -152,10 +160,14 @@ export const updateFeedbackRecordAction = authenticatedActionClient
 
       const currentRecordResult = await retrieveFeedbackRecord(parsedInput.recordId);
       if (!currentRecordResult.data || currentRecordResult.error) {
-        throw new Error("Feedback record not found");
+        throw new ResourceNotFoundError("Feedback record", parsedInput.recordId);
       }
 
-      assertRecordBelongsToWorkspace(workspaceDirectoryIds, currentRecordResult.data.tenant_id);
+      assertRecordBelongsToWorkspace(
+        workspaceDirectoryIds,
+        currentRecordResult.data.tenant_id,
+        parsedInput.recordId
+      );
 
       const { updateInput } = parsedInput;
       const updateParams: FeedbackRecordUpdateParams = {
@@ -196,7 +208,11 @@ export const deleteFeedbackRecordAction = authenticatedActionClient
       throw new ResourceNotFoundError("Feedback record", parsedInput.recordId);
     }
 
-    assertRecordBelongsToWorkspace(workspaceDirectoryIds, currentRecordResult.data.tenant_id);
+    assertRecordBelongsToWorkspace(
+      workspaceDirectoryIds,
+      currentRecordResult.data.tenant_id,
+      parsedInput.recordId
+    );
 
     const deleteResult = await deleteFeedbackRecord(parsedInput.recordId);
     if (!deleteResult.ok || deleteResult.error) {
