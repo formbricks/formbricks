@@ -54,6 +54,13 @@ export const updateWorkspace = async (
   return updatedWorkspace as TWorkspace;
 };
 
+const DEFAULT_CONTACT_ATTRIBUTES = [
+  { key: "email", name: "Email", dataType: "string" },
+  { key: "userId", name: "User ID", dataType: "string" },
+  { key: "firstName", name: "First Name", dataType: "string" },
+  { key: "lastName", name: "Last Name", dataType: "string" },
+] as const;
+
 export const createWorkspace = async (
   organizationId: string,
   workspaceInput: TWorkspaceUpdateInput
@@ -88,6 +95,16 @@ export const createWorkspace = async (
         })),
       });
     }
+
+    await prisma.contactAttributeKey.createMany({
+      data: DEFAULT_CONTACT_ATTRIBUTES.map((attr) => ({
+        key: attr.key,
+        name: attr.name,
+        type: "default",
+        dataType: attr.dataType as any,
+        workspaceId: workspace.id,
+      })),
+    });
 
     return workspace;
   } catch (error) {
