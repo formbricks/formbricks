@@ -19,11 +19,9 @@ let isSurveyRunning = false;
 
 const getBrowserLanguageCodes = (): string[] => {
   if (typeof navigator === "undefined") return [];
-  return navigator.languages?.length
-    ? [...navigator.languages]
-    : navigator.language
-      ? [navigator.language]
-      : [];
+  if (navigator.languages.length > 0) return [...navigator.languages];
+  if (navigator.language) return [navigator.language];
+  return [];
 };
 
 export const setIsSurveyRunning = (value: boolean): void => {
