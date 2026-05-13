@@ -9,7 +9,7 @@ import { TTag } from "@formbricks/types/tags";
 import {
   isPrismaKnownRequestError,
   isSingleUseIdUniqueConstraintError,
-} from "@/app/api/client/[environmentId]/responses/lib/prisma-error";
+} from "@/app/api/client/[environmentId]/responses/lib/error";
 import { buildPrismaResponseData } from "@/app/api/v1/lib/utils";
 import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { calculateTtcTotal } from "@/lib/response/utils";

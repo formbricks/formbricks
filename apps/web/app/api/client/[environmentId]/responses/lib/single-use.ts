@@ -1,3 +1,4 @@
+import "server-only";
 import { logger } from "@formbricks/logger";
 import { TResponseInput } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -17,6 +18,13 @@ export const validateSingleUseResponseInput = (
 ): TValidateSingleUseResponseInputResult => {
   if (survey.type !== "link" || !survey.singleUse?.enabled) {
     return null;
+  }
+
+  if (!ENCRYPTION_KEY) {
+    logger.error({ surveyId: survey.id, environmentId }, "ENCRYPTION_KEY is not set");
+    return {
+      response: responses.internalServerErrorResponse("An unexpected error occurred.", true),
+    };
   }
 
   if (!responseInput.singleUseId) {
@@ -75,13 +83,6 @@ export const validateSingleUseResponseInput = (
         },
         true
       ),
-    };
-  }
-
-  if (!ENCRYPTION_KEY) {
-    logger.error({ surveyId: survey.id, environmentId }, "ENCRYPTION_KEY is not set");
-    return {
-      response: responses.internalServerErrorResponse("An unexpected error occurred.", true),
     };
   }
 
