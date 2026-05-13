@@ -108,7 +108,11 @@ export default async function UnifyFeedbackRecordsPage(
   const frdMap = Object.fromEntries(frds.map((f) => [f.id, f.name]));
   const csvSources = connectors
     .filter((connector) => connector.type === "csv")
-    .map((connector) => ({ id: connector.id, name: connector.name }));
+    .map((connector) => ({
+      id: connector.id,
+      name: connector.name,
+      fieldMappings: connector.fieldMappings,
+    }));
 
   return (
     <FeedbackRecordsPageClient
