@@ -26,7 +26,6 @@ export const getSSOProviders = () => [
   GoogleProvider({
     clientId: GOOGLE_CLIENT_ID || "",
     clientSecret: GOOGLE_CLIENT_SECRET || "",
-    allowDangerousEmailAccountLinking: true,
   }),
   AzureAD({
     clientId: AZUREAD_CLIENT_ID || "",
@@ -81,7 +80,6 @@ export const getSSOProviders = () => [
       clientId: "dummy",
       clientSecret: "dummy",
     },
-    allowDangerousEmailAccountLinking: true,
   },
 ];
 

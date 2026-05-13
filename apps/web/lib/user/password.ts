@@ -5,15 +5,19 @@ import { prisma } from "@formbricks/database";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { verifyPassword } from "@/modules/auth/lib/utils";
 
-const getUserAuthenticationData = reactCache(
-  async (userId: string): Promise<Pick<User, "password" | "identityProvider">> => {
+export const getUserAuthenticationData = reactCache(
+  async (
+    userId: string
+  ): Promise<Pick<User, "email" | "password" | "identityProvider" | "identityProviderAccountId">> => {
     const user = await prisma.user.findUnique({
       where: {
         id: userId,
       },
       select: {
+        email: true,
         password: true,
         identityProvider: true,
+        identityProviderAccountId: true,
       },
     });
 
@@ -28,7 +32,7 @@ const getUserAuthenticationData = reactCache(
 export const verifyUserPassword = async (userId: string, password: string): Promise<boolean> => {
   const user = await getUserAuthenticationData(userId);
 
-  if (user.identityProvider !== "email" || !user.password) {
+  if (!user.password) {
     throw new InvalidInputError("Password is not set for this user");
   }
 

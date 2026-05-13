@@ -18,6 +18,12 @@ import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
 import { verifyToken } from "@/lib/jwt";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { getValidatedCallbackUrl } from "@/lib/utils/url";
+import {
+  completeAccountDeletionSsoReauthentication,
+  getAccountDeletionSsoReauthFailureRedirectUrl,
+  getAccountDeletionSsoReauthIntentFromCallbackUrl,
+  validateAccountDeletionSsoReauthenticationCallback,
+} from "@/modules/account/lib/account-deletion-sso-reauth";
 import { getAuthCallbackUrlFromCookies } from "@/modules/auth/lib/callback-url";
 import { updateUser, updateUserLastLoginAt } from "@/modules/auth/lib/user";
 import {
@@ -336,6 +342,8 @@ export const authOptions: NextAuthOptions = {
       // get callback url from the cookie store,
       const callbackUrl =
         getValidatedCallbackUrl(getAuthCallbackUrlFromCookies(cookieStore), WEBAPP_URL) ?? "";
+      const accountDeletionSsoReauthIntentToken =
+        getAccountDeletionSsoReauthIntentFromCallbackUrl(callbackUrl);
 
       const userEmail = user.email ?? "";
       const userId = user.id as string;
@@ -373,17 +381,44 @@ export const authOptions: NextAuthOptions = {
         return true;
       }
       if (ENTERPRISE_LICENSE_KEY && account) {
-        const result = await handleSsoCallback({
-          user: user as TUser,
-          account,
-          callbackUrl,
-        });
+        try {
+          if (accountDeletionSsoReauthIntentToken) {
+            await validateAccountDeletionSsoReauthenticationCallback({
+              account,
+              intentToken: accountDeletionSsoReauthIntentToken,
+            });
+          }
 
-        if (result) {
-          void captureSignIn(account.provider);
-          await updateUserLastLoginAt(userEmail);
+          const result = await handleSsoCallback({
+            user: user as TUser,
+            account,
+            callbackUrl,
+          });
+
+          if (result) {
+            if (accountDeletionSsoReauthIntentToken) {
+              await completeAccountDeletionSsoReauthentication({
+                account,
+                intentToken: accountDeletionSsoReauthIntentToken,
+              });
+            }
+
+            void captureSignIn(account.provider);
+            await updateUserLastLoginAt(userEmail);
+          }
+          return result;
+        } catch (error) {
+          const failureRedirectUrl = getAccountDeletionSsoReauthFailureRedirectUrl({
+            error,
+            intentToken: accountDeletionSsoReauthIntentToken,
+          });
+
+          if (failureRedirectUrl) {
+            return failureRedirectUrl;
+          }
+
+          throw error;
         }
-        return result;
       }
       void captureSignIn(account?.provider ?? "unknown");
       await updateUserLastLoginAt(userEmail);
