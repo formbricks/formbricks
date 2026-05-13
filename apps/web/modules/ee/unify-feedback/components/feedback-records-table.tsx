@@ -9,7 +9,6 @@ import {
   PlusIcon,
   RefreshCwIcon,
   ToggleLeftIcon,
-  Trash2Icon,
   TypeIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -36,6 +35,7 @@ import { deleteFeedbackRecordAction } from "../actions";
 import { formatSourceType } from "../lib/utils";
 import { CsvImportModal } from "../sources/components/csv-import-modal";
 import { FeedbackRecordFormDrawer } from "./feedback-record-form-drawer";
+import { FeedbackRecordsTableToolbarLeft } from "./feedback-records-table-toolbar-left";
 
 const RECORDS_PER_PAGE = 50;
 
@@ -307,43 +307,17 @@ export const FeedbackRecordsTable = ({
     headerCheckboxChecked = "indeterminate";
   }
 
-  let toolbarLeftContent: React.ReactNode;
-  if (selectedCount > 0) {
-    toolbarLeftContent = (
-      <div className="flex items-center gap-x-2 rounded-md bg-primary p-1 px-2 text-xs text-white">
-        <span className="lowercase">
-          {`${selectedCount} ${t("workspace.unify.feedback_records").toLowerCase()} ${t("common.selected")}`}
-        </span>
-        <span>|</span>
-        <Button variant="outline" size="sm" className="h-6 border-none px-2" onClick={clearSelection}>
-          {t("common.clear_selection")}
-        </Button>
-        <span>|</span>
-        <Button
-          variant="secondary"
-          size="sm"
-          className="h-6 gap-1 px-2"
-          onClick={() => setIsBulkDeleteDialogOpen(true)}>
-          {t("common.delete")}
-          <Trash2Icon />
-        </Button>
-      </div>
-    );
-  } else if (isEmpty) {
-    toolbarLeftContent = <span />;
-  } else {
-    toolbarLeftContent = (
-      <p className="text-sm text-slate-500">
-        {t("workspace.unify.showing_count_loaded", { count: records.length })}
-      </p>
-    );
-  }
-
   return (
     <>
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          {toolbarLeftContent}
+          <FeedbackRecordsTableToolbarLeft
+            selectedCount={selectedCount}
+            recordsCount={records.length}
+            isEmpty={isEmpty}
+            onClearSelection={clearSelection}
+            onBulkDelete={() => setIsBulkDeleteDialogOpen(true)}
+          />
           <div className="flex items-center gap-2">
             {canWrite &&
               (hasCsvSources ? (
