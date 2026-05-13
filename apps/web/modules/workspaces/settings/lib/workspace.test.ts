@@ -38,6 +38,9 @@ vi.mock("@formbricks/database", () => ({
     workspaceTeam: {
       createMany: vi.fn(),
     },
+    contactAttributeKey: {
+      createMany: vi.fn(),
+    },
     feedbackDirectory: {
       upsert: vi.fn(),
       findFirst: vi.fn(),
