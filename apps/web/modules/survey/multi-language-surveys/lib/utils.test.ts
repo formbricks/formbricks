@@ -1,0 +1,207 @@
+import { type TFunction } from "i18next";
+import { describe, expect, test } from "vitest";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
+import { TSurvey } from "@formbricks/types/surveys/types";
+import {
+  computeTranslationProgress,
+  extractTranslatableStrings,
+  setTranslationAtPathMutable,
+} from "./utils";
+
+const t = ((key: string, options?: Record<string, unknown>) => {
+  const translations: Record<string, string> = {
+    "common.choice_n": `Choice ${options?.n}`,
+    "common.headline": "Headline",
+    "common.other_placeholder": "Other Placeholder",
+    "environments.surveys.edit.please_specify": "Please specify",
+    "environments.surveys.share.link_settings.link_description": "Link description",
+    "environments.surveys.share.link_settings.link_title": "Link title",
+  };
+
+  return translations[key] ?? key;
+}) as unknown as TFunction;
+
+const createSurvey = (survey: Partial<TSurvey>): TSurvey =>
+  ({
+    welcomeCard: { enabled: false },
+    blocks: [],
+    endings: [],
+    metadata: {},
+    ...survey,
+  }) as TSurvey;
+
+describe("multi-language survey utils", () => {
+  test("extracts missing other option placeholders for single and multi select elements", () => {
+    const survey = createSurvey({
+      blocks: [
+        {
+          id: "block-1",
+          elements: [
+            {
+              id: "single",
+              type: TSurveyElementTypeEnum.MultipleChoiceSingle,
+              headline: { default: "Pick one" },
+              required: true,
+              choices: [
+                { id: "choice-1", label: { default: "One" } },
+                { id: "choice-2", label: { default: "Two" } },
+                { id: "other", label: { default: "Other" } },
+              ],
+            },
+            {
+              id: "multi",
+              type: TSurveyElementTypeEnum.MultipleChoiceMulti,
+              headline: { default: "Pick many" },
+              required: true,
+              choices: [
+                { id: "choice-1", label: { default: "One" } },
+                { id: "choice-2", label: { default: "Two" } },
+                { id: "other", label: { default: "Other" } },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    const strings = extractTranslatableStrings(survey, t);
+
+    expect(strings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          path: "blocks.0.elements.0.otherOptionPlaceholder",
+          fieldLabel: "Other Placeholder",
+          value: { default: "Please specify" },
+        }),
+        expect.objectContaining({
+          path: "blocks.0.elements.1.otherOptionPlaceholder",
+          fieldLabel: "Other Placeholder",
+          value: { default: "Please specify" },
+        }),
+      ])
+    );
+  });
+
+  test("keeps existing other option placeholder translations when default text is empty", () => {
+    const survey = createSurvey({
+      blocks: [
+        {
+          id: "block-1",
+          elements: [
+            {
+              id: "single",
+              type: TSurveyElementTypeEnum.MultipleChoiceSingle,
+              headline: { default: "Pick one" },
+              required: true,
+              choices: [
+                { id: "choice-1", label: { default: "One" } },
+                { id: "choice-2", label: { default: "Two" } },
+                { id: "other", label: { default: "Other" } },
+              ],
+              otherOptionPlaceholder: { default: "", de: "Bitte angeben" },
+            },
+          ],
+        },
+      ],
+    });
+
+    const placeholder = extractTranslatableStrings(survey, t).find(
+      (string) => string.path === "blocks.0.elements.0.otherOptionPlaceholder"
+    );
+
+    expect(placeholder?.value).toEqual({ default: "Please specify", de: "Bitte angeben" });
+    expect(computeTranslationProgress([placeholder!], "de")).toEqual({
+      translated: 1,
+      total: 1,
+      percentage: 100,
+    });
+  });
+
+  test("does not extract stale other option placeholders without an other choice", () => {
+    const survey = createSurvey({
+      blocks: [
+        {
+          id: "block-1",
+          elements: [
+            {
+              id: "single",
+              type: TSurveyElementTypeEnum.MultipleChoiceSingle,
+              headline: { default: "Pick one" },
+              required: true,
+              choices: [
+                { id: "choice-1", label: { default: "One" } },
+                { id: "choice-2", label: { default: "Two" } },
+              ],
+              otherOptionPlaceholder: { default: "Please specify" },
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(
+      extractTranslatableStrings(survey, t).some(
+        (string) => string.path === "blocks.0.elements.0.otherOptionPlaceholder"
+      )
+    ).toBe(false);
+  });
+
+  test("extracts link metadata title and description", () => {
+    const survey = createSurvey({
+      metadata: {
+        title: { default: "Customer feedback" },
+        description: { default: "Tell us what you think" },
+      },
+    });
+
+    expect(extractTranslatableStrings(survey, t)).toEqual([
+      expect.objectContaining({
+        path: "metadata.title",
+        displayId: "M",
+        fieldLabel: "Link title",
+        value: { default: "Customer feedback" },
+      }),
+      expect.objectContaining({
+        path: "metadata.description",
+        displayId: "M",
+        fieldLabel: "Link description",
+        value: { default: "Tell us what you think" },
+      }),
+    ]);
+  });
+
+  test("creates a missing translatable field when saving a translation with a default value", () => {
+    const survey = createSurvey({
+      blocks: [
+        {
+          id: "block-1",
+          elements: [
+            {
+              id: "single",
+              type: TSurveyElementTypeEnum.MultipleChoiceSingle,
+              headline: { default: "Pick one" },
+              required: true,
+              choices: [
+                { id: "choice-1", label: { default: "One" } },
+                { id: "choice-2", label: { default: "Two" } },
+                { id: "other", label: { default: "Other" } },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    setTranslationAtPathMutable(
+      survey,
+      "blocks.0.elements.0.otherOptionPlaceholder",
+      "de",
+      "Bitte angeben",
+      "Please specify"
+    );
+
+    expect(survey.blocks[0].elements[0]).toMatchObject({
+      otherOptionPlaceholder: { default: "Please specify", de: "Bitte angeben" },
+    });
+  });
+});
