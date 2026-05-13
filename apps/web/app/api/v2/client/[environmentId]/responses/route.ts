@@ -35,10 +35,7 @@ type TValidatedResponseInputResult =
   | { response: Response };
 
 const getCountry = (requestHeaders: Headers): string | undefined =>
-  requestHeaders.get("CF-IPCountry") ||
-  requestHeaders.get("X-Vercel-IP-Country") ||
-  requestHeaders.get("CloudFront-Viewer-Country") ||
-  undefined;
+  requestHeaders.get("CF-IPCountry") || requestHeaders.get("CloudFront-Viewer-Country") || undefined;
 
 const getUnexpectedPublicErrorResponse = (): Response =>
   responses.internalServerErrorResponse("Something went wrong. Please try again.", true);

@@ -149,7 +149,7 @@ For maximum flexibility, you can use Formbricks webhooks with a custom endpoint 
     - **Call the HubSpot API** - Use the [HubSpot Contacts API](https://developers.hubspot.com/docs/api/crm/contacts) to create or update contacts
     - **Handle duplicates** - HubSpot returns a 409 error if a contact with that email exists; search and update instead
 
-    You can deploy using serverless functions (Vercel, AWS Lambda, Cloudflare Workers), traditional servers, or low-code platforms. For webhook signature verification, see the [Webhooks documentation](/xm-and-surveys/core-features/integrations/webhooks).
+    You can deploy using serverless functions (AWS Lambda, Cloudflare Workers), traditional servers, or low-code platforms. For webhook signature verification, see the [Webhooks documentation](/xm-and-surveys/core-features/integrations/webhooks).
   </Step>
   <Step title="Deploy and Test">
     Deploy your webhook handler to a publicly accessible URL, add the URL to your Formbricks webhook configuration, submit a test survey response, and verify the contact appears in HubSpot.

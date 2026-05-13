@@ -87,7 +87,7 @@ x-environment: &environment
 
     ################################################### OPTIONAL (STORAGE) ###################################################
 
-    # Set S3 Storage configuration (required for the file upload in serverless environments like Vercel)
+    # Set S3 Storage configuration (required for the file upload in serverless environments)
     # S3_ACCESS_KEY:
     # S3_SECRET_KEY:
     # S3_REGION:

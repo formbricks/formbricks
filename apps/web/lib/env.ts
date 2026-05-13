@@ -235,7 +235,6 @@ const parsedEnv = createEnv({
     TURNSTILE_SITE_KEY: z.string().optional(),
     RECAPTCHA_SITE_KEY: z.string().optional(),
     RECAPTCHA_SECRET_KEY: z.string().optional(),
-    VERCEL_URL: z.string().optional(),
     WEBAPP_URL: z.url().optional(),
     UNSPLASH_ACCESS_KEY: z.string().optional(),
 
@@ -354,7 +353,6 @@ const parsedEnv = createEnv({
     RECAPTCHA_SITE_KEY: process.env.RECAPTCHA_SITE_KEY,
     RECAPTCHA_SECRET_KEY: process.env.RECAPTCHA_SECRET_KEY,
     TERMS_URL: process.env.TERMS_URL,
-    VERCEL_URL: process.env.VERCEL_URL,
     WEBAPP_URL: process.env.WEBAPP_URL,
     UNSPLASH_ACCESS_KEY: process.env.UNSPLASH_ACCESS_KEY,
     NODE_ENV: process.env.NODE_ENV,
