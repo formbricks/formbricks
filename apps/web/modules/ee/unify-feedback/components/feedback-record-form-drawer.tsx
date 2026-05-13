@@ -10,6 +10,7 @@ import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import type { FeedbackRecordData } from "@/modules/hub/types";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { Button } from "@/modules/ui/components/button";
+import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import {
   FormControl,
   FormError,
@@ -37,6 +38,7 @@ import {
 import { Switch } from "@/modules/ui/components/switch";
 import {
   createFeedbackRecordAction,
+  deleteFeedbackRecordAction,
   retrieveFeedbackRecordAction,
   updateFeedbackRecordAction,
 } from "../actions";
@@ -87,6 +89,8 @@ export const FeedbackRecordFormDrawer = ({
   const [isLoadingRecord, setIsLoadingRecord] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDiscardDialogOpen, setIsDiscardDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const defaultValues = useMemo(() => getCreateDefaults(directories), [directories]);
 
@@ -281,6 +285,24 @@ export const FeedbackRecordFormDrawer = ({
       return false;
     }
     return true;
+  };
+
+  const handleDelete = async () => {
+    if (!recordId) return;
+    setIsDeleting(true);
+    try {
+      const result = await deleteFeedbackRecordAction({ workspaceId, recordId });
+      if (!result?.data) {
+        toast.error(getFormattedErrorMessage(result));
+        return;
+      }
+      toast.success(t("workspace.unify.feedback_record_deleted_successfully"));
+      setIsDeleteDialogOpen(false);
+      await onSuccess();
+      onOpenChange(false);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleSubmit = form.handleSubmit(async (values) => {
@@ -785,15 +807,30 @@ export const FeedbackRecordFormDrawer = ({
             </FormProvider>
           )}
 
-          <SheetFooter className="mt-2">
-            <Button variant="outline" onClick={requestClose} disabled={isSubmitting}>
-              {t("common.cancel")}
-            </Button>
-            {canWrite && (
-              <Button onClick={handleSubmit} loading={isSubmitting} disabled={isLoadingRecord}>
-                {mode === "create" ? t("workspace.unify.add_feedback_record") : t("common.save")}
+          <SheetFooter className="mt-2 sm:justify-between">
+            {isEditMode && canWrite && recordId ? (
+              <Button
+                variant="destructive"
+                onClick={() => setIsDeleteDialogOpen(true)}
+                disabled={isSubmitting || isLoadingRecord || isDeleting}>
+                {t("common.delete")}
               </Button>
+            ) : (
+              <span />
             )}
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={requestClose} disabled={isSubmitting || isDeleting}>
+                {t("common.cancel")}
+              </Button>
+              {canWrite && (
+                <Button
+                  onClick={handleSubmit}
+                  loading={isSubmitting}
+                  disabled={isLoadingRecord || isDeleting}>
+                  {mode === "create" ? t("workspace.unify.add_feedback_record") : t("common.save")}
+                </Button>
+              )}
+            </div>
           </SheetFooter>
         </SheetContent>
       </Sheet>
@@ -808,6 +845,15 @@ export const FeedbackRecordFormDrawer = ({
         declineBtnVariant="outline"
         onDecline={() => setIsDiscardDialogOpen(false)}
         onConfirm={handleDiscardChanges}
+      />
+
+      <DeleteDialog
+        open={isDeleteDialogOpen}
+        setOpen={setIsDeleteDialogOpen}
+        deleteWhat={t("workspace.unify.delete_feedback_record")}
+        text={t("workspace.unify.delete_feedback_record_confirmation")}
+        onDelete={handleDelete}
+        isDeleting={isDeleting}
       />
     </>
   );
