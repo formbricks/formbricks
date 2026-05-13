@@ -1,12 +1,8 @@
 import { type TFunction } from "i18next";
 import { describe, expect, test } from "vitest";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
-import { TSurvey } from "@formbricks/types/surveys/types";
-import {
-  computeTranslationProgress,
-  extractTranslatableStrings,
-  setTranslationAtPathMutable,
-} from "./utils";
+import type { TSurvey } from "@formbricks/types/surveys/types";
+import { computeTranslationProgress, extractTranslatableStrings, setTranslationAtPathMutable } from "./utils";
 
 const t = ((key: string, options?: Record<string, unknown>) => {
   const translations: Record<string, string> = {
@@ -21,14 +17,14 @@ const t = ((key: string, options?: Record<string, unknown>) => {
   return translations[key] ?? key;
 }) as unknown as TFunction;
 
-const createSurvey = (survey: Partial<TSurvey>): TSurvey =>
+const createSurvey = (survey: Record<string, unknown>): TSurvey =>
   ({
     welcomeCard: { enabled: false },
     blocks: [],
     endings: [],
     metadata: {},
     ...survey,
-  }) as TSurvey;
+  }) as unknown as TSurvey;
 
 describe("multi-language survey utils", () => {
   test("extracts missing other option placeholders for single and multi select elements", () => {
