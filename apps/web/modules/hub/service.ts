@@ -123,7 +123,7 @@ export const deleteFeedbackRecord = async (id: string): Promise<HubFeedbackRecor
     return { data: { deleted: true }, error: null };
   } catch (err) {
     logger.warn({ err, id }, "Hub: deleteFeedbackRecord failed");
-    const status = err instanceof FormbricksHub.APIError ? err.status : 0;
+    const status = getErrorStatus(err);
     const message = getErrorMessage(err);
     return { data: null, error: { status, message, detail: message } };
   }
