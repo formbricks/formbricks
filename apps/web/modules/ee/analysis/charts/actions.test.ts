@@ -175,7 +175,7 @@ describe("chart Cube actions", () => {
     mocks.generateText.mockResolvedValue({
       output: {
         measures: ["FeedbackRecords.count"],
-        dimensions: ["FeedbackRecords.sentiment"],
+        dimensions: ["FeedbackRecords.sourceType"],
         timeDimensions: null,
         chartType: "bar",
         filters: null,
@@ -198,7 +198,7 @@ describe("chart Cube actions", () => {
     expect(mocks.executeTenantScopedQuery).toHaveBeenCalledWith({
       query: {
         measures: ["FeedbackRecords.count"],
-        dimensions: ["FeedbackRecords.sentiment"],
+        dimensions: ["FeedbackRecords.sourceType"],
       },
       feedbackDirectoryId: "frd-1",
       workspaceId: "workspace-1",

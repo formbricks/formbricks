@@ -22,13 +22,13 @@ describe("query-builder", () => {
     test("adds dimensions when present", () => {
       const config: ChartBuilderState = {
         selectedMeasures: ["FeedbackRecords.count"],
-        selectedDimensions: ["FeedbackRecords.sentiment"],
+        selectedDimensions: ["FeedbackRecords.userId"],
         filters: [],
         filterLogic: "and",
         timeDimension: null,
       };
       const query = buildCubeQuery(config);
-      expect(query.dimensions).toEqual(["FeedbackRecords.sentiment"]);
+      expect(query.dimensions).toEqual(["FeedbackRecords.userId"]);
     });
 
     test("adds time dimension with string dateRange", () => {
@@ -93,7 +93,7 @@ describe("query-builder", () => {
         selectedMeasures: ["FeedbackRecords.count"],
         selectedDimensions: [],
         filters: [
-          { id: "f1", field: "FeedbackRecords.sentiment", operator: "equals", values: ["positive"] },
+          { id: "f1", field: "FeedbackRecords.userId", operator: "equals", values: ["positive"] },
           { id: "f2", field: "FeedbackRecords.sourceType", operator: "set", values: null },
         ],
         filterLogic: "and",
@@ -101,7 +101,7 @@ describe("query-builder", () => {
       };
       const query = buildCubeQuery(config);
       expect(query.filters).toEqual([
-        { member: "FeedbackRecords.sentiment", operator: "equals", values: ["positive"] },
+        { member: "FeedbackRecords.userId", operator: "equals", values: ["positive"] },
         { member: "FeedbackRecords.sourceType", operator: "set" },
       ]);
     });
@@ -110,14 +110,14 @@ describe("query-builder", () => {
       const config: ChartBuilderState = {
         selectedMeasures: ["FeedbackRecords.count"],
         selectedDimensions: [],
-        filters: [{ id: "f1", field: "FeedbackRecords.sentiment", operator: "equals", values: ["positive"] }],
+        filters: [{ id: "f1", field: "FeedbackRecords.userId", operator: "equals", values: ["positive"] }],
         filterLogic: "or",
         timeDimension: null,
       };
       const query = buildCubeQuery(config);
       expect(query.filters).toEqual([
         {
-          or: [{ member: "FeedbackRecords.sentiment", operator: "equals", values: ["positive"] }],
+          or: [{ member: "FeedbackRecords.userId", operator: "equals", values: ["positive"] }],
         },
       ]);
     });
@@ -136,12 +136,12 @@ describe("query-builder", () => {
     test("parses AND member filters", () => {
       const query = {
         measures: ["FeedbackRecords.count"],
-        filters: [{ member: "FeedbackRecords.sentiment", operator: "equals", values: ["positive"] }],
+        filters: [{ member: "FeedbackRecords.userId", operator: "equals", values: ["positive"] }],
       };
       const state = parseQueryToState(query);
       expect(state.filterLogic).toBe("and");
       expect(state.filters?.map(({ field, operator, values }) => ({ field, operator, values }))).toEqual([
-        { field: "FeedbackRecords.sentiment", operator: "equals", values: ["positive"] },
+        { field: "FeedbackRecords.userId", operator: "equals", values: ["positive"] },
       ]);
     });
 
@@ -150,14 +150,14 @@ describe("query-builder", () => {
         measures: ["FeedbackRecords.count"],
         filters: [
           {
-            or: [{ member: "FeedbackRecords.sentiment", operator: "equals", values: ["positive"] }],
+            or: [{ member: "FeedbackRecords.userId", operator: "equals", values: ["positive"] }],
           },
         ],
       };
       const state = parseQueryToState(query);
       expect(state.filterLogic).toBe("or");
       expect(state.filters?.map(({ field, operator, values }) => ({ field, operator, values }))).toEqual([
-        { field: "FeedbackRecords.sentiment", operator: "equals", values: ["positive"] },
+        { field: "FeedbackRecords.userId", operator: "equals", values: ["positive"] },
       ]);
     });
 
@@ -202,7 +202,7 @@ describe("query-builder", () => {
     test("buildCubeQuery then parseQueryToState restores state", () => {
       const config: ChartBuilderState = {
         selectedMeasures: ["FeedbackRecords.count"],
-        selectedDimensions: ["FeedbackRecords.sentiment"],
+        selectedDimensions: ["FeedbackRecords.userId"],
         filters: [{ id: "f1", field: "FeedbackRecords.sourceType", operator: "equals", values: ["survey"] }],
         filterLogic: "and",
         timeDimension: {
