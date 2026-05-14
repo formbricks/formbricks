@@ -151,6 +151,13 @@ Make sure Docker and Docker Compose are installed on your system. These are usua
   enabled, Cube.js is internal too. The app reaches them through `http://hub:8080` and `http://cube:4000`.
 </Note>
 
+<Info>
+  If you use the one-click Traefik setup, FeedbackRecords are available on the Formbricks origin at
+  `/api/v3/feedbackRecords` and `/v1/feedback-records`. Custom Docker reverse proxies need equivalent wiring:
+  run gateway auth against the Formbricks app, rewrite `/api/v3/feedbackRecords` to Hub's
+  `/v1/feedback-records`, and inject `Authorization: Bearer <HUB_API_KEY>` only on the Hub-bound hop.
+</Info>
+
 ## Update
 
 Please take a look at our [migration guide](/self-hosting/advanced/migration) for version specific steps to update Formbricks.

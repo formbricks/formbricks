@@ -40,6 +40,13 @@ curl -fsSL https://raw.githubusercontent.com/formbricks/formbricks/stable/docker
   finishes, add it manually. `HUB_API_URL` should normally stay at `http://hub:8080`.
 </Info>
 
+<Info>
+  The v5 one-click Traefik setup also exposes Hub-backed FeedbackRecords through Formbricks at
+  `/api/v3/feedbackRecords` and `/v1/feedback-records`. Traefik calls the internal Formbricks gateway auth
+  endpoint first, then forwards allowed requests to Hub with the generated `HUB_API_KEY`. Browser callers should
+  request short-lived gateway tokens from `/api/v3/gateway/token` with `{ "service": "feedbackRecords" }`.
+</Info>
+
 ### Script Prompts
 
 During installation, the script will prompt you to provide some details:
