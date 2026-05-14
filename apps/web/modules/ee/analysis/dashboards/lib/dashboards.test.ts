@@ -465,6 +465,40 @@ describe("Dashboard Service", () => {
         name: "DatabaseError",
       });
     });
+
+    test("returns containsChart per dashboard when chartId is provided", async () => {
+      const dashboards = [
+        {
+          ...mockDashboard,
+          creator: { name: "Alice" },
+          _count: { widgets: 3 },
+          widgets: [{ id: "widget-1" }],
+        },
+        {
+          ...mockDashboard,
+          id: "dash-2",
+          name: "Dashboard 2",
+          creator: null,
+          _count: { widgets: 0 },
+          widgets: [],
+        },
+      ];
+      vi.mocked(prisma.dashboard.findMany).mockResolvedValue(dashboards as any);
+      const { getDashboards } = await import("./dashboards");
+
+      const result = await getDashboards(mockWorkspaceId, mockChartId);
+
+      expect(result[0]).toMatchObject({ containsChart: true });
+      expect(result[1]).toMatchObject({ containsChart: false });
+      expect((result[0] as any).widgets).toBeUndefined();
+      expect(prisma.dashboard.findMany).toHaveBeenCalledWith({
+        where: { workspaceId: mockWorkspaceId },
+        orderBy: { createdAt: "desc" },
+        select: expect.objectContaining({
+          widgets: { where: { chartId: mockChartId }, select: { id: true }, take: 1 },
+        }),
+      });
+    });
   });
 
   describe("updateWidgetLayouts", () => {

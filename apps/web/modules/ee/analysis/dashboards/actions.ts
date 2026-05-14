@@ -233,28 +233,21 @@ export const duplicateDashboardAction = authenticatedActionClient
 
 const ZGetDashboardsAction = z.object({
   workspaceId: ZId,
+  chartId: ZId.optional(),
 });
 
 export const getDashboardsAction = authenticatedActionClient
   .inputSchema(ZGetDashboardsAction)
-  .action(
-    async ({
-      ctx,
-      parsedInput,
-    }: {
-      ctx: AuthenticatedActionClientCtx;
-      parsedInput: z.infer<typeof ZGetDashboardsAction>;
-    }) => {
-      const { organizationId, workspaceId } = await checkWorkspaceAccess(
-        ctx.user.id,
-        parsedInput.workspaceId,
-        "read"
-      );
-      await checkDashboardsEnabled(organizationId);
+  .action(async ({ ctx, parsedInput }) => {
+    const { organizationId, workspaceId } = await checkWorkspaceAccess(
+      ctx.user.id,
+      parsedInput.workspaceId,
+      "read"
+    );
+    await checkDashboardsEnabled(organizationId);
 
-      return getDashboards(workspaceId);
-    }
-  );
+    return getDashboards(workspaceId, parsedInput.chartId);
+  });
 
 const ZGetDashboardAction = z.object({
   workspaceId: ZId,

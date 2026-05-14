@@ -35,7 +35,9 @@ export function ChartDropdownMenu({ workspaceId, chart, onEdit }: Readonly<Chart
   const [isDropDownOpen, setIsDropDownOpen] = useState(false);
   const [isAddToDashboardDialogOpen, setIsAddToDashboardDialogOpen] = useState(false);
   const [isAddingToDashboard, setIsAddingToDashboard] = useState(false);
-  const [dashboards, setDashboards] = useState<Array<{ id: string; name: string }>>([]);
+  const [dashboards, setDashboards] = useState<Array<{ id: string; name: string; containsChart?: boolean }>>(
+    []
+  );
   const [selectedDashboardId, setSelectedDashboardId] = useState<string>();
 
   useEffect(() => {
@@ -47,14 +49,20 @@ export function ChartDropdownMenu({ workspaceId, chart, onEdit }: Readonly<Chart
       };
     }
 
-    void getDashboardsAction({ workspaceId })
+    void getDashboardsAction({ workspaceId, chartId: chart.id })
       .then((result) => {
         if (cancelled) {
           return;
         }
 
         if (result?.data) {
-          setDashboards(result.data.map((dashboard) => ({ id: dashboard.id, name: dashboard.name })));
+          setDashboards(
+            result.data.map((dashboard) => ({
+              id: dashboard.id,
+              name: dashboard.name,
+              containsChart: dashboard.containsChart,
+            }))
+          );
         } else {
           toast.error(getFormattedErrorMessage(result));
         }
@@ -71,7 +79,7 @@ export function ChartDropdownMenu({ workspaceId, chart, onEdit }: Readonly<Chart
     return () => {
       cancelled = true;
     };
-  }, [isAddToDashboardDialogOpen, workspaceId]);
+  }, [isAddToDashboardDialogOpen, workspaceId, chart.id]);
 
   const handleDeleteChart = async () => {
     setIsDeleting(true);

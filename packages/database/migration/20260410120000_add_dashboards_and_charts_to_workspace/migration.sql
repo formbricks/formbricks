@@ -56,6 +56,9 @@ CREATE UNIQUE INDEX "Dashboard_workspaceId_name_key" ON "public"."Dashboard"("wo
 -- CreateIndex
 CREATE INDEX "DashboardWidget_dashboardId_order_idx" ON "public"."DashboardWidget"("dashboardId", "order");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "DashboardWidget_dashboardId_chartId_key" ON "public"."DashboardWidget"("dashboardId", "chartId");
+
 -- AddForeignKey
 ALTER TABLE "public"."Chart" ADD CONSTRAINT "Chart_workspaceId_fkey" FOREIGN KEY ("workspaceId") REFERENCES "public"."Workspace"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
