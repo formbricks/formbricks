@@ -426,7 +426,7 @@ export const CreateConnectorModal = ({
             <DialogDescription>{getDialogDescription(currentStep, selectedType, t)}</DialogDescription>
           </DialogHeader>
 
-          <DialogBody className="min-h-0 min-w-0 overflow-y-auto py-4">
+          <DialogBody>
             {currentStep === "selectType" && (
               <ConnectorTypeSelector
                 selectedType={selectedType}
