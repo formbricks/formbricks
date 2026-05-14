@@ -1,6 +1,6 @@
 import { UAParser } from "ua-parser-js";
 import { ZEnvironmentId } from "@formbricks/types/environment";
-import { InvalidInputError, UniqueConstraintError } from "@formbricks/types/errors";
+import { InvalidInputError, TooManyRequestsError, UniqueConstraintError } from "@formbricks/types/errors";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { checkSurveyValidity } from "@/app/api/v2/client/[environmentId]/responses/lib/utils";
 import { reportApiError } from "@/app/lib/api/api-error-reporter";
@@ -202,21 +202,33 @@ export const OPTIONS = async (): Promise<Response> => {
   );
 };
 
-const applyRateLimit = async (environmentId: string): Promise<Response | null> => {
+const rateLimitMessage = "Maximum number of requests reached. Please try again later.";
+
+const applyRateLimit = async (request: Request, environmentId: string): Promise<Response | null> => {
   try {
     await applyClientRateLimit(environmentId);
     return null;
   } catch (error) {
-    return responses.tooManyRequestsResponse(
-      error instanceof Error ? error.message : "Rate limit exceeded",
-      true
-    );
+    if (
+      error instanceof TooManyRequestsError ||
+      (error instanceof Error && error.name === "TooManyRequestsError")
+    ) {
+      return responses.tooManyRequestsResponse(rateLimitMessage, true);
+    }
+
+    const response = getUnexpectedPublicErrorResponse();
+    reportApiError({
+      request,
+      status: response.status,
+      error,
+    });
+    return response;
   }
 };
 
 export const POST = async (request: Request, context: Context): Promise<Response> => {
   const params = await context.params;
-  const rateLimitResponse = await applyRateLimit(params.environmentId);
+  const rateLimitResponse = await applyRateLimit(request, params.environmentId);
   if (rateLimitResponse) {
     return rateLimitResponse;
   }

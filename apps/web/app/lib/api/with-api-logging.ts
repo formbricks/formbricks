@@ -59,8 +59,10 @@ enum ApiV1RouteTypeEnum {
   Integration = "integration",
 }
 
+const clientEnvironmentPathRegex = /^\/api\/v\d+\/client\/([^/]+)/;
+
 const getClientEnvironmentIdFromPathname = (pathname: string): string | null => {
-  const match = pathname.match(/^\/api\/v\d+\/client\/([^/]+)/);
+  const match = clientEnvironmentPathRegex.exec(pathname);
   return match?.[1] ?? null;
 };
 

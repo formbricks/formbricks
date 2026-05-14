@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { TooManyRequestsError } from "@formbricks/types/errors";
 
 const mocks = vi.hoisted(() => ({
   applyClientRateLimit: vi.fn(),
@@ -66,7 +67,9 @@ describe("api/v2 client displays route", () => {
   });
 
   test("returns 429 before processing when rate limiting rejects", async () => {
-    mocks.applyClientRateLimit.mockRejectedValue(new Error("Rate limit exceeded"));
+    mocks.applyClientRateLimit.mockRejectedValue(
+      new TooManyRequestsError("Maximum number of requests reached. Please try again later.")
+    );
 
     const request = new Request(`https://api.test/api/v2/client/${environmentId}/displays`, {
       method: "POST",
@@ -86,12 +89,45 @@ describe("api/v2 client displays route", () => {
     expect(response.status).toBe(429);
     expect(await response.json()).toEqual({
       code: "too_many_requests",
-      message: "Rate limit exceeded",
+      message: "Maximum number of requests reached. Please try again later.",
       details: {},
     });
     expect(mocks.applyClientRateLimit).toHaveBeenCalledWith(environmentId);
     expect(mocks.createDisplay).not.toHaveBeenCalled();
     expect(mocks.reportApiError).not.toHaveBeenCalled();
+  });
+
+  test("reports unexpected rate limit failures with a generic public response", async () => {
+    const underlyingError = new Error("redis connection failed");
+    mocks.applyClientRateLimit.mockRejectedValue(underlyingError);
+
+    const request = new Request(`https://api.test/api/v2/client/${environmentId}/displays`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        surveyId,
+      }),
+    });
+
+    const { POST } = await import("./route");
+    const response = await POST(request, {
+      params: Promise.resolve({ environmentId }),
+    });
+
+    expect(response.status).toBe(500);
+    expect(await response.json()).toEqual({
+      code: "internal_server_error",
+      message: "Something went wrong. Please try again.",
+      details: {},
+    });
+    expect(mocks.reportApiError).toHaveBeenCalledWith({
+      request,
+      status: 500,
+      error: underlyingError,
+    });
+    expect(mocks.createDisplay).not.toHaveBeenCalled();
   });
 
   test("reports unexpected createDisplay failures while keeping the response payload unchanged", async () => {

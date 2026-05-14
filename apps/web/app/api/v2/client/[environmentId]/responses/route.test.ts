@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { TooManyRequestsError } from "@formbricks/types/errors";
 
 const mocks = vi.hoisted(() => ({
   applyClientRateLimit: vi.fn(),
@@ -76,7 +77,9 @@ describe("api/v2 client responses route", () => {
   });
 
   test("returns 429 before processing when rate limiting rejects", async () => {
-    mocks.applyClientRateLimit.mockRejectedValue(new Error("Rate limit exceeded"));
+    mocks.applyClientRateLimit.mockRejectedValue(
+      new TooManyRequestsError("Maximum number of requests reached. Please try again later.")
+    );
 
     const request = new Request(`https://api.test/api/v2/client/${environmentId}/responses`, {
       method: "POST",
@@ -98,10 +101,48 @@ describe("api/v2 client responses route", () => {
     expect(response.status).toBe(429);
     expect(await response.json()).toEqual({
       code: "too_many_requests",
-      message: "Rate limit exceeded",
+      message: "Maximum number of requests reached. Please try again later.",
       details: {},
     });
     expect(mocks.applyClientRateLimit).toHaveBeenCalledWith(environmentId);
+    expect(mocks.getSurvey).not.toHaveBeenCalled();
+    expect(mocks.createResponseWithQuotaEvaluation).not.toHaveBeenCalled();
+    expect(mocks.sendToPipeline).not.toHaveBeenCalled();
+  });
+
+  test("reports unexpected rate limit failures with the same generic public response", async () => {
+    const underlyingError = new Error("redis connection failed");
+    mocks.applyClientRateLimit.mockRejectedValue(underlyingError);
+
+    const request = new Request(`https://api.test/api/v2/client/${environmentId}/responses`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-request-id": "req-v2-response-rate-limit",
+      },
+      body: JSON.stringify({
+        surveyId,
+        finished: false,
+        data: {},
+      }),
+    });
+
+    const { POST } = await import("./route");
+    const response = await POST(request, {
+      params: Promise.resolve({ environmentId }),
+    });
+
+    expect(response.status).toBe(500);
+    expect(await response.json()).toEqual({
+      code: "internal_server_error",
+      message: "Something went wrong. Please try again.",
+      details: {},
+    });
+    expect(mocks.reportApiError).toHaveBeenCalledWith({
+      request,
+      status: 500,
+      error: underlyingError,
+    });
     expect(mocks.getSurvey).not.toHaveBeenCalled();
     expect(mocks.createResponseWithQuotaEvaluation).not.toHaveBeenCalled();
     expect(mocks.sendToPipeline).not.toHaveBeenCalled();
