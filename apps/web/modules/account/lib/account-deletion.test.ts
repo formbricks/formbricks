@@ -22,9 +22,9 @@ const oldUser = {
 };
 
 const loadAccountDeletionModule = async ({
-  dangerouslyDisableSsoReauth = false,
+  dangerouslyDisableSsoConfirmation = false,
 }: {
-  dangerouslyDisableSsoReauth?: boolean;
+  dangerouslyDisableSsoConfirmation?: boolean;
 } = {}) => {
   vi.resetModules();
 
@@ -35,7 +35,7 @@ const loadAccountDeletionModule = async ({
   }));
 
   vi.doMock("@/lib/constants", () => ({
-    DISABLE_ACCOUNT_DELETION_SSO_REAUTH: dangerouslyDisableSsoReauth,
+    DISABLE_ACCOUNT_DELETION_SSO_CONFIRMATION: dangerouslyDisableSsoConfirmation,
   }));
 
   vi.doMock("@/lib/organization/service", () => ({
@@ -104,7 +104,7 @@ describe("deleteUserWithAccountDeletionAuthorization", () => {
 
   test("can dangerously bypass SSO identity confirmation for passwordless SSO users", async () => {
     const { deleteUserWithAccountDeletionAuthorization } = await loadAccountDeletionModule({
-      dangerouslyDisableSsoReauth: true,
+      dangerouslyDisableSsoConfirmation: true,
     });
 
     await expect(
@@ -131,7 +131,7 @@ describe("deleteUserWithAccountDeletionAuthorization", () => {
       password: "hashed-password",
     });
     const { deleteUserWithAccountDeletionAuthorization } = await loadAccountDeletionModule({
-      dangerouslyDisableSsoReauth: true,
+      dangerouslyDisableSsoConfirmation: true,
     });
 
     await expect(

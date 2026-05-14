@@ -7,7 +7,10 @@ import { useTranslation } from "react-i18next";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
 import { DeleteAccountModal } from "@/modules/account/components/DeleteAccountModal";
-import { ACCOUNT_DELETION_SSO_REAUTH_ERROR_QUERY_PARAM } from "@/modules/account/constants";
+import {
+  ACCOUNT_DELETION_SSO_REAUTH_ERROR_QUERY_PARAM,
+  ACCOUNT_DELETION_SSO_REAUTH_FAILED_ERROR_CODE,
+} from "@/modules/account/constants";
 import { Button } from "@/modules/ui/components/button";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
@@ -39,7 +42,10 @@ export const DeleteAccount = ({
   const hasShownAccountDeletionError = useRef(false);
 
   useEffect(() => {
-    if (!accountDeletionErrorCode || hasShownAccountDeletionError.current) {
+    if (
+      accountDeletionErrorCode !== ACCOUNT_DELETION_SSO_REAUTH_FAILED_ERROR_CODE ||
+      hasShownAccountDeletionError.current
+    ) {
       return;
     }
 

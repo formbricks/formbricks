@@ -84,6 +84,8 @@ const getAccountDeletionSsoReauthAuthorizationParams = (
   // This flow intentionally confirms the same SSO identity without requesting formal freshness proof.
   // Do not add prompt=login, max_age=0, Google auth_time claims, or SAML forceAuthn here unless the
   // product decision changes back to strict step-up authentication.
+  // A future lower-friction alternative would be a short-lived email confirmation link that deletes
+  // the account after verifying the signed deletion intent, making the inbox the confirmation factor.
   if (provider === "saml") {
     return {
       product: SAML_PRODUCT,
