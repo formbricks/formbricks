@@ -1,6 +1,5 @@
 import "server-only";
 import { createCacheKey } from "@formbricks/cache";
-import FormbricksHub from "@formbricks/hub";
 import { logger } from "@formbricks/logger";
 import { cache } from "@/lib/cache";
 import { getHubClient } from "./hub-client";
@@ -33,8 +32,15 @@ const getErrorMessage = (err: unknown): string => {
   return "Unknown error";
 };
 
+// Duck-typed: `instanceof` against the SDK error class breaks under Next dev/Turbopack
+// when @formbricks/hub is loaded into more than one module scope.
+const getErrorStatus = (err: unknown): number =>
+  err && typeof err === "object" && typeof (err as { status?: unknown }).status === "number"
+    ? (err as { status: number }).status
+    : 0;
+
 const createResultFromError = (err: unknown): HubFeedbackRecordResult => {
-  const status = err instanceof FormbricksHub.APIError ? err.status : 0;
+  const status = getErrorStatus(err);
   const message = getErrorMessage(err);
   return { data: null, error: { status, message, detail: message } };
 };
@@ -128,7 +134,7 @@ export const listFeedbackRecords = async (
     return { data, error: null };
   } catch (err) {
     logger.warn({ err }, "Hub: listFeedbackRecords failed");
-    const status = err instanceof FormbricksHub.APIError ? err.status : 0;
+    const status = getErrorStatus(err);
     const message = getErrorMessage(err);
     return { data: null, error: { status, message, detail: message } };
   }
@@ -146,7 +152,7 @@ export const semanticSearchFeedbackRecords = async (
     return { data, error: null };
   } catch (err) {
     logger.warn({ err, tenantId: input.tenant_id }, "Hub: semanticSearchFeedbackRecords failed");
-    const status = err instanceof FormbricksHub.APIError ? err.status : 0;
+    const status = getErrorStatus(err);
     const message = getErrorMessage(err);
     return { data: null, error: { status, message, detail: message } };
   }
@@ -171,7 +177,7 @@ export const getFeedbackRecordTenant = async (recordId: string): Promise<Feedbac
     return { data, error: null };
   } catch (err) {
     logger.warn({ err, recordId }, "Hub: getFeedbackRecordTenant failed");
-    const status = err instanceof FormbricksHub.APIError ? err.status : 0;
+    const status = getErrorStatus(err);
     const message = err instanceof Error ? err.message : String(err);
     return { data: null, error: { status, message, detail: message } };
   }
