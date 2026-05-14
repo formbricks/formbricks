@@ -689,12 +689,12 @@ describe("Tests for createSurvey", () => {
     });
 
     test("enables browser language auto-selection by default for new multi-language surveys", async () => {
-      vi.mocked(getOrganizationByEnvironmentId).mockResolvedValueOnce(mockOrganizationOutput);
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
       prisma.survey.create.mockResolvedValueOnce({
         ...mockSurveyOutput,
       });
 
-      await createSurvey(mockEnvironmentId, {
+      await createSurvey(mockWorkspaceId, {
         ...getMultiLanguageCreateSurveyInput(),
       });
 
@@ -708,12 +708,12 @@ describe("Tests for createSurvey", () => {
     });
 
     test("preserves explicit browser language auto-selection setting on create", async () => {
-      vi.mocked(getOrganizationByEnvironmentId).mockResolvedValueOnce(mockOrganizationOutput);
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
       prisma.survey.create.mockResolvedValueOnce({
         ...mockSurveyOutput,
       });
 
-      await createSurvey(mockEnvironmentId, {
+      await createSurvey(mockWorkspaceId, {
         ...getMultiLanguageCreateSurveyInput(),
         autoSelectLanguage: false,
       });

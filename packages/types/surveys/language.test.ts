@@ -30,7 +30,7 @@ const languages = [
 
 describe("survey language helpers", () => {
   test("normalizes quality values, whitespace, underscores, and case", () => {
-    expect(normalizeLanguageCode(" PT_BR ;q=0.9 ")).toBe("pt-br");
+    expect(normalizeLanguageCode(" ZH_Hans_CN ;q=0.9 ")).toBe("zh-hans-cn");
   });
 
   test("matches exact codes, aliases, and loose variants while ignoring disabled languages", () => {

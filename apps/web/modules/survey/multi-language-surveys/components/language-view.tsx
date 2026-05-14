@@ -504,8 +504,8 @@ export const LanguageView = ({
             disabled={enabledLanguages.length <= 1}
             isChecked={!!localSurvey.autoSelectLanguage}
             onToggle={handleAutoSelectLanguageToggle}
-            title={t("environments.surveys.edit.auto_select_browser_language")}
-            description={t("environments.surveys.edit.auto_select_browser_language_description")}
+            title={t("workspace.surveys.edit.auto_select_browser_language")}
+            description={t("workspace.surveys.edit.auto_select_browser_language_description")}
             childBorder={true}
           />
         </div>

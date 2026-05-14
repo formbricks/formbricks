@@ -330,6 +330,7 @@
                               },
                               "autoSelectLanguage": {
                                 "example": null,
+                                "nullable": true,
                                 "type": "boolean"
                               },
                               "delay": {
@@ -4664,6 +4665,11 @@
               },
               "schema": {
                 "properties": {
+                  "autoSelectLanguage": {
+                    "description": "Whether to automatically select the survey language from the respondent's browser language when a matching active language exists.",
+                    "nullable": true,
+                    "type": "boolean"
+                  },
                   "displayOption": {
                     "enum": ["displayOnce", "displayMultiple", "respondMultiple", "displaySome"],
                     "type": "string"

@@ -86,36 +86,42 @@ describe("widget-file", () => {
     const originalLanguages = navigator.languages;
     const originalLanguage = navigator.language;
 
-    Object.defineProperty(navigator, "languages", {
-      configurable: true,
-      value: ["de-DE", "en-US"],
-    });
-    expect(widget.getBrowserLanguageCodes()).toEqual(["de-DE", "en-US"]);
+    try {
+      Object.defineProperty(navigator, "languages", {
+        configurable: true,
+        value: ["de-DE", "", "en-US"],
+      });
+      expect(widget.getBrowserLanguageCodes()).toEqual(["de-DE", "en-US"]);
 
-    Object.defineProperty(navigator, "languages", {
-      configurable: true,
-      value: [],
-    });
-    Object.defineProperty(navigator, "language", {
-      configurable: true,
-      value: "fr-FR",
-    });
-    expect(widget.getBrowserLanguageCodes()).toEqual(["fr-FR"]);
+      Object.defineProperty(navigator, "languages", {
+        configurable: true,
+        value: [],
+      });
+      Object.defineProperty(navigator, "language", {
+        configurable: true,
+        value: "fr-FR",
+      });
+      expect(widget.getBrowserLanguageCodes()).toEqual(["fr-FR"]);
 
-    Object.defineProperty(navigator, "language", {
-      configurable: true,
-      value: "",
-    });
-    expect(widget.getBrowserLanguageCodes()).toEqual([]);
-
-    Object.defineProperty(navigator, "languages", {
-      configurable: true,
-      value: originalLanguages,
-    });
-    Object.defineProperty(navigator, "language", {
-      configurable: true,
-      value: originalLanguage,
-    });
+      Object.defineProperty(navigator, "languages", {
+        configurable: true,
+        value: undefined,
+      });
+      Object.defineProperty(navigator, "language", {
+        configurable: true,
+        value: "",
+      });
+      expect(widget.getBrowserLanguageCodes()).toEqual([]);
+    } finally {
+      Object.defineProperty(navigator, "languages", {
+        configurable: true,
+        value: originalLanguages,
+      });
+      Object.defineProperty(navigator, "language", {
+        configurable: true,
+        value: originalLanguage,
+      });
+    }
   });
 
   test("triggerSurvey skips if shouldDisplayBasedOnPercentage returns false", async () => {
@@ -251,68 +257,71 @@ describe("widget-file", () => {
 
   test("renderWidget passes browser languages when auto-select is enabled and no user language is set", async () => {
     const originalLanguages = navigator.languages;
-    Object.defineProperty(navigator, "languages", {
-      configurable: true,
-      value: ["de-DE", "en-US"],
-    });
 
-    const mockConfigValue = {
-      get: vi.fn().mockReturnValue({
-        appUrl: "https://fake.app",
-        environmentId: "env_123",
-        environment: {
-          data: {
-            project: {
-              clickOutsideClose: true,
-              overlay: "none",
-              placement: "bottomRight",
-              inAppSurveyBranding: true,
+    try {
+      Object.defineProperty(navigator, "languages", {
+        configurable: true,
+        value: ["de-DE", "en-US"],
+      });
+
+      const mockConfigValue = {
+        get: vi.fn().mockReturnValue({
+          appUrl: "https://fake.app",
+          workspaceId: "env_123",
+          workspace: {
+            data: {
+              settings: {
+                clickOutsideClose: true,
+                overlay: "none",
+                placement: "bottomRight",
+                inAppSurveyBranding: true,
+              },
             },
           },
-        },
-        user: {
-          data: {
-            userId: "user_abc",
-            displays: [],
-            responses: [],
-            lastDisplayAt: null,
+          user: {
+            data: {
+              userId: "user_abc",
+              displays: [],
+              responses: [],
+              lastDisplayAt: null,
+            },
           },
-        },
-      }),
-      update: vi.fn(),
-    };
+        }),
+        update: vi.fn(),
+      };
 
-    getInstanceConfigMock.mockReturnValue(mockConfigValue as unknown as Config);
-    widget.setIsSurveyRunning(false);
-    (getLanguageCode as Mock).mockReturnValueOnce("de");
+      getInstanceConfigMock.mockReturnValue(mockConfigValue as unknown as Config);
+      widget.setIsSurveyRunning(false);
+      (getLanguageCode as Mock).mockReturnValueOnce("de");
 
-    // @ts-expect-error -- mock window.formbricksSurveys
-    window.formbricksSurveys = {
-      renderSurvey: vi.fn(),
-    };
+      // @ts-expect-error -- mock window.formbricksSurveys
+      window.formbricksSurveys = {
+        renderSurvey: vi.fn(),
+      };
 
-    vi.useFakeTimers();
+      vi.useFakeTimers();
 
-    const autoSelectSurvey = {
-      ...mockSurvey,
-      autoSelectLanguage: true,
-      delay: 0,
-      languages: [
-        { language: { code: "en" }, default: true, enabled: true },
-        { language: { code: "de" }, default: false, enabled: true },
-      ],
-    } as unknown as TEnvironmentStateSurvey;
+      const autoSelectSurvey = {
+        ...mockSurvey,
+        autoSelectLanguage: true,
+        delay: 0,
+        languages: [
+          { language: { code: "en" }, default: true, enabled: true },
+          { language: { code: "de" }, default: false, enabled: true },
+        ],
+      } as unknown as TWorkspaceStateSurvey;
 
-    await widget.renderWidget(autoSelectSurvey);
-    vi.advanceTimersByTime(0);
+      await widget.renderWidget(autoSelectSurvey);
+      vi.advanceTimersByTime(0);
 
-    expect(getLanguageCode).toHaveBeenCalledWith(autoSelectSurvey, undefined, ["de-DE", "en-US"]);
-
-    vi.useRealTimers();
-    Object.defineProperty(navigator, "languages", {
-      configurable: true,
-      value: originalLanguages,
-    });
+      expect(getLanguageCode).toHaveBeenCalledWith(autoSelectSurvey, undefined, ["de-DE", "en-US"]);
+    } finally {
+      vi.useRealTimers();
+      Object.defineProperty(navigator, "languages", {
+        configurable: true,
+        value: originalLanguages,
+      });
+    }
   });
 
   test("closeSurvey removes widget container, resets filtered surveys, sets isSurveyRunning=false", () => {

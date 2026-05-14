@@ -15,8 +15,11 @@ interface ResolveSurveyLanguageInput<T extends TSurveyLanguageLike> {
   unmatchedExplicitLanguageBehavior?: "fallback" | "undefined";
 }
 
+/**
+ * Normalizes locale identifiers from URLs, SDK calls, and browser headers before matching.
+ */
 export const normalizeLanguageCode = (languageCode: string): string =>
-  languageCode.trim().split(";")[0].trim().replace("_", "-").toLowerCase();
+  languageCode.trim().split(";")[0].trim().replaceAll("_", "-").toLowerCase();
 
 const getBaseLanguageCode = (languageCode: string): string =>
   normalizeLanguageCode(languageCode).split("-")[0];
@@ -68,6 +71,9 @@ const findLooseLanguageMatch = <T extends TSurveyLanguageLike>(
   return undefined;
 };
 
+/**
+ * Matches a requested language against active survey languages by exact code/alias and then base language.
+ */
 export const matchSurveyLanguage = <T extends TSurveyLanguageLike>(
   languages: T[],
   languageCode: string

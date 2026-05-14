@@ -439,7 +439,7 @@ describe("utils.ts", () => {
           { language: { code: "en" }, default: true, enabled: true },
           { language: { code: "es-ES" }, default: false, enabled: true },
         ],
-      } as unknown as TEnvironmentStateSurvey;
+      } as unknown as TWorkspaceStateSurvey;
 
       expect(getLanguageCode(survey, "es-MX")).toBe("es-ES");
     });
@@ -451,7 +451,7 @@ describe("utils.ts", () => {
           { language: { code: "en" }, default: true, enabled: true },
           { language: { code: "de" }, default: false, enabled: true },
         ],
-      } as unknown as TEnvironmentStateSurvey;
+      } as unknown as TWorkspaceStateSurvey;
 
       expect(getLanguageCode(survey, undefined, ["de-DE", "en-US"])).toBe("de");
       expect(getLanguageCode({ ...survey, autoSelectLanguage: false }, undefined, ["de-DE"])).toBe("default");
@@ -464,7 +464,7 @@ describe("utils.ts", () => {
           { language: { code: "en" }, default: true, enabled: true },
           { language: { code: "de" }, default: false, enabled: true },
         ],
-      } as unknown as TEnvironmentStateSurvey;
+      } as unknown as TWorkspaceStateSurvey;
 
       expect(getLanguageCode(survey, "fr", ["de-DE"])).toBeUndefined();
     });

@@ -87,7 +87,8 @@ How to deliver a specific language depends on the survey type (app or link surve
 
 Formbricks selects the survey language in this order:
 
-1. An explicit `lang` URL parameter for link surveys, or an explicit SDK/user language for app surveys.
+1. An explicit `lang` URL parameter for link surveys, or an explicit SDK/user language for app surveys. For app
+   surveys, if the explicit SDK/user language is unavailable, the survey is not displayed.
 2. The respondent's browser language when **Use browser language by default** is enabled.
 3. The survey's default language.
 
@@ -127,9 +128,10 @@ variants with the same base language, for example `es-MX` can match an active `e
 
 ## Link Surveys Configuration
 
-For link surveys, the `lang` URL parameter always takes priority. If no `lang` parameter is present and **Use browser
-language by default** is enabled, Formbricks uses the respondent's browser language when a matching active language is
-available.
+For link surveys, the `lang` URL parameter always takes priority. If the `lang` parameter contains a supported active
+language, Formbricks opens that language. If it contains an unsupported or disabled language, Formbricks falls back to
+the survey's default language. If no `lang` parameter is present and **Use browser language by default** is enabled,
+Formbricks uses the respondent's browser language when a matching active language is available.
 
 <Steps>
   <Step title="Publish Your Survey">
@@ -150,6 +152,9 @@ available.
     Without the `lang` parameter, Formbricks will use the browser language when **Use browser language by default** is
     enabled and a matching active language exists. Otherwise, it will show the survey in the default language you have
     set.
+
+    If the `lang` parameter is present but does not match an active survey language, Formbricks also falls back to the
+    survey's default language.
 
   </Step>
 
