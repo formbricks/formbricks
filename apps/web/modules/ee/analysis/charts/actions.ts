@@ -21,6 +21,11 @@ import {
 } from "@/modules/ee/analysis/charts/lib/charts";
 import { checkFeedbackDirectoryAccess, checkWorkspaceAccess } from "@/modules/ee/analysis/lib/access";
 import { generateSchemaContext } from "@/modules/ee/analysis/lib/ai-schema-context";
+import {
+  FEEDBACK_DIMENSION_IDS,
+  FEEDBACK_MEASURE_IDS,
+  FEEDBACK_TIME_DIMENSION_IDS,
+} from "@/modules/ee/analysis/lib/schema-definition";
 import { ZChartCreateInput, ZChartType, ZChartUpdateInput } from "@/modules/ee/analysis/types/analysis";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { getIsDashboardsEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -287,13 +292,25 @@ export const executeQueryAction = authenticatedActionClient
 
 const CUBE_NAME = "FeedbackRecords";
 
+const toEnumTuple = (values: readonly string[]): [string, ...string[]] => {
+  if (values.length === 0) {
+    throw new Error("AI query schema requires at least one allowed id");
+  }
+  return [values[0], ...values.slice(1)];
+};
+
+const ZMeasureId = z.enum(toEnumTuple(FEEDBACK_MEASURE_IDS));
+const ZDimensionId = z.enum(toEnumTuple(FEEDBACK_DIMENSION_IDS));
+const ZTimeDimensionId = z.enum(toEnumTuple(FEEDBACK_TIME_DIMENSION_IDS));
+const ZFilterMemberId = z.enum(toEnumTuple([...FEEDBACK_MEASURE_IDS, ...FEEDBACK_DIMENSION_IDS]));
+
 const ZGenerateAIQueryResponse = z.object({
-  measures: z.array(z.string()),
-  dimensions: z.array(z.string()).nullable(),
+  measures: z.array(ZMeasureId),
+  dimensions: z.array(ZDimensionId).nullable(),
   timeDimensions: z
     .array(
       z.object({
-        dimension: z.string(),
+        dimension: ZTimeDimensionId,
         granularity: z.enum(["hour", "day", "week", "month", "quarter", "year"]).nullable(),
         dateRange: z.string().nullable(),
       })
@@ -303,7 +320,7 @@ const ZGenerateAIQueryResponse = z.object({
   filters: z
     .array(
       z.object({
-        member: z.string(),
+        member: ZFilterMemberId,
         operator: z.enum([
           "equals",
           "notEquals",
@@ -364,6 +381,7 @@ export const generateAIChartAction = authenticatedActionClient
         output: Output.object({ schema: ZGenerateAIQueryResponse }),
         system: schemaContext,
         prompt: `User request: "${parsedInput.prompt}"`,
+        temperature: 0,
       });
 
       const measures = output.measures.length > 0 ? output.measures : [`${CUBE_NAME}.count`];

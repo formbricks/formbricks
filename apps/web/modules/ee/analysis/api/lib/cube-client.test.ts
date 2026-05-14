@@ -187,7 +187,7 @@ describe("executeTenantScopedQuery", () => {
       ...scopedInput,
       query: {
         measures: ["FeedbackRecords.count"],
-        filters: [{ member: "FeedbackRecords.sentiment", operator: "equals", values: ["secret-value"] }],
+        filters: [{ member: "FeedbackRecords.sourceType", operator: "equals", values: ["secret-value"] }],
       },
     });
 
@@ -197,7 +197,7 @@ describe("executeTenantScopedQuery", () => {
         targetType: "cubeQuery",
         newObject: expect.objectContaining({
           query: expect.objectContaining({
-            filterMembers: ["FeedbackRecords.sentiment"],
+            filterMembers: ["FeedbackRecords.sourceType"],
             filterCount: 1,
           }),
         }),

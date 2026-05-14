@@ -1,6 +1,5 @@
 // This schema maps to the `feedback_records` table owned by the Formbricks Hub Postgres.
-// If the Hub changes column names, types, or the metadata JSONB shape (e.g. the `topics` array),
-// this schema must be updated to match.
+// If the Hub changes column names or types, this schema must be updated to match.
 cube(`FeedbackRecords`, {
   sql: `SELECT * FROM feedback_records`,
 
@@ -60,12 +59,6 @@ cube(`FeedbackRecords`, {
       primaryKey: true,
     },
 
-    sentiment: {
-      sql: `sentiment`,
-      type: `string`,
-      description: `Sentiment extracted from metadata JSONB field`,
-    },
-
     sourceType: {
       sql: `source_type`,
       type: `string`,
@@ -108,65 +101,10 @@ cube(`FeedbackRecords`, {
       description: `Identifier of the user who provided feedback`,
     },
 
-    emotion: {
-      sql: `emotion`,
-      type: `string`,
-      description: `Emotion extracted from metadata JSONB field`,
-    },
-
     tenantId: {
       sql: `tenant_id`,
       type: `string`,
       description: `Tenant ID linking to FeedbackDirectory`,
-    },
-  },
-
-  joins: {
-    TopicsUnnested: {
-      sql: `${CUBE}.id = ${TopicsUnnested}.feedback_record_id`,
-      relationship: `hasMany`,
-    },
-  },
-});
-
-cube(`TopicsUnnested`, {
-  sql: `
-    SELECT
-      fr.id as feedback_record_id,
-      fr.tenant_id,
-      topic_elem.topic
-    FROM feedback_records fr
-    CROSS JOIN LATERAL jsonb_array_elements_text(COALESCE(fr.metadata->'topics', '[]'::jsonb)) AS topic_elem(topic)
-  `,
-
-  measures: {
-    count: {
-      type: `count`,
-    },
-  },
-
-  dimensions: {
-    id: {
-      sql: `md5(feedback_record_id || '::' || topic)`,
-      type: `string`,
-      primaryKey: true,
-    },
-
-    feedbackRecordId: {
-      sql: `feedback_record_id`,
-      type: `string`,
-    },
-
-    tenantId: {
-      sql: `tenant_id`,
-      type: `string`,
-      description: `Tenant ID for row-level security scoping`,
-    },
-
-    topic: {
-      sql: `topic`,
-      type: `string`,
-      description: `Individual topic from the topics array`,
     },
   },
 });

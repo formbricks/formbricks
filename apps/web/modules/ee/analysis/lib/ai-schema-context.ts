@@ -52,7 +52,7 @@ ${operatorsText}
 
 ## Guidelines
 - Always include at least one measure. If unspecified, default to \`${CUBE_NAME}.count\`.
-- Use dimension IDs exactly as shown (e.g. \`FeedbackRecords.sentiment\`, \`FeedbackRecords.collectedAt\`).
+- Use dimension IDs exactly as shown (e.g. \`FeedbackRecords.sourceType\`, \`FeedbackRecords.collectedAt\`).
 - For time-based filtering (date range only, no time grouping): add a timeDimension with dimension \`${CUBE_NAME}.collectedAt\` and dateRange. Do NOT include granularity (default is None / filter only).
 - For time-series or trend questions (e.g. "over time", "by day", "weekly", "monthly"): add a timeDimension with dimension, granularity (hour/day/week/month/quarter/year), and dateRange.
 - Choose the most appropriate chart type: bar, line, area, pie, or big_number (for single-number queries).

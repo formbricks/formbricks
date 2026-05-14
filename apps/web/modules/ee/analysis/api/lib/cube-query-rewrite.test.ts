@@ -107,18 +107,6 @@ describe("cube queryRewrite", () => {
     ).toThrow(/tenant filters are enforced by Cube/);
   });
 
-  test("rejects caller-supplied TopicsUnnested tenant filters", () => {
-    expect(() =>
-      queryRewrite(
-        {
-          measures: ["TopicsUnnested.count"],
-          filters: [{ member: "TopicsUnnested.tenantId", operator: "equals", values: ["workspace-2"] }],
-        },
-        { securityContext }
-      )
-    ).toThrow(/tenant filters are enforced by Cube/);
-  });
-
   test("logs sanitized failure audit metadata for rejected tenant filters", () => {
     expect(() =>
       queryRewrite(
@@ -169,7 +157,7 @@ describe("cube queryRewrite", () => {
           filters: [
             {
               or: [
-                { member: "FeedbackRecords.sentiment", operator: "equals", values: ["positive"] },
+                { member: "FeedbackRecords.sourceType", operator: "equals", values: ["positive"] },
                 { member: "FeedbackRecords.tenantId", operator: "equals", values: ["workspace-2"] },
               ],
             },
@@ -207,36 +195,23 @@ describe("cube queryRewrite", () => {
   test("appends the mandatory tenant filter from security context", () => {
     const query = {
       measures: ["FeedbackRecords.count"],
-      filters: [{ member: "FeedbackRecords.sentiment", operator: "equals", values: ["positive"] }],
+      filters: [{ member: "FeedbackRecords.sourceType", operator: "equals", values: ["positive"] }],
     };
 
     const rewrittenQuery = queryRewrite(query, { securityContext });
 
     expect(rewrittenQuery.filters).toEqual([
-      { member: "FeedbackRecords.sentiment", operator: "equals", values: ["positive"] },
+      { member: "FeedbackRecords.sourceType", operator: "equals", values: ["positive"] },
       { member: "FeedbackRecords.tenantId", operator: "equals", values: ["frd-1"] },
     ]);
     expect(query.filters).toHaveLength(1);
-  });
-
-  test("appends only the TopicsUnnested tenant filter for TopicsUnnested queries", () => {
-    const query = {
-      measures: ["TopicsUnnested.count"],
-      dimensions: ["TopicsUnnested.topic"],
-    };
-
-    const rewrittenQuery = queryRewrite(query, { securityContext });
-
-    expect(rewrittenQuery.filters).toEqual([
-      { member: "TopicsUnnested.tenantId", operator: "equals", values: ["frd-1"] },
-    ]);
   });
 
   test("logs sanitized Cube audit metadata without raw filter values", () => {
     queryRewrite(
       {
         measures: ["FeedbackRecords.count"],
-        filters: [{ member: "FeedbackRecords.sentiment", operator: "equals", values: ["secret-value"] }],
+        filters: [{ member: "FeedbackRecords.sourceType", operator: "equals", values: ["secret-value"] }],
       },
       { securityContext }
     );
@@ -256,7 +231,6 @@ describe("cube queryRewrite", () => {
       source: "charts.executeQueryAction",
     });
     expect(parsed.members).toContain("FeedbackRecords.tenantId");
-    expect(parsed.members).not.toContain("TopicsUnnested.tenantId");
     expect(logPayload).not.toContain("secret-value");
   });
 });
