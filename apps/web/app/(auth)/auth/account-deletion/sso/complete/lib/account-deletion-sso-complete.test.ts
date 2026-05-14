@@ -4,7 +4,7 @@ import { logger } from "@formbricks/logger";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { verifyAccountDeletionSsoReauthIntent } from "@/lib/jwt";
 import { deleteUserWithAccountDeletionAuthorization } from "@/modules/account/lib/account-deletion";
-import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
+import { queueAccountDeletionAuditEvent } from "@/modules/account/lib/account-deletion-audit";
 import { completeAccountDeletionSsoIdentityConfirmationAndGetRedirectPath } from "./account-deletion-sso-complete";
 
 vi.mock("server-only", () => ({}));
@@ -37,15 +37,15 @@ vi.mock("@/modules/auth/lib/authOptions", () => ({
   authOptions: {},
 }));
 
-vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
-  queueAuditEventBackground: vi.fn(),
+vi.mock("@/modules/account/lib/account-deletion-audit", () => ({
+  queueAccountDeletionAuditEvent: vi.fn(),
 }));
 
 const mockGetServerSession = vi.mocked(getServerSession);
 const mockLoggerError = vi.mocked(logger.error);
 const mockVerifyAccountDeletionSsoReauthIntent = vi.mocked(verifyAccountDeletionSsoReauthIntent);
 const mockDeleteUserWithAccountDeletionAuthorization = vi.mocked(deleteUserWithAccountDeletionAuthorization);
-const mockQueueAuditEventBackground = vi.mocked(queueAuditEventBackground);
+const mockQueueAccountDeletionAuditEvent = vi.mocked(queueAccountDeletionAuditEvent);
 
 const intent = {
   id: "intent-id",
@@ -71,7 +71,7 @@ describe("completeAccountDeletionSsoIdentityConfirmationAndGetRedirectPath", () 
     mockDeleteUserWithAccountDeletionAuthorization.mockResolvedValue({
       oldUser: { id: intent.userId } as any,
     });
-    mockQueueAuditEventBackground.mockResolvedValue(undefined);
+    mockQueueAccountDeletionAuditEvent.mockResolvedValue(undefined);
   });
 
   test("returns login without deleting when the callback has no intent", async () => {
@@ -81,7 +81,7 @@ describe("completeAccountDeletionSsoIdentityConfirmationAndGetRedirectPath", () 
 
     expect(mockVerifyAccountDeletionSsoReauthIntent).not.toHaveBeenCalled();
     expect(mockDeleteUserWithAccountDeletionAuthorization).not.toHaveBeenCalled();
-    expect(mockQueueAuditEventBackground).not.toHaveBeenCalled();
+    expect(mockQueueAccountDeletionAuditEvent).not.toHaveBeenCalled();
   });
 
   test("deletes the account after a completed SSO identity confirmation", async () => {
@@ -94,15 +94,10 @@ describe("completeAccountDeletionSsoIdentityConfirmationAndGetRedirectPath", () 
       userEmail: intent.email,
       userId: intent.userId,
     });
-    expect(mockQueueAuditEventBackground).toHaveBeenCalledWith({
-      action: "deleted",
-      targetType: "user",
-      userId: intent.userId,
-      userType: "user",
-      targetId: intent.userId,
-      organizationId: "unknown",
-      oldObject: { id: intent.userId },
+    expect(mockQueueAccountDeletionAuditEvent).toHaveBeenCalledWith({
+      oldUser: { id: intent.userId },
       status: "success",
+      targetUserId: intent.userId,
     });
   });
 
@@ -135,20 +130,14 @@ describe("completeAccountDeletionSsoIdentityConfirmationAndGetRedirectPath", () 
     ).resolves.toBe("/environments/env-id/settings/profile?accountDeletionError=sso_reauth_failed");
 
     expect(mockDeleteUserWithAccountDeletionAuthorization).toHaveBeenCalled();
-    expect(mockQueueAuditEventBackground).toHaveBeenCalledWith({
-      action: "deleted",
-      targetType: "user",
-      userId: intent.userId,
-      userType: "user",
-      targetId: intent.userId,
-      organizationId: "unknown",
-      oldObject: undefined,
+    expect(mockQueueAccountDeletionAuditEvent).toHaveBeenCalledWith({
       status: "failure",
+      targetUserId: intent.userId,
     });
   });
 
   test("keeps the post-deletion redirect if audit logging fails after deletion", async () => {
-    mockQueueAuditEventBackground.mockRejectedValue(new Error("audit unavailable"));
+    mockQueueAccountDeletionAuditEvent.mockRejectedValue(new Error("audit unavailable"));
 
     await expect(
       completeAccountDeletionSsoIdentityConfirmationAndGetRedirectPath({ intent: "intent-token" })
@@ -156,8 +145,8 @@ describe("completeAccountDeletionSsoIdentityConfirmationAndGetRedirectPath", () 
 
     expect(mockDeleteUserWithAccountDeletionAuthorization).toHaveBeenCalled();
     expect(mockLoggerError).toHaveBeenCalledWith(
-      expect.objectContaining({ error: expect.any(Error), targetUserId: intent.userId }),
-      "Failed to queue account deletion audit event"
+      { error: expect.any(Error) },
+      "Failed to complete account deletion after SSO identity confirmation"
     );
   });
 

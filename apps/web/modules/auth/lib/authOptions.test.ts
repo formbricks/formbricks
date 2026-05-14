@@ -786,10 +786,10 @@ describe("authOptions", () => {
       const mockGetAccountDeletionSsoReauthIntentFromCallbackUrl = vi
         .fn()
         .mockReturnValueOnce("intent-token");
-      const reauthError = new Error("SSO identity confirmation failed");
+      const confirmationError = new Error("SSO identity confirmation failed");
       const mockValidateAccountDeletionSsoReauthenticationCallback = vi
         .fn()
-        .mockRejectedValueOnce(reauthError);
+        .mockRejectedValueOnce(confirmationError);
 
       vi.doMock("@/lib/constants", async (importOriginal) => {
         const actual = await importOriginal<typeof import("@/lib/constants")>();

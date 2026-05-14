@@ -52,7 +52,7 @@ export const DeleteAccount = ({
     hasShownAccountDeletionError.current = true;
 
     toast.error(t("environments.settings.profile.sso_identity_confirmation_failed"), {
-      id: "account-deletion-sso-reauth-error",
+      id: "account-deletion-sso-confirmation-error",
     });
 
     const url = new URL(globalThis.location.href);
