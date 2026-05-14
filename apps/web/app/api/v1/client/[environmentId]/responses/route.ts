@@ -129,6 +129,14 @@ export const POST = withV1ApiWrapper({
       };
     }
 
+    if (survey.status !== "inProgress") {
+      return {
+        response: responses.forbiddenResponse("Survey is not accepting submissions", true, {
+          surveyId: survey.id,
+        }),
+      };
+    }
+
     if (survey.type === "link" && survey.singleUse?.enabled) {
       if (!responseInputData.singleUseId) {
         return {

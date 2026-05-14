@@ -20,6 +20,12 @@ export const checkSurveyValidity = async (
     return responses.badRequestResponse("Survey does not belong to this environment", undefined, true);
   }
 
+  if (survey.status !== "inProgress") {
+    return responses.forbiddenResponse("Survey is not accepting submissions", true, {
+      surveyId: survey.id,
+    });
+  }
+
   if (survey.type === "link" && survey.singleUse?.enabled) {
     if (!responseInput.singleUseId) {
       return responses.badRequestResponse("Missing single use id", {

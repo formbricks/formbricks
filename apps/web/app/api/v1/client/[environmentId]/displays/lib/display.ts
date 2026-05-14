@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { TDisplayCreateInput, ZDisplayCreateInput } from "@formbricks/types/displays";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
 import { getContactByUserId } from "./contact";
 
@@ -39,6 +39,10 @@ export const createDisplay = async (displayInput: TDisplayCreateInput): Promise<
     });
     if (!survey) {
       throw new ResourceNotFoundError("Survey", surveyId);
+    }
+
+    if (survey.status !== "inProgress") {
+      throw new InvalidInputError("Survey is not accepting submissions");
     }
 
     const display = await prisma.display.create({

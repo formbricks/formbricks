@@ -1,6 +1,6 @@
 import { logger } from "@formbricks/logger";
 import { ZDisplayCreateInput } from "@formbricks/types/displays";
-import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
@@ -60,6 +60,12 @@ export const POST = withV1ApiWrapper({
       if (error instanceof ResourceNotFoundError) {
         return {
           response: responses.notFoundResponse("Survey", inputValidation.data.surveyId),
+        };
+      } else if (error instanceof InvalidInputError) {
+        return {
+          response: responses.forbiddenResponse(error.message, true, {
+            surveyId: inputValidation.data.surveyId,
+          }),
         };
       } else {
         logger.error({ error, url: req.url }, "Error in POST /api/v1/client/[environmentId]/displays");

@@ -25,6 +25,7 @@ vi.mock("@/app/lib/api/response", () => ({
   responses: {
     badRequestResponse: vi.fn((message) => new Response(message, { status: 400 })),
     notFoundResponse: vi.fn((message) => new Response(message, { status: 404 })),
+    forbiddenResponse: vi.fn((message) => new Response(message, { status: 403 })),
   },
 }));
 
@@ -129,6 +130,19 @@ describe("checkSurveyValidity", () => {
       true
     );
   });
+
+  test.each(["draft", "paused", "completed"] as const)(
+    "should return forbiddenResponse when survey status is %s",
+    async (status) => {
+      const survey = { ...mockSurvey, status } as TSurvey;
+      const result = await checkSurveyValidity(survey, "env-1", mockResponseInput);
+      expect(result).toBeInstanceOf(Response);
+      expect(result?.status).toBe(403);
+      expect(responses.forbiddenResponse).toHaveBeenCalledWith("Survey is not accepting submissions", true, {
+        surveyId: mockSurvey.id,
+      });
+    }
+  );
 
   test("should return null if recaptcha is not enabled", async () => {
     const survey = { ...mockSurvey, recaptcha: { enabled: false, threshold: 0.5 } };

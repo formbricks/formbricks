@@ -1,7 +1,12 @@
 import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { DatabaseError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
+import {
+  DatabaseError,
+  InvalidInputError,
+  ResourceNotFoundError,
+  ValidationError,
+} from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
 import { TDisplayCreateInputV2 } from "../types/display";
 import { doesContactExist } from "./contact";
@@ -66,6 +71,7 @@ const mockSurvey = {
   id: surveyId,
   name: "Test Survey",
   environmentId,
+  status: "inProgress",
 } as any;
 
 describe("createDisplay", () => {
@@ -148,6 +154,17 @@ describe("createDisplay", () => {
     });
     expect(prisma.display.create).not.toHaveBeenCalled();
   });
+
+  test.each(["draft", "paused", "completed"])(
+    "should throw InvalidInputError when survey status is %s",
+    async (status) => {
+      vi.mocked(doesContactExist).mockResolvedValue(true);
+      vi.mocked(prisma.survey.findUnique).mockResolvedValue({ ...mockSurvey, status } as any);
+
+      await expect(createDisplay(displayInput)).rejects.toThrow(InvalidInputError);
+      expect(prisma.display.create).not.toHaveBeenCalled();
+    }
+  );
 
   test("should throw DatabaseError on other Prisma known request errors", async () => {
     const prismaError = new Prisma.PrismaClientKnownRequestError("DB error", {
