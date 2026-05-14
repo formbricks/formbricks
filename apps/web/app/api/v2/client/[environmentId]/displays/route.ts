@@ -7,6 +7,7 @@ import { reportApiError } from "@/app/lib/api/api-error-reporter";
 import { parseAndValidateJsonBody } from "@/app/lib/api/parse-and-validate-json-body";
 import { responses } from "@/app/lib/api/response";
 import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
+import { applyClientRateLimit } from "@/modules/core/rate-limit/helpers";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createDisplay } from "./lib/display";
 
@@ -49,8 +50,25 @@ export const OPTIONS = async (): Promise<Response> => {
   );
 };
 
+const applyRateLimit = async (environmentId: string): Promise<Response | null> => {
+  try {
+    await applyClientRateLimit(environmentId);
+    return null;
+  } catch (error) {
+    return responses.tooManyRequestsResponse(
+      error instanceof Error ? error.message : "Rate limit exceeded",
+      true
+    );
+  }
+};
+
 export const POST = async (request: Request, context: Context): Promise<Response> => {
   const params = await context.params;
+  const rateLimitResponse = await applyRateLimit(params.environmentId);
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
+
   const validatedInput = await parseAndValidateDisplayInput(request, params.environmentId);
 
   if ("response" in validatedInput) {

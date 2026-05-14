@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
+  applyClientRateLimit: vi.fn(),
   checkSurveyValidity: vi.fn(),
   createResponseWithQuotaEvaluation: vi.fn(),
   getClientIpFromHeaders: vi.fn(),
@@ -49,12 +50,17 @@ vi.mock("@/modules/ee/license-check/lib/utils", () => ({
   getIsContactsEnabled: mocks.getIsContactsEnabled,
 }));
 
+vi.mock("@/modules/core/rate-limit/helpers", () => ({
+  applyClientRateLimit: mocks.applyClientRateLimit,
+}));
+
 const environmentId = "cld1234567890abcdef123456";
 const surveyId = "clg123456789012345678901234";
 
 describe("api/v2 client responses route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.applyClientRateLimit.mockResolvedValue(undefined);
     mocks.checkSurveyValidity.mockResolvedValue(null);
     mocks.getSurvey.mockResolvedValue({
       id: surveyId,
@@ -67,6 +73,38 @@ describe("api/v2 client responses route", () => {
     mocks.getOrganizationIdFromEnvironmentId.mockResolvedValue("org_123");
     mocks.getIsContactsEnabled.mockResolvedValue(true);
     mocks.getClientIpFromHeaders.mockResolvedValue("127.0.0.1");
+  });
+
+  test("returns 429 before processing when rate limiting rejects", async () => {
+    mocks.applyClientRateLimit.mockRejectedValue(new Error("Rate limit exceeded"));
+
+    const request = new Request(`https://api.test/api/v2/client/${environmentId}/responses`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        surveyId,
+        finished: false,
+        data: {},
+      }),
+    });
+
+    const { POST } = await import("./route");
+    const response = await POST(request, {
+      params: Promise.resolve({ environmentId }),
+    });
+
+    expect(response.status).toBe(429);
+    expect(await response.json()).toEqual({
+      code: "too_many_requests",
+      message: "Rate limit exceeded",
+      details: {},
+    });
+    expect(mocks.applyClientRateLimit).toHaveBeenCalledWith(environmentId);
+    expect(mocks.getSurvey).not.toHaveBeenCalled();
+    expect(mocks.createResponseWithQuotaEvaluation).not.toHaveBeenCalled();
+    expect(mocks.sendToPipeline).not.toHaveBeenCalled();
   });
 
   test("reports unexpected response creation failures while keeping the public payload generic", async () => {

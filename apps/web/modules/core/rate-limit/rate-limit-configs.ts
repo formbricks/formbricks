@@ -13,6 +13,11 @@ export const rateLimitConfigs = {
     v2: { interval: 60, allowedPerInterval: 100, namespace: "api:v2" }, // 100 per minute
     v3: { interval: 60, allowedPerInterval: 100, namespace: "api:v3" }, // 100 per minute
     client: { interval: 60, allowedPerInterval: 100, namespace: "api:client" }, // 100 per minute (Client API)
+    clientEnvironment: {
+      interval: 60,
+      allowedPerInterval: 1000,
+      namespace: "api:client:environment",
+    }, // 1000 per minute per environment (Client API)
   },
 
   // Server actions - varies by action type

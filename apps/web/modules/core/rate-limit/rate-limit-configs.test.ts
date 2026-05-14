@@ -68,7 +68,7 @@ describe("rateLimitConfigs", () => {
 
     test("should have all API configurations", () => {
       const apiConfigs = Object.keys(rateLimitConfigs.api);
-      expect(apiConfigs).toEqual(["v1", "v2", "v3", "client"]);
+      expect(apiConfigs).toEqual(["v1", "v2", "v3", "client", "clientEnvironment"]);
     });
 
     test("should have all action configurations", () => {
@@ -139,6 +139,7 @@ describe("rateLimitConfigs", () => {
         { config: rateLimitConfigs.api.v2, identifier: "api-v2-key" },
         { config: rateLimitConfigs.api.v3, identifier: "api-v3-key" },
         { config: rateLimitConfigs.api.client, identifier: "client-api-key" },
+        { config: rateLimitConfigs.api.clientEnvironment, identifier: "environment-id" },
         { config: rateLimitConfigs.actions.emailUpdate, identifier: "user-profile" },
         { config: rateLimitConfigs.actions.accountDeletion, identifier: "user-account-delete" },
         { config: rateLimitConfigs.storage.upload, identifier: "storage-upload" },
@@ -178,6 +179,14 @@ describe("rateLimitConfigs", () => {
       expect(config.interval).toBe(60); // 1 minute
       expect(config.allowedPerInterval).toBe(5); // 5 requests per minute
       expect(config.namespace).toBe("storage:delete");
+    });
+
+    test("should properly configure client environment rate limit", async () => {
+      const config = rateLimitConfigs.api.clientEnvironment;
+
+      expect(config.interval).toBe(60);
+      expect(config.allowedPerInterval).toBe(1000);
+      expect(config.namespace).toBe("api:client:environment");
     });
   });
 });

@@ -3,7 +3,7 @@ import { type NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  applyIPRateLimit: vi.fn(),
+  applyClientRateLimit: vi.fn(),
   getEnvironmentState: vi.fn(),
   contextualLoggerError: vi.fn(),
 }));
@@ -13,7 +13,7 @@ vi.mock("@/app/api/v1/client/[environmentId]/environment/lib/environmentState", 
 }));
 
 vi.mock("@/modules/core/rate-limit/helpers", () => ({
-  applyIPRateLimit: mocks.applyIPRateLimit,
+  applyClientRateLimit: mocks.applyClientRateLimit,
   applyRateLimit: vi.fn(),
 }));
 
@@ -21,6 +21,7 @@ vi.mock("@/modules/core/rate-limit/rate-limit-configs", () => ({
   rateLimitConfigs: {
     api: {
       client: { windowMs: 60000, max: 100 },
+      clientEnvironment: { windowMs: 60000, max: 1000 },
       v1: { windowMs: 60000, max: 1000 },
     },
   },
@@ -74,7 +75,7 @@ const createMockRequest = (url: string, headers = new Map<string, string>()): Ne
 describe("api/v2 client environment route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.applyIPRateLimit.mockResolvedValue(undefined);
+    mocks.applyClientRateLimit.mockResolvedValue(undefined);
   });
 
   test("reports v1-backed failures as v2 and keeps the response payload unchanged", async () => {

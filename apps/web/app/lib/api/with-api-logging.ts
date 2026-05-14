@@ -13,7 +13,7 @@ import {
 } from "@/app/middleware/endpoint-validator";
 import { AUDIT_LOG_ENABLED } from "@/lib/constants";
 import { authOptions } from "@/modules/auth/lib/authOptions";
-import { applyIPRateLimit, applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { applyClientRateLimit, applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { TRateLimitConfig } from "@/modules/core/rate-limit/types/rate-limit";
 import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
@@ -59,11 +59,9 @@ enum ApiV1RouteTypeEnum {
   Integration = "integration",
 }
 
-/**
- * Apply client-side API rate limiting (IP-based)
- */
-const applyClientRateLimit = async (customRateLimitConfig?: TRateLimitConfig): Promise<void> => {
-  await applyIPRateLimit(customRateLimitConfig ?? rateLimitConfigs.api.client);
+const getClientEnvironmentIdFromPathname = (pathname: string): string | null => {
+  const match = pathname.match(/^\/api\/v\d+\/client\/([^/]+)/);
+  return match?.[1] ?? null;
 };
 
 /**
@@ -72,6 +70,7 @@ const applyClientRateLimit = async (customRateLimitConfig?: TRateLimitConfig): P
 const handleRateLimiting = async (
   authentication: TApiV1Authentication,
   routeType: ApiV1RouteTypeEnum,
+  pathname: string,
   customRateLimitConfig?: TRateLimitConfig
 ): Promise<Response | null> => {
   try {
@@ -89,7 +88,13 @@ const handleRateLimiting = async (
     }
 
     if (routeType === ApiV1RouteTypeEnum.Client) {
-      await applyClientRateLimit(customRateLimitConfig);
+      const environmentId = getClientEnvironmentIdFromPathname(pathname);
+      if (!environmentId) {
+        logger.error({ pathname }, "Unable to determine client API environment ID for rate limiting");
+        return responses.badRequestResponse("Environment ID is required", undefined, true);
+      }
+
+      await applyClientRateLimit(environmentId, customRateLimitConfig);
     }
   } catch (error) {
     return responses.tooManyRequestsResponse(error instanceof Error ? error.message : "Rate limit exceeded");
@@ -299,7 +304,12 @@ export const withV1ApiWrapper = <TResult extends { response: Response; error?: u
 
     // === Rate Limiting ===
     if (isRateLimited) {
-      const rateLimitResponse = await handleRateLimiting(authentication, routeType, customRateLimitConfig);
+      const rateLimitResponse = await handleRateLimiting(
+        authentication,
+        routeType,
+        req.nextUrl.pathname,
+        customRateLimitConfig
+      );
       if (rateLimitResponse) return rateLimitResponse;
     }
 

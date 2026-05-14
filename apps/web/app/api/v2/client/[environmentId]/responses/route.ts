@@ -14,6 +14,7 @@ import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
 import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/element";
+import { applyClientRateLimit } from "@/modules/core/rate-limit/helpers";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
 import { createResponseWithQuotaEvaluation } from "./lib/response";
@@ -201,8 +202,25 @@ export const OPTIONS = async (): Promise<Response> => {
   );
 };
 
+const applyRateLimit = async (environmentId: string): Promise<Response | null> => {
+  try {
+    await applyClientRateLimit(environmentId);
+    return null;
+  } catch (error) {
+    return responses.tooManyRequestsResponse(
+      error instanceof Error ? error.message : "Rate limit exceeded",
+      true
+    );
+  }
+};
+
 export const POST = async (request: Request, context: Context): Promise<Response> => {
   const params = await context.params;
+  const rateLimitResponse = await applyRateLimit(params.environmentId);
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
+
   const validatedInput = await parseAndValidateResponseInput(request, params.environmentId);
 
   if ("response" in validatedInput) {

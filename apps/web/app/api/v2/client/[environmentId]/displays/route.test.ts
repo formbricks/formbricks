@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
+  applyClientRateLimit: vi.fn(),
   createDisplay: vi.fn(),
   getIsContactsEnabled: vi.fn(),
   getOrganizationIdFromEnvironmentId: vi.fn(),
@@ -23,12 +24,17 @@ vi.mock("@/app/lib/api/api-error-reporter", () => ({
   reportApiError: mocks.reportApiError,
 }));
 
+vi.mock("@/modules/core/rate-limit/helpers", () => ({
+  applyClientRateLimit: mocks.applyClientRateLimit,
+}));
+
 const environmentId = "cld1234567890abcdef123456";
 const surveyId = "clg123456789012345678901234";
 
 describe("api/v2 client displays route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.applyClientRateLimit.mockResolvedValue(undefined);
     mocks.getOrganizationIdFromEnvironmentId.mockResolvedValue("org_123");
     mocks.getIsContactsEnabled.mockResolvedValue(true);
   });
@@ -54,6 +60,36 @@ describe("api/v2 client displays route", () => {
         message: "Invalid JSON in request body",
       })
     );
+    expect(mocks.createDisplay).not.toHaveBeenCalled();
+    expect(mocks.reportApiError).not.toHaveBeenCalled();
+    expect(mocks.applyClientRateLimit).toHaveBeenCalledWith(environmentId);
+  });
+
+  test("returns 429 before processing when rate limiting rejects", async () => {
+    mocks.applyClientRateLimit.mockRejectedValue(new Error("Rate limit exceeded"));
+
+    const request = new Request(`https://api.test/api/v2/client/${environmentId}/displays`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        surveyId,
+      }),
+    });
+
+    const { POST } = await import("./route");
+    const response = await POST(request, {
+      params: Promise.resolve({ environmentId }),
+    });
+
+    expect(response.status).toBe(429);
+    expect(await response.json()).toEqual({
+      code: "too_many_requests",
+      message: "Rate limit exceeded",
+      details: {},
+    });
+    expect(mocks.applyClientRateLimit).toHaveBeenCalledWith(environmentId);
     expect(mocks.createDisplay).not.toHaveBeenCalled();
     expect(mocks.reportApiError).not.toHaveBeenCalled();
   });
