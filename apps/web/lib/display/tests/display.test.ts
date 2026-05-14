@@ -32,6 +32,7 @@ beforeEach(() => {
     id: mockSurveyId,
     name: "Test Survey",
     environmentId: mockEnvironmentId,
+    status: "inProgress",
   } as any);
 });
 
