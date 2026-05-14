@@ -3817,7 +3817,7 @@
       "semantic_topics_preview_description": "Introduz um tópico ou frase para encontrar registos de feedback por significado. Esta é uma pré-visualização de futuros Tópicos e Subtópicos.",
       "semantic_topics_preview_title": "Pesquisar feedback por tópico",
       "set_value": "definir valor",
-      "setup_connection": "Configurar ligação",
+      "setup_connection": "Configurar origem e criar registos",
       "showing_count_loaded": "A mostrar {count} registos",
       "showing_rows": "A mostrar {visible} de {total} linhas",
       "source": "fonte",

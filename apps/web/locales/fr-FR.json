@@ -3817,7 +3817,7 @@
       "semantic_topics_preview_description": "Saisissez un sujet ou une phrase pour retrouver des retours clients par signification. Ceci est un aperçu des futurs Sujets et Sous-sujets.",
       "semantic_topics_preview_title": "Rechercher des retours par sujet",
       "set_value": "définir la valeur",
-      "setup_connection": "Configurer la connexion",
+      "setup_connection": "Configurer la source et créer des enregistrements",
       "showing_count_loaded": "Affichage de {count} enregistrements",
       "showing_rows": "Affichage de {visible} lignes sur {total}",
       "source": "source",

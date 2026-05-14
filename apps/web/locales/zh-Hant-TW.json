@@ -3817,7 +3817,7 @@
       "semantic_topics_preview_description": "輸入主題或詞彙，以語意方式找出相關的意見回饋記錄。這是未來主題與子主題功能的早期預覽版本。",
       "semantic_topics_preview_title": "依主題搜尋意見回饋",
       "set_value": "設定值",
-      "setup_connection": "設定連線",
+      "setup_connection": "設定來源並建立記錄",
       "showing_count_loaded": "顯示 {count} 筆記錄",
       "showing_rows": "顯示 {total} 列中的 {visible} 列",
       "source": "來源",

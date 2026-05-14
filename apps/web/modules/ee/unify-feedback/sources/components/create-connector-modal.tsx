@@ -2,6 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2Icon, PlusIcon } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -116,6 +117,8 @@ const getSelectableQuestionIds = (survey: TUnifySurvey): string[] =>
     .filter((element) => !(UNSUPPORTED_CONNECTOR_ELEMENT_TYPES as readonly string[]).includes(element.type))
     .map((element) => element.id);
 
+type TImportState = "success" | "error" | "skipped";
+
 export const CreateConnectorModal = ({
   open,
   onOpenChange,
@@ -173,6 +176,21 @@ export const CreateConnectorModal = ({
     selectedSurveyId && responseCountBySurvey[selectedSurveyId] !== undefined
       ? responseCountBySurvey[selectedSurveyId]
       : null;
+
+  const showFeedbackRecordsSuccessToast = useCallback(
+    (message: string) => {
+      const feedbackRecordsHref = `/workspaces/${workspaceId}/unify/feedback-records`;
+      toast.success(() => (
+        <div className="flex flex-col gap-1">
+          <span>{message}</span>
+          <Link className="text-sm font-medium underline" href={feedbackRecordsHref}>
+            {t("workspace.unify.feedback_records")}
+          </Link>
+        </div>
+      ));
+    },
+    [t, workspaceId]
+  );
 
   const fetchResponseCount = useCallback(
     async (surveyId: string) => {
@@ -278,9 +296,9 @@ export const CreateConnectorModal = ({
     }
   };
 
-  const handleHistoricalImport = async (connectorId: string, surveyId: string) => {
+  const handleHistoricalImport = async (connectorId: string, surveyId: string): Promise<TImportState> => {
     const responseCount = responseCountBySurvey[surveyId] ?? 0;
-    if (responseCount <= 0) return;
+    if (responseCount <= 0) return "skipped";
     setIsImporting(true);
     const importResult = await importHistoricalResponsesAction({
       connectorId,
@@ -290,19 +308,21 @@ export const CreateConnectorModal = ({
     setIsImporting(false);
 
     if (importResult?.data) {
-      toast.success(
+      showFeedbackRecordsSuccessToast(
         t("workspace.unify.historical_import_complete", {
           successes: importResult.data.successes,
           failures: importResult.data.failures,
           skipped: importResult.data.skipped,
         })
       );
+      return "success";
     } else {
       toast.error(getFormattedErrorMessage(importResult));
+      return "error";
     }
   };
 
-  const handleCsvImport = async (connectorId: string) => {
+  const handleCsvImport = async (connectorId: string): Promise<TImportState> => {
     setIsImporting(true);
     const importResult = await importCsvDataAction({
       connectorId,
@@ -312,15 +332,17 @@ export const CreateConnectorModal = ({
     setIsImporting(false);
 
     if (importResult?.data) {
-      toast.success(
+      showFeedbackRecordsSuccessToast(
         t("workspace.unify.csv_import_complete", {
           successes: importResult.data.successes,
           failures: importResult.data.failures,
           skipped: importResult.data.skipped,
         })
       );
+      return "success";
     } else {
       toast.error(getTranslatedConnectorError(getFormattedErrorMessage(importResult), t));
+      return "error";
     }
   };
 
@@ -348,8 +370,11 @@ export const CreateConnectorModal = ({
       return;
     }
 
-    if (values.importHistorical) {
-      await handleHistoricalImport(connectorId, values.surveyId);
+    const importState = values.importHistorical
+      ? await handleHistoricalImport(connectorId, values.surveyId)
+      : "skipped";
+    if (importState === "skipped") {
+      showFeedbackRecordsSuccessToast(t("workspace.unify.connector_created_successfully"));
     }
 
     setIsCreating(false);
@@ -397,8 +422,9 @@ export const CreateConnectorModal = ({
       return;
     }
 
-    if (csvParsedData.length > 0) {
-      await handleCsvImport(connectorId);
+    const importState = csvParsedData.length > 0 ? await handleCsvImport(connectorId) : "skipped";
+    if (importState === "skipped") {
+      showFeedbackRecordsSuccessToast(t("workspace.unify.connector_created_successfully"));
     }
 
     setIsCreating(false);

@@ -3817,7 +3817,7 @@
       "semantic_topics_preview_description": "Adjon meg egy témát vagy kifejezést, hogy tartalmilag kapcsolódó visszajelzési bejegyzéseket jelenítsen meg. Ez egy korai előnézet a jövőbeli Témák és Altémák funkcióról.",
       "semantic_topics_preview_title": "Visszajelzések keresése téma szerint",
       "set_value": "érték beállítása",
-      "setup_connection": "Kapcsolat beállítása",
+      "setup_connection": "Forrás beállítása és rekordok létrehozása",
       "showing_count_loaded": "{count} rekord megjelenítése",
       "showing_rows": "{visible} sor megjelenítve a(z) {total} sorból",
       "source": "forrás",

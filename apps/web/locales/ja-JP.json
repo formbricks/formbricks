@@ -3817,7 +3817,7 @@
       "semantic_topics_preview_description": "トピックやフレーズを入力すると、意味に基づいてフィードバック記録を表示できます。これは、今後のトピックとサブトピック機能の早期プレビューです。",
       "semantic_topics_preview_title": "トピック別にフィードバックを検索",
       "set_value": "値を設定",
-      "setup_connection": "接続を設定",
+      "setup_connection": "ソースを設定してレコードを作成",
       "showing_count_loaded": "{count}件のレコードを表示中",
       "showing_rows": "{total}行中{visible}行を表示",
       "source": "ソース",

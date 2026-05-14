@@ -3817,7 +3817,7 @@
       "semantic_topics_preview_description": "Anlam bazında geri bildirim kayıtlarını ortaya çıkarmak için bir konu veya ifade gir. Bu, gelecekteki Konular ve Alt Konular özelliğinin erken bir ön izlemesidir.",
       "semantic_topics_preview_title": "Konuya göre geri bildirim ara",
       "set_value": "değer belirle",
-      "setup_connection": "Bağlantıyı kur",
+      "setup_connection": "Kaynağı ayarla ve kayıtları oluştur",
       "showing_count_loaded": "{count} kayıt gösteriliyor",
       "showing_rows": "{total} satırdan {visible} tanesi gösteriliyor",
       "source": "kaynak",

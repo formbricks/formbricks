@@ -3817,7 +3817,7 @@
       "semantic_topics_preview_description": "Voer een onderwerp of zin in om feedbackrecords op betekenis te vinden. Dit is een vroege preview van toekomstige Onderwerpen & Subonderwerpen.",
       "semantic_topics_preview_title": "Zoek feedback op onderwerp",
       "set_value": "waarde instellen",
-      "setup_connection": "Verbinding instellen",
+      "setup_connection": "Bron instellen en records aanmaken",
       "showing_count_loaded": "Er worden {count} records weergegeven",
       "showing_rows": "{visible} van {total} rijen weergegeven",
       "source": "bron",

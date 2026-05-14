@@ -3565,6 +3565,7 @@ checksums:
     workspace/unify/delete_feedback_records_confirmation: cd8a4ba828963fb6dab5c96606565079
     workspace/unify/discard_feedback_record_changes_description: 48ccde99858dcbeb4d679749d0f51941
     workspace/unify/discard_feedback_record_changes_title: 52df2800f7b0e8a1d04c47113e019a3e
+    workspace/unify/download_sample_csv: 76975598e61d4eaeb04fc14da8b0a837
     workspace/unify/edit_csv_mapping: 4f3bad444664d58ffe8ace3dc9e200f9
     workspace/unify/edit_source_connection: eb42476becc8de3de4ca9626828573f0
     workspace/unify/enter_name_for_source: de6d02a0a8ccc99204ad831ca6dcdbd3
@@ -3656,7 +3657,7 @@ checksums:
     workspace/unify/semantic_topics_preview_description: 330871cf6f36128bfdbc7d9d20c500a4
     workspace/unify/semantic_topics_preview_title: 2d59d672921b4807a40770e5d40b485e
     workspace/unify/set_value: b8a86f8da957ebd599ece4b1b1936a78
-    workspace/unify/setup_connection: cce7d9c488d737d04e70bed929a46f8a
+    workspace/unify/setup_connection: 51ac746bddf1952fa4eb17fb2bdd16a1
     workspace/unify/showing_count_loaded: f443aae08223b65fbd5521d6e69534a4
     workspace/unify/showing_rows: e851514ed6c4d2e453d0098af2d773bd
     workspace/unify/source: 45309626f464f4bda161ee783a4c8c80

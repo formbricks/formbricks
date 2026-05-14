@@ -3817,7 +3817,7 @@
       "semantic_topics_preview_description": "Introduce un tema o frase para encontrar registros de comentarios por significado. Esta es una vista previa temprana de futuros Temas y Subtemas.",
       "semantic_topics_preview_title": "Buscar comentarios por tema",
       "set_value": "establecer valor",
-      "setup_connection": "Configurar conexión",
+      "setup_connection": "Configurar fuente y crear registros",
       "showing_count_loaded": "Mostrando {count} registros",
       "showing_rows": "Mostrando {visible} de {total} filas",
       "source": "origen",

@@ -3817,7 +3817,7 @@
       "semantic_topics_preview_description": "输入主题或短语,按含义查找反馈记录。这是未来主题和子主题功能的早期预览。",
       "semantic_topics_preview_title": "按主题搜索反馈",
       "set_value": "设置值",
-      "setup_connection": "设置连接",
+      "setup_connection": "设置数据源并创建记录",
       "showing_count_loaded": "显示 {count} 条记录",
       "showing_rows": "显示第 {visible} 行，共 {total} 行",
       "source": "source",

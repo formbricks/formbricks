@@ -3817,7 +3817,7 @@
       "semantic_topics_preview_description": "Ange ett ämne eller en fras för att hitta feedbackposter baserat på betydelse. Detta är en tidig förhandsgranskning av framtida Ämnen & Underämnen.",
       "semantic_topics_preview_title": "Sök feedback efter ämne",
       "set_value": "ange värde",
-      "setup_connection": "Ställ in anslutning",
+      "setup_connection": "Konfigurera källa & skapa poster",
       "showing_count_loaded": "Visar {count} poster",
       "showing_rows": "Visar {visible} av {total} rader",
       "source": "källa",

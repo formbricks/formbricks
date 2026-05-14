@@ -84,7 +84,6 @@ export function ConnectorsSection({
       return undefined;
     }
 
-    toast.success(t("workspace.unify.connector_created_successfully"));
     router.refresh();
     return result.data.id;
   };

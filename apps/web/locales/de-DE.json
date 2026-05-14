@@ -3817,7 +3817,7 @@
       "semantic_topics_preview_description": "Gib ein Thema oder einen Begriff ein, um Feedback-Einträge nach Bedeutung zu finden. Dies ist eine frühe Vorschau auf zukünftige Themen & Unterthemen.",
       "semantic_topics_preview_title": "Feedback nach Thema durchsuchen",
       "set_value": "Wert festlegen",
-      "setup_connection": "Verbindung einrichten",
+      "setup_connection": "Quelle einrichten & Datensätze erstellen",
       "showing_count_loaded": "{count} Datensätze werden angezeigt",
       "showing_rows": "Zeige {visible} von {total} Zeilen",
       "source": "Quelle",

@@ -3817,7 +3817,7 @@
       "semantic_topics_preview_description": "Introdu un subiect sau o frază pentru a identifica înregistrările de feedback după sens. Aceasta este o previzualizare timpurie a viitoarelor Subiecte și Subsubiecte.",
       "semantic_topics_preview_title": "Caută feedback după subiect",
       "set_value": "setează valoare",
-      "setup_connection": "Configurează conexiunea",
+      "setup_connection": "Configurează sursa și creează înregistrări",
       "showing_count_loaded": "Se afișează {count} înregistrări",
       "showing_rows": "Se afișează {visible} din {total} rânduri",
       "source": "sursă",

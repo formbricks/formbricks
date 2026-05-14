@@ -3817,7 +3817,7 @@
       "semantic_topics_preview_description": "Введите тему или фразу, чтобы найти записи отзывов по смыслу. Это ранний предварительный просмотр будущих Тем и Подтем.",
       "semantic_topics_preview_title": "Поиск отзывов по теме",
       "set_value": "установить значение",
-      "setup_connection": "Настроить подключение",
+      "setup_connection": "Настроить источник и создать записи",
       "showing_count_loaded": "Показано записей: {count}",
       "showing_rows": "Показано {visible} из {total} строк",
       "source": "источник",
