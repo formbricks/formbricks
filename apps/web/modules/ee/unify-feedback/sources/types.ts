@@ -215,6 +215,17 @@ export const CSV_REQUIRED_UI_FIELDS = ["submission_id", "field_id", "field_type"
 
 export const SAMPLE_CSV_COLUMNS = "timestamp,response_id,customer_id,rating,feedback_text,category";
 
+export const SAMPLE_CSV_FILE_NAME = "formbricks-sample-feedback.csv";
+
+export const SAMPLE_CSV_CONTENT = `submission_id,collected_at,field_id,field_type,value,email,language
+sub-001,2026-01-15T10:00:00Z,nps_score,nps,9,alice@example.com,en
+sub-002,2026-01-15T10:05:00Z,nps_score,nps,7,bob@example.com,en
+sub-003,2026-01-15T10:10:00Z,nps_score,nps,10,carla@example.com,es
+sub-001,2026-01-15T10:00:30Z,nps_comment,text,"Loved the onboarding flow",alice@example.com,en
+sub-002,2026-01-15T10:05:30Z,nps_comment,text,"Pricing page is confusing, please simplify",bob@example.com,en
+sub-003,2026-01-15T10:10:30Z,nps_comment,text,"Documentation could be clearer",carla@example.com,es
+`;
+
 export const MAX_CSV_VALUES = {
   FILE_SIZE: 2_097_152, // 2MB (2 * 1024 * 1024)
   RECORDS: 1_000, // 1,000 records

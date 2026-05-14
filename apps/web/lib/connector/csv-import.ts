@@ -38,7 +38,7 @@ export const importCsvData = async (
     throw new InvalidInputError(formatMissingRequiredCsvFieldMappingsMessage());
   }
 
-  const { records, skipped } = transformCsvRowsToFeedbackRecords(
+  const { records, skipped: transformSkipped } = transformCsvRowsToFeedbackRecords(
     csvRows,
     connector.fieldMappings,
     connector.feedbackDirectoryId
@@ -46,12 +46,21 @@ export const importCsvData = async (
 
   let successes = 0;
   let failures = 0;
+  let skipped = transformSkipped;
 
   for (let i = 0; i < records.length; i += CSV_BATCH_SIZE) {
     const batch = records.slice(i, i + CSV_BATCH_SIZE);
     const { results } = await createFeedbackRecordsBatch(batch);
-    successes += results.filter((r) => r.data !== null).length;
-    failures += results.filter((r) => r.error !== null).length;
+    for (const result of results) {
+      if (result.data !== null) {
+        successes++;
+      } else if (result.error?.status === 409) {
+        // Duplicate (tenant_id, submission_id, field_id) — already imported. Treat as skipped, not failed.
+        skipped++;
+      } else {
+        failures++;
+      }
+    }
   }
 
   return { successes, failures, skipped };

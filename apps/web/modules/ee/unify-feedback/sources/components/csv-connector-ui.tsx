@@ -7,14 +7,14 @@ import { useTranslation } from "react-i18next";
 import { Alert } from "@/modules/ui/components/alert";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
-import { SAMPLE_CSV_COLUMNS, TFieldMapping, TSourceField, createFeedbackCSVDataSchema } from "../types";
 import {
-  TMappingConfidence,
-  autoMapCsvSourceFields,
-  parseCSVColumnsToFields,
-  titleizeFromFileName,
-  validateCsvFile,
-} from "../utils";
+  SAMPLE_CSV_CONTENT,
+  SAMPLE_CSV_FILE_NAME,
+  TFieldMapping,
+  TSourceField,
+  createFeedbackCSVDataSchema,
+} from "../types";
+import { TMappingConfidence, autoMapCsvSourceFields, titleizeFromFileName, validateCsvFile } from "../utils";
 import { MappingUI } from "./mapping-ui";
 
 interface CsvConnectorUIProps {
@@ -186,19 +186,16 @@ export function CsvConnectorUI({
     }
   };
 
-  const handleLoadSample = () => {
-    const fields = parseCSVColumnsToFields(SAMPLE_CSV_COLUMNS);
-    const synthSampleRow = Object.fromEntries(fields.map((f) => [f.id, f.sampleValue ?? ""])) as Record<
-      string,
-      string
-    >;
-    onSourceFieldsChange(fields);
-    onParsedDataChange?.([]);
-    setSampleRow(synthSampleRow);
-    setCsvPreview([fields.map((f) => f.id), fields.map((f) => f.sampleValue ?? "")]);
-    setCsvTotalRows(1);
-    applyAutoMapping(fields, synthSampleRow, "sample-feedback.csv");
-    setShowMapping(true);
+  const handleDownloadSample = () => {
+    const blob = new Blob([SAMPLE_CSV_CONTENT], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = SAMPLE_CSV_FILE_NAME;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   if (showMapping && sourceFields.length > 0) {
@@ -336,8 +333,8 @@ export function CsvConnectorUI({
           </label>
         </div>
         <div className="flex justify-between">
-          <Button variant="secondary" size="sm" onClick={handleLoadSample}>
-            {t("workspace.unify.load_sample_csv")}
+          <Button variant="secondary" size="sm" onClick={handleDownloadSample}>
+            {t("workspace.unify.download_sample_csv")}
           </Button>
         </div>
       </div>

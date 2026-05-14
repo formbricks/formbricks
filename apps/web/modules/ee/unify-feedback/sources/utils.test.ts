@@ -409,6 +409,21 @@ describe("autoMapCsvSourceFields", () => {
     expect(mapping?.staticValue).toBe("rating");
     expect(result.confidence.field_type).toBe("high");
   });
+
+  test.each(["field_type", "type"])(
+    "auto-maps a %s column to field_type (high confidence) over static inference",
+    (columnName) => {
+      const result = autoMapCsvSourceFields({
+        sourceFields: buildSourceFields(["question", "value", columnName]),
+        sampleRow: { question: "q1", value: "9", [columnName]: "nps" },
+        fileName: "x.csv",
+      });
+      const mapping = result.mappings.find((m) => m.targetFieldId === "field_type");
+      expect(mapping?.sourceFieldId).toBe(columnName);
+      expect(mapping?.staticValue).toBeUndefined();
+      expect(result.confidence.field_type).toBe("high");
+    }
+  );
 });
 
 describe("toggleQuestionId", () => {

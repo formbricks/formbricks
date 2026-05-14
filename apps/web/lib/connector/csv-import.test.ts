@@ -189,6 +189,92 @@ describe("importCsvData", () => {
     expect(result).toEqual({ successes: 1, failures: 1, skipped: 1 });
   });
 
+  test("treats Hub 409 conflicts as skipped (duplicate submission_id+field_id), not failed", async () => {
+    transformCsvRowsToFeedbackRecords.mockReturnValue({
+      records: [
+        {
+          source_type: "csv",
+          tenant_id: "tenant-test",
+          submission_id: "resp-1",
+          field_id: "q1",
+          field_type: "text" as const,
+          value_text: "Good",
+        },
+        {
+          source_type: "csv",
+          tenant_id: "tenant-test",
+          submission_id: "resp-2",
+          field_id: "q2",
+          field_type: "text" as const,
+          value_text: "Bad",
+        },
+      ],
+      skipped: 0,
+    });
+
+    createFeedbackRecordsBatch.mockResolvedValue({
+      results: [
+        { data: null, error: { status: 409, message: "duplicate feedback record", detail: null } },
+        { data: null, error: { status: 409, message: "duplicate feedback record", detail: null } },
+      ],
+    } as never);
+
+    const result = await importCsvData(makeConnector(), [
+      matchingCsvRow,
+      { ...matchingCsvRow, response_id: "resp-2" },
+    ]);
+
+    expect(result).toEqual({ successes: 0, failures: 0, skipped: 2 });
+  });
+
+  test("mixed 200/409/500 — successes, skipped, and failures counted separately", async () => {
+    transformCsvRowsToFeedbackRecords.mockReturnValue({
+      records: [
+        {
+          source_type: "csv",
+          tenant_id: "tenant-test",
+          submission_id: "resp-1",
+          field_id: "q1",
+          field_type: "text" as const,
+          value_text: "Good",
+        },
+        {
+          source_type: "csv",
+          tenant_id: "tenant-test",
+          submission_id: "resp-2",
+          field_id: "q2",
+          field_type: "text" as const,
+          value_text: "Dupe",
+        },
+        {
+          source_type: "csv",
+          tenant_id: "tenant-test",
+          submission_id: "resp-3",
+          field_id: "q3",
+          field_type: "text" as const,
+          value_text: "Boom",
+        },
+      ],
+      skipped: 0,
+    });
+
+    createFeedbackRecordsBatch.mockResolvedValue({
+      results: [
+        { data: { id: "fb1" }, error: null },
+        { data: null, error: { status: 409, message: "duplicate", detail: null } },
+        { data: null, error: { status: 500, message: "internal", detail: null } },
+      ],
+    } as never);
+
+    const result = await importCsvData(makeConnector(), [
+      matchingCsvRow,
+      { ...matchingCsvRow, response_id: "resp-2" },
+      { ...matchingCsvRow, response_id: "resp-3" },
+    ]);
+
+    expect(result).toEqual({ successes: 1, failures: 1, skipped: 1 });
+  });
+
   test("processes records in batches of 50", async () => {
     const records = Array.from({ length: 120 }, (_, i) => ({
       source_type: "csv",

@@ -143,6 +143,10 @@ export const CSV_COLUMN_ALIASES: Record<string, { high: RegExp[]; medium: RegExp
     high: [/^(field_id|question_id|q_id)$/i],
     medium: [/^(id|key)$/i],
   },
+  field_type: {
+    high: [/^(field_type|type)$/i],
+    medium: [],
+  },
   field_label: {
     high: [/^(field_label|question|label|question_text)$/i],
     medium: [/^(name|title|prompt)$/i],
