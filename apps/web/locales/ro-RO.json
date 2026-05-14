@@ -3699,6 +3699,7 @@
       "delete_feedback_record": "Șterge înregistrarea de feedback",
       "delete_feedback_record_confirmation": "Aceasta va șterge definitiv înregistrarea de feedback și o va elimina din directorul conectat.",
       "delete_feedback_records_confirmation": "Aceasta va șterge definitiv {count} înregistrări de feedback și le va elimina din directorul conectat.",
+      "delete_source_confirmation": "Ștergerea acestei surse va opri importurile viitoare și va elimina maparea salvată. Înregistrările de feedback existente vor rămâne disponibile.",
       "discard_feedback_record_changes_description": "Modificările dvs. se vor pierde dacă închideți acest sertar.",
       "discard_feedback_record_changes_title": "Renunțați la modificările nesalvate?",
       "drop_a_field_here": "Trage un câmp aici",

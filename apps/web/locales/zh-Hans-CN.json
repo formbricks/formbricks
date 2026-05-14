@@ -3699,6 +3699,7 @@
       "delete_feedback_record": "删除反馈记录",
       "delete_feedback_record_confirmation": "这将永久删除该反馈记录并从关联目录中移除。",
       "delete_feedback_records_confirmation": "这将永久删除 {count} 条反馈记录并从关联目录中移除。",
+      "delete_source_confirmation": "删除此数据源将停止未来的导入并移除其保存的映射。现有的反馈记录将保持可用。",
       "discard_feedback_record_changes_description": "如果关闭此抽屉，您的更改将会丢失。",
       "discard_feedback_record_changes_title": "放弃未保存的更改？",
       "drop_a_field_here": "将字段拖到这里",

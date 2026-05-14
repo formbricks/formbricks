@@ -3699,6 +3699,7 @@
       "delete_feedback_record": "Excluir registro de feedback",
       "delete_feedback_record_confirmation": "Isso excluirá permanentemente o registro de feedback e o removerá do diretório conectado.",
       "delete_feedback_records_confirmation": "Isso excluirá permanentemente {count} registros de feedback e os removerá do diretório conectado.",
+      "delete_source_confirmation": "Excluir esta fonte interromperá futuras importações e removerá seu mapeamento salvo. Os registros de feedback existentes permanecerão disponíveis.",
       "discard_feedback_record_changes_description": "Suas alterações serão perdidas se você fechar esta gaveta.",
       "discard_feedback_record_changes_title": "Descartar alterações não salvas?",
       "drop_a_field_here": "Solte um campo aqui",

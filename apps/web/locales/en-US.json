@@ -3699,6 +3699,7 @@
       "delete_feedback_record": "Delete feedback record",
       "delete_feedback_record_confirmation": "This will permanently delete the feedback record and remove it from the connected directory.",
       "delete_feedback_records_confirmation": "This will permanently delete {count} feedback records and remove them from the connected directory.",
+      "delete_source_confirmation": "Deleting this source will stop future imports and remove its saved mapping. Existing feedback records will remain available.",
       "discard_feedback_record_changes_description": "Your changes will be lost if you close this drawer.",
       "discard_feedback_record_changes_title": "Discard unsaved changes?",
       "drop_a_field_here": "Drop a field here",

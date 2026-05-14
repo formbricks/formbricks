@@ -3699,6 +3699,7 @@
       "delete_feedback_record": "Supprimer l'enregistrement de commentaire",
       "delete_feedback_record_confirmation": "Cela supprimera définitivement l'enregistrement de commentaire et le retirera du répertoire connecté.",
       "delete_feedback_records_confirmation": "Cela supprimera définitivement {count} enregistrements de commentaires et les retirera du répertoire connecté.",
+      "delete_source_confirmation": "La suppression de cette source arrêtera les futures importations et supprimera sa configuration de mapping enregistrée. Les enregistrements de feedback existants resteront disponibles.",
       "discard_feedback_record_changes_description": "Vos modifications seront perdues si vous fermez ce tiroir.",
       "discard_feedback_record_changes_title": "Supprimer les modifications non enregistrées ?",
       "drop_a_field_here": "Déposez un champ ici",
