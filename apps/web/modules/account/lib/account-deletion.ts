@@ -2,7 +2,7 @@ import "server-only";
 import type { IdentityProvider } from "@prisma/client";
 import { logger } from "@formbricks/logger";
 import { AuthorizationError, InvalidInputError, OperationNotAllowedError } from "@formbricks/types/errors";
-import { DISABLE_ACCOUNT_DELETION_SSO_REAUTH } from "@/lib/constants";
+import { DISABLE_ACCOUNT_DELETION_SSO_CONFIRMATION } from "@/lib/constants";
 import { getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
 import { getUserAuthenticationData, verifyUserPassword } from "@/lib/user/password";
 import { deleteUser, getUser } from "@/lib/user/service";
@@ -30,7 +30,7 @@ const assertConfirmationEmailMatches = (confirmationEmail: string, expectedEmail
 };
 
 const canBypassSsoIdentityConfirmation = (identityProvider: IdentityProvider) =>
-  DISABLE_ACCOUNT_DELETION_SSO_REAUTH && identityProvider !== "email";
+  DISABLE_ACCOUNT_DELETION_SSO_CONFIRMATION && identityProvider !== "email";
 
 const assertAccountDeletionSsoIdentityConfirmation = async ({
   identityProvider,

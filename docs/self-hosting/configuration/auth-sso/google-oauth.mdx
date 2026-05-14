@@ -23,9 +23,9 @@ For SSO-only users, Formbricks asks the user to type their email address and the
 This confirms the Google identity for the current deletion attempt, but it does not guarantee that Google will ask for a password or MFA every time. If the browser already has an active Google session, Google may silently return the same account.
 
 <Warning>
-  If you set `DISABLE_ACCOUNT_DELETION_SSO_REAUTH=1`, Formbricks skips this SSO identity confirmation
-  redirect for passwordless SSO accounts. Users can delete their account with email confirmation only. Keep it
-  unset unless you accept this security trade-off.
+  If you set `DISABLE_ACCOUNT_DELETION_SSO_CONFIRMATION=1`, Formbricks skips this SSO identity confirmation
+  redirect for passwordless SSO accounts. Users can delete their account with only the in-app email text
+  confirmation. Keep it unset unless you accept this security trade-off.
 </Warning>
 
 ### How to connect your Formbricks instance to Google
@@ -69,7 +69,7 @@ This confirms the Google identity for the current deletion attempt, but it does 
     GOOGLE_CLIENT_ID=your-client-id-here
     GOOGLE_CLIENT_SECRET=your-client-secret-here
     # Optional: dangerous fallback that skips SSO identity confirmation for account deletion.
-    # DISABLE_ACCOUNT_DELETION_SSO_REAUTH=1
+    # DISABLE_ACCOUNT_DELETION_SSO_CONFIRMATION=1
     ```
 
     - Alternatively, you can add the environment variables directly to the running container using the following commands (replace `container_id` with your actual Docker container ID):
