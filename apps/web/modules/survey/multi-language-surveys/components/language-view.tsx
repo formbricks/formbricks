@@ -149,7 +149,7 @@ export const LanguageView = ({
           buttonVariant: "destructive",
           onConfirm: () => {
             // Strip all non-default language keys from the survey data
-            let cleanedSurvey = localSurvey;
+            let cleanedSurvey = { ...localSurvey, autoSelectLanguage: false };
             for (const lang of localSurvey.languages) {
               if (!lang.default) {
                 cleanedSurvey = removeLanguageKeysFromSurvey(cleanedSurvey, lang.language.code);
@@ -172,6 +172,7 @@ export const LanguageView = ({
     const language = workspaceLanguages.find((lang) => lang.code === languageCode);
     if (!language) return;
 
+    const isNewMultiLanguageSurvey = localSurvey.languages.length === 0;
     let languageExists = false;
     const newLanguages =
       localSurvey.languages.map((lang) => {
@@ -187,7 +188,11 @@ export const LanguageView = ({
     }
 
     setConfirmationModalInfo((prev) => ({ ...prev, open: false }));
-    setLocalSurvey({ ...localSurvey, languages: newLanguages });
+    setLocalSurvey({
+      ...localSurvey,
+      languages: newLanguages,
+      autoSelectLanguage: isNewMultiLanguageSurvey ? true : localSurvey.autoSelectLanguage,
+    });
   };
 
   const handleToggleLanguage = (code: string) => {
@@ -254,7 +259,7 @@ export const LanguageView = ({
       buttonText: t("workspace.surveys.edit.remove_translations"),
       buttonVariant: "destructive",
       onConfirm: () => {
-        updateSurveyTranslations(localSurvey, []);
+        updateSurveyTranslations({ ...localSurvey, autoSelectLanguage: false }, []);
         setIsMultiLanguageActivated(false);
         setConfirmationModalInfo((prev) => ({ ...prev, open: false }));
       },
@@ -263,6 +268,10 @@ export const LanguageView = ({
 
   const handleLanguageSwitchToggle = () => {
     setLocalSurvey({ ...localSurvey, showLanguageSwitch: !localSurvey.showLanguageSwitch });
+  };
+
+  const handleAutoSelectLanguageToggle = () => {
+    setLocalSurvey({ ...localSurvey, autoSelectLanguage: !localSurvey.autoSelectLanguage });
   };
 
   const openTranslationModal = (code: string) => {
@@ -487,6 +496,16 @@ export const LanguageView = ({
             description={t(
               "workspace.surveys.edit.enable_participants_to_switch_the_survey_language_at_any_point_during_the_survey"
             )}
+            childBorder={true}
+          />
+          <AdvancedOptionToggle
+            customContainerClass="px-0 pt-0"
+            htmlId="autoSelectLanguage"
+            disabled={enabledLanguages.length <= 1}
+            isChecked={!!localSurvey.autoSelectLanguage}
+            onToggle={handleAutoSelectLanguageToggle}
+            title={t("workspace.surveys.edit.auto_select_browser_language")}
+            description={t("workspace.surveys.edit.auto_select_browser_language_description")}
             childBorder={true}
           />
         </div>

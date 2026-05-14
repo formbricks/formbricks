@@ -2,7 +2,7 @@ import * as nextHeaders from "next/headers";
 import { describe, expect, test, vi } from "vitest";
 import { AVAILABLE_LOCALES, DEFAULT_LOCALE } from "@/lib/constants";
 import { appLanguages } from "@/lib/i18n/utils";
-import { findMatchingLocale } from "./locale";
+import { findMatchingBrowserLanguageCodes, findMatchingLocale } from "./locale";
 
 // Mock the Next.js headers function
 vi.mock("next/headers", () => ({
@@ -34,6 +34,26 @@ describe("locale", () => {
 
     expect(result).toBe(testLocale);
     expect(nextHeaders.headers).toHaveBeenCalled();
+  });
+
+  test("ignores Accept-Language quality values when matching locales", async () => {
+    vi.mocked(nextHeaders.headers).mockReturnValue({
+      get: vi.fn().mockReturnValue("de-DE;q=0.9,en-US;q=0.8"),
+    } as any);
+
+    const result = await findMatchingLocale();
+
+    expect(result).toBe("de-DE");
+  });
+
+  test("returns browser language codes without quality values", async () => {
+    vi.mocked(nextHeaders.headers).mockReturnValue({
+      get: vi.fn().mockReturnValue("es-MX,es;q=0.9,en-US;q=0.8"),
+    } as any);
+
+    const result = await findMatchingBrowserLanguageCodes();
+
+    expect(result).toEqual(["es-MX", "es", "en-US"]);
   });
 
   test("returns normalized match when available", async () => {

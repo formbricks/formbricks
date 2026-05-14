@@ -1,6 +1,7 @@
 import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
+import { resolveSurveyLanguage } from "@formbricks/types/surveys/language";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 export function isRTL(text: string): boolean {
@@ -54,6 +55,22 @@ export function isRTLLanguage(survey: TJsWorkspaceStateSurvey, languageCode: str
  */
 export const getElementsFromSurveyBlocks = (blocks: TSurveyBlock[]): TSurveyElement[] =>
   blocks.flatMap((block) => block.elements);
+
+export const getSurveyLanguageCode = (
+  langParam: string | undefined,
+  survey: TSurvey,
+  browserLanguageCodes: string[] = []
+): string => {
+  return (
+    resolveSurveyLanguage({
+      languages: survey.languages,
+      explicitLanguageCode: langParam,
+      browserLanguageCodes,
+      autoSelectLanguage: survey.autoSelectLanguage,
+      unmatchedExplicitLanguageBehavior: "fallback",
+    }) ?? "default"
+  );
+};
 
 /**
  * Maps survey language codes to web app locale codes.

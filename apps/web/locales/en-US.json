@@ -2833,6 +2833,8 @@
         "auto_save_disabled": "Auto-save disabled",
         "auto_save_disabled_tooltip": "Your survey is only auto-saved when in draft. This assures public surveys are not unintentionally updated.",
         "auto_save_on": "Auto-save on",
+        "auto_select_browser_language": "Use browser language by default",
+        "auto_select_browser_language_description": "Automatically open the survey in the respondent's browser language when that language is active. Falls back to the default language.",
         "automatically_close_survey_after": "Automatically close survey after",
         "automatically_close_the_survey_after_a_certain_number_of_responses": "Automatically close the survey after a certain number of responses.",
         "automatically_close_the_survey_if_the_user_does_not_respond_after_certain_number_of_seconds": "Automatically close the survey if the user does not respond after certain number of seconds.",

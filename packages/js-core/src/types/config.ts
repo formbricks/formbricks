@@ -10,6 +10,7 @@ export type TWorkspaceStateSurvey = Pick<
   | "variables"
   | "type"
   | "showLanguageSwitch"
+  | "autoSelectLanguage"
   | "endings"
   | "autoClose"
   | "status"

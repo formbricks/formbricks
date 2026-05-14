@@ -51,6 +51,7 @@ export const ZSurveyInput = ZSurveyWithoutQuestionType.pick({
   styling: true,
   workspaceOverwrites: true,
   showLanguageSwitch: true,
+  autoSelectLanguage: true,
 })
   .partial({
     redirectUrl: true,
@@ -66,6 +67,7 @@ export const ZSurveyInput = ZSurveyWithoutQuestionType.pick({
     styling: true,
     workspaceOverwrites: true,
     showLanguageSwitch: true,
+    autoSelectLanguage: true,
     inlineTriggers: true,
     displayPercentage: true,
   })

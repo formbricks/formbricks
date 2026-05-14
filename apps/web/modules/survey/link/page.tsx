@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { findMatchingLocale } from "@/lib/utils/locale";
+import { findMatchingBrowserLanguageCodes, findMatchingLocale } from "@/lib/utils/locale";
 import { getResponseCountBySurveyId } from "@/modules/survey/lib/response";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { renderSurvey } from "@/modules/survey/link/components/survey-renderer";
@@ -93,17 +93,18 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
   if (isSingleUseSurvey) {
     const validatedSingleUseId = checkAndValidateSingleUseId(suId, isSingleUseSurveyEncrypted);
     if (!validatedSingleUseId) {
-      // Need to fetch workspace for error page - fetch environmentContext for it
-      const environmentContext = await getWorkspaceContextForLinkSurvey(survey.workspaceId);
-      return <SurveyInactive status="link invalid" workspace={environmentContext.workspace} />;
+      // Need to fetch workspace for error page.
+      const workspaceContext = await getWorkspaceContextForLinkSurvey(survey.workspaceId);
+      return <SurveyInactive status="link invalid" workspace={workspaceContext.workspace} />;
     }
     singleUseId = validatedSingleUseId;
   }
 
   // Stage 2: Parallel fetch of all remaining data
-  const [workspaceContext, locale, singleUseResponse] = await Promise.all([
+  const [workspaceContext, locale, browserLanguageCodes, singleUseResponse] = await Promise.all([
     getWorkspaceContextForLinkSurvey(survey.workspaceId),
     findMatchingLocale(),
+    findMatchingBrowserLanguageCodes(),
     // Only fetch single-use response if we have a validated ID
     isSingleUseSurvey && singleUseId
       ? getResponseBySingleUseId(survey.id, singleUseId)()
@@ -124,6 +125,7 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
     isPreview,
     workspaceContext,
     locale,
+    browserLanguageCodes,
     responseCount,
   });
 };

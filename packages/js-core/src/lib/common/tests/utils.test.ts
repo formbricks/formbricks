@@ -432,6 +432,42 @@ describe("utils.ts", () => {
       expect(getLanguageCode(survey, "fr")).toBe("fr");
       expect(getLanguageCode(survey, "fr-FR")).toBe("fr");
     });
+
+    test("returns a loose variant match for the selected language", () => {
+      const survey = {
+        languages: [
+          { language: { code: "en" }, default: true, enabled: true },
+          { language: { code: "es-ES" }, default: false, enabled: true },
+        ],
+      } as unknown as TWorkspaceStateSurvey;
+
+      expect(getLanguageCode(survey, "es-MX")).toBe("es-ES");
+    });
+
+    test("uses fallback languages only when auto-select is enabled", () => {
+      const survey = {
+        autoSelectLanguage: true,
+        languages: [
+          { language: { code: "en" }, default: true, enabled: true },
+          { language: { code: "de" }, default: false, enabled: true },
+        ],
+      } as unknown as TWorkspaceStateSurvey;
+
+      expect(getLanguageCode(survey, undefined, ["de-DE", "en-US"])).toBe("de");
+      expect(getLanguageCode({ ...survey, autoSelectLanguage: false }, undefined, ["de-DE"])).toBe("default");
+    });
+
+    test("does not fall back to browser language when an explicit user language is unavailable", () => {
+      const survey = {
+        autoSelectLanguage: true,
+        languages: [
+          { language: { code: "en" }, default: true, enabled: true },
+          { language: { code: "de" }, default: false, enabled: true },
+        ],
+      } as unknown as TWorkspaceStateSurvey;
+
+      expect(getLanguageCode(survey, "fr", ["de-DE"])).toBeUndefined();
+    });
   });
 
   // ---------------------------------------------------------------------------------
