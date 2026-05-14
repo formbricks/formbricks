@@ -88,7 +88,7 @@ describe("deleteUserAction", () => {
 
   test("returns SSO confirmation details without auditing a failed deletion for the normal redirect flow", async () => {
     const ssoConfirmation = {
-      authorizationParams: { login_hint: "sso-user@example.com" },
+      authorizationParams: { login_hint: "sso-user@example.com", prompt: "login" },
       callbackUrl: "http://localhost:3000/auth/account-deletion/sso/complete?intent=intent-token",
       provider: "google",
     };

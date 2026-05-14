@@ -147,13 +147,14 @@ describe("account deletion SSO identity confirmation", () => {
     expect(result).toEqual({
       authorizationParams: {
         login_hint: intent.email,
+        prompt: "login",
       },
       callbackUrl: "http://localhost:3000/auth/account-deletion/sso/complete?intent=intent-token",
       provider: "google",
     });
   });
 
-  test("does not request freshness-only SSO authorization parameters", async () => {
+  test("requests interactive login without freshness-only SSO authorization parameters", async () => {
     mockCreateAccountDeletionSsoReauthIntent.mockReturnValue("intent-token");
 
     for (const identityProvider of ["google", "azuread", "openid"] as const) {
@@ -172,14 +173,14 @@ describe("account deletion SSO identity confirmation", () => {
 
       expect(result.authorizationParams).toEqual({
         login_hint: intent.email,
+        prompt: "login",
       });
       expect(result.authorizationParams).not.toHaveProperty("claims");
       expect(result.authorizationParams).not.toHaveProperty("max_age");
-      expect(result.authorizationParams).not.toHaveProperty("prompt");
     }
   });
 
-  test("starts GitHub SSO identity confirmation without freshness params", async () => {
+  test("starts GitHub SSO identity confirmation with account picker params", async () => {
     mockGetUserAuthenticationData.mockResolvedValue({
       email: intent.email,
       identityProvider: "github",
@@ -194,11 +195,14 @@ describe("account deletion SSO identity confirmation", () => {
       userId: intent.userId,
     });
 
-    expect(result.authorizationParams).toEqual({});
+    expect(result.authorizationParams).toEqual({
+      login: intent.email,
+      prompt: "select_account",
+    });
     expect(result.provider).toBe("github");
   });
 
-  test("starts SAML SSO identity confirmation with only Jackson routing params", async () => {
+  test("starts SAML SSO identity confirmation with Jackson routing and ForceAuthn params", async () => {
     mockGetUserAuthenticationData.mockResolvedValue({
       email: intent.email,
       identityProvider: "saml",
@@ -215,6 +219,7 @@ describe("account deletion SSO identity confirmation", () => {
 
     expect(result).toEqual({
       authorizationParams: {
+        forceAuthn: "true",
         product: "formbricks",
         provider: "saml",
         tenant: "formbricks.com",
@@ -222,7 +227,6 @@ describe("account deletion SSO identity confirmation", () => {
       callbackUrl: "http://localhost:3000/auth/account-deletion/sso/complete?intent=intent-token",
       provider: "saml",
     });
-    expect(result.authorizationParams).not.toHaveProperty("forceAuthn");
   });
 
   test("extracts confirmation intents only from the expected callback URL", () => {

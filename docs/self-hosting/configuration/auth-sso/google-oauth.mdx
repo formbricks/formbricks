@@ -18,9 +18,9 @@ Integrating Google OAuth with your Formbricks instance allows users to log in us
 
 ### Account deletion SSO confirmation
 
-For SSO-only users, Formbricks asks the user to type their email address and then redirects them through Google OAuth before deleting the account. The deletion continues only when Google returns the same linked provider account.
+For SSO-only users, Formbricks asks the user to type their email address and then redirects them through Google OAuth before deleting the account. Formbricks asks Google for an interactive login prompt, and the deletion continues only when Google returns the same linked provider account.
 
-This confirms the Google identity for the current deletion attempt, but it does not guarantee that Google will ask for a password or MFA every time. If the browser already has an active Google session, Google may silently return the same account.
+This confirms the Google identity for the current deletion attempt, but it does not validate a provider-side freshness proof. Google still controls whether it asks for a password or MFA.
 
 <Warning>
   If you set `DISABLE_ACCOUNT_DELETION_SSO_CONFIRMATION=1`, Formbricks skips this SSO identity confirmation

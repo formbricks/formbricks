@@ -60,6 +60,13 @@ const NEXT_AUTH_PROVIDER_BY_IDENTITY_PROVIDER = {
   saml: "saml",
 } as const satisfies Record<TSsoIdentityProvider, string>;
 
+const INTERACTIVE_SSO_CONFIRMATION_PROVIDERS = new Set<TSsoIdentityProvider>([
+  "azuread",
+  "google",
+  "openid",
+  "saml",
+]);
+
 const getAccountDeletionSsoReauthIntentKey = (intentId: string) =>
   createCacheKey.custom("account_deletion", "sso_reauth_intent", intentId);
 
@@ -81,13 +88,14 @@ const getAccountDeletionSsoReauthAuthorizationParams = (
   provider: TSsoIdentityProvider,
   email: string
 ): Record<string, string> => {
-  // This flow intentionally confirms the same SSO identity without requesting formal freshness proof.
-  // Do not add prompt=login, max_age=0, Google auth_time claims, or SAML forceAuthn here unless the
-  // product decision changes back to strict step-up authentication.
+  // This flow asks supported providers for an interactive login, but still only treats the callback
+  // as same-identity confirmation. Do not add max_age=0, Google auth_time claims, or AuthnInstant
+  // validation here unless the product decision changes back to strict step-up authentication.
   // A future lower-friction alternative would be a short-lived email confirmation link that deletes
   // the account after verifying the signed deletion intent, making the inbox the confirmation factor.
   if (provider === "saml") {
     return {
+      ...(INTERACTIVE_SSO_CONFIRMATION_PROVIDERS.has(provider) ? { forceAuthn: "true" } : {}),
       product: SAML_PRODUCT,
       provider: "saml",
       tenant: SAML_TENANT,
@@ -95,11 +103,15 @@ const getAccountDeletionSsoReauthAuthorizationParams = (
   }
 
   if (provider === "github") {
-    return {};
+    return {
+      login: email,
+      prompt: "select_account",
+    };
   }
 
   return {
     login_hint: email,
+    ...(INTERACTIVE_SSO_CONFIRMATION_PROVIDERS.has(provider) ? { prompt: "login" } : {}),
   };
 };
 
