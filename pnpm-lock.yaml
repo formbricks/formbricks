@@ -138,9 +138,6 @@ importers:
       '@boxyhq/saml-jackson':
         specifier: 1.52.2
         version: 1.52.2(socks@2.8.7)(ts-node@10.9.2(@types/node@25.4.0)(typescript@5.9.3))
-      '@boxyhq/saml20':
-        specifier: 1.15.2
-        version: 1.15.2
       '@dnd-kit/core':
         specifier: 6.3.1
         version: 6.3.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -1850,9 +1847,6 @@ packages:
 
   '@boxyhq/saml20@1.12.1':
     resolution: {integrity: sha512-lAHJ13kTZqPgSFUuAV8+kg5As3/MoSfiEr96tNKP0sj6c6o/Sbwn6DIhUZLQRNzDtmyAu9zuQk3vdbY5BK56Xg==}
-
-  '@boxyhq/saml20@1.15.2':
-    resolution: {integrity: sha512-kdceDRQMfVft/CdpsKOAwYe44EZPRkqvIt6yh1Hh+ugoab/lKjb13wUvLJwNrWwftMRYrV7oS7N05viu+ljQDw==}
 
   '@bramus/specificity@2.4.2':
     resolution: {integrity: sha512-ctxtJ/eA+t+6q2++vj5j7FYX3nRu311q1wfYH3xjlLOsczhlhxAg2FWNUXhpGvAw3BWo1xBcvOV6/YLc2r5FJw==}
@@ -11445,9 +11439,6 @@ packages:
   xml-encryption@3.1.0:
     resolution: {integrity: sha512-PV7qnYpoAMXbf1kvQkqMScLeQpjCMixddAKq9PtqVrho8HnYbBOWNfG0kA4R7zxQDo7w9kiYAyzS/ullAyO55Q==}
 
-  xml-encryption@4.0.0:
-    resolution: {integrity: sha512-UvSSRKoDfmyH/ECiKPbhHXMKhcXKOYLva7ifmzitN4BNXLAfdgez+nQANJ3jllmY42D5bdeVvIK0Y7hzcAAlyQ==}
-
   xml-name-validator@5.0.0:
     resolution: {integrity: sha512-EvGK8EJ3DhaHfbRlETOWAS5pO9MZITeauHKJyb8wyajUfQUenkIg2MvLDTZ4T/TgIcm3HU0TFBgWWboAZ30UHg==}
     engines: {node: '>=18'}
@@ -13383,14 +13374,6 @@ snapshots:
       '@xmldom/xmldom': 0.9.10
       xml-crypto: 6.1.2
       xml-encryption: 3.1.0
-      xml2js: 0.6.2
-      xmlbuilder: 15.1.1
-
-  '@boxyhq/saml20@1.15.2':
-    dependencies:
-      '@xmldom/xmldom': 0.9.10
-      xml-crypto: 6.1.2
-      xml-encryption: 4.0.0
       xml2js: 0.6.2
       xmlbuilder: 15.1.1
 
@@ -24243,12 +24226,6 @@ snapshots:
       xpath: 0.0.33
 
   xml-encryption@3.1.0:
-    dependencies:
-      '@xmldom/xmldom': 0.9.10
-      escape-html: 1.0.3
-      xpath: 0.0.32
-
-  xml-encryption@4.0.0:
     dependencies:
       '@xmldom/xmldom': 0.9.10
       escape-html: 1.0.3

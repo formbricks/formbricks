@@ -409,7 +409,6 @@ export const authOptions: NextAuthOptions = {
           return result;
         } catch (error) {
           const failureRedirectUrl = getAccountDeletionSsoReauthFailureRedirectUrl({
-            error,
             intentToken: accountDeletionSsoReauthIntentToken,
           });
 

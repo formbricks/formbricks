@@ -7,10 +7,7 @@ import { useTranslation } from "react-i18next";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
 import { DeleteAccountModal } from "@/modules/account/components/DeleteAccountModal";
-import {
-  ACCOUNT_DELETION_GOOGLE_REAUTH_NOT_CONFIGURED_ERROR_CODE,
-  ACCOUNT_DELETION_SSO_REAUTH_ERROR_QUERY_PARAM,
-} from "@/modules/account/constants";
+import { ACCOUNT_DELETION_SSO_REAUTH_ERROR_QUERY_PARAM } from "@/modules/account/constants";
 import { Button } from "@/modules/ui/components/button";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
@@ -48,15 +45,9 @@ export const DeleteAccount = ({
 
     hasShownAccountDeletionError.current = true;
 
-    if (accountDeletionErrorCode === ACCOUNT_DELETION_GOOGLE_REAUTH_NOT_CONFIGURED_ERROR_CODE) {
-      toast.error(t("environments.settings.profile.google_sso_account_deletion_requires_setup"), {
-        id: "account-deletion-sso-reauth-error",
-      });
-    } else {
-      toast.error(t("environments.settings.profile.sso_reauthentication_failed"), {
-        id: "account-deletion-sso-reauth-error",
-      });
-    }
+    toast.error(t("environments.settings.profile.sso_identity_confirmation_failed"), {
+      id: "account-deletion-sso-reauth-error",
+    });
 
     const url = new URL(globalThis.location.href);
     url.searchParams.delete(ACCOUNT_DELETION_SSO_REAUTH_ERROR_QUERY_PARAM);
