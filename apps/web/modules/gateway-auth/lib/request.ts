@@ -1,6 +1,7 @@
 import "server-only";
 import { NextRequest } from "next/server";
 import { prisma } from "@formbricks/database";
+import { logger } from "@formbricks/logger";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { authenticateApiKeyFromHeaders, getApiKeyFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { getProxySession } from "@/modules/auth/lib/proxy-session";
@@ -61,6 +62,7 @@ export const authenticateGatewayRequest = async (
   if (getApiKeyFromHeaders(request.headers)) {
     const apiKeyAuthentication = await authenticateApiKeyFromHeaders(request.headers);
     if (!apiKeyAuthentication) {
+      logger.warn({ hasApiKey: true, reason: "invalid_api_key" }, "Gateway authentication failed");
       return { status: "invalid" };
     }
 
@@ -76,28 +78,45 @@ export const authenticateGatewayRequest = async (
   if (gatewayToken) {
     const token = gatewayToken.getTokenFromHeaders(request.headers);
     if (token) {
+      let userId: string;
+
       try {
-        const { userId } = gatewayToken.verifyToken(token);
-        const user = await prisma.user.findUnique({
-          where: { id: userId },
-          select: { id: true, isActive: true },
-        });
-
-        if (!user || user.isActive === false) {
-          return { status: "invalid" };
-        }
-
-        return {
-          status: "authenticated",
-          principal: {
-            type: "user",
-            userId: user.id,
-            source: "jwt",
-          },
-        };
-      } catch {
+        ({ userId } = gatewayToken.verifyToken(token));
+      } catch (error) {
+        logger.warn(
+          { error, hasToken: true, reason: "token_verification_failed" },
+          "Gateway authentication failed"
+        );
         return { status: "invalid" };
       }
+
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, isActive: true },
+      });
+
+      if (!user || user.isActive === false) {
+        logger.warn(
+          {
+            hasToken: true,
+            reason: "user_missing_or_inactive",
+            userId,
+            userFound: Boolean(user),
+            isActive: user?.isActive ?? null,
+          },
+          "Gateway authentication failed"
+        );
+        return { status: "invalid" };
+      }
+
+      return {
+        status: "authenticated",
+        principal: {
+          type: "user",
+          userId: user.id,
+          source: "jwt",
+        },
+      };
     }
   }
 
