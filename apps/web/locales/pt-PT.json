@@ -1669,6 +1669,7 @@
         "ai_query_placeholder": "ex: Quantos utilizadores se registaram na semana passada?",
         "ai_query_section_description": "Descreve o que queres ver e deixa a IA construir o gráfico.",
         "ai_query_section_title": "Pergunta aos teus dados",
+        "already_on_dashboard": "Já está no painel",
         "and_filter_logic": "E",
         "apply_changes": "Aplicar alterações",
         "chart": "Gráfico",

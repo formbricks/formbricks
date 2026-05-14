@@ -26,7 +26,7 @@ interface AddToDashboardDialogProps {
   onOpenChange: (open: boolean) => void;
   chartName: string;
   onChartNameChange: (name: string) => void;
-  dashboards: Array<{ id: string; name: string }>;
+  dashboards: Array<{ id: string; name: string; containsChart?: boolean }>;
   selectedDashboardId: string | undefined;
   onDashboardSelect: (id: string) => void;
   onConfirm: () => void;
@@ -89,8 +89,13 @@ export function AddToDashboardDialog({
                 </SelectTrigger>
                 <SelectContent position="popper" className="max-h-[200px]">
                   {dashboards.map((dashboard) => (
-                    <SelectItem key={dashboard.id} value={dashboard.id}>
+                    <SelectItem key={dashboard.id} value={dashboard.id} disabled={dashboard.containsChart}>
                       {dashboard.name}
+                      {dashboard.containsChart && (
+                        <span className="ml-2 text-xs text-gray-500">
+                          ({t("workspace.analysis.charts.already_on_dashboard")})
+                        </span>
+                      )}
                     </SelectItem>
                   ))}
                 </SelectContent>

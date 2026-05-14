@@ -158,19 +158,34 @@ export const getDashboard = async (dashboardId: string, workspaceId: string) => 
   }
 };
 
-export const getDashboards = async (workspaceId: string): Promise<TDashboardWithCount[]> => {
-  validateInputs([workspaceId, ZId]);
+export const getDashboards = async (
+  workspaceId: string,
+  chartId?: string
+): Promise<TDashboardWithCount[]> => {
+  validateInputs([workspaceId, ZId], [chartId, ZId.optional()]);
 
   try {
-    return await prisma.dashboard.findMany({
+    const select = {
+      ...selectDashboard,
+      creator: { select: { name: true } },
+      _count: { select: { widgets: true } },
+      ...(chartId ? { widgets: { where: { chartId }, select: { id: true }, take: 1 } } : {}),
+    };
+
+    const dashboards = await prisma.dashboard.findMany({
       where: { workspaceId },
       orderBy: { createdAt: "desc" },
-      select: {
-        ...selectDashboard,
-        creator: { select: { name: true } },
-        _count: { select: { widgets: true } },
-      },
+      select,
     });
+
+    if (!chartId) {
+      return dashboards;
+    }
+
+    return dashboards.map(({ widgets, ...rest }) => ({
+      ...rest,
+      containsChart: (widgets?.length ?? 0) > 0,
+    }));
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
@@ -344,6 +359,18 @@ export const addChartToDashboard = async (data: TAddWidgetInput) => {
           throw new ResourceNotFoundError("Dashboard", data.dashboardId);
         }
 
+        const existingWidget = await tx.dashboardWidget.findFirst({
+          where: {
+            dashboardId: data.dashboardId,
+            chartId: data.chartId,
+          },
+          select: { id: true },
+        });
+
+        if (existingWidget) {
+          throw new InvalidInputError("This chart is already on the dashboard");
+        }
+
         const [maxOrder, existingWidgets] = await Promise.all([
           tx.dashboardWidget.aggregate({
             where: { dashboardId: data.dashboardId },
@@ -375,7 +402,7 @@ export const addChartToDashboard = async (data: TAddWidgetInput) => {
       { isolationLevel: "Serializable" }
     );
   } catch (error) {
-    if (error instanceof ResourceNotFoundError) {
+    if (error instanceof ResourceNotFoundError || error instanceof InvalidInputError) {
       throw error;
     }
     if (error instanceof Prisma.PrismaClientKnownRequestError) {

@@ -1669,6 +1669,7 @@
         "ai_query_placeholder": "pl. Hány felhasználó regisztrált a múlt héten?",
         "ai_query_section_description": "Írd le, mit szeretnél látni, és hagyd, hogy az AI elkészítse a diagramot.",
         "ai_query_section_title": "Kérdezd meg az adataidat",
+        "already_on_dashboard": "Már a vezérlőpulton van",
         "and_filter_logic": "ÉS",
         "apply_changes": "Módosítások alkalmazása",
         "chart": "Diagram",
