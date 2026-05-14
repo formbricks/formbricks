@@ -28,6 +28,7 @@ interface SurveyRendererProps {
     embed?: string;
     preview?: string;
     suId?: string;
+    suToken?: string;
   };
   singleUseId?: string;
   singleUseResponse?: Pick<Response, "id" | "finished">;
@@ -117,6 +118,7 @@ export const renderSurvey = async ({
     return (
       <VerifyEmail
         singleUseId={searchParams.suId ?? ""}
+        singleUseToken={searchParams.suToken}
         survey={survey}
         languageCode={getLanguageCode(langParam, survey)}
         styling={project.styling}

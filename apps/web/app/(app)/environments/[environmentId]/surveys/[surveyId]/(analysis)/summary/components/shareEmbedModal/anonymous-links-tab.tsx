@@ -2,7 +2,7 @@
 
 import { CirclePlayIcon, CopyIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -41,18 +41,13 @@ export const AnonymousLinksTab = ({
   const [isSingleUseLink, setIsSingleUseLink] = useState(survey.singleUse?.enabled ?? false);
   const [singleUseEncryption, setSingleUseEncryption] = useState(survey.singleUse?.isEncrypted ?? false);
   const [numberOfLinks, setNumberOfLinks] = useState<number | string>(1);
+  const [customSingleUseId, setCustomSingleUseId] = useState("");
 
   const [disableLinkModal, setDisableLinkModal] = useState<{
     open: boolean;
     type: "multi-use" | "single-use";
     pendingAction: () => Promise<void> | void;
   } | null>(null);
-
-  const surveyUrlWithCustomSuid = useMemo(() => {
-    const url = new URL(surveyUrl);
-    url.searchParams.set("suId", "CUSTOM-ID");
-    return url.toString();
-  }, [surveyUrl]);
 
   const resetState = () => {
     const { singleUse } = survey;
@@ -181,10 +176,13 @@ export const AnonymousLinksTab = ({
       });
 
       if (!!response?.data?.length) {
-        const singleUseIds = response.data;
-        const surveyLinks = singleUseIds.map((singleUseId) => {
+        const singleUseLinkParams = response.data;
+        const surveyLinks = singleUseLinkParams.map(({ suId, suToken }) => {
           const url = new URL(surveyUrl);
-          url.searchParams.set("suId", singleUseId);
+          url.searchParams.set("suId", suId);
+          if (suToken) {
+            url.searchParams.set("suToken", suToken);
+          }
           return url.toString();
         });
 
@@ -208,6 +206,40 @@ export const AnonymousLinksTab = ({
 
       toast.error(t("environments.surveys.share.anonymous_links.generate_links_error"));
     } catch (error) {
+      toast.error(t("environments.surveys.share.anonymous_links.generate_links_error"));
+    }
+  };
+
+  const handleCopyCustomSingleUseLink = async () => {
+    const trimmedCustomSingleUseId = customSingleUseId.trim();
+    if (!trimmedCustomSingleUseId) {
+      toast.error(t("environments.surveys.share.anonymous_links.custom_single_use_id_required"));
+      return;
+    }
+
+    try {
+      const response = await generateSingleUseIdsAction({
+        surveyId: survey.id,
+        isEncrypted: false,
+        count: 1,
+        singleUseId: trimmedCustomSingleUseId,
+      });
+
+      const singleUseLinkParams = response?.data?.[0];
+      if (!singleUseLinkParams) {
+        toast.error(t("environments.surveys.share.anonymous_links.generate_links_error"));
+        return;
+      }
+
+      const url = new URL(surveyUrl);
+      url.searchParams.set("suId", singleUseLinkParams.suId);
+      if (singleUseLinkParams.suToken) {
+        url.searchParams.set("suToken", singleUseLinkParams.suToken);
+      }
+
+      await navigator.clipboard.writeText(url.toString());
+      toast.success(t("common.copied_to_clipboard"));
+    } catch {
       toast.error(t("environments.surveys.share.anonymous_links.generate_links_error"));
     }
   };
@@ -279,16 +311,19 @@ export const AnonymousLinksTab = ({
                   </Alert>
 
                   <div className="grid w-full grid-cols-6 items-center gap-2">
-                    <div className="col-span-5 truncate rounded-md border border-slate-200 px-2 py-1">
-                      <span className="truncate text-sm text-slate-900">{surveyUrlWithCustomSuid}</span>
-                    </div>
+                    <Input
+                      className="col-span-5 bg-white focus:border focus:border-slate-900"
+                      value={customSingleUseId}
+                      onChange={(event) => setCustomSingleUseId(event.target.value)}
+                      placeholder={t(
+                        "environments.surveys.share.anonymous_links.custom_single_use_id_placeholder"
+                      )}
+                    />
 
                     <Button
                       variant="secondary"
-                      onClick={() => {
-                        navigator.clipboard.writeText(surveyUrlWithCustomSuid);
-                        toast.success(t("common.copied_to_clipboard"));
-                      }}
+                      disabled={!customSingleUseId.trim()}
+                      onClick={handleCopyCustomSingleUseLink}
                       className="col-span-1 gap-1 text-sm">
                       {t("common.copy")}
                       <CopyIcon />

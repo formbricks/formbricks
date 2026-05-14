@@ -113,9 +113,12 @@ export const SurveyAnalysisCTA = ({
     const surveyUrl = new URL(`${publicDomain}/s/${survey.id}`);
 
     if (survey.singleUse?.enabled) {
-      const newId = await refreshSingleUseId();
-      if (newId) {
-        surveyUrl.searchParams.set("suId", newId);
+      const singleUseLinkParams = await refreshSingleUseId();
+      if (singleUseLinkParams) {
+        surveyUrl.searchParams.set("suId", singleUseLinkParams.suId);
+        if (singleUseLinkParams.suToken) {
+          surveyUrl.searchParams.set("suToken", singleUseLinkParams.suToken);
+        }
       }
     }
 
