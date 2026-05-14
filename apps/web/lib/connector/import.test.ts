@@ -114,6 +114,28 @@ describe("importHistoricalResponses", () => {
     expect(result.failures).toBe(1);
   });
 
+  test("counts 409 duplicates as skipped, not failures", async () => {
+    const mockResponses = [{ id: "r1" }, { id: "r2" }, { id: "r3" }];
+    getResponses.mockResolvedValueOnce(mockResponses as never);
+    getResponses.mockResolvedValueOnce([]);
+
+    transformResponseToFeedbackRecords.mockReturnValue([{ field: "record" }] as never);
+
+    createFeedbackRecordsBatch.mockResolvedValue({
+      results: [
+        { data: { id: "fb1" }, error: null },
+        { data: null, error: { status: 409, message: "Conflict", detail: "duplicate" } },
+        { data: null, error: { status: 500, message: "Server error", detail: "boom" } },
+      ],
+    } as never);
+
+    const result = await importHistoricalResponses(mockConnector, mockSurvey);
+
+    expect(result.successes).toBe(1);
+    expect(result.failures).toBe(1);
+    expect(result.skipped).toBe(1);
+  });
+
   test("paginates through responses in batches", async () => {
     const batch1 = Array.from({ length: 50 }, (_, i) => ({ id: `r${i}` }));
     const batch2 = [{ id: "r50" }];
