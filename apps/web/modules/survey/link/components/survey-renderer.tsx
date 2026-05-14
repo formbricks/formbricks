@@ -19,16 +19,9 @@ import { SurveyCompletedMessage } from "@/modules/survey/link/components/survey-
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { VerifyEmail } from "@/modules/survey/link/components/verify-email";
 import { getEmailVerificationDetails } from "@/modules/survey/link/lib/helper";
+import type { TLinkSurveySearchParams } from "@/modules/survey/link/lib/types";
 import { hasUserIdSearchParam } from "@/modules/survey/link/lib/user-id";
 import { TWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
-
-type TLinkSurveySearchParams = {
-  verify?: string;
-  lang?: string;
-  embed?: string;
-  preview?: string;
-  suId?: string;
-} & Record<string, string | string[] | undefined>;
 
 interface SurveyRendererProps {
   survey: TSurvey;
