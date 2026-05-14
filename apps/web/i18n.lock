@@ -1172,7 +1172,6 @@ checksums:
     environments/settings/profile/email_confirmation_does_not_match: eee9d13af9ca8c1f21b46fee764605ac
     environments/settings/profile/enable_two_factor_authentication: 476d45754f584b25cc66ab00eccbefaa
     environments/settings/profile/enter_the_code_from_your_authenticator_app_below: 9bae7024a84c2be6e2725b187e2244f9
-    environments/settings/profile/google_sso_account_deletion_requires_setup: b2b60bb8bd1297f8b78af44b461733f5
     environments/settings/profile/lost_access: 70292321ff8232218d2261b11c40bc0a
     environments/settings/profile/or_enter_the_following_code_manually: c209f319f38984d8718cd272a2a60b97
     environments/settings/profile/organizations_delete_message: 9ca1794c9a63c8d82462abcf7109d31f
@@ -1183,8 +1182,8 @@ checksums:
     environments/settings/profile/save_the_following_backup_codes_in_a_safe_place: a5b9d38083770375f2372f93ac9a7b2b
     environments/settings/profile/scan_the_qr_code_below_with_your_authenticator_app: 5a6b60928590ce3b6be1bdf1d34cd45e
     environments/settings/profile/security_description: e833adde4e3e26795e61a93619c6caec
-    environments/settings/profile/sso_reauthentication_failed: 1b2f4047fcec5571c67ee3235ad70853
-    environments/settings/profile/sso_reauthentication_may_be_required_for_deletion: f2e0c238a701bd504a9527113b4f22e4
+    environments/settings/profile/sso_identity_confirmation_failed: 9d0fcabd5321c07af1caf627b0c68bdf
+    environments/settings/profile/sso_identity_confirmation_may_be_required_for_deletion: a220681b82105f16803bb542853809f4
     environments/settings/profile/two_factor_authentication: 97a428a54e41d68810a12dbae075f371
     environments/settings/profile/two_factor_authentication_description: 1429e4eeaea193f15fb508875d4fb601
     environments/settings/profile/two_factor_authentication_enabled_please_enter_the_six_digit_code_from_your_authenticator_app: 308ba145b3dc485ff4f17387e977b1f9

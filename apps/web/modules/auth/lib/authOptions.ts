@@ -92,7 +92,7 @@ const handleCredentialsOrTokenSignIn = async ({
   return true;
 };
 
-const maybeValidateAccountDeletionSsoReauth = async ({
+const maybeValidateAccountDeletionSsoConfirmation = async ({
   account,
   intentToken,
 }: {
@@ -109,7 +109,7 @@ const maybeValidateAccountDeletionSsoReauth = async ({
   });
 };
 
-const maybeCompleteAccountDeletionSsoReauth = async ({
+const maybeCompleteAccountDeletionSsoConfirmation = async ({
   account,
   intentToken,
 }: {
@@ -141,7 +141,7 @@ const handleEnterpriseSsoSignIn = async ({
   userEmail: string;
   userId: string;
 }) => {
-  await maybeValidateAccountDeletionSsoReauth({ account, intentToken });
+  await maybeValidateAccountDeletionSsoConfirmation({ account, intentToken });
 
   const result = await handleSsoCallback({
     user: user as TUser,
@@ -150,7 +150,7 @@ const handleEnterpriseSsoSignIn = async ({
   });
 
   if (result === true) {
-    await maybeCompleteAccountDeletionSsoReauth({ account, intentToken });
+    await maybeCompleteAccountDeletionSsoConfirmation({ account, intentToken });
 
     await finalizeSuccessfulSignIn({
       userId,
@@ -495,7 +495,6 @@ export const authOptions: NextAuthOptions = {
           });
         } catch (error) {
           const failureRedirectUrl = getAccountDeletionSsoReauthFailureRedirectUrl({
-            error,
             intentToken: accountDeletionSsoReauthIntentToken,
           });
 

@@ -29,10 +29,10 @@ const assertConfirmationEmailMatches = (confirmationEmail: string, expectedEmail
   }
 };
 
-const canBypassSsoReauthentication = (identityProvider: IdentityProvider) =>
+const canBypassSsoIdentityConfirmation = (identityProvider: IdentityProvider) =>
   DISABLE_ACCOUNT_DELETION_SSO_REAUTH && identityProvider !== "email";
 
-const assertAccountDeletionSsoReauthentication = async ({
+const assertAccountDeletionSsoIdentityConfirmation = async ({
   identityProvider,
   providerAccountId,
   userId,
@@ -41,10 +41,10 @@ const assertAccountDeletionSsoReauthentication = async ({
   providerAccountId: string | null;
   userId: string;
 }) => {
-  if (canBypassSsoReauthentication(identityProvider)) {
+  if (canBypassSsoIdentityConfirmation(identityProvider)) {
     logger.warn(
       { identityProvider, userId },
-      "Account deletion SSO reauthentication bypassed by environment configuration"
+      "Account deletion SSO identity confirmation bypassed by environment configuration"
     );
     return;
   }
@@ -95,7 +95,7 @@ export const deleteUserWithAccountDeletionAuthorization = async ({
   }
 
   if (!requiresPasswordConfirmationForAccountDeletion(userAuthenticationData)) {
-    await assertAccountDeletionSsoReauthentication({
+    await assertAccountDeletionSsoIdentityConfirmation({
       identityProvider: userAuthenticationData.identityProvider,
       providerAccountId: userAuthenticationData.identityProviderAccountId,
       userId,
