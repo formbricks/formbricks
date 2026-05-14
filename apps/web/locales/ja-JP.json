@@ -1669,6 +1669,7 @@
         "ai_query_placeholder": "例: 先週何人のユーザーが登録しましたか?",
         "ai_query_section_description": "表示したい内容を説明すると、AIがチャートを作成します。",
         "ai_query_section_title": "データに質問する",
+        "already_on_dashboard": "すでにダッシュボードに追加済み",
         "and_filter_logic": "AND",
         "apply_changes": "変更を適用",
         "chart": "チャート",

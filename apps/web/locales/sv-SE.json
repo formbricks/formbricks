@@ -1669,6 +1669,7 @@
         "ai_query_placeholder": "t.ex. Hur många användare registrerade sig förra veckan?",
         "ai_query_section_description": "Beskriv vad du vill se så bygger AI diagrammet åt dig.",
         "ai_query_section_title": "Fråga din data",
+        "already_on_dashboard": "Redan på instrumentpanelen",
         "and_filter_logic": "OCH",
         "apply_changes": "Verkställ ändringar",
         "chart": "Diagram",
