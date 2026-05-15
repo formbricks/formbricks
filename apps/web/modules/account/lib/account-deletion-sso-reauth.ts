@@ -60,13 +60,6 @@ const NEXT_AUTH_PROVIDER_BY_IDENTITY_PROVIDER = {
   saml: "saml",
 } as const satisfies Record<TSsoIdentityProvider, string>;
 
-const INTERACTIVE_SSO_CONFIRMATION_PROVIDERS = new Set<TSsoIdentityProvider>([
-  "azuread",
-  "google",
-  "openid",
-  "saml",
-]);
-
 const getAccountDeletionSsoReauthIntentKey = (intentId: string) =>
   createCacheKey.custom("account_deletion", "sso_reauth_intent", intentId);
 
@@ -95,7 +88,7 @@ const getAccountDeletionSsoReauthAuthorizationParams = (
   // the account after verifying the signed deletion intent, making the inbox the confirmation factor.
   if (provider === "saml") {
     return {
-      ...(INTERACTIVE_SSO_CONFIRMATION_PROVIDERS.has(provider) ? { forceAuthn: "true" } : {}),
+      forceAuthn: "true",
       product: SAML_PRODUCT,
       provider: "saml",
       tenant: SAML_TENANT,
@@ -111,11 +104,9 @@ const getAccountDeletionSsoReauthAuthorizationParams = (
 
   return {
     login_hint: email,
-    ...(INTERACTIVE_SSO_CONFIRMATION_PROVIDERS.has(provider) ? { prompt: "login" } : {}),
+    prompt: "login",
   };
 };
-
-const getAccountDeletionSsoReauthErrorCode = () => ACCOUNT_DELETION_SSO_REAUTH_FAILED_ERROR_CODE;
 
 const createAccountDeletionSsoReauthCallbackUrl = (intentToken: string) => {
   const callbackUrl = new URL(ACCOUNT_DELETION_SSO_REAUTH_CALLBACK_PATH, WEBAPP_URL);
@@ -159,7 +150,7 @@ export const getAccountDeletionSsoReauthFailureRedirectUrl = ({
     const redirectUrl = new URL(validatedReturnToUrl);
     redirectUrl.searchParams.set(
       ACCOUNT_DELETION_SSO_REAUTH_ERROR_QUERY_PARAM,
-      getAccountDeletionSsoReauthErrorCode()
+      ACCOUNT_DELETION_SSO_REAUTH_FAILED_ERROR_CODE
     );
     return redirectUrl.toString();
   } catch (redirectError) {
