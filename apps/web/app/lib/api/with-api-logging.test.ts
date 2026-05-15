@@ -3,6 +3,7 @@ import { NextRequest } from "next/server";
 import { Mock, beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
+import { TooManyRequestsError } from "@formbricks/types/errors";
 import { AuthenticationMethod } from "@/app/middleware/endpoint-validator";
 import { responses } from "./response";
 
@@ -68,6 +69,7 @@ vi.mock("@/app/middleware/endpoint-validator", async () => {
 
 vi.mock("@/modules/core/rate-limit/helpers", () => ({
   applyClientRateLimit: vi.fn(),
+  applyIPRateLimit: vi.fn(),
   applyRateLimit: vi.fn(),
 }));
 
@@ -492,7 +494,7 @@ describe("withV1ApiWrapper", () => {
     const { isClientSideApiRoute, isManagementApiRoute, isIntegrationRoute } =
       await import("@/app/middleware/endpoint-validator");
     const { authenticateRequest } = await import("@/app/api/v1/auth");
-    const { applyClientRateLimit } = await import("@/modules/core/rate-limit/helpers");
+    const { applyIPRateLimit } = await import("@/modules/core/rate-limit/helpers");
 
     vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: true, isRateLimited: true });
     vi.mocked(isManagementApiRoute).mockReturnValue({
@@ -501,7 +503,7 @@ describe("withV1ApiWrapper", () => {
     });
     vi.mocked(isIntegrationRoute).mockReturnValue(false);
     vi.mocked(authenticateRequest).mockResolvedValue(null);
-    vi.mocked(applyClientRateLimit).mockResolvedValue({ allowed: true });
+    vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
 
     const handler = vi.fn().mockResolvedValue({
       response: responses.successResponse({ data: "test" }),
@@ -513,7 +515,7 @@ describe("withV1ApiWrapper", () => {
     const res = await wrapped(req, undefined);
 
     expect(res.status).toBe(200);
-    expect(applyClientRateLimit).toHaveBeenCalledWith("ck12345678901234567890123", undefined);
+    expect(applyIPRateLimit).toHaveBeenCalled();
     expect(handler).toHaveBeenCalledWith({
       req,
       props: undefined,
@@ -674,9 +676,7 @@ describe("withV1ApiWrapper", () => {
     });
     vi.mocked(isIntegrationRoute).mockReturnValue(false);
     vi.mocked(getServerSession).mockResolvedValue({ user: { id: "user-1" } } as any);
-    const rateLimitError = new Error("Rate limit exceeded");
-    rateLimitError.message = "Rate limit exceeded";
-    vi.mocked(applyRateLimit).mockRejectedValue(rateLimitError);
+    vi.mocked(applyRateLimit).mockRejectedValue(new TooManyRequestsError("Rate limit exceeded"));
 
     const handler = vi.fn();
     const req = createMockRequest({ method: "POST", url: "https://api.test/api/v1/management/storage" });
@@ -719,7 +719,7 @@ describe("withV1ApiWrapper", () => {
   });
 
   test("returns a generic error for unexpected client rate limit failures", async () => {
-    const { applyClientRateLimit } = await import("@/modules/core/rate-limit/helpers");
+    const { applyIPRateLimit } = await import("@/modules/core/rate-limit/helpers");
     const { isClientSideApiRoute, isManagementApiRoute, isIntegrationRoute } =
       await import("@/app/middleware/endpoint-validator");
     const { authenticateRequest } = await import("@/app/api/v1/auth");
@@ -733,7 +733,7 @@ describe("withV1ApiWrapper", () => {
     vi.mocked(isIntegrationRoute).mockReturnValue(false);
 
     const underlyingError = new Error("Failed to hash IP");
-    vi.mocked(applyClientRateLimit).mockRejectedValue(underlyingError);
+    vi.mocked(applyIPRateLimit).mockRejectedValue(underlyingError);
 
     const handler = vi.fn();
     const req = createMockRequest({

@@ -360,7 +360,7 @@ describe("renderEmbedSurveyPreviewEmail", () => {
 
     const openTextStyling = {
       ...EMBED_SURVEY_PREVIEW_STYLING,
-      inputColor: { light: "#fcedf0" },
+      inputBgColor: { light: "#fcedf0" },
       inputTextColor: { light: "#901629" },
       inputPlaceholderOpacity: 0.5,
       inputHeight: 20,
