@@ -1,13 +1,13 @@
-import { InvalidInputError, ResourceNotFoundError, TooManyRequestsError } from "@formbricks/types/errors";
+import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   TDisplayCreateInputV2,
   ZDisplayCreateInputV2,
 } from "@/app/api/v2/client/[environmentId]/displays/types/display";
 import { reportApiError } from "@/app/lib/api/api-error-reporter";
+import { applyClientApiRateLimit } from "@/app/lib/api/client-rate-limit";
 import { parseAndValidateJsonBody } from "@/app/lib/api/parse-and-validate-json-body";
 import { responses } from "@/app/lib/api/response";
 import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
-import { applyClientRateLimit } from "@/modules/core/rate-limit/helpers";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createDisplay } from "./lib/display";
 
@@ -50,33 +50,9 @@ export const OPTIONS = async (): Promise<Response> => {
   );
 };
 
-const rateLimitMessage = "Maximum number of requests reached. Please try again later.";
-
-const applyRateLimit = async (request: Request, environmentId: string): Promise<Response | null> => {
-  try {
-    await applyClientRateLimit(environmentId);
-    return null;
-  } catch (error) {
-    if (
-      error instanceof TooManyRequestsError ||
-      (error instanceof Error && error.name === "TooManyRequestsError")
-    ) {
-      return responses.tooManyRequestsResponse(rateLimitMessage, true);
-    }
-
-    const response = responses.internalServerErrorResponse("Something went wrong. Please try again.", true);
-    reportApiError({
-      request,
-      status: response.status,
-      error,
-    });
-    return response;
-  }
-};
-
 export const POST = async (request: Request, context: Context): Promise<Response> => {
   const params = await context.params;
-  const rateLimitResponse = await applyRateLimit(request, params.environmentId);
+  const rateLimitResponse = await applyClientApiRateLimit({ request, environmentId: params.environmentId });
   if (rateLimitResponse) {
     return rateLimitResponse;
   }

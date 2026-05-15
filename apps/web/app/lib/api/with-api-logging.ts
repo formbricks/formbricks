@@ -4,6 +4,7 @@ import { logger } from "@formbricks/logger";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { reportApiError } from "@/app/lib/api/api-error-reporter";
+import { applyClientApiRateLimit, getRateLimitErrorResponse } from "@/app/lib/api/client-rate-limit";
 import { responses } from "@/app/lib/api/response";
 import {
   AuthenticationMethod,
@@ -13,7 +14,7 @@ import {
 } from "@/app/middleware/endpoint-validator";
 import { AUDIT_LOG_ENABLED } from "@/lib/constants";
 import { authOptions } from "@/modules/auth/lib/authOptions";
-import { applyClientRateLimit, applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { TRateLimitConfig } from "@/modules/core/rate-limit/types/rate-limit";
 import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
@@ -72,9 +73,11 @@ const getClientEnvironmentIdFromPathname = (pathname: string): string | null => 
 const handleRateLimiting = async (
   authentication: TApiV1Authentication,
   routeType: ApiV1RouteTypeEnum,
-  pathname: string,
+  req: NextRequest,
   customRateLimitConfig?: TRateLimitConfig
 ): Promise<Response | null> => {
+  const pathname = req.nextUrl.pathname;
+
   try {
     if (authentication) {
       if ("user" in authentication) {
@@ -96,10 +99,14 @@ const handleRateLimiting = async (
         return responses.badRequestResponse("Environment ID is required", undefined, true);
       }
 
-      await applyClientRateLimit(environmentId, customRateLimitConfig);
+      return await applyClientApiRateLimit({ request: req, environmentId, customRateLimitConfig });
     }
   } catch (error) {
-    return responses.tooManyRequestsResponse(error instanceof Error ? error.message : "Rate limit exceeded");
+    return getRateLimitErrorResponse({
+      request: req,
+      error,
+      cors: routeType === ApiV1RouteTypeEnum.Client,
+    });
   }
 
   return null;
@@ -309,7 +316,7 @@ export const withV1ApiWrapper = <TResult extends { response: Response; error?: u
       const rateLimitResponse = await handleRateLimiting(
         authentication,
         routeType,
-        req.nextUrl.pathname,
+        req,
         customRateLimitConfig
       );
       if (rateLimitResponse) return rateLimitResponse;

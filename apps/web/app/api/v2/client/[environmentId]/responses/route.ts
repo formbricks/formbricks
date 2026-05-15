@@ -1,9 +1,10 @@
 import { UAParser } from "ua-parser-js";
 import { ZEnvironmentId } from "@formbricks/types/environment";
-import { InvalidInputError, TooManyRequestsError, UniqueConstraintError } from "@formbricks/types/errors";
+import { InvalidInputError, UniqueConstraintError } from "@formbricks/types/errors";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { checkSurveyValidity } from "@/app/api/v2/client/[environmentId]/responses/lib/utils";
 import { reportApiError } from "@/app/lib/api/api-error-reporter";
+import { applyClientApiRateLimit } from "@/app/lib/api/client-rate-limit";
 import { parseAndValidateJsonBody } from "@/app/lib/api/parse-and-validate-json-body";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
@@ -14,7 +15,6 @@ import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
 import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/element";
-import { applyClientRateLimit } from "@/modules/core/rate-limit/helpers";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
 import { createResponseWithQuotaEvaluation } from "./lib/response";
@@ -202,33 +202,9 @@ export const OPTIONS = async (): Promise<Response> => {
   );
 };
 
-const rateLimitMessage = "Maximum number of requests reached. Please try again later.";
-
-const applyRateLimit = async (request: Request, environmentId: string): Promise<Response | null> => {
-  try {
-    await applyClientRateLimit(environmentId);
-    return null;
-  } catch (error) {
-    if (
-      error instanceof TooManyRequestsError ||
-      (error instanceof Error && error.name === "TooManyRequestsError")
-    ) {
-      return responses.tooManyRequestsResponse(rateLimitMessage, true);
-    }
-
-    const response = getUnexpectedPublicErrorResponse();
-    reportApiError({
-      request,
-      status: response.status,
-      error,
-    });
-    return response;
-  }
-};
-
 export const POST = async (request: Request, context: Context): Promise<Response> => {
   const params = await context.params;
-  const rateLimitResponse = await applyRateLimit(request, params.environmentId);
+  const rateLimitResponse = await applyClientApiRateLimit({ request, environmentId: params.environmentId });
   if (rateLimitResponse) {
     return rateLimitResponse;
   }

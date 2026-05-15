@@ -3,6 +3,7 @@ import { NextRequest } from "next/server";
 import { Mock, beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
+import { TooManyRequestsError } from "@formbricks/types/errors";
 import { AuthenticationMethod } from "@/app/middleware/endpoint-validator";
 import { responses } from "./response";
 
@@ -460,13 +461,13 @@ describe("withV1ApiWrapper", () => {
       response: responses.successResponse({ data: "test" }),
     });
 
-    const req = createMockRequest({ url: "/api/v1/client/env_123/displays" });
+    const req = createMockRequest({ url: "/api/v1/client/ck12345678901234567890123/displays" });
     const { withV1ApiWrapper } = await import("./with-api-logging");
     const wrapped = withV1ApiWrapper({ handler });
     const res = await wrapped(req, undefined);
 
     expect(res.status).toBe(200);
-    expect(applyClientRateLimit).toHaveBeenCalledWith("env_123", undefined);
+    expect(applyClientRateLimit).toHaveBeenCalledWith("ck12345678901234567890123", undefined);
     expect(handler).toHaveBeenCalledWith({
       req,
       props: undefined,
@@ -499,14 +500,48 @@ describe("withV1ApiWrapper", () => {
       response: responses.successResponse({ data: "test" }),
     });
 
-    const req = createMockRequest({ url: "/api/v1/client/env_storage/storage" });
+    const req = createMockRequest({ url: "/api/v1/client/ck12345678901234567890123/storage" });
     const { withV1ApiWrapper } = await import("./with-api-logging");
     const wrapped = withV1ApiWrapper({ handler, customRateLimitConfig });
     const res = await wrapped(req, undefined);
 
     expect(res.status).toBe(200);
-    expect(applyClientRateLimit).toHaveBeenCalledWith("env_storage", customRateLimitConfig);
+    expect(applyClientRateLimit).toHaveBeenCalledWith("ck12345678901234567890123", customRateLimitConfig);
     expect(handler).toHaveBeenCalled();
+  });
+
+  test("rejects invalid client environment IDs before rate limiting", async () => {
+    const { isClientSideApiRoute, isManagementApiRoute, isIntegrationRoute } =
+      await import("@/app/middleware/endpoint-validator");
+    const { authenticateRequest } = await import("@/app/api/v1/auth");
+    const { applyClientRateLimit } = await import("@/modules/core/rate-limit/helpers");
+
+    vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: true, isRateLimited: true });
+    vi.mocked(isManagementApiRoute).mockReturnValue({
+      isManagementApi: false,
+      authenticationMethod: AuthenticationMethod.None,
+    });
+    vi.mocked(isIntegrationRoute).mockReturnValue(false);
+    vi.mocked(authenticateRequest).mockResolvedValue(null);
+    vi.mocked(applyClientRateLimit).mockResolvedValue({ allowed: true });
+
+    const handler = vi.fn().mockResolvedValue({
+      response: responses.successResponse({ data: "test" }),
+    });
+
+    const req = createMockRequest({ url: "/api/v1/client/not-a-cuid/displays" });
+    const { withV1ApiWrapper } = await import("./with-api-logging");
+    const wrapped = withV1ApiWrapper({ handler });
+    const res = await wrapped(req, undefined);
+
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({
+      code: "bad_request",
+      message: "Invalid environment ID format",
+      details: {},
+    });
+    expect(applyClientRateLimit).not.toHaveBeenCalled();
+    expect(handler).not.toHaveBeenCalled();
   });
 
   test("returns authentication error for non-client routes without auth", async () => {
@@ -577,9 +612,9 @@ describe("withV1ApiWrapper", () => {
       authenticationMethod: AuthenticationMethod.ApiKey,
     });
     vi.mocked(isIntegrationRoute).mockReturnValue(false);
-    const rateLimitError = new Error("Rate limit exceeded");
-    rateLimitError.message = "Rate limit exceeded";
-    vi.mocked(applyRateLimit).mockRejectedValue(rateLimitError);
+    vi.mocked(applyRateLimit).mockRejectedValue(
+      new TooManyRequestsError("Maximum number of requests reached. Please try again later.")
+    );
 
     const handler = vi.fn();
     const req = createMockRequest({ url: V1_MANAGEMENT_SURVEYS_URL });
@@ -589,6 +624,55 @@ describe("withV1ApiWrapper", () => {
 
     expect(res.status).toBe(429);
     expect(handler).not.toHaveBeenCalled();
+  });
+
+  test("returns a generic error for unexpected client rate limit failures", async () => {
+    const { applyClientRateLimit } = await import("@/modules/core/rate-limit/helpers");
+    const { isClientSideApiRoute, isManagementApiRoute, isIntegrationRoute } =
+      await import("@/app/middleware/endpoint-validator");
+    const { authenticateRequest } = await import("@/app/api/v1/auth");
+
+    vi.mocked(authenticateRequest).mockResolvedValue(null);
+    vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: true, isRateLimited: true });
+    vi.mocked(isManagementApiRoute).mockReturnValue({
+      isManagementApi: false,
+      authenticationMethod: AuthenticationMethod.None,
+    });
+    vi.mocked(isIntegrationRoute).mockReturnValue(false);
+
+    const underlyingError = new Error("Failed to hash IP");
+    vi.mocked(applyClientRateLimit).mockRejectedValue(underlyingError);
+
+    const handler = vi.fn();
+    const req = createMockRequest({
+      url: "/api/v1/client/ck12345678901234567890123/displays",
+      headers: new Map([["x-request-id", "rate-limit-failure"]]),
+    });
+    const { withV1ApiWrapper } = await import("./with-api-logging");
+    const wrapped = withV1ApiWrapper({ handler });
+    const res = await wrapped(req, undefined);
+
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({
+      code: "internal_server_error",
+      message: "Something went wrong. Please try again.",
+      details: {},
+    });
+    expect(handler).not.toHaveBeenCalled();
+    expect(Sentry.captureException).toHaveBeenCalledWith(
+      underlyingError,
+      expect.objectContaining({
+        tags: expect.objectContaining({
+          correlationId: "rate-limit-failure",
+          path: "/api/v1/client/ck12345678901234567890123/displays",
+        }),
+        contexts: expect.objectContaining({
+          apiRequest: expect.objectContaining({
+            status: 500,
+          }),
+        }),
+      })
+    );
   });
 
   test("skips audit log creation when no action/targetType provided", async () => {
