@@ -2,7 +2,7 @@ import "server-only";
 import { env } from "./env";
 
 const configuredWebappUrl = env.WEBAPP_URL?.trim() ?? "";
-const WEBAPP_URL = configuredWebappUrl !== "" ? configuredWebappUrl : "http://localhost:3000";
+const WEBAPP_URL = configuredWebappUrl === "" ? "http://localhost:3000" : configuredWebappUrl;
 
 /**
  * Returns the public domain URL
