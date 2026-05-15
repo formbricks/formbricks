@@ -608,9 +608,9 @@
         },
         "mode": {
           "formbricks_cx": "Formbricks CX",
-          "formbricks_cx_description": "Рабочие процессы для работы с клиентским опытом: сбор отзывов, отчётность и понимание потребностей клиентов. Это можно изменить позже.",
+          "formbricks_cx_description": "Опросы и отчёты для понимания потребностей ваших клиентов.",
           "formbricks_surveys": "Formbricks Surveys",
-          "formbricks_surveys_description": "Универсальная платформа для опросов в вебе, приложениях и по электронной почте. Это можно изменить позже.",
+          "formbricks_surveys_description": "Универсальная платформа для опросов в вебе, приложениях и email.",
           "what_are_you_here_for": "Что ты хочешь настроить в первую очередь?"
         },
         "settings": {

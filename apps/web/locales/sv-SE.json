@@ -608,9 +608,9 @@
         },
         "mode": {
           "formbricks_cx": "Formbricks CX",
-          "formbricks_cx_description": "Arbetsflöden för kundupplevelse för att samla in feedback, rapportera och förstå vad kunderna behöver. Du kan ändra detta senare.",
+          "formbricks_cx_description": "Undersökningar och rapporter för att förstå vad dina kunder behöver.",
           "formbricks_surveys": "Formbricks Surveys",
-          "formbricks_surveys_description": "Mångsidig enkätplattform för webb-, app- och e-postenkäter. Du kan ändra detta senare.",
+          "formbricks_surveys_description": "Mångsidig undersökningsplattform för webb-, app- och e-postundersökningar.",
           "what_are_you_here_for": "Vad vill du sätta upp först?"
         },
         "settings": {

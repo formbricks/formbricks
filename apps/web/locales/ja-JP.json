@@ -608,9 +608,9 @@
         },
         "mode": {
           "formbricks_cx": "Formbricks CX",
-          "formbricks_cx_description": "フィードバックの収集、レポート作成、顧客ニーズの理解のためのカスタマーエクスペリエンスワークフロー。後で変更できます。",
+          "formbricks_cx_description": "顧客ニーズを理解するためのアンケートとレポート。",
           "formbricks_surveys": "Formbricks フォーム",
-          "formbricks_surveys_description": "ウェブ、アプリ、メールアンケートに対応した多目的アンケートプラットフォーム。後で変更できます。",
+          "formbricks_surveys_description": "Web、アプリ、メールアンケートに対応した多目的アンケートプラットフォーム。",
           "what_are_you_here_for": "最初に設定したいのはどちらですか？"
         },
         "settings": {

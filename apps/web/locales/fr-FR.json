@@ -608,9 +608,9 @@
         },
         "mode": {
           "formbricks_cx": "Formbricks CX",
-          "formbricks_cx_description": "Flux de travail d'expérience client pour collecter des retours, générer des rapports et comprendre les besoins de vos clients. Tu pourras modifier cela plus tard.",
+          "formbricks_cx_description": "Sondages et rapports pour comprendre les besoins de vos clients.",
           "formbricks_surveys": "Sondages Formbricks",
-          "formbricks_surveys_description": "Plateforme de sondages polyvalente pour les enquêtes web, application et email. Tu pourras modifier cela plus tard.",
+          "formbricks_surveys_description": "Plateforme de sondage polyvalente pour les enquêtes web, application et email.",
           "what_are_you_here_for": "Que souhaites-tu configurer en premier ?"
         },
         "settings": {

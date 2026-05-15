@@ -608,9 +608,9 @@
         },
         "mode": {
           "formbricks_cx": "Formbricks CX",
-          "formbricks_cx_description": "客戶體驗工作流程，用於收集回饋、報告並了解客戶需求。你可以稍後變更此設定。",
+          "formbricks_cx_description": "透過調查和報告了解客戶需求。",
           "formbricks_surveys": "Formbricks 問卷",
-          "formbricks_surveys_description": "多功能問卷平台，支援網頁、應用程式和電子郵件問卷。你可以稍後變更此設定。",
+          "formbricks_surveys_description": "適用於網頁、應用程式和電子郵件調查的多功能調查平台。",
           "what_are_you_here_for": "你想先設定什麼？"
         },
         "settings": {

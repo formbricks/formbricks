@@ -608,9 +608,9 @@
         },
         "mode": {
           "formbricks_cx": "Formbricks CX",
-          "formbricks_cx_description": "Ügyfélélmény-munkafolyamatok visszajelzések gyűjtésére, jelentésekre és az ügyfelek igényeinek megértésére. Ezt később megváltoztathatja.",
+          "formbricks_cx_description": "Felmérések és riportok az ügyfelei igényeinek megértéséhez.",
           "formbricks_surveys": "Formbricks kérdőívek",
-          "formbricks_surveys_description": "Többcélú felmérési platform webes, alkalmazásbeli és e-mailes kérdőívekhez. Ezt később megváltoztathatja.",
+          "formbricks_surveys_description": "Többcélú felmérési platform webes, alkalmazásbeli és e-mailes kérdőívekhez.",
           "what_are_you_here_for": "Mit szeretne először beállítani?"
         },
         "settings": {

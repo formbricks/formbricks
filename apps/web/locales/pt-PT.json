@@ -608,9 +608,9 @@
         },
         "mode": {
           "formbricks_cx": "Formbricks CX",
-          "formbricks_cx_description": "Fluxos de trabalho de experiência do cliente para recolher feedback, relatórios e compreender o que os clientes precisam. Podes alterar isto mais tarde.",
+          "formbricks_cx_description": "Questionários e relatórios para compreender o que os teus clientes precisam.",
           "formbricks_surveys": "Pesquisas Formbricks",
-          "formbricks_surveys_description": "Plataforma de inquéritos multiusos para inquéritos web, app e email. Podes alterar isto mais tarde.",
+          "formbricks_surveys_description": "Plataforma de questionários multiuso para inquéritos web, aplicação e email.",
           "what_are_you_here_for": "O que gostarias de configurar primeiro?"
         },
         "settings": {

@@ -608,9 +608,9 @@
         },
         "mode": {
           "formbricks_cx": "Formbricks CX",
-          "formbricks_cx_description": "Flujos de trabajo de experiencia del cliente para recopilar comentarios, generar informes y entender qué necesitan tus clientes. Puedes cambiar esto más adelante.",
+          "formbricks_cx_description": "Encuestas e informes para entender qué necesitan tus clientes.",
           "formbricks_surveys": "Formbricks Surveys",
-          "formbricks_surveys_description": "Plataforma de encuestas multipropósito para encuestas web, aplicaciones y correo electrónico. Puedes cambiar esto más adelante.",
+          "formbricks_surveys_description": "Plataforma de encuestas multifuncional para encuestas web, de aplicación y por correo electrónico.",
           "what_are_you_here_for": "¿Qué te gustaría configurar primero?"
         },
         "settings": {

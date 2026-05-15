@@ -608,9 +608,9 @@
         },
         "mode": {
           "formbricks_cx": "Formbricks CX",
-          "formbricks_cx_description": "Fluxuri de lucru pentru experiența clienților, pentru colectarea feedback-ului, raportare și înțelegerea nevoilor clienților. Poți schimba asta mai târziu.",
+          "formbricks_cx_description": "Sondaje și rapoarte pentru a înțelege ce au nevoie clienții tăi.",
           "formbricks_surveys": "Chestionare Formbricks",
-          "formbricks_surveys_description": "Platformă de sondaje multifuncțională pentru sondaje web, aplicații și email. Poți schimba asta mai târziu.",
+          "formbricks_surveys_description": "Platformă de sondaje multi-scop pentru sondaje web, aplicații și email.",
           "what_are_you_here_for": "Ce ai dori să configurezi mai întâi?"
         },
         "settings": {
