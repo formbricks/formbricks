@@ -118,6 +118,7 @@
                   "xm-and-surveys/surveys/website-app-surveys/workspace-id-migration",
                   "xm-and-surveys/surveys/website-app-surveys/framework-guides",
                   "xm-and-surveys/surveys/website-app-surveys/google-tag-manager",
+                  "xm-and-surveys/surveys/website-app-surveys/custom-css",
                   {
                     "group": "Features",
                     "icon": "wrench",
