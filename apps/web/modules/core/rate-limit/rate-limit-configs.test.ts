@@ -59,6 +59,7 @@ describe("rateLimitConfigs", () => {
       expect(rateLimitConfigs).toHaveProperty("auth");
       expect(rateLimitConfigs).toHaveProperty("api");
       expect(rateLimitConfigs).toHaveProperty("actions");
+      expect(rateLimitConfigs).toHaveProperty("storage");
     });
 
     test("should have all auth configurations", () => {
@@ -81,6 +82,11 @@ describe("rateLimitConfigs", () => {
         "licenseRecheck",
       ]);
     });
+
+    test("should have all storage configurations", () => {
+      const storageConfigs = Object.keys(rateLimitConfigs.storage);
+      expect(storageConfigs).toEqual(["upload", "uploadPerEnvironment", "delete"]);
+    });
   });
 
   describe("Zod Validation", () => {
@@ -89,6 +95,7 @@ describe("rateLimitConfigs", () => {
         ...Object.values(rateLimitConfigs.auth),
         ...Object.values(rateLimitConfigs.api),
         ...Object.values(rateLimitConfigs.actions),
+        ...Object.values(rateLimitConfigs.storage),
       ];
 
       for (const config of allConfigs) {
@@ -105,6 +112,7 @@ describe("rateLimitConfigs", () => {
       Object.values(rateLimitConfigs.auth).forEach((config) => allNamespaces.push(config.namespace));
       Object.values(rateLimitConfigs.api).forEach((config) => allNamespaces.push(config.namespace));
       Object.values(rateLimitConfigs.actions).forEach((config) => allNamespaces.push(config.namespace));
+      Object.values(rateLimitConfigs.storage).forEach((config) => allNamespaces.push(config.namespace));
 
       const uniqueNamespaces = new Set(allNamespaces);
       expect(uniqueNamespaces.size).toBe(allNamespaces.length);
@@ -143,6 +151,7 @@ describe("rateLimitConfigs", () => {
         { config: rateLimitConfigs.actions.emailUpdate, identifier: "user-profile" },
         { config: rateLimitConfigs.actions.accountDeletion, identifier: "user-account-delete" },
         { config: rateLimitConfigs.storage.upload, identifier: "storage-upload" },
+        { config: rateLimitConfigs.storage.uploadPerEnvironment, identifier: "storage-upload-env" },
         { config: rateLimitConfigs.storage.delete, identifier: "storage-delete" },
       ];
 
@@ -170,6 +179,15 @@ describe("rateLimitConfigs", () => {
       expect(config.interval).toBe(60); // 1 minute
       expect(config.allowedPerInterval).toBe(5); // 5 requests per minute
       expect(config.namespace).toBe("storage:upload");
+    });
+
+    test("should properly configure storage upload per environment rate limit", async () => {
+      const config = rateLimitConfigs.storage.uploadPerEnvironment;
+
+      // Verify configuration values
+      expect(config.interval).toBe(60); // 1 minute
+      expect(config.allowedPerInterval).toBe(100); // 100 requests per minute
+      expect(config.namespace).toBe("storage:upload:environment");
     });
 
     test("should properly configure storage delete rate limit", async () => {

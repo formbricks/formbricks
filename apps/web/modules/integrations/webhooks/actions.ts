@@ -43,7 +43,7 @@ export const createWebhookAction = authenticatedActionClient.inputSchema(ZCreate
         },
         {
           type: "projectTeam",
-          minPermission: "read",
+          minPermission: "readWrite",
           projectId,
         },
       ],
