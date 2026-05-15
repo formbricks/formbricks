@@ -30,6 +30,7 @@ interface SettingsViewProps {
   isQuotasAllowed: boolean;
   quotas: TSurveyQuota[];
   locale: TUserLocale;
+  appSetupCompleted: boolean;
 }
 
 export const SettingsView = ({
@@ -47,12 +48,17 @@ export const SettingsView = ({
   isFormbricksCloud,
   quotas,
   locale,
+  appSetupCompleted,
 }: SettingsViewProps) => {
   const isAppSurvey = localSurvey.type === "app";
 
   return (
     <div className="mt-12 space-y-3 p-5">
-      <HowToSendCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />
+      <HowToSendCard
+        localSurvey={localSurvey}
+        setLocalSurvey={setLocalSurvey}
+        appSetupCompleted={appSetupCompleted}
+      />
 
       {localSurvey.type === "app" ? (
         <div>
