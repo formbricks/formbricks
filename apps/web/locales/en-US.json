@@ -3835,7 +3835,6 @@
       "source_connect_csv_description": "Import feedback records from CSV files",
       "source_connect_feedback_record_mcp_description": "Send feedback records through the MCP integration.",
       "source_connect_formbricks_description": "Send feedback records from your Formbricks surveys",
-      "source_fields": "Source Fields",
       "source_id": "Source ID",
       "source_name": "Source Name",
       "source_type": "Source Type",

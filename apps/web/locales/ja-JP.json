@@ -3835,7 +3835,6 @@
       "source_connect_csv_description": "CSVファイルからフィードバック記録をインポート",
       "source_connect_feedback_record_mcp_description": "MCP統合を通じてフィードバックレコードを送信します。",
       "source_connect_formbricks_description": "Formbricksアンケートからフィードバック記録を送信",
-      "source_fields": "ソースフィールド",
       "source_id": "ソースID",
       "source_name": "ソース名",
       "source_type": "ソースタイプ",

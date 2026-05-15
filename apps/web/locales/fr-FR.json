@@ -3835,7 +3835,6 @@
       "source_connect_csv_description": "Importer des retours clients à partir de fichiers CSV",
       "source_connect_feedback_record_mcp_description": "Envoyer des enregistrements de feedback via l'intégration MCP.",
       "source_connect_formbricks_description": "Envoyer des retours clients depuis vos sondages Formbricks",
-      "source_fields": "Champs source",
       "source_id": "Identifiant de la source",
       "source_name": "Nom de la source",
       "source_type": "Type de source",

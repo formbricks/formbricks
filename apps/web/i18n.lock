@@ -3675,7 +3675,6 @@ checksums:
     workspace/unify/source_connect_csv_description: 8db7e23acbfa89920694d61ac9585b44
     workspace/unify/source_connect_feedback_record_mcp_description: a3f56e2a6e403f4021e83f1b1a466d95
     workspace/unify/source_connect_formbricks_description: 2d7aa0bb9b9f9251184c0e60ee409a8a
-    workspace/unify/source_fields: 1bae074990e64cbfd820a0b6462397be
     workspace/unify/source_id: 134a9a7d473508c5623ac724a5ba4be9
     workspace/unify/source_name: 157675beca12efcd8ec512c5256b1a61
     workspace/unify/source_type: d1ff69af76c687eb189db72030717570

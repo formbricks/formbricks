@@ -3835,7 +3835,6 @@
       "source_connect_csv_description": "Importa registos de feedback de ficheiros CSV",
       "source_connect_feedback_record_mcp_description": "Envia registos de feedback através da integração MCP.",
       "source_connect_formbricks_description": "Envia registos de feedback dos teus inquéritos Formbricks",
-      "source_fields": "Campos da fonte",
       "source_id": "ID da fonte",
       "source_name": "Nome da fonte",
       "source_type": "Tipo de fonte",

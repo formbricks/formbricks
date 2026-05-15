@@ -3835,7 +3835,6 @@
       "source_connect_csv_description": "Importera feedbackposter från CSV-filer",
       "source_connect_feedback_record_mcp_description": "Send feedback records through the MCP integration.",
       "source_connect_formbricks_description": "Skicka feedbackposter från dina Formbricks-enkäter",
-      "source_fields": "Källfält",
       "source_id": "Käll-ID",
       "source_name": "Källnamn",
       "source_type": "Källtyp",

@@ -3835,7 +3835,6 @@
       "source_connect_csv_description": "Importa registros de comentarios desde archivos CSV",
       "source_connect_feedback_record_mcp_description": "Envía registros de feedback a través de la integración MCP.",
       "source_connect_formbricks_description": "Envía registros de comentarios desde tus encuestas de Formbricks",
-      "source_fields": "Campos de origen",
       "source_id": "ID de fuente",
       "source_name": "Nombre de origen",
       "source_type": "Tipo de fuente",

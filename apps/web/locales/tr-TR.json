@@ -3835,7 +3835,6 @@
       "source_connect_csv_description": "CSV dosyalarından geri bildirim kayıtlarını içe aktar",
       "source_connect_feedback_record_mcp_description": "Send feedback records through the MCP integration.",
       "source_connect_formbricks_description": "Formbricks anketlerinizden geri bildirim kayıtlarını gönder",
-      "source_fields": "Kaynak Alanları",
       "source_id": "Kaynak kimliği",
       "source_name": "Kaynak Adı",
       "source_type": "Kaynak Türü",

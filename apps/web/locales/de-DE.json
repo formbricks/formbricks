@@ -3835,7 +3835,6 @@
       "source_connect_csv_description": "Importiere Feedback-Einträge aus CSV-Dateien",
       "source_connect_feedback_record_mcp_description": "Sende Feedback-Datensätze über die MCP-Integration.",
       "source_connect_formbricks_description": "Sende Feedback-Einträge aus deinen Formbricks-Umfragen",
-      "source_fields": "Quellfelder",
       "source_id": "Quell-ID",
       "source_name": "Quellenname",
       "source_type": "Quellentyp",

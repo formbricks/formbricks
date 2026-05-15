@@ -3835,7 +3835,6 @@
       "source_connect_csv_description": "Visszajelzési bejegyzések importálása CSV fájlokból",
       "source_connect_feedback_record_mcp_description": "Visszajelzési rekordok küldése az MCP integráción keresztül.",
       "source_connect_formbricks_description": "Visszajelzési bejegyzések küldése a Formbricks felméréseiből",
-      "source_fields": "Forrásmezők",
       "source_id": "Forrásazonosító",
       "source_name": "Forrásnév",
       "source_type": "Forrás típus",

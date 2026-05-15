@@ -3835,7 +3835,6 @@
       "source_connect_csv_description": "Importeer feedbackgegevens uit CSV-bestanden",
       "source_connect_feedback_record_mcp_description": "Verstuur feedbackrecords via de MCP-integratie.",
       "source_connect_formbricks_description": "Stuur feedbackgegevens van je Formbricks-enquêtes",
-      "source_fields": "Bronvelden",
       "source_id": "Bron-ID",
       "source_name": "Bronnaam",
       "source_type": "Brontype",

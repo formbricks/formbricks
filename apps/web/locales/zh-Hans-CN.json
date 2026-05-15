@@ -3835,7 +3835,6 @@
       "source_connect_csv_description": "从 CSV 文件导入反馈记录",
       "source_connect_feedback_record_mcp_description": "Send feedback records through the MCP integration.",
       "source_connect_formbricks_description": "从您的 Formbricks 调查发送反馈记录",
-      "source_fields": "来源字段",
       "source_id": "源ID",
       "source_name": "来源名称",
       "source_type": "来源类型",

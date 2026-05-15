@@ -3835,7 +3835,6 @@
       "source_connect_csv_description": "Importă înregistrări de feedback din fișiere CSV",
       "source_connect_feedback_record_mcp_description": "Trimite înregistrări de feedback prin integrarea MCP.",
       "source_connect_formbricks_description": "Trimite înregistrări de feedback din sondajele tale Formbricks",
-      "source_fields": "Câmpuri sursă",
       "source_id": "ID sursă",
       "source_name": "Nume sursă",
       "source_type": "Tip sursă",

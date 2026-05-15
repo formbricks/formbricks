@@ -3835,7 +3835,6 @@
       "source_connect_csv_description": "Импортируйте записи с отзывами из CSV-файлов",
       "source_connect_feedback_record_mcp_description": "Отправляйте записи обратной связи через интеграцию MCP.",
       "source_connect_formbricks_description": "Отправляйте записи с отзывами из ваших опросов Formbricks",
-      "source_fields": "Поля источника",
       "source_id": "Идентификатор источника",
       "source_name": "Имя источника",
       "source_type": "Тип источника",
