@@ -1,31 +1,31 @@
 import { Page } from "@playwright/test";
 import { UsersFixture } from "../fixtures/users";
 
-type EnvironmentSurveyLocation = {
-  environmentId: string;
+type WorkspaceSurveyLocation = {
+  workspaceId: string;
   isSurveyList: boolean;
 };
 
-const getEnvironmentSurveyLocation = (url: URL): EnvironmentSurveyLocation | null => {
+const getWorkspaceSurveyLocation = (url: URL): WorkspaceSurveyLocation | null => {
   const segments = url.pathname.split("/").filter(Boolean);
 
   if (segments.length !== 2 && segments.length !== 3) {
     return null;
   }
 
-  if (segments[0] !== "environments") {
+  if (segments[0] !== "workspaces") {
     return null;
   }
 
-  const environmentId = segments[1];
+  const workspaceId = segments[1];
 
-  if (!environmentId) {
+  if (!workspaceId) {
     return null;
   }
 
   if (segments.length === 2) {
     return {
-      environmentId,
+      workspaceId,
       isSurveyList: false,
     };
   }
@@ -35,32 +35,32 @@ const getEnvironmentSurveyLocation = (url: URL): EnvironmentSurveyLocation | nul
   }
 
   return {
-    environmentId,
+    workspaceId,
     isSurveyList: true,
   };
 };
 
 export async function gotoSurveyList(page: Page): Promise<string> {
-  await page.waitForURL((url) => getEnvironmentSurveyLocation(url) !== null, { timeout: 30000 });
+  await page.waitForURL((url) => getWorkspaceSurveyLocation(url) !== null, { timeout: 30000 });
 
   const currentUrl = new URL(page.url());
-  const location = getEnvironmentSurveyLocation(currentUrl);
+  const location = getWorkspaceSurveyLocation(currentUrl);
 
   if (!location) {
-    throw new Error(`Unable to determine environmentId from URL: ${page.url()}`);
+    throw new Error(`Unable to determine workspaceId from URL: ${page.url()}`);
   }
 
-  const { environmentId, isSurveyList } = location;
+  const { workspaceId, isSurveyList } = location;
 
   if (!isSurveyList) {
-    await page.goto(`/environments/${environmentId}/surveys`, { waitUntil: "domcontentloaded" });
+    await page.goto(`/workspaces/${workspaceId}/surveys`, { waitUntil: "domcontentloaded" });
   }
 
-  await page.waitForURL((url) => getEnvironmentSurveyLocation(url)?.isSurveyList === true, {
+  await page.waitForURL((url) => getWorkspaceSurveyLocation(url)?.isSurveyList === true, {
     timeout: 30000,
   });
 
-  return environmentId;
+  return workspaceId;
 }
 
 export async function loginAndGetApiKey(page: Page, users: UsersFixture) {

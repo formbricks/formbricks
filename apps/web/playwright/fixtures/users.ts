@@ -35,6 +35,8 @@ export const createUserFixture = (
     login: async () => {
       await login(user, page);
     },
+    id: user.id,
+    organizationId: user.memberships[0]?.organizationId,
     workspaceId: ids?.workspaceId,
   };
 };
