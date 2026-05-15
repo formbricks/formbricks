@@ -98,15 +98,18 @@ const handleRateLimiting = async (
     }
 
     if (routeType === ApiV1RouteTypeEnum.Client) {
-      const environmentId = getClientEnvironmentIdFromPathname(pathname);
-      if (!environmentId) {
+      const environmentIdFromPath = getClientEnvironmentIdFromPathname(pathname);
+      if (!environmentIdFromPath) {
         logger.error({ pathname }, "Unable to determine client API environment ID for rate limiting");
         return responses.badRequestResponse("Environment ID is required", undefined, true);
       }
 
-      const validEnvironmentId = validateClientEnvironmentId(environmentId);
+      const validEnvironmentId = validateClientEnvironmentId(environmentIdFromPath);
       if (!validEnvironmentId) {
-        logger.warn({ pathname, environmentId }, "Invalid client API environment ID for rate limiting");
+        logger.warn(
+          { pathname, environmentId: environmentIdFromPath },
+          "Invalid client API environment ID for rate limiting"
+        );
         return getInvalidClientEnvironmentIdResponse();
       }
 
