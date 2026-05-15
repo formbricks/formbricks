@@ -29,9 +29,7 @@ export const BrandingSettingsCard = async ({
     },
     {
       text: t("common.learn_more"),
-      href: IS_FORMBRICKS_CLOUD
-        ? `${workspaceBasePath}/settings/organization/billing`
-        : "https://formbricks.com/learn-more-self-hosting-license",
+      href: "https://formbricks.com/docs/self-hosting/advanced/enterprise-features/hide-powered-by-formbricks",
     },
   ];
 
