@@ -542,6 +542,13 @@ describe("withV1ApiWrapper", () => {
     });
     expect(applyClientRateLimit).not.toHaveBeenCalled();
     expect(handler).not.toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalledWith(
+      {
+        pathname: "/api/v1/client/not-a-cuid/displays",
+        environmentId: "not-a-cuid",
+      },
+      "Invalid client API environment ID for rate limiting"
+    );
   });
 
   test("returns authentication error for non-client routes without auth", async () => {
