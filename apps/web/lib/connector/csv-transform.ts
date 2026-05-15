@@ -1,11 +1,27 @@
-import { randomUUID } from "crypto";
-import { TConnectorFieldMapping, THubTargetField } from "@formbricks/types/connector";
+import {
+  TConnectorFieldMapping,
+  THubFieldType,
+  THubTargetField,
+  ZHubFieldType,
+} from "@formbricks/types/connector";
 import { FeedbackRecordCreateParams } from "@/modules/hub";
+import { routeResponseValueTarget } from "./utils";
 
 const NUMERIC_FIELDS = new Set<THubTargetField>(["value_number"]);
 const BOOLEAN_FIELDS = new Set<THubTargetField>(["value_boolean"]);
 const TIMESTAMP_FIELDS = new Set<THubTargetField>(["collected_at", "value_date"]);
 const JSON_FIELDS = new Set<THubTargetField>(["metadata"]);
+const ISO_DATE_OR_TIMESTAMP_REGEX =
+  /^(\d{4})-(\d{2})-(\d{2})(?:T(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d{1,9})?)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d))?$/;
+
+const isValidIsoDateOrTimestamp = (value: string): boolean => {
+  const match = ISO_DATE_OR_TIMESTAMP_REGEX.exec(value);
+  if (!match) return false;
+
+  const [, year, month, day] = match.map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
+};
 
 const coerceValue = (value: string, targetField: THubTargetField): string | number | boolean | undefined => {
   const trimmed = value.trim();
@@ -24,6 +40,7 @@ const coerceValue = (value: string, targetField: THubTargetField): string | numb
   }
 
   if (TIMESTAMP_FIELDS.has(targetField)) {
+    if (!isValidIsoDateOrTimestamp(trimmed)) return undefined;
     const date = new Date(trimmed);
     return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
   }
@@ -33,28 +50,40 @@ const coerceValue = (value: string, targetField: THubTargetField): string | numb
 
 const resolveValue = (
   row: Record<string, string>,
-  mapping: TConnectorFieldMapping
+  mapping: TConnectorFieldMapping,
+  effectiveTargetFieldId: THubTargetField
 ): string | number | boolean | undefined => {
   if (mapping.staticValue) {
-    if (mapping.staticValue === "$now" && TIMESTAMP_FIELDS.has(mapping.targetFieldId)) {
+    if (mapping.staticValue === "$now" && TIMESTAMP_FIELDS.has(effectiveTargetFieldId)) {
       return new Date().toISOString();
     }
-    return coerceValue(mapping.staticValue, mapping.targetFieldId);
+    return coerceValue(mapping.staticValue, effectiveTargetFieldId);
   }
 
   const rawValue = row[mapping.sourceFieldId];
   if (rawValue === undefined || rawValue === null) return undefined;
 
-  return coerceValue(rawValue, mapping.targetFieldId);
+  return coerceValue(rawValue, effectiveTargetFieldId);
+};
+
+const resolveFieldTypeForRow = (
+  row: Record<string, string>,
+  mappings: TConnectorFieldMapping[]
+): THubFieldType | null => {
+  const mapping = mappings.find((m) => m.targetFieldId === "field_type");
+  if (!mapping) return null;
+
+  const raw = mapping.staticValue ?? row[mapping.sourceFieldId];
+  if (!raw) return null;
+
+  const parsed = ZHubFieldType.safeParse(raw.trim());
+  return parsed.success ? parsed.data : null;
 };
 
 /**
  * Transform a single CSV row into a FeedbackRecord using field mappings.
  *
- * Returns null if any of source_type, field_id, field_type, tenant_id are missing,
- * or if submission_id is mapped but resolves empty for this row (would break
- * idempotency on re-import). Falls back to a random UUID for submission_id only
- * when no mapping for it exists.
+ * Returns null if field_id, field_type, tenant_id, or submission_id are missing.
  */
 export const transformCsvRowToFeedbackRecord = (
   row: Record<string, string>,
@@ -63,18 +92,37 @@ export const transformCsvRowToFeedbackRecord = (
 ): FeedbackRecordCreateParams | null => {
   const record: Record<string, string | number | boolean | Record<string, unknown> | undefined> = {};
 
-  for (const mapping of mappings) {
-    const value = resolveValue(row, mapping);
-    if (value === undefined) continue;
+  const safeMappings = mappings.filter(
+    (m) => m.targetFieldId !== "tenant_id" && m.targetFieldId !== "source_type"
+  );
+  record.source_type = "csv";
 
-    if (JSON_FIELDS.has(mapping.targetFieldId)) {
+  const fieldType = resolveFieldTypeForRow(row, safeMappings);
+  if (!fieldType) return null;
+
+  for (const mapping of safeMappings) {
+    let effectiveTargetFieldId: THubTargetField;
+    if (mapping.targetFieldId === "response_value") {
       try {
-        record[mapping.targetFieldId] = typeof value === "string" ? JSON.parse(value) : value;
+        effectiveTargetFieldId = routeResponseValueTarget(fieldType);
       } catch {
-        record[mapping.targetFieldId] = { raw: value };
+        return null;
       }
     } else {
-      record[mapping.targetFieldId] = value;
+      effectiveTargetFieldId = mapping.targetFieldId;
+    }
+
+    const value = resolveValue(row, mapping, effectiveTargetFieldId);
+    if (value === undefined) continue;
+
+    if (JSON_FIELDS.has(effectiveTargetFieldId)) {
+      try {
+        record[effectiveTargetFieldId] = typeof value === "string" ? JSON.parse(value) : value;
+      } catch {
+        record[effectiveTargetFieldId] = { raw: value };
+      }
+    } else {
+      record[effectiveTargetFieldId] = value;
     }
   }
 
@@ -90,12 +138,8 @@ export const transformCsvRowToFeedbackRecord = (
     return null;
   }
 
-  if (!("submission_id" in record)) {
-    const submissionMapped = mappings.some((m) => m.targetFieldId === "submission_id");
-    if (submissionMapped) {
-      return null;
-    }
-    record.submission_id = randomUUID();
+  if (!record.submission_id) {
+    return null;
   }
 
   return record as unknown as FeedbackRecordCreateParams;

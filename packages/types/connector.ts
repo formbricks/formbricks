@@ -23,7 +23,9 @@ export const ZHubFieldType = z.enum([
 ]);
 export type THubFieldType = z.infer<typeof ZHubFieldType>;
 
-// Hub target fields for mapping
+// Hub target fields for mapping.
+// `response_value` is a CSV-only synthetic id stored in ConnectorFieldMapping; csv-transform.ts
+// resolves it to the appropriate value_* target before any Hub write — the Hub never sees it.
 export const ZHubTargetField = z.enum([
   "collected_at",
   "source_type",
@@ -43,6 +45,7 @@ export const ZHubTargetField = z.enum([
   "language",
   "user_id",
   "submission_id",
+  "response_value",
 ]);
 export type THubTargetField = z.infer<typeof ZHubTargetField>;
 
