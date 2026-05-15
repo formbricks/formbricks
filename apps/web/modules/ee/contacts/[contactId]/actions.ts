@@ -60,10 +60,10 @@ export const generatePersonalSurveyLinkAction = authenticatedActionClient
       "personal_link_created",
       {
         organization_id: organizationId,
-        workspace_id: projectId,
+        workspace_id: workspaceId,
         survey_id: parsedInput.surveyId,
       },
-      { organizationId, workspaceId: projectId }
+      { organizationId, workspaceId: workspaceId }
     );
 
     return {

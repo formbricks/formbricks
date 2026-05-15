@@ -104,7 +104,6 @@ export const ShareSurveyModal = ({
         description: t("workspace.surveys.share.personal_links.description"),
         componentType: PersonalLinksTab,
         componentProps: {
-          workspaceId: survey.workspaceId,
           surveyId: survey.id,
           segments,
           isContactsEnabled,

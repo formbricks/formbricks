@@ -29,8 +29,8 @@ const WorkspaceLayout = async (props: {
         <PostHogGroupIdentify
           organizationId={layoutData.organization.id}
           organizationName={layoutData.organization.name}
-          workspaceId={layoutData.project.id}
-          workspaceName={layoutData.project.name}
+          workspaceId={layoutData.workspace.id}
+          workspaceName={layoutData.workspace.name}
         />
       )}
       <WorkspaceContextWrapper workspace={layoutData.workspace} organization={layoutData.organization}>

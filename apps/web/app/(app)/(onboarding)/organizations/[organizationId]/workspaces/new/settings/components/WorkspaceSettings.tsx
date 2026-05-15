@@ -18,6 +18,7 @@ import { createWorkspaceAction } from "@/app/(app)/workspaces/[workspaceId]/acti
 import { previewSurvey } from "@/app/lib/templates";
 import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@/lib/localStorage";
 import { buildStylingFromBrandColor } from "@/lib/styling/constants";
+import { toJsWorkspaceStateSurvey } from "@/lib/survey/client-utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { CreateTeamModal } from "@/modules/ee/teams/team-list/components/create-team-modal";
 import { TOrganizationTeam } from "@/modules/ee/teams/workspace-teams/types/team";
@@ -237,7 +238,7 @@ export const WorkspaceSettings = ({
         <SurveyInline
           appUrl={publicDomain}
           isPreviewMode={true}
-          survey={previewSurvey(workspaceName || t("common.my_product"), t)}
+          survey={toJsWorkspaceStateSurvey(previewSurvey(workspaceName || t("common.my_product"), t))}
           styling={previewStyling}
           isBrandingEnabled={false}
           languageCode="default"

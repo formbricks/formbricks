@@ -42,7 +42,7 @@ export const getResponsesDownloadUrlAction = authenticatedActionClient
       ],
     });
 
-    const projectId = await getProjectIdFromSurveyId(parsedInput.surveyId);
+    const workspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
     const result = await getResponseDownloadFile(
       parsedInput.surveyId,
       parsedInput.format,
@@ -57,9 +57,9 @@ export const getResponsesDownloadUrlAction = authenticatedActionClient
         format: parsedInput.format,
         filter_applied: Object.keys(parsedInput.filterCriteria ?? {}).length > 0,
         organization_id: organizationId,
-        workspace_id: projectId,
+        workspace_id: workspaceId,
       },
-      { organizationId, workspaceId: projectId }
+      { organizationId, workspaceId }
     );
 
     return result;

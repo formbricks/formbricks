@@ -117,9 +117,8 @@ export const createContactsFromCSVAction = authenticatedActionClient
       });
 
       ctx.auditLoggingCtx.organizationId = organizationId;
-      const projectId = await getProjectIdFromEnvironmentId(parsedInput.environmentId);
       const existingContactCount = await prisma.contact.count({
-        where: { environmentId: parsedInput.environmentId },
+        where: { workspaceId },
       });
       const result = await createContactsFromCSV(
         parsedInput.csvData,
@@ -138,13 +137,12 @@ export const createContactsFromCSVAction = authenticatedActionClient
           "contact_created",
           {
             organization_id: organizationId,
-            workspace_id: projectId,
-            environment_id: parsedInput.environmentId,
+            workspace_id: workspaceId,
             existing_contact_count: existingContactCount,
             creation_method: "import",
             import_count: result.contacts.length,
           },
-          { organizationId, workspaceId: projectId }
+          { organizationId, workspaceId }
         );
       }
 

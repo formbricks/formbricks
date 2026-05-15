@@ -9,9 +9,9 @@ type TContactAttributeResult = {
   value: string;
 };
 
-export const getContact = reactCache(async (contactId: string, environmentId: string) => {
+export const getContact = reactCache(async (contactId: string, workspaceId: string) => {
   const contact = await prisma.contact.findUnique({
-    where: { id: contactId, environmentId },
+    where: { id: contactId, workspaceId },
     select: {
       id: true,
       attributes: {

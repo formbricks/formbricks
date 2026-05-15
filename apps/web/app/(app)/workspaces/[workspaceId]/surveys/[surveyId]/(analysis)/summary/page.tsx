@@ -69,7 +69,6 @@ const SurveyPage = async (props: { params: Promise<{ workspaceId: string; survey
         pageTitle={survey.name}
         cta={
           <SurveyAnalysisCTA
-            survey={survey}
             isReadOnly={isReadOnly}
             user={user}
             publicDomain={publicDomain}

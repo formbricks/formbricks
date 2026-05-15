@@ -57,10 +57,10 @@ export const createLanguageAction = authenticatedActionClient.inputSchema(ZCreat
       "workspace_language_created",
       {
         organization_id: organizationId,
-        workspace_id: parsedInput.projectId,
+        workspace_id: parsedInput.workspaceId,
         language_code: result.code,
       },
-      { organizationId, workspaceId: parsedInput.projectId }
+      { organizationId, workspaceId: parsedInput.workspaceId }
     );
 
     return result;

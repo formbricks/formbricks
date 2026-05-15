@@ -68,11 +68,10 @@ export const createContactAttributeKeyAction = authenticatedActionClient
         "contact_attribute_key_created",
         {
           organization_id: organizationId,
-          workspace_id: projectId,
-          environment_id: parsedInput.environmentId,
+          workspace_id: workspaceId,
           key: parsedInput.key,
         },
-        { organizationId, workspaceId: projectId }
+        { organizationId, workspaceId }
       );
 
       return contactAttributeKey;
