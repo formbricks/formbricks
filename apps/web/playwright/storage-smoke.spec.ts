@@ -16,7 +16,7 @@ test.describe("Storage Smoke @storage-smoke", () => {
     await gotoSurveyList(page);
     await page.getByText("Start from scratch").click();
     await page.getByRole("button", { name: "Create survey", exact: true }).click();
-    await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/edit$/);
+    await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/edit$/);
 
     await fillRichTextEditor(page, "Question*", "Storage smoke question");
 

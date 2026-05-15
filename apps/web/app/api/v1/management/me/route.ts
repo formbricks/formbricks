@@ -170,6 +170,20 @@ const handleSessionAuthentication = async () => {
 
   const user = await prisma.user.findUnique({
     where: { id: sessionUser.id },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      emailVerified: true,
+      createdAt: true,
+      updatedAt: true,
+      twoFactorEnabled: true,
+      identityProvider: true,
+      notificationSettings: true,
+      locale: true,
+      lastLoginAt: true,
+      isActive: true,
+    },
   });
 
   return Response.json(user);
