@@ -83,23 +83,25 @@ export const FormStylingSettings = ({
         <hr className="py-1 text-slate-600" />
 
         <div className="flex flex-col gap-6 p-6">
-          <div className="grid grid-cols-2 items-end gap-4">
-            <ColorField
-              form={form}
-              name="brandColor.light"
-              label={t("workspace.surveys.edit.brand_color")}
-              description={t("workspace.surveys.edit.brand_color_description")}
-            />
-            <Button
-              type="button"
-              variant="default"
-              className="h-10 justify-center gap-1"
-              onClick={onSuggestColorsClick}
-              disabled={disabled || !onSuggestColorsClick}>
-              <SparklesIcon className="mr-2 h-4 w-4" />
-              {t("workspace.look.suggest_colors")}
-            </Button>
-          </div>
+          {!isSettingsPage && (
+            <div className="grid grid-cols-2 items-end gap-4">
+              <ColorField
+                form={form}
+                name="brandColor.light"
+                label={t("workspace.surveys.edit.brand_color")}
+                description={t("workspace.surveys.edit.brand_color_description")}
+              />
+              <Button
+                type="button"
+                variant="default"
+                className="h-10 justify-center gap-1"
+                onClick={onSuggestColorsClick}
+                disabled={disabled || !onSuggestColorsClick}>
+                <SparklesIcon className="mr-2 h-4 w-4" />
+                {t("workspace.look.suggest_colors")}
+              </Button>
+            </div>
+          )}
 
           {/* Headlines & Descriptions */}
           <StylingSection
