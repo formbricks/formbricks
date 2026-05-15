@@ -200,7 +200,7 @@ describe("POST /api/v1/client/[environmentId]/storage", () => {
       }) as any
     );
 
-    const response = await POST(createRequest(createRequestBody({ allowedFileExtensions: ["pdf"] })), props);
+    const response = await POST(createRequest(createRequestBody()), props);
 
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toMatchObject({

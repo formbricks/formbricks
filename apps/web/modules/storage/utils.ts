@@ -64,14 +64,26 @@ export const sanitizeFileName = (rawFileName: string): string => {
 };
 
 /**
+ * Extracts the lowercase file extension from a file name
+ * @param fileName The name of the file
+ * @returns {string | null} The lowercase extension, or null when no extension exists
+ */
+const extractFileExtension = (fileName: string): string | null => {
+  const extension = fileName.split(".").pop()?.toLowerCase();
+
+  if (!extension || extension === fileName.toLowerCase()) return null;
+
+  return extension;
+};
+
+/**
  * Validates if the file extension is allowed
  * @param fileName The name of the file to validate
  * @returns {boolean} True if the file extension is allowed, false otherwise
  */
 export const isAllowedFileExtension = (fileName: string): boolean => {
-  // Extract the file extension
-  const extension = fileName.split(".").pop()?.toLowerCase();
-  if (!extension || extension === fileName.toLowerCase()) return false;
+  const extension = extractFileExtension(fileName);
+  if (!extension) return false;
 
   // Check if the extension is in the allowed list
   return Object.values(ZAllowedFileExtension.enum).includes(extension as TAllowedFileExtension);
@@ -83,7 +95,7 @@ export const validateSingleFile = (
 ): boolean => {
   const fileName = getOriginalFileNameFromUrl(fileUrl);
   if (!fileName) return false;
-  const extension = fileName.split(".").pop()?.toLowerCase();
+  const extension = extractFileExtension(fileName);
   if (!extension) return false;
   return !allowedFileExtensions || allowedFileExtensions.includes(extension as TAllowedFileExtension);
 };
@@ -120,11 +132,8 @@ export type TSurveyFileUploadPermissionResult =
     };
 
 const getAllowedFileExtensionFromFileName = (fileName: string): TAllowedFileExtension | null => {
-  const extension = fileName.split(".").pop()?.toLowerCase();
-
-  if (!extension || extension === fileName.toLowerCase()) {
-    return null;
-  }
+  const extension = extractFileExtension(fileName);
+  if (!extension) return null;
 
   const extensionValidation = ZAllowedFileExtension.safeParse(extension);
 
