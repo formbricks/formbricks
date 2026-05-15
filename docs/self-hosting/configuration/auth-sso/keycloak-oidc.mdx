@@ -133,7 +133,7 @@ When `AUTH_SKIP_INVITE_FOR_SSO=1` and `AUTH_SSO_DEFAULT_TEAM_ID` are both set:
 1. A user authenticates through Keycloak for the first time.
 2. Formbricks creates a new user account.
 3. The user is automatically added as a **member** of the organization that owns the specified team.
-4. The user is assigned to the default team, granting them access to all projects associated with that team.
+4. The user is assigned to the default team, granting them access to all Workspaces associated with that team.
 
 No manual invitation or admin action is required.
 
@@ -160,7 +160,7 @@ AUTH_SSO_DEFAULT_TEAM_ID=your-team-id-here
     This means the user was added to the organization but not assigned to a team. Verify that:
     - `AUTH_SSO_DEFAULT_TEAM_ID` is set correctly (the env variable name is `AUTH_SSO_DEFAULT_TEAM_ID`, not `DEFAULT_TEAM_ID`).
     - The Team ID is a valid cuid that exists in your database.
-    - The team is linked to a project via **Project Teams** settings.
+    - The team is linked to a Workspace via **Workspace Teams** settings.
 
     You can verify the team exists by checking your database:
     ```sql

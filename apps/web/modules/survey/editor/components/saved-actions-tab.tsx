@@ -4,9 +4,9 @@ import { ActionClass } from "@prisma/client";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { ACTION_TYPE_ICON_LOOKUP } from "@/modules/projects/settings/(setup)/app-connection/utils";
 import { ActionClassInfo } from "@/modules/ui/components/action-class-info";
 import { Input } from "@/modules/ui/components/input";
+import { ACTION_TYPE_ICON_LOOKUP } from "@/modules/workspaces/settings/(setup)/app-connection/utils";
 
 interface SavedActionsTabProps {
   actionClasses: ActionClass[];

@@ -134,7 +134,7 @@ export const ZActionClass = z.object({
   type: ZActionClassType,
   key: z.string().trim().min(1).nullable(),
   noCodeConfig: ZActionClassNoCodeConfig.nullable(),
-  environmentId: z.string(),
+  workspaceId: z.cuid2(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
 });
@@ -151,8 +151,8 @@ const ZActionClassInputBase = z.object({
       error: "Name must be at least 1 character long",
     }),
   description: z.string().nullish(),
-  environmentId: ZId.min(1, {
-    error: "Environment ID cannot be empty",
+  workspaceId: ZId.min(1, {
+    error: "Workspace ID cannot be empty",
   }),
   type: ZActionClassType,
 });

@@ -84,6 +84,8 @@ export const transformElement = (
       case TSurveyElementTypeEnum.Consent:
         return transformConsent(answer);
       case TSurveyElementTypeEnum.Rating:
+      case TSurveyElementTypeEnum.CSAT:
+      case TSurveyElementTypeEnum.CES:
         return transformRating(answer);
       case TSurveyElementTypeEnum.NPS:
         return transformNPS(answer);

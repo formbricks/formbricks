@@ -279,7 +279,7 @@ export const RecallWrapper = ({
                     variant="ghost"
                     type="button"
                     className="absolute right-2 top-full z-[1] flex h-6 cursor-pointer items-center rounded-b-lg rounded-t-none bg-slate-100 px-2.5 py-0 text-xs hover:bg-slate-200">
-                    {t("environments.surveys.edit.edit_recall")}
+                    {t("workspace.surveys.edit.edit_recall")}
                     <PencilIcon className="h-3 w-3" />
                   </Button>
                 }

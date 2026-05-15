@@ -1,0 +1,377 @@
+/**
+ * Schema definitions for FeedbackRecords fields.
+ * Used by the advanced chart builder to provide field metadata and operators.
+ */
+import type { TFunction } from "i18next";
+
+export interface FieldDefinition {
+  id: string;
+  label: string;
+  type: "string" | "number" | "time" | "boolean";
+  description?: string;
+}
+
+export interface MeasureDefinition {
+  id: string;
+  label: string;
+  type: "count" | "number";
+  description?: string;
+}
+
+export const FEEDBACK_FIELDS = {
+  dimensions: [
+    {
+      id: "FeedbackRecords.sourceType",
+      label: "Source Type",
+      type: "string",
+      description: "Source type of the feedback (e.g., nps_campaign, survey)",
+    },
+    {
+      id: "FeedbackRecords.sourceName",
+      label: "Source Name",
+      type: "string",
+      description: "Human-readable name of the source",
+    },
+    {
+      id: "FeedbackRecords.fieldType",
+      label: "Field Type",
+      type: "string",
+      description: "Type of feedback field (e.g., nps, text, rating)",
+    },
+    {
+      id: "FeedbackRecords.fieldLabel",
+      label: "Question",
+      type: "string",
+      description: "Human-readable label of the question/field",
+    },
+    {
+      id: "FeedbackRecords.fieldGroupLabel",
+      label: "Question Group",
+      type: "string",
+      description: "Label of the parent composite question for matrix/ranking rows",
+    },
+    {
+      id: "FeedbackRecords.language",
+      label: "Language",
+      type: "string",
+      description: 'Response language code (e.g., "en", "de")',
+    },
+    {
+      id: "FeedbackRecords.userId",
+      label: "User ID",
+      type: "string",
+      description: "Identifier of the user who provided feedback",
+    },
+    {
+      id: "FeedbackRecords.responseId",
+      label: "Response ID",
+      type: "string",
+      description: "Unique identifier linking related feedback records",
+    },
+    {
+      id: "FeedbackRecords.valueNumber",
+      label: "Value (Number)",
+      type: "number",
+      description:
+        "Numeric answer value (NPS 0-10, CSAT 1-5, CES 1-5 or 1-7, rating, number). Pair with a fieldType filter to keep scales consistent.",
+    },
+    {
+      id: "FeedbackRecords.valueText",
+      label: "Value (Text)",
+      type: "string",
+      description:
+        "Text answer value (open text, or the label of a multiple-choice/categorical answer). Pair with a fieldType filter to keep types consistent.",
+    },
+    {
+      id: "FeedbackRecords.valueBoolean",
+      label: "Value (Boolean)",
+      type: "boolean",
+      description: "Boolean answer value (yes/no). Pair with a fieldType filter.",
+    },
+    {
+      id: "FeedbackRecords.valueDate",
+      label: "Value (Date)",
+      type: "time",
+      description: "Date answer value. Pair with a fieldType filter.",
+    },
+    {
+      id: "FeedbackRecords.collectedAt",
+      label: "Collected At",
+      type: "time",
+      description: "Timestamp when the feedback was collected",
+    },
+    {
+      id: "FeedbackRecords.createdAt",
+      label: "Created At",
+      type: "time",
+      description: "Timestamp when the feedback record was created in Hub",
+    },
+    {
+      id: "FeedbackRecords.updatedAt",
+      label: "Updated At",
+      type: "time",
+      description: "Timestamp when the feedback record was last updated in Hub",
+    },
+  ] as FieldDefinition[],
+  measures: [
+    {
+      id: "FeedbackRecords.count",
+      label: "Count",
+      type: "count",
+      description: "Total number of feedback responses",
+    },
+    {
+      id: "FeedbackRecords.uniqueRespondents",
+      label: "Unique Respondents",
+      type: "number",
+      description: "Number of unique users who provided feedback",
+    },
+    {
+      id: "FeedbackRecords.uniqueResponses",
+      label: "Unique Responses",
+      type: "number",
+      description: "Number of unique survey submissions",
+    },
+    {
+      id: "FeedbackRecords.npsScore",
+      label: "NPS Score",
+      type: "number",
+      description: "Net Promoter Score: ((Promoters - Detractors) / Total NPS responses) * 100",
+    },
+    {
+      id: "FeedbackRecords.npsAverage",
+      label: "NPS Average",
+      type: "number",
+      description: "Average NPS rating (0-10)",
+    },
+    {
+      id: "FeedbackRecords.promoterCount",
+      label: "Promoter Count",
+      type: "count",
+      description: "Number of NPS promoters (score 9-10)",
+    },
+    {
+      id: "FeedbackRecords.passiveCount",
+      label: "Passive Count",
+      type: "count",
+      description: "Number of NPS passives (score 7-8)",
+    },
+    {
+      id: "FeedbackRecords.detractorCount",
+      label: "Detractor Count",
+      type: "count",
+      description: "Number of NPS detractors (score 0-6)",
+    },
+    {
+      id: "FeedbackRecords.csatScore",
+      label: "CSAT Score",
+      type: "number",
+      description: "CSAT Score: % of CSAT responses rated 4 or 5 (top-2-box on the 1-5 scale)",
+    },
+    {
+      id: "FeedbackRecords.csatAverage",
+      label: "CSAT Average",
+      type: "number",
+      description: "Average CSAT rating (1-5)",
+    },
+    {
+      id: "FeedbackRecords.csatSatisfiedCount",
+      label: "CSAT Satisfied Count",
+      type: "count",
+      description: "Number of satisfied CSAT responses (top-2-box on the 1-5 scale)",
+    },
+    {
+      id: "FeedbackRecords.csatDissatisfiedCount",
+      label: "CSAT Dissatisfied Count",
+      type: "count",
+      description: "Number of dissatisfied CSAT responses (bottom-2-box on the 1-5 scale)",
+    },
+    {
+      id: "FeedbackRecords.csatNeutralCount",
+      label: "CSAT Neutral Count",
+      type: "count",
+      description: "Number of neutral CSAT responses (middle box on the 1-5 scale)",
+    },
+    {
+      id: "FeedbackRecords.csatCount",
+      label: "CSAT Count",
+      type: "count",
+      description: "Number of CSAT responses",
+    },
+    {
+      id: "FeedbackRecords.cesAverage",
+      label: "CES Average",
+      type: "number",
+      description: "Average CES rating (scale is 1-5 or 1-7 depending on the question)",
+    },
+    {
+      id: "FeedbackRecords.cesCount",
+      label: "CES Count",
+      type: "count",
+      description: "Number of CES responses",
+    },
+  ] as MeasureDefinition[],
+};
+
+export const FEEDBACK_MEASURE_IDS: string[] = FEEDBACK_FIELDS.measures.map((m) => m.id);
+
+export const FEEDBACK_DIMENSION_IDS: string[] = FEEDBACK_FIELDS.dimensions.map((d) => d.id);
+
+export const FEEDBACK_TIME_DIMENSION_IDS: string[] = FEEDBACK_FIELDS.dimensions
+  .filter((d) => d.type === "time")
+  .map((d) => d.id);
+
+export type FilterOperator =
+  | "equals"
+  | "notEquals"
+  | "contains"
+  | "notContains"
+  | "set"
+  | "notSet"
+  | "gt"
+  | "gte"
+  | "lt"
+  | "lte";
+
+export const FILTER_OPERATORS: Record<string, FilterOperator[]> = {
+  string: ["equals", "notEquals", "contains", "notContains", "set", "notSet"],
+  number: ["equals", "notEquals", "gt", "gte", "lt", "lte", "set", "notSet"],
+  time: ["equals", "notEquals", "gt", "gte", "lt", "lte", "set", "notSet"],
+  boolean: ["equals", "notEquals", "set", "notSet"],
+};
+
+export const TIME_GRANULARITIES = ["hour", "day", "week", "month", "quarter", "year"] as const;
+
+export type TimeGranularity = (typeof TIME_GRANULARITIES)[number];
+
+export const GRANULARITY_LABELS: Record<string, string> = {
+  hour: "Hour",
+  day: "Day",
+  week: "Week",
+  month: "Month",
+  quarter: "Quarter",
+  year: "Year",
+};
+
+export const DATE_PRESETS = [
+  { label: "Today", value: "today" },
+  { label: "Yesterday", value: "yesterday" },
+  { label: "Last 7 days", value: "last 7 days" },
+  { label: "Last 30 days", value: "last 30 days" },
+  { label: "This month", value: "this month" },
+  { label: "Last month", value: "last month" },
+  { label: "This quarter", value: "this quarter" },
+  { label: "This year", value: "this year" },
+] as const;
+
+/**
+ * Get filter operators for a given field type.
+ */
+export function getFilterOperatorsForType(type: "string" | "number" | "time" | "boolean"): FilterOperator[] {
+  return FILTER_OPERATORS[type] || FILTER_OPERATORS.string;
+}
+
+/**
+ * Get field definition by ID.
+ */
+export function getFieldById(id: string): FieldDefinition | MeasureDefinition | undefined {
+  const dimension = FEEDBACK_FIELDS.dimensions.find((d) => d.id === id);
+  if (dimension) return dimension;
+  return FEEDBACK_FIELDS.measures.find((m) => m.id === id);
+}
+
+/**
+ * Translate a field/measure ID. Each t() call uses a literal key so the i18n scanner can detect it.
+ */
+export function getTranslatedFieldLabel(id: string, t: TFunction): string {
+  const labels: Record<string, string> = {
+    "FeedbackRecords.sourceType": t("workspace.analysis.charts.field_label_source_type"),
+    "FeedbackRecords.sourceName": t("workspace.analysis.charts.field_label_source_name"),
+    "FeedbackRecords.fieldType": t("workspace.analysis.charts.field_label_field_type"),
+    "FeedbackRecords.fieldLabel": t("workspace.analysis.charts.field_label_question"),
+    "FeedbackRecords.fieldGroupLabel": t("workspace.analysis.charts.field_label_question_group"),
+    "FeedbackRecords.language": t("workspace.analysis.charts.field_label_language"),
+    "FeedbackRecords.userId": t("workspace.analysis.charts.field_label_user_identifier"),
+    "FeedbackRecords.responseId": t("workspace.analysis.charts.field_label_response_id"),
+    "FeedbackRecords.valueNumber": t("workspace.analysis.charts.field_label_value_number"),
+    "FeedbackRecords.valueText": t("workspace.analysis.charts.field_label_value_text"),
+    "FeedbackRecords.valueBoolean": t("workspace.analysis.charts.field_label_value_boolean"),
+    "FeedbackRecords.valueDate": t("workspace.analysis.charts.field_label_value_date"),
+    "FeedbackRecords.collectedAt": t("workspace.analysis.charts.field_label_collected_at"),
+    "FeedbackRecords.createdAt": t("workspace.analysis.charts.field_label_created_at"),
+    "FeedbackRecords.updatedAt": t("workspace.analysis.charts.field_label_updated_at"),
+    "FeedbackRecords.count": t("workspace.analysis.charts.field_label_count"),
+    "FeedbackRecords.uniqueRespondents": t("workspace.analysis.charts.field_label_unique_respondents"),
+    "FeedbackRecords.uniqueResponses": t("workspace.analysis.charts.field_label_unique_responses"),
+    "FeedbackRecords.npsScore": t("workspace.analysis.charts.field_label_nps_score"),
+    "FeedbackRecords.npsAverage": t("workspace.analysis.charts.field_label_nps_average"),
+    "FeedbackRecords.promoterCount": t("workspace.analysis.charts.field_label_promoter_count"),
+    "FeedbackRecords.passiveCount": t("workspace.analysis.charts.field_label_passive_count"),
+    "FeedbackRecords.detractorCount": t("workspace.analysis.charts.field_label_detractor_count"),
+    "FeedbackRecords.csatScore": t("workspace.analysis.charts.field_label_csat_score"),
+    "FeedbackRecords.csatAverage": t("workspace.analysis.charts.field_label_csat_average"),
+    "FeedbackRecords.csatSatisfiedCount": t("workspace.analysis.charts.field_label_csat_satisfied_count"),
+    "FeedbackRecords.csatDissatisfiedCount": t(
+      "workspace.analysis.charts.field_label_csat_dissatisfied_count"
+    ),
+    "FeedbackRecords.csatNeutralCount": t("workspace.analysis.charts.field_label_csat_neutral_count"),
+    "FeedbackRecords.csatCount": t("workspace.analysis.charts.field_label_csat_count"),
+    "FeedbackRecords.cesAverage": t("workspace.analysis.charts.field_label_ces_average"),
+    "FeedbackRecords.cesCount": t("workspace.analysis.charts.field_label_ces_count"),
+  };
+  return labels[id] ?? getFieldById(id)?.label ?? id;
+}
+
+/**
+ * Translate a time granularity value.
+ */
+export function getTranslatedGranularityLabel(granularity: string, t: TFunction): string {
+  const labels: Record<string, string> = {
+    hour: t("workspace.analysis.charts.granularity_hour"),
+    day: t("workspace.analysis.charts.granularity_day"),
+    week: t("workspace.analysis.charts.granularity_week"),
+    month: t("workspace.analysis.charts.granularity_month"),
+    quarter: t("workspace.analysis.charts.granularity_quarter"),
+    year: t("workspace.analysis.charts.granularity_year"),
+  };
+  return labels[granularity] ?? GRANULARITY_LABELS[granularity] ?? granularity;
+}
+
+/**
+ * Translate a date preset value.
+ */
+export function getTranslatedDatePresetLabel(value: string, t: TFunction): string {
+  const labels: Record<string, string> = {
+    today: t("workspace.analysis.charts.date_preset_today"),
+    yesterday: t("workspace.analysis.charts.date_preset_yesterday"),
+    "last 7 days": t("workspace.analysis.charts.date_preset_last_7_days"),
+    "last 30 days": t("workspace.analysis.charts.date_preset_last_30_days"),
+    "this month": t("workspace.analysis.charts.date_preset_this_month"),
+    "last month": t("workspace.analysis.charts.date_preset_last_month"),
+    "this quarter": t("workspace.analysis.charts.date_preset_this_quarter"),
+    "this year": t("workspace.analysis.charts.date_preset_this_year"),
+  };
+  return labels[value] ?? value;
+}
+
+/**
+ * Format a Cube.js column key for display (e.g. FeedbackRecords.collectedAt.day → "Day").
+ * When `t` is provided, returns translated labels.
+ */
+export function formatCubeColumnHeader(key: string, t?: TFunction): string {
+  const granularity = TIME_GRANULARITIES.find((g) => key.endsWith(`.${g}`));
+  if (granularity) {
+    return t
+      ? getTranslatedGranularityLabel(granularity, t)
+      : (GRANULARITY_LABELS[granularity] ?? granularity);
+  }
+  const field = getFieldById(key);
+  if (field) {
+    return t ? getTranslatedFieldLabel(key, t) : field.label;
+  }
+  const lastSegment = key.split(".").pop() ?? key;
+  return lastSegment
+    .replaceAll(/([A-Z])/g, " $1")
+    .replace(/^./, (s) => s.toUpperCase())
+    .trim();
+}

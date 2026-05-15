@@ -115,6 +115,7 @@
                 "icon": "mobile",
                 "pages": [
                   "xm-and-surveys/surveys/website-app-surveys/quickstart",
+                  "xm-and-surveys/surveys/website-app-surveys/workspace-id-migration",
                   "xm-and-surveys/surveys/website-app-surveys/framework-guides",
                   "xm-and-surveys/surveys/website-app-surveys/google-tag-manager",
                   {
@@ -186,8 +187,7 @@
                 ]
               },
               "xm-and-surveys/core-features/styling-theme",
-              "xm-and-surveys/core-features/email-customization",
-              "xm-and-surveys/core-features/test-environment"
+              "xm-and-surveys/core-features/email-customization"
             ]
           },
           {
@@ -309,6 +309,9 @@
             "group": "Technical Handbook",
             "pages": [
               "development/technical-handbook/overview",
+              "development/technical-handbook/api-gateway",
+              "development/technical-handbook/background-job-processing",
+              "development/technical-handbook/cube-tenant-isolation",
               "development/technical-handbook/database-model",
               "development/technical-handbook/tenant-separation"
             ]

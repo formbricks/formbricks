@@ -1,7 +1,7 @@
 // Add this import for survey-ui CSS variables
 import surveyUiCss from "@formbricks/survey-ui/styles?inline";
-import { type TProjectStyling } from "@formbricks/types/project";
 import { type TSurveyStyling } from "@formbricks/types/surveys/types";
+import { type TWorkspaceStyling } from "@formbricks/types/workspace";
 import { isLight, mixColor } from "@/lib/color";
 import global from "@/styles/global.css?inline";
 import preflight from "@/styles/preflight.css?inline";
@@ -55,7 +55,7 @@ export const addStylesToDom = () => {
   }
 };
 
-export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TSurveyStyling }): void => {
+export const addCustomThemeToDom = ({ styling }: { styling: TWorkspaceStyling | TSurveyStyling }): void => {
   // Check if the style element already exists
   let styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement | null;
 
@@ -102,16 +102,14 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
     appendCssVariable("brand-text-color", "#ffffff");
   }
 
-  // Backwards-compat: legacy variables still used by some consumers/tests
-  appendCssVariable("heading-color", styling.questionColor?.light);
-  appendCssVariable("element-headline-color", styling.questionColor?.light);
-  appendCssVariable("element-description-color", styling.questionColor?.light);
-  appendCssVariable("input-color", styling.questionColor?.light);
-  appendCssVariable("label-color", styling.questionColor?.light);
-  // Backwards-compat: legacy variables still used by some consumers/tests
-  appendCssVariable("subheading-color", styling.questionColor?.light);
+  appendCssVariable("heading-color", styling.elementHeadlineColor?.light);
+  appendCssVariable("element-headline-color", styling.elementHeadlineColor?.light);
+  appendCssVariable("element-description-color", styling.elementDescriptionColor?.light);
+  appendCssVariable("input-color", styling.inputTextColor?.light);
+  appendCssVariable("label-color", styling.elementUpperLabelColor?.light);
+  appendCssVariable("subheading-color", styling.elementDescriptionColor?.light);
 
-  const placeholderBaseColor = styling.inputTextColor?.light ?? styling.questionColor?.light;
+  const placeholderBaseColor = styling.inputTextColor?.light;
   if (placeholderBaseColor) {
     appendCssVariable("placeholder-color", mixColor(placeholderBaseColor, "#ffffff", 0.3));
     appendCssVariable("input-placeholder-color", mixColor(placeholderBaseColor, "#ffffff", 0.3));
@@ -142,21 +140,21 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
   appendCssVariable("input-border-radius", formatDimension(roundness));
   appendCssVariable("option-border-radius", formatDimension(roundness));
   appendCssVariable("button-border-radius", formatDimension(roundness));
-  appendCssVariable("input-background-color", styling.inputColor?.light);
-  appendCssVariable("input-bg-color", styling.inputColor?.light);
-  appendCssVariable("option-bg-color", styling.inputColor?.light);
-  appendCssVariable("input-color", styling.questionColor?.light);
+  appendCssVariable("input-background-color", styling.inputBgColor?.light);
+  appendCssVariable("input-bg-color", styling.inputBgColor?.light);
+  appendCssVariable("option-bg-color", styling.optionBgColor?.light);
+  appendCssVariable("input-color", styling.inputTextColor?.light);
 
-  if (styling.questionColor?.light) {
-    const isLightQuestionColor = isLight(styling.questionColor.light);
+  if (styling.elementHeadlineColor?.light) {
+    const isLightHeadlineColor = isLight(styling.elementHeadlineColor.light);
     const signatureColor = mixColor(
-      styling.questionColor.light,
-      isLightQuestionColor ? "#000000" : "#ffffff",
+      styling.elementHeadlineColor.light,
+      isLightHeadlineColor ? "#000000" : "#ffffff",
       0.2
     );
     const brandingColor = mixColor(
-      styling.questionColor.light,
-      isLightQuestionColor ? "#000000" : "#ffffff",
+      styling.elementHeadlineColor.light,
+      isLightHeadlineColor ? "#000000" : "#ffffff",
       0.3
     );
 
@@ -164,17 +162,17 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
     appendCssVariable("branding-text-color", brandingColor);
   }
 
-  if (styling.inputColor?.light) {
+  if (styling.inputBgColor?.light) {
     if (
-      styling.inputColor.light === "#fff" ||
-      styling.inputColor.light === "#ffffff" ||
-      styling.inputColor.light === "white"
+      styling.inputBgColor.light === "#fff" ||
+      styling.inputBgColor.light === "#ffffff" ||
+      styling.inputBgColor.light === "white"
     ) {
       appendCssVariable("input-background-color-selected", "var(--slate-50)");
     } else {
       appendCssVariable(
         "input-background-color-selected",
-        mixColor(styling.inputColor.light, "#000000", 0.025)
+        mixColor(styling.inputBgColor.light, "#000000", 0.025)
       );
     }
   }
@@ -194,7 +192,7 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
   }
 
   // Buttons (Advanced)
-  const buttonBg = styling.buttonBgColor?.light ?? styling.brandColor?.light;
+  const buttonBg = styling.buttonBgColor?.light;
   let buttonText = styling.buttonTextColor?.light;
   if (buttonText === undefined && buttonBg) {
     buttonText = isLight(buttonBg) ? "#0f172a" : "#ffffff";
@@ -215,8 +213,8 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
     appendCssVariable("button-padding-y", formatDimension(styling.buttonPaddingY));
 
   // Inputs (Advanced)
-  appendCssVariable("input-background-color", styling.inputBgColor?.light ?? styling.inputColor?.light);
-  const inputTextColor = styling.inputTextColor?.light ?? styling.questionColor?.light;
+  appendCssVariable("input-background-color", styling.inputBgColor?.light);
+  const inputTextColor = styling.inputTextColor?.light;
   appendCssVariable("input-text-color", inputTextColor);
   if (inputTextColor) {
     appendCssVariable("input-placeholder-color", mixColor(inputTextColor, "#ffffff", 0.3));
@@ -236,8 +234,8 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
   appendCssVariable("input-shadow", styling.inputShadow);
 
   // Options (Advanced)
-  appendCssVariable("option-bg-color", styling.optionBgColor?.light ?? styling.inputColor?.light);
-  appendCssVariable("option-label-color", styling.optionLabelColor?.light ?? styling.questionColor?.light);
+  appendCssVariable("option-bg-color", styling.optionBgColor?.light);
+  appendCssVariable("option-label-color", styling.optionLabelColor?.light);
   if (styling.optionBorderColor?.light)
     appendCssVariable("option-border-color", styling.optionBorderColor.light);
   if (styling.optionBorderRadius !== undefined)
@@ -254,28 +252,19 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
     appendCssVariable("element-headline-font-size", formatDimension(styling.elementHeadlineFontSize));
   if (styling.elementHeadlineFontWeight !== undefined && styling.elementHeadlineFontWeight !== null)
     appendCssVariable("element-headline-font-weight", `${styling.elementHeadlineFontWeight}`);
-  appendCssVariable(
-    "element-headline-color",
-    styling.elementHeadlineColor?.light ?? styling.questionColor?.light
-  );
+  appendCssVariable("element-headline-color", styling.elementHeadlineColor?.light);
 
   if (styling.elementDescriptionFontSize !== undefined)
     appendCssVariable("element-description-font-size", formatDimension(styling.elementDescriptionFontSize));
   if (styling.elementDescriptionFontWeight !== undefined && styling.elementDescriptionFontWeight !== null)
     appendCssVariable("element-description-font-weight", `${styling.elementDescriptionFontWeight}`);
-  appendCssVariable(
-    "element-description-color",
-    styling.elementDescriptionColor?.light ?? styling.questionColor?.light
-  );
+  appendCssVariable("element-description-color", styling.elementDescriptionColor?.light);
 
   appendCssVariable(
     "element-upper-label-font-size",
     formatDimension(styling.elementUpperLabelFontSize ?? 12)
   );
-  appendCssVariable(
-    "element-upper-label-color",
-    styling.elementUpperLabelColor?.light ?? styling.questionColor?.light
-  );
+  appendCssVariable("element-upper-label-color", styling.elementUpperLabelColor?.light);
 
   if (styling.elementUpperLabelColor?.light) {
     appendCssVariable("element-upper-label-opacity", "1");
@@ -290,15 +279,8 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
   // Implicitly set the progress track border radius to the roundness of the card
   appendCssVariable("progress-track-border-radius", formatDimension(roundness));
 
-  appendCssVariable(
-    "progress-track-bg-color",
-    styling.progressTrackBgColor?.light ??
-      (styling.brandColor?.light ? mixColor(styling.brandColor.light, "#ffffff", 0.8) : undefined)
-  );
-  appendCssVariable(
-    "progress-indicator-bg-color",
-    styling.progressIndicatorBgColor?.light ?? styling.brandColor?.light
-  );
+  appendCssVariable("progress-track-bg-color", styling.progressTrackBgColor?.light);
+  appendCssVariable("progress-indicator-bg-color", styling.progressIndicatorBgColor?.light);
 
   // Close the #fbjs variable block
   cssVariables += "}\n";
@@ -324,7 +306,7 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
     headlineDecls += "  font-size: var(--fb-element-headline-font-size) !important;\n";
   if (styling.elementHeadlineFontWeight !== undefined && styling.elementHeadlineFontWeight !== null)
     headlineDecls += "  font-weight: var(--fb-element-headline-font-weight) !important;\n";
-  if (styling.elementHeadlineColor?.light || styling.questionColor?.light)
+  if (styling.elementHeadlineColor?.light)
     headlineDecls += "  color: var(--fb-element-headline-color) !important;\n";
   addRule("#fbjs .label-headline,\n#fbjs .label-headline *", headlineDecls);
 
@@ -334,7 +316,7 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
     descriptionDecls += "  font-size: var(--fb-element-description-font-size) !important;\n";
   if (styling.elementDescriptionFontWeight !== undefined && styling.elementDescriptionFontWeight !== null)
     descriptionDecls += "  font-weight: var(--fb-element-description-font-weight) !important;\n";
-  if (styling.elementDescriptionColor?.light || styling.questionColor?.light)
+  if (styling.elementDescriptionColor?.light)
     descriptionDecls += "  color: var(--fb-element-description-color) !important;\n";
   addRule("#fbjs .label-description,\n#fbjs .label-description *", descriptionDecls);
 
@@ -344,7 +326,7 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
     upperDecls += "  font-size: var(--fb-element-upper-label-font-size) !important;\n";
   if (styling.elementUpperLabelFontWeight !== undefined && styling.elementUpperLabelFontWeight !== null)
     upperDecls += "  font-weight: var(--fb-element-upper-label-font-weight) !important;\n";
-  if (styling.elementUpperLabelColor?.light || styling.questionColor?.light) {
+  if (styling.elementUpperLabelColor?.light) {
     upperDecls += "  color: var(--fb-element-upper-label-color) !important;\n";
     upperDecls += "  opacity: var(--fb-element-upper-label-opacity, 1) !important;\n";
   }
@@ -352,10 +334,8 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
 
   // --- Buttons ---
   let buttonDecls = "";
-  if (styling.buttonBgColor?.light || styling.brandColor?.light)
-    buttonDecls += "  background-color: var(--fb-button-bg-color) !important;\n";
-  if (styling.buttonTextColor?.light || styling.brandColor?.light)
-    buttonDecls += "  color: var(--fb-button-text-color) !important;\n";
+  if (buttonBg) buttonDecls += "  background-color: var(--fb-button-bg-color) !important;\n";
+  if (buttonText) buttonDecls += "  color: var(--fb-button-text-color) !important;\n";
   if (styling.buttonBorderRadius !== undefined)
     buttonDecls += "  border-radius: var(--fb-button-border-radius) !important;\n";
   if (styling.buttonHeight !== undefined) buttonDecls += "  height: var(--fb-button-height) !important;\n";
@@ -378,11 +358,11 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
     addRule("#fbjs .rounded-option", "  border-radius: var(--fb-option-border-radius) !important;\n");
   if (styling.optionBorderColor?.light)
     addRule("#fbjs .border-option-border", "  border-color: var(--fb-option-border-color) !important;\n");
-  if (styling.optionBgColor?.light || styling.inputColor?.light)
+  if (styling.optionBgColor?.light)
     addRule("#fbjs .bg-option-bg", "  background-color: var(--fb-option-bg-color) !important;\n");
 
   let optionLabelDecls = "";
-  if (styling.optionLabelColor?.light || styling.questionColor?.light)
+  if (styling.optionLabelColor?.light)
     optionLabelDecls += "  color: var(--fb-option-label-color) !important;\n";
   if (styling.optionFontSize !== undefined)
     optionLabelDecls += "  font-size: var(--fb-option-font-size) !important;\n";
@@ -402,14 +382,13 @@ export const addCustomThemeToDom = ({ styling }: { styling: TProjectStyling | TS
   // --- Inputs ---
   if (styling.inputBorderRadius !== undefined)
     addRule("#fbjs .rounded-input", "  border-radius: var(--fb-input-border-radius) !important;\n");
-  if (styling.inputBgColor?.light || styling.inputColor?.light)
+  if (styling.inputBgColor?.light)
     addRule("#fbjs .bg-input-bg", "  background-color: var(--fb-input-background-color) !important;\n");
   if (styling.inputBorderColor?.light)
     addRule("#fbjs .border-input-border", "  border-color: var(--fb-input-border-color) !important;\n");
 
   let inputTextDecls = "";
-  if (styling.inputTextColor?.light || styling.questionColor?.light)
-    inputTextDecls += "  color: var(--fb-input-text-color) !important;\n";
+  if (styling.inputTextColor?.light) inputTextDecls += "  color: var(--fb-input-text-color) !important;\n";
   if (styling.inputFontSize !== undefined)
     inputTextDecls += "  font-size: var(--fb-input-font-size) !important;\n";
   addRule("#fbjs .text-input-text", inputTextDecls);

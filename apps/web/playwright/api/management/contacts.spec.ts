@@ -4,11 +4,11 @@ import { loginAndGetApiKey } from "../../lib/utils";
 
 test.describe("API Tests for Single Contact Creation", () => {
   test("Create and Test Contact Creation via API", async ({ page, users, request }) => {
-    let environmentId: string;
+    let workspaceId: string;
     let apiKey: string;
 
     try {
-      ({ environmentId, apiKey } = await loginAndGetApiKey(page, users));
+      ({ workspaceId, apiKey } = await loginAndGetApiKey(page, users));
     } catch (error) {
       console.error("Error during login and getting API key:", error);
       throw error;
@@ -22,7 +22,7 @@ test.describe("API Tests for Single Contact Creation", () => {
       const response = await request.post("/api/v2/management/contacts", {
         headers: { "x-api-key": apiKey },
         data: {
-          environmentId,
+          workspaceId,
           attributes: {
             email: uniqueEmail,
           },
@@ -34,7 +34,7 @@ test.describe("API Tests for Single Contact Creation", () => {
       const contactData = await response.json();
       expect(contactData.data).toBeDefined();
       expect(contactData.data.id).toMatch(/^[a-z0-9]{25}$/); // CUID2 format
-      expect(contactData.data.environmentId).toBe(environmentId);
+      expect(contactData.data.workspaceId).toBe(workspaceId);
       expect(contactData.data.attributes.email).toBe(uniqueEmail);
       expect(contactData.data.createdAt).toBeDefined();
     });
@@ -46,7 +46,7 @@ test.describe("API Tests for Single Contact Creation", () => {
       const response = await request.post("/api/v2/management/contacts", {
         headers: { "x-api-key": apiKey },
         data: {
-          environmentId,
+          workspaceId,
           attributes: {
             email: uniqueEmail,
             firstName: "John",
@@ -72,7 +72,7 @@ test.describe("API Tests for Single Contact Creation", () => {
       const response = await request.post("/api/v2/management/contacts", {
         headers: { "x-api-key": apiKey },
         data: {
-          environmentId,
+          workspaceId,
           attributes: {
             email: uniqueEmail,
             [customKey]: "custom value",
@@ -95,7 +95,7 @@ test.describe("API Tests for Single Contact Creation", () => {
       const firstResponse = await request.post("/api/v2/management/contacts", {
         headers: { "x-api-key": apiKey },
         data: {
-          environmentId,
+          workspaceId,
           attributes: {
             email: duplicateEmail,
           },
@@ -107,7 +107,7 @@ test.describe("API Tests for Single Contact Creation", () => {
       const secondResponse = await request.post("/api/v2/management/contacts", {
         headers: { "x-api-key": apiKey },
         data: {
-          environmentId,
+          workspaceId,
           attributes: {
             email: duplicateEmail,
           },
@@ -131,7 +131,7 @@ test.describe("API Tests for Single Contact Creation", () => {
       const firstResponse = await request.post("/api/v2/management/contacts", {
         headers: { "x-api-key": apiKey },
         data: {
-          environmentId,
+          workspaceId,
           attributes: {
             email: email1,
             userId: duplicateUserId,
@@ -144,7 +144,7 @@ test.describe("API Tests for Single Contact Creation", () => {
       const secondResponse = await request.post("/api/v2/management/contacts", {
         headers: { "x-api-key": apiKey },
         data: {
-          environmentId,
+          workspaceId,
           attributes: {
             email: email2,
             userId: duplicateUserId,

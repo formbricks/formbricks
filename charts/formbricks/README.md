@@ -1,6 +1,6 @@
 # formbricks
 
-![Version: 0.0.0-dev](https://img.shields.io/badge/Version-0.0.0--dev-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
+![Version: 0.0.0-dev](https://img.shields.io/badge/Version-0.0.0--dev-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 3.7.0](https://img.shields.io/badge/AppVersion-3.7.0-informational?style=flat-square)
 
 A Helm chart for Formbricks with PostgreSQL, Redis
 
@@ -14,12 +14,12 @@ A Helm chart for Formbricks with PostgreSQL, Redis
 
 ## Requirements
 
-| Repository                               | Name       | Version |
-| ---------------------------------------- | ---------- | ------- |
-| oci://registry-1.docker.io/bitnamicharts | postgresql | 16.4.16 |
-| oci://registry-1.docker.io/bitnamicharts | redis      | 20.11.2 |
-| oci://docker.io/envoyproxy               | gateway-helm | v1.7.1 |
-| oci://registry-1.docker.io/bitnamicharts | redis      | 20.11.2 |
+| Repository                               | Name         | Version |
+| ---------------------------------------- | ------------ | ------- |
+| oci://registry-1.docker.io/bitnamicharts | postgresql   | 16.4.16 |
+| oci://registry-1.docker.io/bitnamicharts | redis        | 20.11.2 |
+| oci://docker.io/envoyproxy               | gateway-helm | v1.7.1  |
+| oci://registry-1.docker.io/bitnamicharts | redis        | 20.11.2 |
 
 ## Envoy bundle modes
 
@@ -46,12 +46,63 @@ The intended defaults are:
 - self-hosted / single-tenant clusters: bundled controller mode
 - shared clusters with an existing platform controller: external-controller mode
 
+## Cube.js for XM Suite v5
+
+XM Suite v5 dashboard and analysis features require Cube.js. Set `cube.enabled=true` to deploy an
+internal Cube service from this chart, or provide an external Cube endpoint.
+
+- For chart-managed Cube, set `deployment.env.CUBEJS_API_URL` to `http://formbricks-cube:4000`
+  when using the default release name.
+- For external Cube, set `deployment.env.CUBEJS_API_URL` to your Cube endpoint.
+- Provide `CUBEJS_API_SECRET` through your existing secret management flow, such as the generated app secret override or `deployment.envFrom`.
+- Provide `CUBEJS_DB_*` connection variables to the Cube deployment through `cube.envFrom` or `cube.env`.
+- Keep `cube.replicas=1` while `cube.env.CUBEJS_CACHE_AND_QUEUE_DRIVER` is `memory`. Configure Cube Store before running multiple Cube replicas.
+- Keep Hub enabled. Cube should point at the same feedback records database that Hub writes to, unless you intentionally split that storage.
+
+## Hub worker and self-hosted embeddings
+
+The chart deploys Hub API and, by default, a `hub-worker` deployment. Hub API is insert-only for River jobs; webhook dispatch and embedding jobs are processed by `hub-worker`.
+
+Self-hosted embeddings are disabled by default. Set `hub.embeddings.enabled=true` to deploy an internal Hugging Face Text Embeddings Inference (TEI) service and wire Hub API plus Hub worker to it through the OpenAI-compatible endpoint added in Hub:
+
+```yaml
+hub:
+  worker:
+    enabled: true
+
+  embeddings:
+    enabled: true
+    model: Alibaba-NLP/gte-multilingual-base
+    servedModelName: Alibaba-NLP/gte-multilingual-base
+```
+
+The generated Hub embedding configuration is:
+
+- `EMBEDDING_PROVIDER=openai`
+- `EMBEDDING_MODEL=<hub.embeddings.servedModelName or hub.embeddings.model>`
+- `EMBEDDING_BASE_URL=http://<release>-hub-embeddings:8080/v1`
+- `EMBEDDING_PROVIDER_API_KEY` from a dedicated embeddings Secret
+
+The TEI service is internal-only (`ClusterIP`) and not exposed through ingress. For private or gated models, provide `hub.embeddings.huggingFace.token` or set `hub.embeddings.huggingFace.existingSecret`.
+
+When TEI auth is enabled, configure the shared key through `hub.embeddings.auth.apiKey` or `hub.embeddings.auth.existingSecret`; the chart manages both TEI `API_KEY` and Hub `EMBEDDING_PROVIDER_API_KEY` from that source.
+
+Autoscaling is opt-in for Hub API, Hub worker, and the embeddings runtime. If you scale the embeddings runtime above one replica while persistence is enabled, the cache PVC must support `ReadWriteMany`; otherwise set `hub.embeddings.persistence.enabled=false` or provide a compatible `existingClaim`.
+
 ## Values
 
 | Key                                                                | Type   | Default                           | Description |
 | ------------------------------------------------------------------ | ------ | --------------------------------- | ----------- |
 | autoscaling.additionalLabels                                       | object | `{}`                              |             |
 | autoscaling.annotations                                            | object | `{}`                              |             |
+| autoscaling.behavior.scaleDown.policies[0].periodSeconds           | int    | `120`                             |             |
+| autoscaling.behavior.scaleDown.policies[0].type                    | string | `"Pods"`                          |             |
+| autoscaling.behavior.scaleDown.policies[0].value                   | int    | `1`                               |             |
+| autoscaling.behavior.scaleDown.stabilizationWindowSeconds          | int    | `300`                             |             |
+| autoscaling.behavior.scaleUp.policies[0].periodSeconds             | int    | `60`                              |             |
+| autoscaling.behavior.scaleUp.policies[0].type                      | string | `"Pods"`                          |             |
+| autoscaling.behavior.scaleUp.policies[0].value                     | int    | `2`                               |             |
+| autoscaling.behavior.scaleUp.stabilizationWindowSeconds            | int    | `60`                              |             |
 | autoscaling.enabled                                                | bool   | `true`                            |             |
 | autoscaling.maxReplicas                                            | int    | `10`                              |             |
 | autoscaling.metrics[0].resource.name                               | string | `"cpu"`                           |             |
@@ -64,8 +115,6 @@ The intended defaults are:
 | autoscaling.metrics[1].type                                        | string | `"Resource"`                      |             |
 | autoscaling.minReplicas                                            | int    | `1`                               |             |
 | componentOverride                                                  | string | `""`                              |             |
-| cronJob.enabled                                                    | bool   | `false`                           |             |
-| cronJob.jobs                                                       | object | `{}`                              |             |
 | deployment.additionalLabels                                        | object | `{}`                              |             |
 | deployment.additionalPodAnnotations                                | object | `{}`                              |             |
 | deployment.additionalPodLabels                                     | object | `{}`                              |             |
@@ -75,12 +124,12 @@ The intended defaults are:
 | deployment.command                                                 | list   | `[]`                              |             |
 | deployment.containerSecurityContext.readOnlyRootFilesystem         | bool   | `true`                            |             |
 | deployment.containerSecurityContext.runAsNonRoot                   | bool   | `true`                            |             |
-| deployment.env.EMAIL_VERIFICATION_DISABLED.value                   | string | `"1"`                             |             |
-| deployment.env.PASSWORD_RESET_DISABLED.value                       | string | `"1"`                             |             |
+| deployment.env                                                     | object | `{}`                              |             |
 | deployment.envFrom                                                 | string | `nil`                             |             |
 | deployment.image.digest                                            | string | `""`                              |             |
 | deployment.image.pullPolicy                                        | string | `"IfNotPresent"`                  |             |
 | deployment.image.repository                                        | string | `"ghcr.io/formbricks/formbricks"` |             |
+| deployment.image.tag                                               | string | `""`                              |             |
 | deployment.imagePullSecrets                                        | string | `""`                              |             |
 | deployment.nodeSelector                                            | object | `{}`                              |             |
 | deployment.ports.http.containerPort                                | int    | `3000`                            |             |
@@ -123,6 +172,69 @@ The intended defaults are:
 | externalSecret.refreshInterval                                     | string | `"1h"`                            |             |
 | externalSecret.secretStore.kind                                    | string | `"ClusterSecretStore"`            |             |
 | externalSecret.secretStore.name                                    | string | `"aws-secrets-manager"`           |             |
+| formbricks.publicUrl                                               | string | `""`                              |             |
+| formbricks.webappUrl                                               | string | `""`                              |             |
+| hub.autoscaling.enabled                                            | bool   | `false`                           |             |
+| hub.autoscaling.maxReplicas                                        | int    | `3`                               |             |
+| hub.autoscaling.minReplicas                                        | int    | `1`                               |             |
+| hub.enabled                                                        | bool   | `true`                            |             |
+| hub.embeddings.auth.enabled                                        | bool   | `true`                            |             |
+| hub.embeddings.auth.existingSecret                                 | string | `""`                              |             |
+| hub.embeddings.auth.secretKey                                      | string | `"EMBEDDING_PROVIDER_API_KEY"`    |             |
+| hub.embeddings.autoscaling.enabled                                 | bool   | `false`                           |             |
+| hub.embeddings.autoscaling.maxReplicas                             | int    | `2`                               |             |
+| hub.embeddings.autoscaling.minReplicas                             | int    | `1`                               |             |
+| hub.embeddings.baseUrl                                             | string | `""`                              | Defaults to the internal TEI service URL ending in `/v1`. |
+| hub.embeddings.enabled                                             | bool   | `false`                           |             |
+| hub.embeddings.extraArgs                                           | list   | `["--dtype","float16"]`           | Additional args appended to the generated TEI args. |
+| hub.embeddings.huggingFace.existingSecret                          | string | `""`                              |             |
+| hub.embeddings.huggingFace.token                                   | string | `""`                              |             |
+| hub.embeddings.huggingFace.tokenKey                                | string | `"HF_TOKEN"`                      |             |
+| hub.embeddings.image.pullPolicy                                    | string | `"IfNotPresent"`                  |             |
+| hub.embeddings.image.repository                                    | string | `"ghcr.io/huggingface/text-embeddings-inference"` |             |
+| hub.embeddings.image.tag                                           | string | `"cpu-1.9"`                       |             |
+| hub.embeddings.maxConcurrent                                       | string | `"5"`                             |             |
+| hub.embeddings.model                                               | string | `"Alibaba-NLP/gte-multilingual-base"` |             |
+| hub.embeddings.persistence.enabled                                 | bool   | `true`                            |             |
+| hub.embeddings.persistence.mountPath                               | string | `"/data"`                         |             |
+| hub.embeddings.persistence.size                                    | string | `"10Gi"`                          |             |
+| hub.embeddings.pdb.enabled                                         | bool   | `false`                           |             |
+| hub.embeddings.port                                                | int    | `8080`                            |             |
+| hub.embeddings.prometheusPort                                      | int    | `9000`                            |             |
+| hub.embeddings.replicas                                            | int    | `1`                               |             |
+| hub.embeddings.resources.limits.memory                             | string | `"8Gi"`                           |             |
+| hub.embeddings.resources.requests.cpu                              | string | `"4"`                             |             |
+| hub.embeddings.resources.requests.memory                           | string | `"8Gi"`                           |             |
+| hub.embeddings.runtime                                             | string | `"tei"`                           |             |
+| hub.embeddings.servedModelName                                     | string | `""`                              | Defaults to `hub.embeddings.model`. |
+| hub.embeddings.service.port                                        | int    | `8080`                            |             |
+| hub.embeddings.service.type                                        | string | `"ClusterIP"`                     |             |
+| hub.env                                                            | object | `{}`                              |             |
+| hub.existingSecret                                                 | string | `""`                              |             |
+| hub.image.digest                                                   | string | `"sha256:14db7b3d285b6e9165b55693f9b83d08beff840a255fd77dd12882ee0a62f5cb"` | When set, takes precedence over tag (immutable pin). |
+| hub.image.pullPolicy                                               | string | `"IfNotPresent"`                  |             |
+| hub.image.repository                                               | string | `"ghcr.io/formbricks/hub"`        |             |
+| hub.image.tag                                                      | string | `"0.3.0"`                         | Fallback when digest is empty. |
+| hub.migration.activeDeadlineSeconds                                | int    | `900`                             |             |
+| hub.migration.backoffLimit                                         | int    | `3`                               |             |
+| hub.migration.ttlSecondsAfterFinished                              | int    | `300`                             |             |
+| hub.pdb.enabled                                                    | bool   | `false`                           |             |
+| hub.replicas                                                       | int    | `1`                               |             |
+| hub.resources.limits.memory                                        | string | `"512Mi"`                         |             |
+| hub.resources.requests.cpu                                         | string | `"100m"`                          |             |
+| hub.resources.requests.memory                                      | string | `"256Mi"`                         |             |
+| hub.worker.autoscaling.enabled                                     | bool   | `false`                           |             |
+| hub.worker.autoscaling.maxReplicas                                 | int    | `5`                               |             |
+| hub.worker.autoscaling.minReplicas                                 | int    | `1`                               |             |
+| hub.worker.enabled                                                 | bool   | `true`                            |             |
+| hub.worker.env                                                     | object | `{}`                              |             |
+| hub.worker.pdb.enabled                                             | bool   | `false`                           |             |
+| hub.worker.replicas                                                | int    | `1`                               |             |
+| hub.worker.resources.limits.memory                                 | string | `"512Mi"`                         |             |
+| hub.worker.resources.requests.cpu                                  | string | `"100m"`                          |             |
+| hub.worker.resources.requests.memory                               | string | `"256Mi"`                         |             |
+| hub.worker.waitForApi.enabled                                      | bool   | `true`                            |             |
+| hub.worker.waitForApi.maxAttempts                                  | int    | `120`                             | 120 attempts at 5s intervals = 10 minutes. |
 | ingress.annotations                                                | object | `{}`                              |             |
 | ingress.enabled                                                    | bool   | `false`                           |             |
 | ingress.hosts[0].host                                              | string | `"k8s.formbricks.com"`            |             |
@@ -130,8 +242,19 @@ The intended defaults are:
 | ingress.hosts[0].paths[0].pathType                                 | string | `"Prefix"`                        |             |
 | ingress.hosts[0].paths[0].serviceName                              | string | `"formbricks"`                    |             |
 | ingress.ingressClassName                                           | string | `"alb"`                           |             |
+| migration.annotations                                              | object | `{}`                              |             |
+| migration.backoffLimit                                             | int    | `3`                               |             |
+| migration.enabled                                                  | bool   | `true`                            |             |
+| migration.resources.limits.memory                                  | string | `"512Mi"`                         |             |
+| migration.resources.requests.cpu                                   | string | `"100m"`                          |             |
+| migration.resources.requests.memory                                | string | `"256Mi"`                         |             |
+| migration.ttlSecondsAfterFinished                                  | int    | `300`                             |             |
 | nameOverride                                                       | string | `""`                              |             |
 | partOfOverride                                                     | string | `""`                              |             |
+| pdb.additionalLabels                                               | object | `{}`                              |             |
+| pdb.annotations                                                    | object | `{}`                              |             |
+| pdb.enabled                                                        | bool   | `true`                            |             |
+| pdb.minAvailable                                                   | int    | `1`                               |             |
 | postgresql.auth.database                                           | string | `"formbricks"`                    |             |
 | postgresql.auth.existingSecret                                     | string | `"formbricks-app-secrets"`        |             |
 | postgresql.auth.secretKeys.adminPasswordKey                        | string | `"POSTGRES_ADMIN_PASSWORD"`       |             |
@@ -142,7 +265,7 @@ The intended defaults are:
 | postgresql.fullnameOverride                                        | string | `"formbricks-postgresql"`         |             |
 | postgresql.global.security.allowInsecureImages                     | bool   | `true`                            |             |
 | postgresql.image.repository                                        | string | `"pgvector/pgvector"`             |             |
-| postgresql.image.tag                                               | string | `"0.8.0-pg17"`                    |             |
+| postgresql.image.tag                                               | string | `"pg17"`                          |             |
 | postgresql.primary.containerSecurityContext.enabled                | bool   | `true`                            |             |
 | postgresql.primary.containerSecurityContext.readOnlyRootFilesystem | bool   | `false`                           |             |
 | postgresql.primary.containerSecurityContext.runAsUser              | int    | `1001`                            |             |
@@ -178,7 +301,3 @@ The intended defaults are:
 | serviceMonitor.endpoints[0].interval                               | string | `"5s"`                            |             |
 | serviceMonitor.endpoints[0].path                                   | string | `"/metrics"`                      |             |
 | serviceMonitor.endpoints[0].port                                   | string | `"metrics"`                       |             |
-
----
-
-Autogenerated from chart metadata using [helm-docs v1.14.2](https://github.com/norwoodj/helm-docs/releases/v1.14.2)

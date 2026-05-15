@@ -7,6 +7,22 @@ It also truncates the name to a maximum of 63 characters and removes trailing hy
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
+{{/*
+Hub resource name: base name truncated to 59 chars then "-hub" so the suffix is never lost (63 char limit).
+*/}}
+{{- define "formbricks.hubname" -}}
+{{- $base := include "formbricks.name" . | trunc 59 | trimSuffix "-" }}
+{{- printf "%s-hub" $base | trimSuffix "-" }}
+{{- end }}
+
+{{/*
+Cube.js resource name.
+*/}}
+{{- define "formbricks.cubeName" -}}
+{{- $base := include "formbricks.name" . | trunc 58 | trimSuffix "-" }}
+{{- printf "%s-cube" $base | trimSuffix "-" }}
+{{- end }}
+
 
 {{/*
 Define the application version to be used in labels.
@@ -85,9 +101,129 @@ If `namespaceOverride` is provided, it will be used; otherwise, it defaults to `
 {{- default .Release.Namespace .Values.namespaceOverride -}}
 {{- end -}}
 
+{{- define "formbricks.appSecretName" -}}
+{{- printf "%s-app-secrets" (include "formbricks.name" .) -}}
+{{- end }}
+
+{{- define "formbricks.hubSecretName" -}}
+{{- default (include "formbricks.appSecretName" .) .Values.hub.existingSecret -}}
+{{- end }}
+
+{{/*
+Hub image reference. Pin by digest in production (hub.image.digest = "sha256:..."); falls back to
+hub.image.tag for local/dev. All Hub workloads (deployment, init container, migration job, future
+hub-worker) must use this helper so they cannot drift apart.
+*/}}
+{{- define "formbricks.hubImage" -}}
+{{- if .Values.hub.image.digest -}}
+{{- printf "%s@%s" .Values.hub.image.repository .Values.hub.image.digest -}}
+{{- else -}}
+{{- printf "%s:%s" .Values.hub.image.repository (.Values.hub.image.tag | default "latest") -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Hub worker resource name.
+*/}}
+{{- define "formbricks.hubWorkerName" -}}
+{{- $base := include "formbricks.name" . | trunc 52 | trimSuffix "-" }}
+{{- printf "%s-hub-worker" $base | trimSuffix "-" }}
+{{- end }}
+
+{{/*
+Hub embeddings runtime resource name.
+*/}}
+{{- define "formbricks.hubEmbeddingsName" -}}
+{{- $base := include "formbricks.name" . | trunc 48 | trimSuffix "-" }}
+{{- printf "%s-hub-embeddings" $base | trimSuffix "-" }}
+{{- end }}
+
+{{/*
+Secret used by Hub and the embeddings runtime for the embeddings API key.
+*/}}
+{{- define "formbricks.hubEmbeddingsSecretName" -}}
+{{- default (printf "%s-secret" (include "formbricks.hubEmbeddingsName" .)) .Values.hub.embeddings.auth.existingSecret -}}
+{{- end }}
+
+{{/*
+Secret used by the embeddings runtime for Hugging Face access.
+*/}}
+{{- define "formbricks.hubEmbeddingsHuggingFaceSecretName" -}}
+{{- default (include "formbricks.hubEmbeddingsSecretName" .) .Values.hub.embeddings.huggingFace.existingSecret -}}
+{{- end }}
+
+{{/*
+Model name Hub sends to the OpenAI-compatible embeddings endpoint.
+*/}}
+{{- define "formbricks.hubEmbeddingsServedModelName" -}}
+{{- default .Values.hub.embeddings.model .Values.hub.embeddings.servedModelName -}}
+{{- end }}
+
+{{/*
+OpenAI-compatible embeddings base URL used by Hub.
+*/}}
+{{- define "formbricks.hubEmbeddingsBaseURL" -}}
+{{- if .Values.hub.embeddings.baseUrl -}}
+{{- .Values.hub.embeddings.baseUrl -}}
+{{- else -}}
+{{- printf "http://%s:%v/v1" (include "formbricks.hubEmbeddingsName" .) (.Values.hub.embeddings.service.port | default .Values.hub.embeddings.port) -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Embedding API key value for the generated embeddings secret.
+*/}}
+{{- define "formbricks.hubEmbeddingsApiKey" -}}
+{{- $secretName := include "formbricks.hubEmbeddingsSecretName" . }}
+{{- $secretKey := .Values.hub.embeddings.auth.secretKey | default "EMBEDDING_PROVIDER_API_KEY" }}
+{{- $secret := (lookup "v1" "Secret" .Release.Namespace $secretName) }}
+{{- if and $secret (index $secret.data $secretKey) }}
+    {{- index $secret.data $secretKey | b64dec -}}
+{{- else if .Values.hub.embeddings.auth.apiKey }}
+    {{- .Values.hub.embeddings.auth.apiKey -}}
+{{- else }}
+    {{- randAlphaNum 32 -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Shared Hub embedding env. These values are managed from hub.embeddings when the
+self-hosted runtime is enabled so Hub API and Hub worker cannot drift.
+*/}}
+{{- define "formbricks.hubEmbeddingEnv" -}}
+{{- $root := .root -}}
+{{- if $root.Values.hub.embeddings.enabled }}
+- name: EMBEDDING_PROVIDER
+  value: "openai"
+- name: EMBEDDING_MODEL
+  value: {{ include "formbricks.hubEmbeddingsServedModelName" $root | quote }}
+- name: EMBEDDING_BASE_URL
+  value: {{ include "formbricks.hubEmbeddingsBaseURL" $root | quote }}
+- name: EMBEDDING_PROVIDER_API_KEY
+  valueFrom:
+    secretKeyRef:
+      name: {{ include "formbricks.hubEmbeddingsSecretName" $root }}
+      key: {{ $root.Values.hub.embeddings.auth.secretKey | default "EMBEDDING_PROVIDER_API_KEY" }}
+- name: EMBEDDING_MAX_CONCURRENT
+  value: {{ $root.Values.hub.embeddings.maxConcurrent | quote }}
+- name: EMBEDDING_NORMALIZE
+  value: {{ $root.Values.hub.embeddings.normalize | quote }}
+{{- end }}
+{{- end }}
+
+{{/*
+Returns true when an env var is managed by hub.embeddings and should not be rendered from hub.env/worker.env.
+*/}}
+{{- define "formbricks.hubEmbeddingEnvManaged" -}}
+{{- $key := .key -}}
+{{- if has $key (list "EMBEDDING_PROVIDER" "EMBEDDING_MODEL" "EMBEDDING_BASE_URL" "EMBEDDING_PROVIDER_API_KEY" "EMBEDDING_MAX_CONCURRENT" "EMBEDDING_NORMALIZE") -}}
+true
+{{- end -}}
+{{- end }}
+
 
 {{- define "formbricks.postgresAdminPassword" -}}
-{{- $secret := (lookup "v1" "Secret" .Release.Namespace (printf "%s-app-secrets" (include "formbricks.name" .))) }}
+{{- $secret := (lookup "v1" "Secret" .Release.Namespace (include "formbricks.appSecretName" .)) }}
 {{- if and $secret (index $secret.data "POSTGRES_ADMIN_PASSWORD") }}
     {{- index $secret.data "POSTGRES_ADMIN_PASSWORD" | b64dec -}}
 {{- else }}
@@ -96,7 +232,7 @@ If `namespaceOverride` is provided, it will be used; otherwise, it defaults to `
 {{- end }}
 
 {{- define "formbricks.postgresUserPassword" -}}
-{{- $secret := (lookup "v1" "Secret" .Release.Namespace (printf "%s-app-secrets" (include "formbricks.name" .))) }}
+{{- $secret := (lookup "v1" "Secret" .Release.Namespace (include "formbricks.appSecretName" .)) }}
 {{- if and $secret (index $secret.data "POSTGRES_USER_PASSWORD") }}
     {{- index $secret.data "POSTGRES_USER_PASSWORD" | b64dec -}}
 {{- else }}
@@ -105,7 +241,7 @@ If `namespaceOverride` is provided, it will be used; otherwise, it defaults to `
 {{- end }}
 
 {{- define "formbricks.redisPassword" -}}
-{{- $secret := (lookup "v1" "Secret" .Release.Namespace (printf "%s-app-secrets" (include "formbricks.name" .))) }}
+{{- $secret := (lookup "v1" "Secret" .Release.Namespace (include "formbricks.appSecretName" .)) }}
 {{- if and $secret (index $secret.data "REDIS_PASSWORD") }}
     {{- index $secret.data "REDIS_PASSWORD" | b64dec -}}
 {{- else }}
@@ -113,17 +249,19 @@ If `namespaceOverride` is provided, it will be used; otherwise, it defaults to `
 {{- end -}}
 {{- end }}
 
-{{- define "formbricks.cronSecret" -}}	
-{{- $secret := (lookup "v1" "Secret" .Release.Namespace (printf "%s-app-secrets" (include "formbricks.name" .))) }}	
-{{- if $secret }}	
-    {{- index $secret.data "CRON_SECRET" | b64dec -}}	
-{{- else }}	
-    {{- randAlphaNum 32 -}}	
-{{- end -}}	
+{{- define "formbricks.cronSecret" -}}
+{{- $secret := (lookup "v1" "Secret" .Release.Namespace (include "formbricks.appSecretName" .)) }}
+{{- if and $secret (index $secret.data "CRON_SECRET") }}
+    {{- index $secret.data "CRON_SECRET" | b64dec -}}
+{{- else if $secret }}
+    {{- fail (printf "Secret %q exists in namespace %q but is missing CRON_SECRET" (include "formbricks.appSecretName" .) .Release.Namespace) -}}
+{{- else }}
+    {{- randAlphaNum 32 -}}
+{{- end -}}
 {{- end }}
 
 {{- define "formbricks.encryptionKey" -}}
-{{- $secret := (lookup "v1" "Secret" .Release.Namespace (printf "%s-app-secrets" (include "formbricks.name" .))) }}
+{{- $secret := (lookup "v1" "Secret" .Release.Namespace (include "formbricks.appSecretName" .)) }}
 {{- if $secret }}
     {{- index $secret.data "ENCRYPTION_KEY" | b64dec -}}
 {{- else }}
@@ -132,7 +270,7 @@ If `namespaceOverride` is provided, it will be used; otherwise, it defaults to `
 {{- end }}
 
 {{- define "formbricks.nextAuthSecret" -}}
-{{- $secret := (lookup "v1" "Secret" .Release.Namespace (printf "%s-app-secrets" (include "formbricks.name" .))) }}
+{{- $secret := (lookup "v1" "Secret" .Release.Namespace (include "formbricks.appSecretName" .)) }}
 {{- if $secret }}
     {{- index $secret.data "NEXTAUTH_SECRET" | b64dec -}}
 {{- else }}
@@ -140,6 +278,17 @@ If `namespaceOverride` is provided, it will be used; otherwise, it defaults to `
 {{- end -}}
 {{- end }}
 
+{{- define "formbricks.hubApiKey" -}}
+{{- $hubSecretName := include "formbricks.hubSecretName" . }}
+{{- $secret := (lookup "v1" "Secret" .Release.Namespace $hubSecretName) }}
+{{- if and $secret (index $secret.data "HUB_API_KEY") }}
+    {{- index $secret.data "HUB_API_KEY" | b64dec -}}
+{{- else if .Values.hub.existingSecret }}
+    {{- fail (printf "hub.existingSecret %q must already exist in namespace %q and contain HUB_API_KEY when rendering the generated app secret. Disable secret.enabled and provide app-secrets externally, or pre-create the Hub secret." $hubSecretName .Release.Namespace) -}}
+{{- else }}
+    {{- randAlphaNum 32 -}}
+{{- end -}}
+{{- end }}
 {{- define "formbricks.envoy.gatewayClassName" -}}
 {{- if .Values.envoy.formbricks.gatewayClass.name -}}
 {{- .Values.envoy.formbricks.gatewayClass.name | trunc 63 | trimSuffix "-" -}}

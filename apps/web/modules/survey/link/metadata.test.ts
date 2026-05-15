@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
-import { getEnvironmentContextForLinkSurvey } from "@/modules/survey/link/lib/environment";
+import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
 import { getBasicSurveyMetadata, getSurveyOpenGraphMetadata } from "./lib/metadata-utils";
 import { getMetadataForLinkSurvey } from "./metadata";
 
@@ -9,8 +9,8 @@ vi.mock("@/modules/survey/link/lib/data", () => ({
   getSurveyWithMetadata: vi.fn(),
 }));
 
-vi.mock("@/modules/survey/link/lib/environment", () => ({
-  getEnvironmentContextForLinkSurvey: vi.fn(),
+vi.mock("@/modules/survey/link/lib/workspace", () => ({
+  getWorkspaceContextForLinkSurvey: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -53,10 +53,10 @@ describe("getMetadataForLinkSurvey", () => {
         description: "Thanks a lot for your time 🙏",
       },
     });
-    vi.mocked(getEnvironmentContextForLinkSurvey).mockResolvedValue({
-      project: {
-        id: "project-123",
-        name: "Test Project",
+    vi.mocked(getWorkspaceContextForLinkSurvey).mockResolvedValue({
+      workspace: {
+        id: "workspace-123",
+        name: "Test Workspace",
         styling: { allowStyleOverwrite: true },
         logo: null,
         linkSurveyBranding: true,
@@ -66,7 +66,7 @@ describe("getMetadataForLinkSurvey", () => {
       organizationBilling: {
         usageCycleAnchor: new Date(),
         stripeCustomerId: null,
-        limits: { projects: 3, monthly: { responses: 1500 } },
+        limits: { workspaces: 3, monthly: { responses: 1500 } },
       },
       organizationWhitelabel: null,
     });

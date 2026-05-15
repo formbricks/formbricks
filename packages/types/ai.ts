@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const AI_PROVIDERS = ["aws", "gcp", "azure"] as const;
+export const AI_PROVIDERS = ["aws", "google", "azure"] as const;
 
 export const ZAIProvider = z.enum(AI_PROVIDERS);
 

@@ -52,6 +52,21 @@ Run this command in your terminal:
 curl -fsSL https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/formbricks.sh -o formbricks.sh && chmod +x formbricks.sh && ./formbricks.sh install
 ```
 
+<Info>
+  The current v5 one-click stack is based on the production Docker Compose file and includes Formbricks Hub plus
+  the bundled XM Suite v5 Cube.js files under `formbricks/cube/`. Ensure your generated
+  `formbricks/docker-compose.yml` contains a non-empty `HUB_API_KEY` and that `formbricks/.env` contains
+  `CUBEJS_API_SECRET` before treating the v5 stack as ready. If either value is missing after the script
+  finishes, add it manually. `HUB_API_URL` should normally stay at `http://hub:8080`.
+</Info>
+
+<Info>
+  The v5 one-click Traefik setup also exposes Hub-backed FeedbackRecords through Formbricks at
+  `/api/v3/feedbackRecords` and `/v1/feedback-records`. Traefik calls the internal Formbricks gateway auth
+  endpoint first, then forwards allowed requests to Hub with the generated `HUB_API_KEY`. Browser callers should
+  request short-lived gateway tokens from `/api/v3/gateway/token` with `{ "service": "feedbackRecords" }`.
+</Info>
+
 ### Script Prompts
 
 During installation, the script will prompt you to provide some details:
@@ -304,13 +319,22 @@ Y
 
 ## Update
 
-To update Formbricks, simply run the following command:
+To update Formbricks for a minor or patch release, run:
 
 ```
 ./formbricks.sh update
 ```
 
-The script will automatically pull the latest version of Formbricks from GitHub Container Registry and restart the containers.
+The script pulls the latest images, stops the running containers, and starts the stack again.
+
+<Warning>
+  `./formbricks.sh update` does **not** rewrite your existing `formbricks/docker-compose.yml`. For a major
+  migration such as Formbricks 4.x to 5.0, follow the [migration guide](/self-hosting/advanced/migration#v5)
+  first, merge the current v5 Compose changes into your existing deployment, confirm `HUB_API_KEY` is set, and
+  only then run the update command. If your older one-click install also uses bundled MinIO for file uploads,
+  review that storage path separately before the first v5 restart; newer self-hosting updates move the bundled
+  object-storage path to RustFS, while external S3-compatible storage keeps the same `S3_*` app contract.
+</Warning>
 
 ## Stop
 

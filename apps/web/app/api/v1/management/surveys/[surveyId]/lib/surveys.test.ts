@@ -10,10 +10,11 @@ vi.mock("@/modules/survey/lib/surveys", () => ({
 }));
 
 const surveyId = "clq5n7p1q0000m7z0h5p6g3r2";
+const workspaceId = "clq5n7p1q0000m7z0h5p6g3r3";
 
 const mockDeletedSurveyLink = {
   id: surveyId,
-  environmentId: "clq5n7p1q0000m7z0h5p6g3r3",
+  workspaceId,
   type: "link",
   segment: null,
   triggers: [],

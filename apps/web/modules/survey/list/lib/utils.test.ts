@@ -28,7 +28,7 @@ describe("normalizeSurveyFilters", () => {
     });
   });
 
-  test("drops type filters when the project channel is link-only", () => {
+  test("drops type filters when the workspace channel is link-only", () => {
     expect(
       normalizeSurveyFilters(
         {

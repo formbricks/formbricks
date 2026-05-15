@@ -1,9 +1,9 @@
 import { expect } from "@playwright/test";
-import { readFileSync, writeFileSync } from "fs";
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { Page } from "playwright";
 import { logger } from "@formbricks/logger";
-import { TProjectConfigChannel } from "@formbricks/types/project";
+import { TWorkspaceConfigChannel } from "@formbricks/types/workspace";
 import { CreateSurveyParams, CreateSurveyWithLogicParams } from "@/playwright/utils/mock";
 
 const MOCK_STORAGE_UPLOAD_PATH = "/__playwright__/mock-storage-upload";
@@ -236,6 +236,43 @@ export const apiLogin = async (page: Page, email: string, password: string) => {
   });
 };
 
+export const isWorkspaceStorageConfigured = async (page: Page, workspaceId: string): Promise<boolean> => {
+  const response = await page.context().request.post("/api/v1/management/storage", {
+    data: {
+      fileName: "e2e-storage-check.png",
+      fileType: "image/png",
+      workspaceId,
+    },
+  });
+
+  return response.ok();
+};
+
+export const uploadFileForFileUploadQuestion = async (page: Page) => {
+  try {
+    const fileInput = page.locator('input[type="file"]');
+    const response1 = await fetch("https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-1-small.jpg");
+    const response2 = await fetch("https://formbricks-cdn.s3.eu-central-1.amazonaws.com/puppy-2-small.jpg");
+    const buffer1 = Buffer.from(await response1.arrayBuffer());
+    const buffer2 = Buffer.from(await response2.arrayBuffer());
+
+    await fileInput.setInputFiles([
+      {
+        name: "puppy-1-small.jpg",
+        mimeType: "image/jpeg",
+        buffer: buffer1,
+      },
+      {
+        name: "puppy-2-small.jpg",
+        mimeType: "image/jpeg",
+        buffer: buffer2,
+      },
+    ]);
+  } catch (error) {
+    logger.error(error, "Error uploading files");
+  }
+};
+
 export const waitForPendingFileUploads = async (page: Page): Promise<void> => {
   await expect(page.locator("svg.animate-spin.text-slate-700")).toHaveCount(0, { timeout: 60000 });
   await expect(page.getByText("Some files failed to upload")).toHaveCount(0);
@@ -257,13 +294,13 @@ export const uploadImageChoicesForPictureSelection = async (page: Page) => {
 
 export const finishOnboarding = async (
   page: Page,
-  projectChannel: TProjectConfigChannel = "website"
+  workspaceChannel: TWorkspaceConfigChannel = "website"
 ): Promise<void> => {
   await page.waitForURL(/\/organizations\/[^/]+\/workspaces\/new\/mode/);
 
   await page.getByRole("button", { name: "Formbricks Surveys Multi-" }).click();
 
-  if (projectChannel === "app") {
+  if (workspaceChannel === "app") {
     await page.getByRole("button", { name: "In-product surveys" }).click();
   } else {
     await page.getByRole("button", { name: "Link & email surveys" }).click();
@@ -274,20 +311,12 @@ export const finishOnboarding = async (
   await page.getByPlaceholder("e.g. Formbricks").fill("My Workspace");
   await page.locator("#form-next-button").click();
 
-  if (projectChannel !== "link") {
+  if (workspaceChannel !== "link") {
     await page.getByRole("button", { name: "I will do it later" }).click();
   }
 
-  await page.waitForURL(/\/environments\/[^/]+\/surveys/);
+  await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
   await expect(page.getByText("My Workspace")).toBeVisible();
-};
-
-export const replaceEnvironmentIdInHtml = (filePath: string, environmentId: string): string => {
-  let htmlContent = readFileSync(filePath, "utf-8");
-  htmlContent = htmlContent.replace(/environmentId: ".*?"/, `environmentId: "${environmentId}"`);
-
-  writeFileSync(filePath, htmlContent, { mode: 1 });
-  return "file:///" + filePath;
 };
 
 export const signupUsingInviteToken = async (page: Page, name: string, email: string, password: string) => {
@@ -363,7 +392,7 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   await page.getByText("Start from scratch").click();
   await page.getByRole("button", { name: "Create survey", exact: true }).click();
 
-  await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/edit$/);
+  await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/edit$/);
 
   // Welcome Card
   await expect(page.locator("#welcome-toggle")).toBeVisible();
@@ -499,17 +528,17 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   await page.locator("#row-1").click();
   await page.locator("#row-1").fill(params.matrix.rows[1]);
   await page.getByRole("button", { name: "Add row" }).click();
-  await page.locator("#row-2").click();
+  await expect(page.locator("#row-2")).toBeEditable();
   await page.locator("#row-2").fill(params.matrix.rows[2]);
   await page.locator("#column-0").click();
   await page.locator("#column-0").fill(params.matrix.columns[0]);
   await page.locator("#column-1").click();
   await page.locator("#column-1").fill(params.matrix.columns[1]);
   await page.getByRole("button", { name: "Add column" }).click();
-  await page.locator("#column-2").click();
+  await expect(page.locator("#column-2")).toBeEditable();
   await page.locator("#column-2").fill(params.matrix.columns[2]);
   await page.getByRole("button", { name: "Add column" }).click();
-  await page.locator("#column-3").click();
+  await expect(page.locator("#column-3")).toBeEditable();
   await page.locator("#column-3").fill(params.matrix.columns[3]);
 
   // Fill Address Question
@@ -568,7 +597,7 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByText("Start from scratch").click();
   await page.getByRole("button", { name: "Create survey", exact: true }).click();
 
-  await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/edit$/);
+  await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/edit$/);
 
   // Add variables
   await page.getByText("Variables").click();
@@ -706,17 +735,17 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#row-1").click();
   await page.locator("#row-1").fill(params.matrix.rows[1]);
   await page.getByRole("button", { name: "Add row" }).click();
-  await page.locator("#row-2").click();
+  await expect(page.locator("#row-2")).toBeEditable();
   await page.locator("#row-2").fill(params.matrix.rows[2]);
   await page.locator("#column-0").click();
   await page.locator("#column-0").fill(params.matrix.columns[0]);
   await page.locator("#column-1").click();
   await page.locator("#column-1").fill(params.matrix.columns[1]);
   await page.getByRole("button", { name: "Add column" }).click();
-  await page.locator("#column-2").click();
+  await expect(page.locator("#column-2")).toBeEditable();
   await page.locator("#column-2").fill(params.matrix.columns[2]);
   await page.getByRole("button", { name: "Add column" }).click();
-  await page.locator("#column-3").click();
+  await expect(page.locator("#column-3")).toBeEditable();
   await page.locator("#column-3").fill(params.matrix.columns[3]);
 
   // CTA Question

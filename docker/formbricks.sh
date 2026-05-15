@@ -459,7 +459,7 @@ EOT
   echo "   If you skip this, the following features will be disabled:"
   echo "   - Adding images to surveys (e.g., in questions or as background)"
   echo "   - 'File Upload' and 'Picture Selection' question types"
-  echo "   - Project logos"
+  echo "   - Workspace logos"
   echo "   - Custom organization logo in emails"
   read -p "Configure file uploads now? [Y/n] " configure_uploads
   configure_uploads=$(echo "$configure_uploads" | tr '[:upper:]' '[:lower:]')
@@ -506,6 +506,10 @@ EOT
 
   echo "📥 Downloading docker-compose.yml from Formbricks GitHub repository..."
   curl -fsSL -o docker-compose.yml https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/docker-compose.yml
+  mkdir -p cube/schema
+  echo "📥 Downloading Cube.js configuration for XM Suite v5 analytics..."
+  curl -fsSL -o cube/cube.js https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/cube/cube.js
+  curl -fsSL -o cube/schema/FeedbackRecords.js https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/cube/schema/FeedbackRecords.js
 
   echo "🚙 Updating docker-compose.yml with your custom inputs..."
   sed -i "/WEBAPP_URL:/s|WEBAPP_URL:.*|WEBAPP_URL: \"https://$domain_name\"|" docker-compose.yml
@@ -519,6 +523,17 @@ EOT
 
   cron_secret=$(openssl rand -hex 32) && sed -i "/CRON_SECRET:$/s/CRON_SECRET:.*/CRON_SECRET: $cron_secret/" docker-compose.yml	
   echo "🚗 CRON_SECRET updated successfully!"
+
+  hub_api_key=$(openssl rand -hex 32)
+  cubejs_api_secret=$(openssl rand -hex 32)
+cat <<EOF > .env
+COMPOSE_PROFILES=xm
+HUB_API_KEY=$hub_api_key
+CUBEJS_API_SECRET=$cubejs_api_secret
+CUBEJS_JWT_ISSUER=formbricks-web
+CUBEJS_JWT_AUDIENCE=formbricks-cube
+EOF
+  echo "🚗 Generated Hub and Cube secrets in .env successfully!"
   
   if [[ -n $mail_from ]]; then
     sed -i "s|# MAIL_FROM:|MAIL_FROM: \"$mail_from\"|" docker-compose.yml
@@ -576,6 +591,12 @@ EOT
         print "      - \"traefik.http.routers.formbricks.tls=true\""
         print "      - \"traefik.http.routers.formbricks.tls.certresolver=default\""
         print "      - \"traefik.http.services.formbricks.loadbalancer.server.port=3000\""
+        print "      - \"traefik.http.routers.feedback-records-token.rule=Host(`" domain_name "`) && Path(`/api/v3/feedbackRecords/token`)\""
+        print "      - \"traefik.http.routers.feedback-records-token.entrypoints=websecure\""
+        print "      - \"traefik.http.routers.feedback-records-token.tls=true\""
+        print "      - \"traefik.http.routers.feedback-records-token.tls.certresolver=default\""
+        print "      - \"traefik.http.routers.feedback-records-token.service=formbricks\""
+        print "      - \"traefik.http.routers.feedback-records-token.priority=200\""
         if (hsts_enabled == "y") {
             print "      - \"traefik.http.middlewares.hstsHeader.headers.stsSeconds=31536000\""
             print "      - \"traefik.http.middlewares.hstsHeader.headers.forceSTSHeader=true\""
@@ -584,6 +605,10 @@ EOT
         } else {
             print "      - \"traefik.http.routers.formbricks_http.entrypoints=web\""
             print "      - \"traefik.http.routers.formbricks_http.rule=Host(`" domain_name "`)\""
+            print "      - \"traefik.http.routers.feedback-records-token-http.rule=Host(`" domain_name "`) && Path(`/api/v3/feedbackRecords/token`)\""
+            print "      - \"traefik.http.routers.feedback-records-token-http.entrypoints=web\""
+            print "      - \"traefik.http.routers.feedback-records-token-http.service=formbricks\""
+            print "      - \"traefik.http.routers.feedback-records-token-http.priority=200\""
         }
         print $0
     } else {
@@ -592,6 +617,57 @@ EOT
     next
 }
 { print }
+' docker-compose.yml >tmp.yml && mv tmp.yml docker-compose.yml
+
+  # Step 1b: Add FeedbackRecords gateway labels to the Hub service.
+  awk -v domain_name="$domain_name" -v hsts_enabled="$hsts_enabled" '
+BEGIN { in_hub = 0; inserted = 0 }
+/^  hub:/ { in_hub = 1 }
+in_hub && /^  [A-Za-z0-9_-]+:/ && !/^  hub:/ { in_hub = 0 }
+{
+    if (in_hub && !inserted && $0 ~ /^    environment:/) {
+        print "    labels:"
+        print "      - \"traefik.enable=true\""
+        print "      - \"traefik.http.services.feedback-records-hub.loadbalancer.server.port=8080\""
+        print "      - \"traefik.http.routers.feedback-records-v3.rule=Host(`" domain_name "`) && PathPrefix(`/api/v3/feedbackRecords`)\""
+        print "      - \"traefik.http.routers.feedback-records-v3.entrypoints=websecure\""
+        print "      - \"traefik.http.routers.feedback-records-v3.tls=true\""
+        print "      - \"traefik.http.routers.feedback-records-v3.tls.certresolver=default\""
+        print "      - \"traefik.http.routers.feedback-records-v3.service=feedback-records-hub\""
+        print "      - \"traefik.http.routers.feedback-records-v3.priority=100\""
+        print "      - \"traefik.http.routers.feedback-records-v3.middlewares=feedback-records-auth,feedback-records-v3-rewrite,feedback-records-hub-headers\""
+        print "      - \"traefik.http.routers.feedback-records-sdk.rule=Host(`" domain_name "`) && PathPrefix(`/v1/feedback-records`)\""
+        print "      - \"traefik.http.routers.feedback-records-sdk.entrypoints=websecure\""
+        print "      - \"traefik.http.routers.feedback-records-sdk.tls=true\""
+        print "      - \"traefik.http.routers.feedback-records-sdk.tls.certresolver=default\""
+        print "      - \"traefik.http.routers.feedback-records-sdk.service=feedback-records-hub\""
+        print "      - \"traefik.http.routers.feedback-records-sdk.priority=100\""
+        print "      - \"traefik.http.routers.feedback-records-sdk.middlewares=feedback-records-auth,feedback-records-hub-headers\""
+        if (hsts_enabled != "y") {
+            print "      - \"traefik.http.routers.feedback-records-v3-http.rule=Host(`" domain_name "`) && PathPrefix(`/api/v3/feedbackRecords`)\""
+            print "      - \"traefik.http.routers.feedback-records-v3-http.entrypoints=web\""
+            print "      - \"traefik.http.routers.feedback-records-v3-http.service=feedback-records-hub\""
+            print "      - \"traefik.http.routers.feedback-records-v3-http.priority=100\""
+            print "      - \"traefik.http.routers.feedback-records-v3-http.middlewares=feedback-records-auth,feedback-records-v3-rewrite,feedback-records-hub-headers\""
+            print "      - \"traefik.http.routers.feedback-records-sdk-http.rule=Host(`" domain_name "`) && PathPrefix(`/v1/feedback-records`)\""
+            print "      - \"traefik.http.routers.feedback-records-sdk-http.entrypoints=web\""
+            print "      - \"traefik.http.routers.feedback-records-sdk-http.service=feedback-records-hub\""
+            print "      - \"traefik.http.routers.feedback-records-sdk-http.priority=100\""
+            print "      - \"traefik.http.routers.feedback-records-sdk-http.middlewares=feedback-records-auth,feedback-records-hub-headers\""
+        }
+        print "      - \"traefik.http.middlewares.feedback-records-auth.forwardauth.address=http://formbricks:3000/api/traefik-auth/feedback-records\""
+        print "      - \"traefik.http.middlewares.feedback-records-auth.forwardauth.forwardbody=true\""
+        print "      - \"traefik.http.middlewares.feedback-records-auth.forwardauth.maxbodysize=1048576\""
+        print "      - \"traefik.http.middlewares.feedback-records-auth.forwardauth.preserverequestmethod=true\""
+        print "      - \"traefik.http.middlewares.feedback-records-v3-rewrite.replacepathregex.regex=^/api/v3/feedbackRecords(.*)\""
+        print "      - \"traefik.http.middlewares.feedback-records-v3-rewrite.replacepathregex.replacement=/v1/feedback-records$${1}\""
+        print "      - \"traefik.http.middlewares.feedback-records-hub-headers.headers.customrequestheaders.Authorization=Bearer ${HUB_API_KEY}\""
+        print "      - \"traefik.http.middlewares.feedback-records-hub-headers.headers.customrequestheaders.X-API-Key=\""
+        print "      - \"traefik.http.middlewares.feedback-records-hub-headers.headers.customrequestheaders.Cookie=\""
+        inserted = 1
+    }
+    print
+}
 ' docker-compose.yml >tmp.yml && mv tmp.yml docker-compose.yml
 
   # Step 2: Ensure formbricks waits for rustfs-init to complete successfully (mapping depends_on)
@@ -715,11 +791,12 @@ EOF
     if [[ $insert_traefik == "y" ]]; then
       cat >> "$services_snippet_file" << EOF
   traefik:
-    image: "traefik:v2.11.31"
+    image: "traefik:v3.6.4"
     restart: always
     container_name: "traefik"
     depends_on:
       - formbricks
+      - hub
       - rustfs
     ports:
       - "80:80"
@@ -744,11 +821,12 @@ EOF
       cat > "$services_snippet_file" << EOF
 
   traefik:
-    image: "traefik:v2.11.31"
+    image: "traefik:v3.6.4"
     restart: always
     container_name: "traefik"
     depends_on:
       - formbricks
+      - hub
     ports:
       - "80:80"
       - "443:443"

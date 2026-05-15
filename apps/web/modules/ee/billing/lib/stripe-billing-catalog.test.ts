@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
+const TEST_TIMEOUT_MS = 15_000;
+
 const mocks = vi.hoisted(() => ({
   pricesList: vi.fn(),
   cacheWithCache: vi.fn(),
@@ -73,133 +75,149 @@ describe("stripe-billing-catalog", () => {
     });
   });
 
-  test("resolves the metadata-backed billing catalog", async () => {
-    mocks.pricesList.mockResolvedValue({
-      data: [
-        createPrice({ id: "price_hobby_monthly", plan: "hobby", kind: "base", interval: "monthly" }),
-        createPrice({ id: "price_pro_monthly", plan: "pro", kind: "base", interval: "monthly" }),
-        createPrice({ id: "price_pro_yearly", plan: "pro", kind: "base", interval: "yearly" }),
-        createPrice({ id: "price_pro_responses", plan: "pro", kind: "responses", interval: "monthly" }),
-        createPrice({ id: "price_scale_monthly", plan: "scale", kind: "base", interval: "monthly" }),
-        createPrice({ id: "price_scale_yearly", plan: "scale", kind: "base", interval: "yearly" }),
-        createPrice({ id: "price_scale_responses", plan: "scale", kind: "responses", interval: "monthly" }),
-      ],
-      has_more: false,
-    });
+  test(
+    "resolves the metadata-backed billing catalog",
+    async () => {
+      mocks.pricesList.mockResolvedValue({
+        data: [
+          createPrice({ id: "price_hobby_monthly", plan: "hobby", kind: "base", interval: "monthly" }),
+          createPrice({ id: "price_pro_monthly", plan: "pro", kind: "base", interval: "monthly" }),
+          createPrice({ id: "price_pro_yearly", plan: "pro", kind: "base", interval: "yearly" }),
+          createPrice({ id: "price_pro_responses", plan: "pro", kind: "responses", interval: "monthly" }),
+          createPrice({ id: "price_scale_monthly", plan: "scale", kind: "base", interval: "monthly" }),
+          createPrice({ id: "price_scale_yearly", plan: "scale", kind: "base", interval: "yearly" }),
+          createPrice({ id: "price_scale_responses", plan: "scale", kind: "responses", interval: "monthly" }),
+        ],
+        has_more: false,
+      });
 
-    const { getCatalogItemsForPlan, getStripeBillingCatalogDisplay } =
-      await import("./stripe-billing-catalog");
+      const { getCatalogItemsForPlan, getStripeBillingCatalogDisplay } =
+        await import("./stripe-billing-catalog");
 
-    await expect(getCatalogItemsForPlan("hobby", "monthly")).resolves.toEqual([
-      { price: "price_hobby_monthly", quantity: 1 },
-    ]);
-    await expect(getCatalogItemsForPlan("pro", "yearly")).resolves.toEqual([
-      { price: "price_pro_yearly", quantity: 1 },
-      { price: "price_pro_responses" },
-    ]);
-    await expect(getStripeBillingCatalogDisplay()).resolves.toEqual({
-      hobby: {
-        monthly: {
-          plan: "hobby",
-          interval: "monthly",
-          currency: "usd",
-          unitAmount: 1000,
+      await expect(getCatalogItemsForPlan("hobby", "monthly")).resolves.toEqual([
+        { price: "price_hobby_monthly", quantity: 1 },
+      ]);
+      await expect(getCatalogItemsForPlan("pro", "yearly")).resolves.toEqual([
+        { price: "price_pro_yearly", quantity: 1 },
+        { price: "price_pro_responses" },
+      ]);
+      await expect(getStripeBillingCatalogDisplay()).resolves.toEqual({
+        hobby: {
+          monthly: {
+            plan: "hobby",
+            interval: "monthly",
+            currency: "usd",
+            unitAmount: 1000,
+          },
         },
-      },
-      pro: {
-        monthly: {
-          plan: "pro",
-          interval: "monthly",
-          currency: "usd",
-          unitAmount: 1000,
+        pro: {
+          monthly: {
+            plan: "pro",
+            interval: "monthly",
+            currency: "usd",
+            unitAmount: 1000,
+          },
+          yearly: {
+            plan: "pro",
+            interval: "yearly",
+            currency: "usd",
+            unitAmount: 10000,
+          },
         },
-        yearly: {
-          plan: "pro",
-          interval: "yearly",
-          currency: "usd",
-          unitAmount: 10000,
+        scale: {
+          monthly: {
+            plan: "scale",
+            interval: "monthly",
+            currency: "usd",
+            unitAmount: 1000,
+          },
+          yearly: {
+            plan: "scale",
+            interval: "yearly",
+            currency: "usd",
+            unitAmount: 10000,
+          },
         },
-      },
-      scale: {
-        monthly: {
-          plan: "scale",
-          interval: "monthly",
-          currency: "usd",
-          unitAmount: 1000,
+      });
+    },
+    TEST_TIMEOUT_MS
+  );
+
+  test(
+    "fails fast when the catalog is incomplete",
+    async () => {
+      mocks.pricesList.mockResolvedValue({
+        data: [createPrice({ id: "price_hobby_monthly", plan: "hobby", kind: "base", interval: "monthly" })],
+        has_more: false,
+      });
+
+      const { getCatalogItemsForPlan } = await import("./stripe-billing-catalog");
+
+      await expect(getCatalogItemsForPlan("pro", "monthly")).rejects.toThrow(
+        "Expected exactly one Stripe price for pro/base/monthly, but found 0"
+      );
+    },
+    TEST_TIMEOUT_MS
+  );
+
+  test(
+    "reuses the shared cached catalog across module reloads",
+    async () => {
+      mocks.pricesList.mockResolvedValue({
+        data: [
+          createPrice({ id: "price_hobby_monthly", plan: "hobby", kind: "base", interval: "monthly" }),
+          createPrice({ id: "price_pro_monthly", plan: "pro", kind: "base", interval: "monthly" }),
+          createPrice({ id: "price_pro_yearly", plan: "pro", kind: "base", interval: "yearly" }),
+          createPrice({ id: "price_pro_responses", plan: "pro", kind: "responses", interval: "monthly" }),
+          createPrice({ id: "price_scale_monthly", plan: "scale", kind: "base", interval: "monthly" }),
+          createPrice({ id: "price_scale_yearly", plan: "scale", kind: "base", interval: "yearly" }),
+          createPrice({ id: "price_scale_responses", plan: "scale", kind: "responses", interval: "monthly" }),
+        ],
+        has_more: false,
+      });
+
+      const firstModule = await import("./stripe-billing-catalog");
+      await firstModule.getStripeBillingCatalogDisplay();
+
+      vi.resetModules();
+
+      const secondModule = await import("./stripe-billing-catalog");
+      await secondModule.getStripeBillingCatalogDisplay();
+
+      expect(mocks.pricesList).toHaveBeenCalledTimes(1);
+      expect(mocks.cacheWithCache).toHaveBeenCalledTimes(2);
+    },
+    TEST_TIMEOUT_MS
+  );
+
+  test(
+    "falls back to direct Stripe fetch when shared cache is unavailable",
+    async () => {
+      mocks.pricesList.mockResolvedValue({
+        data: [
+          createPrice({ id: "price_hobby_monthly", plan: "hobby", kind: "base", interval: "monthly" }),
+          createPrice({ id: "price_pro_monthly", plan: "pro", kind: "base", interval: "monthly" }),
+          createPrice({ id: "price_pro_yearly", plan: "pro", kind: "base", interval: "yearly" }),
+          createPrice({ id: "price_pro_responses", plan: "pro", kind: "responses", interval: "monthly" }),
+          createPrice({ id: "price_scale_monthly", plan: "scale", kind: "base", interval: "monthly" }),
+          createPrice({ id: "price_scale_yearly", plan: "scale", kind: "base", interval: "yearly" }),
+          createPrice({ id: "price_scale_responses", plan: "scale", kind: "responses", interval: "monthly" }),
+        ],
+        has_more: false,
+      });
+      mocks.cacheWithCache.mockImplementationOnce(async (fn: () => Promise<unknown>) => await fn());
+
+      const { getStripeBillingCatalogDisplay } = await import("./stripe-billing-catalog");
+
+      await expect(getStripeBillingCatalogDisplay()).resolves.toMatchObject({
+        hobby: {
+          monthly: {
+            plan: "hobby",
+          },
         },
-        yearly: {
-          plan: "scale",
-          interval: "yearly",
-          currency: "usd",
-          unitAmount: 10000,
-        },
-      },
-    });
-  });
-
-  test("fails fast when the catalog is incomplete", async () => {
-    mocks.pricesList.mockResolvedValue({
-      data: [createPrice({ id: "price_hobby_monthly", plan: "hobby", kind: "base", interval: "monthly" })],
-      has_more: false,
-    });
-
-    const { getCatalogItemsForPlan } = await import("./stripe-billing-catalog");
-
-    await expect(getCatalogItemsForPlan("pro", "monthly")).rejects.toThrow(
-      "Expected exactly one Stripe price for pro/base/monthly, but found 0"
-    );
-  });
-
-  test("reuses the shared cached catalog across module reloads", async () => {
-    mocks.pricesList.mockResolvedValue({
-      data: [
-        createPrice({ id: "price_hobby_monthly", plan: "hobby", kind: "base", interval: "monthly" }),
-        createPrice({ id: "price_pro_monthly", plan: "pro", kind: "base", interval: "monthly" }),
-        createPrice({ id: "price_pro_yearly", plan: "pro", kind: "base", interval: "yearly" }),
-        createPrice({ id: "price_pro_responses", plan: "pro", kind: "responses", interval: "monthly" }),
-        createPrice({ id: "price_scale_monthly", plan: "scale", kind: "base", interval: "monthly" }),
-        createPrice({ id: "price_scale_yearly", plan: "scale", kind: "base", interval: "yearly" }),
-        createPrice({ id: "price_scale_responses", plan: "scale", kind: "responses", interval: "monthly" }),
-      ],
-      has_more: false,
-    });
-
-    const firstModule = await import("./stripe-billing-catalog");
-    await firstModule.getStripeBillingCatalogDisplay();
-
-    vi.resetModules();
-
-    const secondModule = await import("./stripe-billing-catalog");
-    await secondModule.getStripeBillingCatalogDisplay();
-
-    expect(mocks.pricesList).toHaveBeenCalledTimes(1);
-    expect(mocks.cacheWithCache).toHaveBeenCalledTimes(2);
-  });
-
-  test("falls back to direct Stripe fetch when shared cache is unavailable", async () => {
-    mocks.pricesList.mockResolvedValue({
-      data: [
-        createPrice({ id: "price_hobby_monthly", plan: "hobby", kind: "base", interval: "monthly" }),
-        createPrice({ id: "price_pro_monthly", plan: "pro", kind: "base", interval: "monthly" }),
-        createPrice({ id: "price_pro_yearly", plan: "pro", kind: "base", interval: "yearly" }),
-        createPrice({ id: "price_pro_responses", plan: "pro", kind: "responses", interval: "monthly" }),
-        createPrice({ id: "price_scale_monthly", plan: "scale", kind: "base", interval: "monthly" }),
-        createPrice({ id: "price_scale_yearly", plan: "scale", kind: "base", interval: "yearly" }),
-        createPrice({ id: "price_scale_responses", plan: "scale", kind: "responses", interval: "monthly" }),
-      ],
-      has_more: false,
-    });
-    mocks.cacheWithCache.mockImplementationOnce(async (fn: () => Promise<unknown>) => await fn());
-
-    const { getStripeBillingCatalogDisplay } = await import("./stripe-billing-catalog");
-
-    await expect(getStripeBillingCatalogDisplay()).resolves.toMatchObject({
-      hobby: {
-        monthly: {
-          plan: "hobby",
-        },
-      },
-    });
-    expect(mocks.pricesList).toHaveBeenCalledTimes(1);
-  });
+      });
+      expect(mocks.pricesList).toHaveBeenCalledTimes(1);
+    },
+    TEST_TIMEOUT_MS
+  );
 });

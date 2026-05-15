@@ -25,8 +25,8 @@ export const ValidationLogicSelector = ({ value, onChange }: ValidationLogicSele
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="and">{t("environments.surveys.edit.validation_logic_and")}</SelectItem>
-          <SelectItem value="or">{t("environments.surveys.edit.validation_logic_or")}</SelectItem>
+          <SelectItem value="and">{t("workspace.surveys.edit.validation_logic_and")}</SelectItem>
+          <SelectItem value="or">{t("workspace.surveys.edit.validation_logic_or")}</SelectItem>
         </SelectContent>
       </Select>
     </div>

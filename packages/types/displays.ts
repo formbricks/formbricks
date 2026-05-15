@@ -11,7 +11,7 @@ export const ZDisplay = z.object({
 export type TDisplay = z.infer<typeof ZDisplay>;
 
 export const ZDisplayCreateInput = z.object({
-  environmentId: z.cuid2(),
+  workspaceId: z.cuid2(),
   surveyId: z.cuid2(),
   userId: z
     .string()

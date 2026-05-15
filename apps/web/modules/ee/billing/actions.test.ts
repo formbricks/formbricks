@@ -9,7 +9,6 @@ const mocks = vi.hoisted(() => ({
   ensureStripeCustomerForOrganization: vi.fn(),
   reconcileCloudStripeSubscriptionsForOrganization: vi.fn(),
   syncOrganizationBillingFromStripe: vi.fn(),
-  getOrganizationIdFromEnvironmentId: vi.fn(),
   createCustomerPortalSession: vi.fn(),
   createSetupCheckoutSession: vi.fn(),
   isSubscriptionCancelled: vi.fn(),
@@ -39,10 +38,6 @@ vi.mock("@/lib/utils/action-client/action-client-middleware", () => ({
 
 vi.mock("@/lib/organization/service", () => ({
   getOrganization: mocks.getOrganization,
-}));
-
-vi.mock("@/lib/utils/helper", () => ({
-  getOrganizationIdFromEnvironmentId: mocks.getOrganizationIdFromEnvironmentId,
 }));
 
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({

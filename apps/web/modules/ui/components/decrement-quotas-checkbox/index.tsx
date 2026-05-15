@@ -29,7 +29,7 @@ export const DecrementQuotasCheckbox = ({
           checked={checked}
           onCheckedChange={handleCheckedChange}
         />
-        <span className="ml-2">{t("environments.surveys.responses.decrement_quotas")}</span>
+        <span className="ml-2">{t("workspace.surveys.responses.decrement_quotas")}</span>
       </label>
     </div>
   );

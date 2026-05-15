@@ -29,14 +29,14 @@ export const ActionNameDescriptionFields = ({
             disabled={isReadOnly}
             render={({ field, fieldState: { error } }) => (
               <FormItem>
-                <FormLabel htmlFor={nameInputId}>{t("environments.actions.what_did_your_user_do")}</FormLabel>
+                <FormLabel htmlFor={nameInputId}>{t("workspace.actions.what_did_your_user_do")}</FormLabel>
 
                 <FormControl>
                   <Input
                     type="text"
                     id={nameInputId}
                     {...field}
-                    placeholder={t("environments.actions.eg_clicked_download")}
+                    placeholder={t("workspace.actions.eg_clicked_download")}
                     isInvalid={!!error?.message}
                     disabled={isReadOnly}
                   />
@@ -61,7 +61,7 @@ export const ActionNameDescriptionFields = ({
                     type="text"
                     id={descriptionInputId}
                     {...field}
-                    placeholder={t("environments.actions.user_clicked_download_button")}
+                    placeholder={t("workspace.actions.user_clicked_download_button")}
                     value={field.value ?? ""}
                     disabled={isReadOnly}
                   />

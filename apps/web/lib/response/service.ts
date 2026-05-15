@@ -23,7 +23,7 @@ import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { reduceQuotaLimits } from "@/modules/ee/quotas/lib/quotas";
 import { deleteFile } from "@/modules/storage/service";
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
-import { getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
+import { getOrganizationIdFromWorkspaceId } from "@/modules/survey/lib/organization";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 import { ITEMS_PER_PAGE } from "../constants";
 import { deleteDisplay } from "../display/service";
@@ -74,7 +74,7 @@ export const responseSelection = {
           createdAt: true,
           updatedAt: true,
           name: true,
-          environmentId: true,
+          workspaceId: true,
         },
       },
     },
@@ -92,6 +92,14 @@ export const getResponseContact = (
       ?.value as string,
   };
 };
+
+const mapResponsePrismaToResponse = (
+  responsePrisma: Prisma.ResponseGetPayload<{ select: typeof responseSelection }>
+): TResponse => ({
+  ...responsePrisma,
+  contact: getResponseContact(responsePrisma),
+  tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+});
 
 export const getResponsesByContactId = reactCache(
   async (contactId: string, page?: number): Promise<TResponseWithQuotas[]> => {
@@ -172,13 +180,7 @@ export const getResponseBySingleUseId = reactCache(
         return null;
       }
 
-      const response: TResponse = {
-        ...responsePrisma,
-        contact: getResponseContact(responsePrisma),
-        tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
-      };
-
-      return response;
+      return mapResponsePrismaToResponse(responsePrisma);
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);
@@ -204,13 +206,7 @@ export const getResponse = reactCache(async (responseId: string): Promise<TRespo
       return null;
     }
 
-    const response: TResponse = {
-      ...responsePrisma,
-      contact: getResponseContact(responsePrisma),
-      tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
-    };
-
-    return response;
+    return mapResponsePrismaToResponse(responsePrisma);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
@@ -219,6 +215,31 @@ export const getResponse = reactCache(async (responseId: string): Promise<TRespo
     throw error;
   }
 });
+
+export const getResponseSnapshotForPipeline = async (responseId: string): Promise<TResponse | null> => {
+  validateInputs([responseId, ZId]);
+
+  try {
+    const responsePrisma = await prisma.response.findUnique({
+      where: {
+        id: responseId,
+      },
+      select: responseSelection,
+    });
+
+    if (!responsePrisma) {
+      return null;
+    }
+
+    return mapResponsePrismaToResponse(responsePrisma);
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+
+    throw error;
+  }
+};
 
 export const getResponseFilteringValues = reactCache(async (surveyId: string) => {
   validateInputs([surveyId, ZId]);
@@ -376,7 +397,7 @@ export const getResponseDownloadFile = async (
       responses
     );
 
-    const organizationId = await getOrganizationIdFromEnvironmentId(survey.environmentId);
+    const organizationId = await getOrganizationIdFromWorkspaceId(survey.workspaceId);
     if (!organizationId) {
       throw new ResourceNotFoundError("Organization", null);
     }
@@ -441,15 +462,15 @@ export const getResponseDownloadFile = async (
   }
 };
 
-export const getResponsesByEnvironmentId = reactCache(
-  async (environmentId: string, limit?: number, offset?: number): Promise<TResponse[]> => {
-    validateInputs([environmentId, ZId], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
+export const getResponsesByWorkspaceId = reactCache(
+  async (workspaceId: string, limit?: number, offset?: number): Promise<TResponse[]> => {
+    validateInputs([workspaceId, ZId], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
 
     try {
       const responses = await prisma.response.findMany({
         where: {
           survey: {
-            environmentId,
+            workspaceId,
           },
         },
         select: responseSelection,
@@ -569,13 +590,13 @@ const findAndDeleteUploadedFilesInResponse = async (response: TResponse, survey:
   const deletionPromises = fileUrls.map(async (fileUrl) => {
     try {
       const { pathname } = new URL(fileUrl);
-      const [, environmentId, accessType, fileName] = pathname.split("/").filter(Boolean);
+      const [, storageId, accessType, fileName] = pathname.split("/").filter(Boolean);
 
-      if (!environmentId || !accessType || !fileName) {
+      if (!storageId || !accessType || !fileName) {
         throw new Error(`Invalid file path: ${pathname}`);
       }
 
-      return deleteFile(environmentId, accessType as "private" | "public", fileName);
+      return deleteFile(storageId, accessType as "private" | "public", fileName, survey.workspaceId);
     } catch (error) {
       logger.error(error, `Failed to delete file ${fileUrl}`);
     }

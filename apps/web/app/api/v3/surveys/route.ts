@@ -44,16 +44,16 @@ export const GET = withV3ApiWrapper({
         return authResult;
       }
 
-      const { environmentId } = authResult;
+      const { workspaceId } = authResult;
 
-      const surveyPagePromise = getSurveyListPage(environmentId, {
+      const surveyPagePromise = getSurveyListPage(workspaceId, {
         limit: parsed.limit,
         cursor: parsed.cursor,
         sortBy: parsed.sortBy,
         filterCriteria: parsed.filterCriteria,
       });
       const totalCountPromise = parsed.includeTotalCount
-        ? getSurveyCount(environmentId, parsed.filterCriteria)
+        ? getSurveyCount(workspaceId, parsed.filterCriteria)
         : Promise.resolve(null);
       const [surveyPage, totalCount] = await Promise.all([surveyPagePromise, totalCountPromise]);
 

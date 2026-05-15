@@ -1,4 +1,4 @@
-import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
+import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -18,7 +18,7 @@ const RTL_LANGUAGES = ["ar", "ar-SA", "ar-EG", "ar-AE", "ar-MA", "he", "fa", "ur
  * @param survey The survey to test
  * @param languageCode The language code to test (e.g., "ar", "ar-SA", "he")
  */
-export function isRTLLanguage(survey: TJsEnvironmentStateSurvey, languageCode: string): boolean {
+export function isRTLLanguage(survey: TJsWorkspaceStateSurvey, languageCode: string): boolean {
   if (survey.languages.length === 0) {
     if (survey.welcomeCard.enabled) {
       const welcomeCardHeadline = survey.welcomeCard.headline?.[languageCode];

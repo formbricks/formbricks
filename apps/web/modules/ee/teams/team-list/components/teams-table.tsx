@@ -10,7 +10,6 @@ import { getTeamDetailsAction, getTeamRoleAction } from "@/modules/ee/teams/team
 import { CreateTeamButton } from "@/modules/ee/teams/team-list/components/create-team-button";
 import { ManageTeamButton } from "@/modules/ee/teams/team-list/components/manage-team-button";
 import { TeamSettingsModal } from "@/modules/ee/teams/team-list/components/team-settings/team-settings-modal";
-import { TOrganizationProject } from "@/modules/ee/teams/team-list/types/project";
 import {
   TOrganizationMember,
   TOtherTeam,
@@ -18,6 +17,7 @@ import {
   TTeamRole,
   TUserTeam,
 } from "@/modules/ee/teams/team-list/types/team";
+import { TOrganizationWorkspace } from "@/modules/ee/teams/team-list/types/workspace";
 import { Badge } from "@/modules/ui/components/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
 
@@ -25,7 +25,7 @@ interface TeamsTableProps {
   teams: { userTeams: TUserTeam[]; otherTeams: TOtherTeam[] };
   organizationId: string;
   orgMembers: TOrganizationMember[];
-  orgProjects: TOrganizationProject[];
+  orgWorkspaces: TOrganizationWorkspace[];
   membershipRole?: TOrganizationRole;
   currentUserId: string;
 }
@@ -34,7 +34,7 @@ export const TeamsTable = ({
   teams,
   organizationId,
   orgMembers,
-  orgProjects,
+  orgWorkspaces,
   membershipRole,
   currentUserId,
 }: TeamsTableProps) => {
@@ -79,7 +79,7 @@ export const TeamsTable = ({
           <TableHeader role="rowgroup">
             <TableRow className="bg-slate-100" role="row">
               <TableHead className="font-medium text-slate-500">
-                {t("environments.settings.teams.team_name")}
+                {t("workspace.settings.teams.team_name")}
               </TableHead>
               <TableHead className="font-medium text-slate-500">{t("common.size")}</TableHead>
               <TableHead></TableHead>
@@ -90,7 +90,7 @@ export const TeamsTable = ({
             {allTeams.length === 0 && (
               <TableRow>
                 <TableCell colSpan={4} className="text-center hover:bg-transparent">
-                  {t("environments.settings.teams.empty_teams_state")}
+                  {t("workspace.settings.teams.empty_teams_state")}
                 </TableCell>
               </TableRow>
             )}
@@ -99,11 +99,7 @@ export const TeamsTable = ({
                 <TableCell>{team.name}</TableCell>
                 <TableCell>{t("common.count_members", { count: team.memberCount })}</TableCell>
                 <TableCell>
-                  <Badge
-                    type="success"
-                    size={"tiny"}
-                    text={t("environments.settings.teams.you_are_a_member")}
-                  />
+                  <Badge type="success" size={"tiny"} text={t("workspace.settings.teams.you_are_a_member")} />
                 </TableCell>
                 <TableCell className="flex justify-end">
                   <ManageTeamButton
@@ -139,7 +135,7 @@ export const TeamsTable = ({
           setOpen={setOpenSettingsModal}
           team={selectedTeam}
           orgMembers={orgMembers}
-          orgProjects={orgProjects}
+          orgWorkspaces={orgWorkspaces}
           membershipRole={membershipRole}
           userTeamRole={userTeamRole}
           currentUserId={currentUserId}

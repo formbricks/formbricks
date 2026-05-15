@@ -4,10 +4,10 @@ x-environment: &environment
 
     # The url of your Formbricks instance used in the admin panel
     # Set this to your public-facing URL, e.g., example http://localhost:3000 or https://example.com
-    WEBAPP_URL: 
+    WEBAPP_URL:
 
     # Required for next-auth. Should be the same as WEBAPP_URL
-    NEXTAUTH_URL: 
+    NEXTAUTH_URL:
 
     # PostgreSQL DB for Formbricks to connect to
     DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/formbricks?schema=public"
@@ -15,19 +15,34 @@ x-environment: &environment
     # NextJS Auth
     # @see: https://next-auth.js.org/configuration/options#nextauth_secret
     # You can use: `openssl rand -hex 32` to generate one
-    NEXTAUTH_SECRET: 
+    NEXTAUTH_SECRET:
 
     # Encryption Key is used for 2FA & Single use URLs for Link Surveys
     # You can use: $(openssl rand -hex 32) to generate one
-    ENCRYPTION_KEY: 
+    ENCRYPTION_KEY:
 
     # API Secret for running cron jobs.
     # You can use: $(openssl rand -hex 32) to generate a secure one
-    CRON_SECRET: 
+    CRON_SECRET:
 
     # Redis URL for caching, rate limiting, and audit logging
     # To use external Redis/Valkey: remove the redis service below and update this URL
     REDIS_URL: redis://redis:6379
+
+    # Formbricks Hub (port 8080): API key required. Use e.g. openssl rand -hex 32
+    HUB_API_KEY:
+
+    # Base URL the Formbricks app uses to reach Hub. Defaults to the internal Hub service.
+    HUB_API_URL: ${HUB_API_URL:-http://hub:8080}
+
+    # Hub database URL (optional). Default: same Postgres as Formbricks. Set only if Hub uses a separate DB.
+    # HUB_DATABASE_URL:
+
+    # Cube.js analytics for XM Suite v5. Enable the optional xm profile and set CUBEJS_API_SECRET to run Cube.
+    CUBEJS_API_URL: ${CUBEJS_API_URL:-http://cube:4000}
+    CUBEJS_API_SECRET: ${CUBEJS_API_SECRET:-}
+    CUBEJS_JWT_ISSUER: ${CUBEJS_JWT_ISSUER:-formbricks-web}
+    CUBEJS_JWT_AUDIENCE: ${CUBEJS_JWT_AUDIENCE:-formbricks-cube}
 
     # Set the minimum log level(debug, info, warn, error, fatal)
     # LOG_LEVEL: info
@@ -205,7 +220,7 @@ x-environment: &environment
 services:
   postgres:
     restart: always
-    image: pgvector/pgvector:pg17
+    image: pgvector/pgvector:pg18
     volumes:
       - postgres:/var/lib/postgresql/data
     environment:
@@ -222,7 +237,7 @@ services:
   redis:
     restart: always
     image: valkey/valkey@sha256:12ba4f45a7c3e1d0f076acd616cb230834e75a77e8516dde382720af32832d6d
-    command: valkey-server --appendonly yes
+    command: valkey-server --appendonly yes --maxmemory-policy noeviction
     volumes:
       - redis:/data
     ports:
@@ -247,6 +262,63 @@ services:
     volumes:
       - ./saml-connection:/home/nextjs/apps/web/saml-connection
     <<: *environment
+
+  # Run Hub DB migrations (goose + river) before the API starts. Uses same image; migrations are idempotent.
+  # Default tracks :latest so self-host updates (compose pull) advance Hub alongside the app image.
+  # Operators who want an immutable pin can set HUB_IMAGE_REF in docker/.env to either ":<tag>"
+  # (e.g. ":0.3.0") or "@sha256:<digest>". hub and hub-migrate share the same value — no drift.
+  hub-migrate:
+    image: ghcr.io/formbricks/hub${HUB_IMAGE_REF:-:latest}
+    restart: "no"
+    entrypoint: ["sh", "-c"]
+    command:
+      [
+        'if [ -x /usr/local/bin/goose ] && [ -x /usr/local/bin/river ]; then /usr/local/bin/goose -dir /app/migrations postgres "$$DATABASE_URL" up && /usr/local/bin/river migrate-up --database-url "$$DATABASE_URL"; else echo ''Migration tools (goose/river) not in image.''; exit 1; fi',
+      ]
+    environment:
+      DATABASE_URL: ${HUB_DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/formbricks?sslmode=disable}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # Formbricks Hub API (ghcr.io/formbricks/hub). Set HUB_API_KEY. By default shares the Formbricks database; set HUB_DATABASE_URL to use a separate DB.
+  hub:
+    restart: always
+    image: ghcr.io/formbricks/hub${HUB_IMAGE_REF:-:latest}
+    depends_on:
+      hub-migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+    environment:
+      API_KEY: ${HUB_API_KEY:?HUB_API_KEY is required to run Hub}
+      DATABASE_URL: ${HUB_DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/formbricks?sslmode=disable}
+
+  # Optional Cube.js analytics service for XM Suite v5. Enable with COMPOSE_PROFILES=xm and set CUBEJS_API_SECRET.
+  cube:
+    profiles: ["xm"]
+    restart: always
+    image: cubejs/cube:v1.6.6
+    depends_on:
+      hub-migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+    environment:
+      CUBEJS_DB_TYPE: postgres
+      CUBEJS_DB_HOST: ${CUBEJS_DB_HOST:-postgres}
+      CUBEJS_DB_NAME: ${CUBEJS_DB_NAME:-formbricks}
+      CUBEJS_DB_USER: ${CUBEJS_DB_USER:-postgres}
+      CUBEJS_DB_PASS: ${CUBEJS_DB_PASS:-postgres}
+      CUBEJS_DB_PORT: ${CUBEJS_DB_PORT:-5432}
+      CUBEJS_API_SECRET: ${CUBEJS_API_SECRET:-}
+      CUBEJS_JWT_ISSUER: ${CUBEJS_JWT_ISSUER:-formbricks-web}
+      CUBEJS_JWT_AUDIENCE: ${CUBEJS_JWT_AUDIENCE:-formbricks-cube}
+      CUBEJS_DEFAULT_API_SCOPES: meta,data
+      CUBEJS_CACHE_AND_QUEUE_DRIVER: memory
+    volumes:
+      - ./cube/cube.js:/cube/conf/cube.js:ro
+      - ./cube/schema:/cube/conf/model:ro
 
 volumes:
   postgres:

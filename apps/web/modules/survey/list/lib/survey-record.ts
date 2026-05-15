@@ -14,8 +14,12 @@ export const surveySelect = {
     },
   },
   status: true,
+  publishOn: true,
   singleUse: true,
-  environmentId: true,
+  workspaceId: true,
+  _count: {
+    select: { responses: true },
+  },
 } satisfies Prisma.SurveySelect;
 
 export type TSurveyRow = Prisma.SurveyGetPayload<{ select: typeof surveySelect }>;
@@ -41,8 +45,9 @@ export async function getResponseCountsBySurveyIds(surveyIds: string[]): Promise
 }
 
 export function mapSurveyRowToSurvey(row: TSurveyRow, responseCount = 0): TSurvey {
+  const { _count: _ignored, ...rest } = row;
   return {
-    ...row,
+    ...rest,
     responseCount,
   };
 }

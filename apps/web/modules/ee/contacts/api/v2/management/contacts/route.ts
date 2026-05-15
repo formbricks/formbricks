@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
+import { resolveBodyIdsV2 } from "@/modules/api/v2/management/lib/workspace-resolver";
 import { createContact } from "@/modules/ee/contacts/api/v2/management/contacts/lib/contact";
 import { ZContactCreateRequest } from "@/modules/ee/contacts/types/contact";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -12,6 +13,11 @@ export const POST = async (request: NextRequest) =>
     request,
     schemas: {
       body: ZContactCreateRequest,
+    },
+    bodyTransform: async (body, auth) => {
+      const resolved = await resolveBodyIdsV2(body, auth.workspacePermissions, "POST");
+      if (!resolved.ok) throw resolved.error;
+      return { ...body, ...resolved.data };
     },
 
     handler: async ({ authentication, parsedInput, auditLog }) => {
@@ -28,17 +34,18 @@ export const POST = async (request: NextRequest) =>
         );
       }
 
-      const { environmentId } = body;
+      const { workspaceId } = body;
 
-      if (!hasPermission(authentication.environmentPermissions, environmentId, "POST")) {
+      const perm = authentication.workspacePermissions.find((p) => p.workspaceId === workspaceId);
+      if (!perm || !hasPermission(authentication.workspacePermissions, perm.workspaceId, "POST")) {
         return handleApiError(
           request,
           {
             type: "forbidden",
             details: [
               {
-                field: "environmentId",
-                issue: "insufficient permissions to create contact in this environment",
+                field: "workspaceId",
+                issue: "insufficient permissions to create contact in this workspace",
               },
             ],
           },

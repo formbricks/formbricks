@@ -140,7 +140,7 @@ describe("License Core Logic", () => {
     const mockFetchedLicenseDetailsFeatures: TEnterpriseLicenseFeatures = {
       isMultiOrgEnabled: true,
       contacts: true,
-      projects: 10,
+      workspaces: 10,
       whitelabel: true,
       removeBranding: true,
       twoFactorAuth: true,
@@ -152,6 +152,9 @@ describe("License Core Logic", () => {
       auditLogs: true,
       accessControl: true,
       quotas: true,
+      unifyFeedback: false,
+      feedbackDirectories: false,
+      dashboards: false,
     };
     const mockFetchedLicenseDetails: TEnterpriseLicenseDetails = {
       status: "active",
@@ -217,7 +220,7 @@ describe("License Core Logic", () => {
       const previousTime = new Date(Date.now() - 1 * 24 * 60 * 60 * 1000); // 1 day ago, within grace period
       const mockPreviousResult = {
         active: true,
-        features: { removeBranding: true, projects: 5 },
+        features: { removeBranding: true, workspaces: 5 },
         lastChecked: previousTime,
         version: 1,
       };
@@ -277,7 +280,7 @@ describe("License Core Logic", () => {
           active: false,
           features: {
             isMultiOrgEnabled: false,
-            projects: 3,
+            workspaces: 3,
             twoFactorAuth: false,
             sso: false,
             whitelabel: false,
@@ -290,6 +293,9 @@ describe("License Core Logic", () => {
             auditLogs: false,
             accessControl: false,
             quotas: false,
+            unifyFeedback: false,
+            feedbackDirectories: false,
+            dashboards: false,
           },
           lastChecked: expect.any(Date),
         },
@@ -299,7 +305,7 @@ describe("License Core Logic", () => {
         active: false,
         features: {
           isMultiOrgEnabled: false,
-          projects: 3,
+          workspaces: 3,
           twoFactorAuth: false,
           sso: false,
           whitelabel: false,
@@ -312,6 +318,9 @@ describe("License Core Logic", () => {
           auditLogs: false,
           accessControl: false,
           quotas: false,
+          unifyFeedback: false,
+          feedbackDirectories: false,
+          dashboards: false,
         },
         lastChecked: expect.any(Date),
         isPendingDowngrade: false,
@@ -330,7 +339,7 @@ describe("License Core Logic", () => {
       const license = await getEnterpriseLicense();
       const expectedFeatures: TEnterpriseLicenseFeatures = {
         isMultiOrgEnabled: false,
-        projects: 3,
+        workspaces: 3,
         twoFactorAuth: false,
         sso: false,
         whitelabel: false,
@@ -343,6 +352,9 @@ describe("License Core Logic", () => {
         auditLogs: false,
         accessControl: false,
         quotas: false,
+        unifyFeedback: false,
+        feedbackDirectories: false,
+        dashboards: false,
       };
       expect(mockCache.set).toHaveBeenCalledWith(
         expect.stringContaining("fb:license:"),
@@ -428,7 +440,7 @@ describe("License Core Logic", () => {
         active: false,
         features: expect.objectContaining({
           isMultiOrgEnabled: false,
-          projects: 3,
+          workspaces: 3,
           removeBranding: false,
         }),
         lastChecked: expect.any(Date),
@@ -461,7 +473,7 @@ describe("License Core Logic", () => {
 
       expect(license).toEqual({
         active: false,
-        features: expect.objectContaining({ projects: 3 }),
+        features: expect.objectContaining({ workspaces: 3 }),
         lastChecked: expect.any(Date),
         isPendingDowngrade: false,
         fallbackLevel: "default" as const,
@@ -492,7 +504,7 @@ describe("License Core Logic", () => {
 
       expect(license).toEqual({
         active: false,
-        features: expect.objectContaining({ projects: 3 }),
+        features: expect.objectContaining({ workspaces: 3 }),
         lastChecked: expect.any(Date),
         isPendingDowngrade: false,
         fallbackLevel: "default" as const,
@@ -521,7 +533,7 @@ describe("License Core Logic", () => {
         features: {
           isMultiOrgEnabled: true,
           contacts: true,
-          projects: 10,
+          workspaces: 10,
           whitelabel: true,
           removeBranding: true,
           twoFactorAuth: true,
@@ -533,6 +545,9 @@ describe("License Core Logic", () => {
           auditLogs: true,
           accessControl: true,
           quotas: true,
+          unifyFeedback: false,
+          feedbackDirectories: false,
+          dashboards: false,
         },
       };
 
@@ -586,7 +601,7 @@ describe("License Core Logic", () => {
         features: {
           isMultiOrgEnabled: true,
           contacts: true,
-          projects: 10,
+          workspaces: 10,
           whitelabel: true,
           removeBranding: true,
           twoFactorAuth: true,
@@ -598,6 +613,9 @@ describe("License Core Logic", () => {
           auditLogs: true,
           accessControl: true,
           quotas: true,
+          unifyFeedback: false,
+          feedbackDirectories: false,
+          dashboards: false,
         },
       };
 
@@ -642,7 +660,7 @@ describe("License Core Logic", () => {
         features: {
           isMultiOrgEnabled: true,
           contacts: true,
-          projects: 10,
+          workspaces: 10,
           whitelabel: true,
           removeBranding: true,
           twoFactorAuth: true,
@@ -654,6 +672,9 @@ describe("License Core Logic", () => {
           auditLogs: true,
           accessControl: true,
           quotas: true,
+          unifyFeedback: false,
+          feedbackDirectories: false,
+          dashboards: false,
         },
       };
 
@@ -785,7 +806,7 @@ describe("License Core Logic", () => {
         features: {
           isMultiOrgEnabled: true,
           contacts: true,
-          projects: 5,
+          workspaces: 5,
           whitelabel: true,
           removeBranding: true,
           twoFactorAuth: true,
@@ -814,7 +835,7 @@ describe("License Core Logic", () => {
       expect(features).toEqual({
         isMultiOrgEnabled: true,
         contacts: true,
-        projects: 5,
+        workspaces: 5,
         whitelabel: true,
         removeBranding: true,
         twoFactorAuth: true,
@@ -845,7 +866,7 @@ describe("License Core Logic", () => {
                 status: "expired",
                 features: {
                   isMultiOrgEnabled: false,
-                  projects: 3,
+                  workspaces: 3,
                   twoFactorAuth: false,
                   sso: false,
                   whitelabel: false,
@@ -858,6 +879,9 @@ describe("License Core Logic", () => {
                   auditLogs: false,
                   accessControl: false,
                   quotas: false,
+                  unifyFeedback: false,
+                  feedbackDirectories: false,
+                  dashboards: false,
                 },
               },
             },
@@ -917,7 +941,7 @@ describe("License Core Logic", () => {
             status: "active",
             features: {
               isMultiOrgEnabled: true,
-              projects: 5,
+              workspaces: 5,
               twoFactorAuth: true,
               sso: true,
               whitelabel: true,
@@ -986,7 +1010,7 @@ describe("License Core Logic", () => {
             status: "active",
             features: {
               isMultiOrgEnabled: true,
-              projects: 5,
+              workspaces: 5,
               twoFactorAuth: true,
               sso: true,
               whitelabel: true,
@@ -1027,7 +1051,7 @@ describe("License Core Logic", () => {
         features: {
           isMultiOrgEnabled: true,
           contacts: true,
-          projects: 10,
+          workspaces: 10,
           whitelabel: true,
           removeBranding: true,
           twoFactorAuth: true,
@@ -1039,6 +1063,9 @@ describe("License Core Logic", () => {
           auditLogs: true,
           accessControl: true,
           quotas: true,
+          unifyFeedback: false,
+          feedbackDirectories: false,
+          dashboards: false,
         },
       };
 
@@ -1122,7 +1149,7 @@ describe("License Core Logic", () => {
       const previousTime = new Date(Date.now() - 1 * 24 * 60 * 60 * 1000); // 1 day ago
       const mockPreviousResult = {
         active: true,
-        features: { removeBranding: true, projects: 5 },
+        features: { removeBranding: true, workspaces: 5 },
         lastChecked: previousTime,
         version: 1,
       };
@@ -1154,7 +1181,7 @@ describe("License Core Logic", () => {
       features: {
         isMultiOrgEnabled: true,
         contacts: true,
-        projects: 10,
+        workspaces: 10,
         whitelabel: true,
         removeBranding: true,
         twoFactorAuth: true,
@@ -1166,6 +1193,9 @@ describe("License Core Logic", () => {
         auditLogs: true,
         accessControl: true,
         quotas: true,
+        unifyFeedback: false,
+        feedbackDirectories: false,
+        dashboards: false,
       },
     };
 
@@ -1199,7 +1229,7 @@ describe("License Core Logic", () => {
       const previousTime = new Date(Date.now() - 1 * 24 * 60 * 60 * 1000); // 1 day ago
       const mockPreviousResult = {
         active: true,
-        features: { removeBranding: true, projects: 5 },
+        features: { removeBranding: true, workspaces: 5 },
         lastChecked: previousTime,
       };
 
@@ -1236,7 +1266,7 @@ describe("License Core Logic", () => {
         active: false,
         features: expect.objectContaining({
           isMultiOrgEnabled: false,
-          projects: 3,
+          workspaces: 3,
         }),
         lastChecked: expect.any(Date),
         isPendingDowngrade: false,
@@ -1260,7 +1290,7 @@ describe("License Core Logic", () => {
         active: false,
         features: expect.objectContaining({
           isMultiOrgEnabled: false,
-          projects: 3,
+          workspaces: 3,
         }),
         lastChecked: expect.any(Date),
         isPendingDowngrade: false,
@@ -1277,7 +1307,7 @@ describe("License Core Logic", () => {
         status: "active" as const,
         features: {
           isMultiOrgEnabled: true,
-          projects: 5,
+          workspaces: 5,
           twoFactorAuth: true,
           sso: true,
           whitelabel: true,
@@ -1333,7 +1363,7 @@ describe("License Core Logic", () => {
             status: "active",
             features: {
               isMultiOrgEnabled: true,
-              projects: 5,
+              workspaces: 5,
               twoFactorAuth: true,
               sso: true,
               whitelabel: true,
@@ -1356,7 +1386,7 @@ describe("License Core Logic", () => {
       expect(result).toEqual(
         expect.objectContaining({
           status: "active",
-          features: expect.objectContaining({ projects: 5 }),
+          features: expect.objectContaining({ workspaces: 5 }),
         })
       );
       expect(fetch).toHaveBeenCalled();
@@ -1389,7 +1419,7 @@ describe("License Core Logic", () => {
             status: "active",
             features: {
               isMultiOrgEnabled: true,
-              projects: 5,
+              workspaces: 5,
               twoFactorAuth: true,
               sso: true,
               whitelabel: true,

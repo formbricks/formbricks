@@ -10,26 +10,26 @@ import {
   TLanguageUpdate,
   ZLanguageInput,
   ZLanguageUpdate,
-} from "@formbricks/types/project";
-import { getProject } from "../project/service";
+} from "@formbricks/types/workspace";
 import { validateInputs } from "../utils/validate";
+import { getWorkspace } from "../workspace/service";
 
 const languageSelect = {
   id: true,
   code: true,
   alias: true,
-  projectId: true,
+  workspaceId: true,
   createdAt: true,
   updatedAt: true,
 };
 
-export const getLanguage = async (languageId: string): Promise<TLanguage & { projectId: string }> => {
+export const getLanguage = async (languageId: string): Promise<TLanguage & { workspaceId: string }> => {
   try {
     validateInputs([languageId, ZId]);
 
     const language = await prisma.language.findFirst({
       where: { id: languageId },
-      select: { ...languageSelect, projectId: true },
+      select: { ...languageSelect, workspaceId: true },
     });
 
     if (!language) {
@@ -47,13 +47,13 @@ export const getLanguage = async (languageId: string): Promise<TLanguage & { pro
 };
 
 export const createLanguage = async (
-  projectId: string,
+  workspaceId: string,
   languageInput: TLanguageInput
 ): Promise<TLanguage> => {
   try {
-    validateInputs([projectId, ZId], [languageInput, ZLanguageInput]);
-    const project = await getProject(projectId);
-    if (!project) throw new ResourceNotFoundError("Workspace not found", projectId);
+    validateInputs([workspaceId, ZId], [languageInput, ZLanguageInput]);
+    const workspace = await getWorkspace(workspaceId);
+    if (!workspace) throw new ResourceNotFoundError("Workspace not found", workspaceId);
     if (!languageInput.code) {
       throw new ValidationError("Language code is required");
     }
@@ -61,8 +61,8 @@ export const createLanguage = async (
     const language = await prisma.language.create({
       data: {
         ...languageInput,
-        project: {
-          connect: { id: projectId },
+        workspace: {
+          connect: { id: workspaceId },
         },
       },
       select: languageSelect,
@@ -106,11 +106,11 @@ export const getSurveysUsingGivenLanguage = reactCache(async (languageId: string
   }
 });
 
-export const deleteLanguage = async (languageId: string, projectId: string): Promise<TLanguage> => {
+export const deleteLanguage = async (languageId: string, workspaceId: string): Promise<TLanguage> => {
   try {
-    validateInputs([languageId, ZId], [projectId, ZId]);
-    const project = await getProject(projectId);
-    if (!project) throw new ResourceNotFoundError("Workspace not found", projectId);
+    validateInputs([languageId, ZId], [workspaceId, ZId]);
+    const workspace = await getWorkspace(workspaceId);
+    if (!workspace) throw new ResourceNotFoundError("Workspace not found", workspaceId);
     const prismaLanguage = await prisma.language.delete({
       where: { id: languageId },
       select: { ...languageSelect, surveyLanguages: { select: { surveyId: true } } },
@@ -130,14 +130,14 @@ export const deleteLanguage = async (languageId: string, projectId: string): Pro
 };
 
 export const updateLanguage = async (
-  projectId: string,
+  workspaceId: string,
   languageId: string,
   languageInput: TLanguageUpdate
 ): Promise<TLanguage> => {
   try {
-    validateInputs([languageId, ZId], [languageInput, ZLanguageUpdate], [projectId, ZId]);
-    const project = await getProject(projectId);
-    if (!project) throw new ResourceNotFoundError("Workspace not found", projectId);
+    validateInputs([languageId, ZId], [languageInput, ZLanguageUpdate], [workspaceId, ZId]);
+    const workspace = await getWorkspace(workspaceId);
+    if (!workspace) throw new ResourceNotFoundError("Workspace not found", workspaceId);
     const prismaLanguage = await prisma.language.update({
       where: { id: languageId },
       data: { ...languageInput, updatedAt: new Date() },

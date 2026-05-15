@@ -6,11 +6,11 @@ import { loginAndGetApiKey } from "../../lib/utils";
 
 test.describe("API Tests for Webhooks", () => {
   test("Create, Retrieve, Update, and Delete Webhooks via API", async ({ page, users, request }) => {
-    let environmentId: string;
+    let workspaceId: string;
     let apiKey: string;
 
     try {
-      ({ environmentId, apiKey } = await loginAndGetApiKey(page, users));
+      ({ workspaceId, apiKey } = await loginAndGetApiKey(page, users));
     } catch (error) {
       logger.error(error, "Error during login and getting API key");
       throw error;
@@ -20,7 +20,7 @@ test.describe("API Tests for Webhooks", () => {
 
     await test.step("Create Survey via API", async () => {
       const surveyBody = {
-        environmentId: environmentId,
+        workspaceId: workspaceId,
         type: "link",
         name: "My new Survey from API",
         questions: [
@@ -63,7 +63,7 @@ test.describe("API Tests for Webhooks", () => {
 
     await test.step("Create Webhook via API", async () => {
       const webhookBody = {
-        environmentId,
+        workspaceId,
         name: "New Webhook",
         url: "https://example.com/webhook",
         source: "user",
@@ -103,7 +103,7 @@ test.describe("API Tests for Webhooks", () => {
 
     await test.step("Update Webhook by ID via API", async () => {
       const updatedBody = {
-        environmentId,
+        workspaceId,
         name: "Updated Webhook",
         url: "https://example.com/updated-webhook",
         source: "zapier",

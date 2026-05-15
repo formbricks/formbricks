@@ -157,13 +157,12 @@ describe("shared-conditions-factory", () => {
     status: "draft",
     createdAt: new Date(),
     updatedAt: new Date(),
-    environmentId: "env1",
     createdBy: null,
     segment: null,
     pin: null,
     endings: [],
     followUps: [],
-    projectOverwrites: null,
+    workspaceOverwrites: null,
     displayPercentage: null,
   } as unknown as TSurvey;
 

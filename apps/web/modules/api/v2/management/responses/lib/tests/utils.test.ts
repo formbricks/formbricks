@@ -29,7 +29,7 @@ describe("getResponsesQuery", () => {
     expect(buildCommonFilterQuery).toHaveBeenCalledWith(
       expect.objectContaining<Prisma.ResponseFindManyArgs>({
         where: {
-          survey: { environmentId: { in: ["env-id"] } },
+          survey: { workspaceId: { in: ["env-id"] } },
           surveyId: "test",
         },
       }),

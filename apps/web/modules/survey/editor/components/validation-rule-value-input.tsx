@@ -58,7 +58,7 @@ export const ValidationRuleValueInput = ({
             const currentEndDate = (currentValue as string)?.split(",")?.[1] ?? "";
             onChange(`${e.target.value},${currentEndDate}`);
           }}
-          placeholder={t("environments.surveys.edit.validation.start_date")}
+          placeholder={t("workspace.surveys.edit.validation.start_date")}
           className="h-9 flex-1 bg-white"
         />
         <span className="text-sm text-slate-500">{t("common.and")}</span>
@@ -69,7 +69,7 @@ export const ValidationRuleValueInput = ({
             const currentStartDate = (currentValue as string)?.split(",")?.[0] ?? "";
             onChange(`${currentStartDate},${e.target.value}`);
           }}
-          placeholder={t("environments.surveys.edit.validation.end_date")}
+          placeholder={t("workspace.surveys.edit.validation.end_date")}
           className="h-9 flex-1 bg-white"
         />
       </div>
@@ -82,7 +82,7 @@ export const ValidationRuleValueInput = ({
     return (
       <Select value={optionValue} onValueChange={onChange}>
         <SelectTrigger className="h-9 min-w-[200px] bg-white">
-          <SelectValue placeholder={t("environments.surveys.edit.validation.select_option")} />
+          <SelectValue placeholder={t("workspace.surveys.edit.validation.select_option")} />
         </SelectTrigger>
         <SelectContent>
           {element &&
@@ -117,7 +117,7 @@ export const ValidationRuleValueInput = ({
         options={extensionOptions}
         value={selectedExtensions as TAllowedFileExtension[]}
         onChange={onFileExtensionChange}
-        placeholder={t("environments.surveys.edit.validation.select_file_extensions")}
+        placeholder={t("workspace.surveys.edit.validation.select_file_extensions")}
         disabled={false}
       />
     );

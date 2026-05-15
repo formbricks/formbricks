@@ -54,7 +54,7 @@ packages/surveys/
    - Join the Formbricks team on Lingo.dev
 
 2. **Get Your API Key**
-   - In the sidebar, go to **Projects** and open the default project
+   - In the sidebar, go to **Workspaces** and open the default workspace
    - Navigate to the **Settings** tab
    - Copy the API key
 
