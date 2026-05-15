@@ -7,7 +7,6 @@ import { Trans, useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
-import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@/lib/localStorage";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import {
   ACCOUNT_DELETION_CONFIRMATION_REQUIRED_ERROR_CODE,
@@ -16,6 +15,7 @@ import {
   DELETE_ACCOUNT_WRONG_PASSWORD_ERROR,
   FORMBRICKS_CLOUD_ACCOUNT_DELETION_SURVEY_URL,
 } from "@/modules/account/constants";
+import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { Input } from "@/modules/ui/components/input";
 import { PasswordInput } from "@/modules/ui/components/password-input";
@@ -28,6 +28,7 @@ interface DeleteAccountModalProps {
   user: TUser;
   isFormbricksCloud: boolean;
   organizationsWithSingleOwner: TOrganization[];
+  isSsoIdentityConfirmationDisabled: boolean;
 }
 
 export const DeleteAccountModal = ({
@@ -37,11 +38,13 @@ export const DeleteAccountModal = ({
   user,
   isFormbricksCloud,
   organizationsWithSingleOwner,
+  isSsoIdentityConfirmationDisabled,
 }: Readonly<DeleteAccountModalProps>) => {
   const { t } = useTranslation();
   const [deleting, setDeleting] = useState(false);
   const [inputValue, setInputValue] = useState("");
   const [password, setPassword] = useState("");
+  const { signOut: signOutWithAudit } = useSignOut({ id: user.id, email: user.email });
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
   };
@@ -121,7 +124,15 @@ export const DeleteAccountModal = ({
         return;
       }
 
-      globalThis.localStorage.removeItem(FORMBRICKS_ENVIRONMENT_ID_LS);
+      try {
+        await signOutWithAudit({
+          clearEnvironmentId: true,
+          reason: "account_deletion",
+          redirect: false,
+        });
+      } catch (error) {
+        logger.error({ error }, "Failed to sign out after account deletion");
+      }
 
       if (isFormbricksCloud) {
         globalThis.location.replace(FORMBRICKS_CLOUD_ACCOUNT_DELETION_SURVEY_URL);
@@ -192,7 +203,7 @@ export const DeleteAccountModal = ({
             id="deleteAccountConfirmation"
             name="deleteAccountConfirmation"
           />
-          {!requiresPasswordConfirmation && (
+          {!requiresPasswordConfirmation && !isSsoIdentityConfirmationDisabled && (
             <p className="mt-2 text-sm text-slate-600">
               {t("environments.settings.profile.sso_identity_confirmation_may_be_required_for_deletion")}
             </p>
