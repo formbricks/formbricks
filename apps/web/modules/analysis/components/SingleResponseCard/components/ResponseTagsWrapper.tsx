@@ -9,6 +9,7 @@ import { TTag } from "@formbricks/types/tags";
 import { TUserLocale } from "@formbricks/types/user";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { TagError } from "@/modules/projects/settings/types/tag";
+import { IdBadge } from "@/modules/ui/components/id-badge";
 import { Tag } from "@/modules/ui/components/tag";
 import { TagsCombobox } from "@/modules/ui/components/tags-combobox";
 import { createTagAction, createTagToResponseAction, deleteTagOnResponseAction } from "../actions";
@@ -133,6 +134,7 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
   return (
     <div className="flex items-center justify-between gap-4 border-t border-slate-200 px-6 py-3">
       <div className="flex flex-wrap items-center gap-2">
+        <IdBadge id={responseId} />
         <SingleResponseCardMetadata response={response} locale={locale} />
         {tagsState?.map((tag) => (
           <Tag
