@@ -46,6 +46,21 @@ services:
     volumes:
       - minio-data:/data
 
+  # Create Hub's dedicated dev database before migrations run. Idempotent; runs on every compose up.
+  hub-db-create:
+    image: pgvector/pgvector:pg18
+    restart: "no"
+    entrypoint: ["sh", "-c"]
+    command:
+      [
+        'if [ "$$(psql "$$POSTGRES_DATABASE_URL" -tAc "SELECT 1 FROM pg_database WHERE datname = ''hub''")" != "1" ]; then psql "$$POSTGRES_DATABASE_URL" -v ON_ERROR_STOP=1 -c "CREATE DATABASE hub"; fi',
+      ]
+    environment:
+      POSTGRES_DATABASE_URL: postgresql://postgres:postgres@postgres:5432/postgres?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   # Run Hub DB migrations (goose + river) before the API starts. Idempotent; runs on every compose up.
   # Hub image pinned via HUB_IMAGE_TAG so docker does not silently reuse a stale :latest cache.
   # Keep hub, hub-migrate, and any future hub-worker on the same tag — they share one image and
@@ -59,12 +74,12 @@ services:
         'if [ -x /usr/local/bin/goose ] && [ -x /usr/local/bin/river ]; then /usr/local/bin/goose -dir /app/migrations postgres "$$DATABASE_URL" up && /usr/local/bin/river migrate-up --database-url "$$DATABASE_URL"; else echo ''Migration tools (goose/river) not in image.''; exit 1; fi',
       ]
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/postgres?sslmode=disable
+      DATABASE_URL: ${HUB_DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/hub?sslmode=disable}
     depends_on:
-      postgres:
-        condition: service_healthy
+      hub-db-create:
+        condition: service_completed_successfully
 
-  # Formbricks Hub API (ghcr.io/formbricks/hub). Shares the same Postgres database as Formbricks by default.
+  # Formbricks Hub API (ghcr.io/formbricks/hub). Uses a dedicated local Hub database by default.
   hub:
     image: ghcr.io/formbricks/hub:${HUB_IMAGE_TAG:-0.3.0}
     depends_on:
@@ -72,16 +87,41 @@ services:
         condition: service_completed_successfully
     ports:
       - "8080:8080"
-    environment:
+    environment: &hub-runtime-environment
       API_KEY: ${HUB_API_KEY:-dev-api-key}
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/postgres?sslmode=disable
+      DATABASE_URL: ${HUB_DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/hub?sslmode=disable}
       # Explicit Postgres env so migrations and any libpq fallback use the service host, not localhost
       PGHOST: postgres
       PGPORT: "5432"
       PGUSER: postgres
       PGPASSWORD: postgres
-      PGDATABASE: postgres
+      PGDATABASE: hub
       PGSSLMODE: disable
+      # Hub embeddings are disabled unless EMBEDDING_PROVIDER and EMBEDDING_MODEL are set.
+      EMBEDDING_PROVIDER: ${EMBEDDING_PROVIDER:-}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-}
+      EMBEDDING_PROVIDER_API_KEY: ${EMBEDDING_PROVIDER_API_KEY:-}
+      EMBEDDING_BASE_URL: ${EMBEDDING_BASE_URL:-}
+      EMBEDDING_MAX_CONCURRENT: ${EMBEDDING_MAX_CONCURRENT:-5}
+      EMBEDDING_MAX_ATTEMPTS: ${EMBEDDING_MAX_ATTEMPTS:-3}
+      EMBEDDING_NORMALIZE: ${EMBEDDING_NORMALIZE:-false}
+      EMBEDDING_GOOGLE_CLOUD_PROJECT: ${EMBEDDING_GOOGLE_CLOUD_PROJECT:-}
+      EMBEDDING_GOOGLE_CLOUD_LOCATION: ${EMBEDDING_GOOGLE_CLOUD_LOCATION:-}
+      GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS:-}
+
+  # Hub worker processes async jobs enqueued by the API, including embeddings.
+  hub-worker:
+    image: ghcr.io/formbricks/hub:${HUB_IMAGE_TAG:-0.3.0}
+    depends_on:
+      hub-migrate:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+    entrypoint: ["/app/hub-worker"]
+    healthcheck:
+      disable: true
+    environment:
+      <<: *hub-runtime-environment
 
   cube:
     profiles: ["xm"]
