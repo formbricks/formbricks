@@ -9,6 +9,7 @@ export interface FieldDefinition {
   label: string;
   type: "string" | "number" | "time";
   description?: string;
+  isGenerated?: boolean;
 }
 
 export interface MeasureDefinition {
@@ -25,6 +26,7 @@ export const FEEDBACK_FIELDS = {
       label: "Sentiment",
       type: "string",
       description: "Sentiment extracted from feedback",
+      isGenerated: true,
     },
     {
       id: "FeedbackRecords.sourceType",
@@ -49,6 +51,7 @@ export const FEEDBACK_FIELDS = {
       label: "Emotion",
       type: "string",
       description: "Emotion extracted from metadata JSONB field",
+      isGenerated: true,
     },
     {
       id: "FeedbackRecords.userId",
@@ -79,6 +82,7 @@ export const FEEDBACK_FIELDS = {
       label: "Topic",
       type: "string",
       description: "Individual topic from the topics array",
+      isGenerated: true,
     },
   ] as FieldDefinition[],
   measures: [
