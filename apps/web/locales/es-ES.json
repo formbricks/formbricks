@@ -3675,7 +3675,6 @@
       "add_source": "Añadir fuente",
       "allowed_values": "Valores permitidos: {values}",
       "api_ingestion": "Ingesta de API",
-      "api_ingestion_manage_api_keys": "Gestionar claves de API",
       "api_ingestion_settings_description": "Envía registros de feedback mediante la API de gestión.",
       "auto_generated": "Generado automáticamente",
       "change_file": "Cambiar archivo",

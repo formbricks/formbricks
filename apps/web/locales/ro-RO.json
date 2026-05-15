@@ -3675,7 +3675,6 @@
       "add_source": "Adaugă sursă",
       "allowed_values": "Valori permise: {values}",
       "api_ingestion": "Ingestie API",
-      "api_ingestion_manage_api_keys": "Gestionează cheile API",
       "api_ingestion_settings_description": "Trimite înregistrări de feedback folosind API-ul de management.",
       "auto_generated": "Generat automat",
       "change_file": "Schimbă fișierul",

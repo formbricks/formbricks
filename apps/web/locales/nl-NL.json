@@ -3675,7 +3675,6 @@
       "add_source": "Bron toevoegen",
       "allowed_values": "Toegestane waarden: {values}",
       "api_ingestion": "API-inname",
-      "api_ingestion_manage_api_keys": "API-sleutels beheren",
       "api_ingestion_settings_description": "Verstuur feedbackrecords via de Management API.",
       "auto_generated": "Automatisch gegenereerd",
       "change_file": "Bestand wijzigen",

@@ -3675,7 +3675,6 @@
       "add_source": "Kaynak ekle",
       "allowed_values": "İzin verilen değerler: {values}",
       "api_ingestion": "API ingestion",
-      "api_ingestion_manage_api_keys": "Manage API keys",
       "api_ingestion_settings_description": "Send feedback records using the Management API.",
       "auto_generated": "Otomatik olarak oluşturuldu",
       "change_file": "Dosyayı değiştir",

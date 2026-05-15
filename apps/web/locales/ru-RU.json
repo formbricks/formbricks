@@ -3675,7 +3675,6 @@
       "add_source": "Добавить источник",
       "allowed_values": "Допустимые значения: {values}",
       "api_ingestion": "Импорт через API",
-      "api_ingestion_manage_api_keys": "Управление API-ключами",
       "api_ingestion_settings_description": "Отправляйте записи обратной связи через Management API.",
       "auto_generated": "Автоматически генерируется",
       "change_file": "Изменить файл",

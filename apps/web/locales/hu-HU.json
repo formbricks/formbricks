@@ -3675,7 +3675,6 @@
       "add_source": "Forrás hozzáadása",
       "allowed_values": "Engedélyezett értékek: {values}",
       "api_ingestion": "API betöltés",
-      "api_ingestion_manage_api_keys": "API kulcsok kezelése",
       "api_ingestion_settings_description": "Visszajelzési rekordok küldése a Management API használatával.",
       "auto_generated": "Automatikusan generált",
       "change_file": "Fájl módosítása",

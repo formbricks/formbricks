@@ -159,7 +159,7 @@ export const MainNavigation = ({
               text="Beta"
               type="gray"
               size="tiny"
-              className="normal-case text-[10px] font-semibold tracking-normal"
+              className="text-[10px] font-semibold normal-case tracking-normal"
             />
           </span>
         ),
@@ -462,7 +462,7 @@ export const MainNavigation = ({
           {isSettingsMode ? (
             <div className="flex flex-col overflow-hidden">
               <div className="mb-2 px-3">
-                <GoBackButton url={`/workspaces/${workspace.id}/surveys`} />
+                <GoBackButton />
               </div>
 
               {/* Settings sidebar content */}
