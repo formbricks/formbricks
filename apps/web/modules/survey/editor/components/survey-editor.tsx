@@ -265,6 +265,7 @@ export const SurveyEditor = ({
               isQuotasAllowed={isQuotasAllowed}
               quotas={quotas}
               locale={locale}
+              appSetupCompleted={localWorkspace.appSetupCompleted}
             />
           )}
 

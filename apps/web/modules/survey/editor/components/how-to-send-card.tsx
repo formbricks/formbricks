@@ -7,7 +7,6 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyType } from "@formbricks/types/surveys/types";
-import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { getDefaultEndingCard } from "@/app/lib/survey-builder";
 import { cn } from "@/lib/cn";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
@@ -18,11 +17,11 @@ import { RadioGroup, RadioGroupItem } from "@/modules/ui/components/radio-group"
 interface HowToSendCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey | ((TSurvey: TSurvey) => TSurvey)) => void;
+  appSetupCompleted: boolean;
 }
 
-export const HowToSendCard = ({ localSurvey, setLocalSurvey }: HowToSendCardProps) => {
-  const { workspace } = useWorkspace();
-  const workspaceBasePath = `/workspaces/${workspace?.id}`;
+export const HowToSendCard = ({ localSurvey, setLocalSurvey, appSetupCompleted }: HowToSendCardProps) => {
+  const workspaceBasePath = `/workspaces/${localSurvey.workspaceId}`;
   const [open, setOpen] = useState(false);
   const { t } = useTranslation();
 
@@ -82,7 +81,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey }: HowToSendCardProp
       icon: MonitorIcon,
       description: t("workspace.surveys.edit.app_survey_description"),
       comingSoon: false,
-      alert: !workspace?.appSetupCompleted,
+      alert: !appSetupCompleted,
     },
   ];
 
