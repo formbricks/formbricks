@@ -3,7 +3,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2Icon, PlusIcon } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -108,7 +107,7 @@ const getDialogDescription = (
 const getNextStepButtonLabel = (type: TConnectorOptionId | null, t: (key: string) => string): string => {
   if (type === "formbricks_survey") return t("workspace.unify.select_questions");
   if (type === "csv") return t("workspace.unify.configure_import");
-  if (type === "api_ingestion") return t("workspace.unify.api_ingestion_manage_api_keys");
+  if (type === "api_ingestion") return t("common.learn_more");
   if (type === "feedback_record_mcp") return t("common.learn_more");
   return t("workspace.unify.create_mapping");
 };
@@ -130,7 +129,6 @@ export const CreateConnectorModal = ({
   directories,
 }: CreateConnectorModalProps) => {
   const { t } = useTranslation();
-  const router = useRouter();
 
   const defaultConnectorName = useMemo<Record<TConnectorType, string>>(
     () => ({
@@ -262,13 +260,12 @@ export const CreateConnectorModal = ({
     if (currentStep !== "selectType" || !selectedType) return;
 
     if (selectedType === "api_ingestion") {
-      handleOpenChange(false);
-      router.push(`/workspaces/${workspaceId}/settings/organization/api-keys`);
+      window.open("https://formbricks.com/docs/unify-feedback/api/rest-api", "_blank", "noopener,noreferrer");
       return;
     }
 
     if (selectedType === "feedback_record_mcp") {
-      window.open("https://formbricks.com/docs", "_blank", "noopener,noreferrer");
+      window.open("https://formbricks.com/docs/unify-feedback/api/mcp", "_blank", "noopener,noreferrer");
       return;
     }
 

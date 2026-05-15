@@ -1,5 +1,6 @@
 import { getTranslate } from "@/lingodotdev/server";
 import { ChartRow } from "@/modules/ee/analysis/charts/components/chart-row";
+import { CreateChartButton } from "@/modules/ee/analysis/charts/components/create-chart-button";
 import type { TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
 
 interface ChartsListProps {
@@ -27,9 +28,23 @@ export const ChartsList = async ({
         <div className="col-span-1" />
       </div>
       {charts.length === 0 ? (
-        <p className="py-6 text-center text-sm text-slate-400">
-          {t("workspace.analysis.charts.no_charts_found")}
-        </p>
+        <div className="flex flex-col items-center gap-3 px-6 py-8 text-center">
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-slate-900">
+              {t("workspace.analysis.charts.no_charts_found")}
+            </p>
+            <p className="text-sm text-slate-500">
+              {t("workspace.analysis.charts.no_charts_found_description")}
+            </p>
+          </div>
+          {!isReadOnly && (
+            <CreateChartButton
+              workspaceId={workspaceId}
+              directories={directories}
+              buttonProps={{ variant: "secondary" }}
+            />
+          )}
+        </div>
       ) : (
         charts.map((chart) => (
           <ChartRow

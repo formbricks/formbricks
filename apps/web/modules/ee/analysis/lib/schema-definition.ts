@@ -9,6 +9,7 @@ export interface FieldDefinition {
   label: string;
   type: "string" | "number" | "time" | "boolean";
   description?: string;
+  isGenerated?: boolean;
 }
 
 export interface MeasureDefinition {
