@@ -95,9 +95,7 @@ export const AISettingsToggle = ({
     },
     {
       text: t("common.learn_more"),
-      href: isFormbricksCloud
-        ? `${workspaceBasePath}/settings/organization/billing`
-        : "https://formbricks.com/learn-more-self-hosting-license",
+      href: "https://formbricks.com/docs/platform/features/ai-features",
     },
   ];
 

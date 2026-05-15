@@ -55,9 +55,7 @@ export default async function UnifyFeedbackRecordsPage(
               },
               {
                 text: t("common.learn_more"),
-                href: IS_FORMBRICKS_CLOUD
-                  ? `/workspaces/${params.workspaceId}/settings/organization/billing`
-                  : "https://formbricks.com/learn-more-self-hosting-license",
+                href: "https://formbricks.com/docs/unify-feedback/overview",
               },
             ]}
           />
