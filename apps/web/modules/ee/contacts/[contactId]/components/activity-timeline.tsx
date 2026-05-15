@@ -17,8 +17,8 @@ import { DisplayCard } from "./display-card";
 import { ResponseSurveyCard } from "./response-survey-card";
 
 type TTimelineItem =
-  | { type: "display"; data: Pick<TDisplay, "id" | "createdAt" | "surveyId"> }
-  | { type: "response"; data: TResponseWithQuotas };
+  | { type: "display"; data: Pick<TDisplay, "id" | "createdAt" | "surveyId">; survey: TSurvey }
+  | { type: "response"; data: TResponseWithQuotas; survey: TSurvey };
 
 interface ActivityTimelineProps {
   surveys: TSurvey[];
@@ -40,7 +40,7 @@ export const ActivityTimeline = ({
   environmentTags,
   locale,
   workspacePermission,
-}: ActivityTimelineProps) => {
+}: Readonly<ActivityTimelineProps>) => {
   const { t } = useTranslation();
   const [responses, setResponses] = useState(initialResponses);
   const [isReversed, setIsReversed] = useState(false);
@@ -65,16 +65,20 @@ export const ActivityTimeline = ({
     setResponses((prev) => prev.map((r) => (r.id === responseId ? updatedResponse : r)));
   };
 
-  const timelineItems = useMemo(() => {
-    const displayItems: TTimelineItem[] = displays.map((d) => ({
-      type: "display" as const,
-      data: d,
-    }));
+  const surveyById = useMemo(() => {
+    return new Map(surveys.map((s) => [s.id, s]));
+  }, [surveys]);
 
-    const responseItems: TTimelineItem[] = responses.map((r) => ({
-      type: "response" as const,
-      data: r,
-    }));
+  const timelineItems = useMemo(() => {
+    const displayItems: TTimelineItem[] = displays.flatMap((d) => {
+      const survey = surveyById.get(d.surveyId);
+      return survey ? [{ type: "display" as const, data: d, survey }] : [];
+    });
+
+    const responseItems: TTimelineItem[] = responses.flatMap((r) => {
+      const survey = surveyById.get(r.surveyId);
+      return survey ? [{ type: "response" as const, data: r, survey }] : [];
+    });
 
     const merged = [...displayItems, ...responseItems].sort((a, b) => {
       const aTime = new Date(a.data.createdAt).getTime();
@@ -83,7 +87,7 @@ export const ActivityTimeline = ({
     });
 
     return isReversed ? [...merged].reverse() : merged;
-  }, [displays, responses, isReversed]);
+  }, [displays, responses, surveyById, isReversed]);
 
   const toggleSort = () => {
     setIsReversed((prev) => !prev);
@@ -111,16 +115,18 @@ export const ActivityTimeline = ({
               <DisplayCard
                 key={`display-${item.data.id}`}
                 display={item.data}
-                surveys={surveys}
+                survey={item.survey}
+                workspaceId={workspaceId}
                 locale={locale}
               />
             ) : (
               <ResponseSurveyCard
                 key={`response-${item.data.id}`}
                 response={item.data}
-                surveys={surveys}
+                survey={item.survey}
                 user={user}
                 environmentTags={environmentTags}
+                workspaceId={workspaceId}
                 updateResponseList={updateResponseList}
                 updateResponse={updateResponse}
                 locale={locale}

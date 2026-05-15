@@ -1912,6 +1912,7 @@ checksums:
     workspace/contacts/select_a_survey: 1f49086dfb874307aae1136e88c3d514
     workspace/contacts/select_attribute: d93fb60eb4fbb42bf13a22f6216fbd79
     workspace/contacts/select_attribute_key: 673a6683fab41b387d921841cded7e38
+    workspace/contacts/survey_response_created: e4a6eaac2acd8defca3ff57eae045ba6
     workspace/contacts/survey_viewed: 646d413218626787b0373ffd71cb7451
     workspace/contacts/survey_viewed_at: 2ab535237af5c3c3f33acc792a7e70a4
     workspace/contacts/system_attributes: eadb6a8888c7b32c0e68881f945ae9b6
@@ -3248,6 +3249,7 @@ checksums:
     workspace/surveys/responses/completed: 2dca9d2e4c0fe669801112a66d679f6d
     workspace/surveys/responses/country: 73581fc33a1e83e6a56db73558e7b5c6
     workspace/surveys/responses/decrement_quotas: 9ef63d3e9214c508eb040eb41c25a5c4
+    workspace/surveys/responses/delete_response: d86cb6fe4af953cde58f12092962bca4
     workspace/surveys/responses/delete_response_confirmation: 83a43954ca60c8ef30b9683253a6f5ea
     workspace/surveys/responses/delete_response_quotas: 6719c90d8019000ca0a74586fb3b6a65
     workspace/surveys/responses/device: c009f849d689c745de9e38ad17644c7a

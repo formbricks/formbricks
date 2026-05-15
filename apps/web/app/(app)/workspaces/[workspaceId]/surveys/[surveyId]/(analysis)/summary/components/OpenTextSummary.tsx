@@ -12,6 +12,7 @@ import { renderHyperlinkedContent } from "@/modules/analysis/utils";
 import { PersonAvatar } from "@/modules/ui/components/avatars";
 import { Button } from "@/modules/ui/components/button";
 import { EmptyState } from "@/modules/ui/components/empty-state";
+import { IdBadge } from "@/modules/ui/components/id-badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
 import { ElementSummaryHeader } from "./ElementSummaryHeader";
 
@@ -48,7 +49,8 @@ export const OpenTextSummary = ({ elementSummary, survey, locale }: OpenTextSumm
               <TableRow>
                 <TableHead className="w-1/4">{t("common.user")}</TableHead>
                 <TableHead className="w-2/4">{t("common.response")}</TableHead>
-                <TableHead className="w-1/4">{t("common.time")}</TableHead>
+                <TableHead className="w-1/6">{t("common.time")}</TableHead>
+                <TableHead className="w-1/6">{t("common.response_id")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -80,8 +82,11 @@ export const OpenTextSummary = ({ elementSummary, survey, locale }: OpenTextSumm
                       ? renderHyperlinkedContent(response.value)
                       : response.value}
                   </TableCell>
-                  <TableCell className="w-1/4">
+                  <TableCell className="w-1/6">
                     {timeSince(new Date(response.updatedAt).toISOString(), locale)}
+                  </TableCell>
+                  <TableCell className="w-1/6">
+                    <IdBadge id={response.id} />
                   </TableCell>
                 </TableRow>
               ))}
