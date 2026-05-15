@@ -9,6 +9,7 @@ import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive
 import { renderSurvey } from "@/modules/survey/link/components/survey-renderer";
 import { getResponseBySingleUseId, getSurveyWithMetadata } from "@/modules/survey/link/lib/data";
 import { checkAndValidateSingleUseId } from "@/modules/survey/link/lib/helper";
+import type { TLinkSurveySearchParams } from "@/modules/survey/link/lib/types";
 import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
 import { getMetadataForLinkSurvey } from "@/modules/survey/link/metadata";
 
@@ -16,13 +17,7 @@ interface LinkSurveyPageProps {
   params: Promise<{
     surveyId: string;
   }>;
-  searchParams: Promise<{
-    suId?: string;
-    verify?: string;
-    lang?: string;
-    embed?: string;
-    preview?: string;
-  }>;
+  searchParams: Promise<TLinkSurveySearchParams>;
 }
 
 export const generateMetadata = async (props: LinkSurveyPageProps): Promise<Metadata> => {
@@ -121,6 +116,7 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
     searchParams,
     singleUseId,
     singleUseResponse: singleUseResponse ?? undefined,
+    allowUrlUserIdLookup: true,
     isPreview,
     workspaceContext,
     locale,

@@ -11,6 +11,7 @@ import { CustomScriptsInjector } from "@/modules/survey/link/components/custom-s
 import { LinkSurveyWrapper } from "@/modules/survey/link/components/link-survey-wrapper";
 import { OfflineAlert } from "@/modules/survey/link/components/offline-alert";
 import { getPrefillValue } from "@/modules/survey/link/lib/prefill";
+import { getUserIdFromSearchParams } from "@/modules/survey/link/lib/user-id";
 import { isRTLLanguage } from "@/modules/survey/link/lib/utils";
 import { SurveyInline } from "@/modules/ui/components/survey";
 
@@ -25,6 +26,7 @@ interface SurveyClientWrapperProps {
   singleUseId?: string;
   singleUseResponseId?: string;
   contactId?: string;
+  canReadUserIdFromUrl?: boolean;
   recaptchaSiteKey?: string;
   isSpamProtectionEnabled: boolean;
   isPreview: boolean;
@@ -49,6 +51,7 @@ export const SurveyClientWrapper = ({
   singleUseId,
   singleUseResponseId,
   contactId,
+  canReadUserIdFromUrl = false,
   recaptchaSiteKey,
   isSpamProtectionEnabled,
   isPreview,
@@ -61,6 +64,7 @@ export const SurveyClientWrapper = ({
   const searchParams = useSearchParams();
   const skipPrefilled = searchParams.get("skipPrefilled") === "true";
   const offlineSupport = searchParams.get("offlineSupport") === "true";
+  const userId = canReadUserIdFromUrl ? getUserIdFromSearchParams(searchParams) : undefined;
   const elements = useMemo(() => getElementsFromBlocks(survey.blocks), [survey.blocks]);
 
   const startAt = searchParams.get("startAt");
@@ -194,6 +198,7 @@ export const SurveyClientWrapper = ({
           singleUseResponseId={singleUseResponseId}
           getSetIsResponseSendingFinished={(_f: (value: boolean) => void) => {}}
           contactId={contactId}
+          userId={userId}
           recaptchaSiteKey={recaptchaSiteKey}
           isSpamProtectionEnabled={isSpamProtectionEnabled}
           offlineSupport={offlineSupport}

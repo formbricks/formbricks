@@ -14,6 +14,7 @@ import {
   getMetadataBrandColor,
   getSurveyOpenGraphMetadata,
 } from "@/modules/survey/link/lib/metadata-utils";
+import type { TLinkSurveySearchParams } from "@/modules/survey/link/lib/types";
 import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
 import { getWorkspaceById } from "@/modules/survey/link/lib/workspace";
 
@@ -21,13 +22,7 @@ interface ContactSurveyPageProps {
   params: Promise<{
     jwt: string;
   }>;
-  searchParams: Promise<{
-    suId?: string;
-    verify?: string;
-    lang?: string;
-    embed?: string;
-    preview?: string;
-  }>;
+  searchParams: Promise<TLinkSurveySearchParams>;
 }
 
 export const generateMetadata = async (props: ContactSurveyPageProps): Promise<Metadata> => {
