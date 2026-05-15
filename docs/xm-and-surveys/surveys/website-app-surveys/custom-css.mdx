@@ -101,3 +101,45 @@ This gives you two important guarantees:
 
 - This usually means a selector is missing `#fbjs`.
 - Prefix every rule with `#fbjs` to keep styles isolated.
+
+## Survey UI CSS Class Reference
+
+The following classes are used by `packages/survey-ui` and are safe to target when scoped with `#fbjs`.
+
+| CSS class | Element(s) it styles | Notes |
+| --- | --- | --- |
+| `.button-custom` | Survey action buttons (submit, CTA, navigation buttons with custom variant) | Applies `--fb-button-*` styling tokens. |
+| `.label-headline` | Question headlines and headline HTML content | Used by `Label` variant `headline`. |
+| `.label-description` | Question descriptions and helper copy | Used by `Label` variant `description`. |
+| `.label-default` | Default label text content | Used by `Label` variant `default`. |
+| `.label-card` | Upper labels (for example, required label text) | Used by `Label` variant `card`. |
+| `.progress-track` | Progress bar track container | Uses `--fb-progress-track-*` tokens. |
+| `.progress-indicator` | Progress bar fill indicator | Uses `--fb-progress-indicator-*` tokens. |
+| `.rounded-input` | Input-like controls (text inputs, dropdown triggers, date inputs, rating/NPS options) | Controls input border radius token. |
+| `.bg-input-bg` | Input-like control backgrounds | Maps to `--fb-input-bg-color`. |
+| `.border-input-border` | Input-like control borders | Maps to `--fb-input-border-color`. |
+| `.text-input` | Input-like text size | Maps to `--fb-input-font-size`. |
+| `.text-input-text` | Input text and some input icons | Maps to `--fb-input-color`. |
+| `.text-input-placeholder` | Placeholder and empty-state text | Maps to `--fb-input-placeholder-color`. |
+| `.font-input` | Input-like font family | Maps to `--fb-input-font-family`. |
+| `.font-input-weight` | Input-like font weight | Maps to `--fb-input-font-weight`. |
+| `.w-input` | Input width | Maps to `--fb-input-width`. |
+| `.min-h-input` | Input minimum height | Maps to `--fb-input-height`. |
+| `.px-input-x` | Input horizontal padding | Maps to `--fb-input-padding-x`. |
+| `.py-input-y` | Input vertical padding | Maps to `--fb-input-padding-y`. |
+| `.shadow-input` | Input shadow | Maps to `--fb-input-shadow`. |
+| `.rounded-option` | Select/multi-select/ranking/picture-select option containers | Controls option border radius token. |
+| `.bg-option-bg` | Unselected option backgrounds | Maps to `--fb-option-bg-color`. |
+| `.bg-option-selected-bg` | Selected option backgrounds | Used for selected states. |
+| `.bg-option-hover-bg` | Option hover background | Used for hover states. |
+| `.border-option-border` | Option borders and dropdown search divider | Maps to option border token. |
+| `.text-option` | Option label font size | Maps to `--fb-option-font-size`. |
+| `.text-option-label` | Option label text color | Maps to `--fb-option-label-color`. |
+| `.font-option` | Option label font family | Maps to `--fb-option-font-family`. |
+| `.font-option-weight` | Option label font weight | Maps to `--fb-option-font-weight`. |
+| `.px-option-x` | Option horizontal padding | Maps to `--fb-option-padding-x`. |
+| `.py-option-y` | Option vertical padding | Maps to `--fb-option-padding-y`. |
+| `.rounded-button` | Button radius (base button component) | Maps to `--fb-button-border-radius`. |
+| `.text-button` | Button text size | Maps to `--fb-button-font-size`. |
+| `.font-button-weight` | Button font weight | Maps to `--fb-button-font-weight`. |
+| `.border-brand` | Selected/active option borders | Uses survey brand color token. |
