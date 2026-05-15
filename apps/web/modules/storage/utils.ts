@@ -3,7 +3,7 @@ import { StorageErrorCode } from "@formbricks/storage";
 import { TResponseData } from "@formbricks/types/responses";
 import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/storage";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
-import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { TSurveyElementTypeEnum, TSurveyFileUploadElement } from "@formbricks/types/surveys/elements";
 import { TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { responses } from "@/app/lib/api/response";
 import { WEBAPP_URL } from "@/lib/constants";
@@ -118,10 +118,6 @@ export const validateFileUploads = (data?: TResponseData, questions?: TSurveyQue
   return true;
 };
 
-type TSurveyFileUploadConfig = {
-  allowedFileExtensions?: TAllowedFileExtension[];
-};
-
 export type TSurveyFileUploadPermissionResult =
   | {
       ok: true;
@@ -149,12 +145,12 @@ export const validateSurveyAllowsFileUpload = ({
   blocks?: TSurveyBlock[] | null;
   questions?: TSurveyQuestion[] | null;
 }): TSurveyFileUploadPermissionResult => {
-  const fileUploadConfigs: TSurveyFileUploadConfig[] = [
+  const fileUploadConfigs = [
     ...(blocks ?? [])
       .flatMap((block) => block.elements)
       .filter((element) => element.type === TSurveyElementTypeEnum.FileUpload),
     ...(questions ?? []).filter((question) => question.type === TSurveyQuestionTypeEnum.FileUpload),
-  ];
+  ] as TSurveyFileUploadElement[];
 
   if (fileUploadConfigs.length === 0) {
     return {
