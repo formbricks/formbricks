@@ -49,11 +49,11 @@ export const DeleteAccount = ({
     hasShownAccountDeletionError.current = true;
 
     if (accountDeletionErrorCode === ACCOUNT_DELETION_GOOGLE_REAUTH_NOT_CONFIGURED_ERROR_CODE) {
-      toast.error(t("environments.settings.profile.google_sso_account_deletion_requires_setup"), {
+      toast.error(t("workspace.settings.profile.google_sso_account_deletion_requires_setup"), {
         id: "account-deletion-sso-reauth-error",
       });
     } else {
-      toast.error(t("environments.settings.profile.sso_reauthentication_failed"), {
+      toast.error(t("workspace.settings.profile.sso_reauthentication_failed"), {
         id: "account-deletion-sso-reauth-error",
       });
     }

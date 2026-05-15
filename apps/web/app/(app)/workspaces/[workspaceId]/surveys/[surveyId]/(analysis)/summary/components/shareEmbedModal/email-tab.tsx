@@ -152,7 +152,7 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
                     sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin"
                     srcDoc={emailPreviewDocument}
                     style={{ height: `${previewFrameHeight}px` }}
-                    title={t("environments.surveys.share.send_email.email_preview_tab")}
+                    title={t("workspace.surveys.share.send_email.email_preview_tab")}
                   />
                 ) : (
                   <LoadingSpinner />

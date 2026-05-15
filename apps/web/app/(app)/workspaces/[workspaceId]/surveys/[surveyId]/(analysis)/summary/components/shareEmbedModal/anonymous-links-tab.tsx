@@ -213,7 +213,7 @@ export const AnonymousLinksTab = ({
   const handleCopyCustomSingleUseLink = async () => {
     const trimmedCustomSingleUseId = customSingleUseId.trim();
     if (!trimmedCustomSingleUseId) {
-      toast.error(t("environments.surveys.share.anonymous_links.custom_single_use_id_required"));
+      toast.error(t("workspace.surveys.share.anonymous_links.custom_single_use_id_required"));
       return;
     }
 
@@ -227,7 +227,7 @@ export const AnonymousLinksTab = ({
 
       const singleUseLinkParams = response?.data?.[0];
       if (!singleUseLinkParams) {
-        toast.error(t("environments.surveys.share.anonymous_links.generate_links_error"));
+        toast.error(t("workspace.surveys.share.anonymous_links.generate_links_error"));
         return;
       }
 
@@ -240,7 +240,7 @@ export const AnonymousLinksTab = ({
       await navigator.clipboard.writeText(url.toString());
       toast.success(t("common.copied_to_clipboard"));
     } catch {
-      toast.error(t("environments.surveys.share.anonymous_links.generate_links_error"));
+      toast.error(t("workspace.surveys.share.anonymous_links.generate_links_error"));
     }
   };
 
@@ -314,7 +314,7 @@ export const AnonymousLinksTab = ({
                       value={customSingleUseId}
                       onChange={(event) => setCustomSingleUseId(event.target.value)}
                       placeholder={t(
-                        "environments.surveys.share.anonymous_links.custom_single_use_id_placeholder"
+                        "workspace.surveys.share.anonymous_links.custom_single_use_id_placeholder"
                       )}
                     />
 

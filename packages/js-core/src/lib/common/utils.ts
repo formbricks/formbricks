@@ -59,7 +59,7 @@ export const wrapThrowsAsync =
  * array — older SDKs cached the full segment in localStorage and may still be
  * read back here within the cache window after an SDK upgrade.
  */
-export const surveyHasSegmentFilters = (survey: TEnvironmentStateSurvey): boolean => {
+export const surveyHasSegmentFilters = (survey: TWorkspaceStateSurvey): boolean => {
   const segment = survey.segment as { hasFilters?: boolean; filters?: unknown[] } | null | undefined;
   if (!segment) return false;
   if (typeof segment.hasFilters === "boolean") return segment.hasFilters;

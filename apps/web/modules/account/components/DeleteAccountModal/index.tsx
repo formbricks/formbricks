@@ -62,23 +62,23 @@ export const DeleteAccountModal = ({
   const isDeleteDisabled = !hasValidConfirmation;
   const getLocalizedDeletionErrorMessage = (serverError?: string) => {
     if (serverError === DELETE_ACCOUNT_WRONG_PASSWORD_ERROR) {
-      return t("environments.settings.profile.wrong_password");
+      return t("workspace.settings.profile.wrong_password");
     }
 
     if (serverError === ACCOUNT_DELETION_GOOGLE_REAUTH_NOT_CONFIGURED_ERROR_CODE) {
-      return t("environments.settings.profile.google_sso_account_deletion_requires_setup");
+      return t("workspace.settings.profile.google_sso_account_deletion_requires_setup");
     }
 
     if (serverError === ACCOUNT_DELETION_EMAIL_MISMATCH_ERROR_CODE) {
-      return t("environments.settings.profile.email_confirmation_does_not_match");
+      return t("workspace.settings.profile.email_confirmation_does_not_match");
     }
 
     if (serverError === ACCOUNT_DELETION_CONFIRMATION_REQUIRED_ERROR_CODE) {
-      return t("environments.settings.profile.delete_account_confirmation_required");
+      return t("workspace.settings.profile.delete_account_confirmation_required");
     }
 
     if (serverError === ACCOUNT_DELETION_SSO_REAUTH_REQUIRED_ERROR_CODE) {
-      return t("environments.settings.profile.sso_reauthentication_failed");
+      return t("workspace.settings.profile.sso_reauthentication_failed");
     }
 
     return null;
@@ -223,7 +223,7 @@ export const DeleteAccountModal = ({
           />
           {!requiresPasswordConfirmation && (
             <p className="mt-2 text-sm text-slate-600">
-              {t("environments.settings.profile.sso_reauthentication_may_be_required_for_deletion")}
+              {t("workspace.settings.profile.sso_reauthentication_may_be_required_for_deletion")}
             </p>
           )}
           {requiresPasswordConfirmation && (
