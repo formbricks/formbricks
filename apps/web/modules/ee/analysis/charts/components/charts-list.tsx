@@ -37,7 +37,13 @@ export const ChartsList = async ({
               {t("workspace.analysis.charts.no_charts_found_description")}
             </p>
           </div>
-          {!isReadOnly && <CreateChartButton workspaceId={workspaceId} directories={directories} />}
+          {!isReadOnly && (
+            <CreateChartButton
+              workspaceId={workspaceId}
+              directories={directories}
+              buttonProps={{ variant: "secondary" }}
+            />
+          )}
         </div>
       ) : (
         charts.map((chart) => (

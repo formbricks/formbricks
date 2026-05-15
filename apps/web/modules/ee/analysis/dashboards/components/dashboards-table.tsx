@@ -39,7 +39,9 @@ export const DashboardsTable = async ({
               {t("workspace.analysis.dashboards.no_dashboards_found_description")}
             </p>
           </div>
-          {!isReadOnly && <CreateDashboardButton workspaceId={workspaceId} />}
+          {!isReadOnly && (
+            <CreateDashboardButton workspaceId={workspaceId} buttonProps={{ variant: "secondary" }} />
+          )}
         </div>
       ) : (
         dashboards.map((dashboard) => {
