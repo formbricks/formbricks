@@ -11,14 +11,14 @@ import ethereumLogo from "@/images/customer-logos/ethereum-logo.png";
 import flixbusLogo from "@/images/customer-logos/flixbus-white.svg";
 import githubLogo from "@/images/customer-logos/github-logo.png";
 import siemensLogo from "@/images/customer-logos/siemens.png";
-import { startProTrialAction } from "@/modules/ee/billing/actions";
-import { startHobbyAction } from "@/modules/ee/billing/actions";
+import { startHobbyAction, startProTrialAction } from "@/modules/ee/billing/actions";
+import { PLAN_VARIANTS, type TPlanVariant } from "@/modules/ee/billing/lib/select-plan-variants";
 import { Button } from "@/modules/ui/components/button";
 
 interface SelectPlanCardProps {
-  /** URL to redirect after starting trial or continuing with free */
   nextUrl: string;
   organizationId: string;
+  variant?: TPlanVariant;
 }
 
 const CUSTOMER_LOGOS = [
@@ -29,11 +29,26 @@ const CUSTOMER_LOGOS = [
   { src: ethereumLogo, alt: "Ethereum" },
 ];
 
-export const SelectPlanCard = ({ nextUrl, organizationId }: SelectPlanCardProps) => {
+export const SelectPlanCard = ({ nextUrl, organizationId, variant = "a" }: SelectPlanCardProps) => {
   const router = useRouter();
   const [isStartingTrial, setIsStartingTrial] = useState(false);
   const [isStartingHobby, setIsStartingHobby] = useState(false);
   const { t } = useTranslation();
+  const config = PLAN_VARIANTS[variant];
+
+  const isVariantB = variant === "b";
+
+  const title = isVariantB
+    ? t("environments.settings.billing.select_plan_variant_b_title")
+    : t("environments.settings.billing.trial_title");
+
+  const subtitle = isVariantB ? null : t("environments.settings.billing.trial_no_credit_card");
+
+  const cta = isVariantB
+    ? t("environments.settings.billing.select_plan_variant_b_cta")
+    : t("common.start_free_trial");
+
+  const skip = t("environments.settings.billing.select_plan_variant_b_skip");
 
   const TRIAL_FEATURE_KEYS = [
     t("environments.settings.billing.trial_feature_unlimited_seats"),
@@ -84,7 +99,6 @@ export const SelectPlanCard = ({ nextUrl, organizationId }: SelectPlanCardProps)
 
   return (
     <div className="flex w-full max-w-md flex-col items-center space-y-6">
-      {/* Trial Card */}
       <div className="relative w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
         <div className="flex flex-col items-center space-y-6 p-8">
           <div className="rounded-full bg-slate-100 p-4">
@@ -92,20 +106,20 @@ export const SelectPlanCard = ({ nextUrl, organizationId }: SelectPlanCardProps)
           </div>
 
           <div className="text-center">
-            <h3 className="text-2xl font-semibold text-slate-800">
-              {t("environments.settings.billing.trial_title")}
-            </h3>
-            <p className="mt-2 text-slate-600">{t("environments.settings.billing.trial_no_credit_card")}</p>
+            <h3 className="text-2xl font-semibold text-slate-800">{title}</h3>
+            {subtitle && <p className="mt-2 text-slate-600">{subtitle}</p>}
           </div>
 
-          <ul className="w-full space-y-3 text-left">
-            {TRIAL_FEATURE_KEYS.map((key) => (
-              <li key={key} className="flex items-center gap-3 text-slate-700">
-                <CheckIcon className="h-5 w-5 flex-shrink-0 text-slate-900" />
-                <span>{key}</span>
-              </li>
-            ))}
-          </ul>
+          {config.showFeatures && (
+            <ul className="w-full space-y-3 text-left">
+              {TRIAL_FEATURE_KEYS.map((key) => (
+                <li key={key} className="flex items-center gap-3 text-slate-700">
+                  <CheckIcon className="h-5 w-5 flex-shrink-0 text-slate-900" />
+                  <span>{key}</span>
+                </li>
+              ))}
+            </ul>
+          )}
 
           <Button
             size="lg"
@@ -113,35 +127,36 @@ export const SelectPlanCard = ({ nextUrl, organizationId }: SelectPlanCardProps)
             className="mt-4 w-full"
             loading={isStartingTrial}
             disabled={isStartingTrial || isStartingHobby}>
-            {t("common.start_free_trial")}
+            {cta}
           </Button>
         </div>
 
-        {/* Logo Carousel */}
-        <div className="w-full overflow-hidden border-t border-slate-100 bg-slate-50 py-4">
-          <div className="flex w-max animate-logo-scroll gap-12 hover:[animation-play-state:paused]">
-            {[...CUSTOMER_LOGOS, ...CUSTOMER_LOGOS].map((logo, index) => (
-              <div
-                key={`${logo.alt}-${index}`}
-                className="flex h-5 items-center opacity-50 grayscale transition-all duration-200 hover:opacity-100 hover:grayscale-0">
-                <Image
-                  src={logo.src}
-                  alt={logo.alt}
-                  height={20}
-                  width={100}
-                  className="h-5 w-auto max-w-[100px] object-contain"
-                />
-              </div>
-            ))}
+        {config.showLogos && (
+          <div className="w-full overflow-hidden border-t border-slate-100 bg-slate-50 py-4">
+            <div className="flex w-max animate-logo-scroll gap-12 hover:[animation-play-state:paused]">
+              {[...CUSTOMER_LOGOS, ...CUSTOMER_LOGOS].map((logo, index) => (
+                <div
+                  key={`${logo.alt}-${index}`}
+                  className="flex h-5 items-center opacity-50 grayscale transition-all duration-200 hover:opacity-100 hover:grayscale-0">
+                  <Image
+                    src={logo.src}
+                    alt={logo.alt}
+                    height={20}
+                    width={100}
+                    className="h-5 w-auto max-w-[100px] object-contain"
+                  />
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <button
         onClick={handleContinueHobby}
         disabled={isStartingTrial || isStartingHobby}
         className="text-sm text-slate-400 underline-offset-2 transition-colors hover:text-slate-600 hover:underline">
-        {isStartingHobby ? t("common.loading") : t("environments.settings.billing.stay_on_hobby_plan")}
+        {isStartingHobby ? t("common.loading") : skip}
       </button>
     </div>
   );

@@ -214,6 +214,9 @@ checksums:
     common/failed_to_load_organizations: 512808a2b674c7c28bca73f8f91fd87e
     common/failed_to_load_workspaces: 6ee3448097394517dc605074cd4e6ea4
     common/field_placeholder: ec26d96643d86da164162204ec6c650f
+    common/file_size_must_be_less_than_5_mb: a7d8ef9f888bfb3de2b589947fa2a63f
+    common/file_storage_not_set_up: ed82fc9c54da2f16245eaea9f8aa08f3
+    common/file_upload_service_unavailable: 93a6a904cef89cc18d2c4a65e2d581cc
     common/filter: 626325a05e4c8800f7ede7012b0cadaf
     common/finish: ffa7a10f71182b48fefed7135bee24fa
     common/first_name: cf040a5d6a9fd696be400380cc99f54b
@@ -980,8 +983,12 @@ checksums:
     environments/settings/billing/retry_setup: bef560e42fa8798271fea150476791e0
     environments/settings/billing/select_plan_header_subtitle: 8de6b4e3ce5726829829bd46582f343a
     environments/settings/billing/select_plan_header_title: b15a9d86b819a7fae8e956a50572184c
+    environments/settings/billing/select_plan_variant_b_cta: 3994d5c8a6e7b1865e8c4b8aa7fea5e4
+    environments/settings/billing/select_plan_variant_b_header_subtitle: e0c177a159fbb891aa61e5d35a40849c
+    environments/settings/billing/select_plan_variant_b_header_title: 22f73b2ddc56a8e28a8df6ec95cc92c2
+    environments/settings/billing/select_plan_variant_b_skip: a88d4f26a91460707ed079ffb37a4b08
+    environments/settings/billing/select_plan_variant_b_title: 8db4ce3320c900dd1d97817f33418599
     environments/settings/billing/status_trialing: 4fd32760caf3bd7169935b0a6d2b5b67
-    environments/settings/billing/stay_on_hobby_plan: 966ab0c752a79f00ef10d6a5ed1d8cad
     environments/settings/billing/stripe_setup_incomplete: fa6d6e295dd14b73c17ac8678205109b
     environments/settings/billing/stripe_setup_incomplete_description: 9f28a542729cc719bca2ca08e7406284
     environments/settings/billing/subscription: ba9f3675e18987d067d48533c8897343
@@ -1833,8 +1840,10 @@ checksums:
     environments/surveys/responses/this_response_is_in_progress: 7d785fcb597ea30466467084fd474904
     environments/surveys/responses/zip_post_code: ab7dc45bd5f9e37930586e2db17e4304
     environments/surveys/search_by_survey_name: 44cf2e6f8ba43d233fb33939431eba99
-    environments/surveys/share/anonymous_links/custom_single_use_id_description: 53c6d2b6cf597115b1f5a280ce7e9cab
-    environments/surveys/share/anonymous_links/custom_single_use_id_title: 9d708fe4ced64ddedd307fb61827cd03
+    environments/surveys/share/anonymous_links/custom_single_use_id_description: 994c76257cc373388a3870caf9d85dc7
+    environments/surveys/share/anonymous_links/custom_single_use_id_placeholder: e089b0f1838164b2ef2f74076477d8f2
+    environments/surveys/share/anonymous_links/custom_single_use_id_required: 36f60e76ebed5af11661ac7bbadd9a2b
+    environments/surveys/share/anonymous_links/custom_single_use_id_title: 0a1b97ed6fd82d9b0f9f43750d45fbe3
     environments/surveys/share/anonymous_links/custom_start_point: 4ea6552b37339d17e02f3bce8c7e4125
     environments/surveys/share/anonymous_links/data_prefilling: 82f0e31e90f1f2ca31361df9893e117c
     environments/surveys/share/anonymous_links/description: d13534a22f135420651ebfd218a4f01b
