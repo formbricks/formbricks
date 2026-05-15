@@ -9,7 +9,7 @@ import { getSurvey } from "@/lib/survey/service";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getBiggerUploadFileSizePermission } from "@/modules/ee/license-check/lib/utils";
 import { getSignedUrlForUpload } from "@/modules/storage/service";
-import { getErrorResponseFromStorageError } from "@/modules/storage/utils";
+import { getErrorResponseFromStorageError, validateSurveyAllowsFileUpload } from "@/modules/storage/utils";
 
 export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse(
@@ -76,6 +76,24 @@ export const POST = withV1ApiWrapper({
     if (survey.environmentId !== environmentId) {
       return {
         response: responses.badRequestResponse("Survey does not belong to this environment", undefined, true),
+      };
+    }
+
+    const fileUploadPermission = validateSurveyAllowsFileUpload({
+      fileName,
+      blocks: survey.blocks,
+      questions: survey.questions,
+    });
+
+    if (!fileUploadPermission.ok) {
+      return {
+        response: responses.badRequestResponse(
+          fileUploadPermission.reason === "no_file_upload_question"
+            ? "Survey does not allow file uploads"
+            : "File extension is not allowed for this survey",
+          undefined,
+          true
+        ),
       };
     }
 

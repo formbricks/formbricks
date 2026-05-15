@@ -1,7 +1,9 @@
 import "server-only";
-import { StorageError, StorageErrorCode } from "@formbricks/storage";
+import { StorageErrorCode } from "@formbricks/storage";
 import { TResponseData } from "@formbricks/types/responses";
 import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/storage";
+import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { responses } from "@/app/lib/api/response";
 import { WEBAPP_URL } from "@/lib/constants";
@@ -10,6 +12,10 @@ import { getOriginalFileNameFromUrl } from "./url-helpers";
 
 // Re-export for backward compatibility with server-side code
 export { getOriginalFileNameFromUrl } from "./url-helpers";
+
+type TStorageError = {
+  code: (typeof StorageErrorCode)[keyof typeof StorageErrorCode];
+};
 
 /**
  * Sanitize a provided file name to a safe subset.
@@ -100,6 +106,77 @@ export const validateFileUploads = (data?: TResponseData, questions?: TSurveyQue
   return true;
 };
 
+type TSurveyFileUploadConfig = {
+  allowedFileExtensions?: TAllowedFileExtension[];
+};
+
+export type TSurveyFileUploadPermissionResult =
+  | {
+      ok: true;
+    }
+  | {
+      ok: false;
+      reason: "no_file_upload_question" | "file_extension_not_allowed";
+    };
+
+const getAllowedFileExtensionFromFileName = (fileName: string): TAllowedFileExtension | null => {
+  const extension = fileName.split(".").pop()?.toLowerCase();
+
+  if (!extension || extension === fileName.toLowerCase()) {
+    return null;
+  }
+
+  const extensionValidation = ZAllowedFileExtension.safeParse(extension);
+
+  return extensionValidation.success ? extensionValidation.data : null;
+};
+
+export const validateSurveyAllowsFileUpload = ({
+  fileName,
+  blocks,
+  questions,
+}: {
+  fileName: string;
+  blocks?: TSurveyBlock[] | null;
+  questions?: TSurveyQuestion[] | null;
+}): TSurveyFileUploadPermissionResult => {
+  const fileUploadConfigs: TSurveyFileUploadConfig[] = [
+    ...(blocks ?? [])
+      .flatMap((block) => block.elements)
+      .filter((element) => element.type === TSurveyElementTypeEnum.FileUpload),
+    ...(questions ?? []).filter((question) => question.type === TSurveyQuestionTypeEnum.FileUpload),
+  ];
+
+  if (fileUploadConfigs.length === 0) {
+    return {
+      ok: false,
+      reason: "no_file_upload_question",
+    };
+  }
+
+  const fileExtension = getAllowedFileExtensionFromFileName(fileName);
+
+  if (!fileExtension) {
+    return {
+      ok: false,
+      reason: "file_extension_not_allowed",
+    };
+  }
+
+  const isFileExtensionAllowed = fileUploadConfigs.some((fileUploadConfig) => {
+    const { allowedFileExtensions } = fileUploadConfig;
+
+    return allowedFileExtensions === undefined || allowedFileExtensions.includes(fileExtension);
+  });
+
+  return isFileExtensionAllowed
+    ? { ok: true }
+    : {
+        ok: false,
+        reason: "file_extension_not_allowed",
+      };
+};
+
 export const isValidImageFile = (fileUrl: string): boolean => {
   const fileName = getOriginalFileNameFromUrl(fileUrl);
   if (!fileName || fileName.endsWith(".")) return false;
@@ -112,7 +189,7 @@ export const isValidImageFile = (fileUrl: string): boolean => {
 };
 
 export const getErrorResponseFromStorageError = (
-  error: StorageError,
+  error: TStorageError,
   details?: Record<string, string>
 ): Response => {
   switch (error.code) {
