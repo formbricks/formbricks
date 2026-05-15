@@ -82,6 +82,7 @@ export type TDashboard = {
 export type TDashboardWithCount = TDashboard & {
   creator: { name: string } | null;
   _count: { widgets: number };
+  containsChart?: boolean;
 };
 
 // ── Widget input schema ─────────────────────────────────────────────────────

@@ -7,7 +7,7 @@ import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TActionClass, TActionClassInput, ZActionClassInput } from "@formbricks/types/action-classes";
 import { ZId, ZOptionalNumber, ZString } from "@formbricks/types/common";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { DatabaseError, ResourceNotFoundError, UniqueConstraintError } from "@formbricks/types/errors";
 import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
 
@@ -132,7 +132,7 @@ export const createActionClass = async (actionClass: TActionClassInput): Promise
       error.code === PrismaErrorType.UniqueConstraintViolation
     ) {
       const targetField = (error.meta?.target as string[] | undefined)?.[0];
-      throw new DatabaseError(
+      throw new UniqueConstraintError(
         `Action with ${targetField} ${targetField ? (actionClass as Record<string, unknown>)[targetField] : ""} already exists`
       );
     }
@@ -181,7 +181,7 @@ export const updateActionClass = async (
       error.code === PrismaErrorType.UniqueConstraintViolation
     ) {
       const targetField = (error.meta?.target as string[] | undefined)?.[0];
-      throw new DatabaseError(
+      throw new UniqueConstraintError(
         `Action with ${targetField} ${targetField ? (inputActionClass as Record<string, unknown>)[targetField] : ""} already exists`
       );
     }

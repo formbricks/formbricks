@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { useSurvey } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/context/survey-context";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { updateSurveyAction } from "@/modules/survey/editor/actions";
 import {
@@ -15,12 +16,8 @@ import {
 } from "@/modules/ui/components/select";
 import { SurveyStatusIndicator } from "@/modules/ui/components/survey-status-indicator";
 
-interface SurveyStatusDropdownProps {
-  updateLocalSurveyStatus?: (status: TSurvey["status"]) => void;
-  survey: TSurvey;
-}
-
-export const SurveyStatusDropdown = ({ updateLocalSurveyStatus, survey }: SurveyStatusDropdownProps) => {
+export const SurveyStatusDropdown = () => {
+  const { survey } = useSurvey();
   const { t } = useTranslation();
   const router = useRouter();
   const isScheduled = survey.status === "paused" && survey.publishOn !== null;
@@ -40,10 +37,6 @@ export const SurveyStatusDropdown = ({ updateLocalSurveyStatus, survey }: Survey
       const toastMessage = statusToToastMessage[resultingStatus];
       if (toastMessage) {
         toast.success(toastMessage);
-      }
-
-      if (updateLocalSurveyStatus) {
-        updateLocalSurveyStatus(resultingStatus);
       }
 
       router.refresh();

@@ -1,9 +1,9 @@
 "use client";
 
-import { debounce } from "lodash";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
+import { debounce } from "@/lib/utils/debounce";
 import { getContactsAction } from "../actions";
 import { TContactTableData, TContactWithAttributes } from "../types/contact";
 import { ContactsTable } from "./contacts-table";

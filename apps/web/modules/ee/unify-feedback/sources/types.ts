@@ -24,6 +24,8 @@ export interface TFieldMapping {
   staticValue?: string;
 }
 
+export const CSV_IMPORT_MISSING_COLUMNS_ERROR_CODE = "CSV_IMPORT_MISSING_COLUMNS";
+
 export type TTargetFieldType = "string" | "enum" | "timestamp" | "float64" | "boolean" | "jsonb" | "string[]";
 
 export interface TTargetField {
@@ -84,9 +86,9 @@ export const FEEDBACK_RECORD_FIELDS: TTargetField[] = [
     id: "submission_id",
     name: "Submission ID",
     type: "string",
-    required: false,
+    required: true,
     description:
-      "Optional. Map to a stable column (e.g. order_id, ticket_id) to enable idempotent re-imports. Auto-generated UUID per row if unmapped.",
+      "Map to a stable column (e.g. response_id, order_id, ticket_id) to enable idempotent re-imports.",
   },
   {
     id: "source_id",
@@ -175,7 +177,54 @@ export const FEEDBACK_RECORD_FIELDS: TTargetField[] = [
   },
 ];
 
-export const SAMPLE_CSV_COLUMNS = "timestamp,customer_id,rating,feedback_text,category";
+export const CSV_RESPONSE_VALUE_TARGET: TTargetField = {
+  id: "response_value",
+  name: "Response",
+  type: "string",
+  required: true,
+  description:
+    "The user's actual answer or value. We'll store it in the right format (text, number, boolean, or date) based on Field Type.",
+};
+
+const CSV_HIDDEN_TARGET_IDS = [
+  "tenant_id",
+  "source_type",
+  "value_text",
+  "value_number",
+  "value_boolean",
+  "value_date",
+];
+export const CSV_TARGET_FIELDS: TTargetField[] = [
+  ...FEEDBACK_RECORD_FIELDS.filter((f) => CSV_HIDDEN_TARGET_IDS.every((id) => f.id !== id)),
+  CSV_RESPONSE_VALUE_TARGET,
+];
+
+export const CSV_FIELD_GROUPS = {
+  basic: ["submission_id", "collected_at", "field_id", "field_label", "field_type", "response_value"],
+  sourceContext: ["source_id", "source_name"],
+  advanced: ["field_group_id", "field_group_label", "language", "user_id", "metadata"],
+} as const;
+
+export const CSV_PROTECTED_TARGET_IDS = ["tenant_id", "source_type"] as const;
+
+export const CSV_HIDDEN_STATIC_MAPPINGS: TFieldMapping[] = [
+  { sourceFieldId: "", targetFieldId: "source_type", staticValue: "csv" },
+];
+
+export const CSV_REQUIRED_UI_FIELDS = ["submission_id", "field_id", "field_type", "response_value"];
+
+export const SAMPLE_CSV_COLUMNS = "timestamp,response_id,customer_id,rating,feedback_text,category";
+
+export const SAMPLE_CSV_FILE_NAME = "formbricks-sample-feedback.csv";
+
+export const SAMPLE_CSV_CONTENT = `submission_id,collected_at,field_id,field_type,value,email,language
+sub-001,2026-01-15T10:00:00Z,nps_score,nps,9,alice@example.com,en
+sub-002,2026-01-15T10:05:00Z,nps_score,nps,7,bob@example.com,en
+sub-003,2026-01-15T10:10:00Z,nps_score,nps,10,carla@example.com,es
+sub-001,2026-01-15T10:00:30Z,nps_comment,text,"Loved the onboarding flow",alice@example.com,en
+sub-002,2026-01-15T10:05:30Z,nps_comment,text,"Pricing page is confusing, please simplify",bob@example.com,en
+sub-003,2026-01-15T10:10:30Z,nps_comment,text,"Documentation could be clearer",carla@example.com,es
+`;
 
 export const MAX_CSV_VALUES = {
   FILE_SIZE: 2_097_152, // 2MB (2 * 1024 * 1024)
@@ -236,6 +285,8 @@ export const getTranslatedConnectorError = (errorCode: string, t: TFunction): st
       return t("workspace.unify.error_connector_formbricks_mapping_duplicate");
     case "CONNECTOR_FIELD_MAPPING_DUPLICATE":
       return t("workspace.unify.error_connector_field_mapping_duplicate");
+    case CSV_IMPORT_MISSING_COLUMNS_ERROR_CODE:
+      return t("workspace.unify.csv_saved_mapping_missing_columns");
     case "CONNECTOR_NAME_REQUIRED":
       return t("workspace.unify.error_connector_name_required");
     case "CONNECTOR_SURVEY_REQUIRED":

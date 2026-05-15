@@ -46,10 +46,16 @@ export const createOrUpdateIntegrationAction = authenticatedActionClient
       ctx.auditLoggingCtx.integrationId = result.id;
       ctx.auditLoggingCtx.newObject = result;
 
-      capturePostHogEvent(ctx.user.id, "integration_connected", {
-        integration_type: parsedInput.integrationData.type,
-        organization_id: organizationId,
-      });
+      capturePostHogEvent(
+        ctx.user.id,
+        "integration_connected",
+        {
+          integration_type: parsedInput.integrationData.type,
+          organization_id: organizationId,
+          workspace_id: parsedInput.workspaceId,
+        },
+        { organizationId, workspaceId: parsedInput.workspaceId }
+      );
 
       return result;
     })

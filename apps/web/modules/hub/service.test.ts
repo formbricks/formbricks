@@ -96,6 +96,24 @@ describe("hub service", () => {
       expect(result.data).toBeNull();
       expect(result.error).toMatchObject({ message: "Network error" });
     });
+
+    test("reads status from a foreign error class (simulates dual module scope)", async () => {
+      // Simulates the SDK being loaded into a different module scope under Next dev/Turbopack:
+      // the thrown error is NOT instanceof the FormbricksHub.APIError reference captured in service.ts.
+      class ForeignConflictError extends Error {
+        readonly status = 409;
+      }
+      vi.mocked(getHubClient).mockReturnValue({
+        feedbackRecords: {
+          create: vi.fn().mockRejectedValue(new ForeignConflictError("duplicate submission_id")),
+        },
+      } as any);
+
+      const result = await createFeedbackRecord(sampleInput);
+
+      expect(result.data).toBeNull();
+      expect(result.error).toMatchObject({ status: 409, message: "duplicate submission_id" });
+    });
   });
 
   describe("listFeedbackRecords", () => {

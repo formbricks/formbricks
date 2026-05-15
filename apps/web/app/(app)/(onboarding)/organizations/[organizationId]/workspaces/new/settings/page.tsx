@@ -11,6 +11,7 @@ import { getTeamsByOrganizationId } from "@/app/(app)/(onboarding)/lib/onboardin
 import { WorkspaceSettings } from "@/app/(app)/(onboarding)/organizations/[organizationId]/workspaces/new/settings/components/WorkspaceSettings";
 import { DEFAULT_BRAND_COLOR } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { getUserWorkspaces } from "@/lib/workspace/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getAccessControlPermission } from "@/modules/ee/license-check/lib/utils";
@@ -54,6 +55,18 @@ const Page = async (props: WorkspaceSettingsPageProps) => {
   }
 
   const publicDomain = getPublicDomain();
+
+  if (searchParams.mode === "cx") {
+    capturePostHogEvent(
+      session.user.id,
+      "organization_mode_selected",
+      {
+        organization_id: params.organizationId,
+        mode: "cx",
+      },
+      { organizationId: params.organizationId }
+    );
+  }
 
   return (
     <div className="flex min-h-full min-w-full flex-col items-center justify-center space-y-12">

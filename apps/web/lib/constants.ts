@@ -10,8 +10,7 @@ export const IS_DEVELOPMENT = env.NODE_ENV === "development";
 export const E2E_TESTING = env.E2E_TESTING === "1";
 
 // URLs
-export const WEBAPP_URL =
-  env.WEBAPP_URL || (env.VERCEL_URL ? `https://${env.VERCEL_URL}` : false) || "http://localhost:3000";
+export const WEBAPP_URL = env.WEBAPP_URL?.trim() || "http://localhost:3000";
 
 // encryption keys
 export const ENCRYPTION_KEY = env.ENCRYPTION_KEY;
@@ -26,6 +25,7 @@ export const TERMS_URL = env.TERMS_URL;
 export const IMPRINT_URL = env.IMPRINT_URL;
 export const IMPRINT_ADDRESS = env.IMPRINT_ADDRESS;
 
+export const DISABLE_ACCOUNT_DELETION_SSO_REAUTH = env.DISABLE_ACCOUNT_DELETION_SSO_REAUTH === "1";
 export const DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS = env.DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS === "1";
 export const DEBUG_SHOW_RESET_LINK = !IS_PRODUCTION && env.DEBUG_SHOW_RESET_LINK === "1";
 export const PASSWORD_RESET_DISABLED = env.PASSWORD_RESET_DISABLED === "1";
@@ -33,6 +33,7 @@ export const PASSWORD_RESET_TOKEN_LIFETIME_MINUTES = env.PASSWORD_RESET_TOKEN_LI
 export const EMAIL_VERIFICATION_DISABLED = env.EMAIL_VERIFICATION_DISABLED === "1";
 
 export const GOOGLE_OAUTH_ENABLED = !!(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET);
+export const GOOGLE_ACCOUNT_DELETION_REAUTH_ENABLED = env.GOOGLE_ACCOUNT_DELETION_REAUTH_ENABLED === "1";
 export const GITHUB_OAUTH_ENABLED = !!(env.GITHUB_ID && env.GITHUB_SECRET);
 export const AZURE_OAUTH_ENABLED = !!(env.AZUREAD_CLIENT_ID && env.AZUREAD_CLIENT_SECRET);
 export const OIDC_OAUTH_ENABLED = !!(env.OIDC_CLIENT_ID && env.OIDC_CLIENT_SECRET && env.OIDC_ISSUER);
@@ -155,6 +156,9 @@ export const DEBUG = env.DEBUG === "1";
 
 // Enterprise License constant
 export const ENTERPRISE_LICENSE_KEY = env.ENTERPRISE_LICENSE_KEY;
+
+export const ENTERPRISE_LICENSE_REQUEST_FORM_URL =
+  "https://app.formbricks.com/s/trvp8tzy5uvsps9rc9qi9l9w?delivery=onpremise&source=ce";
 
 export const REDIS_URL = env.REDIS_URL;
 export const RATE_LIMITING_DISABLED = env.RATE_LIMITING_DISABLED === "1";

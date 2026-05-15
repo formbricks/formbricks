@@ -1,12 +1,16 @@
+import { Prisma } from "@prisma/client";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { TActionClass } from "@formbricks/types/action-classes";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { PrismaErrorType } from "@formbricks/database/types/error";
+import { TActionClass, TActionClassInput } from "@formbricks/types/action-classes";
+import { DatabaseError, ResourceNotFoundError, UniqueConstraintError } from "@formbricks/types/errors";
 import {
+  createActionClass,
   deleteActionClass,
   getActionClass,
   getActionClassByWorkspaceIdAndName,
   getActionClasses,
+  updateActionClass,
 } from "./service";
 
 vi.mock("@formbricks/database", () => ({
@@ -16,6 +20,8 @@ vi.mock("@formbricks/database", () => ({
       findFirst: vi.fn(),
       findUnique: vi.fn(),
       delete: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
     },
   },
 }));
@@ -176,6 +182,145 @@ describe("ActionClass Service", () => {
       const error = new Error("unknown");
       vi.mocked(prisma.actionClass.delete).mockRejectedValue(error);
       await expect(deleteActionClass("id4")).rejects.toThrow("unknown");
+    });
+  });
+
+  describe("createActionClass", () => {
+    const codeInput: TActionClassInput = {
+      name: "Code Action",
+      description: "desc",
+      type: "code",
+      key: "code-action-key",
+      workspaceId: "ws-create",
+    };
+
+    const buildPrismaUniqueError = (target: string[]) =>
+      Object.assign(
+        new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+          code: PrismaErrorType.UniqueConstraintViolation,
+          clientVersion: "test",
+        }),
+        { meta: { target } }
+      );
+
+    test("should create and return the action class", async () => {
+      const created: TActionClass = {
+        id: "id-create",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        name: codeInput.name,
+        description: codeInput.description ?? null,
+        type: "code",
+        key: codeInput.type === "code" ? codeInput.key : null,
+        noCodeConfig: null,
+        workspaceId: codeInput.workspaceId,
+      };
+      vi.mocked(prisma.actionClass.create).mockResolvedValue(created as never);
+
+      const result = await createActionClass(codeInput);
+      expect(result).toEqual(created);
+    });
+
+    test("should throw UniqueConstraintError on P2002 with target field", async () => {
+      vi.mocked(prisma.actionClass.create).mockRejectedValue(buildPrismaUniqueError(["name"]));
+
+      await expect(createActionClass(codeInput)).rejects.toThrow(UniqueConstraintError);
+      await expect(createActionClass(codeInput)).rejects.toThrow(
+        `Action with name ${codeInput.name} already exists`
+      );
+    });
+
+    test("should throw UniqueConstraintError on P2002 even when target is missing", async () => {
+      vi.mocked(prisma.actionClass.create).mockRejectedValue(
+        Object.assign(
+          new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+            code: PrismaErrorType.UniqueConstraintViolation,
+            clientVersion: "test",
+          }),
+          { meta: undefined }
+        )
+      );
+
+      await expect(createActionClass(codeInput)).rejects.toThrow(UniqueConstraintError);
+    });
+
+    test("should throw DatabaseError for non-P2002 errors", async () => {
+      vi.mocked(prisma.actionClass.create).mockRejectedValue(new Error("boom"));
+
+      await expect(createActionClass(codeInput)).rejects.toThrow(DatabaseError);
+      await expect(createActionClass(codeInput)).rejects.toThrow(
+        `Database error when creating an action for workspace ${codeInput.workspaceId}`
+      );
+    });
+  });
+
+  describe("updateActionClass", () => {
+    const updateInput: Partial<TActionClassInput> = {
+      name: "Renamed Action",
+      description: "updated desc",
+      type: "code",
+      key: "renamed-key",
+      workspaceId: "ws-update",
+    };
+
+    const buildPrismaUniqueError = (target: string[]) =>
+      Object.assign(
+        new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+          code: PrismaErrorType.UniqueConstraintViolation,
+          clientVersion: "test",
+        }),
+        { meta: { target } }
+      );
+
+    test("should update and return the action class", async () => {
+      const updated = {
+        id: "id-update",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        name: updateInput.name,
+        description: updateInput.description ?? null,
+        type: "code" as const,
+        key: "renamed-key",
+        noCodeConfig: null,
+        workspaceId: updateInput.workspaceId,
+        surveyTriggers: [],
+      };
+      vi.mocked(prisma.actionClass.update).mockResolvedValue(updated as never);
+
+      const result = await updateActionClass(updateInput.workspaceId!, "id-update", updateInput);
+      expect(result).toEqual(updated);
+    });
+
+    test("should throw UniqueConstraintError on P2002 with target field", async () => {
+      vi.mocked(prisma.actionClass.update).mockRejectedValue(buildPrismaUniqueError(["name"]));
+
+      await expect(updateActionClass(updateInput.workspaceId!, "id-update", updateInput)).rejects.toThrow(
+        UniqueConstraintError
+      );
+      await expect(updateActionClass(updateInput.workspaceId!, "id-update", updateInput)).rejects.toThrow(
+        `Action with name ${updateInput.name} already exists`
+      );
+    });
+
+    test("should throw DatabaseError for other PrismaClientKnownRequestError codes", async () => {
+      vi.mocked(prisma.actionClass.update).mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError("Record not found", {
+          code: "P2025",
+          clientVersion: "test",
+        })
+      );
+
+      await expect(updateActionClass(updateInput.workspaceId!, "id-update", updateInput)).rejects.toThrow(
+        DatabaseError
+      );
+    });
+
+    test("should rethrow unknown errors", async () => {
+      vi.mocked(prisma.actionClass.update).mockRejectedValue(new Error("boom"));
+
+      await expect(updateActionClass(updateInput.workspaceId!, "id-update", updateInput)).rejects.toThrow(
+        "boom"
+      );
     });
   });
 });

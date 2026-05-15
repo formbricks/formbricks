@@ -1,14 +1,8 @@
 import "server-only";
 import { NextRequest } from "next/server";
-import { feedbackRecordsEnvoyAuthorizer } from "@/modules/hub/feedback-records-gateway";
-import {
-  TEnvoyRequestAuthorizer,
-  authenticateEnvoyRequest,
-  buildStatusResponse,
-  parseEnvoyRequestMetadata,
-} from "./shared";
-
-const envoyAuthorizers: TEnvoyRequestAuthorizer[] = [feedbackRecordsEnvoyAuthorizer];
+import { gatewayRequestAuthorizers } from "@/modules/gateway-auth/lib/authorizers";
+import { authorizeGatewayRequest } from "@/modules/gateway-auth/lib/request";
+import { buildEnvoyAllowResponse, parseEnvoyRequestMetadata } from "./shared";
 
 export const authorizeEnvoyRequest = async (request: NextRequest): Promise<Response> => {
   const requestMetadata = parseEnvoyRequestMetadata(request);
@@ -16,20 +10,12 @@ export const authorizeEnvoyRequest = async (request: NextRequest): Promise<Respo
     return requestMetadata.errorResponse;
   }
 
-  const authorizer = envoyAuthorizers.find((candidate) => candidate.matches(requestMetadata.originalRequest));
-  if (!authorizer) {
-    return buildStatusResponse(400, "Unsupported Envoy auth route");
-  }
-
-  const authenticationResult = await authenticateEnvoyRequest(request, authorizer.gatewayToken);
-  if (authenticationResult.status === "missing" || authenticationResult.status === "invalid") {
-    return buildStatusResponse(401, "Unauthorized");
-  }
-
-  return await authorizer.authorize({
+  return await authorizeGatewayRequest({
     request,
     originalRequest: requestMetadata.originalRequest,
-    principal: authenticationResult.principal,
+    authorizers: gatewayRequestAuthorizers,
     requestId: request.headers.get("x-request-id") ?? "unknown",
+    buildAllowResponse: buildEnvoyAllowResponse,
+    unsupportedRouteMessage: "Unsupported Envoy auth route",
   });
 };

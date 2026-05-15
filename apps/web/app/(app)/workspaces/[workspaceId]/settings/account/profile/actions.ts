@@ -6,11 +6,9 @@ import {
   TUserUpdateInput,
   ZUserPersonalInfoUpdateInput,
 } from "@formbricks/types/user";
-import {
-  getIsEmailUnique,
-  verifyUserPassword,
-} from "@/app/(app)/workspaces/[workspaceId]/settings/account/profile/lib/user";
+import { getIsEmailUnique } from "@/app/(app)/workspaces/[workspaceId]/settings/account/profile/lib/user";
 import { EMAIL_VERIFICATION_DISABLED, PASSWORD_RESET_DISABLED } from "@/lib/constants";
+import { verifyUserPassword } from "@/lib/user/password";
 import { getUser, updateUser } from "@/lib/user/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";

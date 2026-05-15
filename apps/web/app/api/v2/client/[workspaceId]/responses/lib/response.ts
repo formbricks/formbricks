@@ -6,6 +6,10 @@ import { DatabaseError, ResourceNotFoundError, UniqueConstraintError } from "@fo
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { TResponse, ZResponseInput } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
+import {
+  isPrismaKnownRequestError,
+  isSingleUseIdUniqueConstraintError,
+} from "@/app/api/client/[workspaceId]/responses/lib/response-error";
 import { responseSelection } from "@/app/api/v1/client/[workspaceId]/responses/lib/response";
 import { TResponseInputV2 } from "@/app/api/v2/client/[workspaceId]/responses/types/response";
 import { getOrganization } from "@/lib/organization/service";
@@ -18,7 +22,7 @@ import { getContact } from "./contact";
 export const createResponseWithQuotaEvaluation = async (
   responseInput: TResponseInputV2
 ): Promise<TResponseWithQuotaFull> => {
-  const txResponse = await prisma.$transaction(async (tx) => {
+  const txResponse = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     const response = await createResponse(responseInput, tx);
 
     const quotaResult = await evaluateResponseQuotas({
@@ -103,7 +107,7 @@ export const createResponse = async (
     }
 
     if (contactId) {
-      contact = await getContact(contactId);
+      contact = await getContact(contactId, workspaceId);
     }
 
     const ttc = initialTtc ? (finished ? calculateTtcTotal(initialTtc) : initialTtc) : {};
@@ -130,12 +134,9 @@ export const createResponse = async (
 
     return response;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === "P2002") {
-        const target = (error.meta?.target as string[]) ?? [];
-        if (target?.includes("singleUseId")) {
-          throw new UniqueConstraintError("Response already submitted for this single-use link");
-        }
+    if (isPrismaKnownRequestError(error)) {
+      if (isSingleUseIdUniqueConstraintError(error)) {
+        throw new UniqueConstraintError("Response already submitted for this single-use link");
       }
 
       throw new DatabaseError(error.message);

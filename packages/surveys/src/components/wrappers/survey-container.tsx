@@ -1,12 +1,15 @@
-import { useEffect, useRef } from "preact/hooks";
+import { type ComponentChildren } from "preact";
+import { useEffect } from "preact/hooks";
+import { useTranslation } from "react-i18next";
 import { type TOverlay, type TPlacement } from "@formbricks/types/common";
+import { useFocusTrap } from "@/lib/use-focus-trap";
 import { cn } from "@/lib/utils";
 
 interface SurveyContainerProps {
   mode: "modal" | "inline";
   placement?: TPlacement;
   overlay?: TOverlay;
-  children: React.ReactNode;
+  children: ComponentChildren;
   onClose?: () => void;
   clickOutside?: boolean;
   isOpen?: boolean;
@@ -23,8 +26,9 @@ export function SurveyContainer({
   isOpen = true,
   dir = "auto",
 }: Readonly<SurveyContainerProps>) {
-  const modalRef = useRef<HTMLDivElement>(null);
   const isModal = mode === "modal";
+  const { t } = useTranslation();
+  const modalRef = useFocusTrap<HTMLDivElement>({ enabled: isModal && isOpen, onEscapeKeyDown: onClose });
   const hasOverlay = overlay !== "none";
 
   useEffect(() => {
@@ -47,7 +51,7 @@ export function SurveyContainer({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [clickOutside, onClose, isModal, isOpen]);
+  }, [clickOutside, hasOverlay, modalRef, onClose, isModal, isOpen]);
 
   const getPlacementStyle = (placement: TPlacement): string => {
     switch (placement) {
@@ -92,6 +96,10 @@ export function SurveyContainer({
           )}>
           <div
             ref={modalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label={t("common.survey_dialog")}
+            tabIndex={-1}
             className={cn(
               getPlacementStyle(placement),
               isOpen ? "opacity-100" : "opacity-0",

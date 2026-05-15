@@ -3,7 +3,7 @@ import { responses } from "@/app/lib/api/response";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getSurvey } from "@/lib/survey/service";
-import { generateSurveySingleUseIds } from "@/lib/utils/single-use-surveys";
+import { generateSurveySingleUseLinkParamsList } from "@/lib/utils/single-use-surveys";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 
 export const GET = withV1ApiWrapper({
@@ -56,13 +56,22 @@ export const GET = withV1ApiWrapper({
         };
       }
 
-      const singleUseIds = generateSurveySingleUseIds(limit, survey.singleUse.isEncrypted);
+      const singleUseLinkParams = generateSurveySingleUseLinkParamsList(
+        limit,
+        survey.id,
+        survey.singleUse.isEncrypted
+      );
 
       const publicDomain = getPublicDomain();
       // map single use ids to survey links
-      const surveyLinks = singleUseIds.map(
-        (singleUseId) => `${publicDomain}/s/${survey.id}?suId=${singleUseId}`
-      );
+      const surveyLinks = singleUseLinkParams.map(({ suId, suToken }) => {
+        const surveyLink = new URL(`${publicDomain}/s/${survey.id}`);
+        surveyLink.searchParams.set("suId", suId);
+        if (suToken) {
+          surveyLink.searchParams.set("suToken", suToken);
+        }
+        return surveyLink.toString();
+      });
 
       return {
         response: responses.successResponse(surveyLinks),

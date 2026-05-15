@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useCallback, useContext, useState } from "react";
+import React, { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
 import {
   ElementOption,
   ElementOptions,
@@ -30,7 +30,7 @@ interface SelectedFilterOptions {
 
 export interface DateRange {
   from: Date | undefined;
-  to?: Date | undefined;
+  to?: Date;
 }
 
 interface FilterDateContextProps {
@@ -41,6 +41,8 @@ interface FilterDateContextProps {
   dateRange: DateRange;
   setDateRange: React.Dispatch<React.SetStateAction<DateRange>>;
   resetState: () => void;
+  refreshAnalysisData: () => Promise<void>;
+  registerAnalysisRefreshHandler: (handler: () => Promise<void>) => () => void;
 }
 
 const ResponseFilterContext = createContext<FilterDateContextProps | undefined>(undefined);
@@ -61,6 +63,7 @@ const ResponseFilterProvider = ({ children }: { children: React.ReactNode }) => 
     from: undefined,
     to: getTodayDate(),
   });
+  const refreshHandlerRef = useRef<(() => Promise<void>) | null>(null);
 
   const resetState = useCallback(() => {
     setDateRange({
@@ -73,20 +76,43 @@ const ResponseFilterProvider = ({ children }: { children: React.ReactNode }) => 
     });
   }, []);
 
-  return (
-    <ResponseFilterContext.Provider
-      value={{
-        setSelectedFilter,
-        selectedFilter,
-        selectedOptions,
-        setSelectedOptions,
-        dateRange,
-        setDateRange,
-        resetState,
-      }}>
-      {children}
-    </ResponseFilterContext.Provider>
+  const refreshAnalysisData = useCallback(async () => {
+    await refreshHandlerRef.current?.();
+  }, []);
+
+  const registerAnalysisRefreshHandler = useCallback((handler: () => Promise<void>) => {
+    refreshHandlerRef.current = handler;
+
+    return () => {
+      if (refreshHandlerRef.current === handler) {
+        refreshHandlerRef.current = null;
+      }
+    };
+  }, []);
+
+  const contextValue = useMemo(
+    () => ({
+      setSelectedFilter,
+      selectedFilter,
+      selectedOptions,
+      setSelectedOptions,
+      dateRange,
+      setDateRange,
+      resetState,
+      refreshAnalysisData,
+      registerAnalysisRefreshHandler,
+    }),
+    [
+      dateRange,
+      refreshAnalysisData,
+      registerAnalysisRefreshHandler,
+      resetState,
+      selectedFilter,
+      selectedOptions,
+    ]
   );
+
+  return <ResponseFilterContext.Provider value={contextValue}>{children}</ResponseFilterContext.Provider>;
 };
 
 const useResponseFilter = () => {

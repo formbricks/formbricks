@@ -88,6 +88,16 @@ export const GET = async (req: Request) => {
         integration_type: "googleSheets",
         organization_id: organizationId,
       });
+      capturePostHogEvent(
+        session.user.id,
+        "integration_connected",
+        {
+          integration_type: "googleSheets",
+          organization_id: organizationId,
+          workspace_id: workspaceId,
+        },
+        { organizationId, workspaceId }
+      );
     } catch (err) {
       logger.error({ error: err }, "Failed to capture PostHog integration_connected event for googleSheets");
     }

@@ -143,4 +143,5 @@ This setting disables only the **application-level** limiter. It does **not** di
 - Redis/Valkey is required for the application-level limiter (`REDIS_URL`).
 - If you deploy Envoy rate limiting, use a dedicated Redis/Valkey backend for Envoy instead of sharing the app cache.
 - If application Redis is unavailable at runtime, app rate-limiter checks currently fail open (requests are allowed through without enforcement).
+- Client storage upload rate limits count signed upload URL issuance, not successful object creation in S3-compatible storage.
 - Authentication failure audit logging uses a separate throttle (`shouldLogAuthFailure()`) and is intentionally **fail-closed**: when Redis is unavailable or errors occur, audit log entries are **skipped entirely** rather than written without throttle control. This prevents spam while preserving the hash-integrity chain required for compliance. In other words, if Redis is down, no authentication-failure audit logs will be recorded—requests themselves are still allowed (fail-open rate limiting above), but the audit trail for those failures will not be written.

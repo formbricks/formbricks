@@ -4,6 +4,7 @@ import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { getOrganization } from "@/lib/organization/service";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
@@ -63,12 +64,41 @@ export const updateWorkspaceBrandingAction = authenticatedActionClient
           }
         }
       }
-
       ctx.auditLoggingCtx.organizationId = organizationId;
       ctx.auditLoggingCtx.workspaceId = parsedInput.workspaceId;
-      ctx.auditLoggingCtx.oldObject = await getWorkspace(parsedInput.workspaceId);
+      const oldWorkspace = await getWorkspace(parsedInput.workspaceId);
+      ctx.auditLoggingCtx.oldObject = oldWorkspace;
       const result = await updateWorkspaceBranding(parsedInput.workspaceId, parsedInput.data);
       ctx.auditLoggingCtx.newObject = await getWorkspace(parsedInput.workspaceId);
+
+      const groupContext = { organizationId, workspaceId: parsedInput.workspaceId };
+
+      if (oldWorkspace?.linkSurveyBranding === true && parsedInput.data.linkSurveyBranding === false) {
+        capturePostHogEvent(
+          ctx.user.id,
+          "remove_branding_enabled",
+          {
+            organization_id: organizationId,
+            workspace_id: parsedInput.workspaceId,
+            branding_type: "link",
+          },
+          groupContext
+        );
+      }
+
+      if (oldWorkspace?.inAppSurveyBranding === true && parsedInput.data.inAppSurveyBranding === false) {
+        capturePostHogEvent(
+          ctx.user.id,
+          "remove_branding_enabled",
+          {
+            organization_id: organizationId,
+            workspace_id: parsedInput.workspaceId,
+            branding_type: "in_app",
+          },
+          groupContext
+        );
+      }
+
       return result;
     })
   );

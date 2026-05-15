@@ -32,9 +32,9 @@ describe("schema-definition", () => {
 
   describe("getFieldById", () => {
     test("returns dimension by id", () => {
-      const field = getFieldById("FeedbackRecords.sentiment");
+      const field = getFieldById("FeedbackRecords.sourceType");
       expect(field).toBeDefined();
-      expect(field?.label).toBe("Sentiment");
+      expect(field?.label).toBe("Source Type");
       expect(field?.type).toBe("string");
     });
 
@@ -56,7 +56,7 @@ describe("schema-definition", () => {
     });
 
     test("returns field label for known dimension/measure", () => {
-      expect(formatCubeColumnHeader("FeedbackRecords.sentiment")).toBe("Sentiment");
+      expect(formatCubeColumnHeader("FeedbackRecords.sourceType")).toBe("Source Type");
       expect(formatCubeColumnHeader("FeedbackRecords.count")).toBe("Count");
     });
 
@@ -73,6 +73,26 @@ describe("schema-definition", () => {
     test("has dimensions and measures", () => {
       expect(FEEDBACK_FIELDS.dimensions.length).toBeGreaterThan(0);
       expect(FEEDBACK_FIELDS.measures.length).toBeGreaterThan(0);
+    });
+
+    test("exposes CSAT, CES, NPS and universal measures", () => {
+      const ids = FEEDBACK_FIELDS.measures.map((m) => m.id);
+      expect(ids).toEqual(
+        expect.arrayContaining([
+          "FeedbackRecords.count",
+          "FeedbackRecords.uniqueRespondents",
+          "FeedbackRecords.uniqueResponses",
+          "FeedbackRecords.npsScore",
+          "FeedbackRecords.npsAverage",
+          "FeedbackRecords.csatScore",
+          "FeedbackRecords.csatAverage",
+          "FeedbackRecords.csatSatisfiedCount",
+          "FeedbackRecords.csatCount",
+          "FeedbackRecords.cesAverage",
+          "FeedbackRecords.cesCount",
+        ])
+      );
+      expect(ids).not.toContain("FeedbackRecords.averageScore");
     });
   });
 });

@@ -6,7 +6,7 @@ import Link from "next/link";
 import React, { useEffect, useMemo, useState } from "react";
 import { UseFormReturn, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { COLOR_DEFAULTS, STYLE_DEFAULTS, getSuggestedColors } from "@/lib/styling/constants";
@@ -279,11 +279,18 @@ export const StylingView = ({
                 )}
               </div>
               <p className="text-sm text-slate-500">
-                {t("workspace.surveys.edit.adjust_the_theme_in_the")}{" "}
-                <Link href={`${workspaceBasePath}/look`} target="_blank" className="font-semibold underline">
-                  {t("common.appearance")}
-                </Link>{" "}
-                {t("common.settings")}
+                <Trans
+                  i18nKey="workspace.surveys.edit.adjust_theme_in_look_and_feel_settings"
+                  components={{
+                    lookFeelLink: (
+                      <Link
+                        href={`${workspaceBasePath}/look`}
+                        target="_blank"
+                        className="font-semibold underline"
+                      />
+                    ),
+                  }}
+                />
               </p>
             </div>
           )}

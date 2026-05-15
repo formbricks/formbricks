@@ -4,8 +4,9 @@ import { err, ok } from "@formbricks/types/error-handlers";
 import { hashString } from "@/lib/hash-string";
 // Import modules after mocking
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
-import { applyIPRateLimit, applyRateLimit, getClientIdentifier } from "./helpers";
+import { applyClientRateLimit, applyIPRateLimit, applyRateLimit, getClientIdentifier } from "./helpers";
 import { checkRateLimit } from "./rate-limit";
+import { rateLimitConfigs } from "./rate-limit-configs";
 
 // Mock all dependencies
 vi.mock("@/lib/utils/client-ip", () => ({
@@ -194,6 +195,64 @@ describe("helpers", () => {
       await expect(applyIPRateLimit(mockConfig)).rejects.toThrow(
         "Maximum number of requests reached. Please try again later."
       );
+    });
+  });
+
+  describe("applyClientRateLimit", () => {
+    test("should apply compound environment/IP and environment aggregate rate limits", async () => {
+      (getClientIpFromHeaders as any).mockResolvedValue("192.168.1.1");
+      (hashString as any).mockReturnValue("hashed-ip-123");
+      (checkRateLimit as any).mockResolvedValue(ok({ allowed: true }));
+
+      await expect(applyClientRateLimit("env_1")).resolves.toEqual({ allowed: true });
+
+      expect(checkRateLimit).toHaveBeenNthCalledWith(1, rateLimitConfigs.api.client, "env_1:hashed-ip-123");
+      expect(checkRateLimit).toHaveBeenNthCalledWith(2, rateLimitConfigs.api.clientEnvironment, "env_1");
+    });
+
+    test("should apply custom config only to the compound environment/IP check", async () => {
+      const customConfig = {
+        interval: 60,
+        allowedPerInterval: 5,
+        namespace: "storage:upload",
+      };
+
+      (getClientIpFromHeaders as any).mockResolvedValue("192.168.1.1");
+      (hashString as any).mockReturnValue("hashed-ip-123");
+      (checkRateLimit as any).mockResolvedValue(ok({ allowed: true }));
+
+      await expect(applyClientRateLimit("env_1", customConfig)).resolves.toEqual({ allowed: true });
+
+      expect(checkRateLimit).toHaveBeenNthCalledWith(1, customConfig, "env_1:hashed-ip-123");
+      expect(checkRateLimit).toHaveBeenNthCalledWith(2, rateLimitConfigs.api.clientEnvironment, "env_1");
+    });
+
+    test("should throw when the compound environment/IP rate limit is exceeded", async () => {
+      (getClientIpFromHeaders as any).mockResolvedValue("192.168.1.1");
+      (hashString as any).mockReturnValue("hashed-ip-123");
+      (checkRateLimit as any).mockResolvedValue(ok({ allowed: false }));
+
+      await expect(applyClientRateLimit("env_1")).rejects.toThrow(
+        "Maximum number of requests reached. Please try again later."
+      );
+
+      expect(checkRateLimit).toHaveBeenCalledTimes(1);
+      expect(checkRateLimit).toHaveBeenCalledWith(rateLimitConfigs.api.client, "env_1:hashed-ip-123");
+    });
+
+    test("should throw when the environment aggregate rate limit is exceeded", async () => {
+      (getClientIpFromHeaders as any).mockResolvedValue("192.168.1.1");
+      (hashString as any).mockReturnValue("hashed-ip-123");
+      (checkRateLimit as any)
+        .mockResolvedValueOnce(ok({ allowed: true }))
+        .mockResolvedValueOnce(ok({ allowed: false }));
+
+      await expect(applyClientRateLimit("env_1")).rejects.toThrow(
+        "Maximum number of requests reached. Please try again later."
+      );
+
+      expect(checkRateLimit).toHaveBeenNthCalledWith(1, rateLimitConfigs.api.client, "env_1:hashed-ip-123");
+      expect(checkRateLimit).toHaveBeenNthCalledWith(2, rateLimitConfigs.api.clientEnvironment, "env_1");
     });
   });
 });

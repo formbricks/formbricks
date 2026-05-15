@@ -38,11 +38,17 @@ import {
   WEBAPP_URL,
 } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
-import { createEmailChangeToken, createInviteToken, createToken, createTokenForLinkSurvey } from "@/lib/jwt";
+import {
+  createEmailChangeToken,
+  createEmailToken,
+  createInviteToken,
+  createToken,
+  createTokenForLinkSurvey,
+} from "@/lib/jwt";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { TElementResponseMappingSurvey, getElementResponseMapping } from "@/lib/responses";
 import { getTranslate } from "@/lingodotdev/server";
-import { buildVerificationLinks } from "@/modules/auth/lib/verification-links";
+import { TVerificationRequestPurpose, buildVerificationLinks } from "@/modules/auth/lib/verification-links";
 import { resolveStorageUrl } from "@/modules/storage/utils";
 
 export const IS_SMTP_CONFIGURED = Boolean(SMTP_HOST && SMTP_PORT);
@@ -131,21 +137,26 @@ export const sendVerificationEmail = async ({
   email,
   locale,
   callbackUrl,
+  purpose = "email_verification",
 }: {
   id: string;
   email: TUserEmail;
   locale: TUserLocale;
   callbackUrl?: string;
+  purpose?: TVerificationRequestPurpose;
 }): Promise<boolean> => {
   try {
     const t = await getTranslate(locale);
     const token = createToken(id, {
       expiresIn: "1d",
+      purpose,
     });
     const { verifyLink, verificationRequestLink } = buildVerificationLinks({
       token,
       webAppUrl: WEBAPP_URL,
       callbackUrl,
+      purpose,
+      verificationRequestToken: createEmailToken(email),
     });
 
     const html = await renderVerificationEmail({
@@ -349,13 +360,20 @@ export const sendLinkSurveyToVerifiedEmail = async (data: TLinkSurveyEmailData):
   const email = data.email;
   const surveyName = data.surveyName;
   const singleUseId = data.suId;
+  const singleUseToken = data.suToken;
   // Resolve relative storage URLs to absolute URLs for email rendering
   const logoUrl = data.logoUrl ? resolveStorageUrl(data.logoUrl) : "";
   const token = createTokenForLinkSurvey(surveyId, email);
   const t = await getTranslate(data.locale);
   const getSurveyLink = (): string => {
     if (singleUseId) {
-      return `${getPublicDomain()}/s/${surveyId}?verify=${encodeURIComponent(token)}&suId=${singleUseId}`;
+      const surveyLink = new URL(`${getPublicDomain()}/s/${surveyId}`);
+      surveyLink.searchParams.set("verify", token);
+      surveyLink.searchParams.set("suId", singleUseId);
+      if (singleUseToken) {
+        surveyLink.searchParams.set("suToken", singleUseToken);
+      }
+      return surveyLink.toString();
     }
     return `${getPublicDomain()}/s/${surveyId}?verify=${encodeURIComponent(token)}`;
   };

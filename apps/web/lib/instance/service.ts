@@ -19,7 +19,7 @@ export const getIsFreshInstance = reactCache(async (): Promise<boolean> => {
 });
 
 // Function to check if there are any organizations in the database
-export const gethasNoOrganizations = reactCache(async (): Promise<boolean> => {
+export const getHasNoOrganizations = reactCache(async (): Promise<boolean> => {
   try {
     const organizationCount = await prisma.organization.count();
     return organizationCount === 0;

@@ -1,6 +1,68 @@
 import { Page } from "@playwright/test";
 import { UsersFixture } from "../fixtures/users";
 
+type WorkspaceSurveyLocation = {
+  workspaceId: string;
+  isSurveyList: boolean;
+};
+
+const getWorkspaceSurveyLocation = (url: URL): WorkspaceSurveyLocation | null => {
+  const segments = url.pathname.split("/").filter(Boolean);
+
+  if (segments.length !== 2 && segments.length !== 3) {
+    return null;
+  }
+
+  if (segments[0] !== "workspaces") {
+    return null;
+  }
+
+  const workspaceId = segments[1];
+
+  if (!workspaceId) {
+    return null;
+  }
+
+  if (segments.length === 2) {
+    return {
+      workspaceId,
+      isSurveyList: false,
+    };
+  }
+
+  if (segments[2] !== "surveys") {
+    return null;
+  }
+
+  return {
+    workspaceId,
+    isSurveyList: true,
+  };
+};
+
+export async function gotoSurveyList(page: Page): Promise<string> {
+  await page.waitForURL((url) => getWorkspaceSurveyLocation(url) !== null, { timeout: 30000 });
+
+  const currentUrl = new URL(page.url());
+  const location = getWorkspaceSurveyLocation(currentUrl);
+
+  if (!location) {
+    throw new Error(`Unable to determine workspaceId from URL: ${page.url()}`);
+  }
+
+  const { workspaceId, isSurveyList } = location;
+
+  if (!isSurveyList) {
+    await page.goto(`/workspaces/${workspaceId}/surveys`, { waitUntil: "domcontentloaded" });
+  }
+
+  await page.waitForURL((url) => getWorkspaceSurveyLocation(url)?.isSurveyList === true, {
+    timeout: 30000,
+  });
+
+  return workspaceId;
+}
+
 export async function loginAndGetApiKey(page: Page, users: UsersFixture) {
   const user = await users.create();
   await user.login();

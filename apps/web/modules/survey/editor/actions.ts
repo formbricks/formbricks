@@ -5,7 +5,7 @@ import { z } from "zod";
 import { ZActionClassInput } from "@formbricks/types/action-classes";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TSurvey, ZSurvey } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyVariable, ZSurvey } from "@formbricks/types/surveys/types";
 import { POSTHOG_KEY, UNSPLASH_ACCESS_KEY, UNSPLASH_ALLOWED_DOMAINS } from "@/lib/constants";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { actionClient, authenticatedActionClient } from "@/lib/utils/action-client";
@@ -25,6 +25,136 @@ import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { checkSpamProtectionPermission } from "@/modules/survey/lib/permission";
 import { getOrganizationBilling, getSurvey } from "@/modules/survey/lib/survey";
 import { getWorkspace, getWorkspaceLanguages } from "./lib/workspace";
+
+type SurveyEditDiffContext = {
+  userId: string;
+  surveyId: string;
+  organizationId: string;
+  workspaceId: string;
+};
+
+const captureSurveyEditDiffEvents = (
+  oldSurvey: TSurvey | null,
+  newSurvey: TSurvey,
+  context: SurveyEditDiffContext
+): void => {
+  if (!oldSurvey) return;
+
+  const groupContext = { organizationId: context.organizationId, workspaceId: context.workspaceId };
+  const baseProps = {
+    organization_id: context.organizationId,
+    workspace_id: context.workspaceId,
+    survey_id: context.surveyId,
+  };
+
+  // hidden_field_added
+  const oldFieldIds = new Set(oldSurvey.hiddenFields?.fieldIds ?? []);
+  const newFieldIds = newSurvey.hiddenFields?.fieldIds ?? [];
+  const addedFieldIds = newFieldIds.filter((id) => !oldFieldIds.has(id));
+  if (addedFieldIds.length > 0) {
+    capturePostHogEvent(
+      context.userId,
+      "hidden_field_added",
+      { ...baseProps, field_count: newFieldIds.length },
+      groupContext
+    );
+  }
+
+  // conditional_logic_added (per block)
+  const oldBlocks = oldSurvey.blocks ?? [];
+  const newBlocks = newSurvey.blocks ?? [];
+  const oldBlockLogic = new Map<string, number>(
+    oldBlocks.map((b) => [b.id, (b.logic?.length ?? 0) + (b.logicFallback ? 1 : 0)])
+  );
+  for (const block of newBlocks) {
+    const newLogicCount = (block.logic?.length ?? 0) + (block.logicFallback ? 1 : 0);
+    const oldLogicCount = oldBlockLogic.get(block.id) ?? 0;
+    if (newLogicCount > oldLogicCount) {
+      capturePostHogEvent(
+        context.userId,
+        "conditional_logic_added",
+        { ...baseProps, question_id: block.id },
+        groupContext
+      );
+    }
+  }
+
+  // variable_created
+  const oldVariableIds = new Set((oldSurvey.variables ?? []).map((v: TSurveyVariable) => v.id));
+  for (const variable of newSurvey.variables ?? []) {
+    if (!oldVariableIds.has(variable.id)) {
+      capturePostHogEvent(
+        context.userId,
+        "variable_created",
+        { ...baseProps, variable_type: variable.type },
+        groupContext
+      );
+    }
+  }
+
+  // survey_language_enabled / survey_language_added
+  const oldLanguages = oldSurvey.languages ?? [];
+  const newLanguages = newSurvey.languages ?? [];
+  const oldLanguageCodes = new Set(oldLanguages.map((l) => l.language.code));
+  const addedLanguages = newLanguages.filter((l) => !oldLanguageCodes.has(l.language.code));
+
+  if (addedLanguages.length > 0) {
+    const wasMultiLangBefore = oldLanguages.length > 1;
+    let currentCount = oldLanguages.length;
+
+    if (!wasMultiLangBefore) {
+      const [first, ...rest] = addedLanguages;
+      capturePostHogEvent(
+        context.userId,
+        "survey_language_enabled",
+        { ...baseProps, language_code: first.language.code, existing_language_count: currentCount },
+        groupContext
+      );
+      currentCount++;
+      for (const lang of rest) {
+        capturePostHogEvent(
+          context.userId,
+          "survey_language_added",
+          {
+            ...baseProps,
+            language_code: lang.language.code,
+            existing_language_count: currentCount,
+          },
+          groupContext
+        );
+        currentCount++;
+      }
+    } else {
+      for (const lang of addedLanguages) {
+        capturePostHogEvent(
+          context.userId,
+          "survey_language_added",
+          {
+            ...baseProps,
+            language_code: lang.language.code,
+            existing_language_count: currentCount,
+          },
+          groupContext
+        );
+        currentCount++;
+      }
+    }
+  }
+
+  // follow_up_added
+  const oldFollowUpIds = new Set((oldSurvey.followUps ?? []).map((f) => f.id));
+  const newFollowUps = (newSurvey.followUps ?? []).filter((f) => !f.deleted);
+  for (const followUp of newFollowUps) {
+    if (!oldFollowUpIds.has(followUp.id)) {
+      capturePostHogEvent(
+        context.userId,
+        "follow_up_added",
+        { ...baseProps, follow_up_id: followUp.id },
+        groupContext
+      );
+    }
+  }
+};
 
 /**
  * Checks if survey follow-ups can be added for the given organization.
@@ -98,6 +228,13 @@ export const updateSurveyDraftAction = authenticatedActionClient.inputSchema(ZSu
     ctx.auditLoggingCtx.oldObject = oldObject;
     ctx.auditLoggingCtx.newObject = result;
 
+    captureSurveyEditDiffEvents(oldObject, result, {
+      userId: ctx.user.id,
+      surveyId: result.id,
+      organizationId,
+      workspaceId: result.workspaceId,
+    });
+
     revalidatePath(`/workspaces/${result.workspaceId}/surveys/${result.id}`);
 
     return result;
@@ -146,23 +283,35 @@ export const updateSurveyAction = authenticatedActionClient.inputSchema(ZSurvey)
     ctx.auditLoggingCtx.oldObject = oldObject;
     ctx.auditLoggingCtx.newObject = result;
 
-    if (POSTHOG_KEY && result.status !== "draft") {
-      const isPublish = oldObject?.status === "draft" && result.status === "inProgress";
+    captureSurveyEditDiffEvents(oldObject, result, {
+      userId: ctx.user.id,
+      surveyId: result.id,
+      organizationId,
+      workspaceId: result.workspaceId,
+    });
 
-      const posthogEventMetadata = {
-        survey_id: result.id,
-        survey_type: result.type,
-        question_count: getElementsFromBlocks(result.blocks).length,
-        organization_id: organizationId,
-        has_targeting: result.segment ? !result.segment.isPrivate : false,
-        language_count: result.languages?.length ?? 0,
-      };
+    if (POSTHOG_KEY) {
+      if (result.status !== "draft") {
+        const isPublish = oldObject?.status === "draft" && result.status === "inProgress";
 
-      if (isPublish) {
-        capturePostHogEvent(ctx.user.id, "survey_published", posthogEventMetadata);
-        capturePostHogEvent(ctx.user.id, "survey_updated", posthogEventMetadata);
-      } else {
-        capturePostHogEvent(ctx.user.id, "survey_updated", posthogEventMetadata);
+        const posthogEventMetadata = {
+          survey_id: result.id,
+          survey_type: result.type,
+          question_count: getElementsFromBlocks(result.blocks).length,
+          organization_id: organizationId,
+          workspace_id: result.workspaceId,
+          has_targeting: result.segment ? !result.segment.isPrivate : false,
+          language_count: result.languages?.length ?? 0,
+        };
+
+        const groupContext = { organizationId, workspaceId: result.workspaceId };
+
+        if (isPublish) {
+          capturePostHogEvent(ctx.user.id, "survey_published", posthogEventMetadata, groupContext);
+          capturePostHogEvent(ctx.user.id, "survey_updated", posthogEventMetadata, groupContext);
+        } else {
+          capturePostHogEvent(ctx.user.id, "survey_updated", posthogEventMetadata, groupContext);
+        }
       }
     }
 
@@ -337,6 +486,22 @@ export const createActionClassAction = authenticatedActionClient.inputSchema(ZCr
     const result = await createActionClass(workspaceId, parsedInput.action);
     ctx.auditLoggingCtx.actionClassId = result.id;
     ctx.auditLoggingCtx.newObject = result;
+
+    const triggerType =
+      parsedInput.action.type === "code" ? "codeAction" : (parsedInput.action.noCodeConfig?.type ?? "noCode");
+
+    capturePostHogEvent(
+      ctx.user.id,
+      "action_class_created",
+      {
+        organization_id: organizationId,
+        workspace_id: workspaceId,
+        type: parsedInput.action.type,
+        trigger_type: triggerType,
+      },
+      { organizationId, workspaceId }
+    );
+
     return result;
   })
 );

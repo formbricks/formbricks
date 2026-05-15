@@ -98,7 +98,9 @@ describe("storage utils", () => {
         );
       const spyISE = vi
         .spyOn(responseMod.responses, "internalServerErrorResponse")
-        .mockImplementation((_msg: string, _public?: boolean) => new Response(null, { status: 500 }));
+        .mockImplementation((msg: string, _public?: boolean, details = {}) =>
+          Response.json({ code: "internal_server_error", message: msg, details }, { status: 500 })
+        );
 
       const { getErrorResponseFromStorageError } = await import("@/modules/storage/utils");
 
@@ -120,8 +122,16 @@ describe("storage utils", () => {
       // S3 related and Unknown -> 500
       const r500a = getErrorResponseFromStorageError({ code: StorageErrorCode.S3ClientError });
       expect(r500a.status).toBe(500);
+      await expect(r500a.json()).resolves.toMatchObject({
+        message: "File storage is not configured correctly. Please check your file upload settings.",
+        details: { storage_error_code: StorageErrorCode.S3ClientError },
+      });
       const r500b = getErrorResponseFromStorageError({ code: StorageErrorCode.S3CredentialsError });
       expect(r500b.status).toBe(500);
+      await expect(r500b.json()).resolves.toMatchObject({
+        message: "File storage is not configured correctly. Please check your file upload settings.",
+        details: { storage_error_code: StorageErrorCode.S3CredentialsError },
+      });
       const r500c = getErrorResponseFromStorageError({ code: StorageErrorCode.Unknown });
       expect(r500c.status).toBe(500);
 

@@ -178,6 +178,7 @@ export function ConnectorRowDropdown({
         setOpen={setIsDeleteDialogOpen}
         onDelete={handleDelete}
         isDeleting={isDeleting}
+        text={t("workspace.unify.delete_source_confirmation")}
       />
     </div>
   );

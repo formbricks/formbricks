@@ -1,5 +1,10 @@
 import { isInstanceAIConfigured } from "@/lib/ai/service";
-import { FB_LOGO_URL, IS_FORMBRICKS_CLOUD, IS_STORAGE_CONFIGURED } from "@/lib/constants";
+import {
+  ENTERPRISE_LICENSE_REQUEST_FORM_URL,
+  FB_LOGO_URL,
+  IS_FORMBRICKS_CLOUD,
+  IS_STORAGE_CONFIGURED,
+} from "@/lib/constants";
 import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import {
@@ -81,6 +86,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
         fbLogoUrl={FB_LOGO_URL}
         user={user}
         isStorageConfigured={IS_STORAGE_CONFIGURED}
+        enterpriseLicenseRequestFormUrl={ENTERPRISE_LICENSE_REQUEST_FORM_URL}
       />
       {isMultiOrgEnabled && (
         <SettingsCard

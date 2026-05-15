@@ -328,10 +328,15 @@ export const inviteUserAction = authenticatedActionClient.inputSchema(ZInviteUse
       await sendInviteMemberEmail(inviteId, parsedInput.email, ctx.user.name ?? "", parsedInput.name ?? "");
     }
 
-    capturePostHogEvent(ctx.user.id, "team_member_invited", {
-      organization_id: parsedInput.organizationId,
-      invitee_role: parsedInput.role,
-    });
+    capturePostHogEvent(
+      ctx.user.id,
+      "team_member_invited",
+      {
+        organization_id: parsedInput.organizationId,
+        invitee_role: parsedInput.role,
+      },
+      { organizationId: parsedInput.organizationId }
+    );
 
     return inviteId;
   })

@@ -61,9 +61,7 @@ export async function ChartsListPage({ workspaceId }: Readonly<ChartsListPagePro
               },
               {
                 text: t("common.learn_more"),
-                href: IS_FORMBRICKS_CLOUD
-                  ? `/workspaces/${workspaceId}/settings/organization/billing`
-                  : "https://formbricks.com/learn-more-self-hosting-license",
+                href: "https://formbricks.com/docs/unify-feedback/features/dashboards-and-charts",
               },
             ]}
           />

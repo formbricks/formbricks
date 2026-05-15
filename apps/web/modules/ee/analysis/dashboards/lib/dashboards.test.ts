@@ -98,6 +98,7 @@ const makePrismaError = (code: string) =>
 describe("Dashboard Service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockTxWidget.findFirst.mockResolvedValue(null);
   });
 
   describe("createDashboard", () => {
@@ -464,6 +465,40 @@ describe("Dashboard Service", () => {
         name: "DatabaseError",
       });
     });
+
+    test("returns containsChart per dashboard when chartId is provided", async () => {
+      const dashboards = [
+        {
+          ...mockDashboard,
+          creator: { name: "Alice" },
+          _count: { widgets: 3 },
+          widgets: [{ id: "widget-1" }],
+        },
+        {
+          ...mockDashboard,
+          id: "dash-2",
+          name: "Dashboard 2",
+          creator: null,
+          _count: { widgets: 0 },
+          widgets: [],
+        },
+      ];
+      vi.mocked(prisma.dashboard.findMany).mockResolvedValue(dashboards as any);
+      const { getDashboards } = await import("./dashboards");
+
+      const result = await getDashboards(mockWorkspaceId, mockChartId);
+
+      expect(result[0]).toMatchObject({ containsChart: true });
+      expect(result[1]).toMatchObject({ containsChart: false });
+      expect((result[0] as any).widgets).toBeUndefined();
+      expect(prisma.dashboard.findMany).toHaveBeenCalledWith({
+        where: { workspaceId: mockWorkspaceId },
+        orderBy: { createdAt: "desc" },
+        select: expect.objectContaining({
+          widgets: { where: { chartId: mockChartId }, select: { id: true }, take: 1 },
+        }),
+      });
+    });
   });
 
   describe("updateWidgetLayouts", () => {
@@ -651,6 +686,26 @@ describe("Dashboard Service", () => {
         resourceType: "Dashboard",
         resourceId: mockDashboardId,
       });
+      expect(mockTxWidget.create).not.toHaveBeenCalled();
+    });
+
+    test("throws InvalidInputError when chart is already on the dashboard", async () => {
+      mockTxChart.findFirst.mockResolvedValue({ id: mockChartId });
+      mockTxDashboard.findFirst.mockResolvedValue(mockDashboard);
+      mockTxWidget.findFirst.mockResolvedValue({ id: "existing-widget-abc-123" });
+      const { addChartToDashboard } = await import("./dashboards");
+
+      await expect(
+        addChartToDashboard({
+          dashboardId: mockDashboardId,
+          chartId: mockChartId,
+          workspaceId: mockWorkspaceId,
+          layout: mockLayout,
+        })
+      ).rejects.toMatchObject({
+        name: "InvalidInputError",
+      });
+      expect(mockTxWidget.aggregate).not.toHaveBeenCalled();
       expect(mockTxWidget.create).not.toHaveBeenCalled();
     });
 

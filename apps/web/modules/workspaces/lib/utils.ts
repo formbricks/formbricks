@@ -293,7 +293,13 @@ export const getWorkspaceLayoutData = reactCache(
       session,
       user,
       workspace,
-      organization,
+      organization: {
+        ...organization,
+        billing: {
+          ...organization.billing,
+          stripe: organization.billing.stripe ?? undefined,
+        },
+      },
       membership,
       isAccessControlAllowed,
       workspacePermission,

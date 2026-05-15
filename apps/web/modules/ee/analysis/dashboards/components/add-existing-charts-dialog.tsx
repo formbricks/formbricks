@@ -89,10 +89,19 @@ export function AddExistingChartsDialog({
   const handleAdd = async () => {
     if (selectedChartIds.length === 0) return;
 
+    const chartIdsToAdd = Array.from(new Set(selectedChartIds)).filter(
+      (chartId) => !existingChartIdsRef.current.includes(chartId)
+    );
+
+    if (chartIdsToAdd.length === 0) {
+      setSelectedChartIds([]);
+      return;
+    }
+
     setIsAdding(true);
     try {
       const results = await Promise.allSettled(
-        selectedChartIds.map((chartId) => addChartToDashboardAction({ workspaceId, chartId, dashboardId }))
+        chartIdsToAdd.map((chartId) => addChartToDashboardAction({ workspaceId, chartId, dashboardId }))
       );
 
       const fulfilled = results.filter(
@@ -112,7 +121,7 @@ export function AddExistingChartsDialog({
       } else {
         toast.success(
           t("workspace.analysis.dashboards.charts_added_to_dashboard", {
-            count: selectedChartIds.length,
+            count: chartIdsToAdd.length,
           })
         );
       }

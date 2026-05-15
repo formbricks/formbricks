@@ -10,6 +10,7 @@ import {
 import { ZWorkspaceUpdateInput } from "@formbricks/types/workspace";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getOrganization } from "@/lib/organization/service";
+import { capturePostHogEvent, groupIdentifyPostHog } from "@/lib/posthog";
 import { updateUser } from "@/lib/user/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
@@ -79,6 +80,19 @@ export const createWorkspaceAction = authenticatedActionClient.inputSchema(ZCrea
     await updateUser(user.id, {
       notificationSettings: updatedNotificationSettings,
     });
+
+    groupIdentifyPostHog("workspace", workspace.id, { name: workspace.name });
+
+    capturePostHogEvent(
+      user.id,
+      "workspace_created",
+      {
+        organization_id: organizationId,
+        workspace_id: workspace.id,
+        name: workspace.name,
+      },
+      { organizationId, workspaceId: workspace.id }
+    );
 
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.workspaceId = workspace.id;

@@ -5,7 +5,13 @@ import { ArrowUpFromLineIcon, Loader2Icon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import type { TConnectorFieldMapping } from "@formbricks/types/connector";
 import { importCsvDataAction } from "@/lib/connector/actions";
+import {
+  formatCsvMissingMappedSourceColumns,
+  getMissingCsvMappedSourceColumns,
+  getMissingRequiredCsvSourceColumns,
+} from "@/lib/connector/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Alert } from "@/modules/ui/components/alert";
 import { Badge } from "@/modules/ui/components/badge";
@@ -18,7 +24,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
-import { createFeedbackCSVDataSchema } from "../types";
+import { createFeedbackCSVDataSchema, getTranslatedConnectorError } from "../types";
 import { validateCsvFile } from "../utils";
 
 interface CsvImportModalProps {
@@ -26,6 +32,7 @@ interface CsvImportModalProps {
   onOpenChange: (open: boolean) => void;
   connectorId: string;
   workspaceId: string;
+  fieldMappings: TConnectorFieldMapping[];
   onOpenEditConnector?: () => void;
 }
 
@@ -34,6 +41,7 @@ export function CsvImportModal({
   onOpenChange,
   connectorId,
   workspaceId,
+  fieldMappings,
   onOpenEditConnector,
 }: CsvImportModalProps) {
   const { t } = useTranslation();
@@ -61,6 +69,29 @@ export function CsvImportModal({
 
         if (!result.success) {
           setCsvError(result.error.issues[0].message);
+          return;
+        }
+
+        const missingMappedColumns = getMissingCsvMappedSourceColumns(
+          fieldMappings,
+          Object.keys(result.data[0] ?? {})
+        );
+        if (missingMappedColumns.length > 0) {
+          const missingRequiredSourceColumns = getMissingRequiredCsvSourceColumns(
+            fieldMappings,
+            Object.keys(result.data[0] ?? {})
+          );
+          const missingSourceColumns =
+            missingRequiredSourceColumns.length > 0
+              ? missingRequiredSourceColumns.join(", ")
+              : [...new Set(missingMappedColumns.map(({ sourceFieldId }) => sourceFieldId))].join(", ");
+
+          setCsvError(
+            t("workspace.unify.csv_saved_mapping_missing_columns", {
+              columns: missingSourceColumns,
+              mappings: formatCsvMissingMappedSourceColumns(missingMappedColumns),
+            })
+          );
           return;
         }
 
@@ -111,7 +142,7 @@ export function CsvImportModal({
       setRowCount(0);
       onOpenChange(false);
     } else {
-      toast.error(getFormattedErrorMessage(result));
+      toast.error(getTranslatedConnectorError(getFormattedErrorMessage(result), t));
     }
   };
 
@@ -131,9 +162,9 @@ export function CsvImportModal({
         </DialogHeader>
 
         <div className="space-y-3">
-          <Alert variant="info" size="small">
+          <p className="rounded-md bg-slate-50 px-3 py-2 text-xs text-slate-600">
             {t("workspace.unify.csv_import_duplicate_warning")}
-          </Alert>
+          </p>
 
           {csvError && (
             <Alert variant="error" size="small">

@@ -8,6 +8,7 @@ import { getOrganization } from "@/lib/organization/service";
 import { getSurvey } from "@/lib/survey/service";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { resolveClientApiIds } from "@/lib/utils/resolve-client-id";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getBiggerUploadFileSizePermission } from "@/modules/ee/license-check/lib/utils";
 import { getSignedUrlForUpload } from "@/modules/storage/service";
@@ -90,6 +91,17 @@ export const POST = withV1ApiWrapper({
         response: responses.badRequestResponse(
           "Survey does not belong to the workspace",
           { surveyId, workspaceId },
+          true
+        ),
+      };
+    }
+
+    try {
+      await applyRateLimit(rateLimitConfigs.storage.uploadPerWorkspace, workspaceId);
+    } catch (error) {
+      return {
+        response: responses.tooManyRequestsResponse(
+          error instanceof Error ? error.message : "Rate limit exceeded",
           true
         ),
       };

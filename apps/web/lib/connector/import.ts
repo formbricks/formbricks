@@ -18,6 +18,7 @@ const processBatch = async (
 ): Promise<TImportResult> => {
   let successes = 0;
   let failures = 0;
+  let duplicates = 0;
   const expectedRecords = responses.length * mappings.length;
 
   const allRecords = responses.flatMap((response) =>
@@ -27,10 +28,12 @@ const processBatch = async (
   if (allRecords.length > 0) {
     const { results } = await createFeedbackRecordsBatch(allRecords);
     successes = results.filter((r) => r.data !== null).length;
-    failures = results.filter((r) => r.error !== null).length;
+    duplicates = results.filter((r) => r.error?.status === 409).length;
+    failures = results.filter((r) => r.error !== null && r.error.status !== 409).length;
   }
 
-  return { successes, failures, skipped: expectedRecords - allRecords.length };
+  const unmappedSkipped = expectedRecords - allRecords.length;
+  return { successes, failures, skipped: unmappedSkipped + duplicates };
 };
 
 export const importHistoricalResponses = async (

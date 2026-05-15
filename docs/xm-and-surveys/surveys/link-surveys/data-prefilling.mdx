@@ -24,8 +24,8 @@ https://app.formbricks.com/s/clin3dxja02k8l80hpwmx4bjy?question_id_1=answer_1&qu
 
 ## How it works
 
-1. To prefill survey questions, add query parameters to the survey URL using the format `questionId=answer`. 
-2. The answer must match the question’s expected type to pass [validation](/xm-and-surveys/surveys/link-surveys/data-prefilling#validation).
+1. To prefill survey questions, add query parameters to the survey URL using the format `questionId=answer`.
+2. The answer must match the question’s expected type to pass [validation](/xm-and-surveys/surveys/link-surveys/data-prefilling#validation). For Single Select and Multi Select questions, `answer` can be either the option label text or the option ID.
 3. The answer needs to be [URL encoded](https://www.urlencoder.org/) (if it contains spaces or special characters)
 
 
@@ -108,15 +108,28 @@ https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?pictureSelection_question
 ```
 
 
-## Using Option IDs for Choice-Based Questions
+## Using Option IDs for Single Select and Multi Select Questions
 
-All choice-based question types (Single Select, Multi Select, Picture Selection) now support prefilling with **option IDs** in addition to option labels. This is the recommended approach as it's more reliable and doesn't break when you update option text.
+Single Select and Multi Select questions support prefilling with **option IDs** in addition to option labels. This is the most robust approach and the recommended default, especially for multilingual surveys.
 
-### Benefits of Using Option IDs
+### Why Option IDs are recommended
 
-- **Stable:** Option IDs don't change when you edit the option label text
-- **Language-independent:** Works across all survey languages without modification
-- **Reliable:** No issues with special characters or URL encoding of complex text
+- **Stable:** Option IDs don't change when you edit option labels.
+- **Language-independent:** The same URL works across all survey languages.
+- **Reliable:** No brittle string matching and fewer URL-encoding issues.
+
+### One link per option
+
+When you create one CTA link per answer option (for example in emails), use the option ID as the parameter value:
+
+```sh Option-ID prefill
+https://app.formbricks.com/s/cmoh0584taxoxu501jyvk8tzn?tuk2i9ktui1lee0mfos82czb=e2r697fou23n7ba4vmt7you6
+```
+
+In this example:
+
+- `tuk2i9ktui1lee0mfos82czb` is the question ID.
+- `e2r697fou23n7ba4vmt7you6` is the selected option ID.
 
 ### How to Find Option IDs
 
@@ -160,7 +173,7 @@ The URL validation works as follows:
 - **Rating or NPS questions:** The response is parsed as a number and verified to be within the valid range.
 - **Consent type questions:** Valid values are "accepted" (consent given) and "dismissed" (consent not given).
 - **Picture Selection questions:** The response is parsed as comma-separated numbers (1-based indices) and verified against available choices.
-- **Single/Multi Select questions:** Values can be either option IDs or exact label text. The system tries to match by option ID first, then falls back to label matching.
+- **Single/Multi Select questions:** Values can be either option IDs or exact label text. The system tries option ID matching first, then falls back to label matching.
 - **Open Text questions:** Any string value is accepted.
 
 <Note>

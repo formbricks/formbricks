@@ -5,7 +5,12 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ZId, ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
-import { TIntegration, TIntegrationInput, ZIntegrationType } from "@formbricks/types/integration";
+import {
+  TIntegration,
+  TIntegrationByType,
+  TIntegrationInput,
+  ZIntegrationType,
+} from "@formbricks/types/integration";
 import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
 
@@ -94,7 +99,10 @@ export const getIntegration = reactCache(async (integrationId: string): Promise<
 });
 
 export const getIntegrationByType = reactCache(
-  async (workspaceId: string, type: TIntegrationInput["type"]): Promise<TIntegration | null> => {
+  async <T extends TIntegrationInput["type"]>(
+    workspaceId: string,
+    type: T
+  ): Promise<TIntegrationByType<T> | null> => {
     validateInputs([workspaceId, ZId], [type, ZIntegrationType]);
 
     try {
@@ -104,7 +112,7 @@ export const getIntegrationByType = reactCache(
           type,
         },
       });
-      return integration ? transformIntegration(integration) : null;
+      return integration ? (transformIntegration(integration) as TIntegrationByType<T>) : null;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);

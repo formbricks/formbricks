@@ -4,6 +4,7 @@ import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ZContactAttributeDataType } from "@formbricks/types/contact-attribute-key";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
@@ -61,6 +62,17 @@ export const createContactAttributeKeyAction = authenticatedActionClient
       });
 
       ctx.auditLoggingCtx.newObject = contactAttributeKey;
+
+      capturePostHogEvent(
+        ctx.user.id,
+        "contact_attribute_key_created",
+        {
+          organization_id: organizationId,
+          workspace_id: workspaceId,
+          key: parsedInput.key,
+        },
+        { organizationId, workspaceId }
+      );
 
       return contactAttributeKey;
     })
