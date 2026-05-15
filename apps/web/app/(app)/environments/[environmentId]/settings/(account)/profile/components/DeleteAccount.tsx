@@ -22,6 +22,7 @@ interface DeleteAccountProps {
   accountDeletionError?: string | string[];
   isMultiOrgEnabled: boolean;
   requiresPasswordConfirmation: boolean;
+  isSsoIdentityConfirmationDisabled: boolean;
 }
 
 export const DeleteAccount = ({
@@ -32,6 +33,7 @@ export const DeleteAccount = ({
   accountDeletionError,
   isMultiOrgEnabled,
   requiresPasswordConfirmation,
+  isSsoIdentityConfirmationDisabled,
 }: Readonly<DeleteAccountProps>) => {
   const [isModalOpen, setModalOpen] = useState(false);
   const isDeleteDisabled = !isMultiOrgEnabled && organizationsWithSingleOwner.length > 0;
@@ -73,6 +75,7 @@ export const DeleteAccount = ({
         user={user}
         isFormbricksCloud={IS_FORMBRICKS_CLOUD}
         organizationsWithSingleOwner={organizationsWithSingleOwner}
+        isSsoIdentityConfirmationDisabled={isSsoIdentityConfirmationDisabled}
       />
       <p className="text-sm text-slate-700">
         <strong>{t("environments.settings.profile.warning_cannot_undo")}</strong>

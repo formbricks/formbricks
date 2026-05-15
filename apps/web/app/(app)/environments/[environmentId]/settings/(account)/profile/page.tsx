@@ -2,6 +2,7 @@ import { AuthenticationError } from "@formbricks/types/errors";
 import { AccountSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(account)/components/AccountSettingsNavbar";
 import { AccountSecurity } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/components/AccountSecurity";
 import {
+  DISABLE_ACCOUNT_DELETION_SSO_CONFIRMATION,
   EMAIL_VERIFICATION_DISABLED,
   ENTERPRISE_LICENSE_REQUEST_FORM_URL,
   IS_FORMBRICKS_CLOUD,
@@ -103,6 +104,7 @@ const Page = async (props: {
               isMultiOrgEnabled={isMultiOrgEnabled}
               accountDeletionError={searchParams.accountDeletionError}
               requiresPasswordConfirmation={requiresPasswordConfirmation}
+              isSsoIdentityConfirmationDisabled={DISABLE_ACCOUNT_DELETION_SSO_CONFIRMATION}
             />
           </SettingsCard>
           <IdBadge id={user.id} label={t("common.profile_id")} variant="column" />

@@ -28,6 +28,7 @@ interface DeleteAccountModalProps {
   user: TUser;
   isFormbricksCloud: boolean;
   organizationsWithSingleOwner: TOrganization[];
+  isSsoIdentityConfirmationDisabled: boolean;
 }
 
 export const DeleteAccountModal = ({
@@ -37,6 +38,7 @@ export const DeleteAccountModal = ({
   user,
   isFormbricksCloud,
   organizationsWithSingleOwner,
+  isSsoIdentityConfirmationDisabled,
 }: Readonly<DeleteAccountModalProps>) => {
   const { t } = useTranslation();
   const [deleting, setDeleting] = useState(false);
@@ -192,7 +194,7 @@ export const DeleteAccountModal = ({
             id="deleteAccountConfirmation"
             name="deleteAccountConfirmation"
           />
-          {!requiresPasswordConfirmation && (
+          {!requiresPasswordConfirmation && !isSsoIdentityConfirmationDisabled && (
             <p className="mt-2 text-sm text-slate-600">
               {t("environments.settings.profile.sso_identity_confirmation_may_be_required_for_deletion")}
             </p>

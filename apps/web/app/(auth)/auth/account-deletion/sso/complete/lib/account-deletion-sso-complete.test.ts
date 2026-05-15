@@ -3,11 +3,16 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { verifyAccountDeletionSsoReauthIntent } from "@/lib/jwt";
+import { FORMBRICKS_CLOUD_ACCOUNT_DELETION_SURVEY_URL } from "@/modules/account/constants";
 import { deleteUserWithAccountDeletionAuthorization } from "@/modules/account/lib/account-deletion";
 import { queueAccountDeletionAuditEvent } from "@/modules/account/lib/account-deletion-audit";
 import { completeAccountDeletionSsoIdentityConfirmationAndGetRedirectPath } from "./account-deletion-sso-complete";
 
 vi.mock("server-only", () => ({}));
+
+const mockConstants = vi.hoisted(() => ({
+  isFormbricksCloud: false,
+}));
 
 vi.mock("next-auth", () => ({
   getServerSession: vi.fn(),
@@ -21,7 +26,9 @@ vi.mock("@formbricks/logger", () => ({
 }));
 
 vi.mock("@/lib/constants", () => ({
-  IS_FORMBRICKS_CLOUD: false,
+  get IS_FORMBRICKS_CLOUD() {
+    return mockConstants.isFormbricksCloud;
+  },
   WEBAPP_URL: "http://localhost:3000",
 }));
 
@@ -60,6 +67,7 @@ const intent = {
 describe("completeAccountDeletionSsoIdentityConfirmationAndGetRedirectPath", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockConstants.isFormbricksCloud = false;
 
     mockVerifyAccountDeletionSsoReauthIntent.mockReturnValue(intent);
     mockGetServerSession.mockResolvedValue({
@@ -98,6 +106,20 @@ describe("completeAccountDeletionSsoIdentityConfirmationAndGetRedirectPath", () 
       oldUser: { id: intent.userId },
       status: "success",
       targetUserId: intent.userId,
+    });
+  });
+
+  test("redirects to the account deletion survey after SSO identity confirmation on Formbricks Cloud", async () => {
+    mockConstants.isFormbricksCloud = true;
+
+    await expect(
+      completeAccountDeletionSsoIdentityConfirmationAndGetRedirectPath({ intent: "intent-token" })
+    ).resolves.toBe(FORMBRICKS_CLOUD_ACCOUNT_DELETION_SURVEY_URL);
+
+    expect(mockDeleteUserWithAccountDeletionAuthorization).toHaveBeenCalledWith({
+      confirmationEmail: intent.email,
+      userEmail: intent.email,
+      userId: intent.userId,
     });
   });
 
