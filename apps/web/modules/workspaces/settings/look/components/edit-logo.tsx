@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { ChangeEvent, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -26,6 +27,7 @@ interface EditLogoProps {
 
 export const EditLogo = ({ workspace, workspaceId, isReadOnly, isStorageConfigured }: EditLogoProps) => {
   const { t } = useTranslation();
+  const router = useRouter();
   const [logoUrl, setLogoUrl] = useState<string | undefined>(workspace.logo?.url || undefined);
   const [logoBgColor, setLogoBgColor] = useState<string | undefined>(workspace.logo?.bgColor || undefined);
   const [isBgColorEnabled, setIsBgColorEnabled] = useState<boolean>(!!workspace.logo?.bgColor);
@@ -77,6 +79,7 @@ export const EditLogo = ({ workspace, workspaceId, isReadOnly, isStorageConfigur
       });
       if (updateWorkspaceResponse?.data) {
         toast.success(t("workspace.look.logo_updated_successfully"));
+        router.refresh();
       } else {
         const errorMessage = getFormattedErrorMessage(updateWorkspaceResponse);
         toast.error(errorMessage);
@@ -107,6 +110,7 @@ export const EditLogo = ({ workspace, workspaceId, isReadOnly, isStorageConfigur
       });
       if (updateWorkspaceResponse?.data) {
         toast.success(t("workspace.look.logo_removed_successfully"));
+        router.refresh();
       } else {
         const errorMessage = getFormattedErrorMessage(updateWorkspaceResponse);
         toast.error(errorMessage);
