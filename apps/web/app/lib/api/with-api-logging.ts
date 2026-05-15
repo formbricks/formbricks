@@ -4,6 +4,7 @@ import { logger } from "@formbricks/logger";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { reportApiError } from "@/app/lib/api/api-error-reporter";
+import { getRateLimitErrorResponse } from "@/app/lib/api/client-rate-limit";
 import { responses } from "@/app/lib/api/response";
 import {
   AuthenticationMethod,
@@ -126,7 +127,11 @@ const handleRateLimiting = async (
       await applyClientRateLimit(customRateLimitConfig);
     }
   } catch (error) {
-    return responses.tooManyRequestsResponse(error instanceof Error ? error.message : "Rate limit exceeded");
+    return getRateLimitErrorResponse({
+      request: req,
+      error,
+      cors: routeType === ApiV1RouteTypeEnum.Client,
+    });
   }
 
   return null;

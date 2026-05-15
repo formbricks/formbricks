@@ -95,10 +95,7 @@ export const POST = withV1ApiWrapper({
     const agent = new UAParser(userAgent);
 
     const country =
-      requestHeaders.get("CF-IPCountry") ||
-      requestHeaders.get("X-Vercel-IP-Country") ||
-      requestHeaders.get("CloudFront-Viewer-Country") ||
-      undefined;
+      requestHeaders.get("CF-IPCountry") || requestHeaders.get("CloudFront-Viewer-Country") || undefined;
 
     const responseInputData = responseInputValidation.data;
 

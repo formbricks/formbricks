@@ -59,6 +59,7 @@ describe("rateLimitConfigs", () => {
       expect(rateLimitConfigs).toHaveProperty("auth");
       expect(rateLimitConfigs).toHaveProperty("api");
       expect(rateLimitConfigs).toHaveProperty("actions");
+      expect(rateLimitConfigs).toHaveProperty("storage");
     });
 
     test("should have all auth configurations", () => {
@@ -68,7 +69,7 @@ describe("rateLimitConfigs", () => {
 
     test("should have all API configurations", () => {
       const apiConfigs = Object.keys(rateLimitConfigs.api);
-      expect(apiConfigs).toEqual(["v1", "v2", "v3", "client"]);
+      expect(apiConfigs).toEqual(["v1", "v2", "v3", "client", "clientEnvironment"]);
     });
 
     test("should have all action configurations", () => {
@@ -81,6 +82,11 @@ describe("rateLimitConfigs", () => {
         "licenseRecheck",
       ]);
     });
+
+    test("should have all storage configurations", () => {
+      const storageConfigs = Object.keys(rateLimitConfigs.storage);
+      expect(storageConfigs).toEqual(["upload", "uploadPerWorkspace", "delete"]);
+    });
   });
 
   describe("Zod Validation", () => {
@@ -89,6 +95,7 @@ describe("rateLimitConfigs", () => {
         ...Object.values(rateLimitConfigs.auth),
         ...Object.values(rateLimitConfigs.api),
         ...Object.values(rateLimitConfigs.actions),
+        ...Object.values(rateLimitConfigs.storage),
       ];
 
       for (const config of allConfigs) {
@@ -105,6 +112,7 @@ describe("rateLimitConfigs", () => {
       Object.values(rateLimitConfigs.auth).forEach((config) => allNamespaces.push(config.namespace));
       Object.values(rateLimitConfigs.api).forEach((config) => allNamespaces.push(config.namespace));
       Object.values(rateLimitConfigs.actions).forEach((config) => allNamespaces.push(config.namespace));
+      Object.values(rateLimitConfigs.storage).forEach((config) => allNamespaces.push(config.namespace));
 
       const uniqueNamespaces = new Set(allNamespaces);
       expect(uniqueNamespaces.size).toBe(allNamespaces.length);
@@ -139,9 +147,11 @@ describe("rateLimitConfigs", () => {
         { config: rateLimitConfigs.api.v2, identifier: "api-v2-key" },
         { config: rateLimitConfigs.api.v3, identifier: "api-v3-key" },
         { config: rateLimitConfigs.api.client, identifier: "client-api-key" },
+        { config: rateLimitConfigs.api.clientEnvironment, identifier: "environment-id" },
         { config: rateLimitConfigs.actions.emailUpdate, identifier: "user-profile" },
         { config: rateLimitConfigs.actions.accountDeletion, identifier: "user-account-delete" },
         { config: rateLimitConfigs.storage.upload, identifier: "storage-upload" },
+        { config: rateLimitConfigs.storage.uploadPerWorkspace, identifier: "storage-upload-workspace" },
         { config: rateLimitConfigs.storage.delete, identifier: "storage-delete" },
       ];
 
@@ -171,6 +181,15 @@ describe("rateLimitConfigs", () => {
       expect(config.namespace).toBe("storage:upload");
     });
 
+    test("should properly configure storage upload per workspace rate limit", async () => {
+      const config = rateLimitConfigs.storage.uploadPerWorkspace;
+
+      // Verify configuration values
+      expect(config.interval).toBe(60); // 1 minute
+      expect(config.allowedPerInterval).toBe(100); // 100 requests per minute
+      expect(config.namespace).toBe("storage:upload:workspace");
+    });
+
     test("should properly configure storage delete rate limit", async () => {
       const config = rateLimitConfigs.storage.delete;
 
@@ -178,6 +197,14 @@ describe("rateLimitConfigs", () => {
       expect(config.interval).toBe(60); // 1 minute
       expect(config.allowedPerInterval).toBe(5); // 5 requests per minute
       expect(config.namespace).toBe("storage:delete");
+    });
+
+    test("should properly configure client environment rate limit", async () => {
+      const config = rateLimitConfigs.api.clientEnvironment;
+
+      expect(config.interval).toBe(60);
+      expect(config.allowedPerInterval).toBe(1000);
+      expect(config.namespace).toBe("api:client:environment");
     });
   });
 });

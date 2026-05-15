@@ -41,7 +41,7 @@ export const createWebhookAction = authenticatedActionClient.inputSchema(ZCreate
         },
         {
           type: "workspaceTeam",
-          minPermission: "read",
+          minPermission: "readWrite",
           workspaceId: parsedInput.workspaceId,
         },
       ],

@@ -10,8 +10,7 @@ export const IS_DEVELOPMENT = env.NODE_ENV === "development";
 export const E2E_TESTING = env.E2E_TESTING === "1";
 
 // URLs
-export const WEBAPP_URL =
-  env.WEBAPP_URL || (env.VERCEL_URL ? `https://${env.VERCEL_URL}` : false) || "http://localhost:3000";
+export const WEBAPP_URL = env.WEBAPP_URL?.trim() || "http://localhost:3000";
 
 // encryption keys
 export const ENCRYPTION_KEY = env.ENCRYPTION_KEY;
