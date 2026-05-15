@@ -1,6 +1,7 @@
 import { type Mock, type MockInstance, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { Config } from "@/lib/common/config";
 import { Logger } from "@/lib/common/logger";
+import type * as CommonUtils from "@/lib/common/utils";
 import { filterSurveys, getLanguageCode, shouldDisplayBasedOnPercentage } from "@/lib/common/utils";
 import { mockSurvey } from "@/lib/survey/tests/__mocks__/widget.mock";
 import * as widget from "@/lib/survey/widget";
@@ -34,14 +35,18 @@ vi.mock("@/lib/common/timeout-stack", () => ({
   },
 }));
 
-vi.mock("@/lib/common/utils", () => ({
-  filterSurveys: vi.fn(),
-  getLanguageCode: vi.fn(),
-  getStyling: vi.fn(),
-  shouldDisplayBasedOnPercentage: vi.fn(),
-  wrapThrowsAsync: vi.fn(),
-  handleHiddenFields: vi.fn(),
-}));
+vi.mock("@/lib/common/utils", async (importOriginal) => {
+  const actual = await importOriginal<typeof CommonUtils>();
+  return {
+    ...actual,
+    filterSurveys: vi.fn(),
+    getLanguageCode: vi.fn(),
+    getStyling: vi.fn(),
+    shouldDisplayBasedOnPercentage: vi.fn(),
+    wrapThrowsAsync: vi.fn(),
+    handleHiddenFields: vi.fn(),
+  };
+});
 
 const mockUpdateQueue = {
   hasPendingWork: vi.fn().mockReturnValue(false),
@@ -67,7 +72,6 @@ describe("widget-file", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     document.body.innerHTML = "";
-    // @ts-expect-error -- cleaning up mock
     delete window.formbricksSurveys;
 
     getInstanceConfigMock = vi.spyOn(Config, "getInstance");
@@ -89,7 +93,7 @@ describe("widget-file", () => {
     await widget.triggerSurvey(mockSurvey);
 
     expect(mockLogger.debug).toHaveBeenCalledWith(
-      `Survey display of "${mockSurvey.name}" skipped based on displayPercentage.`
+      `Survey display of "${mockSurvey.id}" skipped based on displayPercentage.`
     );
   });
 
@@ -145,7 +149,7 @@ describe("widget-file", () => {
     await widget.renderWidget(mockSurvey);
 
     expect(mockLogger.debug).toHaveBeenCalledWith(
-      `Delaying survey "${mockSurvey.name}" by ${mockSurvey.delay.toString()} seconds.`
+      `Delaying survey "${mockSurvey.id}" by ${mockSurvey.delay.toString()} seconds.`
     );
 
     vi.advanceTimersByTime(mockSurvey.delay * 1000);
@@ -209,7 +213,7 @@ describe("widget-file", () => {
     await widget.renderWidget(mockSurveyNoDelay as unknown as TWorkspaceStateSurvey);
 
     expect(mockLogger.debug).toHaveBeenCalledWith(
-      `Survey "${mockSurvey.name}" is not available in specified language.`
+      `Survey "${mockSurvey.id}" is not available in specified language.`
     );
   });
 

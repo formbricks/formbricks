@@ -1,5 +1,5 @@
 import { logger } from "@formbricks/logger";
-import { TIntegrationNotionConfigData, TIntegrationNotionInput } from "@formbricks/types/integration/notion";
+import { TIntegrationNotionInput } from "@formbricks/types/integration/notion";
 import { responses } from "@/app/lib/api/response";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import {
@@ -95,7 +95,7 @@ export const GET = withV1ApiWrapper({
 
       const existingIntegration = await getIntegrationByType(workspaceId, "notion");
       if (existingIntegration) {
-        notionIntegration.config.data = existingIntegration.config.data as TIntegrationNotionConfigData[];
+        notionIntegration.config.data = existingIntegration.config.data;
       }
 
       const result = await createOrUpdateIntegration(workspaceId, notionIntegration);
@@ -103,10 +103,16 @@ export const GET = withV1ApiWrapper({
       if (result) {
         try {
           const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
-          capturePostHogEvent(authentication.user.id, "integration_connected", {
-            integration_type: "notion",
-            organization_id: organizationId,
-          });
+          capturePostHogEvent(
+            authentication.user.id,
+            "integration_connected",
+            {
+              integration_type: "notion",
+              organization_id: organizationId,
+              workspace_id: workspaceId,
+            },
+            { organizationId, workspaceId }
+          );
         } catch (err) {
           logger.error({ error: err }, "Failed to capture PostHog integration_connected event for notion");
         }

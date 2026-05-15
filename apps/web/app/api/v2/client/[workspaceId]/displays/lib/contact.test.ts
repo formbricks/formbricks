@@ -43,7 +43,7 @@ describe("doesContactExist", () => {
     });
   });
 
-  test("should return false if contact does not exist", async () => {
+  test("should return false if contact does not exist in the workspace", async () => {
     vi.mocked(prisma.contact.findFirst).mockResolvedValue(null);
 
     const result = await doesContactExist(contactId);

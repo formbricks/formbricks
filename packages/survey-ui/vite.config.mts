@@ -3,6 +3,7 @@ import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
 import tsconfigPaths from "vite-tsconfig-paths";
 import tailwindcss from "@tailwindcss/vite";
+import { rewriteNodeNextDtsSpecifiers } from "../vite-plugins/node-next-dts";
 
 /**
  * Plugin to strip "use client" directives from bundled dependencies.
@@ -52,6 +53,7 @@ export default defineConfig({
     dts({
       include: ["src"],
       exclude: ["**/*.stories.tsx", "**/*.test.ts", "**/story-helpers.tsx"],
+      beforeWriteFile: rewriteNodeNextDtsSpecifiers,
     }),
     tailwindcss(),
   ],
@@ -69,4 +71,3 @@ export default defineConfig({
     },
   },
 });
-

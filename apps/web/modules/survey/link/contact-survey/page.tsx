@@ -82,7 +82,7 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
 
   const t = await getTranslate();
   const { jwt } = params;
-  const { preview, suId } = searchParams;
+  const { preview, suId, suToken } = searchParams;
 
   const result = verifyContactSurveyToken(jwt);
   if (!result.ok) {
@@ -122,7 +122,12 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
   let singleUseId: string | undefined = undefined;
 
   if (isSingleUseSurvey) {
-    const validatedSingleUseId = checkAndValidateSingleUseId(suId, isSingleUseSurveyEncrypted);
+    const validatedSingleUseId = checkAndValidateSingleUseId(
+      suId,
+      isSingleUseSurveyEncrypted,
+      survey.id,
+      suToken
+    );
     if (!validatedSingleUseId) {
       const workspaceContext = await getWorkspaceContextForLinkSurvey(survey.workspaceId);
       return <SurveyInactive status="link invalid" workspace={workspaceContext.workspace} />;

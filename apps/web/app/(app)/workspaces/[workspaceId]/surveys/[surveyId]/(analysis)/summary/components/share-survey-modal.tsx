@@ -54,6 +54,7 @@ interface ShareSurveyModalProps {
   isReadOnly: boolean;
   isStorageConfigured: boolean;
   workspaceCustomScripts?: string | null;
+  enterpriseLicenseRequestFormUrl: string;
 }
 
 export const ShareSurveyModal = ({
@@ -69,6 +70,7 @@ export const ShareSurveyModal = ({
   isReadOnly,
   isStorageConfigured,
   workspaceCustomScripts,
+  enterpriseLicenseRequestFormUrl,
 }: ShareSurveyModalProps) => {
   const [surveyUrl, setSurveyUrl] = useState<string>(getSurveyUrl(survey, publicDomain, "default"));
   const [showView, setShowView] = useState<ModalView>(modalView);
@@ -107,6 +109,7 @@ export const ShareSurveyModal = ({
           segments,
           isContactsEnabled,
           isFormbricksCloud,
+          enterpriseLicenseRequestFormUrl,
         },
         disabled: survey.singleUse?.enabled,
       },

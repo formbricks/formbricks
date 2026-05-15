@@ -9,7 +9,7 @@ icon: "user"
 In self-hosted Formbricks, user management and authentication can be customized using environment variables. By default, self-hosted instances have user signup disabled, and only organization owners or admins can invite new users. The behavior of the authentication and invitation flow can be further controlled using the following environment variables:
 
 - `AUTH_SKIP_INVITE_FOR_SSO`
-- `AUTH_DEFAULT_TEAM_ID`
+- `AUTH_SSO_DEFAULT_TEAM_ID`
 
 ## License Requirement for Role Management and SSO Behavior
 
@@ -31,7 +31,7 @@ In self-hosted Formbricks, user management and authentication can be customized 
   - Set this to `1` if you want to allow anyone with access to your SSO provider to join your Formbricks instance without a manual invite.
   - Keep it at `0` for stricter access control, where only invited users can join, regardless of SSO.
 
-### `AUTH_DEFAULT_TEAM_ID`
+### `AUTH_SSO_DEFAULT_TEAM_ID`
 
 - **Type:** String (Team ID, a valid cuid)
 - **Default:** None (must be set if you want to use default team assignment)
@@ -49,7 +49,7 @@ In self-hosted Formbricks, user management and authentication can be customized 
 AUTH_SKIP_INVITE_FOR_SSO=1
 
 # Automatically assign new users to this team
-AUTH_DEFAULT_TEAM_ID=team-123
+AUTH_SSO_DEFAULT_TEAM_ID=team-123
 ```
 
 Refer to the [Environment Variables documentation](./configuration/environment-variables) for a full list and details.

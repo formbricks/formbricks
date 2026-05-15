@@ -13,7 +13,6 @@ interface IconAction {
 
 interface IconBarProps {
   actions: IconAction[];
-  className?: string;
 }
 
 export const IconBar = ({ actions }: IconBarProps) => {

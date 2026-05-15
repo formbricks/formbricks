@@ -1,8 +1,7 @@
 import * as z from "zod";
-import { TIntegrationAirtable } from "@formbricks/types/integration/airtable";
 import { responses } from "@/app/lib/api/response";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
-import { getTables } from "@/lib/airtable/service";
+import { getAirtableToken, getTables } from "@/lib/airtable/service";
 import { getIntegrationByType } from "@/lib/integration/service";
 import { hasUserWorkspaceAccess } from "@/lib/workspace/auth";
 
@@ -36,15 +35,20 @@ export const GET = withV1ApiWrapper({
       };
     }
 
-    const integration = (await getIntegrationByType(workspaceId, "airtable")) as TIntegrationAirtable;
+    const integration = await getIntegrationByType(workspaceId, "airtable");
 
     if (!integration) {
       return {
-        response: responses.notFoundResponse("Integration not found", workspaceId),
+        response: responses.notFoundResponse("Integration not found", null),
       };
     }
 
-    const tables = await getTables(integration.config.key, baseId.data);
+    // Use getAirtableToken to ensure the access token is refreshed if expired
+    const freshAccessToken = await getAirtableToken(workspaceId);
+    const tables = await getTables(
+      { ...integration.config.key, access_token: freshAccessToken },
+      baseId.data
+    );
     return {
       response: responses.successResponse(tables),
     };

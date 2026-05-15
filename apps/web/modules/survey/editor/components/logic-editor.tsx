@@ -2,7 +2,7 @@
 
 import { ArrowRightIcon } from "lucide-react";
 import { useMemo } from "react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { TSurveyBlock, TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
@@ -101,30 +101,36 @@ export function LogicEditor({
           <div className="flex w-10 shrink-0 items-center justify-end">
             <ArrowRightIcon className="h-4 w-4 text-slate-500" />
           </div>
-          <p className="text-nowrap font-medium text-slate-900">
-            {t("workspace.surveys.edit.all_other_answers_will_continue_to")}
-          </p>
-          <Select
-            autoComplete="true"
-            defaultValue={blockLogicFallback || "defaultSelection"}
-            onValueChange={(val) => {
-              updateBlockLogicFallback(blockIdx, val === "defaultSelection" ? undefined : val);
-            }}>
-            <SelectTrigger className="w-auto bg-white">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem key="fallback_default_selection" value={"defaultSelection"}>
-                {t("workspace.surveys.edit.next_block")}
-              </SelectItem>
+          <div className="inline-flex items-center gap-x-2 text-nowrap font-medium text-slate-900">
+            <Trans
+              i18nKey="workspace.surveys.edit.all_other_answers_will_continue_to_fallback"
+              components={{
+                fallbackSelect: (
+                  <Select
+                    autoComplete="true"
+                    defaultValue={blockLogicFallback || "defaultSelection"}
+                    onValueChange={(val) => {
+                      updateBlockLogicFallback(blockIdx, val === "defaultSelection" ? undefined : val);
+                    }}>
+                    <SelectTrigger className="w-auto bg-white">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem key="fallback_default_selection" value={"defaultSelection"}>
+                        {t("workspace.surveys.edit.next_block")}
+                      </SelectItem>
 
-              {fallbackOptions.map((option) => (
-                <SelectItem key={`fallback_${option.value}`} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+                      {fallbackOptions.map((option) => (
+                        <SelectItem key={`fallback_${option.value}`} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ),
+              }}
+            />
+          </div>
         </div>
       ) : null}
     </div>

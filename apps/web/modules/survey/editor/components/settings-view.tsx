@@ -31,6 +31,7 @@ interface SettingsViewProps {
   quotas: TSurveyQuota[];
   locale: TUserLocale;
   appSetupCompleted: boolean;
+  enterpriseLicenseRequestFormUrl: string;
 }
 
 export const SettingsView = ({
@@ -49,6 +50,7 @@ export const SettingsView = ({
   quotas,
   locale,
   appSetupCompleted,
+  enterpriseLicenseRequestFormUrl,
 }: SettingsViewProps) => {
   const isAppSurvey = localSurvey.type === "app";
 
@@ -77,7 +79,11 @@ export const SettingsView = ({
               </div>
             </div>
           ) : (
-            <TargetingLockedCard isFormbricksCloud={isFormbricksCloud} />
+            <TargetingLockedCard
+              isFormbricksCloud={isFormbricksCloud}
+              workspaceId={localSurvey.workspaceId}
+              enterpriseLicenseRequestFormUrl={enterpriseLicenseRequestFormUrl}
+            />
           )}
         </div>
       ) : null}
@@ -96,6 +102,7 @@ export const SettingsView = ({
         isFormbricksCloud={isFormbricksCloud}
         quotas={quotas}
         hasResponses={responseCount > 0}
+        enterpriseLicenseRequestFormUrl={enterpriseLicenseRequestFormUrl}
       />
 
       <ResponseOptionsCard

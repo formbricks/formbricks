@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import { TWorkspace } from "@formbricks/types/workspace";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { handleFileUpload } from "@/modules/storage/file-upload";
+import { showFileUploadErrorToast } from "@/modules/storage/file-upload-error";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -41,7 +42,7 @@ export const EditLogo = ({ workspace, workspaceId, isReadOnly, isStorageConfigur
     try {
       const uploadResult = await handleFileUpload(file, workspaceId);
       if (uploadResult.error) {
-        toast.error(uploadResult.error);
+        showFileUploadErrorToast(uploadResult.error, t);
         return;
       }
       setLogoUrl(uploadResult.url);

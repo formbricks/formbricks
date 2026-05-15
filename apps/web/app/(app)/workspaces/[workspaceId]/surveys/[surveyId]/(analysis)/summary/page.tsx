@@ -4,7 +4,12 @@ import { SurveyAnalysisNavigation } from "@/app/(app)/workspaces/[workspaceId]/s
 import { SummaryPage } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/SummaryPage";
 import { SurveyAnalysisCTA } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA";
 import { getSurveySummary } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/lib/surveySummary";
-import { DEFAULT_LOCALE, IS_FORMBRICKS_CLOUD, IS_STORAGE_CONFIGURED } from "@/lib/constants";
+import {
+  DEFAULT_LOCALE,
+  ENTERPRISE_LICENSE_REQUEST_FORM_URL,
+  IS_FORMBRICKS_CLOUD,
+  IS_STORAGE_CONFIGURED,
+} from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getSurvey } from "@/lib/survey/service";
 import { getUser } from "@/lib/user/service";
@@ -73,6 +78,7 @@ const SurveyPage = async (props: { params: Promise<{ workspaceId: string; survey
             isContactsEnabled={isContactsEnabled}
             isFormbricksCloud={IS_FORMBRICKS_CLOUD}
             isStorageConfigured={IS_STORAGE_CONFIGURED}
+            enterpriseLicenseRequestFormUrl={ENTERPRISE_LICENSE_REQUEST_FORM_URL}
           />
         }>
         <SurveyAnalysisNavigation survey={survey} activeId="summary" />

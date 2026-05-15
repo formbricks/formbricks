@@ -3,6 +3,7 @@ import { glob } from "glob";
 import { dirname, resolve } from "path";
 import { Plugin, UserConfig, defineConfig } from "vite";
 import dts from "vite-plugin-dts";
+import { rewriteNodeNextDtsSpecifiers } from "../vite-plugins/node-next-dts";
 
 const copySqlMigrationsPlugin: Plugin = {
   name: "copy-sql-migrations",
@@ -72,9 +73,11 @@ export default defineConfig(async (): Promise<UserConfig> => {
     plugins: [
       dts({
         rollupTypes: false,
-        include: ["src/**/*"],
-        exclude: ["src/**/*.test.ts", "src/**/*.spec.ts"],
+        include: ["src/index.ts", "src/client.ts", "src/json-types.ts"],
+        entryRoot: ".",
+        exclude: ["src/**/*.test.ts", "src/**/*.spec.ts", "migration/**/*"],
         insertTypesEntry: true,
+        beforeWriteFile: rewriteNodeNextDtsSpecifiers,
       }),
       copySqlMigrationsPlugin,
     ],

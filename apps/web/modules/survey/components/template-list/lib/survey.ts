@@ -1,7 +1,8 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurvey, TSurveyCreateInput } from "@formbricks/types/surveys/types";
 import { getOrganization, subscribeOrganizationMembersToSurveyResponses } from "@/lib/organization/service";
 import { validateMediaAndPrepareBlocks } from "@/lib/survey/utils";
@@ -60,8 +61,8 @@ export const createSurvey = async (workspaceId: string, surveyBody: TSurveyCreat
     }
 
     // Validate and prepare blocks
-    if (data.blocks && data.blocks.length > 0) {
-      data.blocks = validateMediaAndPrepareBlocks(data.blocks);
+    if (Array.isArray(data.blocks) && data.blocks.length > 0) {
+      data.blocks = validateMediaAndPrepareBlocks(data.blocks as unknown as TSurveyBlock[]);
     }
 
     const survey = await prisma.survey.create({

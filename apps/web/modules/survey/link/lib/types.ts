@@ -4,4 +4,5 @@ export type TLinkSurveySearchParams = {
   lang?: string;
   embed?: string;
   preview?: string;
+  suToken?: string;
 } & Record<string, string | string[] | undefined>;

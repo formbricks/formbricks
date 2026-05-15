@@ -4,18 +4,23 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { LockIcon } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 
 interface TargetingLockedCardProps {
   isFormbricksCloud: boolean;
+  workspaceId: string;
+  enterpriseLicenseRequestFormUrl: string;
 }
 
-export const TargetingLockedCard = ({ isFormbricksCloud }: TargetingLockedCardProps) => {
-  const { workspace } = useWorkspace();
-  const workspaceBasePath = `/workspaces/${workspace?.id}`;
+export const TargetingLockedCard = ({
+  isFormbricksCloud,
+  workspaceId,
+  enterpriseLicenseRequestFormUrl,
+}: TargetingLockedCardProps) => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
+
+  const workspaceBasePath = `/workspaces/${workspaceId}`;
 
   return (
     <Collapsible.Root
@@ -49,7 +54,7 @@ export const TargetingLockedCard = ({ isFormbricksCloud }: TargetingLockedCardPr
                 text: isFormbricksCloud ? t("common.upgrade_plan") : t("common.request_trial_license"),
                 href: isFormbricksCloud
                   ? `${workspaceBasePath}/settings/organization/billing`
-                  : "https://formbricks.com/upgrade-self-hosting-license",
+                  : enterpriseLicenseRequestFormUrl,
               },
               {
                 text: t("common.learn_more"),

@@ -118,6 +118,7 @@ export const renderSurvey = async ({
     return (
       <VerifyEmail
         singleUseId={searchParams.suId ?? ""}
+        singleUseToken={searchParams.suToken}
         survey={survey}
         languageCode={getLanguageCode(langParam, survey)}
         styling={workspace.styling}

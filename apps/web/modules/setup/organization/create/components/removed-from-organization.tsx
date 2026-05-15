@@ -9,10 +9,15 @@ import { Button } from "@/modules/ui/components/button";
 
 interface RemovedFromOrganizationProps {
   isFormbricksCloud: boolean;
+  requiresPasswordConfirmation: boolean;
   user: TUser;
 }
 
-export const RemovedFromOrganization = ({ user, isFormbricksCloud }: RemovedFromOrganizationProps) => {
+export const RemovedFromOrganization = ({
+  user,
+  isFormbricksCloud,
+  requiresPasswordConfirmation,
+}: Readonly<RemovedFromOrganizationProps>) => {
   const { t } = useTranslation();
   const [isModalOpen, setIsModalOpen] = useState(false);
   return (
@@ -24,6 +29,7 @@ export const RemovedFromOrganization = ({ user, isFormbricksCloud }: RemovedFrom
       <hr className="my-4 border-slate-200" />
       <p className="text-sm">{t("setup.organization.create.delete_account_description")}</p>
       <DeleteAccountModal
+        requiresPasswordConfirmation={requiresPasswordConfirmation}
         open={isModalOpen}
         setOpen={setIsModalOpen}
         user={user}

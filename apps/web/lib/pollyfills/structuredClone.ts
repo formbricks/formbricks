@@ -1,6 +1,3 @@
-import structuredClonePolyfill from "@ungap/structured-clone";
-
-const structuredCloneExport =
-  typeof structuredClone === "undefined" ? structuredClonePolyfill : structuredClone;
+const structuredCloneExport = globalThis.structuredClone;
 
 export { structuredCloneExport as structuredClone };

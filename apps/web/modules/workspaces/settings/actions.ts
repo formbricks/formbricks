@@ -6,6 +6,7 @@ import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/typ
 import { ZWorkspaceUpdateInput } from "@formbricks/types/workspace";
 import { getTeamsByOrganizationId } from "@/app/(app)/(onboarding)/lib/onboarding";
 import { getOrganization } from "@/lib/organization/service";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
@@ -72,6 +73,35 @@ export const updateWorkspaceAction = authenticatedActionClient.inputSchema(ZUpda
     const result = await updateWorkspace(parsedInput.workspaceId, parsedInput.data);
     ctx.auditLoggingCtx.oldObject = oldObject;
     ctx.auditLoggingCtx.newObject = result;
+
+    const groupContext = { organizationId, workspaceId: parsedInput.workspaceId };
+
+    if (oldObject?.linkSurveyBranding === true && parsedInput.data.linkSurveyBranding === false) {
+      capturePostHogEvent(
+        ctx.user.id,
+        "remove_branding_enabled",
+        {
+          organization_id: organizationId,
+          workspace_id: parsedInput.workspaceId,
+          branding_type: "link",
+        },
+        groupContext
+      );
+    }
+
+    if (oldObject?.inAppSurveyBranding === true && parsedInput.data.inAppSurveyBranding === false) {
+      capturePostHogEvent(
+        ctx.user.id,
+        "remove_branding_enabled",
+        {
+          organization_id: organizationId,
+          workspace_id: parsedInput.workspaceId,
+          branding_type: "in_app",
+        },
+        groupContext
+      );
+    }
+
     return result;
   })
 );

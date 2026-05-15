@@ -1,7 +1,11 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { generateStandardWebhookSignature } from "@/lib/crypto";
-import { validateWebhookUrl } from "@/lib/utils/validate-webhook-url";
+import {
+  createPinnedDispatcher,
+  validateAndResolveWebhookUrl,
+  validateWebhookUrl,
+} from "@/lib/utils/validate-webhook-url";
 import { getTranslate } from "@/lingodotdev/server";
 import { isDiscordWebhook } from "@/modules/integrations/webhooks/lib/utils";
 import { testEndpoint } from "./webhook";
@@ -17,6 +21,14 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
+const constantsMock = vi.hoisted(() => ({ dangerouslyAllow: false }));
+
+vi.mock("@/lib/constants", () => ({
+  get DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS() {
+    return constantsMock.dangerouslyAllow;
+  },
+}));
+
 vi.mock("@/lib/crypto", () => ({
   generateStandardWebhookSignature: vi.fn(() => "signed-payload"),
   generateWebhookSecret: vi.fn(() => "generated-secret"),
@@ -24,6 +36,12 @@ vi.mock("@/lib/crypto", () => ({
 
 vi.mock("@/lib/utils/validate-webhook-url", () => ({
   validateWebhookUrl: vi.fn(async () => undefined),
+  validateAndResolveWebhookUrl: vi.fn(async () => ({ ip: "93.184.216.34", family: 4 })),
+  createPinnedDispatcher: vi.fn(() => ({
+    __pinned: true,
+    close: vi.fn(async () => undefined),
+    destroy: vi.fn(async () => undefined),
+  })),
 }));
 
 vi.mock("@/lingodotdev/server", () => ({
@@ -41,8 +59,15 @@ vi.mock("uuid", () => ({
 describe("testEndpoint", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    constantsMock.dangerouslyAllow = false;
     vi.mocked(generateStandardWebhookSignature).mockReturnValue("signed-payload");
     vi.mocked(validateWebhookUrl).mockResolvedValue(undefined);
+    vi.mocked(validateAndResolveWebhookUrl).mockResolvedValue({ ip: "93.184.216.34", family: 4 });
+    vi.mocked(createPinnedDispatcher).mockReturnValue({
+      __pinned: true,
+      close: vi.fn(async () => undefined),
+      destroy: vi.fn(async () => undefined),
+    } as never);
     vi.mocked(getTranslate).mockResolvedValue(((key: string) => key) as any);
     vi.mocked(isDiscordWebhook).mockReturnValue(false);
   });
@@ -71,9 +96,39 @@ describe("testEndpoint", () => {
       new InvalidInputError(messageKey)
     );
 
-    expect(validateWebhookUrl).toHaveBeenCalledWith("https://example.com/webhook");
+    expect(validateAndResolveWebhookUrl).toHaveBeenCalledWith("https://example.com/webhook");
     expect(generateStandardWebhookSignature).toHaveBeenCalled();
     expect(getTranslate).toHaveBeenCalled();
+  });
+
+  test.each([301, 302, 303, 307, 308])(
+    "rejects %s redirects to prevent SSRF via redirect",
+    async (statusCode) => {
+      const fetchMock = vi.fn(async () => ({ status: statusCode }));
+      vi.stubGlobal("fetch", fetchMock);
+
+      await expect(testEndpoint("https://example.com/webhook")).rejects.toThrow(
+        "Webhook endpoint returned a redirect, which is not allowed"
+      );
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        "https://example.com/webhook",
+        expect.objectContaining({ redirect: "manual" })
+      );
+    }
+  );
+
+  test("follows redirects when DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS is enabled", async () => {
+    constantsMock.dangerouslyAllow = true;
+    const fetchMock = vi.fn(async () => ({ status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(testEndpoint("https://example.com/webhook")).resolves.toBe(true);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://example.com/webhook",
+      expect.objectContaining({ redirect: "follow" })
+    );
   });
 
   test("allows non-blocked non-2xx statuses", async () => {

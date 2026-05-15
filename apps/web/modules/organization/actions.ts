@@ -7,6 +7,7 @@ import { TUserNotificationSettings } from "@formbricks/types/user";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { createMembership } from "@/lib/membership/service";
 import { createOrganization } from "@/lib/organization/service";
+import { capturePostHogEvent, groupIdentifyPostHog } from "@/lib/posthog";
 import { updateUser } from "@/lib/user/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
@@ -47,9 +48,33 @@ export const createOrganizationAction = authenticatedActionClient
         });
       }
 
-      await createWorkspace(newOrganization.id, {
+      const newWorkspace = await createWorkspace(newOrganization.id, {
         name: "My Workspace",
       });
+
+      groupIdentifyPostHog("organization", newOrganization.id, { name: newOrganization.name });
+      groupIdentifyPostHog("workspace", newWorkspace.id, { name: newWorkspace.name });
+
+      capturePostHogEvent(
+        ctx.user.id,
+        "organization_created",
+        {
+          organization_id: newOrganization.id,
+          is_first_org: false,
+        },
+        { organizationId: newOrganization.id, workspaceId: newWorkspace.id }
+      );
+
+      capturePostHogEvent(
+        ctx.user.id,
+        "workspace_created",
+        {
+          organization_id: newOrganization.id,
+          workspace_id: newWorkspace.id,
+          name: newWorkspace.name,
+        },
+        { organizationId: newOrganization.id, workspaceId: newWorkspace.id }
+      );
 
       const updatedNotificationSettings: TUserNotificationSettings = {
         ...ctx.user.notificationSettings,

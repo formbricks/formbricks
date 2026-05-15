@@ -7,6 +7,7 @@ import { responses } from "@/app/lib/api/response";
 import { ENCRYPTION_KEY } from "@/lib/constants";
 import { symmetricDecrypt } from "@/lib/crypto";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
+import { validateSurveySingleUseLinkParams } from "@/lib/utils/single-use-surveys";
 import { getIsSpamProtectionEnabled } from "@/modules/ee/license-check/lib/utils";
 
 export const RECAPTCHA_VERIFICATION_ERROR_CODE = "recaptcha_verification_failed";
@@ -24,6 +25,12 @@ export const checkSurveyValidity = async (
       },
       true
     );
+  }
+
+  if (survey.status !== "inProgress") {
+    return responses.forbiddenResponse("Survey is not accepting submissions", true, {
+      surveyId: survey.id,
+    });
   }
 
   if (survey.type === "link" && survey.singleUse?.enabled) {
@@ -52,6 +59,7 @@ export const checkSurveyValidity = async (
       });
     }
     const suId = url.searchParams.get("suId");
+    const suToken = url.searchParams.get("suToken");
     if (!suId) {
       return responses.badRequestResponse("Missing single use id", {
         surveyId: survey.id,
@@ -59,20 +67,27 @@ export const checkSurveyValidity = async (
       });
     }
 
-    if (survey.singleUse.isEncrypted) {
-      const decryptedSuId = symmetricDecrypt(suId, ENCRYPTION_KEY);
-      if (decryptedSuId !== responseInput.singleUseId) {
-        return responses.badRequestResponse("Invalid single use id", {
-          surveyId: survey.id,
-          workspaceId,
-        });
-      }
-    } else if (responseInput.singleUseId !== suId) {
+    let canonicalSingleUseId: string | null = null;
+    try {
+      canonicalSingleUseId = validateSurveySingleUseLinkParams({
+        surveyId: survey.id,
+        suId,
+        suToken,
+        isEncrypted: survey.singleUse.isEncrypted,
+        decrypt: (encryptedSingleUseId: string) => symmetricDecrypt(encryptedSingleUseId, ENCRYPTION_KEY),
+      });
+    } catch (error) {
+      logger.error({ error, surveyId: survey.id, workspaceId }, "Failed to validate single-use id");
+    }
+
+    if (!canonicalSingleUseId || canonicalSingleUseId !== responseInput.singleUseId) {
       return responses.badRequestResponse("Invalid single use id", {
         surveyId: survey.id,
         workspaceId,
       });
     }
+
+    responseInput.singleUseId = canonicalSingleUseId;
   }
 
   if (survey.recaptcha?.enabled) {

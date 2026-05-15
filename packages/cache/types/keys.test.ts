@@ -93,8 +93,10 @@ describe("@formbricks/cache types/keys", () => {
   describe("CustomCacheNamespace type", () => {
     test("should include expected namespaces", () => {
       // Type test - this will fail at compile time if types don't match
+      const accountDeletionNamespace: CustomCacheNamespace = "account_deletion";
       const analyticsNamespace: CustomCacheNamespace = "analytics";
       const billingNamespace: CustomCacheNamespace = "billing";
+      expect(accountDeletionNamespace).toBe("account_deletion");
       expect(analyticsNamespace).toBe("analytics");
       expect(billingNamespace).toBe("billing");
     });

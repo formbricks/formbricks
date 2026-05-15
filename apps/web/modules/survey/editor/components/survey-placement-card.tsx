@@ -5,7 +5,7 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { TOverlay, TPlacement } from "@formbricks/types/common";
 import { TSurvey, TSurveyWorkspaceOverwrites } from "@formbricks/types/surveys/types";
 import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
@@ -139,12 +139,14 @@ export const SurveyPlacementCard = ({ localSurvey, setLocalSurvey }: SurveyPlace
 
             <div>
               <p className="text-xs text-slate-500">
-                {t("workspace.surveys.edit.to_keep_the_placement_over_all_surveys_consistent_you_can")}{" "}
-                <Link href={`${workspaceBasePath}/look`} target="_blank">
-                  <span className="underline">
-                    {t("workspace.surveys.edit.set_the_global_placement_in_the_look_feel_settings")}
-                  </span>
-                </Link>
+                <Trans
+                  i18nKey="workspace.surveys.edit.set_global_placement_in_look_feel_settings_hint"
+                  components={{
+                    lookFeelLink: (
+                      <Link href={`${workspaceBasePath}/look`} target="_blank" className="underline" />
+                    ),
+                  }}
+                />
               </p>
             </div>
           </div>

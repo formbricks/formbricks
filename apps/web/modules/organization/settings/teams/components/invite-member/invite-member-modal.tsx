@@ -29,6 +29,7 @@ interface InviteMemberModalProps {
   isOwnerOrManager: boolean;
   isTeamAdmin: boolean;
   userAdminTeamIds?: string[];
+  enterpriseLicenseRequestFormUrl: string;
 }
 
 export const InviteMemberModal = ({
@@ -43,6 +44,7 @@ export const InviteMemberModal = ({
   isOwnerOrManager,
   isTeamAdmin,
   userAdminTeamIds,
+  enterpriseLicenseRequestFormUrl,
 }: InviteMemberModalProps) => {
   const [type, setType] = useState<"individual" | "bulk">("individual");
 
@@ -65,6 +67,7 @@ export const InviteMemberModal = ({
         teams={filteredTeams}
         membershipRole={membershipRole}
         showTeamAdminRestrictions={showTeamAdminRestrictions}
+        enterpriseLicenseRequestFormUrl={enterpriseLicenseRequestFormUrl}
       />
     ),
     bulk: (

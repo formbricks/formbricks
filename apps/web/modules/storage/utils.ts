@@ -121,9 +121,13 @@ export const getErrorResponseFromStorageError = (
     case StorageErrorCode.InvalidInput:
       return responses.badRequestResponse("Invalid input", details, true);
     case StorageErrorCode.S3ClientError:
-      return responses.internalServerErrorResponse("Internal server error", true);
     case StorageErrorCode.S3CredentialsError:
-      return responses.internalServerErrorResponse("Internal server error", true);
+      return responses.internalServerErrorResponse(
+        "File storage is not configured correctly. Please check your file upload settings.",
+        true,
+        { storage_error_code: error.code },
+        "private, no-store"
+      );
     case StorageErrorCode.Unknown:
       return responses.internalServerErrorResponse("Internal server error", true);
     default: {

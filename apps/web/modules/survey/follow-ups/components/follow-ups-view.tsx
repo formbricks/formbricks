@@ -23,6 +23,7 @@ interface FollowUpsViewProps {
   userEmail: string;
   teamMemberDetails: TFollowUpEmailToUser[];
   locale: TUserLocale;
+  enterpriseLicenseRequestFormUrl: string;
 }
 
 export const FollowUpsView = ({
@@ -35,6 +36,7 @@ export const FollowUpsView = ({
   userEmail,
   teamMemberDetails,
   locale,
+  enterpriseLicenseRequestFormUrl,
 }: FollowUpsViewProps) => {
   const { workspace } = useWorkspace();
   const workspaceBasePath = `/workspaces/${workspace?.id}`;
@@ -57,7 +59,7 @@ export const FollowUpsView = ({
                 : t("common.request_trial_license"),
               href: isFormbricksCloud
                 ? `${workspaceBasePath}/settings/organization/billing`
-                : "https://formbricks.com/docs/self-hosting/license",
+                : enterpriseLicenseRequestFormUrl,
             },
             {
               text: t("common.learn_more"),

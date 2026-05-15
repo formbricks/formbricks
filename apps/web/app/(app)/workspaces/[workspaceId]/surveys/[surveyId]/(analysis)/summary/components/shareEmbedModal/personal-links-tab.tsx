@@ -35,6 +35,7 @@ interface PersonalLinksTabProps {
   segments: TSegment[];
   isContactsEnabled: boolean;
   isFormbricksCloud: boolean;
+  enterpriseLicenseRequestFormUrl: string;
 }
 
 interface PersonalLinksFormData {
@@ -75,6 +76,7 @@ export const PersonalLinksTab = ({
   surveyId,
   isContactsEnabled,
   isFormbricksCloud,
+  enterpriseLicenseRequestFormUrl,
 }: PersonalLinksTabProps) => {
   const { t } = useTranslation();
   const { workspace } = useWorkspace();
@@ -117,7 +119,6 @@ export const PersonalLinksTab = ({
     const result = await generatePersonalLinksAction({
       surveyId: surveyId,
       segmentId: selectedSegment,
-      workspaceId: workspaceId,
       expirationDays: expiryDate
         ? Math.max(1, Math.floor((expiryDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)))
         : undefined,

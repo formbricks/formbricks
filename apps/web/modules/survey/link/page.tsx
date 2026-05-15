@@ -79,6 +79,7 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
   }
 
   const suId = searchParams.suId;
+  const suToken = searchParams.suToken;
 
   // Validate single-use ID early (no I/O, just validation)
   const isSingleUseSurvey = survey.singleUse?.enabled;
@@ -86,7 +87,12 @@ export const LinkSurveyPage = async (props: LinkSurveyPageProps) => {
   let singleUseId: string | undefined = undefined;
 
   if (isSingleUseSurvey) {
-    const validatedSingleUseId = checkAndValidateSingleUseId(suId, isSingleUseSurveyEncrypted);
+    const validatedSingleUseId = checkAndValidateSingleUseId(
+      suId,
+      isSingleUseSurveyEncrypted,
+      survey.id,
+      suToken
+    );
     if (!validatedSingleUseId) {
       // Need to fetch workspace for error page - fetch environmentContext for it
       const environmentContext = await getWorkspaceContextForLinkSurvey(survey.workspaceId);

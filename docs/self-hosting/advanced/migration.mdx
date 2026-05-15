@@ -463,7 +463,7 @@ Formbricks 4.0 is a **major milestone** that sets up the technical foundation fo
 These improvements in Formbricks 4.0 also make some infrastructure requirements mandatory going forward:
 
 - **Redis** for caching
-- **MinIO or S3-compatible storage** for file uploads
+- **RustFS or S3-compatible storage** for file uploads
 
 These services are already included in the updated one-click setup for self-hosters, but existing users need to upgrade their setup. More information on this below.
 
@@ -484,9 +484,9 @@ We believe this is the only path forward to build the comprehensive Survey and E
 
 Additional migration steps are needed if you are using a self-hosted Formbricks setup that uses either local file storage (not S3-compatible file storage) or doesn't already use a Redis cache.
 
-### One-Click Setup
+### Legacy one-click v4.0 upgrade
 
-For users using our official one-click setup, we provide an automated migration using a migration script:
+For historical v4.0 upgrades, our original one-click migration script is still available:
 
 ```bash
 # Download the latest script
@@ -503,7 +503,7 @@ chmod +x migrate-to-v4.sh
 This script guides you through the steps for the infrastructure migration and does the following:
 
 - Adds a Redis service to your setup and configures it
-- Adds a MinIO service (open source S3-alternative) to your setup, configures it and migrates local files to it
+- Adds a bundled MinIO service to your setup, configures it, and migrates local files to it
 - Pulls the latest Formbricks image and updates your instance
 
 ### Manual Setup
@@ -525,7 +525,7 @@ Formbricks supports multiple storage providers (among many other S3-compatible s
 - AWS S3
 - Digital Ocean Spaces
 - Hetzner Object Storage
-- Custom MinIO server
+- Custom RustFS server
 
 Please make sure to set up a storage bucket with one of these solutions and then link it to Formbricks using the following environment variables:
 
@@ -534,7 +534,8 @@ Please make sure to set up a storage bucket with one of these solutions and then
   S3_SECRET_KEY: your-secret-key
   S3_REGION: us-east-1
   S3_BUCKET_NAME: formbricks-uploads
-  S3_ENDPOINT_URL: http://minio:9000 # not needed for AWS S3
+  S3_ENDPOINT_URL: https://files.yourdomain.com # not needed for AWS S3
+  S3_FORCE_PATH_STYLE: 1 # set this only for custom endpoints like RustFS, MinIO, or LocalStack; omit for AWS S3
 ```
 
 #### Upgrade Process
@@ -580,7 +581,7 @@ No manual intervention is required for the database migration.
 **4. Verify Your Upgrade**
 
 - Access your Formbricks instance at the same URL as before
-- Test file uploads to ensure S3/MinIO integration works correctly. Check the [File Upload Troubleshooting](/self-hosting/configuration/file-uploads#troubleshooting) section if you face any issues.
+- Test file uploads to ensure S3 storage integration works correctly. Check the [File Upload Troubleshooting](/self-hosting/configuration/file-uploads#troubleshooting) section if you face any issues.
 - Verify that existing surveys and data are intact
 - Check that previously uploaded files are accessible
 

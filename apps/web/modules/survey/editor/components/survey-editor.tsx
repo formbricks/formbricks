@@ -50,6 +50,7 @@ interface SurveyEditorProps {
   quotas: TSurveyQuota[];
   isExternalUrlsAllowed: boolean;
   publicDomain: string;
+  enterpriseLicenseRequestFormUrl: string;
 }
 
 export const SurveyEditor = ({
@@ -78,6 +79,7 @@ export const SurveyEditor = ({
   quotas,
   isExternalUrlsAllowed,
   publicDomain,
+  enterpriseLicenseRequestFormUrl,
 }: SurveyEditorProps) => {
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("elements");
   const [activeElementId, setActiveElementId] = useState<string | null>(null);
@@ -266,6 +268,7 @@ export const SurveyEditor = ({
               quotas={quotas}
               locale={locale}
               appSetupCompleted={localWorkspace.appSetupCompleted}
+              enterpriseLicenseRequestFormUrl={enterpriseLicenseRequestFormUrl}
             />
           )}
 
@@ -280,6 +283,7 @@ export const SurveyEditor = ({
               userEmail={userEmail}
               teamMemberDetails={teamMemberDetails}
               locale={locale}
+              enterpriseLicenseRequestFormUrl={enterpriseLicenseRequestFormUrl}
             />
           )}
         </main>

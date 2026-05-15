@@ -50,7 +50,7 @@ export function removeSurveyFromInfiniteData(
       ...page,
       meta: {
         ...page.meta,
-        totalCount: Math.max(0, page.meta.totalCount - 1),
+        totalCount: page.meta.totalCount === null ? null : Math.max(0, page.meta.totalCount - 1),
       },
     })),
   };

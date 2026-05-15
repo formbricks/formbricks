@@ -1,6 +1,6 @@
 import { TWorkspace } from "@formbricks/types/workspace";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
-import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { EditBranding } from "@/modules/ee/whitelabel/remove-branding/components/edit-branding";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
@@ -25,7 +25,7 @@ export const BrandingSettingsCard = async ({
       text: IS_FORMBRICKS_CLOUD ? t("common.upgrade_plan") : t("common.request_trial_license"),
       href: IS_FORMBRICKS_CLOUD
         ? `${workspaceBasePath}/settings/organization/billing`
-        : "https://formbricks.com/upgrade-self-hosting-license",
+        : ENTERPRISE_LICENSE_REQUEST_FORM_URL,
     },
     {
       text: t("common.learn_more"),

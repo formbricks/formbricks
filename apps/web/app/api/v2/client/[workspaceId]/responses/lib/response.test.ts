@@ -239,6 +239,51 @@ describe("createResponse V2", () => {
     const result = await createResponse(mockResponseInput, mockTx as unknown as Prisma.TransactionClient);
     expect(result.tags).toEqual([mockTag]);
   });
+
+  test("should create response with contact when contact belongs to the workspace", async () => {
+    const responseInputWithContact = {
+      ...mockResponseInput,
+      contactId,
+    };
+
+    const result = await createResponse(
+      responseInputWithContact,
+      mockTx as unknown as Prisma.TransactionClient
+    );
+
+    expect(getContact).toHaveBeenCalledWith(contactId, workspaceId);
+    expect(mockTx.response.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          contact: { connect: { id: contactId } },
+          contactAttributes: mockContact.attributes,
+        }),
+      })
+    );
+    expect(result.contact).toEqual({
+      id: contactId,
+      userId,
+    });
+  });
+
+  test("should create response without contact when contact is not found in the workspace", async () => {
+    vi.mocked(getContact).mockResolvedValue(null);
+    const responseInputWithContact = {
+      ...mockResponseInput,
+      contactId,
+    };
+
+    const result = await createResponse(
+      responseInputWithContact,
+      mockTx as unknown as Prisma.TransactionClient
+    );
+    const createArgs = mockTx.response.create.mock.calls[0][0];
+
+    expect(getContact).toHaveBeenCalledWith(contactId, workspaceId);
+    expect(createArgs.data).not.toHaveProperty("contact");
+    expect(createArgs.data).not.toHaveProperty("contactAttributes");
+    expect(result.contact).toBeNull();
+  });
 });
 
 describe("createResponseWithQuotaEvaluation V2", () => {

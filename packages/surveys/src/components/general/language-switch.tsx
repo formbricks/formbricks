@@ -88,7 +88,6 @@ export function LanguageSwitch({
           borderRadius: typeof borderRadius === "number" ? `${borderRadius}px` : borderRadius,
         }}
         onClick={toggleDropdown}
-        tabIndex={-1}
         aria-haspopup="true"
         aria-expanded={showLanguageDropdown}
         aria-label={t("common.language_switch")}

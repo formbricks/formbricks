@@ -1,4 +1,5 @@
 {
+  "adjust_theme_in_look_and_feel_settings": "Temayı <lookFeelLink>Görünüm ve His</lookFeelLink> Ayarlarından düzenleyin.",
   "auth": {
     "continue_with_azure": "Microsoft ile devam et",
     "continue_with_email": "Email ile devam et",
@@ -77,8 +78,8 @@
       "password_validation_uppercase_and_lowercase": "Büyük ve küçük harf karışımı",
       "please_verify_captcha": "Lütfen reCAPTCHA doğrulamasını yapın",
       "privacy_policy": "Gizlilik Politikası",
-      "product_updates_description": "Aylık ürün haberleri ve özellik güncellemeleri, Gizlilik Politikası geçerlidir.",
-      "product_updates_title": "Ürün güncellemeleri",
+      "product_updates_description": "Formbricks'ten aylık ürün güncelleme e-postaları almak istiyorum. Gizlilik Politikası geçerlidir.",
+      "product_updates_title": "Aylık ürün güncelleme e-postaları",
       "security_updates_description": "Yalnızca güvenlikle ilgili bilgiler, Gizlilik Politikası geçerlidir.",
       "security_updates_title": "Güvenlik güncellemeleri",
       "terms_of_service": "Hizmet Şartları",
@@ -111,7 +112,8 @@
   },
   "c": {
     "link_expired": "Bağlantınızın süresi doldu.",
-    "link_expired_description": "Kullandığınız bağlantı artık geçerli değil."
+    "link_expired_description": "Kullandığınız bağlantı artık geçerli değil.",
+    "link_expired_heading": "Bağlantınızın süresi doldu."
   },
   "common": {
     "accepted": "Kabul Edildi",
@@ -208,6 +210,7 @@
     "dark_overlay": "Koyu kaplama",
     "dashboard": "Pano",
     "dashboards": "Panolar",
+    "data_refreshed_successfully": "Veriler başarıyla yenilendi",
     "date": "Tarih",
     "days": "gün",
     "default": "Varsayılan",
@@ -248,10 +251,12 @@
     "failed_to_load_workspaces": "Çalışma alanları yüklenemedi",
     "failed_to_parse_csv": "CSV ayrıştırılamadı",
     "field_placeholder": "{field} Yer Tutucu",
+    "file_size_must_be_less_than_5_mb": "File size must be less than 5 MB.",
+    "file_storage_not_set_up": "File storage not set up",
+    "file_upload_service_unavailable": "File upload service unavailable",
     "filter": "Filtre",
     "finish": "Bitir",
     "first_name": "Ad",
-    "follow_these": "Şunları izleyin",
     "formbricks_version": "Formbricks Sürümü",
     "full_name": "Tam ad",
     "gathering_responses": "Yanıtlar toplanıyor",
@@ -368,7 +373,6 @@
     "placeholder": "Yer tutucu",
     "please_select_at_least_one_survey": "Lütfen en az bir survey seçin",
     "please_select_at_least_one_trigger": "Lütfen en az bir tetikleyici seçin",
-    "please_upgrade_your_plan": "Lütfen planınızı yükseltin",
     "powered_by_formbricks": "Formbricks tarafından desteklenmektedir",
     "preview": "Önizleme",
     "privacy": "Gizlilik Politikası",
@@ -516,6 +520,7 @@
     "you_are_not_authorized_to_perform_this_action": "Bu işlemi gerçekleştirme yetkiniz yok.",
     "you_have_reached_your_limit_of_workspace_limit": "{workspaceLimit} çalışma alanı limitine ulaştınız.",
     "you_have_reached_your_monthly_response_limit_of": "Aylık yanıt sınırınıza ulaştınız:",
+    "you_have_reached_your_monthly_response_limit_of_count": "Aylık {count} yanıt limitinize ulaştınız.",
     "you_will_be_downgraded_to_the_community_edition_on_date": "{date} tarihinde Topluluk Sürümüne düşürüleceksiniz.",
     "your_license_has_expired_please_renew": "Kurumsal lisansınızın süresi doldu. Kurumsal özellikleri kullanmaya devam etmek için lütfen yenileyin.",
     "your_profile": "Profilin"
@@ -627,11 +632,13 @@
   "s": {
     "check_inbox_or_spam": "Email'i gelen kutunuzda görmüyorsanız lütfen spam klasörünüzü de kontrol edin.",
     "completed": "Bu survey kapatılmıştır.",
+    "completed_heading": "Tamamlandı",
     "create_your_own": "Kendi açık kaynak survey'inizi oluşturun",
     "enter_pin": "Bu survey korumalıdır. Aşağıya PIN girin.",
     "just_curious": "Sadece merak mı ediyorsunuz?",
     "link_invalid": "Bu survey yalnızca davet ile katılıma açıktır.",
     "paused": "Bu survey geçici olarak duraklatılmıştır.",
+    "paused_heading": "Duraklatıldı",
     "please_try_again_with_the_original_link": "Lütfen orijinal bağlantıyla tekrar deneyin",
     "preview_survey_questions": "Survey sorularını önizleyin.",
     "question_preview": "Soru Önizlemesi",
@@ -661,7 +668,7 @@
       "add_another_member": "Başka bir üye ekle",
       "continue": "Devam",
       "failed_to_invite": "Davet gönderilemedi",
-      "invitation_sent_to": "Davet gönderildi:",
+      "invitation_sent_to_email": "{{email}} adresine davetiye gönderildi!",
       "invite_your_organization_members": "Organizasyon üyelerinizi davet edin",
       "life_s_no_fun_alone": "Hayat yalnız eğlenceli değil.",
       "skip": "Atla",

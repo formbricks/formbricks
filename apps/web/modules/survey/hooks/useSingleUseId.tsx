@@ -2,16 +2,17 @@ import { useCallback, useState } from "react";
 import toast from "react-hot-toast";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import type { TSurveySingleUseLinkParams } from "@/lib/utils/single-use-surveys";
 import { generateSingleUseIdsAction } from "@/modules/survey/list/actions";
 import type { TSurvey as TSurveyList } from "@/modules/survey/list/types/surveys";
 
 export const useSingleUseId = (survey: TSurvey | TSurveyList, isReadOnly: boolean) => {
-  const [singleUseId, setSingleUseId] = useState<string>();
+  const [singleUseLinkParams, setSingleUseLinkParams] = useState<TSurveySingleUseLinkParams>();
 
-  const refreshSingleUseId = useCallback(async (): Promise<string | undefined> => {
+  const refreshSingleUseId = useCallback(async (): Promise<TSurveySingleUseLinkParams | undefined> => {
     if (isReadOnly || !survey.singleUse?.enabled) {
       // If read‑only or singleUse disabled, just clear and bail out
-      setSingleUseId(undefined);
+      setSingleUseLinkParams(undefined);
       return undefined;
     }
 
@@ -22,7 +23,7 @@ export const useSingleUseId = (survey: TSurvey | TSurveyList, isReadOnly: boolea
     });
 
     if (response?.data?.length) {
-      setSingleUseId(response.data[0]);
+      setSingleUseLinkParams(response.data[0]);
       return response.data[0];
     } else {
       toast.error(getFormattedErrorMessage(response));
@@ -31,7 +32,8 @@ export const useSingleUseId = (survey: TSurvey | TSurveyList, isReadOnly: boolea
   }, [survey, isReadOnly]);
 
   return {
-    singleUseId: isReadOnly ? undefined : singleUseId,
+    singleUseId: isReadOnly ? undefined : singleUseLinkParams?.suId,
+    singleUseToken: isReadOnly ? undefined : singleUseLinkParams?.suToken,
     refreshSingleUseId: isReadOnly ? async () => undefined : refreshSingleUseId,
   };
 };

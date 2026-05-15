@@ -26,6 +26,12 @@ const getAuthMethod = (account: Account | null) => {
   return "unknown";
 };
 
+const isSsoRecoveryVerificationFlow = (account: Account | null, user: User | AdapterUser) =>
+  account?.provider === "token" &&
+  "authFlowPurpose" in user &&
+  typeof user.authFlowPurpose === "string" &&
+  user.authFlowPurpose === "sso_recovery";
+
 const handler = async (req: Request, ctx: any) => {
   const eventId = req.headers.get("x-request-id") ?? undefined;
 
@@ -117,6 +123,10 @@ const handler = async (req: Request, ctx: any) => {
     events: {
       ...baseAuthOptions.events,
       async signIn({ user, account, isNewUser }: any) {
+        if (isSsoRecoveryVerificationFlow(account, user)) {
+          return;
+        }
+
         try {
           await baseAuthOptions.events?.signIn?.({ user, account, isNewUser });
         } catch (err) {

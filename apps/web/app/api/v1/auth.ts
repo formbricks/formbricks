@@ -1,11 +1,22 @@
 import { NextRequest } from "next/server";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
-import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import {
+  DatabaseError,
+  InvalidInputError,
+  ResourceNotFoundError,
+  UniqueConstraintError,
+} from "@formbricks/types/errors";
 import { responses } from "@/app/lib/api/response";
-import { authenticateApiKeyFromHeaders } from "@/modules/api/lib/api-key-auth";
+import {
+  type AuthenticateApiKeyOptions,
+  authenticateApiKeyFromHeaders,
+} from "@/modules/api/lib/api-key-auth";
 
-export const authenticateRequest = async (request: NextRequest): Promise<TAuthenticationApiKey | null> => {
-  return await authenticateApiKeyFromHeaders(request.headers);
+export const authenticateRequest = async (
+  request: NextRequest,
+  options: AuthenticateApiKeyOptions = {}
+): Promise<TAuthenticationApiKey | null> => {
+  return await authenticateApiKeyFromHeaders(request.headers, options);
 };
 
 export const handleErrorResponse = (error: any): Response => {
@@ -15,6 +26,9 @@ export const handleErrorResponse = (error: any): Response => {
     case "Unauthorized":
       return responses.unauthorizedResponse();
     default:
+      if (error instanceof UniqueConstraintError) {
+        return responses.conflictResponse(error.message);
+      }
       if (
         error instanceof DatabaseError ||
         error instanceof InvalidInputError ||

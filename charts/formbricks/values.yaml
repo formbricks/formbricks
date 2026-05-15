@@ -83,7 +83,7 @@ deployment:
   # Additional pod annotations
   additionalPodAnnotations: {}
 
-  # Number of replicas
+  # Number of replicas when autoscaling is disabled
   replicas: 1
 
   # Image pull secrets for private container registries

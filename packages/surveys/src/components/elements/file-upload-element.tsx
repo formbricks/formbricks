@@ -1,6 +1,7 @@
 import { useCallback, useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
 import { FileUpload, type UploadedFile } from "@formbricks/survey-ui";
+import { FILE_UPLOAD_ERROR_NAMES } from "@formbricks/types/errors";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TAllowedFileExtension } from "@formbricks/types/storage";
 import type { TSurveyFileUploadElement } from "@formbricks/types/surveys/elements";
@@ -284,10 +285,15 @@ export function FileUploadElement({
         setFileErrorMessage(undefined);
       } catch (err: any) {
         // Handle upload errors
-        if (err?.name === "FileTooLargeError") {
+        if (err?.name === FILE_UPLOAD_ERROR_NAMES.FILE_TOO_LARGE) {
           setFileErrorMessage(err.message);
-        } else if (err?.name === "InvalidFileNameError") {
-          setFileErrorMessage(t("errors.file_input.upload_failed"));
+        } else if (err?.name === FILE_UPLOAD_ERROR_NAMES.INVALID_FILE_NAME) {
+          setFileErrorMessage(t("errors.file_input.invalid_file_name"));
+        } else if (
+          err?.name === FILE_UPLOAD_ERROR_NAMES.STORAGE_NOT_CONFIGURED ||
+          err?.name === FILE_UPLOAD_ERROR_NAMES.STORAGE_UPLOAD_FAILED
+        ) {
+          setFileErrorMessage(t("errors.file_input.upload_service_unavailable"));
         } else {
           setFileErrorMessage(t("errors.file_input.upload_failed"));
         }

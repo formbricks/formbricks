@@ -13,6 +13,7 @@ vi.mock("@formbricks/database", () => ({
 }));
 
 const contactId = "test-contact-id";
+const environmentId = "test-env-id";
 const mockContact = {
   id: contactId,
   attributes: [
@@ -32,10 +33,10 @@ describe("getContact", () => {
       mockContact as unknown as Awaited<ReturnType<typeof prisma.contact.findUnique>>
     );
 
-    const result = await getContact(contactId);
+    const result = await getContact(contactId, environmentId);
 
     expect(prisma.contact.findUnique).toHaveBeenCalledWith({
-      where: { id: contactId },
+      where: { id: contactId, environmentId },
       select: {
         id: true,
         attributes: {
@@ -55,10 +56,10 @@ describe("getContact", () => {
   test("should return null when contact is not found", async () => {
     vi.mocked(prisma.contact.findUnique).mockResolvedValue(null);
 
-    const result = await getContact(contactId);
+    const result = await getContact(contactId, environmentId);
 
     expect(prisma.contact.findUnique).toHaveBeenCalledWith({
-      where: { id: contactId },
+      where: { id: contactId, environmentId },
       select: {
         id: true,
         attributes: {

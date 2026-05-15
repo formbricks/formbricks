@@ -7,7 +7,6 @@ export const mockWorkspaceId = "kr6tqhajodm086z7u4claj9y";
 
 export const mockSurvey: TWorkspaceStateSurvey = {
   id: mockSurveyId,
-  name: "Test Survey",
   welcomeCard: {
     enabled: false,
     timeToFinish: false,
