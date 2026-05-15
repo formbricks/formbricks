@@ -1,8 +1,8 @@
 "use client";
 
-import { LinkIcon, PencilIcon, TrashIcon } from "lucide-react";
+import { LinkIcon, PencilIcon, RefreshCwIcon, TrashIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TContactAttributeDataType, TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
@@ -46,6 +46,13 @@ export const ContactControlBar = ({
   const [isDeletingPerson, setIsDeletingPerson] = useState(false);
   const [isGenerateLinkModalOpen, setIsGenerateLinkModalOpen] = useState(false);
   const [isEditAttributesModalOpen, setIsEditAttributesModalOpen] = useState(false);
+  const [isRefreshing, startRefreshTransition] = useTransition();
+
+  const handleRefresh = () => {
+    startRefreshTransition(() => {
+      router.refresh();
+    });
+  };
 
   const handleDeletePerson = async () => {
     setIsDeletingPerson(true);
@@ -62,18 +69,22 @@ export const ContactControlBar = ({
     setDeleteDialogOpen(false);
   };
 
-  if (isReadOnly) {
-    return null;
-  }
-
   const iconActions = [
+    {
+      icon: RefreshCwIcon,
+      tooltip: t("common.refresh"),
+      onClick: handleRefresh,
+      isVisible: true,
+      disabled: isRefreshing,
+      iconClassName: isRefreshing ? "animate-spin" : undefined,
+    },
     {
       icon: PencilIcon,
       tooltip: t("environments.contacts.edit_attributes"),
       onClick: () => {
         setIsEditAttributesModalOpen(true);
       },
-      isVisible: true,
+      isVisible: !isReadOnly,
     },
     {
       icon: LinkIcon,
@@ -81,7 +92,7 @@ export const ContactControlBar = ({
       onClick: () => {
         setIsGenerateLinkModalOpen(true);
       },
-      isVisible: true,
+      isVisible: !isReadOnly,
     },
     {
       icon: TrashIcon,
@@ -89,7 +100,7 @@ export const ContactControlBar = ({
       onClick: () => {
         setDeleteDialogOpen(true);
       },
-      isVisible: true,
+      isVisible: !isReadOnly,
     },
   ];
 
