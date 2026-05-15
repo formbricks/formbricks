@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { TEnvironment } from "@formbricks/types/environment";
 import { TSurvey, TSurveyElementSummaryOpenText } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { timeSince } from "@/lib/time";
@@ -14,20 +15,28 @@ import { EmptyState } from "@/modules/ui/components/empty-state";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
 import { ElementSummaryHeader } from "./ElementSummaryHeader";
+import { ResponseSampleModal } from "./ResponseSampleModal";
 
 interface OpenTextSummaryProps {
   elementSummary: TSurveyElementSummaryOpenText;
-  environmentId: string;
+  environment: TEnvironment;
   survey: TSurvey;
   locale: TUserLocale;
+  isReadOnly: boolean;
 }
 
-export const OpenTextSummary = ({ elementSummary, environmentId, survey, locale }: OpenTextSummaryProps) => {
+export const OpenTextSummary = ({
+  elementSummary,
+  environment,
+  survey,
+  locale,
+  isReadOnly,
+}: OpenTextSummaryProps) => {
   const { t } = useTranslation();
   const [visibleResponses, setVisibleResponses] = useState(10);
+  const [selectedResponseId, setSelectedResponseId] = useState<string | null>(null);
 
   const handleLoadMore = () => {
-    // Increase the number of visible responses by 10, not exceeding the total number of responses
     setVisibleResponses((prevVisibleResponses) =>
       Math.min(prevVisibleResponses + 10, elementSummary.samples.length)
     );
@@ -54,12 +63,16 @@ export const OpenTextSummary = ({ elementSummary, environmentId, survey, locale 
             </TableHeader>
             <TableBody>
               {elementSummary.samples.slice(0, visibleResponses).map((response) => (
-                <TableRow key={response.id}>
+                <TableRow
+                  key={response.id}
+                  className="cursor-pointer hover:bg-slate-50"
+                  onClick={() => setSelectedResponseId(response.id)}>
                   <TableCell className="w-1/4">
                     {response.contact ? (
                       <Link
                         className="ph-no-capture group flex items-center"
-                        href={`/environments/${environmentId}/contacts/${response.contact.id}`}>
+                        href={`/environments/${environment.id}/contacts/${response.contact.id}`}
+                        onClick={(e) => e.stopPropagation()}>
                         <div className="hidden md:flex">
                           <PersonAvatar personId={response.contact.id} />
                         </div>
@@ -84,7 +97,7 @@ export const OpenTextSummary = ({ elementSummary, environmentId, survey, locale 
                   <TableCell className="w-1/6">
                     {timeSince(new Date(response.updatedAt).toISOString(), locale)}
                   </TableCell>
-                  <TableCell className="w-1/6">
+                  <TableCell className="w-1/6" onClick={(e) => e.stopPropagation()}>
                     <IdBadge id={response.id} />
                   </TableCell>
                 </TableRow>
@@ -100,6 +113,15 @@ export const OpenTextSummary = ({ elementSummary, environmentId, survey, locale 
           )}
         </div>
       )}
+
+      <ResponseSampleModal
+        responseId={selectedResponseId}
+        onClose={() => setSelectedResponseId(null)}
+        survey={survey}
+        environment={environment}
+        isReadOnly={isReadOnly}
+        locale={locale}
+      />
     </div>
   );
 };

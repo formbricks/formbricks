@@ -91,6 +91,7 @@ const SurveyPage = async (props: { params: Promise<{ environmentId: string; surv
         locale={user.locale ?? DEFAULT_LOCALE}
         initialSurveySummary={initialSurveySummary}
         isQuotasAllowed={isQuotasAllowed}
+        isReadOnly={isReadOnly}
       />
 
       <IdBadge id={surveyId} label={t("common.survey_id")} variant="column" />

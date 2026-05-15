@@ -41,9 +41,17 @@ interface SummaryListProps {
   environment: TEnvironment;
   survey: TSurvey;
   locale: TUserLocale;
+  isReadOnly: boolean;
 }
 
-export const SummaryList = ({ summary, environment, responseCount, survey, locale }: SummaryListProps) => {
+export const SummaryList = ({
+  summary,
+  environment,
+  responseCount,
+  survey,
+  locale,
+  isReadOnly,
+}: SummaryListProps) => {
   const { setSelectedFilter, selectedFilter } = useResponseFilter();
   const { t } = useTranslation();
   const setFilter = (
@@ -113,9 +121,10 @@ export const SummaryList = ({ summary, environment, responseCount, survey, local
               <OpenTextSummary
                 key={elementSummary.element.id}
                 elementSummary={elementSummary}
-                environmentId={environment.id}
+                environment={environment}
                 survey={survey}
                 locale={locale}
+                isReadOnly={isReadOnly}
               />
             );
           }

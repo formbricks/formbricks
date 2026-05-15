@@ -51,6 +51,7 @@ interface SummaryPageProps {
   locale: TUserLocale;
   initialSurveySummary?: TSurveySummary;
   isQuotasAllowed: boolean;
+  isReadOnly: boolean;
 }
 
 export const SummaryPage = ({
@@ -60,6 +61,7 @@ export const SummaryPage = ({
   locale,
   initialSurveySummary,
   isQuotasAllowed,
+  isReadOnly,
 }: SummaryPageProps) => {
   const { t } = useTranslation();
   const searchParams = useSearchParams();
@@ -230,6 +232,7 @@ export const SummaryPage = ({
         survey={surveyMemoized}
         environment={environment}
         locale={locale}
+        isReadOnly={isReadOnly}
       />
     </>
   );

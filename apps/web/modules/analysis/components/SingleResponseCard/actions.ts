@@ -4,7 +4,7 @@ import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { deleteResponse, getResponse } from "@/lib/response/service";
-import { createTag } from "@/lib/tag/service";
+import { createTag, getTagsByEnvironmentId } from "@/lib/tag/service";
 import { addTagToRespone, deleteTagOnResponse } from "@/lib/tagOnResponse/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
@@ -174,6 +174,32 @@ export const deleteResponseAction = authenticatedActionClient.inputSchema(ZDelet
     return result;
   })
 );
+
+const ZGetTagsByEnvironmentIdAction = z.object({
+  environmentId: ZId,
+});
+
+export const getTagsByEnvironmentIdAction = authenticatedActionClient
+  .inputSchema(ZGetTagsByEnvironmentIdAction)
+  .action(async ({ parsedInput, ctx }) => {
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "projectTeam",
+          minPermission: "read",
+          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
+        },
+      ],
+    });
+
+    return await getTagsByEnvironmentId(parsedInput.environmentId);
+  });
 
 const ZGetResponseAction = z.object({
   responseId: ZId,
