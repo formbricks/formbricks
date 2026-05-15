@@ -3,6 +3,7 @@
 import { Project } from "@prisma/client";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { TProjectStyling } from "@formbricks/types/project";
 import { TResponseData } from "@formbricks/types/responses";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
@@ -12,7 +13,7 @@ import { CustomScriptsInjector } from "@/modules/survey/link/components/custom-s
 import { LinkSurveyWrapper } from "@/modules/survey/link/components/link-survey-wrapper";
 import { OfflineAlert } from "@/modules/survey/link/components/offline-alert";
 import { getPrefillValue } from "@/modules/survey/link/lib/prefill";
-import { isRTLLanguage } from "@/modules/survey/link/lib/utils";
+import { getWebAppLocale, isRTLLanguage } from "@/modules/survey/link/lib/utils";
 import { SurveyInline } from "@/modules/ui/components/survey";
 
 interface SurveyClientWrapperProps {
@@ -60,6 +61,17 @@ export const SurveyClientWrapper = ({
   IS_FORMBRICKS_CLOUD,
 }: SurveyClientWrapperProps) => {
   const searchParams = useSearchParams();
+  const { i18n } = useTranslation();
+
+  useEffect(() => {
+    const webAppLocale = getWebAppLocale(languageCode, survey);
+    if (i18n.language !== webAppLocale) {
+      i18n.changeLanguage(webAppLocale).catch(() => {
+        i18n.changeLanguage("en-US");
+      });
+    }
+  }, [languageCode, survey, i18n]);
+
   const skipPrefilled = searchParams.get("skipPrefilled") === "true";
   const offlineSupport = searchParams.get("offlineSupport") === "true";
   const elements = useMemo(() => getElementsFromBlocks(survey.blocks), [survey.blocks]);
