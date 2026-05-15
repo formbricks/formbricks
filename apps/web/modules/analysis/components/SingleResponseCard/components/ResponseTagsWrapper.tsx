@@ -9,6 +9,7 @@ import { TTag } from "@formbricks/types/tags";
 import { TUserLocale } from "@formbricks/types/user";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { TagError } from "@/modules/projects/settings/types/tag";
+import { IdBadge } from "@/modules/ui/components/id-badge";
 import { Tag } from "@/modules/ui/components/tag";
 import { TagsCombobox } from "@/modules/ui/components/tags-combobox";
 import { createTagAction, createTagToResponseAction, deleteTagOnResponseAction } from "../actions";
@@ -160,6 +161,7 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
           />
         )}
       </div>
+      <IdBadge id={responseId} />
     </div>
   );
 };

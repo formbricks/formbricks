@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { ReactNode, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TEnvironment } from "@formbricks/types/environment";
@@ -16,7 +16,12 @@ import { deleteResponseAction, getResponseAction } from "./actions";
 import { ResponseTagsWrapper } from "./components/ResponseTagsWrapper";
 import { SingleResponseCardBody } from "./components/SingleResponseCardBody";
 import { SingleResponseCardHeader } from "./components/SingleResponseCardHeader";
-import { isValidValue } from "./util";
+import { isSubmissionTimeMoreThan5Minutes, isValidValue } from "./util";
+
+export interface SingleResponseCardHeaderRenderProps {
+  onDeleteClick: () => void;
+  canResponseBeDeleted: boolean;
+}
 
 interface SingleResponseCardProps {
   survey: TSurvey;
@@ -29,6 +34,11 @@ interface SingleResponseCardProps {
   isReadOnly: boolean;
   setSelectedResponseId?: (responseId: string | null) => void;
   locale: TUserLocale;
+  /**
+   * Optional render-prop to replace the default header. Receives helpers to
+   * trigger the (shared) delete dialog so callers don't have to reimplement it.
+   */
+  renderHeader?: (props: SingleResponseCardHeaderRenderProps) => ReactNode;
 }
 
 export const SingleResponseCard = ({
@@ -42,7 +52,8 @@ export const SingleResponseCard = ({
   isReadOnly,
   setSelectedResponseId,
   locale,
-}: SingleResponseCardProps) => {
+  renderHeader,
+}: Readonly<SingleResponseCardProps>) => {
   const hasQuotas = (response?.quotas && response.quotas.length > 0) ?? false;
   const [decrementQuotas, setDecrementQuotas] = useState(hasQuotas);
   const { t } = useTranslation();
@@ -128,19 +139,30 @@ export const SingleResponseCard = ({
     }
   };
 
+  const canResponseBeDeleted = response.finished
+    ? true
+    : isSubmissionTimeMoreThan5Minutes(response.updatedAt);
+
   return (
     <div className="group relative">
-      <div className="relative z-20 my-6 rounded-xl border border-slate-200 bg-white shadow-sm transition-all">
-        <SingleResponseCardHeader
-          pageType="response"
-          response={response}
-          survey={survey}
-          environment={environment}
-          user={user}
-          isReadOnly={isReadOnly}
-          setDeleteDialogOpen={setDeleteDialogOpen}
-          locale={locale}
-        />
+      <div className="relative z-20 rounded-xl border border-slate-200 bg-white shadow-sm transition-all">
+        {renderHeader ? (
+          renderHeader({
+            onDeleteClick: () => setDeleteDialogOpen(true),
+            canResponseBeDeleted,
+          })
+        ) : (
+          <SingleResponseCardHeader
+            pageType="response"
+            response={response}
+            survey={survey}
+            environment={environment}
+            user={user}
+            isReadOnly={isReadOnly}
+            setDeleteDialogOpen={setDeleteDialogOpen}
+            locale={locale}
+          />
+        )}
 
         <SingleResponseCardBody
           survey={survey}
