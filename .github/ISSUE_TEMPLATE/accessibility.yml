@@ -57,12 +57,12 @@ body:
     id: at
     attributes:
       label: Assistive technology
-      placeholder: "e.g. NVDA 2024.1, VoiceOver on macOS 14, keyboard only"
+      placeholder: "e.g. NVDA 2026.1, VoiceOver on macOS 15, keyboard only"
   - type: input
     id: browser
     attributes:
       label: Browser and OS
-      placeholder: "e.g. Firefox 124 on Windows 11"
+      placeholder: "e.g. Firefox 138 on Windows 11"
   - type: dropdown
     id: environment
     attributes:
