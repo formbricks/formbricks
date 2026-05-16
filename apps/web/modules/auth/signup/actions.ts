@@ -6,6 +6,7 @@ import { InvalidInputError, UnknownError } from "@formbricks/types/errors";
 import { ZUser, ZUserEmail, ZUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
 import { hashPassword } from "@/lib/auth";
 import {
+  EMAIL_VERIFICATION_DISABLED,
   IS_FORMBRICKS_CLOUD,
   IS_TURNSTILE_CONFIGURED,
   TURNSTILE_SECRET_KEY,
@@ -45,7 +46,6 @@ const ZCreateUserAction = z.object({
   password: ZUserPassword,
   inviteToken: z.string().optional(),
   userLocale: ZUserLocale.optional(),
-  emailVerificationDisabled: z.boolean().optional(),
   turnstileToken: z
     .string()
     .optional()
@@ -53,7 +53,6 @@ const ZCreateUserAction = z.object({
       (token) => !IS_TURNSTILE_CONFIGURED || (IS_TURNSTILE_CONFIGURED && token),
       "CAPTCHA verification required"
     ),
-  isFormbricksCloud: z.boolean(),
   subscribeToSecurityUpdates: z.boolean().optional(),
   subscribeToProductUpdates: z.boolean().optional(),
 });
@@ -202,8 +201,7 @@ async function handleOrganizationCreation(ctx: ActionClientCtx, user: TCreatedUs
 async function handlePostUserCreation(
   ctx: ActionClientCtx,
   user: TCreatedUser,
-  inviteToken: string | undefined,
-  emailVerificationDisabled: boolean | undefined
+  inviteToken: string | undefined
 ): Promise<void> {
   if (inviteToken) {
     await handleInviteAcceptance(ctx, inviteToken, user);
@@ -211,7 +209,7 @@ async function handlePostUserCreation(
     await handleOrganizationCreation(ctx, user);
   }
 
-  if (!emailVerificationDisabled) {
+  if (!EMAIL_VERIFICATION_DISABLED) {
     let inviteCallbackUrl: string | undefined;
 
     if (inviteToken) {
@@ -243,11 +241,11 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
     );
 
     if (!userAlreadyExisted && user) {
-      await handlePostUserCreation(ctx, user, parsedInput.inviteToken, parsedInput.emailVerificationDisabled);
+      await handlePostUserCreation(ctx, user, parsedInput.inviteToken);
 
       await subscribeUserToMailingList({
         email: user.email,
-        isFormbricksCloud: parsedInput.isFormbricksCloud,
+        isFormbricksCloud: IS_FORMBRICKS_CLOUD,
         subscribeToSecurityUpdates: parsedInput.subscribeToSecurityUpdates,
         subscribeToProductUpdates: parsedInput.subscribeToProductUpdates,
       });

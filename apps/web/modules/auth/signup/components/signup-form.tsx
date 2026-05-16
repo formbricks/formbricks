@@ -114,9 +114,7 @@ export const SignupForm = ({
         password: data.password,
         userLocale,
         inviteToken: inviteToken ?? "",
-        emailVerificationDisabled,
         turnstileToken,
-        isFormbricksCloud,
         subscribeToSecurityUpdates,
         subscribeToProductUpdates,
       });

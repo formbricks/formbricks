@@ -1,0 +1,19 @@
+{{- if .Values.cube.enabled }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "formbricks.cubeName" . }}-config
+  labels:
+    helm.sh/chart: {{ include "formbricks.chart" . }}
+    app.kubernetes.io/name: {{ include "formbricks.cubeName" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: cube
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/part-of: {{ .Values.partOfOverride | default (include "formbricks.name" .) }}
+data:
+  cube.js: |-
+{{ .Files.Get "cube/cube.js" | indent 4 }}
+  FeedbackRecords.js: |-
+{{ .Files.Get "cube/schema/FeedbackRecords.js" | indent 4 }}
+{{- end }}

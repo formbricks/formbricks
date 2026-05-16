@@ -1,12 +1,12 @@
 import { z } from "zod";
 import { ZActionClass } from "./action-classes";
 import { ZId } from "./common";
-import { ZProject } from "./project";
-import { ZJsEnvironmentStateSegment } from "./segment";
+import { ZJsWorkspaceStateSegment } from "./segment";
 import { ZUploadFileConfig } from "./storage";
 import { ZSurveyBase, surveyRefinement } from "./surveys/types";
+import { ZWorkspace } from "./workspace";
 
-export const ZJsEnvironmentStateSurvey = ZSurveyBase.pick({
+export const ZJsWorkspaceStateSurvey = ZSurveyBase.pick({
   id: true,
   // name intentionally omitted — internal label, not needed by SDK
   welcomeCard: true,
@@ -28,7 +28,7 @@ export const ZJsEnvironmentStateSurvey = ZSurveyBase.pick({
   triggers: true,
   displayPercentage: true,
   delay: true,
-  projectOverwrites: true,
+  workspaceOverwrites: true,
   isBackButtonHidden: true,
   isAutoProgressingEnabled: true,
   recaptcha: true,
@@ -37,15 +37,15 @@ export const ZJsEnvironmentStateSurvey = ZSurveyBase.pick({
     // Only expose what the SDK needs: segment ID for membership check + whether any filters exist.
     // Full filter logic (titles, descriptions, conditions) is evaluated server-side and must not
     // be sent to the browser to avoid leaking sensitive targeting data.
-    segment: ZJsEnvironmentStateSegment.nullable(),
+    segment: ZJsWorkspaceStateSegment.nullable(),
   })
   .superRefine((survey, ctx) => {
     surveyRefinement(survey as z.infer<typeof ZSurveyBase>, ctx);
   });
 
-export type TJsEnvironmentStateSurvey = z.infer<typeof ZJsEnvironmentStateSurvey>;
+export type TJsWorkspaceStateSurvey = z.infer<typeof ZJsWorkspaceStateSurvey>;
 
-export const ZJsEnvironmentStateActionClass = ZActionClass.pick({
+export const ZJsWorkspaceStateActionClass = ZActionClass.pick({
   id: true,
   key: true,
   type: true,
@@ -53,10 +53,9 @@ export const ZJsEnvironmentStateActionClass = ZActionClass.pick({
   noCodeConfig: true,
 });
 
-export type TJsEnvironmentStateActionClass = z.infer<typeof ZJsEnvironmentStateActionClass>;
+export type TJsWorkspaceStateActionClass = z.infer<typeof ZJsWorkspaceStateActionClass>;
 
-export const ZJsEnvironmentStateProject = ZProject.pick({
-  id: true,
+export const ZJsWorkspaceStateWorkspaceSetting = ZWorkspace.pick({
   recontactDays: true,
   clickOutsideClose: true,
   overlay: true,
@@ -65,19 +64,19 @@ export const ZJsEnvironmentStateProject = ZProject.pick({
   styling: true,
 });
 
-export type TJsEnvironmentStateProject = z.infer<typeof ZJsEnvironmentStateProject>;
+export type TJsWorkspaceStateWorkspaceSetting = z.infer<typeof ZJsWorkspaceStateWorkspaceSetting>;
 
-export const ZJsEnvironmentState = z.object({
+export const ZJsWorkspaceState = z.object({
   expiresAt: z.date(),
   data: z.object({
-    surveys: z.array(ZJsEnvironmentStateSurvey),
-    actionClasses: z.array(ZJsEnvironmentStateActionClass),
-    project: ZJsEnvironmentStateProject,
+    surveys: z.array(ZJsWorkspaceStateSurvey),
+    actionClasses: z.array(ZJsWorkspaceStateActionClass),
+    workspace: ZJsWorkspaceStateWorkspaceSetting,
     recaptchaSiteKey: z.string().optional(),
   }),
 });
 
-export type TJsEnvironmentState = z.infer<typeof ZJsEnvironmentState>;
+export type TJsWorkspaceState = z.infer<typeof ZJsWorkspaceState>;
 
 export const ZJsPersonState = z.object({
   expiresAt: z.date().nullable(),

@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
-import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
+import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
 import { TSurveyBlockLogic, TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
@@ -27,7 +27,7 @@ vi.mock("@paralleldrive/cuid2", () => ({
 }));
 
 describe("surveyLogic", () => {
-  const mockSurvey: TJsEnvironmentStateSurvey = {
+  const mockSurvey: TJsWorkspaceStateSurvey = {
     id: "cm9gptbhg0000192zceq9ayuc",
     name: "Start from scratch‌‌‍‍‌‍‍‌‌‌‌‍‍‍‌‌‌‌‌‌‌‌‍‌‍‌‌",
     type: "link",
@@ -100,7 +100,7 @@ describe("surveyLogic", () => {
     delay: 0,
     displayPercentage: null,
     isBackButtonHidden: false,
-    projectOverwrites: null,
+    workspaceOverwrites: null,
     styling: null,
     showLanguageSwitch: null,
     languages: [],
@@ -455,7 +455,7 @@ describe("surveyLogic", () => {
   });
 
   test("performActions handles divide by zero, assign, concat, and missing variable", () => {
-    const survey: TJsEnvironmentStateSurvey = {
+    const survey: TJsWorkspaceStateSurvey = {
       ...mockSurvey,
       variables: [{ id: "v", name: "num", type: "number", value: 0 }],
     };
@@ -745,7 +745,7 @@ describe("surveyLogic", () => {
   });
 
   test("getLeftOperandValue handles different question types", () => {
-    const surveyWithQuestions: TJsEnvironmentStateSurvey = {
+    const surveyWithQuestions: TJsWorkspaceStateSurvey = {
       ...mockSurvey,
       blocks: [
         {
@@ -1006,7 +1006,7 @@ describe("surveyLogic", () => {
   });
 
   test("getRightOperandValue handles different data types and sources", () => {
-    const surveyWithVars: TJsEnvironmentStateSurvey = {
+    const surveyWithVars: TJsWorkspaceStateSurvey = {
       ...mockSurvey,
       blocks: [
         {
@@ -1121,7 +1121,7 @@ describe("surveyLogic", () => {
   });
 
   test("performCalculation handles different variable types and operations", () => {
-    const surveyWithVars: TJsEnvironmentStateSurvey = {
+    const surveyWithVars: TJsWorkspaceStateSurvey = {
       ...mockSurvey,
       variables: [
         { id: "numVar", name: "numberVar", type: "number", value: 5 },
@@ -1324,7 +1324,7 @@ describe("surveyLogic", () => {
   });
 
   test("getLeftOperandValue handles number input type with non-number value", () => {
-    const surveyWithNumberInput: TJsEnvironmentStateSurvey = {
+    const surveyWithNumberInput: TJsWorkspaceStateSurvey = {
       ...mockSurvey,
       blocks: [
         {

@@ -161,7 +161,7 @@ describe("Cache Integration Tests - End-to-End Redis Operations", () => {
       return;
     }
 
-    const key = createCacheKey.environment.state("basic-ops-test");
+    const key = createCacheKey.workspace.state("basic-ops-test");
     const testValue = { message: "Hello Cache!", timestamp: Date.now(), count: 42 };
 
     // Test set operation
@@ -213,7 +213,7 @@ describe("Cache Integration Tests - End-to-End Redis Operations", () => {
       return;
     }
 
-    const key = createCacheKey.environment.state("miss-hit-test");
+    const key = createCacheKey.workspace.state("miss-hit-test");
     let executionCount = 0;
 
     // Expensive function that we want to cache
@@ -255,7 +255,7 @@ describe("Cache Integration Tests - End-to-End Redis Operations", () => {
       return;
     }
 
-    const key = createCacheKey.environment.state("invalidation-test");
+    const key = createCacheKey.workspace.state("invalidation-test");
     let executionCount = 0;
 
     const expensiveFunction = async (): Promise<{ value: string; execution: number }> => {
@@ -309,7 +309,7 @@ describe("Cache Integration Tests - End-to-End Redis Operations", () => {
       return;
     }
 
-    const key = createCacheKey.environment.state("ttl-expiry-test");
+    const key = createCacheKey.workspace.state("ttl-expiry-test");
     let executionCount = 0;
 
     const expensiveFunction = async (): Promise<{ value: string; execution: number }> => {
@@ -395,7 +395,7 @@ describe("Cache Integration Tests - End-to-End Redis Operations", () => {
 
     // Create multiple concurrent operations on different keys
     const concurrentOperations = Array.from({ length: 10 }, async (_, i) => {
-      const key = createCacheKey.environment.state(`${baseKey}-${i}`);
+      const key = createCacheKey.workspace.state(`${baseKey}-${i}`);
 
       // Each "thread" makes the same call twice - first should miss, second should hit
       const firstCall = await cacheService!.withCache(() => expensiveFunction(i), key, 30000);
@@ -473,7 +473,7 @@ describe("Cache Integration Tests - End-to-End Redis Operations", () => {
     logger.info(`Testing serialization for ${testCases.length} data types...`);
 
     for (const testCase of testCases) {
-      const key = createCacheKey.environment.state(`serialization-${testCase.name}`);
+      const key = createCacheKey.workspace.state(`serialization-${testCase.name}`);
 
       logger.info(`Testing ${testCase.name} type...`);
 
@@ -516,7 +516,7 @@ describe("Cache Integration Tests - End-to-End Redis Operations", () => {
     }
 
     // Test with invalid TTL (should handle gracefully)
-    const validKey = createCacheKey.environment.state("error-test");
+    const validKey = createCacheKey.workspace.state("error-test");
     const invalidTtl = -1000; // Negative TTL should be invalid
 
     logger.info("Testing error handling with invalid inputs...");

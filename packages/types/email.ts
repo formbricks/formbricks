@@ -6,6 +6,7 @@ export const ZLinkSurveyEmailData = z.object({
   surveyId: z.string(),
   email: z.string(),
   suId: z.string().optional(),
+  suToken: z.string().optional(),
   surveyName: z.string(),
   locale: ZUserLocale,
   logoUrl: ZStorageUrl.optional(),

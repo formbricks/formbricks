@@ -18,7 +18,7 @@ export const ZWebhook = z.object({
     .describe("The date and time the webhook was last updated"),
   url: z.url().describe("The URL of the webhook"),
   source: z.enum(["user", "zapier", "make", "n8n"]).describe("The source of the webhook"),
-  environmentId: z.cuid2().describe("The ID of the environment"),
+  workspaceId: z.cuid2().describe("The ID of the workspace"),
   triggers: z
     .array(z.enum(["responseFinished", "responseCreated", "responseUpdated"]))
     .describe("The triggers of the webhook")

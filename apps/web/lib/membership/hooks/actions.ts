@@ -2,11 +2,11 @@
 
 import "server-only";
 import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { getOrganizationByEnvironmentId } from "../../organization/service";
+import { getOrganizationByWorkspaceId } from "../../organization/service";
 import { getMembershipByUserIdOrganizationId } from "../service";
 
-export const getMembershipByUserIdOrganizationIdAction = async (environmentId: string, userId: string) => {
-  const organization = await getOrganizationByEnvironmentId(environmentId);
+export const getMembershipByUserIdOrganizationIdAction = async (workspaceId: string, userId: string) => {
+  const organization = await getOrganizationByWorkspaceId(workspaceId);
 
   if (!organization) {
     throw new ResourceNotFoundError("Organization", null);

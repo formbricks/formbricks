@@ -46,10 +46,12 @@
       "duplicate_files": "Les fichiers suivants sont déjà téléchargés : {duplicateNames}. Les fichiers en double ne sont pas autorisés.",
       "file_size_exceeded": "Les fichiers suivants dépassent la taille maximale de {maxSizeInMB} Mo et ont été supprimés : {fileNames}",
       "file_size_exceeded_alert": "Le fichier doit être inférieur à {maxSizeInMB} Mo",
+      "invalid_file_name": "Le nom du fichier contient des caractères non valides. Renommez le fichier et réessayez.",
       "no_valid_file_types_selected": "Aucun type de fichier valide sélectionné. Veuillez sélectionner un type de fichier valide.",
       "only_one_file_can_be_uploaded_at_a_time": "Un seul fichier peut être téléchargé à la fois.",
       "placeholder_text": "Cliquez ou glissez pour télécharger des fichiers",
       "upload_failed": "Échec du téléchargement ! Veuillez réessayer.",
+      "upload_service_unavailable": "Le service de téléversement de fichiers est indisponible. Réessayez plus tard ou contactez le propriétaire du sondage.",
       "uploading": "Téléchargement en cours...",
       "you_can_only_upload_a_maximum_of_files": "Vous ne pouvez télécharger qu'un maximum de {FILE_LIMIT} fichiers."
     },

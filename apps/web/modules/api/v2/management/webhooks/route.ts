@@ -2,10 +2,10 @@ import { NextRequest } from "next/server";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
-import { getEnvironmentIdFromSurveyIds } from "@/modules/api/v2/management/lib/helper";
+import { getWorkspaceIdFromSurveyIds } from "@/modules/api/v2/management/lib/helper";
+import { resolveBodyIdsV2 } from "@/modules/api/v2/management/lib/workspace-resolver";
 import { createWebhook, getWebhooks } from "@/modules/api/v2/management/webhooks/lib/webhook";
-import { ZGetWebhooksFilter, ZWebhookInput } from "@/modules/api/v2/management/webhooks/types/webhooks";
-import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
+import { ZGetWebhooksFilter, ZWebhookCreateInput } from "@/modules/api/v2/management/webhooks/types/webhooks";
 
 export const GET = async (request: NextRequest) =>
   authenticatedApiClient({
@@ -23,11 +23,11 @@ export const GET = async (request: NextRequest) =>
         });
       }
 
-      const environemntIds = authentication.environmentPermissions.map(
-        (permission) => permission.environmentId
-      );
+      const workspaceIds = [
+        ...new Set(authentication.workspacePermissions.map((permission) => permission.workspaceId)),
+      ];
 
-      const res = await getWebhooks(environemntIds, query);
+      const res = await getWebhooks(workspaceIds, query);
 
       if (res.ok) {
         return responses.successResponse(res.data);
@@ -41,9 +41,14 @@ export const POST = async (request: NextRequest) =>
   authenticatedApiClient({
     request,
     schemas: {
-      body: ZWebhookInput,
+      body: ZWebhookCreateInput,
     },
-    handler: async ({ authentication, parsedInput, auditLog }) => {
+    bodyTransform: async (body, auth) => {
+      const resolved = await resolveBodyIdsV2(body, auth.workspacePermissions, "POST");
+      if (!resolved.ok) throw resolved.error;
+      return { ...body, ...resolved.data };
+    },
+    handler: async ({ parsedInput, auditLog }) => {
       const { body } = parsedInput;
 
       if (!body) {
@@ -58,22 +63,11 @@ export const POST = async (request: NextRequest) =>
       }
 
       if (body.surveyIds && body.surveyIds.length > 0) {
-        const environmentIdResult = await getEnvironmentIdFromSurveyIds(body.surveyIds);
+        const workspaceIdResult = await getWorkspaceIdFromSurveyIds(body.surveyIds);
 
-        if (!environmentIdResult.ok) {
-          return handleApiError(request, environmentIdResult.error, auditLog);
+        if (!workspaceIdResult.ok) {
+          return handleApiError(request, workspaceIdResult.error, auditLog);
         }
-      }
-
-      if (!hasPermission(authentication.environmentPermissions, body.environmentId, "POST")) {
-        return handleApiError(
-          request,
-          {
-            type: "forbidden",
-            details: [{ field: "environmentId", issue: "does not have permission to create webhook" }],
-          },
-          auditLog
-        );
       }
 
       const createWebhookResult = await createWebhook(body);

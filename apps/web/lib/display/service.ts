@@ -4,7 +4,7 @@ import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/common";
-import { TDisplay, TDisplayFilters, TDisplayWithContact } from "@formbricks/types/displays";
+import { TDisplay, TDisplayFilters, TDisplayWithContact, ZDisplayFilters } from "@formbricks/types/displays";
 import { DatabaseError } from "@formbricks/types/errors";
 import { validateInputs } from "../utils/validate";
 
@@ -18,16 +18,29 @@ export const selectDisplay = {
 
 export const getDisplayCountBySurveyId = reactCache(
   async (surveyId: string, filters?: TDisplayFilters): Promise<number> => {
-    validateInputs([surveyId, ZId]);
+    validateInputs([surveyId, ZId], [filters, ZDisplayFilters.optional()]);
+
+    if (filters?.responseIds?.length === 0) {
+      return 0;
+    }
 
     try {
       const displayCount = await prisma.display.count({
         where: {
-          surveyId: surveyId,
+          surveyId,
           ...(filters?.createdAt && {
             createdAt: {
               gte: filters.createdAt.min,
               lte: filters.createdAt.max,
+            },
+          }),
+          ...(filters?.responseIds && {
+            response: {
+              is: {
+                id: {
+                  in: filters.responseIds,
+                },
+              },
             },
           }),
         },

@@ -321,14 +321,12 @@ export const ToolbarPlugin = (
   // Removed custom PASTE_COMMAND handler to allow Lexical's default paste handler
   // to properly preserve rich text formatting (bold, italic, links, etc.)
 
-  if (!props.editable) return <></>;
-
   const getLinkItemTooltipText = () => {
     if (!props.isExternalUrlsAllowed) {
-      return t("environments.surveys.edit.external_urls_paywall_tooltip");
+      return t("workspace.surveys.edit.external_urls_paywall_tooltip");
     }
 
-    return isLink ? t("environments.surveys.edit.edit_link") : t("environments.surveys.edit.insert_link");
+    return isLink ? t("workspace.surveys.edit.edit_link") : t("workspace.surveys.edit.insert_link");
   };
 
   const items = [
@@ -337,24 +335,24 @@ export const ToolbarPlugin = (
       icon: Bold,
       onClick: () => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "bold"),
       active: isBold,
-      tooltipText: t("environments.surveys.edit.bold"),
-      disabled: false,
+      tooltipText: t("workspace.surveys.edit.bold"),
+      disabled: !props.editable,
     },
     {
       key: "italic",
       icon: Italic,
       onClick: () => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "italic"),
       active: isItalic,
-      tooltipText: t("environments.surveys.edit.italic"),
-      disabled: false,
+      tooltipText: t("workspace.surveys.edit.italic"),
+      disabled: !props.editable,
     },
     {
       key: "underline",
       icon: Underline,
       onClick: () => editor.dispatchCommand(FORMAT_TEXT_COMMAND, "underline"),
       active: isUnderline,
-      tooltipText: t("environments.surveys.edit.underline"),
-      disabled: false,
+      tooltipText: t("workspace.surveys.edit.underline"),
+      disabled: !props.editable,
     },
     {
       key: "link",
@@ -362,23 +360,23 @@ export const ToolbarPlugin = (
       onClick: insertLink,
       active: isLink,
       tooltipText: getLinkItemTooltipText(),
-      disabled: !props.isExternalUrlsAllowed || (!isLink && !hasTextSelection),
+      disabled: !props.editable || !props.isExternalUrlsAllowed || (!isLink && !hasTextSelection),
     },
     {
       key: "recall",
       icon: AtSign,
       onClick: () => props.setShowRecallItemSelect(true),
       active: false,
-      tooltipText: t("environments.surveys.edit.recall_data"),
-      disabled: false,
+      tooltipText: t("workspace.surveys.edit.recall_data"),
+      disabled: !props.editable,
     },
     {
       key: "editRecall",
       icon: PencilIcon,
       onClick: () => props.setShowFallbackInput(true),
       active: false,
-      tooltipText: t("environments.surveys.edit.edit_recall"),
-      disabled: !props.recallItemsCount || props.recallItemsCount === 0,
+      tooltipText: t("workspace.surveys.edit.edit_recall"),
+      disabled: !props.editable || !props.recallItemsCount || props.recallItemsCount === 0,
     },
   ];
 
@@ -386,7 +384,7 @@ export const ToolbarPlugin = (
     <div className="toolbar flex" ref={toolbarRef}>
       {!props.excludedToolbarItems?.includes("blockType") && supportedBlockTypes.has(blockType) && (
         <DropdownMenu>
-          <DropdownMenuTrigger className="text-subtle" tabIndex={-1}>
+          <DropdownMenuTrigger className="text-subtle" tabIndex={-1} disabled={!props.editable}>
             <>
               <span className={cn("icon", blockType)} />
               <span className="text text-default hidden sm:flex">

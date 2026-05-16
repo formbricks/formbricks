@@ -57,7 +57,7 @@ export const AttributeFieldRow = ({
 
           return (
             <FormItem className="flex-1">
-              <FormLabel>{t("environments.contacts.attribute_key")}</FormLabel>
+              <FormLabel>{t("workspace.contacts.attribute_key")}</FormLabel>
               <FormControl>
                 <Select
                   value={keyField.value || undefined}
@@ -70,7 +70,7 @@ export const AttributeFieldRow = ({
                         <span>{selectedOption?.label ?? keyField.value}</span>
                       </span>
                     ) : (
-                      <SelectValue placeholder={t("environments.contacts.select_attribute_key")} />
+                      <SelectValue placeholder={t("workspace.contacts.select_attribute_key")} />
                     )}
                   </SelectTrigger>
                   <SelectContent>
@@ -111,7 +111,7 @@ export const AttributeFieldRow = ({
                     const dateValue = e.target.value ? new Date(e.target.value).toISOString() : "";
                     valueField.onChange(dateValue);
                   }}
-                  placeholder={t("environments.contacts.attribute_value_placeholder")}
+                  placeholder={t("workspace.contacts.attribute_value_placeholder")}
                   className="w-full"
                 />
               );
@@ -122,7 +122,7 @@ export const AttributeFieldRow = ({
                 <Input
                   type="number"
                   {...valueField}
-                  placeholder={t("environments.contacts.attribute_value_placeholder")}
+                  placeholder={t("workspace.contacts.attribute_value_placeholder")}
                   className="w-full"
                 />
               );
@@ -132,7 +132,7 @@ export const AttributeFieldRow = ({
               <Input
                 type="text"
                 {...valueField}
-                placeholder={t("environments.contacts.attribute_value_placeholder")}
+                placeholder={t("workspace.contacts.attribute_value_placeholder")}
                 className="w-full"
               />
             );
@@ -140,7 +140,7 @@ export const AttributeFieldRow = ({
 
           return (
             <FormItem className="flex-1">
-              <FormLabel>{t("environments.contacts.attribute_value")}</FormLabel>
+              <FormLabel>{t("workspace.contacts.attribute_value")}</FormLabel>
               <FormControl>
                 <div className="flex space-x-2">
                   {renderValueInput()}

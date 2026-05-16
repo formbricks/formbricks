@@ -3,6 +3,9 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ENCRYPTION_KEY, NEXTAUTH_SECRET } from "@/lib/constants";
 import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
+import { TGatewayAuthService, getGatewayAuthServiceTokenPurpose } from "@/modules/gateway-auth/lib/service";
+
+const FEEDBACK_RECORDS_GATEWAY_TOKEN_TTL_SECONDS = 60 * 10;
 
 // Helper function to decrypt with fallback to plain text
 const decryptWithFallback = (encryptedText: string, key: string): string => {
@@ -35,6 +38,16 @@ type TSsoRelinkIntentPayload = {
   userId: string;
 };
 
+type TAccountDeletionSsoReauthIntentPayload = {
+  id: string;
+  email: string;
+  provider: string;
+  providerAccountId: string;
+  purpose: "account_deletion_sso_reauth";
+  returnToUrl: string;
+  userId: string;
+};
+
 const DEFAULT_VERIFICATION_TOKEN_PURPOSE: TVerificationTokenPurpose = "email_verification";
 
 const getVerificationTokenPurpose = (purpose: unknown): TVerificationTokenPurpose => {
@@ -59,6 +72,44 @@ export const createToken = (userId: string, options: TVerificationTokenOptions =
 
   return jwt.sign({ id: encryptedUserId, purpose }, NEXTAUTH_SECRET, jwtOptions);
 };
+
+export const createGatewayServiceToken = (
+  userId: string,
+  service: TGatewayAuthService
+): {
+  token: string;
+  expiresAt: string;
+} => {
+  if (!NEXTAUTH_SECRET) {
+    throw new Error("NEXTAUTH_SECRET is not set");
+  }
+
+  const token = jwt.sign({ purpose: getGatewayAuthServiceTokenPurpose(service) }, NEXTAUTH_SECRET, {
+    algorithm: "HS256",
+    expiresIn: FEEDBACK_RECORDS_GATEWAY_TOKEN_TTL_SECONDS,
+    subject: userId,
+  });
+
+  const decodedToken = jwt.decode(token);
+  if (!decodedToken || typeof decodedToken !== "object" || typeof decodedToken.exp !== "number") {
+    throw new Error("Failed to create feedback records gateway token");
+  }
+
+  return {
+    token,
+    expiresAt: new Date(decodedToken.exp * 1000).toISOString(),
+  };
+};
+
+export const createFeedbackRecordsGatewayToken = (
+  userId: string
+): {
+  token: string;
+  expiresAt: string;
+} => {
+  return createGatewayServiceToken(userId, "feedbackRecords");
+};
+
 export const createTokenForLinkSurvey = (surveyId: string, userEmail: string): string => {
   if (!NEXTAUTH_SECRET) {
     throw new Error("NEXTAUTH_SECRET is not set");
@@ -98,6 +149,38 @@ export const verifyEmailChangeToken = async (token: string): Promise<{ id: strin
     id: decryptedId,
     email: decryptedEmail,
   };
+};
+
+export const verifyGatewayServiceToken = (
+  token: string,
+  service: TGatewayAuthService
+): {
+  userId: string;
+} => {
+  if (!NEXTAUTH_SECRET) {
+    throw new Error("NEXTAUTH_SECRET is not set");
+  }
+
+  const payload = jwt.verify(token, NEXTAUTH_SECRET, { algorithms: ["HS256"] }) as JwtPayload & {
+    purpose?: string;
+    sub?: string;
+  };
+
+  if (payload.purpose !== getGatewayAuthServiceTokenPurpose(service) || !payload.sub) {
+    throw new Error("Invalid feedback records gateway token");
+  }
+
+  return {
+    userId: payload.sub,
+  };
+};
+
+export const verifyFeedbackRecordsGatewayToken = (
+  token: string
+): {
+  userId: string;
+} => {
+  return verifyGatewayServiceToken(token, "feedbackRecords");
 };
 
 export const createEmailChangeToken = (userId: string, email: string): string => {
@@ -262,6 +345,10 @@ const DEFAULT_SSO_RELINK_INTENT_OPTIONS: SignOptions = {
   expiresIn: "15m",
 };
 
+const DEFAULT_ACCOUNT_DELETION_SSO_REAUTH_INTENT_OPTIONS: SignOptions = {
+  expiresIn: "10m",
+};
+
 export const createSsoRelinkIntent = (
   payload: TSsoRelinkIntentPayload,
   options: SignOptions = DEFAULT_SSO_RELINK_INTENT_OPTIONS
@@ -320,6 +407,77 @@ export const verifySsoRelinkIntent = (token: string): TSsoRelinkIntentPayload =>
     provider: payload.provider,
     providerAccountId: decryptWithFallback(payload.providerAccountId, ENCRYPTION_KEY),
     callbackUrl: decryptWithFallback(payload.callbackUrl, ENCRYPTION_KEY),
+  };
+};
+
+export const createAccountDeletionSsoReauthIntent = (
+  payload: TAccountDeletionSsoReauthIntentPayload,
+  options: SignOptions = DEFAULT_ACCOUNT_DELETION_SSO_REAUTH_INTENT_OPTIONS
+): string => {
+  if (!NEXTAUTH_SECRET) {
+    throw new Error("NEXTAUTH_SECRET is not set");
+  }
+
+  if (!ENCRYPTION_KEY) {
+    throw new Error("ENCRYPTION_KEY is not set");
+  }
+
+  return jwt.sign(
+    {
+      id: symmetricEncrypt(payload.id, ENCRYPTION_KEY),
+      userId: symmetricEncrypt(payload.userId, ENCRYPTION_KEY),
+      email: symmetricEncrypt(payload.email, ENCRYPTION_KEY),
+      provider: payload.provider,
+      providerAccountId: symmetricEncrypt(payload.providerAccountId, ENCRYPTION_KEY),
+      purpose: payload.purpose,
+      returnToUrl: symmetricEncrypt(payload.returnToUrl, ENCRYPTION_KEY),
+    },
+    NEXTAUTH_SECRET,
+    options
+  );
+};
+
+export const verifyAccountDeletionSsoReauthIntent = (
+  token: string
+): TAccountDeletionSsoReauthIntentPayload => {
+  if (!NEXTAUTH_SECRET) {
+    throw new Error("NEXTAUTH_SECRET is not set");
+  }
+
+  if (!ENCRYPTION_KEY) {
+    throw new Error("ENCRYPTION_KEY is not set");
+  }
+
+  const payload = jwt.verify(token, NEXTAUTH_SECRET, { algorithms: ["HS256"] }) as JwtPayload & {
+    id: string;
+    userId: string;
+    email: string;
+    provider: string;
+    providerAccountId: string;
+    purpose: string;
+    returnToUrl: string;
+  };
+
+  if (
+    !payload?.id ||
+    !payload?.userId ||
+    !payload?.email ||
+    !payload?.provider ||
+    !payload?.providerAccountId ||
+    payload?.purpose !== "account_deletion_sso_reauth" ||
+    !payload?.returnToUrl
+  ) {
+    throw new Error("Token is invalid or missing required fields");
+  }
+
+  return {
+    id: decryptWithFallback(payload.id, ENCRYPTION_KEY),
+    userId: decryptWithFallback(payload.userId, ENCRYPTION_KEY),
+    email: decryptWithFallback(payload.email, ENCRYPTION_KEY),
+    provider: payload.provider,
+    providerAccountId: decryptWithFallback(payload.providerAccountId, ENCRYPTION_KEY),
+    purpose: "account_deletion_sso_reauth",
+    returnToUrl: decryptWithFallback(payload.returnToUrl, ENCRYPTION_KEY),
   };
 };
 

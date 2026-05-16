@@ -46,10 +46,12 @@
       "duplicate_files": "The following files are already uploaded: {duplicateNames}. Duplicate files are not allowed.",
       "file_size_exceeded": "The following file(s) exceed the maximum size of {maxSizeInMB} MB and were removed: {fileNames}",
       "file_size_exceeded_alert": "File should be less than {maxSizeInMB} MB",
+      "invalid_file_name": "The file name contains invalid characters. Please rename the file and try again.",
       "no_valid_file_types_selected": "No valid file types selected. Please select a valid file type.",
       "only_one_file_can_be_uploaded_at_a_time": "Only one file can be uploaded at a time.",
       "placeholder_text": "Click or drag to upload files",
       "upload_failed": "Upload failed! Please try again.",
+      "upload_service_unavailable": "File upload service is unavailable. Please try again later or contact the survey owner.",
       "uploading": "Uploading...",
       "you_can_only_upload_a_maximum_of_files": "You can only upload a maximum of {FILE_LIMIT} files."
     },

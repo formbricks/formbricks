@@ -46,10 +46,12 @@
       "duplicate_files": "Quyidagi fayllar allaqachon yuklangan: {duplicateNames}. Takroriy fayllarga ruxsat berilmaydi.",
       "file_size_exceeded": "Quyidagi fayl(lar) {maxSizeInMB} MB maksimal hajmdan oshib ketdi va olib tashlandi: {fileNames}",
       "file_size_exceeded_alert": "Fayl hajmi {maxSizeInMB} MB dan kam bo'lishi kerak",
+      "invalid_file_name": "Fayl nomida yaroqsiz belgilar bor. Fayl nomini o‘zgartirib, qayta urinib ko‘ring.",
       "no_valid_file_types_selected": "Hech qanday yaroqli fayl turi tanlanmadi. Iltimos, yaroqli fayl turini tanlang.",
       "only_one_file_can_be_uploaded_at_a_time": "Bir vaqtning o'zida faqat bitta fayl yuklanishi mumkin.",
       "placeholder_text": "Fayllarni yuklash uchun bosing yoki sudrab olib keling",
       "upload_failed": "Yuklash muvaffaqiyatsiz tugadi! Iltimos, qayta urinib ko'ring.",
+      "upload_service_unavailable": "Fayl yuklash xizmati mavjud emas. Keyinroq qayta urinib ko‘ring yoki so‘rovnoma egasiga murojaat qiling.",
       "uploading": "Yuklanmoqda...",
       "you_can_only_upload_a_maximum_of_files": "Siz faqat {FILE_LIMIT} ta faylni maksimal yuklashingiz mumkin."
     },

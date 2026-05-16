@@ -42,7 +42,7 @@ export type TOrganizationStripeBilling = z.infer<typeof ZOrganizationStripeBilli
 
 // responses can be null to support the unlimited plan
 export const ZOrganizationBillingPlanLimits = z.object({
-  projects: z.number().nullable(),
+  workspaces: z.number().nullable(),
   monthly: z.object({
     responses: z.number().nullable(),
   }),
@@ -53,7 +53,7 @@ export type TOrganizationBillingPlanLimits = z.infer<typeof ZOrganizationBilling
 export const ZOrganizationBilling = z.object({
   stripeCustomerId: z.string().nullable(),
   limits: ZOrganizationBillingPlanLimits.default({
-    projects: 3,
+    workspaces: 3,
     monthly: {
       responses: 1500,
     },

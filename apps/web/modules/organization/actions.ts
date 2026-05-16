@@ -13,7 +13,7 @@ import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { ensureCloudStripeSetupForOrganization } from "@/modules/ee/billing/lib/organization-billing";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
-import { createProject } from "@/modules/projects/settings/lib/project";
+import { createWorkspace } from "@/modules/workspaces/settings/lib/workspace";
 
 const ZCreateOrganizationAction = z.object({
   organizationName: z.string().min(1, "Organization name must be at least 1 character long"),
@@ -48,12 +48,12 @@ export const createOrganizationAction = authenticatedActionClient
         });
       }
 
-      const newProject = await createProject(newOrganization.id, {
-        name: "My Project",
+      const newWorkspace = await createWorkspace(newOrganization.id, {
+        name: "My Workspace",
       });
 
       groupIdentifyPostHog("organization", newOrganization.id, { name: newOrganization.name });
-      groupIdentifyPostHog("workspace", newProject.id, { name: newProject.name });
+      groupIdentifyPostHog("workspace", newWorkspace.id, { name: newWorkspace.name });
 
       capturePostHogEvent(
         ctx.user.id,
@@ -62,7 +62,7 @@ export const createOrganizationAction = authenticatedActionClient
           organization_id: newOrganization.id,
           is_first_org: false,
         },
-        { organizationId: newOrganization.id, workspaceId: newProject.id }
+        { organizationId: newOrganization.id, workspaceId: newWorkspace.id }
       );
 
       capturePostHogEvent(
@@ -70,10 +70,10 @@ export const createOrganizationAction = authenticatedActionClient
         "workspace_created",
         {
           organization_id: newOrganization.id,
-          workspace_id: newProject.id,
-          name: newProject.name,
+          workspace_id: newWorkspace.id,
+          name: newWorkspace.name,
         },
-        { organizationId: newOrganization.id, workspaceId: newProject.id }
+        { organizationId: newOrganization.id, workspaceId: newWorkspace.id }
       );
 
       const updatedNotificationSettings: TUserNotificationSettings = {

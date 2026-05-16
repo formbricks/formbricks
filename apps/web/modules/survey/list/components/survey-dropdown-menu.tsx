@@ -7,6 +7,7 @@ import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { cn } from "@/lib/cn";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
@@ -22,7 +23,6 @@ import {
 } from "@/modules/ui/components/dropdown-menu";
 
 interface SurveyDropDownMenuProps {
-  environmentId: string;
   survey: TSurveyListItem;
   publicDomain: string;
   disabled?: boolean;
@@ -31,13 +31,14 @@ interface SurveyDropDownMenuProps {
 }
 
 export const SurveyDropDownMenu = ({
-  environmentId,
   survey,
   publicDomain,
   disabled,
   isSurveyCreationDeletionDisabled,
   deleteSurvey,
 }: SurveyDropDownMenuProps) => {
+  const { workspace } = useWorkspace();
+
   const { t } = useTranslation();
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -45,7 +46,8 @@ export const SurveyDropDownMenu = ({
   const [isCautionDialogOpen, setIsCautionDialogOpen] = useState(false);
   const router = useRouter();
 
-  const editHref = `/environments/${environmentId}/surveys/${survey.id}/edit`;
+  const editHref = `/workspaces/${workspace?.id}/surveys/${survey.id}/edit`;
+
   const surveyLink = useMemo(() => `${publicDomain}/s/${survey.id}`, [publicDomain, survey.id]);
   const isSingleUseEnabled = survey.singleUse?.enabled ?? false;
   const canManageSurvey = !isSurveyCreationDeletionDisabled;
@@ -57,9 +59,9 @@ export const SurveyDropDownMenu = ({
 
     try {
       await deleteSurvey(surveyId);
-      toast.success(t("environments.surveys.survey_deleted_successfully"));
+      toast.success(t("workspace.surveys.survey_deleted_successfully"));
     } catch (error) {
-      toast.error(getV3ApiErrorMessage(error, t("environments.surveys.error_deleting_survey")));
+      toast.error(getV3ApiErrorMessage(error, t("workspace.surveys.error_deleting_survey")));
     } finally {
       setLoading(false);
     }
@@ -96,12 +98,12 @@ export const SurveyDropDownMenu = ({
           <button
             type="button"
             data-testid="survey-dropdown-trigger"
-            aria-label={t("environments.surveys.open_options")}
+            aria-label={t("workspace.surveys.open_options")}
             className={cn(
               "rounded-lg border bg-white p-2",
               disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:bg-slate-50"
             )}>
-            <span className="sr-only">{t("environments.surveys.open_options")}</span>
+            <span className="sr-only">{t("workspace.surveys.open_options")}</span>
             <MoreVertical className="h-4 w-4" aria-hidden="true" />
           </button>
         </DropdownMenuTrigger>
@@ -180,7 +182,7 @@ export const SurveyDropDownMenu = ({
           open={isDeleteDialogOpen}
           setOpen={setDeleteDialogOpen}
           onDelete={() => handleDeleteSurvey(survey.id)}
-          text={t("environments.surveys.delete_survey_and_responses_warning")}
+          text={t("workspace.surveys.delete_survey_and_responses_warning")}
           isDeleting={loading}
         />
       )}

@@ -4,7 +4,6 @@ import { getSessionUser } from "@/app/api/v1/management/me/lib/utils";
 import { responses } from "@/app/lib/api/response";
 import { CONTROL_HASH } from "@/lib/constants";
 import { hashSha256, parseApiKeyV2, verifySecret } from "@/lib/crypto";
-import { publicUserSelect } from "@/lib/user/public-user";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 
@@ -14,22 +13,16 @@ const apiKeySelect = {
   id: true,
   organizationId: true,
   lastUsedAt: true,
-  apiKeyEnvironments: {
+  apiKeyWorkspaces: {
     select: {
-      environment: {
+      workspace: {
         select: {
           id: true,
-          type: true,
+          legacyEnvironmentId: true,
           createdAt: true,
           updatedAt: true,
-          projectId: true,
+          name: true,
           appSetupCompleted: true,
-          project: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
         },
       },
       permission: true,
@@ -43,19 +36,15 @@ type ApiKeyData = {
   hashedKey: string;
   organizationId: string;
   lastUsedAt: Date | null;
-  apiKeyEnvironments: Array<{
+  apiKeyWorkspaces: Array<{
     permission: string;
-    environment: {
+    workspace: {
       id: string;
-      type: string;
+      legacyEnvironmentId: string | null;
       createdAt: Date;
       updatedAt: Date;
-      projectId: string;
+      name: string;
       appSetupCompleted: boolean;
-      project: {
-        id: string;
-        name: string;
-      };
     };
   }>;
 };
@@ -117,26 +106,32 @@ const updateApiKeyUsage = async (apiKeyId: string) => {
   });
 };
 
-const buildEnvironmentResponse = (apiKeyData: ApiKeyData) => {
-  const env = apiKeyData.apiKeyEnvironments[0].environment;
+const buildWorkspaceResponse = (apiKeyData: ApiKeyData) => {
+  const workspace = apiKeyData.apiKeyWorkspaces[0].workspace;
   return Response.json({
-    id: env.id,
-    type: env.type,
-    createdAt: env.createdAt,
-    updatedAt: env.updatedAt,
-    appSetupCompleted: env.appSetupCompleted,
+    // Keep v1 payload shape stable while sourcing data from workspace.
+    id: workspace.legacyEnvironmentId ?? workspace.id,
+    type: "production",
+    createdAt: workspace.createdAt,
+    updatedAt: workspace.updatedAt,
+    appSetupCompleted: workspace.appSetupCompleted,
+    workspace: {
+      id: workspace.id,
+      name: workspace.name,
+    },
+    // Backwards compat: old consumers expect project fields
     project: {
-      id: env.projectId,
-      name: env.project.name,
+      id: workspace.id,
+      name: workspace.name,
     },
   });
 };
 
 const isValidApiKeyEnvironment = (apiKeyData: ApiKeyData): boolean => {
   return (
-    apiKeyData.apiKeyEnvironments.length === 1 &&
+    apiKeyData.apiKeyWorkspaces.length === 1 &&
     ALLOWED_PERMISSIONS.includes(
-      apiKeyData.apiKeyEnvironments[0].permission as (typeof ALLOWED_PERMISSIONS)[number]
+      apiKeyData.apiKeyWorkspaces[0].permission as (typeof ALLOWED_PERMISSIONS)[number]
     )
   );
 };
@@ -155,14 +150,12 @@ const handleApiKeyAuthentication = async (apiKey: string) => {
     });
   }
 
-  const rateLimitError = await checkRateLimit(apiKeyData.id);
-  if (rateLimitError) return rateLimitError;
-
+  // Rate limiting for apiKey auth is enforced by Envoy in v5 — see envoy-rate-limit-coverage.ts
   if (!isValidApiKeyEnvironment(apiKeyData)) {
     return responses.badRequestResponse("You can't use this method with this API key");
   }
 
-  return buildEnvironmentResponse(apiKeyData);
+  return buildWorkspaceResponse(apiKeyData);
 };
 
 const handleSessionAuthentication = async () => {
@@ -177,7 +170,20 @@ const handleSessionAuthentication = async () => {
 
   const user = await prisma.user.findUnique({
     where: { id: sessionUser.id },
-    select: publicUserSelect,
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      emailVerified: true,
+      createdAt: true,
+      updatedAt: true,
+      twoFactorEnabled: true,
+      identityProvider: true,
+      notificationSettings: true,
+      locale: true,
+      lastLoginAt: true,
+      isActive: true,
+    },
   });
 
   return Response.json(user);

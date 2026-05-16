@@ -1,4 +1,4 @@
-import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
+import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TSurvey } from "@formbricks/types/surveys/types";
 
 /**
@@ -7,9 +7,9 @@ import { TSurvey } from "@formbricks/types/surveys/types";
  * expect. Only the segment shape needs reshaping — the rest of `TSurvey` is a
  * structural superset of the SDK survey type.
  */
-export const toJsEnvironmentStateSurvey = (survey: TSurvey): TJsEnvironmentStateSurvey => {
+export const toJsWorkspaceStateSurvey = (survey: TSurvey): TJsWorkspaceStateSurvey => {
   return {
     ...survey,
     segment: survey.segment ? { id: survey.segment.id, hasFilters: survey.segment.filters.length > 0 } : null,
-  } as unknown as TJsEnvironmentStateSurvey;
+  } as unknown as TJsWorkspaceStateSurvey;
 };

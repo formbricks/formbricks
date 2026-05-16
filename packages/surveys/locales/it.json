@@ -46,10 +46,12 @@
       "duplicate_files": "I seguenti file sono già caricati: {duplicateNames}. I file duplicati non sono consentiti.",
       "file_size_exceeded": "I seguenti file superano la dimensione massima di {maxSizeInMB} MB e sono stati rimossi: {fileNames}",
       "file_size_exceeded_alert": "Il file deve essere inferiore a {maxSizeInMB} MB",
+      "invalid_file_name": "Il nome del file contiene caratteri non validi. Rinomina il file e riprova.",
       "no_valid_file_types_selected": "Nessun tipo di file valido selezionato. Seleziona un tipo di file valido.",
       "only_one_file_can_be_uploaded_at_a_time": "È possibile caricare solo un file alla volta.",
       "placeholder_text": "Clicca o trascina per caricare i file",
       "upload_failed": "Caricamento fallito! Riprova.",
+      "upload_service_unavailable": "Il servizio di caricamento file non è disponibile. Riprova più tardi o contatta il proprietario del sondaggio. (da verificare)",
       "uploading": "Caricamento in corso...",
       "you_can_only_upload_a_maximum_of_files": "Puoi caricare un massimo di {FILE_LIMIT} file."
     },

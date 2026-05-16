@@ -27,10 +27,6 @@ To get this running, you'll need a bit of time. Here are the steps we're going t
 
 - Create a [Formbricks Cloud](https://app.formbricks.com/auth/signup) account.
 
-- In the top-right menu, you can switch between “Development” and “Production” environments. These are separate, so your test data won’t affect real insights. Switch to “Development”:
-
-![switch to dev environment](/images/xm-and-surveys/xm/best-practices/docs-feedback/switch-to-dev.webp)
-
 - Then, create a survey using the template [Docs Feedback](https://formbricks.com/survey-templates/docs-feedback):
 
 ![select docs template](/images/xm-and-surveys/xm/best-practices/docs-feedback/docs-template.webp)
@@ -107,7 +103,7 @@ export const DocsFeedback = () => {
   if (
     !process.env.NEXT_PUBLIC_FORMBRICKS_COM_DOCS_FEEDBACK_SURVEY_ID ||
     !process.env.NEXT_PUBLIC_FORMBRICKS_COM_API_HOST ||
-    !process.env.NEXT_PUBLIC_FORMBRICKS_COM_ENVIRONMENT_ID
+    !process.env.NEXT_PUBLIC_FORMBRICKS_COM_WORKSPACE_ID
   ) {
     return null;
   }
@@ -187,7 +183,7 @@ Disabling feedback if config environment variables are not set properly:
 if (
   !process.env.NEXT_PUBLIC_FORMBRICKS_COM_DOCS_FEEDBACK_SURVEY_ID ||
   !process.env.NEXT_PUBLIC_FORMBRICKS_COM_API_HOST ||
-  !process.env.NEXT_PUBLIC_FORMBRICKS_COM_ENVIRONMENT_ID
+  !process.env.NEXT_PUBLIC_FORMBRICKS_COM_WORKSPACE_ID
 ) {
   return null;
 }
@@ -270,8 +266,7 @@ export const handleFeedbackSubmit = async (YesNo, pageUrl) => {
 
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_FORMBRICKS_COM_API_HOST}/api/v1/client/environments/${process.env.NEXT_PUBLIC_FORMBRICKS_COM_ENVIRONMENT_ID}/responses`, // For testing, replace this with the API host and environemnt ID of your Development environment on app.formbricks.com
-  };
+      `${process.env.NEXT_PUBLIC_FORMBRICKS_COM_API_HOST}/api/v1/client/${process.env.NEXT_PUBLIC_FORMBRICKS_COM_WORKSPACE_ID}/responses`, // For testing, replace this with the API host and workspace ID of your Development workspace on app.formbricks.com
       {
         method: "POST",
         headers: {
@@ -313,7 +308,7 @@ export const updateFeedback = async (freeText, responseId) => {
 
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_FORMBRICKS_COM_API_HOST}/api/v1/client/environments/${process.env.NEXT_PUBLIC_FORMBRICKS_COM_ENVIRONMENT_ID}/responses/${responseId}`,
+      `${process.env.NEXT_PUBLIC_FORMBRICKS_COM_API_HOST}/api/v1/client/${process.env.NEXT_PUBLIC_FORMBRICKS_COM_WORKSPACE_ID}/responses/${responseId}`,
       {
         method: "PUT",
         headers: {
@@ -338,7 +333,7 @@ We're almosr there! 🤸
 
 Before you roll it out in production, you want to test it. To do so, you need two things:
 
-- Environment ID (1) of the development environment on app.formbricks.com
+- Workspace ID (1) of the workspace on app.formbricks.com
 
 - Survey ID (2) of your test survey
 
@@ -357,8 +352,7 @@ Now, you have to replace the IDs and the API host accordingly in your `handleFee
   try {
     const res = await fetch(
 			// Note that we also updated the API host to 'https://app.formbricks.com/'
-      `https:app.formbricks.com/api/v1/client/environments/clgwcwp4z000lpf0hur7uxbuv/responses`,
-  };
+      `https://app.formbricks.com/api/v1/client/clgwcwp4z000lpf0hur7uxbuv/responses`,
 ```
 
 And lastly, in the `updateFeedback` function
@@ -367,8 +361,7 @@ And lastly, in the `updateFeedback` function
   try {
     const res = await fetch(
 		// Note that we also updated the API host to 'https://app.formbricks.com/'
-      `https:app.formbricks.com/api/v1/client/environments/clgwcwp4z000lpf0hur7uxbuv/responses/${responseId}`, // Note that we also updated the API host to 'https://app.formbricks.com/'
-}
+      `https://app.formbricks.com/api/v1/client/clgwcwp4z000lpf0hur7uxbuv/responses/${responseId}`, // Note that we also updated the API host to 'https://app.formbricks.com/'
 ```
 
 ### You’re good to go! 🎉

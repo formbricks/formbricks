@@ -46,10 +46,12 @@
       "duplicate_files": "A következő fájlok már fel lettek töltve: {duplicateNames}. Kettőzött fájlok nem engedélyezettek.",
       "file_size_exceeded": "A következő fájlok túllépik a legnagyobb, {maxSizeInMB} MB-os méretet, ezért eltávolításra kerültek: {fileNames}",
       "file_size_exceeded_alert": "A fájlnak kisebbnek kell lennie mint {maxSizeInMB} MB",
+      "invalid_file_name": "A fájlnév érvénytelen karaktereket tartalmaz. Nevezd át a fájlt, majd próbáld újra.",
       "no_valid_file_types_selected": "Nincs érvényes fájltípus kiválasztva. Válasszon egy érvényes fájltípust.",
       "only_one_file_can_be_uploaded_at_a_time": "Egyszerre csak egy fájl tölthető fel.",
       "placeholder_text": "Kattintson vagy húzza ide a fájlok feltöltéséhez",
       "upload_failed": "A feltöltés nem sikerült! Próbálja meg újra.",
+      "upload_service_unavailable": "A fájlfeltöltési szolgáltatás nem érhető el. Próbáld újra később, vagy vedd fel a kapcsolatot a felmérés tulajdonosával.",
       "uploading": "Feltöltés…",
       "you_can_only_upload_a_maximum_of_files": "Legfeljebb csak {FILE_LIMIT} fájlt tölthet fel."
     },

@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -9,7 +9,7 @@ import { ContactsSecondaryNavigation } from "./contacts-secondary-navigation";
 interface ContactsPageLayoutProps {
   pageTitle: string;
   activeId: string;
-  environmentId: string;
+  workspaceId: string;
   isContactsEnabled: boolean;
   isReadOnly: boolean;
   cta?: ReactNode;
@@ -22,7 +22,7 @@ interface ContactsPageLayoutProps {
 export const ContactsPageLayout = async ({
   pageTitle,
   activeId,
-  environmentId,
+  workspaceId,
   isContactsEnabled,
   isReadOnly,
   cta,
@@ -32,11 +32,12 @@ export const ContactsPageLayout = async ({
   upgradeFeature = "contacts",
 }: ContactsPageLayoutProps) => {
   const t = await getTranslate();
+  const workspaceBasePath = `/workspaces/${workspaceId}`;
 
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={pageTitle} cta={isContactsEnabled && !isReadOnly ? cta : undefined}>
-        <ContactsSecondaryNavigation activeId={activeId} environmentId={environmentId} />
+        <ContactsSecondaryNavigation activeId={activeId} workspaceId={workspaceId} />
       </PageHeader>
 
       {isContactsEnabled ? (
@@ -44,20 +45,20 @@ export const ContactsPageLayout = async ({
       ) : (
         <div className="flex items-center justify-center">
           <UpgradePrompt
-            title={upgradePromptTitle ?? t("environments.contacts.unlock_contacts_title")}
-            description={upgradePromptDescription ?? t("environments.contacts.unlock_contacts_description")}
+            title={upgradePromptTitle ?? t("workspace.contacts.unlock_contacts_title")}
+            description={upgradePromptDescription ?? t("workspace.contacts.unlock_contacts_description")}
             feature={upgradeFeature}
             buttons={[
               {
                 text: IS_FORMBRICKS_CLOUD ? t("common.upgrade_plan") : t("common.request_trial_license"),
                 href: IS_FORMBRICKS_CLOUD
-                  ? `/environments/${environmentId}/settings/billing`
-                  : "https://formbricks.com/upgrade-self-hosting-license",
+                  ? `${workspaceBasePath}/settings/organization/billing`
+                  : ENTERPRISE_LICENSE_REQUEST_FORM_URL,
               },
               {
                 text: t("common.learn_more"),
                 href: IS_FORMBRICKS_CLOUD
-                  ? `/environments/${environmentId}/settings/billing`
+                  ? `${workspaceBasePath}/settings/organization/billing`
                   : "https://formbricks.com/learn-more-self-hosting-license",
               },
             ]}

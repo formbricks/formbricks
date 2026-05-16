@@ -66,7 +66,7 @@ export const BulkInviteTab = ({
           ZInvitees.parse(members);
           onSubmit(members);
         } catch (err) {
-          toast.error(t("environments.settings.general.please_check_csv_file"));
+          toast.error(t("workspace.settings.general.please_check_csv_file"));
         }
         setOpen(false);
       },
@@ -127,7 +127,7 @@ export const BulkInviteTab = ({
             <AlertDescription className="ml-2">
               <p className="text-sm">
                 <strong>{t("common.warning")}: </strong>
-                {t("environments.settings.general.bulk_invite_warning_description")}
+                {t("workspace.settings.general.bulk_invite_warning_description")}
               </p>
             </AlertDescription>
           </Alert>

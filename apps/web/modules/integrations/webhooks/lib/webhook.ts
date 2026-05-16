@@ -12,7 +12,11 @@ import {
 import { DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS } from "@/lib/constants";
 import { generateStandardWebhookSignature, generateWebhookSecret } from "@/lib/crypto";
 import { validateInputs } from "@/lib/utils/validate";
-import { validateWebhookUrl } from "@/lib/utils/validate-webhook-url";
+import {
+  createPinnedDispatcher,
+  validateAndResolveWebhookUrl,
+  validateWebhookUrl,
+} from "@/lib/utils/validate-webhook-url";
 import { getTranslate } from "@/lingodotdev/server";
 import { isDiscordWebhook } from "@/modules/integrations/webhooks/lib/utils";
 import { TWebhookInput } from "../types/webhooks";
@@ -21,27 +25,27 @@ const getWebhookTestErrorMessage = async (statusCode: number): Promise<string | 
   switch (statusCode) {
     case 500: {
       const t = await getTranslate();
-      return t("environments.integrations.webhooks.endpoint_internal_server_error");
+      return t("workspace.integrations.webhooks.endpoint_internal_server_error");
     }
     case 404: {
       const t = await getTranslate();
-      return t("environments.integrations.webhooks.endpoint_not_found_error");
+      return t("workspace.integrations.webhooks.endpoint_not_found_error");
     }
     case 405: {
       const t = await getTranslate();
-      return t("environments.integrations.webhooks.endpoint_method_not_allowed_error");
+      return t("workspace.integrations.webhooks.endpoint_method_not_allowed_error");
     }
     case 502: {
       const t = await getTranslate();
-      return t("environments.integrations.webhooks.endpoint_bad_gateway_error");
+      return t("workspace.integrations.webhooks.endpoint_bad_gateway_error");
     }
     case 503: {
       const t = await getTranslate();
-      return t("environments.integrations.webhooks.endpoint_service_unavailable_error");
+      return t("workspace.integrations.webhooks.endpoint_service_unavailable_error");
     }
     case 504: {
       const t = await getTranslate();
-      return t("environments.integrations.webhooks.endpoint_gateway_timeout_error");
+      return t("workspace.integrations.webhooks.endpoint_gateway_timeout_error");
     }
     default:
       return null;
@@ -100,7 +104,7 @@ export const deleteWebhook = async (id: string): Promise<boolean> => {
 };
 
 export const createWebhook = async (
-  environmentId: string,
+  workspaceId: string,
   webhookInput: TWebhookInput,
   secret?: string
 ): Promise<Webhook> => {
@@ -118,9 +122,9 @@ export const createWebhook = async (
         ...webhookInput,
         surveyIds: webhookInput.surveyIds || [],
         secret: signingSecret,
-        environment: {
+        workspace: {
           connect: {
-            id: environmentId,
+            id: workspaceId,
           },
         },
       },
@@ -133,20 +137,20 @@ export const createWebhook = async (
     }
 
     if (!(error instanceof InvalidInputError)) {
-      throw new DatabaseError(`Database error when creating webhook for environment ${environmentId}`);
+      throw new DatabaseError(`Database error when creating webhook for workspace ${workspaceId}`);
     }
 
     throw error;
   }
 };
 
-export const getWebhooks = async (environmentId: string): Promise<Webhook[]> => {
-  validateInputs([environmentId, ZId]);
+export const getWebhooks = async (workspaceId: string): Promise<Webhook[]> => {
+  validateInputs([workspaceId, ZId]);
 
   try {
     const webhooks = await prisma.webhook.findMany({
       where: {
-        environmentId: environmentId,
+        workspaceId,
       },
       orderBy: {
         createdAt: "desc",
@@ -163,7 +167,7 @@ export const getWebhooks = async (environmentId: string): Promise<Webhook[]> => 
 };
 
 export const testEndpoint = async (url: string, secret?: string): Promise<boolean> => {
-  await validateWebhookUrl(url);
+  const address = await validateAndResolveWebhookUrl(url);
 
   if (isDiscordWebhook(url)) {
     throw new UnknownError("Discord webhooks are currently not supported.");
@@ -171,6 +175,10 @@ export const testEndpoint = async (url: string, secret?: string): Promise<boolea
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 5000);
+  // Hoisted out of the try so the finally can close it on every path.
+  // Pin TCP connect to the validated IP — closes DNS-rebinding TOCTOU between
+  // validation and fetch (undici otherwise resolves the hostname a second time).
+  const dispatcher = address ? createPinnedDispatcher(address) : undefined;
 
   try {
     const webhookMessageId = uuidv7();
@@ -203,7 +211,8 @@ export const testEndpoint = async (url: string, secret?: string): Promise<boolea
       headers: requestHeaders,
       signal: controller.signal,
       redirect: redirectMode,
-    });
+      dispatcher,
+    } as RequestInit & { dispatcher?: ReturnType<typeof createPinnedDispatcher> });
 
     const statusCode = response.status;
 
@@ -236,5 +245,9 @@ export const testEndpoint = async (url: string, secret?: string): Promise<boolea
     );
   } finally {
     clearTimeout(timeout);
+    // destroy() — not close() — force-kills sockets. close() drains gracefully and
+    // would deadlock if the endpoint accepted TCP but never responded (controller.abort()
+    // above cancels fetch, but destroy is the belt-and-suspenders cleanup).
+    await dispatcher?.destroy();
   }
 };

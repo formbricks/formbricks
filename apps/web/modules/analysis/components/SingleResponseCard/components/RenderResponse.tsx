@@ -53,6 +53,8 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
   };
   switch (element.type) {
     case TSurveyElementTypeEnum.Rating:
+    case TSurveyElementTypeEnum.CSAT:
+    case TSurveyElementTypeEnum.CES:
       if (typeof responseData === "number") {
         return (
           <RatingResponse

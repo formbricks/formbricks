@@ -1,5 +1,7 @@
 import {
+  TSurveyCesElement,
   TSurveyConsentElement,
+  TSurveyCsatElement,
   TSurveyElement,
   TSurveyElementTypeEnum,
   TSurveyMultipleChoiceElement,
@@ -140,15 +142,15 @@ export const validateConsent = (element: TSurveyConsentElement, answer: string):
   return { isValid: true, type: TSurveyElementTypeEnum.Consent };
 };
 
-export const validateRating = (element: TSurveyRatingElement, answer: string): TValidationResult => {
-  if (element.type !== TSurveyElementTypeEnum.Rating) {
-    return invalid(TSurveyElementTypeEnum.Rating);
-  }
+export const validateRating = (
+  element: TSurveyRatingElement | TSurveyCsatElement | TSurveyCesElement,
+  answer: string
+): TValidationResult => {
   const answerNumber = parseNumber(answer);
   if (answerNumber === null || answerNumber < 1 || answerNumber > (element.range ?? 5)) {
-    return invalid(TSurveyElementTypeEnum.Rating);
+    return invalid(element.type);
   }
-  return { isValid: true, type: TSurveyElementTypeEnum.Rating };
+  return { isValid: true, type: element.type };
 };
 
 export const validatePictureSelection = (
@@ -216,6 +218,8 @@ export const validateElement = (
       case TSurveyElementTypeEnum.Consent:
         return validateConsent(element, answer);
       case TSurveyElementTypeEnum.Rating:
+      case TSurveyElementTypeEnum.CSAT:
+      case TSurveyElementTypeEnum.CES:
         return validateRating(element, answer);
       case TSurveyElementTypeEnum.PictureSelection:
         return validatePictureSelection(element, answer);

@@ -46,10 +46,12 @@
       "duplicate_files": "De volgende bestanden zijn al geüpload: {duplicateNames}. Dubbele bestanden zijn niet toegestaan.",
       "file_size_exceeded": "De volgende bestanden overschrijden de maximale grootte van {maxSizeInMB} MB en zijn verwijderd: {fileNames}",
       "file_size_exceeded_alert": "Het bestand moet kleiner zijn dan {maxSizeInMB} MB",
+      "invalid_file_name": "De bestandsnaam bevat ongeldige tekens. Wijzig de bestandsnaam en probeer het opnieuw.",
       "no_valid_file_types_selected": "Geen geldige bestandstypen geselecteerd. Selecteer een geldig bestandstype.",
       "only_one_file_can_be_uploaded_at_a_time": "Er kan slechts één bestand tegelijk worden geüpload.",
       "placeholder_text": "Klik of sleep bestanden om te uploaden",
       "upload_failed": "Uploaden mislukt! Probeer het opnieuw.",
+      "upload_service_unavailable": "De service voor bestandsuploads is niet beschikbaar. Probeer het later opnieuw of neem contact op met de eigenaar van de enquête.",
       "uploading": "Uploaden...",
       "you_can_only_upload_a_maximum_of_files": "Je kunt maximaal {FILE_LIMIT} bestanden uploaden."
     },

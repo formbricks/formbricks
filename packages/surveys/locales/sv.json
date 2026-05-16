@@ -46,10 +46,12 @@
       "duplicate_files": "Följande filer är redan uppladdade: {duplicateNames}. Dubbletter av filer är inte tillåtna.",
       "file_size_exceeded": "Följande filer överstiger maxstorleken på {maxSizeInMB} MB och togs bort: {fileNames}",
       "file_size_exceeded_alert": "Filen måste vara mindre än {maxSizeInMB} MB",
+      "invalid_file_name": "Filnamnet innehåller ogiltiga tecken. Byt namn på filen och försök igen.",
       "no_valid_file_types_selected": "Inga giltiga filtyper valda. Vänligen välj en giltig filtyp.",
       "only_one_file_can_be_uploaded_at_a_time": "Endast en fil kan laddas upp åt gången.",
       "placeholder_text": "Klicka eller dra för att ladda upp filer",
       "upload_failed": "Uppladdning misslyckades! Försök igen.",
+      "upload_service_unavailable": "Filuppladdningstjänsten är inte tillgänglig. Försök igen senare eller kontakta enkätens ägare.",
       "uploading": "Laddar upp...",
       "you_can_only_upload_a_maximum_of_files": "Du kan ladda upp maximalt {FILE_LIMIT} filer."
     },

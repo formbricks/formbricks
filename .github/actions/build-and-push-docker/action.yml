@@ -284,6 +284,10 @@ runs:
           database_url=${{ env.DUMMY_DATABASE_URL }}
           encryption_key=${{ env.DUMMY_ENCRYPTION_KEY }}
           redis_url=${{ env.DUMMY_REDIS_URL }}
+          hub_api_url=${{ env.DUMMY_HUB_API_URL }}
+          hub_api_key=${{ env.DUMMY_HUB_API_KEY }}
+          cubejs_api_url=${{ env.DUMMY_CUBEJS_API_URL }}
+          cubejs_api_secret=${{ env.DUMMY_CUBEJS_API_SECRET }}
           sentry_auth_token=${{ env.SENTRY_AUTH_TOKEN }}
           posthog_key=${{ env.POSTHOG_KEY }}
       env:
@@ -291,6 +295,10 @@ runs:
         DUMMY_DATABASE_URL: ${{ env.DUMMY_DATABASE_URL }}
         DUMMY_ENCRYPTION_KEY: ${{ env.DUMMY_ENCRYPTION_KEY }}
         DUMMY_REDIS_URL: ${{ env.DUMMY_REDIS_URL }}
+        DUMMY_HUB_API_URL: ${{ env.DUMMY_HUB_API_URL }}
+        DUMMY_HUB_API_KEY: ${{ env.DUMMY_HUB_API_KEY }}
+        DUMMY_CUBEJS_API_URL: ${{ env.DUMMY_CUBEJS_API_URL }}
+        DUMMY_CUBEJS_API_SECRET: ${{ env.DUMMY_CUBEJS_API_SECRET }}
         SENTRY_AUTH_TOKEN: ${{ env.SENTRY_AUTH_TOKEN }}
         POSTHOG_KEY: ${{ env.POSTHOG_KEY }}
 

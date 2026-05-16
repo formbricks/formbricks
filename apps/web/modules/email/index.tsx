@@ -45,8 +45,8 @@ import {
   createToken,
   createTokenForLinkSurvey,
 } from "@/lib/jwt";
-import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
-import { getElementResponseMapping } from "@/lib/responses";
+import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
+import { TElementResponseMappingSurvey, getElementResponseMapping } from "@/lib/responses";
 import { getTranslate } from "@/lingodotdev/server";
 import { TVerificationRequestPurpose, buildVerificationLinks } from "@/modules/auth/lib/verification-links";
 import { resolveStorageUrl } from "@/modules/storage/utils";
@@ -67,6 +67,9 @@ interface SendEmailDataProps {
   text?: string;
   html: string;
 }
+
+export type TResponseFinishedEmailSurvey = TElementResponseMappingSurvey &
+  Pick<TSurvey, "id" | "name" | "variables" | "hiddenFields">;
 
 export const sendEmail = async (emailData: SendEmailDataProps): Promise<boolean> => {
   if (!IS_SMTP_CONFIGURED) {
@@ -246,14 +249,14 @@ export const sendInviteAcceptedEmail = async (
 export const sendResponseFinishedEmail = async (
   email: string,
   locale: TUserLocale,
-  environmentId: string,
-  survey: TSurvey,
+  workspaceId: string,
+  survey: TResponseFinishedEmailSurvey,
   response: TResponse,
   responseCount: number
 ): Promise<void> => {
   const t = await getTranslate(locale);
   const personEmail = response.contactAttributes?.email;
-  const organization = await getOrganizationByEnvironmentId(environmentId);
+  const organization = await getOrganizationByWorkspaceId(workspaceId);
 
   if (!organization) {
     throw new ResourceNotFoundError("Organization", null);
@@ -283,7 +286,7 @@ export const sendResponseFinishedEmail = async (
     responseCount,
     response,
     WEBAPP_URL,
-    environmentId,
+    workspaceId,
     organization,
     elements: elementsWithResolvedUrls,
     t,
@@ -308,7 +311,7 @@ export const sendResponseFinishedEmail = async (
 export const sendEmbedSurveyPreviewEmail = async (
   to: string,
   innerHtml: string,
-  environmentId: string,
+  workspaceId: string,
   locale: TUserLocale,
   logoUrl?: string
 ): Promise<boolean> => {
@@ -317,7 +320,7 @@ export const sendEmbedSurveyPreviewEmail = async (
   const resolvedLogoUrl = logoUrl ? resolveStorageUrl(logoUrl) : undefined;
   const html = await renderEmbedSurveyPreviewEmail({
     html: innerHtml,
-    environmentId,
+    workspaceId,
     logoUrl: resolvedLogoUrl,
     t,
     ...legalProps,
@@ -357,13 +360,20 @@ export const sendLinkSurveyToVerifiedEmail = async (data: TLinkSurveyEmailData):
   const email = data.email;
   const surveyName = data.surveyName;
   const singleUseId = data.suId;
+  const singleUseToken = data.suToken;
   // Resolve relative storage URLs to absolute URLs for email rendering
   const logoUrl = data.logoUrl ? resolveStorageUrl(data.logoUrl) : "";
   const token = createTokenForLinkSurvey(surveyId, email);
   const t = await getTranslate(data.locale);
   const getSurveyLink = (): string => {
     if (singleUseId) {
-      return `${getPublicDomain()}/s/${surveyId}?verify=${encodeURIComponent(token)}&suId=${singleUseId}`;
+      const surveyLink = new URL(`${getPublicDomain()}/s/${surveyId}`);
+      surveyLink.searchParams.set("verify", token);
+      surveyLink.searchParams.set("suId", singleUseId);
+      if (singleUseToken) {
+        surveyLink.searchParams.set("suToken", singleUseToken);
+      }
+      return surveyLink.toString();
     }
     return `${getPublicDomain()}/s/${surveyId}?verify=${encodeURIComponent(token)}`;
   };

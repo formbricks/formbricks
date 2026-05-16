@@ -46,10 +46,12 @@
       "duplicate_files": "निम्नलिखित फ़ाइलें पहले से ही अपलोड की गई हैं: {duplicateNames}। डुप्लिकेट फ़ाइलों की अनुमति नहीं है।",
       "file_size_exceeded": "निम्नलिखित फ़ाइल(ें) अधिकतम आकार {maxSizeInMB} MB से अधिक हैं और हटा दी गई हैं: {fileNames}",
       "file_size_exceeded_alert": "फ़ाइल {maxSizeInMB} MB से कम होनी चाहिए",
+      "invalid_file_name": "फ़ाइल नाम में अमान्य वर्ण हैं। कृपया फ़ाइल का नाम बदलें और फिर से प्रयास करें।",
       "no_valid_file_types_selected": "कोई मान्य फ़ाइल प्रकार नहीं चुना गया है। कृपया एक मान्य फ़ाइल प्रकार चुनें।",
       "only_one_file_can_be_uploaded_at_a_time": "एक समय में केवल एक फ़ाइल अपलोड की जा सकती है।",
       "placeholder_text": "फ़ाइलें अपलोड करने के लिए क्लिक करें या ड्रैग करें",
       "upload_failed": "अपलोड विफल! कृपया पुनः प्रयास करें।",
+      "upload_service_unavailable": "फ़ाइल अपलोड सेवा उपलब्ध नहीं है। कृपया बाद में फिर से प्रयास करें या सर्वेक्षण के मालिक से संपर्क करें।",
       "uploading": "अपलोड हो रहा है...",
       "you_can_only_upload_a_maximum_of_files": "आप अधिकतम {FILE_LIMIT} फ़ाइलें ही अपलोड कर सकते हैं।"
     },

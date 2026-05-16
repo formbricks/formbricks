@@ -46,10 +46,12 @@
       "duplicate_files": "Următoarele fișiere sunt deja încărcate: {duplicateNames}. Fișierele duplicate nu sunt permise.",
       "file_size_exceeded": "Următoarele fișiere depășesc dimensiunea maximă de {maxSizeInMB} MB și au fost eliminate: {fileNames}",
       "file_size_exceeded_alert": "Fișierul trebuie să fie mai mic de {maxSizeInMB} MB",
+      "invalid_file_name": "Numele fișierului conține caractere nevalide. Redenumește fișierul și încearcă din nou.",
       "no_valid_file_types_selected": "Nu au fost selectate tipuri de fișiere valide. Te rugăm să selectezi un tip de fișier valid.",
       "only_one_file_can_be_uploaded_at_a_time": "Poți încărca doar un singur fișier odată.",
       "placeholder_text": "Apasă sau trage pentru a încărca fișiere",
       "upload_failed": "Încărcarea a eșuat! Te rugăm să încerci din nou.",
+      "upload_service_unavailable": "Serviciul de încărcare a fișierelor nu este disponibil. Încearcă din nou mai târziu sau contactează proprietarul sondajului.",
       "uploading": "Se încarcă...",
       "you_can_only_upload_a_maximum_of_files": "Poți încărca un număr maxim de {FILE_LIMIT} fișiere."
     },

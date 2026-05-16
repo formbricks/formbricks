@@ -4,9 +4,14 @@ import { Prisma } from "@prisma/client";
 import { describe, expect, test, vi } from "vitest";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
-import { getDisplaysByContactId, getDisplaysBySurveyIdWithContact } from "../service";
+import {
+  getDisplayCountBySurveyId,
+  getDisplaysByContactId,
+  getDisplaysBySurveyIdWithContact,
+} from "../service";
 
 const mockContactId = "clqnj99r9000008lebgf8734j";
+const mockResponseIds = ["clqnfg59i000208i426pb4wcv", "clqnfg59i000208i426pb4wcw"];
 
 const mockDisplaysForContact = [
   {
@@ -44,6 +49,74 @@ const mockDisplaysWithContact = [
     },
   },
 ];
+
+describe("getDisplayCountBySurveyId", () => {
+  describe("Happy Path", () => {
+    test("counts displays by surveyId", async () => {
+      vi.mocked(prisma.display.count).mockResolvedValue(5);
+
+      const result = await getDisplayCountBySurveyId(mockSurveyId);
+
+      expect(result).toBe(5);
+      expect(prisma.display.count).toHaveBeenCalledWith({
+        where: {
+          surveyId: mockSurveyId,
+        },
+      });
+    });
+
+    test("combines createdAt and responseIds filters", async () => {
+      const createdAt = {
+        min: new Date("2024-01-01T00:00:00.000Z"),
+        max: new Date("2024-01-31T23:59:59.999Z"),
+      };
+      vi.mocked(prisma.display.count).mockResolvedValue(2);
+
+      const result = await getDisplayCountBySurveyId(mockSurveyId, {
+        createdAt,
+        responseIds: mockResponseIds,
+      });
+
+      expect(result).toBe(2);
+      expect(prisma.display.count).toHaveBeenCalledWith({
+        where: {
+          surveyId: mockSurveyId,
+          createdAt: {
+            gte: createdAt.min,
+            lte: createdAt.max,
+          },
+          response: {
+            is: {
+              id: {
+                in: mockResponseIds,
+              },
+            },
+          },
+        },
+      });
+    });
+
+    test("returns 0 without querying when responseIds filter is empty", async () => {
+      const result = await getDisplayCountBySurveyId(mockSurveyId, { responseIds: [] });
+
+      expect(result).toBe(0);
+      expect(prisma.display.count).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("Sad Path", () => {
+    test("throws DatabaseError on PrismaClientKnownRequestError", async () => {
+      const errToThrow = new Prisma.PrismaClientKnownRequestError("Mock error", {
+        code: PrismaErrorType.UniqueConstraintViolation,
+        clientVersion: "0.0.1",
+      });
+
+      vi.mocked(prisma.display.count).mockRejectedValue(errToThrow);
+
+      await expect(getDisplayCountBySurveyId(mockSurveyId)).rejects.toThrow(DatabaseError);
+    });
+  });
+});
 
 describe("getDisplaysByContactId", () => {
   describe("Happy Path", () => {

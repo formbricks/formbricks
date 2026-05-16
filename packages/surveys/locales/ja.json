@@ -46,10 +46,12 @@
       "duplicate_files": "以下のファイルはすでにアップロードされています：{duplicateNames}。重複ファイルは許可されていません。",
       "file_size_exceeded": "以下のファイルは最大サイズ{maxSizeInMB}MBを超えているため削除されました：{fileNames}",
       "file_size_exceeded_alert": "ファイルは{maxSizeInMB}MB未満である必要があります",
+      "invalid_file_name": "ファイル名に無効な文字が含まれています。ファイル名を変更してもう一度お試しください。",
       "no_valid_file_types_selected": "有効なファイルタイプが選択されていません。有効なファイルタイプを選択してください。",
       "only_one_file_can_be_uploaded_at_a_time": "一度にアップロードできるファイルは1つだけです。",
       "placeholder_text": "クリックまたはドラッグしてファイルをアップロード",
       "upload_failed": "アップロードに失敗しました！もう一度お試しください。",
+      "upload_service_unavailable": "ファイルアップロードサービスは利用できません。後でもう一度試すか、アンケートの所有者に連絡してください。",
       "uploading": "アップロード中...",
       "you_can_only_upload_a_maximum_of_files": "アップロードできるファイルは最大{FILE_LIMIT}個までです。"
     },

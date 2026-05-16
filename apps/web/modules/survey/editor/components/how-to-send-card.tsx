@@ -1,10 +1,9 @@
 "use client";
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { Environment } from "@prisma/client";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon, LinkIcon, MonitorIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyType } from "@formbricks/types/surveys/types";
@@ -18,18 +17,13 @@ import { RadioGroup, RadioGroupItem } from "@/modules/ui/components/radio-group"
 interface HowToSendCardProps {
   localSurvey: TSurvey;
   setLocalSurvey: (survey: TSurvey | ((TSurvey: TSurvey) => TSurvey)) => void;
-  environment: Pick<Environment, "id" | "appSetupCompleted">;
+  appSetupCompleted: boolean;
 }
 
-export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowToSendCardProps) => {
+export const HowToSendCard = ({ localSurvey, setLocalSurvey, appSetupCompleted }: HowToSendCardProps) => {
+  const workspaceBasePath = `/workspaces/${localSurvey.workspaceId}`;
   const [open, setOpen] = useState(false);
-  const [appSetupCompleted, setAppSetupCompleted] = useState(false);
   const { t } = useTranslation();
-  useEffect(() => {
-    if (environment) {
-      setAppSetupCompleted(environment.appSetupCompleted);
-    }
-  }, [environment]);
 
   const setSurveyType = (type: TSurveyType) => {
     const endingsTemp = localSurvey.endings;
@@ -48,7 +42,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
         id: "temp",
         isPrivate: true,
         title: localSurvey.id,
-        environmentId: environment.id,
+        workspaceId: localSurvey.workspaceId,
         surveys: [localSurvey.id],
         filters: [],
         createdAt: new Date(),
@@ -76,7 +70,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
       id: "link",
       name: t("common.link_survey"),
       icon: LinkIcon,
-      description: t("environments.surveys.edit.link_survey_description"),
+      description: t("workspace.surveys.edit.link_survey_description"),
       comingSoon: false,
       alert: false,
       hide: false,
@@ -85,7 +79,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
       id: "app",
       name: t("common.website_app_survey"),
       icon: MonitorIcon,
-      description: t("environments.surveys.edit.app_survey_description"),
+      description: t("workspace.surveys.edit.app_survey_description"),
       comingSoon: false,
       alert: !appSetupCompleted,
     },
@@ -115,7 +109,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
           <div>
             <p className="font-semibold text-slate-800">{t("common.survey_type")}</p>
             <p className="mt-1 text-sm text-slate-500">
-              {t("environments.surveys.edit.choose_where_to_run_the_survey")}
+              {t("workspace.surveys.edit.choose_where_to_run_the_survey")}
             </p>
           </div>
         </div>
@@ -125,11 +119,9 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
         <div className="space-y-3 p-3">
           {localSurvey.status === "inProgress" && (
             <Alert variant="warning" className="mb-3">
-              <AlertTitle>{t("environments.surveys.edit.change_survey_type")}</AlertTitle>
+              <AlertTitle>{t("workspace.surveys.edit.change_survey_type")}</AlertTitle>
               <AlertDescription>
-                {t(
-                  "environments.surveys.edit.changing_survey_type_will_remove_existing_distribution_channels"
-                )}
+                {t("workspace.surveys.edit.changing_survey_type_will_remove_existing_distribution_channels")}
               </AlertDescription>
             </Alert>
           )}
@@ -175,7 +167,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
                             size="normal"
                             type="success"
                             className="ml-2"
-                            text={t("environments.settings.enterprise.coming_soon")}
+                            text={t("workspace.settings.enterprise.coming_soon")}
                           />
                         )}
                       </div>
@@ -183,19 +175,14 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, environment }: HowT
                       {localSurvey.type === option.id && option.alert && (
                         <Alert variant="warning" className="mt-2">
                           <AlertTitle>
-                            {t("environments.surveys.edit.formbricks_sdk_is_not_connected")}
+                            {t("workspace.surveys.edit.formbricks_sdk_is_not_connected")}
                           </AlertTitle>
                           <AlertDescription>
-                            {t("common.connect_formbricks") +
-                              " " +
-                              t("environments.surveys.edit.and_launch_surveys_in_your_website_or_app")}
+                            {t("workspace.surveys.edit.connect_formbricks_and_launch_surveys")}
                           </AlertDescription>
                           <AlertButton
                             onClick={() =>
-                              window.open(
-                                `/environments/${environment.id}/workspace/${option.id}-connection`,
-                                "_blank"
-                              )
+                              window.open(`${workspaceBasePath}/${option.id}-connection`, "_blank")
                             }>
                             {t("common.connect_formbricks")}
                           </AlertButton>

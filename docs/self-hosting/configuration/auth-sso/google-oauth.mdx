@@ -16,7 +16,30 @@ Integrating Google OAuth with your Formbricks instance allows users to log in us
 
 - A Formbricks instance running
 
+### Account deletion reauthentication
+
+For SSO-only users, Formbricks requires a fresh Google `auth_time` claim before deleting the account. Google only returns this claim when your OAuth app is published, verified, and has **Session age claims** enabled in Google Auth Platform.
+
+To enable it, open Google Auth Platform, select your app project, go to **Settings**, and under **Advanced Settings** enable **Session age claims**. Then set:
+
+```sh
+GOOGLE_ACCOUNT_DELETION_REAUTH_ENABLED=1
+```
+
+If this Google setting and environment variable are not enabled together, Google login can still work, but SSO-only account deletion will fail closed.
+
+Google does not support app-triggered Google Account reauthentication requests. If the returned `auth_time` is too old, the deletion flow is rejected and the user must complete Google sign-in from a fresh Google session before trying again.
+
+<Warning>
+  If you need to allow SSO-only users to delete their accounts without a fresh SSO reauthentication check, set
+  `DISABLE_ACCOUNT_DELETION_SSO_REAUTH=1`. This bypasses the deletion reauthentication marker for passwordless
+  SSO accounts, so users can delete their account with email confirmation only. Keep it unset unless you
+  accept this security trade-off.
+</Warning>
+
 ### How to connect your Formbricks instance to Google
+
+<!-- prettier-ignore-start -->
 
 <Steps>
   <Step title="Create a GCP Project">
@@ -43,20 +66,25 @@ Integrating Google OAuth with your Formbricks instance allows users to log in us
     Authorized JavaScript origins: {WEBAPP_URL}
     Authorized redirect URIs: {WEBAPP_URL}/api/auth/callback/google
     ```
+
   </Step>
 
   <Step title="Update Environment Variables in Docker">
     - To integrate the Google OAuth, you have two options: either update the environment variables in the docker-compose file or directly add them to the running container.
-    
+
     - In your Docker setup directory, open the `.env` file, and add or update the following lines with the `Client ID` and `Client Secret` obtained from Google Cloud Platform:
-    
+
     ```sh
     GOOGLE_CLIENT_ID=your-client-id-here
     GOOGLE_CLIENT_SECRET=your-client-secret-here
+    # Optional: only when Google Auth Platform Session age claims are enabled.
+    GOOGLE_ACCOUNT_DELETION_REAUTH_ENABLED=1
+    # Optional: dangerous fallback that disables fresh SSO reauthentication for account deletion.
+    # DISABLE_ACCOUNT_DELETION_SSO_REAUTH=1
     ```
-    
+
     - Alternatively, you can add the environment variables directly to the running container using the following commands (replace `container_id` with your actual Docker container ID):
-    
+
     ```sh
     docker exec -it container_id /bin/bash
     export GOOGLE_CLIENT_ID=your-client-id-here
@@ -77,3 +105,5 @@ Integrating Google OAuth with your Formbricks instance allows users to log in us
     - Run the following command to bring down your current Docker containers and then bring them back up with the updated environment configuration.
   </Step>
 </Steps>
+
+<!-- prettier-ignore-end -->

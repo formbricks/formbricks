@@ -25,7 +25,7 @@ import formbricks from "@formbricks/js";
 
 if (typeof window !== "undefined") {
   formbricks.setup({
-    environmentId: "your-environment-id",
+    workspaceId: "your-workspace-id",
     appUrl: "https://app.formbricks.com",
   });
 }

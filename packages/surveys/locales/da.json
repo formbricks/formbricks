@@ -46,10 +46,12 @@
       "duplicate_files": "Følgende filer er allerede uploadet: {duplicateNames}. Duplikatfiler er ikke tilladt.",
       "file_size_exceeded": "Følgende fil(er) overstiger den maksimale størrelse på {maxSizeInMB} MB og blev fjernet: {fileNames}",
       "file_size_exceeded_alert": "Filen skal være mindre end {maxSizeInMB} MB",
+      "invalid_file_name": "Filnavnet indeholder ugyldige tegn. Omdøb filen, og prøv igen.",
       "no_valid_file_types_selected": "Ingen gyldige filtyper valgt. Vælg venligst en gyldig filtype.",
       "only_one_file_can_be_uploaded_at_a_time": "Du kan kun uploade én fil ad gangen.",
       "placeholder_text": "Klik eller træk for at uploade filer",
       "upload_failed": "Upload mislykkedes! Prøv venligst igen.",
+      "upload_service_unavailable": "Filuploadtjenesten er ikke tilgængelig. Prøv igen senere, eller kontakt undersøgelsens ejer.",
       "uploading": "Uploader...",
       "you_can_only_upload_a_maximum_of_files": "Du kan maksimalt uploade {FILE_LIMIT} filer."
     },

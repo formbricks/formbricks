@@ -1,8 +1,13 @@
 import { Suspense } from "react";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
-import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
-import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD, IS_STORAGE_CONFIGURED } from "@/lib/constants";
+import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
+import {
+  ENTERPRISE_LICENSE_REQUEST_FORM_URL,
+  INVITE_DISABLED,
+  IS_FORMBRICKS_CLOUD,
+  IS_STORAGE_CONFIGURED,
+} from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getTeamsWhereUserIsAdmin } from "@/modules/ee/teams/lib/roles";
@@ -16,7 +21,6 @@ interface MembersViewProps {
   membershipRole?: TOrganizationRole;
   organization: TOrganization;
   currentUserId: string;
-  environmentId: string;
   isAccessControlAllowed: boolean;
   isUserManagementDisabledFromUi: boolean;
 }
@@ -35,7 +39,6 @@ export const MembersView = async ({
   membershipRole,
   organization,
   currentUserId,
-  environmentId,
   isAccessControlAllowed,
   isUserManagementDisabledFromUi,
 }: MembersViewProps) => {
@@ -58,8 +61,8 @@ export const MembersView = async ({
 
   return (
     <SettingsCard
-      title={t("environments.settings.general.manage_members")}
-      description={t("environments.settings.general.manage_members_description")}>
+      title={t("workspace.settings.general.manage_members")}
+      description={t("workspace.settings.general.manage_members_description")}>
       {membershipRole && (
         <OrganizationActions
           organization={organization}
@@ -70,7 +73,7 @@ export const MembersView = async ({
           isAccessControlAllowed={isAccessControlAllowed}
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           isStorageConfigured={IS_STORAGE_CONFIGURED}
-          environmentId={environmentId}
+          enterpriseLicenseRequestFormUrl={ENTERPRISE_LICENSE_REQUEST_FORM_URL}
           isMultiOrgEnabled={isMultiOrgEnabled}
           teams={teams}
           isUserManagementDisabledFromUi={isUserManagementDisabledFromUi}
