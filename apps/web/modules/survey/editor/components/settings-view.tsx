@@ -34,7 +34,6 @@ interface SettingsViewProps {
   locale: TUserLocale;
   appSetupCompleted: boolean;
   enterpriseLicenseRequestFormUrl: string;
-  // TODO: experiment cleanup — customisations_in_settings
   customisationsInSettings?: boolean;
   activeElementId?: string | null;
   setActiveElementId?: (elementId: string | null) => void;
