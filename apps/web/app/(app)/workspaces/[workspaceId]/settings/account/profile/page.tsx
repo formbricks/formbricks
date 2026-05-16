@@ -3,7 +3,12 @@ import { AccountSecurity } from "@/app/(app)/workspaces/[workspaceId]/settings/a
 import { DeleteAccount } from "@/app/(app)/workspaces/[workspaceId]/settings/account/profile/components/DeleteAccount";
 import { EditProfileDetailsForm } from "@/app/(app)/workspaces/[workspaceId]/settings/account/profile/components/EditProfileDetailsForm";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
-import { EMAIL_VERIFICATION_DISABLED, IS_FORMBRICKS_CLOUD, PASSWORD_RESET_DISABLED } from "@/lib/constants";
+import {
+  EMAIL_VERIFICATION_DISABLED,
+  ENTERPRISE_LICENSE_REQUEST_FORM_URL,
+  IS_FORMBRICKS_CLOUD,
+  PASSWORD_RESET_DISABLED,
+} from "@/lib/constants";
 import { getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
@@ -66,7 +71,7 @@ const Page = async (props: {
                         : t("common.request_trial_license"),
                       href: IS_FORMBRICKS_CLOUD
                         ? `/workspaces/${params.workspaceId}/settings/organization/billing`
-                        : "https://formbricks.com/upgrade-self-hosting-license",
+                        : ENTERPRISE_LICENSE_REQUEST_FORM_URL,
                     },
                     {
                       text: t("common.learn_more"),

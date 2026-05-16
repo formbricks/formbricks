@@ -75,6 +75,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
           isInstanceAIConfigured={isInstanceAIConfigured()}
           hasAIPermission={hasAIPermission}
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
+          enterpriseLicenseRequestFormUrl={ENTERPRISE_LICENSE_REQUEST_FORM_URL}
         />
       </SettingsCard>
       <EmailCustomizationSettings

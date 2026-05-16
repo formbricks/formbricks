@@ -1,4 +1,4 @@
-import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getTranslate } from "@/lingodotdev/server";
 import { FeedbackDirectoryView } from "@/modules/ee/feedback-directory/components/feedback-directory-view";
@@ -33,7 +33,7 @@ export const FeedbackDirectoriesPage = async (props: { params: Promise<{ workspa
                 text: IS_FORMBRICKS_CLOUD ? t("common.upgrade_plan") : t("common.request_trial_license"),
                 href: IS_FORMBRICKS_CLOUD
                   ? `/workspaces/${params.workspaceId}/settings/organization/billing`
-                  : "https://formbricks.com/upgrade-self-hosting-license",
+                  : ENTERPRISE_LICENSE_REQUEST_FORM_URL,
               },
               {
                 text: t("common.learn_more"),
