@@ -40,7 +40,7 @@ const Page = async (props: PlanPageProps) => {
     return redirect(`/organizations/${params.organizationId}/workspaces/new/mode`);
   }
 
-  let variant: TPlanVariant = "a";
+  let variant: TPlanVariant = "control";
   const flagValue = await getPostHogFeatureFlag(session.user.id, "reverse_trial_experiment", {
     organizationId: params.organizationId,
   });

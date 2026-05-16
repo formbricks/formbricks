@@ -8,17 +8,20 @@ interface SelectPlanOnboardingProps {
   variant?: TPlanVariant;
 }
 
-export const SelectPlanOnboarding = async ({ organizationId, variant = "a" }: SelectPlanOnboardingProps) => {
+export const SelectPlanOnboarding = async ({
+  organizationId,
+  variant = "control",
+}: SelectPlanOnboardingProps) => {
   const t = await getTranslate();
   const nextUrl = `/organizations/${organizationId}/workspaces/new/mode`;
 
-  const isVariantB = variant === "b";
+  const isGiftedPro = variant === "gifted_pro";
 
-  const headerTitle = isVariantB
+  const headerTitle = isGiftedPro
     ? t("workspace.settings.billing.select_plan_variant_b_header_title")
     : t("workspace.settings.billing.select_plan_header_title");
 
-  const headerSubtitle = isVariantB
+  const headerSubtitle = isGiftedPro
     ? t("workspace.settings.billing.select_plan_variant_b_header_subtitle")
     : t("workspace.settings.billing.select_plan_header_subtitle");
 

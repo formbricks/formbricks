@@ -29,20 +29,20 @@ const CUSTOMER_LOGOS = [
   { src: ethereumLogo, alt: "Ethereum" },
 ];
 
-export const SelectPlanCard = ({ nextUrl, organizationId, variant = "a" }: SelectPlanCardProps) => {
+export const SelectPlanCard = ({ nextUrl, organizationId, variant = "control" }: SelectPlanCardProps) => {
   const router = useRouter();
   const [isStartingTrial, setIsStartingTrial] = useState(false);
   const [isStartingHobby, setIsStartingHobby] = useState(false);
   const { t } = useTranslation();
-  const isVariantB = variant === "b";
+  const isGiftedPro = variant === "gifted_pro";
 
-  const title = isVariantB
+  const title = isGiftedPro
     ? t("workspace.settings.billing.select_plan_variant_b_title")
     : t("workspace.settings.billing.trial_title");
 
-  const subtitle = isVariantB ? null : t("workspace.settings.billing.trial_no_credit_card");
+  const subtitle = isGiftedPro ? null : t("workspace.settings.billing.trial_no_credit_card");
 
-  const cta = isVariantB
+  const cta = isGiftedPro
     ? t("workspace.settings.billing.select_plan_variant_b_cta")
     : t("common.start_free_trial");
 

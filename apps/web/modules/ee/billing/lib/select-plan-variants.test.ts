@@ -3,7 +3,7 @@ import { PLAN_VARIANTS, type TPlanVariant } from "./select-plan-variants";
 
 describe("PLAN_VARIANTS", () => {
   test("contains exactly the expected variants", () => {
-    expect(PLAN_VARIANTS).toEqual(["a", "b"]);
+    expect(PLAN_VARIANTS).toEqual(["control", "gifted_pro"]);
   });
 
   test("TPlanVariant covers all entries", () => {
