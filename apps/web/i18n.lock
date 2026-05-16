@@ -2355,8 +2355,12 @@ checksums:
     workspace/settings/billing/retry_setup: bef560e42fa8798271fea150476791e0
     workspace/settings/billing/select_plan_header_subtitle: 8de6b4e3ce5726829829bd46582f343a
     workspace/settings/billing/select_plan_header_title: b15a9d86b819a7fae8e956a50572184c
+    workspace/settings/billing/select_plan_variant_b_cta: 3994d5c8a6e7b1865e8c4b8aa7fea5e4
+    workspace/settings/billing/select_plan_variant_b_header_subtitle: e0c177a159fbb891aa61e5d35a40849c
+    workspace/settings/billing/select_plan_variant_b_header_title: 22f73b2ddc56a8e28a8df6ec95cc92c2
+    workspace/settings/billing/select_plan_variant_b_skip: a88d4f26a91460707ed079ffb37a4b08
+    workspace/settings/billing/select_plan_variant_b_title: 8db4ce3320c900dd1d97817f33418599
     workspace/settings/billing/status_trialing: 4fd32760caf3bd7169935b0a6d2b5b67
-    workspace/settings/billing/stay_on_hobby_plan: 966ab0c752a79f00ef10d6a5ed1d8cad
     workspace/settings/billing/stripe_setup_incomplete: fa6d6e295dd14b73c17ac8678205109b
     workspace/settings/billing/stripe_setup_incomplete_description: 9f28a542729cc719bca2ca08e7406284
     workspace/settings/billing/subscription: ba9f3675e18987d067d48533c8897343
