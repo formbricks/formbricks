@@ -476,6 +476,7 @@
     "trial_days_remaining": "{count} dias restantes no seu período de teste",
     "trial_expired": "Seu período de teste expirou",
     "trial_one_day_remaining": "1 dia restante no seu período de teste",
+    "trial_plan_badge": "Teste {plan}",
     "try_again": "Tenta de novo",
     "type": "Tipo",
     "unknown_survey": "Pesquisa desconhecida",
