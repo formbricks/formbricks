@@ -71,7 +71,7 @@ const ZSurveyBase = z.object({
   displayProgressBar: z.boolean().nullable().describe("Whether to display the progress bar"),
   pin: z.string().nullable().describe("The pin of the survey"),
   createdBy: z.string().nullable().describe("The user who created the survey"),
-  environmentId: z.cuid2().describe("The environment ID of the survey"),
+  workspaceId: z.cuid2().describe("The workspace ID of the survey"),
   questions: z.array(ZSurveyQuestion).describe("The questions of the survey"),
   blocks: ZSurveyBlocks.prefault([]).describe("The blocks of the survey"),
   endings: z.array(ZSurveyEnding).prefault([]).describe("The endings of the survey"),
@@ -90,6 +90,8 @@ const ZSurveyBase = z.object({
   autoClose: z.number().nullable().describe("Auto close time in seconds"),
   autoComplete: z.number().nullable().describe("Auto complete time in seconds"),
   delay: z.number().describe("Delay before showing survey"),
+  publishOn: z.coerce.date().nullable().describe("Date when the survey should be published"),
+  closeOn: z.coerce.date().nullable().describe("Date when the survey should be closed"),
   surveyClosedMessage: z
     .object({
       enabled: z.boolean(),
@@ -99,7 +101,7 @@ const ZSurveyBase = z.object({
     .nullable()
     .describe("Message shown when survey is closed"),
   segmentId: z.string().nullable().describe("ID of the segment"),
-  projectOverwrites: z
+  workspaceOverwrites: z
     .object({
       brandColor: ZColor.nullish(),
       highlightBorderColor: ZColor.nullish(),
@@ -108,12 +110,10 @@ const ZSurveyBase = z.object({
       overlay: ZOverlay.nullish(),
     })
     .nullable()
-    .describe("Project specific overwrites"),
+    .describe("Workspace specific overwrites"),
   styling: z
     .object({
       brandColor: ZStylingColor.nullish(),
-      questionColor: ZStylingColor.nullish(),
-      inputColor: ZStylingColor.nullish(),
       inputBorderColor: ZStylingColor.nullish(),
       cardBackgroundColor: ZStylingColor.nullish(),
       cardBorderColor: ZStylingColor.nullish(),

@@ -28,7 +28,7 @@ export const ValidationRuleFieldSelector = ({
       value={value ?? ""}
       onValueChange={(val) => onChange(val ? (val as TAddressField | TContactInfoField) : undefined)}>
       <SelectTrigger className="h-9 min-w-[140px] bg-white">
-        <SelectValue placeholder={t("environments.surveys.edit.select_field")} />
+        <SelectValue placeholder={t("workspace.surveys.edit.select_field")} />
       </SelectTrigger>
       <SelectContent>
         {fieldOptions.map((field) => (

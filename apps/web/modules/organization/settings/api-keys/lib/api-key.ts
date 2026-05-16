@@ -13,7 +13,7 @@ import { validateInputs } from "@/lib/utils/validate";
 import {
   TApiKeyCreateInput,
   TApiKeyUpdateInput,
-  TApiKeyWithEnvironmentAndProject,
+  TApiKeyWithEnvironmentAndWorkspace,
   TApiKeyWithEnvironmentPermission,
   ZApiKeyCreateInput,
 } from "@/modules/organization/settings/api-keys/types/api-keys";
@@ -32,10 +32,10 @@ export const getApiKeysWithEnvironmentPermissions = reactCache(
           label: true,
           createdAt: true,
           organizationAccess: true,
-          apiKeyEnvironments: {
+          apiKeyWorkspaces: {
             select: {
-              environmentId: true,
               permission: true,
+              workspaceId: true,
             },
           },
         },
@@ -52,19 +52,15 @@ export const getApiKeysWithEnvironmentPermissions = reactCache(
 
 // Get API key with its permissions from a raw API key
 export const getApiKeyWithPermissions = reactCache(
-  async (apiKey: string): Promise<TApiKeyWithEnvironmentAndProject | null> => {
+  async (apiKey: string): Promise<TApiKeyWithEnvironmentAndWorkspace | null> => {
     try {
       const includeQuery = {
-        apiKeyEnvironments: {
+        apiKeyWorkspaces: {
           include: {
-            environment: {
-              include: {
-                project: {
-                  select: {
-                    id: true,
-                    name: true,
-                  },
-                },
+            workspace: {
+              select: {
+                id: true,
+                name: true,
               },
             },
           },
@@ -121,7 +117,7 @@ export const getApiKeyWithPermissions = reactCache(
           });
       }
 
-      return apiKeyData as TApiKeyWithEnvironmentAndProject;
+      return apiKeyData as TApiKeyWithEnvironmentAndWorkspace;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);
@@ -156,7 +152,10 @@ export const createApiKey = async (
   organizationId: string,
   userId: string,
   apiKeyData: TApiKeyCreateInput & {
-    environmentPermissions?: Array<{ environmentId: string; permission: ApiKeyPermission }>;
+    workspacePermissions?: Array<{
+      workspaceId: string;
+      permission: ApiKeyPermission;
+    }>;
     organizationAccess: TOrganizationAccess;
   }
 ): Promise<TApiKeyWithEnvironmentPermission & { actualKey: string }> => {
@@ -172,8 +171,7 @@ export const createApiKey = async (
     // 2. bcrypt hash
     const hashedKey = await hashSecret(secret, 12);
 
-    // Extract environmentPermissions from apiKeyData
-    const { environmentPermissions, organizationAccess, ...apiKeyDataWithoutPermissions } = apiKeyData;
+    const { workspacePermissions, organizationAccess, ...apiKeyDataWithoutPermissions } = apiKeyData;
 
     // Create the API key
     const result = await prisma.apiKey.create({
@@ -184,19 +182,19 @@ export const createApiKey = async (
         createdBy: userId,
         organization: { connect: { id: organizationId } },
         organizationAccess,
-        ...(environmentPermissions && environmentPermissions.length > 0
+        ...(workspacePermissions && workspacePermissions.length > 0
           ? {
-              apiKeyEnvironments: {
-                create: environmentPermissions.map((envPerm) => ({
-                  environmentId: envPerm.environmentId,
-                  permission: envPerm.permission,
+              apiKeyWorkspaces: {
+                create: workspacePermissions.map((wsPerm) => ({
+                  permission: wsPerm.permission,
+                  workspaceId: wsPerm.workspaceId,
                 })),
               },
             }
           : {}),
       },
       include: {
-        apiKeyEnvironments: true,
+        apiKeyWorkspaces: true,
       },
     });
 

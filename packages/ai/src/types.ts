@@ -1,16 +1,16 @@
 import type { LanguageModel, generateText } from "ai";
 
-export const AI_PROVIDERS = ["aws", "gcp", "azure"] as const;
+export const AI_PROVIDERS = ["aws", "google", "azure"] as const;
 
 export type ActiveAIProvider = (typeof AI_PROVIDERS)[number];
 
 export interface AIEnvironment {
   AI_PROVIDER?: string;
   AI_MODEL?: string;
-  AI_GCP_PROJECT?: string;
-  AI_GCP_LOCATION?: string;
-  AI_GCP_CREDENTIALS_JSON?: string;
-  AI_GCP_APPLICATION_CREDENTIALS?: string;
+  AI_GOOGLE_CLOUD_PROJECT?: string;
+  AI_GOOGLE_CLOUD_LOCATION?: string;
+  AI_GOOGLE_CLOUD_CREDENTIALS_JSON?: string;
+  AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS?: string;
   AI_AWS_REGION?: string;
   AI_AWS_ACCESS_KEY_ID?: string;
   AI_AWS_SECRET_ACCESS_KEY?: string;

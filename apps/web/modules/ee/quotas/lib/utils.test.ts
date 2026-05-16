@@ -2,7 +2,7 @@ import { Prisma } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
-import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
+import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
 import { TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
@@ -61,7 +61,7 @@ describe("Quota Utils", () => {
   const mockQuotaId = "quota123";
   const mockEndingCardId = "ending123";
 
-  const mockSurvey: TJsEnvironmentStateSurvey = {
+  const mockSurvey: TJsWorkspaceStateSurvey = {
     id: mockSurveyId,
     name: "Test Survey",
     type: "link",
@@ -105,7 +105,7 @@ describe("Quota Utils", () => {
     delay: 0,
     displayPercentage: null,
     isBackButtonHidden: false,
-    projectOverwrites: null,
+    workspaceOverwrites: null,
     styling: null,
     showLanguageSwitch: null,
     languages: [],

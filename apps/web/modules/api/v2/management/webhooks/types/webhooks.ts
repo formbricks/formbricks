@@ -22,9 +22,22 @@ export const ZWebhookInput = ZWebhook.pick({
   name: true,
   url: true,
   source: true,
-  environmentId: true,
+  workspaceId: true,
   triggers: true,
   surveyIds: true,
 });
 
 export type TWebhookInput = z.infer<typeof ZWebhookInput>;
+
+// Route-level schema — workspaceId is required.
+export const ZWebhookCreateInput = ZWebhook.pick({
+  name: true,
+  url: true,
+  source: true,
+  triggers: true,
+  surveyIds: true,
+}).extend({
+  workspaceId: z.cuid2(),
+});
+
+export type TWebhookCreateInput = z.infer<typeof ZWebhookCreateInput>;

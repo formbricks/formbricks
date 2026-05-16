@@ -130,7 +130,7 @@ describe("no-code-event-listeners file", () => {
 
     const mockConfigValue = {
       get: vi.fn().mockReturnValue({
-        environment: {
+        workspace: {
           data: {
             actionClasses: [
               {
@@ -161,7 +161,7 @@ describe("no-code-event-listeners file", () => {
 
     const mockConfigValue = {
       get: vi.fn().mockReturnValue({
-        environment: {
+        workspace: {
           data: {
             actionClasses: [
               {
@@ -378,7 +378,7 @@ describe("no-code-event-listeners file", () => {
       };
       const mockConfigValue = {
         get: vi.fn().mockReturnValue({
-          environment: { data: { actionClasses: [mockAction] } },
+          workspace: { data: { actionClasses: [mockAction] } },
         }),
       };
       getInstanceConfigMock.mockReturnValue(mockConfigValue as unknown as Config);
@@ -442,7 +442,7 @@ describe("no-code-event-listeners file", () => {
     test("checkScrollDepth does nothing if no fiftyPercentScroll actions", async () => {
       const mockConfigValue = {
         get: vi.fn().mockReturnValue({
-          environment: { data: { actionClasses: [] } },
+          workspace: { data: { actionClasses: [] } },
         }),
       };
       getInstanceConfigMock.mockReturnValue(mockConfigValue as unknown as Config);
@@ -465,7 +465,7 @@ describe("no-code-event-listeners file", () => {
       };
       const mockConfigValue = {
         get: vi.fn().mockReturnValue({
-          environment: { data: { actionClasses: [mockAction] } },
+          workspace: { data: { actionClasses: [mockAction] } },
         }),
       };
       getInstanceConfigMock.mockReturnValue(mockConfigValue as unknown as Config);
@@ -499,7 +499,7 @@ describe("no-code-event-listeners file", () => {
       };
       const mockConfigValue = {
         get: vi.fn().mockReturnValue({
-          environment: { data: { actionClasses: [mockActionValid, mockActionInvalid] } },
+          workspace: { data: { actionClasses: [mockActionValid, mockActionInvalid] } },
         }),
       };
       getInstanceConfigMock.mockReturnValue(mockConfigValue as unknown as Config);
@@ -531,7 +531,7 @@ describe("checkPageUrl additional cases", () => {
 
     const mockConfigValue = {
       get: vi.fn().mockReturnValue({
-        environment: {
+        workspace: {
           data: {
             actionClasses: [
               {
@@ -558,7 +558,7 @@ describe("checkPageUrl additional cases", () => {
     (handleUrlFilters as Mock).mockReturnValue(false); // Invalid URL
     const mockConfigValue = {
       get: vi.fn().mockReturnValue({
-        environment: {
+        workspace: {
           data: {
             actionClasses: [
               {
@@ -711,7 +711,7 @@ describe("time on page action handling", () => {
 
   const createConfigWithTimeOnPageAction = (actionName: string, timeInSeconds: number) => ({
     get: vi.fn().mockReturnValue({
-      environment: {
+      workspace: {
         data: {
           actionClasses: [
             {

@@ -5,6 +5,7 @@ import { logger } from "@formbricks/logger";
 import { TooManyRequestsError } from "@formbricks/types/errors";
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { buildAuditLogBaseObject } from "@/app/lib/api/with-api-logging";
+import { getApiKeyFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
@@ -128,11 +129,8 @@ async function authenticateV3Request(req: NextRequest, authMode: TV3AuthMode): P
     return null;
   }
 
-  if (authMode === "both" && req.headers.has("x-api-key")) {
-    const apiKeyAuth = await authenticateRequest(req);
-    if (apiKeyAuth) {
-      return apiKeyAuth;
-    }
+  if (authMode === "both" && getApiKeyFromHeaders(req.headers)) {
+    return await authenticateRequest(req);
   }
 
   if (authMode === "session" || authMode === "both") {

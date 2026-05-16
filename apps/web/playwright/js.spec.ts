@@ -10,7 +10,7 @@ const HTML_TEMPLATE = `<head>
       var e = document.getElementsByTagName("script")[0];
       t.onload = function(){
         if (window.formbricks) {
-          window.formbricks.setup({environmentId: "ENVIRONMENT_ID", appUrl: "http://localhost:3000"});
+          window.formbricks.setup({workspaceId: "WORKSPACE_ID", appUrl: "http://localhost:3000"});
         } else {
           console.error("Formbricks library failed to load properly. The formbricks object is not available.");
         }
@@ -27,13 +27,13 @@ const HTML_TEMPLATE = `<head>
 
 test.describe("JS Package Test", async () => {
   let server: http.Server;
-  let environmentId: string;
+  let workspaceId: string;
 
   test.setTimeout(3 * 60 * 1000);
   test.beforeAll(async () => {
     // Create a simple HTTP server
     server = http.createServer((_, res) => {
-      const htmlContent = HTML_TEMPLATE.replace("ENVIRONMENT_ID", environmentId || "");
+      const htmlContent = HTML_TEMPLATE.replace("WORKSPACE_ID", workspaceId || "");
       res.writeHead(200, { "Content-Type": "text/html" });
       res.end(htmlContent);
     });
@@ -53,13 +53,13 @@ test.describe("JS Package Test", async () => {
     const user = await users.create();
     await user.login();
 
-    await page.waitForURL(/\/environments\/[^/]+\/surveys/);
+    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
 
-    // Extract environmentId early in the test
-    environmentId =
-      /\/environments\/([^/]+)\/surveys/.exec(page.url())?.[1] ??
+    // Get the workspaceId from the fixture (needed for SDK setup)
+    workspaceId =
+      user.workspaceId ??
       (() => {
-        throw new Error("Unable to parse environmentId from URL");
+        throw new Error("Unable to get workspaceId from user fixture");
       })();
 
     // Create survey from template
@@ -69,7 +69,7 @@ test.describe("JS Package Test", async () => {
     await page.getByRole("button", { name: "Use this template" }).click();
 
     // Configure survey settings
-    await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/edit/);
+    await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/edit/);
     await page.getByRole("button", { name: "Settings", exact: true }).click();
 
     await expect(page.locator("#howToSendCardTrigger")).toBeVisible();
@@ -90,19 +90,16 @@ test.describe("JS Package Test", async () => {
     await page.locator('[data-testid="recontact-option-respondMultiple"]').click();
     await page.locator('[data-testid="waiting-time-option-ignore"]').click();
 
-    await page.getByRole("button", { name: "Publish" }).click();
+    await page.getByRole("button", { name: "Save as draft", exact: true }).click();
+    await expect(page.getByText("Changes saved.")).toBeVisible();
 
-    await page.waitForURL(/\/environments\/[^/]+\/surveys\/[^/]+\/summary/);
+    await Promise.all([
+      page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/summary/, { timeout: 120000 }),
+      page.getByRole("button", { name: "Publish", exact: true }).click(),
+    ]);
 
-    // No need for file operations anymore, just use the server
     await page.goto("http://localhost:3004");
-
-    const syncApi = await page.waitForResponse((response) => response.url().includes("/environment"), {
-      timeout: 120000,
-    });
-    expect(syncApi.status()).toBe(200);
-
-    await expect(page.locator("#formbricks-modal-container")).toHaveCount(1);
+    await expect(page.locator("#formbricks-modal-container")).toHaveCount(1, { timeout: 120000 });
     await expect(
       page.locator("#questionCard-0").getByRole("link", { name: "Powered by Formbricks" })
     ).toBeVisible();
@@ -129,7 +126,7 @@ test.describe("JS Package Test", async () => {
 
     // Validate displays and response
     await page.goto("/");
-    await page.waitForURL(/\/environments\/[^/]+\/surveys/);
+    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
     await page.getByRole("link", { name: "product Market Fit (Superhuman)" }).click();
     await page.waitForSelector("text=Responses");
     await page.waitForTimeout(5000);

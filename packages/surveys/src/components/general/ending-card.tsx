@@ -1,6 +1,6 @@
 import { useCallback, useEffect } from "preact/hooks";
 import { useTranslation } from "react-i18next";
-import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
+import { type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
 import { type TSurveyEndScreenCard, type TSurveyRedirectUrlCard } from "@formbricks/types/surveys/types";
 import { SubmitButton } from "@/components/buttons/submit-button";
@@ -13,7 +13,7 @@ import { getLocalizedValue } from "@/lib/i18n";
 import { replaceRecallInfo } from "@/lib/recall";
 
 interface EndingCardProps {
-  survey: TJsEnvironmentStateSurvey;
+  survey: TJsWorkspaceStateSurvey;
   endingCard: TSurveyEndScreenCard | TSurveyRedirectUrlCard;
   isRedirectDisabled: boolean;
   isResponseSendingFinished: boolean;

@@ -73,6 +73,22 @@ spec:
                 port:
                   number: 80
           {{- end }}
+          {{- if .Values.envoy.formbricks.routes.feedbackRecords }}
+          - path: /api/v3/feedbackRecords
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $proxyServiceName }}
+                port:
+                  number: 80
+          - path: /v1/feedback-records
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $proxyServiceName }}
+                port:
+                  number: 80
+          {{- end }}
           {{- if .Values.envoy.formbricks.routes.storage }}
           - path: /storage
             pathType: Prefix

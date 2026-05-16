@@ -39,27 +39,30 @@ export const SelectPlanCard = ({ nextUrl, organizationId, variant = "a" }: Selec
   const isVariantB = variant === "b";
 
   const title = isVariantB
-    ? t("environments.settings.billing.select_plan_variant_b_title")
-    : t("environments.settings.billing.trial_title");
+    ? t("workspace.settings.billing.select_plan_variant_b_title")
+    : t("workspace.settings.billing.trial_title");
 
-  const subtitle = isVariantB ? null : t("environments.settings.billing.trial_no_credit_card");
+  const subtitle = isVariantB ? null : t("workspace.settings.billing.trial_no_credit_card");
 
   const cta = isVariantB
-    ? t("environments.settings.billing.select_plan_variant_b_cta")
+    ? t("workspace.settings.billing.select_plan_variant_b_cta")
     : t("common.start_free_trial");
 
-  const skip = t("environments.settings.billing.select_plan_variant_b_skip");
+  const skip = t("workspace.settings.billing.select_plan_variant_b_skip");
 
   const TRIAL_FEATURE_KEYS = [
-    t("environments.settings.billing.trial_feature_unlimited_seats"),
-    t("environments.settings.billing.trial_feature_hide_branding"),
-    t("environments.settings.billing.trial_feature_respondent_identification"),
-    t("environments.settings.billing.trial_feature_contact_segment_management"),
-    t("environments.settings.billing.trial_feature_attribute_segmentation"),
-    t("environments.settings.billing.trial_feature_mobile_sdks"),
-    t("environments.settings.billing.trial_feature_email_followups"),
-    t("environments.settings.billing.trial_feature_webhooks"),
-    t("environments.settings.billing.trial_feature_api_access"),
+    t("workspace.settings.billing.trial_feature_unlimited_seats"),
+    t("workspace.settings.billing.trial_feature_hide_branding"),
+    t("workspace.settings.billing.trial_feature_respondent_identification"),
+    t("workspace.settings.billing.trial_feature_contact_segment_management"),
+    t("workspace.settings.billing.trial_feature_attribute_segmentation"),
+    t("workspace.settings.billing.trial_feature_mobile_sdks"),
+    t("workspace.settings.billing.trial_feature_email_followups"),
+    t("workspace.settings.billing.trial_feature_webhooks"),
+    t("workspace.settings.billing.trial_feature_api_access"),
+    t("workspace.settings.billing.trial_feature_unify_feedback"),
+    t("workspace.settings.billing.trial_feature_feedback_directories"),
+    t("workspace.settings.billing.trial_feature_dashboards"),
   ] as const;
 
   const handleStartTrial = async () => {
@@ -69,14 +72,14 @@ export const SelectPlanCard = ({ nextUrl, organizationId, variant = "a" }: Selec
       if (result?.data) {
         router.push(nextUrl);
       } else if (result?.serverError === "trial_already_used") {
-        toast.error(t("environments.settings.billing.trial_already_used"));
+        toast.error(t("workspace.settings.billing.trial_already_used"));
         setIsStartingTrial(false);
       } else {
-        toast.error(t("environments.settings.billing.failed_to_start_trial"));
+        toast.error(t("workspace.settings.billing.failed_to_start_trial"));
         setIsStartingTrial(false);
       }
     } catch {
-      toast.error(t("environments.settings.billing.failed_to_start_trial"));
+      toast.error(t("workspace.settings.billing.failed_to_start_trial"));
       setIsStartingTrial(false);
     }
   };

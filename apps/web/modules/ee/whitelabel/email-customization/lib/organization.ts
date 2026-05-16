@@ -31,14 +31,9 @@ export const updateOrganizationEmailLogoUrl = async (
         },
       },
       select: {
-        projects: {
+        workspaces: {
           select: {
             id: true,
-            environments: {
-              select: {
-                id: true,
-              },
-            },
           },
         },
       },
@@ -65,14 +60,9 @@ export const removeOrganizationEmailLogoUrl = async (organizationId: string): Pr
       where: { id: organizationId },
       select: {
         whitelabel: true,
-        projects: {
+        workspaces: {
           select: {
             id: true,
-            environments: {
-              select: {
-                id: true,
-              },
-            },
           },
         },
       },

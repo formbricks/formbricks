@@ -32,7 +32,7 @@
     },
     "@formbricks/database#build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**"]
+      "outputs": ["dist/**", "../../node_modules/.prisma/client/**"]
     },
     "@formbricks/database#lint": {
       "dependsOn": ["@formbricks/logger#build", "@formbricks/database#build"]
@@ -50,6 +50,19 @@
     },
     "@formbricks/i18n-utils#test": {
       "dependsOn": ["@formbricks/i18n-utils#build"]
+    },
+    "@formbricks/jobs#build": {
+      "dependsOn": ["@formbricks/logger#build"],
+      "outputs": ["dist/**"]
+    },
+    "@formbricks/jobs#lint": {
+      "dependsOn": ["@formbricks/logger#build"]
+    },
+    "@formbricks/jobs#test": {
+      "dependsOn": ["@formbricks/logger#build"]
+    },
+    "@formbricks/jobs#test:coverage": {
+      "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/js-core#build": {
       "dependsOn": ["^build", "@formbricks/database#build"],
@@ -123,6 +136,7 @@
         "@formbricks/ai#build",
         "@formbricks/cache#build",
         "@formbricks/database#build",
+        "@formbricks/jobs#build",
         "@formbricks/logger#build",
         "@formbricks/storage#build"
       ],
@@ -135,6 +149,7 @@
         "@formbricks/cache#build",
         "@formbricks/database#build",
         "@formbricks/database#db:setup",
+        "@formbricks/jobs#build",
         "@formbricks/logger#build",
         "@formbricks/storage#build"
       ],
@@ -147,6 +162,7 @@
         "@formbricks/database#build",
         "@formbricks/storage#build",
         "@formbricks/cache#build",
+        "@formbricks/jobs#build",
         "@formbricks/surveys#build"
       ]
     },
@@ -157,6 +173,7 @@
         "@formbricks/database#build",
         "@formbricks/storage#build",
         "@formbricks/cache#build",
+        "@formbricks/jobs#build",
         "@formbricks/surveys#build"
       ]
     },
@@ -173,10 +190,10 @@
         "AI_AZURE_API_VERSION",
         "AI_AZURE_BASE_URL",
         "AI_AZURE_RESOURCE_NAME",
-        "AI_GCP_APPLICATION_CREDENTIALS",
-        "AI_GCP_CREDENTIALS_JSON",
-        "AI_GCP_LOCATION",
-        "AI_GCP_PROJECT",
+        "AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS",
+        "AI_GOOGLE_CLOUD_CREDENTIALS_JSON",
+        "AI_GOOGLE_CLOUD_LOCATION",
+        "AI_GOOGLE_CLOUD_PROJECT",
         "AI_MODEL",
         "AI_PROVIDER",
         "AIRTABLE_CLIENT_ID",
@@ -186,10 +203,18 @@
         "AZUREAD_TENANT_ID",
         "AUTH_SSO_DEFAULT_TEAM_ID",
         "AUTH_SKIP_INVITE_FOR_SSO",
+        "BULLMQ_EXTERNAL_WORKER_ENABLED",
+        "BULLMQ_WORKER_CONCURRENCY",
+        "BULLMQ_WORKER_COUNT",
+        "BULLMQ_WORKER_ENABLED",
         "BASE_PATH",
         "BREVO_API_KEY",
         "BREVO_LIST_ID",
         "CRON_SECRET",
+        "CUBEJS_API_SECRET",
+        "CUBEJS_API_URL",
+        "CUBEJS_JWT_AUDIENCE",
+        "CUBEJS_JWT_ISSUER",
         "DISABLE_ACCOUNT_DELETION_SSO_REAUTH",
         "DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS",
         "DATABASE_URL",
@@ -209,6 +234,8 @@
         "GOOGLE_SHEETS_CLIENT_ID",
         "GOOGLE_SHEETS_CLIENT_SECRET",
         "GOOGLE_SHEETS_REDIRECT_URL",
+        "HUB_API_KEY",
+        "HUB_API_URL",
         "NOTION_OAUTH_CLIENT_ID",
         "NOTION_OAUTH_CLIENT_SECRET",
         "HEROKU_APP_NAME",
@@ -233,6 +260,7 @@
         "NEXT_PUBLIC_FORMBRICKS_COM_API_HOST",
         "NEXT_PUBLIC_FORMBRICKS_COM_ENVIRONMENT_ID",
         "NEXT_PUBLIC_FORMBRICKS_COM_DOCS_FEEDBACK_SURVEY_ID",
+        "OPENAI_API_KEY",
         "OTEL_EXPORTER_OTLP_ENDPOINT",
         "OTEL_EXPORTER_OTLP_HEADERS",
         "OTEL_EXPORTER_OTLP_PROTOCOL",
@@ -289,14 +317,14 @@
         "RECAPTCHA_SECRET_KEY",
         "TELEMETRY_DISABLED",
         "TERMS_URL",
-        "VERCEL",
-        "VERCEL_URL",
         "VERSION",
         "WEBAPP_URL",
         "UNSPLASH_ACCESS_KEY",
         "PROMETHEUS_ENABLED",
         "PROMETHEUS_EXPORTER_PORT",
-        "USER_MANAGEMENT_MINIMUM_ROLE"
+        "USER_MANAGEMENT_MINIMUM_ROLE",
+        "HUB_API_URL",
+        "HUB_API_KEY"
       ],
       "outputs": ["dist/**", ".next/**"]
     },

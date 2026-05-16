@@ -15,7 +15,7 @@ export const transformPrismaContact = (person: TTransformPersonInput): TContactW
   return {
     id: person.id,
     attributes,
-    environmentId: person.environmentId,
+    workspaceId: person.workspaceId,
     createdAt: new Date(person.createdAt),
     updatedAt: new Date(person.updatedAt),
   };

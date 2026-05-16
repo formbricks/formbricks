@@ -13,7 +13,7 @@ vi.mock("@formbricks/logger", () => ({
 vi.mock("@/modules/ee/billing/lib/organization-billing", () => ({
   getOrganizationBillingWithReadThroughSync: vi.fn(),
   getDefaultOrganizationBilling: () => ({
-    limits: { projects: 1, monthly: { responses: 250 } },
+    limits: { workspaces: 1, monthly: { responses: 250 } },
     stripeCustomerId: null,
     usageCycleAnchor: null,
   }),
@@ -29,7 +29,7 @@ const mockGetLicense = vi.mocked(getEnterpriseLicense);
 const createBillingFixture = (overrides: Partial<TOrganizationBilling> = {}): TOrganizationBilling => ({
   stripeCustomerId: null,
   limits: {
-    projects: null,
+    workspaces: null,
     monthly: {
       responses: null,
     },
@@ -45,7 +45,7 @@ beforeEach(() => {
 describe("getCloudOrganizationEntitlementsContext", () => {
   test("returns default entitlements when billing is null", async () => {
     mockGetBilling.mockResolvedValue(null);
-    mockGetLicense.mockResolvedValue({ status: "no-license", features: null, active: false });
+    mockGetLicense.mockResolvedValue({ status: "no-license", features: null, active: false } as any);
 
     const result = await getCloudOrganizationEntitlementsContext("org1");
 
@@ -53,7 +53,7 @@ describe("getCloudOrganizationEntitlementsContext", () => {
       organizationId: "org1",
       source: "cloud_stripe",
       features: [],
-      limits: { projects: 1, monthlyResponses: 250 },
+      limits: { workspaces: 1, monthlyResponses: 250 },
       licenseStatus: "no-license",
       licenseFeatures: null,
       stripeCustomerId: null,
@@ -67,12 +67,12 @@ describe("getCloudOrganizationEntitlementsContext", () => {
     mockGetBilling.mockResolvedValue(
       createBillingFixture({
         stripeCustomerId: "cus_1",
-        limits: { projects: 5, monthly: { responses: 1000 } },
+        limits: { workspaces: 5, monthly: { responses: 1000 } },
         usageCycleAnchor,
         stripe: { features: ["rbac", "spam-protection"], plan: "pro" },
       })
     );
-    mockGetLicense.mockResolvedValue({ status: "no-license", features: null, active: false });
+    mockGetLicense.mockResolvedValue({ status: "no-license", features: null, active: false } as any);
 
     const result = await getCloudOrganizationEntitlementsContext("org1");
 
@@ -80,7 +80,7 @@ describe("getCloudOrganizationEntitlementsContext", () => {
       organizationId: "org1",
       source: "cloud_stripe",
       features: ["rbac", "spam-protection"],
-      limits: { projects: 5, monthlyResponses: 1000 },
+      limits: { workspaces: 5, monthlyResponses: 1000 },
       licenseStatus: "no-license",
       licenseFeatures: null,
       stripeCustomerId: "cus_1",
@@ -90,13 +90,13 @@ describe("getCloudOrganizationEntitlementsContext", () => {
   });
 
   test("handles missing stripe features and limits gracefully", async () => {
-    mockGetBilling.mockResolvedValue(createBillingFixture({ stripe: null }));
-    mockGetLicense.mockResolvedValue({ status: "no-license", features: null, active: false });
+    mockGetBilling.mockResolvedValue(createBillingFixture({ stripe: undefined }));
+    mockGetLicense.mockResolvedValue({ status: "no-license", features: null, active: false } as any);
 
     const result = await getCloudOrganizationEntitlementsContext("org1");
 
     expect(result.features).toEqual([]);
-    expect(result.limits).toEqual({ projects: null, monthlyResponses: null });
+    expect(result.limits).toEqual({ workspaces: null, monthlyResponses: null });
     expect(result.stripeCustomerId).toBeNull();
     expect(result.subscriptionStatus).toBeNull();
     expect(result.usageCycleAnchor).toBeNull();
@@ -105,11 +105,11 @@ describe("getCloudOrganizationEntitlementsContext", () => {
   test("parses string usageCycleAnchor to Date", async () => {
     mockGetBilling.mockResolvedValue(
       createBillingFixture({
-        usageCycleAnchor: "2025-06-15T00:00:00.000Z",
-        stripe: null,
+        usageCycleAnchor: new Date("2025-06-15T00:00:00.000Z"),
+        stripe: undefined,
       })
     );
-    mockGetLicense.mockResolvedValue({ status: "no-license", features: null, active: false });
+    mockGetLicense.mockResolvedValue({ status: "no-license", features: null, active: false } as any);
 
     const result = await getCloudOrganizationEntitlementsContext("org1");
 
@@ -122,7 +122,7 @@ describe("getCloudOrganizationEntitlementsContext", () => {
         stripe: { features: ["rbac", "invalid-feature-xyz"] },
       })
     );
-    mockGetLicense.mockResolvedValue({ status: "no-license", features: null, active: false });
+    mockGetLicense.mockResolvedValue({ status: "no-license", features: null, active: false } as any);
 
     const result = await getCloudOrganizationEntitlementsContext("org1");
 
@@ -133,11 +133,11 @@ describe("getCloudOrganizationEntitlementsContext", () => {
     mockGetBilling.mockResolvedValue(
       createBillingFixture({
         stripeCustomerId: "cus_1",
-        limits: { projects: 5, monthly: { responses: 1000 } },
+        limits: { workspaces: 5, monthly: { responses: 1000 } },
         stripe: { features: ["follow-ups"], subscriptionStatus: "trialing" },
       })
     );
-    mockGetLicense.mockResolvedValue({ status: "no-license", features: null, active: false });
+    mockGetLicense.mockResolvedValue({ status: "no-license", features: null, active: false } as any);
 
     const result = await getCloudOrganizationEntitlementsContext("org1");
 

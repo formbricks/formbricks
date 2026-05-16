@@ -1,11 +1,11 @@
 // https://github.com/airbnb/javascript/#naming--uppercase
-import { TProjectStyling } from "@formbricks/types/project";
+import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { isLight, mixColor } from "@/lib/utils/colors";
 
 export const COLOR_DEFAULTS = {
   brandColor: "#64748b",
-  questionColor: "#2b2524",
-  inputColor: "#ffffff",
+  elementHeadlineColor: "#2b2524",
+  inputBgColor: "#ffffff",
   inputBorderColor: "#cbd5e1",
   cardBackgroundColor: "#ffffff",
   cardBorderColor: "#f8fafc",
@@ -17,7 +17,7 @@ const DEFAULT_BRAND_COLOR = "#64748b";
 /**
  * Derives a complete set of suggested color values from a single brand color.
  *
- * Used by the project-level "Suggest Colors" button **and** to build
+ * Used by the workspace-level "Suggest Colors" button **and** to build
  * `STYLE_DEFAULTS` so that a fresh install always has colours that are
  * visually cohesive with the default brand.
  *
@@ -40,10 +40,8 @@ export const getSuggestedColors = (brandColor: string = DEFAULT_BRAND_COLOR) => 
   return {
     // General
     "brandColor.light": brandColor,
-    "questionColor.light": questionColor,
 
-    // Headlines & Descriptions — use questionColor to match the legacy behaviour
-    // where all text elements derived their color from questionColor.
+    // Headlines & Descriptions
     "elementHeadlineColor.light": questionColor,
     "elementDescriptionColor.light": questionColor,
     "elementUpperLabelColor.light": questionColor,
@@ -53,7 +51,7 @@ export const getSuggestedColors = (brandColor: string = DEFAULT_BRAND_COLOR) => 
     "buttonTextColor.light": isLight(brandColor) ? "#0f172a" : "#ffffff",
 
     // Inputs
-    "inputColor.light": inputBg,
+    "inputBgColor.light": inputBg,
     "inputBorderColor.light": inputBorder,
     "inputTextColor.light": questionColor,
 
@@ -91,11 +89,9 @@ const _colors = getSuggestedColors(DEFAULT_BRAND_COLOR);
  * Used everywhere: form defaults, preview rendering, email templates,
  * and as the reset target for "Restore defaults".
  */
-export const STYLE_DEFAULTS: TProjectStyling = {
+export const STYLE_DEFAULTS: TWorkspaceStyling = {
   allowStyleOverwrite: true,
   brandColor: { light: _colors["brandColor.light"] },
-  questionColor: { light: _colors["questionColor.light"] },
-  inputColor: { light: _colors["inputColor.light"] },
   inputBorderColor: { light: _colors["inputBorderColor.light"] },
   cardBackgroundColor: { light: _colors["cardBackgroundColor.light"] },
   cardBorderColor: { light: _colors["cardBorderColor.light"] },
@@ -117,6 +113,7 @@ export const STYLE_DEFAULTS: TProjectStyling = {
   elementUpperLabelFontWeight: 400,
 
   // Inputs
+  inputBgColor: { light: _colors["inputBgColor.light"] },
   inputTextColor: { light: _colors["inputTextColor.light"] },
   inputBorderRadius: 8,
   inputHeight: 20,
@@ -152,44 +149,7 @@ export const STYLE_DEFAULTS: TProjectStyling = {
 };
 
 /**
- * Fills in new v4.7 color fields from legacy v4.6 fields when they are missing.
- *
- * v4.6 stored: brandColor, questionColor, inputColor, inputBorderColor.
- * v4.7 adds: elementHeadlineColor, buttonBgColor, optionBgColor, etc.
- *
- * When loading v4.6 data the new fields are absent. Without this helper the
- * form would fall back to STYLE_DEFAULTS (derived from the *default* brand
- * colour), causing a visible mismatch.  This function derives the new fields
- * from the actually-saved legacy fields so the preview and form stay coherent.
- *
- * Only sets a field when the legacy source exists AND the new field is absent.
- */
-export const deriveNewFieldsFromLegacy = (saved: Record<string, unknown>): Record<string, unknown> => {
-  const light = (key: string): string | undefined =>
-    (saved[key] as { light?: string } | null | undefined)?.light;
-
-  const q = light("questionColor");
-  const b = light("brandColor");
-  const i = light("inputColor");
-  const inputBorder = light("inputBorderColor");
-
-  return {
-    ...(q && !saved.elementHeadlineColor && { elementHeadlineColor: { light: q } }),
-    ...(q && !saved.elementDescriptionColor && { elementDescriptionColor: { light: q } }),
-    ...(q && !saved.elementUpperLabelColor && { elementUpperLabelColor: { light: q } }),
-    ...(q && !saved.inputTextColor && { inputTextColor: { light: q } }),
-    ...(q && !saved.optionLabelColor && { optionLabelColor: { light: q } }),
-    ...(b && !saved.buttonBgColor && { buttonBgColor: { light: b } }),
-    ...(b && !saved.buttonTextColor && { buttonTextColor: { light: isLight(b) ? "#0f172a" : "#ffffff" } }),
-    ...(i && !saved.optionBgColor && { optionBgColor: { light: i } }),
-    ...(inputBorder && !saved.optionBorderColor && { optionBorderColor: { light: inputBorder } }),
-    ...(b && !saved.progressIndicatorBgColor && { progressIndicatorBgColor: { light: b } }),
-    ...(b && !saved.progressTrackBgColor && { progressTrackBgColor: { light: mixColor(b, "#ffffff", 0.8) } }),
-  };
-};
-
-/**
- * Builds a complete TProjectStyling object from a single brand color.
+ * Builds a complete TWorkspaceStyling object from a single brand color.
  *
  * Uses STYLE_DEFAULTS for all non-color properties (dimensions, weights, etc.)
  * and derives every color from the given brand color via getSuggestedColors().
@@ -197,19 +157,18 @@ export const deriveNewFieldsFromLegacy = (saved: Record<string, unknown>): Recor
  * Useful when only a brand color is known (e.g. onboarding) and a fully
  * coherent styling object is needed for both preview rendering and persistence.
  */
-export const buildStylingFromBrandColor = (brandColor: string = DEFAULT_BRAND_COLOR): TProjectStyling => {
+export const buildStylingFromBrandColor = (brandColor: string = DEFAULT_BRAND_COLOR): TWorkspaceStyling => {
   const colors = getSuggestedColors(brandColor);
 
   return {
     ...STYLE_DEFAULTS,
     brandColor: { light: colors["brandColor.light"] },
-    questionColor: { light: colors["questionColor.light"] },
     elementHeadlineColor: { light: colors["elementHeadlineColor.light"] },
     elementDescriptionColor: { light: colors["elementDescriptionColor.light"] },
     elementUpperLabelColor: { light: colors["elementUpperLabelColor.light"] },
     buttonBgColor: { light: colors["buttonBgColor.light"] },
     buttonTextColor: { light: colors["buttonTextColor.light"] },
-    inputColor: { light: colors["inputColor.light"] },
+    inputBgColor: { light: colors["inputBgColor.light"] },
     inputBorderColor: { light: colors["inputBorderColor.light"] },
     inputTextColor: { light: colors["inputTextColor.light"] },
     optionBgColor: { light: colors["optionBgColor.light"] },
