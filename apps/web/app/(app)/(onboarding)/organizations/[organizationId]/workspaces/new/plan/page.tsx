@@ -9,7 +9,7 @@ import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import { SelectPlanOnboarding } from "./components/select-plan-onboarding";
 
 const PAID_PLANS = new Set<TCloudBillingPlan>(["pro", "scale", "custom"]);
-const VALID_VARIANTS = new Set(Object.keys(PLAN_VARIANTS) as TPlanVariant[]);
+const VALID_VARIANTS = new Set<TPlanVariant>(PLAN_VARIANTS);
 
 interface PlanPageProps {
   params: Promise<{

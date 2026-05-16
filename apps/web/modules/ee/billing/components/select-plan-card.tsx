@@ -12,7 +12,7 @@ import flixbusLogo from "@/images/customer-logos/flixbus-white.svg";
 import githubLogo from "@/images/customer-logos/github-logo.png";
 import siemensLogo from "@/images/customer-logos/siemens.png";
 import { startHobbyAction, startProTrialAction } from "@/modules/ee/billing/actions";
-import { PLAN_VARIANTS, type TPlanVariant } from "@/modules/ee/billing/lib/select-plan-variants";
+import { type TPlanVariant } from "@/modules/ee/billing/lib/select-plan-variants";
 import { Button } from "@/modules/ui/components/button";
 
 interface SelectPlanCardProps {
@@ -34,8 +34,6 @@ export const SelectPlanCard = ({ nextUrl, organizationId, variant = "a" }: Selec
   const [isStartingTrial, setIsStartingTrial] = useState(false);
   const [isStartingHobby, setIsStartingHobby] = useState(false);
   const { t } = useTranslation();
-  const config = PLAN_VARIANTS[variant];
-
   const isVariantB = variant === "b";
 
   const title = isVariantB
@@ -113,16 +111,14 @@ export const SelectPlanCard = ({ nextUrl, organizationId, variant = "a" }: Selec
             {subtitle && <p className="mt-2 text-slate-600">{subtitle}</p>}
           </div>
 
-          {config.showFeatures && (
-            <ul className="w-full space-y-3 text-left">
-              {TRIAL_FEATURE_KEYS.map((key) => (
-                <li key={key} className="flex items-center gap-3 text-slate-700">
-                  <CheckIcon className="h-5 w-5 flex-shrink-0 text-slate-900" />
-                  <span>{key}</span>
-                </li>
-              ))}
-            </ul>
-          )}
+          <ul className="w-full space-y-3 text-left">
+            {TRIAL_FEATURE_KEYS.map((key) => (
+              <li key={key} className="flex items-center gap-3 text-slate-700">
+                <CheckIcon className="h-5 w-5 flex-shrink-0 text-slate-900" />
+                <span>{key}</span>
+              </li>
+            ))}
+          </ul>
 
           <Button
             size="lg"
@@ -134,25 +130,23 @@ export const SelectPlanCard = ({ nextUrl, organizationId, variant = "a" }: Selec
           </Button>
         </div>
 
-        {config.showLogos && (
-          <div className="w-full overflow-hidden border-t border-slate-100 bg-slate-50 py-4">
-            <div className="flex w-max animate-logo-scroll gap-12 hover:[animation-play-state:paused]">
-              {[...CUSTOMER_LOGOS, ...CUSTOMER_LOGOS].map((logo, index) => (
-                <div
-                  key={`${logo.alt}-${index}`}
-                  className="flex h-5 items-center opacity-50 grayscale transition-all duration-200 hover:opacity-100 hover:grayscale-0">
-                  <Image
-                    src={logo.src}
-                    alt={logo.alt}
-                    height={20}
-                    width={100}
-                    className="h-5 w-auto max-w-[100px] object-contain"
-                  />
-                </div>
-              ))}
-            </div>
+        <div className="w-full overflow-hidden border-t border-slate-100 bg-slate-50 py-4">
+          <div className="flex w-max animate-logo-scroll gap-12 hover:[animation-play-state:paused]">
+            {[...CUSTOMER_LOGOS, ...CUSTOMER_LOGOS].map((logo, index) => (
+              <div
+                key={`${logo.alt}-${index}`}
+                className="flex h-5 items-center opacity-50 grayscale transition-all duration-200 hover:opacity-100 hover:grayscale-0">
+                <Image
+                  src={logo.src}
+                  alt={logo.alt}
+                  height={20}
+                  width={100}
+                  className="h-5 w-auto max-w-[100px] object-contain"
+                />
+              </div>
+            ))}
           </div>
-        )}
+        </div>
       </div>
 
       <button
