@@ -26,7 +26,8 @@ export const TrialBannerNew = ({
   billingHref,
   hasPaymentMethod = false,
 }: TrialBannerNewProps) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
 
   const effectiveLimit = responseLimit ?? baseResponseLimit;
   const progressPercent = Math.min((responseCount / effectiveLimit) * 100, 100);
@@ -46,8 +47,9 @@ export const TrialBannerNew = ({
       </div>
 
       <p className="mb-2 text-xs text-slate-500">
-        {responseCount} / <span className="line-through">{baseResponseLimit.toLocaleString()}</span>{" "}
-        {effectiveLimit.toLocaleString()} {t("common.responses")}
+        {responseCount.toLocaleString(locale)} /{" "}
+        <span className="line-through">{baseResponseLimit.toLocaleString(locale)}</span>{" "}
+        {effectiveLimit.toLocaleString(locale)} {t("common.responses")}
       </p>
 
       <div className="mb-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
