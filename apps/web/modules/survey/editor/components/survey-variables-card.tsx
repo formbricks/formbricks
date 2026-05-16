@@ -103,7 +103,9 @@ export const SurveyVariablesCard = ({
             </div>
             <div>
               <p className="font-semibold text-slate-800">{t("common.variables")}</p>
-              <p className="mt-1 text-sm text-slate-500">Define and compute values throughout your survey.</p>
+              <p className="mt-1 text-sm text-slate-500">
+                {t("workspace.surveys.edit.variables_description")}
+              </p>
             </div>
           </div>
         </Collapsible.CollapsibleTrigger>

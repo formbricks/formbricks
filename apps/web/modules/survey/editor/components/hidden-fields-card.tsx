@@ -240,7 +240,7 @@ export const HiddenFieldsCard = ({
             <div>
               <p className="font-semibold text-slate-800">{t("common.hidden_fields")}</p>
               <p className="mt-1 text-sm text-slate-500">
-                Pass hidden data into your survey without showing it to respondents.
+                {t("workspace.surveys.edit.hidden_fields_description")}
               </p>
             </div>
           </div>

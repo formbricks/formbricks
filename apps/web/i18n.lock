@@ -2904,6 +2904,7 @@ checksums:
     workspace/surveys/edit/hidden_field_used_in_recall: 15d959528c3e817dce95640173d5d6a8
     workspace/surveys/edit/hidden_field_used_in_recall_ending_card: ea0d0b12ca1c9400690658cb1b537025
     workspace/surveys/edit/hidden_field_used_in_recall_welcome: bb498b6ee69c6311a3977d454866b610
+    workspace/surveys/edit/hidden_fields_description: e9221cd00ae2944602c19ffbc82358a4
     workspace/surveys/edit/hide_back_button: 91355864b3032c3f57689074e2173544
     workspace/surveys/edit/hide_back_button_description: caaa30cf43c5611577933a1c9f44b9ee
     workspace/surveys/edit/hide_block_settings: c24c3d3892c251792e297cdc036d2fde
@@ -3205,6 +3206,7 @@ checksums:
     workspace/surveys/edit/variable_used_in_recall: 1979c231569117297d1a19972b349617
     workspace/surveys/edit/variable_used_in_recall_ending_card: e6ab9a124985708dd77067c014b7c514
     workspace/surveys/edit/variable_used_in_recall_welcome: 60b995389b488366d8f6f53df35b6d8d
+    workspace/surveys/edit/variables_description: 4a55faa279acc675228f54dccf63db6a
     workspace/surveys/edit/verify_email_before_submission: c05d345dc35f2d33839e4cfd72d11eb2
     workspace/surveys/edit/verify_email_before_submission_description: 434ab3ee6134367513b633a9d4f7d772
     workspace/surveys/edit/visibility_and_recontact: c27cb4ff3a4262266902a335c3ad5d84
