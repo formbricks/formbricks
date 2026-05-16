@@ -1,0 +1,102 @@
+{{- if and .Values.hub.enabled .Values.hub.autoscaling.enabled }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "formbricks.hubname" . }}
+  labels:
+    helm.sh/chart: {{ include "formbricks.chart" . }}
+    app.kubernetes.io/name: {{ include "formbricks.hubname" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: hub
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/part-of: {{ .Values.partOfOverride | default (include "formbricks.name" .) }}
+    {{- with .Values.hub.autoscaling.additionalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.hub.autoscaling.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "formbricks.hubname" . }}
+  minReplicas: {{ .Values.hub.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.hub.autoscaling.maxReplicas }}
+  metrics:
+    {{- toYaml .Values.hub.autoscaling.metrics | nindent 4 }}
+  {{- with .Values.hub.autoscaling.behavior }}
+  behavior:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}
+{{- if and .Values.hub.enabled .Values.hub.worker.enabled .Values.hub.worker.autoscaling.enabled }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "formbricks.hubWorkerName" . }}
+  labels:
+    helm.sh/chart: {{ include "formbricks.chart" . }}
+    app.kubernetes.io/name: {{ include "formbricks.hubWorkerName" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: hub-worker
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/part-of: {{ .Values.partOfOverride | default (include "formbricks.name" .) }}
+    {{- with .Values.hub.worker.autoscaling.additionalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.hub.worker.autoscaling.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "formbricks.hubWorkerName" . }}
+  minReplicas: {{ .Values.hub.worker.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.hub.worker.autoscaling.maxReplicas }}
+  metrics:
+    {{- toYaml .Values.hub.worker.autoscaling.metrics | nindent 4 }}
+  {{- with .Values.hub.worker.autoscaling.behavior }}
+  behavior:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}
+{{- if and .Values.hub.enabled .Values.hub.embeddings.enabled .Values.hub.embeddings.autoscaling.enabled }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "formbricks.hubEmbeddingsName" . }}
+  labels:
+    helm.sh/chart: {{ include "formbricks.chart" . }}
+    app.kubernetes.io/name: {{ include "formbricks.hubEmbeddingsName" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: hub-embeddings
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/part-of: {{ .Values.partOfOverride | default (include "formbricks.name" .) }}
+    {{- with .Values.hub.embeddings.autoscaling.additionalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.hub.embeddings.autoscaling.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "formbricks.hubEmbeddingsName" . }}
+  minReplicas: {{ .Values.hub.embeddings.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.hub.embeddings.autoscaling.maxReplicas }}
+  metrics:
+    {{- toYaml .Values.hub.embeddings.autoscaling.metrics | nindent 4 }}
+  {{- with .Values.hub.embeddings.autoscaling.behavior }}
+  behavior:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}

@@ -72,8 +72,8 @@ export const BlockSettings = ({
         aria-label="Toggle advanced settings">
         {open ? <ChevronDownIcon className="mr-1 h-4 w-3" /> : <ChevronRightIcon className="mr-2 h-4 w-3" />}
         {open
-          ? t("environments.surveys.edit.hide_block_settings")
-          : t("environments.surveys.edit.show_block_settings")}
+          ? t("workspace.surveys.edit.hide_block_settings")
+          : t("workspace.surveys.edit.show_block_settings")}
       </Collapsible.CollapsibleTrigger>
       <Collapsible.CollapsibleContent>
         <div className="mt-2 space-y-4">
@@ -82,7 +82,7 @@ export const BlockSettings = ({
               <ElementFormInput
                 id="backButtonLabel"
                 value={block.backButtonLabel}
-                label={t("environments.surveys.edit.back_button_label")}
+                label={t("workspace.surveys.edit.back_button_label")}
                 localSurvey={localSurvey}
                 elementIdx={blockIndex}
                 isInvalid={false}
@@ -116,7 +116,7 @@ export const BlockSettings = ({
             <ElementFormInput
               id="buttonLabel"
               value={block.buttonLabel}
-              label={t("environments.surveys.edit.button_label")}
+              label={t("workspace.surveys.edit.button_label")}
               localSurvey={localSurvey}
               elementIdx={blockIndex}
               isInvalid={false}

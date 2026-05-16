@@ -11,7 +11,6 @@ describe("prefill integration tests", () => {
     name: "Test Survey",
     createdAt: new Date(),
     updatedAt: new Date(),
-    environmentId: "env1",
     blocks: [
       {
         id: "block1",

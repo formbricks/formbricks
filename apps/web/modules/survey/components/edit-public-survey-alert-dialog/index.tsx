@@ -64,16 +64,16 @@ export const EditPublicSurveyAlertDialog = ({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="max-w-[540px]">
         <DialogHeader>
-          <DialogTitle>{t("environments.surveys.edit.caution_edit_published_survey")}</DialogTitle>
-          <DialogDescription>{t("environments.surveys.edit.caution_recommendation")}</DialogDescription>
+          <DialogTitle>{t("workspace.surveys.edit.caution_edit_published_survey")}</DialogTitle>
+          <DialogDescription>{t("workspace.surveys.edit.caution_recommendation")}</DialogDescription>
         </DialogHeader>
 
         <DialogBody>
-          <p>{t("environments.surveys.edit.caution_explanation_intro")}</p>
+          <p>{t("workspace.surveys.edit.caution_explanation_intro")}</p>
           <ul className="mt-3 list-disc space-y-0.5 pl-5">
-            <li>{t("environments.surveys.edit.caution_explanation_responses_are_safe")}</li>
-            <li>{t("environments.surveys.edit.caution_explanation_new_responses_separated")}</li>
-            <li>{t("environments.surveys.edit.caution_explanation_only_new_responses_in_summary")}</li>
+            <li>{t("workspace.surveys.edit.caution_explanation_responses_are_safe")}</li>
+            <li>{t("workspace.surveys.edit.caution_explanation_new_responses_separated")}</li>
+            <li>{t("workspace.surveys.edit.caution_explanation_only_new_responses_in_summary")}</li>
           </ul>
         </DialogBody>
 

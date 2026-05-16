@@ -54,7 +54,7 @@ export const trackCodeAction = async (
   const appConfig = Config.getInstance();
 
   const {
-    environment: {
+    workspace: {
       data: { actionClasses = [] },
     },
   } = appConfig.get();

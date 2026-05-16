@@ -1,7 +1,7 @@
 "use client";
 
 import { createId } from "@paralleldrive/cuid2";
-import { Project } from "@prisma/client";
+import { Workspace } from "@prisma/client";
 import { ArrowDownIcon, ArrowRightIcon, ArrowUpIcon, CopyIcon, EllipsisIcon, TrashIcon } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -50,7 +50,7 @@ interface EditorCardMenuProps {
   addCardToBlock?: (element: TSurveyElement, blockId: string, afterElementIdx: number) => void;
   moveElementToBlock?: (elementId: string, targetBlockId: string) => void;
   cardType: "element" | "ending";
-  project?: Project;
+  workspace?: Workspace;
   isCxMode?: boolean;
 }
 
@@ -63,7 +63,7 @@ export const EditorCardMenu = ({
   duplicateCard,
   deleteCard,
   moveCard,
-  project,
+  workspace,
   card,
   updateCard,
   addCard,
@@ -95,7 +95,7 @@ export const EditorCardMenu = ({
     const { headline, required, subheader, imageUrl, videoUrl, buttonLabel, backButtonLabel } =
       card as EditorCardMenuSurveyElement;
 
-    const elementDefaults = getElementDefaults(type, project, t);
+    const elementDefaults = getElementDefaults(type, workspace, t);
 
     if (
       (type === TSurveyElementTypeEnum.MultipleChoiceSingle &&
@@ -134,7 +134,7 @@ export const EditorCardMenu = ({
   };
 
   const addElementCardBelow = (type: TSurveyElementTypeEnum) => {
-    const elementDefaults = getElementDefaults(type, project, t);
+    const elementDefaults = getElementDefaults(type, workspace, t);
 
     const newElement = {
       ...elementDefaults,
@@ -197,7 +197,7 @@ export const EditorCardMenu = ({
         </Button>
       </TooltipRenderer>
       <TooltipRenderer
-        tooltipContent={t("environments.surveys.edit.duplicate_question")}
+        tooltipContent={t("workspace.surveys.edit.duplicate_question")}
         triggerClass="disabled:border-none">
         <Button
           variant="ghost"
@@ -236,7 +236,7 @@ export const EditorCardMenu = ({
                 <DropdownMenuSubTrigger
                   className="cursor-pointer text-sm text-slate-600 hover:text-slate-700"
                   onClick={(e) => e.preventDefault()}>
-                  {t("environments.surveys.edit.change_question_type")}
+                  {t("workspace.surveys.edit.change_question_type")}
                 </DropdownMenuSubTrigger>
 
                 <DropdownMenuSubContent className="ml-2">
@@ -269,14 +269,14 @@ export const EditorCardMenu = ({
                   e.preventDefault();
                   addEndingCardBelow();
                 }}>
-                <span className="text-sm">{t("environments.surveys.edit.add_ending_below")}</span>
+                <span className="text-sm">{t("workspace.surveys.edit.add_ending_below")}</span>
               </DropdownMenuItem>
             )}
 
             {cardType === "element" && (
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger className="cursor-pointer" onClick={(e) => e.preventDefault()}>
-                  {t("environments.surveys.edit.add_question_below")}
+                  {t("workspace.surveys.edit.add_question_below")}
                 </DropdownMenuSubTrigger>
 
                 <DropdownMenuSubContent className="ml-2">
@@ -302,7 +302,7 @@ export const EditorCardMenu = ({
             {cardType === "element" && moveElementToBlock && survey.blocks.length > 1 && (
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger className="cursor-pointer" onClick={(e) => e.preventDefault()}>
-                  {t("environments.surveys.edit.move_question_to_block")}
+                  {t("workspace.surveys.edit.move_question_to_block")}
                 </DropdownMenuSubTrigger>
 
                 <DropdownMenuSubContent className="ml-2">
@@ -356,9 +356,9 @@ export const EditorCardMenu = ({
       <ConfirmationModal
         open={logicWarningModal}
         setOpen={setLogicWarningModal}
-        title={t("environments.surveys.edit.logic_error_warning")}
-        body={t("environments.surveys.edit.logic_error_warning_text")}
-        buttonText={t("environments.surveys.edit.change_anyway")}
+        title={t("workspace.surveys.edit.logic_error_warning")}
+        body={t("workspace.surveys.edit.logic_error_warning_text")}
+        buttonText={t("workspace.surveys.edit.change_anyway")}
         onConfirm={onConfirm}
       />
     </div>

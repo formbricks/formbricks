@@ -7,7 +7,8 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TAllowedFileExtension } from "@formbricks/types/storage";
 import { cn } from "@/lib/cn";
-import { FileUploadError, handleFileUpload } from "@/modules/storage/file-upload";
+import { handleFileUpload } from "@/modules/storage/file-upload";
+import { showFileUploadErrorToast } from "@/modules/storage/file-upload-error";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 import { OptionsSwitch } from "@/modules/ui/components/options-switch";
 import { showStorageNotConfiguredToast } from "@/modules/ui/components/storage-not-configured-toast/lib/utils";
@@ -23,7 +24,7 @@ const isImage = (name: string) => {
 interface FileInputProps {
   id: string;
   allowedFileExtensions: TAllowedFileExtension[];
-  environmentId: string;
+  workspaceId: string;
   onFileUpload: (uploadedUrl: string[] | undefined, fileType: "image" | "video") => void;
   fileUrl?: string | string[];
   videoUrl?: string;
@@ -44,7 +45,7 @@ interface SelectedFile {
 export const FileInput = ({
   id,
   allowedFileExtensions,
-  environmentId,
+  workspaceId,
   onFileUpload,
   fileUrl,
   videoUrl,
@@ -88,15 +89,15 @@ export const FileInput = ({
     );
 
     const uploadedFiles = await Promise.all(
-      allowedFiles.map((file) => handleFileUpload(file, environmentId, allowedFileExtensions))
+      allowedFiles.map((file) => handleFileUpload(file, workspaceId, allowedFileExtensions))
     );
 
     if (uploadedFiles.length < allowedFiles.length || uploadedFiles.some((file) => file.error)) {
       const firstError = uploadedFiles.find((f) => f.error)?.error;
-      if (firstError === FileUploadError.INVALID_FILE_NAME) {
-        toast.error(t("common.invalid_file_name"));
-      } else if (uploadedFiles.length === 0) {
+      if (uploadedFiles.length === 0) {
         toast.error(t("common.no_files_uploaded"));
+      } else if (firstError) {
+        showFileUploadErrorToast(firstError, t);
       } else {
         toast.error(t("common.some_files_failed_to_upload"));
       }
@@ -162,15 +163,15 @@ export const FileInput = ({
     ]);
 
     const uploadedFiles = await Promise.all(
-      allowedFiles.map((file) => handleFileUpload(file, environmentId, allowedFileExtensions))
+      allowedFiles.map((file) => handleFileUpload(file, workspaceId, allowedFileExtensions))
     );
 
     if (uploadedFiles.length < allowedFiles.length || uploadedFiles.some((file) => file.error)) {
       const firstError = uploadedFiles.find((f) => f.error)?.error;
-      if (firstError === FileUploadError.INVALID_FILE_NAME) {
-        toast.error(t("common.invalid_file_name"));
-      } else if (uploadedFiles.length === 0) {
+      if (uploadedFiles.length === 0) {
         toast.error(t("common.no_files_uploaded"));
+      } else if (firstError) {
+        showFileUploadErrorToast(firstError, t);
       } else {
         toast.error(t("common.some_files_failed_to_upload"));
       }

@@ -46,10 +46,12 @@
       "duplicate_files": "Los siguientes archivos ya están subidos: {duplicateNames}. No se permiten archivos duplicados.",
       "file_size_exceeded": "Los siguientes archivos exceden el tamaño máximo de {maxSizeInMB} MB y fueron eliminados: {fileNames}",
       "file_size_exceeded_alert": "El archivo debe ser menor de {maxSizeInMB} MB",
+      "invalid_file_name": "El nombre del archivo contiene caracteres no válidos. Cambia el nombre del archivo e inténtalo de nuevo.",
       "no_valid_file_types_selected": "No se han seleccionado tipos de archivo válidos. Por favor, selecciona un tipo de archivo válido.",
       "only_one_file_can_be_uploaded_at_a_time": "Solo se puede subir un archivo a la vez.",
       "placeholder_text": "Haz clic o arrastra para subir archivos",
       "upload_failed": "¡Subida fallida! Por favor, inténtalo de nuevo.",
+      "upload_service_unavailable": "El servicio de carga de archivos no está disponible. Inténtalo de nuevo más tarde o contacta con el propietario de la encuesta.",
       "uploading": "Subiendo...",
       "you_can_only_upload_a_maximum_of_files": "Solo puedes subir un máximo de {FILE_LIMIT} archivos."
     },

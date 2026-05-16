@@ -216,8 +216,8 @@ export const updateUser = async (
             include: {
               team: {
                 include: {
-                  projectTeams: {
-                    select: { projectId: true },
+                  workspaceTeams: {
+                    select: { workspaceId: true },
                   },
                 },
               },
@@ -245,8 +245,8 @@ export const updateUser = async (
             include: {
               team: {
                 include: {
-                  projectTeams: {
-                    select: { projectId: true },
+                  workspaceTeams: {
+                    select: { workspaceId: true },
                   },
                 },
               },
@@ -327,9 +327,9 @@ const getExistingTeamsFromInput = async (userInputTeams: string[] | undefined, o
       select: {
         id: true,
         name: true,
-        projectTeams: {
+        workspaceTeams: {
           select: {
-            projectId: true,
+            workspaceId: true,
           },
         },
       },

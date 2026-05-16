@@ -13,7 +13,7 @@ interface SurveyBgSelectorTabProps {
   handleBgChange: (bg: string, bgType: string) => void;
   colors: string[];
   bgType: string | null | undefined;
-  environmentId: string;
+  workspaceId: string;
   isUnsplashConfigured: boolean;
   bg: string;
   isStorageConfigured: boolean;
@@ -24,7 +24,7 @@ export const SurveyBgSelectorTab = ({
   colors,
   bgType,
   bg,
-  environmentId,
+  workspaceId,
   isUnsplashConfigured,
   isStorageConfigured = true,
 }: SurveyBgSelectorTabProps) => {
@@ -36,10 +36,10 @@ export const SurveyBgSelectorTab = ({
   const [uploadBackground, setUploadBackground] = useState(bg);
 
   const tabs = [
-    { id: "color", label: t("environments.surveys.edit.color") },
-    { id: "animation", label: t("environments.surveys.edit.animation") },
-    { id: "upload", label: t("environments.surveys.edit.upload") },
-    { id: "image", label: t("environments.surveys.edit.image") },
+    { id: "color", label: t("workspace.surveys.edit.color") },
+    { id: "animation", label: t("workspace.surveys.edit.animation") },
+    { id: "upload", label: t("workspace.surveys.edit.upload") },
+    { id: "image", label: t("workspace.surveys.edit.image") },
   ];
 
   useEffect(() => {
@@ -77,7 +77,7 @@ export const SurveyBgSelectorTab = ({
       case "upload":
         return (
           <UploadImageSurveyBg
-            environmentId={environmentId}
+            workspaceId={workspaceId}
             handleBgChange={handleBgChange}
             background={uploadBackground}
             isStorageConfigured={isStorageConfigured}

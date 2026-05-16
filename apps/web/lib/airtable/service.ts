@@ -85,9 +85,9 @@ export const fetchAirtableAuthToken = async (formData: Record<string, any>) => {
   };
 };
 
-export const getAirtableToken = async (environmentId: string) => {
+export const getAirtableToken = async (workspaceId: string) => {
   try {
-    const airtableIntegration = await getIntegrationByType(environmentId, "airtable");
+    const airtableIntegration = await getIntegrationByType(workspaceId, "airtable");
 
     const { access_token, expiry_date, refresh_token } = ZIntegrationAirtableCredential.parse(
       airtableIntegration?.config.key
@@ -108,7 +108,7 @@ export const getAirtableToken = async (environmentId: string) => {
       if (!newToken) {
         logger.error(
           {
-            environmentId,
+            workspaceId,
             airtableIntegration,
           },
           "Failed to fetch new Airtable token"
@@ -116,7 +116,7 @@ export const getAirtableToken = async (environmentId: string) => {
         throw new Error("Failed to fetch new Airtable token");
       }
 
-      await createOrUpdateIntegration(environmentId, {
+      await createOrUpdateIntegration(workspaceId, {
         type: "airtable",
         config: {
           data: airtableIntegration?.config?.data ?? [],
@@ -132,7 +132,7 @@ export const getAirtableToken = async (environmentId: string) => {
   } catch (error) {
     logger.error(
       {
-        environmentId,
+        workspaceId,
         error,
       },
       "Failed to get Airtable token"
@@ -141,10 +141,10 @@ export const getAirtableToken = async (environmentId: string) => {
   }
 };
 
-export const getAirtableTables = async (environmentId: string) => {
+export const getAirtableTables = async (workspaceId: string) => {
   let tables: TIntegrationItem[] = [];
   try {
-    const token = await getAirtableToken(environmentId);
+    const token = await getAirtableToken(workspaceId);
 
     tables = (await getBases(token)).bases;
 

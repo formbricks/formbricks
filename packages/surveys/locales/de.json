@@ -46,10 +46,12 @@
       "duplicate_files": "Die folgenden Dateien sind bereits hochgeladen: {duplicateNames}. Doppelte Dateien sind nicht erlaubt.",
       "file_size_exceeded": "Die folgenden Dateien überschreiten die maximale Größe von {maxSizeInMB} MB und wurden entfernt: {fileNames}",
       "file_size_exceeded_alert": "Die Datei sollte kleiner als {maxSizeInMB} MB sein",
+      "invalid_file_name": "Der Dateiname enthält ungültige Zeichen. Bitte benenne die Datei um und versuche es erneut.",
       "no_valid_file_types_selected": "Keine gültigen Dateitypen ausgewählt. Bitte wählen Sie einen gültigen Dateityp.",
       "only_one_file_can_be_uploaded_at_a_time": "Es kann nur eine Datei gleichzeitig hochgeladen werden.",
       "placeholder_text": "Klicke oder ziehe Dateien hierher zum Hochladen",
       "upload_failed": "Upload fehlgeschlagen! Bitte versuchen Sie es erneut.",
+      "upload_service_unavailable": "Der Datei-Upload-Dienst ist nicht verfügbar. Bitte versuche es später erneut oder kontaktiere den Umfragebesitzer.",
       "uploading": "Wird hochgeladen...",
       "you_can_only_upload_a_maximum_of_files": "Sie können maximal {FILE_LIMIT} Dateien hochladen."
     },

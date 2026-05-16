@@ -2,8 +2,6 @@ import { expect } from "@playwright/test";
 import { prisma } from "@formbricks/database";
 import { test } from "./lib/fixtures";
 
-const SURVEYS_PER_PAGE = 12;
-
 const getUserIdForEmail = async (email: string) => {
   const user = await prisma.user.findUnique({
     where: {
@@ -33,18 +31,9 @@ const getWorkspaceIdsForEmail = async (email: string) => {
           organizationId: true,
           organization: {
             select: {
-              projects: {
+              workspaces: {
                 select: {
                   id: true,
-                  environments: {
-                    where: {
-                      type: "development",
-                    },
-                    select: {
-                      id: true,
-                    },
-                    take: 1,
-                  },
                 },
                 take: 1,
               },
@@ -57,29 +46,27 @@ const getWorkspaceIdsForEmail = async (email: string) => {
   });
 
   const membership = user?.memberships[0];
-  const project = membership?.organization.projects[0];
-  const environment = project?.environments[0];
+  const workspace = membership?.organization.workspaces[0];
 
-  if (!user || !membership || !project || !environment) {
+  if (!user || !membership || !workspace) {
     throw new Error(`Workspace not found for email: ${email}`);
   }
 
   return {
     userId: user.id,
     organizationId: membership.organizationId,
-    projectId: project.id,
-    environmentId: environment.id,
+    workspaceId: workspace.id,
   };
 };
 
 const createSurveySeed = async ({
-  environmentId,
+  workspaceId,
   userId,
   name,
   status = "draft",
   type = "link",
 }: {
-  environmentId: string;
+  workspaceId: string;
   userId: string;
   name: string;
   status?: "draft" | "inProgress" | "paused" | "completed";
@@ -87,7 +74,7 @@ const createSurveySeed = async ({
 }) => {
   return prisma.survey.create({
     data: {
-      environmentId,
+      workspaceId,
       createdBy: userId,
       name,
       status,
@@ -108,16 +95,16 @@ test.describe("Survey overview", () => {
     const user = await users.create({
       email,
       name,
-      projectName: "Overview Workspace",
+      workspaceName: "Overview Workspace",
     });
     const userId = await getUserIdForEmail(email);
 
     await user.login();
-    await page.waitForURL(/\/environments\/[^/]+\/surveys/);
-    const environmentId =
-      /\/environments\/([^/]+)\/surveys/.exec(page.url())?.[1] ??
+    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
+    const workspaceId =
+      /\/workspaces\/([^/]+)\/surveys/.exec(page.url())?.[1] ??
       (() => {
-        throw new Error("Unable to determine environment id from surveys URL");
+        throw new Error("Unable to determine workspace id from surveys URL");
       })();
 
     const surveyDefinitions: Array<{
@@ -142,7 +129,7 @@ test.describe("Survey overview", () => {
 
     for (const surveyDefinition of surveyDefinitions) {
       await createSurveySeed({
-        environmentId,
+        workspaceId,
         userId,
         name: surveyDefinition.name,
         status: surveyDefinition.status,
@@ -201,19 +188,19 @@ test.describe("Survey overview", () => {
     const user = await users.create({
       email,
       name,
-      projectName: "Delete Workspace",
+      workspaceName: "Delete Workspace",
     });
     const userId = await getUserIdForEmail(email);
 
     await user.login();
-    await page.waitForURL(/\/environments\/[^/]+\/surveys/);
-    const environmentId =
-      /\/environments\/([^/]+)\/surveys/.exec(page.url())?.[1] ??
+    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
+    const workspaceId =
+      /\/workspaces\/([^/]+)\/surveys/.exec(page.url())?.[1] ??
       (() => {
-        throw new Error("Unable to determine environment id from surveys URL");
+        throw new Error("Unable to determine workspace id from surveys URL");
       })();
     const survey = await createSurveySeed({
-      environmentId,
+      workspaceId,
       userId,
       name: surveyName,
       status: "draft",
@@ -260,19 +247,20 @@ test.describe("Survey overview", () => {
     const user = await users.create({
       email,
       name,
-      projectName: "Rollback Workspace",
+      workspaceName: "Rollback Workspace",
     });
+
     const userId = await getUserIdForEmail(email);
 
     await user.login();
-    await page.waitForURL(/\/environments\/[^/]+\/surveys/);
-    const environmentId =
-      /\/environments\/([^/]+)\/surveys/.exec(page.url())?.[1] ??
+    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
+    const workspaceId =
+      /\/workspaces\/([^/]+)\/surveys/.exec(page.url())?.[1] ??
       (() => {
-        throw new Error("Unable to determine environment id from surveys URL");
+        throw new Error("Unable to determine workspace id from surveys URL");
       })();
     const survey = await createSurveySeed({
-      environmentId,
+      workspaceId,
       userId,
       name: surveyName,
       status: "draft",
@@ -317,9 +305,9 @@ test.describe("Survey overview", () => {
     const user = await users.create({
       email,
       name,
-      projectName: "Action Workspace",
+      workspaceName: "Action Workspace",
     });
-    const { userId, organizationId, projectId, environmentId } = await getWorkspaceIdsForEmail(email);
+    const { userId, organizationId, workspaceId } = await getWorkspaceIdsForEmail(email);
 
     await prisma.membership.update({
       where: {
@@ -351,26 +339,26 @@ test.describe("Survey overview", () => {
       },
     });
 
-    await prisma.projectTeam.create({
+    await prisma.workspaceTeam.create({
       data: {
         teamId: team.id,
-        projectId,
+        workspaceId,
         permission: "read",
       },
     });
 
     await user.login();
-    await page.goto(`/environments/${environmentId}/surveys`);
+    await page.goto(`/workspaces/${workspaceId}/surveys`);
 
     await createSurveySeed({
-      environmentId,
+      workspaceId,
       userId,
       name: linkSurveyName,
       status: "paused",
       type: "link",
     });
     await createSurveySeed({
-      environmentId,
+      workspaceId,
       userId,
       name: appSurveyName,
       status: "completed",

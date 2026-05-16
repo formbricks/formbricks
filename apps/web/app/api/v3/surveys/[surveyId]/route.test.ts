@@ -1,4 +1,4 @@
-import { ApiKeyPermission, EnvironmentType } from "@prisma/client";
+import { ApiKeyPermission } from "@prisma/client";
 import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
@@ -79,7 +79,7 @@ const getServerSession = vi.mocked((await import("next-auth")).getServerSession)
 const queueAuditEvent = vi.mocked((await import("@/modules/ee/audit-logs/lib/handler")).queueAuditEvent);
 
 const surveyId = "clxx1234567890123456789012";
-const environmentId = "clzz9876543210987654321098";
+const workspaceId = "clzz9876543210987654321098";
 
 function createRequest(url: string, requestId?: string, extraHeaders?: Record<string, string>): NextRequest {
   const headers: Record<string, string> = { ...extraHeaders };
@@ -100,12 +100,10 @@ const apiKeyAuth = {
   organizationAccess: {
     accessControl: { read: true, write: true },
   },
-  environmentPermissions: [
+  workspacePermissions: [
     {
-      environmentId,
-      environmentType: EnvironmentType.development,
-      projectId: "proj_1",
-      projectName: "P",
+      workspaceId,
+      workspaceName: "W",
       permission: ApiKeyPermission.write,
     },
   ],
@@ -122,7 +120,7 @@ describe("DELETE /api/v3/surveys/[surveyId]", () => {
     vi.mocked(getSurvey).mockResolvedValue({
       id: surveyId,
       name: "Delete me",
-      environmentId,
+      workspaceId: workspaceId,
       type: "link",
       status: "draft",
       createdAt: new Date("2026-04-15T10:00:00.000Z"),
@@ -133,14 +131,13 @@ describe("DELETE /api/v3/surveys/[surveyId]", () => {
     } as any);
     vi.mocked(deleteSurvey).mockResolvedValue({
       id: surveyId,
-      environmentId,
+      workspaceId,
       type: "link",
       segment: null,
       triggers: [],
     } as any);
     vi.mocked(requireV3WorkspaceAccess).mockResolvedValue({
-      environmentId,
-      projectId: "proj_1",
+      workspaceId,
       organizationId: "org_1",
     });
   });
@@ -169,7 +166,7 @@ describe("DELETE /api/v3/surveys/[surveyId]", () => {
     expect(res.status).toBe(200);
     expect(requireV3WorkspaceAccess).toHaveBeenCalledWith(
       expect.objectContaining({ user: expect.any(Object) }),
-      environmentId,
+      workspaceId,
       "readWrite",
       "req-delete",
       `/api/v3/surveys/${surveyId}`
@@ -198,7 +195,7 @@ describe("DELETE /api/v3/surveys/[surveyId]", () => {
     expect(res.status).toBe(200);
     expect(requireV3WorkspaceAccess).toHaveBeenCalledWith(
       expect.objectContaining({ apiKeyId: "key_1" }),
-      environmentId,
+      workspaceId,
       "readWrite",
       "req-api-key",
       `/api/v3/surveys/${surveyId}`
@@ -291,7 +288,7 @@ describe("DELETE /api/v3/surveys/[surveyId]", () => {
         status: "failure",
         oldObject: expect.objectContaining({
           id: surveyId,
-          environmentId,
+          workspaceId: workspaceId,
         }),
       })
     );
@@ -313,7 +310,7 @@ describe("DELETE /api/v3/surveys/[surveyId]", () => {
         status: "success",
         oldObject: expect.objectContaining({
           id: surveyId,
-          environmentId,
+          workspaceId: workspaceId,
         }),
       })
     );

@@ -5,6 +5,10 @@ import { ZSurveyUpdateInput } from "@formbricks/types/surveys/types";
 import { handleErrorResponse } from "@/app/api/v1/auth";
 import { deleteSurvey } from "@/app/api/v1/management/surveys/[surveyId]/lib/surveys";
 import { checkFeaturePermissions } from "@/app/api/v1/management/surveys/lib/utils";
+import {
+  addLegacyProjectOverwrites,
+  normaliseProjectOverwritesToWorkspace,
+} from "@/app/lib/api/api-backwards-compat";
 import { responses } from "@/app/lib/api/response";
 import {
   transformBlocksToQuestions,
@@ -13,7 +17,7 @@ import {
 } from "@/app/lib/api/survey-transformation";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
-import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
@@ -27,7 +31,7 @@ const fetchAndAuthorizeSurvey = async (
   if (!survey) {
     return { error: responses.notFoundResponse("Survey", surveyId) };
   }
-  if (!hasPermission(authentication.environmentPermissions, survey.environmentId, requiredPermission)) {
+  if (!hasPermission(authentication.workspacePermissions, survey.workspaceId, requiredPermission)) {
     return { error: responses.unauthorizedResponse() };
   }
 
@@ -58,17 +62,21 @@ export const GET = withV1ApiWrapper({
       if (shouldTransformToQuestions) {
         return {
           response: responses.successResponse(
-            resolveStorageUrlsInObject({
-              ...result.survey,
-              questions: transformBlocksToQuestions(result.survey.blocks, result.survey.endings),
-              blocks: [],
-            })
+            addLegacyProjectOverwrites(
+              resolveStorageUrlsInObject({
+                ...result.survey,
+                questions: transformBlocksToQuestions(result.survey.blocks, result.survey.endings),
+                blocks: [],
+              })
+            )
           ),
         };
       }
 
       return {
-        response: responses.successResponse(resolveStorageUrlsInObject(result.survey)),
+        response: responses.successResponse(
+          addLegacyProjectOverwrites(resolveStorageUrlsInObject(result.survey))
+        ),
       };
     } catch (error) {
       if (error instanceof ResourceNotFoundError) {
@@ -149,7 +157,7 @@ export const PUT = withV1ApiWrapper({
         auditLog.oldObject = result.survey;
       }
 
-      const organization = await getOrganizationByEnvironmentId(result.survey.environmentId);
+      const organization = await getOrganizationByWorkspaceId(result.survey.workspaceId);
       if (!organization) {
         return {
           response: responses.notFoundResponse("Organization", null),
@@ -165,6 +173,9 @@ export const PUT = withV1ApiWrapper({
           response: responses.badRequestResponse("Malformed JSON input, please check your request body"),
         };
       }
+
+      // Backwards compat: accept projectOverwrites as alias for workspaceOverwrites
+      surveyUpdate = normaliseProjectOverwritesToWorkspace(surveyUpdate);
 
       const validateResult = validateSurveyInput({ ...surveyUpdate, updateOnly: true });
       if (!validateResult.ok) {
@@ -218,12 +229,16 @@ export const PUT = withV1ApiWrapper({
           };
 
           return {
-            response: responses.successResponse(resolveStorageUrlsInObject(surveyWithQuestions)),
+            response: responses.successResponse(
+              addLegacyProjectOverwrites(resolveStorageUrlsInObject(surveyWithQuestions))
+            ),
           };
         }
 
         return {
-          response: responses.successResponse(resolveStorageUrlsInObject(updatedSurvey)),
+          response: responses.successResponse(
+            addLegacyProjectOverwrites(resolveStorageUrlsInObject(updatedSurvey))
+          ),
         };
       } catch (error) {
         return {

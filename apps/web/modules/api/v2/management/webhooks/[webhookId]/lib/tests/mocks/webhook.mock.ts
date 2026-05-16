@@ -8,7 +8,7 @@ export const mockedPrismaWebhookUpdateReturn = {
   createdAt: new Date("2025-03-24T07:27:36.850Z"),
   updatedAt: new Date("2025-03-24T07:27:36.850Z"),
   source: "user" as WebhookSource,
-  environmentId: "",
+  workspaceId: "workspace-123",
   triggers: [],
   surveyIds: [],
   secret: null,

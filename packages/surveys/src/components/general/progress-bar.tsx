@@ -1,9 +1,9 @@
 import { useCallback, useMemo } from "preact/hooks";
-import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
+import { type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { Progress } from "@/components/general/progress";
 
 interface ProgressBarProps {
-  survey: TJsEnvironmentStateSurvey;
+  survey: TJsWorkspaceStateSurvey;
   blockId: string;
 }
 

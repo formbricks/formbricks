@@ -82,7 +82,7 @@ export const UploadContactsAttributeCombobox = ({
             size="sm"
             className="justify-between border border-slate-300"
             aria-expanded={open}>
-            {t("environments.contacts.select_attribute")}
+            {t("workspace.contacts.select_attribute")}
             <ChevronDownIcon className="h-4 w-4 opacity-50" />
           </Button>
         )}
@@ -106,7 +106,7 @@ export const UploadContactsAttributeCombobox = ({
               placeholder={
                 keys?.length === 0
                   ? "Add attribute"
-                  : t("environments.contacts.upload_contacts_modal_attributes_search_or_add")
+                  : t("workspace.contacts.upload_contacts_modal_attributes_search_or_add")
               }
               className="border-b border-none border-transparent shadow-none outline-0 ring-offset-transparent focus:border-none focus:border-transparent focus:shadow-none focus:outline-0 focus:ring-offset-transparent"
               value={searchValue}
@@ -146,7 +146,7 @@ export const UploadContactsAttributeCombobox = ({
                   ) : (
                     <div className="flex flex-col py-1 text-xs text-slate-500">
                       <span className="text-red-500">
-                        {t("environments.contacts.attribute_key_safe_identifier_required")}
+                        {t("workspace.contacts.attribute_key_safe_identifier_required")}
                       </span>
                     </div>
                   )}

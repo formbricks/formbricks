@@ -3,13 +3,13 @@ import { TGetContactAttributeKeysFilter } from "@/modules/api/v2/management/cont
 import { buildCommonFilterQuery, pickCommonFilter } from "@/modules/api/v2/management/lib/utils";
 
 export const getContactAttributeKeysQuery = (
-  environmentIds: string[],
+  workspaceIds: string[],
   params?: TGetContactAttributeKeysFilter
 ): Prisma.ContactAttributeKeyFindManyArgs => {
   let query: Prisma.ContactAttributeKeyFindManyArgs = {
     where: {
-      environmentId: {
-        in: environmentIds,
+      workspaceId: {
+        in: workspaceIds,
       },
     },
   };

@@ -9,10 +9,10 @@ import { formatSnakeCaseToTitleCase } from "@/lib/utils/safe-identifier";
 import { TContactAttributeKeyCreateInput } from "@/modules/ee/contacts/api/v1/management/contact-attribute-keys/[contactAttributeKeyId]/types/contact-attribute-keys";
 
 export const getContactAttributeKeys = reactCache(
-  async (environmentIds: string[]): Promise<TContactAttributeKey[]> => {
+  async (workspaceIds: string[]): Promise<TContactAttributeKey[]> => {
     try {
       const contactAttributeKeys = await prisma.contactAttributeKey.findMany({
-        where: { environmentId: { in: environmentIds } },
+        where: { workspaceId: { in: workspaceIds } },
       });
 
       return contactAttributeKeys;
@@ -26,21 +26,20 @@ export const getContactAttributeKeys = reactCache(
 );
 
 export const createContactAttributeKey = async (
-  environmentId: string,
+  workspaceId: string,
   data: TContactAttributeKeyCreateInput
 ): Promise<TContactAttributeKey | null> => {
   const contactAttributeKeysCount = await prisma.contactAttributeKey.count({
     where: {
-      environmentId,
+      workspaceId,
     },
   });
 
   if (contactAttributeKeysCount >= MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT) {
     throw new OperationNotAllowedError(
-      `Maximum number of attribute classes (${MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT}) reached for environment ${environmentId}`
+      `Maximum number of attribute classes (${MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT}) reached for workspace ${workspaceId}`
     );
   }
-
   try {
     const contactAttributeKey = await prisma.contactAttributeKey.create({
       data: {
@@ -49,11 +48,7 @@ export const createContactAttributeKey = async (
         type: data.type,
         description: data.description ?? "",
         ...(data.dataType && { dataType: data.dataType }),
-        environment: {
-          connect: {
-            id: environmentId,
-          },
-        },
+        workspaceId,
       },
     });
 

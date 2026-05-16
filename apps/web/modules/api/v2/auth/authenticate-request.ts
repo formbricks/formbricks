@@ -1,30 +1,16 @@
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
+import {
+  type AuthenticateApiKeyOptions,
+  authenticateApiKeyFromHeaders,
+} from "@/modules/api/lib/api-key-auth";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
-import { getApiKeyWithPermissions } from "@/modules/organization/settings/api-keys/lib/api-key";
 
 export const authenticateRequest = async (
-  request: Request
+  request: Request,
+  options: AuthenticateApiKeyOptions = {}
 ): Promise<Result<TAuthenticationApiKey, ApiErrorResponseV2>> => {
-  const apiKey = request.headers.get("x-api-key");
-  if (!apiKey) return err({ type: "unauthorized" });
-
-  const apiKeyData = await getApiKeyWithPermissions(apiKey);
-
-  if (!apiKeyData) return err({ type: "unauthorized" });
-
-  const authentication: TAuthenticationApiKey = {
-    type: "apiKey",
-    environmentPermissions: apiKeyData.apiKeyEnvironments.map((env) => ({
-      environmentId: env.environmentId,
-      environmentType: env.environment.type,
-      permission: env.permission,
-      projectId: env.environment.projectId,
-      projectName: env.environment.project.name,
-    })),
-    apiKeyId: apiKeyData.id,
-    organizationId: apiKeyData.organizationId,
-    organizationAccess: apiKeyData.organizationAccess,
-  };
+  const authentication = await authenticateApiKeyFromHeaders(request.headers, options);
+  if (!authentication) return err({ type: "unauthorized" });
   return ok(authentication);
 };

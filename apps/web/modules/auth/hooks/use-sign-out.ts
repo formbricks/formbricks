@@ -1,6 +1,6 @@
 import { signOut } from "next-auth/react";
 import { logger } from "@formbricks/logger";
-import { FORMBRICKS_ENVIRONMENT_ID_LS } from "@/lib/localStorage";
+import { FORMBRICKS_ENVIRONMENT_ID_LS, FORMBRICKS_WORKSPACE_ID_LS } from "@/lib/localStorage";
 import { logSignOutAction } from "@/modules/auth/actions/sign-out";
 
 interface UseSignOutOptions {
@@ -15,7 +15,7 @@ interface UseSignOutOptions {
   organizationId?: string;
   redirect?: boolean;
   callbackUrl?: string;
-  clearEnvironmentId?: boolean;
+  clearWorkspaceId?: boolean;
 }
 
 interface SessionUser {
@@ -47,7 +47,8 @@ export const useSignOut = (sessionUser?: SessionUser | null) => {
       }
     }
 
-    if (options?.clearEnvironmentId) {
+    if (options?.clearWorkspaceId) {
+      localStorage.removeItem(FORMBRICKS_WORKSPACE_ID_LS);
       localStorage.removeItem(FORMBRICKS_ENVIRONMENT_ID_LS);
     }
 

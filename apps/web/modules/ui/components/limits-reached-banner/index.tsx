@@ -5,18 +5,16 @@ import Link from "next/link";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TOrganization } from "@formbricks/types/organizations";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 
 interface LimitsReachedBannerProps {
   organization: TOrganization;
-  environmentId: string;
   responseCount: number;
 }
 
-export const LimitsReachedBanner = ({
-  organization,
-  responseCount,
-  environmentId,
-}: LimitsReachedBannerProps) => {
+export const LimitsReachedBanner = ({ organization, responseCount }: LimitsReachedBannerProps) => {
+  const { workspace } = useWorkspace();
+  const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const { t } = useTranslation();
   const orgBillingResponseLimit = organization.billing?.limits?.monthly?.responses;
   const isResponseLimitReached = orgBillingResponseLimit !== null && responseCount >= orgBillingResponseLimit;
@@ -39,14 +37,13 @@ export const LimitsReachedBanner = ({
                   <div className="ml-3 w-0 flex-1">
                     <p className="text-base font-medium text-slate-900">{t("common.limits_reached")}</p>
                     <p className="mt-1 text-sm text-slate-500">
-                      {isResponseLimitReached ? (
-                        <>
-                          {t("common.you_have_reached_your_monthly_response_limit_of")}{" "}
-                          {orgBillingResponseLimit}.{" "}
-                        </>
-                      ) : null}
+                      {isResponseLimitReached
+                        ? t("common.you_have_reached_your_monthly_response_limit_of_count", {
+                            count: orgBillingResponseLimit,
+                          })
+                        : null}
                     </p>
-                    <Link href={`/environments/${environmentId}/settings/billing`}>
+                    <Link href={`${workspaceBasePath}/settings/organization/billing`}>
                       <span className="text-sm text-slate-900">{t("common.learn_more")}</span>
                     </Link>
                   </div>

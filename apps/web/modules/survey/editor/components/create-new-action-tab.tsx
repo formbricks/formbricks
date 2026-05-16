@@ -26,7 +26,7 @@ interface CreateNewActionTabProps {
   isReadOnly: boolean;
   setLocalSurvey?: React.Dispatch<React.SetStateAction<TSurvey>>;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  environmentId: string;
+  workspaceId: string;
 }
 
 export const CreateNewActionTab = ({
@@ -35,7 +35,7 @@ export const CreateNewActionTab = ({
   setOpen,
   isReadOnly,
   setLocalSurvey,
-  environmentId,
+  workspaceId,
 }: CreateNewActionTabProps) => {
   const { t } = useTranslation();
   const router = useRouter();
@@ -50,7 +50,7 @@ export const CreateNewActionTab = ({
     defaultValues: {
       name: "",
       description: "",
-      environmentId,
+      workspaceId,
       type: "noCode",
       noCodeConfig: {
         type: "click",
@@ -71,7 +71,7 @@ export const CreateNewActionTab = ({
   const submitHandler = async (data: TActionClassInput) => {
     try {
       validatePermissions(isReadOnly, t);
-      const updatedAction = buildActionObject(data, environmentId, t);
+      const updatedAction = buildActionObject(data, workspaceId, t);
       await createAndHandleAction(updatedAction);
     } catch (e: any) {
       toast.error(e.message);
@@ -106,7 +106,7 @@ export const CreateNewActionTab = ({
     reset();
     resetAllStates();
     router.refresh();
-    toast.success(t("environments.actions.action_created_successfully"));
+    toast.success(t("workspace.actions.action_created_successfully"));
   };
 
   const resetAllStates = () => {
@@ -125,7 +125,7 @@ export const CreateNewActionTab = ({
                 control={control}
                 render={({ field }) => (
                   <div>
-                    <Label className="font-semibold">{t("environments.actions.action_type")}</Label>
+                    <Label className="font-semibold">{t("workspace.actions.action_type")}</Label>
                     <TabToggle
                       id="type"
                       options={[
@@ -158,7 +158,7 @@ export const CreateNewActionTab = ({
               {t("common.cancel")}
             </Button>
             <Button type="submit" loading={isSubmitting}>
-              {t("environments.actions.create_action")}
+              {t("workspace.actions.create_action")}
             </Button>
           </div>
         </form>

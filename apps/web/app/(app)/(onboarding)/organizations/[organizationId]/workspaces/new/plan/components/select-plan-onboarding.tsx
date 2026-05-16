@@ -13,8 +13,8 @@ export const SelectPlanOnboarding = async ({ organizationId }: SelectPlanOnboard
   return (
     <div className="flex min-h-full min-w-full flex-col items-center justify-center space-y-8">
       <Header
-        title={t("environments.settings.billing.select_plan_header_title")}
-        subtitle={t("environments.settings.billing.select_plan_header_subtitle")}
+        title={t("workspace.settings.billing.select_plan_header_title")}
+        subtitle={t("workspace.settings.billing.select_plan_header_subtitle")}
       />
       <SelectPlanCard nextUrl={nextUrl} organizationId={organizationId} />
     </div>

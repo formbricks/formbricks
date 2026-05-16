@@ -46,10 +46,12 @@
       "duplicate_files": "Şu dosyalar zaten yüklendi: {duplicateNames}. Yinelenen dosyalara izin verilmez.",
       "file_size_exceeded": "Şu dosya(lar) maksimum {maxSizeInMB} MB boyutunu aşıyor ve kaldırıldı: {fileNames}",
       "file_size_exceeded_alert": "Dosya {maxSizeInMB} MB'den küçük olmalıdır",
+      "invalid_file_name": "Dosya adı geçersiz karakterler içeriyor. Lütfen dosyayı yeniden adlandırıp tekrar deneyin.",
       "no_valid_file_types_selected": "Geçerli dosya türü seçilmedi. Lütfen geçerli bir dosya türü seçin.",
       "only_one_file_can_be_uploaded_at_a_time": "Aynı anda yalnızca bir dosya yüklenebilir.",
       "placeholder_text": "Dosyaları yüklemek için tıklayın veya sürükleyin",
       "upload_failed": "Yükleme başarısız oldu! Lütfen tekrar deneyin.",
+      "upload_service_unavailable": "Dosya yükleme hizmeti kullanılamıyor. Lütfen daha sonra tekrar deneyin veya anket sahibiyle iletişime geçin.",
       "uploading": "Yükleniyor...",
       "you_can_only_upload_a_maximum_of_files": "En fazla {FILE_LIMIT} dosya yükleyebilirsiniz."
     },

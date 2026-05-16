@@ -1,91 +1,79 @@
 "use server";
 
 import { z } from "zod";
-import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import {
-  getEnvironmentIdFromSurveyId,
-  getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromSurveyId,
-  getProjectIdFromSurveyId,
+  getOrganizationIdFromWorkspaceId,
+  getWorkspaceIdFromSurveyId,
 } from "@/lib/utils/helper";
-import { generateSurveySingleUseIds } from "@/lib/utils/single-use-surveys";
+import {
+  generateSurveySingleUseLinkParams,
+  generateSurveySingleUseLinkParamsList,
+} from "@/lib/utils/single-use-surveys";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
-import { getProjectIdIfEnvironmentExists } from "@/modules/survey/list/lib/environment";
-import { copySurveyToOtherEnvironment } from "@/modules/survey/list/lib/survey";
+import { copySurveyToOtherWorkspace } from "@/modules/survey/list/lib/survey";
 
-const ZCopySurveyToOtherEnvironmentAction = z.object({
+const ZCopySurveyToOtherWorkspaceAction = z.object({
   surveyId: z.cuid2(),
-  targetEnvironmentId: z.cuid2(),
+  targetWorkspaceId: z.cuid2(),
 });
 
-export const copySurveyToOtherEnvironmentAction = authenticatedActionClient
-  .inputSchema(ZCopySurveyToOtherEnvironmentAction)
+export const copySurveyToOtherWorkspaceAction = authenticatedActionClient
+  .inputSchema(ZCopySurveyToOtherWorkspaceAction)
   .action(
-    withAuditLogging("copiedToOtherEnvironment", "survey", async ({ ctx, parsedInput }) => {
-      const sourceEnvironmentId = await getEnvironmentIdFromSurveyId(parsedInput.surveyId);
-      const sourceEnvironmentProjectId = await getProjectIdIfEnvironmentExists(sourceEnvironmentId);
-      const targetEnvironmentProjectId = await getProjectIdIfEnvironmentExists(
-        parsedInput.targetEnvironmentId
-      );
+    withAuditLogging("copiedToOtherWorkspace", "survey", async ({ ctx, parsedInput }) => {
+      const sourceWorkspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
 
-      if (!sourceEnvironmentProjectId || !targetEnvironmentProjectId) {
-        throw new ResourceNotFoundError(
-          "Environment",
-          sourceEnvironmentProjectId ? parsedInput.targetEnvironmentId : sourceEnvironmentId
-        );
+      const sourceOrganizationId = await getOrganizationIdFromWorkspaceId(sourceWorkspaceId);
+      const targetOrganizationId = await getOrganizationIdFromWorkspaceId(parsedInput.targetWorkspaceId);
+
+      if (sourceOrganizationId !== targetOrganizationId) {
+        throw new OperationNotAllowedError("Source and target workspaces must be in the same organization");
       }
 
-      const sourceEnvironmentOrganizationId = await getOrganizationIdFromEnvironmentId(sourceEnvironmentId);
-      const targetEnvironmentOrganizationId = await getOrganizationIdFromEnvironmentId(
-        parsedInput.targetEnvironmentId
-      );
-
-      if (sourceEnvironmentOrganizationId !== targetEnvironmentOrganizationId) {
-        throw new OperationNotAllowedError("Source and target environments must be in the same organization");
-      }
-
-      // authorization check for source environment
+      // authorization check for source workspace
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
-        organizationId: sourceEnvironmentOrganizationId,
+        organizationId: sourceOrganizationId,
         access: [
           {
             type: "organization",
             roles: ["owner", "manager"],
           },
           {
-            type: "projectTeam",
+            type: "workspaceTeam",
             minPermission: "readWrite",
-            projectId: sourceEnvironmentProjectId,
+            workspaceId: sourceWorkspaceId,
           },
         ],
       });
 
-      // authorization check for target environment
+      // authorization check for target workspace
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
-        organizationId: targetEnvironmentOrganizationId,
+        organizationId: targetOrganizationId,
         access: [
           {
             type: "organization",
             roles: ["owner", "manager"],
           },
           {
-            type: "projectTeam",
+            type: "workspaceTeam",
             minPermission: "readWrite",
-            projectId: targetEnvironmentProjectId,
+            workspaceId: parsedInput.targetWorkspaceId,
           },
         ],
       });
 
-      ctx.auditLoggingCtx.organizationId = sourceEnvironmentOrganizationId;
+      ctx.auditLoggingCtx.organizationId = sourceOrganizationId;
       ctx.auditLoggingCtx.surveyId = parsedInput.surveyId;
-      const result = await copySurveyToOtherEnvironment(
-        sourceEnvironmentId,
+      const result = await copySurveyToOtherWorkspace(
+        sourceWorkspaceId,
         parsedInput.surveyId,
-        parsedInput.targetEnvironmentId,
+        parsedInput.targetWorkspaceId,
         ctx.user.id
       );
       ctx.auditLoggingCtx.newObject = result;
@@ -93,11 +81,16 @@ export const copySurveyToOtherEnvironmentAction = authenticatedActionClient
     })
   );
 
-const ZGenerateSingleUseIdAction = z.object({
-  surveyId: z.cuid2(),
-  isEncrypted: z.boolean(),
-  count: z.number().min(1).max(5000).prefault(1),
-});
+const ZGenerateSingleUseIdAction = z
+  .object({
+    surveyId: z.cuid2(),
+    isEncrypted: z.boolean(),
+    count: z.number().min(1).max(5000).prefault(1),
+    singleUseId: z.string().trim().min(1).max(255).optional(),
+  })
+  .refine((data) => !data.singleUseId || (!data.isEncrypted && data.count === 1), {
+    message: "Custom single-use IDs can only be generated one at a time without encryption",
+  });
 
 export const generateSingleUseIdsAction = authenticatedActionClient
   .inputSchema(ZGenerateSingleUseIdAction)
@@ -111,12 +104,20 @@ export const generateSingleUseIdsAction = authenticatedActionClient
           roles: ["owner", "manager"],
         },
         {
-          type: "projectTeam",
-          projectId: await getProjectIdFromSurveyId(parsedInput.surveyId),
+          type: "workspaceTeam",
+          workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
           minPermission: "readWrite",
         },
       ],
     });
 
-    return generateSurveySingleUseIds(parsedInput.count, parsedInput.isEncrypted);
+    if (parsedInput.singleUseId) {
+      return [generateSurveySingleUseLinkParams(parsedInput.surveyId, false, parsedInput.singleUseId)];
+    }
+
+    return generateSurveySingleUseLinkParamsList(
+      parsedInput.count,
+      parsedInput.surveyId,
+      parsedInput.isEncrypted
+    );
   });

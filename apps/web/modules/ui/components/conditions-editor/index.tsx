@@ -126,7 +126,7 @@ export function ConditionsEditor({
                         callbacks.onAddConditionBelow(condition.id);
                       }}
                       icon={<PlusIcon className="h-4 w-4" />}>
-                      {t("environments.surveys.edit.add_condition_below")}
+                      {t("workspace.surveys.edit.add_condition_below")}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => callbacks.onRemoveCondition(condition.id)}
@@ -161,8 +161,7 @@ export function ConditionsEditor({
 
     const getConnector = () => {
       if (index > 0) return <div>{connector}</div>;
-      if (parentConditionGroup.conditions.length === 1)
-        return <div>{t("environments.surveys.edit.when")}</div>;
+      if (parentConditionGroup.conditions.length === 1) return <div>{t("workspace.surveys.edit.when")}</div>;
       return <div />;
     };
 
@@ -203,7 +202,7 @@ export function ConditionsEditor({
                   withInput={showInput}
                   inputProps={{
                     type: inputType,
-                    placeholder: t("environments.surveys.edit.select_or_type_value"),
+                    placeholder: t("workspace.surveys.edit.select_or_type_value"),
                   }}
                   key="conditionMatchValue"
                   showSearch={false}
@@ -234,7 +233,7 @@ export function ConditionsEditor({
                   callbacks.onAddConditionBelow(condition.id);
                 }}
                 icon={<PlusIcon className="h-4 w-4" />}>
-                {t("environments.surveys.edit.add_condition_below")}
+                {t("workspace.surveys.edit.add_condition_below")}
               </DropdownMenuItem>
               <DropdownMenuItem
                 // onCreateGroup determines if this component is being used in quotas or logic, if in quotas we do not allow removal of only condition
@@ -253,7 +252,7 @@ export function ConditionsEditor({
                   onClick={() => onCreateGroup(condition.id)}
                   icon={<WorkflowIcon className="h-4 w-4" />}
                   disabled={conditions.conditions.length <= 1}>
-                  {t("environments.surveys.edit.create_group")}
+                  {t("workspace.surveys.edit.create_group")}
                 </DropdownMenuItem>
               )}
             </DropdownMenuContent>
@@ -272,7 +271,7 @@ export function ConditionsEditor({
       {conditions.conditions.length > 1 && (
         <div className="flex items-center gap-x-2 text-sm">
           <p className="flex w-10 shrink-0 items-center justify-end font-medium text-slate-900">
-            {t("environments.surveys.edit.when")}
+            {t("workspace.surveys.edit.when")}
           </p>
           <Select
             value={conditions.connector}
@@ -283,8 +282,8 @@ export function ConditionsEditor({
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="flex min-w-fit max-w-fit items-center justify-between">
-              <SelectItem value="and">{t("environments.surveys.edit.all_are_true")}</SelectItem>
-              <SelectItem value="or">{t("environments.surveys.edit.any_is_true")}</SelectItem>
+              <SelectItem value="and">{t("workspace.surveys.edit.all_are_true")}</SelectItem>
+              <SelectItem value="or">{t("workspace.surveys.edit.any_is_true")}</SelectItem>
             </SelectContent>
           </Select>
         </div>

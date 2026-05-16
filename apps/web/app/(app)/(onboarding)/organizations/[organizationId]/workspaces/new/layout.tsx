@@ -4,10 +4,10 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getOrganization } from "@/lib/organization/service";
-import { getOrganizationProjectsCount } from "@/lib/project/service";
+import { getOrganizationWorkspacesCount } from "@/lib/workspace/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { authOptions } from "@/modules/auth/lib/authOptions";
-import { getOrganizationProjectsLimit } from "@/modules/ee/license-check/lib/utils";
+import { getOrganizationWorkspacesLimit } from "@/modules/ee/license-check/lib/utils";
 
 const OnboardingLayout = async (props: {
   params: Promise<{ organizationId: string }>;
@@ -32,12 +32,12 @@ const OnboardingLayout = async (props: {
     throw new ResourceNotFoundError(t("common.organization"), params.organizationId);
   }
 
-  const [organizationProjectsLimit, organizationProjectsCount] = await Promise.all([
-    getOrganizationProjectsLimit(organization.id),
-    getOrganizationProjectsCount(organization.id),
+  const [organizationWorkspacesLimit, organizationWorkspacesCount] = await Promise.all([
+    getOrganizationWorkspacesLimit(organization.id),
+    getOrganizationWorkspacesCount(organization.id),
   ]);
 
-  if (organizationProjectsCount >= organizationProjectsLimit) {
+  if (organizationWorkspacesCount >= organizationWorkspacesLimit) {
     return redirect(`/`);
   }
 

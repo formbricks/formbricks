@@ -126,7 +126,7 @@ export function SegmentTable({
             ) : (
               <TableRow className="hover:bg-white">
                 <TableCell colSpan={columns.length} className="h-24 rounded-b-lg text-center">
-                  <p className="text-slate-400">{t("environments.segments.create_your_first_segment")}</p>
+                  <p className="text-slate-400">{t("workspace.segments.create_your_first_segment")}</p>
                 </TableCell>
               </TableRow>
             )}
@@ -136,7 +136,7 @@ export function SegmentTable({
 
       {editingSegment && (
         <EditSegmentModal
-          environmentId={editingSegment.environmentId}
+          workspaceId={editingSegment.workspaceId}
           open={!!editingSegment}
           setOpen={(open) => !open && setEditingSegment(null)}
           currentSegment={editingSegment}

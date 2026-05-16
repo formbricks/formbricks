@@ -14,6 +14,7 @@ import {
 } from "@formbricks/types/organizations";
 import { cache } from "@/lib/cache";
 import { IS_FORMBRICKS_CLOUD, WEBAPP_URL } from "@/lib/constants";
+import { getWorkspace } from "@/lib/workspace/service";
 import {
   type TStandardCloudPlan,
   getCatalogItemForPlan,
@@ -47,7 +48,7 @@ export const invalidateOrganizationBillingCache = async (organizationId: string)
 
 export const getDefaultOrganizationBilling = (): TOrganizationBilling => ({
   limits: {
-    projects: IS_FORMBRICKS_CLOUD ? 1 : 3,
+    workspaces: IS_FORMBRICKS_CLOUD ? 1 : 3,
     monthly: {
       responses: IS_FORMBRICKS_CLOUD ? 250 : 1500,
     },
@@ -552,7 +553,7 @@ export const createProTrialSubscription = async (
 export const createPaidPlanCheckoutSession = async (input: {
   organizationId: string;
   customerId: string;
-  environmentId: string;
+  workspaceId: string;
   plan: Exclude<TStandardCloudPlan, "hobby">;
   interval: TCloudBillingInterval;
 }): Promise<string> => {
@@ -572,6 +573,10 @@ export const createPaidPlanCheckoutSession = async (input: {
   }
 
   const items = await getCatalogItemsForPlan(input.plan, input.interval);
+  const workspace = await getWorkspace(input.workspaceId);
+  if (!workspace) {
+    throw new ResourceNotFoundError("workspace", input.workspaceId);
+  }
   const session = await stripeClient.checkout.sessions.create({
     mode: "subscription",
     customer: input.customerId,
@@ -586,8 +591,8 @@ export const createPaidPlanCheckoutSession = async (input: {
       address: "auto",
       name: "auto",
     },
-    success_url: `${WEBAPP_URL}/billing-confirmation?environmentId=${input.environmentId}&checkout_success=1`,
-    cancel_url: `${WEBAPP_URL}/environments/${input.environmentId}/settings/billing`,
+    success_url: `${WEBAPP_URL}/billing-confirmation?workspaceId=${input.workspaceId}&checkout_success=1`,
+    cancel_url: `${WEBAPP_URL}/workspaces/${workspace.id}/settings/organization/billing`,
     metadata: {
       organizationId: input.organizationId,
       targetPlan: input.plan,
@@ -1062,15 +1067,15 @@ const resolveEntitlementDrivenLimits = (
   const workspaceLimitFromEntitlements = parseEntitlementLimit(featureLookupKeys, "workspace-limit-");
   const responsesIncludedFromEntitlements = parseEntitlementLimit(featureLookupKeys, "responses-included-");
 
-  const projectsLimit =
+  const workspacesLimit =
     workspaceLimitFromEntitlements === undefined
-      ? (previousLimits?.projects ?? null)
+      ? (previousLimits?.workspaces ?? null)
       : workspaceLimitFromEntitlements;
 
-  if (workspaceLimitFromEntitlements === undefined && previousLimits?.projects == null) {
+  if (workspaceLimitFromEntitlements === undefined && previousLimits?.workspaces == null) {
     logger.warn(
       { organizationId, customerId, cloudPlan, featureLookupKeys },
-      "No workspace limit entitlement found in Stripe entitlements; preserving previous projects limit"
+      "No workspace limit entitlement found in Stripe entitlements; preserving previous workspaces limit"
     );
   }
 
@@ -1087,7 +1092,7 @@ const resolveEntitlementDrivenLimits = (
   }
 
   return {
-    projects: projectsLimit,
+    workspaces: workspacesLimit,
     monthly: {
       responses: responsesIncludedLimit,
     },

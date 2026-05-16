@@ -1,7 +1,11 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { generateStandardWebhookSignature } from "@/lib/crypto";
-import { validateWebhookUrl } from "@/lib/utils/validate-webhook-url";
+import {
+  createPinnedDispatcher,
+  validateAndResolveWebhookUrl,
+  validateWebhookUrl,
+} from "@/lib/utils/validate-webhook-url";
 import { getTranslate } from "@/lingodotdev/server";
 import { isDiscordWebhook } from "@/modules/integrations/webhooks/lib/utils";
 import { testEndpoint } from "./webhook";
@@ -32,6 +36,12 @@ vi.mock("@/lib/crypto", () => ({
 
 vi.mock("@/lib/utils/validate-webhook-url", () => ({
   validateWebhookUrl: vi.fn(async () => undefined),
+  validateAndResolveWebhookUrl: vi.fn(async () => ({ ip: "93.184.216.34", family: 4 })),
+  createPinnedDispatcher: vi.fn(() => ({
+    __pinned: true,
+    close: vi.fn(async () => undefined),
+    destroy: vi.fn(async () => undefined),
+  })),
 }));
 
 vi.mock("@/lingodotdev/server", () => ({
@@ -52,7 +62,13 @@ describe("testEndpoint", () => {
     constantsMock.dangerouslyAllow = false;
     vi.mocked(generateStandardWebhookSignature).mockReturnValue("signed-payload");
     vi.mocked(validateWebhookUrl).mockResolvedValue(undefined);
-    vi.mocked(getTranslate).mockResolvedValue((key: string) => key);
+    vi.mocked(validateAndResolveWebhookUrl).mockResolvedValue({ ip: "93.184.216.34", family: 4 });
+    vi.mocked(createPinnedDispatcher).mockReturnValue({
+      __pinned: true,
+      close: vi.fn(async () => undefined),
+      destroy: vi.fn(async () => undefined),
+    } as never);
+    vi.mocked(getTranslate).mockResolvedValue(((key: string) => key) as any);
     vi.mocked(isDiscordWebhook).mockReturnValue(false);
   });
 
@@ -62,12 +78,12 @@ describe("testEndpoint", () => {
   });
 
   test.each([
-    [500, "environments.integrations.webhooks.endpoint_internal_server_error"],
-    [404, "environments.integrations.webhooks.endpoint_not_found_error"],
-    [405, "environments.integrations.webhooks.endpoint_method_not_allowed_error"],
-    [502, "environments.integrations.webhooks.endpoint_bad_gateway_error"],
-    [503, "environments.integrations.webhooks.endpoint_service_unavailable_error"],
-    [504, "environments.integrations.webhooks.endpoint_gateway_timeout_error"],
+    [500, "workspace.integrations.webhooks.endpoint_internal_server_error"],
+    [404, "workspace.integrations.webhooks.endpoint_not_found_error"],
+    [405, "workspace.integrations.webhooks.endpoint_method_not_allowed_error"],
+    [502, "workspace.integrations.webhooks.endpoint_bad_gateway_error"],
+    [503, "workspace.integrations.webhooks.endpoint_service_unavailable_error"],
+    [504, "workspace.integrations.webhooks.endpoint_gateway_timeout_error"],
   ])("throws a translated InvalidInputError for blocked status %s", async (statusCode, messageKey) => {
     vi.stubGlobal(
       "fetch",
@@ -80,7 +96,7 @@ describe("testEndpoint", () => {
       new InvalidInputError(messageKey)
     );
 
-    expect(validateWebhookUrl).toHaveBeenCalledWith("https://example.com/webhook");
+    expect(validateAndResolveWebhookUrl).toHaveBeenCalledWith("https://example.com/webhook");
     expect(generateStandardWebhookSignature).toHaveBeenCalled();
     expect(getTranslate).toHaveBeenCalled();
   });

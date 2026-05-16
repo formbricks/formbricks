@@ -13,7 +13,7 @@ type ResponseMock = Prisma.ResponseGetPayload<{
   include: typeof responseSelection;
 }>;
 
-export const mockEnvironmentId = "ars2tjk8hsi8oqk1uac00mo7";
+export const mockWorkspaceId = "wksp2tjk8hsi8oqk1uac00mo";
 export const mockContactId = "lhwy39ga2zy8by1ol1bnaiso";
 export const mockResponseId = "z32bqib0nlcw8vqymlj6m8x7";
 export const mockSingleUseId = "qj57j3opsw8b5sxgea20fgcq";
@@ -33,10 +33,10 @@ export const mockMeta = {
 
 export const mockContact = {
   id: mockContactId,
+  workspaceId: mockWorkspaceId,
   userId: mockUserId,
   createdAt: new Date(2000, 1, 1, 19),
   updatedAt: new Date(2000, 1, 1, 19),
-  environmentId: mockEnvironmentId,
   attributes: [],
 };
 
@@ -47,7 +47,7 @@ export const mockTags = [
       name: "tag1",
       createdAt: new Date(),
       updatedAt: new Date(),
-      environmentId: mockEnvironmentId,
+      workspaceId: mockWorkspaceId,
     },
   },
 ];
@@ -116,7 +116,7 @@ const getMockTags = (tags: string[]): { tag: TTag }[] => {
       name: tag,
       createdAt: new Date(),
       updatedAt: new Date(),
-      environmentId: mockEnvironmentId,
+      workspaceId: mockWorkspaceId,
     },
   }));
 };
@@ -429,7 +429,6 @@ export const mockSurvey: TSurvey = {
   updatedAt: new Date("2024-02-06T20:12:03.521Z"),
   name: "New Survey",
   type: "link",
-  environmentId: "envId",
   createdBy: "creatorId",
   status: "draft",
   welcomeCard: mockWelcomeCard,
@@ -523,7 +522,7 @@ export const mockSurvey: TSurvey = {
   displayPercentage: null,
   autoComplete: null,
   isVerifyEmailEnabled: false,
-  projectOverwrites: null,
+  workspaceOverwrites: null,
   recaptcha: null,
   styling: null,
   surveyClosedMessage: null,

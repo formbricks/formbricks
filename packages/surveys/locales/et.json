@@ -46,10 +46,12 @@
       "duplicate_files": "Järgmised failid on juba üles laaditud: {duplicateNames}. Duplikaatfailid ei ole lubatud.",
       "file_size_exceeded": "Järgmised failid ületavad maksimaalse suuruse {maxSizeInMB} MB ja eemaldati: {fileNames}",
       "file_size_exceeded_alert": "Fail peab olema väiksem kui {maxSizeInMB} MB",
+      "invalid_file_name": "Failinimi sisaldab sobimatuid märke. Nimeta fail ümber ja proovi uuesti.",
       "no_valid_file_types_selected": "Ühtegi kehtivat failitüüpi pole valitud. Palun vali kehtiv failitüüp.",
       "only_one_file_can_be_uploaded_at_a_time": "Korraga saab üles laadida ainult ühe faili.",
       "placeholder_text": "Klõpsa või lohista failide üleslaadimiseks",
       "upload_failed": "Üleslaadimine ebaõnnestus! Palun proovi uuesti.",
+      "upload_service_unavailable": "Failide üleslaadimise teenus pole saadaval. Proovi hiljem uuesti või võta ühendust küsitluse omanikuga.",
       "uploading": "Üleslaadimine...",
       "you_can_only_upload_a_maximum_of_files": "Saad üles laadida maksimaalselt {FILE_LIMIT} faili."
     },
