@@ -51,12 +51,17 @@ const Page = async (props: WorkspaceSettingsPageProps) => {
   const experimentVariant =
     (await getPostHogFeatureFlag(session.user.id, "onboarding-theme-experiment")) || "control";
 
+  const workspaces = await getUserWorkspaces(session.user.id, params.organizationId);
+
   if (experimentVariant === "remove-theme") {
-    const workspace = await createWorkspace(params.organizationId, {
-      name: organization.name,
-      styling: buildStylingFromBrandColor(DEFAULT_BRAND_COLOR),
-      config: { channel, industry },
-    });
+    const existing = workspaces.find((w) => w.name === organization.name);
+    const workspace =
+      existing ??
+      (await createWorkspace(params.organizationId, {
+        name: organization.name,
+        styling: buildStylingFromBrandColor(DEFAULT_BRAND_COLOR),
+        config: { channel, industry },
+      }));
     if (channel === "app" || channel === "website") {
       return redirect(`/workspaces/${workspace.id}/connect`);
     } else if (channel === "link") {
@@ -64,8 +69,6 @@ const Page = async (props: WorkspaceSettingsPageProps) => {
     }
     return redirect(`/workspaces/${workspace.id}/xm-templates`);
   }
-
-  const workspaces = await getUserWorkspaces(session.user.id, params.organizationId);
 
   const organizationTeams = await getTeamsByOrganizationId(params.organizationId);
 
