@@ -40,7 +40,7 @@ export const TrialBannerNew = ({
             ? t("common.trial_days_remaining", { count: trialDaysRemaining })
             : t("common.trial_expired")}
         </span>
-        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+        <span className="whitespace-nowrap rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
           {planLabel} Trial
         </span>
       </div>
