@@ -590,7 +590,7 @@ export const MainNavigation = ({
               {!isCollapsed &&
                 isFormbricksCloud &&
                 trialDaysRemaining !== null &&
-                (newTrialBannerVariant === "test" ? (
+                (newTrialBannerVariant === "new-trial-banner" ? (
                   <TrialBannerNew
                     trialDaysRemaining={trialDaysRemaining}
                     planName={organization.billing.stripe?.plan ?? "pro"}
