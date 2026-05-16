@@ -41,6 +41,7 @@ import { getAccessFlags } from "@/lib/membership/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
 import { TrialAlert } from "@/modules/ee/billing/components/trial-alert";
+import { TRIAL_BASE_RESPONSE_LIMIT, TrialBannerNew } from "@/modules/ee/billing/components/trial-banner-new";
 import { CreateOrganizationModal } from "@/modules/organization/components/CreateOrganizationModal";
 import { ProfileAvatar } from "@/modules/ui/components/avatars";
 import { Badge } from "@/modules/ui/components/badge";
@@ -73,6 +74,8 @@ interface NavigationProps {
   organizationWorkspacesLimit: number;
   isLicenseActive: boolean;
   isAccessControlAllowed: boolean;
+  responseCount: number;
+  newTrialBannerVariant: string | boolean;
 }
 
 export const MainNavigation = ({
@@ -87,6 +90,8 @@ export const MainNavigation = ({
   organizationWorkspacesLimit,
   isLicenseActive,
   isAccessControlAllowed,
+  responseCount,
+  newTrialBannerVariant,
 }: NavigationProps) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -582,13 +587,26 @@ export const MainNavigation = ({
               )}
 
               {/* Trial Days Remaining */}
-              {!isCollapsed && isFormbricksCloud && trialDaysRemaining !== null && (
-                <Link
-                  href={`/workspaces/${workspace.id}/settings/organization/billing`}
-                  className="m-2 block">
-                  <TrialAlert trialDaysRemaining={trialDaysRemaining} size="small" />
-                </Link>
-              )}
+              {!isCollapsed &&
+                isFormbricksCloud &&
+                trialDaysRemaining !== null &&
+                (newTrialBannerVariant === "test" ? (
+                  <TrialBannerNew
+                    trialDaysRemaining={trialDaysRemaining}
+                    planName={organization.billing.stripe?.plan ?? "pro"}
+                    responseCount={responseCount}
+                    responseLimit={organization.billing.limits.monthly.responses}
+                    baseResponseLimit={TRIAL_BASE_RESPONSE_LIMIT}
+                    billingHref={`/workspaces/${workspace.id}/settings/organization/billing`}
+                    hasPaymentMethod={organization.billing.stripe?.hasPaymentMethod}
+                  />
+                ) : (
+                  <Link
+                    href={`/workspaces/${workspace.id}/settings/organization/billing`}
+                    className="m-2 block">
+                    <TrialAlert trialDaysRemaining={trialDaysRemaining} size="small" />
+                  </Link>
+                ))}
 
               <div className="flex flex-col">
                 <DropdownMenu onOpenChange={setIsWorkspaceDropdownOpen}>
