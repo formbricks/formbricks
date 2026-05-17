@@ -12,7 +12,7 @@ const {
   mockGetFeedbackRecordTenant,
   mockCheckAuthorizationUpdated,
   mockUserFindUnique,
-  mockGetIsUnifyFeedbackEnabled,
+  mockGetIsFeedbackDirectoriesEnabled,
 } = vi.hoisted(() => ({
   mockAuthenticateApiKeyFromHeaders: vi.fn(),
   mockGetApiKeyFromHeaders: vi.fn(),
@@ -23,7 +23,7 @@ const {
   mockGetFeedbackRecordTenant: vi.fn(),
   mockCheckAuthorizationUpdated: vi.fn(),
   mockUserFindUnique: vi.fn(),
-  mockGetIsUnifyFeedbackEnabled: vi.fn(),
+  mockGetIsFeedbackDirectoriesEnabled: vi.fn(),
 }));
 
 vi.mock("@/modules/api/lib/api-key-auth", () => ({
@@ -57,7 +57,7 @@ vi.mock("@/modules/ee/feedback-directory/lib/feedback-directory", () => ({
 }));
 
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
-  getIsUnifyFeedbackEnabled: mockGetIsUnifyFeedbackEnabled,
+  getIsFeedbackDirectoriesEnabled: mockGetIsFeedbackDirectoriesEnabled,
 }));
 
 vi.mock("@/modules/hub/service", () => ({
@@ -118,7 +118,7 @@ describe("authorizeEnvoyRequest", () => {
     });
     mockCheckAuthorizationUpdated.mockResolvedValue(true);
     mockUserFindUnique.mockResolvedValue({ id: "user_1", isActive: true });
-    mockGetIsUnifyFeedbackEnabled.mockResolvedValue(true);
+    mockGetIsFeedbackDirectoriesEnabled.mockResolvedValue(true);
   });
 
   test("allows create requests with an API key and body tenant_id", async () => {
@@ -457,7 +457,7 @@ describe("authorizeEnvoyRequest", () => {
   });
 
   test("returns 403 when unify feedback entitlement is disabled", async () => {
-    mockGetIsUnifyFeedbackEnabled.mockResolvedValue(false);
+    mockGetIsFeedbackDirectoriesEnabled.mockResolvedValue(false);
     mockGetApiKeyFromHeaders.mockReturnValue("fbk_test");
     mockAuthenticateApiKeyFromHeaders.mockResolvedValue({
       type: "apiKey",
@@ -476,7 +476,7 @@ describe("authorizeEnvoyRequest", () => {
     );
 
     expect(response.status).toBe(403);
-    expect(mockGetIsUnifyFeedbackEnabled).toHaveBeenCalledWith("org_1");
+    expect(mockGetIsFeedbackDirectoriesEnabled).toHaveBeenCalledWith("org_1");
   });
 
   test("returns 403 for archived directories", async () => {

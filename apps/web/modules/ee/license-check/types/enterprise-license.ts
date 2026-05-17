@@ -19,7 +19,6 @@ const ZEnterpriseLicenseFeatures = z.object({
   auditLogs: z.boolean(),
   accessControl: z.boolean(),
   quotas: z.boolean(),
-  unifyFeedback: z.boolean().default(false),
   feedbackDirectories: z.boolean().default(false),
   dashboards: z.boolean().default(false),
 });

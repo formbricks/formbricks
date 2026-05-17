@@ -10,7 +10,7 @@ import { verifyFeedbackRecordsGatewayToken } from "@/lib/jwt";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getBearerTokenFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { getFeedbackDirectoryAuthContext } from "@/modules/ee/feedback-directory/lib/feedback-directory";
-import { getIsUnifyFeedbackEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/utils";
 import {
   TGatewayAuthenticatedPrincipal,
   TGatewayRequestAuthorizer,
@@ -264,8 +264,10 @@ const authorizeFeedbackRecordsGatewayRequest = async (
     return { allowed: false };
   }
 
-  const isUnifyFeedbackAllowed = await getIsUnifyFeedbackEnabled(feedbackDirectory.organizationId);
-  if (!isUnifyFeedbackAllowed) {
+  const isFeedbackDirectoriesAllowed = await getIsFeedbackDirectoriesEnabled(
+    feedbackDirectory.organizationId
+  );
+  if (!isFeedbackDirectoriesAllowed) {
     return { allowed: false };
   }
 
