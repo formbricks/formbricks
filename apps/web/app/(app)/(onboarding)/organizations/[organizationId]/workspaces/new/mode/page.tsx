@@ -25,7 +25,7 @@ const Page = async (props: ModePageProps) => {
   }
 
   const experimentVariant =
-    (await getPostHogFeatureFlag(session.user.id, "onboarding-mode-experiment")) || "control";
+    (await getPostHogFeatureFlag(session.user.id, "a-b_onboarding_skip-first-screen")) || "control";
 
   if (experimentVariant === "remove-cx-and-surveys-mode") {
     return redirect(`/organizations/${params.organizationId}/workspaces/new/channel`);
