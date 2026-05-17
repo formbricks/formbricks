@@ -4,6 +4,7 @@ import { TopControlBar } from "@/app/(app)/workspaces/[workspaceId]/components/T
 import { IS_DEVELOPMENT, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getAccessFlags } from "@/lib/membership/utils";
+import { getPostHogFeatureFlag } from "@/lib/posthog/get-feature-flag";
 import { getTranslate } from "@/lingodotdev/server";
 import { getOrganizationWorkspacesLimit } from "@/modules/ee/license-check/lib/utils";
 import { LimitsReachedBanner } from "@/modules/ui/components/limits-reached-banner";
@@ -37,6 +38,7 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
   const { features, lastChecked, isPendingDowngrade, active, status } = license;
   const isMultiOrgEnabled = features?.isMultiOrgEnabled ?? false;
   const organizationWorkspacesLimit = await getOrganizationWorkspacesLimit(organization.id);
+  const newTrialBannerVariant = await getPostHogFeatureFlag(user.id, "a-b_navigation_rich-trial-banner");
   const isOwnerOrManager = isOwner || isManager;
 
   // Validate that workspace permission exists for members
@@ -71,6 +73,8 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
           organizationWorkspacesLimit={organizationWorkspacesLimit}
           isLicenseActive={active}
           isAccessControlAllowed={isAccessControlAllowed}
+          responseCount={responseCount}
+          newTrialBannerVariant={newTrialBannerVariant}
         />
         <div id="mainContent" className="flex flex-1 flex-col overflow-hidden bg-slate-50">
           <TopControlBar

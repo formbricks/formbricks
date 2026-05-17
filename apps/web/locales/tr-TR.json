@@ -476,6 +476,7 @@
     "trial_days_remaining": "Deneme sürenizde {count} gün kaldı",
     "trial_expired": "Deneme süreniz doldu",
     "trial_one_day_remaining": "Deneme sürenizde 1 gün kaldı",
+    "trial_plan_badge": "{plan} Deneme",
     "try_again": "Tekrar dene",
     "type": "Tür",
     "unknown_survey": "Bilinmeyen anket",

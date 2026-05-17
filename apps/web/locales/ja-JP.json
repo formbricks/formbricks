@@ -476,6 +476,7 @@
     "trial_days_remaining": "トライアル期間の残り{count}日",
     "trial_expired": "トライアル期間が終了しました",
     "trial_one_day_remaining": "トライアル期間の残り1日",
+    "trial_plan_badge": "{plan}トライアル",
     "try_again": "もう一度お試しください",
     "type": "種類",
     "unknown_survey": "不明なフォーム",

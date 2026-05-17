@@ -476,6 +476,7 @@
     "trial_days_remaining": "试用期还剩 {count} 天",
     "trial_expired": "您的试用期已过期",
     "trial_one_day_remaining": "试用期还剩 1 天",
+    "trial_plan_badge": "{plan} 试用版",
     "try_again": "再试一次",
     "type": "类型",
     "unknown_survey": "未知调查",
