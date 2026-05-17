@@ -29,40 +29,33 @@ const CUSTOMER_LOGOS = [
   { src: ethereumLogo, alt: "Ethereum" },
 ];
 
-export const SelectPlanCard = ({ nextUrl, organizationId, variant = "control" }: SelectPlanCardProps) => {
+export const SelectPlanCard = ({ nextUrl, organizationId, variant }: Readonly<SelectPlanCardProps>) => {
   const router = useRouter();
   const [isStartingTrial, setIsStartingTrial] = useState(false);
   const [isStartingHobby, setIsStartingHobby] = useState(false);
   const { t } = useTranslation();
   const isVariantB = variant === "variant_b";
   const isVariantC = variant === "variant_c";
-  let copyKeys = {
-    header: "workspace.settings.billing.select_plan_header",
-    subheader: "workspace.settings.billing.select_plan_subheader",
-    cta: "workspace.settings.billing.select_plan_cta",
-    skip: "workspace.settings.billing.select_plan_skip",
-  };
-
-  if (isVariantB) {
-    copyKeys = {
-      header: "workspace.settings.billing.select_plan_variant_b_header",
-      subheader: "workspace.settings.billing.select_plan_variant_b_subheader",
-      cta: "workspace.settings.billing.select_plan_variant_b_cta",
-      skip: "workspace.settings.billing.select_plan_variant_b_skip",
-    };
-  } else if (isVariantC) {
-    copyKeys = {
-      header: "workspace.settings.billing.select_plan_variant_c_header",
-      subheader: "workspace.settings.billing.select_plan_variant_c_subheader",
-      cta: "workspace.settings.billing.select_plan_variant_c_cta",
-      skip: "workspace.settings.billing.select_plan_variant_c_skip",
-    };
-  }
-
-  const header = t(copyKeys.header);
-  const subheader = t(copyKeys.subheader);
-  const cta = t(copyKeys.cta);
-  const skip = t(copyKeys.skip);
+  const copy = isVariantB
+    ? {
+        header: t("workspace.settings.billing.select_plan_variant_b_header"),
+        subheader: t("workspace.settings.billing.select_plan_variant_b_subheader"),
+        cta: t("workspace.settings.billing.select_plan_variant_b_cta"),
+        skip: t("workspace.settings.billing.select_plan_variant_b_skip"),
+      }
+    : isVariantC
+      ? {
+          header: t("workspace.settings.billing.select_plan_variant_c_header"),
+          subheader: t("workspace.settings.billing.select_plan_variant_c_subheader"),
+          cta: t("workspace.settings.billing.select_plan_variant_c_cta"),
+          skip: t("workspace.settings.billing.select_plan_variant_c_skip"),
+        }
+      : {
+          header: t("workspace.settings.billing.select_plan_header"),
+          subheader: t("workspace.settings.billing.select_plan_subheader"),
+          cta: t("workspace.settings.billing.select_plan_cta"),
+          skip: t("workspace.settings.billing.select_plan_skip"),
+        };
 
   const SELECT_PLAN_FEATURE_KEYS = [
     t("workspace.settings.billing.select_plan_feature_1"),
@@ -114,8 +107,8 @@ export const SelectPlanCard = ({ nextUrl, organizationId, variant = "control" }:
           </div>
 
           <div className="text-center">
-            <h3 className="text-2xl font-semibold text-slate-800">{header}</h3>
-            <p className="mt-2 text-slate-600">{subheader}</p>
+            <h3 className="text-2xl font-semibold text-slate-800">{copy.header}</h3>
+            <p className="mt-2 text-slate-600">{copy.subheader}</p>
           </div>
 
           <ul className="my-3 w-full space-y-3 text-left">
@@ -133,7 +126,7 @@ export const SelectPlanCard = ({ nextUrl, organizationId, variant = "control" }:
             className="mt-4 w-full"
             loading={isStartingTrial}
             disabled={isStartingTrial || isStartingHobby}>
-            {cta}
+            {copy.cta}
           </Button>
         </div>
 
@@ -160,7 +153,7 @@ export const SelectPlanCard = ({ nextUrl, organizationId, variant = "control" }:
         onClick={handleContinueHobby}
         disabled={isStartingTrial || isStartingHobby}
         className="text-sm text-slate-400 underline-offset-2 transition-colors hover:text-slate-600 hover:underline">
-        {isStartingHobby ? t("common.loading") : skip}
+        {isStartingHobby ? t("common.loading") : copy.skip}
       </button>
     </div>
   );
