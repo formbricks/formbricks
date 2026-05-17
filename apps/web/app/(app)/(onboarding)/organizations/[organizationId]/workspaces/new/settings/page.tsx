@@ -49,7 +49,7 @@ const Page = async (props: WorkspaceSettingsPageProps) => {
   const mode = searchParams.mode ?? "surveys";
 
   const experimentVariant =
-    (await getPostHogFeatureFlag(session.user.id, "onboarding-theme-experiment")) || "control";
+    (await getPostHogFeatureFlag(session.user.id, "a-b_onboarding_skip-theme-screen")) || "control";
 
   const workspaces = await getUserWorkspaces(session.user.id, params.organizationId);
 
