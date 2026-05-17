@@ -72,7 +72,7 @@ interface ElementsViewProps {
   isStorageConfigured: boolean;
   quotas: TSurveyQuota[];
   isExternalUrlsAllowed: boolean;
-  customisationsInSettings?: boolean;
+  moveHiddenFieldsToSettingsTab?: boolean;
 }
 
 export const ElementsView = ({
@@ -92,7 +92,7 @@ export const ElementsView = ({
   isStorageConfigured = true,
   quotas,
   isExternalUrlsAllowed,
-  customisationsInSettings = false,
+  moveHiddenFieldsToSettingsTab = false,
 }: ElementsViewProps) => {
   const { t } = useTranslation();
   const [logicDeletionWarning, setLogicDeletionWarning] = React.useState<{
@@ -921,7 +921,7 @@ export const ElementsView = ({
         {!isCxMode && (
           <>
             <AddEndingCardButton localSurvey={localSurvey} addEndingCard={addEndingCard} />
-            {!customisationsInSettings && (
+            {!moveHiddenFieldsToSettingsTab && (
               <>
                 <hr />
                 <HiddenFieldsCard

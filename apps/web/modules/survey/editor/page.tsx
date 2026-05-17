@@ -93,12 +93,12 @@ export const SurveyEditorPage = async (props: {
   ]);
 
   const quotas = isQuotasAllowed && survey ? await getQuotas(survey.id) : [];
-  const [workspaceLanguages, teamMemberDetails, customisationsInSettingsFlag] = await Promise.all([
+  const [workspaceLanguages, teamMemberDetails, moveHiddenFieldsToSettingsTabFlag] = await Promise.all([
     getWorkspaceLanguages(workspaceWithTeamIds.id),
     getTeamMemberDetails(workspaceWithTeamIds.teamIds),
-    getPostHogFeatureFlag(session.user.id, "customisations_in_settings"),
+    getPostHogFeatureFlag(session.user.id, "a-b_survey-editor_move-hidden-fields-to-settings"),
   ]);
-  const customisationsInSettings = customisationsInSettingsFlag === "in-settings";
+  const moveHiddenFieldsToSettingsTab = moveHiddenFieldsToSettingsTabFlag === "in-settings";
 
   if (
     !survey ||
@@ -142,7 +142,7 @@ export const SurveyEditorPage = async (props: {
       isExternalUrlsAllowed={isExternalUrlsAllowed}
       publicDomain={publicDomain}
       enterpriseLicenseRequestFormUrl={ENTERPRISE_LICENSE_REQUEST_FORM_URL}
-      customisationsInSettings={customisationsInSettings}
+      moveHiddenFieldsToSettingsTab={moveHiddenFieldsToSettingsTab}
     />
   );
 };

@@ -34,7 +34,7 @@ interface SettingsViewProps {
   locale: TUserLocale;
   appSetupCompleted: boolean;
   enterpriseLicenseRequestFormUrl: string;
-  customisationsInSettings?: boolean;
+  moveHiddenFieldsToSettingsTab?: boolean;
   activeElementId?: string | null;
   setActiveElementId?: (elementId: string | null) => void;
 }
@@ -56,7 +56,7 @@ export const SettingsView = ({
   locale,
   appSetupCompleted,
   enterpriseLicenseRequestFormUrl,
-  customisationsInSettings = false,
+  moveHiddenFieldsToSettingsTab = false,
   activeElementId,
   setActiveElementId,
 }: SettingsViewProps) => {
@@ -125,7 +125,7 @@ export const SettingsView = ({
 
       {isAppSurvey && <SurveyPlacementCard localSurvey={localSurvey} setLocalSurvey={setLocalSurvey} />}
 
-      {customisationsInSettings && setActiveElementId && (
+      {moveHiddenFieldsToSettingsTab && setActiveElementId && (
         <>
           <HiddenFieldsCard
             localSurvey={localSurvey}
