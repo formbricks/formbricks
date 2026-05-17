@@ -411,7 +411,6 @@ checksums:
     common/something_went_wrong: a3cd2f01c073f1f5ff436d4b132d39cf
     common/something_went_wrong_please_try_again: c62a7718d9a1e9c4ffb707807550f836
     common/sort_by: 8adf3dbc5668379558957662f0c43563
-    common/start_free_trial: e346e4ed7d138dcc873db187922369da
     common/status: 4e1fcce15854d824919b4a582c697c90
     common/step_by_step_manual: 2894a07952a4fd11d98d5d8f1088690c
     common/storage_not_configured: b0c3e339f6d71f23fdd189e7bcb076f6
@@ -2354,10 +2353,22 @@ checksums:
     workspace/settings/billing/plan_unknown: 5cd12b882fe90320f93130c1b50e2e32
     workspace/settings/billing/remove_branding: 88b6b818750e478bfa153b33dd658280
     workspace/settings/billing/retry_setup: bef560e42fa8798271fea150476791e0
-    workspace/settings/billing/select_plan_header_subtitle: 8de6b4e3ce5726829829bd46582f343a
-    workspace/settings/billing/select_plan_header_title: b15a9d86b819a7fae8e956a50572184c
+    workspace/settings/billing/select_plan_cta: e346e4ed7d138dcc873db187922369da
+    workspace/settings/billing/select_plan_feature_1: 030739fb52448dba74b47e900500c4e3
+    workspace/settings/billing/select_plan_feature_2: cc2e5907d2241a589ff6e995efb1f050
+    workspace/settings/billing/select_plan_feature_3: 64ccc8de5813e88972d8260103bc8dcb
+    workspace/settings/billing/select_plan_header: f2c3791c1fb2970617ec0f2d243a931b
+    workspace/settings/billing/select_plan_skip: bb8bbd19353e6d40cfb5144d9ea6fe86
+    workspace/settings/billing/select_plan_subheader: 01c70aa6e1001815a9a11951394923ca
+    workspace/settings/billing/select_plan_variant_b_cta: f5d80c9a93a431eed25a714a8e39fc9f
+    workspace/settings/billing/select_plan_variant_b_header: 8c2e2e23f95b6cb342e8d54f67ed2a97
+    workspace/settings/billing/select_plan_variant_b_skip: 75e5fcff10a00796dbca6ead0148c72c
+    workspace/settings/billing/select_plan_variant_b_subheader: 949f452eab5897af335a18ae0343086e
+    workspace/settings/billing/select_plan_variant_c_cta: 405a43f614903e35445005603b0507ed
+    workspace/settings/billing/select_plan_variant_c_header: 2f319a63297fbd513ccd4225f9393885
+    workspace/settings/billing/select_plan_variant_c_skip: b1b90e0acbda206bbd20c10eafc3f7d4
+    workspace/settings/billing/select_plan_variant_c_subheader: e50313bfaab8bfcf36d45a952bb3943a
     workspace/settings/billing/status_trialing: 4fd32760caf3bd7169935b0a6d2b5b67
-    workspace/settings/billing/stay_on_hobby_plan: 966ab0c752a79f00ef10d6a5ed1d8cad
     workspace/settings/billing/stripe_setup_incomplete: fa6d6e295dd14b73c17ac8678205109b
     workspace/settings/billing/stripe_setup_incomplete_description: 9f28a542729cc719bca2ca08e7406284
     workspace/settings/billing/subscription: ba9f3675e18987d067d48533c8897343
@@ -2367,21 +2378,7 @@ checksums:
     workspace/settings/billing/this_includes: 127e0fe104f47886b54106a057a6b26f
     workspace/settings/billing/trial_alert_description: aba3076cc6814cc6128d425d3d1957e8
     workspace/settings/billing/trial_already_used: 5433347ff7647fe0aba0fe91a44560ba
-    workspace/settings/billing/trial_feature_api_access: 8c6d03728c3d9470616eb5cee5f9f65d
-    workspace/settings/billing/trial_feature_attribute_segmentation: 90087da973ae48e32ec6d863516fc8c9
-    workspace/settings/billing/trial_feature_contact_segment_management: 27f17a039ebed6413811ab3a461db2f4
-    workspace/settings/billing/trial_feature_dashboards: 04e267e196068634607d701fb7346d30
-    workspace/settings/billing/trial_feature_email_followups: 0cc02dc14aa28ce94ca6153c306924e5
-    workspace/settings/billing/trial_feature_feedback_directories: cf9a57b3cbac0f04b98e06fb693e986e
-    workspace/settings/billing/trial_feature_hide_branding: b8dbcb24e50e0eb4aeb0c97891cac61d
-    workspace/settings/billing/trial_feature_mobile_sdks: 0963480a27df49657c1b7507adec9a06
-    workspace/settings/billing/trial_feature_respondent_identification: a82e24ab4c27c5e485326678d9b7bd79
-    workspace/settings/billing/trial_feature_unify_feedback: e56481905ea1cf0e47dc30cf0fac6d22
-    workspace/settings/billing/trial_feature_unlimited_seats: a3257d5b6a23bfbc4b7fd1108087a823
-    workspace/settings/billing/trial_feature_webhooks: 5ead39fba97fbd37835a476ee67fdd94
-    workspace/settings/billing/trial_no_credit_card: 01c70aa6e1001815a9a11951394923ca
     workspace/settings/billing/trial_payment_method_added_description: 872a5c557f56bafc9b7ec4895f9c33e8
-    workspace/settings/billing/trial_title: f2c3791c1fb2970617ec0f2d243a931b
     workspace/settings/billing/unlimited_responses: 25bd1cd99bc08c66b8d7d3380b2812e1
     workspace/settings/billing/unlimited_workspaces: f7433bc693ee6d177e76509277f5c173
     workspace/settings/billing/upgrade: 63c3b52882e0d779859307d672c178c2
