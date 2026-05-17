@@ -18,7 +18,7 @@ import { Button } from "@/modules/ui/components/button";
 interface SelectPlanCardProps {
   nextUrl: string;
   organizationId: string;
-  variant?: TPlanVariant;
+  variant: TPlanVariant;
 }
 
 const CUSTOMER_LOGOS = [
@@ -34,33 +34,40 @@ export const SelectPlanCard = ({ nextUrl, organizationId, variant = "control" }:
   const [isStartingTrial, setIsStartingTrial] = useState(false);
   const [isStartingHobby, setIsStartingHobby] = useState(false);
   const { t } = useTranslation();
-  const isGiftedPro = variant === "gifted_pro";
+  const isVariantB = variant === "variant_b";
+  const isVariantC = variant === "variant_c";
+  let copyKeys = {
+    header: "workspace.settings.billing.select_plan_header",
+    subheader: "workspace.settings.billing.select_plan_subheader",
+    cta: "workspace.settings.billing.select_plan_cta",
+    skip: "workspace.settings.billing.select_plan_skip",
+  };
 
-  const title = isGiftedPro
-    ? t("workspace.settings.billing.select_plan_variant_b_title")
-    : t("workspace.settings.billing.trial_title");
+  if (isVariantB) {
+    copyKeys = {
+      header: "workspace.settings.billing.select_plan_variant_b_header",
+      subheader: "workspace.settings.billing.select_plan_variant_b_subheader",
+      cta: "workspace.settings.billing.select_plan_variant_b_cta",
+      skip: "workspace.settings.billing.select_plan_variant_b_skip",
+    };
+  } else if (isVariantC) {
+    copyKeys = {
+      header: "workspace.settings.billing.select_plan_variant_c_header",
+      subheader: "workspace.settings.billing.select_plan_variant_c_subheader",
+      cta: "workspace.settings.billing.select_plan_variant_c_cta",
+      skip: "workspace.settings.billing.select_plan_variant_c_skip",
+    };
+  }
 
-  const subtitle = isGiftedPro ? null : t("workspace.settings.billing.trial_no_credit_card");
+  const header = t(copyKeys.header);
+  const subheader = t(copyKeys.subheader);
+  const cta = t(copyKeys.cta);
+  const skip = t(copyKeys.skip);
 
-  const cta = isGiftedPro
-    ? t("workspace.settings.billing.select_plan_variant_b_cta")
-    : t("common.start_free_trial");
-
-  const skip = t("workspace.settings.billing.select_plan_variant_b_skip");
-
-  const TRIAL_FEATURE_KEYS = [
-    t("workspace.settings.billing.trial_feature_unlimited_seats"),
-    t("workspace.settings.billing.trial_feature_hide_branding"),
-    t("workspace.settings.billing.trial_feature_respondent_identification"),
-    t("workspace.settings.billing.trial_feature_contact_segment_management"),
-    t("workspace.settings.billing.trial_feature_attribute_segmentation"),
-    t("workspace.settings.billing.trial_feature_mobile_sdks"),
-    t("workspace.settings.billing.trial_feature_email_followups"),
-    t("workspace.settings.billing.trial_feature_webhooks"),
-    t("workspace.settings.billing.trial_feature_api_access"),
-    t("workspace.settings.billing.trial_feature_unify_feedback"),
-    t("workspace.settings.billing.trial_feature_feedback_directories"),
-    t("workspace.settings.billing.trial_feature_dashboards"),
+  const SELECT_PLAN_FEATURE_KEYS = [
+    t("workspace.settings.billing.select_plan_feature_1"),
+    t("workspace.settings.billing.select_plan_feature_2"),
+    t("workspace.settings.billing.select_plan_feature_3"),
   ] as const;
 
   const handleStartTrial = async () => {
@@ -107,12 +114,12 @@ export const SelectPlanCard = ({ nextUrl, organizationId, variant = "control" }:
           </div>
 
           <div className="text-center">
-            <h3 className="text-2xl font-semibold text-slate-800">{title}</h3>
-            {subtitle && <p className="mt-2 text-slate-600">{subtitle}</p>}
+            <h3 className="text-2xl font-semibold text-slate-800">{header}</h3>
+            <p className="mt-2 text-slate-600">{subheader}</p>
           </div>
 
-          <ul className="w-full space-y-3 text-left">
-            {TRIAL_FEATURE_KEYS.map((key) => (
+          <ul className="my-3 w-full space-y-3 text-left">
+            {SELECT_PLAN_FEATURE_KEYS.map((key) => (
               <li key={key} className="flex items-center gap-3 text-slate-700">
                 <CheckIcon className="h-5 w-5 flex-shrink-0 text-slate-900" />
                 <span>{key}</span>

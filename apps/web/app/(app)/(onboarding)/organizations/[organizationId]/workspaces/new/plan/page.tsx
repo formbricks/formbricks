@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import { TCloudBillingPlan } from "@formbricks/types/organizations";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
-import { capturePostHogEvent } from "@/lib/posthog/capture";
 import { getPostHogFeatureFlag } from "@/lib/posthog/get-feature-flag";
 import { getOrganizationBillingWithReadThroughSync } from "@/modules/ee/billing/lib/organization-billing";
 import { PLAN_VARIANTS, type TPlanVariant } from "@/modules/ee/billing/lib/select-plan-variants";
@@ -41,24 +40,23 @@ const Page = async (props: PlanPageProps) => {
   }
 
   let variant: TPlanVariant = "control";
-  const flagValue = await getPostHogFeatureFlag(session.user.id, "reverse_trial_experiment", {
-    organizationId: params.organizationId,
-  });
+  const flagValue = await getPostHogFeatureFlag(
+    session.user.id,
+    "a-b_onboarding_trial-conversion-screen-copy",
+    {
+      organizationId: params.organizationId,
+    }
+  );
   if (typeof flagValue === "string" && VALID_VARIANTS.has(flagValue as TPlanVariant)) {
     variant = flagValue as TPlanVariant;
   }
 
-  capturePostHogEvent(
-    session.user.id,
-    "$feature_flag_called",
-    {
-      $feature_flag: "reverse_trial_experiment",
-      $feature_flag_response: variant,
-    },
-    { organizationId: params.organizationId }
-  );
+  const selectPlanOnboardingProps = {
+    organizationId: params.organizationId,
+    variant,
+  };
 
-  return <SelectPlanOnboarding organizationId={params.organizationId} variant={variant} />;
+  return <SelectPlanOnboarding {...selectPlanOnboardingProps} />;
 };
 
 export default Page;
