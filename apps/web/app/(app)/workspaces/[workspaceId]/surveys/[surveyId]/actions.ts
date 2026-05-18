@@ -42,18 +42,25 @@ export const getResponsesDownloadUrlAction = authenticatedActionClient
       ],
     });
 
+    const workspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
     const result = await getResponseDownloadFile(
       parsedInput.surveyId,
       parsedInput.format,
       parsedInput.filterCriteria
     );
 
-    capturePostHogEvent(ctx.user.id, "responses_exported", {
-      survey_id: parsedInput.surveyId,
-      format: parsedInput.format,
-      filter_applied: Object.keys(parsedInput.filterCriteria ?? {}).length > 0,
-      organization_id: organizationId,
-    });
+    capturePostHogEvent(
+      ctx.user.id,
+      "responses_exported",
+      {
+        survey_id: parsedInput.surveyId,
+        format: parsedInput.format,
+        filter_applied: Object.keys(parsedInput.filterCriteria ?? {}).length > 0,
+        organization_id: organizationId,
+        workspace_id: workspaceId,
+      },
+      { organizationId, workspaceId }
+    );
 
     return result;
   });

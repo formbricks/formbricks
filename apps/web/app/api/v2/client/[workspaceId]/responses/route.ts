@@ -34,10 +34,7 @@ type TValidatedResponseInputResult =
   | { response: Response };
 
 const getCountry = (requestHeaders: Headers): string | undefined =>
-  requestHeaders.get("CF-IPCountry") ||
-  requestHeaders.get("X-Vercel-IP-Country") ||
-  requestHeaders.get("CloudFront-Viewer-Country") ||
-  undefined;
+  requestHeaders.get("CF-IPCountry") || requestHeaders.get("CloudFront-Viewer-Country") || undefined;
 
 const getUnexpectedPublicErrorResponse = (): Response =>
   responses.internalServerErrorResponse("Something went wrong. Please try again.", true);
@@ -190,7 +187,6 @@ export const OPTIONS = async (): Promise<Response> => {
 
 export const POST = async (request: Request, context: Context): Promise<Response> => {
   const params = await context.params;
-
   // Resolve: accepts either an environmentId (old SDK) or a workspaceId (new SDK)
   const resolved = await resolveClientApiIds(params.workspaceId);
   if (!resolved) {

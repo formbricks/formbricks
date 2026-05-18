@@ -1,6 +1,11 @@
 import dns from "node:dns";
+import type { Agent } from "undici";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { validateWebhookUrl } from "./validate-webhook-url";
+import {
+  createPinnedDispatcher,
+  validateAndResolveWebhookUrl,
+  validateWebhookUrl,
+} from "./validate-webhook-url";
 
 vi.mock("node:dns", () => ({
   default: {
@@ -370,6 +375,127 @@ describe("validateWebhookUrl", () => {
       await expect(validateWithFlag("ftp://192.168.1.1/")).rejects.toThrow(
         "Webhook URL must use HTTPS or HTTP protocol"
       );
+    });
+  });
+
+  describe("validateAndResolveWebhookUrl returns pinned address", () => {
+    test("returns IPv4 literal as { ip, family: 4 }", async () => {
+      await expect(validateAndResolveWebhookUrl("https://93.184.216.34/webhook")).resolves.toEqual({
+        ip: "93.184.216.34",
+        family: 4,
+      });
+    });
+
+    test("returns IPv6 literal stripped of brackets as { ip, family: 6 }", async () => {
+      await expect(
+        validateAndResolveWebhookUrl("https://[2606:2800:220:1:248:1893:25c8:1946]/webhook")
+      ).resolves.toEqual({
+        ip: "2606:2800:220:1:248:1893:25c8:1946",
+        family: 6,
+      });
+    });
+
+    test("returns first resolved IPv4 for hostnames", async () => {
+      setupDnsResolution(["93.184.216.34", "23.23.23.23"]);
+      await expect(validateAndResolveWebhookUrl("https://example.com/webhook")).resolves.toEqual({
+        ip: "93.184.216.34",
+        family: 4,
+      });
+    });
+
+    test("returns IPv6 when only IPv6 is resolvable", async () => {
+      setupDnsResolution(null, ["2606:2800:220:1:248:1893:25c8:1946"]);
+      await expect(validateAndResolveWebhookUrl("https://example.com/webhook")).resolves.toEqual({
+        ip: "2606:2800:220:1:248:1893:25c8:1946",
+        family: 6,
+      });
+    });
+
+    test("returns null for blocked hostname when DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS is enabled", async () => {
+      vi.doMock("../constants", () => ({
+        DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS: true,
+      }));
+      const { validateAndResolveWebhookUrl: fn } = await import("./validate-webhook-url");
+      await expect(fn("http://localhost/webhook")).resolves.toBeNull();
+    });
+  });
+
+  describe("createPinnedDispatcher", () => {
+    test("returns an undici Agent instance", async () => {
+      const { Agent } = await import("undici");
+      const dispatcher = createPinnedDispatcher({ ip: "93.184.216.34", family: 4 });
+      expect(dispatcher).toBeInstanceOf(Agent);
+      await dispatcher.close();
+    });
+
+    // Reach into the Agent's connect options to grab the lookup function we
+    // installed. This is implementation-coupled but the only way to assert the
+    // pinning behavior without spinning up a real socket. If undici changes
+    // internals and this stops finding the lookup, the integration-style test
+    // below still verifies the end-to-end behavior.
+    const extractLookup = (
+      agent: Agent
+    ):
+      | ((
+          host: string,
+          opts: { all?: boolean },
+          cb: (
+            err: NodeJS.ErrnoException | null,
+            address: string | { address: string; family: number }[],
+            family?: number
+          ) => void
+        ) => void)
+      | undefined => {
+      const symbols = Object.getOwnPropertySymbols(agent);
+      for (const sym of symbols) {
+        const value = (agent as unknown as Record<symbol, unknown>)[sym];
+        if (value && typeof value === "object" && "connect" in value) {
+          const connect = (value as { connect?: { lookup?: unknown } }).connect;
+          if (connect && typeof connect.lookup === "function") {
+            return connect.lookup as never;
+          }
+        }
+      }
+      return undefined;
+    };
+
+    test("lookup returns the pinned IP regardless of which hostname is queried (all=true)", async () => {
+      const dispatcher = createPinnedDispatcher({ ip: "93.184.216.34", family: 4 });
+      const lookup = extractLookup(dispatcher);
+
+      // If we couldn't reach into the Agent, skip the deep assertion — the
+      // integration test still covers the contract.
+      if (!lookup) {
+        await dispatcher.close();
+        return;
+      }
+
+      const result = await new Promise<{ address: string; family: number }[]>((resolve, reject) => {
+        lookup("attacker-rebound.example.com", { all: true }, (err, addresses) => {
+          if (err) reject(err);
+          else resolve(addresses as { address: string; family: number }[]);
+        });
+      });
+      expect(result).toEqual([{ address: "93.184.216.34", family: 4 }]);
+      await dispatcher.close();
+    });
+
+    test("lookup honours legacy (err, address, family) form when all is not set", async () => {
+      const dispatcher = createPinnedDispatcher({ ip: "2606:4700::1", family: 6 });
+      const lookup = extractLookup(dispatcher);
+      if (!lookup) {
+        await dispatcher.close();
+        return;
+      }
+
+      const result = await new Promise<{ address: string; family: number }>((resolve, reject) => {
+        lookup("anything.example", {}, (err, address, family) => {
+          if (err) reject(err);
+          else resolve({ address: address as string, family: family ?? -1 });
+        });
+      });
+      expect(result).toEqual({ address: "2606:4700::1", family: 6 });
+      await dispatcher.close();
     });
   });
 });

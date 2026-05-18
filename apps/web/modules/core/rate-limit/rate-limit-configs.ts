@@ -13,11 +13,17 @@ export const rateLimitConfigs = {
     v2: { interval: 60, allowedPerInterval: 100, namespace: "api:v2" }, // 100 per minute
     v3: { interval: 60, allowedPerInterval: 100, namespace: "api:v3" }, // 100 per minute
     client: { interval: 60, allowedPerInterval: 100, namespace: "api:client" }, // 100 per minute (Client API)
+    clientEnvironment: {
+      interval: 60,
+      allowedPerInterval: 1000,
+      namespace: "api:client:environment",
+    }, // 1000 per minute per environment (Client API)
   },
 
   // Server actions - varies by action type
   actions: {
     emailUpdate: { interval: 3600, allowedPerInterval: 3, namespace: "action:email" }, // 3 per hour
+    accountDeletion: { interval: 3600, allowedPerInterval: 5, namespace: "action:account-delete" }, // 5 per hour
     surveyFollowUp: { interval: 3600, allowedPerInterval: 50, namespace: "action:followup" }, // 50 per hour
     sendLinkSurveyEmail: {
       interval: 3600,
@@ -29,6 +35,11 @@ export const rateLimitConfigs = {
 
   storage: {
     upload: { interval: 60, allowedPerInterval: 5, namespace: "storage:upload" }, // 5 per minute
+    uploadPerWorkspace: {
+      interval: 60,
+      allowedPerInterval: 100,
+      namespace: "storage:upload:workspace",
+    }, // 100 per minute per workspace
     delete: { interval: 60, allowedPerInterval: 5, namespace: "storage:delete" }, // 5 per minute
   },
 } as const;

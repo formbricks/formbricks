@@ -15,6 +15,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import type { TConnectorFieldMapping } from "@formbricks/types/connector";
 import { listFeedbackRecordsAction } from "@/lib/connector/actions";
 import { formatDateForDisplay, formatDateTimeForDisplay } from "@/lib/utils/datetime";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
@@ -69,7 +70,7 @@ interface FeedbackRecordsTableProps {
   initialRecords: FeedbackRecordData[];
   initialCursors: Record<string, string>;
   frdMap: Record<string, string>;
-  csvSources: { id: string; name: string }[];
+  csvSources: { id: string; name: string; fieldMappings: TConnectorFieldMapping[] }[];
   canWrite: boolean;
 }
 
@@ -90,7 +91,11 @@ export const FeedbackRecordsTable = ({
   const [drawerMode, setDrawerMode] = useState<"create" | "edit">("edit");
   const [drawerRecordId, setDrawerRecordId] = useState<string | undefined>();
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [csvImportSource, setCsvImportSource] = useState<{ id: string; name: string } | null>(null);
+  const [csvImportSource, setCsvImportSource] = useState<{
+    id: string;
+    name: string;
+    fieldMappings: TConnectorFieldMapping[];
+  } | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -462,6 +467,7 @@ export const FeedbackRecordsTable = ({
           }}
           connectorId={csvImportSource.id}
           workspaceId={workspaceId}
+          fieldMappings={csvImportSource.fieldMappings}
         />
       )}
     </>

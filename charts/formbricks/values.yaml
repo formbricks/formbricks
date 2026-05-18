@@ -83,7 +83,7 @@ deployment:
   # Additional pod annotations
   additionalPodAnnotations: {}
 
-  # Number of replicas
+  # Number of replicas when autoscaling is disabled
   replicas: 1
 
   # Image pull secrets for private container registries
@@ -96,8 +96,8 @@ deployment:
     #   nameSuffix: app-secrets
 
   # Environment variables passed to the app container.
-  # XM Suite v5 analytics requires an external Cube endpoint when using Helm:
-  # set deployment.env.CUBEJS_API_URL and provide CUBEJS_API_SECRET through a Secret referenced by envFrom/existingSecret.
+  # Cube is bundled by default (see the `cube` section below). To use an external Cube cluster instead,
+  # set `cube.enabled: false` and provide CUBEJS_API_URL / CUBEJS_API_SECRET here via deployment.env or envFrom.
   env: {}
 
   # Tolerations for scheduling pods on tainted nodes
@@ -561,8 +561,10 @@ serviceMonitor:
 # Cube.js Analytics Configuration
 ##########################################################
 cube:
-  # Optional internal Cube.js service for XM Suite v5 analytics.
-  enabled: false
+  # Cube semantic-layer service used by Formbricks analytics. Bundled by default.
+  # Set to false only if you want to point the app at an external Cube cluster
+  # via deployment.env.CUBEJS_API_URL (CUBEJS_API_SECRET must still be provided).
+  enabled: true
   replicas: 1
 
   image:
@@ -899,10 +901,6 @@ hub:
     tolerations: []
     affinity: {}
     topologySpreadConstraints: []
-
-  # XM Suite v5 analytics also requires Cube. Use cube.enabled=true to deploy
-  # the internal chart-managed Cube service, or set deployment.env.CUBEJS_API_URL
-  # to an operator-managed Cube endpoint.
 
   # Upgrade migration job runs goose + river before Helm upgrades Hub resources.
   # Fresh installs run the same migrations through the Hub deployment init container.

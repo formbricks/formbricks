@@ -1,10 +1,11 @@
 import { headers } from "next/headers";
 import { UAParser } from "ua-parser-js";
 import { logger } from "@formbricks/logger";
-import { InvalidInputError } from "@formbricks/types/errors";
+import { InvalidInputError, UniqueConstraintError } from "@formbricks/types/errors";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { TResponseInput, ZResponseInput } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { validateSingleUseResponseInput } from "@/app/api/client/[workspaceId]/responses/lib/single-use";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
@@ -94,10 +95,7 @@ export const POST = withV1ApiWrapper({
     const agent = new UAParser(userAgent);
 
     const country =
-      requestHeaders.get("CF-IPCountry") ||
-      requestHeaders.get("X-Vercel-IP-Country") ||
-      requestHeaders.get("CloudFront-Viewer-Country") ||
-      undefined;
+      requestHeaders.get("CF-IPCountry") || requestHeaders.get("CloudFront-Viewer-Country") || undefined;
 
     const responseInputData = responseInputValidation.data;
 
@@ -131,6 +129,22 @@ export const POST = withV1ApiWrapper({
           true
         ),
       };
+    }
+
+    if (survey.status !== "inProgress") {
+      return {
+        response: responses.forbiddenResponse("Survey is not accepting submissions", true, {
+          surveyId: survey.id,
+        }),
+      };
+    }
+
+    const singleUseValidationResult = validateSingleUseResponseInput(survey, workspaceId, responseInputData);
+    if (singleUseValidationResult) {
+      if ("response" in singleUseValidationResult) {
+        return { response: singleUseValidationResult.response };
+      }
+      responseInputData.singleUseId = singleUseValidationResult.singleUseId;
     }
 
     if (!validateFileUploads(responseInputData.data, survey.questions)) {
@@ -173,6 +187,10 @@ export const POST = withV1ApiWrapper({
       if (error instanceof InvalidInputError) {
         return {
           response: responses.badRequestResponse(error.message),
+        };
+      } else if (error instanceof UniqueConstraintError) {
+        return {
+          response: responses.conflictResponse(error.message, undefined, true),
         };
       } else {
         logger.error({ error, url: req.url }, "Error creating response");

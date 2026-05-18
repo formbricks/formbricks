@@ -46,14 +46,15 @@ The intended defaults are:
 - self-hosted / single-tenant clusters: bundled controller mode
 - shared clusters with an existing platform controller: external-controller mode
 
-## Cube.js for XM Suite v5
+## Cube
 
-XM Suite v5 dashboard and analysis features require Cube.js. Set `cube.enabled=true` to deploy an
-internal Cube service from this chart, or provide an external Cube endpoint.
+Cube is part of the baseline Formbricks v5 stack and is deployed by this chart by default
+(`cube.enabled: true`).
 
-- For chart-managed Cube, set `deployment.env.CUBEJS_API_URL` to `http://formbricks-cube:4000`
+- For the chart-managed Cube, `deployment.env.CUBEJS_API_URL` should point at `http://formbricks-cube:4000`
   when using the default release name.
-- For external Cube, set `deployment.env.CUBEJS_API_URL` to your Cube endpoint.
+- For an external Cube, set `cube.enabled: false` and point `deployment.env.CUBEJS_API_URL` at your
+  endpoint.
 - Provide `CUBEJS_API_SECRET` through your existing secret management flow, such as the generated app secret override or `deployment.envFrom`.
 - Provide `CUBEJS_DB_*` connection variables to the Cube deployment through `cube.envFrom` or `cube.env`.
 - Keep `cube.replicas=1` while `cube.env.CUBEJS_CACHE_AND_QUEUE_DRIVER` is `memory`. Configure Cube Store before running multiple Cube replicas.
@@ -214,7 +215,7 @@ Autoscaling is opt-in for Hub API, Hub worker, and the embeddings runtime. If yo
 | hub.image.digest                                                   | string | `"sha256:14db7b3d285b6e9165b55693f9b83d08beff840a255fd77dd12882ee0a62f5cb"` | When set, takes precedence over tag (immutable pin). |
 | hub.image.pullPolicy                                               | string | `"IfNotPresent"`                  |             |
 | hub.image.repository                                               | string | `"ghcr.io/formbricks/hub"`        |             |
-| hub.image.tag                                                      | string | `"0.2.0"`                         | Fallback when digest is empty. |
+| hub.image.tag                                                      | string | `"0.3.0"`                         | Fallback when digest is empty. |
 | hub.migration.activeDeadlineSeconds                                | int    | `900`                             |             |
 | hub.migration.backoffLimit                                         | int    | `3`                               |             |
 | hub.migration.ttlSecondsAfterFinished                              | int    | `300`                             |             |

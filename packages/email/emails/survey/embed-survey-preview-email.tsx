@@ -20,7 +20,7 @@ export function EmbedSurveyPreviewEmail({
   ...legalProps
 }: EmbedSurveyPreviewEmailProps): React.JSX.Element {
   return (
-    <EmailTemplate logoUrl={logoUrl} t={t} {...legalProps}>
+    <EmailTemplate forceLightMode logoUrl={logoUrl} t={t} {...legalProps}>
       <Container>
         <Heading>{t("emails.embed_survey_preview_email_heading")}</Heading>
         <Text className="text-sm">{t("emails.embed_survey_preview_email_text")}</Text>

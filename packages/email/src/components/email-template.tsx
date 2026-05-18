@@ -1,18 +1,21 @@
-import { Body, Container, Html, Img, Link, Section, Tailwind, Text } from "@react-email/components";
+import { Body, Container, Head, Html, Img, Link, Section, Tailwind, Text } from "@react-email/components";
 import { TEmailTemplateLegalProps } from "../types/email";
 import { TFunction } from "../types/translations";
 
 const fbLogoUrl = "https://app.formbricks.com/logo-transparent.png";
 const logoLink = "https://formbricks.com?utm_source=email_header&utm_medium=email";
+const FORCE_LIGHT_COLOR_SCHEME = "only light";
 
 interface EmailTemplateProps extends TEmailTemplateLegalProps {
   readonly children: React.ReactNode;
+  readonly forceLightMode?: boolean;
   readonly logoUrl?: string;
   readonly t: TFunction;
 }
 
 export function EmailTemplate({
   children,
+  forceLightMode = false,
   logoUrl,
   t,
   privacyUrl,
@@ -23,10 +26,25 @@ export function EmailTemplate({
 
   return (
     <Html>
+      {forceLightMode && (
+        <Head>
+          <meta name="color-scheme" content="only light" />
+          <meta name="supported-color-schemes" content="light" />
+          <style>
+            {`:root {
+  color-scheme: only light;
+  supported-color-schemes: light;
+}`}
+          </style>
+        </Head>
+      )}
       <Tailwind>
         <Body
           className="m-0 h-full w-full justify-center bg-slate-50 p-6 text-center text-sm text-slate-800"
           style={{
+            ...(forceLightMode
+              ? { backgroundColor: "#f8fafc", color: "#1e293b", colorScheme: FORCE_LIGHT_COLOR_SCHEME }
+              : {}),
             fontFamily: "'Jost', 'Helvetica Neue', 'Segoe UI', 'Helvetica', 'sans-serif'",
           }}>
           <Section>

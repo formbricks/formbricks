@@ -30,11 +30,11 @@ import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { generatePersonalLinksAction } from "../../actions";
 
 interface PersonalLinksTabProps {
-  workspaceId: string;
   surveyId: string;
   segments: TSegment[];
   isContactsEnabled: boolean;
   isFormbricksCloud: boolean;
+  enterpriseLicenseRequestFormUrl: string;
 }
 
 interface PersonalLinksFormData {
@@ -70,11 +70,11 @@ const RestrictedDatePicker = ({
 };
 
 export const PersonalLinksTab = ({
-  workspaceId,
   segments,
   surveyId,
   isContactsEnabled,
   isFormbricksCloud,
+  enterpriseLicenseRequestFormUrl,
 }: PersonalLinksTabProps) => {
   const { t } = useTranslation();
   const { workspace } = useWorkspace();
@@ -117,7 +117,6 @@ export const PersonalLinksTab = ({
     const result = await generatePersonalLinksAction({
       surveyId: surveyId,
       segmentId: selectedSegment,
-      workspaceId: workspaceId,
       expirationDays: expiryDate
         ? Math.max(1, Math.floor((expiryDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)))
         : undefined,
@@ -171,7 +170,7 @@ export const PersonalLinksTab = ({
             text: isFormbricksCloud ? t("common.upgrade_plan") : t("common.request_trial_license"),
             href: isFormbricksCloud
               ? `/workspaces/${workspace?.id}/settings/organization/billing`
-              : "https://formbricks.com/upgrade-self-hosting-license",
+              : enterpriseLicenseRequestFormUrl,
           },
           {
             text: t("common.learn_more"),

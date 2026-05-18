@@ -34,8 +34,13 @@ export const getApiKeyFromHeaders = (headers: THeadersLike): string | null => {
   return bearerToken;
 };
 
+export type AuthenticateApiKeyOptions = {
+  allowOrganizationOnlyApiKey?: boolean;
+};
+
 export const authenticateApiKeyFromHeaders = async (
-  headers: THeadersLike
+  headers: THeadersLike,
+  options: AuthenticateApiKeyOptions = {}
 ): Promise<TAuthenticationApiKey | null> => {
   const apiKey = getApiKeyFromHeaders(headers);
   if (!apiKey) {
@@ -44,6 +49,12 @@ export const authenticateApiKeyFromHeaders = async (
 
   const apiKeyData = await getApiKeyWithPermissions(apiKey);
   if (!apiKeyData) {
+    return null;
+  }
+
+  // Reject org-only API keys for routes that require workspace-scoped permissions
+  // (those routes opt in via allowOrganizationOnlyApiKey when an org-only key is acceptable).
+  if (!options.allowOrganizationOnlyApiKey && (apiKeyData.apiKeyWorkspaces?.length ?? 0) === 0) {
     return null;
   }
 

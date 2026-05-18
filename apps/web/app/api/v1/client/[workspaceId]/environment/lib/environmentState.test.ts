@@ -6,10 +6,16 @@ import { TJsWorkspaceStateWorkspaceSetting } from "@formbricks/types/js";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { cache } from "@/lib/cache";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { WorkspaceStateData, getWorkspaceStateData } from "./data";
 import { getWorkspaceState } from "./environmentState";
 
 vi.mock("server-only", () => ({}));
+
+vi.mock("server-only", () => ({}));
+vi.mock("@/lib/utils/validate", () => ({ validateInputs: vi.fn() }));
+vi.mock("@/modules/storage/utils", () => ({ resolveStorageUrlsInObject: vi.fn((obj: unknown) => obj) }));
+vi.mock("@/modules/survey/lib/utils", () => ({ transformPrismaSurvey: vi.fn() }));
 
 // Mock dependencies
 vi.mock("@/lib/cache", () => ({
@@ -22,6 +28,9 @@ vi.mock("@formbricks/database", () => ({
   prisma: {
     workspace: {
       update: vi.fn(),
+    },
+    project: {
+      findUnique: vi.fn(),
     },
   },
 }));
@@ -61,6 +70,10 @@ vi.mock("@/lib/constants", () => ({
 
 vi.mock("@/lib/posthog", () => ({
   capturePostHogEvent: vi.fn(),
+}));
+
+vi.mock("@/lib/utils/helper", () => ({
+  getOrganizationIdFromWorkspaceId: vi.fn().mockResolvedValue("mock-org-id"),
 }));
 
 // Mock @formbricks/cache
@@ -156,6 +169,7 @@ describe("getWorkspaceState", () => {
 
     // Default mocks for successful retrieval
     vi.mocked(getWorkspaceStateData).mockResolvedValue(mockWorkspaceStateData);
+    vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue("mock-org-id");
   });
 
   afterEach(() => {
@@ -328,11 +342,18 @@ describe("getWorkspaceState", () => {
 
     await getWorkspaceState(workspaceId);
 
-    expect(capturePostHogEvent).toHaveBeenCalledWith(workspaceId, "app_connected", {
-      num_surveys: 1,
-      num_code_actions: 1,
-      num_no_code_actions: 1,
-    });
+    expect(capturePostHogEvent).toHaveBeenCalledWith(
+      workspaceId,
+      "app_connected",
+      {
+        num_surveys: 1,
+        num_code_actions: 1,
+        num_no_code_actions: 1,
+        organization_id: "mock-org-id",
+        workspace_id: workspaceId,
+      },
+      { organizationId: "mock-org-id", workspaceId }
+    );
   });
 
   test("should not capture app_connected event when app setup already completed", async () => {

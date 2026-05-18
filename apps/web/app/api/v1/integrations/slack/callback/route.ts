@@ -110,10 +110,16 @@ export const GET = withV1ApiWrapper({
       if (result) {
         try {
           const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
-          capturePostHogEvent(authentication.user.id, "integration_connected", {
-            integration_type: "slack",
-            organization_id: organizationId,
-          });
+          capturePostHogEvent(
+            authentication.user.id,
+            "integration_connected",
+            {
+              integration_type: "slack",
+              organization_id: organizationId,
+              workspace_id: workspaceId,
+            },
+            { organizationId, workspaceId }
+          );
         } catch (err) {
           logger.error({ error: err }, "Failed to capture PostHog integration_connected event for slack");
         }

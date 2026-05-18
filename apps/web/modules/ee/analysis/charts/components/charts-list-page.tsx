@@ -1,7 +1,7 @@
 import { use } from "react";
 import { getAIDataAnalysisUnavailableReason, getOrganizationAIConfig } from "@/lib/ai/service";
 import { getConnectorsWithMappings } from "@/lib/connector/service";
-import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { ChartsList } from "@/modules/ee/analysis/charts/components/charts-list";
 import { CreateChartButton } from "@/modules/ee/analysis/charts/components/create-chart-button";
@@ -57,13 +57,11 @@ export async function ChartsListPage({ workspaceId }: Readonly<ChartsListPagePro
                 text: IS_FORMBRICKS_CLOUD ? t("common.upgrade_plan") : t("common.request_trial_license"),
                 href: IS_FORMBRICKS_CLOUD
                   ? `/workspaces/${workspaceId}/settings/organization/billing`
-                  : "https://formbricks.com/upgrade-self-hosting-license",
+                  : ENTERPRISE_LICENSE_REQUEST_FORM_URL,
               },
               {
                 text: t("common.learn_more"),
-                href: IS_FORMBRICKS_CLOUD
-                  ? `/workspaces/${workspaceId}/settings/organization/billing`
-                  : "https://formbricks.com/learn-more-self-hosting-license",
+                href: "https://formbricks.com/docs/unify-feedback/features/dashboards-and-charts",
               },
             ]}
           />

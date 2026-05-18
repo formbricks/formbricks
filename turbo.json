@@ -1,5 +1,6 @@
 {
   "$schema": "https://turborepo.org/schema.json",
+  "globalEnv": [],
   "tasks": {
     "@formbricks/ai#build": {
       "dependsOn": ["@formbricks/logger#build"],
@@ -215,6 +216,7 @@
         "CUBEJS_API_URL",
         "CUBEJS_JWT_AUDIENCE",
         "CUBEJS_JWT_ISSUER",
+        "DISABLE_ACCOUNT_DELETION_SSO_CONFIRMATION",
         "DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS",
         "DATABASE_URL",
         "DEBUG",
@@ -315,16 +317,12 @@
         "RECAPTCHA_SECRET_KEY",
         "TELEMETRY_DISABLED",
         "TERMS_URL",
-        "VERCEL",
-        "VERCEL_URL",
         "VERSION",
         "WEBAPP_URL",
         "UNSPLASH_ACCESS_KEY",
         "PROMETHEUS_ENABLED",
         "PROMETHEUS_EXPORTER_PORT",
-        "USER_MANAGEMENT_MINIMUM_ROLE",
-        "HUB_API_URL",
-        "HUB_API_KEY"
+        "USER_MANAGEMENT_MINIMUM_ROLE"
       ],
       "outputs": ["dist/**", ".next/**"]
     },

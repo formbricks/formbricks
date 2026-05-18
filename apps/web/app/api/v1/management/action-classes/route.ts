@@ -1,6 +1,6 @@
 import { logger } from "@formbricks/logger";
 import { TActionClass, ZActionClassInput } from "@formbricks/types/action-classes";
-import { DatabaseError } from "@formbricks/types/errors";
+import { DatabaseError, UniqueConstraintError } from "@formbricks/types/errors";
 import { resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
@@ -84,6 +84,11 @@ export const POST = withV1ApiWrapper({
         response: responses.successResponse(actionClass),
       };
     } catch (error) {
+      if (error instanceof UniqueConstraintError) {
+        return {
+          response: responses.conflictResponse(error.message),
+        };
+      }
       if (error instanceof DatabaseError) {
         return {
           response: responses.badRequestResponse(error.message),

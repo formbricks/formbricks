@@ -63,7 +63,7 @@ const mapOrganizationBilling = (billing: TOrganizationWithBilling["billing"]): T
     stripeCustomerId: billing.stripeCustomerId,
     limits: billing.limits,
     usageCycleAnchor: billing.usageCycleAnchor,
-    ...(billing.stripe === undefined ? {} : { stripe: billing.stripe }),
+    ...(billing.stripe == null ? {} : { stripe: billing.stripe }),
   };
 };
 

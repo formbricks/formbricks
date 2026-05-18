@@ -24,7 +24,7 @@ export type TSurveyListPage = {
   meta: {
     limit: number;
     nextCursor: string | null;
-    totalCount: number;
+    totalCount: number | null;
   };
 };
 
@@ -41,11 +41,13 @@ export function buildSurveyListSearchParams({
   workspaceId,
   limit,
   cursor,
+  includeTotalCount,
   filters,
 }: {
   workspaceId: string;
   limit: number;
   cursor?: string | null;
+  includeTotalCount?: boolean;
   filters: TSurveyOverviewFilters;
 }): URLSearchParams {
   const normalizedFilters = normalizeSurveyFilters(filters);
@@ -57,6 +59,10 @@ export function buildSurveyListSearchParams({
 
   if (cursor) {
     searchParams.set("cursor", cursor);
+  }
+
+  if (includeTotalCount === false) {
+    searchParams.set("includeTotalCount", "false");
   }
 
   if (normalizedFilters.name) {
@@ -78,17 +84,25 @@ export async function listSurveys({
   workspaceId,
   limit,
   cursor,
+  includeTotalCount,
   filters,
   signal,
 }: {
   workspaceId: string;
   limit: number;
   cursor?: string | null;
+  includeTotalCount?: boolean;
   filters: TSurveyOverviewFilters;
   signal?: AbortSignal;
 }): Promise<TSurveyListPage> {
   const response = await fetch(
-    `/api/v3/surveys?${buildSurveyListSearchParams({ workspaceId, limit, cursor, filters }).toString()}`,
+    `/api/v3/surveys?${buildSurveyListSearchParams({
+      workspaceId,
+      limit,
+      cursor,
+      includeTotalCount,
+      filters,
+    }).toString()}`,
     {
       method: "GET",
       cache: "no-store",

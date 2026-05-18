@@ -84,7 +84,6 @@ export function ConnectorsSection({
       return undefined;
     }
 
-    toast.success(t("workspace.unify.connector_created_successfully"));
     router.refresh();
     return result.data.id;
   };
@@ -236,6 +235,7 @@ export function ConnectorsSection({
           onOpenChange={(open) => !open && setCsvImportConnector(null)}
           connectorId={csvImportConnector.id}
           workspaceId={csvImportConnector.workspaceId}
+          fieldMappings={csvImportConnector.fieldMappings}
           onOpenEditConnector={() => {
             setEditingConnector(csvImportConnector);
           }}

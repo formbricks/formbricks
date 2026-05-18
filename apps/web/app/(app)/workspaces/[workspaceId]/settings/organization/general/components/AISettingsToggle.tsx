@@ -21,6 +21,7 @@ interface AISettingsToggleProps {
   isInstanceAIConfigured: boolean;
   hasAIPermission: boolean;
   isFormbricksCloud: boolean;
+  enterpriseLicenseRequestFormUrl: string;
 }
 
 export const AISettingsToggle = ({
@@ -29,6 +30,7 @@ export const AISettingsToggle = ({
   isInstanceAIConfigured,
   hasAIPermission,
   isFormbricksCloud,
+  enterpriseLicenseRequestFormUrl,
 }: Readonly<AISettingsToggleProps>) => {
   const { workspace } = useWorkspace();
   const workspaceBasePath = `/workspaces/${workspace?.id}`;
@@ -91,13 +93,11 @@ export const AISettingsToggle = ({
       text: isFormbricksCloud ? t("common.upgrade_plan") : t("common.request_trial_license"),
       href: isFormbricksCloud
         ? `${workspaceBasePath}/settings/organization/billing`
-        : "https://formbricks.com/upgrade-self-hosting-license",
+        : enterpriseLicenseRequestFormUrl,
     },
     {
       text: t("common.learn_more"),
-      href: isFormbricksCloud
-        ? `${workspaceBasePath}/settings/organization/billing`
-        : "https://formbricks.com/learn-more-self-hosting-license",
+      href: "https://formbricks.com/docs/platform/features/ai-features",
     },
   ];
 

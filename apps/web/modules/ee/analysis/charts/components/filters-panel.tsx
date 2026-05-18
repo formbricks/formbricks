@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, TrashIcon } from "lucide-react";
+import { Plus, SparklesIcon, TrashIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { FilterRow, TFilterFieldType } from "@/modules/ee/analysis/lib/query-builder";
 import {
@@ -41,11 +41,13 @@ export function FiltersPanel({
       value: d.id,
       label: getTranslatedFieldLabel(d.id, t),
       type: d.type,
+      isGenerated: d.isGenerated ?? false,
     })),
     ...FEEDBACK_FIELDS.measures.map((m) => ({
       value: m.id,
       label: getTranslatedFieldLabel(m.id, t),
       type: "number" as TFilterFieldType,
+      isGenerated: false,
     })),
   ];
 
@@ -155,7 +157,12 @@ export function FiltersPanel({
                 <SelectContent>
                   {fieldOptions.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
-                      {option.label}
+                      <span className="flex items-center gap-1.5">
+                        {option.isGenerated && (
+                          <SparklesIcon className="h-4 w-4 text-slate-500" aria-hidden="true" />
+                        )}
+                        {option.label}
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectContent>

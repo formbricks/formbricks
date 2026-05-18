@@ -1,10 +1,44 @@
+import { STORAGE_CONFIGURATION_ERROR_CODES, type TStorageApiErrorDetails } from "@formbricks/types/storage";
+
 export enum FileUploadError {
-  NO_FILE = "No file provided or invalid file type. Expected a File or Blob.",
-  INVALID_FILE_TYPE = "Please upload an image file.",
-  FILE_SIZE_EXCEEDED = "File size must be less than 5 MB.",
-  UPLOAD_FAILED = "Upload failed. Please try again.",
-  INVALID_FILE_NAME = "Invalid file name. Please rename your file and try again.",
+  NO_FILE = "no_file",
+  INVALID_FILE_TYPE = "invalid_file_type",
+  FILE_SIZE_EXCEEDED = "file_size_exceeded",
+  UPLOAD_FAILED = "upload_failed",
+  INVALID_FILE_NAME = "invalid_file_name",
+  STORAGE_NOT_CONFIGURED = "storage_not_configured",
+  STORAGE_UPLOAD_FAILED = "storage_upload_failed",
 }
+
+type UploadApiErrorResponse = {
+  details?: TStorageApiErrorDetails;
+};
+
+const parseUploadApiError = async (response: Response): Promise<UploadApiErrorResponse | undefined> => {
+  try {
+    return (await response.json()) as UploadApiErrorResponse;
+  } catch {
+    return undefined;
+  }
+};
+
+const getFileUploadErrorFromResponse = async (response: Response): Promise<FileUploadError> => {
+  const json = await parseUploadApiError(response);
+
+  if (response.status === 400 && json?.details?.fileName) {
+    return FileUploadError.INVALID_FILE_NAME;
+  }
+
+  if (
+    response.status >= 500 &&
+    json?.details?.storage_error_code &&
+    STORAGE_CONFIGURATION_ERROR_CODES.has(json.details.storage_error_code)
+  ) {
+    return FileUploadError.STORAGE_NOT_CONFIGURED;
+  }
+
+  return FileUploadError.UPLOAD_FAILED;
+};
 
 export const toBase64 = (file: File) =>
   new Promise((resolve, reject) => {
@@ -61,18 +95,8 @@ export const handleFileUpload = async (
     });
 
     if (!response.ok) {
-      if (response.status === 400) {
-        const json = (await response.json()) as { details?: { fileName?: string } };
-        if (json.details?.fileName) {
-          return {
-            error: FileUploadError.INVALID_FILE_NAME,
-            url: "",
-          };
-        }
-      }
-
       return {
-        error: FileUploadError.UPLOAD_FAILED,
+        error: await getFileUploadErrorFromResponse(response),
         url: "",
       };
     }
@@ -107,14 +131,24 @@ export const handleFileUpload = async (
       };
     }
 
-    const uploadResponse = await fetch(signedUrl, {
-      method: "POST",
-      body: formDataForS3,
-    });
+    let uploadResponse: Response;
+
+    try {
+      uploadResponse = await fetch(signedUrl, {
+        method: "POST",
+        body: formDataForS3,
+      });
+    } catch (err) {
+      console.error("Error in uploading file: ", err);
+      return {
+        error: FileUploadError.STORAGE_UPLOAD_FAILED,
+        url: "",
+      };
+    }
 
     if (!uploadResponse.ok) {
       return {
-        error: FileUploadError.UPLOAD_FAILED,
+        error: FileUploadError.STORAGE_UPLOAD_FAILED,
         url: "",
       };
     }

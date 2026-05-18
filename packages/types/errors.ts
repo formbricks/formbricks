@@ -31,14 +31,6 @@ class ValidationError extends Error {
   }
 }
 
-class ConfigurationError extends Error {
-  statusCode = 503;
-  constructor(message: string) {
-    super(message);
-    this.name = "ConfigurationError";
-  }
-}
-
 class QueryExecutionError extends Error {
   statusCode = 500;
   constructor(message: string) {
@@ -151,7 +143,6 @@ export {
   ResourceNotFoundError,
   InvalidInputError,
   ValidationError,
-  ConfigurationError,
   QueryExecutionError,
   DatabaseError,
   UniqueConstraintError,
@@ -165,6 +156,13 @@ export {
 };
 export type { NetworkError, ForbiddenError };
 
+export const FILE_UPLOAD_ERROR_NAMES = {
+  INVALID_FILE_NAME: "InvalidFileNameError",
+  STORAGE_NOT_CONFIGURED: "StorageNotConfiguredError",
+  STORAGE_UPLOAD_FAILED: "StorageUploadFailedError",
+  FILE_TOO_LARGE: "FileTooLargeError",
+} as const;
+
 /**
  * Error names that represent expected business-logic failures.
  * These are handled gracefully in the UI and should NOT be reported to Sentry.
@@ -174,12 +172,12 @@ export const EXPECTED_ERROR_NAMES = new Set([
   "AuthorizationError",
   "InvalidInputError",
   "ValidationError",
-  "ConfigurationError",
   "QueryExecutionError",
   "AuthenticationError",
   "OperationNotAllowedError",
   "TooManyRequestsError",
   "InvalidPasswordResetTokenError",
+  "UniqueConstraintError",
 ]);
 
 /**

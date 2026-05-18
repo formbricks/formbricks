@@ -1,4 +1,4 @@
-import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   TDisplayCreateInputV2,
   ZDisplayCreateInputV2,
@@ -52,7 +52,6 @@ export const OPTIONS = async (): Promise<Response> => {
 
 export const POST = async (request: Request, context: Context): Promise<Response> => {
   const params = await context.params;
-
   // Resolve: accepts either an environmentId (old SDK) or a workspaceId (new SDK)
   const resolved = await resolveClientApiIds(params.workspaceId);
   if (!resolved) {
@@ -86,6 +85,12 @@ export const POST = async (request: Request, context: Context): Promise<Response
   } catch (error) {
     if (error instanceof ResourceNotFoundError) {
       return responses.notFoundResponse("Survey", displayInputData.surveyId, true);
+    }
+
+    if (error instanceof InvalidInputError) {
+      return responses.forbiddenResponse(error.message, true, {
+        surveyId: displayInputData.surveyId,
+      });
     }
 
     const response = responses.internalServerErrorResponse("Something went wrong. Please try again.", true);

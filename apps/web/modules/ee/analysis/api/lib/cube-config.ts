@@ -1,11 +1,8 @@
 import "server-only";
 import jwt from "jsonwebtoken";
 import { randomUUID } from "node:crypto";
-import { ConfigurationError } from "@formbricks/types/errors";
 import { env } from "@/lib/env";
 
-export const CUBE_CONFIGURATION_ERROR_MESSAGE =
-  "Cube is not configured on this instance. Set CUBEJS_API_URL and CUBEJS_API_SECRET.";
 export const CUBE_API_TOKEN_TTL_SECONDS = 5 * 60;
 export const CUBE_QUERY_SCOPE = "xm:cube:query";
 export const DEFAULT_CUBE_JWT_AUDIENCE = "formbricks-cube";
@@ -39,18 +36,12 @@ export const normalizeCubeApiUrl = (baseUrl: string): string => {
   return `${normalizedBaseUrl}/cubejs-api/v1`;
 };
 
-export const getCubeApiCredentials = () => {
-  if (!env.CUBEJS_API_URL || !env.CUBEJS_API_SECRET) {
-    throw new ConfigurationError(CUBE_CONFIGURATION_ERROR_MESSAGE);
-  }
-
-  return {
-    apiUrl: normalizeCubeApiUrl(env.CUBEJS_API_URL),
-    apiSecret: env.CUBEJS_API_SECRET,
-    audience: env.CUBEJS_JWT_AUDIENCE ?? DEFAULT_CUBE_JWT_AUDIENCE,
-    issuer: env.CUBEJS_JWT_ISSUER ?? DEFAULT_CUBE_JWT_ISSUER,
-  };
-};
+export const getCubeApiCredentials = () => ({
+  apiUrl: normalizeCubeApiUrl(env.CUBEJS_API_URL),
+  apiSecret: env.CUBEJS_API_SECRET,
+  audience: env.CUBEJS_JWT_AUDIENCE ?? DEFAULT_CUBE_JWT_AUDIENCE,
+  issuer: env.CUBEJS_JWT_ISSUER ?? DEFAULT_CUBE_JWT_ISSUER,
+});
 
 export const createCubeApiToken = (
   apiSecret: string,

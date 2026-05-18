@@ -38,7 +38,7 @@ x-environment: &environment
     # Hub database URL (optional). Default: same Postgres as Formbricks. Set only if Hub uses a separate DB.
     # HUB_DATABASE_URL:
 
-    # Cube.js analytics for XM Suite v5. Enable the optional xm profile and set CUBEJS_API_SECRET to run Cube.
+    # Cube semantic-layer API used by Formbricks analytics. Required.
     CUBEJS_API_URL: ${CUBEJS_API_URL:-http://cube:4000}
     CUBEJS_API_SECRET: ${CUBEJS_API_SECRET:-}
     CUBEJS_JWT_ISSUER: ${CUBEJS_JWT_ISSUER:-formbricks-web}
@@ -102,7 +102,7 @@ x-environment: &environment
 
     ################################################### OPTIONAL (STORAGE) ###################################################
 
-    # Set S3 Storage configuration (required for the file upload in serverless environments like Vercel)
+    # Set S3 Storage configuration (required for the file upload in serverless environments)
     # S3_ACCESS_KEY:
     # S3_SECRET_KEY:
     # S3_REGION:
@@ -257,6 +257,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      cube:
+        condition: service_healthy
     ports:
       - 3000:3000
     volumes:
@@ -294,9 +296,8 @@ services:
       API_KEY: ${HUB_API_KEY:?HUB_API_KEY is required to run Hub}
       DATABASE_URL: ${HUB_DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/formbricks?sslmode=disable}
 
-  # Optional Cube.js analytics service for XM Suite v5. Enable with COMPOSE_PROFILES=xm and set CUBEJS_API_SECRET.
+  # Cube semantic-layer API used by Formbricks analytics dashboards.
   cube:
-    profiles: ["xm"]
     restart: always
     image: cubejs/cube:v1.6.6
     depends_on:
@@ -319,6 +320,12 @@ services:
     volumes:
       - ./cube/cube.js:/cube/conf/cube.js:ro
       - ./cube/schema:/cube/conf/model:ro
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4000/readyz"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
 
 volumes:
   postgres:

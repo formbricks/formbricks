@@ -217,6 +217,7 @@ const successResponse = (data: Object, cors: boolean = false, cache: string = "p
 const internalServerErrorResponse = (
   message: string,
   cors: boolean = false,
+  details: ApiErrorResponse["details"] = {},
   cache: string = "private, no-store"
 ) => {
   const headers = {
@@ -228,7 +229,7 @@ const internalServerErrorResponse = (
     {
       code: "internal_server_error",
       message,
-      details: {},
+      details,
     } as ApiErrorResponse,
     {
       status: 500,

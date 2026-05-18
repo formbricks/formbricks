@@ -2,6 +2,7 @@ import { HeartIcon, ListTodoIcon, XIcon } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizations/components/OnboardingOptionsContainer";
+import { getPostHogFeatureFlag } from "@/lib/posthog/get-feature-flag";
 import { getUserWorkspaces } from "@/lib/workspace/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
@@ -21,6 +22,13 @@ const Page = async (props: ModePageProps) => {
 
   if (!session?.user) {
     return redirect(`/auth/login`);
+  }
+
+  const experimentVariant =
+    (await getPostHogFeatureFlag(session.user.id, "a-b_onboarding_skip-first-screen")) || "control";
+
+  if (experimentVariant === "remove-cx-and-surveys-mode") {
+    return redirect(`/organizations/${params.organizationId}/workspaces/new/channel`);
   }
 
   const t = await getTranslate();

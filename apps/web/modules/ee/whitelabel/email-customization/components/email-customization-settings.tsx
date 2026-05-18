@@ -19,6 +19,7 @@ import {
   updateOrganizationEmailLogoUrlAction,
 } from "@/modules/ee/whitelabel/email-customization/actions";
 import { handleFileUpload } from "@/modules/storage/file-upload";
+import { showFileUploadErrorToast } from "@/modules/storage/file-upload-error";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Uploader } from "@/modules/ui/components/file-input/components/uploader";
@@ -37,6 +38,7 @@ interface EmailCustomizationSettingsProps {
   user: TUser | null;
   fbLogoUrl: string;
   isStorageConfigured: boolean;
+  enterpriseLicenseRequestFormUrl: string;
 }
 
 export const EmailCustomizationSettings = ({
@@ -48,6 +50,7 @@ export const EmailCustomizationSettings = ({
   user,
   fbLogoUrl,
   isStorageConfigured,
+  enterpriseLicenseRequestFormUrl,
 }: EmailCustomizationSettingsProps) => {
   const { workspace } = useWorkspace();
   const workspaceBasePath = `/workspaces/${workspace?.id}`;
@@ -139,7 +142,7 @@ export const EmailCustomizationSettings = ({
     const { url, error } = await handleFileUpload(logoFile, workspaceId, allowedFileExtensions);
 
     if (error) {
-      toast.error(error);
+      showFileUploadErrorToast(error, t);
       setIsSaving(false);
       return;
     }
@@ -187,7 +190,7 @@ export const EmailCustomizationSettings = ({
       text: isFormbricksCloud ? t("common.upgrade_plan") : t("common.request_trial_license"),
       href: isFormbricksCloud
         ? `${workspaceBasePath}/settings/organization/billing`
-        : "https://formbricks.com/upgrade-self-hosting-license",
+        : enterpriseLicenseRequestFormUrl,
     },
     {
       text: t("common.learn_more"),

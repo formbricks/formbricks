@@ -4,7 +4,7 @@ import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { ENCRYPTION_KEY } from "@/lib/constants";
 import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
 import { getPublicDomain } from "@/lib/getPublicUrl";
-import { generateSurveySingleUseId } from "@/lib/utils/single-use-surveys";
+import { generateSurveySingleUseLinkParams } from "@/lib/utils/single-use-surveys";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { getSurvey } from "@/modules/survey/lib/survey";
 
@@ -36,10 +36,10 @@ export const getContactSurveyLink = async (
   const encryptedContactId = symmetricEncrypt(contactId, ENCRYPTION_KEY);
   const encryptedSurveyId = symmetricEncrypt(surveyId, ENCRYPTION_KEY);
 
-  let singleUseId: string | undefined;
+  let singleUseLinkParams: { suId: string; suToken?: string } | undefined;
 
   if (isSingleUseEnabled) {
-    singleUseId = generateSurveySingleUseId(isSingleUseEncrypted ?? false);
+    singleUseLinkParams = generateSurveySingleUseLinkParams(surveyId, isSingleUseEncrypted ?? false);
   }
 
   // Create JWT payload with encrypted IDs
@@ -62,9 +62,17 @@ export const getContactSurveyLink = async (
   const token = jwt.sign(payload, ENCRYPTION_KEY, tokenOptions);
 
   // Return the personalized URL
-  return singleUseId
-    ? ok(`${getPublicDomain()}/c/${token}?suId=${singleUseId}`)
-    : ok(`${getPublicDomain()}/c/${token}`);
+  const surveyUrl = `${getPublicDomain()}/c/${token}`;
+  if (!singleUseLinkParams) {
+    return ok(surveyUrl);
+  }
+
+  const searchParams = new URLSearchParams({ suId: singleUseLinkParams.suId });
+  if (singleUseLinkParams.suToken) {
+    searchParams.set("suToken", singleUseLinkParams.suToken);
+  }
+
+  return ok(`${surveyUrl}?${searchParams.toString()}`);
 };
 
 // Validates and decrypts a contact survey JWT token

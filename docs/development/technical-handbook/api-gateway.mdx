@@ -1,0 +1,27 @@
+---
+title: "API Gateway"
+description: "Gateway auth architecture for proxied service APIs"
+icon: "route"
+---
+
+### Gateway Model
+
+Formbricks gateway auth is split into three layers:
+
+- A shared gateway-auth core authenticates the caller, normalizes the original request, and dispatches to a
+  service authorizer.
+- Provider adapters translate ingress-specific auth requests into the shared shape. Envoy uses
+  `/api/envoy-auth/[...path]`; Traefik uses `/api/traefik-auth/[...path]`.
+- Service authorizers own service-specific authorization. FeedbackRecords is the first registered service authorizer.
+
+### Tokens
+
+Session-authenticated browser callers should use `/api/v3/gateway/token` with
+`{ "service": "feedbackRecords" }`. The token identifies the user for the gateway only; every proxied request
+still runs through gateway authorization. `/api/v3/feedbackRecords/token` remains a compatibility alias.
+
+### Provider Adapters
+
+Envoy and Traefik do not send auth subrequests in the same format, so they stay as thin adapters. Envoy derives the
+original path from the auth request path. Traefik derives it from `X-Forwarded-Method` and `X-Forwarded-Uri`.
+Both adapters reuse the same gateway-auth core and FeedbackRecords authorizer.

@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { DatabaseError, ResourceNotFoundError, UniqueConstraintError } from "@formbricks/types/errors";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TResponseInput } from "@formbricks/types/responses";
 import { getOrganization } from "@/lib/organization/service";
@@ -9,6 +9,8 @@ import { calculateTtcTotal } from "@/lib/response/utils";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
 import { createResponse, createResponseWithQuotaEvaluation } from "./response";
+
+vi.mock("server-only", () => ({}));
 
 let mockIsFormbricksCloud = false;
 
@@ -141,6 +143,16 @@ describe("createResponse", () => {
     });
     vi.mocked(prisma.response.create).mockRejectedValue(prismaError);
     await expect(createResponse(mockResponseInput, prisma)).rejects.toThrow(DatabaseError);
+  });
+
+  test("should throw UniqueConstraintError on P2002 with singleUseId target", async () => {
+    const prismaError = new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+      code: "P2002",
+      clientVersion: "test",
+      meta: { target: ["surveyId", "singleUseId"] },
+    });
+    vi.mocked(prisma.response.create).mockRejectedValue(prismaError);
+    await expect(createResponse(mockResponseInput, prisma)).rejects.toThrow(UniqueConstraintError);
   });
 
   test("should throw original error on other Prisma errors", async () => {

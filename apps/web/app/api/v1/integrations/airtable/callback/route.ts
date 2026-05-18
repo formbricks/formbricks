@@ -4,7 +4,7 @@ import { responses } from "@/app/lib/api/response";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { fetchAirtableAuthToken } from "@/lib/airtable/service";
 import { AIRTABLE_CLIENT_ID, WEBAPP_URL } from "@/lib/constants";
-import { createOrUpdateIntegration } from "@/lib/integration/service";
+import { createOrUpdateIntegration, getIntegrationByType } from "@/lib/integration/service";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { hasUserWorkspaceAccess } from "@/lib/workspace/auth";
@@ -79,11 +79,15 @@ export const GET = withV1ApiWrapper({
       }
       const email = await getEmail(key.access_token);
 
+      // Preserve existing integration data (survey-to-table mappings) when re-authorizing
+      const existingIntegration = await getIntegrationByType(workspaceId, "airtable");
+      const existingData = existingIntegration?.config?.data ?? [];
+
       const airtableIntegrationInput = {
-        type: "airtable" as "airtable",
+        type: "airtable" as const,
         config: {
           key,
-          data: [],
+          data: existingData,
           email,
         },
       };
@@ -91,10 +95,16 @@ export const GET = withV1ApiWrapper({
 
       try {
         const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
-        capturePostHogEvent(authentication.user.id, "integration_connected", {
-          integration_type: "airtable",
-          organization_id: organizationId,
-        });
+        capturePostHogEvent(
+          authentication.user.id,
+          "integration_connected",
+          {
+            integration_type: "airtable",
+            organization_id: organizationId,
+            workspace_id: workspaceId,
+          },
+          { organizationId, workspaceId }
+        );
       } catch (err) {
         logger.error({ error: err }, "Failed to capture PostHog integration_connected event for airtable");
       }

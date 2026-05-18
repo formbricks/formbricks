@@ -10,6 +10,7 @@ import { TSurvey, TSurveyLanguage, TSurveyStyling } from "@formbricks/types/surv
 import { TUserLocale } from "@formbricks/types/user";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
+import { toJsWorkspaceStateSurvey } from "@/lib/survey/client-utils";
 import { ClientLogo } from "@/modules/ui/components/client-logo";
 import {
   DropdownMenu,
@@ -268,7 +269,7 @@ export const PreviewSurvey = ({
                   <SurveyInline
                     appUrl={publicDomain}
                     isPreviewMode={true}
-                    survey={survey}
+                    survey={toJsWorkspaceStateSurvey(survey)}
                     isBrandingEnabled={workspace.inAppSurveyBranding}
                     isRedirectDisabled={true}
                     languageCode={languageCode}
@@ -294,8 +295,8 @@ export const PreviewSurvey = ({
                     <SurveyInline
                       appUrl={publicDomain}
                       isPreviewMode={true}
-                      survey={{ ...survey, type: "link" }}
                       isBrandingEnabled={workspace.linkSurveyBranding}
+                      survey={toJsWorkspaceStateSurvey({ ...survey, type: "link" })}
                       languageCode={languageCode}
                       responseCount={42}
                       styling={styling}
@@ -377,7 +378,7 @@ export const PreviewSurvey = ({
                 <SurveyInline
                   appUrl={publicDomain}
                   isPreviewMode={true}
-                  survey={survey}
+                  survey={toJsWorkspaceStateSurvey(survey)}
                   isBrandingEnabled={workspace.inAppSurveyBranding}
                   isRedirectDisabled={true}
                   languageCode={languageCode}
@@ -407,7 +408,7 @@ export const PreviewSurvey = ({
                   <SurveyInline
                     appUrl={publicDomain}
                     isPreviewMode={true}
-                    survey={{ ...survey, type: "link" }}
+                    survey={toJsWorkspaceStateSurvey({ ...survey, type: "link" })}
                     isBrandingEnabled={workspace.linkSurveyBranding}
                     isRedirectDisabled={true}
                     languageCode={languageCode}

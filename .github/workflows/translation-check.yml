@@ -2,6 +2,7 @@ name: Translation Validation
 
 permissions:
   contents: read
+  pull-requests: read
 
 on:
   pull_request:
@@ -39,7 +40,7 @@ jobs:
 
       - name: Setup Node.js 22.x
         if: steps.changes.outputs.translations == 'true'
-        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22.x
 
@@ -49,7 +50,7 @@ jobs:
 
       - name: Install dependencies
         if: steps.changes.outputs.translations == 'true'
-        run: pnpm install --config.platform=linux --config.architecture=x64
+        run: pnpm install --frozen-lockfile --config.platform=linux --config.architecture=x64
 
       - name: Validate translation keys
         if: steps.changes.outputs.translations == 'true'

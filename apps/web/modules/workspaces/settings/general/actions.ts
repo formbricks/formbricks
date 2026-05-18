@@ -1,44 +1,35 @@
 "use server";
 
 import { z } from "zod";
-import { ZId } from "@formbricks/types/common";
+import { logger } from "@formbricks/logger";
+import { isExpectedError } from "@formbricks/types/errors";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
-import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
-import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
-import { getUserWorkspaces, getWorkspace } from "@/lib/workspace/service";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
-import { deleteWorkspace } from "@/modules/workspaces/settings/lib/workspace";
+import { deleteWorkspaceWithConfirmation, getWorkspaceIdForLogging } from "./lib/delete-workspace";
 
-const ZWorkspaceDeleteAction = z.object({
-  workspaceId: ZId,
-});
+const logWorkspaceDeletionError = (userId: string, workspaceId: string, error: unknown) => {
+  logger.error({ error, userId, workspaceId }, "Workspace deletion failed");
+};
 
-export const deleteWorkspaceAction = authenticatedActionClient.inputSchema(ZWorkspaceDeleteAction).action(
+const shouldLogWorkspaceDeletionError = (error: unknown) => {
+  return !(error instanceof Error && isExpectedError(error));
+};
+
+export const deleteWorkspaceAction = authenticatedActionClient.inputSchema(z.unknown()).action(
   withAuditLogging("deleted", "workspace", async ({ ctx, parsedInput }) => {
-    const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
+    const workspaceIdForLogging = getWorkspaceIdForLogging(parsedInput);
 
-    await checkAuthorizationUpdated({
-      userId: ctx.user.id,
-      organizationId: organizationId,
-      access: [
-        {
-          type: "organization",
-          roles: ["owner", "manager"],
-        },
-      ],
-    });
-
-    const availableWorkspaces = (await getUserWorkspaces(ctx.user.id, organizationId)) ?? null;
-
-    if (!!availableWorkspaces && availableWorkspaces?.length <= 1) {
-      throw new Error("You can't delete the last workspace in the environment.");
+    try {
+      return await deleteWorkspaceWithConfirmation({
+        input: parsedInput,
+        userId: ctx.user.id,
+        auditLoggingCtx: ctx.auditLoggingCtx,
+      });
+    } catch (error) {
+      if (shouldLogWorkspaceDeletionError(error)) {
+        logWorkspaceDeletionError(ctx.user.id, workspaceIdForLogging, error);
+      }
+      throw error;
     }
-
-    ctx.auditLoggingCtx.organizationId = organizationId;
-    ctx.auditLoggingCtx.workspaceId = parsedInput.workspaceId;
-    ctx.auditLoggingCtx.oldObject = await getWorkspace(parsedInput.workspaceId);
-
-    // delete workspace
-    return await deleteWorkspace(parsedInput.workspaceId);
   })
 );

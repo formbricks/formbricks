@@ -9,6 +9,7 @@ import {
 import { cache } from "@/lib/cache";
 import { IS_RECAPTCHA_CONFIGURED, POSTHOG_KEY, RECAPTCHA_SITE_KEY } from "@/lib/constants";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { getWorkspaceStateData } from "./data";
 
 /**
@@ -37,11 +38,19 @@ export const getWorkspaceState = async (
         });
 
         if (POSTHOG_KEY) {
-          capturePostHogEvent(workspaceId, "app_connected", {
-            num_surveys: surveys.length,
-            num_code_actions: actionClasses.filter((ac) => ac.type === "code").length,
-            num_no_code_actions: actionClasses.filter((ac) => ac.type === "noCode").length,
-          });
+          const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
+          capturePostHogEvent(
+            workspaceId,
+            "app_connected",
+            {
+              num_surveys: surveys.length,
+              num_code_actions: actionClasses.filter((ac) => ac.type === "code").length,
+              num_no_code_actions: actionClasses.filter((ac) => ac.type === "noCode").length,
+              organization_id: organizationId ?? "",
+              workspace_id: workspaceId,
+            },
+            organizationId ? { organizationId, workspaceId } : undefined
+          );
         }
       }
 

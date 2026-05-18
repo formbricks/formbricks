@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { STORAGE_ERROR_CODES } from "@formbricks/types/storage";
 import * as fileUploadModule from "./file-upload";
 
 // Mock global fetch
@@ -67,7 +68,41 @@ describe("fileUpload", () => {
     });
 
     const result = await fileUploadModule.handleFileUpload(file, "test-env");
-    expect(result.error).toBe("Upload failed. Please try again.");
+    expect(result.error).toBe(fileUploadModule.FileUploadError.UPLOAD_FAILED);
+    expect(result.url).toBe("");
+  });
+
+  test("should return STORAGE_NOT_CONFIGURED when signing API returns a storage configuration error", async () => {
+    const file = createMockFile("test.jpg", "image/jpeg", 1000);
+
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+      json: async () => ({
+        code: "internal_server_error",
+        message: "File storage is not configured correctly. Please check your file upload settings.",
+        details: { storage_error_code: STORAGE_ERROR_CODES.S3_CREDENTIALS_ERROR },
+      }),
+    });
+
+    const result = await fileUploadModule.handleFileUpload(file, "test-env");
+
+    expect(result.error).toBe(fileUploadModule.FileUploadError.STORAGE_NOT_CONFIGURED);
+    expect(result.url).toBe("");
+  });
+
+  test("should return INVALID_FILE_NAME when signing API rejects the file name", async () => {
+    const file = createMockFile("----.jpg", "image/jpeg", 1000);
+
+    mockFetch.mockResolvedValueOnce({
+      ok: false,
+      status: 400,
+      json: async () => ({ details: { fileName: "Invalid file name" } }),
+    });
+
+    const result = await fileUploadModule.handleFileUpload(file, "test-env");
+
+    expect(result.error).toBe(fileUploadModule.FileUploadError.INVALID_FILE_NAME);
     expect(result.url).toBe("");
   });
 
@@ -129,7 +164,7 @@ describe("fileUpload", () => {
     }, 0);
 
     const result = await fileUploadModule.handleFileUpload(file, "test-env");
-    expect(result.error).toBe("Upload failed. Please try again.");
+    expect(result.error).toBe(fileUploadModule.FileUploadError.UPLOAD_FAILED);
     expect(result.url).toBe("");
   });
 
@@ -161,7 +196,34 @@ describe("fileUpload", () => {
     }, 0);
 
     const result = await fileUploadModule.handleFileUpload(file, "test-env");
-    expect(result.error).toBe("Upload failed. Please try again.");
+    expect(result.error).toBe(fileUploadModule.FileUploadError.STORAGE_UPLOAD_FAILED);
+    expect(result.url).toBe("");
+  });
+
+  test("should return STORAGE_UPLOAD_FAILED when storage upload request throws", async () => {
+    const file = createMockFile("test.jpg", "image/jpeg", 1000);
+
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        data: {
+          signedUrl: "https://s3.example.com/upload",
+          fileUrl: "/storage/test-env/public/file.jpg",
+          presignedFields: {
+            key: "value",
+          },
+        },
+      }),
+    });
+
+    mockFetch.mockRejectedValueOnce(new Error("Network error"));
+
+    setTimeout(() => {
+      mockFileReader.onload();
+    }, 0);
+
+    const result = await fileUploadModule.handleFileUpload(file, "test-env");
+    expect(result.error).toBe(fileUploadModule.FileUploadError.STORAGE_UPLOAD_FAILED);
     expect(result.url).toBe("");
   });
 

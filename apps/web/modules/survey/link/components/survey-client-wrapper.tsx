@@ -3,15 +3,18 @@
 import { Workspace } from "@prisma/client";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { TResponseData } from "@formbricks/types/responses";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
+import { toJsWorkspaceStateSurvey } from "@/lib/survey/client-utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { CustomScriptsInjector } from "@/modules/survey/link/components/custom-scripts-injector";
 import { LinkSurveyWrapper } from "@/modules/survey/link/components/link-survey-wrapper";
 import { OfflineAlert } from "@/modules/survey/link/components/offline-alert";
 import { getPrefillValue } from "@/modules/survey/link/lib/prefill";
-import { isRTLLanguage } from "@/modules/survey/link/lib/utils";
+import { getUserIdFromSearchParams } from "@/modules/survey/link/lib/user-id";
+import { getWebAppLocale, isRTLLanguage } from "@/modules/survey/link/lib/utils";
 import { SurveyInline } from "@/modules/ui/components/survey";
 
 interface SurveyClientWrapperProps {
@@ -25,6 +28,7 @@ interface SurveyClientWrapperProps {
   singleUseId?: string;
   singleUseResponseId?: string;
   contactId?: string;
+  canReadUserIdFromUrl?: boolean;
   recaptchaSiteKey?: string;
   isSpamProtectionEnabled: boolean;
   isPreview: boolean;
@@ -49,6 +53,7 @@ export const SurveyClientWrapper = ({
   singleUseId,
   singleUseResponseId,
   contactId,
+  canReadUserIdFromUrl = false,
   recaptchaSiteKey,
   isSpamProtectionEnabled,
   isPreview,
@@ -59,8 +64,20 @@ export const SurveyClientWrapper = ({
   IS_FORMBRICKS_CLOUD,
 }: SurveyClientWrapperProps) => {
   const searchParams = useSearchParams();
+  const { i18n } = useTranslation();
+
+  useEffect(() => {
+    const webAppLocale = getWebAppLocale(languageCode, survey);
+    if (i18n.language !== webAppLocale) {
+      i18n.changeLanguage(webAppLocale).catch(() => {
+        i18n.changeLanguage("en-US");
+      });
+    }
+  }, [languageCode, survey, i18n]);
+
   const skipPrefilled = searchParams.get("skipPrefilled") === "true";
   const offlineSupport = searchParams.get("offlineSupport") === "true";
+  const userId = canReadUserIdFromUrl ? getUserIdFromSearchParams(searchParams) : undefined;
   const elements = useMemo(() => getElementsFromBlocks(survey.blocks), [survey.blocks]);
 
   const startAt = searchParams.get("startAt");
@@ -133,11 +150,13 @@ export const SurveyClientWrapper = ({
     }
     setResponseData({});
   };
+  const jsSurvey = useMemo(() => toJsWorkspaceStateSurvey(survey), [survey]);
+
   // Determine text direction based on language code for logo positioning only
   // which checks both language code and survey content. This is only for logo UI positioning.
   const logoDir = useMemo(() => {
-    return isRTLLanguage(survey, languageCode) ? "rtl" : "auto";
-  }, [languageCode, survey]);
+    return isRTLLanguage(jsSurvey, languageCode) ? "rtl" : "auto";
+  }, [languageCode, jsSurvey]);
 
   return (
     <>
@@ -169,7 +188,7 @@ export const SurveyClientWrapper = ({
           appUrl={publicDomain}
           workspaceId={survey.workspaceId}
           isPreviewMode={isPreview}
-          survey={survey}
+          survey={jsSurvey}
           styling={styling}
           languageCode={languageCode}
           isBrandingEnabled={workspace.linkSurveyBranding}
@@ -194,6 +213,7 @@ export const SurveyClientWrapper = ({
           singleUseResponseId={singleUseResponseId}
           getSetIsResponseSendingFinished={(_f: (value: boolean) => void) => {}}
           contactId={contactId}
+          userId={userId}
           recaptchaSiteKey={recaptchaSiteKey}
           isSpamProtectionEnabled={isSpamProtectionEnabled}
           offlineSupport={offlineSupport}

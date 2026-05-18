@@ -38,6 +38,7 @@ interface OrganizationActionsProps {
   isStorageConfigured: boolean;
   isTeamAdmin: boolean;
   userAdminTeamIds?: string[];
+  enterpriseLicenseRequestFormUrl: string;
 }
 
 export const OrganizationActions = ({
@@ -54,6 +55,7 @@ export const OrganizationActions = ({
   isStorageConfigured,
   isTeamAdmin,
   userAdminTeamIds,
+  enterpriseLicenseRequestFormUrl,
 }: OrganizationActionsProps) => {
   const router = useRouter();
   const { t } = useTranslation();
@@ -171,6 +173,7 @@ export const OrganizationActions = ({
         isOwnerOrManager={isOwnerOrManager}
         isTeamAdmin={isTeamAdmin}
         userAdminTeamIds={userAdminTeamIds}
+        enterpriseLicenseRequestFormUrl={enterpriseLicenseRequestFormUrl}
       />
 
       <Dialog open={isLeaveOrganizationModalOpen} onOpenChange={setIsLeaveOrganizationModalOpen}>

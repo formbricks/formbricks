@@ -1,9 +1,14 @@
 import { TDisplayCreateInput } from "@formbricks/types/displays";
 import { Result } from "@formbricks/types/error-handlers";
-import { ApiErrorResponse } from "@formbricks/types/errors";
+import { type ApiErrorResponse, FILE_UPLOAD_ERROR_NAMES } from "@formbricks/types/errors";
 import { TSurveyQuotaAction } from "@formbricks/types/quota";
 import { TResponseInput, TResponseUpdateInput } from "@formbricks/types/responses";
-import { TUploadFileConfig, TUploadFileResponse } from "@formbricks/types/storage";
+import {
+  STORAGE_CONFIGURATION_ERROR_CODES,
+  type TStorageApiErrorDetails,
+  type TUploadFileConfig,
+  type TUploadFileResponse,
+} from "@formbricks/types/storage";
 import { makeRequest } from "@/lib/utils";
 
 type TResponseCreateResponseQuotaFull = {
@@ -22,6 +27,18 @@ type TResponseCreateResponse = {
 } & TResponseQuota;
 
 type TResponseUpdateResponse = Record<string, unknown> & TResponseQuota;
+
+type TUploadApiErrorResponse = ApiErrorResponse & {
+  details?: ApiErrorResponse["details"] & TStorageApiErrorDetails;
+};
+
+const parseUploadErrorResponse = async (response: Response): Promise<TUploadApiErrorResponse | undefined> => {
+  try {
+    return (await response.json()) as TUploadApiErrorResponse;
+  } catch {
+    return undefined;
+  }
+};
 
 // Simple API client using fetch
 export class ApiClient {
@@ -121,13 +138,22 @@ export class ApiClient {
     });
 
     if (!response.ok) {
-      if (response.status === 400) {
-        const json = (await response.json()) as ApiErrorResponse;
-        if (json.details?.fileName) {
-          const err = new Error("Invalid file name");
-          err.name = "InvalidFileNameError";
-          throw err;
-        }
+      const json = await parseUploadErrorResponse(response);
+
+      if (response.status === 400 && json?.details?.fileName) {
+        const err = new Error("Invalid file name");
+        err.name = FILE_UPLOAD_ERROR_NAMES.INVALID_FILE_NAME;
+        throw err;
+      }
+
+      if (
+        response.status >= 500 &&
+        json?.details?.storage_error_code &&
+        STORAGE_CONFIGURATION_ERROR_CODES.has(json.details.storage_error_code)
+      ) {
+        const err = new Error("File upload service is not configured");
+        err.name = FILE_UPLOAD_ERROR_NAMES.STORAGE_NOT_CONFIGURED;
+        throw err;
       }
 
       throw new Error(`Upload failed with status: ${String(response.status)}`);
@@ -173,7 +199,9 @@ export class ApiClient {
       });
     } catch (err) {
       console.error("Error uploading file", err);
-      throw new Error("Network error while uploading file");
+      const error = new Error("File upload service is unavailable");
+      error.name = FILE_UPLOAD_ERROR_NAMES.STORAGE_UPLOAD_FAILED;
+      throw error;
     }
 
     if (!uploadResponse.ok) {
@@ -181,11 +209,13 @@ export class ApiClient {
 
       if (presignedFields && errorText.includes("EntityTooLarge")) {
         const error = new Error("File size exceeds the size limit for your plan");
-        error.name = "FileTooLargeError";
+        error.name = FILE_UPLOAD_ERROR_NAMES.FILE_TOO_LARGE;
         throw error;
       }
 
-      throw new Error(`Upload failed with status: ${String(uploadResponse.status)}`);
+      const error = new Error(`Upload failed with status: ${String(uploadResponse.status)}`);
+      error.name = FILE_UPLOAD_ERROR_NAMES.STORAGE_UPLOAD_FAILED;
+      throw error;
     }
 
     return fileUrl;

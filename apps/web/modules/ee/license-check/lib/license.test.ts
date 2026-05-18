@@ -12,7 +12,7 @@ vi.mock("@/lib/env", () => ({
   env: {
     ENTERPRISE_LICENSE_KEY: "test-license-key",
     ENVIRONMENT: "production",
-    VERCEL_URL: "some.vercel.url",
+
     FORMBRICKS_COM_URL: "https://app.formbricks.com",
     HTTPS_PROXY: undefined,
     HTTP_PROXY: undefined,
@@ -46,10 +46,6 @@ vi.mock("@formbricks/cache", () => ({
       return subResource ? `${base}:${subResource}` : base;
     },
   },
-}));
-
-vi.mock("node-fetch", () => ({
-  default: vi.fn(),
 }));
 
 vi.mock("@formbricks/database", () => ({
@@ -86,6 +82,10 @@ vi.mock("@/lib/constants", async (importOriginal) => {
   return {
     ...(typeof actual === "object" && actual !== null ? actual : {}),
     IS_FORMBRICKS_CLOUD: false, // Default to self-hosted for most tests
+    // Keep false so the normal instanceId + guard logic is exercised. No real
+    // network calls are made: global.fetch and getInstanceId() are both mocked
+    // at the top of this file, so the license server is never actually reached.
+    E2E_TESTING: false,
     REVALIDATION_INTERVAL: 3600, // Example value
     ENTERPRISE_LICENSE_KEY: "test-license-key",
   };
@@ -107,6 +107,7 @@ describe("License Core Logic", () => {
     mockLogger.warn.mockReset();
     mockLogger.info.mockReset();
     mockLogger.debug.mockReset();
+    vi.stubGlobal("fetch", vi.fn());
 
     // Set up default mock implementations for Result types
     // fetchLicense uses get with TCachedFetchResult wrapper + distributed lock; getPreviousResult uses get with :previous_result key
@@ -151,7 +152,6 @@ describe("License Core Logic", () => {
       auditLogs: true,
       accessControl: true,
       quotas: true,
-      unifyFeedback: false,
       feedbackDirectories: false,
       dashboards: false,
     };
@@ -171,7 +171,7 @@ describe("License Core Logic", () => {
 
     test("should return cached license from FETCH_LICENSE_CACHE_KEY if available and valid", async () => {
       const { getEnterpriseLicense } = await import("./license");
-      const fetch = (await import("node-fetch")).default as Mock;
+      const fetch = global.fetch as Mock;
 
       // Mock cache hit: get returns wrapped license for status key
       mockCache.get.mockImplementation(async (key: string) => {
@@ -194,7 +194,7 @@ describe("License Core Logic", () => {
 
     test("should fetch license if not in FETCH_LICENSE_CACHE_KEY", async () => {
       const { getEnterpriseLicense } = await import("./license");
-      const fetch = (await import("node-fetch")).default as Mock;
+      const fetch = global.fetch as Mock;
 
       // Default mocks give cache miss (get returns null)
       fetch.mockResolvedValueOnce({
@@ -214,7 +214,7 @@ describe("License Core Logic", () => {
 
     test("should use previous result if fetch fails and previous result exists and is within grace period", async () => {
       const { getEnterpriseLicense } = await import("./license");
-      const fetch = (await import("node-fetch")).default as Mock;
+      const fetch = global.fetch as Mock;
 
       const previousTime = new Date(Date.now() - 1 * 24 * 60 * 60 * 1000); // 1 day ago, within grace period
       const mockPreviousResult = {
@@ -250,7 +250,7 @@ describe("License Core Logic", () => {
 
     test("should return inactive and set new previousResult if fetch fails and previous result is outside grace period", async () => {
       const { getEnterpriseLicense } = await import("./license");
-      const fetch = (await import("node-fetch")).default as Mock;
+      const fetch = global.fetch as Mock;
 
       const previousTime = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000); // 5 days ago, outside grace period
       const mockPreviousResult = {
@@ -292,7 +292,6 @@ describe("License Core Logic", () => {
             auditLogs: false,
             accessControl: false,
             quotas: false,
-            unifyFeedback: false,
             feedbackDirectories: false,
             dashboards: false,
           },
@@ -317,7 +316,6 @@ describe("License Core Logic", () => {
           auditLogs: false,
           accessControl: false,
           quotas: false,
-          unifyFeedback: false,
           feedbackDirectories: false,
           dashboards: false,
         },
@@ -330,7 +328,7 @@ describe("License Core Logic", () => {
 
     test("should return inactive with default features if fetch fails and no previous result (initial fail)", async () => {
       const { getEnterpriseLicense } = await import("./license");
-      const fetch = (await import("node-fetch")).default as Mock;
+      const fetch = global.fetch as Mock;
 
       // Cache miss -> fetch fails; no previous result (default get returns null)
       fetch.mockRejectedValueOnce(new Error("Network error"));
@@ -351,7 +349,6 @@ describe("License Core Logic", () => {
         auditLogs: false,
         accessControl: false,
         quotas: false,
-        unifyFeedback: false,
         feedbackDirectories: false,
         dashboards: false,
       };
@@ -380,14 +377,16 @@ describe("License Core Logic", () => {
       mockCache.get.mockReset();
       mockCache.set.mockReset();
       mockCache.withCache.mockReset();
-      const fetch = (await import("node-fetch")).default as Mock;
+      const fetch = global.fetch as Mock;
       fetch.mockReset();
 
+      // Reset modules so the dynamic import below gets a fresh module with the new env mock
+      vi.resetModules();
       // Mock the env module with empty license key
       vi.doMock("@/lib/env", () => ({
         env: {
           ENTERPRISE_LICENSE_KEY: "",
-          VERCEL_URL: "some.vercel.url",
+
           FORMBRICKS_COM_URL: "https://app.formbricks.com",
           HTTPS_PROXY: undefined,
           HTTP_PROXY: undefined,
@@ -419,7 +418,7 @@ describe("License Core Logic", () => {
         env: {
           ENTERPRISE_LICENSE_KEY: "test-license-key",
           ENVIRONMENT: "production",
-          VERCEL_URL: "some.vercel.url",
+
           FORMBRICKS_COM_URL: "https://app.formbricks.com",
           HTTPS_PROXY: undefined,
           HTTP_PROXY: undefined,
@@ -427,7 +426,7 @@ describe("License Core Logic", () => {
       }));
 
       const { getEnterpriseLicense } = await import("./license");
-      const fetch = (await import("node-fetch")).default as Mock;
+      const fetch = global.fetch as Mock;
 
       // Cache miss -> fetch throws -> no previous result -> handleInitialFailure
       fetch.mockRejectedValueOnce(new Error("Network error"));
@@ -453,7 +452,7 @@ describe("License Core Logic", () => {
         env: {
           ENTERPRISE_LICENSE_KEY: "test-license-key",
           ENVIRONMENT: "production",
-          VERCEL_URL: "some.vercel.url",
+
           FORMBRICKS_COM_URL: "https://app.formbricks.com",
           HTTPS_PROXY: undefined,
           HTTP_PROXY: undefined,
@@ -461,7 +460,7 @@ describe("License Core Logic", () => {
       }));
 
       const { getEnterpriseLicense } = await import("./license");
-      const fetch = (await import("node-fetch")).default as Mock;
+      const fetch = global.fetch as Mock;
 
       mockCache.get.mockResolvedValue({ ok: true, data: null });
       fetch.mockResolvedValueOnce({ ok: false, status: 400 } as any);
@@ -484,7 +483,7 @@ describe("License Core Logic", () => {
         env: {
           ENTERPRISE_LICENSE_KEY: "test-license-key",
           ENVIRONMENT: "production",
-          VERCEL_URL: "some.vercel.url",
+
           FORMBRICKS_COM_URL: "https://app.formbricks.com",
           HTTPS_PROXY: undefined,
           HTTP_PROXY: undefined,
@@ -492,7 +491,7 @@ describe("License Core Logic", () => {
       }));
 
       const { getEnterpriseLicense } = await import("./license");
-      const fetch = (await import("node-fetch")).default as Mock;
+      const fetch = global.fetch as Mock;
 
       mockCache.get.mockResolvedValue({ ok: true, data: null });
       fetch.mockResolvedValueOnce({ ok: false, status: 403 } as any);
@@ -515,7 +514,7 @@ describe("License Core Logic", () => {
         env: {
           ENTERPRISE_LICENSE_KEY: "test-license-key",
           ENVIRONMENT: "production",
-          VERCEL_URL: "some.vercel.url",
+
           FORMBRICKS_COM_URL: "https://app.formbricks.com",
           HTTPS_PROXY: undefined,
           HTTP_PROXY: undefined,
@@ -523,7 +522,7 @@ describe("License Core Logic", () => {
       }));
 
       const { getEnterpriseLicense } = await import("./license");
-      const fetch = (await import("node-fetch")).default as Mock;
+      const fetch = global.fetch as Mock;
 
       const mockLicense: TEnterpriseLicenseDetails = {
         status: "active",
@@ -542,7 +541,6 @@ describe("License Core Logic", () => {
           auditLogs: true,
           accessControl: true,
           quotas: true,
-          unifyFeedback: false,
           feedbackDirectories: false,
           dashboards: false,
         },
@@ -583,7 +581,7 @@ describe("License Core Logic", () => {
         env: {
           ENTERPRISE_LICENSE_KEY: "test-license-key",
           ENVIRONMENT: "production",
-          VERCEL_URL: "some.vercel.url",
+
           FORMBRICKS_COM_URL: "https://app.formbricks.com",
           HTTPS_PROXY: undefined,
           HTTP_PROXY: undefined,
@@ -591,7 +589,7 @@ describe("License Core Logic", () => {
       }));
 
       const { fetchLicense } = await import("./license");
-      const fetch = (await import("node-fetch")).default as Mock;
+      const fetch = global.fetch as Mock;
 
       const mockLicense: TEnterpriseLicenseDetails = {
         status: "active",
@@ -610,7 +608,6 @@ describe("License Core Logic", () => {
           auditLogs: true,
           accessControl: true,
           quotas: true,
-          unifyFeedback: false,
           feedbackDirectories: false,
           dashboards: false,
         },
@@ -642,7 +639,7 @@ describe("License Core Logic", () => {
         env: {
           ENTERPRISE_LICENSE_KEY: "test-license-key",
           ENVIRONMENT: "production",
-          VERCEL_URL: "some.vercel.url",
+
           FORMBRICKS_COM_URL: "https://app.formbricks.com",
           HTTPS_PROXY: undefined,
           HTTP_PROXY: undefined,
@@ -650,7 +647,7 @@ describe("License Core Logic", () => {
       }));
 
       const { fetchLicense } = await import("./license");
-      const fetch = (await import("node-fetch")).default as Mock;
+      const fetch = global.fetch as Mock;
 
       const mockLicense: TEnterpriseLicenseDetails = {
         status: "active",
@@ -669,7 +666,6 @@ describe("License Core Logic", () => {
           auditLogs: true,
           accessControl: true,
           quotas: true,
-          unifyFeedback: false,
           feedbackDirectories: false,
           dashboards: false,
         },
@@ -701,7 +697,7 @@ describe("License Core Logic", () => {
         env: {
           ENTERPRISE_LICENSE_KEY: "test-license-key",
           ENVIRONMENT: "production",
-          VERCEL_URL: "some.vercel.url",
+
           FORMBRICKS_COM_URL: "https://app.formbricks.com",
           HTTPS_PROXY: undefined,
           HTTP_PROXY: undefined,
@@ -709,7 +705,7 @@ describe("License Core Logic", () => {
       }));
 
       const { fetchLicense } = await import("./license");
-      const fetch = (await import("node-fetch")).default as Mock;
+      const fetch = global.fetch as Mock;
 
       mockCache.get.mockResolvedValue({ ok: true, data: null });
       mockCache.tryLock.mockResolvedValue({ ok: true, data: true });
@@ -740,7 +736,7 @@ describe("License Core Logic", () => {
         env: {
           ENTERPRISE_LICENSE_KEY: "test-license-key",
           ENVIRONMENT: "production",
-          VERCEL_URL: "some.vercel.url",
+
           FORMBRICKS_COM_URL: "https://app.formbricks.com",
           HTTPS_PROXY: undefined,
           HTTP_PROXY: undefined,
@@ -751,7 +747,7 @@ describe("License Core Logic", () => {
       process.env.NEXT_PHASE = "phase-production-build";
 
       const { fetchLicense } = await import("./license");
-      const fetch = (await import("node-fetch")).default as Mock;
+      const fetch = global.fetch as Mock;
 
       const result = await fetchLicense();
 
@@ -766,7 +762,7 @@ describe("License Core Logic", () => {
         env: {
           ENTERPRISE_LICENSE_KEY: "test-license-key",
           ENVIRONMENT: "production",
-          VERCEL_URL: "some.vercel.url",
+
           FORMBRICKS_COM_URL: "https://app.formbricks.com",
           HTTPS_PROXY: undefined,
           HTTP_PROXY: undefined,
@@ -774,7 +770,7 @@ describe("License Core Logic", () => {
       }));
 
       const { fetchLicense } = await import("./license");
-      const fetch = (await import("node-fetch")).default as Mock;
+      const fetch = global.fetch as Mock;
 
       mockCache.tryLock.mockResolvedValue({ ok: true, data: false });
       mockCache.get.mockResolvedValue({ ok: true, data: null });
@@ -876,7 +872,6 @@ describe("License Core Logic", () => {
                   auditLogs: false,
                   accessControl: false,
                   quotas: false,
-                  unifyFeedback: false,
                   feedbackDirectories: false,
                   dashboards: false,
                 },
@@ -920,7 +915,7 @@ describe("License Core Logic", () => {
         env: {
           ENTERPRISE_LICENSE_KEY: "test-license-key",
           ENVIRONMENT: "production",
-          VERCEL_URL: "some.vercel.url",
+
           FORMBRICKS_COM_URL: "https://app.formbricks.com",
           HTTPS_PROXY: undefined,
           HTTP_PROXY: undefined,
@@ -930,7 +925,7 @@ describe("License Core Logic", () => {
       // Cache miss so fetch runs; mock get for cache check
       mockCache.get.mockResolvedValue({ ok: true, data: null });
 
-      const fetch = (await import("node-fetch")).default as Mock;
+      const fetch = global.fetch as Mock;
       fetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
@@ -967,7 +962,7 @@ describe("License Core Logic", () => {
       vi.doMock("@/lib/env", () => ({
         env: {
           ENTERPRISE_LICENSE_KEY: undefined,
-          VERCEL_URL: "some.vercel.url",
+
           FORMBRICKS_COM_URL: "https://app.formbricks.com",
           HTTPS_PROXY: undefined,
           HTTP_PROXY: undefined,
@@ -990,7 +985,7 @@ describe("License Core Logic", () => {
         env: {
           ENTERPRISE_LICENSE_KEY: testLicenseKey,
           ENVIRONMENT: "production",
-          VERCEL_URL: "some.vercel.url",
+
           FORMBRICKS_COM_URL: "https://app.formbricks.com",
           HTTPS_PROXY: undefined,
           HTTP_PROXY: undefined,
@@ -999,7 +994,7 @@ describe("License Core Logic", () => {
 
       mockCache.get.mockResolvedValue({ ok: true, data: null });
 
-      const fetch = (await import("node-fetch")).default as Mock;
+      const fetch = global.fetch as Mock;
       fetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
@@ -1042,7 +1037,6 @@ describe("License Core Logic", () => {
 
     test("should log warning when setPreviousResult cache.set fails (line 176-178)", async () => {
       const { getEnterpriseLicense } = await import("./license");
-      (await import("node-fetch")).default as Mock;
 
       const mockFetchedLicenseDetails: TEnterpriseLicenseDetails = {
         status: "active",
@@ -1061,7 +1055,6 @@ describe("License Core Logic", () => {
           auditLogs: true,
           accessControl: true,
           quotas: true,
-          unifyFeedback: false,
           feedbackDirectories: false,
           dashboards: false,
         },
@@ -1094,7 +1087,7 @@ describe("License Core Logic", () => {
 
     test("should log error when trackApiError is called (line 196-203)", async () => {
       const { getEnterpriseLicense } = await import("./license");
-      const fetch = (await import("node-fetch")).default as Mock;
+      const fetch = global.fetch as Mock;
 
       // Cache miss -> fetch returns 500
       const mockStatus = 500;
@@ -1118,7 +1111,7 @@ describe("License Core Logic", () => {
 
     test("should log error when trackApiError is called with different status codes (line 196-203)", async () => {
       const { getEnterpriseLicense } = await import("./license");
-      const fetch = (await import("node-fetch")).default as Mock;
+      const fetch = global.fetch as Mock;
 
       // Cache miss -> fetch returns 403
       const mockStatus = 403;
@@ -1142,7 +1135,7 @@ describe("License Core Logic", () => {
 
     test("should log info when trackFallbackUsage is called during grace period", async () => {
       const { getEnterpriseLicense } = await import("./license");
-      const fetch = (await import("node-fetch")).default as Mock;
+      const fetch = global.fetch as Mock;
 
       const previousTime = new Date(Date.now() - 1 * 24 * 60 * 60 * 1000); // 1 day ago
       const mockPreviousResult = {
@@ -1191,7 +1184,6 @@ describe("License Core Logic", () => {
         auditLogs: true,
         accessControl: true,
         quotas: true,
-        unifyFeedback: false,
         feedbackDirectories: false,
         dashboards: false,
       },
@@ -1207,7 +1199,7 @@ describe("License Core Logic", () => {
 
     test("should return active license state from pre-fetched active license without calling fetch", async () => {
       const { computeFreshLicenseState } = await import("./license");
-      const fetch = (await import("node-fetch")).default as Mock;
+      const fetch = global.fetch as Mock;
 
       const result = await computeFreshLicenseState(mockActiveLicenseDetails);
 
@@ -1239,7 +1231,7 @@ describe("License Core Logic", () => {
       });
 
       const { computeFreshLicenseState } = await import("./license");
-      const fetch = (await import("node-fetch")).default as Mock;
+      const fetch = global.fetch as Mock;
 
       const result = await computeFreshLicenseState(null);
 
@@ -1256,7 +1248,7 @@ describe("License Core Logic", () => {
 
     test("should return inactive default when freshLicense is null and no previous result", async () => {
       const { computeFreshLicenseState } = await import("./license");
-      const fetch = (await import("node-fetch")).default as Mock;
+      const fetch = global.fetch as Mock;
 
       const result = await computeFreshLicenseState(null);
 
@@ -1351,7 +1343,7 @@ describe("License Core Logic", () => {
   describe("fetchLicenseFresh", () => {
     test("should fetch directly from server without using cache", async () => {
       const { fetchLicenseFresh } = await import("./license");
-      const fetch = (await import("node-fetch")).default as Mock;
+      const fetch = global.fetch as Mock;
 
       mockCache.get.mockResolvedValue({ ok: true, data: null });
       fetch.mockResolvedValueOnce({
@@ -1404,7 +1396,7 @@ describe("License Core Logic", () => {
         },
       }));
 
-      const fetch = (await import("node-fetch")).default as Mock;
+      const fetch = global.fetch as Mock;
 
       // Cache miss so fetchLicense fetches from server
       mockCache.get.mockResolvedValue({ ok: true, data: null });

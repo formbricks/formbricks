@@ -36,7 +36,6 @@ const getCustomPlanFeaturePermission = async (
     | "contacts"
     | "aiSmartTools"
     | "aiDataAnalysis"
-    | "unifyFeedback"
     | "feedbackDirectories"
     | "dashboards"
   >
@@ -48,7 +47,6 @@ const getCustomPlanFeaturePermission = async (
       contacts: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.CONTACTS,
       aiSmartTools: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.AI_SMART_TOOLS,
       aiDataAnalysis: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.AI_DATA_ANALYSIS,
-      unifyFeedback: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.UNIFY_FEEDBACK,
       feedbackDirectories: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.FEEDBACK_DIRECTORIES,
       dashboards: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.DASHBOARDS,
     };
@@ -162,10 +160,6 @@ export const getIsSpamProtectionEnabled = async (organizationId: string): Promis
 
 export const getAccessControlPermission = async (organizationId: string): Promise<boolean> => {
   return getCustomPlanFeaturePermission(organizationId, "accessControl");
-};
-
-export const getIsUnifyFeedbackEnabled = async (organizationId: string): Promise<boolean> => {
-  return getCustomPlanFeaturePermission(organizationId, "unifyFeedback");
 };
 
 export const getIsFeedbackDirectoriesEnabled = async (organizationId: string): Promise<boolean> => {

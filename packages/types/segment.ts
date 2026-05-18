@@ -349,6 +349,13 @@ export const ZSegment = z.object({
   surveys: z.array(z.string()),
 });
 
+// Minimal segment shape for the public client API — strips sensitive targeting logic
+export const ZJsWorkspaceStateSegment = z.object({
+  id: z.string(),
+  hasFilters: z.boolean(),
+});
+export type TJsWorkspaceStateSegment = z.infer<typeof ZJsWorkspaceStateSegment>;
+
 export const ZSegmentCreateInput = z.object({
   workspaceId: z.string(),
   title: z.string(),

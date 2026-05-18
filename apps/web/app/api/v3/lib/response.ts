@@ -171,3 +171,18 @@ export function successResponse<T>(
     }
   );
 }
+
+export function noContentResponse(options?: { requestId?: string; cache?: string }): Response {
+  const headers: Record<string, string> = {
+    "Cache-Control": options?.cache ?? CACHE_NO_STORE,
+  };
+
+  if (options?.requestId) {
+    headers["X-Request-Id"] = options.requestId;
+  }
+
+  return new Response(null, {
+    status: 204,
+    headers,
+  });
+}
