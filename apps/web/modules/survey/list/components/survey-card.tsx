@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { type ComponentProps, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { TUserLocale } from "@formbricks/types/user";
 import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
@@ -18,9 +18,17 @@ interface SurveyCardProps {
   publicDomain: string;
   isReadOnly: boolean;
   deleteSurvey: (surveyId: string) => Promise<void>;
+  updateSurveyStatus: ComponentProps<typeof SurveyDropDownMenu>["updateSurveyStatus"];
   locale: TUserLocale;
 }
-export const SurveyCard = ({ survey, publicDomain, isReadOnly, deleteSurvey, locale }: SurveyCardProps) => {
+export const SurveyCard = ({
+  survey,
+  publicDomain,
+  isReadOnly,
+  deleteSurvey,
+  updateSurveyStatus,
+  locale,
+}: Readonly<SurveyCardProps>) => {
   const { t } = useTranslation();
   const { workspace } = useWorkspace();
   const workspaceBasePath = `/workspaces/${workspace?.id}`;
@@ -104,6 +112,7 @@ export const SurveyCard = ({ survey, publicDomain, isReadOnly, deleteSurvey, loc
           disabled={isDraftAndReadOnly}
           isSurveyCreationDeletionDisabled={isSurveyCreationDeletionDisabled}
           deleteSurvey={deleteSurvey}
+          updateSurveyStatus={updateSurveyStatus}
         />
       </div>
     </div>

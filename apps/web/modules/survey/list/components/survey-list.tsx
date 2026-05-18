@@ -11,6 +11,7 @@ import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@/lib/localStorage";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { useDeleteSurvey } from "@/modules/survey/list/hooks/use-delete-survey";
 import { useSurveys } from "@/modules/survey/list/hooks/use-surveys";
+import { useUpdateSurveyStatus } from "@/modules/survey/list/hooks/use-update-survey-status";
 import { initialFilters } from "@/modules/survey/list/lib/constants";
 import {
   hasActiveSurveyFilters,
@@ -44,7 +45,7 @@ export const SurveysList = ({
   surveysPerPage,
   currentWorkspaceChannel,
   locale,
-}: SurveysListProps) => {
+}: Readonly<SurveysListProps>) => {
   const { t } = useTranslation();
   const [surveyFilters, setSurveyFilters] = useState<TSurveyOverviewFilters>(initialFilters);
   const [isFilterInitialized, setIsFilterInitialized] = useState(false);
@@ -103,6 +104,7 @@ export const SurveysList = ({
   });
 
   const deleteSurveyMutation = useDeleteSurvey({ queryKey });
+  const updateSurveyStatusMutation = useUpdateSurveyStatus({ queryKey });
 
   const hasAppliedFilters = hasActiveSurveyFilters(normalizedFilters);
   const showInitialLoading = !isFilterInitialized || (isLoading && surveys.length === 0);
@@ -112,6 +114,10 @@ export const SurveysList = ({
   const handleDeleteSurvey = async (surveyId: string) => {
     await deleteSurveyMutation.mutateAsync({ surveyId });
   };
+
+  const handleUpdateSurveyStatus = async (
+    variables: Parameters<typeof updateSurveyStatusMutation.mutateAsync>[0]
+  ) => updateSurveyStatusMutation.mutateAsync(variables);
 
   const createSurveyButton = (
     <Button size="sm" asChild>
@@ -203,6 +209,7 @@ export const SurveysList = ({
               survey={survey}
               isReadOnly={isReadOnly}
               deleteSurvey={handleDeleteSurvey}
+              updateSurveyStatus={handleUpdateSurveyStatus}
               publicDomain={publicDomain}
               locale={locale}
             />

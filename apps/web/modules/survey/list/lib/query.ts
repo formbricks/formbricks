@@ -1,6 +1,6 @@
 import type { InfiniteData } from "@tanstack/react-query";
-import { TSurveyListItem, TSurveyOverviewFilters } from "@/modules/survey/list/types/survey-overview";
-import { TSurveyListPage } from "./v3-surveys-client";
+import type { TSurveyListItem, TSurveyOverviewFilters } from "@/modules/survey/list/types/survey-overview";
+import type { TSurveyListPage } from "./v3-surveys-client";
 
 type TSurveyListKeyInput = {
   workspaceId: string;
@@ -53,5 +53,40 @@ export function removeSurveyFromInfiniteData(
         totalCount: page.meta.totalCount === null ? null : Math.max(0, page.meta.totalCount - 1),
       },
     })),
+  };
+}
+
+export function updateSurveyInInfiniteData(
+  data: InfiniteData<TSurveyListPage> | undefined,
+  updatedSurvey: Pick<TSurveyListItem, "id"> & Partial<TSurveyListItem>
+): InfiniteData<TSurveyListPage> | undefined {
+  if (!data) {
+    return data;
+  }
+
+  let surveyWasUpdated = false;
+
+  const pages = data.pages.map((page) => ({
+    ...page,
+    data: page.data.map((survey) => {
+      if (survey.id !== updatedSurvey.id) {
+        return survey;
+      }
+
+      surveyWasUpdated = true;
+      return {
+        ...survey,
+        ...updatedSurvey,
+      };
+    }),
+  }));
+
+  if (!surveyWasUpdated) {
+    return data;
+  }
+
+  return {
+    ...data,
+    pages,
   };
 }

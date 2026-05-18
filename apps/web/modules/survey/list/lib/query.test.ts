@@ -1,7 +1,7 @@
 import type { InfiniteData } from "@tanstack/react-query";
 import { describe, expect, test } from "vitest";
-import { flattenSurveyPages, removeSurveyFromInfiniteData } from "./query";
-import { TSurveyListPage } from "./v3-surveys-client";
+import { flattenSurveyPages, removeSurveyFromInfiniteData, updateSurveyInInfiniteData } from "./query";
+import type { TSurveyListPage } from "./v3-surveys-client";
 
 const surveyA = {
   id: "survey_a",
@@ -9,6 +9,7 @@ const surveyA = {
   workspaceId: "env_1",
   type: "link" as const,
   status: "draft" as const,
+  publishOn: null,
   createdAt: new Date("2026-04-15T10:00:00.000Z"),
   updatedAt: new Date("2026-04-15T10:00:00.000Z"),
   responseCount: 0,
@@ -47,6 +48,30 @@ const baseData: InfiniteData<TSurveyListPage> = {
 describe("flattenSurveyPages", () => {
   test("flattens every fetched page", () => {
     expect(flattenSurveyPages(baseData)).toEqual([surveyA, surveyB]);
+  });
+});
+
+describe("updateSurveyInInfiniteData", () => {
+  test("updates the matching survey across cached pages", () => {
+    const updatedAt = new Date("2026-04-16T10:00:00.000Z");
+    const nextData = updateSurveyInInfiniteData(baseData, {
+      id: "survey_b",
+      status: "completed",
+      publishOn: null,
+      updatedAt,
+    });
+
+    expect(nextData?.pages[0]?.data).toEqual([surveyA]);
+    expect(nextData?.pages[1]?.data[0]).toEqual({
+      ...surveyB,
+      status: "completed",
+      publishOn: null,
+      updatedAt,
+    });
+  });
+
+  test("returns the original cache when the survey is not present", () => {
+    expect(updateSurveyInInfiniteData(baseData, { id: "missing_survey", status: "paused" })).toBe(baseData);
   });
 });
 
