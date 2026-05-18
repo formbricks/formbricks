@@ -117,7 +117,7 @@ importers:
     dependencies:
       '@boxyhq/saml-jackson':
         specifier: 26.2.0
-        version: 26.2.0(@types/node@25.4.0)(socks@2.8.7)(sqlite3@5.1.7)(ts-node@10.9.2(@types/node@25.4.0)(typescript@5.9.3))
+        version: 26.2.0(@types/node@25.4.0)(ioredis@5.8.1)(socks@2.8.7)(sqlite3@5.1.7)(ts-node@10.9.2(@types/node@25.4.0)(typescript@5.9.3))
       '@cubejs-client/core':
         specifier: 1.6.6
         version: 1.6.6(encoding@0.1.13)
