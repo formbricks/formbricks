@@ -109,13 +109,15 @@ envoyRedis:
 
 This keeps Envoy rate-limiting state separate from the application's own Redis traffic.
 
-### Cube Is Optional
+### Cube
 
-Cube is only needed for analytics dashboards or other analysis flows that depend on Cube queries.
+Cube is part of the baseline Formbricks v5 stack and is bundled with the chart by default
+(`cube.enabled: true`). To run an external Cube cluster instead:
 
-- deploy Cube separately when you need it
-- configure `CUBEJS_API_URL` and `CUBEJS_API_SECRET` for the Formbricks app
-- do not expect the main Formbricks chart to provision Cube automatically
+- set `cube.enabled: false` to skip the bundled Cube deployment
+- point the app at your external endpoint via `deployment.env.CUBEJS_API_URL`
+- supply `CUBEJS_API_SECRET` through your existing secret management flow (`deployment.envFrom` or
+  `existingSecret`)
 
 ## 4. Upgrade The Deployment
 
@@ -133,7 +135,8 @@ For a Formbricks 4.x to 5.0 migration, confirm the following before running the 
 - `HUB_API_KEY` is present
 - your edge rate-limiting plan is in place
 - any required `AI_*` variables are added
-- Cube is configured only if this instance needs analytics dashboards or analysis queries
+- `CUBEJS_API_SECRET` is configured (Cube is bundled by default; provide an external endpoint if you set
+  `cube.enabled: false`)
 
 ## 5. Key Values
 
