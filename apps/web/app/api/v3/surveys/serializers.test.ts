@@ -64,14 +64,28 @@ describe("serializeV3SurveyResource", () => {
       { code: "de-DE", default: false, enabled: true },
       { code: "fr-FR", default: false, enabled: false },
     ]);
-    expect((resource.welcomeCard as any).headline).toEqual({
-      "en-US": "Welcome",
-      "de-DE": "Willkommen",
-      "fr-FR": "Bienvenue",
+    expect(resource).toMatchObject({
+      welcomeCard: {
+        headline: {
+          "en-US": "Welcome",
+          "de-DE": "Willkommen",
+          "fr-FR": "Bienvenue",
+        },
+      },
     });
-    expect((resource.blocks as any)[0].elements[0].headline).toEqual({
-      "en-US": "What should we improve?",
-      "de-DE": "Was sollen wir verbessern?",
+    expect(resource).toMatchObject({
+      blocks: [
+        {
+          elements: [
+            {
+              headline: {
+                "en-US": "What should we improve?",
+                "de-DE": "Was sollen wir verbessern?",
+              },
+            },
+          ],
+        },
+      ],
     });
   });
 
@@ -103,9 +117,17 @@ describe("serializeV3SurveyResource", () => {
 
     expect(resource.defaultLanguage).toBe("en-US");
     expect(resource.languages).toEqual([{ code: "en-US", default: true, enabled: true }]);
-    expect((resource.welcomeCard as any).headline).toEqual({ "en-US": "Welcome" });
-    expect((resource.blocks as any)[0].elements[0].headline).toEqual({
-      "en-US": "What should we improve?",
+    expect(resource).toMatchObject({
+      welcomeCard: { headline: { "en-US": "Welcome" } },
+      blocks: [
+        {
+          elements: [
+            {
+              headline: { "en-US": "What should we improve?" },
+            },
+          ],
+        },
+      ],
     });
   });
 
@@ -122,7 +144,7 @@ describe("serializeV3SurveyResource", () => {
     const resource = serializeV3SurveyResource(survey, { lang: "en" });
 
     expect(resource.language).toBe("en-US");
-    expect((resource.welcomeCard as any).headline).toBe("Welcome");
+    expect(resource).toMatchObject({ welcomeCard: { headline: "Welcome" } });
   });
 
   test("preserves stored locale variants when their keys use non-canonical casing or separators", () => {
@@ -136,9 +158,13 @@ describe("serializeV3SurveyResource", () => {
 
     const resource = serializeV3SurveyResource(survey);
 
-    expect((resource.welcomeCard as any).headline).toEqual({
-      "en-US": "Welcome",
-      "de-DE": "Willkommen",
+    expect(resource).toMatchObject({
+      welcomeCard: {
+        headline: {
+          "en-US": "Welcome",
+          "de-DE": "Willkommen",
+        },
+      },
     });
   });
 
@@ -146,23 +172,33 @@ describe("serializeV3SurveyResource", () => {
     const resource = serializeV3SurveyResource(baseSurvey, { lang: "DE_de" });
 
     expect(resource.language).toBe("de-DE");
-    expect((resource.welcomeCard as any).headline).toBe("Willkommen");
-    expect((resource.blocks as any)[0].elements[0].headline).toBe("Was sollen wir verbessern?");
-    expect((resource.blocks as any)[0].elements[0].subheader).toBe("Tell us more");
+    expect(resource).toMatchObject({
+      welcomeCard: { headline: "Willkommen" },
+      blocks: [
+        {
+          elements: [
+            {
+              headline: "Was sollen wir verbessern?",
+              subheader: "Tell us more",
+            },
+          ],
+        },
+      ],
+    });
   });
 
   test("resolves language-only selectors against configured survey languages", () => {
     const resource = serializeV3SurveyResource(baseSurvey, { lang: "de" });
 
     expect(resource.language).toBe("de-DE");
-    expect((resource.welcomeCard as any).headline).toBe("Willkommen");
+    expect(resource).toMatchObject({ welcomeCard: { headline: "Willkommen" } });
   });
 
   test("localizes disabled configured languages for management reads", () => {
     const resource = serializeV3SurveyResource(baseSurvey, { lang: "fr" });
 
     expect(resource.language).toBe("fr-FR");
-    expect((resource.welcomeCard as any).headline).toBe("Bienvenue");
+    expect(resource).toMatchObject({ welcomeCard: { headline: "Bienvenue" } });
   });
 
   test("rejects ambiguous language-only selectors", () => {
