@@ -4,6 +4,260 @@ description: "Formbricks Self-hosted version migration"
 icon: "arrow-right"
 ---
 
+## v5
+
+Formbricks v5 changes the self-hosted runtime contract. If you are upgrading an existing Formbricks 4.x
+deployment, review this section before starting the new version.
+
+### What Changes In v5
+
+- **Formbricks Hub is now mandatory** for self-hosted Formbricks v5 deployments.
+- **Edge rate limiting is now required** for specific public and API-key routes. Those routes are no longer
+  throttled inside the application server.
+- **AI features are configured at the instance level** via `AI_*` environment variables.
+- **XM Suite v5 analytics depends on Cube.js**. The Docker and one-click stack bundle it, while Helm
+  deployments still need a separate reachable Cube.js instance and `CUBEJS_API_SECRET`.
+
+<Warning>
+  Formbricks v5 removes application-level rate limiting for several routes that are now expected to be
+  protected by Envoy Gateway or an equivalent edge rate limiter. If your self-hosted instance does not
+  already have equivalent edge protection, add it before exposing the v5 stack.
+</Warning>
+
+### Before You Upgrade
+
+Before you restart your instance on Formbricks v5:
+
+- back up your database
+- identify your current deployment type: one-click, manual Docker Compose, or Kubernetes/Helm
+- confirm Redis/Valkey and your file storage setup are already healthy from your v4 baseline
+- identify whether file uploads use external S3-compatible storage or a legacy bundled MinIO service
+- decide whether this instance needs AI features, dashboards/analysis, or only core survey flows
+- verify whether you already run Envoy Gateway or another equivalent edge rate limiter for the covered routes
+
+### Required Config And Infrastructure Changes
+
+#### Formbricks Hub
+
+Formbricks v5 expects Hub to be part of the self-hosted stack.
+
+- `HUB_API_KEY` is required
+- `HUB_API_URL` must point to the Hub service the Formbricks app can reach
+- `HUB_DATABASE_URL` is optional; when unset, Hub can share the same PostgreSQL database as Formbricks
+- bundled Docker and Helm assets run Hub database migrations automatically during startup or upgrade, and the
+  migration steps are idempotent
+
+<Note>
+  Hub-specific source code and standalone deployment assets live in the
+  [Formbricks Hub repository](https://github.com/formbricks/hub). For a normal Formbricks v5 upgrade, use that
+  repository as reference material only; the canonical migration steps stay in these Formbricks docs.
+</Note>
+
+#### Edge Rate Limiting
+
+Formbricks v5 splits rate limiting across two layers:
+
+- Envoy Gateway, or an equivalent edge rate limiter, for covered public and API-key routes
+- the application server for the remaining session-authenticated routes, server actions, and uncovered APIs
+
+Keep Redis/Valkey enabled for the remaining application-enforced limits. For the covered route groups and exact
+thresholds, use the [rate-limiting guide](/self-hosting/advanced/rate-limiting) as the source of truth.
+
+#### AI Features
+
+AI features are optional and only need instance-level configuration if you want to enable the related
+enterprise functionality.
+
+- `AI_PROVIDER` and `AI_MODEL` are the base settings
+- `AI_PROVIDER=aws` requires `AI_AWS_REGION`, `AI_AWS_ACCESS_KEY_ID`, and `AI_AWS_SECRET_ACCESS_KEY`
+- `AI_PROVIDER=google` requires `AI_GOOGLE_CLOUD_PROJECT`, `AI_GOOGLE_CLOUD_LOCATION`, and either
+  `AI_GOOGLE_CLOUD_CREDENTIALS_JSON` or `AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS`
+- `AI_PROVIDER=azure` requires `AI_AZURE_API_KEY` and either `AI_AZURE_BASE_URL` or
+  `AI_AZURE_RESOURCE_NAME`
+
+#### Cube.js Analytics
+
+XM Suite v5 dashboard and analysis features require Cube.js.
+
+- the Docker and one-click stack bundle the `cube` service and expect `CUBEJS_API_SECRET`
+- Helm deployments still need a separate reachable Cube.js instance
+- the Formbricks app expects `CUBEJS_API_URL` and `CUBEJS_API_SECRET`
+- if you run Cube yourself, you may also need to override `CUBEJS_DB_*` values for the Cube service
+
+### Upgrade Steps By Deployment Type
+
+**1. Back up your database**
+
+<Tabs>
+  <Tab title="One-Click">
+    From the `formbricks` directory created by the installer:
+
+    ```bash
+    cd formbricks
+    docker compose exec postgres pg_dump -Fc -U postgres -d formbricks > formbricks_pre_v5_$(date +%Y%m%d_%H%M%S).dump
+    ```
+
+    <Info>
+      If your PostgreSQL service name differs, run <code>docker compose ps</code> first and adjust the command.
+    </Info>
+  </Tab>
+  <Tab title="Docker Compose">
+    From the directory that contains your `docker-compose.yml`:
+
+    ```bash
+    docker compose exec postgres pg_dump -Fc -U postgres -d formbricks > formbricks_pre_v5_$(date +%Y%m%d_%H%M%S).dump
+    ```
+
+    <Info>
+      If your service is not named <code>postgres</code>, use <code>docker compose ps</code> to find the correct
+      name.
+    </Info>
+  </Tab>
+  <Tab title="Kubernetes">
+    If you are using the in-cluster PostgreSQL released by the Helm chart:
+
+    ```bash
+    kubectl exec -n formbricks formbricks-postgresql-0 -- pg_dump -Fc -U formbricks -d formbricks > formbricks_pre_v5_$(date +%Y%m%d_%H%M%S).dump
+    ```
+
+    If you use a managed PostgreSQL service, create a provider snapshot or run `pg_dump` directly against the
+    external host before continuing.
+  </Tab>
+</Tabs>
+
+**2. Update your deployment config and restart on v5**
+
+<Tabs>
+  <Tab title="One-Click">
+    The one-click `./formbricks.sh update` command only pulls new images. It does **not** rewrite your existing
+    `formbricks/docker-compose.yml`, so you must merge the v5 stack changes before the first v5 restart.
+
+    ```bash
+    curl -fsSL -o formbricks/docker-compose.v5.yml https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/docker-compose.yml
+    ```
+
+    Then compare `formbricks/docker-compose.v5.yml` with your existing `formbricks/docker-compose.yml` and merge
+    the v5 additions:
+
+    - add a non-empty `HUB_API_KEY` and reuse the same value wherever your deployment resolves Hub auth
+    - keep `HUB_API_URL` at `http://hub:8080` unless Hub runs elsewhere
+    - include the bundled `hub-migrate` and `hub` services
+    - if you use the bundled XM Suite v5 analytics stack, sync `formbricks/cube/cube.js` and
+      `formbricks/cube/schema/FeedbackRecords.js` from the current release and ensure
+      `formbricks/.env` contains `CUBEJS_API_SECRET`
+    - if your older setup still uses bundled MinIO for uploads, review that storage path separately before the
+      first v5 restart; newer self-hosting updates move the bundled object-storage path to RustFS, while
+      external S3-compatible storage keeps the same `S3_*` app contract
+    - add any `AI_*` variables you need
+    - if you do not run the bundled Docker analytics path, point `CUBEJS_API_URL` at your external Cube.js
+      instance and provide the matching `CUBEJS_API_SECRET`
+
+    After the compose file is updated and your edge rate limiter is in place:
+
+    ```bash
+    ./formbricks.sh update
+    ```
+  </Tab>
+  <Tab title="Docker Compose">
+    Pull the current production compose file and merge the v5 changes into your existing deployment config before
+    only updating images:
+
+    ```bash
+    curl -fsSL -o docker-compose.v5.yml https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/docker-compose.yml
+    ```
+
+    At minimum, confirm:
+
+    - `HUB_API_KEY` is configured and the same value is available wherever your deployment resolves Hub auth
+    - `HUB_API_URL` points to the Hub service the app can reach
+    - the compose stack includes `hub-migrate` and `hub`
+    - the XM Suite v5 Docker stack also includes `cube`, `cube/cube.js`, and
+      `cube/schema/FeedbackRecords.js`, with `CUBEJS_API_SECRET` available through your `.env` or shell
+      environment
+    - if your legacy Compose file still includes bundled MinIO for uploads, treat that as a separate storage
+      review when comparing files; newer bundled storage guidance uses RustFS, while external S3-compatible
+      storage keeps the same `S3_*` app contract
+    - any `AI_*` variables you need are set
+    - if you override the bundled analytics path, point `CUBEJS_API_URL` at your external Cube.js instance and
+      supply the matching `CUBEJS_API_SECRET`
+
+    Then restart the stack:
+
+    ```bash
+    docker compose pull
+    docker compose down
+    docker compose up -d
+    ```
+
+    <Info>
+      The XM Suite v5 Docker Compose stack bundles Hub and Cube.js. Keep the bundled `cube/` config files in
+      sync with `docker-compose.yml` when you update this path.
+    </Info>
+  </Tab>
+  <Tab title="Kubernetes">
+    Upgrade using the current Formbricks chart:
+
+    ```bash
+    helm upgrade formbricks oci://ghcr.io/formbricks/helm-charts/formbricks \
+      -n formbricks \
+      -f values.yaml
+    ```
+
+    Before running the upgrade, confirm these v5 expectations in your values:
+
+    - keep `hub.enabled=true`; Hub is mandatory in v5
+    - if you want the bundled Envoy path, configure `envoy.enabled=true` and then choose:
+      - `envoy.controller.enabled=true` for the bundled controller mode
+      - `envoy.controller.enabled=false` when the cluster already has a compatible Envoy Gateway controller
+    - if you use bundled Envoy rate limiting, enable a dedicated backend with `envoyRedis.enabled=true`
+    - if you already have an equivalent edge rate limiter outside the chart, keep that protection in place
+    - if the instance needs XM Suite v5 analytics or dashboards, provide `CUBEJS_API_URL` and
+      `CUBEJS_API_SECRET` for the external Cube.js deployment
+  </Tab>
+</Tabs>
+
+### Post-Upgrade Verification
+
+After the upgrade:
+
+- confirm the Formbricks app starts and `GET /health` returns successfully
+- confirm the Hub service is healthy and reachable from the Formbricks app
+- verify any Hub-backed connector or feedback flows you use
+- verify covered routes are rate-limited at the edge layer
+- verify AI features only if you configured the required `AI_*` variables
+- verify dashboards and analysis flows only if your deployment path includes Cube.js or points to an external
+  Cube.js instance
+
+### Troubleshooting And Rollback
+
+Common upgrade issues:
+
+- **Missing `HUB_API_KEY`**: Formbricks cannot authenticate to Hub, and Hub itself may fail to start
+- **Bad `HUB_API_URL`**: the app starts, but Hub-backed features fail because the service cannot be reached
+- **No edge rate limiter in front of covered routes**: the v5 deployment runs, but those routes are no longer
+  protected by the legacy in-app limiter
+- **Missing AI credentials**: AI features remain unavailable until `AI_PROVIDER`, `AI_MODEL`, and the matching
+  provider credentials are set correctly
+- **Cube not configured**: dashboards or analysis queries fail even though the core Formbricks app is healthy
+
+If you need to roll back:
+
+- restore the pre-upgrade database backup if schema or data changes require it
+- revert your image tags or Helm release values to the last known-good Formbricks 4.x version
+- revert compose or Helm configuration changes introduced for the v5 rollout
+
+**Workspaces and Environment IDs**
+
+Environment IDs were deprecated to simplify SDK setup around a single Workspace ID while keeping existing
+integrations backward compatible during migration.
+
+**Website & App Surveys SDK: Migrate to Workspace ID**
+
+<Info>
+  Formbricks v5 also includes the Environment ID to Workspace ID transition for SDK setup. If you still rely on a
+  legacy Environment ID, read the [Migrate to Workspace ID guide](/xm-and-surveys/surveys/website-app-surveys/workspace-id-migration).
+</Info>
+
 ## v4.7
 
 Formbricks v4.7 introduces **typed contact attributes** with native `number` and `date` data types. This enables comparison-based segment filters (e.g. "signup date before 2025-01-01") that were previously not possible with string-only attribute values.
@@ -1342,7 +1596,8 @@ For a seamless migration, below is a shell script for your self-hosted instance 
 ### Docker & Single Script Setup
 
 Now that these variables can be defined at runtime, you can append them inside your `x-environment` in the `docker-compose.yml` itself.
-For a more detailed guide on these environment variables, please refer to the [Important Runtime Variables](/self-hosting/setup/docker#important-run-time-variables) section.
+For a more detailed guide on these environment variables, please refer to the
+[Environment Variables](/self-hosting/configuration/environment-variables) page.
 
 ```yaml docker-compose.yml
 version: "3.3"

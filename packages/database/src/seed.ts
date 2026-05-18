@@ -1,8 +1,10 @@
 import { createId } from "@paralleldrive/cuid2";
 import { type Prisma, PrismaClient } from "@prisma/client";
-import bcrypt from "bcryptjs";
+import bcryptjs from "bcryptjs";
 import { logger } from "@formbricks/logger";
 import { SEED_CREDENTIALS, SEED_IDS } from "./seed/constants";
+
+const hashPassword = bcryptjs.hash;
 
 const prisma = new PrismaClient();
 
@@ -88,15 +90,18 @@ async function deleteData(): Promise<void> {
     "contactAttribute",
     "contactAttributeKey",
     "contact",
-    "apiKeyEnvironment",
+    "apiKeyWorkspace",
     "apiKey",
     "segment",
     "webhook",
     "integration",
-    "projectTeam",
+    "dashboardWidget",
+    "chart",
+    "dashboard",
+    "workspaceTeam",
     "teamUser",
     "team",
-    "project",
+    "workspace",
     "invite",
     "membership",
     "account",
@@ -367,14 +372,14 @@ async function main(): Promise<void> {
     update: {},
     create: {
       organizationId: organization.id,
-      limits: { projects: 3, monthly: { responses: 1500 } },
+      limits: { workspaces: 3, monthly: { responses: 1500 } },
       stripeCustomerId: null,
       usageCycleAnchor: new Date(),
     },
   });
 
   // Users
-  const passwordHash = await bcrypt.hash(SEED_CREDENTIALS.ADMIN.password, 10);
+  const passwordHash = await hashPassword(SEED_CREDENTIALS.ADMIN.password, 10);
 
   await prisma.user.upsert({
     where: { id: SEED_IDS.USER_ADMIN },
@@ -433,64 +438,40 @@ async function main(): Promise<void> {
     },
   });
 
-  // Project
-  const project = await prisma.project.upsert({
-    where: { id: SEED_IDS.PROJECT },
+  // Workspace
+  const workspace = await prisma.workspace.upsert({
+    where: { id: SEED_IDS.WORKSPACE },
     update: {},
     create: {
-      id: SEED_IDS.PROJECT,
-      name: "Seed Project",
+      id: SEED_IDS.WORKSPACE,
+      name: "Seed Workspace",
       organizationId: organization.id,
     },
   });
 
-  // Environments
-  await prisma.environment.upsert({
-    where: { id: SEED_IDS.ENV_DEV },
-    update: { appSetupCompleted: false },
-    create: {
-      id: SEED_IDS.ENV_DEV,
-      type: "development",
-      projectId: project.id,
-      appSetupCompleted: false,
-      attributeKeys: {
-        create: [
-          { name: "Email", key: "email", isUnique: true, type: "default" },
-          { name: "First Name", key: "firstName", isUnique: false, type: "default" },
-          { name: "Last Name", key: "lastName", isUnique: false, type: "default" },
-          { name: "userId", key: "userId", isUnique: true, type: "default" },
-          { name: "Language", key: "language", isUnique: false, type: "default" },
-        ],
-      },
-    },
-  });
+  // Contact attribute keys for the workspace
+  const defaultAttributeKeys = [
+    { name: "Email", key: "email", isUnique: true, type: "default" as const },
+    { name: "First Name", key: "firstName", isUnique: false, type: "default" as const },
+    { name: "Last Name", key: "lastName", isUnique: false, type: "default" as const },
+    { name: "userId", key: "userId", isUnique: true, type: "default" as const },
+    { name: "Language", key: "language", isUnique: false, type: "default" as const },
+  ];
 
-  const prodEnv = await prisma.environment.upsert({
-    where: { id: SEED_IDS.ENV_PROD },
-    update: { appSetupCompleted: false },
-    create: {
-      id: SEED_IDS.ENV_PROD,
-      type: "production",
-      projectId: project.id,
-      appSetupCompleted: false,
-      attributeKeys: {
-        create: [
-          { name: "Email", key: "email", isUnique: true, type: "default" },
-          { name: "First Name", key: "firstName", isUnique: false, type: "default" },
-          { name: "Last Name", key: "lastName", isUnique: false, type: "default" },
-          { name: "userId", key: "userId", isUnique: true, type: "default" },
-          { name: "Language", key: "language", isUnique: false, type: "default" },
-        ],
-      },
-    },
-  });
+  for (const attr of defaultAttributeKeys) {
+    await prisma.contactAttributeKey.upsert({
+      where: { key_workspaceId: { key: attr.key, workspaceId: workspace.id } },
+      update: {},
+      create: { ...attr, workspaceId: workspace.id },
+    });
+  }
 
   logger.info("Seeding surveys...");
 
   const createSurveyWithBlocks = async (
     id: string,
     name: string,
-    environmentId: string,
+    workspaceId: string,
     status: "inProgress" | "draft" | "completed",
     questions: SurveyQuestion[]
   ): Promise<void> => {
@@ -505,7 +486,7 @@ async function main(): Promise<void> {
     await prisma.survey.upsert({
       where: { id },
       update: {
-        environmentId,
+        workspaceId,
         type: "link",
         // @ts-expect-error - blocks is not typed correctly
         blocks: blocks as unknown as Prisma.InputJsonValue[],
@@ -513,7 +494,7 @@ async function main(): Promise<void> {
       create: {
         id,
         name,
-        environmentId,
+        workspaceId,
         status,
         type: "link",
         // @ts-expect-error - blocks is not typed correctly
@@ -526,13 +507,13 @@ async function main(): Promise<void> {
   await createSurveyWithBlocks(
     SEED_IDS.SURVEY_KITCHEN_SINK,
     "Kitchen Sink Survey",
-    prodEnv.id,
+    workspace.id,
     "inProgress",
     KITCHEN_SINK_QUESTIONS
   );
 
   // CSAT Survey
-  await createSurveyWithBlocks(SEED_IDS.SURVEY_CSAT, "CSAT Survey", prodEnv.id, "inProgress", [
+  await createSurveyWithBlocks(SEED_IDS.SURVEY_CSAT, "CSAT Survey", workspace.id, "inProgress", [
     {
       id: createId(),
       type: "rating",
@@ -544,7 +525,7 @@ async function main(): Promise<void> {
   ]);
 
   // Draft Survey
-  await createSurveyWithBlocks(SEED_IDS.SURVEY_DRAFT, "Draft Survey", prodEnv.id, "draft", [
+  await createSurveyWithBlocks(SEED_IDS.SURVEY_DRAFT, "Draft Survey", workspace.id, "draft", [
     {
       id: createId(),
       type: "openText",
@@ -554,7 +535,7 @@ async function main(): Promise<void> {
   ]);
 
   // Completed Survey
-  await createSurveyWithBlocks(SEED_IDS.SURVEY_COMPLETED, "Exit Survey", prodEnv.id, "completed", [
+  await createSurveyWithBlocks(SEED_IDS.SURVEY_COMPLETED, "Exit Survey", workspace.id, "completed", [
     {
       id: createId(),
       type: "multipleChoiceSingle",
@@ -575,7 +556,7 @@ async function main(): Promise<void> {
   await generateResponses(SEED_IDS.SURVEY_COMPLETED, 50);
 
   logger.info(`\n${"=".repeat(50)}`);
-  logger.info("🚀 SEEDING COMPLETED SUCCESSFULLY");
+  logger.info("SEEDING COMPLETED SUCCESSFULLY");
   logger.info("=".repeat(50));
   logger.info("\nLog in with the following credentials:");
   logger.info(`\n  Admin (Owner):`);

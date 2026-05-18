@@ -30,7 +30,7 @@ export const DELETE = withV3ApiWrapper({
 
       const authResult = await requireV3WorkspaceAccess(
         authentication,
-        survey.environmentId,
+        survey.workspaceId,
         "readWrite",
         requestId,
         instance

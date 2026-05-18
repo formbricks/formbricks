@@ -2,12 +2,16 @@ import { useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
 import { Rating } from "@formbricks/survey-ui";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
-import type { TSurveyRatingElement } from "@formbricks/types/surveys/elements";
+import type {
+  TSurveyCesElement,
+  TSurveyCsatElement,
+  TSurveyRatingElement,
+} from "@formbricks/types/surveys/elements";
 import { getLocalizedValue } from "@/lib/i18n";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 
 interface RatingElementProps {
-  element: TSurveyRatingElement;
+  element: TSurveyRatingElement | TSurveyCsatElement | TSurveyCesElement;
   value?: number;
   onChange: (responseData: TResponseData) => void;
   languageCode: string;

@@ -13,18 +13,20 @@ import { TEmailTemplateLegalProps } from "../../src/types/email";
 import { ProcessedResponseElement } from "../../src/types/follow-up";
 import { TFunction } from "../../src/types/translations";
 
+type TResponseFinishedEmailSurvey = Pick<TSurvey, "id" | "name" | "variables" | "hiddenFields">;
+
 export interface ResponseFinishedEmailProps extends TEmailTemplateLegalProps {
-  readonly survey: TSurvey;
+  readonly survey: TResponseFinishedEmailSurvey;
   readonly responseCount: number;
   readonly response: TResponse;
   readonly WEBAPP_URL: string;
-  readonly environmentId: string;
+  readonly workspaceId: string;
   readonly organization: TOrganization;
   readonly elements: ProcessedResponseElement[]; // Pre-processed data, not a function
   readonly t?: TFunction;
 }
 
-const mockGetElementResponseMapping = (survey: TSurvey, response: TResponse) => {
+const mockGetElementResponseMapping = (survey: TResponseFinishedEmailSurvey, response: TResponse) => {
   // For preview, just return the response data as elements
   return Object.entries(response.data)
     .filter(([key]) => !survey.hiddenFields.fieldIds?.includes(key))
@@ -40,7 +42,7 @@ export function ResponseFinishedEmail({
   responseCount,
   response,
   WEBAPP_URL,
-  environmentId,
+  workspaceId,
   organization,
   elements,
   t = mockT,
@@ -118,7 +120,7 @@ export function ResponseFinishedEmail({
                 );
               })}
             <EmailButton
-              href={`${WEBAPP_URL}/environments/${environmentId}/surveys/${survey.id}/responses?utm_source=email_notification&utm_medium=email&utm_content=view_responses_CTA`}
+              href={`${WEBAPP_URL}/workspaces/${workspaceId}/surveys/${survey.id}/responses?utm_source=email_notification&utm_medium=email&utm_content=view_responses_CTA`}
               label={
                 responseCount > 1
                   ? t("emails.survey_response_finished_email_view_more_responses", {
@@ -135,14 +137,14 @@ export function ResponseFinishedEmail({
               <Text className="mb-0">
                 <Link
                   className="text-sm text-black underline"
-                  href={`${WEBAPP_URL}/environments/${environmentId}/settings/notifications?type=alert&elementId=${survey.id}`}>
+                  href={`${WEBAPP_URL}/workspaces/${workspaceId}/settings/notifications?type=alert&elementId=${survey.id}`}>
                   {t("emails.survey_response_finished_email_turn_off_notifications_for_this_form")}
                 </Link>
               </Text>
               <Text className="mt-0">
                 <Link
                   className="text-sm text-black underline"
-                  href={`${WEBAPP_URL}/environments/${environmentId}/settings/notifications?type=unsubscribedOrganizationIds&elementId=${organization.id}`}>
+                  href={`${WEBAPP_URL}/workspaces/${workspaceId}/settings/notifications?type=unsubscribedOrganizationIds&elementId=${organization.id}`}>
                   {t("emails.survey_response_finished_email_turn_off_notifications_for_all_new_forms")}
                 </Link>
               </Text>

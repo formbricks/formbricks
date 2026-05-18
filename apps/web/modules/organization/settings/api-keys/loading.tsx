@@ -1,7 +1,6 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import { OrganizationSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(organization)/components/OrganizationSettingsNavbar";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 
@@ -23,7 +22,7 @@ const LoadingCard = () => {
             <div className="grid h-12 grid-cols-10 content-center rounded-t-lg bg-slate-100 px-6 text-left text-sm font-semibold text-slate-900">
               <div className="col-span-4 sm:col-span-2">{t("common.label")}</div>
               <div className="col-span-4 hidden sm:col-span-5 sm:block">
-                {t("environments.workspace.api_keys.api_key")}
+                {t("workspace.api_keys.api_key")}
               </div>
               <div className="col-span-4 sm:col-span-2">{t("common.created_at")}</div>
             </div>
@@ -44,13 +43,11 @@ const LoadingCard = () => {
   );
 };
 
-const Loading = ({ isFormbricksCloud }: { isFormbricksCloud: boolean }) => {
+const Loading = () => {
   const { t } = useTranslation();
   return (
     <PageContentWrapper>
-      <PageHeader pageTitle={t("environments.settings.general.organization_settings")}>
-        <OrganizationSettingsNavbar isFormbricksCloud={isFormbricksCloud} activeId="api-keys" loading />
-      </PageHeader>
+      <PageHeader pageTitle={t("common.api_keys")} />
       <div className="mt-4 flex max-w-4xl animate-pulse items-center space-y-4 rounded-lg border bg-blue-50 p-6 text-sm text-blue-900 shadow-sm md:space-y-0 md:text-base"></div>
       <LoadingCard />
     </PageContentWrapper>

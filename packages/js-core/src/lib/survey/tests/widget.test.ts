@@ -5,7 +5,7 @@ import type * as CommonUtils from "@/lib/common/utils";
 import { filterSurveys, getLanguageCode, shouldDisplayBasedOnPercentage } from "@/lib/common/utils";
 import { mockSurvey } from "@/lib/survey/tests/__mocks__/widget.mock";
 import * as widget from "@/lib/survey/widget";
-import { type TEnvironmentStateSurvey } from "@/types/config";
+import { type TWorkspaceStateSurvey } from "@/types/config";
 
 vi.mock("@/lib/common/config", () => ({
   Config: {
@@ -109,10 +109,10 @@ describe("widget-file", () => {
     const mockConfigValue = {
       get: vi.fn().mockReturnValue({
         appUrl: "https://fake.app",
-        environmentId: "env_123",
-        environment: {
+        workspaceId: "env_123",
+        workspace: {
           data: {
-            project: {
+            settings: {
               clickOutsideClose: true,
               overlay: "none",
               placement: "bottomRight",
@@ -158,7 +158,7 @@ describe("widget-file", () => {
       expect.objectContaining({
         survey: mockSurvey,
         appUrl: "https://fake.app",
-        environmentId: "env_123",
+        workspaceId: "env_123",
         contactId: "contact_abc",
       })
     );
@@ -175,10 +175,10 @@ describe("widget-file", () => {
     const mockConfigValue = {
       get: vi.fn().mockReturnValue({
         appUrl: "https://fake.app",
-        environmentId: "env_123",
-        environment: {
+        workspaceId: "env_123",
+        workspace: {
           data: {
-            project: {
+            settings: {
               clickOutsideClose: true,
               overlay: "none",
               placement: "bottomRight",
@@ -210,7 +210,7 @@ describe("widget-file", () => {
     widget.setIsSurveyRunning(false);
     (getLanguageCode as Mock).mockReturnValueOnce(undefined); // means "not available"
 
-    await widget.renderWidget(mockSurveyNoDelay as unknown as TEnvironmentStateSurvey);
+    await widget.renderWidget(mockSurveyNoDelay as unknown as TWorkspaceStateSurvey);
 
     expect(mockLogger.debug).toHaveBeenCalledWith(
       `Survey "${mockSurvey.id}" is not available in specified language.`
@@ -221,10 +221,10 @@ describe("widget-file", () => {
     const mockConfigValue = {
       get: vi.fn().mockReturnValue({
         appUrl: "https://fake.app",
-        environmentId: "env_123",
-        environment: {
+        workspaceId: "env_123",
+        workspace: {
           data: {
-            project: {
+            settings: {
               clickOutsideClose: true,
               overlay: "none",
               placement: "bottomRight",
@@ -274,10 +274,10 @@ describe("widget-file", () => {
     const mockConfigValue = {
       get: vi.fn().mockReturnValue({
         appUrl: "https://fake.app",
-        environmentId: "env_123",
-        environment: {
+        workspaceId: "env_123",
+        workspace: {
           data: {
-            project: {
+            settings: {
               clickOutsideClose: true,
               overlay: "none",
               placement: "bottomRight",
@@ -312,7 +312,7 @@ describe("widget-file", () => {
     await widget.renderWidget({
       ...mockSurvey,
       delay: 0,
-    } as unknown as TEnvironmentStateSurvey);
+    } as unknown as TWorkspaceStateSurvey);
 
     expect(mockUpdateQueue.hasPendingWork).toHaveBeenCalled();
     expect(mockUpdateQueue.waitForPendingWork).toHaveBeenCalled();
@@ -334,10 +334,10 @@ describe("widget-file", () => {
     const mockConfigValue = {
       get: vi.fn().mockReturnValue({
         appUrl: "https://fake.app",
-        environmentId: "env_123",
-        environment: {
+        workspaceId: "env_123",
+        workspace: {
           data: {
-            project: {
+            settings: {
               clickOutsideClose: true,
               overlay: "none",
               placement: "bottomRight",
@@ -372,7 +372,7 @@ describe("widget-file", () => {
     await widget.renderWidget({
       ...mockSurvey,
       delay: 0,
-    } as unknown as TEnvironmentStateSurvey);
+    } as unknown as TWorkspaceStateSurvey);
 
     expect(mockUpdateQueue.hasPendingWork).toHaveBeenCalled();
     expect(mockUpdateQueue.waitForPendingWork).not.toHaveBeenCalled();
@@ -390,10 +390,10 @@ describe("widget-file", () => {
         callCount++;
         return {
           appUrl: "https://fake.app",
-          environmentId: "env_123",
-          environment: {
+          workspaceId: "env_123",
+          workspace: {
             data: {
-              project: {
+              settings: {
                 clickOutsideClose: true,
                 overlay: "none",
                 placement: "bottomRight",
@@ -432,7 +432,7 @@ describe("widget-file", () => {
     await widget.renderWidget({
       ...mockSurvey,
       delay: 0,
-    } as unknown as TEnvironmentStateSurvey);
+    } as unknown as TWorkspaceStateSurvey);
 
     vi.advanceTimersByTime(0);
 
@@ -460,8 +460,8 @@ describe("widget-file", () => {
     await widget.renderWidget({
       ...mockSurvey,
       delay: 0,
-      segment: { id: "seg_1", hasFilters: true },
-    } as unknown as TEnvironmentStateSurvey);
+      segment: { id: "seg_1", filters: [{ type: "attribute", value: "plan" }] },
+    } as unknown as TWorkspaceStateSurvey);
 
     expect(mockUpdateQueue.waitForPendingWork).toHaveBeenCalled();
     expect(mockLogger.debug).toHaveBeenCalledWith(
@@ -474,10 +474,10 @@ describe("widget-file", () => {
     const scriptLoadMockConfig = {
       get: vi.fn().mockReturnValue({
         appUrl: "https://fake.app",
-        environmentId: "env_123",
-        environment: {
+        workspaceId: "env_123",
+        workspace: {
           data: {
-            project: {
+            settings: {
               clickOutsideClose: true,
               overlay: "none",
               placement: "bottomRight",
@@ -529,7 +529,7 @@ describe("widget-file", () => {
       const renderPromise = widget.renderWidget({
         ...mockSurvey,
         delay: 0,
-      } as unknown as TEnvironmentStateSurvey);
+      } as unknown as TWorkspaceStateSurvey);
 
       const scriptEl = getAppendedScript();
 
@@ -557,7 +557,7 @@ describe("widget-file", () => {
       const renderPromise = widget.renderWidget({
         ...mockSurvey,
         delay: 0,
-      } as unknown as TEnvironmentStateSurvey);
+      } as unknown as TWorkspaceStateSurvey);
 
       const scriptEl = getAppendedScript();
 
@@ -590,7 +590,7 @@ describe("widget-file", () => {
       const renderPromise = widget.renderWidget({
         ...mockSurvey,
         delay: 0,
-      } as unknown as TEnvironmentStateSurvey);
+      } as unknown as TWorkspaceStateSurvey);
 
       const scriptEl = getAppendedScript();
 
@@ -613,7 +613,7 @@ describe("widget-file", () => {
       expect(window.formbricksSurveys.renderSurvey).toHaveBeenCalledWith(
         expect.objectContaining({
           appUrl: "https://fake.app",
-          environmentId: "env_123",
+          workspaceId: "env_123",
           contactId: "contact_abc",
         })
       );
@@ -642,7 +642,7 @@ describe("widget-file", () => {
       await widget.renderWidget({
         ...mockSurvey,
         delay: 0,
-      } as unknown as TEnvironmentStateSurvey);
+      } as unknown as TWorkspaceStateSurvey);
 
       vi.advanceTimersByTime(0);
 
@@ -685,10 +685,10 @@ describe("widget-file", () => {
     const mockConfigValue = {
       get: vi.fn().mockReturnValue({
         appUrl: "https://fake.app",
-        environmentId: "env_123",
-        environment: {
+        workspaceId: "env_123",
+        workspace: {
           data: {
-            project: {
+            settings: {
               clickOutsideClose: true,
               overlay: "none",
               placement: "bottomRight",
@@ -724,7 +724,7 @@ describe("widget-file", () => {
       ...mockSurvey,
       delay: 0,
       segment: undefined,
-    } as unknown as TEnvironmentStateSurvey);
+    } as unknown as TWorkspaceStateSurvey);
 
     expect(mockLogger.debug).toHaveBeenCalledWith(
       "User identification failed but survey has no segment filters. Proceeding."

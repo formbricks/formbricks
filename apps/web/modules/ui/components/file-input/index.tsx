@@ -24,7 +24,7 @@ const isImage = (name: string) => {
 interface FileInputProps {
   id: string;
   allowedFileExtensions: TAllowedFileExtension[];
-  environmentId: string;
+  workspaceId: string;
   onFileUpload: (uploadedUrl: string[] | undefined, fileType: "image" | "video") => void;
   fileUrl?: string | string[];
   videoUrl?: string;
@@ -45,7 +45,7 @@ interface SelectedFile {
 export const FileInput = ({
   id,
   allowedFileExtensions,
-  environmentId,
+  workspaceId,
   onFileUpload,
   fileUrl,
   videoUrl,
@@ -89,7 +89,7 @@ export const FileInput = ({
     );
 
     const uploadedFiles = await Promise.all(
-      allowedFiles.map((file) => handleFileUpload(file, environmentId, allowedFileExtensions))
+      allowedFiles.map((file) => handleFileUpload(file, workspaceId, allowedFileExtensions))
     );
 
     if (uploadedFiles.length < allowedFiles.length || uploadedFiles.some((file) => file.error)) {
@@ -163,7 +163,7 @@ export const FileInput = ({
     ]);
 
     const uploadedFiles = await Promise.all(
-      allowedFiles.map((file) => handleFileUpload(file, environmentId, allowedFileExtensions))
+      allowedFiles.map((file) => handleFileUpload(file, workspaceId, allowedFileExtensions))
     );
 
     if (uploadedFiles.length < allowedFiles.length || uploadedFiles.some((file) => file.error)) {

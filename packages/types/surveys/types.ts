@@ -3,10 +3,10 @@ import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
 import { ZColor, ZEndingCardUrl, ZId, ZOverlay, ZPlacement, ZStorageUrl, getZSafeUrl } from "../common";
 import { ZContactAttributes } from "../contact-attribute";
 import { type TI18nString, ZI18nString } from "../i18n";
-import { ZLanguage } from "../project";
 import { ZSegment } from "../segment";
 import { ZAllowedFileExtension } from "../storage";
 import { ZBaseStyling } from "../styling";
+import { ZLanguage } from "../workspace";
 import { type TSurveyBlock, type TSurveyBlockLogicAction, ZSurveyBlocks } from "./blocks";
 import { findBlocksWithCyclicLogic } from "./blocks-validation";
 import {
@@ -15,8 +15,10 @@ import {
   ZSurveyAddressElement,
   ZSurveyCTAElement,
   ZSurveyCalElement,
+  ZSurveyCesElement,
   ZSurveyConsentElement,
   ZSurveyContactInfoElement,
+  ZSurveyCsatElement,
   ZSurveyDateElement,
   ZSurveyFileUploadElement,
   ZSurveyMatrixElement,
@@ -104,6 +106,8 @@ export enum TSurveyQuestionTypeEnum {
   Address = "address",
   Ranking = "ranking",
   ContactInfo = "contactInfo",
+  CSAT = "csat",
+  CES = "ces",
 }
 
 /**
@@ -223,7 +227,7 @@ export const ZSurveySlug = z
 
 export type TSurveySlug = z.infer<typeof ZSurveySlug>;
 
-export const ZSurveyProjectOverwrites = z.object({
+export const ZSurveyWorkspaceOverwrites = z.object({
   brandColor: ZColor.nullish(),
   highlightBorderColor: ZColor.nullish(),
   placement: ZPlacement.nullish(),
@@ -231,7 +235,7 @@ export const ZSurveyProjectOverwrites = z.object({
   overlay: ZOverlay.nullish(),
 });
 
-export type TSurveyProjectOverwrites = z.infer<typeof ZSurveyProjectOverwrites>;
+export type TSurveyWorkspaceOverwrites = z.infer<typeof ZSurveyWorkspaceOverwrites>;
 
 export const ZSurveyBackgroundBgType = z.enum(["animation", "color", "upload", "image"]);
 
@@ -714,6 +718,40 @@ export const ZSurveyRankingQuestion = ZSurveyQuestionBase.extend({
 export type TSurveyRankingQuestion = z.infer<typeof ZSurveyRankingQuestion>;
 
 /**
+ * @deprecated Use ZSurveyCsatElement instead. Kept for v1 API backward compatibility only.
+ */
+export const ZSurveyCsatQuestion = ZSurveyQuestionBase.extend({
+  type: z.literal(TSurveyQuestionTypeEnum.CSAT),
+  scale: z.enum(["number", "smiley", "star"]),
+  range: z.literal(5),
+  lowerLabel: ZI18nString.optional(),
+  upperLabel: ZI18nString.optional(),
+  isColorCodingEnabled: z.boolean().optional().prefault(false),
+});
+
+/**
+ * @deprecated Use TSurveyCsatElement instead. Kept for v1 API backward compatibility only.
+ */
+export type TSurveyCsatQuestion = z.infer<typeof ZSurveyCsatQuestion>;
+
+/**
+ * @deprecated Use ZSurveyCesElement instead. Kept for v1 API backward compatibility only.
+ */
+export const ZSurveyCesQuestion = ZSurveyQuestionBase.extend({
+  type: z.literal(TSurveyQuestionTypeEnum.CES),
+  scale: z.enum(["number", "smiley", "star"]),
+  range: z.union([z.literal(5), z.literal(7)]),
+  lowerLabel: ZI18nString.optional(),
+  upperLabel: ZI18nString.optional(),
+  isColorCodingEnabled: z.boolean().optional().prefault(false),
+});
+
+/**
+ * @deprecated Use TSurveyCesElement instead. Kept for v1 API backward compatibility only.
+ */
+export type TSurveyCesQuestion = z.infer<typeof ZSurveyCesQuestion>;
+
+/**
  * @deprecated Use TSurveyElement instead. Kept for v1 API backward compatibility only.
  */
 export const ZSurveyQuestion = z.union([
@@ -731,6 +769,8 @@ export const ZSurveyQuestion = z.union([
   ZSurveyAddressQuestion,
   ZSurveyRankingQuestion,
   ZSurveyContactInfoQuestion,
+  ZSurveyCsatQuestion,
+  ZSurveyCesQuestion,
 ]);
 
 /**
@@ -767,6 +807,8 @@ export const ZSurveyQuestionType = z.enum([
   TSurveyQuestionTypeEnum.Cal,
   TSurveyQuestionTypeEnum.Ranking,
   TSurveyQuestionTypeEnum.ContactInfo,
+  TSurveyQuestionTypeEnum.CSAT,
+  TSurveyQuestionTypeEnum.CES,
 ]);
 
 /**
@@ -825,7 +867,7 @@ export const ZSurveyBase = z.object({
   updatedAt: z.date(),
   name: z.string(),
   type: ZSurveyType,
-  environmentId: z.string(),
+  workspaceId: z.cuid2(),
   createdBy: z.string().nullable(),
   status: ZSurveyStatus,
   displayOption: ZSurveyDisplayOption,
@@ -898,13 +940,21 @@ export const ZSurveyBase = z.object({
     })
   ),
   delay: z.number(),
+  publishOn: z.coerce
+    .date()
+    .nullish()
+    .transform((value) => value ?? null),
+  closeOn: z.coerce
+    .date()
+    .nullish()
+    .transform((value) => value ?? null),
   autoComplete: z
     .number()
     .min(1, {
       error: "Response limit must be greater than 0",
     })
     .nullable(),
-  projectOverwrites: ZSurveyProjectOverwrites.nullable(),
+  workspaceOverwrites: ZSurveyWorkspaceOverwrites.nullable(),
   styling: ZSurveyStyling.nullable(),
   showLanguageSwitch: z.boolean().nullable(),
   surveyClosedMessage: ZSurveyClosedMessage.nullable(),
@@ -2993,6 +3043,8 @@ const isInvalidOperatorsForElementType = (
       break;
     case TSurveyElementTypeEnum.NPS:
     case TSurveyElementTypeEnum.Rating:
+    case TSurveyElementTypeEnum.CSAT:
+    case TSurveyElementTypeEnum.CES:
       if (
         ![
           "equals",
@@ -3784,7 +3836,7 @@ export const ZSurveyCreateInput = makeSchemaOptional(ZSurveyBase)
     id: true,
     createdAt: true,
     updatedAt: true,
-    projectOverwrites: true,
+    workspaceOverwrites: true,
     languages: true,
     followUps: true,
   })
@@ -3827,18 +3879,18 @@ export const ZSurveyCreateInput = makeSchemaOptional(ZSurveyBase)
 
 export type TSurvey = z.infer<typeof ZSurvey>;
 
-export const ZSurveyCreateInputWithEnvironmentId = makeSchemaOptional(ZSurveyBase)
+export const ZSurveyCreateInputWithWorkspaceId = makeSchemaOptional(ZSurveyBase)
   .omit({
     id: true,
     createdAt: true,
     updatedAt: true,
-    projectOverwrites: true,
+    workspaceOverwrites: true,
     languages: true,
     followUps: true,
   })
   .extend({
     name: z.string(), // Keep name required
-    environmentId: z.string(),
+    workspaceId: z.string(),
     questions: ZSurveyBase.shape.questions,
     blocks: ZSurveyBase.shape.blocks,
     languages: z.array(ZSurveyLanguage).prefault([]),
@@ -3874,7 +3926,7 @@ export const ZSurveyCreateInputWithEnvironmentId = makeSchemaOptional(ZSurveyBas
     }
   });
 
-export type TSurveyCreateInputWithEnvironmentId = z.infer<typeof ZSurveyCreateInputWithEnvironmentId>;
+export type TSurveyCreateInputWithWorkspaceId = z.infer<typeof ZSurveyCreateInputWithWorkspaceId>;
 export interface TSurveyDates {
   createdAt: TSurvey["createdAt"];
   updatedAt: TSurvey["updatedAt"];
@@ -3971,10 +4023,6 @@ export const ZSurveyElementSummaryRating = z.object({
   dismissed: z.object({
     count: z.number(),
   }),
-  csat: z.object({
-    satisfiedCount: z.number(),
-    satisfiedPercentage: z.number(),
-  }),
 });
 
 export type TSurveyElementSummaryRating = z.infer<typeof ZSurveyElementSummaryRating>;
@@ -4011,6 +4059,48 @@ export const ZSurveyElementSummaryNps = z.object({
 });
 
 export type TSurveyElementSummaryNps = z.infer<typeof ZSurveyElementSummaryNps>;
+
+export const ZSurveyElementSummaryCsat = z.object({
+  type: z.literal(TSurveyElementTypeEnum.CSAT),
+  element: ZSurveyCsatElement,
+  responseCount: z.number(),
+  average: z.number(),
+  choices: z.array(
+    z.object({
+      rating: z.number(),
+      count: z.number(),
+      percentage: z.number(),
+    })
+  ),
+  dismissed: z.object({
+    count: z.number(),
+  }),
+  csat: z.object({
+    satisfiedCount: z.number(),
+    satisfiedPercentage: z.number(),
+  }),
+});
+
+export type TSurveyElementSummaryCsat = z.infer<typeof ZSurveyElementSummaryCsat>;
+
+export const ZSurveyElementSummaryCes = z.object({
+  type: z.literal(TSurveyElementTypeEnum.CES),
+  element: ZSurveyCesElement,
+  responseCount: z.number(),
+  average: z.number(),
+  choices: z.array(
+    z.object({
+      rating: z.number(),
+      count: z.number(),
+      percentage: z.number(),
+    })
+  ),
+  dismissed: z.object({
+    count: z.number(),
+  }),
+});
+
+export type TSurveyElementSummaryCes = z.infer<typeof ZSurveyElementSummaryCes>;
 
 export const ZSurveyElementSummaryCta = z.object({
   type: z.literal(TSurveyElementTypeEnum.CTA),
@@ -4231,6 +4321,8 @@ export const ZSurveyElementSummary = z.union([
   ZSurveyElementSummaryAddress,
   ZSurveyElementSummaryRanking,
   ZSurveyElementSummaryContactInfo,
+  ZSurveyElementSummaryCsat,
+  ZSurveyElementSummaryCes,
 ]);
 
 export type TSurveyElementSummary = z.infer<typeof ZSurveyElementSummary>;

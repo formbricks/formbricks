@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
+import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -12,7 +12,7 @@ const createMockSurvey = (languages: TSurvey["languages"] = []): TSurvey =>
     updatedAt: new Date(),
     name: "Test",
     type: "link",
-    environmentId: "env-1",
+    workspaceId: "ws-1",
     createdBy: null,
     status: "draft",
     displayOption: "displayOnce",
@@ -39,7 +39,7 @@ const createMockSurvey = (languages: TSurvey["languages"] = []): TSurvey =>
     isSingleResponsePerEmailEnabled: false,
     singleUse: null,
     pin: null,
-    projectOverwrites: null,
+    workspaceOverwrites: null,
     surveyClosedMessage: null,
     followUps: [],
     delay: 0,
@@ -64,7 +64,7 @@ describe("getWebAppLocale", () => {
           alias: null,
           createdAt: new Date(),
           updatedAt: new Date(),
-          projectId: "p1",
+          workspaceId: "p1",
         },
         default: true,
         enabled: true,
@@ -83,7 +83,7 @@ describe("getWebAppLocale", () => {
           alias: null,
           createdAt: new Date(),
           updatedAt: new Date(),
-          projectId: "p1",
+          workspaceId: "p1",
         },
         default: false,
         enabled: true,
@@ -108,16 +108,16 @@ describe("isRTL", () => {
 
 describe("isRTLLanguage", () => {
   const createJsSurvey = (
-    languages: TJsEnvironmentStateSurvey["languages"] = [],
+    languages: TJsWorkspaceStateSurvey["languages"] = [],
     blocks: TSurveyBlock[] = []
-  ): TJsEnvironmentStateSurvey =>
+  ): TJsWorkspaceStateSurvey =>
     ({
       id: "s1",
       createdAt: new Date(),
       updatedAt: new Date(),
       name: "Test",
       type: "link",
-      environmentId: "env-1",
+      workspaceId: "ws-1",
       welcomeCard: {
         enabled: false,
         headline: { default: "Welcome" },
@@ -126,7 +126,7 @@ describe("isRTLLanguage", () => {
       },
       blocks,
       languages,
-    }) as unknown as TJsEnvironmentStateSurvey;
+    }) as unknown as TJsWorkspaceStateSurvey;
 
   test("checks language codes when multi-language enabled", () => {
     const survey = createJsSurvey([
@@ -137,7 +137,7 @@ describe("isRTLLanguage", () => {
           alias: null,
           createdAt: new Date(),
           updatedAt: new Date(),
-          projectId: "p1",
+          workspaceId: "p1",
         },
         default: true,
         enabled: true,
@@ -162,7 +162,7 @@ describe("isRTLLanguage", () => {
     const survey = {
       ...createJsSurvey([], []),
       welcomeCard: { enabled: true, headline: { default: "مرحبا" } },
-    } as unknown as TJsEnvironmentStateSurvey;
+    } as unknown as TJsWorkspaceStateSurvey;
     expect(isRTLLanguage(survey, "default")).toBe(true);
   });
 

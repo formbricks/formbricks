@@ -2,7 +2,8 @@ import { HeartIcon, ListTodoIcon, XIcon } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizations/components/OnboardingOptionsContainer";
-import { getUserProjects } from "@/lib/project/service";
+import { getPostHogFeatureFlag } from "@/lib/posthog/get-feature-flag";
+import { getUserWorkspaces } from "@/lib/workspace/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import { Button } from "@/modules/ui/components/button";
@@ -23,6 +24,13 @@ const Page = async (props: ModePageProps) => {
     return redirect(`/auth/login`);
   }
 
+  const experimentVariant =
+    (await getPostHogFeatureFlag(session.user.id, "a-b_onboarding_skip-first-screen")) || "control";
+
+  if (experimentVariant === "remove-cx-and-surveys-mode") {
+    return redirect(`/organizations/${params.organizationId}/workspaces/new/channel`);
+  }
+
   const t = await getTranslate();
   const channelOptions = [
     {
@@ -39,13 +47,13 @@ const Page = async (props: ModePageProps) => {
     },
   ];
 
-  const projects = await getUserProjects(session.user.id, params.organizationId);
+  const workspaces = await getUserWorkspaces(session.user.id, params.organizationId);
 
   return (
     <div className="flex min-h-full min-w-full flex-col items-center justify-center space-y-12">
       <Header title={t("organizations.workspaces.new.mode.what_are_you_here_for")} />
       <OnboardingOptionsContainer options={channelOptions} />
-      {projects.length >= 1 && (
+      {workspaces.length >= 1 && (
         <Button
           className="absolute right-5 top-5 !mt-0 text-slate-500 hover:text-slate-700"
           variant="ghost"

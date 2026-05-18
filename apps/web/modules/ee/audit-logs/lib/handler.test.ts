@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { TActor, TAuditAction, TAuditStatus, TAuditTarget } from "../types/audit-log";
 // Import original module to access its original exports for the mock factory
 import * as OriginalHandler from "./handler";
@@ -131,6 +132,7 @@ const mockCtxBase = {
 function clearAllMockHandles() {
   if (serviceLogAuditEventMockHandle) serviceLogAuditEventMockHandle.mockClear().mockResolvedValue(undefined);
   if (loggerErrorMockHandle) loggerErrorMockHandle.mockClear();
+  vi.mocked(getClientIpFromHeaders).mockClear();
   if (mutableConstants) {
     // Check because it's a var and could be re-assigned (though not in this code)
     mutableConstants.AUDIT_LOG_ENABLED = true;
@@ -186,6 +188,29 @@ describe("queueAuditEventBackground", () => {
   });
 });
 
+describe("queueAuditEventWithoutRequest", () => {
+  beforeEach(() => {
+    clearAllMockHandles();
+  });
+  afterEach(() => {
+    vi.resetModules();
+  });
+
+  test("logs audit events without reading request headers", async () => {
+    await OriginalHandler.queueAuditEventWithoutRequest({
+      ...baseEventParams,
+      ipAddress: "worker-ip",
+    });
+
+    expect(serviceLogAuditEventMockHandle).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ipAddress: "worker-ip",
+      })
+    );
+    expect(vi.mocked(getClientIpFromHeaders)).not.toHaveBeenCalled();
+  });
+});
+
 describe("withAuditLogging", () => {
   beforeEach(() => {
     clearAllMockHandles();
@@ -232,5 +257,50 @@ describe("withAuditLogging", () => {
     expect(serviceLogAuditEventMockHandle).not.toHaveBeenCalled();
     // Reset for other tests; clearAllMockHandles will also do this in the next beforeEach
     if (mutableConstants) mutableConstants.AUDIT_LOG_ENABLED = true;
+  });
+
+  test("resolves targetId for chart target type", async () => {
+    const chartCtx = {
+      ...mockCtxBase,
+      auditLoggingCtx: { ...mockCtxBase.auditLoggingCtx, chartId: "chart-1" },
+    };
+    const handlerImpl = vi.fn().mockResolvedValue("ok");
+    const wrapped = OriginalHandler.withAuditLogging("created", "chart", handlerImpl);
+    await wrapped({ ctx: chartCtx as any, parsedInput: mockParsedInput });
+    await new Promise(setImmediate);
+    expect(serviceLogAuditEventMockHandle).toHaveBeenCalled();
+    const callArgs = serviceLogAuditEventMockHandle.mock.calls[0][0];
+    expect(callArgs.target.type).toBe("chart");
+    expect(callArgs.target.id).toBe("chart-1");
+  });
+
+  test("resolves targetId for dashboard target type", async () => {
+    const dashCtx = {
+      ...mockCtxBase,
+      auditLoggingCtx: { ...mockCtxBase.auditLoggingCtx, dashboardId: "dash-1" },
+    };
+    const handlerImpl = vi.fn().mockResolvedValue("ok");
+    const wrapped = OriginalHandler.withAuditLogging("created", "dashboard", handlerImpl);
+    await wrapped({ ctx: dashCtx as any, parsedInput: mockParsedInput });
+    await new Promise(setImmediate);
+    expect(serviceLogAuditEventMockHandle).toHaveBeenCalled();
+    const callArgs = serviceLogAuditEventMockHandle.mock.calls[0][0];
+    expect(callArgs.target.type).toBe("dashboard");
+    expect(callArgs.target.id).toBe("dash-1");
+  });
+
+  test("resolves targetId for dashboardWidget target type", async () => {
+    const widgetCtx = {
+      ...mockCtxBase,
+      auditLoggingCtx: { ...mockCtxBase.auditLoggingCtx, dashboardWidgetId: "widget-1" },
+    };
+    const handlerImpl = vi.fn().mockResolvedValue("ok");
+    const wrapped = OriginalHandler.withAuditLogging("created", "dashboardWidget", handlerImpl);
+    await wrapped({ ctx: widgetCtx as any, parsedInput: mockParsedInput });
+    await new Promise(setImmediate);
+    expect(serviceLogAuditEventMockHandle).toHaveBeenCalled();
+    const callArgs = serviceLogAuditEventMockHandle.mock.calls[0][0];
+    expect(callArgs.target.type).toBe("dashboardWidget");
+    expect(callArgs.target.id).toBe("widget-1");
   });
 });

@@ -8,7 +8,7 @@ export const getSurvey = reactCache(async (surveyId: string) => {
       where: { id: surveyId },
       select: {
         id: true,
-        environmentId: true,
+        workspaceId: true,
         type: true,
         status: true,
       },

@@ -7,7 +7,8 @@ import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TAllowedFileExtension } from "@formbricks/types/storage";
-import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
+import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import {
   removeOrganizationFaviconUrlAction,
@@ -32,7 +33,7 @@ const MAX_FAVICON_SIZE_MB = 0.1; // 100KB
 interface FaviconCustomizationSettingsProps {
   organization: TOrganization;
   hasWhiteLabelPermission: boolean;
-  environmentId: string;
+  workspaceId: string;
   isReadOnly: boolean;
   isStorageConfigured: boolean;
 }
@@ -40,10 +41,12 @@ interface FaviconCustomizationSettingsProps {
 export const FaviconCustomizationSettings = ({
   organization,
   hasWhiteLabelPermission,
-  environmentId,
+  workspaceId,
   isReadOnly,
   isStorageConfigured,
 }: FaviconCustomizationSettingsProps) => {
+  const { workspace } = useWorkspace();
+  const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const { t } = useTranslation();
   const router = useRouter();
 
@@ -57,7 +60,7 @@ export const FaviconCustomizationSettings = ({
   const handleImageUpload = async (file: File) => {
     setIsLoading(true);
     try {
-      const uploadResult = await handleFileUpload(file, environmentId, allowedFileExtensions);
+      const uploadResult = await handleFileUpload(file, workspaceId, allowedFileExtensions);
       if (uploadResult.error) {
         showFileUploadErrorToast(uploadResult.error, t);
         return;
@@ -81,7 +84,7 @@ export const FaviconCustomizationSettings = ({
     // Validate file size
     const fileSizeInMB = file.size / 1000000;
     if (fileSizeInMB > MAX_FAVICON_SIZE_MB) {
-      toast.error(t("environments.settings.domain.favicon_too_large"));
+      toast.error(t("workspace.settings.domain.favicon_too_large"));
       return;
     }
 
@@ -105,7 +108,7 @@ export const FaviconCustomizationSettings = ({
       });
 
       if (updateFaviconResponse?.data) {
-        toast.success(t("environments.settings.domain.favicon_saved_successfully"));
+        toast.success(t("workspace.settings.domain.favicon_saved_successfully"));
         router.refresh();
       } else {
         const errorMessage = getFormattedErrorMessage(updateFaviconResponse);
@@ -134,7 +137,7 @@ export const FaviconCustomizationSettings = ({
       });
 
       if (removeFaviconResponse?.data) {
-        toast.success(t("environments.settings.domain.favicon_removed_successfully"));
+        toast.success(t("workspace.settings.domain.favicon_removed_successfully"));
         router.refresh();
       } else {
         const errorMessage = getFormattedErrorMessage(removeFaviconResponse);
@@ -151,18 +154,18 @@ export const FaviconCustomizationSettings = ({
   const buttons: [ModalButton, ModalButton] = [
     {
       text: t("common.upgrade_plan"),
-      href: `/environments/${environmentId}/settings/billing`,
+      href: `${workspaceBasePath}/settings/organization/billing`,
     },
     {
       text: t("common.learn_more"),
-      href: `/environments/${environmentId}/settings/billing`,
+      href: `${workspaceBasePath}/settings/organization/billing`,
     },
   ];
 
   return (
     <SettingsCard
-      title={t("environments.settings.domain.favicon_customization")}
-      description={t("environments.settings.domain.favicon_customization_description")}>
+      title={t("workspace.settings.domain.favicon_customization")}
+      description={t("workspace.settings.domain.favicon_customization_description")}>
       {hasWhiteLabelPermission ? (
         <div className="w-full space-y-4">
           {faviconUrl ? (
@@ -177,7 +180,7 @@ export const FaviconCustomizationSettings = ({
             <FileInput
               id="favicon-input"
               allowedFileExtensions={allowedFileExtensions}
-              environmentId={environmentId}
+              workspaceId={workspaceId}
               onFileUpload={(files: string[] | undefined, _fileType: "image" | "video") => {
                 if (files?.[0]) {
                   setFaviconUrl(files[0]);
@@ -226,7 +229,7 @@ export const FaviconCustomizationSettings = ({
           )}
 
           <Alert variant="info">
-            <AlertDescription>{t("environments.settings.domain.favicon_size_hint")}</AlertDescription>
+            <AlertDescription>{t("workspace.settings.domain.favicon_size_hint")}</AlertDescription>
           </Alert>
 
           {isReadOnly && (
@@ -239,8 +242,8 @@ export const FaviconCustomizationSettings = ({
         </div>
       ) : (
         <UpgradePrompt
-          title={t("environments.settings.domain.customize_favicon_with_higher_plan")}
-          description={t("environments.settings.domain.customize_favicon_description")}
+          title={t("workspace.settings.domain.customize_favicon_with_higher_plan")}
+          description={t("workspace.settings.domain.customize_favicon_description")}
           buttons={buttons}
           feature="favicon_customization"
         />

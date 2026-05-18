@@ -1,7 +1,9 @@
 import "server-only";
-import { StorageError, StorageErrorCode } from "@formbricks/storage";
+import { type StorageError, StorageErrorCode } from "@formbricks/storage";
 import { TResponseData } from "@formbricks/types/responses";
 import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/storage";
+import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
+import { TSurveyElementTypeEnum, TSurveyFileUploadElement } from "@formbricks/types/surveys/elements";
 import { TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { responses } from "@/app/lib/api/response";
 import { WEBAPP_URL } from "@/lib/constants";
@@ -58,14 +60,26 @@ export const sanitizeFileName = (rawFileName: string): string => {
 };
 
 /**
+ * Extracts the lowercase file extension from a file name
+ * @param fileName The name of the file
+ * @returns {string | null} The lowercase extension, or null when no extension exists
+ */
+const extractFileExtension = (fileName: string): string | null => {
+  const extension = fileName.split(".").pop()?.toLowerCase();
+
+  if (!extension || extension === fileName.toLowerCase()) return null;
+
+  return extension;
+};
+
+/**
  * Validates if the file extension is allowed
  * @param fileName The name of the file to validate
  * @returns {boolean} True if the file extension is allowed, false otherwise
  */
 export const isAllowedFileExtension = (fileName: string): boolean => {
-  // Extract the file extension
-  const extension = fileName.split(".").pop()?.toLowerCase();
-  if (!extension || extension === fileName.toLowerCase()) return false;
+  const extension = extractFileExtension(fileName);
+  if (!extension) return false;
 
   // Check if the extension is in the allowed list
   return Object.values(ZAllowedFileExtension.enum).includes(extension as TAllowedFileExtension);
@@ -77,7 +91,7 @@ export const validateSingleFile = (
 ): boolean => {
   const fileName = getOriginalFileNameFromUrl(fileUrl);
   if (!fileName) return false;
-  const extension = fileName.split(".").pop()?.toLowerCase();
+  const extension = extractFileExtension(fileName);
   if (!extension) return false;
   return !allowedFileExtensions || allowedFileExtensions.includes(extension as TAllowedFileExtension);
 };
@@ -98,6 +112,70 @@ export const validateFileUploads = (data?: TResponseData, questions?: TSurveyQue
   }
 
   return true;
+};
+
+export type TSurveyFileUploadPermissionResult =
+  | {
+      ok: true;
+    }
+  | {
+      ok: false;
+      reason: "no_file_upload_question" | "file_extension_not_allowed";
+    };
+
+const getAllowedFileExtensionFromFileName = (fileName: string): TAllowedFileExtension | null => {
+  const extension = extractFileExtension(fileName);
+  if (!extension) return null;
+
+  const extensionValidation = ZAllowedFileExtension.safeParse(extension);
+
+  return extensionValidation.success ? extensionValidation.data : null;
+};
+
+export const validateSurveyAllowsFileUpload = ({
+  fileName,
+  blocks,
+  questions,
+}: {
+  fileName: string;
+  blocks?: TSurveyBlock[] | null;
+  questions?: TSurveyQuestion[] | null;
+}): TSurveyFileUploadPermissionResult => {
+  const fileUploadConfigs = [
+    ...(blocks ?? [])
+      .flatMap((block) => block.elements)
+      .filter((element) => element.type === TSurveyElementTypeEnum.FileUpload),
+    ...(questions ?? []).filter((question) => question.type === TSurveyQuestionTypeEnum.FileUpload),
+  ] as TSurveyFileUploadElement[];
+
+  if (fileUploadConfigs.length === 0) {
+    return {
+      ok: false,
+      reason: "no_file_upload_question",
+    };
+  }
+
+  const fileExtension = getAllowedFileExtensionFromFileName(fileName);
+
+  if (!fileExtension) {
+    return {
+      ok: false,
+      reason: "file_extension_not_allowed",
+    };
+  }
+
+  const isFileExtensionAllowed = fileUploadConfigs.some((fileUploadConfig) => {
+    const { allowedFileExtensions } = fileUploadConfig;
+
+    return allowedFileExtensions === undefined || allowedFileExtensions.includes(fileExtension);
+  });
+
+  return isFileExtensionAllowed
+    ? { ok: true }
+    : {
+        ok: false,
+        reason: "file_extension_not_allowed",
+      };
 };
 
 export const isValidImageFile = (fileUrl: string): boolean => {

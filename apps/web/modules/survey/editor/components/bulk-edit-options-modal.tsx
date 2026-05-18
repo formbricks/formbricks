@@ -125,7 +125,7 @@ export const BulkEditOptionsModal = ({
     // Format: "Option '3' is used in logic at 'Block Name'"
     const details = problematicOptions.map((opt) => `"${opt.optionLabel}" → ${opt.blockName}`).join(", ");
 
-    return t("environments.surveys.edit.options_used_in_logic_bulk_error", {
+    return t("workspace.surveys.edit.options_used_in_logic_bulk_error", {
       questionIndexes: details,
     });
   };
@@ -147,7 +147,7 @@ export const BulkEditOptionsModal = ({
 
     onSave(updatedChoices);
     onClose();
-    toast.success(t("environments.surveys.edit.changes_saved"));
+    toast.success(t("workspace.surveys.edit.changes_saved"));
   };
 
   return (
@@ -156,10 +156,10 @@ export const BulkEditOptionsModal = ({
         <DialogHeader>
           <DialogTitle>
             {selectedLanguageName
-              ? t("environments.surveys.edit.bulk_edit_options_for", { language: selectedLanguageName })
-              : t("environments.surveys.edit.bulk_edit_options")}
+              ? t("workspace.surveys.edit.bulk_edit_options_for", { language: selectedLanguageName })
+              : t("workspace.surveys.edit.bulk_edit_options")}
           </DialogTitle>
-          <DialogDescription>{t("environments.surveys.edit.bulk_edit_description")}</DialogDescription>
+          <DialogDescription>{t("workspace.surveys.edit.bulk_edit_description")}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-2">
@@ -177,7 +177,7 @@ export const BulkEditOptionsModal = ({
             }}
             rows={15}
             className="w-full rounded-md border border-slate-300 bg-white p-3 font-mono text-sm focus:border-brand focus:outline-none"
-            placeholder={t("environments.surveys.edit.bulk_edit_description")}
+            placeholder={t("workspace.surveys.edit.bulk_edit_description")}
           />
           {validationError && <div className="text-sm text-red-600">{validationError}</div>}
         </div>
@@ -186,7 +186,7 @@ export const BulkEditOptionsModal = ({
           <Button variant="ghost" onClick={onClose}>
             {t("common.cancel")}
           </Button>
-          <Button onClick={handleSave}>{t("environments.surveys.edit.update_options")}</Button>
+          <Button onClick={handleSave}>{t("workspace.surveys.edit.update_options")}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

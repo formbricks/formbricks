@@ -470,7 +470,9 @@ export async function PreviewEmailTemplate({
         </PreviewQuestionCard>
       );
     }
-    case TSurveyElementTypeEnum.Rating: {
+    case TSurveyElementTypeEnum.Rating:
+    case TSurveyElementTypeEnum.CSAT:
+    case TSurveyElementTypeEnum.CES: {
       const isNumberRating = firstQuestion.scale === "number";
       let ratingOptionHeight: string | undefined;
 

@@ -3,7 +3,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { Project } from "@prisma/client";
+import { Workspace } from "@prisma/client";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { ChevronDownIcon, ChevronRightIcon, GripIcon } from "lucide-react";
 import { useState } from "react";
@@ -22,8 +22,10 @@ import { AdvancedSettings } from "@/modules/survey/editor/components/advanced-se
 import { BlockMenu } from "@/modules/survey/editor/components/block-menu";
 import { BlockSettings } from "@/modules/survey/editor/components/block-settings";
 import { CalElementForm } from "@/modules/survey/editor/components/cal-element-form";
+import { CESElementForm } from "@/modules/survey/editor/components/ces-element-form";
 import { ConsentElementForm } from "@/modules/survey/editor/components/consent-element-form";
 import { ContactInfoElementForm } from "@/modules/survey/editor/components/contact-info-element-form";
+import { CSATElementForm } from "@/modules/survey/editor/components/csat-element-form";
 import { CTAElementForm } from "@/modules/survey/editor/components/cta-element-form";
 import { DateElementForm } from "@/modules/survey/editor/components/date-element-form";
 import { EditorCardMenu } from "@/modules/survey/editor/components/editor-card-menu";
@@ -41,7 +43,7 @@ import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
 
 interface BlockCardProps {
   localSurvey: TSurvey;
-  project: Project;
+  workspace: Workspace;
   block: TSurveyBlock;
   blockIdx: number;
   moveElement: (elementIdx: number, up: boolean) => void;
@@ -79,7 +81,7 @@ interface BlockCardProps {
 
 export const BlockCard = ({
   localSurvey,
-  project,
+  workspace,
   block,
   blockIdx,
   moveElement,
@@ -154,6 +156,8 @@ export const BlockCard = ({
         TSurveyElementTypeEnum.PictureSelection,
         TSurveyElementTypeEnum.Rating,
         TSurveyElementTypeEnum.NPS,
+        TSurveyElementTypeEnum.CSAT,
+        TSurveyElementTypeEnum.CES,
         TSurveyElementTypeEnum.Ranking,
         TSurveyElementTypeEnum.Matrix,
       ].includes(elementType)
@@ -181,6 +185,8 @@ export const BlockCard = ({
     [TSurveyElementTypeEnum.NPS]: NPSElementForm,
     [TSurveyElementTypeEnum.CTA]: CTAElementForm,
     [TSurveyElementTypeEnum.Rating]: RatingElementForm,
+    [TSurveyElementTypeEnum.CSAT]: CSATElementForm,
+    [TSurveyElementTypeEnum.CES]: CESElementForm,
     [TSurveyElementTypeEnum.Consent]: ConsentElementForm,
     [TSurveyElementTypeEnum.Date]: DateElementForm,
     [TSurveyElementTypeEnum.PictureSelection]: PictureSelectionForm,
@@ -215,7 +221,7 @@ export const BlockCard = ({
 
     // FileUpload needs extra props
     if (element.type === TSurveyElementTypeEnum.FileUpload) {
-      additionalProps.project = project;
+      additionalProps.workspace = workspace;
       additionalProps.isFormbricksCloud = isFormbricksCloud;
     }
 
@@ -336,7 +342,7 @@ export const BlockCard = ({
                               <div className="flex grow flex-col justify-center">
                                 {hasMultipleElements && (
                                   <p className="mb-1 text-xs font-medium text-slate-500">
-                                    {t("environments.surveys.edit.question_number", {
+                                    {t("workspace.surveys.edit.question_number", {
                                       number: elementIndex + 1,
                                     })}
                                   </p>
@@ -347,8 +353,8 @@ export const BlockCard = ({
                                 {!isOpen && element.type !== TSurveyElementTypeEnum.CTA && (
                                   <p className="mt-1 truncate text-xs text-slate-500">
                                     {element?.required
-                                      ? t("environments.surveys.edit.required")
-                                      : t("environments.surveys.edit.optional")}
+                                      ? t("workspace.surveys.edit.required")
+                                      : t("workspace.surveys.edit.optional")}
                                   </p>
                                 )}
                               </div>
@@ -371,7 +377,7 @@ export const BlockCard = ({
                                 buttonLabel: block.buttonLabel,
                                 backButtonLabel: block.backButtonLabel,
                               }}
-                              project={project}
+                              workspace={workspace}
                               updateCard={updateElement}
                               addCard={addElement}
                               addCardToBlock={addElementToBlock}
@@ -385,7 +391,7 @@ export const BlockCard = ({
                       <Collapsible.CollapsibleContent className={`flex flex-col px-4 ${isOpen && "pb-4"}`}>
                         {shouldShowCautionAlert(element.type) && (
                           <Alert variant="warning" size="small" className="w-fill mt-2" role="alert">
-                            <AlertTitle>{t("environments.surveys.edit.caution_text")}</AlertTitle>
+                            <AlertTitle>{t("workspace.surveys.edit.caution_text")}</AlertTitle>
                             <AlertButton onClick={() => onAlertTrigger()}>
                               {t("common.learn_more")}
                             </AlertButton>
@@ -406,8 +412,8 @@ export const BlockCard = ({
                                 <ChevronRightIcon className="mr-2 h-4 w-3" />
                               )}
                               {openAdvanced
-                                ? t("environments.surveys.edit.hide_question_settings")
-                                : t("environments.surveys.edit.show_question_settings")}
+                                ? t("workspace.surveys.edit.hide_question_settings")
+                                : t("workspace.surveys.edit.show_question_settings")}
                             </Collapsible.CollapsibleTrigger>
 
                             <Collapsible.CollapsibleContent className="flex flex-col gap-4" ref={parent}>
@@ -443,7 +449,7 @@ export const BlockCard = ({
                 setLocalSurvey={setLocalSurvey}
                 setActiveElementId={setActiveElementId}
                 block={block}
-                project={project}
+                workspace={workspace}
                 isCxMode={isCxMode}
               />
             </div>

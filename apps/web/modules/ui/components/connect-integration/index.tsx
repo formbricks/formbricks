@@ -41,7 +41,7 @@ export const ConnectIntegration = ({
   useEffect(() => {
     const error = searchParams?.get("error");
     if (error) {
-      toast.error(t("environments.integrations.connecting_integration_failed_please_try_again"));
+      toast.error(t("workspace.integrations.connecting_integration_failed_please_try_again"));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -63,7 +63,7 @@ export const ConnectIntegration = ({
             {integrationDetails?.notConfiguredText}
             <br />
             <Trans
-              i18nKey="environments.integrations.follow_these_docs_to_configure_it"
+              i18nKey="workspace.integrations.follow_these_docs_to_configure_it"
               components={{
                 docsLink: <Link href={integrationDetails?.docsLink ?? ""} className="underline" />,
               }}

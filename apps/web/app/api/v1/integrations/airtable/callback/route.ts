@@ -4,10 +4,10 @@ import { responses } from "@/app/lib/api/response";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { fetchAirtableAuthToken } from "@/lib/airtable/service";
 import { AIRTABLE_CLIENT_ID, WEBAPP_URL } from "@/lib/constants";
-import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { createOrUpdateIntegration, getIntegrationByType } from "@/lib/integration/service";
 import { capturePostHogEvent } from "@/lib/posthog";
-import { getOrganizationIdFromEnvironmentId, getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
+import { hasUserWorkspaceAccess } from "@/lib/workspace/auth";
 
 const getEmail = async (token: string) => {
   const req_ = await fetch("https://api.airtable.com/v0/meta/whoami", {
@@ -29,12 +29,12 @@ export const GET = withV1ApiWrapper({
 
     const url = req.url;
     const queryParams = new URLSearchParams(url.split("?")[1]); // Split the URL and get the query parameters
-    const environmentId = queryParams.get("state"); // Get the value of the 'state' parameter
+    const workspaceId = queryParams.get("state"); // Get the value of the 'state' parameter
     const code = queryParams.get("code");
 
-    if (!environmentId) {
+    if (!workspaceId) {
       return {
-        response: responses.badRequestResponse("Invalid environmentId"),
+        response: responses.badRequestResponse("Invalid workspaceId"),
       };
     }
 
@@ -43,18 +43,19 @@ export const GET = withV1ApiWrapper({
         response: responses.badRequestResponse("`code` is missing"),
       };
     }
-    const canUserAccessEnvironment = await hasUserEnvironmentAccess(authentication.user.id, environmentId);
-    if (!canUserAccessEnvironment) {
+
+    const canUserAccessWorkspace = await hasUserWorkspaceAccess(authentication.user.id, workspaceId);
+    if (!canUserAccessWorkspace) {
       return {
         response: responses.unauthorizedResponse(),
       };
     }
 
+    const basePath = `/workspaces/${workspaceId}`;
+
     const client_id = AIRTABLE_CLIENT_ID;
     const redirect_uri = WEBAPP_URL + "/api/v1/integrations/airtable/callback";
-    const code_verifier = Buffer.from(environmentId + authentication.user.id + environmentId).toString(
-      "base64"
-    );
+    const code_verifier = Buffer.from(workspaceId + authentication.user.id + workspaceId).toString("base64");
 
     if (!client_id)
       return {
@@ -79,42 +80,37 @@ export const GET = withV1ApiWrapper({
       const email = await getEmail(key.access_token);
 
       // Preserve existing integration data (survey-to-table mappings) when re-authorizing
-      const existingIntegration = await getIntegrationByType(environmentId, "airtable");
+      const existingIntegration = await getIntegrationByType(workspaceId, "airtable");
       const existingData = existingIntegration?.config?.data ?? [];
 
       const airtableIntegrationInput = {
-        type: "airtable" as "airtable",
-        environment: environmentId,
+        type: "airtable" as const,
         config: {
           key,
           data: existingData,
           email,
         },
       };
-      await createOrUpdateIntegration(environmentId, airtableIntegrationInput);
+      await createOrUpdateIntegration(workspaceId, airtableIntegrationInput);
 
       try {
-        const organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
-        const projectId = await getProjectIdFromEnvironmentId(environmentId);
+        const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
         capturePostHogEvent(
           authentication.user.id,
           "integration_connected",
           {
             integration_type: "airtable",
             organization_id: organizationId,
-            workspace_id: projectId,
-            environment_id: environmentId,
+            workspace_id: workspaceId,
           },
-          { organizationId, workspaceId: projectId }
+          { organizationId, workspaceId }
         );
       } catch (err) {
         logger.error({ error: err }, "Failed to capture PostHog integration_connected event for airtable");
       }
 
       return {
-        response: Response.redirect(
-          `${WEBAPP_URL}/environments/${environmentId}/workspace/integrations/airtable`
-        ),
+        response: Response.redirect(`${WEBAPP_URL}${basePath}/integrations/airtable`),
       };
     } catch (error) {
       logger.error({ error, url: req.url }, "Error in GET /api/v1/integrations/airtable/callback");

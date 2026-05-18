@@ -436,6 +436,7 @@ export const RecallPlugin = ({
       };
 
       editor.update(handleRecallInsert);
+      editor.blur();
       setAtSymbolPosition(null);
       setShowRecallItemSelect(false);
 
@@ -446,10 +447,11 @@ export const RecallPlugin = ({
       }
       setRecallItems(newItems);
 
-      // Show fallback input after state is updated
+      // Delay opening the fallback popover so the dropdown fully unmounts
+      // first. Without this, the dropdown's dismiss events close the popover.
       setTimeout(() => {
         onShowFallbackInput();
-      }, 0);
+      }, 150);
     },
     [
       editor,

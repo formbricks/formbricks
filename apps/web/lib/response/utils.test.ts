@@ -46,7 +46,7 @@ describe("Response Utils", () => {
       hiddenFields: { enabled: true, fieldIds: [] },
       createdAt: new Date(),
       updatedAt: new Date(),
-      environmentId: "env1",
+      workspaceId: "env1",
       createdBy: "user1",
       status: "draft",
     };
@@ -105,7 +105,7 @@ describe("Response Utils", () => {
       hiddenFields: { enabled: false, fieldIds: [] },
       createdAt: new Date(),
       updatedAt: new Date(),
-      environmentId: "e1",
+      workspaceId: "e1",
       createdBy: "u1",
       status: "inProgress",
     };
@@ -219,7 +219,7 @@ describe("Response Utils", () => {
       hiddenFields: { enabled: false, fieldIds: [] },
       createdAt: new Date(),
       updatedAt: new Date(),
-      environmentId: "e2",
+      workspaceId: "e2",
       createdBy: "u2",
       status: "inProgress",
     };
@@ -310,7 +310,7 @@ describe("Response Utils", () => {
         hiddenFields: { enabled: false, fieldIds: [] },
         createdAt: new Date(),
         updatedAt: new Date(),
-        environmentId: "e3",
+        workspaceId: "e3",
         createdBy: "u3",
         status: "inProgress",
       };
@@ -405,7 +405,7 @@ describe("Response Utils", () => {
       hiddenFields: { enabled: true, fieldIds: ["hidden1"] },
       createdAt: new Date(),
       updatedAt: new Date(),
-      environmentId: "env1",
+      workspaceId: "env1",
       createdBy: "user1",
       status: "draft",
     };
@@ -462,7 +462,7 @@ describe("Response Utils", () => {
       hiddenFields: { enabled: true, fieldIds: [] },
       createdAt: new Date(),
       updatedAt: new Date(),
-      environmentId: "env1",
+      workspaceId: "env1",
       createdBy: "user1",
       status: "draft",
     };
@@ -659,7 +659,7 @@ describe("Response Utils", () => {
       hiddenFields: { enabled: true, fieldIds: ["hidden1", "hidden2"] },
       createdAt: new Date(),
       updatedAt: new Date(),
-      environmentId: "env1",
+      workspaceId: "env1",
       createdBy: "user1",
       status: "draft",
     };

@@ -1,113 +1,84 @@
 import { PipelineTriggers } from "@prisma/client";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
+import { TResponsePipelineJobData, getBackgroundJobProducer } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
 import { TResponse } from "@formbricks/types/responses";
-import { TPipelineInput } from "@/app/lib/types/pipelines";
-import { sendToPipeline } from "./pipelines";
+import { sendToPipeline } from "@/app/lib/pipelines";
+import { getJobsQueueingConfig } from "@/lib/jobs/config";
 
-// Mock the constants module
-vi.mock("@/lib/constants", () => ({
-  CRON_SECRET: "mocked-cron-secret",
-  WEBAPP_URL: "https://test.formbricks.com",
+const mockEnqueueResponsePipeline = vi.fn();
+
+vi.mock("@formbricks/jobs", () => ({
+  getBackgroundJobProducer: vi.fn(() => ({
+    enqueueResponsePipeline: mockEnqueueResponsePipeline,
+  })),
 }));
 
-// Mock the logger
+vi.mock("@/lib/jobs/config", () => ({
+  getJobsQueueingConfig: vi.fn(),
+}));
+
 vi.mock("@formbricks/logger", () => ({
   logger: {
     error: vi.fn(),
   },
 }));
 
-// Mock global fetch
-const mockFetch = vi.fn();
-global.fetch = mockFetch;
+describe("sendToPipeline", () => {
+  const testData: TResponsePipelineJobData = {
+    event: PipelineTriggers.responseCreated,
+    surveyId: "cm8ckvchx000008lb710n0gdn",
+    workspaceId: "cm8cmp9hp000008jf7l570ml2",
+    response: { id: "cm8cmpnjj000108jfdr9dfqe6" } as TResponse,
+  };
 
-describe("pipelines", () => {
-  // Reset mocks before each test
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(getJobsQueueingConfig).mockReturnValue({
+      enabled: true,
+      redisUrl: "redis://localhost:6379",
+    });
   });
 
-  // Clean up after each test
-  afterEach(() => {
-    vi.clearAllMocks();
-  });
-
-  test("sendToPipeline should call fetch with correct parameters", async () => {
-    // Mock the fetch implementation to return a successful response
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ success: true }),
+  test("enqueues the pipeline job through the BullMQ producer", async () => {
+    mockEnqueueResponsePipeline.mockResolvedValue({
+      jobId: "job-1",
+      jobName: "response-pipeline.process",
+      queueName: "background-jobs",
     });
 
-    // Create sample data for testing
-    const testData: TPipelineInput = {
-      event: PipelineTriggers.responseCreated,
-      surveyId: "cm8ckvchx000008lb710n0gdn",
-      environmentId: "cm8cmp9hp000008jf7l570ml2",
-      response: { id: "cm8cmpnjj000108jfdr9dfqe6" } as TResponse,
-    };
-
-    // Call the function with test data
     await sendToPipeline(testData);
 
-    // Check that fetch was called with the correct arguments
-    expect(mockFetch).toHaveBeenCalledTimes(1);
-    expect(mockFetch).toHaveBeenCalledWith("https://test.formbricks.com/api/pipeline", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": "mocked-cron-secret",
-      },
-      body: JSON.stringify({
-        environmentId: testData.environmentId,
-        surveyId: testData.surveyId,
+    expect(getBackgroundJobProducer).toHaveBeenCalledTimes(1);
+    expect(mockEnqueueResponsePipeline).toHaveBeenCalledWith(testData);
+  });
+
+  test("logs enqueue failures and rethrows", async () => {
+    const testError = new Error("Redis unavailable");
+    mockEnqueueResponsePipeline.mockRejectedValue(testError);
+
+    await expect(sendToPipeline(testData)).rejects.toThrow(testError);
+
+    expect(logger.error).toHaveBeenCalledWith(
+      {
+        error: testError,
         event: testData.event,
-        response: testData.response,
-      }),
+        surveyId: testData.surveyId,
+        workspaceId: testData.workspaceId,
+      },
+      "Error queueing pipeline event"
+    );
+  });
+
+  test("throws when BullMQ queueing is disabled", async () => {
+    vi.mocked(getJobsQueueingConfig).mockReturnValue({
+      enabled: false,
+      redisUrl: null,
     });
-  });
 
-  test("sendToPipeline should handle fetch errors", async () => {
-    // Mock fetch to throw an error
-    const testError = new Error("Network error");
-    mockFetch.mockRejectedValueOnce(testError);
-
-    // Create sample data for testing
-    const testData: TPipelineInput = {
-      event: PipelineTriggers.responseCreated,
-      surveyId: "cm8ckvchx000008lb710n0gdn",
-      environmentId: "cm8cmp9hp000008jf7l570ml2",
-      response: { id: "cm8cmpnjj000108jfdr9dfqe6" } as TResponse,
-    };
-
-    // Call the function
-    await sendToPipeline(testData);
-
-    // Check that the error was logged using logger
-    expect(logger.error).toHaveBeenCalledWith(testError, "Error sending event to pipeline");
-  });
-
-  test("sendToPipeline should throw error if CRON_SECRET is not set", async () => {
-    // For this test, we need to mock CRON_SECRET as undefined
-    // Let's use a more compatible approach to reset the mocks
-    const originalModule = await import("@/lib/constants");
-    const mockConstants = { ...originalModule, CRON_SECRET: undefined };
-
-    vi.doMock("@/lib/constants", () => mockConstants);
-
-    // Re-import the module to get the new mocked values
-    const { sendToPipeline: sendToPipelineNoSecret } = await import("./pipelines");
-
-    // Create sample data for testing
-    const testData: TPipelineInput = {
-      event: PipelineTriggers.responseCreated,
-      surveyId: "cm8ckvchx000008lb710n0gdn",
-      environmentId: "cm8cmp9hp000008jf7l570ml2",
-      response: { id: "cm8cmpnjj000108jfdr9dfqe6" } as TResponse,
-    };
-
-    // Expect the function to throw an error
-    await expect(sendToPipelineNoSecret(testData)).rejects.toThrow("CRON_SECRET is not set");
+    await expect(sendToPipeline(testData)).rejects.toThrow(
+      "BullMQ response pipeline queueing is not enabled"
+    );
+    expect(getBackgroundJobProducer).not.toHaveBeenCalled();
   });
 });

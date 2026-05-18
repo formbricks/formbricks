@@ -88,8 +88,12 @@ describe("SSO Providers", () => {
     expect(samlProvider.token).toBe("https://test-app.com/api/auth/saml/token");
     expect(samlProvider.userinfo).toBe("https://test-app.com/api/auth/saml/userinfo");
     expect(googleProvider.options?.checks).toContain("nonce");
-    expect(googleProvider.allowDangerousEmailAccountLinking).toBeUndefined();
-    expect(samlProvider.allowDangerousEmailAccountLinking).toBeUndefined();
+    expect(
+      (googleProvider as { allowDangerousEmailAccountLinking?: boolean }).allowDangerousEmailAccountLinking
+    ).toBeUndefined();
+    expect(
+      (samlProvider as { allowDangerousEmailAccountLinking?: boolean }).allowDangerousEmailAccountLinking
+    ).toBeUndefined();
   });
 
   test("should map the SAML profile and trim empty name parts", () => {

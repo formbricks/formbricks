@@ -10,7 +10,7 @@ import { validateInputs } from "../utils/validate";
 const selectTagsOnResponse = {
   tag: {
     select: {
-      environmentId: true,
+      workspaceId: true,
     },
   },
 };
@@ -62,8 +62,8 @@ export const deleteTagOnResponse = async (responseId: string, tagId: string): Pr
   }
 };
 
-export const getTagsOnResponsesCount = reactCache(async (environmentId: string): Promise<TTagsCount> => {
-  validateInputs([environmentId, ZId]);
+export const getTagsOnResponsesCount = reactCache(async (workspaceId: string): Promise<TTagsCount> => {
+  validateInputs([workspaceId, ZId]);
 
   try {
     const tagsCount = await prisma.tagsOnResponses.groupBy({
@@ -71,9 +71,7 @@ export const getTagsOnResponsesCount = reactCache(async (environmentId: string):
       where: {
         response: {
           survey: {
-            environment: {
-              id: environmentId,
-            },
+            workspaceId,
           },
         },
       },

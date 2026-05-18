@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { type TProject } from "@formbricks/types/project";
 import type { TSurveyElement } from "@formbricks/types/surveys/elements";
 import type { TTemplate } from "@formbricks/types/templates";
+import { type TWorkspace } from "@formbricks/types/workspace";
 import * as i18nUtils from "@/lib/i18n/utils";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import { replaceElementPresetPlaceholders, replacePresetPlaceholders } from "./templates";
@@ -18,10 +18,10 @@ beforeEach(() => {
 
 describe("Template Utilities", () => {
   describe("replaceElementPresetPlaceholders", () => {
-    test("returns original element when project is not provided", () => {
+    test("returns original element when workspace is not provided", () => {
       const element = {
         type: "openText",
-        headline: { default: "Question about $[projectName]?" },
+        headline: { default: "Question about $[workspaceName]?" },
       } as unknown as TSurveyElement;
 
       const result = replaceElementPresetPlaceholders(element, undefined as any);
@@ -29,37 +29,37 @@ describe("Template Utilities", () => {
       expect(result).toEqual(element);
     });
 
-    test("replaces projectName placeholder in headline", () => {
+    test("replaces workspaceName placeholder in headline", () => {
       const element = {
         type: "openText",
-        headline: { default: "How do you like $[projectName]?" },
+        headline: { default: "How do you like $[workspaceName]?" },
       } as unknown as TSurveyElement;
 
-      const project = {
-        name: "TestProject",
-      } as unknown as TProject;
+      const workspace = {
+        name: "TestWorkspace",
+      } as unknown as TWorkspace;
 
-      const result = replaceElementPresetPlaceholders(element, project);
+      const result = replaceElementPresetPlaceholders(element, workspace);
 
       // The function directly replaces without calling getLocalizedValue in the test scenario
-      expect(result.headline?.default).toBe("How do you like TestProject?");
+      expect(result.headline?.default).toBe("How do you like TestWorkspace?");
     });
 
-    test("replaces projectName placeholder in subheader", () => {
+    test("replaces workspaceName placeholder in subheader", () => {
       const element = {
         type: "openText",
         headline: { default: "Question" },
-        subheader: { default: "Subheader for $[projectName]" },
+        subheader: { default: "Subheader for $[workspaceName]" },
       } as unknown as TSurveyElement;
 
-      const project = {
-        name: "TestProject",
-      } as unknown as TProject;
+      const workspace = {
+        name: "TestWorkspace",
+      } as unknown as TWorkspace;
 
-      const result = replaceElementPresetPlaceholders(element, project);
+      const result = replaceElementPresetPlaceholders(element, workspace);
 
       expect(result.headline?.default).toBe("Question");
-      expect(result.subheader?.default).toBe("Subheader for TestProject");
+      expect(result.subheader?.default).toBe("Subheader for TestWorkspace");
     });
 
     test("handles missing headline and subheader", () => {
@@ -67,11 +67,11 @@ describe("Template Utilities", () => {
         type: "openText",
       } as unknown as TSurveyElement;
 
-      const project = {
-        name: "TestProject",
-      } as unknown as TProject;
+      const workspace = {
+        name: "TestWorkspace",
+      } as unknown as TWorkspace;
 
-      const result = replaceElementPresetPlaceholders(element, project);
+      const result = replaceElementPresetPlaceholders(element, workspace);
 
       expect(structuredClone).toHaveBeenCalledWith(element);
       expect(result).toEqual(element);
@@ -79,11 +79,11 @@ describe("Template Utilities", () => {
   });
 
   describe("replacePresetPlaceholders", () => {
-    test("replaces projectName placeholder in template name and blocks", () => {
+    test("replaces workspaceName placeholder in template name and blocks", () => {
       const mockTemplate = {
         name: "Template 1",
         preset: {
-          name: "$[projectName] Feedback",
+          name: "$[workspaceName] Feedback",
           welcomeCard: { enabled: false, timeToFinish: false, showResponseCount: false },
           blocks: [
             {
@@ -93,7 +93,7 @@ describe("Template Utilities", () => {
                 {
                   id: "elem1",
                   type: "openText",
-                  headline: { default: "How would you rate $[projectName]?" },
+                  headline: { default: "How would you rate $[workspaceName]?" },
                   required: true,
                   inputType: "text",
                 },
@@ -105,15 +105,15 @@ describe("Template Utilities", () => {
         },
       } as unknown as TTemplate;
 
-      const project = {
-        name: "TestProject",
-      } as TProject;
+      const workspace = {
+        name: "TestWorkspace",
+      } as TWorkspace;
 
-      const result = replacePresetPlaceholders(mockTemplate, project);
+      const result = replacePresetPlaceholders(mockTemplate, workspace);
 
       expect(structuredClone).toHaveBeenCalledWith(mockTemplate.preset);
-      expect(result.preset.name).toBe("TestProject Feedback");
-      expect(result.preset.blocks[0].elements[0].headline?.default).toBe("How would you rate TestProject?");
+      expect(result.preset.name).toBe("TestWorkspace Feedback");
+      expect(result.preset.blocks[0].elements[0].headline?.default).toBe("How would you rate TestWorkspace?");
     });
   });
 });

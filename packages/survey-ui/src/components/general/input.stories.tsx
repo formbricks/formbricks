@@ -12,7 +12,7 @@ interface StylingOptions {
   inputFontFamily: string;
   inputFontSize: string;
   inputFontWeight: string;
-  inputColor: string;
+  inputTextColor: string;
   inputPlaceholderColor: string;
   inputPaddingX: string;
   inputPaddingY: string;
@@ -74,7 +74,7 @@ const withCSSVariables: Decorator<StoryProps> = (
     inputFontFamily,
     inputFontSize,
     inputFontWeight,
-    inputColor,
+    inputTextColor,
     inputPlaceholderColor,
     inputPaddingX,
     inputPaddingY,
@@ -91,7 +91,7 @@ const withCSSVariables: Decorator<StoryProps> = (
     "--fb-input-font-family": inputFontFamily,
     "--fb-input-font-size": inputFontSize,
     "--fb-input-font-weight": inputFontWeight,
-    "--fb-input-color": inputColor,
+    "--fb-input-text-color": inputTextColor,
     "--fb-input-placeholder-color": inputPlaceholderColor,
     "--fb-input-padding-x": inputPaddingX,
     "--fb-input-padding-y": inputPaddingY,
@@ -168,7 +168,7 @@ export const StylingPlayground: Story = {
         defaultValue: { summary: "400" },
       },
     },
-    inputColor: {
+    inputTextColor: {
       control: "color",
       table: {
         category: "Input Styling",

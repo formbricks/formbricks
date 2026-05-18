@@ -170,10 +170,6 @@ install_formbricks() {
   echo "🛸 Fasten your seatbelts! We're setting up your Formbricks environment on your $ubuntu_version server."
   echo ""
 
-  # Remove any old Docker installations, without stopping the script if they're not found
-  echo "🧹 Time to sweep away any old Docker installations."
-  sudo apt-get remove docker docker-engine docker.io containerd runc >/dev/null 2>&1 || true
-
   # Update package list
   echo "🔄 Updating your package list."
   sudo apt-get update >/dev/null 2>&1
@@ -183,32 +179,69 @@ install_formbricks() {
   sudo apt-get install -y \
     ca-certificates \
     curl \
-    gnupg \
     lsb-release >/dev/null 2>&1
 
-  # Set up Docker's official GPG key & stable repository
-  echo "🔑 Adding Docker's official GPG key and setting up the stable repository."
-  sudo mkdir -m 0755 -p /etc/apt/keyrings >/dev/null 2>&1
-  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg >/dev/null 2>&1
-  echo \
-    "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
-  $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null 2>&1
+  # Reuse an existing Docker installation instead of replacing it implicitly.
+  if command -v docker >/dev/null 2>&1; then
+    echo "✅ Docker is already installed."
 
-  # Update package list again
-  echo "🔄 Updating your package list again."
-  sudo apt-get update >/dev/null 2>&1
+    if docker info >/dev/null 2>&1 || sudo docker info >/dev/null 2>&1; then
+      echo "✅ Docker daemon is reachable. Reusing the existing Docker installation."
 
-  # Install Docker
-  echo "🐳 Installing Docker."
-  sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin >/dev/null 2>&1
-
-  # Test Docker installation
-  echo "🚀 Testing your Docker installation."
-  if docker --version >/dev/null 2>&1; then
-    echo "🎉 Docker is installed!"
+      if docker compose version >/dev/null 2>&1 || sudo docker compose version >/dev/null 2>&1; then
+        echo "✅ Docker Compose is available."
+      else
+        echo "❌ Docker Compose is not available on this system."
+        echo "Please install Docker Compose or upgrade Docker so 'docker compose' works, then rerun this script."
+        exit 1
+      fi
+    else
+      echo "❌ Docker is installed, but the daemon is not reachable."
+      echo "Please start or fix Docker and rerun this script."
+      echo "To avoid modifying an existing Docker setup without your consent, this script will not remove or reinstall Docker automatically."
+      exit 1
+    fi
   else
-    echo "❌ Docker is not installed. Please install Docker before proceeding."
-    exit 1
+    # Remove old Docker packages only when Docker is not installed at all.
+    echo "⚠️ Legacy Docker-related packages may conflict with Docker CE."
+    echo "These packages can also be used outside Docker, so they will only be removed with your consent."
+    read -p "Remove legacy packages (docker/docker-engine/docker.io/containerd/runc)? [y/N] " remove_legacy_docker_pkgs
+    remove_legacy_docker_pkgs=$(echo "$remove_legacy_docker_pkgs" | tr '[:upper:]' '[:lower:]')
+    if [[ "$remove_legacy_docker_pkgs" == "y" || "$remove_legacy_docker_pkgs" == "yes" ]]; then
+      echo "🧹 Removing old Docker installations."
+      sudo apt-get remove docker docker-engine docker.io containerd runc >/dev/null 2>&1 || true
+    else
+      echo "⏭️ Skipping legacy package removal."
+      echo "If Docker installation fails due to conflicting packages, rerun the script and allow the removal step."
+    fi
+
+    echo "📦 Installing Docker-specific dependencies."
+    sudo apt-get install -y gnupg >/dev/null 2>&1
+
+    # Set up Docker's official GPG key & stable repository.
+    echo "🔑 Adding Docker's official GPG key and setting up the stable repository."
+    sudo mkdir -m 0755 -p /etc/apt/keyrings >/dev/null 2>&1
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg >/dev/null 2>&1
+    echo \
+      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+    $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null 2>&1
+
+    # Update package list again after adding the Docker repository.
+    echo "🔄 Updating your package list again."
+    sudo apt-get update >/dev/null 2>&1
+
+    # Install Docker only when it is not already present on the system.
+    echo "🐳 Installing Docker."
+    sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin >/dev/null 2>&1
+
+    # Test Docker installation.
+    echo "🚀 Testing your Docker installation."
+    if docker --version >/dev/null 2>&1; then
+      echo "🎉 Docker is installed!"
+    else
+      echo "❌ Docker is not installed. Please install Docker before proceeding."
+      exit 1
+    fi
   fi
 
   # Adding your user to the Docker group
@@ -426,7 +459,7 @@ EOT
   echo "   If you skip this, the following features will be disabled:"
   echo "   - Adding images to surveys (e.g., in questions or as background)"
   echo "   - 'File Upload' and 'Picture Selection' question types"
-  echo "   - Project logos"
+  echo "   - Workspace logos"
   echo "   - Custom organization logo in emails"
   read -p "Configure file uploads now? [Y/n] " configure_uploads
   configure_uploads=$(echo "$configure_uploads" | tr '[:upper:]' '[:lower:]')
@@ -473,6 +506,10 @@ EOT
 
   echo "📥 Downloading docker-compose.yml from Formbricks GitHub repository..."
   curl -fsSL -o docker-compose.yml https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/docker-compose.yml
+  mkdir -p cube/schema
+  echo "📥 Downloading Cube.js configuration for XM Suite v5 analytics..."
+  curl -fsSL -o cube/cube.js https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/cube/cube.js
+  curl -fsSL -o cube/schema/FeedbackRecords.js https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/cube/schema/FeedbackRecords.js
 
   echo "🚙 Updating docker-compose.yml with your custom inputs..."
   sed -i "/WEBAPP_URL:/s|WEBAPP_URL:.*|WEBAPP_URL: \"https://$domain_name\"|" docker-compose.yml
@@ -486,6 +523,17 @@ EOT
 
   cron_secret=$(openssl rand -hex 32) && sed -i "/CRON_SECRET:$/s/CRON_SECRET:.*/CRON_SECRET: $cron_secret/" docker-compose.yml	
   echo "🚗 CRON_SECRET updated successfully!"
+
+  hub_api_key=$(openssl rand -hex 32)
+  cubejs_api_secret=$(openssl rand -hex 32)
+cat <<EOF > .env
+COMPOSE_PROFILES=xm
+HUB_API_KEY=$hub_api_key
+CUBEJS_API_SECRET=$cubejs_api_secret
+CUBEJS_JWT_ISSUER=formbricks-web
+CUBEJS_JWT_AUDIENCE=formbricks-cube
+EOF
+  echo "🚗 Generated Hub and Cube secrets in .env successfully!"
   
   if [[ -n $mail_from ]]; then
     sed -i "s|# MAIL_FROM:|MAIL_FROM: \"$mail_from\"|" docker-compose.yml
@@ -543,6 +591,12 @@ EOT
         print "      - \"traefik.http.routers.formbricks.tls=true\""
         print "      - \"traefik.http.routers.formbricks.tls.certresolver=default\""
         print "      - \"traefik.http.services.formbricks.loadbalancer.server.port=3000\""
+        print "      - \"traefik.http.routers.feedback-records-token.rule=Host(`" domain_name "`) && Path(`/api/v3/feedbackRecords/token`)\""
+        print "      - \"traefik.http.routers.feedback-records-token.entrypoints=websecure\""
+        print "      - \"traefik.http.routers.feedback-records-token.tls=true\""
+        print "      - \"traefik.http.routers.feedback-records-token.tls.certresolver=default\""
+        print "      - \"traefik.http.routers.feedback-records-token.service=formbricks\""
+        print "      - \"traefik.http.routers.feedback-records-token.priority=200\""
         if (hsts_enabled == "y") {
             print "      - \"traefik.http.middlewares.hstsHeader.headers.stsSeconds=31536000\""
             print "      - \"traefik.http.middlewares.hstsHeader.headers.forceSTSHeader=true\""
@@ -551,6 +605,10 @@ EOT
         } else {
             print "      - \"traefik.http.routers.formbricks_http.entrypoints=web\""
             print "      - \"traefik.http.routers.formbricks_http.rule=Host(`" domain_name "`)\""
+            print "      - \"traefik.http.routers.feedback-records-token-http.rule=Host(`" domain_name "`) && Path(`/api/v3/feedbackRecords/token`)\""
+            print "      - \"traefik.http.routers.feedback-records-token-http.entrypoints=web\""
+            print "      - \"traefik.http.routers.feedback-records-token-http.service=formbricks\""
+            print "      - \"traefik.http.routers.feedback-records-token-http.priority=200\""
         }
         print $0
     } else {
@@ -559,6 +617,57 @@ EOT
     next
 }
 { print }
+' docker-compose.yml >tmp.yml && mv tmp.yml docker-compose.yml
+
+  # Step 1b: Add FeedbackRecords gateway labels to the Hub service.
+  awk -v domain_name="$domain_name" -v hsts_enabled="$hsts_enabled" '
+BEGIN { in_hub = 0; inserted = 0 }
+/^  hub:/ { in_hub = 1 }
+in_hub && /^  [A-Za-z0-9_-]+:/ && !/^  hub:/ { in_hub = 0 }
+{
+    if (in_hub && !inserted && $0 ~ /^    environment:/) {
+        print "    labels:"
+        print "      - \"traefik.enable=true\""
+        print "      - \"traefik.http.services.feedback-records-hub.loadbalancer.server.port=8080\""
+        print "      - \"traefik.http.routers.feedback-records-v3.rule=Host(`" domain_name "`) && PathPrefix(`/api/v3/feedbackRecords`)\""
+        print "      - \"traefik.http.routers.feedback-records-v3.entrypoints=websecure\""
+        print "      - \"traefik.http.routers.feedback-records-v3.tls=true\""
+        print "      - \"traefik.http.routers.feedback-records-v3.tls.certresolver=default\""
+        print "      - \"traefik.http.routers.feedback-records-v3.service=feedback-records-hub\""
+        print "      - \"traefik.http.routers.feedback-records-v3.priority=100\""
+        print "      - \"traefik.http.routers.feedback-records-v3.middlewares=feedback-records-auth,feedback-records-v3-rewrite,feedback-records-hub-headers\""
+        print "      - \"traefik.http.routers.feedback-records-sdk.rule=Host(`" domain_name "`) && PathPrefix(`/v1/feedback-records`)\""
+        print "      - \"traefik.http.routers.feedback-records-sdk.entrypoints=websecure\""
+        print "      - \"traefik.http.routers.feedback-records-sdk.tls=true\""
+        print "      - \"traefik.http.routers.feedback-records-sdk.tls.certresolver=default\""
+        print "      - \"traefik.http.routers.feedback-records-sdk.service=feedback-records-hub\""
+        print "      - \"traefik.http.routers.feedback-records-sdk.priority=100\""
+        print "      - \"traefik.http.routers.feedback-records-sdk.middlewares=feedback-records-auth,feedback-records-hub-headers\""
+        if (hsts_enabled != "y") {
+            print "      - \"traefik.http.routers.feedback-records-v3-http.rule=Host(`" domain_name "`) && PathPrefix(`/api/v3/feedbackRecords`)\""
+            print "      - \"traefik.http.routers.feedback-records-v3-http.entrypoints=web\""
+            print "      - \"traefik.http.routers.feedback-records-v3-http.service=feedback-records-hub\""
+            print "      - \"traefik.http.routers.feedback-records-v3-http.priority=100\""
+            print "      - \"traefik.http.routers.feedback-records-v3-http.middlewares=feedback-records-auth,feedback-records-v3-rewrite,feedback-records-hub-headers\""
+            print "      - \"traefik.http.routers.feedback-records-sdk-http.rule=Host(`" domain_name "`) && PathPrefix(`/v1/feedback-records`)\""
+            print "      - \"traefik.http.routers.feedback-records-sdk-http.entrypoints=web\""
+            print "      - \"traefik.http.routers.feedback-records-sdk-http.service=feedback-records-hub\""
+            print "      - \"traefik.http.routers.feedback-records-sdk-http.priority=100\""
+            print "      - \"traefik.http.routers.feedback-records-sdk-http.middlewares=feedback-records-auth,feedback-records-hub-headers\""
+        }
+        print "      - \"traefik.http.middlewares.feedback-records-auth.forwardauth.address=http://formbricks:3000/api/traefik-auth/feedback-records\""
+        print "      - \"traefik.http.middlewares.feedback-records-auth.forwardauth.forwardbody=true\""
+        print "      - \"traefik.http.middlewares.feedback-records-auth.forwardauth.maxbodysize=1048576\""
+        print "      - \"traefik.http.middlewares.feedback-records-auth.forwardauth.preserverequestmethod=true\""
+        print "      - \"traefik.http.middlewares.feedback-records-v3-rewrite.replacepathregex.regex=^/api/v3/feedbackRecords(.*)\""
+        print "      - \"traefik.http.middlewares.feedback-records-v3-rewrite.replacepathregex.replacement=/v1/feedback-records$${1}\""
+        print "      - \"traefik.http.middlewares.feedback-records-hub-headers.headers.customrequestheaders.Authorization=Bearer ${HUB_API_KEY}\""
+        print "      - \"traefik.http.middlewares.feedback-records-hub-headers.headers.customrequestheaders.X-API-Key=\""
+        print "      - \"traefik.http.middlewares.feedback-records-hub-headers.headers.customrequestheaders.Cookie=\""
+        inserted = 1
+    }
+    print
+}
 ' docker-compose.yml >tmp.yml && mv tmp.yml docker-compose.yml
 
   # Step 2: Ensure formbricks waits for rustfs-init to complete successfully (mapping depends_on)
@@ -682,11 +791,12 @@ EOF
     if [[ $insert_traefik == "y" ]]; then
       cat >> "$services_snippet_file" << EOF
   traefik:
-    image: "traefik:v2.11.31"
+    image: "traefik:v3.6.4"
     restart: always
     container_name: "traefik"
     depends_on:
       - formbricks
+      - hub
       - rustfs
     ports:
       - "80:80"
@@ -711,11 +821,12 @@ EOF
       cat > "$services_snippet_file" << EOF
 
   traefik:
-    image: "traefik:v2.11.31"
+    image: "traefik:v3.6.4"
     restart: always
     container_name: "traefik"
     depends_on:
       - formbricks
+      - hub
     ports:
       - "80:80"
       - "443:443"

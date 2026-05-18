@@ -2,7 +2,7 @@ import { logger } from "@formbricks/logger";
 import { AUDIT_LOG_ENABLED, AUDIT_LOG_GET_USER_IP } from "@/lib/constants";
 import { ActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
-import { getOrganizationIdFromEnvironmentId } from "@/lib/utils/helper";
+import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { deepDiff, redactPII } from "@/lib/utils/logger-helpers";
 import { logAuditEvent } from "@/modules/ee/audit-logs/lib/service";
 import {
@@ -14,6 +14,24 @@ import {
   UNKNOWN_DATA,
 } from "@/modules/ee/audit-logs/types/audit-log";
 import { getIsAuditLogsEnabled } from "@/modules/ee/license-check/lib/utils";
+
+export type TAuditEventInput = {
+  action: TAuditAction;
+  targetType: TAuditTarget;
+  userId: string;
+  userType: TActor;
+  targetId: string;
+  organizationId: string;
+  status: TAuditStatus;
+  oldObject?: Record<string, unknown> | null;
+  newObject?: Record<string, unknown> | null;
+  eventId?: string;
+  apiUrl?: string;
+};
+
+type TBuildAuditEventInput = TAuditEventInput & {
+  ipAddress: string;
+};
 
 /**
  * Builds an audit event and logs it.
@@ -32,20 +50,7 @@ export const buildAndLogAuditEvent = async ({
   newObject,
   eventId,
   apiUrl,
-}: {
-  action: TAuditAction;
-  targetType: TAuditTarget;
-  userId: string;
-  userType: TActor;
-  targetId: string;
-  organizationId: string;
-  ipAddress: string;
-  status: TAuditStatus;
-  oldObject?: Record<string, unknown> | null;
-  newObject?: Record<string, unknown> | null;
-  eventId?: string;
-  apiUrl?: string;
-}) => {
+}: TBuildAuditEventInput) => {
   if (!AUDIT_LOG_ENABLED && !(await getIsAuditLogsEnabled())) {
     return;
   }
@@ -97,19 +102,7 @@ export const queueAuditEventBackground = async ({
   status,
   eventId,
   apiUrl,
-}: {
-  action: TAuditAction;
-  targetType: TAuditTarget;
-  userId: string;
-  userType: TActor;
-  targetId: string;
-  organizationId: string;
-  oldObject?: Record<string, unknown> | null;
-  newObject?: Record<string, unknown> | null;
-  status: TAuditStatus;
-  eventId?: string;
-  apiUrl?: string;
-}) => {
+}: TAuditEventInput) => {
   setImmediate(async () => {
     const ipAddress = await getClientIpFromHeaders();
     await buildAndLogAuditEvent({
@@ -145,21 +138,43 @@ export const queueAuditEvent = async ({
   status,
   eventId,
   apiUrl,
-}: {
-  action: TAuditAction;
-  targetType: TAuditTarget;
-  userId: string;
-  userType: TActor;
-  targetId: string;
-  organizationId: string;
-  oldObject?: Record<string, unknown> | null;
-  newObject?: Record<string, unknown> | null;
-  status: TAuditStatus;
-  eventId?: string;
-  apiUrl?: string;
-}) => {
+}: TAuditEventInput) => {
   const ipAddress = await getClientIpFromHeaders();
 
+  await buildAndLogAuditEvent({
+    action,
+    targetType,
+    userId,
+    userType,
+    targetId,
+    organizationId,
+    ipAddress,
+    status,
+    oldObject,
+    newObject,
+    eventId,
+    apiUrl,
+  });
+};
+
+/**
+ * Logs an audit event without reading request headers.
+ * Use this from background workers or other contexts without a request lifecycle.
+ */
+export const queueAuditEventWithoutRequest = async ({
+  action,
+  targetType,
+  userId,
+  userType,
+  targetId,
+  organizationId,
+  oldObject,
+  newObject,
+  status,
+  eventId,
+  apiUrl,
+  ipAddress = UNKNOWN_DATA,
+}: TAuditEventInput & { ipAddress?: string }) => {
   await buildAndLogAuditEvent({
     action,
     targetType,
@@ -227,12 +242,12 @@ export const withAuditLogging = <
           UNKNOWN_DATA;
 
         if (!organizationId) {
-          const environmentId = (parsedInput as Record<string, any>)?.environmentId;
-          if (environmentId && typeof environmentId === "string") {
+          const workspaceId = (parsedInput as Record<string, any>)?.workspaceId;
+          if (workspaceId && typeof workspaceId === "string") {
             try {
-              organizationId = await getOrganizationIdFromEnvironmentId(environmentId);
+              organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
             } catch (err) {
-              logger.error(err, "Failed to get organizationId from environmentId in audit logging");
+              logger.error(err, "Failed to get organizationId from workspaceId in audit logging");
               organizationId = UNKNOWN_DATA;
             }
           } else {
@@ -260,8 +275,8 @@ export const withAuditLogging = <
           case "user":
             targetId = auditLoggingCtx.userId;
             break;
-          case "project":
-            targetId = auditLoggingCtx.projectId;
+          case "workspace":
+            targetId = auditLoggingCtx.workspaceId;
             break;
           case "language":
             targetId = auditLoggingCtx.languageId;
@@ -289,6 +304,18 @@ export const withAuditLogging = <
             break;
           case "quota":
             targetId = auditLoggingCtx.quotaId;
+            break;
+          case "chart":
+            targetId = auditLoggingCtx.chartId;
+            break;
+          case "dashboard":
+            targetId = auditLoggingCtx.dashboardId;
+            break;
+          case "dashboardWidget":
+            targetId = auditLoggingCtx.dashboardWidgetId;
+            break;
+          case "feedbackDirectory":
+            targetId = auditLoggingCtx.feedbackDirectoryId;
             break;
           default:
             targetId = UNKNOWN_DATA;

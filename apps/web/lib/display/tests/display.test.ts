@@ -4,8 +4,6 @@ import {
   mockDisplayInput,
   mockDisplayInputWithUserId,
   mockDisplayWithPersonId,
-  mockEnvironment,
-  mockEnvironmentId,
   mockSurveyId,
 } from "./__mocks__/data.mock";
 import { prisma } from "@/lib/__mocks__/database";
@@ -14,7 +12,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { testInputValidation } from "vitestSetup";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { DatabaseError } from "@formbricks/types/errors";
-import { createDisplay } from "@/app/api/v1/client/[environmentId]/displays/lib/display";
+import { createDisplay } from "@/app/api/v1/client/[workspaceId]/displays/lib/display";
 import { deleteDisplay } from "../service";
 
 beforeEach(() => {
@@ -31,7 +29,6 @@ beforeEach(() => {
   prisma.survey.findUnique.mockResolvedValue({
     id: mockSurveyId,
     name: "Test Survey",
-    environmentId: mockEnvironmentId,
     status: "inProgress",
   } as any);
 });
@@ -39,7 +36,6 @@ beforeEach(() => {
 describe("Tests for createDisplay service", () => {
   describe("Happy Path", () => {
     test("Creates a new display when a userId exists", async () => {
-      prisma.environment.findUnique.mockResolvedValue(mockEnvironment as any);
       prisma.display.create.mockResolvedValue(mockDisplayWithPersonId as any);
 
       const display = await createDisplay(mockDisplayInputWithUserId);
@@ -59,7 +55,6 @@ describe("Tests for createDisplay service", () => {
 
     test("Throws DatabaseError on PrismaClientKnownRequestError occurrence", async () => {
       const mockErrorMessage = "Mock error message";
-      prisma.environment.findUnique.mockResolvedValue(mockEnvironment as any);
       const errToThrow = new Prisma.PrismaClientKnownRequestError(mockErrorMessage, {
         code: PrismaErrorType.UniqueConstraintViolation,
         clientVersion: "0.0.1",

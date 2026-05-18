@@ -185,7 +185,7 @@ export const FollowUpModal = ({
       endingIds: defaultValues?.endingIds || null,
       emailTo: defaultValues?.emailTo ?? emailSendToOptions[0]?.id,
       replyTo: defaultValues?.replyTo ?? [userEmail],
-      subject: defaultValues?.subject ?? t("environments.surveys.edit.follow_ups_modal_action_subject"),
+      subject: defaultValues?.subject ?? t("workspace.surveys.edit.follow_ups_modal_action_subject"),
       body: defaultValues?.body ?? getSurveyFollowUpActionDefaultBody(t),
       attachResponseData: defaultValues?.attachResponseData ?? false,
       includeVariables: defaultValues?.includeVariables ?? false,
@@ -201,12 +201,12 @@ export const FollowUpModal = ({
 
   const handleSubmit = (data: TCreateSurveyFollowUpForm) => {
     if (data.triggerType === "endings" && data.endingIds?.length === 0) {
-      toast.error(t("environments.surveys.edit.follow_ups_modal_trigger_type_ending_warning"));
+      toast.error(t("workspace.surveys.edit.follow_ups_modal_trigger_type_ending_warning"));
       return;
     }
 
     if (!emailSendToOptions.length) {
-      toast.error(t("environments.surveys.edit.follow_ups_modal_action_to_warning"));
+      toast.error(t("workspace.surveys.edit.follow_ups_modal_action_to_warning"));
 
       return;
     }
@@ -239,7 +239,7 @@ export const FollowUpModal = ({
 
     if (mode === "edit") {
       if (!defaultValues?.surveyFollowUpId) {
-        toast.error(t("environments.surveys.edit.follow_ups_modal_edit_no_id"));
+        toast.error(t("workspace.surveys.edit.follow_ups_modal_edit_no_id"));
         return;
       }
 
@@ -279,7 +279,7 @@ export const FollowUpModal = ({
         },
       };
 
-      toast.success(t("environments.surveys.edit.follow_ups_modal_updated_successfull_toast"));
+      toast.success(t("workspace.surveys.edit.follow_ups_modal_updated_successfull_toast"));
       setOpen(false);
       setLocalSurvey((prev) => {
         return {
@@ -328,7 +328,7 @@ export const FollowUpModal = ({
       },
     };
 
-    toast.success(t("environments.surveys.edit.follow_ups_modal_created_successfull_toast"));
+    toast.success(t("workspace.surveys.edit.follow_ups_modal_created_successfull_toast"));
     setOpen(false);
     form.reset();
     setLocalSurvey((prev) => {
@@ -447,10 +447,10 @@ export const FollowUpModal = ({
           <MailIcon />
           <DialogTitle>
             {mode === "edit"
-              ? t("environments.surveys.edit.follow_ups_modal_edit_heading")
-              : t("environments.surveys.edit.follow_ups_modal_create_heading")}
+              ? t("workspace.surveys.edit.follow_ups_modal_edit_heading")
+              : t("workspace.surveys.edit.follow_ups_modal_create_heading")}
           </DialogTitle>
-          <DialogDescription>{t("environments.surveys.edit.follow_ups_modal_subheading")}</DialogDescription>
+          <DialogDescription>{t("workspace.surveys.edit.follow_ups_modal_subheading")}</DialogDescription>
         </DialogHeader>
 
         <FormProvider {...form}>
@@ -466,7 +466,7 @@ export const FollowUpModal = ({
                       return (
                         <FormItem>
                           <FormLabel htmlFor="follow-up-name">
-                            {t("environments.surveys.edit.follow_ups_modal_name_label")}:
+                            {t("workspace.surveys.edit.follow_ups_modal_name_label")}:
                           </FormLabel>
                           <FormControl>
                             <Input
@@ -474,7 +474,7 @@ export const FollowUpModal = ({
                               type="text"
                               className="max-w-80"
                               isInvalid={!!formErrors.followUpName}
-                              placeholder={t("environments.surveys.edit.follow_ups_modal_name_placeholder")}
+                              placeholder={t("workspace.surveys.edit.follow_ups_modal_name_placeholder")}
                             />
                           </FormControl>
                         </FormItem>
@@ -490,7 +490,7 @@ export const FollowUpModal = ({
                       <ZapIcon className="h-3 w-3 text-slate-500" />
                     </div>
                     <h2 className="text-md font-semibold text-slate-900">
-                      {t("environments.surveys.edit.follow_ups_modal_trigger_label")}
+                      {t("workspace.surveys.edit.follow_ups_modal_trigger_label")}
                     </h2>
                   </div>
 
@@ -503,7 +503,7 @@ export const FollowUpModal = ({
                           <FormItem>
                             <div className="flex flex-col space-y-2">
                               <FormLabel htmlFor="triggerType">
-                                {t("environments.surveys.edit.follow_ups_modal_trigger_description")}
+                                {t("workspace.surveys.edit.follow_ups_modal_trigger_description")}
                               </FormLabel>
                               <div className="max-w-80">
                                 <Select
@@ -515,11 +515,11 @@ export const FollowUpModal = ({
 
                                   <SelectContent>
                                     <SelectItem value="response">
-                                      {t("environments.surveys.edit.follow_ups_modal_trigger_type_response")}
+                                      {t("workspace.surveys.edit.follow_ups_modal_trigger_type_response")}
                                     </SelectItem>
                                     {localSurvey.endings.length > 0 ? (
                                       <SelectItem value="endings">
-                                        {t("environments.surveys.edit.follow_ups_modal_trigger_type_ending")}
+                                        {t("workspace.surveys.edit.follow_ups_modal_trigger_type_ending")}
                                       </SelectItem>
                                     ) : null}
                                   </SelectContent>
@@ -529,7 +529,7 @@ export const FollowUpModal = ({
                                   <Alert variant="warning" size="small">
                                     <AlertTitle>
                                       {t(
-                                        "environments.surveys.edit.follow_ups_modal_trigger_type_ending_warning"
+                                        "workspace.surveys.edit.follow_ups_modal_trigger_type_ending_warning"
                                       )}
                                     </AlertTitle>
                                   </Alert>
@@ -549,7 +549,7 @@ export const FollowUpModal = ({
                           return (
                             <div className="flex flex-col space-y-2">
                               <h3 className="text-sm font-medium text-slate-700">
-                                {t("environments.surveys.edit.follow_ups_modal_trigger_type_ending_select")}
+                                {t("workspace.surveys.edit.follow_ups_modal_trigger_type_ending_select")}
                               </h3>
                               <div className="flex flex-col space-y-2">
                                 {localSurvey.endings.map((ending) => {
@@ -626,14 +626,14 @@ export const FollowUpModal = ({
                       <MailIcon className="h-3 w-3 text-slate-500" />
                     </div>
                     <h2 className="text-md font-semibold text-slate-900">
-                      {t("environments.surveys.edit.follow_ups_modal_action_label")}
+                      {t("workspace.surveys.edit.follow_ups_modal_action_label")}
                     </h2>
                   </div>
 
                   {/* email setup */}
                   <div className="flex flex-col gap-y-4 p-4">
                     <h2 className="text-md font-semibold text-slate-900">
-                      {t("environments.surveys.edit.follow_ups_modal_action_email_settings")}
+                      {t("workspace.surveys.edit.follow_ups_modal_action_email_settings")}
                     </h2>
 
                     {/* To */}
@@ -645,14 +645,14 @@ export const FollowUpModal = ({
                           return (
                             <div className="flex flex-col space-y-2">
                               <FormLabel htmlFor="emailTo" className="font-medium">
-                                {t("environments.surveys.edit.follow_ups_modal_action_to_label")}
+                                {t("workspace.surveys.edit.follow_ups_modal_action_to_label")}
                               </FormLabel>
                               <FormDescription
                                 className={cn(
                                   "text-sm",
                                   formErrors.emailTo ? "text-red-500" : "text-slate-500"
                                 )}>
-                                {t("environments.surveys.edit.follow_ups_modal_action_to_description")}
+                                {t("workspace.surveys.edit.follow_ups_modal_action_to_description")}
                               </FormDescription>
 
                               {emailSendToOptions.length === 0 && (
@@ -662,7 +662,7 @@ export const FollowUpModal = ({
                                     aria-hidden="true"
                                   />
                                   <p className="text-sm">
-                                    {t("environments.surveys.edit.follow_ups_modal_action_to_warning")}
+                                    {t("workspace.surveys.edit.follow_ups_modal_action_to_warning")}
                                   </p>
                                 </div>
                               )}
@@ -739,10 +739,10 @@ export const FollowUpModal = ({
                     {/* From */}
                     <div className="flex flex-col space-y-2">
                       <h3 className="text-sm font-medium text-slate-900">
-                        {t("environments.surveys.edit.follow_ups_modal_action_from_label")}
+                        {t("workspace.surveys.edit.follow_ups_modal_action_from_label")}
                       </h3>
                       <p className="text-sm text-slate-500">
-                        {t("environments.surveys.edit.follow_ups_modal_action_from_description")}
+                        {t("workspace.surveys.edit.follow_ups_modal_action_from_description")}
                       </p>
 
                       <div className="w-fit rounded-md border border-slate-200 bg-slate-100 px-2 py-1">
@@ -759,10 +759,10 @@ export const FollowUpModal = ({
                           return (
                             <FormItem>
                               <FormLabel htmlFor="replyTo">
-                                {t("environments.surveys.edit.follow_ups_modal_action_replyTo_label")}
+                                {t("workspace.surveys.edit.follow_ups_modal_action_replyTo_label")}
                               </FormLabel>
                               <FormDescription className="text-sm text-slate-500">
-                                {t("environments.surveys.edit.follow_ups_modal_action_replyTo_description")}
+                                {t("workspace.surveys.edit.follow_ups_modal_action_replyTo_description")}
                               </FormDescription>
                               <FormControl>
                                 <FollowUpActionMultiEmailInput
@@ -781,7 +781,7 @@ export const FollowUpModal = ({
                   {/* email content */}
                   <div className="flex flex-col space-y-4 p-4">
                     <h2 className="text-md font-semibold text-slate-900">
-                      {t("environments.surveys.edit.follow_ups_modal_action_email_content")}
+                      {t("workspace.surveys.edit.follow_ups_modal_action_email_content")}
                     </h2>
                     <FormField
                       control={form.control}
@@ -791,14 +791,14 @@ export const FollowUpModal = ({
                           <FormItem>
                             <div className="flex flex-col space-y-2">
                               <FormLabel>
-                                {t("environments.surveys.edit.follow_ups_modal_action_subject_label")}
+                                {t("workspace.surveys.edit.follow_ups_modal_action_subject_label")}
                               </FormLabel>
                               <FormControl>
                                 <Input
                                   {...field}
                                   className="max-w-80"
                                   placeholder={t(
-                                    "environments.surveys.edit.follow_ups_modal_action_subject_placeholder"
+                                    "workspace.surveys.edit.follow_ups_modal_action_subject_placeholder"
                                   )}
                                   isInvalid={!!formErrors.subject}
                                 />
@@ -821,7 +821,7 @@ export const FollowUpModal = ({
                                   "font-medium",
                                   formErrors.body ? "text-red-500" : "text-slate-700"
                                 )}>
-                                {t("environments.surveys.edit.follow_ups_modal_action_body_label")}
+                                {t("workspace.surveys.edit.follow_ups_modal_action_body_label")}
                               </FormLabel>
                               <FormControl>
                                 <Editor
@@ -834,7 +834,7 @@ export const FollowUpModal = ({
                                   firstRender={firstRender}
                                   setFirstRender={setFirstRender}
                                   placeholder={t(
-                                    "environments.surveys.edit.follow_ups_modal_action_body_placeholder"
+                                    "workspace.surveys.edit.follow_ups_modal_action_body_placeholder"
                                   )}
                                   onEmptyChange={(isEmpty) => {
                                     if (isEmpty) {
@@ -879,10 +879,10 @@ export const FollowUpModal = ({
                               isChecked={field.value}
                               onToggle={(checked) => field.onChange(checked)}
                               title={t(
-                                "environments.surveys.edit.follow_ups_modal_action_attach_response_data_label"
+                                "workspace.surveys.edit.follow_ups_modal_action_attach_response_data_label"
                               )}
                               description={t(
-                                "environments.surveys.edit.follow_ups_modal_action_attach_response_data_description"
+                                "workspace.surveys.edit.follow_ups_modal_action_attach_response_data_description"
                               )}
                               customContainerClass="p-0"
                               childBorder>
@@ -900,7 +900,7 @@ export const FollowUpModal = ({
                                           disabled={!field.value}
                                         />
                                         <FormLabel htmlFor="includeVariables" className="font-medium">
-                                          {t("environments.surveys.edit.follow_ups_include_variables")}
+                                          {t("workspace.surveys.edit.follow_ups_include_variables")}
                                         </FormLabel>
                                       </div>
                                     </FormItem>
@@ -920,7 +920,7 @@ export const FollowUpModal = ({
                                           disabled={!field.value}
                                         />
                                         <FormLabel htmlFor="includeHiddenFields" className="font-medium">
-                                          {t("environments.surveys.edit.follow_ups_include_hidden_fields")}
+                                          {t("workspace.surveys.edit.follow_ups_include_hidden_fields")}
                                         </FormLabel>
                                       </div>
                                     </FormItem>

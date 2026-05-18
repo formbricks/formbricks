@@ -6,65 +6,111 @@ icon: "timer"
 
 Formbricks applies request rate limits to protect against abuse and keep API usage fair.
 
-Rate limits are scoped by identifier, depending on the endpoint:
+Starting with Formbricks v5, rate limiting is split across two layers:
+
+- Envoy Gateway for public and API-key routes that can be enforced at ingress
+- The application server for remaining session-authenticated routes, server actions, and other flows Envoy does
+  not currently cover
+
+<Warning>
+  Formbricks v5 removes application-level rate limiting for several routes that are now expected to be
+  protected by Envoy Gateway. If you self-host Formbricks without Envoy or an equivalent edge rate limiter,
+  those routes will no longer be throttled by the application server after upgrading.
+</Warning>
+
+<Info>
+  For the full self-hosted upgrade checklist, use this page together with the
+  [v5 migration guide](/self-hosting/advanced/migration#v5).
+</Info>
+
+Rate limits are scoped by identifier, depending on the endpoint and enforcement layer:
 
 - IP hash (for unauthenticated/client-side routes and public actions)
-- API key ID (for authenticated API calls)
+- API key ID (for Envoy-managed and app-managed authenticated API calls)
 - User ID (for authenticated session-based calls and server actions)
 - Organization ID (for follow-up email dispatch)
 
 When a limit is exceeded, the API returns `429 Too Many Requests`.
 
-## Management API Rate Limits
+## v5 Migration Note
 
-These are the current limits for Management APIs:
+Before upgrading to Formbricks v5:
 
-| **Route Group** | **Limit** | **Window** | **Identifier** |
-| --- | --- | --- | --- |
-| `/api/v1/management/*` (except `/api/v1/management/storage`), `/api/v1/webhooks/*`, `/api/v1/integrations/*`, `/api/v1/management/me` | 100 requests | 1 minute | API key ID or session user ID |
-| `/api/v2/management/*` (and other v2 authenticated routes that use `authenticatedApiClient`) | 100 requests | 1 minute | API key ID |
-| `POST /api/v1/management/storage` | 5 requests | 1 minute | API key ID or session user ID |
+- deploy Envoy Gateway or an equivalent edge rate limiter for the covered routes below
+- keep application Redis/Valkey enabled for the remaining app-enforced limits
+- expect covered routes to emit gateway `429`s instead of the legacy app JSON `429`s
 
-## All Enforced Limits
+For the current source of truth on covered routes and thresholds, use this page together with your deployment
+configuration and the [v5 migration guide](/self-hosting/advanced/migration#v5).
 
-| **Config** | **Limit** | **Window** | **Identifier** | **Used For** |
-| --- | --- | --- | --- | --- |
-| `auth.login` | 10 requests | 15 minutes | IP hash | Email/password login flow (`/api/auth/callback/credentials`) |
-| `auth.signup` | 30 requests | 60 minutes | IP hash | Signup server action |
-| `auth.forgotPassword` | 5 requests | 60 minutes | IP hash | Forgot password server action |
-| `auth.verifyEmail` | 10 requests | 60 minutes | IP hash | Email verification callback + resend verification action |
-| `api.v1` | 100 requests | 1 minute | API key ID or session user ID | v1 management, webhooks, integrations, and `/api/v1/management/me` |
-| `api.v2` | 100 requests | 1 minute | API key ID | v2 authenticated API wrapper (`authenticatedApiClient`) |
-| `api.client` | 100 requests | 1 minute | IP hash | v1 client API routes (except `/api/v1/client/og` and storage upload override), plus v2 routes that re-use those v1 handlers |
-| `storage.upload` | 5 requests | 1 minute | IP hash or authenticated ID | Client storage upload and management storage upload |
-| `storage.delete` | 5 requests | 1 minute | API key ID or session user ID | `DELETE /storage/[environmentId]/[accessType]/[fileName]` |
-| `actions.emailUpdate` | 3 requests | 60 minutes | User ID | Profile email update action |
-| `actions.surveyFollowUp` | 50 requests | 60 minutes | Organization ID | Survey follow-up email processing |
-| `actions.sendLinkSurveyEmail` | 10 requests | 60 minutes | IP hash | Link survey email send action |
-| `actions.licenseRecheck` | 5 requests | 1 minute | User ID | Enterprise license recheck action |
+## Envoy-Managed Limits
 
-## Current Endpoint Exceptions
+These limits are expected to be enforced at the gateway layer in Formbricks v5 and later:
 
-The following routes are currently not rate-limited by the server-side limiter:
+| **Route Group**                                                          | **Limit**    | **Window** | **Identifier** |
+| ------------------------------------------------------------------------ | ------------ | ---------- | -------------- |
+| `POST /api/auth/callback/credentials`                                    | 40 requests  | 1 hour     | IP hash        |
+| `POST /api/auth/callback/token`                                          | 10 requests  | 1 hour     | IP hash        |
+| `GET, POST, PUT, PATCH, DELETE /api/v1/management/*` (API key auth only) | 100 requests | 1 minute   | API key ID     |
+| `POST /api/v1/management/storage` (API key auth only)                    | 5 requests   | 1 minute   | API key ID     |
+| `GET, POST, PUT, PATCH, DELETE /api/v1/webhooks/*` (API key auth only)   | 100 requests | 1 minute   | API key ID     |
+| `GET /api/v1/client/[workspaceId]/environment`                         | 100 requests | 1 minute   | IP hash        |
+| `POST /api/v1/client/[workspaceId]/responses`                          | 100 requests | 1 minute   | IP hash        |
+| `PUT /api/v1/client/[workspaceId]/responses/[responseId]`              | 100 requests | 1 minute   | IP hash        |
+| `POST /api/v1/client/[workspaceId]/displays`                           | 100 requests | 1 minute   | IP hash        |
+| `POST /api/v1/client/[workspaceId]/user`                               | 100 requests | 1 minute   | IP hash        |
+| `POST /api/v1/client/[workspaceId]/storage`                            | 5 requests   | 1 minute   | IP hash        |
+| `POST /api/v2/client/[workspaceId]/responses`                          | 100 requests | 1 minute   | IP hash        |
+| `PUT /api/v2/client/[workspaceId]/responses/[responseId]`              | 100 requests | 1 minute   | IP hash        |
+| `POST /api/v2/client/[workspaceId]/displays`                           | 100 requests | 1 minute   | IP hash        |
+| `POST /api/v2/client/[workspaceId]/storage`                            | 5 requests   | 1 minute   | IP hash        |
+| `DELETE /storage/[workspaceId]/public/[fileName]` (API key auth only)  | 5 requests   | 1 minute   | API key ID     |
+| `DELETE /storage/[workspaceId]/private/[fileName]` (API key auth only) | 5 requests   | 1 minute   | API key ID     |
 
-- `GET /api/v1/client/og` (explicitly excluded)
-- `POST /api/v2/client/[environmentId]/responses`
-- `POST /api/v2/client/[environmentId]/displays`
-- `GET /api/v2/health`
+Session-authenticated `/api/v1/management/*`, `/api/v1/management/me`, `/api/v1/management/storage`, and
+`DELETE /storage/...` requests are **not** covered by the current Envoy policies and remain app-enforced.
+
+## App-Enforced Limits
+
+These are the limits that still run inside the Formbricks application server:
+
+| **Config**                    | **Limit**    | **Window** | **Identifier**                | **Used For**                                                                                                                                              |
+| ----------------------------- | ------------ | ---------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `auth.signup`                 | 30 requests  | 60 minutes | IP hash                       | Signup server action                                                                                                                                      |
+| `auth.forgotPassword`         | 5 requests   | 60 minutes | IP hash                       | Forgot password server action                                                                                                                             |
+| `auth.verifyEmail`            | 10 requests  | 60 minutes | IP hash                       | Resend verification server action                                                                                                                         |
+| `api.v1`                      | 100 requests | 1 minute   | Session user ID               | Session-authenticated v1 management routes, `/api/v1/management/me`, and `/api/v1/integrations/*`                                                         |
+| `api.v2`                      | 100 requests | 1 minute   | API key ID                    | Authenticated v2 API wrapper outside the Envoy-managed `/api/v2/client/*` subset                                                                          |
+| `api.v3`                      | 100 requests | 1 minute   | API key ID or session user ID | v3 API wrapper                                                                                                                                            |
+| `api.client`                  | 100 requests | 1 minute   | IP hash                       | Uncovered client routes such as `GET /api/v1/client/og`, `GET /api/v2/client/[workspaceId]/environment`, and `POST /api/v2/client/[workspaceId]/user` |
+| `storage.upload`              | 5 requests   | 1 minute   | Session user ID               | Session-authenticated `POST /api/v1/management/storage`                                                                                                   |
+| `storage.delete`              | 5 requests   | 1 minute   | Session user ID               | Session-authenticated `DELETE /storage/[workspaceId]/[accessType]/[fileName]`                                                                           |
+| `actions.emailUpdate`         | 3 requests   | 60 minutes | User ID                       | Profile email update action                                                                                                                               |
+| `actions.surveyFollowUp`      | 50 requests  | 60 minutes | Organization ID               | Survey follow-up email processing                                                                                                                         |
+| `actions.sendLinkSurveyEmail` | 10 requests  | 60 minutes | IP hash                       | Link survey email send action                                                                                                                             |
+| `actions.licenseRecheck`      | 5 requests   | 1 minute   | User ID                       | Enterprise license recheck action                                                                                                                         |
+
+## Explicit Envoy Exclusions
+
+The current Envoy policy set explicitly excludes these routes:
+
+- `GET /api/v1/client/og` (still covered by the app-level `api.client` limiter)
+- `GET /api/v2/health` (not rate-limited)
+- `OPTIONS` requests (not rate-limited)
 
 ## 429 Response Shape
 
-v1-style endpoints return:
+Application-generated v1 `429`s return:
 
 ```json
 {
   "code": "too_many_requests",
-  "message": "Maximum number of requests reached. Please try again later.",
-  "details": {}
+  "details": {},
+  "message": "Maximum number of requests reached. Please try again later."
 }
 ```
 
-v2-style endpoints return:
+Application-generated v2/v3 `429`s return:
 
 ```json
 {
@@ -74,6 +120,9 @@ v2-style endpoints return:
   }
 }
 ```
+
+Envoy-generated `429`s are gateway responses and should include an `x-envoy-ratelimited` header. Their exact body
+shape is not the same stability contract as the in-app JSON responses above.
 
 ## Disabling Rate Limiting
 
@@ -87,8 +136,12 @@ RATE_LIMITING_DISABLED=1
 
 After changing this value, restart the server.
 
+This setting disables only the **application-level** limiter. It does **not** disable Envoy rate-limit policies.
+
 ## Operational Notes
 
-- Redis/Valkey is required for robust rate limiting (`REDIS_URL`).
-- If Redis is unavailable at runtime, rate-limiter checks currently fail open (requests are allowed through without enforcement).
+- Redis/Valkey is required for the application-level limiter (`REDIS_URL`).
+- If you deploy Envoy rate limiting, use a dedicated Redis/Valkey backend for Envoy instead of sharing the app cache.
+- If application Redis is unavailable at runtime, app rate-limiter checks currently fail open (requests are allowed through without enforcement).
+- Client storage upload rate limits count signed upload URL issuance, not successful object creation in S3-compatible storage.
 - Authentication failure audit logging uses a separate throttle (`shouldLogAuthFailure()`) and is intentionally **fail-closed**: when Redis is unavailable or errors occur, audit log entries are **skipped entirely** rather than written without throttle control. This prevents spam while preserving the hash-integrity chain required for compliance. In other words, if Redis is down, no authentication-failure audit logs will be recorded—requests themselves are still allowed (fail-open rate limiting above), but the audit trail for those failures will not be written.
