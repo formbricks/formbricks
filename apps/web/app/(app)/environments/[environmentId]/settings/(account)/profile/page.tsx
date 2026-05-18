@@ -1,7 +1,12 @@
 import { AuthenticationError } from "@formbricks/types/errors";
 import { AccountSettingsNavbar } from "@/app/(app)/environments/[environmentId]/settings/(account)/components/AccountSettingsNavbar";
 import { AccountSecurity } from "@/app/(app)/environments/[environmentId]/settings/(account)/profile/components/AccountSecurity";
-import { EMAIL_VERIFICATION_DISABLED, IS_FORMBRICKS_CLOUD, PASSWORD_RESET_DISABLED } from "@/lib/constants";
+import {
+  DISABLE_ACCOUNT_DELETION_SSO_CONFIRMATION,
+  EMAIL_VERIFICATION_DISABLED,
+  IS_FORMBRICKS_CLOUD,
+  PASSWORD_RESET_DISABLED,
+} from "@/lib/constants";
 import { getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
@@ -98,6 +103,7 @@ const Page = async (props: {
               isMultiOrgEnabled={isMultiOrgEnabled}
               accountDeletionError={searchParams.accountDeletionError}
               requiresPasswordConfirmation={requiresPasswordConfirmation}
+              isSsoIdentityConfirmationDisabled={DISABLE_ACCOUNT_DELETION_SSO_CONFIRMATION}
             />
           </SettingsCard>
           <IdBadge id={user.id} label={t("common.profile_id")} variant="column" />

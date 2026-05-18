@@ -8,8 +8,8 @@ import { TOrganization } from "@formbricks/types/organizations";
 import { TUser } from "@formbricks/types/user";
 import { DeleteAccountModal } from "@/modules/account/components/DeleteAccountModal";
 import {
-  ACCOUNT_DELETION_GOOGLE_REAUTH_NOT_CONFIGURED_ERROR_CODE,
   ACCOUNT_DELETION_SSO_REAUTH_ERROR_QUERY_PARAM,
+  ACCOUNT_DELETION_SSO_REAUTH_FAILED_ERROR_CODE,
 } from "@/modules/account/constants";
 import { Button } from "@/modules/ui/components/button";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
@@ -22,6 +22,7 @@ interface DeleteAccountProps {
   accountDeletionError?: string | string[];
   isMultiOrgEnabled: boolean;
   requiresPasswordConfirmation: boolean;
+  isSsoIdentityConfirmationDisabled: boolean;
 }
 
 export const DeleteAccount = ({
@@ -32,6 +33,7 @@ export const DeleteAccount = ({
   accountDeletionError,
   isMultiOrgEnabled,
   requiresPasswordConfirmation,
+  isSsoIdentityConfirmationDisabled,
 }: Readonly<DeleteAccountProps>) => {
   const [isModalOpen, setModalOpen] = useState(false);
   const isDeleteDisabled = !isMultiOrgEnabled && organizationsWithSingleOwner.length > 0;
@@ -42,21 +44,18 @@ export const DeleteAccount = ({
   const hasShownAccountDeletionError = useRef(false);
 
   useEffect(() => {
-    if (!accountDeletionErrorCode || hasShownAccountDeletionError.current) {
+    if (
+      accountDeletionErrorCode !== ACCOUNT_DELETION_SSO_REAUTH_FAILED_ERROR_CODE ||
+      hasShownAccountDeletionError.current
+    ) {
       return;
     }
 
     hasShownAccountDeletionError.current = true;
 
-    if (accountDeletionErrorCode === ACCOUNT_DELETION_GOOGLE_REAUTH_NOT_CONFIGURED_ERROR_CODE) {
-      toast.error(t("environments.settings.profile.google_sso_account_deletion_requires_setup"), {
-        id: "account-deletion-sso-reauth-error",
-      });
-    } else {
-      toast.error(t("environments.settings.profile.sso_reauthentication_failed"), {
-        id: "account-deletion-sso-reauth-error",
-      });
-    }
+    toast.error(t("environments.settings.profile.sso_identity_confirmation_failed"), {
+      id: "account-deletion-sso-confirmation-error",
+    });
 
     const url = new URL(globalThis.location.href);
     url.searchParams.delete(ACCOUNT_DELETION_SSO_REAUTH_ERROR_QUERY_PARAM);
@@ -76,6 +75,7 @@ export const DeleteAccount = ({
         user={user}
         isFormbricksCloud={IS_FORMBRICKS_CLOUD}
         organizationsWithSingleOwner={organizationsWithSingleOwner}
+        isSsoIdentityConfirmationDisabled={isSsoIdentityConfirmationDisabled}
       />
       <p className="text-sm text-slate-700">
         <strong>{t("environments.settings.profile.warning_cannot_undo")}</strong>
