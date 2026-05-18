@@ -5,7 +5,7 @@ import { z } from "zod";
 import { ZActionClassInput } from "@formbricks/types/action-classes";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { type TSurvey, type TSurveyVariable, ZSurvey } from "@formbricks/types/surveys/types";
+import { TSurvey, TSurveyVariable, ZSurvey } from "@formbricks/types/surveys/types";
 import { POSTHOG_KEY, UNSPLASH_ACCESS_KEY, UNSPLASH_ALLOWED_DOMAINS } from "@/lib/constants";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { actionClient, authenticatedActionClient } from "@/lib/utils/action-client";
@@ -320,82 +320,6 @@ export const updateSurveyAction = authenticatedActionClient.inputSchema(ZSurvey)
     return result;
   })
 );
-
-const ZUpdateSurveyStatusAction = z.object({
-  surveyId: ZId,
-  status: z.enum(["inProgress", "paused", "completed"]),
-});
-
-export const updateSurveyStatusAction = authenticatedActionClient
-  .inputSchema(ZUpdateSurveyStatusAction)
-  .action(
-    withAuditLogging("updated", "survey", async ({ ctx, parsedInput }) => {
-      const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
-      const workspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
-
-      await checkAuthorizationUpdated({
-        userId: ctx.user.id,
-        organizationId,
-        access: [
-          {
-            type: "organization",
-            roles: ["owner", "manager"],
-          },
-          {
-            type: "workspaceTeam",
-            workspaceId,
-            minPermission: "readWrite",
-          },
-        ],
-      });
-
-      ctx.auditLoggingCtx.organizationId = organizationId;
-      ctx.auditLoggingCtx.surveyId = parsedInput.surveyId;
-
-      const oldObject = await getSurvey(parsedInput.surveyId);
-
-      if (oldObject.status === "draft") {
-        throw new OperationNotAllowedError("Draft surveys must be published from the editor.");
-      }
-
-      if (oldObject.recaptcha?.enabled) {
-        await checkSpamProtectionPermission(organizationId);
-      }
-
-      const result = await updateSurvey({ ...oldObject, status: parsedInput.status });
-      ctx.auditLoggingCtx.oldObject = oldObject;
-      ctx.auditLoggingCtx.newObject = result;
-
-      captureSurveyEditDiffEvents(oldObject, result, {
-        userId: ctx.user.id,
-        surveyId: result.id,
-        organizationId,
-        workspaceId: result.workspaceId,
-      });
-
-      if (POSTHOG_KEY && result.status !== "draft") {
-        const posthogEventMetadata = {
-          survey_id: result.id,
-          survey_type: result.type,
-          question_count: getElementsFromBlocks(result.blocks).length,
-          organization_id: organizationId,
-          workspace_id: result.workspaceId,
-          has_targeting: result.segment ? !result.segment.isPrivate : false,
-          language_count: result.languages?.length ?? 0,
-        };
-
-        capturePostHogEvent(ctx.user.id, "survey_updated", posthogEventMetadata, {
-          organizationId,
-          workspaceId: result.workspaceId,
-        });
-      }
-
-      revalidatePath(`/workspaces/${result.workspaceId}/surveys`);
-      revalidatePath(`/workspaces/${result.workspaceId}/surveys/${result.id}`);
-
-      return result;
-    })
-  );
 
 const ZRefetchWorkspaceAction = z.object({
   workspaceId: z.cuid2(),

@@ -1,6 +1,8 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
@@ -14,6 +16,8 @@ import {
   generateSurveySingleUseLinkParamsList,
 } from "@/lib/utils/single-use-surveys";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
+import { updateSurvey } from "@/modules/survey/editor/lib/survey";
+import { getSurvey } from "@/modules/survey/lib/survey";
 import { copySurveyToOtherWorkspace } from "@/modules/survey/list/lib/survey";
 
 const ZCopySurveyToOtherWorkspaceAction = z.object({
@@ -78,6 +82,55 @@ export const copySurveyToOtherWorkspaceAction = authenticatedActionClient
       );
       ctx.auditLoggingCtx.newObject = result;
       return result;
+    })
+  );
+
+const ZUpdateSurveyStatusAction = z.object({
+  surveyId: ZId,
+  status: z.enum(["inProgress", "paused", "completed"]),
+});
+
+export const updateSurveyStatusAction = authenticatedActionClient
+  .inputSchema(ZUpdateSurveyStatusAction)
+  .action(
+    withAuditLogging("updated", "survey", async ({ ctx, parsedInput }) => {
+      const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
+      const workspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
+
+      await checkAuthorizationUpdated({
+        userId: ctx.user.id,
+        organizationId,
+        access: [
+          {
+            type: "organization",
+            roles: ["owner", "manager"],
+          },
+          {
+            type: "workspaceTeam",
+            workspaceId,
+            minPermission: "readWrite",
+          },
+        ],
+      });
+
+      const survey = await getSurvey(parsedInput.surveyId);
+
+      if (survey.status === "draft") {
+        throw new OperationNotAllowedError("Draft surveys must be published from the editor.");
+      }
+
+      ctx.auditLoggingCtx.organizationId = organizationId;
+      ctx.auditLoggingCtx.surveyId = parsedInput.surveyId;
+      ctx.auditLoggingCtx.oldObject = survey;
+
+      const updatedSurvey = await updateSurvey({ ...survey, status: parsedInput.status });
+
+      ctx.auditLoggingCtx.newObject = updatedSurvey;
+
+      revalidatePath(`/workspaces/${updatedSurvey.workspaceId}/surveys`);
+      revalidatePath(`/workspaces/${updatedSurvey.workspaceId}/surveys/${updatedSurvey.id}`);
+
+      return updatedSurvey;
     })
   );
 
