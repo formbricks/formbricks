@@ -12,7 +12,7 @@ const {
   mockGetFeedbackRecordTenant,
   mockCheckAuthorizationUpdated,
   mockUserFindUnique,
-  mockGetIsUnifyFeedbackEnabled,
+  mockGetIsFeedbackDirectoriesEnabled,
 } = vi.hoisted(() => ({
   mockAuthenticateApiKeyFromHeaders: vi.fn(),
   mockGetApiKeyFromHeaders: vi.fn(),
@@ -23,7 +23,7 @@ const {
   mockGetFeedbackRecordTenant: vi.fn(),
   mockCheckAuthorizationUpdated: vi.fn(),
   mockUserFindUnique: vi.fn(),
-  mockGetIsUnifyFeedbackEnabled: vi.fn(),
+  mockGetIsFeedbackDirectoriesEnabled: vi.fn(),
 }));
 
 vi.mock("@/modules/api/lib/api-key-auth", () => ({
@@ -57,7 +57,7 @@ vi.mock("@/modules/ee/feedback-directory/lib/feedback-directory", () => ({
 }));
 
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
-  getIsUnifyFeedbackEnabled: mockGetIsUnifyFeedbackEnabled,
+  getIsFeedbackDirectoriesEnabled: mockGetIsFeedbackDirectoriesEnabled,
 }));
 
 vi.mock("@/modules/hub/service", () => ({
@@ -127,7 +127,7 @@ describe("authorizeTraefikRequest", () => {
     });
     mockCheckAuthorizationUpdated.mockResolvedValue(true);
     mockUserFindUnique.mockResolvedValue({ id: "user_1", isActive: true });
-    mockGetIsUnifyFeedbackEnabled.mockResolvedValue(true);
+    mockGetIsFeedbackDirectoriesEnabled.mockResolvedValue(true);
   });
 
   test("allows requests using Traefik forwarded method and URI metadata", async () => {

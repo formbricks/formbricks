@@ -9,6 +9,41 @@ import { TWorkspace, TWorkspaceUpdateInput, ZWorkspaceUpdateInput } from "@formb
 import { validateInputs } from "@/lib/utils/validate";
 import { deleteFilesByWorkspaceId } from "@/modules/storage/service";
 
+const DEFAULT_CONTACT_ATTRIBUTE_KEYS: Prisma.ContactAttributeKeyCreateWithoutWorkspaceInput[] = [
+  {
+    key: "userId",
+    name: "User Id",
+    description: "The user id of a contact",
+    type: "default",
+    isUnique: true,
+  },
+  {
+    key: "email",
+    name: "Email",
+    description: "The email of a contact",
+    type: "default",
+    isUnique: true,
+  },
+  {
+    key: "firstName",
+    name: "First Name",
+    description: "Your contact's first name",
+    type: "default",
+  },
+  {
+    key: "lastName",
+    name: "Last Name",
+    description: "Your contact's last name",
+    type: "default",
+  },
+  {
+    key: "language",
+    name: "Language",
+    description: "The language preference of a contact",
+    type: "default",
+  },
+];
+
 const selectWorkspace = {
   id: true,
   createdAt: true,
@@ -76,6 +111,9 @@ export const createWorkspace = async (
         ...data,
         name: workspaceInput.name,
         organizationId,
+        contactAttributeKeys: {
+          create: DEFAULT_CONTACT_ATTRIBUTE_KEYS,
+        },
       },
       select: selectWorkspace,
     });

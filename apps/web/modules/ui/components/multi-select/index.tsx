@@ -12,6 +12,7 @@ interface TOption<T> {
   value: T;
   label: string;
   disabled?: boolean;
+  icon?: React.ReactNode;
 }
 
 interface MultiSelectProps<T extends string, K extends TOption<T>["value"][]> {
@@ -177,6 +178,7 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
         <div className="flex flex-wrap gap-1">
           {selected.map((option) => (
             <Badge key={option.value} className="rounded-md">
+              {option.icon ? <span className="mr-1 inline-flex items-center">{option.icon}</span> : null}
               {option.label}
               <button
                 className="ring-offset-background focus:ring-ring ml-1 rounded-full outline-none focus:ring-2 focus:ring-offset-2"
@@ -238,6 +240,9 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
                         setInputValue("");
                       }}
                       className={option.disabled ? "cursor-not-allowed" : "cursor-pointer"}>
+                      {option.icon ? (
+                        <span className="mr-1 inline-flex items-center">{option.icon}</span>
+                      ) : null}
                       {option.label}
                     </CommandItem>
                   ))}

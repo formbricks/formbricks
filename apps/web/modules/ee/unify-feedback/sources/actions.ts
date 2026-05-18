@@ -7,7 +7,7 @@ import { getSurveys } from "@/lib/survey/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
-import { getIsUnifyFeedbackEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/utils";
 import { transformToUnifySurvey } from "./lib";
 import { TUnifySurvey } from "./types";
 
@@ -19,8 +19,8 @@ export const getSurveysForUnifyAction = authenticatedActionClient
   .schema(ZGetSurveysForUnifyAction)
   .action(async ({ ctx, parsedInput }): Promise<TUnifySurvey[]> => {
     const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
-    const isUnifyFeedbackAllowed = await getIsUnifyFeedbackEnabled(organizationId);
-    if (!isUnifyFeedbackAllowed) {
+    const isFeedbackDirectoriesAllowed = await getIsFeedbackDirectoriesEnabled(organizationId);
+    if (!isFeedbackDirectoriesAllowed) {
       throw new OperationNotAllowedError("Unify Feedback is not enabled for this organization");
     }
     await checkAuthorizationUpdated({

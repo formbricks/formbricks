@@ -3,6 +3,7 @@ import Link from "next/link";
 import { formatDate, timeSinceDate } from "@/lib/time";
 import { getTranslate } from "@/lingodotdev/server";
 import { TDashboardWithCount } from "../../types/analysis";
+import { CreateDashboardButton } from "./create-dashboard-button";
 import { DashboardDropdownMenu } from "./dashboard-dropdown-menu";
 
 interface DashboardsTableProps {
@@ -29,9 +30,19 @@ export const DashboardsTable = async ({
         <div className="col-span-1" />
       </div>
       {dashboards.length === 0 ? (
-        <p className="py-6 text-center text-sm text-slate-400">
-          {t("workspace.analysis.dashboards.no_dashboards_found")}
-        </p>
+        <div className="flex flex-col items-center gap-3 px-6 py-8 text-center">
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-slate-900">
+              {t("workspace.analysis.dashboards.no_dashboards_found")}
+            </p>
+            <p className="text-sm text-slate-500">
+              {t("workspace.analysis.dashboards.no_dashboards_found_description")}
+            </p>
+          </div>
+          {!isReadOnly && (
+            <CreateDashboardButton workspaceId={workspaceId} buttonProps={{ variant: "secondary" }} />
+          )}
+        </div>
       ) : (
         dashboards.map((dashboard) => {
           return (
