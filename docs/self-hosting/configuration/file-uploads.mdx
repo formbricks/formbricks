@@ -1,6 +1,6 @@
 ---
 title: "File Uploads Configuration"
-description: "Configure file storage for survey images, file uploads, and project assets in your self-hosted Formbricks instance"
+description: "Configure file storage for survey images, file uploads, and Workspace assets in your self-hosted Formbricks instance"
 icon: "upload"
 ---
 
@@ -12,7 +12,7 @@ Setting up file storage enables important features in Formbricks, including:
 
 - Adding images to surveys (questions, backgrounds, logos)
 - 'File Upload' and 'Picture Selection' question types
-- Project logos and branding
+- Workspace logos and branding
 - Custom organization logos in emails
 - Survey background images from uploads
 
@@ -66,7 +66,7 @@ When using the Formbricks installation script, you'll be prompted to configure f
    If you skip this, the following features will be disabled:
    - Adding images to surveys (e.g., in questions or as background)
    - 'File Upload' and 'Picture Selection' question types
-   - Project logos
+   - Workspace logos
    - Custom organization logo in emails
 Configure file uploads now? [Y/n] y
 ```
@@ -384,7 +384,7 @@ When using bundled RustFS:
 
 To test if file uploads are working:
 
-1. **Admin Panel**: Try uploading a project logo in the project settings
+1. **Admin Panel**: Try uploading a Workspace logo in the Workspace settings
 2. **Survey Editor**: Attempt to add a background image to a survey
 3. **Question Types**: Create a 'File Upload' or 'Picture Selection' question
 4. **Check Logs**: Monitor container logs for any storage-related errors

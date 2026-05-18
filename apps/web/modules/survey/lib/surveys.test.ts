@@ -24,14 +24,14 @@ vi.mock("@formbricks/logger", () => ({
 }));
 
 const surveyId = "clq5n7p1q0000m7z0h5p6g3r2";
-const environmentId = "clq5n7p1q0000m7z0h5p6g3r3";
+const workspaceId = "clq5n7p1q0000m7z0h5p6g3r3";
 const segmentId = "clq5n7p1q0000m7z0h5p6g3r4";
 const actionClassId1 = "clq5n7p1q0000m7z0h5p6g3r5";
 const actionClassId2 = "clq5n7p1q0000m7z0h5p6g3r6";
 
 const mockDeletedSurveyAppPrivateSegment = {
   id: surveyId,
-  environmentId,
+  workspaceId,
   type: "app",
   segment: { id: segmentId, isPrivate: true },
   triggers: [{ actionClass: { id: actionClassId1 } }, { actionClass: { id: actionClassId2 } }],
@@ -39,7 +39,7 @@ const mockDeletedSurveyAppPrivateSegment = {
 
 const mockDeletedSurveyLink = {
   id: surveyId,
-  environmentId,
+  workspaceId,
   type: "link",
   segment: null,
   triggers: [],

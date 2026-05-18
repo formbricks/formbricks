@@ -4,6 +4,8 @@ import { prisma } from "@formbricks/database";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { getSurveyBySlug, getSurveysWithSlugsByOrganizationId, updateSurveySlug } from "./slug";
 
+vi.mock("server-only", () => ({}));
+
 // Mock prisma
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -22,14 +24,14 @@ describe("Slug Library Tests", () => {
 
   describe("getSurveyBySlug", () => {
     test("should return survey when found", async () => {
-      const mockSurvey = { id: "survey_123", environmentId: "env_123", status: "inProgress" };
+      const mockSurvey = { id: "survey_123", workspaceId: "workspace_123", status: "inProgress" };
       vi.mocked(prisma.survey.findUnique).mockResolvedValueOnce(mockSurvey as never);
 
       const result = await getSurveyBySlug("test-slug");
       expect(result).toEqual(mockSurvey);
       expect(prisma.survey.findUnique).toHaveBeenCalledWith({
         where: { slug: "test-slug" },
-        select: { id: true, environmentId: true, status: true },
+        select: { id: true, workspaceId: true, status: true },
       });
     });
 
@@ -108,11 +110,7 @@ describe("Slug Library Tests", () => {
           slug: "slug-1",
           status: "inProgress",
           createdAt: new Date(),
-          environment: {
-            id: "env_1",
-            type: "production",
-            project: { id: "proj_1", name: "Project 1" },
-          },
+          workspace: { id: "proj_1", name: "Workspace 1", organizationId: "org_123" },
         },
       ];
       vi.mocked(prisma.survey.findMany).mockResolvedValueOnce(mockSurveys as never);
@@ -123,7 +121,7 @@ describe("Slug Library Tests", () => {
         expect.objectContaining({
           where: {
             slug: { not: null },
-            environment: { project: { organizationId: "org_123" } },
+            workspace: { organizationId: "org_123" },
           },
         })
       );

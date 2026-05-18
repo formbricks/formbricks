@@ -109,7 +109,7 @@ Modify the configuration to enforce SSL. The rest of the configuration should re
       <<: *environment
 
     traefik:
-      image: "traefik:v2.11.31"
+      image: "traefik:v3.6.4"
       restart: always
       container_name: "traefik"
       depends_on:
@@ -145,5 +145,4 @@ Modify the configuration to enforce SSL. The rest of the configuration should re
 
 This setup ensures that Formbricks securely communicates using your own SSL certificate. 🚀
 
-If you have any questions or require help, feel free to reach out to us on [**GitHub Discussions**](https://github.com/formbricks/formbricks/discussions). 😃[
-](https://formbricks.com/docs/developer-docs/rest-api)
+If you have any questions or require help, feel free to reach out to us on [**GitHub Discussions**](https://github.com/formbricks/formbricks/discussions). 😃

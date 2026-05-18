@@ -78,7 +78,7 @@ export const ElementOptionChoice = ({
   const getPlaceholder = () => {
     if (choice.id === "other") return t("common.other");
     if (choice.id === "none") return t("common.none_of_the_above");
-    return t("environments.surveys.edit.option_idx", { choiceIndex: choiceIdx + 1 });
+    return t("workspace.surveys.edit.option_idx", { choiceIndex: choiceIdx + 1 });
   };
 
   const normalChoice = element.choices?.filter((c) => c.id !== "other" && c.id !== "none") || [];
@@ -137,12 +137,12 @@ export const ElementOptionChoice = ({
           <ElementFormInput
             id="otherOptionPlaceholder"
             localSurvey={localSurvey}
-            placeholder={t("environments.surveys.edit.please_specify")}
+            placeholder={t("workspace.surveys.edit.please_specify")}
             label={""}
             elementIdx={elementIdx}
             value={
               element.otherOptionPlaceholder ??
-              createI18nString(t("environments.surveys.edit.please_specify"), surveyLanguageCodes)
+              createI18nString(t("workspace.surveys.edit.please_specify"), surveyLanguageCodes)
             }
             updateElement={updateElement}
             isInvalid={
@@ -156,7 +156,7 @@ export const ElementOptionChoice = ({
       </div>
       <div className="flex gap-2">
         {(normalChoice.length > 1 || isSpecialChoice) && (
-          <TooltipRenderer tooltipContent={t("environments.surveys.edit.delete_choice")}>
+          <TooltipRenderer tooltipContent={t("workspace.surveys.edit.delete_choice")}>
             <Button
               variant="secondary"
               size="icon"
@@ -170,7 +170,7 @@ export const ElementOptionChoice = ({
           </TooltipRenderer>
         )}
         {!isSpecialChoice && (
-          <TooltipRenderer tooltipContent={t("environments.surveys.edit.add_choice_below")}>
+          <TooltipRenderer tooltipContent={t("workspace.surveys.edit.add_choice_below")}>
             <Button
               variant="secondary"
               size="icon"

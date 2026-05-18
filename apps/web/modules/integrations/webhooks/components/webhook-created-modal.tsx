@@ -41,13 +41,13 @@ export const WebhookCreatedModal = ({ open, webhook, onClose }: WebhookCreatedMo
       <DialogContent>
         <DialogHeader>
           <CheckIcon className="h-6 w-6 text-green-500" />
-          <DialogTitle>{t("environments.integrations.webhooks.webhook_created")}</DialogTitle>
-          <DialogDescription>{t("environments.integrations.webhooks.copy_secret_now")}</DialogDescription>
+          <DialogTitle>{t("workspace.integrations.webhooks.webhook_created")}</DialogTitle>
+          <DialogDescription>{t("workspace.integrations.webhooks.copy_secret_now")}</DialogDescription>
         </DialogHeader>
 
         <DialogBody className="space-y-4 pb-4">
           <div className="col-span-1">
-            <Label>{t("environments.integrations.webhooks.signing_secret")}</Label>
+            <Label>{t("workspace.integrations.webhooks.signing_secret")}</Label>
             <div className="mt-1 flex">
               <Input type="text" readOnly value={webhook.secret ?? ""} className="font-mono text-sm" />
               <Button
@@ -69,13 +69,13 @@ export const WebhookCreatedModal = ({ open, webhook, onClose }: WebhookCreatedMo
               </Button>
             </div>
             <p className="mt-2 text-xs text-slate-500">
-              {t("environments.integrations.webhooks.secret_copy_warning")}
+              {t("workspace.integrations.webhooks.secret_copy_warning")}
             </p>
             <Link
               href="https://formbricks.com/docs/xm-and-surveys/core-features/integrations/webhooks#webhook-security-with-standard-webhooks"
               target="_blank"
               className="mt-2 inline-flex items-center gap-1 text-xs text-slate-600 underline hover:text-slate-800">
-              {t("environments.integrations.webhooks.learn_to_verify")}
+              {t("workspace.integrations.webhooks.learn_to_verify")}
               <ExternalLinkIcon className="h-3 w-3" />
             </Link>
           </div>

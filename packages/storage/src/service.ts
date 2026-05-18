@@ -13,9 +13,9 @@ import {
 } from "@aws-sdk/s3-presigned-post";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { logger } from "@formbricks/logger";
-import { type Result, type StorageError, StorageErrorCode, err, ok } from "../types/error";
 import { createS3Client } from "./client";
 import { S3_BUCKET_NAME } from "./constants";
+import { type Result, type StorageError, StorageErrorCode, err, ok } from "./types/error";
 
 /**
  * Get a signed URL for uploading a file to S3

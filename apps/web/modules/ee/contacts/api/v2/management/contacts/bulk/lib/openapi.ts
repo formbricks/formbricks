@@ -10,12 +10,12 @@ const bulkContactEndpoint: ZodOpenApiOperationObject = {
   requestBody: {
     required: true,
     description:
-      "The contacts to upload. Use the full nested bulk body shown in the example or cURL snippet: `{ environmentId, contacts: [{ attributes: [{ attributeKey: { key, name }, value }] }] }`. Each contact must include an `email` attribute inside its `attributes` array.",
+      "The contacts to upload. Use the full nested bulk body shown in the example or cURL snippet: `{ workspaceId, contacts: [{ attributes: [{ attributeKey: { key, name }, value }] }] }`. Each contact must include an `email` attribute inside its `attributes` array.",
     content: {
       "application/json": {
         schema: ZContactBulkUploadRequest,
         example: {
-          environmentId: "env_01h2xce9q8p3w4x5y6z7a8b9c0",
+          workspaceId: "cm01h2xce9q8p3w4x5y6z7a8b9c0",
           contacts: [
             {
               attributes: [

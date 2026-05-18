@@ -56,7 +56,7 @@ export const SegmentActivityTab = ({ currentSegment, activitySummary }: SegmentA
           </p>
         </div>
         <div>
-          <IdBadge id={currentSegment.id} label={t("environments.segments.segment_id")} variant="column" />
+          <IdBadge id={currentSegment.id} label={t("workspace.segments.segment_id")} variant="column" />
         </div>
       </div>
     </div>

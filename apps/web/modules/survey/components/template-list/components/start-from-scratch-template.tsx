@@ -1,6 +1,6 @@
 "use client";
 
-import { Project } from "@prisma/client";
+import { Workspace } from "@prisma/client";
 import { PlusCircleIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { TTemplate } from "@formbricks/types/templates";
@@ -13,7 +13,7 @@ interface StartFromScratchTemplateProps {
   activeTemplate: TTemplate | null;
   setActiveTemplate: (template: TTemplate) => void;
   onTemplateClick: (template: TTemplate) => void;
-  project: Project;
+  workspace: Workspace;
   createSurvey: (template: TTemplate) => void;
   loading: boolean;
   noPreview?: boolean;
@@ -23,7 +23,7 @@ export const StartFromScratchTemplate = ({
   activeTemplate,
   setActiveTemplate,
   onTemplateClick,
-  project,
+  workspace,
   createSurvey,
   loading,
   noPreview,
@@ -37,7 +37,7 @@ export const StartFromScratchTemplate = ({
       createSurvey(customSurvey);
       return;
     }
-    const newTemplate = replacePresetPlaceholders(customSurvey, project);
+    const newTemplate = replacePresetPlaceholders(customSurvey, workspace);
     onTemplateClick(newTemplate);
     setActiveTemplate(newTemplate);
   };

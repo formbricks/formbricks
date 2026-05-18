@@ -5,8 +5,8 @@ import { PlusIcon } from "lucide-react";
 import Link from "next/link";
 import { type ComponentProps, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { TProjectConfigChannel } from "@formbricks/types/project";
 import { TUserLocale } from "@formbricks/types/user";
+import { TWorkspaceConfigChannel } from "@formbricks/types/workspace";
 import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@/lib/localStorage";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { useDeleteSurvey } from "@/modules/survey/list/hooks/use-delete-survey";
@@ -27,24 +27,22 @@ import { SurveyFilters } from "./survey-filters";
 import { SurveyLoading } from "./survey-loading";
 
 interface SurveysListProps {
-  environment: ComponentProps<typeof TemplateContainerWithPreview>["environment"];
-  project: ComponentProps<typeof TemplateContainerWithPreview>["project"];
+  workspace: ComponentProps<typeof TemplateContainerWithPreview>["workspace"];
   userId: string;
   publicDomain: string;
   isReadOnly: boolean;
   surveysPerPage: number;
-  currentProjectChannel: TProjectConfigChannel;
+  currentWorkspaceChannel: TWorkspaceConfigChannel;
   locale: TUserLocale;
 }
 
 export const SurveysList = ({
-  environment,
-  project,
+  workspace,
   userId,
   publicDomain,
   isReadOnly,
   surveysPerPage,
-  currentProjectChannel,
+  currentWorkspaceChannel,
   locale,
 }: SurveysListProps) => {
   const { t } = useTranslation();
@@ -58,7 +56,7 @@ export const SurveysList = ({
     }
 
     const storedFilters = globalThis.window.localStorage.getItem(FORMBRICKS_SURVEYS_FILTERS_KEY_LS);
-    const parsedFilters = parseStoredSurveyFilters(storedFilters, currentProjectChannel);
+    const parsedFilters = parseStoredSurveyFilters(storedFilters, currentWorkspaceChannel);
 
     if (storedFilters && !parsedFilters) {
       globalThis.window.localStorage.removeItem(FORMBRICKS_SURVEYS_FILTERS_KEY_LS);
@@ -68,11 +66,11 @@ export const SurveysList = ({
     }
 
     setIsFilterInitialized(true);
-  }, [currentProjectChannel]);
+  }, [currentWorkspaceChannel]);
 
   const normalizedFilters = useMemo(
-    () => normalizeSurveyFilters(surveyFilters, currentProjectChannel),
-    [currentProjectChannel, surveyFilters]
+    () => normalizeSurveyFilters(surveyFilters, currentWorkspaceChannel),
+    [currentWorkspaceChannel, surveyFilters]
   );
 
   useEffect(() => {
@@ -98,7 +96,7 @@ export const SurveysList = ({
     surveys,
     totalCount,
   } = useSurveys({
-    workspaceId: environment.id,
+    workspaceId: workspace.id,
     limit: surveysPerPage,
     filters: normalizedFilters,
     enabled: isFilterInitialized,
@@ -117,8 +115,8 @@ export const SurveysList = ({
 
   const createSurveyButton = (
     <Button size="sm" asChild>
-      <Link href={`/environments/${environment.id}/surveys/templates`}>
-        {t("environments.surveys.new_survey")}
+      <Link href={`/workspaces/${workspace.id}/surveys/templates`}>
+        {t("workspace.surveys.new_survey")}
         <PlusIcon />
       </Link>
     </Button>
@@ -148,8 +146,7 @@ export const SurveysList = ({
     return (
       <TemplateContainerWithPreview
         userId={userId}
-        environment={environment}
-        project={project}
+        workspace={workspace}
         isTemplatePage={false}
         publicDomain={publicDomain}
       />
@@ -160,10 +157,10 @@ export const SurveysList = ({
     return (
       <PageContentWrapper>
         <h1 className="px-6 text-3xl font-extrabold text-slate-700">
-          {t("environments.surveys.no_surveys_created_yet")}
+          {t("workspace.surveys.no_surveys_created_yet")}
         </h1>
         <h2 className="px-6 text-lg font-medium text-slate-500">
-          {t("environments.surveys.read_only_user_not_allowed_to_create_survey_warning")}
+          {t("workspace.surveys.read_only_user_not_allowed_to_create_survey_warning")}
         </h2>
       </PageContentWrapper>
     );
@@ -204,7 +201,6 @@ export const SurveysList = ({
             <SurveyCard
               key={survey.id}
               survey={survey}
-              environmentId={environment.id}
               isReadOnly={isReadOnly}
               deleteSurvey={handleDeleteSurvey}
               publicDomain={publicDomain}
@@ -235,7 +231,7 @@ export const SurveysList = ({
         <SurveyFilters
           surveyFilters={normalizedFilters}
           setSurveyFilters={setSurveyFilters}
-          currentProjectChannel={currentProjectChannel}
+          currentWorkspaceChannel={currentWorkspaceChannel}
         />
         {surveyContent}
       </div>

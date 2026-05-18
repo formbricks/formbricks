@@ -83,7 +83,7 @@ Run these commands from the root directory of the Formbricks monorepo:
   - Copies migration to Prisma's internal directory
   - Applies all pending migrations to the database
 - **`pnpm db:seed`**: Seed the database with sample data
-  - Upserts base infrastructure (Organization, Project, Environments)
+  - Upserts base infrastructure (Organization, Workspaces)
   - Creates multi-role users (Admin, Manager)
   - Generates complex surveys and sample responses
 - **`pnpm db:seed:clear`**: Clear all seeded data and re-seed
@@ -121,11 +121,11 @@ Run these commands from the `packages/database` directory:
 
 ## Database Seeding
 
-The seeding system provides a quick way to set up a functional environment for development, QA, and testing.
+The seeding system provides a quick way to set up a functional workspace for development, QA, and testing.
 
 ### Safety Guard
 
-To prevent accidental data loss in production, seeding is blocked if `NODE_ENV=production`. If you explicitly need to seed a production-like environment (e.g., staging), you must set:
+To prevent accidental data loss in production, seeding is blocked if `NODE_ENV=production`. If you explicitly need to seed a production-like workspace (e.g., staging), you must set:
 
 ```bash
 ALLOW_SEED=true
@@ -135,11 +135,11 @@ ALLOW_SEED=true
 
 The `pnpm db:seed` script:
 
-1. **Infrastructure**: Upserts a default organization, project, and environments.
+1. **Infrastructure**: Upserts a default organization and workspace.
 2. **Users**: Creates default users with the following credentials (passwords are hashed):
    - **Admin**: `admin@formbricks.com` / `password123`
    - **Manager**: `manager@formbricks.com` / `password123`
-3. **Surveys**: Creates complex sample surveys (Kitchen Sink, CSAT, Draft, etc.) in the **Production** environment.
+3. **Surveys**: Creates complex sample surveys (Kitchen Sink, CSAT, Draft, etc.) in the **Production** workspace.
 4. **Responses**: Generates ~50 realistic responses and displays for each survey.
 
 ### Idempotency
@@ -203,7 +203,7 @@ The package uses PostgreSQL with the following key features:
 
 - **User**: User accounts with authentication and profile data
 - **Organization**: Multi-tenant organization structure
-- **Project**: Project-level configuration and settings
+- **Workspace**: Workspace-level configuration and settings
 - **Survey**: Survey definitions with advanced targeting and styling
 - **Response**: Survey response data with metadata
 - **Contact**: Contact management and attributes

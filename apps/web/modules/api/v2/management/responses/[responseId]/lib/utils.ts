@@ -7,7 +7,8 @@ import { deleteFile } from "@/modules/storage/service";
 
 export const findAndDeleteUploadedFilesInResponse = async (
   responseData: Response["data"],
-  questions: Survey["questions"]
+  questions: Survey["questions"],
+  workspaceId?: string
 ): Promise<Result<void, ApiErrorResponseV2>> => {
   const fileUploadQuestions = new Set(
     questions
@@ -24,12 +25,12 @@ export const findAndDeleteUploadedFilesInResponse = async (
   const deletionPromises = fileUrls.map(async (fileUrl) => {
     try {
       const { pathname } = new URL(fileUrl);
-      const [, environmentId, accessType, fileName] = pathname.split("/").filter(Boolean);
+      const [, storageId, accessType, fileName] = pathname.split("/").filter(Boolean);
 
-      if (!environmentId || !accessType || !fileName) {
+      if (!storageId || !accessType || !fileName) {
         throw new Error(`Invalid file path: ${pathname}`);
       }
-      return deleteFile(environmentId, accessType as "private" | "public", fileName);
+      return deleteFile(storageId, accessType as "private" | "public", fileName, workspaceId);
     } catch (error) {
       logger.error({ error, fileUrl }, "Failed to delete file");
     }

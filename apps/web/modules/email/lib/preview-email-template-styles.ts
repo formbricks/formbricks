@@ -160,15 +160,14 @@ const getPreviewRoundness = (roundness: TSurveyStyling["roundness"]): number => 
 
 export const getPreviewEmailStyleTokens = (styling: TSurveyStyling): PreviewEmailStyleTokens => {
   const questionColor =
-    styling.questionColor?.light ?? STYLE_DEFAULTS.questionColor?.light ?? COLOR_DEFAULTS.questionColor;
+    styling.elementHeadlineColor?.light ??
+    STYLE_DEFAULTS.elementHeadlineColor?.light ??
+    COLOR_DEFAULTS.elementHeadlineColor;
   const brandColor =
     styling.brandColor?.light ?? STYLE_DEFAULTS.brandColor?.light ?? COLOR_DEFAULTS.brandColor;
   const inputTextColor = styling.inputTextColor?.light ?? questionColor;
   const inputBackgroundColor =
-    styling.inputBgColor?.light ??
-    styling.inputColor?.light ??
-    STYLE_DEFAULTS.inputColor?.light ??
-    COLOR_DEFAULTS.inputColor;
+    styling.inputBgColor?.light ?? STYLE_DEFAULTS.inputBgColor?.light ?? COLOR_DEFAULTS.inputBgColor;
   const inputPlaceholderColor = mixColor(inputTextColor, "#ffffff", 0.3);
   const inputPlaceholderOpacity = getPreviewOpacity(
     styling.inputPlaceholderOpacity,
@@ -176,9 +175,9 @@ export const getPreviewEmailStyleTokens = (styling: TSurveyStyling): PreviewEmai
   );
   const optionBackgroundColor =
     styling.optionBgColor?.light ??
-    styling.inputColor?.light ??
+    styling.inputBgColor?.light ??
     STYLE_DEFAULTS.optionBgColor?.light ??
-    COLOR_DEFAULTS.inputColor;
+    COLOR_DEFAULTS.inputBgColor;
   const buttonBackgroundColor = styling.buttonBgColor?.light ?? brandColor;
   const previewRoundness = getPreviewRoundness(styling.roundness);
   const signatureColor = isLight(questionColor)
@@ -244,7 +243,7 @@ export const getPreviewEmailStyleTokens = (styling: TSurveyStyling): PreviewEmai
       styling.inputBorderRadius,
       STYLE_DEFAULTS.inputBorderRadius ?? previewRoundness
     ),
-    inputColor: styling.inputColor?.light ?? STYLE_DEFAULTS.inputColor?.light ?? COLOR_DEFAULTS.inputColor,
+    inputColor: inputBackgroundColor,
     inputFontSize: getPreviewDimension(styling.inputFontSize, STYLE_DEFAULTS.inputFontSize),
     inputHeight: getPreviewDimension(styling.inputHeight, STYLE_DEFAULTS.inputHeight),
     inputPaddingX: getPreviewDimension(styling.inputPaddingX, STYLE_DEFAULTS.inputPaddingX),

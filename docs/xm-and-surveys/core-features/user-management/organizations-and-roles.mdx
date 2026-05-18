@@ -1,10 +1,10 @@
 ---
 title: "Organizations and roles"
-description: "Understand organization-level roles and how they control access to teams, projects, and data across your Formbricks organization."
+description: "Understand organization-level roles and how they control access to teams, Workspaces, and data across your Formbricks organization."
 icon: "building"
 ---
 
-Organization-level roles apply to all teams and projects within your Formbricks organization. These roles provide broad permissions that determine what users can do across the entire organization.
+Organization-level roles apply to all teams and Workspaces within your Formbricks organization. These roles provide broad permissions that determine what users can do across the entire organization.
 
 <Note>
   Access Roles is a feature of the [Enterprise Edition](/self-hosting/advanced/license). In the **Community Edition** and on the **Free**
@@ -18,7 +18,7 @@ Here are the different access permissions, ranked from highest to lowest access:
 1. **Owner** - Full organizational control
 2. **Manager** - Management access with some restrictions
 3. **Billing** - Billing and payment management only
-4. **Member** - Basic access to assigned projects
+4. **Member** - Basic access to assigned Workspaces
 
 ### Role Permissions and Privilege Escalation Prevention
 
@@ -46,7 +46,7 @@ All users and their organization-level roles are listed in **Organization Settin
 - Can manage all aspects of the organization including billing, integrations, and member management
 
 ### Manager
-- Have full management access to all teams and projects
+- Have full management access to all teams and Workspaces
 - Can manage the organization's membership (but can only invite or assign users as members)
 - Can perform Team Admin actions without needing to join the team
 - Cannot change other organization settings like billing or delete the organization
@@ -57,9 +57,9 @@ All users and their organization-level roles are listed in **Organization Settin
 - Cannot access other organizational data or settings
 
 ### Member
-- Can view most data in the organization and act in the projects they are members of
-- Cannot create or join projects on their own and need to be assigned by owners or managers
-- Have limited permissions that depend on their project-level access
+- Can view most data in the organization and act in the Workspaces they are members of
+- Cannot create or join Workspaces on their own and need to be assigned by owners or managers
+- Have limited permissions that depend on their Workspace-level access
 
 ## Detailed permissions matrix
 
@@ -72,13 +72,13 @@ All users and their organization-level roles are listed in **Organization Settin
 | Delete member                    | ✅    | ✅      | ❌      | ❌     |
 | Update member access             | ✅    | ✅      | ❌      | ❌     |
 | Update billing                   | ✅    | ✅      | ✅      | ❌     |
-| **Project**                      |       |         |         |        |
-| Create project                   | ✅    | ✅      | ❌      | ❌     |
-| Update project name              | ✅    | ✅      | ❌      | ✅\*\* |
-| Update project recontact options | ✅    | ✅      | ❌      | ✅\*\* |
+| **Workspace**                    |       |         |         |        |
+| Create Workspace                 | ✅    | ✅      | ❌      | ❌     |
+| Update Workspace name            | ✅    | ✅      | ❌      | ✅\*\* |
+| Update Workspace recontact options | ✅    | ✅      | ❌      | ✅\*\* |
 | Update look & feel               | ✅    | ✅      | ❌      | ✅\*\* |
 | Update survey languages          | ✅    | ✅      | ❌      | ✅\*\* |
-| Delete project                   | ✅    | ✅      | ❌      | ❌     |
+| Delete Workspace                 | ✅    | ✅      | ❌      | ❌     |
 | **Surveys**                      |       |         |         |        |
 | Create new survey                | ✅    | ✅      | ❌      | ✅\*   |
 | Edit survey                      | ✅    | ✅      | ❌      | ✅\*   |
@@ -115,4 +115,4 @@ All users and their organization-level roles are listed in **Organization Settin
 - **Principle of least privilege**: Assign users the minimum role necessary for their responsibilities
 - **Regular audits**: Periodically review organization members and their roles
 - **Owner role**: Limit the number of owners to reduce security risk
-- **Manager role**: Use for team leads who need to manage projects but not organizational settings
+- **Manager role**: Use for team leads who need to manage Workspaces but not organizational settings

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { TJsEnvironmentStateSurvey } from "@formbricks/types/js";
+import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey, TSurveyFilterCriteria, TSurveyStatus, TSurveyType } from "@formbricks/types/surveys/types";
 import { anySurveyHasFilters, buildOrderByClause, buildWhereClause, transformPrismaSurvey } from "./utils";
@@ -89,15 +89,15 @@ describe("Survey Utils", () => {
       expect(result.displayPercentage).toBeNull();
     });
 
-    test("should transform for TJsEnvironmentStateSurvey type", () => {
+    test("should transform for TJsWorkspaceStateSurvey type", () => {
       const surveyPrisma = {
         id: "surveyJs",
         name: "JS Survey",
         displayPercentage: "10.0",
         segment: null,
-        // other specific TJsEnvironmentStateSurvey properties if any
+        // other specific TJsWorkspaceStateSurvey properties if any
       };
-      const result = transformPrismaSurvey<TJsEnvironmentStateSurvey>(surveyPrisma);
+      const result = transformPrismaSurvey<TJsWorkspaceStateSurvey>(surveyPrisma);
       expect(result.displayPercentage).toBe(10.0);
       expect(result.segment).toBeNull();
       expect(result.id).toBe("surveyJs");
@@ -239,9 +239,9 @@ describe("Survey Utils", () => {
       expect(anySurveyHasFilters(surveys)).toBe(false);
     });
 
-    test("should handle surveys that are not TSurvey but TJsEnvironmentStateSurvey (no segment)", () => {
+    test("should handle surveys that are not TSurvey but TJsWorkspaceStateSurvey (no segment)", () => {
       const surveys = [
-        { id: "js1", name: "JS Survey 1" }, // TJsEnvironmentStateSurvey like, no segment property
+        { id: "js1", name: "JS Survey 1" }, // TJsWorkspaceStateSurvey like, no segment property
       ] as any[]; // Using any[] to simulate mixed types or types without segment
       expect(anySurveyHasFilters(surveys)).toBe(false);
     });

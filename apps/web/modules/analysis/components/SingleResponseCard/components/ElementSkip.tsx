@@ -67,7 +67,7 @@ export const ElementSkip = ({
                       </TooltipTrigger>
                       <TooltipContent>
                         <p data-testid="tooltip-respondent_skipped_questions">
-                          {t("environments.surveys.responses.respondent_skipped_questions")}
+                          {t("workspace.surveys.responses.respondent_skipped_questions")}
                         </p>
                       </TooltipContent>
                     </Tooltip>
@@ -115,7 +115,7 @@ export const ElementSkip = ({
                 <p
                   data-testid="tooltip-survey_closed"
                   className="mb-2 w-fit rounded-lg bg-slate-100 px-2 font-medium text-slate-700">
-                  {t("environments.surveys.responses.survey_closed")}
+                  {t("workspace.surveys.responses.survey_closed")}
                 </p>
                 {skippedElements &&
                   skippedElements.map((questionId) => {

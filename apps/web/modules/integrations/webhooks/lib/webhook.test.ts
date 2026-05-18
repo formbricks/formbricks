@@ -68,7 +68,7 @@ describe("testEndpoint", () => {
       close: vi.fn(async () => undefined),
       destroy: vi.fn(async () => undefined),
     } as never);
-    vi.mocked(getTranslate).mockResolvedValue((key: string) => key);
+    vi.mocked(getTranslate).mockResolvedValue(((key: string) => key) as any);
     vi.mocked(isDiscordWebhook).mockReturnValue(false);
   });
 
@@ -78,12 +78,12 @@ describe("testEndpoint", () => {
   });
 
   test.each([
-    [500, "environments.integrations.webhooks.endpoint_internal_server_error"],
-    [404, "environments.integrations.webhooks.endpoint_not_found_error"],
-    [405, "environments.integrations.webhooks.endpoint_method_not_allowed_error"],
-    [502, "environments.integrations.webhooks.endpoint_bad_gateway_error"],
-    [503, "environments.integrations.webhooks.endpoint_service_unavailable_error"],
-    [504, "environments.integrations.webhooks.endpoint_gateway_timeout_error"],
+    [500, "workspace.integrations.webhooks.endpoint_internal_server_error"],
+    [404, "workspace.integrations.webhooks.endpoint_not_found_error"],
+    [405, "workspace.integrations.webhooks.endpoint_method_not_allowed_error"],
+    [502, "workspace.integrations.webhooks.endpoint_bad_gateway_error"],
+    [503, "workspace.integrations.webhooks.endpoint_service_unavailable_error"],
+    [504, "workspace.integrations.webhooks.endpoint_gateway_timeout_error"],
   ])("throws a translated InvalidInputError for blocked status %s", async (statusCode, messageKey) => {
     vi.stubGlobal(
       "fetch",

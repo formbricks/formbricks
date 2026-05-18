@@ -1,0 +1,78 @@
+name: Accessibility issue
+description: "Report an accessibility barrier in Formbricks (WCAG, screen reader, keyboard, contrast, etc.)"
+type: bug
+labels: ["accessibility", "bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping make Formbricks accessible to everyone. Please fill in as much as you can — see [ACCESSIBILITY.md](https://github.com/formbricks/formbricks/blob/main/ACCESSIBILITY.md) for context.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What part of Formbricks is affected and what's wrong?
+      placeholder: "e.g. The language switcher in survey runtime can't be reached with Tab."
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open a survey with multiple languages
+        2. Press Tab repeatedly
+        3. Focus never lands on the language switcher
+    validations:
+      required: true
+  - type: input
+    id: wcag
+    attributes:
+      label: Related WCAG criterion (if known)
+      placeholder: "e.g. 2.1.1 Keyboard"
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - "Critical — blocks a user from completing a core task"
+        - "High — significant barrier with no easy workaround"
+        - "Medium — barrier with a workaround"
+        - "Low — minor friction"
+    validations:
+      required: true
+  - type: input
+    id: at
+    attributes:
+      label: Assistive technology
+      placeholder: "e.g. NVDA 2026.1, VoiceOver on macOS 15, keyboard only"
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and OS
+      placeholder: "e.g. Firefox 138 on Windows 11"
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Your Environment
+      options:
+        - Formbricks Cloud (app.formbricks.com)
+        - Self-hosted Formbricks
+    validations:
+      required: true
+  - type: textarea
+    id: other
+    attributes:
+      label: Other information (screenshots, recordings, axe output)

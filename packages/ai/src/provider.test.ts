@@ -45,9 +45,9 @@ describe("packages/ai provider helpers", () => {
   test("resolves the active provider from the environment", () => {
     expect(
       getActiveAiProvider({
-        AI_PROVIDER: " gcp ",
+        AI_PROVIDER: " google ",
       })
-    ).toBe("gcp");
+    ).toBe("google");
   });
 
   test("resolves the active model from the environment", () => {
@@ -58,23 +58,47 @@ describe("packages/ai provider helpers", () => {
     ).toBe("gemini-2.5-flash");
   });
 
-  test("reports a fully configured GCP instance when the active provider credentials and model are valid", () => {
+  test("reports a fully configured Google Cloud instance when the active provider credentials and model are valid", () => {
     expect(
       getAiConfigurationStatus({
-        AI_PROVIDER: "gcp",
+        AI_PROVIDER: "google",
         AI_MODEL: "gemini-2.5-flash",
-        AI_GCP_PROJECT: "test-project",
-        AI_GCP_LOCATION: "us-central1",
-        AI_GCP_CREDENTIALS_JSON: JSON.stringify({ client_email: "vertex@example.com" }),
+        AI_GOOGLE_CLOUD_PROJECT: "test-project",
+        AI_GOOGLE_CLOUD_LOCATION: "us-central1",
+        AI_GOOGLE_CLOUD_CREDENTIALS_JSON: JSON.stringify({ client_email: "google@example.com" }),
       })
     ).toEqual({
-      provider: "gcp",
+      provider: "google",
       model: "gemini-2.5-flash",
       isConfigured: true,
       missingFields: [],
       invalidFields: [],
       providerStatus: {
-        provider: "gcp",
+        provider: "google",
+        model: "gemini-2.5-flash",
+        isConfigured: true,
+        missingFields: [],
+        invalidFields: [],
+      },
+    });
+  });
+
+  test("reports a fully configured Google Cloud instance when ADC provides credentials", () => {
+    expect(
+      getAiConfigurationStatus({
+        AI_PROVIDER: "google",
+        AI_MODEL: "gemini-2.5-flash",
+        AI_GOOGLE_CLOUD_PROJECT: "test-project",
+        AI_GOOGLE_CLOUD_LOCATION: "us-central1",
+      })
+    ).toEqual({
+      provider: "google",
+      model: "gemini-2.5-flash",
+      isConfigured: true,
+      missingFields: [],
+      invalidFields: [],
+      providerStatus: {
+        provider: "google",
         model: "gemini-2.5-flash",
         isConfigured: true,
         missingFields: [],
@@ -87,9 +111,9 @@ describe("packages/ai provider helpers", () => {
     expect(
       isAiConfigured({
         AI_MODEL: "gemini-2.5-flash",
-        AI_GCP_PROJECT: "test-project",
-        AI_GCP_LOCATION: "us-central1",
-        AI_GCP_APPLICATION_CREDENTIALS: "/tmp/vertex.json",
+        AI_GOOGLE_CLOUD_PROJECT: "test-project",
+        AI_GOOGLE_CLOUD_LOCATION: "us-central1",
+        AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS: "/tmp/google-cloud.json",
       })
     ).toBe(false);
   });
@@ -141,52 +165,112 @@ describe("packages/ai provider helpers", () => {
     });
   });
 
-  test("treats the instance as not configured when GCP credentials JSON is invalid", () => {
+  test("treats the instance as not configured when Google Cloud credentials JSON is invalid", () => {
     expect(
       getAiConfigurationStatus({
-        AI_PROVIDER: "gcp",
+        AI_PROVIDER: "google",
         AI_MODEL: "gemini-2.5-flash",
-        AI_GCP_PROJECT: "test-project",
-        AI_GCP_LOCATION: "us-central1",
-        AI_GCP_CREDENTIALS_JSON: "{not-json}",
+        AI_GOOGLE_CLOUD_PROJECT: "test-project",
+        AI_GOOGLE_CLOUD_LOCATION: "us-central1",
+        AI_GOOGLE_CLOUD_CREDENTIALS_JSON: "{not-json}",
       })
     ).toMatchObject({
-      provider: "gcp",
+      provider: "google",
       model: "gemini-2.5-flash",
       isConfigured: false,
-      invalidFields: ["AI_GCP_CREDENTIALS_JSON"],
+      invalidFields: ["AI_GOOGLE_CLOUD_CREDENTIALS_JSON"],
       errorCode: "providerNotConfigured",
     });
   });
 
-  test("creates and caches a GCP model with parsed JSON credentials", () => {
-    const vertexProvider = createMockProvider("gcp");
+  test("treats the instance as not configured when Google Cloud credentials JSON is not an object", () => {
+    expect(
+      getAiConfigurationStatus({
+        AI_PROVIDER: "google",
+        AI_MODEL: "gemini-2.5-flash",
+        AI_GOOGLE_CLOUD_PROJECT: "test-project",
+        AI_GOOGLE_CLOUD_LOCATION: "us-central1",
+        AI_GOOGLE_CLOUD_CREDENTIALS_JSON: "[]",
+      })
+    ).toMatchObject({
+      provider: "google",
+      model: "gemini-2.5-flash",
+      isConfigured: false,
+      invalidFields: ["AI_GOOGLE_CLOUD_CREDENTIALS_JSON"],
+      errorCode: "providerNotConfigured",
+    });
+  });
+
+  test("creates and caches a Google Cloud model with parsed JSON credentials", () => {
+    const vertexProvider = createMockProvider("google");
     mocks.createVertex.mockReturnValue(vertexProvider);
 
     const environment: AIEnvironment = {
-      AI_PROVIDER: "gcp",
+      AI_PROVIDER: "google",
       AI_MODEL: "gemini-2.5-flash",
-      AI_GCP_PROJECT: "test-project",
-      AI_GCP_LOCATION: "us-central1",
-      AI_GCP_CREDENTIALS_JSON: JSON.stringify({ client_email: "vertex@example.com" }),
+      AI_GOOGLE_CLOUD_PROJECT: "test-project",
+      AI_GOOGLE_CLOUD_LOCATION: "us-central1",
+      AI_GOOGLE_CLOUD_CREDENTIALS_JSON: JSON.stringify({ client_email: "google@example.com" }),
     };
 
     const firstModel = getAiModel(environment);
     const secondModel = getAiModel(environment);
 
-    expect(firstModel).toEqual({ providerName: "gcp", modelName: "gemini-2.5-flash" });
+    expect(firstModel).toEqual({ providerName: "google", modelName: "gemini-2.5-flash" });
     expect(secondModel).toBe(firstModel);
     expect(mocks.createVertex).toHaveBeenCalledWith({
       project: "test-project",
       location: "us-central1",
       googleAuthOptions: {
         credentials: {
-          client_email: "vertex@example.com",
+          client_email: "google@example.com",
         },
       },
     });
     expect(vertexProvider).toHaveBeenCalledWith("gemini-2.5-flash");
     expect(mocks.createVertex).toHaveBeenCalledTimes(1);
+  });
+
+  test("creates a Google Cloud model with application credentials file", () => {
+    const vertexProvider = createMockProvider("google");
+    mocks.createVertex.mockReturnValue(vertexProvider);
+
+    const model = getAiModel({
+      AI_PROVIDER: "google",
+      AI_MODEL: "gemini-2.5-flash",
+      AI_GOOGLE_CLOUD_PROJECT: "test-project",
+      AI_GOOGLE_CLOUD_LOCATION: "us-central1",
+      AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS: "/tmp/google-cloud.json",
+    });
+
+    expect(model).toEqual({ providerName: "google", modelName: "gemini-2.5-flash" });
+    expect(mocks.createVertex).toHaveBeenCalledWith({
+      project: "test-project",
+      location: "us-central1",
+      googleAuthOptions: {
+        keyFilename: "/tmp/google-cloud.json",
+      },
+    });
+    expect(vertexProvider).toHaveBeenCalledWith("gemini-2.5-flash");
+  });
+
+  test("creates a Google Cloud model using ADC when no credential override is configured", () => {
+    const vertexProvider = createMockProvider("google");
+    mocks.createVertex.mockReturnValue(vertexProvider);
+
+    const model = getAiModel({
+      AI_PROVIDER: "google",
+      AI_MODEL: "gemini-2.5-flash",
+      AI_GOOGLE_CLOUD_PROJECT: "test-project",
+      AI_GOOGLE_CLOUD_LOCATION: "us-central1",
+    });
+
+    expect(model).toEqual({ providerName: "google", modelName: "gemini-2.5-flash" });
+    expect(mocks.createVertex).toHaveBeenCalledWith({
+      project: "test-project",
+      location: "us-central1",
+    });
+    expect(vertexProvider).toHaveBeenCalledWith("gemini-2.5-flash");
   });
 
   test("creates an AWS model with explicit AWS credentials", () => {
@@ -234,10 +318,10 @@ describe("packages/ai provider helpers", () => {
   test("throws a helpful error when the active model is missing", () => {
     const getModel = (): ReturnType<typeof getAiModel> =>
       getAiModel({
-        AI_PROVIDER: "gcp",
-        AI_GCP_PROJECT: "test-project",
-        AI_GCP_LOCATION: "us-central1",
-        AI_GCP_APPLICATION_CREDENTIALS: "/tmp/vertex.json",
+        AI_PROVIDER: "google",
+        AI_GOOGLE_CLOUD_PROJECT: "test-project",
+        AI_GOOGLE_CLOUD_LOCATION: "us-central1",
+        AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS: "/tmp/google-cloud.json",
       });
 
     expect(getModel).toThrowError(AIConfigurationError);

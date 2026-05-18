@@ -1,0 +1,268 @@
+"use server";
+
+import { z } from "zod";
+import { ZId } from "@formbricks/types/common";
+import { OperationNotAllowedError, ResourceNotFoundError, UnknownError } from "@formbricks/types/errors";
+import { getEmailTemplateHtml } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/lib/emailTemplate";
+import { capturePostHogEvent } from "@/lib/posthog";
+import { getSurvey, updateSurvey } from "@/lib/survey/service";
+import { authenticatedActionClient } from "@/lib/utils/action-client";
+import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
+import { convertToCsv } from "@/lib/utils/file-conversion";
+import { getOrganizationIdFromSurveyId, getWorkspaceIdFromSurveyId } from "@/lib/utils/helper";
+import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
+import { generatePersonalLinks } from "@/modules/ee/contacts/lib/contacts";
+import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getOrganizationLogoUrl } from "@/modules/ee/whitelabel/email-customization/lib/organization";
+import { sendEmbedSurveyPreviewEmail } from "@/modules/email";
+import { deleteResponsesAndDisplaysForSurvey } from "./lib/survey";
+
+const ZSendEmbedSurveyPreviewEmailAction = z.object({
+  surveyId: ZId,
+});
+
+export const sendEmbedSurveyPreviewEmailAction = authenticatedActionClient
+  .inputSchema(ZSendEmbedSurveyPreviewEmailAction)
+  .action(async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
+    const organizationLogoUrl = await getOrganizationLogoUrl(organizationId);
+
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "workspaceTeam",
+          minPermission: "read",
+          workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
+        },
+      ],
+    });
+
+    const survey = await getSurvey(parsedInput.surveyId);
+    if (!survey) {
+      throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
+    }
+
+    const rawEmailHtml = await getEmailTemplateHtml(parsedInput.surveyId, ctx.user.locale);
+    const emailHtml = rawEmailHtml
+      .replaceAll("?preview=true&amp;", "?")
+      .replaceAll("?preview=true&;", "?")
+      .replaceAll("?preview=true", "");
+
+    return await sendEmbedSurveyPreviewEmail(
+      ctx.user.email,
+      emailHtml,
+      survey.workspaceId,
+      ctx.user.locale,
+      organizationLogoUrl || ""
+    );
+  });
+
+const ZResetSurveyAction = z.object({
+  surveyId: ZId,
+  workspaceId: ZId,
+});
+
+export const resetSurveyAction = authenticatedActionClient.inputSchema(ZResetSurveyAction).action(
+  withAuditLogging("updated", "survey", async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
+    const workspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
+
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "workspaceTeam",
+          minPermission: "readWrite",
+          workspaceId,
+        },
+      ],
+    });
+
+    ctx.auditLoggingCtx.organizationId = organizationId;
+    ctx.auditLoggingCtx.surveyId = parsedInput.surveyId;
+    ctx.auditLoggingCtx.oldObject = null;
+
+    const { deletedResponsesCount, deletedDisplaysCount } = await deleteResponsesAndDisplaysForSurvey(
+      parsedInput.surveyId
+    );
+
+    ctx.auditLoggingCtx.newObject = {
+      deletedResponsesCount: deletedResponsesCount,
+      deletedDisplaysCount: deletedDisplaysCount,
+    };
+
+    return {
+      success: true,
+      deletedResponsesCount: deletedResponsesCount,
+      deletedDisplaysCount: deletedDisplaysCount,
+    };
+  })
+);
+
+const ZGetEmailHtmlAction = z.object({
+  surveyId: ZId,
+});
+
+export const getEmailHtmlAction = authenticatedActionClient
+  .inputSchema(ZGetEmailHtmlAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "workspaceTeam",
+          minPermission: "readWrite",
+          workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
+        },
+      ],
+    });
+
+    return await getEmailTemplateHtml(parsedInput.surveyId, ctx.user.locale);
+  });
+
+const ZGeneratePersonalLinksAction = z.object({
+  surveyId: ZId,
+  segmentId: ZId,
+  expirationDays: z.number().optional(),
+});
+
+export const generatePersonalLinksAction = authenticatedActionClient
+  .inputSchema(ZGeneratePersonalLinksAction)
+  .action(async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
+    const workspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
+    const isContactsEnabled = await getIsContactsEnabled(organizationId);
+    if (!isContactsEnabled) {
+      throw new OperationNotAllowedError("Contacts are not enabled for this workspace");
+    }
+
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "workspaceTeam",
+          workspaceId,
+          minPermission: "readWrite",
+        },
+      ],
+    });
+
+    // Get contacts and generate personal links
+    const contactsResult = await generatePersonalLinks(
+      parsedInput.surveyId,
+      parsedInput.segmentId,
+      parsedInput.expirationDays
+    );
+
+    if (!contactsResult || contactsResult.length === 0) {
+      throw new UnknownError("No contacts found for the selected segment");
+    }
+
+    capturePostHogEvent(
+      ctx.user.id,
+      "personal_link_created",
+      {
+        organization_id: organizationId,
+        workspace_id: workspaceId,
+        survey_id: parsedInput.surveyId,
+        link_count: contactsResult.length,
+      },
+      { organizationId, workspaceId }
+    );
+
+    // Prepare CSV data with the specified headers and order
+    const csvHeaders = [
+      "Formbricks Contact ID",
+      "User ID",
+      "First Name",
+      "Last Name",
+      "Email",
+      "Personal Link",
+    ];
+
+    const csvData = contactsResult
+      .map((contact) => {
+        if (!contact) {
+          return null;
+        }
+        const attributes = contact.attributes ?? {};
+        return {
+          "Formbricks Contact ID": contact.contactId,
+          "User ID": attributes.userId ?? "",
+          "First Name": attributes.firstName ?? "",
+          "Last Name": attributes.lastName ?? "",
+          Email: attributes.email ?? "",
+          "Personal Link": contact.surveyUrl,
+        };
+      })
+      .filter((contact) => contact !== null);
+
+    // Convert to CSV using the file conversion utility
+    const csvContent = await convertToCsv(csvHeaders, csvData);
+    const fileName = `personal-links-${parsedInput.surveyId}-${Date.now()}.csv`;
+
+    return {
+      fileName,
+      csvContent,
+    };
+  });
+
+const ZUpdateSingleUseLinksAction = z.object({
+  surveyId: ZId,
+  workspaceId: ZId,
+  isSingleUse: z.boolean(),
+  isSingleUseEncryption: z.boolean(),
+});
+
+export const updateSingleUseLinksAction = authenticatedActionClient
+  .inputSchema(ZUpdateSingleUseLinksAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "workspaceTeam",
+          workspaceId: await getWorkspaceIdFromSurveyId(parsedInput.surveyId),
+          minPermission: "readWrite",
+        },
+      ],
+    });
+
+    const survey = await getSurvey(parsedInput.surveyId);
+    if (!survey) {
+      throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
+    }
+
+    const updatedSurvey = await updateSurvey({
+      ...survey,
+      singleUse: { enabled: parsedInput.isSingleUse, isEncrypted: parsedInput.isSingleUseEncryption },
+    });
+
+    return updatedSurvey;
+  });

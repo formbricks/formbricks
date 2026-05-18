@@ -68,11 +68,11 @@ export const ElementToggleTable = ({
         <tr className="text-left text-slate-800">
           <th className="w-1/4 text-sm font-semibold">
             {type === "address"
-              ? t("environments.surveys.edit.address_fields")
-              : t("environments.surveys.edit.contact_fields")}
+              ? t("workspace.surveys.edit.address_fields")
+              : t("workspace.surveys.edit.contact_fields")}
           </th>
           <th className="w-1/6 text-sm font-semibold">{t("common.show")}</th>
-          <th className="w-1/6 text-sm font-semibold">{t("environments.surveys.edit.required")}</th>
+          <th className="w-1/6 text-sm font-semibold">{t("workspace.surveys.edit.required")}</th>
           <th className="text-sm font-semibold">{t("common.label")}</th>
         </tr>
       </thead>

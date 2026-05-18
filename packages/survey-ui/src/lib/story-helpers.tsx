@@ -18,7 +18,7 @@ export interface BaseStylingOptions {
   // Input styling
   inputBgColor: string;
   inputBorderColor: string;
-  inputColor: string;
+  inputTextColor: string;
   inputFontSize: string;
   inputFontWeight: string;
   // Survey styling
@@ -178,7 +178,7 @@ export const inputStylingArgTypes = {
     control: "color",
     table: { category: "Input Styling" },
   },
-  inputColor: {
+  inputTextColor: {
     control: "color",
     table: { category: "Input Styling" },
   },
@@ -337,7 +337,7 @@ const CSS_VAR_MAP: CSSVarMapping = {
   elementDescriptionColor: "--fb-element-description-color",
   inputBgColor: "--fb-input-bg-color",
   inputBorderColor: "--fb-input-border-color",
-  inputColor: "--fb-input-color",
+  inputTextColor: "--fb-input-text-color",
   inputFontSize: "--fb-input-font-size",
   inputFontWeight: "--fb-input-font-weight",
   inputWidth: "--fb-input-width",

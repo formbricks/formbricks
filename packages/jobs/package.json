@@ -1,0 +1,41 @@
+{
+  "name": "@formbricks/jobs",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "scripts": {
+    "clean": "rimraf .turbo node_modules coverage dist",
+    "build": "tsc && vite build",
+    "lint": "eslint . --ext .ts,.js",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@formbricks/database": "workspace:*",
+    "@formbricks/logger": "workspace:*",
+    "@formbricks/types": "workspace:*",
+    "bullmq": "5.61.0",
+    "ioredis": "5.8.1",
+    "zod": "4.3.6"
+  },
+  "devDependencies": {
+    "@formbricks/config-typescript": "workspace:*",
+    "@formbricks/eslint-config": "workspace:*",
+    "@vitest/coverage-v8": "4.0.18",
+    "vite": "7.3.2",
+    "vite-plugin-dts": "4.5.4",
+    "vitest": "4.0.18"
+  }
+}

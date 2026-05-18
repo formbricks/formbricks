@@ -30,7 +30,7 @@ export const UsageCard = ({ metric, currentCount, limit, isUnlimited, unlimitedL
         <p className="text-sm font-semibold text-slate-700">{metric}</p>
         <p className="text-sm text-slate-600">
           <Trans
-            i18nKey="environments.settings.billing.usage_count_of_limit_used"
+            i18nKey="workspace.settings.billing.usage_count_of_limit_used"
             values={{ current: currentCount.toLocaleString(), limit: limit.toLocaleString() }}
             components={{ muted: <span className="text-slate-400" /> }}
           />

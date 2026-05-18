@@ -4,6 +4,7 @@ import { logger } from "@formbricks/logger";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { reportApiError } from "@/app/lib/api/api-error-reporter";
+import { getRateLimitErrorResponse } from "@/app/lib/api/client-rate-limit";
 import { responses } from "@/app/lib/api/response";
 import {
   AuthenticationMethod,
@@ -12,7 +13,12 @@ import {
   isManagementApiRoute,
 } from "@/app/middleware/endpoint-validator";
 import { AUDIT_LOG_ENABLED } from "@/lib/constants";
+import { getApiKeyFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { authOptions } from "@/modules/auth/lib/authOptions";
+import {
+  TEnvoyRateLimitAuthType,
+  isRouteRateLimitedByEnvoy,
+} from "@/modules/core/rate-limit/envoy-rate-limit-coverage";
 import { applyIPRateLimit, applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { TRateLimitConfig } from "@/modules/core/rate-limit/types/rate-limit";
@@ -66,33 +72,66 @@ const applyClientRateLimit = async (customRateLimitConfig?: TRateLimitConfig): P
   await applyIPRateLimit(customRateLimitConfig ?? rateLimitConfigs.api.client);
 };
 
+const getEnvoyRateLimitAuthType = (
+  authentication: TApiV1Authentication
+): TEnvoyRateLimitAuthType | "unknown" => {
+  if (!authentication) {
+    return "none";
+  }
+
+  if ("user" in authentication) {
+    return "session";
+  }
+
+  if ("apiKeyId" in authentication) {
+    return "apiKey";
+  }
+
+  return "unknown";
+};
+
 /**
  * Handle rate limiting based on authentication and API type
  */
 const handleRateLimiting = async (
+  req: NextRequest,
   authentication: TApiV1Authentication,
   routeType: ApiV1RouteTypeEnum,
   customRateLimitConfig?: TRateLimitConfig
 ): Promise<Response | null> => {
+  const authType = getEnvoyRateLimitAuthType(authentication);
+
+  if (authType === "unknown") {
+    logger.error({ authentication }, "Unknown authentication type");
+    return responses.internalServerErrorResponse("Invalid authentication configuration");
+  }
+
+  const isEnvoyManagedRateLimit = isRouteRateLimitedByEnvoy({
+    pathname: req.nextUrl.pathname,
+    method: req.method,
+    authType,
+  });
+
   try {
-    if (authentication) {
+    if (authentication && !isEnvoyManagedRateLimit) {
       if ("user" in authentication) {
         // Session-based authentication for integration routes
         await applyRateLimit(customRateLimitConfig ?? rateLimitConfigs.api.v1, authentication.user.id);
       } else if ("apiKeyId" in authentication) {
         // API key authentication for general routes
         await applyRateLimit(customRateLimitConfig ?? rateLimitConfigs.api.v1, authentication.apiKeyId);
-      } else {
-        logger.error({ authentication }, "Unknown authentication type");
-        return responses.internalServerErrorResponse("Invalid authentication configuration");
       }
     }
 
-    if (routeType === ApiV1RouteTypeEnum.Client) {
+    if (routeType === ApiV1RouteTypeEnum.Client && !isEnvoyManagedRateLimit) {
       await applyClientRateLimit(customRateLimitConfig);
     }
   } catch (error) {
-    return responses.tooManyRequestsResponse(error instanceof Error ? error.message : "Rate limit exceeded");
+    return getRateLimitErrorResponse({
+      request: req,
+      error,
+      cors: routeType === ApiV1RouteTypeEnum.Client,
+    });
   }
 
   return null;
@@ -156,8 +195,11 @@ const handleAuthentication = async (
     case AuthenticationMethod.Session:
       return await getServerSession(authOptions);
     case AuthenticationMethod.Both: {
-      const session = await getServerSession(authOptions);
-      return session ?? (await authenticateRequest(req, { allowOrganizationOnlyApiKey }));
+      if (getApiKeyFromHeaders(req.headers)) {
+        return await authenticateRequest(req, { allowOrganizationOnlyApiKey });
+      }
+
+      return await getServerSession(authOptions);
     }
     case AuthenticationMethod.None:
       return null;
@@ -299,7 +341,12 @@ export const withV1ApiWrapper = <TResult extends { response: Response; error?: u
 
     // === Rate Limiting ===
     if (isRateLimited) {
-      const rateLimitResponse = await handleRateLimiting(authentication, routeType, customRateLimitConfig);
+      const rateLimitResponse = await handleRateLimiting(
+        req,
+        authentication,
+        routeType,
+        customRateLimitConfig
+      );
       if (rateLimitResponse) return rateLimitResponse;
     }
 

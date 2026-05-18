@@ -42,10 +42,10 @@ export const TemplateFilters = ({
                 "rounded border border-slate-800 px-2 py-1 text-xs transition-all duration-150"
               )}>
               {index === 0
-                ? t("environments.surveys.templates.all_channels")
+                ? t("workspace.surveys.templates.all_channels")
                 : index === 1
-                  ? t("environments.surveys.templates.all_industries")
-                  : t("environments.surveys.templates.all_roles")}
+                  ? t("workspace.surveys.templates.all_industries")
+                  : t("workspace.surveys.templates.all_roles")}
             </button>
             {filters.map((filter) => (
               <button

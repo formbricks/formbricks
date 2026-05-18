@@ -150,7 +150,7 @@ export const UploadContactsAttributes = ({
             size="normal"
             type="success"
             className="rounded-md"
-            text={t("environments.contacts.upload_contacts_modal_attributes_new")}
+            text={t("workspace.contacts.upload_contacts_modal_attributes_new")}
           />
         ) : null}
       </div>

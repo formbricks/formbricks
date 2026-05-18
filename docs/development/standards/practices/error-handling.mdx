@@ -54,7 +54,7 @@ export const GET = async (request: Request) => {
 try {
 const authentication = await authenticateRequest(request);
 if (!authentication) return responses.notAuthenticatedResponse();
-const data = await fetchData(authentication.environmentId!);
+const data = await fetchData(authentication.workspaceId!);
 return responses.successResponse(data);
 } catch (error) {
 if (error instanceof DatabaseError) {
