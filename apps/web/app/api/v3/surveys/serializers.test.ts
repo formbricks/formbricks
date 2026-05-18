@@ -131,7 +131,7 @@ describe("serializeV3SurveyResource", () => {
     });
   });
 
-  test("localizes the implicit default language for surveys without configured languages", () => {
+  test("filters the implicit default language for surveys without configured languages", () => {
     const survey = {
       ...baseSurvey,
       languages: [],
@@ -141,10 +141,10 @@ describe("serializeV3SurveyResource", () => {
       },
     } as unknown as TSurvey;
 
-    const resource = serializeV3SurveyResource(survey, { lang: "en" });
+    const resource = serializeV3SurveyResource(survey, { lang: ["en"] });
 
-    expect(resource.language).toBe("en-US");
-    expect(resource).toMatchObject({ welcomeCard: { headline: "Welcome" } });
+    expect(resource).not.toHaveProperty("language");
+    expect(resource).toMatchObject({ welcomeCard: { headline: { "en-US": "Welcome" } } });
   });
 
   test("preserves stored locale variants when their keys use non-canonical casing or separators", () => {
@@ -168,18 +168,18 @@ describe("serializeV3SurveyResource", () => {
     });
   });
 
-  test("localizes fields for case-insensitive underscore language selectors", () => {
-    const resource = serializeV3SurveyResource(baseSurvey, { lang: "DE_de" });
+  test("filters fields for case-insensitive underscore language selectors while preserving maps", () => {
+    const resource = serializeV3SurveyResource(baseSurvey, { lang: ["DE_de"] });
 
-    expect(resource.language).toBe("de-DE");
+    expect(resource).not.toHaveProperty("language");
     expect(resource).toMatchObject({
-      welcomeCard: { headline: "Willkommen" },
+      welcomeCard: { headline: { "de-DE": "Willkommen" } },
       blocks: [
         {
           elements: [
             {
-              headline: "Was sollen wir verbessern?",
-              subheader: "Tell us more",
+              headline: { "de-DE": "Was sollen wir verbessern?" },
+              subheader: { "de-DE": "Tell us more" },
             },
           ],
         },
@@ -188,17 +188,41 @@ describe("serializeV3SurveyResource", () => {
   });
 
   test("resolves language-only selectors against configured survey languages", () => {
-    const resource = serializeV3SurveyResource(baseSurvey, { lang: "de" });
+    const resource = serializeV3SurveyResource(baseSurvey, { lang: ["de"] });
 
-    expect(resource.language).toBe("de-DE");
-    expect(resource).toMatchObject({ welcomeCard: { headline: "Willkommen" } });
+    expect(resource).toMatchObject({ welcomeCard: { headline: { "de-DE": "Willkommen" } } });
   });
 
-  test("localizes disabled configured languages for management reads", () => {
-    const resource = serializeV3SurveyResource(baseSurvey, { lang: "fr" });
+  test("filters disabled configured languages for management reads", () => {
+    const resource = serializeV3SurveyResource(baseSurvey, { lang: ["fr"] });
 
-    expect(resource.language).toBe("fr-FR");
-    expect(resource).toMatchObject({ welcomeCard: { headline: "Bienvenue" } });
+    expect(resource).toMatchObject({ welcomeCard: { headline: { "fr-FR": "Bienvenue" } } });
+  });
+
+  test("filters multiple requested languages while preserving maps", () => {
+    const resource = serializeV3SurveyResource(baseSurvey, { lang: ["en-US", "de"] });
+
+    expect(resource).not.toHaveProperty("language");
+    expect(resource).toMatchObject({
+      welcomeCard: {
+        headline: {
+          "en-US": "Welcome",
+          "de-DE": "Willkommen",
+        },
+      },
+      blocks: [
+        {
+          elements: [
+            {
+              headline: {
+                "en-US": "What should we improve?",
+                "de-DE": "Was sollen wir verbessern?",
+              },
+            },
+          ],
+        },
+      ],
+    });
   });
 
   test("rejects ambiguous language-only selectors", () => {
@@ -230,7 +254,7 @@ describe("serializeV3SurveyResource", () => {
       ],
     } as unknown as TSurvey;
 
-    expect(() => serializeV3SurveyResource(survey, { lang: "pt" })).toThrow(
+    expect(() => serializeV3SurveyResource(survey, { lang: ["pt"] })).toThrow(
       "Language 'pt' is ambiguous for this survey; use one of pt-BR, pt-PT"
     );
   });

@@ -3,9 +3,13 @@ type TV3SurveyLanguageInput = {
   enabled: boolean;
 };
 
+type TV3SurveyLanguageQueryInput = string | string[];
+
 type TResolveV3SurveyLanguageCodeResult =
   | { ok: true; code: string }
   | { ok: false; reason: "invalid" | "unknown" | "ambiguous"; message: string };
+
+type TParseV3SurveyLanguageQueryResult = { ok: true; languages: string[] } | { ok: false; message: string };
 
 export function normalizeV3SurveyLanguageTag(value: string): string | null {
   const normalizedSeparators = value.trim().replaceAll("_", "-");
@@ -15,6 +19,40 @@ export function normalizeV3SurveyLanguageTag(value: string): string | null {
   } catch {
     return null;
   }
+}
+
+export function parseV3SurveyLanguageQuery(
+  value: TV3SurveyLanguageQueryInput
+): TParseV3SurveyLanguageQueryResult {
+  const requestedLanguages = (Array.isArray(value) ? value : [value])
+    .flatMap((entry) => entry.split(","))
+    .map((entry) => entry.trim());
+
+  if (requestedLanguages.some((entry) => entry.length === 0)) {
+    return {
+      ok: false,
+      message: "Language selector must contain valid comma-separated locale codes",
+    };
+  }
+
+  const normalizedLanguages: string[] = [];
+
+  for (const language of requestedLanguages) {
+    const normalizedLanguage = normalizeV3SurveyLanguageTag(language);
+
+    if (!normalizedLanguage) {
+      return {
+        ok: false,
+        message: `Language '${language}' is not a valid locale code`,
+      };
+    }
+
+    if (!normalizedLanguages.some((entry) => entry.toLowerCase() === normalizedLanguage.toLowerCase())) {
+      normalizedLanguages.push(normalizedLanguage);
+    }
+  }
+
+  return { ok: true, languages: normalizedLanguages };
 }
 
 function getLanguageSubtag(languageTag: string): string {

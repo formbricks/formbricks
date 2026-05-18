@@ -203,7 +203,7 @@ paths:
       description: |
         Returns the public v3 survey management resource for one survey. By default, translatable
         fields are returned as canonical multilingual maps keyed by real locale codes. Use `lang`
-        to request a localized projection where translatable fields are returned as strings.
+        to filter those maps to one or more requested locale codes.
       tags:
         - V3 Surveys
       parameters:
@@ -217,15 +217,23 @@ paths:
         - in: query
           name: lang
           required: false
+          style: form
+          explode: false
           schema:
-            type: string
-            examples: [de-DE, de_DE, de]
+            type: array
+            items:
+              type: string
+            examples:
+              - [de-DE]
+              - [de-DE, pt-PT]
           description: |
-            Locale code for a localized read projection. The parser is case-insensitive, accepts
-            `_` or `-` separators, and normalizes to canonical BCP 47 casing (`de_DE`, `DE-de` → `de-DE`).
-            A language-only selector (`de`) resolves to the matching configured survey language when exactly
-            one exists; otherwise it returns `400`. Disabled-but-configured languages are readable in the
-            management API so unfinished translations can be completed. Aliases are not accepted.
+            Comma-separated locale code filter for translatable fields, for example `?lang=de-DE,pt-PT`.
+            The response shape stays stable: translatable fields are always maps keyed by locale code, never
+            strings. The parser is case-insensitive, accepts `_` or `-` separators, and normalizes to canonical
+            BCP 47 casing (`de_DE`, `DE-de` → `de-DE`). A language-only selector (`de`) resolves to the matching
+            configured survey language when exactly one exists; otherwise it returns `400`. Disabled-but-configured
+            languages are readable in the management API so unfinished translations can be completed. Aliases are
+            not accepted.
       responses:
         "200":
           description: Survey retrieved successfully
@@ -283,8 +291,8 @@ paths:
                       hiddenFields:
                         enabled: false
                       variables: []
-                localized:
-                  summary: Localized projection with ?lang=en-US
+                filtered:
+                  summary: Language-filtered projection with ?lang=en-US,de-DE
                   value:
                     data:
                       id: clseedsurveycsat000000
@@ -296,7 +304,6 @@ paths:
                       status: inProgress
                       metadata: {}
                       defaultLanguage: en-US
-                      language: en-US
                       languages:
                         - code: en-US
                           default: true
@@ -314,7 +321,9 @@ paths:
                               type: rating
                               range: 5
                               scale: smiley
-                              headline: How satisfied are you with our product?
+                              headline:
+                                en-US: How satisfied are you with our product?
+                                de-DE: Wie zufrieden sind Sie mit unserem Produkt?
                               required: true
                       endings: []
                       hiddenFields:
@@ -460,16 +469,13 @@ components:
             enabled: { type: boolean }
             isEncrypted: { type: boolean }
     TranslatableText:
-      oneOf:
-        - type: string
-          description: Localized projection string returned when `?lang=` is used.
+      allOf:
         - $ref: "#/components/schemas/TranslatableTextMap"
       description: |
-        Survey authoring text. Default `GET /api/v3/surveys/{surveyId}` returns locale maps keyed by
-        real locale codes such as `en-US` and `de-DE`. Localized reads with `?lang=` return strings.
+        Survey authoring text. `GET /api/v3/surveys/{surveyId}` always returns locale maps keyed by
+        real locale codes such as `en-US` and `de-DE`. Use `?lang=` to filter which locale keys are included.
         The internal storage key `default` is never exposed by v3.
       examples:
-        - What should we improve?
         - en-US: What should we improve?
           de-DE: Was sollten wir verbessern?
     TranslatableTextMap:
@@ -1130,9 +1136,6 @@ components:
         defaultLanguage:
           type: string
           description: Real locale code for the survey default language. The internal `default` translation key is never exposed.
-        language:
-          type: string
-          description: Present only on localized `?lang=` responses.
         languages:
           type: array
           items:

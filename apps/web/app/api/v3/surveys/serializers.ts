@@ -95,51 +95,42 @@ function getI18nValueForLanguage(value: Record<string, string>, languageCode: st
 function serializeCanonicalValue(
   value: unknown,
   defaultLanguage: string,
-  configuredLanguageCodes: Set<string>
+  languageCodes: Set<string>,
+  options?: { fallbackMissingTranslations?: boolean }
 ): TSerializedValue {
   if (isI18nString(value)) {
     const result: Record<string, string> = {
       [defaultLanguage]: value.default,
     };
 
-    for (const languageCode of configuredLanguageCodes) {
+    for (const languageCode of languageCodes) {
       const translatedValue = getI18nValueForLanguage(value, languageCode);
-      if (languageCode !== defaultLanguage && translatedValue !== undefined) {
-        result[languageCode] = translatedValue;
+      if (languageCode !== defaultLanguage) {
+        if (translatedValue !== undefined) {
+          result[languageCode] = translatedValue;
+        } else if (options?.fallbackMissingTranslations) {
+          result[languageCode] = value.default;
+        }
       }
+    }
+
+    if (!languageCodes.has(defaultLanguage)) {
+      delete result[defaultLanguage];
     }
 
     return result;
   }
 
   if (Array.isArray(value)) {
-    return value.map((entry) => serializeCanonicalValue(entry, defaultLanguage, configuredLanguageCodes));
+    return value.map((entry) => serializeCanonicalValue(entry, defaultLanguage, languageCodes, options));
   }
 
   if (isPlainObject(value)) {
     return Object.fromEntries(
       Object.entries(value).map(([key, entry]) => [
         key,
-        serializeCanonicalValue(entry, defaultLanguage, configuredLanguageCodes),
+        serializeCanonicalValue(entry, defaultLanguage, languageCodes, options),
       ])
-    );
-  }
-
-  return value as TSerializedValue;
-}
-
-function serializeLocalizedValue(value: unknown, language: string): TSerializedValue {
-  if (isI18nString(value)) {
-    return getI18nValueForLanguage(value, language) ?? value.default;
-  }
-
-  if (Array.isArray(value)) {
-    return value.map((entry) => serializeLocalizedValue(entry, language));
-  }
-
-  if (isPlainObject(value)) {
-    return Object.fromEntries(
-      Object.entries(value).map(([key, entry]) => [key, serializeLocalizedValue(entry, language)])
     );
   }
 
@@ -156,7 +147,15 @@ function resolveRequestedLanguage(languages: TV3SurveyLanguage[], language: stri
   return result.code;
 }
 
-export function serializeV3SurveyResource(survey: TInternalSurvey, options?: { lang?: string }) {
+function resolveRequestedLanguages(languages: TV3SurveyLanguage[], requestedLanguages?: string[]): string[] {
+  if (!requestedLanguages) {
+    return [];
+  }
+
+  return requestedLanguages.map((language) => resolveRequestedLanguage(languages, language));
+}
+
+export function serializeV3SurveyResource(survey: TInternalSurvey, options?: { lang?: string[] }) {
   if (Array.isArray(survey.questions) && survey.questions.length > 0) {
     throw new V3SurveyUnsupportedShapeError(
       "Legacy question-based surveys are not supported by the v3 survey management API"
@@ -166,11 +165,12 @@ export function serializeV3SurveyResource(survey: TInternalSurvey, options?: { l
   const defaultLanguage = getDefaultLanguage(survey);
   const languages = getSurveyLanguages(survey);
   const configuredLanguageCodes = new Set(languages.map((language) => language.code));
-  const language = options?.lang ? resolveRequestedLanguage(languages, options.lang) : undefined;
-
-  const serializeValue = language
-    ? (value: unknown) => serializeLocalizedValue(value, language)
-    : (value: unknown) => serializeCanonicalValue(value, defaultLanguage, configuredLanguageCodes);
+  const requestedLanguages = resolveRequestedLanguages(languages, options?.lang);
+  const languageCodes = requestedLanguages.length > 0 ? new Set(requestedLanguages) : configuredLanguageCodes;
+  const serializeValue = (value: unknown) =>
+    serializeCanonicalValue(value, defaultLanguage, languageCodes, {
+      fallbackMissingTranslations: requestedLanguages.length > 0,
+    });
 
   return {
     id: survey.id,
@@ -182,7 +182,6 @@ export function serializeV3SurveyResource(survey: TInternalSurvey, options?: { l
     status: survey.status,
     metadata: survey.metadata,
     defaultLanguage,
-    ...(language ? { language } : {}),
     languages,
     welcomeCard: serializeValue(survey.welcomeCard),
     blocks: serializeValue(survey.blocks),

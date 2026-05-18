@@ -1,5 +1,9 @@
 import { describe, expect, test } from "vitest";
-import { normalizeV3SurveyLanguageTag, resolveV3SurveyLanguageCode } from "./language";
+import {
+  normalizeV3SurveyLanguageTag,
+  parseV3SurveyLanguageQuery,
+  resolveV3SurveyLanguageCode,
+} from "./language";
 
 const languages = [
   { code: "en-US", enabled: true },
@@ -19,6 +23,43 @@ describe("normalizeV3SurveyLanguageTag", () => {
 
   test("returns null for invalid language tags", () => {
     expect(normalizeV3SurveyLanguageTag("not a locale")).toBeNull();
+  });
+});
+
+describe("parseV3SurveyLanguageQuery", () => {
+  test("parses comma-separated language selectors", () => {
+    expect(parseV3SurveyLanguageQuery("de-DE, pt_PT, EN_us")).toEqual({
+      ok: true,
+      languages: ["de-DE", "pt-PT", "en-US"],
+    });
+  });
+
+  test("parses repeated language selectors", () => {
+    expect(parseV3SurveyLanguageQuery(["de-DE", "pt_PT,en_us"])).toEqual({
+      ok: true,
+      languages: ["de-DE", "pt-PT", "en-US"],
+    });
+  });
+
+  test("deduplicates language selectors case-insensitively", () => {
+    expect(parseV3SurveyLanguageQuery("de-DE,DE_de")).toEqual({
+      ok: true,
+      languages: ["de-DE"],
+    });
+  });
+
+  test("rejects empty language selectors", () => {
+    expect(parseV3SurveyLanguageQuery("de-DE,")).toEqual({
+      ok: false,
+      message: "Language selector must contain valid comma-separated locale codes",
+    });
+  });
+
+  test("rejects invalid language selectors", () => {
+    expect(parseV3SurveyLanguageQuery("not a locale")).toEqual({
+      ok: false,
+      message: "Language 'not a locale' is not a valid locale code",
+    });
   });
 });
 

@@ -17,7 +17,7 @@ import {
 } from "@/app/api/v3/surveys/serializers";
 import { getSurvey } from "@/lib/survey/service";
 import { deleteSurvey } from "@/modules/survey/lib/surveys";
-import { normalizeV3SurveyLanguageTag } from "../language";
+import { parseV3SurveyLanguageQuery } from "../language";
 
 const surveyParamsSchema = z.object({
   surveyId: z.cuid2(),
@@ -26,20 +26,19 @@ const surveyParamsSchema = z.object({
 const surveyQuerySchema = z
   .object({
     lang: z
-      .string()
-      .trim()
+      .union([z.string(), z.array(z.string())])
       .transform((value, ctx) => {
-        const normalizedLanguage = normalizeV3SurveyLanguageTag(value);
+        const parsedLanguageQuery = parseV3SurveyLanguageQuery(value);
 
-        if (!normalizedLanguage) {
+        if (!parsedLanguageQuery.ok) {
           ctx.addIssue({
             code: "custom",
-            message: "Language must be a valid locale code",
+            message: parsedLanguageQuery.message,
           });
           return z.NEVER;
         }
 
-        return normalizedLanguage;
+        return parsedLanguageQuery.languages;
       })
       .optional(),
   })
