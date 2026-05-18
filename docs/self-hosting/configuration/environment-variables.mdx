@@ -127,7 +127,7 @@ Cube JWT from `CUBEJS_API_SECRET`, so `CUBEJS_API_TOKEN` is not part of the supp
 
 | Variable                  | Description                                                                                            | Required | Default                              |
 | ------------------------- | ------------------------------------------------------------------------------------------------------ | -------- | ------------------------------------ |
-| CUBEJS_API_URL            | Base URL the Formbricks app uses to call Cube. Use `http://localhost:4000` locally.                    | required | `http://localhost:4000` in local dev |
+| CUBEJS_API_URL            | Base URL the Formbricks app uses to call Cube. Local dev (app on host): `http://localhost:4000`. Docker/container: `http://cube:4000` (service name). | required | |
 | CUBEJS_API_SECRET         | Shared secret Formbricks uses to sign Cube API JWTs. Generate with `openssl rand -hex 32`.             | required |                                      |
 | CUBEJS_JWT_ISSUER         | JWT issuer expected by Cube and used by Formbricks when signing per-request Cube tokens.               | optional | `formbricks-web`                     |
 | CUBEJS_JWT_AUDIENCE       | JWT audience expected by Cube and used by Formbricks when signing per-request Cube tokens.             | optional | `formbricks-cube`                    |
