@@ -3597,6 +3597,7 @@
         "no_identified_impressions": "没有已识别联系人的展示次数",
         "no_responses_found": "未找到响应",
         "nps_promoters_tooltip": "{percentage}% 的受访者给出了 9 或 10 分的评价（NPS 推荐者）。",
+        "open_response_details": "开放式回答详情",
         "other_values_found": "找到其他值",
         "overall": "整体",
         "promoters": "推荐者",

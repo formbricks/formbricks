@@ -3597,6 +3597,7 @@
         "no_identified_impressions": "Nincsenek azonosított partnerektől származó megtekintések",
         "no_responses_found": "Nem találhatók válaszok",
         "nps_promoters_tooltip": "A válaszadók {percentage}%-a 9-es vagy 10-es értékelést adott (NPS promoters).",
+        "open_response_details": "Nyitott válasz részletei",
         "other_values_found": "Más értékek találhatók",
         "overall": "Összesen",
         "promoters": "Népszerűsítők",

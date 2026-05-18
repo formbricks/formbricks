@@ -3446,6 +3446,7 @@ checksums:
     workspace/surveys/summary/no_identified_impressions: c3bc42e6feb9010ced905ded51c5afc4
     workspace/surveys/summary/no_responses_found: f10190cffdda4ca1bed479acbb89b13f
     workspace/surveys/summary/nps_promoters_tooltip: dea6a683c0c36189e325656d5a7596b8
+    workspace/surveys/summary/open_response_details: 0e5de115b5e605f68ea857cf8ef5533a
     workspace/surveys/summary/other_values_found: 48a74ee68c05f7fb162072b50c683b6a
     workspace/surveys/summary/overall: 6c6d6533013d4739766af84b2871bca6
     workspace/surveys/summary/promoters: 41fbb8d0439227661253a82fda39f521
