@@ -261,4 +261,52 @@ describe("integration OAuth state route wiring", () => {
     expect(mocks.fetchMock).not.toHaveBeenCalled();
     expect(mockFetchAirtableAuthToken).not.toHaveBeenCalled();
   });
+
+  test("redirects sanitized provider errors without token exchange", async () => {
+    mockConsumeIntegrationOAuthState.mockResolvedValue({
+      createdAt: Date.now(),
+      pkceCodeVerifier: "airtable-code-verifier",
+      provider: "airtable",
+      userId: "user-1",
+      workspaceId,
+    } as any);
+
+    const googleResponse = await googleSheetsCallbackGET(
+      new Request(`http://localhost:3000/api/google-sheet/callback?state=${opaqueState}&error=access_denied`)
+    );
+    const slackResponse = await slackCallbackGET(
+      nextRequest(
+        `http://localhost:3000/api/v1/integrations/slack/callback?state=${opaqueState}&error=access_denied`
+      ),
+      {} as never
+    );
+    const notionResponse = await notionCallbackGET(
+      nextRequest(
+        `http://localhost:3000/api/v1/integrations/notion/callback?state=${opaqueState}&error=access_denied`
+      ),
+      {} as never
+    );
+    const airtableResponse = await airtableCallbackGET(
+      nextRequest(
+        `http://localhost:3000/api/v1/integrations/airtable/callback?state=${opaqueState}&error=access_denied`
+      ),
+      {} as never
+    );
+
+    expect(googleResponse.headers.get("location")).toBe(
+      "http://localhost:3000/workspaces/workspace-1/integrations/google-sheets?error=access_denied"
+    );
+    expect(slackResponse.headers.get("location")).toBe(
+      "http://localhost:3000/workspaces/workspace-1/integrations/slack?error=access_denied"
+    );
+    expect(notionResponse.headers.get("location")).toBe(
+      "http://localhost:3000/workspaces/workspace-1/integrations/notion?error=access_denied"
+    );
+    expect(airtableResponse.headers.get("location")).toBe(
+      "http://localhost:3000/workspaces/workspace-1/integrations/airtable?error=access_denied"
+    );
+    expect(mocks.googleGetToken).not.toHaveBeenCalled();
+    expect(mocks.fetchMock).not.toHaveBeenCalled();
+    expect(mockFetchAirtableAuthToken).not.toHaveBeenCalled();
+  });
 });
