@@ -14,7 +14,7 @@ import {
   importHistoricalResponsesAction,
 } from "@/lib/connector/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { Alert } from "@/modules/ui/components/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -66,6 +66,9 @@ import { ConnectorTypeSelector } from "./connector-type-selector";
 import { CsvConnectorUI } from "./csv-connector-ui";
 import { FormbricksQuestionList } from "./formbricks-question-list";
 
+const API_INGESTION_DOCS_URL = "https://formbricks.com/docs/unify-feedback/api/rest-api";
+const FEEDBACK_RECORD_MCP_DOCS_URL = "https://formbricks.com/docs/unify-feedback/api/mcp";
+
 interface CreateConnectorModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -107,7 +110,7 @@ const getDialogDescription = (
 const getNextStepButtonLabel = (type: TConnectorOptionId | null, t: (key: string) => string): string => {
   if (type === "formbricks_survey") return t("workspace.unify.select_questions");
   if (type === "csv") return t("workspace.unify.configure_import");
-  if (type === "api_ingestion") return t("common.learn_more");
+  if (type === "api_ingestion") return t("workspace.unify.view_rest_api_docs");
   if (type === "feedback_record_mcp") return t("common.learn_more");
   return t("workspace.unify.create_mapping");
 };
@@ -260,12 +263,12 @@ export const CreateConnectorModal = ({
     if (currentStep !== "selectType" || !selectedType) return;
 
     if (selectedType === "api_ingestion") {
-      window.open("https://formbricks.com/docs/unify-feedback/api/rest-api", "_blank", "noopener,noreferrer");
+      window.open(API_INGESTION_DOCS_URL, "_blank", "noopener,noreferrer");
       return;
     }
 
     if (selectedType === "feedback_record_mcp") {
-      window.open("https://formbricks.com/docs/unify-feedback/api/mcp", "_blank", "noopener,noreferrer");
+      window.open(FEEDBACK_RECORD_MCP_DOCS_URL, "_blank", "noopener,noreferrer");
       return;
     }
 
@@ -478,6 +481,16 @@ export const CreateConnectorModal = ({
                 surveyCount={surveys.length}
                 workspaceId={workspaceId}
               />
+            )}
+            {currentStep === "selectType" && selectedType === "api_ingestion" && (
+              <Alert variant="info" size="small" className="mt-3 items-start">
+                <div className="min-w-0 space-y-1">
+                  <AlertTitle>{t("workspace.unify.api_ingestion_setup_title")}</AlertTitle>
+                  <AlertDescription className="overflow-visible whitespace-normal">
+                    <p>{t("workspace.unify.api_ingestion_setup_description")}</p>
+                  </AlertDescription>
+                </div>
+              </Alert>
             )}
 
             {currentStep === "mapping" && selectedType === "formbricks_survey" && (

@@ -383,6 +383,16 @@ const getArchiveUpdate = async (
   }
 
   if (isArchived === false) {
+    const currentDetails = await getFeedbackDirectoryDetails(directoryId);
+    if (!currentDetails) {
+      throw new ResourceNotFoundError("FeedbackDirectory", directoryId);
+    }
+
+    await assertWorkspacesNotAssignedElsewhere(
+      directoryId,
+      currentDetails.workspaces.map((workspace) => workspace.workspaceId)
+    );
+
     return { isArchived: false };
   }
 

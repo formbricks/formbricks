@@ -23,6 +23,7 @@ import {
   getTranslatedFeedbackDirectoryError,
 } from "@/modules/ee/feedback-directory/types/feedback-directory";
 import { TOrganizationWorkspace } from "@/modules/ee/teams/team-list/types/workspace";
+import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -96,6 +97,34 @@ export const FeedbackDirectorySettingsModal = ({
     [orgWorkspaces, workspaceAccessMap, directory?.id]
   );
 
+  const workspaceConflictDetails = useMemo(
+    () =>
+      orgWorkspaces
+        .map((workspace) => {
+          const assignment = workspaceAccessMap.get(workspace.id);
+          if (!assignment || assignment.feedbackDirectoryId === directory?.id) {
+            return null;
+          }
+
+          return {
+            workspaceId: workspace.id,
+            workspaceName: workspace.name,
+            feedbackDirectoryName: assignment.feedbackDirectoryName,
+          };
+        })
+        .filter(
+          (
+            conflict
+          ): conflict is {
+            workspaceId: string;
+            workspaceName: string;
+            feedbackDirectoryName: string;
+          } => conflict !== null
+        )
+        .sort((a, b) => a.workspaceName.localeCompare(b.workspaceName, undefined, { sensitivity: "base" })),
+    [orgWorkspaces, workspaceAccessMap, directory?.id]
+  );
+
   const initialWorkspaceIds = useMemo(
     () => directory?.workspaces.map((workspace) => workspace.workspaceId) ?? [],
     [directory?.workspaces]
@@ -117,6 +146,10 @@ export const FeedbackDirectorySettingsModal = ({
     setValue,
     reset,
   } = form;
+  const selectedWorkspaceIds = form.watch("workspaceIds") ?? [];
+  const hasUnassignedWorkspace = workspaceOptions.some((option) => !option.disabled);
+  const showWorkspaceAccessBlockedExplanation =
+    workspaceConflictDetails.length > 0 && !hasUnassignedWorkspace;
 
   const workspaceNameById = useMemo(() => {
     const map = new Map(orgWorkspaces.map((workspace) => [workspace.id, workspace.name]));
@@ -290,7 +323,7 @@ export const FeedbackDirectorySettingsModal = ({
                 </Muted>
                 <MultiSelect
                   options={workspaceOptions}
-                  value={form.watch("workspaceIds") ?? []}
+                  value={selectedWorkspaceIds}
                   onChange={(selected) => {
                     setValue("workspaceIds", selected, { shouldDirty: true });
                   }}
@@ -298,6 +331,32 @@ export const FeedbackDirectorySettingsModal = ({
                   placeholder={t("workspace.settings.feedback_directories.select_workspaces_placeholder")}
                   containerClassName="focus-within:ring-0 focus-within:ring-offset-0"
                 />
+                {showWorkspaceAccessBlockedExplanation && (
+                  <Alert variant="info" size="small" className="items-start">
+                    <div className="min-w-0 space-y-1">
+                      <AlertTitle className="truncate">
+                        {t("workspace.settings.feedback_directories.no_unassigned_workspaces_title")}
+                      </AlertTitle>
+                      <AlertDescription className="overflow-visible whitespace-normal">
+                        <p>
+                          {t(
+                            "workspace.settings.feedback_directories.no_unassigned_workspaces_description"
+                          )}
+                        </p>
+                        <ul className="mt-1 list-disc space-y-0.5 pl-4">
+                          {workspaceConflictDetails.map((conflict) => (
+                            <li key={conflict.workspaceId}>
+                              {t("workspace.settings.feedback_directories.workspace_assigned_to_directory", {
+                                workspaceName: conflict.workspaceName,
+                                directoryName: conflict.feedbackDirectoryName,
+                              })}
+                            </li>
+                          ))}
+                        </ul>
+                      </AlertDescription>
+                    </div>
+                  </Alert>
+                )}
               </div>
 
               {isEdit && (
