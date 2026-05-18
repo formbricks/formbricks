@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { deleteResponse, getResponse } from "@/lib/response/service";
+import { deleteResponse, getResponseWithQuotas } from "@/lib/response/service";
 import { createTag, getTagsByWorkspaceId } from "@/lib/tag/service";
 import { addTagToRespone, deleteTagOnResponse } from "@/lib/tagOnResponse/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
@@ -222,5 +222,5 @@ export const getResponseAction = authenticatedActionClient
       ],
     });
 
-    return await getResponse(parsedInput.responseId);
+    return await getResponseWithQuotas(parsedInput.responseId);
   });

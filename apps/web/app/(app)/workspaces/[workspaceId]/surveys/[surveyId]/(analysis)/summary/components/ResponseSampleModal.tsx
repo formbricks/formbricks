@@ -7,11 +7,11 @@ import { TResponseWithQuotas } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUserLocale } from "@formbricks/types/user";
+import { SingleResponseCard } from "@/modules/analysis/components/SingleResponseCard";
 import {
   getResponseAction,
   getTagsByWorkspaceIdAction,
 } from "@/modules/analysis/components/SingleResponseCard/actions";
-import { SingleResponseCard } from "@/modules/analysis/components/SingleResponseCard";
 import {
   Dialog,
   DialogBody,
@@ -66,7 +66,7 @@ export const ResponseSampleModal = ({
         const fetchedTags = tagsResult?.data ?? [];
 
         if (fetchedResponse) {
-          const entry = { response: fetchedResponse as TResponseWithQuotas, tags: fetchedTags };
+          const entry = { response: fetchedResponse, tags: fetchedTags };
           cache.current.set(responseId, entry);
           setResponse(entry.response);
           setTags(entry.tags);
