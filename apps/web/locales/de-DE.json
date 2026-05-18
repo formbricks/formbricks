@@ -2710,6 +2710,8 @@
         "save_the_following_backup_codes_in_a_safe_place": "Speichere die folgenden Backup-Codes an einem sicheren Ort.",
         "scan_the_qr_code_below_with_your_authenticator_app": "Scanne den QR-Code unten mit deiner Authenticator-App.",
         "security_description": "Verwalte dein Passwort und andere Sicherheitseinstellungen wie die Zwei-Faktor-Authentifizierung (2FA).",
+        "sso_identity_confirmation_failed": "SSO-Identitätsbestätigung fehlgeschlagen. Bitte versuche erneut, dein Konto zu löschen.",
+        "sso_identity_confirmation_may_be_required_for_deletion": "Bei SSO-Konten kann dich die Auswahl von Löschen zu deinem Identitätsanbieter weiterleiten, um dieses Konto zu bestätigen. Wenn dasselbe Konto bestätigt wird, wird die Löschung automatisch fortgesetzt.",
         "two_factor_authentication": "Zwei-Faktor-Authentifizierung",
         "two_factor_authentication_description": "Füge deinem Konto eine zusätzliche Sicherheitsebene hinzu, falls dein Passwort gestohlen wird.",
         "two_factor_authentication_enabled_please_enter_the_six_digit_code_from_your_authenticator_app": "Zwei-Faktor-Authentifizierung aktiviert. Bitte gib den sechsstelligen Code aus deiner Authenticator-App ein.",
@@ -2718,9 +2720,7 @@
         "update_personal_info": "Aktualisiere deine persönlichen Informationen",
         "warning_cannot_delete_account": "Du bist der einzige Inhaber dieser Organisation. Bitte übertrage zuerst die Inhaberschaft auf ein anderes Mitglied.",
         "warning_cannot_undo": "Dies kann nicht rückgängig gemacht werden",
-        "wrong_password": "Falsches Passwort",
-        "sso_identity_confirmation_failed": "SSO-Identitätsbestätigung fehlgeschlagen. Bitte versuche erneut, dein Konto zu löschen.",
-        "sso_identity_confirmation_may_be_required_for_deletion": "Bei SSO-Konten kann dich die Auswahl von Löschen zu deinem Identitätsanbieter weiterleiten, um dieses Konto zu bestätigen. Wenn dasselbe Konto bestätigt wird, wird die Löschung automatisch fortgesetzt."
+        "wrong_password": "Falsches Passwort"
       },
       "teams": {
         "add_members_description": "Füge Mitglieder zum Team hinzu und lege ihre Rolle fest.",
