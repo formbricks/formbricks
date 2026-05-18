@@ -1602,6 +1602,7 @@ checksums:
     workspace/analysis/charts/add_filter: ed5d8e9bfcb05cd1e10e4c403befbae6
     workspace/analysis/charts/add_to_dashboard: 9941c3d30895bb8e25ce8d4e03d33a08
     workspace/analysis/charts/advanced_chart_builder_config_prompt: c2fe2c1a076f27d3ae62a4db75474b0a
+    workspace/analysis/charts/ai_enable_in_settings: 426cb4525381e193e6c4dcce286e60c8
     workspace/analysis/charts/ai_instance_not_configured: 6deeb8aeaff3982d07e1d5a045e06d2d
     workspace/analysis/charts/ai_not_available: 173abfcd32dd45edcc258dfdaaed494b
     workspace/analysis/charts/ai_not_enabled: 8651fdac58cd311d17a48001a880318d
@@ -1609,6 +1610,7 @@ checksums:
     workspace/analysis/charts/ai_query_placeholder: 24c3d18f514cb3a9953f04c3b04503a2
     workspace/analysis/charts/ai_query_section_description: 66d06342f29bf6658793403856521fd7
     workspace/analysis/charts/ai_query_section_title: c0e450a47af7c2a516b77f73cf54db1b
+    workspace/analysis/charts/ai_upgrade_plan: 5041b68b64e13143fc5336bfbe47978c
     workspace/analysis/charts/already_on_dashboard: c2cee946860c71a71cf03392b2d1fc3a
     workspace/analysis/charts/and_filter_logic: 53e8eb67a396fcb5e419bb4cbf0008df
     workspace/analysis/charts/apply_changes: ed3da8072dbd27dc0c959777cdcbebf3
@@ -2484,16 +2486,19 @@ checksums:
     workspace/settings/feedback_directories/nav_label: cf9a57b3cbac0f04b98e06fb693e986e
     workspace/settings/feedback_directories/no_access: 707627df25fbaa28f18aa0f0d03dcb81
     workspace/settings/feedback_directories/no_connectors: ccc725ff9a82a7b8ab68de735490a9b9
+    workspace/settings/feedback_directories/no_unassigned_workspaces_description: c96a260b582e6c930de72e6e69f9a9a6
+    workspace/settings/feedback_directories/no_unassigned_workspaces_title: 458d4289d73d799561bec26a0bb1a1a3
     workspace/settings/feedback_directories/pause_connectors_confirmation_description: 0e30f827576b931651b9eae44e00279b
     workspace/settings/feedback_directories/pause_connectors_confirmation_title: da1950dbb9ce62caa65c87ae8b88b1a1
     workspace/settings/feedback_directories/select_workspaces_placeholder: 7d8c8f5910b264525f73bd32107765db
     workspace/settings/feedback_directories/show_archived: c4c1c3bbddc1bb1540c079b589a2d3de
     workspace/settings/feedback_directories/title: cf9a57b3cbac0f04b98e06fb693e986e
     workspace/settings/feedback_directories/unarchive: 671fc7e9d7c8cb4d182a25a46551c168
-    workspace/settings/feedback_directories/unarchive_workspace_conflict: 82f4b8ebaf41589cfb96e6398dafcc76
+    workspace/settings/feedback_directories/unarchive_workspace_conflict: ed44bc0bd570b40de5251d04abf7bd08
     workspace/settings/feedback_directories/upgrade_prompt_description: eb8a4bf60bcae458899e1ea94094789d
     workspace/settings/feedback_directories/upgrade_prompt_title: 0a7b67ccf15a0aa8c64e5da7feb6e532
     workspace/settings/feedback_directories/workspace_access: 32407b39cf878fb579559c1ed3660892
+    workspace/settings/feedback_directories/workspace_assigned_to_directory: 6b907668667a9c74a99c437fa3cc2046
     workspace/settings/feedback_directories/workspaces_already_linked: ef6248289707611a44950c3406aec0ec
     workspace/settings/feedback_directories/workspaces_being_added: e01628710aff05c5172f2f43aab1f6fb
     workspace/settings/general/ai_data_analysis_enabled: 45fabb594da6851f73fef50ca40fe525
@@ -3515,6 +3520,8 @@ checksums:
     workspace/unify/allowed_values: 430e0721aa2c52745ef8f8b6918bb7d2
     workspace/unify/api_ingestion: a14642d27bbb6843f9f4903b6555dfbb
     workspace/unify/api_ingestion_settings_description: a2597917ca1c724607d1d32178d670b3
+    workspace/unify/api_ingestion_setup_description: d18a267d0e50198682950f5341307fa3
+    workspace/unify/api_ingestion_setup_title: 4e6a497297ddc85497da5098dd3fe0c4
     workspace/unify/auto_generated: 6e83e8febd63275692c444cb8074531d
     workspace/unify/change_file: c5163ac18bf443370228a8ecbb0b07da
     workspace/unify/clear_mapping: 9bd7c716667838b9f203f5af0ac2d651
@@ -3705,6 +3712,7 @@ checksums:
     workspace/unify/value_date: c8d705d1975affc01c002324725fec3f
     workspace/unify/value_number: 1f14da79d14bd7b1c2324141f4470675
     workspace/unify/value_text: e097a597cc507c716401ad18255de578
+    workspace/unify/view_rest_api_docs: 985a000e4900414bd112b67f85ad8c05
     workspace/xm-templates/ces: e2ea309b2f7f13257967b966c2fda1e9
     workspace/xm-templates/ces_description: c8d9794dd17d5ab85a979f1b3e1bc935
     workspace/xm-templates/csat: fdfc1dc6214cce661dcdc32a71d80337
