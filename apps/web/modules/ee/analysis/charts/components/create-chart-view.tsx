@@ -11,6 +11,7 @@ import { ChartDialogLoadingView } from "@/modules/ee/analysis/charts/components/
 import { ChartPreview } from "@/modules/ee/analysis/charts/components/chart-preview";
 import { ManualChartBuilder } from "@/modules/ee/analysis/charts/components/manual-chart-builder";
 import { useChartDialog } from "@/modules/ee/analysis/charts/hooks/use-chart-dialog";
+import type { TAIUnavailableReason } from "@/modules/ee/analysis/charts/lib/ai-availability";
 import { DEFAULT_CHART_TYPE } from "@/modules/ee/analysis/charts/lib/chart-types";
 import type { TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
 import { Alert } from "@/modules/ui/components/alert";
@@ -36,7 +37,7 @@ interface CreateChartViewProps {
   onSuccess?: () => void;
   directories: { id: string; name: string }[];
   isAIAvailable?: boolean;
-  aiUnavailableReason?: string;
+  aiUnavailableReason?: TAIUnavailableReason;
 }
 
 export function CreateChartView({

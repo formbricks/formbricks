@@ -16,6 +16,10 @@ import {
 } from "@/modules/ee/feedback-directory/actions";
 import { ArchiveFeedbackDirectory } from "@/modules/ee/feedback-directory/components/feedback-directory-settings/archive-feedback-directory";
 import {
+  getWorkspaceConflictDetails,
+  shouldShowWorkspaceAccessBlockedExplanation,
+} from "@/modules/ee/feedback-directory/lib/workspace-access-conflicts";
+import {
   TFeedbackDirectoryDetails,
   TFeedbackDirectoryUpdateInput,
   TWorkspaceFeedbackDirectoryAccess,
@@ -97,32 +101,18 @@ export const FeedbackDirectorySettingsModal = ({
     [orgWorkspaces, workspaceAccessMap, directory?.id]
   );
 
-  const workspaceConflictDetails = useMemo(
-    () =>
-      orgWorkspaces
-        .map((workspace) => {
-          const assignment = workspaceAccessMap.get(workspace.id);
-          if (!assignment || assignment.feedbackDirectoryId === directory?.id) {
-            return null;
-          }
+  const workspaceConflictInput = useMemo(
+    () => ({
+      orgWorkspaces,
+      workspaceAccessByWorkspace,
+      currentDirectoryId: directory?.id,
+    }),
+    [orgWorkspaces, workspaceAccessByWorkspace, directory?.id]
+  );
 
-          return {
-            workspaceId: workspace.id,
-            workspaceName: workspace.name,
-            feedbackDirectoryName: assignment.feedbackDirectoryName,
-          };
-        })
-        .filter(
-          (
-            conflict
-          ): conflict is {
-            workspaceId: string;
-            workspaceName: string;
-            feedbackDirectoryName: string;
-          } => conflict !== null
-        )
-        .sort((a, b) => a.workspaceName.localeCompare(b.workspaceName, undefined, { sensitivity: "base" })),
-    [orgWorkspaces, workspaceAccessMap, directory?.id]
+  const workspaceConflictDetails = useMemo(
+    () => getWorkspaceConflictDetails(workspaceConflictInput),
+    [workspaceConflictInput]
   );
 
   const initialWorkspaceIds = useMemo(
@@ -147,9 +137,8 @@ export const FeedbackDirectorySettingsModal = ({
     reset,
   } = form;
   const selectedWorkspaceIds = form.watch("workspaceIds") ?? [];
-  const hasUnassignedWorkspace = workspaceOptions.some((option) => !option.disabled);
   const showWorkspaceAccessBlockedExplanation =
-    workspaceConflictDetails.length > 0 && !hasUnassignedWorkspace;
+    shouldShowWorkspaceAccessBlockedExplanation(workspaceConflictInput);
 
   const workspaceNameById = useMemo(() => {
     const map = new Map(orgWorkspaces.map((workspace) => [workspace.id, workspace.name]));
@@ -339,9 +328,7 @@ export const FeedbackDirectorySettingsModal = ({
                       </AlertTitle>
                       <AlertDescription className="overflow-visible whitespace-normal">
                         <p>
-                          {t(
-                            "workspace.settings.feedback_directories.no_unassigned_workspaces_description"
-                          )}
+                          {t("workspace.settings.feedback_directories.no_unassigned_workspaces_description")}
                         </p>
                         <ul className="mt-1 list-disc space-y-0.5 pl-4">
                           {workspaceConflictDetails.map((conflict) => (

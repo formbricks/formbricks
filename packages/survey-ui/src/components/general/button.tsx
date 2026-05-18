@@ -5,10 +5,10 @@ import { cn } from "@/lib/utils";
 
 export type ButtonVariant = "default" | "destructive" | "outline" | "secondary" | "ghost" | "link" | "custom";
 export type ButtonSize = "default" | "custom" | "sm" | "lg" | "icon";
-interface ButtonVariantProps {
+type ButtonVariantProps = {
   variant?: ButtonVariant | null;
   size?: ButtonSize | null;
-}
+};
 type ButtonVariantClassProps =
   | (ButtonVariantProps & { class?: string; className?: never })
   | (ButtonVariantProps & { class?: never; className?: string })

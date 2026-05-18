@@ -7,17 +7,25 @@ import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { generateAIChartAction } from "@/modules/ee/analysis/charts/actions";
+import {
+  type TAIUnavailableActionLabelKey,
+  type TAIUnavailableReason,
+  getAIUnavailableAction,
+  getAIUnavailableMessageKey,
+} from "@/modules/ee/analysis/charts/lib/ai-availability";
 import type { AnalyticsResponse } from "@/modules/ee/analysis/types/analysis";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
+
+type TAIUnavailableMessageKey = ReturnType<typeof getAIUnavailableMessageKey>;
 
 interface AIQuerySectionProps {
   workspaceId: string;
   onChartGenerated: (data: AnalyticsResponse) => void;
   feedbackDirectoryId: string;
   isAIAvailable?: boolean;
-  aiUnavailableReason?: string;
+  aiUnavailableReason?: TAIUnavailableReason;
 }
 
 export function AIQuerySection({
@@ -31,12 +39,30 @@ export function AIQuerySection({
   const [isGenerating, setIsGenerating] = useState(false);
   const { t } = useTranslation();
 
-  const aiUnavailableMessage =
-    {
-      not_in_plan: t("workspace.analysis.charts.ai_not_in_plan"),
-      not_enabled: t("workspace.analysis.charts.ai_not_enabled"),
-      instance_not_configured: t("workspace.analysis.charts.ai_instance_not_configured"),
-    }[aiUnavailableReason ?? ""] ?? t("workspace.analysis.charts.ai_not_available");
+  const translateAIUnavailableMessage = (messageKey: TAIUnavailableMessageKey): string => {
+    switch (messageKey) {
+      case "workspace.analysis.charts.ai_not_in_plan":
+        return t("workspace.analysis.charts.ai_not_in_plan");
+      case "workspace.analysis.charts.ai_not_enabled":
+        return t("workspace.analysis.charts.ai_not_enabled");
+      case "workspace.analysis.charts.ai_instance_not_configured":
+        return t("workspace.analysis.charts.ai_instance_not_configured");
+      case "workspace.analysis.charts.ai_not_available":
+        return t("workspace.analysis.charts.ai_not_available");
+    }
+  };
+
+  const translateAIUnavailableAction = (labelKey: TAIUnavailableActionLabelKey): string => {
+    switch (labelKey) {
+      case "workspace.analysis.charts.ai_enable_in_settings":
+        return t("workspace.analysis.charts.ai_enable_in_settings");
+      case "workspace.analysis.charts.ai_upgrade_plan":
+        return t("workspace.analysis.charts.ai_upgrade_plan");
+    }
+  };
+
+  const aiUnavailableMessage = translateAIUnavailableMessage(getAIUnavailableMessageKey(aiUnavailableReason));
+  const aiUnavailableAction = getAIUnavailableAction(aiUnavailableReason, workspaceId);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -103,18 +129,9 @@ export function AIQuerySection({
         <Alert variant="info" size="small">
           <AlertDescription className="overflow-visible whitespace-normal">
             <span>{aiUnavailableMessage}</span>
-            {aiUnavailableReason === "not_enabled" && (
-              <Link
-                href={`/workspaces/${workspaceId}/settings/organization/general`}
-                className="ml-2 inline-flex shrink-0 underline">
-                {t("workspace.analysis.charts.ai_enable_in_settings")}
-              </Link>
-            )}
-            {aiUnavailableReason === "not_in_plan" && (
-              <Link
-                href={`/workspaces/${workspaceId}/settings/organization/billing`}
-                className="ml-2 inline-flex shrink-0 underline">
-                {t("workspace.analysis.charts.ai_upgrade_plan")}
+            {aiUnavailableAction && (
+              <Link href={aiUnavailableAction.href} className="ml-2 inline-flex shrink-0 underline">
+                {translateAIUnavailableAction(aiUnavailableAction.labelKey)}
               </Link>
             )}
           </AlertDescription>

@@ -1,5 +1,5 @@
 import "server-only";
-import { Prisma, PrismaClient } from "@prisma/client";
+import { Prisma, type PrismaClient } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
@@ -14,6 +14,11 @@ import {
   TWorkspaceFeedbackDirectoryAccess,
   ZFeedbackDirectoryUpdateInput,
 } from "@/modules/ee/feedback-directory/types/feedback-directory";
+
+type FeedbackDirectoryPrismaClient = Pick<
+  PrismaClient,
+  "connector" | "feedbackDirectory" | "feedbackDirectoryWorkspace" | "workspace"
+>;
 
 /**
  * Retrieves all feedback directories for a given organization.
@@ -186,63 +191,70 @@ export const getWorkspaceFeedbackDirectoryAccess = reactCache(
   }
 );
 
+const getFeedbackDirectoryDetailsWithClient = async (
+  prismaClient: FeedbackDirectoryPrismaClient,
+  directoryId: string
+): Promise<TFeedbackDirectoryDetails | null> => {
+  const directory = await prismaClient.feedbackDirectory.findUnique({
+    where: {
+      id: directoryId,
+    },
+    select: {
+      id: true,
+      name: true,
+      isArchived: true,
+      organizationId: true,
+      workspaces: {
+        select: {
+          workspaceId: true,
+          workspace: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      },
+      connectors: {
+        select: {
+          id: true,
+          name: true,
+          type: true,
+          workspaceId: true,
+          workspace: { select: { name: true } },
+        },
+        orderBy: { createdAt: "desc" },
+      },
+    },
+  });
+
+  if (!directory) {
+    return null;
+  }
+
+  return {
+    id: directory.id,
+    name: directory.name,
+    isArchived: directory.isArchived,
+    organizationId: directory.organizationId,
+    workspaces: directory.workspaces.map((dp) => ({
+      workspaceId: dp.workspaceId,
+      workspaceName: dp.workspace.name,
+    })),
+    connectors: directory.connectors.map((c) => ({
+      id: c.id,
+      name: c.name,
+      type: c.type,
+      workspaceId: c.workspaceId,
+      workspaceName: c.workspace.name,
+    })),
+  };
+};
+
 export const getFeedbackDirectoryDetails = reactCache(
   async (directoryId: string): Promise<TFeedbackDirectoryDetails | null> => {
     validateInputs([directoryId, ZId]);
     try {
-      const directory = await prisma.feedbackDirectory.findUnique({
-        where: {
-          id: directoryId,
-        },
-        select: {
-          id: true,
-          name: true,
-          isArchived: true,
-          organizationId: true,
-          workspaces: {
-            select: {
-              workspaceId: true,
-              workspace: {
-                select: {
-                  name: true,
-                },
-              },
-            },
-          },
-          connectors: {
-            select: {
-              id: true,
-              name: true,
-              type: true,
-              workspaceId: true,
-              workspace: { select: { name: true } },
-            },
-            orderBy: { createdAt: "desc" },
-          },
-        },
-      });
-
-      if (!directory) {
-        return null;
-      }
-
-      return {
-        id: directory.id,
-        name: directory.name,
-        isArchived: directory.isArchived,
-        organizationId: directory.organizationId,
-        workspaces: directory.workspaces.map((dp) => ({
-          workspaceId: dp.workspaceId,
-          workspaceName: dp.workspace.name,
-        })),
-        connectors: directory.connectors.map((c) => ({
-          id: c.id,
-          name: c.name,
-          type: c.type,
-          workspaceId: c.workspaceId,
-          workspaceName: c.workspace.name,
-        })),
-      };
+      return await getFeedbackDirectoryDetailsWithClient(prisma, directoryId);
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);
@@ -279,7 +291,7 @@ export const createFeedbackDirectory = async (
       if (count !== workspaceIds.length) {
         throw new InvalidInputError("DIRECTORY_WORKSPACES_INVALID_ORG");
       }
-      await assertWorkspacesNotAssignedElsewhere(undefined, workspaceIds);
+      await assertWorkspacesNotAssignedElsewhere(prisma, undefined, workspaceIds);
     }
 
     const directory = await prisma.feedbackDirectory.create({
@@ -321,7 +333,7 @@ export const createFeedbackDirectory = async (
  * @throws {InvalidInputError} If any workspace does not belong to the organization.
  */
 const buildWorkspaceAssignmentPayload = async (
-  prismaClient: PrismaClient,
+  prismaClient: FeedbackDirectoryPrismaClient,
   directoryId: string,
   workspaceIds: string[],
   organizationId: string,
@@ -369,11 +381,12 @@ interface UpdateFeedbackDirectoryOptions {
 }
 
 const getArchiveUpdate = async (
+  prismaClient: FeedbackDirectoryPrismaClient,
   directoryId: string,
   isArchived: boolean | undefined
 ): Promise<Pick<Prisma.FeedbackDirectoryUpdateInput, "isArchived">> => {
   if (isArchived === true) {
-    const connectorCount = await prisma.connector.count({
+    const connectorCount = await prismaClient.connector.count({
       where: { feedbackDirectoryId: directoryId },
     });
     if (connectorCount > 0) {
@@ -383,12 +396,13 @@ const getArchiveUpdate = async (
   }
 
   if (isArchived === false) {
-    const currentDetails = await getFeedbackDirectoryDetails(directoryId);
+    const currentDetails = await getFeedbackDirectoryDetailsWithClient(prismaClient, directoryId);
     if (!currentDetails) {
       throw new ResourceNotFoundError("FeedbackDirectory", directoryId);
     }
 
     await assertWorkspacesNotAssignedElsewhere(
+      prismaClient,
       directoryId,
       currentDetails.workspaces.map((workspace) => workspace.workspaceId)
     );
@@ -400,6 +414,7 @@ const getArchiveUpdate = async (
 };
 
 const getWorkspaceAssignmentUpdate = async (
+  prismaClient: FeedbackDirectoryPrismaClient,
   directoryId: string,
   organizationId: string,
   workspaceIds: string[] | undefined
@@ -411,10 +426,10 @@ const getWorkspaceAssignmentUpdate = async (
     return { removedWorkspaceIds: [] };
   }
 
-  const currentDetails = await getFeedbackDirectoryDetails(directoryId);
+  const currentDetails = await getFeedbackDirectoryDetailsWithClient(prismaClient, directoryId);
   const currentWorkspaceIds = currentDetails?.workspaces.map((workspace) => workspace.workspaceId) ?? [];
   const assignmentPayload = await buildWorkspaceAssignmentPayload(
-    prisma,
+    prismaClient,
     directoryId,
     workspaceIds,
     organizationId,
@@ -456,12 +471,13 @@ const pauseConnectorsInWorkspaces = async (
  * conflict check. Omit it on create — every active directory is a conflict.
  */
 const assertWorkspacesNotAssignedElsewhere = async (
+  prismaClient: FeedbackDirectoryPrismaClient,
   directoryId: string | undefined,
   workspaceIds: string[]
 ): Promise<void> => {
   if (workspaceIds.length === 0) return;
 
-  const conflicting = await prisma.feedbackDirectoryWorkspace.findFirst({
+  const conflicting = await prismaClient.feedbackDirectoryWorkspace.findFirst({
     where: {
       workspaceId: { in: workspaceIds },
       ...(directoryId === undefined ? {} : { feedbackDirectoryId: { not: directoryId } }),
@@ -504,33 +520,41 @@ export const updateFeedbackDirectory = async (
   try {
     const { name, workspaceIds, isArchived } = data;
 
-    if (workspaceIds !== undefined) {
-      await assertWorkspacesNotAssignedElsewhere(directoryId, workspaceIds);
-    }
+    await prisma.$transaction(
+      async (tx) => {
+        if (workspaceIds !== undefined) {
+          await assertWorkspacesNotAssignedElsewhere(tx, directoryId, workspaceIds);
+        }
 
-    const archiveUpdate = await getArchiveUpdate(directoryId, isArchived);
-    const workspaceAssignmentUpdate = await getWorkspaceAssignmentUpdate(
-      directoryId,
-      organizationId,
-      workspaceIds
-    );
+        const archiveUpdate = await getArchiveUpdate(tx, directoryId, isArchived);
+        const workspaceAssignmentUpdate = await getWorkspaceAssignmentUpdate(
+          tx,
+          directoryId,
+          organizationId,
+          workspaceIds
+        );
 
-    const payload: Prisma.FeedbackDirectoryUpdateInput = {
-      ...(name !== undefined ? { name } : {}),
-      ...archiveUpdate,
-      ...(workspaceAssignmentUpdate.workspaces ? { workspaces: workspaceAssignmentUpdate.workspaces } : {}),
-    };
+        const payload: Prisma.FeedbackDirectoryUpdateInput = {
+          ...(name !== undefined ? { name } : {}),
+          ...archiveUpdate,
+          ...(workspaceAssignmentUpdate.workspaces
+            ? { workspaces: workspaceAssignmentUpdate.workspaces }
+            : {}),
+        };
 
-    await prisma.$transaction(async (tx) => {
-      await tx.feedbackDirectory.update({
-        where: { id: directoryId },
-        data: payload,
-      });
+        await tx.feedbackDirectory.update({
+          where: { id: directoryId },
+          data: payload,
+        });
 
-      if (options?.pauseConnectorsInRemovedWorkspaces) {
-        await pauseConnectorsInWorkspaces(tx, directoryId, workspaceAssignmentUpdate.removedWorkspaceIds);
+        if (options?.pauseConnectorsInRemovedWorkspaces) {
+          await pauseConnectorsInWorkspaces(tx, directoryId, workspaceAssignmentUpdate.removedWorkspaceIds);
+        }
+      },
+      {
+        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
       }
-    });
+    );
 
     return true;
   } catch (error) {

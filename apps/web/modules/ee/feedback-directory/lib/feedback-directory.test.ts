@@ -424,6 +424,19 @@ describe("FeedbackDirectory Service", () => {
       });
     });
 
+    test("throws ResourceNotFoundError when unarchiving and directory cannot be loaded", async () => {
+      vi.mocked(prisma.feedbackDirectory.findUnique).mockResolvedValueOnce(null);
+
+      await expect(
+        updateFeedbackDirectory(mockDirectoryId, mockOrganizationId, {
+          isArchived: false,
+        })
+      ).rejects.toThrow(ResourceNotFoundError);
+
+      expect(prisma.feedbackDirectoryWorkspace.findFirst).not.toHaveBeenCalled();
+      expect(prisma.feedbackDirectory.update).not.toHaveBeenCalled();
+    });
+
     test("throws InvalidInputError when unarchiving would assign a workspace to two active directories", async () => {
       vi.mocked(prisma.feedbackDirectory.findUnique).mockResolvedValueOnce(mockDirectoryDetailsDbRow as any);
       vi.mocked(prisma.feedbackDirectoryWorkspace.findFirst).mockResolvedValueOnce({

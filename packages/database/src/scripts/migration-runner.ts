@@ -1,9 +1,9 @@
+import { type Prisma, PrismaClient } from "@prisma/client";
 import { exec } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
-import { type Prisma, PrismaClient } from "@prisma/client";
 import { logger } from "@formbricks/logger";
 
 const __filename = fileURLToPath(import.meta.url);
