@@ -118,6 +118,26 @@ describe("workspace lib", () => {
       expectNoFrdSideEffects();
     });
 
+    test("seeds the four default contact attribute keys when creating a workspace", async () => {
+      const createdWorkspace = { ...baseWorkspace, id: "p-defaults" };
+      vi.mocked(prisma.workspace.create).mockResolvedValueOnce(createdWorkspace as any);
+
+      await createWorkspace("org1", { name: "Workspace defaults" });
+
+      const createArgs = vi.mocked(prisma.workspace.create).mock.calls[0][0];
+      const attributeCreate = (createArgs.data as any).contactAttributeKeys.create as Array<{
+        key: string;
+        type: string;
+        isUnique?: boolean;
+      }>;
+      expect(attributeCreate.map((a) => a.key).sort()).toEqual(
+        ["email", "firstName", "lastName", "userId"].sort()
+      );
+      expect(attributeCreate.every((a) => a.type === "default")).toBe(true);
+      const uniqueKeys = attributeCreate.filter((a) => a.isUnique).map((a) => a.key);
+      expect(uniqueKeys.sort()).toEqual(["email", "userId"].sort());
+    });
+
     test("creates workspace without teams and does not auto-link any FRD", async () => {
       const createdWorkspace = { ...baseWorkspace, id: "p3" };
       vi.mocked(prisma.workspace.create).mockResolvedValueOnce(createdWorkspace as any);
