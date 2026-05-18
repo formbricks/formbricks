@@ -1,237 +1,135 @@
 {
   "$schema": "https://turborepo.org/schema.json",
+  "globalEnv": [],
   "tasks": {
     "@formbricks/ai#build": {
-      "dependsOn": [
-        "@formbricks/logger#build"
-      ],
-      "outputs": [
-        "dist/**"
-      ]
+      "dependsOn": ["@formbricks/logger#build"],
+      "outputs": ["dist/**"]
     },
     "@formbricks/ai#lint": {
-      "dependsOn": [
-        "@formbricks/logger#build"
-      ]
+      "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/ai#test": {
-      "dependsOn": [
-        "@formbricks/logger#build"
-      ]
+      "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/ai#test:coverage": {
-      "dependsOn": [
-        "@formbricks/logger#build"
-      ]
+      "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/cache#build": {
-      "dependsOn": [
-        "@formbricks/logger#build"
-      ],
-      "outputs": [
-        "dist/**"
-      ]
+      "dependsOn": ["@formbricks/logger#build"],
+      "outputs": ["dist/**"]
     },
     "@formbricks/cache#go": {
-      "dependsOn": [
-        "@formbricks/logger#build"
-      ]
+      "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/cache#lint": {
-      "dependsOn": [
-        "@formbricks/logger#build"
-      ]
+      "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/cache#test": {
-      "dependsOn": [
-        "@formbricks/logger#build"
-      ]
+      "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/cache#test:coverage": {
-      "dependsOn": [
-        "@formbricks/logger#build"
-      ]
+      "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/database#build": {
-      "dependsOn": [
-        "^build"
-      ],
-      "outputs": [
-        "dist/**",
-        "../../node_modules/.prisma/client/**"
-      ]
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**", "../../node_modules/.prisma/client/**"]
     },
     "@formbricks/database#lint": {
-      "dependsOn": [
-        "@formbricks/logger#build",
-        "@formbricks/database#build"
-      ]
+      "dependsOn": ["@formbricks/logger#build", "@formbricks/database#build"]
     },
     "@formbricks/email#build": {
-      "dependsOn": [
-        "^build"
-      ],
+      "dependsOn": ["^build"],
       "outputs": []
     },
     "@formbricks/i18n-utils#build": {
-      "dependsOn": [
-        "^build"
-      ],
-      "outputs": [
-        "dist/**"
-      ]
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"]
     },
     "@formbricks/i18n-utils#lint": {
-      "dependsOn": [
-        "^lint"
-      ]
+      "dependsOn": ["^lint"]
     },
     "@formbricks/i18n-utils#test": {
-      "dependsOn": [
-        "@formbricks/i18n-utils#build"
-      ]
+      "dependsOn": ["@formbricks/i18n-utils#build"]
     },
     "@formbricks/jobs#build": {
-      "dependsOn": [
-        "@formbricks/logger#build"
-      ],
-      "outputs": [
-        "dist/**"
-      ]
+      "dependsOn": ["@formbricks/logger#build"],
+      "outputs": ["dist/**"]
     },
     "@formbricks/jobs#lint": {
-      "dependsOn": [
-        "@formbricks/logger#build"
-      ]
+      "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/jobs#test": {
-      "dependsOn": [
-        "@formbricks/logger#build"
-      ]
+      "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/jobs#test:coverage": {
-      "dependsOn": [
-        "@formbricks/logger#build"
-      ]
+      "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/js-core#build": {
-      "dependsOn": [
-        "^build",
-        "@formbricks/database#build"
-      ],
-      "outputs": [
-        "dist/**"
-      ]
+      "dependsOn": ["^build", "@formbricks/database#build"],
+      "outputs": ["dist/**"]
     },
     "@formbricks/js-core#go": {
       "cache": false,
-      "dependsOn": [
-        "@formbricks/database#db:setup"
-      ],
+      "dependsOn": ["@formbricks/database#db:setup"],
       "persistent": true
     },
     "@formbricks/js-core#lint": {
-      "dependsOn": [
-        "@formbricks/database#build"
-      ]
+      "dependsOn": ["@formbricks/database#build"]
     },
     "@formbricks/logger#build": {
-      "dependsOn": [
-        "^build"
-      ],
-      "outputs": [
-        "dist/**"
-      ]
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"]
     },
     "@formbricks/storage#build": {
-      "dependsOn": [
-        "@formbricks/logger#build"
-      ],
-      "outputs": [
-        "dist/**"
-      ]
+      "dependsOn": ["@formbricks/logger#build"],
+      "outputs": ["dist/**"]
     },
     "@formbricks/storage#go": {
       "cache": false,
-      "dependsOn": [
-        "@formbricks/storage#build"
-      ],
+      "dependsOn": ["@formbricks/storage#build"],
       "persistent": true
     },
     "@formbricks/storage#lint": {
-      "dependsOn": [
-        "@formbricks/logger#build"
-      ]
+      "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/storage#test": {
-      "dependsOn": [
-        "@formbricks/logger#build"
-      ]
+      "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/storage#test:coverage": {
-      "dependsOn": [
-        "@formbricks/logger#build"
-      ]
+      "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/survey-ui#build": {
-      "dependsOn": [
-        "^build"
-      ],
-      "outputs": [
-        "dist/**"
-      ]
+      "dependsOn": ["^build"],
+      "outputs": ["dist/**"]
     },
     "@formbricks/survey-ui#build:dev": {
-      "dependsOn": [
-        "^build:dev"
-      ],
-      "outputs": [
-        "dist/**"
-      ]
+      "dependsOn": ["^build:dev"],
+      "outputs": ["dist/**"]
     },
     "@formbricks/survey-ui#go": {
       "cache": false,
-      "dependsOn": [
-        "@formbricks/survey-ui#build"
-      ],
+      "dependsOn": ["@formbricks/survey-ui#build"],
       "persistent": true
     },
     "@formbricks/surveys#build": {
-      "dependsOn": [
-        "^build",
-        "@formbricks/survey-ui#build"
-      ],
-      "outputs": [
-        "dist/**"
-      ]
+      "dependsOn": ["^build", "@formbricks/survey-ui#build"],
+      "outputs": ["dist/**"]
     },
     "@formbricks/surveys#build:dev": {
-      "dependsOn": [
-        "^build:dev",
-        "@formbricks/i18n-utils#build",
-        "@formbricks/survey-ui#build:dev"
-      ],
-      "outputs": [
-        "dist/**"
-      ]
+      "dependsOn": ["^build:dev", "@formbricks/i18n-utils#build", "@formbricks/survey-ui#build:dev"],
+      "outputs": ["dist/**"]
     },
     "@formbricks/surveys#go": {
       "cache": false,
-      "dependsOn": [
-        "@formbricks/survey-ui#build",
-        "@formbricks/surveys#build"
-      ],
+      "dependsOn": ["@formbricks/survey-ui#build", "@formbricks/surveys#build"],
       "persistent": true
     },
     "@formbricks/surveys#test": {
-      "dependsOn": [
-        "@formbricks/survey-ui#build"
-      ]
+      "dependsOn": ["@formbricks/survey-ui#build"]
     },
     "@formbricks/surveys#test:coverage": {
-      "dependsOn": [
-        "@formbricks/survey-ui#build"
-      ]
+      "dependsOn": ["@formbricks/survey-ui#build"]
     },
     "@formbricks/web#dev": {
       "cache": false,
@@ -281,9 +179,7 @@
       ]
     },
     "build": {
-      "dependsOn": [
-        "^build"
-      ],
+      "dependsOn": ["^build"],
       "env": [
         "AUDIT_LOG_ENABLED",
         "AUDIT_LOG_GET_USER_IP",
@@ -428,19 +324,11 @@
         "PROMETHEUS_EXPORTER_PORT",
         "USER_MANAGEMENT_MINIMUM_ROLE"
       ],
-      "outputs": [
-        "dist/**",
-        ".next/**"
-      ]
+      "outputs": ["dist/**", ".next/**"]
     },
     "build:dev": {
-      "dependsOn": [
-        "^build:dev"
-      ],
-      "outputs": [
-        "dist/**",
-        ".next/**"
-      ]
+      "dependsOn": ["^build:dev"],
+      "outputs": ["dist/**", ".next/**"]
     },
     "clean": {
       "cache": false,
@@ -462,17 +350,12 @@
       "outputs": []
     },
     "db:seed": {
-      "env": [
-        "ALLOW_SEED"
-      ],
+      "env": ["ALLOW_SEED"],
       "outputs": []
     },
     "db:setup": {
       "cache": false,
-      "dependsOn": [
-        "@formbricks/logger#build",
-        "@formbricks/database#build"
-      ],
+      "dependsOn": ["@formbricks/logger#build", "@formbricks/database#build"],
       "outputs": []
     },
     "db:start": {
@@ -487,9 +370,7 @@
       "persistent": true
     },
     "generate": {
-      "dependsOn": [
-        "^generate"
-      ]
+      "dependsOn": ["^generate"]
     },
     "go": {
       "cache": false,
@@ -506,9 +387,7 @@
       "persistent": true
     },
     "storybook#storybook": {
-      "dependsOn": [
-        "@formbricks/logger#build"
-      ]
+      "dependsOn": ["@formbricks/logger#build"]
     },
     "test": {
       "outputs": []
@@ -517,6 +396,5 @@
       "outputs": []
     }
   },
-  "ui": "stream",
-  "globalEnv": []
+  "ui": "stream"
 }
