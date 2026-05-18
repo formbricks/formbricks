@@ -9,7 +9,7 @@ import { TWorkspace, TWorkspaceUpdateInput, ZWorkspaceUpdateInput } from "@formb
 import { validateInputs } from "@/lib/utils/validate";
 import { deleteFilesByWorkspaceId } from "@/modules/storage/service";
 
-const DEFAULT_CONTACT_ATTRIBUTE_KEYS = [
+const DEFAULT_CONTACT_ATTRIBUTE_KEYS: Prisma.ContactAttributeKeyCreateWithoutWorkspaceInput[] = [
   {
     key: "userId",
     name: "User Id",
