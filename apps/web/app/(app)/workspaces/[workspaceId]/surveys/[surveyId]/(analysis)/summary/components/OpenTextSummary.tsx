@@ -62,8 +62,19 @@ export const OpenTextSummary = ({
               {elementSummary.samples.slice(0, visibleResponses).map((response) => (
                 <TableRow
                   key={response.id}
-                  className="cursor-pointer hover:bg-slate-50"
-                  onClick={() => setSelectedResponseId(response.id)}>
+                  role="button"
+                  tabIndex={0}
+                  aria-label={t("environments.surveys.summary.open_response_details", {
+                    defaultValue: "Open response details",
+                  })}
+                  className="cursor-pointer hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+                  onClick={() => setSelectedResponseId(response.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setSelectedResponseId(response.id);
+                    }
+                  }}>
                   <TableCell className="w-1/4">
                     {response.contact ? (
                       <Link
