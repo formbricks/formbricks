@@ -65,6 +65,23 @@ describe("integration OAuth state", () => {
     );
   });
 
+  test("stores the PKCE verifier with Airtable OAuth state", async () => {
+    const pkceCodeVerifier = "E".repeat(43);
+
+    await createIntegrationOAuthState({
+      pkceCodeVerifier,
+      provider: "airtable",
+      userId: oauthStatePayload.userId,
+      workspaceId: oauthStatePayload.workspaceId,
+    });
+
+    expect(mockCache.set).toHaveBeenCalledWith(
+      "fb:oauth:state:fake-hash",
+      expect.objectContaining({ pkceCodeVerifier }),
+      10 * 60 * 1000
+    );
+  });
+
   test("consumes a valid state atomically and returns the stored workspace", async () => {
     const state = await createIntegrationOAuthState({
       provider: "slack",
@@ -96,6 +113,19 @@ describe("integration OAuth state", () => {
         state: "A".repeat(43),
       })
     ).rejects.toThrow(IntegrationOAuthStateError);
+  });
+
+  test("rejects malformed callback state before reading Redis", async () => {
+    await expect(
+      consumeIntegrationOAuthState({
+        provider: "slack",
+        userId: oauthStatePayload.userId,
+        state: "too-short",
+      })
+    ).rejects.toThrow(IntegrationOAuthStateError);
+
+    expect(mockCache.getRedisClient).not.toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalled();
   });
 
   test("rejects wrong provider and wrong user states", async () => {
@@ -138,6 +168,70 @@ describe("integration OAuth state", () => {
         provider: "slack",
         userId: oauthStatePayload.userId,
         state: "D".repeat(43),
+      })
+    ).rejects.toThrow(IntegrationOAuthStateError);
+
+    expect(logger.error).toHaveBeenCalled();
+  });
+
+  test("fails closed when Redis client resolution throws", async () => {
+    mockCache.getRedisClient.mockRejectedValueOnce(new Error("Redis unavailable"));
+
+    await expect(
+      consumeIntegrationOAuthState({
+        provider: "slack",
+        userId: oauthStatePayload.userId,
+        state: "I".repeat(43),
+      })
+    ).rejects.toThrow(IntegrationOAuthStateError);
+
+    expect(logger.error).toHaveBeenCalled();
+  });
+
+  test("rejects malformed cached state values", async () => {
+    mockRedisConsume({
+      createdAt: Date.now(),
+      provider: "slack",
+      userId: oauthStatePayload.userId,
+    });
+
+    await expect(
+      consumeIntegrationOAuthState({
+        provider: "slack",
+        userId: oauthStatePayload.userId,
+        state: "F".repeat(43),
+      })
+    ).rejects.toThrow(IntegrationOAuthStateError);
+
+    expect(logger.error).toHaveBeenCalled();
+  });
+
+  test("rejects unexpected cached value types", async () => {
+    mockCache.getRedisClient.mockResolvedValueOnce({
+      eval: vi.fn().mockResolvedValue(42),
+    } as any);
+
+    await expect(
+      consumeIntegrationOAuthState({
+        provider: "slack",
+        userId: oauthStatePayload.userId,
+        state: "G".repeat(43),
+      })
+    ).rejects.toThrow(IntegrationOAuthStateError);
+
+    expect(logger.error).toHaveBeenCalled();
+  });
+
+  test("fails closed when atomic cache consumption fails", async () => {
+    mockCache.getRedisClient.mockResolvedValueOnce({
+      eval: vi.fn().mockRejectedValue(new Error("Redis failed")),
+    } as any);
+
+    await expect(
+      consumeIntegrationOAuthState({
+        provider: "slack",
+        userId: oauthStatePayload.userId,
+        state: "H".repeat(43),
       })
     ).rejects.toThrow(IntegrationOAuthStateError);
 
