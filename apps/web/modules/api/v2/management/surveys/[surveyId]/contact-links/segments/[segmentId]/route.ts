@@ -3,7 +3,7 @@ import { getOrganizationIdFromSurveyId } from "@/lib/utils/helper";
 import { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
 import { responses } from "@/modules/api/v2/lib/response";
 import { handleApiError } from "@/modules/api/v2/lib/utils";
-import { getEnvironmentId } from "@/modules/api/v2/management/lib/helper";
+import { getWorkspaceId } from "@/modules/api/v2/management/lib/helper";
 import { calculateExpirationDate } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/lib/utils";
 import { getContactsInSegment } from "@/modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/lib/contact";
 import {
@@ -47,15 +47,15 @@ export const GET = async (
         });
       }
 
-      const environmentIdResult = await getEnvironmentId(params.surveyId, false);
+      const workspaceIdResult = await getWorkspaceId(params.surveyId, false);
 
-      if (!environmentIdResult.ok) {
-        return handleApiError(request, environmentIdResult.error);
+      if (!workspaceIdResult.ok) {
+        return handleApiError(request, workspaceIdResult.error);
       }
 
-      const environmentId = environmentIdResult.data;
+      const { workspaceId } = workspaceIdResult.data;
 
-      if (!hasPermission(authentication.environmentPermissions, environmentId, "GET")) {
+      if (!hasPermission(authentication.workspacePermissions, workspaceId, "GET")) {
         return handleApiError(request, {
           type: "unauthorized",
         });

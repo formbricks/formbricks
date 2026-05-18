@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse, TResponseWithQuotas } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
@@ -23,7 +22,6 @@ interface SingleResponseCardProps {
   response: TResponseWithQuotas;
   user?: TUser;
   environmentTags: TTag[];
-  environment: TEnvironment;
   updateResponse?: (responseId: string, responses: TResponse) => void;
   updateResponseList?: (responseIds: string[]) => void;
   isReadOnly: boolean;
@@ -36,7 +34,6 @@ export const SingleResponseCard = ({
   response,
   user,
   environmentTags,
-  environment,
   updateResponse,
   updateResponseList,
   isReadOnly,
@@ -46,7 +43,7 @@ export const SingleResponseCard = ({
   const hasQuotas = (response?.quotas && response.quotas.length > 0) ?? false;
   const [decrementQuotas, setDecrementQuotas] = useState(hasQuotas);
   const { t } = useTranslation();
-  const environmentId = survey.environmentId;
+  const workspaceId = survey.workspaceId;
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -112,7 +109,7 @@ export const SingleResponseCard = ({
       }
       updateResponseList?.([response.id]);
       if (setSelectedResponseId) setSelectedResponseId(null);
-      toast.success(t("environments.surveys.responses.response_deleted_successfully"));
+      toast.success(t("workspace.surveys.responses.response_deleted_successfully"));
       setDeleteDialogOpen(false);
     } catch (error) {
       if (error instanceof Error) toast.error(error.message);
@@ -135,7 +132,6 @@ export const SingleResponseCard = ({
           pageType="response"
           response={response}
           survey={survey}
-          environment={environment}
           user={user}
           isReadOnly={isReadOnly}
           setDeleteDialogOpen={setDeleteDialogOpen}
@@ -151,7 +147,7 @@ export const SingleResponseCard = ({
 
         <ResponseTagsWrapper
           key={response.id}
-          environmentId={environmentId}
+          workspaceId={workspaceId}
           responseId={response.id}
           tags={response.tags.map((tag) => ({ tagId: tag.id, tagName: tag.name }))}
           environmentTags={environmentTags}
@@ -167,10 +163,10 @@ export const SingleResponseCard = ({
           deleteWhat={t("common.response")}
           onDelete={handleDeleteResponse}
           isDeleting={isDeleting}
-          text={t("environments.surveys.responses.delete_response_confirmation")}>
+          text={t("workspace.surveys.responses.delete_response_confirmation")}>
           {hasQuotas && (
             <DecrementQuotasCheckbox
-              title={t("environments.surveys.responses.delete_response_quotas")}
+              title={t("workspace.surveys.responses.delete_response_quotas")}
               checked={decrementQuotas}
               onCheckedChange={setDecrementQuotas}
             />

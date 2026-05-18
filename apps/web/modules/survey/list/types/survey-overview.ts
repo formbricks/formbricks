@@ -16,6 +16,7 @@ export const ZSurveyListItem = z.object({
   workspaceId: z.string(),
   type: z.enum(["link", "app", "website", "web"]),
   status: ZSurveyStatus,
+  publishOn: z.date().nullable(),
   createdAt: z.date(),
   updatedAt: z.date(),
   responseCount: z.number(),

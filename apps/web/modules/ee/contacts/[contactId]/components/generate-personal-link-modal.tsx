@@ -77,7 +77,7 @@ export const GeneratePersonalLinkModal = ({
 
   const handleGenerate = async () => {
     if (!selectedSurveyId) {
-      toast.error(t("environments.contacts.please_select_a_survey"));
+      toast.error(t("workspace.contacts.please_select_a_survey"));
       return;
     }
     setIsLoading(true);
@@ -100,9 +100,9 @@ export const GeneratePersonalLinkModal = ({
         toast.success(t("common.copied_to_clipboard"));
       } else {
         toast.error(
-          t("environments.contacts.personal_link_generated_but_clipboard_failed", {
+          t("workspace.contacts.personal_link_generated_but_clipboard_failed", {
             url: surveyUrl,
-          }) || `${t("environments.contacts.personal_link_generated")}: ${surveyUrl}`,
+          }) || `${t("workspace.contacts.personal_link_generated")}: ${surveyUrl}`,
           { duration: 6000 }
         );
       }
@@ -115,8 +115,8 @@ export const GeneratePersonalLinkModal = ({
   };
 
   const getSelectPlaceholder = () => {
-    if (publishedLinkSurveys.length === 0) return t("environments.contacts.no_published_surveys");
-    return t("environments.contacts.select_a_survey");
+    if (publishedLinkSurveys.length === 0) return t("workspace.contacts.no_published_surveys");
+    return t("workspace.contacts.select_a_survey");
   };
 
   const isDisabled = isLoading || publishedLinkSurveys.length === 0;
@@ -127,10 +127,8 @@ export const GeneratePersonalLinkModal = ({
       <DialogContent>
         <DialogHeader>
           <LinkIcon className="h-4 w-4" />
-          <DialogTitle>{t("environments.contacts.generate_personal_link")}</DialogTitle>
-          <DialogDescription>
-            {t("environments.contacts.generate_personal_link_description")}
-          </DialogDescription>
+          <DialogTitle>{t("workspace.contacts.generate_personal_link")}</DialogTitle>
+          <DialogDescription>{t("workspace.contacts.generate_personal_link_description")}</DialogDescription>
         </DialogHeader>
 
         <DialogBody>
@@ -151,14 +149,14 @@ export const GeneratePersonalLinkModal = ({
               </Select>
               {publishedLinkSurveys.length === 0 && (
                 <p className="text-sm text-slate-500">
-                  {t("environments.contacts.no_published_link_surveys_available")}
+                  {t("workspace.contacts.no_published_link_surveys_available")}
                 </p>
               )}
             </div>
 
             {generatedUrl && (
               <div className="space-y-2">
-                <Label htmlFor="generated-url">{t("environments.contacts.personal_survey_link")}</Label>
+                <Label htmlFor="generated-url">{t("workspace.contacts.personal_survey_link")}</Label>
                 <div className="flex gap-2">
                   <Input
                     id="generated-url"

@@ -1,0 +1,50 @@
+import { useTranslation } from "react-i18next";
+import { TConnectorWithMappings } from "@formbricks/types/connector";
+import { ConnectorsTableDataRow } from "./connectors-table-data-row";
+
+interface ConnectorsTableRowsContainerProps {
+  connectors: TConnectorWithMappings[];
+  onConnectorClick: (connector: TConnectorWithMappings) => void;
+  onCsvImport: (connector: TConnectorWithMappings) => void;
+  onDuplicate: (connector: TConnectorWithMappings) => Promise<void>;
+  onToggleStatus: (connector: TConnectorWithMappings) => Promise<void>;
+  onDelete: (connectorId: string) => Promise<void>;
+  isReadOnly?: boolean;
+}
+
+export const ConnectorsTableRowsContainer = ({
+  connectors,
+  onConnectorClick,
+  onCsvImport,
+  onDuplicate,
+  onToggleStatus,
+  onDelete,
+  isReadOnly = false,
+}: ConnectorsTableRowsContainerProps) => {
+  const { t } = useTranslation();
+
+  if (connectors.length === 0) {
+    return (
+      <div className="flex h-32 items-center justify-center">
+        <p className="text-sm text-slate-500">{t("workspace.unify.no_sources_connected")}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="divide-y divide-slate-100">
+      {connectors.map((connector) => (
+        <ConnectorsTableDataRow
+          key={connector.id}
+          connector={connector}
+          onEdit={() => onConnectorClick(connector)}
+          onCsvImport={connector.type === "csv" ? () => onCsvImport(connector) : undefined}
+          onDuplicate={() => onDuplicate(connector)}
+          onToggleStatus={() => onToggleStatus(connector)}
+          onDelete={() => onDelete(connector.id)}
+          isReadOnly={isReadOnly}
+        />
+      ))}
+    </div>
+  );
+};

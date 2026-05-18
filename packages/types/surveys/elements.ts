@@ -362,6 +362,30 @@ export const ZSurveyContactInfoElement = ZSurveyElementBase.extend({
 
 export type TSurveyContactInfoElement = z.infer<typeof ZSurveyContactInfoElement>;
 
+// CSAT Element
+export const ZSurveyCsatElement = ZSurveyElementBase.extend({
+  type: z.literal(TSurveyElementTypeEnum.CSAT),
+  scale: z.enum(["number", "smiley", "star"]),
+  range: z.literal(5),
+  lowerLabel: ZI18nString.optional(),
+  upperLabel: ZI18nString.optional(),
+  isColorCodingEnabled: z.boolean().optional().prefault(false),
+});
+
+export type TSurveyCsatElement = z.infer<typeof ZSurveyCsatElement>;
+
+// CES Element
+export const ZSurveyCesElement = ZSurveyElementBase.extend({
+  type: z.literal(TSurveyElementTypeEnum.CES),
+  scale: z.enum(["number", "smiley", "star"]),
+  range: z.union([z.literal(5), z.literal(7)]),
+  lowerLabel: ZI18nString.optional(),
+  upperLabel: ZI18nString.optional(),
+  isColorCodingEnabled: z.boolean().optional().prefault(false),
+});
+
+export type TSurveyCesElement = z.infer<typeof ZSurveyCesElement>;
+
 // Union of all element types
 export const ZSurveyElement = z.union([
   ZSurveyOpenTextElement,
@@ -379,6 +403,8 @@ export const ZSurveyElement = z.union([
   ZSurveyAddressElement,
   ZSurveyRankingElement,
   ZSurveyContactInfoElement,
+  ZSurveyCsatElement,
+  ZSurveyCesElement,
 ]);
 
 export type TSurveyElement = z.infer<typeof ZSurveyElement>;

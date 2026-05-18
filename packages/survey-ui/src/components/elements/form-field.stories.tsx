@@ -154,7 +154,7 @@ export const StylingPlayground: Story = {
       control: "text",
       table: { category: "Input Styling" },
     },
-    inputColor: {
+    inputTextColor: {
       control: "color",
       table: { category: "Input Styling" },
     },

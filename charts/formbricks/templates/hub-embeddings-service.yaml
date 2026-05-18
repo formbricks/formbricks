@@ -1,0 +1,35 @@
+{{- if and .Values.hub.enabled .Values.hub.embeddings.enabled }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "formbricks.hubEmbeddingsName" . }}
+  labels:
+    helm.sh/chart: {{ include "formbricks.chart" . }}
+    app.kubernetes.io/name: {{ include "formbricks.hubEmbeddingsName" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: hub-embeddings
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/part-of: {{ .Values.partOfOverride | default (include "formbricks.name" .) }}
+    {{- with .Values.hub.embeddings.service.additionalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.hub.embeddings.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.hub.embeddings.service.type }}
+  selector:
+    app.kubernetes.io/name: {{ include "formbricks.hubEmbeddingsName" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  ports:
+    - name: http
+      port: {{ .Values.hub.embeddings.service.port }}
+      targetPort: http
+      protocol: TCP
+    - name: metrics
+      port: {{ .Values.hub.embeddings.prometheusPort }}
+      targetPort: metrics
+      protocol: TCP
+{{- end }}

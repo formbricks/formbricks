@@ -2,7 +2,7 @@
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
-import { Project } from "@prisma/client";
+import { Workspace } from "@prisma/client";
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { PlusIcon } from "lucide-react";
 import { useState } from "react";
@@ -17,11 +17,11 @@ import {
 
 interface AddElementButtonProps {
   addElement: (element: any) => void;
-  project: Project;
+  workspace: Workspace;
   isCxMode: boolean;
 }
 
-export const AddElementButton = ({ addElement, project, isCxMode }: AddElementButtonProps) => {
+export const AddElementButton = ({ addElement, workspace, isCxMode }: AddElementButtonProps) => {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [hoveredElementId, setHoveredElementId] = useState<string | null>(null);
@@ -42,9 +42,9 @@ export const AddElementButton = ({ addElement, project, isCxMode }: AddElementBu
             <PlusIcon className="h-5 w-5 text-white" />
           </div>
           <div className="px-4 py-3">
-            <p className="text-sm font-semibold">{t("environments.surveys.edit.add_block")}</p>
+            <p className="text-sm font-semibold">{t("workspace.surveys.edit.add_block")}</p>
             <p className="mt-1 text-xs text-slate-500">
-              {t("environments.surveys.edit.choose_the_first_question_on_your_block")}
+              {t("workspace.surveys.edit.choose_the_first_question_on_your_block")}
             </p>
           </div>
         </div>
@@ -58,7 +58,7 @@ export const AddElementButton = ({ addElement, project, isCxMode }: AddElementBu
             onClick={() => {
               addElement({
                 ...universalElementPresets,
-                ...getElementDefaults(elementType.id, project, t),
+                ...getElementDefaults(elementType.id, workspace, t),
                 id: createId(),
                 type: elementType.id,
               });

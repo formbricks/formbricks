@@ -15,6 +15,13 @@ Make sure Docker and Docker Compose are installed on your system. These are usua
   Docker documentation.
 </Note>
 
+<Info>
+  Starting with Formbricks v5, the production Docker Compose stack includes Formbricks Hub and the XM Suite v5
+  Cube.js services. Generate `HUB_API_KEY` and `CUBEJS_API_SECRET` during setup, keep `HUB_API_URL` at its
+  internal default unless Hub runs elsewhere, and use the [migration guide](/self-hosting/advanced/migration#v5)
+  when upgrading an existing 4.x instance.
+</Info>
+
 ## Start
 
 1. **Create a New Directory for Formbricks**
@@ -25,12 +32,31 @@ Make sure Docker and Docker Compose are installed on your system. These are usua
    mkdir formbricks-quickstart && cd formbricks-quickstart
    ```
 
-1. **Download the Docker-Compose File**
+1. **Download the Docker Files**
 
-   Get the docker-compose file from the Formbricks repository by running:
+   Get the Docker Compose file plus the Cube.js configuration shipped with the XM Suite v5 stack:
 
    ```bash
+   mkdir -p cube/schema
    curl -o docker-compose.yml https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/docker-compose.yml
+   curl -o cube/cube.js https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/cube/cube.js
+   curl -o cube/schema/FeedbackRecords.js https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/cube/schema/FeedbackRecords.js
+   ```
+
+1. **Generate Hub Secret and Optional Cube Secret**
+
+   Formbricks Hub requires an API key. XM Suite v5 analytics also requires Cube.js; set the optional `xm`
+   Compose profile and Cube secret when you want to run the bundled Cube service. For a Hub-only stack, create
+   `.env` with just `HUB_API_KEY` and omit `COMPOSE_PROFILES` and `CUBEJS_API_SECRET`.
+
+   ```bash
+   cat <<EOF > .env
+   COMPOSE_PROFILES=xm
+   HUB_API_KEY=$(openssl rand -hex 32)
+   CUBEJS_API_SECRET=$(openssl rand -hex 32)
+   CUBEJS_JWT_ISSUER=formbricks-web
+   CUBEJS_JWT_AUDIENCE=formbricks-cube
+   EOF
    ```
 
 1. **Generate NextAuth Secret**
@@ -81,9 +107,34 @@ Make sure Docker and Docker Compose are installed on your system. These are usua
    sed -i '' "s/CRON_SECRET:.*/CRON_SECRET: $(openssl rand -hex 32)/" docker-compose.yml
    ```
 
+1. **Generate Hub API Key**
+
+   Formbricks v5 requires a Hub API key for the bundled Hub service.
+
+   For Linux:
+
+   ```bash
+   sed -i "/HUB_API_KEY:$/s/HUB_API_KEY:.*/HUB_API_KEY: $(openssl rand -hex 32)/" docker-compose.yml
+   ```
+
+   For macOS:
+
+   ```bash
+   sed -i '' "s/HUB_API_KEY:.*/HUB_API_KEY: $(openssl rand -hex 32)/" docker-compose.yml
+   ```
+
+   <Info>
+     The bundled production stack already sets <code>HUB_API_URL</code> to <code>http://hub:8080</code>. Only
+     change that value if your Formbricks app needs to reach Hub at a different address. If your deployment also
+     resolves Compose variables from a shell environment or <code>.env</code> file, keep the same
+     <code>HUB_API_KEY</code> available there as well.
+   </Info>
+
 1. **Start the Docker Setup**
 
-   Now, you're ready to run Formbricks with Docker. Use the command below to start Formbricks along with a PostgreSQL database using Docker Compose:
+   Now, you're ready to run Formbricks with Docker. Use the command below to start Formbricks together with
+   PostgreSQL, Redis, and Formbricks Hub. If the `xm` profile is set in `.env`, Docker Compose also starts Cube.js
+   for XM Suite v5 analytics.
 
    ```bash
    docker compose up -d
@@ -95,9 +146,27 @@ Make sure Docker and Docker Compose are installed on your system. These are usua
 
    Once the setup is running, open [**http://localhost:3000**](http://localhost:3000) in your browser to access Formbricks. The first time you visit, you'll see a setup wizard. Follow the steps to create your first user and start using Formbricks.
 
+<Note>
+  The bundled Docker stack keeps Formbricks Hub internal to the compose network. When the `xm` profile is
+  enabled, Cube.js is internal too. The app reaches them through `http://hub:8080` and `http://cube:4000`.
+</Note>
+
+<Info>
+  If you use the one-click Traefik setup, FeedbackRecords are available on the Formbricks origin at
+  `/api/v3/feedbackRecords` and `/v1/feedback-records`. Custom Docker reverse proxies need equivalent wiring:
+  run gateway auth against the Formbricks app, rewrite `/api/v3/feedbackRecords` to Hub's
+  `/v1/feedback-records`, and inject `Authorization: Bearer <HUB_API_KEY>` only on the Hub-bound hop.
+</Info>
+
 ## Update
 
 Please take a look at our [migration guide](/self-hosting/advanced/migration) for version specific steps to update Formbricks.
+
+<Info>
+  For a major migration such as Formbricks 4.x to 5.0, update your compose structure and configuration first.
+  Pulling images alone is not enough if your stack does not yet include Hub, `HUB_API_KEY`, the bundled
+  `cube/` config files plus `CUBEJS_API_SECRET`, or the new edge rate-limiting setup.
+</Info>
 
 1. Pull the latest Formbricks image
 
@@ -155,8 +224,8 @@ starts RustFS and auto-creates the `formbricks` bucket.
    docker compose -f docker-compose.dev.yml up -d
    ```
 
-   This starts PostgreSQL, Valkey (Redis), Mailhog, RustFS, a permissions helper, and a one-time bucket
-   bootstrap job.
+   This starts PostgreSQL, Valkey (Redis), Mailhog, RustFS, a permissions helper, a one-time bucket
+   bootstrap job, Formbricks Hub, and a local Cube instance for analytics testing.
 
 2. **Access the RustFS console**
 
@@ -303,6 +372,14 @@ S3_BUCKET_NAME="${FORMBRICKS_RUSTFS_BUCKET_NAME}"
 S3_ENDPOINT_URL="http://rustfs:9000"
 S3_FORCE_PATH_STYLE="1"
 ```
+
+Start the stack:
+
+```bash
+docker compose up -d
+```
+
+The bucket and service account are created automatically by the `rustfs-init` job defined above, so no manual RustFS console step is required.
 
 <Note>
   Restrict the `.env` file to `0600` and do not commit it to source control. For production, prefer the

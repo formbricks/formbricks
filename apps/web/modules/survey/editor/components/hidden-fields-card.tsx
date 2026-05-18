@@ -83,35 +83,30 @@ export const HiddenFieldsCard = ({
 
     if (quesIdx !== -1) {
       toast.error(
-        t(
-          "environments.surveys.edit.fieldId_is_used_in_logic_of_question_please_remove_it_from_logic_first",
-          {
-            fieldId,
-            questionIndex: quesIdx + 1,
-          }
-        )
+        t("workspace.surveys.edit.fieldId_is_used_in_logic_of_question_please_remove_it_from_logic_first", {
+          fieldId,
+          questionIndex: quesIdx + 1,
+        })
       );
       return;
     }
 
     const recallElementIdx = isUsedInRecall(localSurvey, fieldId);
     if (recallElementIdx === -2) {
-      toast.error(
-        t("environments.surveys.edit.hidden_field_used_in_recall_welcome", { hiddenField: fieldId })
-      );
+      toast.error(t("workspace.surveys.edit.hidden_field_used_in_recall_welcome", { hiddenField: fieldId }));
       return;
     }
 
     const totalElements = elements.length;
     if (recallElementIdx === totalElements) {
       toast.error(
-        t("environments.surveys.edit.hidden_field_used_in_recall_ending_card", { hiddenField: fieldId })
+        t("workspace.surveys.edit.hidden_field_used_in_recall_ending_card", { hiddenField: fieldId })
       );
       return;
     }
     if (recallElementIdx !== -1) {
       toast.error(
-        t("environments.surveys.edit.hidden_field_used_in_recall", {
+        t("workspace.surveys.edit.hidden_field_used_in_recall", {
           hiddenField: fieldId,
           questionIndex: recallElementIdx + 1,
         })
@@ -123,7 +118,7 @@ export const HiddenFieldsCard = ({
 
     if (quotaIdx !== -1) {
       toast.error(
-        t("environments.surveys.edit.fieldId_is_used_in_quota_please_remove_it_from_quota_first", {
+        t("workspace.surveys.edit.fieldId_is_used_in_quota_please_remove_it_from_quota_first", {
           fieldId,
           quotaName: quotas[quotaIdx].name,
         })
@@ -138,7 +133,7 @@ export const HiddenFieldsCard = ({
       });
 
     if (isHiddenFieldUsedInFollowUp) {
-      toast.error(t("environments.surveys.edit.follow_ups_hidden_field_error"));
+      toast.error(t("workspace.surveys.edit.follow_ups_hidden_field_error"));
       return;
     }
 
@@ -193,7 +188,7 @@ export const HiddenFieldsCard = ({
               })
             ) : (
               <p className="mt-2 text-sm italic text-slate-500">
-                {t("environments.surveys.edit.no_hidden_fields_yet_add_first_one_below")}
+                {t("workspace.surveys.edit.no_hidden_fields_yet_add_first_one_below")}
               </p>
             )}
           </div>
@@ -222,7 +217,7 @@ export const HiddenFieldsCard = ({
                 fieldIds: [...(localSurvey.hiddenFields?.fieldIds || []), hiddenField],
                 enabled: true,
               });
-              toast.success(t("environments.surveys.edit.hidden_field_added_successfully"));
+              toast.success(t("workspace.surveys.edit.hidden_field_added_successfully"));
               setHiddenField("");
             }}>
             <Label htmlFor="hiddenField">{t("common.hidden_field")}</Label>
@@ -233,10 +228,10 @@ export const HiddenFieldsCard = ({
                 name="hiddenField"
                 value={hiddenField}
                 onChange={(e) => setHiddenField(e.target.value.trim())}
-                placeholder={t("environments.surveys.edit.type_field_id") + "..."}
+                placeholder={t("workspace.surveys.edit.type_field_id") + "..."}
               />
               <Button variant="secondary" type="submit" className="h-10 whitespace-nowrap">
-                {t("environments.surveys.edit.add_hidden_field_id")}
+                {t("workspace.surveys.edit.add_hidden_field_id")}
               </Button>
             </div>
           </form>

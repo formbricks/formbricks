@@ -8,10 +8,9 @@ import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import {
-  getOrganizationIdFromEnvironmentId,
   getOrganizationIdFromWebhookId,
-  getProjectIdFromEnvironmentId,
-  getProjectIdFromWebhookId,
+  getOrganizationIdFromWorkspaceId,
+  getWorkspaceIdFromWebhookId,
 } from "@/lib/utils/helper";
 import { getWebhook } from "@/modules/api/v2/management/webhooks/[webhookId]/lib/webhook";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
@@ -24,15 +23,14 @@ import {
 import { ZWebhookInput } from "@/modules/integrations/webhooks/types/webhooks";
 
 const ZCreateWebhookAction = z.object({
-  environmentId: ZId,
+  workspaceId: ZId,
   webhookInput: ZWebhookInput,
   webhookSecret: z.string().optional(),
 });
 
 export const createWebhookAction = authenticatedActionClient.inputSchema(ZCreateWebhookAction).action(
   withAuditLogging("created", "webhook", async ({ ctx, parsedInput }) => {
-    const organizationId = await getOrganizationIdFromEnvironmentId(parsedInput.environmentId);
-    const projectId = await getProjectIdFromEnvironmentId(parsedInput.environmentId);
+    const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId,
@@ -42,14 +40,14 @@ export const createWebhookAction = authenticatedActionClient.inputSchema(ZCreate
           roles: ["owner", "manager"],
         },
         {
-          type: "projectTeam",
+          type: "workspaceTeam",
           minPermission: "readWrite",
-          projectId,
+          workspaceId: parsedInput.workspaceId,
         },
       ],
     });
     const webhook = await createWebhook(
-      parsedInput.environmentId,
+      parsedInput.workspaceId,
       parsedInput.webhookInput,
       parsedInput.webhookSecret
     );
@@ -62,10 +60,9 @@ export const createWebhookAction = authenticatedActionClient.inputSchema(ZCreate
       {
         integration_type: "webhook",
         organization_id: organizationId,
-        workspace_id: projectId,
-        environment_id: parsedInput.environmentId,
+        workspace_id: parsedInput.workspaceId,
       },
-      { organizationId, workspaceId: projectId }
+      { organizationId, workspaceId: parsedInput.workspaceId }
     );
 
     return webhook;
@@ -88,9 +85,9 @@ export const deleteWebhookAction = authenticatedActionClient.inputSchema(ZDelete
           roles: ["owner", "manager"],
         },
         {
-          type: "projectTeam",
+          type: "workspaceTeam",
           minPermission: "readWrite",
-          projectId: await getProjectIdFromWebhookId(parsedInput.id),
+          workspaceId: await getWorkspaceIdFromWebhookId(parsedInput.id),
         },
       ],
     });
@@ -121,9 +118,9 @@ export const updateWebhookAction = authenticatedActionClient.inputSchema(ZUpdate
           roles: ["owner", "manager"],
         },
         {
-          type: "projectTeam",
+          type: "workspaceTeam",
           minPermission: "readWrite",
-          projectId: await getProjectIdFromWebhookId(parsedInput.webhookId),
+          workspaceId: await getWorkspaceIdFromWebhookId(parsedInput.webhookId),
         },
       ],
     });
@@ -159,9 +156,9 @@ export const testEndpointAction = authenticatedActionClient
             roles: ["owner", "manager"],
           },
           {
-            type: "projectTeam",
+            type: "workspaceTeam",
             minPermission: "read",
-            projectId: await getProjectIdFromWebhookId(parsedInput.webhookId),
+            workspaceId: await getWorkspaceIdFromWebhookId(parsedInput.webhookId),
           },
         ],
       });

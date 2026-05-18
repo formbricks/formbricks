@@ -31,7 +31,7 @@ export const QuotaList = ({ quotas, onEdit, deleteQuota, duplicateQuota }: Quota
           <div className="text-left">
             <Label className="text-sm font-medium text-slate-800">{quota.name}</Label>
             <div className="mt-1 text-sm text-slate-500">
-              {t("environments.surveys.edit.quotas.limited_to_x_responses", {
+              {t("workspace.surveys.edit.quotas.limited_to_x_responses", {
                 limit: quota.limit.toLocaleString(),
               })}
             </div>

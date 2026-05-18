@@ -40,9 +40,9 @@ export const deleteTeam = async (
         organizationId,
       },
       include: {
-        projectTeams: {
+        workspaceTeams: {
           select: {
-            projectId: true,
+            workspaceId: true,
           },
         },
       },
@@ -82,7 +82,7 @@ export const updateTeam = async (
       },
       data: teamInput,
       include: {
-        projectTeams: { select: { projectId: true } },
+        workspaceTeams: { select: { workspaceId: true } },
       },
     });
 

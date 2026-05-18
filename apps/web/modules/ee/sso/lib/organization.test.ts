@@ -25,18 +25,8 @@ describe("getFirstOrganization", () => {
       id: "org-1",
       name: "Test Org",
       createdAt: new Date(),
-      whitelabel: true,
+      whitelabel: null,
       updatedAt: new Date(),
-      billing: {
-        usageCycleAnchor: new Date(),
-        stripeCustomerId: "cus_123",
-        limits: {
-          monthly: {
-            responses: 1000,
-          },
-          projects: 3,
-        },
-      },
       isAISmartToolsEnabled: false,
       isAIDataAnalysisEnabled: false,
     };

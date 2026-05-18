@@ -68,16 +68,12 @@ jobs:
         run: pnpm install --frozen-lockfile --config.platform=linux --config.architecture=x64
         shell: bash
 
-      - name: create .env
-        run: cp .env.example .env
+      - name: Create .env
+        run: pnpm dev:setup
         shell: bash
 
-      - name: Fill ENCRYPTION_KEY, ENTERPRISE_LICENSE_KEY and E2E_TESTING in .env
+      - name: Fill ENTERPRISE_LICENSE_KEY and E2E_TESTING in .env
         run: |
-          RANDOM_KEY=$(openssl rand -hex 32)
-          sed -i "s/ENCRYPTION_KEY=.*/ENCRYPTION_KEY=${RANDOM_KEY}/" .env
-          sed -i "s/CRON_SECRET=.*/CRON_SECRET=${RANDOM_KEY}/" .env
-          sed -i "s/NEXTAUTH_SECRET=.*/NEXTAUTH_SECRET=${RANDOM_KEY}/" .env
           sed -i "s/ENTERPRISE_LICENSE_KEY=.*/ENTERPRISE_LICENSE_KEY=${{ secrets.ENTERPRISE_LICENSE_KEY }}/" .env
           sed -i "s|REDIS_URL=.*|REDIS_URL=redis://localhost:6379|" .env
           echo "" >> .env

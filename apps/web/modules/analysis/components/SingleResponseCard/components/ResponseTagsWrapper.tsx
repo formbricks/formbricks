@@ -8,10 +8,9 @@ import { TResponse } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
 import { TUserLocale } from "@formbricks/types/user";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { TagError } from "@/modules/projects/settings/types/tag";
-import { IdBadge } from "@/modules/ui/components/id-badge";
 import { Tag } from "@/modules/ui/components/tag";
 import { TagsCombobox } from "@/modules/ui/components/tags-combobox";
+import { TagError } from "@/modules/workspaces/settings/types/tag";
 import { createTagAction, createTagToResponseAction, deleteTagOnResponseAction } from "../actions";
 import { SingleResponseCardMetadata } from "./SingleResponseCardMetadata";
 
@@ -20,7 +19,7 @@ interface ResponseTagsWrapperProps {
     tagId: string;
     tagName: string;
   }[];
-  environmentId: string;
+  workspaceId: string;
   responseId: string;
   environmentTags: TTag[];
   updateFetchedResponses: () => void;
@@ -31,7 +30,7 @@ interface ResponseTagsWrapperProps {
 
 export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
   tags,
-  environmentId,
+  workspaceId,
   responseId,
   environmentTags,
   updateFetchedResponses,
@@ -54,7 +53,7 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
     } else {
       const errorMessage = getFormattedErrorMessage(deleteTagResponse);
       logger.error({ errorMessage }, "Error deleting tag");
-      toast.error(t("environments.surveys.responses.an_error_occurred_deleting_the_tag"));
+      toast.error(t("workspace.surveys.responses.an_error_occurred_deleting_the_tag"));
     }
     setIsLoadingTagOperation(false);
   };
@@ -71,21 +70,21 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
 
   const handleCreateTag = async (tagName: string) => {
     setIsLoadingTagOperation(true);
-    const newTagResponse = await createTagAction({ environmentId, tagName });
+    const newTagResponse = await createTagAction({ workspaceId, tagName });
 
     if (!newTagResponse?.data) {
-      toast.error(t("environments.surveys.responses.an_error_occurred_creating_the_tag"));
+      toast.error(t("workspace.surveys.responses.an_error_occurred_creating_the_tag"));
       return;
     }
 
     if (!newTagResponse.data.ok) {
       const errorMessage = newTagResponse.data.error;
       if (errorMessage?.code === TagError.TAG_NAME_ALREADY_EXISTS) {
-        toast.error(t("environments.surveys.responses.tag_already_exists"), {
+        toast.error(t("workspace.surveys.responses.tag_already_exists"), {
           duration: 2000,
         });
       } else {
-        toast.error(t("environments.surveys.responses.an_error_occurred_creating_the_tag"));
+        toast.error(t("workspace.surveys.responses.an_error_occurred_creating_the_tag"));
       }
       return;
     }
@@ -122,7 +121,7 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
       setSearchValue("");
       setOpen(false);
     } catch (error) {
-      toast.error(t("environments.surveys.responses.an_error_occurred_adding_the_tag"));
+      toast.error(t("workspace.surveys.responses.an_error_occurred_adding_the_tag"));
       console.error("Error adding tag:", error);
       // Revert the tag if the action failed
       setTagsState((prevTags) => prevTags.filter((tag) => tag.tagId !== tagId));
@@ -134,7 +133,6 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
   return (
     <div className="flex items-center justify-between gap-4 border-t border-slate-200 px-6 py-3">
       <div className="flex flex-wrap items-center gap-2">
-        <IdBadge id={responseId} />
         <SingleResponseCardMetadata response={response} locale={locale} />
         {tagsState?.map((tag) => (
           <Tag

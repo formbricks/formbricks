@@ -2,8 +2,8 @@ import * as z from "zod";
 import { responses } from "@/app/lib/api/response";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { getAirtableToken, getTables } from "@/lib/airtable/service";
-import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { getIntegrationByType } from "@/lib/integration/service";
+import { hasUserWorkspaceAccess } from "@/lib/workspace/auth";
 
 export const GET = withV1ApiWrapper({
   handler: async ({ req, authentication }) => {
@@ -12,7 +12,7 @@ export const GET = withV1ApiWrapper({
     }
 
     const url = req.url;
-    const environmentId = req.headers.get("environmentId");
+    const workspaceId = req.headers.get("workspaceId");
     const queryParams = new URLSearchParams(url.split("?")[1]);
     const baseId = z.string().safeParse(queryParams.get("baseId"));
 
@@ -22,29 +22,29 @@ export const GET = withV1ApiWrapper({
       };
     }
 
-    if (!environmentId) {
+    if (!workspaceId) {
       return {
-        response: responses.badRequestResponse("environmentId is missing"),
+        response: responses.badRequestResponse("workspaceId is missing"),
       };
     }
 
-    const canUserAccessEnvironment = await hasUserEnvironmentAccess(authentication.user.id, environmentId);
-    if (!canUserAccessEnvironment) {
+    const canUserAccessWorkspace = await hasUserWorkspaceAccess(authentication.user.id, workspaceId);
+    if (!canUserAccessWorkspace) {
       return {
         response: responses.unauthorizedResponse(),
       };
     }
 
-    const integration = await getIntegrationByType(environmentId, "airtable");
+    const integration = await getIntegrationByType(workspaceId, "airtable");
 
     if (!integration) {
       return {
-        response: responses.notFoundResponse("Integration not found", environmentId),
+        response: responses.notFoundResponse("Integration not found", null),
       };
     }
 
     // Use getAirtableToken to ensure the access token is refreshed if expired
-    const freshAccessToken = await getAirtableToken(environmentId);
+    const freshAccessToken = await getAirtableToken(workspaceId);
     const tables = await getTables(
       { ...integration.config.key, access_token: freshAccessToken },
       baseId.data
