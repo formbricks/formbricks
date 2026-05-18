@@ -1670,12 +1670,12 @@
         "ai_enable_in_settings": "Ative nas configurações da organização.",
         "ai_instance_not_configured": "A IA não está configurada nesta instância. Entre em contato com seu administrador.",
         "ai_not_available": "A análise de dados com IA não está disponível.",
-        "ai_not_enabled": "A análise de dados com IA está desabilitada para esta organização. Habilite nas configurações da organização.",
-        "ai_not_in_plan": "A análise de dados com IA não está disponível no seu plano atual. Faça upgrade para desbloquear este recurso.",
+        "ai_not_enabled": "A análise de dados por IA está desativada para esta organização.",
+        "ai_not_in_plan": "A análise de dados por IA não está disponível no seu plano atual.",
         "ai_query_placeholder": "ex: Quantos usuários se cadastraram na semana passada?",
         "ai_query_section_description": "Descreva o que você quer ver e deixe a IA construir o gráfico.",
         "ai_query_section_title": "Pergunte aos seus dados",
-        "ai_upgrade_plan": "Fazer upgrade do plano.",
+        "ai_upgrade_plan": "Fazer upgrade do plano",
         "already_on_dashboard": "Já está no painel",
         "and_filter_logic": "E",
         "apply_changes": "Aplicar alterações",
@@ -3871,8 +3871,7 @@
       "value_boolean": "Valor (Booleano)",
       "value_date": "Valor (Data)",
       "value_number": "Valor (Número)",
-      "value_text": "Valor (Texto)",
-      "view_rest_api_docs": "Ver documentação da API REST"
+      "value_text": "Valor (Texto)"
     },
     "xm-templates": {
       "ces": "CES",

@@ -1670,12 +1670,12 @@
         "ai_enable_in_settings": "組織設定で有効にしてください。",
         "ai_instance_not_configured": "このインスタンスではAIが設定されていません。管理者にお問い合わせください。",
         "ai_not_available": "AIデータ分析は利用できません。",
-        "ai_not_enabled": "この組織ではAIデータ分析が無効になっています。組織設定で有効にしてください。",
-        "ai_not_in_plan": "AIデータ分析は現在のプランではご利用いただけません。この機能を利用するにはアップグレードしてください。",
+        "ai_not_enabled": "この組織ではAIデータ分析が無効になっています。",
+        "ai_not_in_plan": "現在のプランではAIデータ分析をご利用いただけません。",
         "ai_query_placeholder": "例: 先週何人のユーザーが登録しましたか?",
         "ai_query_section_description": "表示したい内容を説明すると、AIがチャートを作成します。",
         "ai_query_section_title": "データに質問する",
-        "ai_upgrade_plan": "プランをアップグレード。",
+        "ai_upgrade_plan": "プランをアップグレード",
         "already_on_dashboard": "すでにダッシュボードに追加済み",
         "and_filter_logic": "AND",
         "apply_changes": "変更を適用",
@@ -3871,8 +3871,7 @@
       "value_boolean": "値 (ブール値)",
       "value_date": "値 (日付)",
       "value_number": "値（数値）",
-      "value_text": "値 (テキスト)",
-      "view_rest_api_docs": "REST APIドキュメントを表示"
+      "value_text": "値 (テキスト)"
     },
     "xm-templates": {
       "ces": "CES",

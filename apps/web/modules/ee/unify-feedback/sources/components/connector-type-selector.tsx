@@ -44,6 +44,8 @@ export function ConnectorTypeSelector({
         {connectorOptions.map((option) => {
           const showNoSurveysAlert =
             surveyCount === 0 && option.id === "formbricks_survey" && selectedType === "formbricks_survey";
+          const showApiIngestionSetupAlert =
+            option.id === "api_ingestion" && selectedType === "api_ingestion";
           return (
             <div key={option.id} className="space-y-2">
               <button
@@ -74,6 +76,7 @@ export function ConnectorTypeSelector({
                 </div>
               </button>
               {showNoSurveysAlert && <NoFormbricksSurveysAlert workspaceId={workspaceId} />}
+              {showApiIngestionSetupAlert && <ApiIngestionSetupAlert />}
             </div>
           );
         })}
@@ -93,6 +96,21 @@ export function ConnectorTypeSelector({
     </div>
   );
 }
+
+const ApiIngestionSetupAlert = () => {
+  const { t } = useTranslation();
+
+  return (
+    <Alert variant="info" size="small">
+      <div className="min-w-0 space-y-1">
+        <AlertTitle>{t("workspace.unify.api_ingestion_setup_title")}</AlertTitle>
+        <AlertDescription className="overflow-visible whitespace-normal">
+          <p>{t("workspace.unify.api_ingestion_setup_description")}</p>
+        </AlertDescription>
+      </div>
+    </Alert>
+  );
+};
 
 const NoFormbricksSurveysAlert = ({ workspaceId }: Readonly<{ workspaceId: string }>) => {
   return (

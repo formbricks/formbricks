@@ -1670,12 +1670,12 @@
         "ai_enable_in_settings": "Engedélyezze a szervezeti beállításokban.",
         "ai_instance_not_configured": "Az AI nincs konfigurálva ezen a példányon. Kérjük, lépjen kapcsolatba a rendszergazdával.",
         "ai_not_available": "Az AI adatelemzés nem elérhető.",
-        "ai_not_enabled": "Az AI adatelemzés le van tiltva ezen szervezet számára. Kérjük, engedélyezze a szervezeti beállításokban.",
-        "ai_not_in_plan": "Az AI adatelemzés nem elérhető az Ön jelenlegi csomagjában. Kérjük, frissítsen magasabb csomagra ezen funkció feloldásához.",
+        "ai_not_enabled": "Az AI adatelemzés le van tiltva ezen szervezet számára.",
+        "ai_not_in_plan": "Az AI adatelemzés nem érhető el az Ön jelenlegi csomagjában.",
         "ai_query_placeholder": "pl. Hány felhasználó regisztrált a múlt héten?",
         "ai_query_section_description": "Írd le, mit szeretnél látni, és hagyd, hogy az AI elkészítse a diagramot.",
         "ai_query_section_title": "Kérdezd meg az adataidat",
-        "ai_upgrade_plan": "Csomag frissítése.",
+        "ai_upgrade_plan": "Csomag frissítése",
         "already_on_dashboard": "Már a vezérlőpulton van",
         "and_filter_logic": "ÉS",
         "apply_changes": "Módosítások alkalmazása",
@@ -3871,8 +3871,7 @@
       "value_boolean": "Érték (logikai)",
       "value_date": "Érték (dátum)",
       "value_number": "Érték (szám)",
-      "value_text": "Érték (szöveg)",
-      "view_rest_api_docs": "REST API dokumentáció megtekintése"
+      "value_text": "Érték (szöveg)"
     },
     "xm-templates": {
       "ces": "CES",

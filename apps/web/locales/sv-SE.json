@@ -1670,12 +1670,12 @@
         "ai_enable_in_settings": "Aktivera det i organisationsinställningarna.",
         "ai_instance_not_configured": "AI är inte konfigurerad på denna instans. Kontakta din administratör.",
         "ai_not_available": "AI-dataanalys är inte tillgänglig.",
-        "ai_not_enabled": "AI-dataanalys är inaktiverad för denna organisation. Aktivera det i organisationsinställningarna.",
-        "ai_not_in_plan": "AI-dataanalys är inte tillgänglig i din nuvarande plan. Uppgradera för att låsa upp denna funktion.",
+        "ai_not_enabled": "AI-dataanalys är inaktiverad för den här organisationen.",
+        "ai_not_in_plan": "AI-dataanalys är inte tillgänglig i din nuvarande plan.",
         "ai_query_placeholder": "t.ex. Hur många användare registrerade sig förra veckan?",
         "ai_query_section_description": "Beskriv vad du vill se så bygger AI diagrammet åt dig.",
         "ai_query_section_title": "Fråga din data",
-        "ai_upgrade_plan": "Uppgradera plan.",
+        "ai_upgrade_plan": "Uppgradera plan",
         "already_on_dashboard": "Redan på instrumentpanelen",
         "and_filter_logic": "OCH",
         "apply_changes": "Verkställ ändringar",
@@ -3871,8 +3871,7 @@
       "value_boolean": "Värde (booleskt)",
       "value_date": "Värde (datum)",
       "value_number": "Värde (antal)",
-      "value_text": "Värde (text)",
-      "view_rest_api_docs": "Visa REST API-dokumentation"
+      "value_text": "Värde (text)"
     },
     "xm-templates": {
       "ces": "CES",

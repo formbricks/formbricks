@@ -1670,12 +1670,12 @@
         "ai_enable_in_settings": "Activez-la dans les paramètres de l'organisation.",
         "ai_instance_not_configured": "L'IA n'est pas configurée sur cette instance. Contacte ton administrateur.",
         "ai_not_available": "L'analyse de données par IA n'est pas disponible.",
-        "ai_not_enabled": "L'analyse de données par IA est désactivée pour cette organisation. Active-la dans les paramètres de l'organisation.",
-        "ai_not_in_plan": "L'analyse de données par IA n'est pas disponible sur ton forfait actuel. Passe à un forfait supérieur pour débloquer cette fonctionnalité.",
+        "ai_not_enabled": "L'analyse de données par IA est désactivée pour cette organisation.",
+        "ai_not_in_plan": "L'analyse de données par IA n'est pas disponible avec ton abonnement actuel.",
         "ai_query_placeholder": "ex. Combien d'utilisateurs se sont inscrits la semaine dernière ?",
         "ai_query_section_description": "Décrivez ce que vous souhaitez voir et laissez l'IA créer le graphique.",
         "ai_query_section_title": "Interrogez vos données",
-        "ai_upgrade_plan": "Mettre à niveau le forfait.",
+        "ai_upgrade_plan": "Mettre à niveau l'abonnement",
         "already_on_dashboard": "Déjà sur le tableau de bord",
         "and_filter_logic": "ET",
         "apply_changes": "Appliquer les modifications",
@@ -3871,8 +3871,7 @@
       "value_boolean": "Valeur (booléenne)",
       "value_date": "Valeur (Date)",
       "value_number": "Valeur (Nombre)",
-      "value_text": "Valeur (texte)",
-      "view_rest_api_docs": "Voir la documentation de l'API REST"
+      "value_text": "Valeur (texte)"
     },
     "xm-templates": {
       "ces": "CES",

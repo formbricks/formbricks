@@ -5,6 +5,7 @@ import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/
 import { getTranslate } from "@/lingodotdev/server";
 import { ChartsList } from "@/modules/ee/analysis/charts/components/charts-list";
 import { CreateChartButton } from "@/modules/ee/analysis/charts/components/create-chart-button";
+import type { TAIUnavailableReason } from "@/modules/ee/analysis/charts/lib/ai-availability";
 import { getChartsWithCreator } from "@/modules/ee/analysis/charts/lib/charts";
 import { AnalysisPageLayout } from "@/modules/ee/analysis/components/analysis-page-layout";
 import { NoFeedbackRecordsState } from "@/modules/ee/analysis/components/no-feedback-records-state";
@@ -20,6 +21,8 @@ interface ChartsListContentProps {
   workspaceId: string;
   isReadOnly: boolean;
   directories: { id: string; name: string }[];
+  isAIAvailable: boolean;
+  aiUnavailableReason?: TAIUnavailableReason;
 }
 
 const ChartsListContent = ({
@@ -27,11 +30,20 @@ const ChartsListContent = ({
   workspaceId,
   isReadOnly,
   directories,
+  isAIAvailable,
+  aiUnavailableReason,
 }: Readonly<ChartsListContentProps>) => {
   const charts = use(chartsPromise);
 
   return (
-    <ChartsList charts={charts} workspaceId={workspaceId} isReadOnly={isReadOnly} directories={directories} />
+    <ChartsList
+      charts={charts}
+      workspaceId={workspaceId}
+      isReadOnly={isReadOnly}
+      directories={directories}
+      isAIAvailable={isAIAvailable}
+      aiUnavailableReason={aiUnavailableReason}
+    />
   );
 };
 
@@ -103,6 +115,8 @@ export async function ChartsListPage({ workspaceId }: Readonly<ChartsListPagePro
           workspaceId={workspaceId}
           isReadOnly={isReadOnly}
           directories={directories}
+          isAIAvailable={isAIAvailable}
+          aiUnavailableReason={aiUnavailableReason}
         />
       ) : (
         <NoFeedbackRecordsState workspaceId={workspaceId} hasFeedbackSources={connectors.length > 0} />

@@ -1670,12 +1670,12 @@
         "ai_enable_in_settings": "Organizasyon ayarlarından etkinleştirin.",
         "ai_instance_not_configured": "Bu örnekte AI yapılandırılmamış. Yöneticinle iletişime geç.",
         "ai_not_available": "AI veri analizi mevcut değil.",
-        "ai_not_enabled": "Bu organizasyon için AI veri analizi devre dışı. Organizasyon ayarlarından etkinleştir.",
-        "ai_not_in_plan": "AI veri analizi mevcut planında bulunmuyor. Bu özelliğin kilidini açmak için yükselt.",
+        "ai_not_enabled": "Bu kuruluş için AI veri analizi devre dışı bırakılmış.",
+        "ai_not_in_plan": "AI veri analizi mevcut planınızda mevcut değil.",
         "ai_query_placeholder": "örn. Geçen hafta kaç kullanıcı kaydoldu?",
         "ai_query_section_description": "Ne görmek istediğini anlat, AI grafiği oluştursun.",
         "ai_query_section_title": "Verilerine sor",
-        "ai_upgrade_plan": "Planı yükselt.",
+        "ai_upgrade_plan": "Planı yükselt",
         "already_on_dashboard": "Zaten panoda",
         "and_filter_logic": "VE",
         "apply_changes": "Değişiklikleri Uygula",
@@ -3871,8 +3871,7 @@
       "value_boolean": "Değer (Boolean)",
       "value_date": "Değer (Tarih)",
       "value_number": "Değer (Sayı)",
-      "value_text": "Değer (Metin)",
-      "view_rest_api_docs": "REST API dokümanlarını görüntüle"
+      "value_text": "Değer (Metin)"
     },
     "xm-templates": {
       "ces": "CES",

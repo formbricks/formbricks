@@ -1670,12 +1670,12 @@
         "ai_enable_in_settings": "Schakel het in bij de organisatie-instellingen.",
         "ai_instance_not_configured": "AI is niet geconfigureerd op deze instantie. Neem contact op met je beheerder.",
         "ai_not_available": "AI-data-analyse is niet beschikbaar.",
-        "ai_not_enabled": "AI-data-analyse is uitgeschakeld voor deze organisatie. Schakel het in bij de organisatie-instellingen.",
-        "ai_not_in_plan": "AI-data-analyse is niet beschikbaar in je huidige abonnement. Upgrade om deze functie te ontgrendelen.",
+        "ai_not_enabled": "AI-gegevensanalyse is uitgeschakeld voor deze organisatie.",
+        "ai_not_in_plan": "AI-gegevensanalyse is niet beschikbaar in je huidige abonnement.",
         "ai_query_placeholder": "bijv. Hoeveel gebruikers hebben zich vorige week aangemeld?",
         "ai_query_section_description": "Beschrijf wat je wilt zien en laat AI de grafiek bouwen.",
         "ai_query_section_title": "Vraag het aan je data",
-        "ai_upgrade_plan": "Upgrade abonnement.",
+        "ai_upgrade_plan": "Abonnement upgraden",
         "already_on_dashboard": "Al op dashboard",
         "and_filter_logic": "EN",
         "apply_changes": "Wijzigingen toepassen",
@@ -3871,8 +3871,7 @@
       "value_boolean": "Waarde (Booleaans)",
       "value_date": "Waarde (datum)",
       "value_number": "Waarde (getal)",
-      "value_text": "Waarde (tekst)",
-      "view_rest_api_docs": "Bekijk REST API-documentatie"
+      "value_text": "Waarde (tekst)"
     },
     "xm-templates": {
       "ces": "CES",

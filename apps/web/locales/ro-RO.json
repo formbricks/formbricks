@@ -1670,12 +1670,12 @@
         "ai_enable_in_settings": "Activează-l în setările organizației.",
         "ai_instance_not_configured": "AI nu este configurat pe această instanță. Contactează administratorul.",
         "ai_not_available": "Analiza datelor cu AI nu este disponibilă.",
-        "ai_not_enabled": "Analiza datelor cu AI este dezactivată pentru această organizație. Activează-o în setările organizației.",
-        "ai_not_in_plan": "Analiza datelor cu AI nu este disponibilă în planul tău actual. Treci la un plan superior pentru a debloca această funcție.",
+        "ai_not_enabled": "Analiza datelor cu AI este dezactivată pentru această organizație.",
+        "ai_not_in_plan": "Analiza datelor cu AI nu este disponibilă în planul tău curent.",
         "ai_query_placeholder": "ex: Câți utilizatori s-au înscris săptămâna trecută?",
         "ai_query_section_description": "Descrie ce vrei să vezi și lasă AI-ul să construiască graficul.",
         "ai_query_section_title": "Întreabă-ți datele",
-        "ai_upgrade_plan": "Upgradeaza planul.",
+        "ai_upgrade_plan": "Actualizează planul",
         "already_on_dashboard": "Deja pe tabloul de bord",
         "and_filter_logic": "ȘI",
         "apply_changes": "Aplică modificările",
@@ -3871,8 +3871,7 @@
       "value_boolean": "Valoare (booleană)",
       "value_date": "Valoare (data)",
       "value_number": "Valoare (număr)",
-      "value_text": "Valoare (Text)",
-      "view_rest_api_docs": "Vezi documentația REST API"
+      "value_text": "Valoare (Text)"
     },
     "xm-templates": {
       "ces": "CES",

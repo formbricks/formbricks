@@ -1670,12 +1670,12 @@
         "ai_enable_in_settings": "請在組織設定中啟用。",
         "ai_instance_not_configured": "此執行個體未設定 AI。請聯絡您的管理員。",
         "ai_not_available": "AI 資料分析無法使用。",
-        "ai_not_enabled": "此組織已停用 AI 資料分析。請在組織設定中啟用。",
-        "ai_not_in_plan": "您目前的方案不包含 AI 資料分析。請升級以解鎖此功能。",
+        "ai_not_enabled": "此組織已停用 AI 資料分析功能。",
+        "ai_not_in_plan": "您目前的方案不包含 AI 資料分析功能。",
         "ai_query_placeholder": "例如：上週有多少用戶註冊？",
         "ai_query_section_description": "描述你想看到的內容，讓 AI 幫你建立圖表。",
         "ai_query_section_title": "詢問你的數據",
-        "ai_upgrade_plan": "升級方案。",
+        "ai_upgrade_plan": "升級方案",
         "already_on_dashboard": "已在儀表板上",
         "and_filter_logic": "且",
         "apply_changes": "套用變更",
@@ -3871,8 +3871,7 @@
       "value_boolean": "值（布林值）",
       "value_date": "值（日期）",
       "value_number": "值（數量）",
-      "value_text": "值（文字）",
-      "view_rest_api_docs": "查看 REST API 文件"
+      "value_text": "值（文字）"
     },
     "xm-templates": {
       "ces": "CES",

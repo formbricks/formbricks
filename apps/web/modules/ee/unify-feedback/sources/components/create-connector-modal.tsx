@@ -14,7 +14,7 @@ import {
   importHistoricalResponsesAction,
 } from "@/lib/connector/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
+import { Alert } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -110,7 +110,7 @@ const getDialogDescription = (
 const getNextStepButtonLabel = (type: TConnectorOptionId | null, t: (key: string) => string): string => {
   if (type === "formbricks_survey") return t("workspace.unify.select_questions");
   if (type === "csv") return t("workspace.unify.configure_import");
-  if (type === "api_ingestion") return t("workspace.unify.view_rest_api_docs");
+  if (type === "api_ingestion") return t("common.learn_more");
   if (type === "feedback_record_mcp") return t("common.learn_more");
   return t("workspace.unify.create_mapping");
 };
@@ -482,17 +482,6 @@ export const CreateConnectorModal = ({
                 workspaceId={workspaceId}
               />
             )}
-            {currentStep === "selectType" && selectedType === "api_ingestion" && (
-              <Alert variant="info" size="small" className="mt-3 items-start">
-                <div className="min-w-0 space-y-1">
-                  <AlertTitle>{t("workspace.unify.api_ingestion_setup_title")}</AlertTitle>
-                  <AlertDescription className="overflow-visible whitespace-normal">
-                    <p>{t("workspace.unify.api_ingestion_setup_description")}</p>
-                  </AlertDescription>
-                </div>
-              </Alert>
-            )}
-
             {currentStep === "mapping" && selectedType === "formbricks_survey" && (
               <FormProvider {...formbricksForm}>
                 <form

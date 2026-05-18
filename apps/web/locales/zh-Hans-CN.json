@@ -1670,12 +1670,12 @@
         "ai_enable_in_settings": "在组织设置中启用。",
         "ai_instance_not_configured": "此实例未配置 AI。请联系您的管理员。",
         "ai_not_available": "AI 数据分析不可用。",
-        "ai_not_enabled": "此组织已禁用 AI 数据分析。请在组织设置中启用。",
-        "ai_not_in_plan": "您当前的套餐不包含 AI 数据分析。升级以解锁此功能。",
+        "ai_not_enabled": "此组织已禁用 AI 数据分析。",
+        "ai_not_in_plan": "您当前的套餐不包含 AI 数据分析功能。",
         "ai_query_placeholder": "例如：上周有多少用户注册？",
         "ai_query_section_description": "描述你想要看到的内容，让 AI 帮你生成图表。",
         "ai_query_section_title": "向你的数据提问",
-        "ai_upgrade_plan": "升级套餐。",
+        "ai_upgrade_plan": "升级套餐",
         "already_on_dashboard": "已在仪表板上",
         "and_filter_logic": "且",
         "apply_changes": "应用更改",
@@ -3871,8 +3871,7 @@
       "value_boolean": "值（布尔值）",
       "value_date": "值（日期）",
       "value_number": "值（数量）",
-      "value_text": "值（文本）",
-      "view_rest_api_docs": "查看 REST API 文档"
+      "value_text": "值（文本）"
     },
     "xm-templates": {
       "ces": "客户努力评分",

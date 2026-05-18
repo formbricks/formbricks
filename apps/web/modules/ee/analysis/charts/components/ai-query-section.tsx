@@ -13,7 +13,7 @@ import {
   getAIUnavailableAction,
 } from "@/modules/ee/analysis/charts/lib/ai-availability";
 import type { AnalyticsResponse } from "@/modules/ee/analysis/types/analysis";
-import { Alert, AlertDescription } from "@/modules/ui/components/alert";
+import { Alert, AlertButton, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 
@@ -120,20 +120,22 @@ export function AIQuerySection({
             <WandSparklesIcon className="h-4 w-4" />
             {t("workspace.analysis.charts.create_chart_with_ai")}
           </Button>
+          {!isAIAvailable && (
+            <Alert variant="info" size="small">
+              <AlertDescription className="overflow-visible whitespace-normal">
+                <span>{aiUnavailableMessage}</span>
+              </AlertDescription>
+              {aiUnavailableAction && (
+                <AlertButton asChild>
+                  <Link href={aiUnavailableAction.href}>
+                    {translateAIUnavailableAction(aiUnavailableAction.type)}
+                  </Link>
+                </AlertButton>
+              )}
+            </Alert>
+          )}
         </form>
       </div>
-      {!isAIAvailable && (
-        <Alert variant="info" size="small">
-          <AlertDescription className="overflow-visible whitespace-normal">
-            <span>{aiUnavailableMessage}</span>
-            {aiUnavailableAction && (
-              <Link href={aiUnavailableAction.href} className="ml-2 inline-flex shrink-0 underline">
-                {translateAIUnavailableAction(aiUnavailableAction.type)}
-              </Link>
-            )}
-          </AlertDescription>
-        </Alert>
-      )}
     </div>
   );
 }

@@ -1670,12 +1670,12 @@
         "ai_enable_in_settings": "Aktiviere es in den Organisationseinstellungen.",
         "ai_instance_not_configured": "KI ist auf dieser Instanz nicht konfiguriert. Kontaktiere deinen Administrator.",
         "ai_not_available": "KI-Datenanalyse ist nicht verfügbar.",
-        "ai_not_enabled": "KI-Datenanalyse ist für diese Organisation deaktiviert. Aktiviere sie in den Organisationseinstellungen.",
-        "ai_not_in_plan": "KI-Datenanalyse ist in deinem aktuellen Tarif nicht verfügbar. Führe ein Upgrade durch, um diese Funktion freizuschalten.",
+        "ai_not_enabled": "KI-Datenanalyse ist für diese Organisation deaktiviert.",
+        "ai_not_in_plan": "KI-Datenanalyse ist in deinem aktuellen Plan nicht verfügbar.",
         "ai_query_placeholder": "z.B. Wie viele Nutzer haben sich letzte Woche angemeldet?",
         "ai_query_section_description": "Beschreibe, was du sehen möchtest, und lass die KI das Diagramm erstellen.",
         "ai_query_section_title": "Frag deine Daten",
-        "ai_upgrade_plan": "Plan upgraden.",
+        "ai_upgrade_plan": "Plan upgraden",
         "already_on_dashboard": "Bereits im Dashboard",
         "and_filter_logic": "UND",
         "apply_changes": "Änderungen übernehmen",
@@ -3871,8 +3871,7 @@
       "value_boolean": "Wert (Boolescher Wert)",
       "value_date": "Wert (Datum)",
       "value_number": "Wert (Anzahl)",
-      "value_text": "Wert (Text)",
-      "view_rest_api_docs": "REST API Docs ansehen"
+      "value_text": "Wert (Text)"
     },
     "xm-templates": {
       "ces": "CES",
