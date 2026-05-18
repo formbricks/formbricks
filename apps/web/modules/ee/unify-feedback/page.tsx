@@ -4,7 +4,7 @@ import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/
 import { getTranslate } from "@/lingodotdev/server";
 import { NoFeedbackDirectoryEmptyState } from "@/modules/ee/feedback-directory/components/no-feedback-directory-empty-state";
 import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
-import { getIsUnifyFeedbackEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/utils";
 import { UnifyConfigNavigation } from "@/modules/ee/unify-feedback/components/unify-config-navigation";
 import { listFeedbackRecords } from "@/modules/hub/service";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
@@ -34,8 +34,8 @@ export default async function UnifyFeedbackRecordsPage(
     return notFound();
   }
 
-  const isUnifyFeedbackAllowed = await getIsUnifyFeedbackEnabled(organization.id);
-  if (!isUnifyFeedbackAllowed) {
+  const isFeedbackDirectoriesAllowed = await getIsFeedbackDirectoriesEnabled(organization.id);
+  if (!isFeedbackDirectoriesAllowed) {
     return (
       <PageContentWrapper>
         <PageHeader pageTitle={t("workspace.unify.feedback_records")}>
@@ -45,7 +45,7 @@ export default async function UnifyFeedbackRecordsPage(
           <UpgradePrompt
             title={t("workspace.unify.upgrade_prompt_title")}
             description={t("workspace.unify.upgrade_prompt_description")}
-            feature="unify-feedback"
+            feature="feedback-directories"
             buttons={[
               {
                 text: IS_FORMBRICKS_CLOUD ? t("common.upgrade_plan") : t("common.request_trial_license"),

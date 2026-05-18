@@ -8,7 +8,7 @@ import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-clie
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
-import { getIsUnifyFeedbackEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/utils";
 import { semanticSearchFeedbackRecords } from "@/modules/hub/service";
 import type { SemanticSearchResultItem } from "@/modules/hub/types";
 
@@ -35,8 +35,8 @@ export type TTopicsPreviewSearchActionResult = {
 
 const ensureReadAccess = async (userId: string, workspaceId: string): Promise<void> => {
   const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
-  const isUnifyFeedbackAllowed = await getIsUnifyFeedbackEnabled(organizationId);
-  if (!isUnifyFeedbackAllowed) {
+  const isFeedbackDirectoriesAllowed = await getIsFeedbackDirectoriesEnabled(organizationId);
+  if (!isFeedbackDirectoriesAllowed) {
     throw new OperationNotAllowedError("Unify Feedback is not enabled for this organization");
   }
   await checkAuthorizationUpdated({
