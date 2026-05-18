@@ -225,7 +225,8 @@ paths:
             Locale code for a localized read projection. The parser is case-insensitive, accepts
             `_` or `-` separators, and normalizes to canonical BCP 47 casing (`de_DE`, `DE-de` → `de-DE`).
             A language-only selector (`de`) resolves to the matching configured survey language when exactly
-            one exists; otherwise it returns `400`. Aliases are not accepted.
+            one exists; otherwise it returns `400`. Disabled-but-configured languages are readable in the
+            management API so unfinished translations can be completed. Aliases are not accepted.
         - in: query
           name: version
           required: false
@@ -251,7 +252,7 @@ paths:
                   data:
                     $ref: "#/components/schemas/SurveyResource"
         "400":
-          description: Invalid survey id, unsupported query parameter, unsupported version selector, or unknown/disabled language
+          description: Invalid survey id, unsupported query parameter, unsupported version selector, unknown language, or unsupported legacy survey shape
           content:
             application/problem+json:
               schema:
@@ -422,7 +423,7 @@ components:
           additionalProperties: true
         defaultLanguage:
           type: string
-          description: Real locale code for the survey default language when configured; otherwise `default`.
+          description: Real locale code for the survey default language. The internal `default` translation key is never exposed.
         language:
           type: string
           description: Present only on localized `?lang=` responses.

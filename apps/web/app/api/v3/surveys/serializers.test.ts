@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import type { TSurvey } from "@formbricks/types/surveys/types";
-import { V3SurveyLanguageError, serializeV3SurveyResource } from "./serializers";
+import { V3SurveyUnsupportedShapeError, serializeV3SurveyResource } from "./serializers";
 
 const baseSurvey = {
   id: "survey_1",
@@ -28,6 +28,7 @@ const baseSurvey = {
       language: { id: "lang_3", code: "fr-FR", alias: "fr", createdAt: new Date(), updatedAt: new Date() },
     },
   ],
+  questions: [],
   welcomeCard: {
     enabled: true,
     headline: { default: "Welcome", "de-DE": "Willkommen", "fr-FR": "Bienvenue" },
@@ -74,6 +75,73 @@ describe("serializeV3SurveyResource", () => {
     });
   });
 
+  test("does not expose the internal default pseudo-locale for surveys without configured languages", () => {
+    const survey = {
+      ...baseSurvey,
+      languages: [],
+      welcomeCard: {
+        enabled: true,
+        headline: { default: "Welcome" },
+      },
+      blocks: [
+        {
+          id: "block_1",
+          name: "Intro",
+          elements: [
+            {
+              id: "satisfaction",
+              type: "openText",
+              headline: { default: "What should we improve?" },
+              required: true,
+            },
+          ],
+        },
+      ],
+    } as unknown as TSurvey;
+
+    const resource = serializeV3SurveyResource(survey);
+
+    expect(resource.defaultLanguage).toBe("en-US");
+    expect(resource.languages).toEqual([{ code: "en-US", default: true, enabled: true }]);
+    expect((resource.welcomeCard as any).headline).toEqual({ "en-US": "Welcome" });
+    expect((resource.blocks as any)[0].elements[0].headline).toEqual({
+      "en-US": "What should we improve?",
+    });
+  });
+
+  test("localizes the implicit default language for surveys without configured languages", () => {
+    const survey = {
+      ...baseSurvey,
+      languages: [],
+      welcomeCard: {
+        enabled: true,
+        headline: { default: "Welcome" },
+      },
+    } as unknown as TSurvey;
+
+    const resource = serializeV3SurveyResource(survey, { lang: "en" });
+
+    expect(resource.language).toBe("en-US");
+    expect((resource.welcomeCard as any).headline).toBe("Welcome");
+  });
+
+  test("preserves stored locale variants when their keys use non-canonical casing or separators", () => {
+    const survey = {
+      ...baseSurvey,
+      welcomeCard: {
+        enabled: true,
+        headline: { default: "Welcome", de_de: "Willkommen" },
+      },
+    } as unknown as TSurvey;
+
+    const resource = serializeV3SurveyResource(survey);
+
+    expect((resource.welcomeCard as any).headline).toEqual({
+      "en-US": "Welcome",
+      "de-DE": "Willkommen",
+    });
+  });
+
   test("localizes fields for case-insensitive underscore language selectors", () => {
     const resource = serializeV3SurveyResource(baseSurvey, { lang: "DE_de" });
 
@@ -90,11 +158,11 @@ describe("serializeV3SurveyResource", () => {
     expect((resource.welcomeCard as any).headline).toBe("Willkommen");
   });
 
-  test("rejects disabled language selectors", () => {
-    expect(() => serializeV3SurveyResource(baseSurvey, { lang: "fr" })).toThrow(V3SurveyLanguageError);
-    expect(() => serializeV3SurveyResource(baseSurvey, { lang: "fr" })).toThrow(
-      "Language 'fr-FR' is disabled for this survey"
-    );
+  test("localizes disabled configured languages for management reads", () => {
+    const resource = serializeV3SurveyResource(baseSurvey, { lang: "fr" });
+
+    expect(resource.language).toBe("fr-FR");
+    expect((resource.welcomeCard as any).headline).toBe("Bienvenue");
   });
 
   test("rejects ambiguous language-only selectors", () => {
@@ -128,6 +196,19 @@ describe("serializeV3SurveyResource", () => {
 
     expect(() => serializeV3SurveyResource(survey, { lang: "pt" })).toThrow(
       "Language 'pt' is ambiguous for this survey; use one of pt-BR, pt-PT"
+    );
+  });
+
+  test("rejects legacy question-based survey shapes instead of returning an incomplete block resource", () => {
+    const survey = {
+      ...baseSurvey,
+      questions: [{ id: "legacy_question", type: "openText", headline: { default: "Legacy question" } }],
+      blocks: [],
+    } as unknown as TSurvey;
+
+    expect(() => serializeV3SurveyResource(survey)).toThrow(V3SurveyUnsupportedShapeError);
+    expect(() => serializeV3SurveyResource(survey)).toThrow(
+      "Legacy question-based surveys are not supported by the v3 survey management API"
     );
   });
 });

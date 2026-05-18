@@ -31,12 +31,8 @@ describe("resolveV3SurveyLanguageCode", () => {
     expect(resolveV3SurveyLanguageCode("de", languages)).toEqual({ ok: true, code: "de-DE" });
   });
 
-  test("returns disabled when the resolved language is disabled", () => {
-    expect(resolveV3SurveyLanguageCode("fr", languages)).toEqual({
-      ok: false,
-      reason: "disabled",
-      message: "Language 'fr-FR' is disabled for this survey",
-    });
+  test("resolves disabled configured languages for management reads", () => {
+    expect(resolveV3SurveyLanguageCode("fr", languages)).toEqual({ ok: true, code: "fr-FR" });
   });
 
   test("returns ambiguous when language-only tags match multiple configured languages", () => {
@@ -57,6 +53,13 @@ describe("resolveV3SurveyLanguageCode", () => {
       ok: false,
       reason: "unknown",
       message: "Language 'es-ES' is not configured for this survey",
+    });
+  });
+
+  test("resolves the implicit default language for surveys without configured languages", () => {
+    expect(resolveV3SurveyLanguageCode("en", [{ code: "en-US", enabled: true }])).toEqual({
+      ok: true,
+      code: "en-US",
     });
   });
 });

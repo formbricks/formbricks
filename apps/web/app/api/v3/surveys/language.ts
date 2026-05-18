@@ -5,7 +5,7 @@ type TV3SurveyLanguageInput = {
 
 type TResolveV3SurveyLanguageCodeResult =
   | { ok: true; code: string }
-  | { ok: false; reason: "invalid" | "unknown" | "disabled" | "ambiguous"; message: string };
+  | { ok: false; reason: "invalid" | "unknown" | "ambiguous"; message: string };
 
 export function normalizeV3SurveyLanguageTag(value: string): string | null {
   const normalizedSeparators = value.trim().replaceAll("_", "-");
@@ -44,14 +44,6 @@ export function resolveV3SurveyLanguageCode(
   );
 
   if (exactMatch) {
-    if (!exactMatch.enabled) {
-      return {
-        ok: false,
-        reason: "disabled",
-        message: `Language '${exactMatch.code}' is disabled for this survey`,
-      };
-    }
-
     return { ok: true, code: exactMatch.code };
   }
 
@@ -71,14 +63,6 @@ export function resolveV3SurveyLanguageCode(
 
   const languageMatch = matchingLanguages[0];
   if (languageMatch) {
-    if (!languageMatch.enabled) {
-      return {
-        ok: false,
-        reason: "disabled",
-        message: `Language '${languageMatch.code}' is disabled for this survey`,
-      };
-    }
-
     return { ok: true, code: languageMatch.code };
   }
 

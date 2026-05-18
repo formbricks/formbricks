@@ -3,6 +3,7 @@ import type { TSurvey as TSurveyListRecord } from "@/modules/survey/list/types/s
 import { normalizeV3SurveyLanguageTag, resolveV3SurveyLanguageCode } from "./language";
 
 export type TV3SurveyListItem = Omit<TSurveyListRecord, "singleUse">;
+const DEFAULT_V3_SURVEY_LANGUAGE = "en-US";
 
 type TV3SurveyLanguage = {
   code: string;
@@ -25,6 +26,13 @@ export class V3SurveyLanguageError extends Error {
   }
 }
 
+export class V3SurveyUnsupportedShapeError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "V3SurveyUnsupportedShapeError";
+  }
+}
+
 /**
  * Keep the v3 API contract isolated from internal persistence naming.
  * Surveys are scoped by workspaceId.
@@ -40,11 +48,17 @@ function toIsoString(value: Date | string): string {
 }
 
 function getSurveyLanguages(survey: TInternalSurvey): TV3SurveyLanguage[] {
-  return (survey.languages ?? []).map((surveyLanguage) => ({
+  const languages = (survey.languages ?? []).map((surveyLanguage) => ({
     code: normalizeV3SurveyLanguageTag(surveyLanguage.language.code) ?? surveyLanguage.language.code,
     default: surveyLanguage.default,
     enabled: surveyLanguage.enabled,
   }));
+
+  if (languages.length === 0) {
+    return [{ code: DEFAULT_V3_SURVEY_LANGUAGE, default: true, enabled: true }];
+  }
+
+  return languages;
 }
 
 function getDefaultLanguage(survey: TInternalSurvey): string {
@@ -52,7 +66,7 @@ function getDefaultLanguage(survey: TInternalSurvey): string {
     .code;
   return defaultLanguageCode
     ? (normalizeV3SurveyLanguageTag(defaultLanguageCode) ?? defaultLanguageCode)
-    : "default";
+    : DEFAULT_V3_SURVEY_LANGUAGE;
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -67,6 +81,17 @@ function isI18nString(value: unknown): value is Record<string, string> {
   );
 }
 
+function getI18nValueForLanguage(value: Record<string, string>, languageCode: string): string | undefined {
+  if (typeof value[languageCode] === "string") {
+    return value[languageCode];
+  }
+
+  const matchingKey = Object.keys(value).find(
+    (key) => normalizeV3SurveyLanguageTag(key)?.toLowerCase() === languageCode.toLowerCase()
+  );
+  return matchingKey ? value[matchingKey] : undefined;
+}
+
 function serializeCanonicalValue(
   value: unknown,
   defaultLanguage: string,
@@ -78,8 +103,9 @@ function serializeCanonicalValue(
     };
 
     for (const languageCode of configuredLanguageCodes) {
-      if (languageCode !== defaultLanguage && typeof value[languageCode] === "string") {
-        result[languageCode] = value[languageCode];
+      const translatedValue = getI18nValueForLanguage(value, languageCode);
+      if (languageCode !== defaultLanguage && translatedValue !== undefined) {
+        result[languageCode] = translatedValue;
       }
     }
 
@@ -104,7 +130,7 @@ function serializeCanonicalValue(
 
 function serializeLocalizedValue(value: unknown, language: string): TSerializedValue {
   if (isI18nString(value)) {
-    return value[language] ?? value.default;
+    return getI18nValueForLanguage(value, language) ?? value.default;
   }
 
   if (Array.isArray(value)) {
@@ -131,6 +157,12 @@ function resolveRequestedLanguage(languages: TV3SurveyLanguage[], language: stri
 }
 
 export function serializeV3SurveyResource(survey: TInternalSurvey, options?: { lang?: string }) {
+  if (Array.isArray(survey.questions) && survey.questions.length > 0) {
+    throw new V3SurveyUnsupportedShapeError(
+      "Legacy question-based surveys are not supported by the v3 survey management API"
+    );
+  }
+
   const defaultLanguage = getDefaultLanguage(survey);
   const languages = getSurveyLanguages(survey);
   const configuredLanguageCodes = new Set(languages.map((language) => language.code));

@@ -10,7 +10,11 @@ import {
   problemInternalError,
   successResponse,
 } from "@/app/api/v3/lib/response";
-import { V3SurveyLanguageError, serializeV3SurveyResource } from "@/app/api/v3/surveys/serializers";
+import {
+  V3SurveyLanguageError,
+  V3SurveyUnsupportedShapeError,
+  serializeV3SurveyResource,
+} from "@/app/api/v3/surveys/serializers";
 import { getSurvey } from "@/lib/survey/service";
 import { deleteSurvey } from "@/modules/survey/lib/surveys";
 import { normalizeV3SurveyLanguageTag } from "../language";
@@ -125,6 +129,19 @@ export const GET = withV3ApiWrapper({
             invalid_params: [
               {
                 name: "lang",
+                reason: error.message,
+              },
+            ],
+          });
+        }
+
+        if (error instanceof V3SurveyUnsupportedShapeError) {
+          log.warn({ statusCode: 400 }, "Unsupported v3 survey shape");
+          return problemBadRequest(requestId, error.message, {
+            instance,
+            invalid_params: [
+              {
+                name: "survey",
                 reason: error.message,
               },
             ],
