@@ -2602,8 +2602,8 @@ checksums:
     workspace/settings/profile/save_the_following_backup_codes_in_a_safe_place: a5b9d38083770375f2372f93ac9a7b2b
     workspace/settings/profile/scan_the_qr_code_below_with_your_authenticator_app: 5a6b60928590ce3b6be1bdf1d34cd45e
     workspace/settings/profile/security_description: e833adde4e3e26795e61a93619c6caec
-    workspace/settings/profile/sso_identity_confirmation_failed: 9d0fcabd5321c07af1caf627b0c68bdf
-    workspace/settings/profile/sso_identity_confirmation_may_be_required_for_deletion: a220681b82105f16803bb542853809f4
+    workspace/settings/profile/sso_identity_confirmation_failed: 2d699f31f3e92bca9508a2772b071a1f
+    workspace/settings/profile/sso_identity_confirmation_may_be_required_for_deletion: 9a5d190ed96e0149ed431c130c40284d
     workspace/settings/profile/two_factor_authentication: 97a428a54e41d68810a12dbae075f371
     workspace/settings/profile/two_factor_authentication_description: 1429e4eeaea193f15fb508875d4fb601
     workspace/settings/profile/two_factor_authentication_enabled_please_enter_the_six_digit_code_from_your_authenticator_app: 308ba145b3dc485ff4f17387e977b1f9
