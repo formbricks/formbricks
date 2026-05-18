@@ -155,7 +155,6 @@ services:
       <<: *hub-runtime-environment
 
   cube:
-    profiles: ["xm"]
     image: cubejs/cube:v1.6.6
     env_file:
       - apps/web/.env
