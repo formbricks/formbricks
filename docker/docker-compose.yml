@@ -257,6 +257,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      cube:
+        condition: service_healthy
     ports:
       - 3000:3000
     volumes:
@@ -318,6 +320,12 @@ services:
     volumes:
       - ./cube/cube.js:/cube/conf/cube.js:ro
       - ./cube/schema:/cube/conf/model:ro
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4000/readyz"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
 
 volumes:
   postgres:

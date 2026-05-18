@@ -902,10 +902,6 @@ hub:
     affinity: {}
     topologySpreadConstraints: []
 
-  # XM Suite v5 analytics also requires Cube. Use cube.enabled=true to deploy
-  # the internal chart-managed Cube service, or set deployment.env.CUBEJS_API_URL
-  # to an operator-managed Cube endpoint.
-
   # Upgrade migration job runs goose + river before Helm upgrades Hub resources.
   # Fresh installs run the same migrations through the Hub deployment init container.
   migration:
