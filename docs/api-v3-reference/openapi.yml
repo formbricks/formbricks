@@ -292,7 +292,7 @@ paths:
                         enabled: false
                       variables: []
                 filtered:
-                  summary: Language-filtered projection with ?lang=en-US,de-DE
+                  summary: Language-filtered projection with ?lang=de-DE
                   value:
                     data:
                       id: clseedsurveycsat000000
@@ -322,7 +322,6 @@ paths:
                               range: 5
                               scale: smiley
                               headline:
-                                en-US: How satisfied are you with our product?
                                 de-DE: Wie zufrieden sind Sie mit unserem Produkt?
                               required: true
                       endings: []
