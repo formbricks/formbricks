@@ -42,7 +42,6 @@ const surveyQuerySchema = z
         return normalizedLanguage;
       })
       .optional(),
-    version: z.string().optional(),
   })
   .strict();
 
@@ -88,19 +87,6 @@ export const GET = withV3ApiWrapper({
   handler: async ({ parsedInput, authentication, requestId, instance }) => {
     const surveyId = parsedInput.params.surveyId;
     const log = logger.withContext({ requestId, surveyId });
-
-    if (parsedInput.query.version !== undefined) {
-      log.warn({ statusCode: 400 }, "V3 survey version selector is not supported");
-      return problemBadRequest(requestId, "Survey version selectors are not supported yet", {
-        instance,
-        invalid_params: [
-          {
-            name: "version",
-            reason: "Survey version selectors are not supported yet",
-          },
-        ],
-      });
-    }
 
     try {
       const { survey, response } = await getAuthorizedSurvey({

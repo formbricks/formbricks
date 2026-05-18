@@ -204,7 +204,6 @@ paths:
         Returns the public v3 survey management resource for one survey. By default, translatable
         fields are returned as canonical multilingual maps keyed by real locale codes. Use `lang`
         to request a localized projection where translatable fields are returned as strings.
-        `version` is reserved for future survey version history and is rejected for now.
       tags:
         - V3 Surveys
       parameters:
@@ -227,12 +226,6 @@ paths:
             A language-only selector (`de`) resolves to the matching configured survey language when exactly
             one exists; otherwise it returns `400`. Disabled-but-configured languages are readable in the
             management API so unfinished translations can be completed. Aliases are not accepted.
-        - in: query
-          name: version
-          required: false
-          schema:
-            type: string
-          description: Reserved for future version history. Currently returns `400 Bad Request` if provided.
       responses:
         "200":
           description: Survey retrieved successfully
@@ -328,7 +321,7 @@ paths:
                         enabled: false
                       variables: []
         "400":
-          description: Invalid survey id, unsupported query parameter, unsupported version selector, unknown language, or unsupported legacy survey shape
+          description: Invalid survey id, unsupported query parameter, unknown language, or unsupported legacy survey shape
           content:
             application/problem+json:
               schema:
