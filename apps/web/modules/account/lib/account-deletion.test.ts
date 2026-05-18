@@ -22,9 +22,9 @@ const oldUser = {
 };
 
 const loadAccountDeletionModule = async ({
-  dangerouslyDisableSsoReauth = false,
+  dangerouslyDisableSsoConfirmation = false,
 }: {
-  dangerouslyDisableSsoReauth?: boolean;
+  dangerouslyDisableSsoConfirmation?: boolean;
 } = {}) => {
   vi.resetModules();
 
@@ -35,7 +35,7 @@ const loadAccountDeletionModule = async ({
   }));
 
   vi.doMock("@/lib/constants", () => ({
-    DISABLE_ACCOUNT_DELETION_SSO_REAUTH: dangerouslyDisableSsoReauth,
+    DISABLE_ACCOUNT_DELETION_SSO_CONFIRMATION: dangerouslyDisableSsoConfirmation,
   }));
 
   vi.doMock("@/lib/organization/service", () => ({
@@ -81,7 +81,7 @@ describe("deleteUserWithAccountDeletionAuthorization", () => {
     mocks.verifyUserPassword.mockResolvedValue(true);
   });
 
-  test("requires the completed SSO reauthentication marker by default", async () => {
+  test("requires the completed SSO identity confirmation marker by default", async () => {
     const { deleteUserWithAccountDeletionAuthorization } = await loadAccountDeletionModule();
 
     await expect(
@@ -102,9 +102,9 @@ describe("deleteUserWithAccountDeletionAuthorization", () => {
     expect(mocks.deleteUser).toHaveBeenCalledWith(user.id);
   });
 
-  test("can dangerously bypass SSO reauthentication for passwordless SSO users", async () => {
+  test("can dangerously bypass SSO identity confirmation for passwordless SSO users", async () => {
     const { deleteUserWithAccountDeletionAuthorization } = await loadAccountDeletionModule({
-      dangerouslyDisableSsoReauth: true,
+      dangerouslyDisableSsoConfirmation: true,
     });
 
     await expect(
@@ -118,7 +118,7 @@ describe("deleteUserWithAccountDeletionAuthorization", () => {
     expect(mocks.consumeAccountDeletionSsoReauthentication).not.toHaveBeenCalled();
     expect(mocks.loggerWarn).toHaveBeenCalledWith(
       { identityProvider: "google", userId: user.id },
-      "Account deletion SSO reauthentication bypassed by environment configuration"
+      "Account deletion SSO identity confirmation bypassed by environment configuration"
     );
     expect(mocks.deleteUser).toHaveBeenCalledWith(user.id);
   });
@@ -131,7 +131,7 @@ describe("deleteUserWithAccountDeletionAuthorization", () => {
       password: "hashed-password",
     });
     const { deleteUserWithAccountDeletionAuthorization } = await loadAccountDeletionModule({
-      dangerouslyDisableSsoReauth: true,
+      dangerouslyDisableSsoConfirmation: true,
     });
 
     await expect(

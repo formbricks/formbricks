@@ -4,6 +4,7 @@ import { DeleteAccount } from "@/app/(app)/workspaces/[workspaceId]/settings/acc
 import { EditProfileDetailsForm } from "@/app/(app)/workspaces/[workspaceId]/settings/account/profile/components/EditProfileDetailsForm";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import {
+  DISABLE_ACCOUNT_DELETION_SSO_CONFIRMATION,
   EMAIL_VERIFICATION_DISABLED,
   ENTERPRISE_LICENSE_REQUEST_FORM_URL,
   IS_FORMBRICKS_CLOUD,
@@ -98,6 +99,7 @@ const Page = async (props: {
               isMultiOrgEnabled={isMultiOrgEnabled}
               accountDeletionError={searchParams.accountDeletionError}
               requiresPasswordConfirmation={requiresPasswordConfirmation}
+              isSsoIdentityConfirmationDisabled={DISABLE_ACCOUNT_DELETION_SSO_CONFIRMATION}
             />
           </SettingsCard>
           <IdBadge id={user.id} label={t("common.profile_id")} variant="column" />

@@ -90,40 +90,6 @@ const handleCredentialsOrTokenSignIn = async ({
   return true;
 };
 
-const maybeValidateAccountDeletionSsoReauth = async ({
-  account,
-  intentToken,
-}: {
-  account: NonNullable<TSignInAccount>;
-  intentToken: string | null;
-}) => {
-  if (!intentToken) {
-    return;
-  }
-
-  await validateAccountDeletionSsoReauthenticationCallback({
-    account,
-    intentToken,
-  });
-};
-
-const maybeCompleteAccountDeletionSsoReauth = async ({
-  account,
-  intentToken,
-}: {
-  account: NonNullable<TSignInAccount>;
-  intentToken: string | null;
-}) => {
-  if (!intentToken) {
-    return;
-  }
-
-  await completeAccountDeletionSsoReauthentication({
-    account,
-    intentToken,
-  });
-};
-
 const handleEnterpriseSsoSignIn = async ({
   account,
   callbackUrl,
@@ -139,7 +105,12 @@ const handleEnterpriseSsoSignIn = async ({
   userEmail: string;
   userId: string;
 }) => {
-  await maybeValidateAccountDeletionSsoReauth({ account, intentToken });
+  if (intentToken) {
+    await validateAccountDeletionSsoReauthenticationCallback({
+      account,
+      intentToken,
+    });
+  }
 
   const result = await handleSsoCallback({
     user: user as TUser,
@@ -148,7 +119,12 @@ const handleEnterpriseSsoSignIn = async ({
   });
 
   if (result === true) {
-    await maybeCompleteAccountDeletionSsoReauth({ account, intentToken });
+    if (intentToken) {
+      await completeAccountDeletionSsoReauthentication({
+        account,
+        intentToken,
+      });
+    }
 
     await finalizeSuccessfulSignIn({
       userId,
@@ -489,7 +465,6 @@ export const authOptions: NextAuthOptions = {
           });
         } catch (error) {
           const failureRedirectUrl = getAccountDeletionSsoReauthFailureRedirectUrl({
-            error,
             intentToken: accountDeletionSsoReauthIntentToken,
           });
 

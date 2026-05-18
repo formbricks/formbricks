@@ -2700,7 +2700,6 @@
         "email_confirmation_does_not_match": "E-Mail-Bestätigung stimmt nicht überein.",
         "enable_two_factor_authentication": "Zwei-Faktor-Authentifizierung aktivieren",
         "enter_the_code_from_your_authenticator_app_below": "Gib unten den Code aus deiner Authentifizierungs-App ein.",
-        "google_sso_account_deletion_requires_setup": "Wir konnten deine Identität nicht mit deinem SSO-Anbieter bestätigen. Bitte versuche es erneut oder kontaktiere deinen Administrator.",
         "lost_access": "Zugang verloren",
         "or_enter_the_following_code_manually": "Oder gib folgenden Code manuell ein:",
         "organizations_delete_message": "Du bist der einzige Inhaber dieser Organisationen, daher <b>werden sie ebenfalls gelöscht.</b>",
@@ -2711,8 +2710,6 @@
         "save_the_following_backup_codes_in_a_safe_place": "Speichere die folgenden Backup-Codes an einem sicheren Ort.",
         "scan_the_qr_code_below_with_your_authenticator_app": "Scanne den QR-Code unten mit deiner Authenticator-App.",
         "security_description": "Verwalte dein Passwort und andere Sicherheitseinstellungen wie die Zwei-Faktor-Authentifizierung (2FA).",
-        "sso_reauthentication_failed": "SSO-Neuauthentifizierung fehlgeschlagen. Bitte versuche erneut, dein Konto zu löschen.",
-        "sso_reauthentication_may_be_required_for_deletion": "Bei SSO-Konten kann die Auswahl von „Löschen“ zu einer Weiterleitung zu deinem Identitätsanbieter führen. Wenn deine Identität bestätigt wird, wird dein Konto automatisch gelöscht.",
         "two_factor_authentication": "Zwei-Faktor-Authentifizierung",
         "two_factor_authentication_description": "Füge deinem Konto eine zusätzliche Sicherheitsebene hinzu, falls dein Passwort gestohlen wird.",
         "two_factor_authentication_enabled_please_enter_the_six_digit_code_from_your_authenticator_app": "Zwei-Faktor-Authentifizierung aktiviert. Bitte gib den sechsstelligen Code aus deiner Authenticator-App ein.",
@@ -2721,7 +2718,9 @@
         "update_personal_info": "Aktualisiere deine persönlichen Informationen",
         "warning_cannot_delete_account": "Du bist der einzige Inhaber dieser Organisation. Bitte übertrage zuerst die Inhaberschaft auf ein anderes Mitglied.",
         "warning_cannot_undo": "Dies kann nicht rückgängig gemacht werden",
-        "wrong_password": "Falsches Passwort"
+        "wrong_password": "Falsches Passwort",
+        "sso_identity_confirmation_failed": "SSO-Identitätsbestätigung fehlgeschlagen. Bitte versuche erneut, dein Konto zu löschen.",
+        "sso_identity_confirmation_may_be_required_for_deletion": "Bei SSO-Konten kann dich die Auswahl von Löschen zu deinem Identitätsanbieter weiterleiten, um dieses Konto zu bestätigen. Wenn dasselbe Konto bestätigt wird, wird die Löschung automatisch fortgesetzt."
       },
       "teams": {
         "add_members_description": "Füge Mitglieder zum Team hinzu und lege ihre Rolle fest.",

@@ -701,7 +701,7 @@ describe("authOptions", () => {
       expect(mockUpdateUserLastLoginAt).toHaveBeenCalledWith(user.email);
     });
 
-    test("should complete account deletion SSO reauthentication before finalizing sign-in", async () => {
+    test("should complete account deletion SSO identity confirmation before finalizing sign-in", async () => {
       vi.resetModules();
 
       const mockHandleSsoCallback = vi.fn().mockResolvedValueOnce(true);
@@ -773,7 +773,7 @@ describe("authOptions", () => {
       expect(mockUpdateUserLastLoginAt).toHaveBeenCalledWith(user.email);
     });
 
-    test("should redirect account deletion SSO reauthentication failures back to the profile page", async () => {
+    test("should redirect account deletion SSO identity confirmation failures back to the profile page", async () => {
       vi.resetModules();
 
       const mockHandleSsoCallback = vi.fn();
@@ -783,17 +783,15 @@ describe("authOptions", () => {
       const mockGetAccountDeletionSsoReauthFailureRedirectUrl = vi
         .fn()
         .mockReturnValueOnce(
-          "http://localhost:3000/environments/env-id/settings/profile?accountDeletionError=google_reauth_not_configured"
+          "http://localhost:3000/environments/env-id/settings/profile?accountDeletionError=sso_reauth_failed"
         );
       const mockGetAccountDeletionSsoReauthIntentFromCallbackUrl = vi
         .fn()
         .mockReturnValueOnce("intent-token");
-      const reauthError = new Error(
-        "Google account deletion requires Google Auth Platform Session age claims to be enabled."
-      );
+      const confirmationError = new Error("SSO identity confirmation failed");
       const mockValidateAccountDeletionSsoReauthenticationCallback = vi
         .fn()
-        .mockRejectedValueOnce(reauthError);
+        .mockRejectedValueOnce(confirmationError);
 
       vi.doMock("@/lib/constants", async (importOriginal) => {
         const actual = await importOriginal<typeof import("@/lib/constants")>();
@@ -842,11 +840,10 @@ describe("authOptions", () => {
       const account = { provider: "google", type: "oauth", providerAccountId: "provider-123" } as any;
 
       await expect(enterpriseAuthOptions.callbacks?.signIn?.({ user, account } as any)).resolves.toBe(
-        "http://localhost:3000/environments/env-id/settings/profile?accountDeletionError=google_reauth_not_configured"
+        "http://localhost:3000/environments/env-id/settings/profile?accountDeletionError=sso_reauth_failed"
       );
 
       expect(mockGetAccountDeletionSsoReauthFailureRedirectUrl).toHaveBeenCalledWith({
-        error: reauthError,
         intentToken: "intent-token",
       });
       expect(mockHandleSsoCallback).not.toHaveBeenCalled();
