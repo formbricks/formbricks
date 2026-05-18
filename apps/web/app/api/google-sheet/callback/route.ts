@@ -10,6 +10,11 @@ import {
   WEBAPP_URL,
 } from "@/lib/constants";
 import { createOrUpdateIntegration, getIntegrationByType } from "@/lib/integration/service";
+import {
+  IntegrationOAuthStateError,
+  consumeIntegrationOAuthState,
+  getSafeOAuthCallbackError,
+} from "@/lib/oauth/integration-state";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { hasUserWorkspaceAccess } from "@/lib/workspace/auth";
@@ -17,24 +22,44 @@ import { authOptions } from "@/modules/auth/lib/authOptions";
 
 export const GET = async (req: Request) => {
   const url = new URL(req.url);
-  const workspaceId = url.searchParams.get("state");
+  const state = url.searchParams.get("state");
   const code = url.searchParams.get("code");
-
-  if (!workspaceId) {
-    return responses.badRequestResponse("Invalid workspaceId");
-  }
+  const error = url.searchParams.get("error");
 
   const session = await getServerSession(authOptions);
   if (!session) {
     return responses.notAuthenticatedResponse();
   }
 
+  let oauthState;
+  try {
+    oauthState = await consumeIntegrationOAuthState({
+      provider: "googleSheets",
+      userId: session.user.id,
+      state,
+    });
+  } catch (err) {
+    if (err instanceof IntegrationOAuthStateError) {
+      return responses.badRequestResponse("Invalid OAuth state");
+    }
+
+    throw err;
+  }
+
+  const workspaceId = oauthState.workspaceId;
   const canUserAccessWorkspace = await hasUserWorkspaceAccess(session.user.id, workspaceId);
   if (!canUserAccessWorkspace) {
     return responses.unauthorizedResponse();
   }
 
   const basePath = `/workspaces/${workspaceId}`;
+  const redirectUrl = new URL(`${basePath}/integrations/google-sheets`, WEBAPP_URL);
+
+  const safeError = getSafeOAuthCallbackError(error);
+  if (safeError) {
+    redirectUrl.searchParams.set("error", safeError);
+    return Response.redirect(redirectUrl);
+  }
 
   if (code && typeof code !== "string") {
     return responses.badRequestResponse("`code` must be a string");
@@ -49,13 +74,13 @@ export const GET = async (req: Request) => {
   const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uri);
 
   if (!code) {
-    return Response.redirect(`${WEBAPP_URL}${basePath}/integrations/google-sheets`);
+    return Response.redirect(redirectUrl);
   }
 
   const token = await oAuth2Client.getToken(code);
   const key = token.res?.data;
   if (!key) {
-    return Response.redirect(`${WEBAPP_URL}${basePath}/integrations/google-sheets`);
+    return Response.redirect(redirectUrl);
   }
 
   oAuth2Client.setCredentials({ access_token: key.access_token });
@@ -102,7 +127,7 @@ export const GET = async (req: Request) => {
       logger.error({ error: err }, "Failed to capture PostHog integration_connected event for googleSheets");
     }
 
-    return Response.redirect(`${WEBAPP_URL}/${basePath}/integrations/google-sheets`);
+    return Response.redirect(redirectUrl);
   }
 
   return responses.internalServerErrorResponse("Failed to create or update Google Sheets integration");

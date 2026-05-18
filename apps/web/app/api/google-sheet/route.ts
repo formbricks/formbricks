@@ -7,6 +7,7 @@ import {
   GOOGLE_SHEETS_CLIENT_SECRET,
   GOOGLE_SHEETS_REDIRECT_URL,
 } from "@/lib/constants";
+import { createIntegrationOAuthState } from "@/lib/oauth/integration-state";
 import { hasUserWorkspaceAccess } from "@/lib/workspace/auth";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 
@@ -39,12 +40,17 @@ export const GET = async (req: NextRequest) => {
   if (!client_secret) return responses.internalServerErrorResponse("Google client secret is missing");
   if (!redirect_uri) return responses.internalServerErrorResponse("Google redirect url is missing");
   const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uri);
+  const state = await createIntegrationOAuthState({
+    provider: "googleSheets",
+    userId: session.user.id,
+    workspaceId,
+  });
 
   const authUrl = oAuth2Client.generateAuthUrl({
     access_type: "offline",
     scope: scopes,
     prompt: "consent",
-    state: workspaceId,
+    state,
   });
 
   return responses.successResponse({ authUrl });
