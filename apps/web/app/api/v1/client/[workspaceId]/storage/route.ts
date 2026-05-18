@@ -66,7 +66,7 @@ export const POST = withV1ApiWrapper({
       };
     }
 
-    const { fileName, fileType, surveyId } = parsedInputResult.data;
+    const { fileName, fileType, surveyId, questionId } = parsedInputResult.data;
 
     const [survey, organizationId] = await Promise.all([
       getSurvey(surveyId),
@@ -109,6 +109,7 @@ export const POST = withV1ApiWrapper({
 
     const fileUploadPermission = validateSurveyAllowsFileUpload({
       fileName,
+      questionId,
       blocks: survey.blocks,
       questions: survey.questions,
     });
@@ -118,7 +119,9 @@ export const POST = withV1ApiWrapper({
         response: responses.badRequestResponse(
           fileUploadPermission.reason === "no_file_upload_question"
             ? "Survey does not allow file uploads"
-            : "File extension is not allowed for this survey",
+            : fileUploadPermission.reason === "file_upload_question_not_found"
+              ? "Question does not allow file uploads"
+              : "File extension is not allowed for this question",
           undefined
         ),
       };
@@ -134,7 +137,8 @@ export const POST = withV1ApiWrapper({
       workspaceId,
       fileType,
       "private",
-      maxFileUploadSize
+      maxFileUploadSize,
+      ["surveys", surveyId, "questions", questionId]
     );
 
     if (!signedUrlResponse.ok) {

@@ -24,8 +24,9 @@ export const findAndDeleteUploadedFilesInResponse = async (
 
   const deletionPromises = fileUrls.map(async (fileUrl) => {
     try {
-      const { pathname } = new URL(fileUrl);
-      const [, storageId, accessType, fileName] = pathname.split("/").filter(Boolean);
+      const pathname = fileUrl.startsWith("/storage/") ? fileUrl : new URL(fileUrl).pathname;
+      const [, storageId, accessType, ...fileNameSegments] = pathname.split("/").filter(Boolean);
+      const fileName = fileNameSegments.join("/");
 
       if (!storageId || !accessType || !fileName) {
         throw new Error(`Invalid file path: ${pathname}`);

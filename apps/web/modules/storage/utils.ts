@@ -120,7 +120,7 @@ export type TSurveyFileUploadPermissionResult =
     }
   | {
       ok: false;
-      reason: "no_file_upload_question" | "file_extension_not_allowed";
+      reason: "no_file_upload_question" | "file_upload_question_not_found" | "file_extension_not_allowed";
     };
 
 const getAllowedFileExtensionFromFileName = (fileName: string): TAllowedFileExtension | null => {
@@ -132,26 +132,47 @@ const getAllowedFileExtensionFromFileName = (fileName: string): TAllowedFileExte
   return extensionValidation.success ? extensionValidation.data : null;
 };
 
-export const validateSurveyAllowsFileUpload = ({
-  fileName,
+const getSurveyFileUploadConfigs = ({
   blocks,
   questions,
 }: {
-  fileName: string;
   blocks?: TSurveyBlock[] | null;
   questions?: TSurveyQuestion[] | null;
-}): TSurveyFileUploadPermissionResult => {
-  const fileUploadConfigs = [
+}): TSurveyFileUploadElement[] => {
+  return [
     ...(blocks ?? [])
       .flatMap((block) => block.elements)
       .filter((element) => element.type === TSurveyElementTypeEnum.FileUpload),
     ...(questions ?? []).filter((question) => question.type === TSurveyQuestionTypeEnum.FileUpload),
   ] as TSurveyFileUploadElement[];
+};
+
+export const validateSurveyAllowsFileUpload = ({
+  fileName,
+  questionId,
+  blocks,
+  questions,
+}: {
+  fileName: string;
+  questionId: string;
+  blocks?: TSurveyBlock[] | null;
+  questions?: TSurveyQuestion[] | null;
+}): TSurveyFileUploadPermissionResult => {
+  const fileUploadConfigs = getSurveyFileUploadConfigs({ blocks, questions });
 
   if (fileUploadConfigs.length === 0) {
     return {
       ok: false,
       reason: "no_file_upload_question",
+    };
+  }
+
+  const fileUploadConfig = fileUploadConfigs.find((config) => config.id === questionId);
+
+  if (!fileUploadConfig) {
+    return {
+      ok: false,
+      reason: "file_upload_question_not_found",
     };
   }
 
@@ -164,11 +185,9 @@ export const validateSurveyAllowsFileUpload = ({
     };
   }
 
-  const isFileExtensionAllowed = fileUploadConfigs.some((fileUploadConfig) => {
-    const { allowedFileExtensions } = fileUploadConfig;
-
-    return allowedFileExtensions === undefined || allowedFileExtensions.includes(fileExtension);
-  });
+  const { allowedFileExtensions } = fileUploadConfig;
+  const isFileExtensionAllowed =
+    allowedFileExtensions === undefined || allowedFileExtensions.includes(fileExtension);
 
   return isFileExtensionAllowed
     ? { ok: true }
@@ -176,6 +195,92 @@ export const validateSurveyAllowsFileUpload = ({
         ok: false,
         reason: "file_extension_not_allowed",
       };
+};
+
+const getStorageUrlPathSegments = (fileUrl: string): string[] | null => {
+  if (!fileUrl.startsWith("/storage/")) return null;
+
+  const pathWithoutSearch = fileUrl.split(/[?#]/)[0];
+  return pathWithoutSearch.split("/").filter(Boolean);
+};
+
+const isScopedPrivateUploadUrl = ({
+  fileUrl,
+  workspaceId,
+  surveyId,
+  questionId,
+}: {
+  fileUrl: string;
+  workspaceId: string;
+  surveyId: string;
+  questionId: string;
+}): boolean => {
+  const segments = getStorageUrlPathSegments(fileUrl);
+
+  if (!segments || segments.length !== 8) return false;
+
+  const [
+    storageSegment,
+    storageWorkspaceId,
+    accessType,
+    surveysSegment,
+    storageSurveyId,
+    questionsSegment,
+    storageQuestionId,
+    fileName,
+  ] = segments;
+
+  return (
+    storageSegment === "storage" &&
+    storageWorkspaceId === workspaceId &&
+    accessType === "private" &&
+    surveysSegment === "surveys" &&
+    storageSurveyId === surveyId &&
+    questionsSegment === "questions" &&
+    storageQuestionId === questionId &&
+    Boolean(fileName)
+  );
+};
+
+export const validateClientFileUploads = ({
+  data,
+  workspaceId,
+  surveyId,
+  blocks,
+  questions,
+}: {
+  data?: TResponseData;
+  workspaceId: string;
+  surveyId: string;
+  blocks?: TSurveyBlock[] | null;
+  questions?: TSurveyQuestion[] | null;
+}): boolean => {
+  if (!data) return true;
+
+  const fileUploadConfigs = getSurveyFileUploadConfigs({ blocks, questions });
+
+  for (const fileUploadConfig of fileUploadConfigs) {
+    const fileUrls = data[fileUploadConfig.id];
+
+    if (fileUrls === undefined) continue;
+    if (!Array.isArray(fileUrls) || !fileUrls.every((url) => typeof url === "string")) return false;
+
+    for (const fileUrl of fileUrls) {
+      if (!validateSingleFile(fileUrl, fileUploadConfig.allowedFileExtensions)) return false;
+      if (
+        !isScopedPrivateUploadUrl({
+          fileUrl,
+          workspaceId,
+          surveyId,
+          questionId: fileUploadConfig.id,
+        })
+      ) {
+        return false;
+      }
+    }
+  }
+
+  return true;
 };
 
 export const isValidImageFile = (fileUrl: string): boolean => {

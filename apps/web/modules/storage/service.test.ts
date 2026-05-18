@@ -117,6 +117,41 @@ describe("storage service", () => {
       }
     });
 
+    test("should generate scoped private upload URL when path segments are provided", async () => {
+      const mockSignedUrlResponse = {
+        ok: true,
+        data: {
+          signedUrl: "https://s3.example.com/upload",
+          presignedFields: { key: "value" },
+        },
+      } as MockedSignedUploadReturn;
+
+      vi.mocked(getSignedUploadUrl).mockResolvedValue(mockSignedUrlResponse);
+
+      const result = await getSignedUrlForUpload(
+        "test-doc.pdf",
+        "ws-123",
+        "application/pdf",
+        "private" as TAccessType,
+        1024 * 1024 * 10,
+        ["surveys", "survey-123", "questions", "question-123"]
+      );
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data.fileUrl).toBe(
+          `/storage/ws-123/private/surveys/survey-123/questions/question-123/test-doc--fid--${mockUUID}.pdf`
+        );
+      }
+
+      expect(getSignedUploadUrl).toHaveBeenCalledWith(
+        `test-doc--fid--${mockUUID}.pdf`,
+        "application/pdf",
+        "ws-123/private/surveys/survey-123/questions/question-123",
+        1024 * 1024 * 10
+      );
+    });
+
     test("should properly sanitize filenames with special characters like # in URL", async () => {
       const mockSignedUrlResponse = {
         ok: true,

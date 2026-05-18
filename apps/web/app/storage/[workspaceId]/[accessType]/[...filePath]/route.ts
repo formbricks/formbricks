@@ -4,7 +4,7 @@ import { logger } from "@formbricks/logger";
 import { ZDeleteFileRequest, ZDownloadFileRequest } from "@formbricks/types/storage";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
-import { authorizePrivateDownload } from "@/app/storage/[workspaceId]/[accessType]/[fileName]/lib/auth";
+import { authorizePrivateDownload } from "@/app/storage/[workspaceId]/[accessType]/[...filePath]/lib/auth";
 import { resolveClientApiIds } from "@/lib/utils/resolve-client-id";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
@@ -15,10 +15,14 @@ import { logFileDeletion } from "./lib/audit-logs";
 
 export const GET = async (
   request: NextRequest,
-  props: { params: Promise<{ workspaceId: string; accessType: string; fileName: string }> }
+  props: { params: Promise<{ workspaceId: string; accessType: string; filePath: string[] }> }
 ): Promise<Response> => {
   const params = await props.params;
-  const paramValidation = ZDownloadFileRequest.safeParse(params);
+  const fileName = params.filePath.join("/");
+  const paramValidation = ZDownloadFileRequest.safeParse({
+    accessType: params.accessType,
+    fileName,
+  });
 
   if (!paramValidation.success) {
     return responses.badRequestResponse(
@@ -28,7 +32,7 @@ export const GET = async (
     );
   }
 
-  const { accessType, fileName } = paramValidation.data;
+  const { accessType } = paramValidation.data;
   const idParam = params.workspaceId;
 
   // Resolve: the URL param may be an environmentId (old uploads) or workspaceId (new uploads)
@@ -72,10 +76,14 @@ export const GET = async (
 
 export const DELETE = async (
   request: NextRequest,
-  props: { params: Promise<{ workspaceId: string; accessType: string; fileName: string }> }
+  props: { params: Promise<{ workspaceId: string; accessType: string; filePath: string[] }> }
 ): Promise<Response> => {
   const params = await props.params;
-  const paramValidation = ZDeleteFileRequest.safeParse(params);
+  const fileName = params.filePath.join("/");
+  const paramValidation = ZDeleteFileRequest.safeParse({
+    accessType: params.accessType,
+    fileName,
+  });
   if (!paramValidation.success) {
     const errorDetails = transformErrorToDetails(paramValidation.error);
 
@@ -88,7 +96,7 @@ export const DELETE = async (
     return responses.badRequestResponse("Fields are missing or incorrectly formatted", errorDetails, true);
   }
 
-  const { accessType, fileName } = paramValidation.data;
+  const { accessType } = paramValidation.data;
   const idParam = params.workspaceId;
 
   // Resolve: the URL param may be an environmentId (old uploads) or workspaceId (new uploads)
@@ -139,7 +147,7 @@ export const DELETE = async (
     idParam
   );
 
-  if (!deleteResult.ok) {
+  if (!deleteResult.ok && "error" in deleteResult) {
     const { error } = deleteResult;
 
     logger.error({ error }, "Error deleting file");

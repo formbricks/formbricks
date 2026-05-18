@@ -18,7 +18,8 @@ export const getSignedUrlForUpload = async (
   workspaceId: string,
   fileType: string,
   accessType: TAccessType,
-  maxFileUploadSize: number = 1024 * 1024 * 10 // 10MB
+  maxFileUploadSize: number = 1024 * 1024 * 10, // 10MB
+  filePathSegments: string[] = []
 ): Promise<
   Result<
     {
@@ -34,17 +35,18 @@ export const getSignedUrlForUpload = async (
     if (!safeFileName) {
       return err({ code: StorageErrorCode.InvalidInput });
     }
+
+    if (filePathSegments.some((segment) => !segment || segment.includes("/") || segment.includes("\\"))) {
+      return err({ code: StorageErrorCode.InvalidInput });
+    }
+
     const fileNameWithoutExtension = safeFileName.split(".").slice(0, -1).join(".");
     const fileExtension = safeFileName.split(".").pop();
 
     const updatedFileName = `${fileNameWithoutExtension}--fid--${randomUUID()}.${fileExtension}`;
+    const filePath = [workspaceId, accessType, ...filePathSegments].join("/");
 
-    const signedUrlResult = await getSignedUploadUrl(
-      updatedFileName,
-      fileType,
-      `${workspaceId}/${accessType}`,
-      maxFileUploadSize
-    );
+    const signedUrlResult = await getSignedUploadUrl(updatedFileName, fileType, filePath, maxFileUploadSize);
 
     if (!signedUrlResult.ok) {
       return signedUrlResult;
@@ -54,7 +56,10 @@ export const getSignedUrlForUpload = async (
     return ok({
       signedUrl: signedUrlResult.data.signedUrl,
       presignedFields: signedUrlResult.data.presignedFields,
-      fileUrl: `/storage/${workspaceId}/${accessType}/${encodeURIComponent(updatedFileName)}`,
+      fileUrl: `/storage/${workspaceId}/${accessType}/${[
+        ...filePathSegments,
+        encodeURIComponent(updatedFileName),
+      ].join("/")}`,
     });
   } catch (error) {
     logger.error({ error }, "Error getting signed url for upload");
