@@ -1,5 +1,5 @@
 import "server-only";
-import crypto from "crypto";
+import crypto from "node:crypto";
 import { createCacheKey } from "@formbricks/cache";
 import { logger } from "@formbricks/logger";
 import { cache } from "@/lib/cache";
@@ -46,7 +46,7 @@ export class IntegrationOAuthStateError extends Error {
 }
 
 const toBase64Url = (buffer: Buffer) =>
-  buffer.toString("base64").replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
+  buffer.toString("base64").replaceAll("=", "").replaceAll("+", "-").replaceAll("/", "_");
 
 const generateRandomToken = () => toBase64Url(crypto.randomBytes(OAUTH_STATE_ENTROPY_BYTES));
 
@@ -187,7 +187,7 @@ export const consumeIntegrationOAuthState = async ({
   const cacheKey = getIntegrationOAuthStateCacheKey(stateHash);
   const storedState = await consumeCachedIntegrationOAuthState(cacheKey, { provider, stateHash, userId });
 
-  if (!storedState || storedState.provider !== provider || storedState.userId !== userId) {
+  if (storedState?.provider !== provider || storedState?.userId !== userId) {
     logger.warn({ provider, stateHash, userId }, "Integration OAuth callback rejected due to invalid state");
     throw new IntegrationOAuthStateError();
   }

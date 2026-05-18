@@ -91,16 +91,17 @@ describe("@formbricks/cache types/keys", () => {
   });
 
   describe("CustomCacheNamespace type", () => {
-    test("should include expected namespaces", () => {
+    test("should support known custom namespaces in parsed cache keys", () => {
       // Type test - this will fail at compile time if types don't match
-      const accountDeletionNamespace: CustomCacheNamespace = "account_deletion";
-      const analyticsNamespace: CustomCacheNamespace = "analytics";
-      const billingNamespace: CustomCacheNamespace = "billing";
-      const oauthNamespace: CustomCacheNamespace = "oauth";
-      expect(accountDeletionNamespace).toBe("account_deletion");
-      expect(analyticsNamespace).toBe("analytics");
-      expect(billingNamespace).toBe("billing");
-      expect(oauthNamespace).toBe("oauth");
+      const namespaces: CustomCacheNamespace[] = ["account_deletion", "analytics", "billing", "oauth"];
+      const cacheKeys = namespaces.map((namespace) => ZCacheKey.parse(`${namespace}:test:123`));
+
+      expect(cacheKeys).toEqual([
+        "account_deletion:test:123",
+        "analytics:test:123",
+        "billing:test:123",
+        "oauth:test:123",
+      ]);
     });
 
     test("should be usable in cache key construction", () => {

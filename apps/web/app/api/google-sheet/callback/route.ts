@@ -20,6 +20,67 @@ import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { hasUserWorkspaceAccess } from "@/lib/workspace/auth";
 import { authOptions } from "@/modules/auth/lib/authOptions";
 
+const getGoogleSheetsRedirectUrl = (workspaceId: string) =>
+  new URL(`/workspaces/${workspaceId}/integrations/google-sheets`, WEBAPP_URL);
+
+const getGoogleSheetsOAuthState = async (state: string | null, userId: string) => {
+  try {
+    return await consumeIntegrationOAuthState({
+      provider: "googleSheets",
+      userId,
+      state,
+    });
+  } catch (err) {
+    if (err instanceof IntegrationOAuthStateError) {
+      return null;
+    }
+
+    throw err;
+  }
+};
+
+const getGoogleSheetsOAuthClient = () => {
+  const client_id = GOOGLE_SHEETS_CLIENT_ID;
+  const client_secret = GOOGLE_SHEETS_CLIENT_SECRET;
+  const redirect_uri = GOOGLE_SHEETS_REDIRECT_URL;
+
+  if (!client_id) {
+    return { response: responses.internalServerErrorResponse("Google client id is missing") };
+  }
+
+  if (!client_secret) {
+    return { response: responses.internalServerErrorResponse("Google client secret is missing") };
+  }
+
+  if (!redirect_uri) {
+    return { response: responses.internalServerErrorResponse("Google redirect url is missing") };
+  }
+
+  return { client: new google.auth.OAuth2(client_id, client_secret, redirect_uri) };
+};
+
+const captureGoogleSheetsConnectedEvent = async (userId: string, workspaceId: string) => {
+  try {
+    const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
+    capturePostHogEvent(userId, "integration_connected", {
+      integration_type: "googleSheets",
+      organization_id: organizationId,
+    });
+    capturePostHogEvent(
+      userId,
+      "integration_connected",
+      {
+        integration_type: "googleSheets",
+        organization_id: organizationId,
+        workspace_id: workspaceId,
+      },
+      { organizationId, workspaceId }
+    );
+  } catch (err) {
+    logger.error({ error: err }, "Failed to capture PostHog integration_connected event for googleSheets");
+  }
+};
+
 export const GET = async (req: Request) => {
   const url = new URL(req.url);
   const state = url.searchParams.get("state");
@@ -31,19 +92,9 @@ export const GET = async (req: Request) => {
     return responses.notAuthenticatedResponse();
   }
 
-  let oauthState;
-  try {
-    oauthState = await consumeIntegrationOAuthState({
-      provider: "googleSheets",
-      userId: session.user.id,
-      state,
-    });
-  } catch (err) {
-    if (err instanceof IntegrationOAuthStateError) {
-      return responses.badRequestResponse("Invalid OAuth state");
-    }
-
-    throw err;
+  const oauthState = await getGoogleSheetsOAuthState(state, session.user.id);
+  if (!oauthState) {
+    return responses.badRequestResponse("Invalid OAuth state");
   }
 
   const workspaceId = oauthState.workspaceId;
@@ -52,8 +103,7 @@ export const GET = async (req: Request) => {
     return responses.unauthorizedResponse();
   }
 
-  const basePath = `/workspaces/${workspaceId}`;
-  const redirectUrl = new URL(`${basePath}/integrations/google-sheets`, WEBAPP_URL);
+  const redirectUrl = getGoogleSheetsRedirectUrl(workspaceId);
 
   const safeError = getSafeOAuthCallbackError(error);
   if (safeError) {
@@ -65,13 +115,11 @@ export const GET = async (req: Request) => {
     return responses.badRequestResponse("`code` must be a string");
   }
 
-  const client_id = GOOGLE_SHEETS_CLIENT_ID;
-  const client_secret = GOOGLE_SHEETS_CLIENT_SECRET;
-  const redirect_uri = GOOGLE_SHEETS_REDIRECT_URL;
-  if (!client_id) return responses.internalServerErrorResponse("Google client id is missing");
-  if (!client_secret) return responses.internalServerErrorResponse("Google client secret is missing");
-  if (!redirect_uri) return responses.internalServerErrorResponse("Google redirect url is missing");
-  const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uri);
+  const oAuth2ClientResult = getGoogleSheetsOAuthClient();
+  if ("response" in oAuth2ClientResult) {
+    return oAuth2ClientResult.response;
+  }
+  const oAuth2Client = oAuth2ClientResult.client;
 
   if (!code) {
     return Response.redirect(redirectUrl);
@@ -106,29 +154,10 @@ export const GET = async (req: Request) => {
   };
 
   const result = await createOrUpdateIntegration(workspaceId, googleSheetIntegration);
-  if (result) {
-    try {
-      const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
-      capturePostHogEvent(session.user.id, "integration_connected", {
-        integration_type: "googleSheets",
-        organization_id: organizationId,
-      });
-      capturePostHogEvent(
-        session.user.id,
-        "integration_connected",
-        {
-          integration_type: "googleSheets",
-          organization_id: organizationId,
-          workspace_id: workspaceId,
-        },
-        { organizationId, workspaceId }
-      );
-    } catch (err) {
-      logger.error({ error: err }, "Failed to capture PostHog integration_connected event for googleSheets");
-    }
-
-    return Response.redirect(redirectUrl);
+  if (!result) {
+    return responses.internalServerErrorResponse("Failed to create or update Google Sheets integration");
   }
 
-  return responses.internalServerErrorResponse("Failed to create or update Google Sheets integration");
+  await captureGoogleSheetsConnectedEvent(session.user.id, workspaceId);
+  return Response.redirect(redirectUrl);
 };
