@@ -118,7 +118,7 @@ describe("workspace lib", () => {
       expectNoFrdSideEffects();
     });
 
-    test("seeds the four default contact attribute keys when creating a workspace", async () => {
+    test("seeds the default contact attribute keys when creating a workspace", async () => {
       const createdWorkspace = { ...baseWorkspace, id: "p-defaults" };
       vi.mocked(prisma.workspace.create).mockResolvedValueOnce(createdWorkspace as any);
 
@@ -131,7 +131,7 @@ describe("workspace lib", () => {
         isUnique?: boolean;
       }>;
       expect(attributeCreate.map((a) => a.key).sort()).toEqual(
-        ["email", "firstName", "lastName", "userId"].sort()
+        ["email", "firstName", "language", "lastName", "userId"].sort()
       );
       expect(attributeCreate.every((a) => a.type === "default")).toBe(true);
       const uniqueKeys = attributeCreate.filter((a) => a.isUnique).map((a) => a.key);

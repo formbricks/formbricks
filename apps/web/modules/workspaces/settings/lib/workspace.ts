@@ -36,7 +36,13 @@ const DEFAULT_CONTACT_ATTRIBUTE_KEYS = [
     description: "Your contact's last name",
     type: "default",
   },
-] as const satisfies Prisma.ContactAttributeKeyCreateWithoutWorkspaceInput[];
+  {
+    key: "language",
+    name: "Language",
+    description: "The language preference of a contact",
+    type: "default",
+  },
+];
 
 const selectWorkspace = {
   id: true,
