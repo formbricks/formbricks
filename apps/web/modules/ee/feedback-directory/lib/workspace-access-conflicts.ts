@@ -15,56 +15,51 @@ export interface WorkspaceConflictDetail {
   feedbackDirectoryName: string;
 }
 
-interface WorkspaceConflictInput {
+interface WorkspaceAccessConflictInput {
   orgWorkspaces: WorkspaceOptionSource[];
   workspaceAccessByWorkspace: WorkspaceAccessAssignment[];
   currentDirectoryId?: string;
 }
 
+interface WorkspaceAccessConflictState {
+  conflictDetails: WorkspaceConflictDetail[];
+  hasSelectableWorkspace: boolean;
+  showBlockedExplanation: boolean;
+}
+
 const sortByWorkspaceName = (a: WorkspaceConflictDetail, b: WorkspaceConflictDetail): number =>
   a.workspaceName.localeCompare(b.workspaceName, undefined, { sensitivity: "base" });
 
-export const getWorkspaceConflictDetails = ({
+export const getWorkspaceAccessConflictState = ({
   orgWorkspaces,
   workspaceAccessByWorkspace,
   currentDirectoryId,
-}: WorkspaceConflictInput): WorkspaceConflictDetail[] => {
+}: WorkspaceAccessConflictInput): WorkspaceAccessConflictState => {
   const workspaceAccessMap = new Map(
     workspaceAccessByWorkspace.map((assignment) => [assignment.workspaceId, assignment])
   );
+  let hasSelectableWorkspace = false;
+  const conflictDetails: WorkspaceConflictDetail[] = [];
 
-  return orgWorkspaces
-    .flatMap((workspace) => {
-      const assignment = workspaceAccessMap.get(workspace.id);
-      if (!assignment || assignment.feedbackDirectoryId === currentDirectoryId) {
-        return [];
-      }
-
-      return [
-        {
-          workspaceId: workspace.id,
-          workspaceName: workspace.name,
-          feedbackDirectoryName: assignment.feedbackDirectoryName,
-        },
-      ];
-    })
-    .sort(sortByWorkspaceName);
-};
-
-export const hasSelectableWorkspace = ({
-  orgWorkspaces,
-  workspaceAccessByWorkspace,
-  currentDirectoryId,
-}: WorkspaceConflictInput): boolean => {
-  const workspaceAccessMap = new Map(
-    workspaceAccessByWorkspace.map((assignment) => [assignment.workspaceId, assignment])
-  );
-
-  return orgWorkspaces.some((workspace) => {
+  for (const workspace of orgWorkspaces) {
     const assignment = workspaceAccessMap.get(workspace.id);
-    return !assignment || assignment.feedbackDirectoryId === currentDirectoryId;
-  });
-};
+    if (!assignment || assignment.feedbackDirectoryId === currentDirectoryId) {
+      hasSelectableWorkspace = true;
+      continue;
+    }
 
-export const shouldShowWorkspaceAccessBlockedExplanation = (input: WorkspaceConflictInput): boolean =>
-  getWorkspaceConflictDetails(input).length > 0 && !hasSelectableWorkspace(input);
+    conflictDetails.push({
+      workspaceId: workspace.id,
+      workspaceName: workspace.name,
+      feedbackDirectoryName: assignment.feedbackDirectoryName,
+    });
+  }
+
+  conflictDetails.sort(sortByWorkspaceName);
+
+  return {
+    conflictDetails,
+    hasSelectableWorkspace,
+    showBlockedExplanation: conflictDetails.length > 0 && !hasSelectableWorkspace,
+  };
+};

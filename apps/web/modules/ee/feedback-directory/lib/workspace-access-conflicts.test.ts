@@ -1,9 +1,5 @@
 import { describe, expect, test } from "vitest";
-import {
-  getWorkspaceConflictDetails,
-  hasSelectableWorkspace,
-  shouldShowWorkspaceAccessBlockedExplanation,
-} from "./workspace-access-conflicts";
+import { getWorkspaceAccessConflictState } from "./workspace-access-conflicts";
 
 const orgWorkspaces = [
   { id: "workspace-b", name: "Beta" },
@@ -29,20 +25,22 @@ describe("workspace access conflict helpers", () => {
       currentDirectoryId: "directory-current",
     };
 
-    expect(getWorkspaceConflictDetails(input)).toEqual([
-      {
-        workspaceId: "workspace-a",
-        workspaceName: "Alpha",
-        feedbackDirectoryName: "Directory A",
-      },
-      {
-        workspaceId: "workspace-b",
-        workspaceName: "Beta",
-        feedbackDirectoryName: "Directory B",
-      },
-    ]);
-    expect(hasSelectableWorkspace(input)).toBe(false);
-    expect(shouldShowWorkspaceAccessBlockedExplanation(input)).toBe(true);
+    expect(getWorkspaceAccessConflictState(input)).toEqual({
+      conflictDetails: [
+        {
+          workspaceId: "workspace-a",
+          workspaceName: "Alpha",
+          feedbackDirectoryName: "Directory A",
+        },
+        {
+          workspaceId: "workspace-b",
+          workspaceName: "Beta",
+          feedbackDirectoryName: "Directory B",
+        },
+      ],
+      hasSelectableWorkspace: false,
+      showBlockedExplanation: true,
+    });
   });
 
   test("does not show the blocked explanation when some workspaces are still available", () => {
@@ -58,15 +56,17 @@ describe("workspace access conflict helpers", () => {
       currentDirectoryId: "directory-current",
     };
 
-    expect(getWorkspaceConflictDetails(input)).toEqual([
-      {
-        workspaceId: "workspace-a",
-        workspaceName: "Alpha",
-        feedbackDirectoryName: "Directory A",
-      },
-    ]);
-    expect(hasSelectableWorkspace(input)).toBe(true);
-    expect(shouldShowWorkspaceAccessBlockedExplanation(input)).toBe(false);
+    expect(getWorkspaceAccessConflictState(input)).toEqual({
+      conflictDetails: [
+        {
+          workspaceId: "workspace-a",
+          workspaceName: "Alpha",
+          feedbackDirectoryName: "Directory A",
+        },
+      ],
+      hasSelectableWorkspace: true,
+      showBlockedExplanation: false,
+    });
   });
 
   test("treats assignments to the current directory as selectable", () => {
@@ -87,14 +87,16 @@ describe("workspace access conflict helpers", () => {
       currentDirectoryId: "directory-current",
     };
 
-    expect(getWorkspaceConflictDetails(input)).toEqual([
-      {
-        workspaceId: "workspace-b",
-        workspaceName: "Beta",
-        feedbackDirectoryName: "Directory B",
-      },
-    ]);
-    expect(hasSelectableWorkspace(input)).toBe(true);
-    expect(shouldShowWorkspaceAccessBlockedExplanation(input)).toBe(false);
+    expect(getWorkspaceAccessConflictState(input)).toEqual({
+      conflictDetails: [
+        {
+          workspaceId: "workspace-b",
+          workspaceName: "Beta",
+          feedbackDirectoryName: "Directory B",
+        },
+      ],
+      hasSelectableWorkspace: true,
+      showBlockedExplanation: false,
+    });
   });
 });
