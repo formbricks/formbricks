@@ -224,4 +224,41 @@ describe("integration OAuth state route wiring", () => {
     expect(mocks.fetchMock).not.toHaveBeenCalled();
     expect(mockFetchAirtableAuthToken).not.toHaveBeenCalled();
   });
+
+  test("rejects valid callback state when workspace access was revoked", async () => {
+    mockHasUserWorkspaceAccess.mockResolvedValue(false);
+    mockConsumeIntegrationOAuthState.mockResolvedValue({
+      createdAt: Date.now(),
+      pkceCodeVerifier: "airtable-code-verifier",
+      provider: "airtable",
+      userId: "user-1",
+      workspaceId,
+    } as any);
+
+    const googleResponse = await googleSheetsCallbackGET(
+      new Request(`http://localhost:3000/api/google-sheet/callback?state=${opaqueState}&code=code`)
+    );
+    const slackResponse = await slackCallbackGET(
+      nextRequest(`http://localhost:3000/api/v1/integrations/slack/callback?state=${opaqueState}&code=code`),
+      {} as never
+    );
+    const notionResponse = await notionCallbackGET(
+      nextRequest(`http://localhost:3000/api/v1/integrations/notion/callback?state=${opaqueState}&code=code`),
+      {} as never
+    );
+    const airtableResponse = await airtableCallbackGET(
+      nextRequest(
+        `http://localhost:3000/api/v1/integrations/airtable/callback?state=${opaqueState}&code=code`
+      ),
+      {} as never
+    );
+
+    expect(googleResponse.status).toBe(401);
+    expect(slackResponse.status).toBe(401);
+    expect(notionResponse.status).toBe(401);
+    expect(airtableResponse.status).toBe(401);
+    expect(mocks.googleGetToken).not.toHaveBeenCalled();
+    expect(mocks.fetchMock).not.toHaveBeenCalled();
+    expect(mockFetchAirtableAuthToken).not.toHaveBeenCalled();
+  });
 });

@@ -146,7 +146,7 @@ export const GET = withV1ApiWrapper({
         response: Response.redirect(redirectUrl),
       };
     } catch (error) {
-      logger.error({ error, url: req.url }, "Error in GET /api/v1/integrations/airtable/callback");
+      logger.error({ error }, "Error in GET /api/v1/integrations/airtable/callback");
       return {
         response: responses.internalServerErrorResponse(
           error instanceof Error ? error.message : String(error)
