@@ -10,10 +10,10 @@ export function LanguageLabels() {
   const { t } = useTranslation();
   return (
     <div className="mb-2 grid w-full grid-cols-4 gap-4">
-      <Label htmlFor="languagesId">{t("environments.workspace.languages.language")}</Label>
-      <Label htmlFor="languagesId">{t("environments.workspace.languages.identifier")}</Label>
+      <Label htmlFor="languagesId">{t("workspace.languages.language")}</Label>
+      <Label htmlFor="languagesId">{t("workspace.languages.identifier")}</Label>
       <Label className="flex items-center space-x-2" htmlFor="Alias">
-        <span>{t("environments.workspace.languages.alias")}</span> <AliasTooltip t={t} />
+        <span>{t("workspace.languages.alias")}</span> <AliasTooltip t={t} />
       </Label>
     </div>
   );
@@ -28,7 +28,7 @@ function AliasTooltip({ t }: Readonly<{ t: TFunction }>) {
             <InfoIcon className="h-4 w-4 text-slate-400" />
           </div>
         </TooltipTrigger>
-        <TooltipContent>{t("environments.workspace.languages.alias_tooltip")}</TooltipContent>
+        <TooltipContent>{t("workspace.languages.alias_tooltip")}</TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );

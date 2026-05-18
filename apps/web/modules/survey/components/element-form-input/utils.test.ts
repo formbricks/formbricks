@@ -149,7 +149,6 @@ describe("utils", () => {
           buttonLabel: createI18nString("Start", surveyLanguageCodes),
         } as unknown as TSurvey["welcomeCard"],
         styling: {},
-        environmentId: "env1",
         type: "app",
         triggers: [],
         recontactDays: null,
@@ -176,7 +175,6 @@ describe("utils", () => {
           headline: createI18nString("Welcome", surveyLanguageCodes),
         } as unknown as TSurvey["welcomeCard"],
         styling: {},
-        environmentId: "env1",
         type: "app",
         triggers: [],
         recontactDays: null,
@@ -206,7 +204,6 @@ describe("utils", () => {
           headline: createI18nString("Welcome", surveyLanguageCodes),
         } as unknown as TSurvey["welcomeCard"],
         styling: {},
-        environmentId: "env1",
         type: "app",
         triggers: [],
         recontactDays: null,
@@ -239,7 +236,6 @@ describe("utils", () => {
           headline: createI18nString("Welcome", surveyLanguageCodes),
         } as unknown as TSurvey["welcomeCard"],
         styling: {},
-        environmentId: "env1",
         type: "app",
         triggers: [],
         recontactDays: null,
@@ -288,7 +284,6 @@ describe("utils", () => {
         ],
         welcomeCard: { enabled: true } as unknown as TSurvey["welcomeCard"],
         styling: {},
-        environmentId: "env1",
         type: "app",
         triggers: [],
         recontactDays: null,
@@ -325,7 +320,6 @@ describe("utils", () => {
         ],
         welcomeCard: { enabled: true } as unknown as TSurvey["welcomeCard"],
         styling: {},
-        environmentId: "env1",
         type: "app",
         triggers: [],
         recontactDays: null,
@@ -361,7 +355,6 @@ describe("utils", () => {
         ],
         welcomeCard: { enabled: true } as unknown as TSurvey["welcomeCard"],
         styling: {},
-        environmentId: "env1",
         type: "app",
         triggers: [],
         recontactDays: null,
@@ -379,15 +372,13 @@ describe("utils", () => {
     test("returns placeholder for headline", () => {
       const t = vi.fn((key) => `Translated: ${key}`) as unknown as TFunction;
       const result = getPlaceHolderById("headline", t);
-      expect(result).toBe("Translated: environments.surveys.edit.your_question_here_recall_information_with");
+      expect(result).toBe("Translated: workspace.surveys.edit.your_question_here_recall_information_with");
     });
 
     test("returns placeholder for subheader", () => {
       const t = vi.fn((key) => `Translated: ${key}`) as unknown as TFunction;
       const result = getPlaceHolderById("subheader", t);
-      expect(result).toBe(
-        "Translated: environments.surveys.edit.your_description_here_recall_information_with"
-      );
+      expect(result).toBe("Translated: workspace.surveys.edit.your_description_here_recall_information_with");
     });
 
     test("returns empty string for unknown id", () => {

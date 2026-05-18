@@ -30,7 +30,7 @@ export const EndingCardSelector = ({ survey, value, onChange }: EndingCardSelect
     <div className="space-y-1 text-sm">
       <Select value={value} onValueChange={onChange}>
         <SelectTrigger>
-          <SelectValue placeholder={t("environments.surveys.edit.quotas.select_ending_card")} />
+          <SelectValue placeholder={t("workspace.surveys.edit.quotas.select_ending_card")} />
         </SelectTrigger>
         <SelectContent>
           {endingCards.length > 0 && (
@@ -53,7 +53,7 @@ export const EndingCardSelector = ({ survey, value, onChange }: EndingCardSelect
             <SelectGroup>
               <div className="flex items-center gap-2 p-2 text-sm text-slate-500">
                 <Undo2Icon className="h-4 w-4" />
-                <span>{t("environments.surveys.edit.redirect_to_url")}</span>
+                <span>{t("workspace.surveys.edit.redirect_to_url")}</span>
               </div>
               {redirectToUrls.map((ending) => (
                 <SelectItem key={ending.id} value={ending.id}>

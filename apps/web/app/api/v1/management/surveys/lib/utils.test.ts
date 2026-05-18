@@ -1,17 +1,16 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
-import type { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { TOrganization } from "@formbricks/types/organizations";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import {
   TSurvey,
-  TSurveyCreateInputWithEnvironmentId,
+  TSurveyCreateInputWithWorkspaceId,
   TSurveyQuestionTypeEnum,
 } from "@formbricks/types/surveys/types";
 import { responses } from "@/app/lib/api/response";
 import { getIsSpamProtectionEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
-import { getEnvironmentIdsByOrganizationId } from "./environment";
-import { checkFeaturePermissions, getReadableEnvironmentIds } from "./utils";
+import { checkFeaturePermissions } from "./utils";
 
 // Mock dependencies
 vi.mock("@/app/lib/api/response", () => ({
@@ -36,10 +35,6 @@ vi.mock("@/lib/survey/utils", () => ({
   getElementsFromBlocks: vi.fn((blocks: any[]) => blocks.flatMap((block: any) => block.elements)),
 }));
 
-vi.mock("./environment", () => ({
-  getEnvironmentIdsByOrganizationId: vi.fn(),
-}));
-
 const mockOrganization: TOrganization = {
   id: "test-org",
   name: "Test Organization",
@@ -48,7 +43,7 @@ const mockOrganization: TOrganization = {
   billing: {
     stripeCustomerId: null,
     limits: {
-      projects: 3,
+      workspaces: 3,
       monthly: {
         responses: 1500,
       },
@@ -59,7 +54,7 @@ const mockOrganization: TOrganization = {
   isAIDataAnalysisEnabled: false,
 };
 
-const mockFollowUp: TSurveyCreateInputWithEnvironmentId["followUps"][number] = {
+const mockFollowUp: TSurveyCreateInputWithWorkspaceId["followUps"][number] = {
   id: "followup1",
   surveyId: "mockSurveyId",
   name: "Test Follow-up",
@@ -80,22 +75,22 @@ const mockFollowUp: TSurveyCreateInputWithEnvironmentId["followUps"][number] = {
   },
 };
 
-const mockLanguage: TSurveyCreateInputWithEnvironmentId["languages"][number] = {
+const mockLanguage: TSurveyCreateInputWithWorkspaceId["languages"][number] = {
   language: {
     id: "lang1",
     code: "en",
     alias: "English",
     createdAt: new Date(),
-    projectId: "mockProjectId",
+    workspaceId: "mockWorkspaceId",
     updatedAt: new Date(),
   },
   default: true,
   enabled: true,
 };
 
-const baseSurveyData: TSurveyCreateInputWithEnvironmentId = {
+const baseSurveyData: TSurveyCreateInputWithWorkspaceId = {
   name: "Test Survey",
-  environmentId: "test-env",
+  workspaceId: "mockWorkspaceId",
   questions: [
     {
       id: "q1",
@@ -113,109 +108,6 @@ const baseSurveyData: TSurveyCreateInputWithEnvironmentId = {
   blocks: [],
   followUps: [],
 };
-
-const baseAuthentication = {
-  type: "apiKey" as const,
-  apiKeyId: "api-key-id",
-  organizationId: "org-id",
-  organizationAccess: {
-    accessControl: {
-      read: false,
-      write: false,
-    },
-  },
-  environmentPermissions: [],
-};
-
-const environmentPermission = (
-  environmentId: string,
-  permission: "read" | "write" | "manage"
-): TAuthenticationApiKey["environmentPermissions"][number] => ({
-  environmentId,
-  permission,
-  environmentType: "development",
-  projectId: `project-${environmentId}`,
-  projectName: `Project ${environmentId}`,
-});
-
-describe("getReadableEnvironmentIds", () => {
-  afterEach(() => {
-    vi.clearAllMocks();
-  });
-
-  test("returns all organization environments when API key has organization read access", async () => {
-    vi.mocked(getEnvironmentIdsByOrganizationId).mockResolvedValue(["env-1", "env-2"]);
-
-    const result = await getReadableEnvironmentIds({
-      ...baseAuthentication,
-      organizationAccess: {
-        accessControl: {
-          read: true,
-          write: false,
-        },
-      },
-    });
-
-    expect(result).toEqual(["env-1", "env-2"]);
-    expect(getEnvironmentIdsByOrganizationId).toHaveBeenCalledWith("org-id");
-  });
-
-  test("returns an empty list when an organization-read API key belongs to an organization without environments", async () => {
-    vi.mocked(getEnvironmentIdsByOrganizationId).mockResolvedValue([]);
-
-    const result = await getReadableEnvironmentIds({
-      ...baseAuthentication,
-      organizationAccess: {
-        accessControl: {
-          read: true,
-          write: false,
-        },
-      },
-    });
-
-    expect(result).toEqual([]);
-    expect(getEnvironmentIdsByOrganizationId).toHaveBeenCalledWith("org-id");
-  });
-
-  test("returns all organization environments when API key has organization write access", async () => {
-    vi.mocked(getEnvironmentIdsByOrganizationId).mockResolvedValue(["env-1"]);
-
-    const result = await getReadableEnvironmentIds({
-      ...baseAuthentication,
-      organizationAccess: {
-        accessControl: {
-          read: false,
-          write: true,
-        },
-      },
-    });
-
-    expect(result).toEqual(["env-1"]);
-    expect(getEnvironmentIdsByOrganizationId).toHaveBeenCalledWith("org-id");
-  });
-
-  test("returns de-duplicated environment permissions that allow GET without organization access", async () => {
-    const result = await getReadableEnvironmentIds({
-      ...baseAuthentication,
-      environmentPermissions: [
-        environmentPermission("env-1", "read"),
-        environmentPermission("env-2", "write"),
-        environmentPermission("env-3", "manage"),
-        environmentPermission("env-1", "read"),
-      ],
-    });
-
-    expect(result).toEqual(["env-1", "env-2", "env-3"]);
-    expect(getEnvironmentIdsByOrganizationId).not.toHaveBeenCalled();
-  });
-
-  test("returns null when the API key has no readable access", async () => {
-    const result = await getReadableEnvironmentIds(baseAuthentication);
-
-    expect(result).toBeNull();
-    expect(getEnvironmentIdsByOrganizationId).not.toHaveBeenCalled();
-  });
-});
 
 describe("checkFeaturePermissions", () => {
   vi.mocked(getExternalUrlsPermission).mockResolvedValue(true);
@@ -245,7 +137,7 @@ describe("checkFeaturePermissions", () => {
 
   test("should return null if recaptcha is enabled and permission granted", async () => {
     vi.mocked(getIsSpamProtectionEnabled).mockResolvedValue(true);
-    const surveyData: TSurveyCreateInputWithEnvironmentId = {
+    const surveyData: TSurveyCreateInputWithWorkspaceId = {
       ...baseSurveyData,
       recaptcha: { enabled: true, threshold: 0.5 },
     };
@@ -443,7 +335,7 @@ describe("checkFeaturePermissions", () => {
           elements: [
             {
               id: "cta1",
-              type: TSurveyQuestionTypeEnum.CTA,
+              type: TSurveyElementTypeEnum.CTA,
               headline: { default: "CTA" },
               required: false,
               buttonExternal: true,
@@ -455,7 +347,7 @@ describe("checkFeaturePermissions", () => {
         },
       ],
     };
-    const result = await checkFeaturePermissions(surveyData, mockOrganization);
+    const result = await checkFeaturePermissions(surveyData as any, mockOrganization);
     expect(result).toBeInstanceOf(Response);
     expect(result?.status).toBe(403);
     expect(responses.forbiddenResponse).toHaveBeenCalledWith(
@@ -474,7 +366,7 @@ describe("checkFeaturePermissions", () => {
           elements: [
             {
               id: "cta1",
-              type: TSurveyQuestionTypeEnum.CTA,
+              type: TSurveyElementTypeEnum.CTA,
               headline: { default: "CTA" },
               required: false,
               buttonExternal: true,
@@ -494,7 +386,7 @@ describe("checkFeaturePermissions", () => {
           elements: [
             {
               id: "cta1",
-              type: TSurveyQuestionTypeEnum.CTA,
+              type: TSurveyElementTypeEnum.CTA,
               headline: { default: "CTA" },
               required: false,
               buttonExternal: true,
@@ -507,7 +399,7 @@ describe("checkFeaturePermissions", () => {
       ],
       endings: [],
     } as unknown as TSurvey;
-    const result = await checkFeaturePermissions(surveyData, mockOrganization, oldSurvey);
+    const result = await checkFeaturePermissions(surveyData as any, mockOrganization, oldSurvey);
     expect(result).toBeInstanceOf(Response);
     expect(result?.status).toBe(403);
   });
@@ -523,7 +415,7 @@ describe("checkFeaturePermissions", () => {
           elements: [
             {
               id: "cta1",
-              type: TSurveyQuestionTypeEnum.CTA,
+              type: TSurveyElementTypeEnum.CTA,
               headline: { default: "CTA" },
               required: false,
               buttonExternal: true,
@@ -543,7 +435,7 @@ describe("checkFeaturePermissions", () => {
           elements: [
             {
               id: "cta1",
-              type: TSurveyQuestionTypeEnum.CTA,
+              type: TSurveyElementTypeEnum.CTA,
               headline: { default: "CTA" },
               required: false,
               buttonExternal: true,
@@ -556,7 +448,7 @@ describe("checkFeaturePermissions", () => {
       ],
       endings: [],
     } as unknown as TSurvey;
-    const result = await checkFeaturePermissions(surveyData, mockOrganization, oldSurvey);
+    const result = await checkFeaturePermissions(surveyData as any, mockOrganization, oldSurvey);
     expect(result).toBeNull();
   });
 
@@ -571,7 +463,7 @@ describe("checkFeaturePermissions", () => {
           elements: [
             {
               id: "cta1",
-              type: TSurveyQuestionTypeEnum.CTA,
+              type: TSurveyElementTypeEnum.CTA,
               headline: { default: "CTA" },
               required: false,
               buttonExternal: true,
@@ -583,7 +475,7 @@ describe("checkFeaturePermissions", () => {
         },
       ],
     };
-    const result = await checkFeaturePermissions(surveyData, mockOrganization);
+    const result = await checkFeaturePermissions(surveyData as any, mockOrganization);
     expect(result).toBeNull();
   });
 
@@ -598,7 +490,7 @@ describe("checkFeaturePermissions", () => {
           elements: [
             {
               id: "cta1",
-              type: TSurveyQuestionTypeEnum.CTA,
+              type: TSurveyElementTypeEnum.CTA,
               headline: { default: "CTA" },
               required: false,
               buttonExternal: true,
@@ -618,7 +510,7 @@ describe("checkFeaturePermissions", () => {
           elements: [
             {
               id: "cta1",
-              type: TSurveyQuestionTypeEnum.CTA,
+              type: TSurveyElementTypeEnum.CTA,
               headline: { default: "CTA" },
               required: false,
               buttonExternal: false,
@@ -631,7 +523,7 @@ describe("checkFeaturePermissions", () => {
       ],
       endings: [],
     } as unknown as TSurvey;
-    const result = await checkFeaturePermissions(surveyData, mockOrganization, oldSurvey);
+    const result = await checkFeaturePermissions(surveyData as any, mockOrganization, oldSurvey);
     expect(result).toBeInstanceOf(Response);
     expect(result?.status).toBe(403);
   });

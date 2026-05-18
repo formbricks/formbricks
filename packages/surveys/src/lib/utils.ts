@@ -1,7 +1,7 @@
 import { twMerge } from "tailwind-merge";
 import { type Result, err, ok, wrapThrowsAsync } from "@formbricks/types/error-handlers";
 import { type ApiErrorResponse } from "@formbricks/types/errors";
-import { type TJsEnvironmentStateSurvey } from "@formbricks/types/js";
+import { type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { type TAllowedFileExtension } from "@formbricks/types/storage";
 import {
   type TSurveyBlock,
@@ -110,7 +110,7 @@ export const getShuffledChoicesIds = (
 };
 
 export const calculateElementIdx = (
-  survey: TJsEnvironmentStateSurvey,
+  survey: TJsWorkspaceStateSurvey,
   currentQustionIdx: number,
   totalCards: number
 ): number => {
@@ -205,7 +205,7 @@ export const makeRequest = async <T>(
   return ok(successResponse.data);
 };
 
-export const getDefaultLanguageCode = (survey: TJsEnvironmentStateSurvey): string | undefined => {
+export const getDefaultLanguageCode = (survey: TJsWorkspaceStateSurvey): string | undefined => {
   const defaultSurveyLanguage = survey.languages.find((surveyLanguage) => {
     return surveyLanguage.default;
   });
@@ -262,7 +262,7 @@ const RTL_LANGUAGES = ["ar", "ar-SA", "ar-EG", "ar-AE", "ar-MA", "he", "fa", "ur
  * Returns true if the language code represents an RTL language.
  * @param languageCode The language code to test (e.g., "ar", "ar-SA", "he")
  */
-export function isRTLLanguage(survey: TJsEnvironmentStateSurvey, languageCode: string): boolean {
+export function isRTLLanguage(survey: TJsWorkspaceStateSurvey, languageCode: string): boolean {
   if (survey.languages.length === 0) {
     if (survey.welcomeCard.enabled) {
       const welcomeCardHeadline = survey.welcomeCard.headline?.[languageCode];
@@ -317,7 +317,7 @@ export const findBlockByElementId = (blocks: TSurveyBlock[], elementId: string) 
  * @returns The first element ID in the block, or undefined if block not found or empty
  */
 export const getFirstElementIdInBlock = (
-  survey: TJsEnvironmentStateSurvey,
+  survey: TJsWorkspaceStateSurvey,
   blockId: string
 ): string | undefined => {
   const block = survey.blocks.find((b) => b.id === blockId);

@@ -74,8 +74,8 @@ export const getContactAttributesWithKeyInfo = reactCache(async (contactId: stri
 });
 
 export const hasEmailAttribute = reactCache(
-  async (email: string, environmentId: string, contactId: string): Promise<boolean> => {
-    validateInputs([email, ZUserEmail], [environmentId, ZId], [contactId, ZId]);
+  async (email: string, workspaceId: string, contactId: string): Promise<boolean> => {
+    validateInputs([email, ZUserEmail], [workspaceId, ZId], [contactId, ZId]);
 
     const contactAttribute = await prisma.contactAttribute.findFirst({
       where: {
@@ -83,7 +83,7 @@ export const hasEmailAttribute = reactCache(
           {
             attributeKey: {
               key: "email",
-              environmentId,
+              workspaceId,
             },
             value: email,
           },
@@ -102,8 +102,8 @@ export const hasEmailAttribute = reactCache(
 );
 
 export const hasUserIdAttribute = reactCache(
-  async (userId: string, environmentId: string, contactId: string): Promise<boolean> => {
-    validateInputs([userId, ZString], [environmentId, ZId], [contactId, ZId]);
+  async (userId: string, workspaceId: string, contactId: string): Promise<boolean> => {
+    validateInputs([userId, ZString], [workspaceId, ZId], [contactId, ZId]);
 
     const contactAttribute = await prisma.contactAttribute.findFirst({
       where: {
@@ -111,7 +111,7 @@ export const hasUserIdAttribute = reactCache(
           {
             attributeKey: {
               key: "userId",
-              environmentId,
+              workspaceId,
             },
             value: userId,
           },

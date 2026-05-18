@@ -2,7 +2,7 @@ import "server-only";
 import type { IdentityProvider } from "@prisma/client";
 import { logger } from "@formbricks/logger";
 import { AuthorizationError, InvalidInputError, OperationNotAllowedError } from "@formbricks/types/errors";
-import { DISABLE_ACCOUNT_DELETION_SSO_REAUTH } from "@/lib/constants";
+import { DISABLE_ACCOUNT_DELETION_SSO_CONFIRMATION } from "@/lib/constants";
 import { getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
 import { getUserAuthenticationData, verifyUserPassword } from "@/lib/user/password";
 import { deleteUser, getUser } from "@/lib/user/service";
@@ -29,10 +29,10 @@ const assertConfirmationEmailMatches = (confirmationEmail: string, expectedEmail
   }
 };
 
-const canBypassSsoReauthentication = (identityProvider: IdentityProvider) =>
-  DISABLE_ACCOUNT_DELETION_SSO_REAUTH && identityProvider !== "email";
+const canBypassSsoIdentityConfirmation = (identityProvider: IdentityProvider) =>
+  DISABLE_ACCOUNT_DELETION_SSO_CONFIRMATION && identityProvider !== "email";
 
-const assertAccountDeletionSsoReauthentication = async ({
+const assertAccountDeletionSsoIdentityConfirmation = async ({
   identityProvider,
   providerAccountId,
   userId,
@@ -41,10 +41,10 @@ const assertAccountDeletionSsoReauthentication = async ({
   providerAccountId: string | null;
   userId: string;
 }) => {
-  if (canBypassSsoReauthentication(identityProvider)) {
+  if (canBypassSsoIdentityConfirmation(identityProvider)) {
     logger.warn(
       { identityProvider, userId },
-      "Account deletion SSO reauthentication bypassed by environment configuration"
+      "Account deletion SSO identity confirmation bypassed by environment configuration"
     );
     return;
   }
@@ -95,7 +95,7 @@ export const deleteUserWithAccountDeletionAuthorization = async ({
   }
 
   if (!requiresPasswordConfirmationForAccountDeletion(userAuthenticationData)) {
-    await assertAccountDeletionSsoReauthentication({
+    await assertAccountDeletionSsoIdentityConfirmation({
       identityProvider: userAuthenticationData.identityProvider,
       providerAccountId: userAuthenticationData.identityProviderAccountId,
       userId,

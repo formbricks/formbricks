@@ -47,7 +47,7 @@ export const MemberActions = ({ organization, member, invite, showDeleteButton }
           setIsDeleting(false);
           return;
         }
-        toast.success(t("environments.settings.general.invite_deleted_successfully"));
+        toast.success(t("workspace.settings.general.invite_deleted_successfully"));
       }
 
       if (member && !invite) {
@@ -62,7 +62,7 @@ export const MemberActions = ({ organization, member, invite, showDeleteButton }
           setIsDeleting(false);
           return;
         }
-        toast.success(t("environments.settings.general.member_deleted_successfully"));
+        toast.success(t("workspace.settings.general.member_deleted_successfully"));
       }
 
       setIsDeleting(false);
@@ -111,7 +111,7 @@ export const MemberActions = ({ organization, member, invite, showDeleteButton }
         organizationId: organization.id,
       });
       if (resendInviteResponse?.data) {
-        toast.success(t("environments.settings.general.invitation_sent_once_more"));
+        toast.success(t("workspace.settings.general.invitation_sent_once_more"));
         router.refresh();
       } else {
         const errorMessage = getFormattedErrorMessage(resendInviteResponse);
@@ -136,7 +136,7 @@ export const MemberActions = ({ organization, member, invite, showDeleteButton }
       </TooltipRenderer>
 
       <TooltipRenderer
-        tooltipContent={t("environments.settings.general.share_invite_link")}
+        tooltipContent={t("workspace.settings.general.share_invite_link")}
         shouldRender={!!invite}>
         <Button
           variant="secondary"
@@ -151,7 +151,7 @@ export const MemberActions = ({ organization, member, invite, showDeleteButton }
       </TooltipRenderer>
 
       <TooltipRenderer
-        tooltipContent={t("environments.settings.general.resend_invitation_email")}
+        tooltipContent={t("workspace.settings.general.resend_invitation_email")}
         shouldRender={!!invite}>
         <Button
           variant="secondary"
@@ -168,10 +168,10 @@ export const MemberActions = ({ organization, member, invite, showDeleteButton }
       <DeleteDialog
         open={isDeleteMemberModalOpen}
         setOpen={setDeleteMemberModalOpen}
-        deleteWhat={t("environments.settings.general.from_your_organization", { memberName })}
+        deleteWhat={t("workspace.settings.general.from_your_organization", { memberName })}
         onDelete={handleDeleteMember}
         isDeleting={isDeleting}
-        text={t("environments.settings.general.delete_member_confirmation")}
+        text={t("workspace.settings.general.delete_member_confirmation")}
       />
 
       {showShareInviteModal && (

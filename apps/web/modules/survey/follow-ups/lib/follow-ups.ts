@@ -7,7 +7,7 @@ import { ValidationError } from "@formbricks/types/errors";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
+import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { validateInputs } from "@/lib/utils/validate";
@@ -171,13 +171,13 @@ export const sendFollowUpsForResponse = async (
       });
     }
 
-    // Get organization from survey's environmentId
-    const organization = await getOrganizationByEnvironmentId(survey.environmentId);
+    // Get organization from survey's workspaceId
+    const organization = await getOrganizationByWorkspaceId(survey.workspaceId);
     if (!organization) {
       return err({
         code: FollowUpSendError.ORG_NOT_FOUND,
         message: "Organization not found",
-        meta: { responseId, surveyId, environmentId: survey.environmentId },
+        meta: { responseId, surveyId, workspaceId: survey.workspaceId },
       });
     }
 

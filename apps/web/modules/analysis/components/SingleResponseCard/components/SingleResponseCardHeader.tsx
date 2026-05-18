@@ -3,10 +3,10 @@
 import { TrashIcon } from "lucide-react";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
-import { TEnvironment } from "@formbricks/types/environment";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser, TUserLocale } from "@formbricks/types/user";
+import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { timeSince } from "@/lib/time";
 import { getContactIdentifier } from "@/lib/utils/contact";
 import { PersonAvatar } from "@/modules/ui/components/avatars";
@@ -20,7 +20,6 @@ interface SingleResponseCardHeaderProps {
   pageType: "people" | "response";
   response: TResponse;
   survey: TSurvey;
-  environment: TEnvironment;
   user?: TUser;
   isReadOnly: boolean;
   setDeleteDialogOpen: (deleteDialogOpen: boolean) => void;
@@ -31,7 +30,6 @@ export const SingleResponseCardHeader = ({
   pageType,
   response,
   survey,
-  environment,
   user,
   isReadOnly,
   setDeleteDialogOpen,
@@ -42,12 +40,13 @@ export const SingleResponseCardHeader = ({
     : null;
 
   const { t } = useTranslation();
-  const environmentId = survey.environmentId;
+  const { workspace } = useWorkspace();
+  const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const canResponseBeDeleted = response.finished
     ? true
     : isSubmissionTimeMoreThan5Minutes(response.updatedAt);
 
-  const deleteSubmissionToolTip = <>{t("environments.surveys.responses.this_response_is_in_progress")}</>;
+  const deleteSubmissionToolTip = <>{t("workspace.surveys.responses.this_response_is_in_progress")}</>;
 
   return (
     <div className="space-y-2 border-b border-slate-200 px-6 pb-4 pt-4">
@@ -59,7 +58,7 @@ export const SingleResponseCardHeader = ({
                 user ? (
                   <Link
                     className="flex items-center space-x-2"
-                    href={`/environments/${environmentId}/contacts/${response.contact.id}`}>
+                    href={`${workspaceBasePath}/contacts/${response.contact.id}`}>
                     <PersonAvatar personId={response.contact.id} />
                     <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600 hover:underline">
                       {displayIdentifier}
@@ -85,12 +84,11 @@ export const SingleResponseCardHeader = ({
 
           {pageType === "people" && (
             <div className="flex items-center justify-center space-x-2 rounded-full bg-slate-100 p-1 px-2 text-sm text-slate-600">
-              {(survey.type === "link" || environment.appSetupCompleted) && (
-                <SurveyStatusIndicator status={survey.status} />
-              )}
-              <Link
-                className="hover:underline"
-                href={`/environments/${environmentId}/surveys/${survey.id}/summary`}>
+              <SurveyStatusIndicator
+                status={survey.status}
+                isScheduled={survey.status === "paused" && survey.publishOn !== null}
+              />
+              <Link className="hover:underline" href={`${workspaceBasePath}/surveys/${survey.id}/summary`}>
                 {survey.name}
               </Link>
             </div>

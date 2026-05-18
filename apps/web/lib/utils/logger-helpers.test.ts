@@ -26,9 +26,6 @@ vi.mock("@/modules/ee/license-check/lib/utils", () => ({
 vi.mock("@formbricks/logger", () => ({
   logger: { error: vi.fn() },
 }));
-vi.mock("@/lib/utils/helper", () => ({
-  getOrganizationIdFromEnvironmentId: vi.fn().mockResolvedValue("org-env-id"),
-}));
 
 // Mocks
 vi.mock("@/lib/constants", () => ({

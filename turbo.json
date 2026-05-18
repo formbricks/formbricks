@@ -2,120 +2,236 @@
   "$schema": "https://turborepo.org/schema.json",
   "tasks": {
     "@formbricks/ai#build": {
-      "dependsOn": ["@formbricks/logger#build"],
-      "outputs": ["dist/**"]
+      "dependsOn": [
+        "@formbricks/logger#build"
+      ],
+      "outputs": [
+        "dist/**"
+      ]
     },
     "@formbricks/ai#lint": {
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": [
+        "@formbricks/logger#build"
+      ]
     },
     "@formbricks/ai#test": {
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": [
+        "@formbricks/logger#build"
+      ]
     },
     "@formbricks/ai#test:coverage": {
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": [
+        "@formbricks/logger#build"
+      ]
     },
     "@formbricks/cache#build": {
-      "dependsOn": ["@formbricks/logger#build"],
-      "outputs": ["dist/**"]
+      "dependsOn": [
+        "@formbricks/logger#build"
+      ],
+      "outputs": [
+        "dist/**"
+      ]
     },
     "@formbricks/cache#go": {
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": [
+        "@formbricks/logger#build"
+      ]
     },
     "@formbricks/cache#lint": {
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": [
+        "@formbricks/logger#build"
+      ]
     },
     "@formbricks/cache#test": {
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": [
+        "@formbricks/logger#build"
+      ]
     },
     "@formbricks/cache#test:coverage": {
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": [
+        "@formbricks/logger#build"
+      ]
     },
     "@formbricks/database#build": {
-      "dependsOn": ["^build"],
-      "outputs": ["dist/**"]
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": [
+        "dist/**",
+        "../../node_modules/.prisma/client/**"
+      ]
     },
     "@formbricks/database#lint": {
-      "dependsOn": ["@formbricks/logger#build", "@formbricks/database#build"]
+      "dependsOn": [
+        "@formbricks/logger#build",
+        "@formbricks/database#build"
+      ]
     },
     "@formbricks/email#build": {
-      "dependsOn": ["^build"],
+      "dependsOn": [
+        "^build"
+      ],
       "outputs": []
     },
     "@formbricks/i18n-utils#build": {
-      "dependsOn": ["^build"],
-      "outputs": ["dist/**"]
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": [
+        "dist/**"
+      ]
     },
     "@formbricks/i18n-utils#lint": {
-      "dependsOn": ["^lint"]
+      "dependsOn": [
+        "^lint"
+      ]
     },
     "@formbricks/i18n-utils#test": {
-      "dependsOn": ["@formbricks/i18n-utils#build"]
+      "dependsOn": [
+        "@formbricks/i18n-utils#build"
+      ]
+    },
+    "@formbricks/jobs#build": {
+      "dependsOn": [
+        "@formbricks/logger#build"
+      ],
+      "outputs": [
+        "dist/**"
+      ]
+    },
+    "@formbricks/jobs#lint": {
+      "dependsOn": [
+        "@formbricks/logger#build"
+      ]
+    },
+    "@formbricks/jobs#test": {
+      "dependsOn": [
+        "@formbricks/logger#build"
+      ]
+    },
+    "@formbricks/jobs#test:coverage": {
+      "dependsOn": [
+        "@formbricks/logger#build"
+      ]
     },
     "@formbricks/js-core#build": {
-      "dependsOn": ["^build", "@formbricks/database#build"],
-      "outputs": ["dist/**"]
+      "dependsOn": [
+        "^build",
+        "@formbricks/database#build"
+      ],
+      "outputs": [
+        "dist/**"
+      ]
     },
     "@formbricks/js-core#go": {
       "cache": false,
-      "dependsOn": ["@formbricks/database#db:setup"],
+      "dependsOn": [
+        "@formbricks/database#db:setup"
+      ],
       "persistent": true
     },
     "@formbricks/js-core#lint": {
-      "dependsOn": ["@formbricks/database#build"]
+      "dependsOn": [
+        "@formbricks/database#build"
+      ]
     },
     "@formbricks/logger#build": {
-      "dependsOn": ["^build"],
-      "outputs": ["dist/**"]
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": [
+        "dist/**"
+      ]
     },
     "@formbricks/storage#build": {
-      "dependsOn": ["@formbricks/logger#build"],
-      "outputs": ["dist/**"]
+      "dependsOn": [
+        "@formbricks/logger#build"
+      ],
+      "outputs": [
+        "dist/**"
+      ]
     },
     "@formbricks/storage#go": {
       "cache": false,
-      "dependsOn": ["@formbricks/storage#build"],
+      "dependsOn": [
+        "@formbricks/storage#build"
+      ],
       "persistent": true
     },
     "@formbricks/storage#lint": {
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": [
+        "@formbricks/logger#build"
+      ]
     },
     "@formbricks/storage#test": {
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": [
+        "@formbricks/logger#build"
+      ]
     },
     "@formbricks/storage#test:coverage": {
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": [
+        "@formbricks/logger#build"
+      ]
     },
     "@formbricks/survey-ui#build": {
-      "dependsOn": ["^build"],
-      "outputs": ["dist/**"]
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": [
+        "dist/**"
+      ]
     },
     "@formbricks/survey-ui#build:dev": {
-      "dependsOn": ["^build:dev"],
-      "outputs": ["dist/**"]
+      "dependsOn": [
+        "^build:dev"
+      ],
+      "outputs": [
+        "dist/**"
+      ]
     },
     "@formbricks/survey-ui#go": {
       "cache": false,
-      "dependsOn": ["@formbricks/survey-ui#build"],
+      "dependsOn": [
+        "@formbricks/survey-ui#build"
+      ],
       "persistent": true
     },
     "@formbricks/surveys#build": {
-      "dependsOn": ["^build", "@formbricks/survey-ui#build"],
-      "outputs": ["dist/**"]
+      "dependsOn": [
+        "^build",
+        "@formbricks/survey-ui#build"
+      ],
+      "outputs": [
+        "dist/**"
+      ]
     },
     "@formbricks/surveys#build:dev": {
-      "dependsOn": ["^build:dev", "@formbricks/i18n-utils#build", "@formbricks/survey-ui#build:dev"],
-      "outputs": ["dist/**"]
+      "dependsOn": [
+        "^build:dev",
+        "@formbricks/i18n-utils#build",
+        "@formbricks/survey-ui#build:dev"
+      ],
+      "outputs": [
+        "dist/**"
+      ]
     },
     "@formbricks/surveys#go": {
       "cache": false,
-      "dependsOn": ["@formbricks/survey-ui#build", "@formbricks/surveys#build"],
+      "dependsOn": [
+        "@formbricks/survey-ui#build",
+        "@formbricks/surveys#build"
+      ],
       "persistent": true
     },
     "@formbricks/surveys#test": {
-      "dependsOn": ["@formbricks/survey-ui#build"]
+      "dependsOn": [
+        "@formbricks/survey-ui#build"
+      ]
     },
     "@formbricks/surveys#test:coverage": {
-      "dependsOn": ["@formbricks/survey-ui#build"]
+      "dependsOn": [
+        "@formbricks/survey-ui#build"
+      ]
     },
     "@formbricks/web#dev": {
       "cache": false,
@@ -123,6 +239,7 @@
         "@formbricks/ai#build",
         "@formbricks/cache#build",
         "@formbricks/database#build",
+        "@formbricks/jobs#build",
         "@formbricks/logger#build",
         "@formbricks/storage#build"
       ],
@@ -135,6 +252,7 @@
         "@formbricks/cache#build",
         "@formbricks/database#build",
         "@formbricks/database#db:setup",
+        "@formbricks/jobs#build",
         "@formbricks/logger#build",
         "@formbricks/storage#build"
       ],
@@ -147,6 +265,7 @@
         "@formbricks/database#build",
         "@formbricks/storage#build",
         "@formbricks/cache#build",
+        "@formbricks/jobs#build",
         "@formbricks/surveys#build"
       ]
     },
@@ -157,11 +276,14 @@
         "@formbricks/database#build",
         "@formbricks/storage#build",
         "@formbricks/cache#build",
+        "@formbricks/jobs#build",
         "@formbricks/surveys#build"
       ]
     },
     "build": {
-      "dependsOn": ["^build"],
+      "dependsOn": [
+        "^build"
+      ],
       "env": [
         "AUDIT_LOG_ENABLED",
         "AUDIT_LOG_GET_USER_IP",
@@ -173,10 +295,10 @@
         "AI_AZURE_API_VERSION",
         "AI_AZURE_BASE_URL",
         "AI_AZURE_RESOURCE_NAME",
-        "AI_GCP_APPLICATION_CREDENTIALS",
-        "AI_GCP_CREDENTIALS_JSON",
-        "AI_GCP_LOCATION",
-        "AI_GCP_PROJECT",
+        "AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS",
+        "AI_GOOGLE_CLOUD_CREDENTIALS_JSON",
+        "AI_GOOGLE_CLOUD_LOCATION",
+        "AI_GOOGLE_CLOUD_PROJECT",
         "AI_MODEL",
         "AI_PROVIDER",
         "AIRTABLE_CLIENT_ID",
@@ -186,11 +308,19 @@
         "AZUREAD_TENANT_ID",
         "AUTH_SSO_DEFAULT_TEAM_ID",
         "AUTH_SKIP_INVITE_FOR_SSO",
+        "BULLMQ_EXTERNAL_WORKER_ENABLED",
+        "BULLMQ_WORKER_CONCURRENCY",
+        "BULLMQ_WORKER_COUNT",
+        "BULLMQ_WORKER_ENABLED",
         "BASE_PATH",
         "BREVO_API_KEY",
         "BREVO_LIST_ID",
         "CRON_SECRET",
-        "DISABLE_ACCOUNT_DELETION_SSO_REAUTH",
+        "CUBEJS_API_SECRET",
+        "CUBEJS_API_URL",
+        "CUBEJS_JWT_AUDIENCE",
+        "CUBEJS_JWT_ISSUER",
+        "DISABLE_ACCOUNT_DELETION_SSO_CONFIRMATION",
         "DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS",
         "DATABASE_URL",
         "DEBUG",
@@ -203,12 +333,13 @@
         "ENVIRONMENT",
         "GITHUB_ID",
         "GITHUB_SECRET",
-        "GOOGLE_ACCOUNT_DELETION_REAUTH_ENABLED",
         "GOOGLE_CLIENT_ID",
         "GOOGLE_CLIENT_SECRET",
         "GOOGLE_SHEETS_CLIENT_ID",
         "GOOGLE_SHEETS_CLIENT_SECRET",
         "GOOGLE_SHEETS_REDIRECT_URL",
+        "HUB_API_KEY",
+        "HUB_API_URL",
         "NOTION_OAUTH_CLIENT_ID",
         "NOTION_OAUTH_CLIENT_SECRET",
         "HEROKU_APP_NAME",
@@ -233,6 +364,7 @@
         "NEXT_PUBLIC_FORMBRICKS_COM_API_HOST",
         "NEXT_PUBLIC_FORMBRICKS_COM_ENVIRONMENT_ID",
         "NEXT_PUBLIC_FORMBRICKS_COM_DOCS_FEEDBACK_SURVEY_ID",
+        "OPENAI_API_KEY",
         "OTEL_EXPORTER_OTLP_ENDPOINT",
         "OTEL_EXPORTER_OTLP_HEADERS",
         "OTEL_EXPORTER_OTLP_PROTOCOL",
@@ -296,11 +428,19 @@
         "PROMETHEUS_EXPORTER_PORT",
         "USER_MANAGEMENT_MINIMUM_ROLE"
       ],
-      "outputs": ["dist/**", ".next/**"]
+      "outputs": [
+        "dist/**",
+        ".next/**"
+      ]
     },
     "build:dev": {
-      "dependsOn": ["^build:dev"],
-      "outputs": ["dist/**", ".next/**"]
+      "dependsOn": [
+        "^build:dev"
+      ],
+      "outputs": [
+        "dist/**",
+        ".next/**"
+      ]
     },
     "clean": {
       "cache": false,
@@ -322,12 +462,17 @@
       "outputs": []
     },
     "db:seed": {
-      "env": ["ALLOW_SEED"],
+      "env": [
+        "ALLOW_SEED"
+      ],
       "outputs": []
     },
     "db:setup": {
       "cache": false,
-      "dependsOn": ["@formbricks/logger#build", "@formbricks/database#build"],
+      "dependsOn": [
+        "@formbricks/logger#build",
+        "@formbricks/database#build"
+      ],
       "outputs": []
     },
     "db:start": {
@@ -342,7 +487,9 @@
       "persistent": true
     },
     "generate": {
-      "dependsOn": ["^generate"]
+      "dependsOn": [
+        "^generate"
+      ]
     },
     "go": {
       "cache": false,
@@ -359,7 +506,9 @@
       "persistent": true
     },
     "storybook#storybook": {
-      "dependsOn": ["@formbricks/logger#build"]
+      "dependsOn": [
+        "@formbricks/logger#build"
+      ]
     },
     "test": {
       "outputs": []
@@ -368,5 +517,6 @@
       "outputs": []
     }
   },
-  "ui": "stream"
+  "ui": "stream",
+  "globalEnv": []
 }

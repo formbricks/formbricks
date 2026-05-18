@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
-import { SettingsCard } from "@/app/(app)/environments/[environmentId]/settings/components/SettingsCard";
+import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import {
   ENTERPRISE_LICENSE_REQUEST_FORM_URL,
   INVITE_DISABLED,
@@ -21,7 +21,6 @@ interface MembersViewProps {
   membershipRole?: TOrganizationRole;
   organization: TOrganization;
   currentUserId: string;
-  environmentId: string;
   isAccessControlAllowed: boolean;
   isUserManagementDisabledFromUi: boolean;
 }
@@ -40,7 +39,6 @@ export const MembersView = async ({
   membershipRole,
   organization,
   currentUserId,
-  environmentId,
   isAccessControlAllowed,
   isUserManagementDisabledFromUi,
 }: MembersViewProps) => {
@@ -63,8 +61,8 @@ export const MembersView = async ({
 
   return (
     <SettingsCard
-      title={t("environments.settings.general.manage_members")}
-      description={t("environments.settings.general.manage_members_description")}>
+      title={t("workspace.settings.general.manage_members")}
+      description={t("workspace.settings.general.manage_members_description")}>
       {membershipRole && (
         <OrganizationActions
           organization={organization}
@@ -76,7 +74,6 @@ export const MembersView = async ({
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
           isStorageConfigured={IS_STORAGE_CONFIGURED}
           enterpriseLicenseRequestFormUrl={ENTERPRISE_LICENSE_REQUEST_FORM_URL}
-          environmentId={environmentId}
           isMultiOrgEnabled={isMultiOrgEnabled}
           teams={teams}
           isUserManagementDisabledFromUi={isUserManagementDisabledFromUi}

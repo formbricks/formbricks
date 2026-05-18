@@ -1,5 +1,5 @@
 import "server-only";
-import { StorageErrorCode } from "@formbricks/storage";
+import { type StorageError, StorageErrorCode } from "@formbricks/storage";
 import { TResponseData } from "@formbricks/types/responses";
 import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/storage";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
@@ -12,10 +12,6 @@ import { getOriginalFileNameFromUrl } from "./url-helpers";
 
 // Re-export for backward compatibility with server-side code
 export { getOriginalFileNameFromUrl } from "./url-helpers";
-
-type TStorageError = {
-  code: (typeof StorageErrorCode)[keyof typeof StorageErrorCode];
-};
 
 /**
  * Sanitize a provided file name to a safe subset.
@@ -194,7 +190,7 @@ export const isValidImageFile = (fileUrl: string): boolean => {
 };
 
 export const getErrorResponseFromStorageError = (
-  error: TStorageError,
+  error: StorageError,
   details?: Record<string, string>
 ): Response => {
   switch (error.code) {

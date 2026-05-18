@@ -37,7 +37,7 @@ const SelectContent: React.ComponentType<SelectPrimitive.SelectContentProps> = R
       ref={ref}
       position={position}
       className={cn(
-        "animate-in fade-in-80 relative z-50 min-w-[8rem] overflow-hidden rounded-md border border-slate-100 bg-white text-slate-700 shadow-md dark:bg-slate-700 dark:text-slate-300",
+        "relative z-50 min-w-[8rem] overflow-hidden rounded-md border border-slate-100 bg-white text-slate-700 shadow-md animate-in fade-in-80 dark:bg-slate-700 dark:text-slate-300",
         position === "popper" &&
           "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
         className

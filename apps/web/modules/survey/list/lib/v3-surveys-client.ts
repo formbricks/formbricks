@@ -2,8 +2,9 @@ import { parseV3ApiError } from "@/modules/api/lib/v3-client";
 import { normalizeSurveyFilters } from "@/modules/survey/list/lib/utils";
 import { TSurveyListItem, TSurveyOverviewFilters } from "@/modules/survey/list/types/survey-overview";
 
-type TV3SurveyListItemResponse = Omit<TSurveyListItem, "createdAt" | "updatedAt"> & {
+type TV3SurveyListItemResponse = Omit<TSurveyListItem, "createdAt" | "publishOn" | "updatedAt"> & {
   createdAt: string;
+  publishOn: string | null;
   updatedAt: string;
 };
 
@@ -31,6 +32,7 @@ function mapSurveyListItem(survey: TV3SurveyListItemResponse): TSurveyListItem {
   return {
     ...survey,
     createdAt: new Date(survey.createdAt),
+    publishOn: survey.publishOn ? new Date(survey.publishOn) : null,
     updatedAt: new Date(survey.updatedAt),
   };
 }

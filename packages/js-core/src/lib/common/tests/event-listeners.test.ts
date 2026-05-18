@@ -6,15 +6,15 @@ import {
   removeAllEventListeners,
   removeCleanupEventListeners,
 } from "@/lib/common/event-listeners";
-import * as environmentState from "@/lib/environment/state";
 import * as pageUrlEventListeners from "@/lib/survey/no-code-action";
 import * as userState from "@/lib/user/state";
+import * as workspaceStateModule from "@/lib/workspace/state";
 
 // 1) Mock all the imported dependencies
 
-vi.mock("@/lib/environment/state", () => ({
-  addEnvironmentStateExpiryCheckListener: vi.fn(),
-  clearEnvironmentStateExpiryCheckListener: vi.fn(),
+vi.mock("@/lib/workspace/state", () => ({
+  addWorkspaceStateExpiryCheckListener: vi.fn(),
+  clearWorkspaceStateExpiryCheckListener: vi.fn(),
 }));
 
 vi.mock("@/lib/user/state", () => ({
@@ -55,7 +55,7 @@ describe("event-listeners file", () => {
   // ---------------------------------------------------------------------------
   test("addEventListeners calls each imported add* function", () => {
     // Ensure the mocks are set up before calling the functions
-    const mockEnvAdd = vi.spyOn(environmentState, "addEnvironmentStateExpiryCheckListener");
+    const mockWorkspaceAdd = vi.spyOn(workspaceStateModule, "addWorkspaceStateExpiryCheckListener");
     const mockUserAdd = vi.spyOn(userState, "addUserStateExpiryCheckListener");
     const mockPageUrlAdd = vi.spyOn(pageUrlEventListeners, "addPageUrlEventListeners");
     const mockClickAdd = vi.spyOn(pageUrlEventListeners, "addClickEventListener");
@@ -66,7 +66,7 @@ describe("event-listeners file", () => {
     addEventListeners();
 
     // Assertions
-    expect(mockEnvAdd).toHaveBeenCalled();
+    expect(mockWorkspaceAdd).toHaveBeenCalled();
     expect(mockUserAdd).toHaveBeenCalled();
     expect(mockPageUrlAdd).toHaveBeenCalled();
     expect(mockClickAdd).toHaveBeenCalled();
@@ -116,7 +116,7 @@ describe("event-listeners file", () => {
   // ---------------------------------------------------------------------------
   test("removeAllEventListeners calls all the remove/clear functions", () => {
     // Ensure the mocks are set up before calling the function
-    const mockEnvClear = vi.spyOn(environmentState, "clearEnvironmentStateExpiryCheckListener");
+    const mockWorkspaceClear = vi.spyOn(workspaceStateModule, "clearWorkspaceStateExpiryCheckListener");
     const mockUserClear = vi.spyOn(userState, "clearUserStateExpiryCheckListener");
     const mockPageUrlRemove = vi.spyOn(pageUrlEventListeners, "removePageUrlEventListeners");
     const mockClickRemove = vi.spyOn(pageUrlEventListeners, "removeClickEventListener");
@@ -128,7 +128,7 @@ describe("event-listeners file", () => {
     removeAllEventListeners();
 
     // Assertions
-    expect(mockEnvClear).toHaveBeenCalled();
+    expect(mockWorkspaceClear).toHaveBeenCalled();
     expect(mockUserClear).toHaveBeenCalled();
     expect(mockPageUrlRemove).toHaveBeenCalled();
     expect(mockClickRemove).toHaveBeenCalled();

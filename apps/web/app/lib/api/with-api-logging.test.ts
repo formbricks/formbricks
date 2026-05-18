@@ -7,6 +7,13 @@ import { TooManyRequestsError } from "@formbricks/types/errors";
 import { AuthenticationMethod } from "@/app/middleware/endpoint-validator";
 import { responses } from "./response";
 
+const AuthMethod = {
+  ApiKey: "apiKey" as AuthenticationMethod,
+  Session: "session" as AuthenticationMethod,
+  Both: "both" as AuthenticationMethod,
+  None: "none" as AuthenticationMethod,
+} as const;
+
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
   __esModule: true,
   queueAuditEvent: vi.fn(),
@@ -62,6 +69,7 @@ vi.mock("@/app/middleware/endpoint-validator", async () => {
 
 vi.mock("@/modules/core/rate-limit/helpers", () => ({
   applyClientRateLimit: vi.fn(),
+  applyIPRateLimit: vi.fn(),
   applyRateLimit: vi.fn(),
 }));
 
@@ -92,7 +100,7 @@ function createMockRequest({ method = "GET", url = "https://api.test/endpoint", 
 
 const mockApiAuthentication = {
   type: "apiKey" as const,
-  environmentPermissions: [],
+  workspacePermissions: [],
   apiKeyId: "api-key-1",
   organizationId: "org-1",
   organizationAccess: "all" as const,
@@ -124,7 +132,7 @@ describe("withV1ApiWrapper", () => {
     vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: false, isRateLimited: true });
     vi.mocked(isManagementApiRoute).mockReturnValue({
       isManagementApi: true,
-      authenticationMethod: AuthenticationMethod.ApiKey,
+      authenticationMethod: AuthMethod.ApiKey,
     });
     vi.mocked(isIntegrationRoute).mockReturnValue(false);
 
@@ -189,6 +197,46 @@ describe("withV1ApiWrapper", () => {
     );
   });
 
+  test("prefers bearer API keys over session auth on both-auth routes", async () => {
+    const { authenticateRequest } = await import("@/app/api/v1/auth");
+    const { getServerSession } = await import("next-auth");
+    const { isClientSideApiRoute, isManagementApiRoute, isIntegrationRoute } =
+      await import("@/app/middleware/endpoint-validator");
+
+    vi.mocked(authenticateRequest).mockResolvedValue(mockApiAuthentication);
+    vi.mocked(getServerSession).mockResolvedValue({
+      user: { id: "session-user-id" },
+      expires: "2026-01-01",
+    } as any);
+    vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: false, isRateLimited: true });
+    vi.mocked(isManagementApiRoute).mockReturnValue({
+      isManagementApi: true,
+      authenticationMethod: AuthMethod.Both,
+    });
+    vi.mocked(isIntegrationRoute).mockReturnValue(false);
+
+    const handler = vi.fn().mockResolvedValue({
+      response: new Response("ok", { status: 200 }),
+    });
+
+    const req = createMockRequest({
+      url: V1_MANAGEMENT_SURVEYS_URL,
+      headers: new Map([["authorization", "Bearer fbk_test"]]),
+    });
+    const { withV1ApiWrapper } = await import("./with-api-logging");
+    const wrapped = withV1ApiWrapper({ handler });
+
+    await wrapped(req, undefined);
+
+    expect(authenticateRequest).toHaveBeenCalledOnce();
+    expect(getServerSession).not.toHaveBeenCalled();
+    expect(handler).toHaveBeenCalledWith(
+      expect.objectContaining({
+        authentication: expect.objectContaining({ apiKeyId: "api-key-1" }),
+      })
+    );
+  });
+
   test("does not log Sentry if not 500", async () => {
     const { queueAuditEvent: mockedQueueAuditEvent } =
       (await import("@/modules/ee/audit-logs/lib/handler")) as unknown as { queueAuditEvent: Mock };
@@ -200,7 +248,7 @@ describe("withV1ApiWrapper", () => {
     vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: false, isRateLimited: true });
     vi.mocked(isManagementApiRoute).mockReturnValue({
       isManagementApi: true,
-      authenticationMethod: AuthenticationMethod.ApiKey,
+      authenticationMethod: AuthMethod.ApiKey,
     });
     vi.mocked(isIntegrationRoute).mockReturnValue(false);
 
@@ -246,7 +294,7 @@ describe("withV1ApiWrapper", () => {
     vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: false, isRateLimited: true });
     vi.mocked(isManagementApiRoute).mockReturnValue({
       isManagementApi: true,
-      authenticationMethod: AuthenticationMethod.ApiKey,
+      authenticationMethod: AuthMethod.ApiKey,
     });
     vi.mocked(isIntegrationRoute).mockReturnValue(false);
 
@@ -320,7 +368,7 @@ describe("withV1ApiWrapper", () => {
     vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: false, isRateLimited: true });
     vi.mocked(isManagementApiRoute).mockReturnValue({
       isManagementApi: true,
-      authenticationMethod: AuthenticationMethod.ApiKey,
+      authenticationMethod: AuthMethod.ApiKey,
     });
     vi.mocked(isIntegrationRoute).mockReturnValue(false);
 
@@ -372,7 +420,7 @@ describe("withV1ApiWrapper", () => {
     vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: false, isRateLimited: true });
     vi.mocked(isManagementApiRoute).mockReturnValue({
       isManagementApi: true,
-      authenticationMethod: AuthenticationMethod.ApiKey,
+      authenticationMethod: AuthMethod.ApiKey,
     });
     vi.mocked(isIntegrationRoute).mockReturnValue(false);
 
@@ -427,7 +475,7 @@ describe("withV1ApiWrapper", () => {
     vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: false, isRateLimited: true });
     vi.mocked(isManagementApiRoute).mockReturnValue({
       isManagementApi: true,
-      authenticationMethod: AuthenticationMethod.ApiKey,
+      authenticationMethod: AuthMethod.ApiKey,
     });
     vi.mocked(isIntegrationRoute).mockReturnValue(false);
 
@@ -446,16 +494,16 @@ describe("withV1ApiWrapper", () => {
     const { isClientSideApiRoute, isManagementApiRoute, isIntegrationRoute } =
       await import("@/app/middleware/endpoint-validator");
     const { authenticateRequest } = await import("@/app/api/v1/auth");
-    const { applyClientRateLimit } = await import("@/modules/core/rate-limit/helpers");
+    const { applyIPRateLimit } = await import("@/modules/core/rate-limit/helpers");
 
     vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: true, isRateLimited: true });
     vi.mocked(isManagementApiRoute).mockReturnValue({
       isManagementApi: false,
-      authenticationMethod: AuthenticationMethod.None,
+      authenticationMethod: AuthMethod.None,
     });
     vi.mocked(isIntegrationRoute).mockReturnValue(false);
     vi.mocked(authenticateRequest).mockResolvedValue(null);
-    vi.mocked(applyClientRateLimit).mockResolvedValue({ allowed: true });
+    vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
 
     const handler = vi.fn().mockResolvedValue({
       response: responses.successResponse({ data: "test" }),
@@ -467,7 +515,7 @@ describe("withV1ApiWrapper", () => {
     const res = await wrapped(req, undefined);
 
     expect(res.status).toBe(200);
-    expect(applyClientRateLimit).toHaveBeenCalledWith("ck12345678901234567890123", undefined);
+    expect(applyIPRateLimit).toHaveBeenCalled();
     expect(handler).toHaveBeenCalledWith({
       req,
       props: undefined,
@@ -476,79 +524,88 @@ describe("withV1ApiWrapper", () => {
     });
   });
 
-  test("passes custom client rate limit config with the environment ID", async () => {
+  test("skips app rate limiting for Envoy-covered client routes", async () => {
     const { isClientSideApiRoute, isManagementApiRoute, isIntegrationRoute } =
       await import("@/app/middleware/endpoint-validator");
     const { authenticateRequest } = await import("@/app/api/v1/auth");
-    const { applyClientRateLimit } = await import("@/modules/core/rate-limit/helpers");
+    const { applyIPRateLimit } = await import("@/modules/core/rate-limit/helpers");
 
     vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: true, isRateLimited: true });
     vi.mocked(isManagementApiRoute).mockReturnValue({
       isManagementApi: false,
-      authenticationMethod: AuthenticationMethod.None,
+      authenticationMethod: AuthMethod.None,
     });
     vi.mocked(isIntegrationRoute).mockReturnValue(false);
     vi.mocked(authenticateRequest).mockResolvedValue(null);
-    vi.mocked(applyClientRateLimit).mockResolvedValue({ allowed: true });
-
-    const customRateLimitConfig = {
-      interval: 60,
-      allowedPerInterval: 5,
-      namespace: "storage:upload",
-    };
-    const handler = vi.fn().mockResolvedValue({
-      response: responses.successResponse({ data: "test" }),
-    });
-
-    const req = createMockRequest({ url: "/api/v1/client/ck12345678901234567890123/storage" });
-    const { withV1ApiWrapper } = await import("./with-api-logging");
-    const wrapped = withV1ApiWrapper({ handler, customRateLimitConfig });
-    const res = await wrapped(req, undefined);
-
-    expect(res.status).toBe(200);
-    expect(applyClientRateLimit).toHaveBeenCalledWith("ck12345678901234567890123", customRateLimitConfig);
-    expect(handler).toHaveBeenCalled();
-  });
-
-  test("rejects invalid client environment IDs before rate limiting", async () => {
-    const { isClientSideApiRoute, isManagementApiRoute, isIntegrationRoute } =
-      await import("@/app/middleware/endpoint-validator");
-    const { authenticateRequest } = await import("@/app/api/v1/auth");
-    const { applyClientRateLimit } = await import("@/modules/core/rate-limit/helpers");
-
-    vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: true, isRateLimited: true });
-    vi.mocked(isManagementApiRoute).mockReturnValue({
-      isManagementApi: false,
-      authenticationMethod: AuthenticationMethod.None,
-    });
-    vi.mocked(isIntegrationRoute).mockReturnValue(false);
-    vi.mocked(authenticateRequest).mockResolvedValue(null);
-    vi.mocked(applyClientRateLimit).mockResolvedValue({ allowed: true });
+    vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
 
     const handler = vi.fn().mockResolvedValue({
       response: responses.successResponse({ data: "test" }),
     });
 
-    const req = createMockRequest({ url: "/api/v1/client/not-a-cuid/displays" });
+    const req = createMockRequest({ method: "POST", url: "/api/v1/client/env_123/storage" });
     const { withV1ApiWrapper } = await import("./with-api-logging");
     const wrapped = withV1ApiWrapper({ handler });
     const res = await wrapped(req, undefined);
 
-    expect(res.status).toBe(400);
-    expect(await res.json()).toEqual({
-      code: "bad_request",
-      message: "Invalid environment ID format",
-      details: {},
+    expect(res.status).toBe(200);
+    expect(applyIPRateLimit).not.toHaveBeenCalled();
+  });
+
+  test("keeps app rate limiting for uncovered client routes", async () => {
+    const { isClientSideApiRoute, isManagementApiRoute, isIntegrationRoute } =
+      await import("@/app/middleware/endpoint-validator");
+    const { authenticateRequest } = await import("@/app/api/v1/auth");
+    const { applyIPRateLimit } = await import("@/modules/core/rate-limit/helpers");
+
+    vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: true, isRateLimited: true });
+    vi.mocked(isManagementApiRoute).mockReturnValue({
+      isManagementApi: false,
+      authenticationMethod: AuthMethod.None,
     });
-    expect(applyClientRateLimit).not.toHaveBeenCalled();
-    expect(handler).not.toHaveBeenCalled();
-    expect(logger.warn).toHaveBeenCalledWith(
-      {
-        pathname: "/api/v1/client/not-a-cuid/displays",
-        environmentId: "not-a-cuid",
-      },
-      "Invalid client API environment ID for rate limiting"
-    );
+    vi.mocked(isIntegrationRoute).mockReturnValue(false);
+    vi.mocked(authenticateRequest).mockResolvedValue(null);
+    vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
+
+    const handler = vi.fn().mockResolvedValue({
+      response: responses.successResponse({ data: "test" }),
+    });
+
+    const req = createMockRequest({ method: "GET", url: "/api/v2/client/env_123/environment" });
+    const { withV1ApiWrapper } = await import("./with-api-logging");
+    const wrapped = withV1ApiWrapper({ handler });
+    const res = await wrapped(req, undefined);
+
+    expect(res.status).toBe(200);
+    expect(applyIPRateLimit).toHaveBeenCalled();
+  });
+
+  test("keeps app rate limiting for uncovered verbs on otherwise covered client paths", async () => {
+    const { isClientSideApiRoute, isManagementApiRoute, isIntegrationRoute } =
+      await import("@/app/middleware/endpoint-validator");
+    const { authenticateRequest } = await import("@/app/api/v1/auth");
+    const { applyIPRateLimit } = await import("@/modules/core/rate-limit/helpers");
+
+    vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: true, isRateLimited: true });
+    vi.mocked(isManagementApiRoute).mockReturnValue({
+      isManagementApi: false,
+      authenticationMethod: AuthMethod.None,
+    });
+    vi.mocked(isIntegrationRoute).mockReturnValue(false);
+    vi.mocked(authenticateRequest).mockResolvedValue(null);
+    vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
+
+    const handler = vi.fn().mockResolvedValue({
+      response: responses.successResponse({ data: "test" }),
+    });
+
+    const req = createMockRequest({ method: "PATCH", url: "/api/v1/client/env_123/environment" });
+    const { withV1ApiWrapper } = await import("./with-api-logging");
+    const wrapped = withV1ApiWrapper({ handler });
+    const res = await wrapped(req, undefined);
+
+    expect(res.status).toBe(200);
+    expect(applyIPRateLimit).toHaveBeenCalled();
   });
 
   test("returns authentication error for non-client routes without auth", async () => {
@@ -559,7 +616,7 @@ describe("withV1ApiWrapper", () => {
     vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: false, isRateLimited: true });
     vi.mocked(isManagementApiRoute).mockReturnValue({
       isManagementApi: true,
-      authenticationMethod: AuthenticationMethod.ApiKey,
+      authenticationMethod: AuthMethod.ApiKey,
     });
     vi.mocked(isIntegrationRoute).mockReturnValue(false);
     vi.mocked(authenticateRequest).mockResolvedValue(null);
@@ -582,7 +639,7 @@ describe("withV1ApiWrapper", () => {
     vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: false, isRateLimited: true });
     vi.mocked(isManagementApiRoute).mockReturnValue({
       isManagementApi: true,
-      authenticationMethod: AuthenticationMethod.Session,
+      authenticationMethod: AuthMethod.Session,
     });
     vi.mocked(isIntegrationRoute).mockReturnValue(false);
     vi.mocked(getServerSession).mockResolvedValue(null);
@@ -606,7 +663,34 @@ describe("withV1ApiWrapper", () => {
     expect(mockContextualLoggerError).toHaveBeenCalled();
   });
 
-  test("handles rate limiting errors", async () => {
+  test("keeps app rate limiting for uncovered session-authenticated management routes", async () => {
+    const { applyRateLimit } = await import("@/modules/core/rate-limit/helpers");
+    const { isClientSideApiRoute, isManagementApiRoute, isIntegrationRoute } =
+      await import("@/app/middleware/endpoint-validator");
+    const { getServerSession } = await import("next-auth");
+
+    vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: false, isRateLimited: true });
+    vi.mocked(isManagementApiRoute).mockReturnValue({
+      isManagementApi: true,
+      authenticationMethod: AuthMethod.Both,
+    });
+    vi.mocked(isIntegrationRoute).mockReturnValue(false);
+    vi.mocked(getServerSession).mockResolvedValue({ user: { id: "user-1" } } as any);
+    vi.mocked(applyRateLimit).mockRejectedValue(new TooManyRequestsError("Rate limit exceeded"));
+
+    const handler = vi.fn();
+    const req = createMockRequest({ method: "POST", url: "https://api.test/api/v1/management/storage" });
+    const { withV1ApiWrapper } = await import("./with-api-logging");
+    const customRateLimitConfig = { interval: 60, allowedPerInterval: 5, namespace: "storage:upload" };
+    const wrapped = withV1ApiWrapper({ handler, customRateLimitConfig });
+    const res = await wrapped(req, undefined);
+
+    expect(res.status).toBe(429);
+    expect(handler).not.toHaveBeenCalled();
+    expect(applyRateLimit).toHaveBeenCalledWith(customRateLimitConfig, "user-1");
+  });
+
+  test("skips app rate limiting for Envoy-covered API-key management routes", async () => {
     const { applyRateLimit } = await import("@/modules/core/rate-limit/helpers");
     const { isClientSideApiRoute, isManagementApiRoute, isIntegrationRoute } =
       await import("@/app/middleware/endpoint-validator");
@@ -616,25 +700,26 @@ describe("withV1ApiWrapper", () => {
     vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: false, isRateLimited: true });
     vi.mocked(isManagementApiRoute).mockReturnValue({
       isManagementApi: true,
-      authenticationMethod: AuthenticationMethod.ApiKey,
+      authenticationMethod: AuthMethod.ApiKey,
     });
     vi.mocked(isIntegrationRoute).mockReturnValue(false);
-    vi.mocked(applyRateLimit).mockRejectedValue(
-      new TooManyRequestsError("Maximum number of requests reached. Please try again later.")
-    );
+    vi.mocked(applyRateLimit).mockResolvedValue({ allowed: true });
 
-    const handler = vi.fn();
+    const handler = vi.fn().mockResolvedValue({
+      response: responses.successResponse({ data: "test" }),
+    });
+
     const req = createMockRequest({ url: V1_MANAGEMENT_SURVEYS_URL });
     const { withV1ApiWrapper } = await import("./with-api-logging");
     const wrapped = withV1ApiWrapper({ handler });
     const res = await wrapped(req, undefined);
 
-    expect(res.status).toBe(429);
-    expect(handler).not.toHaveBeenCalled();
+    expect(res.status).toBe(200);
+    expect(applyRateLimit).not.toHaveBeenCalled();
   });
 
   test("returns a generic error for unexpected client rate limit failures", async () => {
-    const { applyClientRateLimit } = await import("@/modules/core/rate-limit/helpers");
+    const { applyIPRateLimit } = await import("@/modules/core/rate-limit/helpers");
     const { isClientSideApiRoute, isManagementApiRoute, isIntegrationRoute } =
       await import("@/app/middleware/endpoint-validator");
     const { authenticateRequest } = await import("@/app/api/v1/auth");
@@ -648,7 +733,7 @@ describe("withV1ApiWrapper", () => {
     vi.mocked(isIntegrationRoute).mockReturnValue(false);
 
     const underlyingError = new Error("Failed to hash IP");
-    vi.mocked(applyClientRateLimit).mockRejectedValue(underlyingError);
+    vi.mocked(applyIPRateLimit).mockRejectedValue(underlyingError);
 
     const handler = vi.fn();
     const req = createMockRequest({
@@ -693,7 +778,7 @@ describe("withV1ApiWrapper", () => {
     vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: false, isRateLimited: true });
     vi.mocked(isManagementApiRoute).mockReturnValue({
       isManagementApi: true,
-      authenticationMethod: AuthenticationMethod.ApiKey,
+      authenticationMethod: AuthMethod.ApiKey,
     });
     vi.mocked(isIntegrationRoute).mockReturnValue(false);
 
@@ -724,7 +809,7 @@ describe("withV1ApiWrapper", () => {
     vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: false, isRateLimited: true });
     vi.mocked(isManagementApiRoute).mockReturnValue({
       isManagementApi: true,
-      authenticationMethod: AuthenticationMethod.ApiKey,
+      authenticationMethod: AuthMethod.ApiKey,
     });
     vi.mocked(isIntegrationRoute).mockReturnValue(false);
 
@@ -748,7 +833,7 @@ describe("withV1ApiWrapper", () => {
     vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: false, isRateLimited: true });
     vi.mocked(isManagementApiRoute).mockReturnValue({
       isManagementApi: true,
-      authenticationMethod: AuthenticationMethod.ApiKey,
+      authenticationMethod: AuthMethod.ApiKey,
     });
     vi.mocked(isIntegrationRoute).mockReturnValue(false);
 

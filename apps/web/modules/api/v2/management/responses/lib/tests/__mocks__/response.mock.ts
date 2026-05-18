@@ -75,14 +75,14 @@ export const response: Response = {
   ...responseInput,
 };
 
-export const environmentId = "ou9sjm7a7qnilxhhhfszct95";
+export const workspaceId = "ou9sjm7a7qnilxhhhfszct95";
 export const organizationId = "qybv4vk77pw71vnq9rmfrsvi";
 
 export const organizationBilling: TOrganizationBilling = {
   stripeCustomerId: "cus_P78901234567890123456789",
   limits: {
     monthly: { responses: 100 },
-    projects: 1,
+    workspaces: 1,
   },
   usageCycleAnchor: new Date(),
 };

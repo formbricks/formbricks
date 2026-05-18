@@ -51,9 +51,9 @@ export const EMBED_SURVEY_PREVIEW_STYLING: TSurveyStyling = {
   brandColor: { light: "#22c55e" },
   cardBackgroundColor: { light: "#4a865f" },
   cardBorderColor: { light: "#4a865f" },
-  inputColor: { light: "#ffffff" },
+  inputBgColor: { light: "#ffffff" },
   inputBorderColor: { light: "#d6e4dc" },
-  questionColor: { light: "#1f2937" },
+  elementHeadlineColor: { light: "#1f2937" },
   roundness: 8,
 };
 
@@ -294,6 +294,8 @@ const createPreviewElementByType = (type: TSurveyElementTypeEnum): TSurveyElemen
         required: true,
         allowMultipleFiles: false,
       } as TSurveyElement;
+    default:
+      throw new Error(`Unsupported preview element type: ${type as string}`);
   }
 };
 

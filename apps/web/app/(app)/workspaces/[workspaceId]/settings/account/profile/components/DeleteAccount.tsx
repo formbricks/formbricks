@@ -1,0 +1,97 @@
+"use client";
+
+import type { Session } from "next-auth";
+import { useEffect, useRef, useState } from "react";
+import toast from "react-hot-toast";
+import { useTranslation } from "react-i18next";
+import { TOrganization } from "@formbricks/types/organizations";
+import { TUser } from "@formbricks/types/user";
+import { DeleteAccountModal } from "@/modules/account/components/DeleteAccountModal";
+import {
+  ACCOUNT_DELETION_SSO_REAUTH_ERROR_QUERY_PARAM,
+  ACCOUNT_DELETION_SSO_REAUTH_FAILED_ERROR_CODE,
+} from "@/modules/account/constants";
+import { Button } from "@/modules/ui/components/button";
+import { TooltipRenderer } from "@/modules/ui/components/tooltip";
+
+interface DeleteAccountProps {
+  session: Session | null;
+  IS_FORMBRICKS_CLOUD: boolean;
+  user: TUser;
+  organizationsWithSingleOwner: TOrganization[];
+  accountDeletionError?: string | string[];
+  isMultiOrgEnabled: boolean;
+  requiresPasswordConfirmation: boolean;
+  isSsoIdentityConfirmationDisabled: boolean;
+}
+
+export const DeleteAccount = ({
+  session,
+  IS_FORMBRICKS_CLOUD,
+  user,
+  organizationsWithSingleOwner,
+  accountDeletionError,
+  isMultiOrgEnabled,
+  requiresPasswordConfirmation,
+  isSsoIdentityConfirmationDisabled,
+}: Readonly<DeleteAccountProps>) => {
+  const [isModalOpen, setModalOpen] = useState(false);
+  const isDeleteDisabled = !isMultiOrgEnabled && organizationsWithSingleOwner.length > 0;
+  const { t } = useTranslation();
+  const accountDeletionErrorCode = Array.isArray(accountDeletionError)
+    ? accountDeletionError[0]
+    : accountDeletionError;
+  const hasShownAccountDeletionError = useRef(false);
+
+  useEffect(() => {
+    if (
+      accountDeletionErrorCode !== ACCOUNT_DELETION_SSO_REAUTH_FAILED_ERROR_CODE ||
+      hasShownAccountDeletionError.current
+    ) {
+      return;
+    }
+
+    hasShownAccountDeletionError.current = true;
+
+    toast.error(t("workspace.settings.profile.sso_identity_confirmation_failed"), {
+      id: "account-deletion-sso-confirmation-error",
+    });
+
+    const url = new URL(globalThis.location.href);
+    url.searchParams.delete(ACCOUNT_DELETION_SSO_REAUTH_ERROR_QUERY_PARAM);
+    globalThis.history.replaceState(null, "", url.toString());
+  }, [accountDeletionErrorCode, t]);
+
+  if (!session) {
+    return null;
+  }
+
+  return (
+    <div>
+      <DeleteAccountModal
+        requiresPasswordConfirmation={requiresPasswordConfirmation}
+        open={isModalOpen}
+        setOpen={setModalOpen}
+        user={user}
+        isFormbricksCloud={IS_FORMBRICKS_CLOUD}
+        organizationsWithSingleOwner={organizationsWithSingleOwner}
+        isSsoIdentityConfirmationDisabled={isSsoIdentityConfirmationDisabled}
+      />
+      <p className="text-sm text-slate-700">
+        <strong>{t("workspace.settings.profile.warning_cannot_undo")}</strong>
+      </p>
+      <TooltipRenderer
+        shouldRender={isDeleteDisabled}
+        tooltipContent={t("workspace.settings.profile.warning_cannot_delete_account")}>
+        <Button
+          className="mt-4"
+          variant="destructive"
+          size="sm"
+          onClick={() => setModalOpen(!isModalOpen)}
+          disabled={isDeleteDisabled}>
+          {t("workspace.settings.profile.confirm_delete_my_account")}
+        </Button>
+      </TooltipRenderer>
+    </div>
+  );
+};

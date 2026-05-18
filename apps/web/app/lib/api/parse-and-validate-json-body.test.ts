@@ -93,17 +93,17 @@ describe("parseAndValidateJsonBody", () => {
       request,
       schema: z.object({
         finished: z.boolean(),
-        environmentId: z.string(),
+        workspaceId: z.string(),
       }),
       buildInput: (jsonInput) => ({
         ...(jsonInput as Record<string, unknown>),
-        environmentId: "env_123",
+        workspaceId: "ws_123",
       }),
     });
 
     expect(result).toEqual({
       data: {
-        environmentId: "env_123",
+        workspaceId: "ws_123",
         finished: true,
       },
     });

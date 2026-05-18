@@ -3,16 +3,16 @@ import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import { Button } from "../button";
 
 interface IconAction {
-  icon: LucideIcon;
+  icon: LucideIcon | null;
   tooltip: string;
   onClick?: () => void;
   isVisible?: boolean;
   disabled?: boolean;
+  isLoading?: boolean;
 }
 
 interface IconBarProps {
   actions: IconAction[];
-  className?: string;
 }
 
 export const IconBar = ({ actions }: IconBarProps) => {
@@ -34,8 +34,9 @@ export const IconBar = ({ actions }: IconBarProps) => {
                 size="icon"
                 onClick={action.onClick}
                 disabled={action.disabled}
+                loading={action.isLoading}
                 aria-label={action.tooltip}>
-                <action.icon />
+                {action.icon ? <action.icon /> : null}
               </Button>
             </TooltipRenderer>
           </span>

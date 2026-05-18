@@ -1,14 +1,14 @@
 import { FileInput } from "@/modules/ui/components/file-input";
 
 interface UploadImageSurveyBgProps {
-  environmentId: string;
+  workspaceId: string;
   handleBgChange: (url: string, bgType: string) => void;
   background: string;
   isStorageConfigured: boolean;
 }
 
 export const UploadImageSurveyBg = ({
-  environmentId,
+  workspaceId,
   handleBgChange,
   background,
   isStorageConfigured = true,
@@ -19,7 +19,7 @@ export const UploadImageSurveyBg = ({
         <FileInput
           id="survey-bg-file-input"
           allowedFileExtensions={["png", "jpeg", "jpg", "webp", "heic"]}
-          environmentId={environmentId}
+          workspaceId={workspaceId}
           onFileUpload={(url: string[] | undefined, _fileType: "image" | "video") => {
             if (url && url.length > 0) {
               handleBgChange(url[0], "upload");

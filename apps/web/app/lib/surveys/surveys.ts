@@ -13,13 +13,13 @@ import {
   DateRange,
   FilterValue,
   SelectedFilterValue,
-} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
+} from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
 import {
   ElementOption,
   ElementOptions,
   OptionsType,
-} from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ElementsComboBox";
-import { ElementFilterOptions } from "@/app/(app)/environments/[environmentId]/surveys/[surveyId]/components/ResponseFilter";
+} from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/ElementsComboBox";
+import { ElementFilterOptions } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/ResponseFilter";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
@@ -30,6 +30,8 @@ const conditionOptions: Record<string, string[]> = {
   multipleChoiceMulti: ["Includes all", "Includes either"],
   nps: ["Is equal to", "Is less than", "Is more than", "Submitted", "Skipped", "Includes either"],
   rating: ["Is equal to", "Is less than", "Is more than", "Submitted", "Skipped"],
+  csat: ["Is equal to", "Is less than", "Is more than", "Submitted", "Skipped"],
+  ces: ["Is equal to", "Is less than", "Is more than", "Submitted", "Skipped"],
   cta: ["is"],
   tags: ["is"],
   languages: ["Equals", "Not equals"],
@@ -45,6 +47,8 @@ const filterOptions: Record<string, string[]> = {
   openText: ["Filled out", "Skipped"],
   rating: ["1", "2", "3", "4", "5"],
   nps: ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
+  csat: ["1", "2", "3", "4", "5"],
+  ces: ["1", "2", "3", "4", "5", "6", "7"],
   cta: ["Clicked", "Dismissed"],
   tags: ["Applied", "Not applied"],
   consent: ["Accepted", "Dismissed"],
@@ -436,6 +440,8 @@ const processElementFilters = (
         break;
       case TSurveyElementTypeEnum.NPS:
       case TSurveyElementTypeEnum.Rating:
+      case TSurveyElementTypeEnum.CSAT:
+      case TSurveyElementTypeEnum.CES:
         processNPSRatingFilter(filterType, elementId, filters);
         break;
       case TSurveyElementTypeEnum.CTA:
