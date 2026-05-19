@@ -1,13 +1,34 @@
 "use client";
 
 import { ArrowLeftIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
 
-export const GoBackButton = ({ url }: { url?: string }) => {
+interface GoBackButtonProps {
+  url?: string;
+  previousPath?: string | null;
+  settingsPathPrefix?: string;
+  settingsFallbackUrl?: string;
+}
+
+export const GoBackButton = ({
+  url,
+  previousPath,
+  settingsPathPrefix,
+  settingsFallbackUrl,
+}: Readonly<GoBackButtonProps>) => {
   const router = useRouter();
+  const pathname = usePathname();
   const { t } = useTranslation();
+
+  const shouldRedirectToSettingsFallback =
+    !!settingsFallbackUrl &&
+    !!settingsPathPrefix &&
+    !!previousPath &&
+    previousPath.startsWith(settingsPathPrefix) &&
+    previousPath !== pathname;
+
   return (
     <Button
       size="sm"
@@ -17,6 +38,12 @@ export const GoBackButton = ({ url }: { url?: string }) => {
           router.push(url);
           return;
         }
+
+        if (shouldRedirectToSettingsFallback) {
+          router.replace(settingsFallbackUrl);
+          return;
+        }
+
         router.back();
       }}>
       <ArrowLeftIcon />
