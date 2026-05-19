@@ -17,7 +17,8 @@ interface ApiErrorResponse {
     | "not_authenticated"
     | "forbidden"
     | "too_many_requests"
-    | "conflict";
+    | "conflict"
+    | "payload_too_large";
   message: string;
   details: {
     [key: string]: string | string[] | number | number[] | boolean | boolean[];
@@ -75,6 +76,30 @@ const badRequestResponse = (
     } as ApiErrorResponse,
     {
       status: 400,
+      headers,
+    }
+  );
+};
+
+const payloadTooLargeResponse = (
+  message: string = "Payload Too Large",
+  details: ApiErrorResponse["details"] = {},
+  cors: boolean = false,
+  cache: string = "private, no-store"
+) => {
+  const headers = {
+    ...(cors && corsHeaders),
+    "Cache-Control": cache,
+  };
+
+  return Response.json(
+    {
+      code: "payload_too_large",
+      message,
+      details,
+    } as ApiErrorResponse,
+    {
+      status: 413,
       headers,
     }
   );
@@ -294,6 +319,7 @@ export const responses = {
   unauthorizedResponse,
   notFoundResponse,
   successResponse,
+  payloadTooLargeResponse,
   tooManyRequestsResponse,
   forbiddenResponse,
   conflictResponse,
