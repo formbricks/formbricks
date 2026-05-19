@@ -335,6 +335,7 @@ export const SettingsSidebarContent = ({
       href: `${basePath}/organization/feedback-directories`,
       icon: <FoldersIcon className={iconClassName} />,
       hidden: isMember,
+      disabled: !isOwnerOrManager,
     },
     {
       id: "org-api-keys",
