@@ -7,6 +7,7 @@ import { TSurveyQuestion } from "@formbricks/types/surveys/types";
 import {
   isAllowedFileExtension,
   isValidImageFile,
+  parseStorageFileUrl,
   resolveStorageUrl,
   resolveStorageUrlAuto,
   resolveStorageUrlsInObject,
@@ -613,6 +614,37 @@ describe("storage utils", () => {
       };
 
       expect(validateClientFileUploads({ data: responseData, workspaceId, surveyId, blocks })).toBe(false);
+    });
+  });
+
+  describe("parseStorageFileUrl", () => {
+    test("should parse nested relative storage URLs", () => {
+      expect(
+        parseStorageFileUrl(
+          "/storage/workspace-123/private/surveys/survey-123/questions/question-123/report.pdf"
+        )
+      ).toEqual({
+        storageId: "workspace-123",
+        accessType: "private",
+        fileName: "surveys/survey-123/questions/question-123/report.pdf",
+      });
+    });
+
+    test("should parse absolute storage URLs", () => {
+      expect(parseStorageFileUrl("https://example.com/storage/workspace-123/public/report.pdf")).toEqual({
+        storageId: "workspace-123",
+        accessType: "public",
+        fileName: "report.pdf",
+      });
+    });
+
+    test.each([
+      "https://example.com/not-storage/workspace-123/private/report.pdf",
+      "/storage/workspace-123/internal/report.pdf",
+      "/storage/workspace-123/private",
+      "not a url",
+    ])("should reject invalid storage URL %s", (fileUrl) => {
+      expect(parseStorageFileUrl(fileUrl)).toBeNull();
     });
   });
 

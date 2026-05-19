@@ -1,7 +1,11 @@
 import "server-only";
 import { type StorageError, StorageErrorCode } from "@formbricks/storage";
 import { TResponseData } from "@formbricks/types/responses";
-import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/storage";
+import {
+  type TAccessType,
+  type TAllowedFileExtension,
+  ZAllowedFileExtension,
+} from "@formbricks/types/storage";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyElementTypeEnum, TSurveyFileUploadElement } from "@formbricks/types/surveys/elements";
 import { TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
@@ -202,6 +206,41 @@ const getStorageUrlPathSegments = (fileUrl: string): string[] | null => {
 
   const pathWithoutSearch = fileUrl.split(/[?#]/)[0];
   return pathWithoutSearch.split("/").filter(Boolean);
+};
+
+type TParsedStorageFileUrl = {
+  storageId: string;
+  accessType: TAccessType;
+  fileName: string;
+};
+
+export const parseStorageFileUrl = (fileUrl: string): TParsedStorageFileUrl | null => {
+  let pathname: string;
+
+  try {
+    pathname = fileUrl.startsWith("/storage/") ? fileUrl : new URL(fileUrl).pathname;
+  } catch {
+    return null;
+  }
+
+  const pathWithoutSearch = pathname.split(/[?#]/)[0];
+  if (!pathWithoutSearch.startsWith("/storage/")) return null;
+
+  const [storageSegment, storageId, accessType, ...fileNameSegments] = pathWithoutSearch
+    .split("/")
+    .filter(Boolean);
+  const fileName = fileNameSegments.join("/");
+
+  if (
+    storageSegment !== "storage" ||
+    !storageId ||
+    !fileName ||
+    (accessType !== "private" && accessType !== "public")
+  ) {
+    return null;
+  }
+
+  return { storageId, accessType, fileName };
 };
 
 const isScopedPrivateUploadUrl = ({

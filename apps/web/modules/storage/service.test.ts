@@ -152,6 +152,26 @@ describe("storage service", () => {
       );
     });
 
+    test.each(["", ".", "..", "bad segment", "bad/segment", "bad\\segment", "bad?segment", "bad#segment"])(
+      "should reject unsafe scoped private upload path segment %s",
+      async (unsafeSegment) => {
+        const result = await getSignedUrlForUpload(
+          "test-doc.pdf",
+          "ws-123",
+          "application/pdf",
+          "private" as TAccessType,
+          1024 * 1024 * 10,
+          ["surveys", unsafeSegment]
+        );
+
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+          expect(result.error.code).toBe(StorageErrorCode.InvalidInput);
+        }
+        expect(getSignedUploadUrl).not.toHaveBeenCalled();
+      }
+    );
+
     test("should properly sanitize filenames with special characters like # in URL", async () => {
       const mockSignedUrlResponse = {
         ok: true,

@@ -10,8 +10,10 @@ import {
   getSignedUploadUrl,
 } from "@formbricks/storage";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
-import { TAccessType } from "@formbricks/types/storage";
+import { type TAccessType } from "@formbricks/types/storage";
 import { sanitizeFileName } from "./utils";
+
+const SAFE_FILE_PATH_SEGMENT = /^[A-Za-z0-9_-]+$/;
 
 export const getSignedUrlForUpload = async (
   fileName: string,
@@ -36,10 +38,11 @@ export const getSignedUrlForUpload = async (
       return err({ code: StorageErrorCode.InvalidInput });
     }
 
-    if (filePathSegments.some((segment) => !segment || segment.includes("/") || segment.includes("\\"))) {
+    if (filePathSegments.some((segment) => !SAFE_FILE_PATH_SEGMENT.test(segment))) {
       return err({ code: StorageErrorCode.InvalidInput });
     }
 
+    const encodedFilePathSegments = filePathSegments.map((segment) => encodeURIComponent(segment));
     const fileNameWithoutExtension = safeFileName.split(".").slice(0, -1).join(".");
     const fileExtension = safeFileName.split(".").pop();
 
@@ -57,7 +60,7 @@ export const getSignedUrlForUpload = async (
       signedUrl: signedUrlResult.data.signedUrl,
       presignedFields: signedUrlResult.data.presignedFields,
       fileUrl: `/storage/${workspaceId}/${accessType}/${[
-        ...filePathSegments,
+        ...encodedFilePathSegments,
         encodeURIComponent(updatedFileName),
       ].join("/")}`,
     });

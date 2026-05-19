@@ -147,7 +147,21 @@ export const DELETE = async (
     idParam
   );
 
-  if (!deleteResult.ok && "error" in deleteResult) {
+  if (!deleteResult.ok) {
+    if (!("error" in deleteResult)) {
+      logger.error({ deleteResult }, "Unknown delete failure result shape");
+
+      await logFileDeletion({
+        failureReason: "unknown_delete_failure",
+        accessType,
+        userId: session?.user?.id,
+        workspaceId: resolved.workspaceId,
+        apiUrl: request.url,
+      });
+
+      return responses.internalServerErrorResponse("Failed to delete file", true);
+    }
+
     const { error } = deleteResult;
 
     logger.error({ error }, "Error deleting file");
