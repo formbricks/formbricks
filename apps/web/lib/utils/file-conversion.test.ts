@@ -94,13 +94,36 @@ describe("convertToXlsxBuffer", () => {
   });
 
   test("should defang formula injection payloads in xlsx cells", () => {
-    const payload = '=HYPERLINK("https://evil.tld","Click")';
-    const buffer = convertToXlsxBuffer(["name"], [{ name: payload }]);
+    const payloads = [
+      '=HYPERLINK("https://evil.tld","Click")',
+      "+1+1",
+      "-2+3",
+      "@SUM(A1:A2)",
+      "\tleading-tab",
+      "\rleading-cr",
+    ];
+    const rows = payloads.map((p) => ({ name: p }));
+    const buffer = convertToXlsxBuffer(["name"], rows);
     const wb = xlsx.read(buffer, { type: "buffer" });
     const sheet = wb.Sheets["Sheet1"];
-    const cell = sheet["A2"];
-    // value stored as plain text, not as a formula (no `f` property)
-    expect(cell.f).toBeUndefined();
-    expect(cell.v).toBe(`'${payload}`);
+    payloads.forEach((p, i) => {
+      const cell = sheet[`A${i + 2}`]; // row 1 is header
+      // value stored as plain text, not as a formula (no `f` property)
+      expect(cell.f).toBeUndefined();
+      expect(cell.v).toBe(`'${p}`);
+    });
+  });
+
+  test("should defang formula injection in xlsx header names", () => {
+    const buffer = convertToXlsxBuffer(["=evil", "name"], [{ "=evil": "x", name: "Alice" }]);
+    const wb = xlsx.read(buffer, { type: "buffer" });
+    const sheet = wb.Sheets["Sheet1"];
+    const headerCell = sheet["A1"];
+    expect(headerCell.f).toBeUndefined();
+    expect(headerCell.v).toBe("'=evil");
+    // benign header untouched
+    expect(sheet["B1"].v).toBe("name");
+    // data row mapped via sanitized key
+    expect(sheet["A2"].v).toBe("x");
   });
 });
