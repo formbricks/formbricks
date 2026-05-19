@@ -146,6 +146,33 @@ export const getDisplaysBySurveyIdWithContact = reactCache(
   }
 );
 
+export const getDisplayForResponseValidation = async (
+  displayId: string,
+  tx?: Prisma.TransactionClient
+): Promise<{ surveyId: string; workspaceId: string; responseId: string | null } | null> => {
+  validateInputs([displayId, ZId]);
+  const client = tx ?? prisma;
+  try {
+    const display = await client.display.findUnique({
+      where: { id: displayId },
+      select: {
+        surveyId: true,
+        response: { select: { id: true } },
+        survey: { select: { workspaceId: true } },
+      },
+    });
+    if (!display) return null;
+    return {
+      surveyId: display.surveyId,
+      workspaceId: display.survey.workspaceId,
+      responseId: display.response?.id ?? null,
+    };
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) throw new DatabaseError(error.message);
+    throw error;
+  }
+};
+
 export const deleteDisplay = async (displayId: string, tx?: Prisma.TransactionClient): Promise<TDisplay> => {
   validateInputs([displayId, ZId]);
   try {
