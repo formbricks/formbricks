@@ -11,6 +11,7 @@ import "react-resizable/css/styles.css";
 import type { TChartQuery } from "@formbricks/types/analysis";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { CreateChartDialog } from "@/modules/ee/analysis/charts/components/create-chart-dialog";
+import type { TAIUnavailableReason } from "@/modules/ee/analysis/charts/lib/ai-availability";
 import { DashboardControlBar } from "@/modules/ee/analysis/dashboards/components/dashboard-control-bar";
 import { DashboardPageHeader } from "@/modules/ee/analysis/dashboards/components/dashboard-page-header";
 import { DashboardWidget } from "@/modules/ee/analysis/dashboards/components/dashboard-widget";
@@ -40,7 +41,7 @@ interface DashboardDetailClientProps {
   directories: { id: string; name: string }[];
   isReadOnly: boolean;
   isAIAvailable: boolean;
-  aiUnavailableReason?: string;
+  aiUnavailableReason?: TAIUnavailableReason;
 }
 
 const widgetsToLayout = (widgets: TDashboardWidget[]): LayoutItem[] => {

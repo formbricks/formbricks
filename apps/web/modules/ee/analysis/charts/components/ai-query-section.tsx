@@ -7,18 +7,22 @@ import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { generateAIChartAction } from "@/modules/ee/analysis/charts/actions";
+import {
+  type TAIUnavailableActionType,
+  type TAIUnavailableReason,
+  getAIUnavailableAction,
+} from "@/modules/ee/analysis/charts/lib/ai-availability";
 import type { AnalyticsResponse } from "@/modules/ee/analysis/types/analysis";
-import { Alert } from "@/modules/ui/components/alert";
+import { Alert, AlertButton, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 
 interface AIQuerySectionProps {
   workspaceId: string;
   onChartGenerated: (data: AnalyticsResponse) => void;
   feedbackDirectoryId: string;
   isAIAvailable?: boolean;
-  aiUnavailableReason?: string;
+  aiUnavailableReason?: TAIUnavailableReason;
 }
 
 export function AIQuerySection({
@@ -31,7 +35,31 @@ export function AIQuerySection({
   const [userQuery, setUserQuery] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const { t } = useTranslation();
-  const showAIDataAnalysisDisabledAlert = !isAIAvailable && aiUnavailableReason === "not_enabled";
+
+  const translateAIUnavailableMessage = (reason: TAIUnavailableReason | undefined): string => {
+    switch (reason) {
+      case "not_in_plan":
+        return t("workspace.analysis.charts.ai_not_in_plan");
+      case "not_enabled":
+        return t("workspace.analysis.charts.ai_not_enabled");
+      case "instance_not_configured":
+        return t("workspace.analysis.charts.ai_instance_not_configured");
+      default:
+        return t("workspace.analysis.charts.ai_not_available");
+    }
+  };
+
+  const translateAIUnavailableAction = (actionType: TAIUnavailableActionType): string => {
+    switch (actionType) {
+      case "enable_ai":
+        return t("workspace.analysis.charts.ai_enable_in_settings");
+      case "upgrade_plan":
+        return t("workspace.analysis.charts.ai_upgrade_plan");
+    }
+  };
+
+  const aiUnavailableMessage = translateAIUnavailableMessage(aiUnavailableReason);
+  const aiUnavailableAction = getAIUnavailableAction(aiUnavailableReason, workspaceId);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -83,56 +111,31 @@ export function AIQuerySection({
             maxLength={2000}
             disabled={!isAIAvailable || isGenerating}
           />
-          {showAIDataAnalysisDisabledAlert ? (
-            <Button
-              type="submit"
-              variant="default"
-              className="w-full"
-              disabled={!isAIAvailable || !userQuery.trim() || isGenerating}
-              loading={isGenerating}>
-              <WandSparklesIcon className="h-4 w-4" />
-              {t("workspace.analysis.charts.create_chart_with_ai")}
-            </Button>
-          ) : (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div>
-                    <Button
-                      type="submit"
-                      variant="default"
-                      className="w-full"
-                      disabled={!isAIAvailable || !userQuery.trim() || isGenerating}
-                      loading={isGenerating}>
-                      <WandSparklesIcon className="h-4 w-4" />
-                      {t("workspace.analysis.charts.create_chart_with_ai")}
-                    </Button>
-                  </div>
-                </TooltipTrigger>
-                {!isAIAvailable && (
-                  <TooltipContent>
-                    {{
-                      not_in_plan: t("workspace.analysis.charts.ai_not_in_plan"),
-                      not_enabled: t("workspace.analysis.charts.ai_not_enabled"),
-                      instance_not_configured: t("workspace.analysis.charts.ai_instance_not_configured"),
-                    }[aiUnavailableReason ?? ""] ?? t("workspace.analysis.charts.ai_not_available")}
-                  </TooltipContent>
-                )}
-              </Tooltip>
-            </TooltipProvider>
+          <Button
+            type="submit"
+            variant="default"
+            className="w-full"
+            disabled={!isAIAvailable || !userQuery.trim() || isGenerating}
+            loading={isGenerating}>
+            <WandSparklesIcon className="h-4 w-4" />
+            {t("workspace.analysis.charts.create_chart_with_ai")}
+          </Button>
+          {!isAIAvailable && (
+            <Alert variant="info" size="small">
+              <AlertDescription className="overflow-visible whitespace-normal">
+                <span>{aiUnavailableMessage}</span>
+              </AlertDescription>
+              {aiUnavailableAction && (
+                <AlertButton asChild>
+                  <Link href={aiUnavailableAction.href}>
+                    {translateAIUnavailableAction(aiUnavailableAction.type)}
+                  </Link>
+                </AlertButton>
+              )}
+            </Alert>
           )}
         </form>
       </div>
-      {showAIDataAnalysisDisabledAlert && (
-        <Alert variant="info" size="small">
-          <span className="truncate">{t("workspace.surveys.edit.ai_data_analysis_disabled")}</span>
-          <Link
-            href={`/workspaces/${workspaceId}/settings/organization/general`}
-            className="ml-2 inline-flex shrink-0 underline">
-            Enable it in organization settings.
-          </Link>
-        </Alert>
-      )}
     </div>
   );
 }

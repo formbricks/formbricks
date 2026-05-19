@@ -66,6 +66,9 @@ import { ConnectorTypeSelector } from "./connector-type-selector";
 import { CsvConnectorUI } from "./csv-connector-ui";
 import { FormbricksQuestionList } from "./formbricks-question-list";
 
+const API_INGESTION_DOCS_URL = "https://formbricks.com/docs/unify-feedback/api/rest-api";
+const FEEDBACK_RECORD_MCP_DOCS_URL = "https://formbricks.com/docs/unify-feedback/api/mcp";
+
 interface CreateConnectorModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -260,12 +263,12 @@ export const CreateConnectorModal = ({
     if (currentStep !== "selectType" || !selectedType) return;
 
     if (selectedType === "api_ingestion") {
-      window.open("https://formbricks.com/docs/unify-feedback/api/rest-api", "_blank", "noopener,noreferrer");
+      window.open(API_INGESTION_DOCS_URL, "_blank", "noopener,noreferrer");
       return;
     }
 
     if (selectedType === "feedback_record_mcp") {
-      window.open("https://formbricks.com/docs/unify-feedback/api/mcp", "_blank", "noopener,noreferrer");
+      window.open(FEEDBACK_RECORD_MCP_DOCS_URL, "_blank", "noopener,noreferrer");
       return;
     }
 
@@ -479,7 +482,6 @@ export const CreateConnectorModal = ({
                 workspaceId={workspaceId}
               />
             )}
-
             {currentStep === "mapping" && selectedType === "formbricks_survey" && (
               <FormProvider {...formbricksForm}>
                 <form
