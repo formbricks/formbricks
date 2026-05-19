@@ -3681,7 +3681,6 @@
       "api_ingestion": "API ingestion",
       "api_ingestion_settings_description": "Send feedback records using the Management API.",
       "api_ingestion_setup_description": "Geri bildirim kayıtlarını doğrudan Formbricks'e göndermek için REST API'sini kullanın. API entegrasyon dokümanları, endpoint, payload yapısı ve kimlik doğrulama detaylarını içerir.",
-      "api_ingestion_setup_title": "API entegrasyonunu kur",
       "auto_generated": "Otomatik olarak oluşturuldu",
       "change_file": "Dosyayı değiştir",
       "clear_mapping": "Eşleştirmeyi temizle",

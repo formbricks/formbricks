@@ -103,7 +103,6 @@ const ApiIngestionSetupAlert = () => {
   return (
     <Alert variant="info" size="small">
       <div className="min-w-0 space-y-1">
-        <AlertTitle>{t("workspace.unify.api_ingestion_setup_title")}</AlertTitle>
         <AlertDescription className="overflow-visible whitespace-normal">
           <p>{t("workspace.unify.api_ingestion_setup_description")}</p>
         </AlertDescription>

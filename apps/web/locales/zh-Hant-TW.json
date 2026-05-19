@@ -3681,7 +3681,6 @@
       "api_ingestion": "API ingestion",
       "api_ingestion_settings_description": "Send feedback records using the Management API.",
       "api_ingestion_setup_description": "使用 REST API 直接將意見回饋記錄傳送至 Formbricks。API 擷取文件包含端點、負載格式及驗證詳情。",
-      "api_ingestion_setup_title": "設定 API 擷取",
       "auto_generated": "自動生成",
       "change_file": "更換檔案",
       "clear_mapping": "清除對應",

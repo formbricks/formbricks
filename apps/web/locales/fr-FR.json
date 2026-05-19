@@ -3681,7 +3681,6 @@
       "api_ingestion": "Ingestion par API",
       "api_ingestion_settings_description": "Envoyer des enregistrements de feedback via l'API de gestion.",
       "api_ingestion_setup_description": "Utilise l'API REST pour envoyer directement les retours d'expérience dans Formbricks. La documentation sur l'ingestion API inclut le point de terminaison, la structure de la charge utile et les détails d'authentification.",
-      "api_ingestion_setup_title": "Configurer l'ingestion API",
       "auto_generated": "Généré automatiquement",
       "change_file": "Changer de fichier",
       "clear_mapping": "Effacer le mappage",

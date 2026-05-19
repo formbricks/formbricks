@@ -3681,7 +3681,6 @@
       "api_ingestion": "API-inname",
       "api_ingestion_settings_description": "Verstuur feedbackrecords via de Management API.",
       "api_ingestion_setup_description": "Gebruik de REST API om feedbackgegevens rechtstreeks naar Formbricks te sturen. De API-ingestiedocumentatie bevat het endpoint, de payload-structuur en authenticatiegegevens.",
-      "api_ingestion_setup_title": "API-ingestie instellen",
       "auto_generated": "Automatisch gegenereerd",
       "change_file": "Bestand wijzigen",
       "clear_mapping": "Mapping wissen",

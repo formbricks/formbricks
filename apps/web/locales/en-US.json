@@ -3681,7 +3681,6 @@
       "api_ingestion": "API ingestion",
       "api_ingestion_settings_description": "Send feedback records using the Management API.",
       "api_ingestion_setup_description": "Use the REST API to send feedback records directly into Formbricks. The API ingestion docs include the endpoint, payload shape, and authentication details.",
-      "api_ingestion_setup_title": "Set up API ingestion",
       "auto_generated": "Auto-generated",
       "change_file": "Change file",
       "clear_mapping": "Clear mapping",

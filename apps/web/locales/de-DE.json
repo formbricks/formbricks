@@ -3681,7 +3681,6 @@
       "api_ingestion": "API-Erfassung",
       "api_ingestion_settings_description": "Sende Feedback-Datensätze über die Management-API.",
       "api_ingestion_setup_description": "Nutze die REST API, um Feedback-Datensätze direkt an Formbricks zu senden. Die API-Ingestion-Docs enthalten den Endpunkt, die Payload-Struktur und Authentifizierungsdetails.",
-      "api_ingestion_setup_title": "API-Ingestion einrichten",
       "auto_generated": "Automatisch generiert",
       "change_file": "Datei ändern",
       "clear_mapping": "Zuordnung löschen",

@@ -3681,7 +3681,6 @@
       "api_ingestion": "Ingestie API",
       "api_ingestion_settings_description": "Trimite înregistrări de feedback folosind API-ul de management.",
       "api_ingestion_setup_description": "Folosește REST API pentru a trimite înregistrări de feedback direct în Formbricks. Documentația de ingestie API include endpoint-ul, structura payload-ului și detaliile de autentificare.",
-      "api_ingestion_setup_title": "Configurează ingestia API",
       "auto_generated": "Generat automat",
       "change_file": "Schimbă fișierul",
       "clear_mapping": "Șterge maparea",

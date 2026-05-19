@@ -3681,7 +3681,6 @@
       "api_ingestion": "API ingestion",
       "api_ingestion_settings_description": "Send feedback records using the Management API.",
       "api_ingestion_setup_description": "Använd REST API för att skicka feedbackposter direkt till Formbricks. API-dokumentationen innehåller endpoint, datastruktur och autentiseringsdetaljer.",
-      "api_ingestion_setup_title": "Konfigurera API-inmatning",
       "auto_generated": "Automatiskt genererad",
       "change_file": "Byt fil",
       "clear_mapping": "Rensa mappning",

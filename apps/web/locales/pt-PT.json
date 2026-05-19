@@ -3681,7 +3681,6 @@
       "api_ingestion": "Ingestão de API",
       "api_ingestion_settings_description": "Envia registos de feedback através da API de gestão.",
       "api_ingestion_setup_description": "Usa a REST API para enviar registos de feedback diretamente para o Formbricks. A documentação da API de ingestão inclui o endpoint, a estrutura do payload e os detalhes de autenticação.",
-      "api_ingestion_setup_title": "Configurar ingestão via API",
       "auto_generated": "Gerado automaticamente",
       "change_file": "Alterar ficheiro",
       "clear_mapping": "Limpar mapeamento",

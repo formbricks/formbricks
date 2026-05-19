@@ -3681,7 +3681,6 @@
       "api_ingestion": "API betöltés",
       "api_ingestion_settings_description": "Visszajelzési rekordok küldése a Management API használatával.",
       "api_ingestion_setup_description": "Használja a REST API-t, hogy közvetlenül küldjön visszajelzési rekordokat a Formbricks rendszerbe. Az API-betöltési dokumentáció tartalmazza a végpontot, az adatszerkezetet és a hitelesítési részleteket.",
-      "api_ingestion_setup_title": "API-betöltés beállítása",
       "auto_generated": "Automatikusan generált",
       "change_file": "Fájl módosítása",
       "clear_mapping": "Leképezés törlése",

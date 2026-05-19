@@ -3681,7 +3681,6 @@
       "api_ingestion": "Импорт через API",
       "api_ingestion_settings_description": "Отправляйте записи обратной связи через Management API.",
       "api_ingestion_setup_description": "Используйте REST API для прямой отправки записей отзывов в Formbricks. Документация по API включает конечную точку, структуру данных и сведения об аутентификации.",
-      "api_ingestion_setup_title": "Настроить приём через API",
       "auto_generated": "Автоматически генерируется",
       "change_file": "Изменить файл",
       "clear_mapping": "Очистить сопоставление",
