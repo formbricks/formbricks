@@ -38,6 +38,38 @@ describe("convertToCsv", () => {
 
     parseSpy.mockRestore();
   });
+
+  test("should defang formula injection payloads in cell values", async () => {
+    const payloads = [
+      '=HYPERLINK("https://evil.tld","Click")',
+      "+1+1",
+      "-2+3",
+      "@SUM(A1:A2)",
+      "\tleading-tab",
+      "\rleading-cr",
+    ];
+    const rows = payloads.map((p) => ({ name: p, age: 0 }));
+    const csv = await convertToCsv(["name", "age"], rows);
+    const lines = csv.trim().split("\n").slice(1); // drop header
+    payloads.forEach((p, i) => {
+      // each value should be prefixed with a single quote so the spreadsheet
+      // app treats it as text rather than a formula
+      expect(lines[i].startsWith(`"'${p.charAt(0)}`)).toBe(true);
+    });
+  });
+
+  test("should defang formula injection in field/header names", async () => {
+    const csv = await convertToCsv(["=evil", "age"], [{ "=evil": "x", age: 1 }]);
+    const lines = csv.trim().split("\n");
+    expect(lines[0]).toBe('"\'=evil","age"');
+    expect(lines[1]).toBe('"x",1');
+  });
+
+  test("should not alter benign strings", async () => {
+    const csv = await convertToCsv(["name"], [{ name: "Alice = Bob" }]);
+    const lines = csv.trim().split("\n");
+    expect(lines[1]).toBe('"Alice = Bob"');
+  });
 });
 
 describe("convertToXlsxBuffer", () => {
@@ -59,5 +91,16 @@ describe("convertToXlsxBuffer", () => {
     });
     const cleaned = raw.map(({ __rowNum__, ...rest }) => rest);
     expect(cleaned).toEqual(data);
+  });
+
+  test("should defang formula injection payloads in xlsx cells", () => {
+    const payload = '=HYPERLINK("https://evil.tld","Click")';
+    const buffer = convertToXlsxBuffer(["name"], [{ name: payload }]);
+    const wb = xlsx.read(buffer, { type: "buffer" });
+    const sheet = wb.Sheets["Sheet1"];
+    const cell = sheet["A2"];
+    // value stored as plain text, not as a formula (no `f` property)
+    expect(cell.f).toBeUndefined();
+    expect(cell.v).toBe(`'${payload}`);
   });
 });
