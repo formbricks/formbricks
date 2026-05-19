@@ -87,7 +87,7 @@ describe("createDisplay", () => {
     const result = await createDisplay(displayInput);
 
     expect(validateInputs).toHaveBeenCalledWith([displayInput, expect.any(Object)]);
-    expect(doesContactExist).toHaveBeenCalledWith(contactId);
+    expect(doesContactExist).toHaveBeenCalledWith(contactId, workspaceId);
     expect(prisma.display.create).toHaveBeenCalledWith({
       data: {
         survey: { connect: { id: surveyId } },
@@ -121,7 +121,7 @@ describe("createDisplay", () => {
     const result = await createDisplay(displayInput);
 
     expect(validateInputs).toHaveBeenCalledWith([displayInput, expect.any(Object)]);
-    expect(doesContactExist).toHaveBeenCalledWith(contactId);
+    expect(doesContactExist).toHaveBeenCalledWith(contactId, workspaceId);
     expect(prisma.display.create).toHaveBeenCalledWith({
       data: {
         survey: { connect: { id: surveyId } },
@@ -148,7 +148,7 @@ describe("createDisplay", () => {
     vi.mocked(prisma.survey.findUnique).mockResolvedValue(null);
 
     await expect(createDisplay(displayInput)).rejects.toThrow(new ResourceNotFoundError("Survey", surveyId));
-    expect(doesContactExist).toHaveBeenCalledWith(contactId);
+    expect(doesContactExist).toHaveBeenCalledWith(contactId, workspaceId);
     expect(prisma.survey.findUnique).toHaveBeenCalledWith({
       where: { id: surveyId, workspaceId },
     });
