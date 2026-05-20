@@ -628,9 +628,23 @@ export const createSurvey = async (workspaceId: string, surveyBody: TSurveyCreat
   );
 
   try {
-    const { createdBy, languages, ...restSurveyBody } = parsedSurveyBody;
+    const { createdBy, languages, segment, followUps, ...restSurveyBody } = parsedSurveyBody;
     const normalizedCloseOn = restSurveyBody.closeOn instanceof Date ? restSurveyBody.closeOn : null;
     const normalizedPublishOn = restSurveyBody.publishOn instanceof Date ? restSurveyBody.publishOn : null;
+    const surveyLanguagesCreateData: Prisma.SurveyLanguageCreateNestedManyWithoutSurveyInput | undefined =
+      languages?.length
+        ? {
+            create: languages.map((surveyLanguage) => ({
+              language: {
+                connect: {
+                  id: surveyLanguage.language.id,
+                },
+              },
+              default: surveyLanguage.default,
+              enabled: surveyLanguage.enabled,
+            })),
+          }
+        : undefined;
 
     const actionClasses = await getActionClasses(parsedWorkspaceId);
 
@@ -641,18 +655,15 @@ export const createSurvey = async (workspaceId: string, surveyBody: TSurveyCreat
         publishOn: normalizedPublishOn,
         status: restSurveyBody.status ?? "draft",
       }),
-      // @ts-expect-error - languages would be undefined in case of empty array
-      languages: languages?.length ? languages : undefined,
+      languages: surveyLanguagesCreateData,
+      segment: segment?.id ? { connect: { id: segment.id } } : undefined,
       triggers: restSurveyBody.triggers
         ? handleTriggerUpdates(restSurveyBody.triggers, [], actionClasses)
         : undefined,
       attributeFilters: undefined,
     };
     const data = validateSurveyCreateDataMedia(
-      attachSurveyFollowUpsToCreateData(
-        attachSurveyCreatorToCreateData(baseData, createdBy),
-        restSurveyBody.followUps
-      )
+      attachSurveyFollowUpsToCreateData(attachSurveyCreatorToCreateData(baseData, createdBy), followUps)
     );
 
     const organization = await getOrganizationByWorkspaceId(parsedWorkspaceId);

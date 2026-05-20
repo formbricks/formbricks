@@ -50,6 +50,10 @@ vi.mock("@/modules/survey/list/lib/survey", async (importOriginal) => {
   };
 });
 
+vi.mock("./create", () => ({
+  createV3Survey: vi.fn(),
+}));
+
 vi.mock("@formbricks/logger", () => ({
   logger: {
     withContext: vi.fn(() => ({

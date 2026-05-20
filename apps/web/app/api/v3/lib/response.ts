@@ -172,6 +172,31 @@ export function successResponse<T>(
   );
 }
 
+export function createdResponse<T>(
+  data: T,
+  options: { location: string; requestId?: string; cache?: string }
+): Response {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "Cache-Control": options.cache ?? CACHE_NO_STORE,
+    Location: options.location,
+  };
+
+  if (options.requestId) {
+    headers["X-Request-Id"] = options.requestId;
+  }
+
+  return Response.json(
+    {
+      data,
+    },
+    {
+      status: 201,
+      headers,
+    }
+  );
+}
+
 export function noContentResponse(options?: { requestId?: string; cache?: string }): Response {
   const headers: Record<string, string> = {
     "Cache-Control": options?.cache ?? CACHE_NO_STORE,

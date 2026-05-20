@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
+  createdResponse,
   noContentResponse,
   problemBadRequest,
   problemForbidden,
@@ -117,6 +118,27 @@ describe("successResponse", () => {
     );
     expect(res.status).toBe(202);
     expect(res.headers.get("Cache-Control")).toBe("private, max-age=60");
+  });
+});
+
+describe("createdResponse", () => {
+  test("returns 201 with Location, request id, and data envelope", async () => {
+    const res = createdResponse(
+      { id: "survey_1" },
+      {
+        location: "/api/v3/surveys/survey_1",
+        requestId: "req-created",
+      }
+    );
+
+    expect(res.status).toBe(201);
+    expect(res.headers.get("Location")).toBe("/api/v3/surveys/survey_1");
+    expect(res.headers.get("X-Request-Id")).toBe("req-created");
+    expect(res.headers.get("Content-Type")).toBe("application/json");
+    expect(res.headers.get("Cache-Control")).toContain("no-store");
+    expect(await res.json()).toEqual({
+      data: { id: "survey_1" },
+    });
   });
 });
 
