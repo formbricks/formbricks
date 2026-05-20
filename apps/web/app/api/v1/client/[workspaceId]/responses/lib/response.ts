@@ -104,7 +104,11 @@ export const createResponse = async (
 
     const ttc = initialTtc ? (finished ? calculateTtcTotal(initialTtc) : initialTtc) : {};
 
-    const prismaData = buildPrismaResponseData(responseInput, contact, ttc);
+    const prismaData = buildPrismaResponseData(
+      { ...responseInput, createdAt: undefined, updatedAt: undefined },
+      contact,
+      ttc
+    );
 
     const prismaClient = tx ?? prisma;
 
