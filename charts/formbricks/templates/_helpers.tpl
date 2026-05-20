@@ -289,6 +289,15 @@ true
     {{- randAlphaNum 32 -}}
 {{- end -}}
 {{- end }}
+
+{{- define "formbricks.cubejsApiSecret" -}}
+{{- $secret := (lookup "v1" "Secret" .Release.Namespace (include "formbricks.appSecretName" .)) }}
+{{- if and $secret (index $secret.data "CUBEJS_API_SECRET") }}
+    {{- index $secret.data "CUBEJS_API_SECRET" | b64dec -}}
+{{- else }}
+    {{- randAlphaNum 32 -}}
+{{- end -}}
+{{- end }}
 {{- define "formbricks.envoy.gatewayClassName" -}}
 {{- if .Values.envoy.formbricks.gatewayClass.name -}}
 {{- .Values.envoy.formbricks.gatewayClass.name | trunc 63 | trimSuffix "-" -}}
