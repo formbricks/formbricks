@@ -1,6 +1,7 @@
 export interface TUploadFileConfig {
   allowedFileExtensions?: string[] | undefined;
   surveyId?: string | undefined;
+  questionId?: string | undefined;
 }
 
 export interface TUploadFileResponse {

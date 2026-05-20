@@ -11,7 +11,7 @@ const mocks = vi.hoisted(() => ({
   loggerError: vi.fn(),
   sendToPipeline: vi.fn(),
   updateResponseWithQuotaEvaluation: vi.fn(),
-  validateFileUploads: vi.fn(),
+  validateClientFileUploads: vi.fn(),
   validateOtherOptionLengthForMultipleChoice: vi.fn(),
   validateResponseData: vi.fn(),
 }));
@@ -44,7 +44,7 @@ vi.mock("@/modules/api/v2/lib/element", () => ({
 }));
 
 vi.mock("@/modules/storage/utils", () => ({
-  validateFileUploads: mocks.validateFileUploads,
+  validateClientFileUploads: mocks.validateClientFileUploads,
 }));
 
 vi.mock("./response", () => ({
@@ -124,7 +124,7 @@ describe("putResponseHandler", () => {
     mocks.getResponse.mockResolvedValue(getBaseExistingResponse());
     mocks.getSurvey.mockResolvedValue(getBaseSurvey());
     mocks.updateResponseWithQuotaEvaluation.mockResolvedValue(getBaseUpdatedResponse());
-    mocks.validateFileUploads.mockReturnValue(true);
+    mocks.validateClientFileUploads.mockReturnValue(true);
     mocks.validateOtherOptionLengthForMultipleChoice.mockReturnValue(null);
     mocks.validateResponseData.mockReturnValue(null);
   });
@@ -278,7 +278,7 @@ describe("putResponseHandler", () => {
   });
 
   test("rejects invalid file upload updates", async () => {
-    mocks.validateFileUploads.mockReturnValue(false);
+    mocks.validateClientFileUploads.mockReturnValue(false);
 
     const result = await putResponseHandler(createHandlerParams());
 
