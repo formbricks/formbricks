@@ -6,7 +6,7 @@ import {
   ZDisplayCreateInputV2,
 } from "@/app/api/v2/client/[workspaceId]/displays/types/display";
 import { validateInputs } from "@/lib/utils/validate";
-import { doesContactExist } from "./contact";
+import { doesContactExistInWorkspace } from "./contact";
 
 export const createDisplay = async (displayInput: TDisplayCreateInputV2): Promise<{ id: string }> => {
   validateInputs([displayInput, ZDisplayCreateInputV2]);
@@ -14,7 +14,7 @@ export const createDisplay = async (displayInput: TDisplayCreateInputV2): Promis
   const { contactId, surveyId, workspaceId } = displayInput;
 
   try {
-    const contactExists = contactId ? await doesContactExist(contactId, workspaceId) : false;
+    const contactExists = contactId ? await doesContactExistInWorkspace(contactId, workspaceId) : false;
 
     const survey = await prisma.survey.findUnique({
       where: {
