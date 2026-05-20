@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { CopyIcon, EyeIcon, LinkIcon, MoreVertical, SquarePenIcon, TrashIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -14,6 +15,7 @@ import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
 import { copySurveyLink } from "@/modules/survey/lib/client-utils";
 import { copySurveyToOtherWorkspaceAction } from "@/modules/survey/list/actions";
+import { surveyKeys } from "@/modules/survey/list/lib/query";
 import { TSurveyListItem } from "@/modules/survey/list/types/survey-overview";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import {
@@ -48,6 +50,7 @@ export const SurveyDropDownMenu = ({
   const [isDropDownOpen, setIsDropDownOpen] = useState(false);
   const [isCautionDialogOpen, setIsCautionDialogOpen] = useState(false);
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const editHref = `/workspaces/${workspace?.id}/surveys/${survey.id}/edit`;
 
@@ -99,7 +102,10 @@ export const SurveyDropDownMenu = ({
       });
       if (response?.data) {
         toast.success(t("workspace.surveys.survey_duplicated_successfully"));
-        router.refresh();
+        // The list is fetched via React Query (see use-surveys.ts); router.refresh()
+        // alone won't repopulate the client cache. Invalidate the lists prefix to
+        // trigger a refetch so the new draft appears.
+        await queryClient.invalidateQueries({ queryKey: surveyKeys.lists() });
         return;
       }
       toast.error(getFormattedErrorMessage(response));
