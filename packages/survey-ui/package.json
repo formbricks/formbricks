@@ -55,6 +55,7 @@
     "build": "vite build",
     "build:dev": "vite build --mode dev",
     "go": "vite build --watch --mode dev",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint src --fix --ext .ts,.js,.tsx,.jsx",
     "preview": "vite preview",
     "clean": "rimraf .turbo node_modules dist coverage",

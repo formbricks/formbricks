@@ -30,6 +30,7 @@
     "lint": "eslint . --ext .ts,.js",
     "lint:fix": "eslint . --ext .ts,.js --fix",
     "lint:report": "eslint . --format json --output-file ../../lint-results/cache.json",
+    "typecheck": "tsc --noEmit",
     "build": "vite build",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",

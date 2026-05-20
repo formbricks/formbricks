@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { SurveyStore } from "@/lib/survey/store";
-import { mockSurveyId, mockSurveyName } from "@/lib/survey/tests/__mocks__/store.mock";
-import type { TWorkspaceStateSurvey } from "@/types/config";
+import { createMockSurvey } from "@/lib/survey/tests/__mocks__/store.mock";
 
 describe("SurveyStore", () => {
   let store: SurveyStore;
@@ -27,10 +26,7 @@ describe("SurveyStore", () => {
     });
 
     test("returns current survey when set", () => {
-      const mockSurvey: TWorkspaceStateSurvey = {
-        id: mockSurveyId,
-        name: mockSurveyName,
-      } as TWorkspaceStateSurvey;
+      const mockSurvey = createMockSurvey();
 
       store.setSurvey(mockSurvey);
       expect(store.getSurvey()).toBe(mockSurvey);
@@ -40,10 +36,7 @@ describe("SurveyStore", () => {
   describe("setSurvey", () => {
     test("updates survey and notifies listeners when survey changes", () => {
       const listener = vi.fn();
-      const mockSurvey: TWorkspaceStateSurvey = {
-        id: mockSurveyId,
-        name: mockSurveyName,
-      } as TWorkspaceStateSurvey;
+      const mockSurvey = createMockSurvey();
 
       store.subscribe(listener);
       store.setSurvey(mockSurvey);
@@ -54,10 +47,7 @@ describe("SurveyStore", () => {
 
     test("does not notify listeners when setting same survey", () => {
       const listener = vi.fn();
-      const mockSurvey: TWorkspaceStateSurvey = {
-        id: mockSurveyId,
-        name: mockSurveyName,
-      } as TWorkspaceStateSurvey;
+      const mockSurvey = createMockSurvey();
 
       store.setSurvey(mockSurvey);
       store.subscribe(listener);
@@ -70,10 +60,7 @@ describe("SurveyStore", () => {
   describe("resetSurvey", () => {
     test("resets survey to null and notifies listeners", () => {
       const listener = vi.fn();
-      const mockSurvey: TWorkspaceStateSurvey = {
-        id: mockSurveyId,
-        name: mockSurveyName,
-      } as TWorkspaceStateSurvey;
+      const mockSurvey = createMockSurvey();
 
       store.setSurvey(mockSurvey);
       store.subscribe(listener);
@@ -96,27 +83,21 @@ describe("SurveyStore", () => {
   describe("subscribe", () => {
     test("adds listener and returns unsubscribe function", () => {
       const listener = vi.fn();
-      const mockSurvey: TWorkspaceStateSurvey = {
-        id: mockSurveyId,
-        name: mockSurveyName,
-      } as TWorkspaceStateSurvey;
+      const mockSurvey = createMockSurvey();
 
       const unsubscribe = store.subscribe(listener);
       store.setSurvey(mockSurvey);
       expect(listener).toHaveBeenCalledTimes(1);
 
       unsubscribe();
-      store.setSurvey({ ...mockSurvey, name: "Updated Survey" } as TWorkspaceStateSurvey);
+      store.setSurvey({ ...mockSurvey, id: "updated-survey-id" });
       expect(listener).toHaveBeenCalledTimes(1); // Still 1, not called after unsubscribe
     });
 
     test("multiple listeners receive updates", () => {
       const listener1 = vi.fn();
       const listener2 = vi.fn();
-      const mockSurvey: TWorkspaceStateSurvey = {
-        id: mockSurveyId,
-        name: mockSurveyName,
-      } as TWorkspaceStateSurvey;
+      const mockSurvey = createMockSurvey();
 
       store.subscribe(listener1);
       store.subscribe(listener2);
