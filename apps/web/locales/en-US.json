@@ -2429,7 +2429,7 @@
         "most_popular": "Most popular",
         "pending_change_removed": "Scheduled plan change removed.",
         "pending_plan_badge": "Scheduled",
-        "pending_plan_change_description": "Your plan will switch to {{plan}} on {{date}}.",
+        "pending_plan_change_description": "Your plan will switch to {plan} on {date}.",
         "pending_plan_change_title": "Scheduled plan change",
         "pending_plan_cta": "Scheduled",
         "per_month": "per month",

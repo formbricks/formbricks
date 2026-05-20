@@ -2429,7 +2429,7 @@
         "most_popular": "最受歡迎",
         "pending_change_removed": "已取消預定的方案變更。",
         "pending_plan_badge": "已排程",
-        "pending_plan_change_description": "您的方案將於 {{date}} 切換至 {{plan}}。",
+        "pending_plan_change_description": "您的方案將於 {date} 切換至 {plan}。",
         "pending_plan_change_title": "已排程的方案變更",
         "pending_plan_cta": "已排程",
         "per_month": "每月",

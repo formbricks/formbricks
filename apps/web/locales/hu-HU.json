@@ -2429,7 +2429,7 @@
         "most_popular": "Legnépszerűbb",
         "pending_change_removed": "Az ütemezett csomagváltoztatás eltávolítva.",
         "pending_plan_badge": "Ütemezett",
-        "pending_plan_change_description": "Az Ön csomagja {{plan}} csomagra vált {{date}} dátummal.",
+        "pending_plan_change_description": "Az Ön csomagja {plan} csomagra vált {date} dátummal.",
         "pending_plan_change_title": "Ütemezett csomagváltoztatás",
         "pending_plan_cta": "Ütemezett",
         "per_month": "havonta",

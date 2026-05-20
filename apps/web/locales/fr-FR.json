@@ -2429,7 +2429,7 @@
         "most_popular": "Le plus populaire",
         "pending_change_removed": "Changement de formule programmé supprimé.",
         "pending_plan_badge": "Programmé",
-        "pending_plan_change_description": "Votre forfait passera à {{plan}} le {{date}}.",
+        "pending_plan_change_description": "Votre forfait passera à {plan} le {date}.",
         "pending_plan_change_title": "Changement de formule programmé",
         "pending_plan_cta": "Programmé",
         "per_month": "par mois",

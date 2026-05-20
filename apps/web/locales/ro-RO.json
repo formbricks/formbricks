@@ -2429,7 +2429,7 @@
         "most_popular": "Cel mai popular",
         "pending_change_removed": "Schimbarea de plan programată a fost anulată.",
         "pending_plan_badge": "Programat",
-        "pending_plan_change_description": "Abonamentul tău va trece la {{plan}} pe {{date}}.",
+        "pending_plan_change_description": "Abonamentul tău va trece la {plan} pe {date}.",
         "pending_plan_change_title": "Schimbare de plan programată",
         "pending_plan_cta": "Programat",
         "per_month": "pe lună",

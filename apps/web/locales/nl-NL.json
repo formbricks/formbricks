@@ -2429,7 +2429,7 @@
         "most_popular": "Meest populair",
         "pending_change_removed": "Geplande abonnementswijziging verwijderd.",
         "pending_plan_badge": "Gepland",
-        "pending_plan_change_description": "Je abonnement wordt op {{date}} omgezet naar {{plan}}.",
+        "pending_plan_change_description": "Je abonnement wordt op {date} omgezet naar {plan}.",
         "pending_plan_change_title": "Geplande abonnementswijziging",
         "pending_plan_cta": "Gepland",
         "per_month": "per maand",

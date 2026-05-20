@@ -2429,7 +2429,7 @@
         "most_popular": "Más popular",
         "pending_change_removed": "Cambio de plan programado eliminado.",
         "pending_plan_badge": "Programado",
-        "pending_plan_change_description": "Tu plan cambiará a {{plan}} el {{date}}.",
+        "pending_plan_change_description": "Tu plan cambiará a {plan} el {date}.",
         "pending_plan_change_title": "Cambio de plan programado",
         "pending_plan_cta": "Programado",
         "per_month": "por mes",

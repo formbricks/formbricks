@@ -2429,7 +2429,7 @@
         "most_popular": "Mest populär",
         "pending_change_removed": "Schemalagd abonnemangsändring har tagits bort.",
         "pending_plan_badge": "Schemalagd",
-        "pending_plan_change_description": "Din plan kommer att byta till {{plan}} den {{date}}.",
+        "pending_plan_change_description": "Din plan kommer att byta till {plan} den {date}.",
         "pending_plan_change_title": "Schemalagd abonnemangsändring",
         "pending_plan_cta": "Schemalagd",
         "per_month": "per månad",
