@@ -70,8 +70,12 @@ spec:
           readinessProbe:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- if .Values.cube.envFrom }}
+          {{- if or .Values.cube.envFrom (or (and .Values.externalSecret.enabled (index .Values.externalSecret.files "app-secrets")) .Values.secret.enabled) }}
           envFrom:
+            {{- if or .Values.secret.enabled (and .Values.externalSecret.enabled (index .Values.externalSecret.files "app-secrets")) }}
+            - secretRef:
+                name: {{ template "formbricks.name" . }}-app-secrets
+            {{- end }}
             {{- range $value := .Values.cube.envFrom }}
             {{- if (eq .type "configmap") }}
             - configMapRef:
