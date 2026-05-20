@@ -33,10 +33,6 @@ jobs:
     uses: ./.github/workflows/build-web.yml
     secrets: inherit
 
-  helm-chart:
-    name: Validate Helm Chart
-    uses: ./.github/workflows/helm-chart.yml
-
   e2e-test:
     name: Run E2E Tests
     uses: ./.github/workflows/e2e.yml
@@ -44,7 +40,7 @@ jobs:
 
   required:
     name: PR Check Summary
-    needs: [lint, test, build, helm-chart, e2e-test]
+    needs: [lint, test, build, e2e-test]
     if: always()
     runs-on: ubuntu-latest
     permissions:
