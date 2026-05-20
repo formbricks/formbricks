@@ -90,14 +90,12 @@ spec:
             {{- include "formbricks.hubEmbeddingEnv" (dict "root" $ "env" $workerEnv) | nindent 12 }}
             {{- range $key, $value := .Values.hub.env }}
             {{- if and (not (hasKey $.Values.hub.worker.env $key)) (not (and $.Values.hub.embeddings.enabled (include "formbricks.hubEmbeddingEnvManaged" (dict "key" $key)))) }}
-            - name: {{ $key }}
-              value: {{ $value | quote }}
+            {{- include "formbricks.envVar" (dict "name" $key "value" $value "context" $) | nindent 12 }}
             {{- end }}
             {{- end }}
             {{- range $key, $value := .Values.hub.worker.env }}
             {{- if not (and $.Values.hub.embeddings.enabled (include "formbricks.hubEmbeddingEnvManaged" (dict "key" $key))) }}
-            - name: {{ $key }}
-              value: {{ $value | quote }}
+            {{- include "formbricks.envVar" (dict "name" $key "value" $value "context" $) | nindent 12 }}
             {{- end }}
             {{- end }}
           {{- end }}

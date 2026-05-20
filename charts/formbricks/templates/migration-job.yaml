@@ -82,12 +82,7 @@ spec:
           {{- end }}
           env:
             {{- range $key, $value := .Values.deployment.env }}
-            - name: {{ include "formbricks.tplvalues.render" ( dict "value" $key "context" $ ) }}
-              {{- if kindIs "string" $value }}
-              value: {{ include "formbricks.tplvalues.render" ( dict "value" $value "context" $ ) | quote }}
-              {{- else }}
-              {{- toYaml $value | nindent 14 }}
-              {{- end }}
+            {{- include "formbricks.envVar" (dict "name" $key "value" $value "context" $) | nindent 12 }}
             {{- end }}
           {{- if .Values.migration.resources }}
           resources:
