@@ -135,7 +135,7 @@ describe("withV3ApiWrapper", () => {
       apiKeyId: "key_1",
       organizationId: "org_1",
       organizationAccess: { accessControl: { read: true, write: true } },
-      environmentPermissions: [],
+      workspacePermissions: [],
     });
 
     const wrapped = withV3ApiWrapper({

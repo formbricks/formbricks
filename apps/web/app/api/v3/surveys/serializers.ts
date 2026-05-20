@@ -1,15 +1,15 @@
 import type { TSurvey as TInternalSurvey } from "@formbricks/types/surveys/types";
 import type { TSurvey as TSurveyListRecord } from "@/modules/survey/list/types/surveys";
-import { normalizeV3SurveyLanguageTag, resolveV3SurveyLanguageCode } from "./language";
+import {
+  type TV3SurveyLanguage,
+  getV3SurveyDefaultLanguage,
+  getV3SurveyLanguages,
+  normalizeV3SurveyLanguageTag,
+  resolveV3SurveyLanguageCode,
+} from "./language";
 
 export type TV3SurveyListItem = Omit<TSurveyListRecord, "singleUse">;
 const DEFAULT_V3_SURVEY_LANGUAGE = "en-US";
-
-type TV3SurveyLanguage = {
-  code: string;
-  default: boolean;
-  enabled: boolean;
-};
 
 type TSerializedValue =
   | string
@@ -45,28 +45,6 @@ export function serializeV3SurveyListItem(survey: TSurveyListRecord): TV3SurveyL
 
 function toIsoString(value: Date | string): string {
   return value instanceof Date ? value.toISOString() : new Date(value).toISOString();
-}
-
-function getSurveyLanguages(survey: TInternalSurvey): TV3SurveyLanguage[] {
-  const languages = (survey.languages ?? []).map((surveyLanguage) => ({
-    code: normalizeV3SurveyLanguageTag(surveyLanguage.language.code) ?? surveyLanguage.language.code,
-    default: surveyLanguage.default,
-    enabled: surveyLanguage.enabled,
-  }));
-
-  if (languages.length === 0) {
-    return [{ code: DEFAULT_V3_SURVEY_LANGUAGE, default: true, enabled: true }];
-  }
-
-  return languages;
-}
-
-function getDefaultLanguage(survey: TInternalSurvey): string {
-  const defaultLanguageCode = survey.languages?.find((surveyLanguage) => surveyLanguage.default)?.language
-    .code;
-  return defaultLanguageCode
-    ? (normalizeV3SurveyLanguageTag(defaultLanguageCode) ?? defaultLanguageCode)
-    : DEFAULT_V3_SURVEY_LANGUAGE;
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -162,8 +140,8 @@ export function serializeV3SurveyResource(survey: TInternalSurvey, options?: { l
     );
   }
 
-  const defaultLanguage = getDefaultLanguage(survey);
-  const languages = getSurveyLanguages(survey);
+  const defaultLanguage = getV3SurveyDefaultLanguage(survey, DEFAULT_V3_SURVEY_LANGUAGE);
+  const languages = getV3SurveyLanguages(survey, DEFAULT_V3_SURVEY_LANGUAGE);
   const configuredLanguageCodes = new Set(languages.map((language) => language.code));
   const requestedLanguages = resolveRequestedLanguages(languages, options?.lang);
   const languageCodes = requestedLanguages.length > 0 ? new Set(requestedLanguages) : configuredLanguageCodes;

@@ -2,7 +2,6 @@ import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
-import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import {
   noContentResponse,
   problemBadRequest,
@@ -15,8 +14,8 @@ import {
   V3SurveyUnsupportedShapeError,
   serializeV3SurveyResource,
 } from "@/app/api/v3/surveys/serializers";
-import { getSurvey } from "@/lib/survey/service";
 import { deleteSurvey } from "@/modules/survey/lib/surveys";
+import { getAuthorizedV3Survey } from "../authorization";
 import { parseV3SurveyLanguageQuery } from "../language";
 
 const surveyParamsSchema = z.object({
@@ -44,39 +43,6 @@ const surveyQuerySchema = z
   })
   .strict();
 
-async function getAuthorizedSurvey(params: {
-  surveyId: string;
-  authentication: Parameters<typeof requireV3WorkspaceAccess>[0];
-  access: "read" | "readWrite";
-  requestId: string;
-  instance: string;
-}) {
-  const { surveyId, authentication, access, requestId, instance } = params;
-  const survey = await getSurvey(surveyId);
-
-  if (!survey) {
-    return {
-      survey: null,
-      authResult: null,
-      response: problemForbidden(requestId, "You are not authorized to access this resource", instance),
-    };
-  }
-
-  const authResult = await requireV3WorkspaceAccess(
-    authentication,
-    survey.workspaceId,
-    access,
-    requestId,
-    instance
-  );
-
-  if (authResult instanceof Response) {
-    return { survey: null, authResult: null, response: authResult };
-  }
-
-  return { survey, authResult, response: null };
-}
-
 export const GET = withV3ApiWrapper({
   auth: "both",
   schemas: {
@@ -88,7 +54,7 @@ export const GET = withV3ApiWrapper({
     const log = logger.withContext({ requestId, surveyId });
 
     try {
-      const { survey, response } = await getAuthorizedSurvey({
+      const { survey, response } = await getAuthorizedV3Survey({
         surveyId,
         authentication,
         access: "read",
@@ -159,7 +125,7 @@ export const DELETE = withV3ApiWrapper({
     const log = logger.withContext({ requestId, surveyId });
 
     try {
-      const { survey, authResult, response } = await getAuthorizedSurvey({
+      const { survey, authResult, response } = await getAuthorizedV3Survey({
         surveyId,
         authentication,
         access: "readWrite",

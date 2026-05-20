@@ -733,6 +733,85 @@ describe("Tests for createSurvey", () => {
         })
       );
     });
+
+    test("creates survey languages from validated language inputs", async () => {
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
+      prisma.survey.create.mockResolvedValueOnce({
+        ...mockSurveyOutput,
+      });
+
+      await createSurvey(mockWorkspaceId, {
+        ...mockCreateSurveyInput,
+        languages: [
+          {
+            default: true,
+            enabled: true,
+            language: {
+              id: "cllang12345678901234567890",
+              code: "en-US",
+              alias: null,
+              workspaceId: mockWorkspaceId,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            },
+          },
+        ],
+      });
+
+      expect(prisma.survey.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            languages: {
+              create: [
+                {
+                  language: {
+                    connect: {
+                      id: "cllang12345678901234567890",
+                    },
+                  },
+                  default: true,
+                  enabled: true,
+                },
+              ],
+            },
+          }),
+        })
+      );
+    });
+
+    test("preserves an explicitly provided segment relation for existing callers", async () => {
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
+      prisma.survey.create.mockResolvedValueOnce({
+        ...mockSurveyOutput,
+      });
+
+      await createSurvey(mockWorkspaceId, {
+        ...mockCreateSurveyInput,
+        segment: {
+          id: "clseg123456789012345678901",
+          title: "Segment",
+          description: null,
+          isPrivate: false,
+          filters: [],
+          workspaceId: mockWorkspaceId,
+          surveys: [],
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      });
+
+      expect(prisma.survey.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            segment: {
+              connect: {
+                id: "clseg123456789012345678901",
+              },
+            },
+          }),
+        })
+      );
+    });
   });
 
   describe("Sad Path", () => {
