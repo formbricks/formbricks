@@ -116,7 +116,8 @@ Cube is part of the baseline Formbricks v5 stack and is bundled with the chart b
 
 - set `cube.enabled: false` to skip the bundled Cube deployment
 - point the app at your external endpoint via `deployment.env.CUBEJS_API_URL`
-- supply `CUBEJS_API_SECRET` via `deployment.env` or `deployment.envFrom`
+- supply `CUBEJS_API_SECRET` via `deployment.env` or `deployment.envFrom` if you disable generated
+  secrets
 
 ## 4. Upgrade The Deployment
 
@@ -134,8 +135,8 @@ For a Formbricks 4.x to 5.0 migration, confirm the following before running the 
 - `HUB_API_KEY` is present
 - your edge rate-limiting plan is in place
 - any required `AI_*` variables are added
-- `CUBEJS_API_SECRET` is configured (Cube is bundled by default; provide an external endpoint if you set
-  `cube.enabled: false`)
+- `CUBEJS_API_SECRET` is configured (the generated app secret supplies it by default; provide an external
+  endpoint if you set `cube.enabled: false`)
 
 ## 5. Key Values
 
