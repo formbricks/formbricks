@@ -119,7 +119,7 @@ export const ManageTranslationsModal = ({
     for (const s of strings) {
       const val = draftTranslations[s.path] ?? "";
       if (val) {
-        setTranslationAtPathMutable(clone, s.path, languageCode, val);
+        setTranslationAtPathMutable(clone, s.path, languageCode, val, s.value.default);
       }
     }
     return clone;
@@ -197,7 +197,7 @@ export const ManageTranslationsModal = ({
     const updatedSurvey = structuredClone(localSurvey);
     for (const s of strings) {
       const val = draftTranslations[s.path] ?? "";
-      setTranslationAtPathMutable(updatedSurvey, s.path, languageCode, val);
+      setTranslationAtPathMutable(updatedSurvey, s.path, languageCode, val, s.value.default);
     }
     setLocalSurvey(updatedSurvey);
     setOpen(false);

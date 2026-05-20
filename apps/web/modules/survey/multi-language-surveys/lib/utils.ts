@@ -1,11 +1,13 @@
 import { type TFunction } from "i18next";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
+import type { TSurveyMultipleChoiceElement, TSurveyRankingElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
 import { isI18nObject } from "@/lib/i18n/utils";
 import type { TranslatableString, TranslationProgress } from "./types";
 
 const RICH_TEXT_FIELDS = new Set(["headline", "subheader", "html"]);
+const OTHER_OPTION_PLACEHOLDER_FIELD = "otherOptionPlaceholder";
 
 const pushIfI18n = (
   result: TranslatableString[],
@@ -32,6 +34,34 @@ const pushIfI18n = (
       elementId,
     });
   }
+};
+
+const pushOtherOptionPlaceholder = (
+  result: TranslatableString[],
+  element: TSurveyMultipleChoiceElement | TSurveyRankingElement,
+  path: string,
+  displayId: string,
+  fieldLabel: string,
+  elementId: string,
+  defaultPlaceholder: string
+) => {
+  const hasOtherChoice = element.choices?.some((choice) => choice.id === "other");
+  if (!hasOtherChoice) return;
+
+  const existingPlaceholder = element.otherOptionPlaceholder;
+  const defaultText = existingPlaceholder?.default?.trim() ? existingPlaceholder.default : defaultPlaceholder;
+
+  result.push({
+    path: `${path}.${OTHER_OPTION_PLACEHOLDER_FIELD}`,
+    displayId,
+    fieldLabel,
+    value: {
+      ...(isI18nObject(existingPlaceholder) ? existingPlaceholder : {}),
+      default: defaultText,
+    },
+    isRichText: false,
+    elementId,
+  });
 };
 
 export const extractTranslatableStrings = (survey: TSurvey, t: TFunction): TranslatableString[] => {
@@ -108,14 +138,14 @@ export const extractTranslatableStrings = (survey: TSurvey, t: TFunction): Trans
               });
             }
           });
-          pushIfI18n(
+          pushOtherOptionPlaceholder(
             result,
             element,
-            "otherOptionPlaceholder",
             base,
             did,
             t("common.other_placeholder"),
-            eid
+            eid,
+            t("environments.surveys.edit.please_specify")
           );
           break;
         }
@@ -212,14 +242,14 @@ export const extractTranslatableStrings = (survey: TSurvey, t: TFunction): Trans
               });
             }
           });
-          pushIfI18n(
+          pushOtherOptionPlaceholder(
             result,
             element,
-            "otherOptionPlaceholder",
             base,
             did,
             t("common.other_placeholder"),
-            eid
+            eid,
+            t("environments.surveys.edit.please_specify")
           );
           break;
         }
@@ -311,7 +341,8 @@ export const setTranslationAtPathMutable = (
   survey: TSurvey,
   path: string,
   languageCode: string,
-  value: string
+  value: string,
+  defaultValue?: string
 ): void => {
   const parts = path.split(".");
   if (parts.length === 0) return;
@@ -331,5 +362,10 @@ export const setTranslationAtPathMutable = (
   const target = current[lastPart];
   if (isTraversable(target) && !Array.isArray(target) && "default" in target) {
     (target as Record<string, string>)[languageCode] = value;
+    return;
+  }
+
+  if (target === undefined && defaultValue !== undefined && value.trim() !== "") {
+    current[lastPart] = { default: defaultValue, [languageCode]: value };
   }
 };
