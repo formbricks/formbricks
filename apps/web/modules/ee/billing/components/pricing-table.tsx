@@ -457,7 +457,7 @@ export const PricingTable = ({
         )}
 
         {isStripeSetupIncomplete && hasBillingRights && (
-          <Alert variant="warning">
+          <Alert variant="warning" className="max-w-4xl">
             <AlertTitle>{t("workspace.settings.billing.stripe_setup_incomplete")}</AlertTitle>
             <AlertDescription>
               {t("workspace.settings.billing.stripe_setup_incomplete_description")}
@@ -469,7 +469,7 @@ export const PricingTable = ({
         )}
 
         {currentCloudPlan === "custom" && (
-          <Alert>
+          <Alert className="max-w-4xl">
             <AlertTitle>{t("workspace.settings.billing.custom_plan_title")}</AlertTitle>
             <AlertDescription>{t("workspace.settings.billing.custom_plan_description")}</AlertDescription>
           </Alert>
