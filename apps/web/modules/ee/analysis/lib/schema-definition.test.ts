@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { describe, expect, test } from "vitest";
 import {
   FEEDBACK_FIELDS,
@@ -5,6 +7,17 @@ import {
   getFieldById,
   getFilterOperatorsForType,
 } from "./schema-definition";
+
+const chartCubeSchemaPath = fileURLToPath(
+  new URL("../../../../../../charts/formbricks/cube/schema/FeedbackRecords.js", import.meta.url)
+);
+const dockerCubeSchemaPath = fileURLToPath(
+  new URL("../../../../../../docker/cube/schema/FeedbackRecords.js", import.meta.url)
+);
+
+const readChartCubeSchema = (): string => readFileSync(chartCubeSchemaPath, "utf8");
+const readDockerCubeSchema = (): string => readFileSync(dockerCubeSchemaPath, "utf8");
+const getCubeMemberName = (id: string): string => id.replace("FeedbackRecords.", "");
 
 describe("schema-definition", () => {
   describe("getFilterOperatorsForType", () => {
@@ -93,6 +106,21 @@ describe("schema-definition", () => {
         ])
       );
       expect(ids).not.toContain("FeedbackRecords.averageScore");
+    });
+
+    test("only exposes members present in the deployed Cube schema", () => {
+      const chartCubeSchema = readChartCubeSchema();
+      const exposedMembers = [...FEEDBACK_FIELDS.measures, ...FEEDBACK_FIELDS.dimensions].map(({ id }) =>
+        getCubeMemberName(id)
+      );
+
+      for (const member of exposedMembers) {
+        expect(chartCubeSchema).toContain(`    ${member}: {`);
+      }
+    });
+
+    test("keeps the Helm and Docker Cube schemas in sync", () => {
+      expect(readChartCubeSchema()).toBe(readDockerCubeSchema());
     });
   });
 });
