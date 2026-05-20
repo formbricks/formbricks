@@ -59,6 +59,15 @@ export const getAIDataAnalysisUnavailableReason = (
   return undefined;
 };
 
+export const getAISmartToolsUnavailableReason = (
+  aiConfig: TOrganizationAIConfig
+): TAIUnavailableReason | undefined => {
+  if (!aiConfig.isAISmartToolsEntitled) return "not_in_plan";
+  if (!aiConfig.isAISmartToolsEnabled) return "not_enabled";
+  if (!aiConfig.isInstanceConfigured) return "instance_not_configured";
+  return undefined;
+};
+
 export const assertOrganizationAIConfigured = async (
   organizationId: string,
   capability: "smartTools" | "dataAnalysis"

@@ -206,5 +206,9 @@ describe("chart Cube actions", () => {
       userId: "user-1",
       source: "charts.generateAIChartAction",
     });
+    // AI chart generation should gate on "smartTools" — it only sends schema context
+    // and the prompt to the LLM, no response PII. Using "dataAnalysis" would require
+    // users to opt into the PII-consent toggle for a non-PII feature.
+    expect(mocks.assertOrganizationAIConfigured).toHaveBeenCalledWith("organization-1", "smartTools");
   });
 });

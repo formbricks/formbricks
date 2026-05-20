@@ -1,5 +1,5 @@
 import { use } from "react";
-import { getAIDataAnalysisUnavailableReason, getOrganizationAIConfig } from "@/lib/ai/service";
+import { getAISmartToolsUnavailableReason, getOrganizationAIConfig } from "@/lib/ai/service";
 import { getConnectorsWithMappings } from "@/lib/connector/service";
 import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
@@ -87,7 +87,7 @@ export async function ChartsListPage({ workspaceId }: Readonly<ChartsListPagePro
     getConnectorsWithMappings(workspaceId),
     getOrganizationAIConfig(organization.id),
   ]);
-  const aiUnavailableReason = getAIDataAnalysisUnavailableReason(aiConfig);
+  const aiUnavailableReason = getAISmartToolsUnavailableReason(aiConfig);
   const isAIAvailable = !aiUnavailableReason;
   const hasFeedbackRecords = await hasFeedbackRecordsInDirectories(
     directories.map((directory) => directory.id)
