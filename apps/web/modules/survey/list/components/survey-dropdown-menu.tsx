@@ -99,7 +99,7 @@ export const SurveyDropDownMenu = ({
       });
       if (response?.data) {
         toast.success(t("workspace.surveys.survey_duplicated_successfully"));
-        router.push(`/workspaces/${workspace.id}/surveys/${response.data.id}/edit`);
+        router.refresh();
         return;
       }
       toast.error(getFormattedErrorMessage(response));
