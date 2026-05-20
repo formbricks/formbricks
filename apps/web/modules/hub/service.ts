@@ -129,6 +129,44 @@ export const deleteFeedbackRecord = async (id: string): Promise<HubFeedbackRecor
   }
 };
 
+export type HubFeedbackRecordsByTenantDeleteResult = {
+  data: { deletedCount: number } | null;
+  error: HubError | null;
+};
+
+/**
+ * Delete all feedback records in the Hub for a given tenant.
+ * Used when an organization (and its feedback directories) is deleted, so that
+ * Hub-side records do not become orphaned.
+ *
+ * NOTE: depends on the Hub `bulkDelete` endpoint accepting a `tenant_id`-only
+ * payload (no `user_id`). Until that ships, this call will fail with a 4xx and
+ * be logged as a warning — caller treats this as best-effort.
+ */
+export const deleteFeedbackRecordsByTenant = async (
+  tenantId: string
+): Promise<HubFeedbackRecordsByTenantDeleteResult> => {
+  const client = getHubClient();
+  if (!client) {
+    return { data: null, error: { ...NO_CONFIG_ERROR } };
+  }
+
+  try {
+    // Cast: SDK currently requires `user_id`. Hub-side change will accept a
+    // tenant-only payload; until the SDK types catch up we go through `unknown`.
+    const bulkDelete = client.feedbackRecords.bulkDelete as unknown as (params: {
+      tenant_id: string;
+    }) => Promise<{ deleted_count: number }>;
+    const data = await bulkDelete({ tenant_id: tenantId });
+    return { data: { deletedCount: data.deleted_count }, error: null };
+  } catch (err) {
+    logger.warn({ err, tenantId }, "Hub: deleteFeedbackRecordsByTenant failed");
+    const status = getErrorStatus(err);
+    const message = getErrorMessage(err);
+    return { data: null, error: { status, message, detail: message } };
+  }
+};
+
 export type ListFeedbackRecordsResult = {
   data: FeedbackRecordListResponse | null;
   error: HubError | null;
