@@ -13,12 +13,6 @@ type TV3SurveyListResponse = {
   meta: TSurveyListPage["meta"];
 };
 
-type TV3DeleteSurveyResponse = {
-  data: {
-    id: string;
-  };
-};
-
 export type TSurveyListPage = {
   data: TSurveyListItem[];
   meta: {
@@ -122,7 +116,7 @@ export async function listSurveys({
   };
 }
 
-export async function deleteSurvey(surveyId: string): Promise<{ id: string }> {
+export async function deleteSurvey(surveyId: string): Promise<void> {
   const response = await fetch(`/api/v3/surveys/${surveyId}`, {
     method: "DELETE",
     cache: "no-store",
@@ -131,7 +125,4 @@ export async function deleteSurvey(surveyId: string): Promise<{ id: string }> {
   if (!response.ok) {
     throw await parseV3ApiError(response);
   }
-
-  const body = (await response.json()) as TV3DeleteSurveyResponse;
-  return body.data;
 }
