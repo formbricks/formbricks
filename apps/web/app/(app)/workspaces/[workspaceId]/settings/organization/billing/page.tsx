@@ -4,7 +4,7 @@ import { getBillingFallbackPath } from "@/lib/membership/navigation";
 import { PricingPage } from "@/modules/ee/billing/page";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 
-const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
+const Page = async (props: Readonly<{ params: Promise<{ workspaceId: string }> }>) => {
   const params = await props.params;
   const { isBilling } = await getWorkspaceAuth(params.workspaceId);
 

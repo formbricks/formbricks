@@ -374,12 +374,14 @@ export const SettingsSidebarContent = ({
       label: t("common.your_profile"),
       href: `${basePath}/account/profile`,
       icon: <UserCircleIcon className={iconClassName} />,
+      disabled: isBilling,
     },
     {
       id: "notifications",
       label: t("common.notifications"),
       href: `${basePath}/account/notifications`,
       icon: <BellIcon className={iconClassName} />,
+      disabled: isBilling,
     },
   ];
 

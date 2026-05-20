@@ -27,7 +27,7 @@ import { DeleteOrganization } from "./components/DeleteOrganization";
 import { EditOrganizationNameForm } from "./components/EditOrganizationNameForm";
 import { SecurityListTip } from "./components/SecurityListTip";
 
-const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
+const Page = async (props: Readonly<{ params: Promise<{ workspaceId: string }> }>) => {
   const params = await props.params;
   await redirectBillingRoleFromRestrictedSettings(params.workspaceId);
   const t = await getTranslate();
