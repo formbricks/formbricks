@@ -22,7 +22,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
@@ -110,8 +110,6 @@ export const MainNavigation = ({
 
   const isOwnerOrManager = isManager || isOwner;
   const isSettingsMode = pathname?.includes("/settings");
-  const [previousPathname, setPreviousPathname] = useState<string | null>(null);
-  const currentPathRef = useRef<string | null>(pathname ?? null);
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
@@ -122,15 +120,6 @@ export const MainNavigation = ({
     const isCollapsedValueFromLocalStorage = localStorage.getItem("isMainNavCollapsed") === "true";
     setIsCollapsed(isCollapsedValueFromLocalStorage);
   }, []);
-
-  useEffect(() => {
-    if (!pathname || currentPathRef.current === pathname) {
-      return;
-    }
-
-    setPreviousPathname(currentPathRef.current);
-    currentPathRef.current = pathname;
-  }, [pathname]);
 
   useEffect(() => {
     const toggleTextOpacity = () => {
@@ -478,11 +467,7 @@ export const MainNavigation = ({
           {isSettingsMode ? (
             <div className="flex flex-col overflow-hidden">
               <div className="mb-2 px-3">
-                <GoBackButton
-                  previousPath={previousPathname}
-                  settingsPathPrefix={`/workspaces/${workspace.id}/settings`}
-                  settingsFallbackUrl={`/workspaces/${workspace.id}/surveys`}
-                />
+                <GoBackButton url={`/workspaces/${workspace.id}/surveys`} />
               </div>
 
               {/* Settings sidebar content */}
