@@ -34,7 +34,6 @@ export const AppConnectionPage = async ({ params }: { params: Promise<{ workspac
               <IdBadge
                 id={workspace.legacyEnvironmentId}
                 label={t("workspace.app-connection.environment_id_legacy")}
-                copyDisabled
               />
             )}
             <IdBadge id={WEBAPP_URL} label={t("workspace.app-connection.webapp_url")} />
