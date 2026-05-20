@@ -1,0 +1,59 @@
+name: Helm Chart
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate Helm Chart
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Helm
+        uses: azure/setup-helm@5119fcb9089d432beecbf79bb2c7915207344b78 # v3.5
+        with:
+          version: latest
+
+      - name: Lint chart
+        run: helm lint charts/formbricks --set formbricks.webappUrl=https://qa.example.com
+
+      - name: Validate default Formbricks image tag
+        run: |
+          set -euo pipefail
+
+          app_version="$(sed -n 's/^appVersion:[[:space:]]*"\{0,1\}\([^"]*\)"\{0,1\}$/\1/p' charts/formbricks/Chart.yaml)"
+          if [[ -z "$app_version" ]]; then
+            echo "Chart appVersion must be set"
+            exit 1
+          fi
+
+          if [[ ! "$app_version" =~ ^([5-9]|[1-9][0-9]+)\. ]]; then
+            echo "Chart appVersion must point at a v5 or newer Formbricks image tag; got $app_version"
+            exit 1
+          fi
+
+          rendered="$(helm template qa charts/formbricks \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --show-only templates/deployment.yaml \
+            --show-only templates/migration-job.yaml)"
+
+          expected_image="ghcr.io/formbricks/formbricks:${app_version}"
+          image_count="$(grep -c "image: ${expected_image}$" <<< "$rendered" || true)"
+          if [[ "$image_count" -ne 2 ]]; then
+            echo "Expected web Deployment and migration Job to render ${expected_image}; found ${image_count} matches"
+            grep "image: ghcr.io/formbricks/formbricks:" <<< "$rendered" || true
+            exit 1
+          fi
