@@ -2429,7 +2429,7 @@
         "most_popular": "人気",
         "pending_change_removed": "予定されていたプラン変更を取り消しました。",
         "pending_plan_badge": "変更予定",
-        "pending_plan_change_description": "プランは {date} に {plan} に切り替わります。",
+        "pending_plan_change_description": "プランは {{date}} に {{plan}} に切り替わります。",
         "pending_plan_change_title": "プラン変更の予定",
         "pending_plan_cta": "変更予定",
         "per_month": "/月",

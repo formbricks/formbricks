@@ -2429,7 +2429,7 @@
         "most_popular": "En popüler",
         "pending_change_removed": "Planlanmış plan değişikliği kaldırıldı.",
         "pending_plan_badge": "Planlandı",
-        "pending_plan_change_description": "Planınız {date} tarihinde {plan} olarak değişecek.",
+        "pending_plan_change_description": "Planınız {{date}} tarihinde {{plan}} olarak değişecek.",
         "pending_plan_change_title": "Planlanmış plan değişikliği",
         "pending_plan_cta": "Planlandı",
         "per_month": "aylık",

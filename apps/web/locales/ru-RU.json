@@ -2429,7 +2429,7 @@
         "most_popular": "Самый популярный",
         "pending_change_removed": "Запланированное изменение тарифа отменено.",
         "pending_plan_badge": "Запланирован",
-        "pending_plan_change_description": "Твой тариф сменится на {plan} {date}.",
+        "pending_plan_change_description": "Твой тариф сменится на {{plan}} {{date}}.",
         "pending_plan_change_title": "Запланированное изменение тарифа",
         "pending_plan_cta": "Запланирован",
         "per_month": "в месяц",

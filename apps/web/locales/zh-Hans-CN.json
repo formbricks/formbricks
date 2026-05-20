@@ -2429,7 +2429,7 @@
         "most_popular": "最受欢迎",
         "pending_change_removed": "已取消预定的方案变更。",
         "pending_plan_badge": "已预定",
-        "pending_plan_change_description": "你的套餐将在 {date} 切换为 {plan}。",
+        "pending_plan_change_description": "你的套餐将在 {{date}} 切换为 {{plan}}。",
         "pending_plan_change_title": "预定的方案变更",
         "pending_plan_cta": "已预定",
         "per_month": "每月",
