@@ -194,7 +194,7 @@ export const MainNavigation = ({
   const settingsNavigationItem = useMemo(
     () => ({
       name: t("common.settings"),
-      href: `/workspaces/${workspace.id}/settings`,
+      href: `/workspaces/${workspace.id}/settings/workspace/general`,
       icon: SettingsIcon,
       isActive: isSettingsMode,
       disabled: isMembershipPending || isBilling,
@@ -467,7 +467,7 @@ export const MainNavigation = ({
           {isSettingsMode ? (
             <div className="flex flex-col overflow-hidden">
               <div className="mb-2 px-3">
-                <GoBackButton />
+                <GoBackButton url={`/workspaces/${workspace.id}/surveys`} />
               </div>
 
               {/* Settings sidebar content */}
