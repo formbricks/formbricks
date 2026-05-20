@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { doesContactExist } from "./contact";
+import { doesContactExistInWorkspace } from "./contact";
 
 // Mock prisma
 vi.mock("@formbricks/database", () => ({
@@ -21,24 +21,25 @@ vi.mock("react", async () => {
 });
 
 const contactId = "test-contact-id";
+const workspaceId = "test-workspace-id";
 
-describe("doesContactExist", () => {
+describe("doesContactExistInWorkspace", () => {
   afterEach(() => {
     vi.resetAllMocks();
   });
 
-  test("should return true if contact exists", async () => {
+  test("should return true if contact exists in the workspace", async () => {
     vi.mocked(prisma.contact.findFirst).mockResolvedValue({
       id: contactId,
       createdAt: new Date(),
       updatedAt: new Date(),
     } as any);
 
-    const result = await doesContactExist(contactId);
+    const result = await doesContactExistInWorkspace(contactId, workspaceId);
 
     expect(result).toBe(true);
     expect(prisma.contact.findFirst).toHaveBeenCalledWith({
-      where: { id: contactId },
+      where: { id: contactId, workspaceId },
       select: { id: true },
     });
   });
@@ -46,11 +47,11 @@ describe("doesContactExist", () => {
   test("should return false if contact does not exist in the workspace", async () => {
     vi.mocked(prisma.contact.findFirst).mockResolvedValue(null);
 
-    const result = await doesContactExist(contactId);
+    const result = await doesContactExistInWorkspace(contactId, workspaceId);
 
     expect(result).toBe(false);
     expect(prisma.contact.findFirst).toHaveBeenCalledWith({
-      where: { id: contactId },
+      where: { id: contactId, workspaceId },
       select: { id: true },
     });
   });
