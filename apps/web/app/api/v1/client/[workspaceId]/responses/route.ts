@@ -6,6 +6,7 @@ import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { TResponseInput, ZResponseInput } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { validateSingleUseResponseInput } from "@/app/api/client/[workspaceId]/responses/lib/single-use";
+import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
@@ -56,8 +57,14 @@ export const POST = withV1ApiWrapper({
     const requestHeaders = await headers();
     let responseInput;
     try {
-      responseInput = await req.json();
+      responseInput = await parseJsonBodyWithLimit<Record<string, unknown>>(req);
     } catch (error) {
+      if (error instanceof RequestBodyTooLargeError) {
+        return {
+          response: responses.payloadTooLargeResponse("Payload Too Large", { error: error.message }, true),
+        };
+      }
+
       return {
         response: responses.badRequestResponse(
           "Invalid JSON in request body",
@@ -211,7 +218,7 @@ export const POST = withV1ApiWrapper({
       response: responseData,
     });
 
-    if (responseInput.finished) {
+    if (responseInputData.finished) {
       await sendToPipeline({
         event: "responseFinished",
         workspaceId,

@@ -148,6 +148,35 @@ const conflictResponse = ({
   );
 };
 
+const payloadTooLargeResponse = ({
+  details = [],
+  cors = false,
+  cache = "private, no-store",
+}: {
+  details?: ApiErrorDetails;
+  cors?: boolean;
+  cache?: string;
+} = {}) => {
+  const headers = {
+    ...(cors && corsHeaders),
+    "Cache-Control": cache,
+  };
+
+  return Response.json(
+    {
+      error: {
+        code: 413,
+        message: "Payload Too Large",
+        details,
+      },
+    },
+    {
+      status: 413,
+      headers,
+    }
+  );
+};
+
 const unprocessableEntityResponse = ({
   details = [],
   cors = false,
@@ -351,6 +380,7 @@ export const responses = {
   forbiddenResponse,
   notFoundResponse,
   conflictResponse,
+  payloadTooLargeResponse,
   unprocessableEntityResponse,
   tooManyRequestsResponse,
   internalServerErrorResponse,

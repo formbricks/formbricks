@@ -3,6 +3,7 @@ import { TActionClass, ZActionClassInput } from "@formbricks/types/action-classe
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { handleErrorResponse } from "@/app/api/v1/auth";
 import { resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
+import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
@@ -84,8 +85,14 @@ export const PUT = withV1ApiWrapper({
 
       let actionClassUpdate;
       try {
-        actionClassUpdate = await req.json();
+        actionClassUpdate = await parseJsonBodyWithLimit<Record<string, unknown>>(req);
       } catch (error) {
+        if (error instanceof RequestBodyTooLargeError) {
+          return {
+            response: responses.payloadTooLargeResponse("Payload Too Large", { error: error.message }),
+          };
+        }
+
         logger.error({ error, url: req.url }, "Error parsing JSON");
         return {
           response: responses.badRequestResponse("Malformed JSON input, please check your request body"),

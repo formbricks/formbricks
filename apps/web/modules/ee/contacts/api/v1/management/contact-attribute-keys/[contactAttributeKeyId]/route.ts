@@ -1,5 +1,6 @@
 import { logger } from "@formbricks/logger";
 import { handleErrorResponse } from "@/app/api/v1/auth";
+import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { TApiKeyAuthentication, THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
@@ -149,8 +150,14 @@ export const PUT = withV1ApiWrapper({
 
       let contactAttributeKeyUpdate;
       try {
-        contactAttributeKeyUpdate = await req.json();
+        contactAttributeKeyUpdate = await parseJsonBodyWithLimit(req);
       } catch (error) {
+        if (error instanceof RequestBodyTooLargeError) {
+          return {
+            response: responses.payloadTooLargeResponse("Payload Too Large", { error: error.message }),
+          };
+        }
+
         logger.error({ error, url: req.url }, "Error parsing JSON input");
         return {
           response: responses.badRequestResponse("Malformed JSON input, please check your request body"),
