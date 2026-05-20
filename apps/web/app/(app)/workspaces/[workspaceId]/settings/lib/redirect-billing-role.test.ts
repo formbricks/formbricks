@@ -1,6 +1,5 @@
-import { describe, expect, test, vi } from "vitest";
 import { redirect } from "next/navigation";
-import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { describe, expect, test, vi } from "vitest";
 import { getBillingFallbackPath } from "@/lib/membership/navigation";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { redirectBillingRoleFromRestrictedSettings } from "./redirect-billing-role";
@@ -8,6 +7,11 @@ import { redirectBillingRoleFromRestrictedSettings } from "./redirect-billing-ro
 const mocks = vi.hoisted(() => ({
   getBillingFallbackPath: vi.fn(),
   getWorkspaceAuth: vi.fn(),
+  isFormbricksCloud: false,
+}));
+
+vi.mock("@/lib/constants", () => ({
+  IS_FORMBRICKS_CLOUD: mocks.isFormbricksCloud,
 }));
 
 vi.mock("@/lib/membership/navigation", () => ({
@@ -44,7 +48,7 @@ describe("redirectBillingRoleFromRestrictedSettings", () => {
     await redirectBillingRoleFromRestrictedSettings(workspaceId);
 
     expect(getWorkspaceAuth).toHaveBeenCalledWith(workspaceId);
-    expect(getBillingFallbackPath).toHaveBeenCalledWith(workspaceId, IS_FORMBRICKS_CLOUD);
+    expect(getBillingFallbackPath).toHaveBeenCalledWith(workspaceId, mocks.isFormbricksCloud);
     expect(redirect).toHaveBeenCalledWith(billingFallbackPath);
   });
 });
