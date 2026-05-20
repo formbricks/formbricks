@@ -9,7 +9,7 @@ import {
 } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
 import { TDisplayCreateInputV2 } from "../types/display";
-import { doesContactExist } from "./contact";
+import { doesContactExistInWorkspace } from "./contact";
 import { createDisplay } from "./display";
 
 vi.mock("@/lib/utils/validate", () => ({
@@ -30,7 +30,7 @@ vi.mock("@formbricks/database", () => ({
 }));
 
 vi.mock("./contact", () => ({
-  doesContactExist: vi.fn(),
+  doesContactExistInWorkspace: vi.fn(),
 }));
 
 const workspaceId = "workspace-id-mock";
@@ -81,13 +81,13 @@ describe("createDisplay", () => {
   });
 
   test("should create a display with contactId successfully", async () => {
-    vi.mocked(doesContactExist).mockResolvedValue(true);
+    vi.mocked(doesContactExistInWorkspace).mockResolvedValue(true);
     vi.mocked(prisma.display.create).mockResolvedValue(mockDisplay);
 
     const result = await createDisplay(displayInput);
 
     expect(validateInputs).toHaveBeenCalledWith([displayInput, expect.any(Object)]);
-    expect(doesContactExist).toHaveBeenCalledWith(contactId);
+    expect(doesContactExistInWorkspace).toHaveBeenCalledWith(contactId, workspaceId);
     expect(prisma.display.create).toHaveBeenCalledWith({
       data: {
         survey: { connect: { id: surveyId } },
@@ -104,7 +104,7 @@ describe("createDisplay", () => {
     const result = await createDisplay(displayInputWithoutContact);
 
     expect(validateInputs).toHaveBeenCalledWith([displayInputWithoutContact, expect.any(Object)]);
-    expect(doesContactExist).not.toHaveBeenCalled();
+    expect(doesContactExistInWorkspace).not.toHaveBeenCalled();
     expect(prisma.display.create).toHaveBeenCalledWith({
       data: {
         survey: { connect: { id: surveyId } },
@@ -115,13 +115,13 @@ describe("createDisplay", () => {
   });
 
   test("should create a display without contact if contact does not exist in the workspace", async () => {
-    vi.mocked(doesContactExist).mockResolvedValue(false);
+    vi.mocked(doesContactExistInWorkspace).mockResolvedValue(false);
     vi.mocked(prisma.display.create).mockResolvedValue(mockDisplayWithoutContact); // Expect no contact connection
 
     const result = await createDisplay(displayInput);
 
     expect(validateInputs).toHaveBeenCalledWith([displayInput, expect.any(Object)]);
-    expect(doesContactExist).toHaveBeenCalledWith(contactId);
+    expect(doesContactExistInWorkspace).toHaveBeenCalledWith(contactId, workspaceId);
     expect(prisma.display.create).toHaveBeenCalledWith({
       data: {
         survey: { connect: { id: surveyId } },
@@ -139,16 +139,16 @@ describe("createDisplay", () => {
     });
 
     await expect(createDisplay(displayInput)).rejects.toThrow(ValidationError);
-    expect(doesContactExist).not.toHaveBeenCalled();
+    expect(doesContactExistInWorkspace).not.toHaveBeenCalled();
     expect(prisma.display.create).not.toHaveBeenCalled();
   });
 
   test("should throw InvalidInputError when survey does not exist (P2025)", async () => {
-    vi.mocked(doesContactExist).mockResolvedValue(true);
+    vi.mocked(doesContactExistInWorkspace).mockResolvedValue(true);
     vi.mocked(prisma.survey.findUnique).mockResolvedValue(null);
 
     await expect(createDisplay(displayInput)).rejects.toThrow(new ResourceNotFoundError("Survey", surveyId));
-    expect(doesContactExist).toHaveBeenCalledWith(contactId);
+    expect(doesContactExistInWorkspace).toHaveBeenCalledWith(contactId, workspaceId);
     expect(prisma.survey.findUnique).toHaveBeenCalledWith({
       where: { id: surveyId, workspaceId },
     });
@@ -158,7 +158,7 @@ describe("createDisplay", () => {
   test.each(["draft", "paused", "completed"])(
     "should throw InvalidInputError when survey status is %s",
     async (status) => {
-      vi.mocked(doesContactExist).mockResolvedValue(true);
+      vi.mocked(doesContactExistInWorkspace).mockResolvedValue(true);
       vi.mocked(prisma.survey.findUnique).mockResolvedValue({ ...mockSurvey, status } as any);
 
       await expect(createDisplay(displayInput)).rejects.toThrow(InvalidInputError);
@@ -171,7 +171,7 @@ describe("createDisplay", () => {
       code: "P2002",
       clientVersion: "2.0.0",
     });
-    vi.mocked(doesContactExist).mockResolvedValue(true);
+    vi.mocked(doesContactExistInWorkspace).mockResolvedValue(true);
     vi.mocked(prisma.display.create).mockRejectedValue(prismaError);
 
     await expect(createDisplay(displayInput)).rejects.toThrow(DatabaseError);
@@ -179,15 +179,15 @@ describe("createDisplay", () => {
 
   test("should throw original error on other errors during creation", async () => {
     const genericError = new Error("Something went wrong");
-    vi.mocked(doesContactExist).mockResolvedValue(true);
+    vi.mocked(doesContactExistInWorkspace).mockResolvedValue(true);
     vi.mocked(prisma.display.create).mockRejectedValue(genericError);
 
     await expect(createDisplay(displayInput)).rejects.toThrow(genericError);
   });
 
-  test("should throw original error if doesContactExist fails", async () => {
+  test("should throw original error if doesContactExistInWorkspace fails", async () => {
     const contactCheckError = new Error("Failed to check contact");
-    vi.mocked(doesContactExist).mockRejectedValue(contactCheckError);
+    vi.mocked(doesContactExistInWorkspace).mockRejectedValue(contactCheckError);
 
     await expect(createDisplay(displayInput)).rejects.toThrow(contactCheckError);
     expect(prisma.display.create).not.toHaveBeenCalled();
