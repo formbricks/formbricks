@@ -6,6 +6,7 @@ import {
   NOTION_OAUTH_CLIENT_SECRET,
   NOTION_REDIRECT_URI,
 } from "@/lib/constants";
+import { createIntegrationOAuthState } from "@/lib/oauth/integration-state";
 import { hasUserWorkspaceAccess } from "@/lib/workspace/auth";
 
 export const GET = withV1ApiWrapper({
@@ -49,9 +50,16 @@ export const GET = withV1ApiWrapper({
       return {
         response: responses.internalServerErrorResponse("Notion auth url is missing"),
       };
+    const state = await createIntegrationOAuthState({
+      provider: "notion",
+      userId: authentication.user.id,
+      workspaceId,
+    });
+    const authUrlWithState = new URL(auth_url);
+    authUrlWithState.searchParams.set("state", state);
 
     return {
-      response: responses.successResponse({ authUrl: `${auth_url}&state=${workspaceId}` }),
+      response: responses.successResponse({ authUrl: authUrlWithState.toString() }),
     };
   },
 });

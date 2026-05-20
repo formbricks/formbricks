@@ -5,6 +5,11 @@ import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { fetchAirtableAuthToken } from "@/lib/airtable/service";
 import { AIRTABLE_CLIENT_ID, WEBAPP_URL } from "@/lib/constants";
 import { createOrUpdateIntegration, getIntegrationByType } from "@/lib/integration/service";
+import {
+  IntegrationOAuthStateError,
+  consumeIntegrationOAuthState,
+  getSafeOAuthCallbackError,
+} from "@/lib/oauth/integration-state";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { hasUserWorkspaceAccess } from "@/lib/workspace/auth";
@@ -29,18 +34,31 @@ export const GET = withV1ApiWrapper({
 
     const url = req.url;
     const queryParams = new URLSearchParams(url.split("?")[1]); // Split the URL and get the query parameters
-    const workspaceId = queryParams.get("state"); // Get the value of the 'state' parameter
+    const state = queryParams.get("state");
     const code = queryParams.get("code");
+    const error = queryParams.get("error");
 
-    if (!workspaceId) {
-      return {
-        response: responses.badRequestResponse("Invalid workspaceId"),
-      };
+    let oauthState;
+    try {
+      oauthState = await consumeIntegrationOAuthState({
+        provider: "airtable",
+        userId: authentication.user.id,
+        state,
+      });
+    } catch (err) {
+      if (err instanceof IntegrationOAuthStateError) {
+        return {
+          response: responses.badRequestResponse("Invalid OAuth state"),
+        };
+      }
+
+      throw err;
     }
 
-    if (!code) {
+    const workspaceId = oauthState.workspaceId;
+    if (!workspaceId || !oauthState.pkceCodeVerifier) {
       return {
-        response: responses.badRequestResponse("`code` is missing"),
+        response: responses.badRequestResponse("Invalid OAuth state"),
       };
     }
 
@@ -52,10 +70,25 @@ export const GET = withV1ApiWrapper({
     }
 
     const basePath = `/workspaces/${workspaceId}`;
+    const redirectUrl = new URL(`${basePath}/integrations/airtable`, WEBAPP_URL);
+    const safeError = getSafeOAuthCallbackError(error);
+
+    if (!code && safeError) {
+      redirectUrl.searchParams.set("error", safeError);
+      return {
+        response: Response.redirect(redirectUrl),
+      };
+    }
+
+    if (!code) {
+      return {
+        response: responses.badRequestResponse("`code` is missing"),
+      };
+    }
 
     const client_id = AIRTABLE_CLIENT_ID;
     const redirect_uri = WEBAPP_URL + "/api/v1/integrations/airtable/callback";
-    const code_verifier = Buffer.from(workspaceId + authentication.user.id + workspaceId).toString("base64");
+    const code_verifier = oauthState.pkceCodeVerifier;
 
     if (!client_id)
       return {
@@ -110,10 +143,10 @@ export const GET = withV1ApiWrapper({
       }
 
       return {
-        response: Response.redirect(`${WEBAPP_URL}${basePath}/integrations/airtable`),
+        response: Response.redirect(redirectUrl),
       };
     } catch (error) {
-      logger.error({ error, url: req.url }, "Error in GET /api/v1/integrations/airtable/callback");
+      logger.error({ error }, "Error in GET /api/v1/integrations/airtable/callback");
       return {
         response: responses.internalServerErrorResponse(
           error instanceof Error ? error.message : String(error)
