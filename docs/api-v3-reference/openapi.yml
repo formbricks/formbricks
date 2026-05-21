@@ -211,17 +211,18 @@ paths:
             type: array
             items:
               type: string
+              pattern: "^[a-z]{2}-[A-Z]{2}$"
             examples:
               - [de-DE]
               - [de-DE, pt-PT]
           description: |
             Comma-separated locale code filter for translatable fields, for example `?lang=de-DE,pt-PT`.
             The response shape stays stable: translatable fields are always maps keyed by locale code, never
-            strings. The parser is case-insensitive, accepts `_` or `-` separators, and normalizes to canonical
-            BCP 47 casing (`de_DE`, `DE-de` → `de-DE`). A language-only selector (`de`) resolves to the matching
-            configured survey language when exactly one exists; otherwise it returns `400`. Disabled-but-configured
-            languages are readable in the management API so unfinished translations can be completed. Aliases are
-            not accepted.
+            strings. Send canonical locale codes (`de-DE`, not `de`). For interoperability, the parser is
+            case-insensitive, accepts `_` or `-` separators, and normalizes accepted region-qualified tags
+            (`de_DE`, `DE-de` → `de-DE`). Language-only selectors (`de`) and aliases are not accepted.
+            Disabled-but-configured languages are readable in the management API so unfinished translations can
+            be completed.
       responses:
         "200":
           description: Survey retrieved successfully
@@ -1165,3 +1166,6 @@ components:
             properties:
               name: { type: string }
               reason: { type: string }
+              identifier:
+                type: string
+                description: Optional canonical identifier related to the invalid value, such as a normalized locale code.

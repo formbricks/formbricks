@@ -14,7 +14,7 @@ import {
 describe("v3 problem responses", () => {
   test("problemBadRequest includes invalid_params", async () => {
     const res = problemBadRequest("rid", "bad", {
-      invalid_params: [{ name: "x", reason: "y" }],
+      invalid_params: [{ name: "x", reason: "y", identifier: "canonical-x" }],
       instance: "/p",
     });
     expect(res.status).toBe(400);
@@ -22,7 +22,7 @@ describe("v3 problem responses", () => {
     const body = await res.json();
     expect(body.code).toBe("bad_request");
     expect(body.requestId).toBe("rid");
-    expect(body.invalid_params).toEqual([{ name: "x", reason: "y" }]);
+    expect(body.invalid_params).toEqual([{ name: "x", reason: "y", identifier: "canonical-x" }]);
     expect(body.instance).toBe("/p");
   });
 

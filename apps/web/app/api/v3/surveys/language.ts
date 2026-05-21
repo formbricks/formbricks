@@ -7,15 +7,22 @@ type TV3SurveyLanguageQueryInput = string | string[];
 
 type TResolveV3SurveyLanguageCodeResult =
   | { ok: true; code: string }
-  | { ok: false; reason: "invalid" | "unknown" | "ambiguous"; message: string };
+  | { ok: false; reason: "invalid" | "unknown"; message: string; normalizedCode?: string };
 
 type TParseV3SurveyLanguageQueryResult = { ok: true; languages: string[] } | { ok: false; message: string };
+
+const V3_SURVEY_LOCALE_CODE_REGEX = /^[a-z]{2}-[A-Z]{2}$/;
 
 export function normalizeV3SurveyLanguageTag(value: string): string | null {
   const normalizedSeparators = value.trim().replaceAll("_", "-");
 
   try {
-    return Intl.getCanonicalLocales(normalizedSeparators)[0] ?? null;
+    const normalizedLanguage = Intl.getCanonicalLocales(normalizedSeparators)[0] ?? null;
+    if (!normalizedLanguage || !V3_SURVEY_LOCALE_CODE_REGEX.test(normalizedLanguage)) {
+      return null;
+    }
+
+    return normalizedLanguage;
   } catch {
     return null;
   }
@@ -55,10 +62,6 @@ export function parseV3SurveyLanguageQuery(
   return { ok: true, languages: normalizedLanguages };
 }
 
-function getLanguageSubtag(languageTag: string): string {
-  return languageTag.split("-")[0]?.toLowerCase() ?? languageTag.toLowerCase();
-}
-
 export function resolveV3SurveyLanguageCode(
   requestedLanguage: string,
   languages: TV3SurveyLanguageInput[]
@@ -85,28 +88,10 @@ export function resolveV3SurveyLanguageCode(
     return { ok: true, code: exactMatch.code };
   }
 
-  const requestedSubtag = getLanguageSubtag(normalizedRequestedLanguage);
-  const hasRegionOrScript = normalizedRequestedLanguage.includes("-");
-  const matchingLanguages = hasRegionOrScript
-    ? []
-    : normalizedLanguages.filter((language) => getLanguageSubtag(language.code) === requestedSubtag);
-
-  if (matchingLanguages.length > 1) {
-    return {
-      ok: false,
-      reason: "ambiguous",
-      message: `Language '${normalizedRequestedLanguage}' is ambiguous for this survey; use one of ${matchingLanguages.map((language) => language.code).join(", ")}`,
-    };
-  }
-
-  const languageMatch = matchingLanguages[0];
-  if (languageMatch) {
-    return { ok: true, code: languageMatch.code };
-  }
-
   return {
     ok: false,
     reason: "unknown",
+    normalizedCode: normalizedRequestedLanguage,
     message: `Language '${normalizedRequestedLanguage}' is not configured for this survey`,
   };
 }

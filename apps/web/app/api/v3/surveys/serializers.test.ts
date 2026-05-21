@@ -1,6 +1,10 @@
 import { describe, expect, test } from "vitest";
 import type { TSurvey } from "@formbricks/types/surveys/types";
-import { V3SurveyUnsupportedShapeError, serializeV3SurveyResource } from "./serializers";
+import {
+  V3SurveyLanguageError,
+  V3SurveyUnsupportedShapeError,
+  serializeV3SurveyResource,
+} from "./serializers";
 
 const baseSurvey = {
   id: "survey_1",
@@ -141,7 +145,7 @@ describe("serializeV3SurveyResource", () => {
       },
     } as unknown as TSurvey;
 
-    const resource = serializeV3SurveyResource(survey, { lang: ["en"] });
+    const resource = serializeV3SurveyResource(survey, { lang: ["en-US"] });
 
     expect(resource).not.toHaveProperty("language");
     expect(resource).toMatchObject({ welcomeCard: { headline: { "en-US": "Welcome" } } });
@@ -187,20 +191,14 @@ describe("serializeV3SurveyResource", () => {
     });
   });
 
-  test("resolves language-only selectors against configured survey languages", () => {
-    const resource = serializeV3SurveyResource(baseSurvey, { lang: ["de"] });
-
-    expect(resource).toMatchObject({ welcomeCard: { headline: { "de-DE": "Willkommen" } } });
-  });
-
   test("filters disabled configured languages for management reads", () => {
-    const resource = serializeV3SurveyResource(baseSurvey, { lang: ["fr"] });
+    const resource = serializeV3SurveyResource(baseSurvey, { lang: ["fr-FR"] });
 
     expect(resource).toMatchObject({ welcomeCard: { headline: { "fr-FR": "Bienvenue" } } });
   });
 
   test("filters multiple requested languages while preserving maps", () => {
-    const resource = serializeV3SurveyResource(baseSurvey, { lang: ["en-US", "de"] });
+    const resource = serializeV3SurveyResource(baseSurvey, { lang: ["en-US", "de-DE"] });
 
     expect(resource).not.toHaveProperty("language");
     expect(resource).toMatchObject({
@@ -225,38 +223,26 @@ describe("serializeV3SurveyResource", () => {
     });
   });
 
-  test("rejects ambiguous language-only selectors", () => {
-    const survey = {
-      ...baseSurvey,
-      languages: [
-        {
-          default: true,
-          enabled: true,
-          language: {
-            id: "lang_1",
-            code: "pt-BR",
-            alias: "br",
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
-        },
-        {
-          default: false,
-          enabled: true,
-          language: {
-            id: "lang_2",
-            code: "pt-PT",
-            alias: "pt",
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
-        },
-      ],
-    } as unknown as TSurvey;
-
-    expect(() => serializeV3SurveyResource(survey, { lang: ["pt"] })).toThrow(
-      "Language 'pt' is ambiguous for this survey; use one of pt-BR, pt-PT"
+  test("rejects language-only selectors", () => {
+    expect(() => serializeV3SurveyResource(baseSurvey, { lang: ["de"] })).toThrow(
+      "Language 'de' is not a valid locale code"
     );
+  });
+
+  test("exposes the normalized locale code for unknown language errors", () => {
+    try {
+      serializeV3SurveyResource(baseSurvey, { lang: ["ES_es"] });
+    } catch (error) {
+      if (!(error instanceof V3SurveyLanguageError)) {
+        throw error;
+      }
+
+      expect(error.message).toBe("Language 'es-ES' is not configured for this survey");
+      expect(error.normalizedCode).toBe("es-ES");
+      return;
+    }
+
+    throw new Error("Expected V3SurveyLanguageError");
   });
 
   test("rejects legacy question-based survey shapes instead of returning an incomplete block resource", () => {

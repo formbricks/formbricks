@@ -6,7 +6,7 @@
 const PROBLEM_JSON = "application/problem+json" as const;
 const CACHE_NO_STORE = "private, no-store" as const;
 
-export type InvalidParam = { name: string; reason: string };
+export type InvalidParam = { name: string; reason: string; identifier?: string };
 
 export type ProblemExtension = {
   code?: string;

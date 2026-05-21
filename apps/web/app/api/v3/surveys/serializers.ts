@@ -20,7 +20,10 @@ type TSerializedValue =
   | { [key: string]: TSerializedValue };
 
 export class V3SurveyLanguageError extends Error {
-  constructor(message: string) {
+  constructor(
+    message: string,
+    readonly normalizedCode?: string
+  ) {
     super(message);
     this.name = "V3SurveyLanguageError";
   }
@@ -141,7 +144,7 @@ function resolveRequestedLanguage(languages: TV3SurveyLanguage[], language: stri
   const result = resolveV3SurveyLanguageCode(language, languages);
 
   if (!result.ok) {
-    throw new V3SurveyLanguageError(result.message);
+    throw new V3SurveyLanguageError(result.message, result.normalizedCode);
   }
 
   return result.code;
