@@ -239,7 +239,9 @@ describe("validateV3SurveyReferences", () => {
           expect.objectContaining({
             name: "blocks.0.logicFallback",
             code: "invalid_reference",
-            reason: "logicFallback requires at least one logic rule on the same block",
+            reason:
+              "logicFallback requires at least one logic rule on the same block; omit logicFallback for normal sequential flow or add blocks[].logic",
+            referenceType: "ending",
           }),
         ])
       );

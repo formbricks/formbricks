@@ -277,6 +277,10 @@ export function getV3SurveyReferenceInvalidParams(input: TReferenceValidationInp
     path: `variables.${index}.name`,
   }));
   const navigationTargetIds = new Set([...blockIds, ...endingIds]);
+  const navigationTargetReferenceTypes = new Map<string, "block" | "ending">([
+    ...blockIds.map((id) => [id, "block"] as const),
+    ...endingIds.map((id) => [id, "ending"] as const),
+  ]);
   const references = {
     elementIds: new Set(elementIds),
     variableIds: new Set(variableIds),
@@ -316,10 +320,11 @@ export function getV3SurveyReferenceInvalidParams(input: TReferenceValidationInp
     if (block.logicFallback && !block.logic?.length) {
       issues.push({
         name: `blocks.${blockIndex}.logicFallback`,
-        reason: "logicFallback requires at least one logic rule on the same block",
+        reason:
+          "logicFallback requires at least one logic rule on the same block; omit logicFallback for normal sequential flow or add blocks[].logic",
         code: "invalid_reference",
         identifier: block.logicFallback,
-        referenceType: "block",
+        referenceType: navigationTargetReferenceTypes.get(block.logicFallback) ?? "block",
       });
     }
 
