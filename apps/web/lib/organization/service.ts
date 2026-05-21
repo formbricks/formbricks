@@ -19,7 +19,7 @@ import { updateUser } from "@/lib/user/service";
 import { getBillingUsageCycleWindow } from "@/lib/utils/billing";
 import { getWorkspaces } from "@/lib/workspace/service";
 import { cleanupStripeCustomer } from "@/modules/ee/billing/lib/organization-billing";
-import { deleteFeedbackRecordsByTenant } from "@/modules/hub/service";
+import { deleteHubTenantData } from "@/modules/hub/service";
 import { validateInputs } from "../utils/validate";
 
 export const select = {
@@ -306,10 +306,11 @@ export const deleteOrganization = async (organizationId: string) => {
       await cleanupStripeCustomer(stripeCustomerId);
     }
 
-    // Best-effort: purge feedback records in the Hub for each directory tenant.
-    // Failures are logged inside the gateway and do not roll back the local delete.
+    // Best-effort: purge Hub-owned data (feedback records, embeddings, webhooks) for each
+    // directory tenant. Failures are logged inside the gateway and do not roll back the
+    // local delete.
     for (const directory of deletedOrganization.feedbackDirectories) {
-      await deleteFeedbackRecordsByTenant(directory.id);
+      await deleteHubTenantData(directory.id);
     }
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
