@@ -9,7 +9,6 @@ import { getEnterpriseLicense, getLicenseFeatures } from "./license";
 import {
   getAccessControlPermission,
   getBiggerUploadFileSizePermission,
-  getIsAIDataAnalysisEnabled,
   getIsAISmartToolsEnabled,
   getIsAuditLogsEnabled,
   getIsContactsEnabled,
@@ -60,7 +59,6 @@ const defaultFeatures: TEnterpriseLicenseFeatures = {
   saml: false,
   spamProtection: false,
   aiSmartTools: false,
-  aiDataAnalysis: false,
   auditLogs: false,
   accessControl: false,
   quotas: false,
@@ -216,57 +214,26 @@ describe("License Utils", () => {
       );
     });
 
-    test("uses cloud AI data analysis entitlement", async () => {
-      vi.mocked(constants).IS_FORMBRICKS_CLOUD = true;
-      vi.mocked(hasOrganizationEntitlementWithLicenseGuard).mockResolvedValueOnce(true);
+    test("returns self-hosted AI smart tools from license", async () => {
+      vi.mocked(constants).IS_FORMBRICKS_CLOUD = false;
+      vi.mocked(getEnterpriseLicense).mockResolvedValue({
+        ...defaultLicense,
+        features: { ...defaultFeatures, aiSmartTools: true },
+      });
 
-      const result = await getIsAIDataAnalysisEnabled("org_1");
-
+      const result = await getIsAISmartToolsEnabled("org_1");
       expect(result).toBe(true);
-      expect(hasOrganizationEntitlementWithLicenseGuard).toHaveBeenCalledWith(
-        "org_1",
-        CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.AI_DATA_ANALYSIS
-      );
     });
 
-    test("returns self-hosted AI features from license", async () => {
+    test("returns false for self-hosted AI smart tools when not enabled", async () => {
       vi.mocked(constants).IS_FORMBRICKS_CLOUD = false;
       vi.mocked(getEnterpriseLicense).mockResolvedValue({
         ...defaultLicense,
-        features: {
-          ...defaultFeatures,
-          aiSmartTools: true,
-          aiDataAnalysis: true,
-        },
+        features: { ...defaultFeatures, aiSmartTools: false },
       });
 
-      const [smartTools, dataAnalysis] = await Promise.all([
-        getIsAISmartToolsEnabled("org_1"),
-        getIsAIDataAnalysisEnabled("org_1"),
-      ]);
-
-      expect(smartTools).toBe(true);
-      expect(dataAnalysis).toBe(true);
-    });
-
-    test("returns false for self-hosted AI features when not enabled", async () => {
-      vi.mocked(constants).IS_FORMBRICKS_CLOUD = false;
-      vi.mocked(getEnterpriseLicense).mockResolvedValue({
-        ...defaultLicense,
-        features: {
-          ...defaultFeatures,
-          aiSmartTools: false,
-          aiDataAnalysis: false,
-        },
-      });
-
-      const [smartTools, dataAnalysis] = await Promise.all([
-        getIsAISmartToolsEnabled("org_1"),
-        getIsAIDataAnalysisEnabled("org_1"),
-      ]);
-
-      expect(smartTools).toBe(false);
-      expect(dataAnalysis).toBe(false);
+      const result = await getIsAISmartToolsEnabled("org_1");
+      expect(result).toBe(false);
     });
 
     test("uses cloud feedback record directories entitlement", async () => {

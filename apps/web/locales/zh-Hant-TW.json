@@ -2612,8 +2612,6 @@
         "workspaces_being_added": "正在授予存取權限的工作區"
       },
       "general": {
-        "ai_data_analysis_enabled": "資料增強與分析（AI）",
-        "ai_data_analysis_enabled_description": "利用 AI 深入分析你的資料，建立儀表板、圖表、報告等。會處理你的體驗資料。",
         "ai_enabled": "Formbricks AI",
         "ai_enabled_description": "管理此組織的 AI 功能。",
         "ai_instance_not_configured": "AI 會透過環境變數在實例層級進行設定。啟用 AI 功能前，請管理員設定 AI_PROVIDER、該供應商的憑證，以及對應的模型清單。",
@@ -2820,7 +2818,6 @@
         "adjust_survey_closed_message": "調整「問卷已關閉」訊息",
         "adjust_survey_closed_message_description": "變更訪客在問卷關閉時看到的訊息。",
         "adjust_theme_in_look_and_feel_settings": "在<lookFeelLink>外觀與感覺</lookFeelLink>設定中調整主題。",
-        "ai_data_analysis_disabled": "此組織已停用 AI 資料分析。",
         "ai_features_not_enabled": "此組織未啟用 AI 功能。",
         "ai_instance_not_configured": "AI 未設定。請聯絡您的管理員。",
         "ai_smart_tools_disabled": "此組織已停用 AI 智慧工具。",

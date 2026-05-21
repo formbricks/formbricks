@@ -2612,8 +2612,6 @@
         "workspaces_being_added": "Workspaces, denen Zugriff gewährt wird"
       },
       "general": {
-        "ai_data_analysis_enabled": "Datenanreicherung & -analyse (KI)",
-        "ai_data_analysis_enabled_description": "KI nutzen, um mehr aus deinen Daten herauszuholen – richte Dashboards, Diagramme, Berichte und mehr ein. Greift auf deine Erfahrungsdaten zu.",
         "ai_enabled": "Formbricks KI",
         "ai_enabled_description": "Verwalte KI-gestützte Funktionen für diese Organisation.",
         "ai_instance_not_configured": "KI wird auf Instanzebene über Umgebungsvariablen konfiguriert. Bitte deine:n Administrator:in, AI_PROVIDER, AI_MODEL und die passenden Provider-Zugangsdaten zu setzen, bevor du KI-Funktionen aktivierst.",
@@ -2820,7 +2818,6 @@
         "adjust_survey_closed_message": "„Umfrage geschlossen“-Nachricht anpassen",
         "adjust_survey_closed_message_description": "Ändere die Nachricht, die Besucher sehen, wenn die Umfrage geschlossen ist.",
         "adjust_theme_in_look_and_feel_settings": "Passe das Theme in den <lookFeelLink>Look & Feel</lookFeelLink> Einstellungen an.",
-        "ai_data_analysis_disabled": "KI-Datenanalyse ist für diese Organisation deaktiviert.",
         "ai_features_not_enabled": "KI-Funktionen sind für diese Organisation nicht aktiviert.",
         "ai_instance_not_configured": "KI ist nicht konfiguriert. Kontaktiere deinen Administrator.",
         "ai_smart_tools_disabled": "KI-Smart-Tools sind für diese Organisation deaktiviert.",

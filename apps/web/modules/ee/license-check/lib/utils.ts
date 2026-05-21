@@ -31,13 +31,7 @@ const getCustomPlanFeaturePermission = async (
   organizationId: string,
   featureKey: keyof Pick<
     TEnterpriseLicenseFeatures,
-    | "accessControl"
-    | "quotas"
-    | "contacts"
-    | "aiSmartTools"
-    | "aiDataAnalysis"
-    | "feedbackDirectories"
-    | "dashboards"
+    "accessControl" | "quotas" | "contacts" | "aiSmartTools" | "feedbackDirectories" | "dashboards"
   >
 ): Promise<boolean> => {
   if (IS_FORMBRICKS_CLOUD) {
@@ -46,7 +40,6 @@ const getCustomPlanFeaturePermission = async (
       quotas: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.QUOTA_MANAGEMENT,
       contacts: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.CONTACTS,
       aiSmartTools: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.AI_SMART_TOOLS,
-      aiDataAnalysis: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.AI_DATA_ANALYSIS,
       feedbackDirectories: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.FEEDBACK_DIRECTORIES,
       dashboards: CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.DASHBOARDS,
     };
@@ -124,10 +117,6 @@ export const getIsQuotasEnabled = async (organizationId: string): Promise<boolea
 
 export const getIsAISmartToolsEnabled = async (organizationId: string): Promise<boolean> => {
   return getCustomPlanFeaturePermission(organizationId, "aiSmartTools");
-};
-
-export const getIsAIDataAnalysisEnabled = async (organizationId: string): Promise<boolean> => {
-  return getCustomPlanFeaturePermission(organizationId, "aiDataAnalysis");
 };
 
 export const getIsAuditLogsEnabled = async (): Promise<boolean> => {

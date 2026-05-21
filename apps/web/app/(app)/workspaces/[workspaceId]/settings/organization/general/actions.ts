@@ -71,12 +71,11 @@ export const updateOrganizationNameAction = authenticatedActionClient
 
 type TOrganizationAISettings = Pick<
   NonNullable<Awaited<ReturnType<typeof getOrganization>>>,
-  "isAISmartToolsEnabled" | "isAIDataAnalysisEnabled"
+  "isAISmartToolsEnabled"
 >;
 
 type TResolvedOrganizationAISettings = {
   smartToolsEnabled: boolean;
-  dataAnalysisEnabled: boolean;
   isEnablingAnyAISetting: boolean;
 };
 
@@ -90,16 +89,10 @@ const resolveOrganizationAISettings = ({
   const smartToolsEnabled = Object.hasOwn(data, "isAISmartToolsEnabled")
     ? (data.isAISmartToolsEnabled ?? organization.isAISmartToolsEnabled)
     : organization.isAISmartToolsEnabled;
-  const dataAnalysisEnabled = Object.hasOwn(data, "isAIDataAnalysisEnabled")
-    ? (data.isAIDataAnalysisEnabled ?? organization.isAIDataAnalysisEnabled)
-    : organization.isAIDataAnalysisEnabled;
 
   return {
     smartToolsEnabled,
-    dataAnalysisEnabled,
-    isEnablingAnyAISetting:
-      (smartToolsEnabled && !organization.isAISmartToolsEnabled) ||
-      (dataAnalysisEnabled && !organization.isAIDataAnalysisEnabled),
+    isEnablingAnyAISetting: smartToolsEnabled && !organization.isAISmartToolsEnabled,
   };
 };
 
