@@ -4,6 +4,10 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TContactAttributeDataType, TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { InvalidInputError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { formatSnakeCaseToTitleCase } from "@/lib/utils/safe-identifier";
+import {
+  getReservedFutureDefaultAttributeKeyIssue,
+  isReservedFutureDefaultAttributeKey,
+} from "./attribute-key-policy";
 
 export const getContactAttributeKeys = reactCache(
   async (workspaceId: string): Promise<TContactAttributeKey[]> => {
@@ -31,6 +35,10 @@ export const createContactAttributeKey = async (data: {
   description?: string;
   dataType?: TContactAttributeDataType;
 }): Promise<TContactAttributeKey> => {
+  if (isReservedFutureDefaultAttributeKey(data.key)) {
+    throw new InvalidInputError(getReservedFutureDefaultAttributeKeyIssue([data.key]));
+  }
+
   try {
     const contactAttributeKey = await prisma.contactAttributeKey.create({
       data: {
