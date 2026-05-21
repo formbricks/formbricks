@@ -227,18 +227,7 @@ function normalizeEnding(value: unknown, defaultLanguage: string): unknown {
   return normalizePublicI18nFields(value, defaultLanguage, ENDING_I18N_KEYS);
 }
 
-function addGeneratedBlockId(value: unknown): unknown {
-  if (!isPlainObject(value) || value.id !== undefined) {
-    return value;
-  }
-
-  return {
-    ...value,
-    id: createId(),
-  };
-}
-
-function addGeneratedVariableId(value: unknown): unknown {
+function addGeneratedId(value: unknown): unknown {
   if (!isPlainObject(value) || value.id !== undefined) {
     return value;
   }
@@ -253,11 +242,11 @@ function addGeneratedCreateIds(value: Record<string, unknown>): Record<string, u
   const normalized = { ...value };
 
   if (Array.isArray(normalized.blocks)) {
-    normalized.blocks = normalized.blocks.map(addGeneratedBlockId);
+    normalized.blocks = normalized.blocks.map(addGeneratedId);
   }
 
   if (Array.isArray(normalized.variables)) {
-    normalized.variables = normalized.variables.map(addGeneratedVariableId);
+    normalized.variables = normalized.variables.map(addGeneratedId);
   }
 
   return normalized;
