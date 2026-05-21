@@ -71,6 +71,7 @@ export function SubmitButton({
       {...props}
       dir="auto"
       variant="primary"
+      className="button-custom border-submit-button-border"
       ref={buttonRef}
       type={type}
       tabIndex={tabIndex}
