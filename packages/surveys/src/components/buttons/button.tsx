@@ -5,28 +5,28 @@ export type ButtonProps = {
   variant: "primary" | "secondary";
 } & ButtonHTMLAttributes<HTMLButtonElement>;
 
+const commonStyles: CSSProperties = {
+  borderRadius: "var(--fb-button-border-radius)",
+  height: "var(--fb-button-height)",
+  fontSize: "var(--fb-button-font-size)",
+  fontWeight: "var(--fb-button-font-weight)",
+  paddingLeft: "var(--fb-button-padding-x)",
+  paddingRight: "var(--fb-button-padding-x)",
+  paddingTop: "var(--fb-button-padding-y)",
+  paddingBottom: "var(--fb-button-padding-y)",
+};
+
+const variantStyles: Record<ButtonProps["variant"], CSSProperties> = {
+  primary: { backgroundColor: "var(--fb-button-bg-color)", color: "var(--fb-button-text-color)" },
+  // secondary uses primary's bg color as text color and vice-versa
+  secondary: {
+    backgroundColor: "var(--fb-button-text-color) !important",
+    color: "var(--fb-button-bg-color) !important",
+    borderColor: "var(--fb-button-text-color) !important",
+  },
+};
+
 export function Button({ variant, children, ...rest }: Readonly<ButtonProps>) {
-  const commonStyles: CSSProperties = {
-    borderRadius: "var(--fb-button-border-radius)",
-    height: "var(--fb-button-height)",
-    fontSize: "var(--fb-button-font-size)",
-    fontWeight: "var(--fb-button-font-weight)",
-    paddingLeft: "var(--fb-button-padding-x)",
-    paddingRight: "var(--fb-button-padding-x)",
-    paddingTop: "var(--fb-button-padding-y)",
-    paddingBottom: "var(--fb-button-padding-y)",
-  };
-
-  const variantStyles: Record<ButtonProps["variant"], CSSProperties> = {
-    primary: { backgroundColor: "var(--fb-button-bg-color)", color: "var(--fb-button-text-color)" },
-    secondary: {
-      // secondary uses primary's bg color as text color and vice-versa
-      backgroundColor: "var(--fb-button-text-color) !important",
-      color: "var(--fb-button-bg-color) !important",
-      borderColor: "var(--fb-button-text-color) !important",
-    },
-  };
-
   return (
     <button
       dir="auto"
