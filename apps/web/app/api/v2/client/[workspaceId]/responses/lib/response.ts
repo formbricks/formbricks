@@ -49,18 +49,7 @@ const buildPrismaResponseData = (
   contact: { id: string; attributes: TContactAttributes } | null,
   ttc: Record<string, number>
 ): Prisma.ResponseCreateInput => {
-  const {
-    surveyId,
-    displayId,
-    finished,
-    data,
-    language,
-    meta,
-    singleUseId,
-    variables,
-    createdAt,
-    updatedAt,
-  } = responseInput;
+  const { surveyId, displayId, finished, data, language, meta, singleUseId, variables } = responseInput;
 
   return {
     survey: {
@@ -84,8 +73,6 @@ const buildPrismaResponseData = (
     singleUseId,
     ...(variables && { variables }),
     ttc: ttc,
-    createdAt,
-    updatedAt,
   };
 };
 
