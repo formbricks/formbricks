@@ -15,14 +15,20 @@ describe("normalizeV3SurveyLanguageTag", () => {
   test.each([
     ["EN_us", "en-US"],
     ["en-us", "en-US"],
-    ["de", "de"],
-    ["zh_hans_cn", "zh-Hans-CN"],
   ])("normalizes %s to %s", (input, expected) => {
     expect(normalizeV3SurveyLanguageTag(input)).toBe(expected);
   });
 
   test("returns null for invalid language tags", () => {
     expect(normalizeV3SurveyLanguageTag("not a locale")).toBeNull();
+  });
+
+  test("returns null for language-only tags", () => {
+    expect(normalizeV3SurveyLanguageTag("de")).toBeNull();
+  });
+
+  test("returns null for script-only or script-region tags", () => {
+    expect(normalizeV3SurveyLanguageTag("zh_hans_cn")).toBeNull();
   });
 });
 
@@ -61,6 +67,13 @@ describe("parseV3SurveyLanguageQuery", () => {
       message: "Language 'not a locale' is not a valid locale code",
     });
   });
+
+  test("rejects language-only selectors", () => {
+    expect(parseV3SurveyLanguageQuery("de")).toEqual({
+      ok: false,
+      message: "Language 'de' is not a valid locale code",
+    });
+  });
 });
 
 describe("resolveV3SurveyLanguageCode", () => {
@@ -68,37 +81,29 @@ describe("resolveV3SurveyLanguageCode", () => {
     expect(resolveV3SurveyLanguageCode("DE_de", languages)).toEqual({ ok: true, code: "de-DE" });
   });
 
-  test("resolves language-only tags when exactly one configured language matches", () => {
-    expect(resolveV3SurveyLanguageCode("de", languages)).toEqual({ ok: true, code: "de-DE" });
-  });
-
   test("resolves disabled configured languages for management reads", () => {
-    expect(resolveV3SurveyLanguageCode("fr", languages)).toEqual({ ok: true, code: "fr-FR" });
-  });
-
-  test("returns ambiguous when language-only tags match multiple configured languages", () => {
-    expect(
-      resolveV3SurveyLanguageCode("pt", [
-        { code: "pt-BR", enabled: true },
-        { code: "pt-PT", enabled: true },
-      ])
-    ).toEqual({
-      ok: false,
-      reason: "ambiguous",
-      message: "Language 'pt' is ambiguous for this survey; use one of pt-BR, pt-PT",
-    });
+    expect(resolveV3SurveyLanguageCode("fr-FR", languages)).toEqual({ ok: true, code: "fr-FR" });
   });
 
   test("returns unknown for languages not configured on the survey", () => {
     expect(resolveV3SurveyLanguageCode("es-ES", languages)).toEqual({
       ok: false,
       reason: "unknown",
+      normalizedCode: "es-ES",
       message: "Language 'es-ES' is not configured for this survey",
     });
   });
 
-  test("resolves the implicit default language for surveys without configured languages", () => {
-    expect(resolveV3SurveyLanguageCode("en", [{ code: "en-US", enabled: true }])).toEqual({
+  test("rejects language-only tags for surveys with a matching configured language", () => {
+    expect(resolveV3SurveyLanguageCode("de", languages)).toEqual({
+      ok: false,
+      reason: "invalid",
+      message: "Language 'de' is not a valid locale code",
+    });
+  });
+
+  test("resolves the implicit default locale for surveys without configured languages", () => {
+    expect(resolveV3SurveyLanguageCode("en-US", [{ code: "en-US", enabled: true }])).toEqual({
       ok: true,
       code: "en-US",
     });

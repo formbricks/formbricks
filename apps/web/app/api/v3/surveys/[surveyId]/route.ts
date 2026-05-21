@@ -81,6 +81,7 @@ export const GET = withV3ApiWrapper({
               {
                 name: "lang",
                 reason: error.message,
+                ...(error.normalizedCode && { identifier: error.normalizedCode }),
               },
             ],
           });
