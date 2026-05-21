@@ -1,6 +1,7 @@
 "use client";
 
-import { EyeIcon, LinkIcon, MoreVertical, SquarePenIcon, TrashIcon } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { CopyIcon, EyeIcon, LinkIcon, MoreVertical, SquarePenIcon, TrashIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -9,9 +10,12 @@ import { useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
 import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { cn } from "@/lib/cn";
+import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
 import { copySurveyLink } from "@/modules/survey/lib/client-utils";
+import { copySurveyToOtherWorkspaceAction } from "@/modules/survey/list/actions";
+import { surveyKeys } from "@/modules/survey/list/lib/query";
 import { TSurveyListItem } from "@/modules/survey/list/types/survey-overview";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import {
@@ -42,9 +46,11 @@ export const SurveyDropDownMenu = ({
   const { t } = useTranslation();
   const [isDeleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isDuplicating, setIsDuplicating] = useState(false);
   const [isDropDownOpen, setIsDropDownOpen] = useState(false);
   const [isCautionDialogOpen, setIsCautionDialogOpen] = useState(false);
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const editHref = `/workspaces/${workspace?.id}/surveys/${survey.id}/edit`;
 
@@ -85,6 +91,29 @@ export const SurveyDropDownMenu = ({
     setIsCautionDialogOpen(true);
   };
 
+  const handleDuplicateSurvey = async () => {
+    if (!workspace?.id) return;
+    setIsDuplicating(true);
+    setIsDropDownOpen(false);
+    try {
+      const response = await copySurveyToOtherWorkspaceAction({
+        surveyId: survey.id,
+        targetWorkspaceId: workspace.id,
+      });
+      if (response?.data) {
+        toast.success(t("workspace.surveys.survey_duplicated_successfully"));
+        await queryClient.invalidateQueries({ queryKey: surveyKeys.lists() });
+        return;
+      }
+      toast.error(getFormattedErrorMessage(response));
+    } catch (error) {
+      logger.error(error);
+      toast.error(t("common.something_went_wrong_please_try_again"));
+    } finally {
+      setIsDuplicating(false);
+    }
+  };
+
   if (!hasVisibleActions) {
     return null;
   }
@@ -118,6 +147,22 @@ export const SurveyDropDownMenu = ({
                   <SquarePenIcon className="mr-2 size-4" />
                   {t("common.edit")}
                 </Link>
+              </DropdownMenuItem>
+            )}
+            {canManageSurvey && (
+              <DropdownMenuItem>
+                <button
+                  type="button"
+                  data-testid="duplicate-survey"
+                  className={cn("flex w-full items-center", isDuplicating && "cursor-not-allowed opacity-50")}
+                  disabled={isDuplicating}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    void handleDuplicateSurvey();
+                  }}>
+                  <CopyIcon className="mr-2 size-4" />
+                  {t("common.duplicate")}
+                </button>
               </DropdownMenuItem>
             )}
             {canPreviewOrCopyLink && (
