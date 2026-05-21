@@ -909,6 +909,11 @@ hub:
     ttlSecondsAfterFinished: 300
     backoffLimit: 3
     activeDeadlineSeconds: 900
+    waitForFormbricksMigration:
+      enabled: true
+      maxAttempts: 180
+      missingJobMaxAttempts: 12
+      intervalSeconds: 5
 
   resources:
     limits:
