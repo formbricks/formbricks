@@ -129,6 +129,26 @@ If `namespaceOverride` is provided, it will be used; otherwise, it defaults to `
 {{- printf "%s-migration" (include "formbricks.name" .) | trunc 63 | trimSuffix "-" -}}
 {{- end }}
 
+{{- define "formbricks.redisName" -}}
+{{- .Values.redis.fullnameOverride | default (printf "%s-redis" (include "formbricks.name" .)) | trunc 63 | trimSuffix "-" -}}
+{{- end }}
+
+{{- define "formbricks.redisMasterName" -}}
+{{- printf "%s-master" (include "formbricks.redisName" .) | trunc 63 | trimSuffix "-" -}}
+{{- end }}
+
+{{- define "formbricks.redisHeadlessName" -}}
+{{- printf "%s-headless" (include "formbricks.redisName" .) | trunc 63 | trimSuffix "-" -}}
+{{- end }}
+
+{{- define "formbricks.redisImage" -}}
+{{- if .Values.redis.image.digest -}}
+{{- printf "%s@%s" .Values.redis.image.repository .Values.redis.image.digest -}}
+{{- else -}}
+{{- printf "%s:%s" .Values.redis.image.repository .Values.redis.image.tag -}}
+{{- end -}}
+{{- end }}
+
 {{- define "formbricks.hubSecretName" -}}
 {{- default (include "formbricks.appSecretName" .) .Values.hub.existingSecret -}}
 {{- end }}
