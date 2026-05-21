@@ -47,7 +47,10 @@ vi.mock("@/modules/ee/billing/lib/organization-billing", () => ({
 }));
 
 vi.mock("@/modules/hub/service", () => ({
-  deleteFeedbackRecordsByTenant: vi.fn().mockResolvedValue({ data: { deletedCount: 0 }, error: null }),
+  deleteHubTenantData: vi.fn().mockResolvedValue({
+    data: { deletedFeedbackRecords: 0, deletedEmbeddings: 0, deletedWebhooks: 0 },
+    error: null,
+  }),
 }));
 
 describe("Organization Service", () => {
@@ -369,8 +372,8 @@ describe("Organization Service", () => {
       }
     });
 
-    test("should purge Hub feedback records for each feedback directory", async () => {
-      const { deleteFeedbackRecordsByTenant } = await import("@/modules/hub/service");
+    test("should purge Hub-owned data for each feedback directory", async () => {
+      const { deleteHubTenantData } = await import("@/modules/hub/service");
       vi.mocked(prisma.organization.delete).mockResolvedValue({
         id: "org1",
         name: "Test Org",
@@ -382,9 +385,9 @@ describe("Organization Service", () => {
 
       await deleteOrganization("org1");
 
-      expect(deleteFeedbackRecordsByTenant).toHaveBeenCalledTimes(2);
-      expect(deleteFeedbackRecordsByTenant).toHaveBeenCalledWith("frd_1");
-      expect(deleteFeedbackRecordsByTenant).toHaveBeenCalledWith("frd_2");
+      expect(deleteHubTenantData).toHaveBeenCalledTimes(2);
+      expect(deleteHubTenantData).toHaveBeenCalledWith("frd_1");
+      expect(deleteHubTenantData).toHaveBeenCalledWith("frd_2");
     });
   });
 });

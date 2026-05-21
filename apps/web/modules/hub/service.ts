@@ -129,38 +129,51 @@ export const deleteFeedbackRecord = async (id: string): Promise<HubFeedbackRecor
   }
 };
 
-export type HubFeedbackRecordsByTenantDeleteResult = {
-  data: { deletedCount: number } | null;
+export type HubTenantDataDeleteResult = {
+  data: {
+    deletedFeedbackRecords: number;
+    deletedEmbeddings: number;
+    deletedWebhooks: number;
+  } | null;
   error: HubError | null;
 };
 
+type TenantDataDeleteResponse = {
+  tenant_id: string;
+  deleted_feedback_records: number;
+  deleted_embeddings: number;
+  deleted_webhooks: number;
+  message?: string;
+};
+
 /**
- * Delete all feedback records in the Hub for a given tenant.
- * Used when an organization (and its feedback directories) is deleted, so that
- * Hub-side records do not become orphaned.
+ * Purge all Hub-owned data (feedback records, derived embeddings, webhooks) for a tenant.
+ * Called when the owning organization is deleted so Hub-side rows don't become orphaned.
+ * Idempotent on the Hub side; the caller treats failures as best-effort.
  *
- * NOTE: depends on the Hub `bulkDelete` endpoint accepting a `tenant_id`-only
- * payload (no `user_id`). Until that ships, this call will fail with a 4xx and
- * be logged as a warning — caller treats this as best-effort.
+ * Hits `DELETE /v1/tenants/{tenant_id}/data` directly because the SDK doesn't yet expose
+ * a typed method for this endpoint.
  */
-export const deleteFeedbackRecordsByTenant = async (
-  tenantId: string
-): Promise<HubFeedbackRecordsByTenantDeleteResult> => {
+export const deleteHubTenantData = async (tenantId: string): Promise<HubTenantDataDeleteResult> => {
   const client = getHubClient();
   if (!client) {
     return { data: null, error: { ...NO_CONFIG_ERROR } };
   }
 
   try {
-    // Cast: SDK currently requires `user_id`. Hub-side change will accept a
-    // tenant-only payload; until the SDK types catch up we go through `unknown`.
-    const bulkDelete = client.feedbackRecords.bulkDelete as unknown as (params: {
-      tenant_id: string;
-    }) => Promise<{ deleted_count: number }>;
-    const data = await bulkDelete({ tenant_id: tenantId });
-    return { data: { deletedCount: data.deleted_count }, error: null };
+    const data = await client.delete<TenantDataDeleteResponse>(
+      `/v1/tenants/${encodeURIComponent(tenantId)}/data`
+    );
+    return {
+      data: {
+        deletedFeedbackRecords: data.deleted_feedback_records,
+        deletedEmbeddings: data.deleted_embeddings,
+        deletedWebhooks: data.deleted_webhooks,
+      },
+      error: null,
+    };
   } catch (err) {
-    logger.warn({ err, tenantId }, "Hub: deleteFeedbackRecordsByTenant failed");
+    logger.warn({ err, tenantId }, "Hub: deleteHubTenantData failed");
     const status = getErrorStatus(err);
     const message = getErrorMessage(err);
     return { data: null, error: { status, message, detail: message } };
