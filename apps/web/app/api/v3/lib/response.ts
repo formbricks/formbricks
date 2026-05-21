@@ -6,13 +6,17 @@
 const PROBLEM_JSON = "application/problem+json" as const;
 const CACHE_NO_STORE = "private, no-store" as const;
 
-export type InvalidParamCode =
-  | "dangling_reference"
-  | "duplicate_identifier"
-  | "forbidden_identifier"
-  | "immutable_identifier"
-  | "missing_translation"
-  | "unsupported_field";
+export const INVALID_PARAM_CODES = [
+  "dangling_reference",
+  "duplicate_identifier",
+  "forbidden_identifier",
+  "immutable_identifier",
+  "missing_required_field",
+  "missing_translation",
+  "unsupported_field",
+] as const;
+
+export type InvalidParamCode = (typeof INVALID_PARAM_CODES)[number];
 
 export type InvalidParam = {
   name: string;

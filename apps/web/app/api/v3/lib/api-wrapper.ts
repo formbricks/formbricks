@@ -13,6 +13,7 @@ import type { TRateLimitConfig } from "@/modules/core/rate-limit/types/rate-limi
 import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
 import { TAuditAction, TAuditTarget } from "@/modules/ee/audit-logs/types/audit-log";
 import {
+  INVALID_PARAM_CODES,
   type InvalidParam,
   problemBadRequest,
   problemInternalError,
@@ -25,14 +26,7 @@ type TV3Schema = z.ZodTypeAny;
 type MaybePromise<T> = T | Promise<T>;
 type InvalidParamCode = NonNullable<InvalidParam["code"]>;
 
-const INVALID_PARAM_CODES = new Set<InvalidParamCode>([
-  "dangling_reference",
-  "duplicate_identifier",
-  "forbidden_identifier",
-  "immutable_identifier",
-  "missing_translation",
-  "unsupported_field",
-]);
+const INVALID_PARAM_CODE_SET = new Set<InvalidParamCode>(INVALID_PARAM_CODES);
 
 export type TV3AuthMode = "none" | "session" | "apiKey" | "both";
 
@@ -85,7 +79,7 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 }
 
 function isInvalidParamCode(value: unknown): value is InvalidParamCode {
-  return typeof value === "string" && INVALID_PARAM_CODES.has(value as InvalidParamCode);
+  return typeof value === "string" && INVALID_PARAM_CODE_SET.has(value as InvalidParamCode);
 }
 
 function formatZodIssues(error: z.ZodError, fallbackName: "body" | "query" | "params"): InvalidParam[] {

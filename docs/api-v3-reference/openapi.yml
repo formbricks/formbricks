@@ -2063,6 +2063,7 @@ components:
             - duplicate_identifier
             - forbidden_identifier
             - immutable_identifier
+            - missing_required_field
             - missing_translation
             - unsupported_field
           description: Machine-readable validation category, when available.

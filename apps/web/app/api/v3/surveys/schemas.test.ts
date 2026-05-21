@@ -1,5 +1,10 @@
 import { describe, expect, test } from "vitest";
-import { ZV3CreateSurveyBody, ZV3PatchSurveyBody, createZV3PatchSurveyBodySchema } from "./schemas";
+import {
+  ZV3CreateSurveyBody,
+  ZV3PatchSurveyBody,
+  createZV3PatchSurveyBodySchema,
+  formatV3ZodInvalidParams,
+} from "./schemas";
 
 const validCreateBody = {
   workspaceId: "clxx1234567890123456789012",
@@ -354,6 +359,37 @@ describe("ZV3CreateSurveyBody", () => {
     });
 
     expect(result.success).toBe(false);
+  });
+
+  test("reports missing required element fields before shared element union errors", () => {
+    const result = ZV3CreateSurveyBody.safeParse({
+      ...validCreateBody,
+      blocks: [
+        {
+          ...validCreateBody.blocks[0],
+          elements: [
+            {
+              id: "feedback",
+              type: "openText",
+              headline: { "en-US": "Tell us more" },
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(formatV3ZodInvalidParams(result.error, "body")).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: "blocks.0.elements.0.required",
+            reason: "Missing required field 'required' for element type 'openText'",
+            code: "missing_required_field",
+          }),
+        ])
+      );
+    }
   });
 
   test("rejects duplicate language entries and disabled default language", () => {

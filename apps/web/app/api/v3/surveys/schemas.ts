@@ -397,6 +397,7 @@ const ELEMENT_BASE_KEYS = new Set([
   "required",
   "isDraft",
 ]);
+const ELEMENT_REQUIRED_KEYS = ["id", "type", "headline", "required"] as const;
 const ALL_ELEMENT_EXTRA_KEYS = new Set([
   "allowMulti",
   "allowMultipleFiles",
@@ -559,6 +560,28 @@ function addUnknownKeyIssues(
           ? `Unsupported field '${key}' for ${context}. Allowed fields: ${allowedFields}`
           : `Unsupported field '${key}'`,
         code: "unsupported_field",
+      });
+    }
+  }
+}
+
+function addMissingRequiredKeyIssues(
+  value: unknown,
+  requiredKeys: readonly string[],
+  path: string,
+  issues: InvalidParam[],
+  context: string
+): void {
+  if (!isPlainObject(value)) {
+    return;
+  }
+
+  for (const key of requiredKeys) {
+    if (value[key] === undefined) {
+      issues.push({
+        name: path ? `${path}.${key}` : key,
+        reason: `Missing required field '${key}' for ${context}`,
+        code: "missing_required_field",
       });
     }
   }
@@ -763,6 +786,7 @@ function validateElement(
     isPlainObject(value) && typeof value.type === "string"
       ? `element type '${value.type}'`
       : "survey element";
+  addMissingRequiredKeyIssues(value, ELEMENT_REQUIRED_KEYS, path, issues, elementContext);
   addUnknownKeyIssues(value, elementKeys, path, issues, elementContext);
   if (!isPlainObject(value)) {
     return;
@@ -1060,7 +1084,9 @@ export function formatV3ZodInvalidParams(error: z.ZodError, fallbackName: string
     return {
       name: issue.path.length > 0 ? issue.path.join(".") : fallbackName,
       reason: issue.message,
-      ...(params.code === "unsupported_field" ? { code: params.code } : {}),
+      ...(params.code === "missing_required_field" || params.code === "unsupported_field"
+        ? { code: params.code }
+        : {}),
     };
   });
 }
