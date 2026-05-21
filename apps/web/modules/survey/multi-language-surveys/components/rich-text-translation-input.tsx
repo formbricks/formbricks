@@ -26,14 +26,17 @@ export const RichTextTranslationInput = ({
 }: RichTextTranslationInputProps) => {
   const [firstRender, setFirstRender] = useState(true);
   const [editorKey, setEditorKey] = useState(0);
-  // Tracks the most recent value the editor itself produced via setText, so we
-  // can tell external updates (e.g. AI translation fill) apart from the editor's
-  // own write-back and only remount for the former.
+  // Separates external value changes (e.g. AI fill) from the editor's own write-back so we
+  // only remount for the former.
   const lastWrittenRef = useRef(value);
+  // Suppresses Lexical's mount-time empty listener fire which would otherwise clobber an
+  // externally-applied value back to "".
+  const initialContentSetRef = useRef(false);
 
   useEffect(() => {
     if (value !== lastWrittenRef.current) {
       lastWrittenRef.current = value;
+      initialContentSetRef.current = false;
       setEditorKey((k) => k + 1);
       setFirstRender(true);
     }
@@ -49,6 +52,8 @@ export const RichTextTranslationInput = ({
         setFirstRender={setFirstRender}
         getText={() => md.render(value)}
         setText={(v: string) => {
+          if (!initialContentSetRef.current && v === "") return;
+          initialContentSetRef.current = true;
           lastWrittenRef.current = v;
           onChange(path, v);
         }}
