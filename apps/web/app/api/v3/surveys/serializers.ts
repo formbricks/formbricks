@@ -115,6 +115,34 @@ function serializeCanonicalValue(
   return value as TSerializedValue;
 }
 
+function serializeMetadata(
+  metadata: unknown,
+  defaultLanguage: string,
+  languageCodes: Set<string>,
+  options?: { fallbackMissingTranslations?: boolean }
+): TSerializedValue {
+  if (!isPlainObject(metadata)) {
+    return metadata as TSerializedValue;
+  }
+
+  const serializedMetadata: Record<string, TSerializedValue> = { ...metadata } as Record<
+    string,
+    TSerializedValue
+  >;
+  for (const key of ["title", "description"]) {
+    if (metadata[key] !== undefined) {
+      serializedMetadata[key] = serializeCanonicalValue(
+        metadata[key],
+        defaultLanguage,
+        languageCodes,
+        options
+      );
+    }
+  }
+
+  return serializedMetadata;
+}
+
 function resolveRequestedLanguage(languages: TV3SurveyLanguage[], language: string): string {
   const result = resolveV3SurveyLanguageCode(language, languages);
 
@@ -158,7 +186,9 @@ export function serializeV3SurveyResource(survey: TInternalSurvey, options?: { l
     name: survey.name,
     type: survey.type,
     status: survey.status,
-    metadata: serializeValue(survey.metadata),
+    metadata: serializeMetadata(survey.metadata, defaultLanguage, languageCodes, {
+      fallbackMissingTranslations: requestedLanguages.length > 0,
+    }),
     defaultLanguage,
     languages,
     welcomeCard: serializeValue(survey.welcomeCard),

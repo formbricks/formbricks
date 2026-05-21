@@ -12,6 +12,7 @@ const baseSurvey = {
   status: "draft",
   metadata: {
     cx: "enterprise",
+    arbitraryConfig: { default: "preserve-me", mode: "strict" },
     title: { default: "Product Feedback", "de-DE": "Produktfeedback" },
   },
   languages: [
@@ -70,6 +71,7 @@ describe("serializeV3SurveyResource", () => {
     expect(resource).toMatchObject({
       metadata: {
         cx: "enterprise",
+        arbitraryConfig: { default: "preserve-me", mode: "strict" },
         title: {
           "en-US": "Product Feedback",
           "de-DE": "Produktfeedback",

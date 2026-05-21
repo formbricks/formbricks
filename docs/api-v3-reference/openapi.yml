@@ -734,10 +734,9 @@ components:
           enum: [draft, inProgress, paused, completed]
           default: draft
         metadata:
-          type: object
+          allOf:
+            - $ref: "#/components/schemas/SurveyMetadata"
           default: {}
-          additionalProperties: true
-          description: Arbitrary JSON survey context plus optional link-preview metadata.
         defaultLanguage:
           type: string
           default: en-US
@@ -807,8 +806,8 @@ components:
           type: string
           enum: [draft, inProgress, paused, completed]
         metadata:
-          type: object
-          additionalProperties: true
+          allOf:
+            - $ref: "#/components/schemas/SurveyMetadata"
         defaultLanguage:
           type: string
           description: Default authoring locale.
@@ -969,6 +968,18 @@ components:
         description: BCP 47 locale code, for example `en-US`, `de-DE`, or `pt-BR`.
       additionalProperties:
         type: string
+    SurveyMetadata:
+      type: object
+      description: |
+        Arbitrary JSON survey context for customer- or operation-specific metadata. v3 preserves
+        arbitrary metadata values as-is. If present, `title` and `description` are treated as
+        translatable text maps and returned with real locale-code keys.
+      properties:
+        title:
+          $ref: "#/components/schemas/TranslatableText"
+        description:
+          $ref: "#/components/schemas/TranslatableText"
+      additionalProperties: true
     SurveyLanguage:
       type: object
       description: |
@@ -2005,9 +2016,9 @@ components:
           type: string
           enum: [draft, inProgress, paused, completed]
         metadata:
-          type: object
+          allOf:
+            - $ref: "#/components/schemas/SurveyMetadata"
           nullable: true
-          additionalProperties: true
         defaultLanguage:
           type: string
           description: Real locale code for the survey default language. The internal `default` translation key is never exposed.
