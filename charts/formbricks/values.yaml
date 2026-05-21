@@ -580,8 +580,9 @@ cube:
     type: ClusterIP
     port: 4000
 
-  # Secret values such as CUBEJS_API_SECRET and CUBEJS_DB_* should be supplied
-  # through envFrom or another secret-management flow.
+  # The generated app secret supplies CUBEJS_API_SECRET when secret.enabled=true.
+  # Secret values such as CUBEJS_DB_* should be supplied through envFrom or another secret-management
+  # flow.
   envFrom: []
 
   env:

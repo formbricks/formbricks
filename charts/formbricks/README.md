@@ -55,7 +55,8 @@ Cube is part of the baseline Formbricks v5 stack and is deployed by this chart b
   when using the default release name.
 - For an external Cube, set `cube.enabled: false` and point `deployment.env.CUBEJS_API_URL` at your
   endpoint.
-- Provide `CUBEJS_API_SECRET` through your existing secret management flow, such as the generated app secret override or `deployment.envFrom`.
+- The generated app secret supplies `CUBEJS_API_SECRET` by default. If you disable generated secrets,
+  provide it through your existing secret management flow.
 - Provide `CUBEJS_DB_*` connection variables to the Cube deployment through `cube.envFrom` or `cube.env`.
 - Keep `cube.replicas=1` while `cube.env.CUBEJS_CACHE_AND_QUEUE_DRIVER` is `memory`. Configure Cube Store before running multiple Cube replicas.
 - Keep Hub enabled. Cube should point at the same feedback records database that Hub writes to, unless you intentionally split that storage.
