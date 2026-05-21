@@ -3,7 +3,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "formbricks.name" . }}-migration
+  name: {{ include "formbricks.migrationJobName" . }}
   labels:
     {{- include "formbricks.labels" . | nindent 4 }}
   annotations:

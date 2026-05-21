@@ -32,7 +32,134 @@ spec:
       imagePullSecrets:
         {{- toYaml .Values.deployment.imagePullSecrets | nindent 8 }}
       {{- end }}
+      {{- if and .Values.migration.enabled .Values.hub.migration.waitForFormbricksMigration.enabled }}
+      serviceAccountName: {{ include "formbricks.hubMigrationWaitServiceAccountName" . }}
+      automountServiceAccountToken: true
+      {{- end }}
       initContainers:
+        {{- if and .Values.migration.enabled .Values.hub.migration.waitForFormbricksMigration.enabled }}
+        - name: wait-for-formbricks-migration
+          image: {{ .Values.deployment.image.repository }}:{{ .Values.deployment.image.tag | default .Chart.AppVersion | default "latest" }}
+          imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}
+          command:
+            - node
+            - -e
+            - |
+              const fs = require("fs");
+              const https = require("https");
+
+              const maxAttempts = Number.parseInt(process.env.FORMBRICKS_MIGRATION_WAIT_MAX_ATTEMPTS || "180", 10);
+              const missingJobMaxAttempts = Number.parseInt(
+                process.env.FORMBRICKS_MIGRATION_WAIT_MISSING_JOB_MAX_ATTEMPTS || "12",
+                10
+              );
+              const intervalSeconds = Number.parseInt(process.env.FORMBRICKS_MIGRATION_WAIT_INTERVAL_SECONDS || "5", 10);
+              const jobName = process.env.FORMBRICKS_MIGRATION_JOB_NAME;
+              const namespace = fs
+                .readFileSync("/var/run/secrets/kubernetes.io/serviceaccount/namespace", "utf8")
+                .trim();
+              const token = fs.readFileSync("/var/run/secrets/kubernetes.io/serviceaccount/token", "utf8");
+              const ca = fs.readFileSync("/var/run/secrets/kubernetes.io/serviceaccount/ca.crt");
+              const host = process.env.KUBERNETES_SERVICE_HOST;
+              const port = process.env.KUBERNETES_SERVICE_PORT || "443";
+              const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+              const jobPath = `/apis/batch/v1/namespaces/${namespace}/jobs/${jobName}`;
+
+              const fetchJob = () =>
+                new Promise((resolve, reject) => {
+                  const request = https.request(
+                    {
+                      host,
+                      port,
+                      path: jobPath,
+                      method: "GET",
+                      ca,
+                      headers: {
+                        Authorization: `Bearer ${token}`,
+                      },
+                    },
+                    (response) => {
+                      let body = "";
+
+                      response.setEncoding("utf8");
+                      response.on("data", (chunk) => {
+                        body += chunk;
+                      });
+                      response.on("end", () => {
+                        if (response.statusCode >= 200 && response.statusCode < 300) {
+                          resolve(JSON.parse(body));
+                          return;
+                        }
+
+                        const error = new Error(`Kubernetes API returned ${response.statusCode}: ${body}`);
+                        error.statusCode = response.statusCode;
+                        reject(error);
+                      });
+                    }
+                  );
+
+                  request.on("error", reject);
+                  request.end();
+                });
+
+              (async () => {
+                for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+                  try {
+                    const job = await fetchJob();
+                    const conditions = job.status?.conditions || [];
+                    const isComplete = conditions.some(
+                      (condition) => condition.type === "Complete" && condition.status === "True"
+                    );
+                    const isFailed = conditions.some(
+                      (condition) => condition.type === "Failed" && condition.status === "True"
+                    );
+
+                    if (isComplete) {
+                      console.log(`${jobName} completed; starting Hub migrations.`);
+                      return;
+                    }
+
+                    if (isFailed) {
+                      console.error(`${jobName} failed; refusing to start Hub migrations.`);
+                      process.exitCode = 1;
+                      return;
+                    }
+
+                    console.log(`Waiting for ${jobName} to complete (${attempt}/${maxAttempts})...`);
+                  } catch (error) {
+                    const message = error instanceof Error ? error.message : String(error);
+                    if (error && error.statusCode === 404 && attempt >= missingJobMaxAttempts) {
+                      console.log(`${jobName} was not found after ${attempt} attempts; assuming it was already cleaned up.`);
+                      return;
+                    }
+
+                    console.log(`Waiting for ${jobName} to be available (${attempt}/${maxAttempts}): ${message}`);
+                  }
+
+                  await sleep(intervalSeconds * 1000);
+                }
+
+                console.error(`Timed out waiting for ${jobName} after ${maxAttempts} attempts.`);
+                process.exitCode = 1;
+              })()
+                .catch((error) => {
+                  console.error(error);
+                  process.exitCode = 1;
+                });
+          env:
+            - name: FORMBRICKS_MIGRATION_JOB_NAME
+              value: {{ include "formbricks.migrationJobName" . | quote }}
+            - name: FORMBRICKS_MIGRATION_WAIT_MAX_ATTEMPTS
+              value: {{ .Values.hub.migration.waitForFormbricksMigration.maxAttempts | quote }}
+            - name: FORMBRICKS_MIGRATION_WAIT_MISSING_JOB_MAX_ATTEMPTS
+              value: {{ .Values.hub.migration.waitForFormbricksMigration.missingJobMaxAttempts | quote }}
+            - name: FORMBRICKS_MIGRATION_WAIT_INTERVAL_SECONDS
+              value: {{ .Values.hub.migration.waitForFormbricksMigration.intervalSeconds | quote }}
+          {{- if .Values.migration.resources }}
+          resources:
+            {{- toYaml .Values.migration.resources | nindent 12 }}
+          {{- end }}
+        {{- end }}
         - name: hub-migrate
           image: {{ include "formbricks.hubImage" . }}
           imagePullPolicy: {{ .Values.hub.image.pullPolicy }}

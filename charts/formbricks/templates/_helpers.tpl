@@ -153,8 +153,16 @@ If `namespaceOverride` is provided, it will be used; otherwise, it defaults to `
 {{- .Values.redis.auth.existingSecretPasswordKey | default "REDIS_PASSWORD" -}}
 {{- end }}
 
+{{- define "formbricks.migrationJobName" -}}
+{{- printf "%s-migration" (include "formbricks.name" .) | trunc 63 | trimSuffix "-" -}}
+{{- end }}
+
 {{- define "formbricks.hubSecretName" -}}
 {{- default (include "formbricks.appSecretName" .) .Values.hub.existingSecret -}}
+{{- end }}
+
+{{- define "formbricks.hubMigrationWaitServiceAccountName" -}}
+{{- printf "%s-migration-wait" (include "formbricks.hubname" .) | trunc 63 | trimSuffix "-" -}}
 {{- end }}
 
 {{/*
