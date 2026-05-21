@@ -158,7 +158,7 @@ export function serializeV3SurveyResource(survey: TInternalSurvey, options?: { l
     name: survey.name,
     type: survey.type,
     status: survey.status,
-    metadata: survey.metadata,
+    metadata: serializeValue(survey.metadata),
     defaultLanguage,
     languages,
     welcomeCard: serializeValue(survey.welcomeCard),
