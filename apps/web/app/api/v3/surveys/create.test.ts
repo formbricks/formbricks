@@ -188,6 +188,20 @@ describe("createV3Survey", () => {
     const body = ZV3CreateSurveyBody.parse({
       ...rawCreateBody,
       languages: [{ code: "fr-FR", enabled: false }],
+      blocks: [
+        {
+          ...rawCreateBody.blocks[0],
+          elements: [
+            {
+              ...rawCreateBody.blocks[0].elements[0],
+              headline: {
+                ...rawCreateBody.blocks[0].elements[0].headline,
+                "fr-FR": "Que devons-nous améliorer ?",
+              },
+            },
+          ],
+        },
+      ],
     });
 
     await createV3Survey(

@@ -103,6 +103,58 @@ describe("v3 survey preparation", () => {
     }
   });
 
+  test("rejects configured languages that are missing from translatable survey content", () => {
+    const preparation = prepareV3SurveyCreateInput({
+      ...rawCreateBody,
+      languages: [{ code: "de", enabled: true }],
+    });
+
+    expect(preparation.ok).toBe(false);
+    if (!preparation.ok) {
+      expect(preparation.validation.invalidParams).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: "blocks.0.elements.0.headline",
+            code: "missing_translation",
+            identifier: "de",
+            referenceType: "language",
+          }),
+        ])
+      );
+    }
+  });
+
+  test("rejects partial derived translations before internal survey validation", () => {
+    const preparation = prepareV3SurveyCreateInput({
+      ...rawCreateBody,
+      blocks: [
+        {
+          ...rawCreateBody.blocks[0],
+          elements: [
+            {
+              ...rawCreateBody.blocks[0].elements[0],
+              subheader: { "en-US": "Tell us more" },
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(preparation.ok).toBe(false);
+    if (!preparation.ok) {
+      expect(preparation.validation.invalidParams).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: "blocks.0.elements.0.subheader",
+            code: "missing_translation",
+            identifier: "de-DE",
+            referenceType: "language",
+          }),
+        ])
+      );
+    }
+  });
+
   test("applies a patch over the current document before validating references", () => {
     const preparation = prepareV3SurveyPatchInput(survey, {
       blocks: [

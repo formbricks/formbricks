@@ -20,8 +20,12 @@ export function validateInputs<T extends ValidationPair<any>[]>(
         .join("; ");
 
       logger.error(
-        inputValidation.error,
-        `Validation failed for ${JSON.stringify(value).substring(0, 100)} and ${JSON.stringify(schema)}`
+        {
+          error: inputValidation.error,
+          issues: inputValidation.error.issues,
+          valuePreview: JSON.stringify(value).substring(0, 100),
+        },
+        "Input validation failed"
       );
       throw new ValidationError(`Validation failed: ${zodDetails}`);
     }

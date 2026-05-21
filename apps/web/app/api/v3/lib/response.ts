@@ -11,6 +11,7 @@ export type InvalidParamCode =
   | "duplicate_identifier"
   | "forbidden_identifier"
   | "immutable_identifier"
+  | "missing_translation"
   | "unsupported_field";
 
 export type InvalidParam = {
@@ -18,7 +19,15 @@ export type InvalidParam = {
   reason: string;
   code?: InvalidParamCode;
   identifier?: string;
-  referenceType?: "block" | "element" | "ending" | "hiddenField" | "variable" | "variableName" | "recall";
+  referenceType?:
+    | "block"
+    | "element"
+    | "ending"
+    | "hiddenField"
+    | "language"
+    | "variable"
+    | "variableName"
+    | "recall";
   missingId?: string;
   firstUsedAt?: string;
   conflictsWith?: string;

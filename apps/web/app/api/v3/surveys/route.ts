@@ -135,8 +135,8 @@ export const POST = withV3ApiWrapper({
       });
     } catch (err) {
       if (err instanceof V3SurveyReferenceValidationError) {
-        log.warn({ statusCode: 400, invalidParams: err.invalidParams }, "Survey reference validation failed");
-        return problemBadRequest(requestId, "Invalid survey references", {
+        log.warn({ statusCode: 400, invalidParams: err.invalidParams }, "Survey document validation failed");
+        return problemBadRequest(requestId, "Invalid survey document", {
           invalid_params: err.invalidParams,
           instance,
         });
