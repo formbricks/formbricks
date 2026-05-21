@@ -26,17 +26,18 @@ export const RichTextTranslationInput = ({
 }: RichTextTranslationInputProps) => {
   const [firstRender, setFirstRender] = useState(true);
   const [editorKey, setEditorKey] = useState(0);
-  const prevDisabledRef = useRef(disabled);
+  // Tracks the most recent value the editor itself produced via setText, so we
+  // can tell external updates (e.g. AI translation fill) apart from the editor's
+  // own write-back and only remount for the former.
+  const lastWrittenRef = useRef(value);
 
-  // Remount the editor when AI translation finishes (disabled transitions from true → false)
-  // so the editor picks up the externally populated value.
   useEffect(() => {
-    if (prevDisabledRef.current && !disabled) {
+    if (value !== lastWrittenRef.current) {
+      lastWrittenRef.current = value;
       setEditorKey((k) => k + 1);
       setFirstRender(true);
     }
-    prevDisabledRef.current = disabled;
-  }, [disabled]);
+  }, [value]);
 
   return (
     <div className={disabled ? "cursor-not-allowed rounded-md opacity-60" : "rounded-md"}>
@@ -47,7 +48,10 @@ export const RichTextTranslationInput = ({
         firstRender={firstRender}
         setFirstRender={setFirstRender}
         getText={() => md.render(value)}
-        setText={(v: string) => onChange(path, v)}
+        setText={(v: string) => {
+          lastWrittenRef.current = v;
+          onChange(path, v);
+        }}
         localSurvey={localSurvey}
         elementId={elementId}
         selectedLanguageCode={languageCode}
