@@ -69,7 +69,7 @@ Redis Access:
    kubectl get secret --namespace {{ .Release.Namespace }} {{ include "formbricks.name" . }}-app-secrets -o jsonpath="{.data.REDIS_PASSWORD}" | base64 --decode
    ```
    Connection details:
-   - **Host**: `{{ include "formbricks.name" . }}-redis-master`
+   - **Host**: `{{ include "formbricks.redisMasterName" . }}`
    - **Port**: `6379`
 {{- else if .Values.redis.externalRedisUrl }}
    You're using an external Redis instance.
