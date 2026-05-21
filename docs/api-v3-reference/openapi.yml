@@ -251,6 +251,78 @@ paths:
                   hiddenFields:
                     enabled: false
                   variables: []
+              sequentialProductSurvey:
+                summary: Create a richer sequential survey without logicFallback
+                description: |
+                  Multi-block survey with generated block and variable ids. Sequential surveys should
+                  omit `logic` and `logicFallback`; blocks are shown in array order.
+                value:
+                  workspaceId: clxx1234567890123456789012
+                  name: Sequential Product Survey
+                  defaultLanguage: en-US
+                  languages:
+                    - code: de-DE
+                      enabled: true
+                  metadata:
+                    cx_operation: product_feedback
+                    title:
+                      en-US: Sequential Product Survey
+                      de-DE: Sequenzielle Produktumfrage
+                  welcomeCard:
+                    enabled: true
+                    headline:
+                      en-US: Help us improve the product
+                      de-DE: Hilf uns, das Produkt zu verbessern
+                  hiddenFields:
+                    enabled: true
+                    fieldIds:
+                      - account_id
+                      - plan
+                  variables:
+                    - name: feedback_score
+                      type: number
+                      value: 0
+                  blocks:
+                    - name: Satisfaction
+                      elements:
+                        - id: overall_rating
+                          type: rating
+                          headline:
+                            en-US: How satisfied are you with the product?
+                            de-DE: Wie zufrieden bist du mit dem Produkt?
+                          required: true
+                          range: 5
+                          scale: smiley
+                        - id: product_area
+                          type: multipleChoiceSingle
+                          headline:
+                            en-US: Which area should we improve first?
+                            de-DE: Welchen Bereich sollten wir zuerst verbessern?
+                          required: true
+                          choices:
+                            - id: onboarding
+                              label:
+                                en-US: Onboarding
+                                de-DE: Onboarding
+                            - id: analytics
+                              label:
+                                en-US: Analytics
+                                de-DE: Analysen
+                    - name: Feedback
+                      elements:
+                        - id: free_text_feedback
+                          type: openText
+                          headline:
+                            en-US: What is one thing we should change?
+                            de-DE: Was sollten wir ändern?
+                          required: false
+                          longAnswer: true
+                  endings:
+                    - id: cmpsequentialend0000000000
+                      type: endScreen
+                      headline:
+                        en-US: Thanks for your feedback!
+                        de-DE: Danke für dein Feedback!
       responses:
         "201":
           description: Survey created successfully
