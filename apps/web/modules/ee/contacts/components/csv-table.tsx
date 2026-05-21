@@ -10,33 +10,36 @@ export const CsvTable = ({ data }: CsvTableProps) => {
   }
 
   const columns = Object.keys(data[0]);
-
   return (
     <div className="w-full overflow-x-auto rounded-md">
-      <div
-        className="sticky top-0 z-10 grid gap-2 border-b-2 border-slate-100 bg-slate-100 px-3 py-2 text-left"
-        style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(100px, 1fr))` }}>
-        {columns.map((header, index) => (
-          <span
-            key={index}
-            className="overflow-hidden text-ellipsis whitespace-nowrap text-xs font-semibold capitalize leading-tight">
-            {header.replace(/_/g, " ")}
-          </span>
-        ))}
-      </div>
-
-      {data.map((row, rowIndex) => (
-        <div
-          key={rowIndex}
-          className="grid gap-2 border-b border-gray-200 bg-white px-3 py-2 text-left leading-tight last:border-b-0"
-          style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(100px, 1fr))` }}>
-          {columns.map((header, colIndex) => (
-            <span key={colIndex} className="overflow-hidden text-ellipsis whitespace-nowrap text-xs">
-              {row[header]}
-            </span>
+      <table className="w-max min-w-full border-separate border-spacing-0 text-left text-xs">
+        <thead>
+          <tr className="bg-slate-100">
+            {columns.map((header) => (
+              <th
+                key={header}
+                className="sticky top-0 z-10 min-w-[120px] border-b-2 border-slate-200 bg-slate-100 px-3 py-2 font-semibold">
+                {header}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {data.map((row, rowIndex) => (
+            <tr key={rowIndex} className="bg-white">
+              {columns.map((header) => (
+                <td
+                  key={`${rowIndex}-${header}`}
+                  className="min-w-[120px] border-b border-slate-200 px-3 py-2">
+                  <span className="block overflow-hidden text-ellipsis whitespace-nowrap">
+                    {row[header] ?? ""}
+                  </span>
+                </td>
+              ))}
+            </tr>
           ))}
-        </div>
-      ))}
+        </tbody>
+      </table>
     </div>
   );
 };

@@ -11,6 +11,10 @@ import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { isSafeIdentifier } from "@/lib/utils/safe-identifier";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import {
+  RESERVED_FUTURE_DEFAULT_ATTRIBUTE_KEY_VALIDATION_MESSAGE,
+  isReservedFutureDefaultAttributeKey,
+} from "@/modules/ee/contacts/lib/attribute-key-policy";
+import {
   createContactAttributeKey,
   deleteContactAttributeKey,
   getContactAttributeKeyById,
@@ -19,10 +23,15 @@ import {
 
 const ZCreateContactAttributeKeyAction = z.object({
   workspaceId: ZId,
-  key: z.string().refine((val) => isSafeIdentifier(val), {
-    error:
-      "Key must be a safe identifier: only lowercase letters, numbers, and underscores, and must start with a letter",
-  }),
+  key: z
+    .string()
+    .refine((val) => isSafeIdentifier(val), {
+      error:
+        "Key must be a safe identifier: only lowercase letters, numbers, and underscores, and must start with a letter",
+    })
+    .refine((val) => !isReservedFutureDefaultAttributeKey(val), {
+      error: RESERVED_FUTURE_DEFAULT_ATTRIBUTE_KEY_VALIDATION_MESSAGE,
+    }),
   name: z.string().optional(),
   description: z.string().optional(),
   dataType: ZContactAttributeDataType.optional(),

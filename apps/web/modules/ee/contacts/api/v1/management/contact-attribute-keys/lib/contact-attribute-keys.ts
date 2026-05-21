@@ -3,10 +3,14 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
-import { DatabaseError, OperationNotAllowedError } from "@formbricks/types/errors";
+import { DatabaseError, InvalidInputError, OperationNotAllowedError } from "@formbricks/types/errors";
 import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
 import { formatSnakeCaseToTitleCase } from "@/lib/utils/safe-identifier";
 import { TContactAttributeKeyCreateInput } from "@/modules/ee/contacts/api/v1/management/contact-attribute-keys/[contactAttributeKeyId]/types/contact-attribute-keys";
+import {
+  getReservedFutureDefaultAttributeKeyIssue,
+  isReservedFutureDefaultAttributeKey,
+} from "@/modules/ee/contacts/lib/attribute-key-policy";
 
 export const getContactAttributeKeys = reactCache(
   async (workspaceIds: string[]): Promise<TContactAttributeKey[]> => {
@@ -29,6 +33,10 @@ export const createContactAttributeKey = async (
   workspaceId: string,
   data: TContactAttributeKeyCreateInput
 ): Promise<TContactAttributeKey | null> => {
+  if (isReservedFutureDefaultAttributeKey(data.key)) {
+    throw new InvalidInputError(getReservedFutureDefaultAttributeKeyIssue([data.key]));
+  }
+
   const contactAttributeKeysCount = await prisma.contactAttributeKey.count({
     where: {
       workspaceId,
