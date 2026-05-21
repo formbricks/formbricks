@@ -471,16 +471,18 @@ paths:
             type: array
             items:
               type: string
-              pattern: "^[a-z]{2}-[A-Z]{2}$"
+              pattern: "^[a-z]{2}(-[A-Z][a-z]{3})?-[A-Z]{2}$"
             examples:
               - [de-DE]
               - [de-DE, pt-PT]
+              - [zh-Hans-CN]
           description: |
             Comma-separated locale code filter for translatable fields, for example `?lang=de-DE,pt-PT`.
             The response shape stays stable: translatable fields are always maps keyed by locale code, never
-            strings. Send canonical locale codes (`de-DE`, not `de`). For interoperability, the parser is
-            case-insensitive, accepts `_` or `-` separators, and normalizes accepted region-qualified tags
-            (`de_DE`, `DE-de` → `de-DE`). Language-only selectors (`de`) and aliases are not accepted.
+            strings. Send canonical locale codes (`de-DE`, `zh-Hans-CN`, not `de`). For interoperability, the
+            parser is case-insensitive, accepts `_` or `-` separators, and normalizes accepted region-qualified
+            tags (`de_DE`, `DE-de` → `de-DE`; `zh_hans_cn` → `zh-Hans-CN`). Language-only selectors (`de`) and
+            aliases are not accepted.
             Disabled-but-configured languages are readable in the management API so unfinished translations can
             be completed.
       responses:
