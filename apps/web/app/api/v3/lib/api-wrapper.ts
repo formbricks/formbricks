@@ -23,6 +23,15 @@ import type { TV3AuditLog, TV3Authentication } from "./types";
 
 type TV3Schema = z.ZodTypeAny;
 type MaybePromise<T> = T | Promise<T>;
+type InvalidParamCode = NonNullable<InvalidParam["code"]>;
+
+const INVALID_PARAM_CODES = new Set<InvalidParamCode>([
+  "dangling_reference",
+  "duplicate_identifier",
+  "forbidden_identifier",
+  "immutable_identifier",
+  "unsupported_field",
+]);
 
 export type TV3AuthMode = "none" | "session" | "apiKey" | "both";
 
@@ -70,11 +79,25 @@ function getUnauthenticatedDetail(authMode: TV3AuthMode): string {
   return "Not authenticated";
 }
 
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isInvalidParamCode(value: unknown): value is InvalidParamCode {
+  return typeof value === "string" && INVALID_PARAM_CODES.has(value as InvalidParamCode);
+}
+
 function formatZodIssues(error: z.ZodError, fallbackName: "body" | "query" | "params"): InvalidParam[] {
-  return error.issues.map((issue) => ({
-    name: issue.path.length > 0 ? issue.path.join(".") : fallbackName,
-    reason: issue.message,
-  }));
+  return error.issues.map((issue) => {
+    const params = "params" in issue && isPlainObject(issue.params) ? issue.params : {};
+    const code = isInvalidParamCode(params.code) ? params.code : undefined;
+
+    return {
+      name: issue.path.length > 0 ? issue.path.join(".") : fallbackName,
+      reason: issue.message,
+      ...(code ? { code } : {}),
+    };
+  });
 }
 
 function searchParamsToObject(searchParams: URLSearchParams): Record<string, string | string[]> {

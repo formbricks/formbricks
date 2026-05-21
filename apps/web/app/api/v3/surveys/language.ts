@@ -1,5 +1,13 @@
+import type { TSurvey as TInternalSurvey } from "@formbricks/types/surveys/types";
+
 type TV3SurveyLanguageInput = {
   code: string;
+  enabled: boolean;
+};
+
+export type TV3SurveyLanguage = {
+  code: string;
+  default: boolean;
   enabled: boolean;
 };
 
@@ -109,4 +117,33 @@ export function resolveV3SurveyLanguageCode(
     reason: "unknown",
     message: `Language '${normalizedRequestedLanguage}' is not configured for this survey`,
   };
+}
+
+export function getV3SurveyLanguages(
+  survey: Pick<TInternalSurvey, "languages">,
+  fallbackLanguage: string
+): TV3SurveyLanguage[] {
+  const languages = (survey.languages ?? []).map((surveyLanguage) => ({
+    code: normalizeV3SurveyLanguageTag(surveyLanguage.language.code) ?? surveyLanguage.language.code,
+    default: surveyLanguage.default,
+    enabled: surveyLanguage.enabled,
+  }));
+
+  if (languages.length === 0) {
+    return [{ code: fallbackLanguage, default: true, enabled: true }];
+  }
+
+  return languages;
+}
+
+export function getV3SurveyDefaultLanguage(
+  survey: Pick<TInternalSurvey, "languages">,
+  fallbackLanguage: string
+): string {
+  const defaultLanguageCode = survey.languages?.find((surveyLanguage) => surveyLanguage.default)?.language
+    .code;
+
+  return defaultLanguageCode
+    ? (normalizeV3SurveyLanguageTag(defaultLanguageCode) ?? defaultLanguageCode)
+    : fallbackLanguage;
 }

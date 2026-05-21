@@ -6,7 +6,23 @@
 const PROBLEM_JSON = "application/problem+json" as const;
 const CACHE_NO_STORE = "private, no-store" as const;
 
-export type InvalidParam = { name: string; reason: string };
+export type InvalidParamCode =
+  | "dangling_reference"
+  | "duplicate_identifier"
+  | "forbidden_identifier"
+  | "immutable_identifier"
+  | "unsupported_field";
+
+export type InvalidParam = {
+  name: string;
+  reason: string;
+  code?: InvalidParamCode;
+  identifier?: string;
+  referenceType?: "block" | "element" | "ending" | "hiddenField" | "variable" | "variableName" | "recall";
+  missingId?: string;
+  firstUsedAt?: string;
+  conflictsWith?: string;
+};
 
 export type ProblemExtension = {
   code?: string;
@@ -167,6 +183,31 @@ export function successResponse<T>(
     },
     {
       status: options?.status ?? 200,
+      headers,
+    }
+  );
+}
+
+export function createdResponse<T>(
+  data: T,
+  options: { location: string; requestId?: string; cache?: string }
+): Response {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "Cache-Control": options.cache ?? CACHE_NO_STORE,
+    Location: options.location,
+  };
+
+  if (options.requestId) {
+    headers["X-Request-Id"] = options.requestId;
+  }
+
+  return Response.json(
+    {
+      data,
+    },
+    {
+      status: 201,
       headers,
     }
   );
