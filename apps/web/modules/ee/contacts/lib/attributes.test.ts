@@ -221,6 +221,30 @@ describe("updateAttributes", () => {
     );
   });
 
+  test("skips creating reserved future default attributes", async () => {
+    vi.mocked(getContactAttributeKeys).mockResolvedValue([attributeKeys[1]]);
+    vi.mocked(getContactAttributes).mockResolvedValue({ email: "jane@example.com" });
+    vi.mocked(hasEmailAttribute).mockResolvedValue(false);
+    vi.mocked(hasUserIdAttribute).mockResolvedValue(false);
+    vi.mocked(prisma.$transaction).mockResolvedValue(undefined);
+    vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 0 });
+
+    const result = await updateAttributes(contactId, userId, workspaceId, {
+      email: "john@example.com",
+      user_id: "future-safe",
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.errors).toContainEqual({
+      code: "reserved_attribute_keys",
+      params: {
+        issue:
+          "Reserved attribute key(s): user_id. These keys are reserved for the v5.1 safe-identifier default attribute migration and cannot be created as custom attributes.",
+      },
+    });
+    expect(prisma.contactAttributeKey.create).not.toHaveBeenCalled();
+  });
+
   test("returns success with only email attribute", async () => {
     vi.mocked(getContactAttributeKeys).mockResolvedValue([attributeKeys[1]]); // email key
     vi.mocked(getContactAttributes).mockResolvedValue({ email: "existing@example.com" });

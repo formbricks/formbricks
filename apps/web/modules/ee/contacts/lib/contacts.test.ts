@@ -537,6 +537,22 @@ describe("Contacts Lib", () => {
       ).rejects.toThrow(ValidationError);
     });
 
+    test("throws ValidationError when CSV creates reserved future default keys", async () => {
+      const reservedCsvData = [{ email: "john@example.com", user_id: "user-1" }];
+      const attributeMap = { email: "email", user_id: "user_id" };
+
+      vi.mocked(prisma.contact.findMany).mockResolvedValueOnce([]);
+      vi.mocked(prisma.contactAttribute.findMany).mockResolvedValue([]);
+      vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValueOnce([
+        { key: "email", id: "key-1", dataType: "string" },
+      ] as any);
+
+      await expect(
+        createContactsFromCSV(reservedCsvData as any, mockWorkspaceId, "skip", attributeMap)
+      ).rejects.toThrow(ValidationError);
+      expect(prisma.contactAttributeKey.createMany).not.toHaveBeenCalled();
+    });
+
     test("throws DatabaseError on Prisma error", async () => {
       const attributeMap = { email: "email" };
       const prismaError = new Prisma.PrismaClientKnownRequestError("DB Error", {

@@ -147,6 +147,13 @@ describe("createContactAttributeKey", () => {
     await expect(createContactAttributeKey({ workspaceId, key: "email" })).rejects.toThrow(InvalidInputError);
   });
 
+  test("throws InvalidInputError when key is reserved for future defaults", async () => {
+    await expect(createContactAttributeKey({ workspaceId, key: "user_id" })).rejects.toThrow(
+      InvalidInputError
+    );
+    expect(prisma.contactAttributeKey.create).not.toHaveBeenCalled();
+  });
+
   test("rethrows unknown prisma error codes", async () => {
     const err = Object.assign(new Error("Some prisma error"), { code: PrismaErrorType.RecordDoesNotExist });
     vi.mocked(prisma.contactAttributeKey.create).mockRejectedValue(err);
