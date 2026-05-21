@@ -2050,7 +2050,7 @@ components:
       description: |
         Field-level validation error. `name` and `reason` are always intended for humans.
         Optional machine-readable fields are included when the API can identify the semantic error,
-        especially for survey identifier/reference validation used by MCP and agent clients.
+        especially for survey locale, identifier, and reference validation used by MCP and agent clients.
       required: [name, reason]
       properties:
         name:
@@ -2064,8 +2064,10 @@ components:
           enum:
             - dangling_reference
             - duplicate_identifier
+            - duplicate_locale
             - forbidden_identifier
             - immutable_identifier
+            - invalid_locale
             - invalid_reference
             - missing_required_field
             - missing_translation

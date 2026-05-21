@@ -13,8 +13,8 @@ import type { TRateLimitConfig } from "@/modules/core/rate-limit/types/rate-limi
 import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
 import { TAuditAction, TAuditTarget } from "@/modules/ee/audit-logs/types/audit-log";
 import {
-  INVALID_PARAM_CODES,
   type InvalidParam,
+  isInvalidParamCode,
   problemBadRequest,
   problemInternalError,
   problemTooManyRequests,
@@ -24,9 +24,6 @@ import type { TV3AuditLog, TV3Authentication } from "./types";
 
 type TV3Schema = z.ZodTypeAny;
 type MaybePromise<T> = T | Promise<T>;
-type InvalidParamCode = NonNullable<InvalidParam["code"]>;
-
-const INVALID_PARAM_CODE_SET = new Set<InvalidParamCode>(INVALID_PARAM_CODES);
 
 export type TV3AuthMode = "none" | "session" | "apiKey" | "both";
 
@@ -76,10 +73,6 @@ function getUnauthenticatedDetail(authMode: TV3AuthMode): string {
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function isInvalidParamCode(value: unknown): value is InvalidParamCode {
-  return typeof value === "string" && INVALID_PARAM_CODE_SET.has(value as InvalidParamCode);
 }
 
 function formatZodIssues(error: z.ZodError, fallbackName: "body" | "query" | "params"): InvalidParam[] {

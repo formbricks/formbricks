@@ -110,7 +110,17 @@ describe("ZV3CreateSurveyBody", () => {
     });
 
     expect(result.success).toBe(false);
-    expect(result.error?.issues.map((issue) => issue.path.join("."))).toContain("defaultLanguage");
+    if (!result.success) {
+      expect(formatV3ZodInvalidParams(result.error, "body")).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: "defaultLanguage",
+            reason: "Language 'not a locale' is not a valid locale code",
+            code: "invalid_locale",
+          }),
+        ])
+      );
+    }
   });
 
   test("rejects duplicate locale keys after normalization", () => {
@@ -130,9 +140,17 @@ describe("ZV3CreateSurveyBody", () => {
     });
 
     expect(result.success).toBe(false);
-    expect(result.error?.issues.map((issue) => issue.path.join("."))).toContain(
-      "blocks.0.elements.0.headline.en_us"
-    );
+    if (!result.success) {
+      expect(formatV3ZodInvalidParams(result.error, "body")).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: "blocks.0.elements.0.headline.en_us",
+            reason: "Language key 'en_us' duplicates 'en-US' after locale normalization",
+            code: "duplicate_locale",
+          }),
+        ])
+      );
+    }
   });
 
   test("rejects unsupported top-level fields instead of silently ignoring them", () => {
@@ -359,6 +377,17 @@ describe("ZV3CreateSurveyBody", () => {
     });
 
     expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(formatV3ZodInvalidParams(result.error, "body")).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: "blocks.0.elements.0.headline.not a locale",
+            reason: "Language key 'not a locale' is not a valid locale code",
+            code: "invalid_locale",
+          }),
+        ])
+      );
+    }
   });
 
   test("reports missing required element fields before shared element union errors", () => {
@@ -449,9 +478,41 @@ describe("ZV3CreateSurveyBody", () => {
     });
 
     expect(result.success).toBe(false);
-    expect(result.error?.issues.map((issue) => issue.path.join("."))).toEqual(
-      expect.arrayContaining(["languages.0.enabled", "languages.1.code"])
-    );
+    if (!result.success) {
+      expect(formatV3ZodInvalidParams(result.error, "body")).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: "languages.0.enabled",
+            reason: "The default language cannot be disabled",
+          }),
+          expect.objectContaining({
+            name: "languages.1.code",
+            reason: "Language 'en-US' is duplicated",
+            code: "duplicate_locale",
+          }),
+        ])
+      );
+    }
+  });
+
+  test("reports invalid language entries with machine-readable locale metadata", () => {
+    const result = ZV3CreateSurveyBody.safeParse({
+      ...validCreateBody,
+      languages: [{ code: "de", enabled: true }],
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(formatV3ZodInvalidParams(result.error, "body")).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: "languages.0.code",
+            reason: "Language 'de' is not a valid locale code",
+            code: "invalid_locale",
+          }),
+        ])
+      );
+    }
   });
 });
 

@@ -9,7 +9,7 @@ import {
   ZSurveyVariables,
   ZSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
-import type { InvalidParam } from "@/app/api/v3/lib/response";
+import { type InvalidParam, isInvalidParamCode } from "@/app/api/v3/lib/response";
 import { normalizeV3SurveyLanguageTag } from "./language";
 
 export const DEFAULT_V3_SURVEY_LANGUAGE = "en-US";
@@ -25,6 +25,7 @@ const ZV3SurveyLanguageTag = z
       ctx.addIssue({
         code: "custom",
         message: `Language '${value}' is not a valid locale code`,
+        params: { code: "invalid_locale" },
       });
       return z.NEVER;
     }
@@ -623,6 +624,7 @@ function validateTranslatableField(
       issues.push({
         name: `${path}.${key}`,
         reason: `Language key '${key}' is not a valid locale code`,
+        code: "invalid_locale",
       });
       continue;
     }
@@ -633,6 +635,7 @@ function validateTranslatableField(
       issues.push({
         name: `${path}.${key}`,
         reason: `Language key '${key}' duplicates '${previousKey}' after locale normalization`,
+        code: "duplicate_locale",
       });
       continue;
     }
@@ -925,6 +928,7 @@ function addLanguageIssues(
       ctx.addIssue({
         code: "custom",
         message: `Language '${language.code}' is duplicated`,
+        params: { code: "duplicate_locale" },
         path: ["languages", index, "code"],
       });
     }
@@ -1070,13 +1074,12 @@ export const ZV3EmptyQuery = z.object({}).strict();
 export function formatV3ZodInvalidParams(error: z.ZodError, fallbackName: string): InvalidParam[] {
   return error.issues.map((issue) => {
     const params = "params" in issue && isPlainObject(issue.params) ? issue.params : {};
+    const code = isInvalidParamCode(params.code) ? params.code : undefined;
 
     return {
       name: issue.path.length > 0 ? issue.path.join(".") : fallbackName,
       reason: issue.message,
-      ...(params.code === "missing_required_field" || params.code === "unsupported_field"
-        ? { code: params.code }
-        : {}),
+      ...(code ? { code } : {}),
     };
   });
 }
