@@ -18,8 +18,8 @@ Make sure Docker and Docker Compose are installed on your system. These are usua
 <Info>
   Starting with Formbricks v5, the production Docker Compose stack includes Formbricks Hub and Cube as part of
   the baseline. Generate `HUB_API_KEY` and `CUBEJS_API_SECRET` during setup, keep `HUB_API_URL` at its
-  internal default unless Hub runs elsewhere, and use the [migration guide](/self-hosting/advanced/migration#v5)
-  when upgrading an existing 4.x instance.
+  internal default unless Hub runs elsewhere, and use the [migration
+  guide](/self-hosting/advanced/migration#v5) when upgrading an existing 4.x instance.
 </Info>
 
 ## Start
@@ -55,6 +55,16 @@ Make sure Docker and Docker Compose are installed on your system. These are usua
    CUBEJS_JWT_AUDIENCE=formbricks-cube
    EOF
    ```
+
+1. **Validate the Docker Compose Configuration**
+
+   Confirm Docker Compose can resolve the required Hub and Cube variables before starting the stack:
+
+   ```bash
+   docker compose config >/dev/null
+   ```
+
+   This command fails if `HUB_API_KEY` or `CUBEJS_API_SECRET` is missing or empty in `.env`.
 
 1. **Generate NextAuth Secret**
 
@@ -122,8 +132,8 @@ Make sure Docker and Docker Compose are installed on your system. These are usua
 
    <Info>
      The bundled production stack already sets <code>HUB_API_URL</code> to <code>http://hub:8080</code>. Only
-     change that value if your Formbricks app needs to reach Hub at a different address. If your deployment also
-     resolves Compose variables from a shell environment or <code>.env</code> file, keep the same
+     change that value if your Formbricks app needs to reach Hub at a different address. If your deployment
+     also resolves Compose variables from a shell environment or <code>.env</code> file, keep the same
      <code>HUB_API_KEY</code> available there as well.
    </Info>
 
@@ -143,8 +153,8 @@ Make sure Docker and Docker Compose are installed on your system. These are usua
    Once the setup is running, open [**http://localhost:3000**](http://localhost:3000) in your browser to access Formbricks. The first time you visit, you'll see a setup wizard. Follow the steps to create your first user and start using Formbricks.
 
 <Note>
-  The bundled Docker stack keeps Formbricks Hub and Cube internal to the compose network. The app reaches
-  them through `http://hub:8080` and `http://cube:4000`.
+  The bundled Docker stack keeps Formbricks Hub and Cube internal to the compose network. The app reaches them
+  through `http://hub:8080` and `http://cube:4000`.
 </Note>
 
 <Info>
