@@ -12,8 +12,14 @@ import { type TSurveyElement, type TSurveyElementChoice } from "@formbricks/type
 import { type TShuffleOption } from "@formbricks/types/surveys/types";
 import { ApiResponse, ApiSuccessResponse } from "@/types/api";
 
-export const cn = (...classes: (string | undefined)[]) => {
-  return twMerge(classes.filter(Boolean).join(" "));
+type ClassValue = string | boolean | null | undefined | ClassValue[];
+export const cn = (...classes: ClassValue[]): string => {
+  return twMerge(
+    classes
+      .map((c) => (Array.isArray(c) ? cn(...c) : c))
+      .filter((c): c is string => typeof c === "string" && c.length > 0)
+      .join(" ")
+  );
 };
 
 export const getSecureRandom = (): number => {
