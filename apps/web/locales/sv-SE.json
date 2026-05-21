@@ -2612,8 +2612,6 @@
         "workspaces_being_added": "Arbetsytor som beviljas åtkomst"
       },
       "general": {
-        "ai_data_analysis_enabled": "Dataförbättring & analys (AI)",
-        "ai_data_analysis_enabled_description": "AI för att få ut mer av din data, skapa dashboards, diagram, rapporter och mer. Använder din upplevelsedata.",
         "ai_enabled": "Formbricks AI",
         "ai_enabled_description": "Hantera AI-drivna funktioner för den här organisationen.",
         "ai_instance_not_configured": "AI konfigureras på instansnivå via miljövariabler. Be din administratör att ange AI_PROVIDER, autentiseringsuppgifterna för den leverantören och den tillhörande modellistan innan AI-funktioner aktiveras.",
@@ -2820,7 +2818,6 @@
         "adjust_survey_closed_message": "Justera meddelande för 'Enkät stängd'",
         "adjust_survey_closed_message_description": "Ändra meddelandet besökare ser när enkäten är stängd.",
         "adjust_theme_in_look_and_feel_settings": "Justera temat i inställningarna för <lookFeelLink>Utseende & Känsla</lookFeelLink>.",
-        "ai_data_analysis_disabled": "AI-dataanalys är inaktiverad för den här organisationen.",
         "ai_features_not_enabled": "AI-funktioner är inte aktiverade för den här organisationen.",
         "ai_instance_not_configured": "AI är inte konfigurerad. Kontakta din administratör.",
         "ai_smart_tools_disabled": "AI smarta verktyg är inaktiverade för den här organisationen.",

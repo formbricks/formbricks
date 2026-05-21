@@ -15,7 +15,6 @@ const ZEnterpriseLicenseFeatures = z.object({
   saml: z.boolean(),
   spamProtection: z.boolean(),
   aiSmartTools: z.boolean(),
-  aiDataAnalysis: z.boolean(),
   auditLogs: z.boolean(),
   accessControl: z.boolean(),
   quotas: z.boolean(),

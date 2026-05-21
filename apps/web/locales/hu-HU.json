@@ -2612,8 +2612,6 @@
         "workspaces_being_added": "Hozzáférést kapó munkaterületek"
       },
       "general": {
-        "ai_data_analysis_enabled": "Adatgazdagítás és elemzés (AI)",
-        "ai_data_analysis_enabled_description": "AI segítségével többet hozhat ki az adataiból, irányítópultokat, diagramokat, jelentéseket és egyebeket állíthat be. Hozzáfér az élményekhez kapcsolódó adatokhoz.",
         "ai_enabled": "Formbricks AI",
         "ai_enabled_description": "AI-alapú funkciók kezelése ehhez a szervezethez.",
         "ai_instance_not_configured": "Az MI példányszinten, környezeti változókkal van konfigurálva. Kérd meg a rendszergazdát, hogy állítsa be az AI_PROVIDER értékét, a szolgáltató hitelesítő adatait és a megfelelő modelllistát, mielőtt engedélyezné az MI-funkciókat.",
@@ -2820,7 +2818,6 @@
         "adjust_survey_closed_message": "A „Kérdőív lezárva” üzenet módosítása",
         "adjust_survey_closed_message_description": "Annak az üzenetnek a megváltoztatása, amelyet a látogatók akkor látnak, amikor a kérdőív lezárul.",
         "adjust_theme_in_look_and_feel_settings": "A témát a <lookFeelLink>Megjelenés és Élmény</lookFeelLink> beállításokban módosíthatja.",
-        "ai_data_analysis_disabled": "Az AI adatelemzés le van tiltva ezen szervezet számára.",
         "ai_features_not_enabled": "Az AI funkciók nincsenek engedélyezve ezen szervezet számára.",
         "ai_instance_not_configured": "Az AI nincs konfigurálva. Kérjük, forduljon a rendszergazdájához.",
         "ai_smart_tools_disabled": "Az AI intelligens eszközök le vannak tiltva ezen szervezet számára.",
