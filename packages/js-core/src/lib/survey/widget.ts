@@ -239,7 +239,6 @@ const waitForSurveysGlobal = (): Promise<TFormbricksSurveys> => {
     const startTime = Date.now();
 
     const check = (): void => {
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Runtime check for surveys package availability
       if (globalThis.window.formbricksSurveys) {
         const storedNonce = globalThis.window.__formbricksNonce;
         if (storedNonce) {
@@ -262,7 +261,6 @@ const waitForSurveysGlobal = (): Promise<TFormbricksSurveys> => {
 };
 
 const loadFormbricksSurveysExternally = (): Promise<TFormbricksSurveys> => {
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Runtime check for surveys package availability
   if (globalThis.window.formbricksSurveys) {
     return Promise.resolve(globalThis.window.formbricksSurveys);
   }
@@ -300,7 +298,6 @@ let isPreloaded = false;
 
 export const preloadSurveysScript = (appUrl: string): void => {
   // Don't preload if already loaded or already preloading
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Runtime check for surveys package availability
   if (globalThis.window.formbricksSurveys) return;
   if (isPreloaded) return;
 
