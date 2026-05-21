@@ -2612,8 +2612,6 @@
         "workspaces_being_added": "Werkruimtes die toegang krijgen"
       },
       "general": {
-        "ai_data_analysis_enabled": "Dataverrijking & analyse (AI)",
-        "ai_data_analysis_enabled_description": "AI om meer uit je data te halen, dashboards op te zetten, grafieken, rapporten en meer. Raakt je ervaringsdata aan.",
         "ai_enabled": "Formbricks AI",
         "ai_enabled_description": "Beheer AI-functies voor deze organisatie.",
         "ai_instance_not_configured": "AI wordt op instantieniveau geconfigureerd via omgevingsvariabelen. Vraag je beheerder om AI_PROVIDER, de inloggegevens voor die provider en de bijbehorende modellenlijst in te stellen voordat AI-functies worden ingeschakeld.",
@@ -2820,7 +2818,6 @@
         "adjust_survey_closed_message": "Pas het bericht 'Enquête gesloten' aan",
         "adjust_survey_closed_message_description": "Wijzig het bericht dat bezoekers zien wanneer de enquête wordt gesloten.",
         "adjust_theme_in_look_and_feel_settings": "Pas het thema aan in de <lookFeelLink>Look & Feel</lookFeelLink> instellingen.",
-        "ai_data_analysis_disabled": "AI-gegevensanalyse is uitgeschakeld voor deze organisatie.",
         "ai_features_not_enabled": "AI-functies zijn niet ingeschakeld voor deze organisatie.",
         "ai_instance_not_configured": "AI is niet geconfigureerd. Neem contact op met je beheerder.",
         "ai_smart_tools_disabled": "AI slimme tools zijn uitgeschakeld voor deze organisatie.",

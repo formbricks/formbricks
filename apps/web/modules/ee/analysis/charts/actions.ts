@@ -363,10 +363,7 @@ export const generateAIChartAction = authenticatedActionClient
 
       await checkDashboardsEnabled(organizationId);
 
-      // Verify AI is entitled, enabled at org level, and configured at instance level.
-      // Uses "smartTools" (not "dataAnalysis") because chart generation only sends the
-      // Cube schema context and the user's prompt to the LLM — no response PII.
-      await assertOrganizationAIConfigured(organizationId, "smartTools");
+      await assertOrganizationAIConfigured(organizationId);
 
       const { feedbackDirectoryId } = await checkFeedbackDirectoryAccess({
         feedbackDirectoryId: parsedInput.feedbackDirectoryId,

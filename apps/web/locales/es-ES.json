@@ -2612,8 +2612,6 @@
         "workspaces_being_added": "Espacios de trabajo a los que se concede acceso"
       },
       "general": {
-        "ai_data_analysis_enabled": "Enriquecimiento y análisis de datos (IA)",
-        "ai_data_analysis_enabled_description": "IA para sacar más partido a tus datos, configurar paneles, gráficos, informes y más. Accede a los datos de experiencia.",
         "ai_enabled": "IA de Formbricks",
         "ai_enabled_description": "Gestiona las funciones impulsadas por IA para esta organización.",
         "ai_instance_not_configured": "La IA se configura a nivel de instancia mediante variables de entorno. Pide a tu administrador que configure AI_PROVIDER, las credenciales de ese proveedor y la lista de modelos correspondiente antes de habilitar las funciones de IA.",
@@ -2820,7 +2818,6 @@
         "adjust_survey_closed_message": "Ajustar mensaje 'Encuesta cerrada'",
         "adjust_survey_closed_message_description": "Cambiar el mensaje que ven los visitantes cuando la encuesta está cerrada.",
         "adjust_theme_in_look_and_feel_settings": "Ajusta el tema en la configuración de <lookFeelLink>Aspecto</lookFeelLink>.",
-        "ai_data_analysis_disabled": "El análisis de datos con IA está deshabilitado para esta organización.",
         "ai_features_not_enabled": "Las funciones de IA no están habilitadas para esta organización.",
         "ai_instance_not_configured": "La IA no está configurada. Contacta con tu administrador.",
         "ai_smart_tools_disabled": "Las herramientas inteligentes de IA están deshabilitadas para esta organización.",
