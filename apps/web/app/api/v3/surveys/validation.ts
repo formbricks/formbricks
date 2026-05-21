@@ -119,12 +119,7 @@ function getV3SurveyLanguageInvalidParams(document: TV3SurveyDocument): InvalidP
 
 export function validateV3SurveyDocument(document: TV3SurveyDocument): TV3SurveyDocumentValidationResult {
   const languageInvalidParams = getV3SurveyLanguageInvalidParams(document);
-  if (languageInvalidParams.length > 0) {
-    return {
-      valid: false,
-      invalidParams: languageInvalidParams,
-    };
-  }
+  const invalidParams = [...languageInvalidParams];
 
   const referenceValidation = validateV3SurveyReferences({
     blocks: document.blocks,
@@ -136,9 +131,13 @@ export function validateV3SurveyDocument(document: TV3SurveyDocument): TV3Survey
   });
 
   if (!referenceValidation.ok) {
+    invalidParams.push(...referenceValidation.invalidParams);
+  }
+
+  if (invalidParams.length > 0) {
     return {
       valid: false,
-      invalidParams: referenceValidation.invalidParams,
+      invalidParams,
     };
   }
 

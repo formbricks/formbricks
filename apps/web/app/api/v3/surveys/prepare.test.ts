@@ -155,6 +155,35 @@ describe("v3 survey preparation", () => {
     }
   });
 
+  test("returns language and reference validation issues together", () => {
+    const preparation = prepareV3SurveyCreateInput({
+      ...rawCreateBody,
+      languages: [{ code: "de", enabled: true }],
+      blocks: [
+        {
+          ...rawCreateBody.blocks[0],
+          logicFallback: "clmiss12345678901234567890",
+        },
+      ],
+    });
+
+    expect(preparation.ok).toBe(false);
+    if (!preparation.ok) {
+      expect(preparation.validation.invalidParams).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: "blocks.0.elements.0.headline",
+            code: "missing_translation",
+          }),
+          expect.objectContaining({
+            name: "blocks.0.logicFallback",
+            code: "dangling_reference",
+          }),
+        ])
+      );
+    }
+  });
+
   test("applies a patch over the current document before validating references", () => {
     const preparation = prepareV3SurveyPatchInput(survey, {
       blocks: [

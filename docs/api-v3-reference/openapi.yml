@@ -2063,6 +2063,7 @@ components:
             - duplicate_identifier
             - forbidden_identifier
             - immutable_identifier
+            - missing_translation
             - unsupported_field
           description: Machine-readable validation category, when available.
         identifier:
@@ -2070,7 +2071,7 @@ components:
           description: Identifier involved in the validation failure, when available.
         referenceType:
           type: string
-          enum: [block, element, ending, hiddenField, variable, variableName, recall]
+          enum: [block, element, ending, hiddenField, language, variable, variableName, recall]
           description: Identifier namespace involved in the validation failure.
         missingId:
           type: string

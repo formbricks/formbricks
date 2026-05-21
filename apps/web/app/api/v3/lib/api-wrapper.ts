@@ -30,6 +30,7 @@ const INVALID_PARAM_CODES = new Set<InvalidParamCode>([
   "duplicate_identifier",
   "forbidden_identifier",
   "immutable_identifier",
+  "missing_translation",
   "unsupported_field",
 ]);
 
