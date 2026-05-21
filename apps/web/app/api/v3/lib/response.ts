@@ -11,6 +11,7 @@ export const INVALID_PARAM_CODES = [
   "duplicate_identifier",
   "forbidden_identifier",
   "immutable_identifier",
+  "invalid_reference",
   "missing_required_field",
   "missing_translation",
   "unsupported_field",

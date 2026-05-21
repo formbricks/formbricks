@@ -106,7 +106,7 @@ describe("v3 survey preparation", () => {
   test("rejects configured languages that are missing from translatable survey content", () => {
     const preparation = prepareV3SurveyCreateInput({
       ...rawCreateBody,
-      languages: [{ code: "de", enabled: true }],
+      languages: [{ code: "pt-PT", enabled: true }],
     });
 
     expect(preparation.ok).toBe(false);
@@ -116,7 +116,7 @@ describe("v3 survey preparation", () => {
           expect.objectContaining({
             name: "blocks.0.elements.0.headline",
             code: "missing_translation",
-            identifier: "de",
+            identifier: "pt-PT",
             referenceType: "language",
           }),
         ])
@@ -158,7 +158,7 @@ describe("v3 survey preparation", () => {
   test("returns language and reference validation issues together", () => {
     const preparation = prepareV3SurveyCreateInput({
       ...rawCreateBody,
-      languages: [{ code: "de", enabled: true }],
+      languages: [{ code: "pt-PT", enabled: true }],
       blocks: [
         {
           ...rawCreateBody.blocks[0],

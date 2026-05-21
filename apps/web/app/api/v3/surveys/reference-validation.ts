@@ -313,6 +313,26 @@ export function getV3SurveyReferenceInvalidParams(input: TReferenceValidationInp
   );
 
   input.blocks.forEach((block, blockIndex) => {
+    if (block.logicFallback && !block.logic?.length) {
+      issues.push({
+        name: `blocks.${blockIndex}.logicFallback`,
+        reason: "logicFallback requires at least one logic rule on the same block",
+        code: "invalid_reference",
+        identifier: block.logicFallback,
+        referenceType: "block",
+      });
+    }
+
+    if (block.logicFallback && block.logicFallback === block.id) {
+      issues.push({
+        name: `blocks.${blockIndex}.logicFallback`,
+        reason: "logicFallback cannot target the same block",
+        code: "invalid_reference",
+        identifier: block.logicFallback,
+        referenceType: "block",
+      });
+    }
+
     if (block.logicFallback && !navigationTargetIds.has(block.logicFallback)) {
       issues.push({
         name: `blocks.${blockIndex}.logicFallback`,

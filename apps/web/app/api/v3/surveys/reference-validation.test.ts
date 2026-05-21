@@ -213,6 +213,71 @@ describe("validateV3SurveyReferences", () => {
     }
   });
 
+  test("rejects logicFallback without logic before persistence", () => {
+    const survey = {
+      ...validSurvey,
+      blocks: [
+        {
+          ...validSurvey.blocks[0],
+          logic: undefined,
+          logicFallback: validSurvey.endings[0].id,
+        },
+      ],
+    };
+
+    const result = validateV3SurveyReferences({
+      blocks: survey.blocks,
+      endings: survey.endings,
+      hiddenFields: survey.hiddenFields,
+      variables: survey.variables,
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.invalidParams).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: "blocks.0.logicFallback",
+            code: "invalid_reference",
+            reason: "logicFallback requires at least one logic rule on the same block",
+          }),
+        ])
+      );
+    }
+  });
+
+  test("rejects logicFallback targeting the same block", () => {
+    const survey = {
+      ...validSurvey,
+      blocks: [
+        {
+          ...validSurvey.blocks[0],
+          logicFallback: validSurvey.blocks[0].id,
+        },
+      ],
+    };
+
+    const result = validateV3SurveyReferences({
+      blocks: survey.blocks,
+      endings: survey.endings,
+      hiddenFields: survey.hiddenFields,
+      variables: survey.variables,
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.invalidParams).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: "blocks.0.logicFallback",
+            code: "invalid_reference",
+            reason: "logicFallback cannot target the same block",
+          }),
+        ])
+      );
+    }
+  });
+
   test("reports dangling recall references with actionable paths", () => {
     const survey = {
       ...validSurvey,
