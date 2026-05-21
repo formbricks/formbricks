@@ -191,6 +191,36 @@ describe("serializeV3SurveyResource", () => {
     });
   });
 
+  test("filters script-region locale selectors while preserving maps", () => {
+    const survey = {
+      ...baseSurvey,
+      languages: [
+        ...baseSurvey.languages,
+        {
+          default: false,
+          enabled: true,
+          language: {
+            id: "lang_4",
+            code: "zh-Hans-CN",
+            alias: null,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        },
+      ],
+      welcomeCard: {
+        enabled: true,
+        headline: { default: "Welcome", zh_hans_cn: "欢迎" },
+      },
+    } as unknown as TSurvey;
+
+    const resource = serializeV3SurveyResource(survey, { lang: ["ZH_hans_cn"] });
+
+    expect(resource).toMatchObject({
+      welcomeCard: { headline: { "zh-Hans-CN": "欢迎" } },
+    });
+  });
+
   test("filters disabled configured languages for management reads", () => {
     const resource = serializeV3SurveyResource(baseSurvey, { lang: ["fr-FR"] });
 

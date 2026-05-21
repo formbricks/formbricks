@@ -11,7 +11,7 @@ type TResolveV3SurveyLanguageCodeResult =
 
 type TParseV3SurveyLanguageQueryResult = { ok: true; languages: string[] } | { ok: false; message: string };
 
-const V3_SURVEY_LOCALE_CODE_REGEX = /^[a-z]{2}-[A-Z]{2}$/;
+const V3_SURVEY_LOCALE_CODE_REGEX = /^[a-z]{2}(?:-[A-Z][a-z]{3})?-[A-Z]{2}$/;
 
 export function normalizeV3SurveyLanguageTag(value: string): string | null {
   const normalizedSeparators = value.trim().replaceAll("_", "-");

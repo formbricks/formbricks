@@ -15,6 +15,8 @@ describe("normalizeV3SurveyLanguageTag", () => {
   test.each([
     ["EN_us", "en-US"],
     ["en-us", "en-US"],
+    ["zh_hans_cn", "zh-Hans-CN"],
+    ["ZH-hant-tw", "zh-Hant-TW"],
   ])("normalizes %s to %s", (input, expected) => {
     expect(normalizeV3SurveyLanguageTag(input)).toBe(expected);
   });
@@ -27,16 +29,16 @@ describe("normalizeV3SurveyLanguageTag", () => {
     expect(normalizeV3SurveyLanguageTag("de")).toBeNull();
   });
 
-  test("returns null for script-only or script-region tags", () => {
-    expect(normalizeV3SurveyLanguageTag("zh_hans_cn")).toBeNull();
+  test("returns null for script-only tags without a region", () => {
+    expect(normalizeV3SurveyLanguageTag("zh_Hans")).toBeNull();
   });
 });
 
 describe("parseV3SurveyLanguageQuery", () => {
   test("parses comma-separated language selectors", () => {
-    expect(parseV3SurveyLanguageQuery("de-DE, pt_PT, EN_us")).toEqual({
+    expect(parseV3SurveyLanguageQuery("de-DE, pt_PT, EN_us, zh_hans_cn")).toEqual({
       ok: true,
-      languages: ["de-DE", "pt-PT", "en-US"],
+      languages: ["de-DE", "pt-PT", "en-US", "zh-Hans-CN"],
     });
   });
 
@@ -81,16 +83,23 @@ describe("resolveV3SurveyLanguageCode", () => {
     expect(resolveV3SurveyLanguageCode("DE_de", languages)).toEqual({ ok: true, code: "de-DE" });
   });
 
+  test("matches configured script-region languages case-insensitively and normalizes underscores", () => {
+    expect(resolveV3SurveyLanguageCode("ZH_hans_cn", [{ code: "zh-Hans-CN", enabled: true }])).toEqual({
+      ok: true,
+      code: "zh-Hans-CN",
+    });
+  });
+
   test("resolves disabled configured languages for management reads", () => {
     expect(resolveV3SurveyLanguageCode("fr-FR", languages)).toEqual({ ok: true, code: "fr-FR" });
   });
 
   test("returns unknown for languages not configured on the survey", () => {
-    expect(resolveV3SurveyLanguageCode("es-ES", languages)).toEqual({
+    expect(resolveV3SurveyLanguageCode("ZH_hant_tw", languages)).toEqual({
       ok: false,
       reason: "unknown",
-      normalizedCode: "es-ES",
-      message: "Language 'es-ES' is not configured for this survey",
+      normalizedCode: "zh-Hant-TW",
+      message: "Language 'zh-Hant-TW' is not configured for this survey",
     });
   });
 
