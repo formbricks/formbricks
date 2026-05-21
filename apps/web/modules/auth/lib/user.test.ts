@@ -54,7 +54,7 @@ describe("User Management", () => {
     });
 
     test("creates a user with an Azure AD enterprise display name", async () => {
-      const enterpriseDisplayName = "Oberle,Julian (IT INF) BIG-DE-I";
+      const enterpriseDisplayName = "Lastname,Firstname (DEPT) COMPANY-CITY";
       vi.mocked(prisma.user.create).mockResolvedValueOnce({
         ...mockPrismaUser,
         name: enterpriseDisplayName,
