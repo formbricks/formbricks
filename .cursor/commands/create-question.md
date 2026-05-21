@@ -53,7 +53,7 @@ function {QuestionType}({
 }: {QuestionType}Props): React.JSX.Element {
     // Ensure value is always the correct type (handle undefined/null)
     const currentValue = value ?? {defaultValue};
-    
+
     // Detect text direction from content
     const detectedDir = useTextDirection({
         dir,
@@ -63,11 +63,11 @@ function {QuestionType}({
     return (
         <div className="w-full space-y-4" id={elementId} dir={detectedDir}>
             {/* Headline */}
-            <ElementHeader 
-                headline={headline} 
-                description={description} 
-                required={required} 
-                htmlFor={inputId} 
+            <ElementHeader
+                headline={headline}
+                description={description}
+                required={required}
+                htmlFor={inputId}
             />
 
             {/* Question-specific controls */}

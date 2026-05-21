@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "lint": "eslint . --config .eslintrc.cjs --ext .ts,.tsx --report-unused-disable-directives --max-warnings 0",
+    "typecheck": "tsc --noEmit",
     "preview": "vite preview",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",

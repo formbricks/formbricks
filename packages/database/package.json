@@ -46,6 +46,7 @@
     "generate": "prisma generate",
     "lint": "eslint ./src --fix",
     "generate-data-migration": "tsx ./src/scripts/generate-data-migration.ts",
+    "typecheck": "tsc --noEmit",
     "create-migration": "dotenv -e ../../.env -- tsx ./src/scripts/create-migration.ts"
   },
   "dependencies": {

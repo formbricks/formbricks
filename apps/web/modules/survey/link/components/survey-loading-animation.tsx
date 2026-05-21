@@ -123,11 +123,7 @@ export const SurveyLoadingAnimation = ({
           isReadyToTransition ? "animate-surveyExit" : "animate-surveyLoading"
         )}>
         {isBrandingEnabled && (
-          <Image
-            src={Logo as string}
-            alt="Logo"
-            className={cn("w-32 transition-all duration-1000 md:w-40")}
-          />
+          <Image src={Logo} alt="Logo" className={cn("w-32 transition-all duration-1000 md:w-40")} />
         )}
         <LoadingSpinner />
       </div>

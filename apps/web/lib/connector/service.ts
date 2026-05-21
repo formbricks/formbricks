@@ -1,5 +1,6 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
+import type { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
@@ -212,7 +213,7 @@ export const deleteConnector = async (connectorId: string, workspaceId: string):
 
 // -- Composite functions --
 
-const mapUniqueConstraintError = (error: Prisma.PrismaClientKnownRequestError): InvalidInputError => {
+const mapUniqueConstraintError = (error: PrismaClientKnownRequestError): InvalidInputError => {
   const target = error.meta?.target;
   const targetFields = Array.isArray(target) ? (target as string[]) : [];
   if (targetFields.includes("elementId") || targetFields.includes("surveyId")) {

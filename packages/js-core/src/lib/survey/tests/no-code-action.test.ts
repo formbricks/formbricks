@@ -709,7 +709,10 @@ describe("time on page action handling", () => {
     clearTimeOnPageTimers();
   });
 
-  const createConfigWithTimeOnPageAction = (actionName: string, timeInSeconds: number) => ({
+  const createConfigWithTimeOnPageAction = (
+    actionName: string,
+    timeInSeconds: number
+  ): { get: Mock; update: Mock } => ({
     get: vi.fn().mockReturnValue({
       workspace: {
         data: {

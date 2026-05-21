@@ -1,10 +1,11 @@
 import { Prisma } from "@prisma/client";
+import type { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 
-export const isPrismaKnownRequestError = (error: unknown): error is Prisma.PrismaClientKnownRequestError =>
+export const isPrismaKnownRequestError = (error: unknown): error is PrismaClientKnownRequestError =>
   error instanceof Prisma.PrismaClientKnownRequestError;
 
-export const isSingleUseIdUniqueConstraintError = (error: Prisma.PrismaClientKnownRequestError): boolean => {
+export const isSingleUseIdUniqueConstraintError = (error: PrismaClientKnownRequestError): boolean => {
   if (error.code !== PrismaErrorType.UniqueConstraintViolation) {
     return false;
   }
