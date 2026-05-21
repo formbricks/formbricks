@@ -65,6 +65,8 @@ Cube is part of the baseline Formbricks v5 stack and is deployed by this chart b
 
 The chart deploys Hub API and, by default, a `hub-worker` deployment. Hub API is insert-only for River jobs; webhook dispatch and embedding jobs are processed by `hub-worker`.
 
+When the Formbricks migration job is enabled, Hub waits for the `formbricks-migration` Job to complete before its own goose/river init migrations run. This keeps fresh shared-database installs from creating Hub tables before Prisma has initialized the Formbricks schema.
+
 Self-hosted embeddings are disabled by default. Set `hub.embeddings.enabled=true` to deploy an internal Hugging Face Text Embeddings Inference (TEI) service and wire Hub API plus Hub worker to it through the OpenAI-compatible endpoint added in Hub:
 
 ```yaml
@@ -220,6 +222,10 @@ Autoscaling is opt-in for Hub API, Hub worker, and the embeddings runtime. If yo
 | hub.migration.activeDeadlineSeconds                                | int    | `900`                                                                       |                                                           |
 | hub.migration.backoffLimit                                         | int    | `3`                                                                         |                                                           |
 | hub.migration.ttlSecondsAfterFinished                              | int    | `300`                                                                       |                                                           |
+| hub.migration.waitForFormbricksMigration.enabled                   | bool   | `true`                                                                      |                                                           |
+| hub.migration.waitForFormbricksMigration.intervalSeconds           | int    | `5`                                                                         |                                                           |
+| hub.migration.waitForFormbricksMigration.maxAttempts               | int    | `180`                                                                       |                                                           |
+| hub.migration.waitForFormbricksMigration.missingJobMaxAttempts     | int    | `12`                                                                        |                                                           |
 | hub.pdb.enabled                                                    | bool   | `false`                                                                     |                                                           |
 | hub.replicas                                                       | int    | `1`                                                                         |                                                           |
 | hub.resources.limits.memory                                        | string | `"512Mi"`                                                                   |                                                           |
