@@ -51,7 +51,6 @@ const mockOrganization: TOrganization = {
     usageCycleAnchor: new Date(),
   },
   isAISmartToolsEnabled: false,
-  isAIDataAnalysisEnabled: false,
 };
 
 const mockFollowUp: TSurveyCreateInputWithWorkspaceId["followUps"][number] = {

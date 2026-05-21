@@ -2612,8 +2612,6 @@
         "workspaces_being_added": "Workspaces being granted access"
       },
       "general": {
-        "ai_data_analysis_enabled": "Data enrichment & analysis (AI)",
-        "ai_data_analysis_enabled_description": "AI to get more out of your data, setup dashboards, charts, reports and more. Touches your experience data.",
         "ai_enabled": "Formbricks AI",
         "ai_enabled_description": "Manage AI-powered features for this organization.",
         "ai_instance_not_configured": "AI is configured at the instance level via environment variables. Ask your administrator to set AI_PROVIDER, AI_MODEL, and the matching provider credentials before enabling AI features.",
@@ -2820,7 +2818,6 @@
         "adjust_survey_closed_message": "Adjust “Survey Closed” message",
         "adjust_survey_closed_message_description": "Change the message visitors see when the survey is closed.",
         "adjust_theme_in_look_and_feel_settings": "Adjust the theme in the <lookFeelLink>Look & Feel</lookFeelLink> Settings.",
-        "ai_data_analysis_disabled": "AI data analysis is disabled for this organization.",
         "ai_features_not_enabled": "AI features are not enabled for this organization.",
         "ai_instance_not_configured": "AI is not configured. Contact your administrator.",
         "ai_smart_tools_disabled": "AI smart tools are disabled for this organization.",

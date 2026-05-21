@@ -2612,8 +2612,6 @@
         "workspaces_being_added": "Erişim verilen çalışma alanları"
       },
       "general": {
-        "ai_data_analysis_enabled": "Veri zenginleştirme ve analiz (Yapay Zeka)",
-        "ai_data_analysis_enabled_description": "Verilerinden daha fazlasını elde etmek, kontrol panelleri, grafikler, raporlar ve daha fazlasını kurmak için yapay zeka. Deneyim verilerine dokunur.",
         "ai_enabled": "Formbricks Yapay Zeka",
         "ai_enabled_description": "Bu organizasyon için yapay zeka destekli özellikleri yönet.",
         "ai_instance_not_configured": "Yapay zeka, ortam değişkenleri aracılığıyla instance seviyesinde yapılandırılır. Yapay zeka özelliklerini etkinleştirmeden önce yöneticinden AI_PROVIDER, AI_MODEL ve eşleşen sağlayıcı kimlik bilgilerini ayarlamasını iste.",
@@ -2820,7 +2818,6 @@
         "adjust_survey_closed_message": "\"Anket Kapatıldı\" mesajını düzenle",
         "adjust_survey_closed_message_description": "Anket kapalıyken ziyaretçilerin gördüğü mesajı değiştir.",
         "adjust_theme_in_look_and_feel_settings": "Temayı <lookFeelLink>Görünüm ve His</lookFeelLink> Ayarlarından düzenleyin.",
-        "ai_data_analysis_disabled": "Bu organizasyon için yapay zeka veri analizi devre dışı.",
         "ai_features_not_enabled": "Bu organizasyon için yapay zeka özellikleri etkinleştirilmemiş.",
         "ai_instance_not_configured": "Yapay zeka yapılandırılmamış. Yöneticinle iletişime geç.",
         "ai_smart_tools_disabled": "Bu organizasyon için yapay zeka akıllı araçları devre dışı.",

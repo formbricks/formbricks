@@ -73,7 +73,6 @@ describe("Organization Service", () => {
           usageCycleAnchor: new Date(),
         },
         isAISmartToolsEnabled: false,
-        isAIDataAnalysisEnabled: false,
         whitelabel: false,
       };
 
@@ -126,7 +125,6 @@ describe("Organization Service", () => {
             usageCycleAnchor: new Date(),
           },
           isAISmartToolsEnabled: false,
-          isAIDataAnalysisEnabled: false,
           whitelabel: false,
         },
       ];
@@ -179,7 +177,6 @@ describe("Organization Service", () => {
         updatedAt: new Date(),
         billing: expectedBilling,
         isAISmartToolsEnabled: false,
-        isAIDataAnalysisEnabled: false,
         whitelabel: false,
       };
 
@@ -239,7 +236,6 @@ describe("Organization Service", () => {
           usageCycleAnchor: new Date(),
         },
         isAISmartToolsEnabled: false,
-        isAIDataAnalysisEnabled: false,
         whitelabel: false,
         memberships: [{ userId: "user1" }, { userId: "user2" }],
         workspaces: [
@@ -281,7 +277,6 @@ describe("Organization Service", () => {
           usageCycleAnchor: expect.any(Date),
         },
         isAISmartToolsEnabled: false,
-        isAIDataAnalysisEnabled: false,
         whitelabel: false,
       });
       expect(prisma.organization.update).toHaveBeenCalledWith({

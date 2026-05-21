@@ -2612,8 +2612,6 @@
         "workspaces_being_added": "アクセス権が付与されるワークスペース"
       },
       "general": {
-        "ai_data_analysis_enabled": "データエンリッチメントと分析（AI）",
-        "ai_data_analysis_enabled_description": "AIを活用してデータから最大限の価値を引き出し、ダッシュボード、チャート、レポートなどを設定できます。エクスペリエンスデータに触れます。",
         "ai_enabled": "Formbricks AI",
         "ai_enabled_description": "この組織のAI機能を管理します。",
         "ai_instance_not_configured": "AI は環境変数を使ってインスタンスレベルで設定されます。AI 機能を有効にする前に、管理者に AI_PROVIDER、このプロバイダーの認証情報、および対応するモデル一覧を設定してもらってください。",
@@ -2820,7 +2818,6 @@
         "adjust_survey_closed_message": "「フォームはクローズしました」メッセージを調整",
         "adjust_survey_closed_message_description": "フォームがクローズしたときに訪問者が見るメッセージを変更します。",
         "adjust_theme_in_look_and_feel_settings": "テーマは<lookFeelLink>外観</lookFeelLink>設定で調整できます。",
-        "ai_data_analysis_disabled": "この組織ではAIデータ分析が無効になっています。",
         "ai_features_not_enabled": "この組織ではAI機能が有効になっていません。",
         "ai_instance_not_configured": "AIが設定されていません。管理者にお問い合わせください。",
         "ai_smart_tools_disabled": "この組織ではAIスマートツールが無効になっています。",

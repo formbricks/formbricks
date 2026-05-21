@@ -86,7 +86,6 @@ export const ZOrganization = z.object({
   whitelabel: ZOrganizationWhitelabel.optional(),
   billing: ZOrganizationBilling,
   isAISmartToolsEnabled: z.boolean().prefault(false),
-  isAIDataAnalysisEnabled: z.boolean().prefault(false),
 });
 
 export const ZOrganizationCreateInput = z.object({
@@ -101,7 +100,6 @@ export const ZOrganizationUpdateInput = z.object({
   whitelabel: ZOrganizationWhitelabel.optional(),
   billing: ZOrganizationBilling.optional(),
   isAISmartToolsEnabled: z.boolean().optional(),
-  isAIDataAnalysisEnabled: z.boolean().optional(),
 });
 
 export type TOrganizationUpdateInput = z.infer<typeof ZOrganizationUpdateInput>;

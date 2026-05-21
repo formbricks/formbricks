@@ -67,7 +67,6 @@ describe("User Service", () => {
         usageCycleAnchor: new Date(),
       },
       isAISmartToolsEnabled: false,
-      isAIDataAnalysisEnabled: false,
     },
     {
       id: "org2",
@@ -85,7 +84,6 @@ describe("User Service", () => {
         usageCycleAnchor: new Date(),
       },
       isAISmartToolsEnabled: false,
-      isAIDataAnalysisEnabled: false,
     },
   ];
 
