@@ -116,6 +116,8 @@ export const createResponse = async (
         );
       if (display.responseId)
         throw new InvalidInputError(`Display ${responseInput.displayId} is already linked to a response`);
+      if (display.contactId !== null && display.contactId !== (contactId ?? null))
+        throw new InvalidInputError(`Display ${responseInput.displayId} belongs to a different contact`);
     }
 
     const prismaData = buildPrismaResponseData(responseInput, contact, ttc);
@@ -141,6 +143,13 @@ export const createResponse = async (
     return response;
   } catch (error) {
     if (isPrismaKnownRequestError(error)) {
+      if (
+        error.code === "P2002" &&
+        Array.isArray(error.meta?.target) &&
+        error.meta.target.includes("displayId")
+      ) {
+        throw new InvalidInputError(`Display ${responseInput.displayId} is already linked to a response`);
+      }
       if (isSingleUseIdUniqueConstraintError(error)) {
         throw new UniqueConstraintError("Response already submitted for this single-use link");
       }

@@ -149,7 +149,12 @@ export const getDisplaysBySurveyIdWithContact = reactCache(
 export const getDisplayForResponseValidation = async (
   displayId: string,
   tx?: Prisma.TransactionClient
-): Promise<{ surveyId: string; workspaceId: string; responseId: string | null } | null> => {
+): Promise<{
+  surveyId: string;
+  workspaceId: string;
+  responseId: string | null;
+  contactId: string | null;
+} | null> => {
   validateInputs([displayId, ZId]);
   const client = tx ?? prisma;
   try {
@@ -157,6 +162,7 @@ export const getDisplayForResponseValidation = async (
       where: { id: displayId },
       select: {
         surveyId: true,
+        contactId: true,
         response: { select: { id: true } },
         survey: { select: { workspaceId: true } },
       },
@@ -166,6 +172,7 @@ export const getDisplayForResponseValidation = async (
       surveyId: display.surveyId,
       workspaceId: display.survey.workspaceId,
       responseId: display.response?.id ?? null,
+      contactId: display.contactId,
     };
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) throw new DatabaseError(error.message);
