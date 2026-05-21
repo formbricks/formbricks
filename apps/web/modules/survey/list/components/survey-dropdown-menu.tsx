@@ -102,9 +102,6 @@ export const SurveyDropDownMenu = ({
       });
       if (response?.data) {
         toast.success(t("workspace.surveys.survey_duplicated_successfully"));
-        // The list is fetched via React Query (see use-surveys.ts); router.refresh()
-        // alone won't repopulate the client cache. Invalidate the lists prefix to
-        // trigger a refetch so the new draft appears.
         await queryClient.invalidateQueries({ queryKey: surveyKeys.lists() });
         return;
       }
