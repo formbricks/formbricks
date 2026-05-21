@@ -34,7 +34,7 @@ export const GET = async (req: Request) => {
     return responses.unauthorizedResponse();
   }
 
-  const basePath = `/workspaces/${workspaceId}`;
+  const basePath = `/workspaces/${workspaceId}/settings/workspace`;
 
   if (code && typeof code !== "string") {
     return responses.badRequestResponse("`code` must be a string");
@@ -102,7 +102,7 @@ export const GET = async (req: Request) => {
       logger.error({ error: err }, "Failed to capture PostHog integration_connected event for googleSheets");
     }
 
-    return Response.redirect(`${WEBAPP_URL}/${basePath}/integrations/google-sheets`);
+    return Response.redirect(`${WEBAPP_URL}${basePath}/integrations/google-sheets`);
   }
 
   return responses.internalServerErrorResponse("Failed to create or update Google Sheets integration");
