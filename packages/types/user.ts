@@ -31,7 +31,7 @@ export const ZUserName = z
   .min(1, {
     error: "Name should be at least 1 character long",
   })
-  .regex(/^[\p{L}\p{M}\s'\d-]+$/u, "Invalid name format");
+  .regex(/^[\p{L}\p{M}\s',()\d-]+$/u, "Invalid name format");
 
 export const ZUserEmail = z
   .email({
