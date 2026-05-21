@@ -27,8 +27,16 @@ describe("validateInputs", () => {
 
     expect(() => validateInputs([123, schema])).toThrow(ValidationError);
     expect(logger.error).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.stringContaining("Validation failed")
+      expect.objectContaining({
+        error: expect.any(z.ZodError),
+        issues: expect.arrayContaining([
+          expect.objectContaining({
+            message: "Invalid input: expected string, received number",
+          }),
+        ]),
+        valuePreview: "123",
+      }),
+      "Input validation failed"
     );
   });
 
@@ -47,8 +55,16 @@ describe("validateInputs", () => {
 
     expect(() => validateInputs(["valid", stringSchema], ["invalid", numberSchema])).toThrow(ValidationError);
     expect(logger.error).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.stringContaining("Validation failed")
+      expect.objectContaining({
+        error: expect.any(z.ZodError),
+        issues: expect.arrayContaining([
+          expect.objectContaining({
+            message: "Invalid input: expected number, received string",
+          }),
+        ]),
+        valuePreview: '"invalid"',
+      }),
+      "Input validation failed"
     );
   });
 });
