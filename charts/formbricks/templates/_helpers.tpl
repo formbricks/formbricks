@@ -92,6 +92,26 @@ This function allows rendering values dynamically.
     {{- end }}
 {{- end }}
 
+{{/*
+Render a Kubernetes EnvVar from chart env maps.
+Scalar values become quoted string values. Map values are rendered as EnvVar fields,
+which keeps advanced forms such as valueFrom supported.
+*/}}
+{{- define "formbricks.envVarValue" -}}
+{{- $value := .value -}}
+{{- if kindIs "map" $value -}}
+{{- include "formbricks.tplvalues.render" (dict "value" $value "context" .context) -}}
+{{- else if kindIs "invalid" $value -}}
+value: ""
+{{- else -}}
+value: {{ include "formbricks.tplvalues.render" (dict "value" (toString $value) "context" .context) | trim | quote }}
+{{- end -}}
+{{- end }}
+
+{{- define "formbricks.envVar" -}}
+- name: {{ include "formbricks.tplvalues.render" (dict "value" .name "context" .context) }}
+  {{- include "formbricks.envVarValue" (dict "value" .value "context" .context) | nindent 2 }}
+{{- end }}
 
 {{/*
 Allow the release namespace to be overridden.
