@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
+  noContentResponse,
   problemBadRequest,
   problemForbidden,
   problemInternalError,
@@ -116,5 +117,15 @@ describe("successResponse", () => {
     );
     expect(res.status).toBe(202);
     expect(res.headers.get("Cache-Control")).toBe("private, max-age=60");
+  });
+});
+
+describe("noContentResponse", () => {
+  test("returns 204 without a body", async () => {
+    const res = noContentResponse({ requestId: "req-empty" });
+    expect(res.status).toBe(204);
+    expect(res.headers.get("X-Request-Id")).toBe("req-empty");
+    expect(res.headers.get("Cache-Control")).toContain("no-store");
+    expect(await res.text()).toBe("");
   });
 });
