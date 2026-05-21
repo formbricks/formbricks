@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   validateFileUploads: vi.fn(),
   validateOtherOptionLengthForMultipleChoice: vi.fn(),
   validateResponseData: vi.fn(),
+  resolveClientApiIds: vi.fn(),
 }));
 
 vi.mock("@formbricks/logger", () => ({
@@ -32,6 +33,10 @@ vi.mock("@/lib/response/service", () => ({
 
 vi.mock("@/lib/survey/service", () => ({
   getSurvey: mocks.getSurvey,
+}));
+
+vi.mock("@/lib/utils/resolve-client-id", () => ({
+  resolveClientApiIds: mocks.resolveClientApiIds,
 }));
 
 vi.mock("@/modules/api/lib/validation", () => ({
@@ -127,6 +132,7 @@ describe("putResponseHandler", () => {
     mocks.validateFileUploads.mockReturnValue(true);
     mocks.validateOtherOptionLengthForMultipleChoice.mockReturnValue(null);
     mocks.validateResponseData.mockReturnValue(null);
+    mocks.resolveClientApiIds.mockResolvedValue({ workspaceId });
   });
 
   test("returns a bad request response when the response id is missing", async () => {

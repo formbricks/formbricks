@@ -8,6 +8,7 @@ import { THandlerParams } from "@/app/lib/api/with-api-logging";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
+import { resolveClientApiIds } from "@/lib/utils/resolve-client-id";
 import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/element";
 import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
@@ -209,13 +210,21 @@ export const putResponseHandler = async ({
   props,
 }: THandlerParams<TPutRouteParams>): Promise<TRouteResult> => {
   const params = await props.params;
-  const { workspaceId, responseId } = params;
+  const { workspaceId: workspaceIdParam, responseId } = params;
 
   if (!responseId) {
     return {
       response: responses.badRequestResponse("Response ID is missing", undefined, true),
     };
   }
+
+  const resolved = await resolveClientApiIds(workspaceIdParam);
+  if (!resolved) {
+    return {
+      response: responses.notFoundResponse("Workspace", workspaceIdParam, true),
+    };
+  }
+  const { workspaceId } = resolved;
 
   const validatedUpdateInput = await getValidatedResponseUpdateInput(req);
   if ("response" in validatedUpdateInput) {
