@@ -13,7 +13,7 @@ export const ManageTeam = () => {
   const router = useRouter();
 
   const handleManageTeams = () => {
-    router.push(`${workspaceBasePath}/settings/teams`);
+    router.push(`${workspaceBasePath}/settings/organization/teams`);
   };
 
   return (

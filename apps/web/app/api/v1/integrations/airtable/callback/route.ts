@@ -51,7 +51,7 @@ export const GET = withV1ApiWrapper({
       };
     }
 
-    const basePath = `/workspaces/${workspaceId}`;
+    const basePath = `/workspaces/${workspaceId}/settings/workspace`;
 
     const client_id = AIRTABLE_CLIENT_ID;
     const redirect_uri = WEBAPP_URL + "/api/v1/integrations/airtable/callback";

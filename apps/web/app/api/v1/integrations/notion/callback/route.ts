@@ -40,7 +40,7 @@ export const GET = withV1ApiWrapper({
       };
     }
 
-    const basePath = `/workspaces/${workspaceId}`;
+    const basePath = `/workspaces/${workspaceId}/settings/workspace`;
 
     if (code && typeof code !== "string") {
       return {
