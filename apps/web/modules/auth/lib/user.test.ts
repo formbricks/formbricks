@@ -2,7 +2,7 @@ import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
-import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { InvalidInputError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 import { mockUser } from "./mock-data";
 import { createUser, getUser, getUserByEmail, updateUser, updateUserLastLoginAt } from "./user";
 
@@ -74,6 +74,18 @@ describe("User Management", () => {
           }),
         })
       );
+    });
+
+    test("rejects display names with newline characters", async () => {
+      await expect(
+        createUser({
+          email: mockUser.email,
+          name: "Lastname,Firstname\n(DEPT) COMPANY-CITY",
+          locale: mockUser.locale,
+        })
+      ).rejects.toThrow(ValidationError);
+
+      expect(prisma.user.create).not.toHaveBeenCalled();
     });
 
     test("throws InvalidInputError when email already exists", async () => {
