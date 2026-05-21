@@ -82,7 +82,7 @@ export const UploadContactsAttributeCombobox = ({
           onClick={handleCreateKey}
           className="h-8 w-full text-left hover:cursor-pointer hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
           disabled={!!existingKeyMatch}>
-          + Add {searchValue}
+          + {t("common.add")} {normalizedSearchValue}
         </button>
       );
     }

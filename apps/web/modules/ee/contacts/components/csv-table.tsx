@@ -18,6 +18,7 @@ export const CsvTable = ({ data }: CsvTableProps) => {
             {columns.map((header) => (
               <th
                 key={header}
+                scope="col"
                 className="sticky top-0 z-10 min-w-[120px] border-b-2 border-slate-200 bg-slate-100 px-3 py-2 font-semibold">
                 {header}
               </th>
