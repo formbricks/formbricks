@@ -449,6 +449,8 @@ async function main(): Promise<void> {
     },
   });
 
+  // Keep seed defaults aligned with production v5 camelCase keys.
+  // Safe-identifier migration is deferred to v5.1.
   // Contact attribute keys for the workspace
   const defaultAttributeKeys = [
     { name: "Email", key: "email", isUnique: true, type: "default" as const },
