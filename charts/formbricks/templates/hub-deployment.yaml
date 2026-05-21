@@ -73,8 +73,7 @@ spec:
             {{- include "formbricks.hubEmbeddingEnv" (dict "root" $ "env" .Values.hub.env) | nindent 12 }}
             {{- range $key, $value := .Values.hub.env }}
             {{- if not (and $.Values.hub.embeddings.enabled (include "formbricks.hubEmbeddingEnvManaged" (dict "key" $key))) }}
-            - name: {{ $key }}
-              value: {{ $value | quote }}
+            {{- include "formbricks.envVar" (dict "name" $key "value" $value "context" $) | nindent 12 }}
             {{- end }}
             {{- end }}
           {{- if .Values.hub.resources }}
