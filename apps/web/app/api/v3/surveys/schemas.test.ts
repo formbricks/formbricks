@@ -392,6 +392,56 @@ describe("ZV3CreateSurveyBody", () => {
     }
   });
 
+  test("reports missing required ending fields before shared ending union errors", () => {
+    const result = ZV3CreateSurveyBody.safeParse({
+      ...validCreateBody,
+      endings: [
+        {
+          type: "endScreen",
+          headline: { "en-US": "Thanks!" },
+        },
+      ],
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(formatV3ZodInvalidParams(result.error, "body")).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: "endings.0.id",
+            reason: "Missing required field 'id' for ending type 'endScreen'",
+            code: "missing_required_field",
+          }),
+        ])
+      );
+    }
+  });
+
+  test("reports missing ending type with a precise invalid param path", () => {
+    const result = ZV3CreateSurveyBody.safeParse({
+      ...validCreateBody,
+      endings: [
+        {
+          id: "clend123456789012345678901",
+          headline: { "en-US": "Thanks!" },
+        },
+      ],
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(formatV3ZodInvalidParams(result.error, "body")).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: "endings.0.type",
+            reason: "Missing required field 'type' for survey ending",
+            code: "missing_required_field",
+          }),
+        ])
+      );
+    }
+  });
+
   test("rejects duplicate language entries and disabled default language", () => {
     const result = ZV3CreateSurveyBody.safeParse({
       ...validCreateBody,

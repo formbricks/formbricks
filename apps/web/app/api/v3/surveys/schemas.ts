@@ -376,6 +376,7 @@ const END_SCREEN_KEYS = new Set([
   "videoUrl",
 ]);
 const REDIRECT_ENDING_KEYS = new Set(["id", "type", "url", "label"]);
+const ENDING_REQUIRED_KEYS = ["id", "type"] as const;
 const ELEMENT_BASE_KEYS = new Set([
   "id",
   "type",
@@ -849,12 +850,12 @@ function validateEnding(
     return;
   }
 
-  addUnknownKeyIssues(
-    value,
-    value.type === "redirectToUrl" ? REDIRECT_ENDING_KEYS : END_SCREEN_KEYS,
-    path,
-    issues
-  );
+  const isRedirectEnding = value.type === "redirectToUrl";
+  const endingKeys = isRedirectEnding ? REDIRECT_ENDING_KEYS : END_SCREEN_KEYS;
+  const endingContext = typeof value.type === "string" ? `ending type '${value.type}'` : "survey ending";
+
+  addMissingRequiredKeyIssues(value, ENDING_REQUIRED_KEYS, path, issues, endingContext);
+  addUnknownKeyIssues(value, endingKeys, path, issues, endingContext);
   ENDING_I18N_KEYS.forEach((key) =>
     validateTranslatableField(value[key], `${path}.${key}`, issues, defaultLanguage)
   );
