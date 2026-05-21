@@ -4,6 +4,7 @@ import {
   assertOrganizationAIConfigured,
   generateOrganizationAIText,
   getAIDataAnalysisUnavailableReason,
+  getAISmartToolsUnavailableReason,
   getOrganizationAIConfig,
   isInstanceAIConfigured,
 } from "./service";
@@ -205,6 +206,49 @@ describe("AI organization service", () => {
       expect(getAIDataAnalysisUnavailableReason({ ...baseConfig, isInstanceConfigured: false })).toBe(
         "instance_not_configured"
       );
+    });
+  });
+
+  describe("getAISmartToolsUnavailableReason", () => {
+    const baseConfig = {
+      organizationId: "org_1",
+      isAISmartToolsEntitled: true,
+      isAISmartToolsEnabled: true,
+      isAIDataAnalysisEntitled: true,
+      isAIDataAnalysisEnabled: true,
+      isInstanceConfigured: true,
+    };
+
+    test("returns undefined when all checks pass", () => {
+      expect(getAISmartToolsUnavailableReason(baseConfig)).toBeUndefined();
+    });
+
+    test("returns not_in_plan when smart tools entitlement is missing", () => {
+      expect(getAISmartToolsUnavailableReason({ ...baseConfig, isAISmartToolsEntitled: false })).toBe(
+        "not_in_plan"
+      );
+    });
+
+    test("returns not_enabled when smart tools is disabled at org level", () => {
+      expect(getAISmartToolsUnavailableReason({ ...baseConfig, isAISmartToolsEnabled: false })).toBe(
+        "not_enabled"
+      );
+    });
+
+    test("returns instance_not_configured when instance AI is missing", () => {
+      expect(getAISmartToolsUnavailableReason({ ...baseConfig, isInstanceConfigured: false })).toBe(
+        "instance_not_configured"
+      );
+    });
+
+    test("ignores data-analysis flags (smart tools is independent of data analysis state)", () => {
+      expect(
+        getAISmartToolsUnavailableReason({
+          ...baseConfig,
+          isAIDataAnalysisEntitled: false,
+          isAIDataAnalysisEnabled: false,
+        })
+      ).toBeUndefined();
     });
   });
 });
