@@ -5,7 +5,7 @@ import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/common";
 import { TDisplay, TDisplayFilters, TDisplayWithContact, ZDisplayFilters } from "@formbricks/types/displays";
-import { DatabaseError } from "@formbricks/types/errors";
+import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import { validateInputs } from "../utils/validate";
 
 export const selectDisplay = {
@@ -178,6 +178,24 @@ export const getDisplayForResponseValidation = async (
     if (error instanceof Prisma.PrismaClientKnownRequestError) throw new DatabaseError(error.message);
     throw error;
   }
+};
+
+export const assertDisplayOwnership = async (
+  displayId: string,
+  workspaceId: string,
+  surveyId: string,
+  contactId: string | null,
+  tx?: Prisma.TransactionClient
+): Promise<void> => {
+  const display = await getDisplayForResponseValidation(displayId, tx);
+  if (!display) throw new InvalidInputError(`Display ${displayId} not found`);
+  if (display.workspaceId !== workspaceId)
+    throw new InvalidInputError(`Display ${displayId} belongs to a different workspace`);
+  if (display.surveyId !== surveyId)
+    throw new InvalidInputError(`Display ${displayId} is associated with a different survey`);
+  if (display.responseId) throw new InvalidInputError(`Display ${displayId} is already linked to a response`);
+  if (display.contactId !== null && display.contactId !== contactId)
+    throw new InvalidInputError(`Display ${displayId} belongs to a different contact`);
 };
 
 export const deleteDisplay = async (displayId: string, tx?: Prisma.TransactionClient): Promise<TDisplay> => {

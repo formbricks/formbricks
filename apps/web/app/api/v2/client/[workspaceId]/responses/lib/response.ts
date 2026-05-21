@@ -17,7 +17,7 @@ import {
 } from "@/app/api/client/[workspaceId]/responses/lib/response-error";
 import { responseSelection } from "@/app/api/v1/client/[workspaceId]/responses/lib/response";
 import { TResponseInputV2 } from "@/app/api/v2/client/[workspaceId]/responses/types/response";
-import { getDisplayForResponseValidation } from "@/lib/display/service";
+import { assertDisplayOwnership } from "@/lib/display/service";
 import { getOrganization } from "@/lib/organization/service";
 import { calculateTtcTotal } from "@/lib/response/utils";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
@@ -106,18 +106,13 @@ export const createResponse = async (
     const ttc = initialTtc ? (finished ? calculateTtcTotal(initialTtc) : initialTtc) : {};
 
     if (responseInput.displayId) {
-      const display = await getDisplayForResponseValidation(responseInput.displayId, tx);
-      if (!display) throw new InvalidInputError(`Display ${responseInput.displayId} not found`);
-      if (display.workspaceId !== workspaceId)
-        throw new InvalidInputError(`Display ${responseInput.displayId} belongs to a different workspace`);
-      if (display.surveyId !== responseInput.surveyId)
-        throw new InvalidInputError(
-          `Display ${responseInput.displayId} is associated with a different survey`
-        );
-      if (display.responseId)
-        throw new InvalidInputError(`Display ${responseInput.displayId} is already linked to a response`);
-      if (display.contactId !== null && display.contactId !== (contactId ?? null))
-        throw new InvalidInputError(`Display ${responseInput.displayId} belongs to a different contact`);
+      await assertDisplayOwnership(
+        responseInput.displayId,
+        workspaceId,
+        responseInput.surveyId,
+        contactId ?? null,
+        tx
+      );
     }
 
     const prismaData = buildPrismaResponseData(responseInput, contact, ttc);
