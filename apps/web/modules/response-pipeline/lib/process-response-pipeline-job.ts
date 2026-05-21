@@ -254,7 +254,19 @@ const createWebhookDeliveryTask = async ({
         throw new Error(`Webhook delivery failed with status ${response.status}`);
       }
     } finally {
-      await dispatcher?.destroy();
+      try {
+        await dispatcher?.destroy();
+      } catch (cleanupError) {
+        logger.warn(
+          {
+            ...logContext,
+            err: cleanupError,
+            webhookId: webhook.id,
+            webhookUrl: webhook.url,
+          },
+          "Response pipeline webhook dispatcher cleanup failed"
+        );
+      }
     }
   } catch (error) {
     logger.error(

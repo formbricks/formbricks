@@ -858,6 +858,29 @@ describe("processResponsePipelineJob", () => {
     expect(mockDispatcherDestroy).toHaveBeenCalledTimes(1);
   });
 
+  test("logs dispatcher cleanup failures without failing a successful webhook delivery", async () => {
+    const cleanupError = new Error("destroy failed");
+    mockPrismaWebhookFindMany.mockResolvedValue([
+      {
+        id: "webhook_123",
+        secret: null,
+        url: "https://example.com/webhook",
+      },
+    ]);
+    mockDispatcherDestroy.mockRejectedValue(cleanupError);
+
+    await expect(processResponsePipelineJob(baseData, baseContext)).resolves.toBeUndefined();
+
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        err: cleanupError,
+        webhookId: "webhook_123",
+        webhookUrl: "https://example.com/webhook",
+      }),
+      "Response pipeline webhook dispatcher cleanup failed"
+    );
+  });
+
   test("destroys the pinned dispatcher when the webhook fetch throws", async () => {
     mockPrismaWebhookFindMany.mockResolvedValue([
       {
