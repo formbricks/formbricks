@@ -562,7 +562,7 @@ redis:
     pdb:
       enabled: true
       minAvailable: ""
-      maxUnavailable: 1
+      maxUnavailable: 0
 
 ##########################################################
 # Service Monitor to collect Prometheus metrices

@@ -149,6 +149,14 @@ If `namespaceOverride` is provided, it will be used; otherwise, it defaults to `
 {{- end -}}
 {{- end }}
 
+{{- define "formbricks.redisSecretName" -}}
+{{- .Values.redis.auth.existingSecret | default (include "formbricks.appSecretName" .) -}}
+{{- end }}
+
+{{- define "formbricks.redisSecretKey" -}}
+{{- .Values.redis.auth.existingSecretPasswordKey | default "REDIS_PASSWORD" -}}
+{{- end }}
+
 {{- define "formbricks.hubSecretName" -}}
 {{- default (include "formbricks.appSecretName" .) .Values.hub.existingSecret -}}
 {{- end }}
@@ -289,11 +297,15 @@ true
 {{- end }}
 
 {{- define "formbricks.redisPassword" -}}
-{{- $secret := (lookup "v1" "Secret" .Release.Namespace (include "formbricks.appSecretName" .)) }}
-{{- if and $secret (index $secret.data "REDIS_PASSWORD") }}
-    {{- index $secret.data "REDIS_PASSWORD" | b64dec -}}
-{{- else }}
+{{- $redisSecretName := include "formbricks.redisSecretName" . }}
+{{- $redisSecretKey := include "formbricks.redisSecretKey" . }}
+{{- $secret := (lookup "v1" "Secret" .Release.Namespace $redisSecretName) }}
+{{- if and $secret (index $secret.data $redisSecretKey) }}
+    {{- index $secret.data $redisSecretKey | b64dec -}}
+{{- else if eq $redisSecretName (include "formbricks.appSecretName" .) }}
     {{- randAlphaNum 16 -}}
+{{- else }}
+    {{- fail (printf "redis.auth.existingSecret %q must already exist in namespace %q and contain %s when secret.enabled=true so REDIS_URL can use the same password as the bundled Valkey server. Disable secret.enabled and provide app-secrets externally, or pre-create the Redis auth secret." $redisSecretName .Release.Namespace $redisSecretKey) -}}
 {{- end -}}
 {{- end }}
 
