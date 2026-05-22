@@ -15,7 +15,7 @@ spec:
   {{- if .Values.redis.master.pdb.minAvailable }}
   minAvailable: {{ .Values.redis.master.pdb.minAvailable }}
   {{- else }}
-  maxUnavailable: {{ .Values.redis.master.pdb.maxUnavailable | default 1 }}
+  maxUnavailable: {{ .Values.redis.master.pdb.maxUnavailable | default 0 }}
   {{- end }}
   selector:
     matchLabels:

@@ -78,13 +78,13 @@ spec:
             - name: VALKEY_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.redis.auth.existingSecret | default (include "formbricks.appSecretName" .) }}
-                  key: {{ .Values.redis.auth.existingSecretPasswordKey | default "REDIS_PASSWORD" }}
+                  name: {{ include "formbricks.redisSecretName" . }}
+                  key: {{ include "formbricks.redisSecretKey" . }}
             - name: REDISCLI_AUTH
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.redis.auth.existingSecret | default (include "formbricks.appSecretName" .) }}
-                  key: {{ .Values.redis.auth.existingSecretPasswordKey | default "REDIS_PASSWORD" }}
+                  name: {{ include "formbricks.redisSecretName" . }}
+                  key: {{ include "formbricks.redisSecretKey" . }}
           {{- end }}
           livenessProbe:
             exec:
