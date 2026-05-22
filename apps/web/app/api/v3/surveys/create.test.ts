@@ -187,6 +187,13 @@ describe("createV3Survey", () => {
   test("keeps createdBy null for API key calls and honors explicit disabled languages", async () => {
     const body = ZV3CreateSurveyBody.parse({
       ...rawCreateBody,
+      metadata: {
+        ...rawCreateBody.metadata,
+        title: {
+          ...rawCreateBody.metadata.title,
+          "fr-FR": "Retour produit",
+        },
+      },
       languages: [{ code: "fr-FR", enabled: false }],
       blocks: [
         {
@@ -238,11 +245,11 @@ describe("createV3Survey", () => {
             {
               id: "external_cta",
               type: "cta",
-              headline: { "en-US": "Continue" },
+              headline: { "en-US": "Continue", "de-DE": "Weiter" },
               required: false,
               buttonExternal: true,
               buttonUrl: "https://example.com",
-              ctaButtonLabel: { "en-US": "Open" },
+              ctaButtonLabel: { "en-US": "Open", "de-DE": "Öffnen" },
             },
           ],
         },

@@ -539,13 +539,40 @@ describe("ZV3PatchSurveyBody", () => {
       id: "clsv1234567890123456789012",
       workspaceId: "clxx1234567890123456789012",
       type: "link",
+      defaultLanguage: "de-DE",
       questions: [],
     });
 
     expect(result.success).toBe(false);
     expect(result.error?.issues.map((issue) => issue.path.join("."))).toEqual(
-      expect.arrayContaining(["id", "workspaceId", "type", "questions"])
+      expect.arrayContaining(["id", "workspaceId", "type", "defaultLanguage", "questions"])
     );
+  });
+
+  test("rejects patch languages that mark a non-current locale as default", () => {
+    const result = createZV3PatchSurveyBodySchema("en-US").safeParse({
+      languages: [{ code: "de-DE", default: true, enabled: true }],
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]).toMatchObject({
+      message: "The default language entry must match defaultLanguage",
+      path: ["languages", 0, "default"],
+    });
+  });
+
+  test("accepts patch languages that keep the current default locale", () => {
+    const parsed = createZV3PatchSurveyBodySchema("en-US").parse({
+      languages: [
+        { code: "en_us", default: true, enabled: true },
+        { code: "de-DE", enabled: false },
+      ],
+    });
+
+    expect(parsed.languages).toEqual([
+      { code: "en-US", default: true, enabled: true },
+      { code: "de-DE", enabled: false },
+    ]);
   });
 
   test("normalizes patch translation maps using the current default language", () => {

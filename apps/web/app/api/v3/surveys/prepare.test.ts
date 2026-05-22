@@ -155,6 +155,58 @@ describe("v3 survey preparation", () => {
     }
   });
 
+  test("rejects metadata translations that are missing configured languages", () => {
+    const preparation = prepareV3SurveyCreateInput({
+      ...rawCreateBody,
+      metadata: {
+        title: { "en-US": "Product Feedback" },
+      },
+    });
+
+    expect(preparation.ok).toBe(false);
+    if (!preparation.ok) {
+      expect(preparation.validation.invalidParams).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: "metadata.title",
+            code: "missing_translation",
+            identifier: "de-DE",
+            referenceType: "language",
+          }),
+        ])
+      );
+    }
+  });
+
+  test("uses metadata translations when deriving required survey languages", () => {
+    const preparation = prepareV3SurveyCreateInput({
+      ...rawCreateBody,
+      metadata: {
+        title: { "en-US": "Product Feedback", "fr-FR": "Retour produit" },
+      },
+    });
+
+    expect(preparation.ok).toBe(false);
+    if (!preparation.ok) {
+      expect(preparation.validation.invalidParams).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: "metadata.title",
+            code: "missing_translation",
+            identifier: "de-DE",
+            referenceType: "language",
+          }),
+          expect.objectContaining({
+            name: "blocks.0.elements.0.headline",
+            code: "missing_translation",
+            identifier: "fr-FR",
+            referenceType: "language",
+          }),
+        ])
+      );
+    }
+  });
+
   test("returns language and reference validation issues together", () => {
     const preparation = prepareV3SurveyCreateInput({
       ...rawCreateBody,
@@ -205,6 +257,7 @@ describe("v3 survey preparation", () => {
   test("rejects patch input with immutable fields as validation results", () => {
     const preparation = prepareV3SurveyPatchInput(survey, {
       workspaceId,
+      defaultLanguage: "de-DE",
     });
 
     expect(preparation.ok).toBe(false);
@@ -215,9 +268,51 @@ describe("v3 survey preparation", () => {
             name: "workspaceId",
             code: "unsupported_field",
           }),
+          expect.objectContaining({
+            name: "defaultLanguage",
+            code: "unsupported_field",
+          }),
         ])
       );
     }
+  });
+
+  test("rejects patch language changes that try to move the default language", () => {
+    const preparation = prepareV3SurveyPatchInput(survey, {
+      languages: [{ code: "de-DE", default: true, enabled: true }],
+    });
+
+    expect(preparation.ok).toBe(false);
+    if (!preparation.ok) {
+      expect(preparation.validation.invalidParams).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: "languages.0.default",
+            reason: "The default language entry must match defaultLanguage",
+          }),
+        ])
+      );
+    }
+  });
+
+  test("preserves omitted fields while replacing provided top-level patch fields", () => {
+    const preparation = prepareV3SurveyPatchInput(survey, {
+      name: "Updated Product Feedback",
+      metadata: {
+        title: { "en-US": "Updated title", "de-DE": "Aktualisierter Titel" },
+      },
+    });
+
+    expect(preparation.ok).toBe(true);
+    if (!preparation.ok) {
+      throw new Error("Expected patch preparation to succeed");
+    }
+    expect(preparation.document).toMatchObject({
+      name: "Updated Product Feedback",
+      metadata: { title: { default: "Updated title", "de-DE": "Aktualisierter Titel" } },
+      blocks: survey.blocks,
+      hiddenFields: survey.hiddenFields,
+    });
   });
 
   test("rejects non-draft element id changes on non-draft surveys", () => {

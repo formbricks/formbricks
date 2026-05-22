@@ -7,6 +7,7 @@ import type { TI18nString } from "@formbricks/types/i18n";
 import type { TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { normalizeV3SurveyLanguageTag } from "./language";
 import type { TV3SurveyDocument } from "./schemas";
+import { V3_SURVEY_TRANSLATABLE_METADATA_KEYS } from "./translation-fields";
 
 export type TV3SurveyLanguageRequest = {
   code: string;
@@ -68,8 +69,9 @@ function collectMetadataI18nLanguageCodes(
     return;
   }
 
-  collectI18nLanguageCodes(metadata.title, languageCodes);
-  collectI18nLanguageCodes(metadata.description, languageCodes);
+  V3_SURVEY_TRANSLATABLE_METADATA_KEYS.forEach((key) =>
+    collectI18nLanguageCodes(metadata[key], languageCodes)
+  );
 }
 
 export function deriveV3SurveyLanguageRequests(input: TV3SurveyDocument): TV3SurveyLanguageRequest[] {

@@ -381,12 +381,6 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
         return authResult.response;
       }
 
-      const parsedInputResult = await parseV3Input(req, props, schemas, requestId, instance);
-      if (!parsedInputResult.ok) {
-        log.warn({ statusCode: parsedInputResult.response.status }, "V3 API request validation failed");
-        return parsedInputResult.response;
-      }
-
       const rateLimitResponse = await applyV3RateLimitOrRespond({
         authentication: authResult.authentication,
         enabled: rateLimit,
@@ -396,6 +390,12 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
       });
       if (rateLimitResponse) {
         return rateLimitResponse;
+      }
+
+      const parsedInputResult = await parseV3Input(req, props, schemas, requestId, instance);
+      if (!parsedInputResult.ok) {
+        log.warn({ statusCode: parsedInputResult.response.status }, "V3 API request validation failed");
+        return parsedInputResult.response;
       }
 
       auditLog = buildV3AuditLog(authResult.authentication, action, targetType, req.url);

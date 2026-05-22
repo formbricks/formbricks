@@ -7,6 +7,7 @@ import {
   normalizeV3SurveyLanguageTag,
   resolveV3SurveyLanguageCode,
 } from "./language";
+import { V3_SURVEY_TRANSLATABLE_METADATA_KEYS } from "./translation-fields";
 
 export type TV3SurveyListItem = Omit<TSurveyListRecord, "singleUse">;
 const DEFAULT_V3_SURVEY_LANGUAGE = "en-US";
@@ -132,7 +133,7 @@ function serializeMetadata(
     string,
     TSerializedValue
   >;
-  for (const key of ["title", "description"]) {
+  for (const key of V3_SURVEY_TRANSLATABLE_METADATA_KEYS) {
     if (metadata[key] !== undefined) {
       serializedMetadata[key] = serializeCanonicalValue(
         metadata[key],

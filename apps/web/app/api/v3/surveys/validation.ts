@@ -1,6 +1,7 @@
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { validateV3SurveyReferences } from "./reference-validation";
 import type { TV3SurveyDocument } from "./schemas";
+import { V3_SURVEY_TRANSLATABLE_METADATA_KEYS } from "./translation-fields";
 
 export type TV3SurveyDocumentValidationResult =
   | { valid: true; invalidParams: [] }
@@ -57,6 +58,9 @@ function collectTranslationLanguageCodes(value: unknown, languageCodes: Set<stri
 function getRequiredTranslationLanguageCodes(document: TV3SurveyDocument): string[] {
   const languageCodes = new Set(getConfiguredTranslationLanguageCodes(document));
 
+  V3_SURVEY_TRANSLATABLE_METADATA_KEYS.forEach((key) =>
+    collectTranslationLanguageCodes(document.metadata[key], languageCodes)
+  );
   collectTranslationLanguageCodes(document.welcomeCard, languageCodes);
   collectTranslationLanguageCodes(document.blocks, languageCodes);
   collectTranslationLanguageCodes(document.endings, languageCodes);
@@ -110,6 +114,9 @@ function getV3SurveyLanguageInvalidParams(document: TV3SurveyDocument): InvalidP
   const languageCodes = getRequiredTranslationLanguageCodes(document);
   const issues: InvalidParam[] = [];
 
+  V3_SURVEY_TRANSLATABLE_METADATA_KEYS.forEach((key) =>
+    addMissingTranslationIssues(document.metadata[key], `metadata.${key}`, languageCodes, issues)
+  );
   addMissingTranslationIssues(document.welcomeCard, "welcomeCard", languageCodes, issues);
   addMissingTranslationIssues(document.blocks, "blocks", languageCodes, issues);
   addMissingTranslationIssues(document.endings, "endings", languageCodes, issues);

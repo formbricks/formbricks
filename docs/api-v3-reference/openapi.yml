@@ -5,7 +5,7 @@ openapi: 3.1.0
 info:
   title: Formbricks API v3
   description: |
-    **GET /api/v3/surveys**, **POST /api/v3/surveys**, **POST /api/v3/surveys/validate**, **GET /api/v3/surveys/{surveyId}**, and **DELETE /api/v3/surveys/{surveyId}** — authenticate with **session cookie** or **`x-api-key`** (management key with access to the workspace).
+    **GET /api/v3/surveys**, **POST /api/v3/surveys**, **POST /api/v3/surveys/validate**, **GET /api/v3/surveys/{surveyId}**, **PATCH /api/v3/surveys/{surveyId}**, and **DELETE /api/v3/surveys/{surveyId}** — authenticate with **session cookie** or **`x-api-key`** (management key with access to the workspace).
 
     **Spec location:** `docs/api-v3-reference/openapi.yml` (alongside v2 at `docs/api-v2-reference/openapi.yml`).
 
@@ -354,7 +354,7 @@ paths:
                               en-US: What should we improve?
                             required: true
               patchValidation:
-                summary: Validate a future patch payload
+                summary: Validate a patch payload
                 value:
                   operation: patch
                   surveyId: clsv1234567890123456789012
@@ -483,10 +483,8 @@ paths:
           description: |
             Comma-separated locale code filter for translatable fields, for example `?lang=de-DE,pt-PT`.
             The response shape stays stable: translatable fields are always maps keyed by locale code, never
-            strings. Send canonical locale codes (`de-DE`, `zh-Hans-CN`, not `de`). For interoperability, the
-            parser is case-insensitive, accepts `_` or `-` separators, and normalizes accepted region-qualified
-            tags (`de_DE`, `DE-de` → `de-DE`; `zh_hans_cn` → `zh-Hans-CN`). Language-only selectors (`de`) and
-            aliases are not accepted.
+            strings. Send canonical locale codes (`de-DE`, `pt-PT`, `zh-Hans-CN`, not `de`).
+            Language-only selectors (`de`) and aliases are not accepted.
             Disabled-but-configured languages are readable in the management API so unfinished translations can
             be completed.
       responses:
@@ -623,6 +621,131 @@ paths:
       security:
         - sessionAuth: []
         - apiKeyAuth: []
+    patch:
+      operationId: patchSurveyV3
+      summary: Update a survey
+      description: |
+        Updates a survey through a strict top-level partial document. Omitted top-level fields are
+        preserved. Provided top-level objects and arrays replace that whole subtree; this endpoint
+        does not deep-merge nested objects and does not implement JSON Patch.
+
+        This write endpoint accepts the canonical multilingual authoring document only. Translatable
+        fields must be locale-code maps, not strings. `PATCH ?lang=...` and `?version=...` are not
+        supported in Scope 1.
+
+        For MCP and AI-agent workflows, fetch the current survey first, modify only the intended
+        top-level fields, call `/api/v3/surveys/validate` with `operation: patch` for preflight, then
+        submit the same patch here. Missing ids in replaced arrays are treated as deletions. Variable
+        name renames are allowed but may be destructive for downstream exports or integrations.
+        Element id changes are rejected once the survey and element are no longer drafts.
+
+        Optimistic concurrency (`ETag`, `If-Match`, or revision tokens) is future work; until then,
+        overlapping writes are last-write-wins.
+      tags:
+        - V3 Surveys
+      parameters:
+        - in: path
+          name: surveyId
+          required: true
+          schema:
+            type: string
+            format: cuid2
+          description: Survey identifier.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatchSurveyRequest"
+            examples:
+              renameSurvey:
+                summary: Rename a survey
+                value:
+                  name: Updated Product Feedback
+              replaceMetadata:
+                summary: Replace metadata
+                value:
+                  metadata:
+                    title:
+                      en-US: Product Feedback
+                      de-DE: Produktfeedback
+                    cx_operation: product_feedback
+              replaceBlocks:
+                summary: Replace survey blocks
+                value:
+                  blocks:
+                    - id: clbk1234567890123456789012
+                      name: Main Block
+                      elements:
+                        - id: satisfaction
+                          type: rating
+                          headline:
+                            en-US: How satisfied are you?
+                            de-DE: Wie zufrieden sind Sie?
+                          required: true
+                          range: 5
+                          scale: smiley
+      responses:
+        "200":
+          description: Survey updated successfully
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: "private, no-store"
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: "#/components/schemas/SurveyResource"
+        "400":
+          description: |
+            Bad Request — malformed JSON, unsupported query parameter, unsupported field,
+            invalid locale map, duplicate id, immutable element id change, dangling reference,
+            or invalid survey document.
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "401":
+          description: Not authenticated (no valid session or API key)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "403":
+          description: Forbidden — no write access, or survey does not exist (404 not used; avoids existence leak)
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "429":
+          description: Rate limit exceeded
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+              description: Seconds until the current rate-limit window resets
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+        "500":
+          description: Internal Server Error
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Problem"
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
     delete:
       operationId: deleteSurveyV3
       summary: Delete a survey
@@ -713,10 +836,10 @@ components:
         follow-ups, recaptcha, single-use/email verification, slug, custom scripts, analytics fields,
         timestamps, and `createdBy`.
 
-        Translatable fields use real locale-code maps. The map must include the `defaultLanguage`
-        key so the server can persist the internal default translation. Locale keys are normalized
-        case-insensitively (`de_de` → `de-DE`). Unknown workspace languages are auto-created with
-        `alias: null`.
+        Translatable fields use real locale-code maps. The map must include the canonical
+        `defaultLanguage` key, such as `en-US`, so the server can persist the internal default
+        translation. Locale keys must be canonical BCP 47 codes such as `de-DE`, `pt-PT`, or
+        `zh-Hans-CN`. Unknown workspace languages are auto-created with `alias: null`.
 
         `blocks[].id` and `variables[].id` may be omitted on create and will be generated by the
         server. Provide explicit cuid2 ids when other fields in the same request reference them.
@@ -791,7 +914,7 @@ components:
       properties:
         code:
           type: string
-          description: BCP 47 locale code. `_` separators and casing are normalized.
+          description: Canonical BCP 47 locale code, e.g. `de-DE` or `zh-Hans-CN`.
           example: de-DE
         default:
           type: boolean
@@ -803,10 +926,19 @@ components:
       additionalProperties: false
     PatchSurveyRequest:
       type: object
+      minProperties: 1
       description: |
-        Future patch payload shape. Top-level fields are partial; any provided nested object or array
-        fully replaces that subtree. Immutable/system fields such as `id`, `workspaceId`, `type`,
-        timestamps, `questions`, analytics, distribution, styling, targeting, and scripts are rejected.
+        Patch payload shape. Top-level fields are partial; any provided nested object or array
+        fully replaces that subtree. Omitted top-level fields are preserved. Immutable/system fields
+        such as `id`, `workspaceId`, `type`, `defaultLanguage`, timestamps, `questions`, analytics,
+        distribution, styling, targeting, and scripts are rejected.
+
+        `metadata`, `languages`, `welcomeCard`, `blocks`, `endings`, `hiddenFields`, and `variables`
+        replace their full top-level value when provided. Missing ids in replaced arrays are deletions.
+        Languages referenced by translatable maps are still connected automatically; to remove a language,
+        remove it from both `languages` and every translatable map that contains that locale key.
+        Use `/api/v3/surveys/validate` with `operation: patch` before committing automated or agentic
+        changes.
       properties:
         name:
           type: string
@@ -817,13 +949,16 @@ components:
         metadata:
           allOf:
             - $ref: "#/components/schemas/SurveyMetadata"
-        defaultLanguage:
-          type: string
-          description: Default authoring locale.
         languages:
           type: array
           items:
             $ref: "#/components/schemas/CreateSurveyLanguage"
+          description: |
+            Replaces the survey language configuration. The default language cannot be changed through
+            PATCH; any `default: true` entry must match the existing default language. Languages referenced
+            by `metadata`, `welcomeCard`, `blocks`, or `endings` translatable maps are derived and connected
+            automatically, so remove the locale key from those maps as well when intentionally removing a
+            language.
         welcomeCard:
           $ref: "#/components/schemas/SurveyWelcomeCard"
         blocks:

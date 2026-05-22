@@ -11,6 +11,7 @@ import {
 } from "@formbricks/types/surveys/types";
 import { type InvalidParam, isInvalidParamCode } from "@/app/api/v3/lib/response";
 import { normalizeV3SurveyLanguageTag } from "./language";
+import { V3_SURVEY_TRANSLATABLE_METADATA_KEYS } from "./translation-fields";
 
 export const DEFAULT_V3_SURVEY_LANGUAGE = "en-US";
 
@@ -129,21 +130,7 @@ function normalizePublicI18nFields(
 }
 
 function normalizeMetadata(value: unknown, defaultLanguage: string): unknown {
-  if (!isPlainObject(value)) {
-    return value;
-  }
-
-  const normalized = { ...value };
-
-  if ("title" in value) {
-    normalized.title = normalizePublicI18nField(value.title, defaultLanguage);
-  }
-
-  if ("description" in value) {
-    normalized.description = normalizePublicI18nField(value.description, defaultLanguage);
-  }
-
-  return normalized;
+  return normalizePublicI18nFields(value, defaultLanguage, V3_SURVEY_TRANSLATABLE_METADATA_KEYS);
 }
 
 const WELCOME_CARD_I18N_KEYS = ["headline", "subheader", "buttonLabel"] as const;
@@ -336,7 +323,6 @@ const PATCH_ROOT_KEYS = new Set([
   "name",
   "status",
   "metadata",
-  "defaultLanguage",
   "languages",
   "welcomeCard",
   "blocks",
@@ -902,9 +888,11 @@ function getUnsupportedV3SurveyDocumentFields(
       validateEnding(ending, `endings.${index}`, issues, defaultLanguage)
     );
 
-  if (isPlainObject(value.metadata)) {
-    validateTranslatableField(value.metadata.title, "metadata.title", issues, defaultLanguage);
-    validateTranslatableField(value.metadata.description, "metadata.description", issues, defaultLanguage);
+  const metadata = value.metadata;
+  if (isPlainObject(metadata)) {
+    V3_SURVEY_TRANSLATABLE_METADATA_KEYS.forEach((key) =>
+      validateTranslatableField(metadata[key], `metadata.${key}`, issues, defaultLanguage)
+    );
   }
 
   return issues;
@@ -987,7 +975,6 @@ const V3_SURVEY_PATCH_SHAPE = {
   name: ZV3SurveyName.optional(),
   status: ZSurveyStatus.optional(),
   metadata: ZSurveyMetadata.optional(),
-  defaultLanguage: ZV3SurveyLanguageTag.optional(),
   languages: z.array(ZV3SurveyLanguageInput).optional(),
   welcomeCard: ZSurveyWelcomeCard.optional(),
   blocks: ZV3SurveyBlocks.optional(),
@@ -1033,7 +1020,7 @@ function createV3PatchSurveyBodyBase(defaultLanguage: string) {
     z
       .object(V3_SURVEY_PATCH_SHAPE)
       .strict()
-      .superRefine(addLanguageIssues)
+      .superRefine((body, ctx) => addLanguageIssues({ ...body, defaultLanguage }, ctx))
       .refine((body) => Object.keys(body).length > 0, {
         message: "Request body must include at least one updatable field",
       })
