@@ -64,12 +64,14 @@ Redis Access:
 
 {{- if .Values.redis.enabled }}
    Redis is deployed within your cluster.
+   {{- if .Values.redis.auth.enabled }}
    Retrieve the password using:
    ```sh
-   kubectl get secret --namespace {{ .Release.Namespace }} {{ include "formbricks.name" . }}-app-secrets -o jsonpath="{.data.REDIS_PASSWORD}" | base64 --decode
+   kubectl get secret --namespace {{ .Release.Namespace }} {{ include "formbricks.redisSecretName" . }} -o jsonpath="{.data.{{ include "formbricks.redisSecretKey" . }}}" | base64 --decode
    ```
+   {{- end }}
    Connection details:
-   - **Host**: `{{ include "formbricks.name" . }}-redis-master`
+   - **Host**: `{{ include "formbricks.redisMasterName" . }}`
    - **Port**: `6379`
 {{- else if .Values.redis.externalRedisUrl }}
    You're using an external Redis instance.
