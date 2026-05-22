@@ -301,7 +301,10 @@
                   "self-hosting/advanced/enterprise-features/contact-management-segments",
                   "self-hosting/advanced/enterprise-features/oidc-sso",
                   "self-hosting/advanced/enterprise-features/saml-sso",
-                  "self-hosting/advanced/enterprise-features/audit-logging"
+                  "self-hosting/advanced/enterprise-features/audit-logging",
+                  "self-hosting/advanced/enterprise-features/unify-feedback",
+                  "self-hosting/advanced/enterprise-features/dashboards",
+                  "self-hosting/advanced/enterprise-features/ai-features"
                 ]
               },
               "self-hosting/advanced/rate-limiting"
