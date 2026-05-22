@@ -244,8 +244,9 @@ Embedding API key value for the generated embeddings secret.
 {{- $secretName := include "formbricks.hubEmbeddingsSecretName" . }}
 {{- $secretKey := .Values.hub.embeddings.auth.secretKey | default "EMBEDDING_PROVIDER_API_KEY" }}
 {{- $secret := (lookup "v1" "Secret" .Release.Namespace $secretName) }}
-{{- if and $secret (index $secret.data $secretKey) }}
-    {{- index $secret.data $secretKey | b64dec -}}
+{{- $secretData := dig "data" dict $secret }}
+{{- if index $secretData $secretKey }}
+    {{- index $secretData $secretKey | b64dec -}}
 {{- else if .Values.hub.embeddings.auth.apiKey }}
     {{- .Values.hub.embeddings.auth.apiKey -}}
 {{- else }}
@@ -291,8 +292,9 @@ true
 
 {{- define "formbricks.postgresAdminPassword" -}}
 {{- $secret := (lookup "v1" "Secret" .Release.Namespace (include "formbricks.appSecretName" .)) }}
-{{- if and $secret (index $secret.data "POSTGRES_ADMIN_PASSWORD") }}
-    {{- index $secret.data "POSTGRES_ADMIN_PASSWORD" | b64dec -}}
+{{- $secretData := dig "data" dict $secret }}
+{{- if index $secretData "POSTGRES_ADMIN_PASSWORD" }}
+    {{- index $secretData "POSTGRES_ADMIN_PASSWORD" | b64dec -}}
 {{- else }}
     {{- randAlphaNum 16 -}}
 {{- end -}}
@@ -300,8 +302,9 @@ true
 
 {{- define "formbricks.postgresUserPassword" -}}
 {{- $secret := (lookup "v1" "Secret" .Release.Namespace (include "formbricks.appSecretName" .)) }}
-{{- if and $secret (index $secret.data "POSTGRES_USER_PASSWORD") }}
-    {{- index $secret.data "POSTGRES_USER_PASSWORD" | b64dec -}}
+{{- $secretData := dig "data" dict $secret }}
+{{- if index $secretData "POSTGRES_USER_PASSWORD" }}
+    {{- index $secretData "POSTGRES_USER_PASSWORD" | b64dec -}}
 {{- else }}
     {{- randAlphaNum 16 -}}
 {{- end -}}
@@ -311,8 +314,9 @@ true
 {{- $redisSecretName := include "formbricks.redisSecretName" . }}
 {{- $redisSecretKey := include "formbricks.redisSecretKey" . }}
 {{- $secret := (lookup "v1" "Secret" .Release.Namespace $redisSecretName) }}
-{{- if and $secret (index $secret.data $redisSecretKey) }}
-    {{- index $secret.data $redisSecretKey | b64dec -}}
+{{- $secretData := dig "data" dict $secret }}
+{{- if index $secretData $redisSecretKey }}
+    {{- index $secretData $redisSecretKey | b64dec -}}
 {{- else if eq $redisSecretName (include "formbricks.appSecretName" .) }}
     {{- randAlphaNum 16 -}}
 {{- else }}
@@ -322,9 +326,10 @@ true
 
 {{- define "formbricks.cronSecret" -}}
 {{- $secret := (lookup "v1" "Secret" .Release.Namespace (include "formbricks.appSecretName" .)) }}
-{{- if and $secret (index $secret.data "CRON_SECRET") }}
-    {{- index $secret.data "CRON_SECRET" | b64dec -}}
-{{- else if $secret }}
+{{- $secretData := dig "data" dict $secret }}
+{{- if index $secretData "CRON_SECRET" }}
+    {{- index $secretData "CRON_SECRET" | b64dec -}}
+{{- else if and $secret (hasKey $secret "data") }}
     {{- fail (printf "Secret %q exists in namespace %q but is missing CRON_SECRET" (include "formbricks.appSecretName" .) .Release.Namespace) -}}
 {{- else }}
     {{- randAlphaNum 32 -}}
@@ -333,8 +338,11 @@ true
 
 {{- define "formbricks.encryptionKey" -}}
 {{- $secret := (lookup "v1" "Secret" .Release.Namespace (include "formbricks.appSecretName" .)) }}
-{{- if $secret }}
-    {{- index $secret.data "ENCRYPTION_KEY" | b64dec -}}
+{{- $secretData := dig "data" dict $secret }}
+{{- if index $secretData "ENCRYPTION_KEY" }}
+    {{- index $secretData "ENCRYPTION_KEY" | b64dec -}}
+{{- else if and $secret (hasKey $secret "data") }}
+    {{- fail (printf "Secret %q exists in namespace %q but is missing ENCRYPTION_KEY" (include "formbricks.appSecretName" .) .Release.Namespace) -}}
 {{- else }}
     {{- randAlphaNum 32 -}}
 {{- end -}}
@@ -342,8 +350,11 @@ true
 
 {{- define "formbricks.nextAuthSecret" -}}
 {{- $secret := (lookup "v1" "Secret" .Release.Namespace (include "formbricks.appSecretName" .)) }}
-{{- if $secret }}
-    {{- index $secret.data "NEXTAUTH_SECRET" | b64dec -}}
+{{- $secretData := dig "data" dict $secret }}
+{{- if index $secretData "NEXTAUTH_SECRET" }}
+    {{- index $secretData "NEXTAUTH_SECRET" | b64dec -}}
+{{- else if and $secret (hasKey $secret "data") }}
+    {{- fail (printf "Secret %q exists in namespace %q but is missing NEXTAUTH_SECRET" (include "formbricks.appSecretName" .) .Release.Namespace) -}}
 {{- else }}
     {{- randAlphaNum 32 -}}
 {{- end -}}
@@ -352,8 +363,9 @@ true
 {{- define "formbricks.hubApiKey" -}}
 {{- $hubSecretName := include "formbricks.hubSecretName" . }}
 {{- $secret := (lookup "v1" "Secret" .Release.Namespace $hubSecretName) }}
-{{- if and $secret (index $secret.data "HUB_API_KEY") }}
-    {{- index $secret.data "HUB_API_KEY" | b64dec -}}
+{{- $secretData := dig "data" dict $secret }}
+{{- if index $secretData "HUB_API_KEY" }}
+    {{- index $secretData "HUB_API_KEY" | b64dec -}}
 {{- else if .Values.hub.existingSecret }}
     {{- fail (printf "hub.existingSecret %q must already exist in namespace %q and contain HUB_API_KEY when rendering the generated app secret. Disable secret.enabled and provide app-secrets externally, or pre-create the Hub secret." $hubSecretName .Release.Namespace) -}}
 {{- else }}
@@ -363,8 +375,9 @@ true
 
 {{- define "formbricks.cubejsApiSecret" -}}
 {{- $secret := (lookup "v1" "Secret" .Release.Namespace (include "formbricks.appSecretName" .)) }}
-{{- if and $secret (index $secret.data "CUBEJS_API_SECRET") }}
-    {{- index $secret.data "CUBEJS_API_SECRET" | b64dec -}}
+{{- $secretData := dig "data" dict $secret }}
+{{- if index $secretData "CUBEJS_API_SECRET" }}
+    {{- index $secretData "CUBEJS_API_SECRET" | b64dec -}}
 {{- else }}
     {{- randAlphaNum 32 -}}
 {{- end -}}
