@@ -767,7 +767,7 @@
       "source": "/docs/xm-and-surveys/surveys/general-features/validation-rules"
     },
     {
-      "destination": "/docs/surveys/general-features/schedule-start-end-dates",
+      "destination": "/docs/surveys/overview",
       "source": "/docs/link-surveys/global/schedule-start-end-dates"
     },
     {
@@ -1159,7 +1159,7 @@
       "source": "/docs/self-hosting/migration-guide"
     },
     {
-      "destination": "/docs/self-hosting/configuration/integrations",
+      "destination": "/docs/self-hosting/overview",
       "source": "/docs/self-hosting/integrations"
     },
     {
@@ -1191,7 +1191,7 @@
       "source": "/docs/api-docs"
     },
     {
-      "destination": "/docs/development/troubleshooting",
+      "destination": "/docs/development/support/troubleshooting",
       "source": "/docs/developer-docs/contributing/troubleshooting"
     }
   ],
