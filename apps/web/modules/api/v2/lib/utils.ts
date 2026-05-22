@@ -28,6 +28,8 @@ export const handleApiError = (
       return responses.notFoundResponse({ details: err.details });
     case "conflict":
       return responses.conflictResponse({ details: err.details });
+    case "payload_too_large":
+      return responses.payloadTooLargeResponse({ details: err.details });
     case "unprocessable_entity":
       return responses.unprocessableEntityResponse({ details: err.details });
     case "too_many_requests":

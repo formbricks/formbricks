@@ -1,11 +1,12 @@
 import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { logger } from "@formbricks/logger";
+import { RequestBodyTooLargeError, readRequestBodyWithLimit } from "@/app/lib/api/request-body";
 import { webhookHandler } from "@/modules/ee/billing/api/lib/stripe-webhook";
 
 export const POST = async (request: Request) => {
   try {
-    const body = await request.text();
+    const body = await readRequestBodyWithLimit(request);
     const requestHeaders = await headers(); // Corrected: headers() is async
     const signature = requestHeaders.get("stripe-signature");
 
@@ -26,6 +27,10 @@ export const POST = async (request: Request) => {
 
     return NextResponse.json(result.message || { received: true }, { status: 200 });
   } catch (error: any) {
+    if (error instanceof RequestBodyTooLargeError) {
+      return NextResponse.json({ message: "Payload Too Large" }, { status: 413 });
+    }
+
     logger.error(error, `Unhandled error in Stripe webhook POST handler: ${error.message}`);
     return NextResponse.json({ message: "Internal server error" }, { status: 500 });
   }

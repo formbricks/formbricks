@@ -18,6 +18,7 @@ import {
   ValidationError,
   isExpectedError,
 } from "@formbricks/types/errors";
+import { RequestBodyTooLargeError } from "@/app/lib/api/request-body";
 
 // Mock Sentry
 vi.mock("@sentry/nextjs", () => ({
@@ -78,6 +79,7 @@ describe("isExpectedError (shared helper)", () => {
       "TooManyRequestsError",
       "InvalidPasswordResetTokenError",
       "UniqueConstraintError",
+      "RequestBodyTooLargeError",
     ];
 
     expect(EXPECTED_ERROR_NAMES.size).toBe(expected.length);
@@ -97,6 +99,7 @@ describe("isExpectedError (shared helper)", () => {
     { ErrorClass: QueryExecutionError, args: ["Cube query failed. Details: connect ECONNREFUSED"] },
     { ErrorClass: InvalidPasswordResetTokenError, args: [INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE] },
     { ErrorClass: UniqueConstraintError, args: ["Already exists"] },
+    { ErrorClass: RequestBodyTooLargeError, args: [2 * 1024 * 1024] },
   ])("returns true for $ErrorClass.name", ({ ErrorClass, args }) => {
     const error = new (ErrorClass as any)(...args);
     expect(isExpectedError(error)).toBe(true);
