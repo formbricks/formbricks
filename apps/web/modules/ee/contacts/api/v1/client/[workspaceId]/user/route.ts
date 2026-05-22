@@ -92,7 +92,13 @@ export const POST = withV1ApiWrapper({
           };
         }
 
-        throw error;
+        return {
+          response: responses.badRequestResponse(
+            "Malformed JSON input, please check your request body",
+            { error: error instanceof Error ? error.message : "Unknown error occurred" },
+            true
+          ),
+        };
       }
 
       // Basic input validation without Zod overhead
@@ -113,7 +119,7 @@ export const POST = withV1ApiWrapper({
           ? jsonInput.attributes
           : undefined;
 
-      if (attributes?.email) {
+      if (attributes && Object.prototype.hasOwnProperty.call(attributes, "email")) {
         const email = attributes.email;
         if (typeof email !== "string" || !email.includes("@") || email.length < 3) {
           return {

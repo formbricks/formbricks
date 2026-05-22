@@ -43,7 +43,13 @@ export const POST = withV1ApiWrapper({
         };
       }
 
-      throw error;
+      return {
+        response: responses.badRequestResponse(
+          "Malformed JSON input, please check your request body",
+          { error: error instanceof Error ? error.message : "Unknown error occurred" },
+          true
+        ),
+      };
     }
 
     const inputValidation = ZDisplayCreateInput.safeParse({
