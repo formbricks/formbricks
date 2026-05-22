@@ -69,7 +69,7 @@ export const GET = withV1ApiWrapper({
       };
     }
 
-    const basePath = `/workspaces/${workspaceId}`;
+    const basePath = `/workspaces/${workspaceId}/settings/workspace`;
     const redirectUrl = new URL(`${basePath}/integrations/airtable`, WEBAPP_URL);
     const safeError = getSafeOAuthCallbackError(error);
 
@@ -146,7 +146,11 @@ export const GET = withV1ApiWrapper({
         response: Response.redirect(redirectUrl),
       };
     } catch (error) {
-      logger.error({ error }, "Error in GET /api/v1/integrations/airtable/callback");
+      const sanitizedError =
+        error instanceof Error
+          ? { message: error.message, name: error.name }
+          : { message: "Unknown Airtable OAuth callback error" };
+      logger.error({ error: sanitizedError }, "Error in GET /api/v1/integrations/airtable/callback");
       return {
         response: responses.internalServerErrorResponse(
           error instanceof Error ? error.message : String(error)

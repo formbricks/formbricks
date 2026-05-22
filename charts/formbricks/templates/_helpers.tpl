@@ -92,6 +92,26 @@ This function allows rendering values dynamically.
     {{- end }}
 {{- end }}
 
+{{/*
+Render a Kubernetes EnvVar from chart env maps.
+Scalar values become quoted string values. Map values are rendered as EnvVar fields,
+which keeps advanced forms such as valueFrom supported.
+*/}}
+{{- define "formbricks.envVarValue" -}}
+{{- $value := .value -}}
+{{- if kindIs "map" $value -}}
+{{- include "formbricks.tplvalues.render" (dict "value" $value "context" .context) -}}
+{{- else if kindIs "invalid" $value -}}
+value: ""
+{{- else -}}
+value: {{ include "formbricks.tplvalues.render" (dict "value" (toString $value) "context" .context) | trim | quote }}
+{{- end -}}
+{{- end }}
+
+{{- define "formbricks.envVar" -}}
+- name: {{ include "formbricks.tplvalues.render" (dict "value" .name "context" .context) }}
+  {{- include "formbricks.envVarValue" (dict "value" .value "context" .context) | nindent 2 }}
+{{- end }}
 
 {{/*
 Allow the release namespace to be overridden.
@@ -105,8 +125,55 @@ If `namespaceOverride` is provided, it will be used; otherwise, it defaults to `
 {{- printf "%s-app-secrets" (include "formbricks.name" .) -}}
 {{- end }}
 
+{{- define "formbricks.redisName" -}}
+{{- .Values.redis.fullnameOverride | default (printf "%s-redis" (include "formbricks.name" .)) | trunc 63 | trimSuffix "-" -}}
+{{- end }}
+
+{{- define "formbricks.redisMasterName" -}}
+{{- printf "%s-master" (include "formbricks.redisName" .) | trunc 63 | trimSuffix "-" -}}
+{{- end }}
+
+{{- define "formbricks.redisHeadlessName" -}}
+{{- printf "%s-headless" (include "formbricks.redisName" .) | trunc 63 | trimSuffix "-" -}}
+{{- end }}
+
+{{- define "formbricks.redisImage" -}}
+{{- if .Values.redis.image.digest -}}
+{{- printf "%s@%s" .Values.redis.image.repository .Values.redis.image.digest -}}
+{{- else -}}
+{{- printf "%s:%s" .Values.redis.image.repository .Values.redis.image.tag -}}
+{{- end -}}
+{{- end }}
+
+{{- define "formbricks.redisSecretName" -}}
+{{- .Values.redis.auth.existingSecret | default (include "formbricks.appSecretName" .) -}}
+{{- end }}
+
+{{- define "formbricks.redisSecretKey" -}}
+{{- .Values.redis.auth.existingSecretPasswordKey | default "REDIS_PASSWORD" -}}
+{{- end }}
+
+{{- define "formbricks.migrationJobName" -}}
+{{- printf "%s-migration" (include "formbricks.name" .) | trunc 63 | trimSuffix "-" -}}
+{{- end }}
+
+{{/*
+Formbricks application image reference. A configured digest takes precedence over the tag.
+*/}}
+{{- define "formbricks.deploymentImage" -}}
+{{- if .Values.deployment.image.digest -}}
+{{- printf "%s@%s" .Values.deployment.image.repository .Values.deployment.image.digest -}}
+{{- else -}}
+{{- printf "%s:%s" .Values.deployment.image.repository (.Values.deployment.image.tag | default .Chart.AppVersion | default "latest") -}}
+{{- end -}}
+{{- end }}
+
 {{- define "formbricks.hubSecretName" -}}
 {{- default (include "formbricks.appSecretName" .) .Values.hub.existingSecret -}}
+{{- end }}
+
+{{- define "formbricks.hubMigrationWaitServiceAccountName" -}}
+{{- printf "%s-migration-wait" (include "formbricks.hubname" .) | trunc 63 | trimSuffix "-" -}}
 {{- end }}
 
 {{/*
@@ -241,11 +308,15 @@ true
 {{- end }}
 
 {{- define "formbricks.redisPassword" -}}
-{{- $secret := (lookup "v1" "Secret" .Release.Namespace (include "formbricks.appSecretName" .)) }}
-{{- if and $secret (index $secret.data "REDIS_PASSWORD") }}
-    {{- index $secret.data "REDIS_PASSWORD" | b64dec -}}
-{{- else }}
+{{- $redisSecretName := include "formbricks.redisSecretName" . }}
+{{- $redisSecretKey := include "formbricks.redisSecretKey" . }}
+{{- $secret := (lookup "v1" "Secret" .Release.Namespace $redisSecretName) }}
+{{- if and $secret (index $secret.data $redisSecretKey) }}
+    {{- index $secret.data $redisSecretKey | b64dec -}}
+{{- else if eq $redisSecretName (include "formbricks.appSecretName" .) }}
     {{- randAlphaNum 16 -}}
+{{- else }}
+    {{- fail (printf "redis.auth.existingSecret %q must already exist in namespace %q and contain %s when secret.enabled=true so REDIS_URL can use the same password as the bundled Valkey server. Disable secret.enabled and provide app-secrets externally, or pre-create the Redis auth secret." $redisSecretName .Release.Namespace $redisSecretKey) -}}
 {{- end -}}
 {{- end }}
 
@@ -285,6 +356,15 @@ true
     {{- index $secret.data "HUB_API_KEY" | b64dec -}}
 {{- else if .Values.hub.existingSecret }}
     {{- fail (printf "hub.existingSecret %q must already exist in namespace %q and contain HUB_API_KEY when rendering the generated app secret. Disable secret.enabled and provide app-secrets externally, or pre-create the Hub secret." $hubSecretName .Release.Namespace) -}}
+{{- else }}
+    {{- randAlphaNum 32 -}}
+{{- end -}}
+{{- end }}
+
+{{- define "formbricks.cubejsApiSecret" -}}
+{{- $secret := (lookup "v1" "Secret" .Release.Namespace (include "formbricks.appSecretName" .)) }}
+{{- if and $secret (index $secret.data "CUBEJS_API_SECRET") }}
+    {{- index $secret.data "CUBEJS_API_SECRET" | b64dec -}}
 {{- else }}
     {{- randAlphaNum 32 -}}
 {{- end -}}

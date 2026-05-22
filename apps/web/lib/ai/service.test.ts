@@ -3,7 +3,7 @@ import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/typ
 import {
   assertOrganizationAIConfigured,
   generateOrganizationAIText,
-  getAIDataAnalysisUnavailableReason,
+  getAISmartToolsUnavailableReason,
   getOrganizationAIConfig,
   isInstanceAIConfigured,
 } from "./service";
@@ -12,7 +12,6 @@ const mocks = vi.hoisted(() => ({
   generateText: vi.fn(),
   isAiConfigured: vi.fn(),
   getOrganization: vi.fn(),
-  getIsAIDataAnalysisEnabled: vi.fn(),
   getIsAISmartToolsEnabled: vi.fn(),
   loggerError: vi.fn(),
 }));
@@ -62,7 +61,6 @@ vi.mock("@/lib/organization/service", () => ({
 }));
 
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({
-  getIsAIDataAnalysisEnabled: mocks.getIsAIDataAnalysisEnabled,
   getIsAISmartToolsEnabled: mocks.getIsAISmartToolsEnabled,
 }));
 
@@ -74,10 +72,8 @@ describe("AI organization service", () => {
     mocks.getOrganization.mockResolvedValue({
       id: "org_1",
       isAISmartToolsEnabled: true,
-      isAIDataAnalysisEnabled: false,
     });
     mocks.getIsAISmartToolsEnabled.mockResolvedValue(true);
-    mocks.getIsAIDataAnalysisEnabled.mockResolvedValue(true);
   });
 
   test("returns the instance AI status and organization settings", async () => {
@@ -88,9 +84,7 @@ describe("AI organization service", () => {
     expect(result).toMatchObject({
       organizationId: "org_1",
       isAISmartToolsEnabled: true,
-      isAIDataAnalysisEnabled: false,
       isAISmartToolsEntitled: true,
-      isAIDataAnalysisEntitled: true,
       isInstanceConfigured: true,
     });
   });
@@ -104,29 +98,22 @@ describe("AI organization service", () => {
   test("fails closed when the organization is not entitled to AI", async () => {
     mocks.getIsAISmartToolsEnabled.mockResolvedValueOnce(false);
 
-    await expect(assertOrganizationAIConfigured("org_1", "smartTools")).rejects.toThrow(
-      OperationNotAllowedError
-    );
+    await expect(assertOrganizationAIConfigured("org_1")).rejects.toThrow(OperationNotAllowedError);
   });
 
   test("fails closed when the requested AI capability is disabled", async () => {
     mocks.getOrganization.mockResolvedValueOnce({
       id: "org_1",
       isAISmartToolsEnabled: false,
-      isAIDataAnalysisEnabled: true,
     });
 
-    await expect(assertOrganizationAIConfigured("org_1", "smartTools")).rejects.toThrow(
-      OperationNotAllowedError
-    );
+    await expect(assertOrganizationAIConfigured("org_1")).rejects.toThrow(OperationNotAllowedError);
   });
 
   test("fails closed when the instance AI configuration is incomplete", async () => {
     mocks.isAiConfigured.mockReturnValueOnce(false);
 
-    await expect(assertOrganizationAIConfigured("org_1", "smartTools")).rejects.toThrow(
-      OperationNotAllowedError
-    );
+    await expect(assertOrganizationAIConfigured("org_1")).rejects.toThrow(OperationNotAllowedError);
   });
 
   test("generates organization AI text with the configured package abstraction", async () => {
@@ -135,7 +122,6 @@ describe("AI organization service", () => {
 
     const result = await generateOrganizationAIText({
       organizationId: "org_1",
-      capability: "smartTools",
       prompt: "Translate this survey",
     });
 
@@ -159,14 +145,12 @@ describe("AI organization service", () => {
     await expect(
       generateOrganizationAIText({
         organizationId: "org_1",
-        capability: "smartTools",
         prompt: "Translate this survey",
       })
     ).rejects.toThrow(modelError);
     expect(mocks.loggerError).toHaveBeenCalledWith(
       {
         organizationId: "org_1",
-        capability: "smartTools",
         isInstanceConfigured: true,
         errorCode: undefined,
         err: modelError,
@@ -175,34 +159,32 @@ describe("AI organization service", () => {
     );
   });
 
-  describe("getAIDataAnalysisUnavailableReason", () => {
+  describe("getAISmartToolsUnavailableReason", () => {
     const baseConfig = {
       organizationId: "org_1",
       isAISmartToolsEntitled: true,
       isAISmartToolsEnabled: true,
-      isAIDataAnalysisEntitled: true,
-      isAIDataAnalysisEnabled: true,
       isInstanceConfigured: true,
     };
 
     test("returns undefined when all checks pass", () => {
-      expect(getAIDataAnalysisUnavailableReason(baseConfig)).toBeUndefined();
+      expect(getAISmartToolsUnavailableReason(baseConfig)).toBeUndefined();
     });
 
-    test("returns not_in_plan when not entitled", () => {
-      expect(getAIDataAnalysisUnavailableReason({ ...baseConfig, isAIDataAnalysisEntitled: false })).toBe(
+    test("returns not_in_plan when smart tools entitlement is missing", () => {
+      expect(getAISmartToolsUnavailableReason({ ...baseConfig, isAISmartToolsEntitled: false })).toBe(
         "not_in_plan"
       );
     });
 
-    test("returns not_enabled when disabled at org level", () => {
-      expect(getAIDataAnalysisUnavailableReason({ ...baseConfig, isAIDataAnalysisEnabled: false })).toBe(
+    test("returns not_enabled when smart tools is disabled at org level", () => {
+      expect(getAISmartToolsUnavailableReason({ ...baseConfig, isAISmartToolsEnabled: false })).toBe(
         "not_enabled"
       );
     });
 
     test("returns instance_not_configured when instance AI is missing", () => {
-      expect(getAIDataAnalysisUnavailableReason({ ...baseConfig, isInstanceConfigured: false })).toBe(
+      expect(getAISmartToolsUnavailableReason({ ...baseConfig, isInstanceConfigured: false })).toBe(
         "instance_not_configured"
       );
     });

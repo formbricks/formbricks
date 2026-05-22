@@ -105,6 +105,28 @@ describe("createContactAttributeKey", () => {
     }
   });
 
+  test("returns bad request when key is reserved for future defaults", async () => {
+    const result = await createContactAttributeKey({
+      ...inputContactAttributeKey,
+      key: "user_id",
+    });
+    expect(result.ok).toBe(false);
+    expect(prisma.contactAttributeKey.create).not.toHaveBeenCalled();
+
+    if (!result.ok) {
+      expect(result.error).toStrictEqual({
+        type: "bad_request",
+        details: [
+          {
+            field: "key",
+            issue:
+              "Reserved attribute key(s): user_id. These keys are reserved for the v5.1 safe-identifier default attribute migration and cannot be created as custom attributes.",
+          },
+        ],
+      });
+    }
+  });
+
   test("returns conflict error when key already exists", async () => {
     const errToThrow = new Prisma.PrismaClientKnownRequestError("Mock error message", {
       code: PrismaErrorType.UniqueConstraintViolation,

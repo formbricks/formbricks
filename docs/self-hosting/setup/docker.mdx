@@ -16,10 +16,10 @@ Make sure Docker and Docker Compose are installed on your system. These are usua
 </Note>
 
 <Info>
-  Starting with Formbricks v5, the production Docker Compose stack includes Formbricks Hub and the XM Suite v5
-  Cube.js services. Generate `HUB_API_KEY` and `CUBEJS_API_SECRET` during setup, keep `HUB_API_URL` at its
-  internal default unless Hub runs elsewhere, and use the [migration guide](/self-hosting/advanced/migration#v5)
-  when upgrading an existing 4.x instance.
+  Starting with Formbricks v5, the production Docker Compose stack includes Formbricks Hub and Cube as part of
+  the baseline. Generate `HUB_API_KEY` and `CUBEJS_API_SECRET` during setup, keep `HUB_API_URL` at its
+  internal default unless Hub runs elsewhere, and use the [migration
+  guide](/self-hosting/advanced/migration#v5) when upgrading an existing 4.x instance.
 </Info>
 
 ## Start
@@ -34,7 +34,7 @@ Make sure Docker and Docker Compose are installed on your system. These are usua
 
 1. **Download the Docker Files**
 
-   Get the Docker Compose file plus the Cube.js configuration shipped with the XM Suite v5 stack:
+   Get the Docker Compose file plus the Cube configuration shipped with the baseline stack:
 
    ```bash
    mkdir -p cube/schema
@@ -43,21 +43,28 @@ Make sure Docker and Docker Compose are installed on your system. These are usua
    curl -o cube/schema/FeedbackRecords.js https://raw.githubusercontent.com/formbricks/formbricks/stable/docker/cube/schema/FeedbackRecords.js
    ```
 
-1. **Generate Hub Secret and Optional Cube Secret**
+1. **Generate Hub and Cube Secrets**
 
-   Formbricks Hub requires an API key. XM Suite v5 analytics also requires Cube.js; set the optional `xm`
-   Compose profile and Cube secret when you want to run the bundled Cube service. For a Hub-only stack, create
-   `.env` with just `HUB_API_KEY` and omit `COMPOSE_PROFILES` and `CUBEJS_API_SECRET`.
+   Formbricks Hub and Cube each require a shared secret. Create `.env` with both:
 
    ```bash
    cat <<EOF > .env
-   COMPOSE_PROFILES=xm
    HUB_API_KEY=$(openssl rand -hex 32)
    CUBEJS_API_SECRET=$(openssl rand -hex 32)
    CUBEJS_JWT_ISSUER=formbricks-web
    CUBEJS_JWT_AUDIENCE=formbricks-cube
    EOF
    ```
+
+1. **Validate the Docker Compose Configuration**
+
+   Confirm Docker Compose can resolve the required Hub and Cube variables before starting the stack:
+
+   ```bash
+   docker compose config >/dev/null
+   ```
+
+   This command fails if `HUB_API_KEY` or `CUBEJS_API_SECRET` is missing or empty in `.env`.
 
 1. **Generate NextAuth Secret**
 
@@ -125,16 +132,15 @@ Make sure Docker and Docker Compose are installed on your system. These are usua
 
    <Info>
      The bundled production stack already sets <code>HUB_API_URL</code> to <code>http://hub:8080</code>. Only
-     change that value if your Formbricks app needs to reach Hub at a different address. If your deployment also
-     resolves Compose variables from a shell environment or <code>.env</code> file, keep the same
+     change that value if your Formbricks app needs to reach Hub at a different address. If your deployment
+     also resolves Compose variables from a shell environment or <code>.env</code> file, keep the same
      <code>HUB_API_KEY</code> available there as well.
    </Info>
 
 1. **Start the Docker Setup**
 
    Now, you're ready to run Formbricks with Docker. Use the command below to start Formbricks together with
-   PostgreSQL, Redis, and Formbricks Hub. If the `xm` profile is set in `.env`, Docker Compose also starts Cube.js
-   for XM Suite v5 analytics.
+   PostgreSQL, Redis, Formbricks Hub, and Cube.
 
    ```bash
    docker compose up -d
@@ -147,8 +153,8 @@ Make sure Docker and Docker Compose are installed on your system. These are usua
    Once the setup is running, open [**http://localhost:3000**](http://localhost:3000) in your browser to access Formbricks. The first time you visit, you'll see a setup wizard. Follow the steps to create your first user and start using Formbricks.
 
 <Note>
-  The bundled Docker stack keeps Formbricks Hub internal to the compose network. When the `xm` profile is
-  enabled, Cube.js is internal too. The app reaches them through `http://hub:8080` and `http://cube:4000`.
+  The bundled Docker stack keeps Formbricks Hub and Cube internal to the compose network. The app reaches them
+  through `http://hub:8080` and `http://cube:4000`.
 </Note>
 
 <Info>
@@ -164,8 +170,8 @@ Please take a look at our [migration guide](/self-hosting/advanced/migration) fo
 
 <Info>
   For a major migration such as Formbricks 4.x to 5.0, update your compose structure and configuration first.
-  Pulling images alone is not enough if your stack does not yet include Hub, `HUB_API_KEY`, the bundled
-  `cube/` config files plus `CUBEJS_API_SECRET`, or the new edge rate-limiting setup.
+  Pulling images alone is not enough if your stack does not yet include Hub (`HUB_API_KEY`), Cube (`cube/`
+  config files plus `CUBEJS_API_SECRET`), or the new edge rate-limiting setup.
 </Info>
 
 1. Pull the latest Formbricks image

@@ -83,6 +83,24 @@ export function TimeDimensionPanel({
     }
   };
 
+  const handleDateRangeTypeChange = (value: "preset" | "custom") => {
+    setDateRangeType(value);
+    if (!timeDimension) return;
+
+    if (value === "preset") {
+      const nextPreset = presetValue || "last 30 days";
+      if (!presetValue) setPresetValue(nextPreset);
+      onTimeDimensionChange({ ...timeDimension, dateRange: nextPreset });
+      return;
+    }
+
+    const start = customStartDate ?? new Date();
+    const end = customEndDate ?? start;
+    if (!customStartDate) setCustomStartDate(start);
+    if (!customEndDate) setCustomEndDate(end);
+    onTimeDimensionChange({ ...timeDimension, dateRange: [start, end] });
+  };
+
   if (!timeDimension) {
     return (
       <div className="space-y-2">
@@ -150,7 +168,7 @@ export function TimeDimensionPanel({
           <div className="space-y-2">
             <Select
               value={dateRangeType}
-              onValueChange={(value) => setDateRangeType(value as "preset" | "custom")}>
+              onValueChange={(value) => handleDateRangeTypeChange(value as "preset" | "custom")}>
               <SelectTrigger className="w-full bg-white">
                 <SelectValue />
               </SelectTrigger>

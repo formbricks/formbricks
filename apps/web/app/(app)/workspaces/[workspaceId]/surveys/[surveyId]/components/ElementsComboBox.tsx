@@ -11,6 +11,7 @@ import {
   ContactIcon,
   EyeOff,
   FlagIcon,
+  GaugeIcon,
   GlobeIcon,
   GridIcon,
   HashIcon,
@@ -26,6 +27,7 @@ import {
   PieChartIcon,
   Rows3Icon,
   SmartphoneIcon,
+  SmilePlusIcon,
   StarIcon,
   User,
 } from "lucide-react";
@@ -103,6 +105,8 @@ const elementIcons = {
   [TSurveyElementTypeEnum.PictureSelection]: ImageIcon,
   [TSurveyElementTypeEnum.Matrix]: GridIcon,
   [TSurveyElementTypeEnum.Ranking]: ListOrderedIcon,
+  [TSurveyElementTypeEnum.CSAT]: SmilePlusIcon,
+  [TSurveyElementTypeEnum.CES]: GaugeIcon,
   [TSurveyElementTypeEnum.Address]: HomeIcon,
   [TSurveyElementTypeEnum.ContactInfo]: ContactIcon,
 

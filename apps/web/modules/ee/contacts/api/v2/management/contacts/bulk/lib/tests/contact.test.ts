@@ -347,6 +347,42 @@ describe("upsertBulkContacts", () => {
     expect(prisma.$executeRaw).toHaveBeenCalled();
   });
 
+  test("should return bad request when payload creates reserved future default keys", async () => {
+    const mockContacts = [
+      {
+        attributes: [
+          { attributeKey: { key: "email", name: "Email" }, value: "john@example.com" },
+          { attributeKey: { key: "user_id", name: "User Id" }, value: "user-123" },
+        ],
+      },
+    ];
+
+    const mockParsedEmails = ["john@example.com"];
+
+    vi.mocked(prisma.contactAttribute.findMany).mockResolvedValueOnce([]);
+    vi.mocked(prisma.contact.findMany).mockResolvedValueOnce([]);
+    vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValueOnce([
+      { id: "attr-key-email", key: "email", workspaceId: mockWorkspaceId, name: "Email" },
+    ] as any);
+
+    const result = await upsertBulkContacts(mockContacts, mockWorkspaceId, mockParsedEmails);
+    expect(result.ok).toBe(false);
+    expect(prisma.contact.createMany).not.toHaveBeenCalled();
+
+    if (!result.ok) {
+      expect(result.error).toStrictEqual({
+        type: "bad_request",
+        details: [
+          {
+            field: "attributes",
+            issue:
+              "Reserved attribute key(s): user_id. These keys are reserved for the v5.1 safe-identifier default attribute migration and cannot be created as custom attributes.",
+          },
+        ],
+      });
+    }
+  });
+
   test("should update attribute key names when they change", async () => {
     // Mock data: a contact with an attribute that has a new name for an existing key
     const mockContacts = [

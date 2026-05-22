@@ -1602,13 +1602,15 @@ checksums:
     workspace/analysis/charts/add_filter: ed5d8e9bfcb05cd1e10e4c403befbae6
     workspace/analysis/charts/add_to_dashboard: 9941c3d30895bb8e25ce8d4e03d33a08
     workspace/analysis/charts/advanced_chart_builder_config_prompt: c2fe2c1a076f27d3ae62a4db75474b0a
+    workspace/analysis/charts/ai_enable_in_settings: 426cb4525381e193e6c4dcce286e60c8
     workspace/analysis/charts/ai_instance_not_configured: 6deeb8aeaff3982d07e1d5a045e06d2d
     workspace/analysis/charts/ai_not_available: 173abfcd32dd45edcc258dfdaaed494b
-    workspace/analysis/charts/ai_not_enabled: 8651fdac58cd311d17a48001a880318d
-    workspace/analysis/charts/ai_not_in_plan: 60bb0792a1ed98c07d8694029cdfdb43
+    workspace/analysis/charts/ai_not_enabled: 2066fe71ecf8994ba738c79b63a1934b
+    workspace/analysis/charts/ai_not_in_plan: 4b75e143c97d657bd91f857ff2bbf33f
     workspace/analysis/charts/ai_query_placeholder: 24c3d18f514cb3a9953f04c3b04503a2
     workspace/analysis/charts/ai_query_section_description: 66d06342f29bf6658793403856521fd7
     workspace/analysis/charts/ai_query_section_title: c0e450a47af7c2a516b77f73cf54db1b
+    workspace/analysis/charts/ai_upgrade_plan: 81c9e7a593c0e9290f7078ecdc1c6693
     workspace/analysis/charts/already_on_dashboard: c2cee946860c71a71cf03392b2d1fc3a
     workspace/analysis/charts/and_filter_logic: 53e8eb67a396fcb5e419bb4cbf0008df
     workspace/analysis/charts/apply_changes: ed3da8072dbd27dc0c959777cdcbebf3
@@ -1857,6 +1859,7 @@ checksums:
     workspace/contacts/attribute_key_hint: 1a68c6f91e1a5cf9eff811e2e54e92b8
     workspace/contacts/attribute_key_placeholder: 31702e553b3f138a623dbaa42b6f878f
     workspace/contacts/attribute_key_required: 75f22558e9bafe7da2a549e75fab5f75
+    workspace/contacts/attribute_key_reserved_future_default: 2dbd2159bb6883bf56195448789ef72e
     workspace/contacts/attribute_key_safe_identifier_required: aece7d4708065ec5f110b82fc061621d
     workspace/contacts/attribute_label: a5c71bf158481233f8215dbd38cc196b
     workspace/contacts/attribute_label_placeholder: bf5106cb14d2ec0c21e7d8b4ab1f3a93
@@ -1891,6 +1894,7 @@ checksums:
     workspace/contacts/generate_personal_link: 9ac0865f6876d40fe858f94eae781eb8
     workspace/contacts/generate_personal_link_description: b9dbaf9e2d8362505b7e3cfa40f415a6
     workspace/contacts/invalid_csv_column_names: dcb8534e7d4c00b9ea7bdaf389f72328
+    workspace/contacts/invalid_csv_reserved_column_names: 6fef9d55e3dd298fea069404c9aaa474
     workspace/contacts/invalid_date_format: 5bad9730ac5a5bacd0792098f712b1c4
     workspace/contacts/invalid_number_format: bd0422507385f671c3046730a6febc64
     workspace/contacts/no_activity_yet: f88897ac05afd6bf8af0d4834ad24ffc
@@ -2484,16 +2488,19 @@ checksums:
     workspace/settings/feedback_directories/nav_label: cf9a57b3cbac0f04b98e06fb693e986e
     workspace/settings/feedback_directories/no_access: 707627df25fbaa28f18aa0f0d03dcb81
     workspace/settings/feedback_directories/no_connectors: ccc725ff9a82a7b8ab68de735490a9b9
+    workspace/settings/feedback_directories/no_unassigned_workspaces_description: c96a260b582e6c930de72e6e69f9a9a6
+    workspace/settings/feedback_directories/no_unassigned_workspaces_title: 458d4289d73d799561bec26a0bb1a1a3
     workspace/settings/feedback_directories/pause_connectors_confirmation_description: 0e30f827576b931651b9eae44e00279b
     workspace/settings/feedback_directories/pause_connectors_confirmation_title: da1950dbb9ce62caa65c87ae8b88b1a1
     workspace/settings/feedback_directories/select_workspaces_placeholder: 7d8c8f5910b264525f73bd32107765db
     workspace/settings/feedback_directories/show_archived: c4c1c3bbddc1bb1540c079b589a2d3de
     workspace/settings/feedback_directories/title: cf9a57b3cbac0f04b98e06fb693e986e
     workspace/settings/feedback_directories/unarchive: 671fc7e9d7c8cb4d182a25a46551c168
-    workspace/settings/feedback_directories/unarchive_workspace_conflict: 82f4b8ebaf41589cfb96e6398dafcc76
+    workspace/settings/feedback_directories/unarchive_workspace_conflict: ed44bc0bd570b40de5251d04abf7bd08
     workspace/settings/feedback_directories/upgrade_prompt_description: eb8a4bf60bcae458899e1ea94094789d
     workspace/settings/feedback_directories/upgrade_prompt_title: 0a7b67ccf15a0aa8c64e5da7feb6e532
     workspace/settings/feedback_directories/workspace_access: 32407b39cf878fb579559c1ed3660892
+    workspace/settings/feedback_directories/workspace_assigned_to_directory: 6b907668667a9c74a99c437fa3cc2046
     workspace/settings/feedback_directories/workspaces_already_linked: ef6248289707611a44950c3406aec0ec
     workspace/settings/feedback_directories/workspaces_being_added: e01628710aff05c5172f2f43aab1f6fb
     workspace/settings/general/ai_data_analysis_enabled: 45fabb594da6851f73fef50ca40fe525
@@ -2597,8 +2604,8 @@ checksums:
     workspace/settings/profile/save_the_following_backup_codes_in_a_safe_place: a5b9d38083770375f2372f93ac9a7b2b
     workspace/settings/profile/scan_the_qr_code_below_with_your_authenticator_app: 5a6b60928590ce3b6be1bdf1d34cd45e
     workspace/settings/profile/security_description: e833adde4e3e26795e61a93619c6caec
-    workspace/settings/profile/sso_identity_confirmation_failed: 9d0fcabd5321c07af1caf627b0c68bdf
-    workspace/settings/profile/sso_identity_confirmation_may_be_required_for_deletion: a220681b82105f16803bb542853809f4
+    workspace/settings/profile/sso_identity_confirmation_failed: 2d699f31f3e92bca9508a2772b071a1f
+    workspace/settings/profile/sso_identity_confirmation_may_be_required_for_deletion: 9a5d190ed96e0149ed431c130c40284d
     workspace/settings/profile/two_factor_authentication: 97a428a54e41d68810a12dbae075f371
     workspace/settings/profile/two_factor_authentication_description: 1429e4eeaea193f15fb508875d4fb601
     workspace/settings/profile/two_factor_authentication_enabled_please_enter_the_six_digit_code_from_your_authenticator_app: 308ba145b3dc485ff4f17387e977b1f9
@@ -3515,6 +3522,7 @@ checksums:
     workspace/unify/allowed_values: 430e0721aa2c52745ef8f8b6918bb7d2
     workspace/unify/api_ingestion: a14642d27bbb6843f9f4903b6555dfbb
     workspace/unify/api_ingestion_settings_description: a2597917ca1c724607d1d32178d670b3
+    workspace/unify/api_ingestion_setup_description: d18a267d0e50198682950f5341307fa3
     workspace/unify/auto_generated: 6e83e8febd63275692c444cb8074531d
     workspace/unify/change_file: c5163ac18bf443370228a8ecbb0b07da
     workspace/unify/clear_mapping: 9bd7c716667838b9f203f5af0ac2d651

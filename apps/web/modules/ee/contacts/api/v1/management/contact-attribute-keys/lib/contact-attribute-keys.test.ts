@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TContactAttributeKeyType } from "@formbricks/types/contact-attribute-key";
-import { DatabaseError, OperationNotAllowedError } from "@formbricks/types/errors";
+import { DatabaseError, InvalidInputError, OperationNotAllowedError } from "@formbricks/types/errors";
 import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
 import { TContactAttributeKeyCreateInput } from "@/modules/ee/contacts/api/v1/management/contact-attribute-keys/[contactAttributeKeyId]/types/contact-attribute-keys";
 import { createContactAttributeKey, getContactAttributeKeys } from "./contact-attribute-keys";
@@ -141,6 +141,17 @@ describe("createContactAttributeKey", () => {
       OperationNotAllowedError
     );
     expect(prisma.contactAttributeKey.count).toHaveBeenCalledWith({ where: { workspaceId } });
+    expect(prisma.contactAttributeKey.create).not.toHaveBeenCalled();
+  });
+
+  test("should throw InvalidInputError when key is reserved for future defaults", async () => {
+    await expect(
+      createContactAttributeKey(workspaceId, {
+        ...createInput,
+        key: "user_id",
+      })
+    ).rejects.toThrow(InvalidInputError);
+    expect(prisma.contactAttributeKey.count).not.toHaveBeenCalled();
     expect(prisma.contactAttributeKey.create).not.toHaveBeenCalled();
   });
 

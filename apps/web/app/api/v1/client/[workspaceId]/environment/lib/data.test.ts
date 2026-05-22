@@ -103,6 +103,7 @@ describe("getWorkspaceStateData", () => {
         id: workspaceId,
         appSetupCompleted: true,
         workspaceSettings: {
+          id: workspaceId,
           recontactDays: 30,
           clickOutsideClose: true,
           overlay: "none",
@@ -111,7 +112,14 @@ describe("getWorkspaceStateData", () => {
           styling: { allowStyleOverwrite: false },
         },
       },
-      surveys: mockWorkspaceData.surveys,
+      // `survey.name` is replaced with a back-compat placeholder; segment was
+      // null in the mock so the sanitized segment stays null.
+      surveys: [
+        {
+          ...mockWorkspaceData.surveys[0],
+          name: "[deprecated] survey name omitted from public API - will be removed soon",
+        },
+      ],
       actionClasses: mockWorkspaceData.actionClasses,
     });
 
@@ -211,6 +219,7 @@ describe("getWorkspaceStateData", () => {
     const result = await getWorkspaceStateData(workspaceId);
 
     expect(result.workspace.workspaceSettings).toEqual({
+      id: workspaceId,
       recontactDays: 14,
       clickOutsideClose: false,
       overlay: "dark",

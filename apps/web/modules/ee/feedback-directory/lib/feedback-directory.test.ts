@@ -402,6 +402,7 @@ describe("FeedbackDirectory Service", () => {
     });
 
     test("unarchives directory", async () => {
+      vi.mocked(prisma.feedbackDirectory.findUnique).mockResolvedValueOnce(mockDirectoryDetailsDbRow as any);
       vi.mocked(prisma.feedbackDirectory.update).mockResolvedValueOnce({} as any);
 
       const result = await updateFeedbackDirectory(mockDirectoryId, mockOrganizationId, {
@@ -409,10 +410,46 @@ describe("FeedbackDirectory Service", () => {
       });
 
       expect(result).toBe(true);
+      expect(prisma.feedbackDirectoryWorkspace.findFirst).toHaveBeenCalledWith({
+        where: {
+          workspaceId: { in: [mockWorkspaceId1, mockWorkspaceId2] },
+          feedbackDirectoryId: { not: mockDirectoryId },
+          feedbackDirectory: { isArchived: false },
+        },
+        select: { workspaceId: true },
+      });
       expect(prisma.feedbackDirectory.update).toHaveBeenCalledWith({
         where: { id: mockDirectoryId },
         data: { isArchived: false },
       });
+    });
+
+    test("throws ResourceNotFoundError when unarchiving and directory cannot be loaded", async () => {
+      vi.mocked(prisma.feedbackDirectory.findUnique).mockResolvedValueOnce(null);
+
+      await expect(
+        updateFeedbackDirectory(mockDirectoryId, mockOrganizationId, {
+          isArchived: false,
+        })
+      ).rejects.toThrow(ResourceNotFoundError);
+
+      expect(prisma.feedbackDirectoryWorkspace.findFirst).not.toHaveBeenCalled();
+      expect(prisma.feedbackDirectory.update).not.toHaveBeenCalled();
+    });
+
+    test("throws InvalidInputError when unarchiving would assign a workspace to two active directories", async () => {
+      vi.mocked(prisma.feedbackDirectory.findUnique).mockResolvedValueOnce(mockDirectoryDetailsDbRow as any);
+      vi.mocked(prisma.feedbackDirectoryWorkspace.findFirst).mockResolvedValueOnce({
+        workspaceId: mockWorkspaceId1,
+      } as any);
+
+      await expect(
+        updateFeedbackDirectory(mockDirectoryId, mockOrganizationId, {
+          isArchived: false,
+        })
+      ).rejects.toThrow(new InvalidInputError("WORKSPACE_ALREADY_ASSIGNED_TO_DIFFERENT_DIRECTORY"));
+
+      expect(prisma.feedbackDirectory.update).not.toHaveBeenCalled();
     });
 
     test("updates workspace assignments with diff", async () => {

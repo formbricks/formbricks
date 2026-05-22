@@ -228,7 +228,6 @@ export const mockOrganizationOutput: TOrganization = {
   createdAt: currentDate,
   updatedAt: currentDate,
   isAISmartToolsEnabled: false,
-  isAIDataAnalysisEnabled: false,
   billing: {
     stripeCustomerId: null,
     limits: {

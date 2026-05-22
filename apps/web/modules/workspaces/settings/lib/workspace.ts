@@ -9,6 +9,8 @@ import { TWorkspace, TWorkspaceUpdateInput, ZWorkspaceUpdateInput } from "@formb
 import { validateInputs } from "@/lib/utils/validate";
 import { deleteFilesByWorkspaceId } from "@/modules/storage/service";
 
+// Keep v5 defaults aligned with current production camelCase keys.
+// Safe-identifier migration (with backwards compatibility) is intentionally deferred to v5.1.
 const DEFAULT_CONTACT_ATTRIBUTE_KEYS: Prisma.ContactAttributeKeyCreateWithoutWorkspaceInput[] = [
   {
     key: "userId",
@@ -151,7 +153,7 @@ export const deleteWorkspace = async (workspaceId: string): Promise<TWorkspace> 
     if (workspace) {
       const s3Result = await deleteFilesByWorkspaceId(workspaceId, []);
 
-      if (!s3Result.ok) {
+      if (!s3Result.ok && "error" in s3Result) {
         // fail silently because we don't want to throw an error if the files are not deleted
         logger.error(s3Result.error, "Error deleting S3 files");
       }

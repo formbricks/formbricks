@@ -63,7 +63,7 @@ export const GET = withV1ApiWrapper({
       };
     }
 
-    const basePath = `/workspaces/${workspaceId}`;
+    const basePath = `/workspaces/${workspaceId}/settings/workspace`;
     const redirectUrl = new URL(`${basePath}/integrations/notion`, WEBAPP_URL);
     const safeError = getSafeOAuthCallbackError(error);
 

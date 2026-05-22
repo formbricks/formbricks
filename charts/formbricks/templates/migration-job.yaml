@@ -3,7 +3,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "formbricks.name" . }}-migration
+  name: {{ include "formbricks.migrationJobName" . }}
   labels:
     {{- include "formbricks.labels" . | nindent 4 }}
   annotations:
@@ -46,7 +46,7 @@ spec:
       {{- end }}
       containers:
         - name: migration
-          image: {{ .Values.deployment.image.repository }}:{{ .Values.deployment.image.tag | default .Chart.AppVersion | default "latest" }}
+          image: {{ include "formbricks.deploymentImage" . }}
           imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}
           command:
             - node
@@ -82,12 +82,7 @@ spec:
           {{- end }}
           env:
             {{- range $key, $value := .Values.deployment.env }}
-            - name: {{ include "formbricks.tplvalues.render" ( dict "value" $key "context" $ ) }}
-              {{- if kindIs "string" $value }}
-              value: {{ include "formbricks.tplvalues.render" ( dict "value" $value "context" $ ) | quote }}
-              {{- else }}
-              {{- toYaml $value | nindent 14 }}
-              {{- end }}
+            {{- include "formbricks.envVar" (dict "name" $key "value" $value "context" $) | nindent 12 }}
             {{- end }}
           {{- if .Values.migration.resources }}
           resources:

@@ -363,8 +363,7 @@ export const generateAIChartAction = authenticatedActionClient
 
       await checkDashboardsEnabled(organizationId);
 
-      // Verify AI is entitled, enabled at org level, and configured at instance level
-      await assertOrganizationAIConfigured(organizationId, "dataAnalysis");
+      await assertOrganizationAIConfigured(organizationId);
 
       const { feedbackDirectoryId } = await checkFeedbackDirectoryAccess({
         feedbackDirectoryId: parsedInput.feedbackDirectoryId,

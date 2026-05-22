@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { z } from "zod";
 import { TooManyRequestsError } from "@formbricks/types/errors";
+import { DEFAULT_REQUEST_BODY_LIMIT_BYTES } from "@/app/lib/api/request-body";
 import { withV3ApiWrapper } from "./api-wrapper";
 
 const { mockAuthenticateRequest, mockGetServerSession } = vi.hoisted(() => ({
@@ -412,6 +413,44 @@ describe("withV3ApiWrapper", () => {
         reason: "Malformed JSON input, please check your request body",
       },
     ]);
+  });
+
+  test("returns 413 problem response for oversized JSON input", async () => {
+    const handler = vi.fn(async () => Response.json({ ok: true }));
+    const wrapped = withV3ApiWrapper({
+      auth: "none",
+      schemas: {
+        body: z.object({
+          name: z.string(),
+        }),
+      },
+      handler,
+    });
+
+    const response = await wrapped(
+      new NextRequest("http://localhost/api/v3/surveys", {
+        method: "POST",
+        body: "{}",
+        headers: {
+          "Content-Length": String(DEFAULT_REQUEST_BODY_LIMIT_BYTES + 1),
+          "Content-Type": "application/json",
+          "x-request-id": "req-payload-too-large",
+        },
+      }),
+      {} as never
+    );
+
+    expect(response.status).toBe(413);
+    expect(handler).not.toHaveBeenCalled();
+    await expect(response.json()).resolves.toEqual(
+      expect.objectContaining({
+        code: "payload_too_large",
+        detail: `Request body must not exceed ${DEFAULT_REQUEST_BODY_LIMIT_BYTES} bytes`,
+        requestId: "req-payload-too-large",
+        status: 413,
+        title: "Payload Too Large",
+      })
+    );
   });
 
   test("returns 400 problem response for invalid route params", async () => {

@@ -184,22 +184,33 @@ export function AddFilterModal({
     [t]
   );
 
+  const contactAttributeKeysForPicker = useMemo(() => {
+    // `userId` is represented by the person filter (fingerprint icon), so hide it from attribute entries.
+    return contactAttributeKeys.filter((attributeKey) => attributeKey.key !== "userId");
+  }, [contactAttributeKeys]);
+
   const contactAttributeKeysFiltered = useMemo(() => {
-    if (!contactAttributeKeys) return [];
+    if (!contactAttributeKeysForPicker) return [];
 
-    if (!searchValue) return contactAttributeKeys;
+    if (!searchValue) return contactAttributeKeysForPicker;
 
-    return contactAttributeKeys.filter((attributeKey) => {
+    return contactAttributeKeysForPicker.filter((attributeKey) => {
       const attributeValueToSeach = attributeKey.name ?? attributeKey.key;
       return attributeValueToSeach.toLowerCase().includes(searchValue.toLowerCase());
     });
-  }, [contactAttributeKeys, searchValue]);
+  }, [contactAttributeKeysForPicker, searchValue]);
 
   const contactAttributeFiltered = useMemo(() => {
-    const contactAttributes = [{ name: "userId" }];
+    const personIdentifiers = [{ id: "userId", label: t("common.user_id") }];
 
-    return contactAttributes.filter((ca) => ca.name.toLowerCase().includes(searchValue.toLowerCase()));
-  }, [searchValue]);
+    return personIdentifiers.filter((personIdentifier) => {
+      const query = searchValue.toLowerCase();
+      return (
+        personIdentifier.id.toLowerCase().includes(query) ||
+        personIdentifier.label.toLowerCase().includes(query)
+      );
+    });
+  }, [searchValue, t]);
 
   const segmentsFiltered = useMemo(() => {
     if (!segments) return [];
@@ -283,10 +294,10 @@ export function AddFilterModal({
 
             {filters.contactAttributeFiltered.map((personAttribute) => (
               <FilterButton
-                key={personAttribute.name}
-                data-testid={`filter-btn-person-${personAttribute.name}`}
+                key={personAttribute.id}
+                data-testid={`filter-btn-person-${personAttribute.id}`}
                 icon={<FingerprintIcon className="h-4 w-4" />}
-                label={personAttribute.name}
+                label={personAttribute.label}
                 onClick={() => {
                   handleAddFilter({
                     type: "person",

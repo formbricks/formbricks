@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   getSurvey: vi.fn(),
   getValidatedResponseUpdateInput: vi.fn(),
   loggerError: vi.fn(),
+  resolveClientApiIds: vi.fn(),
   sendToPipeline: vi.fn(),
   updateResponseWithQuotaEvaluation: vi.fn(),
   validateFileUploads: vi.fn(),
@@ -32,6 +33,10 @@ vi.mock("@/lib/response/service", () => ({
 
 vi.mock("@/lib/survey/service", () => ({
   getSurvey: mocks.getSurvey,
+}));
+
+vi.mock("@/lib/utils/resolve-client-id", () => ({
+  resolveClientApiIds: mocks.resolveClientApiIds,
 }));
 
 vi.mock("@/modules/api/lib/validation", () => ({
@@ -123,6 +128,7 @@ describe("putResponseHandler", () => {
     });
     mocks.getResponse.mockResolvedValue(getBaseExistingResponse());
     mocks.getSurvey.mockResolvedValue(getBaseSurvey());
+    mocks.resolveClientApiIds.mockResolvedValue({ workspaceId });
     mocks.updateResponseWithQuotaEvaluation.mockResolvedValue(getBaseUpdatedResponse());
     mocks.validateFileUploads.mockReturnValue(true);
     mocks.validateOtherOptionLengthForMultipleChoice.mockReturnValue(null);
@@ -237,6 +243,34 @@ describe("putResponseHandler", () => {
       message: "Unknown error occurred",
       details: {},
     });
+  });
+
+  test("returns not found when the workspace id cannot be resolved", async () => {
+    mocks.resolveClientApiIds.mockResolvedValue(null);
+
+    const result = await putResponseHandler(createHandlerParams({ workspaceId: "unknown_workspace_or_env" }));
+
+    expect(result.response.status).toBe(404);
+    await expect(result.response.json()).resolves.toEqual({
+      code: "not_found",
+      message: "Workspace not found",
+      details: {
+        resource_id: "unknown_workspace_or_env",
+        resource_type: "Workspace",
+      },
+    });
+    expect(mocks.getResponse).not.toHaveBeenCalled();
+    expect(mocks.updateResponseWithQuotaEvaluation).not.toHaveBeenCalled();
+  });
+
+  test("accepts updates when the route param is a legacy environment id that resolves to the survey workspace", async () => {
+    mocks.resolveClientApiIds.mockResolvedValue({ workspaceId });
+
+    const result = await putResponseHandler(createHandlerParams({ workspaceId: "legacy_environment_id" }));
+
+    expect(mocks.resolveClientApiIds).toHaveBeenCalledWith("legacy_environment_id");
+    expect(result.response.status).toBe(200);
+    expect(mocks.updateResponseWithQuotaEvaluation).toHaveBeenCalledTimes(1);
   });
 
   test("rejects updates when the response survey does not belong to the requested workspace", async () => {
