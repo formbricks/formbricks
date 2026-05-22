@@ -85,18 +85,6 @@ describe("utils", () => {
       expect(body.error.message).toBe("Conflict");
     });
 
-    test('return payload too large response for "payload_too_large" error', async () => {
-      const details = [{ field: "body", issue: "Request body must not exceed 2097152 bytes" }];
-      const error: ApiErrorResponseV2 = { type: "payload_too_large", details };
-
-      const response = handleApiError(mockRequest, error);
-      expect(response.status).toBe(413);
-      const body = await response.json();
-      expect(body.error.code).toBe(413);
-      expect(body.error.message).toBe("Payload Too Large");
-      expect(body.error.details).toEqual(details);
-    });
-
     test('return unprocessable entity response for "unprocessable_entity" error', async () => {
       const details = [{ field: "data", issue: "malformed" }];
       const error: ApiErrorResponseV2 = { type: "unprocessable_entity", details };

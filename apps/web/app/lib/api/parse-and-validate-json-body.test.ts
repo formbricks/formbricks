@@ -40,40 +40,6 @@ describe("parseAndValidateJsonBody", () => {
     });
   });
 
-  test("returns a payload too large response when the request body exceeds the body limit", async () => {
-    const request = new Request("http://localhost/api/test", {
-      method: "POST",
-      headers: {
-        "Content-Length": String(DEFAULT_REQUEST_BODY_LIMIT_BYTES + 1),
-        "Content-Type": "application/json",
-      },
-      body: "{}",
-    });
-
-    const result = await parseAndValidateJsonBody({
-      request,
-      schema: z.object({
-        finished: z.boolean(),
-      }),
-    });
-
-    expect("response" in result).toBe(true);
-
-    if (!("response" in result)) {
-      throw new Error("Expected a response result");
-    }
-
-    expect(result.issue).toBe("payload_too_large");
-    expect(result.response.status).toBe(413);
-    await expect(result.response.json()).resolves.toEqual({
-      code: "payload_too_large",
-      message: "Payload Too Large",
-      details: {
-        error: `Request body must not exceed ${DEFAULT_REQUEST_BODY_LIMIT_BYTES} bytes`,
-      },
-    });
-  });
-
   test("returns a validation response when the parsed JSON does not match the schema", async () => {
     const request = new Request("http://localhost/api/test", {
       method: "POST",

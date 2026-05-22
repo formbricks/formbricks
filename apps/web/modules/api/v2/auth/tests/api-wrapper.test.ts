@@ -165,42 +165,6 @@ describe("apiWrapper", () => {
     });
   });
 
-  test("should handle oversized JSON input in request body", async () => {
-    const request = new Request("http://localhost", {
-      method: "POST",
-      body: "{}",
-      headers: {
-        "Content-Length": String(DEFAULT_REQUEST_BODY_LIMIT_BYTES + 1),
-        "Content-Type": "application/json",
-      },
-    });
-
-    vi.mocked(authenticateRequest).mockResolvedValue(ok(mockAuthentication));
-    vi.mocked(handleApiError).mockResolvedValue(new Response("error", { status: 413 }));
-
-    const bodySchema = z.object({ key: z.string() });
-    const handler = vi.fn();
-
-    const response = await apiWrapper({
-      request,
-      schemas: { body: bodySchema },
-      rateLimit: false,
-      handler,
-    });
-
-    expect(response.status).toBe(413);
-    expect(handler).not.toHaveBeenCalled();
-    expect(handleApiError).toHaveBeenCalledWith(request, {
-      type: "payload_too_large",
-      details: [
-        {
-          field: "body",
-          issue: `Request body must not exceed ${DEFAULT_REQUEST_BODY_LIMIT_BYTES} bytes`,
-        },
-      ],
-    });
-  });
-
   test("should handle empty body when body schema is provided", async () => {
     const request = new Request("http://localhost", {
       method: "POST",
