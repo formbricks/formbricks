@@ -425,6 +425,19 @@
           "source": "/api-v2-reference/openapi.yml"
         },
         "tab": "API v2 Reference (Beta)"
+      },
+      {
+        "groups": [
+          {
+            "group": "API v3 Documentation",
+            "pages": ["api-v3-reference/introduction"]
+          }
+        ],
+        "openapi": {
+          "directory": "api-v3-reference",
+          "source": "/api-v3-reference/openapi.yml"
+        },
+        "tab": "API v3 Reference"
       }
     ]
   },

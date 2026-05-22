@@ -1,0 +1,51 @@
+---
+title: "API v3 Reference"
+icon: "code"
+---
+
+The Formbricks v3 API covers two surfaces:
+
+- **Surveys** — workspace-scoped survey list and delete endpoints implemented directly in Formbricks.
+- **Feedback Records** — Unify Feedback's record CRUD, semantic search, and "similar records" endpoints, exposed through the Formbricks gateway.
+
+## Feedback Records are gateway-proxied
+
+The `/api/v3/feedbackRecords/*` paths are not native Formbricks routes. They're matched by the Envoy ingress and forwarded to the upstream **Hub** service at `/v1/feedback-records/*`. The gateway:
+
+1. **Authorizes** the request in Formbricks: the caller must have access to the target Feedback Directory through their workspace.
+2. **Strips** the caller's `Authorization` / `x-api-key` / `cookie` headers.
+3. **Injects** the platform's internal `HUB_API_KEY` (a server-side Kubernetes secret) and forwards to Hub.
+
+The Hub key is **never used by clients**. You authenticate to Formbricks with your Formbricks credentials; the gateway speaks to Hub on your behalf.
+
+Where configured, `/v1/feedback-records/*` is also exposed for SDK callers and follows the same authorization model.
+
+## Authentication
+
+Three methods, in priority order:
+
+| Scheme | Header | When to use |
+| --- | --- | --- |
+| **`apiKeyAuth`** | `x-api-key: <FORMBRICKS_API_KEY>` | Server-to-server. Generate the key under **Workspace Settings → API Keys**. The key's workspace must have access to the target Feedback Directory. |
+| **`sessionAuth`** | `Cookie: next-auth.session-token=...` | In-app browser code. |
+| **`bearerAuth`** | `Authorization: Bearer <gateway JWT>` | Short-lived token issued by `POST /api/v3/gateway/token` or `POST /api/v3/feedbackRecords/token`. Intended for session-only contexts that can't send `x-api-key`. |
+
+If the `x-api-key` header is present, it wins. Otherwise the gateway falls back to bearer, then session cookie.
+
+## `tenant_id` is your Feedback Directory ID
+
+The parameter is named `tenant_id` to match the upstream Hub contract. **In Formbricks it always refers to a Feedback Directory.** Manage directories under **Organization Settings → Feedback Directories**.
+
+## Pagination
+
+List endpoints, semantic search, and "similar records" use cursor pagination — pass the previous response's `next_cursor` as `cursor` on the next request. There is no `offset`.
+
+## Idempotent ingestion
+
+`POST /api/v3/feedbackRecords` is idempotent on the triple `(tenant_id, submission_id, field_id)`. Re-posting with the same triple updates the existing record. Use this to safely retry network failures or re-import CSV exports.
+
+## Embedding-dependent endpoints
+
+`GET /api/v3/feedbackRecords/{id}/similar` and `POST /api/v3/feedbackRecords/search/semantic` require embeddings to be configured on the instance (`EMBEDDING_PROVIDER` and `EMBEDDING_MODEL`). When embeddings are disabled, these endpoints return **503**.
+
+Need help? Visit our [Website](https://formbricks.com/) or join our [Discord](https://formbricks.com/discord).
