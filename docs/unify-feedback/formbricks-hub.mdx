@@ -12,17 +12,4 @@ Hub is built for **the age of AI**: each open-text feedback record is vectorized
 
 The Hub is fully open-source (Apache 2.0) and can be self-hosted.
 
-## Feedback Records API
-
-Hub exposes a Feedback Records API so you can ingest, manage, and retrieve records programmatically:
-
-- **List feedback records with filters**: `GET /v1/feedback-records`
-- **Create a new feedback record**: `POST /v1/feedback-records`
-- **Bulk delete feedback records by user ID**: `DELETE /v1/feedback-records`
-- **Get a feedback record by ID**: `GET /v1/feedback-records/{id}`
-- **Delete a feedback record**: `DELETE /v1/feedback-records/{id}`
-- **Update a feedback record**: `PATCH /v1/feedback-records/{id}`
-- **Get similar feedback records**: `GET /v1/feedback-records/{id}/similar`
-- **Semantic search over feedback records**: `POST /v1/feedback-records/search/semantic`
-
 To learn more, visit the Hub docs at [hub.formbricks.com](https://hub.formbricks.com) and the [Hub API Reference](https://hub.formbricks.com/api).
