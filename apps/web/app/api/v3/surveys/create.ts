@@ -6,9 +6,9 @@ import { type TV3SurveyLanguageRequest, ensureV3WorkspaceLanguages } from "./lan
 import { prepareV3SurveyCreate } from "./prepare";
 import { V3SurveyReferenceValidationError } from "./reference-validation";
 import type { TV3CreateSurveyBody } from "./schemas";
-import { V3SurveyWritePermissionError, assertV3SurveyWritePermissions } from "./write-permissions";
+import { assertV3SurveyWritePermissions } from "./write-permissions";
 
-export { V3SurveyWritePermissionError as V3SurveyCreatePermissionError };
+export { V3SurveyWritePermissionError as V3SurveyCreatePermissionError } from "./write-permissions";
 
 function getCreatedBy(authentication: TV3Authentication): string | null {
   if (authentication && "user" in authentication && authentication.user?.id) {

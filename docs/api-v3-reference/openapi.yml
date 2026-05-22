@@ -474,8 +474,7 @@ paths:
           schema:
             type: array
             items:
-              type: string
-              pattern: "^[a-z]{2}(-[A-Z][a-z]{3})?-[A-Z]{2}$"
+              $ref: "#/components/schemas/LocaleCode"
             examples:
               - [de-DE]
               - [de-DE, pt-PT]
@@ -827,6 +826,11 @@ components:
       description: |
         Management API key; must include **workspaceId** as an allowed workspace with read, write, or manage permission.
   schemas:
+    LocaleCode:
+      type: string
+      pattern: ^[a-z]{2}(?:-[A-Z][a-z]{3})?-[A-Z]{2}$
+      description: Canonical locale code accepted by v3 survey APIs, for example `en-US`, `de-DE`, or `zh-Hans-CN`.
+      example: en-US
     CreateSurveyRequest:
       type: object
       description: |
@@ -870,7 +874,8 @@ components:
             - $ref: "#/components/schemas/SurveyMetadata"
           default: {}
         defaultLanguage:
-          type: string
+          allOf:
+            - $ref: "#/components/schemas/LocaleCode"
           default: en-US
           description: Default authoring locale. Translatable maps must include this locale key.
         languages:
@@ -913,9 +918,7 @@ components:
       required: [code]
       properties:
         code:
-          type: string
-          description: Canonical BCP 47 locale code, e.g. `de-DE` or `zh-Hans-CN`.
-          example: de-DE
+          $ref: "#/components/schemas/LocaleCode"
         default:
           type: boolean
           description: Optional marker for readability; only the `defaultLanguage` entry may set this to true.
@@ -1043,7 +1046,7 @@ components:
       required: [code, default, enabled, writeBehavior]
       properties:
         code:
-          type: string
+          $ref: "#/components/schemas/LocaleCode"
         default:
           type: boolean
         enabled:
@@ -1108,8 +1111,7 @@ components:
       type: object
       description: Canonical multilingual text map keyed by real locale codes.
       propertyNames:
-        type: string
-        description: BCP 47 locale code, for example `en-US`, `de-DE`, or `pt-BR`.
+        $ref: "#/components/schemas/LocaleCode"
       additionalProperties:
         type: string
     SurveyMetadata:
@@ -1132,9 +1134,7 @@ components:
       required: [code, default, enabled]
       properties:
         code:
-          type: string
-          description: Canonical locale code.
-          example: en-US
+          $ref: "#/components/schemas/LocaleCode"
         default:
           type: boolean
           description: Whether this is the default authoring language.
@@ -2170,7 +2170,8 @@ components:
             - $ref: "#/components/schemas/SurveyMetadata"
           nullable: true
         defaultLanguage:
-          type: string
+          allOf:
+            - $ref: "#/components/schemas/LocaleCode"
           description: Real locale code for the survey default language. The internal `default` translation key is never exposed.
         languages:
           type: array

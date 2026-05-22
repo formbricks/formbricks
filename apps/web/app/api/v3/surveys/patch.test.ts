@@ -124,6 +124,21 @@ const currentSurvey = {
   customHeadScriptsMode: null,
 } as unknown as TSurvey;
 
+const createExternalCtaBlock = () => ({
+  ...createBody.blocks[0],
+  elements: [
+    {
+      id: "external_cta",
+      type: "cta" as const,
+      headline: { "en-US": "Continue" },
+      required: false,
+      buttonExternal: true,
+      buttonUrl: "https://example.com",
+      ctaButtonLabel: { "en-US": "Open" },
+    },
+  ],
+});
+
 type TLanguageUpsertArgs = Parameters<typeof prisma.language.upsert>[0];
 type TLanguageUpsertReturn = ReturnType<typeof prisma.language.upsert>;
 
@@ -247,23 +262,7 @@ describe("patchV3Survey", () => {
       workspaceId,
       name: "Product Feedback",
       defaultLanguage: "en-US",
-      blocks: [
-        {
-          id: "clbk1234567890123456789012",
-          name: "Main Block",
-          elements: [
-            {
-              id: "external_cta",
-              type: "cta",
-              headline: { "en-US": "Continue" },
-              required: false,
-              buttonExternal: true,
-              buttonUrl: "https://example.com",
-              ctaButtonLabel: { "en-US": "Open" },
-            },
-          ],
-        },
-      ],
+      blocks: [createExternalCtaBlock()],
       endings: [
         {
           id: "clen1234567890123456789012",
@@ -299,28 +298,30 @@ describe("patchV3Survey", () => {
       patchV3Survey(
         currentSurvey,
         {
-          blocks: [
-            {
-              ...createBody.blocks[0],
-              elements: [
-                {
-                  id: "external_cta",
-                  type: "cta",
-                  headline: { "en-US": "Continue" },
-                  required: false,
-                  buttonExternal: true,
-                  buttonUrl: "https://example.com",
-                  ctaButtonLabel: { "en-US": "Open" },
-                },
-              ],
-            },
-          ],
+          blocks: [createExternalCtaBlock()],
         },
         "req_2",
         "org_1"
       )
     ).rejects.toThrow(V3SurveyWritePermissionError);
 
+    expect(updateSurvey).not.toHaveBeenCalled();
+  });
+
+  test("fails closed when external URL permissions cannot resolve an organization", async () => {
+    vi.mocked(getOrganizationByWorkspaceId).mockResolvedValue(null);
+
+    await expect(
+      patchV3Survey(
+        currentSurvey,
+        {
+          blocks: [createExternalCtaBlock()],
+        },
+        "req_2"
+      )
+    ).rejects.toThrow(`Unable to verify external URL permissions for workspaceId: ${workspaceId}`);
+
+    expect(getExternalUrlsPermission).not.toHaveBeenCalled();
     expect(updateSurvey).not.toHaveBeenCalled();
   });
 });

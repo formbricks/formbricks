@@ -1,3 +1,4 @@
+import type { Session } from "next-auth";
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { DatabaseError } from "@formbricks/types/errors";
@@ -55,6 +56,12 @@ const { getAuthorizedV3Survey } = await import("../authorization");
 
 const surveyId = "clsv1234567890123456789012";
 const workspaceId = "clxx1234567890123456789012";
+type PatchRouteContext = { params: Promise<{ surveyId: string }> };
+
+const testSession: Session = {
+  user: { id: "user_1", name: "User", email: "user@example.com" },
+  expires: "2026-01-01",
+};
 
 const survey = {
   id: surveyId,
@@ -118,13 +125,14 @@ function createRawPatchRequest(
   });
 }
 
+function createPatchContext(id = surveyId): PatchRouteContext {
+  return { params: Promise.resolve({ surveyId: id }) };
+}
+
 describe("PATCH /api/v3/surveys/[surveyId]", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    getServerSession.mockResolvedValue({
-      user: { id: "user_1", name: "User", email: "user@example.com" },
-      expires: "2026-01-01",
-    } as any);
+    getServerSession.mockResolvedValue(testSession);
     mockAuthenticateRequest.mockResolvedValue(null);
     vi.mocked(getAuthorizedV3Survey).mockResolvedValue({
       survey,
@@ -135,9 +143,7 @@ describe("PATCH /api/v3/surveys/[surveyId]", () => {
   });
 
   test("returns the normalized updated survey resource", async () => {
-    const res = await PATCH(createPatchRequest({ name: "Updated Feedback" }), {
-      params: { surveyId },
-    } as any);
+    const res = await PATCH(createPatchRequest({ name: "Updated Feedback" }), createPatchContext());
 
     expect(res.status).toBe(200);
     expect(res.headers.get("Cache-Control")).toBe("private, no-store");
@@ -157,7 +163,7 @@ describe("PATCH /api/v3/surveys/[surveyId]", () => {
         { name: "Updated Feedback" },
         `http://localhost/api/v3/surveys/${surveyId}?lang=de-DE`
       ),
-      { params: { surveyId } } as any
+      createPatchContext()
     );
 
     expect(res.status).toBe(400);
@@ -165,9 +171,7 @@ describe("PATCH /api/v3/surveys/[surveyId]", () => {
   });
 
   test("returns 400 for malformed JSON before patching", async () => {
-    const res = await PATCH(createRawPatchRequest("{"), {
-      params: { surveyId },
-    } as any);
+    const res = await PATCH(createRawPatchRequest("{"), createPatchContext());
 
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -184,9 +188,7 @@ describe("PATCH /api/v3/surveys/[surveyId]", () => {
     getServerSession.mockResolvedValue(null);
     mockAuthenticateRequest.mockResolvedValue(null);
 
-    const res = await PATCH(createPatchRequest({ name: "Updated Feedback" }), {
-      params: { surveyId },
-    } as any);
+    const res = await PATCH(createPatchRequest({ name: "Updated Feedback" }), createPatchContext());
 
     expect(res.status).toBe(401);
     expect(getAuthorizedV3Survey).not.toHaveBeenCalled();
@@ -204,9 +206,7 @@ describe("PATCH /api/v3/surveys/[surveyId]", () => {
       ])
     );
 
-    const res = await PATCH(createPatchRequest({ defaultLanguage: "de-DE" }), {
-      params: { surveyId },
-    } as any);
+    const res = await PATCH(createPatchRequest({ defaultLanguage: "de-DE" }), createPatchContext());
 
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -229,9 +229,7 @@ describe("PATCH /api/v3/surveys/[surveyId]", () => {
       ])
     );
 
-    const res = await PATCH(createPatchRequest({}), {
-      params: { surveyId },
-    } as any);
+    const res = await PATCH(createPatchRequest({}), createPatchContext());
 
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -257,9 +255,7 @@ describe("PATCH /api/v3/surveys/[surveyId]", () => {
       ])
     );
 
-    const res = await PATCH(createPatchRequest({ blocks: [] }), {
-      params: { surveyId },
-    } as any);
+    const res = await PATCH(createPatchRequest({ blocks: [] }), createPatchContext());
 
     expect(res.status).toBe(400);
     const body = await res.json();
@@ -290,9 +286,7 @@ describe("PATCH /api/v3/surveys/[surveyId]", () => {
       ),
     });
 
-    const res = await PATCH(createPatchRequest({ name: "Updated Feedback" }), {
-      params: { surveyId },
-    } as any);
+    const res = await PATCH(createPatchRequest({ name: "Updated Feedback" }), createPatchContext());
 
     expect(res.status).toBe(403);
     expect(patchV3Survey).not.toHaveBeenCalled();
@@ -301,9 +295,7 @@ describe("PATCH /api/v3/surveys/[surveyId]", () => {
   test("returns 500 for database errors", async () => {
     vi.mocked(patchV3Survey).mockRejectedValue(new DatabaseError("database unavailable"));
 
-    const res = await PATCH(createPatchRequest({ name: "Updated Feedback" }), {
-      params: { surveyId },
-    } as any);
+    const res = await PATCH(createPatchRequest({ name: "Updated Feedback" }), createPatchContext());
 
     expect(res.status).toBe(500);
     const body = await res.json();

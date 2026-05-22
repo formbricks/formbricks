@@ -29,11 +29,7 @@ function hasNewOrChangedExternalUrlReferences(input: TV3SurveyWritePermissionInp
     }
 
     const previousEnding = input.previous?.endings.find((entry) => entry.id === ending.id);
-    if (
-      !previousEnding ||
-      previousEnding.type !== "endScreen" ||
-      previousEnding.buttonLink !== ending.buttonLink
-    ) {
+    if (previousEnding?.type !== "endScreen" || previousEnding.buttonLink !== ending.buttonLink) {
       return true;
     }
   }
@@ -47,8 +43,7 @@ function hasNewOrChangedExternalUrlReferences(input: TV3SurveyWritePermissionInp
 
     const previousElement = previousElements.find((entry) => entry.id === element.id);
     if (
-      !previousElement ||
-      previousElement.type !== "cta" ||
+      previousElement?.type !== "cta" ||
       !previousElement.buttonExternal ||
       previousElement.buttonUrl !== element.buttonUrl
     ) {
@@ -70,7 +65,9 @@ export async function assertV3SurveyWritePermissions(
   const resolvedOrganizationId =
     organizationId ?? (await getOrganizationByWorkspaceId(input.workspaceId))?.id ?? null;
   if (!resolvedOrganizationId) {
-    return;
+    throw new V3SurveyWritePermissionError(
+      `Unable to verify external URL permissions for workspaceId: ${input.workspaceId}`
+    );
   }
 
   const isExternalUrlsAllowed = await getExternalUrlsPermission(resolvedOrganizationId);

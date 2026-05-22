@@ -5,7 +5,10 @@ import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { DatabaseError, ResourceNotFoundError, UniqueConstraintError } from "@formbricks/types/errors";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { TResponse, ZResponseInput } from "@formbricks/types/responses";
-import { TTag } from "@formbricks/types/tags";
+import {
+  buildClientResponse,
+  createResponseWithQuotaEvaluation as createClientResponseWithQuotaEvaluation,
+} from "@/app/api/client/[workspaceId]/responses/lib/response";
 import {
   isPrismaKnownRequestError,
   isSingleUseIdUniqueConstraintError,
@@ -16,32 +19,12 @@ import { getOrganization } from "@/lib/organization/service";
 import { calculateTtcTotal } from "@/lib/response/utils";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { validateInputs } from "@/lib/utils/validate";
-import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
 import { getContact } from "./contact";
 
 export const createResponseWithQuotaEvaluation = async (
   responseInput: TResponseInputV2
 ): Promise<TResponseWithQuotaFull> => {
-  const txResponse = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-    const response = await createResponse(responseInput, tx);
-
-    const quotaResult = await evaluateResponseQuotas({
-      surveyId: responseInput.surveyId,
-      responseId: response.id,
-      data: responseInput.data,
-      variables: responseInput.variables,
-      language: responseInput.language,
-      responseFinished: response.finished,
-      tx,
-    });
-
-    return {
-      ...response,
-      ...(quotaResult.quotaFull && { quotaFull: quotaResult.quotaFull }),
-    };
-  });
-
-  return txResponse;
+  return await createClientResponseWithQuotaEvaluation(responseInput, createResponse);
 };
 
 const buildPrismaResponseData = (
@@ -108,18 +91,7 @@ export const createResponse = async (
       select: responseSelection,
     });
 
-    const response: TResponse = {
-      ...responsePrisma,
-      contact: contact
-        ? {
-            id: contact.id,
-            userId: contact.attributes.userId,
-          }
-        : null,
-      tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
-    };
-
-    return response;
+    return buildClientResponse(responsePrisma, contact);
   } catch (error) {
     if (isPrismaKnownRequestError(error)) {
       if (isSingleUseIdUniqueConstraintError(error)) {
