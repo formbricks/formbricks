@@ -1,6 +1,6 @@
 
 
-{{ .Release.Name | camelcase }} with {{ .Values.deployment.image.repository }}:{{ .Values.deployment.image.tag }} has been deployed successfully on {{ template "formbricks.namespace" .}} namespace !
+{{ .Release.Name | camelcase }} with {{ include "formbricks.deploymentImage" . }} has been deployed successfully on {{ template "formbricks.namespace" .}} namespace !
 
 Here's how you can access and manage your deployment:
 ---
