@@ -223,11 +223,15 @@
             "group": "Unify Feedback Features",
             "pages": [
               "unify-feedback/feedback-directories",
-              "unify-feedback/feedback-records",
               "unify-feedback/feedback-sources",
-              "unify-feedback/topics-subtopics",
-              "unify-feedback/dashboards-charts"
+              "unify-feedback/feedback-records",
+              "unify-feedback/dashboards-charts",
+              "unify-feedback/topics-subtopics"
             ]
+          },
+          {
+            "group": "Powered by",
+            "pages": ["unify-feedback/formbricks-hub"]
           }
         ],
         "tab": "Unify Feedback"

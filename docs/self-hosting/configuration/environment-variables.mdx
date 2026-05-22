@@ -15,7 +15,7 @@ These variables are present inside your machine's docker-compose file. Restart t
 
 For `AI_PROVIDER=google`, use a Gemini model ID such as `gemini-2.5-flash` together with Google Cloud credentials. Formbricks uses Google Cloud naming here, even though the underlying SDK still talks to Vertex AI endpoints for Gemini model access.
 
-<!-- prettier-ignore-start -->
+{/* prettier-ignore-start */}
 
 | Variable                                | Description                                                                                                                                                                                     | Required                                                                                 | Default                                                                   |
 | --------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
@@ -144,6 +144,6 @@ For Helm deployments, the chart deploys Cube by default (`cube.enabled: true`). 
 cluster instead, set `cube.enabled: false`, point `CUBEJS_API_URL` at your endpoint, and supply
 `CUBEJS_API_SECRET` through your existing secret management setup.
 
-<!-- prettier-ignore-end -->
+{/* prettier-ignore-end */}
 
 Note: If you want to configure something that is not possible via above, please open an issue on our GitHub repo here or reach out to us on Github Discussions and we'll try our best to work out a solution with you.

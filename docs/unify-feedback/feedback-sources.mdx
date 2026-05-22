@@ -1,10 +1,10 @@
 ---
 title: "Feedback Sources"
-description: "Connectors that bring feedback data into a Feedback Directory."
+description: "Sources that bring feedback data into a Feedback Directory."
 icon: "plug"
 ---
 
-A **Source** (also called a **Connector**) defines how external data is mapped into Feedback Records inside a Feedback Directory. Manage them from **Unify → Sources**.
+A **Source** defines how external data is mapped into Feedback Records inside a Feedback Directory. Manage them from **Unify → Sources**.
 
 ## Source types
 
@@ -12,13 +12,17 @@ Formbricks supports three source types:
 
 ### 1. Formbricks Surveys
 
-Pipe responses from a Formbricks survey directly into a Feedback Directory. Pick a survey, select the questions you want to ingest, and map each question to its `field_type`. Optionally backfill historical responses on connect.
+Pipe responses from a Formbricks survey directly into a Feedback Directory. Pick a survey, select the questions you want to ingest - that's it. Formbricks automatically maps each question to its `field_type`. Optionally create Feedback Records of existing responses on connect.
 
 ### 2. CSV Import
 
-Upload a CSV (up to **2 MB** and **1,000 rows**) and Formbricks auto-suggests a column mapping based on common header names (`timestamp`, `response_id`, `rating`, `feedback_text`, ...). Required columns: `submission_id`, `field_id`, `field_type`, and the response value. Re-uploading a CSV with the same `submission_id` updates rows instead of duplicating them.
+Upload a CSV (up to **2 MB** and **1,000 rows**) and Formbricks auto-suggests a column mapping based on common header names (`timestamp`, `response_id`, `rating`, `feedback_text`, ...). Required columns: `submission_id`, `field_id`, `field_type`, and the feedback value. 
 
-A sample CSV is available from the connector creation dialog.
+<Note>
+  Re-uploading a CSV with the same `submission_id` updates existing records instead of creating duplicates.
+</Note>
+
+A sample CSV is available from the source creation dialog.
 
 ### 3. API Ingestion
 
@@ -26,9 +30,9 @@ Push records into a directory programmatically from your own systems. Best for s
 
 ## Field mapping
 
-For CSV and Formbricks Survey connectors, you map each source column or question to a Feedback Record field. CSV mapping suggests matches automatically with high/medium/low confidence based on header names.
+For CSV and API sources, you map each source column or question to a Feedback Record field. CSV mapping suggests matches automatically with high/medium/low confidence based on header names.
 
-For Formbricks Surveys, mapping translates each question type into the matching Hub `field_type`:
+For Formbricks Surveys, we handle the mapping internally - each question type is translated into the matching Hub `field_type`:
 
 - Single-select, multi-select, dropdown → `categorical`
 - NPS → `nps`
@@ -40,11 +44,11 @@ For Formbricks Surveys, mapping translates each question type into the matching 
 - Date → `date`
 - Boolean / consent → `boolean`
 
-## Managing connectors
+## Managing sources
 
 From the Sources page you can:
 
-- **Create** a new connector for any source type.
-- **Edit** the mapping for an existing connector.
+- **Create** a new source for any source type.
+- **Edit** the mapping for an existing source.
 - **Pause** or **resume** ingestion.
-- **Delete** a connector. Existing records stay in the directory.
+- **Delete** a source. Existing records stay in the directory.
