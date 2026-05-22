@@ -22,6 +22,20 @@ enum PipelineTriggers {
   responseFinished
 }
 
+enum WorkflowStatus {
+  draft
+  enabled
+  disabled
+}
+
+enum WorkflowRunStatus {
+  queued
+  running
+  completed
+  failed
+  canceled
+}
+
 enum WebhookSource {
   user
   zapier
@@ -182,6 +196,7 @@ model Response {
   language          String?
   displayId         String?             @unique
   display           Display?            @relation(fields: [displayId], references: [id])
+  workflowRuns      WorkflowRun[]
 
   @@unique([surveyId, singleUseId])
   @@index([createdAt])
@@ -622,6 +637,8 @@ model Workspace {
   feedbackDirectoryWorkspaces FeedbackDirectoryWorkspace[]
   charts                      Chart[]
   dashboards                  Dashboard[]
+  workflows                   Workflow[]
+  workflowRuns                WorkflowRun[]
 
   surveys              Survey[]
   contacts             Contact[]
@@ -635,6 +652,54 @@ model Workspace {
   connectors           Connector[]
 
   @@unique([organizationId, name])
+}
+
+model Workflow {
+  id          String         @id @default(cuid())
+  createdAt   DateTime       @default(now()) @map(name: "created_at")
+  updatedAt   DateTime       @updatedAt @map(name: "updated_at")
+  name        String
+  description String?
+  status      WorkflowStatus @default(draft)
+  workspace   Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId String
+  creator     User?          @relation("workflowCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  createdBy   String?
+  /// [WorkflowDefinition]
+  definition  Json           @default("{}")
+  runs        WorkflowRun[]
+
+  @@unique([id, workspaceId])
+  @@unique([workspaceId, name])
+  @@index([workspaceId, status])
+  @@index([workspaceId, updatedAt])
+}
+
+model WorkflowRun {
+  id             String            @id @default(cuid())
+  createdAt      DateTime          @default(now()) @map(name: "created_at")
+  updatedAt      DateTime          @updatedAt @map(name: "updated_at")
+  workflow       Workflow          @relation(fields: [workflowId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  workflowId     String
+  workspace      Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId    String
+  status         WorkflowRunStatus @default(queued)
+  triggerEvent   String            @map(name: "trigger_event")
+  surveyId       String?
+  response       Response?         @relation(fields: [responseId], references: [id], onDelete: SetNull)
+  responseId     String?
+  /// [WorkflowTriggerPayload]
+  triggerPayload Json              @default("{}") @map(name: "trigger_payload")
+  /// [WorkflowRunData]
+  data           Json              @default("{}")
+  error          String?
+  startedAt      DateTime?         @map(name: "started_at")
+  finishedAt     DateTime?         @map(name: "finished_at")
+
+  @@index([workspaceId, createdAt])
+  @@index([workflowId, workspaceId, createdAt])
+  @@index([status, createdAt])
+  @@index([responseId])
 }
 
 /// Represents the top-level organizational hierarchy in Formbricks.
@@ -917,6 +982,7 @@ model User {
   surveys                   Survey[]
   charts                    Chart[]             @relation("chartCreatedBy")
   dashboards                Dashboard[]         @relation("dashboardCreatedBy")
+  workflows                 Workflow[]          @relation("workflowCreatedBy")
   connectors                Connector[]
   teamUsers                 TeamUser[]
   lastLoginAt               DateTime?

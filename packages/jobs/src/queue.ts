@@ -23,6 +23,7 @@ import {
   type TResponsePipelineJobData,
   type TSurveySchedulingJobData,
   type TTestLogJobData,
+  type TWorkflowRunJobData,
 } from "@/src/types";
 
 export interface JobsQueueHandle {
@@ -241,6 +242,15 @@ export const enqueueSurveySchedulingJob = async (data: TSurveySchedulingJobData)
   }
 };
 
+export const enqueueWorkflowRunJob = async (data: TWorkflowRunJobData): Promise<Job> => {
+  try {
+    return await enqueueBackgroundJob(JOB_NAMES.workflowRun, data, { attempts: 1 });
+  } catch (error) {
+    logger.error({ err: error, jobName: JOB_NAMES.workflowRun }, "Failed to enqueue BullMQ workflow run job");
+    throw error;
+  }
+};
+
 export const scheduleTestLogJobAt = async (
   schedule: TRunAtBackgroundJobSchedule,
   data: TTestLogJobData
@@ -375,6 +385,7 @@ export const getBackgroundJobProducer = (): BackgroundJobProducer => ({
   enqueueResponsePipeline: async (data) => toEnqueuedJob(await enqueueResponsePipelineJob(data)),
   enqueueSurveyScheduling: async (data) => toEnqueuedJob(await enqueueSurveySchedulingJob(data)),
   enqueueTestLog: async (data) => toEnqueuedJob(await enqueueTestLogJob(data)),
+  enqueueWorkflowRun: async (data) => toEnqueuedJob(await enqueueWorkflowRunJob(data)),
   scheduleResponsePipelineAt: async (schedule, data) =>
     toEnqueuedJob(await scheduleResponsePipelineJobAt(schedule, data)),
   scheduleSurveySchedulingAt: async (schedule, data) =>

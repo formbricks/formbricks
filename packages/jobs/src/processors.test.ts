@@ -27,6 +27,7 @@ describe("@formbricks/jobs processor registry", () => {
     expect(getJobProcessor(JOB_NAMES.testLog)).toBeDefined();
     expect(getJobProcessor(JOB_NAMES.responsePipeline)).toBeDefined();
     expect(getJobProcessor(JOB_NAMES.surveyScheduling)).toBeDefined();
+    expect(getJobProcessor(JOB_NAMES.workflowRun)).toBeDefined();
     expect(getBackgroundJobDefinition(JOB_NAMES.testLog)).toBeDefined();
   });
 
@@ -243,6 +244,72 @@ describe("@formbricks/jobs processor registry", () => {
         scope: "global",
       }),
       "BullMQ survey scheduling processor override is not registered"
+    );
+  });
+
+  test("fails fast for the unimplemented workflow run processor", async () => {
+    await expect(
+      processJob({
+        attemptsMade: 0,
+        data: {
+          workflowId: "cm8cmpnjj000108jfdr9dfqe5",
+          workflowRunId: "cm8cmpnjj000108jfdr9dfqe4",
+          workspaceId: "cm8cmpnjj000108jfdr9dfqe8",
+        },
+        id: "job-workflow-run",
+        name: JOB_NAMES.workflowRun,
+        opts: { attempts: 1 },
+        queueName: "background-jobs",
+      } as never)
+    ).rejects.toThrow("BullMQ workflow run processor override missing");
+
+    expect(mockError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        jobId: "job-workflow-run",
+        jobName: JOB_NAMES.workflowRun,
+        workflowRunId: "cm8cmpnjj000108jfdr9dfqe4",
+        workspaceId: "cm8cmpnjj000108jfdr9dfqe8",
+      }),
+      "BullMQ workflow run processor override is not registered"
+    );
+  });
+
+  test("uses workflow run handler overrides when provided", async () => {
+    const overrideHandler = vi.fn().mockResolvedValue(undefined);
+
+    await expect(
+      processJob(
+        {
+          attemptsMade: 0,
+          data: {
+            workflowId: "cm8cmpnjj000108jfdr9dfqe5",
+            workflowRunId: "cm8cmpnjj000108jfdr9dfqe4",
+            workspaceId: "cm8cmpnjj000108jfdr9dfqe8",
+          },
+          id: "job-workflow-run-override",
+          name: JOB_NAMES.workflowRun,
+          opts: { attempts: 1 },
+          queueName: "background-jobs",
+        } as never,
+        {
+          [JOB_NAMES.workflowRun]: overrideHandler,
+        }
+      )
+    ).resolves.toBeUndefined();
+
+    expect(overrideHandler).toHaveBeenCalledWith(
+      {
+        workflowId: "cm8cmpnjj000108jfdr9dfqe5",
+        workflowRunId: "cm8cmpnjj000108jfdr9dfqe4",
+        workspaceId: "cm8cmpnjj000108jfdr9dfqe8",
+      },
+      {
+        attempt: 1,
+        jobId: "job-workflow-run-override",
+        jobName: JOB_NAMES.workflowRun,
+        maxAttempts: 1,
+        queueName: "background-jobs",
+      }
     );
   });
 

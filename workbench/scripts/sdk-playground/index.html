@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Formbricks JS Playground</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet" />
+    <style>
+      body {
+        font-family: "Inter", Helvetica, Arial, sans-serif;
+      }
+    </style>
+  </head>
+
+  <body class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50 text-slate-900 antialiased">
+    <script>
+      const script = document.createElement("script");
+      script.src = "https://staging.app.formbricks.com/js/formbricks.umd.cjs";
+      script.async = true;
+      script.onload = () => {
+        window.formbricks.setup({
+          environmentId: "cmowy4kvj0008vd01q0fwmey0",
+          appUrl: "https://staging.app.formbricks.com",
+        });
+      };
+      document.head.appendChild(script);
+
+      function reloadSdk() {
+        localStorage.removeItem("formbricks-js");
+        window.location.reload();
+      }
+    </script>
+
+    <header class="sticky top-0 z-10 border-b border-slate-200/70 bg-white/60 backdrop-blur">
+      <div class="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
+        <div class="flex items-center gap-2">
+          <div class="rounded-0 flex h-8 w-8 items-center justify-center bg-blue-600 font-bold text-white">
+            F
+          </div>
+          <span class="font-semibold text-slate-800">SDK Playground</span>
+        </div>
+        <nav class="hidden items-center gap-6 text-sm text-slate-600 sm:flex">
+          <a href="#features" class="hover:text-slate-900">Features</a>
+          <a href="#about" class="hover:text-slate-900">About</a>
+          <a href="https://formbricks.com" target="_blank" rel="noreferrer" class="hover:text-slate-900"
+            >Formbricks</a
+          >
+        </nav>
+        <button
+          onclick="reloadSdk()"
+          class="rounded-0 border border-slate-300 bg-blue-500 px-2 py-1 text-sm text-white transition hover:bg-blue-600">
+          Force SDK Reload
+        </button>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-5xl px-6 py-16">
+      <section class="text-center">
+        <span
+          class="inline-block rounded-full bg-blue-100 px-3 py-1 text-xs font-medium tracking-wider text-blue-700 uppercase">
+          Internal testing
+        </span>
+        <h1 class="mt-4 text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
+          Formbricks SDK Playground
+        </h1>
+        <p class="mx-auto mt-4 max-w-2xl text-lg text-slate-600">
+          A tiny host page used to verify that the survey widget's styles stay scoped and don't leak into the
+          surrounding page.
+        </p>
+
+        <div class="mt-8 flex items-center justify-center gap-3">
+          <button
+            class="rounded-0 bg-blue-600 px-5 py-2.5 font-medium text-white shadow-sm transition hover:bg-blue-700">
+            Host page button before
+          </button>
+          <a
+            href="#features"
+            class="rounded-0 border border-slate-300 bg-white px-5 py-2.5 font-medium text-slate-700 transition hover:bg-slate-50">
+            Learn more
+          </a>
+        </div>
+      </section>
+
+      <section id="features" class="mt-20 grid gap-6 sm:grid-cols-3">
+        <div class="rounded-0 border border-slate-200 bg-white p-6 shadow-sm">
+          <div
+            class="rounded-0 flex h-9 w-9 items-center justify-center bg-blue-100 font-semibold text-blue-700">
+            1
+          </div>
+          <h3 class="mt-4 font-semibold text-slate-900">Isolated styles</h3>
+          <p class="mt-1 text-sm text-slate-600">
+            Check that the widget's Tailwind build doesn't override host styles.
+          </p>
+        </div>
+        <div class="rounded-0 border border-slate-200 bg-white p-6 shadow-sm">
+          <div
+            class="rounded-0 flex h-9 w-9 items-center justify-center bg-blue-100 font-semibold text-blue-700">
+            2
+          </div>
+          <h3 class="mt-4 font-semibold text-slate-900">Realistic markup</h3>
+          <p class="mt-1 text-sm text-slate-600">
+            Buttons, headings, forms - common elements to spot leaks quickly.
+          </p>
+        </div>
+        <div class="rounded-0 border border-slate-200 bg-white p-6 shadow-sm">
+          <div
+            class="rounded-0 flex h-9 w-9 items-center justify-center bg-blue-100 font-semibold text-blue-700">
+            3
+          </div>
+          <h3 class="mt-4 font-semibold text-slate-900">Fast iteration</h3>
+          <p class="mt-1 text-sm text-slate-600">
+            Hit "Force SDK Reload" to drop cached state and reload from staging.
+          </p>
+        </div>
+      </section>
+
+      <section id="about" class="mt-20 rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+        <div class="grid items-center gap-8 sm:grid-cols-2">
+          <div>
+            <h2 class="text-2xl font-semibold text-slate-900">Sample host page</h2>
+            <p class="mt-3 text-slate-600">
+              This page mounts the Formbricks JS widget from the staging environment. Use the controls on the
+              right to interact with typical host-page elements while the survey widget is active.
+            </p>
+          </div>
+          <form class="space-y-3" onsubmit="event.preventDefault()">
+            <label class="block">
+              <span class="text-sm font-medium text-slate-700">Email</span>
+              <input
+                type="email"
+                placeholder="you@example.com"
+                class="rounded-0 mt-1 w-full border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+            </label>
+            <label class="block">
+              <span class="text-sm font-medium text-slate-700">Message</span>
+              <textarea
+                rows="3"
+                placeholder="Anything to share?"
+                class="mt-1 w-full rounded-none border border-slate-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
+            </label>
+            <button
+              type="submit"
+              class="w-full rounded-none bg-slate-900 px-4 py-2 font-medium text-white transition hover:bg-slate-800">
+              Submit
+            </button>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <footer class="border-t border-slate-200 bg-white/60">
+      <div class="mx-auto flex max-w-5xl items-center justify-between px-6 py-6 text-sm text-slate-500">
+        <span>Built with Tailwind 4 (CDN)</span>
+        <button onclick="reloadSdk()" class="hover:text-slate-800">Force SDK Reload</button>
+      </div>
+    </footer>
+  </body>
+</html>

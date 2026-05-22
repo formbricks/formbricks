@@ -5,7 +5,7 @@ import * as React from "react";
 import { cn } from "@/modules/ui/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "relative inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
@@ -50,11 +50,14 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         className={cn(buttonVariants({ variant, size, loading, className }))}
         ref={ref}
         {...props}
+        aria-busy={loading || undefined}
         disabled={loading || disabled}>
         {loading ? (
           <>
-            <Loader2 className="animate-spin" />
-            {children}
+            <span className="absolute inset-0 z-[1] flex items-center justify-center">
+              <Loader2 className="animate-spin" />
+            </span>
+            <span className="flex select-none gap-2 opacity-40">{children}</span>
           </>
         ) : (
           children

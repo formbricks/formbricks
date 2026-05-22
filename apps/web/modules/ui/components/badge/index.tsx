@@ -2,7 +2,7 @@ import { cn } from "@/lib/cn";
 
 interface BadgeProps {
   text: string;
-  type: "warning" | "success" | "error" | "gray";
+  type: "warning" | "success" | "error" | "gray" | "info";
   size: "tiny" | "normal" | "large";
   className?: string;
   role?: string;
@@ -14,6 +14,7 @@ export const Badge: React.FC<BadgeProps> = ({ text, type, size, className, role 
     success: "bg-green-50",
     error: "bg-red-100",
     gray: "bg-slate-100",
+    info: "bg-blue-50",
   };
 
   const borderColor = {
@@ -21,6 +22,7 @@ export const Badge: React.FC<BadgeProps> = ({ text, type, size, className, role 
     success: "border-green-600",
     error: "border-red-200",
     gray: "border-slate-200",
+    info: "border-blue-200",
   };
 
   const textColor = {
@@ -28,6 +30,7 @@ export const Badge: React.FC<BadgeProps> = ({ text, type, size, className, role 
     success: "text-green-800",
     error: "text-red-800",
     gray: "text-slate-600",
+    info: "text-blue-800",
   };
 
   const padding = {

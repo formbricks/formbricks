@@ -13,6 +13,7 @@ import {
   enqueueResponsePipelineJob,
   enqueueSurveySchedulingJob,
   enqueueTestLogJob,
+  enqueueWorkflowRunJob,
   getBackgroundJobProducer,
   getJobsQueue,
   removeRecurringSurveySchedulingJobSchedule,
@@ -76,6 +77,12 @@ const responsePipelineJobData = {
 
 const surveySchedulingJobData = {
   scope: "global" as const,
+};
+
+const workflowRunJobData = {
+  workflowId: "cm8cmpnjj000108jfdr9dfqe5",
+  workflowRunId: "cm8cmpnjj000108jfdr9dfqe4",
+  workspaceId: "cm8cmpnjj000108jfdr9dfqe8",
 };
 
 vi.mock("@formbricks/logger", () => ({
@@ -174,6 +181,16 @@ describe("@formbricks/jobs queue helpers", () => {
     expect(mockQueueAdd).toHaveBeenCalledWith(JOB_NAMES.surveyScheduling, surveySchedulingJobData, undefined);
   });
 
+  test("enqueues workflow run jobs with one PoC attempt", async () => {
+    const mockJob = { id: "job-workflow-run-1" };
+    mockQueueAdd.mockResolvedValue(mockJob);
+
+    const job = await enqueueWorkflowRunJob(workflowRunJobData);
+
+    expect(job).toBe(mockJob);
+    expect(mockQueueAdd).toHaveBeenCalledWith(JOB_NAMES.workflowRun, workflowRunJobData, { attempts: 1 });
+  });
+
   test("exposes an engine-neutral producer interface", async () => {
     const producer = getBackgroundJobProducer();
     mockQueueAdd.mockResolvedValue({
@@ -206,6 +223,24 @@ describe("@formbricks/jobs queue helpers", () => {
       jobName: JOB_NAMES.responsePipeline,
       queueName: JOBS_QUEUE_NAME,
     });
+  });
+
+  test("exposes workflow run enqueues through the engine-neutral producer interface", async () => {
+    const producer = getBackgroundJobProducer();
+    mockQueueAdd.mockResolvedValue({
+      id: "job-workflow-run-2",
+      name: JOB_NAMES.workflowRun,
+      queueName: JOBS_QUEUE_NAME,
+    });
+
+    const job = await producer.enqueueWorkflowRun(workflowRunJobData);
+
+    expect(job).toEqual({
+      jobId: "job-workflow-run-2",
+      jobName: JOB_NAMES.workflowRun,
+      queueName: JOBS_QUEUE_NAME,
+    });
+    expect(mockQueueAdd).toHaveBeenCalledWith(JOB_NAMES.workflowRun, workflowRunJobData, { attempts: 1 });
   });
 
   test("schedules a delayed job using the runAt schedule type", async () => {

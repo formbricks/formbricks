@@ -1,0 +1,126 @@
+You are a coding agent working in the Formbricks monorepo.
+
+Goal:
+Implement the architecture-faithful Workflows PoC vertical slice from
+`workbench/cowork/plans/001-010-workflows-poc-vertical-slice.md`. Do not implement the full
+MVP/Beta backlog in one pass.
+
+Start by reading:
+- `AGENTS.md`
+- `workbench/GUIDE.md`
+- `workbench/blueprint/PRODUCT.md`
+- `workbench/blueprint/EPICS.md`
+- `workbench/blueprint/epics/E001-workflows.md`
+- `workbench/blueprint/business-rules/001-workflows-glossary-and-scope.md`
+- `workbench/blueprint/decisions/001-workflows-api-first-backend-contract.md`
+- `workbench/blueprint/decisions/002-workflows-tech.md`
+- `workbench/blueprint/decisions/003-workflows-mvp-is-proof-of-concept.md`
+- `workbench/research/docs/diagrams.md`
+- `workbench/blueprint/guidelines/design-guidelines-workflows.md`
+- `workbench/blueprint/MILESTONES.md`
+- `workbench/blueprint/milestones/001-workflows-mvp.md`
+- `workbench/cowork/plans/001-000-prototype-readiness-and-contracts.md`
+- `workbench/cowork/plans/001-010-workflows-poc-vertical-slice.md`
+- `workbench/research/docs/workflows-prototype-scope.md`
+- `workbench/research/docs/workflows-api-endpoint-inventory.md`
+- `workbench/research/docs/workflows-schema-sketch.md`
+- `workbench/research/docs/workflows-data-and-jobs-sketch.md`
+- `workbench/research/docs/workflows-trigger-hook-and-ia.md`
+- `workbench/cowork/prompts/poc-mvp-scope.txt`
+- `workbench/research/workflows-proto-logic/`
+- `workbench/blueprint/CHECKS.md`
+- `workbench/blueprint/MANUAL_QA.md`
+
+Before editing:
+- Inspect `git status --short`, relevant staged diffs, and unstaged diffs.
+- Preserve the git index exactly. Do not stage, unstage, commit, amend, reset, or discard files unless
+  explicitly asked.
+- Treat `001-010` as the active implementation scope only after human review of the completed 001-000
+  readiness artifacts. Plans `001-002` through `001-009` are the full MVP/Beta backlog and should not be
+  marked done when the PoC ships.
+
+Non-negotiable PoC architecture:
+- Workflows are API-first. Use minimal v3 route handlers; do not use Next.js server actions as the
+  workflow backend contract.
+- The dashboard is a client of the v3 API. No dashboard-only workflow behavior.
+- Workflow definitions are JSON documents validated by shared client-safe zod schemas.
+- The backend validates the same payload again and remains authoritative.
+- Keep workflow definition records and workflow run records separate.
+- Use BullMQ under `packages/jobs` for execution. Do not execute workflow side effects
+  synchronously in the response request path.
+- React Flow state is derived from workflow JSON; it is not a separate source of truth.
+- Jotai is acceptable only for workflow-builder editor state such as selected node, open drawer,
+  dirty draft, local validation issues, and canvas UI state. Keep API/server state in the v3 API/query
+  layer.
+- Use workflow definition lifecycle values: `draft`, `active`, `disabled`.
+- Use workflow run statuses: `queued`, `running`, `completed`, `failed`, `canceled`.
+
+PoC slice:
+- One trigger: Response Completed.
+- One flow node: If/Else.
+- Two actions: Send Email preview and Send Webhook preview with the fixed envelope
+  `{ response: <previous output or trigger payload> }`.
+- Minimal v3 API: workflow CRUD, activate/disable, and run list/detail. Trigger enqueue is a server-only
+  service called from the response pipeline, not an externally reachable HTTP route.
+- One local BullMQ queue and worker.
+- Dashboard: workflows list, React Flow canvas, fixed/collapsible drawer, run list, run detail.
+- No real email or webhook calls.
+
+Readiness decisions from 001-000:
+- Use `responseFinished` in the existing response pipeline as the Response Completed hook.
+- Add Workflows as its own main dashboard sidebar section for the PoC.
+- Put shared workflow schemas in a browser-safe `@formbricks/types` workflow module.
+- Add separate `Workflow` and `WorkflowRun` persistence.
+- Relate `WorkflowRun` to `Workflow` through `[workflowId, workspaceId]`, not `workflowId` alone.
+- Add a `workflow-run.process` BullMQ job with PoC attempts set to `1`, not the package default retries.
+
+Explicitly defer:
+- OpenAPI generation.
+- Playwright E2E and i18n validation.
+- Dry-run endpoint/UI.
+- Audit logs.
+- Idempotency, retries, backoff, batching, worker topology, and production concurrency decisions.
+- Version snapshots and rollback UI.
+- Real Send Email and Send Webhook execution.
+- Existing Follow-ups/Webhooks migration or no-regression migration guarantees.
+- Compute, AI Agent, extra triggers, scheduling, loops, delays, human input, and webhook-received
+  trigger.
+
+Implementation workflow:
+- Start with shared schemas, minimal persistence, and v3 API shape before rich UI.
+- Implement one happy path end to end before broadening polish:
+  Response Completed -> active workflow match -> run queued -> worker running -> If/Else ->
+  no-send preview action -> completed/failed run detail.
+- Build tests with each code-producing slice.
+- Cover shared schema validation, graph execution/If-Else branch selection, minimal API behavior,
+  and worker status transitions.
+- Do not add TSX/component unit tests for workflow UI.
+- Update the referenced workbench plans/checkpoints/status notes as you implement their PoC subset so
+  the docs do not go stale. Record exactly what shipped and what remains Beta work; do not mark a full
+  MVP/Beta plan done just because its PoC subset shipped.
+- Update business rules, decisions, checks, or manual QA if implementation changes product behavior,
+  architecture, verification, or QA expectations beyond `001-010`.
+- Write a checkpoint after the PoC final review with what the PoC proved and what moves into Beta.
+
+Stop conditions:
+- Stop if the UI needs behavior that has no v3 API endpoint.
+- Stop if Response Completed trigger enqueue is exposed as an HTTP route without an explicit internal auth
+  decision.
+- Stop if shared schemas cannot be imported by browser code without server-only dependencies.
+- Stop if workflow JSON and React Flow state drift into separate sources of truth.
+- Stop if the worker sends real email or outbound webhook requests.
+- Stop if definition/run persistence collapses into one source.
+- Stop if scope expands into dry-run, audit, real side effects, retries, idempotency, OpenAPI,
+  Playwright, or Follow-ups/Webhooks migration before the PoC checkpoint.
+- Stop after repeated test/check failures without new evidence or a changed approach.
+
+Definition of PoC done:
+- A developer can create a workflow through the v3 API and see/edit it in the dashboard.
+- The dashboard validates workflow JSON locally with shared zod schemas, and the API validates again.
+- A developer can activate and disable the workflow through v3-backed controls.
+- A Response Completed event creates a run for matching active workflows.
+- A BullMQ worker evaluates If/Else and produces no-send Email/Webhook preview outputs.
+- Run list/detail show status, timestamps, step outputs, and a failure message.
+- Disabling the workflow prevents new runs.
+- Tests cover the schema, graph execution, minimal API behavior, and worker status transition path.
+- No real email or webhook call is sent.

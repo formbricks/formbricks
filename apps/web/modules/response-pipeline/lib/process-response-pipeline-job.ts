@@ -20,6 +20,7 @@ import { captureSurveyResponsePostHogEvent } from "@/modules/response-pipeline/l
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { sendFollowUpsForResponse } from "@/modules/survey/follow-ups/lib/follow-ups";
 import { FollowUpSendError } from "@/modules/survey/follow-ups/types/follow-up";
+import { enqueueResponseCompletedWorkflowRunsSafely } from "@/modules/workflows/lib/service";
 import { handleIntegrations } from "./handle-integrations";
 import { sendTelemetryEvents } from "./telemetry";
 
@@ -785,6 +786,13 @@ export const processResponsePipelineJob: JobHandler<TResponsePipelineJobData> = 
     });
 
     if (data.event === "responseFinished") {
+      await enqueueResponseCompletedWorkflowRunsSafely({
+        workspaceId: data.workspaceId,
+        surveyId: data.surveyId,
+        response: data.response,
+        logContext,
+      });
+
       await runResponseFinishedSideEffects({
         data,
         logContext,

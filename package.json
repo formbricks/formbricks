@@ -81,33 +81,5 @@
     "budgetPercentIncreaseRed": 20,
     "minimumChangeThreshold": 0,
     "showDetails": true
-  },
-  "pnpm": {
-    "overrides": {
-      "@hono/node-server": "1.19.13",
-      "@protobufjs/utf8": "1.1.1",
-      "@tootallnate/once": "3.0.1",
-      "@xmldom/xmldom": "0.9.10",
-      "ajv@6": "6.14.0",
-      "axios": "1.15.2",
-      "effect": "3.20.0",
-      "fast-uri": "3.1.2",
-      "fast-xml-parser": "5.7.0",
-      "hono": "4.12.18",
-      "ip-address": "10.1.1",
-      "lodash": "4.18.1",
-      "node-forge": "1.4.0",
-      "postcss": "8.5.14",
-      "protobufjs@7": "7.5.8",
-      "protobufjs@8": "8.2.0",
-      "tar": "7.5.15",
-      "uuid@11": "11.1.1"
-    },
-    "comments": {
-      "overrides": "Security fixes for transitive dependencies that still fail a no-override audit. Remove each override when its upstream chain adopts a patched version: @hono/node-server/hono via Prisma dev tooling | @protobufjs/utf8 (CVE overlong UTF-8) - awaiting @opentelemetry/otlp-transformer update | @tootallnate/once and tar via sqlite3/node-gyp chain | @xmldom/xmldom (XML injection/DoS CVEs) - awaiting @boxyhq/saml20 to pin to >=0.9.10 | axios, lodash, and node-forge via @boxyhq/saml-jackson | ajv@6 via webpack/eslint | effect (GHSA-38f7-945m-qr2g) - awaiting @prisma/config update | fast-uri (CVE-2025-48944/48945) - awaiting ajv/schema-utils update | fast-xml-parser via AWS SDK XML builder | ip-address (XSS in Address6) - awaiting mongodb/socks update | postcss (CVE-2025-62695) - awaiting next.js to unpin postcss | protobufjs@7/8 (GHSA-xq3m-2v4x-88gg et al.) - awaiting @grpc/proto-loader/otlp-transformer update | uuid@11 (CVE-2025-61475) - awaiting typeorm update"
-    },
-    "patchedDependencies": {
-      "next-auth@4.24.13": "patches/next-auth@4.24.13.patch"
-    }
   }
 }

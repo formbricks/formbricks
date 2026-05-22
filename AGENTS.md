@@ -99,6 +99,58 @@ Prefer Vitest with Testing Library for logic in `.ts` files, keeping specs coloc
 - Prefer type inference, avoid `any`, and use shared types from `@formbricks/types`.
 - Keep components focused, avoid deep nesting, and ensure basic accessibility.
 
+## Workbench Workflow
+
+The project workbench lives at `workbench/`.
+
+Start substantial tasks with targeted workbench context, not a full-doc sweep. Use `rg`, indexes, headings, and linked records to find the smallest relevant set, then open only the sections needed for the task:
+
+1. `workbench/blueprint/PRODUCT.md`
+2. `workbench/blueprint/EPICS.md`
+3. `workbench/blueprint/business-rules/`
+4. `workbench/blueprint/decisions/`
+5. `workbench/cowork/COORDINATOR.md`
+6. `workbench/blueprint/MILESTONES.md`
+7. The relevant plan, checkpoint, bug-fix, setup, env, security, check, or manual QA file.
+
+`workbench/GUIDE.md` is the workflow source of truth. Keep `AGENTS.md` concise and route detailed workflow rules there.
+
+### Workbench Token Budget
+
+Prefer narrow input and compact output. Do not read entire workbench directories or paste long excerpts unless the task requires it. Summarize findings, link files, and report only changed records plus validation results. For routine implementation, one concise checkpoint is enough after an end-to-end pass.
+
+### Blueprint vs Cowork
+
+- `workbench/blueprint/` contains durable product and application truth: product definition, epics, milestones, business rules, decisions, design, security, checks, manual QA, and env var expectations.
+- `workbench/cowork/` contains active execution records: plans, checkpoints, bug fixes, prompts, and coordination.
+- `workbench/scratch/` and `workbench/local/` are ignored local spaces. Do not rely on their contents for durable project state.
+
+### Blueprint Human Ownership
+
+AI agents may help improve wording, structure, consistency, and traceability for `workbench/blueprint/` documents. The underlying concepts, original prompts or drafts, and final review must come from humans. Treat blueprint records as human-owned product truth: do not invent product direction, business rules, milestones, decisions, security posture, env expectations, checks, manual QA, or design guidance without explicit human input and review.
+
+### Workbench Review Gates
+
+Do not start planning or implementation from a milestone, plan, or bug-fix record unless it has a completed human review line such as `- [ ] Reviewed and refined by: Javier`. If the line is missing or still says `TBD`, stop and ask for human review. Keep checkpoints proportional: one checkpoint is enough when a plan is implemented end to end in one pass.
+
+### Workbench Validation
+
+After editing `workbench/`, `skills/`, or this workflow section in `AGENTS.md`, run `node workbench/scripts/validate-workbench.mjs workbench` and report any failures or relevant warnings. Before implementing from workbench records, run the validator when the workbench structure, links, or review gates may have changed since the plan was reviewed.
+
+### Documentation Sync
+
+When code changes alter product behavior, business rules, architecture decisions, env vars, setup, security posture, automated checks, or manual QA expectations, update the relevant workbench files in the same change. Avoid process churn: do not create or rewrite workbench docs for purely mechanical implementation details, formatting, or phase-by-phase narration when one concise checkpoint covers an end-to-end implementation.
+
+Use checkpoints for completed plan phases. Use bug-fix records for scoped defects. Use decision records for durable tradeoffs. Use business-rule records for current domain behavior.
+
+## Git Discipline
+
+- Do not create commits unless explicitly asked.
+- Preserve staged and unstaged work exactly.
+- Do not stage, unstage, reset, or discard files unless explicitly asked.
+- Before editing files in an existing repo, inspect `git status --short` and check relevant staged and unstaged diffs.
+- Treat staged content as human-selected work in progress.
+
 ## Commit & Pull Request Guidelines
 
 Commits follow a lightweight Conventional Commit format (`fix:`, `chore:`, `feat:`) and usually append the PR number, e.g. `fix: update OpenAPI schema (#6617)`. Keep commits scoped and lint-clean. Pull requests should outline the problem, summarize the solution, and link to issues or product specs. Attach screenshots or gifs for UI-facing work, list any migrations or env changes, and paste the output of relevant commands (`pnpm test`, `pnpm lint`, `pnpm db:migrate:dev`) so reviewers can verify readiness.

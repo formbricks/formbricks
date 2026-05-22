@@ -3,6 +3,7 @@ import {
   type JobsRuntimeHandle,
   type TResponsePipelineJobData,
   type TSurveySchedulingJobData,
+  type TWorkflowRunJobData,
   removeRecurringSurveySchedulingJobSchedule,
   startJobsRuntime,
   upsertRecurringSurveySchedulingJobSchedule,
@@ -17,6 +18,7 @@ import {
   SURVEY_SCHEDULING_TIME_ZONE,
 } from "@/modules/survey/scheduling/lib/constants";
 import { processSurveySchedulingJob } from "@/modules/survey/scheduling/lib/process-survey-scheduling-job";
+import { processWorkflowRunJob } from "@/modules/workflows/lib/process-workflow-run-job";
 
 const WORKER_STARTUP_RETRY_DELAY_MS = 30_000;
 
@@ -32,12 +34,16 @@ type TJobsRuntimeGlobal = typeof globalThis & {
 const globalForJobsRuntime = globalThis as TJobsRuntimeGlobal;
 const RESPONSE_PIPELINE_JOB_NAME = "response-pipeline.process";
 const SURVEY_SCHEDULING_JOB_NAME = "survey-scheduling.reconcile";
+const WORKFLOW_RUN_JOB_NAME = "workflow-run.process";
 
 const responsePipelineJobHandler: NonNullable<JobHandlerOverrides[string]> = async (data, context) => {
   await processResponsePipelineJob(data as TResponsePipelineJobData, context);
 };
 const surveySchedulingJobHandler: NonNullable<JobHandlerOverrides[string]> = async (data, context) => {
   await processSurveySchedulingJob(data as TSurveySchedulingJobData, context);
+};
+const workflowRunJobHandler: NonNullable<JobHandlerOverrides[string]> = async (data, context) => {
+  await processWorkflowRunJob(data as TWorkflowRunJobData, context);
 };
 
 const registerSurveySchedulingSchedule = async (): Promise<void> => {
@@ -170,10 +176,12 @@ export const registerJobsWorker = async (): Promise<JobsRuntimeHandle | null> =>
         ...runtimeOptions.jobHandlerOverrides,
         [RESPONSE_PIPELINE_JOB_NAME]: responsePipelineJobHandler,
         [SURVEY_SCHEDULING_JOB_NAME]: surveySchedulingJobHandler,
+        [WORKFLOW_RUN_JOB_NAME]: workflowRunJobHandler,
       }
     : {
         [RESPONSE_PIPELINE_JOB_NAME]: responsePipelineJobHandler,
         [SURVEY_SCHEDULING_JOB_NAME]: surveySchedulingJobHandler,
+        [WORKFLOW_RUN_JOB_NAME]: workflowRunJobHandler,
       };
 
   globalForJobsRuntime.formbricksJobsRuntimeInitializing = (async () => {

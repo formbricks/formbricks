@@ -1,0 +1,35 @@
+Thinnest possible slice scope for a Proof of Concept of the Workflows MVP:
+
+- One trigger: Response Completed
+- One flow node: If/Else
+- Two actions: Send Email preview, Send Webhook preview with the fixed envelope
+- Minimal shared zod schema for the workflow definition and action configs
+- Minimal v3 API for workflow CRUD, activate/disable, run list, and run detail; Response Completed
+  trigger enqueue stays a server-only service called from the response pipeline, not an exposed HTTP route
+- Single local BullMQ queue and worker
+- Canvas + fixed/collapsible drawer + run list + run detail (read-only)
+- No real email or webhook side effects
+- No idempotency, no retries, no audit, no dry-run, no OpenAPI, no Playwright
+
+With this we already prove:
+
+- API-first workflow management
+- JSON/schema-backed workflow definitions
+- Queue-backed execution
+- Observable runs
+- A dashboard experience for creating workflows and inspecting executions
+
+How this relates to the Workflows MVP milestone and plans:
+
+- This is not the full MVP and should not mark the MVP plans as done.
+- Treat it as a PoC vertical slice that proves the architecture before the full MVP/Beta work.
+- The existing milestone plans still describe the full MVP/Beta target:
+  - API inventory and OpenAPI contract
+  - full shared schemas and persistence model
+  - real execution engine with idempotency, retries, audit, and scale controls
+  - real Send Email and Send Webhook side effects
+  - dry-run support
+  - Playwright and broader QA coverage
+- Execute this slice through Plan 001-010 after consuming the readiness outputs from Plan 001-000.
+- Findings from this PoC should feed the checkpoint after 001-010 and then inform Plans 001-002
+  through 001-009 or the next Beta milestone.
