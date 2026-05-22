@@ -97,7 +97,7 @@ const payloadTooLargeResponse = (
       code: "payload_too_large",
       message,
       details,
-    } as ApiErrorResponse,
+    },
     {
       status: 413,
       headers,

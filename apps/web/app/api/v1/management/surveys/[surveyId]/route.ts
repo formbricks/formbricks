@@ -201,7 +201,7 @@ export const PUT = withV1ApiWrapper({
 
       if (hasQuestions) {
         surveyUpdate.blocks = transformQuestionsToBlocks(
-          surveyUpdate.questions!,
+          surveyUpdate.questions ?? [],
           surveyUpdate.endings || result.survey.endings
         );
         surveyUpdate.questions = [];

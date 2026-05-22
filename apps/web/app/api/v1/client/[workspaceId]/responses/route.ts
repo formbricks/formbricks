@@ -67,7 +67,7 @@ export const POST = withV1ApiWrapper({
 
       return {
         response: responses.badRequestResponse(
-          "Invalid JSON in request body",
+          "Malformed JSON input, please check your request body",
           { error: error instanceof Error ? error.message : "Unknown error occurred" },
           true
         ),
