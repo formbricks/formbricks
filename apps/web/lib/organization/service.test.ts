@@ -46,6 +46,13 @@ vi.mock("@/modules/ee/billing/lib/organization-billing", () => ({
   cleanupStripeCustomer: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock("@/modules/hub/service", () => ({
+  deleteHubTenantData: vi.fn().mockResolvedValue({
+    data: { deletedFeedbackRecords: 0, deletedEmbeddings: 0, deletedWebhooks: 0 },
+    error: null,
+  }),
+}));
+
 describe("Organization Service", () => {
   beforeEach(() => {
     vi.mocked(ensureCloudStripeSetupForOrganization).mockResolvedValue(undefined);
@@ -350,6 +357,7 @@ describe("Organization Service", () => {
         billing: { stripeCustomerId: "cus_123" },
         memberships: [],
         workspaces: [],
+        feedbackDirectories: [],
       } as any);
 
       await deleteOrganization("org1");
@@ -357,6 +365,24 @@ describe("Organization Service", () => {
       if (IS_FORMBRICKS_CLOUD) {
         expect(cleanupStripeCustomer).toHaveBeenCalledWith("cus_123");
       }
+    });
+
+    test("should purge Hub-owned data for each feedback directory", async () => {
+      const { deleteHubTenantData } = await import("@/modules/hub/service");
+      vi.mocked(prisma.organization.delete).mockResolvedValue({
+        id: "org1",
+        name: "Test Org",
+        billing: null,
+        memberships: [],
+        workspaces: [],
+        feedbackDirectories: [{ id: "frd_1" }, { id: "frd_2" }],
+      } as any);
+
+      await deleteOrganization("org1");
+
+      expect(deleteHubTenantData).toHaveBeenCalledTimes(2);
+      expect(deleteHubTenantData).toHaveBeenCalledWith("frd_1");
+      expect(deleteHubTenantData).toHaveBeenCalledWith("frd_2");
     });
   });
 });
