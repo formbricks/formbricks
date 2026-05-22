@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { z } from "zod";
 import { TooManyRequestsError } from "@formbricks/types/errors";
+import { DEFAULT_REQUEST_BODY_LIMIT_BYTES } from "@/app/lib/api/request-body";
 import { withV3ApiWrapper } from "./api-wrapper";
 
 const { mockAuthenticateRequest, mockGetServerSession } = vi.hoisted(() => ({

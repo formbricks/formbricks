@@ -1,6 +1,7 @@
 import { describe, expect, test, vi } from "vitest";
 import { z } from "zod";
 import { err, ok } from "@formbricks/types/error-handlers";
+import { DEFAULT_REQUEST_BODY_LIMIT_BYTES } from "@/app/lib/api/request-body";
 import { apiWrapper } from "@/modules/api/v2/auth/api-wrapper";
 import { authenticateRequest } from "@/modules/api/v2/auth/authenticate-request";
 import { handleApiError } from "@/modules/api/v2/lib/utils";

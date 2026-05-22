@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { z } from "zod";
 import { parseAndValidateJsonBody } from "./parse-and-validate-json-body";
+import { DEFAULT_REQUEST_BODY_LIMIT_BYTES } from "./request-body";
 
 describe("parseAndValidateJsonBody", () => {
   test("returns a malformed JSON response when request parsing fails", async () => {
