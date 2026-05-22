@@ -15,7 +15,7 @@ import { getOrganizationByEnvironmentId } from "@/lib/organization/service";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
 import { convertDatesInObject } from "@/lib/time";
-import { validateWebhookUrl } from "@/lib/utils/validate-webhook-url";
+import { createPinnedDispatcher, validateAndResolveWebhookUrl } from "@/lib/utils/validate-webhook-url";
 import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
 import { TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { recordResponseCreatedMeterEvent } from "@/modules/ee/billing/lib/metering";
@@ -94,19 +94,24 @@ export const POST = async (request: Request) => {
   // Fetch with timeout of 5 seconds to prevent hanging.
   // `redirect: "manual"` blocks SSRF via redirect — webhook URLs are validated against private/internal
   // ranges before delivery, but redirect targets would otherwise bypass that check. Gated on the same
-  // env var as `validateWebhookUrl`: self-hosters who opted into trusting internal URLs also get the
-  // pre-patch redirect-follow behavior for consistency.
+  // env var as `validateAndResolveWebhookUrl`: self-hosters who opted into trusting internal URLs also
+  // get the pre-patch redirect-follow behavior for consistency.
   const redirectMode: RequestRedirect = DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS ? "follow" : "manual";
-  const fetchWithTimeout = (url: string, options: RequestInit, timeout: number = 5000): Promise<Response> => {
+  type WebhookFetchOptions = RequestInit & { dispatcher?: ReturnType<typeof createPinnedDispatcher> };
+  const fetchWithTimeout = (
+    url: string,
+    options: WebhookFetchOptions,
+    timeout: number = 5000
+  ): Promise<Response> => {
     return Promise.race([
-      fetch(url, { ...options, redirect: redirectMode }),
+      fetch(url, { ...options, redirect: redirectMode } as RequestInit),
       new Promise<never>((_, reject) => setTimeout(() => reject(new Error("Timeout")), timeout)),
     ]);
   };
 
   const resolvedResponseData = resolveStorageUrlsInObject(response.data);
 
-  const webhookPromises = webhooks.map((webhook) => {
+  const deliverWebhook = async (webhook: Webhook): Promise<void> => {
     const body = JSON.stringify({
       webhookId: webhook.id,
       event,
@@ -143,18 +148,46 @@ export const POST = async (request: Request) => {
       );
     }
 
-    return validateWebhookUrl(webhook.url)
-      .then(() =>
-        fetchWithTimeout(webhook.url, {
-          method: "POST",
-          headers: requestHeaders,
-          body,
-        })
-      )
-      .catch((error) => {
-        logger.error({ error, url: request.url }, `Webhook call to ${webhook.url} failed`);
+    let dispatcher: ReturnType<typeof createPinnedDispatcher> | undefined;
+    try {
+      const address = await validateAndResolveWebhookUrl(webhook.url);
+      // Pin TCP connect to validated IP — closes DNS-rebinding TOCTOU between
+      // validation and fetch. Null address = DANGEROUSLY flag + blocked name
+      // (/etc/hosts path), so skip pinning.
+      dispatcher = address ? createPinnedDispatcher(address) : undefined;
+
+      const webhookResponse = await fetchWithTimeout(webhook.url, {
+        method: "POST",
+        headers: requestHeaders,
+        body,
+        dispatcher,
       });
-  });
+
+      // With `redirect: "manual"`, undici returns the actual 30x (not opaqueredirect).
+      // Treat as delivery failure so redirect-based SSRF cannot silently succeed.
+      if (webhookResponse.status >= 300 && webhookResponse.status < 400) {
+        throw new Error(`Webhook delivery blocked: redirect status ${webhookResponse.status}`);
+      }
+    } catch (error) {
+      logger.error({ error, url: request.url }, `Webhook call to ${webhook.url} failed`);
+    } finally {
+      // destroy() force-kills sockets — close() would deadlock on accepted-but-idle endpoints.
+      try {
+        await dispatcher?.destroy();
+      } catch (cleanupError) {
+        logger.warn(
+          {
+            err: cleanupError,
+            webhookId: webhook.id,
+            webhookUrl: webhook.url,
+          },
+          "Response pipeline webhook dispatcher cleanup failed"
+        );
+      }
+    }
+  };
+
+  const webhookPromises = webhooks.map((webhook) => deliverWebhook(webhook));
 
   if (event === "responseFinished") {
     // Fetch integrations and responseCount in parallel

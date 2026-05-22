@@ -1,5 +1,6 @@
 import "server-only";
 import dns from "node:dns";
+import { Agent } from "undici";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS } from "../constants";
 
@@ -67,13 +68,15 @@ const isPrivateIPv6 = (ip: string): boolean => {
   return PRIVATE_IPV6_PREFIXES.some((prefix) => normalized.startsWith(prefix));
 };
 
-const isPrivateIP = (ip: string): boolean => {
-  return isPrivateIPv4(ip) || isPrivateIPv6(ip);
+const isPrivateIP = (ip: string, family: 4 | 6): boolean => {
+  return family === 4 ? isPrivateIPv4(ip) : isPrivateIPv6(ip);
 };
 
 const DNS_TIMEOUT_MS = 3000;
 
-const resolveHostnameToIPs = (hostname: string): Promise<string[]> => {
+export type ResolvedAddress = { ip: string; family: 4 | 6 };
+
+const resolveHostnameToAddresses = (hostname: string): Promise<ResolvedAddress[]> => {
   return new Promise((resolve, reject) => {
     let settled = false;
 
@@ -89,16 +92,16 @@ const resolveHostnameToIPs = (hostname: string): Promise<string[]> => {
     }, DNS_TIMEOUT_MS);
 
     dns.resolve(hostname, (errV4, ipv4Addresses) => {
-      const ipv4 = errV4 ? [] : ipv4Addresses;
+      const ipv4: ResolvedAddress[] = errV4 ? [] : ipv4Addresses.map((ip) => ({ ip, family: 4 as const }));
 
       dns.resolve6(hostname, (errV6, ipv6Addresses) => {
-        const ipv6 = errV6 ? [] : ipv6Addresses;
-        const allAddresses = [...ipv4, ...ipv6];
+        const ipv6: ResolvedAddress[] = errV6 ? [] : ipv6Addresses.map((ip) => ({ ip, family: 6 as const }));
+        const all = [...ipv4, ...ipv6];
 
-        if (allAddresses.length === 0) {
+        if (all.length === 0) {
           settle(reject, new Error(`DNS resolution failed for hostname: ${hostname}`));
         } else {
-          settle(resolve, allAddresses);
+          settle(resolve, all);
         }
       });
     });
@@ -114,59 +117,35 @@ const stripIPv6Brackets = (hostname: string): string => {
 
 const IPV4_LITERAL = /^\d{1,3}(?:\.\d{1,3}){3}$/;
 
-/**
- * Validates a webhook URL to prevent Server-Side Request Forgery (SSRF).
- *
- * Checks performed:
- * 1. URL must be well-formed
- * 2. Protocol must be HTTPS or HTTP
- * 3. Hostname must not be a known internal name (localhost, metadata endpoints)
- * 4. IP literal hostnames are checked directly against private ranges
- * 5. Domain hostnames are resolved via DNS; all resulting IPs must be public
- *
- * @throws {InvalidInputError} when the URL fails any validation check
- */
-export const validateWebhookUrl = async (url: string): Promise<void> => {
+const parseWebhookUrl = (url: string): URL => {
   let parsed: URL;
   try {
     parsed = new URL(url);
   } catch {
     throw new InvalidInputError("Invalid webhook URL format");
   }
-
   if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
     throw new InvalidInputError("Webhook URL must use HTTPS or HTTP protocol");
   }
+  return parsed;
+};
 
-  const hostname = parsed.hostname;
-
-  if (!DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS) {
-    if (BLOCKED_HOSTNAMES.has(hostname.toLowerCase())) {
-      throw new InvalidInputError("Webhook URL must not point to localhost or internal services");
-    }
-  }
-
-  // Direct IP literal — validate without DNS resolution
+const validateIpLiteral = (hostname: string): ResolvedAddress | null => {
   const isIPv4Literal = IPV4_LITERAL.test(hostname);
   const isIPv6Literal = hostname.startsWith("[");
+  if (!isIPv4Literal && !isIPv6Literal) return null;
 
-  if (isIPv4Literal || isIPv6Literal) {
-    const ip = isIPv6Literal ? stripIPv6Brackets(hostname) : hostname;
-    if (!DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS && isPrivateIP(ip)) {
-      throw new InvalidInputError("Webhook URL must not point to private or internal IP addresses");
-    }
-    return;
+  const ip = isIPv6Literal ? stripIPv6Brackets(hostname) : hostname;
+  const family: 4 | 6 = isIPv4Literal ? 4 : 6;
+  if (!DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS && isPrivateIP(ip, family)) {
+    throw new InvalidInputError("Webhook URL must not point to private or internal IP addresses");
   }
+  return { ip, family };
+};
 
-  // Skip DNS resolution for localhost-like hostnames when internal URLs are allowed since these are resolved via /etc/hosts and not DNS
-  if (DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS && BLOCKED_HOSTNAMES.has(hostname.toLowerCase())) {
-    return;
-  }
-
-  // Domain name — resolve DNS and validate every resolved IP
-  let resolvedIPs: string[];
+const resolveHostnameOrThrow = async (hostname: string): Promise<ResolvedAddress[]> => {
   try {
-    resolvedIPs = await resolveHostnameToIPs(hostname);
+    return await resolveHostnameToAddresses(hostname);
   } catch (error) {
     const isTimeout = error instanceof Error && error.message.includes("timed out");
     throw new InvalidInputError(
@@ -175,12 +154,94 @@ export const validateWebhookUrl = async (url: string): Promise<void> => {
         : `Could not resolve webhook URL hostname: ${hostname}`
     );
   }
+};
+
+/**
+ * Validates a webhook URL and returns a resolved address pinned for delivery.
+ *
+ * Returns the IP literal or first DNS-resolved address. Returns `null` only when
+ * `DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS` is enabled for a known internal hostname
+ * (localhost etc.) — in that case the caller skips IP pinning so /etc/hosts works.
+ *
+ * Pinning the returned address into the fetch dispatcher closes the TOCTOU window
+ * where DNS could rebind between this validation and the subsequent HTTP request.
+ *
+ * @throws {InvalidInputError} when the URL fails any validation check
+ */
+export const validateAndResolveWebhookUrl = async (url: string): Promise<ResolvedAddress | null> => {
+  const parsed = parseWebhookUrl(url);
+  const hostname = parsed.hostname;
+  const isBlockedName = BLOCKED_HOSTNAMES.has(hostname.toLowerCase());
+
+  if (!DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS && isBlockedName) {
+    throw new InvalidInputError("Webhook URL must not point to localhost or internal services");
+  }
+
+  const literal = validateIpLiteral(hostname);
+  if (literal) return literal;
+
+  // Skip DNS for localhost-like hostnames when internal URLs are allowed (resolved via /etc/hosts)
+  if (DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS && isBlockedName) {
+    return null;
+  }
+
+  const resolved = await resolveHostnameOrThrow(hostname);
 
   if (!DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS) {
-    for (const ip of resolvedIPs) {
-      if (isPrivateIP(ip)) {
+    for (const addr of resolved) {
+      if (isPrivateIP(addr.ip, addr.family)) {
         throw new InvalidInputError("Webhook URL must not point to private or internal IP addresses");
       }
     }
   }
+
+  // Pin to the first resolved address. All addresses already passed the public-IP
+  // check above, so any choice is safe.
+  return resolved[0];
+};
+
+/**
+ * Validates a webhook URL to prevent Server-Side Request Forgery (SSRF).
+ * Thin wrapper around {@link validateAndResolveWebhookUrl} for callers that only
+ * need validation (e.g. webhook create/update) and discard the resolved address.
+ *
+ * @throws {InvalidInputError} when the URL fails any validation check
+ */
+export const validateWebhookUrl = async (url: string): Promise<void> => {
+  await validateAndResolveWebhookUrl(url);
+};
+
+/**
+ * Builds an undici Agent that pins outgoing TCP connections to the given IP/family,
+ * regardless of what hostname the URL resolves to at fetch time. Use the address
+ * returned by {@link validateAndResolveWebhookUrl} so the IP that was validated is
+ * the IP that gets connected to — closes the DNS-rebinding TOCTOU window.
+ *
+ * TLS SNI/cert validation still uses the original hostname from the URL.
+ */
+export const createPinnedDispatcher = (address: ResolvedAddress): Agent => {
+  return new Agent({
+    connect: {
+      // undici calls `lookup(host, { all: true, ... }, cb)`, so honor both forms:
+      // when `all` is true we must return an array; otherwise the legacy
+      // (err, address, family) signature. Returning the wrong form yields
+      // "Invalid IP address: undefined" at connect time.
+      lookup: (_hostname, options, callback) => {
+        if (options && typeof options === "object" && (options as { all?: boolean }).all) {
+          (
+            callback as (
+              err: NodeJS.ErrnoException | null,
+              addresses: { address: string; family: number }[]
+            ) => void
+          )(null, [{ address: address.ip, family: address.family }]);
+          return;
+        }
+        (callback as (err: NodeJS.ErrnoException | null, address: string, family: number) => void)(
+          null,
+          address.ip,
+          address.family
+        );
+      },
+    },
+  });
 };
