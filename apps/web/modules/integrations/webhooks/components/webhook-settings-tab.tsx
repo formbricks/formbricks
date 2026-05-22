@@ -196,9 +196,9 @@ export const WebhookSettingsTab = ({
               onChange={(e) => {
                 setTestEndpointInput(e.target.value);
               }}
-              readOnly={webhook.source !== "user"}
+              readOnly={isReadOnly}
               className={clsx(
-                webhook.source === "user" ? null : "cursor-not-allowed bg-slate-100 text-slate-500",
+                isReadOnly ? "cursor-not-allowed bg-slate-100 text-slate-500" : null,
                 endpointAccessible === true
                   ? "border-green-500 bg-green-50"
                   : endpointAccessible === false
@@ -209,16 +209,18 @@ export const WebhookSettingsTab = ({
               )}
               placeholder={t("workspace.integrations.webhooks.webhook_url_placeholder")}
             />
-            <Button
-              type="button"
-              variant="secondary"
-              loading={hittingEndpoint}
-              className="ml-2 whitespace-nowrap"
-              onClick={() => {
-                handleTestEndpoint(true);
-              }}>
-              {t("workspace.integrations.webhooks.test_endpoint")}
-            </Button>
+            {!isReadOnly && (
+              <Button
+                type="button"
+                variant="secondary"
+                loading={hittingEndpoint}
+                className="ml-2 whitespace-nowrap"
+                onClick={() => {
+                  handleTestEndpoint(true);
+                }}>
+                {t("workspace.integrations.webhooks.test_endpoint")}
+              </Button>
+            )}
           </div>
         </div>
 
@@ -281,7 +283,7 @@ export const WebhookSettingsTab = ({
           <TriggerCheckboxGroup
             selectedTriggers={selectedTriggers}
             onCheckboxChange={handleCheckboxChange}
-            allowChanges={webhook.source === "user" && !isReadOnly}
+            allowChanges={!isReadOnly}
           />
         </div>
 
@@ -293,7 +295,7 @@ export const WebhookSettingsTab = ({
             selectedAllSurveys={selectedAllSurveys}
             onSelectAllSurveys={handleSelectAllSurveys}
             onSelectedSurveyChange={handleSelectedSurveyChange}
-            allowChanges={webhook.source === "user" && !isReadOnly}
+            allowChanges={!isReadOnly}
           />
         </div>
 
