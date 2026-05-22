@@ -101,6 +101,20 @@ describe("integration OAuth state", () => {
       arguments: [],
       keys: ["fb:oauth:state:fake-hash"],
     });
+    expect(redisEval).toHaveBeenCalledWith(expect.stringContaining('redis.call("DEL", KEYS[1])'), {
+      arguments: [],
+      keys: ["fb:oauth:state:fake-hash"],
+    });
+
+    mockRedisConsume(null);
+
+    await expect(
+      consumeIntegrationOAuthState({
+        provider: "slack",
+        userId: oauthStatePayload.userId,
+        state,
+      })
+    ).rejects.toThrow(IntegrationOAuthStateError);
   });
 
   test("rejects reused or unknown states", async () => {

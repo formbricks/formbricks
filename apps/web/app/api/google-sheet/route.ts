@@ -1,6 +1,7 @@
 import { google } from "googleapis";
 import { getServerSession } from "next-auth";
 import { NextRequest } from "next/server";
+import { logger } from "@formbricks/logger";
 import { responses } from "@/app/lib/api/response";
 import {
   GOOGLE_SHEETS_CLIENT_ID,
@@ -40,11 +41,20 @@ export const GET = async (req: NextRequest) => {
   if (!client_secret) return responses.internalServerErrorResponse("Google client secret is missing");
   if (!redirect_uri) return responses.internalServerErrorResponse("Google redirect url is missing");
   const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uri);
-  const state = await createIntegrationOAuthState({
-    provider: "googleSheets",
-    userId: session.user.id,
-    workspaceId,
-  });
+  let state: string;
+  try {
+    state = await createIntegrationOAuthState({
+      provider: "googleSheets",
+      userId: session.user.id,
+      workspaceId,
+    });
+  } catch (error) {
+    logger.error(
+      { error, provider: "googleSheets", userId: session.user.id, workspaceId },
+      "Failed to create Google Sheets OAuth state"
+    );
+    return responses.internalServerErrorResponse("Unable to start OAuth flow");
+  }
 
   const authUrl = oAuth2Client.generateAuthUrl({
     access_type: "offline",

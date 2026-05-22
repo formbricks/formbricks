@@ -26,6 +26,20 @@ const getEmail = async (token: string) => {
   return z.string().parse(res_?.email);
 };
 
+const getSanitizedAirtableOAuthError = (error: unknown) => {
+  if (!(error instanceof Error)) {
+    return { message: "Unknown Airtable OAuth callback error" };
+  }
+
+  const status = (error as { status?: unknown }).status;
+
+  return {
+    message: error.message,
+    name: error.name,
+    ...(typeof status === "number" ? { status } : {}),
+  };
+};
+
 export const GET = withV1ApiWrapper({
   handler: async ({ req, authentication }) => {
     if (!authentication || !("user" in authentication)) {
@@ -146,15 +160,12 @@ export const GET = withV1ApiWrapper({
         response: Response.redirect(redirectUrl),
       };
     } catch (error) {
-      const sanitizedError =
-        error instanceof Error
-          ? { message: error.message, name: error.name }
-          : { message: "Unknown Airtable OAuth callback error" };
-      logger.error({ error: sanitizedError }, "Error in GET /api/v1/integrations/airtable/callback");
+      logger.error(
+        { error: getSanitizedAirtableOAuthError(error) },
+        "Error in GET /api/v1/integrations/airtable/callback"
+      );
       return {
-        response: responses.internalServerErrorResponse(
-          error instanceof Error ? error.message : String(error)
-        ),
+        response: responses.internalServerErrorResponse("Unable to complete Airtable OAuth flow"),
       };
     }
   },
