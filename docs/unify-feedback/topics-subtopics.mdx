@@ -1,0 +1,33 @@
+---
+title: "Topics & Subtopics (Preview)"
+description: "Vector clustering of open-text feedback into Topics and Subtopics."
+icon: "tags"
+---
+
+<Warning>
+  Topics & Subtopics is a **Preview** feature. The schema and UI may change.
+</Warning>
+
+Open-text feedback ("Why did you give this score?", support tickets, app reviews) is rich but hard to count. Topics & Subtopics uses AI to cluster free text into a two-level taxonomy you can filter, count, and trend over time.
+
+## How it works
+
+1. Pick a Feedback Directory under **Unify → Topics & Subtopics**.
+2. Formbricks scans `value_text` across the directory and proposes a set of **Topics** (broad categories) and **Subtopics** (specific themes within a topic).
+3. Each record can be assigned to one Topic and one Subtopic.
+
+## What you can do today
+
+- **Browse** the proposed Topic / Subtopic tree for a directory.
+- **Inspect** which records cluster under each Topic.
+
+## Roadmap
+
+- Manual edits to topic labels and assignments.
+- Topic filters on Charts and Dashboards.
+- Per-source topic confidence scoring.
+
+## Requirements
+
+- A Feedback Directory with records.
+- Smart functionality (AI) enabled at the organization level. See [AI Feature Controls](/platform/features/ai-feature-controls).

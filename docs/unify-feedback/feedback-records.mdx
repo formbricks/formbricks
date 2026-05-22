@@ -1,0 +1,50 @@
+---
+title: "Feedback Records"
+description: "The normalized unit of feedback inside a Feedback Directory."
+icon: "list-check"
+---
+
+A **Feedback Record** is one piece of feedback expressed in a normalized schema. Whether it came from a survey response, a CSV row, or an API push, it lands in the same shape so you can query everything together.
+
+## The Feedback Record schema
+
+Every record has the following fields. Required fields must be mapped by every source.
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `submission_id` | string | Yes | Stable ID for the submission (e.g. `response_id`, `ticket_id`, `order_id`). Used for idempotent re-imports. |
+| `collected_at` | timestamp | Yes | When the feedback was originally collected. |
+| `source_type` | string | Yes | The kind of source (e.g. `survey`, `csv`, `review`). |
+| `field_id` | string | Yes | Stable identifier for the question/field. |
+| `field_type` | enum | Yes | One of `text`, `categorical`, `nps`, `csat`, `ces`, `rating`, `number`, `boolean`, `date`. |
+| `tenant_id` | string | No | Feedback Directory ID. Set automatically when ingesting. |
+| `source_id` | string | No | Reference to the survey/form/ticket/review ID. |
+| `source_name` | string | No | Human-readable source name for display. |
+| `field_label` | string | No | The question text or field label. |
+| `field_group_id` | string | No | Groups related fields (matrix, ranking, grid questions). |
+| `field_group_label` | string | No | Human-readable group label. |
+| `value_text` | string | No | Text responses. |
+| `value_number` | float64 | No | Numeric responses (ratings, NPS, CSAT). |
+| `value_boolean` | boolean | No | Yes/no responses. |
+| `value_date` | timestamp | No | Date responses. |
+| `metadata` | jsonb | No | Free-form context (device, campaign, custom fields). |
+| `language` | string | No | ISO 639-1 language code (`en`, `de`, `fr`, ...). |
+| `user_id` | string | No | Anonymous user ID. Never store PII here. |
+
+The right `value_*` field is set based on `field_type`. For example a `nps` field uses `value_number`, an open-text comment uses `value_text`.
+
+## Viewing and managing records
+
+Inside a workspace, navigate to **Unify → Feedback Records**. You'll see the latest records across every directory the workspace has access to, sorted by `collected_at`.
+
+From the table you can:
+
+- **Filter** by directory, source, field type, or date range.
+- **Open** a record drawer to see the full field set and metadata.
+- **Edit** values inline for cleanup (e.g. relabel a categorical answer).
+- **Delete** a record.
+- **Add** a record manually via the "+ Add" button.
+
+## Idempotent imports
+
+Sources that re-ingest data (CSV uploads, API ingestions) use `submission_id` as the dedup key. Re-importing the same `submission_id` updates the existing record instead of creating a duplicate.

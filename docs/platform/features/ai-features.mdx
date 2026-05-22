@@ -1,0 +1,27 @@
+---
+title: "AI Features"
+description: "Enable AI-powered features for your organization."
+icon: "sparkles"
+---
+
+<Note>
+  AI features are part of the [Enterprise Edition](/self-hosting/advanced/license).
+</Note>
+
+Formbricks ships a single organization-wide toggle that turns on all AI-powered helpers across the app: **Settings → Organization → General → Smart functionality (AI)**.
+
+Your collected feedback and response data is never used as AI training input. AI is only used to power product features.
+
+## Available AI features
+
+- **[AI Survey Translation](/surveys/general-features/multi-language-surveys#translate-with-ai)**: auto-translate survey questions, options, and prompts into any enabled language.
+- **[AI Chart Creation](/unify-feedback/dashboards-charts#ai-builder)**: describe a chart in natural language and Formbricks generates the underlying query.
+
+## Requirements
+
+1. **Instance is AI-configured.** Your Formbricks instance must have `AI_PROVIDER`, `AI_MODEL`, and the matching provider credentials set as environment variables. On Formbricks Cloud this is already configured. On self-hosted setups, ask your administrator to configure these.
+2. **Your plan includes AI features.** If your plan does not include them, you will see an "Unlock AI features" prompt instead of the toggle.
+
+## Permissions
+
+Only **Owners** and **Managers** can change the toggle. Other roles see a read-only state.

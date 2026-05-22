@@ -1,0 +1,54 @@
+---
+title: "Feedback Sources"
+description: "Connectors that bring feedback data into a Feedback Directory."
+icon: "plug"
+---
+
+A **Source** (also called a **Connector**) defines how external data is mapped into Feedback Records inside a Feedback Directory. Manage them from **Unify → Sources**.
+
+## Source types
+
+Formbricks supports four source types:
+
+### 1. Formbricks Surveys
+
+Pipe responses from a Formbricks survey directly into a Feedback Directory. Pick a survey, select the questions you want to ingest, and map each question to its `field_type`. Optionally backfill historical responses on connect.
+
+### 2. CSV Import
+
+Upload a CSV (up to **2 MB** and **1,000 rows**) and Formbricks auto-suggests a column mapping based on common header names (`timestamp`, `response_id`, `rating`, `feedback_text`, ...). Required columns: `submission_id`, `field_id`, `field_type`, and the response value. Re-uploading a CSV with the same `submission_id` updates rows instead of duplicating them.
+
+A sample CSV is available from the connector creation dialog.
+
+### 3. API Ingestion
+
+Push records into a directory programmatically from your own systems. Best for server-to-server ingestion. API reference docs are coming soon.
+
+### 4. MCP (Preview)
+
+Let MCP-enabled AI assistants and tools write Feedback Records on your behalf. Setup and reference docs are coming soon.
+
+## Field mapping
+
+For CSV and Formbricks Survey connectors, you map each source column or question to a Feedback Record field. CSV mapping suggests matches automatically with high/medium/low confidence based on header names.
+
+For Formbricks Surveys, mapping translates each question type into the matching Hub `field_type`:
+
+- Single-select, multi-select, dropdown → `categorical`
+- NPS → `nps`
+- Rating → `rating`
+- CSAT → `csat`
+- CES → `ces`
+- Free text → `text`
+- Number → `number`
+- Date → `date`
+- Boolean / consent → `boolean`
+
+## Managing connectors
+
+From the Sources page you can:
+
+- **Create** a new connector for any source type.
+- **Edit** the mapping for an existing connector.
+- **Pause** or **resume** ingestion.
+- **Delete** a connector. Existing records stay in the directory.

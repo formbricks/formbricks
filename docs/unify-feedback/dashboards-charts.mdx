@@ -1,0 +1,45 @@
+---
+title: "Dashboards & Charts"
+description: "Visualize Feedback Records and group charts onto shareable dashboards."
+icon: "chart-line"
+---
+
+Dashboards & Charts let you turn Feedback Records into visual analytics. A **Chart** is a single visualization scoped to one Feedback Directory. A **Dashboard** is a grid of charts you can share with your team.
+
+## Charts
+
+Charts live under **Workspace → Charts**. Each chart is a Cube query plus a visualization config (bar, line, pie, KPI, table, ...).
+
+You can build a chart in two ways:
+
+### Manual builder
+
+Pick a Feedback Directory, choose dimensions and measures (count of records, average NPS, ...), apply filters, and select a chart type. Live preview updates as you tweak.
+
+### AI builder
+
+Describe what you want in natural language ("Average NPS by month over the last 90 days") and Formbricks generates the Cube query for you. You can edit the result in the manual builder afterwards.
+
+The AI builder requires **Smart functionality (AI)** to be enabled at the organization level and a configured AI provider. See [AI Feature Controls](/platform/features/ai-feature-controls).
+
+## Dashboards
+
+Dashboards live under **Workspace → Dashboards**. Each dashboard is a grid you can resize and arrange.
+
+From a dashboard you can:
+
+- **Create** a new chart inline and have it added automatically.
+- **Add existing** charts.
+- **Reorder and resize** widgets.
+- **Duplicate** a chart for a quick variation.
+- **Delete** a widget (the underlying chart stays in the workspace).
+
+## Permissions
+
+- Owners, Managers, and members with **Manage** or **Read & Write** access can create and edit dashboards and charts.
+- Members with **Read** access can view dashboards and charts but cannot edit them.
+
+## Requirements
+
+- A Feedback Directory with records.
+- Workspace access to that directory.
