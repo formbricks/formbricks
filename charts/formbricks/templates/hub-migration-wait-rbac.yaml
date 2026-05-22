@@ -51,5 +51,5 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: {{ include "formbricks.hubMigrationWaitServiceAccountName" . }}
-    namespace: {{ include "formbricks.namespace" . }}
+    namespace: {{ .Release.Namespace }}
 {{- end }}

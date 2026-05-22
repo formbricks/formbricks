@@ -939,6 +939,7 @@ hub:
     waitForFormbricksMigration:
       enabled: true
       maxAttempts: 180
+      # Consecutive missing Job reads before falling back to persisted Prisma/DataMigration markers.
       missingJobMaxAttempts: 12
       intervalSeconds: 5
 

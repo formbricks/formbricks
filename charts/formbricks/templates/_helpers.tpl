@@ -157,6 +157,17 @@ If `namespaceOverride` is provided, it will be used; otherwise, it defaults to `
 {{- printf "%s-migration" (include "formbricks.name" .) | trunc 63 | trimSuffix "-" -}}
 {{- end }}
 
+{{/*
+Formbricks application image reference. A configured digest takes precedence over the tag.
+*/}}
+{{- define "formbricks.deploymentImage" -}}
+{{- if .Values.deployment.image.digest -}}
+{{- printf "%s@%s" .Values.deployment.image.repository .Values.deployment.image.digest -}}
+{{- else -}}
+{{- printf "%s:%s" .Values.deployment.image.repository (.Values.deployment.image.tag | default .Chart.AppVersion | default "latest") -}}
+{{- end -}}
+{{- end }}
+
 {{- define "formbricks.hubSecretName" -}}
 {{- default (include "formbricks.appSecretName" .) .Values.hub.existingSecret -}}
 {{- end }}
