@@ -119,7 +119,7 @@ export const POST = withV1ApiWrapper({
           ? jsonInput.attributes
           : undefined;
 
-      if (attributes && Object.prototype.hasOwnProperty.call(attributes, "email")) {
+      if (attributes && Object.hasOwn(attributes, "email")) {
         const email = attributes.email;
         if (typeof email !== "string" || !email.includes("@") || email.length < 3) {
           return {
