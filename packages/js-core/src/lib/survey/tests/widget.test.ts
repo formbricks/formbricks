@@ -97,7 +97,10 @@ describe("widget-file", () => {
   });
 
   test("setIsSurveyRunning toggles internal state (covered by usage in other tests)", () => {
-    widget.setIsSurveyRunning(true);
+    // NB: leaves isSurveyRunning=true for the next test which asserts the "already running" branch
+    expect(() => {
+      widget.setIsSurveyRunning(true);
+    }).not.toThrow();
   });
 
   test("triggerSurvey skips if shouldDisplayBasedOnPercentage returns false", async () => {

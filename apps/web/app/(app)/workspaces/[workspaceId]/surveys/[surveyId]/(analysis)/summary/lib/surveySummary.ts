@@ -1111,27 +1111,23 @@ export const getResponsesForSummary = reactCache(
         skip: offset,
       });
 
-      const transformedResponses: TSurveySummaryResponse[] = await Promise.all(
-        responses.map((responsePrisma) => {
-          return {
-            id: responsePrisma.id,
-            data: (responsePrisma.data ?? {}) as TResponseData,
-            updatedAt: responsePrisma.updatedAt,
-            contact: responsePrisma.contact
-              ? {
-                  id: responsePrisma.contact.id as string,
-                  userId: responsePrisma.contact.attributes.find(
-                    (attribute) => attribute.attributeKey.key === "userId"
-                  )?.value as string,
-                }
-              : null,
-            contactAttributes: (responsePrisma.contactAttributes ?? {}) as TResponseContactAttributes,
-            language: responsePrisma.language,
-            ttc: (responsePrisma.ttc ?? {}) as TResponseTtc,
-            finished: responsePrisma.finished,
-          };
-        })
-      );
+      const transformedResponses: TSurveySummaryResponse[] = responses.map((responsePrisma) => ({
+        id: responsePrisma.id,
+        data: (responsePrisma.data ?? {}) as TResponseData,
+        updatedAt: responsePrisma.updatedAt,
+        contact: responsePrisma.contact
+          ? {
+              id: responsePrisma.contact.id as string,
+              userId: responsePrisma.contact.attributes.find(
+                (attribute) => attribute.attributeKey.key === "userId"
+              )?.value as string,
+            }
+          : null,
+        contactAttributes: (responsePrisma.contactAttributes ?? {}) as TResponseContactAttributes,
+        language: responsePrisma.language,
+        ttc: (responsePrisma.ttc ?? {}) as TResponseTtc,
+        finished: responsePrisma.finished,
+      }));
 
       return transformedResponses;
     } catch (error) {

@@ -103,6 +103,7 @@ describe("getActionClasses", () => {
     // We need to import the actual react cache to test it with vi.spyOn if we weren't mocking it.
     // However, since we are mocking it to be a pass-through, we just check if our main cache is called.
 
-    await getActionClasses(workspaceId);
+    const result = await getActionClasses(workspaceId);
+    expect(result).toEqual(mockActionClasses);
   });
 });
