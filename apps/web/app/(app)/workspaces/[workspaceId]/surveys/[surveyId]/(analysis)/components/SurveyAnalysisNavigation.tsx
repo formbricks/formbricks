@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
-import { revalidateSurveyIdPath } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/actions";
+import { revalidateSurveyIdPathAction } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/actions";
 import { SecondaryNavigation } from "@/modules/ui/components/secondary-navigation";
 
 interface SurveyAnalysisNavigationProps {
@@ -28,7 +28,7 @@ export const SurveyAnalysisNavigation = ({ survey, activeId }: SurveyAnalysisNav
       href: `${url}/summary?referer=true`,
       current: pathname?.includes("/summary"),
       onClick: () => {
-        revalidateSurveyIdPath(workspace?.id ?? "", survey.id);
+        revalidateSurveyIdPathAction({ workspaceId: workspace?.id ?? "", surveyId: survey.id });
       },
     },
     {
@@ -38,7 +38,7 @@ export const SurveyAnalysisNavigation = ({ survey, activeId }: SurveyAnalysisNav
       href: `${url}/responses?referer=true`,
       current: pathname?.includes("/responses"),
       onClick: () => {
-        revalidateSurveyIdPath(workspace?.id ?? "", survey.id);
+        revalidateSurveyIdPathAction({ workspaceId: workspace?.id ?? "", surveyId: survey.id });
       },
     },
   ];

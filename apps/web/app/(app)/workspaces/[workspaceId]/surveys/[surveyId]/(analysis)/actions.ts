@@ -11,9 +11,32 @@ import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-clie
 import { getOrganizationIdFromSurveyId, getWorkspaceIdFromSurveyId } from "@/lib/utils/helper";
 import { getSurveySummary } from "./summary/lib/surveySummary";
 
-export const revalidateSurveyIdPath = async (workspaceId: string, surveyId: string) => {
-  revalidatePath(`/workspaces/${workspaceId}/surveys/${surveyId}`);
-};
+const ZRevalidateSurveyIdPathAction = z.object({
+  workspaceId: ZId,
+  surveyId: ZId,
+});
+
+export const revalidateSurveyIdPathAction = authenticatedActionClient
+  .inputSchema(ZRevalidateSurveyIdPathAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId: await getOrganizationIdFromSurveyId(parsedInput.surveyId),
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "workspaceTeam",
+          minPermission: "read",
+          workspaceId: parsedInput.workspaceId,
+        },
+      ],
+    });
+
+    revalidatePath(`/workspaces/${parsedInput.workspaceId}/surveys/${parsedInput.surveyId}`);
+  });
 
 const ZGetResponsesAction = z.object({
   surveyId: ZId,
