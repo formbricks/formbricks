@@ -17,7 +17,7 @@ export const NoFeedbackRecordsState = async ({
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
       <div className="mx-auto flex max-w-xl flex-col items-center gap-4 text-center">
-        <MessageSquareDashedIcon className="h-8 w-8 text-slate-400" />
+        <MessageSquareDashedIcon className="size-8 text-slate-400" />
         <p className="text-balance text-sm text-slate-600">
           {hasFeedbackSources
             ? t("workspace.analysis.no_feedback_records_with_sources_message")

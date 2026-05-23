@@ -115,7 +115,7 @@ export function EditMembershipRole({
             variant="secondary"
             role="button-role">
             <span className="ml-1 capitalize">{memberRole}</span>
-            <ChevronDownIcon className="h-4 w-4" />
+            <ChevronDownIcon className="size-4" />
           </Button>
         </DropdownMenuTrigger>
         {!disableRole && (

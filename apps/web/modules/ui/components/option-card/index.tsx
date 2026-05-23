@@ -34,7 +34,7 @@ export const OptionCard: React.FC<PathwayOptionProps> = ({
         onClick={onSelect}
         role="button"
         tabIndex={0}>
-        <div className="flex flex-col items-center space-y-4">
+        <div className="flex flex-col items-center gap-y-4">
           {children}
           <div className="text-center">
             <p className="text-lg font-medium text-slate-800">{title}</p>

@@ -35,9 +35,9 @@ export const DataTableSettingsModalItem = <T,>({ column, table }: DataTableSetti
         <div
           key={column.id}
           className="flex w-full items-center justify-between gap-4 rounded-md p-1.5 hover:cursor-move hover:bg-slate-100">
-          <div className="flex items-center space-x-2 overflow-hidden">
+          <div className="flex items-center gap-x-2 overflow-hidden">
             <button type="button" aria-label="Reorder column" onClick={(e) => e.preventDefault()}>
-              <GripVertical className="h-4 w-4" />
+              <GripVertical className="size-4" />
             </button>
             {flexRender(column.columnDef.header, headerContext)}
           </div>

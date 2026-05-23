@@ -128,7 +128,7 @@ export const LogoSettingsCard = ({
           <div className="flex items-center pl-2 pr-5">
             <CheckIcon
               strokeWidth={3}
-              className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
+              className="size-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
             />
           </div>
 
@@ -149,7 +149,7 @@ export const LogoSettingsCard = ({
             control={form.control}
             name="isLogoHidden"
             render={({ field }) => (
-              <FormItem className="flex items-center gap-2 space-y-0">
+              <FormItem className="flex items-center gap-2 gap-y-0">
                 <FormControl>
                   <Switch checked={!!field.value} onCheckedChange={field.onChange} disabled={disabled} />
                 </FormControl>

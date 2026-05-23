@@ -55,7 +55,7 @@ export const DashboardsTable = async ({
                 <div className="col-span-3 flex items-center pl-6 text-sm">
                   <div className="flex items-center gap-4">
                     <div className="w-8 flex-shrink-0 text-slate-500">
-                      <BarChart3Icon className="h-5 w-5" />
+                      <BarChart3Icon className="size-5" />
                     </div>
                     <div className="font-medium text-slate-900">{dashboard.name}</div>
                   </div>

@@ -43,9 +43,9 @@ export const Calendar = ({ className, classNames, showOutsideDays = true, ...pro
       components={{
         Chevron: (props) => {
           if (props.orientation === "left") {
-            return <ChevronLeft className="h-4 w-4" />;
+            return <ChevronLeft className="size-4" />;
           } else if (props.orientation === "right") {
-            return <ChevronRight className="h-4 w-4" />;
+            return <ChevronRight className="size-4" />;
           }
           return <Chevron {...props} />;
         },

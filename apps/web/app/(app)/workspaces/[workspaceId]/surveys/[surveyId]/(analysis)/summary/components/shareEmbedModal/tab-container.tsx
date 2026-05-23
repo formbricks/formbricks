@@ -8,7 +8,7 @@ interface TabContainerProps {
 
 export const TabContainer = ({ title, description, children }: TabContainerProps) => {
   return (
-    <div className="flex h-full grow flex-col items-start space-y-4">
+    <div className="flex h-full grow flex-col items-start gap-y-4">
       <div className="pb-2">
         <H3>{title}</H3>
         <Small color="muted" margin="headerDescription">

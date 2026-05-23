@@ -246,7 +246,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
                 }}
               />
             ) : (
-              <ChevronDownIcon className="h-5 w-5 text-slate-300 group-hover/icon:text-slate-400" />
+              <ChevronDownIcon className="size-5 text-slate-300 group-hover/icon:text-slate-400" />
             )}
           </div>
         </DropdownMenuTrigger>
@@ -280,7 +280,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
                   {options.map((opt) => (
                     <CommandItem key={opt.value} onSelect={() => handleSelect(opt)} className="truncate px-2">
                       {showCheckIcon && isSelected(opt) && (
-                        <CheckIcon className="h-4 w-4 text-slate-300 hover:text-slate-400" />
+                        <CheckIcon className="size-4 text-slate-300 hover:text-slate-400" />
                       )}
                       {opt.icon && <opt.icon className={iconClassName} />}
                       {opt.imgSrc && (
@@ -310,7 +310,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
                               }}>
                               <div className="flex w-full items-center gap-2 truncate">
                                 {showCheckIcon && isSelected(opt) && (
-                                  <CheckIcon className="mr-2 h-4 w-4 text-slate-300 hover:text-slate-400" />
+                                  <CheckIcon className="mr-2 size-4 text-slate-300 hover:text-slate-400" />
                                 )}
                                 {opt.icon && <opt.icon className={iconClassName} />}
                                 {opt.imgSrc && (
@@ -357,7 +357,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
                           onSelect={() => handleSelect(opt)}
                           className="truncate px-2">
                           {showCheckIcon && isSelected(opt) && (
-                            <CheckIcon className="h-4 w-4 text-slate-300 hover:text-slate-400" />
+                            <CheckIcon className="size-4 text-slate-300 hover:text-slate-400" />
                           )}
                           {opt.icon && <opt.icon className={iconClassName} />}
                           {opt.imgSrc && (

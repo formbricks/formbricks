@@ -124,13 +124,13 @@ export const OrganizationBreadcrumb = ({
           id="organizationDropdownTrigger"
           asChild>
           <div className="flex items-center gap-1">
-            <Building2Icon className="h-3 w-3" strokeWidth={1.5} />
+            <Building2Icon className="size-3" strokeWidth={1.5} />
             <span>{organizationName}</span>
-            {isPending && <Loader2 className="h-3 w-3 animate-spin" strokeWidth={1.5} />}
+            {isPending && <Loader2 className="size-3 animate-spin" strokeWidth={1.5} />}
             {isOrganizationDropdownOpen ? (
-              <ChevronDownIcon className="h-3 w-3" strokeWidth={1.5} />
+              <ChevronDownIcon className="size-3" strokeWidth={1.5} />
             ) : (
-              <ChevronRightIcon className="h-3 w-3" strokeWidth={1.5} />
+              <ChevronRightIcon className="size-3" strokeWidth={1.5} />
             )}
           </div>
         </DropdownMenuTrigger>
@@ -138,18 +138,19 @@ export const OrganizationBreadcrumb = ({
           {showOrganizationDropdown && (
             <>
               <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
-                <Building2Icon className="mr-2 inline h-4 w-4" />
+                <Building2Icon className="mr-2 inline size-4" />
                 {t("common.choose_organization")}
               </div>
               {isLoadingOrganizations && (
                 <div className="flex items-center justify-center py-2">
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="size-4 animate-spin" />
                 </div>
               )}
               {!isLoadingOrganizations && loadError && (
                 <div className="px-2 py-4">
                   <p className="mb-2 text-sm text-red-600">{loadError}</p>
                   <button
+                    type="button"
                     onClick={() => {
                       setLoadError(null);
                       setOrganizations([]);
@@ -177,7 +178,7 @@ export const OrganizationBreadcrumb = ({
                       onClick={() => setOpenCreateOrganizationModal(true)}
                       className="cursor-pointer">
                       <span>{t("common.create_new_organization")}</span>
-                      <PlusIcon className="ml-2 h-4 w-4" />
+                      <PlusIcon className="ml-2 size-4" />
                     </DropdownMenuCheckboxItem>
                   )}
                 </>
@@ -190,7 +191,7 @@ export const OrganizationBreadcrumb = ({
               <DropdownMenuCheckboxItem
                 onClick={() => handleSettingChange(`${workspaceBasePath}/settings/organization/general`)}
                 className="cursor-pointer">
-                <SettingsIcon className="mr-2 h-4 w-4" />
+                <SettingsIcon className="mr-2 size-4" />
                 {t("common.settings")}
               </DropdownMenuCheckboxItem>
             </>

@@ -265,9 +265,10 @@ export const BlockCard = ({
         </div>
 
         <button
+          type="button"
           className="opacity-0 hover:cursor-move group-hover:opacity-100"
           aria-label="Drag to reorder block">
-          <GripIcon className="h-4 w-4" />
+          <GripIcon className="size-4" />
         </button>
       </div>
       <div className="flex-1 rounded-r-lg border border-slate-200">
@@ -361,7 +362,7 @@ export const BlockCard = ({
                             </div>
                           </div>
 
-                          <div className="flex items-center space-x-2">
+                          <div className="flex items-center gap-x-2">
                             <EditorCardMenu
                               survey={localSurvey}
                               cardIdx={elementIdx}
@@ -420,7 +421,7 @@ export const BlockCard = ({
                               {element.type !== TSurveyElementTypeEnum.NPS &&
                               element.type !== TSurveyElementTypeEnum.Rating &&
                               element.type !== TSurveyElementTypeEnum.CTA ? (
-                                <div className="mt-2 flex space-x-2"></div>
+                                <div className="mt-2 flex gap-x-2"></div>
                               ) : null}
                               <AdvancedSettings
                                 // TODO -- We should remove this when we can confirm that everything works fine with the survey editor, not changing this right now in this file because it would require changing the element type to the respective element type in all the element forms.

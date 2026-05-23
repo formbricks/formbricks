@@ -51,9 +51,9 @@ export const BadgeContent: React.FC<BadgeContentProps> = ({
     return (
       <div
         data-testid="copy-icon"
-        className="flex h-4 w-4 items-center justify-center rounded transition-colors"
+        className="flex size-4 items-center justify-center rounded transition-colors"
         title={t("common.copy")}>
-        {isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+        {isCopied ? <Check className="size-4" /> : <Copy className="h-4 w-4" />}
       </div>
     );
   };

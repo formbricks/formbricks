@@ -63,7 +63,7 @@ export const ShareSurveyLink = ({
         key={surveyUrl}
         enforceSurveyUrlWidth={enforceSurveyUrlWidth}
       />
-      <div className="flex items-center justify-center space-x-2">
+      <div className="flex items-center justify-center gap-x-2">
         <LanguageDropdown survey={survey} setLanguage={handleLanguageChange} locale={locale} />
         <Button
           disabled={!surveyUrl}

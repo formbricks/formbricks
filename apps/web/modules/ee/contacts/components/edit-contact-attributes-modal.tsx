@@ -261,7 +261,7 @@ export const EditContactAttributesModal = ({
               {/* Only show Add Attribute button if there are remaining attributes to add */}
               {watchedAttributes.length < attributeKeys.length && (
                 <Button type="button" variant="secondary" onClick={handleAddAttribute} className="w-fit">
-                  <PlusIcon className="mr-2 h-4 w-4" />
+                  <PlusIcon className="mr-2 size-4" />
                   {t("workspace.contacts.add_attribute")}
                 </Button>
               )}

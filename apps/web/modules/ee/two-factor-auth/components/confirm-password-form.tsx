@@ -57,7 +57,7 @@ export const ConfirmPasswordForm = ({
 
   return (
     <FormProvider {...form}>
-      <form className="flex flex-col space-y-4" onSubmit={handleSubmit(onSubmit)}>
+      <form className="flex flex-col gap-y-4" onSubmit={handleSubmit(onSubmit)}>
         <div className="flex flex-col gap-2">
           <label htmlFor="password" className="text-sm font-medium text-slate-700">
             {t("common.password")}
@@ -87,7 +87,7 @@ export const ConfirmPasswordForm = ({
           />
         </div>
 
-        <div className="flex w-full items-center justify-end space-x-2">
+        <div className="flex w-full items-center justify-end gap-x-2">
           <Button variant="secondary" size="sm" type="button" onClick={() => setOpen(false)}>
             {t("common.cancel")}
           </Button>

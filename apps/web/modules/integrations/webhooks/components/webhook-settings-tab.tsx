@@ -239,9 +239,9 @@ export const WebhookSettingsTab = ({
                   className="absolute right-3 top-1/2 -translate-y-1/2 transform"
                   onClick={() => setShowSecret(!showSecret)}>
                   {showSecret ? (
-                    <EyeOff className="h-5 w-5 text-slate-400" />
+                    <EyeOff className="size-5 text-slate-400" />
                   ) : (
-                    <EyeIcon className="h-5 w-5 text-slate-400" />
+                    <EyeIcon className="size-5 text-slate-400" />
                   )}
                 </button>
               </div>
@@ -252,12 +252,12 @@ export const WebhookSettingsTab = ({
                 onClick={() => copyToClipboard(webhook.secret ?? "")}>
                 {copied ? (
                   <>
-                    <CheckIcon className="h-4 w-4" />
+                    <CheckIcon className="size-4" />
                     {t("common.copied")}
                   </>
                 ) : (
                   <>
-                    <CopyIcon className="h-4 w-4" />
+                    <CopyIcon className="size-4" />
                     {t("common.copy")}
                   </>
                 )}
@@ -271,7 +271,7 @@ export const WebhookSettingsTab = ({
               target="_blank"
               className="mt-1 inline-flex items-center gap-1 text-xs text-slate-600 underline hover:text-slate-800">
               {t("workspace.integrations.webhooks.learn_to_verify")}
-              <ExternalLinkIcon className="h-3 w-3" />
+              <ExternalLinkIcon className="size-3" />
             </Link>
           </div>
         )}
@@ -297,8 +297,8 @@ export const WebhookSettingsTab = ({
           />
         </div>
 
-        <div className="flex justify-between space-x-2">
-          <div className="flex space-x-2">
+        <div className="flex justify-between gap-x-2">
+          <div className="flex gap-x-2">
             {!isReadOnly && (
               <Button type="button" variant="destructive" onClick={() => setOpenDeleteDialog(true)}>
                 <TrashIcon />
@@ -316,7 +316,7 @@ export const WebhookSettingsTab = ({
           </div>
 
           {!isReadOnly && (
-            <div className="flex space-x-2">
+            <div className="flex gap-x-2">
               <Button type="submit" loading={isUpdatingWebhook}>
                 {t("common.save_changes")}
               </Button>

@@ -156,7 +156,7 @@ export const PageUrlSelector = ({ form, isReadOnly }: PageUrlSelectorProps) => {
             }}
           />
           <Button variant="secondary" size="sm" type="button" onClick={handleAddMore} disabled={isReadOnly}>
-            <PlusIcon className="mr-2 h-4 w-4" />
+            <PlusIcon className="mr-2 size-4" />
             {t("workspace.actions.add_url")}
           </Button>
           <div className="mt-4">
@@ -220,7 +220,7 @@ const UrlInput = ({
   return (
     <div className="flex w-full flex-col gap-2">
       {fields.map((field, index) => (
-        <div key={field.id} className="ml-1 flex items-start space-x-2">
+        <div key={field.id} className="ml-1 flex items-start gap-x-2">
           {index !== 0 && (
             <Select value={connector} onValueChange={onConnectorChange} disabled={disabled}>
               <SelectTrigger className="h-[40px] w-[80px] bg-white">
@@ -292,7 +292,7 @@ const UrlInput = ({
               onClick={() => {
                 removeUrlRule(index);
               }}>
-              <TrashIcon className="h-4 w-4" />
+              <TrashIcon className="size-4" />
             </Button>
           )}
         </div>

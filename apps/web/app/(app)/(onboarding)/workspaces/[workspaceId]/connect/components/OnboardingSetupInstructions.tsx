@@ -134,7 +134,7 @@ export const OnboardingSetupInstructions = ({
               </CodeBlock>
             </div>
 
-            <div className="mt-4 flex justify-between space-x-2">
+            <div className="mt-4 flex justify-between gap-x-2">
               <Button
                 id="onboarding-inapp-connect-copy-code"
                 variant={appSetupCompleted ? "secondary" : "default"}

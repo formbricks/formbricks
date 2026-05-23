@@ -47,7 +47,7 @@ export const DisplayBackupCodes = ({ backupCodes, setOpen }: DisplayBackupCodesP
         ))}
       </div>
 
-      <div className="flex w-full items-center justify-end space-x-4 border-t border-slate-300 p-4">
+      <div className="flex w-full items-center justify-end gap-x-4 border-t border-slate-300 p-4">
         <Button
           variant="secondary"
           type="button"

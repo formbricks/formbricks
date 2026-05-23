@@ -11,9 +11,9 @@ export const TargetingIndicator = ({ segment }: { segment: TSegment | null }) =>
   return (
     <div className="ml-4 flex items-center gap-4">
       {doFiltersExist ? (
-        <UsersIcon className="h-6 w-6 text-slate-800" />
+        <UsersIcon className="size-6 text-slate-800" />
       ) : (
-        <FilterIcon className="h-6 w-6 text-slate-800" />
+        <FilterIcon className="size-6 text-slate-800" />
       )}
 
       <div className="flex flex-col">

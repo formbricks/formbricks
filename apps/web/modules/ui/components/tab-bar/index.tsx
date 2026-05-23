@@ -24,9 +24,10 @@ export const TabBar: React.FC<TabBarProps> = ({
   const Nav = () => {
     if (tabStyle === "bar") {
       return (
-        <nav className="flex h-full items-center space-x-4" aria-label="Tabs">
+        <nav className="flex h-full items-center gap-x-4" aria-label="Tabs">
           {tabs.map((tab) => (
             <button
+              type="button"
               key={tab.id}
               onClick={() => setActiveId(tab.id)}
               className={cn(
@@ -36,7 +37,7 @@ export const TabBar: React.FC<TabBarProps> = ({
                 "flex h-full items-center px-3 text-sm font-medium"
               )}
               aria-current={tab.id === activeId ? "page" : undefined}>
-              {tab.icon && <div className="flex h-5 w-5 items-center">{tab.icon}</div>}
+              {tab.icon && <div className="flex size-5 items-center">{tab.icon}</div>}
               {tab.label}
             </button>
           ))}

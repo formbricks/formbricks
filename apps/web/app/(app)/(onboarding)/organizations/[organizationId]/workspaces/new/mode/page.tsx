@@ -50,7 +50,7 @@ const Page = async (props: ModePageProps) => {
   const workspaces = await getUserWorkspaces(session.user.id, params.organizationId);
 
   return (
-    <div className="flex min-h-full min-w-full flex-col items-center justify-center space-y-12">
+    <div className="flex min-h-full min-w-full flex-col items-center justify-center gap-y-12">
       <Header title={t("organizations.workspaces.new.mode.what_are_you_here_for")} />
       <OnboardingOptionsContainer options={channelOptions} />
       {workspaces.length >= 1 && (
@@ -59,7 +59,7 @@ const Page = async (props: ModePageProps) => {
           variant="ghost"
           asChild>
           <Link href={"/"}>
-            <XIcon className="h-7 w-7" strokeWidth={1.5} />
+            <XIcon className="size-7" strokeWidth={1.5} />
           </Link>
         </Button>
       )}

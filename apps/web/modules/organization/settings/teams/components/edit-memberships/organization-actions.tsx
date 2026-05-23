@@ -142,7 +142,7 @@ export const OrganizationActions = ({
 
   return (
     <>
-      <div className="mb-4 flex justify-end space-x-2 text-right">
+      <div className="mb-4 flex justify-end gap-x-2 text-right">
         {role !== "owner" && isMultiOrgEnabled && (
           <Button variant="destructive" size="sm" onClick={() => setIsLeaveOrganizationModalOpen(true)}>
             {t("workspace.settings.general.leave_organization")}

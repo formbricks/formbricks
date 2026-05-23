@@ -225,8 +225,8 @@ export const EditorCardMenu = ({
         </Button>
       </TooltipRenderer>
       <DropdownMenu>
-        <DropdownMenuTrigger className="h-10 w-10 rounded-lg border border-transparent p-2 hover:border-slate-200">
-          <EllipsisIcon className="mx-auto h-4 w-4 text-slate-700 hover:text-slate-600" />
+        <DropdownMenuTrigger className="size-10 rounded-lg border border-transparent p-2 hover:border-slate-200">
+          <EllipsisIcon className="mx-auto size-4 text-slate-700 hover:text-slate-600" />
         </DropdownMenuTrigger>
 
         <DropdownMenuContent>
@@ -319,7 +319,7 @@ export const EditorCardMenu = ({
                           e.stopPropagation();
                           moveElementToBlock(card.id, block.id);
                         }}
-                        icon={<ArrowRightIcon className="h-4 w-4" />}>
+                        icon={<ArrowRightIcon className="size-4" />}>
                         <span className="ml-2">{blockName}</span>
                       </DropdownMenuItem>
                     );
@@ -334,7 +334,7 @@ export const EditorCardMenu = ({
                   moveCard(cardIdx, true);
                 }
               }}
-              icon={<ArrowUpIcon className="h-4 w-4" />}
+              icon={<ArrowUpIcon className="size-4" />}
               disabled={cardIdx === 0}>
               <span>{t("common.move_up")}</span>
             </DropdownMenuItem>
@@ -346,7 +346,7 @@ export const EditorCardMenu = ({
                   moveCard(cardIdx, false);
                 }
               }}
-              icon={<ArrowDownIcon className="h-4 w-4" />}
+              icon={<ArrowDownIcon className="size-4" />}
               disabled={lastCard}>
               <span>{t("common.move_down")}</span>
             </DropdownMenuItem>

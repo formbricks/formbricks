@@ -66,7 +66,7 @@ export const UpdateElementId = ({
   return (
     <div>
       <Label htmlFor="elementId">{t("common.question_id")}</Label>
-      <div className="mt-2 inline-flex w-full items-center space-x-2">
+      <div className="mt-2 inline-flex w-full items-center gap-x-2">
         <Input
           id="elementId"
           name="elementId"

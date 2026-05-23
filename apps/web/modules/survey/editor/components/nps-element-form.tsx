@@ -84,13 +84,13 @@ export const NPSElementForm = ({
                 subheader: createI18nString("", surveyLanguageCodes),
               });
             }}>
-            <PlusIcon className="mr-1 h-4 w-4" />
+            <PlusIcon className="mr-1 size-4" />
             {t("workspace.surveys.edit.add_description")}
           </Button>
         )}
       </div>
 
-      <div className="flex justify-between space-x-2">
+      <div className="flex justify-between gap-x-2">
         <div className="w-full">
           <ElementFormInput
             id="lowerLabel"

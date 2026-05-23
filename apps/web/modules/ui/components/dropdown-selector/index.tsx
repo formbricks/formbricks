@@ -42,7 +42,7 @@ export const DropdownSelector = ({
                 </span>
               </span>
               <span className="flex h-full items-center border-l pl-3">
-                <ChevronDownIcon className="h-4 w-4 text-slate-500" />
+                <ChevronDownIcon className="size-4 text-slate-500" />
               </span>
             </button>
           </DropdownMenuTrigger>

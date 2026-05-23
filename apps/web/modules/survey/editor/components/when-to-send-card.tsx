@@ -158,11 +158,11 @@ export const WhenToSendCard = ({
           <div className="inline-flex px-4 py-4">
             <div className="flex items-center pl-2 pr-5">
               {containsEmptyTriggers ? (
-                <div className="h-7 w-7 rounded-full border border-amber-500 bg-amber-50" />
+                <div className="size-7 rounded-full border border-amber-500 bg-amber-50" />
               ) : (
                 <CheckIcon
                   strokeWidth={3}
-                  className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
+                  className="size-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
                 />
               )}
             </div>
@@ -194,7 +194,7 @@ export const WhenToSendCard = ({
                       className="flex grow items-center justify-between rounded-md border border-slate-300 bg-white p-2 px-3">
                       <div>
                         <div className="mt-1 flex items-center">
-                          <div className="mr-1.5 h-4 w-4 text-slate-600">
+                          <div className="mr-1.5 size-4 text-slate-600">
                             {ACTION_TYPE_ICON_LOOKUP[trigger.actionClass.type]}
                           </div>
 
@@ -204,7 +204,7 @@ export const WhenToSendCard = ({
                       </div>
                     </div>
                     <Trash2Icon
-                      className="h-4 w-4 cursor-pointer text-slate-600"
+                      className="size-4 cursor-pointer text-slate-600"
                       onClick={() => handleRemoveTriggerEvent(idx)}
                     />
                   </div>
@@ -218,7 +218,7 @@ export const WhenToSendCard = ({
                   onClick={() => {
                     setAddActionModalOpen(true);
                   }}>
-                  <PlusIcon className="mr-2 h-4 w-4" />
+                  <PlusIcon className="mr-2 size-4" />
                   {t("common.add_action")}
                 </Button>
               </div>

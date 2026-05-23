@@ -412,7 +412,7 @@ export const ElementFormInput = ({
           <div className="mb-2 mt-3 flex items-center justify-between">
             <Label htmlFor={id}>{label}</Label>
             {id === "headline" && currentElement && updateElement && (
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center gap-x-2">
                 <Label htmlFor="required-toggle" className="text-sm">
                   {t("workspace.surveys.edit.required")}
                 </Label>
@@ -557,7 +557,7 @@ export const ElementFormInput = ({
         render={({ value, onChange, highlightedJSX, children: recallComponents, isRecallSelectVisible }) => {
           return (
             <div className="flex flex-col gap-4 bg-white" ref={animationParent}>
-              <div className="flex w-full items-center space-x-2">
+              <div className="flex w-full items-center gap-x-2">
                 <div className="group relative w-full">
                   {/* The highlight container is absolutely positioned behind the input */}
                   <div className="h-10 w-full"></div>
