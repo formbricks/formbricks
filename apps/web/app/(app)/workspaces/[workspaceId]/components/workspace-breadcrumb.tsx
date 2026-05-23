@@ -121,7 +121,7 @@ export const WorkspaceBreadcrumb = ({
     });
   };
 
-  const LimitModalButtons = (): [ModalButton, ModalButton] => {
+  const getLimitModalButtons = (): [ModalButton, ModalButton] => {
     if (isFormbricksCloud) {
       return [
         {
@@ -246,7 +246,7 @@ export const WorkspaceBreadcrumb = ({
         <WorkspaceLimitModal
           open={openLimitModal}
           setOpen={setOpenLimitModal}
-          buttons={LimitModalButtons()}
+          buttons={getLimitModalButtons()}
           workspaceLimit={organizationWorkspacesLimit}
         />
       )}

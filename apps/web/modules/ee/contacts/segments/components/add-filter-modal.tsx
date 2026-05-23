@@ -465,7 +465,7 @@ export function AddFilterModal({
     );
   };
 
-  const TabContent = (): JSX.Element => {
+  const getTabContent = (): JSX.Element => {
     switch (activeTabId) {
       case "all": {
         return getAllTabContent();
@@ -505,9 +505,7 @@ export function AddFilterModal({
               <TabBar activeId={activeTabId} className="bg-white" setActiveId={setActiveTabId} tabs={tabs} />
             </div>
 
-            <div className={cn("mt-2 flex flex-col gap-1 overflow-y-auto")}>
-              <TabContent />
-            </div>
+            <div className={cn("mt-2 flex flex-col gap-1 overflow-y-auto")}>{getTabContent()}</div>
           </div>
         </DialogBody>
       </DialogContent>

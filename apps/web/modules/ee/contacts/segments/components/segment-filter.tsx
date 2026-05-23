@@ -877,19 +877,17 @@ export function SegmentFilter({
     setAddFilterModalOpen(true);
   };
 
-  function RenderFilterModal() {
-    return (
-      <AddFilterModal
-        contactAttributeKeys={contactAttributeKeys}
-        onAddFilter={(filter) => {
-          handleAddFilterBelow(resource.id, filter);
-        }}
-        open={addFilterModalOpen}
-        segments={segments}
-        setOpen={setAddFilterModalOpen}
-      />
-    );
-  }
+  const filterModal = (
+    <AddFilterModal
+      contactAttributeKeys={contactAttributeKeys}
+      onAddFilter={(filter) => {
+        handleAddFilterBelow(resource.id, filter);
+      }}
+      open={addFilterModalOpen}
+      segments={segments}
+      setOpen={setAddFilterModalOpen}
+    />
+  );
 
   switch (resource.root.type) {
     case "attribute":
@@ -912,7 +910,7 @@ export function SegmentFilter({
             viewOnly={viewOnly}
           />
 
-          <RenderFilterModal />
+          {filterModal}
         </>
       );
 
@@ -936,7 +934,7 @@ export function SegmentFilter({
             viewOnly={viewOnly}
           />
 
-          <RenderFilterModal />
+          {filterModal}
         </>
       );
 
@@ -959,7 +957,7 @@ export function SegmentFilter({
             viewOnly={viewOnly}
           />
 
-          <RenderFilterModal />
+          {filterModal}
         </>
       );
 
@@ -982,7 +980,7 @@ export function SegmentFilter({
             viewOnly={viewOnly}
           />
 
-          <RenderFilterModal />
+          {filterModal}
         </>
       );
 

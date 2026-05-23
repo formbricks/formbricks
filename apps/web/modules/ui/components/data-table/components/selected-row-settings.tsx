@@ -17,6 +17,8 @@ import {
 } from "@/modules/ui/components/dropdown-menu";
 import { cn } from "@/modules/ui/lib/utils";
 
+const Separator = () => <div>|</div>;
+
 interface SelectedRowSettingsProps<T> {
   table: Table<T>;
   updateRowList: (rowId: string[]) => void;
@@ -106,9 +108,6 @@ export const SelectedRowSettings = <T,>({
     }
     setIsDownloading(false);
   };
-
-  // Helper component for the separator
-  const Separator = () => <div>|</div>;
 
   const quotasDialogText = isQuotasAllowed
     ? t("workspace.contacts.delete_contact_confirmation_with_quotas", {
