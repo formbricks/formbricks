@@ -20,7 +20,7 @@ FROM base AS installer
 # Enable corepack and prepare pnpm
 RUN npm install --ignore-scripts -g corepack@0.35.0
 RUN corepack enable
-RUN corepack prepare pnpm@10.28.2 --activate
+RUN corepack prepare pnpm@10.32.1 --activate
 
 # Install necessary build tools and compilers
 RUN apk update && apk add --no-cache cmake g++ gcc jq make openssl-dev python3
