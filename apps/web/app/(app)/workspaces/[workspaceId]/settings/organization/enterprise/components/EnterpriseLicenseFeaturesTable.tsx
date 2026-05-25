@@ -67,11 +67,6 @@ const getFeatureDefinitions = (t: TFunction): TFeatureDefinition[] => {
       docsUrl: "https://formbricks.com/docs/self-hosting/configuration/ai",
     },
     {
-      key: "aiDataAnalysis",
-      labelKey: t("workspace.settings.general.ai_data_analysis_enabled"),
-      docsUrl: "https://formbricks.com/docs/self-hosting/configuration/ai",
-    },
-    {
       key: "auditLogs",
       labelKey: t("workspace.settings.enterprise.license_feature_audit_logs"),
       docsUrl: "https://formbricks.com/docs/self-hosting/advanced/enterprise-features/audit-logging",

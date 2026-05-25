@@ -4,6 +4,7 @@ import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import { TooManyRequestsError } from "@formbricks/types/errors";
 import { authenticateRequest } from "@/app/api/v1/auth";
+import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
 import { buildAuditLogBaseObject } from "@/app/lib/api/with-api-logging";
 import { getApiKeyFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { authOptions } from "@/modules/auth/lib/authOptions";
@@ -17,6 +18,7 @@ import {
   isInvalidParamCode,
   problemBadRequest,
   problemInternalError,
+  problemPayloadTooLarge,
   problemTooManyRequests,
   problemUnauthorized,
 } from "./response";
@@ -87,6 +89,13 @@ function formatZodIssues(error: z.ZodError, fallbackName: "body" | "query" | "pa
     };
   });
 }
+
+type TV3InputParseFailure = {
+  ok: false;
+  response: Response;
+  detail: string;
+  invalidParams: InvalidParam[];
+};
 
 function searchParamsToObject(searchParams: URLSearchParams): Record<string, string | string[]> {
   const query: Record<string, string | string[]> = {};
@@ -168,37 +177,48 @@ async function parseV3Input<S extends TV3Schemas | undefined, TProps>(
   schemas: S | undefined,
   requestId: string,
   instance: string
-): Promise<
-  | { ok: true; parsedInput: TV3ParsedInput<S> }
-  | {
-      ok: false;
-      response: Response;
-    }
-> {
+): Promise<{ ok: true; parsedInput: TV3ParsedInput<S> } | TV3InputParseFailure> {
   const parsedInput = {} as TV3ParsedInput<S>;
 
   if (schemas?.body) {
     let bodyData: unknown;
 
     try {
-      bodyData = await req.json();
-    } catch {
+      bodyData = await parseJsonBodyWithLimit(req);
+    } catch (error) {
+      if (error instanceof RequestBodyTooLargeError) {
+        return {
+          ok: false,
+          detail: error.message,
+          invalidParams: [],
+          response: problemPayloadTooLarge(requestId, error.message, instance),
+        };
+      }
+
+      const invalidParams = [
+        { name: "body", reason: "Malformed JSON input, please check your request body" },
+      ];
       return {
         ok: false,
+        detail: "Invalid request body",
+        invalidParams,
         response: problemBadRequest(requestId, "Invalid request body", {
           instance,
-          invalid_params: [{ name: "body", reason: "Malformed JSON input, please check your request body" }],
+          invalid_params: invalidParams,
         }),
       };
     }
 
     const bodyResult = schemas.body.safeParse(bodyData);
     if (!bodyResult.success) {
+      const invalidParams = formatZodIssues(bodyResult.error, "body");
       return {
         ok: false,
+        detail: "Invalid request body",
+        invalidParams,
         response: problemBadRequest(requestId, "Invalid request body", {
           instance,
-          invalid_params: formatZodIssues(bodyResult.error, "body"),
+          invalid_params: invalidParams,
         }),
       };
     }
@@ -209,11 +229,14 @@ async function parseV3Input<S extends TV3Schemas | undefined, TProps>(
   if (schemas?.query) {
     const queryResult = schemas.query.safeParse(searchParamsToObject(req.nextUrl.searchParams));
     if (!queryResult.success) {
+      const invalidParams = formatZodIssues(queryResult.error, "query");
       return {
         ok: false,
+        detail: "Invalid query parameters",
+        invalidParams,
         response: problemBadRequest(requestId, "Invalid query parameters", {
           instance,
-          invalid_params: formatZodIssues(queryResult.error, "query"),
+          invalid_params: invalidParams,
         }),
       };
     }
@@ -224,11 +247,14 @@ async function parseV3Input<S extends TV3Schemas | undefined, TProps>(
   if (schemas?.params) {
     const paramsResult = schemas.params.safeParse(await getRouteParams(props));
     if (!paramsResult.success) {
+      const invalidParams = formatZodIssues(paramsResult.error, "params");
       return {
         ok: false,
+        detail: "Invalid route parameters",
+        invalidParams,
         response: problemBadRequest(requestId, "Invalid route parameters", {
           instance,
-          invalid_params: formatZodIssues(paramsResult.error, "params"),
+          invalid_params: invalidParams,
         }),
       };
     }
@@ -377,13 +403,23 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
     try {
       const authResult = await authenticateV3RequestOrRespond(req, auth, requestId, instance);
       if (authResult.response) {
-        log.warn({ statusCode: authResult.response.status }, "V3 API authentication failed");
+        log.warn(
+          { statusCode: authResult.response.status, detail: getUnauthenticatedDetail(auth) },
+          "V3 API authentication failed"
+        );
         return authResult.response;
       }
 
       const parsedInputResult = await parseV3Input(req, props, schemas, requestId, instance);
       if (!parsedInputResult.ok) {
-        log.warn({ statusCode: parsedInputResult.response.status }, "V3 API request validation failed");
+        log.warn(
+          {
+            statusCode: parsedInputResult.response.status,
+            detail: parsedInputResult.detail,
+            invalidParams: parsedInputResult.invalidParams,
+          },
+          "V3 API request validation failed"
+        );
         return parsedInputResult.response;
       }
 

@@ -1935,6 +1935,7 @@
       "attribute_key_hint": "Uniquement des lettres minuscules, des chiffres et des underscores. Doit commencer par une lettre.",
       "attribute_key_placeholder": "ex. date_de_naissance",
       "attribute_key_required": "La clé est requise",
+      "attribute_key_reserved_future_default": "La clé est réservée pour les attributs par défaut futurs ({reservedKeys}). Veuillez choisir une clé différente.",
       "attribute_key_safe_identifier_required": "La clé doit être un identifiant sûr : uniquement des lettres minuscules, des chiffres et des underscores, et doit commencer par une lettre",
       "attribute_label": "Étiquette",
       "attribute_label_placeholder": "ex. Date de naissance",
@@ -1969,6 +1970,7 @@
       "generate_personal_link": "Générer un lien personnel",
       "generate_personal_link_description": "Sélectionnez une enquête publiée pour générer un lien personnalisé pour ce contact.",
       "invalid_csv_column_names": "Nom(s) de colonne CSV invalide(s) : {columns}. Les noms de colonnes qui deviendront de nouveaux attributs ne doivent contenir que des lettres minuscules, des chiffres et des underscores, et doivent commencer par une lettre.",
+      "invalid_csv_reserved_column_names": "Nom(s) de colonne CSV réservé(s) : {columns}. Ces noms sont réservés pour les attributs par défaut futurs ({reservedKeys}) et ne peuvent pas être créés en tant que nouveaux attributs.",
       "invalid_date_format": "Format de date invalide. Merci d'utiliser une date valide.",
       "invalid_number_format": "Format de nombre invalide. Veuillez saisir un nombre valide.",
       "no_activity_yet": "Aucune activité pour le moment",
@@ -2610,8 +2612,6 @@
         "workspaces_being_added": "Espaces de travail en cours d'ajout"
       },
       "general": {
-        "ai_data_analysis_enabled": "Enrichissement et analyse des données (IA)",
-        "ai_data_analysis_enabled_description": "L'IA pour tirer le meilleur parti de vos données, configurer des tableaux de bord, des graphiques, des rapports et plus encore. Accède à vos données d'expérience.",
         "ai_enabled": "IA Formbricks",
         "ai_enabled_description": "Gérer les fonctionnalités alimentées par l'IA pour cette organisation.",
         "ai_instance_not_configured": "L'IA est configurée au niveau de l'instance via des variables d'environnement. Demandez à votre administrateur de définir AI_PROVIDER, les identifiants du fournisseur et la liste de modèles correspondante avant d'activer les fonctionnalités d'IA.",
@@ -2818,7 +2818,6 @@
         "adjust_survey_closed_message": "Ajuster le message \"Sondage fermé\"",
         "adjust_survey_closed_message_description": "Modifiez le message que les visiteurs voient lorsque l'enquête est fermée.",
         "adjust_theme_in_look_and_feel_settings": "Ajuste le thème dans les paramètres <lookFeelLink>Apparence et ressenti</lookFeelLink>.",
-        "ai_data_analysis_disabled": "L'analyse de données par IA est désactivée pour cette organisation.",
         "ai_features_not_enabled": "Les fonctionnalités IA ne sont pas activées pour cette organisation.",
         "ai_instance_not_configured": "L'IA n'est pas configurée. Contacte ton administrateur.",
         "ai_smart_tools_disabled": "Les outils intelligents IA sont désactivés pour cette organisation.",

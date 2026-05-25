@@ -1935,6 +1935,7 @@
       "attribute_key_hint": "Apenas letras minúsculas, números e sublinhados. Deve começar com uma letra.",
       "attribute_key_placeholder": "ex. data_de_nascimento",
       "attribute_key_required": "A chave é obrigatória",
+      "attribute_key_reserved_future_default": "A chave está reservada para atributos padrão futuros ({reservedKeys}). Por favor, escolhe uma chave diferente.",
       "attribute_key_safe_identifier_required": "A chave deve ser um identificador seguro: apenas letras minúsculas, números e sublinhados, e deve começar com uma letra",
       "attribute_label": "Etiqueta",
       "attribute_label_placeholder": "ex. Data de nascimento",
@@ -1969,6 +1970,7 @@
       "generate_personal_link": "Gerar Link Pessoal",
       "generate_personal_link_description": "Selecione um inquérito publicado para gerar um link personalizado para este contacto.",
       "invalid_csv_column_names": "Nome(s) de coluna CSV inválido(s): {columns}. Os nomes de colunas que se tornarão novos atributos devem conter apenas letras minúsculas, números e underscores, e devem começar com uma letra.",
+      "invalid_csv_reserved_column_names": "Nome(s) de coluna CSV reservado(s): {columns}. Estes nomes estão reservados para atributos padrão futuros ({reservedKeys}) e não podem ser criados como novos atributos.",
       "invalid_date_format": "Formato de data inválido. Por favor, usa uma data válida.",
       "invalid_number_format": "Formato de número inválido. Por favor, introduz um número válido.",
       "no_activity_yet": "Ainda sem atividade",
@@ -2610,8 +2612,6 @@
         "workspaces_being_added": "Workspaces a receber acesso"
       },
       "general": {
-        "ai_data_analysis_enabled": "Enriquecimento e análise de dados (IA)",
-        "ai_data_analysis_enabled_description": "IA para tirar mais partido dos teus dados, configurar dashboards, gráficos, relatórios e muito mais. Acede aos dados da tua experiência.",
         "ai_enabled": "IA da Formbricks",
         "ai_enabled_description": "Gerir funcionalidades com IA para esta organização.",
         "ai_instance_not_configured": "A IA é configurada ao nível da instância através de variáveis de ambiente. Peça ao seu administrador para definir AI_PROVIDER, as credenciais desse fornecedor e a lista de modelos correspondente antes de ativar as funcionalidades de IA.",
@@ -2818,7 +2818,6 @@
         "adjust_survey_closed_message": "Ajustar mensagem de 'Inquérito Fechado'",
         "adjust_survey_closed_message_description": "Alterar a mensagem que os visitantes veem quando o inquérito está fechado.",
         "adjust_theme_in_look_and_feel_settings": "Ajusta o tema nas definições de <lookFeelLink>Aparência</lookFeelLink>.",
-        "ai_data_analysis_disabled": "A análise de dados por IA está desativada para esta organização.",
         "ai_features_not_enabled": "As funcionalidades de IA não estão ativadas para esta organização.",
         "ai_instance_not_configured": "A IA não está configurada. Contacta o teu administrador.",
         "ai_smart_tools_disabled": "As ferramentas inteligentes de IA estão desativadas para esta organização.",

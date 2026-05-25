@@ -1935,6 +1935,7 @@
       "attribute_key_hint": "僅限小寫字母、數字和底線，且必須以字母開頭。",
       "attribute_key_placeholder": "例如：date_of_birth",
       "attribute_key_required": "金鑰為必填項目",
+      "attribute_key_reserved_future_default": "此鍵已保留供未來預設屬性使用（{reservedKeys}）。請選擇其他鍵。",
       "attribute_key_safe_identifier_required": "金鑰必須為安全識別字：僅限小寫字母、數字和底線，且必須以字母開頭",
       "attribute_label": "標籤",
       "attribute_label_placeholder": "例如：出生日期",
@@ -1969,6 +1970,7 @@
       "generate_personal_link": "產生個人連結",
       "generate_personal_link_description": "選擇一個已發佈的問卷，為此聯絡人產生個人化連結。",
       "invalid_csv_column_names": "無效的 CSV 欄位名稱：{columns}。作為新屬性的欄位名稱只能包含小寫字母、數字和底線，且必須以字母開頭。",
+      "invalid_csv_reserved_column_names": "保留的 CSV 欄位名稱：{columns}。這些名稱已保留供未來預設屬性使用（{reservedKeys}），無法建立為新屬性。",
       "invalid_date_format": "日期格式無效。請使用有效的日期。",
       "invalid_number_format": "數字格式無效。請輸入有效的數字。",
       "no_activity_yet": "尚無活動",
@@ -2610,8 +2612,6 @@
         "workspaces_being_added": "正在授予存取權限的工作區"
       },
       "general": {
-        "ai_data_analysis_enabled": "資料增強與分析（AI）",
-        "ai_data_analysis_enabled_description": "利用 AI 深入分析你的資料，建立儀表板、圖表、報告等。會處理你的體驗資料。",
         "ai_enabled": "Formbricks AI",
         "ai_enabled_description": "管理此組織的 AI 功能。",
         "ai_instance_not_configured": "AI 會透過環境變數在實例層級進行設定。啟用 AI 功能前，請管理員設定 AI_PROVIDER、該供應商的憑證，以及對應的模型清單。",
@@ -2818,7 +2818,6 @@
         "adjust_survey_closed_message": "調整「問卷已關閉」訊息",
         "adjust_survey_closed_message_description": "變更訪客在問卷關閉時看到的訊息。",
         "adjust_theme_in_look_and_feel_settings": "在<lookFeelLink>外觀與感覺</lookFeelLink>設定中調整主題。",
-        "ai_data_analysis_disabled": "此組織已停用 AI 資料分析。",
         "ai_features_not_enabled": "此組織未啟用 AI 功能。",
         "ai_instance_not_configured": "AI 未設定。請聯絡您的管理員。",
         "ai_smart_tools_disabled": "此組織已停用 AI 智慧工具。",

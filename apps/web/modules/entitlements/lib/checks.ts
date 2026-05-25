@@ -11,7 +11,6 @@ const LICENSE_GUARDED_ENTITLEMENTS: Partial<Record<string, keyof TEnterpriseLice
   "spam-protection": "spamProtection",
   contacts: "contacts",
   "ai-smart-tools": "aiSmartTools",
-  "ai-data-analysis": "aiDataAnalysis",
   "feedback-directories": "feedbackDirectories",
   dashboards: "dashboards",
 };

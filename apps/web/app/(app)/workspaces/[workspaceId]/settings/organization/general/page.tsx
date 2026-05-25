@@ -9,7 +9,6 @@ import {
 import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import {
-  getIsAIDataAnalysisEnabled,
   getIsAISmartToolsEnabled,
   getIsMultiOrgEnabled,
   getWhiteLabelPermission,
@@ -38,14 +37,11 @@ const Page = async (props: Readonly<{ params: Promise<{ workspaceId: string }> }
 
   const user = session?.user?.id ? await getUser(session.user.id) : null;
 
-  const [isMultiOrgEnabled, hasWhiteLabelPermission, hasAISmartToolsPermission, hasAIDataAnalysisPermission] =
-    await Promise.all([
-      getIsMultiOrgEnabled(),
-      getWhiteLabelPermission(organization.id),
-      getIsAISmartToolsEnabled(organization.id),
-      getIsAIDataAnalysisEnabled(organization.id),
-    ]);
-  const hasAIPermission = hasAISmartToolsPermission || hasAIDataAnalysisPermission;
+  const [isMultiOrgEnabled, hasWhiteLabelPermission, hasAIPermission] = await Promise.all([
+    getIsMultiOrgEnabled(),
+    getWhiteLabelPermission(organization.id),
+    getIsAISmartToolsEnabled(organization.id),
+  ]);
 
   const isDeleteDisabled = !isOwner || !isMultiOrgEnabled;
   const currentUserRole = currentUserMembership?.role;

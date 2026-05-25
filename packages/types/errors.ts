@@ -178,6 +178,7 @@ export const EXPECTED_ERROR_NAMES = new Set([
   "TooManyRequestsError",
   "InvalidPasswordResetTokenError",
   "UniqueConstraintError",
+  "RequestBodyTooLargeError",
 ]);
 
 /**

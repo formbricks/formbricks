@@ -7,11 +7,11 @@ import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
 import { type TUserLocale, ZUserLocale } from "@formbricks/types/user";
 import { handleConnectorPipeline } from "@/lib/connector/pipeline-handler";
-import { POSTHOG_KEY } from "@/lib/constants";
+import { DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS, POSTHOG_KEY } from "@/lib/constants";
 import { generateStandardWebhookSignature } from "@/lib/crypto";
 import { getIntegrations } from "@/lib/integration/service";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
-import { validateWebhookUrl } from "@/lib/utils/validate-webhook-url";
+import { createPinnedDispatcher, validateAndResolveWebhookUrl } from "@/lib/utils/validate-webhook-url";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
 import { type TAuditStatus, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { recordResponseCreatedMeterEvent } from "@/modules/ee/billing/lib/metering";
@@ -136,9 +136,13 @@ const createWebhookMessageId = ({
   webhookId: string;
 }): string => createHash("sha256").update(`${jobId}:${webhookId}:${event}`).digest("hex");
 
+type WebhookFetchOptions = RequestInit & {
+  dispatcher?: ReturnType<typeof createPinnedDispatcher>;
+};
+
 const fetchWithTimeout = async (
   url: string,
-  options: RequestInit,
+  options: WebhookFetchOptions,
   timeoutMs: number = WEBHOOK_TIMEOUT_MS
 ): Promise<Response> => {
   const abortController = new AbortController();
@@ -153,7 +157,7 @@ const fetchWithTimeout = async (
     return await fetch(url, {
       ...options,
       signal,
-    });
+    } as RequestInit);
   } finally {
     clearTimeout(timeoutId);
   }
@@ -222,15 +226,47 @@ const createWebhookDeliveryTask = async ({
       );
     }
 
-    await validateWebhookUrl(webhook.url);
-    const response = await fetchWithTimeout(webhook.url, {
-      method: "POST",
-      headers: requestHeaders,
-      body,
-    });
+    const address = await validateAndResolveWebhookUrl(webhook.url);
+    // Pin TCP connect to the validated IP — closes DNS-rebinding TOCTOU between
+    // validation and fetch. Skip pinning when address is null (DANGEROUSLY flag +
+    // blocked name resolved via /etc/hosts).
+    const dispatcher = address ? createPinnedDispatcher(address) : undefined;
+    // `redirect: "manual"` blocks 30x-based SSRF to private/internal hosts.
+    // Gated on the same env var as URL validation for self-hosters who opted in.
+    const redirectMode: RequestRedirect = DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS ? "follow" : "manual";
 
-    if (!response.ok) {
-      throw new Error(`Webhook delivery failed with status ${response.status}`);
+    try {
+      const response = await fetchWithTimeout(webhook.url, {
+        method: "POST",
+        headers: requestHeaders,
+        body,
+        redirect: redirectMode,
+        dispatcher,
+      });
+
+      // With `redirect: "manual"`, undici returns the actual 30x (not opaqueredirect).
+      // Treat as delivery failure so redirect-based SSRF cannot silently succeed.
+      if (response.status >= 300 && response.status < 400) {
+        throw new Error(`Webhook delivery blocked: redirect status ${response.status}`);
+      }
+
+      if (!response.ok) {
+        throw new Error(`Webhook delivery failed with status ${response.status}`);
+      }
+    } finally {
+      try {
+        await dispatcher?.destroy();
+      } catch (cleanupError) {
+        logger.warn(
+          {
+            ...logContext,
+            err: cleanupError,
+            webhookId: webhook.id,
+            webhookUrl: webhook.url,
+          },
+          "Response pipeline webhook dispatcher cleanup failed"
+        );
+      }
     }
   } catch (error) {
     logger.error(
