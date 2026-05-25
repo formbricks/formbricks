@@ -1,7 +1,7 @@
 export interface TUploadFileConfig {
-  allowedFileExtensions?: string[] | undefined;
-  surveyId?: string | undefined;
-  questionId?: string | undefined;
+  allowedFileExtensions?: string[];
+  surveyId?: string;
+  elementId?: string;
 }
 
 export interface TUploadFileResponse {
@@ -14,7 +14,7 @@ export interface TUploadFileResponse {
       uuid: string;
     } | null;
     updatedFileName: string;
-    presignedFields?: Record<string, string> | undefined;
+    presignedFields?: Record<string, string>;
   };
 }
 

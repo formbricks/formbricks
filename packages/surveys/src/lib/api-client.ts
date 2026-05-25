@@ -116,7 +116,7 @@ export class ApiClient {
       name: string;
       base64: string;
     },
-    { allowedFileExtensions, surveyId, questionId }: TUploadFileConfig | undefined = {}
+    { allowedFileExtensions, surveyId, elementId }: TUploadFileConfig | undefined = {}
   ): Promise<string> {
     if (!file.name || !file.type || !file.base64) {
       throw new Error(`Invalid file object`);
@@ -127,7 +127,7 @@ export class ApiClient {
       fileType: file.type,
       allowedFileExtensions,
       surveyId,
-      questionId,
+      elementId,
     };
 
     const response = await fetch(`${this.appUrl}/api/v1/client/${this.workspaceId}/storage`, {

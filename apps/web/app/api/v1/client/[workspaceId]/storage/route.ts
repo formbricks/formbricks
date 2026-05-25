@@ -27,7 +27,7 @@ export const OPTIONS = async (): Promise<Response> => {
 // api endpoint for getting a s3 signed url for uploading private files
 // uploaded files will be private, only the user who has access to the environment can access the file
 // uploading private files requires no authentication
-// use this to let users upload files to a file upload question response for example
+// use this to let users upload files to a file upload element response for example
 
 export const POST = withV1ApiWrapper({
   handler: async ({ req, props }: THandlerParams<{ params: Promise<{ workspaceId: string }> }>) => {
@@ -66,7 +66,7 @@ export const POST = withV1ApiWrapper({
       };
     }
 
-    const { fileName, fileType, surveyId, questionId } = parsedInputResult.data;
+    const { fileName, fileType, surveyId, elementId } = parsedInputResult.data;
 
     const [survey, organizationId] = await Promise.all([
       getSurvey(surveyId),
@@ -109,7 +109,7 @@ export const POST = withV1ApiWrapper({
 
     const fileUploadPermission = validateSurveyAllowsFileUpload({
       fileName,
-      questionId,
+      elementId,
       blocks: survey.blocks,
       questions: survey.questions,
     });
@@ -117,11 +117,11 @@ export const POST = withV1ApiWrapper({
     if (!fileUploadPermission.ok) {
       return {
         response: responses.badRequestResponse(
-          fileUploadPermission.reason === "no_file_upload_question"
+          fileUploadPermission.reason === "no_file_upload_element"
             ? "Survey does not allow file uploads"
-            : fileUploadPermission.reason === "file_upload_question_not_found"
-              ? "Question does not allow file uploads"
-              : "File extension is not allowed for this question",
+            : fileUploadPermission.reason === "file_upload_element_not_found"
+              ? "Element does not allow file uploads"
+              : "File extension is not allowed for this element",
           undefined
         ),
       };
@@ -138,7 +138,7 @@ export const POST = withV1ApiWrapper({
       fileType,
       "private",
       maxFileUploadSize,
-      ["surveys", surveyId, "questions", questionId]
+      ["surveys", surveyId, "elements", elementId]
     );
 
     if (!signedUrlResponse.ok) {

@@ -134,20 +134,20 @@ describe("storage service", () => {
         "application/pdf",
         "private" as TAccessType,
         1024 * 1024 * 10,
-        ["surveys", "survey-123", "questions", "question-123"]
+        ["surveys", "survey-123", "elements", "element-123"]
       );
 
       expect(result.ok).toBe(true);
       if (result.ok) {
         expect(result.data.fileUrl).toBe(
-          `/storage/ws-123/private/surveys/survey-123/questions/question-123/test-doc--fid--${mockUUID}.pdf`
+          `/storage/ws-123/private/surveys/survey-123/elements/element-123/test-doc--fid--${mockUUID}.pdf`
         );
       }
 
       expect(getSignedUploadUrl).toHaveBeenCalledWith(
         `test-doc--fid--${mockUUID}.pdf`,
         "application/pdf",
-        "ws-123/private/surveys/survey-123/questions/question-123",
+        "ws-123/private/surveys/survey-123/elements/element-123",
         1024 * 1024 * 10
       );
     });

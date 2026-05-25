@@ -372,7 +372,7 @@ describe("storage utils", () => {
       ] as unknown as TSurveyBlock[];
 
       expect(
-        validateSurveyAllowsFileUpload({ fileName: "report.pdf", questionId: "element1", blocks })
+        validateSurveyAllowsFileUpload({ fileName: "report.pdf", elementId: "element1", blocks })
       ).toEqual({
         ok: true,
       });
@@ -388,7 +388,7 @@ describe("storage utils", () => {
       ] as TSurveyQuestion[];
 
       expect(
-        validateSurveyAllowsFileUpload({ fileName: "image.png", questionId: "question1", questions })
+        validateSurveyAllowsFileUpload({ fileName: "image.png", elementId: "question1", questions })
       ).toEqual({ ok: true });
     });
 
@@ -407,7 +407,7 @@ describe("storage utils", () => {
       ] as unknown as TSurveyBlock[];
 
       expect(
-        validateSurveyAllowsFileUpload({ fileName: "report.pdf", questionId: "element1", blocks })
+        validateSurveyAllowsFileUpload({ fileName: "report.pdf", elementId: "element1", blocks })
       ).toEqual({
         ok: true,
       });
@@ -434,10 +434,10 @@ describe("storage utils", () => {
       ] as TSurveyQuestion[];
 
       expect(
-        validateSurveyAllowsFileUpload({ fileName: "report.pdf", questionId: "question1", blocks, questions })
+        validateSurveyAllowsFileUpload({ fileName: "report.pdf", elementId: "question1", blocks, questions })
       ).toEqual({
         ok: false,
-        reason: "no_file_upload_question",
+        reason: "no_file_upload_element",
       });
     });
 
@@ -462,7 +462,7 @@ describe("storage utils", () => {
       ] as unknown as TSurveyBlock[];
 
       expect(
-        validateSurveyAllowsFileUpload({ fileName: "report.pdf", questionId: "element2", blocks })
+        validateSurveyAllowsFileUpload({ fileName: "report.pdf", elementId: "element2", blocks })
       ).toEqual({
         ok: false,
         reason: "file_extension_not_allowed",
@@ -490,7 +490,7 @@ describe("storage utils", () => {
       ] as unknown as TSurveyBlock[];
 
       expect(
-        validateSurveyAllowsFileUpload({ fileName: "report.pdf", questionId: "element2", blocks })
+        validateSurveyAllowsFileUpload({ fileName: "report.pdf", elementId: "element2", blocks })
       ).toEqual({
         ok: true,
       });
@@ -505,20 +505,20 @@ describe("storage utils", () => {
       ] as TSurveyQuestion[];
 
       expect(
-        validateSurveyAllowsFileUpload({ fileName: "report", questionId: "question1", questions })
+        validateSurveyAllowsFileUpload({ fileName: "report", elementId: "question1", questions })
       ).toEqual({
         ok: false,
         reason: "file_extension_not_allowed",
       });
       expect(
-        validateSurveyAllowsFileUpload({ fileName: "malware.exe", questionId: "question1", questions })
+        validateSurveyAllowsFileUpload({ fileName: "malware.exe", elementId: "question1", questions })
       ).toEqual({
         ok: false,
         reason: "file_extension_not_allowed",
       });
     });
 
-    test("should reject a question id that is not the file upload element", () => {
+    test("should reject an element id that is not the file upload element", () => {
       const blocks = [
         {
           id: "block1",
@@ -534,10 +534,10 @@ describe("storage utils", () => {
       ] as unknown as TSurveyBlock[];
 
       expect(
-        validateSurveyAllowsFileUpload({ fileName: "report.pdf", questionId: "element2", blocks })
+        validateSurveyAllowsFileUpload({ fileName: "report.pdf", elementId: "element2", blocks })
       ).toEqual({
         ok: false,
-        reason: "file_upload_question_not_found",
+        reason: "file_upload_element_not_found",
       });
     });
   });
@@ -545,14 +545,14 @@ describe("storage utils", () => {
   describe("validateClientFileUploads", () => {
     const workspaceId = "clxworkspace123";
     const surveyId = "clxsurvey123";
-    const questionId = "file_question";
+    const elementId = "file_element";
     const blocks = [
       {
         id: "block1",
         name: "Block 1",
         elements: [
           {
-            id: questionId,
+            id: elementId,
             type: "fileUpload" as const,
             allowedFileExtensions: ["pdf"],
           },
@@ -560,10 +560,10 @@ describe("storage utils", () => {
       },
     ] as unknown as TSurveyBlock[];
 
-    test("should accept scoped private storage URLs for the matching survey and question", () => {
+    test("should accept scoped private storage URLs for the matching survey and element", () => {
       const responseData = {
-        [questionId]: [
-          `/storage/${workspaceId}/private/surveys/${surveyId}/questions/${questionId}/report--fid--abc.pdf`,
+        [elementId]: [
+          `/storage/${workspaceId}/private/surveys/${surveyId}/elements/${elementId}/report--fid--abc.pdf`,
         ],
       };
 
@@ -572,7 +572,7 @@ describe("storage utils", () => {
 
     test("should reject unscoped legacy storage URLs for new client submissions", () => {
       const responseData = {
-        [questionId]: [`/storage/${workspaceId}/private/report--fid--abc.pdf`],
+        [elementId]: [`/storage/${workspaceId}/private/report--fid--abc.pdf`],
       };
 
       expect(validateClientFileUploads({ data: responseData, workspaceId, surveyId, blocks })).toBe(false);
@@ -580,18 +580,18 @@ describe("storage utils", () => {
 
     test("should reject scoped URLs for a different survey", () => {
       const responseData = {
-        [questionId]: [
-          `/storage/${workspaceId}/private/surveys/otherSurvey/questions/${questionId}/report--fid--abc.pdf`,
+        [elementId]: [
+          `/storage/${workspaceId}/private/surveys/otherSurvey/elements/${elementId}/report--fid--abc.pdf`,
         ],
       };
 
       expect(validateClientFileUploads({ data: responseData, workspaceId, surveyId, blocks })).toBe(false);
     });
 
-    test("should reject scoped URLs for a different question", () => {
+    test("should reject scoped URLs for a different element", () => {
       const responseData = {
-        [questionId]: [
-          `/storage/${workspaceId}/private/surveys/${surveyId}/questions/otherQuestion/report--fid--abc.pdf`,
+        [elementId]: [
+          `/storage/${workspaceId}/private/surveys/${surveyId}/elements/otherElement/report--fid--abc.pdf`,
         ],
       };
 
@@ -600,16 +600,16 @@ describe("storage utils", () => {
 
     test("should reject external URLs", () => {
       const responseData = {
-        [questionId]: ["https://example.com/report--fid--abc.pdf"],
+        [elementId]: ["https://example.com/report--fid--abc.pdf"],
       };
 
       expect(validateClientFileUploads({ data: responseData, workspaceId, surveyId, blocks })).toBe(false);
     });
 
-    test("should reject file extensions not allowed by the matching upload question", () => {
+    test("should reject file extensions not allowed by the matching upload element", () => {
       const responseData = {
-        [questionId]: [
-          `/storage/${workspaceId}/private/surveys/${surveyId}/questions/${questionId}/image--fid--abc.png`,
+        [elementId]: [
+          `/storage/${workspaceId}/private/surveys/${surveyId}/elements/${elementId}/image--fid--abc.png`,
         ],
       };
 
@@ -621,12 +621,12 @@ describe("storage utils", () => {
     test("should parse nested relative storage URLs", () => {
       expect(
         parseStorageFileUrl(
-          "/storage/workspace-123/private/surveys/survey-123/questions/question-123/report.pdf"
+          "/storage/workspace-123/private/surveys/survey-123/elements/element-123/report.pdf"
         )
       ).toEqual({
         storageId: "workspace-123",
         accessType: "private",
-        fileName: "surveys/survey-123/questions/question-123/report.pdf",
+        fileName: "surveys/survey-123/elements/element-123/report.pdf",
       });
     });
 

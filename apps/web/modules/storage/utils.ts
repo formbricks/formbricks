@@ -124,7 +124,7 @@ export type TSurveyFileUploadPermissionResult =
     }
   | {
       ok: false;
-      reason: "no_file_upload_question" | "file_upload_question_not_found" | "file_extension_not_allowed";
+      reason: "no_file_upload_element" | "file_upload_element_not_found" | "file_extension_not_allowed";
     };
 
 const getAllowedFileExtensionFromFileName = (fileName: string): TAllowedFileExtension | null => {
@@ -153,12 +153,12 @@ const getSurveyFileUploadConfigs = ({
 
 export const validateSurveyAllowsFileUpload = ({
   fileName,
-  questionId,
+  elementId,
   blocks,
   questions,
 }: {
   fileName: string;
-  questionId: string;
+  elementId: string;
   blocks?: TSurveyBlock[] | null;
   questions?: TSurveyQuestion[] | null;
 }): TSurveyFileUploadPermissionResult => {
@@ -167,16 +167,16 @@ export const validateSurveyAllowsFileUpload = ({
   if (fileUploadConfigs.length === 0) {
     return {
       ok: false,
-      reason: "no_file_upload_question",
+      reason: "no_file_upload_element",
     };
   }
 
-  const fileUploadConfig = fileUploadConfigs.find((config) => config.id === questionId);
+  const fileUploadConfig = fileUploadConfigs.find((config) => config.id === elementId);
 
   if (!fileUploadConfig) {
     return {
       ok: false,
-      reason: "file_upload_question_not_found",
+      reason: "file_upload_element_not_found",
     };
   }
 
@@ -247,12 +247,12 @@ const isScopedPrivateUploadUrl = ({
   fileUrl,
   workspaceId,
   surveyId,
-  questionId,
+  elementId,
 }: {
   fileUrl: string;
   workspaceId: string;
   surveyId: string;
-  questionId: string;
+  elementId: string;
 }): boolean => {
   const segments = getStorageUrlPathSegments(fileUrl);
 
@@ -264,8 +264,8 @@ const isScopedPrivateUploadUrl = ({
     accessType,
     surveysSegment,
     storageSurveyId,
-    questionsSegment,
-    storageQuestionId,
+    elementsSegment,
+    storageElementId,
     fileName,
   ] = segments;
 
@@ -275,8 +275,8 @@ const isScopedPrivateUploadUrl = ({
     accessType === "private" &&
     surveysSegment === "surveys" &&
     storageSurveyId === surveyId &&
-    questionsSegment === "questions" &&
-    storageQuestionId === questionId &&
+    elementsSegment === "elements" &&
+    storageElementId === elementId &&
     Boolean(fileName)
   );
 };
@@ -311,7 +311,7 @@ export const validateClientFileUploads = ({
           fileUrl,
           workspaceId,
           surveyId,
-          questionId: fileUploadConfig.id,
+          elementId: fileUploadConfig.id,
         })
       ) {
         return false;

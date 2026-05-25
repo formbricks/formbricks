@@ -183,14 +183,14 @@ describe("ApiClient", () => {
       expect(fileUrl).toBe("https://fake-file-url.com");
     });
 
-    test("includes surveyId and questionId in the upload signing request", async () => {
+    test("includes surveyId and elementId in the upload signing request", async () => {
       vi.mocked(global.fetch)
         .mockResolvedValueOnce({
           ok: true,
           json: async () => ({
             data: {
               signedUrl: "https://fake-s3-url.com",
-              fileUrl: "/storage/ws-test/private/surveys/survey123/questions/question123/test.jpg",
+              fileUrl: "/storage/ws-test/private/surveys/survey123/elements/element123/test.jpg",
               presignedFields: { policy: "test" },
               signingData: null,
               updatedFileName: "test.jpg",
@@ -208,7 +208,7 @@ describe("ApiClient", () => {
         {
           allowedFileExtensions: ["jpg"],
           surveyId: "survey123",
-          questionId: "question123",
+          elementId: "element123",
         }
       );
 
@@ -218,7 +218,7 @@ describe("ApiClient", () => {
         fileType: "image/jpeg",
         allowedFileExtensions: ["jpg"],
         surveyId: "survey123",
-        questionId: "question123",
+        elementId: "element123",
       });
     });
 

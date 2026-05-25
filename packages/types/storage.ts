@@ -114,7 +114,7 @@ export const ZDeleteFileRequest = ZDownloadFileRequest;
 export const ZUploadFileConfig = z.object({
   allowedFileExtensions: z.array(z.string()).optional(),
   surveyId: z.string().optional(),
-  questionId: z.string().optional(),
+  elementId: z.string().optional(),
 });
 
 export type TUploadFileConfig = z.infer<typeof ZUploadFileConfig>;
@@ -125,13 +125,13 @@ export const ZUploadPrivateFileRequest = z
     fileType: z.string().trim().min(1),
     allowedFileExtensions: z.array(ZAllowedFileExtension).optional(),
     surveyId: z.cuid2(),
-    questionId: z
+    elementId: z
       .string()
       .trim()
       .min(1)
       .regex(
         /^[a-zA-Z0-9_-]+$/,
-        "Question id must contain only alphanumeric characters, hyphens, or underscores"
+        "Element id must contain only alphanumeric characters, hyphens, or underscores"
       ),
     workspaceId: z.cuid2(),
   })

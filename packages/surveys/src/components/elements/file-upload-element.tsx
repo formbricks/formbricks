@@ -259,7 +259,7 @@ export function FileUploadElement({
             {
               allowedFileExtensions: element.allowedFileExtensions,
               surveyId,
-              questionId: element.id,
+              elementId: element.id,
             }
           );
           return { name: file.name, url: uploadedUrl };

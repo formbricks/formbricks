@@ -121,15 +121,15 @@ export const mockStorageUploads = async (page: Page): Promise<void> => {
       }
 
       const payload = route.request().postDataJSON() as
-        | { fileName?: string; surveyId?: string; questionId?: string }
+        | { fileName?: string; surveyId?: string; elementId?: string }
         | undefined;
       const fileName = payload?.fileName ?? "uploaded-file.bin";
       const requestUrl = new URL(route.request().url());
       const appOrigin = requestUrl.origin;
       const workspaceId = requestUrl.pathname.split("/").filter(Boolean)[3] ?? "playwright-mock";
       const filePathSegments =
-        payload?.surveyId && payload?.questionId
-          ? ["surveys", payload.surveyId, "questions", payload.questionId]
+        payload?.surveyId && payload?.elementId
+          ? ["surveys", payload.surveyId, "elements", payload.elementId]
           : [];
 
       await route.fulfill({
