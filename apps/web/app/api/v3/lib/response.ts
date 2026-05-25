@@ -16,6 +16,7 @@ export const INVALID_PARAM_CODES = [
   "invalid_reference",
   "missing_required_field",
   "missing_translation",
+  "unsupported_locale",
   "unsupported_field",
 ] as const;
 

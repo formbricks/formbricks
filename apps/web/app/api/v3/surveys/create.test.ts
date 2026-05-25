@@ -44,6 +44,7 @@ const rawCreateBody = {
   workspaceId,
   name: "Product Feedback",
   defaultLanguage: "en-US",
+  languages: [{ code: "de-DE", enabled: true }],
   metadata: {
     cx_operation: "enterprise_onboarding",
     title: { "en-US": "Product Feedback", "de-DE": "Produktfeedback" },
@@ -194,7 +195,10 @@ describe("createV3Survey", () => {
           "fr-FR": "Retour produit",
         },
       },
-      languages: [{ code: "fr-FR", enabled: false }],
+      languages: [
+        { code: "de-DE", enabled: true },
+        { code: "fr-FR", enabled: false },
+      ],
       blocks: [
         {
           ...rawCreateBody.blocks[0],
@@ -249,7 +253,7 @@ describe("createV3Survey", () => {
               required: false,
               buttonExternal: true,
               buttonUrl: "https://example.com",
-              ctaButtonLabel: { "en-US": "Open", "de-DE": "Öffnen" },
+              ctaButtonLabel: { "en-US": "Open", "de-DE": "Oeffnen" },
             },
           ],
         },
@@ -257,6 +261,24 @@ describe("createV3Survey", () => {
     });
 
     await expect(createV3Survey(body, null, "req_3")).rejects.toThrow(V3SurveyCreatePermissionError);
+    expect(createSurvey).not.toHaveBeenCalled();
+  });
+
+  test("rejects redirect URL endings when the organization does not have external URL permission", async () => {
+    vi.mocked(getExternalUrlsPermission).mockResolvedValue(false);
+    const body = ZV3CreateSurveyBody.parse({
+      ...rawCreateBody,
+      endings: [
+        {
+          id: "clen1234567890123456789012",
+          type: "redirectToUrl",
+          url: "https://example.com",
+          label: "Continue",
+        },
+      ],
+    });
+
+    await expect(createV3Survey(body, null, "req_4")).rejects.toThrow(V3SurveyCreatePermissionError);
     expect(createSurvey).not.toHaveBeenCalled();
   });
 });

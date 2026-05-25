@@ -24,6 +24,14 @@ export class V3SurveyWritePermissionError extends Error {
 
 function hasNewOrChangedExternalUrlReferences(input: TV3SurveyWritePermissionInput): boolean {
   for (const ending of input.endings) {
+    if (ending.type === "redirectToUrl" && ending.url) {
+      const previousEnding = input.previous?.endings.find((entry) => entry.id === ending.id);
+      if (previousEnding?.type !== "redirectToUrl" || previousEnding.url !== ending.url) {
+        return true;
+      }
+      continue;
+    }
+
     if (ending.type !== "endScreen" || !ending.buttonLink) {
       continue;
     }
