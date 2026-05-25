@@ -33,33 +33,9 @@ function getConfiguredTranslationLanguageCodes(document: TV3SurveyDocument): str
   return Array.from(languageCodes.values());
 }
 
-function getConfiguredLanguageCodeLookup(document: TV3SurveyDocument): Set<string> {
-  const languageCodes = new Set<string>([document.defaultLanguage.toLowerCase()]);
-
-  document.languages.forEach((language) => {
-    languageCodes.add(language.code.toLowerCase());
-  });
-
-  return languageCodes;
-}
-
-function addTranslationLanguageIssues(
-  value: unknown,
-  path: string,
-  configuredLanguageCodes: Set<string>,
-  requiredLanguageCodes: string[],
-  issues: InvalidParam[]
-): void {
+function collectTranslationLanguageCodes(value: unknown, languageCodes: Set<string>): void {
   if (Array.isArray(value)) {
-    value.forEach((entry, index) =>
-      addTranslationLanguageIssues(
-        entry,
-        path ? `${path}.${index}` : String(index),
-        configuredLanguageCodes,
-        requiredLanguageCodes,
-        issues
-      )
-    );
+    value.forEach((entry) => collectTranslationLanguageCodes(entry, languageCodes));
     return;
   }
 
@@ -69,18 +45,52 @@ function addTranslationLanguageIssues(
 
   if (isInternalI18nString(value)) {
     Object.keys(value).forEach((languageCode) => {
-      if (languageCode !== "default" && !configuredLanguageCodes.has(languageCode.toLowerCase())) {
-        issues.push({
-          name: path,
-          reason: `Language '${languageCode}' is not declared in languages`,
-          code: "unsupported_locale",
-          identifier: languageCode,
-          referenceType: "language",
-        });
+      if (languageCode !== "default") {
+        languageCodes.add(languageCode);
       }
     });
+    return;
+  }
 
-    requiredLanguageCodes.forEach((languageCode) => {
+  Object.values(value).forEach((entry) => collectTranslationLanguageCodes(entry, languageCodes));
+}
+
+function getRequiredTranslationLanguageCodes(document: TV3SurveyDocument): string[] {
+  const languageCodes = new Set(getConfiguredTranslationLanguageCodes(document));
+
+  V3_SURVEY_TRANSLATABLE_METADATA_KEYS.forEach((key) =>
+    collectTranslationLanguageCodes(document.metadata[key], languageCodes)
+  );
+  collectTranslationLanguageCodes(document.welcomeCard, languageCodes);
+  collectTranslationLanguageCodes(document.blocks, languageCodes);
+  collectTranslationLanguageCodes(document.endings, languageCodes);
+
+  return Array.from(languageCodes.values());
+}
+
+function addMissingTranslationIssues(
+  value: unknown,
+  path: string,
+  languageCodes: string[],
+  issues: InvalidParam[]
+): void {
+  if (languageCodes.length === 0) {
+    return;
+  }
+
+  if (Array.isArray(value)) {
+    value.forEach((entry, index) =>
+      addMissingTranslationIssues(entry, path ? `${path}.${index}` : String(index), languageCodes, issues)
+    );
+    return;
+  }
+
+  if (!isPlainObject(value)) {
+    return;
+  }
+
+  if (isInternalI18nString(value)) {
+    languageCodes.forEach((languageCode) => {
       if (value[languageCode] === undefined) {
         issues.push({
           name: path,
@@ -96,52 +106,20 @@ function addTranslationLanguageIssues(
   }
 
   Object.entries(value).forEach(([key, entry]) =>
-    addTranslationLanguageIssues(
-      entry,
-      path ? `${path}.${key}` : key,
-      configuredLanguageCodes,
-      requiredLanguageCodes,
-      issues
-    )
-  );
-}
-
-function addMetadataTranslationLanguageIssues(
-  metadata: TV3SurveyDocument["metadata"],
-  configuredLanguageCodes: Set<string>,
-  requiredLanguageCodes: string[],
-  issues: InvalidParam[]
-): void {
-  if (!isPlainObject(metadata)) {
-    return;
-  }
-
-  V3_SURVEY_TRANSLATABLE_METADATA_KEYS.forEach((key) =>
-    addTranslationLanguageIssues(
-      metadata[key],
-      `metadata.${key}`,
-      configuredLanguageCodes,
-      requiredLanguageCodes,
-      issues
-    )
+    addMissingTranslationIssues(entry, path ? `${path}.${key}` : key, languageCodes, issues)
   );
 }
 
 function getV3SurveyLanguageInvalidParams(document: TV3SurveyDocument): InvalidParam[] {
-  const configuredLanguageCodes = getConfiguredLanguageCodeLookup(document);
-  const languageCodes = getConfiguredTranslationLanguageCodes(document);
+  const languageCodes = getRequiredTranslationLanguageCodes(document);
   const issues: InvalidParam[] = [];
 
-  addTranslationLanguageIssues(
-    document.welcomeCard,
-    "welcomeCard",
-    configuredLanguageCodes,
-    languageCodes,
-    issues
+  V3_SURVEY_TRANSLATABLE_METADATA_KEYS.forEach((key) =>
+    addMissingTranslationIssues(document.metadata[key], `metadata.${key}`, languageCodes, issues)
   );
-  addTranslationLanguageIssues(document.blocks, "blocks", configuredLanguageCodes, languageCodes, issues);
-  addTranslationLanguageIssues(document.endings, "endings", configuredLanguageCodes, languageCodes, issues);
-  addMetadataTranslationLanguageIssues(document.metadata, configuredLanguageCodes, languageCodes, issues);
+  addMissingTranslationIssues(document.welcomeCard, "welcomeCard", languageCodes, issues);
+  addMissingTranslationIssues(document.blocks, "blocks", languageCodes, issues);
+  addMissingTranslationIssues(document.endings, "endings", languageCodes, issues);
 
   return issues;
 }
