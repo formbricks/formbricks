@@ -74,7 +74,10 @@ export const GET = withV3ApiWrapper({
         });
       } catch (error) {
         if (error instanceof V3SurveyLanguageError) {
-          log.warn({ statusCode: 400, lang: parsedInput.query.lang }, "Invalid survey language selector");
+          log.warn(
+            { statusCode: 400, detail: error.message, lang: parsedInput.query.lang },
+            "Invalid survey language selector"
+          );
           return problemBadRequest(requestId, error.message, {
             instance,
             invalid_params: [
@@ -88,7 +91,7 @@ export const GET = withV3ApiWrapper({
         }
 
         if (error instanceof V3SurveyUnsupportedShapeError) {
-          log.warn({ statusCode: 400 }, "Unsupported v3 survey shape");
+          log.warn({ statusCode: 400, detail: error.message }, "Unsupported v3 survey shape");
           return problemBadRequest(requestId, error.message, {
             instance,
             invalid_params: [
