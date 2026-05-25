@@ -13,11 +13,12 @@ vi.mock("@formbricks/database", () => ({
 }));
 
 describe("deriveV3SurveyLanguageRequests", () => {
-  test("derives languages from survey content and known translatable metadata fields only", () => {
+  test("derives languages from defaultLanguage and declared languages only", () => {
     const document = ZV3CreateSurveyBody.parse({
       workspaceId: "clxx1234567890123456789012",
       name: "Product Feedback",
       defaultLanguage: "en-US",
+      languages: [{ code: "pt-BR" }],
       metadata: {
         title: {
           "en-US": "Feedback",
@@ -48,7 +49,6 @@ describe("deriveV3SurveyLanguageRequests", () => {
 
     expect(deriveV3SurveyLanguageRequests(document)).toEqual([
       { code: "en-US", default: true, enabled: true },
-      { code: "de-DE", default: false, enabled: true },
       { code: "pt-BR", default: false, enabled: true },
     ]);
   });

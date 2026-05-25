@@ -27,7 +27,9 @@ function getCreatedBy(authentication: TV3Authentication): string | null {
 
 function hasExternalUrlReferences(input: TV3CreateSurveyBody): boolean {
   const hasExternalEndingLink = input.endings.some(
-    (ending) => ending.type === "endScreen" && Boolean(ending.buttonLink)
+    (ending) =>
+      (ending.type === "endScreen" && Boolean(ending.buttonLink)) ||
+      (ending.type === "redirectToUrl" && Boolean(ending.url))
   );
   const hasExternalCtaButton = getElementsFromBlocks(input.blocks).some(
     (element) => element.type === "cta" && element.buttonExternal

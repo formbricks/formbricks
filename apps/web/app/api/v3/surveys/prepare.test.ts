@@ -11,6 +11,7 @@ const rawCreateBody = {
   workspaceId,
   name: "Product Feedback",
   defaultLanguage: "en-US",
+  languages: [{ code: "de-DE", enabled: true }],
   blocks: [
     {
       id: "clbk1234567890123456789012",
@@ -51,6 +52,18 @@ const survey = {
       default: true,
       enabled: true,
     },
+    {
+      language: {
+        id: "cllangdede000000000000000",
+        code: "de-DE",
+        alias: null,
+        workspaceId,
+        createdAt: new Date("2026-04-21T10:00:00.000Z"),
+        updatedAt: new Date("2026-04-21T10:00:00.000Z"),
+      },
+      default: false,
+      enabled: true,
+    },
   ],
   questions: [],
   welcomeCard: { enabled: false },
@@ -72,6 +85,41 @@ describe("v3 survey preparation", () => {
       { code: "en-US", default: true, enabled: true },
       { code: "de-DE", default: false, enabled: true },
     ]);
+  });
+
+  test("rejects translation locales that are not declared in languages", () => {
+    const preparation = prepareV3SurveyCreateInput({
+      ...rawCreateBody,
+      languages: [],
+      metadata: {
+        title: { "en-US": "Product Feedback", "pt-BR": "Feedback do produto" },
+      },
+      blocks: [
+        {
+          ...rawCreateBody.blocks[0],
+          elements: [
+            {
+              ...rawCreateBody.blocks[0].elements[0],
+              headline: { "en-US": "What should we improve?" },
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(preparation.ok).toBe(false);
+    if (!preparation.ok) {
+      expect(preparation.validation.invalidParams).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: "metadata.title",
+            code: "unsupported_locale",
+            identifier: "pt-BR",
+            referenceType: "language",
+          }),
+        ])
+      );
+    }
   });
 
   test("returns validation results instead of throwing for invalid create input", () => {
