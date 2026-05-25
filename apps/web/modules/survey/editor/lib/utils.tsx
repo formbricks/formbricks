@@ -30,6 +30,16 @@ import { TLogicRuleOption, getLogicRules } from "./logic-rule-engine";
 
 export const MAX_STRING_LENGTH = 2000;
 
+export const scrollElementCardIntoView = (elementId: string) => {
+  if (typeof window === "undefined") return;
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const node = document.getElementById(elementId);
+      node?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  });
+};
+
 export const extractParts = (text: string): string[] => {
   const parts: string[] = [];
   let i = 0;
