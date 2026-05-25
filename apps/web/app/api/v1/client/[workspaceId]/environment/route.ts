@@ -60,6 +60,21 @@ export const GET = withV1ApiWrapper({
 
       // Use optimized environment state fetcher with new caching approach
       const workspace = await getWorkspaceState(workspaceId);
+
+      // Defense in depth: the cache layer guarantees a non-null contract here
+      // (T extends NonNullable<unknown> on withCache), but a runtime guard
+      // ensures any future regression surfaces as a logged 404 rather than a
+      // 500 from destructuring null.
+      if (!workspace?.data) {
+        logger.error(
+          { workspaceId, url: req.url },
+          "getWorkspaceState returned unexpected null/empty payload"
+        );
+        return {
+          response: responses.notFoundResponse("Workspace", workspaceId),
+        };
+      }
+
       const { data } = workspace;
 
       return {

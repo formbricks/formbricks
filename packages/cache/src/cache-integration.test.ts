@@ -432,11 +432,12 @@ describe("Cache Integration Tests - End-to-End Redis Operations", () => {
       return;
     }
 
+    // null is exercised separately below via withCacheNullable, since withCache
+    // is now constrained to non-null values to prevent races on JSON null.
     const testCases = [
       { name: "string", value: "Hello, World!" },
       { name: "number", value: 42.5 },
       { name: "boolean", value: true },
-      { name: "null", value: null },
       { name: "array", value: [1, "two", { three: 3 }, null, true] },
       {
         name: "object",
@@ -506,6 +507,32 @@ describe("Cache Integration Tests - End-to-End Redis Operations", () => {
       logger.info(`✅ ${testCase.name} serialization successful`);
     }
 
+    // Bare `null` written via raw cache.set must not be picked up by
+    // withCacheNullable: the two APIs use different wire formats on purpose
+    // (raw `null` vs the marked envelope), so withCacheNullable should treat
+    // a raw-null entry as a miss and invoke fn().
+    const nullKey = createCacheKey.workspace.state("serialization-null");
+    await cacheService.del([nullKey]);
+    const nullSetResult = await cacheService.set(nullKey, null, 30000);
+    expect(nullSetResult.ok).toBe(true);
+    const nullGetResult = await cacheService.get(nullKey);
+    expect(nullGetResult.ok).toBe(true);
+    if (nullGetResult.ok) {
+      expect(nullGetResult.data).toBeNull();
+    }
+    let nullFnCalled = false;
+    const nullCached = await cacheService.withCacheNullable(
+      async () => {
+        nullFnCalled = true;
+        return "should-not-be-returned";
+      },
+      nullKey,
+      30000
+    );
+    expect(nullFnCalled).toBe(true);
+    expect(nullCached).toBe("should-not-be-returned");
+    logger.info("✅ withCacheNullable correctly ignores entries written via raw cache.set(null)");
+
     logger.info("✅ All data types serialized correctly");
   }, 20000);
 
@@ -546,5 +573,48 @@ describe("Cache Integration Tests - End-to-End Redis Operations", () => {
     logger.info("✅ withCache gracefully degraded to function execution when cache failed");
 
     logger.info("✅ Error handling tests completed successfully");
+  }, 15000);
+
+  test("withCacheNullable: round-trips real values and cached nulls without re-executing fn", async () => {
+    if (!isRedisAvailable || !cacheService) {
+      logger.info("Skipping test: Redis not available");
+      return;
+    }
+
+    const realKey = createCacheKey.workspace.state("nullable-real");
+    const nullKey = createCacheKey.workspace.state("nullable-null");
+    let realCalls = 0;
+    let nullCalls = 0;
+
+    const realFn = async (): Promise<{ id: string } | null> => {
+      realCalls++;
+      return { id: `real-${realCalls}` };
+    };
+    const nullFn = async (): Promise<{ id: string } | null> => {
+      nullCalls++;
+      return null;
+    };
+
+    await cacheService.del([realKey, nullKey]);
+
+    // First call: miss, populate.
+    const realFirst = await cacheService.withCacheNullable(realFn, realKey, 60000);
+    const nullFirst = await cacheService.withCacheNullable(nullFn, nullKey, 60000);
+    expect(realFirst).toEqual({ id: "real-1" });
+    expect(nullFirst).toBeNull();
+    expect(realCalls).toBe(1);
+    expect(nullCalls).toBe(1);
+
+    // Second call: both should be cache hits. The marked nullable envelope
+    // must not be confused with a cache miss.
+    const realSecond = await cacheService.withCacheNullable(realFn, realKey, 60000);
+    const nullSecond = await cacheService.withCacheNullable(nullFn, nullKey, 60000);
+    expect(realSecond).toEqual({ id: "real-1" });
+    expect(nullSecond).toBeNull();
+    expect(realCalls).toBe(1);
+    expect(nullCalls).toBe(1);
+
+    await cacheService.del([realKey, nullKey]);
+    logger.info("✅ withCacheNullable round-trip confirmed for real and null values");
   }, 15000);
 });

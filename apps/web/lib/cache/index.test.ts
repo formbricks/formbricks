@@ -9,6 +9,7 @@ const mockCacheService = {
   del: vi.fn(),
   exists: vi.fn(),
   withCache: vi.fn(),
+  withCacheNullable: vi.fn(),
   getRedisClient: vi.fn(),
 };
 
@@ -217,6 +218,31 @@ describe("Cache Index", () => {
 
       expect(mockCacheService.withCache).toHaveBeenCalledWith(mockFn, "cache-key" as CacheKey, 3000);
       expect(result).toBe("cached-result");
+    });
+
+    test("should proxy withCacheNullable method correctly when cache is available", async () => {
+      const mockFn = vi.fn().mockResolvedValue(null);
+      mockCacheService.withCacheNullable.mockResolvedValue(null);
+
+      const result = await cache.withCacheNullable(mockFn, "cache-key" as CacheKey, 3000);
+
+      expect(mockCacheService.withCacheNullable).toHaveBeenCalledWith(mockFn, "cache-key" as CacheKey, 3000);
+      expect(result).toBeNull();
+    });
+
+    test("should execute nullable function directly when cache service fails", async () => {
+      const mockFn = vi.fn().mockResolvedValue("function-result");
+
+      mockGetCacheService.mockResolvedValue({
+        ok: false,
+        error: { code: "CACHE_UNAVAILABLE" },
+      });
+
+      const result = await cache.withCacheNullable(mockFn, "cache-key" as CacheKey, 3000);
+
+      expect(result).toBe("function-result");
+      expect(mockFn).toHaveBeenCalledTimes(1);
+      expect(mockCacheService.withCacheNullable).not.toHaveBeenCalled();
     });
 
     test("should execute function directly when cache service fails", async () => {

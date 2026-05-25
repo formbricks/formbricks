@@ -1218,7 +1218,7 @@ export const getOrganizationBillingWithReadThroughSync = async (
     return await getOrganizationBillingFromDatabase(organizationId);
   }
 
-  const cachedBilling = await cache.withCache(
+  const cachedBilling = await cache.withCacheNullable(
     async () => await getOrganizationBillingFromDatabase(organizationId),
     getBillingCacheKey(organizationId),
     BILLING_SYNC_STALE_MS
