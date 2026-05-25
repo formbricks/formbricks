@@ -252,4 +252,21 @@ describe("createV3Survey", () => {
     await expect(createV3Survey(body, null, "req_3")).rejects.toThrow(V3SurveyCreatePermissionError);
     expect(createSurvey).not.toHaveBeenCalled();
   });
+
+  test("rejects redirect endings when the organization does not have external URL permission", async () => {
+    vi.mocked(getExternalUrlsPermission).mockResolvedValue(false);
+    const body = ZV3CreateSurveyBody.parse({
+      ...rawCreateBody,
+      endings: [
+        {
+          id: "clen1234567890123456789012",
+          type: "redirectToUrl",
+          url: "https://example.com/next",
+        },
+      ],
+    });
+
+    await expect(createV3Survey(body, null, "req_4")).rejects.toThrow(V3SurveyCreatePermissionError);
+    expect(createSurvey).not.toHaveBeenCalled();
+  });
 });

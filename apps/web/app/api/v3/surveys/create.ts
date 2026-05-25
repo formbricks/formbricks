@@ -26,9 +26,13 @@ function getCreatedBy(authentication: TV3Authentication): string | null {
 }
 
 function hasExternalUrlReferences(input: TV3CreateSurveyBody): boolean {
-  const hasExternalEndingLink = input.endings.some(
-    (ending) => ending.type === "endScreen" && Boolean(ending.buttonLink)
-  );
+  const hasExternalEndingLink = input.endings.some((ending) => {
+    if (ending.type === "endScreen") {
+      return Boolean(ending.buttonLink);
+    }
+
+    return Boolean(ending.url);
+  });
   const hasExternalCtaButton = getElementsFromBlocks(input.blocks).some(
     (element) => element.type === "cta" && element.buttonExternal
   );
@@ -47,7 +51,9 @@ async function assertV3SurveyCreatePermissions(
   const resolvedOrganizationId =
     organizationId ?? (await getOrganizationByWorkspaceId(input.workspaceId))?.id ?? null;
   if (!resolvedOrganizationId) {
-    return;
+    throw new V3SurveyCreatePermissionError(
+      `Unable to verify external URL permissions for workspaceId '${input.workspaceId}'.`
+    );
   }
 
   const isExternalUrlsAllowed = await getExternalUrlsPermission(resolvedOrganizationId);

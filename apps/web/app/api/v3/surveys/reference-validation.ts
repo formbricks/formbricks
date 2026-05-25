@@ -23,6 +23,7 @@ type TReferenceLookup = {
   variableIds: Set<string>;
   hiddenFieldIds: Set<string>;
 };
+type TInvalidParamReferenceType = Exclude<InvalidParam["referenceType"], undefined>;
 
 export class V3SurveyReferenceValidationError extends Error {
   invalidParams: InvalidParam[];
@@ -41,7 +42,7 @@ export type TV3SurveyReferenceValidationResult =
 function addDuplicateIdIssues(
   entries: { id: string; path: string }[],
   label: string,
-  referenceType: NonNullable<InvalidParam["referenceType"]>,
+  referenceType: TInvalidParamReferenceType,
   issues: InvalidParam[]
 ): void {
   const firstPathById = new Map<string, string>();
@@ -68,7 +69,7 @@ function addDuplicateValueIssues(
   values: string[],
   pathForIndex: (index: number) => string,
   label: string,
-  referenceType: NonNullable<InvalidParam["referenceType"]>,
+  referenceType: TInvalidParamReferenceType,
   issues: InvalidParam[]
 ): void {
   const firstIndexByValue = new Map<string, number>();
