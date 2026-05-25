@@ -196,7 +196,7 @@ export const WebhookSettingsTab = ({
               onChange={(e) => {
                 setTestEndpointInput(e.target.value);
               }}
-              readOnly={isReadOnly}
+              readOnly={isReadOnly || webhook.source !== "user"}
               className={clsx(
                 isReadOnly ? "cursor-not-allowed bg-slate-100 text-slate-500" : null,
                 endpointAccessible === true
@@ -283,7 +283,7 @@ export const WebhookSettingsTab = ({
           <TriggerCheckboxGroup
             selectedTriggers={selectedTriggers}
             onCheckboxChange={handleCheckboxChange}
-            allowChanges={!isReadOnly}
+            allowChanges={webhook.source === "user" && !isReadOnly}
           />
         </div>
 
