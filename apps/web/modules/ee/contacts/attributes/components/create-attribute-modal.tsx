@@ -8,6 +8,10 @@ import { useTranslation } from "react-i18next";
 import { TContactAttributeDataType } from "@formbricks/types/contact-attribute-key";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { formatSnakeCaseToTitleCase, isSafeIdentifier, toSafeIdentifier } from "@/lib/utils/safe-identifier";
+import {
+  RESERVED_FUTURE_DEFAULT_ATTRIBUTE_SAFE_IDENTIFIER_KEYS_TEXT,
+  isReservedFutureDefaultAttributeKey,
+} from "@/modules/ee/contacts/lib/attribute-key-policy";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -90,6 +94,14 @@ export function CreateAttributeModal({ workspaceId }: Readonly<CreateAttributeMo
       setKeyError(
         t("workspace.contacts.attribute_key_safe_identifier_required") ||
           "Key must be a safe identifier: only lowercase letters, numbers, and underscores, and must start with a letter"
+      );
+      return false;
+    }
+    if (isReservedFutureDefaultAttributeKey(key)) {
+      setKeyError(
+        t("workspace.contacts.attribute_key_reserved_future_default", {
+          reservedKeys: RESERVED_FUTURE_DEFAULT_ATTRIBUTE_SAFE_IDENTIFIER_KEYS_TEXT,
+        })
       );
       return false;
     }

@@ -22,7 +22,6 @@ export const getOrganizationAIKeys = reactCache(
     organizationId: string
   ): Promise<{
     isAISmartToolsEnabled: boolean;
-    isAIDataAnalysisEnabled: boolean;
     billing: TOrganizationBilling;
   } | null> => {
     try {
@@ -32,7 +31,6 @@ export const getOrganizationAIKeys = reactCache(
         },
         select: {
           isAISmartToolsEnabled: true,
-          isAIDataAnalysisEnabled: true,
           billing: {
             select: {
               stripeCustomerId: true,
@@ -50,7 +48,6 @@ export const getOrganizationAIKeys = reactCache(
 
       return {
         isAISmartToolsEnabled: organization.isAISmartToolsEnabled,
-        isAIDataAnalysisEnabled: organization.isAIDataAnalysisEnabled,
         billing: {
           stripeCustomerId: organization.billing.stripeCustomerId,
           limits: organization.billing.limits as TOrganizationBilling["limits"],

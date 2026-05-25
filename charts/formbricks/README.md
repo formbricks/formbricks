@@ -2,7 +2,7 @@
 
 ![Version: 0.0.0-dev](https://img.shields.io/badge/Version-0.0.0--dev-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 5.0.0-rc.1](https://img.shields.io/badge/AppVersion-5.0.0--rc.1-informational?style=flat-square)
 
-A Helm chart for Formbricks with PostgreSQL, Redis
+A Helm chart for Formbricks with PostgreSQL, Valkey
 
 **Homepage:** <https://formbricks.com/docs/self-hosting/setup/kubernetes>
 
@@ -17,9 +17,8 @@ A Helm chart for Formbricks with PostgreSQL, Redis
 | Repository                               | Name         | Version |
 | ---------------------------------------- | ------------ | ------- |
 | oci://registry-1.docker.io/bitnamicharts | postgresql   | 16.4.16 |
-| oci://registry-1.docker.io/bitnamicharts | redis        | 20.11.2 |
 | oci://docker.io/envoyproxy               | gateway-helm | v1.7.1  |
-| oci://registry-1.docker.io/bitnamicharts | redis        | 20.11.2 |
+| oci://registry-1.docker.io/bitnamicharts | envoyRedis   | 20.11.2 |
 
 ## Envoy bundle modes
 
@@ -32,7 +31,7 @@ rate limiting.
   Gateway API CRDs plus an Envoy Gateway controller compatible with
   `envoy.config.envoyGateway.gateway.controllerName`.
 - `envoyRedis.enabled=true` deploys a dedicated Redis replication + Sentinel bundle for Envoy RLS. It is intentionally
-  separate from the existing app `redis` dependency.
+  separate from the bundled app Valkey deployment.
 - The bundled controller reads its Redis backend from `envoy.config.envoyGateway.rateLimit.backend.redis.url`.
   If you enable Redis authentication or override `envoyRedis.fullnameOverride`, set that URL explicitly so the
   controller points at the correct backend.
@@ -64,6 +63,9 @@ Cube is part of the baseline Formbricks v5 stack and is deployed by this chart b
 ## Hub worker and self-hosted embeddings
 
 The chart deploys Hub API and, by default, a `hub-worker` deployment. Hub API is insert-only for River jobs; webhook dispatch and embedding jobs are processed by `hub-worker`.
+
+When the Formbricks migration job is enabled, Hub waits for the `formbricks-migration` Job to complete before its own goose/river init migrations run. This keeps fresh shared-database installs from creating Hub tables before Prisma has initialized the Formbricks schema.
+If the Job has already been cleaned up, Hub only continues after all expected Prisma and data migration success markers are present in the database.
 
 Self-hosted embeddings are disabled by default. Set `hub.embeddings.enabled=true` to deploy an internal Hugging Face Text Embeddings Inference (TEI) service and wire Hub API plus Hub worker to it through the OpenAI-compatible endpoint added in Hub:
 
@@ -128,7 +130,7 @@ Autoscaling is opt-in for Hub API, Hub worker, and the embeddings runtime. If yo
 | deployment.containerSecurityContext.runAsNonRoot                   | bool   | `true`                                                                      |                                                           |
 | deployment.env                                                     | object | `{}`                                                                        |                                                           |
 | deployment.envFrom                                                 | string | `nil`                                                                       |                                                           |
-| deployment.image.digest                                            | string | `""`                                                                        |                                                           |
+| deployment.image.digest                                            | string | `""`                                                                        | When set, takes precedence over tag.                      |
 | deployment.image.pullPolicy                                        | string | `"IfNotPresent"`                                                            |                                                           |
 | deployment.image.repository                                        | string | `"ghcr.io/formbricks/formbricks"`                                           |                                                           |
 | deployment.image.tag                                               | string | `""`                                                                        |                                                           |
@@ -220,6 +222,10 @@ Autoscaling is opt-in for Hub API, Hub worker, and the embeddings runtime. If yo
 | hub.migration.activeDeadlineSeconds                                | int    | `900`                                                                       |                                                           |
 | hub.migration.backoffLimit                                         | int    | `3`                                                                         |                                                           |
 | hub.migration.ttlSecondsAfterFinished                              | int    | `300`                                                                       |                                                           |
+| hub.migration.waitForFormbricksMigration.enabled                   | bool   | `true`                                                                      |                                                           |
+| hub.migration.waitForFormbricksMigration.intervalSeconds           | int    | `5`                                                                         |                                                           |
+| hub.migration.waitForFormbricksMigration.maxAttempts               | int    | `180`                                                                       |                                                           |
+| hub.migration.waitForFormbricksMigration.missingJobMaxAttempts     | int    | `12`                                                                        | Consecutive missing Job reads before using DB markers.    |
 | hub.pdb.enabled                                                    | bool   | `false`                                                                     |                                                           |
 | hub.replicas                                                       | int    | `1`                                                                         |                                                           |
 | hub.resources.limits.memory                                        | string | `"512Mi"`                                                                   |                                                           |
@@ -289,7 +295,28 @@ Autoscaling is opt-in for Hub API, Hub worker, and the embeddings runtime. If yo
 | redis.enabled                                                      | bool   | `true`                                                                      |                                                           |
 | redis.externalRedisUrl                                             | string | `""`                                                                        |                                                           |
 | redis.fullnameOverride                                             | string | `"formbricks-redis"`                                                        |                                                           |
+| redis.image.digest                                                 | string | `"sha256:12ba4f45a7c3e1d0f076acd616cb230834e75a77e8516dde382720af32832d6d"` |                                                           |
+| redis.image.pullPolicy                                             | string | `"IfNotPresent"`                                                            |                                                           |
+| redis.image.repository                                             | string | `"valkey/valkey"`                                                           |                                                           |
+| redis.image.tag                                                    | string | `""`                                                                        |                                                           |
+| redis.master.affinity                                              | object | `{}`                                                                        |                                                           |
+| redis.master.containerSecurityContext                              | object | `{}`                                                                        |                                                           |
+| redis.master.nodeSelector                                          | object | `{}`                                                                        |                                                           |
+| redis.master.pdb.enabled                                           | bool   | `true`                                                                      |                                                           |
+| redis.master.pdb.maxUnavailable                                    | int    | `0`                                                                         |                                                           |
+| redis.master.pdb.minAvailable                                      | string | `""`                                                                        |                                                           |
+| redis.master.persistence.accessModes[0]                            | string | `"ReadWriteOnce"`                                                           |                                                           |
 | redis.master.persistence.enabled                                   | bool   | `true`                                                                      |                                                           |
+| redis.master.persistence.size                                      | string | `"8Gi"`                                                                     |                                                           |
+| redis.master.persistence.storageClass                              | string | `""`                                                                        |                                                           |
+| redis.master.podAnnotations                                        | object | `{}`                                                                        |                                                           |
+| redis.master.podSecurityContext                                    | object | `{}`                                                                        |                                                           |
+| redis.master.resources.limits.cpu                                  | string | `"150m"`                                                                    |                                                           |
+| redis.master.resources.limits.memory                               | string | `"192Mi"`                                                                   |                                                           |
+| redis.master.resources.requests.cpu                                | string | `"100m"`                                                                    |                                                           |
+| redis.master.resources.requests.memory                             | string | `"128Mi"`                                                                   |                                                           |
+| redis.master.tolerations                                           | list   | `[]`                                                                        |                                                           |
+| redis.master.topologySpreadConstraints                             | list   | `[]`                                                                        |                                                           |
 | redis.networkPolicy.enabled                                        | bool   | `false`                                                                     |                                                           |
 | secret.enabled                                                     | bool   | `true`                                                                      |                                                           |
 | service.additionalLabels                                           | object | `{}`                                                                        |                                                           |

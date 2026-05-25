@@ -9,6 +9,10 @@ import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import { ITEMS_PER_PAGE } from "@/lib/constants";
 import { formatSnakeCaseToTitleCase, isSafeIdentifier } from "@/lib/utils/safe-identifier";
 import { validateInputs } from "@/lib/utils/validate";
+import {
+  getReservedFutureDefaultAttributeKeyIssue,
+  getReservedFutureDefaultAttributeKeys,
+} from "@/modules/ee/contacts/lib/attribute-key-policy";
 import { prepareAttributeColumnsForStorage } from "@/modules/ee/contacts/lib/attribute-storage";
 import { getContactSurveyLink } from "@/modules/ee/contacts/lib/contact-survey-link";
 import { detectAttributeDataType } from "@/modules/ee/contacts/lib/detect-attribute-type";
@@ -410,6 +414,11 @@ const createMissingAttributeKeys = async (
     throw new ValidationError(
       `Invalid attribute key(s): ${invalidKeys.join(", ")}. Keys must only contain lowercase letters, numbers, and underscores, and must start with a letter.`
     );
+  }
+
+  const reservedKeys = getReservedFutureDefaultAttributeKeys(missingKeys);
+  if (reservedKeys.length > 0) {
+    throw new ValidationError(getReservedFutureDefaultAttributeKeyIssue(reservedKeys));
   }
 
   // Deduplicate by lowercase to avoid creating duplicates like "firstName" and "firstname"

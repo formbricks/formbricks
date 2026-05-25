@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
-import { OperationNotAllowedError, ResourceNotFoundError, UnknownError } from "@formbricks/types/errors";
+import { InvalidInputError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { getEmailTemplateHtml } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/lib/emailTemplate";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
@@ -176,7 +176,7 @@ export const generatePersonalLinksAction = authenticatedActionClient
     );
 
     if (!contactsResult || contactsResult.length === 0) {
-      throw new UnknownError("No contacts found for the selected segment");
+      throw new InvalidInputError("No contacts found for the selected segment");
     }
 
     capturePostHogEvent(

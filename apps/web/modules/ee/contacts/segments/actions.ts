@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
-import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { InvalidInputError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZSegmentCreateInput, ZSegmentFilters, ZSegmentUpdateInput } from "@formbricks/types/segment";
 import { getOrganization } from "@/lib/organization/service";
 import { capturePostHogEvent } from "@/lib/posthog";
@@ -49,7 +49,7 @@ export const createSegmentAction = authenticatedActionClient.inputSchema(ZSegmen
       const surveyWorkspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
 
       if (surveyWorkspaceId !== parsedInput.workspaceId) {
-        throw new Error("Survey and segment are not in the same workspace");
+        throw new InvalidInputError("Survey and segment are not in the same workspace");
       }
     }
 
@@ -82,7 +82,7 @@ export const createSegmentAction = authenticatedActionClient.inputSchema(ZSegmen
     if (!parsedFilters.success) {
       const errMsg =
         parsedFilters.error.issues.find((issue) => issue.code === "custom")?.message || "Invalid filters";
-      throw new Error(errMsg);
+      throw new InvalidInputError(errMsg);
     }
 
     const segment = await createSegment(parsedInput);
@@ -139,7 +139,7 @@ export const updateSegmentAction = authenticatedActionClient.inputSchema(ZUpdate
       if (!parsedFilters.success) {
         const errMsg =
           parsedFilters.error.issues.find((issue) => issue.code === "custom")?.message || "Invalid filters";
-        throw new Error(errMsg);
+        throw new InvalidInputError(errMsg);
       }
 
       await checkForRecursiveSegmentFilter(parsedFilters.data, parsedInput.segmentId);
@@ -169,7 +169,7 @@ export const loadNewSegmentAction = authenticatedActionClient
     const segmentWorkspaceId = await getWorkspaceIdFromSegmentId(parsedInput.segmentId);
 
     if (surveyWorkspaceId !== segmentWorkspaceId) {
-      throw new Error("Segment and survey are not in the same workspace");
+      throw new InvalidInputError("Segment and survey are not in the same workspace");
     }
 
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);

@@ -18,9 +18,9 @@ FROM node:24-alpine3.23 AS base
 FROM base AS installer
 
 # Enable corepack and prepare pnpm
-RUN npm install --ignore-scripts -g corepack@latest
+RUN npm install --ignore-scripts -g corepack@0.35.0
 RUN corepack enable
-RUN corepack prepare pnpm@10.28.2 --activate
+RUN corepack prepare pnpm@10.32.1 --activate
 
 # Install necessary build tools and compilers
 RUN apk update && apk add --no-cache cmake g++ gcc jq make openssl-dev python3
@@ -56,7 +56,7 @@ COPY . .
 RUN touch apps/web/.env
 
 # Install the dependencies
-RUN pnpm install --ignore-scripts
+RUN pnpm install --ignore-scripts --frozen-lockfile
 
 # Build the database package first
 RUN pnpm build --filter=@formbricks/database
@@ -82,7 +82,7 @@ FROM base AS runner
 # Upgrade Alpine system packages to pick up security patches, update npm to latest, then create user
 # Note: npm's bundled tar has a known vulnerability but npm is only used during build, not at runtime
 RUN apk update && apk upgrade --no-cache \
-    && npm install --ignore-scripts -g npm@latest \
+    && npm install --ignore-scripts -g npm@11.15.0 \
     && addgroup -S nextjs \
     && adduser -S -u 1001 -G nextjs nextjs
 
@@ -155,7 +155,7 @@ COPY --from=installer /app/node_modules/otlp-logger ./node_modules/otlp-logger
 RUN chmod -R 755 ./node_modules/otlp-logger
 
 # Install prisma CLI globally for database migrations and fix permissions for nextjs user
-RUN npm install --ignore-scripts -g prisma@6 \
+RUN npm install --ignore-scripts -g prisma@6.19.3 \
     && chown -R nextjs:nextjs /usr/local/lib/node_modules/prisma
 
 # Create a startup script to handle the conditional logic

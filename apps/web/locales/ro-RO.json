@@ -1935,6 +1935,7 @@
       "attribute_key_hint": "Doar litere mici, cifre și caractere de subliniere. Trebuie să înceapă cu o literă.",
       "attribute_key_placeholder": "ex: date_of_birth",
       "attribute_key_required": "Cheia este obligatorie",
+      "attribute_key_reserved_future_default": "Cheia este rezervată pentru atribute implicite viitoare ({reservedKeys}). Te rugăm să alegi o cheie diferită.",
       "attribute_key_safe_identifier_required": "Cheia trebuie să fie un identificator sigur: doar litere mici, cifre și caractere de subliniere, și trebuie să înceapă cu o literă",
       "attribute_label": "Etichetă",
       "attribute_label_placeholder": "ex: Data nașterii",
@@ -1969,6 +1970,7 @@
       "generate_personal_link": "Generează link personal",
       "generate_personal_link_description": "Selectați un sondaj publicat pentru a genera un link personalizat pentru acest contact.",
       "invalid_csv_column_names": "Nume de coloană CSV nevalide: {columns}. Numele coloanelor care vor deveni atribute noi trebuie să conțină doar litere mici, cifre și caractere de subliniere și trebuie să înceapă cu o literă.",
+      "invalid_csv_reserved_column_names": "Nume de coloană CSV rezervate: {columns}. Aceste nume sunt rezervate pentru atribute implicite viitoare ({reservedKeys}) și nu pot fi create ca atribute noi.",
       "invalid_date_format": "Format de dată invalid. Te rugăm să folosești o dată validă.",
       "invalid_number_format": "Format de număr invalid. Te rugăm să introduci un număr valid.",
       "no_activity_yet": "Nicio activitate încă",
@@ -2610,8 +2612,6 @@
         "workspaces_being_added": "Spații de lucru cărora li se acordă acces"
       },
       "general": {
-        "ai_data_analysis_enabled": "Îmbogățire și analiză de date (AI)",
-        "ai_data_analysis_enabled_description": "AI pentru a obține mai mult din datele tale, configurare dashboard-uri, grafice, rapoarte și multe altele. Accesează datele tale de experiență.",
         "ai_enabled": "Formbricks AI",
         "ai_enabled_description": "Gestionează funcționalitățile bazate pe AI pentru această organizație.",
         "ai_instance_not_configured": "AI este configurată la nivel de instanță prin variabile de mediu. Cere administratorului să configureze AI_PROVIDER, credențialele acelui furnizor și lista de modele corespunzătoare înainte de a activa funcționalitățile AI.",
@@ -2818,7 +2818,6 @@
         "adjust_survey_closed_message": "Ajustați mesajul 'Sondaj Închis'",
         "adjust_survey_closed_message_description": "Schimbați mesajul pe care îl văd vizitatorii atunci când sondajul este închis.",
         "adjust_theme_in_look_and_feel_settings": "Ajustează tema în setările <lookFeelLink>Aspect și Experiență</lookFeelLink>.",
-        "ai_data_analysis_disabled": "Analiza de date AI este dezactivată pentru această organizație.",
         "ai_features_not_enabled": "Funcțiile AI nu sunt activate pentru această organizație.",
         "ai_instance_not_configured": "AI nu este configurat. Contactează administratorul.",
         "ai_smart_tools_disabled": "Instrumentele inteligente AI sunt dezactivate pentru această organizație.",
