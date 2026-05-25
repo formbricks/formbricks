@@ -145,7 +145,6 @@ export const ManageTranslationsModal = ({
       const errorMessages: Record<string, string> = {
         ai_features_not_enabled: t("workspace.surveys.edit.ai_features_not_enabled"),
         ai_smart_tools_disabled: t("workspace.surveys.edit.ai_smart_tools_disabled"),
-        ai_data_analysis_disabled: t("workspace.surveys.edit.ai_data_analysis_disabled"),
         ai_instance_not_configured: t("workspace.surveys.edit.ai_instance_not_configured"),
       };
       return errorMessages[errorCode] ?? errorCode;

@@ -6,6 +6,10 @@ import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
 import { formatSnakeCaseToTitleCase, isSafeIdentifier } from "@/lib/utils/safe-identifier";
 import { validateInputs } from "@/lib/utils/validate";
+import {
+  getReservedFutureDefaultAttributeKeyIssue,
+  isReservedFutureDefaultAttributeKey,
+} from "@/modules/ee/contacts/lib/attribute-key-policy";
 import { prepareNewSDKAttributeForStorage } from "@/modules/ee/contacts/lib/attribute-storage";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import {
@@ -38,6 +42,7 @@ const MESSAGE_TEMPLATES: Record<string, string> = {
   userid_already_exists: "The userId already exists for this environment and was not updated.",
   invalid_attribute_keys:
     "Skipped creating attribute(s) with invalid key(s): {keys}. Keys must only contain lowercase letters, numbers, and underscores, and must start with a letter.",
+  reserved_attribute_keys: "{issue}",
   attribute_limit_exceeded:
     "Could not create {count} new attribute(s) as it would exceed the maximum limit of {limit} attribute classes. Existing attributes were updated successfully.",
   new_attribute_created: "Created new attribute '{key}' with type '{dataType}'",
@@ -304,12 +309,15 @@ export const updateAttributes = async (
     // Validate that new attribute keys are safe identifiers
     const validNewAttributes: typeof newAttributes = [];
     const invalidKeys: string[] = [];
+    const reservedKeys: string[] = [];
 
     for (const attr of newAttributes) {
-      if (isSafeIdentifier(attr.key)) {
-        validNewAttributes.push(attr);
-      } else {
+      if (!isSafeIdentifier(attr.key)) {
         invalidKeys.push(attr.key);
+      } else if (isReservedFutureDefaultAttributeKey(attr.key)) {
+        reservedKeys.push(attr.key);
+      } else {
+        validNewAttributes.push(attr);
       }
     }
 
@@ -322,6 +330,17 @@ export const updateAttributes = async (
       logger.warn(
         { workspaceId, invalidKeys },
         "SDK tried to create attributes with invalid keys - skipping"
+      );
+    }
+
+    if (reservedKeys.length > 0) {
+      errors.push({
+        code: "reserved_attribute_keys",
+        params: { issue: getReservedFutureDefaultAttributeKeyIssue(reservedKeys) },
+      });
+      logger.warn(
+        { workspaceId, reservedKeys },
+        "SDK tried to create reserved future default attribute keys - skipping"
       );
     }
 

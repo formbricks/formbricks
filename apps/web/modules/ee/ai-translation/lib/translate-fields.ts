@@ -40,7 +40,6 @@ Rules:
 
   const result = await generateOrganizationAIText({
     organizationId,
-    capability: "smartTools",
     system: systemPrompt,
     prompt: JSON.stringify(items),
   });

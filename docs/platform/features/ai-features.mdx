@@ -1,0 +1,56 @@
+---
+title: "AI Features"
+description: "How AI features are organized, hosted, and controlled in Formbricks."
+icon: "sparkles"
+---
+
+<Note>
+  AI features are part of the [Enterprise Edition](/self-hosting/advanced/license).
+</Note>
+
+Formbricks ships a single organization-wide toggle that turns on AI-powered helpers across the app:
+**Settings → Organization → General → Smart functionality (AI)**.
+
+## AI Principles
+
+1. **Always optional**: AI is disabled until your organization enables. You can run
+   Formbricks fully without AI.
+2. **We separate AI**: We distinguish between:
+   - **Smart Functionality**: helps teams build and operate faster (for example
+     [AI Survey Translation](/surveys/general-features/multi-language-surveys#translate-with-ai) or [AI Chart Creation](/unify-feedback/dashboards-charts#ai-builder)).
+   - **Data AI**: features that work directly with your feedback data (creating embeddings for Unify Feedback semantic search).
+
+### Privacy-first and self-hosted where possible
+
+We prioritize self-hosted AI, especially for capabilities that process customer feedback data. Formbricks supports
+AI in self-hosted and on-premise environments, and we prefer open-weight models whenever feasible.
+
+For Unify Feedback semantic search, we host the embeddings model ourselves. This means feedback data is not shared
+with third-party model providers for that capability, and your collected feedback/response data is never used as AI
+training input.
+
+## Model Hosting Status
+
+- **Current Smart Functionality model**: Gemini 3.5 Flash hosted on Google Cloud Platform in Germany.
+
+- **Current Embeddings model**: Alibaba GTE embeddings hosted by Formbricks in Germany.
+
+- **In progress**: evaluation of self-hosted Kimi 2.5 to replace Gemini 3.5 Flash for Smart Functionality.
+
+## AI Features by Category
+
+### Smart Functionality
+
+- **[AI Survey Translation](/surveys/general-features/multi-language-surveys#translate-with-ai)**:
+  auto-translate survey questions, options, and prompts into enabled languages.
+- **[AI Chart Creation](/unify-feedback/dashboards-charts#ai-builder)**:
+  describe a chart in natural language and Formbricks generates the underlying query.
+
+### Data AI
+
+- **Embeddings creation**:
+  create embeddings for feedback records so they can be used for semantic search, clustering, and retrieval.
+
+## Permissions
+
+Only **Owners** and **Managers** can change the AI toggle. Other roles see a read-only state.

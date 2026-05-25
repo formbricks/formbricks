@@ -1,0 +1,147 @@
+{{- if .Values.redis.enabled }}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "formbricks.redisMasterName" . }}
+  labels:
+    helm.sh/chart: {{ include "formbricks.chart" . }}
+    app.kubernetes.io/name: {{ include "formbricks.redisName" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: redis
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/part-of: {{ .Values.partOfOverride | default (include "formbricks.name" .) }}
+spec:
+  replicas: 1
+  serviceName: {{ include "formbricks.redisHeadlessName" . }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "formbricks.redisName" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: redis
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "formbricks.redisName" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        app.kubernetes.io/component: redis
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/redis-configmap.yaml") . | sha256sum }}
+      {{- with .Values.redis.master.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- with .Values.redis.master.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.redis.master.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.redis.master.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.redis.master.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.redis.master.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: valkey
+          image: {{ include "formbricks.redisImage" . }}
+          imagePullPolicy: {{ .Values.redis.image.pullPolicy }}
+          {{- with .Values.redis.master.containerSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -eu
+              {{- if .Values.redis.auth.enabled }}
+              exec valkey-server /etc/valkey/valkey.conf --requirepass "$VALKEY_PASSWORD"
+              {{- else }}
+              exec valkey-server /etc/valkey/valkey.conf
+              {{- end }}
+          ports:
+            - name: redis
+              containerPort: 6379
+              protocol: TCP
+          {{- if .Values.redis.auth.enabled }}
+          env:
+            - name: VALKEY_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "formbricks.redisSecretName" . }}
+                  key: {{ include "formbricks.redisSecretKey" . }}
+            - name: REDISCLI_AUTH
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "formbricks.redisSecretName" . }}
+                  key: {{ include "formbricks.redisSecretKey" . }}
+          {{- end }}
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - valkey-cli ping | grep -q PONG
+            initialDelaySeconds: 20
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 5
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - valkey-cli ping | grep -q PONG
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 5
+          {{- with .Values.redis.master.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: redis-config
+              mountPath: /etc/valkey
+              readOnly: true
+            - name: redis-data
+              mountPath: /data
+      volumes:
+        - name: redis-config
+          configMap:
+            name: {{ include "formbricks.redisName" . }}-configuration
+{{- if .Values.redis.master.persistence.enabled }}
+  volumeClaimTemplates:
+    - apiVersion: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: redis-data
+        labels:
+          helm.sh/chart: {{ include "formbricks.chart" . }}
+          app.kubernetes.io/name: {{ include "formbricks.redisName" . }}
+          app.kubernetes.io/instance: {{ .Release.Name }}
+          app.kubernetes.io/component: redis
+      spec:
+        accessModes:
+          {{- toYaml .Values.redis.master.persistence.accessModes | nindent 10 }}
+        {{- with .Values.redis.master.persistence.storageClass }}
+        storageClassName: {{ . | quote }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.redis.master.persistence.size | quote }}
+{{- else }}
+        - name: redis-data
+          emptyDir: {}
+{{- end }}
+{{- end }}

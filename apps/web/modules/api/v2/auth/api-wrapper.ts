@@ -1,6 +1,7 @@
 import { ZodRawShape, z } from "zod";
 import { logger } from "@formbricks/logger";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
+import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
 import { TApiAuditLog } from "@/app/lib/api/with-api-logging";
 import { formatZodError, handleApiError } from "@/modules/api/v2/lib/utils";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
@@ -73,10 +74,22 @@ export const apiWrapper = async <S extends ExtendedSchemas>({
   let parsedInput: ParsedSchemas<S> = {} as ParsedSchemas<S>;
 
   if (schemas?.body) {
-    let bodyData;
+    let bodyData: Record<string, unknown>;
     try {
-      bodyData = await request.json();
+      bodyData = await parseJsonBodyWithLimit<Record<string, unknown>>(request);
     } catch (error) {
+      if (error instanceof RequestBodyTooLargeError) {
+        return handleApiError(request, {
+          type: "payload_too_large",
+          details: [
+            {
+              field: "body",
+              issue: error.message,
+            },
+          ],
+        });
+      }
+
       logger.error({ error, url: request.url }, "Error parsing JSON input");
       return handleApiError(request, {
         type: "bad_request",

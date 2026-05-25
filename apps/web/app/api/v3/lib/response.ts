@@ -109,6 +109,17 @@ export function problemBadRequest(
   });
 }
 
+export function problemPayloadTooLarge(
+  requestId: string,
+  detail: string = "Payload Too Large",
+  instance?: string
+): Response {
+  return problemResponse(413, "Payload Too Large", detail, requestId, {
+    code: "payload_too_large",
+    instance,
+  });
+}
+
 export function problemUnauthorized(
   requestId: string,
   detail: string = "Not authenticated",

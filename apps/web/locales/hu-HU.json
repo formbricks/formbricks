@@ -1935,6 +1935,7 @@
       "attribute_key_hint": "Csak ékezet nélküli kisbetűk, számok és aláhúzásjelek használhatók. Betűvel kell kezdődnie.",
       "attribute_key_placeholder": "például: szuletesi_ido",
       "attribute_key_required": "A kulcs kötelező",
+      "attribute_key_reserved_future_default": "A kulcs le van foglalva jövőbeli alapértelmezett attribútumok számára ({reservedKeys}). Kérem, válasszon egy másik kulcsot.",
       "attribute_key_safe_identifier_required": "A kulcs csak biztonságos azonosító lehet: csak ékezet nélküli kisbetűk, számok és aláhúzásjelek használhatók, és betűvel kell kezdődnie",
       "attribute_label": "Címke",
       "attribute_label_placeholder": "például: Születési idő",
@@ -1969,6 +1970,7 @@
       "generate_personal_link": "Személyes hivatkozás előállítása",
       "generate_personal_link_description": "Válasszon egy közzétett kérdőívet, hogy személyre szabott hivatkozást állítson elő ehhez a partnerhez.",
       "invalid_csv_column_names": "Érvénytelen CSV-oszlopnevek: {columns}. Az új attribútumokká váló oszlopnevek csak ékezet nélküli kisbetűket, számokat és aláhúzásjeleket tartalmazhatnak, valamint betűvel kell kezdődniük.",
+      "invalid_csv_reserved_column_names": "Fenntartott CSV oszlopnév/nevek: {columns}. Ezek a nevek le vannak foglalva jövőbeli alapértelmezett attribútumok számára ({reservedKeys}), és nem hozhatók létre új attribútumokként.",
       "invalid_date_format": "Érvénytelen dátumformátum. Használjon érvényes dátumot.",
       "invalid_number_format": "Érvénytelen számformátum. Adjon meg érvényes számot.",
       "no_activity_yet": "Még nincs tevékenység",
@@ -2610,8 +2612,6 @@
         "workspaces_being_added": "Hozzáférést kapó munkaterületek"
       },
       "general": {
-        "ai_data_analysis_enabled": "Adatgazdagítás és elemzés (AI)",
-        "ai_data_analysis_enabled_description": "AI segítségével többet hozhat ki az adataiból, irányítópultokat, diagramokat, jelentéseket és egyebeket állíthat be. Hozzáfér az élményekhez kapcsolódó adatokhoz.",
         "ai_enabled": "Formbricks AI",
         "ai_enabled_description": "AI-alapú funkciók kezelése ehhez a szervezethez.",
         "ai_instance_not_configured": "Az MI példányszinten, környezeti változókkal van konfigurálva. Kérd meg a rendszergazdát, hogy állítsa be az AI_PROVIDER értékét, a szolgáltató hitelesítő adatait és a megfelelő modelllistát, mielőtt engedélyezné az MI-funkciókat.",
@@ -2818,7 +2818,6 @@
         "adjust_survey_closed_message": "A „Kérdőív lezárva” üzenet módosítása",
         "adjust_survey_closed_message_description": "Annak az üzenetnek a megváltoztatása, amelyet a látogatók akkor látnak, amikor a kérdőív lezárul.",
         "adjust_theme_in_look_and_feel_settings": "A témát a <lookFeelLink>Megjelenés és Élmény</lookFeelLink> beállításokban módosíthatja.",
-        "ai_data_analysis_disabled": "Az AI adatelemzés le van tiltva ezen szervezet számára.",
         "ai_features_not_enabled": "Az AI funkciók nincsenek engedélyezve ezen szervezet számára.",
         "ai_instance_not_configured": "Az AI nincs konfigurálva. Kérjük, forduljon a rendszergazdájához.",
         "ai_smart_tools_disabled": "Az AI intelligens eszközök le vannak tiltva ezen szervezet számára.",

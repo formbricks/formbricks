@@ -1935,6 +1935,7 @@
       "attribute_key_hint": "Only lowercase letters, numbers, and underscores. Must start with a letter.",
       "attribute_key_placeholder": "e.g. date_of_birth",
       "attribute_key_required": "Key is required",
+      "attribute_key_reserved_future_default": "Key is reserved for future default attributes ({reservedKeys}). Please choose a different key.",
       "attribute_key_safe_identifier_required": "Key must be a safe identifier: only lowercase letters, numbers, and underscores, and must start with a letter",
       "attribute_label": "Label",
       "attribute_label_placeholder": "e.g. Date of Birth",
@@ -1969,6 +1970,7 @@
       "generate_personal_link": "Generate Personal Link",
       "generate_personal_link_description": "Select a published survey to generate a personalized link for this contact.",
       "invalid_csv_column_names": "Invalid CSV column name(s): {columns}. Column names that will become new attributes must only contain lowercase letters, numbers, and underscores, and must start with a letter.",
+      "invalid_csv_reserved_column_names": "Reserved CSV column name(s): {columns}. These names are reserved for future default attributes ({reservedKeys}) and cannot be created as new attributes.",
       "invalid_date_format": "Invalid date format. Please use a valid date.",
       "invalid_number_format": "Invalid number format. Please enter a valid number.",
       "no_activity_yet": "No activity yet",
@@ -2610,8 +2612,6 @@
         "workspaces_being_added": "Workspaces being granted access"
       },
       "general": {
-        "ai_data_analysis_enabled": "Data enrichment & analysis (AI)",
-        "ai_data_analysis_enabled_description": "AI to get more out of your data, setup dashboards, charts, reports and more. Touches your experience data.",
         "ai_enabled": "Formbricks AI",
         "ai_enabled_description": "Manage AI-powered features for this organization.",
         "ai_instance_not_configured": "AI is configured at the instance level via environment variables. Ask your administrator to set AI_PROVIDER, AI_MODEL, and the matching provider credentials before enabling AI features.",
@@ -2818,7 +2818,6 @@
         "adjust_survey_closed_message": "Adjust “Survey Closed” message",
         "adjust_survey_closed_message_description": "Change the message visitors see when the survey is closed.",
         "adjust_theme_in_look_and_feel_settings": "Adjust the theme in the <lookFeelLink>Look & Feel</lookFeelLink> Settings.",
-        "ai_data_analysis_disabled": "AI data analysis is disabled for this organization.",
         "ai_features_not_enabled": "AI features are not enabled for this organization.",
         "ai_instance_not_configured": "AI is not configured. Contact your administrator.",
         "ai_smart_tools_disabled": "AI smart tools are disabled for this organization.",

@@ -1935,6 +1935,7 @@
       "attribute_key_hint": "Alleen kleine letters, cijfers en onderstrepingstekens. Moet beginnen met een letter.",
       "attribute_key_placeholder": "bijv. geboortedatum",
       "attribute_key_required": "Sleutel is verplicht",
+      "attribute_key_reserved_future_default": "Sleutel is gereserveerd voor toekomstige standaardattributen ({reservedKeys}). Kies een andere sleutel.",
       "attribute_key_safe_identifier_required": "Sleutel moet een veilige identifier zijn: alleen kleine letters, cijfers en onderstrepingstekens, en moet beginnen met een letter",
       "attribute_label": "Label",
       "attribute_label_placeholder": "bijv. Geboortedatum",
@@ -1969,6 +1970,7 @@
       "generate_personal_link": "Persoonlijke link genereren",
       "generate_personal_link_description": "Selecteer een gepubliceerde enquête om een gepersonaliseerde link voor dit contact te genereren.",
       "invalid_csv_column_names": "Ongeldige CSV-kolomna(a)m(en): {columns}. Kolomnamen die nieuwe kenmerken worden, mogen alleen kleine letters, cijfers en underscores bevatten en moeten beginnen met een letter.",
+      "invalid_csv_reserved_column_names": "Gereserveerde CSV-kolomnaam/namen: {columns}. Deze namen zijn gereserveerd voor toekomstige standaardattributen ({reservedKeys}) en kunnen niet als nieuwe attributen worden aangemaakt.",
       "invalid_date_format": "Ongeldig datumformaat. Gebruik een geldige datum.",
       "invalid_number_format": "Ongeldig getalformaat. Voer een geldig getal in.",
       "no_activity_yet": "Nog geen activiteit",
@@ -2610,8 +2612,6 @@
         "workspaces_being_added": "Werkruimtes die toegang krijgen"
       },
       "general": {
-        "ai_data_analysis_enabled": "Dataverrijking & analyse (AI)",
-        "ai_data_analysis_enabled_description": "AI om meer uit je data te halen, dashboards op te zetten, grafieken, rapporten en meer. Raakt je ervaringsdata aan.",
         "ai_enabled": "Formbricks AI",
         "ai_enabled_description": "Beheer AI-functies voor deze organisatie.",
         "ai_instance_not_configured": "AI wordt op instantieniveau geconfigureerd via omgevingsvariabelen. Vraag je beheerder om AI_PROVIDER, de inloggegevens voor die provider en de bijbehorende modellenlijst in te stellen voordat AI-functies worden ingeschakeld.",
@@ -2818,7 +2818,6 @@
         "adjust_survey_closed_message": "Pas het bericht 'Enquête gesloten' aan",
         "adjust_survey_closed_message_description": "Wijzig het bericht dat bezoekers zien wanneer de enquête wordt gesloten.",
         "adjust_theme_in_look_and_feel_settings": "Pas het thema aan in de <lookFeelLink>Look & Feel</lookFeelLink> instellingen.",
-        "ai_data_analysis_disabled": "AI-gegevensanalyse is uitgeschakeld voor deze organisatie.",
         "ai_features_not_enabled": "AI-functies zijn niet ingeschakeld voor deze organisatie.",
         "ai_instance_not_configured": "AI is niet geconfigureerd. Neem contact op met je beheerder.",
         "ai_smart_tools_disabled": "AI slimme tools zijn uitgeschakeld voor deze organisatie.",

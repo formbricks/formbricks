@@ -1935,6 +1935,7 @@
       "attribute_key_hint": "仅允许小写字母、数字和下划线，且必须以字母开头。",
       "attribute_key_placeholder": "例如：date_of_birth",
       "attribute_key_required": "键为必填项",
+      "attribute_key_reserved_future_default": "该键已保留用于未来的默认属性（{reservedKeys}）。请选择其他键。",
       "attribute_key_safe_identifier_required": "键必须为安全标识符：仅允许小写字母、数字和下划线，且必须以字母开头",
       "attribute_label": "标签",
       "attribute_label_placeholder": "例如：出生日期",
@@ -1969,6 +1970,7 @@
       "generate_personal_link": "生成个人链接",
       "generate_personal_link_description": "选择一个已发布的调查，为此联系人生成个性化链接。",
       "invalid_csv_column_names": "无效的 CSV 列名：{columns}。作为新属性的列名只能包含小写字母、数字和下划线，并且必须以字母开头。",
+      "invalid_csv_reserved_column_names": "CSV 列名已被保留：{columns}。这些名称已保留用于未来的默认属性（{reservedKeys}），无法创建为新属性。",
       "invalid_date_format": "日期格式无效。请使用有效日期。",
       "invalid_number_format": "数字格式无效。请输入有效的数字。",
       "no_activity_yet": "暂无活动",
@@ -2610,8 +2612,6 @@
         "workspaces_being_added": "将被授权访问的工作区"
       },
       "general": {
-        "ai_data_analysis_enabled": "数据增强与分析（AI）",
-        "ai_data_analysis_enabled_description": "使用 AI 深度挖掘你的数据，设置仪表盘、图表、报告等。会处理你的体验数据。",
         "ai_enabled": "Formbricks AI",
         "ai_enabled_description": "管理该组织的 AI 驱动功能。",
         "ai_instance_not_configured": "AI 通过环境变量在实例级别进行配置。启用 AI 功能前，请让管理员设置 AI_PROVIDER、该提供商的凭据以及对应的模型列表。",
@@ -2818,7 +2818,6 @@
         "adjust_survey_closed_message": "调整 \"调查 关闭\" 消息",
         "adjust_survey_closed_message_description": "更改 访客 看到 调查 关闭 时 的 消息。",
         "adjust_theme_in_look_and_feel_settings": "在<lookFeelLink>外观与感觉</lookFeelLink>设置中调整主题。",
-        "ai_data_analysis_disabled": "此组织已禁用 AI 数据分析。",
         "ai_features_not_enabled": "此组织未启用 AI 功能。",
         "ai_instance_not_configured": "AI 未配置。请联系您的管理员。",
         "ai_smart_tools_disabled": "此组织已禁用 AI 智能工具。",
