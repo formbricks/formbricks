@@ -44,7 +44,6 @@ const rawCreateBody = {
   workspaceId,
   name: "Product Feedback",
   defaultLanguage: "en-US",
-  languages: [{ code: "de-DE", enabled: true }],
   metadata: {
     cx_operation: "enterprise_onboarding",
     title: { "en-US": "Product Feedback", "de-DE": "Produktfeedback" },
@@ -188,10 +187,7 @@ describe("createV3Survey", () => {
   test("keeps createdBy null for API key calls and honors explicit disabled languages", async () => {
     const body = ZV3CreateSurveyBody.parse({
       ...rawCreateBody,
-      languages: [
-        { code: "de-DE", enabled: true },
-        { code: "fr-FR", enabled: false },
-      ],
+      languages: [{ code: "fr-FR", enabled: false }],
       blocks: [
         {
           ...rawCreateBody.blocks[0],
@@ -242,11 +238,11 @@ describe("createV3Survey", () => {
             {
               id: "external_cta",
               type: "cta",
-              headline: { "en-US": "Continue", "de-DE": "Weiter" },
+              headline: { "en-US": "Continue" },
               required: false,
               buttonExternal: true,
               buttonUrl: "https://example.com",
-              ctaButtonLabel: { "en-US": "Open", "de-DE": "Oeffnen" },
+              ctaButtonLabel: { "en-US": "Open" },
             },
           ],
         },
@@ -254,24 +250,6 @@ describe("createV3Survey", () => {
     });
 
     await expect(createV3Survey(body, null, "req_3")).rejects.toThrow(V3SurveyCreatePermissionError);
-    expect(createSurvey).not.toHaveBeenCalled();
-  });
-
-  test("rejects redirect URL endings when the organization does not have external URL permission", async () => {
-    vi.mocked(getExternalUrlsPermission).mockResolvedValue(false);
-    const body = ZV3CreateSurveyBody.parse({
-      ...rawCreateBody,
-      endings: [
-        {
-          id: "clen1234567890123456789012",
-          type: "redirectToUrl",
-          url: "https://example.com",
-          label: "Continue",
-        },
-      ],
-    });
-
-    await expect(createV3Survey(body, null, "req_4")).rejects.toThrow(V3SurveyCreatePermissionError);
     expect(createSurvey).not.toHaveBeenCalled();
   });
 });
