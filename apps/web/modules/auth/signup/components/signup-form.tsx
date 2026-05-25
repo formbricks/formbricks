@@ -160,7 +160,15 @@ export const SignupForm = ({
       <h1 className="mb-4 text-slate-700">{t("auth.signup.title")}</h1>
       {emailAuthEnabled && (
         <FormProvider {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="mb-2">
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && showLogin) {
+                e.preventDefault();
+                form.handleSubmit(handleSubmit)();
+              }
+            }}
+            className="mb-2">
             {showLogin && (
               <div>
                 <div className="space-y-2">

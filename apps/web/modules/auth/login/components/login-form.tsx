@@ -192,7 +192,16 @@ export const LoginForm = ({
         )}
 
         <div className="space-y-2">
-          <form ref={formRef} onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
+          <form
+            ref={formRef}
+            onSubmit={form.handleSubmit(onSubmit)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && showLogin && formRef.current && !totpLogin) {
+                e.preventDefault();
+                formRef.current.requestSubmit();
+              }
+            }}
+            className="space-y-2">
             {TwoFactorComponent}
             {showLogin && (
               <div className={cn(totpLogin && "hidden", "space-y-2")}>
