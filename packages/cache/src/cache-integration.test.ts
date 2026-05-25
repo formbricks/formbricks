@@ -432,8 +432,7 @@ describe("Cache Integration Tests - End-to-End Redis Operations", () => {
       return;
     }
 
-    // null is exercised separately below via withCacheNullable, since withCache
-    // is now constrained to non-null values to prevent races on JSON null.
+    // Null serialization is covered below via withCacheNullable.
     const testCases = [
       { name: "string", value: "Hello, World!" },
       { name: "number", value: 42.5 },
@@ -507,10 +506,7 @@ describe("Cache Integration Tests - End-to-End Redis Operations", () => {
       logger.info(`✅ ${testCase.name} serialization successful`);
     }
 
-    // Bare `null` written via raw cache.set must not be picked up by
-    // withCacheNullable: the two APIs use different wire formats on purpose
-    // (raw `null` vs the marked envelope), so withCacheNullable should treat
-    // a raw-null entry as a miss and invoke fn().
+    // Raw cache.set(null) should be a nullable-cache miss.
     const nullKey = createCacheKey.workspace.state("serialization-null");
     await cacheService.del([nullKey]);
     const nullSetResult = await cacheService.set(nullKey, null, 30000);
@@ -597,7 +593,6 @@ describe("Cache Integration Tests - End-to-End Redis Operations", () => {
 
     await cacheService.del([realKey, nullKey]);
 
-    // First call: miss, populate.
     const realFirst = await cacheService.withCacheNullable(realFn, realKey, 60000);
     const nullFirst = await cacheService.withCacheNullable(nullFn, nullKey, 60000);
     expect(realFirst).toEqual({ id: "real-1" });
@@ -605,8 +600,6 @@ describe("Cache Integration Tests - End-to-End Redis Operations", () => {
     expect(realCalls).toBe(1);
     expect(nullCalls).toBe(1);
 
-    // Second call: both should be cache hits. The marked nullable envelope
-    // must not be confused with a cache miss.
     const realSecond = await cacheService.withCacheNullable(realFn, realKey, 60000);
     const nullSecond = await cacheService.withCacheNullable(nullFn, nullKey, 60000);
     expect(realSecond).toEqual({ id: "real-1" });

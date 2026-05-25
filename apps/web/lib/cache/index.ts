@@ -53,8 +53,6 @@ export const cache = new Proxy({} as AsyncCacheService, {
       };
     }
 
-    // withCacheNullable mirrors withCache's graceful fallback. Kept separate so
-    // the runtime semantics (and logs) don't depend on which overload was used.
     if (prop === "withCacheNullable") {
       return async <T extends NonNullable<unknown>>(
         fn: () => Promise<T | null>,

@@ -605,10 +605,7 @@ describe("CacheService", () => {
       const freshValue = { data: "fresh" };
       const fn = vi.fn().mockResolvedValue(freshValue);
 
-      // Redis returns stringified null. Under the old (racy) implementation
-      // this was treated as a cached null value if exists() returned true,
-      // letting a stale null leak to the caller. The new contract is:
-      // JSON null === cache miss, always.
+      // Bare JSON null is a miss for non-null cache-aside calls.
       mockRedis.get.mockResolvedValue("null");
 
       const result = await cacheService.withCache(fn, key, 60000);
@@ -618,18 +615,13 @@ describe("CacheService", () => {
       expect(mockRedis.setEx).toHaveBeenCalledWith(key, 60, JSON.stringify(freshValue));
     });
 
-    test("should not surface stale null under the original GET→EXISTS race window", async () => {
-      // Regression for ENG-1047: Request A's get returns JS null (key absent),
-      // then Request B writes a real value, then A's exists check would see
-      // the key. The old code returned `null as T` here; the new code calls
-      // fn() instead.
+    test("should not surface stale null under the original GET/EXISTS race window", async () => {
+      // Simulates the removed GET/EXISTS race from ENG-1047.
       const key = "test:key" as CacheKey;
       const freshValue = { data: "fresh-from-fn" };
       const fn = vi.fn().mockResolvedValue(freshValue);
 
       mockRedis.get.mockResolvedValue(null);
-      // exists is no longer consulted but stub it as if a concurrent writer
-      // had populated the key between our GET and the (now removed) EXISTS.
       mockRedis.exists.mockResolvedValue(1);
 
       const result = await cacheService.withCache(fn, key, 60000);
@@ -641,9 +633,7 @@ describe("CacheService", () => {
   });
 
   describe("withCacheNullable", () => {
-    // The wire format for nullable entries is `{ __fb_nullable_v1: true, value }`.
-    // Tests assert the literal string so that any accidental change to the
-    // marker (e.g. version bump) fails loudly and forces an intentional update.
+    // Keep the nullable wire format explicit in assertions.
     const box = (value: unknown): string => JSON.stringify({ __fb_nullable_v1: true, value });
 
     test("should return cached null without executing fn when boxed null is stored", async () => {
@@ -718,9 +708,6 @@ describe("CacheService", () => {
     });
 
     test("should treat a marker-less object with a `value` field as a cache miss", async () => {
-      // Regression guard: the previous implementation discriminated on the
-      // presence of a `value` property alone, which would mis-unwrap any
-      // caller-supplied object that happened to contain that field.
       const key = "test:nullable-key" as CacheKey;
       const collidingShape = { value: { id: "colliding" }, otherField: 123 };
       const freshValue = { id: "fresh" };

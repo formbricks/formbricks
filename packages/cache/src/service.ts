@@ -6,13 +6,7 @@ import { ZCacheKey } from "@/types/keys";
 import { ZTtlMs, ZTtlMsOptional } from "@/types/service";
 import { validateInputs } from "./utils/validation";
 
-/**
- * Sentinel marker stamped onto values cached via {@link CacheService.withCacheNullable}.
- * Using an unlikely property name (rather than just `value`) prevents collisions
- * with caller-supplied objects that happen to have a `value` field, and lets the
- * type guard distinguish boxed entries from legacy/raw cached objects safely.
- * The `v1` suffix lets us bump the wire format if the box shape ever changes.
- */
+/** Marker for the nullable cache wire format. */
 const NULLABLE_BOX_MARKER = "__fb_nullable_v1";
 
 interface NullableCacheBox<T> {
@@ -151,10 +145,7 @@ export class CacheService {
       return validation;
     }
 
-    // Surface accidental undefined writes loudly instead of silently coercing
-    // them to JSON null — caching `undefined` is almost always a programmer
-    // error. Callers that intentionally want to cache a nullable value should
-    // go through withCacheNullable, which boxes the value explicitly.
+    // Undefined is a caller bug, not a cacheable null.
     if (value === undefined) {
       logger.warn({ key, ttlMs }, "cache.set called with undefined; skipping write");
       return ok(undefined);
@@ -254,14 +245,7 @@ export class CacheService {
   /**
    * Cache wrapper for functions (cache-aside).
    *
-   * Cache hit/miss is determined by a single GET — a JSON `null` in Redis is
-   * treated as a miss. This eliminates the GET+EXISTS race that could otherwise
-   * surface a stale null to callers whose contract is non-null.
-   *
-   * T is constrained to NonNullable so callers cannot accidentally rely on
-   * `null` being served from cache. To cache a value that may be `null`, use
-   * {@link withCacheNullable}.
-   *
+   * Bare JSON null is treated as a miss; use withCacheNullable for intentional null values.
    * Never throws due to cache errors; function errors propagate without retry.
    *
    * @param fn - Function to execute (and optionally cache).
@@ -291,11 +275,7 @@ export class CacheService {
   /**
    * Cache wrapper for functions whose result may legitimately be `null`.
    *
-   * Boxes the value in a marked envelope (see {@link NULLABLE_BOX_MARKER})
-   * before writing so that a real cached `null` is distinguishable from a
-   * cache miss without a second Redis round-trip, and so that the unwrap step
-   * cannot be confused by caller objects that happen to expose a `value` field.
-   * The box is stripped before returning to the caller.
+   * Stores results in a marked envelope so cached nulls are distinct from misses.
    *
    * @param fn - Function to execute (and optionally cache); may return null.
    * @param key - Cache key
@@ -324,12 +304,7 @@ export class CacheService {
     }
 
     const fresh = await fn();
-    // Runtime defense beyond what the type system enforces: a buggy caller can
-    // resolve undefined from a Promise typed as `T | null`. Wrapping that in
-    // `{ value: undefined }` would survive trySetCache's own undefined check,
-    // then JSON.stringify would drop the property and persist the garbage
-    // shape `{}` — which fails isNullableCacheBox on every subsequent read and
-    // turns the key into an infinite recompute loop.
+    // Guard against type-erased callers resolving undefined.
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- types exclude undefined; this guards against type-erasure bugs
     if (fresh !== undefined) {
       const box: NullableCacheBox<T> = { [NULLABLE_BOX_MARKER]: true, value: fresh };
@@ -338,11 +313,7 @@ export class CacheService {
     return fresh;
   }
 
-  /**
-   * Shared preamble for the cache-aside wrappers: confirms Redis is reachable
-   * and inputs validate. Returns false when the caller should bypass the cache
-   * and execute the underlying function directly.
-   */
+  /** Returns false when callers should bypass cache and execute directly. */
   private canUseCache(key: CacheKey, ttlMs: number): boolean {
     if (!this.isRedisClientReady()) {
       return false;
