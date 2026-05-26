@@ -12,6 +12,7 @@
     "no_results_found": "Tulemusi ei leitud",
     "open_in_new_tab": "Ava uuel vahelehel",
     "people_responded": "{count, plural, one {1 inimene vastas} other {{count} inimest vastas}}",
+    "picture_selection_option": "Pildivalik {number}",
     "please_retry_now_or_try_again_later": "Palun proovi uuesti kohe või hiljem.",
     "powered_by": "Teenust pakub",
     "privacy_policy": "Privaatsuspoliitika",

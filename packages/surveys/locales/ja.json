@@ -12,6 +12,7 @@
     "no_results_found": "結果が見つかりません",
     "open_in_new_tab": "新しいタブで開く",
     "people_responded": "{count, plural, other {{count}人が回答しました}}",
+    "picture_selection_option": "画像オプション {number}",
     "please_retry_now_or_try_again_later": "今すぐ再試行するか、後でもう一度お試しください。",
     "powered_by": "提供：",
     "privacy_policy": "プライバシーポリシー",

@@ -12,6 +12,7 @@
     "no_results_found": "Keine Ergebnisse gefunden",
     "open_in_new_tab": "In neuem Tab öffnen",
     "people_responded": "{count, plural, one {1 Person hat geantwortet} other {{count} Personen haben geantwortet}}",
+    "picture_selection_option": "Bildoption {number}",
     "please_retry_now_or_try_again_later": "Bitte versuchen Sie es jetzt erneut oder später noch einmal.",
     "powered_by": "Bereitgestellt von",
     "privacy_policy": "Datenschutzrichtlinie",

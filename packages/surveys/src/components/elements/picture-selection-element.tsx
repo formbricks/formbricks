@@ -4,7 +4,6 @@ import { PictureSelect, type PictureSelectOption } from "@formbricks/survey-ui";
 import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyPictureSelectionElement } from "@formbricks/types/surveys/elements";
 import { getLocalizedValue } from "@/lib/i18n";
-import { getOriginalFileNameFromUrl } from "@/lib/storage";
 import { getUpdatedTtc, useTtc } from "@/lib/ttc";
 
 interface PictureSelectionProps {
@@ -37,10 +36,10 @@ export function PictureSelectionElement({
   const { t } = useTranslation();
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
   // Convert choices to PictureSelectOption format
-  const options: PictureSelectOption[] = element.choices.map((choice) => ({
+  const options: PictureSelectOption[] = element.choices.map((choice, index) => ({
     id: choice.id,
     imageUrl: choice.imageUrl,
-    alt: getOriginalFileNameFromUrl(choice.imageUrl),
+    alt: t("common.picture_selection_option", { number: index + 1 }),
   }));
 
   // Convert value from string[] to string | string[] based on allowMulti
