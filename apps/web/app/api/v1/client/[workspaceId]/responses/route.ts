@@ -18,7 +18,7 @@ import { resolveClientApiIds } from "@/lib/utils/resolve-client-id";
 import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
-import { validateFileUploads } from "@/modules/storage/utils";
+import { validateClientFileUploads } from "@/modules/storage/utils";
 import { createResponseWithQuotaEvaluation } from "./lib/response";
 
 export const OPTIONS = async (): Promise<Response> => {
@@ -154,7 +154,15 @@ export const POST = withV1ApiWrapper({
       responseInputData.singleUseId = singleUseValidationResult.singleUseId;
     }
 
-    if (!validateFileUploads(responseInputData.data, survey.questions)) {
+    if (
+      !validateClientFileUploads({
+        data: responseInputData.data,
+        workspaceId,
+        surveyId: survey.id,
+        blocks: survey.blocks,
+        questions: survey.questions,
+      })
+    ) {
       return {
         response: responses.badRequestResponse("Invalid file upload response"),
       };
