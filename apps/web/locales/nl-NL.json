@@ -2845,6 +2845,8 @@
         "auto_save_disabled": "Automatisch opslaan uitgeschakeld",
         "auto_save_disabled_tooltip": "Uw enquête wordt alleen automatisch opgeslagen wanneer deze een concept is. Dit zorgt ervoor dat openbare enquêtes niet onbedoeld worden bijgewerkt.",
         "auto_save_on": "Automatisch opslaan aan",
+        "auto_select_browser_language": "Browsertaal standaard gebruiken",
+        "auto_select_browser_language_description": "Opent de enquête automatisch in de browsertaal van de respondent wanneer die taal actief is. Valt terug op de standaardtaal.",
         "automatically_close_survey_after_n_seconds_if_no_response": "Sluit de enquête automatisch na <autoCloseInput /> seconden na activering als er geen reactie is.",
         "automatically_close_the_survey_after_a_certain_number_of_responses": "Sluit de enquête automatisch af na een bepaald aantal reacties.",
         "automatically_close_the_survey_if_the_user_does_not_respond_after_certain_number_of_seconds": "Sluit de enquête automatisch af als de gebruiker na een bepaald aantal seconden niet reageert.",

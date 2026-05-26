@@ -2,11 +2,25 @@ import { headers } from "next/headers";
 import { TUserLocale } from "@formbricks/types/user";
 import { AVAILABLE_LOCALES, DEFAULT_LOCALE } from "@/lib/constants";
 
+const getAcceptedLanguageCodesFromHeader = (acceptLanguage: string | null): string[] => {
+  return (
+    acceptLanguage
+      ?.split(",")
+      .map((language) => language.trim().split(";")[0].trim())
+      .filter(Boolean) ?? []
+  );
+};
+
+export const findMatchingBrowserLanguageCodes = async (): Promise<string[]> => {
+  const headersList = await headers();
+  return getAcceptedLanguageCodesFromHeader(headersList.get("accept-language"));
+};
+
 export const findMatchingLocale = async (): Promise<TUserLocale> => {
   const headersList = await headers();
   const acceptLanguage = headersList.get("accept-language");
-  const userLocales = acceptLanguage?.split(",");
-  if (!userLocales) {
+  const userLocales = getAcceptedLanguageCodesFromHeader(acceptLanguage);
+  if (!userLocales.length) {
     return DEFAULT_LOCALE;
   }
   // First, try to find an exact match without normalization

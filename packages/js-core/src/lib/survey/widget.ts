@@ -13,10 +13,36 @@ import {
   surveyHasSegmentFilters,
 } from "@/lib/common/utils";
 import { UpdateQueue } from "@/lib/user/update-queue";
-import { type TUserState, type TWorkspaceStateSurvey } from "@/types/config";
+import { type TUserState, type TWorkspaceStateSettings, type TWorkspaceStateSurvey } from "@/types/config";
 import { type TTrackProperties } from "@/types/survey";
 
 let isSurveyRunning = false;
+
+type TWidgetOverlay = "none" | "light" | "dark";
+type TWidgetPlacement = "bottomLeft" | "bottomRight" | "topLeft" | "topRight" | "center";
+interface TWidgetDisplaySettings {
+  clickOutsideClose: boolean;
+  overlay: TWidgetOverlay;
+  placement: TWidgetPlacement;
+  inAppSurveyBranding: boolean;
+}
+
+/**
+ * Reads browser language preferences for auto-selecting app survey translations.
+ */
+export const getBrowserLanguageCodes = (): string[] => {
+  if (typeof navigator === "undefined") return [];
+  if (Array.isArray(navigator.languages)) {
+    const languages = navigator.languages.filter((language): language is string => {
+      return typeof language === "string" && language.trim() !== "";
+    });
+    if (languages.length > 0) return languages;
+  }
+  if (typeof navigator.language === "string" && navigator.language.trim() !== "") {
+    return [navigator.language];
+  }
+  return [];
+};
 
 export const setIsSurveyRunning = (value: boolean): void => {
   isSurveyRunning = value;
@@ -84,14 +110,19 @@ export const renderWidget = async (
     logger.debug(`Delaying survey "${survey.id}" by ${survey.delay.toString()} seconds.`);
   }
 
-  const { settings } = config.get().workspace.data;
+  const settings = config.get().workspace.data.settings as unknown as TWorkspaceStateSettings;
+  const displaySettings = settings as unknown as TWidgetDisplaySettings;
   const { language } = config.get().user.data;
 
   const isMultiLanguageSurvey = survey.languages.length > 1;
   let languageCode = "default";
 
   if (isMultiLanguageSurvey) {
-    const displayLanguage = getLanguageCode(survey, language);
+    const displayLanguage = getLanguageCode(
+      survey,
+      language,
+      survey.autoSelectLanguage ? getBrowserLanguageCodes() : []
+    );
     //if survey is not available in selected language, survey wont be shown
     if (!displayLanguage) {
       logger.debug(`Survey "${survey.id}" is not available in specified language.`);
@@ -102,11 +133,13 @@ export const renderWidget = async (
     languageCode = displayLanguage;
   }
 
-  const workspaceOverwrites = survey.workspaceOverwrites ?? {};
-  const clickOutside = workspaceOverwrites.clickOutsideClose ?? settings.clickOutsideClose;
-  const overlay = workspaceOverwrites.overlay ?? settings.overlay;
-  const placement = workspaceOverwrites.placement ?? settings.placement;
-  const isBrandingEnabled = settings.inAppSurveyBranding;
+  const workspaceOverwrites = (survey.workspaceOverwrites ?? {}) as unknown as Partial<
+    Pick<TWidgetDisplaySettings, "clickOutsideClose" | "overlay" | "placement">
+  >;
+  const clickOutside = workspaceOverwrites.clickOutsideClose ?? displaySettings.clickOutsideClose;
+  const overlay = workspaceOverwrites.overlay ?? displaySettings.overlay;
+  const placement = workspaceOverwrites.placement ?? displaySettings.placement;
+  const isBrandingEnabled = displaySettings.inAppSurveyBranding;
 
   let formbricksSurveys: TFormbricksSurveys;
   try {

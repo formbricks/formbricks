@@ -957,6 +957,7 @@ export const ZSurveyBase = z.object({
   workspaceOverwrites: ZSurveyWorkspaceOverwrites.nullable(),
   styling: ZSurveyStyling.nullable(),
   showLanguageSwitch: z.boolean().nullable(),
+  autoSelectLanguage: z.boolean().nullish(),
   surveyClosedMessage: ZSurveyClosedMessage.nullable(),
   segment: ZSegment.nullable(),
   singleUse: ZSurveySingleUse.nullable(),

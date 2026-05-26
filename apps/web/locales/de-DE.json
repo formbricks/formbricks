@@ -2845,6 +2845,8 @@
         "auto_save_disabled": "Automatisches Speichern deaktiviert",
         "auto_save_disabled_tooltip": "Deine Umfrage wird nur im Entwurfsmodus automatisch gespeichert. So wird sichergestellt, dass öffentliche Umfragen nicht versehentlich aktualisiert werden.",
         "auto_save_on": "Automatisches Speichern an",
+        "auto_select_browser_language": "Browsersprache standardmäßig verwenden",
+        "auto_select_browser_language_description": "Öffnet die Umfrage automatisch in der Browsersprache der befragten Person, wenn diese Sprache aktiv ist. Fällt auf die Standardsprache zurück.",
         "automatically_close_survey_after_n_seconds_if_no_response": "Umfrage automatisch nach <autoCloseInput /> Sekunden schließen, wenn nach dem Auslösen keine Antwort erfolgt.",
         "automatically_close_the_survey_after_a_certain_number_of_responses": "Schließe die Umfrage automatisch nach einer bestimmten Anzahl an Antworten.",
         "automatically_close_the_survey_if_the_user_does_not_respond_after_certain_number_of_seconds": "Schließe die Umfrage automatisch, wenn der Nutzer nach einer bestimmten Anzahl an Sekunden nicht antwortet.",

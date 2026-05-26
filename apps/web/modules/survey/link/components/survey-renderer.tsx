@@ -21,6 +21,7 @@ import { VerifyEmail } from "@/modules/survey/link/components/verify-email";
 import { getEmailVerificationDetails } from "@/modules/survey/link/lib/helper";
 import type { TLinkSurveySearchParams } from "@/modules/survey/link/lib/types";
 import { hasUserIdSearchParam } from "@/modules/survey/link/lib/user-id";
+import { getSurveyLanguageCode } from "@/modules/survey/link/lib/utils";
 import { TWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
 
 interface SurveyRendererProps {
@@ -34,6 +35,7 @@ interface SurveyRendererProps {
   // New props - pre-fetched in parent
   workspaceContext: TWorkspaceContextForLinkSurvey;
   locale: TUserLocale;
+  browserLanguageCodes?: string[];
   responseCount?: number;
 }
 
@@ -58,6 +60,7 @@ export const renderSurvey = async ({
   isPreview,
   workspaceContext,
   locale,
+  browserLanguageCodes = [],
   responseCount,
 }: SurveyRendererProps) => {
   const langParam = searchParams.lang;
@@ -109,7 +112,7 @@ export const renderSurvey = async ({
         <VerifyEmail
           survey={survey}
           isErrorComponent={true}
-          languageCode={getLanguageCode(langParam, survey)}
+          languageCode={getSurveyLanguageCode(langParam, survey, browserLanguageCodes)}
           styling={workspace.styling}
           locale={locale}
         />
@@ -120,7 +123,7 @@ export const renderSurvey = async ({
         singleUseId={searchParams.suId ?? ""}
         singleUseToken={searchParams.suToken}
         survey={survey}
-        languageCode={getLanguageCode(langParam, survey)}
+        languageCode={getSurveyLanguageCode(langParam, survey, browserLanguageCodes)}
         styling={workspace.styling}
         locale={locale}
       />
@@ -129,7 +132,7 @@ export const renderSurvey = async ({
 
   // Compute final styling based on workspace and survey settings
   const styling = computeStyling(workspace.styling, survey.styling);
-  const languageCode = getLanguageCode(langParam, survey);
+  const languageCode = getSurveyLanguageCode(langParam, survey, browserLanguageCodes);
   const publicDomain = getPublicDomain();
   const canReadUserIdFromUrl =
     allowUrlUserIdLookup && !contactId && hasUserIdSearchParam(searchParams)
@@ -201,25 +204,4 @@ function computeStyling(
     return workspaceStyling;
   }
   return surveyStyling?.overwriteThemeStyling ? surveyStyling : workspaceStyling;
-}
-
-/**
- * Determines the language code to use for the survey.
- * Checks URL parameter against available survey languages and returns
- * "default" if language is not found or disabled.
- */
-function getLanguageCode(langParam: string | undefined, survey: TSurvey): string {
-  if (!langParam) return "default";
-
-  const selectedLanguage = survey.languages.find((surveyLanguage) => {
-    return (
-      surveyLanguage.language.code.toLowerCase() === langParam.toLowerCase() ||
-      surveyLanguage.language.alias?.toLowerCase() === langParam.toLowerCase()
-    );
-  });
-
-  if (!selectedLanguage || selectedLanguage?.default || !selectedLanguage?.enabled) {
-    return "default";
-  }
-  return selectedLanguage.language.code;
 }

@@ -24,6 +24,7 @@ import {
   mockActionClass,
   mockId,
   mockOrganizationOutput,
+  mockSurveyLanguages,
   mockSurveyOutput,
   mockSurveyWithLogic,
   mockTransformedSurveyOutput,
@@ -628,6 +629,33 @@ describe("Tests for createSurvey", () => {
     languages: [],
   } as TSurveyCreateInput;
 
+  const getMultiLanguageCreateSurveyInput = (): TSurveyCreateInput =>
+    ({
+      ...mockCreateSurveyInput,
+      welcomeCard: {
+        ...mockCreateSurveyInput.welcomeCard,
+        headline: { default: "Welcome", de: "Willkommen" },
+      },
+      questions: mockCreateSurveyInput.questions.map((question) => {
+        if ("choices" in question && Array.isArray(question.choices)) {
+          return {
+            ...question,
+            headline: { ...question.headline, de: question.headline.default },
+            choices: question.choices.map((choice) => ({
+              ...choice,
+              label: { ...choice.label, de: choice.label.default },
+            })),
+          };
+        }
+
+        return {
+          ...question,
+          headline: { ...question.headline, de: question.headline.default },
+        };
+      }),
+      languages: mockSurveyLanguages,
+    }) as TSurveyCreateInput;
+
   const mockActionClasses = [
     {
       id: "action-123",
@@ -658,6 +686,45 @@ describe("Tests for createSurvey", () => {
       expect(prisma.survey.create).toHaveBeenCalled();
       expect(result.name).toEqual(mockSurveyOutput.name);
       expect(subscribeOrganizationMembersToSurveyResponses).toHaveBeenCalled();
+    });
+
+    test("enables browser language auto-selection by default for new multi-language surveys", async () => {
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
+      prisma.survey.create.mockResolvedValueOnce({
+        ...mockSurveyOutput,
+      });
+
+      await createSurvey(mockWorkspaceId, {
+        ...getMultiLanguageCreateSurveyInput(),
+      });
+
+      expect(prisma.survey.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            autoSelectLanguage: true,
+          }),
+        })
+      );
+    });
+
+    test("preserves explicit browser language auto-selection setting on create", async () => {
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
+      prisma.survey.create.mockResolvedValueOnce({
+        ...mockSurveyOutput,
+      });
+
+      await createSurvey(mockWorkspaceId, {
+        ...getMultiLanguageCreateSurveyInput(),
+        autoSelectLanguage: false,
+      });
+
+      expect(prisma.survey.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            autoSelectLanguage: false,
+          }),
+        })
+      );
     });
 
     test("creates a private segment for app surveys", async () => {

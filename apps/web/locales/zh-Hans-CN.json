@@ -2845,6 +2845,8 @@
         "auto_save_disabled": "自动保存已禁用",
         "auto_save_disabled_tooltip": "您的调查仅在草稿状态时自动保存。这确保公开的调查不会被意外更新。",
         "auto_save_on": "自动保存已启用",
+        "auto_select_browser_language": "默认使用浏览器语言",
+        "auto_select_browser_language_description": "当受访者的浏览器语言处于启用状态时，自动以该语言打开调查。否则回退到默认语言。",
         "automatically_close_survey_after_n_seconds_if_no_response": "如果没有回复，在触发后 <autoCloseInput /> 秒自动关闭调查。",
         "automatically_close_the_survey_after_a_certain_number_of_responses": "自动 关闭 调查 在 达到 一定数量 的 回应 后",
         "automatically_close_the_survey_if_the_user_does_not_respond_after_certain_number_of_seconds": "用户未在一定秒数内应答时 自动关闭 问卷",

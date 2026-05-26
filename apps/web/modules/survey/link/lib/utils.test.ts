@@ -3,7 +3,13 @@ import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { getElementsFromSurveyBlocks, getWebAppLocale, isRTL, isRTLLanguage } from "./utils";
+import {
+  getElementsFromSurveyBlocks,
+  getSurveyLanguageCode,
+  getWebAppLocale,
+  isRTL,
+  isRTLLanguage,
+} from "./utils";
 
 const createMockSurvey = (languages: TSurvey["languages"] = []): TSurvey =>
   ({
@@ -45,6 +51,7 @@ const createMockSurvey = (languages: TSurvey["languages"] = []): TSurvey =>
     delay: 0,
     autoComplete: null,
     showLanguageSwitch: null,
+    autoSelectLanguage: null,
     recaptcha: null,
     isBackButtonHidden: false,
     isCaptureIpEnabled: false,
@@ -95,6 +102,80 @@ describe("getWebAppLocale", () => {
   test("matches base language code for variants", () => {
     expect(getWebAppLocale("pt-PT", createMockSurvey())).toBe("pt-PT");
     expect(getWebAppLocale("es-MX", createMockSurvey())).toBe("es-ES");
+  });
+});
+
+describe("getSurveyLanguageCode", () => {
+  const language = (code: string, overrides: Partial<TSurvey["languages"][number]> = {}) => ({
+    language: {
+      id: `lang-${code}`,
+      code,
+      alias: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      projectId: "p1",
+    },
+    default: false,
+    enabled: true,
+    ...overrides,
+  });
+
+  test("uses the URL language parameter before browser language auto-selection", () => {
+    const survey = {
+      ...createMockSurvey([language("en", { default: true }), language("de")]),
+      autoSelectLanguage: true,
+    };
+
+    expect(getSurveyLanguageCode("de", survey, ["en-US"])).toBe("de");
+  });
+
+  test("matches browser language exactly when auto-selection is enabled", () => {
+    const survey = {
+      ...createMockSurvey([language("en", { default: true }), language("de-DE")]),
+      autoSelectLanguage: true,
+    };
+
+    expect(getSurveyLanguageCode(undefined, survey, ["de-DE", "en-US"])).toBe("de-DE");
+  });
+
+  test("matches browser language by base language when exact variant is unavailable", () => {
+    const survey = {
+      ...createMockSurvey([language("en", { default: true }), language("es-ES")]),
+      autoSelectLanguage: true,
+    };
+
+    expect(getSurveyLanguageCode(undefined, survey, ["es-MX", "en-US"])).toBe("es-ES");
+  });
+
+  test("uses aliases and ignores disabled languages", () => {
+    const survey = {
+      ...createMockSurvey([
+        language("en", { default: true }),
+        language("de", { enabled: false }),
+        language("fr-FR", {
+          language: {
+            id: "lang-fr-FR",
+            code: "fr-FR",
+            alias: "fr",
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            projectId: "p1",
+          },
+        }),
+      ]),
+      autoSelectLanguage: true,
+    };
+
+    expect(getSurveyLanguageCode(undefined, survey, ["de-DE", "fr-CA"])).toBe("fr-FR");
+  });
+
+  test("falls back to default language when auto-selection is disabled or unmatched", () => {
+    const survey = createMockSurvey([language("en", { default: true }), language("de")]);
+
+    expect(getSurveyLanguageCode(undefined, survey, ["de-DE"])).toBe("default");
+    expect(getSurveyLanguageCode(undefined, { ...survey, autoSelectLanguage: true }, ["fr-FR"])).toBe(
+      "default"
+    );
   });
 });
 

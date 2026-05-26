@@ -81,6 +81,7 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
             variables: true,
             type: true,
             showLanguageSwitch: true,
+            autoSelectLanguage: true,
             languages: {
               select: {
                 default: true,

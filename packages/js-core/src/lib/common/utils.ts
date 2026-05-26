@@ -1,3 +1,4 @@
+import { resolveSurveyLanguage } from "@formbricks/types/surveys/language";
 import { Logger } from "@/lib/common/logger";
 import type {
   TSurveyStyling,
@@ -173,27 +174,18 @@ export const getDefaultLanguageCode = (survey: TWorkspaceStateSurvey): string | 
   if (defaultSurveyLanguage) return defaultSurveyLanguage.language.code;
 };
 
-export const getLanguageCode = (survey: TWorkspaceStateSurvey, language?: string): string | undefined => {
-  const availableLanguageCodes = survey.languages.map((surveyLanguage) => surveyLanguage.language.code);
-  if (!language) return "default";
-
-  const selectedLanguage = survey.languages.find((surveyLanguage) => {
-    return (
-      surveyLanguage.language.code.toLowerCase() === language.toLowerCase() ||
-      surveyLanguage.language.alias?.toLowerCase() === language.toLowerCase()
-    );
+export const getLanguageCode = (
+  survey: TWorkspaceStateSurvey,
+  language?: string,
+  fallbackLanguages: string[] = []
+): string | undefined => {
+  return resolveSurveyLanguage({
+    languages: survey.languages,
+    explicitLanguageCode: language,
+    browserLanguageCodes: fallbackLanguages,
+    autoSelectLanguage: survey.autoSelectLanguage,
+    unmatchedExplicitLanguageBehavior: "undefined",
   });
-  if (selectedLanguage?.default) {
-    return "default";
-  }
-  if (
-    !selectedLanguage ||
-    !selectedLanguage.enabled ||
-    !availableLanguageCodes.includes(selectedLanguage.language.code)
-  ) {
-    return undefined;
-  }
-  return selectedLanguage.language.code;
 };
 
 export const getSecureRandom = (): number => {

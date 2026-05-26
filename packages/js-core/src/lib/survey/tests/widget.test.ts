@@ -83,6 +83,22 @@ describe("widget-file", () => {
     return formbricksSurveys;
   };
 
+  const setNavigatorMock = (navigatorValue: Partial<Navigator>): void => {
+    Object.defineProperty(globalThis, "navigator", {
+      configurable: true,
+      value: navigatorValue,
+    });
+  };
+
+  const restoreNavigator = (navigatorDescriptor: PropertyDescriptor | undefined): void => {
+    if (navigatorDescriptor) {
+      Object.defineProperty(globalThis, "navigator", navigatorDescriptor);
+      return;
+    }
+
+    Reflect.deleteProperty(globalThis, "navigator");
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
     document.body.innerHTML = "";
@@ -98,6 +114,23 @@ describe("widget-file", () => {
 
   test("setIsSurveyRunning toggles internal state (covered by usage in other tests)", () => {
     widget.setIsSurveyRunning(true);
+  });
+
+  test("getBrowserLanguageCodes prefers navigator.languages and falls back to navigator.language", () => {
+    const originalNavigator = Object.getOwnPropertyDescriptor(globalThis, "navigator");
+
+    try {
+      setNavigatorMock({ languages: ["de-DE", "", "en-US"] as unknown as Navigator["languages"] });
+      expect(widget.getBrowserLanguageCodes()).toEqual(["de-DE", "en-US"]);
+
+      setNavigatorMock({ languages: [] as unknown as Navigator["languages"], language: "fr-FR" });
+      expect(widget.getBrowserLanguageCodes()).toEqual(["fr-FR"]);
+
+      setNavigatorMock({ language: "" });
+      expect(widget.getBrowserLanguageCodes()).toEqual([]);
+    } finally {
+      restoreNavigator(originalNavigator);
+    }
   });
 
   test("triggerSurvey skips if shouldDisplayBasedOnPercentage returns false", async () => {
@@ -226,6 +259,69 @@ describe("widget-file", () => {
     expect(mockLogger.debug).toHaveBeenCalledWith(
       `Survey "${mockSurvey.id}" is not available in specified language.`
     );
+  });
+
+  test("renderWidget passes browser languages when auto-select is enabled and no user language is set", async () => {
+    const originalNavigator = Object.getOwnPropertyDescriptor(globalThis, "navigator");
+
+    try {
+      setNavigatorMock({ languages: ["de-DE", "en-US"] as unknown as Navigator["languages"] });
+
+      const mockConfigValue = {
+        get: vi.fn().mockReturnValue({
+          appUrl: "https://fake.app",
+          workspaceId: "env_123",
+          workspace: {
+            data: {
+              settings: {
+                clickOutsideClose: true,
+                overlay: "none",
+                placement: "bottomRight",
+                inAppSurveyBranding: true,
+              },
+            },
+          },
+          user: {
+            data: {
+              userId: "user_abc",
+              displays: [],
+              responses: [],
+              lastDisplayAt: null,
+            },
+          },
+        }),
+        update: vi.fn(),
+      };
+
+      getInstanceConfigMock.mockReturnValue(mockConfigValue as unknown as Config);
+      widget.setIsSurveyRunning(false);
+      (getLanguageCode as Mock).mockReturnValueOnce("de");
+
+      // @ts-expect-error -- mock window.formbricksSurveys
+      window.formbricksSurveys = {
+        renderSurvey: vi.fn(),
+      };
+
+      vi.useFakeTimers();
+
+      const autoSelectSurvey = {
+        ...mockSurvey,
+        autoSelectLanguage: true,
+        delay: 0,
+        languages: [
+          { language: { code: "en" }, default: true, enabled: true },
+          { language: { code: "de" }, default: false, enabled: true },
+        ],
+      } as unknown as TWorkspaceStateSurvey;
+
+      await widget.renderWidget(autoSelectSurvey);
+      vi.advanceTimersByTime(0);
+
+      expect(getLanguageCode).toHaveBeenCalledWith(autoSelectSurvey, undefined, ["de-DE", "en-US"]);
+    } finally {
+      vi.useRealTimers();
+      restoreNavigator(originalNavigator);
+    }
   });
 
   test("closeSurvey removes widget container, resets filtered surveys, sets isSurveyRunning=false", () => {

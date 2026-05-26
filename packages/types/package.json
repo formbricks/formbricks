@@ -12,6 +12,8 @@
   "scripts": {
     "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "clean": "rimraf node_modules .turbo"
   },
   "dependencies": {
@@ -21,6 +23,8 @@
     "node-html-parser": "7.1.0"
   },
   "devDependencies": {
-    "@formbricks/config-typescript": "workspace:*"
+    "@formbricks/config-typescript": "workspace:*",
+    "@vitest/coverage-v8": "4.0.18",
+    "vitest": "4.0.18"
   }
 }
