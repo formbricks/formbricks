@@ -63,23 +63,52 @@ type Args = {
 const parseArgs = (): Args => {
   const args: Args = { products: [], apply: false, limit: null, rate: 3 };
   const argv = process.argv.slice(2);
+
+  // Pull the value that follows a value-taking flag and bail out clearly if
+  // it's missing or another flag. Without this, e.g. `--limit` at end-of-line
+  // would parse as NaN and the script would slice(0, NaN) → empty → silently
+  // process zero subscriptions with no error.
+  const takeValue = (flag: string, i: number): string => {
+    const value = argv[i + 1];
+    if (value === undefined || value.startsWith("--")) {
+      console.error(`${flag} requires a value`);
+      process.exit(1);
+    }
+    return value;
+  };
+
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
-    if (a === "--product") args.products.push(argv[++i]);
-    else if (a === "--apply") args.apply = true;
-    else if (a === "--limit") args.limit = Number.parseInt(argv[++i], 10);
-    else if (a === "--rate") args.rate = Number.parseFloat(argv[++i]);
-    else {
+    if (a === "--product") {
+      args.products.push(takeValue("--product", i));
+      i++;
+    } else if (a === "--apply") {
+      args.apply = true;
+    } else if (a === "--limit") {
+      const raw = takeValue("--limit", i);
+      i++;
+      const parsed = Number.parseInt(raw, 10);
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        console.error(`--limit must be a positive integer (got: ${raw})`);
+        process.exit(1);
+      }
+      args.limit = parsed;
+    } else if (a === "--rate") {
+      const raw = takeValue("--rate", i);
+      i++;
+      const parsed = Number.parseFloat(raw);
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        console.error(`--rate must be a positive number (got: ${raw})`);
+        process.exit(1);
+      }
+      args.rate = parsed;
+    } else {
       console.error(`Unknown arg: ${a}`);
       process.exit(1);
     }
   }
   if (args.products.length === 0) {
     console.error("Need at least one --product <prod_id>");
-    process.exit(1);
-  }
-  if (!Number.isFinite(args.rate) || args.rate <= 0) {
-    console.error("--rate must be a positive number");
     process.exit(1);
   }
   return args;
