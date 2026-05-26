@@ -121,13 +121,13 @@ const log = (msg: string, extra?: Record<string, unknown>) => {
   else console.log(`[${new Date().toISOString()}] ${msg}`);
 };
 
-const priceIdOf = (item: Stripe.SubscriptionItem): string =>
-  typeof item.price === "string" ? item.price : item.price.id;
+// SubscriptionItem.price is always an expanded Stripe.Price on retrieved items
+// (the string-vs-object duality in the Stripe types applies to Price.product
+// and Subscription.customer, not here), so no string-narrowing needed.
+const priceIdOf = (item: Stripe.SubscriptionItem): string => item.price.id;
 
-const isBaseLicensedItem = (item: Stripe.SubscriptionItem): boolean => {
-  if (typeof item.price === "string") return false;
-  return item.price.recurring?.usage_type === "licensed";
-};
+const isBaseLicensedItem = (item: Stripe.SubscriptionItem): boolean =>
+  item.price.recurring?.usage_type === "licensed";
 
 const isTouchClone = (price: Stripe.Price): boolean =>
   price.metadata?.clone_reason === CLONE_REASON && typeof price.metadata?.clone_of === "string";
@@ -146,17 +146,9 @@ const priceAttributesMatch = (a: Stripe.Price, b: Stripe.Price): boolean =>
 
 const listActivePricesForProduct = async (productId: string): Promise<Stripe.Price[]> => {
   const all: Stripe.Price[] = [];
-  let startingAfter: string | undefined;
-  do {
-    const page = await stripe.prices.list({
-      product: productId,
-      active: true,
-      limit: 100,
-      ...(startingAfter ? { starting_after: startingAfter } : {}),
-    });
-    all.push(...page.data);
-    startingAfter = page.has_more ? page.data.at(-1)?.id : undefined;
-  } while (startingAfter);
+  for await (const price of stripe.prices.list({ product: productId, active: true })) {
+    all.push(price);
+  }
   return all;
 };
 
@@ -165,18 +157,13 @@ const listSubscriptionsForPrice = async (
   status: Stripe.SubscriptionListParams.Status
 ): Promise<Stripe.Subscription[]> => {
   const all: Stripe.Subscription[] = [];
-  let startingAfter: string | undefined;
-  do {
-    const page = await stripe.subscriptions.list({
-      price: priceId,
-      status,
-      limit: 100,
-      expand: ["data.items.data.price"],
-      ...(startingAfter ? { starting_after: startingAfter } : {}),
-    });
-    all.push(...page.data);
-    startingAfter = page.has_more ? page.data.at(-1)?.id : undefined;
-  } while (startingAfter);
+  for await (const sub of stripe.subscriptions.list({
+    price: priceId,
+    status,
+    expand: ["data.items.data.price"],
+  })) {
+    all.push(sub);
+  }
   return all;
 };
 
@@ -286,7 +273,7 @@ const groupAndClassify = (subs: Stripe.Subscription[]): Map<string, SubTarget[]>
   for (const sub of subs) {
     const baseItem = sub.items.data.find(isBaseLicensedItem);
     if (!baseItem) continue;
-    const basePrice = baseItem.price as Stripe.Price;
+    const basePrice = baseItem.price;
     const stuckOnClone = isTouchClone(basePrice);
     const canonicalId = stuckOnClone ? (basePrice.metadata.clone_of as string) : basePrice.id;
     if (!out.has(canonicalId)) out.set(canonicalId, []);
@@ -377,6 +364,16 @@ const main = async () => {
   const args = parseArgs();
   const mode = args.apply ? "APPLY" : "DRY-RUN";
   const keyKind = SECRET.startsWith("sk_test_") ? "TEST" : SECRET.startsWith("sk_live_") ? "LIVE" : "UNKNOWN";
+
+  // Refuse to proceed if the key doesn't look like a real Stripe API key.
+  // Stripe would reject the first API call anyway, but the error message
+  // is clearer if we surface it here before pagination, retries, etc.
+  if (keyKind === "UNKNOWN") {
+    console.error(
+      "STRIPE_SECRET_KEY does not look like a Stripe API key (expected sk_test_… or sk_live_…). Aborting."
+    );
+    process.exit(1);
+  }
 
   log(`Starting backfill`, {
     mode,
