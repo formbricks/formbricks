@@ -24,7 +24,6 @@
   },
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",
-    "@formbricks/database": "workspace:*",
     "@vitest/coverage-v8": "4.0.18",
     "vitest": "4.0.18"
   }

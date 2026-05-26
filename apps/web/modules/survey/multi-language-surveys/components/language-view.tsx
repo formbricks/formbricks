@@ -149,7 +149,7 @@ export const LanguageView = ({
           buttonVariant: "destructive",
           onConfirm: () => {
             // Strip all non-default language keys from the survey data
-            let cleanedSurvey = { ...localSurvey, autoSelectLanguage: false };
+            let cleanedSurvey: TSurvey = { ...localSurvey, autoSelectLanguage: false };
             for (const lang of localSurvey.languages) {
               if (!lang.default) {
                 cleanedSurvey = removeLanguageKeysFromSurvey(cleanedSurvey, lang.language.code);
