@@ -94,10 +94,30 @@ describe("validateElementResponse", () => {
         type: TSurveyElementTypeEnum.MultipleChoiceMulti,
         headline: { default: "Pick" },
         required: true,
-        choices: [{ id: "opt1", label: { default: "Option 1" } }],
+        choices: [
+          { id: "opt1", label: { default: "Option 1" } },
+          { id: "other", label: { default: "Other" } },
+        ],
       } as unknown as TSurveyElement;
 
       const result = validateElementResponse(element, ["opt1", ""], "en");
+      expect(result.valid).toBe(false);
+      expect(result.errors[0].ruleId).toBe("required");
+    });
+
+    test("should return error when optional multi-select has other selected but no text", () => {
+      const element = {
+        id: "mc1",
+        type: TSurveyElementTypeEnum.MultipleChoiceMulti,
+        headline: { default: "Pick" },
+        required: false,
+        choices: [
+          { id: "opt1", label: { default: "Option 1" } },
+          { id: "other", label: { default: "Other" } },
+        ],
+      } as unknown as TSurveyElement;
+
+      const result = validateElementResponse(element, ["Option 1", ""], "en");
       expect(result.valid).toBe(false);
       expect(result.errors[0].ruleId).toBe("required");
     });
@@ -108,7 +128,10 @@ describe("validateElementResponse", () => {
         type: TSurveyElementTypeEnum.MultipleChoiceMulti,
         headline: { default: "Pick" },
         required: true,
-        choices: [{ id: "opt1", label: { default: "Option 1" } }],
+        choices: [
+          { id: "opt1", label: { default: "Option 1" } },
+          { id: "other", label: { default: "Other" } },
+        ],
       } as unknown as TSurveyElement;
 
       const result = validateElementResponse(element, ["opt1", "", "custom"], "en");

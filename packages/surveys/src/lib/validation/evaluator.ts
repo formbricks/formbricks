@@ -125,6 +125,33 @@ const validateRequiredMatrix = (
   return null;
 };
 
+const validateMultiSelectOtherValue = (
+  element: TSurveyElement,
+  value: TResponseDataValue,
+  t: TFunction
+): TValidationError | null => {
+  if (element.type !== TSurveyElementTypeEnum.MultipleChoiceMulti || !Array.isArray(value)) {
+    return null;
+  }
+
+  const hasOtherOption = "choices" in element && element.choices.some((choice) => choice.id === "other");
+  if (!hasOtherOption) {
+    return null;
+  }
+
+  const sentinelIndex = value.indexOf("");
+  if (sentinelIndex === -1) {
+    return null;
+  }
+
+  const otherText = value[sentinelIndex + 1];
+  if (!otherText || (typeof otherText === "string" && otherText.trim() === "")) {
+    return createRequiredError(t);
+  }
+
+  return null;
+};
+
 /**
  * Check required field validation
  */
@@ -152,17 +179,6 @@ const checkRequiredField = (
 
   if (isEmpty(value)) {
     return createRequiredError(t);
-  }
-
-  // For multi-select: if "other" is selected (sentinel ""), require the other text to be non-empty
-  if (element.type === TSurveyElementTypeEnum.MultipleChoiceMulti && Array.isArray(value)) {
-    const sentinelIndex = value.indexOf("");
-    if (sentinelIndex !== -1) {
-      const otherText = value[sentinelIndex + 1];
-      if (!otherText || (typeof otherText === "string" && otherText.trim() === "")) {
-        return createRequiredError(t);
-      }
-    }
   }
 
   return null;
@@ -376,6 +392,11 @@ export const validateElementResponse = (
   const requiredError = checkRequiredField(element, value, t);
   if (requiredError) {
     errors.push(requiredError);
+  }
+
+  const multiSelectOtherError = validateMultiSelectOtherValue(element, value, t);
+  if (multiSelectOtherError) {
+    errors.push(multiSelectOtherError);
   }
 
   // Validation rules apply to matrix elements regardless of required status
