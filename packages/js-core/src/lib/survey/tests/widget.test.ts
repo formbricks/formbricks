@@ -83,6 +83,22 @@ describe("widget-file", () => {
     return formbricksSurveys;
   };
 
+  const setNavigatorMock = (navigatorValue: Partial<Navigator>): void => {
+    Object.defineProperty(globalThis, "navigator", {
+      configurable: true,
+      value: navigatorValue,
+    });
+  };
+
+  const restoreNavigator = (navigatorDescriptor: PropertyDescriptor | undefined): void => {
+    if (navigatorDescriptor) {
+      Object.defineProperty(globalThis, "navigator", navigatorDescriptor);
+      return;
+    }
+
+    Reflect.deleteProperty(globalThis, "navigator");
+  };
+
   beforeEach(() => {
     vi.clearAllMocks();
     document.body.innerHTML = "";
@@ -101,44 +117,19 @@ describe("widget-file", () => {
   });
 
   test("getBrowserLanguageCodes prefers navigator.languages and falls back to navigator.language", () => {
-    const originalLanguages = navigator.languages;
-    const originalLanguage = navigator.language;
+    const originalNavigator = Object.getOwnPropertyDescriptor(globalThis, "navigator");
 
     try {
-      Object.defineProperty(navigator, "languages", {
-        configurable: true,
-        value: ["de-DE", "", "en-US"],
-      });
+      setNavigatorMock({ languages: ["de-DE", "", "en-US"] as unknown as Navigator["languages"] });
       expect(widget.getBrowserLanguageCodes()).toEqual(["de-DE", "en-US"]);
 
-      Object.defineProperty(navigator, "languages", {
-        configurable: true,
-        value: [],
-      });
-      Object.defineProperty(navigator, "language", {
-        configurable: true,
-        value: "fr-FR",
-      });
+      setNavigatorMock({ languages: [] as unknown as Navigator["languages"], language: "fr-FR" });
       expect(widget.getBrowserLanguageCodes()).toEqual(["fr-FR"]);
 
-      Object.defineProperty(navigator, "languages", {
-        configurable: true,
-        value: undefined,
-      });
-      Object.defineProperty(navigator, "language", {
-        configurable: true,
-        value: "",
-      });
+      setNavigatorMock({ language: "" });
       expect(widget.getBrowserLanguageCodes()).toEqual([]);
     } finally {
-      Object.defineProperty(navigator, "languages", {
-        configurable: true,
-        value: originalLanguages,
-      });
-      Object.defineProperty(navigator, "language", {
-        configurable: true,
-        value: originalLanguage,
-      });
+      restoreNavigator(originalNavigator);
     }
   });
 
@@ -271,13 +262,10 @@ describe("widget-file", () => {
   });
 
   test("renderWidget passes browser languages when auto-select is enabled and no user language is set", async () => {
-    const originalLanguages = navigator.languages;
+    const originalNavigator = Object.getOwnPropertyDescriptor(globalThis, "navigator");
 
     try {
-      Object.defineProperty(navigator, "languages", {
-        configurable: true,
-        value: ["de-DE", "en-US"],
-      });
+      setNavigatorMock({ languages: ["de-DE", "en-US"] as unknown as Navigator["languages"] });
 
       const mockConfigValue = {
         get: vi.fn().mockReturnValue({
@@ -332,10 +320,7 @@ describe("widget-file", () => {
       expect(getLanguageCode).toHaveBeenCalledWith(autoSelectSurvey, undefined, ["de-DE", "en-US"]);
     } finally {
       vi.useRealTimers();
-      Object.defineProperty(navigator, "languages", {
-        configurable: true,
-        value: originalLanguages,
-      });
+      restoreNavigator(originalNavigator);
     }
   });
 
