@@ -2,7 +2,8 @@
   "common": {
     "and": "和",
     "apply": "应用",
-    "auto_close_wrapper": "自动关闭包装器",
+    "auto_close_announcement": "如果你没有互动，调查将自动关闭。",
+    "auto_close_countdown": "自动关闭倒计时",
     "back": "返回",
     "close_survey": "关闭调查",
     "company_logo": "公司标志",

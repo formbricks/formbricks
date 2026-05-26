@@ -2,7 +2,8 @@
   "common": {
     "and": "y",
     "apply": "aplicar",
-    "auto_close_wrapper": "Cerrar automáticamente",
+    "auto_close_announcement": "La encuesta se cerrará automáticamente si no interactúas.",
+    "auto_close_countdown": "Cuenta atrás de cierre automático",
     "back": "Atrás",
     "close_survey": "Cerrar encuesta",
     "company_logo": "Logo de la empresa",

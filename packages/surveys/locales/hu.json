@@ -2,7 +2,8 @@
   "common": {
     "and": "és",
     "apply": "alkalmaz",
-    "auto_close_wrapper": "Borítás automatikus bezárása",
+    "auto_close_announcement": "A kérdőív automatikusan bezárul, ha nem lép interakcióba.",
+    "auto_close_countdown": "Automatikus bezárás visszaszámláló",
     "back": "Vissza",
     "close_survey": "Kérdőív lezárása",
     "company_logo": "Vállalat logója",

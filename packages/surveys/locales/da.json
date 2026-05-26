@@ -2,7 +2,8 @@
   "common": {
     "and": "og",
     "apply": "anvend",
-    "auto_close_wrapper": "Auto close wrapper",
+    "auto_close_announcement": "Undersøgelsen lukkes automatisk, medmindre du interagerer.",
+    "auto_close_countdown": "Nedtælling til automatisk lukning",
     "back": "Tilbage",
     "close_survey": "Luk undersøgelse",
     "company_logo": "Firmalogo",

@@ -2,7 +2,8 @@
   "common": {
     "and": "および",
     "apply": "適用",
-    "auto_close_wrapper": "自動クローズラッパー",
+    "auto_close_announcement": "操作しない場合、アンケートは自動的に閉じます。",
+    "auto_close_countdown": "自動クローズのカウントダウン",
     "back": "戻る",
     "close_survey": "アンケートを閉じる",
     "company_logo": "会社ロゴ",

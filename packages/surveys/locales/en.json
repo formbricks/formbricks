@@ -2,7 +2,8 @@
   "common": {
     "and": "and",
     "apply": "apply",
-    "auto_close_wrapper": "Auto close wrapper",
+    "auto_close_announcement": "This survey will close automatically unless you interact.",
+    "auto_close_countdown": "Auto-close countdown",
     "back": "Back",
     "close_survey": "Close survey",
     "company_logo": "Company Logo",

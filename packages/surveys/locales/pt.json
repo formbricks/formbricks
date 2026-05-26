@@ -2,7 +2,8 @@
   "common": {
     "and": "e",
     "apply": "aplicar",
-    "auto_close_wrapper": "Fechamento automático do wrapper",
+    "auto_close_announcement": "A pesquisa será fechada automaticamente se você não interagir.",
+    "auto_close_countdown": "Contagem regressiva de fechamento automático",
     "back": "Voltar",
     "close_survey": "Fechar pesquisa",
     "company_logo": "Logo da empresa",

@@ -2,7 +2,8 @@
   "common": {
     "and": "en",
     "apply": "Toepassen",
-    "auto_close_wrapper": "Automatisch sluitende wrapper",
+    "auto_close_announcement": "De enquête sluit automatisch als je geen actie onderneemt.",
+    "auto_close_countdown": "Aftellen tot automatisch sluiten",
     "back": "Terug",
     "close_survey": "Enquête sluiten",
     "company_logo": "Bedrijfslogo",

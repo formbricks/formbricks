@@ -2,7 +2,8 @@
   "common": {
     "and": "و",
     "apply": "تطبيق",
-    "auto_close_wrapper": "غلاف إغلاق تلقائي",
+    "auto_close_announcement": "سيتم إغلاق الاستبيان تلقائيًا ما لم تتفاعل معه.",
+    "auto_close_countdown": "العد التنازلي للإغلاق التلقائي",
     "back": "رجوع",
     "close_survey": "إغلاق الاستبيان",
     "company_logo": "شعار الشركة",

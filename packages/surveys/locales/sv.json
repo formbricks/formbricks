@@ -2,7 +2,8 @@
   "common": {
     "and": "och",
     "apply": "Tillämpa",
-    "auto_close_wrapper": "Automatisk stängning",
+    "auto_close_announcement": "Enkäten stängs automatiskt om du inte interagerar.",
+    "auto_close_countdown": "Nedräkning till automatisk stängning",
     "back": "Tillbaka",
     "close_survey": "Stäng enkät",
     "company_logo": "Företagslogotyp",

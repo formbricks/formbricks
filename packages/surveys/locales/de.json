@@ -2,7 +2,8 @@
   "common": {
     "and": "und",
     "apply": "anwenden",
-    "auto_close_wrapper": "Automatisches Schließen",
+    "auto_close_announcement": "Die Umfrage wird automatisch geschlossen, wenn du nicht interagierst.",
+    "auto_close_countdown": "Countdown zum automatischen Schließen",
     "back": "Zurück",
     "close_survey": "Umfrage schließen",
     "company_logo": "Firmenlogo",

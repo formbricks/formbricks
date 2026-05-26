@@ -2,7 +2,8 @@
   "common": {
     "and": "ve",
     "apply": "uygula",
-    "auto_close_wrapper": "Otomatik kapatma sarmalayıcısı",
+    "auto_close_announcement": "Etkileşimde bulunmazsanız anket otomatik olarak kapanacaktır.",
+    "auto_close_countdown": "Otomatik kapanma geri sayımı",
     "back": "Geri",
     "close_survey": "Anketi kapat",
     "company_logo": "Şirket Logosu",

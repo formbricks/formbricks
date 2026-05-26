@@ -2,7 +2,8 @@
   "common": {
     "and": "și",
     "apply": "aplică",
-    "auto_close_wrapper": "Închidere automată a învelișului",
+    "auto_close_announcement": "Sondajul se va închide automat dacă nu interacționezi.",
+    "auto_close_countdown": "Numărătoare inversă pentru închiderea automată",
     "back": "Înapoi",
     "close_survey": "Închide sondajul",
     "company_logo": "Sigla companiei",

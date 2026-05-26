@@ -2,7 +2,8 @@
   "common": {
     "and": "et",
     "apply": "appliquer",
-    "auto_close_wrapper": "Fermeture automatique du wrapper",
+    "auto_close_announcement": "Le sondage se fermera automatiquement si vous n'interagissez pas.",
+    "auto_close_countdown": "Compte à rebours de fermeture automatique",
     "back": "Retour",
     "close_survey": "Fermer le sondage",
     "company_logo": "Logo de l'entreprise",
