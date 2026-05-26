@@ -115,15 +115,17 @@ export const POST = withV1ApiWrapper({
     });
 
     if (!fileUploadPermission.ok) {
+      let responseString: string = "";
+      if (fileUploadPermission.reason === "no_file_upload_element") {
+        responseString = "Survey does not allow file uploads";
+      } else if (fileUploadPermission.reason === "file_upload_element_not_found") {
+        responseString = "Element does not allow file uploads";
+      } else {
+        responseString = "File extension is not allowed for this element";
+      }
+
       return {
-        response: responses.badRequestResponse(
-          fileUploadPermission.reason === "no_file_upload_element"
-            ? "Survey does not allow file uploads"
-            : fileUploadPermission.reason === "file_upload_element_not_found"
-              ? "Element does not allow file uploads"
-              : "File extension is not allowed for this element",
-          undefined
-        ),
+        response: responses.badRequestResponse(responseString, undefined),
       };
     }
 

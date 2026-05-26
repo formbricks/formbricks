@@ -256,7 +256,7 @@ const isScopedPrivateUploadUrl = ({
 }): boolean => {
   const segments = getStorageUrlPathSegments(fileUrl);
 
-  if (!segments || segments.length !== 8) return false;
+  if (segments?.length !== 8) return false;
 
   const [
     storageSegment,
