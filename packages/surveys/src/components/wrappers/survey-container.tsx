@@ -14,6 +14,7 @@ interface SurveyContainerProps {
   clickOutside?: boolean;
   isOpen?: boolean;
   dir?: "ltr" | "rtl" | "auto";
+  lang?: string;
 }
 
 export function SurveyContainer({
@@ -25,6 +26,7 @@ export function SurveyContainer({
   clickOutside,
   isOpen = true,
   dir = "auto",
+  lang,
 }: Readonly<SurveyContainerProps>) {
   const isModal = mode === "modal";
   const { t } = useTranslation();
@@ -74,14 +76,19 @@ export function SurveyContainer({
 
   if (!isModal) {
     return (
-      <div id="fbjs" className="formbricks-form" style={{ height: "100%", width: "100%" }} dir={dir}>
+      <div
+        id="fbjs"
+        className="formbricks-form"
+        style={{ height: "100%", width: "100%" }}
+        dir={dir}
+        lang={lang}>
         {children}
       </div>
     );
   }
 
   return (
-    <div id="fbjs" className="formbricks-form" dir={dir}>
+    <div id="fbjs" className="formbricks-form" dir={dir} lang={lang}>
       <div
         aria-live="assertive"
         className={cn(

@@ -24,6 +24,8 @@ export interface SurveyBaseProps {
   languageCode: string;
   dir?: "ltr" | "rtl" | "auto";
   setDir?: (dir: "ltr" | "rtl" | "auto") => void;
+  lang?: string;
+  setLang?: (lang: string) => void;
   onFileUpload: (file: TJsFileUploadParams["file"], config?: TUploadFileConfig) => Promise<string>;
   responseCount?: number;
   isCardBorderVisible?: boolean;

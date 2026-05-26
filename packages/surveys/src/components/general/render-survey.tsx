@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
+import { getI18nLanguage } from "@/lib/i18n-utils";
 import { isRTLLanguage } from "@/lib/utils";
 import { SurveyContainer } from "../wrappers/survey-container";
 import { Survey } from "./survey";
@@ -11,10 +12,12 @@ export function RenderSurvey(props: SurveyContainerProps) {
   const { onClose } = props;
   const isRTL = isRTLLanguage(props.survey, props.languageCode);
   const [dir, setDir] = useState<"ltr" | "rtl" | "auto">(isRTL ? "rtl" : "ltr");
+  const [lang, setLang] = useState(getI18nLanguage(props.languageCode, props.survey.languages));
 
   useEffect(() => {
     const isRTL = isRTLLanguage(props.survey, props.languageCode);
     setDir(isRTL ? "rtl" : "ltr");
+    setLang(getI18nLanguage(props.languageCode, props.survey.languages));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- Only recalculate direction when languageCode changes, not on survey auto-save
   }, [props.languageCode]);
 
@@ -62,7 +65,8 @@ export function RenderSurvey(props: SurveyContainerProps) {
       clickOutside={props.clickOutside}
       onClose={close}
       isOpen={isOpen}
-      dir={dir}>
+      dir={dir}
+      lang={lang}>
       <Survey
         {...props}
         clickOutside={hasOverlay ? props.clickOutside : true}
@@ -84,6 +88,8 @@ export function RenderSurvey(props: SurveyContainerProps) {
         }}
         dir={dir}
         setDir={setDir}
+        lang={lang}
+        setLang={setLang}
       />
     </SurveyContainer>
   );

@@ -24,6 +24,7 @@ import { WelcomeCard } from "@/components/general/welcome-card";
 import { AutoCloseWrapper } from "@/components/wrappers/auto-close-wrapper";
 import { StackedCardsContainer } from "@/components/wrappers/stacked-cards-container";
 import { ApiClient } from "@/lib/api-client";
+import { getI18nLanguage } from "@/lib/i18n-utils";
 import { evaluateLogic, performActions } from "@/lib/logic";
 import {
   type SerializedSurveyState,
@@ -108,6 +109,7 @@ export function Survey({
   isSpamProtectionEnabled,
   dir = "auto",
   setDir,
+  setLang,
   placement,
   offlineSupport = false,
   onOfflineStatusChange,
@@ -253,6 +255,13 @@ export function Survey({
   );
   const [isSurveyFinished, setIsSurveyFinished] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState(languageCode);
+  const updateSelectedLanguage = useCallback(
+    (nextLanguage: string) => {
+      setSelectedLanguage(nextLanguage);
+      setLang?.(getI18nLanguage(nextLanguage, localSurvey.languages));
+    },
+    [localSurvey.languages, setLang]
+  );
   const [loadingElement, setLoadingElement] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
   const isNavigatingBackRef = useRef(false);
@@ -426,8 +435,8 @@ export function Survey({
   }, [getSetIsResponseSendingFinished]);
 
   useEffect(() => {
-    setSelectedLanguage(languageCode);
-  }, [languageCode]);
+    updateSelectedLanguage(languageCode);
+  }, [languageCode, updateSelectedLanguage]);
 
   // --- Offline support: restore progress from IndexedDB on mount ---
   useEffect(() => {
@@ -484,7 +493,7 @@ export function Survey({
         setTtc(progress.ttc);
         setCurrentVariables(progress.currentVariables);
         setHistory(progress.history);
-        setSelectedLanguage(progress.selectedLanguage);
+        updateSelectedLanguage(progress.selectedLanguage);
 
         // Restore survey state from snapshot
         if (surveyState && progress.surveyStateSnapshot) {
@@ -1202,7 +1211,7 @@ export function Survey({
                     <LanguageSwitch
                       survey={localSurvey}
                       surveyLanguages={localSurvey.languages}
-                      setSelectedLanguageCode={setSelectedLanguage}
+                      setSelectedLanguageCode={updateSelectedLanguage}
                       hoverColor={styling.inputBgColor?.light ?? "#f8fafc"}
                       borderRadius={styling.roundness ?? 8}
                       setDir={setDir}
