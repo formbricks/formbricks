@@ -81,7 +81,7 @@ export const translateSurveyFieldsAction = authenticatedActionClient
       ],
     });
 
-    await assertOrganizationAIConfigured(organizationId, "smartTools");
+    await assertOrganizationAIConfigured(organizationId);
 
     const translations = await translateFields({
       organizationId,

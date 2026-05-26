@@ -75,7 +75,11 @@ export function ElementMedia({ imgUrl, videoUrl, altText = "Image", className }:
         target="_blank"
         rel="noreferrer"
         aria-label={t("common.open_in_new_tab")}
-        className="absolute right-2 bottom-2 flex items-center gap-2 rounded-md bg-slate-800/40 p-1.5 text-white opacity-0 backdrop-blur-lg transition duration-300 ease-in-out group-hover/image:opacity-100 hover:bg-slate-800/65">
+        className={cn(
+          "absolute right-2 bottom-2 flex items-center gap-2 rounded-md bg-slate-800/40 p-1.5",
+          "text-white backdrop-blur-lg transition duration-300 ease-in-out",
+          "opacity-0 group-hover/image:opacity-100 hover:bg-slate-800/65 focus:opacity-100"
+        )}>
         {imgUrl ? <ImageDownIcon size={20} /> : <ExpandIcon size={20} />}
       </a>
     </div>

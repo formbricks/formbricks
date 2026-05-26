@@ -2,8 +2,8 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2Icon, PlusIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -44,6 +44,8 @@ import {
 } from "@/modules/ui/components/select";
 import { Switch } from "@/modules/ui/components/switch";
 import {
+  CSV_HIDDEN_STATIC_MAPPINGS,
+  CSV_PROTECTED_TARGET_IDS,
   TCreateConnectorStep,
   TFieldMapping,
   TFormbricksConnectorForm,
@@ -55,15 +57,17 @@ import {
 import {
   TConnectorOptionId,
   TEnumValidationError,
-  areAllRequiredFieldsMapped,
+  areAllRequiredCsvFieldsMapped,
   isConnectorNameValid,
-  parseCSVColumnsToFields,
   toggleQuestionId,
   validateEnumMappings,
 } from "../utils";
 import { ConnectorTypeSelector } from "./connector-type-selector";
 import { CsvConnectorUI } from "./csv-connector-ui";
 import { FormbricksQuestionList } from "./formbricks-question-list";
+
+const API_INGESTION_DOCS_URL = "https://formbricks.com/docs/unify-feedback/api/rest-api";
+const FEEDBACK_RECORD_MCP_DOCS_URL = "https://formbricks.com/docs/unify-feedback/api/mcp";
 
 interface CreateConnectorModalProps {
   open: boolean;
@@ -106,7 +110,7 @@ const getDialogDescription = (
 const getNextStepButtonLabel = (type: TConnectorOptionId | null, t: (key: string) => string): string => {
   if (type === "formbricks_survey") return t("workspace.unify.select_questions");
   if (type === "csv") return t("workspace.unify.configure_import");
-  if (type === "api_ingestion") return t("workspace.unify.api_ingestion_manage_api_keys");
+  if (type === "api_ingestion") return t("common.learn_more");
   if (type === "feedback_record_mcp") return t("common.learn_more");
   return t("workspace.unify.create_mapping");
 };
@@ -115,6 +119,8 @@ const getSelectableQuestionIds = (survey: TUnifySurvey): string[] =>
   survey.elements
     .filter((element) => !(UNSUPPORTED_CONNECTOR_ELEMENT_TYPES as readonly string[]).includes(element.type))
     .map((element) => element.id);
+
+type TImportState = "success" | "error" | "skipped";
 
 export const CreateConnectorModal = ({
   open,
@@ -126,7 +132,6 @@ export const CreateConnectorModal = ({
   directories,
 }: CreateConnectorModalProps) => {
   const { t } = useTranslation();
-  const router = useRouter();
 
   const defaultConnectorName = useMemo<Record<TConnectorType, string>>(
     () => ({
@@ -158,6 +163,7 @@ export const CreateConnectorModal = ({
   const [isImporting, setIsImporting] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [selectedDirectoryId, setSelectedDirectoryId] = useState<string | null>(directories[0]?.id ?? null);
+  const userEditedConnectorNameRef = useRef(false);
 
   const formbricksValues = formbricksForm.watch();
   const selectedSurveyId = formbricksValues.surveyId;
@@ -172,6 +178,21 @@ export const CreateConnectorModal = ({
     selectedSurveyId && responseCountBySurvey[selectedSurveyId] !== undefined
       ? responseCountBySurvey[selectedSurveyId]
       : null;
+
+  const showFeedbackRecordsSuccessToast = useCallback(
+    (message: string) => {
+      const feedbackRecordsHref = `/workspaces/${workspaceId}/unify/feedback-records`;
+      toast.success(() => (
+        <div className="flex flex-col gap-1">
+          <span>{message}</span>
+          <Link className="text-sm font-medium underline" href={feedbackRecordsHref}>
+            {t("workspace.unify.feedback_records")}
+          </Link>
+        </div>
+      ));
+    },
+    [t, workspaceId]
+  );
 
   const fetchResponseCount = useCallback(
     async (surveyId: string) => {
@@ -226,6 +247,7 @@ export const CreateConnectorModal = ({
     setEnumValidationErrors([]);
     setResponseCountBySurvey({});
     setCsvConnectorName("");
+    userEditedConnectorNameRef.current = false;
     setIsImporting(false);
     setIsCreating(false);
     setSelectedDirectoryId(directories[0]?.id ?? null);
@@ -241,13 +263,12 @@ export const CreateConnectorModal = ({
     if (currentStep !== "selectType" || !selectedType) return;
 
     if (selectedType === "api_ingestion") {
-      handleOpenChange(false);
-      router.push(`/workspaces/${workspaceId}/settings/organization/api-keys`);
+      window.open(API_INGESTION_DOCS_URL, "_blank", "noopener,noreferrer");
       return;
     }
 
     if (selectedType === "feedback_record_mcp") {
-      window.open("https://formbricks.com/docs", "_blank", "noopener,noreferrer");
+      window.open(FEEDBACK_RECORD_MCP_DOCS_URL, "_blank", "noopener,noreferrer");
       return;
     }
 
@@ -276,9 +297,9 @@ export const CreateConnectorModal = ({
     }
   };
 
-  const handleHistoricalImport = async (connectorId: string, surveyId: string) => {
+  const handleHistoricalImport = async (connectorId: string, surveyId: string): Promise<TImportState> => {
     const responseCount = responseCountBySurvey[surveyId] ?? 0;
-    if (responseCount <= 0) return;
+    if (responseCount <= 0) return "skipped";
     setIsImporting(true);
     const importResult = await importHistoricalResponsesAction({
       connectorId,
@@ -288,19 +309,21 @@ export const CreateConnectorModal = ({
     setIsImporting(false);
 
     if (importResult?.data) {
-      toast.success(
+      showFeedbackRecordsSuccessToast(
         t("workspace.unify.historical_import_complete", {
           successes: importResult.data.successes,
           failures: importResult.data.failures,
           skipped: importResult.data.skipped,
         })
       );
+      return "success";
     } else {
       toast.error(getFormattedErrorMessage(importResult));
+      return "error";
     }
   };
 
-  const handleCsvImport = async (connectorId: string) => {
+  const handleCsvImport = async (connectorId: string): Promise<TImportState> => {
     setIsImporting(true);
     const importResult = await importCsvDataAction({
       connectorId,
@@ -310,15 +333,17 @@ export const CreateConnectorModal = ({
     setIsImporting(false);
 
     if (importResult?.data) {
-      toast.success(
+      showFeedbackRecordsSuccessToast(
         t("workspace.unify.csv_import_complete", {
           successes: importResult.data.successes,
           failures: importResult.data.failures,
           skipped: importResult.data.skipped,
         })
       );
+      return "success";
     } else {
-      toast.error(getFormattedErrorMessage(importResult));
+      toast.error(getTranslatedConnectorError(getFormattedErrorMessage(importResult), t));
+      return "error";
     }
   };
 
@@ -346,8 +371,11 @@ export const CreateConnectorModal = ({
       return;
     }
 
-    if (values.importHistorical) {
-      await handleHistoricalImport(connectorId, values.surveyId);
+    const importState = values.importHistorical
+      ? await handleHistoricalImport(connectorId, values.surveyId)
+      : "skipped";
+    if (importState === "skipped") {
+      showFeedbackRecordsSuccessToast(t("workspace.unify.connector_created_successfully"));
     }
 
     setIsCreating(false);
@@ -357,6 +385,15 @@ export const CreateConnectorModal = ({
 
   const handleCreateCsvConnector = async () => {
     if (!selectedDirectoryId || !isConnectorNameValid(csvConnectorName)) return;
+
+    const requiredCheck = areAllRequiredCsvFieldsMapped(mappings);
+    if (!requiredCheck.valid) {
+      toast.error(
+        t("workspace.unify.csv_required_fields_missing", { fields: requiredCheck.missing.join(", ") })
+      );
+      return;
+    }
+
     if (csvParsedData.length > 0) {
       const errors = validateEnumMappings(mappings, csvParsedData);
       if (errors.length > 0) {
@@ -368,11 +405,17 @@ export const CreateConnectorModal = ({
 
     setIsCreating(true);
 
+    // Strip any user-supplied tenant_id and merge hidden static mappings (source_type=csv).
+    const userMappings = mappings.filter((m) =>
+      CSV_PROTECTED_TARGET_IDS.every((id) => m.targetFieldId !== id)
+    );
+    const fieldMappings = [...userMappings, ...CSV_HIDDEN_STATIC_MAPPINGS];
+
     const connectorId = await onCreateConnector({
       name: csvConnectorName.trim(),
       type: "csv",
       feedbackDirectoryId: selectedDirectoryId,
-      fieldMappings: mappings.length > 0 ? mappings : undefined,
+      fieldMappings,
     });
 
     if (!connectorId) {
@@ -380,8 +423,9 @@ export const CreateConnectorModal = ({
       return;
     }
 
-    if (csvParsedData.length > 0) {
-      await handleCsvImport(connectorId);
+    const importState = csvParsedData.length > 0 ? await handleCsvImport(connectorId) : "skipped";
+    if (importState === "skipped") {
+      showFeedbackRecordsSuccessToast(t("workspace.unify.connector_created_successfully"));
     }
 
     setIsCreating(false);
@@ -390,13 +434,16 @@ export const CreateConnectorModal = ({
   };
 
   const isCsvValid = selectedType === "csv" && sourceFields.length > 0;
-  const areCsvRequiredFieldsMapped = areAllRequiredFieldsMapped(mappings);
+  const areCsvRequiredFieldsMapped = areAllRequiredCsvFieldsMapped(mappings).valid;
 
-  const handleLoadSourceFields = () => {
-    if (selectedType === "csv") {
-      const fields = parseCSVColumnsToFields("timestamp,customer_id,rating,feedback_text,category");
-      setSourceFields(fields);
-    }
+  const handleSuggestConnectorName = (name: string) => {
+    if (userEditedConnectorNameRef.current) return;
+    setCsvConnectorName(name);
+  };
+
+  const handleCsvConnectorNameChange = (value: string) => {
+    userEditedConnectorNameRef.current = true;
+    setCsvConnectorName(value);
   };
 
   return (
@@ -435,7 +482,6 @@ export const CreateConnectorModal = ({
                 workspaceId={workspaceId}
               />
             )}
-
             {currentStep === "mapping" && selectedType === "formbricks_survey" && (
               <FormProvider {...formbricksForm}>
                 <form
@@ -538,13 +584,14 @@ export const CreateConnectorModal = ({
             {currentStep === "mapping" && selectedType === "csv" && (
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="connectorName">{t("workspace.unify.source_name")}</Label>
+                  <Label htmlFor="connectorName">{t("workspace.unify.connector_name")}</Label>
                   <Input
                     id="connectorName"
                     value={csvConnectorName}
-                    onChange={(event) => setCsvConnectorName(event.target.value)}
+                    onChange={(event) => handleCsvConnectorNameChange(event.target.value)}
                     placeholder={t("workspace.unify.enter_name_for_source")}
                   />
+                  <p className="text-xs text-slate-500">{t("workspace.unify.connector_name_hint")}</p>
                 </div>
 
                 {directories.length === 0 && <NoFeedbackDirectoryAlert workspaceId={workspaceId} t={t} />}
@@ -558,8 +605,8 @@ export const CreateConnectorModal = ({
                       setEnumValidationErrors([]);
                     }}
                     onSourceFieldsChange={setSourceFields}
-                    onLoadSampleCSV={handleLoadSourceFields}
                     onParsedDataChange={setCsvParsedData}
+                    onSuggestConnectorName={handleSuggestConnectorName}
                   />
                 </div>
 

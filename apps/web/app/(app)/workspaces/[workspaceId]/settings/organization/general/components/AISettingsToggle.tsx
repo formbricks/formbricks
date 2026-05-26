@@ -21,6 +21,7 @@ interface AISettingsToggleProps {
   isInstanceAIConfigured: boolean;
   hasAIPermission: boolean;
   isFormbricksCloud: boolean;
+  enterpriseLicenseRequestFormUrl: string;
 }
 
 export const AISettingsToggle = ({
@@ -29,6 +30,7 @@ export const AISettingsToggle = ({
   isInstanceAIConfigured,
   hasAIPermission,
   isFormbricksCloud,
+  enterpriseLicenseRequestFormUrl,
 }: Readonly<AISettingsToggleProps>) => {
   const { workspace } = useWorkspace();
   const workspaceBasePath = `/workspaces/${workspace?.id}`;
@@ -48,29 +50,18 @@ export const AISettingsToggle = ({
     currentValue: organization.isAISmartToolsEnabled,
     isInstanceConfigured: isInstanceAIConfigured,
   });
-  const displayedDataAnalysisValue = getDisplayedOrganizationAISettingValue({
-    currentValue: organization.isAIDataAnalysisEnabled,
-    isInstanceConfigured: isInstanceAIConfigured,
-  });
 
-  const handleToggle = async (
-    field: "isAISmartToolsEnabled" | "isAIDataAnalysisEnabled",
-    checked: boolean
-  ) => {
+  const handleToggle = async (checked: boolean) => {
     if (checked && !aiEnablementState.canEnableFeatures) {
       toast.error(aiEnablementBlockedMessage);
       return;
     }
 
-    setLoadingField(field);
+    setLoadingField("isAISmartToolsEnabled");
     try {
-      const data =
-        field === "isAISmartToolsEnabled"
-          ? { isAISmartToolsEnabled: checked }
-          : { isAIDataAnalysisEnabled: checked };
       const response = await updateOrganizationAISettingsAction({
         organizationId: organization.id,
-        data,
+        data: { isAISmartToolsEnabled: checked },
       });
 
       if (response?.data) {
@@ -91,13 +82,11 @@ export const AISettingsToggle = ({
       text: isFormbricksCloud ? t("common.upgrade_plan") : t("common.request_trial_license"),
       href: isFormbricksCloud
         ? `${workspaceBasePath}/settings/organization/billing`
-        : "https://formbricks.com/upgrade-self-hosting-license",
+        : enterpriseLicenseRequestFormUrl,
     },
     {
       text: t("common.learn_more"),
-      href: isFormbricksCloud
-        ? `${workspaceBasePath}/settings/organization/billing`
-        : "https://formbricks.com/learn-more-self-hosting-license",
+      href: "https://formbricks.com/docs/platform/features/ai-features",
     },
   ];
 
@@ -122,20 +111,10 @@ export const AISettingsToggle = ({
 
       <AdvancedOptionToggle
         isChecked={displayedSmartToolsValue}
-        onToggle={(checked) => handleToggle("isAISmartToolsEnabled", checked)}
+        onToggle={handleToggle}
         htmlId="ai-smart-tools-toggle"
         title={t("workspace.settings.general.ai_smart_tools_enabled")}
         description={t("workspace.settings.general.ai_smart_tools_enabled_description")}
-        disabled={isToggleDisabled}
-        customContainerClass="px-0"
-      />
-
-      <AdvancedOptionToggle
-        isChecked={displayedDataAnalysisValue}
-        onToggle={(checked) => handleToggle("isAIDataAnalysisEnabled", checked)}
-        htmlId="ai-data-analysis-toggle"
-        title={t("workspace.settings.general.ai_data_analysis_enabled")}
-        description={t("workspace.settings.general.ai_data_analysis_enabled_description")}
         disabled={isToggleDisabled}
         customContainerClass="px-0"
       />

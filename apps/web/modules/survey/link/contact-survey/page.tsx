@@ -14,6 +14,7 @@ import {
   getMetadataBrandColor,
   getSurveyOpenGraphMetadata,
 } from "@/modules/survey/link/lib/metadata-utils";
+import type { TLinkSurveySearchParams } from "@/modules/survey/link/lib/types";
 import { getWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
 import { getWorkspaceById } from "@/modules/survey/link/lib/workspace";
 
@@ -21,13 +22,7 @@ interface ContactSurveyPageProps {
   params: Promise<{
     jwt: string;
   }>;
-  searchParams: Promise<{
-    suId?: string;
-    verify?: string;
-    lang?: string;
-    embed?: string;
-    preview?: string;
-  }>;
+  searchParams: Promise<TLinkSurveySearchParams>;
 }
 
 export const generateMetadata = async (props: ContactSurveyPageProps): Promise<Metadata> => {
@@ -87,7 +82,7 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
 
   const t = await getTranslate();
   const { jwt } = params;
-  const { preview, suId } = searchParams;
+  const { preview, suId, suToken } = searchParams;
 
   const result = verifyContactSurveyToken(jwt);
   if (!result.ok) {
@@ -127,7 +122,12 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
   let singleUseId: string | undefined = undefined;
 
   if (isSingleUseSurvey) {
-    const validatedSingleUseId = checkAndValidateSingleUseId(suId, isSingleUseSurveyEncrypted);
+    const validatedSingleUseId = checkAndValidateSingleUseId(
+      suId,
+      isSingleUseSurveyEncrypted,
+      survey.id,
+      suToken
+    );
     if (!validatedSingleUseId) {
       const workspaceContext = await getWorkspaceContextForLinkSurvey(survey.workspaceId);
       return <SurveyInactive status="link invalid" workspace={workspaceContext.workspace} />;

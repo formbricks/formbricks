@@ -112,4 +112,12 @@ describe("cube-config", () => {
 
     await expect(import("./cube-config")).rejects.toThrow("Invalid environment variables");
   });
+
+  test("fails at env validation when CUBEJS_API_SECRET is an empty string", async () => {
+    setTestEnv({
+      CUBEJS_API_SECRET: "",
+    });
+
+    await expect(import("./cube-config")).rejects.toThrow("Invalid environment variables");
+  });
 });

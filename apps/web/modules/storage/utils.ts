@@ -1,7 +1,13 @@
 import "server-only";
 import { type StorageError, StorageErrorCode } from "@formbricks/storage";
 import { TResponseData } from "@formbricks/types/responses";
-import { TAllowedFileExtension, ZAllowedFileExtension } from "@formbricks/types/storage";
+import {
+  type TAccessType,
+  type TAllowedFileExtension,
+  ZAllowedFileExtension,
+} from "@formbricks/types/storage";
+import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
+import { TSurveyElementTypeEnum, TSurveyFileUploadElement } from "@formbricks/types/surveys/elements";
 import { TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { responses } from "@/app/lib/api/response";
 import { WEBAPP_URL } from "@/lib/constants";
@@ -58,14 +64,26 @@ export const sanitizeFileName = (rawFileName: string): string => {
 };
 
 /**
+ * Extracts the lowercase file extension from a file name
+ * @param fileName The name of the file
+ * @returns {string | null} The lowercase extension, or null when no extension exists
+ */
+const extractFileExtension = (fileName: string): string | null => {
+  const extension = fileName.split(".").pop()?.toLowerCase();
+
+  if (!extension || extension === fileName.toLowerCase()) return null;
+
+  return extension;
+};
+
+/**
  * Validates if the file extension is allowed
  * @param fileName The name of the file to validate
  * @returns {boolean} True if the file extension is allowed, false otherwise
  */
 export const isAllowedFileExtension = (fileName: string): boolean => {
-  // Extract the file extension
-  const extension = fileName.split(".").pop()?.toLowerCase();
-  if (!extension || extension === fileName.toLowerCase()) return false;
+  const extension = extractFileExtension(fileName);
+  if (!extension) return false;
 
   // Check if the extension is in the allowed list
   return Object.values(ZAllowedFileExtension.enum).includes(extension as TAllowedFileExtension);
@@ -77,7 +95,7 @@ export const validateSingleFile = (
 ): boolean => {
   const fileName = getOriginalFileNameFromUrl(fileUrl);
   if (!fileName) return false;
-  const extension = fileName.split(".").pop()?.toLowerCase();
+  const extension = extractFileExtension(fileName);
   if (!extension) return false;
   return !allowedFileExtensions || allowedFileExtensions.includes(extension as TAllowedFileExtension);
 };
@@ -94,6 +112,210 @@ export const validateFileUploads = (data?: TResponseData, questions?: TSurveyQue
 
     for (const fileUrl of fileUrls) {
       if (!validateSingleFile(fileUrl, question.allowedFileExtensions)) return false;
+    }
+  }
+
+  return true;
+};
+
+export type TSurveyFileUploadPermissionResult =
+  | {
+      ok: true;
+    }
+  | {
+      ok: false;
+      reason: "no_file_upload_element" | "file_upload_element_not_found" | "file_extension_not_allowed";
+    };
+
+const getAllowedFileExtensionFromFileName = (fileName: string): TAllowedFileExtension | null => {
+  const extension = extractFileExtension(fileName);
+  if (!extension) return null;
+
+  const extensionValidation = ZAllowedFileExtension.safeParse(extension);
+
+  return extensionValidation.success ? extensionValidation.data : null;
+};
+
+const getSurveyFileUploadConfigs = ({
+  blocks,
+  questions,
+}: {
+  blocks?: TSurveyBlock[] | null;
+  questions?: TSurveyQuestion[] | null;
+}): TSurveyFileUploadElement[] => {
+  return [
+    ...(blocks ?? [])
+      .flatMap((block) => block.elements)
+      .filter((element) => element.type === TSurveyElementTypeEnum.FileUpload),
+    ...(questions ?? []).filter((question) => question.type === TSurveyQuestionTypeEnum.FileUpload),
+  ] as TSurveyFileUploadElement[];
+};
+
+export const validateSurveyAllowsFileUpload = ({
+  fileName,
+  elementId,
+  blocks,
+  questions,
+}: {
+  fileName: string;
+  elementId: string;
+  blocks?: TSurveyBlock[] | null;
+  questions?: TSurveyQuestion[] | null;
+}): TSurveyFileUploadPermissionResult => {
+  const fileUploadConfigs = getSurveyFileUploadConfigs({ blocks, questions });
+
+  if (fileUploadConfigs.length === 0) {
+    return {
+      ok: false,
+      reason: "no_file_upload_element",
+    };
+  }
+
+  const fileUploadConfig = fileUploadConfigs.find((config) => config.id === elementId);
+
+  if (!fileUploadConfig) {
+    return {
+      ok: false,
+      reason: "file_upload_element_not_found",
+    };
+  }
+
+  const fileExtension = getAllowedFileExtensionFromFileName(fileName);
+
+  if (!fileExtension) {
+    return {
+      ok: false,
+      reason: "file_extension_not_allowed",
+    };
+  }
+
+  const { allowedFileExtensions } = fileUploadConfig;
+  const isFileExtensionAllowed =
+    allowedFileExtensions === undefined || allowedFileExtensions.includes(fileExtension);
+
+  return isFileExtensionAllowed
+    ? { ok: true }
+    : {
+        ok: false,
+        reason: "file_extension_not_allowed",
+      };
+};
+
+const getStorageUrlPathSegments = (fileUrl: string): string[] | null => {
+  if (!fileUrl.startsWith("/storage/")) return null;
+
+  const pathWithoutSearch = fileUrl.split(/[?#]/)[0];
+  return pathWithoutSearch.split("/").filter(Boolean);
+};
+
+type TParsedStorageFileUrl = {
+  storageId: string;
+  accessType: TAccessType;
+  fileName: string;
+};
+
+export const parseStorageFileUrl = (fileUrl: string): TParsedStorageFileUrl | null => {
+  let pathname: string;
+
+  try {
+    pathname = fileUrl.startsWith("/storage/") ? fileUrl : new URL(fileUrl).pathname;
+  } catch {
+    return null;
+  }
+
+  const pathWithoutSearch = pathname.split(/[?#]/)[0];
+  if (!pathWithoutSearch.startsWith("/storage/")) return null;
+
+  const [storageSegment, storageId, accessType, ...fileNameSegments] = pathWithoutSearch
+    .split("/")
+    .filter(Boolean);
+  const fileName = fileNameSegments.join("/");
+
+  if (
+    storageSegment !== "storage" ||
+    !storageId ||
+    !fileName ||
+    (accessType !== "private" && accessType !== "public")
+  ) {
+    return null;
+  }
+
+  return { storageId, accessType, fileName };
+};
+
+const isScopedPrivateUploadUrl = ({
+  fileUrl,
+  workspaceId,
+  surveyId,
+  elementId,
+}: {
+  fileUrl: string;
+  workspaceId: string;
+  surveyId: string;
+  elementId: string;
+}): boolean => {
+  const segments = getStorageUrlPathSegments(fileUrl);
+
+  if (segments?.length !== 8) return false;
+
+  const [
+    storageSegment,
+    storageWorkspaceId,
+    accessType,
+    surveysSegment,
+    storageSurveyId,
+    elementsSegment,
+    storageElementId,
+    fileName,
+  ] = segments;
+
+  return (
+    storageSegment === "storage" &&
+    storageWorkspaceId === workspaceId &&
+    accessType === "private" &&
+    surveysSegment === "surveys" &&
+    storageSurveyId === surveyId &&
+    elementsSegment === "elements" &&
+    storageElementId === elementId &&
+    Boolean(fileName)
+  );
+};
+
+export const validateClientFileUploads = ({
+  data,
+  workspaceId,
+  surveyId,
+  blocks,
+  questions,
+}: {
+  data?: TResponseData;
+  workspaceId: string;
+  surveyId: string;
+  blocks?: TSurveyBlock[] | null;
+  questions?: TSurveyQuestion[] | null;
+}): boolean => {
+  if (!data) return true;
+
+  const fileUploadConfigs = getSurveyFileUploadConfigs({ blocks, questions });
+
+  for (const fileUploadConfig of fileUploadConfigs) {
+    const fileUrls = data[fileUploadConfig.id];
+
+    if (fileUrls === undefined) continue;
+    if (!Array.isArray(fileUrls) || !fileUrls.every((url) => typeof url === "string")) return false;
+
+    for (const fileUrl of fileUrls) {
+      if (!validateSingleFile(fileUrl, fileUploadConfig.allowedFileExtensions)) return false;
+      if (
+        !isScopedPrivateUploadUrl({
+          fileUrl,
+          workspaceId,
+          surveyId,
+          elementId: fileUploadConfig.id,
+        })
+      ) {
+        return false;
+      }
     }
   }
 
@@ -121,9 +343,13 @@ export const getErrorResponseFromStorageError = (
     case StorageErrorCode.InvalidInput:
       return responses.badRequestResponse("Invalid input", details, true);
     case StorageErrorCode.S3ClientError:
-      return responses.internalServerErrorResponse("Internal server error", true);
     case StorageErrorCode.S3CredentialsError:
-      return responses.internalServerErrorResponse("Internal server error", true);
+      return responses.internalServerErrorResponse(
+        "File storage is not configured correctly. Please check your file upload settings.",
+        true,
+        { storage_error_code: error.code },
+        "private, no-store"
+      );
     case StorageErrorCode.Unknown:
       return responses.internalServerErrorResponse("Internal server error", true);
     default: {

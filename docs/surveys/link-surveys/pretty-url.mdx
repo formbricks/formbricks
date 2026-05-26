@@ -1,0 +1,81 @@
+---
+title: "Pretty URL"
+description: "Create a custom, memorable URL for your survey instead of sharing a long auto-generated link."
+icon: "link"
+---
+
+<Note>
+  **Self-Hosted Only**: Pretty URLs are available exclusively on self-hosted Formbricks instances. This feature is not available on Formbricks Cloud.
+</Note>
+
+## What is a Pretty URL?
+
+By default, every survey is accessible at a URL containing its auto-generated ID, e.g. `yourdomain.com/s/cm1abc123xyz`. A Pretty URL lets you replace that with a short, human-readable slug of your choice:
+
+```
+yourdomain.com/p/customer-feedback
+```
+
+When someone visits the pretty URL, they are automatically redirected to the actual survey. Query parameters such as `suId` and `lang` are forwarded as well.
+
+## Setting Up a Pretty URL
+
+<Steps>
+  <Step title="Open the Share Modal">
+    Navigate to your survey's **Summary** page and click the **Share survey** button in the top toolbar.
+  </Step>
+
+  <Step title="Go to the Pretty URL tab">
+    In the Share Modal, select the **Pretty URL** tab.
+  </Step>
+
+  <Step title="Enter a slug">
+    Type your desired slug in the input field. Slugs may only contain **lowercase letters, numbers, and hyphens** (e.g. `customer-feedback`, `q4-nps-2024`).
+
+    The full URL is shown in real time below the input so you can confirm how it will look.
+  </Step>
+
+  <Step title="Save">
+    Click **Save**. The slug is now live. Anyone visiting the pretty URL is immediately redirected to your survey.
+  </Step>
+</Steps>
+
+## Managing Pretty URLs
+
+Once a slug is saved, the Pretty URL tab shows the active link with two actions:
+
+- **Copy**: copies the full pretty URL to your clipboard.
+- **Remove**: deletes the slug (after a confirmation prompt). The survey remains accessible via its original `/s/[surveyId]` URL.
+
+## Viewing All Pretty URLs in Your Organization
+
+All surveys that have a pretty URL assigned are listed in one place:
+
+1. Go to **Organization Settings → Domain**.
+2. Open the **Pretty URLs** section.
+
+The table shows each survey's name, workspace, slug, and environment type (production / development).
+
+## Slug Rules
+
+| Rule | Detail |
+|------|--------|
+| Characters | Lowercase letters (a-z), digits (0-9), and hyphens (-) |
+| Uniqueness | Must be unique across your entire Formbricks instance |
+| Format example | `customer-feedback`, `onboarding-survey`, `q4-nps` |
+
+## Query Parameter Forwarding
+
+Pretty URLs forward all query parameters to the destination survey URL. For example:
+
+```
+/p/customer-feedback?suId=contact123&lang=de
+```
+
+redirects to:
+
+```
+/s/[surveyId]?suId=contact123&lang=de
+```
+
+This means features like [single-use links](/xm-and-surveys/surveys/link-surveys/single-use-links), [data prefilling](/xm-and-surveys/surveys/link-surveys/data-prefilling), and [multi-language surveys](/xm-and-surveys/surveys/general-features/multi-language-surveys) all work with pretty URLs.

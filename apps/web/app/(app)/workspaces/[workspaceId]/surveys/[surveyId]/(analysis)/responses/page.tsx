@@ -2,7 +2,12 @@ import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/er
 import { SurveyAnalysisNavigation } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/SurveyAnalysisNavigation";
 import { ResponsePage } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/responses/components/ResponsePage";
 import { SurveyAnalysisCTA } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA";
-import { IS_FORMBRICKS_CLOUD, IS_STORAGE_CONFIGURED, RESPONSES_PER_PAGE } from "@/lib/constants";
+import {
+  ENTERPRISE_LICENSE_REQUEST_FORM_URL,
+  IS_FORMBRICKS_CLOUD,
+  IS_STORAGE_CONFIGURED,
+  RESPONSES_PER_PAGE,
+} from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getResponseCountBySurveyId, getResponses } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
@@ -64,7 +69,6 @@ const Page = async (props: { params: Promise<{ workspaceId: string; surveyId: st
         pageTitle={survey.name}
         cta={
           <SurveyAnalysisCTA
-            survey={survey}
             isReadOnly={isReadOnly}
             user={user}
             publicDomain={publicDomain}
@@ -73,6 +77,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string; surveyId: st
             isContactsEnabled={isContactsEnabled}
             isFormbricksCloud={IS_FORMBRICKS_CLOUD}
             isStorageConfigured={IS_STORAGE_CONFIGURED}
+            enterpriseLicenseRequestFormUrl={ENTERPRISE_LICENSE_REQUEST_FORM_URL}
           />
         }>
         <SurveyAnalysisNavigation survey={survey} activeId="responses" />

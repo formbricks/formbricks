@@ -6,6 +6,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import type { TAIUnavailableReason } from "@/modules/ee/analysis/charts/lib/ai-availability";
 import { deleteDashboardAction } from "@/modules/ee/analysis/dashboards/actions";
 import { AddExistingChartsDialog } from "@/modules/ee/analysis/dashboards/components/add-existing-charts-dialog";
 import { Button } from "@/modules/ui/components/button";
@@ -22,7 +23,7 @@ interface DashboardControlBarProps {
   hasChanges: boolean;
   isReadOnly: boolean;
   isAIAvailable?: boolean;
-  aiUnavailableReason?: string;
+  aiUnavailableReason?: TAIUnavailableReason;
   onRefresh: () => void;
   onEditToggle: () => void;
   onSave: () => void;

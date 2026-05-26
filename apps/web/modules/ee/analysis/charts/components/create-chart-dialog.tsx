@@ -1,6 +1,7 @@
 "use client";
 
 import { CreateChartView } from "@/modules/ee/analysis/charts/components/create-chart-view";
+import type { TAIUnavailableReason } from "@/modules/ee/analysis/charts/lib/ai-availability";
 import type { TChartWithCreator } from "@/modules/ee/analysis/types/analysis";
 
 export interface CreateChartDialogProps {
@@ -13,7 +14,7 @@ export interface CreateChartDialogProps {
   onSuccess?: () => void;
   directories: { id: string; name: string }[];
   isAIAvailable?: boolean;
-  aiUnavailableReason?: string;
+  aiUnavailableReason?: TAIUnavailableReason;
 }
 
 export function CreateChartDialog({

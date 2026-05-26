@@ -20,7 +20,7 @@ import { ApiErrorDetails } from "@/modules/api/v2/types/api-error";
  * @returns Validation error map keyed by element ID, or null if validation passes
  */
 export const validateResponseData = (
-  blocks: TSurveyBlock[] | undefined | null,
+  blocks: unknown[] | undefined | null,
   responseData: TResponseData,
   languageCode: string = "en",
   questions?: TSurveyQuestion[] | undefined | null
@@ -28,8 +28,8 @@ export const validateResponseData = (
   // Use blocks if available, otherwise transform questions to blocks
   let blocksToUse: TSurveyBlock[] = [];
 
-  if (blocks && blocks.length > 0) {
-    blocksToUse = blocks;
+  if (Array.isArray(blocks) && blocks.length > 0) {
+    blocksToUse = blocks as TSurveyBlock[];
   } else if (questions && questions.length > 0) {
     // Transform legacy questions format to blocks for validation
     blocksToUse = transformQuestionsToBlocks(questions, []);

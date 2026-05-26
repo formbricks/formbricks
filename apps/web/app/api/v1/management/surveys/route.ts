@@ -8,6 +8,7 @@ import {
   addLegacyProjectOverwritesToList,
   normaliseProjectOverwritesToWorkspace,
 } from "@/app/lib/api/api-backwards-compat";
+import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
 import { responses } from "@/app/lib/api/response";
 import {
   transformBlocksToQuestions,
@@ -23,6 +24,7 @@ import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { getSurveys } from "./lib/surveys";
 
 export const GET = withV1ApiWrapper({
+  allowOrganizationOnlyApiKey: true,
   handler: async ({ req, authentication }) => {
     if (!authentication || !("apiKeyId" in authentication)) {
       return { response: responses.notAuthenticatedResponse() };
@@ -83,8 +85,14 @@ export const POST = withV1ApiWrapper({
     try {
       let surveyInput;
       try {
-        surveyInput = await req.json();
+        surveyInput = await parseJsonBodyWithLimit<Record<string, unknown>>(req);
       } catch (error) {
+        if (error instanceof RequestBodyTooLargeError) {
+          return {
+            response: responses.payloadTooLargeResponse("Payload Too Large", { error: error.message }),
+          };
+        }
+
         logger.error({ error, url: req.url }, "Error parsing JSON");
         return {
           response: responses.badRequestResponse("Malformed JSON input, please check your request body"),

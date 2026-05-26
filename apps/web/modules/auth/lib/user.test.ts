@@ -2,7 +2,7 @@ import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
-import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { InvalidInputError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
 import { mockUser } from "./mock-data";
 import { createUser, getUser, getUserByEmail, updateUser, updateUserLastLoginAt } from "./user";
 
@@ -17,6 +17,7 @@ const mockPrismaUser = {
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
+    $transaction: vi.fn(),
     user: {
       create: vi.fn(),
       update: vi.fn(),
@@ -29,6 +30,14 @@ vi.mock("@formbricks/database", () => ({
 describe("User Management", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback) =>
+      callback({
+        $queryRaw: vi.fn(),
+        user: {
+          update: vi.mocked(prisma.user.update),
+        },
+      } as any)
+    );
   });
 
   describe("createUser", () => {
@@ -42,6 +51,41 @@ describe("User Management", () => {
       });
 
       expect(result).toEqual(mockPrismaUser);
+    });
+
+    test("creates a user with an Azure AD enterprise display name", async () => {
+      const enterpriseDisplayName = "Lastname,Firstname (DEPT) COMPANY-CITY";
+      vi.mocked(prisma.user.create).mockResolvedValueOnce({
+        ...mockPrismaUser,
+        name: enterpriseDisplayName,
+      });
+
+      const result = await createUser({
+        email: mockUser.email,
+        name: enterpriseDisplayName,
+        locale: mockUser.locale,
+      });
+
+      expect(result.name).toBe(enterpriseDisplayName);
+      expect(prisma.user.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            name: enterpriseDisplayName,
+          }),
+        })
+      );
+    });
+
+    test("rejects display names with newline characters", async () => {
+      await expect(
+        createUser({
+          email: mockUser.email,
+          name: "Lastname,Firstname\n(DEPT) COMPANY-CITY",
+          locale: mockUser.locale,
+        })
+      ).rejects.toThrow(ValidationError);
+
+      expect(prisma.user.create).not.toHaveBeenCalled();
     });
 
     test("throws InvalidInputError when email already exists", async () => {
@@ -84,22 +128,31 @@ describe("User Management", () => {
   });
 
   describe("updateUserLastLoginAt", () => {
-    const mockUpdateData = { name: "Updated Name" };
-
-    test("updates a user successfully", async () => {
-      vi.mocked(prisma.user.update).mockResolvedValueOnce({ ...mockPrismaUser, name: mockUpdateData.name });
+    test("updates a user successfully and returns the previous login timestamp", async () => {
+      const previousLastLoginAt = new Date("2025-04-16T10:00:00.000Z");
+      vi.mocked(prisma.$transaction).mockImplementationOnce(async (callback) =>
+        callback({
+          $queryRaw: vi.fn().mockResolvedValue([{ id: mockUser.id, lastLoginAt: previousLastLoginAt }]),
+          user: {
+            update: vi.fn().mockResolvedValue({ ...mockPrismaUser, lastLoginAt: new Date() }),
+          },
+        } as any)
+      );
 
       const result = await updateUserLastLoginAt(mockUser.email);
 
-      expect(result).toEqual(void 0);
+      expect(result).toEqual(previousLastLoginAt);
     });
 
     test("throws ResourceNotFoundError when user doesn't exist", async () => {
-      const errToThrow = new Prisma.PrismaClientKnownRequestError("Mock error message", {
-        code: PrismaErrorType.RecordDoesNotExist,
-        clientVersion: "0.0.1",
-      });
-      vi.mocked(prisma.user.update).mockRejectedValueOnce(errToThrow);
+      vi.mocked(prisma.$transaction).mockImplementationOnce(async (callback) =>
+        callback({
+          $queryRaw: vi.fn().mockResolvedValue([]),
+          user: {
+            update: vi.fn(),
+          },
+        } as any)
+      );
 
       await expect(updateUserLastLoginAt(mockUser.email)).rejects.toThrow(ResourceNotFoundError);
     });

@@ -6,6 +6,7 @@ import { InvalidInputError, UnknownError } from "@formbricks/types/errors";
 import { ZUser, ZUserEmail, ZUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
 import { hashPassword } from "@/lib/auth";
 import {
+  EMAIL_VERIFICATION_DISABLED,
   IS_FORMBRICKS_CLOUD,
   IS_TURNSTILE_CONFIGURED,
   TURNSTILE_SECRET_KEY,
@@ -13,8 +14,8 @@ import {
 } from "@/lib/constants";
 import { verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
-import { createOrganization } from "@/lib/organization/service";
-import { capturePostHogEvent } from "@/lib/posthog";
+import { createOrganization, getOrganization } from "@/lib/organization/service";
+import { capturePostHogEvent, groupIdentifyPostHog } from "@/lib/posthog";
 import { actionClient } from "@/lib/utils/action-client";
 import { ActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { createUser, updateUser } from "@/modules/auth/lib/user";
@@ -45,7 +46,6 @@ const ZCreateUserAction = z.object({
   password: ZUserPassword,
   inviteToken: z.string().optional(),
   userLocale: ZUserLocale.optional(),
-  emailVerificationDisabled: z.boolean().optional(),
   turnstileToken: z
     .string()
     .optional()
@@ -53,7 +53,6 @@ const ZCreateUserAction = z.object({
       (token) => !IS_TURNSTILE_CONFIGURED || (IS_TURNSTILE_CONFIGURED && token),
       "CAPTCHA verification required"
     ),
-  isFormbricksCloud: z.boolean(),
   subscribeToSecurityUpdates: z.boolean().optional(),
   subscribeToProductUpdates: z.boolean().optional(),
 });
@@ -116,6 +115,15 @@ async function handleInviteAcceptance(
     role: invite.role,
   });
 
+  try {
+    const invitedOrganization = await getOrganization(invite.organizationId);
+    if (invitedOrganization) {
+      groupIdentifyPostHog("organization", invitedOrganization.id, { name: invitedOrganization.name });
+    }
+  } catch (error) {
+    logger.warn({ error, organizationId: invite.organizationId }, "Failed to identify org group in PostHog");
+  }
+
   if (invite.teamIds) {
     await createTeamMembership(
       {
@@ -166,10 +174,17 @@ async function handleOrganizationCreation(ctx: ActionClientCtx, user: TCreatedUs
     });
   }
 
-  capturePostHogEvent(user.id, "organization_created", {
-    organization_id: organization.id,
-    is_first_org: true,
-  });
+  groupIdentifyPostHog("organization", organization.id, { name: organization.name });
+
+  capturePostHogEvent(
+    user.id,
+    "organization_created",
+    {
+      organization_id: organization.id,
+      is_first_org: true,
+    },
+    { organizationId: organization.id }
+  );
 
   await updateUser(user.id, {
     notificationSettings: {
@@ -186,8 +201,7 @@ async function handleOrganizationCreation(ctx: ActionClientCtx, user: TCreatedUs
 async function handlePostUserCreation(
   ctx: ActionClientCtx,
   user: TCreatedUser,
-  inviteToken: string | undefined,
-  emailVerificationDisabled: boolean | undefined
+  inviteToken: string | undefined
 ): Promise<void> {
   if (inviteToken) {
     await handleInviteAcceptance(ctx, inviteToken, user);
@@ -195,7 +209,7 @@ async function handlePostUserCreation(
     await handleOrganizationCreation(ctx, user);
   }
 
-  if (!emailVerificationDisabled) {
+  if (!EMAIL_VERIFICATION_DISABLED) {
     let inviteCallbackUrl: string | undefined;
 
     if (inviteToken) {
@@ -227,21 +241,28 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
     );
 
     if (!userAlreadyExisted && user) {
-      await handlePostUserCreation(ctx, user, parsedInput.inviteToken, parsedInput.emailVerificationDisabled);
+      await handlePostUserCreation(ctx, user, parsedInput.inviteToken);
 
       await subscribeUserToMailingList({
         email: user.email,
-        isFormbricksCloud: parsedInput.isFormbricksCloud,
+        isFormbricksCloud: IS_FORMBRICKS_CLOUD,
         subscribeToSecurityUpdates: parsedInput.subscribeToSecurityUpdates,
         subscribeToProductUpdates: parsedInput.subscribeToProductUpdates,
       });
 
-      capturePostHogEvent(user.id, "user_signed_up", {
-        auth_provider: "credentials",
-        email_domain: user.email.split("@")[1],
-        signup_source: parsedInput.inviteToken ? "invite" : "direct",
-        invite_organization_id: ctx.auditLoggingCtx.organizationId ?? null,
-      });
+      capturePostHogEvent(
+        user.id,
+        "user_signed_up",
+        {
+          auth_provider: "credentials",
+          email_domain: user.email.split("@")[1],
+          signup_source: parsedInput.inviteToken ? "invite" : "direct",
+          invite_organization_id: ctx.auditLoggingCtx.organizationId ?? null,
+        },
+        ctx.auditLoggingCtx.organizationId
+          ? { organizationId: ctx.auditLoggingCtx.organizationId }
+          : undefined
+      );
     }
 
     if (user) {

@@ -26,6 +26,7 @@ export const getSSOProviders = () => [
   GoogleProvider({
     clientId: GOOGLE_CLIENT_ID || "",
     clientSecret: GOOGLE_CLIENT_SECRET || "",
+    checks: ["pkce", "state", "nonce"],
   }),
   AzureAD({
     clientId: AZUREAD_CLIENT_ID || "",

@@ -3,10 +3,17 @@ import { AccountSecurity } from "@/app/(app)/workspaces/[workspaceId]/settings/a
 import { DeleteAccount } from "@/app/(app)/workspaces/[workspaceId]/settings/account/profile/components/DeleteAccount";
 import { EditProfileDetailsForm } from "@/app/(app)/workspaces/[workspaceId]/settings/account/profile/components/EditProfileDetailsForm";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
-import { EMAIL_VERIFICATION_DISABLED, IS_FORMBRICKS_CLOUD, PASSWORD_RESET_DISABLED } from "@/lib/constants";
+import {
+  DISABLE_ACCOUNT_DELETION_SSO_CONFIRMATION,
+  EMAIL_VERIFICATION_DISABLED,
+  ENTERPRISE_LICENSE_REQUEST_FORM_URL,
+  IS_FORMBRICKS_CLOUD,
+  PASSWORD_RESET_DISABLED,
+} from "@/lib/constants";
 import { getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
+import { requiresPasswordConfirmationForAccountDeletion } from "@/modules/account/lib/account-deletion-auth";
 import { getIsMultiOrgEnabled, getIsTwoFactorAuthEnabled } from "@/modules/ee/license-check/lib/utils";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
@@ -14,10 +21,14 @@ import { PageHeader } from "@/modules/ui/components/page-header";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 
-const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
+const Page = async (props: {
+  params: Promise<{ workspaceId: string }>;
+  searchParams: Promise<{ accountDeletionError?: string | string[] }>;
+}) => {
   const isTwoFactorAuthEnabled = await getIsTwoFactorAuthEnabled();
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
   const params = await props.params;
+  const searchParams = await props.searchParams;
   const t = await getTranslate();
   const { session } = await getWorkspaceAuth(params.workspaceId);
 
@@ -30,6 +41,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
   }
 
   const isPasswordResetEnabled = !PASSWORD_RESET_DISABLED && user.identityProvider === "email";
+  const requiresPasswordConfirmation = requiresPasswordConfirmationForAccountDeletion(user);
 
   return (
     <PageContentWrapper>
@@ -60,7 +72,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
                         : t("common.request_trial_license"),
                       href: IS_FORMBRICKS_CLOUD
                         ? `/workspaces/${params.workspaceId}/settings/organization/billing`
-                        : "https://formbricks.com/upgrade-self-hosting-license",
+                        : ENTERPRISE_LICENSE_REQUEST_FORM_URL,
                     },
                     {
                       text: t("common.learn_more"),
@@ -85,6 +97,9 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
               user={user}
               organizationsWithSingleOwner={organizationsWithSingleOwner}
               isMultiOrgEnabled={isMultiOrgEnabled}
+              accountDeletionError={searchParams.accountDeletionError}
+              requiresPasswordConfirmation={requiresPasswordConfirmation}
+              isSsoIdentityConfirmationDisabled={DISABLE_ACCOUNT_DELETION_SSO_CONFIRMATION}
             />
           </SettingsCard>
           <IdBadge id={user.id} label={t("common.profile_id")} variant="column" />

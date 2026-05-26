@@ -46,7 +46,7 @@ const DropdownMenuSubContent: React.ComponentType<DropdownMenuPrimitive.Dropdown
     <DropdownMenuPrimitive.SubContent
       ref={ref as any}
       className={cn(
-        "animate-in slide-in-from-left-1 z-50 min-w-[8rem] overflow-hidden rounded-lg border border-slate-200 bg-white p-1 font-medium text-slate-600 shadow-sm hover:text-slate-700",
+        "z-50 min-w-[8rem] overflow-hidden rounded-lg border border-slate-200 bg-white p-1 font-medium text-slate-600 shadow-sm animate-in slide-in-from-left-1 hover:text-slate-700",
         className
       )}
       {...props}
@@ -67,7 +67,7 @@ const DropdownMenuContent: React.ComponentType<DropdownMenuPrimitive.DropdownMen
           ref={ref}
           sideOffset={sideOffset}
           className={cn(
-            "animate-in data-[side=right]:slide-in-from-left-2 data-[side=left]:slide-in-from-right-2 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2 z-50 min-w-[8rem] overflow-hidden rounded-lg border border-slate-200 bg-white p-1 font-medium text-slate-700 shadow-sm",
+            "z-50 min-w-[8rem] overflow-hidden rounded-lg border border-slate-200 bg-white p-1 font-medium text-slate-700 shadow-sm animate-in data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
             className
           )}
           {...props}

@@ -4,11 +4,16 @@ import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ZContactAttributeDataType } from "@formbricks/types/contact-attribute-key";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { isSafeIdentifier } from "@/lib/utils/safe-identifier";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
+import {
+  RESERVED_FUTURE_DEFAULT_ATTRIBUTE_KEY_VALIDATION_MESSAGE,
+  isReservedFutureDefaultAttributeKey,
+} from "@/modules/ee/contacts/lib/attribute-key-policy";
 import {
   createContactAttributeKey,
   deleteContactAttributeKey,
@@ -18,10 +23,15 @@ import {
 
 const ZCreateContactAttributeKeyAction = z.object({
   workspaceId: ZId,
-  key: z.string().refine((val) => isSafeIdentifier(val), {
-    error:
-      "Key must be a safe identifier: only lowercase letters, numbers, and underscores, and must start with a letter",
-  }),
+  key: z
+    .string()
+    .refine((val) => isSafeIdentifier(val), {
+      error:
+        "Key must be a safe identifier: only lowercase letters, numbers, and underscores, and must start with a letter",
+    })
+    .refine((val) => !isReservedFutureDefaultAttributeKey(val), {
+      error: RESERVED_FUTURE_DEFAULT_ATTRIBUTE_KEY_VALIDATION_MESSAGE,
+    }),
   name: z.string().optional(),
   description: z.string().optional(),
   dataType: ZContactAttributeDataType.optional(),
@@ -61,6 +71,17 @@ export const createContactAttributeKeyAction = authenticatedActionClient
       });
 
       ctx.auditLoggingCtx.newObject = contactAttributeKey;
+
+      capturePostHogEvent(
+        ctx.user.id,
+        "contact_attribute_key_created",
+        {
+          organization_id: organizationId,
+          workspace_id: workspaceId,
+          key: parsedInput.key,
+        },
+        { organizationId, workspaceId }
+      );
 
       return contactAttributeKey;
     })

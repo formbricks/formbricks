@@ -12,27 +12,25 @@ import {
   TERMS_URL,
 } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
+import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { PinScreen } from "@/modules/survey/link/components/pin-screen";
 import { SurveyClientWrapper } from "@/modules/survey/link/components/survey-client-wrapper";
 import { SurveyCompletedMessage } from "@/modules/survey/link/components/survey-completed-message";
 import { SurveyInactive } from "@/modules/survey/link/components/survey-inactive";
 import { VerifyEmail } from "@/modules/survey/link/components/verify-email";
 import { getEmailVerificationDetails } from "@/modules/survey/link/lib/helper";
+import type { TLinkSurveySearchParams } from "@/modules/survey/link/lib/types";
+import { hasUserIdSearchParam } from "@/modules/survey/link/lib/user-id";
 import { getSurveyLanguageCode } from "@/modules/survey/link/lib/utils";
 import { TWorkspaceContextForLinkSurvey } from "@/modules/survey/link/lib/workspace";
 
 interface SurveyRendererProps {
   survey: TSurvey;
-  searchParams: {
-    verify?: string;
-    lang?: string;
-    embed?: string;
-    preview?: string;
-    suId?: string;
-  };
+  searchParams: TLinkSurveySearchParams;
   singleUseId?: string;
   singleUseResponse?: Pick<Response, "id" | "finished">;
   contactId?: string;
+  allowUrlUserIdLookup?: boolean;
   isPreview: boolean;
   // New props - pre-fetched in parent
   workspaceContext: TWorkspaceContextForLinkSurvey;
@@ -48,7 +46,7 @@ interface SurveyRendererProps {
  * database queries. The parent (page.tsx) fetches data in parallel stages
  * to minimize latency for users geographically distant from servers.
  *
- * @param environmentContext - Pre-fetched workspace and organization data
+ * @param workspaceContext - Pre-fetched workspace and organization data
  * @param locale - User's locale from Accept-Language header
  * @param responseCount - Conditionally fetched if showResponseCount is enabled
  */
@@ -58,6 +56,7 @@ export const renderSurvey = async ({
   singleUseId,
   singleUseResponse,
   contactId,
+  allowUrlUserIdLookup = false,
   isPreview,
   workspaceContext,
   locale,
@@ -122,6 +121,7 @@ export const renderSurvey = async ({
     return (
       <VerifyEmail
         singleUseId={searchParams.suId ?? ""}
+        singleUseToken={searchParams.suToken}
         survey={survey}
         languageCode={getSurveyLanguageCode(langParam, survey, browserLanguageCodes)}
         styling={workspace.styling}
@@ -134,6 +134,10 @@ export const renderSurvey = async ({
   const styling = computeStyling(workspace.styling, survey.styling);
   const languageCode = getSurveyLanguageCode(langParam, survey, browserLanguageCodes);
   const publicDomain = getPublicDomain();
+  const canReadUserIdFromUrl =
+    allowUrlUserIdLookup && !contactId && hasUserIdSearchParam(searchParams)
+      ? await getIsContactsEnabled(workspaceContext.organizationId)
+      : false;
 
   // Handle PIN-protected surveys
   if (survey.pin) {
@@ -154,6 +158,7 @@ export const renderSurvey = async ({
         isEmbed={isEmbed}
         isPreview={isPreview}
         contactId={contactId}
+        canReadUserIdFromUrl={canReadUserIdFromUrl}
         recaptchaSiteKey={RECAPTCHA_SITE_KEY}
         isSpamProtectionEnabled={isSpamProtectionEnabled}
         responseCount={responseCount}
@@ -174,6 +179,7 @@ export const renderSurvey = async ({
       singleUseId={singleUseId}
       singleUseResponseId={singleUseResponse?.id}
       contactId={contactId}
+      canReadUserIdFromUrl={canReadUserIdFromUrl}
       recaptchaSiteKey={RECAPTCHA_SITE_KEY}
       isSpamProtectionEnabled={isSpamProtectionEnabled}
       isPreview={isPreview}

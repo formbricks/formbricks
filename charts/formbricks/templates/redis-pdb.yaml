@@ -1,0 +1,25 @@
+{{- if and .Values.redis.enabled .Values.redis.master.pdb.enabled }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "formbricks.redisMasterName" . }}
+  labels:
+    helm.sh/chart: {{ include "formbricks.chart" . }}
+    app.kubernetes.io/name: {{ include "formbricks.redisName" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: redis
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+    app.kubernetes.io/part-of: {{ .Values.partOfOverride | default (include "formbricks.name" .) }}
+spec:
+  {{- if .Values.redis.master.pdb.minAvailable }}
+  minAvailable: {{ .Values.redis.master.pdb.minAvailable }}
+  {{- else }}
+  maxUnavailable: {{ .Values.redis.master.pdb.maxUnavailable | default 0 }}
+  {{- end }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "formbricks.redisName" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+      app.kubernetes.io/component: redis
+{{- end }}

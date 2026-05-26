@@ -1,12 +1,12 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   TDisplayCreateInputV2,
   ZDisplayCreateInputV2,
 } from "@/app/api/v2/client/[workspaceId]/displays/types/display";
 import { validateInputs } from "@/lib/utils/validate";
-import { doesContactExist } from "./contact";
+import { doesContactExistInWorkspace } from "./contact";
 
 export const createDisplay = async (displayInput: TDisplayCreateInputV2): Promise<{ id: string }> => {
   validateInputs([displayInput, ZDisplayCreateInputV2]);
@@ -14,7 +14,7 @@ export const createDisplay = async (displayInput: TDisplayCreateInputV2): Promis
   const { contactId, surveyId, workspaceId } = displayInput;
 
   try {
-    const contactExists = contactId ? await doesContactExist(contactId) : false;
+    const contactExists = contactId ? await doesContactExistInWorkspace(contactId, workspaceId) : false;
 
     const survey = await prisma.survey.findUnique({
       where: {
@@ -24,6 +24,10 @@ export const createDisplay = async (displayInput: TDisplayCreateInputV2): Promis
     });
     if (!survey) {
       throw new ResourceNotFoundError("Survey", surveyId);
+    }
+
+    if (survey.status !== "inProgress") {
+      throw new InvalidInputError("Survey is not accepting submissions");
     }
 
     const display = await prisma.display.create({

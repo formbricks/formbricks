@@ -2,6 +2,7 @@ import { logger } from "@formbricks/logger";
 import { ZUploadPublicFileRequest } from "@formbricks/types/storage";
 import { resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
 import { checkAuth } from "@/app/api/v1/management/storage/lib/utils";
+import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
@@ -19,8 +20,14 @@ export const POST = withV1ApiWrapper({
     let storageInput;
 
     try {
-      storageInput = await req.json();
+      storageInput = await parseJsonBodyWithLimit<Record<string, unknown>>(req);
     } catch (error) {
+      if (error instanceof RequestBodyTooLargeError) {
+        return {
+          response: responses.payloadTooLargeResponse("Payload Too Large", { error: error.message }),
+        };
+      }
+
       logger.error({ error, url: req.url }, "Error parsing JSON input");
       return {
         response: responses.badRequestResponse("Malformed JSON input, please check your request body"),

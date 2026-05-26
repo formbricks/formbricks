@@ -18,6 +18,7 @@ interface AirtableWrapperProps {
   isEnabled: boolean;
   webAppUrl: string;
   locale: TUserLocale;
+  showReconnectButton?: boolean;
 }
 
 export const AirtableWrapper = ({
@@ -28,6 +29,7 @@ export const AirtableWrapper = ({
   isEnabled,
   webAppUrl,
   locale,
+  showReconnectButton = false,
 }: AirtableWrapperProps) => {
   const [isConnected, setIsConnected] = useState(
     airtableIntegration ? airtableIntegration.config?.key : false
@@ -49,6 +51,8 @@ export const AirtableWrapper = ({
       setIsConnected={setIsConnected}
       surveys={surveys}
       locale={locale}
+      showReconnectButton={showReconnectButton}
+      handleAirtableAuthorization={handleAirtableAuthorization}
     />
   ) : (
     <ConnectIntegration

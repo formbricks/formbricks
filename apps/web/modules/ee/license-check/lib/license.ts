@@ -1,7 +1,6 @@
 import "server-only";
-import { HttpsProxyAgent } from "https-proxy-agent";
-import fetch from "node-fetch";
 import { cache as reactCache } from "react";
+import { ProxyAgent } from "undici";
 import { z } from "zod";
 import { createCacheKey } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
@@ -16,6 +15,12 @@ import {
   TEnterpriseLicenseFeatures,
   TLicenseStatus,
 } from "@/modules/ee/license-check/types/enterprise-license";
+
+// Module-level ProxyAgent singleton — reused across all license fetches to avoid leaking
+// socket pools on every call (ProxyAgent owns connection pools and should not be created
+// per-request in long-lived processes).
+const _proxyUrl = env.HTTPS_PROXY ?? env.HTTP_PROXY;
+const _proxyDispatcher = _proxyUrl ? new ProxyAgent(_proxyUrl) : undefined;
 
 // Configuration
 const CONFIG = {
@@ -78,13 +83,11 @@ const LicenseFeaturesSchema = z.object({
   removeBranding: z.boolean(),
   contacts: z.boolean(),
   aiSmartTools: z.boolean(),
-  aiDataAnalysis: z.boolean(),
   saml: z.boolean(),
   spamProtection: z.boolean(),
   auditLogs: z.boolean(),
   accessControl: z.boolean(),
   quotas: z.boolean(),
-  unifyFeedback: z.boolean().default(false),
   feedbackDirectories: z.boolean().default(false),
   dashboards: z.boolean().default(false),
 });
@@ -149,13 +152,11 @@ const DEFAULT_FEATURES: TEnterpriseLicenseFeatures = {
   removeBranding: false,
   contacts: false,
   aiSmartTools: false,
-  aiDataAnalysis: false,
   saml: false,
   spamProtection: false,
   auditLogs: false,
   accessControl: false,
   quotas: false,
-  unifyFeedback: false,
   feedbackDirectories: false,
   dashboards: false,
 };
@@ -364,12 +365,6 @@ const fetchLicenseFromServerInternal = async (retryCount = 0): Promise<TEnterpri
     // (skip this check during E2E tests as we intentionally use null)
     if (!E2E_TESTING && !instanceId) return null;
 
-    const proxyUrl = env.HTTPS_PROXY ?? env.HTTP_PROXY;
-    const agent = proxyUrl ? new HttpsProxyAgent(proxyUrl) : undefined;
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), CONFIG.API.TIMEOUT_MS);
-
     const payload: Record<string, unknown> = {
       licenseKey: env.ENTERPRISE_LICENSE_KEY,
       usage: { responseCount },
@@ -381,13 +376,11 @@ const fetchLicenseFromServerInternal = async (retryCount = 0): Promise<TEnterpri
 
     const res = await fetch(CONFIG.API.ENDPOINT, {
       body: JSON.stringify(payload),
+      dispatcher: _proxyDispatcher,
       headers: { "Content-Type": "application/json" },
       method: "POST",
-      agent,
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
+      signal: AbortSignal.timeout(CONFIG.API.TIMEOUT_MS),
+    } as RequestInit & { dispatcher?: ProxyAgent });
 
     if (res.ok) {
       const responseJson = (await res.json()) as { data: unknown };

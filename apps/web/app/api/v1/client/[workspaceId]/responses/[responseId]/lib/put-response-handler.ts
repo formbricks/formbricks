@@ -8,10 +8,11 @@ import { THandlerParams } from "@/app/lib/api/with-api-logging";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
+import { resolveClientApiIds } from "@/lib/utils/resolve-client-id";
 import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/element";
 import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
-import { validateFileUploads } from "@/modules/storage/utils";
+import { validateClientFileUploads } from "@/modules/storage/utils";
 import { updateResponseWithQuotaEvaluation } from "./response";
 import { getValidatedResponseUpdateInput } from "./validated-response-update-input";
 
@@ -126,7 +127,8 @@ const getSurveyForResponse = async (
 const validateUpdateRequest = (
   existingResponse: TResponse,
   survey: TSurvey,
-  responseUpdateInput: TResponseUpdateInput
+  responseUpdateInput: TResponseUpdateInput,
+  workspaceId: string
 ): TRouteResult | undefined => {
   if (existingResponse.finished) {
     return {
@@ -134,7 +136,15 @@ const validateUpdateRequest = (
     };
   }
 
-  if (!validateFileUploads(responseUpdateInput.data, survey.questions)) {
+  if (
+    !validateClientFileUploads({
+      data: responseUpdateInput.data,
+      workspaceId,
+      surveyId: survey.id,
+      blocks: survey.blocks,
+      questions: survey.questions,
+    })
+  ) {
     return {
       response: responses.badRequestResponse("Invalid file upload response", undefined, true),
     };
@@ -209,13 +219,21 @@ export const putResponseHandler = async ({
   props,
 }: THandlerParams<TPutRouteParams>): Promise<TRouteResult> => {
   const params = await props.params;
-  const { workspaceId, responseId } = params;
+  const { workspaceId: workspaceIdParam, responseId } = params;
 
   if (!responseId) {
     return {
       response: responses.badRequestResponse("Response ID is missing", undefined, true),
     };
   }
+
+  const resolved = await resolveClientApiIds(workspaceIdParam);
+  if (!resolved) {
+    return {
+      response: responses.notFoundResponse("Workspace", workspaceIdParam, true),
+    };
+  }
+  const { workspaceId } = resolved;
 
   const validatedUpdateInput = await getValidatedResponseUpdateInput(req);
   if ("response" in validatedUpdateInput) {
@@ -241,7 +259,7 @@ export const putResponseHandler = async ({
     };
   }
 
-  const validationResult = validateUpdateRequest(existingResponse, survey, responseUpdateInput);
+  const validationResult = validateUpdateRequest(existingResponse, survey, responseUpdateInput, workspaceId);
   if (validationResult) {
     return validationResult;
   }

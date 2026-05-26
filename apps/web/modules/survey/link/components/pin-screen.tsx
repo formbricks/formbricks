@@ -26,6 +26,7 @@ interface PinScreenProps {
   isEmbed: boolean;
   isPreview: boolean;
   contactId?: string;
+  canReadUserIdFromUrl?: boolean;
   recaptchaSiteKey?: string;
   isSpamProtectionEnabled?: boolean;
   responseCount?: number;
@@ -48,6 +49,7 @@ export const PinScreen = (props: PinScreenProps) => {
     isEmbed,
     isPreview,
     contactId,
+    canReadUserIdFromUrl = false,
     recaptchaSiteKey,
     isSpamProtectionEnabled = false,
     responseCount,
@@ -130,6 +132,7 @@ export const PinScreen = (props: PinScreenProps) => {
       singleUseId={singleUseId}
       singleUseResponseId={singleUseResponse?.id}
       contactId={contactId}
+      canReadUserIdFromUrl={canReadUserIdFromUrl}
       recaptchaSiteKey={recaptchaSiteKey}
       isSpamProtectionEnabled={isSpamProtectionEnabled}
       isPreview={isPreview}

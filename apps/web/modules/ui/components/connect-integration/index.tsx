@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { TIntegrationType } from "@formbricks/types/integration";
 import { Button } from "@/modules/ui/components/button";
 import { FormbricksLogo } from "@/modules/ui/components/formbricks-logo";
@@ -62,11 +62,12 @@ export const ConnectIntegration = ({
           <p className="mb-8 rounded border-slate-200 bg-slate-100 p-3 text-sm">
             {integrationDetails?.notConfiguredText}
             <br />
-            {t("common.follow_these")}{" "}
-            <Link href={integrationDetails?.docsLink ?? ""} className="underline">
-              {t("common.docs")}
-            </Link>{" "}
-            {t("workspace.integrations.to_configure_it")}.
+            <Trans
+              i18nKey="workspace.integrations.follow_these_docs_to_configure_it"
+              components={{
+                docsLink: <Link href={integrationDetails?.docsLink ?? ""} className="underline" />,
+              }}
+            />
           </p>
         )}
         <Button loading={isConnecting} onClick={handleConnect} disabled={!isEnabled}>

@@ -1,0 +1,181 @@
+---
+title: "Data Prefilling"
+description:
+  "URL Data Prefilling for Link Surveys in Formbricks"
+icon: "fill"
+---
+
+Data prefilling via the URL allows you to increase completion rate by prefilling data you already have in a different system. Formbricks allows you to prefill multiple questions in a survey and skip prefilled questions.
+
+## Purpose
+
+Data prefilling via URL comes in handy when you:
+
+- Have data for some of the respondents, but not all
+- Have data you want the respondent to confirm or update
+- Have data in a different system (e.g. your database) and want to add it to the user profile in Formbricks
+- Want to embed a survey in an email and increase completion by prefilling the choice selected in the email
+
+## Quick Example
+
+```sh Example URL
+https://app.formbricks.com/s/clin3dxja02k8l80hpwmx4bjy?question_id_1=answer_1&question_id_2=answer_2&skipPrefilled=true
+```
+
+## How it works
+
+1. To prefill survey questions, add query parameters to the survey URL using the format `questionId=answer`.
+2. The answer must match the question’s expected type to pass [validation](/xm-and-surveys/surveys/link-surveys/data-prefilling#validation). For Single Select and Multi Select questions, `answer` can be either the option label text or the option ID.
+3. The answer needs to be [URL encoded](https://www.urlencoder.org/) (if it contains spaces or special characters)
+
+
+### Skip prefilled questions
+
+You can skip prefilled questions by adding the `skipPrefilled` parameter in the URL. To skip prefilled questions and show the next available question, add `skipPrefilled=true` to the URL. By default, `skipPrefilled` is set to `false`.
+
+```sh Skipping prefilled questions
+app.formbricks.com/s/clin3dxj?question_id_1=answer_1&skipPrefilled=true
+```
+
+### Prefilling multiple values
+
+Formbricks lets you prefill as many values as you want. Combine multiple values in the URL using `&`, for example: `name=Bernadette&age=18`. The order of query parameters doesn’t matter, so you can move questions around or add new ones without worrying about the parameter order.
+
+### Where do I find my question Id?
+
+You can find the `questionId` in the **Advanced Settings** at the bottom of each question card in the Survey Editor. You can update the `questionId` to any string you like **before you publish a survey.** After you published a survey, you cannot change the id anymore.
+
+![The question Id is located at the bottom of each question card in the survey editor.](/images/xm-and-surveys/surveys/link-surveys//data-prefilling/question-id.webp)
+
+## Examples
+
+Here are a few examples to get you started:
+
+### Rating Question
+
+Translates to 5 stars / points / emojis:
+
+```sh Rating Question
+https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?rating_question_id=5
+```
+
+### NPS Question
+
+Translates to an NPS rating of 10:
+
+```sh NPS Questions
+https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?nps_question_id=10
+```
+
+### Single Select Question (Radio)
+
+Chooses the option 'Very disappointed' in the single select question. The string has to be identical to the option in your question:
+
+```sh Single-select Question
+https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?single_select_question_id=Very%20disappointed
+```
+
+### Multi Select Question (Checkbox)
+
+Selects three options 'Sun, Palms and Beach' in the multi select question. The strings have to be identical to the options in your question:
+
+```sh Multi-select Question
+https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?multi_select_question_id=Sun%2CPalms%2CBeach
+```
+
+### Open Text Question
+
+Adds 'I love Formbricks' as the answer to the open text question:
+
+```sh Open Text Question
+https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?openText_question_id=I%20love%20Formbricks
+```
+
+### Consent Question
+
+Adds 'accepted' as the answer to the Consent question. Alternatively, you can set it to 'dismissed' to skip the question.
+
+```txt Consent Question
+https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?consent_question_id=accepted
+```
+
+### Picture Selection Question
+
+Adds index of the selected image(s) as the answer to the Picture Selection question. The index starts from 1
+
+```txt Picture Selection Question
+https://app.formbricks.com/s/clin3yxja52k8l80hpwmx4bjy?pictureSelection_question_id=1%2C2%2C3
+```
+
+
+## Using Option IDs for Single Select and Multi Select Questions
+
+Single Select and Multi Select questions support prefilling with **option IDs** in addition to option labels. This is the most robust approach and the recommended default, especially for multilingual surveys.
+
+### Why Option IDs are recommended
+
+- **Stable:** Option IDs don't change when you edit option labels.
+- **Language-independent:** The same URL works across all survey languages.
+- **Reliable:** No brittle string matching and fewer URL-encoding issues.
+
+### One link per option
+
+When you create one CTA link per answer option (for example in emails), use the option ID as the parameter value:
+
+```sh Option-ID prefill
+https://app.formbricks.com/s/cmoh0584taxoxu501jyvk8tzn?tuk2i9ktui1lee0mfos82czb=e2r697fou23n7ba4vmt7you6
+```
+
+In this example:
+
+- `tuk2i9ktui1lee0mfos82czb` is the question ID.
+- `e2r697fou23n7ba4vmt7you6` is the selected option ID.
+
+### How to Find Option IDs
+
+1. Open your survey in the Survey Editor
+2. Click on the question you want to prefill
+3. Open the **Advanced Settings** at the bottom of the question card
+4. Each option shows its unique ID that you can copy
+
+### Examples with Option IDs
+
+**Single Select:**
+
+```sh Single Select with Option ID
+https://app.formbricks.com/s/surveyId?questionId=option-abc123
+```
+
+**Multi Select:**
+
+```sh Multi Select with Option IDs
+https://app.formbricks.com/s/surveyId?questionId=option-1,option-2,option-3
+```
+
+**Mixed IDs and Labels:**
+
+You can even mix option IDs and labels in the same URL (though using IDs consistently is recommended):
+
+```sh Mixed Approach
+https://app.formbricks.com/s/surveyId?questionId=option-abc,Some%20Label,option-xyz
+```
+
+### Backward Compatibility
+
+All existing URLs using option labels continue to work. The system tries to match by option ID first, then falls back to matching by label text if no ID match is found.
+
+## Validation
+
+Make sure that the answer in the URL matches the expected type for the questions.
+
+The URL validation works as follows:
+
+- **Rating or NPS questions:** The response is parsed as a number and verified to be within the valid range.
+- **Consent type questions:** Valid values are "accepted" (consent given) and "dismissed" (consent not given).
+- **Picture Selection questions:** The response is parsed as comma-separated numbers (1-based indices) and verified against available choices.
+- **Single/Multi Select questions:** Values can be either option IDs or exact label text. The system tries option ID matching first, then falls back to label matching.
+- **Open Text questions:** Any string value is accepted.
+
+<Note>
+  If an answer is invalid or doesn't match any option, the prefilling will be ignored and the question is presented as if not prefilled.
+</Note>

@@ -1,5 +1,5 @@
 import { logger } from "@formbricks/logger";
-import { TIntegrationNotionConfigData, TIntegrationNotionInput } from "@formbricks/types/integration/notion";
+import { TIntegrationNotionInput } from "@formbricks/types/integration/notion";
 import { responses } from "@/app/lib/api/response";
 import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import {
@@ -11,6 +11,11 @@ import {
 } from "@/lib/constants";
 import { symmetricEncrypt } from "@/lib/crypto";
 import { createOrUpdateIntegration, getIntegrationByType } from "@/lib/integration/service";
+import {
+  IntegrationOAuthStateError,
+  consumeIntegrationOAuthState,
+  getSafeOAuthCallbackError,
+} from "@/lib/oauth/integration-state";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { hasUserWorkspaceAccess } from "@/lib/workspace/auth";
@@ -23,10 +28,28 @@ export const GET = withV1ApiWrapper({
 
     const url = req.url;
     const queryParams = new URLSearchParams(url.split("?")[1]); // Split the URL and get the query parameters
-    const workspaceId = queryParams.get("state"); // Get the value of the 'state' parameter
+    const state = queryParams.get("state");
     const code = queryParams.get("code");
     const error = queryParams.get("error");
 
+    let oauthState;
+    try {
+      oauthState = await consumeIntegrationOAuthState({
+        provider: "notion",
+        userId: authentication.user.id,
+        state,
+      });
+    } catch (err) {
+      if (err instanceof IntegrationOAuthStateError) {
+        return {
+          response: responses.badRequestResponse("Invalid OAuth state"),
+        };
+      }
+
+      throw err;
+    }
+
+    const workspaceId = oauthState.workspaceId;
     if (!workspaceId) {
       return {
         response: responses.badRequestResponse("Invalid workspaceId"),
@@ -40,11 +63,20 @@ export const GET = withV1ApiWrapper({
       };
     }
 
-    const basePath = `/workspaces/${workspaceId}`;
+    const basePath = `/workspaces/${workspaceId}/settings/workspace`;
+    const redirectUrl = new URL(`${basePath}/integrations/notion`, WEBAPP_URL);
+    const safeError = getSafeOAuthCallbackError(error);
 
     if (code && typeof code !== "string") {
       return {
         response: responses.badRequestResponse("`code` must be a string"),
+      };
+    }
+
+    if (!code && safeError) {
+      redirectUrl.searchParams.set("error", safeError);
+      return {
+        response: Response.redirect(redirectUrl),
       };
     }
 
@@ -95,7 +127,7 @@ export const GET = withV1ApiWrapper({
 
       const existingIntegration = await getIntegrationByType(workspaceId, "notion");
       if (existingIntegration) {
-        notionIntegration.config.data = existingIntegration.config.data as TIntegrationNotionConfigData[];
+        notionIntegration.config.data = existingIntegration.config.data;
       }
 
       const result = await createOrUpdateIntegration(workspaceId, notionIntegration);
@@ -103,22 +135,24 @@ export const GET = withV1ApiWrapper({
       if (result) {
         try {
           const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
-          capturePostHogEvent(authentication.user.id, "integration_connected", {
-            integration_type: "notion",
-            organization_id: organizationId,
-          });
+          capturePostHogEvent(
+            authentication.user.id,
+            "integration_connected",
+            {
+              integration_type: "notion",
+              organization_id: organizationId,
+              workspace_id: workspaceId,
+            },
+            { organizationId, workspaceId }
+          );
         } catch (err) {
           logger.error({ error: err }, "Failed to capture PostHog integration_connected event for notion");
         }
 
         return {
-          response: Response.redirect(`${WEBAPP_URL}${basePath}/integrations/notion`),
+          response: Response.redirect(redirectUrl),
         };
       }
-    } else if (error) {
-      return {
-        response: Response.redirect(`${WEBAPP_URL}${basePath}/integrations/notion?error=${error}`),
-      };
     }
 
     return {

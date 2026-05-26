@@ -1,9 +1,14 @@
+import { redirectBillingRoleFromRestrictedSettings } from "@/app/(app)/workspaces/[workspaceId]/settings/lib/redirect-billing-role";
 import { isInstanceAIConfigured } from "@/lib/ai/service";
-import { FB_LOGO_URL, IS_FORMBRICKS_CLOUD, IS_STORAGE_CONFIGURED } from "@/lib/constants";
+import {
+  ENTERPRISE_LICENSE_REQUEST_FORM_URL,
+  FB_LOGO_URL,
+  IS_FORMBRICKS_CLOUD,
+  IS_STORAGE_CONFIGURED,
+} from "@/lib/constants";
 import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import {
-  getIsAIDataAnalysisEnabled,
   getIsAISmartToolsEnabled,
   getIsMultiOrgEnabled,
   getWhiteLabelPermission,
@@ -21,8 +26,9 @@ import { DeleteOrganization } from "./components/DeleteOrganization";
 import { EditOrganizationNameForm } from "./components/EditOrganizationNameForm";
 import { SecurityListTip } from "./components/SecurityListTip";
 
-const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
+const Page = async (props: Readonly<{ params: Promise<{ workspaceId: string }> }>) => {
   const params = await props.params;
+  await redirectBillingRoleFromRestrictedSettings(params.workspaceId);
   const t = await getTranslate();
 
   const { session, currentUserMembership, organization, isOwner, isManager } = await getWorkspaceAuth(
@@ -31,14 +37,11 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
 
   const user = session?.user?.id ? await getUser(session.user.id) : null;
 
-  const [isMultiOrgEnabled, hasWhiteLabelPermission, hasAISmartToolsPermission, hasAIDataAnalysisPermission] =
-    await Promise.all([
-      getIsMultiOrgEnabled(),
-      getWhiteLabelPermission(organization.id),
-      getIsAISmartToolsEnabled(organization.id),
-      getIsAIDataAnalysisEnabled(organization.id),
-    ]);
-  const hasAIPermission = hasAISmartToolsPermission || hasAIDataAnalysisPermission;
+  const [isMultiOrgEnabled, hasWhiteLabelPermission, hasAIPermission] = await Promise.all([
+    getIsMultiOrgEnabled(),
+    getWhiteLabelPermission(organization.id),
+    getIsAISmartToolsEnabled(organization.id),
+  ]);
 
   const isDeleteDisabled = !isOwner || !isMultiOrgEnabled;
   const currentUserRole = currentUserMembership?.role;
@@ -70,6 +73,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
           isInstanceAIConfigured={isInstanceAIConfigured()}
           hasAIPermission={hasAIPermission}
           isFormbricksCloud={IS_FORMBRICKS_CLOUD}
+          enterpriseLicenseRequestFormUrl={ENTERPRISE_LICENSE_REQUEST_FORM_URL}
         />
       </SettingsCard>
       <EmailCustomizationSettings
@@ -81,6 +85,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
         fbLogoUrl={FB_LOGO_URL}
         user={user}
         isStorageConfigured={IS_STORAGE_CONFIGURED}
+        enterpriseLicenseRequestFormUrl={ENTERPRISE_LICENSE_REQUEST_FORM_URL}
       />
       {isMultiOrgEnabled && (
         <SettingsCard

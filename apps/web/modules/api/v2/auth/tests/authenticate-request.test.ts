@@ -112,7 +112,7 @@ describe("authenticateRequest", () => {
 
     vi.mocked(getApiKeyWithPermissions).mockResolvedValue(mockApiKeyData);
 
-    const result = await authenticateRequest(request);
+    const result = await authenticateRequest(request, { allowOrganizationOnlyApiKey: true });
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -201,7 +201,7 @@ describe("authenticateRequest", () => {
       apiKeyWorkspaces: [],
     } as unknown as TApiKeyWithEnvironmentAndWorkspace);
 
-    const result = await authenticateRequest(request);
+    const result = await authenticateRequest(request, { allowOrganizationOnlyApiKey: true });
 
     expect(result.ok).toBe(true);
     if (result.ok) {

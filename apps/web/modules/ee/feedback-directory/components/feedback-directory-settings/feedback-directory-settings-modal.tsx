@@ -15,6 +15,7 @@ import {
   updateFeedbackDirectoryAction,
 } from "@/modules/ee/feedback-directory/actions";
 import { ArchiveFeedbackDirectory } from "@/modules/ee/feedback-directory/components/feedback-directory-settings/archive-feedback-directory";
+import { getWorkspaceAccessConflictState } from "@/modules/ee/feedback-directory/lib/workspace-access-conflicts";
 import {
   TFeedbackDirectoryDetails,
   TFeedbackDirectoryUpdateInput,
@@ -23,6 +24,7 @@ import {
   getTranslatedFeedbackDirectoryError,
 } from "@/modules/ee/feedback-directory/types/feedback-directory";
 import { TOrganizationWorkspace } from "@/modules/ee/teams/team-list/types/workspace";
+import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -96,6 +98,20 @@ export const FeedbackDirectorySettingsModal = ({
     [orgWorkspaces, workspaceAccessMap, directory?.id]
   );
 
+  const workspaceConflictInput = useMemo(
+    () => ({
+      orgWorkspaces,
+      workspaceAccessByWorkspace,
+      currentDirectoryId: directory?.id,
+    }),
+    [orgWorkspaces, workspaceAccessByWorkspace, directory?.id]
+  );
+
+  const workspaceConflictState = useMemo(
+    () => getWorkspaceAccessConflictState(workspaceConflictInput),
+    [workspaceConflictInput]
+  );
+
   const initialWorkspaceIds = useMemo(
     () => directory?.workspaces.map((workspace) => workspace.workspaceId) ?? [],
     [directory?.workspaces]
@@ -117,6 +133,7 @@ export const FeedbackDirectorySettingsModal = ({
     setValue,
     reset,
   } = form;
+  const selectedWorkspaceIds = form.watch("workspaceIds") ?? [];
 
   const workspaceNameById = useMemo(() => {
     const map = new Map(orgWorkspaces.map((workspace) => [workspace.id, workspace.name]));
@@ -290,7 +307,7 @@ export const FeedbackDirectorySettingsModal = ({
                 </Muted>
                 <MultiSelect
                   options={workspaceOptions}
-                  value={form.watch("workspaceIds") ?? []}
+                  value={selectedWorkspaceIds}
                   onChange={(selected) => {
                     setValue("workspaceIds", selected, { shouldDirty: true });
                   }}
@@ -298,6 +315,30 @@ export const FeedbackDirectorySettingsModal = ({
                   placeholder={t("workspace.settings.feedback_directories.select_workspaces_placeholder")}
                   containerClassName="focus-within:ring-0 focus-within:ring-offset-0"
                 />
+                {workspaceConflictState.showBlockedExplanation && (
+                  <Alert variant="info" className="items-start">
+                    <div className="min-w-0 space-y-1">
+                      <AlertTitle className="truncate">
+                        {t("workspace.settings.feedback_directories.no_unassigned_workspaces_title")}
+                      </AlertTitle>
+                      <AlertDescription className="overflow-visible whitespace-normal">
+                        <p>
+                          {t("workspace.settings.feedback_directories.no_unassigned_workspaces_description")}
+                        </p>
+                        <ul className="mt-1 list-disc space-y-0.5 pl-4">
+                          {workspaceConflictState.conflictDetails.map((conflict) => (
+                            <li key={conflict.workspaceId}>
+                              {t("workspace.settings.feedback_directories.workspace_assigned_to_directory", {
+                                workspaceName: conflict.workspaceName,
+                                directoryName: conflict.feedbackDirectoryName,
+                              })}
+                            </li>
+                          ))}
+                        </ul>
+                      </AlertDescription>
+                    </div>
+                  </Alert>
+                )}
               </div>
 
               {isEdit && (

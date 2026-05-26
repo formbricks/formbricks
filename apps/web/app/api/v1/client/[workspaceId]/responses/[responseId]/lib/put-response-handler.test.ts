@@ -9,9 +9,10 @@ const mocks = vi.hoisted(() => ({
   getSurvey: vi.fn(),
   getValidatedResponseUpdateInput: vi.fn(),
   loggerError: vi.fn(),
+  resolveClientApiIds: vi.fn(),
   sendToPipeline: vi.fn(),
   updateResponseWithQuotaEvaluation: vi.fn(),
-  validateFileUploads: vi.fn(),
+  validateClientFileUploads: vi.fn(),
   validateOtherOptionLengthForMultipleChoice: vi.fn(),
   validateResponseData: vi.fn(),
 }));
@@ -34,6 +35,10 @@ vi.mock("@/lib/survey/service", () => ({
   getSurvey: mocks.getSurvey,
 }));
 
+vi.mock("@/lib/utils/resolve-client-id", () => ({
+  resolveClientApiIds: mocks.resolveClientApiIds,
+}));
+
 vi.mock("@/modules/api/lib/validation", () => ({
   formatValidationErrorsForV1Api: mocks.formatValidationErrorsForV1Api,
   validateResponseData: mocks.validateResponseData,
@@ -44,7 +49,7 @@ vi.mock("@/modules/api/v2/lib/element", () => ({
 }));
 
 vi.mock("@/modules/storage/utils", () => ({
-  validateFileUploads: mocks.validateFileUploads,
+  validateClientFileUploads: mocks.validateClientFileUploads,
 }));
 
 vi.mock("./response", () => ({
@@ -123,8 +128,9 @@ describe("putResponseHandler", () => {
     });
     mocks.getResponse.mockResolvedValue(getBaseExistingResponse());
     mocks.getSurvey.mockResolvedValue(getBaseSurvey());
+    mocks.resolveClientApiIds.mockResolvedValue({ workspaceId });
     mocks.updateResponseWithQuotaEvaluation.mockResolvedValue(getBaseUpdatedResponse());
-    mocks.validateFileUploads.mockReturnValue(true);
+    mocks.validateClientFileUploads.mockReturnValue(true);
     mocks.validateOtherOptionLengthForMultipleChoice.mockReturnValue(null);
     mocks.validateResponseData.mockReturnValue(null);
   });
@@ -239,6 +245,34 @@ describe("putResponseHandler", () => {
     });
   });
 
+  test("returns not found when the workspace id cannot be resolved", async () => {
+    mocks.resolveClientApiIds.mockResolvedValue(null);
+
+    const result = await putResponseHandler(createHandlerParams({ workspaceId: "unknown_workspace_or_env" }));
+
+    expect(result.response.status).toBe(404);
+    await expect(result.response.json()).resolves.toEqual({
+      code: "not_found",
+      message: "Workspace not found",
+      details: {
+        resource_id: "unknown_workspace_or_env",
+        resource_type: "Workspace",
+      },
+    });
+    expect(mocks.getResponse).not.toHaveBeenCalled();
+    expect(mocks.updateResponseWithQuotaEvaluation).not.toHaveBeenCalled();
+  });
+
+  test("accepts updates when the route param is a legacy environment id that resolves to the survey workspace", async () => {
+    mocks.resolveClientApiIds.mockResolvedValue({ workspaceId });
+
+    const result = await putResponseHandler(createHandlerParams({ workspaceId: "legacy_environment_id" }));
+
+    expect(mocks.resolveClientApiIds).toHaveBeenCalledWith("legacy_environment_id");
+    expect(result.response.status).toBe(200);
+    expect(mocks.updateResponseWithQuotaEvaluation).toHaveBeenCalledTimes(1);
+  });
+
   test("rejects updates when the response survey does not belong to the requested workspace", async () => {
     mocks.getSurvey.mockResolvedValue({
       ...getBaseSurvey(),
@@ -278,7 +312,7 @@ describe("putResponseHandler", () => {
   });
 
   test("rejects invalid file upload updates", async () => {
-    mocks.validateFileUploads.mockReturnValue(false);
+    mocks.validateClientFileUploads.mockReturnValue(false);
 
     const result = await putResponseHandler(createHandlerParams());
 

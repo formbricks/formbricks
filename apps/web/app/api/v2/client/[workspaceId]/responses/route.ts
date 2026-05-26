@@ -15,6 +15,7 @@ import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/element";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
+import { validateClientFileUploads } from "@/modules/storage/utils";
 import { createResponseWithQuotaEvaluation } from "./lib/response";
 import { TResponseInputV2, ZResponseInputV2 } from "./types/response";
 
@@ -34,10 +35,7 @@ type TValidatedResponseInputResult =
   | { response: Response };
 
 const getCountry = (requestHeaders: Headers): string | undefined =>
-  requestHeaders.get("CF-IPCountry") ||
-  requestHeaders.get("X-Vercel-IP-Country") ||
-  requestHeaders.get("CloudFront-Viewer-Country") ||
-  undefined;
+  requestHeaders.get("CF-IPCountry") || requestHeaders.get("CloudFront-Viewer-Country") || undefined;
 
 const getUnexpectedPublicErrorResponse = (): Response =>
   responses.internalServerErrorResponse("Something went wrong. Please try again.", true);
@@ -90,6 +88,18 @@ const validateResponseSubmission = async (
   const surveyCheckResult = await checkSurveyValidity(survey, workspaceId, responseInputData);
   if (surveyCheckResult) {
     return surveyCheckResult;
+  }
+
+  if (
+    !validateClientFileUploads({
+      data: responseInputData.data,
+      workspaceId,
+      surveyId: survey.id,
+      blocks: survey.blocks,
+      questions: survey.questions,
+    })
+  ) {
+    return responses.badRequestResponse("Invalid file upload response", undefined, true);
   }
 
   const otherResponseInvalidQuestionId = validateOtherOptionLengthForMultipleChoice({
@@ -190,7 +200,6 @@ export const OPTIONS = async (): Promise<Response> => {
 
 export const POST = async (request: Request, context: Context): Promise<Response> => {
   const params = await context.params;
-
   // Resolve: accepts either an environmentId (old SDK) or a workspaceId (new SDK)
   const resolved = await resolveClientApiIds(params.workspaceId);
   if (!resolved) {

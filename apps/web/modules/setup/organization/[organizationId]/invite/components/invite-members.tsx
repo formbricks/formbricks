@@ -44,12 +44,12 @@ export const InviteMembers = ({ IS_SMTP_CONFIGURED, organizationId }: InviteMemb
           organizationId,
         });
         if (inviteResponse?.data) {
-          toast.success(`${t("setup.invite.invitation_sent_to")} ${member.email}!`);
+          toast.success(t("setup.invite.invitation_sent_to_email", { email: member.email }));
         } else {
           const errorMessage = getFormattedErrorMessage(inviteResponse);
           toast.error(errorMessage);
         }
-      } catch (error) {
+      } catch {
         toast.error(`${t("setup.invite.failed_to_invite")} ${member.email}.`);
       }
     }

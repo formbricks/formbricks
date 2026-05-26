@@ -1,17 +1,18 @@
 "use client";
 
-import { BellRing, Eye, ListRestart, SquarePenIcon } from "lucide-react";
+import { BellRing, Eye, ListRestart, RefreshCcwIcon, SquarePenIcon } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSegment } from "@formbricks/types/segment";
-import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUser } from "@formbricks/types/user";
 import { useWorkspaceContext } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
+import { useResponseFilter } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
 import { SuccessMessage } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/SuccessMessage";
 import { ShareSurveyModal } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/share-survey-modal";
 import { SurveyStatusDropdown } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/SurveyStatusDropdown";
+import { useSurvey } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/context/survey-context";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
 import { useSingleUseId } from "@/modules/survey/hooks/useSingleUseId";
@@ -22,7 +23,6 @@ import { IconBar } from "@/modules/ui/components/iconbar";
 import { resetSurveyAction } from "../actions";
 
 interface SurveyAnalysisCTAProps {
-  survey: TSurvey;
   isReadOnly: boolean;
   user: TUser;
   publicDomain: string;
@@ -31,6 +31,7 @@ interface SurveyAnalysisCTAProps {
   isContactsEnabled: boolean;
   isFormbricksCloud: boolean;
   isStorageConfigured: boolean;
+  enterpriseLicenseRequestFormUrl: string;
 }
 
 interface ModalState {
@@ -39,7 +40,6 @@ interface ModalState {
 }
 
 export const SurveyAnalysisCTA = ({
-  survey,
   isReadOnly,
   user,
   publicDomain,
@@ -48,6 +48,7 @@ export const SurveyAnalysisCTA = ({
   isContactsEnabled,
   isFormbricksCloud,
   isStorageConfigured,
+  enterpriseLicenseRequestFormUrl,
 }: SurveyAnalysisCTAProps) => {
   const { t } = useTranslation();
   const router = useRouter();
@@ -60,9 +61,12 @@ export const SurveyAnalysisCTA = ({
   });
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const { workspace } = useWorkspaceContext();
+  const { survey } = useSurvey();
   const { refreshSingleUseId } = useSingleUseId(survey, isReadOnly);
+  const { refreshAnalysisData } = useResponseFilter();
 
   const appSetupCompleted = survey.type === "app" && workspace.appSetupCompleted;
 
@@ -74,7 +78,7 @@ export const SurveyAnalysisCTA = ({
   }, [searchParams]);
 
   const handleShareModalToggle = (open: boolean) => {
-    const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(globalThis.location.search);
     const currentShareParam = params.get("share") === "true";
 
     if (open && !currentShareParam) {
@@ -109,9 +113,12 @@ export const SurveyAnalysisCTA = ({
     const surveyUrl = new URL(`${publicDomain}/s/${survey.id}`);
 
     if (survey.singleUse?.enabled) {
-      const newId = await refreshSingleUseId();
-      if (newId) {
-        surveyUrl.searchParams.set("suId", newId);
+      const singleUseLinkParams = await refreshSingleUseId();
+      if (singleUseLinkParams) {
+        surveyUrl.searchParams.set("suId", singleUseLinkParams.suId);
+        if (singleUseLinkParams.suToken) {
+          surveyUrl.searchParams.set("suToken", singleUseLinkParams.suToken);
+        }
       }
     }
 
@@ -144,6 +151,25 @@ export const SurveyAnalysisCTA = ({
   };
 
   const iconActions = [
+    {
+      icon: RefreshCcwIcon,
+      tooltip: t("common.refresh"),
+      onClick: async () => {
+        if (isRefreshing) return;
+        setIsRefreshing(true);
+        try {
+          await refreshAnalysisData();
+          toast.success(t("common.data_refreshed_successfully"));
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : t("common.something_went_wrong");
+          toast.error(errorMessage);
+        } finally {
+          setIsRefreshing(false);
+        }
+      },
+      disabled: isRefreshing,
+      isVisible: true,
+    },
     {
       icon: BellRing,
       tooltip: t("workspace.surveys.summary.configure_alerts"),
@@ -180,7 +206,7 @@ export const SurveyAnalysisCTA = ({
   return (
     <div className="hidden justify-end gap-x-1.5 sm:flex">
       {!isReadOnly && (appSetupCompleted || survey.type === "link") && survey.status !== "draft" && (
-        <SurveyStatusDropdown survey={survey} />
+        <SurveyStatusDropdown />
       )}
 
       <IconBar actions={iconActions} />
@@ -210,9 +236,10 @@ export const SurveyAnalysisCTA = ({
           isReadOnly={isReadOnly}
           isStorageConfigured={isStorageConfigured}
           workspaceCustomScripts={workspace.customHeadScripts}
+          enterpriseLicenseRequestFormUrl={enterpriseLicenseRequestFormUrl}
         />
       )}
-      <SuccessMessage survey={survey} />
+      <SuccessMessage />
 
       {responseCount > 0 && (
         <EditPublicSurveyAlertDialog

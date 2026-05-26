@@ -10,6 +10,7 @@ import {
   getStyling,
   handleHiddenFields,
   shouldDisplayBasedOnPercentage,
+  surveyHasSegmentFilters,
 } from "@/lib/common/utils";
 import { UpdateQueue } from "@/lib/user/update-queue";
 import { type TUserState, type TWorkspaceStateSettings, type TWorkspaceStateSurvey } from "@/types/config";
@@ -58,7 +59,7 @@ export const triggerSurvey = async (
   if (survey.displayPercentage) {
     const shouldDisplaySurvey = shouldDisplayBasedOnPercentage(survey.displayPercentage);
     if (!shouldDisplaySurvey) {
-      logger.debug(`Survey display of "${survey.name}" skipped based on displayPercentage.`);
+      logger.debug(`Survey display of "${survey.id}" skipped based on displayPercentage.`);
       return; // skip displaying the survey
     }
   }
@@ -93,7 +94,7 @@ export const renderWidget = async (
     logger.debug("Waiting for pending user identification before rendering survey");
     const identificationSucceeded = await updateQueue.waitForPendingWork();
     if (!identificationSucceeded) {
-      const hasSegmentFilters = Array.isArray(survey.segment?.filters) && survey.segment.filters.length > 0;
+      const hasSegmentFilters = surveyHasSegmentFilters(survey);
 
       if (hasSegmentFilters) {
         logger.debug("User identification failed. Skipping survey with segment filters.");
@@ -106,7 +107,7 @@ export const renderWidget = async (
   }
 
   if (survey.delay) {
-    logger.debug(`Delaying survey "${survey.name}" by ${survey.delay.toString()} seconds.`);
+    logger.debug(`Delaying survey "${survey.id}" by ${survey.delay.toString()} seconds.`);
   }
 
   const settings = config.get().workspace.data.settings as unknown as TWorkspaceStateSettings;
@@ -124,7 +125,7 @@ export const renderWidget = async (
     );
     //if survey is not available in selected language, survey wont be shown
     if (!displayLanguage) {
-      logger.debug(`Survey "${survey.name}" is not available in specified language.`);
+      logger.debug(`Survey "${survey.id}" is not available in specified language.`);
       setIsSurveyRunning(false);
       return;
     }
@@ -166,7 +167,6 @@ export const renderWidget = async (
       workspaceId: config.get().workspaceId,
       contactId: config.get().user.data.contactId ?? undefined,
       action,
-      // @ts-expect-error -- the types are not compatible because they come from different places (types package vs local types)
       survey,
       isBrandingEnabled,
       clickOutside,
@@ -263,7 +263,7 @@ export const removeWidgetContainer = (): void => {
 const SURVEYS_LOAD_TIMEOUT_MS = 10000;
 const SURVEYS_POLL_INTERVAL_MS = 200;
 
-type TFormbricksSurveys = typeof globalThis.window.formbricksSurveys;
+type TFormbricksSurveys = NonNullable<typeof globalThis.window.formbricksSurveys>;
 
 let surveysLoadPromise: Promise<TFormbricksSurveys> | null = null;
 
@@ -272,7 +272,6 @@ const waitForSurveysGlobal = (): Promise<TFormbricksSurveys> => {
     const startTime = Date.now();
 
     const check = (): void => {
-      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Runtime check for surveys package availability
       if (globalThis.window.formbricksSurveys) {
         const storedNonce = globalThis.window.__formbricksNonce;
         if (storedNonce) {
@@ -295,7 +294,6 @@ const waitForSurveysGlobal = (): Promise<TFormbricksSurveys> => {
 };
 
 const loadFormbricksSurveysExternally = (): Promise<TFormbricksSurveys> => {
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Runtime check for surveys package availability
   if (globalThis.window.formbricksSurveys) {
     return Promise.resolve(globalThis.window.formbricksSurveys);
   }
@@ -333,7 +331,6 @@ let isPreloaded = false;
 
 export const preloadSurveysScript = (appUrl: string): void => {
   // Don't preload if already loaded or already preloading
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- Runtime check for surveys package availability
   if (globalThis.window.formbricksSurveys) return;
   if (isPreloaded) return;
 

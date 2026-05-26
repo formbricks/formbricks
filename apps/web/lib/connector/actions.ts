@@ -37,6 +37,11 @@ import {
   updateConnector,
   updateConnectorWithMappings,
 } from "./service";
+import {
+  formatMissingRequiredCsvFieldMappingsMessage,
+  getMissingRequiredCsvFieldMappings,
+  sanitizeCsvFieldMappings,
+} from "./utils";
 
 const ZDeleteConnectorAction = z.object({
   connectorId: ZId,
@@ -125,6 +130,19 @@ const ZFormbricksSurveyMapping = z.object({
   elementIds: z.array(z.string()).min(1),
 });
 
+const sanitizeAndValidateCsvFieldMappings = (
+  fieldMappings: z.infer<typeof ZConnectorFieldMappingCreateInput>[]
+) => {
+  const sanitized = sanitizeCsvFieldMappings(fieldMappings) ?? [];
+  const missing = getMissingRequiredCsvFieldMappings(sanitized);
+
+  if (missing.length > 0) {
+    throw new InvalidInputError(formatMissingRequiredCsvFieldMappingsMessage());
+  }
+
+  return sanitized;
+};
+
 const ZCreateConnectorWithMappingsAction = z
   .object({
     workspaceId: ZId,
@@ -197,7 +215,13 @@ export const createConnectorWithMappingsAction = authenticatedActionClient
 
       mappingsInput = await resolveFormbricksMappingsInput(formbricksMappings);
     } else if (fieldMappings?.length) {
-      mappingsInput = { type: "field", mappings: fieldMappings };
+      mappingsInput = {
+        type: "field",
+        mappings:
+          parsedInput.connectorInput.type === "csv"
+            ? sanitizeAndValidateCsvFieldMappings(fieldMappings)
+            : fieldMappings,
+      };
     }
 
     return createConnectorWithMappings(
@@ -256,7 +280,21 @@ export const updateConnectorWithMappingsAction = authenticatedActionClient
 
         mappingsInput = await resolveFormbricksMappingsInput(parsedInput.formbricksMappings);
       } else if (parsedInput.fieldMappings && parsedInput.fieldMappings.length > 0) {
-        mappingsInput = { type: "field", mappings: parsedInput.fieldMappings };
+        const connector = await prisma.connector.findUnique({
+          where: { id: parsedInput.connectorId, workspaceId: parsedInput.workspaceId },
+          select: { type: true },
+        });
+        if (!connector) {
+          throw new ResourceNotFoundError("Connector", parsedInput.connectorId);
+        }
+
+        mappingsInput = {
+          type: "field",
+          mappings:
+            connector.type === "csv"
+              ? sanitizeAndValidateCsvFieldMappings(parsedInput.fieldMappings)
+              : parsedInput.fieldMappings,
+        };
       }
 
       return updateConnectorWithMappings(
@@ -318,13 +356,14 @@ export const duplicateConnectorAction = authenticatedActionClient
           })),
         };
       } else if (source.fieldMappings.length > 0) {
+        const projected = source.fieldMappings.map((m) => ({
+          sourceFieldId: m.sourceFieldId,
+          targetFieldId: m.targetFieldId,
+          staticValue: m.staticValue ?? undefined,
+        }));
         mappingsInput = {
           type: "field",
-          mappings: source.fieldMappings.map((m) => ({
-            sourceFieldId: m.sourceFieldId,
-            targetFieldId: m.targetFieldId,
-            staticValue: m.staticValue ?? undefined,
-          })),
+          mappings: source.type === "csv" ? sanitizeAndValidateCsvFieldMappings(projected) : projected,
         };
       }
 

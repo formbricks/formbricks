@@ -4,6 +4,7 @@ import { PlusIcon } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CreateChartDialog } from "@/modules/ee/analysis/charts/components/create-chart-dialog";
+import type { TAIUnavailableReason } from "@/modules/ee/analysis/charts/lib/ai-availability";
 import { Button, type ButtonProps } from "@/modules/ui/components/button";
 
 interface CreateChartButtonProps {
@@ -15,7 +16,7 @@ interface CreateChartButtonProps {
   showIcon?: boolean;
   buttonProps?: Omit<ButtonProps, "onClick" | "children">;
   isAIAvailable?: boolean;
-  aiUnavailableReason?: string;
+  aiUnavailableReason?: TAIUnavailableReason;
 }
 
 export function CreateChartButton({

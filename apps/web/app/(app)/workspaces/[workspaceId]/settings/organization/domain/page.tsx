@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { AuthenticationError } from "@formbricks/types/errors";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
+import { redirectBillingRoleFromRestrictedSettings } from "@/app/(app)/workspaces/[workspaceId]/settings/lib/redirect-billing-role";
 import { PrettyUrlsTable } from "@/app/(app)/workspaces/[workspaceId]/settings/organization/domain/components/pretty-urls-table";
 import { IS_FORMBRICKS_CLOUD, IS_STORAGE_CONFIGURED } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
@@ -12,8 +13,9 @@ import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 
-const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
+const Page = async (props: Readonly<{ params: Promise<{ workspaceId: string }> }>) => {
   const params = await props.params;
+  await redirectBillingRoleFromRestrictedSettings(params.workspaceId);
   const t = await getTranslate();
 
   if (IS_FORMBRICKS_CLOUD) {

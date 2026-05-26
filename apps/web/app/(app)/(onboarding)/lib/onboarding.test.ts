@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError } from "@formbricks/types/errors";
@@ -32,7 +32,7 @@ describe("getTeamsByOrganizationId", () => {
 
   test("throws DatabaseError on Prisma error", async () => {
     vi.mocked(prisma.team.findMany).mockRejectedValueOnce(
-      new Prisma.PrismaClientKnownRequestError("fail", { code: "P2002", clientVersion: "1.0.0" })
+      new PrismaClientKnownRequestError("fail", { code: "P2002", clientVersion: "1.0.0" })
     );
     await expect(getTeamsByOrganizationId("org1")).rejects.toThrow(DatabaseError);
   });

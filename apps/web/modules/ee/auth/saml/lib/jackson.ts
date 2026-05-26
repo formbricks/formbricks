@@ -5,17 +5,6 @@ import { SAML_AUDIENCE, SAML_DATABASE_URL, SAML_PATH, WEBAPP_URL } from "@/lib/c
 import { preloadConnection } from "@/modules/ee/auth/saml/lib/preload-connection";
 import { getIsSamlSsoEnabled } from "@/modules/ee/license-check/lib/utils";
 
-const opts: JacksonOption = {
-  externalUrl: WEBAPP_URL,
-  samlAudience: SAML_AUDIENCE,
-  samlPath: SAML_PATH,
-  db: {
-    engine: "sql",
-    type: "postgres",
-    url: SAML_DATABASE_URL,
-  },
-};
-
 declare global {
   var oauthController: IOAuthController | undefined;
   var connectionController: IConnectionAPIController | undefined;
@@ -27,6 +16,17 @@ export default async function init() {
   if (!g.oauthController || !g.connectionController) {
     const isSamlSsoEnabled = await getIsSamlSsoEnabled();
     if (!isSamlSsoEnabled) return;
+
+    const opts: JacksonOption = {
+      externalUrl: WEBAPP_URL,
+      samlAudience: SAML_AUDIENCE,
+      samlPath: SAML_PATH,
+      db: {
+        engine: "sql",
+        type: "postgres",
+        url: SAML_DATABASE_URL,
+      },
+    };
 
     const ret = await (await import("@boxyhq/saml-jackson")).controllers(opts);
 

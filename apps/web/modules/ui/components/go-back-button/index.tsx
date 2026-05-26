@@ -5,9 +5,14 @@ import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
 
-export const GoBackButton = ({ url }: { url?: string }) => {
+interface GoBackButtonProps {
+  url?: string;
+}
+
+export const GoBackButton = ({ url }: Readonly<GoBackButtonProps>) => {
   const router = useRouter();
   const { t } = useTranslation();
+
   return (
     <Button
       size="sm"
@@ -17,6 +22,7 @@ export const GoBackButton = ({ url }: { url?: string }) => {
           router.push(url);
           return;
         }
+
         router.back();
       }}>
       <ArrowLeftIcon />

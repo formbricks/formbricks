@@ -152,7 +152,7 @@ describe("API Response Utilities", () => {
     test("should use custom cache control header when provided", () => {
       const message = "Something went wrong";
       const customCache = "no-cache";
-      const response = responses.internalServerErrorResponse(message, false, customCache);
+      const response = responses.internalServerErrorResponse(message, false, {}, customCache);
 
       expect(response.headers.get("Cache-Control")).toBe(customCache);
     });

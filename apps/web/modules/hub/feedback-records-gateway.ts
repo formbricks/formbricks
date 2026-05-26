@@ -6,11 +6,12 @@ import { logger } from "@formbricks/logger";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { ZId } from "@formbricks/types/common";
 import { AuthorizationError } from "@formbricks/types/errors";
+import { RequestBodyTooLargeError, readRequestBodyWithLimit } from "@/app/lib/api/request-body";
 import { verifyFeedbackRecordsGatewayToken } from "@/lib/jwt";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getBearerTokenFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { getFeedbackDirectoryAuthContext } from "@/modules/ee/feedback-directory/lib/feedback-directory";
-import { getIsUnifyFeedbackEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/utils";
 import {
   TGatewayAuthenticatedPrincipal,
   TGatewayRequestAuthorizer,
@@ -147,17 +148,35 @@ const parseTenantId = (tenantId: string | null): string | null => {
   return ZId.safeParse(tenantId).success ? tenantId : null;
 };
 
-const parseJsonBody = async (request: NextRequest): Promise<Record<string, unknown> | null> => {
+const parseJsonBody = async (
+  request: NextRequest
+): Promise<
+  | {
+      ok: true;
+      body: Record<string, unknown> | null;
+    }
+  | {
+      ok: false;
+      response: Response;
+    }
+> => {
   try {
-    const rawBody = await request.text();
+    const rawBody = await readRequestBodyWithLimit(request);
     if (!rawBody.trim()) {
-      return null;
+      return { ok: true, body: null };
     }
 
     const parsedBody = JSON.parse(rawBody);
-    return parsedBody && typeof parsedBody === "object" ? (parsedBody as Record<string, unknown>) : null;
-  } catch {
-    return null;
+    return {
+      ok: true,
+      body: parsedBody && typeof parsedBody === "object" ? (parsedBody as Record<string, unknown>) : null,
+    };
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError) {
+      return { ok: false, response: buildGatewayStatusResponse(413, "Payload Too Large") };
+    }
+
+    return { ok: true, body: null };
   }
 };
 
@@ -208,7 +227,12 @@ const resolveTenantId = async (
   }
 
   if (route.tenantSource === "body") {
-    const body = await parseJsonBody(request);
+    const parseResult = await parseJsonBody(request);
+    if (!parseResult.ok) {
+      return { errorResponse: parseResult.response };
+    }
+
+    const body = parseResult.body;
     const tenantId = parseTenantId(typeof body?.tenant_id === "string" ? body.tenant_id : null);
     if (!tenantId) {
       return {
@@ -264,8 +288,10 @@ const authorizeFeedbackRecordsGatewayRequest = async (
     return { allowed: false };
   }
 
-  const isUnifyFeedbackAllowed = await getIsUnifyFeedbackEnabled(feedbackDirectory.organizationId);
-  if (!isUnifyFeedbackAllowed) {
+  const isFeedbackDirectoriesAllowed = await getIsFeedbackDirectoriesEnabled(
+    feedbackDirectory.organizationId
+  );
+  if (!isFeedbackDirectoriesAllowed) {
     return { allowed: false };
   }
 

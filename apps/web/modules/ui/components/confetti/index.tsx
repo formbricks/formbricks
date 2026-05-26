@@ -1,7 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import ReactConfetti from "react-confetti";
-import { useWindowSize } from "react-use";
 
 type ConfettiProps = {
   colors?: string[];
@@ -12,11 +12,21 @@ export const Confetti: React.FC<ConfettiProps> = ({
 }: {
   colors?: string[];
 }) => {
-  const { width, height } = useWindowSize();
+  const [windowSize, setWindowSize] = useState({ height: 0, width: 0 });
+
+  useEffect(() => {
+    const updateWindowSize = () => setWindowSize({ height: window.innerHeight, width: window.innerWidth });
+
+    updateWindowSize();
+    window.addEventListener("resize", updateWindowSize);
+
+    return () => window.removeEventListener("resize", updateWindowSize);
+  }, []);
+
   return (
     <ReactConfetti
-      width={width}
-      height={height}
+      width={windowSize.width}
+      height={windowSize.height}
       colors={colors}
       numberOfPieces={400}
       recycle={false}

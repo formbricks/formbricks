@@ -29,6 +29,7 @@ interface IndividualInviteTabProps {
   isFormbricksCloud: boolean;
   membershipRole?: TOrganizationRole;
   showTeamAdminRestrictions: boolean;
+  enterpriseLicenseRequestFormUrl: string;
 }
 
 export const IndividualInviteTab = ({
@@ -39,6 +40,7 @@ export const IndividualInviteTab = ({
   isFormbricksCloud,
   membershipRole,
   showTeamAdminRestrictions,
+  enterpriseLicenseRequestFormUrl,
 }: IndividualInviteTabProps) => {
   const { workspace } = useWorkspace();
   const workspaceBasePath = `/workspaces/${workspace?.id}`;
@@ -192,7 +194,7 @@ export const IndividualInviteTab = ({
                 href={
                   isFormbricksCloud
                     ? `${workspaceBasePath}/settings/organization/billing`
-                    : "https://formbricks.com/upgrade-self-hosting-license"
+                    : enterpriseLicenseRequestFormUrl
                 }>
                 {t("common.upgrade_plan")}
               </Link>

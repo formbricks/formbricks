@@ -335,6 +335,7 @@ export const SettingsSidebarContent = ({
       href: `${basePath}/organization/feedback-directories`,
       icon: <FoldersIcon className={iconClassName} />,
       hidden: isMember,
+      disabled: !isOwnerOrManager,
     },
     {
       id: "org-api-keys",
@@ -379,6 +380,7 @@ export const SettingsSidebarContent = ({
       label: t("common.notifications"),
       href: `${basePath}/account/notifications`,
       icon: <BellIcon className={iconClassName} />,
+      disabled: isBilling,
     },
   ];
 

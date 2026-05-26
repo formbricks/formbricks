@@ -2,11 +2,21 @@ import "server-only";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import {
+  DatabaseError,
+  InvalidInputError,
+  ResourceNotFoundError,
+  UniqueConstraintError,
+} from "@formbricks/types/errors";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
+import {
+  isPrismaKnownRequestError,
+  isSingleUseIdUniqueConstraintError,
+} from "@/app/api/client/[workspaceId]/responses/lib/response-error";
 import { buildPrismaResponseData } from "@/app/api/v1/lib/utils";
+import { assertDisplayOwnership } from "@/lib/display/service";
 import { getOrganization } from "@/lib/organization/service";
 import { calculateTtcTotal } from "@/lib/response/utils";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
@@ -100,7 +110,21 @@ export const createResponse = async (
 
     const ttc = initialTtc ? (finished ? calculateTtcTotal(initialTtc) : initialTtc) : {};
 
-    const prismaData = buildPrismaResponseData(responseInput, contact, ttc);
+    if (responseInput.displayId) {
+      await assertDisplayOwnership(
+        responseInput.displayId,
+        workspaceId,
+        responseInput.surveyId,
+        contact?.id ?? null,
+        tx
+      );
+    }
+
+    const prismaData = buildPrismaResponseData(
+      { ...responseInput, createdAt: undefined, updatedAt: undefined },
+      contact,
+      ttc
+    );
 
     const prismaClient = tx ?? prisma;
 
@@ -122,7 +146,18 @@ export const createResponse = async (
 
     return response;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (isPrismaKnownRequestError(error)) {
+      if (
+        error.code === "P2002" &&
+        Array.isArray(error.meta?.target) &&
+        error.meta.target.includes("displayId")
+      ) {
+        throw new InvalidInputError(`Display ${responseInput.displayId} is already linked to a response`);
+      }
+      if (isSingleUseIdUniqueConstraintError(error)) {
+        throw new UniqueConstraintError("Response already submitted for this single-use link");
+      }
+
       throw new DatabaseError(error.message);
     }
 

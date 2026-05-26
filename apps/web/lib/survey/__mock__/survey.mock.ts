@@ -180,6 +180,14 @@ const mockWelcomeCard: TSurveyWelcomeCard = {
   showResponseCount: false,
 };
 
+const mockBlocks = [
+  {
+    id: "block1",
+    name: "Block 1",
+    elements: [mockQuestion],
+  },
+];
+
 const baseSurveyProperties = {
   id: mockId,
   name: "Mock Survey",
@@ -193,13 +201,7 @@ const baseSurveyProperties = {
   displayLimit: 3,
   welcomeCard: mockWelcomeCard,
   questions: [],
-  blocks: [
-    {
-      id: "block1",
-      name: "Block 1",
-      elements: [mockQuestion],
-    },
-  ],
+  blocks: mockBlocks as unknown as SurveyMock["blocks"],
   isBackButtonHidden: false,
   isAutoProgressingEnabled: false,
   isCaptureIpEnabled: false,
@@ -227,7 +229,6 @@ export const mockOrganizationOutput: TOrganization = {
   createdAt: currentDate,
   updatedAt: currentDate,
   isAISmartToolsEnabled: false,
-  isAIDataAnalysisEnabled: false,
   billing: {
     stripeCustomerId: null,
     limits: {
@@ -297,6 +298,7 @@ export const createSurveyInput: TSurveyCreateInput = {
   displayOption: "respondMultiple",
   triggers: [{ actionClass: mockActionClass }],
   ...baseSurveyProperties,
+  blocks: mockBlocks,
 };
 
 export const updateSurveyInput: TSurvey = {
@@ -319,6 +321,7 @@ export const updateSurveyInput: TSurvey = {
   followUps: [],
   ...baseSurveyProperties,
   ...commonMockProperties,
+  blocks: mockBlocks,
   slug: null,
   customHeadScripts: null,
   customHeadScriptsMode: null,

@@ -4,6 +4,7 @@ import { logger } from "@formbricks/logger";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { reportApiError } from "@/app/lib/api/api-error-reporter";
+import { getRateLimitErrorResponse } from "@/app/lib/api/client-rate-limit";
 import { responses } from "@/app/lib/api/response";
 import {
   AuthenticationMethod,
@@ -51,6 +52,11 @@ export interface TWithV1ApiWrapperParams<
    * the legacy JSON 401. Use this to return a custom response (e.g. RFC 9457 problem+json for V3).
    */
   unauthenticatedResponse?: (req: NextRequest) => Response;
+  /**
+   * Most v1 management routes are environment-scoped. Enable this only for routes that explicitly
+   * support organization-only API keys.
+   */
+  allowOrganizationOnlyApiKey?: boolean;
 }
 
 enum ApiV1RouteTypeEnum {
@@ -121,7 +127,11 @@ const handleRateLimiting = async (
       await applyClientRateLimit(customRateLimitConfig);
     }
   } catch (error) {
-    return responses.tooManyRequestsResponse(error instanceof Error ? error.message : "Rate limit exceeded");
+    return getRateLimitErrorResponse({
+      request: req,
+      error,
+      cors: routeType === ApiV1RouteTypeEnum.Client,
+    });
   }
 
   return null;
@@ -176,16 +186,17 @@ const setupAuditLog = (
  */
 const handleAuthentication = async (
   authenticationMethod: AuthenticationMethod,
-  req: NextRequest
+  req: NextRequest,
+  allowOrganizationOnlyApiKey = false
 ): Promise<TApiV1Authentication> => {
   switch (authenticationMethod) {
     case AuthenticationMethod.ApiKey:
-      return await authenticateRequest(req);
+      return await authenticateRequest(req, { allowOrganizationOnlyApiKey });
     case AuthenticationMethod.Session:
       return await getServerSession(authOptions);
     case AuthenticationMethod.Both: {
       if (getApiKeyFromHeaders(req.headers)) {
-        return await authenticateRequest(req);
+        return await authenticateRequest(req, { allowOrganizationOnlyApiKey });
       }
 
       return await getServerSession(authOptions);
@@ -288,7 +299,14 @@ const getRouteType = (
 export const withV1ApiWrapper = <TResult extends { response: Response; error?: unknown }, TProps = unknown>(
   params: TWithV1ApiWrapperParams<TResult, TProps>
 ): ((req: NextRequest, props: TProps) => Promise<Response>) => {
-  const { handler, action, targetType, customRateLimitConfig, unauthenticatedResponse } = params;
+  const {
+    handler,
+    action,
+    targetType,
+    customRateLimitConfig,
+    unauthenticatedResponse,
+    allowOrganizationOnlyApiKey,
+  } = params;
   return async (req: NextRequest, props: TProps): Promise<Response> => {
     // === Audit Log Setup ===
     const saveAuditLog = action && targetType;
@@ -307,7 +325,7 @@ export const withV1ApiWrapper = <TResult extends { response: Response; error?: u
     }
 
     // === Authentication ===
-    const authentication = await handleAuthentication(authenticationMethod, req);
+    const authentication = await handleAuthentication(authenticationMethod, req, allowOrganizationOnlyApiKey);
 
     if (!authentication && routeType !== ApiV1RouteTypeEnum.Client) {
       if (unauthenticatedResponse) {

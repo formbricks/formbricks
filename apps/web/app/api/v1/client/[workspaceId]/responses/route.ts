@@ -1,10 +1,12 @@
 import { headers } from "next/headers";
 import { UAParser } from "ua-parser-js";
 import { logger } from "@formbricks/logger";
-import { InvalidInputError } from "@formbricks/types/errors";
+import { InvalidInputError, UniqueConstraintError } from "@formbricks/types/errors";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { TResponseInput, ZResponseInput } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { validateSingleUseResponseInput } from "@/app/api/client/[workspaceId]/responses/lib/single-use";
+import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
@@ -16,7 +18,7 @@ import { resolveClientApiIds } from "@/lib/utils/resolve-client-id";
 import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
-import { validateFileUploads } from "@/modules/storage/utils";
+import { validateClientFileUploads } from "@/modules/storage/utils";
 import { createResponseWithQuotaEvaluation } from "./lib/response";
 
 export const OPTIONS = async (): Promise<Response> => {
@@ -55,11 +57,17 @@ export const POST = withV1ApiWrapper({
     const requestHeaders = await headers();
     let responseInput;
     try {
-      responseInput = await req.json();
+      responseInput = await parseJsonBodyWithLimit<Record<string, unknown>>(req);
     } catch (error) {
+      if (error instanceof RequestBodyTooLargeError) {
+        return {
+          response: responses.payloadTooLargeResponse("Payload Too Large", { error: error.message }, true),
+        };
+      }
+
       return {
         response: responses.badRequestResponse(
-          "Invalid JSON in request body",
+          "Malformed JSON input, please check your request body",
           { error: error instanceof Error ? error.message : "Unknown error occurred" },
           true
         ),
@@ -94,10 +102,7 @@ export const POST = withV1ApiWrapper({
     const agent = new UAParser(userAgent);
 
     const country =
-      requestHeaders.get("CF-IPCountry") ||
-      requestHeaders.get("X-Vercel-IP-Country") ||
-      requestHeaders.get("CloudFront-Viewer-Country") ||
-      undefined;
+      requestHeaders.get("CF-IPCountry") || requestHeaders.get("CloudFront-Viewer-Country") || undefined;
 
     const responseInputData = responseInputValidation.data;
 
@@ -133,7 +138,31 @@ export const POST = withV1ApiWrapper({
       };
     }
 
-    if (!validateFileUploads(responseInputData.data, survey.questions)) {
+    if (survey.status !== "inProgress") {
+      return {
+        response: responses.forbiddenResponse("Survey is not accepting submissions", true, {
+          surveyId: survey.id,
+        }),
+      };
+    }
+
+    const singleUseValidationResult = validateSingleUseResponseInput(survey, workspaceId, responseInputData);
+    if (singleUseValidationResult) {
+      if ("response" in singleUseValidationResult) {
+        return { response: singleUseValidationResult.response };
+      }
+      responseInputData.singleUseId = singleUseValidationResult.singleUseId;
+    }
+
+    if (
+      !validateClientFileUploads({
+        data: responseInputData.data,
+        workspaceId,
+        surveyId: survey.id,
+        blocks: survey.blocks,
+        questions: survey.questions,
+      })
+    ) {
       return {
         response: responses.badRequestResponse("Invalid file upload response"),
       };
@@ -174,6 +203,10 @@ export const POST = withV1ApiWrapper({
         return {
           response: responses.badRequestResponse(error.message),
         };
+      } else if (error instanceof UniqueConstraintError) {
+        return {
+          response: responses.conflictResponse(error.message, undefined, true),
+        };
       } else {
         logger.error({ error, url: req.url }, "Error creating response");
         return {
@@ -193,7 +226,7 @@ export const POST = withV1ApiWrapper({
       response: responseData,
     });
 
-    if (responseInput.finished) {
+    if (responseInputData.finished) {
       await sendToPipeline({
         event: "responseFinished",
         workspaceId,

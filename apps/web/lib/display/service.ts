@@ -4,8 +4,8 @@ import { cache as reactCache } from "react";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/common";
-import { TDisplay, TDisplayFilters, TDisplayWithContact } from "@formbricks/types/displays";
-import { DatabaseError } from "@formbricks/types/errors";
+import { TDisplay, TDisplayFilters, TDisplayWithContact, ZDisplayFilters } from "@formbricks/types/displays";
+import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import { validateInputs } from "../utils/validate";
 
 export const selectDisplay = {
@@ -18,16 +18,29 @@ export const selectDisplay = {
 
 export const getDisplayCountBySurveyId = reactCache(
   async (surveyId: string, filters?: TDisplayFilters): Promise<number> => {
-    validateInputs([surveyId, ZId]);
+    validateInputs([surveyId, ZId], [filters, ZDisplayFilters.optional()]);
+
+    if (filters?.responseIds?.length === 0) {
+      return 0;
+    }
 
     try {
       const displayCount = await prisma.display.count({
         where: {
-          surveyId: surveyId,
+          surveyId,
           ...(filters?.createdAt && {
             createdAt: {
               gte: filters.createdAt.min,
               lte: filters.createdAt.max,
+            },
+          }),
+          ...(filters?.responseIds && {
+            response: {
+              is: {
+                id: {
+                  in: filters.responseIds,
+                },
+              },
             },
           }),
         },
@@ -132,6 +145,58 @@ export const getDisplaysBySurveyIdWithContact = reactCache(
     }
   }
 );
+
+export const getDisplayForResponseValidation = async (
+  displayId: string,
+  tx?: Prisma.TransactionClient
+): Promise<{
+  surveyId: string;
+  workspaceId: string;
+  responseId: string | null;
+  contactId: string | null;
+} | null> => {
+  validateInputs([displayId, ZId]);
+  const client = tx ?? prisma;
+  try {
+    const display = await client.display.findUnique({
+      where: { id: displayId },
+      select: {
+        surveyId: true,
+        contactId: true,
+        response: { select: { id: true } },
+        survey: { select: { workspaceId: true } },
+      },
+    });
+    if (!display) return null;
+    return {
+      surveyId: display.surveyId,
+      workspaceId: display.survey.workspaceId,
+      responseId: display.response?.id ?? null,
+      contactId: display.contactId,
+    };
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) throw new DatabaseError(error.message);
+    throw error;
+  }
+};
+
+export const assertDisplayOwnership = async (
+  displayId: string,
+  workspaceId: string,
+  surveyId: string,
+  contactId: string | null,
+  tx?: Prisma.TransactionClient
+): Promise<void> => {
+  const display = await getDisplayForResponseValidation(displayId, tx);
+  if (!display) throw new InvalidInputError(`Display ${displayId} not found`);
+  if (display.workspaceId !== workspaceId)
+    throw new InvalidInputError(`Display ${displayId} belongs to a different workspace`);
+  if (display.surveyId !== surveyId)
+    throw new InvalidInputError(`Display ${displayId} is associated with a different survey`);
+  if (display.responseId) throw new InvalidInputError(`Display ${displayId} is already linked to a response`);
+  if (display.contactId !== null && display.contactId !== contactId)
+    throw new InvalidInputError(`Display ${displayId} belongs to a different contact`);
+};
 
 export const deleteDisplay = async (displayId: string, tx?: Prisma.TransactionClient): Promise<TDisplay> => {
   validateInputs([displayId, ZId]);

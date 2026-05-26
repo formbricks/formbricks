@@ -47,7 +47,7 @@ jobs:
       - name: Set up Helm
         uses: azure/setup-helm@5119fcb9089d432beecbf79bb2c7915207344b78 # v3.5
         with:
-          version: latest
+          version: v3.15.4
 
       - name: Log in to GitHub Container Registry
         env:
@@ -69,6 +69,25 @@ jobs:
           yq -i ".appVersion = \"${VERSION}\"" charts/formbricks/Chart.yaml
 
           echo "✅ Successfully updated Chart.yaml"
+
+      - name: Validate default Formbricks image tag
+        env:
+          VERSION: ${{ env.VERSION }}
+        run: |
+          set -euo pipefail
+
+          rendered="$(helm template qa charts/formbricks \
+            --set formbricks.webappUrl=https://qa.example.com \
+            --show-only templates/deployment.yaml \
+            --show-only templates/migration-job.yaml)"
+
+          expected_image="ghcr.io/formbricks/formbricks:${VERSION}"
+          image_count="$(grep -c "image: ${expected_image}$" <<< "$rendered" || true)"
+          if [[ "$image_count" -ne 2 ]]; then
+            echo "Expected web Deployment and migration Job to render ${expected_image}; found ${image_count} matches"
+            grep "image: ghcr.io/formbricks/formbricks:" <<< "$rendered" || true
+            exit 1
+          fi
 
       - name: Package Helm chart
         env:

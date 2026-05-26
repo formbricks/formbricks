@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { getChartsAction } from "@/modules/ee/analysis/charts/actions";
 import { CreateChartButton } from "@/modules/ee/analysis/charts/components/create-chart-button";
+import type { TAIUnavailableReason } from "@/modules/ee/analysis/charts/lib/ai-availability";
 import { addChartToDashboardAction } from "@/modules/ee/analysis/dashboards/actions";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -31,7 +32,7 @@ interface AddExistingChartsDialogProps {
   existingChartIds: string[];
   onSuccess: () => void;
   isAIAvailable?: boolean;
-  aiUnavailableReason?: string;
+  aiUnavailableReason?: TAIUnavailableReason;
 }
 
 interface ChartOption {

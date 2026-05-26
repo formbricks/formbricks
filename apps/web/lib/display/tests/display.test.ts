@@ -29,6 +29,7 @@ beforeEach(() => {
   prisma.survey.findUnique.mockResolvedValue({
     id: mockSurveyId,
     name: "Test Survey",
+    status: "inProgress",
   } as any);
 });
 

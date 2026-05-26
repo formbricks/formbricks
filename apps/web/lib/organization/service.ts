@@ -19,6 +19,7 @@ import { updateUser } from "@/lib/user/service";
 import { getBillingUsageCycleWindow } from "@/lib/utils/billing";
 import { getWorkspaces } from "@/lib/workspace/service";
 import { cleanupStripeCustomer } from "@/modules/ee/billing/lib/organization-billing";
+import { deleteHubTenantData } from "@/modules/hub/service";
 import { validateInputs } from "../utils/validate";
 
 export const select = {
@@ -35,7 +36,6 @@ export const select = {
     },
   },
   isAISmartToolsEnabled: true,
-  isAIDataAnalysisEnabled: true,
   whitelabel: true,
 } satisfies Prisma.OrganizationSelect;
 
@@ -63,7 +63,7 @@ const mapOrganizationBilling = (billing: TOrganizationWithBilling["billing"]): T
     stripeCustomerId: billing.stripeCustomerId,
     limits: billing.limits,
     usageCycleAnchor: billing.usageCycleAnchor,
-    ...(billing.stripe === undefined ? {} : { stripe: billing.stripe }),
+    ...(billing.stripe == null ? {} : { stripe: billing.stripe }),
   };
 };
 
@@ -74,7 +74,6 @@ const mapOrganization = (organization: TOrganizationWithBilling): TOrganization 
   name: organization.name,
   billing: mapOrganizationBilling(organization.billing),
   isAISmartToolsEnabled: organization.isAISmartToolsEnabled,
-  isAIDataAnalysisEnabled: organization.isAIDataAnalysisEnabled,
   whitelabel: organization.whitelabel as TOrganization["whitelabel"],
 });
 
@@ -294,12 +293,24 @@ export const deleteOrganization = async (organizationId: string) => {
             id: true,
           },
         },
+        feedbackDirectories: {
+          select: {
+            id: true,
+          },
+        },
       },
     });
 
     const stripeCustomerId = deletedOrganization.billing?.stripeCustomerId;
     if (IS_FORMBRICKS_CLOUD && stripeCustomerId) {
       await cleanupStripeCustomer(stripeCustomerId);
+    }
+
+    // Best-effort: purge Hub-owned data (feedback records, embeddings, webhooks) for each
+    // directory tenant. Failures are logged inside the gateway and do not roll back the
+    // local delete.
+    for (const directory of deletedOrganization.feedbackDirectories) {
+      await deleteHubTenantData(directory.id);
     }
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {

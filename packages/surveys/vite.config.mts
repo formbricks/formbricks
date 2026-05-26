@@ -2,7 +2,6 @@ import preact from "@preact/preset-vite";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadEnv } from "vite";
-import dts from "vite-plugin-dts";
 import tsconfigPaths from "vite-tsconfig-paths";
 import { defineConfig } from "vitest/config";
 import { copyCompiledAssetsPlugin } from "../vite-plugins/copy-compiled-assets";
@@ -39,7 +38,6 @@ const config = ({ mode }) => {
       ...sharedConfig,
       build: {
         emptyOutDir: false,
-        minify: "terser",
         lib: {
           entry: resolve(__dirname, "src/index.ts"),
           name: "formbricksSurveys",
@@ -82,7 +80,6 @@ const config = ({ mode }) => {
     },
     build: {
       emptyOutDir: false,
-      minify: "terser",
       lib: {
         entry: {
           index: resolve(__dirname, "src/index.ts"),
@@ -103,11 +100,6 @@ const config = ({ mode }) => {
     },
     plugins: [
       ...sharedConfig.plugins,
-      dts({
-        rollupTypes: false,
-        // Generate separate .d.ts files for each entry point
-        entryRoot: "src",
-      }),
       copyCompiledAssetsPlugin({ filename: "surveys", distDir: resolve(__dirname, "dist") }),
       process.env.ANALYZE === "true" && visualizer({ filename: resolve(__dirname, "stats.html"), open: false, gzipSize: true, brotliSize: true }),
     ],

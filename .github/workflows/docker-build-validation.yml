@@ -147,6 +147,10 @@ jobs:
             -e DATABASE_URL="postgresql://test:test@host.docker.internal:5432/formbricks" \
             -e ENCRYPTION_KEY="$DUMMY_ENCRYPTION_KEY" \
             -e REDIS_URL="redis://host.docker.internal:6379" \
+            -e HUB_API_URL="http://localhost:4000" \
+            -e HUB_API_KEY="build-time-placeholder" \
+            -e CUBEJS_API_URL="http://localhost:4000" \
+            -e CUBEJS_API_SECRET="build-time-placeholder" \
             -d "formbricks-test:$GITHUB_SHA"
 
           # Start health check polling immediately (every 5 seconds for up to 5 minutes)

@@ -57,7 +57,6 @@ describe("organization AI settings actions", () => {
     mocks.getOrganization.mockResolvedValue({
       id: organizationId,
       isAISmartToolsEnabled: false,
-      isAIDataAnalysisEnabled: false,
     });
     mocks.isInstanceAIConfigured.mockReturnValue(true);
     mocks.getTranslate.mockResolvedValue((key: string, values?: Record<string, string>) =>
@@ -66,7 +65,6 @@ describe("organization AI settings actions", () => {
     mocks.updateOrganization.mockResolvedValue({
       id: organizationId,
       isAISmartToolsEnabled: true,
-      isAIDataAnalysisEnabled: false,
     });
     mocks.getIsMultiOrgEnabled.mockResolvedValue(true);
   });
@@ -114,18 +112,15 @@ describe("organization AI settings actions", () => {
       oldObject: {
         id: organizationId,
         isAISmartToolsEnabled: false,
-        isAIDataAnalysisEnabled: false,
       },
       newObject: {
         id: organizationId,
         isAISmartToolsEnabled: true,
-        isAIDataAnalysisEnabled: false,
       },
     });
     expect(result).toEqual({
       id: organizationId,
       isAISmartToolsEnabled: true,
-      isAIDataAnalysisEnabled: false,
     });
   });
 
@@ -194,7 +189,6 @@ describe("organization AI settings actions", () => {
     mocks.getOrganization.mockResolvedValueOnce({
       id: organizationId,
       isAISmartToolsEnabled: true,
-      isAIDataAnalysisEnabled: false,
     });
     mocks.isInstanceAIConfigured.mockReturnValueOnce(false);
 

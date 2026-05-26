@@ -4,6 +4,7 @@ import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { generateWebhookSecret } from "@/lib/crypto";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import {
@@ -40,7 +41,7 @@ export const createWebhookAction = authenticatedActionClient.inputSchema(ZCreate
         },
         {
           type: "workspaceTeam",
-          minPermission: "read",
+          minPermission: "readWrite",
           workspaceId: parsedInput.workspaceId,
         },
       ],
@@ -52,6 +53,18 @@ export const createWebhookAction = authenticatedActionClient.inputSchema(ZCreate
     );
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.newObject = parsedInput.webhookInput;
+
+    capturePostHogEvent(
+      ctx.user.id,
+      "integration_connected",
+      {
+        integration_type: "webhook",
+        organization_id: organizationId,
+        workspace_id: parsedInput.workspaceId,
+      },
+      { organizationId, workspaceId: parsedInput.workspaceId }
+    );
+
     return webhook;
   })
 );
@@ -144,7 +157,7 @@ export const testEndpointAction = authenticatedActionClient
           },
           {
             type: "workspaceTeam",
-            minPermission: "read",
+            minPermission: "readWrite",
             workspaceId: await getWorkspaceIdFromWebhookId(parsedInput.webhookId),
           },
         ],

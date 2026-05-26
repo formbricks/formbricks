@@ -33,9 +33,10 @@
   },
   "scripts": {
     "dev": "vite build --watch --mode dev",
-    "build": "tsc && vite build",
-    "build:dev": "tsc && vite build --mode dev",
+    "build": "vite build",
+    "build:dev": "vite build --mode dev",
     "go": "vite build --watch --mode dev",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint . --ext .ts,.js,.tsx,.jsx",
     "clean": "rimraf .turbo node_modules dist coverage",
     "test": "vitest run",
@@ -48,10 +49,9 @@
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/eslint-config": "workspace:*",
-    "@vitest/coverage-v8": "4.0.18",
-    "terser": "5.46.0",
-    "vite": "7.3.2",
+    "@vitest/coverage-v8": "4.1.6",
+    "vite": "7.3.3",
     "vite-plugin-dts": "4.5.4",
-    "vitest": "4.0.18"
+    "vitest": "4.1.6"
   }
 }

@@ -19,8 +19,6 @@ export const SurveyInactive = async ({
   workspace?: Pick<Workspace, "linkSurveyBranding">;
 }) => {
   const t = await getTranslate();
-  const hasCustomClosedMessage =
-    (status === "completed" || status === "link expired") && Boolean(surveyClosedMessage);
   const icons = {
     paused: isScheduled ? (
       <CalendarClockIcon className="h-20 w-20" />
@@ -40,13 +38,18 @@ export const SurveyInactive = async ({
     "response submitted": t("s.response_submitted"),
     "link expired": t("c.link_expired_description"),
   };
-  let title = `${t("common.survey")} ${status}.`;
+  const headings = {
+    paused: isScheduled ? t("common.survey_scheduled") : t("s.paused_heading"),
+    completed: t("s.completed_heading"),
+    "link invalid": t("s.this_looks_fishy"),
+    "response submitted": t("s.survey_already_answered_heading"),
+    "link expired": t("c.link_expired_heading"),
+  };
 
-  if (hasCustomClosedMessage) {
-    title = surveyClosedMessage?.heading ?? title;
-  } else if (isScheduled) {
-    title = t("common.survey_scheduled");
-  }
+  const title =
+    (status === "completed" || status === "link expired") && surveyClosedMessage
+      ? surveyClosedMessage.heading
+      : headings[status];
 
   const description =
     status === "completed" && surveyClosedMessage ? surveyClosedMessage.subheading : descriptions[status];
@@ -73,7 +76,7 @@ export const SurveyInactive = async ({
       {(!workspace || workspace.linkSurveyBranding) && (
         <div>
           <Link href="https://formbricks.com">
-            <Image src={footerLogo as string} alt="Brand logo" className="mx-auto w-40" />
+            <Image src={footerLogo} alt="Brand logo" className="mx-auto w-40" />
           </Link>
         </div>
       )}

@@ -2,7 +2,7 @@
 
 ## Package Purpose & Design Philosophy
 
-The `@formbricks/storage` package provides a **type-safe, environment-agnostic S3 storage abstraction** for Formbricks. It's designed as a standalone library that can work with any S3-compatible storage provider (AWS S3, MinIO, LocalStack, etc.).
+The `@formbricks/storage` package provides a **type-safe, environment-agnostic S3 storage abstraction** for Formbricks. It's designed as a standalone library that can work with any S3-compatible storage provider (AWS S3, RustFS, LocalStack, etc.).
 
 ### Key Design Decisions
 
@@ -122,8 +122,8 @@ S3_BUCKET_NAME=formbricks-storage
 ### Optional Variables (for non-AWS providers)
 
 ```bash
-S3_ENDPOINT_URL=http://localhost:9000  # MinIO/LocalStack
-S3_FORCE_PATH_STYLE=1                  # Required for MinIO
+S3_ENDPOINT_URL=http://localhost:9000  # RustFS/LocalStack
+S3_FORCE_PATH_STYLE=1                  # Common for RustFS and many third-party S3-compatible providers
 ```
 
 ### Configuration Validation
@@ -310,4 +310,4 @@ const s3Client = new S3Client({
 **Returns**: `Result<{ deletedCount: number; partialFailures?: string[] }, StorageError>`
 **Use Case**: Cleanup entire folders when surveys/users are deleted
 
-Remember: This package is designed to be **infrastructure-agnostic** and **error-resilient**. It should work seamlessly whether you're using AWS S3, MinIO for local development, or any other S3-compatible storage provider.
+Remember: This package is designed to be **infrastructure-agnostic** and **error-resilient**. It should work seamlessly whether you're using AWS S3, RustFS for local or self-hosted storage, or any other S3-compatible storage provider.

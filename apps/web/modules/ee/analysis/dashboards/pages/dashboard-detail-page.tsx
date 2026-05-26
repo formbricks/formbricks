@@ -2,8 +2,8 @@ import { notFound } from "next/navigation";
 import { logger } from "@formbricks/logger";
 import type { TChartQuery } from "@formbricks/types/analysis";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { getAIDataAnalysisUnavailableReason, getOrganizationAIConfig } from "@/lib/ai/service";
-import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { getAISmartToolsUnavailableReason, getOrganizationAIConfig } from "@/lib/ai/service";
+import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { executeTenantScopedQuery } from "@/modules/ee/analysis/api/lib/cube-client";
 import { AnalysisPageLayout } from "@/modules/ee/analysis/components/analysis-page-layout";
@@ -82,13 +82,11 @@ export async function DashboardDetailPage({
                 text: IS_FORMBRICKS_CLOUD ? t("common.upgrade_plan") : t("common.request_trial_license"),
                 href: IS_FORMBRICKS_CLOUD
                   ? `/workspaces/${workspaceId}/settings/organization/billing`
-                  : "https://formbricks.com/upgrade-self-hosting-license",
+                  : ENTERPRISE_LICENSE_REQUEST_FORM_URL,
               },
               {
                 text: t("common.learn_more"),
-                href: IS_FORMBRICKS_CLOUD
-                  ? `/workspaces/${workspaceId}/settings/organization/billing`
-                  : "https://formbricks.com/learn-more-self-hosting-license",
+                href: "https://formbricks.com/docs/unify-feedback/features/dashboards-and-charts",
               },
             ]}
           />
@@ -101,7 +99,7 @@ export async function DashboardDetailPage({
     getFeedbackDirectoriesByWorkspaceId(workspaceId),
     getOrganizationAIConfig(organization.id),
   ]);
-  const aiUnavailableReason = getAIDataAnalysisUnavailableReason(aiConfig);
+  const aiUnavailableReason = getAISmartToolsUnavailableReason(aiConfig);
   const isAIAvailable = !aiUnavailableReason;
 
   let dashboard;

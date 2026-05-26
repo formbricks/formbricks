@@ -10,21 +10,7 @@ import { TUser, TUserLocale, TUserUpdateInput, ZUserUpdateInput } from "@formbri
 import { deleteOrganization, getOrganizationsWhereUserIsSingleOwner } from "@/lib/organization/service";
 import { deleteBrevoCustomerByEmail } from "@/modules/auth/lib/brevo";
 import { validateInputs } from "../utils/validate";
-
-const responseSelection = {
-  id: true,
-  name: true,
-  email: true,
-  emailVerified: true,
-  createdAt: true,
-  updatedAt: true,
-  twoFactorEnabled: true,
-  identityProvider: true,
-  notificationSettings: true,
-  locale: true,
-  lastLoginAt: true,
-  isActive: true,
-};
+import { publicUserSelect } from "./public-user";
 
 // function to retrive basic information about a user's user
 export const getUser = reactCache(async (id: string): Promise<TUser | null> => {
@@ -35,7 +21,7 @@ export const getUser = reactCache(async (id: string): Promise<TUser | null> => {
       where: {
         id,
       },
-      select: responseSelection,
+      select: publicUserSelect,
     });
 
     if (!user) {
@@ -59,7 +45,7 @@ export const getUserByEmail = reactCache(async (email: string): Promise<TUser | 
       where: {
         email,
       },
-      select: responseSelection,
+      select: publicUserSelect,
     });
 
     return user;
@@ -82,7 +68,7 @@ export const updateUser = async (personId: string, data: TUserUpdateInput): Prom
         id: personId,
       },
       data: data,
-      select: responseSelection,
+      select: publicUserSelect,
     });
 
     return updatedUser;
@@ -105,7 +91,7 @@ const deleteUserById = async (id: string): Promise<TUser> => {
       where: {
         id,
       },
-      select: responseSelection,
+      select: publicUserSelect,
     });
     return user;
   } catch (error) {
@@ -153,7 +139,7 @@ export const getUsersWithOrganization = async (organizationId: string): Promise<
           },
         },
       },
-      select: responseSelection,
+      select: publicUserSelect,
     });
 
     return users;
@@ -174,7 +160,7 @@ export const getUserLocale = reactCache(async (id: string): Promise<TUserLocale 
       where: {
         id,
       },
-      select: responseSelection,
+      select: publicUserSelect,
     });
 
     if (!user) {

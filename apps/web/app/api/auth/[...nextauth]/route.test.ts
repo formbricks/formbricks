@@ -185,4 +185,20 @@ describe("auth route audit logging", () => {
       })
     );
   });
+
+  test("does not log a completed sign-in for the intermediate SSO recovery verification step", async () => {
+    const authOptions = await getWrappedAuthOptions("req-sso-recovery");
+    const user = {
+      id: "user_4",
+      email: "user4@example.com",
+      authFlowPurpose: "sso_recovery",
+    };
+    const account = { provider: "token" };
+
+    await expect(authOptions.callbacks.signIn({ user, account })).resolves.toBe(true);
+    await authOptions.events.signIn({ user, account, isNewUser: false });
+
+    expect(mocks.baseEventSignIn).not.toHaveBeenCalled();
+    expect(mocks.queueAuditEventBackground).not.toHaveBeenCalled();
+  });
 });

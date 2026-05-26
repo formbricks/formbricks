@@ -10,8 +10,6 @@ export const CLOUD_STRIPE_FEATURE_LOOKUP_KEYS = {
   SPAM_PROTECTION: "spam-protection",
   CONTACTS: "contacts",
   AI_SMART_TOOLS: "ai-smart-tools",
-  AI_DATA_ANALYSIS: "ai-data-analysis",
-  UNIFY_FEEDBACK: "unify-feedback",
   FEEDBACK_DIRECTORIES: "feedback-directories",
   DASHBOARDS: "dashboards",
 } as const;

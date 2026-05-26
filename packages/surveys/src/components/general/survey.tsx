@@ -255,6 +255,7 @@ export function Survey({
   const [selectedLanguage, setSelectedLanguage] = useState(languageCode);
   const [loadingElement, setLoadingElement] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
+  const isNavigatingBackRef = useRef(false);
   const [responseData, setResponseData] = useState<TResponseData>(hiddenFieldsRecord ?? {});
   const [_variableStack, setVariableStack] = useState<VariableStackEntry[]>([]);
 
@@ -915,6 +916,8 @@ export function Survey({
   }, [isResponseSendingFinished, isSurveyFinished, onFinished]);
 
   const onSubmit = async (surveyResponseData: TResponseData, responsettc: TResponseTtc) => {
+    isNavigatingBackRef.current = false;
+
     // Get the first responded element ID for tracking
     const respondedElementIds = Object.keys(surveyResponseData);
     const firstRespondedElementId = respondedElementIds[0];
@@ -1002,6 +1005,8 @@ export function Survey({
   };
 
   const onBack = (): void => {
+    isNavigatingBackRef.current = true;
+
     let prevBlockId: string | undefined;
     // use history if available
     if (history.length > 0) {
@@ -1044,20 +1049,39 @@ export function Survey({
       switch (errorType) {
         case TResponseErrorCodesEnum.ResponseSendingError:
           return (
-            <ResponseErrorComponent
-              responseData={responseQueue?.getUnsentData() ?? responseData}
-              questions={questions}
-              onRetry={retryResponse}
-              isRetrying={isRetrying}
-            />
+            <>
+              {localSurvey.type !== "link" ? (
+                <div className="bg-survey-bg relative h-8 w-full">
+                  <div className="flex w-full items-center justify-end">
+                    <SurveyCloseButton
+                      onClose={onClose}
+                      hoverColor={styling.inputBgColor?.light ?? "#f8fafc"}
+                      borderRadius={styling.roundness ?? 8}
+                    />
+                  </div>
+                </div>
+              ) : null}
+              <ResponseErrorComponent
+                responseData={responseQueue?.getUnsentData() ?? responseData}
+                questions={questions}
+                onRetry={retryResponse}
+                isRetrying={isRetrying}
+              />
+            </>
           );
         case TResponseErrorCodesEnum.RecaptchaError:
         case TResponseErrorCodesEnum.InvalidDeviceError:
           return (
             <>
               {localSurvey.type !== "link" ? (
-                <div className="bg-survey-bg flex h-6 justify-end pt-2 pr-2">
-                  <SurveyCloseButton onClose={onClose} />
+                <div className="bg-survey-bg relative h-8 w-full">
+                  <div className="flex w-full items-center justify-end">
+                    <SurveyCloseButton
+                      onClose={onClose}
+                      hoverColor={styling.inputBgColor?.light ?? "#f8fafc"}
+                      borderRadius={styling.roundness ?? 8}
+                    />
+                  </div>
                 </div>
               ) : null}
               <ErrorComponent errorType={errorType} />
@@ -1133,7 +1157,7 @@ export function Survey({
               setTtc={setTtc}
               onFileUpload={onFileUpload}
               isFirstBlock={block.id === localSurvey.blocks[0]?.id}
-              skipPrefilled={skipPrefilled}
+              skipPrefilled={skipPrefilled && !isNavigatingBackRef.current}
               prefilledResponseData={offset === 0 ? prefillResponseData : undefined}
               isLastBlock={block.id === localSurvey.blocks[localSurvey.blocks.length - 1].id}
               languageCode={selectedLanguage}

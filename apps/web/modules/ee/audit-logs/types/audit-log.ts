@@ -58,6 +58,9 @@ export const ZAuditAction = z.enum([
   "passwordReset",
   "bulkCreated",
   "queried",
+  "sso_recovery_started",
+  "sso_recovery_completed",
+  "sso_recovery_failed",
 ]);
 export const ZActor = z.enum(["user", "api", "system"]);
 export const ZAuditStatus = z.enum(["success", "failure"]);

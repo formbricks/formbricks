@@ -30,12 +30,6 @@ const mapLicenseFeaturesToEntitlements = (
   if (features.aiSmartTools) {
     entitlementKeys.push(CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.AI_SMART_TOOLS);
   }
-  if (features.aiDataAnalysis) {
-    entitlementKeys.push(CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.AI_DATA_ANALYSIS);
-  }
-  if (features.unifyFeedback) {
-    entitlementKeys.push(CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.UNIFY_FEEDBACK);
-  }
   if (features.feedbackDirectories) {
     entitlementKeys.push(CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.FEEDBACK_DIRECTORIES);
   }

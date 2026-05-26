@@ -1,5 +1,6 @@
 {
   "$schema": "https://turborepo.org/schema.json",
+  "globalEnv": [],
   "tasks": {
     "@formbricks/ai#build": {
       "dependsOn": ["@formbricks/logger#build"],
@@ -12,6 +13,9 @@
       "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/ai#test:coverage": {
+      "dependsOn": ["@formbricks/logger#build"]
+    },
+    "@formbricks/ai#typecheck": {
       "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/cache#build": {
@@ -30,12 +34,18 @@
     "@formbricks/cache#test:coverage": {
       "dependsOn": ["@formbricks/logger#build"]
     },
+    "@formbricks/cache#typecheck": {
+      "dependsOn": ["@formbricks/logger#build"]
+    },
     "@formbricks/database#build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**", "../../node_modules/.prisma/client/**"]
     },
     "@formbricks/database#lint": {
       "dependsOn": ["@formbricks/logger#build", "@formbricks/database#build"]
+    },
+    "@formbricks/database#typecheck": {
+      "dependsOn": ["@formbricks/logger#build", "@formbricks/database#generate"]
     },
     "@formbricks/email#build": {
       "dependsOn": ["^build"],
@@ -76,6 +86,9 @@
     "@formbricks/js-core#lint": {
       "dependsOn": ["@formbricks/database#build"]
     },
+    "@formbricks/js-core#typecheck": {
+      "dependsOn": ["@formbricks/database#build"]
+    },
     "@formbricks/logger#build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**"]
@@ -96,6 +109,9 @@
       "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/storage#test:coverage": {
+      "dependsOn": ["@formbricks/logger#build"]
+    },
+    "@formbricks/storage#typecheck": {
       "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/survey-ui#build": {
@@ -129,6 +145,9 @@
     },
     "@formbricks/surveys#test:coverage": {
       "dependsOn": ["@formbricks/survey-ui#build"]
+    },
+    "@formbricks/surveys#typecheck": {
+      "dependsOn": ["@formbricks/i18n-utils#build", "@formbricks/survey-ui#build"]
     },
     "@formbricks/web#dev": {
       "cache": false,
@@ -177,6 +196,16 @@
         "@formbricks/surveys#build"
       ]
     },
+    "@formbricks/web#typecheck": {
+      "dependsOn": [
+        "@formbricks/ai#build",
+        "@formbricks/cache#build",
+        "@formbricks/database#build",
+        "@formbricks/logger#build",
+        "@formbricks/storage#build",
+        "@formbricks/surveys#build"
+      ]
+    },
     "build": {
       "dependsOn": ["^build"],
       "env": [
@@ -215,6 +244,7 @@
         "CUBEJS_API_URL",
         "CUBEJS_JWT_AUDIENCE",
         "CUBEJS_JWT_ISSUER",
+        "DISABLE_ACCOUNT_DELETION_SSO_CONFIRMATION",
         "DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS",
         "DATABASE_URL",
         "DEBUG",
@@ -315,16 +345,12 @@
         "RECAPTCHA_SECRET_KEY",
         "TELEMETRY_DISABLED",
         "TERMS_URL",
-        "VERCEL",
-        "VERCEL_URL",
         "VERSION",
         "WEBAPP_URL",
         "UNSPLASH_ACCESS_KEY",
         "PROMETHEUS_ENABLED",
         "PROMETHEUS_EXPORTER_PORT",
-        "USER_MANAGEMENT_MINIMUM_ROLE",
-        "HUB_API_URL",
-        "HUB_API_KEY"
+        "USER_MANAGEMENT_MINIMUM_ROLE"
       ],
       "outputs": ["dist/**", ".next/**"]
     },
@@ -395,6 +421,10 @@
       "outputs": []
     },
     "test:coverage": {
+      "outputs": []
+    },
+    "typecheck": {
+      "dependsOn": ["@formbricks/database#generate", "^typecheck"],
       "outputs": []
     }
   },

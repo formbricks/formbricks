@@ -5,6 +5,7 @@ import {
   createFeedbackRecord,
   createFeedbackRecordsBatch,
   deleteFeedbackRecord,
+  deleteHubTenantData,
   getFeedbackRecordTenant,
   listFeedbackRecords,
   retrieveFeedbackRecord,
@@ -338,6 +339,48 @@ describe("hub service", () => {
       } as any);
 
       const result = await deleteFeedbackRecord("rec-1");
+
+      expect(result.data).toBeNull();
+      expect(result.error).toMatchObject({ status: 0, message: "network" });
+    });
+  });
+
+  describe("deleteHubTenantData", () => {
+    test("returns config error when getHubClient returns null", async () => {
+      vi.mocked(getHubClient).mockReturnValue(null);
+
+      const result = await deleteHubTenantData("tenant-1");
+
+      expect(result.data).toBeNull();
+      expect(result.error?.message).toContain("HUB_API_KEY");
+    });
+
+    test("returns mapped data when client.delete resolves", async () => {
+      const deleteSpy = vi.fn().mockResolvedValue({
+        tenant_id: "tenant-1",
+        deleted_feedback_records: 3,
+        deleted_embeddings: 5,
+        deleted_webhooks: 1,
+      });
+      vi.mocked(getHubClient).mockReturnValue({ delete: deleteSpy } as any);
+
+      const result = await deleteHubTenantData("tenant-1");
+
+      expect(deleteSpy).toHaveBeenCalledWith("/v1/tenants/tenant-1/data");
+      expect(result.error).toBeNull();
+      expect(result.data).toEqual({
+        deletedFeedbackRecords: 3,
+        deletedEmbeddings: 5,
+        deletedWebhooks: 1,
+      });
+    });
+
+    test("returns error when client.delete throws", async () => {
+      vi.mocked(getHubClient).mockReturnValue({
+        delete: vi.fn().mockRejectedValue(new Error("network")),
+      } as any);
+
+      const result = await deleteHubTenantData("tenant-1");
 
       expect(result.data).toBeNull();
       expect(result.error).toMatchObject({ status: 0, message: "network" });

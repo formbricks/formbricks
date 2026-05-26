@@ -42,6 +42,7 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
       where: { id: workspaceId },
       select: {
         id: true,
+        legacyEnvironmentId: true,
         appSetupCompleted: true,
         recontactDays: true,
         clickOutsideClose: true,
@@ -72,7 +73,9 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
           select: {
             id: true,
             welcomeCard: true,
-            name: true,
+            // `name` deliberately not selected — internal label not needed by the
+            // SDK and replaced with a fixed placeholder below so older SDKs that
+            // decoded `Survey.name` as a required field keep working.
             questions: true,
             blocks: true,
             variables: true,
@@ -100,13 +103,13 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
             styling: true,
             status: true,
             recaptcha: true,
+            // Only need to know if any filters exist so we can compute
+            // `hasFilters`. Real filter values, segment title/description, and
+            // surveys-list relation are never exposed to clients.
             segment: {
-              include: {
-                surveys: {
-                  select: {
-                    id: true,
-                  },
-                },
+              select: {
+                id: true,
+                filters: true,
               },
             },
             recontactDays: true,
@@ -136,16 +139,68 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
       throw new ResourceNotFoundError("workspace", workspaceId);
     }
 
-    // Transform surveys using existing utility
-    const transformedSurveys = workspaceData.surveys.map((survey) =>
-      transformPrismaSurvey<TJsWorkspaceStateSurvey>(survey)
-    );
+    // Backwards-compat response shape for SDKs from before PR #7931. Those
+    // clients decoded `survey.name` and the full `segment` object as required
+    // fields, so the response must still carry that shape — but every field
+    // that could leak sensitive targeting data is replaced with a placeholder.
+    // The actual segment-membership check happens server-side (segment IDs in
+    // POST /user); SDKs only inspect `filters.length` / `hasFilters` locally.
+    //
+    // `environmentId` mirrors `legacyEnvironmentId ?? workspace.id`, matching
+    // the `/me` endpoints' pattern so migrated workspaces keep returning the
+    // original env ID older clients persisted.
+    const legacyOrCurrentId = workspaceData.legacyEnvironmentId ?? workspaceData.id;
+    const placeholderDate = new Date(0);
+    const placeholderFilter = {
+      id: "placeholder",
+      connector: null,
+      resource: {
+        id: "placeholder",
+        root: { type: "device", deviceType: "phone" },
+        value: "deprecated",
+        qualifier: { operator: "equals" },
+      },
+    };
+
+    const transformedSurveys = workspaceData.surveys.map((survey) => {
+      const realHasFilters =
+        Array.isArray(survey.segment?.filters) && (survey.segment.filters as unknown[]).length > 0;
+
+      const sanitizedSegment = survey.segment
+        ? {
+            id: survey.segment.id,
+            title: "[deprecated] segment title omitted from public API - will be removed soon",
+            description: null,
+            isPrivate: true,
+            filters: realHasFilters ? [placeholderFilter] : [],
+            environmentId: legacyOrCurrentId,
+            workspaceId: legacyOrCurrentId,
+            createdAt: placeholderDate,
+            updatedAt: placeholderDate,
+            surveys: [],
+            hasFilters: realHasFilters,
+          }
+        : null;
+
+      const { segment: _segment, ...surveyWithoutSegment } = survey;
+      const transformed = transformPrismaSurvey<TJsWorkspaceStateSurvey>({
+        ...surveyWithoutSegment,
+        segment: null,
+      });
+
+      return {
+        ...transformed,
+        name: "[deprecated] survey name omitted from public API - will be removed soon",
+        segment: sanitizedSegment,
+      };
+    });
 
     return {
       workspace: {
         id: workspaceData.id,
         appSetupCompleted: workspaceData.appSetupCompleted,
         workspaceSettings: {
+          id: workspaceData.id,
           recontactDays: workspaceData.recontactDays,
           clickOutsideClose: workspaceData.clickOutsideClose,
           overlay: workspaceData.overlay,
@@ -154,8 +209,12 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
           styling: resolveStorageUrlsInObject(workspaceData.styling),
         },
       },
-      surveys: resolveStorageUrlsInObject(transformedSurveys),
-      actionClasses: workspaceData.actionClasses as TJsWorkspaceStateActionClass[],
+      // The runtime shape carries extra back-compat fields (placeholder
+      // segment, `hasFilters`, mirrored `environmentId`) that aren't part of
+      // the modern `TJsWorkspaceStateSurvey`. Cast through unknown — this is
+      // intentional and only this endpoint's response widens the type.
+      surveys: resolveStorageUrlsInObject(transformedSurveys) as unknown as TJsWorkspaceStateSurvey[],
+      actionClasses: workspaceData.actionClasses,
     };
   } catch (error) {
     if (error instanceof ResourceNotFoundError) {

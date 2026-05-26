@@ -77,7 +77,7 @@ describe("useSurveys", () => {
             meta: {
               limit: 20,
               nextCursor: null,
-              totalCount: 2,
+              totalCount: null,
             },
           }),
           { status: 200, headers: { "Content-Type": "application/json" } }
@@ -120,7 +120,7 @@ describe("useSurveys", () => {
     expect(result.current.hasNextPage).toBe(false);
     expect(fetchMock).toHaveBeenNthCalledWith(
       2,
-      "/api/v3/surveys?workspaceId=env_1&limit=20&sortBy=relevance&cursor=cursor_1",
+      "/api/v3/surveys?workspaceId=env_1&limit=20&sortBy=relevance&cursor=cursor_1&includeTotalCount=false",
       expect.objectContaining({
         method: "GET",
         cache: "no-store",

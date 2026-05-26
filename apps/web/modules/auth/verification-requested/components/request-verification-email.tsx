@@ -30,7 +30,10 @@ export const RequestVerificationEmail = ({ email, callbackUrl }: RequestVerifica
 
   const requestVerificationEmail = async () => {
     if (!email) return toast.error(t("auth.verification-requested.no_email_provided"));
-    const response = await resendVerificationEmailAction({ email, callbackUrl: callbackUrl ?? undefined });
+    const response = await resendVerificationEmailAction({
+      email,
+      callbackUrl: callbackUrl ?? undefined,
+    });
     if (response?.data) {
       toast.success(t("auth.verification-requested.verification_email_resent_successfully"));
     } else {

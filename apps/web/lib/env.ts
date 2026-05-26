@@ -153,6 +153,7 @@ const parsedEnv = createEnv({
     BREVO_API_KEY: z.string().optional(),
     BREVO_LIST_ID: z.string().optional(),
     DATABASE_URL: z.url(),
+    DISABLE_ACCOUNT_DELETION_SSO_CONFIRMATION: z.enum(["1", "0"]).optional(),
     DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS: z.enum(["1", "0"]).optional(),
     DEBUG_SHOW_RESET_LINK: z.enum(["1", "0"]).optional(),
     // DEBUG is a common ambient env var in CI/tooling, so we accept arbitrary strings here
@@ -275,7 +276,6 @@ const parsedEnv = createEnv({
     TURNSTILE_SITE_KEY: z.string().optional(),
     RECAPTCHA_SITE_KEY: z.string().optional(),
     RECAPTCHA_SECRET_KEY: z.string().optional(),
-    VERCEL_URL: z.string().optional(),
     WEBAPP_URL: z.url().optional(),
     UNSPLASH_ACCESS_KEY: z.string().optional(),
 
@@ -314,6 +314,7 @@ const parsedEnv = createEnv({
     BREVO_LIST_ID: process.env.BREVO_LIST_ID,
     CRON_SECRET: process.env.CRON_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,
+    DISABLE_ACCOUNT_DELETION_SSO_CONFIRMATION: process.env.DISABLE_ACCOUNT_DELETION_SSO_CONFIRMATION,
     DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS: process.env.DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS,
     DEBUG: process.env.DEBUG,
     DEBUG_SHOW_RESET_LINK: process.env.DEBUG_SHOW_RESET_LINK,
@@ -410,7 +411,6 @@ const parsedEnv = createEnv({
     RECAPTCHA_SITE_KEY: process.env.RECAPTCHA_SITE_KEY,
     RECAPTCHA_SECRET_KEY: process.env.RECAPTCHA_SECRET_KEY,
     TERMS_URL: process.env.TERMS_URL,
-    VERCEL_URL: process.env.VERCEL_URL,
     WEBAPP_URL: process.env.WEBAPP_URL,
     UNSPLASH_ACCESS_KEY: process.env.UNSPLASH_ACCESS_KEY,
     NODE_ENV: process.env.NODE_ENV,

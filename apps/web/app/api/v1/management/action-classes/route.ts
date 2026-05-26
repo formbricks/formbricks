@@ -1,7 +1,8 @@
 import { logger } from "@formbricks/logger";
 import { TActionClass, ZActionClassInput } from "@formbricks/types/action-classes";
-import { DatabaseError } from "@formbricks/types/errors";
+import { DatabaseError, UniqueConstraintError } from "@formbricks/types/errors";
 import { resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
+import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { THandlerParams, withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
@@ -45,8 +46,14 @@ export const POST = withV1ApiWrapper({
     try {
       let actionClassInput;
       try {
-        actionClassInput = await req.json();
+        actionClassInput = await parseJsonBodyWithLimit<Record<string, unknown>>(req);
       } catch (error) {
+        if (error instanceof RequestBodyTooLargeError) {
+          return {
+            response: responses.payloadTooLargeResponse("Payload Too Large", { error: error.message }),
+          };
+        }
+
         logger.error({ error, url: req.url }, "Error parsing JSON input");
         return {
           response: responses.badRequestResponse("Malformed JSON input, please check your request body"),
@@ -84,6 +91,11 @@ export const POST = withV1ApiWrapper({
         response: responses.successResponse(actionClass),
       };
     } catch (error) {
+      if (error instanceof UniqueConstraintError) {
+        return {
+          response: responses.conflictResponse(error.message),
+        };
+      }
       if (error instanceof DatabaseError) {
         return {
           response: responses.badRequestResponse(error.message),

@@ -1,4 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { FILE_UPLOAD_ERROR_NAMES } from "@formbricks/types/errors";
+import { STORAGE_ERROR_CODES } from "@formbricks/types/storage";
 import { ApiClient } from "./api-client";
 
 describe("ApiClient", () => {
@@ -181,6 +183,45 @@ describe("ApiClient", () => {
       expect(fileUrl).toBe("https://fake-file-url.com");
     });
 
+    test("includes surveyId and elementId in the upload signing request", async () => {
+      vi.mocked(global.fetch)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            data: {
+              signedUrl: "https://fake-s3-url.com",
+              fileUrl: "/storage/ws-test/private/surveys/survey123/elements/element123/test.jpg",
+              presignedFields: { policy: "test" },
+              signingData: null,
+              updatedFileName: "test.jpg",
+            },
+          }),
+        } as unknown as Response)
+        .mockResolvedValueOnce({ ok: true } as unknown as Response);
+
+      await client.uploadFile(
+        {
+          base64: "data:image/jpeg;base64,abcd",
+          name: "test.jpg",
+          type: "image/jpeg",
+        },
+        {
+          allowedFileExtensions: ["jpg"],
+          surveyId: "survey123",
+          elementId: "element123",
+        }
+      );
+
+      const requestInit = vi.mocked(global.fetch).mock.calls[0][1] as RequestInit;
+      expect(JSON.parse(requestInit.body as string)).toEqual({
+        fileName: "test.jpg",
+        fileType: "image/jpeg",
+        allowedFileExtensions: ["jpg"],
+        surveyId: "survey123",
+        elementId: "element123",
+      });
+    });
+
     test("throws an error if file is invalid", async () => {
       await expect(() => client.uploadFile({ base64: "", name: "", type: "" } as any)).rejects.toThrow(
         "Invalid file object"
@@ -200,6 +241,26 @@ describe("ApiClient", () => {
           type: "image/jpeg",
         })
       ).rejects.toThrow("Invalid file name");
+    });
+
+    test("throws StorageNotConfiguredError if signing fails because storage is not configured", async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+        json: async () => ({
+          code: "internal_server_error",
+          message: "File storage is not configured correctly. Please check your file upload settings.",
+          details: { storage_error_code: STORAGE_ERROR_CODES.S3_CLIENT_ERROR },
+        }),
+      } as unknown as Response);
+
+      await expect(() =>
+        client.uploadFile({
+          base64: "data:image/jpeg;base64,abcd",
+          name: "test.jpg",
+          type: "image/jpeg",
+        })
+      ).rejects.toMatchObject({ name: FILE_UPLOAD_ERROR_NAMES.STORAGE_NOT_CONFIGURED });
     });
 
     test("throws an error if actual upload fails", async () => {
@@ -228,6 +289,31 @@ describe("ApiClient", () => {
           type: "image/jpeg",
         })
       ).rejects.toThrow("Upload failed with status: 500");
+    });
+
+    test("throws StorageUploadFailedError if actual upload request fails before response", async () => {
+      vi.mocked(global.fetch)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            data: {
+              signedUrl: "https://fake-s3-url.com",
+              fileUrl: "https://fake-file-url.com",
+              presignedFields: { policy: "test" },
+              signingData: null,
+              updatedFileName: "test.jpg",
+            },
+          }),
+        } as unknown as Response)
+        .mockRejectedValueOnce(new Error("Network error"));
+
+      await expect(() =>
+        client.uploadFile({
+          base64: "data:image/jpeg;base64,abcd",
+          name: "test.jpg",
+          type: "image/jpeg",
+        })
+      ).rejects.toMatchObject({ name: FILE_UPLOAD_ERROR_NAMES.STORAGE_UPLOAD_FAILED });
     });
 
     test('throws "Error uploading file" if base64 is invalid', async () => {

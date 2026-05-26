@@ -61,7 +61,7 @@ export function OpenTextElement({
     <form key={element.id} onSubmit={handleOnSubmit} className="w-full">
       <OpenText
         elementId={element.id}
-        inputId={element.id}
+        inputId={`${element.id}-input`}
         headline={getLocalizedValue(element.headline, languageCode)}
         description={element.subheader ? getLocalizedValue(element.subheader, languageCode) : undefined}
         placeholder={getLocalizedValue(element.placeholder, languageCode)}
