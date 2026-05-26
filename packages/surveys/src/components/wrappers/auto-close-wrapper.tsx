@@ -1,6 +1,5 @@
 import React from "preact/compat";
 import { useEffect, useMemo, useRef, useState } from "preact/hooks";
-import { useTranslation } from "react-i18next";
 import { type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { AutoCloseProgressBar } from "@/components/general/auto-close-progress-bar";
 
@@ -22,7 +21,6 @@ export function AutoCloseWrapper({
   setHasInteracted,
 }: AutoCloseProps) {
   const [countDownActive, setCountDownActive] = useState(true);
-  const { t } = useTranslation();
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isAppSurvey = survey.type === "app";
 
@@ -70,7 +68,6 @@ export function AutoCloseWrapper({
         className="h-full w-full"
         data-testid="fb__surveys__auto-close-wrapper-test"
         onKeyDown={stopCountdown}
-        aria-label={t("common.auto_close_wrapper")}
         onTouchStart={stopCountdown}>
         {children}
       </div>
