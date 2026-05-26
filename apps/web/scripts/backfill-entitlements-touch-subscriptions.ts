@@ -191,8 +191,14 @@ const createTouchClone = async (source: Stripe.Price): Promise<Stripe.Price> => 
       interval_count: source.recurring.interval_count,
       usage_type: source.recurring.usage_type,
     },
+    // Set formbricks_plan to a non-standard marker so the billing catalog's
+    // getPricePlan() returns null for this clone (STANDARD_CLOUD_PLANS only
+    // contains hobby/pro/scale). That makes isCatalogCandidate() reject it,
+    // preventing a "found 2 prices for pro/base/monthly" collision between
+    // the real price and its clone. Source metadata is deliberately NOT
+    // spread — clone identity is fully captured by clone_of + clone_reason.
     metadata: {
-      ...source.metadata,
+      formbricks_plan: "touch-clone",
       clone_of: source.id,
       clone_reason: CLONE_REASON,
       clone_created_at: new Date().toISOString(),
