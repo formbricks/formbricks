@@ -76,11 +76,7 @@ export const ResponseSurveyCard = ({
             </time>
             {showDeleteButton &&
               (canResponseBeDeleted ? (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={onDeleteClick}
-                  aria-label={deleteResponseLabel}>
+                <Button variant="ghost" size="icon" onClick={onDeleteClick} aria-label={deleteResponseLabel}>
                   <TrashIcon className="h-4 w-4" />
                 </Button>
               ) : (
