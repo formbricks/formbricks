@@ -16,6 +16,8 @@ export interface FormFieldConfig {
   placeholder?: string;
   /** Input type (text, email, tel, number, url, etc.) */
   type?: "text" | "email" | "tel" | "number" | "url";
+  /** Browser autocomplete token for the field */
+  autoComplete?: React.ComponentProps<"input">["autoComplete"];
   /** Whether this field is required */
   required?: boolean;
   /** Whether this field should be shown */
@@ -143,6 +145,7 @@ function FormField({
                   required={fieldRequired}
                   disabled={disabled}
                   dir={dir}
+                  autoComplete={field.autoComplete}
                   aria-invalid={Boolean(errorMessage) || undefined}
                 />
               </div>
