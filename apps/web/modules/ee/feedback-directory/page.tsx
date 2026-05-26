@@ -1,3 +1,4 @@
+import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getTranslate } from "@/lingodotdev/server";
@@ -23,7 +24,9 @@ export const FeedbackDirectoriesPage = async (props: { params: Promise<{ workspa
     return (
       <PageContentWrapper>
         <PageHeader pageTitle={pageTitle} />
-        <div className="flex items-center justify-center">
+        <SettingsCard
+          title={t("workspace.settings.feedback_directories.title")}
+          description={t("workspace.settings.feedback_directories.description")}>
           <UpgradePrompt
             title={t("workspace.settings.feedback_directories.upgrade_prompt_title")}
             description={t("workspace.settings.feedback_directories.upgrade_prompt_description")}
@@ -43,7 +46,7 @@ export const FeedbackDirectoriesPage = async (props: { params: Promise<{ workspa
               },
             ]}
           />
-        </div>
+        </SettingsCard>
       </PageContentWrapper>
     );
   }

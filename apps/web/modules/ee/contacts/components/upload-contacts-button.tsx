@@ -337,9 +337,10 @@ export const UploadContactsCSVButton = ({
   useEffect(() => {
     if (error && errorContainerRef.current) {
       // Small delay to ensure DOM has updated and the alert is visible
-      setTimeout(() => {
+      const timeoutId = setTimeout(() => {
         errorContainerRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
       }, 100);
+      return () => clearTimeout(timeoutId);
     }
   }, [error]);
 
