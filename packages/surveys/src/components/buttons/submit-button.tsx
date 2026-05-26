@@ -1,4 +1,5 @@
-import { ButtonHTMLAttributes, useRef } from "preact/compat";
+import { type ButtonHTMLAttributes } from "preact";
+import { useRef } from "preact/compat";
 import { useCallback, useEffect, useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
 import { Button } from "./button";

@@ -1,4 +1,5 @@
-import { ButtonHTMLAttributes, CSSProperties, forwardRef } from "preact/compat";
+import { type ButtonHTMLAttributes, type CSSProperties } from "preact";
+import { forwardRef } from "preact/compat";
 import { cn } from "@/lib/utils";
 
 export type ButtonProps = {
@@ -32,11 +33,14 @@ const buttonVariantStyles: Record<ButtonProps["variant"], CSSProperties> = {
   },
 };
 
+const isCssProperties = (style: ButtonProps["style"]): style is CSSProperties => {
+  return typeof style === "object" && style !== null && !("peek" in style);
+};
+
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ variant, className, children, style, dir = "auto", ...props }: Readonly<ButtonProps>, ref) => {
     const incomingClassName = typeof className === "string" ? className : undefined;
-    const incomingStyle =
-      typeof style === "object" && style !== null && !("peek" in style) ? (style as CSSProperties) : undefined;
+    const incomingStyle = isCssProperties(style) ? style : undefined;
 
     return (
       <button
