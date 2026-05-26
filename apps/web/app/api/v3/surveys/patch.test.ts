@@ -308,6 +308,29 @@ describe("patchV3Survey", () => {
     expect(updateSurvey).not.toHaveBeenCalled();
   });
 
+  test("reuses external URL permission checks for patched redirect endings", async () => {
+    vi.mocked(getExternalUrlsPermission).mockResolvedValue(false);
+
+    await expect(
+      patchV3Survey(
+        currentSurvey,
+        {
+          endings: [
+            {
+              id: "clen1234567890123456789012",
+              type: "redirectToUrl",
+              url: "https://example.com/next",
+            },
+          ],
+        },
+        "req_2",
+        "org_1"
+      )
+    ).rejects.toThrow(V3SurveyWritePermissionError);
+
+    expect(updateSurvey).not.toHaveBeenCalled();
+  });
+
   test("fails closed when external URL permissions cannot resolve an organization", async () => {
     vi.mocked(getOrganizationByWorkspaceId).mockResolvedValue(null);
 

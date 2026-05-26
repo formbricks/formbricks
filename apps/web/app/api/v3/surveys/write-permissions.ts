@@ -22,14 +22,27 @@ export class V3SurveyWritePermissionError extends Error {
   }
 }
 
+function getEndingExternalUrl(ending: TSurveyEnding): string | null {
+  if (ending.type === "endScreen") {
+    return ending.buttonLink ?? null;
+  }
+
+  if (ending.type === "redirectToUrl") {
+    return ending.url;
+  }
+
+  return null;
+}
+
 function hasNewOrChangedExternalUrlReferences(input: TV3SurveyWritePermissionInput): boolean {
   for (const ending of input.endings) {
-    if (ending.type !== "endScreen" || !ending.buttonLink) {
+    const externalUrl = getEndingExternalUrl(ending);
+    if (!externalUrl) {
       continue;
     }
 
     const previousEnding = input.previous?.endings.find((entry) => entry.id === ending.id);
-    if (previousEnding?.type !== "endScreen" || previousEnding.buttonLink !== ending.buttonLink) {
+    if (!previousEnding || getEndingExternalUrl(previousEnding) !== externalUrl) {
       return true;
     }
   }

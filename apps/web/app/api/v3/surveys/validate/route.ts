@@ -12,7 +12,7 @@ import {
 } from "../prepare";
 import { type TV3SurveyDocument, ZV3EmptyQuery, ZV3SurveyValidationRequestBody } from "../schemas";
 
-const createWorkspaceSchema = z.object({
+const createWorkspaceIdSchema = z.object({
   workspaceId: z.cuid2(),
 });
 
@@ -51,7 +51,7 @@ export const POST = withV3ApiWrapper({
 
     try {
       if (body.operation === "create") {
-        const workspaceResult = createWorkspaceSchema.safeParse(body.data);
+        const workspaceResult = createWorkspaceIdSchema.safeParse(body.data);
         if (workspaceResult.success) {
           const authResult = await requireV3WorkspaceAccess(
             authentication,
