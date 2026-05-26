@@ -60,7 +60,7 @@ export const ClientLogo = ({
           )}
           width={256}
           height={64}
-          alt={t("common.company_logo")}
+          alt={t("workspace.surveys.edit.company_logo")}
         />
       ) : (
         <Link
