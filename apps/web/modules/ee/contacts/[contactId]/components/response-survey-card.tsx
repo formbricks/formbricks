@@ -43,6 +43,7 @@ export const ResponseSurveyCard = ({
   const surveyWithReplacedRecall = useMemo(() => replaceHeadlineRecall(survey, "default"), [survey]);
 
   const showDeleteButton = !!user && !isReadOnly;
+  const deleteResponseLabel = t("workspace.surveys.responses.delete_response");
 
   return (
     <SingleResponseCard
@@ -70,8 +71,8 @@ export const ResponseSurveyCard = ({
             </div>
           </div>
           <div className="flex items-center gap-1 text-sm text-slate-500">
-            <time className="px-1" dateTime={response.createdAt.toString()}>
-              {timeSince(response.createdAt.toString(), locale)}
+            <time className="px-1" dateTime={response.createdAt.toISOString()}>
+              {timeSince(response.createdAt.toISOString(), locale)}
             </time>
             {showDeleteButton &&
               (canResponseBeDeleted ? (
@@ -79,21 +80,28 @@ export const ResponseSurveyCard = ({
                   variant="ghost"
                   size="icon"
                   onClick={onDeleteClick}
-                  aria-label={t("workspace.surveys.responses.delete_response")}>
+                  aria-label={deleteResponseLabel}>
                   <TrashIcon className="h-4 w-4" />
                 </Button>
               ) : (
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        disabled
-                        className="text-slate-400"
-                        aria-label={t("workspace.surveys.responses.delete_response")}>
-                        <TrashIcon className="h-4 w-4" />
-                      </Button>
+                      <span
+                        className="inline-flex"
+                        tabIndex={0}
+                        role="button"
+                        aria-disabled="true"
+                        aria-label={deleteResponseLabel}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          disabled
+                          className="text-slate-400"
+                          aria-label={deleteResponseLabel}>
+                          <TrashIcon className="h-4 w-4" />
+                        </Button>
+                      </span>
                     </TooltipTrigger>
                     <TooltipContent side="left">
                       {t("workspace.surveys.responses.this_response_is_in_progress")}

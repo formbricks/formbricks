@@ -31,6 +31,12 @@ interface ActivityTimelineProps {
   workspacePermission: TTeamPermission | null;
 }
 
+const warnAboutMissingSurvey = (type: TTimelineItem["type"], id: string, surveyId: string) => {
+  if (process.env.NODE_ENV !== "production") {
+    console.warn(`Skipping ${type} "${id}" because survey "${surveyId}" was not found.`);
+  }
+};
+
 export const ActivityTimeline = ({
   surveys,
   user,
@@ -72,12 +78,22 @@ export const ActivityTimeline = ({
   const timelineItems = useMemo(() => {
     const displayItems: TTimelineItem[] = displays.flatMap((d) => {
       const survey = surveyById.get(d.surveyId);
-      return survey ? [{ type: "display" as const, data: d, survey }] : [];
+      if (!survey) {
+        warnAboutMissingSurvey("display", d.id, d.surveyId);
+        return [];
+      }
+
+      return [{ type: "display" as const, data: d, survey }];
     });
 
     const responseItems: TTimelineItem[] = responses.flatMap((r) => {
       const survey = surveyById.get(r.surveyId);
-      return survey ? [{ type: "response" as const, data: r, survey }] : [];
+      if (!survey) {
+        warnAboutMissingSurvey("response", r.id, r.surveyId);
+        return [];
+      }
+
+      return [{ type: "response" as const, data: r, survey }];
     });
 
     const merged = [...displayItems, ...responseItems].sort((a, b) => {

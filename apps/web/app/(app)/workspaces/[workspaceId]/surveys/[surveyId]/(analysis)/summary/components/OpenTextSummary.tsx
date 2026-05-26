@@ -47,16 +47,16 @@ export const OpenTextSummary = ({ elementSummary, survey, locale }: OpenTextSumm
           <Table>
             <TableHeader className="bg-slate-100">
               <TableRow>
-                <TableHead className="w-1/4">{t("common.user")}</TableHead>
-                <TableHead className="w-2/4">{t("common.response")}</TableHead>
-                <TableHead className="w-1/6">{t("common.time")}</TableHead>
-                <TableHead className="w-1/6">{t("common.response_id")}</TableHead>
+                <TableHead className="w-1/5">{t("common.user")}</TableHead>
+                <TableHead className="w-2/5">{t("common.response")}</TableHead>
+                <TableHead className="w-1/5">{t("common.time")}</TableHead>
+                <TableHead className="w-1/5">{t("common.response_id")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {elementSummary.samples.slice(0, visibleResponses).map((response) => (
                 <TableRow key={response.id}>
-                  <TableCell className="w-1/4">
+                  <TableCell className="w-1/5">
                     {response.contact ? (
                       <Link
                         className="ph-no-capture group flex items-center"
@@ -77,15 +77,15 @@ export const OpenTextSummary = ({ elementSummary, survey, locale }: OpenTextSumm
                       </div>
                     )}
                   </TableCell>
-                  <TableCell className="w-2/4 font-medium">
+                  <TableCell className="w-2/5 font-medium">
                     {typeof response.value === "string"
                       ? renderHyperlinkedContent(response.value)
                       : response.value}
                   </TableCell>
-                  <TableCell className="w-1/6">
+                  <TableCell className="w-1/5">
                     {timeSince(new Date(response.updatedAt).toISOString(), locale)}
                   </TableCell>
-                  <TableCell className="w-1/6">
+                  <TableCell className="w-1/5">
                     <IdBadge id={response.id} />
                   </TableCell>
                 </TableRow>
