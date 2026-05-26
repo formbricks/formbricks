@@ -4,6 +4,7 @@ import { SurveyAnalysisNavigation } from "@/app/(app)/workspaces/[workspaceId]/s
 import { SummaryPage } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/SummaryPage";
 import { SurveyAnalysisCTA } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/SurveyAnalysisCTA";
 import { getSurveySummary } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/lib/surveySummary";
+import { getAISmartToolsUnavailableReason, getOrganizationAIConfig } from "@/lib/ai/service";
 import {
   DEFAULT_LOCALE,
   ENTERPRISE_LICENSE_REQUEST_FORM_URL,
@@ -58,6 +59,13 @@ const SurveyPage = async (props: { params: Promise<{ workspaceId: string; survey
   }
   const isQuotasAllowed = await getIsQuotasEnabled(organization.id);
 
+  // Drives visibility of the "Generate example responses" button. Available
+  // means: entitled in the plan, enabled in org settings, and the instance is
+  // configured with a working AI provider. The server action re-checks via
+  // assertOrganizationAIConfigured.
+  const aiConfig = await getOrganizationAIConfig(organization.id);
+  const isAISmartToolsAvailable = getAISmartToolsUnavailableReason(aiConfig) === undefined;
+
   // Fetch initial survey summary data on the server to prevent duplicate API calls during hydration
   const initialSurveySummary = await getSurveySummary(surveyId);
 
@@ -78,6 +86,7 @@ const SurveyPage = async (props: { params: Promise<{ workspaceId: string; survey
             isFormbricksCloud={IS_FORMBRICKS_CLOUD}
             isStorageConfigured={IS_STORAGE_CONFIGURED}
             enterpriseLicenseRequestFormUrl={ENTERPRISE_LICENSE_REQUEST_FORM_URL}
+            isAISmartToolsAvailable={isAISmartToolsAvailable}
           />
         }>
         <SurveyAnalysisNavigation survey={survey} activeId="summary" />

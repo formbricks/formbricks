@@ -1,4 +1,5 @@
-import type { LanguageModel, generateText } from "ai";
+import type { LanguageModel, generateObject, generateText } from "ai";
+import type { z } from "zod";
 
 export const AI_PROVIDERS = ["aws", "google", "azure"] as const;
 
@@ -47,3 +48,16 @@ export interface AIConfigurationStatus {
 export type AILanguageModel = LanguageModel;
 export type TGenerateTextOptions = Omit<Parameters<typeof generateText>[0], "model">;
 export type TGenerateTextResult = Awaited<ReturnType<typeof generateText>>;
+
+// Strongly-typed generateObject options/result. The caller passes a zod schema
+// for `schema`; the SDK validates / retries until the LLM produces output that
+// parses. `output` is constrained to "object" for the wrapper — the array /
+// enum / no-schema variants of generateObject are intentionally not exposed
+// here to keep the API surface small.
+export type TGenerateObjectOptions<T> = Omit<Parameters<typeof generateObject>[0], "model" | "schema"> & {
+  schema: z.ZodType<T>;
+};
+export type TGenerateObjectResult<T> = { object: T } & Omit<
+  Awaited<ReturnType<typeof generateObject>>,
+  "object"
+>;

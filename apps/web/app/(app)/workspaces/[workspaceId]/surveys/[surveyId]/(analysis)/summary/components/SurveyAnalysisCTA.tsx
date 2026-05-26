@@ -1,6 +1,6 @@
 "use client";
 
-import { BellRing, Eye, ListRestart, RefreshCcwIcon, SquarePenIcon } from "lucide-react";
+import { BellRing, Eye, ListRestart, RefreshCcwIcon, SquarePenIcon, Wand2 } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -20,7 +20,7 @@ import { copySurveyToOtherWorkspaceAction } from "@/modules/survey/list/actions"
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { IconBar } from "@/modules/ui/components/iconbar";
-import { resetSurveyAction } from "../actions";
+import { generateExampleResponsesAction, resetSurveyAction } from "../actions";
 
 interface SurveyAnalysisCTAProps {
   isReadOnly: boolean;
@@ -32,6 +32,7 @@ interface SurveyAnalysisCTAProps {
   isFormbricksCloud: boolean;
   isStorageConfigured: boolean;
   enterpriseLicenseRequestFormUrl: string;
+  isAISmartToolsAvailable: boolean;
 }
 
 interface ModalState {
@@ -49,6 +50,7 @@ export const SurveyAnalysisCTA = ({
   isFormbricksCloud,
   isStorageConfigured,
   enterpriseLicenseRequestFormUrl,
+  isAISmartToolsAvailable,
 }: SurveyAnalysisCTAProps) => {
   const { t } = useTranslation();
   const router = useRouter();
@@ -62,6 +64,7 @@ export const SurveyAnalysisCTA = ({
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isGeneratingExamples, setIsGeneratingExamples] = useState(false);
 
   const { workspace } = useWorkspaceContext();
   const { survey } = useSurvey();
@@ -150,6 +153,24 @@ export const SurveyAnalysisCTA = ({
     setIsResetModalOpen(false);
   };
 
+  const handleGenerateExampleResponses = async () => {
+    if (isGeneratingExamples) return;
+    setIsGeneratingExamples(true);
+    const result = await generateExampleResponsesAction({ surveyId: survey.id });
+    if (result?.data) {
+      toast.success(
+        t("workspace.surveys.summary.example_responses_generated_successfully", {
+          count: result.data.createdCount,
+        })
+      );
+      router.refresh();
+    } else {
+      const errorMessage = getFormattedErrorMessage(result);
+      toast.error(errorMessage || t("workspace.surveys.summary.example_responses_generation_failed"));
+    }
+    setIsGeneratingExamples(false);
+  };
+
   const iconActions = [
     {
       icon: RefreshCcwIcon,
@@ -184,6 +205,17 @@ export const SurveyAnalysisCTA = ({
         window.open(previewUrl, "_blank");
       },
       isVisible: survey.type === "link",
+    },
+    {
+      icon: Wand2,
+      tooltip: isGeneratingExamples
+        ? t("workspace.surveys.summary.generating_example_responses")
+        : t("workspace.surveys.summary.generate_example_responses"),
+      onClick: handleGenerateExampleResponses,
+      disabled: isGeneratingExamples,
+      // Only show for empty surveys on orgs that have AI smart-tools enabled +
+      // entitled. Server action re-checks; this is just the UI gate.
+      isVisible: !isReadOnly && responseCount === 0 && isAISmartToolsAvailable,
     },
     {
       icon: ListRestart,

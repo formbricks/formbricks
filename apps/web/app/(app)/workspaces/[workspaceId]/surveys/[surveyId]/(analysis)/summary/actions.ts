@@ -4,7 +4,14 @@ import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { InvalidInputError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { getEmailTemplateHtml } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/lib/emailTemplate";
+import {
+  generateExampleResponses,
+  toExampleResponseInput,
+} from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/lib/example-responses";
+import { createResponseWithQuotaEvaluation } from "@/app/api/v1/client/[workspaceId]/responses/lib/response";
+import { assertOrganizationAIConfigured } from "@/lib/ai/service";
 import { capturePostHogEvent } from "@/lib/posthog";
+import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
@@ -109,6 +116,69 @@ export const resetSurveyAction = authenticatedActionClient.inputSchema(ZResetSur
     };
   })
 );
+
+const ZGenerateExampleResponsesAction = z.object({
+  surveyId: ZId,
+});
+
+// Generates a small set of LLM-authored example responses for a survey that
+// has no real responses yet. Server-side gates: caller must have write access,
+// the org's AI smart-tools feature must be enabled and entitled, and the
+// survey must currently have zero responses (button is also hidden client-side
+// when responseCount > 0, but we re-check here so a stale tab can't insert
+// noise into a live survey).
+export const generateExampleResponsesAction = authenticatedActionClient
+  .inputSchema(ZGenerateExampleResponsesAction)
+  .action(async ({ ctx, parsedInput }) => {
+    const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
+    const workspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
+
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager"],
+        },
+        {
+          type: "workspaceTeam",
+          minPermission: "readWrite",
+          workspaceId,
+        },
+      ],
+    });
+
+    // Throws OperationNotAllowedError if AI is unentitled, disabled, or
+    // the instance isn't configured (env vars). Same gating helper that the
+    // existing AI text endpoint uses.
+    await assertOrganizationAIConfigured(organizationId);
+
+    const survey = await getSurvey(parsedInput.surveyId);
+    if (!survey) {
+      throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
+    }
+
+    const existingCount = await getResponseCountBySurveyId(parsedInput.surveyId);
+    if (existingCount > 0) {
+      throw new OperationNotAllowedError(
+        "Example responses can only be generated for a survey that has no responses yet."
+      );
+    }
+
+    const generated = await generateExampleResponses({ survey, organizationId });
+    if (generated.length === 0) {
+      throw new InvalidInputError(
+        "This survey doesn't contain any question types we can synthesize answers for yet."
+      );
+    }
+
+    for (const item of generated) {
+      await createResponseWithQuotaEvaluation(toExampleResponseInput(survey.id, workspaceId, item));
+    }
+
+    return { createdCount: generated.length };
+  });
 
 const ZGetEmailHtmlAction = z.object({
   surveyId: ZId,
