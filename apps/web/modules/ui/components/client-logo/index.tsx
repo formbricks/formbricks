@@ -60,7 +60,7 @@ export const ClientLogo = ({
           )}
           width={256}
           height={64}
-          alt="Company Logo"
+          alt={t("common.company_logo")}
         />
       ) : (
         <Link
