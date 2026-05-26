@@ -73,7 +73,7 @@ function DateElement({
       const newDate = new Date(year, month - 1, day);
       setDate((prevDate) => {
         // Only update if the date actually changed to avoid unnecessary re-renders
-        if (!prevDate || newDate.getTime() !== prevDate.getTime()) {
+        if (newDate.getTime() !== prevDate?.getTime()) {
           return newDate;
         }
         return prevDate;
