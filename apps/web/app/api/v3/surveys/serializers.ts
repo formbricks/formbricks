@@ -1,6 +1,6 @@
 import type { TSurvey as TInternalSurvey } from "@formbricks/types/surveys/types";
 import type { TSurvey as TSurveyListRecord } from "@/modules/survey/list/types/surveys";
-import { normalizeV3SurveyLanguageTag, resolveV3SurveyLanguageCode } from "./language";
+import { normalizeV3SurveyLanguageIdentifier, resolveV3SurveyLanguageCode } from "./language";
 
 export type TV3SurveyListItem = Omit<TSurveyListRecord, "singleUse">;
 const DEFAULT_V3_SURVEY_LANGUAGE = "en-US";
@@ -9,6 +9,7 @@ type TV3SurveyLanguage = {
   code: string;
   default: boolean;
   enabled: boolean;
+  alias?: string | null;
 };
 
 type TSerializedValue =
@@ -52,9 +53,10 @@ function toIsoString(value: Date | string): string {
 
 function getSurveyLanguages(survey: TInternalSurvey): TV3SurveyLanguage[] {
   const languages = (survey.languages ?? []).map((surveyLanguage) => ({
-    code: normalizeV3SurveyLanguageTag(surveyLanguage.language.code) ?? surveyLanguage.language.code,
+    code: normalizeV3SurveyLanguageIdentifier(surveyLanguage.language.code) ?? surveyLanguage.language.code,
     default: surveyLanguage.default,
     enabled: surveyLanguage.enabled,
+    alias: surveyLanguage.language.alias,
   }));
 
   if (languages.length === 0) {
@@ -68,7 +70,7 @@ function getDefaultLanguage(survey: TInternalSurvey): string {
   const defaultLanguageCode = survey.languages?.find((surveyLanguage) => surveyLanguage.default)?.language
     .code;
   return defaultLanguageCode
-    ? (normalizeV3SurveyLanguageTag(defaultLanguageCode) ?? defaultLanguageCode)
+    ? (normalizeV3SurveyLanguageIdentifier(defaultLanguageCode) ?? defaultLanguageCode)
     : DEFAULT_V3_SURVEY_LANGUAGE;
 }
 
@@ -90,7 +92,7 @@ function getI18nValueForLanguage(value: Record<string, string>, languageCode: st
   }
 
   const matchingKey = Object.keys(value).find(
-    (key) => normalizeV3SurveyLanguageTag(key)?.toLowerCase() === languageCode.toLowerCase()
+    (key) => normalizeV3SurveyLanguageIdentifier(key)?.toLowerCase() === languageCode.toLowerCase()
   );
   return matchingKey ? value[matchingKey] : undefined;
 }
@@ -185,7 +187,11 @@ export function serializeV3SurveyResource(survey: TInternalSurvey, options?: { l
     status: survey.status,
     metadata: survey.metadata,
     defaultLanguage,
-    languages,
+    languages: languages.map(({ code, default: isDefault, enabled }) => ({
+      code,
+      default: isDefault,
+      enabled,
+    })),
     welcomeCard: serializeValue(survey.welcomeCard),
     blocks: serializeValue(survey.blocks),
     endings: serializeValue(survey.endings),

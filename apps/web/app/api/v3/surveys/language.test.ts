@@ -1,13 +1,14 @@
 import { describe, expect, test } from "vitest";
 import {
+  normalizeV3SurveyLanguageIdentifier,
   normalizeV3SurveyLanguageTag,
   parseV3SurveyLanguageQuery,
   resolveV3SurveyLanguageCode,
 } from "./language";
 
 const languages = [
-  { code: "en-US", enabled: true },
-  { code: "de-DE", enabled: true },
+  { code: "en-US", enabled: true, alias: "english" },
+  { code: "de-DE", enabled: true, alias: "de" },
   { code: "fr-FR", enabled: false },
 ];
 
@@ -34,46 +35,68 @@ describe("normalizeV3SurveyLanguageTag", () => {
   });
 });
 
+describe("normalizeV3SurveyLanguageIdentifier", () => {
+  test.each([
+    ["hi", "hi-IN"],
+    ["HI", "hi-IN"],
+    ["de", "de-DE"],
+    ["hi_in", "hi-IN"],
+  ])("normalizes legacy identifier %s to %s", (input, expected) => {
+    expect(normalizeV3SurveyLanguageIdentifier(input)).toBe(expected);
+  });
+
+  test("does not guess ambiguous legacy identifiers", () => {
+    expect(normalizeV3SurveyLanguageIdentifier("pt")).toBeNull();
+  });
+});
+
 describe("parseV3SurveyLanguageQuery", () => {
   test("parses comma-separated language selectors", () => {
-    expect(parseV3SurveyLanguageQuery("de-DE, pt_PT, EN_us, zh_hans_cn")).toEqual({
+    expect(parseV3SurveyLanguageQuery("de-DE, pt_PT, EN_us, zh_hans_cn, hi")).toEqual({
       ok: true,
-      languages: ["de-DE", "pt-PT", "en-US", "zh-Hans-CN"],
+      languages: ["de-DE", "pt_PT", "EN_us", "zh_hans_cn", "hi"],
     });
   });
 
   test("parses repeated language selectors", () => {
     expect(parseV3SurveyLanguageQuery(["de-DE", "pt_PT,en_us"])).toEqual({
       ok: true,
-      languages: ["de-DE", "pt-PT", "en-US"],
+      languages: ["de-DE", "pt_PT", "en_us"],
     });
   });
 
-  test("deduplicates language selectors case-insensitively", () => {
-    expect(parseV3SurveyLanguageQuery("de-DE,DE_de")).toEqual({
+  test("deduplicates equivalent canonical selectors case-insensitively", () => {
+    expect(parseV3SurveyLanguageQuery("de-DE,DE_de,hi-IN,HI_in")).toEqual({
       ok: true,
-      languages: ["de-DE"],
+      languages: ["de-DE", "hi-IN"],
+    });
+  });
+
+  test("keeps language-only and qualified locale selectors as distinct entries", () => {
+    expect(parseV3SurveyLanguageQuery("hi,hi-IN")).toEqual({
+      ok: true,
+      languages: ["hi", "hi-IN"],
     });
   });
 
   test("rejects empty language selectors", () => {
     expect(parseV3SurveyLanguageQuery("de-DE,")).toEqual({
       ok: false,
-      message: "Language selector must contain valid comma-separated locale codes",
+      message: "Language selector must contain valid comma-separated language selectors",
     });
   });
 
-  test("rejects invalid language selectors", () => {
+  test("keeps invalid-looking selectors for survey-aware alias resolution", () => {
     expect(parseV3SurveyLanguageQuery("not a locale")).toEqual({
-      ok: false,
-      message: "Language 'not a locale' is not a valid locale code",
+      ok: true,
+      languages: ["not a locale"],
     });
   });
 
-  test("rejects language-only selectors", () => {
+  test("keeps language-only selectors for survey-aware compatibility resolution", () => {
     expect(parseV3SurveyLanguageQuery("de")).toEqual({
-      ok: false,
-      message: "Language 'de' is not a valid locale code",
+      ok: true,
+      languages: ["de"],
     });
   });
 });
@@ -94,6 +117,58 @@ describe("resolveV3SurveyLanguageCode", () => {
     expect(resolveV3SurveyLanguageCode("fr-FR", languages)).toEqual({ ok: true, code: "fr-FR" });
   });
 
+  test("resolves legacy stored language codes and canonical selectors", () => {
+    const legacyLanguages = [{ code: "hi", enabled: true, alias: null }];
+
+    expect(resolveV3SurveyLanguageCode("hi", legacyLanguages)).toEqual({ ok: true, code: "hi-IN" });
+    expect(resolveV3SurveyLanguageCode("hi-IN", legacyLanguages)).toEqual({ ok: true, code: "hi-IN" });
+    expect(resolveV3SurveyLanguageCode("HI_in", legacyLanguages)).toEqual({ ok: true, code: "hi-IN" });
+  });
+
+  test("resolves configured language aliases", () => {
+    expect(resolveV3SurveyLanguageCode("english", languages)).toEqual({ ok: true, code: "en-US" });
+    expect(resolveV3SurveyLanguageCode("de", languages)).toEqual({ ok: true, code: "de-DE" });
+  });
+
+  test("rejects ambiguous language-only selectors", () => {
+    expect(
+      resolveV3SurveyLanguageCode("en", [
+        { code: "en-US", enabled: true },
+        { code: "en-GB", enabled: true },
+      ])
+    ).toEqual({
+      ok: false,
+      reason: "ambiguous",
+      normalizedCode: "en",
+      message: "Language 'en' is ambiguous for this survey. Matching languages: en-US, en-GB",
+    });
+  });
+
+  test("reports the user's input rather than a guessed locale when unknown", () => {
+    expect(resolveV3SurveyLanguageCode("en", [{ code: "de-DE", enabled: true }])).toEqual({
+      ok: false,
+      reason: "unknown",
+      normalizedCode: "en",
+      message: "Language 'en' is not configured for this survey",
+    });
+  });
+
+  test("resolves language-only selectors to the only matching configured locale", () => {
+    expect(resolveV3SurveyLanguageCode("pt", [{ code: "pt-BR", enabled: true }])).toEqual({
+      ok: true,
+      code: "pt-BR",
+    });
+  });
+
+  test("does not fallback full locale selectors to a different configured region", () => {
+    expect(resolveV3SurveyLanguageCode("en-GB", [{ code: "en-US", enabled: true }])).toEqual({
+      ok: false,
+      reason: "unknown",
+      normalizedCode: "en-GB",
+      message: "Language 'en-GB' is not configured for this survey",
+    });
+  });
+
   test("returns unknown for languages not configured on the survey", () => {
     expect(resolveV3SurveyLanguageCode("ZH_hant_tw", languages)).toEqual({
       ok: false,
@@ -103,11 +178,11 @@ describe("resolveV3SurveyLanguageCode", () => {
     });
   });
 
-  test("rejects language-only tags for surveys with a matching configured language", () => {
-    expect(resolveV3SurveyLanguageCode("de", languages)).toEqual({
+  test("rejects selectors that are neither locale codes nor configured aliases", () => {
+    expect(resolveV3SurveyLanguageCode("not a locale", languages)).toEqual({
       ok: false,
       reason: "invalid",
-      message: "Language 'de' is not a valid locale code",
+      message: "Language 'not a locale' is not a valid locale code or configured language alias",
     });
   });
 
