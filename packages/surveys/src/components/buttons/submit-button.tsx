@@ -1,5 +1,4 @@
-import { ButtonHTMLAttributes } from "preact";
-import { useRef } from "preact/compat";
+import { ButtonHTMLAttributes, useRef } from "preact/compat";
 import { useCallback, useEffect, useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
 import { Button } from "./button";
@@ -19,7 +18,7 @@ export function SubmitButton({
   disabled,
   type,
   ...props
-}: SubmitButtonProps) {
+}: Readonly<SubmitButtonProps>) {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -71,7 +70,6 @@ export function SubmitButton({
       {...props}
       dir="auto"
       variant="primary"
-      className="button-custom border-submit-button-border"
       ref={buttonRef}
       type={type}
       tabIndex={tabIndex}

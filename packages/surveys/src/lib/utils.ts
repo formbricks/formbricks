@@ -16,8 +16,8 @@ type ClassValue = string | boolean | null | undefined | ClassValue[];
 export const cn = (...classes: ClassValue[]): string => {
   return twMerge(
     classes
-      .map((c) => (Array.isArray(c) ? cn(...c) : c))
-      .filter((c): c is string => typeof c === "string" && c.length > 0)
+      .map((className) => (Array.isArray(className) ? cn(...className) : className))
+      .filter((className): className is string => typeof className === "string" && className.length > 0)
       .join(" ")
   );
 };

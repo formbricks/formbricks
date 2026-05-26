@@ -10,7 +10,7 @@ interface BackButtonProps {
 export function BackButton({ onClick, backButtonLabel, tabIndex = 2 }: Readonly<BackButtonProps>) {
   const { t } = useTranslation();
   return (
-    <Button dir="auto" type="button" variant="secondary" tabIndex={tabIndex} onClick={onClick}>
+    <Button dir="auto" tabIndex={tabIndex} type="button" variant="ghost" onClick={onClick}>
       {backButtonLabel || t("common.back")}
     </Button>
   );
