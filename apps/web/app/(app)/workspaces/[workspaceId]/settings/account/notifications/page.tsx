@@ -6,6 +6,7 @@ import { EditAlerts } from "@/app/(app)/workspaces/[workspaceId]/settings/accoun
 import { IntegrationsTip } from "@/app/(app)/workspaces/[workspaceId]/settings/account/notifications/components/IntegrationsTip";
 import type { Membership } from "@/app/(app)/workspaces/[workspaceId]/settings/account/notifications/types";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
+import { redirectBillingRoleFromRestrictedSettings } from "@/app/(app)/workspaces/[workspaceId]/settings/lib/redirect-billing-role";
 import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { authOptions } from "@/modules/auth/lib/authOptions";
@@ -127,7 +128,13 @@ const getMemberships = async (userId: string): Promise<Membership[]> => {
   return memberships;
 };
 
-const Page = async (props: { searchParams: Promise<Record<string, string>> }) => {
+const Page = async (props: {
+  params: Promise<{ workspaceId: string }>;
+  searchParams: Promise<Record<string, string>>;
+}) => {
+  const params = await props.params;
+  await redirectBillingRoleFromRestrictedSettings(params.workspaceId);
+
   const searchParams = await props.searchParams;
   const t = await getTranslate();
   const session = await getServerSession(authOptions);

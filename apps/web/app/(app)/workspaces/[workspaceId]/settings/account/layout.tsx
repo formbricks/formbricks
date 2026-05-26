@@ -1,11 +1,10 @@
-import { redirectBillingRoleFromRestrictedSettings } from "@/app/(app)/workspaces/[workspaceId]/settings/lib/redirect-billing-role";
-
-const AccountSettingsLayout = async (props: Readonly<{
-  params: Promise<{ workspaceId: string }>;
-  children: React.ReactNode;
-}>) => {
-  const params = await props.params;
-  await redirectBillingRoleFromRestrictedSettings(params.workspaceId);
+const AccountSettingsLayout = async (
+  props: Readonly<{
+    params: Promise<{ workspaceId: string }>;
+    children: React.ReactNode;
+  }>
+) => {
+  await props.params;
   return <>{props.children}</>;
 };
 

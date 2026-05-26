@@ -4,6 +4,7 @@ import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import { TooManyRequestsError } from "@formbricks/types/errors";
 import { authenticateRequest } from "@/app/api/v1/auth";
+import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
 import { buildAuditLogBaseObject } from "@/app/lib/api/with-api-logging";
 import { getApiKeyFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { authOptions } from "@/modules/auth/lib/authOptions";
@@ -16,6 +17,7 @@ import {
   type InvalidParam,
   problemBadRequest,
   problemInternalError,
+  problemPayloadTooLarge,
   problemTooManyRequests,
   problemUnauthorized,
 } from "./response";
@@ -170,8 +172,15 @@ async function parseV3Input<S extends TV3Schemas | undefined, TProps>(
     let bodyData: unknown;
 
     try {
-      bodyData = await req.json();
-    } catch {
+      bodyData = await parseJsonBodyWithLimit(req);
+    } catch (error) {
+      if (error instanceof RequestBodyTooLargeError) {
+        return {
+          ok: false,
+          response: problemPayloadTooLarge(requestId, error.message, instance),
+        };
+      }
+
       return {
         ok: false,
         response: problemBadRequest(requestId, "Invalid request body", {

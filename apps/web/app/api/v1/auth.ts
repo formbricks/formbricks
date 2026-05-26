@@ -29,11 +29,10 @@ export const handleErrorResponse = (error: any): Response => {
       if (error instanceof UniqueConstraintError) {
         return responses.conflictResponse(error.message);
       }
-      if (
-        error instanceof DatabaseError ||
-        error instanceof InvalidInputError ||
-        error instanceof ResourceNotFoundError
-      ) {
+      if (error instanceof ResourceNotFoundError) {
+        return responses.notFoundResponse(error.resourceType, error.resourceId);
+      }
+      if (error instanceof DatabaseError || error instanceof InvalidInputError) {
         return responses.badRequestResponse(error.message);
       }
       return responses.internalServerErrorResponse("Some error occurred");

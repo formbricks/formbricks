@@ -313,9 +313,18 @@ describe("handleErrorResponse", () => {
     expect(body.message).toBe("bad input");
   });
 
-  test("returns 400 badRequest for ResourceNotFoundError", async () => {
+  test("returns 404 notFound for ResourceNotFoundError", async () => {
     const response = handleErrorResponse(new ResourceNotFoundError("Survey", "id-1"));
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(404);
+    const body = await response.json();
+    expect(body).toEqual({
+      code: "not_found",
+      message: "Survey not found",
+      details: {
+        resource_id: "id-1",
+        resource_type: "Survey",
+      },
+    });
   });
 
   test("returns 500 internalServerError for unknown errors", async () => {

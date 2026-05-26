@@ -3,14 +3,18 @@ import { prisma } from "@/lib/__mocks__/database";
 import { Prisma } from "@prisma/client";
 import { describe, expect, test, vi } from "vitest";
 import { PrismaErrorType } from "@formbricks/database/types/error";
-import { DatabaseError, ValidationError } from "@formbricks/types/errors";
+import { DatabaseError, InvalidInputError, ValidationError } from "@formbricks/types/errors";
 import {
+  assertDisplayOwnership,
   getDisplayCountBySurveyId,
+  getDisplayForResponseValidation,
   getDisplaysByContactId,
   getDisplaysBySurveyIdWithContact,
 } from "../service";
 
 const mockContactId = "clqnj99r9000008lebgf8734j";
+const mockWorkspaceId = "clqkr8dlv000308jybb08evgz";
+const mockResponseId = "clqnfg59i000208i426pb4wcv";
 const mockResponseIds = ["clqnfg59i000208i426pb4wcv", "clqnfg59i000208i426pb4wcw"];
 
 const mockDisplaysForContact = [
@@ -288,5 +292,98 @@ describe("getDisplaysBySurveyIdWithContact", () => {
 
       await expect(getDisplaysBySurveyIdWithContact(mockSurveyId)).rejects.toThrow(Error);
     });
+  });
+});
+
+const mockDisplayRecord = {
+  surveyId: mockSurveyId,
+  contactId: null as string | null,
+  response: null as { id: string } | null,
+  survey: { workspaceId: mockWorkspaceId },
+};
+
+describe("getDisplayForResponseValidation", () => {
+  test("returns null when display is not found", async () => {
+    vi.mocked(prisma.display.findUnique).mockResolvedValue(null);
+    const result = await getDisplayForResponseValidation(mockDisplayId);
+    expect(result).toBeNull();
+  });
+
+  test("returns mapped shape when display is found", async () => {
+    vi.mocked(prisma.display.findUnique).mockResolvedValue({
+      ...mockDisplayRecord,
+      contactId: mockContactId,
+      response: { id: mockResponseId },
+    } as any);
+    const result = await getDisplayForResponseValidation(mockDisplayId);
+    expect(result).toEqual({
+      surveyId: mockSurveyId,
+      workspaceId: mockWorkspaceId,
+      responseId: mockResponseId,
+      contactId: mockContactId,
+    });
+  });
+
+  test("throws DatabaseError on PrismaClientKnownRequestError", async () => {
+    vi.mocked(prisma.display.findUnique).mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Mock error", {
+        code: PrismaErrorType.UniqueConstraintViolation,
+        clientVersion: "0.0.1",
+      })
+    );
+    await expect(getDisplayForResponseValidation(mockDisplayId)).rejects.toThrow(DatabaseError);
+  });
+});
+
+describe("assertDisplayOwnership", () => {
+  test("throws InvalidInputError when display is not found", async () => {
+    vi.mocked(prisma.display.findUnique).mockResolvedValue(null);
+    await expect(assertDisplayOwnership(mockDisplayId, mockWorkspaceId, mockSurveyId, null)).rejects.toThrow(
+      InvalidInputError
+    );
+  });
+
+  test("throws InvalidInputError when workspaceId does not match", async () => {
+    vi.mocked(prisma.display.findUnique).mockResolvedValue(mockDisplayRecord as any);
+    await expect(
+      assertDisplayOwnership(mockDisplayId, "wrong-workspace", mockSurveyId, null)
+    ).rejects.toThrow(InvalidInputError);
+  });
+
+  test("throws InvalidInputError when surveyId does not match", async () => {
+    vi.mocked(prisma.display.findUnique).mockResolvedValue(mockDisplayRecord as any);
+    await expect(
+      assertDisplayOwnership(mockDisplayId, mockWorkspaceId, "wrong-survey", null)
+    ).rejects.toThrow(InvalidInputError);
+  });
+
+  test("throws InvalidInputError when display is already linked to a response", async () => {
+    vi.mocked(prisma.display.findUnique).mockResolvedValue({
+      ...mockDisplayRecord,
+      response: { id: mockResponseId },
+    } as any);
+    await expect(assertDisplayOwnership(mockDisplayId, mockWorkspaceId, mockSurveyId, null)).rejects.toThrow(
+      InvalidInputError
+    );
+  });
+
+  test("throws InvalidInputError when contactId does not match", async () => {
+    vi.mocked(prisma.display.findUnique).mockResolvedValue({
+      ...mockDisplayRecord,
+      contactId: "contact-a",
+    } as any);
+    await expect(
+      assertDisplayOwnership(mockDisplayId, mockWorkspaceId, mockSurveyId, "contact-b")
+    ).rejects.toThrow(InvalidInputError);
+  });
+
+  test("resolves without error when all ownership checks pass", async () => {
+    vi.mocked(prisma.display.findUnique).mockResolvedValue({
+      ...mockDisplayRecord,
+      contactId: mockContactId,
+    } as any);
+    await expect(
+      assertDisplayOwnership(mockDisplayId, mockWorkspaceId, mockSurveyId, mockContactId)
+    ).resolves.toBeUndefined();
   });
 });

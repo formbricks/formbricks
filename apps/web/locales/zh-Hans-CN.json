@@ -2612,8 +2612,6 @@
         "workspaces_being_added": "将被授权访问的工作区"
       },
       "general": {
-        "ai_data_analysis_enabled": "数据增强与分析（AI）",
-        "ai_data_analysis_enabled_description": "使用 AI 深度挖掘你的数据，设置仪表盘、图表、报告等。会处理你的体验数据。",
         "ai_enabled": "Formbricks AI",
         "ai_enabled_description": "管理该组织的 AI 驱动功能。",
         "ai_instance_not_configured": "AI 通过环境变量在实例级别进行配置。启用 AI 功能前，请让管理员设置 AI_PROVIDER、该提供商的凭据以及对应的模型列表。",
@@ -2820,7 +2818,6 @@
         "adjust_survey_closed_message": "调整 \"调查 关闭\" 消息",
         "adjust_survey_closed_message_description": "更改 访客 看到 调查 关闭 时 的 消息。",
         "adjust_theme_in_look_and_feel_settings": "在<lookFeelLink>外观与感觉</lookFeelLink>设置中调整主题。",
-        "ai_data_analysis_disabled": "此组织已禁用 AI 数据分析。",
         "ai_features_not_enabled": "此组织未启用 AI 功能。",
         "ai_instance_not_configured": "AI 未配置。请联系您的管理员。",
         "ai_smart_tools_disabled": "此组织已禁用 AI 智能工具。",

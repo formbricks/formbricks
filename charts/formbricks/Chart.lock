@@ -2,14 +2,11 @@ dependencies:
 - name: postgresql
   repository: oci://registry-1.docker.io/bitnamicharts
   version: 16.4.16
-- name: redis
-  repository: oci://registry-1.docker.io/bitnamicharts
-  version: 20.11.2
 - name: gateway-helm
   repository: oci://docker.io/envoyproxy
   version: v1.7.1
 - name: redis
   repository: oci://registry-1.docker.io/bitnamicharts
   version: 20.11.2
-digest: sha256:d93a29cb9cbef513db410ded5aa199f219c5b25ce1870e1e049dc470acc34235
-generated: "2026-04-08T00:33:09.875832+05:30"
+digest: sha256:078652b37649ba5bb72f7463709356c08f464cb989270b97d095b8243c0e58b9
+generated: "2026-05-21T12:52:44.141547+05:30"

@@ -513,15 +513,20 @@ envoyRedis:
     enabled: false
 
 ##########################################################
-# Redis Configuration
+# Valkey Configuration
 ##########################################################
 redis:
-  enabled: true # Enable/disable Redis
+  enabled: true # Enable/disable bundled Valkey
   # Use this to point Formbricks jobs and cache traffic at an existing Redis/Valkey deployment.
   # External Redis instances must also be configured with `maxmemory-policy noeviction`
   # in their redis.conf/valkey.conf (or equivalent managed-service setting) to avoid BullMQ job loss.
   externalRedisUrl: ""
   fullnameOverride: "formbricks-redis"
+  image:
+    repository: "valkey/valkey"
+    tag: ""
+    digest: "sha256:12ba4f45a7c3e1d0f076acd616cb230834e75a77e8516dde382720af32832d6d"
+    pullPolicy: IfNotPresent
   architecture: standalone
   commonConfiguration: |-
     appendonly yes
@@ -534,8 +539,30 @@ redis:
   networkPolicy:
     enabled: false
   master:
+    resources:
+      limits:
+        cpu: 150m
+        memory: 192Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+    podSecurityContext: {}
+    containerSecurityContext: {}
+    podAnnotations: {}
+    nodeSelector: {}
+    tolerations: []
+    affinity: {}
+    topologySpreadConstraints: []
     persistence:
       enabled: true
+      size: 8Gi
+      storageClass: ""
+      accessModes:
+        - ReadWriteOnce
+    pdb:
+      enabled: true
+      minAvailable: ""
+      maxUnavailable: 0
 
 ##########################################################
 # Service Monitor to collect Prometheus metrices
@@ -643,10 +670,10 @@ hub:
     # Pinned by digest for immutable, reproducible deployments. When digest is set it takes
     # precedence over tag, and deployment, init container, and migration job all resolve to the
     # same immutable image. Update on each Hub release.
-    # Current digest corresponds to ghcr.io/formbricks/hub:0.3.0.
-    digest: "sha256:6c39b1143527137e881df785a5b668625a1fe3edb05485bb5ded19f813c8de88"
+    # Current digest corresponds to ghcr.io/formbricks/hub:0.4.0.
+    digest: "sha256:3971dd15fcce22d438ac916266ed72176052460a2bd91808e0995e894faba5bc"
     # Tag is a fallback for dev/non-prod when digest is cleared; keep aligned with the digest above.
-    tag: "0.3.0"
+    tag: "0.4.0"
     pullPolicy: IfNotPresent
 
   # Optional override for the secret Hub reads from.
@@ -909,6 +936,12 @@ hub:
     ttlSecondsAfterFinished: 300
     backoffLimit: 3
     activeDeadlineSeconds: 900
+    waitForFormbricksMigration:
+      enabled: true
+      maxAttempts: 180
+      # Consecutive missing Job reads before falling back to persisted Prisma/DataMigration markers.
+      missingJobMaxAttempts: 12
+      intervalSeconds: 5
 
   resources:
     limits:

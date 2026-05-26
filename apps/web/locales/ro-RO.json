@@ -2612,8 +2612,6 @@
         "workspaces_being_added": "Spații de lucru cărora li se acordă acces"
       },
       "general": {
-        "ai_data_analysis_enabled": "Îmbogățire și analiză de date (AI)",
-        "ai_data_analysis_enabled_description": "AI pentru a obține mai mult din datele tale, configurare dashboard-uri, grafice, rapoarte și multe altele. Accesează datele tale de experiență.",
         "ai_enabled": "Formbricks AI",
         "ai_enabled_description": "Gestionează funcționalitățile bazate pe AI pentru această organizație.",
         "ai_instance_not_configured": "AI este configurată la nivel de instanță prin variabile de mediu. Cere administratorului să configureze AI_PROVIDER, credențialele acelui furnizor și lista de modele corespunzătoare înainte de a activa funcționalitățile AI.",
@@ -2820,7 +2818,6 @@
         "adjust_survey_closed_message": "Ajustați mesajul 'Sondaj Închis'",
         "adjust_survey_closed_message_description": "Schimbați mesajul pe care îl văd vizitatorii atunci când sondajul este închis.",
         "adjust_theme_in_look_and_feel_settings": "Ajustează tema în setările <lookFeelLink>Aspect și Experiență</lookFeelLink>.",
-        "ai_data_analysis_disabled": "Analiza de date AI este dezactivată pentru această organizație.",
         "ai_features_not_enabled": "Funcțiile AI nu sunt activate pentru această organizație.",
         "ai_instance_not_configured": "AI nu este configurat. Contactează administratorul.",
         "ai_smart_tools_disabled": "Instrumentele inteligente AI sunt dezactivate pentru această organizație.",
