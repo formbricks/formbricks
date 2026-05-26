@@ -145,7 +145,7 @@ const validateMultiSelectOtherValue = (
   }
 
   const otherText = value[sentinelIndex + 1];
-  if (!otherText || (typeof otherText === "string" && otherText.trim() === "")) {
+  if (typeof otherText !== "string" || otherText.trim() === "") {
     return createRequiredError(t);
   }
 
