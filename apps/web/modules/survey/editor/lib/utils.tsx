@@ -32,6 +32,8 @@ export const MAX_STRING_LENGTH = 2000;
 
 export const scrollElementCardIntoView = (elementId: string) => {
   if (typeof window === "undefined") return;
+  // Double rAF: first frame flushes React state + DOM mutations (new card mounted, Collapsible opened);
+  // second frame waits for layout/paint so scrollIntoView computes the final position.
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       const node = document.getElementById(elementId);
