@@ -17,7 +17,7 @@ interface TemplateTagsProps {
 
 type NonNullabeChannel = NonNullable<TWorkspaceConfigChannel>;
 
-export const getRoleBasedStyling = (role: TTemplateRole | undefined): string => {
+const getRoleBasedStyling = (role: TTemplateRole | undefined): string => {
   switch (role) {
     case "productManager":
       return "border-blue-300 bg-blue-50 text-blue-500";

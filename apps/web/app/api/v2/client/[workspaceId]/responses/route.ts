@@ -15,6 +15,7 @@ import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/element";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
+import { validateClientFileUploads } from "@/modules/storage/utils";
 import { createResponseWithQuotaEvaluation } from "./lib/response";
 import { TResponseInputV2, ZResponseInputV2 } from "./types/response";
 
@@ -87,6 +88,18 @@ const validateResponseSubmission = async (
   const surveyCheckResult = await checkSurveyValidity(survey, workspaceId, responseInputData);
   if (surveyCheckResult) {
     return surveyCheckResult;
+  }
+
+  if (
+    !validateClientFileUploads({
+      data: responseInputData.data,
+      workspaceId,
+      surveyId: survey.id,
+      blocks: survey.blocks,
+      questions: survey.questions,
+    })
+  ) {
+    return responses.badRequestResponse("Invalid file upload response", undefined, true);
   }
 
   const otherResponseInvalidQuestionId = validateOtherOptionLengthForMultipleChoice({

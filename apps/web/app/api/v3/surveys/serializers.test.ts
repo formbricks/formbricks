@@ -61,6 +61,40 @@ const baseSurvey = {
   variables: [],
 } as unknown as TSurvey;
 
+const createLegacyHindiSurvey = (overrides: Partial<TSurvey> = {}) =>
+  ({
+    ...baseSurvey,
+    languages: [
+      {
+        default: true,
+        enabled: true,
+        language: {
+          id: "lang_1",
+          code: "en",
+          alias: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      },
+      {
+        default: false,
+        enabled: true,
+        language: {
+          id: "lang_2",
+          code: "hi",
+          alias: "hi-in",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      },
+    ],
+    welcomeCard: {
+      enabled: true,
+      headline: { default: "Welcome", hi: "स्वागत है" },
+    },
+    ...overrides,
+  }) as unknown as TSurvey;
+
 describe("serializeV3SurveyResource", () => {
   test("returns canonical multilingual fields using real locale codes", () => {
     const resource = serializeV3SurveyResource(baseSurvey);
@@ -267,9 +301,134 @@ describe("serializeV3SurveyResource", () => {
     });
   });
 
-  test("rejects language-only selectors", () => {
-    expect(() => serializeV3SurveyResource(baseSurvey, { lang: ["de"] })).toThrow(
-      "Language 'de' is not a valid locale code"
+  test("filters fields for configured language aliases", () => {
+    const resource = serializeV3SurveyResource(baseSurvey, { lang: ["de"] });
+
+    expect(resource).toMatchObject({
+      welcomeCard: { headline: { "de-DE": "Willkommen" } },
+      blocks: [
+        {
+          elements: [
+            {
+              headline: { "de-DE": "Was sollen wir verbessern?" },
+            },
+          ],
+        },
+      ],
+    });
+  });
+
+  test("maps legacy stored language codes and translation keys to canonical response locales", () => {
+    const survey = createLegacyHindiSurvey({
+      blocks: [
+        {
+          id: "block_1",
+          name: "Intro",
+          elements: [
+            {
+              id: "satisfaction",
+              type: "openText",
+              headline: { default: "What should we improve?", hi: "हमें क्या सुधारना चाहिए?" },
+              required: true,
+            },
+          ],
+        },
+      ],
+    });
+
+    const resource = serializeV3SurveyResource(survey, { lang: ["hi-IN"] });
+
+    expect(resource.defaultLanguage).toBe("en-US");
+    expect(resource.languages).toEqual([
+      { code: "en-US", default: true, enabled: true },
+      { code: "hi-IN", default: false, enabled: true },
+    ]);
+    expect(resource).toMatchObject({
+      welcomeCard: { headline: { "hi-IN": "स्वागत है" } },
+      blocks: [
+        {
+          elements: [
+            {
+              headline: { "hi-IN": "हमें क्या सुधारना चाहिए?" },
+            },
+          ],
+        },
+      ],
+    });
+  });
+
+  test("filters legacy stored language codes by legacy code and alias", () => {
+    const survey = createLegacyHindiSurvey();
+
+    expect(serializeV3SurveyResource(survey, { lang: ["hi"] })).toMatchObject({
+      welcomeCard: { headline: { "hi-IN": "स्वागत है" } },
+    });
+    expect(serializeV3SurveyResource(survey, { lang: ["hi-in"] })).toMatchObject({
+      welcomeCard: { headline: { "hi-IN": "स्वागत है" } },
+    });
+    expect(serializeV3SurveyResource(survey, { lang: ["HI_in"] })).toMatchObject({
+      welcomeCard: { headline: { "hi-IN": "स्वागत है" } },
+    });
+  });
+
+  test("rejects ambiguous language-only selectors", () => {
+    const survey = {
+      ...baseSurvey,
+      languages: [
+        {
+          default: true,
+          enabled: true,
+          language: {
+            id: "lang_1",
+            code: "en-US",
+            alias: null,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        },
+        {
+          default: false,
+          enabled: true,
+          language: {
+            id: "lang_2",
+            code: "en-GB",
+            alias: null,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        },
+      ],
+    } as unknown as TSurvey;
+
+    expect(() => serializeV3SurveyResource(survey, { lang: ["en"] })).toThrow(
+      "Language 'en' is ambiguous for this survey. Matching languages: en-US, en-GB"
+    );
+  });
+
+  test("does not fallback full locale selectors to another configured region", () => {
+    const survey = {
+      ...baseSurvey,
+      languages: [
+        {
+          default: true,
+          enabled: true,
+          language: {
+            id: "lang_1",
+            code: "pt-BR",
+            alias: null,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        },
+      ],
+      welcomeCard: {
+        enabled: true,
+        headline: { default: "Boas-vindas" },
+      },
+    } as unknown as TSurvey;
+
+    expect(() => serializeV3SurveyResource(survey, { lang: ["pt-PT"] })).toThrow(
+      "Language 'pt-PT' is not configured for this survey"
     );
   });
 

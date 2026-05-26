@@ -1,10 +1,11 @@
 import type { TSurvey as TInternalSurvey } from "@formbricks/types/surveys/types";
 import type { TSurvey as TSurveyListRecord } from "@/modules/survey/list/types/surveys";
 import {
-  type TV3SurveyLanguage,
+  type TV3SurveyResolverLanguage,
   getV3SurveyDefaultLanguage,
   getV3SurveyLanguages,
-  normalizeV3SurveyLanguageTag,
+  getV3SurveyResolverLanguages,
+  normalizeV3SurveyLanguageIdentifier,
   resolveV3SurveyLanguageCode,
 } from "./language";
 
@@ -68,7 +69,7 @@ function getI18nValueForLanguage(value: Record<string, string>, languageCode: st
   }
 
   const matchingKey = Object.keys(value).find(
-    (key) => normalizeV3SurveyLanguageTag(key)?.toLowerCase() === languageCode.toLowerCase()
+    (key) => normalizeV3SurveyLanguageIdentifier(key)?.toLowerCase() === languageCode.toLowerCase()
   );
   return matchingKey ? value[matchingKey] : undefined;
 }
@@ -146,7 +147,7 @@ function serializeMetadata(
   return serializedMetadata;
 }
 
-function resolveRequestedLanguage(languages: TV3SurveyLanguage[], language: string): string {
+function resolveRequestedLanguage(languages: TV3SurveyResolverLanguage[], language: string): string {
   const result = resolveV3SurveyLanguageCode(language, languages);
 
   if (!result.ok) {
@@ -156,7 +157,10 @@ function resolveRequestedLanguage(languages: TV3SurveyLanguage[], language: stri
   return result.code;
 }
 
-function resolveRequestedLanguages(languages: TV3SurveyLanguage[], requestedLanguages?: string[]): string[] {
+function resolveRequestedLanguages(
+  languages: TV3SurveyResolverLanguage[],
+  requestedLanguages?: string[]
+): string[] {
   if (!requestedLanguages) {
     return [];
   }
@@ -173,8 +177,9 @@ export function serializeV3SurveyResource(survey: TInternalSurvey, options?: { l
 
   const defaultLanguage = getV3SurveyDefaultLanguage(survey, DEFAULT_V3_SURVEY_LANGUAGE);
   const languages = getV3SurveyLanguages(survey, DEFAULT_V3_SURVEY_LANGUAGE);
+  const resolverLanguages = getV3SurveyResolverLanguages(survey, DEFAULT_V3_SURVEY_LANGUAGE);
   const configuredLanguageCodes = new Set(languages.map((language) => language.code));
-  const requestedLanguages = resolveRequestedLanguages(languages, options?.lang);
+  const requestedLanguages = resolveRequestedLanguages(resolverLanguages, options?.lang);
   const languageCodes = requestedLanguages.length > 0 ? new Set(requestedLanguages) : configuredLanguageCodes;
   const serializeValue = (value: unknown) =>
     serializeCanonicalValue(value, defaultLanguage, languageCodes, {
