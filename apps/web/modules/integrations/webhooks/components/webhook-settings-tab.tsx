@@ -198,7 +198,9 @@ export const WebhookSettingsTab = ({
               }}
               readOnly={isReadOnly || webhook.source !== "user"}
               className={clsx(
-                isReadOnly ? "cursor-not-allowed bg-slate-100 text-slate-500" : null,
+                isReadOnly || webhook.source !== "user"
+                  ? "cursor-not-allowed bg-slate-100 text-slate-500"
+                  : null,
                 endpointAccessible === true
                   ? "border-green-500 bg-green-50"
                   : endpointAccessible === false
@@ -295,7 +297,7 @@ export const WebhookSettingsTab = ({
             selectedAllSurveys={selectedAllSurveys}
             onSelectAllSurveys={handleSelectAllSurveys}
             onSelectedSurveyChange={handleSelectedSurveyChange}
-            allowChanges={!isReadOnly}
+            allowChanges={webhook.source === "user" && !isReadOnly}
           />
         </div>
 
