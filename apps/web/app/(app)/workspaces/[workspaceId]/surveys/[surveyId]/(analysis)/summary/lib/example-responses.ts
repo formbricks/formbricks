@@ -1,70 +1,66 @@
 import "server-only";
 import { z } from "zod";
 import { type TResponseData, type TResponseInput } from "@formbricks/types/responses";
-import { type TSurvey, type TSurveyQuestion, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { type TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { type TSurvey } from "@formbricks/types/surveys/types";
 import { generateOrganizationAIObject } from "@/lib/ai/service";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 
-// Number of demo responses we ask the LLM to produce. Hardcoded for v1 per
-// ENG-766 to keep scope tight; revisit if there's product demand for configurability.
 export const EXAMPLE_RESPONSE_COUNT = 5;
 
-// Question types we know how to (a) build a zod answer-schema for and (b) map
-// the LLM's output to TResponseData. Anything else is silently skipped — the
-// demo response just won't include an answer for that question.
-const SUPPORTED_QUESTION_TYPES = new Set<TSurveyQuestionTypeEnum>([
-  TSurveyQuestionTypeEnum.OpenText,
-  TSurveyQuestionTypeEnum.MultipleChoiceSingle,
-  TSurveyQuestionTypeEnum.MultipleChoiceMulti,
-  TSurveyQuestionTypeEnum.Rating,
-  TSurveyQuestionTypeEnum.NPS,
+const SUPPORTED_ELEMENT_TYPES = new Set<TSurveyElementTypeEnum>([
+  TSurveyElementTypeEnum.OpenText,
+  TSurveyElementTypeEnum.MultipleChoiceSingle,
+  TSurveyElementTypeEnum.MultipleChoiceMulti,
+  TSurveyElementTypeEnum.Rating,
+  TSurveyElementTypeEnum.NPS,
 ]);
 
 const DEFAULT_LANGUAGE = "default";
 
 // Modern surveys store this in `survey.blocks[].elements`; `survey.questions`
 // is the v1-compat field and may be empty. Walk both, de-dupe by id.
-const collectSurveyQuestions = (survey: TSurvey): TSurveyQuestion[] => {
-  const byId = new Map<string, TSurveyQuestion>();
+const collectSurveyElements = (survey: TSurvey): TSurveyElement[] => {
+  const byId = new Map<string, TSurveyElement>();
   for (const block of survey.blocks ?? []) {
     for (const element of block.elements ?? []) {
-      byId.set(element.id, element as unknown as TSurveyQuestion);
+      byId.set(element.id, element);
     }
   }
   for (const question of survey.questions ?? []) {
-    if (!byId.has(question.id)) byId.set(question.id, question);
+    if (!byId.has(question.id)) byId.set(question.id, question as unknown as TSurveyElement);
   }
   return [...byId.values()];
 };
 
 const labelsForChoices = (
-  question: Extract<
-    TSurveyQuestion,
+  element: Extract<
+    TSurveyElement,
     {
-      type: TSurveyQuestionTypeEnum.MultipleChoiceSingle | TSurveyQuestionTypeEnum.MultipleChoiceMulti;
+      type: TSurveyElementTypeEnum.MultipleChoiceSingle | TSurveyElementTypeEnum.MultipleChoiceMulti;
     }
   >
-): string[] => question.choices.map((c) => getLocalizedValue(c.label, DEFAULT_LANGUAGE)).filter(Boolean);
+): string[] => element.choices.map((c) => getLocalizedValue(c.label, DEFAULT_LANGUAGE)).filter(Boolean);
 
-const answerSchemaForQuestion = (question: TSurveyQuestion): z.ZodTypeAny | null => {
-  switch (question.type) {
-    case TSurveyQuestionTypeEnum.OpenText:
+const answerSchemaForElement = (element: TSurveyElement): z.ZodTypeAny | null => {
+  switch (element.type) {
+    case TSurveyElementTypeEnum.OpenText:
       return z.string().min(1).describe("A realistic free-text answer for this question.");
-    case TSurveyQuestionTypeEnum.Rating: {
-      const range = question.range ?? 5;
+    case TSurveyElementTypeEnum.Rating: {
+      const range = element.range ?? 5;
       return z.number().int().min(1).max(range).describe(`Rating from 1 to ${range}.`);
     }
-    case TSurveyQuestionTypeEnum.NPS:
+    case TSurveyElementTypeEnum.NPS:
       return z.number().int().min(0).max(10).describe("NPS score from 0 (detractor) to 10 (promoter).");
-    case TSurveyQuestionTypeEnum.MultipleChoiceSingle: {
-      const labels = labelsForChoices(question);
+    case TSurveyElementTypeEnum.MultipleChoiceSingle: {
+      const labels = labelsForChoices(element);
       if (labels.length === 0) return null;
       return z
         .enum(labels as [string, ...string[]])
         .describe("Pick exactly one of the listed choices, copying its label verbatim.");
     }
-    case TSurveyQuestionTypeEnum.MultipleChoiceMulti: {
-      const labels = labelsForChoices(question);
+    case TSurveyElementTypeEnum.MultipleChoiceMulti: {
+      const labels = labelsForChoices(element);
       if (labels.length === 0) return null;
       return z
         .array(z.enum(labels as [string, ...string[]]))
@@ -78,59 +74,50 @@ const answerSchemaForQuestion = (question: TSurveyQuestion): z.ZodTypeAny | null
 };
 
 export type TExampleResponseSchemaContext = {
-  supportedQuestionIds: string[];
+  supportedElementIds: string[];
 };
 
-/**
- * Builds a zod schema describing what the LLM must produce: an array of N
- * objects, each keyed by the survey's supported-question ids with the right
- * answer type per question. Anything else in the survey is omitted from the
- * schema so the LLM never wastes tokens or hallucinates fields we'd have to
- * discard.
- */
 export const buildExampleResponsesSchema = (
   survey: TSurvey
 ): { schema: z.ZodTypeAny; ctx: TExampleResponseSchemaContext } => {
-  const perQuestionEntries: [string, z.ZodTypeAny][] = [];
-  for (const q of collectSurveyQuestions(survey)) {
-    if (!SUPPORTED_QUESTION_TYPES.has(q.type)) continue;
-    const answerSchema = answerSchemaForQuestion(q);
+  const perElementEntries: [string, z.ZodTypeAny][] = [];
+  for (const el of collectSurveyElements(survey)) {
+    if (!SUPPORTED_ELEMENT_TYPES.has(el.type)) continue;
+    const answerSchema = answerSchemaForElement(el);
     if (!answerSchema) continue;
-    perQuestionEntries.push([q.id, q.required ? answerSchema : answerSchema.optional()]);
+    perElementEntries.push([el.id, el.required ? answerSchema : answerSchema.optional()]);
   }
 
-  const oneResponse = z.object(Object.fromEntries(perQuestionEntries));
+  const oneResponse = z.object(Object.fromEntries(perElementEntries));
   const schema = z.object({
     responses: z.array(oneResponse).length(EXAMPLE_RESPONSE_COUNT),
   });
 
-  return { schema, ctx: { supportedQuestionIds: perQuestionEntries.map(([id]) => id) } };
+  return { schema, ctx: { supportedElementIds: perElementEntries.map(([id]) => id) } };
 };
 
-// Compact description fed to the LLM. We avoid sending all of `survey` —
-// just the bits that inform the answer content.
-const buildLlmContext = (survey: TSurvey, supportedQuestionIds: Set<string>) => {
-  const questions = collectSurveyQuestions(survey)
-    .filter((q) => supportedQuestionIds.has(q.id))
-    .map((q) => {
-      const headline = getLocalizedValue(q.headline, DEFAULT_LANGUAGE);
-      const subheader = getLocalizedValue(q.subheader, DEFAULT_LANGUAGE);
+const buildLlmContext = (survey: TSurvey, supportedElementIds: Set<string>) => {
+  const elements = collectSurveyElements(survey)
+    .filter((el) => supportedElementIds.has(el.id))
+    .map((el) => {
+      const headline = getLocalizedValue(el.headline, DEFAULT_LANGUAGE);
+      const subheader = getLocalizedValue(el.subheader, DEFAULT_LANGUAGE);
       const base: Record<string, unknown> = {
-        id: q.id,
-        type: q.type,
+        id: el.id,
+        type: el.type,
         headline,
         subheader: subheader || undefined,
-        required: q.required,
+        required: el.required,
       };
       if (
-        q.type === TSurveyQuestionTypeEnum.MultipleChoiceSingle ||
-        q.type === TSurveyQuestionTypeEnum.MultipleChoiceMulti
+        el.type === TSurveyElementTypeEnum.MultipleChoiceSingle ||
+        el.type === TSurveyElementTypeEnum.MultipleChoiceMulti
       ) {
-        base.choices = labelsForChoices(q);
+        base.choices = labelsForChoices(el);
       }
-      if (q.type === TSurveyQuestionTypeEnum.Rating) {
-        base.scale = q.scale;
-        base.range = q.range;
+      if (el.type === TSurveyElementTypeEnum.Rating) {
+        base.scale = el.scale;
+        base.range = el.range;
       }
       return base;
     });
@@ -140,17 +127,17 @@ const buildLlmContext = (survey: TSurvey, supportedQuestionIds: Set<string>) => 
     surveyDescription: survey.welcomeCard?.headline
       ? getLocalizedValue(survey.welcomeCard.headline, DEFAULT_LANGUAGE)
       : undefined,
-    questions,
+    elements,
   };
 };
 
 const SYSTEM_PROMPT = `You generate plausible, varied example survey responses for a Formbricks survey owner who wants to see what their analytics will look like once real respondents start answering.
 Rules:
 - Produce exactly the number of responses requested.
-- Each response must answer every required question. Skip optional questions roughly 20% of the time to make the data realistic.
-- For multiple-choice questions, copy the choice label exactly as listed; never invent new options.
+- Each response must answer every required element. Skip optional elements roughly 20% of the time to make the data realistic.
+- For multiple-choice elements, copy the choice label exactly as listed; never invent new options.
 - Vary tone, length, sentiment, and choice distribution across responses so the data looks like real, diverse users — not robotic copies.
-- For free-text questions, write short to medium answers (1–3 sentences) in the same language as the question headline.`;
+- For free-text elements, write short to medium answers (1–3 sentences) in the same language as the element headline.`;
 
 export type TGenerateExampleResponsesArgs = {
   survey: TSurvey;
@@ -161,23 +148,16 @@ export type TGeneratedExampleResponse = {
   data: TResponseData;
 };
 
-/**
- * Generates N example response payloads for the given survey via the org's
- * configured LLM. Returns response-data objects ready to wrap in TResponseInput
- * and persist via createResponseWithQuotaEvaluation.
- *
- * Returns an empty array if the survey has no questions we can synthesize for.
- */
 export const generateExampleResponses = async ({
   survey,
   organizationId,
 }: TGenerateExampleResponsesArgs): Promise<TGeneratedExampleResponse[]> => {
   const { schema, ctx } = buildExampleResponsesSchema(survey);
-  if (ctx.supportedQuestionIds.length === 0) {
+  if (ctx.supportedElementIds.length === 0) {
     return [];
   }
 
-  const supportedIds = new Set(ctx.supportedQuestionIds);
+  const supportedIds = new Set(ctx.supportedElementIds);
   const llmContext = buildLlmContext(survey, supportedIds);
 
   const { object } = await generateOrganizationAIObject<{ responses: Array<Record<string, unknown>> }>({
@@ -192,20 +172,15 @@ ${JSON.stringify(llmContext, null, 2)}`,
 
   return object.responses.map((row) => {
     const data: TResponseData = {};
-    for (const id of ctx.supportedQuestionIds) {
+    for (const id of ctx.supportedElementIds) {
       const value = row[id];
       if (value === undefined || value === null) continue;
-      // The schema already constrained values to string | string[] | number,
-      // which matches TResponseData. Cast through unknown to satisfy the
-      // narrower TResponseDataValue union.
       data[id] = value as TResponseData[string];
     }
     return { data };
   });
 };
 
-// Constructs the per-response TResponseInput. Kept thin so the action can
-// stamp the meta consistently across all five responses.
 export const toExampleResponseInput = (
   surveyId: string,
   workspaceId: string,

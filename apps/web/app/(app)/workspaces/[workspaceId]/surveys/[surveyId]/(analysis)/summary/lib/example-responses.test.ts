@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { z } from "zod";
-import { type TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { type TSurvey } from "@formbricks/types/surveys/types";
 import {
   EXAMPLE_RESPONSE_COUNT,
   buildExampleResponsesSchema,
@@ -52,13 +53,13 @@ describe("buildExampleResponsesSchema", () => {
 
   test("includes every supported question id; omits unsupported types", () => {
     const survey = makeSurvey([
-      { ...baseQuestion, id: "q_text", type: TSurveyQuestionTypeEnum.OpenText },
-      { ...baseQuestion, id: "q_rating", type: TSurveyQuestionTypeEnum.Rating, scale: "number", range: 5 },
-      { ...baseQuestion, id: "q_nps", type: TSurveyQuestionTypeEnum.NPS },
+      { ...baseQuestion, id: "q_text", type: TSurveyElementTypeEnum.OpenText },
+      { ...baseQuestion, id: "q_rating", type: TSurveyElementTypeEnum.Rating, scale: "number", range: 5 },
+      { ...baseQuestion, id: "q_nps", type: TSurveyElementTypeEnum.NPS },
       {
         ...baseQuestion,
         id: "q_choice_single",
-        type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+        type: TSurveyElementTypeEnum.MultipleChoiceSingle,
         choices: [
           { id: "c1", label: i18n("Yes") },
           { id: "c2", label: i18n("No") },
@@ -67,7 +68,7 @@ describe("buildExampleResponsesSchema", () => {
       {
         ...baseQuestion,
         id: "q_choice_multi",
-        type: TSurveyQuestionTypeEnum.MultipleChoiceMulti,
+        type: TSurveyElementTypeEnum.MultipleChoiceMulti,
         choices: [
           { id: "c1", label: i18n("A") },
           { id: "c2", label: i18n("B") },
@@ -75,12 +76,12 @@ describe("buildExampleResponsesSchema", () => {
         ],
       },
       // Unsupported types are dropped from the schema.
-      { ...baseQuestion, id: "q_date", type: TSurveyQuestionTypeEnum.Date, format: "M-d-y" },
-      { ...baseQuestion, id: "q_cta", type: TSurveyQuestionTypeEnum.CTA, buttonExternal: false },
+      { ...baseQuestion, id: "q_date", type: TSurveyElementTypeEnum.Date, format: "M-d-y" },
+      { ...baseQuestion, id: "q_cta", type: TSurveyElementTypeEnum.CTA, buttonExternal: false },
     ] as unknown as TSurvey["questions"]);
 
     const { ctx } = buildExampleResponsesSchema(survey);
-    expect(ctx.supportedQuestionIds).toEqual([
+    expect(ctx.supportedElementIds).toEqual([
       "q_text",
       "q_rating",
       "q_nps",
@@ -91,13 +92,13 @@ describe("buildExampleResponsesSchema", () => {
 
   test("validates correctly-shaped LLM output", () => {
     const survey = makeSurvey([
-      { ...baseQuestion, id: "q_text", type: TSurveyQuestionTypeEnum.OpenText },
-      { ...baseQuestion, id: "q_rating", type: TSurveyQuestionTypeEnum.Rating, scale: "number", range: 5 },
-      { ...baseQuestion, id: "q_nps", type: TSurveyQuestionTypeEnum.NPS },
+      { ...baseQuestion, id: "q_text", type: TSurveyElementTypeEnum.OpenText },
+      { ...baseQuestion, id: "q_rating", type: TSurveyElementTypeEnum.Rating, scale: "number", range: 5 },
+      { ...baseQuestion, id: "q_nps", type: TSurveyElementTypeEnum.NPS },
       {
         ...baseQuestion,
         id: "q_choice",
-        type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+        type: TSurveyElementTypeEnum.MultipleChoiceSingle,
         choices: [
           { id: "c1", label: i18n("Yes") },
           { id: "c2", label: i18n("No") },
@@ -120,7 +121,7 @@ describe("buildExampleResponsesSchema", () => {
 
   test("rejects out-of-range rating values", () => {
     const survey = makeSurvey([
-      { ...baseQuestion, id: "q_rating", type: TSurveyQuestionTypeEnum.Rating, scale: "number", range: 3 },
+      { ...baseQuestion, id: "q_rating", type: TSurveyElementTypeEnum.Rating, scale: "number", range: 3 },
     ] as unknown as TSurvey["questions"]);
 
     const { schema } = buildExampleResponsesSchema(survey);
@@ -132,7 +133,7 @@ describe("buildExampleResponsesSchema", () => {
 
   test("rejects fewer than N responses", () => {
     const survey = makeSurvey([
-      { ...baseQuestion, id: "q_nps", type: TSurveyQuestionTypeEnum.NPS },
+      { ...baseQuestion, id: "q_nps", type: TSurveyElementTypeEnum.NPS },
     ] as unknown as TSurvey["questions"]);
 
     const { schema } = buildExampleResponsesSchema(survey);
@@ -144,7 +145,7 @@ describe("buildExampleResponsesSchema", () => {
       {
         ...baseQuestion,
         id: "q_choice",
-        type: TSurveyQuestionTypeEnum.MultipleChoiceSingle,
+        type: TSurveyElementTypeEnum.MultipleChoiceSingle,
         choices: [
           { id: "c1", label: i18n("Yes") },
           { id: "c2", label: i18n("No") },
@@ -161,7 +162,7 @@ describe("buildExampleResponsesSchema", () => {
 
   test("treats optional questions as optional", () => {
     const survey = makeSurvey([
-      { ...baseQuestion, id: "q_opt", type: TSurveyQuestionTypeEnum.OpenText, required: false },
+      { ...baseQuestion, id: "q_opt", type: TSurveyElementTypeEnum.OpenText, required: false },
     ] as unknown as TSurvey["questions"]);
 
     const { schema } = buildExampleResponsesSchema(survey);
@@ -175,20 +176,20 @@ describe("buildExampleResponsesSchema", () => {
   // legacy ones under `questions`. The collector walks both and de-dupes by id.
   test("reads questions from blocks[].elements when survey.questions is empty", () => {
     const survey = makeSurvey([
-      { ...baseQuestion, id: "q_text", type: TSurveyQuestionTypeEnum.OpenText },
+      { ...baseQuestion, id: "q_text", type: TSurveyElementTypeEnum.OpenText },
     ] as unknown as TSurvey["questions"]);
 
     const { ctx } = buildExampleResponsesSchema(survey);
-    expect(ctx.supportedQuestionIds).toEqual(["q_text"]);
+    expect(ctx.supportedElementIds).toEqual(["q_text"]);
   });
 
   test("falls back to legacy survey.questions when blocks is empty", () => {
     const survey = makeLegacySurvey([
-      { ...baseQuestion, id: "q_legacy", type: TSurveyQuestionTypeEnum.OpenText },
+      { ...baseQuestion, id: "q_legacy", type: TSurveyElementTypeEnum.OpenText },
     ] as unknown as TSurvey["questions"]);
 
     const { ctx } = buildExampleResponsesSchema(survey);
-    expect(ctx.supportedQuestionIds).toEqual(["q_legacy"]);
+    expect(ctx.supportedElementIds).toEqual(["q_legacy"]);
   });
 
   test("dedupes when an id appears in both blocks and legacy questions", () => {
@@ -200,14 +201,14 @@ describe("buildExampleResponsesSchema", () => {
         {
           id: "block_1",
           name: "Block 1",
-          elements: [{ ...baseQuestion, id: "q_dup", type: TSurveyQuestionTypeEnum.OpenText }],
+          elements: [{ ...baseQuestion, id: "q_dup", type: TSurveyElementTypeEnum.OpenText }],
         },
       ],
-      questions: [{ ...baseQuestion, id: "q_dup", type: TSurveyQuestionTypeEnum.OpenText }],
+      questions: [{ ...baseQuestion, id: "q_dup", type: TSurveyElementTypeEnum.OpenText }],
     } as unknown as TSurvey;
 
     const { ctx } = buildExampleResponsesSchema(survey);
-    expect(ctx.supportedQuestionIds).toEqual(["q_dup"]);
+    expect(ctx.supportedElementIds).toEqual(["q_dup"]);
   });
 });
 
@@ -216,7 +217,7 @@ describe("generateExampleResponses", () => {
 
   test("returns an empty array when the survey has no supported question types", async () => {
     const survey = makeSurvey([
-      { ...baseQuestion, id: "q_date", type: TSurveyQuestionTypeEnum.Date, format: "M-d-y" },
+      { ...baseQuestion, id: "q_date", type: TSurveyElementTypeEnum.Date, format: "M-d-y" },
     ] as unknown as TSurvey["questions"]);
 
     const result = await generateExampleResponses({ survey, organizationId: "org_1" });
@@ -226,8 +227,8 @@ describe("generateExampleResponses", () => {
 
   test("maps LLM output into TResponseData payloads, dropping nullish answers", async () => {
     const survey = makeSurvey([
-      { ...baseQuestion, id: "q_text", type: TSurveyQuestionTypeEnum.OpenText },
-      { ...baseQuestion, id: "q_nps", type: TSurveyQuestionTypeEnum.NPS, required: false },
+      { ...baseQuestion, id: "q_text", type: TSurveyElementTypeEnum.OpenText },
+      { ...baseQuestion, id: "q_nps", type: TSurveyElementTypeEnum.NPS, required: false },
     ] as unknown as TSurvey["questions"]);
 
     mocks.generateOrganizationAIObject.mockResolvedValue({
@@ -256,7 +257,7 @@ describe("generateExampleResponses", () => {
 
   test("propagates errors from the LLM call (gating errors, network, etc.)", async () => {
     const survey = makeSurvey([
-      { ...baseQuestion, id: "q_text", type: TSurveyQuestionTypeEnum.OpenText },
+      { ...baseQuestion, id: "q_text", type: TSurveyElementTypeEnum.OpenText },
     ] as unknown as TSurvey["questions"]);
 
     mocks.generateOrganizationAIObject.mockRejectedValue(new Error("ai_features_not_enabled"));
