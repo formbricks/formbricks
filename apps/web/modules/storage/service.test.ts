@@ -117,6 +117,61 @@ describe("storage service", () => {
       }
     });
 
+    test("should generate scoped private upload URL when path segments are provided", async () => {
+      const mockSignedUrlResponse = {
+        ok: true,
+        data: {
+          signedUrl: "https://s3.example.com/upload",
+          presignedFields: { key: "value" },
+        },
+      } as MockedSignedUploadReturn;
+
+      vi.mocked(getSignedUploadUrl).mockResolvedValue(mockSignedUrlResponse);
+
+      const result = await getSignedUrlForUpload(
+        "test-doc.pdf",
+        "ws-123",
+        "application/pdf",
+        "private" as TAccessType,
+        1024 * 1024 * 10,
+        ["surveys", "survey-123", "elements", "element-123"]
+      );
+
+      expect(result.ok).toBe(true);
+      if (result.ok) {
+        expect(result.data.fileUrl).toBe(
+          `/storage/ws-123/private/surveys/survey-123/elements/element-123/test-doc--fid--${mockUUID}.pdf`
+        );
+      }
+
+      expect(getSignedUploadUrl).toHaveBeenCalledWith(
+        `test-doc--fid--${mockUUID}.pdf`,
+        "application/pdf",
+        "ws-123/private/surveys/survey-123/elements/element-123",
+        1024 * 1024 * 10
+      );
+    });
+
+    test.each(["", ".", "..", "bad segment", "bad/segment", "bad\\segment", "bad?segment", "bad#segment"])(
+      "should reject unsafe scoped private upload path segment %s",
+      async (unsafeSegment) => {
+        const result = await getSignedUrlForUpload(
+          "test-doc.pdf",
+          "ws-123",
+          "application/pdf",
+          "private" as TAccessType,
+          1024 * 1024 * 10,
+          ["surveys", unsafeSegment]
+        );
+
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+          expect(result.error.code).toBe(StorageErrorCode.InvalidInput);
+        }
+        expect(getSignedUploadUrl).not.toHaveBeenCalled();
+      }
+    );
+
     test("should properly sanitize filenames with special characters like # in URL", async () => {
       const mockSignedUrlResponse = {
         ok: true,
