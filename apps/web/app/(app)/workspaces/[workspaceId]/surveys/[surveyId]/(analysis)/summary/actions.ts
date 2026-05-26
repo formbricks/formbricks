@@ -17,6 +17,8 @@ import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { convertToCsv } from "@/lib/utils/file-conversion";
 import { getOrganizationIdFromSurveyId, getWorkspaceIdFromSurveyId } from "@/lib/utils/helper";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { generatePersonalLinks } from "@/modules/ee/contacts/lib/contacts";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -130,6 +132,11 @@ const ZGenerateExampleResponsesAction = z.object({
 export const generateExampleResponsesAction = authenticatedActionClient
   .inputSchema(ZGenerateExampleResponsesAction)
   .action(async ({ ctx, parsedInput }) => {
+    // Per-user limit (1 per minute). Closes the multi-click race window where
+    // two clicks fired before the first LLM call returns could both pass the
+    // responseCount === 0 check, and bounds a single user's overall LLM spend.
+    await applyRateLimit(rateLimitConfigs.actions.generateExampleResponses, ctx.user.id);
+
     const organizationId = await getOrganizationIdFromSurveyId(parsedInput.surveyId);
     const workspaceId = await getWorkspaceIdFromSurveyId(parsedInput.surveyId);
 

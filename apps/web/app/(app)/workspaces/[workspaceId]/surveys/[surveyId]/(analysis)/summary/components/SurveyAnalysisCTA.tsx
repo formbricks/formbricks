@@ -13,6 +13,7 @@ import { SuccessMessage } from "@/app/(app)/workspaces/[workspaceId]/surveys/[su
 import { ShareSurveyModal } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/share-survey-modal";
 import { SurveyStatusDropdown } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/SurveyStatusDropdown";
 import { useSurvey } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/context/survey-context";
+import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
 import { useSingleUseId } from "@/modules/survey/hooks/useSingleUseId";
@@ -32,7 +33,7 @@ interface SurveyAnalysisCTAProps {
   isFormbricksCloud: boolean;
   isStorageConfigured: boolean;
   enterpriseLicenseRequestFormUrl: string;
-  isAISmartToolsAvailable: boolean;
+  aiUnavailableReason: TAIUnavailableReason | null;
 }
 
 interface ModalState {
@@ -50,7 +51,7 @@ export const SurveyAnalysisCTA = ({
   isFormbricksCloud,
   isStorageConfigured,
   enterpriseLicenseRequestFormUrl,
-  isAISmartToolsAvailable,
+  aiUnavailableReason,
 }: SurveyAnalysisCTAProps) => {
   const { t } = useTranslation();
   const router = useRouter();
@@ -156,20 +157,43 @@ export const SurveyAnalysisCTA = ({
   const handleGenerateExampleResponses = async () => {
     if (isGeneratingExamples) return;
     setIsGeneratingExamples(true);
-    const result = await generateExampleResponsesAction({ surveyId: survey.id });
-    if (result?.data) {
-      toast.success(
-        t("workspace.surveys.summary.example_responses_generated_successfully", {
-          count: result.data.createdCount,
-        })
-      );
-      router.refresh();
-    } else {
-      const errorMessage = getFormattedErrorMessage(result);
-      toast.error(errorMessage || t("workspace.surveys.summary.example_responses_generation_failed"));
+    const loadingToastId = toast.loading(t("workspace.surveys.summary.generating_example_responses"));
+    try {
+      const result = await generateExampleResponsesAction({ surveyId: survey.id });
+      if (result?.data) {
+        toast.success(
+          t("workspace.surveys.summary.example_responses_generated_successfully", {
+            count: result.data.createdCount,
+          }),
+          { id: loadingToastId }
+        );
+        router.refresh();
+      } else {
+        const errorMessage = getFormattedErrorMessage(result);
+        toast.error(errorMessage || t("workspace.surveys.summary.example_responses_generation_failed"), {
+          id: loadingToastId,
+        });
+      }
+    } finally {
+      setIsGeneratingExamples(false);
     }
-    setIsGeneratingExamples(false);
   };
+
+  const exampleResponsesTooltip = (() => {
+    if (isGeneratingExamples) {
+      return t("workspace.surveys.summary.generating_example_responses");
+    }
+    if (aiUnavailableReason === "not_in_plan") {
+      return t("workspace.surveys.summary.generate_example_responses_locked_plan");
+    }
+    if (aiUnavailableReason === "not_enabled") {
+      return t("workspace.surveys.summary.generate_example_responses_locked_disabled");
+    }
+    if (aiUnavailableReason === "instance_not_configured") {
+      return t("workspace.surveys.summary.generate_example_responses_locked_instance");
+    }
+    return t("workspace.surveys.summary.generate_example_responses");
+  })();
 
   const iconActions = [
     {
@@ -208,14 +232,10 @@ export const SurveyAnalysisCTA = ({
     },
     {
       icon: Wand2,
-      tooltip: isGeneratingExamples
-        ? t("workspace.surveys.summary.generating_example_responses")
-        : t("workspace.surveys.summary.generate_example_responses"),
+      tooltip: exampleResponsesTooltip,
       onClick: handleGenerateExampleResponses,
-      disabled: isGeneratingExamples,
-      // Only show for empty surveys on orgs that have AI smart-tools enabled +
-      // entitled. Server action re-checks; this is just the UI gate.
-      isVisible: !isReadOnly && responseCount === 0 && isAISmartToolsAvailable,
+      disabled: isGeneratingExamples || aiUnavailableReason !== null,
+      isVisible: !isReadOnly && responseCount === 0,
     },
     {
       icon: ListRestart,

@@ -22,6 +22,21 @@ const SUPPORTED_QUESTION_TYPES = new Set<TSurveyQuestionTypeEnum>([
 
 const DEFAULT_LANGUAGE = "default";
 
+// Modern surveys store this in `survey.blocks[].elements`; `survey.questions`
+// is the v1-compat field and may be empty. Walk both, de-dupe by id.
+const collectSurveyQuestions = (survey: TSurvey): TSurveyQuestion[] => {
+  const byId = new Map<string, TSurveyQuestion>();
+  for (const block of survey.blocks ?? []) {
+    for (const element of block.elements ?? []) {
+      byId.set(element.id, element as unknown as TSurveyQuestion);
+    }
+  }
+  for (const question of survey.questions ?? []) {
+    if (!byId.has(question.id)) byId.set(question.id, question);
+  }
+  return [...byId.values()];
+};
+
 const labelsForChoices = (
   question: Extract<
     TSurveyQuestion,
@@ -77,7 +92,7 @@ export const buildExampleResponsesSchema = (
   survey: TSurvey
 ): { schema: z.ZodTypeAny; ctx: TExampleResponseSchemaContext } => {
   const perQuestionEntries: [string, z.ZodTypeAny][] = [];
-  for (const q of survey.questions) {
+  for (const q of collectSurveyQuestions(survey)) {
     if (!SUPPORTED_QUESTION_TYPES.has(q.type)) continue;
     const answerSchema = answerSchemaForQuestion(q);
     if (!answerSchema) continue;
@@ -95,7 +110,7 @@ export const buildExampleResponsesSchema = (
 // Compact description fed to the LLM. We avoid sending all of `survey` —
 // just the bits that inform the answer content.
 const buildLlmContext = (survey: TSurvey, supportedQuestionIds: Set<string>) => {
-  const questions = survey.questions
+  const questions = collectSurveyQuestions(survey)
     .filter((q) => supportedQuestionIds.has(q.id))
     .map((q) => {
       const headline = getLocalizedValue(q.headline, DEFAULT_LANGUAGE);

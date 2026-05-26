@@ -80,6 +80,7 @@ describe("rateLimitConfigs", () => {
         "surveyFollowUp",
         "sendLinkSurveyEmail",
         "licenseRecheck",
+        "generateExampleResponses",
       ]);
     });
 

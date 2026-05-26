@@ -31,6 +31,11 @@ export const rateLimitConfigs = {
       namespace: "action:send-link-survey-email",
     }, // 10 per hour
     licenseRecheck: { interval: 60, allowedPerInterval: 5, namespace: "action:license-recheck" }, // 5 per minute
+    generateExampleResponses: {
+      interval: 60,
+      allowedPerInterval: 1,
+      namespace: "action:generate-example-responses",
+    }, // 1 per minute per user — closes the multi-click race and bounds LLM spend
   },
 
   storage: {

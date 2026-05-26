@@ -26,11 +26,24 @@ const baseQuestion = {
   subheader: undefined,
 };
 
+// Helper: by default we put question data under `survey.blocks[].elements`
+// because that's where modern surveys store it. Tests that need the legacy
+// path can call `makeLegacySurvey` instead.
 const makeSurvey = (questions: TSurvey["questions"]): TSurvey =>
   ({
     id: "survey_1",
     name: "Demo Survey",
     welcomeCard: { enabled: false, headline: i18n("Welcome") },
+    blocks: [{ id: "block_1", name: "Block 1", elements: questions }],
+    questions: [],
+  }) as unknown as TSurvey;
+
+const makeLegacySurvey = (questions: TSurvey["questions"]): TSurvey =>
+  ({
+    id: "survey_1",
+    name: "Demo Survey",
+    welcomeCard: { enabled: false, headline: i18n("Welcome") },
+    blocks: [],
     questions,
   }) as unknown as TSurvey;
 
@@ -156,6 +169,45 @@ describe("buildExampleResponsesSchema", () => {
       responses: Array.from({ length: EXAMPLE_RESPONSE_COUNT }, () => ({})),
     };
     expect(schema.safeParse(skipping).success).toBe(true);
+  });
+
+  // Regression: modern surveys store question data under `blocks[].elements`,
+  // legacy ones under `questions`. The collector walks both and de-dupes by id.
+  test("reads questions from blocks[].elements when survey.questions is empty", () => {
+    const survey = makeSurvey([
+      { ...baseQuestion, id: "q_text", type: TSurveyQuestionTypeEnum.OpenText },
+    ] as unknown as TSurvey["questions"]);
+
+    const { ctx } = buildExampleResponsesSchema(survey);
+    expect(ctx.supportedQuestionIds).toEqual(["q_text"]);
+  });
+
+  test("falls back to legacy survey.questions when blocks is empty", () => {
+    const survey = makeLegacySurvey([
+      { ...baseQuestion, id: "q_legacy", type: TSurveyQuestionTypeEnum.OpenText },
+    ] as unknown as TSurvey["questions"]);
+
+    const { ctx } = buildExampleResponsesSchema(survey);
+    expect(ctx.supportedQuestionIds).toEqual(["q_legacy"]);
+  });
+
+  test("dedupes when an id appears in both blocks and legacy questions", () => {
+    const survey = {
+      id: "survey_1",
+      name: "Demo Survey",
+      welcomeCard: { enabled: false, headline: i18n("Welcome") },
+      blocks: [
+        {
+          id: "block_1",
+          name: "Block 1",
+          elements: [{ ...baseQuestion, id: "q_dup", type: TSurveyQuestionTypeEnum.OpenText }],
+        },
+      ],
+      questions: [{ ...baseQuestion, id: "q_dup", type: TSurveyQuestionTypeEnum.OpenText }],
+    } as unknown as TSurvey;
+
+    const { ctx } = buildExampleResponsesSchema(survey);
+    expect(ctx.supportedQuestionIds).toEqual(["q_dup"]);
   });
 });
 
