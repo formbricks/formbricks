@@ -67,6 +67,9 @@ export const isSurveyResponsePresentAction = actionClient
     await applyIPRateLimit(rateLimitConfigs.actions.isSurveyResponsePresent);
 
     const survey = await getSurveyWithMetadata(parsedInput.surveyId);
+    if (!survey) {
+      throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
+    }
 
     if (!survey.isSingleResponsePerEmailEnabled) {
       throw new InvalidInputError("SINGLE_RESPONSE_PER_EMAIL_NOT_ENABLED");
