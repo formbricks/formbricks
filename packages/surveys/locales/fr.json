@@ -28,6 +28,7 @@
     "select_options": "Sélectionner des options",
     "sending_responses": "Envoi des réponses...",
     "survey_dialog": "Boîte de dialogue du sondage",
+    "survey_progress": "Progression du sondage",
     "takes_less_than_x_minutes": "{count, plural, one {Prend moins d'une minute} other {Prend moins de {count} minutes}}",
     "takes_x_minutes": "{count, plural, one {Prend 1 minute} other {Prend {count} minutes}}",
     "takes_x_plus_minutes": "Prend {count}+ minutes",

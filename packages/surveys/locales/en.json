@@ -28,6 +28,7 @@
     "select_options": "Select options",
     "sending_responses": "Sending responses…",
     "survey_dialog": "Survey Dialog",
+    "survey_progress": "Survey progress",
     "takes_less_than_x_minutes": "{count, plural, one {Takes less than 1 minute} other {Takes less than {count} minutes}}",
     "takes_x_minutes": "{count, plural, one {Takes 1 minute} other {Takes {count} minutes}}",
     "takes_x_plus_minutes": "Takes {count}+ minutes",

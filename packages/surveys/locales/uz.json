@@ -28,6 +28,7 @@
     "select_options": "Variantlarni tanla",
     "sending_responses": "Javoblar yuborilmoqda...",
     "survey_dialog": "So‘rovnoma dialog oynasi",
+    "survey_progress": "So‘rovnoma jarayoni",
     "takes_less_than_x_minutes": "{count, plural, one {1 daqiqadan kam vaqt oladi} other {{count} daqiqadan kam vaqt oladi}}",
     "takes_x_minutes": "{count, plural, one {1 daqiqa vaqt oladi} other {{count} daqiqa vaqt oladi}}",
     "takes_x_plus_minutes": "{count}+ daqiqa vaqt oladi",
