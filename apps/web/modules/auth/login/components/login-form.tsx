@@ -145,7 +145,6 @@ export const LoginForm = ({
   const [showLogin, setShowLogin] = useState(false);
   const [totpLogin, setTotpLogin] = useState(false);
   const [totpBackup, setTotpBackup] = useState(false);
-  const formRef = useRef<HTMLFormElement>(null);
   const [lastLoggedInWith, setLastLoggedInWith] = useState("");
 
   useEffect(() => {
@@ -192,16 +191,7 @@ export const LoginForm = ({
         )}
 
         <div className="space-y-2">
-          <form
-            ref={formRef}
-            onSubmit={form.handleSubmit(onSubmit)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && showLogin && formRef.current && !totpLogin) {
-                e.preventDefault();
-                formRef.current.requestSubmit();
-              }
-            }}
-            className="space-y-2">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
             {TwoFactorComponent}
             {showLogin && (
               <div className={cn(totpLogin && "hidden", "space-y-2")}>
@@ -267,16 +257,16 @@ export const LoginForm = ({
             )}
             {emailAuthEnabled && (
               <Button
-                type="button"
-                onClick={() => {
-                  if (!showLogin) {
-                    setShowLogin(true);
-                    // Add a slight delay before focusing the input field to ensure it's visible
-                    setTimeout(() => emailRef.current?.focus(), 100);
-                  } else if (formRef.current) {
-                    formRef.current.requestSubmit();
-                  }
-                }}
+                type={showLogin ? "submit" : "button"}
+                onClick={
+                  showLogin
+                    ? undefined
+                    : () => {
+                        setShowLogin(true);
+                        // Add a slight delay before focusing the input field to ensure it's visible
+                        setTimeout(() => emailRef.current?.focus(), 100);
+                      }
+                }
                 className="relative w-full justify-center"
                 loading={form.formState.isSubmitting}>
                 {totpLogin ? t("common.submit") : t("auth.login.login_with_email")}

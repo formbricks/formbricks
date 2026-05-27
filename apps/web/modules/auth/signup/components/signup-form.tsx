@@ -160,15 +160,7 @@ export const SignupForm = ({
       <h1 className="mb-4 text-slate-700">{t("auth.signup.title")}</h1>
       {emailAuthEnabled && (
         <FormProvider {...form}>
-          <form
-            onSubmit={form.handleSubmit(handleSubmit)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && showLogin) {
-                e.preventDefault();
-                form.handleSubmit(handleSubmit)();
-              }
-            }}
-            className="mb-2">
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="mb-2">
             {showLogin && (
               <div>
                 <div className="space-y-2">
@@ -294,28 +286,20 @@ export const SignupForm = ({
                 </label>
               ))}
 
-            {showLogin && (
-              <Button
-                data-testid="signup-submit"
-                type="submit"
-                className="h-10 w-full justify-center"
-                loading={form.formState.isSubmitting}
-                disabled={!form.formState.isValid}>
-                {t("auth.continue_with_email")}
-              </Button>
-            )}
-
-            {!showLogin && (
-              <Button
-                data-testid="signup-show-login"
-                type="button"
-                onClick={() => {
-                  setShowLogin(true);
-                }}
-                className="h-10 w-full justify-center">
-                {t("auth.continue_with_email")}
-              </Button>
-            )}
+            <Button
+              data-testid={showLogin ? "signup-submit" : "signup-show-login"}
+              type={showLogin ? "submit" : "button"}
+              onClick={
+                showLogin
+                  ? undefined
+                  : () => {
+                      setShowLogin(true);
+                    }
+              }
+              className="h-10 w-full justify-center"
+              loading={form.formState.isSubmitting}>
+              {t("auth.continue_with_email")}
+            </Button>
           </form>
         </FormProvider>
       )}
