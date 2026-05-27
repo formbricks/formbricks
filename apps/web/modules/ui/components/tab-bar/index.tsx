@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 
 interface TabBarProps {
@@ -21,11 +22,12 @@ export const TabBar: React.FC<TabBarProps> = ({
   tabStyle = "bar",
   disabled = false,
 }) => {
+  const { t } = useTranslation();
   let nav: React.ReactNode = null;
 
   if (tabStyle === "bar") {
     nav = (
-      <nav className="flex h-full items-center space-x-4" aria-label="Tabs">
+      <nav className="flex h-full items-center space-x-4" aria-label={t("common.tabs")}>
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -50,7 +52,7 @@ export const TabBar: React.FC<TabBarProps> = ({
           "flex h-full w-full flex-1 items-center space-x-4",
           disabled ? "cursor-not-allowed opacity-50" : ""
         )}
-        aria-label="Tabs">
+        aria-label={t("common.tabs")}>
         {tabs.map((tab) => (
           <div className="flex h-full flex-1 justify-center p-1" key={tab.id}>
             <button

@@ -20,7 +20,8 @@ import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { createApiKeyAction, deleteApiKeyAction, updateApiKeyAction } from "../actions";
 import { AddApiKeyModal } from "./add-api-key-modal";
 
-const ApiKeyDisplay = ({ apiKey, t }: { apiKey: string; t: (key: string) => string }) => {
+const ApiKeyDisplay = ({ apiKey }: Readonly<{ apiKey: string }>) => {
+  const { t } = useTranslation();
   const copyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(apiKey);
@@ -197,7 +198,7 @@ export const EditAPIKeys = ({
                 key={apiKey.id}>
                 <div className="col-span-4 font-semibold sm:col-span-2">{apiKey.label}</div>
                 <div className="col-span-4 hidden pr-4 sm:col-span-5 sm:block">
-                  <ApiKeyDisplay apiKey={apiKey.actualKey ?? ""} t={t} />
+                  <ApiKeyDisplay apiKey={apiKey.actualKey ?? ""} />
                 </div>
                 <div className="col-span-4 sm:col-span-2">
                   {timeSince(apiKey.createdAt.toString(), locale)}
