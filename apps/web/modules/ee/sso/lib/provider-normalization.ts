@@ -37,3 +37,11 @@ export const getSsoProviderLookupCandidates = (provider: string): string[] => {
 
   return [normalizedProvider, ...getLegacySsoProviderAliases(normalizedProvider)];
 };
+
+/**
+ * Resolves a NextAuth provider id (e.g. "azure-ad") to the canonical provider string persisted
+ * in `Account.provider` (e.g. "azuread"). Unknown providers are returned unchanged so callers
+ * never drop a value they were handed.
+ */
+export const resolveAccountProvider = (provider: string): string =>
+  normalizeSsoProvider(provider) ?? provider;
