@@ -114,7 +114,7 @@ export const EditSegmentModal = ({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent disableCloseOnOutsideClick>
+      <DialogContent disableCloseOnOutsideClick width="wide">
         <DialogHeader>
           <UsersIcon />
           <DialogTitle>{currentSegment.title}</DialogTitle>

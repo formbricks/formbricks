@@ -133,7 +133,7 @@ export const EditContactAttributesModal = ({
         const errorFieldId = `attribute-key-${firstErrorIndex}`;
         const errorElement = document.getElementById(errorFieldId);
         if (errorElement) {
-          setTimeout(() => {
+          const timeoutId = setTimeout(() => {
             errorElement.scrollIntoView({ behavior: "smooth", block: "center" });
             // Try to focus the input inside the combobox if it exists
             const inputElement = errorElement.querySelector("input") as HTMLInputElement;
@@ -143,6 +143,7 @@ export const EditContactAttributesModal = ({
               errorElement.focus();
             }
           }, 100);
+          return () => clearTimeout(timeoutId);
         }
       }
     }

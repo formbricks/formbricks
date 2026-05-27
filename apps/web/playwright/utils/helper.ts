@@ -7,7 +7,6 @@ import { TWorkspaceConfigChannel } from "@formbricks/types/workspace";
 import { CreateSurveyParams, CreateSurveyWithLogicParams } from "@/playwright/utils/mock";
 
 const MOCK_STORAGE_UPLOAD_PATH = "/__playwright__/mock-storage-upload";
-const MOCK_STORAGE_FILE_PATH = "/storage/playwright-mock";
 
 type MockStorageFileFixture = {
   name: string;
@@ -44,11 +43,19 @@ const DEFAULT_MOCK_STORAGE_FILE_FIXTURE: MockStorageFileFixture = {
   ),
 };
 
-const getMockStorageFileUrl = (
-  appOrigin: string,
-  fileName: string,
-  accessType: "public" | "private"
-): string => {
+const getMockStorageFileUrl = ({
+  appOrigin,
+  fileName,
+  accessType,
+  storageId = "playwright-mock",
+  filePathSegments = [],
+}: {
+  appOrigin: string;
+  fileName: string;
+  accessType: "public" | "private";
+  storageId?: string;
+  filePathSegments?: string[];
+}): string => {
   if (accessType === "public") {
     const fixture = PLAYWRIGHT_STORAGE_FILE_FIXTURES.get(fileName);
 
@@ -57,7 +64,7 @@ const getMockStorageFileUrl = (
     }
   }
 
-  return `${MOCK_STORAGE_FILE_PATH}/${accessType}/${encodeURIComponent(fileName)}`;
+  return `/storage/${storageId}/${accessType}/${[...filePathSegments, encodeURIComponent(fileName)].join("/")}`;
 };
 
 /**
@@ -86,7 +93,7 @@ export const mockStorageUploads = async (page: Page): Promise<void> => {
           presignedFields: {
             key: fileName,
           },
-          fileUrl: getMockStorageFileUrl(appOrigin, fileName, "public"),
+          fileUrl: getMockStorageFileUrl({ appOrigin, fileName, accessType: "public" }),
           signingData: null,
           updatedFileName: fileName,
         },
@@ -113,9 +120,17 @@ export const mockStorageUploads = async (page: Page): Promise<void> => {
         return;
       }
 
-      const payload = route.request().postDataJSON() as { fileName?: string } | undefined;
+      const payload = route.request().postDataJSON() as
+        | { fileName?: string; surveyId?: string; elementId?: string }
+        | undefined;
       const fileName = payload?.fileName ?? "uploaded-file.bin";
-      const appOrigin = new URL(route.request().url()).origin;
+      const requestUrl = new URL(route.request().url());
+      const appOrigin = requestUrl.origin;
+      const workspaceId = requestUrl.pathname.split("/").filter(Boolean)[3] ?? "playwright-mock";
+      const filePathSegments =
+        payload?.surveyId && payload?.elementId
+          ? ["surveys", payload.surveyId, "elements", payload.elementId]
+          : [];
 
       await route.fulfill({
         status: 200,
@@ -126,7 +141,13 @@ export const mockStorageUploads = async (page: Page): Promise<void> => {
             presignedFields: {
               key: fileName,
             },
-            fileUrl: getMockStorageFileUrl(appOrigin, fileName, "private"),
+            fileUrl: getMockStorageFileUrl({
+              appOrigin,
+              fileName,
+              accessType: "private",
+              storageId: workspaceId,
+              filePathSegments,
+            }),
             signingData: null,
             updatedFileName: fileName,
           },
@@ -148,7 +169,7 @@ export const mockStorageUploads = async (page: Page): Promise<void> => {
     });
   });
 
-  await page.route(`**${MOCK_STORAGE_FILE_PATH}/**`, async (route) => {
+  await page.route("**/storage/**", async (route) => {
     if (!["GET", "HEAD"].includes(route.request().method())) {
       await route.fallback();
       return;

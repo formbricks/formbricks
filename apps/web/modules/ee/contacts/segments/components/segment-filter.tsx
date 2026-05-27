@@ -811,7 +811,9 @@ function DeviceFilter({
 
         <SelectContent>
           {operatorArr.map((operator) => (
-            <SelectItem value={operator.id}>{operator.name}</SelectItem>
+            <SelectItem key={operator.id} value={operator.id}>
+              {operator.name}
+            </SelectItem>
           ))}
         </SelectContent>
       </Select>
@@ -831,7 +833,9 @@ function DeviceFilter({
             { id: "desktop", name: t("workspace.segments.desktop") },
             { id: "phone", name: t("workspace.segments.phone") },
           ].map((operator) => (
-            <SelectItem value={operator.id}>{operator.name}</SelectItem>
+            <SelectItem key={operator.id} value={operator.id}>
+              {operator.name}
+            </SelectItem>
           ))}
         </SelectContent>
       </Select>

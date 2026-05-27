@@ -574,275 +574,285 @@ export const MainNavigation = ({
             </div>
           )}
 
-          {!isSettingsMode && (
-            <div>
-              {/* New Version Available */}
-              {!isCollapsed && isOwnerOrManager && latestVersion && !isFormbricksCloud && !isDevelopment && (
-                <Link
-                  href="https://github.com/formbricks/formbricks/releases"
-                  target="_blank"
-                  className="m-2 flex items-center gap-x-4 rounded-lg border border-slate-200 bg-slate-100 p-2 text-sm text-slate-800 hover:border-slate-300 hover:bg-slate-200">
-                  <p className="flex items-center justify-center gap-x-2 text-xs">
-                    <RocketIcon strokeWidth={1.5} className="mx-1 size-6 text-slate-900" />
-                    {t("common.new_version_available", { version: latestVersion })}
-                  </p>
-                </Link>
+          <div>
+            {!isSettingsMode && (
+              <>
+                {/* New Version Available */}
+                {!isCollapsed &&
+                  isOwnerOrManager &&
+                  latestVersion &&
+                  !isFormbricksCloud &&
+                  !isDevelopment && (
+                    <Link
+                      href="https://github.com/formbricks/formbricks/releases"
+                      target="_blank"
+                      className="m-2 flex items-center gap-x-4 rounded-lg border border-slate-200 bg-slate-100 p-2 text-sm text-slate-800 hover:border-slate-300 hover:bg-slate-200">
+                      <p className="flex items-center justify-center gap-x-2 text-xs">
+                        <RocketIcon strokeWidth={1.5} className="mx-1 size-6 text-slate-900" />
+                        {t("common.new_version_available", { version: latestVersion })}
+                      </p>
+                    </Link>
+                  )}
+
+                {/* Trial Days Remaining */}
+                {!isCollapsed &&
+                  isFormbricksCloud &&
+                  trialDaysRemaining !== null &&
+                  (newTrialBannerVariant === "new-trial-banner" ? (
+                    <TrialBannerNew
+                      trialDaysRemaining={trialDaysRemaining}
+                      planName={organization.billing.stripe?.plan ?? "pro"}
+                      responseCount={responseCount}
+                      responseLimit={organization.billing.limits.monthly.responses}
+                      baseResponseLimit={TRIAL_BASE_RESPONSE_LIMIT}
+                      billingHref={`/workspaces/${workspace.id}/settings/organization/billing`}
+                      hasPaymentMethod={organization.billing.stripe?.hasPaymentMethod}
+                    />
+                  ) : (
+                    <Link
+                      href={`/workspaces/${workspace.id}/settings/organization/billing`}
+                      className="m-2 block">
+                      <TrialAlert trialDaysRemaining={trialDaysRemaining} size="small" />
+                    </Link>
+                  ))}
+              </>
+            )}
+
+            <div className="flex flex-col">
+              {!isSettingsMode && (
+                <>
+                  <DropdownMenu onOpenChange={setIsWorkspaceDropdownOpen}>
+                    <DropdownMenuTrigger
+                      asChild
+                      id="workspaceDropdownTrigger"
+                      className={switcherTriggerClasses}>
+                      <button
+                        type="button"
+                        aria-label={isCollapsed ? t("common.change_workspace") : undefined}
+                        className={cn("flex w-full items-center gap-3", isCollapsed && "justify-center")}>
+                        <span className={switcherIconClasses}>
+                          <FoldersIcon className="size-4" strokeWidth={1.5} />
+                        </span>
+                        {!isCollapsed && !isTextVisible && (
+                          <>
+                            <div className="grow overflow-hidden">
+                              <p className="truncate text-sm font-bold text-slate-700">{workspace.name}</p>
+                              <p className="text-sm text-slate-500">{t("common.workspace")}</p>
+                            </div>
+                            {isPending && (
+                              <Loader2 className="size-4 animate-spin text-slate-600" strokeWidth={1.5} />
+                            )}
+                            <ChevronRightIcon className="size-4 shrink-0 text-slate-600" strokeWidth={1.5} />
+                          </>
+                        )}
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent side="right" sideOffset={10} alignOffset={5} align="end">
+                      <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
+                        <FoldersIcon className="mr-2 inline size-4" strokeWidth={1.5} />
+                        {t("common.change_workspace")}
+                      </div>
+                      {(isLoadingWorkspaces || isInitialWorkspacesLoading) && (
+                        <div className="flex items-center justify-center py-2">
+                          <Loader2 className="size-4 animate-spin" />
+                        </div>
+                      )}
+                      {!isLoadingWorkspaces &&
+                        !isInitialWorkspacesLoading &&
+                        workspaceLoadError &&
+                        renderSwitcherError(
+                          workspaceLoadError,
+                          () => {
+                            setWorkspaceLoadError(null);
+                            setWorkspaces([]);
+                          },
+                          t("common.try_again")
+                        )}
+                      {!isLoadingWorkspaces && !isInitialWorkspacesLoading && !workspaceLoadError && (
+                        <>
+                          <DropdownMenuGroup className="max-h-[300px] overflow-y-auto">
+                            {workspaces.map((proj) => (
+                              <DropdownMenuCheckboxItem
+                                key={proj.id}
+                                checked={proj.id === workspace.id}
+                                onClick={() => handleWorkspaceChange(proj.id)}
+                                className="cursor-pointer">
+                                {proj.name}
+                              </DropdownMenuCheckboxItem>
+                            ))}
+                          </DropdownMenuGroup>
+                          {isOwnerOrManager && (
+                            <DropdownMenuCheckboxItem
+                              onClick={handleWorkspaceCreate}
+                              className="w-full cursor-pointer justify-between">
+                              <span>{t("common.add_new_workspace")}</span>
+                              <PlusIcon className="ml-2 size-4" strokeWidth={1.5} />
+                            </DropdownMenuCheckboxItem>
+                          )}
+                        </>
+                      )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuCheckboxItem
+                        onClick={() =>
+                          handleSettingNavigation(`/workspaces/${workspace.id}/settings/workspace/general`)
+                        }
+                        className="cursor-pointer">
+                        <Cog className="mr-2 size-4" strokeWidth={1.5} />
+                        {t("common.settings")}
+                      </DropdownMenuCheckboxItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  <DropdownMenu onOpenChange={setIsOrganizationDropdownOpen}>
+                    <DropdownMenuTrigger
+                      asChild
+                      id="organizationDropdownTriggerSidebar"
+                      className={switcherTriggerClasses}>
+                      <button
+                        type="button"
+                        aria-label={isCollapsed ? t("common.change_organization") : undefined}
+                        className={cn("flex w-full items-center gap-3", isCollapsed && "justify-center")}>
+                        <span className={switcherIconClasses}>
+                          <Building2Icon className="size-4" strokeWidth={1.5} />
+                        </span>
+                        {!isCollapsed && !isTextVisible && (
+                          <>
+                            <div className="grow overflow-hidden">
+                              <p className="truncate text-sm font-bold text-slate-700">{organization.name}</p>
+                              <p className="text-sm text-slate-500">{t("common.organization")}</p>
+                            </div>
+                            {isPending && (
+                              <Loader2 className="size-4 animate-spin text-slate-600" strokeWidth={1.5} />
+                            )}
+                            <ChevronRightIcon className="size-4 shrink-0 text-slate-600" strokeWidth={1.5} />
+                          </>
+                        )}
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent side="right" sideOffset={10} alignOffset={5} align="end">
+                      <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
+                        <Building2Icon className="mr-2 inline size-4" strokeWidth={1.5} />
+                        {t("common.change_organization")}
+                      </div>
+                      {isLoadingOrganizations && (
+                        <div className="flex items-center justify-center py-2">
+                          <Loader2 className="size-4 animate-spin" />
+                        </div>
+                      )}
+                      {!isLoadingOrganizations &&
+                        organizationLoadError &&
+                        renderSwitcherError(
+                          organizationLoadError,
+                          () => {
+                            setOrganizationLoadError(null);
+                            setOrganizations([]);
+                          },
+                          t("common.try_again")
+                        )}
+                      {!isLoadingOrganizations && !organizationLoadError && (
+                        <>
+                          <DropdownMenuGroup className="max-h-[300px] overflow-y-auto">
+                            {organizations.map((org) => (
+                              <DropdownMenuCheckboxItem
+                                key={org.id}
+                                checked={org.id === organization.id}
+                                onClick={() => handleOrganizationChange(org.id)}
+                                className="cursor-pointer">
+                                {org.name}
+                              </DropdownMenuCheckboxItem>
+                            ))}
+                          </DropdownMenuGroup>
+                          {isMultiOrgEnabled && (
+                            <DropdownMenuCheckboxItem
+                              onClick={() => setOpenCreateOrganizationModal(true)}
+                              className="w-full cursor-pointer justify-between">
+                              <span>{t("common.create_new_organization")}</span>
+                              <PlusIcon className="ml-2 size-4" strokeWidth={1.5} />
+                            </DropdownMenuCheckboxItem>
+                          )}
+                        </>
+                      )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuCheckboxItem
+                        onClick={() =>
+                          handleSettingNavigation(`/workspaces/${workspace.id}/settings/organization/general`)
+                        }
+                        className="cursor-pointer">
+                        <SettingsIcon className="mr-2 size-4" strokeWidth={1.5} />
+                        {t("common.settings")}
+                      </DropdownMenuCheckboxItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </>
               )}
 
-              {/* Trial Days Remaining */}
-              {!isCollapsed &&
-                isFormbricksCloud &&
-                trialDaysRemaining !== null &&
-                (newTrialBannerVariant === "new-trial-banner" ? (
-                  <TrialBannerNew
-                    trialDaysRemaining={trialDaysRemaining}
-                    planName={organization.billing.stripe?.plan ?? "pro"}
-                    responseCount={responseCount}
-                    responseLimit={organization.billing.limits.monthly.responses}
-                    baseResponseLimit={TRIAL_BASE_RESPONSE_LIMIT}
-                    billingHref={`/workspaces/${workspace.id}/settings/organization/billing`}
-                    hasPaymentMethod={organization.billing.stripe?.hasPaymentMethod}
-                  />
-                ) : (
-                  <Link
-                    href={`/workspaces/${workspace.id}/settings/organization/billing`}
-                    className="m-2 block">
-                    <TrialAlert trialDaysRemaining={trialDaysRemaining} size="small" />
-                  </Link>
-                ))}
-
-              <div className="flex flex-col">
-                <DropdownMenu onOpenChange={setIsWorkspaceDropdownOpen}>
-                  <DropdownMenuTrigger
-                    asChild
-                    id="workspaceDropdownTrigger"
-                    className={switcherTriggerClasses}>
-                    <button
-                      type="button"
-                      aria-label={isCollapsed ? t("common.change_workspace") : undefined}
-                      className={cn("flex w-full items-center gap-3", isCollapsed && "justify-center")}>
-                      <span className={switcherIconClasses}>
-                        <FoldersIcon className="size-4" strokeWidth={1.5} />
-                      </span>
-                      {!isCollapsed && !isTextVisible && (
-                        <>
-                          <div className="grow overflow-hidden">
-                            <p className="truncate text-sm font-bold text-slate-700">{workspace.name}</p>
-                            <p className="text-sm text-slate-500">{t("common.workspace")}</p>
-                          </div>
-                          {isPending && (
-                            <Loader2 className="size-4 animate-spin text-slate-600" strokeWidth={1.5} />
-                          )}
-                          <ChevronRightIcon className="size-4 shrink-0 text-slate-600" strokeWidth={1.5} />
-                        </>
-                      )}
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent side="right" sideOffset={10} alignOffset={5} align="end">
-                    <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
-                      <FoldersIcon className="mr-2 inline size-4" strokeWidth={1.5} />
-                      {t("common.change_workspace")}
-                    </div>
-                    {(isLoadingWorkspaces || isInitialWorkspacesLoading) && (
-                      <div className="flex items-center justify-center py-2">
-                        <Loader2 className="size-4 animate-spin" />
-                      </div>
-                    )}
-                    {!isLoadingWorkspaces &&
-                      !isInitialWorkspacesLoading &&
-                      workspaceLoadError &&
-                      renderSwitcherError(
-                        workspaceLoadError,
-                        () => {
-                          setWorkspaceLoadError(null);
-                          setWorkspaces([]);
-                        },
-                        t("common.try_again")
-                      )}
-                    {!isLoadingWorkspaces && !isInitialWorkspacesLoading && !workspaceLoadError && (
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  asChild
+                  id="userDropdownTrigger"
+                  className={cn(switcherTriggerClasses, "rounded-br-xl")}>
+                  <button
+                    type="button"
+                    aria-label={isCollapsed ? t("common.account_settings") : undefined}
+                    className={cn("flex w-full items-center gap-3", isCollapsed && "justify-center")}>
+                    <span className={switcherIconClasses}>
+                      <ProfileAvatar userId={user.id} />
+                    </span>
+                    {!isCollapsed && !isTextVisible && (
                       <>
-                        <DropdownMenuGroup className="max-h-[300px] overflow-y-auto">
-                          {workspaces.map((proj) => (
-                            <DropdownMenuCheckboxItem
-                              key={proj.id}
-                              checked={proj.id === workspace.id}
-                              onClick={() => handleWorkspaceChange(proj.id)}
-                              className="cursor-pointer">
-                              {proj.name}
-                            </DropdownMenuCheckboxItem>
-                          ))}
-                        </DropdownMenuGroup>
-                        {isOwnerOrManager && (
-                          <DropdownMenuCheckboxItem
-                            onClick={handleWorkspaceCreate}
-                            className="w-full cursor-pointer justify-between">
-                            <span>{t("common.add_new_workspace")}</span>
-                            <PlusIcon className="ml-2 size-4" strokeWidth={1.5} />
-                          </DropdownMenuCheckboxItem>
-                        )}
+                        <div className="grow overflow-hidden">
+                          <p
+                            title={user?.email}
+                            className="ph-no-capture -mb-0.5 truncate text-sm font-bold text-slate-700">
+                            {user?.name ? <span>{user?.name}</span> : <span>{user?.email}</span>}
+                          </p>
+                          <p className="text-sm text-slate-500">{t("common.account")}</p>
+                        </div>
+                        <ChevronRightIcon className="size-4 shrink-0 text-slate-600" strokeWidth={1.5} />
                       </>
                     )}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuCheckboxItem
-                      onClick={() =>
-                        handleSettingNavigation(`/workspaces/${workspace.id}/settings/workspace/general`)
-                      }
-                      className="cursor-pointer">
-                      <Cog className="mr-2 size-4" strokeWidth={1.5} />
-                      {t("common.settings")}
-                    </DropdownMenuCheckboxItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                  </button>
+                </DropdownMenuTrigger>
 
-                <DropdownMenu onOpenChange={setIsOrganizationDropdownOpen}>
-                  <DropdownMenuTrigger
-                    asChild
-                    id="organizationDropdownTriggerSidebar"
-                    className={switcherTriggerClasses}>
-                    <button
-                      type="button"
-                      aria-label={isCollapsed ? t("common.change_organization") : undefined}
-                      className={cn("flex w-full items-center gap-3", isCollapsed && "justify-center")}>
-                      <span className={switcherIconClasses}>
-                        <Building2Icon className="size-4" strokeWidth={1.5} />
-                      </span>
-                      {!isCollapsed && !isTextVisible && (
-                        <>
-                          <div className="grow overflow-hidden">
-                            <p className="truncate text-sm font-bold text-slate-700">{organization.name}</p>
-                            <p className="text-sm text-slate-500">{t("common.organization")}</p>
-                          </div>
-                          {isPending && (
-                            <Loader2 className="size-4 animate-spin text-slate-600" strokeWidth={1.5} />
-                          )}
-                          <ChevronRightIcon className="size-4 shrink-0 text-slate-600" strokeWidth={1.5} />
-                        </>
-                      )}
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent side="right" sideOffset={10} alignOffset={5} align="end">
-                    <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
-                      <Building2Icon className="mr-2 inline size-4" strokeWidth={1.5} />
-                      {t("common.change_organization")}
-                    </div>
-                    {isLoadingOrganizations && (
-                      <div className="flex items-center justify-center py-2">
-                        <Loader2 className="size-4 animate-spin" />
-                      </div>
-                    )}
-                    {!isLoadingOrganizations &&
-                      organizationLoadError &&
-                      renderSwitcherError(
-                        organizationLoadError,
-                        () => {
-                          setOrganizationLoadError(null);
-                          setOrganizations([]);
-                        },
-                        t("common.try_again")
-                      )}
-                    {!isLoadingOrganizations && !organizationLoadError && (
-                      <>
-                        <DropdownMenuGroup className="max-h-[300px] overflow-y-auto">
-                          {organizations.map((org) => (
-                            <DropdownMenuCheckboxItem
-                              key={org.id}
-                              checked={org.id === organization.id}
-                              onClick={() => handleOrganizationChange(org.id)}
-                              className="cursor-pointer">
-                              {org.name}
-                            </DropdownMenuCheckboxItem>
-                          ))}
-                        </DropdownMenuGroup>
-                        {isMultiOrgEnabled && (
-                          <DropdownMenuCheckboxItem
-                            onClick={() => setOpenCreateOrganizationModal(true)}
-                            className="w-full cursor-pointer justify-between">
-                            <span>{t("common.create_new_organization")}</span>
-                            <PlusIcon className="ml-2 size-4" strokeWidth={1.5} />
-                          </DropdownMenuCheckboxItem>
-                        )}
-                      </>
-                    )}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuCheckboxItem
-                      onClick={() =>
-                        handleSettingNavigation(`/workspaces/${workspace.id}/settings/organization/general`)
-                      }
-                      className="cursor-pointer">
-                      <SettingsIcon className="mr-2 size-4" strokeWidth={1.5} />
-                      {t("common.settings")}
-                    </DropdownMenuCheckboxItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                <DropdownMenu>
-                  <DropdownMenuTrigger
-                    asChild
-                    id="userDropdownTrigger"
-                    className={cn(switcherTriggerClasses, "rounded-br-xl")}>
-                    <button
-                      type="button"
-                      aria-label={isCollapsed ? t("common.account_settings") : undefined}
-                      className={cn("flex w-full items-center gap-3", isCollapsed && "justify-center")}>
-                      <span className={switcherIconClasses}>
-                        <ProfileAvatar userId={user.id} />
-                      </span>
-                      {!isCollapsed && !isTextVisible && (
-                        <>
-                          <div className="grow overflow-hidden">
-                            <p
-                              title={user?.email}
-                              className="ph-no-capture -mb-0.5 truncate text-sm font-bold text-slate-700">
-                              {user?.name ? <span>{user?.name}</span> : <span>{user?.email}</span>}
-                            </p>
-                            <p className="text-sm text-slate-500">{t("common.account")}</p>
-                          </div>
-                          <ChevronRightIcon className="size-4 shrink-0 text-slate-600" strokeWidth={1.5} />
-                        </>
-                      )}
-                    </button>
-                  </DropdownMenuTrigger>
-
-                  <DropdownMenuContent
-                    id="userDropdownInnerContentWrapper"
-                    side="right"
-                    sideOffset={10}
-                    alignOffset={5}
-                    align="end">
-                    {dropdownNavigation.map((link) => (
-                      <Link
-                        href={link.href}
-                        target={link.target}
-                        className="flex w-full items-center"
-                        key={link.label}
-                        rel={link.target === "_blank" ? "noopener noreferrer" : undefined}>
-                        <DropdownMenuItem>
-                          <link.icon className="mr-2 size-4" strokeWidth={1.5} />
-                          {link.label}
-                        </DropdownMenuItem>
-                      </Link>
-                    ))}
-                    <DropdownMenuItem
-                      onClick={async () => {
-                        const loginUrl = `${publicDomain}/auth/login`;
-                        const route = await signOutWithAudit({
-                          reason: "user_initiated",
-                          redirectUrl: loginUrl,
-                          organizationId: organization.id,
-                          redirect: false,
-                          callbackUrl: loginUrl,
-                          clearWorkspaceId: true,
-                        });
-                        router.push(route?.url || loginUrl);
-                      }}
-                      icon={<LogOutIcon className="mr-2 size-4" strokeWidth={1.5} />}>
-                      {t("common.logout")}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+                <DropdownMenuContent
+                  id="userDropdownInnerContentWrapper"
+                  side="right"
+                  sideOffset={10}
+                  alignOffset={5}
+                  align="end">
+                  {dropdownNavigation.map((link) => (
+                    <Link
+                      href={link.href}
+                      target={link.target}
+                      className="flex w-full items-center"
+                      key={link.label}
+                      rel={link.target === "_blank" ? "noopener noreferrer" : undefined}>
+                      <DropdownMenuItem>
+                        <link.icon className="mr-2 size-4" strokeWidth={1.5} />
+                        {link.label}
+                      </DropdownMenuItem>
+                    </Link>
+                  ))}
+                  <DropdownMenuItem
+                    onClick={async () => {
+                      const loginUrl = `${publicDomain}/auth/login`;
+                      const route = await signOutWithAudit({
+                        reason: "user_initiated",
+                        redirectUrl: loginUrl,
+                        organizationId: organization.id,
+                        redirect: false,
+                        callbackUrl: loginUrl,
+                        clearWorkspaceId: true,
+                      });
+                      router.push(route?.url || loginUrl);
+                    }}
+                    icon={<LogOutIcon className="mr-2 size-4" strokeWidth={1.5} />}>
+                    {t("common.logout")}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
-          )}
+          </div>
         </aside>
       )}
       {openWorkspaceLimitModal && (

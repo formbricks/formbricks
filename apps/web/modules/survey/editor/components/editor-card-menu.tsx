@@ -150,9 +150,6 @@ export const EditorCardMenu = ({
     } else {
       addCard(newElement, cardIdx + 1);
     }
-
-    const section = document.getElementById(`${card.id}`);
-    section?.scrollIntoView({ behavior: "smooth", block: "end", inline: "end" });
   };
 
   const addEndingCardBelow = () => {

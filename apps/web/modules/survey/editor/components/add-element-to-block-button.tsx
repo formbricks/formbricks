@@ -11,6 +11,7 @@ import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { addMultiLanguageLabels, extractLanguageCodes } from "@/lib/i18n/utils";
 import { addElementToBlock } from "@/modules/survey/editor/lib/blocks";
+import { scrollElementCardIntoView } from "@/modules/survey/editor/lib/utils";
 import {
   getCXElementNameMap,
   getElementDefaults,
@@ -74,6 +75,7 @@ export const AddElementToBlockButton = ({
     setLocalSurvey(result.data);
     setOpen(false);
     setActiveElementId(elementWithLabels.id);
+    scrollElementCardIntoView(elementWithLabels.id);
   };
 
   return (
