@@ -1,6 +1,7 @@
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import type { PrismaClient } from "@prisma/client";
-import type { Adapter, AdapterAccount, AdapterUser } from "next-auth/adapters";
+import type { Awaitable } from "next-auth";
+import type { Adapter, AdapterAccount } from "next-auth/adapters";
 import { logger } from "@formbricks/logger";
 import { resolveAccountProvider } from "@/modules/ee/sso/lib/provider-normalization";
 
@@ -17,7 +18,7 @@ const normalizeProviderKey = <T extends { provider: string }>(value: T): T => ({
  * original behaviour while making adapter-level failures observable.
  */
 const withAdapterErrorLogging =
-  <TArgs extends unknown[], TResult>(method: string, handler: (...args: TArgs) => Promise<TResult>) =>
+  <TArgs extends unknown[], TResult>(method: string, handler: (...args: TArgs) => Awaitable<TResult>) =>
   async (...args: TArgs): Promise<TResult> => {
     try {
       return await handler(...args);
@@ -47,19 +48,14 @@ export const getNextAuthAdapter = (prismaClient: PrismaClient): Adapter => {
 
   return {
     ...baseAdapter,
-    getUserByAccount: withAdapterErrorLogging(
-      "getUserByAccount",
-      async (providerAccount: TProviderAccountKey): Promise<AdapterUser | null> =>
-        getUserByAccount(normalizeProviderKey(providerAccount))
+    getUserByAccount: withAdapterErrorLogging("getUserByAccount", (providerAccount: TProviderAccountKey) =>
+      getUserByAccount(normalizeProviderKey(providerAccount))
     ),
-    linkAccount: withAdapterErrorLogging("linkAccount", async (account: AdapterAccount): Promise<void> => {
-      await linkAccount(normalizeProviderKey(account));
-    }),
-    unlinkAccount: withAdapterErrorLogging(
-      "unlinkAccount",
-      async (providerAccount: TProviderAccountKey): Promise<void> => {
-        await unlinkAccount(normalizeProviderKey(providerAccount));
-      }
+    linkAccount: withAdapterErrorLogging("linkAccount", (account: AdapterAccount) =>
+      linkAccount(normalizeProviderKey(account))
+    ),
+    unlinkAccount: withAdapterErrorLogging("unlinkAccount", (providerAccount: TProviderAccountKey) =>
+      unlinkAccount(normalizeProviderKey(providerAccount))
     ),
   };
 };
