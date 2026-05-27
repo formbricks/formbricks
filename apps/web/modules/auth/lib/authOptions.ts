@@ -1,4 +1,3 @@
-import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { cookies } from "next/headers";
@@ -37,6 +36,7 @@ import {
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { getSSOProviders } from "@/modules/ee/sso/lib/providers";
 import { handleSsoCallback } from "@/modules/ee/sso/lib/sso-handlers";
+import { getNextAuthAdapter } from "./adapter";
 import { createBrevoCustomer } from "./brevo";
 
 type TSignInCallbackParams = Parameters<NonNullable<NonNullable<NextAuthOptions["callbacks"]>["signIn"]>>[0];
@@ -137,7 +137,7 @@ const handleEnterpriseSsoSignIn = async ({
 };
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  adapter: getNextAuthAdapter(prisma),
   providers: [
     CredentialsProvider({
       id: "credentials",
