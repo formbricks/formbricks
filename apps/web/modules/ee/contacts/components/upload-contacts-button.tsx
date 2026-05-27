@@ -83,6 +83,7 @@ export const UploadContactsCSVButton = ({
         const records = parse(csv, {
           columns: true, // Parse the header as column names
           skip_empty_lines: true, // Skip empty lines
+          delimiter: [",", ";", "\t"], // Support comma, semicolon (EU Excel), and tab
         });
 
         const parsedRecords = ZContactCSVUploadResponse.safeParse(records);
