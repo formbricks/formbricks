@@ -1,27 +1,20 @@
 apiVersion: v2
 name: formbricks
 description: A Helm chart for Formbricks with PostgreSQL, Valkey
-
 type: application
-
 # Helm chart Version
 version: 0.0.0-dev
-
 # This is the version number of the application being deployed.
-appVersion: "5.0.0-rc.1"
-
+appVersion: "5.0.1"
 icon: https://formbricks.com/favicon.ico
-
 keywords:
   - formbricks
   - postgresql
   - valkey
-
 home: https://formbricks.com/docs/self-hosting/setup/kubernetes
 maintainers:
   - name: Formbricks
     email: info@formbricks.com
-
 dependencies:
   - name: postgresql
     version: "16.4.16"
