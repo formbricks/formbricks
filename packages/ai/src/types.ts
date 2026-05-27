@@ -1,5 +1,4 @@
-import type { LanguageModel, generateObject, generateText } from "ai";
-import type { z } from "zod";
+import type { FlexibleSchema, LanguageModel, generateText } from "ai";
 
 export const AI_PROVIDERS = ["aws", "google", "azure"] as const;
 
@@ -49,10 +48,13 @@ export type AILanguageModel = LanguageModel;
 export type TGenerateTextOptions = Omit<Parameters<typeof generateText>[0], "model">;
 export type TGenerateTextResult = Awaited<ReturnType<typeof generateText>>;
 
-export type TGenerateObjectOptions<T> = Omit<Parameters<typeof generateObject>[0], "model" | "schema"> & {
-  schema: z.ZodType<T>;
+export type TGenerateObjectOptions<T> = Omit<
+  Parameters<typeof generateText>[0],
+  "model" | "output" | "experimental_output"
+> & {
+  schema: FlexibleSchema<T>;
 };
 export type TGenerateObjectResult<T> = { object: T } & Omit<
-  Awaited<ReturnType<typeof generateObject>>,
-  "object"
+  Awaited<ReturnType<typeof generateText>>,
+  "output" | "experimental_output"
 >;

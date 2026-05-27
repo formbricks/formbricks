@@ -3,12 +3,14 @@ import { z } from "zod";
 import { generateObject } from "./object";
 
 const mocks = vi.hoisted(() => ({
-  generateObject: vi.fn(),
+  generateText: vi.fn(),
+  outputObject: vi.fn(),
   getAiModel: vi.fn(),
 }));
 
 vi.mock("ai", () => ({
-  generateObject: mocks.generateObject,
+  generateText: mocks.generateText,
+  Output: { object: mocks.outputObject },
 }));
 
 vi.mock("./provider", () => ({
@@ -19,6 +21,10 @@ describe("packages/ai object helpers", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.getAiModel.mockReturnValue({ providerName: "google", modelName: "gemini-2.5-flash" });
+    mocks.outputObject.mockImplementation(({ schema }: { schema: unknown }) => ({
+      __outputSpec: "object",
+      schema,
+    }));
   });
 
   test("uses the configured provider model when generating a structured object", async () => {
@@ -27,16 +33,17 @@ describe("packages/ai object helpers", () => {
       AI_MODEL: "gemini-2.5-flash",
     };
     const schema = z.object({ answer: z.string() });
-    mocks.generateObject.mockResolvedValue({ object: { answer: "42" } });
+    mocks.generateText.mockResolvedValue({ output: { answer: "42" } });
 
     const result = await generateObject({ schema, prompt: "What is the answer?" }, environment);
 
     expect(mocks.getAiModel).toHaveBeenCalledWith(environment);
-    expect(mocks.generateObject).toHaveBeenCalledWith({
-      schema,
+    expect(mocks.outputObject).toHaveBeenCalledWith({ schema });
+    expect(mocks.generateText).toHaveBeenCalledWith({
       prompt: "What is the answer?",
       model: { providerName: "google", modelName: "gemini-2.5-flash" },
+      output: { __outputSpec: "object", schema },
     });
-    expect(result).toEqual({ object: { answer: "42" } });
+    expect(result.object).toEqual({ answer: "42" });
   });
 });

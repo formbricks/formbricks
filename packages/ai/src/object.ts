@@ -1,4 +1,4 @@
-import { generateObject as generateObjectWithConfiguredModel } from "ai";
+import { Output, generateText } from "ai";
 import { getAiModel } from "./provider";
 import type { AIEnvironment, TGenerateObjectOptions, TGenerateObjectResult } from "./types";
 
@@ -6,10 +6,13 @@ export const generateObject = async <T>(
   options: TGenerateObjectOptions<T>,
   environment?: AIEnvironment
 ): Promise<TGenerateObjectResult<T>> => {
+  const { schema, ...rest } = options;
   const request = {
-    ...options,
+    ...rest,
     model: getAiModel(environment),
-  } as Parameters<typeof generateObjectWithConfiguredModel>[0];
+    output: Output.object<T>({ schema }),
+  } as Parameters<typeof generateText>[0];
+  const result = await generateText(request);
 
-  return (await generateObjectWithConfiguredModel(request)) as TGenerateObjectResult<T>;
+  return { ...result, object: result.output as T } as TGenerateObjectResult<T>;
 };
