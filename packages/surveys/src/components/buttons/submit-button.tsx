@@ -1,7 +1,8 @@
-import { ButtonHTMLAttributes, useRef } from "preact/compat";
+import { type ButtonHTMLAttributes } from "preact";
+import { useRef } from "preact/compat";
 import { useCallback, useEffect, useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
-import { cn } from "@/lib/utils";
+import { Button } from "./button";
 
 interface SubmitButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   buttonLabel?: string;
@@ -18,7 +19,7 @@ export function SubmitButton({
   disabled,
   type,
   ...props
-}: SubmitButtonProps) {
+}: Readonly<SubmitButtonProps>) {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -66,32 +67,17 @@ export function SubmitButton({
   }, [focus]);
 
   return (
-    <button
+    <Button
       {...props}
       dir="auto"
+      variant="primary"
       ref={buttonRef}
       type={type}
       tabIndex={tabIndex}
       autoFocus={focus}
-      className={cn(
-        "border-submit-button-border focus:ring-focus mb-1 flex items-center justify-center border leading-4 shadow-xs focus:ring-2 focus:ring-offset-2 focus:outline-hidden enabled:hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60",
-        "button-custom"
-      )}
-      style={{
-        borderRadius: "var(--fb-button-border-radius)",
-        backgroundColor: "var(--fb-button-bg-color)",
-        color: "var(--fb-button-text-color)",
-        height: "var(--fb-button-height)",
-        fontSize: "var(--fb-button-font-size)",
-        fontWeight: "var(--fb-button-font-weight)",
-        paddingLeft: "var(--fb-button-padding-x)",
-        paddingRight: "var(--fb-button-padding-x)",
-        paddingTop: "var(--fb-button-padding-y)",
-        paddingBottom: "var(--fb-button-padding-y)",
-      }}
       onClick={onClick}
       disabled={disabled}>
       {buttonLabel || (isLastQuestion ? t("common.finish") : t("common.next"))}
-    </button>
+    </Button>
   );
 }
