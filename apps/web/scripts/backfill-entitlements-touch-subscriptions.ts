@@ -35,7 +35,9 @@
  * Usage:
  *   pnpm --filter web exec tsx scripts/backfill-entitlements-touch-subscriptions.ts \
  *     --product prod_XXX --product prod_YYY
- *   # add --apply to execute, --limit N for a canary, --rate N to tune throughput.
+ *   # add --apply to execute, --limit N for a canary, --concurrency N to
+ *   # process N subs in parallel (default 1 = serial), --rate N to throttle
+ *   # the serial path (ignored when concurrency > 1).
  */
 import { config as loadEnv } from "dotenv";
 import path from "node:path";
@@ -58,10 +60,11 @@ type Args = {
   apply: boolean;
   limit: number | null;
   rate: number;
+  concurrency: number;
 };
 
 const parseArgs = (): Args => {
-  const args: Args = { products: [], apply: false, limit: null, rate: 3 };
+  const args: Args = { products: [], apply: false, limit: null, rate: 3, concurrency: 1 };
   const argv = process.argv.slice(2);
 
   // Pull the value that follows a value-taking flag and bail out clearly if
@@ -102,6 +105,15 @@ const parseArgs = (): Args => {
         process.exit(1);
       }
       args.rate = parsed;
+    } else if (a === "--concurrency") {
+      const raw = takeValue("--concurrency", i);
+      i++;
+      const parsed = Number.parseInt(raw, 10);
+      if (!Number.isFinite(parsed) || parsed < 1) {
+        console.error(`--concurrency must be a positive integer (got: ${raw})`);
+        process.exit(1);
+      }
+      args.concurrency = parsed;
     } else {
       console.error(`Unknown arg: ${a}`);
       process.exit(1);
@@ -295,17 +307,40 @@ type RunStats = {
   failures: Array<{ subscriptionId: string; customerId: string; phase: string; error: string }>;
 };
 
+// Bounded-concurrency worker pool. Each of `concurrency` workers grabs the
+// next item, awaits `worker(item, index)`, then grabs the next, until all
+// items are processed. Errors inside worker() are caller's responsibility.
+const runWithConcurrency = async <T>(
+  items: T[],
+  concurrency: number,
+  worker: (item: T, index: number) => Promise<void>
+): Promise<void> => {
+  if (items.length === 0) return;
+  let next = 0;
+  const workerCount = Math.min(concurrency, items.length);
+  await Promise.all(
+    Array.from({ length: workerCount }, async () => {
+      while (true) {
+        const i = next++;
+        if (i >= items.length) return;
+        await worker(items[i], i);
+      }
+    })
+  );
+};
+
 const processSubGroup = async (
   canonicalSourceId: string,
   targets: SubTarget[],
   touchClone: Stripe.Price,
   apply: boolean,
   rateMs: number,
+  concurrency: number,
   reentitleAt: string,
   stats: RunStats
 ): Promise<void> => {
-  for (let i = 0; i < targets.length; i++) {
-    const { sub, baseItem, isStuckOnClone } = targets[i];
+  const processOne = async (target: SubTarget, i: number): Promise<void> => {
+    const { sub, baseItem, isStuckOnClone } = target;
     const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer.id;
     const prefix = `  [${i + 1}/${targets.length}] sub=${sub.id} customer=${customerId}`;
 
@@ -315,15 +350,14 @@ const processSubGroup = async (
       );
       stats.touched++;
       if (isStuckOnClone) stats.recovered++;
-      if (i < targets.length - 1) await sleep(rateMs);
-      continue;
+      // In serial mode we throttle between items. In parallel mode the pool
+      // size IS the throughput limit, so no per-item sleep.
+      if (concurrency === 1 && i < targets.length - 1) await sleep(rateMs);
+      return;
     }
 
     try {
       if (isStuckOnClone) {
-        // Sub is already on the clone (prior run died mid-round-trip). One
-        // swap brings it back to the canonical source and that swap itself
-        // fires the entitlement recompute we wanted.
         await swapBaseItem(sub.id, baseItem.id, canonicalSourceId, {
           ...sub.metadata,
           reentitle_at: reentitleAt,
@@ -333,7 +367,6 @@ const processSubGroup = async (
         stats.touched++;
         stats.recovered++;
       } else {
-        // Normal case: round-trip source → clone → source.
         const afterSwap = await swapBaseItem(sub.id, baseItem.id, touchClone.id, {
           ...sub.metadata,
           reentitle_at: reentitleAt,
@@ -356,8 +389,10 @@ const processSubGroup = async (
       stats.failed++;
     }
 
-    if (i < targets.length - 1) await sleep(rateMs);
-  }
+    if (concurrency === 1 && i < targets.length - 1) await sleep(rateMs);
+  };
+
+  await runWithConcurrency(targets, concurrency, processOne);
 };
 
 const main = async () => {
@@ -380,6 +415,7 @@ const main = async () => {
     keyKind,
     products: args.products,
     rate: args.rate,
+    concurrency: args.concurrency,
     limit: args.limit,
   });
 
@@ -428,7 +464,16 @@ const main = async () => {
     }
 
     if (touchClone) {
-      await processSubGroup(canonicalSourceId, targets, touchClone, args.apply, rateMs, reentitleAt, stats);
+      await processSubGroup(
+        canonicalSourceId,
+        targets,
+        touchClone,
+        args.apply,
+        rateMs,
+        args.concurrency,
+        reentitleAt,
+        stats
+      );
     } else {
       // Dry-run with no existing clone — log what would happen.
       for (const { sub, isStuckOnClone } of targets) {
