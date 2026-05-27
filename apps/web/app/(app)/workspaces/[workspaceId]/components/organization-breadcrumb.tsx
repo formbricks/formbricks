@@ -1,21 +1,13 @@
 "use client";
 
 import * as Sentry from "@sentry/nextjs";
-import {
-  Building2Icon,
-  ChevronDownIcon,
-  ChevronRightIcon,
-  Loader2,
-  PlusIcon,
-  SettingsIcon,
-} from "lucide-react";
+import { Building2Icon, ChevronDownIcon, ChevronRightIcon, Loader2, SettingsIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
 import { getOrganizationsForSwitcherAction } from "@/app/(app)/workspaces/[workspaceId]/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { CreateOrganizationModal } from "@/modules/organization/components/CreateOrganizationModal";
 import { BreadcrumbItem } from "@/modules/ui/components/breadcrumb";
 import {
   DropdownMenu,
@@ -42,7 +34,6 @@ export const OrganizationBreadcrumb = ({
 }: OrganizationBreadcrumbProps) => {
   const { t } = useTranslation();
   const [isOrganizationDropdownOpen, setIsOrganizationDropdownOpen] = useState(false);
-  const [openCreateOrganizationModal, setOpenCreateOrganizationModal] = useState(false);
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isLoadingOrganizations, setIsLoadingOrganizations] = useState(false);
@@ -172,14 +163,6 @@ export const OrganizationBreadcrumb = ({
                       </DropdownMenuCheckboxItem>
                     ))}
                   </DropdownMenuGroup>
-                  {isMultiOrgEnabled && (
-                    <DropdownMenuCheckboxItem
-                      onClick={() => setOpenCreateOrganizationModal(true)}
-                      className="cursor-pointer">
-                      <span>{t("common.create_new_organization")}</span>
-                      <PlusIcon className="ml-2 h-4 w-4" />
-                    </DropdownMenuCheckboxItem>
-                  )}
                 </>
               )}
             </>
@@ -197,12 +180,6 @@ export const OrganizationBreadcrumb = ({
           )}
         </DropdownMenuContent>
       </DropdownMenu>
-      {openCreateOrganizationModal && (
-        <CreateOrganizationModal
-          open={openCreateOrganizationModal}
-          setOpen={setOpenCreateOrganizationModal}
-        />
-      )}
     </BreadcrumbItem>
   );
 };

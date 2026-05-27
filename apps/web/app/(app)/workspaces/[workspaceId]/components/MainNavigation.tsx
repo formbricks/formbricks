@@ -42,7 +42,6 @@ import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { useSignOut } from "@/modules/auth/hooks/use-sign-out";
 import { TrialAlert } from "@/modules/ee/billing/components/trial-alert";
 import { TRIAL_BASE_RESPONSE_LIMIT, TrialBannerNew } from "@/modules/ee/billing/components/trial-banner-new";
-import { CreateOrganizationModal } from "@/modules/organization/components/CreateOrganizationModal";
 import { ProfileAvatar } from "@/modules/ui/components/avatars";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
@@ -70,7 +69,6 @@ interface NavigationProps {
   isDevelopment: boolean;
   membershipRole?: TOrganizationRole;
   publicDomain: string;
-  isMultiOrgEnabled: boolean;
   organizationWorkspacesLimit: number;
   isLicenseActive: boolean;
   isAccessControlAllowed: boolean;
@@ -86,7 +84,6 @@ export const MainNavigation = ({
   isFormbricksCloud,
   isDevelopment,
   publicDomain,
-  isMultiOrgEnabled,
   organizationWorkspacesLimit,
   isLicenseActive,
   isAccessControlAllowed,
@@ -232,7 +229,6 @@ export const MainNavigation = ({
   const [workspaceLoadError, setWorkspaceLoadError] = useState<string | null>(null);
   const [organizationLoadError, setOrganizationLoadError] = useState<string | null>(null);
   const [openCreateWorkspaceModal, setOpenCreateWorkspaceModal] = useState(false);
-  const [openCreateOrganizationModal, setOpenCreateOrganizationModal] = useState(false);
   const [openWorkspaceLimitModal, setOpenWorkspaceLimitModal] = useState(false);
 
   const renderSwitcherError = (error: string, onRetry: () => void, retryLabel: string) => (
@@ -759,14 +755,6 @@ export const MainNavigation = ({
                               </DropdownMenuCheckboxItem>
                             ))}
                           </DropdownMenuGroup>
-                          {isMultiOrgEnabled && (
-                            <DropdownMenuCheckboxItem
-                              onClick={() => setOpenCreateOrganizationModal(true)}
-                              className="w-full cursor-pointer justify-between">
-                              <span>{t("common.create_new_organization")}</span>
-                              <PlusIcon className="ml-2 h-4 w-4" strokeWidth={1.5} />
-                            </DropdownMenuCheckboxItem>
-                          )}
                         </>
                       )}
                       <DropdownMenuSeparator />
@@ -866,12 +854,6 @@ export const MainNavigation = ({
           setOpen={setOpenCreateWorkspaceModal}
           organizationId={organization.id}
           isAccessControlAllowed={isAccessControlAllowed}
-        />
-      )}
-      {openCreateOrganizationModal && (
-        <CreateOrganizationModal
-          open={openCreateOrganizationModal}
-          setOpen={setOpenCreateOrganizationModal}
         />
       )}
     </>
