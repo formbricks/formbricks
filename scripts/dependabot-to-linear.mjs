@@ -32,6 +32,10 @@ const PRIORITY_BY_SEVERITY = {
 
 const LINEAR_API_URL = "https://api.linear.app/graphql";
 
+// Abort any outbound request that hangs, so a stuck connection can't tie up the
+// runner until the workflow-level timeout.
+const FETCH_TIMEOUT_MS = 30000;
+
 function requireEnv(name, ...fallbacks) {
   for (const key of [name, ...fallbacks]) {
     if (process.env[key]) return process.env[key];
@@ -46,6 +50,7 @@ async function fetchOpenAlerts(repo, token) {
   for (;;) {
     const url = `https://api.github.com/repos/${repo}/dependabot/alerts?state=open&per_page=${perPage}&page=${page}`;
     const res = await fetch(url, {
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: "application/vnd.github+json",
@@ -68,6 +73,7 @@ async function fetchOpenAlerts(repo, token) {
 async function linearRequest(apiKey, query, variables) {
   const res = await fetch(LINEAR_API_URL, {
     method: "POST",
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
     headers: {
       Authorization: apiKey,
       "Content-Type": "application/json",
