@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { z } from "zod";
 import { generateObject } from "./object";
 
 const mocks = vi.hoisted(() => ({
@@ -32,7 +31,10 @@ describe("packages/ai object helpers", () => {
       AI_PROVIDER: "google",
       AI_MODEL: "gemini-2.5-flash",
     };
-    const schema = z.object({ answer: z.string() });
+    // The schema is opaque to the wrapper — it's passed through to Output.object
+    // and never validated by us. A sentinel object is enough for the assertions
+    // and avoids dragging zod into this package's deps just for the test.
+    const schema = { __schema: "sentinel" } as never;
     mocks.generateText.mockResolvedValue({ output: { answer: "42" } });
 
     const result = await generateObject({ schema, prompt: "What is the answer?" }, environment);
