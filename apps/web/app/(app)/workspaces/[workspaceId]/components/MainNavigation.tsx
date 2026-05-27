@@ -173,7 +173,7 @@ export const MainNavigation = ({
             name: t("workspace.unify.feedback_records"),
             href: `/workspaces/${workspace.id}/unify/feedback-records`,
             icon: MessageSquareTextIcon,
-            isActive: pathname?.includes("/unify/feedback-records"),
+            isActive: pathname?.includes("/unify/"),
             isHidden: false,
             disabled: isMembershipPending || isBilling,
           },
