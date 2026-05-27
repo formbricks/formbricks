@@ -23,7 +23,7 @@ import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { reduceQuotaLimits } from "@/modules/ee/quotas/lib/quotas";
 import { deleteFile } from "@/modules/storage/service";
-import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
+import { parseStorageFileUrl, resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { getOrganizationIdFromWorkspaceId } from "@/modules/survey/lib/organization";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 import { ITEMS_PER_PAGE } from "../constants";
@@ -597,14 +597,18 @@ const findAndDeleteUploadedFilesInResponse = async (response: TResponse, survey:
 
   const deletionPromises = fileUrls.map(async (fileUrl) => {
     try {
-      const { pathname } = new URL(fileUrl);
-      const [, storageId, accessType, fileName] = pathname.split("/").filter(Boolean);
+      const storageFile = parseStorageFileUrl(fileUrl);
 
-      if (!storageId || !accessType || !fileName) {
-        throw new Error(`Invalid file path: ${pathname}`);
+      if (!storageFile) {
+        throw new Error(`Invalid storage file URL: ${fileUrl}`);
       }
 
-      return deleteFile(storageId, accessType as "private" | "public", fileName, survey.workspaceId);
+      return deleteFile(
+        storageFile.storageId,
+        storageFile.accessType,
+        storageFile.fileName,
+        survey.workspaceId
+      );
     } catch (error) {
       logger.error(error, `Failed to delete file ${fileUrl}`);
     }

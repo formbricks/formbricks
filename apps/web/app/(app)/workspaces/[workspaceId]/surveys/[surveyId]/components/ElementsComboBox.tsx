@@ -26,8 +26,8 @@ import {
   NetworkIcon,
   PieChartIcon,
   Rows3Icon,
-  SmilePlusIcon,
   SmartphoneIcon,
+  SmilePlusIcon,
   StarIcon,
   User,
 } from "lucide-react";

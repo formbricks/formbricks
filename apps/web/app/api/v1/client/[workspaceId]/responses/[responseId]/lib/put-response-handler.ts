@@ -12,7 +12,7 @@ import { resolveClientApiIds } from "@/lib/utils/resolve-client-id";
 import { formatValidationErrorsForV1Api, validateResponseData } from "@/modules/api/lib/validation";
 import { validateOtherOptionLengthForMultipleChoice } from "@/modules/api/v2/lib/element";
 import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
-import { validateFileUploads } from "@/modules/storage/utils";
+import { validateClientFileUploads } from "@/modules/storage/utils";
 import { updateResponseWithQuotaEvaluation } from "./response";
 import { getValidatedResponseUpdateInput } from "./validated-response-update-input";
 
@@ -127,7 +127,8 @@ const getSurveyForResponse = async (
 const validateUpdateRequest = (
   existingResponse: TResponse,
   survey: TSurvey,
-  responseUpdateInput: TResponseUpdateInput
+  responseUpdateInput: TResponseUpdateInput,
+  workspaceId: string
 ): TRouteResult | undefined => {
   if (existingResponse.finished) {
     return {
@@ -135,7 +136,15 @@ const validateUpdateRequest = (
     };
   }
 
-  if (!validateFileUploads(responseUpdateInput.data, survey.questions)) {
+  if (
+    !validateClientFileUploads({
+      data: responseUpdateInput.data,
+      workspaceId,
+      surveyId: survey.id,
+      blocks: survey.blocks,
+      questions: survey.questions,
+    })
+  ) {
     return {
       response: responses.badRequestResponse("Invalid file upload response", undefined, true),
     };
@@ -250,7 +259,7 @@ export const putResponseHandler = async ({
     };
   }
 
-  const validationResult = validateUpdateRequest(existingResponse, survey, responseUpdateInput);
+  const validationResult = validateUpdateRequest(existingResponse, survey, responseUpdateInput, workspaceId);
   if (validationResult) {
     return validationResult;
   }

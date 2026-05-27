@@ -315,7 +315,10 @@ export const BlockCard = ({
                 const isOpen = activeElementId === element.id;
 
                 return (
-                  <div key={element.id} className={cn(elementIndex > 0 && "border-t border-slate-200")}>
+                  <div
+                    key={element.id}
+                    id={element.id}
+                    className={cn(elementIndex > 0 && "border-t border-slate-200")}>
                     <Collapsible.Root
                       open={isOpen}
                       onOpenChange={() => {

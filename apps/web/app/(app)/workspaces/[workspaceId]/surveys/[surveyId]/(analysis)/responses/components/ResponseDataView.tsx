@@ -38,20 +38,17 @@ const formatArrayToRecord = (responseValue: TResponseDataValue, keys: string[]):
   return result;
 };
 
-// Export for testing
-export const formatAddressData = (responseValue: TResponseDataValue): Record<string, string> => {
+const formatAddressData = (responseValue: TResponseDataValue): Record<string, string> => {
   const addressKeys = ["addressLine1", "addressLine2", "city", "state", "zip", "country"];
   return formatArrayToRecord(responseValue, addressKeys);
 };
 
-// Export for testing
-export const formatContactInfoData = (responseValue: TResponseDataValue): Record<string, string> => {
+const formatContactInfoData = (responseValue: TResponseDataValue): Record<string, string> => {
   const contactInfoKeys = ["firstName", "lastName", "email", "phone", "company"];
   return formatArrayToRecord(responseValue, contactInfoKeys);
 };
 
-// Export for testing
-export const extractResponseData = (response: TResponseWithQuotas, survey: TSurvey): Record<string, any> => {
+const extractResponseData = (response: TResponseWithQuotas, survey: TSurvey): Record<string, any> => {
   const responseData: Record<string, any> = {};
 
   const elements = getElementsFromBlocks(survey.blocks);
