@@ -358,8 +358,16 @@ export class CacheService {
   }
 
   private async trySetCache(key: CacheKey, value: unknown, ttlMs: number): Promise<void> {
-    if (value === undefined) {
-      return; // Skip caching undefined values
+    // Never persist null/undefined. The read path (tryGetCachedValue) treats a
+    // stored JSON `null` as a cache miss, so writing one is not just useless —
+    // it causes a recompute-and-rewrite loop on every request for a hot key.
+    // This also hardens withCache against a `null` slipping past its
+    // `NonNullable<T>` constraint via type erasure (unknown/any plumbing, casts),
+    // which is the exact class of bug this change set fixes. withCacheNullable is
+    // unaffected: it always writes a non-null boxed envelope, never raw null.
+    if (value === undefined || value === null) {
+      logger.debug({ key, ttlMs }, "Refusing to cache nullish value; treating as non-cacheable");
+      return;
     }
 
     try {

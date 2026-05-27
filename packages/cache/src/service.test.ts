@@ -630,6 +630,27 @@ describe("CacheService", () => {
       expect(fn).toHaveBeenCalledOnce();
       expect(mockRedis.exists).not.toHaveBeenCalled();
     });
+
+    test("should not persist null returned via type erasure (no recompute stampede)", async () => {
+      // withCache<T> is constrained to NonNullable<unknown>, but a caller can
+      // still bypass that through unknown/any plumbing or an erased generic.
+      // If null were written, the read path would treat it as a perpetual miss,
+      // re-running fn() and rewriting "null" on every request for a hot key.
+      const key = "test:key" as CacheKey;
+      const fn = vi.fn().mockResolvedValue(null);
+
+      mockRedis.get.mockResolvedValue(null); // cache miss
+
+      const result = await cacheService.withCache(
+        fn as unknown as () => Promise<{ data: string }>,
+        key,
+        60000
+      );
+
+      expect(result).toBeNull();
+      expect(fn).toHaveBeenCalledOnce();
+      expect(mockRedis.setEx).not.toHaveBeenCalled();
+    });
   });
 
   describe("withCacheNullable", () => {
