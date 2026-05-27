@@ -3,6 +3,7 @@ import {
   getLegacySsoProviderAliases,
   getSsoProviderLookupCandidates,
   normalizeSsoProvider,
+  resolveAccountProvider,
 } from "./provider-normalization";
 
 describe("SSO provider normalization", () => {
@@ -24,5 +25,14 @@ describe("SSO provider normalization", () => {
   test("includes canonical and legacy provider ids when searching for linked accounts", () => {
     expect(getSsoProviderLookupCandidates("azuread")).toEqual(["azuread", "azure-ad"]);
     expect(getSsoProviderLookupCandidates("google")).toEqual(["google"]);
+  });
+
+  test("resolves NextAuth provider ids to the canonical Account.provider string", () => {
+    expect(resolveAccountProvider("azure-ad")).toBe("azuread");
+    expect(resolveAccountProvider("google")).toBe("google");
+  });
+
+  test("passes unknown providers through unchanged", () => {
+    expect(resolveAccountProvider("credentials")).toBe("credentials");
   });
 });
