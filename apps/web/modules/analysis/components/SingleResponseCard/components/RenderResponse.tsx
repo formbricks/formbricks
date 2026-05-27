@@ -122,7 +122,7 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
           <ResponseBadges
             items={[{ value: responseData.toString() }]}
             isExpanded={isExpanded}
-            icon={<PhoneIcon className="h-4 w-4 text-slate-500" />}
+            icon={<PhoneIcon className="size-4 text-slate-500" />}
             showId={showId}
           />
         );
@@ -134,7 +134,7 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
           <ResponseBadges
             items={[{ value: responseData.toString() }]}
             isExpanded={isExpanded}
-            icon={<CheckCheckIcon className="h-4 w-4 text-slate-500" />}
+            icon={<CheckCheckIcon className="size-4 text-slate-500" />}
             showId={showId}
           />
         );
@@ -146,7 +146,7 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
           <ResponseBadges
             items={[{ value: responseData.toString() }]}
             isExpanded={isExpanded}
-            icon={<MousePointerClickIcon className="h-4 w-4 text-slate-500" />}
+            icon={<MousePointerClickIcon className="size-4 text-slate-500" />}
             showId={showId}
           />
         );

@@ -126,7 +126,7 @@ export const GeneratePersonalLinkModal = ({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent>
         <DialogHeader>
-          <LinkIcon className="h-4 w-4" />
+          <LinkIcon className="size-4" />
           <DialogTitle>{t("workspace.contacts.generate_personal_link")}</DialogTitle>
           <DialogDescription>{t("workspace.contacts.generate_personal_link_description")}</DialogDescription>
         </DialogHeader>
@@ -165,7 +165,7 @@ export const GeneratePersonalLinkModal = ({
                     className="flex-1 font-mono text-sm"
                   />
                   <Button variant="secondary" onClick={() => handleCopyUrl(generatedUrl)} className="gap-1">
-                    <CopyIcon className="h-4 w-4" />
+                    <CopyIcon className="size-4" />
                     {t("common.copy")}
                   </Button>
                 </div>

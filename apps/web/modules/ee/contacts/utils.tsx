@@ -5,12 +5,12 @@ import { TContactAttributeDataType } from "@formbricks/types/contact-attribute-k
 export const getContactAttributeDataTypeIcon = (dataType: TContactAttributeDataType) => {
   switch (dataType) {
     case "date":
-      return <Calendar1Icon className="h-4 w-4" />;
+      return <Calendar1Icon className="size-4" />;
     case "number":
-      return <HashIcon className="h-4 w-4" />;
+      return <HashIcon className="size-4" />;
     case "string":
     default:
-      return <TagIcon className="h-4 w-4" />;
+      return <TagIcon className="size-4" />;
   }
 };
 

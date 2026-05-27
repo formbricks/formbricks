@@ -41,15 +41,15 @@ import { FeedbackRecordsTableToolbarLeft } from "./feedback-records-table-toolba
 const RECORDS_PER_PAGE = 50;
 
 const FIELD_TYPE_ICONS: Record<string, React.ReactNode> = {
-  text: <TypeIcon className="h-3.5 w-3.5" />,
-  categorical: <HashIcon className="h-3.5 w-3.5" />,
-  nps: <HashIcon className="h-3.5 w-3.5" />,
-  csat: <HashIcon className="h-3.5 w-3.5" />,
-  ces: <HashIcon className="h-3.5 w-3.5" />,
-  rating: <HashIcon className="h-3.5 w-3.5" />,
-  number: <HashIcon className="h-3.5 w-3.5" />,
-  boolean: <ToggleLeftIcon className="h-3.5 w-3.5" />,
-  date: <CalendarIcon className="h-3.5 w-3.5" />,
+  text: <TypeIcon className="size-3.5" />,
+  categorical: <HashIcon className="size-3.5" />,
+  nps: <HashIcon className="size-3.5" />,
+  csat: <HashIcon className="size-3.5" />,
+  ces: <HashIcon className="size-3.5" />,
+  rating: <HashIcon className="size-3.5" />,
+  number: <HashIcon className="size-3.5" />,
+  boolean: <ToggleLeftIcon className="size-3.5" />,
+  date: <CalendarIcon className="size-3.5" />,
 };
 
 const formatValue = (record: FeedbackRecordData, t: TFunction, locale: string): string => {
@@ -229,7 +229,7 @@ export const FeedbackRecordsTable = ({
     return (
       <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
         <div className="flex h-48 flex-col items-center justify-center gap-3 px-4 text-center">
-          <MessageSquareTextIcon className="h-8 w-8 text-slate-400" />
+          <MessageSquareTextIcon className="size-8 text-slate-400" />
           <p className="text-sm text-slate-500">{error}</p>
           <Button variant="secondary" size="sm" onClick={handleRefresh}>
             {t("common.retry")}
@@ -329,9 +329,9 @@ export const FeedbackRecordsTable = ({
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button size="sm" variant="secondary">
-                      <PlusIcon className="h-4 w-4" />
+                      <PlusIcon className="size-4" />
                       {t("workspace.unify.add_feedback_record")}
-                      <ChevronDownIcon className="h-4 w-4" />
+                      <ChevronDownIcon className="size-4" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
@@ -352,7 +352,7 @@ export const FeedbackRecordsTable = ({
                 </DropdownMenu>
               ) : (
                 <Button size="sm" variant="secondary" onClick={openCreateDrawer}>
-                  <PlusIcon className="h-4 w-4" />
+                  <PlusIcon className="size-4" />
                   {t("workspace.unify.add_feedback_record")}
                 </Button>
               ))}
@@ -367,7 +367,7 @@ export const FeedbackRecordsTable = ({
               onClick={handleRefresh}
               disabled={isRefreshing || isLoadingMore}
               aria-label={t("workspace.unify.refresh_feedback_records")}>
-              <RefreshCwIcon className="h-3.5 w-3.5" aria-hidden="true" />
+              <RefreshCwIcon className="size-3.5" aria-hidden="true" />
             </Button>
           </div>
         </div>
@@ -543,7 +543,7 @@ const FeedbackRecordRow = ({
       </td>
       <td className="whitespace-nowrap px-4 py-3">
         <span className="inline-flex items-center gap-1 text-slate-600">
-          {FIELD_TYPE_ICONS[record.field_type] ?? <HashIcon className="h-3.5 w-3.5" />}
+          {FIELD_TYPE_ICONS[record.field_type] ?? <HashIcon className="size-3.5" />}
           {record.field_type}
         </span>
       </td>

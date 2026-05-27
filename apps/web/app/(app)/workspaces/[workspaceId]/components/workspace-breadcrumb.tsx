@@ -154,31 +154,32 @@ export const WorkspaceBreadcrumb = ({
       <DropdownMenu onOpenChange={setIsWorkspaceDropdownOpen}>
         <DropdownMenuTrigger className="flex cursor-pointer items-center gap-1 outline-none" asChild>
           <div className="flex items-center gap-1">
-            <FoldersIcon className="h-3 w-3" strokeWidth={1.5} />
+            <FoldersIcon className="size-3" strokeWidth={1.5} />
             <span>{workspaceName}</span>
-            {isPending && <Loader2 className="h-3 w-3 animate-spin" strokeWidth={1.5} />}
+            {isPending && <Loader2 className="size-3 animate-spin" strokeWidth={1.5} />}
             {isEnvironmentBreadcrumbVisible && !isWorkspaceDropdownOpen ? (
-              <ChevronRightIcon className="h-3 w-3" strokeWidth={1.5} />
+              <ChevronRightIcon className="size-3" strokeWidth={1.5} />
             ) : (
-              <ChevronDownIcon className="h-3 w-3" strokeWidth={1.5} />
+              <ChevronDownIcon className="size-3" strokeWidth={1.5} />
             )}
           </div>
         </DropdownMenuTrigger>
 
         <DropdownMenuContent align="start" className="mt-2">
           <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
-            <FoldersIcon className="mr-2 inline h-4 w-4" strokeWidth={1.5} />
+            <FoldersIcon className="mr-2 inline size-4" strokeWidth={1.5} />
             {t("common.choose_workspace")}
           </div>
           {isLoadingWorkspaces && (
             <div className="flex items-center justify-center py-2">
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="size-4 animate-spin" />
             </div>
           )}
           {!isLoadingWorkspaces && loadError && (
             <div className="px-2 py-4">
               <p className="mb-2 text-sm text-red-600">{loadError}</p>
               <button
+                type="button"
                 onClick={() => {
                   setLoadError(null);
                   setWorkspaces([]);
@@ -211,7 +212,7 @@ export const WorkspaceBreadcrumb = ({
                       aria-disabled="true"
                       className="relative flex w-full cursor-not-allowed select-none items-center justify-between rounded-lg py-1.5 pl-8 pr-2 text-sm font-medium text-slate-400">
                       <span>{t("common.add_new_workspace")}</span>
-                      <PlusIcon className="ml-2 h-4 w-4" strokeWidth={1.5} />
+                      <PlusIcon className="ml-2 size-4" strokeWidth={1.5} />
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-fit max-w-72 px-3 py-2 text-sm text-slate-700">
@@ -225,7 +226,7 @@ export const WorkspaceBreadcrumb = ({
                   onClick={handleAddWorkspace}
                   className="w-full cursor-pointer justify-between">
                   <span>{t("common.add_new_workspace")}</span>
-                  <PlusIcon className="ml-2 h-4 w-4" strokeWidth={1.5} />
+                  <PlusIcon className="ml-2 size-4" strokeWidth={1.5} />
                 </DropdownMenuCheckboxItem>
               )}
             </>
@@ -236,7 +237,7 @@ export const WorkspaceBreadcrumb = ({
               handleWorkspaceSettingsNavigation(`${workspaceBasePath}/settings/workspace/general`)
             }
             className="cursor-pointer">
-            <CogIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />
+            <CogIcon className="mr-2 size-4" strokeWidth={1.5} />
             {t("common.settings")}
           </DropdownMenuCheckboxItem>
         </DropdownMenuContent>

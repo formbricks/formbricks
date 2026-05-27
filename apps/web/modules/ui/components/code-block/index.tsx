@@ -42,7 +42,7 @@ export const CodeBlock = ({
               navigator.clipboard.writeText(childText);
               toast.success(t("common.copied_to_clipboard"));
             }}
-            className="h-4 w-4"
+            className="size-4"
           />
         </div>
       )}

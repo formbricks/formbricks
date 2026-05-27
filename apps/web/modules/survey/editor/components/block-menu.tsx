@@ -39,8 +39,8 @@ export const BlockMenu = ({
               onMoveUp();
             }
           }}
-          className="h-8 w-8">
-          <ArrowUpIcon className="h-4 w-4" />
+          className="size-8">
+          <ArrowUpIcon className="size-4" />
         </Button>
       </TooltipRenderer>
 
@@ -55,8 +55,8 @@ export const BlockMenu = ({
               onMoveDown();
             }
           }}
-          className="h-8 w-8">
-          <ArrowDownIcon className="h-4 w-4" />
+          className="size-8">
+          <ArrowDownIcon className="size-4" />
         </Button>
       </TooltipRenderer>
 
@@ -68,8 +68,8 @@ export const BlockMenu = ({
             e.stopPropagation();
             onDuplicate();
           }}
-          className="h-8 w-8">
-          <CopyIcon className="h-4 w-4" />
+          className="size-8">
+          <CopyIcon className="size-4" />
         </Button>
       </TooltipRenderer>
 
@@ -84,8 +84,8 @@ export const BlockMenu = ({
               onDelete();
             }
           }}
-          className="h-8 w-8">
-          <TrashIcon className="h-4 w-4" />
+          className="size-8">
+          <TrashIcon className="size-4" />
         </Button>
       </TooltipRenderer>
     </div>

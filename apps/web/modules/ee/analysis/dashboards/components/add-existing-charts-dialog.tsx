@@ -147,7 +147,7 @@ export function AddExistingChartsDialog({
         <DialogBody className="p-1">
           {isLoading ? (
             <div className="flex items-center justify-center rounded-md border px-3 py-2">
-              <Loader2Icon className="h-5 w-5 animate-spin text-slate-400" />
+              <Loader2Icon className="size-5 animate-spin text-slate-400" />
             </div>
           ) : (
             <div className="space-y-2">

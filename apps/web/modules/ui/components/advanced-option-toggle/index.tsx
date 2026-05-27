@@ -29,7 +29,7 @@ export const AdvancedOptionToggle = ({
 }: AdvancedOptionToggleProps) => {
   return (
     <div className={cn("px-4 py-2", customContainerClass)}>
-      <div className="flex items-center space-x-1">
+      <div className="flex items-center gap-x-1">
         <Switch id={htmlId} checked={isChecked} onCheckedChange={onToggle} disabled={disabled} />
         <Label htmlFor={htmlId} className="cursor-pointer rounded-l-lg">
           <div className="ml-2">

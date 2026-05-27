@@ -70,7 +70,7 @@ export const NoCodeActionForm = ({ form, isReadOnly }: NoCodeActionFormProps) =>
         )}
         {watch("noCodeConfig.type") === "pageView" && (
           <Alert>
-            <InfoIcon className="h-4 w-4" />
+            <InfoIcon className="size-4" />
             <AlertTitle>{t("workspace.actions.page_view")}</AlertTitle>
             <AlertDescription>
               {t("workspace.actions.this_action_will_be_triggered_when_the_page_is_loaded")}
@@ -79,7 +79,7 @@ export const NoCodeActionForm = ({ form, isReadOnly }: NoCodeActionFormProps) =>
         )}
         {watch("noCodeConfig.type") === "exitIntent" && (
           <Alert>
-            <InfoIcon className="h-4 w-4" />
+            <InfoIcon className="size-4" />
             <AlertTitle>{t("workspace.actions.exit_intent")}</AlertTitle>
             <AlertDescription>
               {t("workspace.actions.this_action_will_be_triggered_when_the_user_tries_to_leave_the_page")}
@@ -88,7 +88,7 @@ export const NoCodeActionForm = ({ form, isReadOnly }: NoCodeActionFormProps) =>
         )}
         {watch("noCodeConfig.type") === "fiftyPercentScroll" && (
           <Alert>
-            <InfoIcon className="h-4 w-4" />
+            <InfoIcon className="size-4" />
             <AlertTitle>{t("workspace.actions.fifty_percent_scroll")}</AlertTitle>
             <AlertDescription>
               {t(
@@ -100,7 +100,7 @@ export const NoCodeActionForm = ({ form, isReadOnly }: NoCodeActionFormProps) =>
         {watch("noCodeConfig.type") === "pageDwell" && (
           <div className="flex flex-col gap-2">
             <Alert>
-              <InfoIcon className="h-4 w-4" />
+              <InfoIcon className="size-4" />
               <AlertTitle>{t("workspace.actions.time_on_page")}</AlertTitle>
               <AlertDescription>
                 {t("workspace.actions.this_action_will_be_triggered_after_user_stays_on_page")}

@@ -40,7 +40,7 @@ export function ConnectorsTable({
       </div>
       {isLoading ? (
         <div className="flex h-32 items-center justify-center">
-          <Loader2Icon className="h-6 w-6 animate-spin text-slate-500" />
+          <Loader2Icon className="size-6 animate-spin text-slate-500" />
         </div>
       ) : (
         <ConnectorsTableRowsContainer

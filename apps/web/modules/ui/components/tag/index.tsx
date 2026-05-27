@@ -38,12 +38,13 @@ export const Tag = ({
 
       {allowDelete && (
         <button
+          type="button"
           className="cursor-pointer text-sm"
           onClick={() => {
             if (tags && setTagsState) setTagsState(tags.filter((tag) => tag.tagId !== tagId));
             onDelete(tagId);
           }}>
-          <XCircleIcon fontSize={24} className="h-4 w-4 text-slate-100 hover:text-slate-200" />
+          <XCircleIcon fontSize={24} className="size-4 text-slate-100 hover:text-slate-200" />
         </button>
       )}
     </div>

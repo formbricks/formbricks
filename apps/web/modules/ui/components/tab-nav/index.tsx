@@ -20,7 +20,7 @@ interface NavProps {
 
 const Nav: React.FC<NavProps> = ({ tabs, activeId, setActiveId, activeTabClassName, disabled }) => {
   return (
-    <nav className="flex h-full items-center space-x-3" aria-label="Tabs">
+    <nav className="flex h-full items-center gap-x-3" aria-label="Tabs">
       {tabs.map((tab) => (
         <button
           type="button"
@@ -36,7 +36,7 @@ const Nav: React.FC<NavProps> = ({ tabs, activeId, setActiveId, activeTabClassNa
                 : "text-slate-500 hover:text-slate-700"
           )}
           aria-current={tab.id === activeId ? "page" : undefined}>
-          {tab.icon && <div className="flex h-5 w-5 items-center">{tab.icon}</div>}
+          {tab.icon && <div className="flex size-5 items-center">{tab.icon}</div>}
           {tab.label}
         </button>
       ))}

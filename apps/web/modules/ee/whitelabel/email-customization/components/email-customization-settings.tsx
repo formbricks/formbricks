@@ -237,7 +237,7 @@ export const EmailCustomizationSettings = ({
                           inputRef.current?.click();
                         }}
                         disabled={isReadOnly || isSaving}>
-                        <RepeatIcon className="h-4 w-4" />
+                        <RepeatIcon className="size-4" />
                         {t("workspace.settings.general.replace_logo")}
                       </Button>
                       <Button
@@ -245,7 +245,7 @@ export const EmailCustomizationSettings = ({
                         onClick={removeLogo}
                         variant="outline"
                         disabled={isReadOnly || isSaving}>
-                        <Trash2Icon className="h-4 w-4" />
+                        <Trash2Icon className="size-4" />
                         {t("workspace.settings.general.remove_logo")}
                       </Button>
                     </div>

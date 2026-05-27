@@ -174,7 +174,7 @@ export const FaviconCustomizationSettings = ({
               alt="Favicon"
               width={64}
               height={64}
-              className="-mb-2 h-16 w-16 rounded-lg border object-contain p-1"
+              className="-mb-2 size-16 rounded-lg border object-contain p-1"
             />
           ) : (
             <FileInput

@@ -82,7 +82,7 @@ export const AddElementToBlockButton = ({
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <Button variant="secondary">
-          <PlusIcon className="h-4 w-4" />
+          <PlusIcon className="size-4" />
           <div>
             <p className="text-sm font-medium text-slate-900">
               {t("workspace.surveys.edit.add_question_to_block")}

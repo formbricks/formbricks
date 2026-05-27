@@ -24,7 +24,7 @@ export const SurveyAnalysisNavigation = ({ survey, activeId }: SurveyAnalysisNav
     {
       id: "summary",
       label: t("common.summary"),
-      icon: <PresentationIcon className="h-5 w-5" />,
+      icon: <PresentationIcon className="size-5" />,
       href: `${url}/summary?referer=true`,
       current: pathname?.includes("/summary"),
       onClick: () => {
@@ -34,7 +34,7 @@ export const SurveyAnalysisNavigation = ({ survey, activeId }: SurveyAnalysisNav
     {
       id: "responses",
       label: t("common.responses"),
-      icon: <InboxIcon className="h-5 w-5" />,
+      icon: <InboxIcon className="size-5" />,
       href: `${url}/responses?referer=true`,
       current: pathname?.includes("/responses"),
       onClick: () => {

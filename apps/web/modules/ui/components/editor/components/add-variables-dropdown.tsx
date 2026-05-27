@@ -21,14 +21,14 @@ export const AddVariablesDropdown: React.FC<IAddVariablesDropdown> = (props) => 
             <>
               <div className="hidden sm:flex">
                 add_variable
-                <ChevronDownIcon className="ml-1 mt-[2px] h-4 w-4" />
+                <ChevronDownIcon className="ml-1 mt-[2px] size-4" />
               </div>
               <div className="block sm:hidden">+</div>
             </>
           ) : (
             <div className="flex">
               add_variable
-              <ChevronDownIcon className="ml-1 mt-[2px] h-4 w-4" />
+              <ChevronDownIcon className="ml-1 mt-[2px] size-4" />
             </div>
           )}
         </div>

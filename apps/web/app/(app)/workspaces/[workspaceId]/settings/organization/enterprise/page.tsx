@@ -109,7 +109,7 @@ const Page = async (props: Readonly<{ params: Promise<{ workspaceId: string }> }
           <div className="relative isolate mt-8 overflow-hidden rounded-lg bg-slate-900 px-3 pt-8 shadow-2xl sm:px-8 md:pt-12 lg:flex lg:gap-x-10 lg:px-12 lg:pt-0">
             <svg
               viewBox="0 0 1024 1024"
-              className="absolute left-1/2 top-1/2 -z-10 h-[64rem] w-[64rem] -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)] sm:left-full sm:-ml-80 lg:left-1/2 lg:ml-0 lg:-translate-x-1/2 lg:translate-y-0"
+              className="absolute left-1/2 top-1/2 -z-10 size-[64rem] -translate-y-1/2 [mask-image:radial-gradient(closest-side,white,transparent)] sm:left-full sm:-ml-80 lg:left-1/2 lg:ml-0 lg:-translate-x-1/2 lg:translate-y-0"
               aria-hidden="true">
               <circle
                 cx={512}
@@ -145,7 +145,7 @@ const Page = async (props: Readonly<{ params: Promise<{ workspaceId: string }> }
                 {paidFeatures.map((feature) => (
                   <li key={feature.title} className="flex items-center">
                     <div className="rounded-full border border-green-300 bg-green-100 p-0.5 dark:bg-green-800">
-                      <CheckIcon className="h-5 w-5 p-0.5 text-green-500 dark:text-green-400" />
+                      <CheckIcon className="size-5 p-0.5 text-green-500 dark:text-green-400" />
                     </div>
                     <span className="ml-2 text-sm text-slate-500 dark:text-slate-400">{feature.title}</span>
                     {feature.comingSoon && (

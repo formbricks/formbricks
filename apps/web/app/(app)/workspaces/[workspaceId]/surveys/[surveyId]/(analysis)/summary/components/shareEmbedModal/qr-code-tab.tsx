@@ -77,7 +77,7 @@ export const QRCodeTab = ({ surveyUrl }: QRCodeTabProps) => {
     <>
       {isLoading && (
         <div className="flex flex-col items-center gap-2">
-          <LoaderCircle className="h-8 w-8 animate-spin text-slate-500" />
+          <LoaderCircle className="size-8 animate-spin text-slate-500" />
           <p className="text-sm text-slate-500">{t("workspace.surveys.summary.generating_qr_code")}</p>
         </div>
       )}
@@ -91,7 +91,7 @@ export const QRCodeTab = ({ surveyUrl }: QRCodeTabProps) => {
 
       {!isLoading && !hasError && (
         <div className="flex flex-col items-start justify-center gap-4">
-          <div className="flex h-[184px] w-[184px] items-center justify-center overflow-hidden rounded-lg border bg-white">
+          <div className="flex size-[184px] items-center justify-center overflow-hidden rounded-lg border bg-white">
             <div ref={qrCodeRef} className="h-full w-full" />
           </div>
           <Button
@@ -103,9 +103,9 @@ export const QRCodeTab = ({ surveyUrl }: QRCodeTabProps) => {
               ? t("workspace.surveys.summary.downloading_qr_code")
               : t("workspace.surveys.summary.download_qr_code")}
             {isDownloading ? (
-              <LoaderCircle className="h-4 w-4 animate-spin" />
+              <LoaderCircle className="size-4 animate-spin" />
             ) : (
-              <Download className="h-4 w-4" />
+              <Download className="size-4" />
             )}
           </Button>
         </div>

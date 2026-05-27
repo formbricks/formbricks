@@ -25,7 +25,7 @@ export const TagsLoading = () => {
                 <div className="col-span-2 h-10 animate-pulse rounded-md bg-slate-200" />
 
                 <div className="flex items-center justify-center">
-                  <div className="h-5 w-5 animate-pulse rounded-md bg-slate-200" />
+                  <div className="size-5 animate-pulse rounded-md bg-slate-200" />
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="h-8 w-1/2 animate-pulse rounded-md bg-slate-200" />

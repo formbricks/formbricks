@@ -13,15 +13,15 @@ interface SurveyStatusIndicatorProps {
 }
 
 const InProgressIndicator = () => (
-  <span className="relative flex h-3 w-3">
+  <span className="relative flex size-3">
     <span className="absolute inline-flex h-full w-full animate-ping-slow rounded-full bg-green-500 opacity-75"></span>
-    <span className="relative inline-flex h-3 w-3 rounded-full bg-green-500"></span>
+    <span className="relative inline-flex size-3 rounded-full bg-green-500"></span>
   </span>
 );
 
 const IconIndicator = ({ containerClassName, Icon }: { containerClassName: string; Icon: LucideIcon }) => (
   <div className={containerClassName}>
-    <Icon className="h-3 w-3 text-slate-600" />
+    <Icon className="size-3 text-slate-600" />
   </div>
 );
 
@@ -108,7 +108,7 @@ export const SurveyStatusIndicator = ({
         <Tooltip>
           <TooltipTrigger>{renderStatusIndicator({ status, isScheduled, tooltip })}</TooltipTrigger>
           <TooltipContent>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-x-2">
               {renderTooltipContent({ status, isScheduled, t })}
             </div>
           </TooltipContent>

@@ -134,7 +134,7 @@ export const SaveAsNewSegmentModal = ({
       }}>
       <DialogContent>
         <DialogHeader>
-          <UsersIcon className="h-5 w-5" />
+          <UsersIcon className="size-5" />
           <DialogTitle>{t("workspace.segments.save_as_new_segment")}</DialogTitle>
           <DialogDescription>
             {t("workspace.segments.save_your_filters_as_a_segment_to_use_it_in_other_surveys")}

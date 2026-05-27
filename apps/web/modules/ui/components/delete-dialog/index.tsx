@@ -50,7 +50,7 @@ export const DeleteDialog = ({
       <DialogContent width="narrow" hideCloseButton={true} disableCloseOnOutsideClick={true}>
         <DialogHeader>
           <div className="flex items-center gap-2">
-            <CircleAlert className="h-4 w-4" />
+            <CircleAlert className="size-4" />
             <div>
               <DialogTitle>{title || t("common.delete_what", { deleteWhat })}</DialogTitle>
               <DialogDescription>{t("workspace.general.this_action_cannot_be_undone")}</DialogDescription>

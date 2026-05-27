@@ -159,7 +159,7 @@ export function FiltersPanel({
                     <SelectItem key={option.value} value={option.value}>
                       <span className="flex items-center gap-1.5">
                         {option.isGenerated && (
-                          <SparklesIcon className="h-4 w-4 text-slate-500" aria-hidden="true" />
+                          <SparklesIcon className="size-4 text-slate-500" aria-hidden="true" />
                         )}
                         {option.label}
                       </span>
@@ -203,8 +203,8 @@ export function FiltersPanel({
                 variant="ghost"
                 size="icon"
                 onClick={() => handleRemoveFilter(index)}
-                className="h-8 w-8">
-                <TrashIcon className="h-4 w-4" />
+                className="size-8">
+                <TrashIcon className="size-4" />
               </Button>
             </div>
           );
@@ -212,7 +212,7 @@ export function FiltersPanel({
 
         {hasFilters && (
           <Button type="button" variant="outline" size="sm" onClick={handleAddFilter} className="h-8">
-            <Plus className="h-4 w-4" />
+            <Plus className="size-4" />
             {t("workspace.analysis.charts.add_filter")}
           </Button>
         )}
