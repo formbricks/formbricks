@@ -21,6 +21,10 @@ const DRY_RUN = process.argv.includes("--dry-run");
 const LINEAR_TEAM_ID = "272e6dd2-fcab-4270-be37-1626dce35d2c"; // Engineering
 const LINEAR_TODO_STATE_ID = "c32c8340-e8f8-48f4-a863-afabe3b19e17"; // Todo
 const LINEAR_SECURITY_LABEL_ID = "f9c50a45-3bd9-45e7-a70a-5b88aba910f9"; // security
+// The Engineering team uses T-shirt estimation, where the estimate is a plain
+// integer the UI renders as a size: 1=XS, 2=S, 3=M, 5=L. We default every
+// Dependabot issue to "S".
+const LINEAR_ESTIMATE_S = 2;
 
 // Dependabot severity -> Linear priority (0 none, 1 urgent, 2 high, 3 medium, 4 low)
 const PRIORITY_BY_SEVERITY = {
@@ -114,6 +118,7 @@ async function createIssue(apiKey, { title, description, priority }) {
         teamId: LINEAR_TEAM_ID,
         stateId: LINEAR_TODO_STATE_ID,
         labelIds: [LINEAR_SECURITY_LABEL_ID],
+        estimate: LINEAR_ESTIMATE_S,
         title,
         description,
         priority,
