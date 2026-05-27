@@ -82,7 +82,7 @@ function Label({
         data-slot="label"
         data-variant={variant}
         className={cn(baseClasses, variantClass, className)}
-        {...(restProps as React.HTMLAttributes<HTMLSpanElement>)}
+        {...restProps}
         dangerouslySetInnerHTML={{ __html: safeHtml }}
       />
     );
@@ -115,7 +115,7 @@ function Label({
         variantClass,
         className
       )}
-      {...(restProps as React.HTMLAttributes<HTMLSpanElement>)}>
+      {...restProps}>
       {children}
     </span>
   );
