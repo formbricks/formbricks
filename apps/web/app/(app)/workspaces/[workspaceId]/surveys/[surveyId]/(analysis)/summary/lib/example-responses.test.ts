@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { z } from "zod";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { type TSurvey } from "@formbricks/types/surveys/types";
 import {
@@ -76,7 +75,12 @@ describe("buildExampleResponsesSchema", () => {
         ],
       },
       // Unsupported types are dropped from the schema.
-      { ...baseQuestion, id: "q_date", type: TSurveyElementTypeEnum.Date, format: "M-d-y" },
+      {
+        ...baseQuestion,
+        id: "q_file",
+        type: TSurveyElementTypeEnum.FileUpload,
+        allowMultipleFiles: false,
+      },
       { ...baseQuestion, id: "q_cta", type: TSurveyElementTypeEnum.CTA, buttonExternal: false },
     ] as unknown as TSurvey["questions"]);
 
@@ -192,6 +196,384 @@ describe("buildExampleResponsesSchema", () => {
     expect(ctx.supportedElementIds).toEqual(["q_legacy"]);
   });
 
+  test("supports CSAT, CES, Date, Ranking, Matrix, Address, ContactInfo", () => {
+    const survey = makeSurvey([
+      { ...baseQuestion, id: "q_csat", type: TSurveyElementTypeEnum.CSAT, scale: "number", range: 5 },
+      { ...baseQuestion, id: "q_ces", type: TSurveyElementTypeEnum.CES, scale: "number", range: 7 },
+      { ...baseQuestion, id: "q_date", type: TSurveyElementTypeEnum.Date, format: "M-d-y" },
+      {
+        ...baseQuestion,
+        id: "q_rank",
+        type: TSurveyElementTypeEnum.Ranking,
+        choices: [
+          { id: "c1", label: i18n("Speed") },
+          { id: "c2", label: i18n("Price") },
+          { id: "c3", label: i18n("Quality") },
+        ],
+      },
+      {
+        ...baseQuestion,
+        id: "q_matrix",
+        type: TSurveyElementTypeEnum.Matrix,
+        rows: [
+          { id: "r1", label: i18n("Speed") },
+          { id: "r2", label: i18n("Price") },
+        ],
+        columns: [
+          { id: "c1", label: i18n("Bad") },
+          { id: "c2", label: i18n("Good") },
+        ],
+      },
+      {
+        ...baseQuestion,
+        id: "q_addr",
+        type: TSurveyElementTypeEnum.Address,
+        addressLine1: { show: true, required: true, placeholder: i18n("Street") },
+        addressLine2: { show: false, required: false, placeholder: i18n("") },
+        city: { show: true, required: true, placeholder: i18n("City") },
+        state: { show: false, required: false, placeholder: i18n("") },
+        zip: { show: true, required: false, placeholder: i18n("Zip") },
+        country: { show: true, required: true, placeholder: i18n("Country") },
+      },
+      {
+        ...baseQuestion,
+        id: "q_contact",
+        type: TSurveyElementTypeEnum.ContactInfo,
+        firstName: { show: true, required: true, placeholder: i18n("First") },
+        lastName: { show: true, required: false, placeholder: i18n("Last") },
+        email: { show: true, required: true, placeholder: i18n("Email") },
+        phone: { show: false, required: false, placeholder: i18n("") },
+        company: { show: false, required: false, placeholder: i18n("") },
+      },
+    ] as unknown as TSurvey["questions"]);
+
+    const { ctx } = buildExampleResponsesSchema(survey);
+    expect(ctx.supportedElementIds).toEqual([
+      "q_csat",
+      "q_ces",
+      "q_date",
+      "q_rank",
+      "q_matrix",
+      "q_addr",
+      "q_contact",
+    ]);
+  });
+
+  test("validates CSAT and CES range bounds", () => {
+    const survey = makeSurvey([
+      { ...baseQuestion, id: "q_csat", type: TSurveyElementTypeEnum.CSAT, scale: "number", range: 5 },
+      { ...baseQuestion, id: "q_ces", type: TSurveyElementTypeEnum.CES, scale: "number", range: 7 },
+    ] as unknown as TSurvey["questions"]);
+
+    const { schema } = buildExampleResponsesSchema(survey);
+
+    const valid = {
+      responses: Array.from({ length: EXAMPLE_RESPONSE_COUNT }, (_, i) => ({
+        q_csat: (i % 5) + 1,
+        q_ces: (i % 7) + 1,
+      })),
+    };
+    expect(schema.safeParse(valid).success).toBe(true);
+
+    const csatTooHigh = {
+      responses: Array.from({ length: EXAMPLE_RESPONSE_COUNT }, () => ({ q_csat: 6, q_ces: 1 })),
+    };
+    expect(schema.safeParse(csatTooHigh).success).toBe(false);
+
+    const cesTooHigh = {
+      responses: Array.from({ length: EXAMPLE_RESPONSE_COUNT }, () => ({ q_csat: 5, q_ces: 8 })),
+    };
+    expect(schema.safeParse(cesTooHigh).success).toBe(false);
+  });
+
+  test("validates Date as ISO YYYY-MM-DD", () => {
+    const survey = makeSurvey([
+      { ...baseQuestion, id: "q_date", type: TSurveyElementTypeEnum.Date, format: "M-d-y" },
+    ] as unknown as TSurvey["questions"]);
+
+    const { schema } = buildExampleResponsesSchema(survey);
+
+    const ok = {
+      responses: Array.from({ length: EXAMPLE_RESPONSE_COUNT }, () => ({ q_date: "2025-09-14" })),
+    };
+    expect(schema.safeParse(ok).success).toBe(true);
+
+    const wrongFormat = {
+      responses: Array.from({ length: EXAMPLE_RESPONSE_COUNT }, () => ({ q_date: "09/14/2025" })),
+    };
+    expect(schema.safeParse(wrongFormat).success).toBe(false);
+  });
+
+  test("Ranking requires a permutation of all choices (no duplicates, full length)", () => {
+    const survey = makeSurvey([
+      {
+        ...baseQuestion,
+        id: "q_rank",
+        type: TSurveyElementTypeEnum.Ranking,
+        choices: [
+          { id: "c1", label: i18n("A") },
+          { id: "c2", label: i18n("B") },
+          { id: "c3", label: i18n("C") },
+        ],
+      },
+    ] as unknown as TSurvey["questions"]);
+
+    const { schema } = buildExampleResponsesSchema(survey);
+
+    const fullPerm = {
+      responses: Array.from({ length: EXAMPLE_RESPONSE_COUNT }, () => ({ q_rank: ["B", "A", "C"] })),
+    };
+    expect(schema.safeParse(fullPerm).success).toBe(true);
+
+    const duplicates = {
+      responses: Array.from({ length: EXAMPLE_RESPONSE_COUNT }, () => ({ q_rank: ["A", "A", "C"] })),
+    };
+    expect(schema.safeParse(duplicates).success).toBe(false);
+
+    const tooShort = {
+      responses: Array.from({ length: EXAMPLE_RESPONSE_COUNT }, () => ({ q_rank: ["A", "B"] })),
+    };
+    expect(schema.safeParse(tooShort).success).toBe(false);
+
+    const unknownLabel = {
+      responses: Array.from({ length: EXAMPLE_RESPONSE_COUNT }, () => ({ q_rank: ["A", "B", "Z"] })),
+    };
+    expect(schema.safeParse(unknownLabel).success).toBe(false);
+  });
+
+  test("Matrix requires one column label per row", () => {
+    const survey = makeSurvey([
+      {
+        ...baseQuestion,
+        id: "q_matrix",
+        type: TSurveyElementTypeEnum.Matrix,
+        rows: [
+          { id: "r1", label: i18n("Speed") },
+          { id: "r2", label: i18n("Price") },
+        ],
+        columns: [
+          { id: "c1", label: i18n("Bad") },
+          { id: "c2", label: i18n("Good") },
+        ],
+      },
+    ] as unknown as TSurvey["questions"]);
+
+    const { schema } = buildExampleResponsesSchema(survey);
+
+    const ok = {
+      responses: Array.from({ length: EXAMPLE_RESPONSE_COUNT }, () => ({
+        q_matrix: { Speed: "Good", Price: "Bad" },
+      })),
+    };
+    expect(schema.safeParse(ok).success).toBe(true);
+
+    const missingRow = {
+      responses: Array.from({ length: EXAMPLE_RESPONSE_COUNT }, () => ({ q_matrix: { Speed: "Good" } })),
+    };
+    expect(schema.safeParse(missingRow).success).toBe(false);
+
+    const unknownColumn = {
+      responses: Array.from({ length: EXAMPLE_RESPONSE_COUNT }, () => ({
+        q_matrix: { Speed: "Mediocre", Price: "Bad" },
+      })),
+    };
+    expect(schema.safeParse(unknownColumn).success).toBe(false);
+  });
+
+  test("Address schema only requires shown+required fields", () => {
+    const survey = makeSurvey([
+      {
+        ...baseQuestion,
+        id: "q_addr",
+        type: TSurveyElementTypeEnum.Address,
+        addressLine1: { show: true, required: true, placeholder: i18n("Street") },
+        addressLine2: { show: false, required: false, placeholder: i18n("") },
+        city: { show: true, required: true, placeholder: i18n("City") },
+        state: { show: false, required: false, placeholder: i18n("") },
+        zip: { show: true, required: false, placeholder: i18n("Zip") },
+        country: { show: true, required: true, placeholder: i18n("Country") },
+      },
+    ] as unknown as TSurvey["questions"]);
+
+    const { schema } = buildExampleResponsesSchema(survey);
+
+    const ok = {
+      responses: Array.from({ length: EXAMPLE_RESPONSE_COUNT }, () => ({
+        q_addr: { addressLine1: "1 Test St", city: "Vienna", country: "AT" },
+      })),
+    };
+    expect(schema.safeParse(ok).success).toBe(true);
+
+    const missingRequired = {
+      responses: Array.from({ length: EXAMPLE_RESPONSE_COUNT }, () => ({
+        q_addr: { addressLine1: "1 Test St", country: "AT" },
+      })),
+    };
+    expect(schema.safeParse(missingRequired).success).toBe(false);
+  });
+
+  test("ContactInfo enforces email format on the email field", () => {
+    const survey = makeSurvey([
+      {
+        ...baseQuestion,
+        id: "q_contact",
+        type: TSurveyElementTypeEnum.ContactInfo,
+        firstName: { show: true, required: true, placeholder: i18n("First") },
+        lastName: { show: false, required: false, placeholder: i18n("") },
+        email: { show: true, required: true, placeholder: i18n("Email") },
+        phone: { show: false, required: false, placeholder: i18n("") },
+        company: { show: false, required: false, placeholder: i18n("") },
+      },
+    ] as unknown as TSurvey["questions"]);
+
+    const { schema } = buildExampleResponsesSchema(survey);
+
+    const ok = {
+      responses: Array.from({ length: EXAMPLE_RESPONSE_COUNT }, () => ({
+        q_contact: { firstName: "Jane", email: "jane@example.com" },
+      })),
+    };
+    expect(schema.safeParse(ok).success).toBe(true);
+
+    const badEmail = {
+      responses: Array.from({ length: EXAMPLE_RESPONSE_COUNT }, () => ({
+        q_contact: { firstName: "Jane", email: "not-an-email" },
+      })),
+    };
+    expect(schema.safeParse(badEmail).success).toBe(false);
+  });
+
+  test("Consent only accepts the literal 'accepted'", () => {
+    const survey = makeSurvey([
+      {
+        ...baseQuestion,
+        id: "q_consent",
+        type: TSurveyElementTypeEnum.Consent,
+        label: i18n("I agree"),
+      },
+    ] as unknown as TSurvey["questions"]);
+
+    const { schema } = buildExampleResponsesSchema(survey);
+
+    const ok = {
+      responses: Array.from({ length: EXAMPLE_RESPONSE_COUNT }, () => ({ q_consent: "accepted" })),
+    };
+    expect(schema.safeParse(ok).success).toBe(true);
+
+    const wrong = {
+      responses: Array.from({ length: EXAMPLE_RESPONSE_COUNT }, () => ({ q_consent: "dismissed" })),
+    };
+    expect(schema.safeParse(wrong).success).toBe(false);
+  });
+
+  test("PictureSelection (single) requires exactly one known choice id", () => {
+    const survey = makeSurvey([
+      {
+        ...baseQuestion,
+        id: "q_pic",
+        type: TSurveyElementTypeEnum.PictureSelection,
+        allowMulti: false,
+        choices: [
+          { id: "pic_1", imageUrl: "https://example.com/a.png" },
+          { id: "pic_2", imageUrl: "https://example.com/b.png" },
+          { id: "pic_3", imageUrl: "https://example.com/c.png" },
+        ],
+      },
+    ] as unknown as TSurvey["questions"]);
+
+    const { schema } = buildExampleResponsesSchema(survey);
+
+    const ok = {
+      responses: Array.from({ length: EXAMPLE_RESPONSE_COUNT }, (_, i) => ({
+        q_pic: [`pic_${(i % 3) + 1}`],
+      })),
+    };
+    expect(schema.safeParse(ok).success).toBe(true);
+
+    const tooMany = {
+      responses: Array.from({ length: EXAMPLE_RESPONSE_COUNT }, () => ({
+        q_pic: ["pic_1", "pic_2"],
+      })),
+    };
+    expect(schema.safeParse(tooMany).success).toBe(false);
+
+    const unknownId = {
+      responses: Array.from({ length: EXAMPLE_RESPONSE_COUNT }, () => ({ q_pic: ["pic_999"] })),
+    };
+    expect(schema.safeParse(unknownId).success).toBe(false);
+  });
+
+  test("PictureSelection (multi) allows 1..N unique ids", () => {
+    const survey = makeSurvey([
+      {
+        ...baseQuestion,
+        id: "q_pic",
+        type: TSurveyElementTypeEnum.PictureSelection,
+        allowMulti: true,
+        choices: [
+          { id: "pic_1", imageUrl: "https://example.com/a.png" },
+          { id: "pic_2", imageUrl: "https://example.com/b.png" },
+          { id: "pic_3", imageUrl: "https://example.com/c.png" },
+        ],
+      },
+    ] as unknown as TSurvey["questions"]);
+
+    const { schema } = buildExampleResponsesSchema(survey);
+
+    const ok = {
+      responses: Array.from({ length: EXAMPLE_RESPONSE_COUNT }, () => ({
+        q_pic: ["pic_1", "pic_3"],
+      })),
+    };
+    expect(schema.safeParse(ok).success).toBe(true);
+
+    const duplicates = {
+      responses: Array.from({ length: EXAMPLE_RESPONSE_COUNT }, () => ({
+        q_pic: ["pic_1", "pic_1"],
+      })),
+    };
+    expect(schema.safeParse(duplicates).success).toBe(false);
+
+    const empty = {
+      responses: Array.from({ length: EXAMPLE_RESPONSE_COUNT }, () => ({ q_pic: [] })),
+    };
+    expect(schema.safeParse(empty).success).toBe(false);
+  });
+
+  test("drops Matrix when rows or columns are empty in default language", () => {
+    const survey = makeSurvey([
+      {
+        ...baseQuestion,
+        id: "q_matrix",
+        type: TSurveyElementTypeEnum.Matrix,
+        rows: [{ id: "r1", label: { default: "" } }],
+        columns: [{ id: "c1", label: i18n("Bad") }],
+      },
+    ] as unknown as TSurvey["questions"]);
+
+    const { ctx } = buildExampleResponsesSchema(survey);
+    expect(ctx.supportedElementIds).toEqual([]);
+  });
+
+  test("drops Address/ContactInfo when no fields are shown", () => {
+    const survey = makeSurvey([
+      {
+        ...baseQuestion,
+        id: "q_addr",
+        type: TSurveyElementTypeEnum.Address,
+        addressLine1: { show: false, required: false, placeholder: i18n("") },
+        addressLine2: { show: false, required: false, placeholder: i18n("") },
+        city: { show: false, required: false, placeholder: i18n("") },
+        state: { show: false, required: false, placeholder: i18n("") },
+        zip: { show: false, required: false, placeholder: i18n("") },
+        country: { show: false, required: false, placeholder: i18n("") },
+      },
+    ] as unknown as TSurvey["questions"]);
+
+    const { ctx } = buildExampleResponsesSchema(survey);
+    expect(ctx.supportedElementIds).toEqual([]);
+  });
+
   test("dedupes when an id appears in both blocks and legacy questions", () => {
     const survey = {
       id: "survey_1",
@@ -217,7 +599,12 @@ describe("generateExampleResponses", () => {
 
   test("returns an empty array when the survey has no supported question types", async () => {
     const survey = makeSurvey([
-      { ...baseQuestion, id: "q_date", type: TSurveyElementTypeEnum.Date, format: "M-d-y" },
+      {
+        ...baseQuestion,
+        id: "q_file",
+        type: TSurveyElementTypeEnum.FileUpload,
+        allowMultipleFiles: false,
+      },
     ] as unknown as TSurvey["questions"]);
 
     const result = await generateExampleResponses({ survey, organizationId: "org_1" });
@@ -253,6 +640,45 @@ describe("generateExampleResponses", () => {
     expect(call.organizationId).toBe("org_1");
     expect(call.system).toContain("example survey responses");
     expect(call.prompt).toContain("Generate 5 diverse example responses");
+  });
+
+  test("transforms Address/ContactInfo object output into fixed-length arrays", async () => {
+    const survey = makeSurvey([
+      {
+        ...baseQuestion,
+        id: "q_addr",
+        type: TSurveyElementTypeEnum.Address,
+        addressLine1: { show: true, required: true, placeholder: i18n("Street") },
+        addressLine2: { show: false, required: false, placeholder: i18n("") },
+        city: { show: true, required: true, placeholder: i18n("City") },
+        state: { show: false, required: false, placeholder: i18n("") },
+        zip: { show: true, required: false, placeholder: i18n("Zip") },
+        country: { show: true, required: true, placeholder: i18n("Country") },
+      },
+      {
+        ...baseQuestion,
+        id: "q_contact",
+        type: TSurveyElementTypeEnum.ContactInfo,
+        firstName: { show: true, required: true, placeholder: i18n("First") },
+        lastName: { show: false, required: false, placeholder: i18n("") },
+        email: { show: true, required: true, placeholder: i18n("Email") },
+        phone: { show: false, required: false, placeholder: i18n("") },
+        company: { show: false, required: false, placeholder: i18n("") },
+      },
+    ] as unknown as TSurvey["questions"]);
+
+    mocks.generateOrganizationAIObject.mockResolvedValue({
+      object: {
+        responses: Array.from({ length: EXAMPLE_RESPONSE_COUNT }, () => ({
+          q_addr: { addressLine1: "1 Test St", city: "Vienna", zip: "1010", country: "AT" },
+          q_contact: { firstName: "Jane", email: "jane@example.com" },
+        })),
+      },
+    });
+
+    const result = await generateExampleResponses({ survey, organizationId: "org_1" });
+    expect(result[0].data.q_addr).toEqual(["1 Test St", "", "Vienna", "", "1010", "AT"]);
+    expect(result[0].data.q_contact).toEqual(["Jane", "", "jane@example.com", "", ""]);
   });
 
   test("propagates errors from the LLM call (gating errors, network, etc.)", async () => {
