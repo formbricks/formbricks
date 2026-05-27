@@ -215,6 +215,76 @@ describe("Metadata Utils", () => {
       expect(result.title).toBe("Welcome Headline");
     });
 
+    test("uses localized metadata when language matches a language code", async () => {
+      const mockSurvey = {
+        id: mockSurveyId,
+        workspaceId: mockWorkspaceId,
+        name: "Test Survey",
+        metadata: {
+          title: { default: "Default Title", "de-AT": "Österreichischer Titel" },
+          description: { default: "Default Description", "de-AT": "Österreichische Beschreibung" },
+        },
+        languages: [
+          { language: { code: "default", alias: null }, default: true, enabled: true },
+          { language: { code: "de-AT", alias: "austrian" }, default: false, enabled: true },
+        ],
+        welcomeCard: { enabled: false } as TSurveyWelcomeCard,
+      } as unknown as TSurvey;
+
+      vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
+
+      const result = await getBasicSurveyMetadata(mockSurveyId, "de-AT");
+
+      expect(result.title).toBe("Österreichischer Titel");
+      expect(result.description).toBe("Österreichische Beschreibung");
+    });
+
+    test("resolves a language alias to the correct localized metadata", async () => {
+      const mockSurvey = {
+        id: mockSurveyId,
+        workspaceId: mockWorkspaceId,
+        name: "Test Survey",
+        metadata: {
+          title: { default: "Default Title", "de-AT": "Österreichischer Titel" },
+          description: { default: "Default Description", "de-AT": "Österreichische Beschreibung" },
+        },
+        languages: [
+          { language: { code: "default", alias: null }, default: true, enabled: true },
+          { language: { code: "de-AT", alias: "austrian" }, default: false, enabled: true },
+        ],
+        welcomeCard: { enabled: false } as TSurveyWelcomeCard,
+      } as unknown as TSurvey;
+
+      vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
+
+      const result = await getBasicSurveyMetadata(mockSurveyId, "austrian");
+
+      expect(result.title).toBe("Österreichischer Titel");
+      expect(result.description).toBe("Österreichische Beschreibung");
+    });
+
+    test("falls back to default metadata when language is not enabled", async () => {
+      const mockSurvey = {
+        id: mockSurveyId,
+        workspaceId: mockWorkspaceId,
+        name: "Test Survey",
+        metadata: {
+          title: { default: "Default Title", "de-AT": "Österreichischer Titel" },
+        },
+        languages: [
+          { language: { code: "default", alias: null }, default: true, enabled: true },
+          { language: { code: "de-AT", alias: "austrian" }, default: false, enabled: false },
+        ],
+        welcomeCard: { enabled: false } as TSurveyWelcomeCard,
+      } as unknown as TSurvey;
+
+      vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
+
+      const result = await getBasicSurveyMetadata(mockSurveyId, "austrian");
+
+      expect(result.title).toBe("Default Title");
+    });
+
     test("handles welcome card headline with recall variables", async () => {
       const { recallToHeadline } = await import("@/lib/utils/recall");
 
