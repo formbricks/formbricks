@@ -98,6 +98,7 @@ deployment:
   # Environment variables passed to the app container.
   # Cube is bundled by default (see the `cube` section below). To use an external Cube cluster instead,
   # set `cube.enabled: false` and provide CUBEJS_API_URL / CUBEJS_API_SECRET here via deployment.env or envFrom.
+  # When bundled Cube is enabled, CUBEJS_API_URL is rendered automatically unless set here.
   env: {}
 
   # Tolerations for scheduling pods on tainted nodes
@@ -613,6 +614,8 @@ cube:
   envFrom: []
 
   env:
+    # PORT is rendered from cube.port so app-level secret values cannot override
+    # the Cube listener port through envFrom.
     CUBEJS_DB_TYPE: "postgres"
     CUBEJS_DEFAULT_API_SCOPES: "meta,data"
     # Keep the in-memory cache/queue driver at one Cube replica only. The chart
