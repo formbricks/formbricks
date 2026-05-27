@@ -93,7 +93,12 @@ const useDropdownCommitState = ({
   onChange: (value: string) => void;
   handleDropdownOpen: () => void;
   handleDropdownClose: () => void;
-}) => {
+}): {
+  effectiveSelectedValue: string | undefined;
+  handleDropdownOpenChange: (open: boolean) => void;
+  setPendingDropdownValue: React.Dispatch<React.SetStateAction<string | undefined>>;
+  setHasPendingDropdownChange: React.Dispatch<React.SetStateAction<boolean>>;
+} => {
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
   const [pendingDropdownValue, setPendingDropdownValue] = React.useState<string | undefined>(selectedValue);
   const [hasPendingDropdownChange, setHasPendingDropdownChange] = React.useState(false);
@@ -105,7 +110,7 @@ const useDropdownCommitState = ({
     }
   }, [selectedValue, isDropdownOpen]);
 
-  const handleDropdownOpenChange = (open: boolean) => {
+  const handleDropdownOpenChange = (open: boolean): void => {
     setIsDropdownOpen(open);
     if (open) {
       setPendingDropdownValue(selectedValue);
