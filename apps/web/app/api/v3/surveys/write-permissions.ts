@@ -28,7 +28,7 @@ function getEndingExternalUrl(ending: TSurveyEnding): string | null {
   }
 
   if (ending.type === "redirectToUrl") {
-    return ending.url;
+    return ending.url ?? null;
   }
 
   return null;
