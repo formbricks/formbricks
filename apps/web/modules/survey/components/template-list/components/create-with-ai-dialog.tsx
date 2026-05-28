@@ -50,6 +50,7 @@ type TSurveyGenerationType = "link";
 
 type CreateWithAIDialogProps = {
   workspaceId: string;
+  language: string;
   isAIAvailable: boolean;
   aiUnavailableReason?: TAIUnavailableReason;
   trigger?: ReactNode;
@@ -68,6 +69,7 @@ const getUnavailableMessageKey = (reason?: TAIUnavailableReason) => {
 
 export const CreateWithAIDialog = ({
   workspaceId,
+  language,
   isAIAvailable,
   aiUnavailableReason,
   trigger,
@@ -180,6 +182,7 @@ export const CreateWithAIDialog = ({
         workspaceId,
         prompt: trimmedPrompt,
         type: surveyType,
+        language,
       });
       const validation = await validateSurveyCreatePayload(generatedSurvey.payload);
 

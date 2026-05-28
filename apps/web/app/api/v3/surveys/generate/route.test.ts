@@ -123,6 +123,7 @@ describe("POST /api/v3/surveys/generate", () => {
       organizationId: "org_1",
     });
     vi.mocked(generateV3SurveyCreatePayloadFromPrompt).mockResolvedValue({
+      language: "en-US",
       payload: {
         workspaceId,
         type: "link",
@@ -185,7 +186,30 @@ describe("POST /api/v3/surveys/generate", () => {
       },
     });
     const body = await res.json();
+    expect(body.data.language).toBe("en-US");
     expect(body.data.payload.status).toBe("draft");
+  });
+
+  test("passes the requested survey language to generation", async () => {
+    const res = await POST(
+      createGenerateRequest({
+        workspaceId,
+        prompt: "Mide la experiencia de onboarding de usuarios nuevos.",
+        language: "es_ES",
+      }),
+      {} as any
+    );
+
+    expect(res.status).toBe(200);
+    expect(generateV3SurveyCreatePayloadFromPrompt).toHaveBeenCalledWith({
+      organizationId: "org_1",
+      input: {
+        workspaceId,
+        prompt: "Mide la experiencia de onboarding de usuarios nuevos.",
+        type: "link",
+        language: "es-ES",
+      },
+    });
   });
 
   test("supports API key auth", async () => {

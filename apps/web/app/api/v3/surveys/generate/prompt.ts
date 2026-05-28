@@ -18,7 +18,8 @@ export function buildV3SurveyGenerationSystemPrompt(): string {
     "You generate concise Formbricks survey drafts.",
     "Return only data that matches the provided schema.",
     "Write all generated user-facing survey content in the same language as the user's request. " +
-      "Detect the language from the request; if uncertain, use English.",
+      "Detect the language from the request; if uncertain, use the preferred survey language from the user prompt.",
+    "Return the survey language as a normalized BCP-47 language tag with a region, for example en-US or es-ES.",
     "Keep surveys focused: 3 to 6 questions is usually enough.",
     `Group questions into ${GENERATED_SURVEY_MIN_BLOCKS} to ${GENERATED_SURVEY_MAX_BLOCKS} blocks. ` +
       "Use one block for simple requests. Use multiple blocks when the user asks for sections, " +
@@ -33,14 +34,17 @@ export function buildV3SurveyGenerationSystemPrompt(): string {
   ].join("\n");
 }
 
-export function buildV3SurveyGenerationPrompt(prompt: string): string {
+export function buildV3SurveyGenerationPrompt(prompt: string, preferredLanguage: string): string {
   return [
     "Create a draft link survey from this request.",
     "Include a name, optional description, useful questions, and a simple ending.",
     "If the request is broad, choose a practical customer-feedback survey structure.",
     "Return the questions inside blocks. Use multiple blocks only when useful or requested.",
     "Use the same language as the request for all generated survey text. " +
-      "If the language is unclear, use English.",
+      "If the language is unclear, use the preferred survey language.",
+    "If you enable the welcome card, include a short button label in the same language.",
+    `Preferred survey language: ${preferredLanguage}.`,
+    "Set the returned language to the language used for the generated survey content.",
     "",
     "User request:",
     prompt,

@@ -24,18 +24,21 @@ describe("v3 survey generation prompt", () => {
     expect(system.toLowerCase()).not.toContain("openai");
   });
 
-  test("instructs the model to match the prompt language and fall back to English", () => {
+  test("instructs the model to match the prompt language and fall back to the preferred language", () => {
     const system = buildV3SurveyGenerationSystemPrompt();
-    const prompt = buildV3SurveyGenerationPrompt("Mide product-market fit para usuarios activos");
+    const prompt = buildV3SurveyGenerationPrompt("Mide product-market fit para usuarios activos", "es-ES");
 
     expect(system).toContain("same language as the user's request");
-    expect(system).toContain("if uncertain, use English");
+    expect(system).toContain("if uncertain, use the preferred survey language");
+    expect(system).toContain("normalized BCP-47 language tag");
     expect(prompt).toContain("Use the same language as the request");
-    expect(prompt).toContain("If the language is unclear, use English");
+    expect(prompt).toContain("If the language is unclear, use the preferred survey language");
+    expect(prompt).toContain("include a short button label");
+    expect(prompt).toContain("Preferred survey language: es-ES");
   });
 
   test("includes the user request without adding vendor-specific instructions", () => {
-    const prompt = buildV3SurveyGenerationPrompt("Collect product onboarding feedback");
+    const prompt = buildV3SurveyGenerationPrompt("Collect product onboarding feedback", "en-US");
 
     expect(prompt).toContain("Collect product onboarding feedback");
     expect(prompt.toLowerCase()).not.toContain("openai");

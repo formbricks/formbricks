@@ -20,6 +20,7 @@ type TV3SurveyGenerateValidation = {
 };
 
 export type TV3SurveyGenerateResult = {
+  language: string;
   payload: TV3CreateSurveyBody;
   validation: TV3SurveyGenerateValidation;
 };
@@ -50,8 +51,8 @@ export class V3SurveyGeneratedPayloadValidationError extends Error {
   }
 }
 
-function text(value: string): Record<string, string> {
-  return { [DEFAULT_V3_SURVEY_LANGUAGE]: value.trim() };
+function text(value: string, language: string): Record<string, string> {
+  return { [language]: value.trim() };
 }
 
 function getPromptInvalidParams(prompt: string): InvalidParam[] {
@@ -71,18 +72,22 @@ function getPromptInvalidParams(prompt: string): InvalidParam[] {
   ];
 }
 
-function createChoice(label: string, index: number): { id: string; label: Record<string, string> } {
+function createChoice(
+  label: string,
+  index: number,
+  language: string
+): { id: string; label: Record<string, string> } {
   return {
     id: `choice_${index + 1}`,
-    label: text(label),
+    label: text(label, language),
   };
 }
 
-function buildElement(element: TGeneratedSurveyElement, index: number) {
+function buildElement(element: TGeneratedSurveyElement, index: number, language: string) {
   const baseElement = {
     id: `q_${index + 1}_${createId().slice(0, 8)}`,
-    headline: text(element.headline),
-    ...(element.subheader ? { subheader: text(element.subheader) } : {}),
+    headline: text(element.headline, language),
+    ...(element.subheader ? { subheader: text(element.subheader, language) } : {}),
     required: element.required,
     isDraft: true,
   };
@@ -91,7 +96,7 @@ function buildElement(element: TGeneratedSurveyElement, index: number) {
     return {
       ...baseElement,
       type: "openText" as const,
-      ...(element.placeholder ? { placeholder: text(element.placeholder) } : {}),
+      ...(element.placeholder ? { placeholder: text(element.placeholder, language) } : {}),
       longAnswer: element.longAnswer ?? false,
       inputType: "text" as const,
       charLimit: { enabled: false },
@@ -102,7 +107,9 @@ function buildElement(element: TGeneratedSurveyElement, index: number) {
     return {
       ...baseElement,
       type: element.type,
-      choices: (element.choices ?? []).map(createChoice),
+      choices: (element.choices ?? []).map((choice, choiceIndex) =>
+        createChoice(choice, choiceIndex, language)
+      ),
       shuffleOption: "none" as const,
       displayType: "list" as const,
     };
@@ -112,8 +119,8 @@ function buildElement(element: TGeneratedSurveyElement, index: number) {
     return {
       ...baseElement,
       type: "nps" as const,
-      ...(element.lowerLabel ? { lowerLabel: text(element.lowerLabel) } : {}),
-      ...(element.upperLabel ? { upperLabel: text(element.upperLabel) } : {}),
+      ...(element.lowerLabel ? { lowerLabel: text(element.lowerLabel, language) } : {}),
+      ...(element.upperLabel ? { upperLabel: text(element.upperLabel, language) } : {}),
       isColorCodingEnabled: false,
     };
   }
@@ -123,8 +130,8 @@ function buildElement(element: TGeneratedSurveyElement, index: number) {
     type: "rating" as const,
     scale: element.scale ?? "number",
     range: element.range ?? 5,
-    ...(element.lowerLabel ? { lowerLabel: text(element.lowerLabel) } : {}),
-    ...(element.upperLabel ? { upperLabel: text(element.upperLabel) } : {}),
+    ...(element.lowerLabel ? { lowerLabel: text(element.lowerLabel, language) } : {}),
+    ...(element.upperLabel ? { upperLabel: text(element.upperLabel, language) } : {}),
     isColorCodingEnabled: false,
   };
 }
@@ -132,6 +139,7 @@ function buildElement(element: TGeneratedSurveyElement, index: number) {
 function buildCreatePayload(input: TV3SurveyGenerateBody, generatedSurvey: TGeneratedSurveyDraft): unknown {
   const welcomeCard = generatedSurvey.welcomeCard;
   const welcomeHeadline = welcomeCard?.headline ?? generatedSurvey.name;
+  const language = generatedSurvey.language;
   let questionIndex = 0;
 
   return {
@@ -139,19 +147,19 @@ function buildCreatePayload(input: TV3SurveyGenerateBody, generatedSurvey: TGene
     type: input.type,
     name: generatedSurvey.name,
     status: "draft",
-    defaultLanguage: DEFAULT_V3_SURVEY_LANGUAGE,
-    languages: [{ code: DEFAULT_V3_SURVEY_LANGUAGE, default: true, enabled: true }],
+    defaultLanguage: language,
+    languages: [{ code: language, default: true, enabled: true }],
     metadata: {
-      title: text(generatedSurvey.name),
-      ...(generatedSurvey.description ? { description: text(generatedSurvey.description) } : {}),
+      title: text(generatedSurvey.name, language),
+      ...(generatedSurvey.description ? { description: text(generatedSurvey.description, language) } : {}),
     },
     welcomeCard:
       welcomeCard?.enabled === true
         ? {
             enabled: true,
-            headline: text(welcomeHeadline),
-            ...(welcomeCard.subheader ? { subheader: text(welcomeCard.subheader) } : {}),
-            buttonLabel: text("Start"),
+            headline: text(welcomeHeadline, language),
+            ...(welcomeCard.subheader ? { subheader: text(welcomeCard.subheader, language) } : {}),
+            buttonLabel: text(welcomeCard.buttonLabel ?? "Start", language),
             timeToFinish: true,
             showResponseCount: false,
           }
@@ -159,14 +167,16 @@ function buildCreatePayload(input: TV3SurveyGenerateBody, generatedSurvey: TGene
     blocks: generatedSurvey.blocks.map((block) => ({
       id: createId(),
       name: block.name,
-      elements: block.questions.map((element) => buildElement(element, questionIndex++)),
+      elements: block.questions.map((element) => buildElement(element, questionIndex++, language)),
     })),
     endings: [
       {
         id: createId(),
         type: "endScreen",
-        headline: text(generatedSurvey.ending?.headline ?? "Thanks for your feedback"),
-        ...(generatedSurvey.ending?.subheader ? { subheader: text(generatedSurvey.ending.subheader) } : {}),
+        headline: text(generatedSurvey.ending?.headline ?? "Thanks for your feedback", language),
+        ...(generatedSurvey.ending?.subheader
+          ? { subheader: text(generatedSurvey.ending.subheader, language) }
+          : {}),
       },
     ],
     hiddenFields: { enabled: false },
@@ -200,7 +210,10 @@ export async function generateV3SurveyCreatePayloadFromPrompt(params: {
     schemaName: "FormbricksSurveyDraft",
     schemaDescription: "A concise Formbricks survey draft that can be converted to a v3 create payload.",
     system: buildV3SurveyGenerationSystemPrompt(),
-    prompt: buildV3SurveyGenerationPrompt(params.input.prompt),
+    prompt: buildV3SurveyGenerationPrompt(
+      params.input.prompt,
+      params.input.language ?? DEFAULT_V3_SURVEY_LANGUAGE
+    ),
     temperature: 0.2,
     maxOutputTokens: 3000,
   });
@@ -219,6 +232,7 @@ export async function generateV3SurveyCreatePayloadFromPrompt(params: {
   }
 
   return {
+    language: generatedSurvey.data.language,
     payload: createPayload as TV3CreateSurveyBody,
     validation: serializeValidation(preparation),
   };

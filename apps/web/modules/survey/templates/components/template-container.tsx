@@ -4,6 +4,7 @@ import type { Workspace } from "@prisma/client";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TTemplate } from "@formbricks/types/templates";
+import type { TUserLocale } from "@formbricks/types/user";
 import { customSurveyTemplate } from "@/app/lib/templates";
 import type { TAIUnavailableReason } from "@/modules/ee/analysis/charts/lib/ai-availability";
 import { TemplateList } from "@/modules/survey/components/template-list";
@@ -17,6 +18,7 @@ type TemplateContainerWithPreviewProps = {
   userId: string;
   isTemplatePage?: boolean;
   publicDomain: string;
+  language?: TUserLocale;
   isAIAvailable?: boolean;
   aiUnavailableReason?: TAIUnavailableReason;
 };
@@ -26,6 +28,7 @@ export const TemplateContainerWithPreview = ({
   userId,
   isTemplatePage = true,
   publicDomain,
+  language = "en-US",
   isAIAvailable = false,
   aiUnavailableReason,
 }: TemplateContainerWithPreviewProps) => {
@@ -63,6 +66,7 @@ export const TemplateContainerWithPreview = ({
             userId={userId}
             templateSearch={templateSearch ?? ""}
             showAICreateCard={!isTemplatePage}
+            language={language}
             isAIAvailable={isAIAvailable}
             aiUnavailableReason={aiUnavailableReason}
             onTemplateClick={(template) => {

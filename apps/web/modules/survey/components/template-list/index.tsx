@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurveyCreateInput, TSurveyType } from "@formbricks/types/surveys/types";
 import { TTemplate, TTemplateFilter, ZTemplateRole } from "@formbricks/types/templates";
+import { TUserLocale } from "@formbricks/types/user";
 import { ZWorkspaceConfigChannel, ZWorkspaceConfigIndustry } from "@formbricks/types/workspace";
 import { customSurveyTemplate, templates } from "@/app/lib/templates";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
@@ -26,6 +27,7 @@ interface TemplateListProps {
   onTemplateClick?: (template: TTemplate) => void;
   noPreview?: boolean; // single click to create survey
   showAICreateCard?: boolean;
+  language?: TUserLocale;
   isAIAvailable?: boolean;
   aiUnavailableReason?: TAIUnavailableReason;
 }
@@ -39,6 +41,7 @@ export const TemplateList = ({
   onTemplateClick = () => {},
   noPreview,
   showAICreateCard = false,
+  language = "en-US",
   isAIAvailable = false,
   aiUnavailableReason,
 }: TemplateListProps) => {
@@ -135,6 +138,7 @@ export const TemplateList = ({
         {showAICreateCard && (
           <CreateWithAITemplate
             workspaceId={workspaceId}
+            language={language}
             isAIAvailable={isAIAvailable}
             aiUnavailableReason={aiUnavailableReason}
           />

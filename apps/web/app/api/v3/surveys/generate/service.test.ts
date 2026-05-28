@@ -44,12 +44,14 @@ describe("generateV3SurveyCreatePayloadFromPrompt", () => {
   test("returns a validated draft v3 create payload", async () => {
     vi.mocked(generateOrganizationAIObject).mockResolvedValueOnce({
       object: {
+        language: "en-US",
         name: "Onboarding Feedback",
         description: "Understand the first-run onboarding experience.",
         welcomeCard: {
           enabled: true,
           headline: "Help us improve onboarding",
           subheader: "This takes about two minutes.",
+          buttonLabel: "Start",
         },
         blocks: [
           {
@@ -109,11 +111,13 @@ describe("generateV3SurveyCreatePayloadFromPrompt", () => {
       name: "Onboarding Feedback",
       status: "draft",
       defaultLanguage: "en-US",
+      languages: [{ code: "en-US", default: true, enabled: true }],
       welcomeCard: {
         enabled: true,
         headline: { "en-US": "Help us improve onboarding" },
       },
     });
+    expect(result.language).toBe("en-US");
     expect(result.payload.welcomeCard?.headline).not.toHaveProperty("default");
     expect(prepareV3SurveyCreateInput(result.payload).ok).toBe(true);
     expect(result.payload.blocks).toHaveLength(1);
@@ -130,12 +134,14 @@ describe("generateV3SurveyCreatePayloadFromPrompt", () => {
   test("maps generated blocks to separate v3 create blocks", async () => {
     vi.mocked(generateOrganizationAIObject).mockResolvedValueOnce({
       object: {
+        language: "en-US",
         name: "Product-Market Fit Survey",
         description: "Measure fit and learn what users value most.",
         welcomeCard: {
           enabled: false,
           headline: null,
           subheader: null,
+          buttonLabel: null,
         },
         blocks: [
           {
@@ -221,9 +227,70 @@ describe("generateV3SurveyCreatePayloadFromPrompt", () => {
     ).toHaveLength(3);
   });
 
+  test("uses the generated survey language for the create payload and returns it", async () => {
+    vi.mocked(generateOrganizationAIObject).mockResolvedValueOnce({
+      object: {
+        language: "es-ES",
+        name: "Encuesta de onboarding",
+        description: "Entender la experiencia inicial.",
+        welcomeCard: {
+          enabled: false,
+          headline: null,
+          subheader: null,
+          buttonLabel: null,
+        },
+        blocks: [
+          {
+            name: "Experiencia",
+            questions: [
+              {
+                type: "openText",
+                headline: "Que deberiamos mejorar?",
+                subheader: null,
+                required: false,
+                placeholder: null,
+                longAnswer: true,
+                choices: null,
+                lowerLabel: null,
+                upperLabel: null,
+                scale: null,
+                range: null,
+              },
+            ],
+          },
+        ],
+        ending: {
+          headline: "Gracias por tu feedback",
+          subheader: null,
+        },
+      },
+    } as Awaited<ReturnType<typeof generateOrganizationAIObject>>);
+
+    const result = await generateV3SurveyCreatePayloadFromPrompt({
+      organizationId: "org_1",
+      input: {
+        ...generateInput,
+        language: "es-ES",
+        prompt: "Mide la experiencia de onboarding de usuarios nuevos.",
+      },
+    });
+
+    expect(result.language).toBe("es-ES");
+    expect(result.payload.defaultLanguage).toBe("es-ES");
+    expect(result.payload.languages).toEqual([{ code: "es-ES", default: true, enabled: true }]);
+    expect(result.payload.metadata.title).toEqual({ "es-ES": "Encuesta de onboarding" });
+    expect(result.validation.languages).toEqual([{ code: "es-ES", default: true, enabled: true }]);
+    expect(generateOrganizationAIObject).toHaveBeenCalledWith(
+      expect.objectContaining({
+        prompt: expect.stringContaining("Preferred survey language: es-ES"),
+      })
+    );
+  });
+
   test("surfaces invalid generated objects as validation failures", async () => {
     vi.mocked(generateOrganizationAIObject).mockResolvedValueOnce({
       object: {
+        language: "en-US",
         name: "Broken survey",
         description: null,
         welcomeCard: null,

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { normalizeV3SurveyLanguageTag } from "../language";
 import {
   GENERATED_SURVEY_MAX_BLOCKS,
   GENERATED_SURVEY_MAX_QUESTIONS_PER_BLOCK,
@@ -6,6 +7,24 @@ import {
   GENERATED_SURVEY_MIN_QUESTIONS_PER_BLOCK,
   V3_SURVEY_GENERATE_PROMPT_MAX_LENGTH,
 } from "./constants";
+
+const ZV3SurveyGenerateLanguage = z
+  .string()
+  .trim()
+  .min(1, "Language code is required")
+  .transform((value, ctx) => {
+    const normalizedLanguage = normalizeV3SurveyLanguageTag(value);
+
+    if (!normalizedLanguage) {
+      ctx.addIssue({
+        code: "custom",
+        message: `Language '${value}' is not a valid language code`,
+      });
+      return z.NEVER;
+    }
+
+    return normalizedLanguage;
+  });
 
 export const ZV3SurveyGenerateBody = z
   .object({
@@ -19,6 +38,7 @@ export const ZV3SurveyGenerateBody = z
         `Prompt must be ${V3_SURVEY_GENERATE_PROMPT_MAX_LENGTH} characters or less`
       ),
     type: z.literal("link").prefault("link"),
+    language: ZV3SurveyGenerateLanguage.optional(),
   })
   .strict();
 
@@ -66,6 +86,7 @@ const ZGeneratedSurveyBlock = z
 
 export const ZGeneratedSurveyDraft = z
   .object({
+    language: ZV3SurveyGenerateLanguage,
     name: ZGeneratedText,
     description: ZGeneratedDescription.nullable(),
     welcomeCard: z
@@ -73,6 +94,7 @@ export const ZGeneratedSurveyDraft = z
         enabled: z.boolean(),
         headline: ZGeneratedText.nullable(),
         subheader: ZGeneratedDescription.nullable(),
+        buttonLabel: ZGeneratedText.nullable(),
       })
       .strict()
       .nullable(),

@@ -7,12 +7,14 @@ import { CreateWithAIDialog } from "./create-with-ai-dialog";
 
 type CreateWithAITemplateProps = {
   workspaceId: string;
+  language: string;
   isAIAvailable: boolean;
   aiUnavailableReason?: TAIUnavailableReason;
 };
 
 export const CreateWithAITemplate = ({
   workspaceId,
+  language,
   isAIAvailable,
   aiUnavailableReason,
 }: CreateWithAITemplateProps) => {
@@ -21,6 +23,7 @@ export const CreateWithAITemplate = ({
   return (
     <CreateWithAIDialog
       workspaceId={workspaceId}
+      language={language}
       isAIAvailable={isAIAvailable}
       aiUnavailableReason={aiUnavailableReason}
       trigger={
