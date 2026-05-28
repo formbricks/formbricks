@@ -66,6 +66,8 @@ import {
 } from "../lib/preview-email-template-styles";
 import { getNPSOptionColor, getRatingNumberOptionColor } from "../lib/utils";
 
+const EMAIL_RATING_SMILEY_SIZE = 40;
+
 interface PreviewEmailTemplateProps {
   survey: TSurvey;
   surveyUrl: string;
@@ -108,7 +110,7 @@ const getRatingContent = (scale: string, i: number, range: number, isColorCoding
         range={range}
         addColors={isColorCodingEnabled}
         baseUrl={WEBAPP_URL}
-        size={40}
+        size={EMAIL_RATING_SMILEY_SIZE}
       />
     );
   }
