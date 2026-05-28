@@ -108,6 +108,7 @@ const getRatingContent = (scale: string, i: number, range: number, isColorCoding
         range={range}
         addColors={isColorCodingEnabled}
         baseUrl={WEBAPP_URL}
+        size={40}
       />
     );
   }
@@ -500,7 +501,7 @@ export async function PreviewEmailTemplate({
                             : undefined,
                         height: ratingOptionHeight,
                         isConnected: isNumberRating,
-                        isTransparent: firstQuestion.scale === "star",
+                        isTransparent: firstQuestion.scale === "star" || firstQuestion.scale === "smiley",
                         optionCount: firstQuestion.range,
                         optionIndex: i,
                       })}>
