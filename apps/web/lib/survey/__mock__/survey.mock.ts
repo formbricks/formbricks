@@ -218,6 +218,7 @@ const baseSurveyProperties = {
   },
   isVerifyEmailEnabled: false,
   isSingleResponsePerEmailEnabled: false,
+  autoSelectLanguage: null,
   attributeFilters: [],
   ...commonMockProperties,
 };

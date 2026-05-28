@@ -55,6 +55,10 @@ const ZSurveyBase = z.object({
   status: z.enum(SurveyStatus).describe("The status of the survey"),
   thankYouMessage: z.string().nullable().describe("The thank you message of the survey"),
   showLanguageSwitch: z.boolean().nullable().describe("Whether to show the language switch"),
+  autoSelectLanguage: z
+    .boolean()
+    .nullable()
+    .describe("Whether to automatically select the survey language from the respondent's browser"),
   showThankYouMessage: z.boolean().nullable().describe("Whether to show the thank you message"),
   welcomeCard: z
     .object({

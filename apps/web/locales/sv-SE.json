@@ -2845,6 +2845,8 @@
         "auto_save_disabled": "Automatisk sparning inaktiverad",
         "auto_save_disabled_tooltip": "Din enkät sparas endast automatiskt när den är ett utkast. Detta säkerställer att publika enkäter inte uppdateras oavsiktligt.",
         "auto_save_on": "Automatisk sparning på",
+        "auto_select_browser_language": "Använd webbläsarens språk som standard",
+        "auto_select_browser_language_description": "Öppnar automatiskt enkäten på respondentens webbläsarspråk när det språket är aktivt. Faller tillbaka till standardspråket.",
         "automatically_close_survey_after_n_seconds_if_no_response": "Stäng enkäten automatiskt efter <autoCloseInput /> sekunder om inget svar ges.",
         "automatically_close_the_survey_after_a_certain_number_of_responses": "Stäng enkäten automatiskt efter ett visst antal svar.",
         "automatically_close_the_survey_if_the_user_does_not_respond_after_certain_number_of_seconds": "Stäng enkäten automatiskt om användaren inte svarar efter ett visst antal sekunder.",

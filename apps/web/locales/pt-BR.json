@@ -2845,6 +2845,8 @@
         "auto_save_disabled": "Salvamento automático desativado",
         "auto_save_disabled_tooltip": "Sua pesquisa só é salva automaticamente quando está em rascunho. Isso garante que pesquisas públicas não sejam atualizadas involuntariamente.",
         "auto_save_on": "Salvamento automático ativado",
+        "auto_select_browser_language": "Usar o idioma do navegador por padrão",
+        "auto_select_browser_language_description": "Abre automaticamente a pesquisa no idioma do navegador do respondente quando esse idioma está ativo. Caso contrário, usa o idioma padrão.",
         "automatically_close_survey_after_n_seconds_if_no_response": "Fechar a pesquisa automaticamente após <autoCloseInput /> segundos depois do acionamento, caso não haja resposta.",
         "automatically_close_the_survey_after_a_certain_number_of_responses": "Fechar automaticamente a pesquisa depois de um certo número de respostas.",
         "automatically_close_the_survey_if_the_user_does_not_respond_after_certain_number_of_seconds": "Feche automaticamente a pesquisa se o usuário não responder depois de alguns segundos.",
