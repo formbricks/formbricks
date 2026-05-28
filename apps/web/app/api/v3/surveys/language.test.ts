@@ -16,6 +16,7 @@ describe("normalizeV3SurveyLanguageTag", () => {
   test.each([
     ["EN_us", "en-US"],
     ["en-us", "en-US"],
+    ["zh_hans", "zh-Hans"],
     ["zh_hans_cn", "zh-Hans-CN"],
     ["ZH-hant-tw", "zh-Hant-TW"],
   ])("normalizes %s to %s", (input, expected) => {
@@ -28,10 +29,6 @@ describe("normalizeV3SurveyLanguageTag", () => {
 
   test("returns null for language-only tags", () => {
     expect(normalizeV3SurveyLanguageTag("de")).toBeNull();
-  });
-
-  test("returns null for script-only tags without a region", () => {
-    expect(normalizeV3SurveyLanguageTag("zh_Hans")).toBeNull();
   });
 });
 
@@ -110,6 +107,13 @@ describe("resolveV3SurveyLanguageCode", () => {
     expect(resolveV3SurveyLanguageCode("ZH_hans_cn", [{ code: "zh-Hans-CN", enabled: true }])).toEqual({
       ok: true,
       code: "zh-Hans-CN",
+    });
+  });
+
+  test("matches configured script-only languages case-insensitively and normalizes underscores", () => {
+    expect(resolveV3SurveyLanguageCode("ZH_hans", [{ code: "zh-Hans", enabled: true }])).toEqual({
+      ok: true,
+      code: "zh-Hans",
     });
   });
 

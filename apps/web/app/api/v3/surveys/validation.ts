@@ -1,4 +1,5 @@
 import type { InvalidParam } from "@/app/api/v3/lib/response";
+import { isInternalI18nString, isPlainObject } from "./guards";
 import { validateV3SurveyReferences } from "./reference-validation";
 import type { TV3SurveyDocument } from "./schemas";
 import { V3_SURVEY_TRANSLATABLE_METADATA_KEYS } from "./translation-fields";
@@ -6,18 +7,6 @@ import { V3_SURVEY_TRANSLATABLE_METADATA_KEYS } from "./translation-fields";
 export type TV3SurveyDocumentValidationResult =
   | { valid: true; invalidParams: [] }
   | { valid: false; invalidParams: InvalidParam[] };
-
-function isPlainObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function isInternalI18nString(value: unknown): value is Record<string, string> {
-  return (
-    isPlainObject(value) &&
-    typeof value.default === "string" &&
-    Object.values(value).every((entry) => typeof entry === "string")
-  );
-}
 
 function getConfiguredTranslationLanguageCodes(document: TV3SurveyDocument): string[] {
   const defaultLanguage = document.defaultLanguage.toLowerCase();

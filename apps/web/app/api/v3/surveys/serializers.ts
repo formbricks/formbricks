@@ -1,5 +1,6 @@
 import type { TSurvey as TInternalSurvey } from "@formbricks/types/surveys/types";
 import type { TSurvey as TSurveyListRecord } from "@/modules/survey/list/types/surveys";
+import { isInternalI18nString, isPlainObject } from "./guards";
 import {
   type TV3SurveyResolverLanguage,
   getV3SurveyDefaultLanguage,
@@ -52,18 +53,6 @@ function toIsoString(value: Date | string): string {
   return value instanceof Date ? value.toISOString() : new Date(value).toISOString();
 }
 
-function isPlainObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function isI18nString(value: unknown): value is Record<string, string> {
-  return (
-    isPlainObject(value) &&
-    typeof value.default === "string" &&
-    Object.values(value).every((entry) => typeof entry === "string")
-  );
-}
-
 function getI18nValueForLanguage(value: Record<string, string>, languageCode: string): string | undefined {
   if (typeof value[languageCode] === "string") {
     return value[languageCode];
@@ -81,7 +70,7 @@ function serializeCanonicalValue(
   languageCodes: Set<string>,
   options?: { fallbackMissingTranslations?: boolean }
 ): TSerializedValue {
-  if (isI18nString(value)) {
+  if (isInternalI18nString(value)) {
     const result: Record<string, string> = {
       [defaultLanguage]: value.default,
     };
@@ -199,7 +188,12 @@ export function serializeV3SurveyResource(survey: TInternalSurvey, options?: { l
       fallbackMissingTranslations: requestedLanguages.length > 0,
     }),
     defaultLanguage,
-    languages,
+    languages: languages.map(({ code, default: isDefault, enabled, alias }) => ({
+      code,
+      default: isDefault,
+      enabled,
+      ...(alias ? { alias } : {}),
+    })),
     welcomeCard: serializeValue(survey.welcomeCard),
     blocks: serializeValue(survey.blocks),
     endings: serializeValue(survey.endings),

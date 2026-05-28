@@ -526,8 +526,8 @@ paths:
       summary: Retrieve a survey
       description: |
         Returns the public v3 survey management resource for one survey. By default, translatable
-        fields are returned as canonical multilingual maps keyed by real locale codes. Use `lang`
-        to filter those maps to one or more requested locale codes.
+        fields are returned as stable multilingual maps keyed by the language codes emitted in
+        `languages[].code`. Use `lang` to filter those maps to one or more requested language selectors.
       tags:
         - V3 Surveys
       parameters:
@@ -546,16 +546,22 @@ paths:
           schema:
             type: array
             items:
-              $ref: "#/components/schemas/LocaleCode"
+              type: string
             examples:
               - [de-DE]
               - [de-DE, pt-PT]
+              - [de]
+              - [zh-Hans]
               - [zh-Hans-CN]
           description: |
-            Comma-separated locale code filter for translatable fields, for example `?lang=de-DE,pt-PT`.
-            The response shape stays stable: translatable fields are always maps keyed by locale code, never
-            strings. Send canonical locale codes (`de-DE`, `pt-PT`, `zh-Hans-CN`, not `de`).
-            Language-only selectors (`de`) and aliases are not accepted.
+            Comma-separated language selector filter for translatable fields, for example `?lang=de-DE,pt-PT`.
+            The response shape stays stable: translatable fields are always maps, never strings, and response
+            keys match the emitted `languages[].code` values for this survey.
+            For compatibility with existing Formbricks surveys, GET accepts language tags such as `de`,
+            `de-DE`, `zh-Hans`, and `zh-Hans-CN`, accepts `_` or `-` separators, is case-insensitive, and
+            accepts configured workspace aliases such as `english`. Bare language selectors are resolved
+            against the survey's configured languages and return `400` if ambiguous, for example if both
+            `en-US` and `en-GB` are configured.
             Disabled-but-configured languages are readable in the management API so unfinished translations can
             be completed.
       responses:
@@ -579,8 +585,8 @@ paths:
                   data:
                     $ref: "#/components/schemas/SurveyResource"
               examples:
-                canonical:
-                  summary: Canonical multilingual authoring resource
+                multilingual:
+                  summary: Multilingual authoring resource
                   value:
                     data:
                       id: clseedsurveycsat000000
@@ -597,6 +603,7 @@ paths:
                           default: true
                           enabled: true
                         - code: de-DE
+                          alias: german
                           default: false
                           enabled: false
                       welcomeCard:
@@ -635,6 +642,7 @@ paths:
                           default: true
                           enabled: true
                         - code: de-DE
+                          alias: german
                           default: false
                           enabled: false
                       welcomeCard:
@@ -1173,17 +1181,18 @@ components:
       allOf:
         - $ref: "#/components/schemas/TranslatableTextMap"
       description: |
-        Survey authoring text. `GET /api/v3/surveys/{surveyId}` always returns locale maps keyed by
-        real locale codes such as `en-US` and `de-DE`. Use `?lang=` to filter which locale keys are included.
+        Survey authoring text. `GET /api/v3/surveys/{surveyId}` always returns maps keyed by the emitted
+        `languages[].code` values for this survey. Use `?lang=` to filter which language keys are included.
         The internal storage key `default` is never exposed by v3.
       examples:
         - en-US: What should we improve?
           de-DE: Was sollten wir verbessern?
     TranslatableTextMap:
       type: object
-      description: Canonical multilingual text map keyed by real locale codes.
+      description: Multilingual text map keyed by the emitted `languages[].code` values for this survey.
       propertyNames:
-        $ref: "#/components/schemas/LocaleCode"
+        type: string
+        description: Survey language code/tag, for example `en-US`, `de-DE`, `vi`, or `zh-Hans`.
       additionalProperties:
         type: string
     SurveyMetadata:
@@ -1201,12 +1210,20 @@ components:
     SurveyLanguage:
       type: object
       description: |
-        Language configured for this survey. Aliases/display names are intentionally not exposed in v3.
+        Language configured for this survey. GET responses expose the server-emitted code/tag used as the
+        translatable map key. Existing surveys can use region-qualified, language-only, or script-only codes.
         Disabled languages can still be read by the management API so unfinished translations can be completed.
       required: [code, default, enabled]
       properties:
         code:
-          $ref: "#/components/schemas/LocaleCode"
+          type: string
+          description: Server-emitted survey language code/tag used as the translatable map key.
+          example: en-US
+        alias:
+          type: string
+          nullable: true
+          description: Optional configured alias accepted by `?lang` for compatibility and agent discovery.
+          example: english
         default:
           type: boolean
           description: Whether this is the default authoring language.
@@ -2242,9 +2259,8 @@ components:
             - $ref: "#/components/schemas/SurveyMetadata"
           nullable: true
         defaultLanguage:
-          allOf:
-            - $ref: "#/components/schemas/LocaleCode"
-          description: Real locale code for the survey default language. The internal `default` translation key is never exposed.
+          type: string
+          description: Emitted language code/tag for the survey default language. The internal `default` translation key is never exposed.
         languages:
           type: array
           items:
@@ -2295,7 +2311,7 @@ components:
           description: Machine-readable validation category, when available.
         identifier:
           type: string
-          description: Identifier involved in the validation failure, when available. For locale errors, this can be the normalized locale code.
+          description: Identifier involved in the validation failure, when available. For language errors, this can be the normalized language code.
         referenceType:
           type: string
           enum: [block, element, ending, hiddenField, language, variable, variableName, recall]
