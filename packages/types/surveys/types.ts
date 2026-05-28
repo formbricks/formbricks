@@ -278,11 +278,13 @@ export const ZSurveyRecaptcha = z
 
 export type TSurveyRecaptcha = z.infer<typeof ZSurveyRecaptcha>;
 
-export const ZSurveyMetadata = z.object({
-  title: ZI18nString.optional(),
-  description: ZI18nString.optional(),
-  ogImage: ZStorageUrl.optional(),
-});
+export const ZSurveyMetadata = z
+  .object({
+    title: ZI18nString.optional(),
+    description: ZI18nString.optional(),
+    ogImage: ZStorageUrl.optional(),
+  })
+  .catchall(z.unknown());
 
 export type TSurveyMetadata = z.infer<typeof ZSurveyMetadata>;
 

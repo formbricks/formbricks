@@ -141,7 +141,7 @@ describe("withV3ApiWrapper", () => {
       apiKeyId: "key_1",
       organizationId: "org_1",
       organizationAccess: { accessControl: { read: true, write: true } },
-      environmentPermissions: [],
+      workspacePermissions: [],
     });
 
     const wrapped = withV3ApiWrapper({
@@ -510,6 +510,46 @@ describe("withV3ApiWrapper", () => {
     expect(body.invalid_params).toEqual(
       expect.arrayContaining([expect.objectContaining({ name: "workspaceId" })])
     );
+  });
+
+  test("preserves machine-readable validation metadata from Zod issues", async () => {
+    const handler = vi.fn(async () => Response.json({ ok: true }));
+    const wrapped = withV3ApiWrapper({
+      auth: "none",
+      schemas: {
+        body: z.unknown().superRefine((_value, ctx) => {
+          ctx.addIssue({
+            code: "custom",
+            message: "Unsupported field 'extra'",
+            path: ["extra"],
+            params: { code: "unsupported_field" },
+          });
+        }),
+      },
+      handler,
+    });
+
+    const response = await wrapped(
+      new NextRequest("http://localhost/api/v3/surveys", {
+        method: "POST",
+        body: JSON.stringify({ extra: true }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }),
+      {} as never
+    );
+
+    expect(response.status).toBe(400);
+    expect(handler).not.toHaveBeenCalled();
+    const body = await response.json();
+    expect(body.invalid_params).toEqual([
+      {
+        name: "extra",
+        reason: "Unsupported field 'extra'",
+        code: "unsupported_field",
+      },
+    ]);
   });
 
   test("returns 429 problem response when rate limited", async () => {

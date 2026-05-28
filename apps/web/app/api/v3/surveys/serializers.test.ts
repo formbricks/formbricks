@@ -14,7 +14,11 @@ const baseSurvey = {
   name: "Product Feedback",
   type: "link",
   status: "draft",
-  metadata: { cx: "enterprise" },
+  metadata: {
+    cx: "enterprise",
+    arbitraryConfig: { default: "preserve-me", mode: "strict" },
+    title: { default: "Product Feedback", "de-DE": "Produktfeedback" },
+  },
   languages: [
     {
       default: true,
@@ -102,6 +106,16 @@ describe("serializeV3SurveyResource", () => {
       { code: "de-DE", default: false, enabled: true, alias: "de" },
       { code: "fr-FR", default: false, enabled: false, alias: "fr" },
     ]);
+    expect(resource).toMatchObject({
+      metadata: {
+        cx: "enterprise",
+        arbitraryConfig: { default: "preserve-me", mode: "strict" },
+        title: {
+          "en-US": "Product Feedback",
+          "de-DE": "Produktfeedback",
+        },
+      },
+    });
     expect(resource).toMatchObject({
       welcomeCard: {
         headline: {

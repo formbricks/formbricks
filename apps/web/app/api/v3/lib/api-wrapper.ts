@@ -15,6 +15,7 @@ import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
 import { TAuditAction, TAuditTarget } from "@/modules/ee/audit-logs/types/audit-log";
 import {
   type InvalidParam,
+  isInvalidParamCode,
   problemBadRequest,
   problemInternalError,
   problemPayloadTooLarge,
@@ -72,11 +73,21 @@ function getUnauthenticatedDetail(authMode: TV3AuthMode): string {
   return "Not authenticated";
 }
 
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
 function formatZodIssues(error: z.ZodError, fallbackName: "body" | "query" | "params"): InvalidParam[] {
-  return error.issues.map((issue) => ({
-    name: issue.path.length > 0 ? issue.path.join(".") : fallbackName,
-    reason: issue.message,
-  }));
+  return error.issues.map((issue) => {
+    const params = "params" in issue && isPlainObject(issue.params) ? issue.params : {};
+    const code = isInvalidParamCode(params.code) ? params.code : undefined;
+
+    return {
+      name: issue.path.length > 0 ? issue.path.join(".") : fallbackName,
+      reason: issue.message,
+      ...(code ? { code } : {}),
+    };
+  });
 }
 
 type TV3InputParseFailure = {
