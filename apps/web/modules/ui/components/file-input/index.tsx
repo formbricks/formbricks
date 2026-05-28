@@ -63,9 +63,10 @@ export const FileInput = ({
   ];
   const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
   const [uploadedVideoUrl, setUploadedVideoUrl] = useState(videoUrl ?? "");
-  const [activeTab, setActiveTab] = useState(videoUrl ? "video" : "image");
+  const [activeTab, setActiveTab] = useState(isVideoAllowed && videoUrl ? "video" : "image");
   const [imageUrlTemp, setImageUrlTemp] = useState(fileUrl ?? "");
   const [videoUrlTemp, setVideoUrlTemp] = useState(videoUrl ?? "");
+  const fileType = isVideoAllowed && activeTab === "video" ? "video" : "image";
 
   const handleUpload = async (files: File[]) => {
     if (!isStorageConfigured) {
@@ -115,7 +116,7 @@ export const FileInput = ({
       return;
     }
 
-    onFileUpload(uploadedUrls, activeTab === "video" ? "video" : "image");
+    onFileUpload(uploadedUrls, fileType);
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
@@ -134,7 +135,7 @@ export const FileInput = ({
 
   const handleRemove = async (idx: number) => {
     const newFileUrl = selectedFiles.filter((_, i) => i !== idx).map((file) => file.url);
-    onFileUpload(newFileUrl, activeTab === "video" ? "video" : "image");
+    onFileUpload(newFileUrl, fileType);
     setImageUrlTemp("");
   };
 
@@ -185,7 +186,7 @@ export const FileInput = ({
     });
 
     const prevUrls = Array.isArray(fileUrl) ? fileUrl : fileUrl ? [fileUrl] : [];
-    onFileUpload([...prevUrls, ...uploadedUrls], activeTab === "video" ? "video" : "image");
+    onFileUpload([...prevUrls, ...uploadedUrls], fileType);
   };
 
   useEffect(() => {
@@ -202,14 +203,14 @@ export const FileInput = ({
   }, [fileUrl]);
 
   useEffect(() => {
-    if (activeTab === "image" && typeof imageUrlTemp === "string") {
+    if (fileType === "image" && typeof imageUrlTemp === "string") {
       // Temporarily store the current video URL before switching tabs.
       setVideoUrlTemp(videoUrl ?? "");
 
       if (imageUrlTemp) {
         onFileUpload([imageUrlTemp], "image");
       }
-    } else if (activeTab === "video") {
+    } else if (fileType === "video") {
       // Temporarily store the current image URL before switching tabs.
       setImageUrlTemp(fileUrl ?? "");
 
@@ -217,8 +218,8 @@ export const FileInput = ({
         onFileUpload([videoUrlTemp], "video");
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- Only run when activeTab changes to avoid infinite loops
-  }, [activeTab]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Only run when file type changes to avoid loops
+  }, [fileType]);
 
   return (
     <div className="w-full cursor-default">
@@ -227,7 +228,7 @@ export const FileInput = ({
           <OptionsSwitch options={options} currentOption={activeTab} handleOptionChange={setActiveTab} />
         )}
         <div>
-          {activeTab === "video" && (
+          {fileType === "video" && (
             <div className={cn(isVideoAllowed && "rounded-b-lg border-x border-b border-slate-200 p-4")}>
               <VideoSettings
                 uploadedVideoUrl={uploadedVideoUrl}
@@ -239,7 +240,7 @@ export const FileInput = ({
             </div>
           )}
 
-          {activeTab === "image" && (
+          {fileType === "image" && (
             <div className={cn(isVideoAllowed && "rounded-b-lg border-x border-b border-slate-200 p-4")}>
               {selectedFiles.length > 0 ? (
                 multiple ? (
