@@ -152,19 +152,17 @@ export const OrganizationBreadcrumb = ({
                 </div>
               )}
               {!isLoadingOrganizations && !loadError && (
-                <>
-                  <DropdownMenuGroup className="max-h-[300px] overflow-y-auto">
-                    {organizations.map((org) => (
-                      <DropdownMenuCheckboxItem
-                        key={org.id}
-                        checked={org.id === currentOrganizationId}
-                        onClick={() => handleOrganizationChange(org.id)}
-                        className="cursor-pointer">
-                        {org.name}
-                      </DropdownMenuCheckboxItem>
-                    ))}
-                  </DropdownMenuGroup>
-                </>
+                <DropdownMenuGroup className="max-h-[300px] overflow-y-auto">
+                  {organizations.map((org) => (
+                    <DropdownMenuCheckboxItem
+                      key={org.id}
+                      checked={org.id === currentOrganizationId}
+                      onClick={() => handleOrganizationChange(org.id)}
+                      className="cursor-pointer">
+                      {org.name}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </DropdownMenuGroup>
               )}
             </>
           )}
