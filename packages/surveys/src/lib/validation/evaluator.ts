@@ -152,6 +152,40 @@ const validateMultiSelectOtherValue = (
   return null;
 };
 
+const validateSingleSelectOtherValue = (
+  element: TSurveyElement,
+  value: TResponseDataValue,
+  languageCode: string,
+  t: TFunction
+): TValidationError | null => {
+  if (element.type !== TSurveyElementTypeEnum.MultipleChoiceSingle || typeof value !== "string") {
+    return null;
+  }
+
+  const hasOtherOption = "choices" in element && element.choices.some((choice) => choice.id === "other");
+  if (!hasOtherOption || (element.required && value === "")) {
+    return null;
+  }
+
+  const knownChoiceIds = element.choices.filter((choice) => choice.id !== "other").map((choice) => choice.id);
+  if (knownChoiceIds.includes(value)) {
+    return null;
+  }
+
+  const knownChoiceLabels = element.choices
+    .filter((choice) => choice.id !== "other")
+    .map((choice) => getLocalizedValue(choice.label, languageCode));
+  if (knownChoiceLabels.includes(value)) {
+    return null;
+  }
+
+  if (value.trim() === "") {
+    return createRequiredError(t);
+  }
+
+  return null;
+};
+
 /**
  * Check required field validation
  */
@@ -392,6 +426,11 @@ export const validateElementResponse = (
   const requiredError = checkRequiredField(element, value, t);
   if (requiredError) {
     errors.push(requiredError);
+  }
+
+  const singleSelectOtherError = validateSingleSelectOtherValue(element, value, languageCode, t);
+  if (singleSelectOtherError) {
+    errors.push(singleSelectOtherError);
   }
 
   const multiSelectOtherError = validateMultiSelectOtherValue(element, value, t);

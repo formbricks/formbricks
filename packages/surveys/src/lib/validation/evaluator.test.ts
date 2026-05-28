@@ -122,6 +122,56 @@ describe("validateElementResponse", () => {
       expect(result.errors[0].ruleId).toBe("required");
     });
 
+    test("should return error when optional single-select has other selected but no text", () => {
+      const element = {
+        id: "single1",
+        type: TSurveyElementTypeEnum.MultipleChoiceSingle,
+        headline: { default: "Pick" },
+        required: false,
+        choices: [
+          { id: "opt1", label: { default: "Option 1" } },
+          { id: "other", label: { default: "Other" } },
+        ],
+      } as unknown as TSurveyElement;
+
+      const result = validateElementResponse(element, "", "en");
+      expect(result.valid).toBe(false);
+      expect(result.errors[0].ruleId).toBe("required");
+    });
+
+    test("should return error when optional single-select has blank other text", () => {
+      const element = {
+        id: "single1",
+        type: TSurveyElementTypeEnum.MultipleChoiceSingle,
+        headline: { default: "Pick" },
+        required: false,
+        choices: [
+          { id: "opt1", label: { default: "Option 1" } },
+          { id: "other", label: { default: "Other" } },
+        ],
+      } as unknown as TSurveyElement;
+
+      const result = validateElementResponse(element, "   ", "en");
+      expect(result.valid).toBe(false);
+      expect(result.errors[0].ruleId).toBe("required");
+    });
+
+    test("should return valid when optional single-select has no response", () => {
+      const element = {
+        id: "single1",
+        type: TSurveyElementTypeEnum.MultipleChoiceSingle,
+        headline: { default: "Pick" },
+        required: false,
+        choices: [
+          { id: "opt1", label: { default: "Option 1" } },
+          { id: "other", label: { default: "Other" } },
+        ],
+      } as unknown as TSurveyElement;
+
+      const result = validateElementResponse(element, undefined, "en");
+      expect(result.valid).toBe(true);
+    });
+
     test("should return valid when required multi-select has other with text (legacy sentinel)", () => {
       const element = {
         id: "mc1",

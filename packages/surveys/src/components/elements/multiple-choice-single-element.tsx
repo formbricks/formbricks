@@ -91,8 +91,11 @@ export function MultipleChoiceSingleElement({
     if (isOtherSelected) setOtherValue(value ?? "");
   }, [isOtherSelected, value]);
 
-  const handleChange = (selectedValue: string) => {
-    if (selectedValue === otherOption?.id) {
+  const handleChange = (selectedValue: string | undefined) => {
+    if (selectedValue === undefined) {
+      setOtherValue("");
+      onChange({ [element.id]: undefined });
+    } else if (selectedValue === otherOption?.id) {
       setOtherValue("");
       onChange({ [element.id]: "" });
     } else {

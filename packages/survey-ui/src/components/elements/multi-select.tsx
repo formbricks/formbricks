@@ -278,7 +278,7 @@ function DropdownVariant({
           onChange={handleOtherInputChange}
           placeholder={otherOptionPlaceholder}
           disabled={disabled}
-          required
+          aria-required={true}
           aria-invalid={Boolean(errorMessage)}
           dir={dir}
           className="mt-2 w-full"
@@ -399,7 +399,7 @@ function ListVariant({
                   onChange={handleOtherInputChange}
                   placeholder={otherOptionPlaceholder}
                   disabled={disabled}
-                  required
+                  aria-required={true}
                   aria-invalid={Boolean(errorMessage)}
                   dir={dir}
                   className="mt-2 w-full"
