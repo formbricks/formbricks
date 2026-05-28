@@ -315,11 +315,12 @@ export const PreviewSurvey = ({
           {previewMode === "desktop" && (
             <div className="flex h-full w-full flex-1 flex-col">
               <div className="flex h-8 w-full items-center rounded-t-lg bg-slate-100">
-                <div className="ml-6 flex space-x-2">
-                  <div className="h-3 w-3 rounded-full bg-red-500"></div>
-                  <div className="h-3 w-3 rounded-full bg-amber-500"></div>
+                <div className="ml-6 flex gap-x-2">
+                  <div className="size-3 rounded-full bg-red-500"></div>
+                  <div className="size-3 rounded-full bg-amber-500"></div>
                   <button
-                    className="h-3 w-3 cursor-pointer rounded-full bg-emerald-500"
+                    type="button"
+                    className="size-3 cursor-pointer rounded-full bg-emerald-500"
                     onClick={() => {
                       if (isFullScreenPreview) {
                         setIsFullScreenPreview(false);
@@ -349,14 +350,14 @@ export const PreviewSurvey = ({
                     )}
                     {isFullScreenPreview ? (
                       <ShrinkIcon
-                        className="mr-1 h-[22px] w-[22px] cursor-pointer rounded-md bg-white p-1 text-slate-500 hover:text-slate-700"
+                        className="mr-1 size-[22px] cursor-pointer rounded-md bg-white p-1 text-slate-500 hover:text-slate-700"
                         onClick={() => {
                           setIsFullScreenPreview(false);
                         }}
                       />
                     ) : (
                       <ExpandIcon
-                        className="mr-1 h-[22px] w-[22px] cursor-pointer rounded-md bg-white p-1 text-slate-500 hover:text-slate-700"
+                        className="mr-1 size-[22px] cursor-pointer rounded-md bg-white p-1 text-slate-500 hover:text-slate-700"
                         onClick={() => {
                           setIsFullScreenPreview(true);
                         }}
@@ -431,12 +432,12 @@ export const PreviewSurvey = ({
         <div className="mt-2 flex rounded-full border-2 border-slate-300 p-1">
           <TabOption
             active={previewMode === "mobile"}
-            icon={<SmartphoneIcon className="mx-4 my-2 h-4 w-4 text-slate-700" />}
+            icon={<SmartphoneIcon className="mx-4 my-2 size-4 text-slate-700" />}
             onClick={() => handlePreviewModeChange("mobile")}
           />
           <TabOption
             active={previewMode === "desktop"}
-            icon={<MonitorIcon className="mx-4 my-2 h-4 w-4 text-slate-700" />}
+            icon={<MonitorIcon className="mx-4 my-2 size-4 text-slate-700" />}
             onClick={() => handlePreviewModeChange("desktop")}
           />
         </div>
@@ -462,7 +463,7 @@ const LanguageSelector = ({
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="mr-1 flex h-[22px] w-[22px] cursor-pointer items-center justify-center rounded-md bg-white p-1 text-slate-500 hover:text-slate-700"
+          className="mr-1 flex size-[22px] cursor-pointer items-center justify-center rounded-md bg-white p-1 text-slate-500 hover:text-slate-700"
           aria-label="Change preview language">
           <GlobeIcon className="h-full w-full" />
         </button>

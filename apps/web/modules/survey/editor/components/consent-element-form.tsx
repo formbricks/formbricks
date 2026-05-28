@@ -83,7 +83,7 @@ export const ConsentElementForm = ({
                 subheader: createI18nString("", surveyLanguageCodes),
               });
             }}>
-            <PlusIcon className="mr-1 h-4 w-4" />
+            <PlusIcon className="mr-1 size-4" />
             {t("workspace.surveys.edit.add_description")}
           </Button>
         )}

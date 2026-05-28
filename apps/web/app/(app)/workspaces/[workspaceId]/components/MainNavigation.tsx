@@ -170,7 +170,7 @@ export const MainNavigation = ({
             name: t("workspace.unify.feedback_records"),
             href: `/workspaces/${workspace.id}/unify/feedback-records`,
             icon: MessageSquareTextIcon,
-            isActive: pathname?.includes("/unify/feedback-records"),
+            isActive: pathname?.includes("/unify/"),
             isHidden: false,
             disabled: isMembershipPending || isBilling,
           },
@@ -234,7 +234,10 @@ export const MainNavigation = ({
   const renderSwitcherError = (error: string, onRetry: () => void, retryLabel: string) => (
     <div className="px-2 py-4">
       <p className="mb-2 text-sm text-red-600">{error}</p>
-      <button onClick={onRetry} className="text-xs text-slate-600 underline hover:text-slate-800">
+      <button
+        type="button"
+        onClick={onRetry}
+        className="text-xs text-slate-600 underline hover:text-slate-800">
         {retryLabel}
       </button>
     </div>
@@ -579,9 +582,9 @@ export const MainNavigation = ({
                     <Link
                       href="https://github.com/formbricks/formbricks/releases"
                       target="_blank"
-                      className="m-2 flex items-center space-x-4 rounded-lg border border-slate-200 bg-slate-100 p-2 text-sm text-slate-800 hover:border-slate-300 hover:bg-slate-200">
+                      className="m-2 flex items-center gap-x-4 rounded-lg border border-slate-200 bg-slate-100 p-2 text-sm text-slate-800 hover:border-slate-300 hover:bg-slate-200">
                       <p className="flex items-center justify-center gap-x-2 text-xs">
-                        <RocketIcon strokeWidth={1.5} className="mx-1 h-6 w-6 text-slate-900" />
+                        <RocketIcon strokeWidth={1.5} className="mx-1 size-6 text-slate-900" />
                         {t("common.new_version_available", { version: latestVersion })}
                       </p>
                     </Link>
@@ -624,7 +627,7 @@ export const MainNavigation = ({
                         aria-label={isCollapsed ? t("common.change_workspace") : undefined}
                         className={cn("flex w-full items-center gap-3", isCollapsed && "justify-center")}>
                         <span className={switcherIconClasses}>
-                          <FoldersIcon className="h-4 w-4" strokeWidth={1.5} />
+                          <FoldersIcon className="size-4" strokeWidth={1.5} />
                         </span>
                         {!isCollapsed && !isTextVisible && (
                           <>
@@ -633,21 +636,21 @@ export const MainNavigation = ({
                               <p className="text-sm text-slate-500">{t("common.workspace")}</p>
                             </div>
                             {isPending && (
-                              <Loader2 className="h-4 w-4 animate-spin text-slate-600" strokeWidth={1.5} />
+                              <Loader2 className="size-4 animate-spin text-slate-600" strokeWidth={1.5} />
                             )}
-                            <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-600" strokeWidth={1.5} />
+                            <ChevronRightIcon className="size-4 shrink-0 text-slate-600" strokeWidth={1.5} />
                           </>
                         )}
                       </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent side="right" sideOffset={10} alignOffset={5} align="end">
                       <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
-                        <FoldersIcon className="mr-2 inline h-4 w-4" strokeWidth={1.5} />
+                        <FoldersIcon className="mr-2 inline size-4" strokeWidth={1.5} />
                         {t("common.change_workspace")}
                       </div>
                       {(isLoadingWorkspaces || isInitialWorkspacesLoading) && (
                         <div className="flex items-center justify-center py-2">
-                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <Loader2 className="size-4 animate-spin" />
                         </div>
                       )}
                       {!isLoadingWorkspaces &&
@@ -679,7 +682,7 @@ export const MainNavigation = ({
                               onClick={handleWorkspaceCreate}
                               className="w-full cursor-pointer justify-between">
                               <span>{t("common.add_new_workspace")}</span>
-                              <PlusIcon className="ml-2 h-4 w-4" strokeWidth={1.5} />
+                              <PlusIcon className="ml-2 size-4" strokeWidth={1.5} />
                             </DropdownMenuCheckboxItem>
                           )}
                         </>
@@ -690,7 +693,7 @@ export const MainNavigation = ({
                           handleSettingNavigation(`/workspaces/${workspace.id}/settings/workspace/general`)
                         }
                         className="cursor-pointer">
-                        <Cog className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                        <Cog className="mr-2 size-4" strokeWidth={1.5} />
                         {t("common.settings")}
                       </DropdownMenuCheckboxItem>
                     </DropdownMenuContent>
@@ -706,7 +709,7 @@ export const MainNavigation = ({
                         aria-label={isCollapsed ? t("common.change_organization") : undefined}
                         className={cn("flex w-full items-center gap-3", isCollapsed && "justify-center")}>
                         <span className={switcherIconClasses}>
-                          <Building2Icon className="h-4 w-4" strokeWidth={1.5} />
+                          <Building2Icon className="size-4" strokeWidth={1.5} />
                         </span>
                         {!isCollapsed && !isTextVisible && (
                           <>
@@ -715,21 +718,21 @@ export const MainNavigation = ({
                               <p className="text-sm text-slate-500">{t("common.organization")}</p>
                             </div>
                             {isPending && (
-                              <Loader2 className="h-4 w-4 animate-spin text-slate-600" strokeWidth={1.5} />
+                              <Loader2 className="size-4 animate-spin text-slate-600" strokeWidth={1.5} />
                             )}
-                            <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-600" strokeWidth={1.5} />
+                            <ChevronRightIcon className="size-4 shrink-0 text-slate-600" strokeWidth={1.5} />
                           </>
                         )}
                       </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent side="right" sideOffset={10} alignOffset={5} align="end">
                       <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
-                        <Building2Icon className="mr-2 inline h-4 w-4" strokeWidth={1.5} />
+                        <Building2Icon className="mr-2 inline size-4" strokeWidth={1.5} />
                         {t("common.change_organization")}
                       </div>
                       {isLoadingOrganizations && (
                         <div className="flex items-center justify-center py-2">
-                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <Loader2 className="size-4 animate-spin" />
                         </div>
                       )}
                       {!isLoadingOrganizations &&
@@ -763,7 +766,7 @@ export const MainNavigation = ({
                           handleSettingNavigation(`/workspaces/${workspace.id}/settings/organization/general`)
                         }
                         className="cursor-pointer">
-                        <SettingsIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                        <SettingsIcon className="mr-2 size-4" strokeWidth={1.5} />
                         {t("common.settings")}
                       </DropdownMenuCheckboxItem>
                     </DropdownMenuContent>
@@ -793,7 +796,7 @@ export const MainNavigation = ({
                           </p>
                           <p className="text-sm text-slate-500">{t("common.account")}</p>
                         </div>
-                        <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-600" strokeWidth={1.5} />
+                        <ChevronRightIcon className="size-4 shrink-0 text-slate-600" strokeWidth={1.5} />
                       </>
                     )}
                   </button>
@@ -813,7 +816,7 @@ export const MainNavigation = ({
                       key={link.label}
                       rel={link.target === "_blank" ? "noopener noreferrer" : undefined}>
                       <DropdownMenuItem>
-                        <link.icon className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                        <link.icon className="mr-2 size-4" strokeWidth={1.5} />
                         {link.label}
                       </DropdownMenuItem>
                     </Link>
@@ -831,7 +834,7 @@ export const MainNavigation = ({
                       });
                       router.push(route?.url || loginUrl);
                     }}
-                    icon={<LogOutIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />}>
+                    icon={<LogOutIcon className="mr-2 size-4" strokeWidth={1.5} />}>
                     {t("common.logout")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>

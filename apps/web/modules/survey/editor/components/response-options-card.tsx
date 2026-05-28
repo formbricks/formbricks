@@ -313,7 +313,7 @@ export const ResponseOptionsCard = ({
           <div className="flex items-center pl-2 pr-5">
             <CheckIcon
               strokeWidth={3}
-              className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
+              className="size-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
             />{" "}
           </div>
           <div>
@@ -486,7 +486,7 @@ export const ResponseOptionsCard = ({
                 title={t("workspace.surveys.edit.adjust_survey_closed_message")}
                 description={t("workspace.surveys.edit.adjust_survey_closed_message_description")}
                 childBorder={true}>
-                <div className="flex w-full items-center space-x-1 p-4 pb-4">
+                <div className="flex w-full items-center gap-x-1 p-4 pb-4">
                   <div className="w-full cursor-pointer items-center bg-slate-50">
                     <Label htmlFor="headline">{t("workspace.surveys.edit.heading")}</Label>
                     <Input

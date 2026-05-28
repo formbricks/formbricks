@@ -25,7 +25,7 @@ export const SegmentTitle = ({ title, description, isPrivate }: SegmentTitleProp
   return (
     <div className="flex items-center gap-3">
       <div className="rounded-full border border-slate-200 bg-white p-2">
-        <UsersIcon className="h-6 w-6 text-slate-600" />
+        <UsersIcon className="size-6 text-slate-600" />
       </div>
       <div className="flex flex-col">
         <h3 className="font-medium text-slate-900">{title}</h3>

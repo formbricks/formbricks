@@ -36,7 +36,7 @@ export const PictureChoiceSummary = ({ elementSummary, survey, setFilter }: Pict
         additionalInfo={
           elementSummary.element.allowMulti ? (
             <div className="flex items-center rounded-lg bg-slate-100 p-2">
-              <InboxIcon className="mr-2 h-4 w-4" />
+              <InboxIcon className="mr-2 size-4" />
               {t("common.count_selections", { count: elementSummary.selectionCount })}
             </div>
           ) : undefined
@@ -60,7 +60,7 @@ export const PictureChoiceSummary = ({ elementSummary, survey, setFilter }: Pict
                 )
               }>
               <div className="text flex flex-col justify-between px-2 pb-2 sm:flex-row">
-                <div className="mr-8 flex w-full justify-between space-x-2 sm:justify-normal">
+                <div className="mr-8 flex w-full justify-between gap-x-2 sm:justify-normal">
                   <div className="relative h-32 w-[220px]">
                     <Image
                       src={result.imageUrl}
@@ -72,7 +72,7 @@ export const PictureChoiceSummary = ({ elementSummary, survey, setFilter }: Pict
                   </div>
                   <div className="self-end">{choiceId && <IdBadge id={choiceId} />}</div>
                 </div>
-                <div className="flex w-full space-x-2">
+                <div className="flex w-full gap-x-2">
                   <p className="flex w-full pt-1 text-slate-600 sm:items-end sm:justify-end sm:pt-0">
                     {t("common.count_selections", { count: result.count })}
                   </p>

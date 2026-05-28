@@ -190,7 +190,7 @@ export const MappingRow = ({
         elem={mapping[idx].element}
         t={t}
       />
-      <div className="flex w-full items-center space-x-2">
+      <div className="flex w-full items-center gap-x-2">
         <div className="flex w-full items-center">
           <div className="max-w-full flex-1">
             <DropdownSelector
@@ -212,7 +212,7 @@ export const MappingRow = ({
             />
           </div>
         </div>
-        <div className="flex space-x-2">
+        <div className="flex gap-x-2">
           {mapping.length > 1 && (
             <Button variant="secondary" size="icon" className="size-10" onClick={deleteRow} type="button">
               <TrashIcon />

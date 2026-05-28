@@ -131,9 +131,9 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
             className="flex-1 overflow-y-auto rounded-lg border border-slate-200 bg-white p-4"
             data-testid="survey-email-preview-shell">
             <div className="mb-6 flex gap-2">
-              <div className="h-3 w-3 rounded-full bg-red-500" />
-              <div className="h-3 w-3 rounded-full bg-amber-500" />
-              <div className="h-3 w-3 rounded-full bg-emerald-500" />
+              <div className="size-3 rounded-full bg-red-500" />
+              <div className="size-3 rounded-full bg-amber-500" />
+              <div className="size-3 rounded-full bg-emerald-500" />
             </div>
             <div>
               <div className="mb-2 border-b border-slate-200 pb-2 text-sm">
@@ -205,7 +205,7 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
   };
 
   return (
-    <div className="flex h-full w-full flex-col space-y-4">
+    <div className="flex h-full w-full flex-col gap-y-4">
       <TabBar
         tabs={tabs}
         activeId={activeTab}

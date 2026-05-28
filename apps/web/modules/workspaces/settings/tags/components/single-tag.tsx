@@ -71,7 +71,7 @@ export const SingleTag: React.FC<SingleTagProps> = ({
       } else if (result.data?.error?.code === TagError.TAG_NAME_ALREADY_EXISTS) {
         toast.error(t("workspace.tags.tag_already_exists"), {
           duration: 2000,
-          icon: <AlertCircleIcon className="h-5 w-5 text-orange-500" />,
+          icon: <AlertCircleIcon className="size-5 text-orange-500" />,
         });
         setUpdateTagError(true);
       } else {

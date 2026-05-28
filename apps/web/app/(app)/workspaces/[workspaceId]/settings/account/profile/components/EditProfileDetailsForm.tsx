@@ -225,7 +225,7 @@ export const EditProfileDetailsForm = ({
                             ) : (
                               t("common.select")
                             )}
-                            <ChevronDownIcon className="h-4 w-4 text-slate-500" />
+                            <ChevronDownIcon className="size-4 text-slate-500" />
                           </div>
                         </Button>
                       </DropdownMenuTrigger>

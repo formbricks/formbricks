@@ -47,7 +47,7 @@ export const Placement = ({
       <div className="flex">
         <RadioGroup onValueChange={(e) => setCurrentPlacement(e as TPlacement)} value={currentPlacement}>
           {placements.map((placement) => (
-            <div key={placement.value} className="flex items-center space-x-2 whitespace-nowrap">
+            <div key={placement.value} className="flex items-center gap-x-2 whitespace-nowrap">
               <RadioGroupItem id={placement.value} value={placement.value} disabled={placement.disabled} />
               <Label htmlFor={placement.value} className="text-slate-900">
                 {placement.name}
@@ -94,14 +94,14 @@ export const Placement = ({
           <RadioGroup
             onValueChange={(value) => setClickOutsideClose(value === "allow")}
             value={clickOutsideClose ? "allow" : "disallow"}
-            className="flex space-x-4">
-            <div className="flex items-center space-x-2 whitespace-nowrap">
+            className="flex gap-x-4">
+            <div className="flex items-center gap-x-2 whitespace-nowrap">
               <RadioGroupItem id="disallow" value="disallow" />
               <Label htmlFor="disallow" className="text-slate-900">
                 {t("common.disallow")}
               </Label>
             </div>
-            <div className="flex items-center space-x-2 whitespace-nowrap">
+            <div className="flex items-center gap-x-2 whitespace-nowrap">
               <RadioGroupItem id="allow" value="allow" />
               <Label htmlFor="allow" className="text-slate-900">
                 {t("common.allow")}

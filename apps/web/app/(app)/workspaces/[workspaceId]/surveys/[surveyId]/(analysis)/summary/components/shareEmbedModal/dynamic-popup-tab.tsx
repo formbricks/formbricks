@@ -15,7 +15,7 @@ export const DynamicPopupTab = ({ surveyId }: DynamicPopupTabProps) => {
   const { workspace } = useWorkspace();
 
   return (
-    <div className="flex h-full flex-col justify-between space-y-4" data-testid="dynamic-popup-container">
+    <div className="flex h-full flex-col justify-between gap-y-4" data-testid="dynamic-popup-container">
       <Alert variant="info" size="default">
         <AlertTitle>{t("workspace.surveys.share.dynamic_popup.alert_title")}</AlertTitle>
         <AlertDescription>{t("workspace.surveys.share.dynamic_popup.alert_description")}</AlertDescription>

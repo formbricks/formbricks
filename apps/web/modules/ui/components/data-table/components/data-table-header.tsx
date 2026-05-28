@@ -51,8 +51,8 @@ export const DataTableHeader = <T,>({
               column={header.column}
               setIsTableSettingsModalOpen={setIsTableSettingsModalOpen}
             />
-            <button {...attributes} {...listeners} className="cursor-move">
-              <GripVerticalIcon className="h-4 w-4" />
+            <button type="button" {...attributes} {...listeners} className="cursor-move">
+              <GripVerticalIcon className="size-4" />
             </button>
           </div>
         )}
@@ -63,6 +63,7 @@ export const DataTableHeader = <T,>({
 
         {/* Resize handle */}
         <button
+          type="button"
           onDoubleClick={() => header.column.resetSize()}
           onMouseDown={header.getResizeHandler()}
           onTouchStart={header.getResizeHandler()}

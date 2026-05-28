@@ -51,13 +51,13 @@ export const SingleResponseCardHeader = ({
   return (
     <div className="space-y-2 border-b border-slate-200 px-6 pb-4 pt-4">
       <div className="flex items-center justify-between">
-        <div className="flex items-center justify-center space-x-2">
+        <div className="flex items-center justify-center gap-x-2">
           {pageType === "response" && (
             <>
               {response.contact?.id ? (
                 user ? (
                   <Link
-                    className="flex items-center space-x-2"
+                    className="flex items-center gap-x-2"
                     href={`${workspaceBasePath}/contacts/${response.contact.id}`}>
                     <PersonAvatar personId={response.contact.id} />
                     <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600 hover:underline">
@@ -65,7 +65,7 @@ export const SingleResponseCardHeader = ({
                     </h3>
                   </Link>
                 ) : (
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center gap-x-2">
                     <PersonAvatar personId={response.contact.id} />
                     <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600">
                       {displayIdentifier}
@@ -83,7 +83,7 @@ export const SingleResponseCardHeader = ({
           )}
 
           {pageType === "people" && (
-            <div className="flex items-center justify-center space-x-2 rounded-full bg-slate-100 p-1 px-2 text-sm text-slate-600">
+            <div className="flex items-center justify-center gap-x-2 rounded-full bg-slate-100 p-1 px-2 text-sm text-slate-600">
               <SurveyStatusIndicator
                 status={survey.status}
                 isScheduled={survey.status === "paused" && survey.publishOn !== null}
@@ -95,7 +95,7 @@ export const SingleResponseCardHeader = ({
           )}
         </div>
 
-        <div className="flex items-center space-x-2 text-sm">
+        <div className="flex items-center gap-x-2 text-sm">
           <time className="text-slate-500" dateTime={timeSince(response.createdAt.toISOString(), locale)}>
             {timeSince(response.createdAt.toISOString(), locale)}
           </time>
@@ -107,7 +107,7 @@ export const SingleResponseCardHeader = ({
                 size="icon"
                 onClick={() => setDeleteDialogOpen(true)}
                 aria-label="Delete response">
-                <TrashIcon className="h-4 w-4" />
+                <TrashIcon className="size-4" />
               </Button>
             ) : (
               <TooltipProvider>
@@ -119,7 +119,7 @@ export const SingleResponseCardHeader = ({
                       disabled
                       className="text-slate-400"
                       aria-label="Cannot delete response in progress">
-                      <TrashIcon className="h-4 w-4" />
+                      <TrashIcon className="size-4" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent side="left">{deleteSubmissionToolTip}</TooltipContent>

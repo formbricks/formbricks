@@ -140,7 +140,7 @@ const getIcon = (type: string) => {
   const IconComponent = (elementIcons as Record<string, (typeof elementIcons)[keyof typeof elementIcons]>)[
     type
   ];
-  return IconComponent ? <IconComponent className="h-5 w-5" strokeWidth={1.5} /> : null;
+  return IconComponent ? <IconComponent className="size-5" strokeWidth={1.5} /> : null;
 };
 
 const getIconBackground = (type: OptionsType | string): string => {
@@ -231,7 +231,7 @@ export const ElementsComboBox = ({ options, selected, onChangeValue }: ElementCo
           className="flex-shrink-0"
           aria-expanded={open}
           aria-label={t("common.select")}>
-          <ChevronIcon className="h-4 w-4 opacity-50" />
+          <ChevronIcon className="size-4 opacity-50" />
         </Button>
       </div>
 

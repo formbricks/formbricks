@@ -247,7 +247,7 @@ export const TeamSettingsModal = ({
 
               {/* Members Section */}
               <div className="space-y-2">
-                <div className="flex flex-col space-y-1">
+                <div className="flex flex-col gap-y-1">
                   <FormLabel>{t("common.members")}</FormLabel>
                   <Muted className="block text-slate-500">
                     {t("workspace.settings.teams.add_members_description")}
@@ -303,7 +303,7 @@ export const TeamSettingsModal = ({
                       selectedMemberIds.length === orgMembers.length ||
                       hasEmptyMember
                     }>
-                    <PlusIcon className="h-4 w-4" />
+                    <PlusIcon className="size-4" />
                     <span>{t("common.add_member")}</span>
                   </Button>
                 </TooltipRenderer>
@@ -311,7 +311,7 @@ export const TeamSettingsModal = ({
 
               {/* Workspaces Section */}
               <div className="space-y-2">
-                <div className="flex flex-col space-y-1">
+                <div className="flex flex-col gap-y-1">
                   <FormLabel>{t("common.workspaces")}</FormLabel>
                   <Muted className="block text-slate-500">
                     {t("workspace.settings.teams.add_workspaces_description")}
@@ -362,7 +362,7 @@ export const TeamSettingsModal = ({
                       selectedWorkspaceIds.length === orgWorkspaces.length ||
                       hasEmptyWorkspace
                     }>
-                    <PlusIcon className="h-4 w-4" />
+                    <PlusIcon className="size-4" />
                     {t("common.add_workspace")}
                   </Button>
                 </TooltipRenderer>

@@ -20,7 +20,7 @@ export const CalSummary = ({ elementSummary, survey }: CalSummaryProps) => {
       <div className="space-y-5 px-4 pb-6 pt-4 text-sm md:px-6 md:text-base">
         <div>
           <div className="text flex justify-between px-2 pb-2">
-            <div className="mr-8 flex space-x-1">
+            <div className="mr-8 flex gap-x-1">
               <p className="font-semibold text-slate-700">{t("common.booked")}</p>
               <div>
                 <p className="rounded-lg bg-slate-100 px-2 text-slate-700">
@@ -36,7 +36,7 @@ export const CalSummary = ({ elementSummary, survey }: CalSummaryProps) => {
         </div>
         <div>
           <div className="text flex justify-between px-2 pb-2">
-            <div className="mr-8 flex space-x-1">
+            <div className="mr-8 flex gap-x-1">
               <p className="font-semibold text-slate-700">{t("common.dismissed")}</p>
               <div>
                 <p className="rounded-lg bg-slate-100 px-2 text-slate-700">

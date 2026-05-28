@@ -27,7 +27,7 @@ export function ChartDialogFooter({
     <DialogFooter>
       {showAddToDashboard && onAddToDashboardClick && (
         <Button variant="outline" type="button" onClick={onAddToDashboardClick} disabled={isSaving}>
-          <PlusIcon className="mr-2 h-4 w-4" />
+          <PlusIcon className="mr-2 size-4" />
           {t("workspace.analysis.charts.add_to_dashboard")}
         </Button>
       )}
@@ -36,7 +36,7 @@ export function ChartDialogFooter({
         form={formId}
         onClick={formId ? undefined : onSaveClick}
         disabled={isSaving}>
-        <SaveIcon className="mr-2 h-4 w-4" />
+        <SaveIcon className="mr-2 size-4" />
         {saveLabel ?? t("workspace.analysis.charts.save_chart")}
       </Button>
     </DialogFooter>

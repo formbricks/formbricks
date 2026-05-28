@@ -26,9 +26,10 @@ const InfoIconButton = ({
       <Tooltip>
         <TooltipTrigger asChild>
           <button
-            className="flex h-4 w-4 items-center justify-center rounded text-slate-500 hover:text-slate-700"
+            type="button"
+            className="flex size-4 items-center justify-center rounded text-slate-500 hover:text-slate-700"
             aria-label={ariaLabel}>
-            <Icon className="h-4 w-4" />
+            <Icon className="size-4" />
           </button>
         </TooltipTrigger>
         <TooltipContent avoidCollisions align="start" side="bottom" className={maxWidth}>
@@ -141,7 +142,7 @@ export const SingleResponseCardMetadata = ({ response, locale }: SingleResponseC
     ) : null;
 
   return (
-    <div className="flex items-center space-x-2">
+    <div className="flex items-center gap-x-2">
       {hasContactAttributes && contactAttributesTooltipContent && (
         <InfoIconButton
           icon={Tag}

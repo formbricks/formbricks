@@ -91,8 +91,8 @@ export function AIQuerySection({
     <div className="space-y-3">
       <div className="space-y-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
         <div className="flex flex-col items-center gap-2 text-center">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-dark/10">
-            <ActivityIcon className="h-5 w-5 text-brand-dark" />
+          <div className="flex size-8 items-center justify-center rounded-full bg-brand-dark/10">
+            <ActivityIcon className="size-5 text-brand-dark" />
           </div>
           <h2 className="font-semibold text-gray-900">
             {t("workspace.analysis.charts.ai_query_section_title")}
@@ -117,7 +117,7 @@ export function AIQuerySection({
             className="w-full"
             disabled={!isAIAvailable || !userQuery.trim() || isGenerating}
             loading={isGenerating}>
-            <WandSparklesIcon className="h-4 w-4" />
+            <WandSparklesIcon className="size-4" />
             {t("workspace.analysis.charts.create_chart_with_ai")}
           </Button>
           {!isAIAvailable && (

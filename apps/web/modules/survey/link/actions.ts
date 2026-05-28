@@ -37,6 +37,8 @@ const ZValidateSurveyPinAction = z.object({
 export const validateSurveyPinAction = actionClient
   .inputSchema(ZValidateSurveyPinAction)
   .action(async ({ parsedInput }) => {
+    await applyIPRateLimit(rateLimitConfigs.actions.validateSurveyPin);
+
     // Get survey data which includes pin information
     const survey = await getSurveyWithMetadata(parsedInput.surveyId);
     if (!survey) {
@@ -62,5 +64,16 @@ const ZIsSurveyResponsePresentAction = z.object({
 export const isSurveyResponsePresentAction = actionClient
   .inputSchema(ZIsSurveyResponsePresentAction)
   .action(async ({ parsedInput }) => {
+    await applyIPRateLimit(rateLimitConfigs.actions.isSurveyResponsePresent);
+
+    const survey = await getSurveyWithMetadata(parsedInput.surveyId);
+    if (!survey) {
+      throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
+    }
+
+    if (!survey.isSingleResponsePerEmailEnabled) {
+      throw new InvalidInputError("SINGLE_RESPONSE_PER_EMAIL_NOT_ENABLED");
+    }
+
     return await isSurveyResponsePresent(parsedInput.surveyId, parsedInput.email)();
   });

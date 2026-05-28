@@ -389,7 +389,7 @@ export const CustomFilter = ({ survey }: CustomFilterProps) => {
             <PopoverTriggerButton isOpen={isDownloadDropDownOpen} disabled={isDownloading}>
               <span className="flex items-center gap-2">
                 {t("common.download")}
-                {isDownloading && <Loader2 className="h-3 w-3 animate-spin" strokeWidth={1.5} />}
+                {isDownloading && <Loader2 className="size-3 animate-spin" strokeWidth={1.5} />}
               </span>
             </PopoverTriggerButton>
           </DropdownMenuTrigger>

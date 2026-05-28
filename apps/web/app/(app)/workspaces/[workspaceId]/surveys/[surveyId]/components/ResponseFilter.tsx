@@ -57,9 +57,9 @@ export const PopoverTriggerButton = React.forwardRef<HTMLButtonElement, PopoverT
       <span className="text-sm text-slate-700">{children}</span>
       <div className="ml-3">
         {isOpen ? (
-          <ChevronUp className="ml-2 h-4 w-4 opacity-50" />
+          <ChevronUp className="ml-2 size-4 opacity-50" />
         ) : (
-          <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+          <ChevronDown className="ml-2 size-4 opacity-50" />
         )}
       </div>
     </button>
@@ -252,7 +252,7 @@ export const ResponseFilter = ({ survey }: ResponseFilterProps) => {
           <p className="font-semibold text-slate-800">
             {t("workspace.surveys.summary.show_all_responses_that_match")}
           </p>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-x-2">
             <Select
               value={filterValue.responseStatus ?? "all"}
               onValueChange={(val) => {

@@ -150,6 +150,7 @@ export function SegmentEditor({
             <div className="flex items-start gap-2">
               <div className="w-auto" key={connector}>
                 <button
+                  type="button"
                   className={cn(
                     Boolean(connector) && "cursor-pointer underline",
                     "text-sm",
@@ -207,7 +208,7 @@ export function SegmentEditor({
               <div className="flex items-center gap-2 p-4">
                 <DropdownMenu>
                   <DropdownMenuTrigger data-testid="segment-editor-group-menu-trigger" disabled={viewOnly}>
-                    <MoreVertical className="h-4 w-4" />
+                    <MoreVertical className="size-4" />
                   </DropdownMenuTrigger>
 
                   <DropdownMenuContent>
@@ -230,7 +231,7 @@ export function SegmentEditor({
                       onClick={() => {
                         handleMoveResource(groupId, "up");
                       }}
-                      icon={<ArrowUpIcon className="h-4 w-4" />}>
+                      icon={<ArrowUpIcon className="size-4" />}>
                       {t("common.move_up")}
                     </DropdownMenuItem>
 
@@ -239,7 +240,7 @@ export function SegmentEditor({
                         if (viewOnly) return;
                         handleMoveResource(groupId, "down");
                       }}
-                      icon={<ArrowDownIcon className="h-4 w-4" />}>
+                      icon={<ArrowDownIcon className="size-4" />}>
                       {t("common.move_down")}
                     </DropdownMenuItem>
                   </DropdownMenuContent>

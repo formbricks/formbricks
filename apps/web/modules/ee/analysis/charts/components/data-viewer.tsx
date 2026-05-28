@@ -27,7 +27,7 @@ export function DataViewer({ data }: Readonly<DataViewerProps>) {
   return (
     <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
       <div className="mb-2 flex items-center gap-2">
-        <DatabaseIcon className="h-4 w-4 text-gray-600" />
+        <DatabaseIcon className="size-4 text-gray-600" />
         <h4 className="text-sm font-semibold text-gray-900">{t("workspace.analysis.charts.chart_data")}</h4>
       </div>
       <div className="max-h-64 overflow-auto rounded bg-white">

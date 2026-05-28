@@ -69,7 +69,7 @@ export const CreateOrganizationModal = ({ open, setOpen }: CreateOrganizationMod
 
         <form onSubmit={handleSubmit(submitOrganization)} className="space-y-4">
           <DialogBody>
-            <div className="grid w-full space-y-2">
+            <div className="grid w-full gap-y-2">
               <Label>{t("workspace.settings.general.organization_name")}</Label>
               <Input
                 autoFocus

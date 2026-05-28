@@ -46,7 +46,7 @@ const Page = async (props: { params: Promise<{ organizationId: string }> }) => {
               isMembershipPending={isMembershipPending}
             />
           </div>
-          <div className="flex h-full flex-col items-center justify-center space-y-12">
+          <div className="flex h-full flex-col items-center justify-center gap-y-12">
             <Header
               title={t("organizations.landing.no_workspaces_warning_title")}
               subtitle={t("organizations.landing.no_workspaces_warning_subtitle")}

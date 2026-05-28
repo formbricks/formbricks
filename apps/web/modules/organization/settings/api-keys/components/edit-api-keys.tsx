@@ -150,7 +150,7 @@ export const EditAPIKeys = ({
         <span className="whitespace-pre-line break-all">{apiKey}</span>
         <div className="copyApiKeyIcon flex-shrink-0">
           <FilesIcon
-            className="h-4 w-4 cursor-pointer"
+            className="size-4 cursor-pointer"
             onClick={(e) => {
               e.stopPropagation();
               void copyToClipboard();

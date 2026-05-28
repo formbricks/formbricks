@@ -159,7 +159,7 @@ export const ActionSettingsTab = ({
             </div>
 
             {isReadOnly ? null : (
-              <div className="flex space-x-2">
+              <div className="flex gap-x-2">
                 <Button type="submit" loading={isUpdatingAction}>
                   {t("common.save_changes")}
                 </Button>

@@ -207,13 +207,15 @@ export const EditEndingCard = ({
         )}>
         <div className="mt-3 flex w-full justify-center">
           {endingCard.type === "endScreen" ? (
-            <Handshake className="h-4 w-4" />
+            <Handshake className="size-4" />
           ) : (
-            <Undo2 className="h-4 w-4 rotate-180" />
+            <Undo2 className="size-4 rotate-180" />
           )}
         </div>
-        <button className="opacity-0 transition-all duration-300 hover:cursor-move group-hover:opacity-100">
-          <GripIcon className="h-4 w-4" />
+        <button
+          type="button"
+          className="opacity-0 transition-all duration-300 hover:cursor-move group-hover:opacity-100">
+          <GripIcon className="size-4" />
         </button>
       </div>
       <Collapsible.Root
@@ -253,7 +255,7 @@ export const EditEndingCard = ({
               </div>
             </div>
 
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center gap-x-4">
               <EditorCardMenu
                 survey={localSurvey}
                 cardIdx={endingCardIndex}

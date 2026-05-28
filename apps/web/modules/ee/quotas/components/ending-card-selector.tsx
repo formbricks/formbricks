@@ -36,7 +36,7 @@ export const EndingCardSelector = ({ survey, value, onChange }: EndingCardSelect
           {endingCards.length > 0 && (
             <SelectGroup>
               <div className="flex items-center gap-2 p-2 text-sm text-slate-500">
-                <HandshakeIcon className="h-4 w-4" />
+                <HandshakeIcon className="size-4" />
                 <span>{t("common.ending_card")}</span>
               </div>
               {/* Custom endings */}
@@ -52,7 +52,7 @@ export const EndingCardSelector = ({ survey, value, onChange }: EndingCardSelect
           {redirectToUrls.length > 0 && (
             <SelectGroup>
               <div className="flex items-center gap-2 p-2 text-sm text-slate-500">
-                <Undo2Icon className="h-4 w-4" />
+                <Undo2Icon className="size-4" />
                 <span>{t("workspace.surveys.edit.redirect_to_url")}</span>
               </div>
               {redirectToUrls.map((ending) => (

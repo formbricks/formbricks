@@ -98,7 +98,7 @@ export const SurveyVariablesCard = ({
             <div className="flex items-center pl-2 pr-5">
               <CheckIcon
                 strokeWidth={3}
-                className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
+                className="size-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
               />
             </div>
             <div>
@@ -122,7 +122,7 @@ export const SurveyVariablesCard = ({
           "flex w-10 items-center justify-center rounded-l-lg border-b border-l border-t group-aria-expanded:rounded-bl-none"
         )}>
         <div className="flex w-full justify-center">
-          <FileDigitIcon className="h-4 w-4" />
+          <FileDigitIcon className="size-4" />
         </div>
       </div>
       <Collapsible.Root

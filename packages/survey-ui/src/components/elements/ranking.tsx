@@ -227,7 +227,7 @@ function Ranking({
         <ElementError errorMessage={errorMessage} dir={dir} />
         <fieldset className="w-full" dir={dir}>
           <legend className="sr-only">Ranking options</legend>
-          <div className="space-y-2" ref={parent as React.Ref<HTMLDivElement>}>
+          <div className="space-y-2" ref={parent}>
             {allItems.map((item) => (
               <RankingItem
                 key={item.id}

@@ -47,8 +47,8 @@ const getElementColumnsData = (
     const title = suffix ? `${headline} - ${suffix}` : headline;
     const ElementHeader = () => (
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2 overflow-hidden">
-          <span className="h-4 w-4">{ELEMENTS_ICON_MAP[elementType]}</span>
+        <div className="flex items-center gap-x-2 overflow-hidden">
+          <span className="size-4">{ELEMENTS_ICON_MAP[elementType]}</span>
           <span className="truncate">{title}</span>
         </div>
       </div>
@@ -85,8 +85,8 @@ const getElementColumnsData = (
           header: () => {
             return (
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2 overflow-hidden">
-                  <span className="h-4 w-4">{ELEMENTS_ICON_MAP["matrix"]}</span>
+                <div className="flex items-center gap-x-2 overflow-hidden">
+                  <span className="size-4">{ELEMENTS_ICON_MAP["matrix"]}</span>
                   <span className="truncate">
                     {getTextContent(getLocalizedValue(element.headline, "default")) +
                       " - " +
@@ -112,8 +112,8 @@ const getElementColumnsData = (
           header: () => {
             return (
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2 overflow-hidden">
-                  <span className="h-4 w-4">{ELEMENTS_ICON_MAP["address"]}</span>
+                <div className="flex items-center gap-x-2 overflow-hidden">
+                  <span className="size-4">{ELEMENTS_ICON_MAP["address"]}</span>
                   <span className="truncate">{getAddressFieldLabel(addressField, t)}</span>
                 </div>
               </div>
@@ -135,8 +135,8 @@ const getElementColumnsData = (
           header: () => {
             return (
               <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2 overflow-hidden">
-                  <span className="h-4 w-4">{ELEMENTS_ICON_MAP["contactInfo"]}</span>
+                <div className="flex items-center gap-x-2 overflow-hidden">
+                  <span className="size-4">{ELEMENTS_ICON_MAP["contactInfo"]}</span>
                   <span className="truncate">{getContactInfoFieldLabel(contactInfoField, t)}</span>
                 </div>
               </div>
@@ -202,8 +202,8 @@ const getElementColumnsData = (
           accessorKey: "ELEMENT_" + element.id,
           header: () => (
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2 overflow-hidden">
-                <span className="h-4 w-4">{ELEMENTS_ICON_MAP[element.type]}</span>
+              <div className="flex items-center gap-x-2 overflow-hidden">
+                <span className="size-4">{ELEMENTS_ICON_MAP[element.type]}</span>
                 <span className="truncate">
                   {getTextContent(
                     getLocalizedValue(recallToHeadline(element.headline, survey, false, "default"), "default")
@@ -241,8 +241,8 @@ const getMetadataColumnsData = (t: TFunction): ColumnDef<TResponseTableData>[] =
     metadataColumns.push({
       accessorKey: "METADATA_" + label,
       header: () => (
-        <div className="flex items-center space-x-2 overflow-hidden">
-          <span className="h-4 w-4">{IconComponent && <IconComponent className="h-4 w-4" />}</span>
+        <div className="flex items-center gap-x-2 overflow-hidden">
+          <span className="size-4">{IconComponent && <IconComponent className="h-4 w-4" />}</span>
           <span className="truncate">{getMetadataFieldLabel(label, t)}</span>
         </div>
       ),
@@ -290,7 +290,7 @@ export const generateResponseTableColumns = (
         <TooltipProvider delayDuration={0}>
           <Tooltip>
             <TooltipTrigger>
-              <CircleHelpIcon className="h-3 w-3 text-slate-500" strokeWidth={1.5} />
+              <CircleHelpIcon className="size-3 text-slate-500" strokeWidth={1.5} />
             </TooltipTrigger>
             <TooltipContent side="bottom" className="space-x-1 font-normal">
               <span>{t("workspace.surveys.responses.how_to_identify_users")}</span>
@@ -363,7 +363,7 @@ export const generateResponseTableColumns = (
           <ResponseBadges
             items={tagsArray.map((tag) => ({ value: tag }))}
             isExpanded={isExpanded}
-            icon={<TagIcon className="h-4 w-4 text-slate-500" />}
+            icon={<TagIcon className="size-4 text-slate-500" />}
             showId={false}
           />
         );
@@ -375,8 +375,8 @@ export const generateResponseTableColumns = (
     return {
       accessorKey: "VARIABLE_" + variable.id,
       header: () => (
-        <div className="flex items-center space-x-2 overflow-hidden">
-          <span className="h-4 w-4">{VARIABLES_ICON_MAP[variable.type]}</span>
+        <div className="flex items-center gap-x-2 overflow-hidden">
+          <span className="size-4">{VARIABLES_ICON_MAP[variable.type]}</span>
           <span className="truncate">{variable.name}</span>
         </div>
       ),
@@ -394,9 +394,9 @@ export const generateResponseTableColumns = (
         return {
           accessorKey: "HIDDEN_FIELD_" + hiddenFieldId,
           header: () => (
-            <div className="flex items-center space-x-2 overflow-hidden">
-              <span className="h-4 w-4">
-                <EyeOffIcon className="h-4 w-4" />
+            <div className="flex items-center gap-x-2 overflow-hidden">
+              <span className="size-4">
+                <EyeOffIcon className="size-4" />
               </span>
               <span className="truncate">{hiddenFieldId}</span>
             </div>
@@ -416,9 +416,9 @@ export const generateResponseTableColumns = (
   const verifiedEmailColumn: ColumnDef<TResponseTableData> = {
     accessorKey: "verifiedEmail",
     header: () => (
-      <div className="flex items-center space-x-2 overflow-hidden">
-        <span className="h-4 w-4">
-          <MailIcon className="h-4 w-4" />
+      <div className="flex items-center gap-x-2 overflow-hidden">
+        <span className="size-4">
+          <MailIcon className="size-4" />
         </span>
         <span className="truncate">{t("common.verified_email")}</span>
       </div>

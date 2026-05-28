@@ -133,7 +133,7 @@ export const SurveyDropDownMenu = ({
               disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:bg-slate-50"
             )}>
             <span className="sr-only">{t("workspace.surveys.open_options")}</span>
-            <MoreVertical className="h-4 w-4" aria-hidden="true" />
+            <MoreVertical className="size-4" aria-hidden="true" />
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="inline-block w-auto min-w-max">
@@ -181,7 +181,7 @@ export const SurveyDropDownMenu = ({
                     previewUrl.searchParams.set("preview", "true");
                     globalThis.window.open(previewUrl.toString(), "_blank");
                   }}>
-                  <EyeIcon className="mr-2 h-4 w-4" />
+                  <EyeIcon className="mr-2 size-4" />
                   {t("common.preview")}
                 </button>
               </DropdownMenuItem>
@@ -197,7 +197,7 @@ export const SurveyDropDownMenu = ({
                   )}
                   disabled={isSingleUseEnabled}
                   onClick={handleCopyLink}>
-                  <LinkIcon className="mr-2 h-4 w-4" />
+                  <LinkIcon className="mr-2 size-4" />
                   {t("common.copy_link")}
                 </button>
               </DropdownMenuItem>
@@ -212,7 +212,7 @@ export const SurveyDropDownMenu = ({
                     setIsDropDownOpen(false);
                     setDeleteDialogOpen(true);
                   }}>
-                  <TrashIcon className="mr-2 h-4 w-4" />
+                  <TrashIcon className="mr-2 size-4" />
                   {t("common.delete")}
                 </button>
               </DropdownMenuItem>
