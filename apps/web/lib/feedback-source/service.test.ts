@@ -3,28 +3,28 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
-  createConnectorWithMappings,
-  deleteConnector,
-  getConnectorsBySurveyId,
-  getConnectorsWithMappings,
-  updateConnector,
-  updateConnectorWithMappings,
+  createFeedbackSourceWithMappings,
+  deleteFeedbackSource,
+  getFeedbackSourcesBySurveyId,
+  getFeedbackSourcesWithMappings,
+  updateFeedbackSource,
+  updateFeedbackSourceWithMappings,
 } from "./service";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
-    connector: {
+    feedbackSource: {
       findMany: vi.fn(),
       findUniqueOrThrow: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
     },
-    connectorFormbricksMapping: {
+    feedbackSourceFormbricksMapping: {
       create: vi.fn(),
       deleteMany: vi.fn(),
     },
-    connectorFieldMapping: {
+    feedbackSourceFieldMapping: {
       create: vi.fn(),
       deleteMany: vi.fn(),
     },
@@ -42,11 +42,11 @@ const SURVEY_ID = "clxxxxxxxxxxxxxxxx003";
 const FRD_ID = "clxxxxxxxxxxxxxxxx004";
 const NOW = new Date("2026-02-24T10:00:00.000Z");
 
-const mockConnector = {
+const mockFeedbackSource = {
   id: CONNECTOR_ID,
   createdAt: NOW,
   updatedAt: NOW,
-  name: "Test Connector",
+  name: "Test FeedbackSource",
   type: "formbricks_survey" as const,
   status: "active" as const,
   workspaceId: ENV_ID,
@@ -54,14 +54,14 @@ const mockConnector = {
   createdBy: null,
 };
 
-const mockConnectorWithMappingsFromDb = {
-  ...mockConnector,
+const mockFeedbackSourceWithMappingsFromDb = {
+  ...mockFeedbackSource,
   creator: null,
   formbricksMappings: [
     {
       id: "mapping-1",
       createdAt: NOW,
-      connectorId: CONNECTOR_ID,
+      feedbackSourceId: CONNECTOR_ID,
       workspaceId: ENV_ID,
       surveyId: SURVEY_ID,
       elementId: "el-1",
@@ -72,24 +72,26 @@ const mockConnectorWithMappingsFromDb = {
   fieldMappings: [],
 };
 
-const mockConnectorWithMappings = {
-  ...mockConnector,
+const mockFeedbackSourceWithMappings = {
+  ...mockFeedbackSource,
   creatorName: null,
-  formbricksMappings: mockConnectorWithMappingsFromDb.formbricksMappings,
+  formbricksMappings: mockFeedbackSourceWithMappingsFromDb.formbricksMappings,
   fieldMappings: [],
 };
 
-describe("getConnectorsWithMappings", () => {
+describe("getFeedbackSourcesWithMappings", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  test("returns connectors for the given environment", async () => {
-    vi.mocked(prisma.connector.findMany).mockResolvedValue([mockConnectorWithMappingsFromDb] as never);
+  test("returns feedbackSources for the given environment", async () => {
+    vi.mocked(prisma.feedbackSource.findMany).mockResolvedValue([
+      mockFeedbackSourceWithMappingsFromDb,
+    ] as never);
 
-    const result = await getConnectorsWithMappings(ENV_ID);
+    const result = await getFeedbackSourcesWithMappings(ENV_ID);
 
-    expect(prisma.connector.findMany).toHaveBeenCalledWith(
+    expect(prisma.feedbackSource.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { workspaceId: ENV_ID },
         orderBy: { createdAt: "desc" },
@@ -100,11 +102,11 @@ describe("getConnectorsWithMappings", () => {
   });
 
   test("applies pagination when page is provided", async () => {
-    vi.mocked(prisma.connector.findMany).mockResolvedValue([] as never);
+    vi.mocked(prisma.feedbackSource.findMany).mockResolvedValue([] as never);
 
-    await getConnectorsWithMappings(ENV_ID, 2);
+    await getFeedbackSourcesWithMappings(ENV_ID, 2);
 
-    expect(prisma.connector.findMany).toHaveBeenCalledWith(
+    expect(prisma.feedbackSource.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         take: expect.any(Number),
         skip: expect.any(Number),
@@ -112,36 +114,38 @@ describe("getConnectorsWithMappings", () => {
     );
   });
 
-  test("returns empty array when no connectors exist", async () => {
-    vi.mocked(prisma.connector.findMany).mockResolvedValue([] as never);
+  test("returns empty array when no feedbackSources exist", async () => {
+    vi.mocked(prisma.feedbackSource.findMany).mockResolvedValue([] as never);
 
-    const result = await getConnectorsWithMappings(ENV_ID);
+    const result = await getFeedbackSourcesWithMappings(ENV_ID);
     expect(result).toEqual([]);
   });
 
   test("throws DatabaseError on Prisma error", async () => {
-    vi.mocked(prisma.connector.findMany).mockRejectedValue(
+    vi.mocked(prisma.feedbackSource.findMany).mockRejectedValue(
       new Prisma.PrismaClientKnownRequestError("connection error", {
         code: "P1001",
         clientVersion: "5.0.0",
       })
     );
 
-    await expect(getConnectorsWithMappings(ENV_ID)).rejects.toThrow(DatabaseError);
+    await expect(getFeedbackSourcesWithMappings(ENV_ID)).rejects.toThrow(DatabaseError);
   });
 });
 
-describe("getConnectorsBySurveyId", () => {
+describe("getFeedbackSourcesBySurveyId", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  test("returns active formbricks connectors linked to the survey", async () => {
-    vi.mocked(prisma.connector.findMany).mockResolvedValue([mockConnectorWithMappingsFromDb] as never);
+  test("returns active formbricks feedbackSources linked to the survey", async () => {
+    vi.mocked(prisma.feedbackSource.findMany).mockResolvedValue([
+      mockFeedbackSourceWithMappingsFromDb,
+    ] as never);
 
-    const result = await getConnectorsBySurveyId(SURVEY_ID);
+    const result = await getFeedbackSourcesBySurveyId(SURVEY_ID);
 
-    expect(prisma.connector.findMany).toHaveBeenCalledWith(
+    expect(prisma.feedbackSource.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: {
           type: "formbricks_survey",
@@ -153,37 +157,37 @@ describe("getConnectorsBySurveyId", () => {
     expect(result).toHaveLength(1);
   });
 
-  test("returns empty when no connectors match", async () => {
-    vi.mocked(prisma.connector.findMany).mockResolvedValue([] as never);
+  test("returns empty when no feedbackSources match", async () => {
+    vi.mocked(prisma.feedbackSource.findMany).mockResolvedValue([] as never);
 
-    const result = await getConnectorsBySurveyId(SURVEY_ID);
+    const result = await getFeedbackSourcesBySurveyId(SURVEY_ID);
     expect(result).toEqual([]);
   });
 
   test("throws DatabaseError on Prisma error", async () => {
-    vi.mocked(prisma.connector.findMany).mockRejectedValue(
+    vi.mocked(prisma.feedbackSource.findMany).mockRejectedValue(
       new Prisma.PrismaClientKnownRequestError("DB error", {
         code: "P1001",
         clientVersion: "5.0.0",
       })
     );
 
-    await expect(getConnectorsBySurveyId(SURVEY_ID)).rejects.toThrow(DatabaseError);
+    await expect(getFeedbackSourcesBySurveyId(SURVEY_ID)).rejects.toThrow(DatabaseError);
   });
 });
 
-describe("updateConnector", () => {
+describe("updateFeedbackSource", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  test("updates connector name and returns the result", async () => {
-    const updated = { ...mockConnector, name: "Renamed" };
-    vi.mocked(prisma.connector.update).mockResolvedValue(updated as never);
+  test("updates feedbackSource name and returns the result", async () => {
+    const updated = { ...mockFeedbackSource, name: "Renamed" };
+    vi.mocked(prisma.feedbackSource.update).mockResolvedValue(updated as never);
 
-    const result = await updateConnector(CONNECTOR_ID, ENV_ID, { name: "Renamed" });
+    const result = await updateFeedbackSource(CONNECTOR_ID, ENV_ID, { name: "Renamed" });
 
-    expect(prisma.connector.update).toHaveBeenCalledWith(
+    expect(prisma.feedbackSource.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: CONNECTOR_ID, workspaceId: ENV_ID },
         data: expect.objectContaining({ name: "Renamed" }),
@@ -192,54 +196,56 @@ describe("updateConnector", () => {
     expect(result.name).toBe("Renamed");
   });
 
-  test("updates connector status", async () => {
-    const updated = { ...mockConnector, status: "paused" };
-    vi.mocked(prisma.connector.update).mockResolvedValue(updated as never);
+  test("updates feedbackSource status", async () => {
+    const updated = { ...mockFeedbackSource, status: "paused" };
+    vi.mocked(prisma.feedbackSource.update).mockResolvedValue(updated as never);
 
-    const result = await updateConnector(CONNECTOR_ID, ENV_ID, { status: "paused" });
+    const result = await updateFeedbackSource(CONNECTOR_ID, ENV_ID, { status: "paused" });
     expect(result.status).toBe("paused");
   });
 
-  test("throws ResourceNotFoundError when connector does not exist", async () => {
-    vi.mocked(prisma.connector.update).mockRejectedValue(
+  test("throws ResourceNotFoundError when feedbackSource does not exist", async () => {
+    vi.mocked(prisma.feedbackSource.update).mockRejectedValue(
       new Prisma.PrismaClientKnownRequestError("Not found", {
         code: "P2015",
         clientVersion: "5.0.0",
       })
     );
 
-    await expect(updateConnector(CONNECTOR_ID, ENV_ID, { name: "x" })).rejects.toThrow(ResourceNotFoundError);
+    await expect(updateFeedbackSource(CONNECTOR_ID, ENV_ID, { name: "x" })).rejects.toThrow(
+      ResourceNotFoundError
+    );
   });
 
   test("throws DatabaseError on generic Prisma error", async () => {
-    vi.mocked(prisma.connector.update).mockRejectedValue(
+    vi.mocked(prisma.feedbackSource.update).mockRejectedValue(
       new Prisma.PrismaClientKnownRequestError("DB error", {
         code: "P1001",
         clientVersion: "5.0.0",
       })
     );
 
-    await expect(updateConnector(CONNECTOR_ID, ENV_ID, { name: "x" })).rejects.toThrow(DatabaseError);
+    await expect(updateFeedbackSource(CONNECTOR_ID, ENV_ID, { name: "x" })).rejects.toThrow(DatabaseError);
   });
 
   test("rethrows non-Prisma errors", async () => {
-    vi.mocked(prisma.connector.update).mockRejectedValue(new Error("unexpected"));
+    vi.mocked(prisma.feedbackSource.update).mockRejectedValue(new Error("unexpected"));
 
-    await expect(updateConnector(CONNECTOR_ID, ENV_ID, { name: "x" })).rejects.toThrow("unexpected");
+    await expect(updateFeedbackSource(CONNECTOR_ID, ENV_ID, { name: "x" })).rejects.toThrow("unexpected");
   });
 });
 
-describe("deleteConnector", () => {
+describe("deleteFeedbackSource", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  test("deletes the connector and returns it", async () => {
-    vi.mocked(prisma.connector.delete).mockResolvedValue(mockConnector as never);
+  test("deletes the feedbackSource and returns it", async () => {
+    vi.mocked(prisma.feedbackSource.delete).mockResolvedValue(mockFeedbackSource as never);
 
-    const result = await deleteConnector(CONNECTOR_ID, ENV_ID);
+    const result = await deleteFeedbackSource(CONNECTOR_ID, ENV_ID);
 
-    expect(prisma.connector.delete).toHaveBeenCalledWith(
+    expect(prisma.feedbackSource.delete).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: CONNECTOR_ID, workspaceId: ENV_ID },
       })
@@ -247,67 +253,67 @@ describe("deleteConnector", () => {
     expect(result.id).toBe(CONNECTOR_ID);
   });
 
-  test("throws ResourceNotFoundError when connector does not exist", async () => {
-    vi.mocked(prisma.connector.delete).mockRejectedValue(
+  test("throws ResourceNotFoundError when feedbackSource does not exist", async () => {
+    vi.mocked(prisma.feedbackSource.delete).mockRejectedValue(
       new Prisma.PrismaClientKnownRequestError("Not found", {
         code: "P2015",
         clientVersion: "5.0.0",
       })
     );
 
-    await expect(deleteConnector(CONNECTOR_ID, ENV_ID)).rejects.toThrow(ResourceNotFoundError);
+    await expect(deleteFeedbackSource(CONNECTOR_ID, ENV_ID)).rejects.toThrow(ResourceNotFoundError);
   });
 
   test("throws DatabaseError on generic Prisma error", async () => {
-    vi.mocked(prisma.connector.delete).mockRejectedValue(
+    vi.mocked(prisma.feedbackSource.delete).mockRejectedValue(
       new Prisma.PrismaClientKnownRequestError("DB error", {
         code: "P1001",
         clientVersion: "5.0.0",
       })
     );
 
-    await expect(deleteConnector(CONNECTOR_ID, ENV_ID)).rejects.toThrow(DatabaseError);
+    await expect(deleteFeedbackSource(CONNECTOR_ID, ENV_ID)).rejects.toThrow(DatabaseError);
   });
 });
 
-describe("createConnectorWithMappings", () => {
+describe("createFeedbackSourceWithMappings", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   const setupTransaction = () => {
     const txMethods = {
-      connector: {
+      feedbackSource: {
         create: vi.fn(),
         findUniqueOrThrow: vi.fn(),
       },
-      connectorFormbricksMapping: {
+      feedbackSourceFormbricksMapping: {
         create: vi.fn(),
       },
-      connectorFieldMapping: {
+      feedbackSourceFieldMapping: {
         create: vi.fn(),
       },
     };
 
     vi.mocked(prisma.$transaction).mockImplementation(async (fn) => {
-      return (fn as (tx: typeof txMethods) => Promise<unknown>)(txMethods);
+      return (fn as unknown as (tx: typeof txMethods) => Promise<unknown>)(txMethods);
     });
 
     return txMethods;
   };
 
-  test("creates connector without mappings", async () => {
+  test("creates feedbackSource without mappings", async () => {
     const tx = setupTransaction();
-    tx.connector.create.mockResolvedValue({ id: CONNECTOR_ID, workspaceId: ENV_ID });
-    tx.connector.findUniqueOrThrow.mockResolvedValue(mockConnectorWithMappingsFromDb);
+    tx.feedbackSource.create.mockResolvedValue({ id: CONNECTOR_ID, workspaceId: ENV_ID });
+    tx.feedbackSource.findUniqueOrThrow.mockResolvedValue(mockFeedbackSourceWithMappingsFromDb);
 
-    const result = await createConnectorWithMappings(ENV_ID, {
+    const result = await createFeedbackSourceWithMappings(ENV_ID, {
       name: "New",
       type: "formbricks_survey",
       feedbackDirectoryId: FRD_ID,
     });
 
-    expect(tx.connector.create).toHaveBeenCalledWith(
+    expect(tx.feedbackSource.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: {
           name: "New",
@@ -317,18 +323,18 @@ describe("createConnectorWithMappings", () => {
         },
       })
     );
-    expect(tx.connectorFormbricksMapping.create).not.toHaveBeenCalled();
-    expect(tx.connectorFieldMapping.create).not.toHaveBeenCalled();
-    expect(result).toEqual(mockConnectorWithMappings);
+    expect(tx.feedbackSourceFormbricksMapping.create).not.toHaveBeenCalled();
+    expect(tx.feedbackSourceFieldMapping.create).not.toHaveBeenCalled();
+    expect(result).toEqual(mockFeedbackSourceWithMappings);
   });
 
-  test("creates connector with formbricks mappings", async () => {
+  test("creates feedbackSource with formbricks mappings", async () => {
     const tx = setupTransaction();
-    tx.connector.create.mockResolvedValue({ id: CONNECTOR_ID, workspaceId: ENV_ID });
-    tx.connectorFormbricksMapping.create.mockResolvedValue({});
-    tx.connector.findUniqueOrThrow.mockResolvedValue(mockConnectorWithMappingsFromDb);
+    tx.feedbackSource.create.mockResolvedValue({ id: CONNECTOR_ID, workspaceId: ENV_ID });
+    tx.feedbackSourceFormbricksMapping.create.mockResolvedValue({});
+    tx.feedbackSource.findUniqueOrThrow.mockResolvedValue(mockFeedbackSourceWithMappingsFromDb);
 
-    await createConnectorWithMappings(
+    await createFeedbackSourceWithMappings(
       ENV_ID,
       { name: "FB", type: "formbricks_survey", feedbackDirectoryId: FRD_ID },
       {
@@ -340,11 +346,11 @@ describe("createConnectorWithMappings", () => {
       }
     );
 
-    expect(tx.connectorFormbricksMapping.create).toHaveBeenCalledTimes(2);
-    expect(tx.connectorFormbricksMapping.create).toHaveBeenCalledWith(
+    expect(tx.feedbackSourceFormbricksMapping.create).toHaveBeenCalledTimes(2);
+    expect(tx.feedbackSourceFormbricksMapping.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
-          connectorId: CONNECTOR_ID,
+          feedbackSourceId: CONNECTOR_ID,
           workspaceId: ENV_ID,
           surveyId: SURVEY_ID,
           elementId: "el-1",
@@ -354,17 +360,17 @@ describe("createConnectorWithMappings", () => {
     );
   });
 
-  test("creates connector with field mappings", async () => {
+  test("creates feedbackSource with field mappings", async () => {
     const tx = setupTransaction();
-    tx.connector.create.mockResolvedValue({ id: CONNECTOR_ID, workspaceId: ENV_ID });
-    tx.connectorFieldMapping.create.mockResolvedValue({});
-    tx.connector.findUniqueOrThrow.mockResolvedValue({
-      ...mockConnector,
+    tx.feedbackSource.create.mockResolvedValue({ id: CONNECTOR_ID, workspaceId: ENV_ID });
+    tx.feedbackSourceFieldMapping.create.mockResolvedValue({});
+    tx.feedbackSource.findUniqueOrThrow.mockResolvedValue({
+      ...mockFeedbackSource,
       formbricksMappings: [],
       fieldMappings: [],
     });
 
-    await createConnectorWithMappings(
+    await createFeedbackSourceWithMappings(
       ENV_ID,
       { name: "CSV", type: "csv", feedbackDirectoryId: FRD_ID },
       {
@@ -373,11 +379,11 @@ describe("createConnectorWithMappings", () => {
       }
     );
 
-    expect(tx.connectorFieldMapping.create).toHaveBeenCalledTimes(1);
-    expect(tx.connectorFieldMapping.create).toHaveBeenCalledWith(
+    expect(tx.feedbackSourceFieldMapping.create).toHaveBeenCalledTimes(1);
+    expect(tx.feedbackSourceFieldMapping.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
-          connectorId: CONNECTOR_ID,
+          feedbackSourceId: CONNECTOR_ID,
           workspaceId: ENV_ID,
           sourceFieldId: "col-1",
           targetFieldId: "value_text",
@@ -386,7 +392,7 @@ describe("createConnectorWithMappings", () => {
     );
   });
 
-  test("throws CONNECTOR_NAME_DUPLICATE on Connector name unique violation", async () => {
+  test("throws CONNECTOR_NAME_DUPLICATE on FeedbackSource name unique violation", async () => {
     vi.mocked(prisma.$transaction).mockRejectedValue(
       new Prisma.PrismaClientKnownRequestError("Unique constraint", {
         code: "P2002",
@@ -396,7 +402,7 @@ describe("createConnectorWithMappings", () => {
     );
 
     await expect(
-      createConnectorWithMappings(ENV_ID, {
+      createFeedbackSourceWithMappings(ENV_ID, {
         name: "Dup",
         type: "formbricks_survey",
         feedbackDirectoryId: FRD_ID,
@@ -409,12 +415,12 @@ describe("createConnectorWithMappings", () => {
       new Prisma.PrismaClientKnownRequestError("Unique constraint", {
         code: "P2002",
         clientVersion: "5.0.0",
-        meta: { target: ["workspaceId", "connectorId", "surveyId", "elementId"] },
+        meta: { target: ["workspaceId", "feedbackSourceId", "surveyId", "elementId"] },
       })
     );
 
     await expect(
-      createConnectorWithMappings(ENV_ID, {
+      createFeedbackSourceWithMappings(ENV_ID, {
         name: "Dup mapping",
         type: "formbricks_survey",
         feedbackDirectoryId: FRD_ID,
@@ -427,12 +433,12 @@ describe("createConnectorWithMappings", () => {
       new Prisma.PrismaClientKnownRequestError("Unique constraint", {
         code: "P2002",
         clientVersion: "5.0.0",
-        meta: { target: ["workspaceId", "connectorId", "sourceFieldId", "targetFieldId"] },
+        meta: { target: ["workspaceId", "feedbackSourceId", "sourceFieldId", "targetFieldId"] },
       })
     );
 
     await expect(
-      createConnectorWithMappings(ENV_ID, {
+      createFeedbackSourceWithMappings(ENV_ID, {
         name: "Dup field mapping",
         type: "csv",
         feedbackDirectoryId: FRD_ID,
@@ -449,65 +455,65 @@ describe("createConnectorWithMappings", () => {
     );
 
     await expect(
-      createConnectorWithMappings(ENV_ID, { name: "Fail", type: "csv", feedbackDirectoryId: FRD_ID })
+      createFeedbackSourceWithMappings(ENV_ID, { name: "Fail", type: "csv", feedbackDirectoryId: FRD_ID })
     ).rejects.toThrow(DatabaseError);
   });
 });
 
-describe("updateConnectorWithMappings", () => {
+describe("updateFeedbackSourceWithMappings", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   const setupTransaction = () => {
     const txMethods = {
-      connector: {
+      feedbackSource: {
         update: vi.fn(),
         findUniqueOrThrow: vi.fn(),
       },
-      connectorFormbricksMapping: {
+      feedbackSourceFormbricksMapping: {
         create: vi.fn(),
         deleteMany: vi.fn(),
       },
-      connectorFieldMapping: {
+      feedbackSourceFieldMapping: {
         create: vi.fn(),
         deleteMany: vi.fn(),
       },
     };
 
     vi.mocked(prisma.$transaction).mockImplementation(async (fn) => {
-      return (fn as (tx: typeof txMethods) => Promise<unknown>)(txMethods);
+      return (fn as unknown as (tx: typeof txMethods) => Promise<unknown>)(txMethods);
     });
 
     return txMethods;
   };
 
-  test("updates connector name without changing mappings", async () => {
+  test("updates feedbackSource name without changing mappings", async () => {
     const tx = setupTransaction();
-    tx.connector.update.mockResolvedValue(undefined);
-    tx.connector.findUniqueOrThrow.mockResolvedValue(mockConnectorWithMappingsFromDb);
+    tx.feedbackSource.update.mockResolvedValue(undefined);
+    tx.feedbackSource.findUniqueOrThrow.mockResolvedValue(mockFeedbackSourceWithMappingsFromDb);
 
-    const result = await updateConnectorWithMappings(CONNECTOR_ID, ENV_ID, { name: "Updated" });
+    const result = await updateFeedbackSourceWithMappings(CONNECTOR_ID, ENV_ID, { name: "Updated" });
 
-    expect(tx.connector.update).toHaveBeenCalledWith(
+    expect(tx.feedbackSource.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { id: CONNECTOR_ID, workspaceId: ENV_ID },
         data: expect.objectContaining({ name: "Updated" }),
       })
     );
-    expect(tx.connectorFormbricksMapping.deleteMany).not.toHaveBeenCalled();
-    expect(tx.connectorFieldMapping.deleteMany).not.toHaveBeenCalled();
-    expect(result).toEqual(mockConnectorWithMappings);
+    expect(tx.feedbackSourceFormbricksMapping.deleteMany).not.toHaveBeenCalled();
+    expect(tx.feedbackSourceFieldMapping.deleteMany).not.toHaveBeenCalled();
+    expect(result).toEqual(mockFeedbackSourceWithMappings);
   });
 
   test("replaces formbricks mappings when provided", async () => {
     const tx = setupTransaction();
-    tx.connector.update.mockResolvedValue(undefined);
-    tx.connectorFormbricksMapping.deleteMany.mockResolvedValue({ count: 1 });
-    tx.connectorFormbricksMapping.create.mockResolvedValue({});
-    tx.connector.findUniqueOrThrow.mockResolvedValue(mockConnectorWithMappingsFromDb);
+    tx.feedbackSource.update.mockResolvedValue(undefined);
+    tx.feedbackSourceFormbricksMapping.deleteMany.mockResolvedValue({ count: 1 });
+    tx.feedbackSourceFormbricksMapping.create.mockResolvedValue({});
+    tx.feedbackSource.findUniqueOrThrow.mockResolvedValue(mockFeedbackSourceWithMappingsFromDb);
 
-    await updateConnectorWithMappings(
+    await updateFeedbackSourceWithMappings(
       CONNECTOR_ID,
       ENV_ID,
       { name: "Updated" },
@@ -517,24 +523,24 @@ describe("updateConnectorWithMappings", () => {
       }
     );
 
-    expect(tx.connectorFormbricksMapping.deleteMany).toHaveBeenCalledWith({
-      where: { connectorId: CONNECTOR_ID, workspaceId: ENV_ID },
+    expect(tx.feedbackSourceFormbricksMapping.deleteMany).toHaveBeenCalledWith({
+      where: { feedbackSourceId: CONNECTOR_ID, workspaceId: ENV_ID },
     });
-    expect(tx.connectorFormbricksMapping.create).toHaveBeenCalledTimes(1);
+    expect(tx.feedbackSourceFormbricksMapping.create).toHaveBeenCalledTimes(1);
   });
 
   test("replaces field mappings when provided", async () => {
     const tx = setupTransaction();
-    tx.connector.update.mockResolvedValue(undefined);
-    tx.connectorFieldMapping.deleteMany.mockResolvedValue({ count: 1 });
-    tx.connectorFieldMapping.create.mockResolvedValue({});
-    tx.connector.findUniqueOrThrow.mockResolvedValue({
-      ...mockConnector,
+    tx.feedbackSource.update.mockResolvedValue(undefined);
+    tx.feedbackSourceFieldMapping.deleteMany.mockResolvedValue({ count: 1 });
+    tx.feedbackSourceFieldMapping.create.mockResolvedValue({});
+    tx.feedbackSource.findUniqueOrThrow.mockResolvedValue({
+      ...mockFeedbackSource,
       formbricksMappings: [],
       fieldMappings: [],
     });
 
-    await updateConnectorWithMappings(
+    await updateFeedbackSourceWithMappings(
       CONNECTOR_ID,
       ENV_ID,
       { name: "CSV Updated" },
@@ -544,13 +550,13 @@ describe("updateConnectorWithMappings", () => {
       }
     );
 
-    expect(tx.connectorFieldMapping.deleteMany).toHaveBeenCalledWith({
-      where: { connectorId: CONNECTOR_ID, workspaceId: ENV_ID },
+    expect(tx.feedbackSourceFieldMapping.deleteMany).toHaveBeenCalledWith({
+      where: { feedbackSourceId: CONNECTOR_ID, workspaceId: ENV_ID },
     });
-    expect(tx.connectorFieldMapping.create).toHaveBeenCalledTimes(1);
+    expect(tx.feedbackSourceFieldMapping.create).toHaveBeenCalledTimes(1);
   });
 
-  test("throws ResourceNotFoundError when connector does not exist", async () => {
+  test("throws ResourceNotFoundError when feedbackSource does not exist", async () => {
     vi.mocked(prisma.$transaction).mockRejectedValue(
       new Prisma.PrismaClientKnownRequestError("Not found", {
         code: "P2015",
@@ -558,12 +564,12 @@ describe("updateConnectorWithMappings", () => {
       })
     );
 
-    await expect(updateConnectorWithMappings(CONNECTOR_ID, ENV_ID, { name: "x" })).rejects.toThrow(
+    await expect(updateFeedbackSourceWithMappings(CONNECTOR_ID, ENV_ID, { name: "x" })).rejects.toThrow(
       ResourceNotFoundError
     );
   });
 
-  test("throws CONNECTOR_NAME_DUPLICATE on Connector name unique violation", async () => {
+  test("throws CONNECTOR_NAME_DUPLICATE on FeedbackSource name unique violation", async () => {
     vi.mocked(prisma.$transaction).mockRejectedValue(
       new Prisma.PrismaClientKnownRequestError("Unique constraint", {
         code: "P2002",
@@ -572,7 +578,7 @@ describe("updateConnectorWithMappings", () => {
       })
     );
 
-    await expect(updateConnectorWithMappings(CONNECTOR_ID, ENV_ID, { name: "Dup" })).rejects.toThrow(
+    await expect(updateFeedbackSourceWithMappings(CONNECTOR_ID, ENV_ID, { name: "Dup" })).rejects.toThrow(
       new InvalidInputError("CONNECTOR_NAME_DUPLICATE")
     );
   });
@@ -582,11 +588,11 @@ describe("updateConnectorWithMappings", () => {
       new Prisma.PrismaClientKnownRequestError("Unique constraint", {
         code: "P2002",
         clientVersion: "5.0.0",
-        meta: { target: ["workspaceId", "connectorId", "surveyId", "elementId"] },
+        meta: { target: ["workspaceId", "feedbackSourceId", "surveyId", "elementId"] },
       })
     );
 
-    await expect(updateConnectorWithMappings(CONNECTOR_ID, ENV_ID, { name: "x" })).rejects.toThrow(
+    await expect(updateFeedbackSourceWithMappings(CONNECTOR_ID, ENV_ID, { name: "x" })).rejects.toThrow(
       new InvalidInputError("CONNECTOR_FORMBRICKS_MAPPING_DUPLICATE")
     );
   });
@@ -596,11 +602,11 @@ describe("updateConnectorWithMappings", () => {
       new Prisma.PrismaClientKnownRequestError("Unique constraint", {
         code: "P2002",
         clientVersion: "5.0.0",
-        meta: { target: ["workspaceId", "connectorId", "sourceFieldId", "targetFieldId"] },
+        meta: { target: ["workspaceId", "feedbackSourceId", "sourceFieldId", "targetFieldId"] },
       })
     );
 
-    await expect(updateConnectorWithMappings(CONNECTOR_ID, ENV_ID, { name: "x" })).rejects.toThrow(
+    await expect(updateFeedbackSourceWithMappings(CONNECTOR_ID, ENV_ID, { name: "x" })).rejects.toThrow(
       new InvalidInputError("CONNECTOR_FIELD_MAPPING_DUPLICATE")
     );
   });
@@ -613,7 +619,7 @@ describe("updateConnectorWithMappings", () => {
       })
     );
 
-    await expect(updateConnectorWithMappings(CONNECTOR_ID, ENV_ID, { name: "x" })).rejects.toThrow(
+    await expect(updateFeedbackSourceWithMappings(CONNECTOR_ID, ENV_ID, { name: "x" })).rejects.toThrow(
       DatabaseError
     );
   });

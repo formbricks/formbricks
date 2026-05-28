@@ -2,8 +2,8 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   getActionClass,
   getApiKey,
-  getConnector,
   getContact,
+  getFeedbackSource,
   getIntegration,
   getInvite,
   getLanguage,
@@ -275,11 +275,11 @@ export const isStringMatch = (query: string, value: string): boolean => {
 };
 
 // Connector helpers
-export const getOrganizationIdFromConnectorId = async (connectorId: string) => {
-  const connector = await getConnector(connectorId);
-  if (!connector) {
-    throw new ResourceNotFoundError("connector", connectorId);
+export const getOrganizationIdFromFeedbackSourceId = async (feedbackSourceId: string) => {
+  const feedbackSource = await getFeedbackSource(feedbackSourceId);
+  if (!feedbackSource) {
+    throw new ResourceNotFoundError("feedbackSource", feedbackSourceId);
   }
 
-  return await getOrganizationIdFromWorkspaceId(connector.workspaceId);
+  return await getOrganizationIdFromWorkspaceId(feedbackSource.workspaceId);
 };

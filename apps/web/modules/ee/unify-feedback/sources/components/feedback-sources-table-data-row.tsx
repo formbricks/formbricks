@@ -1,10 +1,14 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import { TConnectorStatus, TConnectorType, TConnectorWithMappings } from "@formbricks/types/connector";
+import {
+  TFeedbackSourceStatus,
+  TFeedbackSourceType,
+  TFeedbackSourceWithMappings,
+} from "@formbricks/types/feedback-source";
 import { Badge } from "@/modules/ui/components/badge";
-import { getConnectorIcon, getConnectorTypeLabelKey } from "./connector-display";
-import { ConnectorRowDropdown } from "./connector-row-dropdown";
+import { getFeedbackSourceIcon, getFeedbackSourceTypeLabelKey } from "./feedback-source-display";
+import { FeedbackSourceRowDropdown } from "./feedback-source-row-dropdown";
 
 const RELATIVE_TIME_DIVISIONS: { amount: number; unit: Intl.RelativeTimeFormatUnit }[] = [
   { amount: 60, unit: "seconds" },
@@ -30,8 +34,8 @@ function getRelativeTime(date: Date, locale: string) {
   return formatter.format(Math.round(duration), "years");
 }
 
-interface ConnectorsTableDataRowProps {
-  connector: TConnectorWithMappings;
+interface FeedbackSourcesTableDataRowProps {
+  feedbackSource: TFeedbackSourceWithMappings;
   onEdit: () => void;
   onCsvImport?: () => void;
   onDuplicate: () => Promise<void>;
@@ -40,24 +44,24 @@ interface ConnectorsTableDataRowProps {
   isReadOnly?: boolean;
 }
 
-const STATUS_BADGE_TYPE: Record<TConnectorStatus, "success" | "warning" | "error"> = {
+const STATUS_BADGE_TYPE: Record<TFeedbackSourceStatus, "success" | "warning" | "error"> = {
   active: "success",
   paused: "warning",
   error: "error",
 };
 
-export function ConnectorsTableDataRow({
-  connector,
+export function FeedbackSourcesTableDataRow({
+  feedbackSource,
   onEdit,
   onCsvImport,
   onDuplicate,
   onToggleStatus,
   onDelete,
   isReadOnly = false,
-}: Readonly<ConnectorsTableDataRowProps>) {
+}: Readonly<FeedbackSourcesTableDataRowProps>) {
   const { t, i18n } = useTranslation();
   const handleRowClick = () => {
-    if (!isReadOnly && connector.type === "csv" && onCsvImport) {
+    if (!isReadOnly && feedbackSource.type === "csv" && onCsvImport) {
       onCsvImport();
       return;
     }
@@ -65,10 +69,10 @@ export function ConnectorsTableDataRow({
     onEdit();
   };
 
-  const getStatusLabel = (s: TConnectorStatus, connectorType: TConnectorType) => {
+  const getStatusLabel = (s: TFeedbackSourceStatus, feedbackSourceType: TFeedbackSourceType) => {
     switch (s) {
       case "active":
-        if (connectorType === "csv") {
+        if (feedbackSourceType === "csv") {
           return t("workspace.unify.status_ready");
         }
         return t("workspace.unify.status_live_sync");
@@ -92,29 +96,29 @@ export function ConnectorsTableDataRow({
       }}>
       <div
         className="col-span-1 flex items-center gap-2 pl-4"
-        title={t(getConnectorTypeLabelKey(connector.type))}>
-        {getConnectorIcon(connector.type, "h-4 w-4 text-slate-500")}
+        title={t(getFeedbackSourceTypeLabelKey(feedbackSource.type))}>
+        {getFeedbackSourceIcon(feedbackSource.type, "h-4 w-4 text-slate-500")}
       </div>
       <div className="col-span-4 flex items-center">
-        <span className="truncate text-sm font-medium text-slate-900">{connector.name}</span>
+        <span className="truncate text-sm font-medium text-slate-900">{feedbackSource.name}</span>
       </div>
       <div className="col-span-2 hidden items-center justify-center sm:flex">
         <Badge
-          text={getStatusLabel(connector.status, connector.type)}
-          type={STATUS_BADGE_TYPE[connector.status]}
+          text={getStatusLabel(feedbackSource.status, feedbackSource.type)}
+          type={STATUS_BADGE_TYPE[feedbackSource.status]}
           size="tiny"
         />
       </div>
       <div className="col-span-2 hidden items-center justify-center text-sm text-slate-500 sm:flex">
-        {getRelativeTime(connector.updatedAt, i18n.language)}
+        {getRelativeTime(feedbackSource.updatedAt, i18n.language)}
       </div>
       <div className="col-span-2 hidden items-center justify-center text-sm text-slate-500 sm:flex">
-        <span className="truncate">{connector.creatorName ?? "—"}</span>
+        <span className="truncate">{feedbackSource.creatorName ?? "—"}</span>
       </div>
       <div className="col-span-1 flex items-center justify-end pr-2">
         {!isReadOnly && (
-          <ConnectorRowDropdown
-            connector={connector}
+          <FeedbackSourceRowDropdown
+            feedbackSource={feedbackSource}
             onEdit={onEdit}
             onCsvImport={onCsvImport}
             onDuplicate={onDuplicate}

@@ -1,5 +1,5 @@
 import "server-only";
-import { TConnectorFormbricksMapping, THubFieldType } from "@formbricks/types/connector";
+import { TFeedbackSourceFormbricksMapping, THubFieldType } from "@formbricks/types/feedback-source";
 import { TResponse, TResponseData, TResponseDataValue } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import type {
@@ -138,7 +138,7 @@ const buildBaseFields = (
 
 const expandMatrixToRecords = (
   element: TSurveyMatrixElement,
-  mapping: TConnectorFormbricksMapping,
+  mapping: TFeedbackSourceFormbricksMapping,
   value: TResponseDataValue,
   baseFields: BaseRecordFields
 ): FeedbackRecordCreateParams[] => {
@@ -173,7 +173,7 @@ const expandMatrixToRecords = (
 
 const expandRankingToRecords = (
   element: TSurveyRankingElement,
-  mapping: TConnectorFormbricksMapping,
+  mapping: TFeedbackSourceFormbricksMapping,
   value: TResponseDataValue,
   baseFields: BaseRecordFields
 ): FeedbackRecordCreateParams[] => {
@@ -214,7 +214,7 @@ const expandRankingToRecords = (
 export function transformResponseToFeedbackRecords(
   response: TResponse,
   survey: Pick<TSurvey, "id" | "name" | "blocks">,
-  mappings: TConnectorFormbricksMapping[],
+  mappings: TFeedbackSourceFormbricksMapping[],
   tenantId: string
 ): FeedbackRecordCreateParams[] {
   const responseData = response.data;

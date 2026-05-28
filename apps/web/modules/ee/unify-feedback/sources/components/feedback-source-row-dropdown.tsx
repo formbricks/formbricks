@@ -13,7 +13,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { TConnectorWithMappings } from "@formbricks/types/connector";
+import { TFeedbackSourceWithMappings } from "@formbricks/types/feedback-source";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import {
   DropdownMenu,
@@ -24,8 +24,8 @@ import {
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
 
-interface ConnectorRowDropdownProps {
-  connector: TConnectorWithMappings;
+interface FeedbackSourceRowDropdownProps {
+  feedbackSource: TFeedbackSourceWithMappings;
   onEdit: () => void;
   onCsvImport?: () => void;
   onDuplicate: () => Promise<void>;
@@ -33,23 +33,23 @@ interface ConnectorRowDropdownProps {
   onDelete: () => Promise<void>;
 }
 
-export function ConnectorRowDropdown({
-  connector,
+export function FeedbackSourceRowDropdown({
+  feedbackSource,
   onEdit,
   onCsvImport,
   onDuplicate,
   onToggleStatus,
   onDelete,
-}: ConnectorRowDropdownProps) {
+}: FeedbackSourceRowDropdownProps) {
   const router = useRouter();
   const { t } = useTranslation();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDropDownOpen, setIsDropDownOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const isActive = connector.status === "active";
+  const isActive = feedbackSource.status === "active";
   const linkedSurveyId =
-    connector.type === "formbricks_survey" ? connector.formbricksMappings[0]?.surveyId : undefined;
+    feedbackSource.type === "formbricks_survey" ? feedbackSource.formbricksMappings[0]?.surveyId : undefined;
 
   const handleDelete = async () => {
     setIsDeleting(true);
@@ -65,7 +65,7 @@ export function ConnectorRowDropdown({
     <div // eslint-disable-next-line jsx-a11y/no-static-element-interactions
       onClick={(e) => e.stopPropagation()}
       onKeyDown={(e) => e.stopPropagation()}
-      data-testid="connector-row-dropdown">
+      data-testid="feedbackSource-row-dropdown">
       <DropdownMenu open={isDropDownOpen} onOpenChange={setIsDropDownOpen}>
         <DropdownMenuTrigger className="z-10" asChild>
           <div className="cursor-pointer rounded-lg border bg-white p-2 hover:bg-slate-50">
@@ -75,7 +75,7 @@ export function ConnectorRowDropdown({
         </DropdownMenuTrigger>
         <DropdownMenuContent className="inline-block w-auto min-w-max">
           <DropdownMenuGroup>
-            {connector.type === "csv" && onCsvImport && (
+            {feedbackSource.type === "csv" && onCsvImport && (
               <>
                 <DropdownMenuItem>
                   <button
@@ -103,7 +103,9 @@ export function ConnectorRowDropdown({
                     onClick={(e) => {
                       e.preventDefault();
                       setIsDropDownOpen(false);
-                      router.push(`/workspaces/${connector.workspaceId}/surveys/${linkedSurveyId}/summary`);
+                      router.push(
+                        `/workspaces/${feedbackSource.workspaceId}/surveys/${linkedSurveyId}/summary`
+                      );
                     }}>
                     <EyeIcon className="mr-2 size-4" />
                     {`${t("common.view")} ${t("common.survey")}`}

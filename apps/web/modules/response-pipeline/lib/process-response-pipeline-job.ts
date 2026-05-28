@@ -6,9 +6,9 @@ import { type JobHandler, type TResponsePipelineJobData, UnrecoverableError } fr
 import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
 import { type TUserLocale, ZUserLocale } from "@formbricks/types/user";
-import { handleConnectorPipeline } from "@/lib/connector/pipeline-handler";
 import { DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS, POSTHOG_KEY } from "@/lib/constants";
 import { generateStandardWebhookSignature } from "@/lib/crypto";
+import { handleFeedbackSourcePipeline } from "@/lib/feedback-source/pipeline-handler";
 import { getIntegrations } from "@/lib/integration/service";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { createPinnedDispatcher, validateAndResolveWebhookUrl } from "@/lib/utils/validate-webhook-url";
@@ -656,14 +656,14 @@ const runResponseFinishedSideEffects = async ({
   }
 
   try {
-    await handleConnectorPipeline(data.response, survey, workspaceId);
+    await handleFeedbackSourcePipeline(data.response, survey, workspaceId);
   } catch (error) {
     logger.error(
       {
         ...logContext,
         err: error,
       },
-      "Response pipeline connector handling failed"
+      "Response pipeline feedbackSource handling failed"
     );
   }
 

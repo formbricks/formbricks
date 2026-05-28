@@ -1,6 +1,9 @@
 import "server-only";
-import { TConnectorFormbricksMapping, TConnectorWithMappings } from "@formbricks/types/connector";
 import { InvalidInputError } from "@formbricks/types/errors";
+import {
+  TFeedbackSourceFormbricksMapping,
+  TFeedbackSourceWithMappings,
+} from "@formbricks/types/feedback-source";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { createFeedbackRecordsBatch } from "@/modules/hub";
 import { getResponses } from "../response/service";
@@ -13,7 +16,7 @@ export type TImportResult = { successes: number; failures: number; skipped: numb
 const processBatch = async (
   responses: Awaited<ReturnType<typeof getResponses>>,
   survey: TSurvey,
-  mappings: TConnectorFormbricksMapping[],
+  mappings: TFeedbackSourceFormbricksMapping[],
   tenantId: string
 ): Promise<TImportResult> => {
   let successes = 0;
@@ -37,11 +40,11 @@ const processBatch = async (
 };
 
 export const importHistoricalResponses = async (
-  connector: TConnectorWithMappings,
+  feedbackSource: TFeedbackSourceWithMappings,
   survey: TSurvey
 ): Promise<TImportResult> => {
-  if (connector.type !== "formbricks_survey") {
-    throw new InvalidInputError("Historical import is only supported for Formbricks connectors");
+  if (feedbackSource.type !== "formbricks_survey") {
+    throw new InvalidInputError("Historical import is only supported for Formbricks feedbackSources");
   }
 
   let successes = 0;
@@ -56,8 +59,8 @@ export const importHistoricalResponses = async (
     const batch = await processBatch(
       responses,
       survey,
-      connector.formbricksMappings,
-      connector.feedbackDirectoryId
+      feedbackSource.formbricksMappings,
+      feedbackSource.feedbackDirectoryId
     );
     successes += batch.successes;
     failures += batch.failures;

@@ -314,18 +314,18 @@ export const getSegment = reactCache(async (segmentId: string): Promise<{ worksp
   }
 });
 
-export const getConnector = reactCache(
-  async (connectorId: string): Promise<{ workspaceId: string } | null> => {
-    validateInputs([connectorId, ZId]);
+export const getFeedbackSource = reactCache(
+  async (feedbackSourceId: string): Promise<{ workspaceId: string } | null> => {
+    validateInputs([feedbackSourceId, ZId]);
     try {
-      const connector = await prisma.connector.findUnique({
+      const feedbackSource = await prisma.feedbackSource.findUnique({
         where: {
-          id: connectorId,
+          id: feedbackSourceId,
         },
         select: { workspaceId: true },
       });
 
-      return connector;
+      return feedbackSource;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);

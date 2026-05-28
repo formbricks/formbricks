@@ -17,23 +17,23 @@ import {
 import { TMappingConfidence, autoMapCsvSourceFields, titleizeFromFileName, validateCsvFile } from "../utils";
 import { MappingUI } from "./mapping-ui";
 
-interface CsvConnectorUIProps {
+interface CsvFeedbackSourceUIProps {
   sourceFields: TSourceField[];
   mappings: TFieldMapping[];
   onMappingsChange: (mappings: TFieldMapping[]) => void;
   onSourceFieldsChange: (fields: TSourceField[]) => void;
   onParsedDataChange?: (data: Record<string, string>[]) => void;
-  onSuggestConnectorName?: (name: string) => void;
+  onSuggestFeedbackSourceName?: (name: string) => void;
 }
 
-export function CsvConnectorUI({
+export function CsvFeedbackSourceUI({
   sourceFields,
   mappings,
   onMappingsChange,
   onSourceFieldsChange,
   onParsedDataChange,
-  onSuggestConnectorName,
-}: Readonly<CsvConnectorUIProps>) {
+  onSuggestFeedbackSourceName,
+}: Readonly<CsvFeedbackSourceUIProps>) {
   const { t } = useTranslation();
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [csvPreview, setCsvPreview] = useState<string[][]>([]);
@@ -114,7 +114,7 @@ export function CsvConnectorUI({
     }
 
     lastAutoSourceNameRef.current = autoSourceNameStatic;
-    onSuggestConnectorName?.(titleizeFromFileName(fileName));
+    onSuggestFeedbackSourceName?.(titleizeFromFileName(fileName));
   };
 
   const processCSVFile = (file: File) => {
@@ -288,7 +288,7 @@ export function CsvConnectorUI({
           sourceFields={sourceFields}
           mappings={mappings}
           onMappingsChange={handleUserMappingsChange}
-          connectorType="csv"
+          feedbackSourceType="csv"
           confidenceByTargetId={confidenceByTargetId}
           sampleRow={sampleRow}
         />

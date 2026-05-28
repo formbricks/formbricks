@@ -85,7 +85,7 @@ export const getFeedbackDirectoryDetailsAction = authenticatedActionClient
 const ZUpdateFeedbackDirectoryAction = z.object({
   directoryId: ZId,
   data: ZFeedbackDirectoryUpdateInput,
-  pauseConnectorsInRemovedWorkspaces: z.boolean().optional(),
+  pauseFeedbackSourcesInRemovedWorkspaces: z.boolean().optional(),
 });
 
 export const updateFeedbackDirectoryAction = authenticatedActionClient
@@ -114,7 +114,7 @@ export const updateFeedbackDirectoryAction = authenticatedActionClient
         organizationId,
         parsedInput.data,
         {
-          pauseConnectorsInRemovedWorkspaces: parsedInput.pauseConnectorsInRemovedWorkspaces,
+          pauseFeedbackSourcesInRemovedWorkspaces: parsedInput.pauseFeedbackSourcesInRemovedWorkspaces,
         }
       );
       ctx.auditLoggingCtx.oldObject = oldObject;
