@@ -286,28 +286,21 @@ export const SignupForm = ({
                 </label>
               ))}
 
-            {showLogin && (
-              <Button
-                data-testid="signup-submit"
-                type="submit"
-                className="h-10 w-full justify-center"
-                loading={form.formState.isSubmitting}
-                disabled={!form.formState.isValid}>
-                {t("auth.continue_with_email")}
-              </Button>
-            )}
-
-            {!showLogin && (
-              <Button
-                data-testid="signup-show-login"
-                type="button"
-                onClick={() => {
-                  setShowLogin(true);
-                }}
-                className="h-10 w-full justify-center">
-                {t("auth.continue_with_email")}
-              </Button>
-            )}
+            <Button
+              data-testid={showLogin ? "signup-submit" : "signup-show-login"}
+              type={showLogin ? "submit" : "button"}
+              onClick={
+                showLogin
+                  ? undefined
+                  : () => {
+                      setShowLogin(true);
+                    }
+              }
+              disabled={showLogin && !form.formState.isValid}
+              className="h-10 w-full justify-center"
+              loading={showLogin && form.formState.isSubmitting}>
+              {t("auth.continue_with_email")}
+            </Button>
           </form>
         </FormProvider>
       )}
