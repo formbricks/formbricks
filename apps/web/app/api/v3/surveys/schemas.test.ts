@@ -498,7 +498,10 @@ describe("ZV3CreateSurveyBody", () => {
   test("reports invalid language entries with machine-readable locale metadata", () => {
     const result = ZV3CreateSurveyBody.safeParse({
       ...validCreateBody,
-      languages: [{ code: "de", enabled: true }],
+      languages: [
+        { code: "de", enabled: true },
+        { code: "zh-Hans", enabled: true },
+      ],
     });
 
     expect(result.success).toBe(false);
@@ -508,6 +511,11 @@ describe("ZV3CreateSurveyBody", () => {
           expect.objectContaining({
             name: "languages.0.code",
             reason: "Language 'de' is not a valid locale code",
+            code: "invalid_locale",
+          }),
+          expect.objectContaining({
+            name: "languages.1.code",
+            reason: "Language 'zh-Hans' is not a valid locale code",
             code: "invalid_locale",
           }),
         ])

@@ -22,6 +22,7 @@ type TResolveV3SurveyLanguageCodeResult =
 type TParseV3SurveyLanguageQueryResult = { ok: true; languages: string[] } | { ok: false; message: string };
 
 const V3_SURVEY_LANGUAGE_TAG_REGEX = /^[a-z]{2}(?:-[A-Z]{2}|-[A-Z][a-z]{3}(?:-[A-Z]{2})?)$/;
+const V3_SURVEY_LOCALE_CODE_REGEX = /^[a-z]{2}(?:-[A-Z][a-z]{3})?-[A-Z]{2}$/;
 const V3_LEGACY_LANGUAGE_CODE_MAP: Record<string, string> = {
   ar: "ar-SA",
   cs: "cs-CZ",
@@ -48,11 +49,19 @@ const V3_LEGACY_LANGUAGE_CODE_MAP: Record<string, string> = {
 };
 
 export function normalizeV3SurveyLanguageTag(value: string): string | null {
+  return normalizeV3SurveyLanguageCode(value, V3_SURVEY_LANGUAGE_TAG_REGEX);
+}
+
+export function normalizeV3SurveyLocaleCode(value: string): string | null {
+  return normalizeV3SurveyLanguageCode(value, V3_SURVEY_LOCALE_CODE_REGEX);
+}
+
+function normalizeV3SurveyLanguageCode(value: string, pattern: RegExp): string | null {
   const normalizedSeparators = value.trim().replaceAll("_", "-");
 
   try {
     const normalizedLanguage = Intl.getCanonicalLocales(normalizedSeparators)[0] ?? null;
-    if (!normalizedLanguage || !V3_SURVEY_LANGUAGE_TAG_REGEX.test(normalizedLanguage)) {
+    if (!normalizedLanguage || !pattern.test(normalizedLanguage)) {
       return null;
     }
 

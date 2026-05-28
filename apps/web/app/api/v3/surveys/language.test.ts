@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
   normalizeV3SurveyLanguageIdentifier,
   normalizeV3SurveyLanguageTag,
+  normalizeV3SurveyLocaleCode,
   parseV3SurveyLanguageQuery,
   resolveV3SurveyLanguageCode,
 } from "./language";
@@ -29,6 +30,19 @@ describe("normalizeV3SurveyLanguageTag", () => {
 
   test("returns null for language-only tags", () => {
     expect(normalizeV3SurveyLanguageTag("de")).toBeNull();
+  });
+});
+
+describe("normalizeV3SurveyLocaleCode", () => {
+  test.each([
+    ["EN_us", "en-US"],
+    ["zh_hans_cn", "zh-Hans-CN"],
+  ])("normalizes write locale %s to %s", (input, expected) => {
+    expect(normalizeV3SurveyLocaleCode(input)).toBe(expected);
+  });
+
+  test.each(["de", "zh_Hans", "not a locale"])("rejects non-region-qualified write locale %s", (input) => {
+    expect(normalizeV3SurveyLocaleCode(input)).toBeNull();
   });
 });
 

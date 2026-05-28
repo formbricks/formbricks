@@ -5,7 +5,7 @@ import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
 import type { TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { isInternalI18nString, isPlainObject } from "./guards";
-import { normalizeV3SurveyLanguageTag } from "./language";
+import { normalizeV3SurveyLocaleCode } from "./language";
 import type { TV3SurveyDocument } from "./schemas";
 
 export type TV3SurveyLanguageRequest = {
@@ -36,7 +36,7 @@ function collectI18nLanguageCodes(value: unknown, languageCodes: Set<string>): v
   if (isInternalI18nString(value)) {
     Object.keys(value).forEach((languageCode) => {
       if (languageCode !== "default") {
-        const normalizedLanguageCode = normalizeV3SurveyLanguageTag(languageCode);
+        const normalizedLanguageCode = normalizeV3SurveyLocaleCode(languageCode);
         if (normalizedLanguageCode) {
           languageCodes.add(normalizedLanguageCode);
         }

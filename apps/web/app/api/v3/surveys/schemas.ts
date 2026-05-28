@@ -10,7 +10,7 @@ import {
   ZSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
 import { type InvalidParam, isInvalidParamCode } from "@/app/api/v3/lib/response";
-import { normalizeV3SurveyLanguageTag } from "./language";
+import { normalizeV3SurveyLocaleCode } from "./language";
 
 export const DEFAULT_V3_SURVEY_LANGUAGE = "en-US";
 
@@ -19,7 +19,7 @@ const ZV3SurveyLanguageTag = z
   .trim()
   .min(1, "Language code is required")
   .transform((value, ctx) => {
-    const normalizedLanguage = normalizeV3SurveyLanguageTag(value);
+    const normalizedLanguage = normalizeV3SurveyLocaleCode(value);
 
     if (!normalizedLanguage) {
       ctx.addIssue({
@@ -55,7 +55,7 @@ function isPublicI18nMap(value: Record<string, unknown>): value is Record<string
         return false;
       }
 
-      return Boolean(normalizeV3SurveyLanguageTag(key));
+      return Boolean(normalizeV3SurveyLocaleCode(key));
     })
   );
 }
@@ -69,7 +69,7 @@ function getNormalizedDefaultLanguage(value: Record<string, unknown>): string | 
     return null;
   }
 
-  return normalizeV3SurveyLanguageTag(value.defaultLanguage);
+  return normalizeV3SurveyLocaleCode(value.defaultLanguage);
 }
 
 function normalizePublicI18nMap(
@@ -77,7 +77,7 @@ function normalizePublicI18nMap(
   defaultLanguage: string
 ): Record<string, string> {
   const normalizedEntries = Object.entries(value).map(([key, entry]) => ({
-    key: normalizeV3SurveyLanguageTag(key) ?? key,
+    key: normalizeV3SurveyLocaleCode(key) ?? key,
     entry,
   }));
   const defaultEntry = normalizedEntries.find(
@@ -619,7 +619,7 @@ function validateTranslatableField(
       continue;
     }
 
-    const normalizedKey = normalizeV3SurveyLanguageTag(key);
+    const normalizedKey = normalizeV3SurveyLocaleCode(key);
     if (!normalizedKey) {
       issues.push({
         name: `${path}.${key}`,
