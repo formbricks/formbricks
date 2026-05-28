@@ -12,7 +12,10 @@
 //   GITHUB_REPOSITORY      "owner/repo" (provided automatically in Actions)
 //   DEPENDABOT_ALERTS_TOKEN  token with "Dependabot alerts: read" (the default
 //                            GITHUB_TOKEN cannot read this API)
-//   LINEAR_API_KEY | LINEAR_ACCESS_KEY  Linear key with issue-create access
+//   LINEAR_API_KEY | LINEAR_ACCESS_KEY  Linear personal API key with BOTH
+//                            `read` (to dedupe against existing issues) and
+//                            `write` / `issues:create` (to create new ones).
+//                            Generated at Settings → API → Personal API keys.
 // Flags:
 //   --dry-run  log what would be created without writing to Linear
 
