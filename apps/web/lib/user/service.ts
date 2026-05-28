@@ -114,6 +114,8 @@ export const deleteUser = async (id: string): Promise<TUser> => {
       await deleteOrganization(organization.id);
     }
 
+    await prisma.invite.deleteMany({ where: { creatorId: id } });
+
     const deletedUser = await deleteUserById(id);
     await deleteBrevoCustomerByEmail({ email: deletedUser.email });
 

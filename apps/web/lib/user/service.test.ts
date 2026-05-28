@@ -18,6 +18,9 @@ vi.mock("@formbricks/database", () => ({
       delete: vi.fn(),
       findMany: vi.fn(),
     },
+    invite: {
+      deleteMany: vi.fn(),
+    },
   },
 }));
 
@@ -192,6 +195,7 @@ describe("User Service", () => {
   describe("deleteUser", () => {
     test("should delete user and their organizations when they are single owner", async () => {
       vi.mocked(prisma.user.delete).mockResolvedValue(mockPrismaUser);
+      vi.mocked(prisma.invite.deleteMany).mockResolvedValue({ count: 0 });
       vi.mocked(getOrganizationsWhereUserIsSingleOwner).mockResolvedValue(mockOrganizations);
       vi.mocked(deleteOrganization).mockResolvedValue();
 
@@ -200,10 +204,27 @@ describe("User Service", () => {
       expect(result).toEqual(mockPrismaUser);
       expect(getOrganizationsWhereUserIsSingleOwner).toHaveBeenCalledWith("user1");
       expect(deleteOrganization).toHaveBeenCalledWith("org1");
+      expect(prisma.invite.deleteMany).toHaveBeenCalledWith({ where: { creatorId: "user1" } });
       expect(prisma.user.delete).toHaveBeenCalledWith({
         where: { id: "user1" },
         select: publicUserSelect,
       });
+    });
+
+    // Regression for ENG-1057: Invite.creatorId has no onDelete rule, so any
+    // pending invite created by the user must be cleared before user.delete
+    // or Postgres rejects with a foreign-key constraint violation.
+    test("should delete pending invites where the user is creator before deleting the user", async () => {
+      vi.mocked(prisma.user.delete).mockResolvedValue(mockPrismaUser);
+      vi.mocked(prisma.invite.deleteMany).mockResolvedValue({ count: 3 });
+      vi.mocked(getOrganizationsWhereUserIsSingleOwner).mockResolvedValue([]);
+
+      await deleteUser("user1");
+
+      expect(prisma.invite.deleteMany).toHaveBeenCalledWith({ where: { creatorId: "user1" } });
+      const inviteDeleteOrder = vi.mocked(prisma.invite.deleteMany).mock.invocationCallOrder[0];
+      const userDeleteOrder = vi.mocked(prisma.user.delete).mock.invocationCallOrder[0];
+      expect(inviteDeleteOrder).toBeLessThan(userDeleteOrder);
     });
 
     test("should throw DatabaseError when prisma throws", async () => {
@@ -212,6 +233,7 @@ describe("User Service", () => {
         clientVersion: "5.0.0",
       });
       vi.mocked(getOrganizationsWhereUserIsSingleOwner).mockResolvedValue([]);
+      vi.mocked(prisma.invite.deleteMany).mockResolvedValue({ count: 0 });
       vi.mocked(prisma.user.delete).mockRejectedValue(prismaError);
 
       await expect(deleteUser("user1")).rejects.toThrow(DatabaseError);
