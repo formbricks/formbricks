@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { getLanguageLabel } from "@formbricks/i18n-utils/src/utils";
 import { TResponse } from "@formbricks/types/responses";
 import { TUserLocale } from "@formbricks/types/user";
+import { Button } from "@/modules/ui/components/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 
 interface InfoIconButtonProps {
@@ -25,12 +26,9 @@ const InfoIconButton = ({
     <TooltipProvider delayDuration={0}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <button
-            type="button"
-            className="flex size-4 items-center justify-center rounded text-slate-500 hover:text-slate-700"
-            aria-label={ariaLabel}>
+          <Button type="button" variant="outline" size="icon" aria-label={ariaLabel}>
             <Icon className="size-4" />
-          </button>
+          </Button>
         </TooltipTrigger>
         <TooltipContent avoidCollisions align="start" side="bottom" className={maxWidth}>
           {tooltipContent}

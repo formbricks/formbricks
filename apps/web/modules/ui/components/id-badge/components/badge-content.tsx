@@ -10,7 +10,7 @@ interface BadgeContentProps {
   id: string | number;
   isCopyEnabled: boolean;
   className?: string;
-  handleCopy: (e: React.MouseEvent) => void;
+  handleCopy: (e: React.MouseEvent<HTMLButtonElement>) => void;
   isHovered: boolean;
   setIsHovered: (hovered: boolean) => void;
   shouldShowIcon: boolean;
@@ -31,7 +31,7 @@ export const BadgeContent: React.FC<BadgeContentProps> = ({
 }) => {
   const { t } = useTranslation();
   const getAriaLabel = () => {
-    const prefix = "Copy";
+    const prefix = t("common.copy");
     const labelPart = label ? ` ${label}` : "";
     return `${prefix}${labelPart} ${id}`;
   };
@@ -39,7 +39,8 @@ export const BadgeContent: React.FC<BadgeContentProps> = ({
   const getButtonClasses = () => {
     const baseClasses =
       "inline-flex cursor-default items-center gap-2 rounded-md border border-slate-200 px-2 py-1 text-xs font-regular text-slate-500";
-    const interactiveClasses = "cursor-pointer hover:border-transparent hover:text-slate-50";
+    const interactiveClasses =
+      "cursor-pointer hover:border-transparent hover:text-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2";
     const hoverBg = isCopied ? "hover:bg-slate-900" : "hover:bg-slate-900/80";
 
     return cn(baseClasses, isCopyEnabled && interactiveClasses, isCopyEnabled && hoverBg, className);
@@ -58,18 +59,24 @@ export const BadgeContent: React.FC<BadgeContentProps> = ({
     );
   };
 
-  const content = (
-    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/prefer-tag-over-role, jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-    <div
-      role={isCopyEnabled ? "button" : undefined}
+  const content = isCopyEnabled ? (
+    <button
+      type="button"
       className={getButtonClasses()}
       onClick={handleCopy}
-      onMouseEnter={isCopyEnabled ? () => setIsHovered(true) : undefined}
+      onFocus={() => setIsHovered(true)}
+      onBlur={() => setIsHovered(false)}
+      onMouseEnter={() => setIsHovered(true)}
       aria-label={getAriaLabel()}
-      onMouseLeave={isCopyEnabled ? () => setIsHovered(false) : undefined}>
+      onMouseLeave={() => setIsHovered(false)}>
       <span>{id}</span>
       {renderIcon()}
-    </div>
+    </button>
+  ) : (
+    <span className={getButtonClasses()}>
+      <span>{id}</span>
+      {renderIcon()}
+    </span>
   );
 
   const getTooltipContent = () => {
