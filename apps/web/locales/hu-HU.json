@@ -478,6 +478,7 @@
     "trial_plan_badge": "{plan} próbaverzió",
     "try_again": "Próbálja újra",
     "type": "Típus",
+    "unknown_survey": "Ismeretlen kérdőív",
     "unlock_more_workspaces_with_a_higher_plan": "Több munkaterület feloldása egy magasabb csomaggal.",
     "update": "Frissítés",
     "updated": "Frissítve",
@@ -3403,10 +3404,10 @@
       "search_by_survey_name": "Keresés kérdőívnév alapján",
       "share": {
         "anonymous_links": {
-          "custom_single_use_id_description": "Hozzon létre egy olvasható, egyszer használatos azonosítót, és másoljon ki egy aláírt linket hozzá.",
-          "custom_single_use_id_placeholder": "CUSTOM-ID",
-          "custom_single_use_id_required": "Enter a custom single-use ID.",
-          "custom_single_use_id_title": "Használjon egyedi, egyszer használatos azonosítót az URL-ben.",
+          "custom_single_use_id_description": "Egy olvasható, egyszer használatos azonosító létrehozása, és egy aláírt hivatkozás másolása hozzá.",
+          "custom_single_use_id_placeholder": "EGYÉNI-AZONOSÍTÓ",
+          "custom_single_use_id_required": "Egyéni, egyszer használatos azonosító megadása.",
+          "custom_single_use_id_title": "Egyéni, egyszer használatos azonosító használata az URL-ben.",
           "custom_start_point": "Egyéni kezdési pont",
           "data_prefilling": "Adatok előre kitöltése",
           "description": "Az ezekről a hivatkozásokról érkező válaszok névtelenek lesznek",

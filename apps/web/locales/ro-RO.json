@@ -478,6 +478,7 @@
     "trial_plan_badge": "Perioadă de probă {plan}",
     "try_again": "Încearcă din nou",
     "type": "Tip",
+    "unknown_survey": "Chestionar necunoscut",
     "unlock_more_workspaces_with_a_higher_plan": "Deblochează mai multe workspaces cu un plan superior.",
     "update": "Actualizare",
     "updated": "Actualizat",
@@ -3403,7 +3404,7 @@
       "search_by_survey_name": "Căutare după nume chestionar",
       "share": {
         "anonymous_links": {
-          "custom_single_use_id_description": "Creează un ID de unică folosință lizibil și copiază un link semnat pentru acesta.",
+          "custom_single_use_id_description": "Creează un ID lizibil de unică folosință și copiază un link semnat pentru acesta.",
           "custom_single_use_id_placeholder": "CUSTOM-ID",
           "custom_single_use_id_required": "Enter a custom single-use ID.",
           "custom_single_use_id_title": "Folosește un ID personalizat de unică folosință în URL.",

@@ -94,7 +94,8 @@ export const ResponseSurveyCard = ({
                           size="icon"
                           disabled
                           className="text-slate-400"
-                          aria-label={deleteResponseLabel}>
+                          tabIndex={-1}
+                          aria-hidden="true">
                           <TrashIcon className="h-4 w-4" />
                         </Button>
                       </span>

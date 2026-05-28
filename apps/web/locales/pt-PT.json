@@ -478,6 +478,7 @@
     "trial_plan_badge": "Teste {plan}",
     "try_again": "Tente novamente",
     "type": "Tipo",
+    "unknown_survey": "Inquérito desconhecido",
     "unlock_more_workspaces_with_a_higher_plan": "Desbloqueia mais espaços de trabalho com um plano superior.",
     "update": "Atualizar",
     "updated": "Atualizado",
@@ -3403,10 +3404,10 @@
       "search_by_survey_name": "Pesquisar por nome do inquérito",
       "share": {
         "anonymous_links": {
-          "custom_single_use_id_description": "Cria um ID de utilização única legível e copia uma ligação assinada para o mesmo.",
+          "custom_single_use_id_description": "Cria um ID de uso único legível e copia uma ligação assinada para o mesmo.",
           "custom_single_use_id_placeholder": "CUSTOM-ID",
           "custom_single_use_id_required": "Enter a custom single-use ID.",
-          "custom_single_use_id_title": "Usa um ID de utilização única personalizado no URL.",
+          "custom_single_use_id_title": "Usa um ID personalizado de uso único no URL.",
           "custom_start_point": "Ponto de início personalizado",
           "data_prefilling": "Pré-preenchimento de dados",
           "description": "Respostas provenientes destes links serão anónimas",

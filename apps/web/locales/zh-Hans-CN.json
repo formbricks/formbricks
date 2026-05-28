@@ -478,6 +478,7 @@
     "trial_plan_badge": "{plan} 试用版",
     "try_again": "再试一次",
     "type": "类型",
+    "unknown_survey": "未知调查",
     "unlock_more_workspaces_with_a_higher_plan": "升级套餐以解锁更多工作区。",
     "update": "更新",
     "updated": "已更新",
@@ -3403,7 +3404,7 @@
       "search_by_survey_name": "按 调查 名称 搜索",
       "share": {
         "anonymous_links": {
-          "custom_single_use_id_description": "创建一个可读的一次性 ID，并复制其签名链接。",
+          "custom_single_use_id_description": "创建一个易读的一次性 ID,并复制其签名链接。",
           "custom_single_use_id_placeholder": "CUSTOM-ID",
           "custom_single_use_id_required": "Enter a custom single-use ID.",
           "custom_single_use_id_title": "在 URL 中使用自定义一次性 ID。",

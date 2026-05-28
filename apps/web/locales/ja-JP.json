@@ -478,6 +478,7 @@
     "trial_plan_badge": "{plan}トライアル",
     "try_again": "もう一度お試しください",
     "type": "種類",
+    "unknown_survey": "不明なフォーム",
     "unlock_more_workspaces_with_a_higher_plan": "上位プランでより多くのワークスペースを利用できます。",
     "update": "更新",
     "updated": "更新済み",
@@ -3403,10 +3404,10 @@
       "search_by_survey_name": "フォーム名で検索",
       "share": {
         "anonymous_links": {
-          "custom_single_use_id_description": "読みやすいワンタイムIDを作成し、それに対応する署名付きリンクをコピーします。",
+          "custom_single_use_id_description": "読みやすい使い捨てIDを作成し、それに対応する署名付きリンクをコピーします。",
           "custom_single_use_id_placeholder": "CUSTOM-ID",
           "custom_single_use_id_required": "Enter a custom single-use ID.",
-          "custom_single_use_id_title": "URLにカスタムワンタイムIDを使用する。",
+          "custom_single_use_id_title": "URLでカスタムの使い捨てIDを使用する。",
           "custom_start_point": "カスタム開始点",
           "data_prefilling": "データの事前入力",
           "description": "これらのリンクからの回答は匿名になります",

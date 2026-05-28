@@ -478,6 +478,7 @@
     "trial_plan_badge": "Пробная версия {plan}",
     "try_again": "Попробуйте ещё раз",
     "type": "Тип",
+    "unknown_survey": "Неизвестный опрос",
     "unlock_more_workspaces_with_a_higher_plan": "Откройте больше рабочих пространств с более высоким тарифом.",
     "update": "Обновить",
     "updated": "Обновлено",
@@ -3403,10 +3404,10 @@
       "search_by_survey_name": "Поиск по названию опроса",
       "share": {
         "anonymous_links": {
-          "custom_single_use_id_description": "Создайте читаемый одноразовый ID и скопируйте подписанную ссылку для него.",
+          "custom_single_use_id_description": "Создайте читаемый одноразовый идентификатор и скопируйте подписанную ссылку для него.",
           "custom_single_use_id_placeholder": "CUSTOM-ID",
           "custom_single_use_id_required": "Enter a custom single-use ID.",
-          "custom_single_use_id_title": "Используй собственный одноразовый ID в URL.",
+          "custom_single_use_id_title": "Использовать пользовательский одноразовый идентификатор в URL-адресе.",
           "custom_start_point": "Пользовательская точка старта",
           "data_prefilling": "Предзаполнение данных",
           "description": "Ответы, полученные по этим ссылкам, будут анонимными",

@@ -478,6 +478,7 @@
     "trial_plan_badge": "{plan} Proefperiode",
     "try_again": "Probeer het opnieuw",
     "type": "Type",
+    "unknown_survey": "Onbekende enquête",
     "unlock_more_workspaces_with_a_higher_plan": "Ontgrendel meer werkruimtes met een hoger abonnement.",
     "update": "Update",
     "updated": "Bijgewerkt",
@@ -3403,10 +3404,10 @@
       "search_by_survey_name": "Zoek op enquêtenaam",
       "share": {
         "anonymous_links": {
-          "custom_single_use_id_description": "Maak een leesbare eenmalige ID aan en kopieer een ondertekende link hiervoor.",
+          "custom_single_use_id_description": "Maak een leesbaar eenmalig ID aan en kopieer een ondertekende link ervoor.",
           "custom_single_use_id_placeholder": "CUSTOM-ID",
           "custom_single_use_id_required": "Enter a custom single-use ID.",
-          "custom_single_use_id_title": "Gebruik een aangepaste eenmalige ID in de URL.",
+          "custom_single_use_id_title": "Gebruik een aangepast eenmalig ID in de URL.",
           "custom_start_point": "Aangepast startpunt",
           "data_prefilling": "Gegevens vooraf invullen",
           "description": "Reacties afkomstig van deze links zijn anoniem",
