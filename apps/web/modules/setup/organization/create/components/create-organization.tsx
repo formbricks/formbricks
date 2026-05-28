@@ -57,7 +57,7 @@ export const CreateOrganization = () => {
           e.preventDefault();
           void form.handleSubmit(onSubmit)(e);
         }}>
-        <div className="flex flex-col items-center space-y-4">
+        <div className="flex flex-col items-center gap-y-4">
           <h2 className="text-2xl font-medium">{t("setup.organization.create.title")}</h2>
           <p>{t("setup.organization.create.description")}</p>
           <FormField

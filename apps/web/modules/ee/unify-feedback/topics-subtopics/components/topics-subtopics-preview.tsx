@@ -88,7 +88,7 @@ export const TopicsSubtopicsPreview = ({
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div className="max-w-2xl space-y-2">
               <div className="flex items-center gap-2">
-                <SparklesIcon className="h-5 w-5 text-slate-500" aria-hidden="true" />
+                <SparklesIcon className="size-5 text-slate-500" aria-hidden="true" />
                 <h2 className="text-lg font-semibold text-slate-900">
                   {t("workspace.unify.semantic_topics_preview_title")}
                 </h2>
@@ -109,7 +109,7 @@ export const TopicsSubtopicsPreview = ({
               aria-label={t("workspace.unify.semantic_search_input_label")}
             />
             <Button type="submit" disabled={!query.trim() || !hasDirectories} loading={isSearching}>
-              <SearchIcon className="h-4 w-4" aria-hidden="true" />
+              <SearchIcon className="size-4" aria-hidden="true" />
               {t("workspace.unify.search_feedback")}
             </Button>
           </form>

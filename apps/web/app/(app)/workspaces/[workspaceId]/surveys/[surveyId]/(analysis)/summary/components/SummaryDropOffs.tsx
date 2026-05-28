@@ -18,7 +18,7 @@ export const SummaryDropOffs = ({ dropOff, survey }: SummaryDropOffsProps) => {
   const { t } = useTranslation();
   const getIcon = (elementType: TSurveyElementTypeEnum) => {
     const Icon = getElementIcon(elementType, t);
-    return <Icon className="mt-[3px] h-5 w-5 shrink-0 text-slate-600" />;
+    return <Icon className="mt-[3px] size-5 shrink-0 text-slate-600" />;
   };
 
   return (
@@ -30,7 +30,7 @@ export const SummaryDropOffs = ({ dropOff, survey }: SummaryDropOffsProps) => {
             <TooltipProvider delayDuration={50}>
               <Tooltip>
                 <TooltipTrigger>
-                  <TimerIcon className="h-5 w-5" />
+                  <TimerIcon className="size-5" />
                 </TooltipTrigger>
                 <TooltipContent side={"top"}>
                   <p className="text-center font-normal">{t("workspace.surveys.summary.ttc_tooltip")}</p>

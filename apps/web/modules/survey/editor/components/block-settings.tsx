@@ -77,7 +77,7 @@ export const BlockSettings = ({
       </Collapsible.CollapsibleTrigger>
       <Collapsible.CollapsibleContent>
         <div className="mt-2 space-y-4">
-          <div className="flex space-x-2">
+          <div className="flex gap-x-2">
             {blockIndex !== 0 && (
               <ElementFormInput
                 id="backButtonLabel"

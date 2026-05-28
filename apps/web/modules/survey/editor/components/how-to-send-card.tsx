@@ -103,7 +103,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, appSetupCompleted }
           <div className="flex items-center pl-2 pr-5">
             <CheckIcon
               strokeWidth={3}
-              className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
+              className="size-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
             />
           </div>
           <div>
@@ -129,7 +129,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, appSetupCompleted }
             defaultValue="app"
             value={localSurvey.type}
             onValueChange={setSurveyType}
-            className="flex flex-col space-y-3">
+            className="flex flex-col gap-y-3">
             {options
               .filter((option) => !Boolean(option.hide))
               .map((option) => (
@@ -152,7 +152,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, appSetupCompleted }
                     disabled={option.comingSoon}
                   />
                   <div className="inline-flex items-center">
-                    <option.icon className="mr-4 h-8 w-8 text-slate-500" />
+                    <option.icon className="mr-4 size-8 text-slate-500" />
                     <div>
                       <div className="inline-flex items-center">
                         <p

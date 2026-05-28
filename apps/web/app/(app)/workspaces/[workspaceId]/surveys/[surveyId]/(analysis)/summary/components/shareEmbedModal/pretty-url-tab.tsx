@@ -169,7 +169,7 @@ export const PrettyUrlTab = ({ publicDomain, isReadOnly = false }: PrettyUrlTabP
             {survey.slug && !isEditing && (
               <>
                 <Button type="button" variant="default" onClick={handleCopyUrl} disabled={isReadOnly}>
-                  <Copy className="mr-2 h-4 w-4" />
+                  <Copy className="mr-2 size-4" />
                   {t("common.copy")} URL
                 </Button>
                 <Button
@@ -177,7 +177,7 @@ export const PrettyUrlTab = ({ publicDomain, isReadOnly = false }: PrettyUrlTabP
                   variant="destructive"
                   onClick={() => setShowRemoveDialog(true)}
                   disabled={isReadOnly}>
-                  <Trash2 className="mr-2 h-4 w-4" />
+                  <Trash2 className="mr-2 size-4" />
                   {t("common.remove")}
                 </Button>
               </>

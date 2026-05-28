@@ -237,11 +237,7 @@ export function CsvConnectorUI({
               type="button"
               onClick={() => setPreviewOpen((v) => !v)}
               className="flex w-full items-center gap-1 bg-slate-50 px-3 py-2 text-left text-xs font-medium text-slate-700 hover:bg-slate-100">
-              {previewOpen ? (
-                <ChevronDownIcon className="h-3 w-3" />
-              ) : (
-                <ChevronRightIcon className="h-3 w-3" />
-              )}
+              {previewOpen ? <ChevronDownIcon className="size-3" /> : <ChevronRightIcon className="size-3" />}
               {t("workspace.unify.csv_data_preview")}
               {(() => {
                 const visible = Math.min(3, Math.max(csvPreview.length - 1, 0));
@@ -317,7 +313,7 @@ export function CsvConnectorUI({
             className="flex cursor-pointer flex-col items-center justify-center"
             onDragOver={handleDragOver}
             onDrop={handleDrop}>
-            <ArrowUpFromLineIcon className="h-8 w-8 text-slate-400" />
+            <ArrowUpFromLineIcon className="size-8 text-slate-400" />
             <p className="mt-2 text-sm text-slate-600">
               <span className="font-semibold">{t("workspace.unify.click_to_upload")}</span>{" "}
               {t("workspace.unify.or_drag_and_drop")}

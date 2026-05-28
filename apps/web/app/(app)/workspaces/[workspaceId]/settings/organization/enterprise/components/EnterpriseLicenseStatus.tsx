@@ -112,12 +112,12 @@ export const EnterpriseLicenseStatus = ({
             className="shrink-0">
             {isRechecking ? (
               <>
-                <RotateCcwIcon className="mr-2 h-4 w-4 animate-spin" />
+                <RotateCcwIcon className="mr-2 size-4 animate-spin" />
                 {t("workspace.settings.enterprise.rechecking")}
               </>
             ) : (
               <>
-                <RotateCcwIcon className="mr-2 h-4 w-4" />
+                <RotateCcwIcon className="mr-2 size-4" />
                 {t("workspace.settings.enterprise.recheck_license")}
               </>
             )}

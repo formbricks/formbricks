@@ -169,7 +169,7 @@ export const SurveysList = ({
   let surveyContent = (
     <div className="flex h-full w-full">
       <div className="flex w-full flex-col items-center justify-center text-slate-600">
-        <span className="h-24 w-24 p-4 text-center text-5xl">🕵️</span>
+        <span className="size-24 p-4 text-center text-5xl">🕵️</span>
         {t("common.no_surveys_found")}
       </div>
     </div>

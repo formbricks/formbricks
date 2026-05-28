@@ -60,5 +60,6 @@ test.describe("CX Onboarding", async () => {
     await page.getByRole("button", { name: "Save & Close" }).click();
 
     await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/);
+    await expect(page).toHaveURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/);
   });
 });

@@ -59,7 +59,7 @@ export const AdditionalIntegrationSettings = ({
       <Label htmlFor="Surveys">{t("workspace.integrations.additional_settings")}</Label>
       <div className="text-sm">
         {checkboxes.map(({ id, checked, onChange, label }) => (
-          <div key={id} className="my-1 flex items-center space-x-2">
+          <div key={id} className="my-1 flex items-center gap-x-2">
             <label htmlFor={id} className="flex cursor-pointer items-center">
               <Checkbox
                 type="button"

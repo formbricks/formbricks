@@ -45,7 +45,7 @@ const Page = async (props: ConnectPageProps) => {
         variant="ghost"
         asChild>
         <Link href={`/workspaces/${params.workspaceId}`}>
-          <XIcon className="h-7 w-7" strokeWidth={1.5} />
+          <XIcon className="size-7" strokeWidth={1.5} />
         </Link>
       </Button>
     </div>

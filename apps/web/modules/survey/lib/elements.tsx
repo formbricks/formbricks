@@ -292,7 +292,7 @@ export const getElementIconMap = (t: TFunction): Record<TSurveyElementTypeEnum, 
   getElementTypes(t).reduce(
     (prev, curr) => ({
       ...prev,
-      [curr.id]: <curr.icon className="h-4 w-4" />,
+      [curr.id]: <curr.icon className="size-4" />,
     }),
     {} as Record<TSurveyElementTypeEnum, JSX.Element>
   );
@@ -311,8 +311,8 @@ export const getElementIcon = (type: TSurveyElementTypeEnum, t: TFunction) => {
 };
 
 export const VARIABLES_ICON_MAP = {
-  text: <FileType2Icon className="h-4 w-4" />,
-  number: <FileDigitIcon className="h-4 w-4" />,
+  text: <FileType2Icon className="size-4" />,
+  number: <FileDigitIcon className="size-4" />,
 };
 
 export const getCXElementNameMap = (t: TFunction) =>

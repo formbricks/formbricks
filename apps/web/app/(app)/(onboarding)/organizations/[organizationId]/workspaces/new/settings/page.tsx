@@ -93,7 +93,7 @@ const Page = async (props: WorkspaceSettingsPageProps) => {
   }
 
   return (
-    <div className="flex min-h-full min-w-full flex-col items-center justify-center space-y-12">
+    <div className="flex min-h-full min-w-full flex-col items-center justify-center gap-y-12">
       <Header
         title={t("organizations.workspaces.new.settings.workspace_settings_title")}
         subtitle={t("organizations.workspaces.new.settings.workspace_settings_subtitle")}
@@ -115,7 +115,7 @@ const Page = async (props: WorkspaceSettingsPageProps) => {
           variant="ghost"
           asChild>
           <Link href={"/"}>
-            <XIcon className="h-7 w-7" strokeWidth={1.5} />
+            <XIcon className="size-7" strokeWidth={1.5} />
           </Link>
         </Button>
       )}

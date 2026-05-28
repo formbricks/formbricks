@@ -63,7 +63,7 @@ export const FormStylingSettings = ({
             <div className="flex items-center pl-2 pr-5">
               <CheckIcon
                 strokeWidth={3}
-                className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
+                className="size-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
               />
             </div>
           )}
@@ -97,7 +97,7 @@ export const FormStylingSettings = ({
                 className="h-10 justify-center gap-1"
                 onClick={onSuggestColorsClick}
                 disabled={disabled || !onSuggestColorsClick}>
-                <SparklesIcon className="mr-2 h-4 w-4" />
+                <SparklesIcon className="mr-2 size-4" />
                 {t("workspace.look.suggest_colors")}
               </Button>
             </div>

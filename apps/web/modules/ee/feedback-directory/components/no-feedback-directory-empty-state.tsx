@@ -16,7 +16,7 @@ export const NoFeedbackDirectoryEmptyState = async ({
 
   return (
     <div className="mx-auto flex max-w-xl flex-col items-center gap-4 py-16 text-center">
-      <FolderOpenIcon className="h-8 w-8 text-slate-400" />
+      <FolderOpenIcon className="size-8 text-slate-400" />
       <div className="space-y-2">
         <h3 className="text-base font-semibold text-slate-900">
           {t("workspace.unify.no_feedback_directory_linked_title")}

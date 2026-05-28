@@ -190,7 +190,7 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
   };
 
   return (
-    <div className="flex flex-col space-y-4">
+    <div className="flex flex-col gap-y-4">
       <div className="space-y-4">
         {languages.length > 0 ? (
           <>

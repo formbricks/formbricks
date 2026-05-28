@@ -103,13 +103,13 @@ export const EndScreenForm = ({
                 _forceUpdate: true,
               });
             }}>
-            <PlusIcon className="mr-1 h-4 w-4" />
+            <PlusIcon className="mr-1 size-4" />
             {t("workspace.surveys.edit.add_description")}
           </Button>
         )}
       </div>
       <div className="mt-4">
-        <div className="flex items-center space-x-1">
+        <div className="flex items-center gap-x-1">
           <Switch
             id="showButton"
             checked={showEndingCardCTA}

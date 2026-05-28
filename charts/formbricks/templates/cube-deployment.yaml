@@ -100,7 +100,9 @@ spec:
             {{- end }}
           {{- end }}
           env:
-            {{- range $key, $value := .Values.cube.env }}
+            - name: PORT
+              value: {{ .Values.cube.port | quote }}
+            {{- range $key, $value := omit (.Values.cube.env | default dict) "PORT" }}
             {{- include "formbricks.envVar" (dict "name" $key "value" $value "context" $) | nindent 12 }}
             {{- end }}
           volumeMounts:

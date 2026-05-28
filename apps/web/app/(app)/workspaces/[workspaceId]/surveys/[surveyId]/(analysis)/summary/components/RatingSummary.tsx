@@ -25,9 +25,9 @@ export const RatingSummary = ({ elementSummary, survey, setFilter }: RatingSumma
 
   const getIconBasedOnScale = useMemo(() => {
     const scale = elementSummary.element.scale;
-    if (scale === "number") return <CircleSlash2 className="h-4 w-4" />;
-    else if (scale === "star") return <StarIcon fill="rgb(250 204 21)" className="h-4 w-4 text-yellow-400" />;
-    else if (scale === "smiley") return <SmileIcon className="h-4 w-4" />;
+    if (scale === "number") return <CircleSlash2 className="size-4" />;
+    else if (scale === "star") return <StarIcon fill="rgb(250 204 21)" className="size-4 text-yellow-400" />;
+    else if (scale === "smiley") return <SmileIcon className="size-4" />;
   }, [elementSummary.element.scale]);
 
   return (
@@ -36,8 +36,8 @@ export const RatingSummary = ({ elementSummary, survey, setFilter }: RatingSumma
       survey={survey}
       setFilter={setFilter}
       additionalInfo={
-        <div className="flex items-center space-x-2">
-          <div className="flex items-center space-x-2 rounded-lg bg-slate-100 p-2">
+        <div className="flex items-center gap-x-2">
+          <div className="flex items-center gap-x-2 rounded-lg bg-slate-100 p-2">
             {getIconBasedOnScale}
             <div>
               {t("workspace.surveys.summary.overall")}: {elementSummary.average.toFixed(2)}

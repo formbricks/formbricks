@@ -99,7 +99,7 @@ export const EditPlacementForm = ({ workspace, isReadOnly }: EditPlacementProps)
                       disabled={isReadOnly}
                       className="h-full">
                       {placements.map((placement) => (
-                        <div key={placement.value} className="flex items-center space-x-2 whitespace-nowrap">
+                        <div key={placement.value} className="flex items-center gap-x-2 whitespace-nowrap">
                           <RadioGroupItem
                             id={placement.value}
                             value={placement.value}
@@ -172,8 +172,8 @@ export const EditPlacementForm = ({ workspace, isReadOnly }: EditPlacementProps)
                         onValueChange={(value) => {
                           field.onChange(value === "allow");
                         }}
-                        className="flex space-x-4">
-                        <div className="flex items-center space-x-2 whitespace-nowrap">
+                        className="flex gap-x-4">
+                        <div className="flex items-center gap-x-2 whitespace-nowrap">
                           <RadioGroupItem id="disallow" value="disallow" checked={!field.value} />
                           <Label
                             htmlFor="disallow"
@@ -181,7 +181,7 @@ export const EditPlacementForm = ({ workspace, isReadOnly }: EditPlacementProps)
                             {t("common.disallow")}
                           </Label>
                         </div>
-                        <div className="flex items-center space-x-2 whitespace-nowrap">
+                        <div className="flex items-center gap-x-2 whitespace-nowrap">
                           <RadioGroupItem id="allow" value="allow" checked={field.value} />
                           <Label
                             htmlFor="allow"

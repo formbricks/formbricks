@@ -125,8 +125,8 @@ export const WorkspaceSettings = ({
   }));
 
   return (
-    <div className="mt-6 flex w-5/6 space-x-10 lg:w-2/3 2xl:w-1/2">
-      <div className="flex w-1/2 flex-col space-y-4">
+    <div className="mt-6 flex w-5/6 gap-x-10 lg:w-2/3 2xl:w-1/2">
+      <div className="flex w-1/2 flex-col gap-y-4">
         <FormProvider {...form}>
           <form onSubmit={form.handleSubmit(addWorkspace)} className="w-full space-y-4">
             <FormField
@@ -224,7 +224,7 @@ export const WorkspaceSettings = ({
         </FormProvider>
       </div>
 
-      <div className="relative flex w-1/2 flex-col items-center justify-center space-y-2 rounded-lg border bg-slate-200 p-6 shadow">
+      <div className="relative flex w-1/2 flex-col items-center justify-center gap-y-2 rounded-lg border bg-slate-200 p-6 shadow">
         {logoUrl && (
           <Image
             src={logoUrl}

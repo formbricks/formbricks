@@ -50,6 +50,7 @@ import {
   findElementUsedInLogic,
   isUsedInQuota,
   isUsedInRecall,
+  scrollElementCardIntoView,
 } from "@/modules/survey/editor/lib/utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
@@ -502,6 +503,7 @@ export const ElementsView = ({
 
     setActiveElementId(element.id);
     internalElementIdMap[element.id] = createId();
+    scrollElementCardIntoView(element.id);
   };
 
   const _addElementToBlock = (element: TSurveyElement, blockId: string, afterElementIdx: number) => {
@@ -527,6 +529,7 @@ export const ElementsView = ({
     setLocalSurvey(result.data);
     setActiveElementId(updatedElement.id);
     internalElementIdMap[updatedElement.id] = createId();
+    scrollElementCardIntoView(updatedElement.id);
   };
 
   const moveElementToBlock = (elementId: string, targetBlockId: string) => {

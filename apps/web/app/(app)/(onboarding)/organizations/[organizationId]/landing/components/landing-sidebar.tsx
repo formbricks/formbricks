@@ -120,30 +120,31 @@ export const LandingSidebar = ({ user, organization, isMultiOrgEnabled }: Landin
           <DropdownMenuTrigger asChild className={switcherTriggerClasses}>
             <button type="button" className="flex w-full items-center gap-3">
               <span className={switcherIconClasses}>
-                <Building2Icon className="h-4 w-4" strokeWidth={1.5} />
+                <Building2Icon className="size-4" strokeWidth={1.5} />
               </span>
               <div className="grow overflow-hidden">
                 <p className="truncate text-sm font-bold text-slate-700">{organization.name}</p>
                 <p className="text-sm text-slate-500">{t("common.organization")}</p>
               </div>
-              {isPending && <Loader2 className="h-4 w-4 animate-spin text-slate-600" strokeWidth={1.5} />}
-              <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-600" strokeWidth={1.5} />
+              {isPending && <Loader2 className="size-4 animate-spin text-slate-600" strokeWidth={1.5} />}
+              <ChevronRightIcon className="size-4 shrink-0 text-slate-600" strokeWidth={1.5} />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent side="right" sideOffset={10} alignOffset={5} align="end">
             <div className="px-2 py-1.5 text-sm font-medium text-slate-500">
-              <Building2Icon className="mr-2 inline h-4 w-4" strokeWidth={1.5} />
+              <Building2Icon className="mr-2 inline size-4" strokeWidth={1.5} />
               {t("common.change_organization")}
             </div>
             {isLoadingOrganizations && (
               <div className="flex items-center justify-center py-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="size-4 animate-spin" />
               </div>
             )}
             {!isLoadingOrganizations && organizationLoadError && (
               <div className="px-2 py-4">
                 <p className="mb-2 text-sm text-red-600">{organizationLoadError}</p>
                 <button
+                  type="button"
                   onClick={() => {
                     setOrganizationLoadError(null);
                     setOrganizations([]);
@@ -171,7 +172,7 @@ export const LandingSidebar = ({ user, organization, isMultiOrgEnabled }: Landin
                     onClick={() => setOpenCreateOrganizationModal(true)}
                     className="w-full cursor-pointer justify-between">
                     <span>{t("common.create_new_organization")}</span>
-                    <PlusIcon className="ml-2 h-4 w-4" strokeWidth={1.5} />
+                    <PlusIcon className="ml-2 size-4" strokeWidth={1.5} />
                   </DropdownMenuCheckboxItem>
                 )}
               </>
@@ -197,7 +198,7 @@ export const LandingSidebar = ({ user, organization, isMultiOrgEnabled }: Landin
                 </p>
                 <p className="text-sm text-slate-500">{t("common.account")}</p>
               </div>
-              <ChevronRightIcon className="h-4 w-4 shrink-0 text-slate-600" strokeWidth={1.5} />
+              <ChevronRightIcon className="size-4 shrink-0 text-slate-600" strokeWidth={1.5} />
             </button>
           </DropdownMenuTrigger>
 
@@ -210,7 +211,7 @@ export const LandingSidebar = ({ user, organization, isMultiOrgEnabled }: Landin
                 rel={link.target === "_blank" ? "noopener noreferrer" : undefined}
                 className="flex w-full items-center">
                 <DropdownMenuItem>
-                  <link.icon className="mr-2 h-4 w-4" strokeWidth={1.5} />
+                  <link.icon className="mr-2 size-4" strokeWidth={1.5} />
                   {link.label}
                 </DropdownMenuItem>
               </Link>
@@ -225,7 +226,7 @@ export const LandingSidebar = ({ user, organization, isMultiOrgEnabled }: Landin
                   callbackUrl: "/auth/login",
                 });
               }}
-              icon={<LogOutIcon className="mr-2 h-4 w-4" strokeWidth={1.5} />}>
+              icon={<LogOutIcon className="mr-2 size-4" strokeWidth={1.5} />}>
               {t("common.logout")}
             </DropdownMenuItem>
           </DropdownMenuContent>

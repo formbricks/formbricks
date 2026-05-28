@@ -93,9 +93,9 @@ export const ManageIntegration = ({
           </AlertButton>
         </Alert>
       )}
-      <div className="flex w-full justify-end space-x-2">
+      <div className="flex w-full justify-end gap-x-2">
         <div className="mr-6 flex items-center">
-          <span className="mr-4 h-4 w-4 rounded-full bg-green-600"></span>
+          <span className="mr-4 size-4 rounded-full bg-green-600"></span>
           <span className="text-slate-500">
             {t("workspace.integrations.connected_with_email", {
               email: airtableIntegration.config.email,
@@ -106,7 +106,7 @@ export const ManageIntegration = ({
           <Tooltip>
             <TooltipTrigger asChild>
               <Button variant="outline" onClick={handleAirtableAuthorization}>
-                <RefreshCcwIcon className="mr-2 h-4 w-4" />
+                <RefreshCcwIcon className="mr-2 size-4" />
                 {t("workspace.integrations.reconnect_button")}
               </Button>
             </TooltipTrigger>
@@ -134,6 +134,7 @@ export const ManageIntegration = ({
 
           {integrationData.map((data, index) => (
             <button
+              type="button"
               key={`${index}-${data.baseId}-${data.tableId}-${data.surveyId}`}
               className="grid h-16 w-full grid-cols-8 content-center rounded-lg p-2 hover:bg-slate-100"
               onClick={() => {

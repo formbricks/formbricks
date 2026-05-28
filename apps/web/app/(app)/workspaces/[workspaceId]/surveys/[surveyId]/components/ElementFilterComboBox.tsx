@@ -158,7 +158,7 @@ export const ElementFilterComboBox = ({
           ) : (
             <p className="text-slate-400">{t("common.select")}...</p>
           )}
-          {filterOptions.length > 1 && <ChevronIcon className="h-4 w-4 flex-shrink-0 opacity-50" />}
+          {filterOptions.length > 1 && <ChevronIcon className="size-4 flex-shrink-0 opacity-50" />}
         </DropdownMenuTrigger>
         <DropdownMenuContent className="bg-white">
           {filterOptions.map((o, index) => {
@@ -203,7 +203,7 @@ export const ElementFilterComboBox = ({
       onClick={(e) => handleRemoveTag(e, value)}
       className="flex items-center gap-1 whitespace-nowrap rounded bg-slate-100 px-2 py-1 text-sm text-slate-600 hover:bg-slate-200">
       {value}
-      <X className="h-3 w-3" />
+      <X className="size-3" />
     </button>
   );
 

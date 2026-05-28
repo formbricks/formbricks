@@ -69,7 +69,7 @@ export function LanguageSelect({ language, onLanguageChange, disabled, locale }:
         <span className="mr-2 min-w-0 truncate">
           {selectedOption ? getLabelForLocale(selectedOption) : t("common.select")}
         </span>
-        <ChevronDown className="h-4 w-4 shrink-0" />
+        <ChevronDown className="size-4 shrink-0" />
       </Button>
       <div
         className={`absolute right-0 z-30 mt-2 space-y-1 rounded-md bg-white p-1 shadow-lg ring-1 ring-black ring-opacity-5 ${isOpen ? "" : "hidden"}`}>
@@ -86,6 +86,7 @@ export function LanguageSelect({ language, onLanguageChange, disabled, locale }:
         <div className="max-h-96 overflow-auto">
           {filteredItems.map((item) => (
             <button
+              type="button"
               className="block w-full cursor-pointer rounded-md px-4 py-2 text-left text-slate-700 hover:bg-slate-100 active:bg-blue-100"
               key={item.code}
               onClick={() => {

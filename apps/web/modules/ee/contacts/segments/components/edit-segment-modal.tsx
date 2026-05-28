@@ -114,16 +114,17 @@ export const EditSegmentModal = ({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent disableCloseOnOutsideClick>
+      <DialogContent disableCloseOnOutsideClick width="wide">
         <DialogHeader>
           <UsersIcon />
           <DialogTitle>{currentSegment.title}</DialogTitle>
           <DialogDescription>{currentSegment.description ?? ""}</DialogDescription>
         </DialogHeader>
         <DialogBody>
-          <div className="flex h-full w-full items-center justify-center space-x-2 border-b border-slate-200 px-6">
+          <div className="flex h-full w-full items-center justify-center gap-x-2 border-b border-slate-200 px-6">
             {tabs.map((tab, index) => (
               <button
+                type="button"
                 key={tab.title}
                 className={`mr-4 px-1 pb-3 focus:outline-none ${
                   activeTab === index

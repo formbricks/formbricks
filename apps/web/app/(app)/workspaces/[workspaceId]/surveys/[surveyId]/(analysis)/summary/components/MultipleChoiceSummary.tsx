@@ -74,7 +74,7 @@ export const MultipleChoiceSummary = ({
         additionalInfo={
           elementSummary.type === "multipleChoiceMulti" ? (
             <div className="flex items-center rounded-lg bg-slate-100 p-2">
-              <InboxIcon className="mr-2 h-4 w-4" />
+              <InboxIcon className="mr-2 size-4" />
               {t("common.count_selections", { count: elementSummary.selectionCount })}
             </div>
           ) : undefined
@@ -102,13 +102,13 @@ export const MultipleChoiceSummary = ({
                     )
                   }>
                   <div className="text flex flex-col justify-between px-2 pb-2 sm:flex-row">
-                    <div className="mr-8 flex w-full justify-between space-x-2 sm:justify-normal">
+                    <div className="mr-8 flex w-full justify-between gap-x-2 sm:justify-normal">
                       <p className="font-semibold text-slate-700 underline-offset-4 group-hover:underline">
                         {result.value}
                       </p>
                       {choiceId && <IdBadge id={choiceId} />}
                     </div>
-                    <div className="flex w-full space-x-2">
+                    <div className="flex w-full gap-x-2">
                       <p className="flex w-full pt-1 text-slate-600 sm:items-end sm:justify-end sm:pt-0">
                         {t("common.count_selections", { count: result.count })}
                       </p>
@@ -150,7 +150,7 @@ export const MultipleChoiceSummary = ({
                               <div className="ph-no-capture col-span-1 pl-4 font-medium text-slate-900">
                                 <span>{otherValue.value}</span>
                               </div>
-                              <div className="ph-no-capture col-span-1 flex items-center space-x-4 pl-6 font-medium text-slate-900">
+                              <div className="ph-no-capture col-span-1 flex items-center gap-x-4 pl-6 font-medium text-slate-900">
                                 {otherValue.contact.id && <PersonAvatar personId={otherValue.contact.id} />}
                                 <span>
                                   {getContactIdentifier(otherValue.contact, otherValue.contactAttributes)}

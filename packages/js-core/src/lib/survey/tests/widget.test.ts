@@ -96,8 +96,13 @@ describe("widget-file", () => {
     vi.restoreAllMocks();
   });
 
-  test("setIsSurveyRunning toggles internal state (covered by usage in other tests)", () => {
-    widget.setIsSurveyRunning(true);
+  test("setIsSurveyRunning toggles internal state without throwing", () => {
+    expect(() => {
+      widget.setIsSurveyRunning(true);
+    }).not.toThrow();
+    expect(() => {
+      widget.setIsSurveyRunning(false);
+    }).not.toThrow();
   });
 
   test("triggerSurvey skips if shouldDisplayBasedOnPercentage returns false", async () => {
@@ -111,7 +116,8 @@ describe("widget-file", () => {
     );
   });
 
-  test("triggerSurvey calls renderWidget if displayPercentage is not an issue", async () => {
+  test("triggerSurvey short-circuits via renderWidget when a survey is already running", async () => {
+    widget.setIsSurveyRunning(true);
     (shouldDisplayBasedOnPercentage as Mock).mockReturnValueOnce(true);
 
     await widget.triggerSurvey(mockSurvey);

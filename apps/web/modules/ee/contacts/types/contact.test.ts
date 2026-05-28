@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { ZodError } from "zod";
 import {
   ZContact,
@@ -648,10 +648,10 @@ describe("validateUniqueAttributeKeys", () => {
       },
     ];
     const mockCtx = {
-      addIssue: () => {},
+      addIssue: vi.fn(),
     } as any;
-    // Should not throw or call addIssue
     validateUniqueAttributeKeys(attributes, mockCtx);
+    expect(mockCtx.addIssue).not.toHaveBeenCalled();
   });
 
   test("should fail validation for duplicate attribute keys", () => {

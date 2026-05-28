@@ -27,9 +27,9 @@ const NumberBox = ({ answer, size }: { answer: number; size: "small" | "medium" 
 const renderStarScale = (answer: number, variant: string, range: number) => {
   if (variant === "scale") {
     return answer === 1 ? (
-      <StarIcon className="h-6 w-6 text-slate-300" />
+      <StarIcon className="size-6 text-slate-300" />
     ) : (
-      <StarIcon fill="rgb(250 204 21)" className="h-6 w-6 text-yellow-400" />
+      <StarIcon fill="rgb(250 204 21)" className="size-6 text-yellow-400" />
     );
   }
 
@@ -39,10 +39,10 @@ const renderStarScale = (answer: number, variant: string, range: number) => {
 
   if (variant === "individual" && range > 5) {
     return (
-      <div className="flex items-center space-x-2">
-        <StarIcon className="h-5 w-5 text-slate-300" />
+      <div className="flex items-center gap-x-2">
+        <StarIcon className="size-5 text-slate-300" />
         <span className="text-base font-semibold text-slate-700">{answer}</span>
-        <StarIcon fill="rgb(250 204 21)" className="h-5 w-5 text-yellow-400" />
+        <StarIcon fill="rgb(250 204 21)" className="size-5 text-yellow-400" />
       </div>
     );
   }
@@ -61,7 +61,7 @@ const renderStarScale = (answer: number, variant: string, range: number) => {
 const renderSmileyScale = (answer: number, variant: string, range: number, addColors: boolean) => {
   if (variant === "scale") {
     return (
-      <div className="flex h-6 w-6 items-center justify-center">
+      <div className="flex size-6 items-center justify-center">
         <RatingSmiley active={false} idx={answer - 1} range={range} addColors={addColors} />
       </div>
     );

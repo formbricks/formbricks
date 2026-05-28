@@ -247,7 +247,7 @@ export const AddIntegrationModal = ({
     <Dialog open={open} onOpenChange={setOpenWithStates}>
       <DialogContent>
         <DialogHeader>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-x-2">
             <div className="relative size-8">
               <Image
                 fill
@@ -297,7 +297,7 @@ export const AddIntegrationModal = ({
                     <div className="mt-1 max-h-[15vh] overflow-y-auto overflow-x-hidden rounded-lg border border-slate-200">
                       <div className="grid content-center rounded-lg bg-slate-50 p-3 text-left text-sm text-slate-900">
                         {surveyElements.map((question) => (
-                          <div key={question.id} className="my-1 flex items-center space-x-2">
+                          <div key={question.id} className="my-1 flex items-center gap-x-2">
                             <label htmlFor={question.id} className="flex cursor-pointer items-center">
                               <Checkbox
                                 type="button"

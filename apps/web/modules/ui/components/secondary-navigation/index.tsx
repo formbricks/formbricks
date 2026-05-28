@@ -85,6 +85,7 @@ const renderInteractiveNavItem = (navElem: TSecondaryNavItem, activeId: string) 
 
   return (
     <button
+      type="button"
       {...(navElem.onClick ? { onClick: navElem.onClick } : {})}
       className={cn(textClassName, "grow transition-all duration-150 ease-in-out")}
       aria-current={navElem.id === activeId ? "page" : undefined}>
@@ -98,7 +99,7 @@ export const SecondaryNavigation = ({ navigation, activeId, loading, ...props }:
 
   return (
     <div {...props}>
-      <nav className="flex h-10 w-full items-center space-x-4" aria-label="Tabs">
+      <nav className="flex h-10 w-full items-center gap-x-4" aria-label="Tabs">
         {loading
           ? visibleNavigation.map((navElem) => (
               <div className="group flex h-full flex-col truncate" key={navElem.id}>

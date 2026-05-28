@@ -451,7 +451,7 @@ export const CreateConnectorModal = ({
       {showTrigger && (
         <Button onClick={() => onOpenChange(true)} size="sm">
           {t("workspace.unify.add_source")}
-          <PlusIcon className="ml-2 h-4 w-4" />
+          <PlusIcon className="ml-2 size-4" />
         </Button>
       )}
 
@@ -460,7 +460,7 @@ export const CreateConnectorModal = ({
           {isImporting && (
             <div className="absolute inset-0 z-50 flex items-center justify-center rounded-lg bg-white/80">
               <div className="flex flex-col items-center gap-3">
-                <Loader2Icon className="h-8 w-8 animate-spin text-slate-500" />
+                <Loader2Icon className="size-8 animate-spin text-slate-500" />
                 <p className="text-sm font-medium text-slate-700">
                   {t("workspace.unify.importing_historical_data")}
                 </p>
@@ -672,7 +672,7 @@ export const CreateConnectorModal = ({
                       !formbricksValues.selectedQuestionIds?.length
                     : !isConnectorNameValid(csvConnectorName) || !isCsvValid || !areCsvRequiredFieldsMapped)
                 }>
-                {isCreating && <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />}
+                {isCreating && <Loader2Icon className="mr-2 size-4 animate-spin" />}
                 {t("workspace.unify.setup_connection")}
               </Button>
             )}

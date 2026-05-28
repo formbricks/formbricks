@@ -36,7 +36,7 @@ export const AutoMappedBadge = ({ sourceColumn }: AutoMappedBadgeProps) => {
   if (!sourceColumn) {
     return (
       <span className={className}>
-        <SparklesIcon className="h-3 w-3" />
+        <SparklesIcon className="size-3" />
         {label}
       </span>
     );
@@ -45,7 +45,7 @@ export const AutoMappedBadge = ({ sourceColumn }: AutoMappedBadgeProps) => {
   return (
     <TooltipRenderer tooltipContent={t("workspace.unify.csv_auto_mapped_tooltip", { column: sourceColumn })}>
       <span className={className}>
-        <SparklesIcon className="h-3 w-3" />
+        <SparklesIcon className="size-3" />
         {label}
       </span>
     </TooltipRenderer>
@@ -287,7 +287,7 @@ export const FormTargetField = ({
                       <SelectSeparator />
                       <SelectItem value={SENTINEL.EDIT_FIXED} className={ACTION_ITEM_CLASS}>
                         <span className="inline-flex items-center gap-2 font-normal">
-                          <TextCursorInputIcon className="h-3.5 w-3.5 text-indigo-500" />
+                          <TextCursorInputIcon className="size-3.5 text-indigo-500" />
                           {mapping?.staticValue && mapping.staticValue !== "$now"
                             ? t("workspace.unify.csv_fixed_value_label", {
                                 value: truncate(mapping.staticValue, 40),
@@ -302,7 +302,7 @@ export const FormTargetField = ({
                       <SelectSeparator />
                       <SelectItem value={SENTINEL.CLEAR} className="text-slate-700 focus:bg-orange-50">
                         <span className="inline-flex items-center gap-2 font-normal">
-                          <EraserIcon className="h-3.5 w-3.5 text-orange-500" />
+                          <EraserIcon className="size-3.5 text-orange-500" />
                           {t("workspace.unify.clear_mapping")}
                         </span>
                       </SelectItem>
@@ -318,7 +318,7 @@ export const FormTargetField = ({
                 onClick={openFixedValueEditor}
                 aria-label={t("workspace.unify.csv_fixed_value_action")}
                 className="shrink-0">
-                <PencilIcon className="h-3.5 w-3.5" />
+                <PencilIcon className="size-3.5" />
                 {t("common.edit")}
               </Button>
             )}
