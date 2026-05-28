@@ -22,9 +22,28 @@ function getConfiguredTranslationLanguageCodes(document: TV3SurveyDocument): str
   return Array.from(languageCodes.values());
 }
 
-function collectTranslationLanguageCodes(value: unknown, languageCodes: Set<string>): void {
+function getDeclaredLanguageCodeSet(document: TV3SurveyDocument): Set<string> {
+  return new Set([
+    document.defaultLanguage.toLowerCase(),
+    ...document.languages.map((language) => language.code.toLowerCase()),
+  ]);
+}
+
+function addUnsupportedLocaleIssues(
+  value: unknown,
+  path: string,
+  declaredLanguageCodes: Set<string>,
+  issues: InvalidParam[]
+): void {
   if (Array.isArray(value)) {
-    value.forEach((entry) => collectTranslationLanguageCodes(entry, languageCodes));
+    value.forEach((entry, index) =>
+      addUnsupportedLocaleIssues(
+        entry,
+        path ? `${path}.${index}` : String(index),
+        declaredLanguageCodes,
+        issues
+      )
+    );
     return;
   }
 
@@ -34,27 +53,22 @@ function collectTranslationLanguageCodes(value: unknown, languageCodes: Set<stri
 
   if (isInternalI18nString(value)) {
     Object.keys(value).forEach((languageCode) => {
-      if (languageCode !== "default") {
-        languageCodes.add(languageCode);
+      if (languageCode !== "default" && !declaredLanguageCodes.has(languageCode.toLowerCase())) {
+        issues.push({
+          name: `${path}.${languageCode}`,
+          reason: `Language '${languageCode}' must be declared in languages before it can be used in translatable content`,
+          code: "unsupported_locale",
+          identifier: languageCode,
+          referenceType: "language",
+        });
       }
     });
     return;
   }
 
-  Object.values(value).forEach((entry) => collectTranslationLanguageCodes(entry, languageCodes));
-}
-
-function getRequiredTranslationLanguageCodes(document: TV3SurveyDocument): string[] {
-  const languageCodes = new Set(getConfiguredTranslationLanguageCodes(document));
-
-  V3_SURVEY_TRANSLATABLE_METADATA_KEYS.forEach((key) =>
-    collectTranslationLanguageCodes(document.metadata[key], languageCodes)
+  Object.entries(value).forEach(([key, entry]) =>
+    addUnsupportedLocaleIssues(entry, path ? `${path}.${key}` : key, declaredLanguageCodes, issues)
   );
-  collectTranslationLanguageCodes(document.welcomeCard, languageCodes);
-  collectTranslationLanguageCodes(document.blocks, languageCodes);
-  collectTranslationLanguageCodes(document.endings, languageCodes);
-
-  return Array.from(languageCodes.values());
 }
 
 function addMissingTranslationIssues(
@@ -100,12 +114,24 @@ function addMissingTranslationIssues(
 }
 
 function getV3SurveyLanguageInvalidParams(document: TV3SurveyDocument): InvalidParam[] {
-  const languageCodes = getRequiredTranslationLanguageCodes(document);
+  const declaredLanguageCodes = getDeclaredLanguageCodeSet(document);
+  const languageCodes = getConfiguredTranslationLanguageCodes(document);
   const issues: InvalidParam[] = [];
 
-  V3_SURVEY_TRANSLATABLE_METADATA_KEYS.forEach((key) =>
-    addMissingTranslationIssues(document.metadata[key], `metadata.${key}`, languageCodes, issues)
-  );
+  if (isPlainObject(document.metadata)) {
+    V3_SURVEY_TRANSLATABLE_METADATA_KEYS.forEach((key) =>
+      addUnsupportedLocaleIssues(document.metadata[key], `metadata.${key}`, declaredLanguageCodes, issues)
+    );
+  }
+  addUnsupportedLocaleIssues(document.welcomeCard, "welcomeCard", declaredLanguageCodes, issues);
+  addUnsupportedLocaleIssues(document.blocks, "blocks", declaredLanguageCodes, issues);
+  addUnsupportedLocaleIssues(document.endings, "endings", declaredLanguageCodes, issues);
+
+  if (isPlainObject(document.metadata)) {
+    V3_SURVEY_TRANSLATABLE_METADATA_KEYS.forEach((key) =>
+      addMissingTranslationIssues(document.metadata[key], `metadata.${key}`, languageCodes, issues)
+    );
+  }
   addMissingTranslationIssues(document.welcomeCard, "welcomeCard", languageCodes, issues);
   addMissingTranslationIssues(document.blocks, "blocks", languageCodes, issues);
   addMissingTranslationIssues(document.endings, "endings", languageCodes, issues);

@@ -632,6 +632,24 @@ const assertSurveyLanguagesBelongToWorkspace = (
   }
 };
 
+const assertSurveySegmentBelongsToWorkspace = async (
+  workspaceId: string,
+  segment: TSurveyCreateInput["segment"]
+): Promise<void> => {
+  if (!segment?.id) {
+    return;
+  }
+
+  const existingSegment = await prisma.segment.findUnique({
+    where: { id: segment.id },
+    select: { workspaceId: true },
+  });
+
+  if (existingSegment?.workspaceId !== workspaceId) {
+    throw new ResourceNotFoundError("Segment", segment.id);
+  }
+};
+
 export const createSurvey = async (workspaceId: string, surveyBody: TSurveyCreateInput): Promise<TSurvey> => {
   const [parsedWorkspaceId, parsedSurveyBody] = validateInputs(
     [workspaceId, ZId],
@@ -641,6 +659,7 @@ export const createSurvey = async (workspaceId: string, surveyBody: TSurveyCreat
   try {
     const { createdBy, languages, segment, followUps, ...restSurveyBody } = parsedSurveyBody;
     assertSurveyLanguagesBelongToWorkspace(parsedWorkspaceId, languages);
+    await assertSurveySegmentBelongsToWorkspace(parsedWorkspaceId, segment);
     const normalizedCloseOn = restSurveyBody.closeOn instanceof Date ? restSurveyBody.closeOn : null;
     const normalizedPublishOn = restSurveyBody.publishOn instanceof Date ? restSurveyBody.publishOn : null;
     const surveyLanguagesCreateData: Prisma.SurveyLanguageCreateNestedManyWithoutSurveyInput | undefined =

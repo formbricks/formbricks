@@ -1,14 +1,21 @@
 import "server-only";
 import type { TSurveyCreateInput } from "@formbricks/types/surveys/types";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
+import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { createSurvey } from "@/lib/survey/service";
+import { getElementsFromBlocks } from "@/lib/survey/utils";
+import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import { type TV3SurveyLanguageRequest, ensureV3WorkspaceLanguages } from "./languages";
 import { prepareV3SurveyCreate } from "./prepare";
 import { V3SurveyReferenceValidationError } from "./reference-validation";
 import type { TV3CreateSurveyBody } from "./schemas";
-import { assertV3SurveyWritePermissions } from "./write-permissions";
 
-export { V3SurveyWritePermissionError as V3SurveyCreatePermissionError } from "./write-permissions";
+export class V3SurveyCreatePermissionError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "V3SurveyCreatePermissionError";
+  }
+}
 
 function getCreatedBy(authentication: TV3Authentication): string | null {
   if (authentication && "user" in authentication && authentication.user?.id) {
@@ -16,6 +23,45 @@ function getCreatedBy(authentication: TV3Authentication): string | null {
   }
 
   return null;
+}
+
+function hasExternalUrlReferences(input: TV3CreateSurveyBody): boolean {
+  const hasExternalEndingLink = input.endings.some((ending) => {
+    if (ending.type === "endScreen") {
+      return Boolean(ending.buttonLink);
+    }
+
+    return Boolean(ending.url);
+  });
+  const hasExternalCtaButton = getElementsFromBlocks(input.blocks).some(
+    (element) => element.type === "cta" && element.buttonExternal
+  );
+
+  return hasExternalEndingLink || hasExternalCtaButton;
+}
+
+async function assertV3SurveyCreatePermissions(
+  input: TV3CreateSurveyBody,
+  organizationId?: string
+): Promise<void> {
+  if (!hasExternalUrlReferences(input)) {
+    return;
+  }
+
+  const resolvedOrganizationId =
+    organizationId ?? (await getOrganizationByWorkspaceId(input.workspaceId))?.id ?? null;
+  if (!resolvedOrganizationId) {
+    throw new V3SurveyCreatePermissionError(
+      `Unable to verify external URL permissions for workspaceId '${input.workspaceId}'.`
+    );
+  }
+
+  const isExternalUrlsAllowed = await getExternalUrlsPermission(resolvedOrganizationId);
+  if (!isExternalUrlsAllowed) {
+    throw new V3SurveyCreatePermissionError(
+      "External URLs are not enabled for this organization. Upgrade to use external survey links."
+    );
+  }
 }
 
 export async function executeV3SurveyCreate(params: {
@@ -55,7 +101,7 @@ export async function createV3Survey(
     throw new V3SurveyReferenceValidationError(preparation.validation.invalidParams);
   }
 
-  await assertV3SurveyWritePermissions(input, organizationId);
+  await assertV3SurveyCreatePermissions(input, organizationId);
 
   return await executeV3SurveyCreate({
     input: preparation.document,

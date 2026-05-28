@@ -67,4 +67,27 @@ describe("validateInputs", () => {
       "Input validation failed"
     );
   });
+
+  test("logs a safe preview for circular invalid input", () => {
+    const circularValue: { self?: unknown } = {};
+    circularValue.self = circularValue;
+
+    expect(() => validateInputs([circularValue, z.string()])).toThrow(ValidationError);
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({
+        valuePreview: "[object Object]",
+      }),
+      "Input validation failed"
+    );
+  });
+
+  test("logs a safe preview for BigInt invalid input", () => {
+    expect(() => validateInputs([1n, z.string()])).toThrow(ValidationError);
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({
+        valuePreview: "1",
+      }),
+      "Input validation failed"
+    );
+  });
 });

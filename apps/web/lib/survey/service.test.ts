@@ -781,6 +781,9 @@ describe("Tests for createSurvey", () => {
 
     test("preserves an explicitly provided segment relation for existing callers", async () => {
       vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
+      prisma.segment.findUnique.mockResolvedValueOnce({
+        workspaceId: mockWorkspaceId,
+      });
       prisma.survey.create.mockResolvedValueOnce({
         ...mockSurveyOutput,
       });
@@ -811,6 +814,54 @@ describe("Tests for createSurvey", () => {
           }),
         })
       );
+    });
+
+    test("rejects an explicitly provided segment from another workspace", async () => {
+      prisma.segment.findUnique.mockResolvedValueOnce({
+        workspaceId: "clotherworkspace1234567890",
+      });
+
+      await expect(
+        createSurvey(mockWorkspaceId, {
+          ...mockCreateSurveyInput,
+          segment: {
+            id: "clseg123456789012345678901",
+            title: "Segment",
+            description: null,
+            isPrivate: false,
+            filters: [],
+            workspaceId: mockWorkspaceId,
+            surveys: [],
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        })
+      ).rejects.toThrow(ResourceNotFoundError);
+
+      expect(prisma.survey.create).not.toHaveBeenCalled();
+    });
+
+    test("rejects an explicitly provided segment that does not exist", async () => {
+      prisma.segment.findUnique.mockResolvedValueOnce(null);
+
+      await expect(
+        createSurvey(mockWorkspaceId, {
+          ...mockCreateSurveyInput,
+          segment: {
+            id: "clseg123456789012345678901",
+            title: "Segment",
+            description: null,
+            isPrivate: false,
+            filters: [],
+            workspaceId: mockWorkspaceId,
+            surveys: [],
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        })
+      ).rejects.toThrow(ResourceNotFoundError);
+
+      expect(prisma.survey.create).not.toHaveBeenCalled();
     });
   });
 

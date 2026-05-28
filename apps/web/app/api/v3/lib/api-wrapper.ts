@@ -410,17 +410,6 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
         return authResult.response;
       }
 
-      const rateLimitResponse = await applyV3RateLimitOrRespond({
-        authentication: authResult.authentication,
-        enabled: rateLimit,
-        config: customRateLimitConfig ?? rateLimitConfigs.api.v3,
-        requestId,
-        log,
-      });
-      if (rateLimitResponse) {
-        return rateLimitResponse;
-      }
-
       const parsedInputResult = await parseV3Input(req, props, schemas, requestId, instance);
       if (!parsedInputResult.ok) {
         log.warn(
@@ -432,6 +421,17 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
           "V3 API request validation failed"
         );
         return parsedInputResult.response;
+      }
+
+      const rateLimitResponse = await applyV3RateLimitOrRespond({
+        authentication: authResult.authentication,
+        enabled: rateLimit,
+        config: customRateLimitConfig ?? rateLimitConfigs.api.v3,
+        requestId,
+        log,
+      });
+      if (rateLimitResponse) {
+        return rateLimitResponse;
       }
 
       auditLog = buildV3AuditLog(authResult.authentication, action, targetType, req.url);

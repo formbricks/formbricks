@@ -2,7 +2,6 @@ import type { TSurveyBlocks } from "@formbricks/types/surveys/blocks";
 import type { TConditionGroup, TDynamicLogicFieldValue } from "@formbricks/types/surveys/logic";
 import type { TSurveyEndings, TSurveyHiddenFields, TSurveyVariables } from "@formbricks/types/surveys/types";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
-import { V3_SURVEY_TRANSLATABLE_METADATA_KEYS } from "./translation-fields";
 
 type TReferenceValidationInput = {
   blocks: TSurveyBlocks;
@@ -178,9 +177,8 @@ function addMetadataRecallReferenceIssues(
     return;
   }
 
-  V3_SURVEY_TRANSLATABLE_METADATA_KEYS.forEach((key) =>
-    addRecallReferenceIssues(metadata[key], `metadata.${key}`, references, issues)
-  );
+  addRecallReferenceIssues(metadata.title, "metadata.title", references, issues);
+  addRecallReferenceIssues(metadata.description, "metadata.description", references, issues);
 }
 
 function validateDynamicOperand(
@@ -291,6 +289,7 @@ export function getV3SurveyReferenceInvalidParams(input: TReferenceValidationInp
   };
 
   addDuplicateIdIssues(blockEntries, "Block", "block", issues);
+  addDuplicateIdIssues(endingEntries, "Ending", "ending", issues);
   addDuplicateIdIssues(elementEntries, "Element", "element", issues);
   addDuplicateIdIssues(variableIdEntries, "Variable", "variable", issues);
   addDuplicateValueIssues(
