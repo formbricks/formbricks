@@ -435,6 +435,7 @@ export async function PreviewEmailTemplate({
               <PreviewScaleLabels
                 defaultLanguageCode={defaultLanguageCode}
                 lowerLabel={firstQuestion.lowerLabel}
+                optionCount={npsOptionCount}
                 styleTokens={styleTokens}
                 upperLabel={firstQuestion.upperLabel}
               />
@@ -518,6 +519,7 @@ export async function PreviewEmailTemplate({
               <PreviewScaleLabels
                 defaultLanguageCode={defaultLanguageCode}
                 lowerLabel={firstQuestion.lowerLabel}
+                optionCount={firstQuestion.range}
                 styleTokens={styleTokens}
                 upperLabel={firstQuestion.upperLabel}
               />
@@ -915,32 +917,35 @@ function PreviewScaleOptionColumn({
 function PreviewScaleLabels({
   defaultLanguageCode,
   lowerLabel,
+  optionCount,
   styleTokens,
   upperLabel,
 }: Readonly<{
   defaultLanguageCode: string;
   lowerLabel: Parameters<typeof getLocalizedValue>[0];
+  optionCount: number;
   styleTokens: PreviewEmailStyleTokens;
   upperLabel: Parameters<typeof getLocalizedValue>[0];
 }>): React.JSX.Element {
+  const columnStyle = getScaleColumnStyle(optionCount);
+  const labelTextStyle = { ...getHelperLabelTextStyle(styleTokens), textAlign: "center" as const };
+
   return (
     <Section className="mt-2 w-full">
       <Row>
-        <Column>
-          <Text className="m-0 text-xs leading-[18px]" style={getHelperLabelTextStyle(styleTokens)}>
-            {getLocalizedValue(lowerLabel, defaultLanguageCode)}
-          </Text>
-        </Column>
-        <Column style={{ textAlign: "right" }}>
-          <Text
-            className="m-0 text-xs leading-[18px]"
-            style={{
-              ...getHelperLabelTextStyle(styleTokens),
-              textAlign: "right",
-            }}>
-            {getLocalizedValue(upperLabel, defaultLanguageCode)}
-          </Text>
-        </Column>
+        {Array.from({ length: optionCount }, (_, i) => {
+          const isFirst = i === 0;
+          const isLast = i === optionCount - 1;
+          return (
+            <Column key={i} style={{ ...columnStyle, textAlign: "center" }}>
+              {isFirst || isLast ? (
+                <Text className="m-0 text-xs leading-[18px]" style={labelTextStyle}>
+                  {getLocalizedValue(isFirst ? lowerLabel : upperLabel, defaultLanguageCode)}
+                </Text>
+              ) : null}
+            </Column>
+          );
+        })}
       </Row>
     </Section>
   );
