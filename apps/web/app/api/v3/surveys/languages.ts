@@ -3,8 +3,8 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
-import type { TI18nString } from "@formbricks/types/i18n";
 import type { TSurveyLanguage } from "@formbricks/types/surveys/types";
+import { isInternalI18nString, isPlainObject } from "./guards";
 import { normalizeV3SurveyLanguageTag } from "./language";
 import type { TV3SurveyDocument } from "./schemas";
 
@@ -22,18 +22,6 @@ const languageSelect = {
   createdAt: true,
   updatedAt: true,
 } satisfies Prisma.LanguageSelect;
-
-function isPlainObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function isInternalI18nString(value: unknown): value is TI18nString {
-  return (
-    isPlainObject(value) &&
-    typeof value.default === "string" &&
-    Object.values(value).every((entry) => typeof entry === "string")
-  );
-}
 
 function collectI18nLanguageCodes(value: unknown, languageCodes: Set<string>): void {
   if (Array.isArray(value)) {
