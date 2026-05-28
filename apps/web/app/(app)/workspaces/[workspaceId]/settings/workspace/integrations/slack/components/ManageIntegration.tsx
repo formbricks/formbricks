@@ -71,7 +71,7 @@ export const ManageIntegration = ({
   return (
     <div className="mt-6 flex w-full flex-col items-center justify-center p-6">
       {showReconnectButton && (
-        <div className="mb-4 flex w-full items-center justify-between space-x-4">
+        <div className="mb-4 flex w-full items-center justify-between gap-x-4">
           <p className="text-amber-700">
             <Trans
               i18nKey="workspace.integrations.slack.slack_reconnect_button_description"
@@ -83,9 +83,9 @@ export const ManageIntegration = ({
           </Button>
         </div>
       )}
-      <div className="flex w-full justify-end space-x-4">
+      <div className="flex w-full justify-end gap-x-4">
         <div className="mr-6 flex items-center">
-          <span className="mr-4 h-4 w-4 rounded-full bg-green-600"></span>
+          <span className="mr-4 size-4 rounded-full bg-green-600"></span>
           <span className="text-slate-500">
             {t("workspace.integrations.slack.connected_with_team", {
               team: slackIntegration.config.key.team?.name,
@@ -119,6 +119,7 @@ export const ManageIntegration = ({
             {integrationArray.map((data, index) => {
               return (
                 <button
+                  type="button"
                   key={`${index}-${data.surveyName}-${data.channelName}`}
                   className="grid h-16 w-full grid-cols-8 content-center rounded-lg p-2 text-slate-700 hover:cursor-pointer hover:bg-slate-100"
                   onClick={() => {

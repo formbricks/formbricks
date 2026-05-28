@@ -23,6 +23,7 @@ const mocks = vi.hoisted(() => ({
   prismaOrganizationBillingUpsert: vi.fn(),
   prismaOrganizationBillingUpdate: vi.fn(),
   cacheWithCache: vi.fn(),
+  cacheWithCacheNullable: vi.fn(),
   cacheDel: vi.fn(),
   loggerWarn: vi.fn(),
   getCloudPlanFromProduct: vi.fn(),
@@ -88,6 +89,7 @@ vi.mock("@formbricks/database", () => ({
 vi.mock("@/lib/cache", () => ({
   cache: {
     withCache: mocks.cacheWithCache,
+    withCacheNullable: mocks.cacheWithCacheNullable,
     del: mocks.cacheDel,
   },
 }));
@@ -156,6 +158,7 @@ describe("organization-billing", () => {
         [namespace, identifier, subresource].filter(Boolean).join(":")
     );
     mocks.cacheWithCache.mockImplementation(async (fn: () => Promise<unknown>) => await fn());
+    mocks.cacheWithCacheNullable.mockImplementation(async (fn: () => Promise<unknown>) => await fn());
     mocks.getCloudPlanFromProduct.mockReturnValue("pro");
     mocks.subscriptionsList.mockResolvedValue({ data: [] });
     mocks.customersList.mockResolvedValue({ data: [] });
@@ -1761,7 +1764,7 @@ describe("organization-billing", () => {
       },
       usageCycleAnchor: new Date().toISOString(),
     };
-    mocks.cacheWithCache.mockResolvedValue(cachedBilling);
+    mocks.cacheWithCacheNullable.mockResolvedValue(cachedBilling);
 
     const result = await getOrganizationBillingWithReadThroughSync("org_1");
 
@@ -1774,7 +1777,7 @@ describe("organization-billing", () => {
       stripeCustomerId: "cus_1",
       stripe: { lastSyncedAt: new Date().toISOString() },
     };
-    mocks.cacheWithCache.mockResolvedValue(cachedBilling);
+    mocks.cacheWithCacheNullable.mockResolvedValue(cachedBilling);
 
     const result = await getOrganizationBillingWithReadThroughSync("org_1");
 
@@ -1787,7 +1790,7 @@ describe("organization-billing", () => {
       stripeCustomerId: "cus_1",
       stripe: { lastSyncedAt: new Date(Date.now() - 6 * 60 * 1000).toISOString() },
     };
-    mocks.cacheWithCache.mockResolvedValue(cachedBilling);
+    mocks.cacheWithCacheNullable.mockResolvedValue(cachedBilling);
     mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
       stripeCustomerId: "cus_1",
       limits: {
@@ -1826,7 +1829,7 @@ describe("organization-billing", () => {
 
     const result = await getOrganizationBillingWithReadThroughSync("org_1");
 
-    expect(mocks.cacheWithCache).not.toHaveBeenCalled();
+    expect(mocks.cacheWithCacheNullable).not.toHaveBeenCalled();
     expect(result).toEqual({
       stripeCustomerId: null,
       limits: {
@@ -1841,7 +1844,7 @@ describe("organization-billing", () => {
 
   test("getOrganizationBillingWithReadThroughSync returns null when organization billing is missing", async () => {
     mocks.prismaOrganizationBillingFindUnique.mockResolvedValue(null);
-    mocks.cacheWithCache.mockImplementation(async (fn: () => Promise<unknown>) => await fn());
+    mocks.cacheWithCacheNullable.mockImplementation(async (fn: () => Promise<unknown>) => await fn());
 
     await expect(getOrganizationBillingWithReadThroughSync("org_1")).resolves.toBeNull();
   });

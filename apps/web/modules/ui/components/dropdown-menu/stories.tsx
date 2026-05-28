@@ -162,7 +162,7 @@ const renderDropdownMenu = (args: StoryProps) => {
     <DropdownMenu>
       <DropdownMenuTrigger asChild disabled={disabled}>
         <Button variant={triggerVariant} size="icon">
-          <MoreHorizontal className="h-4 w-4" />
+          <MoreHorizontal className="size-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent sideOffset={sideOffset} className={className} {...contentProps}>
@@ -179,7 +179,7 @@ const renderDropdownMenu = (args: StoryProps) => {
               const IconComponent = showIcons ? iconSet[index % iconSet.length] : undefined;
               return (
                 <DropdownMenuRadioItem value={label} key={label}>
-                  {IconComponent ? <IconComponent className="h-4 w-4" /> : undefined}
+                  {IconComponent ? <IconComponent className="size-4" /> : undefined}
                   <span className="ml-2">{label}</span>
                 </DropdownMenuRadioItem>
               );
@@ -205,7 +205,7 @@ const renderDropdownMenu = (args: StoryProps) => {
                   {needsSeparatorBefore && <DropdownMenuSeparator />}
                   {menuItemType === "default" && (
                     <DropdownMenuItem
-                      icon={IconComponent ? <IconComponent className="h-4 w-4" /> : undefined}
+                      icon={IconComponent ? <IconComponent className="size-4" /> : undefined}
                       className={isDestructive ? "text-red-600 focus:text-red-600" : undefined}>
                       {label}
                     </DropdownMenuItem>
@@ -214,7 +214,7 @@ const renderDropdownMenu = (args: StoryProps) => {
                     <DropdownMenuCheckboxItem
                       checked={index === 0}
                       className={isDestructive ? "text-red-600 focus:text-red-600" : undefined}>
-                      {IconComponent ? <IconComponent className="h-4 w-4" /> : undefined}
+                      {IconComponent ? <IconComponent className="size-4" /> : undefined}
                       <span className="ml-2">{label}</span>
                     </DropdownMenuCheckboxItem>
                   )}

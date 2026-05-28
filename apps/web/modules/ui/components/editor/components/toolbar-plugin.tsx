@@ -390,7 +390,7 @@ export const ToolbarPlugin = (
               <span className="text text-default hidden sm:flex">
                 {blockTypeToBlockName[blockType as keyof BlockType]}
               </span>
-              <ChevronDownIcon className="text-default ml-2 h-4 w-4" />
+              <ChevronDownIcon className="text-default ml-2 size-4" />
             </>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">

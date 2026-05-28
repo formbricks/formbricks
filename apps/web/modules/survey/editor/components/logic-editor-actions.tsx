@@ -117,7 +117,7 @@ export function LogicEditorActions({
         {actions?.map((action, idx) => (
           <div className="flex items-center gap-x-2" key={action.id}>
             <div className="flex w-10 shrink-0 items-center justify-end">
-              <CornerDownRightIcon className="h-4 w-4 shrink-0 text-slate-500" />
+              <CornerDownRightIcon className="size-4 shrink-0 text-slate-500" />
             </div>
             <div key={action.id} className="flex grow items-center justify-between gap-x-2">
               <div className={cn("grid flex-1 grid-cols-12 gap-x-2")}>
@@ -250,8 +250,8 @@ export function LogicEditorActions({
                 <DropdownMenuTrigger id={`actions-${idx}-dropdown`} asChild>
                   <Button
                     variant="outline"
-                    className="flex h-10 w-10 items-center justify-center rounded-md bg-white">
-                    <EllipsisVerticalIcon className="h-4 w-4 text-slate-700 hover:text-slate-950" />
+                    className="flex size-10 items-center justify-center rounded-md bg-white">
+                    <EllipsisVerticalIcon className="size-4 text-slate-700 hover:text-slate-950" />
                   </Button>
                 </DropdownMenuTrigger>
 
@@ -260,7 +260,7 @@ export function LogicEditorActions({
                     onClick={() => {
                       handleActionsChange("addBelow", idx);
                     }}
-                    icon={<PlusIcon className="h-4 w-4" />}>
+                    icon={<PlusIcon className="size-4" />}>
                     {t("workspace.surveys.edit.add_action_below")}
                   </DropdownMenuItem>
 
@@ -269,7 +269,7 @@ export function LogicEditorActions({
                     onClick={() => {
                       handleActionsChange("remove", idx);
                     }}
-                    icon={<TrashIcon className="h-4 w-4" />}>
+                    icon={<TrashIcon className="size-4" />}>
                     {t("common.remove")}
                   </DropdownMenuItem>
 
@@ -277,7 +277,7 @@ export function LogicEditorActions({
                     onClick={() => {
                       handleActionsChange("duplicate", idx);
                     }}
-                    icon={<CopyIcon className="h-4 w-4" />}>
+                    icon={<CopyIcon className="size-4" />}>
                     {t("common.duplicate")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>

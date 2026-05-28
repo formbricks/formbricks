@@ -87,10 +87,10 @@ export const ElementOptionChoice = ({
     <div className="flex w-full gap-2" ref={setNodeRef} style={style}>
       {/* drag handle */}
       <div className={cn(isSpecialChoice && "invisible")} {...listeners} {...attributes}>
-        <GripVerticalIcon className="h-4 w-4 cursor-move text-slate-400" />
+        <GripVerticalIcon className="size-4 cursor-move text-slate-400" />
       </div>
 
-      <div className="flex w-full space-x-2">
+      <div className="flex w-full gap-x-2">
         <ElementFormInput
           key={choice.id}
           id={`choice-${choiceIdx}`}

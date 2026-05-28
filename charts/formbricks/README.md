@@ -50,10 +50,12 @@ The intended defaults are:
 Cube is part of the baseline Formbricks v5 stack and is deployed by this chart by default
 (`cube.enabled: true`).
 
-- For the chart-managed Cube, `deployment.env.CUBEJS_API_URL` should point at `http://formbricks-cube:4000`
-  when using the default release name.
+- For the chart-managed Cube, the chart renders `deployment.env.CUBEJS_API_URL` automatically as
+  `http://formbricks-cube:4000` when using the default release name.
 - For an external Cube, set `cube.enabled: false` and point `deployment.env.CUBEJS_API_URL` at your
   endpoint.
+- Cube listens on `cube.port`; the chart renders this as an explicit `PORT` env var so values from shared
+  app secrets cannot override the listener port.
 - The generated app secret supplies `CUBEJS_API_SECRET` by default. If you disable generated secrets,
   provide it through your existing secret management flow.
 - Provide `CUBEJS_DB_*` connection variables to the Cube deployment through `cube.envFrom` or `cube.env`.

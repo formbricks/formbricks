@@ -153,10 +153,10 @@ export const ThemeStylingPreviewSurvey = ({
             isAppSurvey ? "bg-slate-200" : "overflow-y-auto bg-white"
           )}>
           <div className="flex h-auto w-full items-center rounded-t-lg bg-slate-100 py-2">
-            <div className="ml-6 flex space-x-2">
-              <div className="h-3 w-3 rounded-full bg-red-500"></div>
-              <div className="h-3 w-3 rounded-full bg-amber-500"></div>
-              <div className="h-3 w-3 rounded-full bg-emerald-500"></div>
+            <div className="ml-6 flex gap-x-2">
+              <div className="size-3 rounded-full bg-red-500"></div>
+              <div className="size-3 rounded-full bg-amber-500"></div>
+              <div className="size-3 rounded-full bg-emerald-500"></div>
             </div>
             <div className="ml-4 flex w-full justify-between font-mono text-sm text-slate-400">
               <p>{isAppSurvey ? t("workspace.surveys.edit.your_web_app") : t("common.preview")}</p>
@@ -197,7 +197,7 @@ export const ThemeStylingPreviewSurvey = ({
                 ContentRef={ContentRef as React.MutableRefObject<HTMLDivElement> | null}
                 isEditorView>
                 {!workspace.styling?.isLogoHidden && (
-                  <button className="absolute left-5 top-5" onClick={scrollToEditLogoSection}>
+                  <button type="button" className="absolute left-5 top-5" onClick={scrollToEditLogoSection}>
                     <ClientLogo workspaceLogo={workspace.logo} previewSurvey />
                   </button>
                 )}

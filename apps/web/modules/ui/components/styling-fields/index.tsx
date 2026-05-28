@@ -26,7 +26,7 @@ export const StylingSection = ({ title, open, setOpen, children }: StylingSectio
         onClick={() => setOpen(!open)}
         className="flex w-full items-center justify-between rounded-t-md bg-slate-50 p-3 text-sm font-medium text-slate-700 hover:bg-slate-100">
         {title}
-        {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+        {open ? <ChevronDown className="size-4" /> : <ChevronRight className="h-4 w-4" />}
       </button>
       {open && <div className="rounded-b-md border-t bg-white p-4">{children}</div>}
     </div>

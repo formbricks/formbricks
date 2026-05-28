@@ -39,7 +39,7 @@ export const AddElementButton = ({ addElement, workspace, isCxMode }: AddElement
       <Collapsible.CollapsibleTrigger asChild className="group h-full w-full">
         <div className="inline-flex">
           <div className="flex w-10 items-center justify-center rounded-l-lg bg-brand-dark group-aria-expanded:rounded-bl-none group-aria-expanded:rounded-br">
-            <PlusIcon className="h-5 w-5 text-white" />
+            <PlusIcon className="size-5 text-white" />
           </div>
           <div className="px-4 py-3">
             <p className="text-sm font-semibold">{t("workspace.surveys.edit.add_block")}</p>
@@ -67,7 +67,7 @@ export const AddElementButton = ({ addElement, workspace, isCxMode }: AddElement
             onMouseEnter={() => setHoveredElementId(elementType.id)}
             onMouseLeave={() => setHoveredElementId(null)}>
             <div className="flex items-center">
-              <elementType.icon className="-ml-0.5 mr-2 h-4 w-4 text-brand-dark" aria-hidden="true" />
+              <elementType.icon className="-ml-0.5 mr-2 size-4 text-brand-dark" aria-hidden="true" />
               {elementType.label}
             </div>
             <div

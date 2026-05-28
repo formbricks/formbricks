@@ -89,7 +89,7 @@ function AttributeTabContent({
         <div>
           <FilterButtonWithHandler
             dataTestId="filter-btn-person-userId"
-            icon={<FingerprintIcon className="h-4 w-4" />}
+            icon={<FingerprintIcon className="size-4" />}
             label={t("common.user_id")}
             type="person"
             onAddFilter={onAddFilter}

@@ -117,7 +117,7 @@ export const ShareView = ({ tabs, activeId, setActiveId }: ShareViewProps) => {
                             tooltip={tab.label}
                             isActive={tab.id === activeId}
                             disabled={tab.disabled}>
-                            <tab.icon className="h-4 w-4 text-slate-700" />
+                            <tab.icon className="size-4 text-slate-700" />
                             <span>{tab.label}</span>
                           </SidebarMenuButton>
                         </SidebarMenuItem>
@@ -145,7 +145,7 @@ export const ShareView = ({ tabs, activeId, setActiveId }: ShareViewProps) => {
                       ? "bg-white text-slate-900 shadow-sm hover:bg-white"
                       : "border-transparent text-slate-700 hover:text-slate-900"
                   )}>
-                  <tab.icon className="h-4 w-4 text-slate-700" />
+                  <tab.icon className="size-4 text-slate-700" />
                 </Button>
               </TooltipRenderer>
             ))}

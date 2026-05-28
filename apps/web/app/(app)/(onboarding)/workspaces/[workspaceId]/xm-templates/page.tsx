@@ -38,7 +38,7 @@ const Page = async (props: XMTemplatePageProps) => {
   const workspaces = await getUserWorkspaces(session.user.id, workspace.organizationId);
 
   return (
-    <div className="flex min-h-full min-w-full flex-col items-center justify-center space-y-12">
+    <div className="flex min-h-full min-w-full flex-col items-center justify-center gap-y-12">
       <Header title={t("workspace.xm-templates.headline")} />
       <XMTemplateList workspace={workspace} user={user} workspaceId={params.workspaceId} />
       {workspaces.length >= 2 && (
@@ -47,7 +47,7 @@ const Page = async (props: XMTemplatePageProps) => {
           variant="ghost"
           asChild>
           <Link href={`/workspaces/${params.workspaceId}/surveys`}>
-            <XIcon className="h-7 w-7" strokeWidth={1.5} />
+            <XIcon className="size-7" strokeWidth={1.5} />
           </Link>
         </Button>
       )}

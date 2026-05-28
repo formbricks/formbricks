@@ -153,7 +153,7 @@ export const CreateNewActionTab = ({
               <NoCodeActionForm form={form} isReadOnly={isReadOnly} />
             )}
           </div>
-          <div className="sticky bottom-0 flex justify-end space-x-2 bg-white pt-4">
+          <div className="sticky bottom-0 flex justify-end gap-x-2 bg-white pt-4">
             <Button type="button" variant="secondary" onClick={resetAllStates}>
               {t("common.cancel")}
             </Button>

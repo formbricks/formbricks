@@ -338,17 +338,15 @@ export const getResponses = reactCache(
         skip: offset,
       });
 
-      const transformedResponses: TResponseWithQuotas[] = await Promise.all(
-        responses.map((responsePrisma) => {
-          const { quotaLinks, ...response } = responsePrisma;
-          return {
-            ...response,
-            contact: getResponseContact(responsePrisma),
-            tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
-            quotas: quotaLinks.map((quotaLinkPrisma) => quotaLinkPrisma.quota),
-          };
-        })
-      );
+      const transformedResponses: TResponseWithQuotas[] = responses.map((responsePrisma) => {
+        const { quotaLinks, ...response } = responsePrisma;
+        return {
+          ...response,
+          contact: getResponseContact(responsePrisma),
+          tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+          quotas: quotaLinks.map((quotaLinkPrisma) => quotaLinkPrisma.quota),
+        };
+      });
 
       return transformedResponses;
     } catch (error) {

@@ -201,7 +201,7 @@ export function TimeDimensionPanel({
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="outline" className="w-full justify-start bg-white text-left font-normal">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      <CalendarIcon className="mr-2 size-4" />
                       {customStartDate
                         ? format(customStartDate, "MMM dd, yyyy")
                         : t("workspace.analysis.charts.start_date")}
@@ -229,7 +229,7 @@ export function TimeDimensionPanel({
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="outline" className="w-full justify-start bg-white text-left font-normal">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      <CalendarIcon className="mr-2 size-4" />
                       {customEndDate
                         ? format(customEndDate, "MMM dd, yyyy")
                         : t("workspace.analysis.charts.end_date")}

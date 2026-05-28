@@ -15,7 +15,7 @@ export const SurveyLoading = () => {
               <div className="h-4 w-20 rounded-xl bg-slate-200"></div>
               <div className="h-4 w-20 rounded-xl bg-slate-200"></div>
               <div className="h-4 w-20 rounded-xl bg-slate-200"></div>
-              <div className="h-8 w-8 rounded-md bg-slate-300"></div>
+              <div className="size-8 rounded-md bg-slate-300"></div>
             </div>
           </div>
         );

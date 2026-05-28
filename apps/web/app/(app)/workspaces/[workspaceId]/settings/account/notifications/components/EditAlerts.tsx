@@ -28,8 +28,8 @@ export const EditAlerts = ({
     <>
       {memberships.map((membership) => (
         <div key={membership.organization.id}>
-          <div className="mb-5 grid grid-cols-6 items-center space-x-3">
-            <div className="col-span-3 flex items-center space-x-3">
+          <div className="mb-5 grid grid-cols-6 items-center gap-x-3">
+            <div className="col-span-3 flex items-center gap-x-3">
               <UsersIcon className="h-6 w-7 text-slate-600" />
 
               <p className="text-sm font-medium text-slate-800">{membership.organization.name}</p>
@@ -54,9 +54,9 @@ export const EditAlerts = ({
               <TooltipProvider delayDuration={50}>
                 <Tooltip>
                   <TooltipTrigger>
-                    <div className="col-span-1 flex cursor-default items-center justify-center space-x-2">
+                    <div className="col-span-1 flex cursor-default items-center justify-center gap-x-2">
                       <span>{t("workspace.settings.notifications.every_response")}</span>
-                      <HelpCircleIcon className="h-4 w-4 flex-shrink-0 text-slate-500" />
+                      <HelpCircleIcon className="size-4 flex-shrink-0 text-slate-500" />
                     </div>
                   </TooltipTrigger>
                   <TooltipContent>

@@ -80,7 +80,7 @@ export const ActionActivityTab = ({ actionClass }: ActivityTabProps) => {
         <div>
           <Label className="block text-xs font-normal text-slate-500">{t("common.type")}</Label>
           <div className="mt-1 flex items-center">
-            <div className="mr-1.5 h-4 w-4 text-slate-600">{ACTION_TYPE_ICON_LOOKUP[actionClass.type]}</div>
+            <div className="mr-1.5 size-4 text-slate-600">{ACTION_TYPE_ICON_LOOKUP[actionClass.type]}</div>
             <p className="text-sm capitalize text-slate-700">{actionClass.type}</p>
           </div>
         </div>

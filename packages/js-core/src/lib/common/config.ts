@@ -30,7 +30,7 @@ export class Config {
       },
     };
 
-    void this.saveToStorage();
+    this.saveToStorage();
   }
 
   public get(): TConfig {

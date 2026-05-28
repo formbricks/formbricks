@@ -237,7 +237,7 @@ export const ManageTranslationsModal = ({
                         onClick={handleTranslateWithAI}
                         disabled={!isAIAvailable || isTranslating || emptyFields.length === 0}
                         loading={isTranslating}>
-                        <SparklesIcon className="mr-1 h-3.5 w-3.5" />
+                        <SparklesIcon className="mr-1 size-3.5" />
                         {t("workspace.surveys.edit.ai_translate")}
                       </Button>
                     </div>
@@ -266,7 +266,7 @@ export const ManageTranslationsModal = ({
                     {missingFirst
                       ? t("workspace.surveys.edit.missing_first")
                       : t("workspace.surveys.edit.show_in_order")}
-                    <ChevronDownIcon className="ml-1 h-3.5 w-3.5" />
+                    <ChevronDownIcon className="ml-1 size-3.5" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="text-xs">

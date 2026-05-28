@@ -57,10 +57,10 @@ export function ChartPreview({ chartData, isLoading = false, error }: Readonly<C
       <Tabs value={activeTab} onValueChange={handleTabChange}>
         <div className="mb-4 flex justify-end">
           <TabsList>
-            <TabsTrigger value="chart" icon={<BarChart className="h-4 w-4" />}>
+            <TabsTrigger value="chart" icon={<BarChart className="size-4" />}>
               {t("workspace.analysis.charts.chart")}
             </TabsTrigger>
-            <TabsTrigger value="data" icon={<DatabaseIcon className="h-4 w-4" />}>
+            <TabsTrigger value="data" icon={<DatabaseIcon className="size-4" />}>
               {t("workspace.analysis.charts.chart_data_tab")}
             </TabsTrigger>
           </TabsList>

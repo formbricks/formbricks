@@ -53,7 +53,7 @@ export function DashboardWidget({
                 className="ml-2 shrink-0 rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
                 onPointerDown={(e) => e.stopPropagation()}
                 onClick={(e) => e.stopPropagation()}>
-                <MoreVerticalIcon className="h-4 w-4" />
+                <MoreVerticalIcon className="size-4" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40">
@@ -63,7 +63,7 @@ export function DashboardWidget({
                     setMenuOpen(false);
                     onEdit();
                   }}>
-                  <SquarePenIcon className="mr-2 h-4 w-4" />
+                  <SquarePenIcon className="mr-2 size-4" />
                   {t("common.edit")}
                 </DropdownMenuItem>
               )}
@@ -73,7 +73,7 @@ export function DashboardWidget({
                     setMenuOpen(false);
                     onResize();
                   }}>
-                  <Maximize2Icon className="mr-2 h-4 w-4" />
+                  <Maximize2Icon className="mr-2 size-4" />
                   {t("common.resize")}
                 </DropdownMenuItem>
               )}
@@ -84,7 +84,7 @@ export function DashboardWidget({
                     onRemove();
                   }}
                   className="text-red-600 focus:text-red-600">
-                  <TrashIcon className="mr-2 h-4 w-4" />
+                  <TrashIcon className="mr-2 size-4" />
                   {t("common.remove")}
                 </DropdownMenuItem>
               )}

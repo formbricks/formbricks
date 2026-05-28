@@ -409,7 +409,7 @@ export const FeedbackDirectorySettingsModal = ({
           <DialogContent width="narrow" hideCloseButton={true} disableCloseOnOutsideClick={true}>
             <DialogHeader>
               <div className="flex items-center gap-2">
-                <CircleAlert className="h-4 w-4 text-red-600" />
+                <CircleAlert className="size-4 text-red-600" />
                 <DialogTitle>
                   {t("workspace.settings.feedback_directories.grant_workspace_access_title")}
                 </DialogTitle>
@@ -468,7 +468,7 @@ export const FeedbackDirectorySettingsModal = ({
           <DialogContent width="narrow" hideCloseButton={true} disableCloseOnOutsideClick={true}>
             <DialogHeader>
               <div className="flex items-center gap-2">
-                <CircleAlert className="h-4 w-4" />
+                <CircleAlert className="size-4" />
                 <DialogTitle>
                   {t("workspace.settings.feedback_directories.pause_connectors_confirmation_title")}
                 </DialogTitle>

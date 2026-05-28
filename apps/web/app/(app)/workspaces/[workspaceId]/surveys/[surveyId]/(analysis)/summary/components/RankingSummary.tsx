@@ -26,14 +26,14 @@ export const RankingSummary = ({ elementSummary, survey }: RankingSummaryProps) 
           return (
             <div key={result.value} className="group cursor-pointer">
               <div className="text flex flex-col justify-between px-2 pb-2 sm:flex-row">
-                <div className="mr-8 flex w-full justify-between space-x-2 sm:justify-normal">
+                <div className="mr-8 flex w-full justify-between gap-x-2 sm:justify-normal">
                   <div className="flex w-full items-center">
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-center gap-x-2">
                       <span className="mr-2 text-slate-400">#{resultsIdx + 1}</span>
                       <div className="rounded bg-slate-100 px-2 py-1">{result.value}</div>
                       {choiceId && <IdBadge id={choiceId} />}
                     </div>
-                    <span className="ml-auto flex items-center space-x-1">
+                    <span className="ml-auto flex items-center gap-x-1">
                       <span className="font-bold text-slate-600">
                         #{convertFloatToNDecimal(result.avgRanking, 2)}
                       </span>

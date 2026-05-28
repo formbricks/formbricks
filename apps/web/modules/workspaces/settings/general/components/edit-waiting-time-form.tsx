@@ -60,7 +60,7 @@ export const EditWaitingTimeForm: React.FC<EditWaitingTimeProps> = ({ workspace,
     <>
       <FormProvider {...form}>
         <form
-          className="flex w-full max-w-sm flex-col space-y-4"
+          className="flex w-full max-w-sm flex-col gap-y-4"
           onSubmit={form.handleSubmit(updateWaitingTime)}>
           <FormField
             control={form.control}

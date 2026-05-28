@@ -42,7 +42,7 @@ export const SummaryImpressions = ({
         <div className="p-8">
           <div className="flex flex-col items-center gap-4 text-center">
             <div className="flex items-center gap-2 text-red-600">
-              <AlertCircleIcon className="h-5 w-5" />
+              <AlertCircleIcon className="size-5" />
               <span className="text-sm font-medium">{t("common.error_loading_data")}</span>
             </div>
             <p className="text-sm text-slate-500">{displaysError}</p>
@@ -116,7 +116,7 @@ export const SummaryImpressions = ({
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <div className="flex items-center gap-2 rounded-t-xl border-b border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-        <InfoIcon className="h-4 w-4 shrink-0" />
+        <InfoIcon className="size-4 shrink-0" />
         <span>{t("workspace.surveys.summary.impressions_identified_only")}</span>
       </div>
       {renderContent()}

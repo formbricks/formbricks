@@ -99,11 +99,11 @@ export const SelectPlanCard = ({ nextUrl, organizationId, variant }: Readonly<Se
   };
 
   return (
-    <div className="flex w-full max-w-md flex-col items-center space-y-6">
+    <div className="flex w-full max-w-md flex-col items-center gap-y-6">
       <div className="relative w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
-        <div className="flex flex-col items-center space-y-6 p-8">
+        <div className="flex flex-col items-center gap-y-6 p-8">
           <div className="rounded-full bg-slate-100 p-4">
-            <GiftIcon className="h-10 w-10 text-slate-600" />
+            <GiftIcon className="size-10 text-slate-600" />
           </div>
 
           <div className="text-center">
@@ -114,7 +114,7 @@ export const SelectPlanCard = ({ nextUrl, organizationId, variant }: Readonly<Se
           <ul className="my-3 w-full space-y-3 text-left">
             {SELECT_PLAN_FEATURE_KEYS.map((key) => (
               <li key={key} className="flex items-center gap-3 text-slate-700">
-                <CheckIcon className="h-5 w-5 flex-shrink-0 text-slate-900" />
+                <CheckIcon className="size-5 flex-shrink-0 text-slate-900" />
                 <span>{key}</span>
               </li>
             ))}
@@ -150,6 +150,7 @@ export const SelectPlanCard = ({ nextUrl, organizationId, variant }: Readonly<Se
       </div>
 
       <button
+        type="button"
         onClick={handleContinueHobby}
         disabled={isStartingTrial || isStartingHobby}
         className="text-sm text-slate-400 underline-offset-2 transition-colors hover:text-slate-600 hover:underline">

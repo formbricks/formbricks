@@ -54,7 +54,7 @@ export function AdvancedChartPreview({
           <Collapsible.Root open={showData} onOpenChange={setShowData}>
             <Collapsible.CollapsibleTrigger asChild>
               <Button variant="outline" className="w-full justify-start">
-                <DatabaseIcon className="mr-2 h-4 w-4" />
+                <DatabaseIcon className="mr-2 size-4" />
                 {showData ? t("common.hide") : t("common.view")} {t("workspace.analysis.charts.data_label")}
               </Button>
             </Collapsible.CollapsibleTrigger>

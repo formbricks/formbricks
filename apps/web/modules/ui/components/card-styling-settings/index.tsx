@@ -63,7 +63,7 @@ export const CardStylingSettings = ({
             <div className="flex items-center pl-2 pr-5">
               <CheckIcon
                 strokeWidth={3}
-                className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
+                className="size-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
               />
             </div>
           )}
@@ -168,7 +168,7 @@ export const CardStylingSettings = ({
               control={form.control}
               name="highlightBorderColor"
               render={({ field }) => (
-                <FormItem className="flex w-full flex-col gap-4 space-y-0">
+                <FormItem className="flex w-full flex-col gap-4 gap-y-0">
                   <div className="flex items-center gap-2">
                     <FormControl>
                       <Switch
@@ -224,7 +224,7 @@ export const CardStylingSettings = ({
                 control={form.control}
                 name="hideProgressBar"
                 render={({ field }) => (
-                  <FormItem className="flex w-full items-center gap-2 space-y-0">
+                  <FormItem className="flex w-full items-center gap-2 gap-y-0">
                     <FormControl>
                       <Switch
                         id="hideProgressBar"
