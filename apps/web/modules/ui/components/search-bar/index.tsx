@@ -21,7 +21,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
         "flex h-8 items-center rounded-lg border border-slate-300 bg-white px-4 text-slate-800",
         className
       )}>
-      <Search className="h-4 w-4" />
+      <Search className="size-4" />
       <input
         type="text"
         className="w-full border-none bg-transparent text-sm focus:outline-none"

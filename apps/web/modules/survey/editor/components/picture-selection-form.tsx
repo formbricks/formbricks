@@ -119,7 +119,7 @@ export const PictureSelectionForm = ({
                 subheader: createI18nString("", surveyLanguageCodes),
               });
             }}>
-            <PlusIcon className="mr-1 h-4 w-4" />
+            <PlusIcon className="mr-1 size-4" />
             {t("workspace.surveys.edit.add_description")}
           </Button>
         )}
@@ -148,7 +148,7 @@ export const PictureSelectionForm = ({
         </div>
       </div>
 
-      <div className="my-4 flex items-center space-x-2">
+      <div className="my-4 flex items-center gap-x-2">
         <Switch
           id="multi-select-toggle"
           checked={element.allowMulti}

@@ -55,10 +55,10 @@ export const RatingLikeSummary = ({
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "aggregated" | "individual")}>
         <div className="flex justify-end px-4 md:px-6">
           <TabsList>
-            <TabsTrigger value="aggregated" icon={<BarChartHorizontal className="h-4 w-4" />}>
+            <TabsTrigger value="aggregated" icon={<BarChartHorizontal className="size-4" />}>
               {t("workspace.surveys.summary.aggregated")}
             </TabsTrigger>
-            <TabsTrigger value="individual" icon={<BarChart className="h-4 w-4" />}>
+            <TabsTrigger value="individual" icon={<BarChart className="size-4" />}>
               {t("workspace.surveys.summary.individual")}
             </TabsTrigger>
           </TabsList>
@@ -158,6 +158,7 @@ export const RatingLikeSummary = ({
               {elementSummary.choices.map((result) => (
                 <div key={result.rating}>
                   <button
+                    type="button"
                     className="w-full cursor-pointer hover:opacity-80"
                     onClick={() =>
                       setFilter(
@@ -169,7 +170,7 @@ export const RatingLikeSummary = ({
                       )
                     }>
                     <div className="text flex justify-between px-2 pb-2">
-                      <div className="mr-8 flex items-center space-x-1">
+                      <div className="mr-8 flex items-center gap-x-1">
                         <div className="font-semibold text-slate-700">
                           <RatingResponse
                             scale={elementSummary.element.scale}

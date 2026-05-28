@@ -189,7 +189,7 @@ export function CsvImportModal({
                 className="flex cursor-pointer flex-col items-center justify-center"
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}>
-                <ArrowUpFromLineIcon className="h-8 w-8 text-slate-400" />
+                <ArrowUpFromLineIcon className="size-8 text-slate-400" />
                 <p className="mt-2 text-sm text-slate-600">
                   <span className="font-semibold">{t("workspace.unify.click_to_upload")}</span>{" "}
                   {t("workspace.unify.or_drag_and_drop")}
@@ -221,7 +221,7 @@ export function CsvImportModal({
           <Button onClick={handleImport} disabled={parsedData.length === 0 || isImporting}>
             {isImporting ? (
               <>
-                <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2Icon className="mr-2 size-4 animate-spin" />
                 {t("workspace.unify.importing_data")}
               </>
             ) : (

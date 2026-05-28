@@ -20,7 +20,7 @@ export const LanguagesLoading = () => {
       <SettingsCard
         title={t("workspace.languages.multi_language_surveys")}
         description={t("workspace.languages.multi_language_surveys_description")}>
-        <div className="flex flex-col space-y-4">
+        <div className="flex flex-col gap-y-4">
           <LanguageLabels />
           {loaderIds.map((id) => (
             <div key={id} className="my-3 grid h-10 grid-cols-4 gap-4">

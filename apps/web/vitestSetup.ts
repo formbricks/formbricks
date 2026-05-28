@@ -247,6 +247,6 @@ vi.mock("@/lib/constants", async (importOriginal) => {
     RATE_LIMITING_DISABLED: false,
     TELEMETRY_DISABLED: false,
     PASSWORD_RESET_TOKEN_LIFETIME_MINUTES: 30,
-    CONTROL_HASH: "$2b$12$fzHf9le13Ss9UJ04xzmsjODXpFJxz6vsnupoepF5FiqDECkX2BH5q",
+    CONTROL_HASH: "$2b$12$fzHf9le13Ss9UJ04xzmsjODXpFJxz6vsnupoepF5FiqDECkX2BH5q", //NOSONAR mirrors production CONTROL_HASH, not a real password hash
   };
 });

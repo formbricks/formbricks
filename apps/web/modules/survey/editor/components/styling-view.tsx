@@ -199,7 +199,7 @@ export const StylingView = ({
                 control={form.control}
                 name="overwriteThemeStyling"
                 render={({ field }) => (
-                  <FormItem className="flex items-center gap-4 space-y-0">
+                  <FormItem className="flex items-center gap-4 gap-y-0">
                     <FormControl>
                       <Switch
                         id="overwrite-theme-styling"
@@ -274,7 +274,7 @@ export const StylingView = ({
                     className="flex items-center gap-2"
                     onClick={() => setConfirmResetStylingModalOpen(true)}>
                     {t("workspace.surveys.edit.reset_to_theme_styles")}
-                    <RotateCcwIcon className="h-4 w-4" />
+                    <RotateCcwIcon className="size-4" />
                   </Button>
                 )}
               </div>

@@ -112,9 +112,9 @@ export const ConfirmationModal = ({
         className="max-w-[540px] space-y-4">
         <DialogHeader className="flex justify-center gap-2">
           {Icon ? (
-            <Icon className="h-4 w-4 text-slate-500" />
+            <Icon className="size-4 text-slate-500" />
           ) : (
-            <CircleAlert className="h-4 w-4 text-slate-500" />
+            <CircleAlert className="size-4 text-slate-500" />
           )}
           <div className="flex flex-col">
             <DialogTitle className="w-full truncate text-left">{title}</DialogTitle>

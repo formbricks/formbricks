@@ -23,7 +23,7 @@ const SelectTrigger = React.forwardRef<
     )}
     {...props}>
     {children}
-    {!hideArrow ? <ChevronDown className="h-4 w-4 opacity-50" /> : null}
+    {!hideArrow ? <ChevronDown className="size-4 opacity-50" /> : null}
   </SelectPrimitive.Trigger>
 ));
 SelectTrigger.displayName = SelectPrimitive.Trigger.displayName;

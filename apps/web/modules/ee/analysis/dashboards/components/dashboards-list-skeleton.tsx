@@ -5,7 +5,7 @@ const SkeletonRow = () => {
     <div className="grid h-12 w-full animate-pulse grid-cols-8 content-center">
       <div className="col-span-7 grid grid-cols-7 content-center p-2">
         <div className="col-span-3 flex items-center gap-4 pl-6">
-          <div className="h-5 w-5 rounded bg-gray-200" />
+          <div className="size-5 rounded bg-gray-200" />
           <div className="h-4 w-36 rounded bg-gray-200" />
         </div>
         <div className="col-span-1 my-auto hidden sm:flex sm:justify-center">

@@ -125,14 +125,16 @@ describe("Team Management", () => {
     describe("error handling", () => {
       test("handles missing default team gracefully", async () => {
         vi.mocked(prisma.team.findUnique).mockResolvedValue(null);
-        await createDefaultTeamMembership(MOCK_IDS.userId);
+        await expect(createDefaultTeamMembership(MOCK_IDS.userId)).resolves.toBeUndefined();
+        expect(prisma.teamUser.upsert).not.toHaveBeenCalled();
       });
 
       test("handles missing organization membership gracefully", async () => {
         vi.mocked(prisma.team.findUnique).mockResolvedValue(MOCK_DEFAULT_TEAM);
         vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue(null);
 
-        await createDefaultTeamMembership(MOCK_IDS.userId);
+        await expect(createDefaultTeamMembership(MOCK_IDS.userId)).resolves.toBeUndefined();
+        expect(prisma.teamUser.upsert).not.toHaveBeenCalled();
       });
 
       test("handles database errors gracefully", async () => {
@@ -140,7 +142,7 @@ describe("Team Management", () => {
         vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue(MOCK_ORGANIZATION_MEMBERSHIP);
         vi.mocked(prisma.teamUser.upsert).mockRejectedValue(new Error("Database error"));
 
-        await createDefaultTeamMembership(MOCK_IDS.userId);
+        await expect(createDefaultTeamMembership(MOCK_IDS.userId)).resolves.toBeUndefined();
       });
     });
   });

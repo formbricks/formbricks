@@ -406,19 +406,19 @@ export const FollowUpModal = ({
   ): { icon: React.ReactNode; textClass?: string } => {
     switch (type) {
       case "verifiedEmail":
-        return { icon: <MailIcon className="h-4 w-4" /> };
+        return { icon: <MailIcon className="size-4" /> };
       case "hiddenField":
-        return { icon: <EyeOffIcon className="h-4 w-4" /> };
+        return { icon: <EyeOffIcon className="size-4" /> };
       case "user":
         return {
-          icon: <UserIcon className="h-4 w-4" />,
+          icon: <UserIcon className="size-4" />,
           textClass: "overflow-hidden text-ellipsis whitespace-nowrap",
         };
       case "openTextElement":
       case "contactInfoElement":
         return {
           icon: (
-            <div className="h-4 w-4">
+            <div className="size-4">
               {ELEMENTS_ICON_MAP[type === "openTextElement" ? "openText" : "contactInfo"]}
             </div>
           ),
@@ -432,7 +432,7 @@ export const FollowUpModal = ({
 
     return (
       <SelectItem key={option.id} value={option.id}>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center gap-x-2">
           {icon}
           <span className={textClass}>{option.label}</span>
         </div>
@@ -456,9 +456,9 @@ export const FollowUpModal = ({
         <FormProvider {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="contents">
             <DialogBody className="my-4">
-              <div ref={containerRef} className="flex flex-col space-y-4">
+              <div ref={containerRef} className="flex flex-col gap-y-4">
                 {/* Follow up name */}
-                <div className="flex flex-col space-y-2">
+                <div className="flex flex-col gap-y-2">
                   <FormField
                     control={form.control}
                     name="followUpName"
@@ -487,7 +487,7 @@ export const FollowUpModal = ({
                 <div className="flex flex-col rounded-lg border border-slate-300">
                   <div className="flex items-center gap-x-2 rounded-t-lg border-b border-slate-300 bg-slate-100 px-4 py-2">
                     <div className="rounded-full border border-slate-300 bg-white p-1">
-                      <ZapIcon className="h-3 w-3 text-slate-500" />
+                      <ZapIcon className="size-3 text-slate-500" />
                     </div>
                     <h2 className="text-md font-semibold text-slate-900">
                       {t("workspace.surveys.edit.follow_ups_modal_trigger_label")}
@@ -501,7 +501,7 @@ export const FollowUpModal = ({
                       render={({ field }) => {
                         return (
                           <FormItem>
-                            <div className="flex flex-col space-y-2">
+                            <div className="flex flex-col gap-y-2">
                               <FormLabel htmlFor="triggerType">
                                 {t("workspace.surveys.edit.follow_ups_modal_trigger_description")}
                               </FormLabel>
@@ -547,11 +547,11 @@ export const FollowUpModal = ({
                         name="endingIds"
                         render={({ field }) => {
                           return (
-                            <div className="flex flex-col space-y-2">
+                            <div className="flex flex-col gap-y-2">
                               <h3 className="text-sm font-medium text-slate-700">
                                 {t("workspace.surveys.edit.follow_ups_modal_trigger_type_ending_select")}
                               </h3>
-                              <div className="flex flex-col space-y-2">
+                              <div className="flex flex-col gap-y-2">
                                 {localSurvey.endings.map((ending) => {
                                   const getEndingLabel = (): string => {
                                     if (ending.type === "endScreen") {
@@ -575,7 +575,7 @@ export const FollowUpModal = ({
                                       key={ending.id}
                                       className="w-80 cursor-pointer rounded-md border border-slate-300 bg-slate-50 px-3 py-2 hover:bg-slate-100"
                                       htmlFor={`ending-${ending.id}`}>
-                                      <div className="flex items-center space-x-2">
+                                      <div className="flex items-center gap-x-2">
                                         <Checkbox
                                           className="inline"
                                           checked={field.value?.includes(ending.id)}
@@ -591,7 +591,7 @@ export const FollowUpModal = ({
                                             }
                                           }}
                                         />
-                                        <HandshakeIcon className="h-4 min-h-4 w-4 min-w-4" />
+                                        <HandshakeIcon className="size-4 min-h-4 min-w-4" />
                                         <span className="overflow-hidden text-ellipsis whitespace-nowrap text-slate-900">
                                           {getEndingLabel()}
                                         </span>
@@ -616,14 +616,14 @@ export const FollowUpModal = ({
 
                 {/* Arrow */}
                 <div className="flex items-center justify-center">
-                  <ArrowDownIcon className="h-4 w-4 text-slate-500" />
+                  <ArrowDownIcon className="size-4 text-slate-500" />
                 </div>
 
                 {/* Action */}
                 <div className="flex flex-col rounded-lg border border-slate-300">
                   <div className="flex items-center gap-x-2 rounded-t-lg border-b border-slate-300 bg-slate-100 px-4 py-2">
                     <div className="rounded-full border border-slate-300 bg-white p-1">
-                      <MailIcon className="h-3 w-3 text-slate-500" />
+                      <MailIcon className="size-3 text-slate-500" />
                     </div>
                     <h2 className="text-md font-semibold text-slate-900">
                       {t("workspace.surveys.edit.follow_ups_modal_action_label")}
@@ -637,13 +637,13 @@ export const FollowUpModal = ({
                     </h2>
 
                     {/* To */}
-                    <div className="flex flex-col space-y-2">
+                    <div className="flex flex-col gap-y-2">
                       <FormField
                         control={form.control}
                         name="emailTo"
                         render={({ field }) => {
                           return (
-                            <div className="flex flex-col space-y-2">
+                            <div className="flex flex-col gap-y-2">
                               <FormLabel htmlFor="emailTo" className="font-medium">
                                 {t("workspace.surveys.edit.follow_ups_modal_action_to_label")}
                               </FormLabel>
@@ -658,7 +658,7 @@ export const FollowUpModal = ({
                               {emailSendToOptions.length === 0 && (
                                 <div className="mt-4 flex items-start text-yellow-600">
                                   <TriangleAlertIcon
-                                    className="mr-2 h-5 min-h-5 w-5 min-w-5"
+                                    className="mr-2 size-5 min-h-5 min-w-5"
                                     aria-hidden="true"
                                   />
                                   <p className="text-sm">
@@ -688,7 +688,7 @@ export const FollowUpModal = ({
                                         {emailSendToVerifiedEmailOptions.length > 0 ||
                                         emailSendToElementOptions.length > 0 ? (
                                           <div className="flex flex-col">
-                                            <div className="flex items-center space-x-2 p-2">
+                                            <div className="flex items-center gap-x-2 p-2">
                                               <p className="text-sm text-slate-500">
                                                 {t("common.questions")}
                                               </p>
@@ -706,7 +706,7 @@ export const FollowUpModal = ({
 
                                         {emailSendToHiddenFieldOptions.length > 0 ? (
                                           <div className="flex flex-col">
-                                            <div className="flex space-x-2 p-2">
+                                            <div className="flex gap-x-2 p-2">
                                               <p className="text-sm text-slate-500">Hidden Fields</p>
                                             </div>
 
@@ -718,7 +718,7 @@ export const FollowUpModal = ({
 
                                         {userSendToEmailOptions.length > 0 ? (
                                           <div className="flex flex-col">
-                                            <div className="flex space-x-2 p-2">
+                                            <div className="flex gap-x-2 p-2">
                                               <p className="text-sm text-slate-500">Users</p>
                                             </div>
 
@@ -737,7 +737,7 @@ export const FollowUpModal = ({
                     </div>
 
                     {/* From */}
-                    <div className="flex flex-col space-y-2">
+                    <div className="flex flex-col gap-y-2">
                       <h3 className="text-sm font-medium text-slate-900">
                         {t("workspace.surveys.edit.follow_ups_modal_action_from_label")}
                       </h3>
@@ -751,7 +751,7 @@ export const FollowUpModal = ({
                     </div>
 
                     {/* Reply To */}
-                    <div className="flex flex-col space-y-2">
+                    <div className="flex flex-col gap-y-2">
                       <FormField
                         control={form.control}
                         name="replyTo"
@@ -779,7 +779,7 @@ export const FollowUpModal = ({
                   </div>
 
                   {/* email content */}
-                  <div className="flex flex-col space-y-4 p-4">
+                  <div className="flex flex-col gap-y-4 p-4">
                     <h2 className="text-md font-semibold text-slate-900">
                       {t("workspace.surveys.edit.follow_ups_modal_action_email_content")}
                     </h2>
@@ -789,7 +789,7 @@ export const FollowUpModal = ({
                       render={({ field }) => {
                         return (
                           <FormItem>
-                            <div className="flex flex-col space-y-2">
+                            <div className="flex flex-col gap-y-2">
                               <FormLabel>
                                 {t("workspace.surveys.edit.follow_ups_modal_action_subject_label")}
                               </FormLabel>
@@ -815,7 +815,7 @@ export const FollowUpModal = ({
                       render={({ field }) => {
                         return (
                           <FormItem>
-                            <div className="flex flex-col space-y-2">
+                            <div className="flex flex-col gap-y-2">
                               <FormLabel
                                 className={cn(
                                   "font-medium",
@@ -892,7 +892,7 @@ export const FollowUpModal = ({
                                   name="includeVariables"
                                   render={({ field: variablesField }) => (
                                     <FormItem>
-                                      <div className="flex items-center space-x-2">
+                                      <div className="flex items-center gap-x-2">
                                         <Checkbox
                                           id="includeVariables"
                                           checked={variablesField.value}
@@ -912,7 +912,7 @@ export const FollowUpModal = ({
                                   name="includeHiddenFields"
                                   render={({ field: hiddenFieldsField }) => (
                                     <FormItem>
-                                      <div className="flex items-center space-x-2">
+                                      <div className="flex items-center gap-x-2">
                                         <Checkbox
                                           id="includeHiddenFields"
                                           checked={hiddenFieldsField.value}

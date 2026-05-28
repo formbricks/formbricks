@@ -79,7 +79,7 @@ export const WebhookModal = ({
         </DialogHeader>
         <DialogBody>
           <div className="flex h-full w-full flex-col">
-            <div className="flex w-full items-center justify-center space-x-2 border-b border-slate-200 px-6">
+            <div className="flex w-full items-center justify-center gap-x-2 border-b border-slate-200 px-6">
               {tabs.map((tab, index) => (
                 <button
                   key={tab.title}

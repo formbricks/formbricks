@@ -17,7 +17,7 @@ export const AppConnectionPage = async ({ params }: { params: Promise<{ workspac
   const frameworkGuidesUrl =
     "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/framework-guides";
   const workspaceIdMigrationUrl =
-    "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/workspace-id-migration";
+    "https://formbricks.com/docs/surveys/website-app-surveys/workspace-id-migration";
 
   const { workspace } = await getWorkspaceAuth(workspaceId);
 

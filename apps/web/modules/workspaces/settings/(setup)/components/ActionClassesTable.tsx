@@ -38,6 +38,7 @@ export const ActionClassesTable = ({
           {actionClasses.length > 0 ? (
             actionClasses.map((actionClass, index) => (
               <button
+                type="button"
                 onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                   handleOpenActionDetailModalClick(e, actionClass);
                 }}

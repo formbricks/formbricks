@@ -272,7 +272,7 @@ describe("CacheService", () => {
       expect(mockRedis.setEx).toHaveBeenCalledWith(key, 5, JSON.stringify(value));
     });
 
-    test("should normalize undefined to null and store as JSON", async () => {
+    test("should warn and skip the write when value is undefined", async () => {
       const key = "test:key" as CacheKey;
       const value = undefined;
       const ttlMs = 60000;
@@ -280,7 +280,11 @@ describe("CacheService", () => {
       const result = await cacheService.set(key, value, ttlMs);
 
       expect(result.ok).toBe(true);
-      expect(mockRedis.setEx).toHaveBeenCalledWith(key, 60, "null");
+      expect(mockRedis.setEx).not.toHaveBeenCalled();
+      expect(logger.warn).toHaveBeenCalledWith(
+        { key, ttlMs },
+        "cache.set called with undefined; skipping write"
+      );
     });
 
     test("should store null values as JSON", async () => {
@@ -596,77 +600,178 @@ describe("CacheService", () => {
       expect(fn).toHaveBeenCalledOnce();
     });
 
-    test("should return cached null value without executing function", async () => {
+    test("should treat stringified null as a cache miss and re-execute fn", async () => {
       const key = "test:key" as CacheKey;
-      const fn = vi.fn().mockResolvedValue({ data: "fresh" });
+      const freshValue = { data: "fresh" };
+      const fn = vi.fn().mockResolvedValue(freshValue);
 
-      // Mock Redis returning stringified null (cached null value)
+      // Bare JSON null is a miss for non-null cache-aside calls.
       mockRedis.get.mockResolvedValue("null");
-      mockRedis.exists.mockResolvedValue(1); // Key exists
 
       const result = await cacheService.withCache(fn, key, 60000);
 
-      expect(result).toBeNull();
-      expect(fn).not.toHaveBeenCalled(); // Function should not be executed
+      expect(result).toEqual(freshValue);
+      expect(fn).toHaveBeenCalledOnce();
+      expect(mockRedis.setEx).toHaveBeenCalledWith(key, 60, JSON.stringify(freshValue));
     });
 
-    test("should execute function and cache null result", async () => {
+    test("should not surface stale null under the original GET/EXISTS race window", async () => {
+      // Simulates the removed GET/EXISTS race from ENG-1047.
       const key = "test:key" as CacheKey;
-      const fn = vi.fn().mockResolvedValue(null); // Function returns null
+      const freshValue = { data: "fresh-from-fn" };
+      const fn = vi.fn().mockResolvedValue(freshValue);
 
-      // Mock cache miss
       mockRedis.get.mockResolvedValue(null);
-      mockRedis.exists.mockResolvedValue(0); // Key doesn't exist
+      mockRedis.exists.mockResolvedValue(1);
 
       const result = await cacheService.withCache(fn, key, 60000);
+
+      expect(result).toEqual(freshValue);
+      expect(fn).toHaveBeenCalledOnce();
+      expect(mockRedis.exists).not.toHaveBeenCalled();
+    });
+
+    test("should not persist null returned via type erasure (no recompute stampede)", async () => {
+      // withCache<T> is constrained to NonNullable<unknown>, but a caller can
+      // still bypass that through unknown/any plumbing or an erased generic.
+      // If null were written, the read path would treat it as a perpetual miss,
+      // re-running fn() and rewriting "null" on every request for a hot key.
+      const key = "test:key" as CacheKey;
+      const fn = vi.fn().mockResolvedValue(null);
+
+      mockRedis.get.mockResolvedValue(null); // cache miss
+
+      const result = await cacheService.withCache(
+        fn as unknown as () => Promise<{ data: string }>,
+        key,
+        60000
+      );
 
       expect(result).toBeNull();
       expect(fn).toHaveBeenCalledOnce();
-      expect(mockRedis.setEx).toHaveBeenCalledWith(key, 60, "null");
+      expect(mockRedis.setEx).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("withCacheNullable", () => {
+    // Keep the nullable wire format explicit in assertions.
+    const box = (value: unknown): string => JSON.stringify({ __fb_nullable_v1: true, value });
+
+    test("should return cached null without executing fn when boxed null is stored", async () => {
+      const key = "test:nullable-key" as CacheKey;
+      const fn = vi.fn().mockResolvedValue({ id: "fresh" });
+
+      mockRedis.get.mockResolvedValue(box(null));
+
+      const result = await cacheService.withCacheNullable(fn, key, 60000);
+
+      expect(result).toBeNull();
+      expect(fn).not.toHaveBeenCalled();
     });
 
-    test("should return undefined without caching when function returns undefined", async () => {
-      const key = "test:key" as CacheKey;
-      const fn = vi.fn().mockResolvedValue(undefined); // Function returns undefined
+    test("should compute, box, and cache null on miss", async () => {
+      const key = "test:nullable-key" as CacheKey;
+      const fn = vi.fn().mockResolvedValue(null);
 
-      // Mock cache miss
       mockRedis.get.mockResolvedValue(null);
-      mockRedis.exists.mockResolvedValue(0); // Key doesn't exist
 
-      const result = await cacheService.withCache(fn, key, 60000);
+      const result = await cacheService.withCacheNullable(fn, key, 60000);
+
+      expect(result).toBeNull();
+      expect(fn).toHaveBeenCalledOnce();
+      expect(mockRedis.setEx).toHaveBeenCalledWith(key, 60, box(null));
+    });
+
+    test("should compute, box, and cache a real value on miss", async () => {
+      const key = "test:nullable-key" as CacheKey;
+      const freshValue = { id: "real" };
+      const fn = vi.fn().mockResolvedValue(freshValue);
+
+      mockRedis.get.mockResolvedValue(null);
+
+      const result = await cacheService.withCacheNullable(fn, key, 60000);
+
+      expect(result).toEqual(freshValue);
+      expect(fn).toHaveBeenCalledOnce();
+      expect(mockRedis.setEx).toHaveBeenCalledWith(key, 60, box(freshValue));
+    });
+
+    test("should return boxed cached value without executing fn", async () => {
+      const key = "test:nullable-key" as CacheKey;
+      const cachedValue = { id: "cached" };
+      const fn = vi.fn().mockResolvedValue({ id: "fresh" });
+
+      mockRedis.get.mockResolvedValue(box(cachedValue));
+
+      const result = await cacheService.withCacheNullable(fn, key, 60000);
+
+      expect(result).toEqual(cachedValue);
+      expect(fn).not.toHaveBeenCalled();
+    });
+
+    test("should treat unboxed legacy values as a cache miss and overwrite with boxed value", async () => {
+      const key = "test:nullable-key" as CacheKey;
+      const legacyCachedValue = { id: "legacy" };
+      const freshValue = { id: "fresh" };
+      const fn = vi.fn().mockResolvedValue(freshValue);
+
+      mockRedis.get.mockResolvedValue(JSON.stringify(legacyCachedValue));
+
+      const result = await cacheService.withCacheNullable(fn, key, 60000);
+
+      expect(result).toEqual(freshValue);
+      expect(fn).toHaveBeenCalledOnce();
+      expect(mockRedis.setEx).toHaveBeenCalledWith(key, 60, box(freshValue));
+      expect(logger.debug).toHaveBeenCalledWith(
+        { key, ttlMs: 60000 },
+        "Nullable cache entry is missing marker or value field; treating as cache miss and refreshing"
+      );
+    });
+
+    test("should treat a marker-less object with a `value` field as a cache miss", async () => {
+      const key = "test:nullable-key" as CacheKey;
+      const collidingShape = { value: { id: "colliding" }, otherField: 123 };
+      const freshValue = { id: "fresh" };
+      const fn = vi.fn().mockResolvedValue(freshValue);
+
+      mockRedis.get.mockResolvedValue(JSON.stringify(collidingShape));
+
+      const result = await cacheService.withCacheNullable(fn, key, 60000);
+
+      expect(result).toEqual(freshValue);
+      expect(fn).toHaveBeenCalledOnce();
+      expect(mockRedis.setEx).toHaveBeenCalledWith(key, 60, box(freshValue));
+    });
+
+    test("should treat a marker-only nullable envelope as a cache miss", async () => {
+      const key = "test:nullable-key" as CacheKey;
+      const malformedBox = { __fb_nullable_v1: true };
+      const freshValue = { id: "fresh" };
+      const fn = vi.fn().mockResolvedValue(freshValue);
+
+      mockRedis.get.mockResolvedValue(JSON.stringify(malformedBox));
+
+      const result = await cacheService.withCacheNullable(fn, key, 60000);
+
+      expect(result).toEqual(freshValue);
+      expect(fn).toHaveBeenCalledOnce();
+      expect(mockRedis.setEx).toHaveBeenCalledWith(key, 60, box(freshValue));
+    });
+
+    test("should not cache undefined returned by a nullable callback", async () => {
+      const key = "test:nullable-key" as CacheKey;
+      const fn = vi.fn().mockResolvedValue(undefined);
+
+      mockRedis.get.mockResolvedValue(null);
+
+      const result = await cacheService.withCacheNullable(
+        fn as unknown as () => Promise<{ id: string } | null>,
+        key,
+        60000
+      );
 
       expect(result).toBeUndefined();
       expect(fn).toHaveBeenCalledOnce();
-      // undefined should NOT be cached to preserve semantics
-      expect(mockRedis.setEx).not.toHaveBeenCalled();
-    });
-
-    test("should distinguish between null and undefined return values", async () => {
-      const nullKey = "test:null-key" as CacheKey;
-      const undefinedKey = "test:undefined-key" as CacheKey;
-
-      const nullFn = vi.fn().mockResolvedValue(null);
-      const undefinedFn = vi.fn().mockResolvedValue(undefined);
-
-      // Mock cache miss for both keys
-      mockRedis.get.mockResolvedValue(null);
-      mockRedis.exists.mockResolvedValue(0);
-
-      // Test null return value - should be cached
-      const nullResult = await cacheService.withCache(nullFn, nullKey, 60000);
-      expect(nullResult).toBeNull();
-      expect(nullFn).toHaveBeenCalledOnce();
-      expect(mockRedis.setEx).toHaveBeenCalledWith(nullKey, 60, "null");
-
-      // Reset mocks
-      vi.clearAllMocks();
-      mockRedis.get.mockResolvedValue(null);
-      mockRedis.exists.mockResolvedValue(0);
-
-      // Test undefined return value - should NOT be cached
-      const undefinedResult = await cacheService.withCache(undefinedFn, undefinedKey, 60000);
-      expect(undefinedResult).toBeUndefined();
-      expect(undefinedFn).toHaveBeenCalledOnce();
       expect(mockRedis.setEx).not.toHaveBeenCalled();
     });
 

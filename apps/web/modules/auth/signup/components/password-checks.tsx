@@ -15,10 +15,10 @@ const PASSWORD_REGEX = {
 
 const ValidationIcon = ({ state }: { state: boolean }) =>
   state ? (
-    <CheckIcon className="h-5 w-5" />
+    <CheckIcon className="size-5" />
   ) : (
-    <span className="flex h-5 w-5 items-center justify-center">
-      <i className="inline-block h-2 w-2 rounded-full bg-slate-700" />
+    <span className="flex size-5 items-center justify-center">
+      <i className="inline-block size-2 rounded-full bg-slate-700" />
     </span>
   );
 

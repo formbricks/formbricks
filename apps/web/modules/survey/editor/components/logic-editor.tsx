@@ -99,7 +99,7 @@ export function LogicEditor({
       {isLast ? (
         <div className="flex items-center gap-x-2">
           <div className="flex w-10 shrink-0 items-center justify-end">
-            <ArrowRightIcon className="h-4 w-4 text-slate-500" />
+            <ArrowRightIcon className="size-4 text-slate-500" />
           </div>
           <div className="inline-flex items-center gap-x-2 text-nowrap font-medium text-slate-900">
             <Trans

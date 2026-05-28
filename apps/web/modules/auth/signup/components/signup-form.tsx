@@ -253,12 +253,12 @@ export const SignupForm = ({
               (isFormbricksCloud ? (
                 <label
                   htmlFor="product-updates"
-                  className="my-4 flex cursor-pointer space-x-2 rounded-md border border-slate-200 bg-slate-100 p-2 text-left">
+                  className="my-4 flex cursor-pointer gap-x-2 rounded-md border border-slate-200 bg-slate-100 p-2 text-left">
                   <Checkbox
                     id="product-updates"
                     checked={subscribeToProductUpdates}
                     onCheckedChange={(checked) => setSubscribeToProductUpdates(checked === true)}
-                    className="mt-0.5 h-4 w-4"
+                    className="mt-0.5 size-4"
                   />
                   <div>
                     <span className="text-sm font-medium text-slate-700">
@@ -270,12 +270,12 @@ export const SignupForm = ({
               ) : (
                 <label
                   htmlFor="security-updates"
-                  className="my-4 flex cursor-pointer space-x-2 rounded-md border border-slate-200 bg-slate-100 p-2 text-left">
+                  className="my-4 flex cursor-pointer gap-x-2 rounded-md border border-slate-200 bg-slate-100 p-2 text-left">
                   <Checkbox
                     id="security-updates"
                     checked={subscribeToSecurityUpdates}
                     onCheckedChange={(checked) => setSubscribeToSecurityUpdates(checked === true)}
-                    className="mt-0.5 h-4 w-4"
+                    className="mt-0.5 size-4"
                   />
                   <div>
                     <span className="text-sm font-medium text-slate-700">

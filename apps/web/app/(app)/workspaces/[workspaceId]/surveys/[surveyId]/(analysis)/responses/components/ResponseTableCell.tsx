@@ -38,7 +38,7 @@ const ResponseTableCellComponent = ({
       aria-label="Expand response"
       className="hidden flex-shrink-0 cursor-pointer items-center rounded-md border border-slate-200 bg-white p-2 hover:border-slate-300 focus:outline-none group-hover:flex"
       onClick={handleCellClick}>
-      <Maximize2Icon className="h-4 w-4" />
+      <Maximize2Icon className="size-4" />
     </button>
   );
 

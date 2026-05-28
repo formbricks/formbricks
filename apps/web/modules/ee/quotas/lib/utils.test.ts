@@ -292,9 +292,10 @@ describe("Quota Utils", () => {
     test("should handle empty quota arrays within transaction", async () => {
       await upsertResponseQuotaLinks(mockResponseId, [], [], [], asTx(mockTx));
 
-      // Verify transaction was called even with empty arrays
-      // expect(mockTx).toHaveBeenCalledTimes(1);
-      // expect(mockTx).toHaveBeenCalledWith(expect.any(Function));
+      // deleteMany always runs; create/update are skipped when arrays are empty
+      expect(mockTx.responseQuotaLink.deleteMany).toHaveBeenCalledTimes(1);
+      expect(mockTx.responseQuotaLink.createMany).not.toHaveBeenCalled();
+      expect(mockTx.responseQuotaLink.updateMany).not.toHaveBeenCalled();
     });
 
     test("should execute correct operations within transaction", async () => {

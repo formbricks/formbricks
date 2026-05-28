@@ -161,7 +161,7 @@ export const ThemeStyling = ({
                     control={form.control}
                     name="allowStyleOverwrite"
                     render={({ field }) => (
-                      <FormItem className="flex w-full items-center gap-2 space-y-0">
+                      <FormItem className="flex w-full items-center gap-2 gap-y-0">
                         <FormControl>
                           <Switch
                             checked={field.value}
@@ -212,7 +212,7 @@ export const ThemeStyling = ({
                       variant="default"
                       className="h-10 justify-center gap-1"
                       onClick={() => setConfirmSuggestColorsOpen(true)}>
-                      <SparklesIcon className="mr-2 h-4 w-4" />
+                      <SparklesIcon className="mr-2 size-4" />
                       {t("workspace.look.suggest_colors")}
                     </Button>
                   </div>
@@ -256,7 +256,7 @@ export const ThemeStyling = ({
                 className="flex items-center gap-2"
                 onClick={() => setConfirmResetStylingModalOpen(true)}>
                 {t("common.reset_to_default")}
-                <RotateCcwIcon className="h-4 w-4" />
+                <RotateCcwIcon className="size-4" />
               </Button>
             </div>
           </div>

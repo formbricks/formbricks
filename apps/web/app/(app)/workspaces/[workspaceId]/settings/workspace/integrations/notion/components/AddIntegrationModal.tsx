@@ -277,7 +277,7 @@ export const AddIntegrationModal = ({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent>
         <DialogHeader>
-          <div className="mb-4 flex items-start space-x-2">
+          <div className="mb-4 flex items-start gap-x-2">
             <div className="relative size-8">
               <Image
                 fill

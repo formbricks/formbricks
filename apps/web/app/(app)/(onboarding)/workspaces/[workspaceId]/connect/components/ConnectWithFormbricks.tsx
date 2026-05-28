@@ -43,9 +43,9 @@ export const ConnectWithFormbricks = ({
   }, []);
 
   return (
-    <div className="mt-6 flex w-5/6 flex-col items-center space-y-10 lg:w-2/3 2xl:w-1/2">
-      <div className="flex w-full space-x-10">
-        <div className="flex w-1/2 flex-col space-y-4">
+    <div className="mt-6 flex w-5/6 flex-col items-center gap-y-10 lg:w-2/3 2xl:w-1/2">
+      <div className="flex w-full gap-x-10">
+        <div className="flex w-1/2 flex-col gap-y-4">
           <OnboardingSetupInstructions
             workspaceId={workspaceId}
             publicDomain={publicDomain}
@@ -66,10 +66,10 @@ export const ConnectWithFormbricks = ({
               </p>
             </div>
           ) : (
-            <div className="flex animate-pulse flex-col items-center space-y-4">
-              <span className="relative flex h-10 w-10">
+            <div className="flex animate-pulse flex-col items-center gap-y-4">
+              <span className="relative flex size-10">
                 <span className="absolute inline-flex h-full w-full animate-ping-slow rounded-full bg-slate-400 opacity-75"></span>
-                <span className="relative inline-flex h-10 w-10 rounded-full bg-slate-500"></span>
+                <span className="relative inline-flex size-10 rounded-full bg-slate-500"></span>
               </span>
               <p className="pt-4 text-sm font-medium text-slate-600">
                 {t("workspace.connect.waiting_for_your_signal")}

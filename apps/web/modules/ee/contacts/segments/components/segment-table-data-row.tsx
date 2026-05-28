@@ -35,13 +35,14 @@ export const SegmentTableDataRow = ({
   return (
     <>
       <button
+        type="button"
         key={id}
         className="grid h-12 w-full cursor-pointer grid-cols-7 content-center p-2 text-left transition-colors ease-in-out hover:bg-slate-100"
         onClick={() => setIsEditSegmentModalOpen(true)}>
         <div className="col-span-4 flex items-center pl-6 text-sm">
           <div className="flex items-center gap-4">
             <div className="ph-no-capture w-8 flex-shrink-0 text-slate-500">
-              <UsersIcon className="h-5 w-5" />
+              <UsersIcon className="size-5" />
             </div>
             <div className="flex flex-col">
               <div className="ph-no-capture font-medium text-slate-900">{title}</div>

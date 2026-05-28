@@ -6,7 +6,7 @@ export const LoadingSkeleton = () => (
     {/* Bottom Part - Divided into Left and Right */}
     <div className="mt-4 flex h-[85%] w-full flex-row">
       {/* Left Part - 7 Horizontal Bars */}
-      <div className="flex h-full w-1/2 flex-col justify-between space-y-2">
+      <div className="flex h-full w-1/2 flex-col justify-between gap-y-2">
         <div className="ph-no-capture h-[10vh] animate-pulse rounded-lg bg-slate-200"></div>
         <div className="ph-no-capture h-[10vh] animate-pulse rounded-lg bg-slate-200"></div>
         <div className="ph-no-capture h-[10vh] animate-pulse rounded-lg bg-slate-200"></div>

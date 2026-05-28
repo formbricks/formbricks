@@ -29,7 +29,7 @@ const ChartTooltipRow = ({
   return (
     <>
       <div
-        className="h-2.5 w-2.5 shrink-0 rounded-[2px] border border-current"
+        className="size-2.5 shrink-0 rounded-[2px] border border-current"
         style={{
           backgroundColor: indicatorColor,
           borderColor: indicatorColor,

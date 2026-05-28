@@ -48,7 +48,7 @@ export const EditBranding = ({ type, isEnabled, workspaceId, isReadOnly }: EditB
   };
 
   return (
-    <div className="flex items-center space-x-2">
+    <div className="flex items-center gap-x-2">
       <Switch
         id={`branding-${type}`}
         checked={isBrandingEnabled}

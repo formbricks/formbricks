@@ -257,7 +257,7 @@ export const SurveyVariablesCardItem = ({
                 size="sm"
                 className="whitespace-nowrap"
                 onClick={() => onVariableDelete(variable)}>
-                <TrashIcon className="h-4 w-4" />
+                <TrashIcon className="size-4" />
               </Button>
             )}
           </div>

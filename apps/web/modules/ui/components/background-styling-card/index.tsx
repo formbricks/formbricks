@@ -63,7 +63,7 @@ export const BackgroundStylingCard = ({
             <div className="flex items-center pl-2 pr-5">
               <CheckIcon
                 strokeWidth={3}
-                className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
+                className="size-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
               />
             </div>
           )}

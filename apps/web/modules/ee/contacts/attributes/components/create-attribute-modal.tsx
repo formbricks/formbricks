@@ -215,19 +215,19 @@ export function CreateAttributeModal({ workspaceId }: Readonly<CreateAttributeMo
                     <SelectContent>
                       <SelectItem value="string">
                         <div className="flex items-center gap-2">
-                          <TagIcon className="h-4 w-4" />
+                          <TagIcon className="size-4" />
                           <span>{t("common.string")}</span>
                         </div>
                       </SelectItem>
                       <SelectItem value="number">
                         <div className="flex items-center gap-2">
-                          <HashIcon className="h-4 w-4" />
+                          <HashIcon className="size-4" />
                           <span>{t("common.number")}</span>
                         </div>
                       </SelectItem>
                       <SelectItem value="date">
                         <div className="flex items-center gap-2">
-                          <Calendar1Icon className="h-4 w-4" />
+                          <Calendar1Icon className="size-4" />
                           <span>{t("common.date")}</span>
                         </div>
                       </SelectItem>
