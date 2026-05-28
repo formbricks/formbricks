@@ -198,7 +198,12 @@ export function serializeV3SurveyResource(survey: TInternalSurvey, options?: { l
       fallbackMissingTranslations: requestedLanguages.length > 0,
     }),
     defaultLanguage,
-    languages,
+    languages: languages.map(({ code, default: isDefault, enabled, alias }) => ({
+      code,
+      default: isDefault,
+      enabled,
+      ...(alias ? { alias } : {}),
+    })),
     welcomeCard: serializeValue(survey.welcomeCard),
     blocks: serializeValue(survey.blocks),
     endings: serializeValue(survey.endings),

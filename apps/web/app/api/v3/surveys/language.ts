@@ -10,6 +10,7 @@ export type TV3SurveyLanguage = {
   code: string;
   default: boolean;
   enabled: boolean;
+  alias?: string | null;
 };
 
 type TV3SurveyLanguageQueryInput = string | string[];
@@ -20,7 +21,7 @@ type TResolveV3SurveyLanguageCodeResult =
 
 type TParseV3SurveyLanguageQueryResult = { ok: true; languages: string[] } | { ok: false; message: string };
 
-const V3_SURVEY_LOCALE_CODE_REGEX = /^[a-z]{2}(?:-[A-Z][a-z]{3})?-[A-Z]{2}$/;
+const V3_SURVEY_LANGUAGE_TAG_REGEX = /^[a-z]{2}(?:-[A-Z]{2}|-[A-Z][a-z]{3}(?:-[A-Z]{2})?)$/;
 const V3_LEGACY_LANGUAGE_CODE_MAP: Record<string, string> = {
   ar: "ar-SA",
   cs: "cs-CZ",
@@ -51,7 +52,7 @@ export function normalizeV3SurveyLanguageTag(value: string): string | null {
 
   try {
     const normalizedLanguage = Intl.getCanonicalLocales(normalizedSeparators)[0] ?? null;
-    if (!normalizedLanguage || !V3_SURVEY_LOCALE_CODE_REGEX.test(normalizedLanguage)) {
+    if (!normalizedLanguage || !V3_SURVEY_LANGUAGE_TAG_REGEX.test(normalizedLanguage)) {
       return null;
     }
 
@@ -116,7 +117,7 @@ function isLanguageOnlySelector(code: string): boolean {
 
 function getNormalizedLanguage(language: TV3SurveyResolverLanguage) {
   const code = normalizeV3SurveyLanguageIdentifier(language.code) ?? language.code;
-  const alias = language.alias?.trim() || null;
+  const alias = getV3SurveyLanguageAlias(language.alias);
 
   return {
     ...language,
@@ -125,6 +126,10 @@ function getNormalizedLanguage(language: TV3SurveyResolverLanguage) {
     alias,
     normalizedAlias: alias ? normalizeV3SurveyLanguageIdentifier(alias) : null,
   };
+}
+
+function getV3SurveyLanguageAlias(alias: string | null | undefined): string | null {
+  return alias?.trim() || null;
 }
 
 function createAmbiguousLanguageResult(
@@ -225,11 +230,16 @@ export function getV3SurveyLanguages(
   survey: Pick<TInternalSurvey, "languages">,
   fallbackLanguage: string
 ): TV3SurveyLanguage[] {
-  const languages = (survey.languages ?? []).map((surveyLanguage) => ({
-    code: normalizeV3SurveyLanguageIdentifier(surveyLanguage.language.code) ?? surveyLanguage.language.code,
-    default: surveyLanguage.default,
-    enabled: surveyLanguage.enabled,
-  }));
+  const languages = (survey.languages ?? []).map((surveyLanguage) => {
+    const alias = getV3SurveyLanguageAlias(surveyLanguage.language.alias);
+
+    return {
+      code: normalizeV3SurveyLanguageIdentifier(surveyLanguage.language.code) ?? surveyLanguage.language.code,
+      default: surveyLanguage.default,
+      enabled: surveyLanguage.enabled,
+      alias,
+    };
+  });
 
   if (languages.length === 0) {
     return [{ code: fallbackLanguage, default: true, enabled: true }];
@@ -245,7 +255,7 @@ export function getV3SurveyResolverLanguages(
   const languages = (survey.languages ?? []).map((surveyLanguage) => ({
     code: normalizeV3SurveyLanguageIdentifier(surveyLanguage.language.code) ?? surveyLanguage.language.code,
     enabled: surveyLanguage.enabled,
-    alias: surveyLanguage.language.alias,
+    alias: getV3SurveyLanguageAlias(surveyLanguage.language.alias),
   }));
 
   if (languages.length === 0) {

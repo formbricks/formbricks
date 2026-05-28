@@ -55,6 +55,16 @@ function validPreparation<TDocument extends TV3SurveyDocument>(
   };
 }
 
+function getV3SurveyDocumentLanguages(survey: TInternalSurvey) {
+  return getV3SurveyLanguages(survey, DEFAULT_V3_SURVEY_LANGUAGE).map(
+    ({ code, default: isDefault, enabled }) => ({
+      code,
+      default: isDefault,
+      enabled,
+    })
+  );
+}
+
 function buildDocumentFromSurvey(survey: TInternalSurvey): TV3SurveyPrepareResult<TV3SurveyDocument> {
   if (Array.isArray(survey.questions) && survey.questions.length > 0) {
     return invalidPreparation([
@@ -70,7 +80,7 @@ function buildDocumentFromSurvey(survey: TInternalSurvey): TV3SurveyPrepareResul
     status: survey.status,
     metadata: survey.metadata ?? {},
     defaultLanguage: getV3SurveyDefaultLanguage(survey, DEFAULT_V3_SURVEY_LANGUAGE),
-    languages: getV3SurveyLanguages(survey, DEFAULT_V3_SURVEY_LANGUAGE),
+    languages: getV3SurveyDocumentLanguages(survey),
     welcomeCard: survey.welcomeCard,
     blocks: survey.blocks,
     endings: survey.endings,
