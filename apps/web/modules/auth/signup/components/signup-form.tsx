@@ -298,7 +298,7 @@ export const SignupForm = ({
               }
               disabled={showLogin && !form.formState.isValid}
               className="h-10 w-full justify-center"
-              loading={form.formState.isSubmitting}>
+              loading={showLogin && form.formState.isSubmitting}>
               {t("auth.continue_with_email")}
             </Button>
           </form>
