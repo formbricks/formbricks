@@ -52,12 +52,16 @@ function toIsoString(value: Date | string): string {
 }
 
 function getSurveyLanguages(survey: TInternalSurvey): TV3SurveyLanguage[] {
-  const languages = (survey.languages ?? []).map((surveyLanguage) => ({
-    code: normalizeV3SurveyLanguageIdentifier(surveyLanguage.language.code) ?? surveyLanguage.language.code,
-    default: surveyLanguage.default,
-    enabled: surveyLanguage.enabled,
-    alias: surveyLanguage.language.alias,
-  }));
+  const languages = (survey.languages ?? []).map((surveyLanguage) => {
+    const alias = surveyLanguage.language.alias?.trim() || null;
+
+    return {
+      code: normalizeV3SurveyLanguageIdentifier(surveyLanguage.language.code) ?? surveyLanguage.language.code,
+      default: surveyLanguage.default,
+      enabled: surveyLanguage.enabled,
+      alias,
+    };
+  });
 
   if (languages.length === 0) {
     return [{ code: DEFAULT_V3_SURVEY_LANGUAGE, default: true, enabled: true }];
@@ -187,10 +191,11 @@ export function serializeV3SurveyResource(survey: TInternalSurvey, options?: { l
     status: survey.status,
     metadata: survey.metadata,
     defaultLanguage,
-    languages: languages.map(({ code, default: isDefault, enabled }) => ({
+    languages: languages.map(({ code, default: isDefault, enabled, alias }) => ({
       code,
       default: isDefault,
       enabled,
+      ...(alias ? { alias } : {}),
     })),
     welcomeCard: serializeValue(survey.welcomeCard),
     blocks: serializeValue(survey.blocks),

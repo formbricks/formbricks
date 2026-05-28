@@ -92,15 +92,15 @@ const createLegacyHindiSurvey = (overrides: Partial<TSurvey> = {}) =>
   }) as unknown as TSurvey;
 
 describe("serializeV3SurveyResource", () => {
-  test("returns canonical multilingual fields using real locale codes", () => {
+  test("returns multilingual fields using emitted survey language codes", () => {
     const resource = serializeV3SurveyResource(baseSurvey);
 
     expect(resource.defaultLanguage).toBe("en-US");
     expect(resource).not.toHaveProperty("language");
     expect(resource.languages).toEqual([
-      { code: "en-US", default: true, enabled: true },
-      { code: "de-DE", default: false, enabled: true },
-      { code: "fr-FR", default: false, enabled: false },
+      { code: "en-US", default: true, enabled: true, alias: "en" },
+      { code: "de-DE", default: false, enabled: true, alias: "de" },
+      { code: "fr-FR", default: false, enabled: false, alias: "fr" },
     ]);
     expect(resource).toMatchObject({
       welcomeCard: {
@@ -304,7 +304,81 @@ describe("serializeV3SurveyResource", () => {
     });
   });
 
-  test("maps legacy stored language codes and translation keys to canonical response locales", () => {
+  test("filters fields for non-locale configured language aliases", () => {
+    const survey = {
+      ...baseSurvey,
+      languages: [
+        {
+          default: true,
+          enabled: true,
+          language: {
+            id: "lang_1",
+            code: "en-US",
+            alias: "english",
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        },
+      ],
+      welcomeCard: {
+        enabled: true,
+        headline: { default: "Welcome" },
+      },
+    } as unknown as TSurvey;
+
+    const resource = serializeV3SurveyResource(survey, { lang: ["english"] });
+
+    expect(resource.languages).toEqual([{ code: "en-US", default: true, enabled: true, alias: "english" }]);
+    expect(resource).toMatchObject({
+      welcomeCard: { headline: { "en-US": "Welcome" } },
+    });
+  });
+
+  test("trims configured language aliases and omits blank aliases", () => {
+    const survey = {
+      ...baseSurvey,
+      languages: [
+        {
+          default: true,
+          enabled: true,
+          language: {
+            id: "lang_1",
+            code: "en-US",
+            alias: " english ",
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        },
+        {
+          default: false,
+          enabled: true,
+          language: {
+            id: "lang_2",
+            code: "de-DE",
+            alias: "   ",
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        },
+      ],
+      welcomeCard: {
+        enabled: true,
+        headline: { default: "Welcome", "de-DE": "Willkommen" },
+      },
+    } as unknown as TSurvey;
+
+    const resource = serializeV3SurveyResource(survey, { lang: ["english"] });
+
+    expect(resource.languages).toEqual([
+      { code: "en-US", default: true, enabled: true, alias: "english" },
+      { code: "de-DE", default: false, enabled: true },
+    ]);
+    expect(resource).toMatchObject({
+      welcomeCard: { headline: { "en-US": "Welcome" } },
+    });
+  });
+
+  test("maps known legacy stored language codes and translation keys to emitted response codes", () => {
     const survey = createLegacyHindiSurvey({
       blocks: [
         {
@@ -327,7 +401,7 @@ describe("serializeV3SurveyResource", () => {
     expect(resource.defaultLanguage).toBe("en-US");
     expect(resource.languages).toEqual([
       { code: "en-US", default: true, enabled: true },
-      { code: "hi-IN", default: false, enabled: true },
+      { code: "hi-IN", default: false, enabled: true, alias: "hi-in" },
     ]);
     expect(resource).toMatchObject({
       welcomeCard: { headline: { "hi-IN": "स्वागत है" } },
@@ -354,6 +428,68 @@ describe("serializeV3SurveyResource", () => {
     });
     expect(serializeV3SurveyResource(survey, { lang: ["HI_in"] })).toMatchObject({
       welcomeCard: { headline: { "hi-IN": "स्वागत है" } },
+    });
+  });
+
+  test("resolves language-only selectors and emits configured language-only map keys", () => {
+    const survey = {
+      ...baseSurvey,
+      languages: [
+        {
+          default: true,
+          enabled: true,
+          language: {
+            id: "lang_1",
+            code: "vi",
+            alias: null,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        },
+      ],
+      welcomeCard: {
+        enabled: true,
+        headline: { default: "Chào mừng" },
+      },
+    } as unknown as TSurvey;
+
+    const resource = serializeV3SurveyResource(survey, { lang: ["vi"] });
+
+    expect(resource.defaultLanguage).toBe("vi");
+    expect(resource.languages).toEqual([{ code: "vi", default: true, enabled: true }]);
+    expect(resource).toMatchObject({
+      welcomeCard: { headline: { vi: "Chào mừng" } },
+    });
+  });
+
+  test("resolves script-only selectors and emits configured script-only map keys", () => {
+    const survey = {
+      ...baseSurvey,
+      languages: [
+        {
+          default: true,
+          enabled: true,
+          language: {
+            id: "lang_1",
+            code: "zh-Hans",
+            alias: null,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        },
+      ],
+      welcomeCard: {
+        enabled: true,
+        headline: { default: "欢迎" },
+      },
+    } as unknown as TSurvey;
+
+    const resource = serializeV3SurveyResource(survey, { lang: ["zh_Hans"] });
+
+    expect(resource.defaultLanguage).toBe("zh-Hans");
+    expect(resource.languages).toEqual([{ code: "zh-Hans", default: true, enabled: true }]);
+    expect(resource).toMatchObject({
+      welcomeCard: { headline: { "zh-Hans": "欢迎" } },
     });
   });
 
