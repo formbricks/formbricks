@@ -104,11 +104,11 @@ export const generateOrganizationAIText = async ({
   }
 };
 
-type TGenerateOrganizationAIObjectInput<T> = {
+type TGenerateOrganizationAIObjectInput<T = unknown> = {
   organizationId: string;
 } & TGenerateObjectOptions<T>;
 
-export const generateOrganizationAIObject = async <T>({
+export const generateOrganizationAIObject = async <T = unknown>({
   organizationId,
   ...options
 }: TGenerateOrganizationAIObjectInput<T>): Promise<TGenerateObjectResult<T>> => {

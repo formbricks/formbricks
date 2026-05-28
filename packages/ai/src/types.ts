@@ -59,6 +59,8 @@ export type TGenerateObjectOptions<T> = Omit<
   "model" | "output" | "experimental_output"
 > & {
   schema: FlexibleSchema<T>;
+  schemaName?: string;
+  schemaDescription?: string;
 };
 export type TGenerateObjectResult<T> = { object: T } & Omit<
   Awaited<ReturnType<typeof generateText>>,

@@ -10,7 +10,9 @@ import { TTemplate, TTemplateFilter, ZTemplateRole } from "@formbricks/types/tem
 import { ZWorkspaceConfigChannel, ZWorkspaceConfigIndustry } from "@formbricks/types/workspace";
 import { customSurveyTemplate, templates } from "@/app/lib/templates";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import type { TAIUnavailableReason } from "@/modules/ee/analysis/charts/lib/ai-availability";
 import { createSurveyAction } from "./actions";
+import { CreateWithAITemplate } from "./components/create-with-ai-template";
 import { StartFromScratchTemplate } from "./components/start-from-scratch-template";
 import { Template } from "./components/template";
 import { TemplateFilters } from "./components/template-filters";
@@ -23,6 +25,9 @@ interface TemplateListProps {
   showFilters?: boolean;
   onTemplateClick?: (template: TTemplate) => void;
   noPreview?: boolean; // single click to create survey
+  showAICreateCard?: boolean;
+  isAIAvailable?: boolean;
+  aiUnavailableReason?: TAIUnavailableReason;
 }
 
 export const TemplateList = ({
@@ -33,6 +38,9 @@ export const TemplateList = ({
   templateSearch,
   onTemplateClick = () => {},
   noPreview,
+  showAICreateCard = false,
+  isAIAvailable = false,
+  aiUnavailableReason,
 }: TemplateListProps) => {
   const workspaceBasePath = `/workspaces/${workspace.id}`;
   const { t } = useTranslation();
@@ -124,6 +132,13 @@ export const TemplateList = ({
           loading={loading}
           noPreview={noPreview}
         />
+        {showAICreateCard && (
+          <CreateWithAITemplate
+            workspaceId={workspaceId}
+            isAIAvailable={isAIAvailable}
+            aiUnavailableReason={aiUnavailableReason}
+          />
+        )}
         {(process.env.NODE_ENV === "development" ? [...filteredTemplates()] : filteredTemplates()).map(
           (template: TTemplate) => {
             return (

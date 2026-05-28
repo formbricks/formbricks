@@ -16,7 +16,7 @@ vi.mock("./provider", () => ({
   getAiModel: mocks.getAiModel,
 }));
 
-describe("packages/ai object helpers", () => {
+describe("generateObject", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.getAiModel.mockReturnValue({ providerName: "google", modelName: "gemini-2.5-flash" });
@@ -26,21 +26,30 @@ describe("packages/ai object helpers", () => {
     }));
   });
 
-  test("uses the configured provider model when generating a structured object", async () => {
+  test("calls generateText with the configured model and object output", async () => {
     const environment = {
       AI_PROVIDER: "google",
       AI_MODEL: "gemini-2.5-flash",
     };
-    // The schema is opaque to the wrapper — it's passed through to Output.object
-    // and never validated by us. A sentinel object is enough for the assertions
-    // and avoids dragging zod into this package's deps just for the test.
     const schema = { __schema: "sentinel" } as never;
     mocks.generateText.mockResolvedValue({ output: { answer: "42" } });
 
-    const result = await generateObject({ schema, prompt: "What is the answer?" }, environment);
+    const result = await generateObject<{ answer: string }>(
+      {
+        schema,
+        schemaName: "Answer",
+        schemaDescription: "A generated answer",
+        prompt: "What is the answer?",
+      },
+      environment
+    );
 
     expect(mocks.getAiModel).toHaveBeenCalledWith(environment);
-    expect(mocks.outputObject).toHaveBeenCalledWith({ schema });
+    expect(mocks.outputObject).toHaveBeenCalledWith({
+      schema,
+      name: "Answer",
+      description: "A generated answer",
+    });
     expect(mocks.generateText).toHaveBeenCalledWith({
       prompt: "What is the answer?",
       model: { providerName: "google", modelName: "gemini-2.5-flash" },
