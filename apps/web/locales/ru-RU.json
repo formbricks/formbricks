@@ -3602,6 +3602,7 @@
         "no_identified_impressions": "Нет показов от идентифицированных контактов",
         "no_responses_found": "Ответы не найдены",
         "nps_promoters_tooltip": "{percentage}% респондентов дали оценку 9 или 10 (промоутеры NPS).",
+        "open_response_details": "Детали открытых ответов",
         "other_values_found": "Найдены другие значения",
         "overall": "В целом",
         "promoters": "Сторонники",

@@ -3602,6 +3602,7 @@
         "no_identified_impressions": "Tanımlanmış kişilerden gösterim yok",
         "no_responses_found": "Yanıt bulunamadı",
         "nps_promoters_tooltip": "Yanıt verenlerin %{percentage}'si 9 veya 10 puan verdi (NPS tavsiye edenler).",
+        "open_response_details": "Açık yanıt detayları",
         "other_values_found": "Diğer değerler bulundu",
         "overall": "Genel",
         "promoters": "Tavsiye edenler",

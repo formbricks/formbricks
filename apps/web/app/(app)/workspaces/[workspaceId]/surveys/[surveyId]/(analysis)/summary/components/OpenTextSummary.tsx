@@ -5,29 +5,35 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TSurvey, TSurveyElementSummaryOpenText } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { timeSince } from "@/lib/time";
 import { getContactIdentifier } from "@/lib/utils/contact";
 import { renderHyperlinkedContent } from "@/modules/analysis/utils";
 import { PersonAvatar } from "@/modules/ui/components/avatars";
 import { Button } from "@/modules/ui/components/button";
 import { EmptyState } from "@/modules/ui/components/empty-state";
+import { IdBadge } from "@/modules/ui/components/id-badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
 import { ElementSummaryHeader } from "./ElementSummaryHeader";
+import { ResponseSampleModal } from "./ResponseSampleModal";
 
 interface OpenTextSummaryProps {
   elementSummary: TSurveyElementSummaryOpenText;
   survey: TSurvey;
   locale: TUserLocale;
+  isReadOnly: boolean;
 }
 
-export const OpenTextSummary = ({ elementSummary, survey, locale }: OpenTextSummaryProps) => {
+export const OpenTextSummary = ({
+  elementSummary,
+  survey,
+  locale,
+  isReadOnly,
+}: Readonly<OpenTextSummaryProps>) => {
   const { t } = useTranslation();
-  const { workspace } = useWorkspace();
   const [visibleResponses, setVisibleResponses] = useState(10);
+  const [selectedResponseId, setSelectedResponseId] = useState<string | null>(null);
 
   const handleLoadMore = () => {
-    // Increase the number of visible responses by 10, not exceeding the total number of responses
     setVisibleResponses((prevVisibleResponses) =>
       Math.min(prevVisibleResponses + 10, elementSummary.samples.length)
     );
@@ -48,17 +54,31 @@ export const OpenTextSummary = ({ elementSummary, survey, locale }: OpenTextSumm
               <TableRow>
                 <TableHead className="w-1/4">{t("common.user")}</TableHead>
                 <TableHead className="w-2/4">{t("common.response")}</TableHead>
-                <TableHead className="w-1/4">{t("common.time")}</TableHead>
+                <TableHead className="w-1/6">{t("common.time")}</TableHead>
+                <TableHead className="w-1/6">{t("common.response_id")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {elementSummary.samples.slice(0, visibleResponses).map((response) => (
-                <TableRow key={response.id}>
+                <TableRow
+                  key={response.id}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={t("workspace.surveys.summary.open_response_details")}
+                  className="cursor-pointer hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
+                  onClick={() => setSelectedResponseId(response.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setSelectedResponseId(response.id);
+                    }
+                  }}>
                   <TableCell className="w-1/4">
                     {response.contact ? (
                       <Link
                         className="ph-no-capture group flex items-center"
-                        href={`/workspaces/${workspace?.id}/contacts/${response.contact.id}`}>
+                        href={`/workspaces/${survey.workspaceId}/contacts/${response.contact.id}`}
+                        onClick={(e) => e.stopPropagation()}>
                         <div className="hidden md:flex">
                           <PersonAvatar personId={response.contact.id} />
                         </div>
@@ -80,8 +100,11 @@ export const OpenTextSummary = ({ elementSummary, survey, locale }: OpenTextSumm
                       ? renderHyperlinkedContent(response.value)
                       : response.value}
                   </TableCell>
-                  <TableCell className="w-1/4">
+                  <TableCell className="w-1/6">
                     {timeSince(new Date(response.updatedAt).toISOString(), locale)}
+                  </TableCell>
+                  <TableCell className="w-1/6" onClick={(e) => e.stopPropagation()}>
+                    <IdBadge id={response.id} />
                   </TableCell>
                 </TableRow>
               ))}
@@ -96,6 +119,14 @@ export const OpenTextSummary = ({ elementSummary, survey, locale }: OpenTextSumm
           )}
         </div>
       )}
+
+      <ResponseSampleModal
+        responseId={selectedResponseId}
+        onClose={() => setSelectedResponseId(null)}
+        survey={survey}
+        isReadOnly={isReadOnly}
+        locale={locale}
+      />
     </div>
   );
 };
