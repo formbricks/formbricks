@@ -78,10 +78,11 @@ describe("validateV3SurveyReferences", () => {
     ).toEqual({ ok: true, invalidParams: [] });
   });
 
-  test("rejects duplicate block, element, variable, and hidden field identifiers", () => {
+  test("rejects duplicate block, ending, element, variable, and hidden field identifiers", () => {
     const survey = {
       ...validSurvey,
       hiddenFields: { enabled: true, fieldIds: ["account_id", "account_id"] },
+      endings: [...validSurvey.endings, { ...validSurvey.endings[0] }],
       variables: [
         ...validSurvey.variables,
         {
@@ -112,6 +113,7 @@ describe("validateV3SurveyReferences", () => {
       expect(result.invalidParams).toEqual(
         expect.arrayContaining([
           expect.objectContaining({ name: "blocks.1.id" }),
+          expect.objectContaining({ name: "endings.1.id" }),
           expect.objectContaining({ name: "blocks.1.elements.0.id" }),
           expect.objectContaining({ name: "variables.1.id" }),
           expect.objectContaining({ name: "hiddenFields.fieldIds.1" }),

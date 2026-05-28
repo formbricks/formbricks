@@ -11,6 +11,7 @@ const rawCreateBody = {
   workspaceId,
   name: "Product Feedback",
   defaultLanguage: "en-US",
+  languages: [{ code: "de-DE", enabled: true }],
   blocks: [
     {
       id: "clbk1234567890123456789012",
@@ -39,6 +40,18 @@ const survey = {
   status: "draft",
   metadata: {},
   languages: [
+    {
+      language: {
+        id: "cllangdede000000000000000",
+        code: "de-DE",
+        alias: null,
+        workspaceId,
+        createdAt: new Date("2026-04-21T10:00:00.000Z"),
+        updatedAt: new Date("2026-04-21T10:00:00.000Z"),
+      },
+      default: false,
+      enabled: true,
+    },
     {
       language: {
         id: "cllangenus000000000000000",
@@ -116,6 +129,50 @@ describe("v3 survey preparation", () => {
           expect.objectContaining({
             name: "blocks.0.elements.0.headline",
             code: "missing_translation",
+            identifier: "pt-PT",
+            referenceType: "language",
+          }),
+        ])
+      );
+    }
+  });
+
+  test("rejects undeclared locale keys in translatable survey content", () => {
+    const preparation = prepareV3SurveyCreateInput({
+      ...rawCreateBody,
+      languages: [],
+    });
+
+    expect(preparation.ok).toBe(false);
+    if (!preparation.ok) {
+      expect(preparation.validation.invalidParams).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: "blocks.0.elements.0.headline.de-DE",
+            code: "unsupported_locale",
+            identifier: "de-DE",
+            referenceType: "language",
+          }),
+        ])
+      );
+    }
+  });
+
+  test("rejects undeclared locale keys in translatable metadata fields", () => {
+    const preparation = prepareV3SurveyCreateInput({
+      ...rawCreateBody,
+      metadata: {
+        title: { "en-US": "Product Feedback", "pt-PT": "Feedback do produto" },
+      },
+    });
+
+    expect(preparation.ok).toBe(false);
+    if (!preparation.ok) {
+      expect(preparation.validation.invalidParams).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: "metadata.title.pt-PT",
+            code: "unsupported_locale",
             identifier: "pt-PT",
             referenceType: "language",
           }),

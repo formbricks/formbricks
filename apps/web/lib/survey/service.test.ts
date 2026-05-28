@@ -812,6 +812,27 @@ describe("Tests for createSurvey", () => {
         })
       );
     });
+
+    test("rejects an explicitly provided segment from another workspace", async () => {
+      await expect(
+        createSurvey(mockWorkspaceId, {
+          ...mockCreateSurveyInput,
+          segment: {
+            id: "clseg123456789012345678901",
+            title: "Segment",
+            description: null,
+            isPrivate: false,
+            filters: [],
+            workspaceId: "clotherworkspace1234567890",
+            surveys: [],
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        })
+      ).rejects.toThrow(ResourceNotFoundError);
+
+      expect(prisma.survey.create).not.toHaveBeenCalled();
+    });
   });
 
   describe("Sad Path", () => {

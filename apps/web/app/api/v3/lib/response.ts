@@ -17,6 +17,7 @@ export const INVALID_PARAM_CODES = [
   "missing_required_field",
   "missing_translation",
   "unsupported_field",
+  "unsupported_locale",
 ] as const;
 
 export type InvalidParamCode = (typeof INVALID_PARAM_CODES)[number];

@@ -44,6 +44,7 @@ const rawCreateBody = {
   workspaceId,
   name: "Product Feedback",
   defaultLanguage: "en-US",
+  languages: [{ code: "de-DE", enabled: true }],
   metadata: {
     cx_operation: "enterprise_onboarding",
     title: { "en-US": "Product Feedback", "de-DE": "Produktfeedback" },
@@ -187,7 +188,17 @@ describe("createV3Survey", () => {
   test("keeps createdBy null for API key calls and honors explicit disabled languages", async () => {
     const body = ZV3CreateSurveyBody.parse({
       ...rawCreateBody,
-      languages: [{ code: "fr-FR", enabled: false }],
+      languages: [
+        { code: "de-DE", enabled: true },
+        { code: "fr-FR", enabled: false },
+      ],
+      metadata: {
+        ...rawCreateBody.metadata,
+        title: {
+          ...rawCreateBody.metadata.title,
+          "fr-FR": "Commentaires produit",
+        },
+      },
       blocks: [
         {
           ...rawCreateBody.blocks[0],
@@ -238,11 +249,11 @@ describe("createV3Survey", () => {
             {
               id: "external_cta",
               type: "cta",
-              headline: { "en-US": "Continue" },
+              headline: { "en-US": "Continue", "de-DE": "Weiter" },
               required: false,
               buttonExternal: true,
               buttonUrl: "https://example.com",
-              ctaButtonLabel: { "en-US": "Open" },
+              ctaButtonLabel: { "en-US": "Open", "de-DE": "Öffnen" },
             },
           ],
         },

@@ -289,6 +289,7 @@ export function getV3SurveyReferenceInvalidParams(input: TReferenceValidationInp
   };
 
   addDuplicateIdIssues(blockEntries, "Block", "block", issues);
+  addDuplicateIdIssues(endingEntries, "Ending", "ending", issues);
   addDuplicateIdIssues(elementEntries, "Element", "element", issues);
   addDuplicateIdIssues(variableIdEntries, "Variable", "variable", issues);
   addDuplicateValueIssues(

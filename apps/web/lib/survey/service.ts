@@ -632,6 +632,15 @@ const assertSurveyLanguagesBelongToWorkspace = (
   }
 };
 
+const assertSurveySegmentBelongsToWorkspace = (
+  workspaceId: string,
+  segment: TSurveyCreateInput["segment"]
+): void => {
+  if (segment?.id && segment.workspaceId !== workspaceId) {
+    throw new ResourceNotFoundError("Segment", segment.id);
+  }
+};
+
 export const createSurvey = async (workspaceId: string, surveyBody: TSurveyCreateInput): Promise<TSurvey> => {
   const [parsedWorkspaceId, parsedSurveyBody] = validateInputs(
     [workspaceId, ZId],
@@ -641,6 +650,7 @@ export const createSurvey = async (workspaceId: string, surveyBody: TSurveyCreat
   try {
     const { createdBy, languages, segment, followUps, ...restSurveyBody } = parsedSurveyBody;
     assertSurveyLanguagesBelongToWorkspace(parsedWorkspaceId, languages);
+    assertSurveySegmentBelongsToWorkspace(parsedWorkspaceId, segment);
     const normalizedCloseOn = restSurveyBody.closeOn instanceof Date ? restSurveyBody.closeOn : null;
     const normalizedPublishOn = restSurveyBody.publishOn instanceof Date ? restSurveyBody.publishOn : null;
     const surveyLanguagesCreateData: Prisma.SurveyLanguageCreateNestedManyWithoutSurveyInput | undefined =
