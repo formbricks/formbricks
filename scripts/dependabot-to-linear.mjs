@@ -47,12 +47,22 @@ function requireEnv(name, ...fallbacks) {
   throw new Error(`Missing required env var: ${[name, ...fallbacks].join(" or ")}`);
 }
 
+// The Dependabot alerts endpoint uses cursor pagination (`before`/`after`),
+// not `?page=`. The next-page cursor is returned in the response `Link` header
+// as `<url>; rel="next"`. Walk that until there's no next link.
+function parseNextLink(linkHeader) {
+  if (!linkHeader) return null;
+  for (const part of linkHeader.split(",")) {
+    const match = part.match(/<([^>]+)>\s*;\s*rel="next"/);
+    if (match) return match[1];
+  }
+  return null;
+}
+
 async function fetchOpenAlerts(repo, token) {
   const alerts = [];
-  let page = 1;
-  const perPage = 100;
-  for (;;) {
-    const url = `https://api.github.com/repos/${repo}/dependabot/alerts?state=open&per_page=${perPage}&page=${page}`;
+  let url = `https://api.github.com/repos/${repo}/dependabot/alerts?state=open&per_page=100`;
+  while (url) {
     const res = await fetch(url, {
       signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       headers: {
@@ -68,8 +78,7 @@ async function fetchOpenAlerts(repo, token) {
     }
     const batch = await res.json();
     alerts.push(...batch);
-    if (batch.length < perPage) break;
-    page += 1;
+    url = parseNextLink(res.headers.get("link"));
   }
   return alerts;
 }
