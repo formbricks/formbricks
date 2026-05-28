@@ -456,6 +456,7 @@ export const MainNavigation = ({
 
   const switcherIconClasses =
     "flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-600";
+  const mainNavIconClassName = "h-4 w-4 shrink-0";
   const isInitialWorkspacesLoading =
     isWorkspaceDropdownOpen && !hasInitializedWorkspaces && !workspaceLoadError;
 
@@ -546,7 +547,7 @@ export const MainNavigation = ({
                               disabled={item.disabled}
                               disabledMessage={item.disabled ? disabledNavigationMessage : undefined}
                               linkText={item.name}>
-                              <item.icon strokeWidth={1.5} />
+                              <item.icon className={mainNavIconClassName} strokeWidth={1.5} />
                             </NavigationLink>
                           )
                       )}
@@ -566,7 +567,7 @@ export const MainNavigation = ({
                         settingsNavigationItem.disabled ? disabledNavigationMessage : undefined
                       }
                       linkText={settingsNavigationItem.name}>
-                      <settingsNavigationItem.icon strokeWidth={1.5} />
+                      <settingsNavigationItem.icon className={mainNavIconClassName} strokeWidth={1.5} />
                     </NavigationLink>
                   </ul>
                 </li>
