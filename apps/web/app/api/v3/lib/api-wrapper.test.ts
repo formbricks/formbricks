@@ -26,6 +26,11 @@ const { mockQueueAuditEvent, mockBuildAuditLogBaseObject } = vi.hoisted(() => ({
   })),
 }));
 
+const { mockLoggerWarn, mockLoggerError } = vi.hoisted(() => ({
+  mockLoggerWarn: vi.fn(),
+  mockLoggerError: vi.fn(),
+}));
+
 vi.mock("next-auth", () => ({
   getServerSession: mockGetServerSession,
 }));
@@ -53,8 +58,8 @@ vi.mock("@/app/lib/api/with-api-logging", () => ({
 vi.mock("@formbricks/logger", () => ({
   logger: {
     withContext: vi.fn(() => ({
-      error: vi.fn(),
-      warn: vi.fn(),
+      error: mockLoggerError,
+      warn: mockLoggerWarn,
     })),
   },
 }));
@@ -294,6 +299,13 @@ describe("withV3ApiWrapper", () => {
     expect(response.status).toBe(401);
     expect(handler).not.toHaveBeenCalled();
     expect(response.headers.get("Content-Type")).toBe("application/problem+json");
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        statusCode: 401,
+        detail: "Not authenticated",
+      }),
+      "V3 API authentication failed"
+    );
   });
 
   test("returns 400 problem response for invalid query input", async () => {
@@ -325,6 +337,14 @@ describe("withV3ApiWrapper", () => {
     const body = await response.json();
     expect(body.invalid_params).toEqual(expect.arrayContaining([expect.objectContaining({ name: "limit" })]));
     expect(body.requestId).toBe("req-invalid");
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        statusCode: 400,
+        detail: "Invalid query parameters",
+        invalidParams: expect.arrayContaining([expect.objectContaining({ name: "limit" })]),
+      }),
+      "V3 API request validation failed"
+    );
   });
 
   test("parses body, repeated query params, and async route params", async () => {
@@ -413,6 +433,19 @@ describe("withV3ApiWrapper", () => {
         reason: "Malformed JSON input, please check your request body",
       },
     ]);
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        statusCode: 400,
+        detail: "Invalid request body",
+        invalidParams: [
+          {
+            name: "body",
+            reason: "Malformed JSON input, please check your request body",
+          },
+        ],
+      }),
+      "V3 API request validation failed"
+    );
   });
 
   test("returns 413 problem response for oversized JSON input", async () => {

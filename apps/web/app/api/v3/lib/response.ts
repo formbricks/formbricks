@@ -6,7 +6,7 @@
 const PROBLEM_JSON = "application/problem+json" as const;
 const CACHE_NO_STORE = "private, no-store" as const;
 
-export type InvalidParam = { name: string; reason: string };
+export type InvalidParam = { name: string; reason: string; identifier?: string };
 
 export type ProblemExtension = {
   code?: string;
@@ -181,4 +181,19 @@ export function successResponse<T>(
       headers,
     }
   );
+}
+
+export function noContentResponse(options?: { requestId?: string; cache?: string }): Response {
+  const headers: Record<string, string> = {
+    "Cache-Control": options?.cache ?? CACHE_NO_STORE,
+  };
+
+  if (options?.requestId) {
+    headers["X-Request-Id"] = options.requestId;
+  }
+
+  return new Response(null, {
+    status: 204,
+    headers,
+  });
 }
