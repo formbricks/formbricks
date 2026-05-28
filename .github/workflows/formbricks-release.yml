@@ -259,6 +259,15 @@ jobs:
         with:
           fetch-depth: 0
 
+      # Stamp the in-progress release with the tag version before completing it.
+      # complete only looks up a release by version, it never assigns one, so a
+      # versioned sync must run first (Linear's recommended scheduled-pipeline flow).
+      - name: Stamp Linear release version
+        uses: linear/linear-release-action@0353b5fa8c00326913966f00557d68f8f30b8b6b # v0.7.0
+        with:
+          access_key: ${{ secrets.LINEAR_ACCESS_KEY }}
+          version: ${{ github.event.release.tag_name }}
+
       - name: Complete Linear release
         uses: linear/linear-release-action@0353b5fa8c00326913966f00557d68f8f30b8b6b # v0.7.0
         with:

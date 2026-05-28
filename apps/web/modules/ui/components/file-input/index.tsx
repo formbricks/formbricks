@@ -259,6 +259,7 @@ export const FileInput = ({
                             />
                             {file.uploaded ? (
                               <button
+                                type="button"
                                 className="absolute right-2 top-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
                                 onClick={(e) => {
                                   e.preventDefault();
@@ -280,6 +281,7 @@ export const FileInput = ({
                             </p>
                             {file.uploaded ? (
                               <button
+                                type="button"
                                 className="absolute right-2 top-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
                                 onClick={(e) => {
                                   e.preventDefault();
@@ -324,6 +326,7 @@ export const FileInput = ({
                         />
                         {selectedFiles[0].uploaded ? (
                           <button
+                            type="button"
                             className="absolute right-2 top-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
                             onClick={(e) => {
                               e.preventDefault();
@@ -343,6 +346,7 @@ export const FileInput = ({
                         </p>
                         {selectedFiles[0].uploaded ? (
                           <button
+                            type="button"
                             className="absolute right-2 top-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
                             onClick={(e) => {
                               e.preventDefault();

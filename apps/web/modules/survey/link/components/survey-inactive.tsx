@@ -20,15 +20,11 @@ export const SurveyInactive = async ({
 }) => {
   const t = await getTranslate();
   const icons = {
-    paused: isScheduled ? (
-      <CalendarClockIcon className="h-20 w-20" />
-    ) : (
-      <PauseCircleIcon className="h-20 w-20" />
-    ),
-    completed: <CheckCircle2Icon className="h-20 w-20" />,
-    "link invalid": <HelpCircleIcon className="h-20 w-20" />,
-    "response submitted": <CheckCircle2Icon className="h-20 w-20" />,
-    "link expired": <CalendarClockIcon className="h-20 w-20" />,
+    paused: isScheduled ? <CalendarClockIcon className="size-20" /> : <PauseCircleIcon className="size-20" />,
+    completed: <CheckCircle2Icon className="size-20" />,
+    "link invalid": <HelpCircleIcon className="size-20" />,
+    "response submitted": <CheckCircle2Icon className="size-20" />,
+    "link expired": <CalendarClockIcon className="size-20" />,
   };
 
   const descriptions = {
@@ -63,7 +59,7 @@ export const SurveyInactive = async ({
 
   return (
     <div className="flex h-full flex-col items-center justify-between bg-gradient-to-br from-slate-200 to-slate-50 px-4 py-8 text-center">
-      <div className="my-auto flex flex-col items-center space-y-3 text-slate-300">
+      <div className="my-auto flex flex-col items-center gap-y-3 text-slate-300">
         {icons[status]}
         <h1 className="text-4xl font-bold text-slate-800">{title}</h1>
         <p className="text-lg leading-10 text-slate-500">{description}</p>

@@ -23,8 +23,8 @@ export const ColumnSettingsDropdown = <T,>({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="py-2 focus:outline-none">
-          <EllipsisVerticalIcon name="three-dots" className="h-4 w-4" />{" "}
+        <button type="button" className="py-2 focus:outline-none">
+          <EllipsisVerticalIcon name="three-dots" className="size-4" />{" "}
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -32,15 +32,15 @@ export const ColumnSettingsDropdown = <T,>({
           onClick={() => {
             column.toggleVisibility(false);
           }}
-          icon={<EyeOffIcon className="h-4 w-4" />}>
-          <div className="flex items-center space-x-2">
+          icon={<EyeOffIcon className="size-4" />}>
+          <div className="flex items-center gap-x-2">
             <span>{t("common.hide_column")}</span>
           </div>
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => setIsTableSettingsModalOpen(true)}
-          icon={<SettingsIcon className="h-4 w-4" />}>
-          <div className="flex items-center space-x-2">
+          icon={<SettingsIcon className="size-4" />}>
+          <div className="flex items-center gap-x-2">
             <span>{t("common.table_settings")}</span>
           </div>
         </DropdownMenuItem>

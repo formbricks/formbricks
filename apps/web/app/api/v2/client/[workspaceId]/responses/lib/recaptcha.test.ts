@@ -26,7 +26,7 @@ describe("verifyRecaptchaToken", () => {
     vi.useRealTimers();
   });
 
-  test("returns true if site key or secret key is missing", async () => {
+  test("returns false (fails closed) if site key or secret key is missing", async () => {
     vi.doMock("@/lib/constants", () => ({
       RECAPTCHA_SITE_KEY: undefined,
       RECAPTCHA_SECRET_KEY: undefined,
@@ -34,8 +34,8 @@ describe("verifyRecaptchaToken", () => {
     // Re-import to get new mocked values
     const { verifyRecaptchaToken: verifyWithNoKeys } = await import("./recaptcha");
     const result = await verifyWithNoKeys("token", 0.5);
-    expect(result).toBe(true);
-    expect(logger.warn).toHaveBeenCalledWith("reCAPTCHA verification skipped: keys not configured");
+    expect(result).toBe(false);
+    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining("reCAPTCHA verification rejected"));
   });
 
   test("returns false if fetch response is not ok", async () => {

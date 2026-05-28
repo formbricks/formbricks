@@ -97,7 +97,7 @@ export const DatePicker = ({
                 !formattedDate && "text-muted-foreground bg-slate-800"
               )}
               ref={btnRef}>
-              <CalendarCheckIcon className="mr-2 h-4 w-4" />
+              <CalendarCheckIcon className="mr-2 size-4" />
               {formattedDate}
             </Button>
           ) : (
@@ -109,7 +109,7 @@ export const DatePicker = ({
               )}
               onClick={() => setIsOpen(true)}
               ref={btnRef}>
-              <CalendarIcon className="mr-2 h-4 w-4" />
+              <CalendarIcon className="mr-2 size-4" />
               <span>{t("common.pick_a_date")}</span>
             </Button>
           )}
@@ -156,8 +156,8 @@ export const DatePicker = ({
           variant="outline"
           size="sm"
           onClick={handleClearDate}
-          className="h-8 w-8 p-0 hover:bg-slate-200">
-          <XIcon className="h-4 w-4" />
+          className="size-8 p-0 hover:bg-slate-200">
+          <XIcon className="size-4" />
         </Button>
       )}
     </div>

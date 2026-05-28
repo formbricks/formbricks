@@ -98,7 +98,7 @@ export const ActivityTimeline = ({
             type="button"
             onClick={toggleSort}
             className="flex items-center px-1 text-slate-800 hover:text-brand-dark">
-            <ArrowDownUpIcon className="inline h-4 w-4" />
+            <ArrowDownUpIcon className="inline size-4" />
           </button>
         </div>
       </div>

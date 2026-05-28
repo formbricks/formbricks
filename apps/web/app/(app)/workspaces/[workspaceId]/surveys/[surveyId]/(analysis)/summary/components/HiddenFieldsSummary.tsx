@@ -34,13 +34,13 @@ export const HiddenFieldsSummary = ({ elementSummary, locale }: HiddenFieldsSumm
           <h3 className="pb-1 text-lg font-semibold text-slate-900 md:text-xl">{elementSummary.id}</h3>
         </div>
 
-        <div className="flex space-x-2 text-xs font-semibold text-slate-600 md:text-sm">
+        <div className="flex gap-x-2 text-xs font-semibold text-slate-600 md:text-sm">
           <div className="flex items-center rounded-lg bg-slate-100 p-2">
-            <MessageSquareTextIcon className="mr-2 h-4 w-4" />
+            <MessageSquareTextIcon className="mr-2 size-4" />
             Hidden Field
           </div>
           <div className="flex items-center rounded-lg bg-slate-100 p-2">
-            <InboxIcon className="mr-2 h-4 w-4" />
+            <InboxIcon className="mr-2 size-4" />
             {t("common.count_responses", { count: elementSummary.responseCount })}
           </div>
         </div>

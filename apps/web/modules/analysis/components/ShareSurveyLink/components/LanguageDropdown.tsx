@@ -33,7 +33,7 @@ export const LanguageDropdown = ({ survey, setLanguage, locale }: LanguageDropdo
           variant="secondary"
           title={t("common.select_language")}
           aria-label={t("common.select_language")}>
-          <Languages className="h-5 w-5" />
+          <Languages className="size-5" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent

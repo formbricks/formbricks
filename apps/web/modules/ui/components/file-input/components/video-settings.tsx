@@ -91,9 +91,9 @@ export const VideoSettings = ({
   };
 
   return (
-    <div className="flex flex-col space-y-4">
+    <div className="flex flex-col gap-y-4">
       <Label>Video URL (YouTube, Vimeo, or Loom):</Label>
-      <div className="flex h-10 items-center space-x-2">
+      <div className="flex h-10 items-center gap-x-2">
         <Input
           className="w-full"
           placeholder="https://www.youtube.com/watch?v=VIDEO_ID"

@@ -68,7 +68,7 @@ const ElementCheckbox = ({
   };
 
   return (
-    <div className="my-1 flex items-center space-x-2">
+    <div className="my-1 flex items-center gap-x-2">
       <label htmlFor={element.id} className="flex cursor-pointer items-center">
         <Checkbox
           type="button"
@@ -330,7 +330,7 @@ export const AddIntegrationModal = ({
     <Dialog open={open} onOpenChange={setOpenWithStates}>
       <DialogContent className="overflow-visible md:overflow-visible">
         <DialogHeader>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-x-2">
             <div className="relative size-8">
               <Image
                 fill

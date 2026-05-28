@@ -75,7 +75,7 @@ export const EditWelcomeCard = ({
           "flex w-10 items-center justify-center rounded-l-lg border-b border-l border-t group-aria-expanded:rounded-bl-none",
           isInvalid ? "bg-red-400" : "bg-white group-hover:bg-slate-50"
         )}>
-        <Hand className="h-4 w-4" />
+        <Hand className="size-4" />
       </div>
       <Collapsible.Root
         open={open}
@@ -96,7 +96,7 @@ export const EditWelcomeCard = ({
               </div>
             </div>
 
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-x-2">
               <Label htmlFor="welcome-toggle">
                 {localSurvey?.welcomeCard?.enabled ? t("common.on") : t("common.off")}
               </Label>
@@ -174,7 +174,7 @@ export const EditWelcomeCard = ({
             </div>
 
             <div className="mt-3 flex justify-between gap-8">
-              <div className="flex w-full space-x-2">
+              <div className="flex w-full gap-x-2">
                 <div className="w-full">
                   <ElementFormInput
                     id="buttonLabel"

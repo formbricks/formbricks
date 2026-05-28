@@ -83,6 +83,24 @@ export function TimeDimensionPanel({
     }
   };
 
+  const handleDateRangeTypeChange = (value: "preset" | "custom") => {
+    setDateRangeType(value);
+    if (!timeDimension) return;
+
+    if (value === "preset") {
+      const nextPreset = presetValue || "last 30 days";
+      if (!presetValue) setPresetValue(nextPreset);
+      onTimeDimensionChange({ ...timeDimension, dateRange: nextPreset });
+      return;
+    }
+
+    const start = customStartDate ?? new Date();
+    const end = customEndDate ?? start;
+    if (!customStartDate) setCustomStartDate(start);
+    if (!customEndDate) setCustomEndDate(end);
+    onTimeDimensionChange({ ...timeDimension, dateRange: [start, end] });
+  };
+
   if (!timeDimension) {
     return (
       <div className="space-y-2">
@@ -150,7 +168,7 @@ export function TimeDimensionPanel({
           <div className="space-y-2">
             <Select
               value={dateRangeType}
-              onValueChange={(value) => setDateRangeType(value as "preset" | "custom")}>
+              onValueChange={(value) => handleDateRangeTypeChange(value as "preset" | "custom")}>
               <SelectTrigger className="w-full bg-white">
                 <SelectValue />
               </SelectTrigger>
@@ -183,7 +201,7 @@ export function TimeDimensionPanel({
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="outline" className="w-full justify-start bg-white text-left font-normal">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      <CalendarIcon className="mr-2 size-4" />
                       {customStartDate
                         ? format(customStartDate, "MMM dd, yyyy")
                         : t("workspace.analysis.charts.start_date")}
@@ -211,7 +229,7 @@ export function TimeDimensionPanel({
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button variant="outline" className="w-full justify-start bg-white text-left font-normal">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      <CalendarIcon className="mr-2 size-4" />
                       {customEndDate
                         ? format(customEndDate, "MMM dd, yyyy")
                         : t("workspace.analysis.charts.end_date")}

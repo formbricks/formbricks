@@ -42,7 +42,7 @@ export const CodeActionForm = ({ form, isReadOnly }: CodeActionFormProps) => {
         />
       </div>
       <Alert>
-        <Terminal className="h-4 w-4" />
+        <Terminal className="size-4" />
         <AlertTitle>{t("workspace.actions.how_do_code_actions_work")}</AlertTitle>
         <AlertDescription>
           {t("workspace.actions.you_can_track_code_action_anywhere_in_your_app_using")}

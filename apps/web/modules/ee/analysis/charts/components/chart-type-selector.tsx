@@ -34,8 +34,8 @@ export function ChartTypeSelector({
                   ? "border-brand-dark bg-brand-dark/5 ring-1 ring-brand-dark"
                   : "border-gray-200 hover:border-gray-300"
               }`}>
-              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded bg-gray-100">
-                <chart.icon className="h-6 w-6 text-gray-600" strokeWidth={1.5} />
+              <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded bg-gray-100">
+                <chart.icon className="size-6 text-gray-600" strokeWidth={1.5} />
               </div>
               <span className="text-sm font-medium text-gray-700">{chart.label}</span>
             </button>

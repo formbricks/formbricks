@@ -9,6 +9,7 @@ import {
   addLegacyProjectOverwrites,
   normaliseProjectOverwritesToWorkspace,
 } from "@/app/lib/api/api-backwards-compat";
+import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
 import { responses } from "@/app/lib/api/response";
 import {
   transformBlocksToQuestions,
@@ -21,6 +22,12 @@ import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
 import { hasPermission } from "@/modules/organization/settings/api-keys/lib/utils";
 import { resolveStorageUrlsInObject } from "@/modules/storage/utils";
+
+type TSurveyUpdateBody = Record<string, unknown> & {
+  blocks?: Parameters<typeof validateSurveyInput>[0]["blocks"];
+  endings?: Parameters<typeof transformQuestionsToBlocks>[1];
+  questions?: Parameters<typeof transformQuestionsToBlocks>[0];
+};
 
 const fetchAndAuthorizeSurvey = async (
   surveyId: string,
@@ -164,10 +171,16 @@ export const PUT = withV1ApiWrapper({
         };
       }
 
-      let surveyUpdate;
+      let surveyUpdate: TSurveyUpdateBody;
       try {
-        surveyUpdate = await req.json();
+        surveyUpdate = await parseJsonBodyWithLimit<TSurveyUpdateBody>(req);
       } catch (error) {
+        if (error instanceof RequestBodyTooLargeError) {
+          return {
+            response: responses.payloadTooLargeResponse("Payload Too Large", { error: error.message }),
+          };
+        }
+
         logger.error({ error, url: req.url }, "Error parsing JSON input");
         return {
           response: responses.badRequestResponse("Malformed JSON input, please check your request body"),
@@ -188,7 +201,7 @@ export const PUT = withV1ApiWrapper({
 
       if (hasQuestions) {
         surveyUpdate.blocks = transformQuestionsToBlocks(
-          surveyUpdate.questions,
+          surveyUpdate.questions ?? [],
           surveyUpdate.endings || result.survey.endings
         );
         surveyUpdate.questions = [];
@@ -208,7 +221,11 @@ export const PUT = withV1ApiWrapper({
         };
       }
 
-      const featureCheckResult = await checkFeaturePermissions(surveyUpdate, organization, result.survey);
+      const featureCheckResult = await checkFeaturePermissions(
+        surveyUpdate as Parameters<typeof checkFeaturePermissions>[0],
+        organization,
+        result.survey
+      );
       if (featureCheckResult) {
         return {
           response: featureCheckResult,

@@ -74,6 +74,7 @@ const FollowUpActionMultiEmailInput = ({
             className="group flex items-center gap-1 rounded border border-slate-200 bg-slate-100 px-2 py-1 text-sm">
             <span className="text-slate-900">{email}</span>
             <button
+              type="button"
               onClick={() => removeEmail(index)}
               className="px-1 text-lg font-medium leading-none text-slate-500">
               ×

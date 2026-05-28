@@ -246,7 +246,7 @@ export const AnonymousLinksTab = ({
 
   return (
     <>
-      <div className="flex h-full flex-col justify-between space-y-4">
+      <div className="flex h-full flex-col justify-between gap-y-4">
         <div className="flex w-full grow flex-col gap-6">
           <AdvancedOptionToggle
             htmlId="multi-use-link-switch"
@@ -354,7 +354,7 @@ export const AnonymousLinksTab = ({
                         onClick={() => handleGenerateLinks(Number(numberOfLinks) || 1)}
                         disabled={Number(numberOfLinks) < 1 || Number(numberOfLinks) > 5000}>
                         <div className="flex items-center gap-2">
-                          <CirclePlayIcon className="h-3.5 w-3.5 shrink-0 text-slate-50" />
+                          <CirclePlayIcon className="size-3.5 shrink-0 text-slate-50" />
                         </div>
 
                         <span className="text-sm text-slate-50">

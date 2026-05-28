@@ -70,7 +70,7 @@ export function ConnectorRowDropdown({
         <DropdownMenuTrigger className="z-10" asChild>
           <div className="cursor-pointer rounded-lg border bg-white p-2 hover:bg-slate-50">
             <span className="sr-only">{t("workspace.surveys.open_options")}</span>
-            <MoreVertical className="h-4 w-4" aria-hidden="true" />
+            <MoreVertical className="size-4" aria-hidden="true" />
           </div>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="inline-block w-auto min-w-max">
@@ -86,7 +86,7 @@ export function ConnectorRowDropdown({
                       setIsDropDownOpen(false);
                       onCsvImport();
                     }}>
-                    <FileSpreadsheetIcon className="mr-2 h-4 w-4" />
+                    <FileSpreadsheetIcon className="mr-2 size-4" />
                     {t("workspace.unify.import_csv_data")}
                   </button>
                 </DropdownMenuItem>
@@ -105,7 +105,7 @@ export function ConnectorRowDropdown({
                       setIsDropDownOpen(false);
                       router.push(`/workspaces/${connector.workspaceId}/surveys/${linkedSurveyId}/summary`);
                     }}>
-                    <EyeIcon className="mr-2 h-4 w-4" />
+                    <EyeIcon className="mr-2 size-4" />
                     {`${t("common.view")} ${t("common.survey")}`}
                   </button>
                 </DropdownMenuItem>
@@ -122,7 +122,7 @@ export function ConnectorRowDropdown({
                   setIsDropDownOpen(false);
                   onEdit();
                 }}>
-                <SquarePenIcon className="mr-2 h-4 w-4" />
+                <SquarePenIcon className="mr-2 size-4" />
                 {t("common.edit")}
               </button>
             </DropdownMenuItem>
@@ -136,7 +136,7 @@ export function ConnectorRowDropdown({
                   setIsDropDownOpen(false);
                   await onDuplicate();
                 }}>
-                <CopyIcon className="mr-2 h-4 w-4" />
+                <CopyIcon className="mr-2 size-4" />
                 {t("common.duplicate")}
               </button>
             </DropdownMenuItem>
@@ -150,7 +150,7 @@ export function ConnectorRowDropdown({
                   setIsDropDownOpen(false);
                   await onToggleStatus();
                 }}>
-                {isActive ? <PauseIcon className="mr-2 h-4 w-4" /> : <PlayIcon className="mr-2 h-4 w-4" />}
+                {isActive ? <PauseIcon className="mr-2 size-4" /> : <PlayIcon className="mr-2 h-4 w-4" />}
                 {isActive ? t("common.disable") : t("common.enable")}
               </button>
             </DropdownMenuItem>
@@ -164,7 +164,7 @@ export function ConnectorRowDropdown({
                   setIsDropDownOpen(false);
                   setIsDeleteDialogOpen(true);
                 }}>
-                <TrashIcon className="mr-2 h-4 w-4" />
+                <TrashIcon className="mr-2 size-4" />
                 {t("common.delete")}
               </button>
             </DropdownMenuItem>

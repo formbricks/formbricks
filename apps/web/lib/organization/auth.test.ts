@@ -38,7 +38,6 @@ describe("auth", () => {
             usageCycleAnchor: new Date(),
           },
           isAISmartToolsEnabled: false,
-          isAIDataAnalysisEnabled: false,
         },
       ];
       vi.mocked(getOrganizationsByUserId).mockResolvedValue(mockOrganizations);

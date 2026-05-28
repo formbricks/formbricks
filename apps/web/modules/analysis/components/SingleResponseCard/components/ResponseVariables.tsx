@@ -23,16 +23,16 @@ export const ResponseVariables = ({ variables, variablesData }: HiddenFieldsProp
           return null;
         return (
           <div key={variable.id}>
-            <div className="flex space-x-2 text-sm text-slate-500">
+            <div className="flex gap-x-2 text-sm text-slate-500">
               <p>{variable.name}</p>
-              <div className="flex items-center space-x-2 rounded-full bg-slate-100 px-2">
+              <div className="flex items-center gap-x-2 rounded-full bg-slate-100 px-2">
                 <TooltipProvider delayDuration={50}>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       {variable.type === "number" ? (
-                        <FileDigitIcon className="h-4 w-4" />
+                        <FileDigitIcon className="size-4" />
                       ) : (
-                        <FileType2Icon className="h-4 w-4" />
+                        <FileType2Icon className="size-4" />
                       )}
                     </TooltipTrigger>
                     <TooltipContent className="max-w-[300px]" side="top">

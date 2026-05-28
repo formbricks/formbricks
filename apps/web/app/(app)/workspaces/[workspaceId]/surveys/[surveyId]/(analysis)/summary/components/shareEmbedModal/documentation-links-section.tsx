@@ -20,7 +20,7 @@ export const DocumentationLinksSection = ({ title, links }: DocumentationLinksSe
   const { t } = useTranslation();
 
   return (
-    <div className="flex w-full flex-col space-y-3">
+    <div className="flex w-full flex-col gap-y-3">
       <H4>{title}</H4>
       {links.map((link) => (
         <Alert key={link.title} size="small" variant="default">

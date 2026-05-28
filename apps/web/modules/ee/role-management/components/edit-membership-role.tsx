@@ -112,10 +112,9 @@ export function EditMembershipRole({
             disabled={disableRole}
             loading={loading}
             size="sm"
-            variant="secondary"
-            role="button-role">
+            variant="secondary">
             <span className="ml-1 capitalize">{memberRole}</span>
-            <ChevronDownIcon className="h-4 w-4" />
+            <ChevronDownIcon className="size-4" />
           </Button>
         </DropdownMenuTrigger>
         {!disableRole && (
@@ -138,5 +137,5 @@ export function EditMembershipRole({
     );
   }
 
-  return <Badge size="tiny" type="gray" role="badge-role" text={memberRole} className="capitalize" />;
+  return <Badge size="tiny" type="gray" text={memberRole} className="capitalize" />;
 }

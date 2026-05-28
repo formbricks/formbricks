@@ -1,0 +1,31 @@
+---
+title: "Feedback Directories"
+description: "Org-level containers that group related Feedback Records and their sources."
+icon: "folder-tree"
+---
+
+A **Feedback Directory** is the top-level container for feedback inside an organization. Every Feedback Record belongs to exactly one directory, and every source writes into a single directory.
+
+## When to create a new directory
+
+Create one directory per logically separate dataset. Common patterns:
+
+- **By product line** (e.g. "Mobile devices", "Web apps")
+- **By stakeholder group** (e.g. "Customers", "Employees")
+- **By region** (e.g. "Europe", "North America")
+
+## Workspace access
+
+Directories live at the **organization** level but are exposed to **workspaces** through an access list. Each workspace can **only access one directory.**
+
+Manage directory access from **Organization Settings → Feedback Directories**:
+
+- Create new directories
+- Rename or archive directories
+- Add or remove workspace access
+
+Only **Owners** and **Managers** can manage directories. Workspace members see the directories their workspace has access to inside the Unify section.
+
+## Archiving
+
+Archiving a directory hides it from default views but does not delete its records. Use it for one-off programs that have ended.

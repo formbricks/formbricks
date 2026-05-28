@@ -42,6 +42,7 @@ const ScrollToTop: React.FC<ScrollToTopProps> = ({ containerId }) => {
 
   return (
     <button
+      type="button"
       onClick={scrollToTop}
       className={`fixed bottom-4 right-4 z-[1] flex h-10 w-10 justify-center rounded-md bg-slate-500 p-2 text-white transition-opacity ${
         showButton ? "opacity-80" : "opacity-0"

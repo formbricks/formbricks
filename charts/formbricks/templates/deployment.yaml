@@ -79,7 +79,7 @@ spec:
       terminationGracePeriodSeconds: {{ .Values.deployment.terminationGracePeriodSeconds | default 30 }}
       containers:
         - name: {{ template "formbricks.name" . }}
-          image: {{ .Values.deployment.image.repository }}:{{ .Values.deployment.image.tag | default .Chart.AppVersion | default "latest" }}
+          image: {{ include "formbricks.deploymentImage" . }}
           imagePullPolicy: {{ .Values.deployment.image.pullPolicy }}
           {{- if .Values.deployment.command }}
           command:
@@ -134,6 +134,10 @@ spec:
             {{- if not (hasKey .Values.deployment.env "HUB_API_URL") }}
             - name: HUB_API_URL
               value: "http://{{ include "formbricks.hubname" . }}:8080"
+            {{- end }}
+            {{- if and .Values.cube.enabled (not (hasKey .Values.deployment.env "CUBEJS_API_URL")) }}
+            - name: CUBEJS_API_URL
+              value: "http://{{ include "formbricks.cubeName" . }}:{{ .Values.cube.service.port }}"
             {{- end }}
             {{- range $key, $value := .Values.deployment.env }}
             {{- include "formbricks.envVar" (dict "name" $key "value" $value "context" $) | nindent 12 }}

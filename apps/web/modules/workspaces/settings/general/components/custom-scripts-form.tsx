@@ -67,9 +67,9 @@ export const CustomScriptsForm: React.FC<CustomScriptsFormProps> = ({ workspace,
   return (
     <>
       <FormProvider {...form}>
-        <form className="flex w-full flex-col space-y-4" onSubmit={form.handleSubmit(updateCustomScripts)}>
+        <form className="flex w-full flex-col gap-y-4" onSubmit={form.handleSubmit(updateCustomScripts)}>
           <Alert variant="warning" className="flex items-start gap-2">
-            <AlertTriangleIcon className="mt-0.5 h-4 w-4 shrink-0" />
+            <AlertTriangleIcon className="mt-0.5 size-4 shrink-0" />
             <AlertDescription>{t("workspace.general.custom_scripts_warning")}</AlertDescription>
           </Alert>
 

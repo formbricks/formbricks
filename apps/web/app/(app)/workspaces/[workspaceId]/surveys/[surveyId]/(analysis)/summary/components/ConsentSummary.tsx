@@ -41,6 +41,7 @@ export const ConsentSummary = ({ elementSummary, survey, setFilter }: ConsentSum
         {summaryItems.map((summaryItem) => {
           return (
             <button
+              type="button"
               className="group w-full cursor-pointer"
               key={summaryItem.title}
               onClick={() =>
@@ -53,7 +54,7 @@ export const ConsentSummary = ({ elementSummary, survey, setFilter }: ConsentSum
                 )
               }>
               <div className="text flex justify-between px-2 pb-2">
-                <div className="mr-8 flex space-x-1">
+                <div className="mr-8 flex gap-x-1">
                   <p className="font-semibold text-slate-700 underline-offset-4 group-hover:underline">
                     {summaryItem.title}
                   </p>

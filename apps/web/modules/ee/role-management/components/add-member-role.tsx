@@ -59,7 +59,7 @@ export function AddMemberRole({
       control={control}
       name="role"
       render={({ field: { onChange, value } }) => (
-        <div className="flex flex-col space-y-2">
+        <div className="flex flex-col gap-y-2">
           <Label>{t("workspace.settings.teams.organization_role")}</Label>
           <Select
             defaultValue={isAccessControlAllowed ? "member" : "owner"}

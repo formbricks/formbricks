@@ -60,6 +60,18 @@ export const GET = withV1ApiWrapper({
 
       // Use optimized environment state fetcher with new caching approach
       const workspace = await getWorkspaceState(workspaceId);
+
+      // Guard against unexpected empty state before destructuring.
+      if (!workspace?.data) {
+        logger.error(
+          { workspaceId, url: req.url },
+          "getWorkspaceState returned unexpected null/empty payload"
+        );
+        return {
+          response: responses.notFoundResponse("Workspace", workspaceId),
+        };
+      }
+
       const { data } = workspace;
 
       return {

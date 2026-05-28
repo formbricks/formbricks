@@ -1,6 +1,5 @@
 "use client";
 
-import { parse } from "csv-parse/sync";
 import { ArrowUpFromLineIcon, FileUpIcon, PlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -13,6 +12,11 @@ import { isSafeIdentifier } from "@/lib/utils/safe-identifier";
 import { createContactsFromCSVAction } from "@/modules/ee/contacts/actions";
 import { CsvTable } from "@/modules/ee/contacts/components/csv-table";
 import { UploadContactsAttributes } from "@/modules/ee/contacts/components/upload-contacts-attribute";
+import {
+  RESERVED_FUTURE_DEFAULT_ATTRIBUTE_SAFE_IDENTIFIER_KEYS_TEXT,
+  isReservedFutureDefaultAttributeKey,
+} from "@/modules/ee/contacts/lib/attribute-key-policy";
+import { parseContactsCSV } from "@/modules/ee/contacts/lib/parse-contacts-csv";
 import { TContactCSVUploadResponse, ZContactCSVUploadResponse } from "@/modules/ee/contacts/types/contact";
 import { Alert } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -76,10 +80,7 @@ export const UploadContactsCSVButton = ({
       const csv = e.target?.result as string;
 
       try {
-        const records = parse(csv, {
-          columns: true, // Parse the header as column names
-          skip_empty_lines: true, // Skip empty lines
-        });
+        const records = parseContactsCSV(csv);
 
         const parsedRecords = ZContactCSVUploadResponse.safeParse(records);
         if (!parsedRecords.success) {
@@ -257,7 +258,6 @@ export const UploadContactsCSVButton = ({
 
   useEffect(() => {
     const matches: Record<string, string> = {};
-    const invalidColumns: string[] = [];
 
     for (const columnName of csvColumns) {
       let matched = false;
@@ -270,32 +270,74 @@ export const UploadContactsCSVButton = ({
       }
 
       if (!matched) {
-        // This column will become a new attribute - validate it's a safe identifier
-        if (!isSafeIdentifier(columnName)) {
-          invalidColumns.push(columnName);
-        }
         matches[columnName] = columnName;
       }
     }
 
     setAttributeMap(matches);
+  }, [contactAttributeKeys, csvColumns]);
 
-    // Show error for invalid column names that would become new attributes
+  useEffect(() => {
+    if (!csvColumns.length || !csvResponse.length) {
+      return;
+    }
+
+    const invalidColumns: string[] = [];
+    const reservedColumns: string[] = [];
+
+    for (const columnName of csvColumns) {
+      const mappedAttribute = attributeMap[columnName];
+      if (!mappedAttribute) {
+        continue;
+      }
+
+      const mapsToExistingAttribute = contactAttributeKeys.some(
+        (attributeKey) => attributeKey.id === mappedAttribute
+      );
+
+      if (mapsToExistingAttribute) {
+        continue;
+      }
+
+      if (!isSafeIdentifier(mappedAttribute)) {
+        invalidColumns.push(columnName);
+        continue;
+      }
+
+      if (isReservedFutureDefaultAttributeKey(mappedAttribute)) {
+        reservedColumns.push(columnName);
+      }
+    }
+
+    const errorMessages: string[] = [];
+
     if (invalidColumns.length > 0) {
-      setError(
+      errorMessages.push(
         t("workspace.contacts.invalid_csv_column_names", {
           columns: invalidColumns.join(", "),
         })
       );
     }
-  }, [contactAttributeKeys, csvColumns, t]);
+
+    if (reservedColumns.length > 0) {
+      errorMessages.push(
+        t("workspace.contacts.invalid_csv_reserved_column_names", {
+          columns: reservedColumns.join(", "),
+          reservedKeys: RESERVED_FUTURE_DEFAULT_ATTRIBUTE_SAFE_IDENTIFIER_KEYS_TEXT,
+        })
+      );
+    }
+
+    setError(errorMessages.join("\n"));
+  }, [attributeMap, contactAttributeKeys, csvColumns, csvResponse.length, t]);
 
   useEffect(() => {
     if (error && errorContainerRef.current) {
       // Small delay to ensure DOM has updated and the alert is visible
-      setTimeout(() => {
+      const timeoutId = setTimeout(() => {
         errorContainerRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
       }, 100);
+      return () => clearTimeout(timeoutId);
     }
   }, [error]);
 
@@ -304,7 +346,7 @@ export const UploadContactsCSVButton = ({
     const exampleData = [
       {
         email: "user1@example.com",
-        userId: "1001",
+        user_id: "1001",
         first_name: "John",
         last_name: "Doe",
         age: "28",
@@ -313,7 +355,7 @@ export const UploadContactsCSVButton = ({
       },
       {
         email: "user2@example.com",
-        userId: "1002",
+        user_id: "1002",
         first_name: "Jane",
         last_name: "Smith",
         age: "34",
@@ -322,7 +364,7 @@ export const UploadContactsCSVButton = ({
       },
       {
         email: "user3@example.com",
-        userId: "1003",
+        user_id: "1003",
         first_name: "Mark",
         last_name: "Jones",
         age: "45",
@@ -331,7 +373,7 @@ export const UploadContactsCSVButton = ({
       },
       {
         email: "user4@example.com",
-        userId: "1004",
+        user_id: "1004",
         first_name: "Emily",
         last_name: "Brown",
         age: "22",
@@ -340,7 +382,7 @@ export const UploadContactsCSVButton = ({
       },
       {
         email: "user5@example.com",
-        userId: "1005",
+        user_id: "1005",
         first_name: "David",
         last_name: "Wilson",
         age: "31",

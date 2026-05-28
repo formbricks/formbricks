@@ -4,6 +4,10 @@ import { ChevronDownIcon } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { isSafeIdentifier } from "@/lib/utils/safe-identifier";
+import {
+  RESERVED_FUTURE_DEFAULT_ATTRIBUTE_SAFE_IDENTIFIER_KEYS_TEXT,
+  isReservedFutureDefaultAttributeKey,
+} from "@/modules/ee/contacts/lib/attribute-key-policy";
 import { Button } from "@/modules/ui/components/button";
 import {
   Command,
@@ -41,6 +45,8 @@ export const UploadContactsAttributeCombobox = ({
   currentKey,
 }: ITagsComboboxProps) => {
   const { t } = useTranslation();
+  const normalizedSearchValue = searchValue.trim();
+
   useEffect(() => {
     // reset search value and value when closing the combobox
     if (!open) {
@@ -50,18 +56,55 @@ export const UploadContactsAttributeCombobox = ({
 
   // Check if the search value is a valid safe identifier for creating new attributes
   const isValidNewKey = useMemo(() => {
-    if (!searchValue) return false;
-    return isSafeIdentifier(searchValue.trim());
-  }, [searchValue]);
+    if (!normalizedSearchValue) return false;
+    return isSafeIdentifier(normalizedSearchValue);
+  }, [normalizedSearchValue]);
+
+  const isReservedNewKey = useMemo(() => {
+    if (!normalizedSearchValue) return false;
+    return isReservedFutureDefaultAttributeKey(normalizedSearchValue);
+  }, [normalizedSearchValue]);
 
   const existingKeyMatch = useMemo(() => {
     return keys.find((tag) => tag?.label?.toLowerCase().includes(searchValue?.toLowerCase()));
   }, [keys, searchValue]);
 
   const handleCreateKey = () => {
-    if (isValidNewKey && !existingKeyMatch) {
-      createKey(searchValue.trim());
+    if (isValidNewKey && !existingKeyMatch && !isReservedNewKey) {
+      createKey(normalizedSearchValue);
     }
+  };
+
+  const renderCreateOptionContent = () => {
+    if (isValidNewKey && !isReservedNewKey) {
+      return (
+        <button
+          type="button"
+          onClick={handleCreateKey}
+          className="h-8 w-full text-left hover:cursor-pointer hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+          disabled={!!existingKeyMatch}>
+          + {t("common.add")} {normalizedSearchValue}
+        </button>
+      );
+    }
+
+    if (isReservedNewKey) {
+      return (
+        <div className="flex flex-col py-1 text-xs text-slate-500">
+          <span className="text-red-500">
+            {t("workspace.contacts.attribute_key_reserved_future_default", {
+              reservedKeys: RESERVED_FUTURE_DEFAULT_ATTRIBUTE_SAFE_IDENTIFIER_KEYS_TEXT,
+            })}
+          </span>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex flex-col py-1 text-xs text-slate-500">
+        <span className="text-red-500">{t("workspace.contacts.attribute_key_safe_identifier_required")}</span>
+      </div>
+    );
   };
 
   return (
@@ -74,7 +117,7 @@ export const UploadContactsAttributeCombobox = ({
             className="justify-between border border-slate-300"
             aria-expanded={open}>
             {currentKey.label}
-            <ChevronDownIcon className="h-4 w-4 opacity-50" />
+            <ChevronDownIcon className="size-4 opacity-50" />
           </Button>
         ) : (
           <Button
@@ -83,7 +126,7 @@ export const UploadContactsAttributeCombobox = ({
             className="justify-between border border-slate-300"
             aria-expanded={open}>
             {t("workspace.contacts.select_attribute")}
-            <ChevronDownIcon className="h-4 w-4 opacity-50" />
+            <ChevronDownIcon className="size-4 opacity-50" />
           </Button>
         )}
       </PopoverTrigger>
@@ -135,22 +178,7 @@ export const UploadContactsAttributeCombobox = ({
                 );
               })}
               {searchValue !== "" && !keys.some((tag) => tag.label === searchValue) && (
-                <CommandItem value="_create">
-                  {isValidNewKey ? (
-                    <button
-                      onClick={handleCreateKey}
-                      className="h-8 w-full text-left hover:cursor-pointer hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-                      disabled={!!existingKeyMatch}>
-                      + Add {searchValue}
-                    </button>
-                  ) : (
-                    <div className="flex flex-col py-1 text-xs text-slate-500">
-                      <span className="text-red-500">
-                        {t("workspace.contacts.attribute_key_safe_identifier_required")}
-                      </span>
-                    </div>
-                  )}
-                </CommandItem>
+                <CommandItem value="_create">{renderCreateOptionContent()}</CommandItem>
               )}
             </CommandGroup>
           </CommandList>

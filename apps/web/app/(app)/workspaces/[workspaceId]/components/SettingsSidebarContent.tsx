@@ -195,12 +195,12 @@ const SectionHeader = ({
         <DropdownMenu onOpenChange={(open) => open && onSwitcherOpen?.()}>
           <DropdownMenuTrigger className="ml-auto flex min-w-0 max-w-[50%] items-center gap-1 rounded-md border border-slate-200 px-2 py-0.5 text-xs text-slate-600 hover:bg-slate-50">
             <span className="truncate">{switcherName}</span>
-            <ChevronDownIcon className="h-3 w-3" />
+            <ChevronDownIcon className="size-3" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="max-h-[300px]">
             {isLoadingSwitcher ? (
               <div className="flex items-center justify-center py-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="size-4 animate-spin" />
               </div>
             ) : (
               <DropdownMenuGroup className="overflow-y-auto">
@@ -374,7 +374,6 @@ export const SettingsSidebarContent = ({
       label: t("common.your_profile"),
       href: `${basePath}/account/profile`,
       icon: <UserCircleIcon className={iconClassName} />,
-      disabled: isBilling,
     },
     {
       id: "notifications",
@@ -409,7 +408,7 @@ export const SettingsSidebarContent = ({
     <div className="flex flex-col overflow-y-auto">
       <div>
         <SectionHeader
-          icon={<FoldersIcon className="h-4 w-4" />}
+          icon={<FoldersIcon className="size-4" />}
           label={t("common.workspace")}
           isCollapsed={isCollapsed}
           isTextVisible={isTextVisible}
@@ -425,7 +424,7 @@ export const SettingsSidebarContent = ({
 
       <div>
         <SectionHeader
-          icon={<Building2Icon className="h-4 w-4" />}
+          icon={<Building2Icon className="size-4" />}
           label={t("common.organization")}
           isCollapsed={isCollapsed}
           isTextVisible={isTextVisible}
@@ -441,7 +440,7 @@ export const SettingsSidebarContent = ({
 
       <div>
         <SectionHeader
-          icon={<UserCircleIcon className="h-4 w-4" />}
+          icon={<UserCircleIcon className="size-4" />}
           label={t("common.account")}
           isCollapsed={isCollapsed}
           isTextVisible={isTextVisible}

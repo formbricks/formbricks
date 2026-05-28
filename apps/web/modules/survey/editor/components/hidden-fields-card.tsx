@@ -234,7 +234,7 @@ export const HiddenFieldsCard = ({
             <div className="flex items-center pl-2 pr-5">
               <CheckIcon
                 strokeWidth={3}
-                className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
+                className="size-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
               />
             </div>
             <div>
@@ -257,7 +257,7 @@ export const HiddenFieldsCard = ({
           open ? "bg-slate-50" : "bg-white group-hover:bg-slate-50",
           "flex w-10 items-center justify-center rounded-l-lg border-b border-l border-t group-aria-expanded:rounded-bl-none"
         )}>
-        <EyeOff className="h-4 w-4" />
+        <EyeOff className="size-4" />
       </div>
       <Collapsible.Root
         open={open}

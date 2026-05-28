@@ -36,7 +36,7 @@ export function CreateChartButton({
   return (
     <>
       <Button size="sm" onClick={() => setIsDialogOpen(true)} {...buttonProps}>
-        {showIcon && <PlusIcon className="mr-2 h-4 w-4" />}
+        {showIcon && <PlusIcon className="mr-2 size-4" />}
         {label ?? t("workspace.analysis.charts.create_chart")}
       </Button>
       <CreateChartDialog

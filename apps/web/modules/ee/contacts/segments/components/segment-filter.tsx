@@ -153,7 +153,7 @@ function SegmentFilterItemContextMenu({
       <DropdownMenu>
         <DropdownMenuTrigger asChild disabled={viewOnly}>
           <Button variant="outline" size="icon">
-            <MoreVertical className="h-4 w-4" />
+            <MoreVertical className="size-4" />
           </Button>
         </DropdownMenuTrigger>
 
@@ -175,14 +175,14 @@ function SegmentFilterItemContextMenu({
             onClick={() => {
               onMoveFilter(filterId, "up");
             }}
-            icon={<ArrowUpIcon className="h-4 w-4" />}>
+            icon={<ArrowUpIcon className="size-4" />}>
             {t("common.move_up")}
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => {
               onMoveFilter(filterId, "down");
             }}
-            icon={<ArrowDownIcon className="h-4 w-4" />}>
+            icon={<ArrowDownIcon className="size-4" />}>
             {t("common.move_down")}
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -559,7 +559,7 @@ function PersonSegmentFilter({
           hideArrow>
           <SelectValue>
             <div className="flex items-center gap-1 lowercase">
-              <FingerprintIcon className="h-4 w-4 text-sm" />
+              <FingerprintIcon className="size-4 text-sm" />
               <p>{personIdentifier}</p>
             </div>
           </SelectValue>
@@ -710,7 +710,7 @@ function SegmentSegmentFilter({
           className="flex w-auto items-center justify-center whitespace-nowrap bg-white"
           hideArrow>
           <div className="flex items-center gap-1">
-            <Users2Icon className="h-4 w-4 text-sm" />
+            <Users2Icon className="size-4 text-sm" />
             <SelectValue />
           </div>
         </SelectTrigger>
@@ -791,7 +791,7 @@ function DeviceFilter({
       />
 
       <div className="flex h-10 items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2">
-        <MonitorSmartphoneIcon className="h-4 w-4" />
+        <MonitorSmartphoneIcon className="size-4" />
         <p>Device</p>
       </div>
 
@@ -811,7 +811,9 @@ function DeviceFilter({
 
         <SelectContent>
           {operatorArr.map((operator) => (
-            <SelectItem value={operator.id}>{operator.name}</SelectItem>
+            <SelectItem key={operator.id} value={operator.id}>
+              {operator.name}
+            </SelectItem>
           ))}
         </SelectContent>
       </Select>
@@ -831,7 +833,9 @@ function DeviceFilter({
             { id: "desktop", name: t("workspace.segments.desktop") },
             { id: "phone", name: t("workspace.segments.phone") },
           ].map((operator) => (
-            <SelectItem value={operator.id}>{operator.name}</SelectItem>
+            <SelectItem key={operator.id} value={operator.id}>
+              {operator.name}
+            </SelectItem>
           ))}
         </SelectContent>
       </Select>

@@ -11,7 +11,7 @@ export const EmptyAppSurveys = () => {
   const { workspace } = useWorkspace();
   return (
     <div className="flex w-full items-center justify-center gap-8 bg-slate-100 py-12">
-      <div className="flex h-20 w-20 items-center justify-center rounded-full border border-slate-200 bg-white">
+      <div className="flex size-20 items-center justify-center rounded-full border border-slate-200 bg-white">
         <Unplug size={48} className="text-amber-500" absoluteStrokeWidth />
       </div>
 

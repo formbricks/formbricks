@@ -11,7 +11,12 @@ type CacheService = {
   set(key: string, value: unknown, ttlMs?: number): Promise<CacheResult<void>>;
   del(keys: string[]): Promise<CacheResult<void>>;
   tryLock(key: string, value: string, ttlMs: number): Promise<CacheResult<boolean>>;
-  withCache<T>(fn: () => Promise<T>, key: string, ttlMs: number): Promise<T>;
+  withCache<T extends NonNullable<unknown>>(fn: () => Promise<T>, key: string, ttlMs: number): Promise<T>;
+  withCacheNullable<T extends NonNullable<unknown>>(
+    fn: () => Promise<T | null>,
+    key: string,
+    ttlMs: number
+  ): Promise<T | null>;
   getRedisClient(): RedisClientType | null;
 };
 
@@ -31,7 +36,7 @@ export const cache = new Proxy({} as AsyncCacheService, {
   get(_target, prop: keyof CacheService) {
     // Special-case: withCache must never fail; fall back to direct fn on init failure.
     if (prop === "withCache") {
-      return async <T>(fn: () => Promise<T>, ...rest: [string, number]) => {
+      return async <T extends NonNullable<unknown>>(fn: () => Promise<T>, ...rest: [string, number]) => {
         try {
           const cacheServiceResult = await getCacheService();
 
@@ -41,6 +46,27 @@ export const cache = new Proxy({} as AsyncCacheService, {
 
           const cacheService = cacheServiceResult.data as CacheService;
           return cacheService.withCache(fn, ...rest);
+        } catch (error) {
+          logger.warn({ error }, "Cache unavailable; executing function directly");
+          return await fn();
+        }
+      };
+    }
+
+    if (prop === "withCacheNullable") {
+      return async <T extends NonNullable<unknown>>(
+        fn: () => Promise<T | null>,
+        ...rest: [string, number]
+      ) => {
+        try {
+          const cacheServiceResult = await getCacheService();
+
+          if (!cacheServiceResult.ok) {
+            return await fn();
+          }
+
+          const cacheService = cacheServiceResult.data as CacheService;
+          return cacheService.withCacheNullable(fn, ...rest);
         } catch (error) {
           logger.warn({ error }, "Cache unavailable; executing function directly");
           return await fn();

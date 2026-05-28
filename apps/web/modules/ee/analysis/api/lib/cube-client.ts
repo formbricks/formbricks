@@ -3,6 +3,7 @@ import cubejs, { type Query } from "@cubejs-client/core";
 import { randomUUID } from "node:crypto";
 import { logger } from "@formbricks/logger";
 import type { TChartQuery } from "@formbricks/types/analysis";
+import { expandPresetDateRanges } from "@/modules/ee/analysis/lib/date-presets";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { type TCubeQuerySource, getCubeApiConfig } from "./cube-config";
@@ -89,7 +90,7 @@ export async function executeTenantScopedQuery(input: TScopedCubeQueryInput) {
 
   try {
     const client = cubejs(token, { apiUrl });
-    const resultSet = await client.load(input.query as Query);
+    const resultSet = await client.load(expandPresetDateRanges(input.query) as Query);
     const result = resultSet.tablePivot();
     queueCubeQueryAuditEvent({ input, requestId, status: "success" });
     return result;

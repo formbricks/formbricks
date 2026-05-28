@@ -88,7 +88,7 @@ export const DisableTwoFactorModal = ({ open, setOpen }: DisableTwoFactorModalPr
         </DialogHeader>
 
         <FormProvider {...form}>
-          <form className="flex flex-col space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
+          <form className="flex flex-col gap-y-6" onSubmit={form.handleSubmit(onSubmit)}>
             <DialogBody className="space-y-6">
               <div className="flex flex-col gap-2">
                 <label htmlFor="password" className="text-sm font-medium text-slate-700">
@@ -186,7 +186,7 @@ export const DisableTwoFactorModal = ({ open, setOpen }: DisableTwoFactorModalPr
                   {backupCodeInputVisible ? t("common.go_back") : t("workspace.settings.profile.lost_access")}
                 </Button>
               </div>
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center gap-x-4">
                 <Button
                   variant="secondary"
                   type="button"

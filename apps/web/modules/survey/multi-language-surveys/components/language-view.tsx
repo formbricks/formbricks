@@ -371,7 +371,7 @@ export const LanguageView = ({
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <button type="button" className="rounded p-1 hover:bg-slate-100">
-                            <EllipsisVerticalIcon className="h-4 w-4 text-slate-500" />
+                            <EllipsisVerticalIcon className="size-4 text-slate-500" />
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
@@ -442,7 +442,7 @@ export const LanguageView = ({
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                   <button type="button" className="rounded p-1 hover:bg-slate-100">
-                                    <EllipsisVerticalIcon className="h-4 w-4 text-slate-500" />
+                                    <EllipsisVerticalIcon className="size-4 text-slate-500" />
                                   </button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
@@ -472,7 +472,7 @@ export const LanguageView = ({
           <Button asChild size="sm" variant="secondary">
             <Link href={`/workspaces/${workspaceId}/settings/workspace/languages`} target="_blank">
               {t("workspace.surveys.edit.manage_languages")}
-              <ArrowUpRight className="ml-1 h-4 w-4" />
+              <ArrowUpRight className="ml-1 size-4" />
             </Link>
           </Button>
 
@@ -500,7 +500,7 @@ export const LanguageView = ({
           <Button asChild size="sm" variant="secondary" className="mt-3">
             <Link href={`/workspaces/${workspaceId}/settings/workspace/languages`} target="_blank">
               {t("workspace.surveys.edit.manage_languages")}
-              <ArrowUpRight className="ml-1 h-4 w-4" />
+              <ArrowUpRight className="ml-1 size-4" />
             </Link>
           </Button>
         </div>

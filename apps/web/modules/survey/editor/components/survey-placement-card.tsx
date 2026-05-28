@@ -90,7 +90,7 @@ export const SurveyPlacementCard = ({ localSurvey, setLocalSurvey }: SurveyPlace
           <div className="flex items-center pl-2 pr-5">
             <CheckIcon
               strokeWidth={3}
-              className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
+              className="size-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
             />
           </div>
           <div>
@@ -105,7 +105,7 @@ export const SurveyPlacementCard = ({ localSurvey, setLocalSurvey }: SurveyPlace
         <hr className="py-1 text-slate-600" />
         <div className="p-6">
           <div className="flex flex-col gap-4">
-            <div className="flex items-center space-x-1">
+            <div className="flex items-center gap-x-1">
               <Switch id="surveyDeadline" checked={!!placement} onCheckedChange={togglePlacement} />
               <Label htmlFor="surveyDeadline" className="cursor-pointer">
                 <div className="ml-2">
@@ -121,7 +121,7 @@ export const SurveyPlacementCard = ({ localSurvey, setLocalSurvey }: SurveyPlace
               </Label>
             </div>
             {placement && (
-              <div className="flex items-center space-x-1 pb-4">
+              <div className="flex items-center gap-x-1 pb-4">
                 <div className="flex w-full cursor-pointer items-center rounded-lg border bg-slate-50 p-4">
                   <div className="w-full items-center">
                     <Placement

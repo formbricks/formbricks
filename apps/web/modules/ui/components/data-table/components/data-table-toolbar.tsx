@@ -51,10 +51,11 @@ export const DataTableToolbar = <T,>({
       ) : (
         <div>{leftContent}</div>
       )}
-      <div className="flex space-x-2">
+      <div className="flex gap-x-2">
         {onRefresh ? (
           <TooltipRenderer tooltipContent={t("common.refresh")} shouldRender={true}>
             <button
+              type="button"
               onClick={async () => {
                 await onRefresh();
                 toast.success(t("common.data_refreshed_successfully"));
@@ -67,21 +68,23 @@ export const DataTableToolbar = <T,>({
 
         <TooltipRenderer tooltipContent={t("common.table_settings")} shouldRender={true}>
           <button
+            type="button"
             onClick={() => setIsTableSettingsModalOpen(true)}
             className="cursor-pointer rounded-md border bg-white hover:border-slate-400">
-            <SettingsIcon strokeWidth={1.5} className="m-1 h-6 w-6 p-0.5" />
+            <SettingsIcon strokeWidth={1.5} className="m-1 size-6 p-0.5" />
           </button>
         </TooltipRenderer>
         <TooltipRenderer
           tooltipContent={isExpanded ? t("common.collapse_rows") : t("common.expand_rows")}
           shouldRender={true}>
           <button
+            type="button"
             onClick={() => setIsExpanded(!isExpanded)}
             className={cn(
               "cursor-pointer rounded-md border bg-white hover:border-slate-400",
               isExpanded && "bg-black text-white"
             )}>
-            <MoveVerticalIcon strokeWidth={1.5} className="m-1 h-6 w-6 p-0.5" />
+            <MoveVerticalIcon strokeWidth={1.5} className="m-1 size-6 p-0.5" />
           </button>
         </TooltipRenderer>
       </div>
