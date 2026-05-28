@@ -87,6 +87,7 @@ export const SurveyBgSelectorTab = ({
         if (isUnsplashConfigured) {
           return <ImageFromUnsplashSurveyBg handleBgChange={handleBgChange} />;
         }
+        return null;
       default:
         return null;
     }

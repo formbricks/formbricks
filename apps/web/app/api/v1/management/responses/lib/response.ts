@@ -161,15 +161,11 @@ export const getResponsesByWorkspaceIds = reactCache(
         skip: offset ? offset : undefined,
       });
 
-      const transformedResponses: TResponse[] = await Promise.all(
-        responses.map((responsePrisma) => {
-          return {
-            ...responsePrisma,
-            contact: getResponseContact(responsePrisma),
-            tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
-          };
-        })
-      );
+      const transformedResponses: TResponse[] = responses.map((responsePrisma) => ({
+        ...responsePrisma,
+        contact: getResponseContact(responsePrisma),
+        tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+      }));
 
       return transformedResponses;
     } catch (error) {
@@ -205,15 +201,11 @@ export const getResponses = reactCache(
         skip: offset,
       });
 
-      const transformedResponses: TResponse[] = await Promise.all(
-        responses.map((responsePrisma) => {
-          return {
-            ...responsePrisma,
-            contact: getResponseContact(responsePrisma),
-            tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
-          };
-        })
-      );
+      const transformedResponses: TResponse[] = responses.map((responsePrisma) => ({
+        ...responsePrisma,
+        contact: getResponseContact(responsePrisma),
+        tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
+      }));
 
       return transformedResponses;
     } catch (error) {
