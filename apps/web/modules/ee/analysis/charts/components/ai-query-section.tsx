@@ -61,6 +61,23 @@ export function AIQuerySection({
   const aiUnavailableMessage = translateAIUnavailableMessage(aiUnavailableReason);
   const aiUnavailableAction = getAIUnavailableAction(aiUnavailableReason, workspaceId);
 
+  if (!isAIAvailable) {
+    return (
+      <Alert variant="info" size="small" className="items-center">
+        <AlertDescription className="overflow-visible whitespace-normal">
+          <span>{aiUnavailableMessage}</span>
+        </AlertDescription>
+        {aiUnavailableAction && (
+          <AlertButton asChild>
+            <Link href={aiUnavailableAction.href}>
+              {translateAIUnavailableAction(aiUnavailableAction.type)}
+            </Link>
+          </AlertButton>
+        )}
+      </Alert>
+    );
+  }
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!userQuery.trim()) return;
@@ -109,31 +126,17 @@ export function AIQuerySection({
             value={userQuery}
             onChange={(e) => setUserQuery(e.target.value)}
             maxLength={2000}
-            disabled={!isAIAvailable || isGenerating}
+            disabled={isGenerating}
           />
           <Button
             type="submit"
             variant="default"
             className="w-full"
-            disabled={!isAIAvailable || !userQuery.trim() || isGenerating}
+            disabled={!userQuery.trim() || isGenerating}
             loading={isGenerating}>
             <WandSparklesIcon className="size-4" />
             {t("workspace.analysis.charts.create_chart_with_ai")}
           </Button>
-          {!isAIAvailable && (
-            <Alert variant="info" size="small">
-              <AlertDescription className="overflow-visible whitespace-normal">
-                <span>{aiUnavailableMessage}</span>
-              </AlertDescription>
-              {aiUnavailableAction && (
-                <AlertButton asChild>
-                  <Link href={aiUnavailableAction.href}>
-                    {translateAIUnavailableAction(aiUnavailableAction.type)}
-                  </Link>
-                </AlertButton>
-              )}
-            </Alert>
-          )}
         </form>
       </div>
     </div>
