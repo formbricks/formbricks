@@ -61,8 +61,8 @@ var t=document.createElement("script");t.type="text/javascript",t.async=!0,t.src
           </div>
         </SettingsCard>
         <SettingsCard
-          title={t("workspace.app-connection.install_code_snippet")}
-          description={t("workspace.app-connection.install_code_snippet_description")}>
+          title={t("workspace.app-connection.how_to_setup")}
+          description={t("workspace.app-connection.how_to_setup_description")}>
           <CodeBlock customEditorClass="!bg-white border border-slate-200" language="html" noMargin>
             {htmlSnippet}
           </CodeBlock>

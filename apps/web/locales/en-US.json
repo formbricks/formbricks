@@ -1903,8 +1903,6 @@
       "formbricks_sdk_not_connected_description": "Add the Formbricks SDK to your website or app to connect it with Formbricks",
       "how_to_setup": "How to setup",
       "how_to_setup_description": "Follow these steps to setup the Formbricks widget within your app.",
-      "install_code_snippet": "Install Code Snippet",
-      "install_code_snippet_description": "Copy this snippet into your app or website HTML head to connect Formbricks with this workspace.",
       "receiving_data": "Receiving data 💃🕺",
       "recheck": "Re-check",
       "sdk_connection_details": "SDK Connection Details",
