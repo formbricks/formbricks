@@ -68,6 +68,10 @@ export const FileInput = ({
   const [videoUrlTemp, setVideoUrlTemp] = useState(videoUrl ?? "");
   const fileType = isVideoAllowed && activeTab === "video" ? "video" : "image";
 
+  useEffect(() => {
+    setActiveTab(isVideoAllowed && videoUrl ? "video" : "image");
+  }, [isVideoAllowed, videoUrl]);
+
   const handleUpload = async (files: File[]) => {
     if (!isStorageConfigured) {
       showStorageNotConfiguredToast();
