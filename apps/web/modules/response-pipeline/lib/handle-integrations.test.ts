@@ -621,6 +621,38 @@ describe("handleIntegrations", () => {
       expect(properties["Plan Col"].rich_text).not.toBeNull();
     });
 
+    test("emits no person.* columns when contactAttributes is null even if toggle is on", async () => {
+      vi.mocked(airtableWriteData).mockResolvedValue(undefined);
+      const integration: TIntegrationAirtable = structuredClone(mockAirtableIntegration);
+      integration.config.data[0].includeContactAttributes = true;
+      const input = structuredClone(mockPipelineInput) as typeof mockPipelineInput;
+      (input.response as unknown as { contactAttributes: null }).contactAttributes = null;
+
+      await handleIntegrations([integration], input, mockSurvey);
+
+      const [, , , elements] = vi.mocked(airtableWriteData).mock.calls[0];
+      expect(elements.every((e) => !e.startsWith("person."))).toBe(true);
+    });
+
+    test("Notion person.<key> renders null when response has no contactAttributes", async () => {
+      vi.mocked(writeNotionData).mockResolvedValue(undefined);
+      const integration: TIntegrationNotion = structuredClone(mockNotionIntegration);
+      integration.config.data[0].mapping.push({
+        element: { id: "person.plan", name: "Person: Plan", type: TSurveyElementTypeEnum.OpenText },
+        column: { id: "col_plan", name: "Plan Col", type: "rich_text" },
+      });
+      const input = structuredClone(mockPipelineInput) as typeof mockPipelineInput;
+      (input.response as unknown as { contactAttributes: null }).contactAttributes = null;
+
+      await handleIntegrations([integration], input, mockSurvey);
+
+      const [, properties] = vi.mocked(writeNotionData).mock.calls[0] as unknown as [
+        string,
+        Record<string, any>,
+      ];
+      expect(properties["Plan Col"].rich_text).toBeNull();
+    });
+
     test("Notion: gracefully handles person.<key> when the attribute is missing", async () => {
       vi.mocked(writeNotionData).mockResolvedValue(undefined);
       const integration: TIntegrationNotion = structuredClone(mockNotionIntegration);
