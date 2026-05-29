@@ -9,26 +9,22 @@ export const AppConnectionLoading = () => {
   const { t } = useTranslation();
   const cards = [
     {
-      title: t("workspace.app-connection.app_connection"),
-      description: t("workspace.app-connection.app_connection_description"),
-      skeletonLines: [{ classes: " h-44 max-w-full rounded-lg" }],
-    },
-    {
-      title: t("workspace.app-connection.how_to_setup"),
-      description: t("workspace.app-connection.how_to_setup_description"),
+      title: t("workspace.app-connection.sdk_connection_details"),
+      description: t("workspace.app-connection.sdk_connection_details_description"),
       skeletonLines: [
-        { classes: "h-12 w-24 rounded-lg" },
-        { classes: "h-10 w-60 rounded-lg" },
-        { classes: "h-10 w-60 rounded-lg" },
-        { classes: "h-12 w-24 rounded-lg" },
-        { classes: "h-10 w-60 rounded-lg" },
-        { classes: "h-10 w-60 rounded-lg" },
+        { classes: "h-8 w-72 rounded-lg" },
+        { classes: "h-8 w-72 rounded-lg" },
       ],
     },
     {
-      title: t("workspace.app-connection.workspace_id"),
-      description: t("workspace.app-connection.workspace_id_description"),
-      skeletonLines: [{ classes: "h-12 w-4/6 rounded-lg" }],
+      title: t("workspace.app-connection.install_code_snippet"),
+      description: t("workspace.app-connection.install_code_snippet_description"),
+      skeletonLines: [{ classes: "h-40 max-w-full rounded-lg" }],
+    },
+    {
+      title: t("workspace.app-connection.app_connection"),
+      description: t("workspace.app-connection.app_connection_description"),
+      skeletonLines: [{ classes: " h-44 max-w-full rounded-lg" }],
     },
   ];
 
