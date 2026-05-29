@@ -3,7 +3,12 @@ name: Dependabot Alerts to Linear
 on:
   schedule:
     - cron: "0 11 * * *" # 11:00 UTC = 12:00 CET (noon); +1h during CEST
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Log what would be created without writing to Linear"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -40,4 +45,4 @@ jobs:
           # Fallback used by the script if LINEAR_API_KEY is not set; must be
           # listed here because the job only sees secrets exposed via env.
           LINEAR_ACCESS_KEY: ${{ secrets.LINEAR_ACCESS_KEY }}
-        run: node scripts/dependabot-to-linear.mjs
+        run: node scripts/dependabot-to-linear.mjs ${{ inputs.dry_run && '--dry-run' || '' }}
