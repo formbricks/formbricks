@@ -2095,6 +2095,7 @@
         "spreadsheet_url": "电子表格 URL",
         "token_expired_error": "Google Sheets 的刷新令牌已过期或被撤销。请重新连接集成。"
       },
+      "include_contact_attributes": "Include Person Attributes",
       "include_created_at": "包括 创建 于",
       "include_hidden_fields": "包括 隐藏 字段",
       "include_metadata": "包含 元数据 （浏览器 、国家 等）",

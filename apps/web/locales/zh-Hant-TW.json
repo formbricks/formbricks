@@ -2095,6 +2095,7 @@
         "spreadsheet_url": "試算表網址",
         "token_expired_error": "Google Sheets 的刷新權杖已過期或被撤銷。請重新連線整合。"
       },
+      "include_contact_attributes": "Include Person Attributes",
       "include_created_at": "包含建立於",
       "include_hidden_fields": "包含隱藏欄位",
       "include_metadata": "包含元數據（瀏覽器、國家/地區等）",

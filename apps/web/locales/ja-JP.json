@@ -2095,6 +2095,7 @@
         "spreadsheet_url": "スプレッドシートURL",
         "token_expired_error": "Google Sheetsのリフレッシュトークンが期限切れになったか、取り消されました。統合を再接続してください。"
       },
+      "include_contact_attributes": "Include Person Attributes",
       "include_created_at": "作成日時を含める",
       "include_hidden_fields": "非表示フィールドを含める",
       "include_metadata": "メタデータを含める（ブラウザ、国など）",

@@ -2095,6 +2095,7 @@
         "spreadsheet_url": "Elektronik Tablo URL'si",
         "token_expired_error": "Google Sheets yenileme belirtecinin süresi doldu veya iptal edildi. Lütfen entegrasyonu yeniden bağla."
       },
+      "include_contact_attributes": "Include Person Attributes",
       "include_created_at": "Oluşturulma Tarihini Dahil Et",
       "include_hidden_fields": "Gizli Alanları Dahil Et",
       "include_metadata": "Meta Verileri Dahil Et (Tarayıcı, Ülke, vb.)",

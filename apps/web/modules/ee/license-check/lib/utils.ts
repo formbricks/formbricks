@@ -100,6 +100,7 @@ export const getIsMultiOrgEnabled = async (): Promise<boolean> => {
 };
 
 export const getIsContactsEnabled = async (organizationId: string): Promise<boolean> => {
+  return true;
   return getCustomPlanFeaturePermission(organizationId, "contacts");
 };
 

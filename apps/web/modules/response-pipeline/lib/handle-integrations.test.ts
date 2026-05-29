@@ -84,6 +84,7 @@ const mockPipelineInput = {
       action: "Action Name",
       ipAddress: "203.0.113.7",
     } as TResponseMeta,
+    contactAttributes: { plan: "pro", email: "person@example.com" },
     personAttributes: {},
     singleUseId: null,
     personId: "person1",
@@ -557,6 +558,88 @@ describe("handleIntegrations", () => {
 
       // Verify error was logged, remove checks on the return value
       expect(logger.error).toHaveBeenCalledWith(error, "Error in notion integration");
+    });
+  });
+
+  describe("Person attributes (includeContactAttributes)", () => {
+    test("Airtable: appends person.* columns when includeContactAttributes is true", async () => {
+      vi.mocked(airtableWriteData).mockResolvedValue(undefined);
+      const integration: TIntegrationAirtable = structuredClone(mockAirtableIntegration);
+      integration.config.data[0].includeContactAttributes = true;
+      // Drop hidden/meta/var/created toggles to keep the assertion focused.
+      integration.config.data[0].includeHiddenFields = false;
+      integration.config.data[0].includeMetadata = false;
+      integration.config.data[0].includeVariables = false;
+      integration.config.data[0].includeCreatedAt = false;
+
+      await handleIntegrations([integration], mockPipelineInput, mockSurvey);
+
+      const [, , responses, elements] = vi.mocked(airtableWriteData).mock.calls[0];
+      expect(elements).toContain("person.plan");
+      expect(elements).toContain("person.email");
+      expect(responses[elements.indexOf("person.plan")]).toBe("pro");
+      expect(responses[elements.indexOf("person.email")]).toBe("person@example.com");
+    });
+
+    test("Google Sheets: omits person.* columns when toggle is off (default)", async () => {
+      vi.mocked(googleSheetWriteData).mockResolvedValue(undefined);
+      // mockGoogleSheetsIntegration has includeContactAttributes unset → off.
+      await handleIntegrations([mockGoogleSheetsIntegration], mockPipelineInput, mockSurvey);
+
+      const [, , , elements] = vi.mocked(googleSheetWriteData).mock.calls[0];
+      expect(elements.every((e) => !e.startsWith("person."))).toBe(true);
+    });
+
+    test("Slack: appends person.* columns when toggle is on", async () => {
+      vi.mocked(writeDataToSlack).mockResolvedValue(undefined);
+      const integration: TIntegrationSlack = structuredClone(mockSlackIntegration);
+      integration.config.data[0].includeContactAttributes = true;
+
+      await handleIntegrations([integration], mockPipelineInput, mockSurvey);
+
+      const [, , responses, elements] = vi.mocked(writeDataToSlack).mock.calls[0];
+      expect(elements).toContain("person.plan");
+      expect(elements).toContain("person.email");
+      expect(responses[elements.indexOf("person.plan")]).toBe("pro");
+    });
+
+    test("Notion: maps person.<key> mapping entries to the matching contact attribute", async () => {
+      vi.mocked(writeNotionData).mockResolvedValue(undefined);
+      const integration: TIntegrationNotion = structuredClone(mockNotionIntegration);
+      integration.config.data[0].mapping.push({
+        element: { id: "person.plan", name: "Person: Plan", type: TSurveyElementTypeEnum.OpenText },
+        column: { id: "col_plan", name: "Plan Col", type: "rich_text" },
+      });
+
+      await handleIntegrations([integration], mockPipelineInput, mockSurvey);
+
+      const [, properties] = vi.mocked(writeNotionData).mock.calls[0] as unknown as [
+        string,
+        Record<string, any>,
+      ];
+      expect(properties["Plan Col"]).toBeDefined();
+      expect(properties["Plan Col"].rich_text).not.toBeNull();
+    });
+
+    test("Notion: gracefully handles person.<key> when the attribute is missing", async () => {
+      vi.mocked(writeNotionData).mockResolvedValue(undefined);
+      const integration: TIntegrationNotion = structuredClone(mockNotionIntegration);
+      integration.config.data[0].mapping.push({
+        element: {
+          id: "person.does_not_exist",
+          name: "Person: Missing",
+          type: TSurveyElementTypeEnum.OpenText,
+        },
+        column: { id: "col_missing", name: "Missing Col", type: "rich_text" },
+      });
+
+      await handleIntegrations([integration], mockPipelineInput, mockSurvey);
+
+      const [, properties] = vi.mocked(writeNotionData).mock.calls[0] as unknown as [
+        string,
+        Record<string, any>,
+      ];
+      expect(properties["Missing Col"].rich_text).toBeNull();
     });
   });
 });
