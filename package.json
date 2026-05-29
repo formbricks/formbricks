@@ -58,7 +58,7 @@
     "lint-staged": "16.4.0",
     "rimraf": "6.1.3",
     "tsx": "4.21.0",
-    "turbo": "2.8.21"
+    "turbo": "2.9.16"
   },
   "lint-staged": {
     "(apps|packages)/**/*.{js,ts,jsx,tsx}": [
@@ -94,16 +94,23 @@
       "fast-xml-parser": "5.7.0",
       "hono": "4.12.18",
       "ip-address": "10.1.1",
+      "js-cookie": "3.0.7",
       "lodash": "4.18.1",
+      "minimatch@10": "10.2.5",
       "node-forge": "1.4.0",
       "postcss": "8.5.14",
       "protobufjs@7": "7.5.8",
       "protobufjs@8": "8.2.0",
+      "qs@6": "6.15.2",
       "tar": "7.5.15",
-      "uuid@11": "11.1.1"
+      "uuid@8": "11.1.1",
+      "uuid@9": "11.1.1",
+      "uuid@11": "11.1.1",
+      "ws@8": "8.21.0",
+      "yaml@2": "2.9.0"
     },
     "comments": {
-      "overrides": "Security fixes for transitive dependencies that still fail a no-override audit. Remove each override when its upstream chain adopts a patched version: @hono/node-server/hono via Prisma dev tooling | @protobufjs/utf8 (CVE overlong UTF-8) - awaiting @opentelemetry/otlp-transformer update | @tootallnate/once and tar via sqlite3/node-gyp chain | @xmldom/xmldom (XML injection/DoS CVEs) - awaiting @boxyhq/saml20 to pin to >=0.9.10 | axios, lodash, and node-forge via @boxyhq/saml-jackson | ajv@6 via webpack/eslint | effect (GHSA-38f7-945m-qr2g) - awaiting @prisma/config update | fast-uri (CVE-2025-48944/48945) - awaiting ajv/schema-utils update | fast-xml-parser via AWS SDK XML builder | ip-address (XSS in Address6) - awaiting mongodb/socks update | postcss (CVE-2025-62695) - awaiting next.js to unpin postcss | protobufjs@7/8 (GHSA-xq3m-2v4x-88gg et al.) - awaiting @grpc/proto-loader/otlp-transformer update | uuid@11 (CVE-2025-61475) - awaiting typeorm update"
+      "overrides": "Security fixes for transitive dependencies that still fail a no-override audit. Remove each override when its upstream chain adopts a patched version: @hono/node-server/hono via Prisma dev tooling | @protobufjs/utf8 (CVE overlong UTF-8) - awaiting @opentelemetry/otlp-transformer update | @tootallnate/once and tar via sqlite3/node-gyp chain | @xmldom/xmldom (XML injection/DoS CVEs) - awaiting @boxyhq/saml20 to pin to >=0.9.10 | axios, lodash, and node-forge via @boxyhq/saml-jackson | ajv@6 via webpack/eslint | effect (GHSA-38f7-945m-qr2g) - awaiting @prisma/config update | fast-uri (CVE-2025-48944/48945) - awaiting ajv/schema-utils update | fast-xml-parser via AWS SDK XML builder | ip-address (XSS in Address6) - awaiting mongodb/socks update | js-cookie (GHSA-qjx8-664m-686j prototype hijack) - awaiting react-use to bump to >=3.0.7 | minimatch@10 (GHSA-7r86-cg39-jmmj/GHSA-23c5-xmqv-rm74 ReDoS) - awaiting @microsoft/api-extractor via vite-plugin-dts update | postcss (CVE-2025-62695) - awaiting next.js to unpin postcss | protobufjs@7/8 (GHSA-xq3m-2v4x-88gg et al.) - awaiting @grpc/proto-loader/otlp-transformer update | qs@6 (GHSA-q8mj-m7cp-5q26 DoS) - awaiting @googleapis/admin via @boxyhq/saml-jackson update | uuid@8/9/11 (GHSA-w5hq-g745-h8pq buffer bounds, CVE-2025-61475) - awaiting @azure/msal-node, @sentry/webpack-plugin and typeorm updates | ws@8 (GHSA-58qx-3vcg-4xpx memory disclosure) - awaiting storybook and react-email/socket.io updates | yaml@2 (GHSA-48c2-rrv3-qjmp stack overflow) - awaiting lint-staged update"
     },
     "patchedDependencies": {
       "next-auth@4.24.13": "patches/next-auth@4.24.13.patch"
