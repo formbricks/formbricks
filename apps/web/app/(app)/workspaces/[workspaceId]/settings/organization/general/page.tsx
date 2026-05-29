@@ -22,6 +22,7 @@ import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import packageJson from "@/package.json";
 import { SettingsCard } from "../../components/SettingsCard";
 import { AISettingsToggle } from "./components/AISettingsToggle";
+import { CreateOrganizationCard } from "./components/CreateOrganizationCard";
 import { DeleteOrganization } from "./components/DeleteOrganization";
 import { EditOrganizationNameForm } from "./components/EditOrganizationNameForm";
 import { SecurityListTip } from "./components/SecurityListTip";
@@ -88,15 +89,18 @@ const Page = async (props: Readonly<{ params: Promise<{ workspaceId: string }> }
         enterpriseLicenseRequestFormUrl={ENTERPRISE_LICENSE_REQUEST_FORM_URL}
       />
       {isMultiOrgEnabled && (
-        <SettingsCard
-          title={t("workspace.settings.general.delete_organization")}
-          description={t("workspace.settings.general.delete_organization_description")}>
-          <DeleteOrganization
-            organization={organization}
-            isDeleteDisabled={isDeleteDisabled}
-            isUserOwner={currentUserRole === "owner"}
-          />
-        </SettingsCard>
+        <>
+          <SettingsCard
+            title={t("workspace.settings.general.delete_organization")}
+            description={t("workspace.settings.general.delete_organization_description")}>
+            <DeleteOrganization
+              organization={organization}
+              isDeleteDisabled={isDeleteDisabled}
+              isUserOwner={currentUserRole === "owner"}
+            />
+          </SettingsCard>
+          <CreateOrganizationCard />
+        </>
       )}
 
       <div className="space-y-2">

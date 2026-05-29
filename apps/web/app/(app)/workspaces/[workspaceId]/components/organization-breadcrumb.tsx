@@ -1,21 +1,13 @@
 "use client";
 
 import * as Sentry from "@sentry/nextjs";
-import {
-  Building2Icon,
-  ChevronDownIcon,
-  ChevronRightIcon,
-  Loader2,
-  PlusIcon,
-  SettingsIcon,
-} from "lucide-react";
+import { Building2Icon, ChevronDownIcon, ChevronRightIcon, Loader2, SettingsIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
 import { getOrganizationsForSwitcherAction } from "@/app/(app)/workspaces/[workspaceId]/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { CreateOrganizationModal } from "@/modules/organization/components/CreateOrganizationModal";
 import { BreadcrumbItem } from "@/modules/ui/components/breadcrumb";
 import {
   DropdownMenu,
@@ -42,7 +34,6 @@ export const OrganizationBreadcrumb = ({
 }: OrganizationBreadcrumbProps) => {
   const { t } = useTranslation();
   const [isOrganizationDropdownOpen, setIsOrganizationDropdownOpen] = useState(false);
-  const [openCreateOrganizationModal, setOpenCreateOrganizationModal] = useState(false);
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isLoadingOrganizations, setIsLoadingOrganizations] = useState(false);
@@ -161,27 +152,17 @@ export const OrganizationBreadcrumb = ({
                 </div>
               )}
               {!isLoadingOrganizations && !loadError && (
-                <>
-                  <DropdownMenuGroup className="max-h-[300px] overflow-y-auto">
-                    {organizations.map((org) => (
-                      <DropdownMenuCheckboxItem
-                        key={org.id}
-                        checked={org.id === currentOrganizationId}
-                        onClick={() => handleOrganizationChange(org.id)}
-                        className="cursor-pointer">
-                        {org.name}
-                      </DropdownMenuCheckboxItem>
-                    ))}
-                  </DropdownMenuGroup>
-                  {isMultiOrgEnabled && (
+                <DropdownMenuGroup className="max-h-[300px] overflow-y-auto">
+                  {organizations.map((org) => (
                     <DropdownMenuCheckboxItem
-                      onClick={() => setOpenCreateOrganizationModal(true)}
+                      key={org.id}
+                      checked={org.id === currentOrganizationId}
+                      onClick={() => handleOrganizationChange(org.id)}
                       className="cursor-pointer">
-                      <span>{t("common.create_new_organization")}</span>
-                      <PlusIcon className="ml-2 size-4" />
+                      {org.name}
                     </DropdownMenuCheckboxItem>
-                  )}
-                </>
+                  ))}
+                </DropdownMenuGroup>
               )}
             </>
           )}
@@ -198,12 +179,6 @@ export const OrganizationBreadcrumb = ({
           )}
         </DropdownMenuContent>
       </DropdownMenu>
-      {openCreateOrganizationModal && (
-        <CreateOrganizationModal
-          open={openCreateOrganizationModal}
-          setOpen={setOpenCreateOrganizationModal}
-        />
-      )}
     </BreadcrumbItem>
   );
 };
