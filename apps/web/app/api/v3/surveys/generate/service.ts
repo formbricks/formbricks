@@ -10,7 +10,9 @@ import {
   type TGeneratedSurveyDraft,
   type TGeneratedSurveyElement,
   type TV3SurveyGenerateBody,
+  V3_SURVEY_GENERATE_ALLOWED_LOCALES,
   ZGeneratedSurveyDraft,
+  ZGeneratedSurveyDraftForAI,
 } from "./schemas";
 
 type TV3SurveyGenerateValidation = {
@@ -77,8 +79,17 @@ function createChoice(
   index: number,
   language: string
 ): { id: string; label: Record<string, string> } {
+  return createLabeledItem("choice", label, index, language);
+}
+
+function createLabeledItem(
+  prefix: string,
+  label: string,
+  index: number,
+  language: string
+): { id: string; label: Record<string, string> } {
   return {
-    id: `choice_${index + 1}`,
+    id: `${prefix}_${index + 1}`,
     label: text(label, language),
   };
 }
@@ -115,10 +126,53 @@ function buildElement(element: TGeneratedSurveyElement, index: number, language:
     };
   }
 
+  if (element.type === "ranking") {
+    return {
+      ...baseElement,
+      type: "ranking" as const,
+      choices: (element.choices ?? []).map((choice, choiceIndex) =>
+        createChoice(choice, choiceIndex, language)
+      ),
+      shuffleOption: "none" as const,
+    };
+  }
+
+  if (element.type === "matrix") {
+    return {
+      ...baseElement,
+      type: "matrix" as const,
+      rows: (element.rows ?? []).map((row, rowIndex) => createLabeledItem("row", row, rowIndex, language)),
+      columns: (element.columns ?? []).map((column, columnIndex) =>
+        createLabeledItem("column", column, columnIndex, language)
+      ),
+      shuffleOption: "none" as const,
+    };
+  }
+
+  if (element.type === "date") {
+    return {
+      ...baseElement,
+      type: "date" as const,
+      format: element.format ?? "M-d-y",
+    };
+  }
+
   if (element.type === "nps") {
     return {
       ...baseElement,
       type: "nps" as const,
+      ...(element.lowerLabel ? { lowerLabel: text(element.lowerLabel, language) } : {}),
+      ...(element.upperLabel ? { upperLabel: text(element.upperLabel, language) } : {}),
+      isColorCodingEnabled: false,
+    };
+  }
+
+  if (element.type === "csat" || element.type === "ces") {
+    return {
+      ...baseElement,
+      type: element.type,
+      scale: element.scale ?? "number",
+      range: element.range ?? (element.type === "ces" ? 7 : 5),
       ...(element.lowerLabel ? { lowerLabel: text(element.lowerLabel, language) } : {}),
       ...(element.upperLabel ? { upperLabel: text(element.upperLabel, language) } : {}),
       isColorCodingEnabled: false,
@@ -204,15 +258,17 @@ export async function generateV3SurveyCreatePayloadFromPrompt(params: {
     throw new V3SurveyGeneratePromptError(invalidParams);
   }
 
-  const generation = await generateOrganizationAIObject<TGeneratedSurveyDraft>({
+  const generation = await generateOrganizationAIObject({
     organizationId: params.organizationId,
-    schema: ZGeneratedSurveyDraft,
+    schema: ZGeneratedSurveyDraftForAI,
     schemaName: "FormbricksSurveyDraft",
     schemaDescription: "A concise Formbricks survey draft that can be converted to a v3 create payload.",
-    system: buildV3SurveyGenerationSystemPrompt(),
+    system: buildV3SurveyGenerationSystemPrompt(V3_SURVEY_GENERATE_ALLOWED_LOCALES, params.input.type),
     prompt: buildV3SurveyGenerationPrompt(
       params.input.prompt,
-      params.input.language ?? DEFAULT_V3_SURVEY_LANGUAGE
+      params.input.type,
+      params.input.language ?? DEFAULT_V3_SURVEY_LANGUAGE,
+      V3_SURVEY_GENERATE_ALLOWED_LOCALES
     ),
     temperature: 0.2,
     maxOutputTokens: 3000,

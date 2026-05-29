@@ -12,6 +12,7 @@ import {
   successResponse,
 } from "@/app/api/v3/lib/response";
 import { AI_ERROR_CODES, type TAIErrorCode } from "@/lib/ai/service";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { ZV3SurveyGenerateBody } from "./schemas";
 import {
   V3SurveyGeneratePromptError,
@@ -31,6 +32,7 @@ function isAIErrorCode(value: string): value is TAIErrorCode {
 
 export const POST = withV3ApiWrapper({
   auth: "both",
+  customRateLimitConfig: rateLimitConfigs.api.v3SurveyGenerate,
   schemas: {
     body: ZV3SurveyGenerateBody,
   },

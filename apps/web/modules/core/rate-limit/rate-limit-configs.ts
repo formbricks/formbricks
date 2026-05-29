@@ -12,6 +12,11 @@ export const rateLimitConfigs = {
     v1: { interval: 60, allowedPerInterval: 100, namespace: "api:v1" }, // 100 per minute (Management API)
     v2: { interval: 60, allowedPerInterval: 100, namespace: "api:v2" }, // 100 per minute
     v3: { interval: 60, allowedPerInterval: 100, namespace: "api:v3" }, // 100 per minute
+    v3SurveyGenerate: {
+      interval: 60,
+      allowedPerInterval: 10,
+      namespace: "api:v3:surveys:generate",
+    }, // 10 per minute (AI survey generation)
     client: { interval: 60, allowedPerInterval: 100, namespace: "api:client" }, // 100 per minute (Client API)
     clientEnvironment: {
       interval: 60,

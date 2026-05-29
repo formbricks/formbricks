@@ -2,12 +2,13 @@
 
 import { SparklesIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import type { TUserLocale } from "@formbricks/types/user";
 import type { TAIUnavailableReason } from "@/modules/ee/analysis/charts/lib/ai-availability";
 import { CreateWithAIDialog } from "./create-with-ai-dialog";
 
 type CreateWithAITemplateProps = {
   workspaceId: string;
-  language: string;
+  language: TUserLocale;
   isAIAvailable: boolean;
   aiUnavailableReason?: TAIUnavailableReason;
 };
@@ -17,7 +18,7 @@ export const CreateWithAITemplate = ({
   language,
   isAIAvailable,
   aiUnavailableReason,
-}: CreateWithAITemplateProps) => {
+}: Readonly<CreateWithAITemplateProps>) => {
   const { t } = useTranslation();
 
   return (

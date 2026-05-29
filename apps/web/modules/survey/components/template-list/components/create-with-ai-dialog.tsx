@@ -13,6 +13,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, type KeyboardEvent, type ReactNode, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import type { TUserLocale } from "@formbricks/types/user";
 import { V3ApiError, getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import {
   type TAIUnavailableReason,
@@ -50,7 +51,7 @@ type TSurveyGenerationType = "link";
 
 type CreateWithAIDialogProps = {
   workspaceId: string;
-  language: string;
+  language: TUserLocale;
   isAIAvailable: boolean;
   aiUnavailableReason?: TAIUnavailableReason;
   trigger?: ReactNode;
@@ -237,7 +238,7 @@ export const CreateWithAIDialog = ({
               <XIcon className="size-4" />
             </button>
             <div className="flex items-start gap-3 pr-10">
-              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-amber-200 bg-amber-50 text-amber-600">
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-brand-dark bg-white text-brand-dark">
                 <SparklesIcon className="size-4" />
               </div>
               <div className="space-y-1">
@@ -328,10 +329,12 @@ export const CreateWithAIDialog = ({
                 </p>
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {helperPrompts.map((helperPrompt) => (
-                    <button
+                    <Button
                       key={helperPrompt.label}
                       type="button"
-                      className="group flex h-9 min-w-0 items-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-left text-xs font-medium text-slate-700 shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      variant="secondary"
+                      size="sm"
+                      className="group w-full min-w-0 justify-start text-left"
                       disabled={isGenerating}
                       title={helperPrompt.prompt}
                       aria-label={`${helperPrompt.label}. ${helperPrompt.prompt}`}
@@ -340,8 +343,8 @@ export const CreateWithAIDialog = ({
                         setErrorMessage(null);
                       }}>
                       <helperPrompt.Icon className="size-3.5 shrink-0 text-slate-500 transition-colors group-hover:text-primary" />
-                      <span className="truncate">{helperPrompt.label}</span>
-                    </button>
+                      <span className="min-w-0 truncate">{helperPrompt.label}</span>
+                    </Button>
                   ))}
                 </div>
               </div>

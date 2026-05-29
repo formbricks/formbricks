@@ -4,6 +4,8 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { AI_ERROR_CODES } from "@/lib/ai/service";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { POST } from "./route";
 import {
   V3SurveyGeneratePromptError,
@@ -170,6 +172,7 @@ describe("POST /api/v3/surveys/generate", () => {
     );
 
     expect(res.status).toBe(200);
+    expect(applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.api.v3SurveyGenerate, "user_1");
     expect(requireV3WorkspaceAccess).toHaveBeenCalledWith(
       expect.objectContaining({ user: expect.any(Object) }),
       workspaceId,

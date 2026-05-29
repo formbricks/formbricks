@@ -51,18 +51,27 @@ export interface AIConfigurationStatus {
 }
 
 export type AILanguageModel = LanguageModel;
-export type TGenerateTextOptions = Omit<Parameters<typeof generateText>[0], "model">;
-export type TGenerateTextResult = Awaited<ReturnType<typeof generateText>>;
+type GenerateTextResult = Awaited<ReturnType<typeof generateText>>;
 
-export type TGenerateObjectOptions<T> = Omit<
+export type TGenerateObjectOptions<T = unknown> = Omit<
   Parameters<typeof generateText>[0],
   "model" | "output" | "experimental_output"
 > & {
   schema: FlexibleSchema<T>;
   schemaName?: string;
   schemaDescription?: string;
+  output?: "object";
 };
-export type TGenerateObjectResult<T> = { object: T } & Omit<
-  Awaited<ReturnType<typeof generateText>>,
-  "output" | "experimental_output"
->;
+export interface TGenerateObjectResult<T = unknown> {
+  readonly object: T;
+  readonly reasoning: GenerateTextResult["reasoningText"];
+  readonly finishReason: GenerateTextResult["finishReason"];
+  readonly usage: GenerateTextResult["usage"];
+  readonly warnings: GenerateTextResult["warnings"];
+  readonly request: GenerateTextResult["request"];
+  readonly response: GenerateTextResult["response"];
+  readonly providerMetadata: GenerateTextResult["providerMetadata"];
+  toJsonResponse: (init?: ResponseInit) => Response;
+}
+export type TGenerateTextOptions = Omit<Parameters<typeof generateText>[0], "model">;
+export type TGenerateTextResult = GenerateTextResult;

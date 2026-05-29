@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { generateOrganizationAIObject } from "@/lib/ai/service";
 import { prepareV3SurveyCreateInput } from "../prepare";
+import { V3_SURVEY_GENERATE_ALLOWED_LOCALES, ZGeneratedSurveyDraftForAI } from "./schemas";
 import {
   V3SurveyGeneratePromptError,
   V3SurveyGeneratedPayloadValidationError,
@@ -21,9 +22,50 @@ const generateInput = {
   prompt: "Create a customer onboarding feedback survey for new SaaS users.",
 };
 
+interface GeneratedElementOverrides {
+  type: string;
+  headline: string;
+  subheader?: string | null;
+  required?: boolean;
+  placeholder?: string | null;
+  longAnswer?: boolean | null;
+  choices?: string[] | null;
+  rows?: string[] | null;
+  columns?: string[] | null;
+  lowerLabel?: string | null;
+  upperLabel?: string | null;
+  scale?: "number" | "smiley" | "star" | null;
+  range?: string | null;
+  format?: "M-d-y" | "d-M-y" | "y-M-d" | null;
+}
+
+function generatedElement(overrides: GeneratedElementOverrides) {
+  return {
+    subheader: null,
+    required: false,
+    placeholder: null,
+    longAnswer: null,
+    choices: null,
+    rows: null,
+    columns: null,
+    lowerLabel: null,
+    upperLabel: null,
+    scale: null,
+    range: null,
+    format: null,
+    ...overrides,
+  };
+}
+
 describe("generateV3SurveyCreatePayloadFromPrompt", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  test("formats generated payload validation errors without invalid params", () => {
+    expect(new V3SurveyGeneratedPayloadValidationError([]).message).toBe(
+      "Generated survey payload is invalid"
+    );
   });
 
   test("rejects underspecified prompts before calling the AI provider", async () => {
@@ -34,6 +76,17 @@ describe("generateV3SurveyCreatePayloadFromPrompt", () => {
           workspaceId,
           type: "link",
           prompt: "Feedback",
+        },
+      })
+    ).rejects.toThrow(V3SurveyGeneratePromptError);
+
+    await expect(
+      generateV3SurveyCreatePayloadFromPrompt({
+        organizationId: "org_1",
+        input: {
+          workspaceId,
+          type: "link",
+          prompt: "Onboarding feedback survey",
         },
       })
     ).rejects.toThrow(V3SurveyGeneratePromptError);
@@ -101,10 +154,20 @@ describe("generateV3SurveyCreatePayloadFromPrompt", () => {
     expect(generateOrganizationAIObject).toHaveBeenCalledWith(
       expect.objectContaining({
         organizationId: "org_1",
+        schema: ZGeneratedSurveyDraftForAI,
         schemaName: "FormbricksSurveyDraft",
         temperature: 0.2,
       })
     );
+    const generationOptions = vi.mocked(generateOrganizationAIObject).mock.calls[0][0];
+    expect(generationOptions.system).toContain(
+      `Allowed survey languages: ${V3_SURVEY_GENERATE_ALLOWED_LOCALES.join(", ")}`
+    );
+    expect(generationOptions.system).toContain("link survey draft");
+    expect(generationOptions.prompt).toContain(
+      `Allowed survey languages: ${V3_SURVEY_GENERATE_ALLOWED_LOCALES.join(", ")}`
+    );
+    expect(generationOptions.prompt).toContain("Create a draft link survey");
     expect(result.payload).toMatchObject({
       workspaceId,
       type: "link",
@@ -227,6 +290,155 @@ describe("generateV3SurveyCreatePayloadFromPrompt", () => {
     ).toHaveLength(3);
   });
 
+  test("maps supported generated question types to v3 create elements", async () => {
+    vi.mocked(generateOrganizationAIObject).mockResolvedValueOnce({
+      object: {
+        language: "en-US",
+        name: "Customer Signal Survey",
+        description: null,
+        welcomeCard: null,
+        blocks: [
+          {
+            name: "Scores",
+            questions: [
+              generatedElement({
+                type: "csat",
+                headline: "How satisfied are you with the onboarding experience?",
+                subheader: "Think about the first setup session.",
+                lowerLabel: "Very dissatisfied",
+                upperLabel: "Very satisfied",
+                scale: "number",
+                range: "5",
+              }),
+              generatedElement({
+                type: "ces",
+                headline: "How easy was it to complete setup?",
+                scale: "number",
+                range: "7",
+              }),
+              generatedElement({
+                type: "ranking",
+                headline: "Rank the improvements that matter most.",
+                choices: ["Speed", "Guidance", "Integrations"],
+              }),
+            ],
+          },
+          {
+            name: "Detailed feedback",
+            questions: [
+              generatedElement({
+                type: "matrix",
+                headline: "Rate each part of the onboarding experience.",
+                rows: ["Setup", "Activation"],
+                columns: ["Poor", "Good", "Excellent"],
+              }),
+              generatedElement({
+                type: "date",
+                headline: "When did you complete onboarding?",
+              }),
+              generatedElement({
+                type: "nps",
+                headline: "How likely are you to recommend us?",
+                lowerLabel: "Not likely",
+                upperLabel: "Very likely",
+              }),
+              generatedElement({
+                type: "rating",
+                headline: "How would you rate the setup guidance?",
+                scale: "star",
+                range: "10",
+                lowerLabel: "Poor",
+                upperLabel: "Excellent",
+              }),
+            ],
+          },
+        ],
+        ending: null,
+      },
+    } as Awaited<ReturnType<typeof generateOrganizationAIObject>>);
+
+    const result = await generateV3SurveyCreatePayloadFromPrompt({
+      organizationId: "org_1",
+      input: generateInput,
+    });
+    const elements = result.payload.blocks.flatMap((block) => block.elements);
+
+    expect(prepareV3SurveyCreateInput(result.payload).ok).toBe(true);
+    expect(elements[0]).toMatchObject({
+      type: "csat",
+      subheader: { "en-US": "Think about the first setup session." },
+      scale: "number",
+      range: 5,
+      lowerLabel: { "en-US": "Very dissatisfied" },
+      upperLabel: { "en-US": "Very satisfied" },
+    });
+    expect(elements[1]).toMatchObject({ type: "ces", scale: "number", range: 7 });
+    expect(elements[2]).toMatchObject({
+      type: "ranking",
+      choices: [
+        { id: "choice_1", label: { "en-US": "Speed" } },
+        { id: "choice_2", label: { "en-US": "Guidance" } },
+        { id: "choice_3", label: { "en-US": "Integrations" } },
+      ],
+    });
+    expect(elements[3]).toMatchObject({
+      type: "matrix",
+      rows: [
+        { id: "row_1", label: { "en-US": "Setup" } },
+        { id: "row_2", label: { "en-US": "Activation" } },
+      ],
+      columns: [
+        { id: "column_1", label: { "en-US": "Poor" } },
+        { id: "column_2", label: { "en-US": "Good" } },
+        { id: "column_3", label: { "en-US": "Excellent" } },
+      ],
+    });
+    expect(elements[4]).toMatchObject({ type: "date", format: "M-d-y" });
+    expect(elements[5]).toMatchObject({
+      type: "nps",
+      lowerLabel: { "en-US": "Not likely" },
+      upperLabel: { "en-US": "Very likely" },
+    });
+    expect(elements[6]).toMatchObject({
+      type: "rating",
+      scale: "star",
+      range: 10,
+      lowerLabel: { "en-US": "Poor" },
+      upperLabel: { "en-US": "Excellent" },
+    });
+  });
+
+  test("surfaces create payload validation failures after generating a schema-valid draft", async () => {
+    vi.mocked(generateOrganizationAIObject).mockResolvedValueOnce({
+      object: {
+        language: "en-US",
+        name: "Recall Reference Survey",
+        description: null,
+        welcomeCard: null,
+        blocks: [
+          {
+            name: "Invalid recall",
+            questions: [
+              generatedElement({
+                type: "openText",
+                headline: "Please explain #recall:missing_id/fallback:your answer#",
+                longAnswer: true,
+              }),
+            ],
+          },
+        ],
+        ending: null,
+      },
+    } as Awaited<ReturnType<typeof generateOrganizationAIObject>>);
+
+    await expect(
+      generateV3SurveyCreatePayloadFromPrompt({
+        organizationId: "org_1",
+        input: generateInput,
+      })
+    ).rejects.toThrow(V3SurveyGeneratedPayloadValidationError);
+  });
+
   test("uses the generated survey language for the create payload and returns it", async () => {
     vi.mocked(generateOrganizationAIObject).mockResolvedValueOnce({
       object: {
@@ -285,6 +497,45 @@ describe("generateV3SurveyCreatePayloadFromPrompt", () => {
         prompt: expect.stringContaining("Preferred survey language: es-ES"),
       })
     );
+  });
+
+  test("rejects generated survey languages outside the allowlist", async () => {
+    vi.mocked(generateOrganizationAIObject).mockResolvedValueOnce({
+      object: {
+        language: "it-IT",
+        name: "Survey non supportato",
+        description: null,
+        welcomeCard: null,
+        blocks: [
+          {
+            name: "Feedback",
+            questions: [
+              {
+                type: "openText",
+                headline: "Cosa dovremmo migliorare?",
+                subheader: null,
+                required: false,
+                placeholder: null,
+                longAnswer: true,
+                choices: null,
+                lowerLabel: null,
+                upperLabel: null,
+                scale: null,
+                range: null,
+              },
+            ],
+          },
+        ],
+        ending: null,
+      },
+    } as Awaited<ReturnType<typeof generateOrganizationAIObject>>);
+
+    await expect(
+      generateV3SurveyCreatePayloadFromPrompt({
+        organizationId: "org_1",
+        input: generateInput,
+      })
+    ).rejects.toThrow(V3SurveyGeneratedPayloadValidationError);
   });
 
   test("surfaces invalid generated objects as validation failures", async () => {
