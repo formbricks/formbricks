@@ -219,14 +219,15 @@ export function BlockConditional({
   const validateElementForm = (element: TSurveyElement, form: HTMLFormElement): boolean => {
     const response = value[element.id];
 
+    if (element.type !== TSurveyElementTypeEnum.CTA && !form.checkValidity()) {
+      form.requestSubmit();
+      return false;
+    }
+
     if (
       element.type === TSurveyElementTypeEnum.Address ||
       element.type === TSurveyElementTypeEnum.ContactInfo
     ) {
-      if (!form.checkValidity()) {
-        form.requestSubmit();
-        return false;
-      }
       return true;
     }
 

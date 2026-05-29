@@ -46,7 +46,7 @@ interface SingleSelectProps {
   /** Currently selected option ID */
   value?: string;
   /** Callback function called when selection changes */
-  onChange: (value: string) => void;
+  onChange: (value: string | undefined) => void;
   /** Whether the field is required (shows asterisk indicator) */
   required?: boolean;
   /** Custom label for the required indicator */
@@ -90,7 +90,7 @@ const useDropdownCommitState = ({
 }: {
   variant: SingleSelectVariant;
   selectedValue: string | undefined;
-  onChange: (value: string) => void;
+  onChange: (value: string | undefined) => void;
   handleDropdownOpen: () => void;
   handleDropdownClose: () => void;
 }): {
@@ -300,7 +300,7 @@ function SingleSelectDropdownVariant({
           onChange={handleOtherInputChange}
           placeholder={otherOptionPlaceholder}
           disabled={disabled}
-          required
+          aria-required={true}
           aria-invalid={Boolean(errorMessage)}
           dir={dir}
           className="mt-2 w-full"
@@ -337,7 +337,7 @@ interface ListVariantProps {
   required: boolean;
   options: SingleSelectOption[];
   selectedValue: string | undefined;
-  onChange: (value: string) => void;
+  onChange: (value: string | undefined) => void;
   hasOtherOption: boolean;
   otherOptionId?: string;
   otherOptionLabel: string;
@@ -382,6 +382,15 @@ function SingleSelectListVariant({
   const regularOptions = options.filter((option) => option.id !== "none");
   const noneOptions = options.filter((option) => option.id === "none");
 
+  const handleSelectedOptionClick = (optionId: string, event: React.MouseEvent<HTMLButtonElement>): void => {
+    if (required || selectedValue !== optionId) {
+      return;
+    }
+
+    event.preventDefault();
+    onChange(undefined);
+  };
+
   return (
     <div className="relative" data-element-input>
       <ElementError errorMessage={errorMessage} dir={dir} />
@@ -408,6 +417,7 @@ function SingleSelectListVariant({
                   id={optionId}
                   disabled={disabled}
                   aria-required={required}
+                  onClick={(event) => handleSelectedOptionClick(option.id, event)}
                 />
                 <span className={cn("mx-3 grow", OPTION_LABEL_CLASS)}>{option.label}</span>
               </span>
@@ -424,6 +434,7 @@ function SingleSelectListVariant({
             isOtherSelected={isOtherSelected}
             otherInputRef={otherInputRef}
             handleOtherInputChange={handleOtherInputChange}
+            handleSelectedOptionClick={handleSelectedOptionClick}
             dir={dir}
             disabled={disabled}
             required={required}
@@ -446,6 +457,7 @@ function SingleSelectListVariant({
                   id={optionId}
                   disabled={disabled}
                   aria-required={required}
+                  onClick={(event) => handleSelectedOptionClick(option.id, event)}
                 />
                 <span className={cn("mx-3 grow", OPTION_LABEL_CLASS)}>{option.label}</span>
               </span>
@@ -466,6 +478,7 @@ interface OtherOptionLabelProps {
   isOtherSelected: boolean;
   otherInputRef: React.RefObject<HTMLInputElement | null>;
   handleOtherInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleSelectedOptionClick: (optionId: string, event: React.MouseEvent<HTMLButtonElement>) => void;
   dir: Direction;
   disabled: boolean;
   required: boolean;
@@ -481,6 +494,7 @@ function OtherOptionLabel({
   isOtherSelected,
   otherInputRef,
   handleOtherInputChange,
+  handleSelectedOptionClick,
   dir,
   disabled,
   required,
@@ -497,6 +511,7 @@ function OtherOptionLabel({
           id={`${inputId}-${otherOptionId}`}
           disabled={disabled}
           aria-required={required}
+          onClick={(event) => handleSelectedOptionClick(otherOptionId, event)}
         />
         <span className={cn("mr-3 ml-3 grow", OPTION_LABEL_CLASS)}>{otherOptionLabel}</span>
       </span>
@@ -508,7 +523,7 @@ function OtherOptionLabel({
           onChange={handleOtherInputChange}
           placeholder={otherOptionPlaceholder}
           disabled={disabled}
-          required
+          aria-required={true}
           aria-invalid={Boolean(errorMessage)}
           dir={dir}
           className="mt-2 w-full"
