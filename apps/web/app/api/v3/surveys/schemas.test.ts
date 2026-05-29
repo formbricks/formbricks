@@ -599,6 +599,36 @@ describe("ZV3PatchSurveyBody", () => {
     expect(parsed).not.toHaveProperty("defaultLanguage");
   });
 
+  test("allows existing legacy language codes only through the patch compatibility context", () => {
+    const parsed = createZV3PatchSurveyBodySchema("gu", {
+      allowedLanguageCodes: ["gu"],
+    }).parse({
+      metadata: {
+        title: { gu: "Legacy Gujarati survey" },
+      },
+      languages: [{ code: "gu", default: true, enabled: true }],
+    });
+
+    expect(parsed).toMatchObject({
+      metadata: { title: { default: "Legacy Gujarati survey" } },
+      languages: [{ code: "gu", default: true, enabled: true }],
+    });
+  });
+
+  test("rejects newly introduced non-canonical patch languages without compatibility context", () => {
+    const result = createZV3PatchSurveyBodySchema("en-US", {
+      allowedLanguageCodes: ["en-US"],
+    }).safeParse({
+      languages: [{ code: "gu", enabled: true }],
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]).toMatchObject({
+      message: "Language 'gu' is not a valid locale code",
+      path: ["languages", 0, "code"],
+    });
+  });
+
   test("does not generate missing ids for canonical patch documents", () => {
     const result = ZV3PatchSurveyBody.safeParse({
       blocks: [
