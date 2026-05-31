@@ -12,11 +12,19 @@ import {
   problemTooManyRequests,
   problemUnauthorized,
 } from "@/app/api/v3/lib/response";
+import { getPublicDomain } from "@/lib/getPublicUrl";
 import { authenticateApiKeyFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 
-const QUERY_CREDENTIAL_PARAMS = ["api_key", "apiKey", "x-api-key", "access_token", "token", "authorization"];
+const QUERY_CREDENTIAL_PARAMS = new Set([
+  "api_key",
+  "apikey",
+  "x-api-key",
+  "access_token",
+  "token",
+  "authorization",
+]);
 
 export type TMcpAuthInfo = AuthInfo & {
   extra: {
@@ -41,19 +49,12 @@ function getRequestId(request: NextRequest): string {
   return request.headers.get("x-request-id") ?? crypto.randomUUID();
 }
 
-function getPublicOrigin(request: NextRequest): string {
-  const forwardedHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
-  const forwardedProto = request.headers.get("x-forwarded-proto")?.split(",")[0]?.trim();
-
-  if (forwardedHost) {
-    return new URL(`${forwardedProto || "https"}://${forwardedHost}`).origin;
-  }
-
-  return new URL(request.url).origin;
+function getPublicOrigin(): string {
+  return new URL(getPublicDomain()).origin;
 }
 
 function hasQueryCredentials(searchParams: URLSearchParams): boolean {
-  return QUERY_CREDENTIAL_PARAMS.some((param) => searchParams.has(param));
+  return Array.from(searchParams.keys()).some((param) => QUERY_CREDENTIAL_PARAMS.has(param.toLowerCase()));
 }
 
 function isOriginAllowed(request: NextRequest): boolean {
@@ -63,7 +64,7 @@ function isOriginAllowed(request: NextRequest): boolean {
   }
 
   try {
-    return new URL(origin).origin === getPublicOrigin(request);
+    return new URL(origin).origin === getPublicOrigin();
   } catch {
     return false;
   }

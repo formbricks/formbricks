@@ -1,28 +1,40 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { logger } from "@formbricks/logger";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
-import { deleteV3Survey, listV3Surveys } from "@/app/api/v3/surveys/lib/operations";
+import {
+  createV3SurveyResponse,
+  deleteV3Survey,
+  getV3Survey,
+  listV3Surveys,
+  validateV3Survey,
+} from "@/app/api/v3/surveys/lib/operations";
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
 import { getMcpAuthentication, getMcpRequestId } from "../auth";
 import { responseToMcpToolResult } from "../errors";
 import {
+  type TMcpCreateSurveyInput,
   type TMcpDeleteSurveyInput,
+  type TMcpGetSurveyInput,
   type TMcpListSurveysInput,
+  type TMcpValidateSurveyInput,
+  ZMcpCreateSurveyInput,
   ZMcpDeleteSurveyInput,
+  ZMcpGetSurveyInput,
   ZMcpListSurveysInput,
+  ZMcpValidateSurveyInput,
 } from "./schemas";
 
 export function buildListSurveysSearchParams(input: TMcpListSurveysInput): URLSearchParams {
   const searchParams = new URLSearchParams();
 
   searchParams.set("workspaceId", input.workspaceId);
-  searchParams.set("limit", String(input.limit));
+  searchParams.set("limit", String(input.limit ?? 20));
 
   if (input.cursor) {
     searchParams.set("cursor", input.cursor);
   }
 
-  if (input.includeTotalCount === false) {
+  if ((input.includeTotalCount ?? true) === false) {
     searchParams.set("includeTotalCount", "false");
   }
 
@@ -52,11 +64,119 @@ export function registerSurveyTools(server: McpServer): void {
       title: "List surveys",
       description: "List surveys in a Formbricks workspace using the v3 Surveys API contract.",
       inputSchema: ZMcpListSurveysInput.shape,
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: true,
+      },
     },
     async (input: TMcpListSurveysInput, extra) => {
       const requestId = getMcpRequestId(extra.authInfo);
       const response = await listV3Surveys({
         searchParams: buildListSurveysSearchParams(input),
+        authentication: getMcpAuthentication(extra.authInfo),
+        requestId,
+        instance: MCP_API_ROUTE,
+      });
+
+      return await responseToMcpToolResult(response, requestId);
+    }
+  );
+
+  server.registerTool(
+    "get_survey",
+    {
+      title: "Get survey",
+      description: "Get one Formbricks survey using the v3 Surveys API contract.",
+      inputSchema: ZMcpGetSurveyInput.shape,
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: true,
+      },
+    },
+    async (input: TMcpGetSurveyInput, extra) => {
+      const requestId = getMcpRequestId(extra.authInfo);
+      const response = await getV3Survey({
+        surveyId: input.surveyId,
+        lang: input.lang,
+        authentication: getMcpAuthentication(extra.authInfo),
+        requestId,
+        instance: MCP_API_ROUTE,
+      });
+
+      return await responseToMcpToolResult(response, requestId);
+    }
+  );
+
+  server.registerTool(
+    "create_survey",
+    {
+      title: "Create survey",
+      description: "Create a Formbricks link survey using the v3 Surveys API contract.",
+      inputSchema: ZMcpCreateSurveyInput,
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: true,
+      },
+    },
+    async (input: TMcpCreateSurveyInput, extra) => {
+      const requestId = getMcpRequestId(extra.authInfo);
+      const authentication = getMcpAuthentication(extra.authInfo);
+      const log = logger.withContext({ requestId, workspaceId: input.workspaceId });
+      const auditLog = buildV3AuditLog(authentication, "created", "survey", MCP_API_ROUTE);
+
+      try {
+        const response = await createV3SurveyResponse({
+          body: input,
+          authentication,
+          requestId,
+          instance: MCP_API_ROUTE,
+          auditLog,
+        });
+
+        if (auditLog) {
+          if (response.ok) {
+            auditLog.status = "success";
+          } else {
+            auditLog.eventId = requestId;
+          }
+        }
+
+        await queueV3AuditLog(auditLog, requestId, log);
+        return await responseToMcpToolResult(response, requestId);
+      } catch (error) {
+        if (auditLog) {
+          auditLog.eventId = requestId;
+          await queueV3AuditLog(auditLog, requestId, log);
+        }
+
+        throw error;
+      }
+    }
+  );
+
+  server.registerTool(
+    "validate_survey",
+    {
+      title: "Validate survey",
+      description: "Validate a v3 survey create or patch payload without writing survey changes.",
+      inputSchema: ZMcpValidateSurveyInput,
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: true,
+      },
+    },
+    async (input: TMcpValidateSurveyInput, extra) => {
+      const requestId = getMcpRequestId(extra.authInfo);
+      const response = await validateV3Survey({
+        body: input,
         authentication: getMcpAuthentication(extra.authInfo),
         requestId,
         instance: MCP_API_ROUTE,
@@ -73,7 +193,10 @@ export function registerSurveyTools(server: McpServer): void {
       description: "Delete a Formbricks survey using the v3 Surveys API contract.",
       inputSchema: ZMcpDeleteSurveyInput.shape,
       annotations: {
+        readOnlyHint: false,
         destructiveHint: true,
+        idempotentHint: false,
+        openWorldHint: true,
       },
     },
     async (input: TMcpDeleteSurveyInput, extra) => {

@@ -2,17 +2,28 @@ import { ApiKeyPermission } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
 import {
+  createdResponse,
+  noContentResponse,
   problemBadRequest,
   problemForbidden,
   successListResponse,
   successResponse,
 } from "@/app/api/v3/lib/response";
-import { deleteV3Survey, listV3Surveys } from "@/app/api/v3/surveys/lib/operations";
+import {
+  createV3SurveyResponse,
+  deleteV3Survey,
+  getV3Survey,
+  listV3Surveys,
+  validateV3Survey,
+} from "@/app/api/v3/surveys/lib/operations";
 import { buildListSurveysSearchParams, registerSurveyTools } from "./surveys";
 
 vi.mock("@/app/api/v3/surveys/lib/operations", () => ({
+  createV3SurveyResponse: vi.fn(),
   deleteV3Survey: vi.fn(),
+  getV3Survey: vi.fn(),
   listV3Surveys: vi.fn(),
+  validateV3Survey: vi.fn(),
 }));
 
 vi.mock("@/app/api/v3/lib/audit", () => ({
@@ -74,6 +85,15 @@ function createToolServer() {
 }
 
 describe("buildListSurveysSearchParams", () => {
+  test("applies defensive defaults when optional defaults are not materialized", () => {
+    const params = buildListSurveysSearchParams({
+      workspaceId: "clxx1234567890123456789012",
+    } as unknown as Parameters<typeof buildListSurveysSearchParams>[0]);
+
+    expect(params.get("limit")).toBe("20");
+    expect(params.has("includeTotalCount")).toBe(false);
+  });
+
   test("maps structured MCP filters to v3 query parameters", () => {
     const params = buildListSurveysSearchParams({
       workspaceId: "clxx1234567890123456789012",
@@ -105,17 +125,48 @@ describe("registerSurveyTools", () => {
     vi.mocked(queueV3AuditLog).mockResolvedValue(undefined);
   });
 
-  test("registers list and delete tools", () => {
+  test("registers survey tools with planning annotations", () => {
     const { server, tools } = createToolServer();
 
-    expect(server.registerTool).toHaveBeenCalledTimes(2);
+    expect(server.registerTool).toHaveBeenCalledTimes(5);
     expect(tools.get("list_surveys")?.config).toMatchObject({
       title: "List surveys",
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+      },
+    });
+    expect(tools.get("get_survey")?.config).toMatchObject({
+      title: "Get survey",
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+      },
+    });
+    expect(tools.get("create_survey")?.config).toMatchObject({
+      title: "Create survey",
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+      },
+    });
+    expect(tools.get("validate_survey")?.config).toMatchObject({
+      title: "Validate survey",
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+      },
     });
     expect(tools.get("delete_survey")?.config).toMatchObject({
       title: "Delete survey",
       annotations: {
+        readOnlyHint: false,
         destructiveHint: true,
+        idempotentHint: false,
       },
     });
   });
@@ -180,13 +231,107 @@ describe("registerSurveyTools", () => {
     });
   });
 
+  test("get_survey calls the shared v3 get operation", async () => {
+    const { tools } = createToolServer();
+    vi.mocked(getV3Survey).mockResolvedValue(
+      successResponse({ id: "clxx1234567890123456789012" }, { requestId: "req_tool" })
+    );
+
+    const result = await tools.get("get_survey")!.handler(
+      {
+        surveyId: "clxx1234567890123456789012",
+        lang: ["en-US"],
+      },
+      { authInfo }
+    );
+
+    expect(getV3Survey).toHaveBeenCalledWith({
+      surveyId: "clxx1234567890123456789012",
+      lang: ["en-US"],
+      authentication: apiKeyAuth,
+      requestId: "req_tool",
+      instance: "/api/mcp",
+    });
+    expect(result.structuredContent).toEqual({
+      data: { id: "clxx1234567890123456789012" },
+      requestId: "req_tool",
+    });
+  });
+
+  test("create_survey queues a successful audit log", async () => {
+    const { tools } = createToolServer();
+    const auditLog = { status: "failure" };
+    const createBody = {
+      workspaceId: "clxx1234567890123456789012",
+      name: "New survey",
+      type: "link",
+      status: "draft",
+      metadata: {},
+      defaultLanguage: "en-US",
+      languages: [],
+      welcomeCard: { enabled: false },
+      blocks: [],
+      endings: [],
+      hiddenFields: { enabled: false, fieldIds: [] },
+      variables: [],
+    };
+    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog as any);
+    vi.mocked(createV3SurveyResponse).mockResolvedValue(
+      createdResponse({ id: "clxx1234567890123456789012" }, { requestId: "req_tool", location: "/survey" })
+    );
+
+    const result = await tools.get("create_survey")!.handler(createBody, { authInfo });
+
+    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "created", "survey", "/api/mcp");
+    expect(createV3SurveyResponse).toHaveBeenCalledWith({
+      body: createBody,
+      authentication: apiKeyAuth,
+      requestId: "req_tool",
+      instance: "/api/mcp",
+      auditLog,
+    });
+    expect(auditLog.status).toBe("success");
+    expect(queueV3AuditLog).toHaveBeenCalledWith(auditLog, "req_tool", expect.any(Object));
+    expect(result.structuredContent).toEqual({
+      data: { id: "clxx1234567890123456789012" },
+      requestId: "req_tool",
+    });
+  });
+
+  test("validate_survey calls the shared v3 validation operation without audit logging", async () => {
+    const { tools } = createToolServer();
+    const validationBody = {
+      operation: "create" as const,
+      data: {
+        workspaceId: "clxx1234567890123456789012",
+        name: "New survey",
+      },
+    };
+    vi.mocked(validateV3Survey).mockResolvedValue(
+      successResponse({ valid: true, operation: "create", invalid_params: [] }, { requestId: "req_tool" })
+    );
+
+    const result = await tools.get("validate_survey")!.handler(validationBody, { authInfo });
+
+    expect(validateV3Survey).toHaveBeenCalledWith({
+      body: validationBody,
+      authentication: apiKeyAuth,
+      requestId: "req_tool",
+      instance: "/api/mcp",
+    });
+    expect(buildV3AuditLog).not.toHaveBeenCalled();
+    expect(queueV3AuditLog).not.toHaveBeenCalled();
+    expect(result.structuredContent).toEqual({
+      data: { valid: true, operation: "create", invalid_params: [] },
+      requestId: "req_tool",
+    });
+  });
+
   test("delete_survey queues a successful audit log", async () => {
     const { tools } = createToolServer();
     const auditLog = { status: "failure" };
     vi.mocked(buildV3AuditLog).mockReturnValue(auditLog as any);
-    vi.mocked(deleteV3Survey).mockResolvedValue(
-      successResponse({ id: "clxx1234567890123456789012" }, { requestId: "req_tool" })
-    );
+    vi.mocked(deleteV3Survey).mockResolvedValue(noContentResponse({ requestId: "req_tool" }));
 
     const result = await tools.get("delete_survey")!.handler(
       {
@@ -205,7 +350,6 @@ describe("registerSurveyTools", () => {
     expect(auditLog.status).toBe("success");
     expect(queueV3AuditLog).toHaveBeenCalledWith(auditLog, "req_tool", expect.any(Object));
     expect(result.structuredContent).toEqual({
-      data: { id: "clxx1234567890123456789012" },
       requestId: "req_tool",
     });
   });

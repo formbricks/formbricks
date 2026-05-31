@@ -19,6 +19,10 @@ vi.mock("@/modules/core/rate-limit/helpers", () => ({
   applyRateLimit: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock("@/lib/getPublicUrl", () => ({
+  getPublicDomain: vi.fn(() => "https://app.example.com"),
+}));
+
 vi.mock("@formbricks/logger", () => ({
   logger: {
     withContext: vi.fn(() => ({
@@ -84,9 +88,21 @@ describe("authenticateMcpRequest", () => {
     }
   });
 
+  test("rejects query credential parameters case-insensitively", async () => {
+    const result = await authenticateMcpRequest(
+      createRequest("http://localhost/api/mcp?Authorization=Bearer%20secret")
+    );
+
+    expect(result.ok).toBe(false);
+    expect(authenticateApiKeyFromHeaders).not.toHaveBeenCalled();
+    if (!result.ok) {
+      expect(result.response.status).toBe(400);
+    }
+  });
+
   test("rejects cross-origin browser requests", async () => {
     const result = await authenticateMcpRequest(
-      createRequest("http://app.example.com/api/mcp", {
+      createRequest("https://app.example.com/api/mcp", {
         origin: "https://evil.example.com",
         host: "app.example.com",
       })
@@ -97,6 +113,35 @@ describe("authenticateMcpRequest", () => {
     if (!result.ok) {
       expect(result.response.status).toBe(403);
     }
+  });
+
+  test("does not trust forwarded host headers for origin validation", async () => {
+    const result = await authenticateMcpRequest(
+      createRequest("https://app.example.com/api/mcp", {
+        origin: "https://evil.example.com",
+        "x-forwarded-host": "evil.example.com",
+        "x-forwarded-proto": "https",
+      })
+    );
+
+    expect(result.ok).toBe(false);
+    expect(authenticateApiKeyFromHeaders).not.toHaveBeenCalled();
+    if (!result.ok) {
+      expect(result.response.status).toBe(403);
+    }
+  });
+
+  test("allows the configured public origin", async () => {
+    vi.mocked(authenticateApiKeyFromHeaders).mockResolvedValue(apiKeyAuth);
+
+    const result = await authenticateMcpRequest(
+      createRequest("http://internal.local/api/mcp", {
+        origin: "https://app.example.com",
+        "x-api-key": "fbk_test",
+      })
+    );
+
+    expect(result.ok).toBe(true);
   });
 
   test("returns auth info for a valid API key and rate limits by API key id", async () => {
