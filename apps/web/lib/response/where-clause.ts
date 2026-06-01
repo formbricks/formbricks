@@ -329,8 +329,8 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
             },
           });
           break;
-        case "includesOne":
-          const values: string[] = val.value.map((v) => v.toString());
+        case "includesOne": {
+          const values = new Set(val.value.map((v) => v.toString()));
           const otherChoice =
             element && (element.type === "multipleChoiceMulti" || element.type === "multipleChoiceSingle")
               ? element.choices.find((choice) => choice.id === "other")
@@ -341,13 +341,13 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
             (element.type === "multipleChoiceMulti" || element.type === "multipleChoiceSingle") &&
             element.choices.map((choice) => choice.id).includes("other") &&
             otherChoice &&
-            values.includes(otherChoice.label.default)
+            values.has(otherChoice.label.default)
           ) {
             const predefinedLabels: string[] = [];
 
             element.choices.forEach((choice) => {
               Object.values(choice.label).forEach((label) => {
-                if (!values.includes(label)) {
+                if (!values.has(label)) {
                   predefinedLabels.push(label);
                 }
               });
@@ -397,6 +397,7 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
           }
 
           break;
+        }
         case "uploaded":
           data.push({
             data: {
@@ -447,7 +448,7 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
             },
           });
           break;
-        case "matrix":
+        case "matrix": {
           const rowLabel = Object.keys(val.value)[0];
           data.push({
             data: {
@@ -456,6 +457,7 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
             },
           });
           break;
+        }
       }
     });
 
