@@ -1,6 +1,5 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ZResponseFilterCriteria } from "@formbricks/types/responses";
@@ -10,10 +9,6 @@ import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromSurveyId, getWorkspaceIdFromSurveyId } from "@/lib/utils/helper";
 import { getSurveySummary } from "./summary/lib/surveySummary";
-
-export const revalidateSurveyIdPath = async (workspaceId: string, surveyId: string) => {
-  revalidatePath(`/workspaces/${workspaceId}/surveys/${surveyId}`);
-};
 
 const ZGetResponsesAction = z.object({
   surveyId: ZId,
