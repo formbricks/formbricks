@@ -4,6 +4,7 @@ import {
   getApiKey,
   getConnector,
   getContact,
+  getContactAttributeKey,
   getIntegration,
   getInvite,
   getLanguage,
@@ -86,6 +87,15 @@ export const getOrganizationIdFromContactId = async (contactId: string) => {
   }
 
   return await getOrganizationIdFromWorkspaceId(contact.workspaceId);
+};
+
+export const getOrganizationIdFromContactAttributeKeyId = async (contactAttributeKeyId: string) => {
+  const contactAttributeKey = await getContactAttributeKey(contactAttributeKeyId);
+  if (!contactAttributeKey) {
+    throw new ResourceNotFoundError("ContactAttributeKey", contactAttributeKeyId);
+  }
+
+  return await getOrganizationIdFromWorkspaceId(contactAttributeKey.workspaceId);
 };
 
 export const getOrganizationIdFromTagId = async (tagId: string) => {
@@ -237,6 +247,15 @@ export const getWorkspaceIdFromContactId = async (contactId: string) => {
   }
 
   return contact.workspaceId;
+};
+
+export const getWorkspaceIdFromContactAttributeKeyId = async (contactAttributeKeyId: string) => {
+  const contactAttributeKey = await getContactAttributeKey(contactAttributeKeyId);
+  if (!contactAttributeKey) {
+    throw new ResourceNotFoundError("ContactAttributeKey", contactAttributeKeyId);
+  }
+
+  return contactAttributeKey.workspaceId;
 };
 
 export const getWorkspaceIdFromIntegrationId = async (integrationId: string) => {

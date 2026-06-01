@@ -1,7 +1,6 @@
 "use server";
 
 import { z } from "zod";
-import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/common";
 import { InvalidInputError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZSegmentCreateInput, ZSegmentFilters, ZSegmentUpdateInput } from "@formbricks/types/segment";
@@ -11,9 +10,11 @@ import { loadNewSegmentInSurvey } from "@/lib/survey/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import {
+  getOrganizationIdFromContactAttributeKeyId,
   getOrganizationIdFromSegmentId,
   getOrganizationIdFromSurveyId,
   getOrganizationIdFromWorkspaceId,
+  getWorkspaceIdFromContactAttributeKeyId,
   getWorkspaceIdFromSegmentId,
   getWorkspaceIdFromSurveyId,
 } from "@/lib/utils/helper";
@@ -318,18 +319,9 @@ const ZGetDistinctAttributeValuesAction = z.object({
 export const getDistinctAttributeValuesAction = authenticatedActionClient
   .inputSchema(ZGetDistinctAttributeValuesAction)
   .action(async ({ ctx, parsedInput }) => {
-    const attributeKey = await prisma.contactAttributeKey.findUnique({
-      where: { id: parsedInput.attributeKeyId },
-      select: { workspaceId: true },
-    });
-    if (!attributeKey) {
-      throw new ResourceNotFoundError("ContactAttributeKey", parsedInput.attributeKeyId);
-    }
-    const { workspaceId } = attributeKey;
-
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
-      organizationId: await getOrganizationIdFromWorkspaceId(workspaceId),
+      organizationId: await getOrganizationIdFromContactAttributeKeyId(parsedInput.attributeKeyId),
       access: [
         {
           type: "organization",
@@ -338,7 +330,7 @@ export const getDistinctAttributeValuesAction = authenticatedActionClient
         {
           type: "workspaceTeam",
           minPermission: "read",
-          workspaceId,
+          workspaceId: await getWorkspaceIdFromContactAttributeKeyId(parsedInput.attributeKeyId),
         },
       ],
     });
