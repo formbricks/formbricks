@@ -1,8 +1,11 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "./prisma";
+import { createPrismaPgAdapter } from "./prisma-adapter";
 
 const prismaClientSingleton = (): PrismaClient => {
+  const { adapter } = createPrismaPgAdapter();
+
   return new PrismaClient({
-    datasources: { db: { url: process.env.DATABASE_URL } },
+    adapter,
     ...(process.env.DEBUG === "1" && {
       log: ["query", "info"],
     }),

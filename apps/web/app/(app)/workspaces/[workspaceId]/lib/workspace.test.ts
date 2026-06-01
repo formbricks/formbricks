@@ -1,6 +1,6 @@
-import { Prisma } from "@prisma/client";
 import { describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TMembership } from "@formbricks/types/memberships";
 import { getWorkspacesByUserId } from "./workspace";

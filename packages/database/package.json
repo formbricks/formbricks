@@ -6,8 +6,10 @@
   "main": "./dist/index.cjs",
   "types": "./dist/index.d.ts",
   "type": "module",
+  "sideEffects": false,
   "files": [
     "dist",
+    "generated",
     "schema.prisma",
     "migration"
   ],
@@ -21,6 +23,21 @@
       "types": "./types/*.ts",
       "import": "./types/*.ts"
     },
+    "./prisma": {
+      "types": "./dist/src/prisma.d.ts",
+      "import": "./dist/src/prisma.js",
+      "require": "./dist/src/prisma.cjs"
+    },
+    "./prisma-browser": {
+      "types": "./dist/src/prisma-browser.d.ts",
+      "import": "./dist/src/prisma-browser.js",
+      "require": "./dist/src/prisma-browser.cjs"
+    },
+    "./prisma-adapter": {
+      "types": "./dist/src/prisma-adapter.d.ts",
+      "import": "./dist/src/prisma-adapter.js",
+      "require": "./dist/src/prisma-adapter.cjs"
+    },
     "./zod/*": {
       "types": "./zod/*.ts",
       "import": "./zod/*.ts"
@@ -31,9 +48,9 @@
   },
   "scripts": {
     "clean": "rimraf .turbo node_modules dist",
-    "build": "pnpm generate && vite build",
+    "build": "pnpm generate && vite build && tsc -p tsconfig.generated-prisma.json",
     "dev": "vite build --watch",
-    "db:migrate:deploy": "env DATABASE_URL=\"${MIGRATE_DATABASE_URL:-$DATABASE_URL}\" node ./dist/scripts/apply-migrations.js",
+    "db:migrate:deploy": "node ./dist/scripts/apply-migrations.js",
     "db:migrate:dev": "pnpm build && dotenv -e ../../.env -- sh -c \"pnpm prisma generate && node ./dist/scripts/apply-migrations.js\"",
     "db:create-saml-database:deploy": "env SAML_DATABASE_URL=\"${SAML_DATABASE_URL}\" node ./dist/scripts/create-saml-database.js",
     "db:create-saml-database:dev": "dotenv -e ../../.env -- node ./dist/scripts/create-saml-database.js",
@@ -53,8 +70,10 @@
     "@formbricks/logger": "workspace:*",
     "@formbricks/types": "workspace:*",
     "@paralleldrive/cuid2": "2.3.1",
-    "@prisma/client": "6.19.3",
+    "@prisma/adapter-pg": "7.8.0",
+    "@prisma/client": "7.8.0",
     "bcryptjs": "3.0.3",
+    "pg": "8.16.3",
     "uuid": "14.0.0",
     "zod": "4.3.6",
     "zod-openapi": "5.4.6"
@@ -62,10 +81,11 @@
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/eslint-config": "workspace:*",
+    "@types/pg": "8.16.0",
     "dotenv-cli": "11.0.0",
     "glob": "13.0.6",
-    "prisma": "6.19.3",
-    "prisma-json-types-generator": "3.6.2",
+    "prisma": "7.8.0",
+    "prisma-json-types-generator": "4.1.1",
     "tsx": "4.21.0",
     "vite": "7.3.3",
     "vite-plugin-dts": "4.5.4"

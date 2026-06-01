@@ -1,5 +1,5 @@
 import "server-only";
-import type { IdentityProvider } from "@prisma/client";
+import type { IdentityProvider } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { AuthorizationError, InvalidInputError, OperationNotAllowedError } from "@formbricks/types/errors";
 import { DISABLE_ACCOUNT_DELETION_SSO_CONFIRMATION } from "@/lib/constants";

@@ -1,9 +1,9 @@
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import type { PrismaClient } from "@prisma/client";
 import type { AdapterAccount } from "next-auth/adapters";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import type { PrismaClient } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { getNextAuthAdapter } from "./adapter";
 

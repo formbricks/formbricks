@@ -1,5 +1,5 @@
-import { type ApiKey, ApiKeyPermission } from "@prisma/client";
 import { z } from "zod";
+import { type ApiKey, ApiKeyPermission } from "@formbricks/database/prisma";
 import { ZOrganizationAccess } from "@formbricks/types/api-key";
 import { ZWorkspace } from "@formbricks/types/workspace";
 

@@ -1,4 +1,4 @@
-import { exec } from "node:child_process";
+import { execFile } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import readline from "node:readline";
@@ -10,7 +10,20 @@ import { applyMigrations } from "./migration-runner";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
+const DATABASE_PACKAGE_DIR = path.resolve(__dirname, "../..");
+const REPO_ROOT_DIR = path.resolve(DATABASE_PACKAGE_DIR, "../..");
+const PRISMA_CONFIG_PATH = path.join(REPO_ROOT_DIR, "prisma.config.ts");
+const LOCAL_PRISMA_BIN = path.join(REPO_ROOT_DIR, "node_modules", ".bin", "prisma");
+
+const resolvePrismaBin = async (): Promise<string> => {
+  try {
+    await fs.access(LOCAL_PRISMA_BIN);
+    return LOCAL_PRISMA_BIN;
+  } catch {
+    return "prisma";
+  }
+};
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
@@ -51,7 +64,12 @@ async function main(): Promise<void> {
   }
 
   // Create migration
-  await execAsync(`pnpm prisma migrate dev --name "${migrationName}" --create-only`);
+  const prismaBin = await resolvePrismaBin();
+  await execFileAsync(
+    prismaBin,
+    ["migrate", "dev", "--config", PRISMA_CONFIG_PATH, "--name", migrationName, "--create-only"],
+    { cwd: REPO_ROOT_DIR }
+  );
   logger.info(`Migration created: ${migrationName}`);
 
   // Find the newly created migration
@@ -90,6 +108,9 @@ async function main(): Promise<void> {
 
   // Delete the migration from the original migrations folder
   await fs.rm(sourcePath, { recursive: true, force: true });
+
+  // Prisma 7 migrate commands no longer auto-generate the client.
+  await execFileAsync(prismaBin, ["generate", "--config", PRISMA_CONFIG_PATH], { cwd: REPO_ROOT_DIR });
 
   try {
     await applyMigrations();

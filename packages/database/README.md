@@ -170,7 +170,7 @@ By default, the seed script uses `upsert` to ensure it can be run multiple times
 
 ```typescript
 import { createId } from "@paralleldrive/cuid2";
-import { Prisma } from "@prisma/client";
+import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import type { MigrationScript } from "../../src/scripts/migration-runner";
 

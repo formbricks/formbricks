@@ -1,6 +1,6 @@
-import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TContactAttributeKeyType } from "@formbricks/types/contact-attribute-key";
 import { DatabaseError, InvalidInputError, OperationNotAllowedError } from "@formbricks/types/errors";

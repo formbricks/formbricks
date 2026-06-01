@@ -1,6 +1,6 @@
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { PrismaClientKnownRequestError } from "@formbricks/database/prisma";
 import { DatabaseError } from "@formbricks/types/errors";
 import { getTeamsByOrganizationId } from "./onboarding";
 

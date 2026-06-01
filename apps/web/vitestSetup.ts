@@ -98,8 +98,10 @@ vi.mock("@/modules/auth/actions/sign-out", () => ({
 
 // mock prisma client
 
-vi.mock("@prisma/client", async () => {
-  const actual = await vi.importActual<typeof import("@prisma/client")>("@prisma/client");
+vi.mock("@formbricks/database/prisma", async () => {
+  const actual = await vi.importActual<typeof import("@formbricks/database/prisma")>(
+    "@formbricks/database/prisma"
+  );
 
   return {
     ...actual,

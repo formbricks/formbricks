@@ -1,6 +1,6 @@
 import { expect } from "@playwright/test";
-import { type Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
+import { type Prisma } from "@formbricks/database/prisma";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import {
   EMBED_SURVEY_PREVIEW_CHOICE_IDS,

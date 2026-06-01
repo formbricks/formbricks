@@ -198,7 +198,7 @@ export const ThemeStylingPreviewSurvey = ({
                 isEditorView>
                 {!workspace.styling?.isLogoHidden && (
                   <button type="button" className="absolute left-5 top-5" onClick={scrollToEditLogoSection}>
-                    <ClientLogo workspaceLogo={workspace.logo} previewSurvey />
+                    <ClientLogo workspaceLogo={workspace.logo ?? null} previewSurvey />
                   </button>
                 )}
                 <div

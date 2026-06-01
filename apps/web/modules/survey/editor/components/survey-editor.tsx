@@ -1,7 +1,7 @@
 "use client";
 
-import { ActionClass, Language, OrganizationRole, Workspace } from "@prisma/client";
 import { type Dispatch, type SetStateAction, useCallback, useEffect, useRef, useState } from "react";
+import { ActionClass, Language, OrganizationRole, Workspace } from "@formbricks/database/prisma-browser";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSegment } from "@formbricks/types/segment";

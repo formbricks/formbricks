@@ -50,7 +50,8 @@ spec:
               const https = require("https");
               const path = require("path");
               const { pathToFileURL } = require("url");
-              const { Prisma, PrismaClient } = require("@prisma/client");
+              const { Prisma, PrismaClient } = require("./packages/database/dist/src/prisma.cjs");
+              const { createPrismaPgAdapter } = require("./packages/database/dist/src/prisma-adapter.cjs");
 
               const parsePositiveInteger = (value, fallback) => {
                 const parsed = Number.parseInt(value || "", 10);
@@ -67,7 +68,7 @@ spec:
               );
               const jobName = process.env.FORMBRICKS_MIGRATION_JOB_NAME;
               const migrationsDir = path.resolve("packages/database/dist/migration");
-              const prisma = new PrismaClient();
+              const prisma = new PrismaClient({ adapter: createPrismaPgAdapter().adapter });
               const namespace = fs
                 .readFileSync("/var/run/secrets/kubernetes.io/serviceaccount/namespace", "utf8")
                 .trim();

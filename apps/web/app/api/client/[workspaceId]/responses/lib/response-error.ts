@@ -1,5 +1,5 @@
-import { Prisma } from "@prisma/client";
-import type { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { Prisma } from "@formbricks/database/prisma";
+import type { PrismaClientKnownRequestError } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 
 export const isPrismaKnownRequestError = (error: unknown): error is PrismaClientKnownRequestError =>

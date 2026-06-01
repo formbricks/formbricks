@@ -1,7 +1,7 @@
 import "server-only";
-import { ApiKeyPermission } from "@prisma/client";
 import { NextRequest } from "next/server";
 import { z } from "zod";
+import { ApiKeyPermission } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { ZId } from "@formbricks/types/common";

@@ -98,6 +98,9 @@ RUN chmod 644 ./next.config.mjs
 COPY --from=installer /app/apps/web/package.json .
 RUN chmod 644 ./package.json
 
+COPY --from=installer /app/prisma.config.ts ./prisma.config.ts
+RUN chmod 644 ./prisma.config.ts
+
 COPY --from=installer /app/apps/web/.next/static ./apps/web/.next/static
 RUN chown -R nextjs:nextjs ./apps/web/.next/static && chmod -R 755 ./apps/web/.next/static
 
@@ -116,12 +119,31 @@ RUN chown nextjs:nextjs ./packages/database/schema.prisma && chmod 644 ./package
 COPY --from=installer /app/packages/database/dist ./packages/database/dist
 RUN chown -R nextjs:nextjs ./packages/database/dist && chmod -R 755 ./packages/database/dist
 
-# Copy prisma client packages
-COPY --from=installer /app/node_modules/@prisma/client ./node_modules/@prisma/client
-RUN chown -R nextjs:nextjs ./node_modules/@prisma/client && chmod -R 755 ./node_modules/@prisma/client
+# Copy Prisma v7 generated client output and runtime packages used by the
+# generated client, Prisma CLI config loader, and PostgreSQL driver adapter.
+COPY --from=installer /app/packages/database/generated ./packages/database/generated
+RUN chown -R nextjs:nextjs ./packages/database/generated && chmod -R 755 ./packages/database/generated
 
-COPY --from=installer /app/node_modules/.prisma ./node_modules/.prisma
-RUN chown -R nextjs:nextjs ./node_modules/.prisma && chmod -R 755 ./node_modules/.prisma
+COPY --from=installer /app/node_modules/@prisma ./node_modules/@prisma
+RUN chown -R nextjs:nextjs ./node_modules/@prisma && chmod -R 755 ./node_modules/@prisma
+
+COPY --from=installer /app/node_modules/dotenv ./node_modules/dotenv
+RUN chmod -R 755 ./node_modules/dotenv
+
+COPY --from=installer /app/node_modules/pg ./node_modules/pg
+COPY --from=installer /app/node_modules/pg-connection-string ./node_modules/pg-connection-string
+COPY --from=installer /app/node_modules/pg-cloudflare ./node_modules/pg-cloudflare
+COPY --from=installer /app/node_modules/pg-int8 ./node_modules/pg-int8
+COPY --from=installer /app/node_modules/pg-pool ./node_modules/pg-pool
+COPY --from=installer /app/node_modules/pg-protocol ./node_modules/pg-protocol
+COPY --from=installer /app/node_modules/pg-types ./node_modules/pg-types
+COPY --from=installer /app/node_modules/pgpass ./node_modules/pgpass
+COPY --from=installer /app/node_modules/postgres-array ./node_modules/postgres-array
+COPY --from=installer /app/node_modules/postgres-bytea ./node_modules/postgres-bytea
+COPY --from=installer /app/node_modules/postgres-date ./node_modules/postgres-date
+COPY --from=installer /app/node_modules/postgres-interval ./node_modules/postgres-interval
+COPY --from=installer /app/node_modules/split2 ./node_modules/split2
+RUN chmod -R 755 ./node_modules/pg ./node_modules/pg-connection-string ./node_modules/pg-cloudflare ./node_modules/pg-int8 ./node_modules/pg-pool ./node_modules/pg-protocol ./node_modules/pg-types ./node_modules/pgpass ./node_modules/postgres-array ./node_modules/postgres-bytea ./node_modules/postgres-date ./node_modules/postgres-interval ./node_modules/split2
 
 COPY --from=installer /app/node_modules/@paralleldrive/cuid2 ./node_modules/@paralleldrive/cuid2
 RUN chmod -R 755 ./node_modules/@paralleldrive/cuid2
@@ -155,7 +177,7 @@ COPY --from=installer /app/node_modules/otlp-logger ./node_modules/otlp-logger
 RUN chmod -R 755 ./node_modules/otlp-logger
 
 # Install prisma CLI globally for database migrations and fix permissions for nextjs user
-RUN npm install --ignore-scripts -g prisma@6.19.3 \
+RUN npm install --ignore-scripts -g prisma@7.8.0 \
     && chown -R nextjs:nextjs /usr/local/lib/node_modules/prisma
 
 # Create a startup script to handle the conditional logic

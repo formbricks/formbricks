@@ -1,5 +1,5 @@
-import type { Organization, OrganizationBilling } from "@prisma/client";
 import { z } from "zod";
+import type { Organization, OrganizationBilling } from "../src/prisma";
 
 export const ZOrganizationWhiteLabel = z.object({
   logoUrl: z.string().nullable(),

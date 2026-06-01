@@ -1,7 +1,7 @@
 import "server-only";
-import { PipelineTriggers, Prisma, type Webhook } from "@prisma/client";
 import { createHash } from "node:crypto";
 import { prisma } from "@formbricks/database";
+import { PipelineTriggers, Prisma, type Webhook } from "@formbricks/database/prisma";
 import { type JobHandler, type TResponsePipelineJobData, UnrecoverableError } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";

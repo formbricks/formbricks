@@ -1,8 +1,8 @@
 "use server";
 
-import { OrganizationRole } from "@prisma/client";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
+import { OrganizationRole } from "@formbricks/database/prisma";
 import { ZId, ZUuid } from "@formbricks/types/common";
 import { AuthenticationError, OperationNotAllowedError, ValidationError } from "@formbricks/types/errors";
 import { TOrganizationRole, ZOrganizationRole } from "@formbricks/types/memberships";

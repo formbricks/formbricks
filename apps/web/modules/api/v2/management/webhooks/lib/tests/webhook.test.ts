@@ -1,6 +1,6 @@
-import { WebhookSource } from "@prisma/client";
 import { describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { WebhookSource } from "@formbricks/database/prisma";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { validateWebhookUrl } from "@/lib/utils/validate-webhook-url";
 import { TGetWebhooksFilter, TWebhookInput } from "@/modules/api/v2/management/webhooks/types/webhooks";

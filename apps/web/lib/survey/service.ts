@@ -1,7 +1,7 @@
 import "server-only";
-import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { ZId, ZOptionalNumber } from "@formbricks/types/common";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
@@ -657,7 +657,7 @@ export const createSurvey = async (workspaceId: string, surveyBody: TSurveyCreat
   );
 
   try {
-    const { createdBy, languages, segment, followUps, ...restSurveyBody } = parsedSurveyBody;
+    const { createdBy, languages, segment, followUps, styling, ...restSurveyBody } = parsedSurveyBody;
     assertSurveyLanguagesBelongToWorkspace(parsedWorkspaceId, languages);
     await assertSurveySegmentBelongsToWorkspace(parsedWorkspaceId, segment);
     const normalizedCloseOn = restSurveyBody.closeOn instanceof Date ? restSurveyBody.closeOn : null;
@@ -679,8 +679,9 @@ export const createSurvey = async (workspaceId: string, surveyBody: TSurveyCreat
 
     const actionClasses = await getActionClasses(parsedWorkspaceId);
 
-    const baseData: Omit<Prisma.SurveyCreateInput, "workspace"> = {
+    const baseData = {
       ...restSurveyBody,
+      styling: styling === null ? Prisma.JsonNull : styling,
       ...normalizeSurveyScheduling({
         closeOn: normalizedCloseOn,
         publishOn: normalizedPublishOn,
@@ -692,7 +693,7 @@ export const createSurvey = async (workspaceId: string, surveyBody: TSurveyCreat
         ? handleTriggerUpdates(restSurveyBody.triggers, [], actionClasses)
         : undefined,
       attributeFilters: undefined,
-    };
+    } as Omit<Prisma.SurveyCreateInput, "workspace">;
     const data = validateSurveyCreateDataMedia(
       attachSurveyFollowUpsToCreateData(attachSurveyCreatorToCreateData(baseData, createdBy), followUps)
     );

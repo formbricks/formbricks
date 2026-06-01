@@ -1,9 +1,8 @@
 import { prisma } from "@/lib/__mocks__/database";
-import { ActionClass, Prisma, Survey } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { testInputValidation } from "vitestSetup";
+import { ActionClass, Prisma, Survey } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
-import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { TActionClass } from "@formbricks/types/action-classes";
 import {
   DatabaseError,
@@ -12,6 +11,7 @@ import {
   ValidationError,
 } from "@formbricks/types/errors";
 import { TSegment } from "@formbricks/types/segment";
+import { TSurveyFollowUp } from "@formbricks/types/surveys/follow-up";
 import { TSurvey, TSurveyCreateInput, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { getActionClasses } from "@/lib/actionClass/service";
 import {

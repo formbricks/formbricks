@@ -1,6 +1,6 @@
-import { ContactAttributeKey, Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { ContactAttributeKey, Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { formatSnakeCaseToTitleCase } from "@/lib/utils/safe-identifier";

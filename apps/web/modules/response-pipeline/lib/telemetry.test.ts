@@ -1,7 +1,7 @@
-import { IntegrationType } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { getCacheService } from "@formbricks/cache";
 import { prisma } from "@formbricks/database";
+import { IntegrationType } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { sendTelemetryEvents } from "./telemetry";
 

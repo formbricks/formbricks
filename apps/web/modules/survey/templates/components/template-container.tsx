@@ -1,8 +1,8 @@
 "use client";
 
-import type { Workspace } from "@prisma/client";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import type { Workspace } from "@formbricks/database/prisma-browser";
 import type { TTemplate } from "@formbricks/types/templates";
 import { customSurveyTemplate } from "@/app/lib/templates";
 import { TemplateList } from "@/modules/survey/components/template-list";

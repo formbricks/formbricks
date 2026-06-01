@@ -19,8 +19,8 @@
  * - Organization: whitelabel
  * - Response: data (file upload responses)
  */
-import { Prisma } from "@prisma/client";
 import { logger } from "@formbricks/logger";
+import { Prisma } from "../../src/prisma";
 import type { MigrationScript } from "../../src/scripts/migration-runner";
 import type {
   MigrationStats,

@@ -1,11 +1,11 @@
 "use client";
 
-import { Webhook } from "@prisma/client";
 import { CheckIcon, CopyIcon, ExternalLinkIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { Webhook } from "@formbricks/database/prisma-browser";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,

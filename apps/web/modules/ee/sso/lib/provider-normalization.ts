@@ -1,4 +1,4 @@
-import type { IdentityProvider } from "@prisma/client";
+import type { IdentityProvider } from "@formbricks/database/prisma";
 
 const SSO_PROVIDER_MAP = {
   google: "google",

@@ -1,8 +1,8 @@
 "use server";
 
-import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { PrismaClientKnownRequestError } from "@formbricks/database/prisma";
 import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TOrganizationTeam } from "@/app/(app)/(onboarding)/types/onboarding";

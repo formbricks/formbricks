@@ -1,5 +1,4 @@
 /* eslint-disable import/no-relative-packages -- Need to import from parent package */
-import { SurveyStatus, SurveyType } from "@prisma/client";
 import { z } from "zod";
 import { ZOverlay } from "../../types/common";
 // eslint-disable-next-line import/no-relative-packages -- Need to import from parent package
@@ -12,6 +11,7 @@ import {
   ZSurveyRecaptcha,
   ZSurveyVariable,
 } from "../../types/surveys/types";
+import { SurveyStatus, SurveyType } from "../src/prisma";
 
 const ZColor = z.string().regex(/^#(?:[A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/);
 

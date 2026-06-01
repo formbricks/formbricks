@@ -1,5 +1,5 @@
-import { PipelineTriggers } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { PipelineTriggers } from "@formbricks/database/prisma";
 import { TResponsePipelineJobData, getBackgroundJobProducer } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
 import { TResponse } from "@formbricks/types/responses";

@@ -1,8 +1,8 @@
 import "server-only";
-import { Prisma } from "@prisma/client";
-import type { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
+import type { PrismaClientKnownRequestError } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZId, ZOptionalNumber } from "@formbricks/types/common";
 import {
