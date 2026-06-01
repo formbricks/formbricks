@@ -224,12 +224,12 @@ const mapUniqueConstraintError = (error: PrismaClientKnownRequestError): Invalid
   const target = error.meta?.target;
   const targetFields = Array.isArray(target) ? (target as string[]) : [];
   if (targetFields.includes("elementId") || targetFields.includes("surveyId")) {
-    return new InvalidInputError("CONNECTOR_FORMBRICKS_MAPPING_DUPLICATE");
+    return new InvalidInputError("FEEDBACK_SOURCE_FORMBRICKS_MAPPING_DUPLICATE");
   }
   if (targetFields.includes("sourceFieldId") || targetFields.includes("targetFieldId")) {
-    return new InvalidInputError("CONNECTOR_FIELD_MAPPING_DUPLICATE");
+    return new InvalidInputError("FEEDBACK_SOURCE_FIELD_MAPPING_DUPLICATE");
   }
-  return new InvalidInputError("CONNECTOR_NAME_DUPLICATE");
+  return new InvalidInputError("FEEDBACK_SOURCE_NAME_DUPLICATE");
 };
 
 export type TFormbricksMappingsInput = {

@@ -21,12 +21,12 @@ const { createFeedbackRecordsBatch } = vi.mocked(await import("@/modules/hub"));
 const { transformResponseToFeedbackRecords } = vi.mocked(await import("./transform"));
 
 const ENV_ID = "clxxxxxxxxxxxxxxxx001";
-const CONNECTOR_ID = "clxxxxxxxxxxxxxxxx002";
+const FEEDBACK_SOURCE_ID = "clxxxxxxxxxxxxxxxx002";
 const SURVEY_ID = "clxxxxxxxxxxxxxxxx003";
 const NOW = new Date("2026-02-24T10:00:00.000Z");
 
 const mockFeedbackSource: TFeedbackSourceWithMappings = {
-  id: CONNECTOR_ID,
+  id: FEEDBACK_SOURCE_ID,
   createdAt: NOW,
   updatedAt: NOW,
   name: "Test FeedbackSource",
@@ -40,7 +40,7 @@ const mockFeedbackSource: TFeedbackSourceWithMappings = {
     {
       id: "mapping-1",
       createdAt: NOW,
-      feedbackSourceId: CONNECTOR_ID,
+      feedbackSourceId: FEEDBACK_SOURCE_ID,
       workspaceId: ENV_ID,
       surveyId: SURVEY_ID,
       elementId: "el-1",

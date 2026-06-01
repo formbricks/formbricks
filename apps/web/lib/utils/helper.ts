@@ -274,7 +274,7 @@ export const isStringMatch = (query: string, value: string): boolean => {
   return valueModified.includes(queryModified);
 };
 
-// Connector helpers
+// FeedbackSource helpers
 export const getOrganizationIdFromFeedbackSourceId = async (feedbackSourceId: string) => {
   const feedbackSource = await getFeedbackSource(feedbackSourceId);
   if (!feedbackSource) {

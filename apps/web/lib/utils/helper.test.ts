@@ -337,9 +337,9 @@ describe("Helper Utilities", () => {
         organizationId: "org1",
       });
 
-      const orgId = await getOrganizationIdFromFeedbackSourceId("connector1");
+      const orgId = await getOrganizationIdFromFeedbackSourceId("feedbackSource1");
       expect(orgId).toBe("org1");
-      expect(services.getFeedbackSource).toHaveBeenCalledWith("connector1");
+      expect(services.getFeedbackSource).toHaveBeenCalledWith("feedbackSource1");
       expect(services.getWorkspace).toHaveBeenCalledWith("workspace1");
     });
 

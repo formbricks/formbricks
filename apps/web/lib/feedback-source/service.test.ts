@@ -37,13 +37,13 @@ vi.mock("@/lib/utils/validate", () => ({
 }));
 
 const ENV_ID = "clxxxxxxxxxxxxxxxx001";
-const CONNECTOR_ID = "clxxxxxxxxxxxxxxxx002";
+const FEEDBACK_SOURCE_ID = "clxxxxxxxxxxxxxxxx002";
 const SURVEY_ID = "clxxxxxxxxxxxxxxxx003";
 const FRD_ID = "clxxxxxxxxxxxxxxxx004";
 const NOW = new Date("2026-02-24T10:00:00.000Z");
 
 const mockFeedbackSource = {
-  id: CONNECTOR_ID,
+  id: FEEDBACK_SOURCE_ID,
   createdAt: NOW,
   updatedAt: NOW,
   name: "Test FeedbackSource",
@@ -61,7 +61,7 @@ const mockFeedbackSourceWithMappingsFromDb = {
     {
       id: "mapping-1",
       createdAt: NOW,
-      feedbackSourceId: CONNECTOR_ID,
+      feedbackSourceId: FEEDBACK_SOURCE_ID,
       workspaceId: ENV_ID,
       surveyId: SURVEY_ID,
       elementId: "el-1",
@@ -98,7 +98,7 @@ describe("getFeedbackSourcesWithMappings", () => {
       })
     );
     expect(result).toHaveLength(1);
-    expect(result[0].id).toBe(CONNECTOR_ID);
+    expect(result[0].id).toBe(FEEDBACK_SOURCE_ID);
   });
 
   test("applies pagination when page is provided", async () => {
@@ -185,11 +185,11 @@ describe("updateFeedbackSource", () => {
     const updated = { ...mockFeedbackSource, name: "Renamed" };
     vi.mocked(prisma.feedbackSource.update).mockResolvedValue(updated as never);
 
-    const result = await updateFeedbackSource(CONNECTOR_ID, ENV_ID, { name: "Renamed" });
+    const result = await updateFeedbackSource(FEEDBACK_SOURCE_ID, ENV_ID, { name: "Renamed" });
 
     expect(prisma.feedbackSource.update).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { id: CONNECTOR_ID, workspaceId: ENV_ID },
+        where: { id: FEEDBACK_SOURCE_ID, workspaceId: ENV_ID },
         data: expect.objectContaining({ name: "Renamed" }),
       })
     );
@@ -200,7 +200,7 @@ describe("updateFeedbackSource", () => {
     const updated = { ...mockFeedbackSource, status: "paused" };
     vi.mocked(prisma.feedbackSource.update).mockResolvedValue(updated as never);
 
-    const result = await updateFeedbackSource(CONNECTOR_ID, ENV_ID, { status: "paused" });
+    const result = await updateFeedbackSource(FEEDBACK_SOURCE_ID, ENV_ID, { status: "paused" });
     expect(result.status).toBe("paused");
   });
 
@@ -212,7 +212,7 @@ describe("updateFeedbackSource", () => {
       })
     );
 
-    await expect(updateFeedbackSource(CONNECTOR_ID, ENV_ID, { name: "x" })).rejects.toThrow(
+    await expect(updateFeedbackSource(FEEDBACK_SOURCE_ID, ENV_ID, { name: "x" })).rejects.toThrow(
       ResourceNotFoundError
     );
   });
@@ -225,13 +225,17 @@ describe("updateFeedbackSource", () => {
       })
     );
 
-    await expect(updateFeedbackSource(CONNECTOR_ID, ENV_ID, { name: "x" })).rejects.toThrow(DatabaseError);
+    await expect(updateFeedbackSource(FEEDBACK_SOURCE_ID, ENV_ID, { name: "x" })).rejects.toThrow(
+      DatabaseError
+    );
   });
 
   test("rethrows non-Prisma errors", async () => {
     vi.mocked(prisma.feedbackSource.update).mockRejectedValue(new Error("unexpected"));
 
-    await expect(updateFeedbackSource(CONNECTOR_ID, ENV_ID, { name: "x" })).rejects.toThrow("unexpected");
+    await expect(updateFeedbackSource(FEEDBACK_SOURCE_ID, ENV_ID, { name: "x" })).rejects.toThrow(
+      "unexpected"
+    );
   });
 });
 
@@ -243,14 +247,14 @@ describe("deleteFeedbackSource", () => {
   test("deletes the feedbackSource and returns it", async () => {
     vi.mocked(prisma.feedbackSource.delete).mockResolvedValue(mockFeedbackSource as never);
 
-    const result = await deleteFeedbackSource(CONNECTOR_ID, ENV_ID);
+    const result = await deleteFeedbackSource(FEEDBACK_SOURCE_ID, ENV_ID);
 
     expect(prisma.feedbackSource.delete).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { id: CONNECTOR_ID, workspaceId: ENV_ID },
+        where: { id: FEEDBACK_SOURCE_ID, workspaceId: ENV_ID },
       })
     );
-    expect(result.id).toBe(CONNECTOR_ID);
+    expect(result.id).toBe(FEEDBACK_SOURCE_ID);
   });
 
   test("throws ResourceNotFoundError when feedbackSource does not exist", async () => {
@@ -261,7 +265,7 @@ describe("deleteFeedbackSource", () => {
       })
     );
 
-    await expect(deleteFeedbackSource(CONNECTOR_ID, ENV_ID)).rejects.toThrow(ResourceNotFoundError);
+    await expect(deleteFeedbackSource(FEEDBACK_SOURCE_ID, ENV_ID)).rejects.toThrow(ResourceNotFoundError);
   });
 
   test("throws DatabaseError on generic Prisma error", async () => {
@@ -272,7 +276,7 @@ describe("deleteFeedbackSource", () => {
       })
     );
 
-    await expect(deleteFeedbackSource(CONNECTOR_ID, ENV_ID)).rejects.toThrow(DatabaseError);
+    await expect(deleteFeedbackSource(FEEDBACK_SOURCE_ID, ENV_ID)).rejects.toThrow(DatabaseError);
   });
 });
 
@@ -304,7 +308,7 @@ describe("createFeedbackSourceWithMappings", () => {
 
   test("creates feedbackSource without mappings", async () => {
     const tx = setupTransaction();
-    tx.feedbackSource.create.mockResolvedValue({ id: CONNECTOR_ID, workspaceId: ENV_ID });
+    tx.feedbackSource.create.mockResolvedValue({ id: FEEDBACK_SOURCE_ID, workspaceId: ENV_ID });
     tx.feedbackSource.findUniqueOrThrow.mockResolvedValue(mockFeedbackSourceWithMappingsFromDb);
 
     const result = await createFeedbackSourceWithMappings(ENV_ID, {
@@ -330,7 +334,7 @@ describe("createFeedbackSourceWithMappings", () => {
 
   test("creates feedbackSource with formbricks mappings", async () => {
     const tx = setupTransaction();
-    tx.feedbackSource.create.mockResolvedValue({ id: CONNECTOR_ID, workspaceId: ENV_ID });
+    tx.feedbackSource.create.mockResolvedValue({ id: FEEDBACK_SOURCE_ID, workspaceId: ENV_ID });
     tx.feedbackSourceFormbricksMapping.create.mockResolvedValue({});
     tx.feedbackSource.findUniqueOrThrow.mockResolvedValue(mockFeedbackSourceWithMappingsFromDb);
 
@@ -350,7 +354,7 @@ describe("createFeedbackSourceWithMappings", () => {
     expect(tx.feedbackSourceFormbricksMapping.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
-          feedbackSourceId: CONNECTOR_ID,
+          feedbackSourceId: FEEDBACK_SOURCE_ID,
           workspaceId: ENV_ID,
           surveyId: SURVEY_ID,
           elementId: "el-1",
@@ -362,7 +366,7 @@ describe("createFeedbackSourceWithMappings", () => {
 
   test("creates feedbackSource with field mappings", async () => {
     const tx = setupTransaction();
-    tx.feedbackSource.create.mockResolvedValue({ id: CONNECTOR_ID, workspaceId: ENV_ID });
+    tx.feedbackSource.create.mockResolvedValue({ id: FEEDBACK_SOURCE_ID, workspaceId: ENV_ID });
     tx.feedbackSourceFieldMapping.create.mockResolvedValue({});
     tx.feedbackSource.findUniqueOrThrow.mockResolvedValue({
       ...mockFeedbackSource,
@@ -383,7 +387,7 @@ describe("createFeedbackSourceWithMappings", () => {
     expect(tx.feedbackSourceFieldMapping.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
-          feedbackSourceId: CONNECTOR_ID,
+          feedbackSourceId: FEEDBACK_SOURCE_ID,
           workspaceId: ENV_ID,
           sourceFieldId: "col-1",
           targetFieldId: "value_text",
@@ -392,7 +396,7 @@ describe("createFeedbackSourceWithMappings", () => {
     );
   });
 
-  test("throws CONNECTOR_NAME_DUPLICATE on FeedbackSource name unique violation", async () => {
+  test("throws FEEDBACK_SOURCE_NAME_DUPLICATE on FeedbackSource name unique violation", async () => {
     vi.mocked(prisma.$transaction).mockRejectedValue(
       new Prisma.PrismaClientKnownRequestError("Unique constraint", {
         code: "P2002",
@@ -407,10 +411,10 @@ describe("createFeedbackSourceWithMappings", () => {
         type: "formbricks_survey",
         feedbackDirectoryId: FRD_ID,
       })
-    ).rejects.toThrow(new InvalidInputError("CONNECTOR_NAME_DUPLICATE"));
+    ).rejects.toThrow(new InvalidInputError("FEEDBACK_SOURCE_NAME_DUPLICATE"));
   });
 
-  test("throws CONNECTOR_FORMBRICKS_MAPPING_DUPLICATE on mapping unique violation", async () => {
+  test("throws FEEDBACK_SOURCE_FORMBRICKS_MAPPING_DUPLICATE on mapping unique violation", async () => {
     vi.mocked(prisma.$transaction).mockRejectedValue(
       new Prisma.PrismaClientKnownRequestError("Unique constraint", {
         code: "P2002",
@@ -425,10 +429,10 @@ describe("createFeedbackSourceWithMappings", () => {
         type: "formbricks_survey",
         feedbackDirectoryId: FRD_ID,
       })
-    ).rejects.toThrow(new InvalidInputError("CONNECTOR_FORMBRICKS_MAPPING_DUPLICATE"));
+    ).rejects.toThrow(new InvalidInputError("FEEDBACK_SOURCE_FORMBRICKS_MAPPING_DUPLICATE"));
   });
 
-  test("throws CONNECTOR_FIELD_MAPPING_DUPLICATE on field mapping unique violation", async () => {
+  test("throws FEEDBACK_SOURCE_FIELD_MAPPING_DUPLICATE on field mapping unique violation", async () => {
     vi.mocked(prisma.$transaction).mockRejectedValue(
       new Prisma.PrismaClientKnownRequestError("Unique constraint", {
         code: "P2002",
@@ -443,7 +447,7 @@ describe("createFeedbackSourceWithMappings", () => {
         type: "csv",
         feedbackDirectoryId: FRD_ID,
       })
-    ).rejects.toThrow(new InvalidInputError("CONNECTOR_FIELD_MAPPING_DUPLICATE"));
+    ).rejects.toThrow(new InvalidInputError("FEEDBACK_SOURCE_FIELD_MAPPING_DUPLICATE"));
   });
 
   test("throws DatabaseError on generic Prisma error", async () => {
@@ -493,11 +497,11 @@ describe("updateFeedbackSourceWithMappings", () => {
     tx.feedbackSource.update.mockResolvedValue(undefined);
     tx.feedbackSource.findUniqueOrThrow.mockResolvedValue(mockFeedbackSourceWithMappingsFromDb);
 
-    const result = await updateFeedbackSourceWithMappings(CONNECTOR_ID, ENV_ID, { name: "Updated" });
+    const result = await updateFeedbackSourceWithMappings(FEEDBACK_SOURCE_ID, ENV_ID, { name: "Updated" });
 
     expect(tx.feedbackSource.update).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { id: CONNECTOR_ID, workspaceId: ENV_ID },
+        where: { id: FEEDBACK_SOURCE_ID, workspaceId: ENV_ID },
         data: expect.objectContaining({ name: "Updated" }),
       })
     );
@@ -514,7 +518,7 @@ describe("updateFeedbackSourceWithMappings", () => {
     tx.feedbackSource.findUniqueOrThrow.mockResolvedValue(mockFeedbackSourceWithMappingsFromDb);
 
     await updateFeedbackSourceWithMappings(
-      CONNECTOR_ID,
+      FEEDBACK_SOURCE_ID,
       ENV_ID,
       { name: "Updated" },
       {
@@ -524,7 +528,7 @@ describe("updateFeedbackSourceWithMappings", () => {
     );
 
     expect(tx.feedbackSourceFormbricksMapping.deleteMany).toHaveBeenCalledWith({
-      where: { feedbackSourceId: CONNECTOR_ID, workspaceId: ENV_ID },
+      where: { feedbackSourceId: FEEDBACK_SOURCE_ID, workspaceId: ENV_ID },
     });
     expect(tx.feedbackSourceFormbricksMapping.create).toHaveBeenCalledTimes(1);
   });
@@ -541,7 +545,7 @@ describe("updateFeedbackSourceWithMappings", () => {
     });
 
     await updateFeedbackSourceWithMappings(
-      CONNECTOR_ID,
+      FEEDBACK_SOURCE_ID,
       ENV_ID,
       { name: "CSV Updated" },
       {
@@ -551,7 +555,7 @@ describe("updateFeedbackSourceWithMappings", () => {
     );
 
     expect(tx.feedbackSourceFieldMapping.deleteMany).toHaveBeenCalledWith({
-      where: { feedbackSourceId: CONNECTOR_ID, workspaceId: ENV_ID },
+      where: { feedbackSourceId: FEEDBACK_SOURCE_ID, workspaceId: ENV_ID },
     });
     expect(tx.feedbackSourceFieldMapping.create).toHaveBeenCalledTimes(1);
   });
@@ -564,12 +568,12 @@ describe("updateFeedbackSourceWithMappings", () => {
       })
     );
 
-    await expect(updateFeedbackSourceWithMappings(CONNECTOR_ID, ENV_ID, { name: "x" })).rejects.toThrow(
+    await expect(updateFeedbackSourceWithMappings(FEEDBACK_SOURCE_ID, ENV_ID, { name: "x" })).rejects.toThrow(
       ResourceNotFoundError
     );
   });
 
-  test("throws CONNECTOR_NAME_DUPLICATE on FeedbackSource name unique violation", async () => {
+  test("throws FEEDBACK_SOURCE_NAME_DUPLICATE on FeedbackSource name unique violation", async () => {
     vi.mocked(prisma.$transaction).mockRejectedValue(
       new Prisma.PrismaClientKnownRequestError("Unique constraint", {
         code: "P2002",
@@ -578,12 +582,12 @@ describe("updateFeedbackSourceWithMappings", () => {
       })
     );
 
-    await expect(updateFeedbackSourceWithMappings(CONNECTOR_ID, ENV_ID, { name: "Dup" })).rejects.toThrow(
-      new InvalidInputError("CONNECTOR_NAME_DUPLICATE")
-    );
+    await expect(
+      updateFeedbackSourceWithMappings(FEEDBACK_SOURCE_ID, ENV_ID, { name: "Dup" })
+    ).rejects.toThrow(new InvalidInputError("FEEDBACK_SOURCE_NAME_DUPLICATE"));
   });
 
-  test("throws CONNECTOR_FORMBRICKS_MAPPING_DUPLICATE on formbricks mapping unique violation", async () => {
+  test("throws FEEDBACK_SOURCE_FORMBRICKS_MAPPING_DUPLICATE on formbricks mapping unique violation", async () => {
     vi.mocked(prisma.$transaction).mockRejectedValue(
       new Prisma.PrismaClientKnownRequestError("Unique constraint", {
         code: "P2002",
@@ -592,12 +596,12 @@ describe("updateFeedbackSourceWithMappings", () => {
       })
     );
 
-    await expect(updateFeedbackSourceWithMappings(CONNECTOR_ID, ENV_ID, { name: "x" })).rejects.toThrow(
-      new InvalidInputError("CONNECTOR_FORMBRICKS_MAPPING_DUPLICATE")
+    await expect(updateFeedbackSourceWithMappings(FEEDBACK_SOURCE_ID, ENV_ID, { name: "x" })).rejects.toThrow(
+      new InvalidInputError("FEEDBACK_SOURCE_FORMBRICKS_MAPPING_DUPLICATE")
     );
   });
 
-  test("throws CONNECTOR_FIELD_MAPPING_DUPLICATE on field mapping unique violation", async () => {
+  test("throws FEEDBACK_SOURCE_FIELD_MAPPING_DUPLICATE on field mapping unique violation", async () => {
     vi.mocked(prisma.$transaction).mockRejectedValue(
       new Prisma.PrismaClientKnownRequestError("Unique constraint", {
         code: "P2002",
@@ -606,8 +610,8 @@ describe("updateFeedbackSourceWithMappings", () => {
       })
     );
 
-    await expect(updateFeedbackSourceWithMappings(CONNECTOR_ID, ENV_ID, { name: "x" })).rejects.toThrow(
-      new InvalidInputError("CONNECTOR_FIELD_MAPPING_DUPLICATE")
+    await expect(updateFeedbackSourceWithMappings(FEEDBACK_SOURCE_ID, ENV_ID, { name: "x" })).rejects.toThrow(
+      new InvalidInputError("FEEDBACK_SOURCE_FIELD_MAPPING_DUPLICATE")
     );
   });
 
@@ -619,7 +623,7 @@ describe("updateFeedbackSourceWithMappings", () => {
       })
     );
 
-    await expect(updateFeedbackSourceWithMappings(CONNECTOR_ID, ENV_ID, { name: "x" })).rejects.toThrow(
+    await expect(updateFeedbackSourceWithMappings(FEEDBACK_SOURCE_ID, ENV_ID, { name: "x" })).rejects.toThrow(
       DatabaseError
     );
   });

@@ -269,9 +269,9 @@ export type TFeedbackCSVData = z.infer<ReturnType<typeof createFeedbackCSVDataSc
 export type TCreateFeedbackSourceStep = "selectType" | "mapping";
 
 export const ZFormbricksFeedbackSourceForm = z.object({
-  sourceName: z.string().trim().min(1, "CONNECTOR_NAME_REQUIRED"),
-  surveyId: z.string().min(1, "CONNECTOR_SURVEY_REQUIRED"),
-  selectedQuestionIds: z.array(z.string()).min(1, "CONNECTOR_QUESTIONS_REQUIRED"),
+  sourceName: z.string().trim().min(1, "FEEDBACK_SOURCE_NAME_REQUIRED"),
+  surveyId: z.string().min(1, "FEEDBACK_SOURCE_SURVEY_REQUIRED"),
+  selectedQuestionIds: z.array(z.string()).min(1, "FEEDBACK_SOURCE_QUESTIONS_REQUIRED"),
   importHistorical: z.boolean(),
 });
 
@@ -279,19 +279,19 @@ export type TFormbricksFeedbackSourceForm = z.infer<typeof ZFormbricksFeedbackSo
 
 export const getTranslatedFeedbackSourceError = (errorCode: string, t: TFunction): string => {
   switch (errorCode) {
-    case "CONNECTOR_NAME_DUPLICATE":
+    case "FEEDBACK_SOURCE_NAME_DUPLICATE":
       return t("workspace.unify.error_source_name_duplicate");
-    case "CONNECTOR_FORMBRICKS_MAPPING_DUPLICATE":
+    case "FEEDBACK_SOURCE_FORMBRICKS_MAPPING_DUPLICATE":
       return t("workspace.unify.error_source_formbricks_mapping_duplicate");
-    case "CONNECTOR_FIELD_MAPPING_DUPLICATE":
+    case "FEEDBACK_SOURCE_FIELD_MAPPING_DUPLICATE":
       return t("workspace.unify.error_source_field_mapping_duplicate");
     case CSV_IMPORT_MISSING_COLUMNS_ERROR_CODE:
       return t("workspace.unify.csv_saved_mapping_missing_columns");
-    case "CONNECTOR_NAME_REQUIRED":
+    case "FEEDBACK_SOURCE_NAME_REQUIRED":
       return t("workspace.unify.error_source_name_required");
-    case "CONNECTOR_SURVEY_REQUIRED":
+    case "FEEDBACK_SOURCE_SURVEY_REQUIRED":
       return t("workspace.unify.error_source_survey_required");
-    case "CONNECTOR_QUESTIONS_REQUIRED":
+    case "FEEDBACK_SOURCE_QUESTIONS_REQUIRED":
       return t("workspace.unify.error_source_questions_required");
     default:
       return errorCode;
