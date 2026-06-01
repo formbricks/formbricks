@@ -20,6 +20,38 @@ import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { createApiKeyAction, deleteApiKeyAction, updateApiKeyAction } from "../actions";
 import { AddApiKeyModal } from "./add-api-key-modal";
 
+const ApiKeyDisplay = ({ apiKey }: Readonly<{ apiKey: string }>) => {
+  const { t } = useTranslation();
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(apiKey);
+      toast.success(t("workspace.api_keys.api_key_copied_to_clipboard"));
+    } catch {
+      toast.error(t("workspace.api_keys.unable_to_copy_api_key"));
+    }
+  };
+
+  if (!apiKey) {
+    return <span className="italic">{t("workspace.api_keys.secret")}</span>;
+  }
+
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <span className="whitespace-pre-line break-all">{apiKey}</span>
+      <div className="copyApiKeyIcon flex-shrink-0">
+        <FilesIcon
+          className="size-4 cursor-pointer"
+          onClick={(e) => {
+            e.stopPropagation();
+            void copyToClipboard();
+          }}
+          data-testid="copy-button"
+        />
+      </div>
+    </div>
+  );
+};
+
 interface EditAPIKeysProps {
   organizationId: string;
   apiKeys: TApiKeyWithEnvironmentPermission[];
@@ -129,37 +161,6 @@ export const EditAPIKeys = ({
     }
 
     setViewPermissionsOpen(false);
-  };
-
-  const ApiKeyDisplay = ({ apiKey }: { apiKey: string }) => {
-    const copyToClipboard = async () => {
-      try {
-        await navigator.clipboard.writeText(apiKey);
-        toast.success(t("workspace.api_keys.api_key_copied_to_clipboard"));
-      } catch {
-        toast.error(t("workspace.api_keys.unable_to_copy_api_key"));
-      }
-    };
-
-    if (!apiKey) {
-      return <span className="italic">{t("workspace.api_keys.secret")}</span>;
-    }
-
-    return (
-      <div className="flex items-center justify-between gap-2">
-        <span className="whitespace-pre-line break-all">{apiKey}</span>
-        <div className="copyApiKeyIcon flex-shrink-0">
-          <FilesIcon
-            className="size-4 cursor-pointer"
-            onClick={(e) => {
-              e.stopPropagation();
-              void copyToClipboard();
-            }}
-            data-testid="copy-button"
-          />
-        </div>
-      </div>
-    );
   };
 
   return (
