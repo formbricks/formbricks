@@ -40,7 +40,7 @@ export function FeedbackSourceRowDropdown({
   onDuplicate,
   onToggleStatus,
   onDelete,
-}: FeedbackSourceRowDropdownProps) {
+}: Readonly<FeedbackSourceRowDropdownProps>) {
   const router = useRouter();
   const { t } = useTranslation();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -62,16 +62,14 @@ export function FeedbackSourceRowDropdown({
   };
 
   return (
-    <div // eslint-disable-next-line jsx-a11y/no-static-element-interactions
-      onClick={(e) => e.stopPropagation()}
-      onKeyDown={(e) => e.stopPropagation()}
-      data-testid="feedbackSource-row-dropdown">
+    <div data-testid="feedbackSource-row-dropdown">
       <DropdownMenu open={isDropDownOpen} onOpenChange={setIsDropDownOpen}>
-        <DropdownMenuTrigger className="z-10" asChild>
-          <div className="cursor-pointer rounded-lg border bg-white p-2 hover:bg-slate-50">
-            <span className="sr-only">{t("workspace.surveys.open_options")}</span>
-            <MoreVertical className="size-4" aria-hidden="true" />
-          </div>
+        <DropdownMenuTrigger
+          className="z-10 cursor-pointer rounded-lg border bg-white p-2 hover:bg-slate-50"
+          onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}>
+          <span className="sr-only">{t("workspace.surveys.open_options")}</span>
+          <MoreVertical className="size-4" aria-hidden="true" />
         </DropdownMenuTrigger>
         <DropdownMenuContent className="inline-block w-auto min-w-max">
           <DropdownMenuGroup>

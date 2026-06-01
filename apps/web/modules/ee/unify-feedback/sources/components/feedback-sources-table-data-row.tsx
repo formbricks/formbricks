@@ -84,37 +84,33 @@ export function FeedbackSourcesTableDataRow({
   };
 
   return (
-    <div
-      role="button"
-      tabIndex={0}
-      className="grid h-12 min-h-12 cursor-pointer grid-cols-12 content-center p-2 text-left transition-colors ease-in-out hover:bg-slate-50"
-      onClick={handleRowClick}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          handleRowClick();
-        }
-      }}>
-      <div
-        className="col-span-1 flex items-center gap-2 pl-4"
-        title={t(getFeedbackSourceTypeLabelKey(feedbackSource.type))}>
-        {getFeedbackSourceIcon(feedbackSource.type, "h-4 w-4 text-slate-500")}
-      </div>
-      <div className="col-span-4 flex items-center">
-        <span className="truncate text-sm font-medium text-slate-900">{feedbackSource.name}</span>
-      </div>
-      <div className="col-span-2 hidden items-center justify-center sm:flex">
-        <Badge
-          text={getStatusLabel(feedbackSource.status, feedbackSource.type)}
-          type={STATUS_BADGE_TYPE[feedbackSource.status]}
-          size="tiny"
-        />
-      </div>
-      <div className="col-span-2 hidden items-center justify-center text-sm text-slate-500 sm:flex">
-        {getRelativeTime(feedbackSource.updatedAt, i18n.language)}
-      </div>
-      <div className="col-span-2 hidden items-center justify-center text-sm text-slate-500 sm:flex">
-        <span className="truncate">{feedbackSource.creatorName ?? "—"}</span>
-      </div>
+    <div className="grid h-12 min-h-12 grid-cols-12 content-center transition-colors ease-in-out hover:bg-slate-50">
+      <button
+        type="button"
+        className="col-span-11 grid cursor-pointer grid-cols-11 content-center p-2 text-left"
+        onClick={handleRowClick}>
+        <div
+          className="col-span-1 flex items-center gap-2 pl-4"
+          title={t(getFeedbackSourceTypeLabelKey(feedbackSource.type))}>
+          {getFeedbackSourceIcon(feedbackSource.type, "h-4 w-4 text-slate-500")}
+        </div>
+        <div className="col-span-4 flex items-center">
+          <span className="truncate text-sm font-medium text-slate-900">{feedbackSource.name}</span>
+        </div>
+        <div className="col-span-2 hidden items-center justify-center sm:flex">
+          <Badge
+            text={getStatusLabel(feedbackSource.status, feedbackSource.type)}
+            type={STATUS_BADGE_TYPE[feedbackSource.status]}
+            size="tiny"
+          />
+        </div>
+        <div className="col-span-2 hidden items-center justify-center text-sm text-slate-500 sm:flex">
+          {getRelativeTime(feedbackSource.updatedAt, i18n.language)}
+        </div>
+        <div className="col-span-2 hidden items-center justify-center text-sm text-slate-500 sm:flex">
+          <span className="truncate">{feedbackSource.creatorName ?? "—"}</span>
+        </div>
+      </button>
       <div className="col-span-1 flex items-center justify-end pr-2">
         {!isReadOnly && (
           <FeedbackSourceRowDropdown

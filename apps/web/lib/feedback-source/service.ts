@@ -179,7 +179,7 @@ export const updateFeedbackSource = async (
       select: selectFeedbackSource,
     });
 
-    return feedbackSource as TFeedbackSource;
+    return feedbackSource;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === PrismaErrorType.RecordDoesNotExist) {
@@ -206,7 +206,7 @@ export const deleteFeedbackSource = async (
       select: selectFeedbackSource,
     });
 
-    return feedbackSource as TFeedbackSource;
+    return feedbackSource;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === PrismaErrorType.RecordDoesNotExist) {
