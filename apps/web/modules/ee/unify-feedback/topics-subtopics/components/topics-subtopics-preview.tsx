@@ -26,10 +26,14 @@ export const TopicsSubtopicsPreview = ({
   const { t } = useTranslation();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<TTopicsPreviewSearchResult[]>([]);
+  const [cursors, setCursors] = useState<Record<string, string>>({});
   const [hasSearched, setHasSearched] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [unavailableMessage, setUnavailableMessage] = useState<string | null>(null);
+
+  const hasMore = Object.keys(cursors).length > 0;
 
   const hasDirectories = Object.keys(directoryMap).length > 0;
 
@@ -48,17 +52,18 @@ export const TopicsSubtopicsPreview = ({
     setHasSearched(true);
     setError(null);
     setUnavailableMessage(null);
+    setCursors({});
 
     try {
       const response = await semanticSearchFeedbackRecordsAction({
         workspaceId,
         query: trimmedQuery,
-        limit: 10,
         minScore: 0.7,
       });
 
       if (response?.data) {
         setResults(response.data.results);
+        setCursors(response.data.cursors);
         setUnavailableMessage(response.data.unavailable ? (response.data.unavailableMessage ?? "") : null);
       } else {
         setResults([]);
@@ -75,6 +80,35 @@ export const TopicsSubtopicsPreview = ({
   const handleSubmit = async (event: { preventDefault: () => void }) => {
     event.preventDefault();
     await runSearch(query);
+  };
+
+  const handleLoadMore = async () => {
+    if (isLoadingMore || isSearching || !hasMore) return;
+    setIsLoadingMore(true);
+
+    try {
+      const response = await semanticSearchFeedbackRecordsAction({
+        workspaceId,
+        query,
+        minScore: 0.7,
+        cursors,
+      });
+
+      if (response?.data) {
+        const data = response.data;
+        setResults((prev) => [...prev, ...data.results]);
+        setCursors(data.cursors);
+        if (data.unavailable) {
+          setUnavailableMessage(data.unavailableMessage ?? "");
+        }
+      } else {
+        setError(getFormattedErrorMessage(response) ?? t("workspace.unify.semantic_search_failed"));
+      }
+    } catch {
+      setError(t("workspace.unify.semantic_search_failed"));
+    } finally {
+      setIsLoadingMore(false);
+    }
   };
 
   return (
@@ -158,32 +192,47 @@ export const TopicsSubtopicsPreview = ({
         )}
 
         {results.length > 0 && (
-          <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-            <div className="border-b border-slate-200 px-4 py-3">
-              <p className="text-sm font-medium text-slate-900">
-                {t("workspace.unify.semantic_search_results_count", { count: results.length })}
-              </p>
-            </div>
-            <div className="divide-y divide-slate-100">
-              {results.map((result) => (
-                <div key={`${result.tenant_id}-${result.feedback_record_id}`} className="space-y-2 p-4">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Badge text={result.directory_name} type="gray" size="tiny" />
-                    <span className="text-xs text-slate-500">
-                      {t("workspace.unify.semantic_search_relevance", {
-                        score: Math.round(result.score * 100),
-                      })}
-                    </span>
+          <div className="space-y-3">
+            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+              <div className="border-b border-slate-200 px-4 py-3">
+                <p className="text-sm font-medium text-slate-900">
+                  {t("workspace.unify.semantic_search_results_count", { count: results.length })}
+                </p>
+              </div>
+              <div className="divide-y divide-slate-100">
+                {results.map((result) => (
+                  <div key={`${result.tenant_id}-${result.feedback_record_id}`} className="space-y-2 p-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge text={result.directory_name} type="gray" size="tiny" />
+                      <span className="text-xs text-slate-500">
+                        {t("workspace.unify.semantic_search_relevance", {
+                          score: Math.round(result.score * 100),
+                        })}
+                      </span>
+                    </div>
+                    <p className="text-sm font-medium text-slate-900">
+                      {result.field_label || t("workspace.unify.field_label")}
+                    </p>
+                    <p className="whitespace-pre-wrap text-sm text-slate-700">
+                      {result.value_text || t("workspace.unify.semantic_search_missing_text")}
+                    </p>
                   </div>
-                  <p className="text-sm font-medium text-slate-900">
-                    {result.field_label || t("workspace.unify.field_label")}
-                  </p>
-                  <p className="whitespace-pre-wrap text-sm text-slate-700">
-                    {result.value_text || t("workspace.unify.semantic_search_missing_text")}
-                  </p>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
+
+            {hasMore && (
+              <div className="flex justify-center">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleLoadMore}
+                  disabled={isLoadingMore || isSearching}
+                  loading={isLoadingMore}>
+                  {t("common.load_more")}
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>
