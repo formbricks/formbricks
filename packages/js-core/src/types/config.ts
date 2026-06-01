@@ -15,8 +15,8 @@ export type TActionClassNoCodeConfig =
       urlFilters: { value: string; rule: TActionClassPageUrlRule }[];
       urlFiltersConnector?: "or" | "and";
       elementSelector: {
-        cssSelector?: string | undefined;
-        innerHtml?: string | undefined;
+        cssSelector?: string;
+        innerHtml?: string;
       };
     }
   | {
