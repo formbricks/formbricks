@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/common";
 import { InvalidInputError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZSegmentCreateInput, ZSegmentFilters, ZSegmentUpdateInput } from "@formbricks/types/segment";
@@ -311,14 +312,25 @@ export const resetSegmentFiltersAction = authenticatedActionClient
   );
 
 const ZGetDistinctAttributeValuesAction = z.object({
-  workspaceId: ZId,
   attributeKeyId: ZId,
 });
 
 export const getDistinctAttributeValuesAction = authenticatedActionClient
   .inputSchema(ZGetDistinctAttributeValuesAction)
   .action(async ({ ctx, parsedInput }) => {
-    const workspaceId = parsedInput.workspaceId;
+    // Derive scope from the attribute key itself rather than trusting a
+    // caller-supplied workspaceId. The previous implementation authorized
+    // against parsedInput.workspaceId while reading values for an unrelated
+    // attributeKeyId, allowing cross-tenant disclosure of contact PII.
+    const attributeKey = await prisma.contactAttributeKey.findUnique({
+      where: { id: parsedInput.attributeKeyId },
+      select: { workspaceId: true },
+    });
+    if (!attributeKey) {
+      throw new ResourceNotFoundError("ContactAttributeKey", parsedInput.attributeKeyId);
+    }
+    const { workspaceId } = attributeKey;
+
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromWorkspaceId(workspaceId),

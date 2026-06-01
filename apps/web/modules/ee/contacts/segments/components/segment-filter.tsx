@@ -314,7 +314,6 @@ function AttributeSegmentFilter({
         return (
           <AttributeValueInput
             attributeKeyId={attributeKey.id}
-            workspaceId={segment.workspaceId}
             value={resource.value as string}
             onChange={(newValue) => {
               updateValueInLocalSurvey(resource.id, newValue);
