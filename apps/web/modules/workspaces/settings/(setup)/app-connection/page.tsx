@@ -15,8 +15,7 @@ import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 export const AppConnectionPage = async ({ params }: { params: Promise<{ workspaceId: string }> }) => {
   const t = await getTranslate();
   const { workspaceId } = await params;
-  const frameworkGuidesUrl =
-    "https://formbricks.com/docs/xm-and-surveys/surveys/website-app-surveys/framework-guides";
+  const frameworkGuidesUrl = "https://formbricks.com/docs/surveys/website-app-surveys/framework-guides";
   const workspaceIdMigrationUrl =
     "https://formbricks.com/docs/surveys/website-app-surveys/workspace-id-migration";
 
