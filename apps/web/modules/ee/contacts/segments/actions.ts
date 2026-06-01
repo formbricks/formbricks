@@ -318,10 +318,6 @@ const ZGetDistinctAttributeValuesAction = z.object({
 export const getDistinctAttributeValuesAction = authenticatedActionClient
   .inputSchema(ZGetDistinctAttributeValuesAction)
   .action(async ({ ctx, parsedInput }) => {
-    // Derive scope from the attribute key itself rather than trusting a
-    // caller-supplied workspaceId. The previous implementation authorized
-    // against parsedInput.workspaceId while reading values for an unrelated
-    // attributeKeyId, allowing cross-tenant disclosure of contact PII.
     const attributeKey = await prisma.contactAttributeKey.findUnique({
       where: { id: parsedInput.attributeKeyId },
       select: { workspaceId: true },
