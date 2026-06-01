@@ -92,7 +92,7 @@ export interface TWorkspaceStateSurvey {
   triggers: { actionClass: TWorkspaceStateActionClass }[];
   // Minimal segment shape; full filter logic is evaluated server-side and must not reach the browser.
   segment?: { id: string; hasFilters: boolean };
-  displayPercentage: number;
+  displayPercentage: number | null;
   styling?: TSurveyStyling;
 }
 
