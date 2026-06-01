@@ -94,100 +94,153 @@ function createLabeledItem(
   };
 }
 
-function buildElement(element: TGeneratedSurveyElement, index: number, language: string) {
-  const baseElement = {
+function translatedField<TName extends string>(
+  name: TName,
+  value: string | null | undefined,
+  language: string
+): Partial<Record<TName, Record<string, string>>> {
+  if (!value) {
+    return {};
+  }
+
+  return { [name]: text(value, language) } as Record<TName, Record<string, string>>;
+}
+
+function buildBaseElement(element: TGeneratedSurveyElement, index: number, language: string) {
+  return {
     id: `q_${index + 1}_${createId().slice(0, 8)}`,
     headline: text(element.headline, language),
-    ...(element.subheader ? { subheader: text(element.subheader, language) } : {}),
+    ...translatedField("subheader", element.subheader, language),
     required: element.required,
     isDraft: true,
   };
+}
 
-  if (element.type === "openText") {
-    return {
-      ...baseElement,
-      type: "openText" as const,
-      ...(element.placeholder ? { placeholder: text(element.placeholder, language) } : {}),
-      longAnswer: element.longAnswer ?? false,
-      inputType: "text" as const,
-      charLimit: { enabled: false },
-    };
+type TBaseElement = ReturnType<typeof buildBaseElement>;
+
+function buildOpenTextElement(baseElement: TBaseElement, element: TGeneratedSurveyElement, language: string) {
+  return {
+    ...baseElement,
+    type: "openText" as const,
+    ...translatedField("placeholder", element.placeholder, language),
+    longAnswer: element.longAnswer ?? false,
+    inputType: "text" as const,
+    charLimit: { enabled: false },
+  };
+}
+
+function buildChoiceElement(baseElement: TBaseElement, element: TGeneratedSurveyElement, language: string) {
+  return {
+    ...baseElement,
+    type: element.type as "multipleChoiceSingle" | "multipleChoiceMulti",
+    choices: (element.choices ?? []).map((choice, choiceIndex) =>
+      createChoice(choice, choiceIndex, language)
+    ),
+    shuffleOption: "none" as const,
+    displayType: "list" as const,
+  };
+}
+
+function buildRankingElement(baseElement: TBaseElement, element: TGeneratedSurveyElement, language: string) {
+  return {
+    ...baseElement,
+    type: "ranking" as const,
+    choices: (element.choices ?? []).map((choice, choiceIndex) =>
+      createChoice(choice, choiceIndex, language)
+    ),
+    shuffleOption: "none" as const,
+  };
+}
+
+function buildMatrixElement(baseElement: TBaseElement, element: TGeneratedSurveyElement, language: string) {
+  return {
+    ...baseElement,
+    type: "matrix" as const,
+    rows: (element.rows ?? []).map((row, rowIndex) => createLabeledItem("row", row, rowIndex, language)),
+    columns: (element.columns ?? []).map((column, columnIndex) =>
+      createLabeledItem("column", column, columnIndex, language)
+    ),
+    shuffleOption: "none" as const,
+  };
+}
+
+function buildScaleLabels(element: TGeneratedSurveyElement, language: string) {
+  return {
+    ...translatedField("lowerLabel", element.lowerLabel, language),
+    ...translatedField("upperLabel", element.upperLabel, language),
+  };
+}
+
+function getSatisfactionQuestionRange(element: TGeneratedSurveyElement): 5 | 7 | 10 {
+  if (element.range) {
+    return element.range;
   }
 
-  if (element.type === "multipleChoiceSingle" || element.type === "multipleChoiceMulti") {
-    return {
-      ...baseElement,
-      type: element.type,
-      choices: (element.choices ?? []).map((choice, choiceIndex) =>
-        createChoice(choice, choiceIndex, language)
-      ),
-      shuffleOption: "none" as const,
-      displayType: "list" as const,
-    };
+  if (element.type === "ces") {
+    return 7;
   }
 
-  if (element.type === "ranking") {
-    return {
-      ...baseElement,
-      type: "ranking" as const,
-      choices: (element.choices ?? []).map((choice, choiceIndex) =>
-        createChoice(choice, choiceIndex, language)
-      ),
-      shuffleOption: "none" as const,
-    };
-  }
+  return 5;
+}
 
-  if (element.type === "matrix") {
-    return {
-      ...baseElement,
-      type: "matrix" as const,
-      rows: (element.rows ?? []).map((row, rowIndex) => createLabeledItem("row", row, rowIndex, language)),
-      columns: (element.columns ?? []).map((column, columnIndex) =>
-        createLabeledItem("column", column, columnIndex, language)
-      ),
-      shuffleOption: "none" as const,
-    };
-  }
+function buildNpsElement(baseElement: TBaseElement, element: TGeneratedSurveyElement, language: string) {
+  return {
+    ...baseElement,
+    type: "nps" as const,
+    ...buildScaleLabels(element, language),
+    isColorCodingEnabled: false,
+  };
+}
 
-  if (element.type === "date") {
-    return {
-      ...baseElement,
-      type: "date" as const,
-      format: element.format ?? "M-d-y",
-    };
-  }
+function buildSatisfactionElement(
+  baseElement: TBaseElement,
+  element: TGeneratedSurveyElement,
+  language: string
+) {
+  return {
+    ...baseElement,
+    type: element.type as "csat" | "ces",
+    scale: element.scale ?? "number",
+    range: getSatisfactionQuestionRange(element),
+    ...buildScaleLabels(element, language),
+    isColorCodingEnabled: false,
+  };
+}
 
-  if (element.type === "nps") {
-    return {
-      ...baseElement,
-      type: "nps" as const,
-      ...(element.lowerLabel ? { lowerLabel: text(element.lowerLabel, language) } : {}),
-      ...(element.upperLabel ? { upperLabel: text(element.upperLabel, language) } : {}),
-      isColorCodingEnabled: false,
-    };
-  }
-
-  if (element.type === "csat" || element.type === "ces") {
-    return {
-      ...baseElement,
-      type: element.type,
-      scale: element.scale ?? "number",
-      range: element.range ?? (element.type === "ces" ? 7 : 5),
-      ...(element.lowerLabel ? { lowerLabel: text(element.lowerLabel, language) } : {}),
-      ...(element.upperLabel ? { upperLabel: text(element.upperLabel, language) } : {}),
-      isColorCodingEnabled: false,
-    };
-  }
-
+function buildRatingElement(baseElement: TBaseElement, element: TGeneratedSurveyElement, language: string) {
   return {
     ...baseElement,
     type: "rating" as const,
     scale: element.scale ?? "number",
     range: element.range ?? 5,
-    ...(element.lowerLabel ? { lowerLabel: text(element.lowerLabel, language) } : {}),
-    ...(element.upperLabel ? { upperLabel: text(element.upperLabel, language) } : {}),
+    ...buildScaleLabels(element, language),
     isColorCodingEnabled: false,
   };
+}
+
+function buildElement(element: TGeneratedSurveyElement, index: number, language: string) {
+  const baseElement = buildBaseElement(element, index, language);
+
+  switch (element.type) {
+    case "openText":
+      return buildOpenTextElement(baseElement, element, language);
+    case "multipleChoiceSingle":
+    case "multipleChoiceMulti":
+      return buildChoiceElement(baseElement, element, language);
+    case "ranking":
+      return buildRankingElement(baseElement, element, language);
+    case "matrix":
+      return buildMatrixElement(baseElement, element, language);
+    case "date":
+      return { ...baseElement, type: "date" as const, format: element.format ?? "M-d-y" };
+    case "nps":
+      return buildNpsElement(baseElement, element, language);
+    case "csat":
+    case "ces":
+      return buildSatisfactionElement(baseElement, element, language);
+    default:
+      return buildRatingElement(baseElement, element, language);
+  }
 }
 
 function buildCreatePayload(input: TV3SurveyGenerateBody, generatedSurvey: TGeneratedSurveyDraft): unknown {

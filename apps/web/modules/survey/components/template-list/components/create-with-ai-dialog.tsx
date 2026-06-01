@@ -11,7 +11,14 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { type FormEvent, type KeyboardEvent, type ReactNode, useMemo, useRef, useState } from "react";
+import {
+  type ComponentPropsWithoutRef,
+  type KeyboardEvent,
+  type ReactNode,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import type { TUserLocale } from "@formbricks/types/user";
 import { V3ApiError, getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
@@ -48,6 +55,7 @@ const AI_SURVEY_PROMPT_MIN_LENGTH = 24;
 const AI_SURVEY_PROMPT_MAX_LENGTH = 1200;
 
 type TSurveyGenerationType = "link";
+type TFormSubmitEvent = Parameters<NonNullable<ComponentPropsWithoutRef<"form">["onSubmit"]>>[0];
 
 type CreateWithAIDialogProps = {
   workspaceId: string;
@@ -89,12 +97,12 @@ export const CreateWithAIDialog = ({
   const isControlled = open !== undefined;
   const isOpen = isControlled ? open : internalOpen;
   const unavailableAction = getAIUnavailableAction(aiUnavailableReason, workspaceId);
-  const unavailableActionLabel =
-    unavailableAction?.type === "enable_ai"
-      ? t("workspace.surveys.ai_create.enable_ai_in_settings")
-      : unavailableAction?.type === "upgrade_plan"
-        ? t("workspace.surveys.ai_create.upgrade_plan")
-        : undefined;
+  let unavailableActionLabel: string | undefined;
+  if (unavailableAction?.type === "enable_ai") {
+    unavailableActionLabel = t("workspace.surveys.ai_create.enable_ai_in_settings");
+  } else if (unavailableAction?.type === "upgrade_plan") {
+    unavailableActionLabel = t("workspace.surveys.ai_create.upgrade_plan");
+  }
 
   const helperPrompts = useMemo(
     (): {
@@ -162,7 +170,7 @@ export const CreateWithAIDialog = ({
     return getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again"));
   };
 
-  const handleGenerate = async (event: FormEvent<HTMLFormElement>) => {
+  const handleGenerate = async (event: TFormSubmitEvent) => {
     event.preventDefault();
 
     if (!isAIAvailable) {
@@ -213,7 +221,7 @@ export const CreateWithAIDialog = ({
     if (!isAIAvailable || isGenerating) return;
 
     event.preventDefault();
-    window.requestAnimationFrame(() => {
+    globalThis.requestAnimationFrame(() => {
       promptTextareaRef.current?.focus();
     });
   };

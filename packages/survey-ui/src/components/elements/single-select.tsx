@@ -300,7 +300,7 @@ function SingleSelectDropdownVariant({
           onChange={handleOtherInputChange}
           placeholder={otherOptionPlaceholder}
           disabled={disabled}
-          aria-required={true}
+          aria-required
           aria-invalid={Boolean(errorMessage)}
           dir={dir}
           className="mt-2 w-full"
@@ -417,7 +417,9 @@ function SingleSelectListVariant({
                   id={optionId}
                   disabled={disabled}
                   aria-required={required}
-                  onClick={(event) => handleSelectedOptionClick(option.id, event)}
+                  onClick={(event) => {
+                    handleSelectedOptionClick(option.id, event);
+                  }}
                 />
                 <span className={cn("mx-3 grow", OPTION_LABEL_CLASS)}>{option.label}</span>
               </span>
@@ -457,7 +459,9 @@ function SingleSelectListVariant({
                   id={optionId}
                   disabled={disabled}
                   aria-required={required}
-                  onClick={(event) => handleSelectedOptionClick(option.id, event)}
+                  onClick={(event) => {
+                    handleSelectedOptionClick(option.id, event);
+                  }}
                 />
                 <span className={cn("mx-3 grow", OPTION_LABEL_CLASS)}>{option.label}</span>
               </span>
@@ -511,7 +515,9 @@ function OtherOptionLabel({
           id={`${inputId}-${otherOptionId}`}
           disabled={disabled}
           aria-required={required}
-          onClick={(event) => handleSelectedOptionClick(otherOptionId, event)}
+          onClick={(event) => {
+            handleSelectedOptionClick(otherOptionId, event);
+          }}
         />
         <span className={cn("mr-3 ml-3 grow", OPTION_LABEL_CLASS)}>{otherOptionLabel}</span>
       </span>
@@ -523,7 +529,7 @@ function OtherOptionLabel({
           onChange={handleOtherInputChange}
           placeholder={otherOptionPlaceholder}
           disabled={disabled}
-          aria-required={true}
+          aria-required
           aria-invalid={Boolean(errorMessage)}
           dir={dir}
           className="mt-2 w-full"
