@@ -1,10 +1,13 @@
 import { createVertex as createGoogleCloudProvider } from "@ai-sdk/google-vertex";
+import { createHash } from "node:crypto";
 import { AIConfigurationError } from "../errors";
 import type { AIProviderAdapter } from "../registry";
 import { normalizeValue } from "../shared";
 import type { AIEnvironment } from "../types";
 
 type GoogleProviderSettings = NonNullable<Parameters<typeof createGoogleCloudProvider>[0]>;
+
+const GOOGLE_VERTEX_MULTI_REGION_API_VERSION = "v1";
 
 const GOOGLE_VERTEX_MULTI_REGION_HOSTS: Partial<Record<string, string>> = {
   eu: "https://aiplatform.eu.rep.googleapis.com",
@@ -13,6 +16,16 @@ const GOOGLE_VERTEX_MULTI_REGION_HOSTS: Partial<Record<string, string>> = {
 
 const isCredentialsObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
+
+const getGoogleCredentialFingerprint = (value?: string | null): string | null => {
+  const normalizedValue = normalizeValue(value);
+
+  if (!normalizedValue) {
+    return null;
+  }
+
+  return createHash("sha256").update(normalizedValue).digest("hex");
+};
 
 const getGoogleVertexMultiRegionBaseURL = (project?: string, location?: string): string | undefined => {
   if (!project || !location) {
@@ -25,7 +38,7 @@ const getGoogleVertexMultiRegionBaseURL = (project?: string, location?: string):
     return undefined;
   }
 
-  return `${multiRegionHost}/v1beta1/projects/${project}/locations/${location}/publishers/google`;
+  return `${multiRegionHost}/${GOOGLE_VERTEX_MULTI_REGION_API_VERSION}/projects/${project}/locations/${location}/publishers/google`;
 };
 
 const parseGoogleCredentialsJson = (value?: string | null): Record<string, unknown> | undefined => {
@@ -82,8 +95,12 @@ export const googleProviderAdapter: AIProviderAdapter = {
         normalizeValue(environment.AI_GOOGLE_CLOUD_PROJECT),
         normalizeValue(environment.AI_GOOGLE_CLOUD_LOCATION)
       ),
-      hasCredentialsJson: Boolean(normalizeValue(environment.AI_GOOGLE_CLOUD_CREDENTIALS_JSON)),
-      hasApplicationCredentials: Boolean(normalizeValue(environment.AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS)),
+      credentialsJsonFingerprint: getGoogleCredentialFingerprint(
+        environment.AI_GOOGLE_CLOUD_CREDENTIALS_JSON
+      ),
+      applicationCredentialsFingerprint: getGoogleCredentialFingerprint(
+        environment.AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS
+      ),
     }),
   createModel: (model: string, environment: AIEnvironment) => {
     const project = normalizeValue(environment.AI_GOOGLE_CLOUD_PROJECT);
