@@ -25,6 +25,10 @@ export const TopicsSubtopicsPreview = ({
 }: Readonly<TopicsSubtopicsPreviewProps>) => {
   const { t } = useTranslation();
   const [query, setQuery] = useState("");
+  // The query bound to the current results + cursors. Kept separate from `query` (the
+  // live input) so that editing the input mid-pagination does not corrupt "load more"
+  // by submitting a different query against the existing cursors.
+  const [activeQuery, setActiveQuery] = useState("");
   const [results, setResults] = useState<TTopicsPreviewSearchResult[]>([]);
   const [cursors, setCursors] = useState<Record<string, string>>({});
   const [hasSearched, setHasSearched] = useState(false);
@@ -45,9 +49,10 @@ export const TopicsSubtopicsPreview = ({
 
   const runSearch = async (searchQuery: string) => {
     const trimmedQuery = searchQuery.trim();
-    if (!trimmedQuery || isSearching) return;
+    if (!trimmedQuery || isSearching || isLoadingMore) return;
 
     setQuery(trimmedQuery);
+    setActiveQuery(trimmedQuery);
     setIsSearching(true);
     setHasSearched(true);
     setError(null);
@@ -83,13 +88,13 @@ export const TopicsSubtopicsPreview = ({
   };
 
   const handleLoadMore = async () => {
-    if (isLoadingMore || isSearching || !hasMore) return;
+    if (isLoadingMore || isSearching || !hasMore || !activeQuery) return;
     setIsLoadingMore(true);
 
     try {
       const response = await semanticSearchFeedbackRecordsAction({
         workspaceId,
-        query,
+        query: activeQuery,
         minScore: 0.7,
         cursors,
       });
@@ -139,10 +144,13 @@ export const TopicsSubtopicsPreview = ({
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder={t("workspace.unify.semantic_search_placeholder")}
-              disabled={!hasDirectories || isSearching}
+              disabled={!hasDirectories || isSearching || isLoadingMore}
               aria-label={t("workspace.unify.semantic_search_input_label")}
             />
-            <Button type="submit" disabled={!query.trim() || !hasDirectories} loading={isSearching}>
+            <Button
+              type="submit"
+              disabled={!query.trim() || !hasDirectories || isLoadingMore}
+              loading={isSearching}>
               <SearchIcon className="size-4" aria-hidden="true" />
               {t("workspace.unify.search_feedback")}
             </Button>
@@ -156,7 +164,7 @@ export const TopicsSubtopicsPreview = ({
                 type="button"
                 size="sm"
                 variant="secondary"
-                disabled={!hasDirectories || isSearching}
+                disabled={!hasDirectories || isSearching || isLoadingMore}
                 onClick={() => runSearch(label)}>
                 {label}
               </Button>

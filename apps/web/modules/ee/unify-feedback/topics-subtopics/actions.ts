@@ -119,11 +119,20 @@ export const semanticSearchFeedbackRecordsAction = authenticatedActionClient
         }
       }
 
+      // A directory returning 0/503 is a transient outage we want to surface even when
+      // other directories returned data — otherwise the failing directory silently drops
+      // out of nextCursors and stays excluded from every subsequent "load more".
+      const transientOutage = searches.find(({ result }) => {
+        const status = result.error?.status;
+        return status === 0 || status === 503;
+      })?.result.error;
+
       if (successfulResults.length > 0) {
         return {
           results: successfulResults.toSorted((a, b) => b.score - a.score),
           cursors: nextCursors,
-          unavailable: false,
+          unavailable: Boolean(transientOutage),
+          ...(transientOutage ? { unavailableMessage: transientOutage.message } : {}),
         };
       }
 
