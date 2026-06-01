@@ -190,14 +190,27 @@ const parsedEnv = createEnv({
     AI_AZURE_API_KEY: z.string().optional(),
     AI_AZURE_API_VERSION: z.string().optional(),
     AI_AZURE_RESOURCE_NAME: z.string().optional(),
-    CUBEJS_API_SECRET: z.string().trim().min(1),
-    CUBEJS_API_URL: z.url(),
+    // CUBEJS_* and HUB_API_* point at Cloud-only services (the EE analysis
+    // module and the Formbricks Hub respectively). Self-hosted installs that
+    // don't enable analysis or ship telemetry must still boot, so we fall back
+    // to sentinel placeholders. Hub callers gate on HUB_API_KEY being set,
+    // making the URL placeholder unreachable; Cube callers use the values
+    // directly and will fail loudly at the network call if invoked without
+    // real config. Malformed non-empty values still reject at boot.
+    CUBEJS_API_SECRET: z.preprocess(
+      emptyStringToUndefined,
+      z.string().trim().min(1).default("cubejs-not-configured")
+    ),
+    CUBEJS_API_URL: z.preprocess(
+      emptyStringToUndefined,
+      z.url().default("http://cubejs-not-configured.invalid")
+    ),
     CUBEJS_JWT_AUDIENCE: ZOptionalNonEmptyString,
     CUBEJS_JWT_ISSUER: ZOptionalNonEmptyString,
     HTTP_PROXY: z.url().optional(),
     HTTPS_PROXY: z.url().optional(),
-    HUB_API_URL: z.url(),
-    HUB_API_KEY: z.string().trim().min(1),
+    HUB_API_URL: z.preprocess(emptyStringToUndefined, z.url().default("http://hub-not-configured.invalid")),
+    HUB_API_KEY: ZOptionalNonEmptyString,
     IMPRINT_URL: z
       .url()
       .optional()
