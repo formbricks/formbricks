@@ -73,6 +73,60 @@ const survey = {
   variables: [],
 } as unknown as TSurvey;
 
+function createLegacyLanguageSurvey(code: string, options?: { defaultLanguage?: string }): TSurvey {
+  const defaultLanguage = options?.defaultLanguage ?? code;
+  const defaultLanguageEntry = {
+    language: {
+      id: `cllang${defaultLanguage.replaceAll("-", "").toLowerCase()}000000000000000`,
+      code: defaultLanguage,
+      alias: null,
+      workspaceId,
+      createdAt: new Date("2026-04-21T10:00:00.000Z"),
+      updatedAt: new Date("2026-04-21T10:00:00.000Z"),
+    },
+    default: true,
+    enabled: true,
+  };
+  const legacyLanguageEntry =
+    code === defaultLanguage
+      ? null
+      : {
+          language: {
+            id: `cllang${code.replaceAll("-", "").toLowerCase()}000000000000000`,
+            code,
+            alias: null,
+            workspaceId,
+            createdAt: new Date("2026-04-21T10:00:00.000Z"),
+            updatedAt: new Date("2026-04-21T10:00:00.000Z"),
+          },
+          default: false,
+          enabled: true,
+        };
+
+  return {
+    ...survey,
+    name: `Legacy ${code} survey`,
+    languages: legacyLanguageEntry ? [legacyLanguageEntry, defaultLanguageEntry] : [defaultLanguageEntry],
+    blocks: [
+      {
+        id: "clbk1234567890123456789012",
+        name: "Legacy Block",
+        elements: [
+          {
+            id: "legacy_feedback",
+            type: "openText",
+            headline:
+              code === defaultLanguage
+                ? { default: "Tell us more" }
+                : { default: "Tell us more", [code]: "Tell us more translated" },
+            required: true,
+          },
+        ],
+      },
+    ],
+  } as unknown as TSurvey;
+}
+
 describe("v3 survey preparation", () => {
   test("prepares a valid create document and derives language side effects", () => {
     const preparation = prepareV3SurveyCreate(createBody);
@@ -137,6 +191,60 @@ describe("v3 survey preparation", () => {
     }
   });
 
+  test("rejects partial derived translations before internal survey validation", () => {
+    const preparation = prepareV3SurveyCreateInput({
+      ...rawCreateBody,
+      blocks: [
+        {
+          ...rawCreateBody.blocks[0],
+          elements: [
+            {
+              ...rawCreateBody.blocks[0].elements[0],
+              subheader: { "en-US": "Tell us more" },
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(preparation.ok).toBe(false);
+    if (!preparation.ok) {
+      expect(preparation.validation.invalidParams).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: "blocks.0.elements.0.subheader",
+            code: "missing_translation",
+            identifier: "de-DE",
+            referenceType: "language",
+          }),
+        ])
+      );
+    }
+  });
+
+  test("rejects metadata translations that are missing configured languages", () => {
+    const preparation = prepareV3SurveyCreateInput({
+      ...rawCreateBody,
+      metadata: {
+        title: { "en-US": "Product Feedback" },
+      },
+    });
+
+    expect(preparation.ok).toBe(false);
+    if (!preparation.ok) {
+      expect(preparation.validation.invalidParams).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: "metadata.title",
+            code: "missing_translation",
+            identifier: "de-DE",
+            referenceType: "language",
+          }),
+        ])
+      );
+    }
+  });
+
   test("rejects undeclared locale keys in translatable survey content", () => {
     const preparation = prepareV3SurveyCreateInput({
       ...rawCreateBody,
@@ -162,7 +270,7 @@ describe("v3 survey preparation", () => {
     const preparation = prepareV3SurveyCreateInput({
       ...rawCreateBody,
       metadata: {
-        title: { "en-US": "Product Feedback", "pt-PT": "Feedback do produto" },
+        title: { "en-US": "Product Feedback", "fr-FR": "Retour produit" },
       },
     });
 
@@ -171,40 +279,9 @@ describe("v3 survey preparation", () => {
       expect(preparation.validation.invalidParams).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
-            name: "metadata.title.pt-PT",
+            name: "metadata.title.fr-FR",
             code: "unsupported_locale",
-            identifier: "pt-PT",
-            referenceType: "language",
-          }),
-        ])
-      );
-    }
-  });
-
-  test("rejects partial derived translations before internal survey validation", () => {
-    const preparation = prepareV3SurveyCreateInput({
-      ...rawCreateBody,
-      blocks: [
-        {
-          ...rawCreateBody.blocks[0],
-          elements: [
-            {
-              ...rawCreateBody.blocks[0].elements[0],
-              subheader: { "en-US": "Tell us more" },
-            },
-          ],
-        },
-      ],
-    });
-
-    expect(preparation.ok).toBe(false);
-    if (!preparation.ok) {
-      expect(preparation.validation.invalidParams).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            name: "blocks.0.elements.0.subheader",
-            code: "missing_translation",
-            identifier: "de-DE",
+            identifier: "fr-FR",
             referenceType: "language",
           }),
         ])
@@ -262,6 +339,7 @@ describe("v3 survey preparation", () => {
   test("rejects patch input with immutable fields as validation results", () => {
     const preparation = prepareV3SurveyPatchInput(survey, {
       workspaceId,
+      defaultLanguage: "de-DE",
     });
 
     expect(preparation.ok).toBe(false);
@@ -271,6 +349,154 @@ describe("v3 survey preparation", () => {
           expect.objectContaining({
             name: "workspaceId",
             code: "unsupported_field",
+          }),
+          expect.objectContaining({
+            name: "defaultLanguage",
+            code: "unsupported_field",
+          }),
+        ])
+      );
+    }
+  });
+
+  test("rejects patch language changes that try to move the default language", () => {
+    const preparation = prepareV3SurveyPatchInput(survey, {
+      languages: [{ code: "de-DE", default: true, enabled: true }],
+    });
+
+    expect(preparation.ok).toBe(false);
+    if (!preparation.ok) {
+      expect(preparation.validation.invalidParams).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: "languages.0.default",
+            reason: "The default language entry must match defaultLanguage",
+          }),
+        ])
+      );
+    }
+  });
+
+  test("preserves omitted fields while replacing provided top-level patch fields", () => {
+    const preparation = prepareV3SurveyPatchInput(survey, {
+      name: "Updated Product Feedback",
+      metadata: {
+        title: { "en-US": "Updated title", "de-DE": "Aktualisierter Titel" },
+      },
+    });
+
+    expect(preparation.ok).toBe(true);
+    if (!preparation.ok) {
+      throw new Error("Expected patch preparation to succeed");
+    }
+    expect(preparation.document).toMatchObject({
+      name: "Updated Product Feedback",
+      metadata: { title: { default: "Updated title", "de-DE": "Aktualisierter Titel" } },
+      blocks: survey.blocks,
+      hiddenFields: survey.hiddenFields,
+    });
+  });
+
+  test("patches the name of a survey with an existing legacy language-only code", () => {
+    const preparation = prepareV3SurveyPatchInput(
+      createLegacyLanguageSurvey("vi", { defaultLanguage: "en-US" }),
+      {
+        name: "Updated legacy vi survey",
+      }
+    );
+
+    expect(preparation.ok).toBe(true);
+    if (!preparation.ok) {
+      throw new Error("Expected patch preparation to succeed");
+    }
+    expect(preparation.document.name).toBe("Updated legacy vi survey");
+    expect(preparation.document.languages).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "vi", default: false })])
+    );
+    expect(preparation.languageRequests).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "vi", default: false })])
+    );
+  });
+
+  test("normalizes existing known legacy translation keys during patch preparation", () => {
+    const preparation = prepareV3SurveyPatchInput(
+      createLegacyLanguageSurvey("hi", { defaultLanguage: "en-US" }),
+      {
+        name: "Updated legacy hi survey",
+      }
+    );
+
+    expect(preparation.ok).toBe(true);
+    if (!preparation.ok) {
+      throw new Error("Expected patch preparation to succeed");
+    }
+    expect(preparation.document.languages).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "hi-IN", default: false })])
+    );
+    expect(preparation.document.blocks[0].elements[0]).toMatchObject({
+      headline: { default: "Tell us more", "hi-IN": "Tell us more translated" },
+    });
+    expect(preparation.languageRequests).toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: "hi-IN", default: false })])
+    );
+  });
+
+  test("patches translatable metadata for a survey with an existing legacy default language", () => {
+    const preparation = prepareV3SurveyPatchInput(createLegacyLanguageSurvey("gu"), {
+      metadata: {
+        title: { gu: "Legacy Gujarati survey" },
+      },
+    });
+
+    expect(preparation.ok).toBe(true);
+    if (!preparation.ok) {
+      throw new Error("Expected patch preparation to succeed");
+    }
+    expect(preparation.document.defaultLanguage).toBe("gu");
+    expect(preparation.document.metadata).toMatchObject({
+      title: { default: "Legacy Gujarati survey" },
+    });
+    expect(preparation.languageRequests).toEqual([{ code: "gu", default: true, enabled: true }]);
+  });
+
+  test("allows patch languages to keep an existing legacy code but not introduce a new one", () => {
+    const legacyPreparation = prepareV3SurveyPatchInput(createLegacyLanguageSurvey("gu"), {
+      languages: [{ code: "gu", default: true, enabled: true }],
+    });
+
+    expect(legacyPreparation.ok).toBe(true);
+
+    const canonicalPreparation = prepareV3SurveyPatchInput(survey, {
+      languages: [{ code: "gu", enabled: true }],
+    });
+
+    expect(canonicalPreparation.ok).toBe(false);
+    if (!canonicalPreparation.ok) {
+      expect(canonicalPreparation.validation.invalidParams).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: "languages.0.code",
+            code: "invalid_locale",
+          }),
+        ])
+      );
+    }
+  });
+
+  test("still rejects undeclared canonical locale keys in patch translatable fields", () => {
+    const preparation = prepareV3SurveyPatchInput(createLegacyLanguageSurvey("gu"), {
+      metadata: {
+        title: { gu: "Legacy Gujarati survey", "de-DE": "Legacy survey" },
+      },
+    });
+
+    expect(preparation.ok).toBe(false);
+    if (!preparation.ok) {
+      expect(preparation.validation.invalidParams).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: "metadata.title.de-DE",
+            code: "unsupported_locale",
           }),
         ])
       );

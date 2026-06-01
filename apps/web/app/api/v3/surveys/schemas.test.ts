@@ -498,10 +498,7 @@ describe("ZV3CreateSurveyBody", () => {
   test("reports invalid language entries with machine-readable locale metadata", () => {
     const result = ZV3CreateSurveyBody.safeParse({
       ...validCreateBody,
-      languages: [
-        { code: "de", enabled: true },
-        { code: "zh-Hans", enabled: true },
-      ],
+      languages: [{ code: "de", enabled: true }],
     });
 
     expect(result.success).toBe(false);
@@ -511,11 +508,6 @@ describe("ZV3CreateSurveyBody", () => {
           expect.objectContaining({
             name: "languages.0.code",
             reason: "Language 'de' is not a valid locale code",
-            code: "invalid_locale",
-          }),
-          expect.objectContaining({
-            name: "languages.1.code",
-            reason: "Language 'zh-Hans' is not a valid locale code",
             code: "invalid_locale",
           }),
         ])
@@ -547,13 +539,40 @@ describe("ZV3PatchSurveyBody", () => {
       id: "clsv1234567890123456789012",
       workspaceId: "clxx1234567890123456789012",
       type: "link",
+      defaultLanguage: "de-DE",
       questions: [],
     });
 
     expect(result.success).toBe(false);
     expect(result.error?.issues.map((issue) => issue.path.join("."))).toEqual(
-      expect.arrayContaining(["id", "workspaceId", "type", "questions"])
+      expect.arrayContaining(["id", "workspaceId", "type", "defaultLanguage", "questions"])
     );
+  });
+
+  test("rejects patch languages that mark a non-current locale as default", () => {
+    const result = createZV3PatchSurveyBodySchema("en-US").safeParse({
+      languages: [{ code: "de-DE", default: true, enabled: true }],
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]).toMatchObject({
+      message: "The default language entry must match defaultLanguage",
+      path: ["languages", 0, "default"],
+    });
+  });
+
+  test("accepts patch languages that keep the current default locale", () => {
+    const parsed = createZV3PatchSurveyBodySchema("en-US").parse({
+      languages: [
+        { code: "en_us", default: true, enabled: true },
+        { code: "de-DE", enabled: false },
+      ],
+    });
+
+    expect(parsed.languages).toEqual([
+      { code: "en-US", default: true, enabled: true },
+      { code: "de-DE", enabled: false },
+    ]);
   });
 
   test("normalizes patch translation maps using the current default language", () => {
@@ -578,6 +597,36 @@ describe("ZV3PatchSurveyBody", () => {
       headline: { default: "Hallo", "en-US": "Hello" },
     });
     expect(parsed).not.toHaveProperty("defaultLanguage");
+  });
+
+  test("allows existing legacy language codes only through the patch compatibility context", () => {
+    const parsed = createZV3PatchSurveyBodySchema("gu", {
+      allowedLanguageCodes: ["gu"],
+    }).parse({
+      metadata: {
+        title: { gu: "Legacy Gujarati survey" },
+      },
+      languages: [{ code: "gu", default: true, enabled: true }],
+    });
+
+    expect(parsed).toMatchObject({
+      metadata: { title: { default: "Legacy Gujarati survey" } },
+      languages: [{ code: "gu", default: true, enabled: true }],
+    });
+  });
+
+  test("rejects newly introduced non-canonical patch languages without compatibility context", () => {
+    const result = createZV3PatchSurveyBodySchema("en-US", {
+      allowedLanguageCodes: ["en-US"],
+    }).safeParse({
+      languages: [{ code: "gu", enabled: true }],
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]).toMatchObject({
+      message: "Language 'gu' is not a valid locale code",
+      path: ["languages", 0, "code"],
+    });
   });
 
   test("does not generate missing ids for canonical patch documents", () => {

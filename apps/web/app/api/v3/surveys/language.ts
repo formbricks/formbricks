@@ -77,6 +77,40 @@ export function normalizeV3SurveyLanguageIdentifier(value: string): string | nul
   );
 }
 
+export function normalizeV3SurveyWriteLanguageCode(
+  value: string,
+  allowedLanguageCodes?: Iterable<string>
+): string | null {
+  const normalizedLocale = normalizeV3SurveyLocaleCode(value);
+  if (normalizedLocale) {
+    return normalizedLocale;
+  }
+
+  if (!allowedLanguageCodes) {
+    return null;
+  }
+
+  const requestedKey = value.trim().toLowerCase();
+  const requestedIdentifier = normalizeV3SurveyLanguageIdentifier(value)?.toLowerCase() ?? null;
+
+  for (const allowedLanguageCode of allowedLanguageCodes) {
+    const allowedKey = allowedLanguageCode.toLowerCase();
+    const normalizedAllowedLanguageCode = normalizeV3SurveyLanguageIdentifier(allowedLanguageCode);
+    const allowedIdentifier = normalizedAllowedLanguageCode?.toLowerCase() ?? null;
+
+    if (
+      requestedKey === allowedKey ||
+      (requestedIdentifier && requestedIdentifier === allowedKey) ||
+      (allowedIdentifier && (requestedKey === allowedIdentifier || requestedIdentifier === allowedIdentifier))
+    ) {
+      // PATCH-only compatibility: preserve legacy stored codes that are not safely canonicalizable.
+      return normalizedAllowedLanguageCode ?? allowedLanguageCode;
+    }
+  }
+
+  return null;
+}
+
 function getLanguageSelectorKey(value: string): string {
   return normalizeV3SurveyLanguageTag(value)?.toLowerCase() ?? value.trim().toLowerCase();
 }

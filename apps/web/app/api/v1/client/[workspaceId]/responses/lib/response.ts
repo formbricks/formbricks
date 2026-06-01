@@ -10,7 +10,10 @@ import {
 } from "@formbricks/types/errors";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
-import { TTag } from "@formbricks/types/tags";
+import {
+  buildClientResponse,
+  createResponseWithQuotaEvaluation as createClientResponseWithQuotaEvaluation,
+} from "@/app/api/client/[workspaceId]/responses/lib/response";
 import {
   isPrismaKnownRequestError,
   isSingleUseIdUniqueConstraintError,
@@ -21,7 +24,6 @@ import { getOrganization } from "@/lib/organization/service";
 import { calculateTtcTotal } from "@/lib/response/utils";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { validateInputs } from "@/lib/utils/validate";
-import { evaluateResponseQuotas } from "@/modules/ee/quotas/lib/evaluation-service";
 import { getContactByUserId } from "./contact";
 
 export const responseSelection = {
@@ -65,26 +67,7 @@ export const responseSelection = {
 export const createResponseWithQuotaEvaluation = async (
   responseInput: TResponseInput
 ): Promise<TResponseWithQuotaFull> => {
-  const txResponse = await prisma.$transaction(async (tx) => {
-    const response = await createResponse(responseInput, tx);
-
-    const quotaResult = await evaluateResponseQuotas({
-      surveyId: responseInput.surveyId,
-      responseId: response.id,
-      data: responseInput.data,
-      variables: responseInput.variables,
-      language: responseInput.language,
-      responseFinished: response.finished,
-      tx,
-    });
-
-    return {
-      ...response,
-      ...(quotaResult.quotaFull && { quotaFull: quotaResult.quotaFull }),
-    };
-  });
-
-  return txResponse;
+  return await createClientResponseWithQuotaEvaluation(responseInput, createResponse);
 };
 
 export const createResponse = async (
@@ -133,18 +116,7 @@ export const createResponse = async (
       select: responseSelection,
     });
 
-    const response = {
-      ...responsePrisma,
-      contact: contact
-        ? {
-            id: contact.id,
-            userId: contact.attributes.userId,
-          }
-        : null,
-      tags: responsePrisma.tags.map((tagPrisma: { tag: TTag }) => tagPrisma.tag),
-    };
-
-    return response;
+    return buildClientResponse(responsePrisma, contact);
   } catch (error) {
     if (isPrismaKnownRequestError(error)) {
       if (
