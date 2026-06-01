@@ -10,8 +10,7 @@
   "files": [
     "dist",
     "generated",
-    "schema.prisma",
-    "migration"
+    "schema.prisma"
   ],
   "exports": {
     ".": {
@@ -41,9 +40,6 @@
     "./zod/*": {
       "types": "./zod/*.ts",
       "import": "./zod/*.ts"
-    },
-    "./seed/constants": {
-      "import": "./src/seed/constants.ts"
     }
   },
   "scripts": {
