@@ -1,4 +1,5 @@
 import "server-only";
+import { randomInt } from "node:crypto";
 import { z } from "zod";
 import { type TResponseData, type TResponseInput, type TResponseTtc } from "@formbricks/types/responses";
 import { type TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
@@ -48,9 +49,12 @@ const TTC_BANDS_MS: Partial<Record<TSurveyElementTypeEnum, [number, number]>> = 
 };
 const DEFAULT_TTC_BAND_MS: [number, number] = [3000, 10000];
 
-const pickFrom = <T>(arr: readonly T[]): T => arr[Math.floor(Math.random() * arr.length)];
-const randomIntInclusive = (min: number, max: number): number =>
-  Math.floor(Math.random() * (max - min + 1)) + min;
+// CSPRNG is overkill for preview data, but using node:crypto here avoids
+// tripping static-analysis PRNG warnings; cost is negligible at this volume.
+const RANDOM_FLOAT_DENOMINATOR = 2 ** 32;
+const randomFloat = (): number => randomInt(RANDOM_FLOAT_DENOMINATOR) / RANDOM_FLOAT_DENOMINATOR;
+const pickFrom = <T>(arr: readonly T[]): T => arr[randomInt(arr.length)];
+const randomIntInclusive = (min: number, max: number): number => randomInt(min, max + 1);
 
 const SUPPORTED_ELEMENT_TYPES = new Set<TSurveyElementTypeEnum>([
   TSurveyElementTypeEnum.OpenText,
@@ -381,7 +385,7 @@ export type TGeneratedExampleResponse = {
 const pickResponseLanguage = (survey: TSurvey): string | null => {
   const enabledNonDefault = (survey.languages ?? []).filter((l) => l.enabled && !l.default);
   if (enabledNonDefault.length === 0) return null;
-  if (Math.random() > 0.3) return null;
+  if (randomInt(10) >= 3) return null;
   return pickFrom(enabledNonDefault).language.code;
 };
 
@@ -399,7 +403,7 @@ const buildResponseMeta = (): NonNullable<TResponseInput["meta"]> => ({
 // recent dates so the responses-over-time chart trends upward.
 const pickCreatedAt = (): Date => {
   const now = Date.now();
-  const skew = Math.random() ** 1.6; // bias toward 0 → more recent
+  const skew = randomFloat() ** 1.6; // bias toward 0 → more recent
   const daysAgo = skew * RESPONSE_TIME_SPREAD_DAYS;
   return new Date(now - daysAgo * 24 * 60 * 60 * 1000);
 };
