@@ -146,6 +146,7 @@ export const SurveyAnalysisCTA = ({
         })
       );
       router.refresh();
+      await refreshAnalysisData();
     } else {
       const errorMessage = getFormattedErrorMessage(result);
       toast.error(errorMessage);

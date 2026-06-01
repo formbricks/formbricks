@@ -4,7 +4,6 @@ import { z } from "zod";
 import { type TResponseData, type TResponseInput, type TResponseTtc } from "@formbricks/types/responses";
 import { type TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { type TSurvey } from "@formbricks/types/surveys/types";
-import { ZUserEmail } from "@formbricks/types/user";
 import { generateOrganizationAIObject } from "@/lib/ai/service";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 
@@ -84,6 +83,195 @@ const CONTACT_INFO_FIELD_ORDER = ["firstName", "lastName", "email", "phone", "co
 type TAddressField = (typeof ADDRESS_FIELD_ORDER)[number];
 type TContactInfoField = (typeof CONTACT_INFO_FIELD_ORDER)[number];
 
+type TExampleSentiment = "promoter" | "positive" | "neutral" | "skeptical" | "detractor";
+type TExampleVerbosity = "brief" | "normal" | "detailed";
+type TExamplePolish = "clean" | "casual" | "rough";
+
+type TExampleRespondentProfile = {
+  sentiment: TExampleSentiment;
+  persona: string;
+  verbosity: TExampleVerbosity;
+  polish: TExamplePolish;
+  priorities: string[];
+};
+
+type TExampleResponsePlanRow = {
+  rowId: string;
+  profile: TExampleRespondentProfile;
+  data: TResponseData;
+  ttc: TResponseTtc;
+  finished: boolean;
+  endingId: string | null;
+  language: string | null;
+  meta: NonNullable<TResponseInput["meta"]>;
+  createdAt: Date;
+  openTextElementIds: string[];
+};
+
+export type TGeneratedExampleDisplay = {
+  createdAt: Date;
+};
+
+export type TGeneratedExampleDataset = {
+  responses: TGeneratedExampleResponse[];
+  displays: TGeneratedExampleDisplay[];
+  tagName: typeof EXAMPLE_AI_GENERATED_TAG_NAME;
+};
+
+const RESPONDENT_PROFILE_PRESETS: TExampleRespondentProfile[] = [
+  {
+    sentiment: "promoter",
+    persona: "product manager at a growing SaaS team",
+    verbosity: "detailed",
+    polish: "clean",
+    priorities: ["team adoption", "speed"],
+  },
+  {
+    sentiment: "positive",
+    persona: "founder at a small company",
+    verbosity: "brief",
+    polish: "casual",
+    priorities: ["cost", "setup"],
+  },
+  {
+    sentiment: "neutral",
+    persona: "operations lead comparing internal tools",
+    verbosity: "normal",
+    polish: "clean",
+    priorities: ["reliability", "reporting"],
+  },
+  {
+    sentiment: "skeptical",
+    persona: "software engineer maintaining data workflows",
+    verbosity: "normal",
+    polish: "rough",
+    priorities: ["missing features", "reliability"],
+  },
+  {
+    sentiment: "positive",
+    persona: "customer success manager",
+    verbosity: "detailed",
+    polish: "clean",
+    priorities: ["team adoption", "support"],
+  },
+  {
+    sentiment: "promoter",
+    persona: "executive stakeholder",
+    verbosity: "brief",
+    polish: "clean",
+    priorities: ["reporting", "speed"],
+  },
+  {
+    sentiment: "neutral",
+    persona: "designer running user research",
+    verbosity: "detailed",
+    polish: "casual",
+    priorities: ["setup", "team adoption"],
+  },
+  {
+    sentiment: "detractor",
+    persona: "developer evaluating the product for a side project",
+    verbosity: "brief",
+    polish: "rough",
+    priorities: ["cost", "missing features"],
+  },
+  {
+    sentiment: "positive",
+    persona: "analytics owner at a mid-market team",
+    verbosity: "normal",
+    polish: "clean",
+    priorities: ["reporting", "reliability"],
+  },
+  {
+    sentiment: "skeptical",
+    persona: "team lead with a busy roadmap",
+    verbosity: "normal",
+    polish: "casual",
+    priorities: ["speed", "setup"],
+  },
+];
+
+const ADDRESS_FIXTURES: Array<Record<TAddressField, string>> = [
+  {
+    addressLine1: "14 Example Lane",
+    addressLine2: "",
+    city: "Springfield",
+    state: "IL",
+    zip: "62701",
+    country: "US",
+  },
+  {
+    addressLine1: "82 Demo Street",
+    addressLine2: "Suite 4",
+    city: "Berlin",
+    state: "BE",
+    zip: "10115",
+    country: "DE",
+  },
+  {
+    addressLine1: "5 Sample Road",
+    addressLine2: "",
+    city: "London",
+    state: "",
+    zip: "SW1A 1AA",
+    country: "GB",
+  },
+  {
+    addressLine1: "31 Test Avenue",
+    addressLine2: "Floor 2",
+    city: "Toronto",
+    state: "ON",
+    zip: "M5H 2N2",
+    country: "CA",
+  },
+  {
+    addressLine1: "9 Fictional Blvd",
+    addressLine2: "",
+    city: "Sydney",
+    state: "NSW",
+    zip: "2000",
+    country: "AU",
+  },
+];
+
+const CONTACT_INFO_FIXTURES: Array<Record<TContactInfoField, string>> = [
+  {
+    firstName: "Alex",
+    lastName: "Morgan",
+    email: "alex.morgan@example.com",
+    phone: "+1 555 0101",
+    company: "Example Labs",
+  },
+  {
+    firstName: "Jamie",
+    lastName: "Taylor",
+    email: "jamie.taylor@example.com",
+    phone: "+44 20 7946 0102",
+    company: "Demo Works",
+  },
+  {
+    firstName: "Sam",
+    lastName: "Rivers",
+    email: "sam.rivers@example.com",
+    phone: "+49 30 1234 0103",
+    company: "Sample Systems",
+  },
+  {
+    firstName: "Riley",
+    lastName: "Chen",
+    email: "riley.chen@example.com",
+    phone: "+61 2 5550 0104",
+    company: "Fictional Studio",
+  },
+  {
+    firstName: "Jordan",
+    lastName: "Lee",
+    email: "jordan.lee@example.com",
+    phone: "+1 555 0105",
+    company: "Placeholder Co",
+  },
+];
+
 // Modern surveys store this in `survey.blocks[].elements`; `survey.questions`
 // is the v1-compat field and may be empty. Walk both, de-dupe by id.
 const collectSurveyElements = (survey: TSurvey): TSurveyElement[] => {
@@ -111,134 +299,44 @@ const labelsForChoices = (
   >
 ): string[] => element.choices.map((c) => getLocalizedValue(c.label, DEFAULT_LANGUAGE)).filter(Boolean);
 
-const answerSchemaForElement = (element: TSurveyElement): z.ZodTypeAny | null => {
+const pictureSelectionIds = (
+  element: Extract<TSurveyElement, { type: TSurveyElementTypeEnum.PictureSelection }>
+): string[] => element.choices.map((c) => c.id).filter(Boolean);
+
+const matrixLabels = (element: Extract<TSurveyElement, { type: TSurveyElementTypeEnum.Matrix }>) => ({
+  rows: element.rows.map((r) => getLocalizedValue(r.label, DEFAULT_LANGUAGE)).filter(Boolean),
+  columns: element.columns.map((c) => getLocalizedValue(c.label, DEFAULT_LANGUAGE)).filter(Boolean),
+});
+
+const isElementSupportedForGeneration = (element: TSurveyElement): boolean => {
   switch (element.type) {
     case TSurveyElementTypeEnum.OpenText:
-      return z.string().min(1).describe("A realistic free-text answer for this question.");
-    case TSurveyElementTypeEnum.Rating: {
-      const range = element.range ?? 5;
-      return z.number().int().min(1).max(range).describe(`Rating from 1 to ${range}.`);
-    }
+    case TSurveyElementTypeEnum.Rating:
     case TSurveyElementTypeEnum.NPS:
-      return z.number().int().min(0).max(10).describe("NPS score from 0 (detractor) to 10 (promoter).");
     case TSurveyElementTypeEnum.Consent:
-      // Real consent responses only ever store the literal "accepted"; dismissal
-      // is inferred from ttc presence, which synthetic rows don't carry, so this
-      // bucket realistically reflects accepted respondents only.
-      return z.literal("accepted").describe("Always the literal string 'accepted'.");
-    case TSurveyElementTypeEnum.CSAT: {
-      // CSAT range is fixed to 5 by the element schema, but read defensively.
-      const range = element.range ?? 5;
-      return z.number().int().min(1).max(range).describe(`CSAT rating from 1 to ${range}.`);
-    }
-    case TSurveyElementTypeEnum.CES: {
-      const range = element.range;
-      return z.number().int().min(1).max(range).describe(`CES score from 1 to ${range}.`);
-    }
+    case TSurveyElementTypeEnum.CSAT:
+    case TSurveyElementTypeEnum.CES:
     case TSurveyElementTypeEnum.Date:
-      return z
-        .string()
-        .regex(/^\d{4}-\d{2}-\d{2}$/, "Use ISO date format YYYY-MM-DD")
-        .describe("ISO date (YYYY-MM-DD) within the last 12 months.");
-    case TSurveyElementTypeEnum.MultipleChoiceSingle: {
-      const labels = labelsForChoices(element);
-      if (labels.length === 0) return null;
-      return z
-        .enum(labels as [string, ...string[]])
-        .describe("Pick exactly one of the listed choices, copying its label verbatim.");
-    }
-    case TSurveyElementTypeEnum.MultipleChoiceMulti: {
-      const labels = labelsForChoices(element);
-      if (labels.length === 0) return null;
-      return z
-        .array(z.enum(labels as [string, ...string[]]))
-        .min(1)
-        .max(labels.length)
-        .describe("One or more choice labels copied verbatim from the listed choices.");
-    }
-    case TSurveyElementTypeEnum.Ranking: {
-      const labels = labelsForChoices(element);
-      if (labels.length === 0) return null;
-      return z
-        .array(z.enum(labels as [string, ...string[]]))
-        .length(labels.length)
-        .refine((arr) => new Set(arr).size === arr.length, {
-          message: "Ranking must be a permutation of all choices (no duplicates).",
-        })
-        .describe(
-          `Rank all ${labels.length} choices from most to least preferred. Use each choice label exactly once, copied verbatim.`
-        );
-    }
+      return true;
+    case TSurveyElementTypeEnum.MultipleChoiceSingle:
+    case TSurveyElementTypeEnum.MultipleChoiceMulti:
+    case TSurveyElementTypeEnum.Ranking:
+      return labelsForChoices(element).length > 0;
     case TSurveyElementTypeEnum.Matrix: {
-      const rowLabels = element.rows.map((r) => getLocalizedValue(r.label, DEFAULT_LANGUAGE)).filter(Boolean);
-      const columnLabels = element.columns
-        .map((c) => getLocalizedValue(c.label, DEFAULT_LANGUAGE))
-        .filter(Boolean);
-      if (rowLabels.length === 0 || columnLabels.length === 0) return null;
-
-      const rowShape = Object.fromEntries(
-        rowLabels.map((row) => [row, z.enum(columnLabels as [string, ...string[]])])
-      );
-      return z
-        .object(rowShape)
-        .describe("Object keyed by each row label; each value is exactly one column label copied verbatim.");
+      const { rows, columns } = matrixLabels(element);
+      return rows.length > 0 && columns.length > 0;
     }
-    case TSurveyElementTypeEnum.Address: {
-      const shownFields = ADDRESS_FIELD_ORDER.filter((f) => element[f].show);
-      if (shownFields.length === 0) return null;
-      const shape: Record<string, z.ZodTypeAny> = {};
-      for (const field of shownFields) {
-        shape[field] = element[field].required ? z.string().min(1) : z.string().optional();
-      }
-      return z
-        .object(shape)
-        .describe(
-          "Plausible synthetic address values for the listed fields. Use realistic-but-clearly-fictional values."
-        );
-    }
-    case TSurveyElementTypeEnum.PictureSelection: {
-      // PictureSelection responses store choice IDs, not image URLs. The LLM
-      // can't see images, so it picks IDs blindly — we just need a plausible
-      // distribution to populate the analytics chart.
-      const ids = element.choices.map((c) => c.id);
-      if (ids.length === 0) return null;
-      const idEnum = z.enum(ids as [string, ...string[]]);
-      const max = element.allowMulti ? ids.length : 1;
-      return z
-        .array(idEnum)
-        .min(1)
-        .max(max)
-        .refine((arr) => new Set(arr).size === arr.length, {
-          message: "PictureSelection answers must not repeat the same choice id.",
-        })
-        .describe(
-          element.allowMulti
-            ? `Pick between 1 and ${ids.length} choice ids from the listed picture options (no duplicates).`
-            : "Pick exactly one choice id from the listed picture options."
-        );
-    }
-    case TSurveyElementTypeEnum.ContactInfo: {
-      const shownFields = CONTACT_INFO_FIELD_ORDER.filter((f) => element[f].show);
-      if (shownFields.length === 0) return null;
-      const shape: Record<string, z.ZodTypeAny> = {};
-      for (const field of shownFields) {
-        const base = field === "email" ? ZUserEmail : z.string().min(1);
-        shape[field] = element[field].required ? base : base.optional();
-      }
-      return z
-        .object(shape)
-        .describe(
-          "Plausible synthetic contact info — invented names, example.com emails, fake phone numbers. Never use real people."
-        );
-    }
+    case TSurveyElementTypeEnum.Address:
+      return ADDRESS_FIELD_ORDER.some((field) => element[field].show);
+    case TSurveyElementTypeEnum.PictureSelection:
+      return pictureSelectionIds(element).length > 0;
+    case TSurveyElementTypeEnum.ContactInfo:
+      return CONTACT_INFO_FIELD_ORDER.some((field) => element[field].show);
     default:
-      return null;
+      return false;
   }
 };
 
-// Some element types use a different wire format than the LLM-friendly schema
-// shape (Address/ContactInfo store fixed-length arrays). Map LLM output to the
-// shape the analytics dashboard expects.
 const transformAnswerForElement = (element: TSurveyElement, value: unknown): unknown => {
   switch (element.type) {
     case TSurveyElementTypeEnum.Address: {
@@ -258,109 +356,130 @@ const transformAnswerForElement = (element: TSurveyElement, value: unknown): unk
 
 export type TExampleResponseSchemaContext = {
   supportedElementIds: string[];
+  openTextElementIds: string[];
 };
+
+const buildOpenTextResponsesSchema = (): z.ZodTypeAny =>
+  z.object({
+    responses: z
+      .array(
+        z.object({
+          rowId: z.string().min(1),
+          answers: z.record(z.string(), z.string().min(1)),
+        })
+      )
+      .default([]),
+  });
 
 export const buildExampleResponsesSchema = (
   survey: TSurvey
 ): { schema: z.ZodTypeAny; ctx: TExampleResponseSchemaContext } => {
-  const perElementEntries: [string, z.ZodTypeAny][] = [];
-  for (const el of collectSurveyElements(survey)) {
-    if (!SUPPORTED_ELEMENT_TYPES.has(el.type)) continue;
-    const answerSchema = answerSchemaForElement(el);
-    if (!answerSchema) continue;
-    perElementEntries.push([el.id, el.required ? answerSchema : answerSchema.optional()]);
-  }
+  const supportedElements = collectSurveyElements(survey).filter(
+    (element) => SUPPORTED_ELEMENT_TYPES.has(element.type) && isElementSupportedForGeneration(element)
+  );
+  const openTextElementIds = supportedElements
+    .filter((element) => element.type === TSurveyElementTypeEnum.OpenText)
+    .map((element) => element.id);
 
-  const oneResponse = z.object(Object.fromEntries(perElementEntries));
-  const schema = z.object({
-    responses: z.array(oneResponse).length(EXAMPLE_RESPONSE_COUNT),
-  });
-
-  return { schema, ctx: { supportedElementIds: perElementEntries.map(([id]) => id) } };
+  return {
+    schema: buildOpenTextResponsesSchema(),
+    ctx: {
+      supportedElementIds: supportedElements.map((element) => element.id),
+      openTextElementIds,
+    },
+  };
 };
 
-const buildLlmContext = (survey: TSurvey, supportedElementIds: Set<string>) => {
-  const elements = collectSurveyElements(survey)
-    .filter((el) => supportedElementIds.has(el.id))
-    .map((el) => {
-      const headline = getLocalizedValue(el.headline, DEFAULT_LANGUAGE);
-      const subheader = getLocalizedValue(el.subheader, DEFAULT_LANGUAGE);
-      const base: Record<string, unknown> = {
-        id: el.id,
-        type: el.type,
-        headline,
-        subheader: subheader || undefined,
-        required: el.required,
-      };
-      if (
-        el.type === TSurveyElementTypeEnum.MultipleChoiceSingle ||
-        el.type === TSurveyElementTypeEnum.MultipleChoiceMulti ||
-        el.type === TSurveyElementTypeEnum.Ranking
-      ) {
-        base.choices = labelsForChoices(el);
-      }
-      if (el.type === TSurveyElementTypeEnum.Rating || el.type === TSurveyElementTypeEnum.CES) {
-        base.scale = el.scale;
-        base.range = el.range;
-      }
-      if (el.type === TSurveyElementTypeEnum.CSAT) {
-        base.scale = el.scale;
-        base.range = el.range;
-      }
-      if (el.type === TSurveyElementTypeEnum.Date) {
-        base.displayFormat = el.format;
-      }
-      if (el.type === TSurveyElementTypeEnum.Matrix) {
-        base.rows = el.rows.map((r) => getLocalizedValue(r.label, DEFAULT_LANGUAGE)).filter(Boolean);
-        base.columns = el.columns.map((c) => getLocalizedValue(c.label, DEFAULT_LANGUAGE)).filter(Boolean);
-      }
-      if (el.type === TSurveyElementTypeEnum.Address) {
-        base.shownFields = ADDRESS_FIELD_ORDER.filter((f) => el[f].show);
-        base.requiredFields = ADDRESS_FIELD_ORDER.filter((f) => el[f].show && el[f].required);
-      }
-      if (el.type === TSurveyElementTypeEnum.PictureSelection) {
-        base.choiceIds = el.choices.map((c) => c.id);
-        base.allowMulti = el.allowMulti;
-      }
-      if (el.type === TSurveyElementTypeEnum.ContactInfo) {
-        base.shownFields = CONTACT_INFO_FIELD_ORDER.filter((f) => el[f].show);
-        base.requiredFields = CONTACT_INFO_FIELD_ORDER.filter((f) => el[f].show && el[f].required);
-      }
-      return base;
-    });
+const elementContextForPrompt = (element: TSurveyElement): Record<string, unknown> => {
+  const base: Record<string, unknown> = {
+    id: element.id,
+    type: element.type,
+    headline: getLocalizedValue(element.headline, DEFAULT_LANGUAGE),
+    subheader: getLocalizedValue(element.subheader, DEFAULT_LANGUAGE) || undefined,
+    required: element.required,
+  };
+
+  if (
+    element.type === TSurveyElementTypeEnum.MultipleChoiceSingle ||
+    element.type === TSurveyElementTypeEnum.MultipleChoiceMulti ||
+    element.type === TSurveyElementTypeEnum.Ranking
+  ) {
+    base.choices = labelsForChoices(element);
+  }
+  if (element.type === TSurveyElementTypeEnum.Rating || element.type === TSurveyElementTypeEnum.CES) {
+    base.scale = element.scale;
+    base.range = element.range;
+  }
+  if (element.type === TSurveyElementTypeEnum.CSAT) {
+    base.scale = element.scale;
+    base.range = element.range;
+  }
+  if (element.type === TSurveyElementTypeEnum.Matrix) {
+    base.rows = matrixLabels(element).rows;
+    base.columns = matrixLabels(element).columns;
+  }
+
+  return base;
+};
+
+const buildPlannedAnswerContext = (row: TExampleResponsePlanRow, elementsById: Map<string, TSurveyElement>) =>
+  Object.entries(row.data).map(([elementId, answer]) => {
+    const element = elementsById.get(elementId);
+    return {
+      elementId,
+      question: element ? getLocalizedValue(element.headline, DEFAULT_LANGUAGE) : undefined,
+      type: element?.type,
+      answer,
+    };
+  });
+
+const buildOpenTextLlmContext = (survey: TSurvey, rows: TExampleResponsePlanRow[]) => {
+  const openTextElementIds = new Set(rows.flatMap((row) => row.openTextElementIds));
+  const supportedElements = collectSurveyElements(survey).filter(
+    (element) => SUPPORTED_ELEMENT_TYPES.has(element.type) && isElementSupportedForGeneration(element)
+  );
+  const elementsById = new Map(supportedElements.map((element) => [element.id, element]));
+  const openTextElements = supportedElements
+    .filter((element) => openTextElementIds.has(element.id))
+    .map(elementContextForPrompt);
 
   return {
     surveyTitle: survey.name,
     surveyDescription: survey.welcomeCard?.headline
       ? getLocalizedValue(survey.welcomeCard.headline, DEFAULT_LANGUAGE)
       : undefined,
-    elements,
+    surveyElements: supportedElements.map(elementContextForPrompt),
+    openTextElements,
+    rows: rows.map((row) => ({
+      rowId: row.rowId,
+      profile: row.profile,
+      requestedOpenTextAnswers: row.openTextElementIds.map((elementId) => {
+        const element = elementsById.get(elementId);
+        return {
+          elementId,
+          question: element ? getLocalizedValue(element.headline, DEFAULT_LANGUAGE) : undefined,
+          subheader: element
+            ? getLocalizedValue(element.subheader, DEFAULT_LANGUAGE) || undefined
+            : undefined,
+        };
+      }),
+      plannedAnswers: buildPlannedAnswerContext(row, elementsById),
+      finished: row.finished,
+    })),
   };
 };
 
-const SYSTEM_PROMPT = `You generate plausible, varied example survey responses for a Formbricks survey owner who wants to see what their analytics will look like once real respondents start answering.
+const SYSTEM_PROMPT = `You write only the free-text answers for synthetic Formbricks survey responses.
 Rules:
-- Produce exactly the number of responses requested.
-- Each response must answer every required element. Skip optional elements roughly 20% of the time to make the data realistic.
-- For multiple-choice elements, copy the choice label exactly as listed; never invent new options.
-- For ranking elements, return every choice label exactly once in your preferred order, copied verbatim.
-- For matrix elements, return an object keyed by each row label, with one of the listed column labels as the value.
-- For date elements, return an ISO date string (YYYY-MM-DD) within the last 12 months. Distribute dates across that window, not all in one day.
-- For address/contact-info elements, populate only the listed fields. Use clearly-fictional but realistic values (example.com emails, fake phone numbers, invented names). Never use real people.
-- For picture-selection elements, you cannot see the images — distribute selections roughly evenly across the listed choice ids; use only the ids provided, copied verbatim.
-- Vary tone, length, sentiment, and choice distribution across responses so the data looks like real, diverse users — not robotic copies.
-
-Sentiment & score distribution (real surveys skew positive):
-- NPS: roughly 60% promoters (9–10), 25% passives (7–8), 15% detractors (0–6). Include at least one detractor for realism, but the bulk should sit at 8–10.
-- CSAT: roughly 70% top-two scores (e.g. 4–5 on a 5-point scale), 20% middle, 10% low. Lean satisfied.
-- Rating: similarly bias toward the top third of the scale (e.g. 4–5 on a 5-point, 6–7 on a 7-point). A small minority can be low.
-- For free-text on dissatisfied scores, mirror the score: a low NPS or low CSAT respondent should sound frustrated. A high one should sound enthusiastic.
-
-Free-text style — write like a real person typing on their phone, not a polished focus-group transcript:
-- Vary length wildly: some answers are 2–3 words ("super useful 🙌"), some are 1 short sentence, some are 2 sentences. Avoid the same length twice in a row.
-- Casual register. Start sentences with lowercase sometimes. Use sentence fragments. Drop punctuation occasionally.
-- Sprinkle emojis where they'd naturally appear (🙌, 👍, 😊, ❤️, 🚀, 😅, 🤔) — not on every response, maybe 1 in 3.
-- Light typos and informal contractions are fine ("def", "tbh", "rly nice", "wld love", "thx").
+- Produce exactly one object per requested rowId.
+- Fill only the requestedOpenTextAnswers for each row, keyed by each requested elementId.
+- Answer each specific open-text question directly. A "main benefit" question needs a benefit; an "improve" question needs an improvement idea; an audience question needs an audience.
+- Use the whole survey context and planned answers to keep the respondent coherent across the survey.
+- Match the respondent profile, sentiment, priorities, and already-planned answers.
+- Use the requested verbosity and polish for each row, and keep that style consistent across all open-text answers in the same row.
+- Write like different real respondents, not one synthetic persona.
+- Avoid repeating the same answer, opening, or sentence template across rows or across questions in the same row.
+- Do not simply restate the question. Avoid starting many answers with phrases like "I think", "The main benefit is", "I would improve", or "For me".
 - Match the language of the element headline.
 - No corporate buzzwords. No "I would like to commend the team for..." energy.`;
 
@@ -378,6 +497,12 @@ export type TGeneratedExampleResponse = {
   meta: NonNullable<TResponseInput["meta"]>;
   createdAt: Date;
 };
+
+const buildRespondentProfiles = (count: number): TExampleRespondentProfile[] =>
+  Array.from(
+    { length: count },
+    (_, index) => RESPONDENT_PROFILE_PRESETS[index % RESPONDENT_PROFILE_PRESETS.length]
+  );
 
 // Picks an enabled non-default survey language at random ~30% of the time;
 // otherwise leaves it null so the response uses the survey default. Mirrors a
@@ -413,81 +538,379 @@ const ttcForElement = (element: TSurveyElement): number => {
   return randomIntInclusive(band[0], band[1]);
 };
 
-// For drop-offs we keep only answers up to (but excluding) the drop element
-// and emit ttc for the same prefix. `createResponse` recomputes _total only
-// when finished, so partial responses correctly show no total.
-const applyDropOff = (
-  data: TResponseData,
-  ttc: TResponseTtc,
+const hashString = (value: string): number =>
+  [...value].reduce((acc, char) => (acc * 31 + (char.codePointAt(0) ?? 0)) % 997, 0);
+
+const shouldSkipOptionalElement = (element: TSurveyElement, rowIndex: number): boolean => {
+  if (element.required) return false;
+  return (hashString(element.id) + rowIndex) % 5 === 0;
+};
+
+const getLumpyIndex = (optionCount: number, rowIndex: number): number => {
+  if (optionCount <= 1) return 0;
+  const lumpyPattern = [0, 0, 1, 0, 2, 1, 0, 3, 1, 4];
+  return Math.min(lumpyPattern[rowIndex % lumpyPattern.length], optionCount - 1);
+};
+
+const getScoreForProfile = (
+  profile: TExampleRespondentProfile,
+  rowIndex: number,
+  min: number,
+  max: number
+): number => {
+  const clampedMax = Math.max(min, max);
+  const span = clampedMax - min;
+  const top = clampedMax;
+  const high = min + Math.max(0, Math.round(span * 0.75));
+  const middle = min + Math.max(0, Math.round(span * 0.5));
+  const low = min + Math.max(0, Math.round(span * 0.25));
+
+  switch (profile.sentiment) {
+    case "promoter":
+      return rowIndex % 2 === 0 ? top : Math.max(min, top - 1);
+    case "positive":
+      return Math.max(min, rowIndex % 3 === 0 ? high : top);
+    case "neutral":
+      return Math.min(clampedMax, rowIndex % 2 === 0 ? middle : middle + 1);
+    case "skeptical":
+      return Math.max(min, rowIndex % 2 === 0 ? low : middle);
+    case "detractor":
+      return Math.max(min, rowIndex % 2 === 0 ? min : low);
+  }
+};
+
+const getNpsForProfile = (profile: TExampleRespondentProfile, rowIndex: number): number => {
+  switch (profile.sentiment) {
+    case "promoter":
+      return rowIndex % 2 === 0 ? 10 : 9;
+    case "positive":
+      return rowIndex % 2 === 0 ? 9 : 8;
+    case "neutral":
+      return rowIndex % 2 === 0 ? 8 : 7;
+    case "skeptical":
+      return rowIndex % 2 === 0 ? 6 : 5;
+    case "detractor":
+      return rowIndex % 2 === 0 ? 3 : 2;
+  }
+};
+
+const getIsoDateForRow = (rowIndex: number): string => {
+  const daysAgo = ((rowIndex + 1) * 23) % 365;
+  return new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+};
+
+const rotate = <T>(values: T[], startIndex: number): T[] => [
+  ...values.slice(startIndex),
+  ...values.slice(0, startIndex),
+];
+
+const pickAddressValue = (
+  element: Extract<TSurveyElement, { type: TSurveyElementTypeEnum.Address }>,
+  rowIndex: number
+): Partial<Record<TAddressField, string>> => {
+  const fixture = ADDRESS_FIXTURES[rowIndex % ADDRESS_FIXTURES.length];
+  return Object.fromEntries(
+    ADDRESS_FIELD_ORDER.filter((field) => element[field].show).map((field) => [field, fixture[field]])
+  );
+};
+
+const pickContactInfoValue = (
+  element: Extract<TSurveyElement, { type: TSurveyElementTypeEnum.ContactInfo }>,
+  rowIndex: number
+): Partial<Record<TContactInfoField, string>> => {
+  const fixture = CONTACT_INFO_FIXTURES[rowIndex % CONTACT_INFO_FIXTURES.length];
+  return Object.fromEntries(
+    CONTACT_INFO_FIELD_ORDER.filter((field) => element[field].show).map((field) => [field, fixture[field]])
+  );
+};
+
+const buildClosedAnswerForElement = (
+  element: TSurveyElement,
+  profile: TExampleRespondentProfile,
+  rowIndex: number
+): unknown => {
+  switch (element.type) {
+    case TSurveyElementTypeEnum.OpenText:
+      return undefined;
+    case TSurveyElementTypeEnum.MultipleChoiceSingle: {
+      const labels = labelsForChoices(element);
+      return labels[getLumpyIndex(labels.length, rowIndex)];
+    }
+    case TSurveyElementTypeEnum.MultipleChoiceMulti: {
+      const labels = labelsForChoices(element);
+      const first = getLumpyIndex(labels.length, rowIndex);
+      const picks = [labels[first]];
+      if (labels.length > 1 && rowIndex % 3 !== 0) {
+        picks.push(labels[(first + 1 + (rowIndex % (labels.length - 1))) % labels.length]);
+      }
+      return [...new Set(picks)];
+    }
+    case TSurveyElementTypeEnum.Rating:
+      return getScoreForProfile(profile, rowIndex, 1, element.range ?? 5);
+    case TSurveyElementTypeEnum.NPS:
+      return getNpsForProfile(profile, rowIndex);
+    case TSurveyElementTypeEnum.CSAT:
+      return getScoreForProfile(profile, rowIndex, 1, element.range ?? 5);
+    case TSurveyElementTypeEnum.CES:
+      return getScoreForProfile(profile, rowIndex, 1, element.range);
+    case TSurveyElementTypeEnum.Date:
+      return getIsoDateForRow(rowIndex);
+    case TSurveyElementTypeEnum.Ranking: {
+      const labels = labelsForChoices(element);
+      return rotate(labels, getLumpyIndex(labels.length, rowIndex));
+    }
+    case TSurveyElementTypeEnum.Matrix: {
+      const { rows, columns } = matrixLabels(element);
+      return Object.fromEntries(
+        rows.map((row, index) => [row, columns[getLumpyIndex(columns.length, rowIndex + index)]])
+      );
+    }
+    case TSurveyElementTypeEnum.Address:
+      return pickAddressValue(element, rowIndex);
+    case TSurveyElementTypeEnum.ContactInfo:
+      return pickContactInfoValue(element, rowIndex);
+    case TSurveyElementTypeEnum.PictureSelection: {
+      const ids = pictureSelectionIds(element);
+      const first = getLumpyIndex(ids.length, rowIndex);
+      if (!element.allowMulti || ids.length === 1) return [ids[first]];
+      const picks = [ids[first]];
+      if (rowIndex % 3 !== 0) picks.push(ids[(first + 1) % ids.length]);
+      return [...new Set(picks)];
+    }
+    case TSurveyElementTypeEnum.Consent:
+      return "accepted";
+    default:
+      return undefined;
+  }
+};
+
+const applyDropOffToPlanRow = (
+  row: TExampleResponsePlanRow,
   orderedElementIds: string[]
-): { data: TResponseData; ttc: TResponseTtc } => {
-  if (orderedElementIds.length <= 1) return { data, ttc };
-  const dropIndex = randomIntInclusive(1, orderedElementIds.length - 1);
+): TExampleResponsePlanRow => {
+  if (orderedElementIds.length <= 1 || row.finished) return row;
+  const rowNumber = Number(row.rowId.replace("row_", "")) || 0;
+  const dropIndex = 1 + (rowNumber % (orderedElementIds.length - 1));
   const keptIds = new Set(orderedElementIds.slice(0, dropIndex));
   const newData: TResponseData = {};
   const newTtc: TResponseTtc = {};
   for (const id of keptIds) {
-    if (data[id] !== undefined) newData[id] = data[id];
-    if (ttc[id] !== undefined) newTtc[id] = ttc[id];
+    if (row.data[id] !== undefined) newData[id] = row.data[id];
+    if (row.ttc[id] !== undefined) newTtc[id] = row.ttc[id];
   }
-  return { data: newData, ttc: newTtc };
+  return {
+    ...row,
+    data: newData,
+    ttc: newTtc,
+    openTextElementIds: row.openTextElementIds.filter((id) => keptIds.has(id)),
+  };
 };
 
-export const generateExampleResponses = async ({
-  survey,
-  organizationId,
-}: TGenerateExampleResponsesArgs): Promise<TGeneratedExampleResponse[]> => {
-  const { schema, ctx } = buildExampleResponsesSchema(survey);
+const buildExampleResponsePlan = (survey: TSurvey): TExampleResponsePlanRow[] => {
+  const { ctx } = buildExampleResponsesSchema(survey);
   if (ctx.supportedElementIds.length === 0) {
     return [];
   }
 
-  const supportedIds = new Set(ctx.supportedElementIds);
-  const llmContext = buildLlmContext(survey, supportedIds);
   const elementsById = new Map(collectSurveyElements(survey).map((el) => [el.id, el]));
   const finishedEndingId = survey.endings?.[0]?.id ?? null;
+  const profiles = buildRespondentProfiles(EXAMPLE_RESPONSE_COUNT);
 
-  const { object } = await generateOrganizationAIObject<{ responses: Array<Record<string, unknown>> }>({
-    organizationId,
-    schema: schema as z.ZodType<{ responses: Array<Record<string, unknown>> }>,
-    system: SYSTEM_PROMPT,
-    prompt: `Generate ${EXAMPLE_RESPONSE_COUNT} diverse example responses for this survey.
-
-Survey context (JSON):
-${JSON.stringify(llmContext, null, 2)}`,
-  });
-
-  return object.responses.map((row: Record<string, unknown>, index: number): TGeneratedExampleResponse => {
+  return profiles.map((profile, index) => {
     const data: TResponseData = {};
     const ttc: TResponseTtc = {};
+    const openTextElementIds: string[] = [];
+
     for (const id of ctx.supportedElementIds) {
-      const value = row[id];
-      if (value === undefined || value === null) continue;
       const element = elementsById.get(id);
-      if (!element) continue;
-      const transformed = transformAnswerForElement(element, value);
+      if (!element || shouldSkipOptionalElement(element, index)) continue;
+
+      if (element.type === TSurveyElementTypeEnum.OpenText) {
+        openTextElementIds.push(id);
+        ttc[id] = ttcForElement(element);
+        continue;
+      }
+
+      const answer = buildClosedAnswerForElement(element, profile, index);
+      const transformed = transformAnswerForElement(element, answer);
       if (transformed === undefined) continue;
       data[id] = transformed as TResponseData[string];
       ttc[id] = ttcForElement(element);
     }
 
-    // Deterministically mark the first ~DROP_OFF_RATE * N responses as
-    // drop-offs (here: 2 of 10). Using index instead of Math.random keeps the
-    // ratio stable even with small N.
     const isFinished = index >= Math.ceil(EXAMPLE_RESPONSE_COUNT * DROP_OFF_RATE);
-    const final = isFinished ? { data, ttc } : applyDropOff(data, ttc, ctx.supportedElementIds);
-
-    return {
-      data: final.data,
-      ttc: final.ttc,
+    const row: TExampleResponsePlanRow = {
+      rowId: `row_${index}`,
+      profile,
+      data,
+      ttc,
       finished: isFinished,
       endingId: isFinished ? finishedEndingId : null,
       language: pickResponseLanguage(survey),
       meta: buildResponseMeta(),
       createdAt: pickCreatedAt(),
+      openTextElementIds,
     };
+
+    return applyDropOffToPlanRow(row, ctx.supportedElementIds);
   });
 };
+
+const ensureTrailingPunctuation = (value: string): string =>
+  /[.!?]$/.test(value.trim()) ? value.trim() : `${value.trim()}.`;
+
+const lowercaseFirst = (value: string): string => value.charAt(0).toLowerCase() + value.slice(1);
+
+const uppercaseFirst = (value: string): string => value.charAt(0).toUpperCase() + value.slice(1);
+
+const applyFallbackStyle = (answer: string, profile: TExampleRespondentProfile): string => {
+  const trimmed = ensureTrailingPunctuation(answer);
+
+  if (profile.polish === "rough") {
+    return lowercaseFirst(trimmed);
+  }
+
+  if (profile.polish === "casual" && profile.verbosity === "brief") {
+    return lowercaseFirst(trimmed);
+  }
+
+  return uppercaseFirst(trimmed);
+};
+
+const buildFallbackOpenTextAnswer = (
+  profile: TExampleRespondentProfile,
+  element: TSurveyElement | undefined
+): string => {
+  const headline = element ? getLocalizedValue(element.headline, DEFAULT_LANGUAGE).toLowerCase() : "";
+  const variant = hashString(`${profile.persona}-${headline}`) % 4;
+  const secondaryPriority = profile.priorities[1] ?? profile.priorities[0];
+
+  if (headline.includes("who") || headline.includes("people") || headline.includes("benefit from")) {
+    const answers = [
+      `Teams like ${profile.persona}s, especially when ${profile.priorities[0]} matters.`,
+      `Best fit is probably ${profile.persona}s who care about ${profile.priorities[0]}.`,
+      `${profile.persona}s would get the most out of it.`,
+      `Mostly ${profile.persona}s with a lot of pressure around ${profile.priorities[0]}.`,
+    ];
+    return applyFallbackStyle(answers[variant], profile);
+  }
+
+  if (headline.includes("benefit")) {
+    const answers = [
+      `Better ${profile.priorities[0]} without much extra setup.`,
+      `It saves time around ${profile.priorities[0]}, which is what I notice first.`,
+      `Clearer ${profile.priorities[0]} for the team.`,
+      `${profile.priorities[0]} feels easier to stay on top of now.`,
+    ];
+    return applyFallbackStyle(
+      profile.verbosity === "brief" ? answers[variant].split(",")[0] : answers[variant],
+      profile
+    );
+  }
+
+  if (headline.includes("improve") || headline.includes("better")) {
+    const answers = [
+      `Make ${secondaryPriority} easier to configure.`,
+      `A bit more guidance around ${secondaryPriority} would help.`,
+      `Tighten up ${secondaryPriority}; that is where I still slow down.`,
+      `${secondaryPriority} could be clearer for first-time users.`,
+    ];
+    return applyFallbackStyle(answers[variant], profile);
+  }
+
+  switch (profile.verbosity) {
+    case "brief":
+      return applyFallbackStyle(
+        profile.sentiment === "detractor" ? "Not enough value yet." : "Helpful so far.",
+        profile
+      );
+    case "detailed":
+      return applyFallbackStyle(
+        `As a ${profile.persona}, I mostly care about ${profile.priorities.join(
+          " and "
+        )}. The experience is ${profile.sentiment === "detractor" ? "not quite there yet" : "moving in the right direction"}.`,
+        profile
+      );
+    case "normal":
+      return applyFallbackStyle(
+        `It mainly helps with ${profile.priorities[0]}, though I would still watch ${profile.priorities[1]}.`,
+        profile
+      );
+  }
+};
+
+const fillOpenTextAnswers = async (
+  survey: TSurvey,
+  organizationId: string,
+  planRows: TExampleResponsePlanRow[]
+): Promise<TExampleResponsePlanRow[]> => {
+  const rowsNeedingText = planRows.filter((row) => row.openTextElementIds.length > 0);
+  if (rowsNeedingText.length === 0) return planRows;
+  const elementsById = new Map(collectSurveyElements(survey).map((element) => [element.id, element]));
+
+  const { object } = await generateOrganizationAIObject<{
+    responses: Array<{ rowId: string; answers: Record<string, string> }>;
+  }>({
+    organizationId,
+    schema: buildOpenTextResponsesSchema() as z.ZodType<{
+      responses: Array<{ rowId: string; answers: Record<string, string> }>;
+    }>,
+    system: SYSTEM_PROMPT,
+    prompt: `Write free-text answers for these planned synthetic survey responses.
+
+Survey context (JSON):
+${JSON.stringify(buildOpenTextLlmContext(survey, rowsNeedingText), null, 2)}`,
+  });
+
+  const answersByRowId = new Map(object.responses.map((response) => [response.rowId, response.answers]));
+
+  return planRows.map((row) => {
+    if (row.openTextElementIds.length === 0) return row;
+
+    const answers = answersByRowId.get(row.rowId) ?? {};
+    const data = { ...row.data };
+    for (const elementId of row.openTextElementIds) {
+      data[elementId] = (answers[elementId] ||
+        buildFallbackOpenTextAnswer(row.profile, elementsById.get(elementId))) as TResponseData[string];
+    }
+
+    return { ...row, data };
+  });
+};
+
+const toGeneratedResponse = (row: TExampleResponsePlanRow): TGeneratedExampleResponse => ({
+  data: row.data,
+  ttc: row.ttc,
+  finished: row.finished,
+  endingId: row.endingId,
+  language: row.language,
+  meta: row.meta,
+  createdAt: row.createdAt,
+});
+
+export const generateExampleResponseDataset = async ({
+  survey,
+  organizationId,
+}: TGenerateExampleResponsesArgs): Promise<TGeneratedExampleDataset> => {
+  const planRows = buildExampleResponsePlan(survey);
+  if (planRows.length === 0) {
+    return { responses: [], displays: [], tagName: EXAMPLE_AI_GENERATED_TAG_NAME };
+  }
+
+  const rowsWithText = await fillOpenTextAnswers(survey, organizationId, planRows);
+
+  return {
+    responses: rowsWithText.map(toGeneratedResponse),
+    displays: buildExampleImpressionTimestamps(EXAMPLE_IMPRESSION_ONLY_COUNT).map((createdAt) => ({
+      createdAt,
+    })),
+    tagName: EXAMPLE_AI_GENERATED_TAG_NAME,
+  };
+};
+
+export const generateExampleResponses = async (
+  args: TGenerateExampleResponsesArgs
+): Promise<TGeneratedExampleResponse[]> => (await generateExampleResponseDataset(args)).responses;
 
 export const toExampleResponseInput = (
   surveyId: string,
