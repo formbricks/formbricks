@@ -93,6 +93,61 @@ describe("Response Utils", () => {
       const result = buildWhereClause(mockSurvey as TSurvey, filterCriteria);
       expect(result.AND).toHaveLength(1);
     });
+
+    test("should build where clause with contact attribute exclusions", () => {
+      const filterCriteria = {
+        contactAttributes: {
+          email: { op: "notEquals" as const, value: "blocked@example.com" },
+        },
+      };
+      const result = buildWhereClause(mockSurvey as TSurvey, filterCriteria);
+      expect(result.AND).toEqual([
+        {
+          AND: [{ contactAttributes: { path: ["email"], not: "blocked@example.com" } }],
+        },
+      ]);
+    });
+
+    test("should build where clause with response IDs", () => {
+      const result = buildWhereClause(mockSurvey as TSurvey, { responseIds: ["response1", "response2"] });
+      expect(result.AND).toContainEqual({ id: { in: ["response1", "response2"] } });
+    });
+
+    test("should build where clause with quota filters", () => {
+      const result = buildWhereClause(mockSurvey as TSurvey, {
+        quotas: {
+          quota1: { op: "screenedOutNotInQuota" },
+          quota2: { op: "screenedIn" },
+        },
+      });
+
+      expect(result.AND).toContainEqual({
+        AND: [
+          {
+            NOT: {
+              quotaLinks: {
+                some: {
+                  quotaId: "quota1",
+                },
+              },
+            },
+          },
+          {
+            quotaLinks: {
+              some: {
+                quotaId: "quota2",
+                status: "screenedIn",
+              },
+            },
+          },
+        ],
+      });
+    });
+
+    test("should omit empty quota filters", () => {
+      const result = buildWhereClause(mockSurvey as TSurvey, { quotas: {} });
+      expect(result.AND).toEqual([]);
+    });
   });
 
   describe("buildWhereClause – others & meta filters", () => {
@@ -322,6 +377,143 @@ describe("Response Utils", () => {
           AND: [
             {
               data: { path: ["qM", "R1"], equals: "foo" },
+            },
+          ],
+        },
+      ]);
+    });
+
+    test("includesOne: multiple choice multi with other choice selected", () => {
+      const choiceSurvey: Partial<TSurvey> = {
+        id: "s4",
+        name: "ChoiceSurvey",
+        blocks: [
+          {
+            id: "block1",
+            name: "Block 1",
+            elements: [
+              {
+                id: "qMulti",
+                type: TSurveyElementTypeEnum.MultipleChoiceMulti,
+                headline: { default: "Pick many" },
+                required: false,
+                choices: [
+                  { id: "a", label: { default: "A" } },
+                  { id: "b", label: { default: "B" } },
+                  { id: "other", label: { default: "Other" } },
+                ],
+                shuffleOption: "none",
+                isDraft: false,
+              },
+            ],
+          },
+        ],
+        questions: [],
+        type: "app",
+        hiddenFields: { enabled: false, fieldIds: [] },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        workspaceId: "e4",
+        createdBy: "u4",
+        status: "inProgress",
+      };
+
+      const result = buildWhereClause(choiceSurvey as TSurvey, {
+        data: { qMulti: { op: "includesOne", value: ["Other"] } },
+      });
+
+      expect(result.AND).toEqual([
+        {
+          AND: [
+            {
+              NOT: {
+                OR: expect.arrayContaining([
+                  { data: { path: ["qMulti"], equals: ["A"] } },
+                  { data: { path: ["qMulti"], equals: ["B"] } },
+                ]),
+              },
+            },
+          ],
+        },
+      ]);
+    });
+
+    test("includesOne: multiple choice single with other choice selected", () => {
+      const choiceSurvey: Partial<TSurvey> = {
+        id: "s5",
+        name: "SingleChoiceSurvey",
+        blocks: [
+          {
+            id: "block1",
+            name: "Block 1",
+            elements: [
+              {
+                id: "qSingle",
+                type: TSurveyElementTypeEnum.MultipleChoiceSingle,
+                headline: { default: "Pick one" },
+                required: false,
+                choices: [
+                  { id: "a", label: { default: "A" } },
+                  { id: "b", label: { default: "B" } },
+                  { id: "other", label: { default: "Other" } },
+                ],
+                shuffleOption: "none",
+                isDraft: false,
+              },
+            ],
+          },
+        ],
+        questions: [],
+        type: "app",
+        hiddenFields: { enabled: false, fieldIds: [] },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        workspaceId: "e5",
+        createdBy: "u5",
+        status: "inProgress",
+      };
+
+      const result = buildWhereClause(choiceSurvey as TSurvey, {
+        data: { qSingle: { op: "includesOne", value: ["Other"] } },
+      });
+
+      expect(result.AND).toEqual([
+        {
+          AND: [
+            {
+              AND: [
+                { NOT: { data: { path: ["qSingle"], equals: "A" } } },
+                { NOT: { data: { path: ["qSingle"], equals: "B" } } },
+              ],
+            },
+          ],
+        },
+      ]);
+    });
+
+    test("includesOne: regular choice match", () => {
+      const result = buildWhereClause(textSurvey as TSurvey, {
+        data: { qText: { op: "includesOne", value: ["A", "B"] } },
+      });
+
+      expect(result.AND).toEqual([
+        {
+          AND: [
+            {
+              OR: [
+                {
+                  OR: [
+                    { data: { path: ["qText"], array_contains: ["A"] } },
+                    { data: { path: ["qText"], equals: "A" } },
+                  ],
+                },
+                {
+                  OR: [
+                    { data: { path: ["qText"], array_contains: ["B"] } },
+                    { data: { path: ["qText"], equals: "B" } },
+                  ],
+                },
+              ],
             },
           ],
         },
