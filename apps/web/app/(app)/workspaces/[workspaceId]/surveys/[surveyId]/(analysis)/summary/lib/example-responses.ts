@@ -3,6 +3,7 @@ import { z } from "zod";
 import { type TResponseData, type TResponseInput, type TResponseTtc } from "@formbricks/types/responses";
 import { type TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { type TSurvey } from "@formbricks/types/surveys/types";
+import { ZUserEmail } from "@formbricks/types/user";
 import { generateOrganizationAIObject } from "@/lib/ai/service";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 
@@ -217,7 +218,7 @@ const answerSchemaForElement = (element: TSurveyElement): z.ZodTypeAny | null =>
       if (shownFields.length === 0) return null;
       const shape: Record<string, z.ZodTypeAny> = {};
       for (const field of shownFields) {
-        const base = field === "email" ? z.string().email() : z.string().min(1);
+        const base = field === "email" ? ZUserEmail : z.string().min(1);
         shape[field] = element[field].required ? base : base.optional();
       }
       return z
