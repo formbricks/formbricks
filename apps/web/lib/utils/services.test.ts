@@ -25,6 +25,7 @@ import {
   getApiKey,
   getConnector,
   getContact,
+  getContactAttributeKey,
   getIntegration,
   getInvite,
   getLanguage,
@@ -97,6 +98,9 @@ vi.mock("@formbricks/database", () => ({
       findUnique: vi.fn(),
     },
     surveyQuota: {
+      findUnique: vi.fn(),
+    },
+    contactAttributeKey: {
       findUnique: vi.fn(),
     },
   },
@@ -600,6 +604,48 @@ describe("Service Functions", () => {
       vi.mocked(prisma.connector.findUnique).mockRejectedValue(unknownError);
 
       await expect(getConnector(connectorId)).rejects.toThrow(unknownError);
+    });
+  });
+
+  describe("getContactAttributeKey", () => {
+    const contactAttributeKeyId = "attrKey123";
+
+    test("returns the contact attribute key when found", async () => {
+      const mockAttributeKey = { workspaceId: "ws123" };
+      vi.mocked(prisma.contactAttributeKey.findUnique).mockResolvedValue(mockAttributeKey);
+
+      const result = await getContactAttributeKey(contactAttributeKeyId);
+      expect(validateInputs).toHaveBeenCalled();
+      expect(prisma.contactAttributeKey.findUnique).toHaveBeenCalledWith({
+        where: { id: contactAttributeKeyId },
+        select: { workspaceId: true },
+      });
+      expect(result).toEqual(mockAttributeKey);
+    });
+
+    test("returns null when contact attribute key not found", async () => {
+      vi.mocked(prisma.contactAttributeKey.findUnique).mockResolvedValue(null);
+
+      const result = await getContactAttributeKey(contactAttributeKeyId);
+      expect(result).toBeNull();
+    });
+
+    test("throws DatabaseError when Prisma throws a known request error", async () => {
+      vi.mocked(prisma.contactAttributeKey.findUnique).mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError("Error", {
+          code: "P2002",
+          clientVersion: "4.7.0",
+        })
+      );
+
+      await expect(getContactAttributeKey(contactAttributeKeyId)).rejects.toThrow(DatabaseError);
+    });
+
+    test("rethrows unknown errors", async () => {
+      const unknownError = new Error("Something unexpected");
+      vi.mocked(prisma.contactAttributeKey.findUnique).mockRejectedValue(unknownError);
+
+      await expect(getContactAttributeKey(contactAttributeKeyId)).rejects.toThrow(unknownError);
     });
   });
 });
