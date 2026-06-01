@@ -3,6 +3,7 @@ import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { type TSurvey } from "@formbricks/types/surveys/types";
 import {
   EXAMPLE_RESPONSE_COUNT,
+  buildExampleImpressionTimestamps,
   buildExampleResponsesSchema,
   generateExampleResponses,
   toExampleResponseInput,
@@ -116,7 +117,7 @@ describe("buildExampleResponsesSchema", () => {
       responses: Array.from({ length: EXAMPLE_RESPONSE_COUNT }, (_, i) => ({
         q_text: `Answer ${i}`,
         q_rating: (i % 5) + 1,
-        q_nps: i * 2,
+        q_nps: i % 11,
         q_choice: i % 2 === 0 ? "Yes" : "No",
       })),
     };
@@ -618,28 +619,73 @@ describe("generateExampleResponses", () => {
       { ...baseQuestion, id: "q_nps", type: TSurveyElementTypeEnum.NPS, required: false },
     ] as unknown as TSurvey["questions"]);
 
-    mocks.generateOrganizationAIObject.mockResolvedValue({
-      object: {
-        responses: [
-          { q_text: "Great product", q_nps: 9 },
-          { q_text: "Could be better", q_nps: null }, // simulating "skipped optional"
-          { q_text: "Fine", q_nps: 7 },
-          { q_text: "Loved it" }, // missing key
-          { q_text: "Meh", q_nps: 4 },
-        ],
-      },
-    });
+    // Build EXAMPLE_RESPONSE_COUNT rows so the schema accepts the LLM output;
+    // first few exercise the nullish/missing-key branches in the mapper.
+    const rows: Array<Record<string, unknown>> = [
+      { q_text: "Great product", q_nps: 9 },
+      { q_text: "Could be better", q_nps: null }, // simulating "skipped optional"
+      { q_text: "Fine", q_nps: 7 },
+      { q_text: "Loved it" }, // missing key
+      { q_text: "Meh", q_nps: 4 },
+    ];
+    while (rows.length < EXAMPLE_RESPONSE_COUNT) {
+      rows.push({ q_text: `Filler ${rows.length}`, q_nps: 8 });
+    }
+
+    mocks.generateOrganizationAIObject.mockResolvedValue({ object: { responses: rows } });
 
     const result = await generateExampleResponses({ survey, organizationId: "org_1" });
     expect(result).toHaveLength(EXAMPLE_RESPONSE_COUNT);
-    expect(result[0].data).toEqual({ q_text: "Great product", q_nps: 9 });
-    expect(result[1].data).toEqual({ q_text: "Could be better" }); // null dropped
+    // First two responses are emitted as drop-offs (~20% drop-off rate), so
+    // they may have a truncated answer set. Indices 2+ are finished and carry
+    // the full data the mapper produced.
+    expect(result[2].data).toEqual({ q_text: "Fine", q_nps: 7 });
     expect(result[3].data).toEqual({ q_text: "Loved it" }); // missing key dropped
     expect(mocks.generateOrganizationAIObject).toHaveBeenCalledTimes(1);
     const call = mocks.generateOrganizationAIObject.mock.calls[0][0];
     expect(call.organizationId).toBe("org_1");
     expect(call.system).toContain("example survey responses");
-    expect(call.prompt).toContain("Generate 5 diverse example responses");
+    expect(call.prompt).toContain(`Generate ${EXAMPLE_RESPONSE_COUNT} diverse example responses`);
+  });
+
+  test("emits realistic per-response metadata (ttc, meta, finished mix, createdAt)", async () => {
+    const survey = makeSurvey([
+      { ...baseQuestion, id: "q_text", type: TSurveyElementTypeEnum.OpenText },
+      { ...baseQuestion, id: "q_rating", type: TSurveyElementTypeEnum.Rating, scale: "number", range: 5 },
+    ] as unknown as TSurvey["questions"]);
+
+    mocks.generateOrganizationAIObject.mockResolvedValue({
+      object: {
+        responses: Array.from({ length: EXAMPLE_RESPONSE_COUNT }, (_, i) => ({
+          q_text: `answer ${i}`,
+          q_rating: (i % 5) + 1,
+        })),
+      },
+    });
+
+    const result = await generateExampleResponses({ survey, organizationId: "org_1" });
+
+    // Every row should carry a populated meta block and a createdAt date.
+    for (const row of result) {
+      expect(row.meta.source).toBe("example-generation");
+      expect(row.meta.userAgent?.browser).toBeTypeOf("string");
+      expect(row.meta.userAgent?.device).toBeTypeOf("string");
+      expect(row.meta.userAgent?.os).toBeTypeOf("string");
+      expect(row.meta.country).toBeTypeOf("string");
+      expect(row.createdAt).toBeInstanceOf(Date);
+    }
+
+    // Drop-off contract: at least one unfinished response, and finished
+    // responses keep both element answers + per-element ttc.
+    const finished = result.filter((r) => r.finished);
+    const dropped = result.filter((r) => !r.finished);
+    expect(finished.length).toBeGreaterThan(0);
+    expect(dropped.length).toBeGreaterThan(0);
+    expect(finished.length + dropped.length).toBe(EXAMPLE_RESPONSE_COUNT);
+    for (const f of finished) {
+      expect(f.ttc.q_text).toBeGreaterThan(0);
+      expect(f.ttc.q_rating).toBeGreaterThan(0);
+    }
   });
 
   test("transforms Address/ContactInfo object output into fixed-length arrays", async () => {
@@ -677,8 +723,12 @@ describe("generateExampleResponses", () => {
     });
 
     const result = await generateExampleResponses({ survey, organizationId: "org_1" });
-    expect(result[0].data.q_addr).toEqual(["1 Test St", "", "Vienna", "", "1010", "AT"]);
-    expect(result[0].data.q_contact).toEqual(["Jane", "", "jane@example.com", "", ""]);
+    // First couple of rows are drop-offs (DROP_OFF_RATE * N), so check a row
+    // that's guaranteed finished to assert the address/contact transformation.
+    const finished = result.find((r) => r.finished);
+    expect(finished).toBeDefined();
+    expect(finished!.data.q_addr).toEqual(["1 Test St", "", "Vienna", "", "1010", "AT"]);
+    expect(finished!.data.q_contact).toEqual(["Jane", "", "jane@example.com", "", ""]);
   });
 
   test("propagates errors from the LLM call (gating errors, network, etc.)", async () => {
@@ -694,14 +744,87 @@ describe("generateExampleResponses", () => {
 });
 
 describe("toExampleResponseInput", () => {
-  test("produces a finished TResponseInput keyed to the survey + workspace", () => {
-    const out = toExampleResponseInput("survey_1", "workspace_1", { data: { q_text: "hello" } });
+  const createdAt = new Date("2026-05-20T10:00:00Z");
+
+  test("forwards generated metadata into the TResponseInput shape", () => {
+    const out = toExampleResponseInput(
+      "survey_1",
+      "workspace_1",
+      {
+        data: { q_text: "hello" },
+        ttc: { q_text: 4200 },
+        finished: true,
+        endingId: "ending_1",
+        language: "de",
+        meta: {
+          source: "example-generation",
+          userAgent: { browser: "Chrome", device: "desktop", os: "macOS" },
+          country: "DE",
+        },
+        createdAt,
+      },
+      "display_xyz"
+    );
+
     expect(out).toEqual({
       workspaceId: "workspace_1",
       surveyId: "survey_1",
       finished: true,
+      endingId: "ending_1",
+      language: "de",
       data: { q_text: "hello" },
-      meta: { source: "example-generation" },
+      ttc: { q_text: 4200 },
+      meta: {
+        source: "example-generation",
+        userAgent: { browser: "Chrome", device: "desktop", os: "macOS" },
+        country: "DE",
+      },
+      displayId: "display_xyz",
     });
+  });
+
+  test("omits displayId key entirely when no display is supplied", () => {
+    const out = toExampleResponseInput("survey_1", "workspace_1", {
+      data: { q_text: "hello" },
+      ttc: { q_text: 4200 },
+      finished: true,
+      endingId: null,
+      language: null,
+      meta: { source: "example-generation" },
+      createdAt,
+    });
+    expect(out).not.toHaveProperty("displayId");
+  });
+
+  test("buildExampleImpressionTimestamps returns the requested count of past dates", () => {
+    const now = Date.now();
+    const dates = buildExampleImpressionTimestamps(7);
+    expect(dates).toHaveLength(7);
+    for (const d of dates) {
+      expect(d).toBeInstanceOf(Date);
+      expect(d.getTime()).toBeLessThanOrEqual(now);
+      // 10-day spread window from pickCreatedAt; allow a small buffer.
+      expect(d.getTime()).toBeGreaterThan(now - 11 * 24 * 60 * 60 * 1000);
+    }
+  });
+
+  test("propagates drop-off shape (finished=false, no language, null endingId)", () => {
+    const out = toExampleResponseInput("survey_1", "workspace_1", {
+      data: { q_text: "partial" },
+      ttc: { q_text: 3000 },
+      finished: false,
+      endingId: null,
+      language: null,
+      meta: {
+        source: "example-generation",
+        userAgent: { browser: "Safari", device: "mobile", os: "iOS" },
+        country: "US",
+      },
+      createdAt,
+    });
+
+    expect(out.finished).toBe(false);
+    expect(out.endingId).toBeNull();
+    expect(out.language).toBeUndefined();
   });
 });

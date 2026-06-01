@@ -1,12 +1,55 @@
 import "server-only";
 import { z } from "zod";
-import { type TResponseData, type TResponseInput } from "@formbricks/types/responses";
+import { type TResponseData, type TResponseInput, type TResponseTtc } from "@formbricks/types/responses";
 import { type TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { type TSurvey } from "@formbricks/types/surveys/types";
 import { generateOrganizationAIObject } from "@/lib/ai/service";
 import { getLocalizedValue } from "@/lib/i18n/utils";
 
-export const EXAMPLE_RESPONSE_COUNT = 5;
+export const EXAMPLE_RESPONSE_COUNT = 10;
+// Impression-only displays simulate respondents who saw the survey but didn't
+// submit. Combined with the response count, the dashboard's completion rate
+// lands around 62% — close to typical web survey benchmarks.
+export const EXAMPLE_IMPRESSION_ONLY_COUNT = 6;
+export const EXAMPLE_AI_GENERATED_TAG_NAME = "AI-generated example response";
+
+// ~20% of synthetic responses are partial drop-offs to mirror typical survey
+// abandonment. The remaining ~80% are finished.
+const DROP_OFF_RATE = 0.2;
+const RESPONSE_TIME_SPREAD_DAYS = 10;
+
+// Realistic distributions for synthetic response metadata. Weighted toward
+// common values so charts don't look uniformly random.
+const META_BROWSERS = ["Chrome", "Chrome", "Chrome", "Safari", "Safari", "Firefox", "Edge"];
+const META_DEVICES = ["desktop", "desktop", "desktop", "mobile", "mobile", "tablet"];
+const META_OS = ["macOS", "Windows", "Windows", "iOS", "iOS", "Android", "Linux"];
+const META_COUNTRIES = ["US", "US", "DE", "GB", "FR", "IN", "BR", "JP", "CA", "AU", "NL", "ES"];
+
+// Rough ms-per-element bands used to fabricate per-element TTC. Mirrors what
+// real respondents take so the analytics page's avg-time-per-question chart
+// looks plausible. Values are intentionally coarse — we only need shape, not
+// fidelity.
+const TTC_BANDS_MS: Partial<Record<TSurveyElementTypeEnum, [number, number]>> = {
+  [TSurveyElementTypeEnum.OpenText]: [8000, 30000],
+  [TSurveyElementTypeEnum.MultipleChoiceSingle]: [2000, 7000],
+  [TSurveyElementTypeEnum.MultipleChoiceMulti]: [4000, 12000],
+  [TSurveyElementTypeEnum.Rating]: [2000, 5000],
+  [TSurveyElementTypeEnum.NPS]: [2500, 6000],
+  [TSurveyElementTypeEnum.CSAT]: [2000, 5000],
+  [TSurveyElementTypeEnum.CES]: [3000, 7000],
+  [TSurveyElementTypeEnum.Date]: [3000, 8000],
+  [TSurveyElementTypeEnum.Ranking]: [8000, 20000],
+  [TSurveyElementTypeEnum.Matrix]: [6000, 18000],
+  [TSurveyElementTypeEnum.Address]: [15000, 45000],
+  [TSurveyElementTypeEnum.ContactInfo]: [10000, 30000],
+  [TSurveyElementTypeEnum.PictureSelection]: [3000, 9000],
+  [TSurveyElementTypeEnum.Consent]: [2000, 5000],
+};
+const DEFAULT_TTC_BAND_MS: [number, number] = [3000, 10000];
+
+const pickFrom = <T>(arr: readonly T[]): T => arr[Math.floor(Math.random() * arr.length)];
+const randomIntInclusive = (min: number, max: number): number =>
+  Math.floor(Math.random() * (max - min + 1)) + min;
 
 const SUPPORTED_ELEMENT_TYPES = new Set<TSurveyElementTypeEnum>([
   TSurveyElementTypeEnum.OpenText,
@@ -301,7 +344,20 @@ Rules:
 - For address/contact-info elements, populate only the listed fields. Use clearly-fictional but realistic values (example.com emails, fake phone numbers, invented names). Never use real people.
 - For picture-selection elements, you cannot see the images — distribute selections roughly evenly across the listed choice ids; use only the ids provided, copied verbatim.
 - Vary tone, length, sentiment, and choice distribution across responses so the data looks like real, diverse users — not robotic copies.
-- For free-text elements, write short to medium answers (1–3 sentences) in the same language as the element headline.`;
+
+Sentiment & score distribution (real surveys skew positive):
+- NPS: roughly 60% promoters (9–10), 25% passives (7–8), 15% detractors (0–6). Include at least one detractor for realism, but the bulk should sit at 8–10.
+- CSAT: roughly 70% top-two scores (e.g. 4–5 on a 5-point scale), 20% middle, 10% low. Lean satisfied.
+- Rating: similarly bias toward the top third of the scale (e.g. 4–5 on a 5-point, 6–7 on a 7-point). A small minority can be low.
+- For free-text on dissatisfied scores, mirror the score: a low NPS or low CSAT respondent should sound frustrated. A high one should sound enthusiastic.
+
+Free-text style — write like a real person typing on their phone, not a polished focus-group transcript:
+- Vary length wildly: some answers are 2–3 words ("super useful 🙌"), some are 1 short sentence, some are 2 sentences. Avoid the same length twice in a row.
+- Casual register. Start sentences with lowercase sometimes. Use sentence fragments. Drop punctuation occasionally.
+- Sprinkle emojis where they'd naturally appear (🙌, 👍, 😊, ❤️, 🚀, 😅, 🤔) — not on every response, maybe 1 in 3.
+- Light typos and informal contractions are fine ("def", "tbh", "rly nice", "wld love", "thx").
+- Match the language of the element headline.
+- No corporate buzzwords. No "I would like to commend the team for..." energy.`;
 
 export type TGenerateExampleResponsesArgs = {
   survey: TSurvey;
@@ -310,6 +366,66 @@ export type TGenerateExampleResponsesArgs = {
 
 export type TGeneratedExampleResponse = {
   data: TResponseData;
+  ttc: TResponseTtc;
+  finished: boolean;
+  endingId: string | null;
+  language: string | null;
+  meta: NonNullable<TResponseInput["meta"]>;
+  createdAt: Date;
+};
+
+// Picks an enabled non-default survey language at random ~30% of the time;
+// otherwise leaves it null so the response uses the survey default. Mirrors a
+// real distribution where most respondents use the default language.
+const pickResponseLanguage = (survey: TSurvey): string | null => {
+  const enabledNonDefault = (survey.languages ?? []).filter((l) => l.enabled && !l.default);
+  if (enabledNonDefault.length === 0) return null;
+  if (Math.random() > 0.3) return null;
+  return pickFrom(enabledNonDefault).language.code;
+};
+
+const buildResponseMeta = (): NonNullable<TResponseInput["meta"]> => ({
+  source: "example-generation",
+  userAgent: {
+    browser: pickFrom(META_BROWSERS),
+    device: pickFrom(META_DEVICES),
+    os: pickFrom(META_OS),
+  },
+  country: pickFrom(META_COUNTRIES),
+});
+
+// Spread createdAt across the last N days, weighted slightly toward more
+// recent dates so the responses-over-time chart trends upward.
+const pickCreatedAt = (): Date => {
+  const now = Date.now();
+  const skew = Math.random() ** 1.6; // bias toward 0 → more recent
+  const daysAgo = skew * RESPONSE_TIME_SPREAD_DAYS;
+  return new Date(now - daysAgo * 24 * 60 * 60 * 1000);
+};
+
+const ttcForElement = (element: TSurveyElement): number => {
+  const band = TTC_BANDS_MS[element.type] ?? DEFAULT_TTC_BAND_MS;
+  return randomIntInclusive(band[0], band[1]);
+};
+
+// For drop-offs we keep only answers up to (but excluding) the drop element
+// and emit ttc for the same prefix. `createResponse` recomputes _total only
+// when finished, so partial responses correctly show no total.
+const applyDropOff = (
+  data: TResponseData,
+  ttc: TResponseTtc,
+  orderedElementIds: string[]
+): { data: TResponseData; ttc: TResponseTtc } => {
+  if (orderedElementIds.length <= 1) return { data, ttc };
+  const dropIndex = randomIntInclusive(1, orderedElementIds.length - 1);
+  const keptIds = new Set(orderedElementIds.slice(0, dropIndex));
+  const newData: TResponseData = {};
+  const newTtc: TResponseTtc = {};
+  for (const id of keptIds) {
+    if (data[id] !== undefined) newData[id] = data[id];
+    if (ttc[id] !== undefined) newTtc[id] = ttc[id];
+  }
+  return { data: newData, ttc: newTtc };
 };
 
 export const generateExampleResponses = async ({
@@ -324,6 +440,7 @@ export const generateExampleResponses = async ({
   const supportedIds = new Set(ctx.supportedElementIds);
   const llmContext = buildLlmContext(survey, supportedIds);
   const elementsById = new Map(collectSurveyElements(survey).map((el) => [el.id, el]));
+  const finishedEndingId = survey.endings?.[0]?.id ?? null;
 
   const { object } = await generateOrganizationAIObject<{ responses: Array<Record<string, unknown>> }>({
     organizationId,
@@ -335,8 +452,9 @@ Survey context (JSON):
 ${JSON.stringify(llmContext, null, 2)}`,
   });
 
-  return object.responses.map((row) => {
+  return object.responses.map((row: Record<string, unknown>, index: number): TGeneratedExampleResponse => {
     const data: TResponseData = {};
+    const ttc: TResponseTtc = {};
     for (const id of ctx.supportedElementIds) {
       const value = row[id];
       if (value === undefined || value === null) continue;
@@ -345,21 +463,45 @@ ${JSON.stringify(llmContext, null, 2)}`,
       const transformed = transformAnswerForElement(element, value);
       if (transformed === undefined) continue;
       data[id] = transformed as TResponseData[string];
+      ttc[id] = ttcForElement(element);
     }
-    return { data };
+
+    // Deterministically mark the first ~DROP_OFF_RATE * N responses as
+    // drop-offs (here: 2 of 10). Using index instead of Math.random keeps the
+    // ratio stable even with small N.
+    const isFinished = index >= Math.ceil(EXAMPLE_RESPONSE_COUNT * DROP_OFF_RATE);
+    const final = isFinished ? { data, ttc } : applyDropOff(data, ttc, ctx.supportedElementIds);
+
+    return {
+      data: final.data,
+      ttc: final.ttc,
+      finished: isFinished,
+      endingId: isFinished ? finishedEndingId : null,
+      language: pickResponseLanguage(survey),
+      meta: buildResponseMeta(),
+      createdAt: pickCreatedAt(),
+    };
   });
 };
 
 export const toExampleResponseInput = (
   surveyId: string,
   workspaceId: string,
-  generated: TGeneratedExampleResponse
+  generated: TGeneratedExampleResponse,
+  displayId?: string
 ): TResponseInput => ({
   workspaceId,
   surveyId,
-  finished: true,
+  finished: generated.finished,
+  endingId: generated.endingId,
+  language: generated.language ?? undefined,
   data: generated.data,
-  meta: {
-    source: "example-generation",
-  },
+  ttc: generated.ttc,
+  meta: generated.meta,
+  ...(displayId ? { displayId } : {}),
 });
+
+// Builds timestamps for impression-only displays — same distribution shape as
+// response createdAt so the two trends look consistent on the dashboard.
+export const buildExampleImpressionTimestamps = (count: number): Date[] =>
+  Array.from({ length: count }, () => pickCreatedAt());

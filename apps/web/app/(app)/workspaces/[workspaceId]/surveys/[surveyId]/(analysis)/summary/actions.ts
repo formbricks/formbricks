@@ -1,10 +1,14 @@
 "use server";
 
 import { z } from "zod";
+import { prisma } from "@formbricks/database";
 import { ZId } from "@formbricks/types/common";
 import { InvalidInputError, OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { getEmailTemplateHtml } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/lib/emailTemplate";
 import {
+  EXAMPLE_AI_GENERATED_TAG_NAME,
+  EXAMPLE_IMPRESSION_ONLY_COUNT,
+  buildExampleImpressionTimestamps,
   generateExampleResponses,
   toExampleResponseInput,
 } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/lib/example-responses";
@@ -13,6 +17,7 @@ import { assertOrganizationAIConfigured } from "@/lib/ai/service";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
+import { addTagToRespone } from "@/lib/tagOnResponse/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { convertToCsv } from "@/lib/utils/file-conversion";
@@ -180,9 +185,43 @@ export const generateExampleResponsesAction = authenticatedActionClient
       );
     }
 
+    // Tag every synthetic response so users can tell them apart from real ones
+    // in the responses list. Upsert handles the case where a previous run (or a
+    // user) already created the tag in this workspace.
+    const aiTag = await prisma.tag.upsert({
+      where: { workspaceId_name: { workspaceId, name: EXAMPLE_AI_GENERATED_TAG_NAME } },
+      create: { workspaceId, name: EXAMPLE_AI_GENERATED_TAG_NAME },
+      update: {},
+    });
+
     for (const item of generated) {
-      await createResponseWithQuotaEvaluation(toExampleResponseInput(survey.id, workspaceId, item));
+      // Each response gets its own Display so the dashboard's "displays" count
+      // and completion-rate calc line up with the response row. Backdate the
+      // display to the same moment as the response — the assertDisplayOwnership
+      // check inside createResponse runs against the matching surveyId.
+      const display = await prisma.display.create({
+        data: { survey: { connect: { id: survey.id } }, createdAt: item.createdAt },
+        select: { id: true },
+      });
+
+      const response = await createResponseWithQuotaEvaluation(
+        toExampleResponseInput(survey.id, workspaceId, item, display.id)
+      );
+      await addTagToRespone(response.id, aiTag.id);
+      // `createResponse` ignores caller-supplied createdAt; backdate after the
+      // fact so the responses-over-time chart shows a realistic spread.
+      await prisma.response.update({
+        where: { id: response.id },
+        data: { createdAt: item.createdAt },
+      });
     }
+
+    // Extra view-only displays simulate respondents who saw the survey but
+    // didn't submit. Without these the completion rate would read 100%.
+    const impressionTimestamps = buildExampleImpressionTimestamps(EXAMPLE_IMPRESSION_ONLY_COUNT);
+    await prisma.display.createMany({
+      data: impressionTimestamps.map((createdAt) => ({ surveyId: survey.id, createdAt })),
+    });
 
     return { createdCount: generated.length };
   });
