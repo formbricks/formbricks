@@ -33,7 +33,7 @@ import { getQuotasSummary } from "@/app/(app)/workspaces/[workspaceId]/surveys/[
 import { RESPONSES_PER_PAGE } from "@/lib/constants";
 import { getDisplayCountBySurveyId } from "@/lib/display/service";
 import { getLocalizedValue } from "@/lib/i18n/utils";
-import { buildWhereClause } from "@/lib/response/utils";
+import { buildWhereClause } from "@/lib/response/where-clause";
 import { getSurvey } from "@/lib/survey/service";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { validateInputs } from "@/lib/utils/validate";

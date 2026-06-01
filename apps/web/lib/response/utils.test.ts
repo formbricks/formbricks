@@ -4,7 +4,6 @@ import { TResponse } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import {
-  buildWhereClause,
   calculateTtcTotal,
   extracMetadataKeys,
   extractChoiceIdsFromResponse,
@@ -16,6 +15,7 @@ import {
   getResponsesFileName,
   getResponsesJson,
 } from "./utils";
+import { buildWhereClause } from "./where-clause";
 
 describe("Response Utils", () => {
   describe("calculateTtcTotal", () => {

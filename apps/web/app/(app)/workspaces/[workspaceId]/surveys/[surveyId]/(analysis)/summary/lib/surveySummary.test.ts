@@ -35,7 +35,7 @@ vi.mock("@/lib/i18n/utils", () => ({
 vi.mock("@/lib/response/service", () => ({
   getResponseCountBySurveyId: vi.fn(),
 }));
-vi.mock("@/lib/response/utils", () => ({
+vi.mock("@/lib/response/where-clause", () => ({
   buildWhereClause: vi.fn(() => ({})),
 }));
 vi.mock("@/lib/survey/service", () => ({

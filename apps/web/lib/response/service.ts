@@ -32,7 +32,6 @@ import { getSurvey } from "../survey/service";
 import { convertToCsv, convertToXlsxBuffer } from "../utils/file-conversion";
 import { validateInputs } from "../utils/validate";
 import {
-  buildWhereClause,
   calculateTtcTotal,
   extractSurveyDetails,
   getResponseContactAttributes,
@@ -41,6 +40,7 @@ import {
   getResponsesFileName,
   getResponsesJson,
 } from "./utils";
+import { buildWhereClause } from "./where-clause";
 
 const RESPONSES_PER_PAGE = 10;
 
