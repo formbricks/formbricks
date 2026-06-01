@@ -27,6 +27,7 @@ export default defineConfig({
         "@ai-sdk/openai-compatible",
         "@aws-sdk/credential-providers",
         "@formbricks/logger",
+        "node:crypto",
       ],
     },
     emptyOutDir: false,
