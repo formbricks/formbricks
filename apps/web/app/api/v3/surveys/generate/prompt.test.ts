@@ -41,16 +41,17 @@ describe("v3 survey generation prompt", () => {
       "es-ES",
       V3_SURVEY_GENERATE_ALLOWED_LOCALES
     );
+    const allowedSurveyLanguages = `Allowed survey languages: ${V3_SURVEY_GENERATE_ALLOWED_LOCALES.join(", ")}.`;
 
     expect(system).toContain("same language as the user's request");
     expect(system).toContain(
       "Return the survey language exactly as one of the allowed survey language codes"
     );
-    expect(system).toContain("Allowed survey languages: de-DE, en-US, es-ES");
+    expect(system).toContain(allowedSurveyLanguages);
     expect(prompt).toContain("Use the same language as the request");
     expect(prompt).toContain("If the request language is unclear");
     expect(prompt).toContain("include a short button label");
-    expect(prompt).toContain("Allowed survey languages: de-DE, en-US, es-ES");
+    expect(prompt).toContain(allowedSurveyLanguages);
     expect(prompt).toContain("Preferred survey language: es-ES");
     expect(prompt).toContain("exactly one allowed survey language code");
   });

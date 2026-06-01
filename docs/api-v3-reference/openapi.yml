@@ -556,11 +556,11 @@ paths:
                   value:
                     title: Unprocessable Content
                     status: 422
-                    detail: "Generated survey payload is invalid: generatedSurvey.questions: Too small"
+                    detail: "Generated survey payload is invalid: generatedSurvey.blocks: Too small"
                     code: ai_generated_payload_invalid
                     requestId: req_123
                     invalid_params:
-                      - name: generatedSurvey.questions
+                      - name: generatedSurvey.blocks
                         reason: Too small
         "429":
           description: Rate limit exceeded
@@ -1266,11 +1266,13 @@ components:
           description: Workspace where the generated survey would be created. Requires read/write access.
         prompt:
           type: string
-          minLength: 1
+          minLength: 24
           maxLength: 1200
+          pattern: '^\s*\S+(?:\s+\S+){3,}\s*$'
           description: |
-            Natural-language survey goal and audience. Prompts shorter than 24 characters or fewer
-            than four words are rejected before any AI provider call.
+            Natural-language survey goal and audience. The prompt must be at least 24 characters and
+            contain at least four whitespace-separated words. Requests that fail either check are
+            rejected before any AI provider call.
         type:
           type: string
           enum: [link]

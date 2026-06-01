@@ -68,6 +68,9 @@ type CreateWithAIDialogProps = {
 };
 
 const getUnavailableMessageKey = (reason?: TAIUnavailableReason) => {
+  if (reason === "read_only") {
+    return "workspace.surveys.read_only_user_not_allowed_to_create_survey_warning";
+  }
   if (reason === "not_in_plan") return "workspace.surveys.ai_create.ai_not_in_plan";
   if (reason === "not_enabled") return "workspace.surveys.ai_create.ai_not_enabled";
   if (reason === "instance_not_configured") {

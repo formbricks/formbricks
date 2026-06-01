@@ -8,6 +8,7 @@ import {
   GENERATED_SURVEY_MIN_BLOCKS,
   GENERATED_SURVEY_MIN_QUESTIONS_PER_BLOCK,
   V3_SURVEY_GENERATE_PROMPT_MAX_LENGTH,
+  V3_SURVEY_GENERATE_PROMPT_MIN_LENGTH,
 } from "./constants";
 
 export const V3_SURVEY_GENERATE_ALLOWED_LOCALES = ZUserLocale.options;
@@ -52,7 +53,10 @@ export const ZV3SurveyGenerateBody = z
     prompt: z
       .string()
       .trim()
-      .min(1, "Prompt is required")
+      .min(
+        V3_SURVEY_GENERATE_PROMPT_MIN_LENGTH,
+        `Prompt must be at least ${V3_SURVEY_GENERATE_PROMPT_MIN_LENGTH} characters`
+      )
       .max(
         V3_SURVEY_GENERATE_PROMPT_MAX_LENGTH,
         `Prompt must be ${V3_SURVEY_GENERATE_PROMPT_MAX_LENGTH} characters or less`

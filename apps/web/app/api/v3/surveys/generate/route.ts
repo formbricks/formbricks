@@ -1,4 +1,3 @@
-import { NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
@@ -104,14 +103,3 @@ export const POST = withV3ApiWrapper({
     }
   },
 });
-
-export const OPTIONS = async (req: NextRequest): Promise<Response> => {
-  return new Response(null, {
-    status: 204,
-    headers: {
-      Allow: "POST, OPTIONS",
-      "Cache-Control": "private, no-store",
-      "X-Request-Id": req.headers.get("x-request-id") ?? crypto.randomUUID(),
-    },
-  });
-};

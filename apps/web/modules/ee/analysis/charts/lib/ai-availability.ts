@@ -1,4 +1,4 @@
-export type TAIUnavailableReason = "not_in_plan" | "not_enabled" | "instance_not_configured";
+export type TAIUnavailableReason = "not_in_plan" | "not_enabled" | "instance_not_configured" | "read_only";
 export type TAIUnavailableActionType = "enable_ai" | "upgrade_plan";
 
 interface AIUnavailableAction {

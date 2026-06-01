@@ -20,6 +20,10 @@ describe("ai availability helpers", () => {
     expect(getAIUnavailableAction("instance_not_configured", "workspace-1")).toBeUndefined();
   });
 
+  test("does not return an action for read-only users", () => {
+    expect(getAIUnavailableAction("read_only", "workspace-1")).toBeUndefined();
+  });
+
   test("does not return an action when the reason is unavailable", () => {
     expect(getAIUnavailableAction(undefined, "workspace-1")).toBeUndefined();
   });

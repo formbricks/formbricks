@@ -1,5 +1,9 @@
 import { describe, expect, test } from "vitest";
-import { GENERATED_SURVEY_MAX_BLOCKS, GENERATED_SURVEY_MAX_QUESTIONS_PER_BLOCK } from "./constants";
+import {
+  GENERATED_SURVEY_MAX_BLOCKS,
+  GENERATED_SURVEY_MAX_QUESTIONS_PER_BLOCK,
+  V3_SURVEY_GENERATE_PROMPT_MIN_LENGTH,
+} from "./constants";
 import { ZGeneratedSurveyDraft, ZGeneratedSurveyDraftForAI, ZV3SurveyGenerateBody } from "./schemas";
 
 function generatedQuestion(index: number) {
@@ -319,6 +323,15 @@ describe("ZGeneratedSurveyDraftForAI", () => {
 });
 
 describe("ZV3SurveyGenerateBody", () => {
+  test("rejects prompts shorter than the configured minimum", () => {
+    const result = ZV3SurveyGenerateBody.safeParse({
+      workspaceId: "clxx1234567890123456789012",
+      prompt: "x".repeat(V3_SURVEY_GENERATE_PROMPT_MIN_LENGTH - 1),
+    });
+
+    expect(result.success).toBe(false);
+  });
+
   test("normalizes requested survey language aliases into supported app locales", () => {
     const cases = [
       { input: "es_ES", expected: "es-ES" },

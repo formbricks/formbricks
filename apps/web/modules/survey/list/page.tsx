@@ -41,7 +41,12 @@ export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) 
   const currentWorkspaceChannel = workspace.config.channel ?? null;
   const locale = (await getUserLocale(session.user.id)) ?? DEFAULT_LOCALE;
   const aiConfig = isReadOnly ? null : await getOrganizationAIConfig(workspace.organizationId);
-  const aiUnavailableReason = aiConfig ? getAISmartToolsUnavailableReason(aiConfig) : undefined;
+  const aiUnavailableReason = isReadOnly
+    ? "read_only"
+    : aiConfig
+      ? getAISmartToolsUnavailableReason(aiConfig)
+      : undefined;
+  const isAIAvailable = Boolean(aiConfig && !aiUnavailableReason);
   const workspaceWithRequiredProps = {
     ...workspace,
     brandColor: workspace.styling?.brandColor?.light ?? null,
@@ -57,7 +62,7 @@ export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) 
       surveysPerPage={SURVEYS_PER_PAGE}
       currentWorkspaceChannel={currentWorkspaceChannel}
       locale={locale}
-      isAIAvailable={!aiUnavailableReason}
+      isAIAvailable={isAIAvailable}
       aiUnavailableReason={aiUnavailableReason}
     />
   );

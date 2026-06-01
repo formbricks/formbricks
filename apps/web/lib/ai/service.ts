@@ -47,7 +47,7 @@ export const getOrganizationAIConfig = async (organizationId: string): Promise<T
   };
 };
 
-export type TAIUnavailableReason = "not_in_plan" | "not_enabled" | "instance_not_configured";
+export type TAIUnavailableReason = "not_in_plan" | "not_enabled" | "instance_not_configured" | "read_only";
 
 export const getAISmartToolsUnavailableReason = (
   aiConfig: TOrganizationAIConfig
