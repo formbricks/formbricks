@@ -737,7 +737,7 @@ export const FeedbackRecordFormDrawer = ({
                         variant="ghost"
                         size="sm"
                         onClick={() => append({ key: "", value: "" })}>
-                        <PlusIcon className="h-4 w-4" />
+                        <PlusIcon className="size-4" />
                         {t("common.add")}
                       </Button>
                     )}

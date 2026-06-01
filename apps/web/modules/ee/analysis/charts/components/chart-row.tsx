@@ -49,7 +49,7 @@ export function ChartRow({ chart, workspaceId, isReadOnly, directories }: Readon
           <div className="col-span-3 flex items-center pl-6 text-sm">
             <div className="flex items-center gap-4">
               <div className="ph-no-capture w-8 flex-shrink-0 text-slate-500">
-                <IconComponent className="h-5 w-5" />
+                <IconComponent className="size-5" />
               </div>
               <div className="flex flex-col">
                 <div className="ph-no-capture font-medium text-slate-900">{chart.name}</div>

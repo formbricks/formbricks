@@ -565,6 +565,55 @@ describe("service.ts", () => {
       }
     });
 
+    test("returns file not found when S3 reports NotFound", async () => {
+      vi.doMock("./constants", () => mockConstants);
+
+      const notFoundError = new Error("not found");
+      notFoundError.name = "NotFound";
+      const mockS3Client = {
+        send: vi.fn().mockRejectedValueOnce(notFoundError),
+      };
+
+      vi.doMock("./client", () => ({
+        createS3Client: vi.fn(() => mockS3Client),
+      }));
+
+      const { getFileStream } = await import("./service");
+
+      const result = await getFileStream("responses/missing.pdf");
+
+      expect(result.ok).toBe(false);
+
+      if (!result.ok) {
+        expect(result.error.code).toBe("file_not_found_error");
+      }
+    });
+
+    test("returns file not found when S3 error carries a 404 status code", async () => {
+      vi.doMock("./constants", () => mockConstants);
+
+      const s3Error = Object.assign(new Error("not found"), {
+        $metadata: { httpStatusCode: 404 },
+      });
+      const mockS3Client = {
+        send: vi.fn().mockRejectedValueOnce(s3Error),
+      };
+
+      vi.doMock("./client", () => ({
+        createS3Client: vi.fn(() => mockS3Client),
+      }));
+
+      const { getFileStream } = await import("./service");
+
+      const result = await getFileStream("responses/missing.pdf");
+
+      expect(result.ok).toBe(false);
+
+      if (!result.ok) {
+        expect(result.error.code).toBe("file_not_found_error");
+      }
+    });
+
     test("logs and returns unknown when streaming fails unexpectedly", async () => {
       vi.doMock("./constants", () => mockConstants);
 

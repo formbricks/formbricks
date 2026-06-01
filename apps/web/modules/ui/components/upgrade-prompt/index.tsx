@@ -31,7 +31,7 @@ export const UpgradePrompt = ({ title, description, buttons, feature }: UpgradeP
   return (
     <div className="flex w-full flex-col items-center gap-6 p-6">
       <div className="rounded-md border border-slate-200 p-3">
-        <KeyIcon className="h-6 w-6 text-slate-900" />
+        <KeyIcon className="size-6 text-slate-900" />
       </div>
       <div className="flex max-w-[80%] flex-col items-center gap-2 text-center">
         <h2 className="text-xl font-semibold text-slate-900">{title}</h2>

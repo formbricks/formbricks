@@ -75,7 +75,7 @@ export const EditWelcomeCard = ({
           "flex w-10 items-center justify-center rounded-l-lg border-b border-l border-t group-aria-expanded:rounded-bl-none",
           isInvalid ? "bg-red-400" : "bg-white group-hover:bg-slate-50"
         )}>
-        <Hand className="h-4 w-4" />
+        <Hand className="size-4" />
       </div>
       <Collapsible.Root
         open={open}
@@ -96,7 +96,7 @@ export const EditWelcomeCard = ({
               </div>
             </div>
 
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center gap-x-2">
               <Label htmlFor="welcome-toggle">
                 {localSurvey?.welcomeCard?.enabled ? t("common.on") : t("common.off")}
               </Label>
@@ -126,20 +126,14 @@ export const EditWelcomeCard = ({
                 id="welcome-card-image"
                 allowedFileExtensions={["png", "jpeg", "jpg", "webp", "heic"]}
                 workspaceId={workspaceId}
-                onFileUpload={(url: string[] | undefined, fileType: "image" | "video") => {
+                onFileUpload={(url: string[] | undefined) => {
                   if (url?.length && url[0]) {
-                    const update =
-                      fileType === "video"
-                        ? { videoUrl: url[0], fileUrl: undefined }
-                        : { fileUrl: url[0], videoUrl: undefined };
-                    updateSurvey(update);
+                    updateSurvey({ fileUrl: url[0], videoUrl: undefined });
                   } else {
                     updateSurvey({ fileUrl: undefined, videoUrl: undefined });
                   }
                 }}
                 fileUrl={localSurvey?.welcomeCard?.fileUrl}
-                videoUrl={localSurvey?.welcomeCard?.videoUrl}
-                isVideoAllowed={true}
                 maxSizeInMB={5}
                 isStorageConfigured={isStorageConfigured}
               />
@@ -174,7 +168,7 @@ export const EditWelcomeCard = ({
             </div>
 
             <div className="mt-3 flex justify-between gap-8">
-              <div className="flex w-full space-x-2">
+              <div className="flex w-full gap-x-2">
                 <div className="w-full">
                   <ElementFormInput
                     id="buttonLabel"

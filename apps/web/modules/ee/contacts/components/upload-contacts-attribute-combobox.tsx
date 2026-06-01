@@ -79,6 +79,7 @@ export const UploadContactsAttributeCombobox = ({
     if (isValidNewKey && !isReservedNewKey) {
       return (
         <button
+          type="button"
           onClick={handleCreateKey}
           className="h-8 w-full text-left hover:cursor-pointer hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
           disabled={!!existingKeyMatch}>
@@ -116,7 +117,7 @@ export const UploadContactsAttributeCombobox = ({
             className="justify-between border border-slate-300"
             aria-expanded={open}>
             {currentKey.label}
-            <ChevronDownIcon className="h-4 w-4 opacity-50" />
+            <ChevronDownIcon className="size-4 opacity-50" />
           </Button>
         ) : (
           <Button
@@ -125,7 +126,7 @@ export const UploadContactsAttributeCombobox = ({
             className="justify-between border border-slate-300"
             aria-expanded={open}>
             {t("workspace.contacts.select_attribute")}
-            <ChevronDownIcon className="h-4 w-4 opacity-50" />
+            <ChevronDownIcon className="size-4 opacity-50" />
           </Button>
         )}
       </PopoverTrigger>

@@ -27,12 +27,12 @@ export const ScanQRCode = ({ dataUri, secret, setCurrentStep, setOpen }: ScanQRC
         </h3>
       </div>
 
-      <div className="mb-4 flex flex-col items-center justify-center space-y-4">
+      <div className="mb-4 flex flex-col items-center justify-center gap-y-4">
         <Image src={dataUri} alt="QR code" width={200} height={200} />
         <p className="text-sm text-slate-700">
           {t("workspace.settings.profile.or_enter_the_following_code_manually")}
         </p>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center gap-x-2">
           <p className="text-sm font-medium text-slate-700">{secret}</p>
           <Button
             variant="secondary"
@@ -42,12 +42,12 @@ export const ScanQRCode = ({ dataUri, secret, setCurrentStep, setOpen }: ScanQRC
                 toast.success(t("common.copied_to_clipboard"));
               });
             }}>
-            <CopyIcon className="h-4 w-4" />
+            <CopyIcon className="size-4" />
           </Button>
         </div>
       </div>
 
-      <div className="flex w-full items-center justify-end space-x-4">
+      <div className="flex w-full items-center justify-end gap-x-4">
         <Button variant="secondary" size="sm" type="button" onClick={() => setOpen(false)}>
           {t("common.cancel")}
         </Button>

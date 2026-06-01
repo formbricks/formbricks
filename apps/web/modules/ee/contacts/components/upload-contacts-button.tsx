@@ -1,6 +1,5 @@
 "use client";
 
-import { parse } from "csv-parse/sync";
 import { ArrowUpFromLineIcon, FileUpIcon, PlusIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -17,6 +16,7 @@ import {
   RESERVED_FUTURE_DEFAULT_ATTRIBUTE_SAFE_IDENTIFIER_KEYS_TEXT,
   isReservedFutureDefaultAttributeKey,
 } from "@/modules/ee/contacts/lib/attribute-key-policy";
+import { parseContactsCSV } from "@/modules/ee/contacts/lib/parse-contacts-csv";
 import { TContactCSVUploadResponse, ZContactCSVUploadResponse } from "@/modules/ee/contacts/types/contact";
 import { Alert } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -80,10 +80,7 @@ export const UploadContactsCSVButton = ({
       const csv = e.target?.result as string;
 
       try {
-        const records = parse(csv, {
-          columns: true, // Parse the header as column names
-          skip_empty_lines: true, // Skip empty lines
-        });
+        const records = parseContactsCSV(csv);
 
         const parsedRecords = ZContactCSVUploadResponse.safeParse(records);
         if (!parsedRecords.success) {
@@ -337,9 +334,10 @@ export const UploadContactsCSVButton = ({
   useEffect(() => {
     if (error && errorContainerRef.current) {
       // Small delay to ensure DOM has updated and the alert is visible
-      setTimeout(() => {
+      const timeoutId = setTimeout(() => {
         errorContainerRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
       }, 100);
+      return () => clearTimeout(timeoutId);
     }
   }, [error]);
 

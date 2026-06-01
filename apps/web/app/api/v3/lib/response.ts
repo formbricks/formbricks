@@ -6,7 +6,46 @@
 const PROBLEM_JSON = "application/problem+json" as const;
 const CACHE_NO_STORE = "private, no-store" as const;
 
-export type InvalidParam = { name: string; reason: string };
+export const INVALID_PARAM_CODES = [
+  "dangling_reference",
+  "duplicate_identifier",
+  "duplicate_locale",
+  "forbidden_identifier",
+  "immutable_identifier",
+  "invalid_locale",
+  "invalid_reference",
+  "missing_required_field",
+  "missing_translation",
+  "unsupported_field",
+  "unsupported_locale",
+] as const;
+
+export type InvalidParamCode = (typeof INVALID_PARAM_CODES)[number];
+
+const INVALID_PARAM_CODE_SET = new Set<InvalidParamCode>(INVALID_PARAM_CODES);
+
+export function isInvalidParamCode(value: unknown): value is InvalidParamCode {
+  return typeof value === "string" && INVALID_PARAM_CODE_SET.has(value as InvalidParamCode);
+}
+
+export type InvalidParam = {
+  name: string;
+  reason: string;
+  code?: InvalidParamCode;
+  identifier?: string;
+  referenceType?:
+    | "block"
+    | "element"
+    | "ending"
+    | "hiddenField"
+    | "language"
+    | "variable"
+    | "variableName"
+    | "recall";
+  missingId?: string;
+  firstUsedAt?: string;
+  conflictsWith?: string;
+};
 
 export type ProblemExtension = {
   code?: string;
@@ -181,4 +220,44 @@ export function successResponse<T>(
       headers,
     }
   );
+}
+
+export function createdResponse<T>(
+  data: T,
+  options: { location: string; requestId?: string; cache?: string }
+): Response {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "Cache-Control": options.cache ?? CACHE_NO_STORE,
+    Location: options.location,
+  };
+
+  if (options.requestId) {
+    headers["X-Request-Id"] = options.requestId;
+  }
+
+  return Response.json(
+    {
+      data,
+    },
+    {
+      status: 201,
+      headers,
+    }
+  );
+}
+
+export function noContentResponse(options?: { requestId?: string; cache?: string }): Response {
+  const headers: Record<string, string> = {
+    "Cache-Control": options?.cache ?? CACHE_NO_STORE,
+  };
+
+  if (options?.requestId) {
+    headers["X-Request-Id"] = options.requestId;
+  }
+
+  return new Response(null, {
+    status: 204,
+    headers,
+  });
 }

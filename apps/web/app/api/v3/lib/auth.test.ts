@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
-import { findWorkspaceByIdOrLegacyEnvId } from "@/lib/utils/resolve-client-id";
+import { getWorkspace } from "@/lib/workspace/service";
 import { requireSessionWorkspaceAccess, requireV3WorkspaceAccess } from "./auth";
 
 vi.mock("@formbricks/logger", () => ({
@@ -19,8 +19,8 @@ vi.mock("@/lib/utils/helper", () => ({
   getOrganizationIdFromWorkspaceId: vi.fn(),
 }));
 
-vi.mock("@/lib/utils/resolve-client-id", () => ({
-  findWorkspaceByIdOrLegacyEnvId: vi.fn(),
+vi.mock("@/lib/workspace/service", () => ({
+  getWorkspace: vi.fn(),
 }));
 
 vi.mock("@/lib/utils/action-client/action-client-middleware", () => ({
@@ -39,7 +39,7 @@ describe("requireSessionWorkspaceAccess", () => {
     expect(body.requestId).toBe(requestId);
     expect(body.status).toBe(401);
     expect(body.code).toBe("not_authenticated");
-    expect(findWorkspaceByIdOrLegacyEnvId).not.toHaveBeenCalled();
+    expect(getWorkspace).not.toHaveBeenCalled();
     expect(checkAuthorizationUpdated).not.toHaveBeenCalled();
   });
 
@@ -55,11 +55,11 @@ describe("requireSessionWorkspaceAccess", () => {
     const body = await (result as Response).json();
     expect(body.requestId).toBe(requestId);
     expect(body.code).toBe("not_authenticated");
-    expect(findWorkspaceByIdOrLegacyEnvId).not.toHaveBeenCalled();
+    expect(getWorkspace).not.toHaveBeenCalled();
   });
 
   test("returns 403 when workspace is not found (avoid leaking existence)", async () => {
-    vi.mocked(findWorkspaceByIdOrLegacyEnvId).mockResolvedValueOnce(null);
+    vi.mocked(getWorkspace).mockResolvedValueOnce(null);
     const result = await requireSessionWorkspaceAccess(
       { user: { id: "user_1" }, expires: "" } as any,
       "ws_nonexistent",
@@ -72,12 +72,12 @@ describe("requireSessionWorkspaceAccess", () => {
     const body = await (result as Response).json();
     expect(body.requestId).toBe(requestId);
     expect(body.code).toBe("forbidden");
-    expect(findWorkspaceByIdOrLegacyEnvId).toHaveBeenCalledWith("ws_nonexistent");
+    expect(getWorkspace).toHaveBeenCalledWith("ws_nonexistent");
     expect(checkAuthorizationUpdated).not.toHaveBeenCalled();
   });
 
   test("returns 403 when user has no access to workspace", async () => {
-    vi.mocked(findWorkspaceByIdOrLegacyEnvId).mockResolvedValueOnce({ id: "proj_abc" });
+    vi.mocked(getWorkspace).mockResolvedValueOnce({ id: "proj_abc" } as any);
     vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValueOnce("org_1");
     vi.mocked(checkAuthorizationUpdated).mockRejectedValueOnce(new AuthorizationError("Not authorized"));
     const result = await requireSessionWorkspaceAccess(
@@ -102,7 +102,7 @@ describe("requireSessionWorkspaceAccess", () => {
   });
 
   test("returns workspace context when session is valid and user has access", async () => {
-    vi.mocked(findWorkspaceByIdOrLegacyEnvId).mockResolvedValueOnce({ id: "proj_abc" });
+    vi.mocked(getWorkspace).mockResolvedValueOnce({ id: "proj_abc" } as any);
     vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValueOnce("org_1");
     vi.mocked(checkAuthorizationUpdated).mockResolvedValueOnce(undefined as any);
     const result = await requireSessionWorkspaceAccess(
@@ -144,7 +144,7 @@ function wsPerm(workspaceId: string, permission: ApiKeyPermission = ApiKeyPermis
 
 describe("requireV3WorkspaceAccess", () => {
   beforeEach(() => {
-    vi.mocked(findWorkspaceByIdOrLegacyEnvId).mockResolvedValue({ id: "proj_k" });
+    vi.mocked(getWorkspace).mockResolvedValue({ id: "proj_k" } as any);
     vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue("org_k");
   });
 
@@ -154,7 +154,7 @@ describe("requireV3WorkspaceAccess", () => {
   });
 
   test("delegates to session flow when user is present", async () => {
-    vi.mocked(findWorkspaceByIdOrLegacyEnvId).mockResolvedValueOnce({ id: "proj_s" });
+    vi.mocked(getWorkspace).mockResolvedValueOnce({ id: "proj_s" } as any);
     vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValueOnce("org_s");
     vi.mocked(checkAuthorizationUpdated).mockResolvedValueOnce(undefined as any);
     const r = await requireV3WorkspaceAccess(
@@ -179,7 +179,7 @@ describe("requireV3WorkspaceAccess", () => {
       workspaceId: "proj_k",
       organizationId: "org_k",
     });
-    expect(findWorkspaceByIdOrLegacyEnvId).toHaveBeenCalledWith("proj_k");
+    expect(getWorkspace).toHaveBeenCalledWith("proj_k");
   });
 
   test("returns context for API key with write on workspace", async () => {
@@ -239,7 +239,7 @@ describe("requireV3WorkspaceAccess", () => {
   });
 
   test("returns 403 when the workspace cannot be resolved for an API key", async () => {
-    vi.mocked(findWorkspaceByIdOrLegacyEnvId).mockResolvedValueOnce(null);
+    vi.mocked(getWorkspace).mockResolvedValueOnce(null);
     const auth = {
       ...keyBase,
       workspacePermissions: [wsPerm("proj_k", ApiKeyPermission.manage)],

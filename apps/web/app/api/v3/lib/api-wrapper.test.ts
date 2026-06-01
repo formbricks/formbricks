@@ -26,6 +26,11 @@ const { mockQueueAuditEvent, mockBuildAuditLogBaseObject } = vi.hoisted(() => ({
   })),
 }));
 
+const { mockLoggerWarn, mockLoggerError } = vi.hoisted(() => ({
+  mockLoggerWarn: vi.fn(),
+  mockLoggerError: vi.fn(),
+}));
+
 vi.mock("next-auth", () => ({
   getServerSession: mockGetServerSession,
 }));
@@ -53,8 +58,8 @@ vi.mock("@/app/lib/api/with-api-logging", () => ({
 vi.mock("@formbricks/logger", () => ({
   logger: {
     withContext: vi.fn(() => ({
-      error: vi.fn(),
-      warn: vi.fn(),
+      error: mockLoggerError,
+      warn: mockLoggerWarn,
     })),
   },
 }));
@@ -136,7 +141,7 @@ describe("withV3ApiWrapper", () => {
       apiKeyId: "key_1",
       organizationId: "org_1",
       organizationAccess: { accessControl: { read: true, write: true } },
-      environmentPermissions: [],
+      workspacePermissions: [],
     });
 
     const wrapped = withV3ApiWrapper({
@@ -294,6 +299,13 @@ describe("withV3ApiWrapper", () => {
     expect(response.status).toBe(401);
     expect(handler).not.toHaveBeenCalled();
     expect(response.headers.get("Content-Type")).toBe("application/problem+json");
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        statusCode: 401,
+        detail: "Not authenticated",
+      }),
+      "V3 API authentication failed"
+    );
   });
 
   test("returns 400 problem response for invalid query input", async () => {
@@ -325,6 +337,14 @@ describe("withV3ApiWrapper", () => {
     const body = await response.json();
     expect(body.invalid_params).toEqual(expect.arrayContaining([expect.objectContaining({ name: "limit" })]));
     expect(body.requestId).toBe("req-invalid");
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        statusCode: 400,
+        detail: "Invalid query parameters",
+        invalidParams: expect.arrayContaining([expect.objectContaining({ name: "limit" })]),
+      }),
+      "V3 API request validation failed"
+    );
   });
 
   test("parses body, repeated query params, and async route params", async () => {
@@ -413,6 +433,19 @@ describe("withV3ApiWrapper", () => {
         reason: "Malformed JSON input, please check your request body",
       },
     ]);
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        statusCode: 400,
+        detail: "Invalid request body",
+        invalidParams: [
+          {
+            name: "body",
+            reason: "Malformed JSON input, please check your request body",
+          },
+        ],
+      }),
+      "V3 API request validation failed"
+    );
   });
 
   test("returns 413 problem response for oversized JSON input", async () => {
@@ -477,6 +510,46 @@ describe("withV3ApiWrapper", () => {
     expect(body.invalid_params).toEqual(
       expect.arrayContaining([expect.objectContaining({ name: "workspaceId" })])
     );
+  });
+
+  test("preserves machine-readable validation metadata from Zod issues", async () => {
+    const handler = vi.fn(async () => Response.json({ ok: true }));
+    const wrapped = withV3ApiWrapper({
+      auth: "none",
+      schemas: {
+        body: z.unknown().superRefine((_value, ctx) => {
+          ctx.addIssue({
+            code: "custom",
+            message: "Unsupported field 'extra'",
+            path: ["extra"],
+            params: { code: "unsupported_field" },
+          });
+        }),
+      },
+      handler,
+    });
+
+    const response = await wrapped(
+      new NextRequest("http://localhost/api/v3/surveys", {
+        method: "POST",
+        body: JSON.stringify({ extra: true }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }),
+      {} as never
+    );
+
+    expect(response.status).toBe(400);
+    expect(handler).not.toHaveBeenCalled();
+    const body = await response.json();
+    expect(body.invalid_params).toEqual([
+      {
+        name: "extra",
+        reason: "Unsupported field 'extra'",
+        code: "unsupported_field",
+      },
+    ]);
   });
 
   test("returns 429 problem response when rate limited", async () => {

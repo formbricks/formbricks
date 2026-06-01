@@ -169,7 +169,7 @@ export const SelectedRowSettings = <T,>({
               className={cn(isDownloading && "cursor-not-allowed opacity-50")}
               disabled={isDownloading}>
               <Button variant="outline" size="sm" className="h-6 gap-1 border-none px-2">
-                {isDownloading ? <Loader2Icon className="h-4 w-4 animate-spin" /> : <ArrowDownToLineIcon />}
+                {isDownloading ? <Loader2Icon className="size-4 animate-spin" /> : <ArrowDownToLineIcon />}
                 {t("common.download")}
               </Button>
             </DropdownMenuTrigger>

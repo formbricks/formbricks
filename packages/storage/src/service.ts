@@ -191,7 +191,9 @@ export const getFileStream = async (fileKey: string): Promise<Result<FileStreamR
       contentLength: response.ContentLength ?? 0,
     });
   } catch (error) {
-    if ((error as { name?: string }).name === "NoSuchKey") {
+    const errName = (error as { name?: string }).name;
+    const httpStatusCode = (error as { $metadata?: { httpStatusCode?: number } }).$metadata?.httpStatusCode;
+    if (errName === "NoSuchKey" || errName === "NotFound" || httpStatusCode === 404) {
       return err({
         code: StorageErrorCode.FileNotFoundError,
       });

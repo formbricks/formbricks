@@ -181,6 +181,7 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
               {option.icon ? <span className="mr-1 inline-flex items-center">{option.icon}</span> : null}
               {option.label}
               <button
+                type="button"
                 className="ring-offset-background focus:ring-ring ml-1 rounded-full outline-none focus:ring-2 focus:ring-offset-2"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
@@ -192,7 +193,7 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
                   e.stopPropagation();
                 }}
                 onClick={() => handleUnselect(option)}>
-                <X className="text-muted-foreground hover:text-foreground h-3 w-3" />
+                <X className="text-muted-foreground hover:text-foreground size-3" />
               </button>
             </Badge>
           ))}

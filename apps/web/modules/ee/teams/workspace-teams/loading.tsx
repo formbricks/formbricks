@@ -18,8 +18,8 @@ export const TeamsLoading = () => {
           {[...Array(3)].map((_, idx) => (
             <div
               key={`team-skeleton-${idx}`}
-              className="flex animate-pulse items-center space-x-4 rounded border border-slate-200 p-4">
-              <div className="h-10 w-10 rounded-full bg-slate-300" />
+              className="flex animate-pulse items-center gap-x-4 rounded border border-slate-200 p-4">
+              <div className="size-10 rounded-full bg-slate-300" />
               <div className="flex-1 space-y-2">
                 <div className="h-4 w-3/4 rounded bg-slate-200" />
                 <div className="h-4 w-1/2 rounded bg-slate-200" />

@@ -233,7 +233,7 @@ export const AddApiKeyModal = ({
                                 <span className="w-full truncate text-left">{permission.workspaceName}</span>
                               </span>
                               <span className="flex h-full items-center border-l pl-3">
-                                <ChevronDownIcon className="h-4 w-4 text-slate-500" />
+                                <ChevronDownIcon className="size-4 text-slate-500" />
                               </span>
                             </button>
                           </DropdownMenuTrigger>
@@ -264,7 +264,7 @@ export const AddApiKeyModal = ({
                                 </span>
                               </span>
                               <span className="flex h-full items-center border-l pl-3">
-                                <ChevronDownIcon className="h-4 w-4 text-slate-500" />
+                                <ChevronDownIcon className="size-4 text-slate-500" />
                               </span>
                             </button>
                           </DropdownMenuTrigger>
@@ -284,7 +284,7 @@ export const AddApiKeyModal = ({
 
                       {/* Delete button */}
                       <button type="button" className="p-2" onClick={() => removePermission(permissionIndex)}>
-                        <Trash2Icon className={"h-5 w-5 text-slate-500 hover:text-red-500"} />
+                        <Trash2Icon className={"size-5 text-slate-500 hover:text-red-500"} />
                       </button>
                     </div>
                   );

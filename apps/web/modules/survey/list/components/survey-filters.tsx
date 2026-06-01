@@ -106,7 +106,7 @@ export const SurveyFilters = ({
 
   return (
     <div className="flex justify-between">
-      <div className="flex space-x-2">
+      <div className="flex gap-x-2">
         <SearchBar
           value={name}
           onChange={setName}
@@ -151,7 +151,7 @@ export const SurveyFilters = ({
           </Button>
         )}
       </div>
-      <div className="flex space-x-2">
+      <div className="flex gap-x-2">
         <DropdownMenu>
           <DropdownMenuTrigger
             asChild
@@ -164,7 +164,7 @@ export const SurveyFilters = ({
                     ? getSortOptions(t).find((option) => option.value === sortBy)?.label
                     : ""}
                 </span>
-                <ChevronDownIcon className="ml-2 h-4 w-4" />
+                <ChevronDownIcon className="ml-2 size-4" />
               </div>
             </div>
           </DropdownMenuTrigger>

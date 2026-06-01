@@ -17,7 +17,7 @@ interface TemplateTagsProps {
 
 type NonNullabeChannel = NonNullable<TWorkspaceConfigChannel>;
 
-export const getRoleBasedStyling = (role: TTemplateRole | undefined): string => {
+const getRoleBasedStyling = (role: TTemplateRole | undefined): string => {
   switch (role) {
     case "productManager":
       return "border-blue-300 bg-blue-50 text-blue-500";
@@ -113,7 +113,7 @@ export const TemplateTags = ({ template, selectedFilter }: TemplateTagsProps) =>
         <TooltipRenderer
           tooltipContent={t("workspace.surveys.templates.uses_branching_logic")}
           shouldRender={true}>
-          <SplitIcon className="h-5 w-5 rounded border border-slate-300 bg-slate-50 p-0.5 text-slate-400" />
+          <SplitIcon className="size-5 rounded border border-slate-300 bg-slate-50 p-0.5 text-slate-400" />
         </TooltipRenderer>
       )}
     </div>

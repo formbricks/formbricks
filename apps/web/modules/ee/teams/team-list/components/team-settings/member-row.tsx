@@ -128,7 +128,7 @@ export function MemberRow(props: Readonly<MemberRowProps>) {
             className="shrink-0"
             disabled={!isOwnerOrManager && (!isTeamAdminMember || member.userId === currentUserId)}
             onClick={() => onRemoveMember(index)}>
-            <XIcon className="h-4 w-4" />
+            <XIcon className="size-4" />
           </Button>
         </TooltipRenderer>
       )}

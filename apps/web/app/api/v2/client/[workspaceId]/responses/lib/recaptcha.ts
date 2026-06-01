@@ -12,10 +12,13 @@ export const verifyRecaptchaToken = async (token: string, threshold: number): Pr
   const timeoutId = setTimeout(() => controller.abort(), 5000);
 
   try {
-    // If keys aren't configured, skip verification
+    // Fail closed when keys aren't configured: a survey opted into reCAPTCHA
+    // must not silently bypass spam protection because the server is misconfigured.
     if (!RECAPTCHA_SITE_KEY || !RECAPTCHA_SECRET_KEY) {
-      logger.warn("reCAPTCHA verification skipped: keys not configured");
-      return true;
+      logger.error(
+        "reCAPTCHA verification rejected: RECAPTCHA_SITE_KEY and/or RECAPTCHA_SECRET_KEY are not configured. Set both env vars or disable reCAPTCHA on the survey."
+      );
+      return false;
     }
 
     // Build URL-encoded form data

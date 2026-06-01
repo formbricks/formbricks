@@ -9,6 +9,7 @@ interface IconAction {
   isVisible?: boolean;
   disabled?: boolean;
   isLoading?: boolean;
+  iconClassName?: string;
 }
 
 interface IconBarProps {
@@ -16,31 +17,31 @@ interface IconBarProps {
 }
 
 export const IconBar = ({ actions }: IconBarProps) => {
-  if (actions.length === 0) return null;
+  const visibleActions = actions.filter((action) => action.isVisible);
+
+  if (visibleActions.length === 0) return null;
 
   return (
     <div
       className="flex items-center justify-center divide-x rounded-md border border-slate-300 bg-white"
       role="toolbar"
       aria-label="Action buttons">
-      {actions
-        .filter((action) => action.isVisible)
-        .map((action, index) => (
-          <span key={`${action.tooltip}-${index}`}>
-            <TooltipRenderer tooltipContent={action.tooltip}>
-              <Button
-                variant="ghost"
-                className="border-none hover:bg-slate-50"
-                size="icon"
-                onClick={action.onClick}
-                disabled={action.disabled}
-                loading={action.isLoading}
-                aria-label={action.tooltip}>
-                {action.icon ? <action.icon /> : null}
-              </Button>
-            </TooltipRenderer>
-          </span>
-        ))}
+      {visibleActions.map((action, index) => (
+        <span key={`${action.tooltip}-${index}`}>
+          <TooltipRenderer tooltipContent={action.tooltip}>
+            <Button
+              variant="ghost"
+              className="border-none hover:bg-slate-50"
+              size="icon"
+              onClick={action.onClick}
+              disabled={action.disabled}
+              loading={action.isLoading}
+              aria-label={action.tooltip}>
+              {action.icon ? <action.icon className={action.iconClassName} /> : null}
+            </Button>
+          </TooltipRenderer>
+        </span>
+      ))}
     </div>
   );
 };

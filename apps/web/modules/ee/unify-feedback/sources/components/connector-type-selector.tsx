@@ -70,7 +70,7 @@ export function ConnectorTypeSelector({
                   }`}>
                   {selectedType === option.id && (
                     <div className="flex h-full w-full items-center justify-center">
-                      <div className="h-1.5 w-1.5 rounded-full bg-white" />
+                      <div className="size-1.5 rounded-full bg-white" />
                     </div>
                   )}
                 </div>

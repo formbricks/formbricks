@@ -18,8 +18,8 @@ export const SurveyTypeIndicator = ({ type }: SurveyTypeIndicatorProps) => {
   ] || { icon: HelpCircle, label: "Unknown" };
 
   return (
-    <div className="flex items-center space-x-2 text-sm text-slate-600">
-      <Icon className="h-4 w-4" />
+    <div className="flex items-center gap-x-2 text-sm text-slate-600">
+      <Icon className="size-4" />
       <span>{label}</span>
     </div>
   );

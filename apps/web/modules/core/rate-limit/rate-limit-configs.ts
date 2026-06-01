@@ -30,6 +30,16 @@ export const rateLimitConfigs = {
       allowedPerInterval: 10,
       namespace: "action:send-link-survey-email",
     }, // 10 per hour
+    isSurveyResponsePresent: {
+      interval: 60,
+      allowedPerInterval: 10,
+      namespace: "action:survey-response-present",
+    }, // 10 per minute — prevents email-enumeration oracle
+    validateSurveyPin: {
+      interval: 60,
+      allowedPerInterval: 10,
+      namespace: "action:validate-survey-pin",
+    }, // 10 per minute — prevents brute-force PIN guessing
     licenseRecheck: { interval: 60, allowedPerInterval: 5, namespace: "action:license-recheck" }, // 5 per minute
   },
 

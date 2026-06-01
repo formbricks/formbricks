@@ -133,7 +133,7 @@ export const EditContactAttributesModal = ({
         const errorFieldId = `attribute-key-${firstErrorIndex}`;
         const errorElement = document.getElementById(errorFieldId);
         if (errorElement) {
-          setTimeout(() => {
+          const timeoutId = setTimeout(() => {
             errorElement.scrollIntoView({ behavior: "smooth", block: "center" });
             // Try to focus the input inside the combobox if it exists
             const inputElement = errorElement.querySelector("input") as HTMLInputElement;
@@ -143,6 +143,7 @@ export const EditContactAttributesModal = ({
               errorElement.focus();
             }
           }, 100);
+          return () => clearTimeout(timeoutId);
         }
       }
     }
@@ -261,7 +262,7 @@ export const EditContactAttributesModal = ({
               {/* Only show Add Attribute button if there are remaining attributes to add */}
               {watchedAttributes.length < attributeKeys.length && (
                 <Button type="button" variant="secondary" onClick={handleAddAttribute} className="w-fit">
-                  <PlusIcon className="mr-2 h-4 w-4" />
+                  <PlusIcon className="mr-2 size-4" />
                   {t("workspace.contacts.add_attribute")}
                 </Button>
               )}

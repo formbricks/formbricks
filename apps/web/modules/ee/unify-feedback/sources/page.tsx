@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { getConnectorsWithMappings } from "@/lib/connector/service";
 import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getSurveys } from "@/lib/survey/service";
@@ -6,6 +7,7 @@ import { getTranslate } from "@/lingodotdev/server";
 import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
 import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/utils";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
+import { PageHeader } from "@/modules/ui/components/page-header";
 import { UpgradePrompt } from "@/modules/ui/components/upgrade-prompt";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 import { ConnectorsSection } from "./components/connectors-page-client";
@@ -33,6 +35,7 @@ export const WorkspaceFeedbackSourcesPage = async (
   }
 
   const hasAccess = isOwner || isManager || hasReadAccess || hasReadWriteAccess || hasManageAccess;
+  const pageTitle = t("workspace.unify.feedback_sources");
   if (!hasAccess) {
     return notFound();
   }
@@ -41,7 +44,10 @@ export const WorkspaceFeedbackSourcesPage = async (
   if (!isFeedbackDirectoriesAllowed) {
     return (
       <PageContentWrapper>
-        <div className="flex items-center justify-center">
+        <PageHeader pageTitle={pageTitle} />
+        <SettingsCard
+          title={t("workspace.unify.feedback_sources")}
+          description={t("workspace.unify.feedback_sources_settings_description")}>
           <UpgradePrompt
             title={t("workspace.unify.upgrade_prompt_title")}
             description={t("workspace.unify.upgrade_prompt_description")}
@@ -61,7 +67,7 @@ export const WorkspaceFeedbackSourcesPage = async (
               },
             ]}
           />
-        </div>
+        </SettingsCard>
       </PageContentWrapper>
     );
   }

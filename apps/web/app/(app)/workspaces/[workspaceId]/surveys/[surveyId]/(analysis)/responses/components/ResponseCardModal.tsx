@@ -103,17 +103,19 @@ export const ResponseCardModal = ({
           </DialogDescription>
         </VisuallyHidden>
         <DialogBody>
-          <SingleResponseCard
-            survey={survey}
-            response={responses[currentIndex]}
-            user={user}
-            environmentTags={environmentTags}
-            isReadOnly={isReadOnly}
-            updateResponse={updateResponse}
-            updateResponseList={updateResponseList}
-            setSelectedResponseId={setSelectedResponseId}
-            locale={locale}
-          />
+          <div className="my-3">
+            <SingleResponseCard
+              survey={survey}
+              response={responses[currentIndex]}
+              user={user}
+              environmentTags={environmentTags}
+              isReadOnly={isReadOnly}
+              updateResponse={updateResponse}
+              updateResponseList={updateResponseList}
+              setSelectedResponseId={setSelectedResponseId}
+              locale={locale}
+            />
+          </div>
         </DialogBody>
         <DialogFooter>
           <Button

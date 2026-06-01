@@ -46,8 +46,8 @@ export const QuotaList = ({ quotas, onEdit, deleteQuota, duplicateQuota }: Quota
                   e.stopPropagation();
                   deleteQuota(quota);
                 }}
-                className="h-8 w-8 p-0 text-slate-500">
-                <Trash2Icon className="h-4 w-4" />
+                className="size-8 p-0 text-slate-500">
+                <Trash2Icon className="size-4" />
               </Button>
             </TooltipRenderer>
             <TooltipRenderer tooltipContent={t("common.duplicate")}>
@@ -58,8 +58,8 @@ export const QuotaList = ({ quotas, onEdit, deleteQuota, duplicateQuota }: Quota
                   e.stopPropagation();
                   duplicateQuota(quota);
                 }}
-                className="h-8 w-8 p-0 text-slate-500">
-                <CopyIcon className="h-4 w-4" />
+                className="size-8 p-0 text-slate-500">
+                <CopyIcon className="size-4" />
               </Button>
             </TooltipRenderer>
           </div>

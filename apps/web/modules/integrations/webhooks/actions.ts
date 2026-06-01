@@ -157,7 +157,7 @@ export const testEndpointAction = authenticatedActionClient
           },
           {
             type: "workspaceTeam",
-            minPermission: "read",
+            minPermission: "readWrite",
             workspaceId: await getWorkspaceIdFromWebhookId(parsedInput.webhookId),
           },
         ],

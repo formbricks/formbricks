@@ -55,6 +55,7 @@ export const WebhookTable = ({
           <div className="grid-cols-7">
             {webhooks.map((webhook, index) => (
               <button
+                type="button"
                 onClick={(e) => {
                   handleOpenWebhookDetailModalClick(e, webhook);
                 }}

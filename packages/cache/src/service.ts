@@ -6,6 +6,14 @@ import { ZCacheKey } from "@/types/keys";
 import { ZTtlMs, ZTtlMsOptional } from "@/types/service";
 import { validateInputs } from "./utils/validation";
 
+/** Marker for the nullable cache wire format. */
+const NULLABLE_BOX_MARKER = "__fb_nullable_v1";
+
+interface NullableCacheBox<T> {
+  [NULLABLE_BOX_MARKER]: true;
+  value: T | null;
+}
+
 /**
  * Core cache service providing basic Redis operations with JSON serialization
  */
@@ -87,7 +95,8 @@ export class CacheService {
   }
 
   /**
-   * Check if a key exists in cache (for distinguishing cache miss from cached null)
+   * Check if a key exists in cache.
+   * Prefer single-GET cache-aside semantics in withCache to avoid TOCTOU races.
    * @param key - Cache key to check
    * @returns Result containing boolean indicating if key exists
    */
@@ -136,10 +145,14 @@ export class CacheService {
       return validation;
     }
 
+    // Undefined is a caller bug, not a cacheable null.
+    if (value === undefined) {
+      logger.warn({ key, ttlMs }, "cache.set called with undefined; skipping write");
+      return ok(undefined);
+    }
+
     try {
-      // Normalize undefined to null to maintain consistent cached-null semantics
-      const normalizedValue = value === undefined ? null : value;
-      const serialized = JSON.stringify(normalizedValue);
+      const serialized = JSON.stringify(value);
 
       if (ttlMs === undefined) {
         // Set without expiration (persists indefinitely)
@@ -231,21 +244,21 @@ export class CacheService {
 
   /**
    * Cache wrapper for functions (cache-aside).
+   *
+   * Bare JSON null is treated as a miss; use withCacheNullable for intentional null values.
    * Never throws due to cache errors; function errors propagate without retry.
-   * Must include null in T to support cached null values.
+   *
    * @param fn - Function to execute (and optionally cache).
    * @param key - Cache key
    * @param ttlMs - Time to live in milliseconds
    * @returns Cached value if present, otherwise fresh result from fn()
    */
-  async withCache<T>(fn: () => Promise<T>, key: CacheKey, ttlMs: number): Promise<T> {
-    if (!this.isRedisClientReady()) {
-      return await fn();
-    }
-
-    const validation = validateInputs([key, ZCacheKey], [ttlMs, ZTtlMs]);
-    if (!validation.ok) {
-      logger.warn({ error: validation.error, key }, "Invalid cache inputs, executing function directly");
+  async withCache<T extends NonNullable<unknown>>(
+    fn: () => Promise<T>,
+    key: CacheKey,
+    ttlMs: number
+  ): Promise<T> {
+    if (!this.canUseCache(key, ttlMs)) {
       return await fn();
     }
 
@@ -259,18 +272,76 @@ export class CacheService {
     return fresh;
   }
 
+  /**
+   * Cache wrapper for functions whose result may legitimately be `null`.
+   *
+   * Stores results in a marked envelope so cached nulls are distinct from misses.
+   *
+   * @param fn - Function to execute (and optionally cache); may return null.
+   * @param key - Cache key
+   * @param ttlMs - Time to live in milliseconds
+   * @returns Cached value if present (including a cached `null`), otherwise fresh result from fn()
+   */
+  async withCacheNullable<T extends NonNullable<unknown>>(
+    fn: () => Promise<T | null>,
+    key: CacheKey,
+    ttlMs: number
+  ): Promise<T | null> {
+    if (!this.canUseCache(key, ttlMs)) {
+      return await fn();
+    }
+
+    const cachedValue = await this.tryGetCachedValue<unknown>(key, ttlMs);
+    if (cachedValue !== undefined) {
+      if (this.isNullableCacheBox<T>(cachedValue)) {
+        return cachedValue.value;
+      }
+
+      logger.debug(
+        { key, ttlMs },
+        "Nullable cache entry is missing marker or value field; treating as cache miss and refreshing"
+      );
+    }
+
+    const fresh = await fn();
+    // Guard against type-erased callers resolving undefined.
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- types exclude undefined; this guards against type-erasure bugs
+    if (fresh !== undefined) {
+      const box: NullableCacheBox<T> = { [NULLABLE_BOX_MARKER]: true, value: fresh };
+      await this.trySetCache(key, box, ttlMs);
+    }
+    return fresh;
+  }
+
+  /** Returns false when callers should bypass cache and execute directly. */
+  private canUseCache(key: CacheKey, ttlMs: number): boolean {
+    if (!this.isRedisClientReady()) {
+      return false;
+    }
+
+    const validation = validateInputs([key, ZCacheKey], [ttlMs, ZTtlMs]);
+    if (!validation.ok) {
+      logger.warn({ error: validation.error, key }, "Invalid cache inputs, executing function directly");
+      return false;
+    }
+
+    return true;
+  }
+
+  private isNullableCacheBox<T>(value: unknown): value is NullableCacheBox<T> {
+    return (
+      typeof value === "object" &&
+      value !== null &&
+      (value as Record<string, unknown>)[NULLABLE_BOX_MARKER] === true &&
+      Object.hasOwn(value, "value")
+    );
+  }
+
   private async tryGetCachedValue<T>(key: CacheKey, ttlMs: number): Promise<T | undefined> {
     try {
       const cacheResult = await this.get<T>(key);
       if (cacheResult.ok && cacheResult.data !== null) {
         return cacheResult.data;
-      }
-
-      if (cacheResult.ok && cacheResult.data === null) {
-        const existsResult = await this.exists(key);
-        if (existsResult.ok && existsResult.data) {
-          return null as T;
-        }
       }
 
       if (!cacheResult.ok) {
@@ -280,15 +351,23 @@ export class CacheService {
         );
       }
     } catch (error) {
-      logger.debug({ error, key, ttlMs }, "Cache get/exists threw; proceeding to compute fresh value");
+      logger.debug({ error, key, ttlMs }, "Cache get threw; proceeding to compute fresh value");
     }
 
     return undefined;
   }
 
   private async trySetCache(key: CacheKey, value: unknown, ttlMs: number): Promise<void> {
-    if (value === undefined) {
-      return; // Skip caching undefined values
+    // Never persist null/undefined. The read path (tryGetCachedValue) treats a
+    // stored JSON `null` as a cache miss, so writing one is not just useless —
+    // it causes a recompute-and-rewrite loop on every request for a hot key.
+    // This also hardens withCache against a `null` slipping past its
+    // `NonNullable<T>` constraint via type erasure (unknown/any plumbing, casts),
+    // which is the exact class of bug this change set fixes. withCacheNullable is
+    // unaffected: it always writes a non-null boxed envelope, never raw null.
+    if (value === undefined || value === null) {
+      logger.debug({ key, ttlMs }, "Refusing to cache nullish value; treating as non-cacheable");
+      return;
     }
 
     try {

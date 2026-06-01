@@ -73,10 +73,4 @@ describe("getContacts", () => {
       where: { workspaceId: { in: mockWorkspaceIds } },
     });
   });
-
-  test("should get contacts", async () => {
-    vi.mocked(prisma.contact.findMany).mockResolvedValue(mockContacts);
-
-    await getContacts(mockWorkspaceIds);
-  });
 });

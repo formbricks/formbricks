@@ -69,7 +69,6 @@ export const WorkspaceLayout = async ({ layoutData, children }: WorkspaceLayoutP
           isDevelopment={IS_DEVELOPMENT}
           membershipRole={membership.role}
           publicDomain={publicDomain}
-          isMultiOrgEnabled={isMultiOrgEnabled}
           organizationWorkspacesLimit={organizationWorkspacesLimit}
           isLicenseActive={active}
           isAccessControlAllowed={isAccessControlAllowed}

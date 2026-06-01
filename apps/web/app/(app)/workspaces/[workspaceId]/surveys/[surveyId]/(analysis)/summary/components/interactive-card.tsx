@@ -38,8 +38,8 @@ export const InteractiveCard = ({
           {isLoading ? <div className="h-6 w-12 animate-pulse rounded-full bg-slate-200"></div> : value}
         </span>
         {!isLoading && (
-          <div className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100">
-            {isActive ? <ChevronUpIcon className="h-4 w-4" /> : <ChevronDownIcon className="h-4 w-4" />}
+          <div className="flex size-6 items-center justify-center rounded-md border border-slate-200 bg-slate-50 hover:bg-slate-100">
+            {isActive ? <ChevronUpIcon className="size-4" /> : <ChevronDownIcon className="h-4 w-4" />}
           </div>
         )}
       </div>

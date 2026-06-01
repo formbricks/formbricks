@@ -165,8 +165,7 @@ jobs:
       - helm-chart-release
     if: ${{ !github.event.release.prerelease }}
     permissions:
-      contents: write
-      pull-requests: write
+      contents: read
     steps:
       - name: Harden the runner
         uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
@@ -177,6 +176,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           ref: main
+          persist-credentials: false
 
       - name: Install YQ
         uses: dcarbone/install-yq-action@4075b4dca348d74bd83f2bf82d30f25d7c54539b # v1.3.1
@@ -206,20 +206,46 @@ jobs:
 
           echo "changed=true" >> "$GITHUB_OUTPUT"
 
+      - name: Validate Helm update PR app configuration
+        if: steps.update.outputs.changed == 'true'
+        env:
+          APP_CLIENT_ID: ${{ vars.HELM_APP_VERSION_PR_APP_CLIENT_ID }}
+          APP_PRIVATE_KEY: ${{ secrets.HELM_APP_VERSION_PR_APP_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "$APP_CLIENT_ID" || -z "$APP_PRIVATE_KEY" ]]; then
+            echo "::error::Configure HELM_APP_VERSION_PR_APP_CLIENT_ID as a repository variable and HELM_APP_VERSION_PR_APP_PRIVATE_KEY as a repository secret."
+            exit 1
+          fi
+
+      - name: Create GitHub App token for Helm update PR
+        id: helm-update-pr-token
+        if: steps.update.outputs.changed == 'true'
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.HELM_APP_VERSION_PR_APP_CLIENT_ID }}
+          private-key: ${{ secrets.HELM_APP_VERSION_PR_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+
       - name: Create Helm app version PR
         if: steps.update.outputs.changed == 'true'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ steps.helm-update-pr-token.outputs.token }}
           VERSION: ${{ needs.docker-build-community.outputs.VERSION }}
+          APP_SLUG: ${{ steps.helm-update-pr-token.outputs.app-slug }}
         run: |
           set -euo pipefail
 
           branch="chore/update-helm-app-version-${VERSION}"
           title="chore: update Helm app version to ${VERSION}"
           body_file="$(mktemp)"
+          app_user_id="$(gh api "/users/${APP_SLUG}[bot]" --jq .id)"
 
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          gh auth setup-git
+          git config user.name "${APP_SLUG}[bot]"
+          git config user.email "${app_user_id}+${APP_SLUG}[bot]@users.noreply.github.com"
           git checkout -B "$branch"
           git add charts/formbricks/Chart.yaml charts/formbricks/README.md
           git commit -m "$title"
@@ -258,6 +284,15 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
+
+      # Stamp the in-progress release with the tag version before completing it.
+      # complete only looks up a release by version, it never assigns one, so a
+      # versioned sync must run first (Linear's recommended scheduled-pipeline flow).
+      - name: Stamp Linear release version
+        uses: linear/linear-release-action@0353b5fa8c00326913966f00557d68f8f30b8b6b # v0.7.0
+        with:
+          access_key: ${{ secrets.LINEAR_ACCESS_KEY }}
+          version: ${{ github.event.release.tag_name }}
 
       - name: Complete Linear release
         uses: linear/linear-release-action@0353b5fa8c00326913966f00557d68f8f30b8b6b # v0.7.0

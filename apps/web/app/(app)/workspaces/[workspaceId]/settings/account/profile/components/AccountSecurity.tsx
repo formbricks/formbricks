@@ -18,7 +18,7 @@ export const AccountSecurity = ({ user }: AccountSecurityProps) => {
 
   return (
     <div>
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center gap-x-4">
         <Switch
           checked={user.twoFactorEnabled}
           onCheckedChange={(checked) => {

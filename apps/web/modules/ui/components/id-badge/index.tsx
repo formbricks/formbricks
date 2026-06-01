@@ -27,7 +27,7 @@ export const IdBadge: React.FC<IdBadgeProps> = ({
   const [isHovered, setIsHovered] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
 
-  const handleCopy = async (e: React.MouseEvent) => {
+  const handleCopy = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -70,6 +70,7 @@ export const IdBadge: React.FC<IdBadgeProps> = ({
         shouldShowIcon={shouldShowIcon}
         isCopied={isCopied}
         className={className}
+        label={label}
       />
     );
   }
@@ -87,6 +88,7 @@ export const IdBadge: React.FC<IdBadgeProps> = ({
           shouldShowIcon={shouldShowIcon}
           isCopied={isCopied}
           className={className}
+          label={label}
         />
       </div>
     );
@@ -105,6 +107,7 @@ export const IdBadge: React.FC<IdBadgeProps> = ({
         shouldShowIcon={shouldShowIcon}
         isCopied={isCopied}
         className={className}
+        label={label}
       />
     </div>
   );

@@ -48,7 +48,7 @@ const Loading = () => {
   return (
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.api_keys")} />
-      <div className="mt-4 flex max-w-4xl animate-pulse items-center space-y-4 rounded-lg border bg-blue-50 p-6 text-sm text-blue-900 shadow-sm md:space-y-0 md:text-base"></div>
+      <div className="mt-4 flex max-w-4xl animate-pulse items-center gap-y-4 rounded-lg border bg-blue-50 p-6 text-sm text-blue-900 shadow-sm md:gap-y-0 md:text-base"></div>
       <LoadingCard />
     </PageContentWrapper>
   );

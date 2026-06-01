@@ -85,7 +85,7 @@ export const NPSSummary = ({ elementSummary, survey, setFilter }: NPSSummaryProp
           <TooltipProvider delayDuration={150}>
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="flex items-center space-x-2 rounded-lg bg-slate-100 p-2">
+                <div className="flex items-center gap-x-2 rounded-lg bg-slate-100 p-2">
                   <SatisfactionIndicator percentage={elementSummary.promoters.percentage} />
                   <div>
                     {t("workspace.surveys.summary.promoters")}: {promotersPercentage}%
@@ -105,10 +105,10 @@ export const NPSSummary = ({ elementSummary, survey, setFilter }: NPSSummaryProp
       <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "aggregated" | "individual")}>
         <div className="flex justify-end px-4 md:px-6">
           <TabsList>
-            <TabsTrigger value="aggregated" icon={<BarChartHorizontal className="h-4 w-4" />}>
+            <TabsTrigger value="aggregated" icon={<BarChartHorizontal className="size-4" />}>
               {t("workspace.surveys.summary.aggregated")}
             </TabsTrigger>
-            <TabsTrigger value="individual" icon={<BarChart className="h-4 w-4" />}>
+            <TabsTrigger value="individual" icon={<BarChart className="size-4" />}>
               {t("workspace.surveys.summary.individual")}
             </TabsTrigger>
           </TabsList>
@@ -119,12 +119,13 @@ export const NPSSummary = ({ elementSummary, survey, setFilter }: NPSSummaryProp
             <div className="space-y-5 text-sm md:text-base">
               {(["promoters", "passives", "detractors", "dismissed"] as const).map((group) => (
                 <button
+                  type="button"
                   className="w-full cursor-pointer hover:opacity-80"
                   key={group}
                   onClick={() => applyFilter(group)}>
                   <div
                     className={`mb-2 flex justify-between ${group === "dismissed" ? "mb-2 border-t bg-white pt-4 text-sm md:text-base" : ""}`}>
-                    <div className="mr-8 flex space-x-1">
+                    <div className="mr-8 flex gap-x-1">
                       <p
                         className={`font-semibold capitalize text-slate-700 ${group === "dismissed" ? "" : "text-slate-700"}`}>
                         {group}
@@ -179,7 +180,7 @@ export const NPSSummary = ({ elementSummary, survey, setFilter }: NPSSummaryProp
                     </div>
                     <div className="flex w-full flex-col items-center rounded-b-lg border border-t-0 border-slate-200 bg-slate-50 px-1 py-2">
                       <div className="mb-1.5 text-xs font-medium text-slate-500">{choice.rating}</div>
-                      <div className="mb-1 flex items-center space-x-1">
+                      <div className="mb-1 flex items-center gap-x-1">
                         <div className="text-base font-semibold text-slate-700">{choice.count}</div>
                         <div className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600">
                           {convertFloatToNDecimal(choice.percentage, 1)}%

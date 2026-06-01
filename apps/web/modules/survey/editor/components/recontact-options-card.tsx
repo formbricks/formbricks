@@ -160,7 +160,7 @@ export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactO
           <div className="flex items-center pl-2 pr-5">
             <CheckIcon
               strokeWidth={3}
-              className="h-7 w-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
+              className="size-7 rounded-full border border-green-300 bg-green-100 p-1.5 text-green-600"
             />
           </div>
           <div>
@@ -188,7 +188,7 @@ export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactO
 
           <RadioGroup
             value={getWaitingTimeOption()}
-            className="flex flex-col space-y-3"
+            className="flex flex-col gap-y-3"
             onValueChange={handleWaitingTimeChange}>
             {waitingTimeOptions.map((option) => (
               <div key={option.id}>
@@ -250,7 +250,7 @@ export const RecontactOptionsCard = ({ localSurvey, setLocalSurvey }: RecontactO
 
           <RadioGroup
             value={localSurvey.displayOption}
-            className="flex flex-col space-y-3"
+            className="flex flex-col gap-y-3"
             onValueChange={(v) => {
               if (v === "displayOnce" || v === "displayMultiple" || v === "respondMultiple") {
                 const updatedSurvey: TSurvey = { ...localSurvey, displayOption: v };
