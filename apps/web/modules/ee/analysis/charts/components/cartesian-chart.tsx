@@ -77,10 +77,36 @@ export interface CartesianChartProps {
   tooltipCursor?: boolean | Record<string, unknown>;
 }
 
+/**
+ * Compute y-axis domain bounds from the actual data values with ~10% headroom
+ * above the max and a small buffer below the min. Returns undefined when no
+ * numeric values are present — leaving Recharts' default `auto` domain in
+ * place — so empty datasets don't end up with a [0, 1] domain.
+ */
+const computeYDomain = (data: TChartDataRow[], dataKeys: string[]): [number, number] | undefined => {
+  const values: number[] = [];
+  for (const row of data) {
+    for (const key of dataKeys) {
+      const raw = row[key];
+      if (raw === null || raw === undefined || raw === "") continue;
+      const num = Number(raw);
+      if (Number.isFinite(num)) values.push(num);
+    }
+  }
+  if (values.length === 0) return undefined;
+  const dataMin = Math.min(...values);
+  const dataMax = Math.max(...values);
+  const range = Math.max(dataMax - dataMin, 1); // never zero — flat data still gets padding
+  const lower = Math.floor(dataMin - range * 0.05);
+  const upper = Math.ceil(dataMax + range * 0.1);
+  return [lower, upper];
+};
+
 /** Shared layout for bar, line, and area charts. Supports single or multiple measures. */
 export function CartesianChart({
   data,
   xAxisKey,
+  dataKeys,
   chartConfig,
   chart: Chart,
   children,
@@ -88,6 +114,8 @@ export function CartesianChart({
   chartProps = {},
   tooltipCursor,
 }: Readonly<CartesianChartProps>) {
+  const yDomain = computeYDomain(data, dataKeys);
+
   return (
     <div className="h-full min-h-[16rem] w-full">
       <ChartContainer config={chartConfig} className="h-full w-full">
@@ -100,21 +128,13 @@ export function CartesianChart({
             axisLine={false}
             tickFormatter={formatXAxisTick}
           />
-          {/* Derive the y-axis bounds from the actual data min/max with ~10%
-              headroom on each side so monotone interpolation peaks (which
-              bulge slightly above the data max between points) and troughs
-              (which dip below the data min) are never clipped by the chart
-              container. Round outward to the next integer so tick labels
-              stay clean. */}
-          <YAxis
-            tickLine={false}
-            axisLine={false}
-            padding={{ top: 16, bottom: 4 }}
-            domain={[
-              ((dataMin: number) => Math.floor(dataMin - Math.abs(dataMin) * 0.1 - 1)) as never,
-              ((dataMax: number) => Math.ceil(dataMax + Math.abs(dataMax) * 0.1 + 1)) as never,
-            ]}
-          />
+          {/* Static numeric domain computed up-front from data min/max with
+              5% buffer below and 10% above. Bars touch the top of their
+              column and line/area splines can overshoot the data max — both
+              need explicit headroom so the chart container doesn't clip
+              them. Pixel padding on top reinforces this for the spline case
+              where overshoot can exceed the chosen tick. */}
+          <YAxis tickLine={false} axisLine={false} padding={{ top: 16, bottom: 4 }} domain={yDomain} />
           <ChartTooltip content={<PolishedChartTooltip />} cursor={tooltipCursor} />
           {showLegend && <ChartLegend content={<ChartLegendContent />} verticalAlign="top" height={36} />}
           {children}
