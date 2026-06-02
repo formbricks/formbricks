@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
   CHART_BRAND_DARK,
+  CHART_BRAND_RAMP,
   CHART_MEASURE_COLORS,
   formatCellValue,
   formatXAxisTick,
@@ -31,7 +32,19 @@ describe("chart-utils", () => {
       expect(preparePieData([{ label: "A", count: null }], "count")).toBeNull();
     });
 
-    test("filters to numeric rows and returns processedData with colors", () => {
+    test("drops zero-value rows alongside non-numeric ones", () => {
+      const data = [
+        { sentiment: "positive", count: 10 },
+        { sentiment: "neutral", count: 0 },
+        { sentiment: "skip", count: "n/a" },
+      ];
+      const result = preparePieData(data, "count");
+      expect(result).not.toBeNull();
+      expect(result!.processedData).toHaveLength(1);
+      expect(result!.processedData[0].sentiment).toBe("positive");
+    });
+
+    test("colours slices from the brand-teal ramp dark-to-light", () => {
       const data = [
         { sentiment: "positive", count: 10 },
         { sentiment: "negative", count: 5 },
@@ -41,8 +54,8 @@ describe("chart-utils", () => {
       expect(result).not.toBeNull();
       expect(result!.processedData).toHaveLength(2);
       expect(result!.processedData[0].count).toBe(10);
-      expect(result!.colors[0]).toBe(CHART_BRAND_DARK);
-      expect(result!.colors[1]).toBe("#00E6CA");
+      expect(result!.colors[0]).toBe(CHART_BRAND_RAMP[0]);
+      expect(result!.colors[1]).toBe(CHART_BRAND_RAMP[1]);
     });
   });
 

@@ -2,7 +2,7 @@
 
 import { useId } from "react";
 import { useTranslation } from "react-i18next";
-import { Area, AreaChart, Bar, BarChart, Cell, Pie, PieChart } from "recharts";
+import { Area, AreaChart, Bar, BarChart, Cell, Legend, Pie, PieChart } from "recharts";
 import type { TChartQuery } from "@formbricks/types/analysis";
 import { CartesianChart } from "@/modules/ee/analysis/charts/components/cartesian-chart";
 import {
@@ -10,18 +10,12 @@ import {
   CHART_BRAND_RAMP,
   CHART_MEASURE_COLORS,
   formatCellValue,
-  formatXAxisTick,
   preparePieData,
 } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import { formatCubeColumnHeader } from "@/modules/ee/analysis/lib/schema-definition";
 import type { TChartDataRow, TChartType } from "@/modules/ee/analysis/types/analysis";
 import type { ChartConfig } from "@/modules/ui/components/chart";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/modules/ui/components/chart";
-
-const formatPieLabel = ({ name, percent }: { name: string; percent?: number }): string => {
-  if (percent == null) return "";
-  return `${formatXAxisTick(name)}: ${(percent * 100).toFixed(0)}%`;
-};
 
 const PieTooltipRow = ({ value, name }: Readonly<{ value: unknown; name: string }>) => {
   const { t } = useTranslation();
@@ -201,9 +195,15 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
                 dataKey={dataKey}
                 nameKey={xAxisKey}
                 cx="50%"
-                cy="50%"
-                outerRadius={80}
-                label={formatPieLabel}>
+                cy="45%"
+                // Percentage radius scales with the container so the chart
+                // doesn't disappear when the card height is constrained.
+                // Previously this was a fixed 80px which could render to a
+                // sliver in small cards or, combined with leader-line labels,
+                // collide with the chart frame and disappear.
+                outerRadius="70%"
+                paddingAngle={1}
+                minAngle={2}>
                 {processedData.map((row, index) => {
                   const rowKey = row[xAxisKey] ?? `row-${index}`;
                   const uniqueKey = `${xAxisKey}-${String(rowKey)}-${index}`;
@@ -211,6 +211,7 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
                 })}
               </Pie>
               <ChartTooltip content={<ChartTooltipContent formatter={pieTooltipFormatter} />} />
+              <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: 12 }} />
             </PieChart>
           </ChartContainer>
         </div>

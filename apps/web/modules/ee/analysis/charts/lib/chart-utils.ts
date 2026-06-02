@@ -45,17 +45,17 @@ export const preparePieData = (
   data: TChartDataRow[],
   dataKey: string
 ): { processedData: TChartDataRow[]; colors: string[] } | null => {
-  const validData = data.filter((row) => isNumericValue(row[dataKey]));
+  // Drop rows that are non-numeric or strict zero — a slice with value 0 takes
+  // no arc, but Recharts can still misalign the remaining slices when one
+  // entry has value 0.
+  const validData = data.filter((row) => isNumericValue(row[dataKey]) && Number(row[dataKey]) > 0);
   const processedData = validData.map((row) => ({ ...row, [dataKey]: Number(row[dataKey]) }));
   if (processedData.length === 0) return null;
 
-  const colors = processedData.map((_, i) => {
-    const sat = 70 + (i % 3) * 10;
-    const light = 45 + (i % 2) * 15;
-    return `hsl(180, ${sat}%, ${light}%)`;
-  });
-  if (colors.length > 0) colors[0] = CHART_BRAND_DARK;
-  if (colors.length > 1) colors[1] = CHART_BRAND_LIGHT;
+  // Walk the brand ramp dark→light so the largest categories visually anchor
+  // on the darkest shades. Same palette as the bar chart, keeps the
+  // categorical look consistent across chart types.
+  const colors = processedData.map((_, i) => CHART_BRAND_RAMP[i % CHART_BRAND_RAMP.length]);
   return { processedData, colors };
 };
 
