@@ -1095,6 +1095,18 @@ const ZV3CreateSurveyBodyBase = z.preprocess(
   z
     .object({
       workspaceId: z.cuid2(),
+      type: z.literal("link").prefault("link"),
+      ...V3_SURVEY_DOCUMENT_SHAPE,
+    })
+    .strict()
+    .superRefine(addLanguageIssues)
+);
+
+const ZV3TrustedTemplateCreateSurveyBodyBase = z.preprocess(
+  createV3SurveyDocumentNormalizer({ applyDefaultLanguage: true, generateMissingCreateIds: true }),
+  z
+    .object({
+      workspaceId: z.cuid2(),
       type: ZSurveyType.prefault("link"),
       ...V3_SURVEY_DOCUMENT_SHAPE,
     })
@@ -1110,6 +1122,15 @@ export const ZV3CreateSurveyBody = z
     }
   })
   .pipe(ZV3CreateSurveyBodyBase);
+
+export const ZV3TrustedTemplateCreateSurveyBody = z
+  .unknown()
+  .superRefine((value, ctx) => {
+    for (const issue of getUnsupportedV3SurveyDocumentFields(value, ROOT_KEYS)) {
+      addInvalidParamZodIssue(ctx, issue);
+    }
+  })
+  .pipe(ZV3TrustedTemplateCreateSurveyBodyBase);
 
 function createV3PatchSurveyBodyBase(defaultLanguage: string, options?: TV3LanguageCompatibilityOptions) {
   return z.preprocess(
@@ -1182,5 +1203,6 @@ export function formatV3ZodInvalidParams(error: z.ZodError, fallbackName: string
 
 export type TV3SurveyDocument = z.infer<typeof ZV3SurveyDocumentBase>;
 export type TV3CreateSurveyBody = z.infer<typeof ZV3CreateSurveyBody>;
+export type TV3TrustedTemplateCreateSurveyBody = z.infer<typeof ZV3TrustedTemplateCreateSurveyBody>;
 export type TV3PatchSurveyBody = z.infer<typeof ZV3PatchSurveyBody>;
 export type TV3SurveyValidationRequestBody = z.infer<typeof ZV3SurveyValidationRequestBody>;

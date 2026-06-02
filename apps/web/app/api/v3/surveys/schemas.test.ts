@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
   ZV3CreateSurveyBody,
   ZV3PatchSurveyBody,
+  ZV3TrustedTemplateCreateSurveyBody,
   createZV3PatchSurveyBodySchema,
   formatV3ZodInvalidParams,
 } from "./schemas";
@@ -350,10 +351,20 @@ describe("ZV3CreateSurveyBody", () => {
     });
   });
 
-  test("accepts app survey types and still defaults to link", () => {
+  test("rejects non-link survey types for the public create endpoint", () => {
     expect(ZV3CreateSurveyBody.parse(validCreateBody).type).toBe("link");
 
     const result = ZV3CreateSurveyBody.safeParse({
+      ...validCreateBody,
+      type: "app",
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0].path).toEqual(["type"]);
+  });
+
+  test("accepts app survey types for trusted template creation", () => {
+    const result = ZV3TrustedTemplateCreateSurveyBody.safeParse({
       ...validCreateBody,
       type: "app",
     });

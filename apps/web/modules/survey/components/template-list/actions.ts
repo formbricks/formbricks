@@ -5,7 +5,7 @@ import { logger } from "@formbricks/logger";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZSurveyType } from "@formbricks/types/surveys/types";
 import { createV3SurveyFromTrustedTemplate } from "@/app/api/v3/surveys/create";
-import { prepareV3SurveyCreateInput } from "@/app/api/v3/surveys/prepare";
+import { prepareV3TrustedTemplateSurveyCreateInput } from "@/app/api/v3/surveys/prepare";
 import { CUSTOM_SURVEY_TEMPLATE_ID, getTemplateById } from "@/app/lib/templates";
 import { DEFAULT_LOCALE } from "@/lib/constants";
 import { capturePostHogEvent } from "@/lib/posthog";
@@ -68,7 +68,7 @@ export const createSurveyAction = authenticatedActionClient.inputSchema(ZCreateS
       surveyType: parsedInput.surveyType,
       defaultLanguage: locale,
     });
-    const preparation = prepareV3SurveyCreateInput(payload);
+    const preparation = prepareV3TrustedTemplateSurveyCreateInput(payload);
 
     if (!preparation.ok) {
       const firstInvalidParam = preparation.validation.invalidParams[0];

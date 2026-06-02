@@ -7,7 +7,9 @@ import {
   type TV3CreateSurveyBody,
   type TV3PatchSurveyBody,
   type TV3SurveyDocument,
+  type TV3TrustedTemplateCreateSurveyBody,
   ZV3CreateSurveyBody,
+  ZV3TrustedTemplateCreateSurveyBody,
   createZV3PatchSurveyBodySchema,
   createZV3SurveyDocumentBaseSchema,
   formatV3ZodInvalidParams,
@@ -164,14 +166,26 @@ function getImmutableElementIdIssues(
   return issues;
 }
 
-export function prepareV3SurveyCreate(
-  document: TV3CreateSurveyBody
-): TV3SurveyPrepareResult<TV3CreateSurveyBody> {
+export function prepareV3SurveyCreate<
+  TDocument extends TV3CreateSurveyBody | TV3TrustedTemplateCreateSurveyBody,
+>(document: TDocument): TV3SurveyPrepareResult<TDocument> {
   return validPreparation(document);
 }
 
 export function prepareV3SurveyCreateInput(input: unknown): TV3SurveyPrepareResult<TV3CreateSurveyBody> {
   const parsed = ZV3CreateSurveyBody.safeParse(input);
+
+  if (!parsed.success) {
+    return invalidPreparation(formatV3ZodInvalidParams(parsed.error, "data"));
+  }
+
+  return prepareV3SurveyCreate(parsed.data);
+}
+
+export function prepareV3TrustedTemplateSurveyCreateInput(
+  input: unknown
+): TV3SurveyPrepareResult<TV3TrustedTemplateCreateSurveyBody> {
+  const parsed = ZV3TrustedTemplateCreateSurveyBody.safeParse(input);
 
   if (!parsed.success) {
     return invalidPreparation(formatV3ZodInvalidParams(parsed.error, "data"));

@@ -25,7 +25,7 @@ const mocks = vi.hoisted(() => {
     getWorkspace: vi.fn(),
     replacePresetPlaceholders: vi.fn(),
     buildV3SurveyCreatePayloadFromTemplate: vi.fn(),
-    prepareV3SurveyCreateInput: vi.fn(),
+    prepareV3TrustedTemplateSurveyCreateInput: vi.fn(),
     createV3SurveyFromTrustedTemplate: vi.fn(),
     capturePostHogEvent: vi.fn(),
   };
@@ -83,7 +83,7 @@ vi.mock("./lib/template-to-v3", () => ({
 }));
 
 vi.mock("@/app/api/v3/surveys/prepare", () => ({
-  prepareV3SurveyCreateInput: mocks.prepareV3SurveyCreateInput,
+  prepareV3TrustedTemplateSurveyCreateInput: mocks.prepareV3TrustedTemplateSurveyCreateInput,
 }));
 
 vi.mock("@/app/api/v3/surveys/create", () => ({
@@ -160,7 +160,7 @@ describe("createSurveyAction", () => {
     mocks.getWorkspace.mockResolvedValue(workspace);
     mocks.replacePresetPlaceholders.mockReturnValue(templateWithPlaceholders);
     mocks.buildV3SurveyCreatePayloadFromTemplate.mockReturnValue(payload);
-    mocks.prepareV3SurveyCreateInput.mockReturnValue({
+    mocks.prepareV3TrustedTemplateSurveyCreateInput.mockReturnValue({
       ok: true,
       document: preparedDocument,
     });
@@ -203,7 +203,7 @@ describe("createSurveyAction", () => {
       surveyType: "app",
       defaultLanguage: "de-DE",
     });
-    expect(mocks.prepareV3SurveyCreateInput).toHaveBeenCalledWith(payload);
+    expect(mocks.prepareV3TrustedTemplateSurveyCreateInput).toHaveBeenCalledWith(payload);
     expect(mocks.createV3SurveyFromTrustedTemplate).toHaveBeenCalledWith(preparedDocument, {
       user,
       expires: "",
@@ -275,7 +275,7 @@ describe("createSurveyAction", () => {
   });
 
   test("returns a clear error for invalid regenerated v3 payloads and logs only safe context", async () => {
-    mocks.prepareV3SurveyCreateInput.mockReturnValue({
+    mocks.prepareV3TrustedTemplateSurveyCreateInput.mockReturnValue({
       ok: false,
       validation: {
         invalidParams: [

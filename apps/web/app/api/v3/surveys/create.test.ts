@@ -6,7 +6,7 @@ import { createSurvey } from "@/lib/survey/service";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import { V3SurveyCreatePermissionError, createV3Survey, createV3SurveyFromTrustedTemplate } from "./create";
 import { V3SurveyReferenceValidationError } from "./reference-validation";
-import { ZV3CreateSurveyBody } from "./schemas";
+import { ZV3CreateSurveyBody, ZV3TrustedTemplateCreateSurveyBody } from "./schemas";
 
 vi.mock("server-only", () => ({}));
 
@@ -131,13 +131,8 @@ describe("createV3Survey", () => {
   });
 
   test("maps the public v3 body to the internal create payload", async () => {
-    const appCreateBody = ZV3CreateSurveyBody.parse({
-      ...rawCreateBody,
-      type: "app",
-    });
-
     await createV3Survey(
-      appCreateBody,
+      createBody,
       {
         user: { id: "user_1", email: "user@example.com", name: "User" },
         expires: "2026-05-01",
@@ -161,7 +156,7 @@ describe("createV3Survey", () => {
       workspaceId,
       expect.objectContaining({
         name: "Product Feedback",
-        type: "app",
+        type: "link",
         status: "draft",
         createdBy: "user_1",
         questions: [],
@@ -289,8 +284,9 @@ describe("createV3Survey", () => {
 
   test("trusted template creation preserves curated external URLs without public entitlement checks", async () => {
     vi.mocked(getExternalUrlsPermission).mockResolvedValue(false);
-    const body = ZV3CreateSurveyBody.parse({
+    const body = ZV3TrustedTemplateCreateSurveyBody.parse({
       ...rawCreateBody,
+      type: "app",
       endings: [
         {
           id: "clen1234567890123456789012",
@@ -314,6 +310,7 @@ describe("createV3Survey", () => {
     expect(createSurvey).toHaveBeenCalledWith(
       workspaceId,
       expect.objectContaining({
+        type: "app",
         endings: [
           expect.objectContaining({
             type: "redirectToUrl",
@@ -325,7 +322,7 @@ describe("createV3Survey", () => {
   });
 
   test("trusted template creation still rejects invalid v3 documents", async () => {
-    const body = ZV3CreateSurveyBody.parse({
+    const body = ZV3TrustedTemplateCreateSurveyBody.parse({
       ...rawCreateBody,
       hiddenFields: { enabled: true, fieldIds: ["utm_source"] },
       blocks: [

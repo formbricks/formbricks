@@ -8,7 +8,7 @@ import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import { type TV3SurveyLanguageRequest, ensureV3WorkspaceLanguages } from "./languages";
 import { prepareV3SurveyCreate } from "./prepare";
 import { V3SurveyReferenceValidationError } from "./reference-validation";
-import type { TV3CreateSurveyBody } from "./schemas";
+import type { TV3CreateSurveyBody, TV3TrustedTemplateCreateSurveyBody } from "./schemas";
 
 export class V3SurveyCreatePermissionError extends Error {
   constructor(message: string) {
@@ -25,7 +25,9 @@ function getCreatedBy(authentication: TV3Authentication): string | null {
   return null;
 }
 
-function hasExternalUrlReferences(input: TV3CreateSurveyBody): boolean {
+type TV3SurveyCreateDocument = TV3CreateSurveyBody | TV3TrustedTemplateCreateSurveyBody;
+
+function hasExternalUrlReferences(input: TV3SurveyCreateDocument): boolean {
   const hasExternalEndingLink = input.endings.some((ending) => {
     if (ending.type === "endScreen") {
       return Boolean(ending.buttonLink);
@@ -41,7 +43,7 @@ function hasExternalUrlReferences(input: TV3CreateSurveyBody): boolean {
 }
 
 async function assertV3SurveyCreatePermissions(
-  input: TV3CreateSurveyBody,
+  input: TV3CreateSurveyDocument,
   organizationId?: string
 ): Promise<void> {
   if (!hasExternalUrlReferences(input)) {
@@ -65,7 +67,7 @@ async function assertV3SurveyCreatePermissions(
 }
 
 export async function executeV3SurveyCreate(params: {
-  input: TV3CreateSurveyBody;
+  input: TV3SurveyCreateDocument;
   authentication: TV3Authentication;
   languageRequests: TV3SurveyLanguageRequest[];
   requestId?: string;
@@ -112,7 +114,7 @@ export async function createV3Survey(
 }
 
 export async function createV3SurveyFromTrustedTemplate(
-  input: TV3CreateSurveyBody,
+  input: TV3TrustedTemplateCreateSurveyBody,
   authentication: TV3Authentication,
   requestId?: string
 ) {
