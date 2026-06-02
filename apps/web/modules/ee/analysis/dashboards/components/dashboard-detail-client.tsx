@@ -18,11 +18,11 @@ import { DashboardWidget } from "@/modules/ee/analysis/dashboards/components/das
 import { DashboardWidgetData } from "@/modules/ee/analysis/dashboards/components/dashboard-widget-data";
 import { DashboardWidgetSkeleton } from "@/modules/ee/analysis/dashboards/components/dashboard-widget-skeleton";
 import type { TChartDataRow, TDashboardDetail, TDashboardWidget } from "@/modules/ee/analysis/types/analysis";
-import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { EmptyState } from "@/modules/ui/components/empty-state";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import {
+  addChartToDashboardAction,
   removeWidgetFromDashboardAction,
   updateDashboardAction,
   updateWidgetLayoutsAction,
@@ -169,8 +169,6 @@ export function DashboardDetailClient({
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [editingChartId, setEditingChartId] = useState<string | null>(null);
-  const [widgetIdToRemove, setWidgetIdToRemove] = useState<string | null>(null);
-  const [isRemovingWidget, setIsRemovingWidget] = useState(false);
   const [, startTransition] = useTransition();
 
   const [name, setName] = useState(dashboard.name);
@@ -213,37 +211,78 @@ export function DashboardDetailClient({
     setEditingChartId(chartId);
   }, []);
 
+  const handleUndoRemoveWidget = useCallback(
+    async (snapshot: TDashboardWidget) => {
+      const result = await addChartToDashboardAction({
+        workspaceId,
+        dashboardId: dashboard.id,
+        chartId: snapshot.chartId,
+        layout: snapshot.layout,
+      });
+      if (!result?.data) {
+        toast.error(t("workspace.analysis.dashboards.chart_restore_failed"));
+        return;
+      }
+      toast.success(t("workspace.analysis.dashboards.chart_restored"));
+      startTransition(() => router.refresh());
+    },
+    [workspaceId, dashboard.id, router, t, startTransition]
+  );
+
   const handleRemoveWidgetFromMenu = useCallback(
-    (widgetId: string) => {
+    async (widgetId: string) => {
+      // While the dashboard is being edited, removal stays in the draft state
+      // and is applied on save — no API call, no toast.
       if (isEditing) {
         handleRemoveWidget(widgetId);
         return;
       }
-      setWidgetIdToRemove(widgetId);
-    },
-    [handleRemoveWidget, isEditing]
-  );
 
-  const handleConfirmRemoveWidget = useCallback(async () => {
-    if (!widgetIdToRemove) return;
-    setIsRemovingWidget(true);
-    try {
+      const snapshot = (draftWidgets ?? dashboard.widgets).find((w) => w.id === widgetId);
+      if (!snapshot) return;
+
       const result = await removeWidgetFromDashboardAction({
         workspaceId,
         dashboardId: dashboard.id,
-        widgetId: widgetIdToRemove,
+        widgetId,
       });
       if (!result?.data) {
         toast.error(getFormattedErrorMessage(result));
         return;
       }
-      toast.success(t("workspace.analysis.dashboards.chart_removed"));
-      setWidgetIdToRemove(null);
+
+      toast.success(
+        (toastInstance) => (
+          <div className="flex items-center gap-3">
+            <span>{t("workspace.analysis.dashboards.chart_removed")}</span>
+            <button
+              type="button"
+              className="text-sm font-medium text-brand-dark underline hover:text-brand-dark/80"
+              onClick={() => {
+                toast.dismiss(toastInstance.id);
+                void handleUndoRemoveWidget(snapshot);
+              }}>
+              {t("common.undo")}
+            </button>
+          </div>
+        ),
+        { duration: 6000 }
+      );
       startTransition(() => router.refresh());
-    } finally {
-      setIsRemovingWidget(false);
-    }
-  }, [widgetIdToRemove, workspaceId, dashboard.id, router, t, startTransition]);
+    },
+    [
+      draftWidgets,
+      dashboard.widgets,
+      dashboard.id,
+      handleRemoveWidget,
+      handleUndoRemoveWidget,
+      isEditing,
+      router,
+      startTransition,
+      t,
+      workspaceId,
+    ]
+  );
 
   const handleCancel = useCallback(() => {
     setName(dashboard.name);
@@ -398,17 +437,6 @@ export function DashboardDetailClient({
           directories={directories}
           isAIAvailable={isAIAvailable}
           aiUnavailableReason={aiUnavailableReason}
-        />
-      )}
-      {!isReadOnly && (
-        <DeleteDialog
-          open={widgetIdToRemove !== null}
-          setOpen={(open) => {
-            if (!open) setWidgetIdToRemove(null);
-          }}
-          deleteWhat={t("common.chart")}
-          onDelete={handleConfirmRemoveWidget}
-          isDeleting={isRemovingWidget}
         />
       )}
     </PageContentWrapper>

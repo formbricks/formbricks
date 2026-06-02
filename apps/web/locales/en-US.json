@@ -479,6 +479,7 @@
     "trial_plan_badge": "{plan} Trial",
     "try_again": "Try again",
     "type": "Type",
+    "undo": "Undo",
     "unlock_more_workspaces_with_a_higher_plan": "Unlock more workspaces with a higher plan.",
     "update": "Update",
     "updated": "Updated",
@@ -1835,6 +1836,8 @@
       "dashboards": {
         "add_count_charts": "Add {count} chart(s)",
         "chart_removed": "Chart removed from dashboard",
+        "chart_restore_failed": "Failed to restore chart",
+        "chart_restored": "Chart restored",
         "charts_add_failed": "Failed to add charts to dashboard",
         "charts_add_partial_failure": "Failed to add {count} chart(s)",
         "charts_added_to_dashboard": "Charts added to dashboard",
