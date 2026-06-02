@@ -106,17 +106,19 @@ export function CartesianChart({
             axisLine={false}
             tickFormatter={formatXAxisTick}
           />
-          {/* `monotone` interpolation can bulge slightly above the data max
-              between points. Pad the domain (10% above max, capped at next
-              nice integer) AND reserve pixel space at the top so the spline
-              doesn't get clipped by the chart container. */}
+          {/* Derive the y-axis bounds from the actual data min/max with ~10%
+              headroom on each side so monotone interpolation peaks (which
+              bulge slightly above the data max between points) and troughs
+              (which dip below the data min) are never clipped by the chart
+              container. Round outward to the next integer so tick labels
+              stay clean. */}
           <YAxis
             tickLine={false}
             axisLine={false}
-            padding={{ top: 16 }}
+            padding={{ top: 16, bottom: 4 }}
             domain={[
-              ((dataMin: number) => (dataMin < 0 ? Math.floor(dataMin * 1.1) : dataMin)) as never,
-              ((dataMax: number) => (dataMax <= 0 ? 0 : Math.ceil(dataMax * 1.1))) as never,
+              ((dataMin: number) => Math.floor(dataMin - Math.abs(dataMin) * 0.1 - 1)) as never,
+              ((dataMax: number) => Math.ceil(dataMax + Math.abs(dataMax) * 0.1 + 1)) as never,
             ]}
           />
           <ChartTooltip content={tooltipContent} cursor={tooltipCursor} />
