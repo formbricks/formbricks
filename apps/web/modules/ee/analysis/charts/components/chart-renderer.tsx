@@ -18,14 +18,14 @@ import type { TChartDataRow, TChartType } from "@/modules/ee/analysis/types/anal
 import type { ChartConfig } from "@/modules/ui/components/chart";
 import { ChartContainer, ChartTooltip } from "@/modules/ui/components/chart";
 
-type PieLabelProps = {
+interface PieLabelProps {
   cx?: number;
   cy?: number;
   midAngle?: number;
   outerRadius?: number;
   percent?: number;
   value?: number;
-};
+}
 
 /**
  * External pie label: leader line + "value (percent%)" anchored outside the

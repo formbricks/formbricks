@@ -8,19 +8,19 @@ import {
 } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import { formatCubeColumnHeader } from "@/modules/ee/analysis/lib/schema-definition";
 
-type TooltipPayloadItem = {
+interface TooltipPayloadItem {
   dataKey?: string;
   name?: string | number;
   value?: unknown;
   color?: string;
   payload?: { fill?: string };
-};
+}
 
-type RechartsTooltipProps = {
+interface RechartsTooltipProps {
   active?: boolean;
   payload?: TooltipPayloadItem[];
   label?: string | number;
-};
+}
 
 /**
  * Polished hover tooltip card matching the Twenty-style target:
