@@ -1,9 +1,9 @@
 import {
-  TConnectorFieldMapping,
+  TFeedbackSourceFieldMapping,
   THubFieldType,
   THubTargetField,
   ZHubFieldType,
-} from "@formbricks/types/connector";
+} from "@formbricks/types/feedback-source";
 import { FeedbackRecordCreateParams } from "@/modules/hub";
 import { routeResponseValueTarget } from "./utils";
 
@@ -50,7 +50,7 @@ const coerceValue = (value: string, targetField: THubTargetField): string | numb
 
 const resolveValue = (
   row: Record<string, string>,
-  mapping: TConnectorFieldMapping,
+  mapping: TFeedbackSourceFieldMapping,
   effectiveTargetFieldId: THubTargetField
 ): string | number | boolean | undefined => {
   if (mapping.staticValue) {
@@ -68,7 +68,7 @@ const resolveValue = (
 
 const resolveFieldTypeForRow = (
   row: Record<string, string>,
-  mappings: TConnectorFieldMapping[]
+  mappings: TFeedbackSourceFieldMapping[]
 ): THubFieldType | null => {
   const mapping = mappings.find((m) => m.targetFieldId === "field_type");
   if (!mapping) return null;
@@ -87,7 +87,7 @@ const resolveFieldTypeForRow = (
  */
 export const transformCsvRowToFeedbackRecord = (
   row: Record<string, string>,
-  mappings: TConnectorFieldMapping[],
+  mappings: TFeedbackSourceFieldMapping[],
   tenantId?: string
 ): FeedbackRecordCreateParams | null => {
   const record: Record<string, string | number | boolean | Record<string, unknown> | undefined> = {};
@@ -151,7 +151,7 @@ export const transformCsvRowToFeedbackRecord = (
  */
 export const transformCsvRowsToFeedbackRecords = (
   rows: Record<string, string>[],
-  mappings: TConnectorFieldMapping[],
+  mappings: TFeedbackSourceFieldMapping[],
   tenantId?: string
 ): { records: FeedbackRecordCreateParams[]; skipped: number } => {
   const records: FeedbackRecordCreateParams[] = [];

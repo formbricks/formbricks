@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import { UNSUPPORTED_CONNECTOR_ELEMENT_TYPES } from "@formbricks/types/connector";
+import { UNSUPPORTED_FEEDBACK_SOURCE_ELEMENT_TYPES } from "@formbricks/types/feedback-source";
 import { getTSurveyElementTypeEnumName } from "@/modules/survey/lib/elements";
 import { Checkbox } from "@/modules/ui/components/checkbox";
 import { Label } from "@/modules/ui/components/label";
@@ -14,7 +14,7 @@ interface FormbricksQuestionListProps {
 }
 
 const isUnsupportedElementType = (type: string): boolean =>
-  (UNSUPPORTED_CONNECTOR_ELEMENT_TYPES as readonly string[]).includes(type);
+  (UNSUPPORTED_FEEDBACK_SOURCE_ELEMENT_TYPES as readonly string[]).includes(type);
 
 export const FormbricksQuestionList = ({
   survey,
@@ -45,7 +45,7 @@ export const FormbricksQuestionList = ({
         const unsupported = isUnsupportedElementType(element.type);
         const isChecked = selectedQuestionIds.includes(element.id);
         const elementTypeLabel = getTSurveyElementTypeEnumName(element.type, t) ?? element.type;
-        const inputId = `connector-question-${element.id}`;
+        const inputId = `feedbackSource-question-${element.id}`;
 
         return (
           <div

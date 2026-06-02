@@ -4,15 +4,15 @@ import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
-import {
-  TConnectorWithMappings,
-  THubFieldType,
-  ZConnectorCreateInput,
-  ZConnectorFieldMappingCreateInput,
-  ZConnectorUpdateInput,
-  getHubFieldTypeFromElementType,
-} from "@formbricks/types/connector";
 import { AuthorizationError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import {
+  TFeedbackSourceWithMappings,
+  THubFieldType,
+  ZFeedbackSourceCreateInput,
+  ZFeedbackSourceFieldMappingCreateInput,
+  ZFeedbackSourceUpdateInput,
+  getHubFieldTypeFromElementType,
+} from "@formbricks/types/feedback-source";
 import { getResponseCountBySurveyId } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
@@ -20,7 +20,7 @@ import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import {
-  getOrganizationIdFromConnectorId,
+  getOrganizationIdFromFeedbackSourceId,
   getOrganizationIdFromSurveyId,
   getOrganizationIdFromWorkspaceId,
 } from "@/lib/utils/helper";
@@ -31,11 +31,11 @@ import { importCsvData } from "./csv-import";
 import { importHistoricalResponses } from "./import";
 import {
   TMappingsInput,
-  createConnectorWithMappings,
-  deleteConnector,
-  getConnectorWithMappingsById,
-  updateConnector,
-  updateConnectorWithMappings,
+  createFeedbackSourceWithMappings,
+  deleteFeedbackSource,
+  getFeedbackSourceWithMappingsById,
+  updateFeedbackSource,
+  updateFeedbackSourceWithMappings,
 } from "./service";
 import {
   formatMissingRequiredCsvFieldMappingsMessage,
@@ -43,22 +43,22 @@ import {
   sanitizeCsvFieldMappings,
 } from "./utils";
 
-const ZDeleteConnectorAction = z.object({
-  connectorId: ZId,
+const ZDeleteFeedbackSourceAction = z.object({
+  feedbackSourceId: ZId,
   workspaceId: ZId,
 });
 
-export const deleteConnectorAction = authenticatedActionClient
-  .inputSchema(ZDeleteConnectorAction)
+export const deleteFeedbackSourceAction = authenticatedActionClient
+  .inputSchema(ZDeleteFeedbackSourceAction)
   .action(
     async ({
       ctx,
       parsedInput,
     }: {
       ctx: AuthenticatedActionClientCtx;
-      parsedInput: z.infer<typeof ZDeleteConnectorAction>;
+      parsedInput: z.infer<typeof ZDeleteFeedbackSourceAction>;
     }) => {
-      const organizationId = await getOrganizationIdFromConnectorId(parsedInput.connectorId);
+      const organizationId = await getOrganizationIdFromFeedbackSourceId(parsedInput.feedbackSourceId);
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
         organizationId,
@@ -75,7 +75,7 @@ export const deleteConnectorAction = authenticatedActionClient
         ],
       });
 
-      return deleteConnector(parsedInput.connectorId, parsedInput.workspaceId);
+      return deleteFeedbackSource(parsedInput.feedbackSourceId, parsedInput.workspaceId);
     }
   );
 
@@ -94,7 +94,10 @@ const resolveSurveyMappings = async (
   return elementIds.flatMap((elementId) => {
     const element = elementMap.get(elementId);
     if (!element) {
-      logger.warn({ surveyId, elementId }, "Skipping unknown elementId when building connector mappings");
+      logger.warn(
+        { surveyId, elementId },
+        "Skipping unknown elementId when building feedbackSource mappings"
+      );
       return [];
     }
 
@@ -102,7 +105,7 @@ const resolveSurveyMappings = async (
     if (!hubFieldType) {
       logger.warn(
         { surveyId, elementId, elementType: element.type },
-        "Skipping unmappable element type when building connector mappings"
+        "Skipping unmappable element type when building feedbackSource mappings"
       );
       return [];
     }
@@ -119,7 +122,7 @@ const resolveFormbricksMappingsInput = async (
   );
   const flattenedMappings = allMappings.flat();
   if (flattenedMappings.length === 0) {
-    throw new InvalidInputError("No supported survey questions selected for connector mapping");
+    throw new InvalidInputError("No supported survey questions selected for feedbackSource mapping");
   }
 
   return { type: "formbricks_survey", mappings: flattenedMappings };
@@ -131,7 +134,7 @@ const ZFormbricksSurveyMapping = z.object({
 });
 
 const sanitizeAndValidateCsvFieldMappings = (
-  fieldMappings: z.infer<typeof ZConnectorFieldMappingCreateInput>[]
+  fieldMappings: z.infer<typeof ZFeedbackSourceFieldMappingCreateInput>[]
 ) => {
   const sanitized = sanitizeCsvFieldMappings(fieldMappings) ?? [];
   const missing = getMissingRequiredCsvFieldMappings(sanitized);
@@ -143,36 +146,36 @@ const sanitizeAndValidateCsvFieldMappings = (
   return sanitized;
 };
 
-const ZCreateConnectorWithMappingsAction = z
+const ZCreateFeedbackSourceWithMappingsAction = z
   .object({
     workspaceId: ZId,
-    connectorInput: ZConnectorCreateInput,
+    feedbackSourceInput: ZFeedbackSourceCreateInput,
     formbricksMappings: z.array(ZFormbricksSurveyMapping).optional(),
-    fieldMappings: z.array(ZConnectorFieldMappingCreateInput).optional(),
+    fieldMappings: z.array(ZFeedbackSourceFieldMappingCreateInput).optional(),
   })
   .superRefine((data, ctx) => {
-    if (data.connectorInput.type === "formbricks_survey") {
+    if (data.feedbackSourceInput.type === "formbricks_survey") {
       if (!data.formbricksMappings?.length) {
         ctx.addIssue({
           code: "custom",
           path: ["formbricksMappings"],
-          message: "At least one survey mapping is required for Formbricks connectors",
+          message: "At least one survey mapping is required for Formbricks feedbackSources",
         });
       }
-    } else if (data.connectorInput.type === "csv") {
+    } else if (data.feedbackSourceInput.type === "csv") {
       if (!data.fieldMappings?.length) {
         ctx.addIssue({
           code: "custom",
           path: ["fieldMappings"],
-          message: "At least one field mapping is required for CSV connectors",
+          message: "At least one field mapping is required for CSV feedbackSources",
         });
       }
     }
   });
 
-export const createConnectorWithMappingsAction = authenticatedActionClient
-  .inputSchema(ZCreateConnectorWithMappingsAction)
-  .action(async ({ ctx, parsedInput }): Promise<TConnectorWithMappings> => {
+export const createFeedbackSourceWithMappingsAction = authenticatedActionClient
+  .inputSchema(ZCreateFeedbackSourceWithMappingsAction)
+  .action(async ({ ctx, parsedInput }): Promise<TFeedbackSourceWithMappings> => {
     const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
@@ -192,7 +195,7 @@ export const createConnectorWithMappingsAction = authenticatedActionClient
 
     // Verify FRD belongs to same org
     const frd = await prisma.feedbackDirectory.findUnique({
-      where: { id: parsedInput.connectorInput.feedbackDirectoryId },
+      where: { id: parsedInput.feedbackSourceInput.feedbackDirectoryId },
       select: { organizationId: true },
     });
     if (frd?.organizationId !== organizationId) {
@@ -218,38 +221,38 @@ export const createConnectorWithMappingsAction = authenticatedActionClient
       mappingsInput = {
         type: "field",
         mappings:
-          parsedInput.connectorInput.type === "csv"
+          parsedInput.feedbackSourceInput.type === "csv"
             ? sanitizeAndValidateCsvFieldMappings(fieldMappings)
             : fieldMappings,
       };
     }
 
-    return createConnectorWithMappings(
+    return createFeedbackSourceWithMappings(
       parsedInput.workspaceId,
-      { ...parsedInput.connectorInput, createdBy: ctx.user.id },
+      { ...parsedInput.feedbackSourceInput, createdBy: ctx.user.id },
       mappingsInput
     );
   });
 
-const ZUpdateConnectorWithMappingsAction = z.object({
-  connectorId: ZId,
+const ZUpdateFeedbackSourceWithMappingsAction = z.object({
+  feedbackSourceId: ZId,
   workspaceId: ZId,
-  connectorInput: ZConnectorUpdateInput,
+  feedbackSourceInput: ZFeedbackSourceUpdateInput,
   formbricksMappings: z.array(ZFormbricksSurveyMapping).min(1).optional(),
-  fieldMappings: z.array(ZConnectorFieldMappingCreateInput).optional(),
+  fieldMappings: z.array(ZFeedbackSourceFieldMappingCreateInput).optional(),
 });
 
-export const updateConnectorWithMappingsAction = authenticatedActionClient
-  .inputSchema(ZUpdateConnectorWithMappingsAction)
+export const updateFeedbackSourceWithMappingsAction = authenticatedActionClient
+  .inputSchema(ZUpdateFeedbackSourceWithMappingsAction)
   .action(
     async ({
       ctx,
       parsedInput,
     }: {
       ctx: AuthenticatedActionClientCtx;
-      parsedInput: z.infer<typeof ZUpdateConnectorWithMappingsAction>;
-    }): Promise<TConnectorWithMappings> => {
-      const organizationId = await getOrganizationIdFromConnectorId(parsedInput.connectorId);
+      parsedInput: z.infer<typeof ZUpdateFeedbackSourceWithMappingsAction>;
+    }): Promise<TFeedbackSourceWithMappings> => {
+      const organizationId = await getOrganizationIdFromFeedbackSourceId(parsedInput.feedbackSourceId);
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
         organizationId,
@@ -280,48 +283,48 @@ export const updateConnectorWithMappingsAction = authenticatedActionClient
 
         mappingsInput = await resolveFormbricksMappingsInput(parsedInput.formbricksMappings);
       } else if (parsedInput.fieldMappings && parsedInput.fieldMappings.length > 0) {
-        const connector = await prisma.connector.findUnique({
-          where: { id: parsedInput.connectorId, workspaceId: parsedInput.workspaceId },
+        const feedbackSource = await prisma.feedbackSource.findUnique({
+          where: { id: parsedInput.feedbackSourceId, workspaceId: parsedInput.workspaceId },
           select: { type: true },
         });
-        if (!connector) {
-          throw new ResourceNotFoundError("Connector", parsedInput.connectorId);
+        if (!feedbackSource) {
+          throw new ResourceNotFoundError("FeedbackSource", parsedInput.feedbackSourceId);
         }
 
         mappingsInput = {
           type: "field",
           mappings:
-            connector.type === "csv"
+            feedbackSource.type === "csv"
               ? sanitizeAndValidateCsvFieldMappings(parsedInput.fieldMappings)
               : parsedInput.fieldMappings,
         };
       }
 
-      return updateConnectorWithMappings(
-        parsedInput.connectorId,
+      return updateFeedbackSourceWithMappings(
+        parsedInput.feedbackSourceId,
         parsedInput.workspaceId,
-        parsedInput.connectorInput,
+        parsedInput.feedbackSourceInput,
         mappingsInput
       );
     }
   );
 
-const ZDuplicateConnectorAction = z.object({
-  connectorId: ZId,
+const ZDuplicateFeedbackSourceAction = z.object({
+  feedbackSourceId: ZId,
   workspaceId: ZId,
 });
 
-export const duplicateConnectorAction = authenticatedActionClient
-  .inputSchema(ZDuplicateConnectorAction)
+export const duplicateFeedbackSourceAction = authenticatedActionClient
+  .inputSchema(ZDuplicateFeedbackSourceAction)
   .action(
     async ({
       ctx,
       parsedInput,
     }: {
       ctx: AuthenticatedActionClientCtx;
-      parsedInput: z.infer<typeof ZDuplicateConnectorAction>;
-    }): Promise<TConnectorWithMappings> => {
-      const organizationId = await getOrganizationIdFromConnectorId(parsedInput.connectorId);
+      parsedInput: z.infer<typeof ZDuplicateFeedbackSourceAction>;
+    }): Promise<TFeedbackSourceWithMappings> => {
+      const organizationId = await getOrganizationIdFromFeedbackSourceId(parsedInput.feedbackSourceId);
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
         organizationId,
@@ -338,9 +341,12 @@ export const duplicateConnectorAction = authenticatedActionClient
         ],
       });
 
-      const source = await getConnectorWithMappingsById(parsedInput.connectorId, parsedInput.workspaceId);
+      const source = await getFeedbackSourceWithMappingsById(
+        parsedInput.feedbackSourceId,
+        parsedInput.workspaceId
+      );
       if (!source) {
-        throw new ResourceNotFoundError("Connector", parsedInput.connectorId);
+        throw new ResourceNotFoundError("FeedbackSource", parsedInput.feedbackSourceId);
       }
 
       let mappingsInput: TMappingsInput | undefined;
@@ -367,7 +373,7 @@ export const duplicateConnectorAction = authenticatedActionClient
         };
       }
 
-      return createConnectorWithMappings(
+      return createFeedbackSourceWithMappings(
         parsedInput.workspaceId,
         {
           name: `${source.name} (copy)`,
@@ -417,7 +423,7 @@ export const getResponseCountAction = authenticatedActionClient
   );
 
 const ZImportHistoricalResponsesAction = z.object({
-  connectorId: ZId,
+  feedbackSourceId: ZId,
   workspaceId: ZId,
   surveyId: ZId,
 });
@@ -432,7 +438,7 @@ export const importHistoricalResponsesAction = authenticatedActionClient
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZImportHistoricalResponsesAction>;
     }) => {
-      const organizationId = await getOrganizationIdFromConnectorId(parsedInput.connectorId);
+      const organizationId = await getOrganizationIdFromFeedbackSourceId(parsedInput.feedbackSourceId);
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
         organizationId,
@@ -449,9 +455,12 @@ export const importHistoricalResponsesAction = authenticatedActionClient
         ],
       });
 
-      const connector = await getConnectorWithMappingsById(parsedInput.connectorId, parsedInput.workspaceId);
-      if (!connector) {
-        throw new ResourceNotFoundError("Connector", parsedInput.connectorId);
+      const feedbackSource = await getFeedbackSourceWithMappingsById(
+        parsedInput.feedbackSourceId,
+        parsedInput.workspaceId
+      );
+      if (!feedbackSource) {
+        throw new ResourceNotFoundError("FeedbackSource", parsedInput.feedbackSourceId);
       }
 
       const survey = await getSurvey(parsedInput.surveyId);
@@ -459,12 +468,12 @@ export const importHistoricalResponsesAction = authenticatedActionClient
         throw new ResourceNotFoundError("Survey", parsedInput.surveyId);
       }
 
-      return importHistoricalResponses(connector, survey);
+      return importHistoricalResponses(feedbackSource, survey);
     }
   );
 
 const ZImportCsvDataAction = z.object({
-  connectorId: ZId,
+  feedbackSourceId: ZId,
   workspaceId: ZId,
   csvData: z.array(z.record(z.string(), z.string())).min(1),
 });
@@ -479,7 +488,7 @@ export const importCsvDataAction = authenticatedActionClient
       ctx: AuthenticatedActionClientCtx;
       parsedInput: z.infer<typeof ZImportCsvDataAction>;
     }) => {
-      const organizationId = await getOrganizationIdFromConnectorId(parsedInput.connectorId);
+      const organizationId = await getOrganizationIdFromFeedbackSourceId(parsedInput.feedbackSourceId);
       await checkAuthorizationUpdated({
         userId: ctx.user.id,
         organizationId,
@@ -496,15 +505,18 @@ export const importCsvDataAction = authenticatedActionClient
         ],
       });
 
-      const connector = await getConnectorWithMappingsById(parsedInput.connectorId, parsedInput.workspaceId);
-      if (!connector) {
-        throw new ResourceNotFoundError("Connector", parsedInput.connectorId);
+      const feedbackSource = await getFeedbackSourceWithMappingsById(
+        parsedInput.feedbackSourceId,
+        parsedInput.workspaceId
+      );
+      if (!feedbackSource) {
+        throw new ResourceNotFoundError("FeedbackSource", parsedInput.feedbackSourceId);
       }
 
-      const result = await importCsvData(connector, parsedInput.csvData);
+      const result = await importCsvData(feedbackSource, parsedInput.csvData);
 
       if (result.successes > 0) {
-        await updateConnector(parsedInput.connectorId, parsedInput.workspaceId, {
+        await updateFeedbackSource(parsedInput.feedbackSourceId, parsedInput.workspaceId, {
           lastSyncAt: new Date(),
         });
       }

@@ -5,8 +5,8 @@ import {
   getFormattedErrorMessage,
   getOrganizationIdFromActionClassId,
   getOrganizationIdFromApiKeyId,
-  getOrganizationIdFromConnectorId,
   getOrganizationIdFromContactId,
+  getOrganizationIdFromFeedbackSourceId,
   getOrganizationIdFromIntegrationId,
   getOrganizationIdFromInviteId,
   getOrganizationIdFromLanguageId,
@@ -47,7 +47,7 @@ vi.mock("@/lib/utils/services", () => ({
   getLanguage: vi.fn(),
   getTeam: vi.fn(),
   getTag: vi.fn(),
-  getConnector: vi.fn(),
+  getFeedbackSource: vi.fn(),
 }));
 
 describe("Helper Utilities", () => {
@@ -329,25 +329,27 @@ describe("Helper Utilities", () => {
       expect(orgId).toBe("org1");
     });
 
-    test("getOrganizationIdFromConnectorId returns organization ID through workspace", async () => {
-      vi.mocked(services.getConnector).mockResolvedValueOnce({
+    test("getOrganizationIdFromFeedbackSourceId returns organization ID through workspace", async () => {
+      vi.mocked(services.getFeedbackSource).mockResolvedValueOnce({
         workspaceId: "workspace1",
       });
       vi.mocked(services.getWorkspace).mockResolvedValueOnce({
         organizationId: "org1",
       });
 
-      const orgId = await getOrganizationIdFromConnectorId("connector1");
+      const orgId = await getOrganizationIdFromFeedbackSourceId("feedbackSource1");
       expect(orgId).toBe("org1");
-      expect(services.getConnector).toHaveBeenCalledWith("connector1");
+      expect(services.getFeedbackSource).toHaveBeenCalledWith("feedbackSource1");
       expect(services.getWorkspace).toHaveBeenCalledWith("workspace1");
     });
 
-    test("getOrganizationIdFromConnectorId throws error when connector not found", async () => {
-      vi.mocked(services.getConnector).mockResolvedValueOnce(null);
+    test("getOrganizationIdFromFeedbackSourceId throws error when feedbackSource not found", async () => {
+      vi.mocked(services.getFeedbackSource).mockResolvedValueOnce(null);
 
-      await expect(getOrganizationIdFromConnectorId("nonexistent")).rejects.toThrow(ResourceNotFoundError);
-      expect(services.getConnector).toHaveBeenCalledWith("nonexistent");
+      await expect(getOrganizationIdFromFeedbackSourceId("nonexistent")).rejects.toThrow(
+        ResourceNotFoundError
+      );
+      expect(services.getFeedbackSource).toHaveBeenCalledWith("nonexistent");
     });
   });
 

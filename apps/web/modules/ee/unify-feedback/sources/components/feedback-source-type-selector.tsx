@@ -4,18 +4,18 @@ import Link from "next/link";
 import { Trans, useTranslation } from "react-i18next";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Badge } from "@/modules/ui/components/badge";
-import { TConnectorOptionId, getConnectorOptions } from "../utils";
+import { TFeedbackSourceOptionId, getFeedbackSourceOptions } from "../utils";
 
-interface ConnectorTypeSelectorProps {
-  selectedType: TConnectorOptionId | null;
-  onSelectType: (type: TConnectorOptionId) => void;
+interface FeedbackSourceTypeSelectorProps {
+  selectedType: TFeedbackSourceOptionId | null;
+  onSelectType: (type: TFeedbackSourceOptionId) => void;
   workspaceId: string;
   surveyCount: number;
 }
 
 const getOptionClassName = (
-  selectedType: TConnectorOptionId | null,
-  optionId: TConnectorOptionId,
+  selectedType: TFeedbackSourceOptionId | null,
+  optionId: TFeedbackSourceOptionId,
   disabled: boolean
 ): string => {
   if (selectedType === optionId) {
@@ -29,19 +29,19 @@ const getOptionClassName = (
   return "border-slate-200 hover:border-slate-300 hover:bg-slate-50";
 };
 
-export function ConnectorTypeSelector({
+export function FeedbackSourceTypeSelector({
   selectedType,
   onSelectType,
   workspaceId,
   surveyCount,
-}: Readonly<ConnectorTypeSelectorProps>) {
+}: Readonly<FeedbackSourceTypeSelectorProps>) {
   const { t } = useTranslation();
-  const connectorOptions = getConnectorOptions(t);
+  const feedbackSourceOptions = getFeedbackSourceOptions(t);
 
   return (
     <div className="space-y-3">
       <div className="space-y-2">
-        {connectorOptions.map((option) => {
+        {feedbackSourceOptions.map((option) => {
           const showNoSurveysAlert =
             surveyCount === 0 && option.id === "formbricks_survey" && selectedType === "formbricks_survey";
           const showApiIngestionSetupAlert =

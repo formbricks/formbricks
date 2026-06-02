@@ -1,6 +1,6 @@
 import { TFunction } from "i18next";
 import { z } from "zod";
-import { THubFieldType, ZHubFieldType } from "@formbricks/types/connector";
+import { THubFieldType, ZHubFieldType } from "@formbricks/types/feedback-source";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 
 export interface TUnifySurveyElement {
@@ -266,33 +266,33 @@ export const createFeedbackCSVDataSchema = (t: TFunction) =>
 
 export type TFeedbackCSVData = z.infer<ReturnType<typeof createFeedbackCSVDataSchema>>;
 
-export type TCreateConnectorStep = "selectType" | "mapping";
+export type TCreateFeedbackSourceStep = "selectType" | "mapping";
 
-export const ZFormbricksConnectorForm = z.object({
-  sourceName: z.string().trim().min(1, "CONNECTOR_NAME_REQUIRED"),
-  surveyId: z.string().min(1, "CONNECTOR_SURVEY_REQUIRED"),
-  selectedQuestionIds: z.array(z.string()).min(1, "CONNECTOR_QUESTIONS_REQUIRED"),
+export const ZFormbricksFeedbackSourceForm = z.object({
+  sourceName: z.string().trim().min(1, "FEEDBACK_SOURCE_NAME_REQUIRED"),
+  surveyId: z.string().min(1, "FEEDBACK_SOURCE_SURVEY_REQUIRED"),
+  selectedQuestionIds: z.array(z.string()).min(1, "FEEDBACK_SOURCE_QUESTIONS_REQUIRED"),
   importHistorical: z.boolean(),
 });
 
-export type TFormbricksConnectorForm = z.infer<typeof ZFormbricksConnectorForm>;
+export type TFormbricksFeedbackSourceForm = z.infer<typeof ZFormbricksFeedbackSourceForm>;
 
-export const getTranslatedConnectorError = (errorCode: string, t: TFunction): string => {
+export const getTranslatedFeedbackSourceError = (errorCode: string, t: TFunction): string => {
   switch (errorCode) {
-    case "CONNECTOR_NAME_DUPLICATE":
-      return t("workspace.unify.error_connector_name_duplicate");
-    case "CONNECTOR_FORMBRICKS_MAPPING_DUPLICATE":
-      return t("workspace.unify.error_connector_formbricks_mapping_duplicate");
-    case "CONNECTOR_FIELD_MAPPING_DUPLICATE":
-      return t("workspace.unify.error_connector_field_mapping_duplicate");
+    case "FEEDBACK_SOURCE_NAME_DUPLICATE":
+      return t("workspace.unify.error_source_name_duplicate");
+    case "FEEDBACK_SOURCE_FORMBRICKS_MAPPING_DUPLICATE":
+      return t("workspace.unify.error_source_formbricks_mapping_duplicate");
+    case "FEEDBACK_SOURCE_FIELD_MAPPING_DUPLICATE":
+      return t("workspace.unify.error_source_field_mapping_duplicate");
     case CSV_IMPORT_MISSING_COLUMNS_ERROR_CODE:
       return t("workspace.unify.csv_saved_mapping_missing_columns");
-    case "CONNECTOR_NAME_REQUIRED":
-      return t("workspace.unify.error_connector_name_required");
-    case "CONNECTOR_SURVEY_REQUIRED":
-      return t("workspace.unify.error_connector_survey_required");
-    case "CONNECTOR_QUESTIONS_REQUIRED":
-      return t("workspace.unify.error_connector_questions_required");
+    case "FEEDBACK_SOURCE_NAME_REQUIRED":
+      return t("workspace.unify.error_source_name_required");
+    case "FEEDBACK_SOURCE_SURVEY_REQUIRED":
+      return t("workspace.unify.error_source_survey_required");
+    case "FEEDBACK_SOURCE_QUESTIONS_REQUIRED":
+      return t("workspace.unify.error_source_questions_required");
     default:
       return errorCode;
   }

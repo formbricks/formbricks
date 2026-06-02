@@ -7,12 +7,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { TConnectorType, UNSUPPORTED_CONNECTOR_ELEMENT_TYPES } from "@formbricks/types/connector";
+import {
+  TFeedbackSourceType,
+  UNSUPPORTED_FEEDBACK_SOURCE_ELEMENT_TYPES,
+} from "@formbricks/types/feedback-source";
 import {
   getResponseCountAction,
   importCsvDataAction,
   importHistoricalResponsesAction,
-} from "@/lib/connector/actions";
+} from "@/lib/feedback-source/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Alert } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -46,36 +49,36 @@ import { Switch } from "@/modules/ui/components/switch";
 import {
   CSV_HIDDEN_STATIC_MAPPINGS,
   CSV_PROTECTED_TARGET_IDS,
-  TCreateConnectorStep,
+  TCreateFeedbackSourceStep,
   TFieldMapping,
-  TFormbricksConnectorForm,
+  TFormbricksFeedbackSourceForm,
   TSourceField,
   TUnifySurvey,
-  ZFormbricksConnectorForm,
-  getTranslatedConnectorError,
+  ZFormbricksFeedbackSourceForm,
+  getTranslatedFeedbackSourceError,
 } from "../types";
 import {
-  TConnectorOptionId,
   TEnumValidationError,
+  TFeedbackSourceOptionId,
   areAllRequiredCsvFieldsMapped,
-  isConnectorNameValid,
+  isFeedbackSourceNameValid,
   toggleQuestionId,
   validateEnumMappings,
 } from "../utils";
-import { ConnectorTypeSelector } from "./connector-type-selector";
-import { CsvConnectorUI } from "./csv-connector-ui";
+import { CsvFeedbackSourceUI } from "./csv-feedback-source-ui";
+import { FeedbackSourceTypeSelector } from "./feedback-source-type-selector";
 import { FormbricksQuestionList } from "./formbricks-question-list";
 
 const API_INGESTION_DOCS_URL = "https://formbricks.com/docs/unify-feedback/api/rest-api";
 const FEEDBACK_RECORD_MCP_DOCS_URL = "https://formbricks.com/docs/unify-feedback/api/mcp";
 
-interface CreateConnectorModalProps {
+interface CreateFeedbackSourceModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   showTrigger?: boolean;
-  onCreateConnector: (data: {
+  onCreateFeedbackSource: (data: {
     name: string;
-    type: TConnectorType;
+    type: TFeedbackSourceType;
     feedbackDirectoryId: string;
     surveyMappings?: { surveyId: string; elementIds: string[] }[];
     fieldMappings?: TFieldMapping[];
@@ -86,8 +89,8 @@ interface CreateConnectorModalProps {
 }
 
 const getDialogTitle = (
-  step: TCreateConnectorStep,
-  type: TConnectorOptionId | null,
+  step: TCreateFeedbackSourceStep,
+  type: TFeedbackSourceOptionId | null,
   t: (key: string) => string
 ): string => {
   if (step === "selectType") return t("workspace.unify.add_feedback_source");
@@ -97,8 +100,8 @@ const getDialogTitle = (
 };
 
 const getDialogDescription = (
-  step: TCreateConnectorStep,
-  type: TConnectorOptionId | null,
+  step: TCreateFeedbackSourceStep,
+  type: TFeedbackSourceOptionId | null,
   t: (key: string) => string
 ): string => {
   if (step === "selectType") return t("workspace.unify.select_source_type_description");
@@ -107,7 +110,7 @@ const getDialogDescription = (
   return t("workspace.unify.configure_mapping");
 };
 
-const getNextStepButtonLabel = (type: TConnectorOptionId | null, t: (key: string) => string): string => {
+const getNextStepButtonLabel = (type: TFeedbackSourceOptionId | null, t: (key: string) => string): string => {
   if (type === "formbricks_survey") return t("workspace.unify.select_questions");
   if (type === "csv") return t("workspace.unify.configure_import");
   if (type === "api_ingestion") return t("common.learn_more");
@@ -117,34 +120,36 @@ const getNextStepButtonLabel = (type: TConnectorOptionId | null, t: (key: string
 
 const getSelectableQuestionIds = (survey: TUnifySurvey): string[] =>
   survey.elements
-    .filter((element) => !(UNSUPPORTED_CONNECTOR_ELEMENT_TYPES as readonly string[]).includes(element.type))
+    .filter(
+      (element) => !(UNSUPPORTED_FEEDBACK_SOURCE_ELEMENT_TYPES as readonly string[]).includes(element.type)
+    )
     .map((element) => element.id);
 
 type TImportState = "success" | "error" | "skipped";
 
-export const CreateConnectorModal = ({
+export const CreateFeedbackSourceModal = ({
   open,
   onOpenChange,
   showTrigger = true,
-  onCreateConnector,
+  onCreateFeedbackSource,
   surveys,
   workspaceId,
   directories,
-}: CreateConnectorModalProps) => {
+}: CreateFeedbackSourceModalProps) => {
   const { t } = useTranslation();
 
-  const defaultConnectorName = useMemo<Record<TConnectorType, string>>(
+  const defaultFeedbackSourceName = useMemo<Record<TFeedbackSourceType, string>>(
     () => ({
-      formbricks_survey: t("workspace.unify.default_connector_name_formbricks"),
-      csv: t("workspace.unify.default_connector_name_csv"),
+      formbricks_survey: t("workspace.unify.default_source_name_formbricks"),
+      csv: t("workspace.unify.default_source_name_csv"),
     }),
     [t]
   );
 
-  const formbricksForm = useForm<TFormbricksConnectorForm>({
-    resolver: zodResolver(ZFormbricksConnectorForm),
+  const formbricksForm = useForm<TFormbricksFeedbackSourceForm>({
+    resolver: zodResolver(ZFormbricksFeedbackSourceForm),
     defaultValues: {
-      sourceName: defaultConnectorName.formbricks_survey,
+      sourceName: defaultFeedbackSourceName.formbricks_survey,
       surveyId: "",
       selectedQuestionIds: [],
       importHistorical: true,
@@ -152,18 +157,18 @@ export const CreateConnectorModal = ({
     mode: "onChange",
   });
 
-  const [currentStep, setCurrentStep] = useState<TCreateConnectorStep>("selectType");
-  const [selectedType, setSelectedType] = useState<TConnectorOptionId | null>(null);
+  const [currentStep, setCurrentStep] = useState<TCreateFeedbackSourceStep>("selectType");
+  const [selectedType, setSelectedType] = useState<TFeedbackSourceOptionId | null>(null);
   const [mappings, setMappings] = useState<TFieldMapping[]>([]);
   const [sourceFields, setSourceFields] = useState<TSourceField[]>([]);
   const [csvParsedData, setCsvParsedData] = useState<Record<string, string>[]>([]);
   const [enumValidationErrors, setEnumValidationErrors] = useState<TEnumValidationError[]>([]);
-  const [csvConnectorName, setCsvConnectorName] = useState("");
+  const [csvFeedbackSourceName, setCsvFeedbackSourceName] = useState("");
   const [responseCountBySurvey, setResponseCountBySurvey] = useState<Record<string, number | null>>({});
   const [isImporting, setIsImporting] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [selectedDirectoryId, setSelectedDirectoryId] = useState<string | null>(directories[0]?.id ?? null);
-  const userEditedConnectorNameRef = useRef(false);
+  const userEditedFeedbackSourceNameRef = useRef(false);
 
   const formbricksValues = formbricksForm.watch();
   const selectedSurveyId = formbricksValues.surveyId;
@@ -236,7 +241,7 @@ export const CreateConnectorModal = ({
     setCurrentStep("selectType");
     setSelectedType(null);
     formbricksForm.reset({
-      sourceName: defaultConnectorName.formbricks_survey,
+      sourceName: defaultFeedbackSourceName.formbricks_survey,
       surveyId: "",
       selectedQuestionIds: [],
       importHistorical: true,
@@ -246,8 +251,8 @@ export const CreateConnectorModal = ({
     setCsvParsedData([]);
     setEnumValidationErrors([]);
     setResponseCountBySurvey({});
-    setCsvConnectorName("");
-    userEditedConnectorNameRef.current = false;
+    setCsvFeedbackSourceName("");
+    userEditedFeedbackSourceNameRef.current = false;
     setIsImporting(false);
     setIsCreating(false);
     setSelectedDirectoryId(directories[0]?.id ?? null);
@@ -274,7 +279,7 @@ export const CreateConnectorModal = ({
 
     if (selectedType === "formbricks_survey") {
       formbricksForm.reset({
-        sourceName: defaultConnectorName.formbricks_survey,
+        sourceName: defaultFeedbackSourceName.formbricks_survey,
         surveyId: "",
         selectedQuestionIds: [],
         importHistorical: true,
@@ -282,7 +287,7 @@ export const CreateConnectorModal = ({
     }
 
     if (selectedType === "csv") {
-      setCsvConnectorName(defaultConnectorName.csv);
+      setCsvFeedbackSourceName(defaultFeedbackSourceName.csv);
     }
 
     setCurrentStep("mapping");
@@ -297,12 +302,15 @@ export const CreateConnectorModal = ({
     }
   };
 
-  const handleHistoricalImport = async (connectorId: string, surveyId: string): Promise<TImportState> => {
+  const handleHistoricalImport = async (
+    feedbackSourceId: string,
+    surveyId: string
+  ): Promise<TImportState> => {
     const responseCount = responseCountBySurvey[surveyId] ?? 0;
     if (responseCount <= 0) return "skipped";
     setIsImporting(true);
     const importResult = await importHistoricalResponsesAction({
-      connectorId,
+      feedbackSourceId,
       workspaceId,
       surveyId,
     });
@@ -323,10 +331,10 @@ export const CreateConnectorModal = ({
     }
   };
 
-  const handleCsvImport = async (connectorId: string): Promise<TImportState> => {
+  const handleCsvImport = async (feedbackSourceId: string): Promise<TImportState> => {
     setIsImporting(true);
     const importResult = await importCsvDataAction({
-      connectorId,
+      feedbackSourceId,
       workspaceId,
       csvData: csvParsedData,
     });
@@ -342,7 +350,7 @@ export const CreateConnectorModal = ({
       );
       return "success";
     } else {
-      toast.error(getTranslatedConnectorError(getFormattedErrorMessage(importResult), t));
+      toast.error(getTranslatedFeedbackSourceError(getFormattedErrorMessage(importResult), t));
       return "error";
     }
   };
@@ -355,27 +363,27 @@ export const CreateConnectorModal = ({
     });
   };
 
-  const handleCreateFormbricksConnector = async (values: TFormbricksConnectorForm) => {
+  const handleCreateFormbricksFeedbackSource = async (values: TFormbricksFeedbackSourceForm) => {
     if (!selectedDirectoryId) return;
     setIsCreating(true);
 
-    const connectorId = await onCreateConnector({
+    const feedbackSourceId = await onCreateFeedbackSource({
       name: values.sourceName.trim(),
       type: "formbricks_survey",
       feedbackDirectoryId: selectedDirectoryId,
       surveyMappings: [{ surveyId: values.surveyId, elementIds: values.selectedQuestionIds }],
     });
 
-    if (!connectorId) {
+    if (!feedbackSourceId) {
       setIsCreating(false);
       return;
     }
 
     const importState = values.importHistorical
-      ? await handleHistoricalImport(connectorId, values.surveyId)
+      ? await handleHistoricalImport(feedbackSourceId, values.surveyId)
       : "skipped";
     if (importState === "skipped") {
-      showFeedbackRecordsSuccessToast(t("workspace.unify.connector_created_successfully"));
+      showFeedbackRecordsSuccessToast(t("workspace.unify.source_created_successfully"));
     }
 
     setIsCreating(false);
@@ -383,8 +391,8 @@ export const CreateConnectorModal = ({
     onOpenChange(false);
   };
 
-  const handleCreateCsvConnector = async () => {
-    if (!selectedDirectoryId || !isConnectorNameValid(csvConnectorName)) return;
+  const handleCreateCsvFeedbackSource = async () => {
+    if (!selectedDirectoryId || !isFeedbackSourceNameValid(csvFeedbackSourceName)) return;
 
     const requiredCheck = areAllRequiredCsvFieldsMapped(mappings);
     if (!requiredCheck.valid) {
@@ -411,21 +419,21 @@ export const CreateConnectorModal = ({
     );
     const fieldMappings = [...userMappings, ...CSV_HIDDEN_STATIC_MAPPINGS];
 
-    const connectorId = await onCreateConnector({
-      name: csvConnectorName.trim(),
+    const feedbackSourceId = await onCreateFeedbackSource({
+      name: csvFeedbackSourceName.trim(),
       type: "csv",
       feedbackDirectoryId: selectedDirectoryId,
       fieldMappings,
     });
 
-    if (!connectorId) {
+    if (!feedbackSourceId) {
       setIsCreating(false);
       return;
     }
 
-    const importState = csvParsedData.length > 0 ? await handleCsvImport(connectorId) : "skipped";
+    const importState = csvParsedData.length > 0 ? await handleCsvImport(feedbackSourceId) : "skipped";
     if (importState === "skipped") {
-      showFeedbackRecordsSuccessToast(t("workspace.unify.connector_created_successfully"));
+      showFeedbackRecordsSuccessToast(t("workspace.unify.source_created_successfully"));
     }
 
     setIsCreating(false);
@@ -436,14 +444,14 @@ export const CreateConnectorModal = ({
   const isCsvValid = selectedType === "csv" && sourceFields.length > 0;
   const areCsvRequiredFieldsMapped = areAllRequiredCsvFieldsMapped(mappings).valid;
 
-  const handleSuggestConnectorName = (name: string) => {
-    if (userEditedConnectorNameRef.current) return;
-    setCsvConnectorName(name);
+  const handleSuggestFeedbackSourceName = (name: string) => {
+    if (userEditedFeedbackSourceNameRef.current) return;
+    setCsvFeedbackSourceName(name);
   };
 
-  const handleCsvConnectorNameChange = (value: string) => {
-    userEditedConnectorNameRef.current = true;
-    setCsvConnectorName(value);
+  const handleCsvFeedbackSourceNameChange = (value: string) => {
+    userEditedFeedbackSourceNameRef.current = true;
+    setCsvFeedbackSourceName(value);
   };
 
   return (
@@ -475,7 +483,7 @@ export const CreateConnectorModal = ({
 
           <DialogBody>
             {currentStep === "selectType" && (
-              <ConnectorTypeSelector
+              <FeedbackSourceTypeSelector
                 selectedType={selectedType}
                 onSelectType={setSelectedType}
                 surveyCount={surveys.length}
@@ -486,7 +494,7 @@ export const CreateConnectorModal = ({
               <FormProvider {...formbricksForm}>
                 <form
                   className="space-y-4"
-                  onSubmit={formbricksForm.handleSubmit(handleCreateFormbricksConnector)}>
+                  onSubmit={formbricksForm.handleSubmit(handleCreateFormbricksFeedbackSource)}>
                   <FormField
                     control={formbricksForm.control}
                     name="sourceName"
@@ -501,7 +509,7 @@ export const CreateConnectorModal = ({
                           />
                         </FormControl>
                         {error?.message && (
-                          <FormError>{getTranslatedConnectorError(error.message, t)}</FormError>
+                          <FormError>{getTranslatedFeedbackSourceError(error.message, t)}</FormError>
                         )}
                       </FormItem>
                     )}
@@ -530,7 +538,7 @@ export const CreateConnectorModal = ({
                           </Select>
                         </FormControl>
                         {error?.message && (
-                          <FormError>{getTranslatedConnectorError(error.message, t)}</FormError>
+                          <FormError>{getTranslatedFeedbackSourceError(error.message, t)}</FormError>
                         )}
                       </FormItem>
                     )}
@@ -552,7 +560,7 @@ export const CreateConnectorModal = ({
                           </div>
                         </FormControl>
                         {error?.message && (
-                          <FormError>{getTranslatedConnectorError(error.message, t)}</FormError>
+                          <FormError>{getTranslatedFeedbackSourceError(error.message, t)}</FormError>
                         )}
                       </FormItem>
                     )}
@@ -584,20 +592,20 @@ export const CreateConnectorModal = ({
             {currentStep === "mapping" && selectedType === "csv" && (
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="connectorName">{t("workspace.unify.connector_name")}</Label>
+                  <Label htmlFor="feedbackSourceName">{t("workspace.unify.source_name")}</Label>
                   <Input
-                    id="connectorName"
-                    value={csvConnectorName}
-                    onChange={(event) => handleCsvConnectorNameChange(event.target.value)}
+                    id="feedbackSourceName"
+                    value={csvFeedbackSourceName}
+                    onChange={(event) => handleCsvFeedbackSourceNameChange(event.target.value)}
                     placeholder={t("workspace.unify.enter_name_for_source")}
                   />
-                  <p className="text-xs text-slate-500">{t("workspace.unify.connector_name_hint")}</p>
+                  <p className="text-xs text-slate-500">{t("workspace.unify.source_name_hint")}</p>
                 </div>
 
                 {directories.length === 0 && <NoFeedbackDirectoryAlert workspaceId={workspaceId} t={t} />}
 
                 <div className="max-h-[55vh] overflow-y-auto rounded-lg border border-slate-200 p-4">
-                  <CsvConnectorUI
+                  <CsvFeedbackSourceUI
                     sourceFields={sourceFields}
                     mappings={mappings}
                     onMappingsChange={(m) => {
@@ -606,7 +614,7 @@ export const CreateConnectorModal = ({
                     }}
                     onSourceFieldsChange={setSourceFields}
                     onParsedDataChange={setCsvParsedData}
-                    onSuggestConnectorName={handleSuggestConnectorName}
+                    onSuggestFeedbackSourceName={handleSuggestFeedbackSourceName}
                   />
                 </div>
 
@@ -659,18 +667,20 @@ export const CreateConnectorModal = ({
               <Button
                 onClick={
                   selectedType === "formbricks_survey"
-                    ? () => void formbricksForm.handleSubmit(handleCreateFormbricksConnector)()
-                    : handleCreateCsvConnector
+                    ? () => void formbricksForm.handleSubmit(handleCreateFormbricksFeedbackSource)()
+                    : handleCreateCsvFeedbackSource
                 }
                 disabled={
                   isCreating ||
                   isImporting ||
                   !selectedDirectoryId ||
                   (selectedType === "formbricks_survey"
-                    ? !isConnectorNameValid(formbricksValues.sourceName ?? "") ||
+                    ? !isFeedbackSourceNameValid(formbricksValues.sourceName ?? "") ||
                       !formbricksValues.surveyId ||
                       !formbricksValues.selectedQuestionIds?.length
-                    : !isConnectorNameValid(csvConnectorName) || !isCsvValid || !areCsvRequiredFieldsMapped)
+                    : !isFeedbackSourceNameValid(csvFeedbackSourceName) ||
+                      !isCsvValid ||
+                      !areCsvRequiredFieldsMapped)
                 }>
                 {isCreating && <Loader2Icon className="mr-2 size-4 animate-spin" />}
                 {t("workspace.unify.setup_connection")}

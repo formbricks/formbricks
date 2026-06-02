@@ -23,8 +23,8 @@ import { getQuota as getQuotaService } from "@/modules/ee/quotas/lib/quotas";
 import {
   getActionClass,
   getApiKey,
-  getConnector,
   getContact,
+  getFeedbackSource,
   getIntegration,
   getInvite,
   getLanguage,
@@ -90,7 +90,7 @@ vi.mock("@formbricks/database", () => ({
     contact: {
       findUnique: vi.fn(),
     },
-    connector: {
+    feedbackSource: {
       findUnique: vi.fn(),
     },
     segment: {
@@ -561,45 +561,45 @@ describe("Service Functions", () => {
     });
   });
 
-  describe("getConnector", () => {
-    const connectorId = "connector123";
+  describe("getFeedbackSource", () => {
+    const feedbackSourceId = "feedback_source_123";
 
-    test("returns the connector when found", async () => {
-      const mockConnector = { workspaceId: "ws123" };
-      vi.mocked(prisma.connector.findUnique).mockResolvedValue(mockConnector);
+    test("returns the feedbackSource when found", async () => {
+      const mockFeedbackSource = { workspaceId: "ws123" };
+      vi.mocked(prisma.feedbackSource.findUnique).mockResolvedValue(mockFeedbackSource as never);
 
-      const result = await getConnector(connectorId);
+      const result = await getFeedbackSource(feedbackSourceId);
       expect(validateInputs).toHaveBeenCalled();
-      expect(prisma.connector.findUnique).toHaveBeenCalledWith({
-        where: { id: connectorId },
+      expect(prisma.feedbackSource.findUnique).toHaveBeenCalledWith({
+        where: { id: feedbackSourceId },
         select: { workspaceId: true },
       });
-      expect(result).toEqual(mockConnector);
+      expect(result).toEqual(mockFeedbackSource);
     });
 
-    test("returns null when connector not found", async () => {
-      vi.mocked(prisma.connector.findUnique).mockResolvedValue(null);
+    test("returns null when feedbackSource not found", async () => {
+      vi.mocked(prisma.feedbackSource.findUnique).mockResolvedValue(null);
 
-      const result = await getConnector(connectorId);
+      const result = await getFeedbackSource(feedbackSourceId);
       expect(result).toBeNull();
     });
 
     test("throws DatabaseError when Prisma throws a known request error", async () => {
-      vi.mocked(prisma.connector.findUnique).mockRejectedValue(
+      vi.mocked(prisma.feedbackSource.findUnique).mockRejectedValue(
         new Prisma.PrismaClientKnownRequestError("Error", {
           code: "P2002",
           clientVersion: "4.7.0",
         })
       );
 
-      await expect(getConnector(connectorId)).rejects.toThrow(DatabaseError);
+      await expect(getFeedbackSource(feedbackSourceId)).rejects.toThrow(DatabaseError);
     });
 
     test("rethrows unknown errors", async () => {
       const unknownError = new Error("Something unexpected");
-      vi.mocked(prisma.connector.findUnique).mockRejectedValue(unknownError);
+      vi.mocked(prisma.feedbackSource.findUnique).mockRejectedValue(unknownError);
 
-      await expect(getConnector(connectorId)).rejects.toThrow(unknownError);
+      await expect(getFeedbackSource(feedbackSourceId)).rejects.toThrow(unknownError);
     });
   });
 });

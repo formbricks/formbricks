@@ -17,23 +17,28 @@ import {
 import { TMappingConfidence, autoMapCsvSourceFields, titleizeFromFileName, validateCsvFile } from "../utils";
 import { MappingUI } from "./mapping-ui";
 
-interface CsvConnectorUIProps {
+const PREVIEW_ROW_LIMIT = 5;
+
+const buildCsvPreviewRows = (headers: string[], records: Record<string, string>[]): string[][] =>
+  records.slice(0, PREVIEW_ROW_LIMIT).map((row) => headers.map((h) => row[h] ?? ""));
+
+interface CsvFeedbackSourceUIProps {
   sourceFields: TSourceField[];
   mappings: TFieldMapping[];
   onMappingsChange: (mappings: TFieldMapping[]) => void;
   onSourceFieldsChange: (fields: TSourceField[]) => void;
   onParsedDataChange?: (data: Record<string, string>[]) => void;
-  onSuggestConnectorName?: (name: string) => void;
+  onSuggestFeedbackSourceName?: (name: string) => void;
 }
 
-export function CsvConnectorUI({
+export function CsvFeedbackSourceUI({
   sourceFields,
   mappings,
   onMappingsChange,
   onSourceFieldsChange,
   onParsedDataChange,
-  onSuggestConnectorName,
-}: Readonly<CsvConnectorUIProps>) {
+  onSuggestFeedbackSourceName,
+}: Readonly<CsvFeedbackSourceUIProps>) {
   const { t } = useTranslation();
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [csvPreview, setCsvPreview] = useState<string[][]>([]);
@@ -58,7 +63,7 @@ export function CsvConnectorUI({
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target?.files?.[0];
     if (file) {
-      processCSVFile(file);
+      void processCSVFile(file);
     }
   };
 
@@ -114,10 +119,10 @@ export function CsvConnectorUI({
     }
 
     lastAutoSourceNameRef.current = autoSourceNameStatic;
-    onSuggestConnectorName?.(titleizeFromFileName(fileName));
+    onSuggestFeedbackSourceName?.(titleizeFromFileName(fileName));
   };
 
-  const processCSVFile = (file: File) => {
+  const processCSVFile = async (file: File) => {
     setCsvError("");
 
     const validateCSVFileResult = validateCsvFile(file, t);
@@ -127,49 +132,41 @@ export function CsvConnectorUI({
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const csv = e.target?.result as string;
+    try {
+      const csv = await file.text();
+      const records = parse(csv, { columns: true, skip_empty_lines: true });
 
-      try {
-        const records = parse(csv, { columns: true, skip_empty_lines: true });
-
-        const result = createFeedbackCSVDataSchema(t).safeParse(records);
-        if (!result.success) {
-          setCsvError(result.error.issues[0].message);
-          return;
-        }
-
-        const validRecords = result.data;
-        const headers = Object.keys(validRecords[0]);
-
-        const preview: string[][] = [
-          headers,
-          ...validRecords.slice(0, 5).map((row) => headers.map((h) => row[h] ?? "")),
-        ];
-        setCsvFile(file);
-        setCsvPreview(preview);
-        setCsvTotalRows(validRecords.length);
-
-        const fields: TSourceField[] = headers.map((header) => ({
-          id: header,
-          name: header,
-          type: "string",
-          sampleValue: validRecords[0][header] ?? "",
-        }));
-        onSourceFieldsChange(fields);
-        onParsedDataChange?.(validRecords);
-        setSampleRow(validRecords[0]);
-
-        applyAutoMapping(fields, validRecords[0], file.name);
-
-        setShowMapping(true);
-      } catch (error) {
-        const message = error instanceof Error ? error.message : t("common.failed_to_parse_csv");
-        setCsvError(message);
+      const result = createFeedbackCSVDataSchema(t).safeParse(records);
+      if (!result.success) {
+        setCsvError(result.error.issues[0].message);
+        return;
       }
-    };
-    reader.readAsText(file);
+
+      const validRecords = result.data;
+      const headers = Object.keys(validRecords[0]);
+
+      const preview: string[][] = [headers, ...buildCsvPreviewRows(headers, validRecords)];
+      setCsvFile(file);
+      setCsvPreview(preview);
+      setCsvTotalRows(validRecords.length);
+
+      const fields: TSourceField[] = headers.map((header) => ({
+        id: header,
+        name: header,
+        type: "string",
+        sampleValue: validRecords[0][header] ?? "",
+      }));
+      onSourceFieldsChange(fields);
+      onParsedDataChange?.(validRecords);
+      setSampleRow(validRecords[0]);
+
+      applyAutoMapping(fields, validRecords[0], file.name);
+
+      setShowMapping(true);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : t("common.failed_to_parse_csv");
+      setCsvError(message);
+    }
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
@@ -182,7 +179,7 @@ export function CsvConnectorUI({
     e.stopPropagation();
     const file = e.dataTransfer.files[0];
     if (file) {
-      processCSVFile(file);
+      void processCSVFile(file);
     }
   };
 
@@ -194,7 +191,7 @@ export function CsvConnectorUI({
     link.download = SAMPLE_CSV_FILE_NAME;
     document.body.appendChild(link);
     link.click();
-    document.body.removeChild(link);
+    link.remove();
     URL.revokeObjectURL(url);
   };
 
@@ -250,36 +247,32 @@ export function CsvConnectorUI({
               })()}
             </button>
             {previewOpen && (
-              <>
-                <div className="overflow-x-auto">
-                  <table className="min-w-full text-sm">
-                    <thead className="bg-slate-50">
-                      <tr>
-                        {csvPreview[0]?.map((header, i) => (
-                          <th
-                            key={`${header}-${i}`}
-                            className="px-3 py-2 text-left font-medium text-slate-700">
-                            {header}
-                          </th>
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead className="bg-slate-50">
+                    <tr>
+                      {csvPreview[0]?.map((header, i) => (
+                        <th key={`${header}-${i}`} className="px-3 py-2 text-left font-medium text-slate-700">
+                          {header}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {csvPreview.slice(1, 4).map((row, rowIndex) => (
+                      <tr key={`${rowIndex}-${row.join("|")}`} className="border-t border-slate-100">
+                        {row.map((cell, cellIndex) => (
+                          <td
+                            key={`${csvPreview[0]?.[cellIndex] ?? cellIndex}-${cellIndex}`}
+                            className="px-3 py-2 text-slate-600">
+                            {cell || <span className="text-slate-300">—</span>}
+                          </td>
                         ))}
                       </tr>
-                    </thead>
-                    <tbody>
-                      {csvPreview.slice(1, 4).map((row, rowIndex) => (
-                        <tr key={`${rowIndex}-${row.join("|")}`} className="border-t border-slate-100">
-                          {row.map((cell, cellIndex) => (
-                            <td
-                              key={`${csvPreview[0]?.[cellIndex] ?? cellIndex}-${cellIndex}`}
-                              className="px-3 py-2 text-slate-600">
-                              {cell || <span className="text-slate-300">—</span>}
-                            </td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
         )}
@@ -288,7 +281,7 @@ export function CsvConnectorUI({
           sourceFields={sourceFields}
           mappings={mappings}
           onMappingsChange={handleUserMappingsChange}
-          connectorType="csv"
+          feedbackSourceType="csv"
           confidenceByTargetId={confidenceByTargetId}
           sampleRow={sampleRow}
         />

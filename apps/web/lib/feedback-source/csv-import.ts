@@ -1,6 +1,6 @@
 import "server-only";
-import { TConnectorWithMappings } from "@formbricks/types/connector";
 import { InvalidInputError } from "@formbricks/types/errors";
+import { TFeedbackSourceWithMappings } from "@formbricks/types/feedback-source";
 import { CSV_IMPORT_MISSING_COLUMNS_ERROR_CODE } from "@/modules/ee/unify-feedback/sources/types";
 import { createFeedbackRecordsBatch } from "@/modules/hub";
 import { transformCsvRowsToFeedbackRecords } from "./csv-transform";
@@ -14,34 +14,34 @@ import {
 const CSV_BATCH_SIZE = 50;
 
 export const importCsvData = async (
-  connector: TConnectorWithMappings,
+  feedbackSource: TFeedbackSourceWithMappings,
   csvRows: Record<string, string>[]
 ): Promise<TImportResult> => {
-  if (connector.type !== "csv") {
-    throw new InvalidInputError("CSV import is only supported for CSV connectors");
+  if (feedbackSource.type !== "csv") {
+    throw new InvalidInputError("CSV import is only supported for CSV feedbackSources");
   }
 
-  if (connector.fieldMappings.length === 0) {
-    throw new InvalidInputError("Connector has no field mappings configured");
+  if (feedbackSource.fieldMappings.length === 0) {
+    throw new InvalidInputError("FeedbackSource has no field mappings configured");
   }
 
   const missingMappedColumns = getMissingCsvMappedSourceColumns(
-    connector.fieldMappings,
+    feedbackSource.fieldMappings,
     Object.keys(csvRows[0] ?? {})
   );
   if (missingMappedColumns.length > 0) {
     throw new InvalidInputError(CSV_IMPORT_MISSING_COLUMNS_ERROR_CODE);
   }
 
-  const missing = getMissingRequiredCsvFieldMappings(connector.fieldMappings);
+  const missing = getMissingRequiredCsvFieldMappings(feedbackSource.fieldMappings);
   if (missing.length > 0) {
     throw new InvalidInputError(formatMissingRequiredCsvFieldMappingsMessage());
   }
 
   const { records, skipped: transformSkipped } = transformCsvRowsToFeedbackRecords(
     csvRows,
-    connector.fieldMappings,
-    connector.feedbackDirectoryId
+    feedbackSource.fieldMappings,
+    feedbackSource.feedbackDirectoryId
   );
 
   let successes = 0;

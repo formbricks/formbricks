@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
-import { getConnectorsWithMappings } from "@/lib/connector/service";
 import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { getFeedbackSourcesWithMappings } from "@/lib/feedback-source/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { NoFeedbackDirectoryEmptyState } from "@/modules/ee/feedback-directory/components/no-feedback-directory-empty-state";
 import { getFeedbackDirectoriesByWorkspaceId } from "@/modules/ee/feedback-directory/lib/feedback-directory";
@@ -64,9 +64,9 @@ export default async function UnifyFeedbackRecordsPage(
     );
   }
 
-  const [frds, connectors] = await Promise.all([
+  const [frds, feedbackSources] = await Promise.all([
     getFeedbackDirectoriesByWorkspaceId(params.workspaceId),
-    getConnectorsWithMappings(params.workspaceId),
+    getFeedbackSourcesWithMappings(params.workspaceId),
   ]);
 
   if (frds.length === 0) {
@@ -104,12 +104,12 @@ export default async function UnifyFeedbackRecordsPage(
   }
 
   const frdMap = Object.fromEntries(frds.map((f) => [f.id, f.name]));
-  const csvSources = connectors
-    .filter((connector) => connector.type === "csv")
-    .map((connector) => ({
-      id: connector.id,
-      name: connector.name,
-      fieldMappings: connector.fieldMappings,
+  const csvSources = feedbackSources
+    .filter((feedbackSource) => feedbackSource.type === "csv")
+    .map((feedbackSource) => ({
+      id: feedbackSource.id,
+      name: feedbackSource.name,
+      fieldMappings: feedbackSource.fieldMappings,
     }));
 
   return (
