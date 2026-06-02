@@ -321,7 +321,13 @@ services:
       - ./cube/cube.js:/cube/conf/cube.js:ro
       - ./cube/schema:/cube/conf/model:ro
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:4000/readyz"]
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "require('http').get('http://127.0.0.1:4000/readyz', (res) => { res.resume(); process.exit(res.statusCode === 200 ? 0 : 1); }).on('error', () => process.exit(1));",
+        ]
       interval: 10s
       timeout: 5s
       retries: 12
