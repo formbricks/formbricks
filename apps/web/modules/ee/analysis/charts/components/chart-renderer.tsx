@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Area, AreaChart, Bar, BarChart, Cell, Label, LabelList, Legend, Pie, PieChart } from "recharts";
 import type { TChartQuery } from "@formbricks/types/analysis";
 import { CartesianChart } from "@/modules/ee/analysis/charts/components/cartesian-chart";
+import { PolishedChartTooltip } from "@/modules/ee/analysis/charts/components/polished-tooltip";
 import {
   CHART_BRAND_DARK,
   CHART_BRAND_RAMP,
@@ -16,7 +17,7 @@ import {
 import { formatCubeColumnHeader } from "@/modules/ee/analysis/lib/schema-definition";
 import type { TChartDataRow, TChartType } from "@/modules/ee/analysis/types/analysis";
 import type { ChartConfig } from "@/modules/ui/components/chart";
-import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/modules/ui/components/chart";
+import { ChartContainer, ChartTooltip } from "@/modules/ui/components/chart";
 
 type PieLabelProps = {
   cx?: number;
@@ -79,19 +80,6 @@ const PieCenterLabel = ({
     </g>
   );
 };
-
-const PieTooltipRow = ({ value, name }: Readonly<{ value: unknown; name: string }>) => {
-  const { t } = useTranslation();
-  return (
-    <>
-      {formatCellValue(value)} {formatCubeColumnHeader(name, t)}
-    </>
-  );
-};
-
-const pieTooltipFormatter = (value: unknown, name: string | number) => (
-  <PieTooltipRow value={value} name={String(name)} />
-);
 
 interface ChartRendererProps {
   chartType: TChartType;
@@ -302,7 +290,7 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
                   )}
                 />
               </Pie>
-              <ChartTooltip content={<ChartTooltipContent formatter={pieTooltipFormatter} />} />
+              <ChartTooltip content={<PolishedChartTooltip />} />
               <Legend
                 verticalAlign="bottom"
                 height={36}
