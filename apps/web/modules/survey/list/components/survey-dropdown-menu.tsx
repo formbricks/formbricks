@@ -1,7 +1,15 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { CopyIcon, EyeIcon, LinkIcon, MoreVertical, SquarePenIcon, TrashIcon } from "lucide-react";
+import {
+  ArrowRightLeftIcon,
+  CopyIcon,
+  EyeIcon,
+  LinkIcon,
+  MoreVertical,
+  SquarePenIcon,
+  TrashIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -15,6 +23,7 @@ import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
 import { copySurveyLink } from "@/modules/survey/lib/client-utils";
 import { copySurveyToOtherWorkspaceAction } from "@/modules/survey/list/actions";
+import { CopySurveyModal } from "@/modules/survey/list/components/copy-survey-modal";
 import { surveyKeys } from "@/modules/survey/list/lib/query";
 import { TSurveyListItem } from "@/modules/survey/list/types/survey-overview";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
@@ -49,6 +58,7 @@ export const SurveyDropDownMenu = ({
   const [isDuplicating, setIsDuplicating] = useState(false);
   const [isDropDownOpen, setIsDropDownOpen] = useState(false);
   const [isCautionDialogOpen, setIsCautionDialogOpen] = useState(false);
+  const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -165,6 +175,22 @@ export const SurveyDropDownMenu = ({
                 </button>
               </DropdownMenuItem>
             )}
+            {canManageSurvey && workspace?.organizationId && (
+              <DropdownMenuItem>
+                <button
+                  type="button"
+                  data-testid="copy-to-workspace"
+                  className="flex w-full items-center"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setIsDropDownOpen(false);
+                    setIsCopyModalOpen(true);
+                  }}>
+                  <ArrowRightLeftIcon className="mr-2 size-4" />
+                  {t("workspace.surveys.copy_to")}
+                </button>
+              </DropdownMenuItem>
+            )}
             {canPreviewOrCopyLink && (
               <DropdownMenuItem>
                 <button
@@ -229,6 +255,16 @@ export const SurveyDropDownMenu = ({
           onDelete={() => handleDeleteSurvey(survey.id)}
           text={t("workspace.surveys.delete_survey_and_responses_warning")}
           isDeleting={loading}
+        />
+      )}
+
+      {canManageSurvey && workspace?.id && workspace.organizationId && (
+        <CopySurveyModal
+          open={isCopyModalOpen}
+          setOpen={setIsCopyModalOpen}
+          surveyId={survey.id}
+          currentWorkspaceId={workspace.id}
+          organizationId={workspace.organizationId}
         />
       )}
 

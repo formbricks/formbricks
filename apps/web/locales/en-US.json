@@ -2779,7 +2779,15 @@
     "surveys": {
       "all_set_time_to_create_first_survey": "You are all set! Time to create your first survey",
       "alphabetical": "Alphabetical",
+      "copy_survey": "Copy survey",
+      "copy_survey_description": "Choose a workspace to copy this survey to.",
+      "copy_survey_error": "Failed to copy survey",
       "copy_survey_link_to_clipboard": "Copy survey link to clipboard",
+      "copy_survey_partially_success": "Copied to {{success}} workspaces, failed for {{error}}",
+      "copy_survey_select_workspaces_placeholder": "Search workspaces...",
+      "copy_survey_success": "Survey copied successfully",
+      "copy_survey_target_workspaces_label": "Target workspaces",
+      "copy_to": "Copy to...",
       "delete_survey_and_responses_warning": "Are you sure you want to delete this survey and all of its responses?",
       "edit": {
         "activate_translations": "Activate translations",
@@ -3358,6 +3366,7 @@
         "partial_responses": "Partial responses"
       },
       "new_survey": "New Survey",
+      "no_other_workspaces_available": "No other workspaces available to copy this survey to.",
       "no_surveys_created_yet": "No surveys created yet",
       "open_options": "Open options",
       "preview_survey_in_a_new_tab": "Preview survey in a new tab",
