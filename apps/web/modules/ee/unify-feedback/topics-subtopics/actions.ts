@@ -12,14 +12,14 @@ import { getIsFeedbackDirectoriesEnabled } from "@/modules/ee/license-check/lib/
 import { semanticSearchFeedbackRecords } from "@/modules/hub/service";
 import type { SemanticSearchResultItem } from "@/modules/hub/types";
 
-const TOPICS_PREVIEW_LIMIT = 10;
+const TOPICS_PREVIEW_PAGE_SIZE = 50;
 const SEARCH_CONCURRENCY = 4;
 
 const ZSemanticSearchFeedbackRecordsAction = z.object({
   workspaceId: ZId,
   query: z.string().trim().min(1).max(500),
-  limit: z.number().min(1).max(50).optional(),
   minScore: z.number().min(0).max(1).optional(),
+  cursors: z.record(z.string(), z.string()).optional(),
 });
 
 export type TTopicsPreviewSearchResult = SemanticSearchResultItem & {
@@ -29,6 +29,7 @@ export type TTopicsPreviewSearchResult = SemanticSearchResultItem & {
 
 export type TTopicsPreviewSearchActionResult = {
   results: TTopicsPreviewSearchResult[];
+  cursors: Record<string, string>;
   unavailable: boolean;
   unavailableMessage?: string;
 };
@@ -70,23 +71,31 @@ export const semanticSearchFeedbackRecordsAction = authenticatedActionClient
 
       const directories = await getFeedbackDirectoriesByWorkspaceId(parsedInput.workspaceId);
       if (directories.length === 0) {
-        return { results: [], unavailable: false };
+        return { results: [], cursors: {}, unavailable: false };
       }
 
-      const limit = parsedInput.limit ?? TOPICS_PREVIEW_LIMIT;
+      // On "load more" only re-query directories that returned a cursor on the previous page.
+      // Filtering against the workspace's directories above also guards against cursor-bag
+      // tampering — any directory id not in this set is silently dropped.
+      const targetDirectories = parsedInput.cursors
+        ? directories.filter((d) => Boolean(parsedInput.cursors?.[d.id]))
+        : directories;
+
       const searches: {
         directory: (typeof directories)[number];
         result: Awaited<ReturnType<typeof semanticSearchFeedbackRecords>>;
       }[] = [];
-      for (let i = 0; i < directories.length; i += SEARCH_CONCURRENCY) {
-        const chunk = directories.slice(i, i + SEARCH_CONCURRENCY);
+      for (let i = 0; i < targetDirectories.length; i += SEARCH_CONCURRENCY) {
+        const chunk = targetDirectories.slice(i, i + SEARCH_CONCURRENCY);
         const chunkResults = await Promise.all(
           chunk.map(async (directory) => {
+            const cursor = parsedInput.cursors?.[directory.id];
             const result = await semanticSearchFeedbackRecords({
               tenant_id: directory.id,
               query: parsedInput.query,
-              limit,
+              limit: TOPICS_PREVIEW_PAGE_SIZE,
               min_score: parsedInput.minScore,
+              ...(cursor ? { cursor } : {}),
             });
             return { directory, result };
           })
@@ -102,10 +111,28 @@ export const semanticSearchFeedbackRecordsAction = authenticatedActionClient
         }))
       );
 
+      const nextCursors: Record<string, string> = {};
+      for (const { directory, result } of searches) {
+        const nextCursor = result.data?.next_cursor;
+        if (nextCursor) {
+          nextCursors[directory.id] = nextCursor;
+        }
+      }
+
+      // A directory returning 0/503 is a transient outage we want to surface even when
+      // other directories returned data — otherwise the failing directory silently drops
+      // out of nextCursors and stays excluded from every subsequent "load more".
+      const transientOutage = searches.find(({ result }) => {
+        const status = result.error?.status;
+        return status === 0 || status === 503;
+      })?.result.error;
+
       if (successfulResults.length > 0) {
         return {
-          results: successfulResults.toSorted((a, b) => b.score - a.score).slice(0, limit),
-          unavailable: false,
+          results: successfulResults.toSorted((a, b) => b.score - a.score),
+          cursors: nextCursors,
+          unavailable: Boolean(transientOutage),
+          ...(transientOutage ? { unavailableMessage: transientOutage.message } : {}),
         };
       }
 
@@ -113,6 +140,7 @@ export const semanticSearchFeedbackRecordsAction = authenticatedActionClient
       if (firstError?.status === 0 || firstError?.status === 503) {
         return {
           results: [],
+          cursors: {},
           unavailable: true,
           unavailableMessage: firstError.message,
         };
@@ -122,6 +150,6 @@ export const semanticSearchFeedbackRecordsAction = authenticatedActionClient
         throw new Error(firstError.message);
       }
 
-      return { results: [], unavailable: false };
+      return { results: [], cursors: {}, unavailable: false };
     }
   );
