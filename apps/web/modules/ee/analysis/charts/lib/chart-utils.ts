@@ -59,6 +59,13 @@ export const preparePieData = (
   return { processedData, colors };
 };
 
+// parseISO is liberal: a bare 4-digit string like "1000" is parsed as year 1000
+// and formatted as "Jan 1, 1000". Require a full YYYY-MM-DD prefix so bar/pie
+// x-axis ticks with numeric category labels don't get mistaken for dates.
+const ISO_DATE_PREFIX = /^\d{4}-\d{2}-\d{2}/;
+
+const isLikelyIsoDateString = (str: string): boolean => ISO_DATE_PREFIX.test(str);
+
 /** Format a value for x-axis ticks; ISO date strings become "MMM d, yyyy", others pass through. */
 export function formatXAxisTick(value: unknown): string {
   if (value == null) return "";
@@ -66,6 +73,7 @@ export function formatXAxisTick(value: unknown): string {
   if (typeof value === "string") str = value;
   else if (typeof value === "number") str = String(value);
   else return "";
+  if (!isLikelyIsoDateString(str)) return str;
   const date = parseISO(str);
   if (isValid(date)) return format(date, "MMM d, yyyy");
   return str;
@@ -79,6 +87,7 @@ export function formatCellValue(value: unknown): string {
   if (value == null) return "";
   if (typeof value === "number") return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
   if (typeof value === "string") {
+    if (!isLikelyIsoDateString(value)) return value;
     const date = parseISO(value);
     if (isValid(date)) return format(date, "MMM d, yyyy");
     return value;

@@ -77,6 +77,15 @@ describe("chart-utils", () => {
       expect(formatXAxisTick(1.5)).toBe("1.5");
     });
 
+    test("does not interpret bare year-shaped strings as dates", () => {
+      // parseISO("1000") is a valid year-only ISO date and would render as
+      // "Jan 1, 1000" — but a 4-digit numeric category label shouldn't be
+      // turned into a date.
+      expect(formatXAxisTick("1000")).toBe("1000");
+      expect(formatXAxisTick("2024")).toBe("2024");
+      expect(formatXAxisTick(1000)).toBe("1000");
+    });
+
     test("returns empty for boolean", () => {
       expect(formatXAxisTick(true)).toBe("");
     });
