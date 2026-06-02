@@ -127,7 +127,9 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
     case "line":
       // Render as an AreaChart with a thin stroke and a soft gradient fade so
       // the chart reads as a line with a subtle area tint underneath. Dot
-      // markers are hidden by default and only appear on hover.
+      // markers are hidden by default and only appear on hover. Legend stays
+      // on even for single-measure lines so the colour swatch + measure name
+      // identify what the line represents without requiring a hover.
       return (
         <CartesianChart
           chart={AreaChart}
@@ -135,7 +137,7 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
           xAxisKey={xAxisKey}
           dataKeys={dataKeys}
           chartConfig={chartConfig}
-          showLegend={isMultiMeasure}>
+          showLegend>
           <defs>
             {dataKeys.map((key, i) => {
               const color = chartConfig[key]?.color ?? CHART_MEASURE_COLORS[i % CHART_MEASURE_COLORS.length];
@@ -177,7 +179,7 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
           xAxisKey={xAxisKey}
           dataKeys={dataKeys}
           chartConfig={chartConfig}
-          showLegend={isMultiMeasure}>
+          showLegend>
           {dataKeys.map((key, i) => (
             <Area
               key={key}

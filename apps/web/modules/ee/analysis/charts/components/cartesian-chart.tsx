@@ -107,10 +107,18 @@ export function CartesianChart({
             tickFormatter={formatXAxisTick}
           />
           {/* `monotone` interpolation can bulge slightly above the data max
-              between points. Reserve 12px of plot padding at the top so the
-              spline doesn't get clipped by the chart container, and let
-              Recharts auto-pick nice tick bounds below that. */}
-          <YAxis tickLine={false} axisLine={false} padding={{ top: 12 }} />
+              between points. Pad the domain (10% above max, capped at next
+              nice integer) AND reserve pixel space at the top so the spline
+              doesn't get clipped by the chart container. */}
+          <YAxis
+            tickLine={false}
+            axisLine={false}
+            padding={{ top: 16 }}
+            domain={[
+              ((dataMin: number) => (dataMin < 0 ? Math.floor(dataMin * 1.1) : dataMin)) as never,
+              ((dataMax: number) => (dataMax <= 0 ? 0 : Math.ceil(dataMax * 1.1))) as never,
+            ]}
+          />
           <ChartTooltip content={tooltipContent} cursor={tooltipCursor} />
           {showLegend && <ChartLegend content={<ChartLegendContent />} verticalAlign="top" height={36} />}
           {children}
