@@ -73,6 +73,12 @@ export interface CartesianChartProps {
   children: ReactNode;
   showLegend?: boolean;
   chartProps?: Record<string, unknown>;
+  /**
+   * Cursor prop forwarded to Recharts Tooltip. Set to `false` to suppress
+   * the column highlight so bar-chart tooltips read as per-bar instead of
+   * per-x. Defaults to Recharts' built-in cursor.
+   */
+  tooltipCursor?: boolean | Record<string, unknown>;
 }
 
 /** Shared layout for bar, line, and area charts. Supports single or multiple measures. */
@@ -85,6 +91,7 @@ export function CartesianChart({
   children,
   showLegend = false,
   chartProps = {},
+  tooltipCursor,
 }: Readonly<CartesianChartProps>) {
   const isMultiMeasure = dataKeys.length > 1;
   const tooltipContent = isMultiMeasure ? (
@@ -106,7 +113,7 @@ export function CartesianChart({
             tickFormatter={formatXAxisTick}
           />
           <YAxis tickLine={false} axisLine={false} />
-          <ChartTooltip content={tooltipContent} />
+          <ChartTooltip content={tooltipContent} cursor={tooltipCursor} />
           {showLegend && <ChartLegend content={<ChartLegendContent />} verticalAlign="top" height={36} />}
           {children}
         </Chart>

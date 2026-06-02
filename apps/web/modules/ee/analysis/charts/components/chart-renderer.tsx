@@ -7,6 +7,7 @@ import type { TChartQuery } from "@formbricks/types/analysis";
 import { CartesianChart } from "@/modules/ee/analysis/charts/components/cartesian-chart";
 import {
   CHART_BRAND_DARK,
+  CHART_BRAND_RAMP,
   CHART_MEASURE_COLORS,
   formatCellValue,
   formatXAxisTick,
@@ -87,6 +88,11 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
 
   switch (chartType) {
     case "bar":
+      // Single-measure: render one Bar with per-row Cells coloured from the
+      // brand ramp so each x-category gets its own teal shade. Multi-measure:
+      // keep grouped bars with the measure-colour palette for series
+      // differentiation. `tooltipCursor={false}` removes the column highlight
+      // so the tooltip reads as per-bar.
       return (
         <CartesianChart
           chart={BarChart}
@@ -94,16 +100,23 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
           xAxisKey={xAxisKey}
           dataKeys={dataKeys}
           chartConfig={chartConfig}
-          showLegend
+          showLegend={isMultiMeasure}
+          tooltipCursor={false}
           chartProps={isMultiMeasure ? { barCategoryGap: "20%" } : {}}>
-          {dataKeys.map((key, i) => (
-            <Bar
-              key={key}
-              dataKey={key}
-              fill={chartConfig[key]?.color ?? CHART_MEASURE_COLORS[i % CHART_MEASURE_COLORS.length]}
-              radius={4}
-            />
-          ))}
+          {dataKeys.map((key, i) => {
+            const fallbackColor =
+              chartConfig[key]?.color ?? CHART_MEASURE_COLORS[i % CHART_MEASURE_COLORS.length];
+            return (
+              <Bar key={key} dataKey={key} fill={fallbackColor} radius={4}>
+                {!isMultiMeasure &&
+                  data.map((row, index) => {
+                    const rowKey = row[xAxisKey] ?? `row-${index}`;
+                    const cellKey = `${xAxisKey}-${String(rowKey)}-${index}`;
+                    return <Cell key={cellKey} fill={CHART_BRAND_RAMP[index % CHART_BRAND_RAMP.length]} />;
+                  })}
+              </Bar>
+            );
+          })}
         </CartesianChart>
       );
     case "line":
@@ -212,8 +225,10 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
       return (
         <div className="flex h-full min-h-[16rem] items-center justify-center">
           <div className="text-center">
-            <div className="text-foreground text-4xl font-bold">{formatted}</div>
-            <div className="text-muted-foreground mt-2 text-sm">{formatCubeColumnHeader(dataKey, t)}</div>
+            <div className="text-foreground text-6xl font-semibold tabular-nums tracking-tight">
+              {formatted}
+            </div>
+            <div className="text-muted-foreground mt-4 text-sm">{formatCubeColumnHeader(dataKey, t)}</div>
           </div>
         </div>
       );

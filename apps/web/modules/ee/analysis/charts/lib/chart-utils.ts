@@ -5,6 +5,20 @@ import { ZChartType } from "@/modules/ee/analysis/types/analysis";
 export const CHART_BRAND_DARK = "#00C4B8";
 export const CHART_BRAND_LIGHT = "#00E6CA";
 
+/**
+ * Brand-teal ramp from darkest to lightest. Used for bar-chart categories
+ * and pie slices so categorical palettes feel like one coherent brand
+ * shade-ramp instead of the older "lego" multi-colour palette.
+ */
+export const CHART_BRAND_RAMP = [
+  "#00857C",
+  "#00A39A",
+  CHART_BRAND_DARK, // #00C4B8
+  "#33D3C7",
+  "#66E0D7",
+  "#99EBE5",
+];
+
 /** Palette for multi-measure charts (grouped/stacked bars, multi-series line/area). */
 export const CHART_MEASURE_COLORS = [
   CHART_BRAND_DARK,
