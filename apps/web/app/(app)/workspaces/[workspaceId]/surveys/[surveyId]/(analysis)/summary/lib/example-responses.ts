@@ -189,9 +189,27 @@ const CONTACT_INFO_FIXTURES: Array<Record<TContactInfoField, string>> = (
 // Editor-generated headlines often arrive as HTML (e.g. <p><b><strong>...</strong></b></p>).
 // Strip tags + decode common entities so the text we hand to the LLM and the
 // fallback keyword matcher is plain prose, not markup.
+
+// Single-pass scanner — explicit linear traversal so there's no regex
+// quantifier for static analyzers to flag (ReDoS).
+const removeHtmlTags = (value: string): string => {
+  let out = "";
+  let insideTag = false;
+  for (const ch of value) {
+    if (ch === "<") {
+      insideTag = true;
+    } else if (ch === ">" && insideTag) {
+      insideTag = false;
+      out += " ";
+    } else if (!insideTag) {
+      out += ch;
+    }
+  }
+  return out;
+};
+
 const stripHtml = (value: string): string =>
-  value
-    .replaceAll(/<[^>]*>/g, " ")
+  removeHtmlTags(value)
     .replaceAll("&nbsp;", " ")
     .replaceAll("&amp;", "&")
     .replaceAll("&lt;", "<")
