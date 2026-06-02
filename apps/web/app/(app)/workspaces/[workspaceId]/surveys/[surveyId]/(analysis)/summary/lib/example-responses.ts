@@ -186,6 +186,29 @@ const CONTACT_INFO_FIXTURES: Array<Record<TContactInfoField, string>> = (
   company,
 }));
 
+// Editor-generated headlines often arrive as HTML (e.g. <p><b><strong>...</strong></b></p>).
+// Strip tags + decode common entities so the text we hand to the LLM and the
+// fallback keyword matcher is plain prose, not markup.
+const stripHtml = (value: string): string =>
+  value
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const plainHeadline = (element: TSurveyElement | undefined): string =>
+  element ? stripHtml(getLocalizedValue(element.headline, DEFAULT_LANGUAGE)) : "";
+
+const plainSubheader = (element: TSurveyElement | undefined): string => {
+  const raw = element ? getLocalizedValue(element.subheader, DEFAULT_LANGUAGE) : "";
+  return raw ? stripHtml(raw) : "";
+};
+
 // Modern surveys store this in `survey.blocks[].elements`; `survey.questions`
 // is the v1-compat field and may be empty. Walk both, de-dupe by id.
 const collectSurveyElements = (survey: TSurvey): TSurveyElement[] => {
@@ -305,11 +328,12 @@ export const buildExampleResponsesSchema = (
 };
 
 const elementContextForPrompt = (element: TSurveyElement): Record<string, unknown> => {
+  const subheader = plainSubheader(element);
   const base: Record<string, unknown> = {
     id: element.id,
     type: element.type,
-    headline: getLocalizedValue(element.headline, DEFAULT_LANGUAGE),
-    subheader: getLocalizedValue(element.subheader, DEFAULT_LANGUAGE) || undefined,
+    headline: plainHeadline(element),
+    subheader: subheader || undefined,
     required: element.required,
   };
 
@@ -341,7 +365,7 @@ const buildPlannedAnswerContext = (row: TExampleResponsePlanRow, elementsById: M
     const element = elementsById.get(elementId);
     return {
       elementId,
-      question: element ? getLocalizedValue(element.headline, DEFAULT_LANGUAGE) : undefined,
+      question: plainHeadline(element),
       type: element?.type,
       answer,
     };
@@ -360,7 +384,7 @@ const buildOpenTextLlmContext = (survey: TSurvey, rows: TExampleResponsePlanRow[
   return {
     surveyTitle: survey.name,
     surveyDescription: survey.welcomeCard?.headline
-      ? getLocalizedValue(survey.welcomeCard.headline, DEFAULT_LANGUAGE)
+      ? stripHtml(getLocalizedValue(survey.welcomeCard.headline, DEFAULT_LANGUAGE))
       : undefined,
     surveyElements: supportedElements.map(elementContextForPrompt),
     openTextElements,
@@ -369,12 +393,11 @@ const buildOpenTextLlmContext = (survey: TSurvey, rows: TExampleResponsePlanRow[
       profile: row.profile,
       requestedOpenTextAnswers: row.openTextElementIds.map((elementId) => {
         const element = elementsById.get(elementId);
+        const subheader = plainSubheader(element);
         return {
           elementId,
-          question: element ? getLocalizedValue(element.headline, DEFAULT_LANGUAGE) : undefined,
-          subheader: element
-            ? getLocalizedValue(element.subheader, DEFAULT_LANGUAGE) || undefined
-            : undefined,
+          question: plainHeadline(element),
+          subheader: subheader || undefined,
         };
       }),
       plannedAnswers: buildPlannedAnswerContext(row, elementsById),
@@ -383,19 +406,25 @@ const buildOpenTextLlmContext = (survey: TSurvey, rows: TExampleResponsePlanRow[
   };
 };
 
-const SYSTEM_PROMPT = `You write only the free-text answers for synthetic Formbricks survey responses.
-Rules:
-- Produce exactly one object per requested rowId.
-- Fill only the requestedOpenTextAnswers for each row, keyed by each requested elementId.
-- Answer each specific open-text question directly. A "main benefit" question needs a benefit; an "improve" question needs an improvement idea; an audience question needs an audience.
-- Use the whole survey context and planned answers to keep the respondent coherent across the survey.
-- Match the respondent profile, sentiment, priorities, and already-planned answers.
-- Use the requested verbosity and polish for each row, and keep that style consistent across all open-text answers in the same row.
-- Write like different real respondents, not one synthetic persona.
-- Avoid repeating the same answer, opening, or sentence template across rows or across questions in the same row.
-- Do not simply restate the question. Avoid starting many answers with phrases like "I think", "The main benefit is", "I would improve", or "For me".
-- Match the language of the element headline.
-- No corporate buzzwords. No "I would like to commend the team for..." energy.`;
+const SYSTEM_PROMPT = `You are simulating real survey respondents. For each row, write a short, on-topic answer to each requested open-text question.
+
+Hard requirements:
+- Output one object per rowId provided.
+- For every elementId listed in that row's requestedOpenTextAnswers, return a non-empty string answer. Never omit a requested elementId. Never invent new elementIds.
+- Each answer must directly address that specific question's headline (e.g. a "what is holding you back" question needs a reason or hesitation; a "primary reason for visiting" question needs a motive).
+- Match the language of the question headline.
+
+Style:
+- Write like a different real person on each row. Vary sentence length and openings.
+- Use the row's profile (sentiment, verbosity, polish) to shape tone, but stay on the survey's actual topic — do not paste the profile's priorities into the answer if they don't fit the question.
+- Two answers within the same row must not be byte-identical and should not share the same opening clause.
+- Sound human: contractions are fine, the occasional lowercase start is fine, no corporate buzzwords.
+
+Example output shape:
+{ "responses": [
+  { "rowId": "row_0", "answers": { "<elementId1>": "...", "<elementId2>": "..." } },
+  ...
+] }`;
 
 export type TGenerateExampleResponsesArgs = {
   survey: TSurvey;
@@ -691,15 +720,99 @@ const applyFallbackStyle = (answer: string, profile: TExampleRespondentProfile):
   return uppercaseFirst(trimmed);
 };
 
+const FALLBACK_ANSWERS_BY_SENTIMENT_VERBOSITY: Record<
+  TExampleSentiment,
+  Record<TExampleVerbosity, string[]>
+> = {
+  promoter: {
+    brief: ["Loved it.", "All good here.", "Honestly a yes.", "No complaints."],
+    normal: [
+      "Pretty close to what I was hoping for.",
+      "Glad I came across this today.",
+      "Lining up with what I had in mind.",
+      "Hits the spot for me right now.",
+    ],
+    detailed: [
+      "Genuinely happy with how this is going. Nothing major I would change today.",
+      "This is one of the better ones I have come across — would happily come back.",
+      "Felt easy and straightforward, which is what I was after.",
+      "Met my expectations and then some, no real reservations.",
+    ],
+  },
+  positive: {
+    brief: ["Looks good.", "Pretty solid.", "Working so far.", "Glad I checked."],
+    normal: [
+      "Mostly what I was looking for, with a couple of small things.",
+      "Liking it so far, just want to see a bit more.",
+      "Generally fits, I just need a moment to decide.",
+      "Seems promising, leaning yes.",
+    ],
+    detailed: [
+      "Overall a good experience — it covers most of what I was after, even if a couple of small things could be smoother.",
+      "Feels close to what I need. A few minor questions left, but nothing that would stop me.",
+      "Mostly positive impression; I would just want a bit more clarity on one or two details.",
+      "Largely lines up with what I was hoping for, with a couple of small caveats I am working through.",
+    ],
+  },
+  neutral: {
+    brief: ["It's fine.", "Hard to say yet.", "Need more info.", "Open to it."],
+    normal: [
+      "Comparing a few options before I decide.",
+      "Mostly seems fine, a couple of things on my mind.",
+      "Open to it, just thinking it through.",
+      "Probably need a bit more time before I commit.",
+    ],
+    detailed: [
+      "Honestly still weighing this up — some parts work for me, others I want to think about more.",
+      "On the fence right now. Not negative on it, just not ready to commit either.",
+      "Reasonable so far, but I want to compare against a couple of alternatives before deciding.",
+      "Mixed feeling at the moment. Nothing wrong exactly, just nothing that pushes me one way or the other.",
+    ],
+  },
+  skeptical: {
+    brief: ["Not sure.", "Hesitant.", "Some concerns.", "Probably not today."],
+    normal: [
+      "A few things make me hesitant before going further.",
+      "Not quite convinced yet, leaning cautious.",
+      "I have some concerns I would want answered first.",
+      "Want to do a bit more digging before I move on it.",
+    ],
+    detailed: [
+      "Honestly, there are a couple of things that give me pause. I would not say no, but I am not ready to commit either.",
+      "Some parts work for me and others raise questions. Probably going to hold off for now.",
+      "I want to like this, but a few rough edges make me want to wait and see.",
+      "Mostly hesitant. Nothing dealbreaking, just enough small things that I am not moving forward today.",
+    ],
+  },
+  detractor: {
+    brief: ["Not for me.", "Doesn't fit.", "Probably no.", "Missing the mark."],
+    normal: [
+      "Doesn't quite fit what I am looking for right now.",
+      "Not feeling like it lines up with what I need.",
+      "Leaning no — not seeing enough of a reason yet.",
+      "Not really speaking to what I am here for today.",
+    ],
+    detailed: [
+      "Honestly this doesn't quite land for me. A few things felt off and I am not getting the value I was hoping for.",
+      "Not really seeing the fit. The experience didn't match what I was expecting and I would probably look elsewhere.",
+      "I came in optimistic but a few specific things made me reconsider. Probably not the right thing for me today.",
+      "Not connecting with this one. The pieces I cared about most didn't quite show up the way I needed them to.",
+    ],
+  },
+};
+
 const buildFallbackOpenTextAnswer = (
   profile: TExampleRespondentProfile,
   element: TSurveyElement | undefined,
   variantOffset = 0
 ): string => {
-  const headline = element ? getLocalizedValue(element.headline, DEFAULT_LANGUAGE).toLowerCase() : "";
+  const headline = plainHeadline(element).toLowerCase();
   const variant = (hashString(`${profile.persona}-${headline}`) + variantOffset) % 4;
-  const secondaryPriority = profile.priorities[1] ?? profile.priorities[0];
 
+  // For surveys that match these product-feedback patterns, surface a
+  // priorities-tinted answer. Otherwise fall through to the survey-agnostic
+  // sentiment+verbosity bank so e.g. a purchase-intent survey doesn't get
+  // "team adoption" answers.
   if (headline.includes("who") || headline.includes("people") || headline.includes("benefit from")) {
     const answers = [
       `Teams like ${profile.persona}s, especially when ${profile.priorities[0]} matters.`,
@@ -724,6 +837,7 @@ const buildFallbackOpenTextAnswer = (
   }
 
   if (headline.includes("improve") || headline.includes("better")) {
+    const secondaryPriority = profile.priorities[1] ?? profile.priorities[0];
     const answers = [
       `Make ${secondaryPriority} easier to configure.`,
       `A bit more guidance around ${secondaryPriority} would help.`,
@@ -733,35 +847,8 @@ const buildFallbackOpenTextAnswer = (
     return applyFallbackStyle(answers[variant], profile);
   }
 
-  switch (profile.verbosity) {
-    case "brief": {
-      const answers =
-        profile.sentiment === "detractor"
-          ? ["Not enough value yet.", "Still falls short.", "Hasn't clicked for me.", "Not there yet."]
-          : ["Helpful so far.", "Working for us.", "Solid start.", "Doing the job."];
-      return applyFallbackStyle(answers[variant], profile);
-    }
-    case "detailed": {
-      const direction =
-        profile.sentiment === "detractor" ? "not quite there yet" : "moving in the right direction";
-      const answers = [
-        `As a ${profile.persona}, I mostly care about ${profile.priorities.join(" and ")}. The experience is ${direction}.`,
-        `Coming at this from being a ${profile.persona}, ${profile.priorities[0]} matters most and ${profile.priorities[1]} is close behind; overall it is ${direction}.`,
-        `My take as a ${profile.persona}: ${profile.priorities[0]} drives my judgement, with ${profile.priorities[1]} as a secondary lens. Right now it is ${direction}.`,
-        `From the ${profile.persona} angle, the things I watch are ${profile.priorities[0]} and ${profile.priorities[1]}. I would say it is ${direction}.`,
-      ];
-      return applyFallbackStyle(answers[variant], profile);
-    }
-    case "normal": {
-      const answers = [
-        `It mainly helps with ${profile.priorities[0]}, though I would still watch ${profile.priorities[1]}.`,
-        `Most of the value shows up around ${profile.priorities[0]}; ${profile.priorities[1]} could use more attention.`,
-        `For me it lands on ${profile.priorities[0]} first, and then ${profile.priorities[1]} second.`,
-        `Where I notice it most is ${profile.priorities[0]}, with ${profile.priorities[1]} still on the radar.`,
-      ];
-      return applyFallbackStyle(answers[variant], profile);
-    }
-  }
+  const answers = FALLBACK_ANSWERS_BY_SENTIMENT_VERBOSITY[profile.sentiment][profile.verbosity];
+  return applyFallbackStyle(answers[variant], profile);
 };
 
 const fillOpenTextAnswers = async (
@@ -781,7 +868,7 @@ const fillOpenTextAnswers = async (
       responses: Array<{ rowId: string; answers: Record<string, string> }>;
     }>,
     system: SYSTEM_PROMPT,
-    prompt: `Write free-text answers for these planned synthetic survey responses.
+    prompt: `Write one short answer for each requestedOpenTextAnswers entry in every row below. Every requested elementId must map to a non-empty string in your output. Stay grounded in the actual question headline for each elementId.
 
 Survey context (JSON):
 ${JSON.stringify(buildOpenTextLlmContext(survey, rowsNeedingText), null, 2)}`,

@@ -210,9 +210,8 @@ describe("generateExampleResponseDataset", () => {
     expect(mocks.generateOrganizationAIObject).toHaveBeenCalledTimes(1);
     const call = vi.mocked(mocks.generateOrganizationAIObject).mock.calls[0][0];
     expect(call.organizationId).toBe("org_1");
-    expect(call.system).toContain("write only the free-text answers");
-    expect(call.system).toContain("Answer each specific open-text question directly");
-    expect(call.prompt).toContain("surveyElements");
+    expect(call.system).toContain("simulating real survey respondents");
+    expect(call.system).toContain("non-empty string");
     expect(call.prompt).toContain("requestedOpenTextAnswers");
     expect(call.prompt).toContain("plannedAnswers");
     expect(call.prompt).toContain("hi");
@@ -327,6 +326,55 @@ describe("generateExampleResponseDataset", () => {
     await expect(generateExampleResponseDataset({ survey, organizationId: "org_1" })).rejects.toThrow(
       "ai_features_not_enabled"
     );
+  });
+
+  test("strips HTML from headlines before sending them to the LLM", async () => {
+    const survey = makeSurvey([
+      {
+        ...baseQuestion,
+        id: "q_text",
+        type: TSurveyElementTypeEnum.OpenText,
+        headline: i18n(
+          '<p class="fb-editor-paragraph"><b><strong>How likely are you to shop today?</strong></b></p>'
+        ),
+      },
+    ] as unknown as TSurvey["questions"]);
+    mockOpenTextAnswers(survey);
+
+    await generateExampleResponseDataset({ survey, organizationId: "org_1" });
+
+    const call = vi.mocked(mocks.generateOrganizationAIObject).mock.calls[0][0];
+    expect(call.prompt).toContain("How likely are you to shop today?");
+    expect(call.prompt).not.toContain("fb-editor-paragraph");
+    expect(call.prompt).not.toContain("<strong>");
+  });
+
+  test("uses survey-agnostic fallback answers when no keyword branch matches", async () => {
+    const survey = makeSurvey([
+      {
+        ...baseQuestion,
+        id: "q_reason",
+        type: TSurveyElementTypeEnum.OpenText,
+        headline: i18n("What is your primary reason for visiting today?"),
+      },
+    ] as unknown as TSurvey["questions"]);
+    vi.mocked(mocks.generateOrganizationAIObject).mockResolvedValue({
+      object: {
+        responses: Array.from({ length: EXAMPLE_RESPONSE_COUNT }, (_, index) => ({
+          rowId: `row_${index}`,
+          answers: {},
+        })),
+      },
+    });
+
+    const result = await generateExampleResponseDataset({ survey, organizationId: "org_1" });
+
+    for (const response of result.responses) {
+      const answer = String(response.data.q_reason ?? "");
+      // Profile priorities are SaaS-flavoured ("team adoption", "missing features", etc.).
+      // Generic surveys (like this purchase-intent one) must not leak those into answers.
+      expect(answer).not.toMatch(/team adoption|missing features|reporting|reliability|speed|setup/i);
+    }
   });
 
   test("never ships duplicate open-text answers within a single row", async () => {
