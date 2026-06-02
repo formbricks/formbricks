@@ -1835,6 +1835,7 @@
       },
       "dashboards": {
         "add_count_charts": "{count} diagram hozzáadása",
+        "chart_remove_failed": "A diagram eltávolítása sikertelen",
         "chart_removed": "A diagram eltávolítva a műszerfalról",
         "chart_restore_failed": "A diagram visszaállítása sikertelen",
         "chart_restored": "A diagram visszaállítva",

@@ -1835,6 +1835,7 @@
       },
       "dashboards": {
         "add_count_charts": "Adaugă {count} grafic(e)",
+        "chart_remove_failed": "Nu s-a putut elimina graficul",
         "chart_removed": "Graficul a fost eliminat din tabloul de bord",
         "chart_restore_failed": "Restaurarea graficului a eșuat",
         "chart_restored": "Graficul a fost restaurat",

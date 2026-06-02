@@ -1835,6 +1835,7 @@
       },
       "dashboards": {
         "add_count_charts": "{count}個のグラフを追加",
+        "chart_remove_failed": "グラフの削除に失敗しました",
         "chart_removed": "チャートがダッシュボードから削除されました",
         "chart_restore_failed": "チャートの復元に失敗しました",
         "chart_restored": "チャートを復元しました",

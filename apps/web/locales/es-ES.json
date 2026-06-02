@@ -1835,6 +1835,7 @@
       },
       "dashboards": {
         "add_count_charts": "Añadir {count} gráfico(s)",
+        "chart_remove_failed": "Error al eliminar el gráfico",
         "chart_removed": "Gráfico eliminado del panel",
         "chart_restore_failed": "Error al restaurar el gráfico",
         "chart_restored": "Gráfico restaurado",

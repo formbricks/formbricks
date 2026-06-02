@@ -1835,6 +1835,7 @@
       },
       "dashboards": {
         "add_count_charts": "Добавить {count} график(ов)",
+        "chart_remove_failed": "Не удалось удалить диаграмму",
         "chart_removed": "График удалён с панели",
         "chart_restore_failed": "Не удалось восстановить график",
         "chart_restored": "График восстановлен",
