@@ -28,16 +28,10 @@ const ChartTooltipRow = ({
   const indicatorColor = color ?? CHART_BRAND_DARK;
   return (
     <>
-      <div
-        className="size-2.5 shrink-0 rounded-[2px] border border-current"
-        style={{
-          backgroundColor: indicatorColor,
-          borderColor: indicatorColor,
-        }}
-      />
-      <div className="flex flex-1 items-center justify-between leading-none">
+      <div className="mt-1 size-2.5 shrink-0 rounded-full" style={{ backgroundColor: indicatorColor }} />
+      <div className="flex flex-1 items-baseline justify-between gap-3 leading-none">
         <span className="text-muted-foreground">{formatCubeColumnHeader(dataKey, t)}</span>
-        <span className="text-foreground font-mono font-medium tabular-nums">{formatCellValue(value)}</span>
+        <span className="text-foreground font-medium tabular-nums">{formatCellValue(value)}</span>
       </div>
     </>
   );

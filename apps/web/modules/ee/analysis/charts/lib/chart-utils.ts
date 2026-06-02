@@ -49,7 +49,12 @@ export const preparePieData = (
   // no arc, but Recharts can still misalign the remaining slices when one
   // entry has value 0.
   const validData = data.filter((row) => isNumericValue(row[dataKey]) && Number(row[dataKey]) > 0);
-  const processedData = validData.map((row) => ({ ...row, [dataKey]: Number(row[dataKey]) }));
+  // Sort largest → smallest so the darkest brand-ramp shade lands on the
+  // dominant slice (anchors the eye), and so adjacent slices are predictably
+  // ordered around the pie.
+  const processedData = validData
+    .map((row) => ({ ...row, [dataKey]: Number(row[dataKey]) }))
+    .sort((a, b) => Number(b[dataKey]) - Number(a[dataKey]));
   if (processedData.length === 0) return null;
 
   // Walk the brand ramp dark→light so the largest categories visually anchor

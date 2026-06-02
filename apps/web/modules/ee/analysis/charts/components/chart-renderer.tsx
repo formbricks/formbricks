@@ -2,7 +2,7 @@
 
 import { useId } from "react";
 import { useTranslation } from "react-i18next";
-import { Area, AreaChart, Bar, BarChart, Cell, Legend, Pie, PieChart } from "recharts";
+import { Area, AreaChart, Bar, BarChart, Cell, LabelList, Legend, Pie, PieChart } from "recharts";
 import type { TChartQuery } from "@formbricks/types/analysis";
 import { CartesianChart } from "@/modules/ee/analysis/charts/components/cartesian-chart";
 import {
@@ -108,6 +108,17 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
                     const cellKey = `${xAxisKey}-${String(rowKey)}-${index}`;
                     return <Cell key={cellKey} fill={CHART_BRAND_RAMP[index % CHART_BRAND_RAMP.length]} />;
                   })}
+                {/* Value labels above each bar — only on single-measure where
+                    there's clear vertical space above the bar. */}
+                {!isMultiMeasure && (
+                  <LabelList
+                    dataKey={key}
+                    position="top"
+                    className="fill-foreground"
+                    fontSize={11}
+                    formatter={(value: unknown) => formatCellValue(value)}
+                  />
+                )}
               </Bar>
             );
           })}
