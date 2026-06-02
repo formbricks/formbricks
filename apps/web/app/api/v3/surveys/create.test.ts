@@ -4,7 +4,8 @@ import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { createSurvey } from "@/lib/survey/service";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
-import { V3SurveyCreatePermissionError, createV3Survey } from "./create";
+import { V3SurveyCreatePermissionError, createV3Survey, createV3SurveyFromTrustedTemplate } from "./create";
+import { V3SurveyReferenceValidationError } from "./reference-validation";
 import { ZV3CreateSurveyBody } from "./schemas";
 
 vi.mock("server-only", () => ({}));
@@ -130,8 +131,13 @@ describe("createV3Survey", () => {
   });
 
   test("maps the public v3 body to the internal create payload", async () => {
+    const appCreateBody = ZV3CreateSurveyBody.parse({
+      ...rawCreateBody,
+      type: "app",
+    });
+
     await createV3Survey(
-      createBody,
+      appCreateBody,
       {
         user: { id: "user_1", email: "user@example.com", name: "User" },
         expires: "2026-05-01",
@@ -155,7 +161,7 @@ describe("createV3Survey", () => {
       workspaceId,
       expect.objectContaining({
         name: "Product Feedback",
-        type: "link",
+        type: "app",
         status: "draft",
         createdBy: "user_1",
         questions: [],
@@ -278,6 +284,66 @@ describe("createV3Survey", () => {
     });
 
     await expect(createV3Survey(body, null, "req_4")).rejects.toThrow(V3SurveyCreatePermissionError);
+    expect(createSurvey).not.toHaveBeenCalled();
+  });
+
+  test("trusted template creation preserves curated external URLs without public entitlement checks", async () => {
+    vi.mocked(getExternalUrlsPermission).mockResolvedValue(false);
+    const body = ZV3CreateSurveyBody.parse({
+      ...rawCreateBody,
+      endings: [
+        {
+          id: "clen1234567890123456789012",
+          type: "redirectToUrl",
+          url: "https://example.com/next",
+        },
+      ],
+    });
+
+    await createV3SurveyFromTrustedTemplate(
+      body,
+      {
+        user: { id: "user_1", email: "user@example.com", name: "User" },
+        expires: "2026-05-01",
+      },
+      "req_5"
+    );
+
+    expect(getOrganizationByWorkspaceId).not.toHaveBeenCalled();
+    expect(getExternalUrlsPermission).not.toHaveBeenCalled();
+    expect(createSurvey).toHaveBeenCalledWith(
+      workspaceId,
+      expect.objectContaining({
+        endings: [
+          expect.objectContaining({
+            type: "redirectToUrl",
+            url: "https://example.com/next",
+          }),
+        ],
+      })
+    );
+  });
+
+  test("trusted template creation still rejects invalid v3 documents", async () => {
+    const body = ZV3CreateSurveyBody.parse({
+      ...rawCreateBody,
+      hiddenFields: { enabled: true, fieldIds: ["utm_source"] },
+      blocks: [
+        {
+          ...rawCreateBody.blocks[0],
+          elements: [
+            {
+              ...rawCreateBody.blocks[0].elements[0],
+              headline: { "en-US": "Tell us about #recall:missing_reference" },
+            },
+          ],
+        },
+      ],
+    });
+
+    await expect(createV3SurveyFromTrustedTemplate(body, null, "req_6")).rejects.toThrow(
+      V3SurveyReferenceValidationError
+    );
     expect(createSurvey).not.toHaveBeenCalled();
   });
 });

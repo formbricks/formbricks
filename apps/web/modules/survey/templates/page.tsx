@@ -12,12 +12,12 @@ interface SurveyTemplateProps {
   }>;
 }
 
-export const SurveyTemplatesPage = async (props: SurveyTemplateProps) => {
+export const SurveyTemplatesPage = async (props: Readonly<SurveyTemplateProps>) => {
   const t = await getTranslate();
   const params = await props.params;
   const workspaceId = params.workspaceId;
 
-  const { session, isReadOnly } = await getWorkspaceAuth(workspaceId);
+  const { isReadOnly } = await getWorkspaceAuth(workspaceId);
 
   const workspace = await getWorkspaceWithTeamIds(workspaceId);
 
@@ -31,11 +31,5 @@ export const SurveyTemplatesPage = async (props: SurveyTemplateProps) => {
 
   const publicDomain = getPublicDomain();
 
-  return (
-    <TemplateContainerWithPreview
-      userId={session.user.id}
-      workspace={workspace}
-      publicDomain={publicDomain}
-    />
-  );
+  return <TemplateContainerWithPreview workspace={workspace} publicDomain={publicDomain} />;
 };

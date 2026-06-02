@@ -15,7 +15,6 @@ import { getMinimalSurvey } from "../lib/minimal-survey";
 
 type TemplateContainerWithPreviewProps = {
   workspace: Workspace;
-  userId: string;
   isTemplatePage?: boolean;
   publicDomain: string;
   language?: TUserLocale;
@@ -25,13 +24,12 @@ type TemplateContainerWithPreviewProps = {
 
 export const TemplateContainerWithPreview = ({
   workspace,
-  userId,
   isTemplatePage = true,
   publicDomain,
   language = "en-US",
   isAIAvailable = false,
   aiUnavailableReason,
-}: TemplateContainerWithPreviewProps) => {
+}: Readonly<TemplateContainerWithPreviewProps>) => {
   const { t } = useTranslation();
   const initialTemplate = customSurveyTemplate(t);
   const [activeTemplate, setActiveTemplate] = useState<TTemplate>(initialTemplate);
@@ -63,7 +61,6 @@ export const TemplateContainerWithPreview = ({
           <TemplateList
             workspaceId={workspace.id}
             workspace={workspace}
-            userId={userId}
             templateSearch={templateSearch ?? ""}
             showAICreateCard={!isTemplatePage}
             language={language}

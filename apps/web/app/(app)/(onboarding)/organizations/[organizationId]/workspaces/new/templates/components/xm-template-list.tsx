@@ -5,61 +5,53 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { TSurveyCreateInput } from "@formbricks/types/surveys/types";
-import { TTemplate } from "@formbricks/types/templates";
-import { TUser } from "@formbricks/types/user";
-import { TWorkspace } from "@formbricks/types/workspace";
 import {
   TOnboardingXMTemplateId,
   XM_TEMPLATE_IDS,
 } from "@/app/(app)/(onboarding)/organizations/[organizationId]/workspaces/new/templates/lib/xm-template-ids";
 import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizations/components/OnboardingOptionsContainer";
-import { templates } from "@/app/lib/templates";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { replacePresetPlaceholders } from "@/lib/utils/templates";
 import { createSurveyAction } from "@/modules/survey/components/template-list/actions";
 
 interface XMTemplateListProps {
-  workspace: TWorkspace;
-  user: TUser;
   workspaceId: string;
 }
 
-export const XMTemplateList = ({ workspace, user, workspaceId }: Readonly<XMTemplateListProps>) => {
+export const XMTemplateList = ({ workspaceId }: Readonly<XMTemplateListProps>) => {
   const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
   const { t } = useTranslation();
   const router = useRouter();
 
-  const createSurvey = async (activeTemplate: TTemplate) => {
-    const augmentedTemplate: TSurveyCreateInput = {
-      ...activeTemplate.preset,
-      type: "link",
-      createdBy: user.id,
-    };
-    const createSurveyResponse = await createSurveyAction({
-      workspaceId: workspaceId,
-      surveyBody: augmentedTemplate,
-      createdFrom: "template",
-    });
+  const createSurvey = async (templateId: string) => {
+    try {
+      const createSurveyResponse = await createSurveyAction({
+        workspaceId,
+        templateId,
+        surveyType: "link",
+      });
 
-    if (createSurveyResponse?.data) {
-      router.push(`/workspaces/${workspaceId}/surveys/${createSurveyResponse.data.id}/edit?mode=cx`);
-    } else {
-      const errorMessage = getFormattedErrorMessage(createSurveyResponse);
+      if (createSurveyResponse?.data) {
+        router.push(`/workspaces/${workspaceId}/surveys/${createSurveyResponse.data.id}/edit?mode=cx`);
+      } else {
+        const errorMessage =
+          getFormattedErrorMessage(createSurveyResponse ?? {}) ||
+          t("common.something_went_wrong_please_try_again");
+        toast.error(errorMessage);
+      }
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error && error.message
+          ? error.message
+          : t("common.something_went_wrong_please_try_again");
       toast.error(errorMessage);
+    } finally {
+      setActiveTemplateId(null);
     }
   };
 
   const handleTemplateClick = (templateId: TOnboardingXMTemplateId) => {
     setActiveTemplateId(templateId);
-    const template = templates(t).find((template) => template.id === templateId);
-    if (!template) {
-      toast.error(t("common.something_went_wrong_please_try_again"));
-      setActiveTemplateId(null);
-      return;
-    }
-    const newTemplate = replacePresetPlaceholders(template, workspace);
-    void createSurvey(newTemplate);
+    void createSurvey(templateId);
   };
 
   const XMTemplateOptions = [

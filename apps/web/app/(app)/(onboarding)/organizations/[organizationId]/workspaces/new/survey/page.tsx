@@ -41,7 +41,6 @@ const Page = async (props: SurveyOnboardingPageProps) => {
       <CreateFirstSurvey
         organizationId={params.organizationId}
         workspaceId={workspace.id}
-        userId={session.user.id}
         isAIAvailable={isAIAvailable}
         aiUnavailableReason={aiUnavailableReason}
       />

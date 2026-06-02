@@ -1,6 +1,12 @@
 import { z } from "zod";
 import { ZSurveyBlocks } from "./surveys/blocks";
-import { ZSurveyEndings, ZSurveyHiddenFields, ZSurveyWelcomeCard } from "./surveys/types";
+import {
+  ZSurveyEndings,
+  ZSurveyHiddenFields,
+  ZSurveyMetadata,
+  ZSurveyVariables,
+  ZSurveyWelcomeCard,
+} from "./surveys/types";
 import { ZWorkspaceConfigChannel, ZWorkspaceConfigIndustry } from "./workspace";
 
 export const ZTemplateRole = z.enum([
@@ -26,6 +32,8 @@ export const ZTemplate = z.object({
     blocks: ZSurveyBlocks.prefault([]),
     endings: ZSurveyEndings,
     hiddenFields: ZSurveyHiddenFields,
+    metadata: ZSurveyMetadata.optional(),
+    variables: ZSurveyVariables.optional(),
   }),
 });
 

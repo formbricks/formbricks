@@ -6,9 +6,8 @@ import posthog from "posthog-js";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { TSurveyCreateInput } from "@formbricks/types/surveys/types";
 import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizations/components/OnboardingOptionsContainer";
-import { customSurveyTemplate } from "@/app/lib/templates";
+import { CUSTOM_SURVEY_TEMPLATE_ID } from "@/app/lib/templates";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createSurveyAction } from "@/modules/survey/components/template-list/actions";
@@ -19,7 +18,6 @@ type TOnboardingSurveyPath = "scratch" | "template" | "ai";
 interface CreateFirstSurveyProps {
   organizationId: string;
   workspaceId: string;
-  userId: string;
   isAIAvailable: boolean;
   aiUnavailableReason?: TAIUnavailableReason;
 }
@@ -27,7 +25,6 @@ interface CreateFirstSurveyProps {
 export const CreateFirstSurvey = ({
   organizationId,
   workspaceId,
-  userId,
   isAIAvailable,
   aiUnavailableReason,
 }: Readonly<CreateFirstSurveyProps>) => {
@@ -48,17 +45,10 @@ export const CreateFirstSurvey = ({
     setIsCreatingBlankSurvey(true);
 
     try {
-      const customSurvey = customSurveyTemplate(t);
-      const surveyBody: TSurveyCreateInput = {
-        ...customSurvey.preset,
-        type: "link",
-        createdBy: userId,
-      };
-
       const response = await createSurveyAction({
         workspaceId,
-        surveyBody,
-        createdFrom: "blank",
+        templateId: CUSTOM_SURVEY_TEMPLATE_ID,
+        surveyType: "link",
       });
 
       if (response?.data) {

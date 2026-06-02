@@ -5,11 +5,11 @@ import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { Workspace } from "@formbricks/database/prisma-browser";
-import { TSurveyCreateInput, TSurveyType } from "@formbricks/types/surveys/types";
+import { TSurveyType } from "@formbricks/types/surveys/types";
 import { TTemplate, TTemplateFilter, ZTemplateRole } from "@formbricks/types/templates";
 import { TUserLocale } from "@formbricks/types/user";
 import { ZWorkspaceConfigChannel, ZWorkspaceConfigIndustry } from "@formbricks/types/workspace";
-import { customSurveyTemplate, templates } from "@/app/lib/templates";
+import { templates } from "@/app/lib/templates";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import type { TAIUnavailableReason } from "@/modules/ee/analysis/charts/lib/ai-availability";
 import { createSurveyAction } from "./actions";
@@ -19,7 +19,6 @@ import { Template } from "./components/template";
 import { TemplateFilters } from "./components/template-filters";
 
 interface TemplateListProps {
-  userId: string;
   workspaceId: string;
   workspace: Workspace;
   templateSearch?: string;
@@ -33,7 +32,6 @@ interface TemplateListProps {
 }
 
 export const TemplateList = ({
-  userId,
   workspace,
   workspaceId,
   showFilters = true,
@@ -44,7 +42,7 @@ export const TemplateList = ({
   language = "en-US",
   isAIAvailable = false,
   aiUnavailableReason,
-}: TemplateListProps) => {
+}: Readonly<TemplateListProps>) => {
   const workspaceBasePath = `/workspaces/${workspace.id}`;
   const { t } = useTranslation();
   const router = useRouter();
@@ -65,23 +63,29 @@ export const TemplateList = ({
 
   const createSurvey = async (activeTemplate: TTemplate) => {
     setLoading(true);
-    const augmentedTemplate: TSurveyCreateInput = {
-      ...activeTemplate.preset,
-      type: surveyType,
-      createdBy: userId,
-    };
-    const isBlank = activeTemplate.name === customSurveyTemplate(t).name;
-    const createSurveyResponse = await createSurveyAction({
-      workspaceId: workspaceId,
-      surveyBody: augmentedTemplate,
-      createdFrom: isBlank ? "blank" : "template",
-    });
+    try {
+      const createSurveyResponse = await createSurveyAction({
+        workspaceId,
+        templateId: activeTemplate.id,
+        surveyType,
+      });
 
-    if (createSurveyResponse?.data) {
-      router.push(`${workspaceBasePath}/surveys/${createSurveyResponse.data.id}/edit`);
-    } else {
-      const errorMessage = getFormattedErrorMessage(createSurveyResponse);
+      if (createSurveyResponse?.data) {
+        router.push(`${workspaceBasePath}/surveys/${createSurveyResponse.data.id}/edit`);
+      } else {
+        const errorMessage =
+          getFormattedErrorMessage(createSurveyResponse ?? {}) ||
+          t("common.something_went_wrong_please_try_again");
+        toast.error(errorMessage);
+      }
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error && error.message
+          ? error.message
+          : t("common.something_went_wrong_please_try_again");
       toast.error(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -147,7 +151,7 @@ export const TemplateList = ({
           (template: TTemplate) => {
             return (
               <Template
-                key={template.name}
+                key={template.id}
                 template={template}
                 activeTemplate={activeTemplate}
                 setActiveTemplate={setActiveTemplate}

@@ -74,7 +74,7 @@ export async function executeV3SurveyCreate(params: {
   const languages = await ensureV3WorkspaceLanguages(input.workspaceId, languageRequests, requestId);
   const surveyCreateInput: TSurveyCreateInput = {
     name: input.name,
-    type: "link",
+    type: input.type,
     status: input.status,
     metadata: input.metadata,
     welcomeCard: input.welcomeCard,
@@ -102,6 +102,24 @@ export async function createV3Survey(
   }
 
   await assertV3SurveyCreatePermissions(input, organizationId);
+
+  return await executeV3SurveyCreate({
+    input: preparation.document,
+    authentication,
+    languageRequests: preparation.languageRequests,
+    requestId,
+  });
+}
+
+export async function createV3SurveyFromTrustedTemplate(
+  input: TV3CreateSurveyBody,
+  authentication: TV3Authentication,
+  requestId?: string
+) {
+  const preparation = prepareV3SurveyCreate(input);
+  if (!preparation.ok) {
+    throw new V3SurveyReferenceValidationError(preparation.validation.invalidParams);
+  }
 
   return await executeV3SurveyCreate({
     input: preparation.document,

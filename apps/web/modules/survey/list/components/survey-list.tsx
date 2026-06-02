@@ -6,10 +6,10 @@ import { useRouter } from "next/navigation";
 import { type ComponentProps, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { TSurveyCreateInput, TSurveyType } from "@formbricks/types/surveys/types";
+import { TSurveyType } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
 import { TWorkspaceConfigChannel } from "@formbricks/types/workspace";
-import { customSurveyTemplate } from "@/app/lib/templates";
+import { CUSTOM_SURVEY_TEMPLATE_ID } from "@/app/lib/templates";
 import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@/lib/localStorage";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
@@ -42,7 +42,6 @@ import { SurveyLoading } from "./survey-loading";
 
 interface SurveysListProps {
   workspace: ComponentProps<typeof TemplateContainerWithPreview>["workspace"];
-  userId: string;
   publicDomain: string;
   isReadOnly: boolean;
   surveysPerPage: number;
@@ -54,7 +53,6 @@ interface SurveysListProps {
 
 type NewSurveyMenuProps = {
   workspace: ComponentProps<typeof TemplateContainerWithPreview>["workspace"];
-  userId: string;
   language: TUserLocale;
   isAIAvailable: boolean;
   aiUnavailableReason?: TAIUnavailableReason;
@@ -62,7 +60,6 @@ type NewSurveyMenuProps = {
 
 const NewSurveyMenu = ({
   workspace,
-  userId,
   language,
   isAIAvailable,
   aiUnavailableReason,
@@ -89,17 +86,10 @@ const NewSurveyMenu = ({
     setIsCreatingBlankSurvey(true);
 
     try {
-      const customSurvey = customSurveyTemplate(t);
-      const surveyBody: TSurveyCreateInput = {
-        ...customSurvey.preset,
-        type: surveyType,
-        createdBy: userId,
-      };
-
       const response = await createSurveyAction({
         workspaceId: workspace.id,
-        surveyBody,
-        createdFrom: "blank",
+        templateId: CUSTOM_SURVEY_TEMPLATE_ID,
+        surveyType,
       });
 
       if (response?.data) {
@@ -160,7 +150,6 @@ const NewSurveyMenu = ({
 
 export const SurveysList = ({
   workspace,
-  userId,
   publicDomain,
   isReadOnly,
   surveysPerPage,
@@ -240,7 +229,6 @@ export const SurveysList = ({
   const createSurveyButton = (
     <NewSurveyMenu
       workspace={workspace}
-      userId={userId}
       language={locale}
       isAIAvailable={isAIAvailable}
       aiUnavailableReason={aiUnavailableReason}
@@ -270,7 +258,6 @@ export const SurveysList = ({
   if (showTemplateEmptyState) {
     return (
       <TemplateContainerWithPreview
-        userId={userId}
         workspace={workspace}
         isTemplatePage={false}
         publicDomain={publicDomain}
