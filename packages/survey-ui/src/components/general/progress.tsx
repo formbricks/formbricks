@@ -26,7 +26,7 @@ function Progress({ className, value, ...props }: Readonly<ProgressProps>): Reac
       <ProgressPrimitive.Indicator
         ref={indicatorRef}
         data-slot="progress-indicator"
-        className="progress-indicator h-full w-full flex-1 translate-x-(--fb-progress-translate-x,-100%) transition-all"
+        className="progress-indicator h-full w-full flex-1 translate-x-(--fb-progress-translate-x) transition-all"
       />
     </ProgressPrimitive.Root>
   );
