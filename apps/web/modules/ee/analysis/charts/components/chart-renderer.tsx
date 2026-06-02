@@ -2,7 +2,7 @@
 
 import { useId } from "react";
 import { useTranslation } from "react-i18next";
-import { Area, AreaChart, Bar, BarChart, Cell, LabelList, Legend, Pie, PieChart } from "recharts";
+import { Area, AreaChart, Bar, BarChart, Cell, Label, LabelList, Legend, Pie, PieChart } from "recharts";
 import type { TChartQuery } from "@formbricks/types/analysis";
 import { CartesianChart } from "@/modules/ee/analysis/charts/components/cartesian-chart";
 import {
@@ -10,12 +10,75 @@ import {
   CHART_BRAND_RAMP,
   CHART_MEASURE_COLORS,
   formatCellValue,
+  formatXAxisTick,
   preparePieData,
 } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import { formatCubeColumnHeader } from "@/modules/ee/analysis/lib/schema-definition";
 import type { TChartDataRow, TChartType } from "@/modules/ee/analysis/types/analysis";
 import type { ChartConfig } from "@/modules/ui/components/chart";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/modules/ui/components/chart";
+
+type PieLabelProps = {
+  cx?: number;
+  cy?: number;
+  midAngle?: number;
+  outerRadius?: number;
+  percent?: number;
+  value?: number;
+};
+
+/**
+ * External pie label: leader line + "value (percent%)" anchored outside the
+ * arc, mirroring the Twenty-style target. Tiny slices (<2%) skip the label
+ * to avoid overlapping with neighbours.
+ */
+const renderPieLabel = ({ cx, cy, midAngle, outerRadius, percent, value }: PieLabelProps) => {
+  if (cx == null || cy == null || midAngle == null || outerRadius == null || percent == null) return null;
+  if (percent < 0.02) return null;
+  const RADIAN = Math.PI / 180;
+  const radius = outerRadius + 22;
+  const x = cx + radius * Math.cos(-midAngle * RADIAN);
+  const y = cy + radius * Math.sin(-midAngle * RADIAN);
+  const textAnchor = x > cx ? "start" : "end";
+  return (
+    <text x={x} y={y} fill="#64748b" fontSize={11} textAnchor={textAnchor} dominantBaseline="central">
+      {formatCellValue(value)} ({(percent * 100).toFixed(1)}%)
+    </text>
+  );
+};
+
+/** Center total + label inside the donut hole. */
+const PieCenterLabel = ({
+  viewBox,
+  total,
+  label,
+}: {
+  viewBox?: { cx?: number; cy?: number };
+  total: number;
+  label: string;
+}) => {
+  const cx = viewBox?.cx;
+  const cy = viewBox?.cy;
+  if (cx == null || cy == null) return null;
+  return (
+    <g>
+      <text
+        x={cx}
+        y={cy - 6}
+        textAnchor="middle"
+        dominantBaseline="central"
+        className="fill-foreground"
+        fontSize={26}
+        fontWeight={600}
+        style={{ fontVariantNumeric: "tabular-nums" }}>
+        {formatCellValue(total)}
+      </text>
+      <text x={cx} y={cy + 18} textAnchor="middle" dominantBaseline="central" fill="#64748b" fontSize={11}>
+        {label}
+      </text>
+    </g>
+  );
+};
 
 const PieTooltipRow = ({ value, name }: Readonly<{ value: unknown; name: string }>) => {
   const { t } = useTranslation();
@@ -204,33 +267,49 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
         );
       }
       const { processedData, colors } = pieResult;
+      const total = processedData.reduce((sum, row) => sum + (Number(row[dataKey]) || 0), 0);
+      const centerLabel = formatCubeColumnHeader(dataKey, t);
 
       return (
         <div className="h-full min-h-[16rem] w-full min-w-0">
           <ChartContainer config={chartConfig} className="h-full w-full min-w-0">
-            <PieChart>
+            <PieChart margin={{ top: 16, right: 32, bottom: 8, left: 32 }}>
               <Pie
                 data={processedData}
                 dataKey={dataKey}
                 nameKey={xAxisKey}
                 cx="50%"
                 cy="45%"
-                // Percentage radius scales with the container so the chart
-                // doesn't disappear when the card height is constrained.
-                // Previously this was a fixed 80px which could render to a
-                // sliver in small cards or, combined with leader-line labels,
-                // collide with the chart frame and disappear.
-                outerRadius="70%"
-                paddingAngle={1}
-                minAngle={2}>
+                innerRadius="55%"
+                outerRadius="75%"
+                paddingAngle={2}
+                minAngle={2}
+                labelLine={{ stroke: "#cbd5e1", strokeWidth: 1 }}
+                label={renderPieLabel}>
                 {processedData.map((row, index) => {
                   const rowKey = row[xAxisKey] ?? `row-${index}`;
                   const uniqueKey = `${xAxisKey}-${String(rowKey)}-${index}`;
                   return <Cell key={uniqueKey} fill={colors[index] || CHART_BRAND_DARK} />;
                 })}
+                <Label
+                  position="center"
+                  content={(props) => (
+                    <PieCenterLabel
+                      viewBox={props.viewBox as { cx?: number; cy?: number } | undefined}
+                      total={total}
+                      label={centerLabel}
+                    />
+                  )}
+                />
               </Pie>
               <ChartTooltip content={<ChartTooltipContent formatter={pieTooltipFormatter} />} />
-              <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: 12 }} />
+              <Legend
+                verticalAlign="bottom"
+                height={36}
+                iconType="circle"
+                formatter={(value: string) => formatXAxisTick(value)}
+                wrapperStyle={{ fontSize: 12 }}
+              />
             </PieChart>
           </ChartContainer>
         </div>

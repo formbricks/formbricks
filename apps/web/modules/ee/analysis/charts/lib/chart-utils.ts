@@ -57,10 +57,10 @@ export const preparePieData = (
     .sort((a, b) => Number(b[dataKey]) - Number(a[dataKey]));
   if (processedData.length === 0) return null;
 
-  // Walk the brand ramp dark→light so the largest categories visually anchor
-  // on the darkest shades. Same palette as the bar chart, keeps the
-  // categorical look consistent across chart types.
-  const colors = processedData.map((_, i) => CHART_BRAND_RAMP[i % CHART_BRAND_RAMP.length]);
+  // Adjacent pie slices need to be visually distinguishable, so use the
+  // mixed measure palette (brand teal + indigo + amber + red + violet)
+  // instead of the brand-only ramp used for bar charts.
+  const colors = processedData.map((_, i) => CHART_MEASURE_COLORS[i % CHART_MEASURE_COLORS.length]);
   return { processedData, colors };
 };
 
