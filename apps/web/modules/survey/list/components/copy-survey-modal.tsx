@@ -128,11 +128,13 @@ export const CopySurveyModal = ({
           });
         });
       }
+
+      if (successCount > 0) {
+        setOpen(false);
+      }
     } catch (error) {
       logger.error(error);
       toast.error(t("workspace.surveys.copy_survey_error"));
-    } finally {
-      setOpen(false);
     }
   };
 
