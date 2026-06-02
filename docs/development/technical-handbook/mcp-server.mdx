@@ -1,0 +1,512 @@
+---
+title: "MCP Server"
+description: "Configure and use the Formbricks v3 Surveys MCP server"
+icon: "bot"
+---
+
+## Overview
+
+The Formbricks MCP server exposes a small v3 Surveys tool surface for AI agents. It runs inside the
+Formbricks web app at `/api/mcp` and reuses the same v3 Surveys API authentication, authorization,
+rate limiting, response handling, and audit logging paths as the REST routes.
+
+<Note>
+  This page documents the current API-key MVP. OAuth-based MCP authorization is not part of the current
+  implementation.
+</Note>
+
+## Endpoint
+
+Use the streamable HTTP MCP endpoint on the Formbricks app:
+
+```text
+https://app.formbricks.com/api/mcp
+```
+
+For local development:
+
+```text
+http://localhost:3000/api/mcp
+```
+
+The route supports `POST` requests, runs with the Next.js Node.js runtime, and sets private no-store
+response headers. Browser-origin MCP requests must come from the configured public Formbricks origin.
+
+## Authentication
+
+Authenticate with a Formbricks API key in a request header:
+
+```http
+Authorization: Bearer fbk_...
+```
+
+or:
+
+```http
+x-api-key: fbk_...
+```
+
+Do not pass credentials in the query string. The MCP route rejects query credential names such as
+`api_key`, `x-api-key`, `access_token`, `token`, and `authorization` case-insensitively.
+
+API key permissions are enforced through the same workspace access checks as the v3 REST API:
+
+| Tool              | Minimum Workspace Permission                                        |
+| ----------------- | ------------------------------------------------------------------- |
+| `list_surveys`    | `read`                                                              |
+| `get_survey`      | `read`                                                              |
+| `create_survey`   | `write` or `manage`                                                 |
+| `validate_survey` | `write` or `manage` when the validation request checks write access |
+| `patch_survey`    | `write` or `manage`                                                 |
+| `delete_survey`   | `write` or `manage`                                                 |
+
+<Warning>
+  Store MCP API keys as environment variables or client secrets. Do not commit API keys into MCP client config
+  files.
+</Warning>
+
+## Local Setup
+
+Start Formbricks and prepare the database:
+
+```bash
+pnpm db:up
+pnpm db:migrate:dev
+pnpm --filter @formbricks/web dev
+```
+
+Create an API key in the Formbricks app with access to the target workspace. Use the least privileged
+permission needed by the agent workflow.
+
+Verify that the MCP endpoint can list tools:
+
+```bash
+export FORMBRICKS_MCP_API_KEY="fbk_..."
+
+curl -sS -X POST http://localhost:3000/api/mcp \
+  -H "Accept: application/json, text/event-stream" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $FORMBRICKS_MCP_API_KEY" \
+  --data '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'
+```
+
+## Codex Configuration
+
+Store the API key in the shell environment:
+
+```bash
+export FORMBRICKS_MCP_API_KEY="fbk_..."
+```
+
+For Codex Desktop on macOS, persist the value in the launch environment and restart Codex Desktop:
+
+```bash
+launchctl setenv FORMBRICKS_MCP_API_KEY "fbk_..."
+```
+
+Register the local MCP server:
+
+```bash
+codex mcp add formbricks-local \
+  --url http://localhost:3000/api/mcp \
+  --bearer-token-env-var FORMBRICKS_MCP_API_KEY
+```
+
+Equivalent Codex config:
+
+```toml
+[mcp_servers.formbricks-local]
+url = "http://localhost:3000/api/mcp"
+bearer_token_env_var = "FORMBRICKS_MCP_API_KEY"
+```
+
+Verify the registration:
+
+```bash
+codex mcp list
+codex mcp get formbricks-local
+```
+
+Then ask Codex to use the configured server:
+
+```text
+Use the formbricks-local MCP server to list surveys for workspace clxx1234567890123456789012.
+```
+
+## Claude Configuration
+
+### Claude Code
+
+Set the API key:
+
+```bash
+export FORMBRICKS_MCP_API_KEY="fbk_..."
+```
+
+Add the HTTP MCP server:
+
+```bash
+claude mcp add --transport http formbricks-local http://localhost:3000/api/mcp \
+  --header "Authorization: Bearer $FORMBRICKS_MCP_API_KEY"
+```
+
+Verify it:
+
+```bash
+claude mcp list
+claude mcp get formbricks-local
+```
+
+For a project-shared Claude Code configuration, use `.mcp.json` and keep the API key outside git:
+
+```json
+{
+  "mcpServers": {
+    "formbricks-local": {
+      "headers": {
+        "Authorization": "Bearer ${FORMBRICKS_MCP_API_KEY}"
+      },
+      "type": "http",
+      "url": "http://localhost:3000/api/mcp"
+    }
+  }
+}
+```
+
+Claude Code will fail to parse this config if `FORMBRICKS_MCP_API_KEY` is not set.
+
+### Claude Desktop
+
+If the installed Claude Desktop build supports remote HTTP MCP server entries, add the same server
+definition to the Claude Desktop config file and restart Claude Desktop.
+
+macOS config path:
+
+```text
+~/Library/Application Support/Claude/claude_desktop_config.json
+```
+
+Example config:
+
+```json
+{
+  "mcpServers": {
+    "formbricks-local": {
+      "headers": {
+        "Authorization": "Bearer ${FORMBRICKS_MCP_API_KEY}"
+      },
+      "type": "http",
+      "url": "http://localhost:3000/api/mcp"
+    }
+  }
+}
+```
+
+Set the API key in the Desktop launch environment before opening Claude Desktop:
+
+```bash
+launchctl setenv FORMBRICKS_MCP_API_KEY "fbk_..."
+```
+
+If a Claude Desktop version only supports stdio MCP servers, use Claude Code for the HTTP endpoint or
+add a local stdio-to-HTTP bridge.
+
+## Tool Responses
+
+Tool results include both `structuredContent` and a text content item containing the same JSON string.
+Successful results mirror the v3 REST response body and add `requestId` for correlation.
+
+Errors are returned as MCP error tool results with a structured v3 problem payload:
+
+```json
+{
+  "error": {
+    "code": "bad_request",
+    "detail": "Invalid survey document",
+    "invalid_params": [
+      {
+        "name": "blocks.0.elements.0.headline",
+        "reason": "Required"
+      }
+    ],
+    "requestId": "req_...",
+    "status": 400,
+    "title": "Bad Request"
+  }
+}
+```
+
+## Available Tools
+
+### list_surveys
+
+Lists surveys in one workspace. The tool is read-only and idempotent.
+
+Input:
+
+```json
+{
+  "cursor": "opaque-cursor-from-previous-response",
+  "filter": {
+    "name": {
+      "contains": "feedback"
+    },
+    "status": {
+      "in": ["draft", "inProgress"]
+    },
+    "type": {
+      "in": ["link"]
+    }
+  },
+  "includeTotalCount": true,
+  "limit": 20,
+  "sortBy": "updatedAt",
+  "workspaceId": "clxx1234567890123456789012"
+}
+```
+
+Output:
+
+```json
+{
+  "data": [
+    {
+      "createdAt": "2026-04-21T10:00:00.000Z",
+      "creator": {
+        "name": "Ada Lovelace"
+      },
+      "id": "clsv1234567890123456789012",
+      "name": "Product Feedback",
+      "responseCount": 0,
+      "status": "draft",
+      "type": "link",
+      "updatedAt": "2026-04-21T11:00:00.000Z",
+      "workspaceId": "clxx1234567890123456789012"
+    }
+  ],
+  "meta": {
+    "limit": 20,
+    "nextCursor": null,
+    "totalCount": 1
+  },
+  "requestId": "req_..."
+}
+```
+
+### get_survey
+
+Gets one survey by ID. The tool is read-only and idempotent.
+
+Input:
+
+```json
+{
+  "lang": ["en-US"],
+  "surveyId": "clsv1234567890123456789012"
+}
+```
+
+`lang` is optional. When supplied, it filters translatable survey fields to the requested language
+codes or configured aliases.
+
+### create_survey
+
+Creates a block-based link survey using the v3 survey document contract. The tool writes data and is
+not idempotent.
+
+Input:
+
+```json
+{
+  "blocks": [
+    {
+      "elements": [
+        {
+          "headline": {
+            "de-DE": "Was sollen wir verbessern?",
+            "en-US": "What should we improve?"
+          },
+          "id": "satisfaction",
+          "required": true,
+          "type": "openText"
+        }
+      ],
+      "name": "Main Block"
+    }
+  ],
+  "defaultLanguage": "en-US",
+  "endings": [],
+  "hiddenFields": {
+    "enabled": false
+  },
+  "languages": [
+    {
+      "code": "de-DE",
+      "enabled": true
+    }
+  ],
+  "metadata": {
+    "cx_operation": "enterprise_onboarding",
+    "title": {
+      "de-DE": "Produktfeedback",
+      "en-US": "Product Feedback"
+    }
+  },
+  "name": "Product Feedback Survey",
+  "status": "draft",
+  "variables": [],
+  "welcomeCard": {
+    "enabled": true,
+    "headline": {
+      "de-DE": "Willkommen",
+      "en-US": "Welcome"
+    }
+  },
+  "workspaceId": "clxx1234567890123456789012"
+}
+```
+
+Output uses the same survey resource shape as `GET /api/v3/surveys/{surveyId}` and includes the MCP
+`requestId`.
+
+### validate_survey
+
+Validates a create or patch payload without writing survey changes. The tool is read-only and
+idempotent, but create validation still checks workspace write access when `workspaceId` is present.
+
+Create validation input:
+
+```json
+{
+  "data": {
+    "blocks": [
+      {
+        "elements": [
+          {
+            "headline": {
+              "en-US": "What should we improve?"
+            },
+            "id": "satisfaction",
+            "required": true,
+            "type": "openText"
+          }
+        ],
+        "name": "Main Block"
+      }
+    ],
+    "defaultLanguage": "en-US",
+    "name": "Product Feedback Survey",
+    "workspaceId": "clxx1234567890123456789012"
+  },
+  "operation": "create"
+}
+```
+
+Patch validation input:
+
+```json
+{
+  "data": {
+    "name": "Updated Product Feedback Survey"
+  },
+  "operation": "patch",
+  "surveyId": "clsv1234567890123456789012"
+}
+```
+
+Validation failures return `200` with `valid: false` and structured `invalid_params`, matching
+`POST /api/v3/surveys/validate`.
+
+### patch_survey
+
+Updates a survey by ID using the v3 survey patch contract. The tool writes data, can be
+destructive, and is not idempotent. Omitted top-level fields are preserved. Provided top-level
+objects and arrays replace that whole subtree, so omitted nested entries inside a provided subtree
+can be removed. The patch tool does not deep-merge nested objects and does not implement JSON Patch.
+
+<Note>
+  For agent workflows, fetch the current survey first, modify only the intended top-level fields, run
+  `validate_survey` with `operation: "patch"`, and then submit the same patch with `patch_survey`.
+</Note>
+
+Input:
+
+```json
+{
+  "data": {
+    "metadata": {
+      "cx_operation": "enterprise_onboarding",
+      "title": {
+        "en-US": "Updated Product Feedback"
+      }
+    },
+    "name": "Updated Product Feedback"
+  },
+  "surveyId": "clsv1234567890123456789012"
+}
+```
+
+Output uses the same survey resource shape as `GET /api/v3/surveys/{surveyId}` and includes the MCP
+`requestId`.
+
+### delete_survey
+
+Deletes one survey by ID. The tool is destructive, writes data, and is not idempotent.
+
+Input:
+
+```json
+{
+  "surveyId": "clsv1234567890123456789012"
+}
+```
+
+The v3 REST delete operation returns `204 No Content`. The MCP tool result contains the `requestId`
+so callers can correlate the audit trail:
+
+```json
+{
+  "requestId": "req_..."
+}
+```
+
+## Relationship To V3 Surveys API
+
+The MCP server does not run custom survey database queries. Each tool calls the shared server-only v3
+survey operations used by the REST routes:
+
+| MCP Tool          | REST Contract                       |
+| ----------------- | ----------------------------------- |
+| `list_surveys`    | `GET /api/v3/surveys`               |
+| `get_survey`      | `GET /api/v3/surveys/{surveyId}`    |
+| `create_survey`   | `POST /api/v3/surveys`              |
+| `validate_survey` | `POST /api/v3/surveys/validate`     |
+| `patch_survey`    | `PATCH /api/v3/surveys/{surveyId}`  |
+| `delete_survey`   | `DELETE /api/v3/surveys/{surveyId}` |
+
+When the v3 OpenAPI contract changes, update the MCP schemas and this page together. The hand-maintained
+v3 OpenAPI spec lives at `docs/api-v3-reference/openapi.yml`.
+
+## Limitations
+
+- Authentication is API-key only. OAuth-based MCP authorization is a separate follow-up.
+- The MCP server exposes only the v3 survey operations listed on this page.
+- Tool coverage depends on the current v3 Surveys REST endpoint coverage.
+- `create_survey` creates link surveys only. In-app survey creation and distribution settings are not
+  part of the current v3 create operation.
+- `patch_survey` follows the v3 PATCH contract: top-level partial document updates only, no JSON Patch,
+  and no nested deep merge. Provided top-level objects and arrays replace their whole subtree and can
+  remove omitted nested entries.
+- `validate_survey` validates payload shape and references; it does not create languages, survey
+  versions, or surveys.
+- Query-string credentials are rejected; use headers for API keys.
+- Large request bodies are rejected before the MCP handler using the same body-size policy as v3 APIs.
+
+## Implementation Files
+
+- `apps/web/app/api/mcp/route.ts`
+- `apps/web/modules/mcp/auth.ts`
+- `apps/web/modules/mcp/server.ts`
+- `apps/web/modules/mcp/tools/surveys.ts`
+- `apps/web/modules/mcp/tools/schemas.ts`
+- `apps/web/app/api/v3/surveys/lib/operations.ts`
