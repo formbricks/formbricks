@@ -1171,7 +1171,7 @@ enum HubFieldType {
 
 /// A feedback source — connects external data into Unify Feedback for record creation.
 /// Naming note: "FeedbackSource" is the Unify Feedback domain term; the word "Connector"
-/// is reserved for the Workflows domain (see docs/developer-docs/naming-conventions.md).
+/// is reserved for the Workflows domain (see docs/development/standards/practices/naming-conventions.mdx).
 ///
 /// @property id - Unique identifier for the feedback source
 /// @property name - Display name for the feedback source

@@ -398,7 +398,7 @@ describe("FeedbackDirectory Service", () => {
 
       await expect(
         updateFeedbackDirectory(mockDirectoryId, mockOrganizationId, { isArchived: true })
-      ).rejects.toThrow(new InvalidInputError("DIRECTORY_HAS_CONNECTORS"));
+      ).rejects.toThrow(new InvalidInputError("DIRECTORY_HAS_FEEDBACK_SOURCES"));
     });
 
     test("unarchives directory", async () => {

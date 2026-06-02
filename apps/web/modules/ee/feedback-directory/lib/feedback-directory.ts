@@ -420,7 +420,7 @@ const getArchiveUpdate = async (
       where: { feedbackDirectoryId: directoryId },
     });
     if (feedbackSourceCount > 0) {
-      throw new InvalidInputError("DIRECTORY_HAS_CONNECTORS");
+      throw new InvalidInputError("DIRECTORY_HAS_FEEDBACK_SOURCES");
     }
     return { isArchived: true };
   }
