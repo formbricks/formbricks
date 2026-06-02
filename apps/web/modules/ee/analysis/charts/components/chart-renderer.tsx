@@ -8,7 +8,6 @@ import { CartesianChart } from "@/modules/ee/analysis/charts/components/cartesia
 import { PolishedChartTooltip } from "@/modules/ee/analysis/charts/components/polished-tooltip";
 import {
   CHART_BRAND_DARK,
-  CHART_BRAND_RAMP,
   CHART_MEASURE_COLORS,
   formatCellValue,
   formatXAxisTick,
@@ -133,11 +132,12 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
 
   switch (chartType) {
     case "bar":
-      // Single-measure: render one Bar with per-row Cells coloured from the
-      // brand ramp so each x-category gets its own teal shade. Multi-measure:
-      // keep grouped bars with the measure-colour palette for series
-      // differentiation. `tooltipCursor={false}` removes the column highlight
-      // so the tooltip reads as per-bar.
+      // Both single- and multi-measure bars now draw from the mixed
+      // measure palette (teal + indigo + amber + red + violet) for visual
+      // consistency with the pie charts — categorical / per-bar colouring
+      // uses real palette variety rather than monochromatic brand shades.
+      // `tooltipCursor={false}` removes the column highlight so the
+      // tooltip reads as per-bar.
       return (
         <CartesianChart
           chart={BarChart}
@@ -157,7 +157,9 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
                   data.map((row, index) => {
                     const rowKey = row[xAxisKey] ?? `row-${index}`;
                     const cellKey = `${xAxisKey}-${String(rowKey)}-${index}`;
-                    return <Cell key={cellKey} fill={CHART_BRAND_RAMP[index % CHART_BRAND_RAMP.length]} />;
+                    return (
+                      <Cell key={cellKey} fill={CHART_MEASURE_COLORS[index % CHART_MEASURE_COLORS.length]} />
+                    );
                   })}
                 {/* Value labels above each bar — only on single-measure where
                     there's clear vertical space above the bar. */}
