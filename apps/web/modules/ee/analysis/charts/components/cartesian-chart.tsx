@@ -1,6 +1,6 @@
 "use client";
 
-import { type ElementType, type ReactNode, useMemo } from "react";
+import { type ElementType, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { CartesianGrid, XAxis, YAxis } from "recharts";
 import {
@@ -11,51 +11,53 @@ import {
 import { formatCubeColumnHeader } from "@/modules/ee/analysis/lib/schema-definition";
 import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
 import type { ChartConfig } from "@/modules/ui/components/chart";
-import {
-  ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/modules/ui/components/chart";
+import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip } from "@/modules/ui/components/chart";
 
-const ChartTooltipRow = ({
-  value,
-  dataKey,
-  color,
-}: Readonly<{ value: unknown; dataKey: string; color?: string }>) => {
+type TooltipPayloadItem = {
+  dataKey?: string;
+  name?: string | number;
+  value?: unknown;
+  color?: string;
+  payload?: { fill?: string };
+};
+
+type RechartsTooltipProps = {
+  active?: boolean;
+  payload?: TooltipPayloadItem[];
+  label?: string | number;
+};
+
+/**
+ * Polished hover tooltip card matching the Twenty-style target: prominent
+ * date header, indicator + measure + value per series, comfortable padding
+ * so values are easy to read without scanning a tiny black box.
+ */
+const PolishedChartTooltip = ({ active, payload, label }: Readonly<RechartsTooltipProps>) => {
   const { t } = useTranslation();
-  const indicatorColor = color ?? CHART_BRAND_DARK;
+  if (!active || !payload?.length) return null;
+
   return (
-    <>
-      <div className="mt-1 size-2.5 shrink-0 rounded-full" style={{ backgroundColor: indicatorColor }} />
-      <div className="flex flex-1 items-baseline justify-between gap-3 leading-none">
-        <span className="text-muted-foreground">{formatCubeColumnHeader(dataKey, t)}</span>
-        <span className="text-foreground font-medium tabular-nums">{formatCellValue(value)}</span>
+    <div className="min-w-[180px] rounded-lg border border-slate-200 bg-white px-3 py-2.5 shadow-lg">
+      <div className="mb-2 text-sm font-medium text-slate-800">{formatXAxisTick(label)}</div>
+      <div className="flex flex-col gap-1.5">
+        {payload.map((item) => {
+          const key = item.dataKey ?? String(item.name ?? "");
+          const indicatorColor = item.color ?? item.payload?.fill ?? CHART_BRAND_DARK;
+          return (
+            <div key={key} className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <div className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: indicatorColor }} />
+                <span className="text-sm text-slate-500">{formatCubeColumnHeader(key, t)}</span>
+              </div>
+              <span className="text-foreground text-sm font-medium tabular-nums">
+                {formatCellValue(item.value)}
+              </span>
+            </div>
+          );
+        })}
       </div>
-    </>
+    </div>
   );
-};
-
-/** Creates a tooltip formatter bound to dataKey for Cartesian charts. Defined at module level to avoid Sonar "component in parent" warnings. */
-const createTooltipFormatter = (dataKey: string) => {
-  const Formatter = (value: unknown) => <ChartTooltipRow value={value} dataKey={dataKey} />;
-  Formatter.displayName = "ChartTooltipFormatter";
-  return Formatter;
-};
-
-/** Tooltip content for single-measure Cartesian charts. */
-const SingleMeasureTooltip = ({ dataKey }: Readonly<{ dataKey: string }>) => {
-  const formatter = useMemo(() => createTooltipFormatter(dataKey), [dataKey]);
-  return <ChartTooltipContent labelFormatter={formatXAxisTick} formatter={formatter} />;
-};
-
-/** Tooltip formatter for multi-measure charts; uses each payload item's dataKey and color. */
-const multiMeasureTooltipFormatter = (value: unknown, name: string | number, item: unknown) => {
-  const itemObj = item as { dataKey?: string; color?: string; payload?: { fill?: string } } | undefined;
-  const key = itemObj?.dataKey ?? String(name);
-  const color = itemObj?.color ?? itemObj?.payload?.fill;
-  return <ChartTooltipRow value={value} dataKey={key} color={color} />;
 };
 
 export interface CartesianChartProps {
@@ -79,7 +81,6 @@ export interface CartesianChartProps {
 export function CartesianChart({
   data,
   xAxisKey,
-  dataKeys,
   chartConfig,
   chart: Chart,
   children,
@@ -87,13 +88,6 @@ export function CartesianChart({
   chartProps = {},
   tooltipCursor,
 }: Readonly<CartesianChartProps>) {
-  const isMultiMeasure = dataKeys.length > 1;
-  const tooltipContent = isMultiMeasure ? (
-    <ChartTooltipContent labelFormatter={formatXAxisTick} formatter={multiMeasureTooltipFormatter} />
-  ) : (
-    <SingleMeasureTooltip dataKey={dataKeys[0]} />
-  );
-
   return (
     <div className="h-full min-h-[16rem] w-full">
       <ChartContainer config={chartConfig} className="h-full w-full">
@@ -121,7 +115,7 @@ export function CartesianChart({
               ((dataMax: number) => Math.ceil(dataMax + Math.abs(dataMax) * 0.1 + 1)) as never,
             ]}
           />
-          <ChartTooltip content={tooltipContent} cursor={tooltipCursor} />
+          <ChartTooltip content={<PolishedChartTooltip />} cursor={tooltipCursor} />
           {showLegend && <ChartLegend content={<ChartLegendContent />} verticalAlign="top" height={36} />}
           {children}
         </Chart>
