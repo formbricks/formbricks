@@ -19,6 +19,7 @@ import { getSurveyListPage } from "@/modules/survey/list/lib/survey-page";
 import { getAuthorizedV3Survey } from "../authorization";
 import { V3SurveyCreatePermissionError, createV3Survey } from "../create";
 import { parseV3SurveysListQuery } from "../parse-v3-surveys-list-query";
+import { patchV3Survey } from "../patch";
 import {
   type TV3SurveyPrepareResult,
   prepareV3SurveyCreateInput,
@@ -32,6 +33,7 @@ import {
   serializeV3SurveyListItem,
   serializeV3SurveyResource,
 } from "../serializers";
+import { V3SurveyWritePermissionError } from "../write-permissions";
 
 type TListV3SurveysParams = {
   searchParams: URLSearchParams;
@@ -58,6 +60,15 @@ type TGetV3SurveyParams = {
 
 type TDeleteV3SurveyParams = {
   surveyId: string;
+  authentication: TV3Authentication;
+  requestId: string;
+  instance: string;
+  auditLog?: TV3AuditLog;
+};
+
+type TPatchV3SurveyParams = {
+  surveyId: string;
+  body: unknown;
   authentication: TV3Authentication;
   requestId: string;
   instance: string;
@@ -351,6 +362,91 @@ export async function deleteV3Survey({
     }
 
     log.error({ error, statusCode: 500 }, "V3 survey delete unexpected error");
+    return problemInternalError(requestId, "An unexpected error occurred.", instance);
+  }
+}
+
+export async function patchV3SurveyResponse({
+  surveyId,
+  body,
+  authentication,
+  requestId,
+  instance,
+  auditLog,
+}: TPatchV3SurveyParams): Promise<Response> {
+  const log = logger.withContext({ requestId, surveyId });
+  let workspaceId: string | undefined;
+
+  try {
+    const { survey, authResult, response } = await getAuthorizedV3Survey({
+      surveyId,
+      authentication,
+      access: "readWrite",
+      requestId,
+      instance,
+    });
+
+    if (response) {
+      log.warn({ statusCode: response.status }, "Survey not found or not accessible");
+      return response;
+    }
+
+    workspaceId = survey.workspaceId;
+    const updatedSurvey = await patchV3Survey(survey, body, requestId, authResult.organizationId);
+    const resource = serializeV3SurveyResource(updatedSurvey);
+
+    if (auditLog) {
+      auditLog.targetId = updatedSurvey.id;
+      auditLog.organizationId = authResult.organizationId;
+      auditLog.oldObject = serializeV3SurveyResource(survey);
+      auditLog.newObject = resource;
+    }
+
+    return successResponse(resource, {
+      requestId,
+      cache: "private, no-store",
+    });
+  } catch (error) {
+    if (error instanceof V3SurveyReferenceValidationError) {
+      log.warn(
+        { statusCode: 400, workspaceId, invalidParamCount: error.invalidParams.length },
+        "Survey document validation failed"
+      );
+      return problemBadRequest(requestId, "Invalid survey document", {
+        invalid_params: error.invalidParams,
+        instance,
+      });
+    }
+
+    if (error instanceof V3SurveyUnsupportedShapeError) {
+      log.warn({ statusCode: 400, workspaceId, errorCode: error.name }, "Unsupported v3 survey shape");
+      return problemBadRequest(requestId, error.message, {
+        instance,
+        invalid_params: [
+          {
+            name: "survey",
+            reason: error.message,
+          },
+        ],
+      });
+    }
+
+    if (error instanceof V3SurveyWritePermissionError) {
+      log.warn({ statusCode: 403, workspaceId, errorCode: error.name }, "Survey patch permission check failed");
+      return problemForbidden(requestId, error.message, instance);
+    }
+
+    if (error instanceof ResourceNotFoundError) {
+      log.warn({ errorCode: error.name, workspaceId, statusCode: 403 }, "Survey not found or not accessible");
+      return problemForbidden(requestId, "You are not authorized to access this resource", instance);
+    }
+
+    if (error instanceof DatabaseError) {
+      log.error({ error, workspaceId, statusCode: 500 }, "Database error");
+      return problemInternalError(requestId, "An unexpected error occurred.", instance);
+    }
+
+    log.error({ error, workspaceId, statusCode: 500 }, "V3 survey patch unexpected error");
     return problemInternalError(requestId, "An unexpected error occurred.", instance);
   }
 }

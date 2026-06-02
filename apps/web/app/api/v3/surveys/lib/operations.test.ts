@@ -8,6 +8,7 @@ import { getSurveyListPage } from "@/modules/survey/list/lib/survey-page";
 import { getAuthorizedV3Survey } from "../authorization";
 import { V3SurveyCreatePermissionError, createV3Survey } from "../create";
 import { parseV3SurveysListQuery } from "../parse-v3-surveys-list-query";
+import { patchV3Survey } from "../patch";
 import { prepareV3SurveyCreateInput, prepareV3SurveyPatchInput } from "../prepare";
 import { V3SurveyReferenceValidationError } from "../reference-validation";
 import {
@@ -21,8 +22,10 @@ import {
   deleteV3Survey,
   getV3Survey,
   listV3Surveys,
+  patchV3SurveyResponse,
   validateV3Survey,
 } from "./operations";
+import { V3SurveyWritePermissionError } from "../write-permissions";
 
 vi.mock("@formbricks/logger", () => ({
   logger: {
@@ -65,6 +68,10 @@ vi.mock("../parse-v3-surveys-list-query", () => ({
   parseV3SurveysListQuery: vi.fn(),
 }));
 
+vi.mock("../patch", () => ({
+  patchV3Survey: vi.fn(),
+}));
+
 vi.mock("../prepare", () => ({
   prepareV3SurveyCreateInput: vi.fn(),
   prepareV3SurveyPatchInput: vi.fn(),
@@ -93,6 +100,14 @@ const survey = {
 const serializedSurvey = {
   id: "survey_1",
   name: "Customer Survey",
+};
+const updatedSurvey = {
+  ...survey,
+  name: "Updated Survey",
+};
+const serializedUpdatedSurvey = {
+  id: "survey_1",
+  name: "Updated Survey",
 };
 const createBody = {
   workspaceId,
@@ -496,6 +511,138 @@ describe("deleteV3Survey", () => {
       (
         await deleteV3Survey({
           surveyId: "survey_1",
+          authentication,
+          requestId,
+          instance,
+        })
+      ).status
+    ).toBe(500);
+  });
+});
+
+describe("patchV3SurveyResponse", () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({ survey, authResult, response: null } as any);
+    vi.mocked(patchV3Survey).mockResolvedValue(updatedSurvey as any);
+    vi.mocked(serializeV3SurveyResource).mockImplementation((input) => {
+      return (input as any).name === "Updated Survey"
+        ? (serializedUpdatedSurvey as any)
+        : (serializedSurvey as any);
+    });
+  });
+
+  test("patches an authorized survey, serializes it, and enriches the audit log", async () => {
+    const auditLog = {} as any;
+    const patchBody = { name: "Updated Survey" };
+
+    const response = await patchV3SurveyResponse({
+      surveyId: "survey_1",
+      body: patchBody,
+      authentication,
+      requestId,
+      instance,
+      auditLog,
+    });
+
+    expect(response.status).toBe(200);
+    expect(vi.mocked(getAuthorizedV3Survey)).toHaveBeenCalledWith({
+      surveyId: "survey_1",
+      authentication,
+      access: "readWrite",
+      requestId,
+      instance,
+    });
+    expect(vi.mocked(patchV3Survey)).toHaveBeenCalledWith(survey, patchBody, requestId, "org_1");
+    expect(auditLog).toMatchObject({
+      organizationId: "org_1",
+      targetId: "survey_1",
+      oldObject: serializedSurvey,
+      newObject: serializedUpdatedSurvey,
+    });
+    expect(await readJson(response)).toEqual({ data: serializedUpdatedSurvey });
+  });
+
+  test("returns authorization responses from survey access", async () => {
+    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({
+      survey: null,
+      authResult: null,
+      response: problemForbidden(requestId, "nope", instance),
+    } as any);
+
+    const response = await patchV3SurveyResponse({
+      surveyId: "survey_1",
+      body: { name: "Updated Survey" },
+      authentication,
+      requestId,
+      instance,
+    });
+
+    expect(response.status).toBe(403);
+    expect(vi.mocked(patchV3Survey)).not.toHaveBeenCalled();
+  });
+
+  test("maps validation, shape, permission, missing resource, and database errors", async () => {
+    vi.mocked(patchV3Survey).mockRejectedValueOnce(
+      new V3SurveyReferenceValidationError([{ name: "blocks.0", reason: "Unknown element" }])
+    );
+    expect(
+      (
+        await patchV3SurveyResponse({
+          surveyId: "survey_1",
+          body: { blocks: [] },
+          authentication,
+          requestId,
+          instance,
+        })
+      ).status
+    ).toBe(400);
+
+    vi.mocked(patchV3Survey).mockRejectedValueOnce(new V3SurveyUnsupportedShapeError("Unsupported"));
+    expect(
+      (
+        await patchV3SurveyResponse({
+          surveyId: "survey_1",
+          body: { blocks: [] },
+          authentication,
+          requestId,
+          instance,
+        })
+      ).status
+    ).toBe(400);
+
+    vi.mocked(patchV3Survey).mockRejectedValueOnce(new V3SurveyWritePermissionError("No external URLs"));
+    expect(
+      (
+        await patchV3SurveyResponse({
+          surveyId: "survey_1",
+          body: { blocks: [] },
+          authentication,
+          requestId,
+          instance,
+        })
+      ).status
+    ).toBe(403);
+
+    vi.mocked(patchV3Survey).mockRejectedValueOnce(new ResourceNotFoundError("Survey", "survey_1"));
+    expect(
+      (
+        await patchV3SurveyResponse({
+          surveyId: "survey_1",
+          body: { blocks: [] },
+          authentication,
+          requestId,
+          instance,
+        })
+      ).status
+    ).toBe(403);
+
+    vi.mocked(patchV3Survey).mockRejectedValueOnce(new DatabaseError("db down"));
+    expect(
+      (
+        await patchV3SurveyResponse({
+          surveyId: "survey_1",
+          body: { blocks: [] },
           authentication,
           requestId,
           instance,

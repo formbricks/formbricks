@@ -21,6 +21,7 @@ vi.mock("@/app/api/v3/surveys/lib/operations", () => ({
   deleteV3Survey: vi.fn(),
   getV3Survey: vi.fn(),
   listV3Surveys: vi.fn(),
+  patchV3SurveyResponse: vi.fn(),
   validateV3Survey: vi.fn(),
 }));
 
@@ -148,6 +149,7 @@ describe("POST /api/mcp", () => {
       "get_survey",
       "create_survey",
       "validate_survey",
+      "patch_survey",
       "delete_survey",
     ]);
     expect(message.result.tools.find((tool: { name: string }) => tool.name === "list_surveys")).toMatchObject({
@@ -155,6 +157,15 @@ describe("POST /api/mcp", () => {
         readOnlyHint: true,
         destructiveHint: false,
         idempotentHint: true,
+      },
+    });
+    expect(
+      message.result.tools.find((tool: { name: string }) => tool.name === "patch_survey")
+    ).toMatchObject({
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
       },
     });
     expect(

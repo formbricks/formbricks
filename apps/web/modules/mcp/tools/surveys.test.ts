@@ -14,6 +14,7 @@ import {
   deleteV3Survey,
   getV3Survey,
   listV3Surveys,
+  patchV3SurveyResponse,
   validateV3Survey,
 } from "@/app/api/v3/surveys/lib/operations";
 import { buildListSurveysSearchParams, registerSurveyTools } from "./surveys";
@@ -23,6 +24,7 @@ vi.mock("@/app/api/v3/surveys/lib/operations", () => ({
   deleteV3Survey: vi.fn(),
   getV3Survey: vi.fn(),
   listV3Surveys: vi.fn(),
+  patchV3SurveyResponse: vi.fn(),
   validateV3Survey: vi.fn(),
 }));
 
@@ -128,7 +130,7 @@ describe("registerSurveyTools", () => {
   test("registers survey tools with planning annotations", () => {
     const { server, tools } = createToolServer();
 
-    expect(server.registerTool).toHaveBeenCalledTimes(5);
+    expect(server.registerTool).toHaveBeenCalledTimes(6);
     expect(tools.get("list_surveys")?.config).toMatchObject({
       title: "List surveys",
       annotations: {
@@ -159,6 +161,14 @@ describe("registerSurveyTools", () => {
         readOnlyHint: true,
         destructiveHint: false,
         idempotentHint: true,
+      },
+    });
+    expect(tools.get("patch_survey")?.config).toMatchObject({
+      title: "Patch survey",
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
       },
     });
     expect(tools.get("delete_survey")?.config).toMatchObject({
@@ -323,6 +333,41 @@ describe("registerSurveyTools", () => {
     expect(queueV3AuditLog).not.toHaveBeenCalled();
     expect(result.structuredContent).toEqual({
       data: { valid: true, operation: "create", invalid_params: [] },
+      requestId: "req_tool",
+    });
+  });
+
+  test("patch_survey queues a successful audit log", async () => {
+    const { tools } = createToolServer();
+    const auditLog = { status: "failure" };
+    const patchInput = {
+      surveyId: "clxx1234567890123456789012",
+      data: {
+        name: "Updated survey",
+      },
+    };
+    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog as any);
+    vi.mocked(patchV3SurveyResponse).mockResolvedValue(
+      successResponse({ id: "clxx1234567890123456789012", name: "Updated survey" }, { requestId: "req_tool" })
+    );
+
+    const result = await tools.get("patch_survey")!.handler(patchInput, { authInfo });
+
+    expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "updated", "survey", "/api/mcp");
+    expect(patchV3SurveyResponse).toHaveBeenCalledWith({
+      surveyId: "clxx1234567890123456789012",
+      body: {
+        name: "Updated survey",
+      },
+      authentication: apiKeyAuth,
+      requestId: "req_tool",
+      instance: "/api/mcp",
+      auditLog,
+    });
+    expect(auditLog.status).toBe("success");
+    expect(queueV3AuditLog).toHaveBeenCalledWith(auditLog, "req_tool", expect.any(Object));
+    expect(result.structuredContent).toEqual({
+      data: { id: "clxx1234567890123456789012", name: "Updated survey" },
       requestId: "req_tool",
     });
   });

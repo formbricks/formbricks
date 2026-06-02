@@ -65,6 +65,15 @@ export const ZMcpCreateSurveyInput = ZV3CreateSurveyBody.describe(
   "Create a block-based link survey using the v3 survey document contract."
 );
 
+export const ZMcpPatchSurveyInput = z.object({
+  surveyId: z.cuid2().describe("Survey ID to update."),
+  data: z
+    .record(z.string(), z.unknown())
+    .describe(
+      "Strict top-level v3 survey patch payload. Omitted top-level fields are preserved; provided objects and arrays replace that whole subtree."
+    ),
+});
+
 export const ZMcpValidateSurveyInput = ZV3SurveyValidationRequestBody.describe(
   "Validate a v3 survey create or patch payload without writing survey changes."
 );
@@ -76,5 +85,6 @@ export const ZMcpDeleteSurveyInput = z.object({
 export type TMcpListSurveysInput = z.infer<typeof ZMcpListSurveysInput>;
 export type TMcpGetSurveyInput = z.infer<typeof ZMcpGetSurveyInput>;
 export type TMcpCreateSurveyInput = TV3CreateSurveyBody;
+export type TMcpPatchSurveyInput = z.infer<typeof ZMcpPatchSurveyInput>;
 export type TMcpValidateSurveyInput = TV3SurveyValidationRequestBody;
 export type TMcpDeleteSurveyInput = z.infer<typeof ZMcpDeleteSurveyInput>;

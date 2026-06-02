@@ -57,6 +57,7 @@ API key permissions are enforced through the same workspace access checks as the
 | `get_survey`      | `read`                                                              |
 | `create_survey`   | `write` or `manage`                                                 |
 | `validate_survey` | `write` or `manage` when the validation request checks write access |
+| `patch_survey`    | `write` or `manage`                                                 |
 | `delete_survey`   | `write` or `manage`                                                 |
 
 <Warning>
@@ -416,6 +417,38 @@ Patch validation input:
 Validation failures return `200` with `valid: false` and structured `invalid_params`, matching
 `POST /api/v3/surveys/validate`.
 
+### patch_survey
+
+Updates a survey by ID using the v3 survey patch contract. The tool writes data and is not
+idempotent. Omitted top-level fields are preserved. Provided top-level objects and arrays replace
+that whole subtree; the patch tool does not deep-merge nested objects and does not implement JSON
+Patch.
+
+<Note>
+  For agent workflows, fetch the current survey first, modify only the intended top-level fields, run
+  `validate_survey` with `operation: "patch"`, and then submit the same patch with `patch_survey`.
+</Note>
+
+Input:
+
+```json
+{
+  "data": {
+    "metadata": {
+      "cx_operation": "enterprise_onboarding",
+      "title": {
+        "en-US": "Updated Product Feedback"
+      }
+    },
+    "name": "Updated Product Feedback"
+  },
+  "surveyId": "clsv1234567890123456789012"
+}
+```
+
+Output uses the same survey resource shape as `GET /api/v3/surveys/{surveyId}` and includes the MCP
+`requestId`.
+
 ### delete_survey
 
 Deletes one survey by ID. The tool is destructive, writes data, and is not idempotent.
@@ -448,6 +481,7 @@ survey operations used by the REST routes:
 | `get_survey`      | `GET /api/v3/surveys/{surveyId}`    |
 | `create_survey`   | `POST /api/v3/surveys`              |
 | `validate_survey` | `POST /api/v3/surveys/validate`     |
+| `patch_survey`    | `PATCH /api/v3/surveys/{surveyId}`  |
 | `delete_survey`   | `DELETE /api/v3/surveys/{surveyId}` |
 
 When the v3 OpenAPI contract changes, update the MCP schemas and this page together. The hand-maintained
@@ -460,6 +494,8 @@ v3 OpenAPI spec lives at `docs/api-v3-reference/openapi.yml`.
 - Tool coverage depends on the current v3 Surveys REST endpoint coverage.
 - `create_survey` creates link surveys only. In-app survey creation and distribution settings are not
   part of the current v3 create operation.
+- `patch_survey` follows the v3 PATCH contract: top-level partial document updates only, no JSON Patch,
+  and no nested deep merge.
 - `validate_survey` validates payload shape and references; it does not create languages, survey
   versions, or surveys.
 - Query-string credentials are rejected; use headers for API keys.

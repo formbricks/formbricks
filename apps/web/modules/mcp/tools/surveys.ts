@@ -6,6 +6,7 @@ import {
   deleteV3Survey,
   getV3Survey,
   listV3Surveys,
+  patchV3SurveyResponse,
   validateV3Survey,
 } from "@/app/api/v3/surveys/lib/operations";
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
@@ -16,11 +17,13 @@ import {
   type TMcpDeleteSurveyInput,
   type TMcpGetSurveyInput,
   type TMcpListSurveysInput,
+  type TMcpPatchSurveyInput,
   type TMcpValidateSurveyInput,
   ZMcpCreateSurveyInput,
   ZMcpDeleteSurveyInput,
   ZMcpGetSurveyInput,
   ZMcpListSurveysInput,
+  ZMcpPatchSurveyInput,
   ZMcpValidateSurveyInput,
 } from "./schemas";
 
@@ -183,6 +186,56 @@ export function registerSurveyTools(server: McpServer): void {
       });
 
       return await responseToMcpToolResult(response, requestId);
+    }
+  );
+
+  server.registerTool(
+    "patch_survey",
+    {
+      title: "Patch survey",
+      description: "Update a Formbricks survey using the v3 Surveys API patch contract.",
+      inputSchema: ZMcpPatchSurveyInput.shape,
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: true,
+      },
+    },
+    async (input: TMcpPatchSurveyInput, extra) => {
+      const requestId = getMcpRequestId(extra.authInfo);
+      const authentication = getMcpAuthentication(extra.authInfo);
+      const log = logger.withContext({ requestId, surveyId: input.surveyId });
+      const auditLog = buildV3AuditLog(authentication, "updated", "survey", MCP_API_ROUTE);
+
+      try {
+        const response = await patchV3SurveyResponse({
+          surveyId: input.surveyId,
+          body: input.data,
+          authentication,
+          requestId,
+          instance: MCP_API_ROUTE,
+          auditLog,
+        });
+
+        if (auditLog) {
+          if (response.ok) {
+            auditLog.status = "success";
+          } else {
+            auditLog.eventId = requestId;
+          }
+        }
+
+        await queueV3AuditLog(auditLog, requestId, log);
+        return await responseToMcpToolResult(response, requestId);
+      } catch (error) {
+        if (auditLog) {
+          auditLog.eventId = requestId;
+          await queueV3AuditLog(auditLog, requestId, log);
+        }
+
+        throw error;
+      }
     }
   );
 
