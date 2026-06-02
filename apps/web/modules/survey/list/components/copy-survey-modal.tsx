@@ -2,7 +2,7 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircleIcon, Loader2, MousePointerClickIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -136,6 +136,54 @@ export const CopySurveyModal = ({
 
   const workspaceOptions = workspaces.map((w) => ({ value: w.id, label: w.name }));
 
+  let body: ReactNode;
+  if (workspacesLoading) {
+    body = (
+      <div className="relative flex h-full min-h-96 w-full items-center justify-center bg-white pb-12">
+        <Loader2 className="animate-spin" />
+      </div>
+    );
+  } else if (workspaces.length === 0) {
+    body = (
+      <div className="text-sm text-slate-600">{t("workspace.surveys.no_other_workspaces_available")}</div>
+    );
+  } else {
+    body = (
+      <form onSubmit={form.handleSubmit(onSubmit)} className="flex h-full w-full flex-col bg-white">
+        <div className="mb-2 flex-1 space-y-2">
+          <Label>{t("workspace.surveys.copy_survey_target_workspaces_label")}</Label>
+          <Controller
+            control={form.control}
+            name="workspaceIds"
+            render={({ field }) => (
+              <MultiSelect
+                options={workspaceOptions}
+                value={field.value}
+                onChange={field.onChange}
+                placeholder={t("workspace.surveys.copy_survey_select_workspaces_placeholder")}
+              />
+            )}
+          />
+        </div>
+        <div className="sticky bottom-0 flex justify-end space-x-2 bg-white pt-4">
+          <Button
+            type="button"
+            onClick={() => setOpen(false)}
+            variant="secondary"
+            disabled={form.formState.isSubmitting}>
+            {t("common.cancel")}
+          </Button>
+          <Button
+            type="submit"
+            loading={form.formState.isSubmitting}
+            disabled={form.watch("workspaceIds").length === 0}>
+            {t("workspace.surveys.copy_survey")}
+          </Button>
+        </div>
+      </form>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="max-h-[600px]">
@@ -146,48 +194,7 @@ export const CopySurveyModal = ({
         </DialogHeader>
 
         <DialogBody unconstrained className="p-1">
-          {workspacesLoading ? (
-            <div className="relative flex h-full min-h-96 w-full items-center justify-center bg-white pb-12">
-              <Loader2 className="animate-spin" />
-            </div>
-          ) : workspaces.length === 0 ? (
-            <div className="text-sm text-slate-600">
-              {t("workspace.surveys.no_other_workspaces_available")}
-            </div>
-          ) : (
-            <form onSubmit={form.handleSubmit(onSubmit)} className="flex h-full w-full flex-col bg-white">
-              <div className="mb-2 flex-1 space-y-2">
-                <Label>{t("workspace.surveys.copy_survey_target_workspaces_label")}</Label>
-                <Controller
-                  control={form.control}
-                  name="workspaceIds"
-                  render={({ field }) => (
-                    <MultiSelect
-                      options={workspaceOptions}
-                      value={field.value}
-                      onChange={field.onChange}
-                      placeholder={t("workspace.surveys.copy_survey_select_workspaces_placeholder")}
-                    />
-                  )}
-                />
-              </div>
-              <div className="sticky bottom-0 flex justify-end space-x-2 bg-white pt-4">
-                <Button
-                  type="button"
-                  onClick={() => setOpen(false)}
-                  variant="secondary"
-                  disabled={form.formState.isSubmitting}>
-                  {t("common.cancel")}
-                </Button>
-                <Button
-                  type="submit"
-                  loading={form.formState.isSubmitting}
-                  disabled={form.watch("workspaceIds").length === 0}>
-                  {t("workspace.surveys.copy_survey")}
-                </Button>
-              </div>
-            </form>
-          )}
+          {body}
         </DialogBody>
       </DialogContent>
     </Dialog>
