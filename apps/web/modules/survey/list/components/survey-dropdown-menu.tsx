@@ -176,19 +176,15 @@ export const SurveyDropDownMenu = ({
               </DropdownMenuItem>
             )}
             {canManageSurvey && workspace?.organizationId && (
-              <DropdownMenuItem>
-                <button
-                  type="button"
-                  data-testid="copy-to-workspace"
-                  className="flex w-full items-center"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setIsDropDownOpen(false);
-                    setIsCopyModalOpen(true);
-                  }}>
-                  <ArrowRightLeftIcon className="mr-2 size-4" />
-                  {t("workspace.surveys.copy_to")}
-                </button>
+              <DropdownMenuItem
+                data-testid="copy-to-workspace"
+                onSelect={(e) => {
+                  e.preventDefault();
+                  setIsDropDownOpen(false);
+                  setIsCopyModalOpen(true);
+                }}>
+                <ArrowRightLeftIcon className="mr-2 size-4" />
+                {t("workspace.surveys.copy_to")}
               </DropdownMenuItem>
             )}
             {canPreviewOrCopyLink && (

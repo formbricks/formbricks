@@ -43,7 +43,7 @@ export const CopySurveyModal = ({
   surveyId,
   currentWorkspaceId,
   organizationId,
-}: CopySurveyModalProps) => {
+}: Readonly<CopySurveyModalProps>) => {
   const { t } = useTranslation();
   const [workspaces, setWorkspaces] = useState<{ id: string; name: string }[]>([]);
   const [workspacesLoading, setWorkspacesLoading] = useState(true);
@@ -78,63 +78,59 @@ export const CopySurveyModal = ({
   }, [open, organizationId, currentWorkspaceId, t, form]);
 
   const onSubmit = async (data: TCopySurveyFormData) => {
-    try {
-      const results: Awaited<ReturnType<typeof copySurveyToOtherWorkspaceAction>>[] = [];
-      for (const targetWorkspaceId of data.workspaceIds) {
-        const result = await copySurveyToOtherWorkspaceAction({
-          surveyId,
-          targetWorkspaceId,
-        });
-        results.push(result);
-      }
+    const settled = await Promise.allSettled(
+      data.workspaceIds.map((targetWorkspaceId) =>
+        copySurveyToOtherWorkspaceAction({ surveyId, targetWorkspaceId })
+      )
+    );
 
-      let successCount = 0;
-      const errorsIndexes: number[] = [];
+    let successCount = 0;
+    const errorsIndexes: number[] = [];
 
-      results.forEach((result, index) => {
-        if (result?.data) {
-          successCount++;
-        } else {
-          errorsIndexes.push(index);
+    settled.forEach((outcome, index) => {
+      if (outcome.status === "fulfilled" && outcome.value?.data) {
+        successCount++;
+      } else {
+        errorsIndexes.push(index);
+        if (outcome.status === "rejected") {
+          logger.error(outcome.reason);
         }
+      }
+    });
+
+    const errorCount = errorsIndexes.length;
+
+    if (successCount > 0) {
+      if (errorCount === 0) {
+        toast.success(t("workspace.surveys.copy_survey_success"));
+      } else {
+        toast.error(
+          t("workspace.surveys.copy_survey_partially_success", {
+            success: successCount,
+            error: errorCount,
+          }),
+          {
+            icon: <AlertCircleIcon className="h-5 w-5 text-orange-500" />,
+          }
+        );
+      }
+    }
+
+    errorsIndexes.forEach((index, idx) => {
+      const targetWorkspaceId = data.workspaceIds[index];
+      const workspaceName = workspaces.find((w) => w.id === targetWorkspaceId)?.name ?? targetWorkspaceId;
+      const outcome = settled[index];
+      const errorMessage =
+        outcome.status === "fulfilled"
+          ? getFormattedErrorMessage(outcome.value) || t("workspace.surveys.copy_survey_error")
+          : t("workspace.surveys.copy_survey_error");
+      toast.error(`[${workspaceName}] - ${errorMessage}`, {
+        duration: 2000 + 2000 * idx,
       });
+    });
 
-      const errorCount = errorsIndexes.length;
-
-      if (successCount > 0) {
-        if (errorCount === 0) {
-          toast.success(t("workspace.surveys.copy_survey_success"));
-        } else {
-          toast.error(
-            t("workspace.surveys.copy_survey_partially_success", {
-              success: successCount,
-              error: errorCount,
-            }),
-            {
-              icon: <AlertCircleIcon className="h-5 w-5 text-orange-500" />,
-            }
-          );
-        }
-      }
-
-      if (errorsIndexes.length > 0) {
-        errorsIndexes.forEach((index, idx) => {
-          const targetWorkspaceId = data.workspaceIds[index];
-          const workspaceName = workspaces.find((w) => w.id === targetWorkspaceId)?.name ?? targetWorkspaceId;
-          const errorMessage =
-            getFormattedErrorMessage(results[index]) || t("workspace.surveys.copy_survey_error");
-          toast.error(`[${workspaceName}] - ${errorMessage}`, {
-            duration: 2000 + 2000 * idx,
-          });
-        });
-      }
-
-      if (successCount > 0) {
-        setOpen(false);
-      }
-    } catch (error) {
-      logger.error(error);
-      toast.error(t("workspace.surveys.copy_survey_error"));
+    if (successCount > 0) {
+      setOpen(false);
     }
   };
 
@@ -161,9 +157,7 @@ export const CopySurveyModal = ({
           ) : (
             <form onSubmit={form.handleSubmit(onSubmit)} className="flex h-full w-full flex-col bg-white">
               <div className="mb-2 flex-1 space-y-2">
-                <Label htmlFor="copy-survey-workspaces">
-                  {t("workspace.surveys.copy_survey_target_workspaces_label")}
-                </Label>
+                <Label>{t("workspace.surveys.copy_survey_target_workspaces_label")}</Label>
                 <Controller
                   control={form.control}
                   name="workspaceIds"
