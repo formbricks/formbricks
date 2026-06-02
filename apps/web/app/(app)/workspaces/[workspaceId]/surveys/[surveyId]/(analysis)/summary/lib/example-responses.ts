@@ -693,10 +693,11 @@ const applyFallbackStyle = (answer: string, profile: TExampleRespondentProfile):
 
 const buildFallbackOpenTextAnswer = (
   profile: TExampleRespondentProfile,
-  element: TSurveyElement | undefined
+  element: TSurveyElement | undefined,
+  variantOffset = 0
 ): string => {
   const headline = element ? getLocalizedValue(element.headline, DEFAULT_LANGUAGE).toLowerCase() : "";
-  const variant = hashString(`${profile.persona}-${headline}`) % 4;
+  const variant = (hashString(`${profile.persona}-${headline}`) + variantOffset) % 4;
   const secondaryPriority = profile.priorities[1] ?? profile.priorities[0];
 
   if (headline.includes("who") || headline.includes("people") || headline.includes("benefit from")) {
@@ -733,23 +734,33 @@ const buildFallbackOpenTextAnswer = (
   }
 
   switch (profile.verbosity) {
-    case "brief":
-      return applyFallbackStyle(
-        profile.sentiment === "detractor" ? "Not enough value yet." : "Helpful so far.",
-        profile
-      );
-    case "detailed":
-      return applyFallbackStyle(
-        `As a ${profile.persona}, I mostly care about ${profile.priorities.join(
-          " and "
-        )}. The experience is ${profile.sentiment === "detractor" ? "not quite there yet" : "moving in the right direction"}.`,
-        profile
-      );
-    case "normal":
-      return applyFallbackStyle(
+    case "brief": {
+      const answers =
+        profile.sentiment === "detractor"
+          ? ["Not enough value yet.", "Still falls short.", "Hasn't clicked for me.", "Not there yet."]
+          : ["Helpful so far.", "Working for us.", "Solid start.", "Doing the job."];
+      return applyFallbackStyle(answers[variant], profile);
+    }
+    case "detailed": {
+      const direction =
+        profile.sentiment === "detractor" ? "not quite there yet" : "moving in the right direction";
+      const answers = [
+        `As a ${profile.persona}, I mostly care about ${profile.priorities.join(" and ")}. The experience is ${direction}.`,
+        `Coming at this from being a ${profile.persona}, ${profile.priorities[0]} matters most and ${profile.priorities[1]} is close behind; overall it is ${direction}.`,
+        `My take as a ${profile.persona}: ${profile.priorities[0]} drives my judgement, with ${profile.priorities[1]} as a secondary lens. Right now it is ${direction}.`,
+        `From the ${profile.persona} angle, the things I watch are ${profile.priorities[0]} and ${profile.priorities[1]}. I would say it is ${direction}.`,
+      ];
+      return applyFallbackStyle(answers[variant], profile);
+    }
+    case "normal": {
+      const answers = [
         `It mainly helps with ${profile.priorities[0]}, though I would still watch ${profile.priorities[1]}.`,
-        profile
-      );
+        `Most of the value shows up around ${profile.priorities[0]}; ${profile.priorities[1]} could use more attention.`,
+        `For me it lands on ${profile.priorities[0]} first, and then ${profile.priorities[1]} second.`,
+        `Where I notice it most is ${profile.priorities[0]}, with ${profile.priorities[1]} still on the radar.`,
+      ];
+      return applyFallbackStyle(answers[variant], profile);
+    }
   }
 };
 
@@ -786,6 +797,23 @@ ${JSON.stringify(buildOpenTextLlmContext(survey, rowsNeedingText), null, 2)}`,
     for (const elementId of row.openTextElementIds) {
       data[elementId] = (answers[elementId] ||
         buildFallbackOpenTextAnswer(row.profile, elementsById.get(elementId))) as TResponseData[string];
+    }
+
+    // Belt-and-suspenders: even with the prompt rules and varied fallbacks,
+    // both the LLM and the fallback path can occasionally produce identical
+    // strings across two open-text questions in the same row. Replace any
+    // duplicate with a shifted fallback variant so a single response never
+    // ships the same sentence twice.
+    const seen = new Set<string>();
+    for (const elementId of row.openTextElementIds) {
+      let answer = String(data[elementId] ?? "");
+      let offset = 1;
+      while (seen.has(answer) && offset <= 4) {
+        answer = buildFallbackOpenTextAnswer(row.profile, elementsById.get(elementId), offset);
+        offset += 1;
+      }
+      data[elementId] = answer as TResponseData[string];
+      seen.add(answer);
     }
 
     return { ...row, data };

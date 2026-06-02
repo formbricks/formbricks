@@ -329,6 +329,37 @@ describe("generateExampleResponseDataset", () => {
     );
   });
 
+  test("never ships duplicate open-text answers within a single row", async () => {
+    const survey = makeSurvey([
+      {
+        ...baseQuestion,
+        id: "q_reason",
+        type: TSurveyElementTypeEnum.OpenText,
+        headline: i18n("What is your primary reason for visiting today?"),
+      },
+      {
+        ...baseQuestion,
+        id: "q_block",
+        type: TSurveyElementTypeEnum.OpenText,
+        headline: i18n("What, if anything, is holding you back from making a purchase today?"),
+      },
+    ] as unknown as TSurvey["questions"]);
+    vi.mocked(mocks.generateOrganizationAIObject).mockResolvedValue({
+      object: {
+        responses: Array.from({ length: EXAMPLE_RESPONSE_COUNT }, (_, index) => ({
+          rowId: `row_${index}`,
+          answers: {},
+        })),
+      },
+    });
+
+    const result = await generateExampleResponseDataset({ survey, organizationId: "org_1" });
+
+    for (const response of result.responses) {
+      expect(response.data.q_reason).not.toEqual(response.data.q_block);
+    }
+  });
+
   test("locally generates valid answers for the remaining closed-ended element types", async () => {
     const survey = makeSurvey([
       { ...baseQuestion, id: "q_nps", type: TSurveyElementTypeEnum.NPS },
