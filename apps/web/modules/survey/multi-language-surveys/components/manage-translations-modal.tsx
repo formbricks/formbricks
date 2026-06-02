@@ -173,7 +173,9 @@ export const ManageTranslationsModal = ({
         targetLanguage: languageName,
       });
 
-      if (!result?.data?.translations) {
+      // Empty object is truthy in JS — guard explicitly so a zero-translation
+      // response doesn't slip through as a fake success toast.
+      if (!result?.data?.translations || Object.keys(result.data.translations).length === 0) {
         const errorMessage = getFormattedErrorMessage(result);
         toast.error(
           errorMessage ? getAIErrorMessage(errorMessage) : t("workspace.surveys.edit.ai_translation_failed"),

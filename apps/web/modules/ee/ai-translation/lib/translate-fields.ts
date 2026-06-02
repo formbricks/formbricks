@@ -1,7 +1,7 @@
 import "server-only";
 import { z } from "zod";
 import { logger } from "@formbricks/logger";
-import { generateOrganizationAIText } from "@/lib/ai/service";
+import { generateOrganizationAIObject } from "@/lib/ai/service";
 
 export const ZAITranslationField = z.object({
   path: z.string(),
@@ -18,6 +18,11 @@ interface TranslateFieldsInput {
   targetLanguage: string;
 }
 
+const ZTranslationResponse = z.object({
+  translations: z.record(z.string(), z.string()),
+});
+type TTranslationResponse = z.infer<typeof ZTranslationResponse>;
+
 export const translateFields = async ({
   organizationId,
   fields,
@@ -33,48 +38,36 @@ export const translateFields = async ({
   const systemPrompt = `You are a professional translator for survey content. Translate the provided survey fields from ${sourceLanguage} to ${targetLanguage}.
 
 Rules:
-- Return ONLY a valid JSON object mapping each "key" to its translated text.
-- For rich text fields (richText: true), preserve all HTML tags exactly as they are. Only translate the text content within the tags.
-- Preserve any {{variable}} patterns exactly as they are — do not translate text inside double curly braces.
-- Do not add any explanation, markdown formatting, or extra text — return raw JSON only.`;
+- The response MUST be an object of the form { "translations": { <key>: <translated text>, ... } }.
+- Use the "key" field from each input item EXACTLY as the key in the translations object. Do not modify, escape, nest, or rewrite the key in any way — keys like "blocks.0.elements.0.headline" must appear verbatim, NOT as nested objects.
+- Include one entry per input item; do not invent, drop, or merge keys.
+- For rich text fields (richText: true), preserve all HTML tags exactly. Only translate the text content within the tags.
+- Preserve any {{variable}} patterns exactly — never translate text inside double curly braces.`;
 
-  const result = await generateOrganizationAIText({
+  const { object } = await generateOrganizationAIObject<TTranslationResponse>({
     organizationId,
+    schema: ZTranslationResponse,
     system: systemPrompt,
     prompt: JSON.stringify(items),
   });
 
-  // Parse AI response as JSON.
-  // 1. Strip markdown code fences if present, then try JSON.parse directly.
-  // 2. Fall back to extracting the first {...} block for wrapper text.
-  let parsed: Record<string, string>;
-  try {
-    const stripped = result.text.replaceAll(/^```(?:json)?\s*\n?|\n?```\s*$/g, "").trim();
-    try {
-      parsed = JSON.parse(stripped);
-    } catch {
-      const start = stripped.indexOf("{");
-      const end = stripped.lastIndexOf("}");
-      if (start === -1 || end === -1 || end <= start) {
-        throw new Error("No JSON object found in AI response");
-      }
-      parsed = JSON.parse(stripped.slice(start, end + 1));
-    }
-  } catch (parseError) {
-    logger.error(
-      { rawResponse: result.text.slice(0, 500), parseError },
-      "Failed to parse AI translation response"
-    );
-    throw new Error("Failed to parse AI translation response");
-  }
-
-  // Validate and filter to only requested keys
   const validKeys = new Set(fields.map((f) => f.path));
   const translations: Record<string, string> = {};
-  for (const [key, value] of Object.entries(parsed)) {
-    if (validKeys.has(key) && typeof value === "string") {
+  for (const [key, value] of Object.entries(object.translations)) {
+    if (validKeys.has(key)) {
       translations[key] = value;
     }
+  }
+
+  if (Object.keys(translations).length === 0) {
+    logger.error(
+      {
+        requestedKeys: fields.map((f) => f.path),
+        returnedKeys: Object.keys(object.translations),
+      },
+      "AI translation response had no keys matching the requested fields"
+    );
+    throw new Error("AI translation response had no usable translations");
   }
 
   return translations;
