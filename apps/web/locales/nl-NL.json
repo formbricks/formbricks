@@ -479,6 +479,7 @@
     "trial_plan_badge": "{plan} Proefperiode",
     "try_again": "Probeer het opnieuw",
     "type": "Type",
+    "undo": "Ongedaan maken",
     "unlock_more_workspaces_with_a_higher_plan": "Ontgrendel meer werkruimtes met een hoger abonnement.",
     "update": "Update",
     "updated": "Bijgewerkt",
@@ -1835,6 +1836,8 @@
       "dashboards": {
         "add_count_charts": "{count} grafiek(en) toevoegen",
         "chart_removed": "Grafiek verwijderd van dashboard",
+        "chart_restore_failed": "Grafiek herstellen mislukt",
+        "chart_restored": "Grafiek hersteld",
         "charts_add_failed": "Grafieken toevoegen aan dashboard mislukt",
         "charts_add_partial_failure": "{count} grafiek(en) toevoegen mislukt",
         "charts_added_to_dashboard": "Grafieken toegevoegd aan dashboard",
