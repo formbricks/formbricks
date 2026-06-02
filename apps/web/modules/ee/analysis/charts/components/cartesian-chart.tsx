@@ -106,7 +106,11 @@ export function CartesianChart({
             axisLine={false}
             tickFormatter={formatXAxisTick}
           />
-          <YAxis tickLine={false} axisLine={false} />
+          {/* `monotone` interpolation can bulge slightly above the data max
+              between points. Reserve 12px of plot padding at the top so the
+              spline doesn't get clipped by the chart container, and let
+              Recharts auto-pick nice tick bounds below that. */}
+          <YAxis tickLine={false} axisLine={false} padding={{ top: 12 }} />
           <ChartTooltip content={tooltipContent} cursor={tooltipCursor} />
           {showLegend && <ChartLegend content={<ChartLegendContent />} verticalAlign="top" height={36} />}
           {children}
