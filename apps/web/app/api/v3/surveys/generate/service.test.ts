@@ -290,6 +290,194 @@ describe("generateV3SurveyCreatePayloadFromPrompt", () => {
     ).toHaveLength(3);
   });
 
+  test("normalizes rating-like questions into single-question blocks while preserving order", async () => {
+    vi.mocked(generateOrganizationAIObject).mockResolvedValueOnce({
+      object: {
+        language: "en-US",
+        name: "Mixed Feedback Survey",
+        description: null,
+        welcomeCard: null,
+        blocks: [
+          {
+            name: "Mixed feedback",
+            questions: [
+              generatedElement({
+                type: "openText",
+                headline: "What should we improve first?",
+                longAnswer: true,
+              }),
+              generatedElement({
+                type: "multipleChoiceSingle",
+                headline: "Which user role best describes you?",
+                choices: ["Admin", "Builder", "Viewer"],
+              }),
+              generatedElement({
+                type: "rating",
+                headline: "How would you rate onboarding?",
+                scale: "number",
+                range: "5",
+              }),
+              generatedElement({
+                type: "csat",
+                headline: "How satisfied are you overall?",
+                scale: "number",
+                range: "5",
+              }),
+            ],
+          },
+          {
+            name: "Mixed feedback",
+            questions: [
+              generatedElement({
+                type: "openText",
+                headline: "What was confusing?",
+                longAnswer: true,
+              }),
+              generatedElement({
+                type: "multipleChoiceMulti",
+                headline: "Which areas need attention?",
+                choices: ["Docs", "Setup", "Support"],
+              }),
+              generatedElement({
+                type: "nps",
+                headline: "How likely are you to recommend us?",
+              }),
+            ],
+          },
+        ],
+        ending: null,
+      },
+    } as Awaited<ReturnType<typeof generateOrganizationAIObject>>);
+
+    const result = await generateV3SurveyCreatePayloadFromPrompt({
+      organizationId: "org_1",
+      input: generateInput,
+    });
+
+    expect(prepareV3SurveyCreateInput(result.payload).ok).toBe(true);
+    expect(result.payload.blocks.map((block) => block.name)).toEqual([
+      "Mixed feedback",
+      "How would you rate onboarding?",
+      "How satisfied are you overall?",
+      "Mixed feedback",
+      "How likely are you to recommend us?",
+    ]);
+    expect(result.payload.blocks.map((block) => block.elements.map((element) => element.type))).toEqual([
+      ["openText", "multipleChoiceSingle"],
+      ["rating"],
+      ["csat"],
+      ["openText", "multipleChoiceMulti"],
+      ["nps"],
+    ]);
+  });
+
+  test("splits every rating-like question in the same AI block into separate blocks", async () => {
+    vi.mocked(generateOrganizationAIObject).mockResolvedValueOnce({
+      object: {
+        language: "en-US",
+        name: "Score Survey",
+        description: null,
+        welcomeCard: null,
+        blocks: [
+          {
+            name: "Scores",
+            questions: [
+              generatedElement({
+                type: "ces",
+                headline: "How easy was setup?",
+                scale: "number",
+                range: "7",
+              }),
+              generatedElement({
+                type: "matrix",
+                headline: "Rate each setup area.",
+                rows: ["Docs", "Import"],
+                columns: ["Poor", "Good", "Great"],
+              }),
+              generatedElement({
+                type: "ranking",
+                headline: "Rank the improvements.",
+                choices: ["Guidance", "Speed", "Integrations"],
+              }),
+            ],
+          },
+        ],
+        ending: null,
+      },
+    } as Awaited<ReturnType<typeof generateOrganizationAIObject>>);
+
+    const result = await generateV3SurveyCreatePayloadFromPrompt({
+      organizationId: "org_1",
+      input: generateInput,
+    });
+
+    expect(prepareV3SurveyCreateInput(result.payload).ok).toBe(true);
+    expect(result.payload.blocks.map((block) => block.name)).toEqual([
+      "How easy was setup?",
+      "Rate each setup area.",
+      "Rank the improvements.",
+    ]);
+    expect(result.payload.blocks.map((block) => block.elements.map((element) => element.type))).toEqual([
+      ["ces"],
+      ["matrix"],
+      ["ranking"],
+    ]);
+  });
+
+  test("keeps repeated non-rating questions grouped in their original block", async () => {
+    vi.mocked(generateOrganizationAIObject).mockResolvedValueOnce({
+      object: {
+        language: "en-US",
+        name: "Open Feedback Survey",
+        description: null,
+        welcomeCard: null,
+        blocks: [
+          {
+            name: "Open feedback",
+            questions: [
+              generatedElement({
+                type: "openText",
+                headline: "What worked well?",
+                longAnswer: true,
+              }),
+              generatedElement({
+                type: "openText",
+                headline: "What should we improve?",
+                longAnswer: true,
+              }),
+              generatedElement({
+                type: "multipleChoiceSingle",
+                headline: "Which plan are you on?",
+                choices: ["Free", "Pro", "Enterprise"],
+              }),
+              generatedElement({
+                type: "multipleChoiceSingle",
+                headline: "How often do you use the product?",
+                choices: ["Daily", "Weekly", "Monthly"],
+              }),
+            ],
+          },
+        ],
+        ending: null,
+      },
+    } as Awaited<ReturnType<typeof generateOrganizationAIObject>>);
+
+    const result = await generateV3SurveyCreatePayloadFromPrompt({
+      organizationId: "org_1",
+      input: generateInput,
+    });
+
+    expect(prepareV3SurveyCreateInput(result.payload).ok).toBe(true);
+    expect(result.payload.blocks).toHaveLength(1);
+    expect(result.payload.blocks[0].name).toBe("Open feedback");
+    expect(result.payload.blocks[0].elements.map((element) => element.type)).toEqual([
+      "openText",
+      "openText",
+      "multipleChoiceSingle",
+      "multipleChoiceSingle",
+    ]);
+  });
+
   test("maps supported generated question types to v3 create elements", async () => {
     vi.mocked(generateOrganizationAIObject).mockResolvedValueOnce({
       object: {

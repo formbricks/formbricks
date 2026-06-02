@@ -25,6 +25,8 @@ export function buildV3SurveyGenerationSystemPrompt(
       "pages, blocks, or clearly separate topics.",
     "Give each block a short, meaningful name. " +
       `Use ${GENERATED_SURVEY_MIN_QUESTIONS_PER_BLOCK} to ${GENERATED_SURVEY_MAX_QUESTIONS_PER_BLOCK} questions per block.`,
+    "Rating-like questions must be single-question blocks: rating, csat, ces, nps, matrix, and ranking. " +
+      "Do not place rating-like questions together in the same block.",
     `Use only these question types: ${GENERATED_SURVEY_ELEMENT_TYPES.join(", ")}.`,
     "Use csat for satisfaction, ces for effort, nps for loyalty, ranking for priorities, " +
       "matrix for repeated row-and-column ratings, and date only when the requested feedback needs a date.",
@@ -50,6 +52,7 @@ export function buildV3SurveyGenerationPrompt(
     "Include a name, optional description, useful questions, and a simple ending.",
     "If the request is broad, choose a practical customer-feedback survey structure.",
     "Return the questions inside blocks. Use multiple blocks only when useful or requested.",
+    "Keep rating-like questions in their own single-question blocks: rating, csat, ces, nps, matrix, and ranking.",
     "Use the same language as the request for all generated survey text. " +
       "If the request language is unclear or cannot be matched to an allowed survey language, " +
       "use the preferred survey language.",

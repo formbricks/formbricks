@@ -39,7 +39,7 @@ const ZV3SurveyGenerateLanguage = z
     if (!normalizedLanguage) {
       ctx.addIssue({
         code: "custom",
-        message: `Language '${value}' is not supported for AI survey generation`,
+        message: `Language '${value}' is not supported for AI survey creation`,
       });
       return z.NEVER;
     }

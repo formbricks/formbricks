@@ -24,7 +24,7 @@ info:
     **Security**
     Missing/forbidden workspace returns **403** with a generic message (not **404**) so resource existence is not leaked. List responses use `private, no-store`.
 
-    **AI survey generation**
+    **AI survey creation**
     `POST /api/v3/surveys/generate` returns a draft `POST /api/v3/surveys` payload plus validation metadata. It does not create a survey. Generated payloads are currently link-survey only because the v3 create contract accepts only `type: link`.
     Prompt text is sent to the configured AI provider for generation, but it is not stored by this endpoint, not logged by default, and not included in audit data.
 
@@ -397,18 +397,18 @@ paths:
   /api/v3/surveys/generate:
     post:
       operationId: generateSurveyV3
-      summary: Generate a survey create payload with AI
+      summary: Create a survey draft payload with AI
       description: |
-        Generates a strict v3 `POST /api/v3/surveys` create payload from a creator prompt and returns
+        Creates a strict v3 `POST /api/v3/surveys` create payload from a creator prompt and returns
         validation metadata. This endpoint is single-purpose: it does **not** persist the survey.
         Clients should validate the returned payload with `/api/v3/surveys/validate` or use the
         embedded validation metadata, then create the draft through `POST /api/v3/surveys`.
 
         The generated payload always sets `status: draft`. The initial contract supports only
-        `type: link`; app and website survey generation must stay disabled until the v3 create
+        `type: link`; app and website survey creation must stay disabled until the v3 create
         endpoint accepts those types.
 
-        Prompt privacy: prompt text is sent to the configured AI provider to generate the payload, but
+        Prompt privacy: prompt text is sent to the configured AI provider to create the payload, but
         this endpoint does not store prompts and server logs should use request ids and failure
         categories instead of raw prompt content.
       tags:
@@ -421,7 +421,7 @@ paths:
               $ref: "#/components/schemas/GenerateSurveyRequest"
             examples:
               onboarding:
-                summary: Generate a link survey draft
+                summary: Create a link survey draft
                 value:
                   workspaceId: clxx1234567890123456789012
                   type: link
@@ -1153,7 +1153,7 @@ components:
         - tr-TR
         - zh-Hans-CN
         - zh-Hant-TW
-      description: Supported app locale code that AI survey generation can return.
+      description: Supported app locale code that AI survey creation can return.
       example: en-US
     CreateSurveyRequest:
       type: object
@@ -1255,7 +1255,7 @@ components:
     GenerateSurveyRequest:
       type: object
       description: |
-        AI survey generation request. `prompt` is used only to generate a create payload; it is not
+        AI survey creation request. `prompt` is used only to create a draft payload; it is not
         persisted by this endpoint. The generated payload is validated and returned to the caller for
         a separate create request.
       required: [workspaceId, prompt]
@@ -1263,21 +1263,19 @@ components:
         workspaceId:
           type: string
           format: cuid2
-          description: Workspace where the generated survey would be created. Requires read/write access.
+          description: Workspace where the AI-created survey draft would be created. Requires read/write access.
         prompt:
           type: string
-          minLength: 24
+          minLength: 4
           maxLength: 1200
-          pattern: '^\s*\S+(?:\s+\S+){3,}\s*$'
           description: |
-            Natural-language survey goal and audience. The prompt must be at least 24 characters and
-            contain at least four whitespace-separated words. Requests that fail either check are
-            rejected before any AI provider call.
+            Natural-language survey goal and audience. Prompts with fewer than 24 characters or fewer
+            than four whitespace-separated words return prompt feedback before any AI provider call.
         type:
           type: string
           enum: [link]
           default: link
-          description: Link Survey is the only generated type until the v3 create endpoint supports additional types.
+          description: Link Survey is the only AI-created type until the v3 create endpoint supports additional types.
         language:
           $ref: "#/components/schemas/AISurveyGenerationLocaleCode"
           description: |
@@ -1291,7 +1289,7 @@ components:
       properties:
         language:
           $ref: "#/components/schemas/AISurveyGenerationLocaleCode"
-          description: Supported app locale used for the generated survey content and create payload language maps.
+          description: Supported app locale used for the AI-created survey content and create payload language maps.
         payload:
           allOf:
             - $ref: "#/components/schemas/CreateSurveyRequest"

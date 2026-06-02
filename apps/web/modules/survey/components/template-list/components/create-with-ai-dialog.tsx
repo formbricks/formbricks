@@ -7,7 +7,6 @@ import {
   SparklesIcon,
   TrendingDownIcon,
   UsersIcon,
-  XIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -18,6 +17,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useTransition,
 } from "react";
 import { useTranslation } from "react-i18next";
 import type { TUserLocale } from "@formbricks/types/user";
@@ -51,11 +51,14 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 
-const AI_SURVEY_PROMPT_MIN_LENGTH = 24;
+const AI_SURVEY_PROMPT_MIN_LENGTH = 4;
 const AI_SURVEY_PROMPT_MAX_LENGTH = 1200;
 
 type TSurveyGenerationType = "link";
 type TFormSubmitEvent = Parameters<NonNullable<ComponentPropsWithoutRef<"form">["onSubmit"]>>[0];
+type TSurveyTypeOption = {
+  value: TSurveyGenerationType;
+};
 
 type CreateWithAIDialogProps = {
   workspaceId: string;
@@ -79,6 +82,12 @@ const getUnavailableMessageKey = (reason?: TAIUnavailableReason) => {
   return "workspace.surveys.ai_create.ai_not_available";
 };
 
+const SURVEY_TYPE_OPTIONS: TSurveyTypeOption[] = [
+  {
+    value: "link",
+  },
+];
+
 export const CreateWithAIDialog = ({
   workspaceId,
   language,
@@ -93,12 +102,15 @@ export const CreateWithAIDialog = ({
   const [internalOpen, setInternalOpen] = useState(false);
   const [prompt, setPrompt] = useState("");
   const [surveyType, setSurveyType] = useState<TSurveyGenerationType>("link");
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [isCreatingSurvey, setIsCreatingSurvey] = useState(false);
+  const [isNavigatingToEditor, startEditorNavigationTransition] = useTransition();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const promptTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   const isControlled = open !== undefined;
   const isOpen = isControlled ? open : internalOpen;
+  const isBusy = isCreatingSurvey || isNavigatingToEditor;
+  const canCreate = isAIAvailable && !isBusy && prompt.trim().length >= AI_SURVEY_PROMPT_MIN_LENGTH;
   const unavailableAction = getAIUnavailableAction(aiUnavailableReason, workspaceId);
   let unavailableActionLabel: string | undefined;
   if (unavailableAction?.type === "enable_ai") {
@@ -138,7 +150,7 @@ export const CreateWithAIDialog = ({
   );
 
   const setDialogOpen = (nextOpen: boolean, options?: { force?: boolean }) => {
-    if (isGenerating && !options?.force) return;
+    if (isBusy && !options?.force) return;
 
     if (!nextOpen) {
       setErrorMessage(null);
@@ -176,17 +188,13 @@ export const CreateWithAIDialog = ({
   const handleGenerate = async (event: TFormSubmitEvent) => {
     event.preventDefault();
 
-    if (!isAIAvailable) {
+    if (!canCreate) {
       return;
     }
 
     const trimmedPrompt = prompt.trim();
-    if (trimmedPrompt.length < AI_SURVEY_PROMPT_MIN_LENGTH) {
-      setErrorMessage(t("workspace.surveys.ai_create.prompt_too_short"));
-      return;
-    }
 
-    setIsGenerating(true);
+    setIsCreatingSurvey(true);
     setErrorMessage(null);
 
     try {
@@ -204,12 +212,13 @@ export const CreateWithAIDialog = ({
       }
 
       const survey = await createV3Survey(generatedSurvey.payload);
-      setDialogOpen(false, { force: true });
-      router.push(`/workspaces/${workspaceId}/surveys/${survey.id}/edit`);
+      startEditorNavigationTransition(() => {
+        router.push(`/workspaces/${workspaceId}/surveys/${survey.id}/edit`);
+      });
     } catch (error) {
       setErrorMessage(getErrorMessage(error));
     } finally {
-      setIsGenerating(false);
+      setIsCreatingSurvey(false);
     }
   };
 
@@ -221,7 +230,7 @@ export const CreateWithAIDialog = ({
   };
 
   const handleOpenAutoFocus = (event: Event) => {
-    if (!isAIAvailable || isGenerating) return;
+    if (!isAIAvailable || isBusy) return;
 
     event.preventDefault();
     globalThis.requestAnimationFrame(() => {
@@ -234,36 +243,17 @@ export const CreateWithAIDialog = ({
       {trigger ? <DialogTrigger asChild>{trigger}</DialogTrigger> : null}
       <DialogContent
         width="narrow"
-        className="space-y-0 overflow-hidden p-0"
-        hideCloseButton
+        className="overflow-hidden"
         onOpenAutoFocus={handleOpenAutoFocus}
-        disableCloseOnOutsideClick={isGenerating}>
-        <form className="flex min-h-0 flex-1 flex-col" onSubmit={handleGenerate}>
-          <DialogHeader className="relative top-0 border-b border-slate-200 px-5 py-4">
-            <button
-              type="button"
-              className="absolute right-4 top-4 flex size-8 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
-              disabled={isGenerating}
-              aria-label={t("common.close")}
-              onClick={() => setDialogOpen(false)}>
-              <XIcon className="size-4" />
-            </button>
-            <div className="flex items-start gap-3 pr-10">
-              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-brand-dark bg-white text-brand-dark">
-                <SparklesIcon className="size-4" />
-              </div>
-              <div className="space-y-1">
-                <DialogTitle className="text-base font-semibold leading-6">
-                  {t("workspace.surveys.ai_create.dialog_title")}
-                </DialogTitle>
-                <DialogDescription className="leading-5">
-                  {t("workspace.surveys.ai_create.dialog_description")}
-                </DialogDescription>
-              </div>
-            </div>
+        disableCloseOnOutsideClick={isBusy}>
+        <form className="flex min-h-0 flex-1 flex-col space-y-4" onSubmit={handleGenerate}>
+          <DialogHeader>
+            <SparklesIcon aria-hidden="true" />
+            <DialogTitle>{t("workspace.surveys.ai_create.dialog_title")}</DialogTitle>
+            <DialogDescription>{t("workspace.surveys.ai_create.dialog_description")}</DialogDescription>
           </DialogHeader>
 
-          <DialogBody className="space-y-4 px-5 py-4">
+          <DialogBody className="-mx-1 space-y-4 px-1 pb-1">
             {!isAIAvailable && (
               <Alert variant="info">
                 <AlertTitle>{t("workspace.surveys.ai_create.ai_not_available")}</AlertTitle>
@@ -290,18 +280,16 @@ export const CreateWithAIDialog = ({
               <Select
                 value={surveyType}
                 onValueChange={(value) => setSurveyType(value as TSurveyGenerationType)}
-                disabled={isGenerating || !isAIAvailable}>
+                disabled={isBusy || !isAIAvailable || SURVEY_TYPE_OPTIONS.length <= 1}>
                 <SelectTrigger id="ai-survey-type">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="link">{t("workspace.surveys.ai_create.link_survey")}</SelectItem>
-                  <SelectItem value="app" disabled>
-                    {t("workspace.surveys.ai_create.app_survey")}
-                  </SelectItem>
-                  <SelectItem value="website" disabled>
-                    {t("workspace.surveys.ai_create.website_survey")}
-                  </SelectItem>
+                  {SURVEY_TYPE_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {t("workspace.surveys.ai_create.link_survey")}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <p className="text-xs text-slate-500">{t("workspace.surveys.ai_create.only_link_supported")}</p>
@@ -318,7 +306,7 @@ export const CreateWithAIDialog = ({
                 maxLength={AI_SURVEY_PROMPT_MAX_LENGTH}
                 placeholder={t("workspace.surveys.ai_create.prompt_placeholder")}
                 value={prompt}
-                disabled={isGenerating || !isAIAvailable}
+                disabled={isBusy || !isAIAvailable}
                 onChange={(event) => setPrompt(event.target.value)}
                 onKeyDown={handlePromptKeyDown}
               />
@@ -346,7 +334,7 @@ export const CreateWithAIDialog = ({
                       variant="secondary"
                       size="sm"
                       className="group w-full min-w-0 justify-start text-left"
-                      disabled={isGenerating}
+                      disabled={isBusy}
                       title={helperPrompt.prompt}
                       aria-label={`${helperPrompt.label}. ${helperPrompt.prompt}`}
                       onClick={() => {
@@ -362,15 +350,17 @@ export const CreateWithAIDialog = ({
             )}
           </DialogBody>
 
-          <DialogFooter className="border-t border-slate-200 px-5 py-3">
-            <Button type="button" variant="secondary" onClick={() => setDialogOpen(false)}>
+          <DialogFooter>
+            <Button type="button" variant="secondary" disabled={isBusy} onClick={() => setDialogOpen(false)}>
               {t("common.cancel")}
             </Button>
-            <Button type="submit" loading={isGenerating} disabled={!isAIAvailable}>
-              <SparklesIcon />
-              {isGenerating
-                ? t("workspace.surveys.ai_create.generating")
-                : t("workspace.surveys.ai_create.generate")}
+            <Button type="submit" loading={isBusy} disabled={!canCreate}>
+              {!isBusy && <SparklesIcon />}
+              {isNavigatingToEditor
+                ? t("workspace.surveys.ai_create.opening_editor")
+                : isCreatingSurvey
+                  ? t("workspace.surveys.ai_create.creating")
+                  : t("workspace.surveys.ai_create.create")}
             </Button>
           </DialogFooter>
         </form>

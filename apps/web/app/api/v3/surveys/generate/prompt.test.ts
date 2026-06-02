@@ -24,6 +24,8 @@ describe("v3 survey generation prompt", () => {
     expect(system).toContain("link survey draft");
     expect(system).toContain('string values "5", "7", or "10"');
     expect(system).toContain('For csat questions, set range to "5"');
+    expect(system).toContain("Rating-like questions must be single-question blocks");
+    expect(system).toContain("rating, csat, ces, nps, matrix, and ranking");
     expect(system).toContain(
       `Group questions into ${GENERATED_SURVEY_MIN_BLOCKS} to ${GENERATED_SURVEY_MAX_BLOCKS} blocks`
     );
@@ -54,6 +56,7 @@ describe("v3 survey generation prompt", () => {
     expect(prompt).toContain(allowedSurveyLanguages);
     expect(prompt).toContain("Preferred survey language: es-ES");
     expect(prompt).toContain("exactly one allowed survey language code");
+    expect(prompt).toContain("Keep rating-like questions in their own single-question blocks");
   });
 
   test("includes the user request without adding vendor-specific instructions", () => {

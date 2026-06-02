@@ -332,6 +332,15 @@ describe("ZV3SurveyGenerateBody", () => {
     expect(result.success).toBe(false);
   });
 
+  test("accepts prompts at the lightweight request minimum", () => {
+    const result = ZV3SurveyGenerateBody.safeParse({
+      workspaceId: "clxx1234567890123456789012",
+      prompt: "x".repeat(V3_SURVEY_GENERATE_PROMPT_MIN_LENGTH),
+    });
+
+    expect(result.success).toBe(true);
+  });
+
   test("normalizes requested survey language aliases into supported app locales", () => {
     const cases = [
       { input: "es_ES", expected: "es-ES" },

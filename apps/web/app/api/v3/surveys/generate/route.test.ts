@@ -264,7 +264,7 @@ describe("POST /api/v3/surveys/generate", () => {
     const res = await POST(
       createGenerateRequest({
         workspaceId,
-        prompt: "Feedback please for onboarding",
+        prompt: "abcd",
       }),
       {} as any
     );

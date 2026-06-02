@@ -1,10 +1,14 @@
 import "server-only";
 import { createId } from "@paralleldrive/cuid2";
+import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { generateOrganizationAIObject } from "@/lib/ai/service";
 import { type TV3SurveyPrepareResult, prepareV3SurveyCreateInput } from "../prepare";
 import { DEFAULT_V3_SURVEY_LANGUAGE, type TV3CreateSurveyBody, formatV3ZodInvalidParams } from "../schemas";
-import { V3_SURVEY_GENERATE_PROMPT_MIN_LENGTH } from "./constants";
+import {
+  V3_SURVEY_GENERATE_PROMPT_DETAIL_MIN_LENGTH,
+  V3_SURVEY_GENERATE_PROMPT_DETAIL_MIN_WORDS,
+} from "./constants";
 import { buildV3SurveyGenerationPrompt, buildV3SurveyGenerationSystemPrompt } from "./prompt";
 import {
   type TGeneratedSurveyDraft,
@@ -61,7 +65,10 @@ function getPromptInvalidParams(prompt: string): InvalidParam[] {
   const normalizedPrompt = prompt.trim();
   const wordCount = normalizedPrompt.split(/\s+/).filter(Boolean).length;
 
-  if (normalizedPrompt.length >= V3_SURVEY_GENERATE_PROMPT_MIN_LENGTH && wordCount >= 4) {
+  if (
+    normalizedPrompt.length >= V3_SURVEY_GENERATE_PROMPT_DETAIL_MIN_LENGTH &&
+    wordCount >= V3_SURVEY_GENERATE_PROMPT_DETAIL_MIN_WORDS
+  ) {
     return [];
   }
 
@@ -243,6 +250,62 @@ function buildElement(element: TGeneratedSurveyElement, index: number, language:
   }
 }
 
+const RATING_LIKE_GENERATED_ELEMENT_TYPES = new Set<TGeneratedSurveyElement["type"]>([
+  TSurveyElementTypeEnum.Rating,
+  TSurveyElementTypeEnum.CSAT,
+  TSurveyElementTypeEnum.CES,
+  TSurveyElementTypeEnum.NPS,
+  TSurveyElementTypeEnum.Matrix,
+  TSurveyElementTypeEnum.Ranking,
+]);
+
+function isRatingLikeGeneratedElement(element: TGeneratedSurveyElement): boolean {
+  return RATING_LIKE_GENERATED_ELEMENT_TYPES.has(element.type);
+}
+
+function normalizeGeneratedSurveyBlocks(generatedSurvey: TGeneratedSurveyDraft): TGeneratedSurveyDraft {
+  return {
+    ...generatedSurvey,
+    blocks: generatedSurvey.blocks.flatMap((block) => {
+      if (block.questions.length === 1) {
+        return [block];
+      }
+
+      const normalizedBlocks: TGeneratedSurveyDraft["blocks"] = [];
+      let pendingNonRatingQuestions: TGeneratedSurveyElement[] = [];
+
+      const flushPendingNonRatingQuestions = () => {
+        if (pendingNonRatingQuestions.length === 0) {
+          return;
+        }
+
+        normalizedBlocks.push({
+          name: block.name,
+          questions: pendingNonRatingQuestions,
+        });
+        pendingNonRatingQuestions = [];
+      };
+
+      block.questions.forEach((question) => {
+        if (!isRatingLikeGeneratedElement(question)) {
+          pendingNonRatingQuestions.push(question);
+          return;
+        }
+
+        flushPendingNonRatingQuestions();
+        normalizedBlocks.push({
+          name: question.headline,
+          questions: [question],
+        });
+      });
+
+      flushPendingNonRatingQuestions();
+
+      return normalizedBlocks;
+    }),
+  };
+}
+
 function buildCreatePayload(input: TV3SurveyGenerateBody, generatedSurvey: TGeneratedSurveyDraft): unknown {
   const welcomeCard = generatedSurvey.welcomeCard;
   const welcomeHeadline = welcomeCard?.headline ?? generatedSurvey.name;
@@ -334,14 +397,15 @@ export async function generateV3SurveyCreatePayloadFromPrompt(params: {
     );
   }
 
-  const createPayload = buildCreatePayload(params.input, generatedSurvey.data);
+  const normalizedGeneratedSurvey = normalizeGeneratedSurveyBlocks(generatedSurvey.data);
+  const createPayload = buildCreatePayload(params.input, normalizedGeneratedSurvey);
   const preparation = prepareV3SurveyCreateInput(createPayload);
   if (!preparation.ok) {
     throw new V3SurveyGeneratedPayloadValidationError(preparation.validation.invalidParams);
   }
 
   return {
-    language: generatedSurvey.data.language,
+    language: normalizedGeneratedSurvey.language,
     payload: createPayload as TV3CreateSurveyBody,
     validation: serializeValidation(preparation),
   };

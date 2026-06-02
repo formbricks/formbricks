@@ -128,7 +128,7 @@ const NewSurveyMenu = ({
           <DropdownMenuItem
             icon={<SparklesIcon className="size-4" />}
             onSelect={() => setIsAIDialogOpen(true)}>
-            {t("workspace.surveys.ai_create.generate_with_ai")}
+            {t("workspace.surveys.ai_create.create_with_ai")}
           </DropdownMenuItem>
           <DropdownMenuItem
             icon={<LayoutTemplateIcon className="size-4" />}
