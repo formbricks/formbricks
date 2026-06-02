@@ -98,8 +98,8 @@ RUN chmod 644 ./next.config.mjs
 COPY --from=installer /app/apps/web/package.json .
 RUN chmod 644 ./package.json
 
-COPY --from=installer /app/prisma.config.ts ./prisma.config.ts
-RUN chmod 644 ./prisma.config.ts
+COPY --from=installer /app/prisma.config.mjs ./prisma.config.mjs
+RUN chmod 644 ./prisma.config.mjs
 
 COPY --from=installer /app/apps/web/.next/static ./apps/web/.next/static
 RUN chown -R nextjs:nextjs ./apps/web/.next/static && chmod -R 755 ./apps/web/.next/static
@@ -138,7 +138,6 @@ RUN chmod -R 755 ./node_modules/dotenv
 
 COPY --from=installer /app/node_modules/@standard-schema ./node_modules/@standard-schema
 COPY --from=installer /app/node_modules/c12 ./node_modules/c12
-COPY --from=installer /app/node_modules/chokidar ./node_modules/chokidar
 COPY --from=installer /app/node_modules/confbox ./node_modules/confbox
 COPY --from=installer /app/node_modules/deepmerge-ts ./node_modules/deepmerge-ts
 COPY --from=installer /app/node_modules/defu ./node_modules/defu
@@ -155,7 +154,6 @@ COPY --from=installer /app/node_modules/perfect-debounce ./node_modules/perfect-
 COPY --from=installer /app/node_modules/pkg-types ./node_modules/pkg-types
 COPY --from=installer /app/node_modules/pure-rand ./node_modules/pure-rand
 COPY --from=installer /app/node_modules/rc9 ./node_modules/rc9
-COPY --from=installer /app/node_modules/readdirp ./node_modules/readdirp
 COPY --from=installer /app/node_modules/cross-spawn ./node_modules/cross-spawn
 COPY --from=installer /app/node_modules/foreground-child ./node_modules/foreground-child
 COPY --from=installer /app/node_modules/get-port-please ./node_modules/get-port-please
@@ -177,7 +175,6 @@ COPY --from=installer /app/node_modules/zeptomatch ./node_modules/zeptomatch
 RUN chmod -R 755 \
   ./node_modules/@standard-schema \
   ./node_modules/c12 \
-  ./node_modules/chokidar \
   ./node_modules/confbox \
   ./node_modules/deepmerge-ts \
   ./node_modules/defu \
@@ -194,7 +191,6 @@ RUN chmod -R 755 \
   ./node_modules/pkg-types \
   ./node_modules/pure-rand \
   ./node_modules/rc9 \
-  ./node_modules/readdirp \
   ./node_modules/cross-spawn \
   ./node_modules/foreground-child \
   ./node_modules/get-port-please \

@@ -23,12 +23,12 @@ export interface MigrationScript {
   type: "data" | "schema";
 }
 
-// MIGRATE_DATABASE_URL is scoped to this migration runner. prisma.config.ts
+// MIGRATE_DATABASE_URL is scoped to this migration runner. prisma.config.mjs
 // always reads DATABASE_URL so normal Prisma CLI commands (generate, format,
 // db push from a developer shell) do not unexpectedly target the elevated-
 // privilege migration database. When this runner spawns `prisma migrate
 // deploy` below, we explicitly inject the resolved URL into the child env so
-// the subprocess's prisma.config.ts resolves to the same database.
+// the subprocess's prisma.config.mjs resolves to the same database.
 const migrationDatabaseUrl = process.env.MIGRATE_DATABASE_URL ?? process.env.DATABASE_URL;
 const prisma = new PrismaClient({ adapter: createPrismaPgAdapter(migrationDatabaseUrl).adapter });
 const TRANSACTION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
@@ -41,7 +41,7 @@ const MIGRATIONS_DIR = isBuilt
 const PRISMA_MIGRATIONS_DIR = path.resolve(__dirname, "../../migrations");
 const DATABASE_PACKAGE_DIR = isBuilt ? path.resolve(__dirname, "../..") : path.resolve(__dirname, "../..");
 const REPO_ROOT_DIR = path.resolve(DATABASE_PACKAGE_DIR, "../..");
-const PRISMA_CONFIG_PATH = path.join(REPO_ROOT_DIR, "prisma.config.ts");
+const PRISMA_CONFIG_PATH = path.join(REPO_ROOT_DIR, "prisma.config.mjs");
 const LOCAL_PRISMA_BIN = path.join(REPO_ROOT_DIR, "node_modules", ".bin", "prisma");
 
 // Prefer the workspace-local prisma binary; fall back to PATH for Docker
@@ -193,7 +193,7 @@ const runSingleMigration = async (migration: MigrationScript, index: number): Pr
 
       // Run Prisma migrate. Throws when migrate deploy fails.
       // We pin DATABASE_URL on the child env to the same URL the in-process
-      // PrismaClient resolved above. prisma.config.ts always reads
+      // PrismaClient resolved above. prisma.config.mjs always reads
       // env("DATABASE_URL"), so this is how MIGRATE_DATABASE_URL reaches the
       // subprocess without leaking into the parent's env.
       const prismaBin = await resolvePrismaBin();

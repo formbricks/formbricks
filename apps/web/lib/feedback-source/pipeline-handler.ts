@@ -1,24 +1,24 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
-import { TConnectorWithMappings } from "@formbricks/types/connector";
+import { TFeedbackSourceWithMappings } from "@formbricks/types/feedback-source";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { createFeedbackRecordsBatch } from "@/modules/hub";
-import { getConnectorsBySurveyId, updateConnector } from "./service";
+import { getFeedbackSourcesBySurveyId, updateFeedbackSource } from "./service";
 import { transformResponseToFeedbackRecords } from "./transform";
 
 const getErrorMessage = (error: unknown): string =>
   error instanceof Error ? error.message : "Unknown error";
 
 const logFailedRecords = (
-  connectorId: string,
+  feedbackSourceId: string,
   results: Awaited<ReturnType<typeof createFeedbackRecordsBatch>>["results"]
 ): void => {
   for (const [index, result] of results.entries()) {
     if (!result.error) continue;
     logger.error(
       {
-        connectorId,
+        feedbackSourceId,
         feedbackRecordIndex: index,
         error: {
           status: result.error.status,
@@ -31,8 +31,8 @@ const logFailedRecords = (
   }
 };
 
-const processConnector = async (
-  connector: TConnectorWithMappings,
+const processFeedbackSource = async (
+  feedbackSource: TFeedbackSourceWithMappings,
   response: TResponse,
   survey: Pick<TSurvey, "id" | "name" | "blocks">,
   workspaceId: string
@@ -40,8 +40,8 @@ const processConnector = async (
   const feedbackRecords = transformResponseToFeedbackRecords(
     response,
     survey,
-    connector.formbricksMappings,
-    connector.feedbackDirectoryId
+    feedbackSource.formbricksMappings,
+    feedbackSource.feedbackDirectoryId
   );
 
   if (feedbackRecords.length === 0) {
@@ -56,66 +56,66 @@ const processConnector = async (
   if (failures > 0) {
     logger.warn(
       {
-        connectorId: connector.id,
+        feedbackSourceId: feedbackSource.id,
         surveyId: survey.id,
         responseId: response.id,
         successes,
         failures,
       },
-      `Connector pipeline: ${failures}/${feedbackRecords.length} FeedbackRecords failed to send`
+      `FeedbackSource pipeline: ${failures}/${feedbackRecords.length} FeedbackRecords failed to send`
     );
-    logFailedRecords(connector.id, results);
+    logFailedRecords(feedbackSource.id, results);
   } else {
     logger.info(
       {
-        connectorId: connector.id,
+        feedbackSourceId: feedbackSource.id,
         surveyId: survey.id,
         responseId: response.id,
         feedbackRecordsCreated: successes,
       },
-      `Connector pipeline: Successfully sent ${successes} FeedbackRecords`
+      `FeedbackSource pipeline: Successfully sent ${successes} FeedbackRecords`
     );
   }
 
   if (successes > 0) {
-    await updateConnector(connector.id, workspaceId, { lastSyncAt: new Date() });
+    await updateFeedbackSource(feedbackSource.id, workspaceId, { lastSyncAt: new Date() });
   }
 };
 
 /**
- * Handle connector pipeline for a survey response
+ * Handle feedbackSource pipeline for a survey response
  *
  * This function is called from the pipeline when a response is created/finished.
- * It looks up active connectors for the survey and sends the response data.
+ * It looks up active feedbackSources for the survey and sends the response data.
  *
  * @param response - The survey response
  * @param survey - The survey
  * @param workspaceId - The workspace ID (used as tenant_id)
  */
-export const handleConnectorPipeline = async (
+export const handleFeedbackSourcePipeline = async (
   response: TResponse,
   survey: Pick<TSurvey, "id" | "name" | "blocks">,
   workspaceId: string
 ): Promise<void> => {
   try {
-    const connectors = await getConnectorsBySurveyId(survey.id);
+    const feedbackSources = await getFeedbackSourcesBySurveyId(survey.id);
 
-    if (connectors.length === 0) {
+    if (feedbackSources.length === 0) {
       return;
     }
 
-    for (const connector of connectors) {
+    for (const feedbackSource of feedbackSources) {
       try {
-        await processConnector(connector, response, survey, workspaceId);
+        await processFeedbackSource(feedbackSource, response, survey, workspaceId);
       } catch (error) {
         logger.error(
           {
-            connectorId: connector.id,
+            feedbackSourceId: feedbackSource.id,
             surveyId: survey.id,
             responseId: response.id,
             error: getErrorMessage(error),
           },
-          "Connector pipeline: Failed to process connector"
+          "FeedbackSource pipeline: Failed to process feedbackSource"
         );
       }
     }
@@ -126,7 +126,7 @@ export const handleConnectorPipeline = async (
         responseId: response.id,
         error: getErrorMessage(error),
       },
-      "Connector pipeline: Failed to handle connectors"
+      "FeedbackSource pipeline: Failed to handle feedbackSources"
     );
   }
 };

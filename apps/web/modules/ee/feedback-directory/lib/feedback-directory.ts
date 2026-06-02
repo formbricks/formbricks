@@ -17,7 +17,7 @@ import {
 
 type FeedbackDirectoryPrismaClient = Pick<
   PrismaClient,
-  "connector" | "feedbackDirectory" | "feedbackDirectoryWorkspace" | "workspace"
+  "feedbackSource" | "feedbackDirectory" | "feedbackDirectoryWorkspace" | "workspace"
 >;
 
 /**
@@ -44,7 +44,7 @@ export const getFeedbackDirectories = reactCache(
           _count: {
             select: {
               workspaces: true,
-              connectors: true,
+              feedbackSources: true,
             },
           },
         },
@@ -58,7 +58,7 @@ export const getFeedbackDirectories = reactCache(
         name: dir.name,
         isArchived: dir.isArchived,
         workspaceCount: dir._count.workspaces,
-        connectorCount: dir._count.connectors,
+        feedbackSourceCount: dir._count.feedbackSources,
       }));
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -80,7 +80,7 @@ export const getFeedbackDirectories = reactCache(
  */
 /**
  * Lists feedback directories assigned to a workspace.
- * Used by connector creation to pick a feedback directory.
+ * Used by feedbackSource creation to pick a feedback directory.
  */
 export const getFeedbackDirectoriesByWorkspaceId = reactCache(
   async (workspaceId: string): Promise<{ id: string; name: string }[]> => {
@@ -197,7 +197,7 @@ const mapFeedbackDirectoryDetails = (directory: {
   isArchived: boolean;
   organizationId: string;
   workspaces: { workspaceId: string; workspace: { name: string } }[];
-  connectors: {
+  feedbackSources: {
     id: string;
     name: string;
     type: string;
@@ -213,7 +213,7 @@ const mapFeedbackDirectoryDetails = (directory: {
     workspaceId: dp.workspaceId,
     workspaceName: dp.workspace.name,
   })),
-  connectors: directory.connectors.map((c) => ({
+  feedbackSources: directory.feedbackSources.map((c) => ({
     id: c.id,
     name: c.name,
     type: c.type,
@@ -267,7 +267,7 @@ export const getFeedbackDirectoryDetails = reactCache(
               },
             },
           },
-          connectors: {
+          feedbackSources: {
             select: {
               id: true,
               name: true,
@@ -407,7 +407,7 @@ const buildWorkspaceAssignmentPayload = async (
 };
 
 interface UpdateFeedbackDirectoryOptions {
-  pauseConnectorsInRemovedWorkspaces?: boolean;
+  pauseFeedbackSourcesInRemovedWorkspaces?: boolean;
 }
 
 const getArchiveUpdate = async (
@@ -416,11 +416,11 @@ const getArchiveUpdate = async (
   isArchived: boolean | undefined
 ): Promise<Pick<Prisma.FeedbackDirectoryUpdateInput, "isArchived">> => {
   if (isArchived === true) {
-    const connectorCount = await prismaClient.connector.count({
+    const feedbackSourceCount = await prismaClient.feedbackSource.count({
       where: { feedbackDirectoryId: directoryId },
     });
-    if (connectorCount > 0) {
-      throw new InvalidInputError("DIRECTORY_HAS_CONNECTORS");
+    if (feedbackSourceCount > 0) {
+      throw new InvalidInputError("DIRECTORY_HAS_FEEDBACK_SOURCES");
     }
     return { isArchived: true };
   }
@@ -477,7 +477,7 @@ const pauseConnectorsInWorkspaces = async (
     return;
   }
 
-  await tx.connector.updateMany({
+  await tx.feedbackSource.updateMany({
     where: {
       feedbackDirectoryId: directoryId,
       workspaceId: { in: workspaceIds },
@@ -573,7 +573,7 @@ export const updateFeedbackDirectory = async (
           data: payload,
         });
 
-        if (options?.pauseConnectorsInRemovedWorkspaces) {
+        if (options?.pauseFeedbackSourcesInRemovedWorkspaces) {
           await pauseConnectorsInWorkspaces(tx, directoryId, workspaceAssignmentUpdate.removedWorkspaceIds);
         }
       },

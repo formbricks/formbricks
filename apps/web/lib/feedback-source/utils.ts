@@ -1,5 +1,8 @@
-import type { TConnectorFieldMappingCreateInput, THubFieldType } from "@formbricks/types/connector";
-import { ZHubFieldType } from "@formbricks/types/connector";
+import type {
+  TFeedbackSourceFieldMappingCreateInput,
+  THubFieldType,
+} from "@formbricks/types/feedback-source";
+import { ZHubFieldType } from "@formbricks/types/feedback-source";
 import {
   CSV_HIDDEN_STATIC_MAPPINGS,
   CSV_PROTECTED_TARGET_IDS,
@@ -7,15 +10,15 @@ import {
 } from "@/modules/ee/unify-feedback/sources/types";
 
 export const sanitizeCsvFieldMappings = (
-  fieldMappings: TConnectorFieldMappingCreateInput[] | undefined
-): TConnectorFieldMappingCreateInput[] | undefined => {
+  fieldMappings: TFeedbackSourceFieldMappingCreateInput[] | undefined
+): TFeedbackSourceFieldMappingCreateInput[] | undefined => {
   if (!fieldMappings?.length) return undefined;
 
   const userMappings = fieldMappings.filter((mapping) =>
     CSV_PROTECTED_TARGET_IDS.every((id) => mapping.targetFieldId !== id)
   );
 
-  return [...userMappings, ...(CSV_HIDDEN_STATIC_MAPPINGS as TConnectorFieldMappingCreateInput[])];
+  return [...userMappings, ...(CSV_HIDDEN_STATIC_MAPPINGS as TFeedbackSourceFieldMappingCreateInput[])];
 };
 
 type TCsvFieldMappingLike = {

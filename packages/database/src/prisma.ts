@@ -54,9 +54,9 @@ export type {
   Chart,
   Dashboard,
   DashboardWidget,
-  Connector,
-  ConnectorFormbricksMapping,
-  ConnectorFieldMapping,
+  FeedbackSource,
+  FeedbackSourceFormbricksMapping,
+  FeedbackSourceFieldMapping,
   FeedbackDirectory,
   FeedbackDirectoryWorkspace,
 } from "../generated/prisma/client";
@@ -81,10 +81,6 @@ export namespace Prisma {
   > = PrismaNamespaceTypes.TypeMap<ExtArgs, GlobalOmitOptions>;
   export type ActionClassSelect = PrismaModelTypes.ActionClassSelect;
   export type ChartFindManyArgs = PrismaModelTypes.ChartFindManyArgs;
-  export type ConnectorGetPayload<
-    S extends boolean | null | undefined | PrismaModelTypes.ConnectorDefaultArgs,
-  > = PrismaModelTypes.ConnectorGetPayload<S>;
-  export type ConnectorSelect = PrismaModelTypes.ConnectorSelect;
   export type ContactAttributeKeyCreateInput = PrismaModelTypes.ContactAttributeKeyCreateInput;
   export type ContactAttributeKeyCreateWithoutWorkspaceInput =
     PrismaModelTypes.ContactAttributeKeyCreateWithoutWorkspaceInput;
@@ -103,6 +99,10 @@ export namespace Prisma {
   export type FeedbackDirectoryUpdateInput = PrismaModelTypes.FeedbackDirectoryUpdateInput;
   export type FeedbackDirectoryWorkspaceUpdateManyWithoutFeedbackDirectoryNestedInput =
     PrismaModelTypes.FeedbackDirectoryWorkspaceUpdateManyWithoutFeedbackDirectoryNestedInput;
+  export type FeedbackSourceGetPayload<
+    S extends boolean | null | undefined | PrismaModelTypes.FeedbackSourceDefaultArgs,
+  > = PrismaModelTypes.FeedbackSourceGetPayload<S>;
+  export type FeedbackSourceSelect = PrismaModelTypes.FeedbackSourceSelect;
   export type FloatNullableFilter = PrismaModelTypes.FloatNullableFilter;
   export type LanguageSelect = PrismaModelTypes.LanguageSelect;
   export type OrganizationBillingGetPayload<

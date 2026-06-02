@@ -68,7 +68,7 @@ export const FeedbackDirectorySettingsModal = ({
 
   const [confirmPauseDialogOpen, setConfirmPauseDialogOpen] = useState(false);
   const [pendingSubmitData, setPendingSubmitData] = useState<TFeedbackDirectoryUpdateInput | null>(null);
-  const [connectorsToPauseCount, setConnectorsToPauseCount] = useState(0);
+  const [feedbackSourcesToPauseCount, setFeedbackSourcesToPauseCount] = useState(0);
 
   const [confirmAddDialogOpen, setConfirmAddDialogOpen] = useState(false);
   const [pendingAddData, setPendingAddData] = useState<TFeedbackDirectoryUpdateInput | null>(null);
@@ -148,7 +148,7 @@ export const FeedbackDirectorySettingsModal = ({
   const closeModal = () => {
     setConfirmPauseDialogOpen(false);
     setPendingSubmitData(null);
-    setConnectorsToPauseCount(0);
+    setFeedbackSourcesToPauseCount(0);
     setConfirmAddDialogOpen(false);
     setPendingAddData(null);
     setAddedWorkspaceIds([]);
@@ -158,14 +158,14 @@ export const FeedbackDirectorySettingsModal = ({
 
   const submitDirectory = async (
     data: TFeedbackDirectoryUpdateInput,
-    pauseConnectorsInRemovedWorkspaces: boolean
+    pauseFeedbackSourcesInRemovedWorkspaces: boolean
   ) => {
     const response =
       isEdit && directory
         ? await updateFeedbackDirectoryAction({
             directoryId: directory.id,
             data: { name: data.name, workspaceIds: data.workspaceIds },
-            pauseConnectorsInRemovedWorkspaces,
+            pauseFeedbackSourcesInRemovedWorkspaces,
           })
         : await createFeedbackDirectoryAction({
             organizationId,
@@ -198,7 +198,7 @@ export const FeedbackDirectorySettingsModal = ({
     if (wasSuccessful) {
       setConfirmPauseDialogOpen(false);
       setPendingSubmitData(null);
-      setConnectorsToPauseCount(0);
+      setFeedbackSourcesToPauseCount(0);
     }
   };
 
@@ -214,13 +214,13 @@ export const FeedbackDirectorySettingsModal = ({
     );
 
     if (removedWorkspaceIds.length > 0) {
-      const affectedConnectors = directory.connectors.filter((connector) =>
-        removedWorkspaceIds.includes(connector.workspaceId)
+      const affectedFeedbackSources = directory.feedbackSources.filter((feedbackSource) =>
+        removedWorkspaceIds.includes(feedbackSource.workspaceId)
       );
 
-      if (affectedConnectors.length > 0) {
+      if (affectedFeedbackSources.length > 0) {
         setPendingSubmitData(data);
-        setConnectorsToPauseCount(affectedConnectors.length);
+        setFeedbackSourcesToPauseCount(affectedFeedbackSources.length);
         setConfirmPauseDialogOpen(true);
         return;
       }
@@ -343,17 +343,17 @@ export const FeedbackDirectorySettingsModal = ({
 
               {isEdit && (
                 <div className="space-y-2">
-                  <FormLabel>{t("workspace.unify.connectors")}</FormLabel>
+                  <FormLabel>{t("workspace.unify.sources")}</FormLabel>
                   <Muted className="block text-slate-500">
-                    {t("workspace.settings.feedback_directories.connectors_description")}
+                    {t("workspace.settings.feedback_directories.feedback_sources_description")}
                   </Muted>
-                  {directory.connectors.length === 0 ? (
+                  {directory.feedbackSources.length === 0 ? (
                     <p className="rounded-md border border-dashed border-slate-200 p-3 text-center text-sm text-slate-400">
-                      {t("workspace.settings.feedback_directories.no_connectors")}
+                      {t("workspace.settings.feedback_directories.no_feedback_sources")}
                     </p>
                   ) : (
                     <ul className="space-y-2">
-                      {directory.connectors.map((c) => (
+                      {directory.feedbackSources.map((c) => (
                         <li
                           key={c.id}
                           className="flex items-center justify-between rounded-md border border-slate-200 bg-slate-50 p-3 text-sm">
@@ -470,15 +470,18 @@ export const FeedbackDirectorySettingsModal = ({
               <div className="flex items-center gap-2">
                 <CircleAlert className="size-4" />
                 <DialogTitle>
-                  {t("workspace.settings.feedback_directories.pause_connectors_confirmation_title")}
+                  {t("workspace.settings.feedback_directories.pause_feedback_sources_confirmation_title")}
                 </DialogTitle>
               </div>
             </DialogHeader>
             <DialogBody>
               <p>
-                {t("workspace.settings.feedback_directories.pause_connectors_confirmation_description", {
-                  count: connectorsToPauseCount,
-                })}
+                {t(
+                  "workspace.settings.feedback_directories.pause_feedback_sources_confirmation_description",
+                  {
+                    count: feedbackSourcesToPauseCount,
+                  }
+                )}
               </p>
             </DialogBody>
             <DialogFooter>
@@ -487,7 +490,7 @@ export const FeedbackDirectorySettingsModal = ({
                 onClick={() => {
                   setConfirmPauseDialogOpen(false);
                   setPendingSubmitData(null);
-                  setConnectorsToPauseCount(0);
+                  setFeedbackSourcesToPauseCount(0);
                 }}
                 disabled={isSubmitting}>
                 {t("common.cancel")}

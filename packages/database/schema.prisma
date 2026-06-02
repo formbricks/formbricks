@@ -395,21 +395,21 @@ model Survey {
   /// [SurveySingleUse]
   singleUse Json? @default("{\"enabled\": false, \"isEncrypted\": true}")
 
-  isVerifyEmailEnabled            Boolean                      @default(false)
-  isSingleResponsePerEmailEnabled Boolean                      @default(false)
-  isBackButtonHidden              Boolean                      @default(false)
-  isAutoProgressingEnabled        Boolean                      @default(false)
-  isCaptureIpEnabled              Boolean                      @default(false)
+  isVerifyEmailEnabled            Boolean                           @default(false)
+  isSingleResponsePerEmailEnabled Boolean                           @default(false)
+  isBackButtonHidden              Boolean                           @default(false)
+  isAutoProgressingEnabled        Boolean                           @default(false)
+  isCaptureIpEnabled              Boolean                           @default(false)
   pin                             String?
   displayPercentage               Decimal?
   languages                       SurveyLanguage[]
   showLanguageSwitch              Boolean?
   followUps                       SurveyFollowUp[]
   /// [SurveyRecaptcha]
-  recaptcha                       Json?                        @default("{\"enabled\": false, \"threshold\":0.1}")
+  recaptcha                       Json?                             @default("{\"enabled\": false, \"threshold\":0.1}")
   /// [SurveyLinkMetadata]
-  metadata                        Json                         @default("{}")
-  connectorMappings               ConnectorFormbricksMapping[]
+  metadata                        Json                              @default("{}")
+  feedbackSourceMappings          FeedbackSourceFormbricksMapping[]
 
   slug String? @unique
 
@@ -632,7 +632,7 @@ model Workspace {
   segments             Segment[]
   integrations         Integration[]
   apiKeyWorkspaces     ApiKeyWorkspace[]
-  connectors           Connector[]
+  feedbackSources      FeedbackSource[]
 
   @@unique([organizationId, name])
 }
@@ -917,7 +917,7 @@ model User {
   surveys                   Survey[]
   charts                    Chart[]             @relation("chartCreatedBy")
   dashboards                Dashboard[]         @relation("dashboardCreatedBy")
-  connectors                Connector[]
+  feedbackSources           FeedbackSource[]
   teamUsers                 TeamUser[]
   lastLoginAt               DateTime?
   isActive                  Boolean             @default(true)
@@ -1146,12 +1146,12 @@ model DashboardWidget {
   @@index([dashboardId, order])
 }
 
-enum ConnectorType {
+enum FeedbackSourceType {
   formbricks_survey
   csv
 }
 
-enum ConnectorStatus {
+enum FeedbackSourceStatus {
   active
   paused
   error
@@ -1169,33 +1169,34 @@ enum HubFieldType {
   date
 }
 
-/// Base connector for all integration types.
-/// Connects external data sources to the Hub for feedback record creation.
+/// A feedback source — connects external data into Unify Feedback for record creation.
+/// Naming note: "FeedbackSource" is the Unify Feedback domain term; the word "Connector"
+/// is reserved for the Workflows domain (see docs/development/standards/practices/naming-conventions.mdx).
 ///
-/// @property id - Unique identifier for the connector
-/// @property name - Display name for the connector
-/// @property type - Type of connector (formbricks_survey, webhook, csv, email, slack)
-/// @property status - Current state of the connector (active, paused)
-/// @property environment - The environment this connector belongs to
-/// @property config - Type-specific configuration (e.g., webhook secret, S3 config)
-/// @property formbricksMappings - Element mappings for Formbricks connectors
-/// @property fieldMappings - Field mappings for other connector types
-model Connector {
-  id                  String                       @id @default(cuid())
-  createdAt           DateTime                     @default(now()) @map(name: "created_at")
-  updatedAt           DateTime                     @updatedAt @map(name: "updated_at")
+/// @property id - Unique identifier for the feedback source
+/// @property name - Display name for the feedback source
+/// @property type - Type of feedback source (formbricks_survey, csv, …)
+/// @property status - Current state of the feedback source (active, paused, error)
+/// @property workspace - The workspace this feedback source belongs to
+/// @property feedbackDirectory - Hub directory the feedback source writes into
+/// @property formbricksMappings - Element mappings for Formbricks feedback sources
+/// @property fieldMappings - Field mappings for other feedback source types
+model FeedbackSource {
+  id                  String                            @id @default(cuid())
+  createdAt           DateTime                          @default(now()) @map(name: "created_at")
+  updatedAt           DateTime                          @updatedAt @map(name: "updated_at")
   name                String
-  type                ConnectorType
-  status              ConnectorStatus              @default(active)
+  type                FeedbackSourceType
+  status              FeedbackSourceStatus              @default(active)
   workspaceId         String
-  workspace           Workspace                    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspace           Workspace                         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   feedbackDirectoryId String
-  feedbackDirectory   FeedbackDirectory            @relation(fields: [feedbackDirectoryId], references: [id], onDelete: Cascade)
-  formbricksMappings  ConnectorFormbricksMapping[]
-  fieldMappings       ConnectorFieldMapping[]
-  lastSyncAt          DateTime?                    @map(name: "last_sync_at")
-  createdBy           String?                      @map(name: "created_by")
-  creator             User?                        @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+  feedbackDirectory   FeedbackDirectory                 @relation(fields: [feedbackDirectoryId], references: [id], onDelete: Cascade)
+  formbricksMappings  FeedbackSourceFormbricksMapping[]
+  fieldMappings       FeedbackSourceFieldMapping[]
+  lastSyncAt          DateTime?                         @map(name: "last_sync_at")
+  createdBy           String?                           @map(name: "created_by")
+  creator             User?                             @relation(fields: [createdBy], references: [id], onDelete: SetNull)
 
   @@unique([id, workspaceId])
   @@unique([workspaceId, name])
@@ -1203,51 +1204,51 @@ model Connector {
   @@index([feedbackDirectoryId])
 }
 
-/// Maps survey elements to Hub FeedbackRecords for Formbricks connectors.
+/// Maps survey elements to Hub FeedbackRecords for Formbricks feedback sources.
 /// Each row represents one element that will create FeedbackRecords when answered.
 ///
 /// @property id - Unique identifier for the mapping
-/// @property connector - The parent connector
+/// @property feedbackSource - The parent feedback source
 /// @property survey - The survey containing the element
 /// @property elementId - The element ID within the survey (from blocks[].elements[].id)
 /// @property hubFieldType - The field_type to use in Hub (text, nps, rating, etc.)
 /// @property customFieldLabel - Optional override for the element headline as field_label in Hub
-model ConnectorFormbricksMapping {
-  id               String       @id @default(cuid())
-  createdAt        DateTime     @default(now()) @map(name: "created_at")
-  connectorId      String
+model FeedbackSourceFormbricksMapping {
+  id               String         @id @default(cuid())
+  createdAt        DateTime       @default(now()) @map(name: "created_at")
+  feedbackSourceId String         @map(name: "feedback_source_id")
   workspaceId      String
-  connector        Connector    @relation(fields: [connectorId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  feedbackSource   FeedbackSource @relation(fields: [feedbackSourceId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
   surveyId         String
-  survey           Survey       @relation(fields: [surveyId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  survey           Survey         @relation(fields: [surveyId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
   elementId        String
   hubFieldType     HubFieldType
-  customFieldLabel String?      @map(name: "custom_field_label")
+  customFieldLabel String?        @map(name: "custom_field_label")
 
-  @@unique([workspaceId, connectorId, surveyId, elementId])
+  @@unique([workspaceId, feedbackSourceId, surveyId, elementId])
   @@index([workspaceId, surveyId])
   @@index([surveyId])
 }
 
-/// Generic field mapping for Webhook, CSV, Email, Slack connectors.
+/// Generic field mapping for non-Formbricks feedback sources (CSV today; webhook/email/slack later).
 /// Maps source fields to Hub FeedbackRecord fields.
 ///
 /// @property id - Unique identifier for the mapping
-/// @property connector - The parent connector
+/// @property feedbackSource - The parent feedback source
 /// @property sourceFieldId - Field path for webhook (e.g., "user.id"), column name for CSV
 /// @property targetFieldId - Hub field (collected_at, field_id, value_text, etc.)
 /// @property staticValue - If set, use this value instead of reading from sourceFieldId
-model ConnectorFieldMapping {
-  id            String    @id @default(cuid())
-  createdAt     DateTime  @default(now()) @map(name: "created_at")
-  connectorId   String
-  workspaceId   String
-  connector     Connector @relation(fields: [connectorId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
-  sourceFieldId String    @map(name: "source_field_id")
-  targetFieldId String    @map(name: "target_field_id")
-  staticValue   String?   @map(name: "static_value")
+model FeedbackSourceFieldMapping {
+  id               String         @id @default(cuid())
+  createdAt        DateTime       @default(now()) @map(name: "created_at")
+  feedbackSourceId String         @map(name: "feedback_source_id")
+  workspaceId      String
+  feedbackSource   FeedbackSource @relation(fields: [feedbackSourceId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  sourceFieldId    String         @map(name: "source_field_id")
+  targetFieldId    String         @map(name: "target_field_id")
+  staticValue      String?        @map(name: "static_value")
 
-  @@unique([workspaceId, connectorId, sourceFieldId, targetFieldId])
+  @@unique([workspaceId, feedbackSourceId, sourceFieldId, targetFieldId])
 }
 
 /// Represents a feedback directory (Hub tenant) owned by an organization.
@@ -1259,16 +1260,16 @@ model ConnectorFieldMapping {
 /// @property organization - The parent organization
 /// @property workspaces - Workspaces assigned to this directory
 model FeedbackDirectory {
-  id             String                       @id @default(cuid())
-  createdAt      DateTime                     @default(now()) @map(name: "created_at")
-  updatedAt      DateTime                     @updatedAt @map(name: "updated_at")
-  name           String
-  isArchived     Boolean                      @default(false)
-  organizationId String
-  organization   Organization                 @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  workspaces     FeedbackDirectoryWorkspace[]
-  connectors     Connector[]
-  charts         Chart[]
+  id              String                       @id @default(cuid())
+  createdAt       DateTime                     @default(now()) @map(name: "created_at")
+  updatedAt       DateTime                     @updatedAt @map(name: "updated_at")
+  name            String
+  isArchived      Boolean                      @default(false)
+  organizationId  String
+  organization    Organization                 @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  workspaces      FeedbackDirectoryWorkspace[]
+  feedbackSources FeedbackSource[]
+  charts          Chart[]
 
   @@unique([organizationId, name])
 }
