@@ -71,7 +71,6 @@ import { DateFilterValue } from "./date-filter-value";
 interface TSegmentFilterProps {
   connector: TSegmentConnector;
   resource: TSegmentFilter;
-  workspaceId: string;
   segment: TSegment;
   segments: TSegment[];
   contactAttributeKeys: TContactAttributeKey[];
@@ -314,7 +313,6 @@ function AttributeSegmentFilter({
         return (
           <AttributeValueInput
             attributeKeyId={attributeKey.id}
-            workspaceId={segment.workspaceId}
             value={resource.value as string}
             onChange={(newValue) => {
               updateValueInLocalSurvey(resource.id, newValue);
@@ -855,7 +853,6 @@ function DeviceFilter({
 export function SegmentFilter({
   resource,
   connector,
-  workspaceId,
   segment,
   segments,
   contactAttributeKeys,
@@ -900,7 +897,6 @@ export function SegmentFilter({
           <AttributeSegmentFilter
             contactAttributeKeys={contactAttributeKeys}
             connector={connector}
-            workspaceId={workspaceId}
             handleAddFilterBelow={handleAddFilterBelow}
             onAddFilterBelow={onAddFilterBelow}
             onCreateGroup={onCreateGroup}
@@ -924,7 +920,6 @@ export function SegmentFilter({
           <PersonSegmentFilter
             contactAttributeKeys={contactAttributeKeys}
             connector={connector}
-            workspaceId={workspaceId}
             handleAddFilterBelow={handleAddFilterBelow}
             onAddFilterBelow={onAddFilterBelow}
             onCreateGroup={onCreateGroup}
@@ -948,7 +943,6 @@ export function SegmentFilter({
           <SegmentSegmentFilter
             contactAttributeKeys={contactAttributeKeys}
             connector={connector}
-            workspaceId={workspaceId}
             handleAddFilterBelow={handleAddFilterBelow}
             onAddFilterBelow={onAddFilterBelow}
             onCreateGroup={onCreateGroup}
@@ -971,7 +965,6 @@ export function SegmentFilter({
           <DeviceFilter
             contactAttributeKeys={contactAttributeKeys}
             connector={connector}
-            workspaceId={workspaceId}
             handleAddFilterBelow={handleAddFilterBelow}
             onAddFilterBelow={onAddFilterBelow}
             onCreateGroup={onCreateGroup}
