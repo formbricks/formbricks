@@ -235,7 +235,7 @@ export const duplicateDashboard = async (
           widgets: {
             create: source.widgets.map((widget) => ({
               chartId: widget.chartId,
-              layout: widget.layout ?? { x: 0, y: 0, w: 4, h: 3 },
+              layout: widget.layout ?? { x: 0, y: 0, w: 4, h: 4 },
               order: widget.order,
             })),
           },

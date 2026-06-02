@@ -94,7 +94,7 @@ export function CartesianChart({
   );
 
   return (
-    <div className="h-64 w-full">
+    <div className="h-full min-h-[16rem] w-full">
       <ChartContainer config={chartConfig} className="h-full w-full">
         <Chart data={data} {...chartProps}>
           <CartesianGrid strokeDasharray="2 4" vertical={false} />

@@ -52,7 +52,7 @@ const widgetsToLayout = (widgets: TDashboardWidget[]): LayoutItem[] => {
     w: widget.layout.w,
     h: widget.layout.h,
     minW: 2,
-    minH: 2,
+    minH: 3,
     maxW: 12,
     maxH: 8,
   }));
