@@ -131,17 +131,26 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
   const isMultiMeasure = dataKeys.length > 1;
 
   switch (chartType) {
-    case "bar":
+    case "bar": {
       // Both single- and multi-measure bars now draw from the mixed
       // measure palette (teal + indigo + amber + red + violet) for visual
-      // consistency with the pie charts — categorical / per-bar colouring
-      // uses real palette variety rather than monochromatic brand shades.
-      // `tooltipCursor={false}` removes the column highlight so the
-      // tooltip reads as per-bar.
+      // consistency with the pie charts. For single-measure we set `fill`
+      // directly on each data row — Recharts picks it up for both
+      // rendering AND tooltip payload, which using <Cell> inside <Bar>
+      // does NOT do (Cell only paints the SVG, leaving the tooltip pointing
+      // at the Bar's series fallback colour). `tooltipCursor={false}`
+      // removes the column highlight so the tooltip reads as per-bar.
+      const barData = isMultiMeasure
+        ? data
+        : data.map((row, index) => ({
+            ...row,
+            fill: CHART_MEASURE_COLORS[index % CHART_MEASURE_COLORS.length],
+          }));
+
       return (
         <CartesianChart
           chart={BarChart}
-          data={data}
+          data={barData}
           xAxisKey={xAxisKey}
           dataKeys={dataKeys}
           chartConfig={chartConfig}
@@ -153,14 +162,6 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
               chartConfig[key]?.color ?? CHART_MEASURE_COLORS[i % CHART_MEASURE_COLORS.length];
             return (
               <Bar key={key} dataKey={key} fill={fallbackColor} radius={4}>
-                {!isMultiMeasure &&
-                  data.map((row, index) => {
-                    const rowKey = row[xAxisKey] ?? `row-${index}`;
-                    const cellKey = `${xAxisKey}-${String(rowKey)}-${index}`;
-                    return (
-                      <Cell key={cellKey} fill={CHART_MEASURE_COLORS[index % CHART_MEASURE_COLORS.length]} />
-                    );
-                  })}
                 {/* Value labels above each bar — only on single-measure where
                     there's clear vertical space above the bar. */}
                 {!isMultiMeasure && (
@@ -177,6 +178,7 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
           })}
         </CartesianChart>
       );
+    }
     case "line":
       // Render as an AreaChart with a thin stroke and a soft gradient fade so
       // the chart reads as a line with a subtle area tint underneath. Dot
