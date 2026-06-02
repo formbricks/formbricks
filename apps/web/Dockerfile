@@ -127,6 +127,12 @@ RUN chown -R nextjs:nextjs ./packages/database/generated && chmod -R 755 ./packa
 COPY --from=installer /app/node_modules/@prisma ./node_modules/@prisma
 RUN chown -R nextjs:nextjs ./node_modules/@prisma && chmod -R 755 ./node_modules/@prisma
 
+COPY --from=installer /app/node_modules/prisma ./node_modules/prisma
+COPY --from=installer /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
+RUN chown -R nextjs:nextjs ./node_modules/prisma ./node_modules/.bin \
+    && chmod -R 755 ./node_modules/prisma \
+    && chmod 755 ./node_modules/.bin/prisma
+
 COPY --from=installer /app/node_modules/dotenv ./node_modules/dotenv
 RUN chmod -R 755 ./node_modules/dotenv
 
@@ -165,7 +171,11 @@ RUN chmod -R 755 ./node_modules/@paralleldrive/cuid2
 # database package's resolved install instead of the repo-root hoisted version.
 COPY --from=installer /app/packages/database/node_modules/uuid ./node_modules/uuid
 RUN chmod -R 755 ./node_modules/uuid \
-    && node --input-type=module -e "import('uuid').then((module) => { if (typeof module.v7 !== 'function') throw new Error('uuid v7 missing in runtime image'); })"
+    && node --input-type=module -e "\
+      import { v7 } from 'uuid'; \
+      if (typeof v7 !== 'function') { \
+        throw new Error('uuid v7 missing in runtime image'); \
+      }"
 
 COPY --from=installer /app/node_modules/@noble/hashes ./node_modules/@noble/hashes
 RUN chmod -R 755 ./node_modules/@noble/hashes
@@ -188,10 +198,6 @@ RUN chmod -R 755 ./node_modules/pino-abstract-transport
 
 COPY --from=installer /app/node_modules/otlp-logger ./node_modules/otlp-logger
 RUN chmod -R 755 ./node_modules/otlp-logger
-
-# Install prisma CLI globally for database migrations and fix permissions for nextjs user
-RUN npm install --ignore-scripts -g prisma@7.8.0 \
-    && chown -R nextjs:nextjs /usr/local/lib/node_modules/prisma
 
 # Create a startup script to handle the conditional logic
 COPY --from=installer /app/apps/web/scripts/docker/next-start.sh /home/nextjs/start.sh
