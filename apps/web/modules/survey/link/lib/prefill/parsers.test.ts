@@ -61,4 +61,10 @@ describe("parseNumber", () => {
   test("returns null for NaN result", () => {
     expect(parseNumber("NaN")).toBeNull();
   });
+
+  test("rejects JSON literals as numeric prefill values", () => {
+    expect(parseNumber("true")).toBeNull();
+    expect(parseNumber("false")).toBeNull();
+    expect(parseNumber("null")).toBeNull();
+  });
 });
