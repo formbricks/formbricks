@@ -221,9 +221,6 @@ export function DashboardDetailClient({
           layout: snapshot.layout,
         });
         if (!result?.data) {
-          // Surface the sanitized server-action error rather than swallowing
-          // it behind a generic toast — permission/validation failures should
-          // stay actionable for the user.
           toast.error(getFormattedErrorMessage(result));
           return;
         }
@@ -238,8 +235,7 @@ export function DashboardDetailClient({
 
   const handleRemoveWidgetFromMenu = useCallback(
     async (widgetId: string) => {
-      // While the dashboard is being edited, removal stays in the draft state
-      // and is applied on save — no API call, no toast.
+      // In edit mode removal stays in draft state until save — no API call.
       if (isEditing) {
         handleRemoveWidget(widgetId);
         return;
@@ -278,9 +274,6 @@ export function DashboardDetailClient({
         );
         startTransition(() => router.refresh());
       } catch {
-        // The action throws (rather than returning {error}) on unexpected
-        // failures — without this catch the click handler surfaces an
-        // unhandled rejection and the user gets no feedback.
         toast.error(t("workspace.analysis.dashboards.chart_remove_failed"));
       }
     },

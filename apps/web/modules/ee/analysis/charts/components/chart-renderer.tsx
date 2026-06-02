@@ -27,13 +27,9 @@ interface PieLabelProps {
   value?: number;
 }
 
-/**
- * External pie label: leader line + "value (percent%)" anchored outside the
- * arc, mirroring the Twenty-style target. Tiny slices (<2%) skip the label
- * to avoid overlapping with neighbours.
- */
 const renderPieLabel = ({ cx, cy, midAngle, outerRadius, percent, value }: PieLabelProps) => {
   if (cx == null || cy == null || midAngle == null || outerRadius == null || percent == null) return null;
+  // Tiny slices skip the label so adjacent leader lines don't overlap.
   if (percent < 0.02) return null;
   const RADIAN = Math.PI / 180;
   const radius = outerRadius + 22;
@@ -47,7 +43,6 @@ const renderPieLabel = ({ cx, cy, midAngle, outerRadius, percent, value }: PieLa
   );
 };
 
-/** Center total + label inside the donut hole. */
 const PieCenterLabel = ({
   viewBox,
   total,
@@ -88,7 +83,7 @@ interface ChartRendererProps {
 
 export function ChartRenderer({ chartType, data, query }: Readonly<ChartRendererProps>) {
   const { t } = useTranslation();
-  // SVG <defs> ids must be unique across charts on the same page.
+  // Unique across charts on the same page so SVG <defs> ids don't collide.
   const gradientIdPrefix = useId();
 
   if (!data || data.length === 0) {
@@ -132,14 +127,8 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
 
   switch (chartType) {
     case "bar": {
-      // Both single- and multi-measure bars now draw from the mixed
-      // measure palette (teal + indigo + amber + red + violet) for visual
-      // consistency with the pie charts. For single-measure we set `fill`
-      // directly on each data row — Recharts picks it up for both
-      // rendering AND tooltip payload, which using <Cell> inside <Bar>
-      // does NOT do (Cell only paints the SVG, leaving the tooltip pointing
-      // at the Bar's series fallback colour). `tooltipCursor={false}`
-      // removes the column highlight so the tooltip reads as per-bar.
+      // Setting `fill` on the data row (not via <Cell>) is what propagates
+      // the per-bar colour into the tooltip payload as well as the SVG.
       const barData = isMultiMeasure
         ? data
         : data.map((row, index) => ({
@@ -162,8 +151,6 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
               chartConfig[key]?.color ?? CHART_MEASURE_COLORS[i % CHART_MEASURE_COLORS.length];
             return (
               <Bar key={key} dataKey={key} fill={fallbackColor} radius={4}>
-                {/* Value labels above each bar — only on single-measure where
-                    there's clear vertical space above the bar. */}
                 {!isMultiMeasure && (
                   <LabelList
                     dataKey={key}
@@ -180,11 +167,7 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
       );
     }
     case "line":
-      // Render as an AreaChart with a thin stroke and a soft gradient fade so
-      // the chart reads as a line with a subtle area tint underneath. Dot
-      // markers are hidden by default and only appear on hover. Legend stays
-      // on even for single-measure lines so the colour swatch + measure name
-      // identify what the line represents without requiring a hover.
+      // AreaChart with a thin stroke + gradient fade reads as a line with a soft tint.
       return (
         <CartesianChart
           chart={AreaChart}
@@ -216,10 +199,7 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
                 fill={`url(#${gradientIdPrefix}-line-${key})`}
                 dot={false}
                 activeDot={{ r: 5, stroke: color, strokeWidth: 2, fill: "#fff" }}
-                // Days with no data come back as null from Cube — render them
-                // as gaps in the line rather than connecting through, so the
-                // chart honestly reflects "no data for this day" instead of
-                // implying the value dropped to 0.
+                // Cube returns null for empty buckets; render them as gaps, not a dip to zero.
                 connectNulls={false}
               />
             );
@@ -283,10 +263,6 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
                   const uniqueKey = `${xAxisKey}-${String(rowKey)}-${index}`;
                   return <Cell key={uniqueKey} fill={colors[index] || CHART_BRAND_DARK} />;
                 })}
-                {/* Recharts injects `viewBox` into the element via cloneElement,
-                    so we can pass PieCenterLabel directly instead of wrapping
-                    in an inline render function (which would be redefined on
-                    every parent render). */}
                 <Label position="center" content={<PieCenterLabel total={total} label={centerLabel} />} />
               </Pie>
               <ChartTooltip content={<PolishedChartTooltip />} />
