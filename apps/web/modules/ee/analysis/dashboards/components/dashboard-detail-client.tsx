@@ -213,18 +213,25 @@ export function DashboardDetailClient({
 
   const handleUndoRemoveWidget = useCallback(
     async (snapshot: TDashboardWidget) => {
-      const result = await addChartToDashboardAction({
-        workspaceId,
-        dashboardId: dashboard.id,
-        chartId: snapshot.chartId,
-        layout: snapshot.layout,
-      });
-      if (!result?.data) {
+      try {
+        const result = await addChartToDashboardAction({
+          workspaceId,
+          dashboardId: dashboard.id,
+          chartId: snapshot.chartId,
+          layout: snapshot.layout,
+        });
+        if (!result?.data) {
+          // Surface the sanitized server-action error rather than swallowing
+          // it behind a generic toast — permission/validation failures should
+          // stay actionable for the user.
+          toast.error(getFormattedErrorMessage(result));
+          return;
+        }
+        toast.success(t("workspace.analysis.dashboards.chart_restored"));
+        startTransition(() => router.refresh());
+      } catch {
         toast.error(t("workspace.analysis.dashboards.chart_restore_failed"));
-        return;
       }
-      toast.success(t("workspace.analysis.dashboards.chart_restored"));
-      startTransition(() => router.refresh());
     },
     [workspaceId, dashboard.id, router, t, startTransition]
   );
@@ -241,34 +248,41 @@ export function DashboardDetailClient({
       const snapshot = (draftWidgets ?? dashboard.widgets).find((w) => w.id === widgetId);
       if (!snapshot) return;
 
-      const result = await removeWidgetFromDashboardAction({
-        workspaceId,
-        dashboardId: dashboard.id,
-        widgetId,
-      });
-      if (!result?.data) {
-        toast.error(getFormattedErrorMessage(result));
-        return;
-      }
+      try {
+        const result = await removeWidgetFromDashboardAction({
+          workspaceId,
+          dashboardId: dashboard.id,
+          widgetId,
+        });
+        if (!result?.data) {
+          toast.error(getFormattedErrorMessage(result));
+          return;
+        }
 
-      toast.success(
-        (toastInstance) => (
-          <div className="flex items-center gap-3">
-            <span>{t("workspace.analysis.dashboards.chart_removed")}</span>
-            <button
-              type="button"
-              className="text-sm font-medium text-brand-dark underline hover:text-brand-dark/80"
-              onClick={() => {
-                toast.dismiss(toastInstance.id);
-                void handleUndoRemoveWidget(snapshot);
-              }}>
-              {t("common.undo")}
-            </button>
-          </div>
-        ),
-        { duration: 6000 }
-      );
-      startTransition(() => router.refresh());
+        toast.success(
+          (toastInstance) => (
+            <div className="flex items-center gap-3">
+              <span>{t("workspace.analysis.dashboards.chart_removed")}</span>
+              <button
+                type="button"
+                className="text-sm font-medium text-brand-dark underline hover:text-brand-dark/80"
+                onClick={() => {
+                  toast.dismiss(toastInstance.id);
+                  void handleUndoRemoveWidget(snapshot);
+                }}>
+                {t("common.undo")}
+              </button>
+            </div>
+          ),
+          { duration: 6000 }
+        );
+        startTransition(() => router.refresh());
+      } catch {
+        // The action throws (rather than returning {error}) on unexpected
+        // failures — without this catch the click handler surfaces an
+        // unhandled rejection and the user gets no feedback.
+        toast.error(t("workspace.analysis.dashboards.chart_remove_failed"));
+      }
     },
     [
       draftWidgets,
