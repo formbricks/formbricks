@@ -1,7 +1,8 @@
 "use client";
 
+import { useId } from "react";
 import { useTranslation } from "react-i18next";
-import { Area, AreaChart, Bar, BarChart, Cell, Line, LineChart, Pie, PieChart } from "recharts";
+import { Area, AreaChart, Bar, BarChart, Cell, Pie, PieChart } from "recharts";
 import type { TChartQuery } from "@formbricks/types/analysis";
 import { CartesianChart } from "@/modules/ee/analysis/charts/components/cartesian-chart";
 import {
@@ -42,6 +43,8 @@ interface ChartRendererProps {
 
 export function ChartRenderer({ chartType, data, query }: Readonly<ChartRendererProps>) {
   const { t } = useTranslation();
+  // SVG <defs> ids must be unique across charts on the same page.
+  const gradientIdPrefix = useId();
 
   if (!data || data.length === 0) {
     return (
@@ -104,25 +107,40 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
         </CartesianChart>
       );
     case "line":
+      // Render as an AreaChart with a thin stroke and a soft gradient fade so
+      // the chart reads as a line with a subtle area tint underneath. Dot
+      // markers are hidden by default and only appear on hover.
       return (
         <CartesianChart
-          chart={LineChart}
+          chart={AreaChart}
           data={data}
           xAxisKey={xAxisKey}
           dataKeys={dataKeys}
           chartConfig={chartConfig}
           showLegend={isMultiMeasure}>
+          <defs>
+            {dataKeys.map((key, i) => {
+              const color = chartConfig[key]?.color ?? CHART_MEASURE_COLORS[i % CHART_MEASURE_COLORS.length];
+              return (
+                <linearGradient key={key} id={`${gradientIdPrefix}-line-${key}`} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor={color} stopOpacity={0.3} />
+                  <stop offset="95%" stopColor={color} stopOpacity={0} />
+                </linearGradient>
+              );
+            })}
+          </defs>
           {dataKeys.map((key, i) => {
             const color = chartConfig[key]?.color ?? CHART_MEASURE_COLORS[i % CHART_MEASURE_COLORS.length];
             return (
-              <Line
+              <Area
                 key={key}
                 type="monotone"
                 dataKey={key}
                 stroke={color}
-                strokeWidth={3}
-                dot={{ fill: color, r: 4 }}
-                activeDot={{ r: 6 }}
+                strokeWidth={2}
+                fill={`url(#${gradientIdPrefix}-line-${key})`}
+                dot={false}
+                activeDot={{ r: 5, stroke: color, strokeWidth: 2, fill: "#fff" }}
               />
             );
           })}

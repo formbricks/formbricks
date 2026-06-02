@@ -97,7 +97,7 @@ export function CartesianChart({
     <div className="h-64 w-full">
       <ChartContainer config={chartConfig} className="h-full w-full">
         <Chart data={data} {...chartProps}>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} />
+          <CartesianGrid strokeDasharray="2 4" vertical={false} />
           <XAxis
             dataKey={xAxisKey}
             tickLine={false}
