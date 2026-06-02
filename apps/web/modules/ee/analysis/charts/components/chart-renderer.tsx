@@ -148,6 +148,11 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
                 fill={`url(#${gradientIdPrefix}-line-${key})`}
                 dot={false}
                 activeDot={{ r: 5, stroke: color, strokeWidth: 2, fill: "#fff" }}
+                // Days with no data come back as null from Cube — render them
+                // as gaps in the line rather than connecting through, so the
+                // chart honestly reflects "no data for this day" instead of
+                // implying the value dropped to 0.
+                connectNulls={false}
               />
             );
           })}
@@ -171,6 +176,7 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
               fill={chartConfig[key]?.color ?? CHART_MEASURE_COLORS[i % CHART_MEASURE_COLORS.length]}
               fillOpacity={0.4}
               strokeWidth={2}
+              connectNulls={false}
             />
           ))}
         </CartesianChart>
