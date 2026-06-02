@@ -645,7 +645,7 @@ const assertSurveySegmentBelongsToWorkspace = async (
     select: { workspaceId: true },
   });
 
-  if (!existingSegment || existingSegment.workspaceId !== workspaceId) {
+  if (existingSegment?.workspaceId !== workspaceId) {
     throw new ResourceNotFoundError("Segment", segment.id);
   }
 };

@@ -1,13 +1,13 @@
 import { z } from "zod";
 import { TSurveyElementTypeEnum } from "./surveys/constants";
 
-// Connector type enum
-export const ZConnectorType = z.enum(["formbricks_survey", "csv"]);
-export type TConnectorType = z.infer<typeof ZConnectorType>;
+// Feedback source type enum
+export const ZFeedbackSourceType = z.enum(["formbricks_survey", "csv"]);
+export type TFeedbackSourceType = z.infer<typeof ZFeedbackSourceType>;
 
-// Connector status enum
-export const ZConnectorStatus = z.enum(["active", "paused", "error"]);
-export type TConnectorStatus = z.infer<typeof ZConnectorStatus>;
+// Feedback source status enum
+export const ZFeedbackSourceStatus = z.enum(["active", "paused", "error"]);
+export type TFeedbackSourceStatus = z.infer<typeof ZFeedbackSourceStatus>;
 
 // Hub field types (from Hub OpenAPI spec)
 export const ZHubFieldType = z.enum([
@@ -24,7 +24,7 @@ export const ZHubFieldType = z.enum([
 export type THubFieldType = z.infer<typeof ZHubFieldType>;
 
 // Hub target fields for mapping.
-// `response_value` is a CSV-only synthetic id stored in ConnectorFieldMapping; csv-transform.ts
+// `response_value` is a CSV-only synthetic id stored in FeedbackSourceFieldMapping; csv-transform.ts
 // resolves it to the appropriate value_* target before any Hub write — the Hub never sees it.
 export const ZHubTargetField = z.enum([
   "collected_at",
@@ -49,88 +49,90 @@ export const ZHubTargetField = z.enum([
 ]);
 export type THubTargetField = z.infer<typeof ZHubTargetField>;
 
-// Base connector schema
-export const ZConnector = z.object({
+// Base feedback source schema
+export const ZFeedbackSource = z.object({
   id: z.cuid2(),
   createdAt: z.date(),
   updatedAt: z.date(),
   name: z.string().min(1),
-  type: ZConnectorType,
-  status: ZConnectorStatus,
+  type: ZFeedbackSourceType,
+  status: ZFeedbackSourceStatus,
   workspaceId: z.cuid2(),
   feedbackDirectoryId: z.cuid2(),
   lastSyncAt: z.date().nullable(),
   createdBy: z.string().nullable(),
 });
-export type TConnector = z.infer<typeof ZConnector>;
+export type TFeedbackSource = z.infer<typeof ZFeedbackSource>;
 
 // Formbricks element mapping
-export const ZConnectorFormbricksMapping = z.object({
+export const ZFeedbackSourceFormbricksMapping = z.object({
   id: z.cuid2(),
   createdAt: z.date(),
-  connectorId: z.cuid2(),
+  feedbackSourceId: z.cuid2(),
   workspaceId: z.cuid2(),
   surveyId: z.cuid2(),
   elementId: z.string(),
   hubFieldType: ZHubFieldType,
   customFieldLabel: z.string().nullable(),
 });
-export type TConnectorFormbricksMapping = z.infer<typeof ZConnectorFormbricksMapping>;
+export type TFeedbackSourceFormbricksMapping = z.infer<typeof ZFeedbackSourceFormbricksMapping>;
 
-export const ZConnectorFieldMapping = z.object({
+export const ZFeedbackSourceFieldMapping = z.object({
   id: z.cuid2(),
   createdAt: z.date(),
-  connectorId: z.cuid2(),
+  feedbackSourceId: z.cuid2(),
   workspaceId: z.cuid2(),
   sourceFieldId: z.string(),
   targetFieldId: ZHubTargetField,
   staticValue: z.string().nullable(),
 });
-export type TConnectorFieldMapping = z.infer<typeof ZConnectorFieldMapping>;
+export type TFeedbackSourceFieldMapping = z.infer<typeof ZFeedbackSourceFieldMapping>;
 
-export const ZConnectorWithMappings = ZConnector.extend({
-  formbricksMappings: z.array(ZConnectorFormbricksMapping),
-  fieldMappings: z.array(ZConnectorFieldMapping),
+export const ZFeedbackSourceWithMappings = ZFeedbackSource.extend({
+  formbricksMappings: z.array(ZFeedbackSourceFormbricksMapping),
+  fieldMappings: z.array(ZFeedbackSourceFieldMapping),
   creatorName: z.string().nullable().optional(),
 });
-export type TConnectorWithMappings = z.infer<typeof ZConnectorWithMappings>;
+export type TFeedbackSourceWithMappings = z.infer<typeof ZFeedbackSourceWithMappings>;
 
 // Create input schemas
-export const ZConnectorCreateInput = z.object({
+export const ZFeedbackSourceCreateInput = z.object({
   name: z.string().min(1),
-  type: ZConnectorType,
+  type: ZFeedbackSourceType,
   feedbackDirectoryId: z.cuid2(),
   createdBy: z.cuid2().optional(),
 });
-export type TConnectorCreateInput = z.infer<typeof ZConnectorCreateInput>;
+export type TFeedbackSourceCreateInput = z.infer<typeof ZFeedbackSourceCreateInput>;
 
 // Create Formbricks mapping input
-export const ZConnectorFormbricksMappingCreateInput = z.object({
+export const ZFeedbackSourceFormbricksMappingCreateInput = z.object({
   surveyId: z.cuid2(),
   elementId: z.string(),
   hubFieldType: ZHubFieldType,
   customFieldLabel: z.string().optional(),
 });
-export type TConnectorFormbricksMappingCreateInput = z.infer<typeof ZConnectorFormbricksMappingCreateInput>;
+export type TFeedbackSourceFormbricksMappingCreateInput = z.infer<
+  typeof ZFeedbackSourceFormbricksMappingCreateInput
+>;
 
 // Create field mapping input
-export const ZConnectorFieldMappingCreateInput = z.object({
+export const ZFeedbackSourceFieldMappingCreateInput = z.object({
   sourceFieldId: z.string(),
   targetFieldId: ZHubTargetField,
   staticValue: z.string().optional(),
 });
-export type TConnectorFieldMappingCreateInput = z.infer<typeof ZConnectorFieldMappingCreateInput>;
+export type TFeedbackSourceFieldMappingCreateInput = z.infer<typeof ZFeedbackSourceFieldMappingCreateInput>;
 
-// Update connector input
-export const ZConnectorUpdateInput = z.object({
+// Update feedback source input
+export const ZFeedbackSourceUpdateInput = z.object({
   name: z.string().min(1).optional(),
-  status: ZConnectorStatus.optional(),
+  status: ZFeedbackSourceStatus.optional(),
   lastSyncAt: z.date().nullable().optional(),
 });
-export type TConnectorUpdateInput = z.infer<typeof ZConnectorUpdateInput>;
+export type TFeedbackSourceUpdateInput = z.infer<typeof ZFeedbackSourceUpdateInput>;
 
 // Element types that cannot be mapped to Hub fields
-export const UNSUPPORTED_CONNECTOR_ELEMENT_TYPES: readonly TSurveyElementTypeEnum[] = [
+export const UNSUPPORTED_FEEDBACK_SOURCE_ELEMENT_TYPES: readonly TSurveyElementTypeEnum[] = [
   TSurveyElementTypeEnum.ContactInfo,
   TSurveyElementTypeEnum.Address,
   TSurveyElementTypeEnum.Cal,

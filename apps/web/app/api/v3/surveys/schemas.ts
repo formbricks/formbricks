@@ -10,42 +10,62 @@ import {
   ZSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
 import { type InvalidParam, isInvalidParamCode } from "@/app/api/v3/lib/response";
-import { normalizeV3SurveyLocaleCode } from "./language";
+import { normalizeV3SurveyWriteLanguageCode } from "./language";
+import { V3_SURVEY_TRANSLATABLE_METADATA_KEYS } from "./translation-fields";
 
 export const DEFAULT_V3_SURVEY_LANGUAGE = "en-US";
 
-const ZV3SurveyLanguageTag = z
-  .string()
-  .trim()
-  .min(1, "Language code is required")
-  .transform((value, ctx) => {
-    const normalizedLanguage = normalizeV3SurveyLocaleCode(value);
+export type TV3LanguageCompatibilityOptions = {
+  allowedLanguageCodes?: readonly string[];
+};
 
-    if (!normalizedLanguage) {
-      ctx.addIssue({
-        code: "custom",
-        message: `Language '${value}' is not a valid locale code`,
-        params: { code: "invalid_locale" },
-      });
-      return z.NEVER;
-    }
+type TV3LanguageNormalizationOptions = TV3LanguageCompatibilityOptions & {
+  allowInternalDefaultTranslationKey?: boolean;
+};
 
-    return normalizedLanguage;
-  });
+type TV3SurveyDocumentSchemaOptions = TV3LanguageNormalizationOptions & {
+  fallbackDefaultLanguage?: string;
+};
 
-const ZV3SurveyLanguageInput = z
-  .object({
-    code: ZV3SurveyLanguageTag,
-    default: z.boolean().optional(),
-    enabled: z.boolean().prefault(true),
-  })
-  .strict();
+const createZV3SurveyLanguageTag = (options?: TV3LanguageCompatibilityOptions) =>
+  z
+    .string()
+    .trim()
+    .min(1, "Language code is required")
+    .transform((value, ctx) => {
+      const normalizedLanguage = normalizeV3SurveyWriteLanguageCode(value, options?.allowedLanguageCodes);
+
+      if (!normalizedLanguage) {
+        ctx.addIssue({
+          code: "custom",
+          message: `Language '${value}' is not a valid locale code`,
+          params: { code: "invalid_locale" },
+        });
+        return z.NEVER;
+      }
+
+      return normalizedLanguage;
+    });
+
+const createZV3SurveyLanguageInput = (options?: TV3LanguageCompatibilityOptions) =>
+  z
+    .object({
+      code: createZV3SurveyLanguageTag(options),
+      default: z.boolean().optional(),
+      enabled: z.boolean().prefault(true),
+    })
+    .strict();
+
+const ZV3SurveyLanguageInput = createZV3SurveyLanguageInput();
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function isPublicI18nMap(value: Record<string, unknown>): value is Record<string, string> {
+function isPublicI18nMapWithOptions(
+  value: Record<string, unknown>,
+  options?: TV3LanguageNormalizationOptions
+): value is Record<string, string> {
   const entries = Object.entries(value);
 
   return (
@@ -55,12 +75,19 @@ function isPublicI18nMap(value: Record<string, unknown>): value is Record<string
         return false;
       }
 
-      return Boolean(normalizeV3SurveyLocaleCode(key));
+      if (key === "default" && options?.allowInternalDefaultTranslationKey) {
+        return true;
+      }
+
+      return Boolean(normalizeV3SurveyWriteLanguageCode(key, options?.allowedLanguageCodes));
     })
   );
 }
 
-function getNormalizedDefaultLanguage(value: Record<string, unknown>): string | null {
+function getNormalizedDefaultLanguage(
+  value: Record<string, unknown>,
+  options?: TV3LanguageNormalizationOptions
+): string | null {
   if (value.defaultLanguage === undefined) {
     return DEFAULT_V3_SURVEY_LANGUAGE;
   }
@@ -69,15 +96,16 @@ function getNormalizedDefaultLanguage(value: Record<string, unknown>): string | 
     return null;
   }
 
-  return normalizeV3SurveyLocaleCode(value.defaultLanguage);
+  return normalizeV3SurveyWriteLanguageCode(value.defaultLanguage, options?.allowedLanguageCodes);
 }
 
 function normalizePublicI18nMap(
   value: Record<string, string>,
-  defaultLanguage: string
+  defaultLanguage: string,
+  options?: TV3LanguageNormalizationOptions
 ): Record<string, string> {
   const normalizedEntries = Object.entries(value).map(([key, entry]) => ({
-    key: normalizeV3SurveyLocaleCode(key) ?? key,
+    key: normalizeV3SurveyWriteLanguageCode(key, options?.allowedLanguageCodes) ?? key,
     entry,
   }));
   const defaultEntry = normalizedEntries.find(
@@ -101,18 +129,23 @@ function normalizePublicI18nMap(
   return normalized;
 }
 
-function normalizePublicI18nField(value: unknown, defaultLanguage: string): unknown {
-  if (!isPlainObject(value) || !isPublicI18nMap(value)) {
+function normalizePublicI18nField(
+  value: unknown,
+  defaultLanguage: string,
+  options?: TV3LanguageNormalizationOptions
+): unknown {
+  if (!isPlainObject(value) || !isPublicI18nMapWithOptions(value, options)) {
     return value;
   }
 
-  return normalizePublicI18nMap(value, defaultLanguage);
+  return normalizePublicI18nMap(value, defaultLanguage, options);
 }
 
 function normalizePublicI18nFields(
   value: unknown,
   defaultLanguage: string,
-  keys: readonly string[]
+  keys: readonly string[],
+  options?: TV3LanguageNormalizationOptions
 ): unknown {
   if (!isPlainObject(value)) {
     return value;
@@ -121,29 +154,19 @@ function normalizePublicI18nFields(
   const normalized = { ...value };
   for (const key of keys) {
     if (normalized[key] !== undefined) {
-      normalized[key] = normalizePublicI18nField(normalized[key], defaultLanguage);
+      normalized[key] = normalizePublicI18nField(normalized[key], defaultLanguage, options);
     }
   }
 
   return normalized;
 }
 
-function normalizeMetadata(value: unknown, defaultLanguage: string): unknown {
-  if (!isPlainObject(value)) {
-    return value;
-  }
-
-  const normalized = { ...value };
-
-  if ("title" in value) {
-    normalized.title = normalizePublicI18nField(value.title, defaultLanguage);
-  }
-
-  if ("description" in value) {
-    normalized.description = normalizePublicI18nField(value.description, defaultLanguage);
-  }
-
-  return normalized;
+function normalizeMetadata(
+  value: unknown,
+  defaultLanguage: string,
+  options?: TV3LanguageNormalizationOptions
+): unknown {
+  return normalizePublicI18nFields(value, defaultLanguage, V3_SURVEY_TRANSLATABLE_METADATA_KEYS, options);
 }
 
 const WELCOME_CARD_I18N_KEYS = ["headline", "subheader", "buttonLabel"] as const;
@@ -174,58 +197,84 @@ const TOGGLE_INPUT_I18N_KEYS = [
   "company",
 ] as const;
 
-function normalizeChoice(value: unknown, defaultLanguage: string): unknown {
-  return normalizePublicI18nFields(value, defaultLanguage, ["label"]);
+function normalizeChoice(
+  value: unknown,
+  defaultLanguage: string,
+  options?: TV3LanguageNormalizationOptions
+): unknown {
+  return normalizePublicI18nFields(value, defaultLanguage, ["label"], options);
 }
 
-function normalizeToggleInput(value: unknown, defaultLanguage: string): unknown {
-  return normalizePublicI18nFields(value, defaultLanguage, ["placeholder"]);
+function normalizeToggleInput(
+  value: unknown,
+  defaultLanguage: string,
+  options?: TV3LanguageNormalizationOptions
+): unknown {
+  return normalizePublicI18nFields(value, defaultLanguage, ["placeholder"], options);
 }
 
-function normalizeElement(value: unknown, defaultLanguage: string): unknown {
+function normalizeElement(
+  value: unknown,
+  defaultLanguage: string,
+  options?: TV3LanguageNormalizationOptions
+): unknown {
   if (!isPlainObject(value)) {
     return value;
   }
 
-  const normalized = normalizePublicI18nFields(value, defaultLanguage, ELEMENT_I18N_KEYS);
+  const normalized = normalizePublicI18nFields(value, defaultLanguage, ELEMENT_I18N_KEYS, options);
   if (!isPlainObject(normalized)) {
     return value;
   }
 
   for (const key of TOGGLE_INPUT_I18N_KEYS) {
     if (normalized[key] !== undefined) {
-      normalized[key] = normalizeToggleInput(normalized[key], defaultLanguage);
+      normalized[key] = normalizeToggleInput(normalized[key], defaultLanguage, options);
     }
   }
 
   if (Array.isArray(normalized.choices)) {
-    normalized.choices = normalized.choices.map((choice) => normalizeChoice(choice, defaultLanguage));
+    normalized.choices = normalized.choices.map((choice) =>
+      normalizeChoice(choice, defaultLanguage, options)
+    );
   }
   if (Array.isArray(normalized.rows)) {
-    normalized.rows = normalized.rows.map((row) => normalizeChoice(row, defaultLanguage));
+    normalized.rows = normalized.rows.map((row) => normalizeChoice(row, defaultLanguage, options));
   }
   if (Array.isArray(normalized.columns)) {
-    normalized.columns = normalized.columns.map((column) => normalizeChoice(column, defaultLanguage));
+    normalized.columns = normalized.columns.map((column) =>
+      normalizeChoice(column, defaultLanguage, options)
+    );
   }
 
   return normalized;
 }
 
-function normalizeBlock(value: unknown, defaultLanguage: string): unknown {
+function normalizeBlock(
+  value: unknown,
+  defaultLanguage: string,
+  options?: TV3LanguageNormalizationOptions
+): unknown {
   if (!isPlainObject(value)) {
     return value;
   }
 
-  const normalized = normalizePublicI18nFields(value, defaultLanguage, BLOCK_I18N_KEYS);
+  const normalized = normalizePublicI18nFields(value, defaultLanguage, BLOCK_I18N_KEYS, options);
   if (isPlainObject(normalized) && Array.isArray(normalized.elements)) {
-    normalized.elements = normalized.elements.map((element) => normalizeElement(element, defaultLanguage));
+    normalized.elements = normalized.elements.map((element) =>
+      normalizeElement(element, defaultLanguage, options)
+    );
   }
 
   return normalized;
 }
 
-function normalizeEnding(value: unknown, defaultLanguage: string): unknown {
-  return normalizePublicI18nFields(value, defaultLanguage, ENDING_I18N_KEYS);
+function normalizeEnding(
+  value: unknown,
+  defaultLanguage: string,
+  options?: TV3LanguageNormalizationOptions
+): unknown {
+  return normalizePublicI18nFields(value, defaultLanguage, ENDING_I18N_KEYS, options);
 }
 
 function addGeneratedId(value: unknown): unknown {
@@ -258,7 +307,9 @@ function normalizeV3SurveyDocumentInput(
   options: {
     fallbackDefaultLanguage: string;
     applyDefaultLanguage: boolean;
+    allowInternalDefaultTranslationKey: boolean;
     generateMissingCreateIds: boolean;
+    allowedLanguageCodes?: readonly string[];
   }
 ): unknown {
   if (!isPlainObject(value)) {
@@ -266,7 +317,7 @@ function normalizeV3SurveyDocumentInput(
   }
 
   const normalizedDefaultLanguage =
-    value.defaultLanguage === undefined ? null : getNormalizedDefaultLanguage(value);
+    value.defaultLanguage === undefined ? null : getNormalizedDefaultLanguage(value, options);
   const defaultLanguageForI18n = normalizedDefaultLanguage ?? options.fallbackDefaultLanguage;
   const normalized = { ...value };
 
@@ -279,26 +330,27 @@ function normalizeV3SurveyDocumentInput(
   }
 
   if ("metadata" in value) {
-    normalized.metadata = normalizeMetadata(value.metadata, defaultLanguageForI18n);
+    normalized.metadata = normalizeMetadata(value.metadata, defaultLanguageForI18n, options);
   }
 
   if ("welcomeCard" in value) {
     normalized.welcomeCard = normalizePublicI18nFields(
       value.welcomeCard,
       defaultLanguageForI18n,
-      WELCOME_CARD_I18N_KEYS
+      WELCOME_CARD_I18N_KEYS,
+      options
     );
   }
 
   if ("blocks" in value) {
     normalized.blocks = Array.isArray(value.blocks)
-      ? value.blocks.map((block) => normalizeBlock(block, defaultLanguageForI18n))
+      ? value.blocks.map((block) => normalizeBlock(block, defaultLanguageForI18n, options))
       : value.blocks;
   }
 
   if ("endings" in value) {
     normalized.endings = Array.isArray(value.endings)
-      ? value.endings.map((ending) => normalizeEnding(ending, defaultLanguageForI18n))
+      ? value.endings.map((ending) => normalizeEnding(ending, defaultLanguageForI18n, options))
       : value.endings;
   }
 
@@ -308,13 +360,17 @@ function normalizeV3SurveyDocumentInput(
 function createV3SurveyDocumentNormalizer(options: {
   fallbackDefaultLanguage?: string;
   applyDefaultLanguage: boolean;
+  allowInternalDefaultTranslationKey?: boolean;
   generateMissingCreateIds?: boolean;
+  allowedLanguageCodes?: readonly string[];
 }) {
   return (value: unknown): unknown =>
     normalizeV3SurveyDocumentInput(value, {
       fallbackDefaultLanguage: options.fallbackDefaultLanguage ?? DEFAULT_V3_SURVEY_LANGUAGE,
       applyDefaultLanguage: options.applyDefaultLanguage,
+      allowInternalDefaultTranslationKey: options.allowInternalDefaultTranslationKey ?? false,
       generateMissingCreateIds: options.generateMissingCreateIds ?? false,
+      allowedLanguageCodes: options.allowedLanguageCodes,
     });
 }
 
@@ -336,7 +392,6 @@ const PATCH_ROOT_KEYS = new Set([
   "name",
   "status",
   "metadata",
-  "defaultLanguage",
   "languages",
   "welcomeCard",
   "blocks",
@@ -598,7 +653,8 @@ function validateTranslatableField(
   value: unknown,
   path: string,
   issues: InvalidParam[],
-  defaultLanguage: string | null
+  defaultLanguage: string | null,
+  options?: TV3LanguageCompatibilityOptions
 ): void {
   if (!isPlainObject(value)) {
     return;
@@ -619,7 +675,7 @@ function validateTranslatableField(
       continue;
     }
 
-    const normalizedKey = normalizeV3SurveyLocaleCode(key);
+    const normalizedKey = normalizeV3SurveyWriteLanguageCode(key, options?.allowedLanguageCodes);
     if (!normalizedKey) {
       issues.push({
         name: `${path}.${key}`,
@@ -659,12 +715,13 @@ function validateChoice(
   path: string,
   issues: InvalidParam[],
   defaultLanguage: string | null,
-  allowedKeys: Set<string>
+  allowedKeys: Set<string>,
+  options?: TV3LanguageCompatibilityOptions
 ): void {
   const choiceContext = allowedKeys === PICTURE_CHOICE_KEYS ? "pictureSelection choice" : "choice";
   addUnknownKeyIssues(value, allowedKeys, path, issues, choiceContext);
   if (isPlainObject(value)) {
-    validateTranslatableField(value.label, `${path}.label`, issues, defaultLanguage);
+    validateTranslatableField(value.label, `${path}.label`, issues, defaultLanguage, options);
   }
 }
 
@@ -672,11 +729,12 @@ function validateToggleInput(
   value: unknown,
   path: string,
   issues: InvalidParam[],
-  defaultLanguage: string | null
+  defaultLanguage: string | null,
+  options?: TV3LanguageCompatibilityOptions
 ): void {
   addUnknownKeyIssues(value, TOGGLE_INPUT_KEYS, path, issues);
   if (isPlainObject(value)) {
-    validateTranslatableField(value.placeholder, `${path}.placeholder`, issues, defaultLanguage);
+    validateTranslatableField(value.placeholder, `${path}.placeholder`, issues, defaultLanguage, options);
   }
 }
 
@@ -768,7 +826,8 @@ function validateElement(
   value: unknown,
   path: string,
   issues: InvalidParam[],
-  defaultLanguage: string | null
+  defaultLanguage: string | null,
+  options?: TV3LanguageCompatibilityOptions
 ): void {
   let elementKeys = ELEMENT_KEYS;
   if (isPlainObject(value) && typeof value.type === "string" && isElementTypeWithStrictKeys(value.type)) {
@@ -786,10 +845,10 @@ function validateElement(
   }
 
   ELEMENT_I18N_KEYS.forEach((key) =>
-    validateTranslatableField(value[key], `${path}.${key}`, issues, defaultLanguage)
+    validateTranslatableField(value[key], `${path}.${key}`, issues, defaultLanguage, options)
   );
   TOGGLE_INPUT_I18N_KEYS.forEach((key) =>
-    validateToggleInput(value[key], `${path}.${key}`, issues, defaultLanguage)
+    validateToggleInput(value[key], `${path}.${key}`, issues, defaultLanguage, options)
   );
 
   if (isPlainObject(value.charLimit)) {
@@ -801,19 +860,19 @@ function validateElement(
   if (Array.isArray(value.choices)) {
     const choiceKeys = value.type === "pictureSelection" ? PICTURE_CHOICE_KEYS : LABEL_CHOICE_KEYS;
     value.choices.forEach((choice, index) =>
-      validateChoice(choice, `${path}.choices.${index}`, issues, defaultLanguage, choiceKeys)
+      validateChoice(choice, `${path}.choices.${index}`, issues, defaultLanguage, choiceKeys, options)
     );
   }
 
   if (Array.isArray(value.rows)) {
     value.rows.forEach((row, index) =>
-      validateChoice(row, `${path}.rows.${index}`, issues, defaultLanguage, LABEL_CHOICE_KEYS)
+      validateChoice(row, `${path}.rows.${index}`, issues, defaultLanguage, LABEL_CHOICE_KEYS, options)
     );
   }
 
   if (Array.isArray(value.columns)) {
     value.columns.forEach((column, index) =>
-      validateChoice(column, `${path}.columns.${index}`, issues, defaultLanguage, LABEL_CHOICE_KEYS)
+      validateChoice(column, `${path}.columns.${index}`, issues, defaultLanguage, LABEL_CHOICE_KEYS, options)
     );
   }
 }
@@ -822,19 +881,26 @@ function validateBlock(
   value: unknown,
   path: string,
   issues: InvalidParam[],
-  defaultLanguage: string | null
+  defaultLanguage: string | null,
+  options?: TV3LanguageCompatibilityOptions
 ): void {
   addUnknownKeyIssues(value, BLOCK_KEYS, path, issues);
   if (!isPlainObject(value)) {
     return;
   }
 
-  validateTranslatableField(value.buttonLabel, `${path}.buttonLabel`, issues, defaultLanguage);
-  validateTranslatableField(value.backButtonLabel, `${path}.backButtonLabel`, issues, defaultLanguage);
+  validateTranslatableField(value.buttonLabel, `${path}.buttonLabel`, issues, defaultLanguage, options);
+  validateTranslatableField(
+    value.backButtonLabel,
+    `${path}.backButtonLabel`,
+    issues,
+    defaultLanguage,
+    options
+  );
 
   if (Array.isArray(value.elements)) {
     value.elements.forEach((element, index) =>
-      validateElement(element, `${path}.elements.${index}`, issues, defaultLanguage)
+      validateElement(element, `${path}.elements.${index}`, issues, defaultLanguage, options)
     );
   }
 
@@ -847,7 +913,8 @@ function validateEnding(
   value: unknown,
   path: string,
   issues: InvalidParam[],
-  defaultLanguage: string | null
+  defaultLanguage: string | null,
+  options?: TV3LanguageCompatibilityOptions
 ): void {
   if (!isPlainObject(value)) {
     return;
@@ -860,14 +927,15 @@ function validateEnding(
   addMissingRequiredKeyIssues(value, ENDING_REQUIRED_KEYS, path, issues, endingContext);
   addUnknownKeyIssues(value, endingKeys, path, issues, endingContext);
   ENDING_I18N_KEYS.forEach((key) =>
-    validateTranslatableField(value[key], `${path}.${key}`, issues, defaultLanguage)
+    validateTranslatableField(value[key], `${path}.${key}`, issues, defaultLanguage, options)
   );
 }
 
 function getUnsupportedV3SurveyDocumentFields(
   value: unknown,
   rootKeys: Set<string>,
-  fallbackDefaultLanguage = DEFAULT_V3_SURVEY_LANGUAGE
+  fallbackDefaultLanguage = DEFAULT_V3_SURVEY_LANGUAGE,
+  options?: TV3LanguageCompatibilityOptions
 ): InvalidParam[] {
   const issues: InvalidParam[] = [];
   addUnknownKeyIssues(value, rootKeys, "", issues);
@@ -877,7 +945,9 @@ function getUnsupportedV3SurveyDocumentFields(
   }
 
   const defaultLanguage =
-    value.defaultLanguage === undefined ? fallbackDefaultLanguage : getNormalizedDefaultLanguage(value);
+    value.defaultLanguage === undefined
+      ? fallbackDefaultLanguage
+      : getNormalizedDefaultLanguage(value, options);
 
   Array.isArray(value.languages) &&
     value.languages.forEach((language, index) =>
@@ -887,7 +957,7 @@ function getUnsupportedV3SurveyDocumentFields(
   if (isPlainObject(value.welcomeCard)) {
     const welcomeCard = value.welcomeCard;
     WELCOME_CARD_I18N_KEYS.forEach((key) =>
-      validateTranslatableField(welcomeCard[key], `welcomeCard.${key}`, issues, defaultLanguage)
+      validateTranslatableField(welcomeCard[key], `welcomeCard.${key}`, issues, defaultLanguage, options)
     );
   }
   addUnknownKeyIssues(value.hiddenFields, HIDDEN_FIELDS_KEYS, "hiddenFields", issues);
@@ -896,15 +966,19 @@ function getUnsupportedV3SurveyDocumentFields(
       addUnknownKeyIssues(variable, VARIABLE_KEYS, `variables.${index}`, issues)
     );
   Array.isArray(value.blocks) &&
-    value.blocks.forEach((block, index) => validateBlock(block, `blocks.${index}`, issues, defaultLanguage));
+    value.blocks.forEach((block, index) =>
+      validateBlock(block, `blocks.${index}`, issues, defaultLanguage, options)
+    );
   Array.isArray(value.endings) &&
     value.endings.forEach((ending, index) =>
-      validateEnding(ending, `endings.${index}`, issues, defaultLanguage)
+      validateEnding(ending, `endings.${index}`, issues, defaultLanguage, options)
     );
 
-  if (isPlainObject(value.metadata)) {
-    validateTranslatableField(value.metadata.title, "metadata.title", issues, defaultLanguage);
-    validateTranslatableField(value.metadata.description, "metadata.description", issues, defaultLanguage);
+  const metadata = value.metadata;
+  if (isPlainObject(metadata)) {
+    V3_SURVEY_TRANSLATABLE_METADATA_KEYS.forEach((key) =>
+      validateTranslatableField(metadata[key], `metadata.${key}`, issues, defaultLanguage, options)
+    );
   }
 
   return issues;
@@ -970,38 +1044,50 @@ function addLanguageIssues(
 const ZV3SurveyName = z.string().trim().min(1, "Survey name is required");
 const ZV3SurveyBlocks = ZSurveyBlocks.min(1, "At least one block is required");
 
-const V3_SURVEY_DOCUMENT_SHAPE = {
-  name: ZV3SurveyName,
-  status: ZSurveyStatus.prefault("draft"),
-  metadata: ZSurveyMetadata.prefault({}),
-  defaultLanguage: ZV3SurveyLanguageTag.prefault(DEFAULT_V3_SURVEY_LANGUAGE),
-  languages: z.array(ZV3SurveyLanguageInput).prefault([]),
-  welcomeCard: ZSurveyWelcomeCard.prefault({ enabled: false }),
-  blocks: ZV3SurveyBlocks,
-  endings: ZSurveyEndings.prefault([]),
-  hiddenFields: ZSurveyHiddenFields.prefault({ enabled: false }),
-  variables: ZSurveyVariables.prefault([]),
-};
+function createV3SurveyDocumentShape(options?: TV3LanguageCompatibilityOptions) {
+  return {
+    name: ZV3SurveyName,
+    status: ZSurveyStatus.prefault("draft"),
+    metadata: ZSurveyMetadata.prefault({}),
+    defaultLanguage: createZV3SurveyLanguageTag(options).prefault(DEFAULT_V3_SURVEY_LANGUAGE),
+    languages: z.array(createZV3SurveyLanguageInput(options)).prefault([]),
+    welcomeCard: ZSurveyWelcomeCard.prefault({ enabled: false }),
+    blocks: ZV3SurveyBlocks,
+    endings: ZSurveyEndings.prefault([]),
+    hiddenFields: ZSurveyHiddenFields.prefault({ enabled: false }),
+    variables: ZSurveyVariables.prefault([]),
+  };
+}
 
-const V3_SURVEY_PATCH_SHAPE = {
-  name: ZV3SurveyName.optional(),
-  status: ZSurveyStatus.optional(),
-  metadata: ZSurveyMetadata.optional(),
-  defaultLanguage: ZV3SurveyLanguageTag.optional(),
-  languages: z.array(ZV3SurveyLanguageInput).optional(),
-  welcomeCard: ZSurveyWelcomeCard.optional(),
-  blocks: ZV3SurveyBlocks.optional(),
-  endings: ZSurveyEndings.optional(),
-  hiddenFields: ZSurveyHiddenFields.optional(),
-  variables: ZSurveyVariables.optional(),
-};
+function createV3SurveyPatchShape(options?: TV3LanguageCompatibilityOptions) {
+  return {
+    name: ZV3SurveyName.optional(),
+    status: ZSurveyStatus.optional(),
+    metadata: ZSurveyMetadata.optional(),
+    languages: z.array(createZV3SurveyLanguageInput(options)).optional(),
+    welcomeCard: ZSurveyWelcomeCard.optional(),
+    blocks: ZV3SurveyBlocks.optional(),
+    endings: ZSurveyEndings.optional(),
+    hiddenFields: ZSurveyHiddenFields.optional(),
+    variables: ZSurveyVariables.optional(),
+  };
+}
 
-const ZV3SurveyDocumentObject = z.object(V3_SURVEY_DOCUMENT_SHAPE).strict().superRefine(addLanguageIssues);
+const V3_SURVEY_DOCUMENT_SHAPE = createV3SurveyDocumentShape();
 
-export const ZV3SurveyDocumentBase = z.preprocess(
-  createV3SurveyDocumentNormalizer({ applyDefaultLanguage: true }),
-  ZV3SurveyDocumentObject
-);
+export function createZV3SurveyDocumentBaseSchema(options?: TV3SurveyDocumentSchemaOptions) {
+  return z.preprocess(
+    createV3SurveyDocumentNormalizer({
+      allowInternalDefaultTranslationKey: options?.allowInternalDefaultTranslationKey,
+      fallbackDefaultLanguage: options?.fallbackDefaultLanguage,
+      applyDefaultLanguage: true,
+      allowedLanguageCodes: options?.allowedLanguageCodes,
+    }),
+    z.object(createV3SurveyDocumentShape(options)).strict().superRefine(addLanguageIssues)
+  );
+}
+
+export const ZV3SurveyDocumentBase = createZV3SurveyDocumentBaseSchema();
 
 const ZV3CreateSurveyBodyBase = z.preprocess(
   createV3SurveyDocumentNormalizer({ applyDefaultLanguage: true, generateMissingCreateIds: true }),
@@ -1024,31 +1110,40 @@ export const ZV3CreateSurveyBody = z
   })
   .pipe(ZV3CreateSurveyBodyBase);
 
-function createV3PatchSurveyBodyBase(defaultLanguage: string) {
+function createV3PatchSurveyBodyBase(defaultLanguage: string, options?: TV3LanguageCompatibilityOptions) {
   return z.preprocess(
     createV3SurveyDocumentNormalizer({
       fallbackDefaultLanguage: defaultLanguage,
       applyDefaultLanguage: false,
+      allowedLanguageCodes: options?.allowedLanguageCodes,
     }),
     z
-      .object(V3_SURVEY_PATCH_SHAPE)
+      .object(createV3SurveyPatchShape(options))
       .strict()
-      .superRefine(addLanguageIssues)
+      .superRefine((body, ctx) => addLanguageIssues({ ...body, defaultLanguage }, ctx))
       .refine((body) => Object.keys(body).length > 0, {
         message: "Request body must include at least one updatable field",
       })
   );
 }
 
-export function createZV3PatchSurveyBodySchema(defaultLanguage = DEFAULT_V3_SURVEY_LANGUAGE) {
+export function createZV3PatchSurveyBodySchema(
+  defaultLanguage = DEFAULT_V3_SURVEY_LANGUAGE,
+  options?: TV3LanguageCompatibilityOptions
+) {
   return z
     .unknown()
     .superRefine((value, ctx) => {
-      for (const issue of getUnsupportedV3SurveyDocumentFields(value, PATCH_ROOT_KEYS, defaultLanguage)) {
+      for (const issue of getUnsupportedV3SurveyDocumentFields(
+        value,
+        PATCH_ROOT_KEYS,
+        defaultLanguage,
+        options
+      )) {
         addInvalidParamZodIssue(ctx, issue);
       }
     })
-    .pipe(createV3PatchSurveyBodyBase(defaultLanguage));
+    .pipe(createV3PatchSurveyBodyBase(defaultLanguage, options));
 }
 
 export const ZV3PatchSurveyBody = createZV3PatchSurveyBodySchema();

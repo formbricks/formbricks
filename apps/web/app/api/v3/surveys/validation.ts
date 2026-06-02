@@ -2,6 +2,7 @@ import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { isInternalI18nString, isPlainObject } from "./guards";
 import { validateV3SurveyReferences } from "./reference-validation";
 import type { TV3SurveyDocument } from "./schemas";
+import { V3_SURVEY_TRANSLATABLE_METADATA_KEYS } from "./translation-fields";
 
 export type TV3SurveyDocumentValidationResult =
   | { valid: true; invalidParams: [] }
@@ -118,12 +119,8 @@ function getV3SurveyLanguageInvalidParams(document: TV3SurveyDocument): InvalidP
   const issues: InvalidParam[] = [];
 
   if (isPlainObject(document.metadata)) {
-    addUnsupportedLocaleIssues(document.metadata.title, "metadata.title", declaredLanguageCodes, issues);
-    addUnsupportedLocaleIssues(
-      document.metadata.description,
-      "metadata.description",
-      declaredLanguageCodes,
-      issues
+    V3_SURVEY_TRANSLATABLE_METADATA_KEYS.forEach((key) =>
+      addUnsupportedLocaleIssues(document.metadata[key], `metadata.${key}`, declaredLanguageCodes, issues)
     );
   }
   addUnsupportedLocaleIssues(document.welcomeCard, "welcomeCard", declaredLanguageCodes, issues);
@@ -131,8 +128,9 @@ function getV3SurveyLanguageInvalidParams(document: TV3SurveyDocument): InvalidP
   addUnsupportedLocaleIssues(document.endings, "endings", declaredLanguageCodes, issues);
 
   if (isPlainObject(document.metadata)) {
-    addMissingTranslationIssues(document.metadata.title, "metadata.title", languageCodes, issues);
-    addMissingTranslationIssues(document.metadata.description, "metadata.description", languageCodes, issues);
+    V3_SURVEY_TRANSLATABLE_METADATA_KEYS.forEach((key) =>
+      addMissingTranslationIssues(document.metadata[key], `metadata.${key}`, languageCodes, issues)
+    );
   }
   addMissingTranslationIssues(document.welcomeCard, "welcomeCard", languageCodes, issues);
   addMissingTranslationIssues(document.blocks, "blocks", languageCodes, issues);

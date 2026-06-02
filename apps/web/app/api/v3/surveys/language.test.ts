@@ -3,6 +3,7 @@ import {
   normalizeV3SurveyLanguageIdentifier,
   normalizeV3SurveyLanguageTag,
   normalizeV3SurveyLocaleCode,
+  normalizeV3SurveyWriteLanguageCode,
   parseV3SurveyLanguageQuery,
   resolveV3SurveyLanguageCode,
 } from "./language";
@@ -58,6 +59,20 @@ describe("normalizeV3SurveyLanguageIdentifier", () => {
 
   test("does not guess ambiguous legacy identifiers", () => {
     expect(normalizeV3SurveyLanguageIdentifier("pt")).toBeNull();
+  });
+});
+
+describe("normalizeV3SurveyWriteLanguageCode", () => {
+  test("keeps strict write locale validation by default", () => {
+    expect(normalizeV3SurveyWriteLanguageCode("de-DE")).toBe("de-DE");
+    expect(normalizeV3SurveyWriteLanguageCode("gu")).toBeNull();
+  });
+
+  test("allows legacy codes only when they are already configured", () => {
+    expect(normalizeV3SurveyWriteLanguageCode("gu", ["gu", "en-US"])).toBe("gu");
+    expect(normalizeV3SurveyWriteLanguageCode("GU", ["gu", "en-US"])).toBe("gu");
+    expect(normalizeV3SurveyWriteLanguageCode("hi", ["hi-IN", "en-US"])).toBe("hi-IN");
+    expect(normalizeV3SurveyWriteLanguageCode("vi", ["en-US"])).toBeNull();
   });
 });
 

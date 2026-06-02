@@ -1,5 +1,8 @@
 import { describe, expect, test } from "vitest";
-import { type TConnectorFieldMappingCreateInput, ZHubFieldType } from "@formbricks/types/connector";
+import {
+  type TFeedbackSourceFieldMappingCreateInput,
+  ZHubFieldType,
+} from "@formbricks/types/feedback-source";
 import {
   formatCsvMissingMappedSourceColumns,
   formatMissingRequiredCsvFieldMappingsMessage,
@@ -12,7 +15,7 @@ import {
 
 describe("sanitizeCsvFieldMappings", () => {
   test("drops user-controlled tenant_id and source_type mappings", () => {
-    const mappings: TConnectorFieldMappingCreateInput[] = [
+    const mappings: TFeedbackSourceFieldMappingCreateInput[] = [
       { sourceFieldId: "tenant", targetFieldId: "tenant_id" },
       { sourceFieldId: "type", targetFieldId: "source_type" },
       { sourceFieldId: "question", targetFieldId: "field_id" },
@@ -30,7 +33,7 @@ describe("sanitizeCsvFieldMappings", () => {
   });
 
   test("returns only the static csv source_type mapping when input is all-protected", () => {
-    const mappings: TConnectorFieldMappingCreateInput[] = [
+    const mappings: TFeedbackSourceFieldMappingCreateInput[] = [
       { sourceFieldId: "tenant", targetFieldId: "tenant_id" },
       { sourceFieldId: "type", targetFieldId: "source_type" },
     ];
@@ -42,7 +45,7 @@ describe("sanitizeCsvFieldMappings", () => {
 });
 
 describe("getMissingRequiredCsvFieldMappings", () => {
-  const requiredMappings: TConnectorFieldMappingCreateInput[] = [
+  const requiredMappings: TFeedbackSourceFieldMappingCreateInput[] = [
     { sourceFieldId: "response_id", targetFieldId: "submission_id" },
     { sourceFieldId: "question_id", targetFieldId: "field_id" },
     { sourceFieldId: "question", targetFieldId: "field_label" },

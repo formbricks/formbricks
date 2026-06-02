@@ -5,21 +5,21 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZId, ZOptionalNumber } from "@formbricks/types/common";
-import {
-  TConnector,
-  TConnectorCreateInput,
-  TConnectorFieldMappingCreateInput,
-  TConnectorFormbricksMappingCreateInput,
-  TConnectorUpdateInput,
-  TConnectorWithMappings,
-  ZConnectorCreateInput,
-  ZConnectorUpdateInput,
-} from "@formbricks/types/connector";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
+import {
+  TFeedbackSource,
+  TFeedbackSourceCreateInput,
+  TFeedbackSourceFieldMappingCreateInput,
+  TFeedbackSourceFormbricksMappingCreateInput,
+  TFeedbackSourceUpdateInput,
+  TFeedbackSourceWithMappings,
+  ZFeedbackSourceCreateInput,
+  ZFeedbackSourceUpdateInput,
+} from "@formbricks/types/feedback-source";
 import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
 
-const selectConnectorWithMappings = {
+const selectFeedbackSourceWithMappings = {
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -35,7 +35,7 @@ const selectConnectorWithMappings = {
     select: {
       id: true,
       createdAt: true,
-      connectorId: true,
+      feedbackSourceId: true,
       workspaceId: true,
       surveyId: true,
       elementId: true,
@@ -47,16 +47,16 @@ const selectConnectorWithMappings = {
     select: {
       id: true,
       createdAt: true,
-      connectorId: true,
+      feedbackSourceId: true,
       workspaceId: true,
       sourceFieldId: true,
       targetFieldId: true,
       staticValue: true,
     },
   },
-} satisfies Prisma.ConnectorSelect;
+} satisfies Prisma.FeedbackSourceSelect;
 
-const selectConnector = {
+const selectFeedbackSource = {
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -67,25 +67,29 @@ const selectConnector = {
   feedbackDirectoryId: true,
   lastSyncAt: true,
   createdBy: true,
-} satisfies Prisma.ConnectorSelect;
+} satisfies Prisma.FeedbackSourceSelect;
 
-type PrismaConnectorWithCreator = Prisma.ConnectorGetPayload<{ select: typeof selectConnectorWithMappings }>;
+type PrismaFeedbackSourceWithCreator = Prisma.FeedbackSourceGetPayload<{
+  select: typeof selectFeedbackSourceWithMappings;
+}>;
 
-const mapConnectorWithMappings = (connector: PrismaConnectorWithCreator): TConnectorWithMappings => {
-  const { creator, ...rest } = connector;
-  return { ...rest, creatorName: creator?.name ?? null } as TConnectorWithMappings;
+const mapFeedbackSourceWithMappings = (
+  feedbackSource: PrismaFeedbackSourceWithCreator
+): TFeedbackSourceWithMappings => {
+  const { creator, ...rest } = feedbackSource;
+  return { ...rest, creatorName: creator?.name ?? null } as TFeedbackSourceWithMappings;
 };
 
-export const getConnectorsWithMappings = reactCache(
-  async (workspaceId: string, page?: number): Promise<TConnectorWithMappings[]> => {
+export const getFeedbackSourcesWithMappings = reactCache(
+  async (workspaceId: string, page?: number): Promise<TFeedbackSourceWithMappings[]> => {
     validateInputs([workspaceId, ZId], [page, ZOptionalNumber]);
 
     try {
-      const connectors = await prisma.connector.findMany({
+      const feedbackSources = await prisma.feedbackSource.findMany({
         where: {
           workspaceId,
         },
-        select: selectConnectorWithMappings,
+        select: selectFeedbackSourceWithMappings,
         orderBy: {
           createdAt: "desc",
         },
@@ -93,7 +97,7 @@ export const getConnectorsWithMappings = reactCache(
         skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
       });
 
-      return connectors.map(mapConnectorWithMappings);
+      return feedbackSources.map(mapFeedbackSourceWithMappings);
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);
@@ -103,20 +107,20 @@ export const getConnectorsWithMappings = reactCache(
   }
 );
 
-export const getConnectorWithMappingsById = reactCache(
-  async (connectorId: string, workspaceId: string): Promise<TConnectorWithMappings | null> => {
-    validateInputs([connectorId, ZId], [workspaceId, ZId]);
+export const getFeedbackSourceWithMappingsById = reactCache(
+  async (feedbackSourceId: string, workspaceId: string): Promise<TFeedbackSourceWithMappings | null> => {
+    validateInputs([feedbackSourceId, ZId], [workspaceId, ZId]);
 
     try {
-      const connector = await prisma.connector.findUnique({
+      const feedbackSource = await prisma.feedbackSource.findUnique({
         where: {
-          id: connectorId,
+          id: feedbackSourceId,
           workspaceId,
         },
-        select: selectConnectorWithMappings,
+        select: selectFeedbackSourceWithMappings,
       });
 
-      return connector ? mapConnectorWithMappings(connector) : null;
+      return feedbackSource ? mapFeedbackSourceWithMappings(feedbackSource) : null;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);
@@ -126,12 +130,12 @@ export const getConnectorWithMappingsById = reactCache(
   }
 );
 
-export const getConnectorsBySurveyId = reactCache(
-  async (surveyId: string): Promise<TConnectorWithMappings[]> => {
+export const getFeedbackSourcesBySurveyId = reactCache(
+  async (surveyId: string): Promise<TFeedbackSourceWithMappings[]> => {
     validateInputs([surveyId, ZId]);
 
     try {
-      const connectors = await prisma.connector.findMany({
+      const feedbackSources = await prisma.feedbackSource.findMany({
         where: {
           type: "formbricks_survey",
           status: "active",
@@ -141,10 +145,10 @@ export const getConnectorsBySurveyId = reactCache(
             },
           },
         },
-        select: selectConnectorWithMappings,
+        select: selectFeedbackSourceWithMappings,
       });
 
-      return connectors.map(mapConnectorWithMappings);
+      return feedbackSources.map(mapFeedbackSourceWithMappings);
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         throw new DatabaseError(error.message);
@@ -154,17 +158,17 @@ export const getConnectorsBySurveyId = reactCache(
   }
 );
 
-export const updateConnector = async (
-  connectorId: string,
+export const updateFeedbackSource = async (
+  feedbackSourceId: string,
   workspaceId: string,
-  data: TConnectorUpdateInput
-): Promise<TConnector> => {
-  validateInputs([connectorId, ZId], [data, ZConnectorUpdateInput], [workspaceId, ZId]);
+  data: TFeedbackSourceUpdateInput
+): Promise<TFeedbackSource> => {
+  validateInputs([feedbackSourceId, ZId], [data, ZFeedbackSourceUpdateInput], [workspaceId, ZId]);
 
   try {
-    const connector = await prisma.connector.update({
+    const feedbackSource = await prisma.feedbackSource.update({
       where: {
-        id: connectorId,
+        id: feedbackSourceId,
         workspaceId,
       },
       data: {
@@ -172,14 +176,14 @@ export const updateConnector = async (
         status: data.status,
         lastSyncAt: data.lastSyncAt,
       },
-      select: selectConnector,
+      select: selectFeedbackSource,
     });
 
-    return connector as TConnector;
+    return feedbackSource;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === PrismaErrorType.RecordDoesNotExist) {
-        throw new ResourceNotFoundError("Connector", connectorId);
+        throw new ResourceNotFoundError("FeedbackSource", feedbackSourceId);
       }
       throw new DatabaseError(error.message);
     }
@@ -187,23 +191,26 @@ export const updateConnector = async (
   }
 };
 
-export const deleteConnector = async (connectorId: string, workspaceId: string): Promise<TConnector> => {
-  validateInputs([connectorId, ZId], [workspaceId, ZId]);
+export const deleteFeedbackSource = async (
+  feedbackSourceId: string,
+  workspaceId: string
+): Promise<TFeedbackSource> => {
+  validateInputs([feedbackSourceId, ZId], [workspaceId, ZId]);
 
   try {
-    const connector = await prisma.connector.delete({
+    const feedbackSource = await prisma.feedbackSource.delete({
       where: {
-        id: connectorId,
+        id: feedbackSourceId,
         workspaceId,
       },
-      select: selectConnector,
+      select: selectFeedbackSource,
     });
 
-    return connector as TConnector;
+    return feedbackSource;
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === PrismaErrorType.RecordDoesNotExist) {
-        throw new ResourceNotFoundError("Connector", connectorId);
+        throw new ResourceNotFoundError("FeedbackSource", feedbackSourceId);
       }
       throw new DatabaseError(error.message);
     }
@@ -217,36 +224,36 @@ const mapUniqueConstraintError = (error: PrismaClientKnownRequestError): Invalid
   const target = error.meta?.target;
   const targetFields = Array.isArray(target) ? (target as string[]) : [];
   if (targetFields.includes("elementId") || targetFields.includes("surveyId")) {
-    return new InvalidInputError("CONNECTOR_FORMBRICKS_MAPPING_DUPLICATE");
+    return new InvalidInputError("FEEDBACK_SOURCE_FORMBRICKS_MAPPING_DUPLICATE");
   }
   if (targetFields.includes("sourceFieldId") || targetFields.includes("targetFieldId")) {
-    return new InvalidInputError("CONNECTOR_FIELD_MAPPING_DUPLICATE");
+    return new InvalidInputError("FEEDBACK_SOURCE_FIELD_MAPPING_DUPLICATE");
   }
-  return new InvalidInputError("CONNECTOR_NAME_DUPLICATE");
+  return new InvalidInputError("FEEDBACK_SOURCE_NAME_DUPLICATE");
 };
 
 export type TFormbricksMappingsInput = {
   type: "formbricks_survey";
-  mappings: TConnectorFormbricksMappingCreateInput[];
+  mappings: TFeedbackSourceFormbricksMappingCreateInput[];
 };
 
 export type TFieldMappingsInput = {
   type: "field";
-  mappings: TConnectorFieldMappingCreateInput[];
+  mappings: TFeedbackSourceFieldMappingCreateInput[];
 };
 
 export type TMappingsInput = TFormbricksMappingsInput | TFieldMappingsInput;
 
-export const createConnectorWithMappings = async (
+export const createFeedbackSourceWithMappings = async (
   workspaceId: string,
-  data: TConnectorCreateInput,
+  data: TFeedbackSourceCreateInput,
   mappingsInput?: TMappingsInput
-): Promise<TConnectorWithMappings> => {
-  validateInputs([workspaceId, ZId], [data, ZConnectorCreateInput]);
+): Promise<TFeedbackSourceWithMappings> => {
+  validateInputs([workspaceId, ZId], [data, ZFeedbackSourceCreateInput]);
 
   try {
     const result = await prisma.$transaction(async (tx) => {
-      const connector = await tx.connector.create({
+      const feedbackSource = await tx.feedbackSource.create({
         data: {
           name: data.name,
           type: data.type,
@@ -259,9 +266,9 @@ export const createConnectorWithMappings = async (
       if (mappingsInput?.type === "formbricks_survey") {
         await Promise.all(
           mappingsInput.mappings.map((mapping) =>
-            tx.connectorFormbricksMapping.create({
+            tx.feedbackSourceFormbricksMapping.create({
               data: {
-                connectorId: connector.id,
+                feedbackSourceId: feedbackSource.id,
                 workspaceId,
                 surveyId: mapping.surveyId,
                 elementId: mapping.elementId,
@@ -274,9 +281,9 @@ export const createConnectorWithMappings = async (
       } else if (mappingsInput?.type === "field") {
         await Promise.all(
           mappingsInput.mappings.map((mapping) =>
-            tx.connectorFieldMapping.create({
+            tx.feedbackSourceFieldMapping.create({
               data: {
-                connectorId: connector.id,
+                feedbackSourceId: feedbackSource.id,
                 workspaceId,
                 sourceFieldId: mapping.sourceFieldId,
                 targetFieldId: mapping.targetFieldId,
@@ -287,13 +294,13 @@ export const createConnectorWithMappings = async (
         );
       }
 
-      return tx.connector.findUniqueOrThrow({
-        where: { id: connector.id },
-        select: selectConnectorWithMappings,
+      return tx.feedbackSource.findUniqueOrThrow({
+        where: { id: feedbackSource.id },
+        select: selectFeedbackSourceWithMappings,
       });
     });
 
-    return mapConnectorWithMappings(result);
+    return mapFeedbackSourceWithMappings(result);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === PrismaErrorType.UniqueConstraintViolation) {
@@ -305,18 +312,18 @@ export const createConnectorWithMappings = async (
   }
 };
 
-export const updateConnectorWithMappings = async (
-  connectorId: string,
+export const updateFeedbackSourceWithMappings = async (
+  feedbackSourceId: string,
   workspaceId: string,
-  data: TConnectorUpdateInput,
+  data: TFeedbackSourceUpdateInput,
   mappingsInput?: TMappingsInput
-): Promise<TConnectorWithMappings> => {
-  validateInputs([connectorId, ZId], [data, ZConnectorUpdateInput], [workspaceId, ZId]);
+): Promise<TFeedbackSourceWithMappings> => {
+  validateInputs([feedbackSourceId, ZId], [data, ZFeedbackSourceUpdateInput], [workspaceId, ZId]);
 
   try {
     const result = await prisma.$transaction(async (tx) => {
-      await tx.connector.update({
-        where: { id: connectorId, workspaceId },
+      await tx.feedbackSource.update({
+        where: { id: feedbackSourceId, workspaceId },
         data: {
           name: data.name,
           status: data.status,
@@ -325,15 +332,15 @@ export const updateConnectorWithMappings = async (
       });
 
       if (mappingsInput?.type === "formbricks_survey") {
-        await tx.connectorFormbricksMapping.deleteMany({
-          where: { connectorId, workspaceId },
+        await tx.feedbackSourceFormbricksMapping.deleteMany({
+          where: { feedbackSourceId, workspaceId },
         });
 
         await Promise.all(
           mappingsInput.mappings.map((mapping) =>
-            tx.connectorFormbricksMapping.create({
+            tx.feedbackSourceFormbricksMapping.create({
               data: {
-                connectorId,
+                feedbackSourceId,
                 workspaceId,
                 surveyId: mapping.surveyId,
                 elementId: mapping.elementId,
@@ -344,15 +351,15 @@ export const updateConnectorWithMappings = async (
           )
         );
       } else if (mappingsInput?.type === "field") {
-        await tx.connectorFieldMapping.deleteMany({
-          where: { connectorId, workspaceId },
+        await tx.feedbackSourceFieldMapping.deleteMany({
+          where: { feedbackSourceId, workspaceId },
         });
 
         await Promise.all(
           mappingsInput.mappings.map((mapping) =>
-            tx.connectorFieldMapping.create({
+            tx.feedbackSourceFieldMapping.create({
               data: {
-                connectorId,
+                feedbackSourceId,
                 workspaceId,
                 sourceFieldId: mapping.sourceFieldId,
                 targetFieldId: mapping.targetFieldId,
@@ -363,20 +370,20 @@ export const updateConnectorWithMappings = async (
         );
       }
 
-      return tx.connector.findUniqueOrThrow({
-        where: { id: connectorId },
-        select: selectConnectorWithMappings,
+      return tx.feedbackSource.findUniqueOrThrow({
+        where: { id: feedbackSourceId },
+        select: selectFeedbackSourceWithMappings,
       });
     });
 
-    return mapConnectorWithMappings(result);
+    return mapFeedbackSourceWithMappings(result);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === PrismaErrorType.UniqueConstraintViolation) {
         throw mapUniqueConstraintError(error);
       }
       if (error.code === PrismaErrorType.RecordDoesNotExist) {
-        throw new ResourceNotFoundError("Connector", connectorId);
+        throw new ResourceNotFoundError("FeedbackSource", feedbackSourceId);
       }
       throw new DatabaseError(error.message);
     }

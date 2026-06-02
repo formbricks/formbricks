@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { TConnectorWithMappings } from "@formbricks/types/connector";
 import { InvalidInputError } from "@formbricks/types/errors";
+import { TFeedbackSourceWithMappings } from "@formbricks/types/feedback-source";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { importHistoricalResponses } from "./import";
 
@@ -21,15 +21,15 @@ const { createFeedbackRecordsBatch } = vi.mocked(await import("@/modules/hub"));
 const { transformResponseToFeedbackRecords } = vi.mocked(await import("./transform"));
 
 const ENV_ID = "clxxxxxxxxxxxxxxxx001";
-const CONNECTOR_ID = "clxxxxxxxxxxxxxxxx002";
+const FEEDBACK_SOURCE_ID = "clxxxxxxxxxxxxxxxx002";
 const SURVEY_ID = "clxxxxxxxxxxxxxxxx003";
 const NOW = new Date("2026-02-24T10:00:00.000Z");
 
-const mockConnector: TConnectorWithMappings = {
-  id: CONNECTOR_ID,
+const mockFeedbackSource: TFeedbackSourceWithMappings = {
+  id: FEEDBACK_SOURCE_ID,
   createdAt: NOW,
   updatedAt: NOW,
-  name: "Test Connector",
+  name: "Test FeedbackSource",
   type: "formbricks_survey",
   status: "active",
   workspaceId: ENV_ID,
@@ -40,7 +40,7 @@ const mockConnector: TConnectorWithMappings = {
     {
       id: "mapping-1",
       createdAt: NOW,
-      connectorId: CONNECTOR_ID,
+      feedbackSourceId: FEEDBACK_SOURCE_ID,
       workspaceId: ENV_ID,
       surveyId: SURVEY_ID,
       elementId: "el-1",
@@ -58,17 +58,17 @@ describe("importHistoricalResponses", () => {
     vi.clearAllMocks();
   });
 
-  test("throws InvalidInputError for non-formbricks connector", async () => {
-    const csvConnector = { ...mockConnector, type: "csv" as const };
+  test("throws InvalidInputError for non-formbricks feedbackSource", async () => {
+    const csvFeedbackSource = { ...mockFeedbackSource, type: "csv" as const };
 
-    await expect(importHistoricalResponses(csvConnector, mockSurvey)).rejects.toThrow(InvalidInputError);
+    await expect(importHistoricalResponses(csvFeedbackSource, mockSurvey)).rejects.toThrow(InvalidInputError);
     expect(getResponses).not.toHaveBeenCalled();
   });
 
   test("returns zeros when there are no responses", async () => {
     getResponses.mockResolvedValue([]);
 
-    const result = await importHistoricalResponses(mockConnector, mockSurvey);
+    const result = await importHistoricalResponses(mockFeedbackSource, mockSurvey);
 
     expect(result).toEqual({ successes: 0, failures: 0, skipped: 0 });
   });
@@ -90,7 +90,7 @@ describe("importHistoricalResponses", () => {
       ],
     } as never);
 
-    const result = await importHistoricalResponses(mockConnector, mockSurvey);
+    const result = await importHistoricalResponses(mockFeedbackSource, mockSurvey);
 
     expect(result.successes).toBe(2);
     expect(result.failures).toBe(0);
@@ -108,7 +108,7 @@ describe("importHistoricalResponses", () => {
       results: [{ data: null, error: { status: 400, message: "Bad request" } }],
     } as never);
 
-    const result = await importHistoricalResponses(mockConnector, mockSurvey);
+    const result = await importHistoricalResponses(mockFeedbackSource, mockSurvey);
 
     expect(result.successes).toBe(0);
     expect(result.failures).toBe(1);
@@ -129,7 +129,7 @@ describe("importHistoricalResponses", () => {
       ],
     } as never);
 
-    const result = await importHistoricalResponses(mockConnector, mockSurvey);
+    const result = await importHistoricalResponses(mockFeedbackSource, mockSurvey);
 
     expect(result.successes).toBe(1);
     expect(result.failures).toBe(1);
@@ -149,7 +149,7 @@ describe("importHistoricalResponses", () => {
       results: [{ data: { id: "fb" }, error: null }],
     } as never);
 
-    await importHistoricalResponses(mockConnector, mockSurvey);
+    await importHistoricalResponses(mockFeedbackSource, mockSurvey);
 
     expect(getResponses).toHaveBeenCalledWith(SURVEY_ID, 50, 0);
     expect(getResponses).toHaveBeenCalledWith(SURVEY_ID, 50, 50);
@@ -162,7 +162,7 @@ describe("importHistoricalResponses", () => {
 
     transformResponseToFeedbackRecords.mockReturnValue([]);
 
-    const result = await importHistoricalResponses(mockConnector, mockSurvey);
+    const result = await importHistoricalResponses(mockFeedbackSource, mockSurvey);
 
     expect(createFeedbackRecordsBatch).not.toHaveBeenCalled();
     expect(result).toEqual({ successes: 0, failures: 0, skipped: 2 });

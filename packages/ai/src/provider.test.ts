@@ -273,6 +273,83 @@ describe("packages/ai provider helpers", () => {
     expect(vertexProvider).toHaveBeenCalledWith("gemini-2.5-flash");
   });
 
+  test.each([
+    [
+      "us",
+      "https://aiplatform.us.rep.googleapis.com/v1/projects/test-project/locations/us/publishers/google",
+    ],
+    [
+      "eu",
+      "https://aiplatform.eu.rep.googleapis.com/v1/projects/test-project/locations/eu/publishers/google",
+    ],
+  ])("creates a Google Cloud model with the %s multi-region endpoint", (location, baseURL) => {
+    const vertexProvider = createMockProvider("google");
+    mocks.createVertex.mockReturnValue(vertexProvider);
+
+    const model = getAiModel({
+      AI_PROVIDER: "google",
+      AI_MODEL: "gemini-3.5-flash",
+      AI_GOOGLE_CLOUD_PROJECT: "test-project",
+      AI_GOOGLE_CLOUD_LOCATION: location,
+    });
+
+    expect(model).toEqual({ providerName: "google", modelName: "gemini-3.5-flash" });
+    expect(mocks.createVertex).toHaveBeenCalledWith({
+      project: "test-project",
+      location,
+      baseURL,
+    });
+    expect(vertexProvider).toHaveBeenCalledWith("gemini-3.5-flash");
+  });
+
+  test.each(["global", "europe-west3", "me-central2"])(
+    "keeps the SDK default Google Cloud endpoint for the %s location",
+    (location) => {
+      const vertexProvider = createMockProvider("google");
+      mocks.createVertex.mockReturnValue(vertexProvider);
+
+      const model = getAiModel({
+        AI_PROVIDER: "google",
+        AI_MODEL: "gemini-3.5-flash",
+        AI_GOOGLE_CLOUD_PROJECT: "test-project",
+        AI_GOOGLE_CLOUD_LOCATION: location,
+      });
+
+      expect(model).toEqual({ providerName: "google", modelName: "gemini-3.5-flash" });
+      expect(mocks.createVertex).toHaveBeenCalledWith({
+        project: "test-project",
+        location,
+      });
+      expect(vertexProvider).toHaveBeenCalledWith("gemini-3.5-flash");
+    }
+  );
+
+  test("does not reuse a cached Google Cloud model after credentials change", () => {
+    const firstVertexProvider = createMockProvider("google");
+    const secondVertexProvider = createMockProvider("google");
+    mocks.createVertex.mockReturnValueOnce(firstVertexProvider).mockReturnValueOnce(secondVertexProvider);
+
+    const firstModel = getAiModel({
+      AI_PROVIDER: "google",
+      AI_MODEL: "gemini-3.5-flash",
+      AI_GOOGLE_CLOUD_PROJECT: "test-project",
+      AI_GOOGLE_CLOUD_LOCATION: "eu",
+      AI_GOOGLE_CLOUD_CREDENTIALS_JSON: JSON.stringify({ client_email: "first@example.com" }),
+    });
+    const secondModel = getAiModel({
+      AI_PROVIDER: "google",
+      AI_MODEL: "gemini-3.5-flash",
+      AI_GOOGLE_CLOUD_PROJECT: "test-project",
+      AI_GOOGLE_CLOUD_LOCATION: "eu",
+      AI_GOOGLE_CLOUD_CREDENTIALS_JSON: JSON.stringify({ client_email: "second@example.com" }),
+    });
+
+    expect(firstModel).toEqual({ providerName: "google", modelName: "gemini-3.5-flash" });
+    expect(secondModel).toEqual({ providerName: "google", modelName: "gemini-3.5-flash" });
+    expect(secondModel).not.toBe(firstModel);
+    expect(mocks.createVertex).toHaveBeenCalledTimes(2);
+  });
+
   test("creates an AWS model with explicit AWS credentials", () => {
     const bedrockProvider = createMockProvider("aws");
     mocks.createAmazonBedrock.mockReturnValue(bedrockProvider);

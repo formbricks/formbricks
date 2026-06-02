@@ -573,6 +573,42 @@ describe("withV3ApiWrapper", () => {
     expect(body.code).toBe("too_many_requests");
   });
 
+  test("applies rate limiting before parsing request bodies", async () => {
+    const { applyRateLimit } = await import("@/modules/core/rate-limit/helpers");
+    mockGetServerSession.mockResolvedValue({
+      user: { id: "user_1" },
+      expires: "2026-01-01",
+    });
+    vi.mocked(applyRateLimit).mockRejectedValueOnce(new TooManyRequestsError("Too many requests", 60));
+
+    const handler = vi.fn(async () => Response.json({ ok: true }));
+    const wrapped = withV3ApiWrapper({
+      auth: "both",
+      schemas: {
+        body: z.object({
+          name: z.string(),
+        }),
+      },
+      handler,
+    });
+
+    const response = await wrapped(
+      new NextRequest("http://localhost/api/v3/surveys", {
+        method: "POST",
+        body: "{",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }),
+      {} as never
+    );
+
+    expect(response.status).toBe(429);
+    expect(handler).not.toHaveBeenCalled();
+    const body = await response.json();
+    expect(body.code).toBe("too_many_requests");
+  });
+
   test("returns 500 problem response when the handler throws unexpectedly", async () => {
     mockGetServerSession.mockResolvedValue({
       user: { id: "user_1" },

@@ -1,4 +1,5 @@
 import { createVertex as createGoogleCloudProvider } from "@ai-sdk/google-vertex";
+import { createHash } from "node:crypto";
 import { AIConfigurationError } from "../errors";
 import type { AIProviderAdapter } from "../registry";
 import { normalizeValue } from "../shared";
@@ -6,8 +7,39 @@ import type { AIEnvironment } from "../types";
 
 type GoogleProviderSettings = NonNullable<Parameters<typeof createGoogleCloudProvider>[0]>;
 
+const GOOGLE_VERTEX_MULTI_REGION_API_VERSION = "v1";
+
+const GOOGLE_VERTEX_MULTI_REGION_HOSTS: Partial<Record<string, string>> = {
+  eu: "https://aiplatform.eu.rep.googleapis.com",
+  us: "https://aiplatform.us.rep.googleapis.com",
+};
+
 const isCredentialsObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
+
+const getGoogleCredentialFingerprint = (value?: string | null): string | null => {
+  const normalizedValue = normalizeValue(value);
+
+  if (!normalizedValue) {
+    return null;
+  }
+
+  return createHash("sha256").update(normalizedValue).digest("hex");
+};
+
+const getGoogleVertexMultiRegionBaseURL = (project?: string, location?: string): string | undefined => {
+  if (!project || !location) {
+    return undefined;
+  }
+
+  const multiRegionHost = GOOGLE_VERTEX_MULTI_REGION_HOSTS[location];
+
+  if (!multiRegionHost) {
+    return undefined;
+  }
+
+  return `${multiRegionHost}/${GOOGLE_VERTEX_MULTI_REGION_API_VERSION}/projects/${project}/locations/${location}/publishers/google`;
+};
 
 const parseGoogleCredentialsJson = (value?: string | null): Record<string, unknown> | undefined => {
   const normalizedValue = normalizeValue(value);
@@ -59,14 +91,23 @@ export const googleProviderAdapter: AIProviderAdapter = {
       model,
       project: normalizeValue(environment.AI_GOOGLE_CLOUD_PROJECT),
       location: normalizeValue(environment.AI_GOOGLE_CLOUD_LOCATION),
-      hasCredentialsJson: Boolean(normalizeValue(environment.AI_GOOGLE_CLOUD_CREDENTIALS_JSON)),
-      hasApplicationCredentials: Boolean(normalizeValue(environment.AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS)),
+      baseURL: getGoogleVertexMultiRegionBaseURL(
+        normalizeValue(environment.AI_GOOGLE_CLOUD_PROJECT),
+        normalizeValue(environment.AI_GOOGLE_CLOUD_LOCATION)
+      ),
+      credentialsJsonFingerprint: getGoogleCredentialFingerprint(
+        environment.AI_GOOGLE_CLOUD_CREDENTIALS_JSON
+      ),
+      applicationCredentialsFingerprint: getGoogleCredentialFingerprint(
+        environment.AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS
+      ),
     }),
   createModel: (model: string, environment: AIEnvironment) => {
     const project = normalizeValue(environment.AI_GOOGLE_CLOUD_PROJECT);
     const location = normalizeValue(environment.AI_GOOGLE_CLOUD_LOCATION);
     const credentialsJson = normalizeValue(environment.AI_GOOGLE_CLOUD_CREDENTIALS_JSON);
     const applicationCredentials = normalizeValue(environment.AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS);
+    const baseURL = getGoogleVertexMultiRegionBaseURL(project, location);
 
     if (!project || !location) {
       throw new AIConfigurationError("providerNotConfigured", "Google Cloud AI configuration is incomplete", {
@@ -104,6 +145,7 @@ export const googleProviderAdapter: AIProviderAdapter = {
     const googleCloudProvider = createGoogleCloudProvider({
       project,
       location,
+      ...(baseURL ? { baseURL } : {}),
       ...(googleAuthOptions ? { googleAuthOptions } : {}),
     });
 

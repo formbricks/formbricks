@@ -2,30 +2,30 @@
 
 import { Loader2Icon } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { TConnectorWithMappings } from "@formbricks/types/connector";
-import { ConnectorsTableRowsContainer } from "./connectors-table-rows-container";
+import { TFeedbackSourceWithMappings } from "@formbricks/types/feedback-source";
+import { FeedbackSourcesTableRowsContainer } from "./feedback-sources-table-rows-container";
 
-interface ConnectorsTableProps {
-  connectors: TConnectorWithMappings[];
-  onConnectorClick: (connector: TConnectorWithMappings) => void;
-  onCsvImport: (connector: TConnectorWithMappings) => void;
-  onDuplicate: (connector: TConnectorWithMappings) => Promise<void>;
-  onToggleStatus: (connector: TConnectorWithMappings) => Promise<void>;
-  onDelete: (connectorId: string) => Promise<void>;
+interface FeedbackSourcesTableProps {
+  feedbackSources: TFeedbackSourceWithMappings[];
+  onFeedbackSourceClick: (feedbackSource: TFeedbackSourceWithMappings) => void;
+  onCsvImport: (feedbackSource: TFeedbackSourceWithMappings) => void;
+  onDuplicate: (feedbackSource: TFeedbackSourceWithMappings) => Promise<void>;
+  onToggleStatus: (feedbackSource: TFeedbackSourceWithMappings) => Promise<void>;
+  onDelete: (feedbackSourceId: string) => Promise<void>;
   isLoading?: boolean;
   isReadOnly?: boolean;
 }
 
-export function ConnectorsTable({
-  connectors,
-  onConnectorClick,
+export function FeedbackSourcesTable({
+  feedbackSources,
+  onFeedbackSourceClick,
   onCsvImport,
   onDuplicate,
   onToggleStatus,
   onDelete,
   isLoading = false,
   isReadOnly = false,
-}: Readonly<ConnectorsTableProps>) {
+}: Readonly<FeedbackSourcesTableProps>) {
   const { t } = useTranslation();
 
   return (
@@ -43,9 +43,9 @@ export function ConnectorsTable({
           <Loader2Icon className="size-6 animate-spin text-slate-500" />
         </div>
       ) : (
-        <ConnectorsTableRowsContainer
-          connectors={connectors}
-          onConnectorClick={onConnectorClick}
+        <FeedbackSourcesTableRowsContainer
+          feedbackSources={feedbackSources}
+          onFeedbackSourceClick={onFeedbackSourceClick}
           onCsvImport={onCsvImport}
           onDuplicate={onDuplicate}
           onToggleStatus={onToggleStatus}

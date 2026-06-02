@@ -8,8 +8,8 @@ import {
   type TV3PatchSurveyBody,
   type TV3SurveyDocument,
   ZV3CreateSurveyBody,
-  ZV3SurveyDocumentBase,
   createZV3PatchSurveyBodySchema,
+  createZV3SurveyDocumentBaseSchema,
   formatV3ZodInvalidParams,
 } from "./schemas";
 import { type TV3SurveyDocumentValidationResult, validateV3SurveyDocument } from "./validation";
@@ -65,7 +65,19 @@ function getV3SurveyDocumentLanguages(survey: TInternalSurvey) {
   );
 }
 
-function buildDocumentFromSurvey(survey: TInternalSurvey): TV3SurveyPrepareResult<TV3SurveyDocument> {
+function getV3SurveyPatchAllowedLanguageCodes(survey: TInternalSurvey): string[] {
+  return Array.from(
+    new Set([
+      ...getV3SurveyLanguages(survey, DEFAULT_V3_SURVEY_LANGUAGE).map(({ code }) => code),
+      ...(survey.languages ?? []).map((surveyLanguage) => surveyLanguage.language.code),
+    ])
+  );
+}
+
+function buildDocumentFromSurvey(
+  survey: TInternalSurvey,
+  allowedLanguageCodes = getV3SurveyPatchAllowedLanguageCodes(survey)
+): TV3SurveyPrepareResult<TV3SurveyDocument> {
   if (Array.isArray(survey.questions) && survey.questions.length > 0) {
     return invalidPreparation([
       {
@@ -75,11 +87,16 @@ function buildDocumentFromSurvey(survey: TInternalSurvey): TV3SurveyPrepareResul
     ]);
   }
 
-  const documentResult = ZV3SurveyDocumentBase.safeParse({
+  const defaultLanguage = getV3SurveyDefaultLanguage(survey, DEFAULT_V3_SURVEY_LANGUAGE);
+  const documentResult = createZV3SurveyDocumentBaseSchema({
+    allowInternalDefaultTranslationKey: true,
+    allowedLanguageCodes,
+    fallbackDefaultLanguage: defaultLanguage,
+  }).safeParse({
     name: survey.name,
     status: survey.status,
     metadata: survey.metadata ?? {},
-    defaultLanguage: getV3SurveyDefaultLanguage(survey, DEFAULT_V3_SURVEY_LANGUAGE),
+    defaultLanguage,
     languages: getV3SurveyDocumentLanguages(survey),
     welcomeCard: survey.welcomeCard,
     blocks: survey.blocks,
@@ -167,15 +184,16 @@ export function prepareV3SurveyPatchInput(
   survey: TInternalSurvey,
   input: unknown
 ): TV3SurveyPrepareResult<TV3SurveyDocument> {
-  const currentDocument = buildDocumentFromSurvey(survey);
+  const allowedLanguageCodes = getV3SurveyPatchAllowedLanguageCodes(survey);
+  const currentDocument = buildDocumentFromSurvey(survey, allowedLanguageCodes);
 
   if (!currentDocument.ok) {
     return currentDocument;
   }
 
-  const parsedPatch = createZV3PatchSurveyBodySchema(currentDocument.document.defaultLanguage).safeParse(
-    input
-  );
+  const parsedPatch = createZV3PatchSurveyBodySchema(currentDocument.document.defaultLanguage, {
+    allowedLanguageCodes,
+  }).safeParse(input);
 
   if (!parsedPatch.success) {
     return invalidPreparation(formatV3ZodInvalidParams(parsedPatch.error, "data"));

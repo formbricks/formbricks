@@ -1,5 +1,5 @@
 import { TFunction } from "i18next";
-import { TConnectorType, THubFieldType, ZHubFieldType } from "@formbricks/types/connector";
+import { TFeedbackSourceType, THubFieldType, ZHubFieldType } from "@formbricks/types/feedback-source";
 import {
   CSV_REQUIRED_UI_FIELDS,
   CSV_TARGET_FIELDS,
@@ -9,17 +9,17 @@ import {
   TSourceField,
 } from "./types";
 
-export type TConnectorOptionId = TConnectorType | "api_ingestion" | "feedback_record_mcp";
+export type TFeedbackSourceOptionId = TFeedbackSourceType | "api_ingestion" | "feedback_record_mcp";
 
-export interface TConnectorOption {
-  id: TConnectorOptionId;
+export interface TFeedbackSourceOption {
+  id: TFeedbackSourceOptionId;
   name: string;
   description: string;
   disabled: boolean;
   badge?: { text: string; type: "success" | "gray" | "warning" };
 }
 
-export const getConnectorOptions = (t: TFunction): TConnectorOption[] => [
+export const getFeedbackSourceOptions = (t: TFunction): TFeedbackSourceOption[] => [
   {
     id: "formbricks_survey",
     name: t("workspace.unify.formbricks_surveys"),
@@ -101,7 +101,7 @@ export const validateEnumMappings = (
   return errors;
 };
 
-export const isConnectorNameValid = (name: string): boolean => name.trim().length > 0;
+export const isFeedbackSourceNameValid = (name: string): boolean => name.trim().length > 0;
 
 export const toggleQuestionId = (currentSelection: string[], questionId: string): string[] => {
   return currentSelection.includes(questionId)
