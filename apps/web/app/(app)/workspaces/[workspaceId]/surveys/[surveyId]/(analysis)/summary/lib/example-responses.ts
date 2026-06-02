@@ -118,159 +118,73 @@ export type TGeneratedExampleDataset = {
   tagName: typeof EXAMPLE_AI_GENERATED_TAG_NAME;
 };
 
-const RESPONDENT_PROFILE_PRESETS: TExampleRespondentProfile[] = [
-  {
-    sentiment: "promoter",
-    persona: "product manager at a growing SaaS team",
-    verbosity: "detailed",
-    polish: "clean",
-    priorities: ["team adoption", "speed"],
-  },
-  {
-    sentiment: "positive",
-    persona: "founder at a small company",
-    verbosity: "brief",
-    polish: "casual",
-    priorities: ["cost", "setup"],
-  },
-  {
-    sentiment: "neutral",
-    persona: "operations lead comparing internal tools",
-    verbosity: "normal",
-    polish: "clean",
-    priorities: ["reliability", "reporting"],
-  },
-  {
-    sentiment: "skeptical",
-    persona: "software engineer maintaining data workflows",
-    verbosity: "normal",
-    polish: "rough",
-    priorities: ["missing features", "reliability"],
-  },
-  {
-    sentiment: "positive",
-    persona: "customer success manager",
-    verbosity: "detailed",
-    polish: "clean",
-    priorities: ["team adoption", "support"],
-  },
-  {
-    sentiment: "promoter",
-    persona: "executive stakeholder",
-    verbosity: "brief",
-    polish: "clean",
-    priorities: ["reporting", "speed"],
-  },
-  {
-    sentiment: "neutral",
-    persona: "designer running user research",
-    verbosity: "detailed",
-    polish: "casual",
-    priorities: ["setup", "team adoption"],
-  },
-  {
-    sentiment: "detractor",
-    persona: "developer evaluating the product for a side project",
-    verbosity: "brief",
-    polish: "rough",
-    priorities: ["cost", "missing features"],
-  },
-  {
-    sentiment: "positive",
-    persona: "analytics owner at a mid-market team",
-    verbosity: "normal",
-    polish: "clean",
-    priorities: ["reporting", "reliability"],
-  },
-  {
-    sentiment: "skeptical",
-    persona: "team lead with a busy roadmap",
-    verbosity: "normal",
-    polish: "casual",
-    priorities: ["speed", "setup"],
-  },
-];
+const RESPONDENT_PROFILE_PRESETS: TExampleRespondentProfile[] = (
+  [
+    ["promoter", "product manager at a growing SaaS team", "detailed", "clean", "team adoption", "speed"],
+    ["positive", "founder at a small company", "brief", "casual", "cost", "setup"],
+    ["neutral", "operations lead comparing internal tools", "normal", "clean", "reliability", "reporting"],
+    [
+      "skeptical",
+      "software engineer maintaining data workflows",
+      "normal",
+      "rough",
+      "missing features",
+      "reliability",
+    ],
+    ["positive", "customer success manager", "detailed", "clean", "team adoption", "support"],
+    ["promoter", "executive stakeholder", "brief", "clean", "reporting", "speed"],
+    ["neutral", "designer running user research", "detailed", "casual", "setup", "team adoption"],
+    [
+      "detractor",
+      "developer evaluating the product for a side project",
+      "brief",
+      "rough",
+      "cost",
+      "missing features",
+    ],
+    ["positive", "analytics owner at a mid-market team", "normal", "clean", "reporting", "reliability"],
+    ["skeptical", "team lead with a busy roadmap", "normal", "casual", "speed", "setup"],
+  ] as const
+).map(([sentiment, persona, verbosity, polish, priorityA, priorityB]) => ({
+  sentiment,
+  persona,
+  verbosity,
+  polish,
+  priorities: [priorityA, priorityB],
+}));
 
-const ADDRESS_FIXTURES: Array<Record<TAddressField, string>> = [
-  {
-    addressLine1: "14 Example Lane",
-    addressLine2: "",
-    city: "Springfield",
-    state: "IL",
-    zip: "62701",
-    country: "US",
-  },
-  {
-    addressLine1: "82 Demo Street",
-    addressLine2: "Suite 4",
-    city: "Berlin",
-    state: "BE",
-    zip: "10115",
-    country: "DE",
-  },
-  {
-    addressLine1: "5 Sample Road",
-    addressLine2: "",
-    city: "London",
-    state: "",
-    zip: "SW1A 1AA",
-    country: "GB",
-  },
-  {
-    addressLine1: "31 Test Avenue",
-    addressLine2: "Floor 2",
-    city: "Toronto",
-    state: "ON",
-    zip: "M5H 2N2",
-    country: "CA",
-  },
-  {
-    addressLine1: "9 Fictional Blvd",
-    addressLine2: "",
-    city: "Sydney",
-    state: "NSW",
-    zip: "2000",
-    country: "AU",
-  },
-];
+const ADDRESS_FIXTURES: Array<Record<TAddressField, string>> = (
+  [
+    ["14 Example Lane", "", "Springfield", "IL", "62701", "US"],
+    ["82 Demo Street", "Suite 4", "Berlin", "BE", "10115", "DE"],
+    ["5 Sample Road", "", "London", "", "SW1A 1AA", "GB"],
+    ["31 Test Avenue", "Floor 2", "Toronto", "ON", "M5H 2N2", "CA"],
+    ["9 Fictional Blvd", "", "Sydney", "NSW", "2000", "AU"],
+  ] as const
+).map(([addressLine1, addressLine2, city, state, zip, country]) => ({
+  addressLine1,
+  addressLine2,
+  city,
+  state,
+  zip,
+  country,
+}));
 
-const CONTACT_INFO_FIXTURES: Array<Record<TContactInfoField, string>> = [
-  {
-    firstName: "Alex",
-    lastName: "Morgan",
-    email: "alex.morgan@example.com",
-    phone: "+1 555 0101",
-    company: "Example Labs",
-  },
-  {
-    firstName: "Jamie",
-    lastName: "Taylor",
-    email: "jamie.taylor@example.com",
-    phone: "+44 20 7946 0102",
-    company: "Demo Works",
-  },
-  {
-    firstName: "Sam",
-    lastName: "Rivers",
-    email: "sam.rivers@example.com",
-    phone: "+49 30 1234 0103",
-    company: "Sample Systems",
-  },
-  {
-    firstName: "Riley",
-    lastName: "Chen",
-    email: "riley.chen@example.com",
-    phone: "+61 2 5550 0104",
-    company: "Fictional Studio",
-  },
-  {
-    firstName: "Jordan",
-    lastName: "Lee",
-    email: "jordan.lee@example.com",
-    phone: "+1 555 0105",
-    company: "Placeholder Co",
-  },
-];
+const CONTACT_INFO_FIXTURES: Array<Record<TContactInfoField, string>> = (
+  [
+    ["Alex", "Morgan", "alex.morgan@example.com", "+1 555 0101", "Example Labs"],
+    ["Jamie", "Taylor", "jamie.taylor@example.com", "+44 20 7946 0102", "Demo Works"],
+    ["Sam", "Rivers", "sam.rivers@example.com", "+49 30 1234 0103", "Sample Systems"],
+    ["Riley", "Chen", "riley.chen@example.com", "+61 2 5550 0104", "Fictional Studio"],
+    ["Jordan", "Lee", "jordan.lee@example.com", "+1 555 0105", "Placeholder Co"],
+  ] as const
+).map(([firstName, lastName, email, phone, company]) => ({
+  firstName,
+  lastName,
+  email,
+  phone,
+  company,
+}));
 
 // Modern surveys store this in `survey.blocks[].elements`; `survey.questions`
 // is the v1-compat field and may be empty. Walk both, de-dupe by id.

@@ -329,6 +329,76 @@ describe("generateExampleResponseDataset", () => {
     );
   });
 
+  test("locally generates valid answers for the remaining closed-ended element types", async () => {
+    const survey = makeSurvey([
+      { ...baseQuestion, id: "q_nps", type: TSurveyElementTypeEnum.NPS },
+      { ...baseQuestion, id: "q_csat", type: TSurveyElementTypeEnum.CSAT, scale: "number", range: 5 },
+      { ...baseQuestion, id: "q_ces", type: TSurveyElementTypeEnum.CES, scale: "number", range: 7 },
+      { ...baseQuestion, id: "q_date", type: TSurveyElementTypeEnum.Date, format: "M-d-y" },
+      { ...baseQuestion, id: "q_consent", type: TSurveyElementTypeEnum.Consent, label: i18n("I agree") },
+      {
+        ...baseQuestion,
+        id: "q_multi",
+        type: TSurveyElementTypeEnum.MultipleChoiceMulti,
+        choices: [
+          { id: "c1", label: i18n("A") },
+          { id: "c2", label: i18n("B") },
+          { id: "c3", label: i18n("C") },
+        ],
+      },
+      {
+        ...baseQuestion,
+        id: "q_rank",
+        type: TSurveyElementTypeEnum.Ranking,
+        choices: [
+          { id: "c1", label: i18n("A") },
+          { id: "c2", label: i18n("B") },
+          { id: "c3", label: i18n("C") },
+        ],
+      },
+      {
+        ...baseQuestion,
+        id: "q_matrix",
+        type: TSurveyElementTypeEnum.Matrix,
+        rows: [
+          { id: "r1", label: i18n("Speed") },
+          { id: "r2", label: i18n("Price") },
+        ],
+        columns: [
+          { id: "c1", label: i18n("Bad") },
+          { id: "c2", label: i18n("Good") },
+        ],
+      },
+      {
+        ...baseQuestion,
+        id: "q_pic",
+        type: TSurveyElementTypeEnum.PictureSelection,
+        allowMulti: true,
+        choices: [
+          { id: "pic_1", imageUrl: "https://example.com/a.png" },
+          { id: "pic_2", imageUrl: "https://example.com/b.png" },
+        ],
+      },
+    ] as unknown as TSurvey["questions"]);
+
+    const result = await generateExampleResponseDataset({ survey, organizationId: "org_1" });
+    const finished = result.responses.find((response) => response.finished);
+
+    expect(finished).toBeDefined();
+    if (!finished) throw new Error("Expected at least one finished response");
+    expect(finished.data.q_nps).toBeTypeOf("number");
+    expect(finished.data.q_csat).toBeTypeOf("number");
+    expect(finished.data.q_ces).toBeTypeOf("number");
+    expect(finished.data.q_date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(finished.data.q_consent).toBe("accepted");
+    expect(Array.isArray(finished.data.q_multi)).toBe(true);
+    expect(Array.isArray(finished.data.q_rank)).toBe(true);
+    expect((finished.data.q_rank as string[]).slice().sort()).toEqual(["A", "B", "C"]);
+    expect(finished.data.q_matrix).toEqual(expect.objectContaining({ Speed: expect.any(String) }));
+    expect(Array.isArray(finished.data.q_pic)).toBe(true);
+    expect(mocks.generateOrganizationAIObject).not.toHaveBeenCalled();
+  });
+
   test("generateExampleResponses returns only the response rows for compatibility", async () => {
     const survey = makeSurvey([
       { ...baseQuestion, id: "q_rating", type: TSurveyElementTypeEnum.Rating, scale: "number", range: 5 },
