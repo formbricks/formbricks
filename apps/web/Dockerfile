@@ -136,6 +136,86 @@ RUN mkdir -p ./node_modules/.bin \
 COPY --from=installer /app/node_modules/dotenv ./node_modules/dotenv
 RUN chmod -R 755 ./node_modules/dotenv
 
+# @prisma/config + its transitive chain. Required at runtime because the
+# Prisma CLI hard-requires `@prisma/config` at module load (every invocation
+# of `prisma migrate deploy`, including the one at container boot). Removing
+# any of these triggers MODULE_NOT_FOUND from inside @prisma/config or its
+# deps. Do NOT trim this list without first relocating migrations out of the
+# runtime image (e.g. via a dedicated K8s migration job + SKIP_STARTUP_MIGRATION=true).
+COPY --from=installer /app/node_modules/@standard-schema ./node_modules/@standard-schema
+COPY --from=installer /app/node_modules/c12 ./node_modules/c12
+COPY --from=installer /app/node_modules/confbox ./node_modules/confbox
+COPY --from=installer /app/node_modules/deepmerge-ts ./node_modules/deepmerge-ts
+COPY --from=installer /app/node_modules/defu ./node_modules/defu
+COPY --from=installer /app/node_modules/destr ./node_modules/destr
+COPY --from=installer /app/node_modules/effect ./node_modules/effect
+COPY --from=installer /app/node_modules/empathic ./node_modules/empathic
+COPY --from=installer /app/node_modules/exsolve ./node_modules/exsolve
+COPY --from=installer /app/node_modules/fast-check ./node_modules/fast-check
+COPY --from=installer /app/node_modules/giget ./node_modules/giget
+COPY --from=installer /app/node_modules/jiti ./node_modules/jiti
+COPY --from=installer /app/node_modules/ohash ./node_modules/ohash
+COPY --from=installer /app/node_modules/pathe ./node_modules/pathe
+COPY --from=installer /app/node_modules/perfect-debounce ./node_modules/perfect-debounce
+COPY --from=installer /app/node_modules/pkg-types ./node_modules/pkg-types
+COPY --from=installer /app/node_modules/pure-rand ./node_modules/pure-rand
+COPY --from=installer /app/node_modules/rc9 ./node_modules/rc9
+COPY --from=installer /app/node_modules/cross-spawn ./node_modules/cross-spawn
+COPY --from=installer /app/node_modules/foreground-child ./node_modules/foreground-child
+COPY --from=installer /app/node_modules/get-port-please ./node_modules/get-port-please
+COPY --from=installer /app/node_modules/graceful-fs ./node_modules/graceful-fs
+COPY --from=installer /app/node_modules/grammex ./node_modules/grammex
+COPY --from=installer /app/node_modules/graphmatch ./node_modules/graphmatch
+COPY --from=installer /app/node_modules/isexe ./node_modules/isexe
+COPY --from=installer /app/node_modules/path-key ./node_modules/path-key
+COPY --from=installer /app/node_modules/proper-lockfile ./node_modules/proper-lockfile
+COPY --from=installer /app/node_modules/remeda ./node_modules/remeda
+COPY --from=installer /app/node_modules/retry ./node_modules/retry
+COPY --from=installer /app/node_modules/shebang-command ./node_modules/shebang-command
+COPY --from=installer /app/node_modules/shebang-regex ./node_modules/shebang-regex
+COPY --from=installer /app/node_modules/signal-exit ./node_modules/signal-exit
+COPY --from=installer /app/node_modules/std-env ./node_modules/std-env
+COPY --from=installer /app/node_modules/valibot ./node_modules/valibot
+COPY --from=installer /app/node_modules/which ./node_modules/which
+COPY --from=installer /app/node_modules/zeptomatch ./node_modules/zeptomatch
+RUN chmod -R 755 \
+  ./node_modules/@standard-schema \
+  ./node_modules/c12 \
+  ./node_modules/confbox \
+  ./node_modules/deepmerge-ts \
+  ./node_modules/defu \
+  ./node_modules/destr \
+  ./node_modules/effect \
+  ./node_modules/empathic \
+  ./node_modules/exsolve \
+  ./node_modules/fast-check \
+  ./node_modules/giget \
+  ./node_modules/jiti \
+  ./node_modules/ohash \
+  ./node_modules/pathe \
+  ./node_modules/perfect-debounce \
+  ./node_modules/pkg-types \
+  ./node_modules/pure-rand \
+  ./node_modules/rc9 \
+  ./node_modules/cross-spawn \
+  ./node_modules/foreground-child \
+  ./node_modules/get-port-please \
+  ./node_modules/graceful-fs \
+  ./node_modules/grammex \
+  ./node_modules/graphmatch \
+  ./node_modules/isexe \
+  ./node_modules/path-key \
+  ./node_modules/proper-lockfile \
+  ./node_modules/remeda \
+  ./node_modules/retry \
+  ./node_modules/shebang-command \
+  ./node_modules/shebang-regex \
+  ./node_modules/signal-exit \
+  ./node_modules/std-env \
+  ./node_modules/valibot \
+  ./node_modules/which \
+  ./node_modules/zeptomatch
+
 COPY --from=installer /app/node_modules/pg ./node_modules/pg
 COPY --from=installer /app/node_modules/pg-connection-string ./node_modules/pg-connection-string
 COPY --from=installer /app/node_modules/pg-cloudflare ./node_modules/pg-cloudflare
