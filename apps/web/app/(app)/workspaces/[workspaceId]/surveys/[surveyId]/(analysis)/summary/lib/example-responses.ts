@@ -191,14 +191,14 @@ const CONTACT_INFO_FIXTURES: Array<Record<TContactInfoField, string>> = (
 // fallback keyword matcher is plain prose, not markup.
 const stripHtml = (value: string): string =>
   value
-    .replace(/<[^>]*>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/\s+/g, " ")
+    .replaceAll(/<[^>]*>/g, " ")
+    .replaceAll("&nbsp;", " ")
+    .replaceAll("&amp;", "&")
+    .replaceAll("&lt;", "<")
+    .replaceAll("&gt;", ">")
+    .replaceAll("&quot;", '"')
+    .replaceAll("&#39;", "'")
+    .replaceAll(/\s+/g, " ")
     .trim();
 
 const plainHeadline = (element: TSurveyElement | undefined): string =>
@@ -879,11 +879,11 @@ ${JSON.stringify(buildOpenTextLlmContext(survey, rowsNeedingText), null, 2)}`,
   return planRows.map((row) => {
     if (row.openTextElementIds.length === 0) return row;
 
-    const answers = answersByRowId.get(row.rowId) ?? {};
-    const data = { ...row.data };
+    const llmAnswers = answersByRowId.get(row.rowId) ?? {};
+    const openTextAnswers: Record<string, string> = {};
     for (const elementId of row.openTextElementIds) {
-      data[elementId] = (answers[elementId] ||
-        buildFallbackOpenTextAnswer(row.profile, elementsById.get(elementId))) as TResponseData[string];
+      openTextAnswers[elementId] =
+        llmAnswers[elementId] || buildFallbackOpenTextAnswer(row.profile, elementsById.get(elementId));
     }
 
     // Belt-and-suspenders: even with the prompt rules and varied fallbacks,
@@ -893,17 +893,17 @@ ${JSON.stringify(buildOpenTextLlmContext(survey, rowsNeedingText), null, 2)}`,
     // ships the same sentence twice.
     const seen = new Set<string>();
     for (const elementId of row.openTextElementIds) {
-      let answer = String(data[elementId] ?? "");
+      let answer = openTextAnswers[elementId];
       let offset = 1;
       while (seen.has(answer) && offset <= 4) {
         answer = buildFallbackOpenTextAnswer(row.profile, elementsById.get(elementId), offset);
         offset += 1;
       }
-      data[elementId] = answer as TResponseData[string];
+      openTextAnswers[elementId] = answer;
       seen.add(answer);
     }
 
-    return { ...row, data };
+    return { ...row, data: { ...row.data, ...openTextAnswers } };
   });
 };
 
