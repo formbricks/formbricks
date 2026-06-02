@@ -128,13 +128,91 @@ COPY --from=installer /app/node_modules/@prisma ./node_modules/@prisma
 RUN chown -R nextjs:nextjs ./node_modules/@prisma && chmod -R 755 ./node_modules/@prisma
 
 COPY --from=installer /app/node_modules/prisma ./node_modules/prisma
-COPY --from=installer /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
-RUN chown -R nextjs:nextjs ./node_modules/prisma ./node_modules/.bin \
-    && chmod -R 755 ./node_modules/prisma \
-    && chmod 755 ./node_modules/.bin/prisma
+RUN mkdir -p ./node_modules/.bin \
+    && ln -sf ../prisma/build/index.js ./node_modules/.bin/prisma \
+    && chown -R nextjs:nextjs ./node_modules/prisma ./node_modules/.bin \
+    && chmod -R 755 ./node_modules/prisma
 
 COPY --from=installer /app/node_modules/dotenv ./node_modules/dotenv
 RUN chmod -R 755 ./node_modules/dotenv
+
+COPY --from=installer /app/node_modules/@standard-schema ./node_modules/@standard-schema
+COPY --from=installer /app/node_modules/c12 ./node_modules/c12
+COPY --from=installer /app/node_modules/chokidar ./node_modules/chokidar
+COPY --from=installer /app/node_modules/confbox ./node_modules/confbox
+COPY --from=installer /app/node_modules/deepmerge-ts ./node_modules/deepmerge-ts
+COPY --from=installer /app/node_modules/defu ./node_modules/defu
+COPY --from=installer /app/node_modules/destr ./node_modules/destr
+COPY --from=installer /app/node_modules/effect ./node_modules/effect
+COPY --from=installer /app/node_modules/empathic ./node_modules/empathic
+COPY --from=installer /app/node_modules/exsolve ./node_modules/exsolve
+COPY --from=installer /app/node_modules/fast-check ./node_modules/fast-check
+COPY --from=installer /app/node_modules/giget ./node_modules/giget
+COPY --from=installer /app/node_modules/jiti ./node_modules/jiti
+COPY --from=installer /app/node_modules/ohash ./node_modules/ohash
+COPY --from=installer /app/node_modules/pathe ./node_modules/pathe
+COPY --from=installer /app/node_modules/perfect-debounce ./node_modules/perfect-debounce
+COPY --from=installer /app/node_modules/pkg-types ./node_modules/pkg-types
+COPY --from=installer /app/node_modules/pure-rand ./node_modules/pure-rand
+COPY --from=installer /app/node_modules/rc9 ./node_modules/rc9
+COPY --from=installer /app/node_modules/readdirp ./node_modules/readdirp
+COPY --from=installer /app/node_modules/cross-spawn ./node_modules/cross-spawn
+COPY --from=installer /app/node_modules/foreground-child ./node_modules/foreground-child
+COPY --from=installer /app/node_modules/get-port-please ./node_modules/get-port-please
+COPY --from=installer /app/node_modules/graceful-fs ./node_modules/graceful-fs
+COPY --from=installer /app/node_modules/grammex ./node_modules/grammex
+COPY --from=installer /app/node_modules/graphmatch ./node_modules/graphmatch
+COPY --from=installer /app/node_modules/isexe ./node_modules/isexe
+COPY --from=installer /app/node_modules/path-key ./node_modules/path-key
+COPY --from=installer /app/node_modules/proper-lockfile ./node_modules/proper-lockfile
+COPY --from=installer /app/node_modules/remeda ./node_modules/remeda
+COPY --from=installer /app/node_modules/retry ./node_modules/retry
+COPY --from=installer /app/node_modules/shebang-command ./node_modules/shebang-command
+COPY --from=installer /app/node_modules/shebang-regex ./node_modules/shebang-regex
+COPY --from=installer /app/node_modules/signal-exit ./node_modules/signal-exit
+COPY --from=installer /app/node_modules/std-env ./node_modules/std-env
+COPY --from=installer /app/node_modules/valibot ./node_modules/valibot
+COPY --from=installer /app/node_modules/which ./node_modules/which
+COPY --from=installer /app/node_modules/zeptomatch ./node_modules/zeptomatch
+RUN chmod -R 755 \
+  ./node_modules/@standard-schema \
+  ./node_modules/c12 \
+  ./node_modules/chokidar \
+  ./node_modules/confbox \
+  ./node_modules/deepmerge-ts \
+  ./node_modules/defu \
+  ./node_modules/destr \
+  ./node_modules/effect \
+  ./node_modules/empathic \
+  ./node_modules/exsolve \
+  ./node_modules/fast-check \
+  ./node_modules/giget \
+  ./node_modules/jiti \
+  ./node_modules/ohash \
+  ./node_modules/pathe \
+  ./node_modules/perfect-debounce \
+  ./node_modules/pkg-types \
+  ./node_modules/pure-rand \
+  ./node_modules/rc9 \
+  ./node_modules/readdirp \
+  ./node_modules/cross-spawn \
+  ./node_modules/foreground-child \
+  ./node_modules/get-port-please \
+  ./node_modules/graceful-fs \
+  ./node_modules/grammex \
+  ./node_modules/graphmatch \
+  ./node_modules/isexe \
+  ./node_modules/path-key \
+  ./node_modules/proper-lockfile \
+  ./node_modules/remeda \
+  ./node_modules/retry \
+  ./node_modules/shebang-command \
+  ./node_modules/shebang-regex \
+  ./node_modules/signal-exit \
+  ./node_modules/std-env \
+  ./node_modules/valibot \
+  ./node_modules/which \
+  ./node_modules/zeptomatch
 
 COPY --from=installer /app/node_modules/pg ./node_modules/pg
 COPY --from=installer /app/node_modules/pg-connection-string ./node_modules/pg-connection-string
