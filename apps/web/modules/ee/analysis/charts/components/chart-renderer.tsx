@@ -283,16 +283,11 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
                   const uniqueKey = `${xAxisKey}-${String(rowKey)}-${index}`;
                   return <Cell key={uniqueKey} fill={colors[index] || CHART_BRAND_DARK} />;
                 })}
-                <Label
-                  position="center"
-                  content={(props) => (
-                    <PieCenterLabel
-                      viewBox={props.viewBox as { cx?: number; cy?: number } | undefined}
-                      total={total}
-                      label={centerLabel}
-                    />
-                  )}
-                />
+                {/* Recharts injects `viewBox` into the element via cloneElement,
+                    so we can pass PieCenterLabel directly instead of wrapping
+                    in an inline render function (which would be redefined on
+                    every parent render). */}
+                <Label position="center" content={<PieCenterLabel total={total} label={centerLabel} />} />
               </Pie>
               <ChartTooltip content={<PolishedChartTooltip />} />
               <Legend
