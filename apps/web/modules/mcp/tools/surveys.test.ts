@@ -167,7 +167,7 @@ describe("registerSurveyTools", () => {
       title: "Patch survey",
       annotations: {
         readOnlyHint: false,
-        destructiveHint: false,
+        destructiveHint: true,
         idempotentHint: false,
       },
     });

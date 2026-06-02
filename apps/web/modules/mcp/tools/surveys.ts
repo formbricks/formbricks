@@ -193,11 +193,14 @@ export function registerSurveyTools(server: McpServer): void {
     "patch_survey",
     {
       title: "Patch survey",
-      description: "Update a Formbricks survey using the v3 Surveys API patch contract.",
+      description: [
+        "Update a Formbricks survey using the v3 Surveys API patch contract.",
+        "Provided top-level arrays and objects replace that whole subtree.",
+      ].join(" "),
       inputSchema: ZMcpPatchSurveyInput.shape,
       annotations: {
         readOnlyHint: false,
-        destructiveHint: false,
+        destructiveHint: true,
         idempotentHint: false,
         openWorldHint: true,
       },

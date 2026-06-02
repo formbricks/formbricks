@@ -1,9 +1,9 @@
 import { ApiKeyPermission } from "@prisma/client";
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { DEFAULT_REQUEST_BODY_LIMIT_BYTES } from "@/app/lib/api/request-body";
 import { successListResponse } from "@/app/api/v3/lib/response";
 import { listV3Surveys } from "@/app/api/v3/surveys/lib/operations";
+import { DEFAULT_REQUEST_BODY_LIMIT_BYTES } from "@/app/lib/api/request-body";
 import { authenticateApiKeyFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { POST } from "./route";
@@ -152,22 +152,24 @@ describe("POST /api/mcp", () => {
       "patch_survey",
       "delete_survey",
     ]);
-    expect(message.result.tools.find((tool: { name: string }) => tool.name === "list_surveys")).toMatchObject({
-      annotations: {
-        readOnlyHint: true,
-        destructiveHint: false,
-        idempotentHint: true,
-      },
-    });
-    expect(
-      message.result.tools.find((tool: { name: string }) => tool.name === "patch_survey")
-    ).toMatchObject({
-      annotations: {
-        readOnlyHint: false,
-        destructiveHint: false,
-        idempotentHint: false,
-      },
-    });
+    expect(message.result.tools.find((tool: { name: string }) => tool.name === "list_surveys")).toMatchObject(
+      {
+        annotations: {
+          readOnlyHint: true,
+          destructiveHint: false,
+          idempotentHint: true,
+        },
+      }
+    );
+    expect(message.result.tools.find((tool: { name: string }) => tool.name === "patch_survey")).toMatchObject(
+      {
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: true,
+          idempotentHint: false,
+        },
+      }
+    );
     expect(
       message.result.tools.find((tool: { name: string }) => tool.name === "delete_survey")
     ).toMatchObject({

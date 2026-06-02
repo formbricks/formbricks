@@ -419,10 +419,10 @@ Validation failures return `200` with `valid: false` and structured `invalid_par
 
 ### patch_survey
 
-Updates a survey by ID using the v3 survey patch contract. The tool writes data and is not
-idempotent. Omitted top-level fields are preserved. Provided top-level objects and arrays replace
-that whole subtree; the patch tool does not deep-merge nested objects and does not implement JSON
-Patch.
+Updates a survey by ID using the v3 survey patch contract. The tool writes data, can be
+destructive, and is not idempotent. Omitted top-level fields are preserved. Provided top-level
+objects and arrays replace that whole subtree, so omitted nested entries inside a provided subtree
+can be removed. The patch tool does not deep-merge nested objects and does not implement JSON Patch.
 
 <Note>
   For agent workflows, fetch the current survey first, modify only the intended top-level fields, run
@@ -495,7 +495,8 @@ v3 OpenAPI spec lives at `docs/api-v3-reference/openapi.yml`.
 - `create_survey` creates link surveys only. In-app survey creation and distribution settings are not
   part of the current v3 create operation.
 - `patch_survey` follows the v3 PATCH contract: top-level partial document updates only, no JSON Patch,
-  and no nested deep merge.
+  and no nested deep merge. Provided top-level objects and arrays replace their whole subtree and can
+  remove omitted nested entries.
 - `validate_survey` validates payload shape and references; it does not create languages, survey
   versions, or surveys.
 - Query-string credentials are rejected; use headers for API keys.
