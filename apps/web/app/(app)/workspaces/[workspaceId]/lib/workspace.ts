@@ -1,7 +1,7 @@
 import { Prisma } from "@prisma/client";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { ZString } from "@formbricks/types/common";
+import { ZId } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TMembership, ZMembership } from "@formbricks/types/memberships";
 import { validateInputs } from "@/lib/utils/validate";
@@ -11,7 +11,7 @@ const findWorkspacesForMembership = async (
   orgMembership: TMembership,
   { writableOnly }: { writableOnly: boolean }
 ): Promise<{ id: string; name: string }[]> => {
-  validateInputs([userId, ZString], [orgMembership, ZMembership]);
+  validateInputs([userId, ZId], [orgMembership, ZMembership]);
 
   let workspaceWhereClause: Prisma.WorkspaceWhereInput = {};
 
