@@ -15,8 +15,8 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import type { TConnectorFieldMapping } from "@formbricks/types/connector";
-import { listFeedbackRecordsAction } from "@/lib/connector/actions";
+import type { TFeedbackSourceFieldMapping } from "@formbricks/types/feedback-source";
+import { listFeedbackRecordsAction } from "@/lib/feedback-source/actions";
 import { formatDateForDisplay, formatDateTimeForDisplay } from "@/lib/utils/datetime";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import type { FeedbackRecordData } from "@/modules/hub/types";
@@ -70,7 +70,7 @@ interface FeedbackRecordsTableProps {
   initialRecords: FeedbackRecordData[];
   initialCursors: Record<string, string>;
   frdMap: Record<string, string>;
-  csvSources: { id: string; name: string; fieldMappings: TConnectorFieldMapping[] }[];
+  csvSources: { id: string; name: string; fieldMappings: TFeedbackSourceFieldMapping[] }[];
   canWrite: boolean;
 }
 
@@ -94,7 +94,7 @@ export const FeedbackRecordsTable = ({
   const [csvImportSource, setCsvImportSource] = useState<{
     id: string;
     name: string;
-    fieldMappings: TConnectorFieldMapping[];
+    fieldMappings: TFeedbackSourceFieldMapping[];
   } | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [isBulkDeleteDialogOpen, setIsBulkDeleteDialogOpen] = useState(false);
@@ -465,7 +465,7 @@ export const FeedbackRecordsTable = ({
               setCsvImportSource(null);
             }
           }}
-          connectorId={csvImportSource.id}
+          feedbackSourceId={csvImportSource.id}
           workspaceId={workspaceId}
           fieldMappings={csvImportSource.fieldMappings}
         />

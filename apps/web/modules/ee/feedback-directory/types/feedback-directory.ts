@@ -6,7 +6,7 @@ export const ZFeedbackDirectory = z.object({
   name: z.string(),
   isArchived: z.boolean(),
   workspaceCount: z.number(),
-  connectorCount: z.number(),
+  feedbackSourceCount: z.number(),
 });
 
 export type TFeedbackDirectory = z.infer<typeof ZFeedbackDirectory>;
@@ -22,7 +22,7 @@ export const ZFeedbackDirectoryDetails = z.object({
       workspaceName: z.string(),
     })
   ),
-  connectors: z.array(
+  feedbackSources: z.array(
     z.object({
       id: ZId,
       name: z.string(),
@@ -71,8 +71,8 @@ export const getTranslatedFeedbackDirectoryError = (
       return t("workspace.settings.feedback_directories.error_directory_name_duplicate");
     case "DIRECTORY_WORKSPACES_INVALID_ORG":
       return t("workspace.settings.feedback_directories.error_directory_workspaces_invalid_org");
-    case "DIRECTORY_HAS_CONNECTORS":
-      return t("workspace.settings.feedback_directories.error_directory_has_connectors");
+    case "DIRECTORY_HAS_FEEDBACK_SOURCES":
+      return t("workspace.settings.feedback_directories.error_directory_has_feedback_sources");
     case "WORKSPACE_ALREADY_ASSIGNED_TO_DIFFERENT_DIRECTORY":
       return t("workspace.settings.feedback_directories.error_workspace_already_assigned");
     default:

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import type { TConnectorWithMappings } from "@formbricks/types/connector";
 import { InvalidInputError } from "@formbricks/types/errors";
+import type { TFeedbackSourceWithMappings } from "@formbricks/types/feedback-source";
 import { CSV_IMPORT_MISSING_COLUMNS_ERROR_CODE } from "@/modules/ee/unify-feedback/sources/types";
 import { importCsvData } from "./csv-import";
 
@@ -24,7 +24,9 @@ const matchingCsvRow = {
   feedback: "Great",
 };
 
-const makeConnector = (overrides?: Partial<TConnectorWithMappings>): TConnectorWithMappings => ({
+const makeFeedbackSource = (
+  overrides?: Partial<TFeedbackSourceWithMappings>
+): TFeedbackSourceWithMappings => ({
   id: "conn-1",
   createdAt: NOW,
   updatedAt: NOW,
@@ -41,7 +43,7 @@ const makeConnector = (overrides?: Partial<TConnectorWithMappings>): TConnectorW
     {
       id: "fm-1",
       createdAt: NOW,
-      connectorId: "conn-1",
+      feedbackSourceId: "conn-1",
       workspaceId: "env-1",
       sourceFieldId: "response_id",
       targetFieldId: "submission_id",
@@ -50,7 +52,7 @@ const makeConnector = (overrides?: Partial<TConnectorWithMappings>): TConnectorW
     {
       id: "fm-2",
       createdAt: NOW,
-      connectorId: "conn-1",
+      feedbackSourceId: "conn-1",
       workspaceId: "env-1",
       sourceFieldId: "question_id",
       targetFieldId: "field_id",
@@ -59,7 +61,7 @@ const makeConnector = (overrides?: Partial<TConnectorWithMappings>): TConnectorW
     {
       id: "fm-3",
       createdAt: NOW,
-      connectorId: "conn-1",
+      feedbackSourceId: "conn-1",
       workspaceId: "env-1",
       sourceFieldId: "question",
       targetFieldId: "field_label",
@@ -68,7 +70,7 @@ const makeConnector = (overrides?: Partial<TConnectorWithMappings>): TConnectorW
     {
       id: "fm-4",
       createdAt: NOW,
-      connectorId: "conn-1",
+      feedbackSourceId: "conn-1",
       workspaceId: "env-1",
       sourceFieldId: "",
       targetFieldId: "field_type",
@@ -77,7 +79,7 @@ const makeConnector = (overrides?: Partial<TConnectorWithMappings>): TConnectorW
     {
       id: "fm-5",
       createdAt: NOW,
-      connectorId: "conn-1",
+      feedbackSourceId: "conn-1",
       workspaceId: "env-1",
       sourceFieldId: "feedback",
       targetFieldId: "response_value",
@@ -86,7 +88,7 @@ const makeConnector = (overrides?: Partial<TConnectorWithMappings>): TConnectorW
     {
       id: "fm-6",
       createdAt: NOW,
-      connectorId: "conn-1",
+      feedbackSourceId: "conn-1",
       workspaceId: "env-1",
       sourceFieldId: "",
       targetFieldId: "source_type",
@@ -101,37 +103,37 @@ describe("importCsvData", () => {
     vi.clearAllMocks();
   });
 
-  test("throws InvalidInputError for non-csv connector", async () => {
-    const connector = makeConnector({ type: "formbricks_survey" });
-    await expect(importCsvData(connector, [])).rejects.toThrow(InvalidInputError);
+  test("throws InvalidInputError for non-csv feedbackSource", async () => {
+    const feedbackSource = makeFeedbackSource({ type: "formbricks_survey" });
+    await expect(importCsvData(feedbackSource, [])).rejects.toThrow(InvalidInputError);
   });
 
   test("throws InvalidInputError when no field mappings configured", async () => {
-    const connector = makeConnector({ fieldMappings: [] });
-    await expect(importCsvData(connector, [{ feedback: "test" }])).rejects.toThrow(InvalidInputError);
+    const feedbackSource = makeFeedbackSource({ fieldMappings: [] });
+    await expect(importCsvData(feedbackSource, [{ feedback: "test" }])).rejects.toThrow(InvalidInputError);
   });
 
   test("throws InvalidInputError when submission_id is not mapped", async () => {
-    const connector = makeConnector({
-      fieldMappings: makeConnector().fieldMappings.filter(
+    const feedbackSource = makeFeedbackSource({
+      fieldMappings: makeFeedbackSource().fieldMappings.filter(
         (mapping) => mapping.targetFieldId !== "submission_id"
       ),
     });
 
-    await expect(importCsvData(connector, [matchingCsvRow])).rejects.toThrow(
+    await expect(importCsvData(feedbackSource, [matchingCsvRow])).rejects.toThrow(
       "This saved CSV mapping is incomplete"
     );
     expect(transformCsvRowsToFeedbackRecords).not.toHaveBeenCalled();
   });
 
   test("throws InvalidInputError when uploaded CSV is missing a mapped source column", async () => {
-    const connector = makeConnector({
-      fieldMappings: makeConnector().fieldMappings.map((mapping) =>
+    const feedbackSource = makeFeedbackSource({
+      fieldMappings: makeFeedbackSource().fieldMappings.map((mapping) =>
         mapping.targetFieldId === "submission_id" ? { ...mapping, sourceFieldId: "source_id" } : mapping
       ),
     });
 
-    await expect(importCsvData(connector, [matchingCsvRow])).rejects.toThrow(
+    await expect(importCsvData(feedbackSource, [matchingCsvRow])).rejects.toThrow(
       CSV_IMPORT_MISSING_COLUMNS_ERROR_CODE
     );
     expect(transformCsvRowsToFeedbackRecords).not.toHaveBeenCalled();
@@ -140,7 +142,7 @@ describe("importCsvData", () => {
   test("returns zeros when all rows are skipped", async () => {
     transformCsvRowsToFeedbackRecords.mockReturnValue({ records: [], skipped: 3 });
 
-    const result = await importCsvData(makeConnector(), [
+    const result = await importCsvData(makeFeedbackSource(), [
       matchingCsvRow,
       { ...matchingCsvRow, response_id: "resp-2" },
       { ...matchingCsvRow, response_id: "resp-3" },
@@ -180,7 +182,7 @@ describe("importCsvData", () => {
       ],
     } as never);
 
-    const result = await importCsvData(makeConnector(), [
+    const result = await importCsvData(makeFeedbackSource(), [
       matchingCsvRow,
       { ...matchingCsvRow, response_id: "resp-2" },
       { ...matchingCsvRow, response_id: "resp-3" },
@@ -219,7 +221,7 @@ describe("importCsvData", () => {
       ],
     } as never);
 
-    const result = await importCsvData(makeConnector(), [
+    const result = await importCsvData(makeFeedbackSource(), [
       matchingCsvRow,
       { ...matchingCsvRow, response_id: "resp-2" },
     ]);
@@ -266,7 +268,7 @@ describe("importCsvData", () => {
       ],
     } as never);
 
-    const result = await importCsvData(makeConnector(), [
+    const result = await importCsvData(makeFeedbackSource(), [
       matchingCsvRow,
       { ...matchingCsvRow, response_id: "resp-2" },
       { ...matchingCsvRow, response_id: "resp-3" },
@@ -291,7 +293,7 @@ describe("importCsvData", () => {
     } as never);
 
     await importCsvData(
-      makeConnector(),
+      makeFeedbackSource(),
       Array.from({ length: 120 }, (_, i) => ({ ...matchingCsvRow, response_id: `resp-${i}` }))
     );
 

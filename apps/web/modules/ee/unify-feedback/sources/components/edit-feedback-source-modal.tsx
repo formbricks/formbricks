@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { TConnectorWithMappings } from "@formbricks/types/connector";
+import { TFeedbackSourceWithMappings } from "@formbricks/types/feedback-source";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -37,28 +37,28 @@ import {
   CSV_PROTECTED_TARGET_IDS,
   SAMPLE_CSV_COLUMNS,
   TFieldMapping,
-  TFormbricksConnectorForm,
+  TFormbricksFeedbackSourceForm,
   TSourceField,
   TUnifySurvey,
-  ZFormbricksConnectorForm,
-  getTranslatedConnectorError,
+  ZFormbricksFeedbackSourceForm,
+  getTranslatedFeedbackSourceError,
 } from "../types";
 import {
   areAllRequiredCsvFieldsMapped,
-  isConnectorNameValid,
+  isFeedbackSourceNameValid,
   parseCSVColumnsToFields,
   toggleQuestionId,
 } from "../utils";
-import { getConnectorIcon, getConnectorTypeLabelKey } from "./connector-display";
+import { getFeedbackSourceIcon, getFeedbackSourceTypeLabelKey } from "./feedback-source-display";
 import { FormbricksQuestionList } from "./formbricks-question-list";
 import { MappingUI } from "./mapping-ui";
 
-interface EditConnectorModalProps {
-  connector: TConnectorWithMappings | null;
+interface EditFeedbackSourceModalProps {
+  feedbackSource: TFeedbackSourceWithMappings | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onUpdateConnector: (data: {
-    connectorId: string;
+  onUpdateFeedbackSource: (data: {
+    feedbackSourceId: string;
     workspaceId: string;
     name: string;
     surveyMappings?: { surveyId: string; elementIds: string[] }[];
@@ -69,23 +69,23 @@ interface EditConnectorModalProps {
   isReadOnly?: boolean;
 }
 
-export const EditConnectorModal = ({
-  connector,
+export const EditFeedbackSourceModal = ({
+  feedbackSource,
   open,
   onOpenChange,
-  onUpdateConnector,
+  onUpdateFeedbackSource,
   surveys,
   onOpenCsvImport,
   isReadOnly = false,
-}: EditConnectorModalProps) => {
+}: EditFeedbackSourceModalProps) => {
   const { t } = useTranslation();
-  const [csvConnectorName, setCsvConnectorName] = useState("");
+  const [csvFeedbackSourceName, setCsvFeedbackSourceName] = useState("");
   const [mappings, setMappings] = useState<TFieldMapping[]>([]);
   const [sourceFields, setSourceFields] = useState<TSourceField[]>([]);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  const formbricksForm = useForm<TFormbricksConnectorForm>({
-    resolver: zodResolver(ZFormbricksConnectorForm),
+  const formbricksForm = useForm<TFormbricksFeedbackSourceForm>({
+    resolver: zodResolver(ZFormbricksFeedbackSourceForm),
     defaultValues: {
       sourceName: "",
       surveyId: "",
@@ -104,26 +104,26 @@ export const EditConnectorModal = ({
   );
 
   useEffect(() => {
-    if (connector) {
-      if (connector.type === "formbricks_survey") {
-        const mappedSurveyId = connector.formbricksMappings[0]?.surveyId ?? "";
-        const mappedQuestionIds = connector.formbricksMappings
+    if (feedbackSource) {
+      if (feedbackSource.type === "formbricks_survey") {
+        const mappedSurveyId = feedbackSource.formbricksMappings[0]?.surveyId ?? "";
+        const mappedQuestionIds = feedbackSource.formbricksMappings
           .filter((mapping) => mapping.surveyId === mappedSurveyId)
           .map((mapping) => mapping.elementId);
 
         formbricksForm.reset({
-          sourceName: connector.name,
+          sourceName: feedbackSource.name,
           surveyId: mappedSurveyId,
           selectedQuestionIds: mappedQuestionIds,
           importHistorical: true,
         });
-        setCsvConnectorName("");
+        setCsvFeedbackSourceName("");
         setSourceFields([]);
         setMappings([]);
-      } else if (connector.type === "csv") {
-        setCsvConnectorName(connector.name);
+      } else if (feedbackSource.type === "csv") {
+        setCsvFeedbackSourceName(feedbackSource.name);
         const columnsFromMappings = [
-          ...new Set(connector.fieldMappings.map((m) => m.sourceFieldId).filter(Boolean)),
+          ...new Set(feedbackSource.fieldMappings.map((m) => m.sourceFieldId).filter(Boolean)),
         ];
         setSourceFields(
           columnsFromMappings.length > 0
@@ -131,7 +131,7 @@ export const EditConnectorModal = ({
             : parseCSVColumnsToFields(SAMPLE_CSV_COLUMNS, { includeSampleValues: false })
         );
         setMappings(
-          connector.fieldMappings.map((m) => ({
+          feedbackSource.fieldMappings.map((m) => ({
             sourceFieldId: m.sourceFieldId,
             targetFieldId: m.targetFieldId,
             staticValue: m.staticValue ?? undefined,
@@ -144,7 +144,7 @@ export const EditConnectorModal = ({
           importHistorical: true,
         });
       } else {
-        setCsvConnectorName("");
+        setCsvFeedbackSourceName("");
         setSourceFields([]);
         setMappings([]);
         formbricksForm.reset({
@@ -155,10 +155,10 @@ export const EditConnectorModal = ({
         });
       }
     }
-  }, [connector, formbricksForm]);
+  }, [feedbackSource, formbricksForm]);
 
   const resetForm = () => {
-    setCsvConnectorName("");
+    setCsvFeedbackSourceName("");
     setMappings([]);
     setSourceFields([]);
     formbricksForm.reset({
@@ -177,12 +177,12 @@ export const EditConnectorModal = ({
     onOpenChange(newOpen);
   };
 
-  const handleUpdateFormbricksConnector = async (values: TFormbricksConnectorForm) => {
-    if (connector?.type !== "formbricks_survey") return;
+  const handleUpdateFormbricksFeedbackSource = async (values: TFormbricksFeedbackSourceForm) => {
+    if (feedbackSource?.type !== "formbricks_survey") return;
     setIsUpdating(true);
-    const success = await onUpdateConnector({
-      connectorId: connector.id,
-      workspaceId: connector.workspaceId,
+    const success = await onUpdateFeedbackSource({
+      feedbackSourceId: feedbackSource.id,
+      workspaceId: feedbackSource.workspaceId,
       name: values.sourceName.trim(),
       surveyMappings: [{ surveyId: values.surveyId, elementIds: values.selectedQuestionIds }],
       fieldMappings: undefined,
@@ -193,8 +193,8 @@ export const EditConnectorModal = ({
     }
   };
 
-  const handleUpdateCsvConnector = async () => {
-    if (connector?.type !== "csv" || !isConnectorNameValid(csvConnectorName)) return;
+  const handleUpdateCsvFeedbackSource = async () => {
+    if (feedbackSource?.type !== "csv" || !isFeedbackSourceNameValid(csvFeedbackSourceName)) return;
 
     const requiredCheck = areAllRequiredCsvFieldsMapped(mappings);
     if (!requiredCheck.valid) {
@@ -210,10 +210,10 @@ export const EditConnectorModal = ({
     );
     const fieldMappings = [...userMappings, ...CSV_HIDDEN_STATIC_MAPPINGS];
 
-    const success = await onUpdateConnector({
-      connectorId: connector.id,
-      workspaceId: connector.workspaceId,
-      name: csvConnectorName.trim(),
+    const success = await onUpdateFeedbackSource({
+      feedbackSourceId: feedbackSource.id,
+      workspaceId: feedbackSource.workspaceId,
+      name: csvFeedbackSourceName.trim(),
       surveyMappings: undefined,
       fieldMappings,
     });
@@ -232,25 +232,27 @@ export const EditConnectorModal = ({
   };
 
   const saveChangesDisabled = useMemo(() => {
-    if (!connector) return true;
+    if (!feedbackSource) return true;
     if (isUpdating) return true;
 
-    if (connector.type === "formbricks_survey") {
+    if (feedbackSource.type === "formbricks_survey") {
       return (
-        !isConnectorNameValid(formbricksValues.sourceName ?? "") ||
+        !isFeedbackSourceNameValid(formbricksValues.sourceName ?? "") ||
         !formbricksValues.surveyId ||
         !formbricksValues.selectedQuestionIds?.length
       );
     }
 
-    if (connector.type === "csv") {
-      return !isConnectorNameValid(csvConnectorName) || !areAllRequiredCsvFieldsMapped(mappings).valid;
+    if (feedbackSource.type === "csv") {
+      return (
+        !isFeedbackSourceNameValid(csvFeedbackSourceName) || !areAllRequiredCsvFieldsMapped(mappings).valid
+      );
     }
 
     return true;
-  }, [connector, csvConnectorName, formbricksValues, isUpdating, mappings]);
+  }, [feedbackSource, csvFeedbackSourceName, formbricksValues, isUpdating, mappings]);
 
-  if (!connector) return null;
+  if (!feedbackSource) return null;
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -261,11 +263,11 @@ export const EditConnectorModal = ({
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          {connector.type === "formbricks_survey" ? (
+          {feedbackSource.type === "formbricks_survey" ? (
             <FormProvider {...formbricksForm}>
               <form
                 className="space-y-4"
-                onSubmit={formbricksForm.handleSubmit(handleUpdateFormbricksConnector)}>
+                onSubmit={formbricksForm.handleSubmit(handleUpdateFormbricksFeedbackSource)}>
                 <FormField
                   control={formbricksForm.control}
                   name="sourceName"
@@ -281,7 +283,7 @@ export const EditConnectorModal = ({
                         />
                       </FormControl>
                       {error?.message && (
-                        <FormError>{getTranslatedConnectorError(error.message, t)}</FormError>
+                        <FormError>{getTranslatedFeedbackSourceError(error.message, t)}</FormError>
                       )}
                     </FormItem>
                   )}
@@ -311,7 +313,7 @@ export const EditConnectorModal = ({
                         </Select>
                       </FormControl>
                       {error?.message && (
-                        <FormError>{getTranslatedConnectorError(error.message, t)}</FormError>
+                        <FormError>{getTranslatedFeedbackSourceError(error.message, t)}</FormError>
                       )}
                     </FormItem>
                   )}
@@ -333,7 +335,7 @@ export const EditConnectorModal = ({
                         </fieldset>
                       </FormControl>
                       {error?.message && (
-                        <FormError>{getTranslatedConnectorError(error.message, t)}</FormError>
+                        <FormError>{getTranslatedFeedbackSourceError(error.message, t)}</FormError>
                       )}
                     </FormItem>
                   )}
@@ -343,10 +345,10 @@ export const EditConnectorModal = ({
           ) : (
             <>
               <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
-                {getConnectorIcon(connector.type, "h-5 w-5 text-slate-500")}
+                {getFeedbackSourceIcon(feedbackSource.type, "h-5 w-5 text-slate-500")}
                 <div>
                   <p className="text-sm font-medium text-slate-900">
-                    {t(getConnectorTypeLabelKey(connector.type))}
+                    {t(getFeedbackSourceTypeLabelKey(feedbackSource.type))}
                   </p>
                   <p className="text-xs text-slate-500">
                     {t("workspace.unify.source_type_cannot_be_changed")}
@@ -355,11 +357,11 @@ export const EditConnectorModal = ({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="editConnectorName">{t("workspace.unify.source_name")}</Label>
+                <Label htmlFor="editFeedbackSourceName">{t("workspace.unify.source_name")}</Label>
                 <Input
-                  id="editConnectorName"
-                  value={csvConnectorName}
-                  onChange={(event) => setCsvConnectorName(event.target.value)}
+                  id="editFeedbackSourceName"
+                  value={csvFeedbackSourceName}
+                  onChange={(event) => setCsvFeedbackSourceName(event.target.value)}
                   placeholder={t("workspace.unify.enter_name_for_source")}
                   disabled={isReadOnly}
                 />
@@ -374,7 +376,7 @@ export const EditConnectorModal = ({
                   sourceFields={sourceFields}
                   mappings={mappings}
                   onMappingsChange={setMappings}
-                  connectorType={connector.type}
+                  feedbackSourceType={feedbackSource.type}
                 />
               </fieldset>
             </>
@@ -388,7 +390,7 @@ export const EditConnectorModal = ({
             </Button>
           ) : (
             <>
-              {connector.type === "csv" && (
+              {feedbackSource.type === "csv" && (
                 <Button
                   variant="secondary"
                   onClick={() => {
@@ -400,9 +402,9 @@ export const EditConnectorModal = ({
               )}
               <Button
                 onClick={
-                  connector.type === "formbricks_survey"
-                    ? () => void formbricksForm.handleSubmit(handleUpdateFormbricksConnector)()
-                    : handleUpdateCsvConnector
+                  feedbackSource.type === "formbricks_survey"
+                    ? () => void formbricksForm.handleSubmit(handleUpdateFormbricksFeedbackSource)()
+                    : handleUpdateCsvFeedbackSource
                 }
                 disabled={saveChangesDisabled}>
                 {t("workspace.unify.save_changes")}

@@ -1,0 +1,45 @@
+---
+title: Naming conventions
+description: Domain-specific naming rules used across the Formbricks codebase.
+icon: book-open
+---
+
+This page documents naming choices that intentionally split similar-sounding terms
+across different domains. Always check this list before introducing a name that
+overlaps with one of these reserved terms.
+
+## `FeedbackSource` vs `Connector`
+
+These two words sound interchangeable in English but refer to **two different
+domains in the codebase**. Use them precisely.
+
+| Term | Domain | Meaning | Used in |
+| --- | --- | --- | --- |
+| `FeedbackSource` | **Unify Feedback** | A configured integration (Formbricks survey, CSV import, etc.) that streams records into the Hub. | `apps/web/lib/feedback-source/`, `apps/web/modules/ee/unify-feedback/`, Prisma models `FeedbackSource`, `FeedbackSourceFormbricksMapping`, `FeedbackSourceFieldMapping`, enums `FeedbackSourceType`/`FeedbackSourceStatus`, types `T/ZFeedbackSource*`, i18n keys under `workspace.unify.source_*` and `workspace.settings.feedback_directories.feedback_sources_*`. |
+| `Connector` | **Workflows** *(upcoming)* and **logical condition combinator** | (a) The logical AND/OR connector used by survey logic, segment filters, and quotas (`ZConnector = z.enum(["and", "or"])`). (b) Reserved for the upcoming Workflows feature; do not use for new Unify Feedback work. | `packages/types/surveys/logic.ts` (`ZConnector`), segment / survey-logic / quota code. |
+
+## Rules
+
+- **Never** introduce a new type, file, identifier, Prisma field, or i18n key that uses `Connector`/`connector` inside the Unify Feedback domain. Use `FeedbackSource`/`feedbackSource` instead.
+- **Never** rename existing AND/OR `connector` usages in survey logic, segment filters, or quotas. They are not Unify Feedback concepts.
+- When adding a new Workflows component, use `Connector` / `connector` freely — that is the reserved name for that domain.
+- User-facing copy should say "feedback source" (lowercase) or "Feedback source" (sentence case). Avoid showing "connector" to end users in Unify Feedback UI.
+
+## i18n key prefix conventions
+
+Within `workspace.unify.*`:
+
+- `source_*` — single feedback source actions, errors, labels (e.g., `source_created_successfully`, `source_name`, `default_source_name_csv`)
+- `sources` — collection label
+
+Within `workspace.settings.feedback_directories.*`:
+
+- `feedback_sources_*` — references to feedback sources attached to a directory (e.g., `feedback_sources_description`, `no_feedback_sources`, `pause_feedback_sources_confirmation_title`)
+
+## Migration history
+
+The Unify Feedback domain was originally implemented under `Connector` naming.
+The rename was performed in migration `20260528120000_rename_connector_to_feedback_source`,
+which renamed three tables, two enums, foreign-key columns (`connectorId` → `feedback_source_id`),
+indexes, and constraints in place — preserving all data. See that migration's SQL for the
+full mapping if you ever need to reconcile pre-rename SQL dumps.

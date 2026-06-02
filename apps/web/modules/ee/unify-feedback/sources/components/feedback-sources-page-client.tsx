@@ -5,44 +5,52 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { TConnectorType, TConnectorWithMappings, THubTargetField } from "@formbricks/types/connector";
+import {
+  TFeedbackSourceType,
+  TFeedbackSourceWithMappings,
+  THubTargetField,
+} from "@formbricks/types/feedback-source";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import {
-  createConnectorWithMappingsAction,
-  deleteConnectorAction,
-  duplicateConnectorAction,
-  updateConnectorWithMappingsAction,
-} from "@/lib/connector/actions";
+  createFeedbackSourceWithMappingsAction,
+  deleteFeedbackSourceAction,
+  duplicateFeedbackSourceAction,
+  updateFeedbackSourceWithMappingsAction,
+} from "@/lib/feedback-source/actions";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Alert, AlertButton, AlertDescription } from "@/modules/ui/components/alert";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
-import { TFieldMapping, TUnifySurvey, getTranslatedConnectorError } from "../types";
-import { ConnectorsTable } from "./connectors-table";
-import { CreateConnectorModal } from "./create-connector-modal";
+import { TFieldMapping, TUnifySurvey, getTranslatedFeedbackSourceError } from "../types";
+import { CreateFeedbackSourceModal } from "./create-feedback-source-modal";
 import { CsvImportModal } from "./csv-import-modal";
-import { EditConnectorModal } from "./edit-connector-modal";
+import { EditFeedbackSourceModal } from "./edit-feedback-source-modal";
+import { FeedbackSourcesTable } from "./feedback-sources-table";
 
-interface ConnectorsSectionProps {
+interface FeedbackSourcesSectionProps {
   workspaceId: string;
-  initialConnectors: TConnectorWithMappings[];
+  initialFeedbackSources: TFeedbackSourceWithMappings[];
   initialSurveys: TUnifySurvey[];
   directories: { id: string; name: string }[];
   isReadOnly: boolean;
 }
 
-export function ConnectorsSection({
+export function FeedbackSourcesSection({
   workspaceId,
-  initialConnectors,
+  initialFeedbackSources,
   initialSurveys,
   directories,
   isReadOnly,
-}: Readonly<ConnectorsSectionProps>) {
+}: Readonly<FeedbackSourcesSectionProps>) {
   const { t } = useTranslation();
   const router = useRouter();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [editingConnector, setEditingConnector] = useState<TConnectorWithMappings | null>(null);
-  const [csvImportConnector, setCsvImportConnector] = useState<TConnectorWithMappings | null>(null);
+  const [editingFeedbackSource, setEditingFeedbackSource] = useState<TFeedbackSourceWithMappings | null>(
+    null
+  );
+  const [csvImportFeedbackSource, setCsvImportFeedbackSource] = useState<TFeedbackSourceWithMappings | null>(
+    null
+  );
   const directoryNames = directories.map((directory) => directory.name).join(", ");
   const feedbackDirectoryAccessText =
     directories.length === 1
@@ -53,16 +61,16 @@ export function ConnectorsSection({
           directoryNames,
         });
 
-  const handleCreateConnector = async (data: {
+  const handleCreateFeedbackSource = async (data: {
     name: string;
-    type: TConnectorType;
+    type: TFeedbackSourceType;
     feedbackDirectoryId: string;
     surveyMappings?: { surveyId: string; elementIds: string[] }[];
     fieldMappings?: TFieldMapping[];
   }): Promise<string | undefined> => {
-    const result = await createConnectorWithMappingsAction({
+    const result = await createFeedbackSourceWithMappingsAction({
       workspaceId: workspaceId,
-      connectorInput: {
+      feedbackSourceInput: {
         name: data.name,
         type: data.type,
         feedbackDirectoryId: data.feedbackDirectoryId,
@@ -80,7 +88,7 @@ export function ConnectorsSection({
     });
 
     if (!result?.data) {
-      toast.error(getTranslatedConnectorError(getFormattedErrorMessage(result), t));
+      toast.error(getTranslatedFeedbackSourceError(getFormattedErrorMessage(result), t));
       return undefined;
     }
 
@@ -88,17 +96,17 @@ export function ConnectorsSection({
     return result.data.id;
   };
 
-  const handleUpdateConnector = async (data: {
-    connectorId: string;
+  const handleUpdateFeedbackSource = async (data: {
+    feedbackSourceId: string;
     workspaceId: string;
     name: string;
     surveyMappings?: { surveyId: string; elementIds: string[] }[];
     fieldMappings?: TFieldMapping[];
   }): Promise<boolean> => {
-    const result = await updateConnectorWithMappingsAction({
-      connectorId: data.connectorId,
+    const result = await updateFeedbackSourceWithMappingsAction({
+      feedbackSourceId: data.feedbackSourceId,
       workspaceId: workspaceId,
-      connectorInput: {
+      feedbackSourceInput: {
         name: data.name,
       },
       formbricksMappings: data.surveyMappings?.length ? data.surveyMappings : undefined,
@@ -112,56 +120,58 @@ export function ConnectorsSection({
     });
 
     if (!result?.data) {
-      toast.error(getTranslatedConnectorError(getFormattedErrorMessage(result), t));
+      toast.error(getTranslatedFeedbackSourceError(getFormattedErrorMessage(result), t));
       return false;
     }
 
-    toast.success(t("workspace.unify.connector_updated_successfully"));
+    toast.success(t("workspace.unify.source_updated_successfully"));
     router.refresh();
     return true;
   };
 
-  const handleDeleteConnector = async (connectorId: string): Promise<void> => {
-    const result = await deleteConnectorAction({ connectorId, workspaceId: workspaceId });
+  const handleDeleteFeedbackSource = async (feedbackSourceId: string): Promise<void> => {
+    const result = await deleteFeedbackSourceAction({ feedbackSourceId, workspaceId: workspaceId });
 
     if (!result?.data) {
-      toast.error(getTranslatedConnectorError(getFormattedErrorMessage(result), t));
+      toast.error(getTranslatedFeedbackSourceError(getFormattedErrorMessage(result), t));
       return;
     }
 
-    toast.success(t("workspace.unify.connector_deleted_successfully"));
+    toast.success(t("workspace.unify.source_deleted_successfully"));
     router.refresh();
   };
 
-  const handleDuplicateConnector = async (connector: TConnectorWithMappings): Promise<void> => {
-    const result = await duplicateConnectorAction({
-      connectorId: connector.id,
+  const handleDuplicateFeedbackSource = async (
+    feedbackSource: TFeedbackSourceWithMappings
+  ): Promise<void> => {
+    const result = await duplicateFeedbackSourceAction({
+      feedbackSourceId: feedbackSource.id,
       workspaceId: workspaceId,
     });
 
     if (!result?.data) {
-      toast.error(getTranslatedConnectorError(getFormattedErrorMessage(result), t));
+      toast.error(getTranslatedFeedbackSourceError(getFormattedErrorMessage(result), t));
       return;
     }
 
-    toast.success(t("workspace.unify.connector_duplicated_successfully"));
+    toast.success(t("workspace.unify.source_duplicated_successfully"));
     router.refresh();
   };
 
-  const handleToggleStatus = async (connector: TConnectorWithMappings): Promise<void> => {
-    const newStatus = connector.status === "active" ? "paused" : "active";
-    const result = await updateConnectorWithMappingsAction({
-      connectorId: connector.id,
+  const handleToggleStatus = async (feedbackSource: TFeedbackSourceWithMappings): Promise<void> => {
+    const newStatus = feedbackSource.status === "active" ? "paused" : "active";
+    const result = await updateFeedbackSourceWithMappingsAction({
+      feedbackSourceId: feedbackSource.id,
       workspaceId: workspaceId,
-      connectorInput: { status: newStatus },
+      feedbackSourceInput: { status: newStatus },
     });
 
     if (!result?.data) {
-      toast.error(getTranslatedConnectorError(getFormattedErrorMessage(result), t));
+      toast.error(getTranslatedFeedbackSourceError(getFormattedErrorMessage(result), t));
       return;
     }
 
-    toast.success(t("workspace.unify.connector_status_updated_successfully"));
+    toast.success(t("workspace.unify.source_status_updated_successfully"));
     router.refresh();
   };
 
@@ -181,13 +191,13 @@ export function ConnectorsSection({
                 variant: "default",
               }
         }>
-        <ConnectorsTable
-          connectors={initialConnectors}
-          onConnectorClick={setEditingConnector}
-          onCsvImport={setCsvImportConnector}
-          onDuplicate={handleDuplicateConnector}
+        <FeedbackSourcesTable
+          feedbackSources={initialFeedbackSources}
+          onFeedbackSourceClick={setEditingFeedbackSource}
+          onCsvImport={setCsvImportFeedbackSource}
+          onDuplicate={handleDuplicateFeedbackSource}
           onToggleStatus={handleToggleStatus}
-          onDelete={handleDeleteConnector}
+          onDelete={handleDeleteFeedbackSource}
           isLoading={false}
           isReadOnly={isReadOnly}
         />
@@ -205,39 +215,39 @@ export function ConnectorsSection({
         )}
       </SettingsCard>
 
-      <CreateConnectorModal
+      <CreateFeedbackSourceModal
         open={isCreateModalOpen}
         onOpenChange={setIsCreateModalOpen}
-        onCreateConnector={handleCreateConnector}
+        onCreateFeedbackSource={handleCreateFeedbackSource}
         surveys={initialSurveys}
         workspaceId={workspaceId}
         directories={directories}
         showTrigger={false}
       />
 
-      <EditConnectorModal
-        connector={editingConnector}
+      <EditFeedbackSourceModal
+        feedbackSource={editingFeedbackSource}
         isReadOnly={isReadOnly}
-        open={editingConnector !== null}
-        onOpenChange={(open) => !open && setEditingConnector(null)}
-        onUpdateConnector={handleUpdateConnector}
+        open={editingFeedbackSource !== null}
+        onOpenChange={(open) => !open && setEditingFeedbackSource(null)}
+        onUpdateFeedbackSource={handleUpdateFeedbackSource}
         surveys={initialSurveys}
         onOpenCsvImport={() => {
-          if (editingConnector) {
-            setCsvImportConnector(editingConnector);
+          if (editingFeedbackSource) {
+            setCsvImportFeedbackSource(editingFeedbackSource);
           }
         }}
       />
 
-      {csvImportConnector && (
+      {csvImportFeedbackSource && (
         <CsvImportModal
-          open={csvImportConnector !== null}
-          onOpenChange={(open) => !open && setCsvImportConnector(null)}
-          connectorId={csvImportConnector.id}
-          workspaceId={csvImportConnector.workspaceId}
-          fieldMappings={csvImportConnector.fieldMappings}
-          onOpenEditConnector={() => {
-            setEditingConnector(csvImportConnector);
+          open={csvImportFeedbackSource !== null}
+          onOpenChange={(open) => !open && setCsvImportFeedbackSource(null)}
+          feedbackSourceId={csvImportFeedbackSource.id}
+          workspaceId={csvImportFeedbackSource.workspaceId}
+          fieldMappings={csvImportFeedbackSource.fieldMappings}
+          onOpenEditFeedbackSource={() => {
+            setEditingFeedbackSource(csvImportFeedbackSource);
           }}
         />
       )}

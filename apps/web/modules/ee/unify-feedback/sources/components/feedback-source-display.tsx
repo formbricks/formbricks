@@ -1,9 +1,9 @@
 "use client";
 
 import { FileSpreadsheetIcon, FormIcon } from "lucide-react";
-import { TConnectorType } from "@formbricks/types/connector";
+import { TFeedbackSourceType } from "@formbricks/types/feedback-source";
 
-export const getConnectorIcon = (type: TConnectorType, className: string) => {
+export const getFeedbackSourceIcon = (type: TFeedbackSourceType, className: string) => {
   switch (type) {
     case "formbricks_survey":
       return <FormIcon className={className} />;
@@ -14,7 +14,7 @@ export const getConnectorIcon = (type: TConnectorType, className: string) => {
   }
 };
 
-export const getConnectorTypeLabelKey = (type: TConnectorType): string => {
+export const getFeedbackSourceTypeLabelKey = (type: TFeedbackSourceType): string => {
   switch (type) {
     case "formbricks_survey":
       return "workspace.unify.formbricks_surveys";

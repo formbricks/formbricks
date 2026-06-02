@@ -2,8 +2,9 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   getActionClass,
   getApiKey,
-  getConnector,
   getContact,
+  getContactAttributeKey,
+  getFeedbackSource,
   getIntegration,
   getInvite,
   getLanguage,
@@ -86,6 +87,15 @@ export const getOrganizationIdFromContactId = async (contactId: string) => {
   }
 
   return await getOrganizationIdFromWorkspaceId(contact.workspaceId);
+};
+
+export const getOrganizationIdFromContactAttributeKeyId = async (contactAttributeKeyId: string) => {
+  const contactAttributeKey = await getContactAttributeKey(contactAttributeKeyId);
+  if (!contactAttributeKey) {
+    throw new ResourceNotFoundError("ContactAttributeKey", contactAttributeKeyId);
+  }
+
+  return await getOrganizationIdFromWorkspaceId(contactAttributeKey.workspaceId);
 };
 
 export const getOrganizationIdFromTagId = async (tagId: string) => {
@@ -239,6 +249,15 @@ export const getWorkspaceIdFromContactId = async (contactId: string) => {
   return contact.workspaceId;
 };
 
+export const getWorkspaceIdFromContactAttributeKeyId = async (contactAttributeKeyId: string) => {
+  const contactAttributeKey = await getContactAttributeKey(contactAttributeKeyId);
+  if (!contactAttributeKey) {
+    throw new ResourceNotFoundError("ContactAttributeKey", contactAttributeKeyId);
+  }
+
+  return contactAttributeKey.workspaceId;
+};
+
 export const getWorkspaceIdFromIntegrationId = async (integrationId: string) => {
   const integration = await getIntegration(integrationId);
   if (!integration) {
@@ -274,12 +293,12 @@ export const isStringMatch = (query: string, value: string): boolean => {
   return valueModified.includes(queryModified);
 };
 
-// Connector helpers
-export const getOrganizationIdFromConnectorId = async (connectorId: string) => {
-  const connector = await getConnector(connectorId);
-  if (!connector) {
-    throw new ResourceNotFoundError("connector", connectorId);
+// FeedbackSource helpers
+export const getOrganizationIdFromFeedbackSourceId = async (feedbackSourceId: string) => {
+  const feedbackSource = await getFeedbackSource(feedbackSourceId);
+  if (!feedbackSource) {
+    throw new ResourceNotFoundError("feedbackSource", feedbackSourceId);
   }
 
-  return await getOrganizationIdFromWorkspaceId(connector.workspaceId);
+  return await getOrganizationIdFromWorkspaceId(feedbackSource.workspaceId);
 };

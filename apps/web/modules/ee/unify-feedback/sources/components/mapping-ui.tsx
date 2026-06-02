@@ -3,8 +3,8 @@
 import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { TConnectorType, THubFieldType, ZHubFieldType } from "@formbricks/types/connector";
-import { routeResponseValueTarget } from "@/lib/connector/utils";
+import { TFeedbackSourceType, THubFieldType, ZHubFieldType } from "@formbricks/types/feedback-source";
+import { routeResponseValueTarget } from "@/lib/feedback-source/utils";
 import { CSV_FIELD_GROUPS, CSV_TARGET_FIELDS, TFieldMapping, TSourceField, TTargetField } from "../types";
 import { TMappingConfidence } from "../utils";
 import { FormTargetField, TAutoMapState } from "./mapping-field";
@@ -13,7 +13,7 @@ interface MappingUIProps {
   sourceFields: TSourceField[];
   mappings: TFieldMapping[];
   onMappingsChange: (mappings: TFieldMapping[]) => void;
-  connectorType: TConnectorType;
+  feedbackSourceType: TFeedbackSourceType;
   confidenceByTargetId?: Record<string, TMappingConfidence>;
   sampleRow?: Record<string, string>;
 }
@@ -27,11 +27,11 @@ export function MappingUI({
   sourceFields,
   mappings,
   onMappingsChange,
-  connectorType,
+  feedbackSourceType,
   confidenceByTargetId,
   sampleRow,
 }: MappingUIProps) {
-  switch (connectorType) {
+  switch (feedbackSourceType) {
     case "csv":
       return (
         <CsvMappingForm

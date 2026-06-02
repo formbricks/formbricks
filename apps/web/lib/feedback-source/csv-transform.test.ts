@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
-import { TConnectorFieldMapping } from "@formbricks/types/connector";
+import { TFeedbackSourceFieldMapping } from "@formbricks/types/feedback-source";
 import { transformCsvRowToFeedbackRecord, transformCsvRowsToFeedbackRecords } from "./csv-transform";
 
 const NOW = new Date("2026-02-25T10:00:00.000Z");
@@ -9,17 +9,17 @@ const makeMapping = (
   sourceFieldId: string,
   targetFieldId: string,
   staticValue?: string
-): TConnectorFieldMapping => ({
+): TFeedbackSourceFieldMapping => ({
   id: `mapping-${targetFieldId}`,
   createdAt: NOW,
-  connectorId: "conn-1",
+  feedbackSourceId: "conn-1",
   workspaceId: "env-1",
   sourceFieldId,
-  targetFieldId: targetFieldId as TConnectorFieldMapping["targetFieldId"],
+  targetFieldId: targetFieldId as TFeedbackSourceFieldMapping["targetFieldId"],
   staticValue: staticValue ?? null,
 });
 
-const baseMappings: TConnectorFieldMapping[] = [
+const baseMappings: TFeedbackSourceFieldMapping[] = [
   makeMapping("feedback_text", "value_text"),
   makeMapping("question", "field_id"),
   makeMapping("response_id", "submission_id"),
@@ -198,7 +198,7 @@ describe("transformCsvRowToFeedbackRecord", () => {
     vi.useFakeTimers();
     vi.setSystemTime(NOW);
 
-    const mappings: TConnectorFieldMapping[] = [
+    const mappings: TFeedbackSourceFieldMapping[] = [
       makeMapping("question", "field_id"),
       makeMapping("response_id", "submission_id"),
       makeMapping("", "source_type", "csv"),
@@ -217,7 +217,7 @@ describe("transformCsvRowToFeedbackRecord", () => {
   });
 
   test("ignores source_type mappings and uses csv", () => {
-    const mappings: TConnectorFieldMapping[] = [
+    const mappings: TFeedbackSourceFieldMapping[] = [
       makeMapping("question", "field_id"),
       makeMapping("response_id", "submission_id"),
       makeMapping("type_column", "source_type", "always_survey"),
@@ -315,7 +315,7 @@ describe("transformCsvRowsToFeedbackRecords", () => {
       { feedback_text: "No question field" },
     ];
 
-    const mappings: TConnectorFieldMapping[] = [
+    const mappings: TFeedbackSourceFieldMapping[] = [
       makeMapping("feedback_text", "value_text"),
       makeMapping("question", "field_id"),
       makeMapping("response_id", "submission_id"),
@@ -342,7 +342,7 @@ describe("transformCsvRowsToFeedbackRecords", () => {
 });
 
 describe("response_value routing", () => {
-  const responseMappings = (fieldType: string): TConnectorFieldMapping[] => [
+  const responseMappings = (fieldType: string): TFeedbackSourceFieldMapping[] => [
     makeMapping("answer", "response_value"),
     makeMapping("question", "field_id"),
     makeMapping("response_id", "submission_id"),
@@ -408,7 +408,7 @@ describe("response_value routing", () => {
   });
 
   test("invalid field_type causes the row to be skipped", () => {
-    const mappings: TConnectorFieldMapping[] = [
+    const mappings: TFeedbackSourceFieldMapping[] = [
       makeMapping("answer", "response_value"),
       makeMapping("question", "field_id"),
       makeMapping("response_id", "submission_id"),
@@ -425,7 +425,7 @@ describe("response_value routing", () => {
   });
 
   test("missing field_type causes the row to be skipped", () => {
-    const mappings: TConnectorFieldMapping[] = [
+    const mappings: TFeedbackSourceFieldMapping[] = [
       makeMapping("answer", "response_value"),
       makeMapping("question", "field_id"),
       makeMapping("response_id", "submission_id"),
@@ -442,8 +442,8 @@ describe("response_value routing", () => {
 });
 
 describe("tenant_id defense-in-depth", () => {
-  test("ignores a user-supplied tenant_id mapping and uses the connector value", () => {
-    const mappings: TConnectorFieldMapping[] = [
+  test("ignores a user-supplied tenant_id mapping and uses the feedbackSource value", () => {
+    const mappings: TFeedbackSourceFieldMapping[] = [
       makeMapping("malicious", "tenant_id"),
       makeMapping("feedback_text", "value_text"),
       makeMapping("question", "field_id"),
@@ -467,7 +467,7 @@ describe("tenant_id defense-in-depth", () => {
   });
 
   test("ignores a static tenant_id mapping", () => {
-    const mappings: TConnectorFieldMapping[] = [
+    const mappings: TFeedbackSourceFieldMapping[] = [
       makeMapping("", "tenant_id", "stolen-tenant"),
       makeMapping("feedback_text", "value_text"),
       makeMapping("question", "field_id"),
