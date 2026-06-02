@@ -158,7 +158,7 @@ export interface TConfigInput {
 
 export interface TStylingColor {
   light: string;
-  dark?: string | null | undefined;
+  dark?: string | null;
 }
 
 type TDimension = number | string | null;
