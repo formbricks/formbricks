@@ -1,6 +1,6 @@
 import type { LanguageModel, generateText } from "ai";
 
-export const AI_PROVIDERS = ["aws", "google", "azure"] as const;
+export const AI_PROVIDERS = ["aws", "google", "azure", "openai-compatible"] as const;
 
 export type ActiveAIProvider = (typeof AI_PROVIDERS)[number];
 
@@ -19,6 +19,12 @@ export interface AIEnvironment {
   AI_AZURE_RESOURCE_NAME?: string;
   AI_AZURE_API_KEY?: string;
   AI_AZURE_API_VERSION?: string;
+  AI_OPENAI_COMPATIBLE_BASE_URL?: string;
+  AI_OPENAI_COMPATIBLE_API_KEY?: string;
+  AI_OPENAI_COMPATIBLE_PROVIDER_NAME?: string;
+  AI_OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUTS?: string;
+  AI_OPENAI_COMPATIBLE_HEADERS_JSON?: string;
+  AI_OPENAI_COMPATIBLE_QUERY_PARAMS_JSON?: string;
 }
 
 export type AIProviderStatusErrorCode = "missingCredentials" | "invalidCredentials" | "missingModel";
