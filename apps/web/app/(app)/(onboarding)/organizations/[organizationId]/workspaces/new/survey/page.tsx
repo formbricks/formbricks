@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { getOnboardingWorkspaceContext } from "@/app/(app)/(onboarding)/lib/onboarding-workspace";
 import { redirectIfOnboardingComplete } from "@/app/(app)/(onboarding)/lib/redirect-if-onboarding-complete";
 import { CreateFirstSurvey } from "@/app/(app)/(onboarding)/organizations/[organizationId]/workspaces/new/survey/components/create-first-survey";
+import { DEFAULT_LOCALE } from "@/lib/constants";
+import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import { getSurveyAIAvailability } from "@/modules/survey/lib/get-survey-ai-availability";
@@ -34,6 +36,7 @@ const Page = async (props: SurveyOnboardingPageProps) => {
     isAISmartToolsEnabled,
     isAISmartToolsEntitled,
   });
+  const locale = (await getUserLocale(session.user.id)) ?? DEFAULT_LOCALE;
 
   return (
     <div className="flex min-h-full min-w-full flex-col items-center justify-center gap-y-12">
@@ -41,6 +44,7 @@ const Page = async (props: SurveyOnboardingPageProps) => {
       <CreateFirstSurvey
         organizationId={params.organizationId}
         workspaceId={workspace.id}
+        defaultLanguage={locale}
         isAIAvailable={isAIAvailable}
         aiUnavailableReason={aiUnavailableReason}
       />

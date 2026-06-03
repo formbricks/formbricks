@@ -4,9 +4,9 @@ import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { createSurvey } from "@/lib/survey/service";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
-import { V3SurveyCreatePermissionError, createV3Survey, createV3SurveyFromTrustedTemplate } from "./create";
+import { V3SurveyCreatePermissionError, createV3Survey } from "./create";
 import { V3SurveyReferenceValidationError } from "./reference-validation";
-import { ZV3CreateSurveyBody, ZV3TrustedTemplateCreateSurveyBody } from "./schemas";
+import { ZV3CreateSurveyBody } from "./schemas";
 
 vi.mock("server-only", () => ({}));
 
@@ -265,6 +265,48 @@ describe("createV3Survey", () => {
     expect(createSurvey).not.toHaveBeenCalled();
   });
 
+  test("rejects external CTA buttons for API-key creates without external URL permission", async () => {
+    vi.mocked(getExternalUrlsPermission).mockResolvedValue(false);
+    const body = ZV3CreateSurveyBody.parse({
+      ...rawCreateBody,
+      blocks: [
+        {
+          ...rawCreateBody.blocks[0],
+          elements: [
+            {
+              id: "external_cta",
+              type: "cta",
+              headline: { "en-US": "Continue", "de-DE": "Weiter" },
+              required: false,
+              buttonExternal: true,
+              buttonUrl: "https://example.com",
+              ctaButtonLabel: { "en-US": "Open", "de-DE": "Öffnen" },
+            },
+          ],
+        },
+      ],
+    });
+
+    await expect(
+      createV3Survey(
+        body,
+        {
+          type: "apiKey",
+          apiKeyId: "key_1",
+          organizationId: "org_1",
+          organizationAccess: { accessControl: { read: true, write: true } },
+          workspacePermissions: [],
+        },
+        "req_api_key",
+        "org_1"
+      )
+    ).rejects.toThrow(V3SurveyCreatePermissionError);
+
+    expect(getOrganizationByWorkspaceId).not.toHaveBeenCalled();
+    expect(getExternalUrlsPermission).toHaveBeenCalledWith("org_1");
+    expect(createSurvey).not.toHaveBeenCalled();
+  });
+
   test("rejects redirect endings when the organization does not have external URL permission", async () => {
     vi.mocked(getExternalUrlsPermission).mockResolvedValue(false);
     const body = ZV3CreateSurveyBody.parse({
@@ -282,9 +324,9 @@ describe("createV3Survey", () => {
     expect(createSurvey).not.toHaveBeenCalled();
   });
 
-  test("trusted template creation preserves curated external URLs without public entitlement checks", async () => {
+  test("session-authenticated create preserves curated external URLs without public entitlement checks", async () => {
     vi.mocked(getExternalUrlsPermission).mockResolvedValue(false);
-    const body = ZV3TrustedTemplateCreateSurveyBody.parse({
+    const body = ZV3CreateSurveyBody.parse({
       ...rawCreateBody,
       type: "app",
       endings: [
@@ -296,7 +338,7 @@ describe("createV3Survey", () => {
       ],
     });
 
-    await createV3SurveyFromTrustedTemplate(
+    await createV3Survey(
       body,
       {
         user: { id: "user_1", email: "user@example.com", name: "User" },
@@ -321,8 +363,8 @@ describe("createV3Survey", () => {
     );
   });
 
-  test("trusted template creation still rejects invalid v3 documents", async () => {
-    const body = ZV3TrustedTemplateCreateSurveyBody.parse({
+  test("create still rejects invalid v3 documents", async () => {
+    const body = ZV3CreateSurveyBody.parse({
       ...rawCreateBody,
       hiddenFields: { enabled: true, fieldIds: ["utm_source"] },
       blocks: [
@@ -338,9 +380,16 @@ describe("createV3Survey", () => {
       ],
     });
 
-    await expect(createV3SurveyFromTrustedTemplate(body, null, "req_6")).rejects.toThrow(
-      V3SurveyReferenceValidationError
-    );
+    await expect(
+      createV3Survey(
+        body,
+        {
+          user: { id: "user_1", email: "user@example.com", name: "User" },
+          expires: "2026-05-01",
+        },
+        "req_6"
+      )
+    ).rejects.toThrow(V3SurveyReferenceValidationError);
     expect(createSurvey).not.toHaveBeenCalled();
   });
 });

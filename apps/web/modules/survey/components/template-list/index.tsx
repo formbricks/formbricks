@@ -4,23 +4,25 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { Workspace } from "@formbricks/database/prisma-browser";
-import { TSurveyType } from "@formbricks/types/surveys/types";
-import { TTemplate, TTemplateFilter, ZTemplateRole } from "@formbricks/types/templates";
-import { TUserLocale } from "@formbricks/types/user";
+import type { Workspace } from "@formbricks/database/prisma-browser";
+import type { TSurveyType } from "@formbricks/types/surveys/types";
+import { type TTemplate, type TTemplateFilter, ZTemplateRole } from "@formbricks/types/templates";
+import type { TUserLocale } from "@formbricks/types/user";
 import { ZWorkspaceConfigChannel, ZWorkspaceConfigIndustry } from "@formbricks/types/workspace";
 import { templates } from "@/app/lib/templates";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
+import { replacePresetPlaceholders } from "@/lib/utils/templates";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import type { TAIUnavailableReason } from "@/modules/ee/analysis/charts/lib/ai-availability";
-import { createSurveyAction } from "./actions";
 import { CreateWithAITemplate } from "./components/create-with-ai-template";
 import { StartFromScratchTemplate } from "./components/start-from-scratch-template";
 import { Template } from "./components/template";
 import { TemplateFilters } from "./components/template-filters";
+import { createSurveyFromTemplate } from "./lib/v3-template-client";
 
 interface TemplateListProps {
   workspaceId: string;
   workspace: Workspace;
+  defaultLanguage: TUserLocale;
   templateSearch?: string;
   showFilters?: boolean;
   onTemplateClick?: (template: TTemplate) => void;
@@ -34,12 +36,13 @@ interface TemplateListProps {
 export const TemplateList = ({
   workspace,
   workspaceId,
+  defaultLanguage,
   showFilters = true,
   templateSearch,
   onTemplateClick = () => {},
   noPreview,
   showAICreateCard = false,
-  language = "en-US",
+  language = defaultLanguage,
   isAIAvailable = false,
   aiUnavailableReason,
 }: Readonly<TemplateListProps>) => {
@@ -64,26 +67,17 @@ export const TemplateList = ({
   const createSurvey = async (activeTemplate: TTemplate) => {
     setLoading(true);
     try {
-      const createSurveyResponse = await createSurveyAction({
+      const template = replacePresetPlaceholders(activeTemplate, workspace);
+      const survey = await createSurveyFromTemplate({
+        template,
         workspaceId,
-        templateId: activeTemplate.id,
         surveyType,
+        defaultLanguage,
       });
 
-      if (createSurveyResponse?.data) {
-        router.push(`${workspaceBasePath}/surveys/${createSurveyResponse.data.id}/edit`);
-      } else {
-        const errorMessage =
-          getFormattedErrorMessage(createSurveyResponse ?? {}) ||
-          t("common.something_went_wrong_please_try_again");
-        toast.error(errorMessage);
-      }
+      router.push(`${workspaceBasePath}/surveys/${survey.id}/edit`);
     } catch (error) {
-      const errorMessage =
-        error instanceof Error && error.message
-          ? error.message
-          : t("common.something_went_wrong_please_try_again");
-      toast.error(errorMessage);
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     } finally {
       setLoading(false);
     }

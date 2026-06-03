@@ -2,7 +2,7 @@ import type { TSurveyType } from "@formbricks/types/surveys/types";
 import type { TTemplate } from "@formbricks/types/templates";
 import type { TUserLocale } from "@formbricks/types/user";
 
-type TV3TemplateSurveyCreatePayload = {
+export type TV3TemplateSurveyCreatePayload = {
   workspaceId: string;
   name: string;
   type: TSurveyType;

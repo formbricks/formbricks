@@ -5,45 +5,39 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import type { TTemplate } from "@formbricks/types/templates";
+import type { TUserLocale } from "@formbricks/types/user";
 import {
   TOnboardingXMTemplateId,
   XM_TEMPLATE_IDS,
 } from "@/app/(app)/(onboarding)/organizations/[organizationId]/workspaces/new/templates/lib/xm-template-ids";
 import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizations/components/OnboardingOptionsContainer";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { createSurveyAction } from "@/modules/survey/components/template-list/actions";
+import { templates } from "@/app/lib/templates";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import { createSurveyFromTemplate } from "@/modules/survey/components/template-list/lib/v3-template-client";
 
 interface XMTemplateListProps {
   workspaceId: string;
+  defaultLanguage: TUserLocale;
 }
 
-export const XMTemplateList = ({ workspaceId }: Readonly<XMTemplateListProps>) => {
+export const XMTemplateList = ({ workspaceId, defaultLanguage }: Readonly<XMTemplateListProps>) => {
   const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
   const { t } = useTranslation();
   const router = useRouter();
 
-  const createSurvey = async (templateId: string) => {
+  const createSurvey = async (template: TTemplate) => {
     try {
-      const createSurveyResponse = await createSurveyAction({
+      const survey = await createSurveyFromTemplate({
+        template,
         workspaceId,
-        templateId,
         surveyType: "link",
+        defaultLanguage,
       });
 
-      if (createSurveyResponse?.data) {
-        router.push(`/workspaces/${workspaceId}/surveys/${createSurveyResponse.data.id}/edit?mode=cx`);
-      } else {
-        const errorMessage =
-          getFormattedErrorMessage(createSurveyResponse ?? {}) ||
-          t("common.something_went_wrong_please_try_again");
-        toast.error(errorMessage);
-      }
+      router.push(`/workspaces/${workspaceId}/surveys/${survey.id}/edit?mode=cx`);
     } catch (error) {
-      const errorMessage =
-        error instanceof Error && error.message
-          ? error.message
-          : t("common.something_went_wrong_please_try_again");
-      toast.error(errorMessage);
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     } finally {
       setActiveTemplateId(null);
     }
@@ -51,7 +45,14 @@ export const XMTemplateList = ({ workspaceId }: Readonly<XMTemplateListProps>) =
 
   const handleTemplateClick = (templateId: TOnboardingXMTemplateId) => {
     setActiveTemplateId(templateId);
-    void createSurvey(templateId);
+    const template = templates(t).find((template) => template.id === templateId);
+    if (!template) {
+      toast.error(t("common.something_went_wrong_please_try_again"));
+      setActiveTemplateId(null);
+      return;
+    }
+
+    void createSurvey(template);
   };
 
   const XMTemplateOptions = [

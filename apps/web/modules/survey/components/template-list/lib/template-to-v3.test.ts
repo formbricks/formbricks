@@ -1,6 +1,6 @@
 import type { TFunction } from "i18next";
 import { describe, expect, test } from "vitest";
-import { prepareV3TrustedTemplateSurveyCreateInput } from "@/app/api/v3/surveys/prepare";
+import { prepareV3SurveyCreateInput } from "@/app/api/v3/surveys/prepare";
 import { CUSTOM_SURVEY_TEMPLATE_ID, customSurveyTemplate, templates } from "@/app/lib/templates";
 import { replacePresetPlaceholders } from "@/lib/utils/templates";
 import { buildV3SurveyCreatePayloadFromTemplate } from "./template-to-v3";
@@ -270,7 +270,7 @@ describe("buildV3SurveyCreatePayloadFromTemplate", () => {
         expect.objectContaining({ id: endingTwoId, url: "https://example.com/next" }),
       ],
     });
-    const preparation = prepareV3TrustedTemplateSurveyCreateInput(payload);
+    const preparation = prepareV3SurveyCreateInput(payload);
     expect(
       preparation,
       preparation.ok ? undefined : JSON.stringify(preparation.validation.invalidParams)
@@ -290,7 +290,7 @@ describe("buildV3SurveyCreatePayloadFromTemplate", () => {
         surveyType: template.id === CUSTOM_SURVEY_TEMPLATE_ID ? "link" : "app",
         defaultLanguage: "en-US",
       });
-      const preparation = prepareV3TrustedTemplateSurveyCreateInput(payload);
+      const preparation = prepareV3SurveyCreateInput(payload);
 
       expect(preparation, template.id).toMatchObject({ ok: true });
     }

@@ -1185,11 +1185,11 @@ components:
           minLength: 1
         type:
           type: string
-          enum: [link]
+          enum: [link, app]
           default: link
           description: |
-            Optional compatibility field. Only `link` is accepted here; app/in-app survey distribution
-            remains outside this structure-focused create endpoint.
+            Optional compatibility field. `link` and `app` survey types are accepted here; app/in-app
+            survey distribution settings remain outside this structure-focused create endpoint.
         status:
           type: string
           enum: [draft, inProgress, paused, completed]

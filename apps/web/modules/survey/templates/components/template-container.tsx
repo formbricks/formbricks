@@ -17,6 +17,7 @@ type TemplateContainerWithPreviewProps = {
   workspace: Workspace;
   isTemplatePage?: boolean;
   publicDomain: string;
+  defaultLanguage: TUserLocale;
   language?: TUserLocale;
   isAIAvailable?: boolean;
   aiUnavailableReason?: TAIUnavailableReason;
@@ -26,7 +27,8 @@ export const TemplateContainerWithPreview = ({
   workspace,
   isTemplatePage = true,
   publicDomain,
-  language = "en-US",
+  defaultLanguage,
+  language = defaultLanguage,
   isAIAvailable = false,
   aiUnavailableReason,
 }: Readonly<TemplateContainerWithPreviewProps>) => {
@@ -61,6 +63,7 @@ export const TemplateContainerWithPreview = ({
           <TemplateList
             workspaceId={workspace.id}
             workspace={workspace}
+            defaultLanguage={defaultLanguage}
             templateSearch={templateSearch ?? ""}
             showAICreateCard={!isTemplatePage}
             language={language}

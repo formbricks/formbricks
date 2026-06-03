@@ -8,7 +8,7 @@ import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import { type TV3SurveyLanguageRequest, ensureV3WorkspaceLanguages } from "./languages";
 import { prepareV3SurveyCreate } from "./prepare";
 import { V3SurveyReferenceValidationError } from "./reference-validation";
-import type { TV3CreateSurveyBody, TV3TrustedTemplateCreateSurveyBody } from "./schemas";
+import type { TV3CreateSurveyBody } from "./schemas";
 
 export class V3SurveyCreatePermissionError extends Error {
   constructor(message: string) {
@@ -25,9 +25,11 @@ function getCreatedBy(authentication: TV3Authentication): string | null {
   return null;
 }
 
-type TV3SurveyCreateDocument = TV3CreateSurveyBody | TV3TrustedTemplateCreateSurveyBody;
+function isSessionAuthentication(authentication: TV3Authentication): boolean {
+  return Boolean(authentication && "user" in authentication && authentication.user?.id);
+}
 
-function hasExternalUrlReferences(input: TV3SurveyCreateDocument): boolean {
+function hasExternalUrlReferences(input: TV3CreateSurveyBody): boolean {
   const hasExternalEndingLink = input.endings.some((ending) => {
     if (ending.type === "endScreen") {
       return Boolean(ending.buttonLink);
@@ -43,10 +45,11 @@ function hasExternalUrlReferences(input: TV3SurveyCreateDocument): boolean {
 }
 
 async function assertV3SurveyCreatePermissions(
-  input: TV3CreateSurveyDocument,
+  input: TV3CreateSurveyBody,
+  authentication: TV3Authentication,
   organizationId?: string
 ): Promise<void> {
-  if (!hasExternalUrlReferences(input)) {
+  if (!hasExternalUrlReferences(input) || isSessionAuthentication(authentication)) {
     return;
   }
 
@@ -67,7 +70,7 @@ async function assertV3SurveyCreatePermissions(
 }
 
 export async function executeV3SurveyCreate(params: {
-  input: TV3SurveyCreateDocument;
+  input: TV3CreateSurveyBody;
   authentication: TV3Authentication;
   languageRequests: TV3SurveyLanguageRequest[];
   requestId?: string;
@@ -103,25 +106,7 @@ export async function createV3Survey(
     throw new V3SurveyReferenceValidationError(preparation.validation.invalidParams);
   }
 
-  await assertV3SurveyCreatePermissions(input, organizationId);
-
-  return await executeV3SurveyCreate({
-    input: preparation.document,
-    authentication,
-    languageRequests: preparation.languageRequests,
-    requestId,
-  });
-}
-
-export async function createV3SurveyFromTrustedTemplate(
-  input: TV3TrustedTemplateCreateSurveyBody,
-  authentication: TV3Authentication,
-  requestId?: string
-) {
-  const preparation = prepareV3SurveyCreate(input);
-  if (!preparation.ok) {
-    throw new V3SurveyReferenceValidationError(preparation.validation.invalidParams);
-  }
+  await assertV3SurveyCreatePermissions(input, authentication, organizationId);
 
   return await executeV3SurveyCreate({
     input: preparation.document,

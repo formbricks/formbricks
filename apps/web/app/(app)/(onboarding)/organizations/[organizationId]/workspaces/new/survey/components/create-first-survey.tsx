@@ -6,18 +6,20 @@ import posthog from "posthog-js";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import type { TUserLocale } from "@formbricks/types/user";
 import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizations/components/OnboardingOptionsContainer";
-import { CUSTOM_SURVEY_TEMPLATE_ID } from "@/app/lib/templates";
+import { customSurveyTemplate } from "@/app/lib/templates";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
-import { getFormattedErrorMessage } from "@/lib/utils/helper";
-import { createSurveyAction } from "@/modules/survey/components/template-list/actions";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { getUnavailableMessageKey } from "@/modules/survey/components/template-list/lib/ai-create-utils";
+import { createSurveyFromTemplate } from "@/modules/survey/components/template-list/lib/v3-template-client";
 
 type TOnboardingSurveyPath = "scratch" | "template" | "ai";
 
 interface CreateFirstSurveyProps {
   organizationId: string;
   workspaceId: string;
+  defaultLanguage: TUserLocale;
   isAIAvailable: boolean;
   aiUnavailableReason?: TAIUnavailableReason;
 }
@@ -25,6 +27,7 @@ interface CreateFirstSurveyProps {
 export const CreateFirstSurvey = ({
   organizationId,
   workspaceId,
+  defaultLanguage,
   isAIAvailable,
   aiUnavailableReason,
 }: Readonly<CreateFirstSurveyProps>) => {
@@ -45,20 +48,16 @@ export const CreateFirstSurvey = ({
     setIsCreatingBlankSurvey(true);
 
     try {
-      const response = await createSurveyAction({
+      const survey = await createSurveyFromTemplate({
+        template: customSurveyTemplate(t),
         workspaceId,
-        templateId: CUSTOM_SURVEY_TEMPLATE_ID,
         surveyType: "link",
+        defaultLanguage,
       });
 
-      if (response?.data) {
-        router.push(`/workspaces/${workspaceId}/surveys/${response.data.id}/edit?mode=cx`);
-        return;
-      }
-
-      toast.error(getFormattedErrorMessage(response));
-    } catch {
-      toast.error(t("common.something_went_wrong_please_try_again"));
+      router.push(`/workspaces/${workspaceId}/surveys/${survey.id}/edit?mode=cx`);
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     } finally {
       setIsCreatingBlankSurvey(false);
     }
