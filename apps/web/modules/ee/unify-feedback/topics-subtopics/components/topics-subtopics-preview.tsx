@@ -26,22 +26,22 @@ interface TopicsSubtopicsPreviewProps {
   directoryMap: Record<string, string>;
 }
 
-const CONFIDENCE_BADGE_TYPE_BY_LEVEL = {
+const MATCH_BADGE_TYPE_BY_LEVEL = {
   high: "success",
-  low: "error",
+  low: "warning",
   medium: "warning",
-} satisfies Record<TSemanticSearchConfidenceLevel, "error" | "warning" | "success">;
+} satisfies Record<TSemanticSearchConfidenceLevel, "warning" | "success">;
 
-const CONFIDENCE_INDICATOR_BY_LEVEL = {
+const MATCH_INDICATOR_BY_LEVEL = {
   high: "🟢",
-  low: "🔴",
+  low: "🟠",
   medium: "🟡",
 } satisfies Record<TSemanticSearchConfidenceLevel, string>;
 
-const CONFIDENCE_LABEL_BY_LEVEL = {
-  high: (t) => t("workspace.unify.semantic_search_confidence_high"),
-  low: (t) => t("workspace.unify.semantic_search_confidence_low"),
-  medium: (t) => t("workspace.unify.semantic_search_confidence_medium"),
+const MATCH_LABEL_BY_LEVEL = {
+  high: (t) => t("workspace.unify.semantic_search_match_strong"),
+  low: (t) => t("workspace.unify.semantic_search_match_weak"),
+  medium: (t) => t("workspace.unify.semantic_search_match_partial"),
 } satisfies Record<TSemanticSearchConfidenceLevel, (t: TFunction) => string>;
 
 export const TopicsSubtopicsPreview = ({
@@ -237,7 +237,7 @@ export const TopicsSubtopicsPreview = ({
                   const displayScore = getSemanticSearchDisplayScore(result.score);
                   const displayScorePercent = Math.round(displayScore * 100);
                   const confidenceLevel = getSemanticSearchConfidenceLevel(displayScore);
-                  const confidenceLabel = CONFIDENCE_LABEL_BY_LEVEL[confidenceLevel](t);
+                  const matchLabel = MATCH_LABEL_BY_LEVEL[confidenceLevel](t);
                   const confidenceTooltip = t("workspace.unify.semantic_search_confidence_tooltip", {
                     score: displayScorePercent,
                   });
@@ -248,11 +248,11 @@ export const TopicsSubtopicsPreview = ({
                         <Badge text={result.directory_name} type="gray" size="tiny" />
                         <span title={confidenceTooltip} className="inline-flex">
                           <Badge
-                            text={t("workspace.unify.semantic_search_confidence_label", {
-                              confidenceLabel,
-                              indicator: CONFIDENCE_INDICATOR_BY_LEVEL[confidenceLevel],
+                            text={t("workspace.unify.semantic_search_match_label", {
+                              indicator: MATCH_INDICATOR_BY_LEVEL[confidenceLevel],
+                              matchLabel,
                             })}
-                            type={CONFIDENCE_BADGE_TYPE_BY_LEVEL[confidenceLevel]}
+                            type={MATCH_BADGE_TYPE_BY_LEVEL[confidenceLevel]}
                             size="tiny"
                           />
                         </span>
