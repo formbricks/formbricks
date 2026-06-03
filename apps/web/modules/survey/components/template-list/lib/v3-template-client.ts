@@ -16,7 +16,7 @@ type TV3SurveyCreateResponse = {
 type TV3SurveyValidationResponse = {
   data: {
     valid: boolean;
-    invalid_params: {
+    invalid_params?: {
       name: string;
       reason: string;
     }[];
@@ -45,14 +45,16 @@ async function validateV3TemplateSurveyCreatePayload(payload: TV3TemplateSurveyC
     return;
   }
 
-  const firstInvalidParam = body.data.invalid_params[0];
+  const invalidParams = Array.isArray(body.data.invalid_params) ? body.data.invalid_params : [];
+  const firstInvalidParam = invalidParams[0];
+
   throw new V3ApiError({
     status: 400,
     detail: firstInvalidParam
       ? `Invalid template survey document: ${firstInvalidParam.name}: ${firstInvalidParam.reason}`
       : "Invalid template survey document",
     code: "bad_request",
-    invalid_params: body.data.invalid_params,
+    invalid_params: invalidParams,
   });
 }
 

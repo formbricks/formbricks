@@ -135,6 +135,59 @@ describe("createSurveyFromTemplate", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  test("normalizes missing or malformed validation invalid params", async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce(
+      Response.json({
+        data: {
+          valid: false,
+          invalid_params: { name: "blocks", reason: "Expected array" },
+        },
+      })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      createSurveyFromTemplate({
+        template,
+        workspaceId,
+        surveyType: "app",
+        defaultLanguage: "en-US",
+      })
+    ).rejects.toMatchObject({
+      status: 400,
+      message: "Invalid template survey document",
+      invalid_params: [],
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  test("handles validation responses without invalid params", async () => {
+    const fetchMock = vi.fn().mockResolvedValueOnce(
+      Response.json({
+        data: {
+          valid: false,
+        },
+      })
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(
+      createSurveyFromTemplate({
+        template,
+        workspaceId,
+        surveyType: "app",
+        defaultLanguage: "en-US",
+      })
+    ).rejects.toMatchObject({
+      status: 400,
+      message: "Invalid template survey document",
+      invalid_params: [],
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   test("returns useful messages for v3 problem responses", async () => {
     const fetchMock = vi
       .fn()

@@ -18,8 +18,13 @@ export const ZTemplateRole = z.enum([
 ]);
 export type TTemplateRole = z.infer<typeof ZTemplateRole>;
 
+const ZTemplateId = z
+  .string()
+  .trim()
+  .min(1, "Template id must contain at least one non-whitespace character");
+
 export const ZTemplate = z.object({
-  id: z.string().min(1),
+  id: ZTemplateId,
   name: z.string(),
   description: z.string(),
   icon: z.any().optional(),
