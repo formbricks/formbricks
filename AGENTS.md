@@ -80,7 +80,7 @@ Do:
 
 - E2E tests (Playwright): cover critical user flows and regression risks. Extend existing specs or add
   focused new ones in `apps/web/playwright`, keep tests small and well-named, use descriptive filenames
-  like `billing.spec.ts`, tag slow suites with `@slow`, and run the suite before opening a PR.
+  such as `billing.spec.ts`, tag slow suites with `@slow`, and run the suite before opening a PR.
 - Unit tests: cover stable, high-value logic in `.ts` files, such as validators, transformers,
   evaluators, calculations, and edge cases. Keep assertions on inputs and outputs, colocate specs with
   the code they exercise (`utility.test.ts`), and mock network and storage boundaries through helpers
