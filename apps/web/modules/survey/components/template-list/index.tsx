@@ -9,8 +9,7 @@ import type { TSurveyType } from "@formbricks/types/surveys/types";
 import { type TTemplate, type TTemplateFilter, ZTemplateRole } from "@formbricks/types/templates";
 import type { TUserLocale } from "@formbricks/types/user";
 import { ZWorkspaceConfigChannel, ZWorkspaceConfigIndustry } from "@formbricks/types/workspace";
-import { templates } from "@/app/lib/templates";
-import { replacePresetPlaceholders } from "@/lib/utils/templates";
+import { CUSTOM_SURVEY_TEMPLATE_ID, templates } from "@/app/lib/templates";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import type { TAIUnavailableReason } from "@/modules/ee/analysis/charts/lib/ai-availability";
 import { CreateWithAITemplate } from "./components/create-with-ai-template";
@@ -67,10 +66,10 @@ export const TemplateList = ({
   const createSurvey = async (activeTemplate: TTemplate) => {
     setLoading(true);
     try {
-      const template = replacePresetPlaceholders(activeTemplate, workspace);
       const survey = await createSurveyFromTemplate({
-        template,
         workspaceId,
+        templateId: activeTemplate.id,
+        source: activeTemplate.id === CUSTOM_SURVEY_TEMPLATE_ID ? "custom" : "catalog",
         surveyType,
         defaultLanguage,
       });

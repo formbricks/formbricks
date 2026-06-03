@@ -8,7 +8,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TUserLocale } from "@formbricks/types/user";
 import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizations/components/OnboardingOptionsContainer";
-import { customSurveyTemplate } from "@/app/lib/templates";
+import { CUSTOM_SURVEY_TEMPLATE_ID } from "@/app/lib/templates";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { getUnavailableMessageKey } from "@/modules/survey/components/template-list/lib/ai-create-utils";
@@ -49,8 +49,9 @@ export const CreateFirstSurvey = ({
 
     try {
       const survey = await createSurveyFromTemplate({
-        template: customSurveyTemplate(t),
         workspaceId,
+        templateId: CUSTOM_SURVEY_TEMPLATE_ID,
+        source: "custom",
         surveyType: "link",
         defaultLanguage,
       });

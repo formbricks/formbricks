@@ -9,9 +9,8 @@ import { useTranslation } from "react-i18next";
 import type { TSurveyType } from "@formbricks/types/surveys/types";
 import type { TUserLocale } from "@formbricks/types/user";
 import type { TWorkspaceConfigChannel } from "@formbricks/types/workspace";
-import { customSurveyTemplate } from "@/app/lib/templates";
+import { CUSTOM_SURVEY_TEMPLATE_ID } from "@/app/lib/templates";
 import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@/lib/localStorage";
-import { replacePresetPlaceholders } from "@/lib/utils/templates";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import type { TAIUnavailableReason } from "@/modules/ee/analysis/charts/lib/ai-availability";
 import { CreateWithAIDialog } from "@/modules/survey/components/template-list/components/create-with-ai-dialog";
@@ -87,8 +86,9 @@ const NewSurveyMenu = ({
 
     try {
       const survey = await createSurveyFromTemplate({
-        template: replacePresetPlaceholders(customSurveyTemplate(t), workspace),
         workspaceId: workspace.id,
+        templateId: CUSTOM_SURVEY_TEMPLATE_ID,
+        source: "custom",
         surveyType,
         defaultLanguage: language,
       });

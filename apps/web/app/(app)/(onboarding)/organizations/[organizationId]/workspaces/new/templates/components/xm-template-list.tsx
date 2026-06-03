@@ -5,14 +5,12 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import type { TTemplate } from "@formbricks/types/templates";
 import type { TUserLocale } from "@formbricks/types/user";
 import {
   TOnboardingXMTemplateId,
   XM_TEMPLATE_IDS,
 } from "@/app/(app)/(onboarding)/organizations/[organizationId]/workspaces/new/templates/lib/xm-template-ids";
 import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizations/components/OnboardingOptionsContainer";
-import { templates } from "@/app/lib/templates";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { createSurveyFromTemplate } from "@/modules/survey/components/template-list/lib/v3-template-client";
 
@@ -26,11 +24,12 @@ export const XMTemplateList = ({ workspaceId, defaultLanguage }: Readonly<XMTemp
   const { t } = useTranslation();
   const router = useRouter();
 
-  const createSurvey = async (template: TTemplate) => {
+  const createSurvey = async (templateId: string) => {
     try {
       const survey = await createSurveyFromTemplate({
-        template,
         workspaceId,
+        templateId,
+        source: "xm",
         surveyType: "link",
         defaultLanguage,
       });
@@ -45,14 +44,7 @@ export const XMTemplateList = ({ workspaceId, defaultLanguage }: Readonly<XMTemp
 
   const handleTemplateClick = (templateId: TOnboardingXMTemplateId) => {
     setActiveTemplateId(templateId);
-    const template = templates(t).find((template) => template.id === templateId);
-    if (!template) {
-      toast.error(t("common.something_went_wrong_please_try_again"));
-      setActiveTemplateId(null);
-      return;
-    }
-
-    void createSurvey(template);
+    void createSurvey(templateId);
   };
 
   const XMTemplateOptions = [

@@ -324,7 +324,7 @@ describe("createV3Survey", () => {
     expect(createSurvey).not.toHaveBeenCalled();
   });
 
-  test("session-authenticated create preserves curated external URLs without public entitlement checks", async () => {
+  test("rejects external URLs for session-authenticated public creates without external URL permission", async () => {
     vi.mocked(getExternalUrlsPermission).mockResolvedValue(false);
     const body = ZV3CreateSurveyBody.parse({
       ...rawCreateBody,
@@ -338,29 +338,20 @@ describe("createV3Survey", () => {
       ],
     });
 
-    await createV3Survey(
-      body,
-      {
-        user: { id: "user_1", email: "user@example.com", name: "User" },
-        expires: "2026-05-01",
-      },
-      "req_5"
-    );
+    await expect(
+      createV3Survey(
+        body,
+        {
+          user: { id: "user_1", email: "user@example.com", name: "User" },
+          expires: "2026-05-01",
+        },
+        "req_5"
+      )
+    ).rejects.toThrow(V3SurveyCreatePermissionError);
 
-    expect(getOrganizationByWorkspaceId).not.toHaveBeenCalled();
-    expect(getExternalUrlsPermission).not.toHaveBeenCalled();
-    expect(createSurvey).toHaveBeenCalledWith(
-      workspaceId,
-      expect.objectContaining({
-        type: "app",
-        endings: [
-          expect.objectContaining({
-            type: "redirectToUrl",
-            url: "https://example.com/next",
-          }),
-        ],
-      })
-    );
+    expect(getOrganizationByWorkspaceId).toHaveBeenCalledWith(workspaceId);
+    expect(getExternalUrlsPermission).toHaveBeenCalledWith("org_1");
+    expect(createSurvey).not.toHaveBeenCalled();
   });
 
   test("create still rejects invalid v3 documents", async () => {

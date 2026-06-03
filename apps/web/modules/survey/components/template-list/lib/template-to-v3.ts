@@ -6,6 +6,7 @@ export type TV3TemplateSurveyCreatePayload = {
   workspaceId: string;
   name: string;
   type: TSurveyType;
+  status: "draft";
   defaultLanguage: TUserLocale;
   languages: [];
   metadata: unknown;
@@ -72,6 +73,7 @@ export function buildV3SurveyCreatePayloadFromTemplate({
     workspaceId,
     name: template.preset.name,
     type: surveyType,
+    status: "draft",
     defaultLanguage,
     languages: [],
     metadata: toV3PublicValue(template.preset.metadata ?? {}, defaultLanguage),

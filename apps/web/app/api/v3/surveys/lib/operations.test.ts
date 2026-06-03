@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { problemForbidden } from "@/app/api/v3/lib/response";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { deleteSurvey } from "@/modules/survey/lib/surveys";
 import { getSurveyCount } from "@/modules/survey/list/lib/survey";
 import { getSurveyListPage } from "@/modules/survey/list/lib/survey-page";
@@ -38,6 +39,10 @@ vi.mock("@formbricks/logger", () => ({
 
 vi.mock("@/app/api/v3/lib/auth", () => ({
   requireV3WorkspaceAccess: vi.fn(),
+}));
+
+vi.mock("@/lib/posthog", () => ({
+  capturePostHogEvent: vi.fn(),
 }));
 
 vi.mock("@/modules/survey/lib/surveys", () => ({
@@ -90,12 +95,18 @@ const workspaceId = "tz4a98xxat96iws9zmbrgj3a";
 const requestId = "req_123";
 const instance = "/api/v3/surveys";
 const authentication = { type: "apiKey", apiKey: { id: "api_key_1" } } as any;
+const sessionAuthentication = {
+  user: { id: "user_1", email: "user@example.com", name: "User" },
+  expires: "2026-05-01",
+} as any;
 const authResult = { workspaceId, organizationId: "org_1" };
 const survey = {
   id: "survey_1",
   workspaceId,
   name: "Customer Survey",
   status: "draft",
+  type: "link",
+  questions: [{ id: "question_1" }],
 };
 const serializedSurvey = {
   id: "survey_1",
@@ -269,14 +280,41 @@ describe("createV3SurveyResponse", () => {
       { ...createBody, workspaceId },
       authentication,
       requestId,
-      "org_1"
+      "org_1",
+      undefined
     );
+    expect(capturePostHogEvent).not.toHaveBeenCalled();
     expect(auditLog).toMatchObject({
       organizationId: "org_1",
       targetId: "survey_1",
       newObject: serializedSurvey,
     });
     expect(await readJson(response)).toEqual({ data: serializedSurvey });
+  });
+
+  test("captures survey_created for session-authenticated product template creates", async () => {
+    const response = await createV3SurveyResponse({
+      body: createBody,
+      authentication: sessionAuthentication,
+      requestId,
+      instance,
+      createdFrom: "template",
+    });
+
+    expect(response.status).toBe(201);
+    expect(capturePostHogEvent).toHaveBeenCalledWith(
+      "user_1",
+      "survey_created",
+      {
+        survey_id: "survey_1",
+        survey_type: "link",
+        organization_id: "org_1",
+        workspace_id: workspaceId,
+        question_count: 1,
+        created_from: "template",
+      },
+      { organizationId: "org_1", workspaceId }
+    );
   });
 
   test("returns authorization responses from workspace access", async () => {

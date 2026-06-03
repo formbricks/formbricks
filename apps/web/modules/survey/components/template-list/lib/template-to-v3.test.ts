@@ -238,6 +238,7 @@ describe("buildV3SurveyCreatePayloadFromTemplate", () => {
         "languages",
         "metadata",
         "name",
+        "status",
         "type",
         "variables",
         "welcomeCard",
