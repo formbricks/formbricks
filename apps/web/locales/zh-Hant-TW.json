@@ -479,6 +479,7 @@
     "trial_plan_badge": "{plan} 試用版",
     "try_again": "再試一次",
     "type": "類型",
+    "undo": "復原",
     "unlock_more_workspaces_with_a_higher_plan": "升級方案以解鎖更多工作區。",
     "update": "更新",
     "updated": "已更新",
@@ -1834,7 +1835,10 @@
       },
       "dashboards": {
         "add_count_charts": "新增 {count} 個圖表",
+        "chart_remove_failed": "移除圖表失敗",
         "chart_removed": "圖表已從儀表板移除",
+        "chart_restore_failed": "還原圖表失敗",
+        "chart_restored": "圖表已還原",
         "charts_add_failed": "無法將圖表新增至儀表板",
         "charts_add_partial_failure": "無法新增 {count} 個圖表",
         "charts_added_to_dashboard": "圖表已新增至儀表板",

@@ -479,6 +479,7 @@
     "trial_plan_badge": "Essai {plan}",
     "try_again": "Réessayer",
     "type": "Type",
+    "undo": "Annuler",
     "unlock_more_workspaces_with_a_higher_plan": "Débloque plus d'espaces de travail avec un forfait supérieur.",
     "update": "Mise à jour",
     "updated": "Mise à jour",
@@ -1834,7 +1835,10 @@
       },
       "dashboards": {
         "add_count_charts": "Ajouter {count} graphique(s)",
+        "chart_remove_failed": "Échec de la suppression du graphique",
         "chart_removed": "Graphique retiré du tableau de bord",
+        "chart_restore_failed": "Échec de la restauration du graphique",
+        "chart_restored": "Graphique restauré",
         "charts_add_failed": "Échec de l'ajout des graphiques au tableau de bord",
         "charts_add_partial_failure": "Échec de l'ajout de {count} graphique(s)",
         "charts_added_to_dashboard": "Graphiques ajoutés au tableau de bord",

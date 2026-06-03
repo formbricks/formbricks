@@ -2016,6 +2016,7 @@ checksums:
     workspace/integrations/google_sheets/spreadsheet_permission_error: 24a55163c657593e88c28fdc8628acdd
     workspace/integrations/google_sheets/spreadsheet_url: b1665f96e6ecce23ea2d9196f4a3e5dd
     workspace/integrations/google_sheets/token_expired_error: 555d34c18c554ec8ac66614f21bd44fc
+    workspace/integrations/include_contact_attributes: 22be6cb4b99b2d8e178631adfffc3e27
     workspace/integrations/include_created_at: 8011355b13e28e638d74e6f3d68a2bbf
     workspace/integrations/include_hidden_fields: 25f0ea5ca1c6ead2cd121f8754cb8d72
     workspace/integrations/include_metadata: 750091d965d7cc8d02468b5239816dc5

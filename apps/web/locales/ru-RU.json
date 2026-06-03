@@ -479,6 +479,7 @@
     "trial_plan_badge": "Пробная версия {plan}",
     "try_again": "Попробуйте ещё раз",
     "type": "Тип",
+    "undo": "Отменить",
     "unlock_more_workspaces_with_a_higher_plan": "Откройте больше рабочих пространств с более высоким тарифом.",
     "update": "Обновить",
     "updated": "Обновлено",
@@ -1834,7 +1835,10 @@
       },
       "dashboards": {
         "add_count_charts": "Добавить {count} график(ов)",
+        "chart_remove_failed": "Не удалось удалить диаграмму",
         "chart_removed": "График удалён с панели",
+        "chart_restore_failed": "Не удалось восстановить диаграмму",
+        "chart_restored": "Диаграмма восстановлена",
         "charts_add_failed": "Не удалось добавить графики на дашборд",
         "charts_add_partial_failure": "Не удалось добавить {count} график(ов)",
         "charts_added_to_dashboard": "Графики добавлены на дашборд",

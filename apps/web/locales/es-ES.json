@@ -479,6 +479,7 @@
     "trial_plan_badge": "Prueba de {plan}",
     "try_again": "Intentar de nuevo",
     "type": "Tipo",
+    "undo": "Deshacer",
     "unlock_more_workspaces_with_a_higher_plan": "Desbloquea más espacios de trabajo con un plan superior.",
     "update": "Actualizar",
     "updated": "Actualizado",
@@ -1834,7 +1835,10 @@
       },
       "dashboards": {
         "add_count_charts": "Añadir {count} gráfico(s)",
+        "chart_remove_failed": "No se pudo eliminar el gráfico",
         "chart_removed": "Gráfico eliminado del panel",
+        "chart_restore_failed": "No se pudo restaurar el gráfico",
+        "chart_restored": "Gráfico restaurado",
         "charts_add_failed": "Error al añadir gráficos al panel",
         "charts_add_partial_failure": "Error al añadir {count} gráfico(s)",
         "charts_added_to_dashboard": "Gráficos añadidos al panel",
