@@ -1,7 +1,7 @@
 "use client";
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { LockIcon, PlusIcon } from "lucide-react";
+import { PlusIcon } from "lucide-react";
 import Link from "next/link";
 import { type ComponentProps, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -20,6 +20,7 @@ import {
 import { TSurveyOverviewFilters } from "@/modules/survey/list/types/survey-overview";
 import { TemplateContainerWithPreview } from "@/modules/survey/templates/components/template-container";
 import { Button } from "@/modules/ui/components/button";
+import { EmptyState } from "@/modules/ui/components/empty-state";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { SurveyCard } from "./survey-card";
@@ -157,17 +158,7 @@ export const SurveysList = ({
     return (
       <PageContentWrapper>
         <PageHeader pageTitle={t("common.surveys")} />
-        <div className="mx-auto flex max-w-xl flex-col items-center gap-4 py-16 text-center">
-          <LockIcon className="size-8 text-slate-400" />
-          <div className="space-y-2">
-            <h3 className="text-base font-semibold text-slate-900">
-              {t("workspace.surveys.no_surveys_created_yet")}
-            </h3>
-            <p className="text-balance text-sm text-slate-600">
-              {t("workspace.surveys.read_only_user_not_allowed_to_create_survey_warning")}
-            </p>
-          </div>
-        </div>
+        <EmptyState text={t("workspace.surveys.read_only_user_not_allowed_to_create_survey_warning")} />
       </PageContentWrapper>
     );
   }
