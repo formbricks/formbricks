@@ -2096,6 +2096,7 @@
         "spreadsheet_url": "URL da folha de cálculo",
         "token_expired_error": "O token de atualização do Google Sheets expirou ou foi revogado. Por favor, reconecta a integração."
       },
+      "include_contact_attributes": "Include Person Attributes",
       "include_created_at": "Incluir Criado Em",
       "include_hidden_fields": "Incluir Campos Ocultos",
       "include_metadata": "Incluir Metadados (Navegador, País, etc.)",

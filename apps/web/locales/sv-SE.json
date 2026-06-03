@@ -2096,6 +2096,7 @@
         "spreadsheet_url": "Kalkylblads-URL",
         "token_expired_error": "Google Sheets refresh token har gått ut eller återkallats. Återanslut integrationen."
       },
+      "include_contact_attributes": "Include Person Attributes",
       "include_created_at": "Inkludera Skapad vid",
       "include_hidden_fields": "Inkludera dolda fält",
       "include_metadata": "Inkludera metadata (webbläsare, land, etc.)",

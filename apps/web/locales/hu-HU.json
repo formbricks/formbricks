@@ -2096,6 +2096,7 @@
         "spreadsheet_url": "Táblázat URL-e",
         "token_expired_error": "A Google Táblázatok frissítési tokenje lejárt vagy visszavonásra került. Csatlakoztassa újra az integrációt."
       },
+      "include_contact_attributes": "Include Person Attributes",
       "include_created_at": "Létrehozva felvétele",
       "include_hidden_fields": "Rejtett mezők felvétele",
       "include_metadata": "Metaadatok (böngésző, ország stb.) felvétele",

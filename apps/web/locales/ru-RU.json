@@ -2096,6 +2096,7 @@
         "spreadsheet_url": "URL таблицы",
         "token_expired_error": "Срок действия токена обновления Google Sheets истёк или он был отозван. Пожалуйста, переподключи интеграцию."
       },
+      "include_contact_attributes": "Include Person Attributes",
       "include_created_at": "Включить дату создания",
       "include_hidden_fields": "Включить скрытые поля",
       "include_metadata": "Включить метаданные (браузер, страна и т. д.)",

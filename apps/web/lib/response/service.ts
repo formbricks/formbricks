@@ -422,7 +422,7 @@ export const getResponseDownloadFile = async (
       ...elements.flat(),
       ...variables,
       ...hiddenFields,
-      ...userAttributes,
+      ...userAttributes.map((attribute) => `person.${attribute}`),
     ];
 
     if (survey.isVerifyEmailEnabled) {

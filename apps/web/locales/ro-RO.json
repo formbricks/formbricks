@@ -2096,6 +2096,7 @@
         "spreadsheet_url": "URL foaie de calcul",
         "token_expired_error": "Tokenul de reîmprospătare Google Sheets a expirat sau a fost revocat. Te rugăm să reconectezi integrarea."
       },
+      "include_contact_attributes": "Include Person Attributes",
       "include_created_at": "Include data creării",
       "include_hidden_fields": "Include câmpuri ascunse",
       "include_metadata": "Includere Metadata (Browser, Țară, etc.)",

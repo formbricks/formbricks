@@ -2096,6 +2096,7 @@
         "spreadsheet_url": "Spreadsheet-URL",
         "token_expired_error": "Het vernieuwingstoken van Google Sheets is verlopen of ingetrokken. Maak opnieuw verbinding met de integratie."
       },
+      "include_contact_attributes": "Include Person Attributes",
       "include_created_at": "Inclusief gemaakt op",
       "include_hidden_fields": "Inclusief verborgen velden",
       "include_metadata": "Metagegevens opnemen (browser, land, enz.)",

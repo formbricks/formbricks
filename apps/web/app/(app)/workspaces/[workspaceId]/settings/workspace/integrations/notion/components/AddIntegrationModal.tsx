@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TIntegrationInput } from "@formbricks/types/integration";
 import {
   TIntegrationNotion,
@@ -46,6 +47,7 @@ interface AddIntegrationModalProps {
   notionIntegration: TIntegrationNotion;
   databases: TIntegrationNotionDatabase[];
   selectedIntegration: (TIntegrationNotionConfigData & { index: number }) | null;
+  contactAttributeKeys: TContactAttributeKey[];
 }
 
 export const AddIntegrationModal = ({
@@ -56,6 +58,7 @@ export const AddIntegrationModal = ({
   notionIntegration,
   databases,
   selectedIntegration,
+  contactAttributeKeys,
 }: AddIntegrationModalProps) => {
   const { t } = useTranslation();
   const { handleSubmit } = useForm();
@@ -146,10 +149,15 @@ export const AddIntegrationModal = ({
         type: TSurveyElementTypeEnum.Date,
       },
     ];
+    const personAttributes = contactAttributeKeys.map((attributeKey) => ({
+      id: `person.${attributeKey.key}`,
+      name: `${t("common.person")}: ${attributeKey.name ?? attributeKey.key}`,
+      type: TSurveyElementTypeEnum.OpenText,
+    }));
 
-    return [...mappedElements, ...variables, ...hiddenFields, ...Metadata, ...createdAt];
+    return [...mappedElements, ...variables, ...hiddenFields, ...Metadata, ...createdAt, ...personAttributes];
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedSurvey?.id]);
+  }, [selectedSurvey?.id, contactAttributeKeys]);
 
   useEffect(() => {
     if (selectedIntegration) {
