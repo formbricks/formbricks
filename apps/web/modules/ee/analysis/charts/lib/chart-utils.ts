@@ -31,8 +31,12 @@ export const preparePieData = (
   data: TChartDataRow[],
   dataKey: string
 ): { processedData: TChartDataRow[]; colors: string[] } | null => {
-  // Drop zero-value rows alongside non-numeric ones — Recharts can misalign
-  // remaining slices when one entry has value 0.
+  // Drop zero-value rows alongside non-numeric ones. With `minAngle={2}` on
+  // `<Pie>`, a `value: 0` slice gets stretched to 2° of visible arc and the
+  // label math (driven by midAngle) then implies a non-zero share, so callouts
+  // line up off the data. Trade-off: real "0" categories (e.g. a Neutral
+  // sentiment bucket with no responses) disappear from both the pie and the
+  // legend; surfacing those in the legend is tracked as a follow-up.
   const validData = data.filter((row) => isNumericValue(row[dataKey]) && Number(row[dataKey]) > 0);
   const processedData = validData
     .map((row) => ({ ...row, [dataKey]: Number(row[dataKey]) }))
