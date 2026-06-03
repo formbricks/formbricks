@@ -1,8 +1,8 @@
 import { z } from "zod";
-import type { TV3CreateSurveyBody, TV3SurveyValidationRequestBody } from "@/app/api/v3/surveys/schemas";
-import { ZV3CreateSurveyBody, ZV3SurveyValidationRequestBody } from "@/app/api/v3/surveys/schemas";
 import { ZId } from "@formbricks/types/common";
 import { ZSurveyFilters, ZSurveyStatus, ZSurveyType } from "@formbricks/types/surveys/types";
+import type { TV3CreateSurveyBody, TV3SurveyValidationRequestBody } from "@/app/api/v3/surveys/schemas";
+import { ZV3CreateSurveyBody, ZV3SurveyValidationRequestBody } from "@/app/api/v3/surveys/schemas";
 
 export const ZMcpListSurveysInput = z.object({
   workspaceId: ZId.describe("Workspace ID whose surveys should be listed."),
@@ -20,7 +20,9 @@ export const ZMcpListSurveysInput = z.object({
     .describe("Opaque pagination cursor from a previous list_surveys response."),
   includeTotalCount: z
     .boolean()
-    .describe("Whether to include the total matching survey count in the response metadata. Defaults to true.")
+    .describe(
+      "Whether to include the total matching survey count in the response metadata. Defaults to true."
+    )
     .default(true),
   filter: z
     .object({

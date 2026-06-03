@@ -1,6 +1,6 @@
 import { type NextRequest } from "next/server";
-import { DEFAULT_REQUEST_BODY_LIMIT_BYTES } from "@/app/lib/api/request-body";
 import { problemPayloadTooLarge } from "@/app/api/v3/lib/response";
+import { DEFAULT_REQUEST_BODY_LIMIT_BYTES } from "@/app/lib/api/request-body";
 import { handleAuthenticatedMcpRequest } from "@/modules/mcp/auth";
 import { mcpHandler } from "@/modules/mcp/server";
 
