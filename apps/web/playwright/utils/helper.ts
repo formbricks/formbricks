@@ -54,7 +54,7 @@ export const waitForSurveyCreateResponse = async (page: Page): Promise<string> =
 
   const surveyId = (responseBody as { data?: { id?: unknown } } | null)?.data?.id;
   if (typeof surveyId !== "string") {
-    throw new Error("Survey create response did not include a survey id");
+    throw new TypeError("Survey create response did not include a survey id");
   }
 
   return surveyId;
@@ -73,7 +73,9 @@ export const waitForSurveyEditor = async (
   }
 
   if (options.mode === "cx") {
-    await expect(page).toHaveURL(new RegExp(`/workspaces/[^/]+/surveys/${surveyId}/edit\\?.*mode=cx`));
+    await expect(page).toHaveURL(
+      new RegExp(String.raw`/workspaces/[^/]+/surveys/${surveyId}/edit\?.*mode=cx`)
+    );
     await expect(page.getByRole("button", { name: "Save & Close", exact: true })).toBeVisible();
     return;
   }
