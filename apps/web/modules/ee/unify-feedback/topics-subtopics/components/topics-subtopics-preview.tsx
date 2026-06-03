@@ -14,7 +14,11 @@ import { PageHeader } from "@/modules/ui/components/page-header";
 import { UnifyConfigNavigation } from "../../components/unify-config-navigation";
 import { semanticSearchFeedbackRecordsAction } from "../actions";
 import type { TTopicsPreviewSearchResult } from "../actions";
-import { SEMANTIC_SEARCH_MIN_SCORE, getSemanticSearchConfidenceLevel } from "../confidence";
+import {
+  SEMANTIC_SEARCH_MIN_SCORE,
+  getSemanticSearchConfidenceLevel,
+  getSemanticSearchDisplayScore,
+} from "../confidence";
 import type { TSemanticSearchConfidenceLevel } from "../confidence";
 
 interface TopicsSubtopicsPreviewProps {
@@ -230,19 +234,18 @@ export const TopicsSubtopicsPreview = ({
               </div>
               <div className="divide-y divide-slate-100">
                 {results.map((result) => {
-                  const confidenceLevel = getSemanticSearchConfidenceLevel(result.score);
+                  const displayScore = getSemanticSearchDisplayScore(result.score);
+                  const confidenceLevel = getSemanticSearchConfidenceLevel(displayScore);
                   const confidenceLabel = CONFIDENCE_LABEL_BY_LEVEL[confidenceLevel](t);
-                  const score = Math.round(result.score * 100);
 
                   return (
                     <div key={`${result.tenant_id}-${result.feedback_record_id}`} className="space-y-2 p-4">
                       <div className="flex flex-wrap items-center gap-2">
                         <Badge text={result.directory_name} type="gray" size="tiny" />
                         <Badge
-                          text={t("workspace.unify.semantic_search_confidence_score", {
+                          text={t("workspace.unify.semantic_search_confidence_label", {
                             confidenceLabel,
                             indicator: CONFIDENCE_INDICATOR_BY_LEVEL[confidenceLevel],
-                            score,
                           })}
                           type={CONFIDENCE_BADGE_TYPE_BY_LEVEL[confidenceLevel]}
                           size="tiny"
