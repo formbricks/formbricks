@@ -3822,6 +3822,7 @@
       "semantic_search_confidence_label": "{indicator} {confidenceLabel} konfidens",
       "semantic_search_confidence_low": "låg",
       "semantic_search_confidence_medium": "medel",
+      "semantic_search_confidence_tooltip": "{score}% konfidens",
       "semantic_search_failed": "Misslyckades med att söka i feedback-poster",
       "semantic_search_input_label": "Sök feedback-poster efter ämne",
       "semantic_search_missing_text": "Denna feedback-post har ingen text att visa.",

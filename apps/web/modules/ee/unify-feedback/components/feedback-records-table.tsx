@@ -69,6 +69,16 @@ interface FeedbackRecordsTableProps {
   canWrite: boolean;
 }
 
+interface FeedbackRecordRowProps {
+  record: FeedbackRecordData;
+  workspaceId: string;
+  locale: string;
+  t: TFunction;
+  isSelected: boolean;
+  onSelectChange: (checked: boolean) => void;
+  onClick: () => void;
+}
+
 export const FeedbackRecordsTable = ({
   workspaceId,
   initialRecords,
@@ -487,15 +497,7 @@ const FeedbackRecordRow = ({
   isSelected,
   onSelectChange,
   onClick,
-}: {
-  record: FeedbackRecordData;
-  workspaceId: string;
-  locale: string;
-  t: TFunction;
-  isSelected: boolean;
-  onSelectChange: (checked: boolean) => void;
-  onClick: () => void;
-}) => {
+}: Readonly<FeedbackRecordRowProps>) => {
   const value = formatValue(record, t, locale);
   const isLongValue = value.length > 60;
   const isFormbricksSurveySource =
@@ -552,7 +554,7 @@ const FeedbackRecordRow = ({
           {record.field_type}
         </span>
       </td>
-      <td className="px-4 py-3">
+      <td className="px-4 py-3" title={value}>
         {isLongValue ? (
           <TooltipProvider>
             <Tooltip>

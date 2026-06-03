@@ -3822,6 +3822,7 @@
       "semantic_search_confidence_label": "{indicator} {confidenceLabel} confidence",
       "semantic_search_confidence_low": "low",
       "semantic_search_confidence_medium": "medium",
+      "semantic_search_confidence_tooltip": "{score}% confidence",
       "semantic_search_failed": "Failed to search feedback records",
       "semantic_search_input_label": "Search feedback records by topic",
       "semantic_search_missing_text": "This feedback record has no text to display.",

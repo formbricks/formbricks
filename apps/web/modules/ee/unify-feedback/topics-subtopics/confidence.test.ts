@@ -7,11 +7,14 @@ import {
 
 describe("getSemanticSearchConfidenceLevel", () => {
   test("classifies normalized display scores in thirds", () => {
+    const mediumConfidenceThreshold = 1 / 3;
+    const highConfidenceThreshold = 2 / 3;
+
     expect(getSemanticSearchConfidenceLevel(0)).toBe("low");
-    expect(getSemanticSearchConfidenceLevel(0.3333333332)).toBe("low");
-    expect(getSemanticSearchConfidenceLevel(0.3333333333)).toBe("medium");
-    expect(getSemanticSearchConfidenceLevel(0.6666666666)).toBe("medium");
-    expect(getSemanticSearchConfidenceLevel(0.6666666667)).toBe("high");
+    expect(getSemanticSearchConfidenceLevel(mediumConfidenceThreshold - Number.EPSILON)).toBe("low");
+    expect(getSemanticSearchConfidenceLevel(mediumConfidenceThreshold)).toBe("medium");
+    expect(getSemanticSearchConfidenceLevel(highConfidenceThreshold - Number.EPSILON)).toBe("medium");
+    expect(getSemanticSearchConfidenceLevel(highConfidenceThreshold)).toBe("high");
     expect(getSemanticSearchConfidenceLevel(1)).toBe("high");
   });
 });

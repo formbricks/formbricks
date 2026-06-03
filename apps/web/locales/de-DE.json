@@ -3822,6 +3822,7 @@
       "semantic_search_confidence_label": "{indicator} {confidenceLabel} Konfidenz",
       "semantic_search_confidence_low": "niedrig",
       "semantic_search_confidence_medium": "mittel",
+      "semantic_search_confidence_tooltip": "{score}% Konfidenz",
       "semantic_search_failed": "Suche nach Feedback-Einträgen fehlgeschlagen",
       "semantic_search_input_label": "Feedback-Einträge nach Thema durchsuchen",
       "semantic_search_missing_text": "Dieser Feedback-Eintrag hat keinen anzuzeigenden Text.",

@@ -3822,6 +3822,7 @@
       "semantic_search_confidence_label": "{indicator} {confidenceLabel} megbízhatóság",
       "semantic_search_confidence_low": "alacsony",
       "semantic_search_confidence_medium": "közepes",
+      "semantic_search_confidence_tooltip": "{score}% megbízhatóság",
       "semantic_search_failed": "A visszajelzési rekordok keresése sikertelen",
       "semantic_search_input_label": "Visszajelzési rekordok keresése téma szerint",
       "semantic_search_missing_text": "Ez a visszajelzési rekord nem tartalmaz megjeleníthető szöveget.",

@@ -3822,6 +3822,7 @@
       "semantic_search_confidence_label": "{indicator} confianza {confidenceLabel}",
       "semantic_search_confidence_low": "baja",
       "semantic_search_confidence_medium": "media",
+      "semantic_search_confidence_tooltip": "{score}% confianza",
       "semantic_search_failed": "No se pudieron buscar los registros de feedback",
       "semantic_search_input_label": "Buscar registros de feedback por tema",
       "semantic_search_missing_text": "Este registro de feedback no tiene texto para mostrar.",

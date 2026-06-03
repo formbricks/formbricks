@@ -235,21 +235,27 @@ export const TopicsSubtopicsPreview = ({
               <div className="divide-y divide-slate-100">
                 {results.map((result) => {
                   const displayScore = getSemanticSearchDisplayScore(result.score);
+                  const displayScorePercent = Math.round(displayScore * 100);
                   const confidenceLevel = getSemanticSearchConfidenceLevel(displayScore);
                   const confidenceLabel = CONFIDENCE_LABEL_BY_LEVEL[confidenceLevel](t);
+                  const confidenceTooltip = t("workspace.unify.semantic_search_confidence_tooltip", {
+                    score: displayScorePercent,
+                  });
 
                   return (
                     <div key={`${result.tenant_id}-${result.feedback_record_id}`} className="space-y-2 p-4">
                       <div className="flex flex-wrap items-center gap-2">
                         <Badge text={result.directory_name} type="gray" size="tiny" />
-                        <Badge
-                          text={t("workspace.unify.semantic_search_confidence_label", {
-                            confidenceLabel,
-                            indicator: CONFIDENCE_INDICATOR_BY_LEVEL[confidenceLevel],
-                          })}
-                          type={CONFIDENCE_BADGE_TYPE_BY_LEVEL[confidenceLevel]}
-                          size="tiny"
-                        />
+                        <span title={confidenceTooltip} className="inline-flex">
+                          <Badge
+                            text={t("workspace.unify.semantic_search_confidence_label", {
+                              confidenceLabel,
+                              indicator: CONFIDENCE_INDICATOR_BY_LEVEL[confidenceLevel],
+                            })}
+                            type={CONFIDENCE_BADGE_TYPE_BY_LEVEL[confidenceLevel]}
+                            size="tiny"
+                          />
+                        </span>
                       </div>
                       <p className="text-sm font-medium text-slate-900">
                         {result.field_label || t("workspace.unify.field_label")}

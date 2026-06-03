@@ -3822,6 +3822,7 @@
       "semantic_search_confidence_label": "{indicator} {confidenceLabel} betrouwbaarheid",
       "semantic_search_confidence_low": "laag",
       "semantic_search_confidence_medium": "gemiddeld",
+      "semantic_search_confidence_tooltip": "{score}% betrouwbaarheid",
       "semantic_search_failed": "Feedbackrecords zoeken is mislukt",
       "semantic_search_input_label": "Zoek feedbackrecords op onderwerp",
       "semantic_search_missing_text": "Dit feedbackrecord heeft geen tekst om weer te geven.",

@@ -3822,6 +3822,7 @@
       "semantic_search_confidence_label": "{indicator} {confidenceLabel} güven",
       "semantic_search_confidence_low": "düşük",
       "semantic_search_confidence_medium": "orta",
+      "semantic_search_confidence_tooltip": "{score}% güven",
       "semantic_search_failed": "Geri bildirim kayıtları aranamadı",
       "semantic_search_input_label": "Geri bildirim kayıtlarını konuya göre ara",
       "semantic_search_missing_text": "Bu geri bildirim kaydında görüntülenecek metin yok.",
