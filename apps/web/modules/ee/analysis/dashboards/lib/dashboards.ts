@@ -376,25 +376,32 @@ export const addChartToDashboard = async (data: TAddWidgetInput) => {
             where: { dashboardId: data.dashboardId },
             _max: { order: true },
           }),
-          tx.dashboardWidget.findMany({
-            where: { dashboardId: data.dashboardId },
-            select: { layout: true },
-          }),
+          data.respectY
+            ? Promise.resolve([])
+            : tx.dashboardWidget.findMany({
+                where: { dashboardId: data.dashboardId },
+                select: { layout: true },
+              }),
         ]);
 
-        const bottomY = existingWidgets.reduce((max, w) => {
-          const layout =
-            typeof w.layout === "object" && w.layout !== null
-              ? (w.layout as Partial<{ y: number; h: number }>)
-              : {};
-          return Math.max(max, (layout.y ?? 0) + (layout.h ?? 0));
-        }, 0);
+        const layout = data.respectY
+          ? data.layout
+          : {
+              ...data.layout,
+              y: existingWidgets.reduce((max, w) => {
+                const l =
+                  typeof w.layout === "object" && w.layout !== null
+                    ? (w.layout as Partial<{ y: number; h: number }>)
+                    : {};
+                return Math.max(max, (l.y ?? 0) + (l.h ?? 0));
+              }, 0),
+            };
 
         return tx.dashboardWidget.create({
           data: {
             dashboardId: data.dashboardId,
             chartId: data.chartId,
-            layout: { ...data.layout, y: bottomY },
+            layout,
             order: (maxOrder._max.order ?? -1) + 1,
           },
         });

@@ -31,8 +31,8 @@ export const PolishedChartTooltip = ({ active, payload, label }: Readonly<Rechar
   const headerText = formatXAxisTick(headerSource);
 
   return (
-    <div className="min-w-[180px] rounded-lg border border-slate-200 bg-white px-3 py-2.5 shadow-lg">
-      {headerText && <div className="mb-2 text-sm font-medium text-slate-800">{headerText}</div>}
+    <div className="border-border/50 min-w-[180px] rounded-lg border bg-white px-3 py-2.5 shadow-lg dark:bg-gray-950">
+      {headerText && <div className="text-foreground mb-2 text-sm font-medium">{headerText}</div>}
       <div className="flex flex-col gap-1.5">
         {payload.map((item) => {
           const key = item.dataKey ?? String(item.name ?? "");
@@ -42,7 +42,7 @@ export const PolishedChartTooltip = ({ active, payload, label }: Readonly<Rechar
             <div key={key} className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <div className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: indicatorColor }} />
-                <span className="text-sm text-slate-500">{formatCubeColumnHeader(key, t)}</span>
+                <span className="text-muted-foreground text-sm">{formatCubeColumnHeader(key, t)}</span>
               </div>
               <span className="text-foreground text-sm font-medium tabular-nums">
                 {formatCellValue(item.value)}

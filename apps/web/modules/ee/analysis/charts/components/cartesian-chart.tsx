@@ -19,9 +19,15 @@ export interface CartesianChartProps {
   chartProps?: Record<string, unknown>;
   /** Forwarded to Recharts Tooltip `cursor`. Pass `false` for per-bar bar charts. */
   tooltipCursor?: boolean | Record<string, unknown>;
+  /** Force the y-axis to start at 0. Required for bars so length encodes magnitude correctly. */
+  zeroBaseline?: boolean;
 }
 
-const computeYDomain = (data: TChartDataRow[], dataKeys: string[]): [number, number] | undefined => {
+const computeYDomain = (
+  data: TChartDataRow[],
+  dataKeys: string[],
+  zeroBaseline: boolean
+): [number, number] | undefined => {
   const values: number[] = [];
   for (const row of data) {
     for (const key of dataKeys) {
@@ -36,7 +42,8 @@ const computeYDomain = (data: TChartDataRow[], dataKeys: string[]): [number, num
   const dataMax = Math.max(...values);
   // Flat data still needs visible headroom, so floor the range at 1.
   const range = Math.max(dataMax - dataMin, 1);
-  return [Math.floor(dataMin - range * 0.05), Math.ceil(dataMax + range * 0.1)];
+  const lower = zeroBaseline ? Math.min(0, dataMin) : Math.floor(dataMin - range * 0.05);
+  return [lower, Math.ceil(dataMax + range * 0.1)];
 };
 
 export function CartesianChart({
@@ -49,8 +56,9 @@ export function CartesianChart({
   showLegend = false,
   chartProps = {},
   tooltipCursor,
+  zeroBaseline = false,
 }: Readonly<CartesianChartProps>) {
-  const yDomain = computeYDomain(data, dataKeys);
+  const yDomain = computeYDomain(data, dataKeys, zeroBaseline);
 
   return (
     <div className="h-full min-h-[16rem] w-full">

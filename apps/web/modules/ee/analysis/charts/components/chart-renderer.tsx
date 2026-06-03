@@ -27,19 +27,46 @@ interface PieLabelProps {
   value?: number;
 }
 
+// Tiny slices hide both label and leader line so adjacent labels don't overlap
+// and `minAngle`-stretched slices don't end up with lines pointing at nothing.
+const PIE_LABEL_MIN_PERCENT = 0.02;
+
 const renderPieLabel = ({ cx, cy, midAngle, outerRadius, percent, value }: PieLabelProps) => {
   if (cx == null || cy == null || midAngle == null || outerRadius == null || percent == null) return null;
-  // Tiny slices skip the label so adjacent leader lines don't overlap.
-  if (percent < 0.02) return null;
+  if (percent < PIE_LABEL_MIN_PERCENT) return null;
   const RADIAN = Math.PI / 180;
   const radius = outerRadius + 22;
   const x = cx + radius * Math.cos(-midAngle * RADIAN);
   const y = cy + radius * Math.sin(-midAngle * RADIAN);
   const textAnchor = x > cx ? "start" : "end";
   return (
-    <text x={x} y={y} fill="#64748b" fontSize={11} textAnchor={textAnchor} dominantBaseline="central">
+    <text
+      x={x}
+      y={y}
+      className="fill-muted-foreground"
+      fontSize={11}
+      textAnchor={textAnchor}
+      dominantBaseline="central">
       {formatCellValue(value)} ({(percent * 100).toFixed(1)}%)
     </text>
+  );
+};
+
+interface PieLabelLineProps {
+  percent?: number;
+  points?: Array<{ x: number; y: number }>;
+}
+
+const renderPieLabelLine = ({ percent, points }: PieLabelLineProps) => {
+  if (percent == null || percent < PIE_LABEL_MIN_PERCENT) return null;
+  if (!points || points.length < 2) return null;
+  return (
+    <polyline
+      points={points.map((p) => `${p.x},${p.y}`).join(" ")}
+      fill="none"
+      className="stroke-border"
+      strokeWidth={1}
+    />
   );
 };
 
@@ -68,7 +95,13 @@ const PieCenterLabel = ({
         style={{ fontVariantNumeric: "tabular-nums" }}>
         {formatCellValue(total)}
       </text>
-      <text x={cx} y={cy + 18} textAnchor="middle" dominantBaseline="central" fill="#64748b" fontSize={11}>
+      <text
+        x={cx}
+        y={cy + 18}
+        textAnchor="middle"
+        dominantBaseline="central"
+        className="fill-muted-foreground"
+        fontSize={11}>
         {label}
       </text>
     </g>
@@ -145,6 +178,7 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
           chartConfig={chartConfig}
           showLegend={isMultiMeasure}
           tooltipCursor={false}
+          zeroBaseline
           chartProps={isMultiMeasure ? { barCategoryGap: "20%" } : {}}>
           {dataKeys.map((key, i) => {
             const fallbackColor =
@@ -256,7 +290,10 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
                 outerRadius="75%"
                 paddingAngle={2}
                 minAngle={2}
-                labelLine={{ stroke: "#cbd5e1", strokeWidth: 1 }}
+                // Recharts types `labelLine` as `ReactElement | function -> ReactElement`,
+                // but returning `null` from the function is supported at runtime and is
+                // how we hide the leader line for sub-2% slices.
+                labelLine={renderPieLabelLine as never}
                 label={renderPieLabel}>
                 {processedData.map((row, index) => {
                   const rowKey = row[xAxisKey] ?? `row-${index}`;

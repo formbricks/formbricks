@@ -92,6 +92,7 @@ export const ZAddWidgetInput = z.object({
   chartId: ZId,
   workspaceId: ZId,
   layout: ZWidgetLayout,
+  respectY: z.boolean().optional(),
 });
 export type TAddWidgetInput = z.infer<typeof ZAddWidgetInput>;
 

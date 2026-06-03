@@ -219,6 +219,7 @@ export function DashboardDetailClient({
           dashboardId: dashboard.id,
           chartId: snapshot.chartId,
           layout: snapshot.layout,
+          respectY: true,
         });
         if (!result?.data) {
           toast.error(getFormattedErrorMessage(result));
