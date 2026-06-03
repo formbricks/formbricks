@@ -1,5 +1,6 @@
 "use client";
 
+import type { TFunction } from "i18next";
 import { SearchIcon, SparklesIcon } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -13,11 +14,31 @@ import { PageHeader } from "@/modules/ui/components/page-header";
 import { UnifyConfigNavigation } from "../../components/unify-config-navigation";
 import { semanticSearchFeedbackRecordsAction } from "../actions";
 import type { TTopicsPreviewSearchResult } from "../actions";
+import { SEMANTIC_SEARCH_MIN_SCORE, getSemanticSearchConfidenceLevel } from "../confidence";
+import type { TSemanticSearchConfidenceLevel } from "../confidence";
 
 interface TopicsSubtopicsPreviewProps {
   workspaceId: string;
   directoryMap: Record<string, string>;
 }
+
+const CONFIDENCE_BADGE_TYPE_BY_LEVEL = {
+  high: "success",
+  low: "error",
+  medium: "warning",
+} satisfies Record<TSemanticSearchConfidenceLevel, "error" | "warning" | "success">;
+
+const CONFIDENCE_INDICATOR_BY_LEVEL = {
+  high: "🟢",
+  low: "🔴",
+  medium: "🟡",
+} satisfies Record<TSemanticSearchConfidenceLevel, string>;
+
+const CONFIDENCE_LABEL_BY_LEVEL = {
+  high: (t) => t("workspace.unify.semantic_search_confidence_high"),
+  low: (t) => t("workspace.unify.semantic_search_confidence_low"),
+  medium: (t) => t("workspace.unify.semantic_search_confidence_medium"),
+} satisfies Record<TSemanticSearchConfidenceLevel, (t: TFunction) => string>;
 
 export const TopicsSubtopicsPreview = ({
   workspaceId,
@@ -63,7 +84,7 @@ export const TopicsSubtopicsPreview = ({
       const response = await semanticSearchFeedbackRecordsAction({
         workspaceId,
         query: trimmedQuery,
-        minScore: 0.7,
+        minScore: SEMANTIC_SEARCH_MIN_SCORE,
       });
 
       if (response?.data) {
@@ -95,7 +116,7 @@ export const TopicsSubtopicsPreview = ({
       const response = await semanticSearchFeedbackRecordsAction({
         workspaceId,
         query: activeQuery,
-        minScore: 0.7,
+        minScore: SEMANTIC_SEARCH_MIN_SCORE,
         cursors,
       });
 
@@ -208,24 +229,34 @@ export const TopicsSubtopicsPreview = ({
                 </p>
               </div>
               <div className="divide-y divide-slate-100">
-                {results.map((result) => (
-                  <div key={`${result.tenant_id}-${result.feedback_record_id}`} className="space-y-2 p-4">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Badge text={result.directory_name} type="gray" size="tiny" />
-                      <span className="text-xs text-slate-500">
-                        {t("workspace.unify.semantic_search_relevance", {
-                          score: Math.round(result.score * 100),
-                        })}
-                      </span>
+                {results.map((result) => {
+                  const confidenceLevel = getSemanticSearchConfidenceLevel(result.score);
+                  const confidenceLabel = CONFIDENCE_LABEL_BY_LEVEL[confidenceLevel](t);
+                  const score = Math.round(result.score * 100);
+
+                  return (
+                    <div key={`${result.tenant_id}-${result.feedback_record_id}`} className="space-y-2 p-4">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge text={result.directory_name} type="gray" size="tiny" />
+                        <Badge
+                          text={t("workspace.unify.semantic_search_confidence_score", {
+                            confidenceLabel,
+                            indicator: CONFIDENCE_INDICATOR_BY_LEVEL[confidenceLevel],
+                            score,
+                          })}
+                          type={CONFIDENCE_BADGE_TYPE_BY_LEVEL[confidenceLevel]}
+                          size="tiny"
+                        />
+                      </div>
+                      <p className="text-sm font-medium text-slate-900">
+                        {result.field_label || t("workspace.unify.field_label")}
+                      </p>
+                      <p className="whitespace-pre-wrap text-sm text-slate-700">
+                        {result.value_text || t("workspace.unify.semantic_search_missing_text")}
+                      </p>
                     </div>
-                    <p className="text-sm font-medium text-slate-900">
-                      {result.field_label || t("workspace.unify.field_label")}
-                    </p>
-                    <p className="whitespace-pre-wrap text-sm text-slate-700">
-                      {result.value_text || t("workspace.unify.semantic_search_missing_text")}
-                    </p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
