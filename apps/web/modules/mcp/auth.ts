@@ -1,7 +1,7 @@
 import "server-only";
 import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
-import { ApiKeyPermission } from "@prisma/client";
 import type { NextRequest } from "next/server";
+import { ApiKeyPermission } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import type { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { TooManyRequestsError } from "@formbricks/types/errors";
