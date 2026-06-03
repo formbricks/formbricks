@@ -24,6 +24,15 @@ export const EditAlerts = ({
 }: EditAlertsProps) => {
   const { t } = useTranslation();
   const { workspace: currentWorkspace } = useWorkspace();
+
+  if (memberships.length === 0) {
+    return (
+      <div className="m-2 flex h-16 items-center justify-center rounded bg-slate-50 text-sm text-slate-500">
+        <p>{t("common.no_surveys_found")}</p>
+      </div>
+    );
+  }
+
   return (
     <>
       {memberships.map((membership) => (

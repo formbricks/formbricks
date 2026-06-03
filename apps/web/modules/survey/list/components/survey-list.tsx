@@ -156,12 +156,18 @@ export const SurveysList = ({
   if (showReadOnlyEmptyState) {
     return (
       <PageContentWrapper>
-        <h1 className="px-6 text-3xl font-extrabold text-slate-700">
-          {t("workspace.surveys.no_surveys_created_yet")}
-        </h1>
-        <h2 className="px-6 text-lg font-medium text-slate-500">
-          {t("workspace.surveys.read_only_user_not_allowed_to_create_survey_warning")}
-        </h2>
+        <PageHeader pageTitle={t("common.surveys")} />
+        <div className="flex h-full w-full">
+          <div className="flex w-full flex-col items-center justify-center text-slate-600">
+            <span className="size-24 p-4 text-center text-5xl">🔒</span>
+            <h2 className="text-xl font-semibold text-slate-700">
+              {t("workspace.surveys.no_surveys_created_yet")}
+            </h2>
+            <p className="mt-2 max-w-md text-center text-sm text-slate-500">
+              {t("workspace.surveys.read_only_user_not_allowed_to_create_survey_warning")}
+            </p>
+          </div>
+        </div>
       </PageContentWrapper>
     );
   }
