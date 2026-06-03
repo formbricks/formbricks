@@ -1,6 +1,6 @@
 "use client";
 
-import { BellRing, Eye, ListRestart, RefreshCcwIcon, SquarePenIcon } from "lucide-react";
+import { BellRing, Eye, ListRestart, RefreshCcwIcon, SquarePenIcon, Wand2 } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -13,6 +13,7 @@ import { SuccessMessage } from "@/app/(app)/workspaces/[workspaceId]/surveys/[su
 import { ShareSurveyModal } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/share-survey-modal";
 import { SurveyStatusDropdown } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/SurveyStatusDropdown";
 import { useSurvey } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/context/survey-context";
+import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
 import { useSingleUseId } from "@/modules/survey/hooks/useSingleUseId";
@@ -20,7 +21,7 @@ import { copySurveyToOtherWorkspaceAction } from "@/modules/survey/list/actions"
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { IconBar } from "@/modules/ui/components/iconbar";
-import { resetSurveyAction } from "../actions";
+import { generateExampleResponsesAction, resetSurveyAction } from "../actions";
 
 interface SurveyAnalysisCTAProps {
   isReadOnly: boolean;
@@ -32,6 +33,7 @@ interface SurveyAnalysisCTAProps {
   isFormbricksCloud: boolean;
   isStorageConfigured: boolean;
   enterpriseLicenseRequestFormUrl: string;
+  aiUnavailableReason: TAIUnavailableReason | null;
 }
 
 interface ModalState {
@@ -49,6 +51,7 @@ export const SurveyAnalysisCTA = ({
   isFormbricksCloud,
   isStorageConfigured,
   enterpriseLicenseRequestFormUrl,
+  aiUnavailableReason,
 }: SurveyAnalysisCTAProps) => {
   const { t } = useTranslation();
   const router = useRouter();
@@ -62,6 +65,7 @@ export const SurveyAnalysisCTA = ({
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isGeneratingExamples, setIsGeneratingExamples] = useState(false);
 
   const { workspace } = useWorkspaceContext();
   const { survey } = useSurvey();
@@ -142,6 +146,7 @@ export const SurveyAnalysisCTA = ({
         })
       );
       router.refresh();
+      await refreshAnalysisData();
     } else {
       const errorMessage = getFormattedErrorMessage(result);
       toast.error(errorMessage);
@@ -149,6 +154,47 @@ export const SurveyAnalysisCTA = ({
     setIsResetting(false);
     setIsResetModalOpen(false);
   };
+
+  const handleGenerateExampleResponses = async () => {
+    if (isGeneratingExamples) return;
+    setIsGeneratingExamples(true);
+    const loadingToastId = toast.loading(t("workspace.surveys.summary.generating_example_responses"));
+    try {
+      const result = await generateExampleResponsesAction({ surveyId: survey.id });
+      if (result?.data) {
+        toast.success(
+          t("workspace.surveys.summary.example_responses_generated_successfully", {
+            count: result.data.createdCount,
+          }),
+          { id: loadingToastId }
+        );
+        router.refresh();
+      } else {
+        const errorMessage = getFormattedErrorMessage(result);
+        toast.error(errorMessage || t("workspace.surveys.summary.example_responses_generation_failed"), {
+          id: loadingToastId,
+        });
+      }
+    } finally {
+      setIsGeneratingExamples(false);
+    }
+  };
+
+  const exampleResponsesTooltip = (() => {
+    if (isGeneratingExamples) {
+      return t("workspace.surveys.summary.generating_example_responses");
+    }
+    if (aiUnavailableReason === "not_in_plan") {
+      return t("workspace.surveys.summary.generate_example_responses_locked_plan");
+    }
+    if (aiUnavailableReason === "not_enabled") {
+      return t("workspace.surveys.summary.generate_example_responses_locked_disabled");
+    }
+    if (aiUnavailableReason === "instance_not_configured") {
+      return t("workspace.surveys.summary.generate_example_responses_locked_instance");
+    }
+    return t("workspace.surveys.summary.generate_example_responses");
+  })();
 
   const iconActions = [
     {
@@ -184,6 +230,13 @@ export const SurveyAnalysisCTA = ({
         window.open(previewUrl, "_blank");
       },
       isVisible: survey.type === "link",
+    },
+    {
+      icon: Wand2,
+      tooltip: exampleResponsesTooltip,
+      onClick: handleGenerateExampleResponses,
+      disabled: isGeneratingExamples || aiUnavailableReason !== null,
+      isVisible: !isReadOnly && responseCount === 0,
     },
     {
       icon: ListRestart,
