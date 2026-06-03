@@ -96,8 +96,7 @@ function UploadedFileItem({
       <div className="flex flex-col items-center justify-center p-2">
         <UploadIcon />
         <p
-          style={{ fontSize: "var(--fb-input-font-size)" }}
-          className="mt-1 w-full overflow-hidden px-2 text-center overflow-ellipsis whitespace-nowrap text-[var(--foreground)]"
+          className="mt-1 w-full overflow-hidden px-2 text-center [font-size:var(--fb-input-font-size)] text-ellipsis whitespace-nowrap text-(--foreground)"
           title={file.name}>
           {file.name}
         </p>
@@ -189,8 +188,7 @@ function UploadArea({
         aria-label="Upload files by clicking or dragging them here">
         <Upload className="text-input-text h-6" aria-hidden="true" />
         <span
-          className="text-input-text font-input-weight m-2"
-          style={{ fontSize: "var(--fb-input-font-size)" }}
+          className="text-input-text font-input-weight m-2 [font-size:var(--fb-input-font-size)]"
           id={`${inputId}-label`}>
           {placeholderText}
         </span>
@@ -306,9 +304,7 @@ function FileUpload({
           <div className="w-full">
             {isUploading ? (
               <div className="flex animate-pulse items-center justify-center rounded-lg py-4">
-                <p
-                  className="text-muted-foreground font-medium"
-                  style={{ fontSize: "var(--fb-input-font-size)" }}>
+                <p className="text-muted-foreground [font-size:var(--fb-input-font-size)] font-medium">
                   {uploadingText}
                 </p>
               </div>

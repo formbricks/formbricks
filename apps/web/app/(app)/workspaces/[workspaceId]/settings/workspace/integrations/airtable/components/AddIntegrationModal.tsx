@@ -122,6 +122,8 @@ const renderElementSelection = ({
   setIncludeMetadata,
   includeCreatedAt,
   setIncludeCreatedAt,
+  includeContactAttributes,
+  setIncludeContactAttributes,
 }: {
   t: TFunction;
   selectedSurvey: TSurvey;
@@ -135,6 +137,8 @@ const renderElementSelection = ({
   setIncludeMetadata: (value: boolean) => void;
   includeCreatedAt: boolean;
   setIncludeCreatedAt: (value: boolean) => void;
+  includeContactAttributes: boolean;
+  setIncludeContactAttributes: (value: boolean) => void;
 }) => {
   return (
     <div className="space-y-4">
@@ -164,6 +168,8 @@ const renderElementSelection = ({
         setIncludeMetadata={setIncludeMetadata}
         includeCreatedAt={includeCreatedAt}
         setIncludeCreatedAt={setIncludeCreatedAt}
+        includeContactAttributes={includeContactAttributes}
+        setIncludeContactAttributes={setIncludeContactAttributes}
       />
     </div>
   );
@@ -187,6 +193,7 @@ export const AddIntegrationModal = ({
   const [includeHiddenFields, setIncludeHiddenFields] = useState(false);
   const [includeMetadata, setIncludeMetadata] = useState(false);
   const [includeCreatedAt, setIncludeCreatedAt] = useState(true);
+  const [includeContactAttributes, setIncludeContactAttributes] = useState(false);
   const airtableIntegrationData: TIntegrationAirtableInput = {
     type: "airtable",
     config: {
@@ -205,6 +212,7 @@ export const AddIntegrationModal = ({
       setIncludeHiddenFields(!!defaultData.includeHiddenFields);
       setIncludeMetadata(!!defaultData.includeMetadata);
       setIncludeCreatedAt(!!defaultData.includeCreatedAt);
+      setIncludeContactAttributes(!!defaultData.includeContactAttributes);
     } else {
       reset();
     }
@@ -259,6 +267,7 @@ export const AddIntegrationModal = ({
         includeHiddenFields,
         includeMetadata,
         includeCreatedAt,
+        includeContactAttributes,
       };
 
       if (isEditMode) {
@@ -446,6 +455,8 @@ export const AddIntegrationModal = ({
                   setIncludeMetadata,
                   includeCreatedAt,
                   setIncludeCreatedAt,
+                  includeContactAttributes,
+                  setIncludeContactAttributes,
                 })}
             </div>
           </DialogBody>

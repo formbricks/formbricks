@@ -213,6 +213,7 @@
 }
 
 #fbjs .progress-indicator {
+  --fb-progress-translate-x: -100%;
   background-color: var(--fb-progress-indicator-bg-color);
   border-radius: var(--fb-progress-indicator-border-radius);
 }

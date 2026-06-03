@@ -23,10 +23,12 @@ import { truncateText } from "@/lib/utils/strings";
 import { resolveStorageUrlAuto } from "@/modules/storage/utils";
 
 type TIntegrationPipelineData = {
-  response: Pick<TResponse, "createdAt" | "data" | "meta" | "variables">;
+  response: Pick<TResponse, "createdAt" | "data" | "meta" | "variables" | "contactAttributes">;
   surveyId: string;
 };
 type TPipelineIntegrationSurvey = Pick<TSurvey, "blocks" | "hiddenFields" | "variables" | "name">;
+
+const NOTION_PERSON_ATTRIBUTE_PREFIX = "person.";
 
 const convertMetaObjectToString = (metadata: TResponseMeta): string => {
   let result: string[] = [];
@@ -49,6 +51,7 @@ interface TIntegrationFieldSelection {
   includeHiddenFields: boolean;
   includeMetadata: boolean;
   includeVariables: boolean;
+  includeContactAttributes: boolean;
 }
 
 const toIntegrationFieldSelection = (config: {
@@ -57,12 +60,14 @@ const toIntegrationFieldSelection = (config: {
   includeHiddenFields?: boolean | null;
   includeMetadata?: boolean | null;
   includeVariables?: boolean | null;
+  includeContactAttributes?: boolean | null;
 }): TIntegrationFieldSelection => ({
   elementIds: config.elementIds,
   includeCreatedAt: Boolean(config.includeCreatedAt),
   includeHiddenFields: Boolean(config.includeHiddenFields),
   includeMetadata: Boolean(config.includeMetadata),
   includeVariables: Boolean(config.includeVariables),
+  includeContactAttributes: Boolean(config.includeContactAttributes),
 });
 
 const processDataForIntegration = async (
@@ -74,7 +79,14 @@ const processDataForIntegration = async (
   responses: string[];
   elements: string[];
 }> => {
-  const { elementIds, includeCreatedAt, includeHiddenFields, includeMetadata, includeVariables } = selection;
+  const {
+    elementIds,
+    includeCreatedAt,
+    includeHiddenFields,
+    includeMetadata,
+    includeVariables,
+    includeContactAttributes,
+  } = selection;
   const ids =
     includeHiddenFields && survey.hiddenFields.fieldIds
       ? [...elementIds, ...survey.hiddenFields.fieldIds]
@@ -98,6 +110,12 @@ const processDataForIntegration = async (
     const date = new Date(data.response.createdAt);
     responses.push(`${getFormattedDateTimeString(date)}`);
     elements.push("Created At");
+  }
+  if (includeContactAttributes && data.response.contactAttributes) {
+    Object.entries(data.response.contactAttributes).forEach(([key, value]) => {
+      responses.push(String(value));
+      elements.push(`person.${key}`);
+    });
   }
 
   return {
@@ -412,6 +430,12 @@ const buildNotionPayloadProperties = (
     } else if (map.element.id === "createdAt") {
       properties[map.column.name] = {
         [map.column.type]: getValue(map.column.type, data.response.createdAt) || null,
+      };
+    } else if (map.element.id.startsWith(NOTION_PERSON_ATTRIBUTE_PREFIX)) {
+      const attributeKey = map.element.id.slice(NOTION_PERSON_ATTRIBUTE_PREFIX.length);
+      const value = data.response.contactAttributes?.[attributeKey];
+      properties[map.column.name] = {
+        [map.column.type]: getValue(map.column.type, value) || null,
       };
     } else {
       const value = normalizedResponses[map.element.id];

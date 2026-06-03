@@ -82,6 +82,7 @@ describe("rateLimitConfigs", () => {
         "isSurveyResponsePresent",
         "validateSurveyPin",
         "licenseRecheck",
+        "generateExampleResponses",
       ]);
     });
 

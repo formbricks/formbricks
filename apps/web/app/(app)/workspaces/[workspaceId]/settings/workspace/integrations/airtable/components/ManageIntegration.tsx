@@ -147,6 +147,7 @@ export const ManageIntegration = ({
                   includeHiddenFields: !!data.includeHiddenFields,
                   includeMetadata: !!data.includeMetadata,
                   includeCreatedAt: !!data.includeCreatedAt,
+                  includeContactAttributes: !!data.includeContactAttributes,
                   index,
                 });
                 setIsModalOpen(true);
