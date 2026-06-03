@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { TUser } from "@formbricks/types/user";
 import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
+import { EmptyState } from "@/modules/ui/components/empty-state";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modules/ui/components/tooltip";
 import { Membership } from "../types";
 import { NotificationSwitch } from "./NotificationSwitch";
@@ -26,11 +27,7 @@ export const EditAlerts = ({
   const { workspace: currentWorkspace } = useWorkspace();
 
   if (memberships.length === 0) {
-    return (
-      <div className="m-2 flex h-16 items-center justify-center rounded bg-slate-50 text-sm text-slate-500">
-        <p>{t("common.no_surveys_found")}</p>
-      </div>
-    );
+    return <EmptyState text={t("common.no_surveys_found")} variant="simple" />;
   }
 
   return (

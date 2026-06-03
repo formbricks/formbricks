@@ -1,7 +1,7 @@
 "use client";
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { PlusIcon } from "lucide-react";
+import { LockIcon, PlusIcon } from "lucide-react";
 import Link from "next/link";
 import { type ComponentProps, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -157,13 +157,13 @@ export const SurveysList = ({
     return (
       <PageContentWrapper>
         <PageHeader pageTitle={t("common.surveys")} />
-        <div className="flex h-full w-full">
-          <div className="flex w-full flex-col items-center justify-center text-slate-600">
-            <span className="size-24 p-4 text-center text-5xl">🔒</span>
-            <h2 className="text-xl font-semibold text-slate-700">
+        <div className="mx-auto flex max-w-xl flex-col items-center gap-4 py-16 text-center">
+          <LockIcon className="size-8 text-slate-400" />
+          <div className="space-y-2">
+            <h3 className="text-base font-semibold text-slate-900">
               {t("workspace.surveys.no_surveys_created_yet")}
-            </h2>
-            <p className="mt-2 max-w-md text-center text-sm text-slate-500">
+            </h3>
+            <p className="text-balance text-sm text-slate-600">
               {t("workspace.surveys.read_only_user_not_allowed_to_create_survey_warning")}
             </p>
           </div>
