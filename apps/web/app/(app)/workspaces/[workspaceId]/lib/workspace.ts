@@ -19,7 +19,7 @@ const findWorkspacesForMembership = async (
     workspaceWhereClause = {
       workspaceTeams: {
         some: {
-          ...(writableOnly && { permission: "readWrite" }),
+          ...(writableOnly && { permission: { in: ["readWrite", "manage"] } }),
           team: {
             teamUsers: {
               some: {

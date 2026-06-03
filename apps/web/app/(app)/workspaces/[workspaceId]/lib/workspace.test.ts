@@ -207,7 +207,7 @@ describe("Workspace", () => {
       expect(result).toEqual(mockWorkspaces);
     });
 
-    test("should filter to readWrite team workspaces for member role", async () => {
+    test("should filter to readWrite or manage team workspaces for member role", async () => {
       const mockWorkspaces = [{ id: "workspace1", name: "Workspace 1" }];
 
       vi.mocked(prisma.workspace.findMany).mockResolvedValue(mockWorkspaces as any);
@@ -219,7 +219,7 @@ describe("Workspace", () => {
           organizationId: "org1",
           workspaceTeams: {
             some: {
-              permission: "readWrite",
+              permission: { in: ["readWrite", "manage"] },
               team: {
                 teamUsers: {
                   some: {
@@ -238,7 +238,21 @@ describe("Workspace", () => {
       expect(result).toEqual(mockWorkspaces);
     });
 
-    test("should return empty array when member has no readWrite team access", async () => {
+    test("should include workspaces where member has manage permission", async () => {
+      const mockWorkspaces = [{ id: "workspace-manage", name: "Managed Workspace" }];
+
+      vi.mocked(prisma.workspace.findMany).mockResolvedValue(mockWorkspaces as any);
+
+      const result = await getWritableWorkspacesByUserId("user1", mockMemberMembership);
+
+      const callArgs = vi.mocked(prisma.workspace.findMany).mock.calls.at(-1)?.[0];
+      const permissionFilter = (callArgs?.where as any)?.workspaceTeams?.some?.permission;
+      expect(permissionFilter).toEqual({ in: ["readWrite", "manage"] });
+      expect(permissionFilter.in).toContain("manage");
+      expect(result).toEqual(mockWorkspaces);
+    });
+
+    test("should return empty array when member has no readWrite or manage team access", async () => {
       vi.mocked(prisma.workspace.findMany).mockResolvedValue([]);
 
       const result = await getWritableWorkspacesByUserId("user1", mockMemberMembership);
