@@ -2096,6 +2096,7 @@
         "spreadsheet_url": "Spreadsheet URL",
         "token_expired_error": "Google Sheets refresh token has expired or been revoked. Please reconnect the integration."
       },
+      "include_contact_attributes": "Include Person Attributes",
       "include_created_at": "Include Created At",
       "include_hidden_fields": "Include Hidden Fields",
       "include_metadata": "Include Metadata (Browser, Country, etc.)",

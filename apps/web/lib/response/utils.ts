@@ -688,10 +688,9 @@ export const extractSurveyDetails = (survey: TSurvey, responses: TResponse[]) =>
   });
 
   const hiddenFields = survey.hiddenFields?.fieldIds || [];
-  const userAttributes =
-    survey.type === "app"
-      ? Array.from(new Set(responses.map((response) => Object.keys(response.contactAttributes ?? {})).flat()))
-      : [];
+  const userAttributes = Array.from(
+    new Set(responses.map((response) => Object.keys(response.contactAttributes ?? {})).flat())
+  );
   const variables = survey.variables?.map((variable) => variable.name) || [];
 
   return { metaDataFields, elements, hiddenFields, variables, userAttributes };
@@ -781,9 +780,8 @@ export const getResponsesJson = (
       jsonData[idx][variable.name] = answer;
     });
 
-    // user attributes
     userAttributes.forEach((attribute) => {
-      jsonData[idx][attribute] = response.contactAttributes?.[attribute] || "";
+      jsonData[idx][`person.${attribute}`] = response.contactAttributes?.[attribute] || "";
     });
 
     // hidden fields

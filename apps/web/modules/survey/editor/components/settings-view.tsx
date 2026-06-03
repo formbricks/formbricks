@@ -79,7 +79,6 @@ export const SettingsView = ({
                   key={localSurvey.segment?.id}
                   localSurvey={localSurvey}
                   setLocalSurvey={setLocalSurvey}
-                  workspaceId={localSurvey.workspaceId}
                   contactAttributeKeys={contactAttributeKeys}
                   segments={segments}
                   initialSegment={segments.find((segment) => segment.id === localSurvey.segment?.id)}

@@ -2096,6 +2096,7 @@
         "spreadsheet_url": "Tabellen-URL",
         "token_expired_error": "Das Google Sheets Refresh-Token ist abgelaufen oder wurde widerrufen. Bitte verbinde die Integration erneut."
       },
+      "include_contact_attributes": "Include Person Attributes",
       "include_created_at": "Erstellungsdatum einbeziehen",
       "include_hidden_fields": "Versteckte Felder einbeziehen",
       "include_metadata": "Metadaten einbeziehen (Browser, Land, etc.)",

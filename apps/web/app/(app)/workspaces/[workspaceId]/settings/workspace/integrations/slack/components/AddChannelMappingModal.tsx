@@ -65,6 +65,7 @@ export const AddChannelMappingModal = ({
   const [includeHiddenFields, setIncludeHiddenFields] = useState(false);
   const [includeMetadata, setIncludeMetadata] = useState(false);
   const [includeCreatedAt, setIncludeCreatedAt] = useState(true);
+  const [includeContactAttributes, setIncludeContactAttributes] = useState(false);
   const existingIntegrationData = slackIntegration?.config?.data;
   const slackIntegrationData: TIntegrationSlackInput = {
     type: "slack",
@@ -104,6 +105,7 @@ export const AddChannelMappingModal = ({
       setIncludeHiddenFields(!!selectedIntegration.includeHiddenFields);
       setIncludeMetadata(!!selectedIntegration.includeMetadata);
       setIncludeCreatedAt(!!selectedIntegration.includeCreatedAt);
+      setIncludeContactAttributes(!!selectedIntegration.includeContactAttributes);
       return;
     }
     resetForm();
@@ -137,6 +139,7 @@ export const AddChannelMappingModal = ({
         includeHiddenFields,
         includeMetadata,
         includeCreatedAt,
+        includeContactAttributes,
       };
       if (selectedIntegration) {
         // update action
@@ -324,6 +327,8 @@ export const AddChannelMappingModal = ({
                     setIncludeMetadata={setIncludeMetadata}
                     includeCreatedAt={includeCreatedAt}
                     setIncludeCreatedAt={setIncludeCreatedAt}
+                    includeContactAttributes={includeContactAttributes}
+                    setIncludeContactAttributes={setIncludeContactAttributes}
                   />
                 </div>
               )}

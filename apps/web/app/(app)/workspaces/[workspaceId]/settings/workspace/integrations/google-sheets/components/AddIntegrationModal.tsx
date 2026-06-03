@@ -81,6 +81,7 @@ export const AddIntegrationModal = ({
   const [includeHiddenFields, setIncludeHiddenFields] = useState(false);
   const [includeMetadata, setIncludeMetadata] = useState(false);
   const [includeCreatedAt, setIncludeCreatedAt] = useState(true);
+  const [includeContactAttributes, setIncludeContactAttributes] = useState(false);
   const googleSheetIntegrationData: TIntegrationGoogleSheetsInput = {
     type: "googleSheets",
     config: {
@@ -115,6 +116,7 @@ export const AddIntegrationModal = ({
       setIncludeHiddenFields(!!selectedIntegration.includeHiddenFields);
       setIncludeMetadata(!!selectedIntegration.includeMetadata);
       setIncludeCreatedAt(!!selectedIntegration.includeCreatedAt);
+      setIncludeContactAttributes(!!selectedIntegration.includeContactAttributes);
       return;
     } else {
       setSpreadsheetUrl("");
@@ -172,6 +174,7 @@ export const AddIntegrationModal = ({
       integrationData.includeHiddenFields = includeHiddenFields;
       integrationData.includeMetadata = includeMetadata;
       integrationData.includeCreatedAt = includeCreatedAt;
+      integrationData.includeContactAttributes = includeContactAttributes;
       if (selectedIntegration) {
         // update action
         googleSheetIntegrationData.config.data[selectedIntegration.index] = integrationData;
@@ -331,6 +334,8 @@ export const AddIntegrationModal = ({
                     setIncludeMetadata={setIncludeMetadata}
                     includeCreatedAt={includeCreatedAt}
                     setIncludeCreatedAt={setIncludeCreatedAt}
+                    includeContactAttributes={includeContactAttributes}
+                    setIncludeContactAttributes={setIncludeContactAttributes}
                   />
                 </div>
               )}

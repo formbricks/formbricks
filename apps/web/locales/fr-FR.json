@@ -2096,6 +2096,7 @@
         "spreadsheet_url": "URL de la feuille de calcul",
         "token_expired_error": "Le jeton d'actualisation Google Sheets a expiré ou a été révoqué. Veuillez reconnecter l'intégration."
       },
+      "include_contact_attributes": "Include Person Attributes",
       "include_created_at": "Inclure la date de création",
       "include_hidden_fields": "Inclure les champs cachés",
       "include_metadata": "Inclure des métadonnées (navigateur, pays, etc.)",

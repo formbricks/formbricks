@@ -335,3 +335,25 @@ export const getFeedbackSource = reactCache(
     }
   }
 );
+
+export const getContactAttributeKey = reactCache(
+  async (contactAttributeKeyId: string): Promise<{ workspaceId: string } | null> => {
+    validateInputs([contactAttributeKeyId, ZId]);
+    try {
+      const contactAttributeKey = await prisma.contactAttributeKey.findUnique({
+        where: {
+          id: contactAttributeKeyId,
+        },
+        select: { workspaceId: true },
+      });
+
+      return contactAttributeKey;
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        throw new DatabaseError(error.message);
+      }
+
+      throw error;
+    }
+  }
+);
