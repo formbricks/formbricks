@@ -1,7 +1,7 @@
 import { use } from "react";
 import { getAISmartToolsUnavailableReason, getOrganizationAIConfig } from "@/lib/ai/service";
-import { getConnectorsWithMappings } from "@/lib/connector/service";
 import { ENTERPRISE_LICENSE_REQUEST_FORM_URL, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { getFeedbackSourcesWithMappings } from "@/lib/feedback-source/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { ChartsList } from "@/modules/ee/analysis/charts/components/charts-list";
 import { CreateChartButton } from "@/modules/ee/analysis/charts/components/create-chart-button";
@@ -82,9 +82,9 @@ export async function ChartsListPage({ workspaceId }: Readonly<ChartsListPagePro
     );
   }
 
-  const [directories, connectors, aiConfig] = await Promise.all([
+  const [directories, feedbackSources, aiConfig] = await Promise.all([
     getFeedbackDirectoriesByWorkspaceId(workspaceId),
-    getConnectorsWithMappings(workspaceId),
+    getFeedbackSourcesWithMappings(workspaceId),
     getOrganizationAIConfig(organization.id),
   ]);
   const aiUnavailableReason = getAISmartToolsUnavailableReason(aiConfig);
@@ -119,7 +119,7 @@ export async function ChartsListPage({ workspaceId }: Readonly<ChartsListPagePro
           aiUnavailableReason={aiUnavailableReason}
         />
       ) : (
-        <NoFeedbackRecordsState workspaceId={workspaceId} hasFeedbackSources={connectors.length > 0} />
+        <NoFeedbackRecordsState workspaceId={workspaceId} hasFeedbackSources={feedbackSources.length > 0} />
       )}
     </AnalysisPageLayout>
   );

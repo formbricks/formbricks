@@ -14,6 +14,7 @@ import { getIntegrationByType } from "@/lib/integration/service";
 import { getNotionDatabases } from "@/lib/notion/service";
 import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
+import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
@@ -31,10 +32,11 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
 
   const { isReadOnly, session, workspace } = await getWorkspaceAuth(params.workspaceId);
 
-  const [surveys, notionIntegration, locale] = await Promise.all([
+  const [surveys, notionIntegration, locale, contactAttributeKeys] = await Promise.all([
     getSurveys(workspace.id),
     getIntegrationByType(workspace.id, "notion"),
     getUserLocale(session.user.id),
+    getContactAttributeKeys(workspace.id),
   ]);
 
   let databasesArray: TIntegrationNotionDatabase[] = [];
@@ -58,6 +60,7 @@ const Page = async (props: { params: Promise<{ workspaceId: string }> }) => {
         webAppUrl={WEBAPP_URL}
         databasesArray={databasesArray}
         locale={locale ?? DEFAULT_LOCALE}
+        contactAttributeKeys={contactAttributeKeys}
       />
     </PageContentWrapper>
   );

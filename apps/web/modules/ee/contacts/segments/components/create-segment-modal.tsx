@@ -209,7 +209,6 @@ export function CreateSegmentModal({
 
                 <SegmentEditor
                   contactAttributeKeys={contactAttributeKeys}
-                  workspaceId={workspaceId}
                   group={segment.filters}
                   segment={segment}
                   segments={segments}

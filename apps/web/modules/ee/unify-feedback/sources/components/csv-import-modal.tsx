@@ -5,13 +5,13 @@ import { ArrowUpFromLineIcon, Loader2Icon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import type { TConnectorFieldMapping } from "@formbricks/types/connector";
-import { importCsvDataAction } from "@/lib/connector/actions";
+import type { TFeedbackSourceFieldMapping } from "@formbricks/types/feedback-source";
+import { importCsvDataAction } from "@/lib/feedback-source/actions";
 import {
   formatCsvMissingMappedSourceColumns,
   getMissingCsvMappedSourceColumns,
   getMissingRequiredCsvSourceColumns,
-} from "@/lib/connector/utils";
+} from "@/lib/feedback-source/utils";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { Alert } from "@/modules/ui/components/alert";
 import { Badge } from "@/modules/ui/components/badge";
@@ -24,25 +24,25 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
-import { createFeedbackCSVDataSchema, getTranslatedConnectorError } from "../types";
+import { createFeedbackCSVDataSchema, getTranslatedFeedbackSourceError } from "../types";
 import { validateCsvFile } from "../utils";
 
 interface CsvImportModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  connectorId: string;
+  feedbackSourceId: string;
   workspaceId: string;
-  fieldMappings: TConnectorFieldMapping[];
-  onOpenEditConnector?: () => void;
+  fieldMappings: TFeedbackSourceFieldMapping[];
+  onOpenEditFeedbackSource?: () => void;
 }
 
 export function CsvImportModal({
   open,
   onOpenChange,
-  connectorId,
+  feedbackSourceId,
   workspaceId,
   fieldMappings,
-  onOpenEditConnector,
+  onOpenEditFeedbackSource,
 }: CsvImportModalProps) {
   const { t } = useTranslation();
   const [csvFile, setCsvFile] = useState<File | null>(null);
@@ -126,7 +126,7 @@ export function CsvImportModal({
     if (parsedData.length === 0) return;
 
     setIsImporting(true);
-    const result = await importCsvDataAction({ connectorId, workspaceId, csvData: parsedData });
+    const result = await importCsvDataAction({ feedbackSourceId, workspaceId, csvData: parsedData });
     setIsImporting(false);
 
     if (result?.data) {
@@ -142,7 +142,7 @@ export function CsvImportModal({
       setRowCount(0);
       onOpenChange(false);
     } else {
-      toast.error(getTranslatedConnectorError(getFormattedErrorMessage(result), t));
+      toast.error(getTranslatedFeedbackSourceError(getFormattedErrorMessage(result), t));
     }
   };
 
@@ -208,12 +208,12 @@ export function CsvImportModal({
         </div>
 
         <DialogFooter>
-          {onOpenEditConnector && (
+          {onOpenEditFeedbackSource && (
             <Button
               variant="secondary"
               onClick={() => {
                 onOpenChange(false);
-                onOpenEditConnector();
+                onOpenEditFeedbackSource();
               }}>
               {t("workspace.unify.edit_csv_mapping")}
             </Button>

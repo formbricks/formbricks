@@ -243,6 +243,9 @@ Common upgrade issues:
 - **Missing `CUBEJS_API_SECRET`** (or unreachable Cube endpoint): the Formbricks app fails env validation
   at boot, or — if env vars are present but Cube is unreachable — dashboards and analysis queries fail
   while the rest of the app stays healthy
+- **Cube healthcheck fails with `wget: not found`**: older v5 Docker Compose files used `wget` for the
+  bundled Cube healthcheck, but `cubejs/cube:v1.6.6` does not include it. Sync the Cube healthcheck from the
+  current Docker Compose file so it checks `/readyz` with Node instead.
 
 If you need to roll back:
 

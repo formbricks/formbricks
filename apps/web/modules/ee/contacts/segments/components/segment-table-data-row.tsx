@@ -28,7 +28,7 @@ export const SegmentTableDataRow = ({
   isReadOnly,
 }: TSegmentTableDataRowProps) => {
   const { i18n } = useTranslation();
-  const { createdAt, workspaceId, id, surveys, title, updatedAt, description } = currentSegment;
+  const { createdAt, id, surveys, title, updatedAt, description } = currentSegment;
   const [isEditSegmentModalOpen, setIsEditSegmentModalOpen] = useState(false);
   const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
 
@@ -68,7 +68,6 @@ export const SegmentTableDataRow = ({
       </button>
 
       <EditSegmentModal
-        workspaceId={workspaceId}
         open={isEditSegmentModalOpen}
         setOpen={setIsEditSegmentModalOpen}
         currentSegment={currentSegment}

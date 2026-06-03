@@ -9,10 +9,12 @@ interface AdditionalIntegrationSettingsProps {
   includeHiddenFields: boolean;
   includeMetadata: boolean;
   includeCreatedAt: boolean;
+  includeContactAttributes: boolean;
   setIncludeVariables: (includeVariables: boolean) => void;
   setIncludeHiddenFields: (includeHiddenFields: boolean) => void;
   setIncludeMetadata: (includeMetadata: boolean) => void;
   setIncludeCreatedAt: (includeCreatedAt: boolean) => void;
+  setIncludeContactAttributes: (includeContactAttributes: boolean) => void;
 }
 
 export const AdditionalIntegrationSettings = ({
@@ -20,10 +22,12 @@ export const AdditionalIntegrationSettings = ({
   includeHiddenFields,
   includeMetadata,
   includeCreatedAt,
+  includeContactAttributes,
   setIncludeVariables,
   setIncludeHiddenFields,
   setIncludeMetadata,
   setIncludeCreatedAt,
+  setIncludeContactAttributes,
 }: AdditionalIntegrationSettingsProps) => {
   const { t } = useTranslation();
 
@@ -51,6 +55,12 @@ export const AdditionalIntegrationSettings = ({
       checked: includeMetadata,
       onChange: setIncludeMetadata,
       label: t("workspace.integrations.include_metadata"),
+    },
+    {
+      id: "includeContactAttributes",
+      checked: includeContactAttributes,
+      onChange: setIncludeContactAttributes,
+      label: t("workspace.integrations.include_contact_attributes"),
     },
   ];
 
