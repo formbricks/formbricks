@@ -2780,7 +2780,15 @@
     "surveys": {
       "all_set_time_to_create_first_survey": "Tá tudo pronto! Hora de criar sua primeira pesquisa",
       "alphabetical": "alfabético",
+      "copy_survey": "Copiar pesquisa",
+      "copy_survey_description": "Escolha um espaço de trabalho para copiar esta pesquisa.",
+      "copy_survey_error": "Falha ao copiar pesquisa",
       "copy_survey_link_to_clipboard": "Copiar link da pesquisa para a área de transferência",
+      "copy_survey_partially_success": "Copiada para {{success}} espaços de trabalho, falhou para {{error}}",
+      "copy_survey_select_workspaces_placeholder": "Buscar espaços de trabalho...",
+      "copy_survey_success": "Pesquisa copiada com sucesso",
+      "copy_survey_target_workspaces_label": "Espaços de trabalho de destino",
+      "copy_to": "Copiar para...",
       "delete_survey_and_responses_warning": "Você tem certeza de que quer deletar essa pesquisa e todas as suas respostas?",
       "edit": {
         "activate_translations": "Ativar traduções",
@@ -3359,6 +3367,7 @@
         "partial_responses": "Respostas parciais"
       },
       "new_survey": "Nova Pesquisa",
+      "no_other_workspaces_available": "Nenhum outro espaço de trabalho disponível para copiar esta pesquisa.",
       "no_surveys_created_yet": "Ainda não foram criadas pesquisas",
       "open_options": "Abre opções",
       "preview_survey_in_a_new_tab": "Visualizar pesquisa em uma nova aba",
