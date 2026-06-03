@@ -1,8 +1,10 @@
 import { describe, expect, test } from "vitest";
 import type { TSurvey } from "@formbricks/types/surveys/types";
+import type { TSurvey as TSurveyListRecord } from "@/modules/survey/list/types/surveys";
 import {
   V3SurveyLanguageError,
   V3SurveyUnsupportedShapeError,
+  serializeV3SurveyListItem,
   serializeV3SurveyResource,
 } from "./serializers";
 
@@ -595,5 +597,42 @@ describe("serializeV3SurveyResource", () => {
     expect(() => serializeV3SurveyResource(survey)).toThrow(
       "Legacy question-based surveys are not supported by the v3 survey management API"
     );
+  });
+});
+
+describe("serializeV3SurveyListItem", () => {
+  const baseListSurvey = {
+    id: "survey_1",
+    name: "Customer onboarding",
+    workspaceId: "workspace_1",
+    type: "link",
+    status: "draft",
+    publishOn: null,
+    createdAt: new Date("2026-04-15T10:00:00.000Z"),
+    updatedAt: new Date("2026-04-16T10:00:00.000Z"),
+    responseCount: 0,
+    singleUse: null,
+  } satisfies Omit<TSurveyListRecord, "creator">;
+
+  test("allowlists nested creator fields", () => {
+    const survey = {
+      ...baseListSurvey,
+      creator: {
+        name: "Ada",
+        email: "ada@example.com",
+        id: "user_1",
+      },
+    } as unknown as TSurveyListRecord;
+
+    expect(serializeV3SurveyListItem(survey).creator).toEqual({ name: "Ada" });
+  });
+
+  test("preserves null creator", () => {
+    const survey = {
+      ...baseListSurvey,
+      creator: null,
+    } satisfies TSurveyListRecord;
+
+    expect(serializeV3SurveyListItem(survey).creator).toBeNull();
   });
 });

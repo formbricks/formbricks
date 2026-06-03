@@ -136,7 +136,6 @@ export function SegmentTable({
 
       {editingSegment && (
         <EditSegmentModal
-          workspaceId={editingSegment.workspaceId}
           open={!!editingSegment}
           setOpen={(open) => !open && setEditingSegment(null)}
           currentSegment={editingSegment}
