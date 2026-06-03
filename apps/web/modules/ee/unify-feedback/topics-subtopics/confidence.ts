@@ -1,8 +1,8 @@
 // Keep this UI cutoff in sync with the Hub/backend semantic-search cutoff when backend filtering changes.
 export const SEMANTIC_SEARCH_MIN_SCORE = 0.5;
 
-const MEDIUM_CONFIDENCE_THRESHOLD = 1.0 / 3.0;
-const HIGH_CONFIDENCE_THRESHOLD = 2.0 / 3.0;
+const MEDIUM_CONFIDENCE_THRESHOLD = 1 / 3;
+const HIGH_CONFIDENCE_THRESHOLD = 2 / 3;
 
 export type TSemanticSearchConfidenceLevel = "low" | "medium" | "high";
 
