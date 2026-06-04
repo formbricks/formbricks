@@ -4450,7 +4450,7 @@
     },
     "/api/v1/management/surveys": {
       "get": {
-        "description": "Fetches all existing surveys",
+        "description": "Fetches all existing surveys. Each survey includes both `questions` (the legacy structure) and `blocks` (the newer structure). `questions` is always derived from `blocks` for backwards compatibility, so integrations may read either field.",
         "parameters": [
           {
             "example": "{{apiKey}}",
@@ -4471,6 +4471,64 @@
                     {
                       "autoClose": null,
                       "autoComplete": null,
+                      "blocks": [
+                        {
+                          "elements": [
+                            {
+                              "headline": {
+                                "default": "What would you like to know?"
+                              },
+                              "id": "ovpy6va1hab7fl12n913zua0",
+                              "inputType": "text",
+                              "placeholder": {
+                                "default": "Type your answer here..."
+                              },
+                              "required": true,
+                              "subheader": {
+                                "default": "This is an example survey."
+                              },
+                              "type": "openText"
+                            }
+                          ],
+                          "id": "qp8j2k0fx3m9wd1c7b5n4tva",
+                          "name": "Block 1"
+                        },
+                        {
+                          "elements": [
+                            {
+                              "choices": [
+                                {
+                                  "id": "xpoxuu3sifk1ee8he67ctf5i",
+                                  "label": {
+                                    "default": "Sun ☀️"
+                                  }
+                                },
+                                {
+                                  "id": "hnsovcdmxtcbly6tig1az3qc",
+                                  "label": {
+                                    "default": "Ocean 🌊"
+                                  }
+                                },
+                                {
+                                  "id": "kcnelzdxknvwo8fq20d3nrr5",
+                                  "label": {
+                                    "default": "Palms 🌴"
+                                  }
+                                }
+                              ],
+                              "headline": {
+                                "default": "What's important on vacay?"
+                              },
+                              "id": "awkn2llljy7a4oulp5t15yec",
+                              "required": true,
+                              "shuffleOption": "none",
+                              "type": "multipleChoiceMulti"
+                            }
+                          ],
+                          "id": "rk4v9m2dqz7n0fyt8c3b1xws",
+                          "name": "Block 2"
+                        }
+                      ],
                       "createdAt": "2024-08-05T11:08:27.042Z",
                       "createdBy": "clfv1zvij0000ru0gunwpy43a",
                       "delay": 0,
@@ -4875,6 +4933,64 @@
                   "data": {
                     "autoClose": null,
                     "autoComplete": null,
+                    "blocks": [
+                      {
+                        "elements": [
+                          {
+                            "headline": {
+                              "default": "What would you like to know?"
+                            },
+                            "id": "ovpy6va1hab7fl12n913zua0",
+                            "inputType": "text",
+                            "placeholder": {
+                              "default": "Type your answer here..."
+                            },
+                            "required": true,
+                            "subheader": {
+                              "default": "This is an example survey."
+                            },
+                            "type": "openText"
+                          }
+                        ],
+                        "id": "qp8j2k0fx3m9wd1c7b5n4tva",
+                        "name": "Block 1"
+                      },
+                      {
+                        "elements": [
+                          {
+                            "choices": [
+                              {
+                                "id": "xpoxuu3sifk1ee8he67ctf5i",
+                                "label": {
+                                  "default": "Sun ☀️"
+                                }
+                              },
+                              {
+                                "id": "hnsovcdmxtcbly6tig1az3qc",
+                                "label": {
+                                  "default": "Ocean 🌊"
+                                }
+                              },
+                              {
+                                "id": "kcnelzdxknvwo8fq20d3nrr5",
+                                "label": {
+                                  "default": "Palms 🌴"
+                                }
+                              }
+                            ],
+                            "headline": {
+                              "default": "What's important on vacay?"
+                            },
+                            "id": "awkn2llljy7a4oulp5t15yec",
+                            "required": true,
+                            "shuffleOption": "none",
+                            "type": "multipleChoiceMulti"
+                          }
+                        ],
+                        "id": "rk4v9m2dqz7n0fyt8c3b1xws",
+                        "name": "Block 2"
+                      }
+                    ],
                     "createdAt": "2024-08-05T11:08:27.042Z",
                     "createdBy": "clfv1zvij0000ru0gunwpy43a",
                     "delay": 0,
@@ -5141,6 +5257,64 @@
                   "data": {
                     "autoClose": null,
                     "autoComplete": null,
+                    "blocks": [
+                      {
+                        "elements": [
+                          {
+                            "headline": {
+                              "default": "What would you like to know?"
+                            },
+                            "id": "ovpy6va1hab7fl12n913zua0",
+                            "inputType": "text",
+                            "placeholder": {
+                              "default": "Type your answer here..."
+                            },
+                            "required": true,
+                            "subheader": {
+                              "default": "This is an example survey."
+                            },
+                            "type": "openText"
+                          }
+                        ],
+                        "id": "qp8j2k0fx3m9wd1c7b5n4tva",
+                        "name": "Block 1"
+                      },
+                      {
+                        "elements": [
+                          {
+                            "choices": [
+                              {
+                                "id": "xpoxuu3sifk1ee8he67ctf5i",
+                                "label": {
+                                  "default": "Sun ☀️"
+                                }
+                              },
+                              {
+                                "id": "hnsovcdmxtcbly6tig1az3qc",
+                                "label": {
+                                  "default": "Ocean 🌊"
+                                }
+                              },
+                              {
+                                "id": "kcnelzdxknvwo8fq20d3nrr5",
+                                "label": {
+                                  "default": "Palms 🌴"
+                                }
+                              }
+                            ],
+                            "headline": {
+                              "default": "What's important on vacay?"
+                            },
+                            "id": "awkn2llljy7a4oulp5t15yec",
+                            "required": true,
+                            "shuffleOption": "none",
+                            "type": "multipleChoiceMulti"
+                          }
+                        ],
+                        "id": "rk4v9m2dqz7n0fyt8c3b1xws",
+                        "name": "Block 2"
+                      }
+                    ],
                     "createdAt": "2024-08-05T11:08:27.042Z",
                     "createdBy": "clfv1zvij0000ru0gunwpy43a",
                     "delay": 0,
@@ -5366,7 +5540,7 @@
         "tags": ["Management API - Survey"]
       },
       "get": {
-        "description": "Fetch a survey object based on its ID",
+        "description": "Fetch a survey object based on its ID. The response includes both `questions` (the legacy structure) and `blocks` (the newer structure). `questions` is always derived from `blocks` for backwards compatibility, so integrations may read either field.",
         "parameters": [
           {
             "example": "{{apiKey}}",
@@ -5394,6 +5568,64 @@
                   "data": {
                     "autoClose": null,
                     "autoComplete": null,
+                    "blocks": [
+                      {
+                        "elements": [
+                          {
+                            "headline": {
+                              "default": "What would you like to know?"
+                            },
+                            "id": "ovpy6va1hab7fl12n913zua0",
+                            "inputType": "text",
+                            "placeholder": {
+                              "default": "Type your answer here..."
+                            },
+                            "required": true,
+                            "subheader": {
+                              "default": "This is an example survey."
+                            },
+                            "type": "openText"
+                          }
+                        ],
+                        "id": "qp8j2k0fx3m9wd1c7b5n4tva",
+                        "name": "Block 1"
+                      },
+                      {
+                        "elements": [
+                          {
+                            "choices": [
+                              {
+                                "id": "xpoxuu3sifk1ee8he67ctf5i",
+                                "label": {
+                                  "default": "Sun ☀️"
+                                }
+                              },
+                              {
+                                "id": "hnsovcdmxtcbly6tig1az3qc",
+                                "label": {
+                                  "default": "Ocean 🌊"
+                                }
+                              },
+                              {
+                                "id": "kcnelzdxknvwo8fq20d3nrr5",
+                                "label": {
+                                  "default": "Palms 🌴"
+                                }
+                              }
+                            ],
+                            "headline": {
+                              "default": "What's important on vacay?"
+                            },
+                            "id": "awkn2llljy7a4oulp5t15yec",
+                            "required": true,
+                            "shuffleOption": "none",
+                            "type": "multipleChoiceMulti"
+                          }
+                        ],
+                        "id": "rk4v9m2dqz7n0fyt8c3b1xws",
+                        "name": "Block 2"
+                      }
+                    ],
                     "createdAt": "2024-08-05T11:08:27.042Z",
                     "createdBy": "clfv1zvij0000ru0gunwpy43a",
                     "delay": 0,
@@ -5597,6 +5829,64 @@
                   "data": {
                     "autoClose": null,
                     "autoComplete": null,
+                    "blocks": [
+                      {
+                        "elements": [
+                          {
+                            "headline": {
+                              "default": "What would you like to know?"
+                            },
+                            "id": "ovpy6va1hab7fl12n913zua0",
+                            "inputType": "text",
+                            "placeholder": {
+                              "default": "Type your answer here..."
+                            },
+                            "required": true,
+                            "subheader": {
+                              "default": "This is an example survey."
+                            },
+                            "type": "openText"
+                          }
+                        ],
+                        "id": "qp8j2k0fx3m9wd1c7b5n4tva",
+                        "name": "Block 1"
+                      },
+                      {
+                        "elements": [
+                          {
+                            "choices": [
+                              {
+                                "id": "xpoxuu3sifk1ee8he67ctf5i",
+                                "label": {
+                                  "default": "Sun ☀️"
+                                }
+                              },
+                              {
+                                "id": "hnsovcdmxtcbly6tig1az3qc",
+                                "label": {
+                                  "default": "Ocean 🌊"
+                                }
+                              },
+                              {
+                                "id": "kcnelzdxknvwo8fq20d3nrr5",
+                                "label": {
+                                  "default": "Palms 🌴"
+                                }
+                              }
+                            ],
+                            "headline": {
+                              "default": "What's important on vacay?"
+                            },
+                            "id": "awkn2llljy7a4oulp5t15yec",
+                            "required": true,
+                            "shuffleOption": "none",
+                            "type": "multipleChoiceMulti"
+                          }
+                        ],
+                        "id": "rk4v9m2dqz7n0fyt8c3b1xws",
+                        "name": "Block 2"
+                      }
+                    ],
                     "createdAt": "2024-08-05T11:08:27.042Z",
                     "createdBy": "clfv1zvij0000ru0gunwpy43a",
                     "delay": 0,
