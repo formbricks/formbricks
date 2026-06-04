@@ -2647,6 +2647,7 @@
         "leave_organization_description": "You wil leave this organization and loose access to all surveys and responses. You can only rejoin if you are invited again.",
         "leave_organization_ok_btn_text": "Yes, leave organization",
         "leave_organization_title": "Are you sure?",
+        "lite_license_description": "We’ll send a complimentary Lite Enterprise License. No strings attached. Free forever.",
         "logo_in_email_header": "Logo in email header",
         "logo_removed_successfully": "Logo removed successfully",
         "logo_saved_successfully": "Logo saved successfully",
@@ -2675,9 +2676,13 @@
         "security_list_tip_link": "Sign up here.",
         "share_invite_link": "Share Invite Link",
         "share_this_link_to_let_your_organization_member_join_your_organization": "Share this link to let your organization member join your organization:",
+        "sso_license_card_description": "Enable SSO for your organization with a complimentary Lite Enterprise License.",
+        "sso_license_card_title": "Single Sign-On (SSO)",
+        "sso_license_request_cta": "Request Lite License",
         "test_email_sent_successfully": "Test email sent successfully",
         "unlock_ai_features_description": "AI-powered translations, smart tools, and data analysis are available on higher plans. Upgrade to supercharge your surveys with AI.",
-        "unlock_ai_features_with_a_higher_plan": "Unlock AI features with a higher plan"
+        "unlock_ai_features_with_a_higher_plan": "Unlock AI features with a higher plan",
+        "unlock_sso_with_lite_license": "Enable SSO for free."
       },
       "notifications": {
         "auto_subscribe_to_new_surveys": "Auto-subscribe to new surveys",
