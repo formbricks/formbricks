@@ -101,4 +101,49 @@ describe("translateFields", () => {
 
     await expect(translateFields({ ...baseInput, fields })).rejects.toThrow("provider failed");
   });
+
+  test("echoes empty defaultText through without calling the model", async () => {
+    const allEmpty: TAITranslationField[] = [
+      { path: "welcomeCard.subheader.default", defaultText: "", isRichText: false },
+      { path: "endings.0.subheader.default", defaultText: "", isRichText: false },
+    ];
+
+    const result = await translateFields({ ...baseInput, fields: allEmpty });
+
+    expect(result).toEqual({
+      "welcomeCard.subheader.default": "",
+      "endings.0.subheader.default": "",
+    });
+    expect(mockGenerateOrganizationAIObject).not.toHaveBeenCalled();
+  });
+
+  test("translates non-empty fields and echoes empty ones in the same call", async () => {
+    const mixed: TAITranslationField[] = [
+      { path: "welcomeCard.headline.default", defaultText: "Welcome", isRichText: false },
+      { path: "welcomeCard.subheader.default", defaultText: "", isRichText: false },
+      { path: "questions.0.headline.default", defaultText: "How are you?", isRichText: false },
+    ];
+
+    // Empty fields are filtered out before indexing, so the model only sees
+    // the two non-empty entries as t0 and t1.
+    mockGenerateOrganizationAIObject.mockResolvedValue({
+      object: { t0: "Willkommen", t1: "Wie geht es dir?" },
+    });
+
+    const result = await translateFields({ ...baseInput, fields: mixed });
+
+    expect(result).toEqual({
+      "welcomeCard.headline.default": "Willkommen",
+      "welcomeCard.subheader.default": "",
+      "questions.0.headline.default": "Wie geht es dir?",
+    });
+
+    // Confirm the model never saw the empty field in the payload.
+    const callArg = mockGenerateOrganizationAIObject.mock.calls[0][0];
+    const userPayload = JSON.parse(callArg.prompt);
+    expect(userPayload).toEqual([
+      { id: "t0", text: "Welcome", richText: false },
+      { id: "t1", text: "How are you?", richText: false },
+    ]);
+  });
 });

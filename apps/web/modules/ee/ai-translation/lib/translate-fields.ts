@@ -28,9 +28,27 @@ export const translateFields = async ({
     return {};
   }
 
+  // Empty defaultText is valid per the schema but has no meaningful translation.
+  // Echo it through unchanged so callers still see every requested path in the
+  // result, instead of aborting the whole batch when the model "fails" to
+  // translate an empty string.
+  const translatableFields: TAITranslationField[] = [];
+  const passthroughTranslations: Record<string, string> = {};
+  for (const field of fields) {
+    if (field.defaultText.length === 0) {
+      passthroughTranslations[field.path] = "";
+    } else {
+      translatableFields.push(field);
+    }
+  }
+
+  if (translatableFields.length === 0) {
+    return passthroughTranslations;
+  }
+
   // Indexed IDs insulate the LLM from user-supplied paths (dots, casing,
   // separator normalization). We map back to paths after generation.
-  const items = fields.map((f, i) => ({
+  const items = translatableFields.map((f, i) => ({
     id: `t${i}`,
     path: f.path,
     text: f.defaultText,
@@ -76,7 +94,7 @@ Rules:
         organizationId,
         sourceLanguage,
         targetLanguage,
-        requestedCount: fields.length,
+        requestedCount: translatableFields.length,
         returnedCount: Object.keys(translations).length,
         missingIds,
       },
@@ -85,5 +103,5 @@ Rules:
     throw new Error("AI translation returned incomplete result");
   }
 
-  return translations;
+  return { ...passthroughTranslations, ...translations };
 };
