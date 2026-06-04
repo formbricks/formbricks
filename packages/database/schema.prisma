@@ -595,6 +595,7 @@ enum SurveyOverlay {
 /// @property config - Workspace-specific configuration
 /// @property recontactDays - Default recontact delay for surveys
 /// @property placement - Default widget placement for in-app surveys
+/// @property activeStyleGuideId - Reference to the active style guide for this workspace
 model Workspace {
   id                          String                       @id @default(cuid())
   createdAt                   DateTime                     @default(now()) @map(name: "created_at")
@@ -622,6 +623,7 @@ model Workspace {
   feedbackDirectoryWorkspaces FeedbackDirectoryWorkspace[]
   charts                      Chart[]
   dashboards                  Dashboard[]
+  activeStyleGuideId          String?
 
   surveys              Survey[]
   contacts             Contact[]
