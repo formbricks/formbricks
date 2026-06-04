@@ -13,7 +13,7 @@ import {
   getAIUnavailableAction,
 } from "@/modules/ee/analysis/charts/lib/ai-availability";
 import type { AnalyticsResponse } from "@/modules/ee/analysis/types/analysis";
-import { Alert, AlertButton, AlertDescription } from "@/modules/ui/components/alert";
+import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 
@@ -63,10 +63,9 @@ export function AIQuerySection({
 
   if (!isAIAvailable) {
     return (
-      <Alert variant="info" size="small" className="items-center">
-        <AlertDescription className="overflow-visible whitespace-normal">
-          <span>{aiUnavailableMessage}</span>
-        </AlertDescription>
+      <Alert>
+        <AlertTitle>{t("workspace.analysis.charts.ai_chart_generation")}</AlertTitle>
+        <AlertDescription>{aiUnavailableMessage}</AlertDescription>
         {aiUnavailableAction && (
           <AlertButton asChild>
             <Link href={aiUnavailableAction.href}>
