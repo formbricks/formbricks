@@ -183,7 +183,7 @@ export const SurveyDropDownMenu = ({
                   setIsDropDownOpen(false);
                   setIsCopyModalOpen(true);
                 }}>
-                <ArrowRightLeftIcon className="mr-2 size-4" />
+                <ArrowRightLeftIcon className="size-4" />
                 {t("workspace.surveys.copy_to")}
               </DropdownMenuItem>
             )}
