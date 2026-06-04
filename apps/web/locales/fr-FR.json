@@ -3359,7 +3359,6 @@
         "partial_responses": "Réponses partielles"
       },
       "new_survey": "Nouveau Sondage",
-      "no_surveys_created_yet": "Aucun sondage créé pour le moment",
       "open_options": "Ouvrir les options",
       "preview_survey_in_a_new_tab": "Aperçu de l'enquête dans un nouvel onglet",
       "read_only_user_not_allowed_to_create_survey_warning": "En tant qu'utilisateur en lecture seule, vous n'êtes pas autorisé à créer des enquêtes. Veuillez demander à un utilisateur ayant un accès en écriture de créer une enquête ou à un responsable de mettre à jour votre rôle.",

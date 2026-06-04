@@ -3359,7 +3359,6 @@
         "partial_responses": "Respostas parciais"
       },
       "new_survey": "Novo inquérito",
-      "no_surveys_created_yet": "Ainda não foram criados questionários",
       "open_options": "Abrir opções",
       "preview_survey_in_a_new_tab": "Pré-visualizar inquérito num novo separador",
       "read_only_user_not_allowed_to_create_survey_warning": "Como utilizador de leitura apenas, não tem permissão para criar questionários. Por favor, peça a um utilizador com acesso de escrita para criar um questionário ou a um gestor para atualizar o seu papel.",

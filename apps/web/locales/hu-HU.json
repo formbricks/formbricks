@@ -3359,7 +3359,6 @@
         "partial_responses": "Részleges válaszok"
       },
       "new_survey": "Új kérdőív",
-      "no_surveys_created_yet": "Még nincsenek kérdőívek létrehozva",
       "open_options": "Beállítások megnyitása",
       "preview_survey_in_a_new_tab": "Kérdőív előnézete új lapon",
       "read_only_user_not_allowed_to_create_survey_warning": "Csak olvasási jogosultságú felhasználóként nem hozhat létre kérdőíveket. Kérjen meg egy írási jogosultsággal rendelkező felhasználót, hogy hozzon létre egy kérdőívet, vagy egy vezetőt, hogy frissítse az Ön szerepét.",

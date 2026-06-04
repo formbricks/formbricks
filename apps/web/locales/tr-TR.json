@@ -3359,7 +3359,6 @@
         "partial_responses": "Yarım yanıtlar"
       },
       "new_survey": "Yeni Anket",
-      "no_surveys_created_yet": "Henüz anket oluşturulmadı",
       "open_options": "Seçenekleri aç",
       "preview_survey_in_a_new_tab": "Anketi yeni sekmede önizle",
       "read_only_user_not_allowed_to_create_survey_warning": "Salt Okunur kullanıcı olarak anket oluşturma yetkiniz bulunmamaktadır. Lütfen yazma yetkisi olan bir kullanıcıdan anket oluşturmasını isteyin veya yöneticinizden rolünüzü yükseltmesini talep edin.",

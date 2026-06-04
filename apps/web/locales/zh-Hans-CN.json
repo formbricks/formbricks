@@ -3359,7 +3359,6 @@
         "partial_responses": "部分 反馈"
       },
       "new_survey": "新 调查",
-      "no_surveys_created_yet": "尚未创建调查",
       "open_options": "打开 选项",
       "preview_survey_in_a_new_tab": "在 新 标签 中 预览 survey",
       "read_only_user_not_allowed_to_create_survey_warning": "作为 只读 用户，你 无法 创建 调查。请 询问 一位 具有 写 访问 权限 的 用户 创建 调查 或 请 一位 经理 升级 你的 角色。",

@@ -3359,7 +3359,6 @@
         "partial_responses": "Respuestas parciales"
       },
       "new_survey": "Nueva encuesta",
-      "no_surveys_created_yet": "Aún no se han creado encuestas",
       "open_options": "Abrir opciones",
       "preview_survey_in_a_new_tab": "Vista previa de la encuesta en una nueva pestaña",
       "read_only_user_not_allowed_to_create_survey_warning": "Como usuario de solo lectura no se te permite crear encuestas. Por favor, pide a un usuario con acceso de escritura que cree una encuesta o a un administrador que mejore tu rol.",
