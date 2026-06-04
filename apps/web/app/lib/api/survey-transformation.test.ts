@@ -598,6 +598,42 @@ describe("transformBlocksToQuestions", () => {
     expect(questions[0].id).toBe("q1");
     expect(questions[1].id).toBe("q2");
   });
+
+  test("should resolve CTA buttonLabel for a non-last element in a multi-element block", () => {
+    const blocks = [
+      {
+        id: "b1",
+        name: "Block 1",
+        buttonLabel: { default: "Block next" },
+        elements: [
+          {
+            id: "q1",
+            type: "cta",
+            headline: { default: "CTA element" },
+            required: false,
+            ctaButtonLabel: { default: "Click me" },
+          },
+          {
+            id: "q2",
+            type: "text",
+            headline: { default: "Last element" },
+            required: false,
+            inputType: "text",
+          },
+        ],
+      },
+    ] as unknown as TSurveyBlock[];
+
+    const questions = transformBlocksToQuestions(blocks, []);
+
+    expect(questions).toHaveLength(2);
+    // Non-last CTA element keeps its own button label (block attrs are not applied to it)
+    expect(questions[0].id).toBe("q1");
+    expect(questions[0].buttonLabel).toEqual({ default: "Click me" });
+    // Block-level button label applies to the last element only
+    expect(questions[1].id).toBe("q2");
+    expect(questions[1].buttonLabel).toEqual({ default: "Block next" });
+  });
 });
 
 describe("CTA Logic Cleaning", () => {
