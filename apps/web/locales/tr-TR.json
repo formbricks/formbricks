@@ -2780,7 +2780,15 @@
     "surveys": {
       "all_set_time_to_create_first_survey": "Her şey hazır! İlk anketini oluşturma zamanı",
       "alphabetical": "Alfabetik",
+      "copy_survey": "Anketi kopyala",
+      "copy_survey_description": "Bu anketi kopyalamak için bir çalışma alanı seç.",
+      "copy_survey_error": "Anket kopyalanamadı",
       "copy_survey_link_to_clipboard": "Anket bağlantısını panoya kopyala",
+      "copy_survey_partially_success": "{{success}} çalışma alanına kopyalandı, {{error}} için başarısız oldu",
+      "copy_survey_select_workspaces_placeholder": "Çalışma alanlarında ara...",
+      "copy_survey_success": "Anket başarıyla kopyalandı",
+      "copy_survey_target_workspaces_label": "Hedef çalışma alanları",
+      "copy_to": "Şuraya kopyala...",
       "delete_survey_and_responses_warning": "Bu anketi ve tüm yanıtlarını silmek istediğinden emin misin?",
       "edit": {
         "activate_translations": "Çevirileri etkinleştir",
@@ -3359,6 +3367,7 @@
         "partial_responses": "Yarım yanıtlar"
       },
       "new_survey": "Yeni Anket",
+      "no_other_workspaces_available": "Bu anketi kopyalamak için başka çalışma alanı yok.",
       "no_surveys_created_yet": "Henüz anket oluşturulmadı",
       "open_options": "Seçenekleri aç",
       "preview_survey_in_a_new_tab": "Anketi yeni sekmede önizle",

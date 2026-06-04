@@ -2780,7 +2780,15 @@
     "surveys": {
       "all_set_time_to_create_first_survey": "您已準備就緒！是時候建立您的第一個問卷",
       "alphabetical": "依字母順序",
+      "copy_survey": "複製問卷",
+      "copy_survey_description": "選擇要將此問卷複製到的工作區。",
+      "copy_survey_error": "複製問卷失敗",
       "copy_survey_link_to_clipboard": "將問卷連結複製到剪貼簿",
+      "copy_survey_partially_success": "已成功複製到 {{success}} 個工作區,{{error}} 個失敗",
+      "copy_survey_select_workspaces_placeholder": "搜尋工作區...",
+      "copy_survey_success": "問卷複製成功",
+      "copy_survey_target_workspaces_label": "目標工作區",
+      "copy_to": "複製到...",
       "delete_survey_and_responses_warning": "您確定要刪除此問卷及其所有回應嗎？",
       "edit": {
         "activate_translations": "啟用翻譯",
@@ -3359,6 +3367,7 @@
         "partial_responses": "部分回應"
       },
       "new_survey": "新增問卷",
+      "no_other_workspaces_available": "沒有其他可用的工作區可複製此問卷。",
       "no_surveys_created_yet": "尚未建立任何問卷",
       "open_options": "開啟選項",
       "preview_survey_in_a_new_tab": "在新分頁中預覽問卷",

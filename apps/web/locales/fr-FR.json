@@ -2780,7 +2780,15 @@
     "surveys": {
       "all_set_time_to_create_first_survey": "Vous êtes prêt ! Il est temps de créer votre première enquête.",
       "alphabetical": "Alphabétique",
+      "copy_survey": "Copier l'enquête",
+      "copy_survey_description": "Choisis un espace de travail vers lequel copier cette enquête.",
+      "copy_survey_error": "Échec de la copie de l'enquête",
       "copy_survey_link_to_clipboard": "Copier le lien du sondage dans le presse-papiers",
+      "copy_survey_partially_success": "Copié vers {{success}} espaces de travail, échec pour {{error}}",
+      "copy_survey_select_workspaces_placeholder": "Rechercher des espaces de travail...",
+      "copy_survey_success": "Enquête copiée avec succès",
+      "copy_survey_target_workspaces_label": "Espaces de travail cibles",
+      "copy_to": "Copier vers...",
       "delete_survey_and_responses_warning": "Êtes-vous sûr de vouloir supprimer cette enquête et toutes ses réponses?",
       "edit": {
         "activate_translations": "Activer les traductions",
@@ -3359,6 +3367,7 @@
         "partial_responses": "Réponses partielles"
       },
       "new_survey": "Nouveau Sondage",
+      "no_other_workspaces_available": "Aucun autre espace de travail disponible pour copier cette enquête.",
       "no_surveys_created_yet": "Aucun sondage créé pour le moment",
       "open_options": "Ouvrir les options",
       "preview_survey_in_a_new_tab": "Aperçu de l'enquête dans un nouvel onglet",

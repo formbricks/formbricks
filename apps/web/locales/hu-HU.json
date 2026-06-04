@@ -2780,7 +2780,15 @@
     "surveys": {
       "all_set_time_to_create_first_survey": "Mindent beállított! Ideje létrehozni az első kérdőívet",
       "alphabetical": "Ábécé-sorrend",
+      "copy_survey": "Felmérés másolása",
+      "copy_survey_description": "Válasszon ki egy munkaterületet, amelyre ezt a felmérést másolni szeretné.",
+      "copy_survey_error": "A felmérés másolása sikertelen volt",
       "copy_survey_link_to_clipboard": "Kérdőív hivatkozásának másolása a vágólapra",
+      "copy_survey_partially_success": "Sikeresen másolva {{success}} munkaterületre, sikertelen {{error}} esetben",
+      "copy_survey_select_workspaces_placeholder": "Munkaterületek keresése...",
+      "copy_survey_success": "A felmérés sikeresen másolva",
+      "copy_survey_target_workspaces_label": "Cél munkaterületek",
+      "copy_to": "Másolás ide...",
       "delete_survey_and_responses_warning": "Biztosan törölni szeretné ezt a kérdőívet és az összes válaszát?",
       "edit": {
         "activate_translations": "Fordítások aktiválása",
@@ -3359,6 +3367,7 @@
         "partial_responses": "Részleges válaszok"
       },
       "new_survey": "Új kérdőív",
+      "no_other_workspaces_available": "Nem áll rendelkezésre más munkaterület, amelyre ezt a felmérést másolni lehetne.",
       "no_surveys_created_yet": "Még nincsenek kérdőívek létrehozva",
       "open_options": "Beállítások megnyitása",
       "preview_survey_in_a_new_tab": "Kérdőív előnézete új lapon",

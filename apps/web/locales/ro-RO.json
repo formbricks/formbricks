@@ -2780,7 +2780,15 @@
     "surveys": {
       "all_set_time_to_create_first_survey": "Ești gata! Este timpul să creezi primul tău chestionar",
       "alphabetical": "Alfabetic",
+      "copy_survey": "Copiază chestionarul",
+      "copy_survey_description": "Alege un spațiu de lucru în care să copiezi acest chestionar.",
+      "copy_survey_error": "Copierea chestionarului a eșuat",
       "copy_survey_link_to_clipboard": "Copiază linkul chestionarului în clipboard",
+      "copy_survey_partially_success": "Copiat în {{success}} spații de lucru, eșuat pentru {{error}}",
+      "copy_survey_select_workspaces_placeholder": "Caută spații de lucru...",
+      "copy_survey_success": "Chestionar copiat cu succes",
+      "copy_survey_target_workspaces_label": "Spații de lucru destinație",
+      "copy_to": "Copiază în...",
       "delete_survey_and_responses_warning": "Sigur doriți să ștergeți acest sondaj și toate răspunsurile sale?",
       "edit": {
         "activate_translations": "Activează traducerile",
@@ -3359,6 +3367,7 @@
         "partial_responses": "Răspunsuri parțiale"
       },
       "new_survey": "Chestionar nou",
+      "no_other_workspaces_available": "Nu există alte spații de lucru disponibile în care să copiezi acest chestionar.",
       "no_surveys_created_yet": "Nu au fost create încă chestionare",
       "open_options": "Opțiuni deschise",
       "preview_survey_in_a_new_tab": "Previzualizare chestionar în alt tab",

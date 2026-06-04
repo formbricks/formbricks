@@ -2780,7 +2780,15 @@
     "surveys": {
       "all_set_time_to_create_first_survey": "Всё готово! Пора создать первый опрос",
       "alphabetical": "По алфавиту",
+      "copy_survey": "Копировать опрос",
+      "copy_survey_description": "Выбери рабочее пространство, в которое хочешь скопировать этот опрос.",
+      "copy_survey_error": "Не удалось скопировать опрос",
       "copy_survey_link_to_clipboard": "Скопировать ссылку на опрос в буфер обмена",
+      "copy_survey_partially_success": "Скопировано в {{success}} рабочих пространств, не удалось для {{error}}",
+      "copy_survey_select_workspaces_placeholder": "Найти рабочие пространства...",
+      "copy_survey_success": "Опрос успешно скопирован",
+      "copy_survey_target_workspaces_label": "Целевые рабочие пространства",
+      "copy_to": "Копировать в...",
       "delete_survey_and_responses_warning": "Вы уверены, что хотите удалить этот опрос и все его ответы?",
       "edit": {
         "activate_translations": "Активировать переводы",
@@ -3359,6 +3367,7 @@
         "partial_responses": "Частичные ответы"
       },
       "new_survey": "Новый опрос",
+      "no_other_workspaces_available": "Нет других доступных рабочих пространств для копирования этого опроса.",
       "no_surveys_created_yet": "Опросы ещё не созданы",
       "open_options": "Открыть параметры",
       "preview_survey_in_a_new_tab": "Просмотреть опрос в новой вкладке",
