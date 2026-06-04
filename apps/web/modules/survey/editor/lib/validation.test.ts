@@ -16,6 +16,7 @@ import {
   TSurveyPictureSelectionElement,
   TSurveyRatingElement,
 } from "@formbricks/types/surveys/elements";
+import { validateElementLabels } from "@formbricks/types/surveys/elements-validation";
 import {
   TSurvey,
   TSurveyEndScreenCard,
@@ -23,7 +24,7 @@ import {
   TSurveyRedirectUrlCard,
   TSurveyWelcomeCard,
 } from "@formbricks/types/surveys/types";
-import { TValidateIdErrorCode } from "@formbricks/types/surveys/validation";
+import { TValidateIdErrorCode, validateQuestionLabels } from "@formbricks/types/surveys/validation";
 import { checkForEmptyFallBackValue } from "@/lib/utils/recall";
 import * as validation from "./validation";
 
@@ -120,6 +121,55 @@ const surveyLanguagesWithDisabled: TSurveyLanguage[] = [
     enabled: false,
   },
 ];
+
+describe("survey schema multilingual label validation", () => {
+  test("returns a block-editor issue when a block element default headline is missing", () => {
+    const issue = validateElementLabels(
+      "headline",
+      { default: "", en: "", de: "" },
+      surveyLanguagesEnabled,
+      1,
+      0
+    );
+
+    expect(issue).toMatchObject({
+      message: "The question in question 1 of block 2 is missing",
+      path: ["blocks", 1, "elements", 0, "headline"],
+    });
+    expect(issue?.params).toBeUndefined();
+  });
+
+  test("returns a block-editor issue when a question default headline is missing", () => {
+    const issue = validateQuestionLabels(
+      "headline",
+      { default: "", en: "", de: "" },
+      surveyLanguagesEnabled,
+      0
+    );
+
+    expect(issue).toMatchObject({
+      message: "The question in question 1 is missing",
+      path: ["questions", 0, "headline"],
+    });
+    expect(issue?.params).toBeUndefined();
+  });
+
+  test("returns language params when only a translated block element headline is missing", () => {
+    const issue = validateElementLabels(
+      "headline",
+      { default: "Question", en: "Question", de: "" },
+      surveyLanguagesEnabled,
+      1,
+      0
+    );
+
+    expect(issue).toMatchObject({
+      message: "The question in question 1 of block 2 is missing for the following languages:  -fLang- de",
+      path: ["blocks", 1, "elements", 0, "headline"],
+      params: { invalidLanguageCodes: ["de"] },
+    });
+  });
+});
 
 describe("validation.isLabelValidForAllLanguages", () => {
   test("should return true if all enabled languages have non-empty labels", () => {
