@@ -151,7 +151,9 @@ export const POST = withV1ApiWrapper({
       }
 
       return {
-        response: responses.successResponse(addLegacyProjectOverwrites(withDerivedQuestions(survey))),
+        response: responses.successResponse(
+          addLegacyProjectOverwrites(resolveStorageUrlsInObject(withDerivedQuestions(survey)))
+        ),
       };
     } catch (error) {
       if (error instanceof DatabaseError) {
