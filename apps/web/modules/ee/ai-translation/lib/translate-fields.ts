@@ -75,7 +75,7 @@ Rules:
     temperature: 0,
   });
 
-  const translatedById = result.object as Record<string, string>;
+  const translatedById = result.object;
 
   const translations: Record<string, string> = {};
   const missingIds: string[] = [];
