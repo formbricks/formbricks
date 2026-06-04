@@ -45,11 +45,20 @@ jobs:
       - name: Run tests with coverage
         run: |
           pnpm test:coverage
+      - name: Use runner Java 21 for SonarQube
+        run: |
+          if [ -z "${JAVA_HOME_21_X64:-}" ]; then
+            echo "JAVA_HOME_21_X64 is not available on this runner"
+            exit 1
+          fi
+          echo "JAVA_HOME=${JAVA_HOME_21_X64}" >> "$GITHUB_ENV"
+          echo "${JAVA_HOME_21_X64}/bin" >> "$GITHUB_PATH"
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@2500896589ef8f7247069a56136f8dc177c27ccf
         with:
           args: >
             -Dsonar.verbose=true
+            -Dsonar.scanner.skipJreProvisioning=true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
