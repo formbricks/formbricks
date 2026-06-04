@@ -568,7 +568,7 @@ describe("transformBlocksToQuestions", () => {
     expect(questions[0].backButtonLabel).toEqual({ default: "Back" });
   });
 
-  test("should handle blocks with multiple elements by taking the first element", () => {
+  test("should flatten blocks with multiple elements into one question per element", () => {
     const blocks = [
       {
         id: "b1",
@@ -594,8 +594,9 @@ describe("transformBlocksToQuestions", () => {
 
     const questions = transformBlocksToQuestions(blocks, []);
 
-    expect(questions).toHaveLength(1);
+    expect(questions).toHaveLength(2);
     expect(questions[0].id).toBe("q1");
+    expect(questions[1].id).toBe("q2");
   });
 });
 
