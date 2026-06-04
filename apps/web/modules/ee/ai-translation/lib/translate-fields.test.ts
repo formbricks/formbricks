@@ -3,9 +3,13 @@ import { type TAITranslationField, translateFields } from "./translate-fields";
 
 vi.mock("server-only", () => ({}));
 
-const mockGenerateOrganizationAIText = vi.fn();
+const mockGenerateOrganizationAIObject = vi.fn();
 vi.mock("@/lib/ai/service", () => ({
-  generateOrganizationAIText: (...args: unknown[]) => mockGenerateOrganizationAIText(...args),
+  generateOrganizationAIObject: (...args: unknown[]) => mockGenerateOrganizationAIObject(...args),
+}));
+
+vi.mock("@formbricks/logger", () => ({
+  logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
 }));
 
 const baseInput = {
@@ -15,8 +19,8 @@ const baseInput = {
 };
 
 const fields: TAITranslationField[] = [
-  { path: "headline", defaultText: "Welcome", isRichText: false },
-  { path: "description", defaultText: "<p>Hello</p>", isRichText: true },
+  { path: "welcomeCard.headline.default", defaultText: "Welcome", isRichText: false },
+  { path: "questions.0.html.default", defaultText: "<p>Hello</p>", isRichText: true },
 ];
 
 describe("translateFields", () => {
@@ -24,47 +28,77 @@ describe("translateFields", () => {
     vi.clearAllMocks();
   });
 
-  test("returns translated fields from clean JSON response", async () => {
-    mockGenerateOrganizationAIText.mockResolvedValue({
-      text: JSON.stringify({ headline: "Willkommen", description: "<p>Hallo</p>" }),
+  test("returns translations keyed by original field paths", async () => {
+    mockGenerateOrganizationAIObject.mockResolvedValue({
+      object: { t0: "Willkommen", t1: "<p>Hallo</p>" },
     });
 
     const result = await translateFields({ ...baseInput, fields });
-    expect(result).toEqual({ headline: "Willkommen", description: "<p>Hallo</p>" });
+
+    expect(result).toEqual({
+      "welcomeCard.headline.default": "Willkommen",
+      "questions.0.html.default": "<p>Hallo</p>",
+    });
   });
 
-  test("strips markdown code fences", async () => {
-    mockGenerateOrganizationAIText.mockResolvedValue({
-      text: '```json\n{"headline": "Willkommen"}\n```',
+  test("sends opaque indexed IDs to the model, never the field paths", async () => {
+    mockGenerateOrganizationAIObject.mockResolvedValue({
+      object: { t0: "Willkommen", t1: "<p>Hallo</p>" },
     });
 
-    const result = await translateFields({ ...baseInput, fields });
-    expect(result).toEqual({ headline: "Willkommen" });
+    await translateFields({ ...baseInput, fields });
+
+    expect(mockGenerateOrganizationAIObject).toHaveBeenCalledTimes(1);
+    const callArg = mockGenerateOrganizationAIObject.mock.calls[0][0];
+    expect(callArg.prompt).not.toContain("welcomeCard.headline.default");
+    expect(callArg.prompt).not.toContain("questions.0.html.default");
+    const userPayload = JSON.parse(callArg.prompt);
+    expect(userPayload).toEqual([
+      { id: "t0", text: "Welcome", richText: false },
+      { id: "t1", text: "<p>Hello</p>", richText: true },
+    ]);
   });
 
-  test("extracts JSON from wrapper text", async () => {
-    mockGenerateOrganizationAIText.mockResolvedValue({
-      text: 'Here is the translation:\n{"headline": "Willkommen"}\nHope this helps!',
+  test("requests deterministic output (temperature: 0) for stable translations", async () => {
+    mockGenerateOrganizationAIObject.mockResolvedValue({
+      object: { t0: "Willkommen", t1: "<p>Hallo</p>" },
     });
 
-    const result = await translateFields({ ...baseInput, fields });
-    expect(result).toEqual({ headline: "Willkommen" });
+    await translateFields({ ...baseInput, fields });
+
+    expect(mockGenerateOrganizationAIObject.mock.calls[0][0].temperature).toBe(0);
   });
 
-  test("filters out unrequested keys and non-string values", async () => {
-    mockGenerateOrganizationAIText.mockResolvedValue({
-      text: JSON.stringify({ headline: "Willkommen", extra: "Nein", description: 42 }),
+  test("returns empty object without calling the model when no fields are provided", async () => {
+    const result = await translateFields({ ...baseInput, fields: [] });
+
+    expect(result).toEqual({});
+    expect(mockGenerateOrganizationAIObject).not.toHaveBeenCalled();
+  });
+
+  test("throws when the model omits any requested ID from the response", async () => {
+    mockGenerateOrganizationAIObject.mockResolvedValue({
+      object: { t0: "Willkommen" }, // t1 missing
     });
-
-    const result = await translateFields({ ...baseInput, fields });
-    expect(result).toEqual({ headline: "Willkommen" });
-  });
-
-  test("throws on unparseable response", async () => {
-    mockGenerateOrganizationAIText.mockResolvedValue({ text: "not json at all" });
 
     await expect(translateFields({ ...baseInput, fields })).rejects.toThrow(
-      "Failed to parse AI translation response"
+      "AI translation returned incomplete result"
     );
+  });
+
+  test("throws when the model returns an empty string for any ID", async () => {
+    mockGenerateOrganizationAIObject.mockResolvedValue({
+      object: { t0: "Willkommen", t1: "" }, // empty string treated as missing
+    });
+
+    await expect(translateFields({ ...baseInput, fields })).rejects.toThrow(
+      "AI translation returned incomplete result"
+    );
+  });
+
+  test("propagates errors thrown by the AI provider", async () => {
+    mockGenerateOrganizationAIObject.mockRejectedValue(new Error("provider failed"));
+
+    await expect(translateFields({ ...baseInput, fields })).rejects.toThrow("provider failed");
   });
 });
