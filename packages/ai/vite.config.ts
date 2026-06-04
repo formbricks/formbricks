@@ -1,4 +1,5 @@
 /// <reference types="vitest" />
+import { builtinModules } from "node:module";
 import { resolve } from "node:path";
 import { defineConfig } from "vitest/config";
 
@@ -17,6 +18,8 @@ export default defineConfig({
     },
     rollupOptions: {
       external: [
+        ...builtinModules,
+        ...builtinModules.map((m) => `node:${m}`),
         "ai",
         "@ai-sdk/amazon-bedrock",
         "@ai-sdk/azure",
