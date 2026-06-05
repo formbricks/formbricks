@@ -1602,11 +1602,12 @@ checksums:
     workspace/analysis/charts/add_filter: ed5d8e9bfcb05cd1e10e4c403befbae6
     workspace/analysis/charts/add_to_dashboard: 9941c3d30895bb8e25ce8d4e03d33a08
     workspace/analysis/charts/advanced_chart_builder_config_prompt: c2fe2c1a076f27d3ae62a4db75474b0a
+    workspace/analysis/charts/ai_chart_generation: add72413077023d31590374e179d8784
     workspace/analysis/charts/ai_enable_in_settings: 426cb4525381e193e6c4dcce286e60c8
     workspace/analysis/charts/ai_instance_not_configured: 6deeb8aeaff3982d07e1d5a045e06d2d
-    workspace/analysis/charts/ai_not_available: 173abfcd32dd45edcc258dfdaaed494b
-    workspace/analysis/charts/ai_not_enabled: 2066fe71ecf8994ba738c79b63a1934b
-    workspace/analysis/charts/ai_not_in_plan: 4b75e143c97d657bd91f857ff2bbf33f
+    workspace/analysis/charts/ai_not_available: d5a8ef5f964591bc4c1af7bc2ac9cfc9
+    workspace/analysis/charts/ai_not_enabled: 13df84ae47d35dfa6e86ffa62f29c75d
+    workspace/analysis/charts/ai_not_in_plan: 911fbcc84e4fde4c62762747aa9e5a33
     workspace/analysis/charts/ai_query_placeholder: 24c3d18f514cb3a9953f04c3b04503a2
     workspace/analysis/charts/ai_query_section_description: 66d06342f29bf6658793403856521fd7
     workspace/analysis/charts/ai_query_section_title: c0e450a47af7c2a516b77f73cf54db1b
@@ -2567,7 +2568,7 @@ checksums:
     workspace/settings/general/share_invite_link: b40b7ffbcf02d7464be52fb562df5e3a
     workspace/settings/general/share_this_link_to_let_your_organization_member_join_your_organization: 6eb43d5b1c855572b7ab35f527ba953c
     workspace/settings/general/test_email_sent_successfully: aa68214f5e0707c9615e01343640ab32
-    workspace/settings/general/unlock_ai_features_description: c15c8c050a4a16d99dc595d9c6419bc4
+    workspace/settings/general/unlock_ai_features_description: 7ee40c8563d8c6d323a82520f7d54ad2
     workspace/settings/general/unlock_ai_features_with_a_higher_plan: e0140d3ffd07524fb8f1fec637c4149a
     workspace/settings/notifications/auto_subscribe_to_new_surveys: 8102c9ce2fbcae53bd8d979c42932fa9
     workspace/settings/notifications/email_alerts_surveys: 12be5a073d74453a531167debd947bd6
