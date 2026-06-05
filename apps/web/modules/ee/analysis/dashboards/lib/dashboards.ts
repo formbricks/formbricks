@@ -9,6 +9,7 @@ import { validateInputs } from "@/lib/utils/validate";
 import { selectChart } from "@/modules/ee/analysis/charts/lib/charts";
 import {
   TAddWidgetInput,
+  TChartType,
   TDashboard,
   TDashboardCreateInput,
   TDashboardUpdateInput,
@@ -19,6 +20,9 @@ import {
 } from "@/modules/ee/analysis/types/analysis";
 
 const MAX_NAME_ATTEMPTS = 5;
+
+const getDefaultWidgetLayout = (chartType: TChartType): TWidgetLayout =>
+  chartType === "big_number" ? { x: 0, y: 0, w: 3, h: 2 } : { x: 0, y: 0, w: 4, h: 4 };
 
 const selectDashboard = {
   id: true,
@@ -384,10 +388,11 @@ export const addChartToDashboard = async (data: TAddWidgetInput) => {
               }),
         ]);
 
+        const baseLayout = data.layout ?? getDefaultWidgetLayout(chart.type as TChartType);
         const layout = data.respectY
-          ? data.layout
+          ? baseLayout
           : {
-              ...data.layout,
+              ...baseLayout,
               y: existingWidgets.reduce((max, w) => {
                 const l =
                   typeof w.layout === "object" && w.layout !== null

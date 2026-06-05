@@ -322,12 +322,12 @@ export function ChartRenderer({ chartType, data, query }: Readonly<ChartRenderer
           : data.reduce((sum, row) => sum + (Number(row[dataKey]) || 0), 0);
       const formatted = total.toLocaleString();
       return (
-        <div className="flex h-full min-h-[16rem] items-center justify-center">
+        <div className="flex h-full items-center justify-center p-4">
           <div className="text-center">
-            <div className="text-foreground text-6xl font-semibold tabular-nums tracking-tight">
+            <div className="text-foreground text-5xl font-semibold tabular-nums tracking-tight">
               {formatted}
             </div>
-            <div className="text-muted-foreground mt-4 text-sm">{formatCubeColumnHeader(dataKey, t)}</div>
+            <div className="text-muted-foreground mt-2 text-sm">{formatCubeColumnHeader(dataKey, t)}</div>
           </div>
         </div>
       );

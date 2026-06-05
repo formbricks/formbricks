@@ -91,7 +91,7 @@ export const ZAddWidgetInput = z.object({
   dashboardId: ZId,
   chartId: ZId,
   workspaceId: ZId,
-  layout: ZWidgetLayout,
+  layout: ZWidgetLayout.optional(),
   respectY: z.boolean().optional(),
 });
 export type TAddWidgetInput = z.infer<typeof ZAddWidgetInput>;

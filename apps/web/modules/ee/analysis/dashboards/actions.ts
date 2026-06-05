@@ -279,7 +279,7 @@ const ZAddChartToDashboardAction = z.object({
   workspaceId: ZId,
   dashboardId: ZId,
   chartId: ZId,
-  layout: ZWidgetLayout.optional().default({ x: 0, y: 0, w: 4, h: 4 }),
+  layout: ZWidgetLayout.optional(),
   respectY: z.boolean().optional(),
 });
 
