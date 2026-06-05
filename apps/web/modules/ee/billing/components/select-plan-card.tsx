@@ -12,13 +12,13 @@ import flixbusLogo from "@/images/customer-logos/flixbus-white.svg";
 import githubLogo from "@/images/customer-logos/github-logo.png";
 import siemensLogo from "@/images/customer-logos/siemens.png";
 import { startHobbyAction, startProTrialAction } from "@/modules/ee/billing/actions";
-import { type TPlanVariant } from "@/modules/ee/billing/lib/select-plan-variants";
 import { Button } from "@/modules/ui/components/button";
 
 interface SelectPlanCardProps {
   nextUrl: string;
   organizationId: string;
-  variant: TPlanVariant;
+  featureVariant: "control" | "variant_b";
+  ctaVariant: "control" | "variant_b" | "variant_c" | "variant_d";
 }
 
 const CUSTOMER_LOGOS = [
@@ -29,39 +29,45 @@ const CUSTOMER_LOGOS = [
   { src: ethereumLogo, alt: "Ethereum" },
 ];
 
-export const SelectPlanCard = ({ nextUrl, organizationId, variant }: Readonly<SelectPlanCardProps>) => {
+export const SelectPlanCard = ({
+  nextUrl,
+  organizationId,
+  featureVariant,
+  ctaVariant,
+}: Readonly<SelectPlanCardProps>) => {
   const router = useRouter();
   const [isStartingTrial, setIsStartingTrial] = useState(false);
   const [isStartingHobby, setIsStartingHobby] = useState(false);
   const { t } = useTranslation();
-  const isVariantB = variant === "variant_b";
-  const isVariantC = variant === "variant_c";
-  const copy = isVariantB
-    ? {
-        header: t("workspace.settings.billing.select_plan_variant_b_header"),
-        subheader: t("workspace.settings.billing.select_plan_variant_b_subheader"),
-        cta: t("workspace.settings.billing.select_plan_variant_b_cta"),
-        skip: t("workspace.settings.billing.select_plan_variant_b_skip"),
-      }
-    : isVariantC
-      ? {
-          header: t("workspace.settings.billing.select_plan_variant_c_header"),
-          subheader: t("workspace.settings.billing.select_plan_variant_c_subheader"),
-          cta: t("workspace.settings.billing.select_plan_variant_c_cta"),
-          skip: t("workspace.settings.billing.select_plan_variant_c_skip"),
-        }
-      : {
-          header: t("workspace.settings.billing.select_plan_header"),
-          subheader: t("workspace.settings.billing.select_plan_subheader"),
-          cta: t("workspace.settings.billing.select_plan_cta"),
-          skip: t("workspace.settings.billing.select_plan_skip"),
-        };
+  const ctaKey =
+    ctaVariant === "variant_b"
+      ? "workspace.settings.billing.select_plan_cta_variant_b"
+      : ctaVariant === "variant_c"
+        ? "workspace.settings.billing.select_plan_cta_variant_c"
+        : ctaVariant === "variant_d"
+          ? "workspace.settings.billing.select_plan_cta_variant_d"
+          : "workspace.settings.billing.select_plan_cta";
 
-  const SELECT_PLAN_FEATURE_KEYS = [
-    t("workspace.settings.billing.select_plan_feature_1"),
-    t("workspace.settings.billing.select_plan_feature_2"),
-    t("workspace.settings.billing.select_plan_feature_3"),
-  ] as const;
+  const copy = {
+    header: t("workspace.settings.billing.select_plan_header"),
+    subheader: t("workspace.settings.billing.select_plan_subheader"),
+    cta: t(ctaKey),
+    skip: t("workspace.settings.billing.select_plan_skip"),
+  };
+
+  const SELECT_PLAN_FEATURE_KEYS =
+    featureVariant === "variant_b"
+      ? [
+          t("workspace.settings.billing.select_plan_variant_b_feature_1"),
+          t("workspace.settings.billing.select_plan_variant_b_feature_2"),
+          t("workspace.settings.billing.select_plan_variant_b_feature_3"),
+          t("workspace.settings.billing.select_plan_variant_b_feature_4"),
+        ]
+      : [
+          t("workspace.settings.billing.select_plan_feature_1"),
+          t("workspace.settings.billing.select_plan_feature_2"),
+          t("workspace.settings.billing.select_plan_feature_3"),
+        ];
 
   const handleStartTrial = async () => {
     setIsStartingTrial(true);

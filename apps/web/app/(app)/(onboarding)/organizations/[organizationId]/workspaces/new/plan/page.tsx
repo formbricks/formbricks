@@ -3,12 +3,10 @@ import { TCloudBillingPlan } from "@formbricks/types/organizations";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getPostHogFeatureFlag } from "@/lib/posthog/get-feature-flag";
 import { getOrganizationBillingWithReadThroughSync } from "@/modules/ee/billing/lib/organization-billing";
-import { PLAN_VARIANTS, type TPlanVariant } from "@/modules/ee/billing/lib/select-plan-variants";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import { SelectPlanOnboarding } from "./components/select-plan-onboarding";
 
 const PAID_PLANS = new Set<TCloudBillingPlan>(["pro", "scale", "custom"]);
-const VALID_VARIANTS = new Set<TPlanVariant>(PLAN_VARIANTS);
 
 interface PlanPageProps {
   params: Promise<{
@@ -39,24 +37,28 @@ const Page = async (props: PlanPageProps) => {
     return redirect(`/organizations/${params.organizationId}/workspaces/new/mode`);
   }
 
-  let variant: TPlanVariant = "control";
-  const flagValue = await getPostHogFeatureFlag(
-    session.user.id,
-    "a-b_onboarding_trial-conversion-screen-copy",
-    {
+  const [featureFlagValue, ctaFlagValue] = await Promise.all([
+    getPostHogFeatureFlag(session.user.id, "a-b_onboarding_trial-conversion-screen-feature-copy", {
       organizationId: params.organizationId,
-    }
+    }),
+    getPostHogFeatureFlag(session.user.id, "a-b_onboarding_trial-conversion-screen-cta", {
+      organizationId: params.organizationId,
+    }),
+  ]);
+
+  const featureVariant = featureFlagValue === "variant_b" ? "variant_b" : "control";
+  const ctaVariant =
+    ctaFlagValue === "variant_b" || ctaFlagValue === "variant_c" || ctaFlagValue === "variant_d"
+      ? ctaFlagValue
+      : "control";
+
+  return (
+    <SelectPlanOnboarding
+      organizationId={params.organizationId}
+      featureVariant={featureVariant}
+      ctaVariant={ctaVariant}
+    />
   );
-  if (typeof flagValue === "string" && VALID_VARIANTS.has(flagValue as TPlanVariant)) {
-    variant = flagValue as TPlanVariant;
-  }
-
-  const selectPlanOnboardingProps = {
-    organizationId: params.organizationId,
-    variant,
-  };
-
-  return <SelectPlanOnboarding {...selectPlanOnboardingProps} />;
 };
 
 export default Page;
