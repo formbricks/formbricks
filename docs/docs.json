@@ -230,6 +230,22 @@
             ]
           },
           {
+            "group": "Best Practices",
+            "pages": [
+              {
+                "group": "Journey Management",
+                "icon": "map",
+                "pages": [
+                  "unify-feedback/journey-management/map-feedback-to-journeys",
+                  "unify-feedback/journey-management/journey-scorecards",
+                  "unify-feedback/journey-management/detection-signals",
+                  "unify-feedback/journey-management/recurring-patterns",
+                  "unify-feedback/journey-management/close-the-loop"
+                ]
+              }
+            ]
+          },
+          {
             "group": "Powered by",
             "pages": ["unify-feedback/formbricks-hub"]
           }
