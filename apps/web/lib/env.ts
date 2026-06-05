@@ -105,7 +105,12 @@ const validateAzureAIConfiguration = (values: TAIConfigurationEnv, ctx: z.Refine
   }
 };
 
-const validateJsonObjectEnv = (
+const isStringRecord = (value: unknown): value is Record<string, string> =>
+  isJsonObject(value) && Object.values(value).every((entry) => typeof entry === "string");
+
+// Mirrors parseStringRecordJson in packages/ai so headers/query params that the provider rejects
+// fail at startup instead of only when an AI flow runs.
+const validateStringRecordEnv = (
   ctx: z.RefinementCtx,
   path: keyof TAIConfigurationEnv,
   value: string | undefined
@@ -117,11 +122,11 @@ const validateJsonObjectEnv = (
   try {
     const parsedValue = JSON.parse(value) as unknown;
 
-    if (!isJsonObject(parsedValue)) {
-      throw new Error(`${path} must be a JSON object`);
+    if (!isStringRecord(parsedValue)) {
+      throw new Error(`${path} must be a JSON object of string values`);
     }
   } catch {
-    addEnvIssue(ctx, path, `${path} must be a valid JSON object`);
+    addEnvIssue(ctx, path, `${path} must be a JSON object of string values`);
   }
 };
 
@@ -134,8 +139,8 @@ const validateOpenAICompatibleAIConfiguration = (values: TAIConfigurationEnv, ct
     );
   }
 
-  validateJsonObjectEnv(ctx, "AI_OPENAI_COMPATIBLE_HEADERS_JSON", values.AI_OPENAI_COMPATIBLE_HEADERS_JSON);
-  validateJsonObjectEnv(
+  validateStringRecordEnv(ctx, "AI_OPENAI_COMPATIBLE_HEADERS_JSON", values.AI_OPENAI_COMPATIBLE_HEADERS_JSON);
+  validateStringRecordEnv(
     ctx,
     "AI_OPENAI_COMPATIBLE_QUERY_PARAMS_JSON",
     values.AI_OPENAI_COMPATIBLE_QUERY_PARAMS_JSON
