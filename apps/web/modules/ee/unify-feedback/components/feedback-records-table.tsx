@@ -500,6 +500,7 @@ const FeedbackRecordRow = ({
 }: Readonly<FeedbackRecordRowProps>) => {
   const value = formatValue(record, t, locale);
   const isLongValue = value.length > 60;
+  const collectedAt = formatDateTimeForDisplay(new Date(record.collected_at), locale);
   const isFormbricksSurveySource =
     (record.source_type === "formbricks" || record.source_type === "formbricks_survey") && !!record.source_id;
   const surveySummaryHref = `/workspaces/${workspaceId}/surveys/${record.source_id}/summary`;
@@ -527,8 +528,8 @@ const FeedbackRecordRow = ({
           onCheckedChange={(checked) => onSelectChange(checked === true)}
         />
       </td>
-      <td className="whitespace-nowrap px-4 py-3 text-slate-500">
-        {formatDateTimeForDisplay(new Date(record.collected_at), locale)}
+      <td className="px-4 py-3 text-slate-500" title={collectedAt}>
+        <span className="block min-w-0 truncate">{collectedAt}</span>
       </td>
       <td className="whitespace-nowrap px-4 py-3">
         <Badge text={formatSourceType(record.source_type, t)} type="gray" size="tiny" />
