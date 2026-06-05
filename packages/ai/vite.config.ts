@@ -24,6 +24,7 @@ export default defineConfig({
         "@ai-sdk/amazon-bedrock",
         "@ai-sdk/azure",
         "@ai-sdk/google-vertex",
+        "@ai-sdk/openai-compatible",
         "@aws-sdk/credential-providers",
         "@formbricks/logger",
       ],
