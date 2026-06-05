@@ -39,19 +39,21 @@ export const SelectPlanCard = ({
   const [isStartingTrial, setIsStartingTrial] = useState(false);
   const [isStartingHobby, setIsStartingHobby] = useState(false);
   const { t } = useTranslation();
-  const ctaKey =
-    ctaVariant === "variant_b"
-      ? "workspace.settings.billing.select_plan_cta_variant_b"
-      : ctaVariant === "variant_c"
-        ? "workspace.settings.billing.select_plan_cta_variant_c"
-        : ctaVariant === "variant_d"
-          ? "workspace.settings.billing.select_plan_cta_variant_d"
-          : "workspace.settings.billing.select_plan_cta";
+  let ctaCopy: string;
+  if (ctaVariant === "variant_b") {
+    ctaCopy = t("workspace.settings.billing.select_plan_cta_variant_b");
+  } else if (ctaVariant === "variant_c") {
+    ctaCopy = t("workspace.settings.billing.select_plan_cta_variant_c");
+  } else if (ctaVariant === "variant_d") {
+    ctaCopy = t("workspace.settings.billing.select_plan_cta_variant_d");
+  } else {
+    ctaCopy = t("workspace.settings.billing.select_plan_cta");
+  }
 
   const copy = {
     header: t("workspace.settings.billing.select_plan_header"),
     subheader: t("workspace.settings.billing.select_plan_subheader"),
-    cta: t(ctaKey),
+    cta: ctaCopy,
     skip: t("workspace.settings.billing.select_plan_skip"),
   };
 

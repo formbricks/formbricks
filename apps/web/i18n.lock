@@ -2359,6 +2359,10 @@ checksums:
     workspace/settings/billing/plan_unknown: 5cd12b882fe90320f93130c1b50e2e32
     workspace/settings/billing/remove_branding: 88b6b818750e478bfa153b33dd658280
     workspace/settings/billing/retry_setup: bef560e42fa8798271fea150476791e0
+    workspace/settings/billing/select_plan_cta: f5d80c9a93a431eed25a714a8e39fc9f
+    workspace/settings/billing/select_plan_cta_variant_b: f44c6688c4ff83694b0de0be29ba6a8e
+    workspace/settings/billing/select_plan_cta_variant_c: ec46b4ca1790074e4812ad351784efa3
+    workspace/settings/billing/select_plan_cta_variant_d: 5c783951b0100a168bdd2161ff294833
     workspace/settings/billing/select_plan_feature_1: 030739fb52448dba74b47e900500c4e3
     workspace/settings/billing/select_plan_feature_2: cc2e5907d2241a589ff6e995efb1f050
     workspace/settings/billing/select_plan_feature_3: 64ccc8de5813e88972d8260103bc8dcb
