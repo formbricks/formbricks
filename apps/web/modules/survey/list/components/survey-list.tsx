@@ -20,6 +20,7 @@ import {
 import { TSurveyOverviewFilters } from "@/modules/survey/list/types/survey-overview";
 import { TemplateContainerWithPreview } from "@/modules/survey/templates/components/template-container";
 import { Button } from "@/modules/ui/components/button";
+import { EmptyState } from "@/modules/ui/components/empty-state";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { PageHeader } from "@/modules/ui/components/page-header";
 import { SurveyCard } from "./survey-card";
@@ -156,12 +157,8 @@ export const SurveysList = ({
   if (showReadOnlyEmptyState) {
     return (
       <PageContentWrapper>
-        <h1 className="px-6 text-3xl font-extrabold text-slate-700">
-          {t("workspace.surveys.no_surveys_created_yet")}
-        </h1>
-        <h2 className="px-6 text-lg font-medium text-slate-500">
-          {t("workspace.surveys.read_only_user_not_allowed_to_create_survey_warning")}
-        </h2>
+        <PageHeader pageTitle={t("common.surveys")} />
+        <EmptyState text={t("workspace.surveys.read_only_user_not_allowed_to_create_survey_warning")} />
       </PageContentWrapper>
     );
   }

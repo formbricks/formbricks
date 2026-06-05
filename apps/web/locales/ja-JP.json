@@ -3373,7 +3373,6 @@
       },
       "new_survey": "新規フォーム",
       "no_other_workspaces_available": "このアンケートをコピーできる他のワークスペースがありません。",
-      "no_surveys_created_yet": "まだフォームが作成されていません",
       "open_options": "オプションを開く",
       "preview_survey_in_a_new_tab": "新しいタブでフォームをプレビュー",
       "read_only_user_not_allowed_to_create_survey_warning": "読み取り専用ユーザーはフォームを作成できません。書き込みアクセスを持つユーザーにフォームの作成を依頼するか、管理者にあなたの役割をアップグレードするように依頼してください。",
