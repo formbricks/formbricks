@@ -2780,7 +2780,15 @@
     "surveys": {
       "all_set_time_to_create_first_survey": "すべての準備が整いました！最初のフォームを作成しましょう",
       "alphabetical": "アルファベット順",
+      "copy_survey": "アンケートをコピー",
+      "copy_survey_description": "このアンケートをコピーするワークスペースを選択してください。",
+      "copy_survey_error": "アンケートのコピーに失敗しました",
       "copy_survey_link_to_clipboard": "フォームのリンクをクリップボードにコピー",
+      "copy_survey_partially_success": "{{success}}個のワークスペースにコピーしました。{{error}}個は失敗しました",
+      "copy_survey_select_workspaces_placeholder": "ワークスペースを検索...",
+      "copy_survey_success": "アンケートを正常にコピーしました",
+      "copy_survey_target_workspaces_label": "コピー先のワークスペース",
+      "copy_to": "コピー先...",
       "delete_survey_and_responses_warning": "本当にこのフォームとすべての回答を削除しますか？",
       "edit": {
         "activate_translations": "翻訳を有効化",
@@ -3359,6 +3367,7 @@
         "partial_responses": "部分的な回答"
       },
       "new_survey": "新規フォーム",
+      "no_other_workspaces_available": "このアンケートをコピーできる他のワークスペースがありません。",
       "open_options": "オプションを開く",
       "preview_survey_in_a_new_tab": "新しいタブでフォームをプレビュー",
       "read_only_user_not_allowed_to_create_survey_warning": "読み取り専用ユーザーはフォームを作成できません。書き込みアクセスを持つユーザーにフォームの作成を依頼するか、管理者にあなたの役割をアップグレードするように依頼してください。",

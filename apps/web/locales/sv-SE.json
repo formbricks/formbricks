@@ -2780,7 +2780,15 @@
     "surveys": {
       "all_set_time_to_create_first_survey": "Allt klart! Dags att skapa din första enkät",
       "alphabetical": "Alfabetisk",
+      "copy_survey": "Kopiera undersökning",
+      "copy_survey_description": "Välj en arbetsyta att kopiera den här undersökningen till.",
+      "copy_survey_error": "Kunde inte kopiera undersökningen",
       "copy_survey_link_to_clipboard": "Kopiera enkätlänk till urklipp",
+      "copy_survey_partially_success": "Kopierad till {{success}} arbetsytor, misslyckades för {{error}}",
+      "copy_survey_select_workspaces_placeholder": "Sök arbetsytor...",
+      "copy_survey_success": "Undersökningen kopierades",
+      "copy_survey_target_workspaces_label": "Målarbetsytor",
+      "copy_to": "Kopiera till...",
       "delete_survey_and_responses_warning": "Är du säker på att du vill ta bort denna enkät och alla dess svar?",
       "edit": {
         "activate_translations": "Aktivera översättningar",
@@ -3359,6 +3367,7 @@
         "partial_responses": "Delvisa svar"
       },
       "new_survey": "Ny enkät",
+      "no_other_workspaces_available": "Inga andra arbetsytor tillgängliga att kopiera den här undersökningen till.",
       "open_options": "Öppna alternativ",
       "preview_survey_in_a_new_tab": "Förhandsgranska enkät i en ny flik",
       "read_only_user_not_allowed_to_create_survey_warning": "Som skrivskyddad användare har du inte behörighet att skapa enkäter. Be en användare med skrivåtkomst att skapa en enkät eller en administratör att uppgradera din roll.",

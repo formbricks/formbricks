@@ -432,7 +432,10 @@ export async function patchV3SurveyResponse({
     }
 
     if (error instanceof V3SurveyWritePermissionError) {
-      log.warn({ statusCode: 403, workspaceId, errorCode: error.name }, "Survey patch permission check failed");
+      log.warn(
+        { statusCode: 403, workspaceId, errorCode: error.name },
+        "Survey patch permission check failed"
+      );
       return problemForbidden(requestId, error.message, instance);
     }
 
@@ -491,17 +494,17 @@ export async function validateV3Survey({
     });
 
     if (response) {
-      log.warn({ statusCode: response.status, surveyId: body.surveyId }, "Survey not found or not accessible");
+      log.warn(
+        { statusCode: response.status, surveyId: body.surveyId },
+        "Survey not found or not accessible"
+      );
       return response;
     }
 
-    return successResponse(
-      serializeValidationResult("patch", prepareV3SurveyPatchInput(survey, body.data)),
-      {
-        requestId,
-        cache: "private, no-store",
-      }
-    );
+    return successResponse(serializeValidationResult("patch", prepareV3SurveyPatchInput(survey, body.data)), {
+      requestId,
+      cache: "private, no-store",
+    });
   } catch (error) {
     if (error instanceof DatabaseError) {
       log.error({ error, statusCode: 500 }, "Database error");

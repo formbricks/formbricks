@@ -1,7 +1,7 @@
-import { describe, expect, test, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { problemForbidden } from "@/app/api/v3/lib/response";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
+import { problemForbidden } from "@/app/api/v3/lib/response";
 import { deleteSurvey } from "@/modules/survey/lib/surveys";
 import { getSurveyCount } from "@/modules/survey/list/lib/survey";
 import { getSurveyListPage } from "@/modules/survey/list/lib/survey-page";
@@ -17,6 +17,7 @@ import {
   serializeV3SurveyListItem,
   serializeV3SurveyResource,
 } from "../serializers";
+import { V3SurveyWritePermissionError } from "../write-permissions";
 import {
   createV3SurveyResponse,
   deleteV3Survey,
@@ -25,7 +26,6 @@ import {
   patchV3SurveyResponse,
   validateV3Survey,
 } from "./operations";
-import { V3SurveyWritePermissionError } from "../write-permissions";
 
 vi.mock("@formbricks/logger", () => ({
   logger: {
@@ -205,9 +205,7 @@ describe("listV3Surveys", () => {
     });
 
     expect(response.status).toBe(400);
-    expect((await readJson(response)).invalid_params).toEqual([
-      { name: "workspaceId", reason: "Required" },
-    ]);
+    expect((await readJson(response)).invalid_params).toEqual([{ name: "workspaceId", reason: "Required" }]);
   });
 
   test("returns authorization responses from workspace access", async () => {

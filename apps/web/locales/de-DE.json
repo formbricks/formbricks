@@ -2780,7 +2780,15 @@
     "surveys": {
       "all_set_time_to_create_first_survey": "Alles klar! Zeit, deine erste Umfrage zu erstellen",
       "alphabetical": "alphabetisch",
+      "copy_survey": "Umfrage kopieren",
+      "copy_survey_description": "Wähle einen Workspace aus, in den du diese Umfrage kopieren möchtest.",
+      "copy_survey_error": "Umfrage konnte nicht kopiert werden",
       "copy_survey_link_to_clipboard": "Umfragelink in die Zwischenablage kopieren",
+      "copy_survey_partially_success": "In {{success}} Workspaces kopiert, bei {{error}} fehlgeschlagen",
+      "copy_survey_select_workspaces_placeholder": "Workspaces durchsuchen...",
+      "copy_survey_success": "Umfrage erfolgreich kopiert",
+      "copy_survey_target_workspaces_label": "Ziel-Workspaces",
+      "copy_to": "Kopieren nach...",
       "delete_survey_and_responses_warning": "Bist Du sicher, dass Du diese Umfrage und alle ihre Antworten löschen möchtest?",
       "edit": {
         "activate_translations": "Übersetzungen aktivieren",
@@ -3359,6 +3367,7 @@
         "partial_responses": "Teilweise Antworten"
       },
       "new_survey": "Neue Umfrage",
+      "no_other_workspaces_available": "Keine weiteren Workspaces verfügbar, in die du diese Umfrage kopieren kannst.",
       "open_options": "Optionen öffnen",
       "preview_survey_in_a_new_tab": "Umfrage in neuem Tab in der Vorschau anzeigen",
       "read_only_user_not_allowed_to_create_survey_warning": "Als Nutzer mit Lesezugriff darfst du keine Umfragen erstellen. Bitte einen Nutzer mit Schreibzugriff, eine Umfrage zu erstellen, oder einen Manager, deine Rolle zu erweitern.",
