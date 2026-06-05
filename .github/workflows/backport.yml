@@ -1,0 +1,59 @@
+name: Backport
+
+# Opens backport PR(s) for merged PRs that carry a label of the form
+# "backport release/X.Y". One label per target release branch.
+#
+# Trigger fires when a PR is closed (covers the case of labelling before merge)
+# and when a label is added (covers the case of deciding to backport after merge).
+on:
+  pull_request_target:
+    types: [closed, labeled]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  backport:
+    name: Backport PR
+    # Only act on merged PRs. The action itself filters by label_pattern below,
+    # so a PR closed without merging or without a backport label is a no-op.
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
+        with:
+          egress-policy: audit
+
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          # Cherry-picks need the full commit graph for the source PR and target branch.
+          fetch-depth: 0
+
+      - name: Create backport PR(s)
+        uses: korthout/backport-action@66065406958f46e82238fd59546f5a99e69e22aa # v4.5.2
+        with:
+          # Match labels like "backport release/4.7" — captured group becomes the target branch.
+          label_pattern: '^backport (release/.+)$'
+          pull_title: '[${target_branch}] ${pull_title}'
+          pull_description: |
+            Backport of #${pull_number} into `${target_branch}`.
+
+            Original PR: ${pull_title}
+
+            ---
+            Cherry-picked automatically by `korthout/backport-action`. If the cherry-pick
+            conflicted, this PR is opened as a draft with conflict markers — please resolve
+            manually before merging.
+          # Copy every label except other "backport ..." labels (prevents recursive backports
+          # when a single source PR targets multiple release branches).
+          copy_labels_pattern: '^(?!backport )'
+          copy_assignees: true
+          # NOTE: PRs opened with the default GITHUB_TOKEN do NOT trigger downstream workflows
+          # (e.g. CI checks). To make CI run automatically on the backport PR, replace this with
+          # a PAT or GitHub App token stored as a repo secret. Until then, close-and-reopen the
+          # backport PR to kick CI.
+          github_token: ${{ secrets.GITHUB_TOKEN }}
