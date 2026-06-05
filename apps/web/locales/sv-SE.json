@@ -479,6 +479,7 @@
     "trial_plan_badge": "{plan} provperiod",
     "try_again": "Försök igen",
     "type": "Typ",
+    "undo": "Ångra",
     "unlock_more_workspaces_with_a_higher_plan": "Lås upp fler arbetsytor med ett högre abonnemang.",
     "update": "Uppdatera",
     "updated": "Uppdaterad",
@@ -1835,7 +1836,10 @@
       },
       "dashboards": {
         "add_count_charts": "Lägg till {count} diagram",
+        "chart_remove_failed": "Misslyckades med att ta bort diagram",
         "chart_removed": "Diagram borttaget från instrumentpanelen",
+        "chart_restore_failed": "Misslyckades med att återställa diagram",
+        "chart_restored": "Diagram återställt",
         "charts_add_failed": "Misslyckades med att lägga till diagram i instrumentpanelen",
         "charts_add_partial_failure": "Misslyckades med att lägga till {count} diagram",
         "charts_added_to_dashboard": "Diagram tillagda i instrumentpanelen",

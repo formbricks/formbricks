@@ -479,6 +479,7 @@
     "trial_plan_badge": "Perioadă de probă {plan}",
     "try_again": "Încearcă din nou",
     "type": "Tip",
+    "undo": "Anulează",
     "unlock_more_workspaces_with_a_higher_plan": "Deblochează mai multe workspaces cu un plan superior.",
     "update": "Actualizare",
     "updated": "Actualizat",
@@ -1835,7 +1836,10 @@
       },
       "dashboards": {
         "add_count_charts": "Adaugă {count} grafic(e)",
+        "chart_remove_failed": "Ștergerea graficului a eșuat",
         "chart_removed": "Graficul a fost eliminat din tabloul de bord",
+        "chart_restore_failed": "Restaurarea graficului a eșuat",
+        "chart_restored": "Graficul a fost restaurat",
         "charts_add_failed": "Nu s-au putut adăuga graficele la panoul de control",
         "charts_add_partial_failure": "Nu s-au putut adăuga {count} grafic(e)",
         "charts_added_to_dashboard": "Grafice adăugate la panoul de control",
