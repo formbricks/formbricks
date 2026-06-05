@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import {
   assertOrganizationAIConfigured,
+  generateOrganizationAIObject,
   generateOrganizationAIText,
   getAISmartToolsUnavailableReason,
   getOrganizationAIConfig,
@@ -9,6 +10,7 @@ import {
 } from "./service";
 
 const mocks = vi.hoisted(() => ({
+  generateObject: vi.fn(),
   generateText: vi.fn(),
   isAiConfigured: vi.fn(),
   getOrganization: vi.fn(),
@@ -27,6 +29,7 @@ vi.mock("@formbricks/ai", () => ({
       this.code = code;
     }
   },
+  generateObject: mocks.generateObject,
   generateText: mocks.generateText,
   isAiConfigured: mocks.isAiConfigured,
 }));
@@ -138,6 +141,31 @@ describe("AI organization service", () => {
     );
   });
 
+  test("generates organization AI objects with the configured package abstraction", async () => {
+    const generatedObject = { object: { name: "Generated survey" } };
+    const schema = { type: "object" };
+    mocks.generateObject.mockResolvedValueOnce(generatedObject);
+
+    const result = await generateOrganizationAIObject<{ name: string }>({
+      organizationId: "org_1",
+      schema,
+      prompt: "Generate a survey",
+    } as any);
+
+    expect(result).toBe(generatedObject);
+    expect(mocks.generateObject).toHaveBeenCalledWith(
+      {
+        schema,
+        prompt: "Generate a survey",
+      },
+      expect.objectContaining({
+        AI_PROVIDER: "google",
+        AI_MODEL: "gemini-2.5-flash",
+        AI_GOOGLE_CLOUD_PROJECT: "google-cloud-project",
+      })
+    );
+  });
+
   test("logs and rethrows generation errors", async () => {
     const modelError = new Error("provider boom");
     mocks.generateText.mockRejectedValueOnce(modelError);
@@ -156,6 +184,28 @@ describe("AI organization service", () => {
         err: modelError,
       },
       "Failed to generate organization AI text"
+    );
+  });
+
+  test("logs and rethrows object generation errors", async () => {
+    const modelError = new Error("provider boom");
+    mocks.generateObject.mockRejectedValueOnce(modelError);
+
+    await expect(
+      generateOrganizationAIObject({
+        organizationId: "org_1",
+        schema: { type: "object" },
+        prompt: "Generate a survey",
+      } as any)
+    ).rejects.toThrow(modelError);
+    expect(mocks.loggerError).toHaveBeenCalledWith(
+      {
+        organizationId: "org_1",
+        isInstanceConfigured: true,
+        errorCode: undefined,
+        err: modelError,
+      },
+      "Failed to generate organization AI object"
     );
   });
 

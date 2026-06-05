@@ -47,7 +47,7 @@ export const getOrganizationAIConfig = async (organizationId: string): Promise<T
   };
 };
 
-export type TAIUnavailableReason = "not_in_plan" | "not_enabled" | "instance_not_configured";
+export type TAIUnavailableReason = "not_in_plan" | "not_enabled" | "instance_not_configured" | "read_only";
 
 export const getAISmartToolsUnavailableReason = (
   aiConfig: TOrganizationAIConfig
@@ -104,11 +104,11 @@ export const generateOrganizationAIText = async ({
   }
 };
 
-type TGenerateOrganizationAIObjectInput<T> = {
+type TGenerateOrganizationAIObjectInput<T = unknown> = {
   organizationId: string;
 } & TGenerateObjectOptions<T>;
 
-export const generateOrganizationAIObject = async <T>({
+export const generateOrganizationAIObject = async <T = unknown>({
   organizationId,
   ...options
 }: TGenerateOrganizationAIObjectInput<T>): Promise<TGenerateObjectResult<T>> => {
