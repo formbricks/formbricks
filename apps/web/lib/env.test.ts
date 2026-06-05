@@ -157,6 +157,16 @@ describe("env", () => {
     await expect(import("./env")).rejects.toThrow("Invalid environment variables");
   });
 
+  test("fails to load when the OpenAI-compatible base URL is not an HTTP URL", async () => {
+    setTestEnv({
+      AI_PROVIDER: "openai-compatible",
+      AI_MODEL: "Qwen/Qwen2.5-7B-Instruct",
+      AI_OPENAI_COMPATIBLE_BASE_URL: "ftp://example.com/v1",
+    });
+
+    await expect(import("./env")).rejects.toThrow("Invalid environment variables");
+  });
+
   test("fails to load when the OpenAI-compatible headers JSON is malformed", async () => {
     setTestEnv({
       AI_PROVIDER: "openai-compatible",
