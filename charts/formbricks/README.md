@@ -97,6 +97,41 @@ When TEI auth is enabled, configure the shared key through `hub.embeddings.auth.
 
 Autoscaling is opt-in for Hub API, Hub worker, and the embeddings runtime. If you scale the embeddings runtime above one replica while persistence is enabled, the cache PVC must support `ReadWriteMany`; otherwise set `hub.embeddings.persistence.enabled=false` or provide a compatible `existingClaim`.
 
+## Web AI with self-hosted Qwen/vLLM
+
+The chart does not deploy a web LLM runtime. For LLM GA v1, point the web app at a Qwen model served by an internal vLLM OpenAI-compatible `/v1` endpoint through `deployment.env`.
+
+Only set these variables when you use `AI_PROVIDER=openai-compatible`; Google Vertex, AWS Bedrock, and Azure continue to use their own provider-specific variables.
+
+```yaml
+deployment:
+  env:
+    AI_PROVIDER: openai-compatible
+    AI_MODEL: qwen3-14b-awq
+    AI_OPENAI_COMPATIBLE_BASE_URL: http://vllm:8000/v1
+    AI_OPENAI_COMPATIBLE_PROVIDER_NAME: vllm
+    AI_OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUTS: "1"
+    AI_OPENAI_COMPATIBLE_API_KEY:
+      valueFrom:
+        secretKeyRef:
+          name: formbricks-ai-secrets
+          key: AI_OPENAI_COMPATIBLE_API_KEY
+```
+
+Optional JSON fields such as `AI_OPENAI_COMPATIBLE_HEADERS_JSON` and `AI_OPENAI_COMPATIBLE_QUERY_PARAMS_JSON` can use the same `valueFrom.secretKeyRef` pattern. If you use External Secrets, render a dedicated Secret and reference it from `deployment.env`:
+
+```yaml
+externalSecret:
+  enabled: true
+  files:
+    ai-secrets:
+      data:
+        AI_OPENAI_COMPATIBLE_API_KEY:
+          remoteRef:
+            key: formbricks/qwen-vllm
+            property: apiKey
+```
+
 ## Values
 
 | Key                                                                | Type   | Default                                                                     | Description                                               |
@@ -132,8 +167,8 @@ Autoscaling is opt-in for Hub API, Hub worker, and the embeddings runtime. If yo
 | deployment.command                                                 | list   | `[]`                                                                        |                                                           |
 | deployment.containerSecurityContext.readOnlyRootFilesystem         | bool   | `true`                                                                      |                                                           |
 | deployment.containerSecurityContext.runAsNonRoot                   | bool   | `true`                                                                      |                                                           |
-| deployment.env                                                     | object | `{}`                                                                        |                                                           |
-| deployment.envFrom                                                 | string | `nil`                                                                       |                                                           |
+| deployment.env                                                     | object | `{}`                                                                        | App container environment variables. Supports scalar values and `valueFrom` maps such as `secretKeyRef`. |
+| deployment.envFrom                                                 | string | `nil`                                                                       | Additional app container environment sources from ConfigMaps or Secrets. |
 | deployment.image.digest                                            | string | `""`                                                                        | When set, takes precedence over tag.                      |
 | deployment.image.pullPolicy                                        | string | `"IfNotPresent"`                                                            |                                                           |
 | deployment.image.repository                                        | string | `"ghcr.io/formbricks/formbricks"`                                           |                                                           |
