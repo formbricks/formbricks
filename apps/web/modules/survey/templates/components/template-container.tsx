@@ -4,7 +4,9 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { Workspace } from "@formbricks/database/prisma-browser";
 import type { TTemplate } from "@formbricks/types/templates";
+import type { TUserLocale } from "@formbricks/types/user";
 import { customSurveyTemplate } from "@/app/lib/templates";
+import type { TAIUnavailableReason } from "@/modules/ee/analysis/charts/lib/ai-availability";
 import { TemplateList } from "@/modules/survey/components/template-list";
 import { MenuBar } from "@/modules/survey/templates/components/menu-bar";
 import { PreviewSurvey } from "@/modules/ui/components/preview-survey";
@@ -16,6 +18,9 @@ type TemplateContainerWithPreviewProps = {
   userId: string;
   isTemplatePage?: boolean;
   publicDomain: string;
+  language?: TUserLocale;
+  isAIAvailable?: boolean;
+  aiUnavailableReason?: TAIUnavailableReason;
 };
 
 export const TemplateContainerWithPreview = ({
@@ -23,6 +28,9 @@ export const TemplateContainerWithPreview = ({
   userId,
   isTemplatePage = true,
   publicDomain,
+  language = "en-US",
+  isAIAvailable = false,
+  aiUnavailableReason,
 }: TemplateContainerWithPreviewProps) => {
   const { t } = useTranslation();
   const initialTemplate = customSurveyTemplate(t);
@@ -57,6 +65,10 @@ export const TemplateContainerWithPreview = ({
             workspace={workspace}
             userId={userId}
             templateSearch={templateSearch ?? ""}
+            showAICreateCard={!isTemplatePage}
+            language={language}
+            isAIAvailable={isAIAvailable}
+            aiUnavailableReason={aiUnavailableReason}
             onTemplateClick={(template) => {
               setActiveElementId(template.preset.blocks[0]?.elements[0]?.id || "");
               setActiveTemplate(template);

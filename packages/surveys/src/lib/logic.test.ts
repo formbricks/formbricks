@@ -27,6 +27,7 @@ describe("Survey Logic", () => {
 
   const mockSurvey: TJsWorkspaceStateSurvey = {
     id: "survey1",
+    name: "Survey 1",
     questions: [], // Deprecated - using blocks instead
     blocks: [
       {

@@ -117,6 +117,7 @@ export function CreateChartView({
 
   const chartType = selectedChartType ?? (isEditing ? (initialChart?.type ?? DEFAULT_CHART_TYPE) : undefined);
   const hasSelectedDirectory = !!selectedDirectoryId;
+  const isAIQueryAvailable = isAIAvailable !== false;
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
@@ -140,6 +141,16 @@ export function CreateChartView({
           <div className="grid gap-4">
             {hasSelectedDirectory ? (
               <>
+                {!isEditing && !isAIQueryAvailable && (
+                  <AIQuerySection
+                    workspaceId={workspaceId}
+                    onChartGenerated={handleChartGenerated}
+                    feedbackDirectoryId={selectedDirectoryId}
+                    isAIAvailable={isAIAvailable}
+                    aiUnavailableReason={aiUnavailableReason}
+                  />
+                )}
+
                 <form
                   id={CREATE_CHART_FORM_ID}
                   onSubmit={(event) => {
@@ -173,7 +184,7 @@ export function CreateChartView({
                   {chartNameError && <p className="text-sm text-red-500">{chartNameError}</p>}
                 </form>
 
-                {!isEditing && (
+                {!isEditing && isAIQueryAvailable && (
                   <>
                     <AIQuerySection
                       workspaceId={workspaceId}

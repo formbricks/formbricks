@@ -31,7 +31,19 @@ describe("chart-utils", () => {
       expect(preparePieData([{ label: "A", count: null }], "count")).toBeNull();
     });
 
-    test("filters to numeric rows and returns processedData with colors", () => {
+    test("drops zero-value rows alongside non-numeric ones", () => {
+      const data = [
+        { sentiment: "positive", count: 10 },
+        { sentiment: "neutral", count: 0 },
+        { sentiment: "skip", count: "n/a" },
+      ];
+      const result = preparePieData(data, "count");
+      expect(result).not.toBeNull();
+      expect(result!.processedData).toHaveLength(1);
+      expect(result!.processedData[0].sentiment).toBe("positive");
+    });
+
+    test("colours slices from the mixed measure palette for distinguishability", () => {
       const data = [
         { sentiment: "positive", count: 10 },
         { sentiment: "negative", count: 5 },
@@ -41,8 +53,8 @@ describe("chart-utils", () => {
       expect(result).not.toBeNull();
       expect(result!.processedData).toHaveLength(2);
       expect(result!.processedData[0].count).toBe(10);
-      expect(result!.colors[0]).toBe(CHART_BRAND_DARK);
-      expect(result!.colors[1]).toBe("#00E6CA");
+      expect(result!.colors[0]).toBe(CHART_MEASURE_COLORS[0]);
+      expect(result!.colors[1]).toBe(CHART_MEASURE_COLORS[1]);
     });
   });
 
@@ -62,6 +74,15 @@ describe("chart-utils", () => {
 
     test("formats number as string when it parses as date, else passes through", () => {
       expect(formatXAxisTick(1.5)).toBe("1.5");
+    });
+
+    test("does not interpret bare year-shaped strings as dates", () => {
+      // parseISO("1000") is a valid year-only ISO date and would render as
+      // "Jan 1, 1000" — but a 4-digit numeric category label shouldn't be
+      // turned into a date.
+      expect(formatXAxisTick("1000")).toBe("1000");
+      expect(formatXAxisTick("2024")).toBe("2024");
+      expect(formatXAxisTick(1000)).toBe("1000");
     });
 
     test("returns empty for boolean", () => {
