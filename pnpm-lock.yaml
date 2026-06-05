@@ -10,7 +10,7 @@ overrides:
   '@tootallnate/once': 3.0.1
   '@xmldom/xmldom': 0.9.10
   ajv@6: 6.14.0
-  axios: 1.15.2
+  axios: 1.16.0
   effect: 3.20.0
   fast-uri: 3.1.2
   fast-xml-parser: 5.7.0
@@ -6849,8 +6849,8 @@ packages:
     resolution: {integrity: sha512-ilYanEU8vxxBexpJd8cWM4ElSQq4QctCLKih0TSfjIfCQTeyH/6zVrmIJfLPrKTKJRbiG+cfnZbQIjAlJmF1jQ==}
     engines: {node: '>=4'}
 
-  axios@1.15.2:
-    resolution: {integrity: sha512-wLrXxPtcrPTsNlJmKjkPnNPK2Ihe0hn0wGSaTEiHRPxwjvJwT3hKmXF4dpqxmPO9SoNb2FsYXj/xEo0gHN+D5A==}
+  axios@1.16.0:
+    resolution: {integrity: sha512-6hp5CwvTPlN2A31g5dxnwAX0orzM7pmCRDLnZSX772mv8WDqICwFjowHuPs04Mc8deIld1+ejhtaMn5vp6b+1w==}
 
   axobject-query@4.1.0:
     resolution: {integrity: sha512-qIj0G9wZbMGNLjLmg1PT6v2mE9AH2zlnADJD/2tC6E00hgmhUOfEB6greHPAfLRSufHqROIUTkw6E+M3lH0PTQ==}
@@ -13706,7 +13706,7 @@ snapshots:
       '@boxyhq/metrics': 0.2.12
       '@boxyhq/saml20': 1.13.2
       '@googleapis/admin': 30.3.0
-      axios: 1.15.2
+      axios: 1.16.0
       better-sqlite3: 12.8.0
       encoding: 0.1.13
       ipaddr.js: 2.3.0
@@ -19293,7 +19293,7 @@ snapshots:
 
   axe-core@4.11.0: {}
 
-  axios@1.15.2:
+  axios@1.16.0:
     dependencies:
       follow-redirects: 1.16.0
       form-data: 4.0.5
