@@ -1,8 +1,7 @@
 import { createVertex as createGoogleCloudProvider } from "@ai-sdk/google-vertex";
-import { createHash } from "node:crypto";
 import { AIConfigurationError } from "../errors";
 import type { AIProviderAdapter } from "../registry";
-import { normalizeValue } from "../shared";
+import { getCredentialFingerprint, normalizeValue } from "../shared";
 import type { AIEnvironment } from "../types";
 
 type GoogleProviderSettings = NonNullable<Parameters<typeof createGoogleCloudProvider>[0]>;
@@ -16,16 +15,6 @@ const GOOGLE_VERTEX_MULTI_REGION_HOSTS: Partial<Record<string, string>> = {
 
 const isCredentialsObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
-
-const getGoogleCredentialFingerprint = (value?: string | null): string | null => {
-  const normalizedValue = normalizeValue(value);
-
-  if (!normalizedValue) {
-    return null;
-  }
-
-  return createHash("sha256").update(normalizedValue).digest("hex");
-};
 
 const getGoogleVertexMultiRegionBaseURL = (project?: string, location?: string): string | undefined => {
   if (!project || !location) {
@@ -95,10 +84,8 @@ export const googleProviderAdapter: AIProviderAdapter = {
         normalizeValue(environment.AI_GOOGLE_CLOUD_PROJECT),
         normalizeValue(environment.AI_GOOGLE_CLOUD_LOCATION)
       ),
-      credentialsJsonFingerprint: getGoogleCredentialFingerprint(
-        environment.AI_GOOGLE_CLOUD_CREDENTIALS_JSON
-      ),
-      applicationCredentialsFingerprint: getGoogleCredentialFingerprint(
+      credentialsJsonFingerprint: getCredentialFingerprint(environment.AI_GOOGLE_CLOUD_CREDENTIALS_JSON),
+      applicationCredentialsFingerprint: getCredentialFingerprint(
         environment.AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS
       ),
     }),

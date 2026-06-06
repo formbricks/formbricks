@@ -13,6 +13,11 @@ metadata:
     app.kubernetes.io/component: hub-migration
     app.kubernetes.io/managed-by: {{ .Release.Service }}
   annotations:
+    # Argo CD sync hook: run after lower-wave managed resources such as
+    # ExternalSecrets have been applied and reported healthy.
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+    argocd.argoproj.io/sync-wave: "-1"
     helm.sh/hook: pre-upgrade
     helm.sh/hook-weight: "-5"
     helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded

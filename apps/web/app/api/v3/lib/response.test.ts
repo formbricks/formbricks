@@ -2,12 +2,15 @@ import { describe, expect, test } from "vitest";
 import {
   createdResponse,
   noContentResponse,
+  problemAIUnavailable,
+  problemBadGateway,
   problemBadRequest,
   problemForbidden,
   problemInternalError,
   problemNotFound,
   problemTooManyRequests,
   problemUnauthorized,
+  problemUnprocessableContent,
   successListResponse,
   successResponse,
 } from "./response";
@@ -41,6 +44,40 @@ describe("v3 problem responses", () => {
     const body = await res.json();
     expect(body.code).toBe("forbidden");
     expect(body.instance).toBe("/api/x");
+  });
+
+  test("problemAIUnavailable preserves AI error codes", async () => {
+    const res = problemAIUnavailable("r-ai", "AI is disabled", "ai_smart_tools_disabled", "/api/ai");
+    expect(res.status).toBe(403);
+    const body = await res.json();
+    expect(body.title).toBe("AI Unavailable");
+    expect(body.code).toBe("ai_smart_tools_disabled");
+    expect(body.instance).toBe("/api/ai");
+  });
+
+  test("problemAIUnavailable returns 503 for instance configuration gaps", async () => {
+    const res = problemAIUnavailable("r-ai", "AI is not configured", "ai_instance_not_configured");
+    expect(res.status).toBe(503);
+  });
+
+  test("problemUnprocessableContent includes validation details", async () => {
+    const res = problemUnprocessableContent("r-422", "Generated payload is invalid", {
+      invalid_params: [{ name: "blocks.0.elements", reason: "At least one element is required" }],
+      code: "ai_generated_payload_invalid",
+    });
+    expect(res.status).toBe(422);
+    const body = await res.json();
+    expect(body.code).toBe("ai_generated_payload_invalid");
+    expect(body.invalid_params).toEqual([
+      { name: "blocks.0.elements", reason: "At least one element is required" },
+    ]);
+  });
+
+  test("problemBadGateway", async () => {
+    const res = problemBadGateway("r-502", "Provider failed");
+    expect(res.status).toBe(502);
+    const body = await res.json();
+    expect(body.code).toBe("bad_gateway");
   });
 
   test("problemInternalError", async () => {
