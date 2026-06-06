@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { ensureOnboardingWorkspace } from "@/app/(app)/(onboarding)/lib/ensure-onboarding-workspace";
+import { getOnboardingWorkspaceContext } from "@/app/(app)/(onboarding)/lib/onboarding-workspace";
 import { redirectIfOnboardingComplete } from "@/app/(app)/(onboarding)/lib/redirect-if-onboarding-complete";
 import { CreateFirstSurvey } from "@/app/(app)/(onboarding)/organizations/[organizationId]/workspaces/new/survey/components/create-first-survey";
 import { getTranslate } from "@/lingodotdev/server";
@@ -23,7 +23,7 @@ const Page = async (props: SurveyOnboardingPageProps) => {
     return redirect(`/auth/login`);
   }
 
-  const { workspace, isAISmartToolsEnabled, isAISmartToolsEntitled } = await ensureOnboardingWorkspace({
+  const { workspace, isAISmartToolsEnabled, isAISmartToolsEntitled } = await getOnboardingWorkspaceContext({
     userId: session.user.id,
     organizationId: params.organizationId,
   });

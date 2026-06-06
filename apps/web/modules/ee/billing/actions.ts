@@ -12,6 +12,7 @@ import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { getWorkspace } from "@/lib/workspace/service";
+import { CLOUD_STRIPE_FEATURE_LOOKUP_KEYS } from "@/modules/billing/lib/stripe-catalog";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { createCustomerPortalSession } from "@/modules/ee/billing/api/lib/create-customer-portal-session";
 import { createSetupCheckoutSession } from "@/modules/ee/billing/api/lib/create-setup-checkout-session";
@@ -29,6 +30,32 @@ import {
 const ZManageSubscriptionAction = z.object({
   workspaceId: ZId,
 });
+
+const STRIPE_ENTITLEMENT_PROPAGATION_POLL_INTERVAL_MS = 500;
+const STRIPE_ENTITLEMENT_PROPAGATION_TIMEOUT_MS = 6_000;
+
+const wait = (milliseconds: number): Promise<void> =>
+  new Promise((resolve) => {
+    setTimeout(resolve, milliseconds);
+  });
+
+const waitForStripeAIEntitlementPropagation = async (organizationId: string): Promise<void> => {
+  const deadline = Date.now() + STRIPE_ENTITLEMENT_PROPAGATION_TIMEOUT_MS;
+
+  while (true) {
+    const billing = await syncOrganizationBillingFromStripe(organizationId);
+
+    if (billing?.stripe?.features?.includes(CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.AI_SMART_TOOLS)) {
+      return;
+    }
+
+    if (Date.now() >= deadline) {
+      return;
+    }
+
+    await wait(STRIPE_ENTITLEMENT_PROPAGATION_POLL_INTERVAL_MS);
+  }
+};
 
 export const manageSubscriptionAction = authenticatedActionClient
   .inputSchema(ZManageSubscriptionAction)
@@ -272,7 +299,7 @@ export const startProTrialAction = authenticatedActionClient
 
     await createProTrialSubscription(parsedInput.organizationId, customerId);
     await reconcileCloudStripeSubscriptionsForOrganization(parsedInput.organizationId);
-    await syncOrganizationBillingFromStripe(parsedInput.organizationId);
+    await waitForStripeAIEntitlementPropagation(parsedInput.organizationId);
 
     capturePostHogEvent(
       ctx.user.id,

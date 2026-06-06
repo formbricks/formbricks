@@ -1,21 +1,28 @@
 import { redirect } from "next/navigation";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { getSurveyCount } from "@/lib/survey/service";
-import { getOnboardingWorkspace } from "./ensure-onboarding-workspace";
-import {
-  getOnboardingSurveyRedirectPath,
-  redirectIfOnboardingComplete,
-} from "./redirect-if-onboarding-complete";
+import { getOnboardingWorkspace } from "./onboarding-workspace";
+import { getOnboardingRedirectPath, redirectIfOnboardingComplete } from "./redirect-if-onboarding-complete";
+
+const constantsMock = vi.hoisted(() => ({
+  isFormbricksCloud: false,
+}));
 
 vi.mock("next/navigation", () => ({
   redirect: vi.fn(),
+}));
+
+vi.mock("@/lib/constants", () => ({
+  get IS_FORMBRICKS_CLOUD() {
+    return constantsMock.isFormbricksCloud;
+  },
 }));
 
 vi.mock("@/lib/survey/service", () => ({
   getSurveyCount: vi.fn(),
 }));
 
-vi.mock("./ensure-onboarding-workspace", () => ({
+vi.mock("./onboarding-workspace", () => ({
   getOnboardingWorkspace: vi.fn(),
 }));
 
@@ -41,15 +48,16 @@ describe("redirectIfOnboardingComplete", () => {
   });
 });
 
-describe("getOnboardingSurveyRedirectPath", () => {
+describe("getOnboardingRedirectPath", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    constantsMock.isFormbricksCloud = false;
   });
 
   test("returns null when no onboarding workspace exists", async () => {
     vi.mocked(getOnboardingWorkspace).mockResolvedValue(undefined);
 
-    const result = await getOnboardingSurveyRedirectPath({
+    const result = await getOnboardingRedirectPath({
       userId: "user1",
       organizationId: "org1",
     });
@@ -70,12 +78,34 @@ describe("getOnboardingSurveyRedirectPath", () => {
     });
     vi.mocked(getSurveyCount).mockResolvedValue(0);
 
-    const result = await getOnboardingSurveyRedirectPath({
+    const result = await getOnboardingRedirectPath({
       userId: "user1",
       organizationId: "org1",
     });
 
     expect(result).toBe("/organizations/org1/workspaces/new/survey");
+    expect(getSurveyCount).toHaveBeenCalledWith("ws1");
+  });
+
+  test("returns plan onboarding path for cloud when workspace has no surveys", async () => {
+    constantsMock.isFormbricksCloud = true;
+    vi.mocked(getOnboardingWorkspace).mockResolvedValue({
+      id: "ws1",
+      createdAt: new Date("2024-01-01"),
+      updatedAt: new Date("2024-01-01"),
+      name: "My Workspace",
+      organizationId: "org1",
+      styling: {},
+      config: { channel: "link", industry: null },
+    });
+    vi.mocked(getSurveyCount).mockResolvedValue(0);
+
+    const result = await getOnboardingRedirectPath({
+      userId: "user1",
+      organizationId: "org1",
+    });
+
+    expect(result).toBe("/organizations/org1/workspaces/new/plan");
     expect(getSurveyCount).toHaveBeenCalledWith("ws1");
   });
 
@@ -91,7 +121,7 @@ describe("getOnboardingSurveyRedirectPath", () => {
     });
     vi.mocked(getSurveyCount).mockResolvedValue(2);
 
-    const result = await getOnboardingSurveyRedirectPath({
+    const result = await getOnboardingRedirectPath({
       userId: "user1",
       organizationId: "org1",
     });

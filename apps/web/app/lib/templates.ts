@@ -2134,10 +2134,10 @@ const nps = (t: TFunction): TTemplate => {
 
 const starRatingSurvey = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
-  return buildSurvey(
+  const template = buildSurvey(
     {
       id: "star-rating",
-      name: t("templates.star_rating_survey_name"),
+      name: t("workspace.xm-templates.five_star_rating"),
       role: "customerSuccess",
       industries: ["saas", "eCommerce", "other"],
       channels: ["app", "link", "website"],
@@ -2176,14 +2176,22 @@ const starRatingSurvey = (t: TFunction): TTemplate => {
     },
     t
   );
+
+  return {
+    ...template,
+    preset: {
+      ...template.preset,
+      name: t("templates.star_rating_survey_name"),
+    },
+  };
 };
 
 const customerSatisfactionScore = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
-  return buildSurvey(
+  const template = buildSurvey(
     {
       id: "csat",
-      name: t("templates.csat_survey_name"),
+      name: t("workspace.xm-templates.csat"),
       role: "customerSuccess",
       industries: ["saas", "eCommerce", "other"],
       channels: ["app", "link", "website"],
@@ -2220,6 +2228,14 @@ const customerSatisfactionScore = (t: TFunction): TTemplate => {
     },
     t
   );
+
+  return {
+    ...template,
+    preset: {
+      ...template.preset,
+      name: t("templates.csat_survey_name"),
+    },
+  };
 };
 
 const collectFeedback = (t: TFunction): TTemplate => {

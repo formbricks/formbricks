@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { ensureOnboardingWorkspace } from "@/app/(app)/(onboarding)/lib/ensure-onboarding-workspace";
+import { getOnboardingWorkspaceContext } from "@/app/(app)/(onboarding)/lib/onboarding-workspace";
 import { redirectIfOnboardingComplete } from "@/app/(app)/(onboarding)/lib/redirect-if-onboarding-complete";
 import { XMTemplateList } from "@/app/(app)/(onboarding)/organizations/[organizationId]/workspaces/new/templates/components/xm-template-list";
 import { getUser } from "@/lib/user/service";
@@ -24,7 +24,7 @@ const Page = async (props: TemplatesOnboardingPageProps) => {
     return redirect(`/auth/login`);
   }
 
-  const { workspace } = await ensureOnboardingWorkspace({
+  const { workspace } = await getOnboardingWorkspaceContext({
     userId: session.user.id,
     organizationId: params.organizationId,
   });

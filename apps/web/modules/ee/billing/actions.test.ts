@@ -89,7 +89,7 @@ describe("billing actions", () => {
     mocks.ensureStripeCustomerForOrganization.mockResolvedValue({ customerId: "cus_1" });
     mocks.createProTrialSubscription.mockResolvedValue(undefined);
     mocks.reconcileCloudStripeSubscriptionsForOrganization.mockResolvedValue(undefined);
-    mocks.syncOrganizationBillingFromStripe.mockResolvedValue(undefined);
+    mocks.syncOrganizationBillingFromStripe.mockResolvedValue({ stripe: { features: ["ai-smart-tools"] } });
   });
 
   test("startHobbyAction ensures a customer, reconciles hobby, and syncs billing", async () => {

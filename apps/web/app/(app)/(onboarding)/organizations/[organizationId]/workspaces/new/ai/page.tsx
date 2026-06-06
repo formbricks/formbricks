@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { ensureOnboardingWorkspace } from "@/app/(app)/(onboarding)/lib/ensure-onboarding-workspace";
+import { getOnboardingWorkspaceContext } from "@/app/(app)/(onboarding)/lib/onboarding-workspace";
 import { redirectIfOnboardingComplete } from "@/app/(app)/(onboarding)/lib/redirect-if-onboarding-complete";
 import { CreateSurveyWithAIOnboarding } from "@/app/(app)/(onboarding)/organizations/[organizationId]/workspaces/new/ai/components/create-survey-with-ai-onboarding";
 import { DEFAULT_LOCALE } from "@/lib/constants";
@@ -22,7 +22,7 @@ const Page = async (props: AIOnboardingPageProps) => {
     return redirect(`/auth/login`);
   }
 
-  const { workspace, isAISmartToolsEnabled, isAISmartToolsEntitled } = await ensureOnboardingWorkspace({
+  const { workspace, isAISmartToolsEnabled, isAISmartToolsEntitled } = await getOnboardingWorkspaceContext({
     userId: session.user.id,
     organizationId: params.organizationId,
   });

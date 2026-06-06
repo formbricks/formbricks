@@ -15,6 +15,16 @@ describe("templates", () => {
     ).toEqual([...XM_TEMPLATE_IDS]);
   });
 
+  test("does not show workspace placeholders in XM catalog names", () => {
+    const catalog = templates(mockT);
+    const xmTemplateIds = new Set<string>(XM_TEMPLATE_IDS);
+    const xmTemplateNames = catalog
+      .filter((template) => xmTemplateIds.has(template.id))
+      .map((template) => template.name);
+
+    expect(xmTemplateNames.every((name) => !name.includes("$[workspaceName]"))).toBe(true);
+  });
+
   test("keeps XM templates simple and free of branch logic", () => {
     const catalog = templates(mockT);
     const xmTemplateIds = new Set<string>(XM_TEMPLATE_IDS);

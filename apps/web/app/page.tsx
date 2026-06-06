@@ -1,9 +1,8 @@
 import type { Session } from "next-auth";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import { getOnboardingSurveyRedirectPath } from "@/app/(app)/(onboarding)/lib/redirect-if-onboarding-complete";
+import { getOnboardingRedirectPath } from "@/app/(app)/(onboarding)/lib/redirect-if-onboarding-complete";
 import ClientWorkspaceRedirect from "@/app/ClientWorkspaceRedirect";
-import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getIsFreshInstance } from "@/lib/instance/service";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
@@ -52,25 +51,18 @@ const Page = async () => {
 
   const { isManager, isOwner } = getAccessFlags(currentUserMembership?.role);
 
-  if (allWorkspaceIds.length === 0) {
-    if (isOwner || isManager) {
-      if (IS_FORMBRICKS_CLOUD) {
-        return redirect(`/organizations/${userOrganizations[0].id}/workspaces/new/plan`);
-      }
-      return redirect(`/organizations/${userOrganizations[0].id}/workspaces/new/survey`);
-    } else {
-      return redirect(`/organizations/${userOrganizations[0].id}/landing`);
-    }
+  if (allWorkspaceIds.length === 0 && !isOwner && !isManager) {
+    return redirect(`/organizations/${userOrganizations[0].id}/landing`);
   }
 
   if (isOwner || isManager) {
-    const onboardingSurveyRedirectPath = await getOnboardingSurveyRedirectPath({
+    const onboardingRedirectPath = await getOnboardingRedirectPath({
       userId: session.user.id,
       organizationId: userOrganizations[0].id,
     });
 
-    if (onboardingSurveyRedirectPath) {
-      return redirect(onboardingSurveyRedirectPath);
+    if (onboardingRedirectPath) {
+      return redirect(onboardingRedirectPath);
     }
   }
 
