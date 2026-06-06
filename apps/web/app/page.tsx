@@ -1,6 +1,7 @@
 import type { Session } from "next-auth";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
+import { getOnboardingSurveyRedirectPath } from "@/app/(app)/(onboarding)/lib/redirect-if-onboarding-complete";
 import ClientWorkspaceRedirect from "@/app/ClientWorkspaceRedirect";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getIsFreshInstance } from "@/lib/instance/service";
@@ -56,9 +57,20 @@ const Page = async () => {
       if (IS_FORMBRICKS_CLOUD) {
         return redirect(`/organizations/${userOrganizations[0].id}/workspaces/new/plan`);
       }
-      return redirect(`/organizations/${userOrganizations[0].id}/workspaces/new/mode`);
+      return redirect(`/organizations/${userOrganizations[0].id}/workspaces/new/survey`);
     } else {
       return redirect(`/organizations/${userOrganizations[0].id}/landing`);
+    }
+  }
+
+  if (isOwner || isManager) {
+    const onboardingSurveyRedirectPath = await getOnboardingSurveyRedirectPath({
+      userId: session.user.id,
+      organizationId: userOrganizations[0].id,
+    });
+
+    if (onboardingSurveyRedirectPath) {
+      return redirect(onboardingSurveyRedirectPath);
     }
   }
 

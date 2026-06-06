@@ -1,7 +1,6 @@
-import "@testing-library/jest-dom/vitest";
-import { cleanup } from "@testing-library/preact";
 import { TFunction } from "i18next";
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { describe, expect, test, vi } from "vitest";
+import { logger } from "@formbricks/logger";
 import { getXMSurveyDefault, getXMTemplates } from "./xm-templates";
 
 vi.mock("@formbricks/logger", () => ({
@@ -9,10 +8,6 @@ vi.mock("@formbricks/logger", () => ({
 }));
 
 describe("xm-templates", () => {
-  afterEach(() => {
-    cleanup();
-  });
-
   test("getXMSurveyDefault returns default survey template", () => {
     const tMock = vi.fn((key: string) => key) as unknown as TFunction;
     const result = getXMSurveyDefault(tMock);
@@ -41,15 +36,12 @@ describe("xm-templates", () => {
     expect(result[5].name).toBe("templates.enps_survey_name");
   });
 
-  test("getXMTemplates handles errors gracefully", async () => {
+  test("getXMTemplates handles errors gracefully", () => {
     const tMock = vi.fn(() => {
       throw new Error("Test error");
     }) as unknown as TFunction;
 
     const result = getXMTemplates(tMock);
-
-    // Dynamically import the mocked logger
-    const { logger } = await import("@formbricks/logger");
 
     expect(result).toEqual([]);
     expect(logger.error).toHaveBeenCalledWith(

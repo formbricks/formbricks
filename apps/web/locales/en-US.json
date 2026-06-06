@@ -599,31 +599,13 @@
     },
     "workspaces": {
       "new": {
-        "channel": {
-          "channel_select_subtitle": "Share a link or display your survey in apps or on websites.",
-          "channel_select_title": "What type of surveys do you need?",
-          "in_product_surveys": "In-product surveys",
-          "in_product_surveys_description": "Embedded in apps or websites.",
-          "link_and_email_surveys": "Link & email surveys",
-          "link_and_email_surveys_description": "Reach people anywhere online."
-        },
-        "mode": {
-          "formbricks_cx": "Formbricks CX",
-          "formbricks_cx_description": "Surveys and reports to understand what your customers need.",
-          "formbricks_surveys": "Formbricks Surveys",
-          "formbricks_surveys_description": "Multi-purpose survey platform for web, app and email surveys.",
-          "what_are_you_here_for": "What would you like to set up first?"
-        },
-        "settings": {
-          "brand_color": "Brand color",
-          "brand_color_description": "Match the main color of surveys with your brand.",
-          "create_new_team": "Create new team",
-          "team_description": "Who all can access this workspace?",
-          "workspace_creation_failed": "Workspace creation failed",
-          "workspace_name": "Workspace name",
-          "workspace_name_description": "What is your workspace called?",
-          "workspace_settings_subtitle": "When people recognize your brand, they are much more likely to start and complete responses.",
-          "workspace_settings_title": "Let respondents know it is you"
+        "survey": {
+          "create_with_ai_description": "Describe what you need and start from a generated survey.",
+          "start_from_scratch": "Start from scratch",
+          "start_from_scratch_description": "Create your own survey questions",
+          "title": "Create your first survey",
+          "use_template": "Use a template",
+          "use_template_description": "Pick from common surveys like NPS, CES or CSAT."
         }
       }
     }
@@ -1919,17 +1901,6 @@
       "workspace_id": "Your Workspace ID",
       "workspace_id_description": "This id uniquely identifies this Formbricks Workspace."
     },
-    "connect": {
-      "congrats": "Congrats!",
-      "connection_successful_message": "Well done! We are connected.",
-      "do_it_later": "I will do it later",
-      "finish_onboarding": "Finish Onboarding",
-      "headline": "Connect your app or website",
-      "import_formbricks_and_initialize_the_widget_in_your_component": "Import Formbricks and initialize the widget in your Component (e.g. App.tsx):",
-      "insert_this_code_into_the_head_tag_of_your_website": "Insert this code into the head tag of your website:",
-      "subtitle": "It takes less than 4 minutes.",
-      "waiting_for_your_signal": "Waiting for your signal…"
-    },
     "contacts": {
       "add_attribute": "Add Attribute",
       "attribute_created_successfully": "Attribute created successfully",
@@ -2795,8 +2766,8 @@
         "create": "Create",
         "create_with_ai": "Create with AI",
         "creating": "Creating...",
-        "dialog_description": "Describe the survey goal and audience. Formbricks will create a draft you can edit before publishing.",
-        "dialog_title": "Create survey with AI",
+        "dialog_description": "Formbricks will create a draft you can edit before publishing.",
+        "dialog_title": "Create your survey using AI",
         "enable_ai_in_settings": "Enable in settings",
         "generated_payload_invalid": "The survey draft could not be validated. Try adding more detail.",
         "link_survey": "Link Survey",
@@ -2815,7 +2786,7 @@
         "shortcut_hint": "⌘/Ctrl + Enter to create",
         "start_from_scratch": "Start from scratch",
         "survey_type_label": "Survey type",
-        "try_prompt": "Try an example",
+        "try_prompt": "See example prompt",
         "upgrade_plan": "Upgrade plan"
       },
       "all_set_time_to_create_first_survey": "You are all set! Time to create your first survey",
@@ -3689,7 +3660,7 @@
         "unknown_question_type": "Unknown Question Type",
         "use_personal_links": "Use personal links",
         "whats_next": "What is next?",
-        "your_survey_is_public": "Your survey is public",
+        "your_survey_is_public": "Your survey is live",
         "youre_not_plugged_in_yet": "You are not plugged in yet!"
       },
       "survey_deleted_successfully": "Survey deleted successfully",
@@ -3928,18 +3899,18 @@
     },
     "xm-templates": {
       "ces": "CES",
-      "ces_description": "Leverage every touchpoint to understand ease of customer interaction.",
+      "ces_description": "Customer Effort Score",
       "csat": "CSAT",
-      "csat_description": "Implement best practices to measure customer satisfaction.",
+      "csat_description": "Measure customer satisfaction",
       "enps": "eNPS",
-      "enps_description": "Universal feedback to understand employee engagement and satisfaction.",
+      "enps_description": "Employee Net Promoter Score",
       "five_star_rating": "5-Star Rating",
-      "five_star_rating_description": "Universal feedback solution to gauge overall satisfaction.",
-      "headline": "What kind of feedback would you like to get?",
+      "five_star_rating_description": "Overall satisfaction rating",
+      "headline": "What feedback would you like to gather?",
       "nps": "NPS",
-      "nps_description": "Implement proven best practices to understand WHY people buy.",
+      "nps_description": "Net Promoter Score",
       "smileys": "Smileys",
-      "smileys_description": "Use visual indicators to capture feedback across customer touchpoints."
+      "smileys_description": "Emoji-based satisfaction rating"
     }
   }
 }

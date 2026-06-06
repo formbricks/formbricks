@@ -73,8 +73,10 @@ export const SurveyEditorTabs = ({
     return tabs.filter((tab) => tab.id !== "styling");
   }, [isStylingTabVisible, t, hasLanguageErrors]);
 
-  // Hide settings tab in CX mode
-  let tabsToDisplay = isCxMode ? tabsComputed.filter((tab) => tab.id !== "settings") : tabsComputed;
+  const cxModeHiddenTabIds: TSurveyEditorTabs[] = ["settings", "language", "followUps"];
+  const tabsToDisplay = isCxMode
+    ? tabsComputed.filter((tab) => !cxModeHiddenTabIds.includes(tab.id))
+    : tabsComputed;
 
   return (
     <div className="fixed z-30 flex h-12 w-full items-center justify-center border-b bg-white md:w-2/3">

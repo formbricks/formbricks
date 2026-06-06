@@ -9,9 +9,9 @@ import { TSurveyCreateInput } from "@formbricks/types/surveys/types";
 import { TXMTemplate } from "@formbricks/types/templates";
 import { TUser } from "@formbricks/types/user";
 import { TWorkspace } from "@formbricks/types/workspace";
+import { replacePresetPlaceholders } from "@/app/(app)/(onboarding)/organizations/[organizationId]/workspaces/new/templates/lib/utils";
+import { getXMTemplates } from "@/app/(app)/(onboarding)/organizations/[organizationId]/workspaces/new/templates/lib/xm-templates";
 import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizations/components/OnboardingOptionsContainer";
-import { replacePresetPlaceholders } from "@/app/(app)/(onboarding)/workspaces/[workspaceId]/xm-templates/lib/utils";
-import { getXMTemplates } from "@/app/(app)/(onboarding)/workspaces/[workspaceId]/xm-templates/lib/xm-templates";
 import { getFormattedErrorMessage } from "@/lib/utils/helper";
 import { createSurveyAction } from "@/modules/survey/components/template-list/actions";
 
@@ -21,7 +21,7 @@ interface XMTemplateListProps {
   workspaceId: string;
 }
 
-export const XMTemplateList = ({ workspace, user, workspaceId }: XMTemplateListProps) => {
+export const XMTemplateList = ({ workspace, user, workspaceId }: Readonly<XMTemplateListProps>) => {
   const [activeTemplateId, setActiveTemplateId] = useState<number | null>(null);
   const { t } = useTranslation();
   const router = useRouter();
@@ -49,7 +49,7 @@ export const XMTemplateList = ({ workspace, user, workspaceId }: XMTemplateListP
     setActiveTemplateId(templateIdx);
     const template = getXMTemplates(t)[templateIdx];
     const newTemplate = replacePresetPlaceholders(template, workspace);
-    createSurvey(newTemplate);
+    void createSurvey(newTemplate);
   };
 
   const XMTemplateOptions = [

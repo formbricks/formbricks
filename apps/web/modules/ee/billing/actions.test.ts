@@ -72,6 +72,10 @@ vi.mock("@/modules/ee/billing/lib/stripe-client", () => ({
   },
 }));
 
+vi.mock("@/app/(app)/(onboarding)/lib/revalidate-onboarding-paths", () => ({
+  revalidateOnboardingWorkspacePaths: vi.fn(),
+}));
+
 describe("billing actions", () => {
   beforeEach(() => {
     vi.clearAllMocks();

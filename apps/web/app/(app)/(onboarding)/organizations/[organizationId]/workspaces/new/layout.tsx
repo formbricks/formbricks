@@ -1,6 +1,7 @@
 import { getServerSession } from "next-auth";
 import { notFound, redirect } from "next/navigation";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { refreshOnboardingBillingSnapshot } from "@/app/(app)/(onboarding)/lib/refresh-onboarding-billing";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getOrganization } from "@/lib/organization/service";
@@ -31,6 +32,8 @@ const OnboardingLayout = async (props: {
   if (!organization) {
     throw new ResourceNotFoundError(t("common.organization"), params.organizationId);
   }
+
+  await refreshOnboardingBillingSnapshot(organization.id);
 
   const [organizationWorkspacesLimit, organizationWorkspacesCount] = await Promise.all([
     getOrganizationWorkspacesLimit(organization.id),

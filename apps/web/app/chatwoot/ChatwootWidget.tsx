@@ -1,7 +1,9 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef } from "react";
 import { getIsActiveCustomerAction } from "./actions";
+import { isOnboardingPathname } from "./is-onboarding-pathname";
 
 interface ChatwootWidgetProps {
   chatwootBaseUrl: string;
@@ -12,6 +14,9 @@ interface ChatwootWidgetProps {
 }
 
 const CHATWOOT_SCRIPT_ID = "chatwoot-script";
+const CHATWOOT_ONBOARDING_HIDE_STYLE_ID = "chatwoot-onboarding-hide";
+const CHATWOOT_HIDE_SELECTORS =
+  "#chatwoot_live_chat_widget, .woot-widget-holder, .woot--bubble-holder, #cw-widget-holder";
 
 interface ChatwootInstance {
   setUser: (
@@ -32,6 +37,8 @@ export const ChatwootWidget = ({
   chatwootWebsiteToken,
   chatwootBaseUrl,
 }: ChatwootWidgetProps) => {
+  const pathname = usePathname();
+  const isOnboarding = isOnboardingPathname(pathname);
   const userSetRef = useRef(false);
   const customerStatusSetRef = useRef(false);
 
@@ -63,7 +70,23 @@ export const ChatwootWidget = ({
   }, [getChatwoot]);
 
   useEffect(() => {
-    if (!chatwootWebsiteToken) return;
+    const hideStyle = document.getElementById(CHATWOOT_ONBOARDING_HIDE_STYLE_ID);
+
+    if (isOnboarding) {
+      if (!hideStyle) {
+        const style = document.createElement("style");
+        style.id = CHATWOOT_ONBOARDING_HIDE_STYLE_ID;
+        style.textContent = `${CHATWOOT_HIDE_SELECTORS} { display: none !important; visibility: hidden !important; }`;
+        document.head.appendChild(style);
+      }
+      return;
+    }
+
+    hideStyle?.remove();
+  }, [isOnboarding]);
+
+  useEffect(() => {
+    if (!chatwootWebsiteToken || isOnboarding) return;
 
     const existingScript = document.getElementById(CHATWOOT_SCRIPT_ID);
     if (existingScript) return;
@@ -115,6 +138,7 @@ export const ChatwootWidget = ({
   }, [
     chatwootBaseUrl,
     chatwootWebsiteToken,
+    isOnboarding,
     userId,
     userEmail,
     userName,

@@ -1,12 +1,9 @@
-import "@testing-library/jest-dom/vitest";
-import { cleanup } from "@testing-library/react";
-import { afterEach, describe, expect, test } from "vitest";
+import { describe, expect, test } from "vitest";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import { TXMTemplate } from "@formbricks/types/templates";
 import { TWorkspace } from "@formbricks/types/workspace";
 import { replacePresetPlaceholders } from "./utils";
 
-// Mock data
 const mockWorkspace: TWorkspace = {
   id: "workspace1",
   createdAt: new Date(),
@@ -31,6 +28,7 @@ const mockWorkspace: TWorkspace = {
   languages: [],
   logo: null,
 };
+
 const mockTemplate: TXMTemplate = {
   name: "$[workspaceName] Survey",
   blocks: [
@@ -66,10 +64,6 @@ const mockTemplate: TXMTemplate = {
 };
 
 describe("replacePresetPlaceholders", () => {
-  afterEach(() => {
-    cleanup();
-  });
-
   test("replaces workspaceName placeholder in template name", () => {
     const result = replacePresetPlaceholders(mockTemplate, mockWorkspace);
     expect(result.name).toBe("Test Workspace Survey");
