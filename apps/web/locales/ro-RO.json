@@ -318,7 +318,6 @@
     "move_up": "Mută sus",
     "my_product": "produsul meu",
     "name": "Nume",
-    "new": "Nou",
     "new_version_available": "Formbricks {version} este disponibil. Actualizați acum!",
     "next": "Următorul",
     "no": "Nu",
@@ -439,7 +438,6 @@
     "something_went_wrong_please_try_again": "Ceva nu a mers bine. Vă rugăm să încercați din nou.",
     "sort_by": "Sortare după",
     "status": "Stare",
-    "step_by_step_manual": "Manual pas cu pas",
     "storage_not_configured": "Stocarea fișierelor neconfigurată, upload-urile vor eșua probabil",
     "string": "Text",
     "styling": "Stilizare",
@@ -599,31 +597,13 @@
     },
     "workspaces": {
       "new": {
-        "channel": {
-          "channel_select_subtitle": "Partajați un link sau afișați chestionarul în aplicații sau pe site-uri web.",
-          "channel_select_title": "Ce tip de chestionare aveți nevoie?",
-          "in_product_surveys": "Chestionare în produs",
-          "in_product_surveys_description": "Încorporate în aplicații sau pe site-uri web.",
-          "link_and_email_surveys": "Chestionare prin link și email",
-          "link_and_email_surveys_description": "Ajungeți la oameni oriunde online."
-        },
-        "mode": {
-          "formbricks_cx": "Formbricks CX",
-          "formbricks_cx_description": "Sondaje și rapoarte pentru a înțelege ce au nevoie clienții tăi.",
-          "formbricks_surveys": "Chestionare Formbricks",
-          "formbricks_surveys_description": "Platformă de sondaje multi-scop pentru sondaje web, aplicații și email.",
-          "what_are_you_here_for": "Ce ai dori să configurezi mai întâi?"
-        },
-        "settings": {
-          "brand_color": "Culoarea brandului",
-          "brand_color_description": "Potrivește culoarea principală a chestionarelor cu brandul tău.",
-          "create_new_team": "Creează echipă nouă",
-          "team_description": "Cine poate accesa acest spațiu de lucru?",
-          "workspace_creation_failed": "Crearea spațiului de lucru a eșuat",
-          "workspace_name": "Numele workspace-ului",
-          "workspace_name_description": "Cum se numește workspace-ul tău?",
-          "workspace_settings_subtitle": "Când oamenii recunosc brandul tău, sunt mult mai predispuși să înceapă și să finalizeze răspunsurile.",
-          "workspace_settings_title": "Anunță respondenții că ești tu"
+        "survey": {
+          "create_with_ai_description": "Descrie ce ai nevoie și pornește de la un chestionar generat automat.",
+          "start_from_scratch": "Pornește de la zero",
+          "start_from_scratch_description": "Creează propriile întrebări pentru chestionar",
+          "title": "Creează primul tău chestionar",
+          "use_template": "Folosește un șablon",
+          "use_template_description": "Alege din chestionare comune precum NPS, CES sau CSAT."
         }
       }
     }
@@ -1919,17 +1899,6 @@
       "workspace_id": "ID-ul spațiului tău de lucru",
       "workspace_id_description": "Acest ID identifică în mod unic acest Workspace Formbricks."
     },
-    "connect": {
-      "congrats": "Felicitări!",
-      "connection_successful_message": "Bravo! Suntem conectați.",
-      "do_it_later": "Am să o fac mai târziu",
-      "finish_onboarding": "Încheie înregistrarea",
-      "headline": "Conectați aplicația sau site-ul dvs.",
-      "import_formbricks_and_initialize_the_widget_in_your_component": "Importați Formbricks și inițializați widgetul în componenta dumneavoastră (de exemplu, App.tsx):",
-      "insert_this_code_into_the_head_tag_of_your_website": "Introduceți acest cod în eticheta head a site-ului dvs.:",
-      "subtitle": "Durează mai puțin de 4 minute.",
-      "waiting_for_your_signal": "Așteptăm semnalul dumneavoastră..."
-    },
     "contacts": {
       "add_attribute": "Adaugă atribut",
       "attribute_created_successfully": "Atribut creat cu succes",
@@ -2795,8 +2764,8 @@
         "create": "Creează",
         "create_with_ai": "Creează cu AI",
         "creating": "Se creează...",
-        "dialog_description": "Descrie obiectivul chestionarului și publicul țintă. Formbricks va crea o ciornă pe care o poți edita înainte de publicare.",
-        "dialog_title": "Creează chestionar cu AI",
+        "dialog_description": "Formbricks va crea o schiță pe care o poți edita înainte de publicare.",
+        "dialog_title": "Creează chestionarul folosind AI",
         "enable_ai_in_settings": "Activează în setări",
         "generated_payload_invalid": "Schița chestionarului nu a putut fi validată. Încearcă să adaugi mai multe detalii.",
         "link_survey": "Chestionar prin Link",
@@ -2815,7 +2784,7 @@
         "shortcut_hint": "⌘/Ctrl + Enter pentru a crea",
         "start_from_scratch": "Începe de la zero",
         "survey_type_label": "Tip de sondaj",
-        "try_prompt": "Încearcă un exemplu",
+        "try_prompt": "Vezi exemplu de solicitare",
         "upgrade_plan": "Actualizează planul"
       },
       "all_set_time_to_create_first_survey": "Ești gata! Este timpul să creezi primul tău chestionar",
@@ -3689,7 +3658,7 @@
         "unknown_question_type": "Tip de întrebare necunoscut",
         "use_personal_links": "Folosește linkuri personale",
         "whats_next": "Ce urmează?",
-        "your_survey_is_public": "Sondajul tău este public",
+        "your_survey_is_public": "Chestionarul tău este activ",
         "youre_not_plugged_in_yet": "Nu sunteţi încă conectat!"
       },
       "survey_deleted_successfully": "\"Sondaj șters cu succes!\"",
@@ -3928,18 +3897,18 @@
     },
     "xm-templates": {
       "ces": "CES",
-      "ces_description": "Valorificați fiecare punct de contact pentru a înțelege ușurința interacțiunilor cu clienții.",
+      "ces_description": "Scorul Efortului Clientului",
       "csat": "CSAT",
-      "csat_description": "Implementați cele mai bune practici pentru a măsura satisfacția clienților.",
+      "csat_description": "Măsoară satisfacția clienților",
       "enps": "eNPS",
-      "enps_description": "Feedback universal pentru a înțelege angajamentul și satisfacția angajaților.",
+      "enps_description": "Scorul Net Promoter al Angajaților",
       "five_star_rating": "Evaluare cu 5 stele",
-      "five_star_rating_description": "Soluție universală de feedback pentru a evalua satisfacția generală.",
-      "headline": "Ce fel de feedback doriți să primiți?",
+      "five_star_rating_description": "Evaluare generală a satisfacției",
+      "headline": "Ce feedback ai vrea să aduni?",
       "nps": "NPS",
-      "nps_description": "Implementați practici dovedite pentru a înțelege DE CE oamenii cumpără.",
+      "nps_description": "Scorul Net Promoter",
       "smileys": "Smileys",
-      "smileys_description": "Folosiți indicatori vizuali pentru a captura feedback-ul la toate punctele de contact cu clienții."
+      "smileys_description": "Evaluare a satisfacției pe bază de emoji-uri"
     }
   }
 }

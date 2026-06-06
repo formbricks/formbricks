@@ -318,7 +318,6 @@
     "move_up": "Yukarı taşı",
     "my_product": "Ürünüm",
     "name": "Ad",
-    "new": "Yeni",
     "new_version_available": "Formbricks {version} burada. Şimdi yükseltin!",
     "next": "Sonraki",
     "no": "Hayır",
@@ -439,7 +438,6 @@
     "something_went_wrong_please_try_again": "Bir sorun oluştu. Lütfen tekrar deneyin.",
     "sort_by": "Sıralama",
     "status": "Durum",
-    "step_by_step_manual": "Adım adım kılavuz",
     "storage_not_configured": "Dosya depolama yapılandırılmadı, yüklemeler muhtemelen başarısız olacak",
     "string": "Metin",
     "styling": "Stil",
@@ -599,31 +597,13 @@
     },
     "workspaces": {
       "new": {
-        "channel": {
-          "channel_select_subtitle": "Bir bağlantı paylaşın veya survey'inizi uygulamalarda ya da web sitelerinde görüntüleyin.",
-          "channel_select_title": "Ne tür survey'lere ihtiyacınız var?",
-          "in_product_surveys": "Ürün içi survey'ler",
-          "in_product_surveys_description": "Uygulamalara veya web sitelerine gömülü.",
-          "link_and_email_surveys": "Bağlantı ve email survey'leri",
-          "link_and_email_surveys_description": "Çevrimiçi her yerde insanlara ulaşın."
-        },
-        "mode": {
-          "formbricks_cx": "Formbricks CX",
-          "formbricks_cx_description": "Müşterilerinizin neye ihtiyaç duyduğunu anlamak için anketler ve raporlar.",
-          "formbricks_surveys": "Formbricks Surveys",
-          "formbricks_surveys_description": "Web, uygulama ve e-posta anketleri için çok amaçlı anket platformu.",
-          "what_are_you_here_for": "Önce neyi kurmak istersin?"
-        },
-        "settings": {
-          "brand_color": "Marka rengi",
-          "brand_color_description": "Survey'lerin ana rengini markanızla eşleştirin.",
-          "create_new_team": "Yeni takım oluştur",
-          "team_description": "Bu çalışma alanına kimler erişebilir?",
-          "workspace_creation_failed": "Çalışma alanı oluşturma başarısız oldu",
-          "workspace_name": "Ürün adı",
-          "workspace_name_description": "Ürününüzün adı ne?",
-          "workspace_settings_subtitle": "İnsanlar markanızı tanıdığında, yanıt vermeye başlama ve tamamlama olasılıkları çok daha yüksektir.",
-          "workspace_settings_title": "Yanıtlayanların sizi tanımasını sağlayın"
+        "survey": {
+          "create_with_ai_description": "Neye ihtiyacın olduğunu açıkla ve oluşturulan bir anketle başla.",
+          "start_from_scratch": "Sıfırdan başla",
+          "start_from_scratch_description": "Kendi anket sorularını oluştur",
+          "title": "İlk anketini oluştur",
+          "use_template": "Şablon kullan",
+          "use_template_description": "NPS, CES veya CSAT gibi yaygın anketler arasından seç."
         }
       }
     }
@@ -1919,17 +1899,6 @@
       "workspace_id": "Çalışma Alanı Kimliğiniz",
       "workspace_id_description": "Bu kimlik, bu Formbricks Çalışma Alanını benzersiz şekilde tanımlar."
     },
-    "connect": {
-      "congrats": "Tebrikler!",
-      "connection_successful_message": "Harika! Bağlantı kuruldu.",
-      "do_it_later": "Daha sonra yaparım",
-      "finish_onboarding": "Tanıtımı Tamamla",
-      "headline": "Uygulamanızı veya web sitenizi bağlayın",
-      "import_formbricks_and_initialize_the_widget_in_your_component": "Formbricks'i içe aktarın ve widget'ı bileşeninizde başlatın (örn. App.tsx):",
-      "insert_this_code_into_the_head_tag_of_your_website": "Bu kodu web sitenizin head etiketine ekleyin:",
-      "subtitle": "4 dakikadan kısa sürer.",
-      "waiting_for_your_signal": "Sinyaliniz bekleniyor…"
-    },
     "contacts": {
       "add_attribute": "Özellik Ekle",
       "attribute_created_successfully": "Özellik başarıyla oluşturuldu",
@@ -2795,8 +2764,8 @@
         "create": "Oluştur",
         "create_with_ai": "AI ile Oluştur",
         "creating": "Oluşturuluyor...",
-        "dialog_description": "Anket amacını ve hedef kitlesini anlat. Formbricks, yayınlamadan önce düzenleyebileceğin bir taslak oluşturacak.",
-        "dialog_title": "AI ile anket oluştur",
+        "dialog_description": "Formbricks yayınlamadan önce düzenleyebileceğin bir taslak oluşturacak.",
+        "dialog_title": "Yapay zeka kullanarak anketini oluştur",
         "enable_ai_in_settings": "Ayarlardan etkinleştir",
         "generated_payload_invalid": "Anket taslağı doğrulanamadı. Daha fazla detay eklemeyi dene.",
         "link_survey": "Link Anketi",
@@ -2815,7 +2784,7 @@
         "shortcut_hint": "Oluşturmak için ⌘/Ctrl + Enter",
         "start_from_scratch": "Sıfırdan başla",
         "survey_type_label": "Anket türü",
-        "try_prompt": "Bir örnek deneyin",
+        "try_prompt": "Örnek komutu gör",
         "upgrade_plan": "Planı yükselt"
       },
       "all_set_time_to_create_first_survey": "Her şey hazır! İlk anketini oluşturma zamanı",
@@ -3689,7 +3658,7 @@
         "unknown_question_type": "Bilinmeyen Soru Türü",
         "use_personal_links": "Kişisel bağlantıları kullan",
         "whats_next": "Sırada ne var?",
-        "your_survey_is_public": "Anketin herkese açık",
+        "your_survey_is_public": "Anketin yayında",
         "youre_not_plugged_in_yet": "Henüz bağlantı kurmadın!"
       },
       "survey_deleted_successfully": "Anket başarıyla silindi",
@@ -3928,18 +3897,18 @@
     },
     "xm-templates": {
       "ces": "CES",
-      "ces_description": "Müşteri etkileşiminin kolaylığını anlamak için her temas noktasından yararlanın.",
+      "ces_description": "Müşteri Çaba Skoru",
       "csat": "CSAT",
-      "csat_description": "Müşteri memnuniyetini ölçmek için en iyi uygulamaları hayata geçirin.",
+      "csat_description": "Müşteri memnuniyetini ölç",
       "enps": "eNPS",
-      "enps_description": "Çalışan bağlılığını ve memnuniyetini anlamak için evrensel geri bildirim.",
+      "enps_description": "Çalışan Net Tavsiye Skoru",
       "five_star_rating": "5 Yıldızlı Değerlendirme",
-      "five_star_rating_description": "Genel memnuniyeti ölçmek için evrensel geri bildirim çözümü.",
-      "headline": "Ne tür bir geri bildirim almak istersin?",
+      "five_star_rating_description": "Genel memnuniyet değerlendirmesi",
+      "headline": "Hangi geri bildirimleri toplamak istersin?",
       "nps": "NPS",
-      "nps_description": "İnsanların NEDEN satın aldığını anlamak için kanıtlanmış en iyi uygulamaları hayata geçirin.",
+      "nps_description": "Net Tavsiye Skoru",
       "smileys": "Gülen Yüzler",
-      "smileys_description": "Müşteri temas noktalarında geri bildirim toplamak için görsel göstergeler kullan."
+      "smileys_description": "Emoji tabanlı memnuniyet değerlendirmesi"
     }
   }
 }

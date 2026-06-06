@@ -318,7 +318,6 @@
     "move_up": "上移",
     "my_product": "我的产品",
     "name": "名称",
-    "new": "新建",
     "new_version_available": "Formbricks {version} 在 这里。立即 升级！",
     "next": "下一步",
     "no": "否",
@@ -439,7 +438,6 @@
     "something_went_wrong_please_try_again": "出错了 。请 尝试 再次 操作 。",
     "sort_by": "排序 依据",
     "status": "状态",
-    "step_by_step_manual": "分步 手册",
     "storage_not_configured": "文件存储 未设置，上传 可能 失败",
     "string": "文本",
     "styling": "样式",
@@ -599,31 +597,13 @@
     },
     "workspaces": {
       "new": {
-        "channel": {
-          "channel_select_subtitle": "分享链接，或在应用或网站中展示你的问卷。",
-          "channel_select_title": "你需要哪种类型的问卷？",
-          "in_product_surveys": "产品内问卷",
-          "in_product_surveys_description": "嵌入在应用或网站中。",
-          "link_and_email_surveys": "链接与邮件问卷",
-          "link_and_email_surveys_description": "在任何线上渠道触达用户。"
-        },
-        "mode": {
-          "formbricks_cx": "Formbricks CX",
-          "formbricks_cx_description": "通过调查和报告了解客户需求。",
-          "formbricks_surveys": "Formbricks Surveys",
-          "formbricks_surveys_description": "适用于网页、应用和邮件调查的多功能调查平台。",
-          "what_are_you_here_for": "你想先设置什么？"
-        },
-        "settings": {
-          "brand_color": "品牌颜色",
-          "brand_color_description": "让问卷主色调与你的品牌保持一致。",
-          "create_new_team": "创建新团队",
-          "team_description": "谁可以访问此工作区？",
-          "workspace_creation_failed": "工作区创建失败",
-          "workspace_name": "工作区名称",
-          "workspace_name_description": "您的工作区叫什么名字?",
-          "workspace_settings_subtitle": "当人们认出你的品牌时，更有可能开始并完成问卷。",
-          "workspace_settings_title": "让答卷者知道是你"
+        "survey": {
+          "create_with_ai_description": "描述你的需求，从生成的调查问卷开始。",
+          "start_from_scratch": "从头开始",
+          "start_from_scratch_description": "创建你自己的调查问题",
+          "title": "创建你的第一份调查问卷",
+          "use_template": "使用模板",
+          "use_template_description": "从常用调查问卷中选择，如 NPS、CES 或 CSAT。"
         }
       }
     }
@@ -1919,17 +1899,6 @@
       "workspace_id": "您的工作区 ID",
       "workspace_id_description": "此 ID 唯一标识这个 Formbricks 工作区。"
     },
-    "connect": {
-      "congrats": "恭喜!",
-      "connection_successful_message": "做得好 ！我们 已经 连接。",
-      "do_it_later": "稍后 再说",
-      "finish_onboarding": "完成 入职培训",
-      "headline": "连接 您的 应用 或 网站",
-      "import_formbricks_and_initialize_the_widget_in_your_component": "在你的组件 (例如 App.tsx) 中 导入 Formbricks 并初始化 小组件 :",
-      "insert_this_code_into_the_head_tag_of_your_website": "插入 此代码 到 您 网站 的 head 标签 中：",
-      "subtitle": "不到 4 分钟",
-      "waiting_for_your_signal": "等待 您的 信号..."
-    },
     "contacts": {
       "add_attribute": "添加属性",
       "attribute_created_successfully": "属性创建成功",
@@ -2795,8 +2764,8 @@
         "create": "创建",
         "create_with_ai": "使用 AI 创建",
         "creating": "正在创建...",
-        "dialog_description": "描述问卷目标和受众。Formbricks 将创建草稿,你可以在发布前进行编辑。",
-        "dialog_title": "使用 AI 创建问卷",
+        "dialog_description": "Formbricks 将创建一份草稿，你可以在发布前进行编辑。",
+        "dialog_title": "使用 AI 创建你的调查问卷",
         "enable_ai_in_settings": "在设置中启用",
         "generated_payload_invalid": "问卷草稿无法验证。请尝试添加更多详细信息。",
         "link_survey": "链接问卷",
@@ -2815,7 +2784,7 @@
         "shortcut_hint": "⌘/Ctrl + Enter 创建",
         "start_from_scratch": "从头开始",
         "survey_type_label": "调查类型",
-        "try_prompt": "试试示例",
+        "try_prompt": "查看示例提示",
         "upgrade_plan": "升级套餐"
       },
       "all_set_time_to_create_first_survey": "一切准备就绪！是时候创建您的第一个调查了",
@@ -3689,7 +3658,7 @@
         "unknown_question_type": "未知 问题 类型",
         "use_personal_links": "使用 个人 链接",
         "whats_next": "接下来 是 什么?",
-        "your_survey_is_public": "您的 调查 是 公共 的",
+        "your_survey_is_public": "你的调查问卷已上线",
         "youre_not_plugged_in_yet": "您 还 没 有 连 接！"
       },
       "survey_deleted_successfully": "调查 删除 成功",
@@ -3928,18 +3897,18 @@
     },
     "xm-templates": {
       "ces": "客户努力评分",
-      "ces_description": "利用 每个 接触点 来 了解 客户 互动 的 轻松 程度",
+      "ces_description": "客户费力度分数",
       "csat": "CSAT",
-      "csat_description": "实施 最佳 实践 来 衡量 客户 满意度",
+      "csat_description": "衡量客户满意度",
       "enps": "员工净推荐值",
-      "enps_description": "通用反馈以了解员工参与度和满意度",
+      "enps_description": "员工净推荐值",
       "five_star_rating": "五 星 评分",
-      "five_star_rating_description": "通用 反馈 解决方案 来 衡量 总体 满意度",
-      "headline": "您 想 获得 什么 类型 的 反馈？",
+      "five_star_rating_description": "整体满意度评分",
+      "headline": "你想收集什么样的反馈？",
       "nps": "净推荐值",
-      "nps_description": "实施 已验证 的 最佳 实践 来 了解 人们 购买 的 原因",
+      "nps_description": "净推荐值",
       "smileys": "笑脸",
-      "smileys_description": "使用 视觉 指标 来 捕捉 客户 接触点 的 反馈"
+      "smileys_description": "基于表情符号的满意度评分"
     }
   }
 }

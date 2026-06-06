@@ -318,7 +318,6 @@
     "move_up": "Переместить вверх",
     "my_product": "мой продукт",
     "name": "Имя",
-    "new": "Новый",
     "new_version_available": "Formbricks {version} уже здесь. Обновитесь сейчас!",
     "next": "Далее",
     "no": "Нет",
@@ -439,7 +438,6 @@
     "something_went_wrong_please_try_again": "Что-то пошло не так. Пожалуйста, попробуйте ещё раз.",
     "sort_by": "Сортировать по",
     "status": "Статус",
-    "step_by_step_manual": "Пошаговая инструкция",
     "storage_not_configured": "Хранилище файлов не настроено, загрузка, скорее всего, не удастся",
     "string": "Текст",
     "styling": "Стилизация",
@@ -599,31 +597,13 @@
     },
     "workspaces": {
       "new": {
-        "channel": {
-          "channel_select_subtitle": "Поделитесь ссылкой или разместите опрос в приложениях или на сайтах.",
-          "channel_select_title": "Какие опросы вам нужны?",
-          "in_product_surveys": "Встроенные опросы",
-          "in_product_surveys_description": "Встраиваются в приложения или на сайты.",
-          "link_and_email_surveys": "Опросы по ссылке и email",
-          "link_and_email_surveys_description": "Достигайте людей в любом месте онлайн."
-        },
-        "mode": {
-          "formbricks_cx": "Formbricks CX",
-          "formbricks_cx_description": "Опросы и отчёты для понимания потребностей ваших клиентов.",
-          "formbricks_surveys": "Formbricks Surveys",
-          "formbricks_surveys_description": "Универсальная платформа для опросов в вебе, приложениях и email.",
-          "what_are_you_here_for": "Что ты хочешь настроить в первую очередь?"
-        },
-        "settings": {
-          "brand_color": "Фирменный цвет",
-          "brand_color_description": "Сделайте основной цвет опросов соответствующим вашему бренду.",
-          "create_new_team": "Создать новую команду",
-          "team_description": "Кто может получить доступ к этому рабочему пространству?",
-          "workspace_creation_failed": "Не удалось создать рабочее пространство",
-          "workspace_name": "Название рабочего пространства",
-          "workspace_name_description": "Как называется ваше рабочее пространство?",
-          "workspace_settings_subtitle": "Когда люди узнают ваш бренд, они гораздо чаще начинают и завершают прохождение опроса.",
-          "workspace_settings_title": "Дайте респондентам понять, что это вы"
+        "survey": {
+          "create_with_ai_description": "Опишите, что вам нужно, и начните с готового опроса.",
+          "start_from_scratch": "Начать с нуля",
+          "start_from_scratch_description": "Создайте собственные вопросы для опроса",
+          "title": "Создайте свой первый опрос",
+          "use_template": "Использовать шаблон",
+          "use_template_description": "Выберите из популярных опросов, таких как NPS, CES или CSAT."
         }
       }
     }
@@ -1919,17 +1899,6 @@
       "workspace_id": "ID вашего рабочего пространства",
       "workspace_id_description": "Этот ID уникально идентифицирует данное рабочее пространство Formbricks."
     },
-    "connect": {
-      "congrats": "Поздравляем!",
-      "connection_successful_message": "Отлично! Мы подключены.",
-      "do_it_later": "Сделаю позже",
-      "finish_onboarding": "Завершить онбординг",
-      "headline": "Подключите ваше приложение или сайт",
-      "import_formbricks_and_initialize_the_widget_in_your_component": "Импортируйте Formbricks и инициализируйте виджет в вашем компоненте (например, App.tsx):",
-      "insert_this_code_into_the_head_tag_of_your_website": "Вставьте этот код в тег head вашего сайта:",
-      "subtitle": "Это займет меньше 4 минут.",
-      "waiting_for_your_signal": "Ожидание вашего сигнала..."
-    },
     "contacts": {
       "add_attribute": "Добавить атрибут",
       "attribute_created_successfully": "Атрибут успешно создан",
@@ -2795,8 +2764,8 @@
         "create": "Создать",
         "create_with_ai": "Создать с помощью ИИ",
         "creating": "Создаём...",
-        "dialog_description": "Опиши цель опроса и аудиторию. Formbricks создаст черновик, который ты сможешь отредактировать перед публикацией.",
-        "dialog_title": "Создать опрос с помощью ИИ",
+        "dialog_description": "Formbricks создаст черновик, который вы сможете отредактировать перед публикацией.",
+        "dialog_title": "Создайте свой опрос с помощью ИИ",
         "enable_ai_in_settings": "Включи в настройках",
         "generated_payload_invalid": "Черновик опроса не удалось проверить. Попробуй добавить больше деталей.",
         "link_survey": "Опрос по ссылке",
@@ -2815,7 +2784,7 @@
         "shortcut_hint": "⌘/Ctrl + Enter для создания",
         "start_from_scratch": "Начать с нуля",
         "survey_type_label": "Тип опроса",
-        "try_prompt": "Попробуй пример",
+        "try_prompt": "Посмотреть пример запроса",
         "upgrade_plan": "Обновить план"
       },
       "all_set_time_to_create_first_survey": "Всё готово! Пора создать первый опрос",
@@ -3689,7 +3658,7 @@
         "unknown_question_type": "Неизвестный тип вопроса",
         "use_personal_links": "Использовать персональные ссылки",
         "whats_next": "Что дальше?",
-        "your_survey_is_public": "Ваш опрос общедоступен",
+        "your_survey_is_public": "Ваш опрос запущен",
         "youre_not_plugged_in_yet": "Вы ещё не подключены!"
       },
       "survey_deleted_successfully": "Опрос успешно удалён!",
@@ -3928,18 +3897,18 @@
     },
     "xm-templates": {
       "ces": "CES",
-      "ces_description": "Используйте каждый контакт с клиентом, чтобы понять, насколько легко с вами взаимодействовать.",
+      "ces_description": "Индекс усилий клиента",
       "csat": "CSAT",
-      "csat_description": "Внедряйте лучшие практики для измерения удовлетворённости клиентов.",
+      "csat_description": "Измерение удовлетворенности клиентов",
       "enps": "eNPS",
-      "enps_description": "Универсальная обратная связь для оценки вовлечённости и удовлетворённости сотрудников.",
+      "enps_description": "Индекс лояльности сотрудников",
       "five_star_rating": "Оценка по 5-балльной шкале",
-      "five_star_rating_description": "Универсальное решение для оценки общей удовлетворённости.",
-      "headline": "Какую обратную связь вы хотите получить?",
+      "five_star_rating_description": "Общая оценка удовлетворенности",
+      "headline": "Какую обратную связь вы хотите собрать?",
       "nps": "NPS",
-      "nps_description": "Внедряйте проверенные лучшие практики, чтобы понять, ПОЧЕМУ люди покупают.",
+      "nps_description": "Индекс потребительской лояльности",
       "smileys": "Смайлики",
-      "smileys_description": "Используйте визуальные индикаторы для сбора отзывов на всех этапах взаимодействия с клиентом."
+      "smileys_description": "Оценка удовлетворенности с помощью эмодзи"
     }
   }
 }

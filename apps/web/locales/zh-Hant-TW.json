@@ -318,7 +318,6 @@
     "move_up": "上移",
     "my_product": "我的產品",
     "name": "名稱",
-    "new": "新增",
     "new_version_available": "Formbricks '{'version'}' 已推出。立即升級！",
     "next": "下一步",
     "no": "否",
@@ -439,7 +438,6 @@
     "something_went_wrong_please_try_again": "發生錯誤。請再試一次。",
     "sort_by": "排序方式",
     "status": "狀態",
-    "step_by_step_manual": "逐步手冊",
     "storage_not_configured": "檔案儲存未設定，上傳可能會失敗",
     "string": "文字",
     "styling": "樣式設定",
@@ -599,31 +597,13 @@
     },
     "workspaces": {
       "new": {
-        "channel": {
-          "channel_select_subtitle": "分享連結，或在應用程式或網站中顯示您的問卷。",
-          "channel_select_title": "您需要哪種類型的問卷？",
-          "in_product_surveys": "產品內問卷",
-          "in_product_surveys_description": "嵌入於應用程式或網站中。",
-          "link_and_email_surveys": "連結與電子郵件問卷",
-          "link_and_email_surveys_description": "在網路上的任何地方觸及受眾。"
-        },
-        "mode": {
-          "formbricks_cx": "Formbricks CX",
-          "formbricks_cx_description": "透過調查和報告了解客戶需求。",
-          "formbricks_surveys": "Formbricks 問卷",
-          "formbricks_surveys_description": "適用於網頁、應用程式和電子郵件調查的多功能調查平台。",
-          "what_are_you_here_for": "你想先設定什麼？"
-        },
-        "settings": {
-          "brand_color": "品牌顏色",
-          "brand_color_description": "讓問卷的主色調與您的品牌一致。",
-          "create_new_team": "建立新團隊",
-          "team_description": "誰可以存取這個工作區？",
-          "workspace_creation_failed": "工作區建立失敗",
-          "workspace_name": "工作區名稱",
-          "workspace_name_description": "你的工作區叫什麼名字?",
-          "workspace_settings_subtitle": "當人們認出您的品牌時，他們更有可能開始並完成回覆。",
-          "workspace_settings_title": "讓填答者知道這是您的品牌"
+        "survey": {
+          "create_with_ai_description": "描述您的需求，從生成的問卷開始。",
+          "start_from_scratch": "從頭開始",
+          "start_from_scratch_description": "建立您自己的問卷問題",
+          "title": "建立您的第一份問卷",
+          "use_template": "使用範本",
+          "use_template_description": "從常見問卷中選擇，如 NPS、CES 或 CSAT。"
         }
       }
     }
@@ -1919,17 +1899,6 @@
       "workspace_id": "您的工作區 ID",
       "workspace_id_description": "此 ID 用於唯一識別這個 Formbricks 工作區。"
     },
-    "connect": {
-      "congrats": "恭喜！",
-      "connection_successful_message": "做得好！我們已連線。",
-      "do_it_later": "稍後再做",
-      "finish_onboarding": "完成新手上路",
-      "headline": "連線您的應用程式或網站",
-      "import_formbricks_and_initialize_the_widget_in_your_component": "匯入 Formbricks 並在您的元件中初始化小工具（例如，App.tsx）：",
-      "insert_this_code_into_the_head_tag_of_your_website": "將此程式碼插入您網站的 head 標籤中：",
-      "subtitle": "只需不到 4 分鐘。",
-      "waiting_for_your_signal": "正在等待您的訊號..."
-    },
     "contacts": {
       "add_attribute": "新增屬性",
       "attribute_created_successfully": "屬性建立成功",
@@ -2795,7 +2764,7 @@
         "create": "建立",
         "create_with_ai": "使用 AI 建立",
         "creating": "建立中...",
-        "dialog_description": "描述問卷目標和受眾。Formbricks 會建立一份草稿,你可以在發布前進行編輯。",
+        "dialog_description": "Formbricks 會建立一份草稿，您可以在發布前進行編輯。",
         "dialog_title": "使用 AI 建立問卷",
         "enable_ai_in_settings": "在設定中啟用",
         "generated_payload_invalid": "問卷草稿無法驗證。請嘗試新增更多細節。",
@@ -2815,7 +2784,7 @@
         "shortcut_hint": "⌘/Ctrl + Enter 建立",
         "start_from_scratch": "從零開始",
         "survey_type_label": "問卷類型",
-        "try_prompt": "試試範例",
+        "try_prompt": "查看範例提示",
         "upgrade_plan": "升級方案"
       },
       "all_set_time_to_create_first_survey": "您已準備就緒！是時候建立您的第一個問卷",
@@ -3689,7 +3658,7 @@
         "unknown_question_type": "未知的問題類型",
         "use_personal_links": "使用 個人 連結",
         "whats_next": "下一步是什麼？",
-        "your_survey_is_public": "您的問卷是公開的",
+        "your_survey_is_public": "您的問卷已上線",
         "youre_not_plugged_in_yet": "您尚未插入任何內容！"
       },
       "survey_deleted_successfully": "問卷已成功刪除！",
@@ -3928,18 +3897,18 @@
     },
     "xm-templates": {
       "ces": "CES",
-      "ces_description": "利用每個接觸點來瞭解客戶互動的便利性。",
+      "ces_description": "顧客費力度指數",
       "csat": "CSAT",
-      "csat_description": "實施最佳實務以衡量客戶滿意度。",
+      "csat_description": "衡量顧客滿意度",
       "enps": "eNPS",
-      "enps_description": "通用回饋，瞭解員工投入程度和滿意度。",
+      "enps_description": "員工淨推薦值",
       "five_star_rating": "5 星評分",
-      "five_star_rating_description": "用於衡量整體滿意度的通用回饋解決方案。",
-      "headline": "您想要取得哪種回饋？",
+      "five_star_rating_description": "整體滿意度評分",
+      "headline": "您想收集什麼樣的回饋？",
       "nps": "NPS",
-      "nps_description": "實施經過驗證的最佳實務，以瞭解人們為何購買。",
+      "nps_description": "淨推薦值",
       "smileys": "表情符號",
-      "smileys_description": "使用視覺指標來擷取客戶接觸點的回饋。"
+      "smileys_description": "表情符號滿意度評分"
     }
   }
 }

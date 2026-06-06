@@ -318,7 +318,6 @@
     "move_up": "Ga omhoog",
     "my_product": "mijn product",
     "name": "Naam",
-    "new": "Nieuw",
     "new_version_available": "Formbricks {version} is hier. Upgrade nu!",
     "next": "Volgende",
     "no": "Nee",
@@ -439,7 +438,6 @@
     "something_went_wrong_please_try_again": "Er is iets misgegaan. Probeer het opnieuw.",
     "sort_by": "Sorteer op",
     "status": "Status",
-    "step_by_step_manual": "Stap voor stap handleiding",
     "storage_not_configured": "Bestandsopslag is niet ingesteld, uploads zullen waarschijnlijk mislukken",
     "string": "Tekst",
     "styling": "Styling",
@@ -599,31 +597,13 @@
     },
     "workspaces": {
       "new": {
-        "channel": {
-          "channel_select_subtitle": "Deel een link of toon je enquête in apps of op websites.",
-          "channel_select_title": "Welk type enquêtes heb je nodig?",
-          "in_product_surveys": "In-product enquêtes",
-          "in_product_surveys_description": "Ingebed in apps of websites.",
-          "link_and_email_surveys": "Link- en e-mailenquêtes",
-          "link_and_email_surveys_description": "Bereik mensen overal online."
-        },
-        "mode": {
-          "formbricks_cx": "Formbricks CX",
-          "formbricks_cx_description": "Enquêtes en rapporten om te begrijpen wat je klanten nodig hebben.",
-          "formbricks_surveys": "Formbricks Surveys",
-          "formbricks_surveys_description": "Multifunctioneel enquêteplatform voor web-, app- en e-mailenquêtes.",
-          "what_are_you_here_for": "Wat wil je als eerste instellen?"
-        },
-        "settings": {
-          "brand_color": "Merkkleur",
-          "brand_color_description": "Stem de hoofdkleur van enquêtes af op je merk.",
-          "create_new_team": "Nieuw team aanmaken",
-          "team_description": "Wie heeft allemaal toegang tot deze workspace?",
-          "workspace_creation_failed": "Aanmaken workspace mislukt",
-          "workspace_name": "Werkruimtenaam",
-          "workspace_name_description": "Hoe heet je werkruimte?",
-          "workspace_settings_subtitle": "Wanneer mensen je merk herkennen, zijn ze veel eerder geneigd om te beginnen en antwoorden te voltooien.",
-          "workspace_settings_title": "Laat respondenten weten dat jij het bent"
+        "survey": {
+          "create_with_ai_description": "Beschrijf wat je nodig hebt en begin met een gegenereerde enquête.",
+          "start_from_scratch": "Begin vanaf nul",
+          "start_from_scratch_description": "Maak je eigen enquêtevragen",
+          "title": "Maak je eerste enquête",
+          "use_template": "Gebruik een sjabloon",
+          "use_template_description": "Kies uit veelgebruikte enquêtes zoals NPS, CES of CSAT."
         }
       }
     }
@@ -1919,17 +1899,6 @@
       "workspace_id": "Jouw Werkruimte-ID",
       "workspace_id_description": "Dit ID identificeert deze Formbricks Workspace op unieke wijze."
     },
-    "connect": {
-      "congrats": "Gefeliciteerd!",
-      "connection_successful_message": "Goed gedaan! We zijn verbonden.",
-      "do_it_later": "Ik zal het later doen",
-      "finish_onboarding": "Voltooi de onboarding",
-      "headline": "Koppel uw app of website",
-      "import_formbricks_and_initialize_the_widget_in_your_component": "Importeer Formbricks en initialiseer de widget in uw component (bijvoorbeeld App.tsx):",
-      "insert_this_code_into_the_head_tag_of_your_website": "Plaats deze code in de headtag van uw website:",
-      "subtitle": "Het duurt minder dan 4 minuten.",
-      "waiting_for_your_signal": "Wachten op uw signaal..."
-    },
     "contacts": {
       "add_attribute": "Attribuut toevoegen",
       "attribute_created_successfully": "Attribuut succesvol aangemaakt",
@@ -2795,8 +2764,8 @@
         "create": "Aanmaken",
         "create_with_ai": "Aanmaken met AI",
         "creating": "Aanmaken...",
-        "dialog_description": "Beschrijf het doel en de doelgroep van de enquête. Formbricks maakt een concept dat je kunt bewerken voordat je het publiceert.",
-        "dialog_title": "Maak enquête met AI",
+        "dialog_description": "Formbricks maakt een concept dat je kunt bewerken voordat je publiceert.",
+        "dialog_title": "Maak je enquête met AI",
         "enable_ai_in_settings": "Inschakelen in instellingen",
         "generated_payload_invalid": "Het enquêteconcept kon niet worden gevalideerd. Probeer meer details toe te voegen.",
         "link_survey": "Link-enquête",
@@ -2815,7 +2784,7 @@
         "shortcut_hint": "⌘/Ctrl + Enter om aan te maken",
         "start_from_scratch": "Begin vanaf nul",
         "survey_type_label": "Type enquête",
-        "try_prompt": "Probeer een voorbeeld",
+        "try_prompt": "Bekijk voorbeeldprompt",
         "upgrade_plan": "Upgrade abonnement"
       },
       "all_set_time_to_create_first_survey": "Je bent helemaal klaar! Tijd om uw eerste enquête te maken",
@@ -3689,7 +3658,7 @@
         "unknown_question_type": "Onbekend vraagtype",
         "use_personal_links": "Gebruik persoonlijke links",
         "whats_next": "Wat is het volgende?",
-        "your_survey_is_public": "Uw enquête is openbaar",
+        "your_survey_is_public": "Je enquête is live",
         "youre_not_plugged_in_yet": "Je bent nog niet aangesloten!"
       },
       "survey_deleted_successfully": "Enquête succesvol verwijderd!",
@@ -3928,18 +3897,18 @@
     },
     "xm-templates": {
       "ces": "CES",
-      "ces_description": "Benut elk contactpunt om inzicht te krijgen in het gemak van klantinteractie.",
+      "ces_description": "Customer Effort Score",
       "csat": "CSAT",
-      "csat_description": "Implementeer best practices om de klanttevredenheid te meten.",
+      "csat_description": "Meet klanttevredenheid",
       "enps": "eNPS",
-      "enps_description": "Universele feedback om de betrokkenheid en tevredenheid van medewerkers te begrijpen.",
+      "enps_description": "Employee Net Promoter Score",
       "five_star_rating": "5-sterrenbeoordeling",
-      "five_star_rating_description": "Universele feedbackoplossing om de algehele tevredenheid te meten.",
-      "headline": "Wat voor soort feedback zou je graag willen krijgen?",
+      "five_star_rating_description": "Algemene tevredenheidsbeoordeling",
+      "headline": "Welke feedback wil je verzamelen?",
       "nps": "NPS",
-      "nps_description": "Implementeer bewezen best practices om te begrijpen WAAROM mensen kopen.",
+      "nps_description": "Net Promoter Score",
       "smileys": "Smileys",
-      "smileys_description": "Gebruik visuele indicatoren om feedback vast te leggen over klantcontactpunten."
+      "smileys_description": "Tevredenheidsbeoordeling op basis van emoji's"
     }
   }
 }

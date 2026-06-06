@@ -318,7 +318,6 @@
     "move_up": "Subir",
     "my_product": "meu produto",
     "name": "Nome",
-    "new": "Novo",
     "new_version_available": "Formbricks {version} chegou. Atualize agora!",
     "next": "Próximo",
     "no": "Não",
@@ -439,7 +438,6 @@
     "something_went_wrong_please_try_again": "Algo deu errado. Tente novamente.",
     "sort_by": "Ordenar por",
     "status": "status",
-    "step_by_step_manual": "Manual passo a passo",
     "storage_not_configured": "Armazenamento de arquivos não configurado, uploads provavelmente falharão",
     "string": "Texto",
     "styling": "Estilização",
@@ -599,31 +597,13 @@
     },
     "workspaces": {
       "new": {
-        "channel": {
-          "channel_select_subtitle": "Compartilhe um link ou exiba sua pesquisa em aplicativos ou sites.",
-          "channel_select_title": "Que tipo de pesquisas você precisa?",
-          "in_product_surveys": "Pesquisas no produto",
-          "in_product_surveys_description": "Incorporadas em aplicativos ou sites.",
-          "link_and_email_surveys": "Pesquisas por link e e-mail",
-          "link_and_email_surveys_description": "Alcance pessoas em qualquer lugar online."
-        },
-        "mode": {
-          "formbricks_cx": "Formbricks CX",
-          "formbricks_cx_description": "Pesquisas e relatórios para entender o que seus clientes precisam.",
-          "formbricks_surveys": "Pesquisas Formbricks",
-          "formbricks_surveys_description": "Plataforma de pesquisa multifuncional para web, app e pesquisas por e-mail.",
-          "what_are_you_here_for": "O que você gostaria de configurar primeiro?"
-        },
-        "settings": {
-          "brand_color": "Cor da marca",
-          "brand_color_description": "Combine a cor principal das pesquisas com sua marca.",
-          "create_new_team": "Criar nova equipe",
-          "team_description": "Quem pode acessar este espaço de trabalho?",
-          "workspace_creation_failed": "Falha ao criar espaço de trabalho",
-          "workspace_name": "Nome do workspace",
-          "workspace_name_description": "Como seu workspace se chama?",
-          "workspace_settings_subtitle": "Quando as pessoas reconhecem sua marca, elas têm muito mais probabilidade de iniciar e concluir respostas.",
-          "workspace_settings_title": "Deixe os respondentes saberem que é você"
+        "survey": {
+          "create_with_ai_description": "Descreva o que você precisa e comece a partir de uma pesquisa gerada.",
+          "start_from_scratch": "Começar do zero",
+          "start_from_scratch_description": "Crie suas próprias perguntas de pesquisa",
+          "title": "Crie sua primeira pesquisa",
+          "use_template": "Usar um modelo",
+          "use_template_description": "Escolha entre pesquisas comuns como NPS, CES ou CSAT."
         }
       }
     }
@@ -1919,17 +1899,6 @@
       "workspace_id": "ID do seu Workspace",
       "workspace_id_description": "Este ID identifica exclusivamente este Workspace do Formbricks."
     },
-    "connect": {
-      "congrats": "Parabéns!",
-      "connection_successful_message": "Mandou bem! Estamos conectados.",
-      "do_it_later": "Vou fazer isso mais tarde",
-      "finish_onboarding": "Concluir Integração",
-      "headline": "Conecte seu app ou site",
-      "import_formbricks_and_initialize_the_widget_in_your_component": "Importe o Formbricks e inicialize o widget no seu Componente (por exemplo, App.tsx):",
-      "insert_this_code_into_the_head_tag_of_your_website": "Insira esse código na tag head do seu site:",
-      "subtitle": "Leva menos de 4 minutos.",
-      "waiting_for_your_signal": "Esperando seu sinal..."
-    },
     "contacts": {
       "add_attribute": "Adicionar atributo",
       "attribute_created_successfully": "Atributo criado com sucesso",
@@ -2795,8 +2764,8 @@
         "create": "Criar",
         "create_with_ai": "Criar com IA",
         "creating": "Criando...",
-        "dialog_description": "Descreva o objetivo da pesquisa e o público-alvo. O Formbricks vai criar um rascunho que você pode editar antes de publicar.",
-        "dialog_title": "Criar pesquisa com IA",
+        "dialog_description": "O Formbricks criará um rascunho que você pode editar antes de publicar.",
+        "dialog_title": "Crie sua pesquisa usando IA",
         "enable_ai_in_settings": "Habilitar nas configurações",
         "generated_payload_invalid": "O rascunho da pesquisa não pôde ser validado. Tente adicionar mais detalhes.",
         "link_survey": "Pesquisa de Link",
@@ -2815,7 +2784,7 @@
         "shortcut_hint": "⌘/Ctrl + Enter para criar",
         "start_from_scratch": "Começar do zero",
         "survey_type_label": "Tipo de pesquisa",
-        "try_prompt": "Experimente um exemplo",
+        "try_prompt": "Ver exemplo de prompt",
         "upgrade_plan": "Fazer upgrade do plano"
       },
       "all_set_time_to_create_first_survey": "Tá tudo pronto! Hora de criar sua primeira pesquisa",
@@ -3689,7 +3658,7 @@
         "unknown_question_type": "Tipo de pergunta desconhecido",
         "use_personal_links": "Use links pessoais",
         "whats_next": "E agora?",
-        "your_survey_is_public": "Sua pesquisa é pública",
+        "your_survey_is_public": "Sua pesquisa está no ar",
         "youre_not_plugged_in_yet": "Você ainda não tá conectado!"
       },
       "survey_deleted_successfully": "Pesquisa deletada com sucesso!",
@@ -3928,18 +3897,18 @@
     },
     "xm-templates": {
       "ces": "CES",
-      "ces_description": "Aproveite cada ponto de contato para entender a facilidade de interação do cliente.",
+      "ces_description": "Customer Effort Score",
       "csat": "Satisfação do Cliente",
-      "csat_description": "Implementar as melhores práticas para medir a satisfação do cliente.",
+      "csat_description": "Medir a satisfação do cliente",
       "enps": "eNPS",
-      "enps_description": "Feedback universal pra entender o engajamento e a satisfação dos funcionários.",
+      "enps_description": "Employee Net Promoter Score",
       "five_star_rating": "Avaliação de 5 Estelas",
-      "five_star_rating_description": "Solução universal de feedback para medir a satisfação geral.",
-      "headline": "Que tipo de feedback você gostaria de receber?",
+      "five_star_rating_description": "Avaliação geral de satisfação",
+      "headline": "Que tipo de feedback você gostaria de coletar?",
       "nps": "NPS",
-      "nps_description": "Implementar práticas recomendadas comprovadas para entender POR QUE as pessoas compram.",
+      "nps_description": "Net Promoter Score",
       "smileys": "Emoticons",
-      "smileys_description": "Use indicadores visuais pra captar feedback em todos os pontos de contato com o cliente."
+      "smileys_description": "Avaliação de satisfação baseada em emojis"
     }
   }
 }

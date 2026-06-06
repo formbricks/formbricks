@@ -318,7 +318,6 @@
     "move_up": "Déplacer vers le haut",
     "my_product": "mon produit",
     "name": "Nom",
-    "new": "Nouveau",
     "new_version_available": "Formbricks {version} est là. Mettez à jour maintenant !",
     "next": "Suivant",
     "no": "Non",
@@ -439,7 +438,6 @@
     "something_went_wrong_please_try_again": "Une erreur s'est produite. Veuillez réessayer.",
     "sort_by": "Trier par",
     "status": "Statut",
-    "step_by_step_manual": "Manuel étape par étape",
     "storage_not_configured": "Stockage de fichiers non configuré, les téléchargements risquent d'échouer",
     "string": "Texte",
     "styling": "Style",
@@ -599,31 +597,13 @@
     },
     "workspaces": {
       "new": {
-        "channel": {
-          "channel_select_subtitle": "Partagez un lien ou affichez votre enquête dans des applications ou sur des sites web.",
-          "channel_select_title": "Quel type d'enquêtes avez-vous besoin ?",
-          "in_product_surveys": "Enquêtes intégrées au produit",
-          "in_product_surveys_description": "Intégrées dans des applications ou des sites web.",
-          "link_and_email_surveys": "Enquêtes par lien et e-mail",
-          "link_and_email_surveys_description": "Atteignez les gens partout en ligne."
-        },
-        "mode": {
-          "formbricks_cx": "Formbricks CX",
-          "formbricks_cx_description": "Sondages et rapports pour comprendre les besoins de vos clients.",
-          "formbricks_surveys": "Sondages Formbricks",
-          "formbricks_surveys_description": "Plateforme de sondage polyvalente pour les enquêtes web, application et email.",
-          "what_are_you_here_for": "Que souhaites-tu configurer en premier ?"
-        },
-        "settings": {
-          "brand_color": "Couleur de marque",
-          "brand_color_description": "Harmonisez la couleur principale des sondages avec votre marque.",
-          "create_new_team": "Créer une nouvelle équipe",
-          "team_description": "Qui peut accéder à cet espace de travail ?",
-          "workspace_creation_failed": "Échec de la création de l'espace de travail",
-          "workspace_name": "Nom de l'espace de travail",
-          "workspace_name_description": "Comment s'appelle ton espace de travail ?",
-          "workspace_settings_subtitle": "Lorsque les gens reconnaissent votre marque, ils sont beaucoup plus susceptibles de commencer et de compléter leurs réponses.",
-          "workspace_settings_title": "Faites savoir aux répondants que c'est vous"
+        "survey": {
+          "create_with_ai_description": "Décrivez vos besoins et commencez à partir d'une enquête générée.",
+          "start_from_scratch": "Partir de zéro",
+          "start_from_scratch_description": "Créez vos propres questions d'enquête",
+          "title": "Créez votre première enquête",
+          "use_template": "Utiliser un modèle",
+          "use_template_description": "Choisissez parmi des enquêtes courantes comme NPS, CES ou CSAT."
         }
       }
     }
@@ -1919,17 +1899,6 @@
       "workspace_id": "ID de votre espace de travail",
       "workspace_id_description": "Cet identifiant identifie de manière unique cet espace de travail Formbricks."
     },
-    "connect": {
-      "congrats": "Félicitations !",
-      "connection_successful_message": "Bien joué ! Nous sommes connectés.",
-      "do_it_later": "Je le ferai plus tard",
-      "finish_onboarding": "Terminer l'intégration",
-      "headline": "Connecte ton appli ou site web",
-      "import_formbricks_and_initialize_the_widget_in_your_component": "Importez Formbricks et initialisez le widget dans votre composant (par exemple, App.tsx) :",
-      "insert_this_code_into_the_head_tag_of_your_website": "Insérez ce code dans la balise head de votre site web :",
-      "subtitle": "Ça prend moins de 4 minutes.",
-      "waiting_for_your_signal": "En attente de votre signal..."
-    },
     "contacts": {
       "add_attribute": "Ajouter un attribut",
       "attribute_created_successfully": "Attribut créé avec succès",
@@ -2795,8 +2764,8 @@
         "create": "Créer",
         "create_with_ai": "Créer avec l'IA",
         "creating": "Création...",
-        "dialog_description": "Décris l'objectif du questionnaire et le public cible. Formbricks créera un brouillon que tu pourras modifier avant publication.",
-        "dialog_title": "Créer un questionnaire avec l'IA",
+        "dialog_description": "Formbricks créera un brouillon que tu pourras modifier avant de publier.",
+        "dialog_title": "Crée ton enquête avec l'IA",
         "enable_ai_in_settings": "Activer dans les paramètres",
         "generated_payload_invalid": "Le brouillon du questionnaire n'a pas pu être validé. Essaie d'ajouter plus de détails.",
         "link_survey": "Questionnaire par lien",
@@ -2815,7 +2784,7 @@
         "shortcut_hint": "⌘/Ctrl + Entrée pour créer",
         "start_from_scratch": "Partir de zéro",
         "survey_type_label": "Type de sondage",
-        "try_prompt": "Essayer un exemple",
+        "try_prompt": "Voir un exemple d'instruction",
         "upgrade_plan": "Mettre à niveau l'abonnement"
       },
       "all_set_time_to_create_first_survey": "Vous êtes prêt ! Il est temps de créer votre première enquête.",
@@ -3689,7 +3658,7 @@
         "unknown_question_type": "Type de question inconnu",
         "use_personal_links": "Utilisez des liens personnels",
         "whats_next": "Qu'est-ce qui vient ensuite ?",
-        "your_survey_is_public": "Votre enquête est publique.",
+        "your_survey_is_public": "Ton enquête est en ligne",
         "youre_not_plugged_in_yet": "Vous n'êtes pas encore branché !"
       },
       "survey_deleted_successfully": "Enquête supprimée avec succès !",
@@ -3928,18 +3897,18 @@
     },
     "xm-templates": {
       "ces": "CES",
-      "ces_description": "Tirez parti de chaque point de contact pour comprendre la facilité d'interaction avec le client.",
+      "ces_description": "Score d'Effort Client",
       "csat": "CSAT",
-      "csat_description": "Mettez en œuvre les meilleures pratiques pour mesurer la satisfaction client.",
+      "csat_description": "Mesurer la satisfaction client",
       "enps": "eNPS",
-      "enps_description": "Retour d'information universel pour comprendre l'engagement et la satisfaction des employés.",
+      "enps_description": "Score de Recommandation Employé",
       "five_star_rating": "Évaluation 5 étoiles",
-      "five_star_rating_description": "Solution de feedback universelle pour évaluer la satisfaction globale.",
-      "headline": "Quel type de retour aimeriez-vous recevoir ?",
+      "five_star_rating_description": "Évaluation globale de satisfaction",
+      "headline": "Quels retours souhaites-tu recueillir ?",
       "nps": "NPS",
-      "nps_description": "Mettez en œuvre des pratiques éprouvées pour comprendre POURQUOI les gens achètent.",
+      "nps_description": "Score de Recommandation Net",
       "smileys": "Émoticônes",
-      "smileys_description": "Utilisez des indicateurs visuels pour recueillir des retours d'expérience à travers les points de contact avec les clients."
+      "smileys_description": "Évaluation de satisfaction par emoji"
     }
   }
 }

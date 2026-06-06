@@ -318,7 +318,6 @@
     "move_up": "Mozgatás fel",
     "my_product": "saját termék",
     "name": "Név",
-    "new": "Új",
     "new_version_available": "A Formbricks {version} megérkezett. Frissítsen most!",
     "next": "Következő",
     "no": "Nem",
@@ -439,7 +438,6 @@
     "something_went_wrong_please_try_again": "Valami probléma történt. Próbálja meg újra.",
     "sort_by": "Rendezési sorrend",
     "status": "Állapot",
-    "step_by_step_manual": "Lépésenkénti kézikönyv",
     "storage_not_configured": "A fájltároló nincs beállítva, a feltöltések valószínűleg sikertelenek lesznek",
     "string": "Szöveg",
     "styling": "Stíluskészítés",
@@ -599,31 +597,13 @@
     },
     "workspaces": {
       "new": {
-        "channel": {
-          "channel_select_subtitle": "Hivatkozás megosztása vagy a kérdőív megjelenítése az alkalmazásokban vagy webhelyeken.",
-          "channel_select_title": "Milyen típusú kérdőívekre van szüksége?",
-          "in_product_surveys": "Terméken belüli kérdőívek",
-          "in_product_surveys_description": "Beágyazva alkalmazásokba vagy webhelyekre.",
-          "link_and_email_surveys": "Hivatkozás- és e-mail-kérdőívek",
-          "link_and_email_surveys_description": "Személyek elérése bárhol az interneten."
-        },
-        "mode": {
-          "formbricks_cx": "Formbricks CX",
-          "formbricks_cx_description": "Felmérések és riportok az ügyfelei igényeinek megértéséhez.",
-          "formbricks_surveys": "Formbricks kérdőívek",
-          "formbricks_surveys_description": "Többcélú felmérési platform webes, alkalmazásbeli és e-mailes kérdőívekhez.",
-          "what_are_you_here_for": "Mit szeretne először beállítani?"
-        },
-        "settings": {
-          "brand_color": "Márkajel színe",
-          "brand_color_description": "A kérdőívek fő színének hozzáigazítása a márkajelhez.",
-          "create_new_team": "Új csapat létrehozása",
-          "team_description": "Kik férhetnek hozzá ehhez a munkaterülethez?",
-          "workspace_creation_failed": "A munkaterület létrehozása nem sikerült",
-          "workspace_name": "Munkaterület neve",
-          "workspace_name_description": "Hogy hívják a munkaterületet?",
-          "workspace_settings_subtitle": "Ha a személyek felismerik a márkáját, akkor sokkal inkább hajlandóak lesznek elkezdeni és befejezni a válaszokat.",
-          "workspace_settings_title": "Tudassa a válaszadókkal, hogy Ön az"
+        "survey": {
+          "create_with_ai_description": "Írja le, mire van szüksége, és induljon egy generált felmérésből.",
+          "start_from_scratch": "Kezdés a nulláról",
+          "start_from_scratch_description": "Hozza létre saját felmérési kérdéseit",
+          "title": "Hozza létre első felmérését",
+          "use_template": "Sablon használata",
+          "use_template_description": "Válasszon gyakori felmérések közül, mint például NPS, CES vagy CSAT."
         }
       }
     }
@@ -1919,17 +1899,6 @@
       "workspace_id": "Az Ön munkaterület-azonosítója",
       "workspace_id_description": "Ez az azonosító egyedileg azonosítja ezt a Formbricks munkaterületet."
     },
-    "connect": {
-      "congrats": "Gratulálunk!",
-      "connection_successful_message": "Szép munka! Kapcsolódtunk.",
-      "do_it_later": "Később megcsinálom",
-      "finish_onboarding": "Bevezetés befejezése",
-      "headline": "Alkalmazás vagy webhely csatlakoztatása",
-      "import_formbricks_and_initialize_the_widget_in_your_component": "Importálja a Formbricks alkalmazást, és készítse elő a felületi elemet az összetevőjében (például App.tsx):",
-      "insert_this_code_into_the_head_tag_of_your_website": "Illessze be ezt a kódot webhelye head címkéjébe:",
-      "subtitle": "Kevesebb mint 4 percet vesz igénybe.",
-      "waiting_for_your_signal": "Várakozás a jelzésére…"
-    },
     "contacts": {
       "add_attribute": "Attribútum hozzáadása",
       "attribute_created_successfully": "Az attribútum sikeresen létrehozva",
@@ -2795,8 +2764,8 @@
         "create": "Létrehozás",
         "create_with_ai": "Létrehozás AI-val",
         "creating": "Létrehozás folyamatban...",
-        "dialog_description": "Írja le a kérdőív célját és közönségét. A Formbricks elkészít egy tervezetet, amelyet szerkeszthet a közzététel előtt.",
-        "dialog_title": "Kérdőív készítése AI-val",
+        "dialog_description": "A Formbricks készít egy vázlatot, amelyet közzététel előtt szerkeszthet.",
+        "dialog_title": "Hozza létre felmérését mesterséges intelligencia használatával",
         "enable_ai_in_settings": "Engedélyezze a beállításokban",
         "generated_payload_invalid": "A kérdőívvázlatot nem sikerült érvényesíteni. Próbálj meg több részletet hozzáadni.",
         "link_survey": "Linkes kérdőív",
@@ -2815,7 +2784,7 @@
         "shortcut_hint": "⌘/Ctrl + Enter a létrehozáshoz",
         "start_from_scratch": "Kezdés a nulláról",
         "survey_type_label": "Felmérés típusa",
-        "try_prompt": "Próbálj ki egy példát",
+        "try_prompt": "Példa promptra",
         "upgrade_plan": "Csomag frissítése"
       },
       "all_set_time_to_create_first_survey": "Mindent beállított! Ideje létrehozni az első kérdőívet",
@@ -3689,7 +3658,7 @@
         "unknown_question_type": "Ismeretlen kérdéstípus",
         "use_personal_links": "Személyes hivatkozások használata",
         "whats_next": "Mi következik?",
-        "your_survey_is_public": "A kérdőíve nyilvános",
+        "your_survey_is_public": "Felmérése élő",
         "youre_not_plugged_in_yet": "Még nincs csatlakoztatva!"
       },
       "survey_deleted_successfully": "A kérdőív sikeresen törölve",
@@ -3928,18 +3897,18 @@
     },
     "xm-templates": {
       "ces": "CES",
-      "ces_description": "Minden érintkezési pont kihasználása az ügyfelekkel való interakció egyszerűségének megértéséhez.",
+      "ces_description": "Ügyfélmegterhelési pontszám",
       "csat": "CSAT",
-      "csat_description": "Legjobb gyakorlatok megvalósítása az ügyfél-elégedettség méréséhez.",
+      "csat_description": "Ügyfélelégedettség mérése",
       "enps": "eNPS",
-      "enps_description": "Általános visszajelzés a munkavállalók elkötelezettségének és elégedettségének megértéséhez.",
+      "enps_description": "Munkavállalói Net Promoter Score",
       "five_star_rating": "5 csillagos értékelés",
-      "five_star_rating_description": "Általános visszajelzési megoldás az általános elégedettség méréséhez.",
-      "headline": "Milyen jellegű visszajelzést szeretne kapni?",
+      "five_star_rating_description": "Általános elégedettségi értékelés",
+      "headline": "Milyen visszajelzést szeretne gyűjteni?",
       "nps": "NPS",
-      "nps_description": "Bizonyított legjobb gyakorlatok megvalósítása annak megértéséhez, hogy a személyek MIÉRT vásárolnak.",
+      "nps_description": "Net Promoter Score",
       "smileys": "Hangulatjelek",
-      "smileys_description": "Látható jelzők használata a visszajelzések rögzítéséhez az ügyfelek érintkezési pontjain keresztül."
+      "smileys_description": "Emoji-alapú elégedettségi értékelés"
     }
   }
 }

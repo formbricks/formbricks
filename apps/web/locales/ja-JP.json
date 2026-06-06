@@ -318,7 +318,6 @@
     "move_up": "上に移動",
     "my_product": "マイプロダクト",
     "name": "名前",
-    "new": "新規",
     "new_version_available": "Formbricks {version} が利用可能です。今すぐアップグレード！",
     "next": "次へ",
     "no": "いいえ",
@@ -439,7 +438,6 @@
     "something_went_wrong_please_try_again": "問題が発生しました。もう一度お試しください。",
     "sort_by": "並び替え",
     "status": "ステータス",
-    "step_by_step_manual": "ステップバイステップマニュアル",
     "storage_not_configured": "ファイルストレージが設定されていないため、アップロードは失敗する可能性があります",
     "string": "テキスト",
     "styling": "スタイル",
@@ -599,31 +597,13 @@
     },
     "workspaces": {
       "new": {
-        "channel": {
-          "channel_select_subtitle": "リンクを共有するか、アプリやウェブサイトでフォームを表示します。",
-          "channel_select_title": "どのタイプのフォームが必要ですか?",
-          "in_product_surveys": "プロダクト内フォーム",
-          "in_product_surveys_description": "アプリやウェブサイトに埋め込み。",
-          "link_and_email_surveys": "リンク&メールフォーム",
-          "link_and_email_surveys_description": "オンラインのどこでも人々にリーチ。"
-        },
-        "mode": {
-          "formbricks_cx": "Formbricks CX",
-          "formbricks_cx_description": "顧客ニーズを理解するためのアンケートとレポート。",
-          "formbricks_surveys": "Formbricks フォーム",
-          "formbricks_surveys_description": "Web、アプリ、メールアンケートに対応した多目的アンケートプラットフォーム。",
-          "what_are_you_here_for": "最初に設定したいのはどちらですか？"
-        },
-        "settings": {
-          "brand_color": "ブランドカラー",
-          "brand_color_description": "フォームのメインカラーをブランドに合わせます。",
-          "create_new_team": "新しいチームを作成",
-          "team_description": "このワークスペースにアクセスできるのは誰ですか？",
-          "workspace_creation_failed": "ワークスペースの作成に失敗しました",
-          "workspace_name": "ワークスペース名",
-          "workspace_name_description": "ワークスペースの名前を入力してください",
-          "workspace_settings_subtitle": "回答者があなたのブランドを認識すると、回答を開始して完了する可能性が大幅に高まります。",
-          "workspace_settings_title": "回答者にあなたであることを知らせましょう"
+        "survey": {
+          "create_with_ai_description": "必要な内容を説明すると、AIが自動生成したアンケートから始められます。",
+          "start_from_scratch": "ゼロから作成",
+          "start_from_scratch_description": "独自のアンケート質問を作成",
+          "title": "最初のアンケートを作成",
+          "use_template": "テンプレートを使用",
+          "use_template_description": "NPS、CES、CSATなどの一般的なアンケートから選択できます。"
         }
       }
     }
@@ -1919,17 +1899,6 @@
       "workspace_id": "ワークスペースID",
       "workspace_id_description": "このIDは、このFormbricksワークスペースを一意に識別します。"
     },
-    "connect": {
-      "congrats": "おめでとうございます！",
-      "connection_successful_message": "うまくいきました！接続されました。",
-      "do_it_later": "後でやります",
-      "finish_onboarding": "オンボーディングを完了",
-      "headline": "アプリまたはウェブサイトを接続",
-      "import_formbricks_and_initialize_the_widget_in_your_component": "Formbricksをインポートし、コンポーネント（例: App.tsx）でウィジェットを初期化します。",
-      "insert_this_code_into_the_head_tag_of_your_website": "このコードをウェブサイトの<head>タグに挿入してください:",
-      "subtitle": "4分もかかりません。",
-      "waiting_for_your_signal": "あなたの信号を待っています..."
-    },
     "contacts": {
       "add_attribute": "属性を追加",
       "attribute_created_successfully": "属性を作成しました",
@@ -2795,8 +2764,8 @@
         "create": "作成",
         "create_with_ai": "AIで作成",
         "creating": "作成中...",
-        "dialog_description": "アンケートの目的と対象者を説明してください。Formbricksが下書きを作成しますので、公開前に編集できます。",
-        "dialog_title": "AIでアンケートを作成",
+        "dialog_description": "Formbricksが下書きを作成します。公開前に編集できます。",
+        "dialog_title": "AIを使ってアンケートを作成",
         "enable_ai_in_settings": "設定で有効にする",
         "generated_payload_invalid": "アンケートの下書きを検証できませんでした。詳細を追加してみてください。",
         "link_survey": "リンク型アンケート",
@@ -2815,7 +2784,7 @@
         "shortcut_hint": "⌘/Ctrl + Enterで作成",
         "start_from_scratch": "ゼロから作成",
         "survey_type_label": "アンケートタイプ",
-        "try_prompt": "例を試す",
+        "try_prompt": "プロンプト例を見る",
         "upgrade_plan": "プランをアップグレード"
       },
       "all_set_time_to_create_first_survey": "すべての準備が整いました！最初のフォームを作成しましょう",
@@ -3689,7 +3658,7 @@
         "unknown_question_type": "不明な質問の種類",
         "use_personal_links": "個人リンクを使用",
         "whats_next": "次は何をしますか？",
-        "your_survey_is_public": "あなたのフォームは公開されています",
+        "your_survey_is_public": "アンケートが公開中です",
         "youre_not_plugged_in_yet": "まだ接続されていません！"
       },
       "survey_deleted_successfully": "フォームを正常に削除しました！",
@@ -3928,18 +3897,18 @@
     },
     "xm-templates": {
       "ces": "CES",
-      "ces_description": "あらゆるタッチポイントを活用して、顧客のインタラクションの容易さを把握します。",
+      "ces_description": "顧客努力指標",
       "csat": "CSAT",
-      "csat_description": "顧客満足度を測定するためのベストプラクティスを実装します。",
+      "csat_description": "顧客満足度を測定",
       "enps": "eNPS",
-      "enps_description": "従業員のエンゲージメントと満足度を理解するための普遍的なフィードバック。",
+      "enps_description": "従業員ネットプロモータースコア",
       "five_star_rating": "5つ星評価",
-      "five_star_rating_description": "全体的な満足度を測るための普遍的なフィードバックソリューション。",
-      "headline": "どのようなフィードバックを求めていますか？",
+      "five_star_rating_description": "総合満足度評価",
+      "headline": "どのようなフィードバックを収集しますか?",
       "nps": "NPS",
-      "nps_description": "人々が購入する理由を理解するための実証済みのベストプラクティスを実装します。",
+      "nps_description": "ネットプロモータースコア",
       "smileys": "スマイリー",
-      "smileys_description": "視覚的な指標を使用して、顧客のタッチポイント全体でフィードバックを収集します。"
+      "smileys_description": "絵文字ベースの満足度評価"
     }
   }
 }
