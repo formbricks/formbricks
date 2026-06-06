@@ -1,7 +1,6 @@
 import { createId } from "@paralleldrive/cuid2";
 import type { TFunction } from "i18next";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
-import type { TSurveyOpenTextElement } from "@formbricks/types/surveys/elements";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import type { TTemplate } from "@formbricks/types/templates";
 import {
@@ -27,6 +26,7 @@ const cartAbandonmentSurvey = (t: TFunction): TTemplate => {
 
   return buildSurvey(
     {
+      id: "cart-abandonment",
       name: t("templates.card_abandonment_survey"),
       role: "productManager",
       industries: ["eCommerce"],
@@ -168,6 +168,7 @@ const siteAbandonmentSurvey = (t: TFunction): TTemplate => {
 
   return buildSurvey(
     {
+      id: "site-abandonment",
       name: t("templates.site_abandonment_survey"),
       role: "productManager",
       industries: ["eCommerce"],
@@ -306,6 +307,7 @@ const productMarketFitSuperhuman = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
+      id: "product-market-fit-superhuman",
       name: t("templates.product_market_fit_superhuman"),
       role: "productManager",
       industries: ["saas"],
@@ -409,6 +411,7 @@ const onboardingSegmentation = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
+      id: "onboarding-segmentation",
       name: t("templates.onboarding_segmentation"),
       role: "productManager",
       industries: ["saas"],
@@ -494,6 +497,7 @@ const churnSurvey = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
+      id: "churn-survey",
       name: t("templates.churn_survey"),
       role: "sales",
       industries: ["saas", "eCommerce", "other"],
@@ -618,6 +622,7 @@ const earnedAdvocacyScore = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
+      id: "earned-advocacy-score",
       name: t("templates.earned_advocacy_score_name"),
       role: "customerSuccess",
       industries: ["saas", "eCommerce", "other"],
@@ -722,6 +727,7 @@ const usabilityScoreRatingSurvey = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
+      id: "usability-score-rating",
       name: t("templates.usability_score_name"),
       role: "customerSuccess",
       industries: ["saas"],
@@ -905,6 +911,7 @@ const improveTrialConversion = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
+      id: "improve-trial-conversion",
       name: t("templates.improve_trial_conversion_name"),
       role: "sales",
       industries: ["saas"],
@@ -1047,6 +1054,7 @@ const reviewPrompt = (t: TFunction): TTemplate => {
 
   return buildSurvey(
     {
+      id: "review-prompt",
       name: t("templates.review_prompt_name"),
       role: "marketing",
       industries: ["saas", "eCommerce", "other"],
@@ -1145,6 +1153,7 @@ const interviewPrompt = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
+      id: "interview-prompt",
       name: t("templates.interview_prompt_name"),
       role: "productManager",
       industries: ["saas"],
@@ -1184,6 +1193,7 @@ const improveActivationRate = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
+      id: "improve-activation-rate",
       name: t("templates.improve_activation_rate_name"),
       role: "productManager",
       industries: ["saas"],
@@ -1310,6 +1320,7 @@ const employeeSatisfaction = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
+      id: "employee-satisfaction",
       name: t("templates.employee_satisfaction_name"),
       role: "peopleManager",
       industries: ["saas", "eCommerce", "other"],
@@ -1420,6 +1431,7 @@ const uncoverStrengthsAndWeaknesses = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
+      id: "uncover-strengths-and-weaknesses",
       name: t("templates.uncover_strengths_and_weaknesses_name"),
       role: "productManager",
       industries: ["saas", "other"],
@@ -1491,6 +1503,7 @@ const productMarketFitShort = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
+      id: "product-market-fit-short",
       name: t("templates.product_market_fit_short_name"),
       role: "productManager",
       industries: ["saas"],
@@ -1540,6 +1553,7 @@ const marketAttribution = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
+      id: "market-attribution",
       name: t("templates.market_attribution_name"),
       role: "marketing",
       industries: ["saas", "eCommerce"],
@@ -1579,6 +1593,7 @@ const changingSubscriptionExperience = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
+      id: "changing-subscription-experience",
       name: t("templates.changing_subscription_experience_name"),
       role: "productManager",
       industries: ["saas"],
@@ -1635,6 +1650,7 @@ const identifyCustomerGoals = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
+      id: "identify-customer-goals",
       name: t("templates.identify_customer_goals_name"),
       role: "productManager",
       industries: ["saas", "other"],
@@ -1672,6 +1688,7 @@ const featureChaser = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
+      id: "feature-chaser",
       name: t("templates.feature_chaser_name"),
       role: "productManager",
       industries: ["saas"],
@@ -1724,6 +1741,7 @@ const fakeDoorFollowUp = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
+      id: "fake-door-follow-up",
       name: t("templates.fake_door_follow_up_name"),
       role: "productManager",
       industries: ["saas", "eCommerce"],
@@ -1782,6 +1800,7 @@ const feedbackBox = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
+      id: "feedback-box",
       name: t("templates.feedback_box_name"),
       role: "productManager",
       industries: ["saas"],
@@ -1872,6 +1891,7 @@ const integrationSetupSurvey = (t: TFunction): TTemplate => {
 
   return buildSurvey(
     {
+      id: "integration-setup-survey",
       name: t("templates.integration_setup_survey_name"),
       role: "productManager",
       industries: ["saas"],
@@ -1964,6 +1984,7 @@ const newIntegrationSurvey = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
+      id: "new-integration-survey",
       name: t("templates.new_integration_survey_name"),
       role: "productManager",
       industries: ["saas"],
@@ -2003,6 +2024,7 @@ const docsFeedback = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
+      id: "docs-feedback",
       name: t("templates.docs_feedback_name"),
       role: "productManager",
       industries: ["saas"],
@@ -2060,7 +2082,8 @@ const nps = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
-      name: t("templates.nps_name"),
+      id: "nps",
+      name: t("templates.nps_survey_name"),
       role: "customerSuccess",
       industries: ["saas", "eCommerce", "other"],
       channels: ["app", "link", "website"],
@@ -2072,10 +2095,11 @@ const nps = (t: TFunction): TTemplate => {
           name: t("templates.block_1"),
           elements: [
             buildNPSElement({
-              headline: t("templates.nps_question_1_headline"),
-              required: false,
-              lowerLabel: t("templates.nps_question_1_lower_label"),
-              upperLabel: t("templates.nps_question_1_upper_label"),
+              headline: t("templates.nps_survey_question_1_headline"),
+              required: true,
+              lowerLabel: t("templates.nps_survey_question_1_lower_label"),
+              upperLabel: t("templates.nps_survey_question_1_upper_label"),
+              isColorCodingEnabled: true,
             }),
           ],
           t,
@@ -2084,12 +2108,68 @@ const nps = (t: TFunction): TTemplate => {
           name: t("templates.block_2"),
           elements: [
             buildOpenTextElement({
-              headline: t("templates.nps_question_2_headline"),
+              headline: t("templates.nps_survey_question_2_headline"),
               required: false,
               inputType: "text",
             }),
           ],
-          buttonLabel: t("templates.finish"),
+          t,
+        }),
+        buildBlock({
+          name: t("templates.block_3"),
+          elements: [
+            buildOpenTextElement({
+              headline: t("templates.nps_survey_question_3_headline"),
+              required: false,
+              inputType: "text",
+            }),
+          ],
+          t,
+        }),
+      ],
+    },
+    t
+  );
+};
+
+const starRatingSurvey = (t: TFunction): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
+  return buildSurvey(
+    {
+      id: "star-rating",
+      name: t("templates.star_rating_survey_name"),
+      role: "customerSuccess",
+      industries: ["saas", "eCommerce", "other"],
+      channels: ["app", "link", "website"],
+      description: t("workspace.xm-templates.five_star_rating_description"),
+      endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
+      blocks: [
+        buildBlock({
+          name: t("templates.block_1"),
+          elements: [
+            buildRatingElement({
+              range: 5,
+              scale: "star",
+              headline: t("templates.star_rating_survey_question_1_headline"),
+              required: true,
+              lowerLabel: t("templates.star_rating_survey_question_1_lower_label"),
+              upperLabel: t("templates.star_rating_survey_question_1_upper_label"),
+            }),
+          ],
+          t,
+        }),
+        buildBlock({
+          name: t("templates.block_2"),
+          elements: [
+            buildOpenTextElement({
+              headline: t("templates.star_rating_survey_question_3_headline"),
+              required: false,
+              subheader: t("templates.star_rating_survey_question_3_subheader"),
+              placeholder: t("templates.star_rating_survey_question_3_placeholder"),
+              inputType: "text",
+            }),
+          ],
           t,
         }),
       ],
@@ -2102,7 +2182,8 @@ const customerSatisfactionScore = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
-      name: t("templates.csat_name"),
+      id: "csat",
+      name: t("templates.csat_survey_name"),
       role: "customerSuccess",
       industries: ["saas", "eCommerce", "other"],
       channels: ["app", "link", "website"],
@@ -2113,14 +2194,12 @@ const customerSatisfactionScore = (t: TFunction): TTemplate => {
         buildBlock({
           name: t("templates.block_1"),
           elements: [
-            buildRatingElement({
-              range: 10,
-              scale: "number",
-              headline: t("templates.csat_question_1_headline"),
+            buildCsatElement({
+              scale: "smiley",
+              headline: t("templates.csat_survey_question_1_headline"),
               required: true,
-              lowerLabel: t("templates.csat_question_1_lower_label"),
-              upperLabel: t("templates.csat_question_1_upper_label"),
-              isColorCodingEnabled: false,
+              lowerLabel: t("templates.csat_survey_question_1_lower_label"),
+              upperLabel: t("templates.csat_survey_question_1_upper_label"),
             }),
           ],
           t,
@@ -2128,171 +2207,13 @@ const customerSatisfactionScore = (t: TFunction): TTemplate => {
         buildBlock({
           name: t("templates.block_2"),
           elements: [
-            buildMultipleChoiceElement({
-              type: TSurveyElementTypeEnum.MultipleChoiceSingle,
-              headline: t("templates.csat_question_2_headline"),
-              subheader: t("templates.csat_question_2_subheader"),
-              required: true,
-              choices: [
-                t("templates.csat_question_2_choice_1"),
-                t("templates.csat_question_2_choice_2"),
-                t("templates.csat_question_2_choice_3"),
-                t("templates.csat_question_2_choice_4"),
-                t("templates.csat_question_2_choice_5"),
-              ],
-            }),
-          ],
-          t,
-        }),
-        buildBlock({
-          name: t("templates.block_3"),
-          elements: [
-            buildMultipleChoiceElement({
-              type: TSurveyElementTypeEnum.MultipleChoiceMulti,
-              headline: t("templates.csat_question_3_headline"),
-              subheader: t("templates.csat_question_3_subheader"),
-              required: true,
-              choices: [
-                t("templates.csat_question_3_choice_1"),
-                t("templates.csat_question_3_choice_2"),
-                t("templates.csat_question_3_choice_3"),
-                t("templates.csat_question_3_choice_4"),
-                t("templates.csat_question_3_choice_5"),
-                t("templates.csat_question_3_choice_6"),
-                t("templates.csat_question_3_choice_7"),
-                t("templates.csat_question_3_choice_8"),
-                t("templates.csat_question_3_choice_9"),
-                t("templates.csat_question_3_choice_10"),
-              ],
-            }),
-          ],
-          t,
-        }),
-        buildBlock({
-          name: t("templates.block_4"),
-          elements: [
-            buildMultipleChoiceElement({
-              type: TSurveyElementTypeEnum.MultipleChoiceSingle,
-              headline: t("templates.csat_question_4_headline"),
-              subheader: t("templates.csat_question_4_subheader"),
-              required: true,
-              choices: [
-                t("templates.csat_question_4_choice_1"),
-                t("templates.csat_question_4_choice_2"),
-                t("templates.csat_question_4_choice_3"),
-                t("templates.csat_question_4_choice_4"),
-                t("templates.csat_question_4_choice_5"),
-              ],
-            }),
-          ],
-          t,
-        }),
-        buildBlock({
-          name: t("templates.block_5"),
-          elements: [
-            buildMultipleChoiceElement({
-              type: TSurveyElementTypeEnum.MultipleChoiceSingle,
-              headline: t("templates.csat_question_5_headline"),
-              subheader: t("templates.csat_question_5_subheader"),
-              required: true,
-              choices: [
-                t("templates.csat_question_5_choice_1"),
-                t("templates.csat_question_5_choice_2"),
-                t("templates.csat_question_5_choice_3"),
-                t("templates.csat_question_5_choice_4"),
-                t("templates.csat_question_5_choice_5"),
-              ],
-            }),
-          ],
-          t,
-        }),
-        buildBlock({
-          name: t("templates.block_6"),
-          elements: [
-            buildMultipleChoiceElement({
-              type: TSurveyElementTypeEnum.MultipleChoiceSingle,
-              headline: t("templates.csat_question_6_headline"),
-              subheader: t("templates.csat_question_6_subheader"),
-              required: true,
-              choices: [
-                t("templates.csat_question_6_choice_1"),
-                t("templates.csat_question_6_choice_2"),
-                t("templates.csat_question_6_choice_3"),
-                t("templates.csat_question_6_choice_4"),
-                t("templates.csat_question_6_choice_5"),
-              ],
-            }),
-          ],
-          t,
-        }),
-        buildBlock({
-          name: t("templates.block_7"),
-          elements: [
-            buildMultipleChoiceElement({
-              type: TSurveyElementTypeEnum.MultipleChoiceSingle,
-              headline: t("templates.csat_question_7_headline"),
-              subheader: t("templates.csat_question_7_subheader"),
-              required: true,
-              choices: [
-                t("templates.csat_question_7_choice_1"),
-                t("templates.csat_question_7_choice_2"),
-                t("templates.csat_question_7_choice_3"),
-                t("templates.csat_question_7_choice_4"),
-                t("templates.csat_question_7_choice_5"),
-              ],
-            }),
-          ],
-          t,
-        }),
-        buildBlock({
-          name: t("templates.block_8"),
-          elements: [
-            buildMultipleChoiceElement({
-              type: TSurveyElementTypeEnum.MultipleChoiceSingle,
-              headline: t("templates.csat_question_8_headline"),
-              subheader: t("templates.csat_question_8_subheader"),
-              required: true,
-              choices: [
-                t("templates.csat_question_8_choice_1"),
-                t("templates.csat_question_8_choice_2"),
-                t("templates.csat_question_8_choice_3"),
-                t("templates.csat_question_8_choice_4"),
-                t("templates.csat_question_8_choice_5"),
-              ],
-            }),
-          ],
-          t,
-        }),
-        buildBlock({
-          name: t("templates.block_9"),
-          elements: [
-            buildMultipleChoiceElement({
-              type: TSurveyElementTypeEnum.MultipleChoiceSingle,
-              headline: t("templates.csat_question_9_headline"),
-              subheader: t("templates.csat_question_9_subheader"),
-              required: true,
-              choices: [
-                t("templates.csat_question_9_choice_1"),
-                t("templates.csat_question_9_choice_2"),
-                t("templates.csat_question_9_choice_3"),
-                t("templates.csat_question_9_choice_4"),
-                t("templates.csat_question_9_choice_5"),
-              ],
-            }),
-          ],
-          t,
-        }),
-        buildBlock({
-          name: t("templates.block_10"),
-          elements: [
             buildOpenTextElement({
-              headline: t("templates.csat_question_10_headline"),
+              headline: t("templates.csat_survey_question_2_headline"),
               required: false,
-              placeholder: t("templates.csat_question_10_placeholder"),
+              placeholder: t("templates.csat_survey_question_2_placeholder"),
               inputType: "text",
             }),
           ],
-          buttonLabel: t("templates.finish"),
           t,
         }),
       ],
@@ -2316,6 +2237,7 @@ const collectFeedback = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
+      id: "collect-feedback",
       name: t("templates.collect_feedback_name"),
       role: "productManager",
       industries: ["other", "eCommerce"],
@@ -2503,6 +2425,7 @@ const identifyUpsellOpportunities = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
+      id: "identify-upsell-opportunities",
       name: t("templates.identify_upsell_opportunities_name"),
       role: "sales",
       industries: ["saas"],
@@ -2540,6 +2463,7 @@ const prioritizeFeatures = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
+      id: "prioritize-features",
       name: t("templates.prioritize_features_name"),
       role: "productManager",
       industries: ["saas"],
@@ -2607,6 +2531,7 @@ const gaugeFeatureSatisfaction = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
+      id: "gauge-feature-satisfaction",
       name: t("templates.gauge_feature_satisfaction_name"),
       role: "productManager",
       industries: ["saas"],
@@ -2652,6 +2577,7 @@ const marketSiteClarity = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
+      id: "market-site-clarity",
       name: t("templates.market_site_clarity_name"),
       role: "marketing",
       industries: ["saas", "eCommerce", "other"],
@@ -2713,10 +2639,11 @@ const customerEffortScore = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
-      name: t("templates.customer_effort_score_name"),
+      id: "ces",
+      name: t("templates.cess_survey_name"),
       role: "productManager",
-      industries: ["saas"],
-      channels: ["app"],
+      industries: ["saas", "eCommerce", "other"],
+      channels: ["app", "link", "website"],
       description: t("templates.customer_effort_score_description"),
       endings: localSurvey.endings,
       hiddenFields: hiddenFieldsDefault,
@@ -2727,10 +2654,10 @@ const customerEffortScore = (t: TFunction): TTemplate => {
             buildCesElement({
               range: 5,
               scale: "number",
-              headline: t("templates.customer_effort_score_question_1_headline"),
+              headline: t("templates.cess_survey_question_1_headline"),
               required: true,
-              lowerLabel: t("templates.customer_effort_score_question_1_lower_label"),
-              upperLabel: t("templates.customer_effort_score_question_1_upper_label"),
+              lowerLabel: t("templates.cess_survey_question_1_lower_label"),
+              upperLabel: t("templates.cess_survey_question_1_upper_label"),
             }),
           ],
           t,
@@ -2739,13 +2666,111 @@ const customerEffortScore = (t: TFunction): TTemplate => {
           name: t("templates.block_2"),
           elements: [
             buildOpenTextElement({
-              headline: t("templates.customer_effort_score_question_2_headline"),
+              headline: t("templates.cess_survey_question_2_headline"),
               required: true,
-              placeholder: t("templates.customer_effort_score_question_2_placeholder"),
+              placeholder: t("templates.cess_survey_question_2_placeholder"),
               inputType: "text",
             }),
           ],
-          buttonLabel: t("templates.finish"),
+          t,
+        }),
+      ],
+    },
+    t
+  );
+};
+
+const smileysSurvey = (t: TFunction): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
+  return buildSurvey(
+    {
+      id: "smileys",
+      name: t("templates.smileys_survey_name"),
+      role: "customerSuccess",
+      industries: ["saas", "eCommerce", "other"],
+      channels: ["app", "link", "website"],
+      description: t("workspace.xm-templates.smileys_description"),
+      endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
+      blocks: [
+        buildBlock({
+          name: t("templates.block_1"),
+          elements: [
+            buildCsatElement({
+              scale: "smiley",
+              headline: t("templates.smileys_survey_question_1_headline"),
+              required: true,
+              lowerLabel: t("templates.smileys_survey_question_1_lower_label"),
+              upperLabel: t("templates.smileys_survey_question_1_upper_label"),
+            }),
+          ],
+          t,
+        }),
+        buildBlock({
+          name: t("templates.block_2"),
+          elements: [
+            buildOpenTextElement({
+              headline: t("templates.smileys_survey_question_3_headline"),
+              required: false,
+              subheader: t("templates.smileys_survey_question_3_subheader"),
+              placeholder: t("templates.smileys_survey_question_3_placeholder"),
+              inputType: "text",
+            }),
+          ],
+          t,
+        }),
+      ],
+    },
+    t
+  );
+};
+
+const enpsSurvey = (t: TFunction): TTemplate => {
+  const localSurvey = getDefaultSurveyPreset(t);
+  return buildSurvey(
+    {
+      id: "enps",
+      name: t("templates.enps_survey_name"),
+      role: "peopleManager",
+      industries: ["saas", "eCommerce", "other"],
+      channels: ["app", "link", "website"],
+      description: t("workspace.xm-templates.enps_description"),
+      endings: localSurvey.endings,
+      hiddenFields: hiddenFieldsDefault,
+      blocks: [
+        buildBlock({
+          name: t("templates.block_1"),
+          elements: [
+            buildNPSElement({
+              headline: t("templates.enps_survey_question_1_headline"),
+              required: false,
+              lowerLabel: t("templates.enps_survey_question_1_lower_label"),
+              upperLabel: t("templates.enps_survey_question_1_upper_label"),
+              isColorCodingEnabled: true,
+            }),
+          ],
+          t,
+        }),
+        buildBlock({
+          name: t("templates.block_2"),
+          elements: [
+            buildOpenTextElement({
+              headline: t("templates.enps_survey_question_2_headline"),
+              required: false,
+              inputType: "text",
+            }),
+          ],
+          t,
+        }),
+        buildBlock({
+          name: t("templates.block_3"),
+          elements: [
+            buildOpenTextElement({
+              headline: t("templates.enps_survey_question_3_headline"),
+              required: false,
+              inputType: "text",
+            }),
+          ],
           t,
         }),
       ],
@@ -2758,6 +2783,7 @@ const careerDevelopmentSurvey = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
+      id: "career-development-survey",
       name: t("templates.career_development_survey_name"),
       role: "peopleManager",
       industries: ["saas", "eCommerce", "other"],
@@ -2876,6 +2902,7 @@ const professionalDevelopmentSurvey = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
+      id: "professional-development-survey",
       name: t("templates.professional_development_survey_name"),
       role: "peopleManager",
       industries: ["saas", "eCommerce", "other"],
@@ -2987,6 +3014,7 @@ const rateCheckoutExperience = (t: TFunction): TTemplate => {
   const block3Id = createId(); // Pre-generate ID for Block 3 (referenced by Block 1 logic)
   return buildSurvey(
     {
+      id: "rate-checkout-experience",
       name: t("templates.rate_checkout_experience_name"),
       role: "productManager",
       industries: ["eCommerce"],
@@ -3082,6 +3110,7 @@ const measureSearchExperience = (t: TFunction): TTemplate => {
   const block3Id = createId(); // Pre-generate ID for Block 3 (referenced by Block 1 logic)
   return buildSurvey(
     {
+      id: "measure-search-experience",
       name: t("templates.measure_search_experience_name"),
       role: "productManager",
       industries: ["saas", "eCommerce"],
@@ -3177,6 +3206,7 @@ const evaluateContentQuality = (t: TFunction): TTemplate => {
   const block3Id = createId(); // Pre-generate ID for Block 3 (referenced by Block 1 logic)
   return buildSurvey(
     {
+      id: "evaluate-content-quality",
       name: t("templates.evaluate_content_quality_name"),
       role: "marketing",
       industries: ["other"],
@@ -3275,6 +3305,7 @@ const measureTaskAccomplishment = (t: TFunction): TTemplate => {
   const block5Id = createId();
   return buildSurvey(
     {
+      id: "measure-task-accomplishment",
       name: t("templates.measure_task_accomplishment_name"),
       role: "productManager",
       industries: ["saas"],
@@ -3492,6 +3523,7 @@ const identifySignUpBarriers = (t: TFunction): TTemplate => {
   const block9Id = createId();
   return buildSurvey(
     {
+      id: "identify-sign-up-barriers",
       name: t("templates.identify_sign_up_barriers_name"),
       role: "marketing",
       industries: ["saas", "eCommerce", "other"],
@@ -3693,6 +3725,7 @@ const buildProductRoadmap = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
+      id: "build-product-roadmap",
       name: t("templates.build_product_roadmap_name"),
       role: "productManager",
       industries: ["saas"],
@@ -3742,6 +3775,7 @@ const understandPurchaseIntention = (t: TFunction): TTemplate => {
   const block3Id = createId();
   return buildSurvey(
     {
+      id: "understand-purchase-intention",
       name: t("templates.understand_purchase_intention_name"),
       role: "sales",
       industries: ["eCommerce"],
@@ -3818,6 +3852,7 @@ const improveNewsletterContent = (t: TFunction): TTemplate => {
   const block3Id = createId();
   return buildSurvey(
     {
+      id: "improve-newsletter-content",
       name: t("templates.improve_newsletter_content_name"),
       role: "marketing",
       industries: ["eCommerce", "saas", "other"],
@@ -3931,6 +3966,7 @@ const evaluateAProductIdea = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
+      id: "evaluate-a-product-idea",
       name: t("templates.evaluate_a_product_idea_name"),
       role: "productManager",
       industries: ["saas", "other"],
@@ -4081,6 +4117,7 @@ const understandLowEngagement = (t: TFunction): TTemplate => {
   const block6Id = createId();
   return buildSurvey(
     {
+      id: "understand-low-engagement",
       name: t("templates.understand_low_engagement_name"),
       role: "productManager",
       industries: ["saas"],
@@ -4208,6 +4245,7 @@ const employeeWellBeing = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
+      id: "employee-well-being",
       name: t("templates.employee_well_being_name"),
       role: "peopleManager",
       industries: ["saas", "eCommerce", "other"],
@@ -4281,6 +4319,7 @@ const longTermRetentionCheckIn = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
+      id: "long-term-retention-check-in",
       name: t("templates.long_term_retention_check_in_name"),
       role: "peopleManager",
       industries: ["saas", "other"],
@@ -4443,6 +4482,7 @@ const professionalDevelopmentGrowth = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
+      id: "professional-development-growth",
       name: t("templates.professional_development_growth_survey_name"),
       role: "peopleManager",
       industries: ["saas", "eCommerce", "other"],
@@ -4516,6 +4556,7 @@ const recognitionAndReward = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
+      id: "recognition-and-reward",
       name: t("templates.recognition_and_reward_survey_name"),
       role: "peopleManager",
       industries: ["saas", "eCommerce", "other"],
@@ -4589,6 +4630,7 @@ const alignmentAndEngagement = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
+      id: "alignment-and-engagement",
       name: t("templates.alignment_and_engagement_survey_name"),
       role: "peopleManager",
       industries: ["saas", "eCommerce", "other"],
@@ -4661,6 +4703,7 @@ const supportiveWorkCulture = (t: TFunction): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   return buildSurvey(
     {
+      id: "supportive-work-culture",
       name: t("templates.supportive_work_culture_survey_name"),
       role: "peopleManager",
       industries: ["saas", "eCommerce", "other"],
@@ -4754,13 +4797,16 @@ export const templates = (t: TFunction): TTemplate[] => [
   newIntegrationSurvey(t),
   docsFeedback(t),
   nps(t),
+  starRatingSurvey(t),
   customerSatisfactionScore(t),
+  customerEffortScore(t),
+  smileysSurvey(t),
+  enpsSurvey(t),
   collectFeedback(t),
   identifyUpsellOpportunities(t),
   prioritizeFeatures(t),
   gaugeFeatureSatisfaction(t),
   marketSiteClarity(t),
-  customerEffortScore(t),
   rateCheckoutExperience(t),
   measureSearchExperience(t),
   evaluateContentQuality(t),
@@ -4784,6 +4830,7 @@ export const templates = (t: TFunction): TTemplate[] => [
 
 export const customSurveyTemplate = (t: TFunction): TTemplate => {
   return {
+    id: "custom",
     name: t("templates.custom_survey_name"),
     description: t("templates.custom_survey_description"),
     preset: {
@@ -4804,7 +4851,7 @@ export const customSurveyTemplate = (t: TFunction): TTemplate => {
               charLimit: {
                 enabled: false,
               },
-            } as TSurveyOpenTextElement,
+            },
           ],
           // Button labels at block level with default key for i18n support
           buttonLabel: createI18nString(t("templates.next"), []),

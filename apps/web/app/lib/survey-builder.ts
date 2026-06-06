@@ -121,6 +121,7 @@ export const getDefaultSurveyPreset = (t: TFunction): TTemplate["preset"] => {
  */
 export const buildSurvey = (
   config: {
+    id: string;
     name: string;
     industries: ("eCommerce" | "saas" | "other")[];
     channels: ("link" | "app" | "website")[];
@@ -134,6 +135,7 @@ export const buildSurvey = (
 ): TTemplate => {
   const localSurvey = getDefaultSurveyPreset(t);
   return {
+    id: config.id,
     name: config.name,
     industries: config.industries,
     channels: config.channels,

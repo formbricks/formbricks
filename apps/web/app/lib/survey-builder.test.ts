@@ -60,6 +60,7 @@ describe("Survey Builder", () => {
 
     test("buildSurvey returns built survey with overridden preset properties", () => {
       const config = {
+        id: "custom-survey",
         name: "Custom Survey",
         role: "productManager" as const,
         industries: ["saas" as const],
@@ -73,6 +74,7 @@ describe("Survey Builder", () => {
       const survey = buildSurvey(config, mockT);
 
       // role, industries, channels, description
+      expect(survey.id).toBe(config.id);
       expect(survey.role).toBe(config.role);
       expect(survey.industries).toEqual(config.industries);
       expect(survey.channels).toEqual(config.channels);
