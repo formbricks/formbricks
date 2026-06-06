@@ -2331,6 +2331,7 @@ checksums:
     workspace/settings/billing/custom_plan_description: 53faa38123cc74e5adc7e59630641d66
     workspace/settings/billing/custom_plan_title: f3b71be0d1cd4f81a177ada040119f30
     workspace/settings/billing/failed_to_start_trial: 43e28223f51af382042b3a753d9e4380
+    workspace/settings/billing/go_to_billing: cd3ec8ecd7af2e724b44a61b29517ee7
     workspace/settings/billing/keep_current_plan: 57ac15ffa2c29ac364dd405669eeb7f6
     workspace/settings/billing/manage_billing_details: 40448f0b5ed4b3bb1d864ba6e1bb6a3b
     workspace/settings/billing/monthly: 818f1192e32bb855597f930d3e78806e
@@ -2364,21 +2365,20 @@ checksums:
     workspace/settings/billing/plan_unknown: 5cd12b882fe90320f93130c1b50e2e32
     workspace/settings/billing/remove_branding: 88b6b818750e478bfa153b33dd658280
     workspace/settings/billing/retry_setup: bef560e42fa8798271fea150476791e0
-    workspace/settings/billing/select_plan_cta: e346e4ed7d138dcc873db187922369da
+    workspace/settings/billing/select_plan_cta: f5d80c9a93a431eed25a714a8e39fc9f
+    workspace/settings/billing/select_plan_cta_variant_b: f44c6688c4ff83694b0de0be29ba6a8e
+    workspace/settings/billing/select_plan_cta_variant_c: ec46b4ca1790074e4812ad351784efa3
+    workspace/settings/billing/select_plan_cta_variant_d: 5c783951b0100a168bdd2161ff294833
     workspace/settings/billing/select_plan_feature_1: 030739fb52448dba74b47e900500c4e3
     workspace/settings/billing/select_plan_feature_2: cc2e5907d2241a589ff6e995efb1f050
     workspace/settings/billing/select_plan_feature_3: 64ccc8de5813e88972d8260103bc8dcb
-    workspace/settings/billing/select_plan_header: f2c3791c1fb2970617ec0f2d243a931b
-    workspace/settings/billing/select_plan_skip: bb8bbd19353e6d40cfb5144d9ea6fe86
-    workspace/settings/billing/select_plan_subheader: 01c70aa6e1001815a9a11951394923ca
-    workspace/settings/billing/select_plan_variant_b_cta: f5d80c9a93a431eed25a714a8e39fc9f
-    workspace/settings/billing/select_plan_variant_b_header: 8c2e2e23f95b6cb342e8d54f67ed2a97
-    workspace/settings/billing/select_plan_variant_b_skip: 75e5fcff10a00796dbca6ead0148c72c
-    workspace/settings/billing/select_plan_variant_b_subheader: 949f452eab5897af335a18ae0343086e
-    workspace/settings/billing/select_plan_variant_c_cta: 405a43f614903e35445005603b0507ed
-    workspace/settings/billing/select_plan_variant_c_header: 2f319a63297fbd513ccd4225f9393885
-    workspace/settings/billing/select_plan_variant_c_skip: b1b90e0acbda206bbd20c10eafc3f7d4
-    workspace/settings/billing/select_plan_variant_c_subheader: e50313bfaab8bfcf36d45a952bb3943a
+    workspace/settings/billing/select_plan_header: 8c2e2e23f95b6cb342e8d54f67ed2a97
+    workspace/settings/billing/select_plan_skip: 75e5fcff10a00796dbca6ead0148c72c
+    workspace/settings/billing/select_plan_subheader: 949f452eab5897af335a18ae0343086e
+    workspace/settings/billing/select_plan_variant_b_feature_1: fd8ff2540674c7034d9d84e23153f15b
+    workspace/settings/billing/select_plan_variant_b_feature_2: 5e11742e97a979312ca4bee52f61e87c
+    workspace/settings/billing/select_plan_variant_b_feature_3: 611b5246b7a6556e39b09d9411792ab3
+    workspace/settings/billing/select_plan_variant_b_feature_4: 765a4db9fdf1523dd53f3971e964c8dd
     workspace/settings/billing/status_trialing: 4fd32760caf3bd7169935b0a6d2b5b67
     workspace/settings/billing/stripe_setup_incomplete: fa6d6e295dd14b73c17ac8678205109b
     workspace/settings/billing/stripe_setup_incomplete_description: 9f28a542729cc719bca2ca08e7406284
@@ -2953,7 +2953,6 @@ checksums:
     workspace/surveys/edit/hidden_field_used_in_recall: 15d959528c3e817dce95640173d5d6a8
     workspace/surveys/edit/hidden_field_used_in_recall_ending_card: ea0d0b12ca1c9400690658cb1b537025
     workspace/surveys/edit/hidden_field_used_in_recall_welcome: bb498b6ee69c6311a3977d454866b610
-    workspace/surveys/edit/hidden_fields_description: e9221cd00ae2944602c19ffbc82358a4
     workspace/surveys/edit/hide_back_button: 91355864b3032c3f57689074e2173544
     workspace/surveys/edit/hide_back_button_description: caaa30cf43c5611577933a1c9f44b9ee
     workspace/surveys/edit/hide_block_settings: c24c3d3892c251792e297cdc036d2fde
@@ -3255,7 +3254,6 @@ checksums:
     workspace/surveys/edit/variable_used_in_recall: 1979c231569117297d1a19972b349617
     workspace/surveys/edit/variable_used_in_recall_ending_card: e6ab9a124985708dd77067c014b7c514
     workspace/surveys/edit/variable_used_in_recall_welcome: 60b995389b488366d8f6f53df35b6d8d
-    workspace/surveys/edit/variables_description: 4a55faa279acc675228f54dccf63db6a
     workspace/surveys/edit/verify_email_before_submission: c05d345dc35f2d33839e4cfd72d11eb2
     workspace/surveys/edit/verify_email_before_submission_description: 434ab3ee6134367513b633a9d4f7d772
     workspace/surveys/edit/visibility_and_recontact: c27cb4ff3a4262266902a335c3ad5d84
