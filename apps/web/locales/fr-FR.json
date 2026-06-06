@@ -2427,6 +2427,7 @@
         "custom_plan_description": "Votre organisation dispose d'une configuration de facturation personnalisée. Tu peux toujours basculer vers l'une des formules standard ci-dessous.",
         "custom_plan_title": "Formule personnalisée",
         "failed_to_start_trial": "Échec du démarrage de l'essai. Réessaye.",
+        "go_to_billing": "Accéder à la facturation",
         "keep_current_plan": "Conserver la formule actuelle",
         "manage_billing_details": "Gérer les détails de la carte et les factures",
         "monthly": "Mensuel",

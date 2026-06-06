@@ -2427,6 +2427,7 @@
         "custom_plan_description": "あなたの組織はカスタム請求設定を利用しています。以下の標準プランに切り替えることもできます。",
         "custom_plan_title": "カスタムプラン",
         "failed_to_start_trial": "トライアルの開始に失敗しました。もう一度お試しください。",
+        "go_to_billing": "請求情報へ移動",
         "keep_current_plan": "現在のプランを継続",
         "manage_billing_details": "カード情報と請求書を管理",
         "monthly": "月払い",

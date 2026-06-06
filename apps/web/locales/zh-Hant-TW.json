@@ -2427,6 +2427,7 @@
         "custom_plan_description": "您的組織使用自訂計費設定。您仍可切換至下方的標準方案。",
         "custom_plan_title": "自訂方案",
         "failed_to_start_trial": "無法開始試用。請再試一次。",
+        "go_to_billing": "前往帳單",
         "keep_current_plan": "保留目前方案",
         "manage_billing_details": "管理卡片資訊與發票",
         "monthly": "每月",

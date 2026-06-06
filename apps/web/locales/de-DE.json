@@ -2427,6 +2427,7 @@
         "custom_plan_description": "Deine Organisation nutzt ein individuelles Abrechnungsmodell. Du kannst trotzdem zu einem der Standardpläne unten wechseln.",
         "custom_plan_title": "Individueller Plan",
         "failed_to_start_trial": "Testphase konnte nicht gestartet werden. Bitte versuche es erneut.",
+        "go_to_billing": "Zur Abrechnung",
         "keep_current_plan": "Aktuellen Plan beibehalten",
         "manage_billing_details": "Kartendaten & Rechnungen verwalten",
         "monthly": "Monatlich",

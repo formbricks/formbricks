@@ -2427,6 +2427,7 @@
         "custom_plan_description": "Organizația ta folosește o configurație de facturare personalizată. Poți totuși să treci la unul dintre planurile standard de mai jos.",
         "custom_plan_title": "Plan personalizat",
         "failed_to_start_trial": "Nu am putut porni perioada de probă. Te rugăm să încerci din nou.",
+        "go_to_billing": "Mergi la Facturare",
         "keep_current_plan": "Păstrează planul curent",
         "manage_billing_details": "Gestionează detaliile cardului și facturile",
         "monthly": "Lunar",

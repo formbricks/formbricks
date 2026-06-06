@@ -2427,6 +2427,7 @@
         "custom_plan_description": "Je organisatie heeft een aangepaste factureringsopzet. Je kunt nog steeds overstappen naar een van de standaard abonnementen hieronder.",
         "custom_plan_title": "Aangepast abonnement",
         "failed_to_start_trial": "Proefperiode starten mislukt. Probeer het opnieuw.",
+        "go_to_billing": "Ga naar Facturering",
         "keep_current_plan": "Huidig abonnement behouden",
         "manage_billing_details": "Kaartgegevens en facturen beheren",
         "monthly": "Maandelijks",

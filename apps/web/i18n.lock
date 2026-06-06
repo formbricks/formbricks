@@ -2326,6 +2326,7 @@ checksums:
     workspace/settings/billing/custom_plan_description: 53faa38123cc74e5adc7e59630641d66
     workspace/settings/billing/custom_plan_title: f3b71be0d1cd4f81a177ada040119f30
     workspace/settings/billing/failed_to_start_trial: 43e28223f51af382042b3a753d9e4380
+    workspace/settings/billing/go_to_billing: cd3ec8ecd7af2e724b44a61b29517ee7
     workspace/settings/billing/keep_current_plan: 57ac15ffa2c29ac364dd405669eeb7f6
     workspace/settings/billing/manage_billing_details: 40448f0b5ed4b3bb1d864ba6e1bb6a3b
     workspace/settings/billing/monthly: 818f1192e32bb855597f930d3e78806e

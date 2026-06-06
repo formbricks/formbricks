@@ -2427,6 +2427,7 @@
         "custom_plan_description": "Kuruluşunuz özel bir fatura yapılandırmasına sahip. Yine de aşağıdaki standart planlardan birine geçebilirsin.",
         "custom_plan_title": "Özel plan",
         "failed_to_start_trial": "Deneme başlatılamadı. Lütfen tekrar dene.",
+        "go_to_billing": "Faturaya Git",
         "keep_current_plan": "Mevcut planı koru",
         "manage_billing_details": "Kart bilgilerini ve faturaları yönet",
         "monthly": "Aylık",
