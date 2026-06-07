@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
+  applyPendingUpgradeFromSetupCheckout,
   createPaidPlanCheckoutSession,
   ensureCloudStripeSetupForOrganization,
   ensureStripeCustomerForOrganization,
@@ -1982,5 +1983,128 @@ describe("organization-billing", () => {
 
     expect(mocks.subscriptionsCancel).toHaveBeenCalledWith("sub_hobby", { prorate: false });
     expect(mocks.subscriptionsCreate).not.toHaveBeenCalled();
+  });
+
+  test("applyPendingUpgradeFromSetupCheckout upgrades hobby to pro", async () => {
+    mocks.getCloudPlanFromProduct.mockImplementation((product: { id?: string } | string) => {
+      const productId = typeof product === "string" ? product : product.id;
+      return productId === "prod_hobby" ? "hobby" : "pro";
+    });
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_1",
+          status: "active",
+          billing_cycle_anchor: 1739923200,
+          cancel_at_period_end: false,
+          schedule: null,
+          items: {
+            data: [
+              {
+                id: "si_hobby_base",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_hobby_monthly",
+                  metadata: {
+                    formbricks_plan: "hobby",
+                    formbricks_price_kind: "base",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_hobby", metadata: { formbricks_plan: "hobby" }, active: true },
+                  recurring: { usage_type: "licensed", interval: "month" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: {
+        workspaces: 1,
+        monthly: {
+          responses: 500,
+        },
+      },
+      usageCycleAnchor: new Date(),
+      stripe: {
+        subscriptionId: "sub_1",
+        plan: "hobby",
+        interval: "monthly",
+        hasPaymentMethod: false,
+      },
+    });
+
+    const applied = await applyPendingUpgradeFromSetupCheckout({
+      organizationId: "org_1",
+      customerId: "cus_1",
+      targetPlan: "pro",
+      targetInterval: "monthly",
+    });
+
+    expect(applied).toBe(true);
+    expect(mocks.subscriptionsUpdate).toHaveBeenCalledWith(
+      "sub_1",
+      expect.objectContaining({
+        payment_behavior: "error_if_incomplete",
+        proration_behavior: "always_invoice",
+      })
+    );
+  });
+
+  test("applyPendingUpgradeFromSetupCheckout returns false without a valid target plan", async () => {
+    const applied = await applyPendingUpgradeFromSetupCheckout({
+      organizationId: "org_1",
+      customerId: "cus_1",
+      targetPlan: undefined,
+      targetInterval: "monthly",
+    });
+
+    expect(applied).toBe(false);
+    expect(mocks.subscriptionsUpdate).not.toHaveBeenCalled();
+  });
+
+  test("applyPendingUpgradeFromSetupCheckout skips downgrades", async () => {
+    mocks.getCloudPlanFromProduct.mockReturnValue("pro");
+    mocks.subscriptionsList.mockResolvedValue({
+      data: [
+        {
+          id: "sub_1",
+          status: "active",
+          billing_cycle_anchor: 1739923200,
+          cancel_at_period_end: false,
+          schedule: null,
+          items: {
+            data: [
+              {
+                id: "si_pro_base",
+                current_period_end: 1742515200,
+                price: {
+                  id: "price_pro_monthly",
+                  metadata: {
+                    formbricks_plan: "pro",
+                    formbricks_price_kind: "base",
+                    formbricks_interval: "monthly",
+                  },
+                  product: { id: "prod_pro", metadata: { formbricks_plan: "pro" }, active: true },
+                  recurring: { usage_type: "licensed", interval: "month" },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+
+    const applied = await applyPendingUpgradeFromSetupCheckout({
+      organizationId: "org_1",
+      customerId: "cus_1",
+      targetPlan: "hobby",
+      targetInterval: "monthly",
+    });
+
+    expect(applied).toBe(false);
+    expect(mocks.subscriptionsUpdate).not.toHaveBeenCalled();
   });
 });

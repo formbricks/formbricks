@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 import { logger } from "@formbricks/logger";
 import {
+  applyPendingUpgradeFromSetupCheckout,
   findOrganizationIdByStripeCustomerId,
   reconcileCloudStripeSubscriptionsForOrganization,
   syncOrganizationBillingFromStripe,
@@ -57,6 +58,16 @@ const handleSetupCheckoutCompleted = async (
   if (subscriptionId) {
     await stripe.subscriptions.update(subscriptionId, {
       default_payment_method: paymentMethodId,
+    });
+  }
+
+  const organizationId = session.metadata?.organizationId;
+  if (organizationId && customerId) {
+    await applyPendingUpgradeFromSetupCheckout({
+      organizationId,
+      customerId,
+      targetPlan: session.metadata?.targetPlan,
+      targetInterval: session.metadata?.targetInterval,
     });
   }
 };
