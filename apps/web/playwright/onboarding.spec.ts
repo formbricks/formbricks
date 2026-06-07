@@ -1,4 +1,3 @@
-import { expect } from "@playwright/test";
 import { test } from "./lib/fixtures";
 
 test.describe("Onboarding Flow Test", async () => {
@@ -13,7 +12,6 @@ test.describe("Onboarding Flow Test", async () => {
     await page.getByRole("button", { name: "Save & Close" }).click();
 
     await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/);
-    await expect(page).toHaveURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/);
   });
 
   test("use template", async ({ page, users }) => {
@@ -30,6 +28,5 @@ test.describe("Onboarding Flow Test", async () => {
     await page.getByRole("button", { name: "Save & Close" }).click();
 
     await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/);
-    await expect(page).toHaveURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/);
   });
 });

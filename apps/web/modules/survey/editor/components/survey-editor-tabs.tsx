@@ -73,9 +73,9 @@ export const SurveyEditorTabs = ({
     return tabs.filter((tab) => tab.id !== "styling");
   }, [isStylingTabVisible, t, hasLanguageErrors]);
 
-  const cxModeHiddenTabIds: TSurveyEditorTabs[] = ["settings", "language", "followUps"];
+  const cxModeHiddenTabIds = new Set<TSurveyEditorTabs>(["settings", "language", "followUps"]);
   const tabsToDisplay = isCxMode
-    ? tabsComputed.filter((tab) => !cxModeHiddenTabIds.includes(tab.id))
+    ? tabsComputed.filter((tab) => !cxModeHiddenTabIds.has(tab.id))
     : tabsComputed;
 
   return (

@@ -77,7 +77,7 @@ export const getOnboardingWorkspaceContext = async ({
   const workspace = await getOnboardingWorkspace(userId, organizationId);
 
   if (!workspace) {
-    throw new ResourceNotFoundError("Workspace", organizationId);
+    throw new ResourceNotFoundError("Onboarding workspace for organization", organizationId);
   }
 
   return {

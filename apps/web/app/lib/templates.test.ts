@@ -4,9 +4,26 @@ import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { XM_TEMPLATE_IDS } from "@/app/(app)/(onboarding)/organizations/[organizationId]/workspaces/new/templates/lib/xm-template-ids";
 import { templates } from "./templates";
 
-const mockT = ((key: string): string => key) as unknown as TFunction;
+const mockTranslations: Record<string, string> = {
+  "templates.nps_survey_name": "NPS Survey",
+  "workspace.xm-templates.five_star_rating": "5-Star Rating",
+  "workspace.xm-templates.csat": "CSAT",
+  "templates.cess_survey_name": "CES Survey",
+  "templates.smileys_survey_name": "Smileys Survey",
+  "templates.enps_survey_name": "eNPS Survey",
+  "templates.csat_survey_name": "$[workspaceName] CSAT",
+  "templates.star_rating_survey_name": "$[workspaceName]'s Rating Survey",
+};
+
+const mockT = ((key: string): string => mockTranslations[key] ?? key) as unknown as TFunction;
 
 describe("templates", () => {
+  test("uses unique ids across the full catalog", () => {
+    const catalog = templates(mockT);
+
+    expect(new Set(catalog.map((template) => template.id)).size).toBe(catalog.length);
+  });
+
   test("includes all XM onboarding templates in the main catalog", () => {
     const catalog = templates(mockT);
 

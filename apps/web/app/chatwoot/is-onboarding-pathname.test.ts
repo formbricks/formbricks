@@ -13,6 +13,11 @@ describe("isOnboardingPathname", () => {
     expect(isOnboardingPathname("/organizations/org1/landing")).toBe(true);
   });
 
+  test("handles trailing slashes", () => {
+    expect(isOnboardingPathname("/organizations/org1/workspaces/new/")).toBe(true);
+    expect(isOnboardingPathname("/organizations/org1/landing/")).toBe(true);
+  });
+
   test("returns false outside onboarding", () => {
     expect(isOnboardingPathname("/workspaces/ws1/surveys")).toBe(false);
     expect(isOnboardingPathname("/organizations/org1")).toBe(false);

@@ -1,9 +1,8 @@
 import "server-only";
 import { TUserLocale } from "@formbricks/types/user";
-import { DEFAULT_BRAND_COLOR } from "./brand-color";
 import { env } from "./env";
 
-export { DEFAULT_BRAND_COLOR };
+export { DEFAULT_BRAND_COLOR } from "./brand-color";
 
 export const IS_FORMBRICKS_CLOUD = env.IS_FORMBRICKS_CLOUD === "1";
 

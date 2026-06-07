@@ -29,7 +29,7 @@ const Page = async (props: AIOnboardingPageProps) => {
 
   await redirectIfOnboardingComplete(workspace.id);
 
-  const { isAIAvailable, aiUnavailableReason } = await getSurveyAIAvailability(params.organizationId, {
+  const { isAIAvailable } = await getSurveyAIAvailability(params.organizationId, {
     isAISmartToolsEnabled,
     isAISmartToolsEntitled,
   });
@@ -42,12 +42,7 @@ const Page = async (props: AIOnboardingPageProps) => {
 
   return (
     <div className="flex min-h-full min-w-full flex-col items-center justify-center">
-      <CreateSurveyWithAIOnboarding
-        workspaceId={workspace.id}
-        language={locale}
-        isAIAvailable={isAIAvailable}
-        aiUnavailableReason={aiUnavailableReason}
-      />
+      <CreateSurveyWithAIOnboarding workspaceId={workspace.id} language={locale} />
     </div>
   );
 };

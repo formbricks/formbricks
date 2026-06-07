@@ -13,7 +13,7 @@ export const ZTemplateRole = z.enum([
 export type TTemplateRole = z.infer<typeof ZTemplateRole>;
 
 export const ZTemplate = z.object({
-  id: z.string(),
+  id: z.string().min(1),
   name: z.string(),
   description: z.string(),
   icon: z.any().optional(),

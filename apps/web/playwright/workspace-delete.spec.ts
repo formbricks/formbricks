@@ -49,6 +49,6 @@ test("requires workspace name confirmation before deleting a workspace", async (
   await dialog.getByRole("button", { name: "Delete", exact: true }).click();
 
   await expect(page.getByText("Workspace deleted successfully", { exact: true }).first()).toBeVisible();
-  await page.waitForURL(new RegExp(`/workspaces/${remainingWorkspace.id}`));
+  await page.waitForURL(`**/workspaces/${remainingWorkspace.id}**`);
   await expect.poll(async () => prisma.workspace.findUnique({ where: { id: user.workspaceId! } })).toBeNull();
 });

@@ -73,6 +73,10 @@ test.describe("API Tests", () => {
       expect(createdSurvey).toBeDefined();
       expect(responseBody.data.length).toBeGreaterThanOrEqual(1);
 
+      if (!createdSurvey) {
+        throw new Error("Expected created survey to be defined");
+      }
+
       surveyId = createdSurvey.id;
     });
 

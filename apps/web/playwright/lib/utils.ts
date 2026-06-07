@@ -41,7 +41,7 @@ const getWorkspaceSurveyLocation = (url: URL): WorkspaceSurveyLocation | null =>
 };
 
 const SURVEY_EDITOR_URL = /\/workspaces\/[^/]+\/surveys\/[^/]+\/edit(\?.*)?$/;
-const ONBOARDING_SURVEY_URL = /\/organizations\/[^/]+\/workspaces\/new\/survey/;
+const ONBOARDING_SURVEY_URL = /\/organizations\/[^/]+\/workspaces\/new\/survey(\?.*)?$/;
 
 export async function startSurveyFromScratch(
   page: Page,
@@ -67,6 +67,7 @@ export async function startSurveyFromScratch(
 
   if (await emptyStateCard.isVisible().catch(() => false)) {
     await emptyStateCard.click();
+    await createSurveyButton.waitFor({ state: "visible" });
     await createSurveyButton.click();
     await page.waitForURL(editUrlPattern);
     return;
@@ -80,6 +81,7 @@ export async function startSurveyFromScratch(
 export async function gotoSurveyTemplates(page: Page, workspaceId: string): Promise<void> {
   await page.goto(`/workspaces/${workspaceId}/surveys/templates`, { waitUntil: "domcontentloaded" });
   await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/templates/);
+  await page.getByRole("heading", { name: /templates/i }).waitFor({ state: "visible" });
 }
 
 export async function gotoSurveyList(page: Page): Promise<string> {

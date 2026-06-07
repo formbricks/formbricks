@@ -63,7 +63,7 @@ export const useCreateSurveyWithAI = ({
   );
 
   const handleGenerate = useCallback(
-    async (event: React.FormEvent) => {
+    async (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
 
       if (!canCreate) {
