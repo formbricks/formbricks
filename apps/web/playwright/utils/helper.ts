@@ -3,7 +3,6 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { Page } from "playwright";
 import { logger } from "@formbricks/logger";
-import { TWorkspaceConfigChannel } from "@formbricks/types/workspace";
 import { CreateSurveyParams, CreateSurveyWithLogicParams } from "@/playwright/utils/mock";
 
 const MOCK_STORAGE_UPLOAD_PATH = "/__playwright__/mock-storage-upload";
@@ -313,31 +312,14 @@ export const uploadImageChoicesForPictureSelection = async (page: Page) => {
   }
 };
 
-export const finishOnboarding = async (
-  page: Page,
-  workspaceChannel: TWorkspaceConfigChannel = "website"
-): Promise<void> => {
-  await page.waitForURL(/\/organizations\/[^/]+\/workspaces\/new\/mode/);
+export const finishOnboarding = async (page: Page): Promise<void> => {
+  await page.waitForURL(/\/organizations\/[^/]+\/workspaces\/new\/survey/);
+  await page.getByRole("button", { name: "Start from scratch" }).click();
 
-  await page.getByRole("button", { name: "Formbricks Surveys Multi-" }).click();
+  await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/edit(\?.*)mode=cx/);
+  await page.getByRole("button", { name: "Save & Close" }).click();
 
-  if (workspaceChannel === "app") {
-    await page.getByRole("button", { name: "In-product surveys" }).click();
-  } else {
-    await page.getByRole("button", { name: "Link & email surveys" }).click();
-  }
-
-  // await page.getByRole("button", { name: "Proven methods SaaS" }).click();
-  await page.getByPlaceholder("e.g. Formbricks").click();
-  await page.getByPlaceholder("e.g. Formbricks").fill("My Workspace");
-  await page.locator("#form-next-button").click();
-
-  if (workspaceChannel !== "link") {
-    await page.getByRole("button", { name: "I will do it later" }).click();
-  }
-
-  await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
-  await expect(page.getByText("My Workspace")).toBeVisible();
+  await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/summary(\?.*)?$/);
 };
 
 export const signupUsingInviteToken = async (page: Page, name: string, email: string, password: string) => {

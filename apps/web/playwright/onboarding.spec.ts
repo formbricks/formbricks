@@ -3,7 +3,7 @@ import { test } from "./lib/fixtures";
 
 test.describe("Onboarding Flow Test", async () => {
   test("start from scratch", async ({ page, users }) => {
-    const user = await users.create({ withoutWorkspace: true });
+    const user = await users.create({ skipSurveySeed: true });
     await user.login();
 
     await page.waitForURL(/\/organizations\/[^/]+\/workspaces\/new\/survey/);
@@ -17,14 +17,14 @@ test.describe("Onboarding Flow Test", async () => {
   });
 
   test("use template", async ({ page, users }) => {
-    const user = await users.create({ withoutWorkspace: true });
+    const user = await users.create({ skipSurveySeed: true });
     await user.login();
 
     await page.waitForURL(/\/organizations\/[^/]+\/workspaces\/new\/survey/);
-    await page.getByRole("button", { name: "Use a quick template" }).click();
+    await page.getByRole("button", { name: "Use a template" }).click();
 
     await page.waitForURL(/\/organizations\/[^/]+\/workspaces\/new\/templates/);
-    await page.getByRole("button", { name: "NPS Net Promoter Score" }).click();
+    await page.getByRole("button", { name: "NPS" }).click();
 
     await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/edit(\?.*)mode=cx/);
     await page.getByRole("button", { name: "Save & Close" }).click();
