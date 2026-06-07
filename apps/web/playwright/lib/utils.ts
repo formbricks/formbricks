@@ -81,7 +81,7 @@ export async function startSurveyFromScratch(
 export async function gotoSurveyTemplates(page: Page, workspaceId: string): Promise<void> {
   await page.goto(`/workspaces/${workspaceId}/surveys/templates`, { waitUntil: "domcontentloaded" });
   await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/templates/);
-  await page.getByRole("heading", { name: /templates/i }).waitFor({ state: "visible" });
+  await page.getByRole("heading", { name: /Create a new survey/i }).waitFor({ state: "visible" });
 }
 
 export async function gotoSurveyList(page: Page): Promise<string> {
