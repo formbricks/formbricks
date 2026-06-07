@@ -162,7 +162,8 @@ export const PricingTable = ({
   const hasPaymentMethod = organization.billing.stripe?.hasPaymentMethod === true;
   const existingSubscriptionId = organization.billing.stripe?.subscriptionId ?? null;
   const canShowSubscriptionButton = hasBillingRights && !!organization.billing.stripeCustomerId;
-  const showPlanSelector = !isStripeSetupIncomplete && (!isTrialing || hasPaymentMethod);
+  const isTrialingWithoutPayment = isTrialing && !hasPaymentMethod;
+  const showPlanSelector = !isStripeSetupIncomplete;
   const usageCycleLabel = `${formatDateForDisplay(usageCycleStart, locale, {
     year: "numeric",
     month: "short",
@@ -200,8 +201,14 @@ export const PricingTable = ({
         ),
         description: t("workspace.settings.billing.plan_hobby_description"),
         features: [
-          t("workspace.settings.billing.plan_hobby_feature_workspaces"),
           t("workspace.settings.billing.plan_hobby_feature_responses"),
+          t("workspace.settings.billing.plan_hobby_feature_workspaces"),
+          t("workspace.settings.billing.plan_hobby_feature_surveys"),
+          t("workspace.settings.billing.plan_hobby_feature_question_types"),
+          t("workspace.settings.billing.plan_hobby_feature_logic"),
+          t("workspace.settings.billing.plan_hobby_feature_partial"),
+          t("workspace.settings.billing.plan_hobby_feature_file_uploads"),
+          t("workspace.settings.billing.plan_hobby_feature_api"),
         ],
       },
       {
@@ -215,8 +222,14 @@ export const PricingTable = ({
         description: t("workspace.settings.billing.plan_pro_description"),
         features: [
           t("workspace.settings.billing.plan_feature_everything_in_hobby"),
-          t("workspace.settings.billing.plan_pro_feature_workspaces"),
           t("workspace.settings.billing.plan_pro_feature_responses"),
+          t("workspace.settings.billing.plan_pro_feature_workspaces"),
+          t("workspace.settings.billing.plan_pro_feature_unlimited_seats"),
+          t("workspace.settings.billing.plan_pro_feature_hide_branding"),
+          t("workspace.settings.billing.plan_pro_feature_contacts"),
+          t("workspace.settings.billing.plan_pro_feature_integrations"),
+          t("workspace.settings.billing.plan_pro_feature_sdks"),
+          t("workspace.settings.billing.plan_pro_feature_ai_translations"),
         ],
       },
       {
@@ -230,8 +243,12 @@ export const PricingTable = ({
         description: t("workspace.settings.billing.plan_scale_description"),
         features: [
           t("workspace.settings.billing.plan_feature_everything_in_pro"),
-          t("workspace.settings.billing.plan_scale_feature_workspaces"),
           t("workspace.settings.billing.plan_scale_feature_responses"),
+          t("workspace.settings.billing.plan_scale_feature_workspaces"),
+          t("workspace.settings.billing.plan_scale_feature_rbac"),
+          t("workspace.settings.billing.plan_scale_feature_quota"),
+          t("workspace.settings.billing.plan_scale_feature_feedback"),
+          t("workspace.settings.billing.plan_scale_feature_security"),
         ],
       },
     ];
@@ -388,6 +405,15 @@ export const PricingTable = ({
   const getCtaLabel = (plan: TStandardPlan, interval: TCloudBillingInterval) => {
     const isCurrentSelection =
       currentCloudPlan === plan && (plan === "hobby" || currentBillingInterval === interval);
+
+    if (isCurrentSelection && isTrialingWithoutPayment) {
+      return t("workspace.settings.billing.continue_with_plan_after_trial");
+    }
+
+    if (isTrialingWithoutPayment && plan === "hobby") {
+      return t("workspace.settings.billing.downgrade_to_hobby");
+    }
+
     if (isCurrentSelection) {
       return t("workspace.settings.billing.current_plan_cta");
     }
@@ -423,10 +449,18 @@ export const PricingTable = ({
             </TrialAlert>
           ) : (
             <TrialAlert trialDaysRemaining={trialDaysRemaining}>
-              <AlertDescription>{t("workspace.settings.billing.trial_alert_description")}</AlertDescription>
+              <AlertDescription>
+                {t("workspace.settings.billing.trial_alert_description", {
+                  price: formatMoney(
+                    billingCatalog.pro.monthly.currency,
+                    billingCatalog.pro.monthly.unitAmount,
+                    locale
+                  ),
+                })}
+              </AlertDescription>
               {hasBillingRights && (
                 <AlertButton onClick={() => void openTrialPaymentCheckout()}>
-                  {t("workspace.settings.billing.add_payment_method")}
+                  {t("workspace.settings.billing.continue_with_plan_after_trial")}
                 </AlertButton>
               )}
             </TrialAlert>
@@ -477,7 +511,7 @@ export const PricingTable = ({
           title={t("workspace.settings.billing.subscription")}
           description={t("workspace.settings.billing.subscription_description")}
           buttonInfo={
-            canShowSubscriptionButton
+            canShowSubscriptionButton && (hasPaymentMethod || !isTrialing)
               ? {
                   text: hasPaymentMethod
                     ? t("workspace.settings.billing.manage_billing_details")
@@ -579,18 +613,16 @@ export const PricingTable = ({
                   const isMissingPaymentMethodUpgrade =
                     hasBillingRights &&
                     !isStripeSetupIncomplete &&
-                    !isTrialing &&
                     !isCurrentSelection &&
                     !isPendingSelection &&
                     !hasPaymentMethod &&
                     planCard.plan !== "hobby";
                   const isDisabled =
                     !hasBillingRights ||
-                    isCurrentSelection ||
+                    (isCurrentSelection && !isTrialingWithoutPayment) ||
                     isPendingSelection ||
                     isStripeSetupIncomplete ||
-                    isMissingPaymentMethodUpgrade ||
-                    (isTrialing && !hasPaymentMethod);
+                    isMissingPaymentMethodUpgrade;
 
                   return (
                     <div
