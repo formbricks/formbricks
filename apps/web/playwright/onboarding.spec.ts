@@ -24,7 +24,7 @@ test.describe("Onboarding Flow Test", async () => {
     await page.getByRole("button", { name: "Use a template" }).click();
 
     await page.waitForURL(/\/organizations\/[^/]+\/workspaces\/new\/templates/);
-    await page.getByRole("button", { name: "NPS" }).click();
+    await page.getByRole("button", { name: "NPS Net Promoter Score" }).click();
 
     await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/edit(\?.*)mode=cx/);
     await page.getByRole("button", { name: "Save & Close" }).click();
