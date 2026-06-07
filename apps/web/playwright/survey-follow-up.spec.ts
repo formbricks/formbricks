@@ -1,5 +1,6 @@
 import { expect } from "@playwright/test";
 import { test } from "./lib/fixtures";
+import { startSurveyFromScratch } from "./lib/utils";
 
 test.describe("Survey Follow-Up Create & Edit", async () => {
   // 3 minutes
@@ -12,9 +13,9 @@ test.describe("Survey Follow-Up Create & Edit", async () => {
     await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
 
     await test.step("Create a new survey", async () => {
-      await page.getByText("Start from scratch").click();
-      await page.getByRole("button", { name: "Create survey", exact: true }).click();
-      await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/edit$/);
+      await startSurveyFromScratch(page, {
+        waitForEditUrl: /\/workspaces\/[^/]+\/surveys\/[^/]+\/edit$/,
+      });
     });
 
     await test.step("Navigate to Follow-ups tab", async () => {

@@ -207,6 +207,15 @@ test.describe("Survey overview", () => {
       type: "link",
     });
 
+    await prisma.survey.deleteMany({
+      where: {
+        workspaceId,
+        id: {
+          not: survey.id,
+        },
+      },
+    });
+
     await page.reload();
     await expect(page.getByText(surveyName, { exact: true })).toBeVisible({ timeout: 10000 });
 
@@ -267,6 +276,15 @@ test.describe("Survey overview", () => {
       name: surveyName,
       status: "draft",
       type: "link",
+    });
+
+    await prisma.survey.deleteMany({
+      where: {
+        workspaceId,
+        id: {
+          not: survey.id,
+        },
+      },
     });
 
     await page.reload();

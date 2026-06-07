@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { Page } from "playwright";
 import { logger } from "@formbricks/logger";
+import { startSurveyFromScratch } from "@/playwright/lib/utils";
 import { CreateSurveyParams, CreateSurveyWithLogicParams } from "@/playwright/utils/mock";
 
 const MOCK_STORAGE_UPLOAD_PATH = "/__playwright__/mock-storage-upload";
@@ -392,10 +393,9 @@ export const fillModalRichTranslation = async (page: Page, path: string, text: s
 export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
   const addBlock = "Add BlockChoose the first question on your Block";
 
-  await page.getByText("Start from scratch").click();
-  await page.getByRole("button", { name: "Create survey", exact: true }).click();
-
-  await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/edit$/);
+  await startSurveyFromScratch(page, {
+    waitForEditUrl: /\/workspaces\/[^/]+\/surveys\/[^/]+\/edit$/,
+  });
 
   // Welcome Card
   await expect(page.locator("#welcome-toggle")).toBeVisible();
@@ -597,10 +597,9 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
 export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWithLogicParams) => {
   const addBlock = "Add BlockChoose the first question on your Block";
 
-  await page.getByText("Start from scratch").click();
-  await page.getByRole("button", { name: "Create survey", exact: true }).click();
-
-  await page.waitForURL(/\/workspaces\/[^/]+\/surveys\/[^/]+\/edit$/);
+  await startSurveyFromScratch(page, {
+    waitForEditUrl: /\/workspaces\/[^/]+\/surveys\/[^/]+\/edit$/,
+  });
 
   // Add variables
   await page.getByText("Variables").click();

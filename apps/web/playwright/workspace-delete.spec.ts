@@ -25,6 +25,16 @@ test("requires workspace name confirmation before deleting a workspace", async (
     select: { id: true },
   });
 
+  await prisma.survey.create({
+    data: {
+      workspaceId: remainingWorkspace.id,
+      createdBy: user.id,
+      name: "Remaining Workspace Seed Survey",
+      status: "draft",
+      type: "link",
+    },
+  });
+
   await user.login();
   await page.goto(`/workspaces/${user.workspaceId}/settings/workspace/general`, {
     waitUntil: "domcontentloaded",

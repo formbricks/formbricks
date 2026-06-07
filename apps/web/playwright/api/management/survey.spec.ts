@@ -66,11 +66,14 @@ test.describe("API Tests", () => {
       });
       expect(response.ok()).toBeTruthy();
       const responseBody = await response.json();
+      const createdSurvey = responseBody.data.find(
+        (survey: { name: string }) => survey.name === "My new Survey from API"
+      );
 
-      const surveyCount = responseBody.data.length;
-      expect(surveyCount).toEqual(1);
+      expect(createdSurvey).toBeDefined();
+      expect(responseBody.data.length).toBeGreaterThanOrEqual(1);
 
-      surveyId = responseBody.data[0].id;
+      surveyId = createdSurvey.id;
     });
 
     await test.step("Get Survey by ID from API", async () => {
