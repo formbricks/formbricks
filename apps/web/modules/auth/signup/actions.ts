@@ -18,6 +18,7 @@ import { createOrganization, getOrganization } from "@/lib/organization/service"
 import { capturePostHogEvent, groupIdentifyPostHog } from "@/lib/posthog";
 import { actionClient } from "@/lib/utils/action-client";
 import { ActionClientCtx } from "@/lib/utils/action-client/types/context";
+import { DEFAULT_WORKSPACE_NAME } from "@/lib/workspace/constants";
 import { createUser, updateUser } from "@/modules/auth/lib/user";
 import { deleteInvite, getInvite } from "@/modules/auth/signup/lib/invite";
 import { createTeamMembership } from "@/modules/auth/signup/lib/team";
@@ -29,6 +30,7 @@ import { ensureCloudStripeSetupForOrganization } from "@/modules/ee/billing/lib/
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import { subscribeUserToMailingList } from "@/modules/ee/mailing/lib/mailing-subscription";
 import { sendInviteAcceptedEmail, sendVerificationEmail } from "@/modules/email";
+import { createWorkspace } from "@/modules/workspaces/settings/lib/workspace";
 
 const ZCreatedUser = ZUser.pick({
   name: true,
@@ -174,7 +176,12 @@ async function handleOrganizationCreation(ctx: ActionClientCtx, user: TCreatedUs
     });
   }
 
+  const workspace = await createWorkspace(organization.id, {
+    name: DEFAULT_WORKSPACE_NAME,
+  });
+
   groupIdentifyPostHog("organization", organization.id, { name: organization.name });
+  groupIdentifyPostHog("workspace", workspace.id, { name: workspace.name });
 
   capturePostHogEvent(
     user.id,
@@ -183,7 +190,18 @@ async function handleOrganizationCreation(ctx: ActionClientCtx, user: TCreatedUs
       organization_id: organization.id,
       is_first_org: true,
     },
-    { organizationId: organization.id }
+    { organizationId: organization.id, workspaceId: workspace.id }
+  );
+
+  capturePostHogEvent(
+    user.id,
+    "workspace_created",
+    {
+      organization_id: organization.id,
+      workspace_id: workspace.id,
+      name: workspace.name,
+    },
+    { organizationId: organization.id, workspaceId: workspace.id }
   );
 
   await updateUser(user.id, {

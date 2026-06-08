@@ -8,12 +8,13 @@ import { replacePresetPlaceholders } from "@/lib/utils/templates";
 import { getChannelMapping, getIndustryMapping, getRoleMapping } from "./utils";
 
 vi.mock("@/lib/pollyfills/structuredClone", () => ({
-  structuredClone: vi.fn((val) => JSON.parse(JSON.stringify(val))),
+  structuredClone: vi.fn((val) => globalThis.structuredClone(val)),
 }));
 
 describe("Template utils", () => {
   test("replacePresetPlaceholders replaces workspace name in template with blocks", () => {
     const mockTemplate: TTemplate = {
+      id: "test-template",
       name: "Test Template",
       description: "Template description",
       preset: {

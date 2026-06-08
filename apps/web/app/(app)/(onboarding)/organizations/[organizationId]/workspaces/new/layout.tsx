@@ -1,13 +1,13 @@
 import { getServerSession } from "next-auth";
 import { notFound, redirect } from "next/navigation";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
+import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getOrganization } from "@/lib/organization/service";
-import { getOrganizationWorkspacesCount } from "@/lib/workspace/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { authOptions } from "@/modules/auth/lib/authOptions";
-import { getOrganizationWorkspacesLimit } from "@/modules/ee/license-check/lib/utils";
+import { invalidateOrganizationBillingCache } from "@/modules/ee/billing/lib/organization-billing";
 
 const OnboardingLayout = async (props: {
   params: Promise<{ organizationId: string }>;
@@ -32,13 +32,9 @@ const OnboardingLayout = async (props: {
     throw new ResourceNotFoundError(t("common.organization"), params.organizationId);
   }
 
-  const [organizationWorkspacesLimit, organizationWorkspacesCount] = await Promise.all([
-    getOrganizationWorkspacesLimit(organization.id),
-    getOrganizationWorkspacesCount(organization.id),
-  ]);
-
-  if (organizationWorkspacesCount >= organizationWorkspacesLimit) {
-    return redirect(`/`);
+  if (IS_FORMBRICKS_CLOUD) {
+    // Refresh trial/plan state after users return from onboarding billing actions.
+    await invalidateOrganizationBillingCache(organization.id);
   }
 
   return <>{children}</>;
