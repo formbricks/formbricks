@@ -932,6 +932,43 @@ export const undoPendingOrganizationPlanChange = async (
   await clearPendingPlanState(organizationId, subscription);
 };
 
+const isValidSetupCheckoutUpgradeTarget = (
+  targetPlan?: string
+): targetPlan is Exclude<TStandardCloudPlan, "hobby"> => {
+  return targetPlan === "pro" || targetPlan === "scale";
+};
+
+export const applyPendingUpgradeFromSetupCheckout = async (input: {
+  organizationId: string;
+  customerId: string;
+  targetPlan?: string;
+  targetInterval?: string;
+}): Promise<boolean> => {
+  if (!isValidSetupCheckoutUpgradeTarget(input.targetPlan)) {
+    return false;
+  }
+
+  const targetInterval: TCloudBillingInterval = input.targetInterval === "yearly" ? "yearly" : "monthly";
+  const subscription = await getRequiredActiveSubscription(input.organizationId, input.customerId);
+  const currentPlan = resolveCloudPlanFromSubscription(subscription);
+  const isNonStandardCurrentPlan = currentPlan === "custom" || currentPlan === "unknown";
+  const isUpgrade =
+    isNonStandardCurrentPlan || CLOUD_PLAN_LEVEL[input.targetPlan] > CLOUD_PLAN_LEVEL[currentPlan];
+
+  if (!isUpgrade) {
+    return false;
+  }
+
+  await switchOrganizationToCloudPlan({
+    organizationId: input.organizationId,
+    customerId: input.customerId,
+    targetPlan: input.targetPlan,
+    targetInterval,
+  });
+
+  return true;
+};
+
 const ensureOrganizationBillingRecord = async (
   organizationId: string
 ): Promise<TOrganizationBilling | null> => {

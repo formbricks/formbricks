@@ -1,6 +1,12 @@
 import Stripe from "stripe";
+import type { TCloudBillingInterval } from "@formbricks/types/organizations";
 import { STRIPE_API_VERSION } from "@/lib/constants";
 import { env } from "@/lib/env";
+
+type TSetupCheckoutUpgradeIntent = {
+  targetPlan: "pro" | "scale";
+  targetInterval: TCloudBillingInterval;
+};
 
 /**
  * Creates a Stripe Checkout Session in `setup` mode so the customer can enter
@@ -12,7 +18,8 @@ export const createSetupCheckoutSession = async (
   stripeCustomerId: string,
   subscriptionId: string,
   returnUrl: string,
-  organizationId: string
+  organizationId: string,
+  upgradeIntent?: TSetupCheckoutUpgradeIntent
 ): Promise<string> => {
   if (!env.STRIPE_SECRET_KEY) throw new Error("Stripe is not enabled; STRIPE_SECRET_KEY is not set.");
 
@@ -22,6 +29,10 @@ export const createSetupCheckoutSession = async (
 
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
   const currency = subscription.currency ?? "usd";
+
+  const successUrl = upgradeIntent
+    ? `${returnUrl}?checkout_success=1&upgrade_pending=1`
+    : `${returnUrl}?checkout_success=1`;
 
   const session = await stripe.checkout.sessions.create({
     mode: "setup",
@@ -36,11 +47,17 @@ export const createSetupCheckoutSession = async (
       address: "auto",
       name: "auto",
     },
-    success_url: `${returnUrl}?checkout_success=1`,
+    success_url: successUrl,
     cancel_url: returnUrl,
     metadata: {
       organizationId,
       subscriptionId,
+      ...(upgradeIntent
+        ? {
+            targetPlan: upgradeIntent.targetPlan,
+            targetInterval: upgradeIntent.targetInterval,
+          }
+        : {}),
     },
   });
 

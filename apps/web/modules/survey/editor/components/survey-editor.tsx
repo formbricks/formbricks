@@ -50,7 +50,6 @@ interface SurveyEditorProps {
   quotas: TSurveyQuota[];
   isExternalUrlsAllowed: boolean;
   publicDomain: string;
-  moveHiddenFieldsToSettingsTab?: boolean;
   enterpriseLicenseRequestFormUrl: string;
 }
 
@@ -80,7 +79,6 @@ export const SurveyEditor = ({
   quotas,
   isExternalUrlsAllowed,
   publicDomain,
-  moveHiddenFieldsToSettingsTab = false,
   enterpriseLicenseRequestFormUrl,
 }: SurveyEditorProps) => {
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("elements");
@@ -223,7 +221,6 @@ export const SurveyEditor = ({
               isStorageConfigured={isStorageConfigured}
               quotas={quotas}
               isExternalUrlsAllowed={isExternalUrlsAllowed}
-              moveHiddenFieldsToSettingsTab={moveHiddenFieldsToSettingsTab}
             />
           )}
 
@@ -272,9 +269,6 @@ export const SurveyEditor = ({
               locale={locale}
               appSetupCompleted={localWorkspace.appSetupCompleted}
               enterpriseLicenseRequestFormUrl={enterpriseLicenseRequestFormUrl}
-              moveHiddenFieldsToSettingsTab={moveHiddenFieldsToSettingsTab}
-              activeElementId={activeElementId}
-              setActiveElementId={setActiveElementId}
             />
           )}
 

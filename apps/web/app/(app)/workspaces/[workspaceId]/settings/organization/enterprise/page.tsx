@@ -35,56 +35,22 @@ const Page = async (props: Readonly<{ params: Promise<{ workspaceId: string }> }
   const hasLicense = licenseState.status !== "no-license";
 
   const paidFeatures = [
-    {
-      title: t("workspace.settings.billing.remove_branding"),
-      comingSoon: false,
-      onRequest: false,
-    },
-    {
-      title: t("workspace.settings.enterprise.sso"),
-      comingSoon: false,
-      onRequest: false,
-    },
-    {
-      title: t("workspace.languages.multi_language_surveys"),
-      comingSoon: false,
-      onRequest: false,
-    },
-    {
-      title: t("workspace.settings.enterprise.organization_roles"),
-      comingSoon: false,
-      onRequest: false,
-    },
-    {
-      title: t("workspace.settings.enterprise.teams"),
-      comingSoon: false,
-      onRequest: false,
-    },
-    {
-      title: t("workspace.settings.enterprise.contacts_and_segments"),
-      comingSoon: false,
-      onRequest: false,
-    },
-    {
-      title: t("workspace.settings.enterprise.audit_logs"),
-      comingSoon: false,
-      onRequest: true,
-    },
-    {
-      title: t("workspace.settings.enterprise.saml_sso"),
-      comingSoon: false,
-      onRequest: true,
-    },
-    {
-      title: t("workspace.settings.enterprise.service_level_agreement"),
-      comingSoon: false,
-      onRequest: true,
-    },
-    {
-      title: t("workspace.settings.enterprise.soc2_hipaa_iso_27001_compliance_check"),
-      comingSoon: false,
-      onRequest: true,
-    },
+    t("workspace.settings.enterprise.hide_powered_by_formbricks"),
+    t("workspace.settings.enterprise.whitelabel_email_follow_ups"),
+    t("workspace.settings.enterprise.teams_and_access_roles"),
+    t("workspace.settings.enterprise.contacts_and_segments"),
+    t("workspace.settings.enterprise.quota_management"),
+    t("workspace.settings.enterprise.unify_feedback_inbox"),
+    t("workspace.settings.enterprise.feedback_directories"),
+    t("workspace.settings.enterprise.insights_dashboards"),
+    t("workspace.settings.enterprise.audit_logs"),
+    t("workspace.settings.enterprise.oidc_sso"),
+    t("workspace.settings.enterprise.saml_sso"),
+    t("workspace.settings.enterprise.spam_protection_recaptcha"),
+    t("workspace.settings.enterprise.two_factor_authentication"),
+    t("workspace.settings.enterprise.custom_workspace_count"),
+    t("workspace.settings.enterprise.white_glove_onboarding"),
+    t("workspace.settings.enterprise.support_slas"),
   ];
 
   return (
@@ -143,21 +109,11 @@ const Page = async (props: Readonly<{ params: Promise<{ workspaceId: string }> }
               </h2>
               <ul className="my-4 space-y-4">
                 {paidFeatures.map((feature) => (
-                  <li key={feature.title} className="flex items-center">
+                  <li key={feature} className="flex items-center">
                     <div className="rounded-full border border-green-300 bg-green-100 p-0.5 dark:bg-green-800">
                       <CheckIcon className="size-5 p-0.5 text-green-500 dark:text-green-400" />
                     </div>
-                    <span className="ml-2 text-sm text-slate-500 dark:text-slate-400">{feature.title}</span>
-                    {feature.comingSoon && (
-                      <span className="mx-2 rounded-full bg-blue-100 px-3 py-1 text-xs text-blue-700 dark:bg-slate-700 dark:text-teal-500">
-                        {t("workspace.settings.enterprise.coming_soon")}
-                      </span>
-                    )}
-                    {feature.onRequest && (
-                      <span className="mx-2 rounded-full bg-violet-100 px-3 py-1 text-xs text-violet-700 dark:bg-slate-700 dark:text-teal-500">
-                        {t("workspace.settings.enterprise.on_request")}
-                      </span>
-                    )}
+                    <span className="ml-2 text-sm text-slate-500 dark:text-slate-400">{feature}</span>
                   </li>
                 ))}
               </ul>

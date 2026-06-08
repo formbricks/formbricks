@@ -1,5 +1,5 @@
 x-environment: &environment
-  environment:
+  environment: &app-environment
     ######################################################## REQUIRED ########################################################
 
     # The url of your Formbricks instance used in the admin panel
@@ -222,9 +222,10 @@ services:
     restart: always
     image: pgvector/pgvector:pg18
     volumes:
-      - postgres:/var/lib/postgresql/data
+      - postgres:/var/lib/postgresql
     environment:
       - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=formbricks
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres || exit 1"]
       interval: 5s
@@ -249,6 +250,20 @@ services:
       retries: 30
       start_period: 10s
 
+  # Run Formbricks Prisma migrations before Hub writes tables to the shared database.
+  formbricks-migrate:
+    image: ghcr.io/formbricks/formbricks:latest
+    restart: "no"
+    entrypoint: ["sh", "-c"]
+    command:
+      [
+        'if command -v timeout >/dev/null 2>&1; then timeout 300 node packages/database/dist/scripts/apply-migrations.js; else node packages/database/dist/scripts/apply-migrations.js; fi',
+      ]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    <<: *environment
+
   formbricks:
     restart: always
     image: ghcr.io/formbricks/formbricks:latest
@@ -263,7 +278,9 @@ services:
       - 3000:3000
     volumes:
       - ./saml-connection:/home/nextjs/apps/web/saml-connection
-    <<: *environment
+    environment:
+      <<: *app-environment
+      SKIP_STARTUP_MIGRATION: "true"
 
   # Run Hub DB migrations (goose + river) before the API starts. Uses same image; migrations are idempotent.
   # Default tracks :latest so self-host updates (compose pull) advance Hub alongside the app image.
@@ -280,8 +297,8 @@ services:
     environment:
       DATABASE_URL: ${HUB_DATABASE_URL:-postgresql://postgres:postgres@postgres:5432/formbricks?sslmode=disable}
     depends_on:
-      postgres:
-        condition: service_healthy
+      formbricks-migrate:
+        condition: service_completed_successfully
 
   # Formbricks Hub API (ghcr.io/formbricks/hub). Set HUB_API_KEY. By default shares the Formbricks database; set HUB_DATABASE_URL to use a separate DB.
   hub:

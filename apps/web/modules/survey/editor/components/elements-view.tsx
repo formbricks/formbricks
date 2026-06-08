@@ -73,7 +73,6 @@ interface ElementsViewProps {
   isStorageConfigured: boolean;
   quotas: TSurveyQuota[];
   isExternalUrlsAllowed: boolean;
-  moveHiddenFieldsToSettingsTab?: boolean;
 }
 
 export const ElementsView = ({
@@ -93,7 +92,6 @@ export const ElementsView = ({
   isStorageConfigured = true,
   quotas,
   isExternalUrlsAllowed,
-  moveHiddenFieldsToSettingsTab = false,
 }: ElementsViewProps) => {
   const { t } = useTranslation();
   const [logicDeletionWarning, setLogicDeletionWarning] = React.useState<{
@@ -924,25 +922,21 @@ export const ElementsView = ({
         {!isCxMode && (
           <>
             <AddEndingCardButton localSurvey={localSurvey} addEndingCard={addEndingCard} />
-            {!moveHiddenFieldsToSettingsTab && (
-              <>
-                <hr />
-                <HiddenFieldsCard
-                  localSurvey={localSurvey}
-                  setLocalSurvey={setLocalSurvey}
-                  setActiveElementId={setActiveElementId}
-                  activeElementId={activeElementId}
-                  quotas={quotas}
-                />
-                <SurveyVariablesCard
-                  localSurvey={localSurvey}
-                  setLocalSurvey={setLocalSurvey}
-                  activeElementId={activeElementId}
-                  setActiveElementId={setActiveElementId}
-                  quotas={quotas}
-                />
-              </>
-            )}
+            <hr />
+            <HiddenFieldsCard
+              localSurvey={localSurvey}
+              setLocalSurvey={setLocalSurvey}
+              setActiveElementId={setActiveElementId}
+              activeElementId={activeElementId}
+              quotas={quotas}
+            />
+            <SurveyVariablesCard
+              localSurvey={localSurvey}
+              setLocalSurvey={setLocalSurvey}
+              activeElementId={activeElementId}
+              setActiveElementId={setActiveElementId}
+              quotas={quotas}
+            />
           </>
         )}
       </div>

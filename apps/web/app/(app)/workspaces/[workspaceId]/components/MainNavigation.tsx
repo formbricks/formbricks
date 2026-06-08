@@ -603,7 +603,6 @@ export const MainNavigation = ({
                       responseLimit={organization.billing.limits.monthly.responses}
                       baseResponseLimit={TRIAL_BASE_RESPONSE_LIMIT}
                       billingHref={`/workspaces/${workspace.id}/settings/organization/billing`}
-                      hasPaymentMethod={organization.billing.stripe?.hasPaymentMethod}
                     />
                   ) : (
                     <Link
