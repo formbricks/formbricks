@@ -146,6 +146,8 @@ export const retryStripeSetupAction = authenticatedActionClient
 
 const ZCreateTrialPaymentCheckoutAction = z.object({
   workspaceId: ZId,
+  targetPlan: z.enum(["pro", "scale"]).optional(),
+  targetInterval: ZCloudBillingInterval.optional(),
 });
 
 export const createTrialPaymentCheckoutAction = authenticatedActionClient
@@ -184,14 +186,30 @@ export const createTrialPaymentCheckoutAction = authenticatedActionClient
         throw new ResourceNotFoundError("workspace", parsedInput.workspaceId);
       }
       const returnUrl = `${WEBAPP_URL}/workspaces/${workspace.id}/settings/organization/billing`;
+      const upgradeIntent =
+        parsedInput.targetPlan !== undefined
+          ? {
+              targetPlan: parsedInput.targetPlan,
+              targetInterval: parsedInput.targetInterval ?? "monthly",
+            }
+          : undefined;
       const checkoutUrl = await createSetupCheckoutSession(
         organization.billing.stripeCustomerId,
         subscriptionId,
         returnUrl,
-        organizationId
+        organizationId,
+        upgradeIntent
       );
 
-      ctx.auditLoggingCtx.newObject = { setupCheckoutCreated: true };
+      ctx.auditLoggingCtx.newObject = {
+        setupCheckoutCreated: true,
+        ...(upgradeIntent
+          ? {
+              targetPlan: upgradeIntent.targetPlan,
+              targetInterval: upgradeIntent.targetInterval,
+            }
+          : {}),
+      };
       return checkoutUrl;
     })
   );

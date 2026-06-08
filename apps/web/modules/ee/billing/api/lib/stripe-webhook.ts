@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 import { logger } from "@formbricks/logger";
 import {
+  applyPendingUpgradeFromSetupCheckout,
   findOrganizationIdByStripeCustomerId,
   reconcileCloudStripeSubscriptionsForOrganization,
   syncOrganizationBillingFromStripe,
@@ -58,6 +59,29 @@ const handleSetupCheckoutCompleted = async (
     await stripe.subscriptions.update(subscriptionId, {
       default_payment_method: paymentMethodId,
     });
+  }
+
+  const organizationId = session.metadata?.organizationId;
+  if (organizationId && customerId) {
+    try {
+      await applyPendingUpgradeFromSetupCheckout({
+        organizationId,
+        customerId,
+        targetPlan: session.metadata?.targetPlan,
+        targetInterval: session.metadata?.targetInterval,
+      });
+    } catch (error) {
+      // The payment method is already attached above; the prorated upgrade invoice
+      // failed to collect (declined card, SCA required, etc.). updateSubscriptionItems
+      // uses `error_if_incomplete`, so the subscription is left unchanged (atomic).
+      // We deliberately don't rethrow: failing the webhook would make Stripe retry the
+      // whole event, re-attaching the payment method and re-attempting a charge that
+      // won't succeed. The snapshot sync below still runs and keeps its retry behavior.
+      logger.error(
+        { error, organizationId, customerId, targetPlan: session.metadata?.targetPlan },
+        "Failed to apply pending plan upgrade after setup checkout"
+      );
+    }
   }
 };
 

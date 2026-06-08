@@ -18,7 +18,6 @@ import { formatDateForDisplay } from "@/lib/utils/datetime";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
-import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import {
   changeBillingPlanAction,
   createPlanCheckoutAction,
@@ -32,6 +31,10 @@ import { TrialAlert } from "./trial-alert";
 import { UsageCard } from "./usage-card";
 
 const BILLING_CONFIRMATION_WORKSPACE_ID_KEY = "billingConfirmationWorkspaceId";
+const BILLING_PENDING_UPGRADE_PLAN_KEY = "billingPendingUpgradePlan";
+const BILLING_PENDING_UPGRADE_INTERVAL_KEY = "billingPendingUpgradeInterval";
+const UPGRADE_CHECKOUT_POLL_INTERVAL_MS = 2000;
+const UPGRADE_CHECKOUT_POLL_TIMEOUT_MS = 30000;
 
 type TDisplayPlan = "hobby" | "pro" | "scale" | "custom" | "unknown";
 type TStandardPlan = "hobby" | "pro" | "scale";
@@ -131,6 +134,61 @@ const getActionErrorMessage = (serverError: string, t: (key: string) => string) 
   return t("common.something_went_wrong_please_try_again");
 };
 
+const isCurrentPlanSelection = (
+  plan: TStandardPlan,
+  interval: TCloudBillingInterval,
+  currentCloudPlan: TDisplayPlan,
+  currentBillingInterval: TCloudBillingInterval | null
+) => currentCloudPlan === plan && (plan === "hobby" || currentBillingInterval === interval);
+
+const canCancelCurrentPaidPlanAtPeriodEnd = (
+  plan: TStandardPlan,
+  interval: TCloudBillingInterval,
+  currentCloudPlan: TDisplayPlan,
+  currentBillingInterval: TCloudBillingInterval | null,
+  isTrialingWithoutPayment: boolean,
+  pendingChange: TOrganizationStripePendingChange | null
+) =>
+  plan !== "hobby" &&
+  !isTrialingWithoutPayment &&
+  pendingChange?.targetPlan !== "hobby" &&
+  isCurrentPlanSelection(plan, interval, currentCloudPlan, currentBillingInterval);
+
+const isSwitchAtPeriodEndCta = (
+  plan: TStandardPlan,
+  interval: TCloudBillingInterval,
+  currentCloudPlan: TDisplayPlan,
+  currentBillingInterval: TCloudBillingInterval | null,
+  currentPlanLevel: number | null,
+  isTrialingWithoutPayment: boolean,
+  hasPaymentMethod: boolean,
+  pendingChange: TOrganizationStripePendingChange | null
+) => {
+  if (currentPlanLevel === null) {
+    return false;
+  }
+
+  if (isCurrentPlanSelection(plan, interval, currentCloudPlan, currentBillingInterval)) {
+    return false;
+  }
+
+  const isPendingSelection =
+    pendingChange?.targetPlan === plan && (plan === "hobby" || pendingChange.targetInterval === interval);
+  if (isPendingSelection) {
+    return false;
+  }
+
+  if (!hasPaymentMethod && plan !== "hobby") {
+    return false;
+  }
+
+  if (isTrialingWithoutPayment && plan === "hobby") {
+    return false;
+  }
+
+  return STANDARD_PLAN_LEVEL[plan] <= currentPlanLevel;
+};
+
 export const PricingTable = ({
   workspaceId,
   organization,
@@ -162,7 +220,8 @@ export const PricingTable = ({
   const hasPaymentMethod = organization.billing.stripe?.hasPaymentMethod === true;
   const existingSubscriptionId = organization.billing.stripe?.subscriptionId ?? null;
   const canShowSubscriptionButton = hasBillingRights && !!organization.billing.stripeCustomerId;
-  const showPlanSelector = !isStripeSetupIncomplete && (!isTrialing || hasPaymentMethod);
+  const isTrialingWithoutPayment = isTrialing && !hasPaymentMethod;
+  const showPlanSelector = !isStripeSetupIncomplete;
   const usageCycleLabel = `${formatDateForDisplay(usageCycleStart, locale, {
     year: "numeric",
     month: "short",
@@ -181,12 +240,83 @@ export const PricingTable = ({
       ? STANDARD_PLAN_LEVEL[currentCloudPlan]
       : null;
 
-  useEffect(() => {
-    if (searchParams.get("checkout_success")) {
-      const timer = setTimeout(() => router.refresh(), 2500);
-      return () => clearTimeout(timer);
+  const clearUpgradeIntent = () => {
+    if (globalThis.window === undefined) {
+      return;
     }
-  }, [searchParams, router]);
+
+    globalThis.window.sessionStorage.removeItem(BILLING_PENDING_UPGRADE_PLAN_KEY);
+    globalThis.window.sessionStorage.removeItem(BILLING_PENDING_UPGRADE_INTERVAL_KEY);
+  };
+
+  const persistUpgradeIntent = (plan: Exclude<TStandardPlan, "hobby">, interval: TCloudBillingInterval) => {
+    if (globalThis.window === undefined) {
+      return;
+    }
+
+    globalThis.window.sessionStorage.setItem(BILLING_PENDING_UPGRADE_PLAN_KEY, plan);
+    globalThis.window.sessionStorage.setItem(BILLING_PENDING_UPGRADE_INTERVAL_KEY, interval);
+  };
+
+  useEffect(() => {
+    if (searchParams.get("checkout_success") !== "1") {
+      return;
+    }
+
+    if (searchParams.get("upgrade_pending") === "1") {
+      const toastId = toast.loading(t("workspace.settings.billing.upgrade_checkout_pending"));
+      const pollInterval = setInterval(() => router.refresh(), UPGRADE_CHECKOUT_POLL_INTERVAL_MS);
+      const pollTimeout = setTimeout(() => {
+        clearInterval(pollInterval);
+        toast.dismiss(toastId);
+        clearUpgradeIntent();
+      }, UPGRADE_CHECKOUT_POLL_TIMEOUT_MS);
+
+      return () => {
+        clearInterval(pollInterval);
+        clearTimeout(pollTimeout);
+        toast.dismiss(toastId);
+      };
+    }
+
+    const timer = setTimeout(() => router.refresh(), 2500);
+    return () => clearTimeout(timer);
+  }, [searchParams, router, t]);
+
+  useEffect(() => {
+    if (searchParams.get("checkout_success") !== "1" || searchParams.get("upgrade_pending") !== "1") {
+      return;
+    }
+
+    if (globalThis.window === undefined) {
+      return;
+    }
+
+    const pendingPlan = globalThis.window.sessionStorage.getItem(BILLING_PENDING_UPGRADE_PLAN_KEY) as Exclude<
+      TStandardPlan,
+      "hobby"
+    > | null;
+    if (!pendingPlan) {
+      return;
+    }
+
+    const pendingInterval = globalThis.window.sessionStorage.getItem(
+      BILLING_PENDING_UPGRADE_INTERVAL_KEY
+    ) as TCloudBillingInterval | null;
+    const planMatches = currentCloudPlan === pendingPlan && currentBillingInterval === pendingInterval;
+
+    if (!planMatches) {
+      return;
+    }
+
+    toast.success(
+      t("workspace.settings.billing.upgrade_checkout_success", {
+        plan: getCurrentCloudPlanLabel(pendingPlan, t),
+      })
+    );
+    clearUpgradeIntent();
+    router.replace(`/workspaces/${workspaceId}/settings/organization/billing`);
+  }, [currentBillingInterval, currentCloudPlan, router, searchParams, t, workspaceId]);
 
   const planCards = useMemo<TPlanCardData[]>(() => {
     return [
@@ -200,8 +330,14 @@ export const PricingTable = ({
         ),
         description: t("workspace.settings.billing.plan_hobby_description"),
         features: [
-          t("workspace.settings.billing.plan_hobby_feature_workspaces"),
           t("workspace.settings.billing.plan_hobby_feature_responses"),
+          t("workspace.settings.billing.plan_hobby_feature_workspaces"),
+          t("workspace.settings.billing.plan_hobby_feature_surveys"),
+          t("workspace.settings.billing.plan_hobby_feature_question_types"),
+          t("workspace.settings.billing.plan_hobby_feature_logic"),
+          t("workspace.settings.billing.plan_hobby_feature_partial"),
+          t("workspace.settings.billing.plan_hobby_feature_file_uploads"),
+          t("workspace.settings.billing.plan_hobby_feature_api"),
         ],
       },
       {
@@ -215,8 +351,15 @@ export const PricingTable = ({
         description: t("workspace.settings.billing.plan_pro_description"),
         features: [
           t("workspace.settings.billing.plan_feature_everything_in_hobby"),
-          t("workspace.settings.billing.plan_pro_feature_workspaces"),
+          t("workspace.settings.billing.plan_pro_feature_smart_tools"),
           t("workspace.settings.billing.plan_pro_feature_responses"),
+          t("workspace.settings.billing.plan_pro_feature_workspaces"),
+          t("workspace.settings.billing.plan_pro_feature_unlimited_seats"),
+          t("workspace.settings.billing.plan_pro_feature_hide_branding"),
+          t("workspace.settings.billing.plan_pro_feature_contacts"),
+          t("workspace.settings.billing.plan_pro_feature_integrations"),
+          t("workspace.settings.billing.plan_pro_feature_sdks"),
+          t("workspace.settings.billing.plan_pro_feature_ai_translations"),
         ],
       },
       {
@@ -230,8 +373,13 @@ export const PricingTable = ({
         description: t("workspace.settings.billing.plan_scale_description"),
         features: [
           t("workspace.settings.billing.plan_feature_everything_in_pro"),
-          t("workspace.settings.billing.plan_scale_feature_workspaces"),
           t("workspace.settings.billing.plan_scale_feature_responses"),
+          t("workspace.settings.billing.plan_scale_feature_workspaces"),
+          t("workspace.settings.billing.plan_scale_feature_rbac"),
+          t("workspace.settings.billing.plan_scale_feature_quota"),
+          t("workspace.settings.billing.plan_scale_feature_feedback"),
+          t("workspace.settings.billing.plan_scale_feature_semantic_analysis"),
+          t("workspace.settings.billing.plan_scale_feature_security"),
         ],
       },
     ];
@@ -284,6 +432,36 @@ export const PricingTable = ({
     }
   };
 
+  const openUpgradeCheckout = async (
+    plan: Exclude<TStandardPlan, "hobby">,
+    interval: TCloudBillingInterval
+  ) => {
+    try {
+      persistWorkspaceId();
+      persistUpgradeIntent(plan, interval);
+      const response = await createTrialPaymentCheckoutAction({
+        workspaceId,
+        targetPlan: plan,
+        targetInterval: interval,
+      });
+      if (response?.serverError) {
+        clearUpgradeIntent();
+        toast.error(getActionErrorMessage(response.serverError, t));
+        return;
+      }
+      if (response?.data && typeof response.data === "string") {
+        navigateToExternalUrl(response.data);
+        return;
+      }
+      clearUpgradeIntent();
+      toast.error(t("common.something_went_wrong_please_try_again"));
+    } catch (error) {
+      clearUpgradeIntent();
+      console.error("Failed to create upgrade checkout session:", error);
+      toast.error(t("common.something_went_wrong_please_try_again"));
+    }
+  };
+
   const retryStripeSetup = async () => {
     setIsRetryingStripeSetup(true);
     try {
@@ -309,7 +487,7 @@ export const PricingTable = ({
     interval: TCloudBillingInterval
   ): Promise<void> => {
     if (existingSubscriptionId) {
-      await openTrialPaymentCheckout();
+      await openUpgradeCheckout(plan, interval);
       return;
     }
 
@@ -343,7 +521,35 @@ export const PricingTable = ({
 
     try {
       if (!hasPaymentMethod && plan !== "hobby") {
+        if (
+          isTrialingWithoutPayment &&
+          isCurrentPlanSelection(plan, interval, currentCloudPlan, currentBillingInterval)
+        ) {
+          await openTrialPaymentCheckout();
+          return;
+        }
+
         await redirectToPlanCheckout(plan, interval);
+        return;
+      }
+
+      if (
+        canCancelCurrentPaidPlanAtPeriodEnd(
+          plan,
+          interval,
+          currentCloudPlan,
+          currentBillingInterval,
+          isTrialingWithoutPayment,
+          pendingChange
+        )
+      ) {
+        const response = await changeBillingPlanAction(getPlanChangePayload(workspaceId, "hobby", "monthly"));
+        if (response?.serverError) {
+          toast.error(getActionErrorMessage(response.serverError, t));
+          return;
+        }
+        toast.success(getPlanChangeSuccessMessage(response?.data?.mode, t));
+        router.refresh();
         return;
       }
 
@@ -386,8 +592,38 @@ export const PricingTable = ({
   };
 
   const getCtaLabel = (plan: TStandardPlan, interval: TCloudBillingInterval) => {
-    const isCurrentSelection =
-      currentCloudPlan === plan && (plan === "hobby" || currentBillingInterval === interval);
+    const isCurrentSelection = isCurrentPlanSelection(
+      plan,
+      interval,
+      currentCloudPlan,
+      currentBillingInterval
+    );
+
+    if (isCurrentSelection && isTrialingWithoutPayment) {
+      return t("workspace.settings.billing.continue_with_plan_after_trial");
+    }
+
+    if (isTrialingWithoutPayment && plan === "hobby") {
+      return t("workspace.settings.billing.downgrade_to_hobby");
+    }
+
+    if (
+      canCancelCurrentPaidPlanAtPeriodEnd(
+        plan,
+        interval,
+        currentCloudPlan,
+        currentBillingInterval,
+        isTrialingWithoutPayment,
+        pendingChange
+      )
+    ) {
+      return t("workspace.settings.billing.cancel_at_period_end");
+    }
+
+    if (isCurrentSelection && pendingChange?.targetPlan === "hobby") {
+      return t("workspace.settings.billing.pending_plan_cta");
+    }
+
     if (isCurrentSelection) {
       return t("workspace.settings.billing.current_plan_cta");
     }
@@ -423,10 +659,18 @@ export const PricingTable = ({
             </TrialAlert>
           ) : (
             <TrialAlert trialDaysRemaining={trialDaysRemaining}>
-              <AlertDescription>{t("workspace.settings.billing.trial_alert_description")}</AlertDescription>
+              <AlertDescription>
+                {t("workspace.settings.billing.trial_alert_description", {
+                  price: formatMoney(
+                    billingCatalog.pro.monthly.currency,
+                    billingCatalog.pro.monthly.unitAmount,
+                    locale
+                  ),
+                })}
+              </AlertDescription>
               {hasBillingRights && (
                 <AlertButton onClick={() => void openTrialPaymentCheckout()}>
-                  {t("workspace.settings.billing.add_payment_method")}
+                  {t("workspace.settings.billing.continue_with_plan_after_trial")}
                 </AlertButton>
               )}
             </TrialAlert>
@@ -477,13 +721,11 @@ export const PricingTable = ({
           title={t("workspace.settings.billing.subscription")}
           description={t("workspace.settings.billing.subscription_description")}
           buttonInfo={
-            canShowSubscriptionButton
+            canShowSubscriptionButton && hasPaymentMethod
               ? {
-                  text: hasPaymentMethod
-                    ? t("workspace.settings.billing.manage_billing_details")
-                    : t("workspace.settings.billing.add_payment_method"),
-                  onClick: () => void (hasPaymentMethod ? openBillingPortal() : openTrialPaymentCheckout()),
-                  variant: "default",
+                  text: t("workspace.settings.billing.manage_billing_details"),
+                  onClick: () => void openBillingPortal(),
+                  variant: "secondary",
                 }
               : undefined
           }>
@@ -570,27 +812,39 @@ export const PricingTable = ({
 
               <div className="grid gap-4 lg:grid-cols-3">
                 {planCards.map((planCard) => {
-                  const isCurrentSelection =
-                    currentCloudPlan === planCard.plan &&
-                    (planCard.plan === "hobby" || currentBillingInterval === planCard.interval);
+                  const isCurrentSelection = isCurrentPlanSelection(
+                    planCard.plan,
+                    planCard.interval,
+                    currentCloudPlan,
+                    currentBillingInterval
+                  );
                   const isPendingSelection =
                     pendingChange?.targetPlan === planCard.plan &&
                     (planCard.plan === "hobby" || pendingChange.targetInterval === planCard.interval);
-                  const isMissingPaymentMethodUpgrade =
-                    hasBillingRights &&
-                    !isStripeSetupIncomplete &&
-                    !isTrialing &&
-                    !isCurrentSelection &&
-                    !isPendingSelection &&
-                    !hasPaymentMethod &&
-                    planCard.plan !== "hobby";
+                  const isCancelAtPeriodEndCta = canCancelCurrentPaidPlanAtPeriodEnd(
+                    planCard.plan,
+                    planCard.interval,
+                    currentCloudPlan,
+                    currentBillingInterval,
+                    isTrialingWithoutPayment,
+                    pendingChange
+                  );
+                  const isSwitchAtPeriodEndCtaForCard = isSwitchAtPeriodEndCta(
+                    planCard.plan,
+                    planCard.interval,
+                    currentCloudPlan,
+                    currentBillingInterval,
+                    currentPlanLevel,
+                    isTrialingWithoutPayment,
+                    hasPaymentMethod,
+                    pendingChange
+                  );
+                  const isSecondaryPlanCta = isCancelAtPeriodEndCta || isSwitchAtPeriodEndCtaForCard;
                   const isDisabled =
                     !hasBillingRights ||
-                    isCurrentSelection ||
+                    (isCurrentSelection && !isTrialingWithoutPayment && !isCancelAtPeriodEndCta) ||
                     isPendingSelection ||
-                    isStripeSetupIncomplete ||
-                    isMissingPaymentMethodUpgrade ||
-                    (isTrialing && !hasPaymentMethod);
+                    isStripeSetupIncomplete;
 
                   return (
                     <div
@@ -633,21 +887,14 @@ export const PricingTable = ({
                         </span>
                       </div>
 
-                      <TooltipRenderer
-                        shouldRender={isMissingPaymentMethodUpgrade}
-                        triggerClass="block w-full"
-                        tooltipContent={t(
-                          "workspace.settings.billing.add_payment_method_to_upgrade_tooltip"
-                        )}>
-                        <Button
-                          variant="secondary"
-                          className="mt-4 w-full"
-                          disabled={isDisabled}
-                          loading={isPlanActionPending === `${planCard.plan}-${planCard.interval}`}
-                          onClick={() => void handlePlanAction(planCard.plan, planCard.interval)}>
-                          {getCtaLabel(planCard.plan, planCard.interval)}
-                        </Button>
-                      </TooltipRenderer>
+                      <Button
+                        variant={isSecondaryPlanCta || planCard.plan !== "pro" ? "secondary" : "default"}
+                        className="mt-4 w-full"
+                        disabled={isDisabled}
+                        loading={isPlanActionPending === `${planCard.plan}-${planCard.interval}`}
+                        onClick={() => void handlePlanAction(planCard.plan, planCard.interval)}>
+                        {getCtaLabel(planCard.plan, planCard.interval)}
+                      </Button>
 
                       <div className="mt-8 border-t border-slate-100 pt-6">
                         <p className="mb-4 text-sm font-semibold text-slate-900">
