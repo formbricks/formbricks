@@ -1,6 +1,7 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 import { AI_PROVIDERS } from "@formbricks/types/ai";
+import { throwEnvValidationError } from "./env-validation-error";
 
 const ZActiveAIProvider = z.enum(AI_PROVIDERS);
 
@@ -201,6 +202,7 @@ const emptyStringToUndefined = (value: unknown) =>
 const ZOptionalNonEmptyString = z.preprocess(emptyStringToUndefined, z.string().trim().min(1).optional());
 
 const parsedEnv = createEnv({
+  onValidationError: throwEnvValidationError,
   /*
    * Serverside Environment variables, not available on the client.
    * Will throw if you access these variables on the client.
