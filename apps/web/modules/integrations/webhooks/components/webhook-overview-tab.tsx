@@ -1,8 +1,8 @@
 "use client";
 
-import { Webhook } from "@prisma/client";
 import { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
+import { Webhook } from "@formbricks/database/prisma-browser";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { type TUserLocale } from "@formbricks/types/user";
 import { formatDateTimeForDisplay } from "@/lib/utils/datetime";

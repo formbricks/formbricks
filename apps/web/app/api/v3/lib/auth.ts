@@ -1,7 +1,7 @@
 /**
  * V3 API auth — session (browser) or API key with workspace-scoped access.
  */
-import { ApiKeyPermission } from "@prisma/client";
+import { ApiKeyPermission } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import type { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { AuthorizationError, ResourceNotFoundError } from "@formbricks/types/errors";

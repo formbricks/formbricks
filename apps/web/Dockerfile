@@ -98,6 +98,9 @@ RUN chmod 644 ./next.config.mjs
 COPY --from=installer /app/apps/web/package.json .
 RUN chmod 644 ./package.json
 
+COPY --from=installer /app/prisma.config.mjs ./prisma.config.mjs
+RUN chmod 644 ./prisma.config.mjs
+
 COPY --from=installer /app/apps/web/.next/static ./apps/web/.next/static
 RUN chown -R nextjs:nextjs ./apps/web/.next/static && chmod -R 755 ./apps/web/.next/static
 
@@ -116,12 +119,130 @@ RUN chown nextjs:nextjs ./packages/database/schema.prisma && chmod 644 ./package
 COPY --from=installer /app/packages/database/dist ./packages/database/dist
 RUN chown -R nextjs:nextjs ./packages/database/dist && chmod -R 755 ./packages/database/dist
 
-# Copy prisma client packages
-COPY --from=installer /app/node_modules/@prisma/client ./node_modules/@prisma/client
-RUN chown -R nextjs:nextjs ./node_modules/@prisma/client && chmod -R 755 ./node_modules/@prisma/client
+# Copy Prisma v7 generated client output and runtime packages used by the
+# generated client, Prisma CLI config loader, and PostgreSQL driver adapter.
+COPY --from=installer /app/packages/database/generated ./packages/database/generated
+RUN chown -R nextjs:nextjs ./packages/database/generated && chmod -R 755 ./packages/database/generated
 
-COPY --from=installer /app/node_modules/.prisma ./node_modules/.prisma
-RUN chown -R nextjs:nextjs ./node_modules/.prisma && chmod -R 755 ./node_modules/.prisma
+COPY --from=installer /app/node_modules/@prisma ./node_modules/@prisma
+RUN chown -R nextjs:nextjs ./node_modules/@prisma && chmod -R 755 ./node_modules/@prisma
+
+COPY --from=installer /app/node_modules/prisma ./node_modules/prisma
+RUN mkdir -p ./node_modules/.bin \
+    && ln -sf ../prisma/build/index.js ./node_modules/.bin/prisma \
+    && chown -R nextjs:nextjs ./node_modules/prisma ./node_modules/.bin \
+    && chmod -R 755 ./node_modules/prisma
+
+COPY --from=installer /app/node_modules/dotenv ./node_modules/dotenv
+RUN chmod -R 755 ./node_modules/dotenv
+
+# @prisma/config + its transitive chain. Required at runtime because the
+# Prisma CLI hard-requires `@prisma/config` at module load (every invocation
+# of `prisma migrate deploy`, including the one at container boot). Removing
+# any of these triggers MODULE_NOT_FOUND from inside @prisma/config or its
+# deps. Do NOT trim this list without first relocating migrations out of the
+# runtime image (e.g. via a dedicated K8s migration job + SKIP_STARTUP_MIGRATION=true).
+COPY --from=installer /app/node_modules/@standard-schema ./node_modules/@standard-schema
+COPY --from=installer /app/node_modules/c12 ./node_modules/c12
+COPY --from=installer /app/node_modules/confbox ./node_modules/confbox
+COPY --from=installer /app/node_modules/deepmerge-ts ./node_modules/deepmerge-ts
+COPY --from=installer /app/node_modules/defu ./node_modules/defu
+COPY --from=installer /app/node_modules/destr ./node_modules/destr
+COPY --from=installer /app/node_modules/effect ./node_modules/effect
+COPY --from=installer /app/node_modules/empathic ./node_modules/empathic
+COPY --from=installer /app/node_modules/exsolve ./node_modules/exsolve
+COPY --from=installer /app/node_modules/fast-check ./node_modules/fast-check
+COPY --from=installer /app/node_modules/giget ./node_modules/giget
+COPY --from=installer /app/node_modules/jiti ./node_modules/jiti
+COPY --from=installer /app/node_modules/ohash ./node_modules/ohash
+COPY --from=installer /app/node_modules/pathe ./node_modules/pathe
+COPY --from=installer /app/node_modules/perfect-debounce ./node_modules/perfect-debounce
+COPY --from=installer /app/node_modules/pkg-types ./node_modules/pkg-types
+COPY --from=installer /app/node_modules/pure-rand ./node_modules/pure-rand
+COPY --from=installer /app/node_modules/rc9 ./node_modules/rc9
+COPY --from=installer /app/node_modules/cross-spawn ./node_modules/cross-spawn
+COPY --from=installer /app/node_modules/foreground-child ./node_modules/foreground-child
+COPY --from=installer /app/node_modules/get-port-please ./node_modules/get-port-please
+COPY --from=installer /app/node_modules/graceful-fs ./node_modules/graceful-fs
+COPY --from=installer /app/node_modules/grammex ./node_modules/grammex
+COPY --from=installer /app/node_modules/graphmatch ./node_modules/graphmatch
+COPY --from=installer /app/node_modules/isexe ./node_modules/isexe
+COPY --from=installer /app/node_modules/path-key ./node_modules/path-key
+COPY --from=installer /app/node_modules/proper-lockfile ./node_modules/proper-lockfile
+COPY --from=installer /app/node_modules/remeda ./node_modules/remeda
+COPY --from=installer /app/node_modules/retry ./node_modules/retry
+COPY --from=installer /app/node_modules/shebang-command ./node_modules/shebang-command
+COPY --from=installer /app/node_modules/shebang-regex ./node_modules/shebang-regex
+COPY --from=installer /app/node_modules/signal-exit ./node_modules/signal-exit
+COPY --from=installer /app/node_modules/std-env ./node_modules/std-env
+COPY --from=installer /app/node_modules/valibot ./node_modules/valibot
+COPY --from=installer /app/node_modules/which ./node_modules/which
+COPY --from=installer /app/node_modules/zeptomatch ./node_modules/zeptomatch
+RUN chmod -R 755 \
+  ./node_modules/@standard-schema \
+  ./node_modules/c12 \
+  ./node_modules/confbox \
+  ./node_modules/deepmerge-ts \
+  ./node_modules/defu \
+  ./node_modules/destr \
+  ./node_modules/effect \
+  ./node_modules/empathic \
+  ./node_modules/exsolve \
+  ./node_modules/fast-check \
+  ./node_modules/giget \
+  ./node_modules/jiti \
+  ./node_modules/ohash \
+  ./node_modules/pathe \
+  ./node_modules/perfect-debounce \
+  ./node_modules/pkg-types \
+  ./node_modules/pure-rand \
+  ./node_modules/rc9 \
+  ./node_modules/cross-spawn \
+  ./node_modules/foreground-child \
+  ./node_modules/get-port-please \
+  ./node_modules/graceful-fs \
+  ./node_modules/grammex \
+  ./node_modules/graphmatch \
+  ./node_modules/isexe \
+  ./node_modules/path-key \
+  ./node_modules/proper-lockfile \
+  ./node_modules/remeda \
+  ./node_modules/retry \
+  ./node_modules/shebang-command \
+  ./node_modules/shebang-regex \
+  ./node_modules/signal-exit \
+  ./node_modules/std-env \
+  ./node_modules/valibot \
+  ./node_modules/which \
+  ./node_modules/zeptomatch
+
+COPY --from=installer /app/node_modules/pg ./node_modules/pg
+COPY --from=installer /app/node_modules/pg-connection-string ./node_modules/pg-connection-string
+COPY --from=installer /app/node_modules/pg-cloudflare ./node_modules/pg-cloudflare
+COPY --from=installer /app/node_modules/pg-int8 ./node_modules/pg-int8
+COPY --from=installer /app/node_modules/pg-pool ./node_modules/pg-pool
+COPY --from=installer /app/node_modules/pg-protocol ./node_modules/pg-protocol
+COPY --from=installer /app/node_modules/pg-types ./node_modules/pg-types
+COPY --from=installer /app/node_modules/pgpass ./node_modules/pgpass
+COPY --from=installer /app/node_modules/postgres-array ./node_modules/postgres-array
+COPY --from=installer /app/node_modules/postgres-bytea ./node_modules/postgres-bytea
+COPY --from=installer /app/node_modules/postgres-date ./node_modules/postgres-date
+COPY --from=installer /app/node_modules/postgres-interval ./node_modules/postgres-interval
+COPY --from=installer /app/node_modules/split2 ./node_modules/split2
+RUN chmod -R 755 \
+  ./node_modules/pg \
+  ./node_modules/pg-connection-string \
+  ./node_modules/pg-cloudflare \
+  ./node_modules/pg-int8 \
+  ./node_modules/pg-pool \
+  ./node_modules/pg-protocol \
+  ./node_modules/pg-types \
+  ./node_modules/pgpass \
+  ./node_modules/postgres-array \
+  ./node_modules/postgres-bytea \
+  ./node_modules/postgres-date \
+  ./node_modules/postgres-interval \
+  ./node_modules/split2
 
 COPY --from=installer /app/node_modules/@paralleldrive/cuid2 ./node_modules/@paralleldrive/cuid2
 RUN chmod -R 755 ./node_modules/@paralleldrive/cuid2
@@ -130,7 +251,11 @@ RUN chmod -R 755 ./node_modules/@paralleldrive/cuid2
 # database package's resolved install instead of the repo-root hoisted version.
 COPY --from=installer /app/packages/database/node_modules/uuid ./node_modules/uuid
 RUN chmod -R 755 ./node_modules/uuid \
-    && node --input-type=module -e "import('uuid').then((module) => { if (typeof module.v7 !== 'function') throw new Error('uuid v7 missing in runtime image'); })"
+    && node --input-type=module -e "\
+      import { v7 } from 'uuid'; \
+      if (typeof v7 !== 'function') { \
+        throw new Error('uuid v7 missing in runtime image'); \
+      }"
 
 COPY --from=installer /app/node_modules/@noble/hashes ./node_modules/@noble/hashes
 RUN chmod -R 755 ./node_modules/@noble/hashes
@@ -153,10 +278,6 @@ RUN chmod -R 755 ./node_modules/pino-abstract-transport
 
 COPY --from=installer /app/node_modules/otlp-logger ./node_modules/otlp-logger
 RUN chmod -R 755 ./node_modules/otlp-logger
-
-# Install prisma CLI globally for database migrations and fix permissions for nextjs user
-RUN npm install --ignore-scripts -g prisma@6.19.3 \
-    && chown -R nextjs:nextjs /usr/local/lib/node_modules/prisma
 
 # Create a startup script to handle the conditional logic
 COPY --from=installer /app/apps/web/scripts/docker/next-start.sh /home/nextjs/start.sh

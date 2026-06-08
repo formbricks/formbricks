@@ -1,5 +1,5 @@
-import { ActionClass, OrganizationRole } from "@prisma/client";
 import { type Dispatch, type SetStateAction } from "react";
+import { ActionClass, OrganizationRole } from "@formbricks/database/prisma-browser";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSegment } from "@formbricks/types/segment";

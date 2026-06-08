@@ -1,11 +1,11 @@
 "use client";
 
 import { createId } from "@paralleldrive/cuid2";
-import { type Workspace } from "@prisma/client";
 import { PlusIcon } from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { type Workspace } from "@formbricks/database/prisma-browser";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";

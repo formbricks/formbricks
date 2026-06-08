@@ -1,6 +1,6 @@
 {
   "$schema": "https://turborepo.org/schema.json",
-  "globalEnv": [],
+  "globalEnv": ["MIGRATE_DATABASE_URL", "SHADOW_DATABASE_URL"],
   "tasks": {
     "@formbricks/ai#build": {
       "dependsOn": ["@formbricks/logger#build"],
@@ -39,7 +39,7 @@
     },
     "@formbricks/database#build": {
       "dependsOn": ["^build"],
-      "outputs": ["dist/**", "../../node_modules/.prisma/client/**"]
+      "outputs": ["dist/**", "generated/prisma/**"]
     },
     "@formbricks/database#lint": {
       "dependsOn": ["@formbricks/logger#build", "@formbricks/database#build"]

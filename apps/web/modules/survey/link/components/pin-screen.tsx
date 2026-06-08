@@ -1,8 +1,8 @@
 "use client";
 
-import { Response, Workspace } from "@prisma/client";
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Response, Workspace } from "@formbricks/database/prisma-browser";
 import { TSurvey, TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";

@@ -1,5 +1,5 @@
-import type { Team } from "@prisma/client";
 import { z } from "zod";
+import type { Team } from "../src/prisma";
 
 export const ZTeam = z.object({
   id: z.cuid2().describe("The ID of the team"),

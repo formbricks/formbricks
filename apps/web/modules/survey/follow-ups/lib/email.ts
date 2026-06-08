@@ -1,5 +1,4 @@
 import sanitizeHtml from "sanitize-html";
-import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import {
   ProcessedHiddenField,
   ProcessedResponseElement,
@@ -8,6 +7,7 @@ import {
 } from "@formbricks/email";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { TSurveyFollowUp } from "@formbricks/types/surveys/follow-up";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { IMPRINT_ADDRESS, IMPRINT_URL, PRIVACY_URL, TERMS_URL } from "@/lib/constants";
 import { getElementResponseMapping } from "@/lib/responses";

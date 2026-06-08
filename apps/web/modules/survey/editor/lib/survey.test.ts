@@ -1,5 +1,5 @@
-import { ActionClass } from "@prisma/client";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { ActionClass } from "@formbricks/database/prisma";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { TSurvey, TSurveyQuestionTypeEnum } from "@formbricks/types/surveys/types";
 import { updateSurveyInternal } from "@/lib/survey/service";

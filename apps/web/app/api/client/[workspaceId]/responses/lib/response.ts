@@ -1,6 +1,6 @@
 import "server-only";
-import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import type { TContactAttributes } from "@formbricks/types/contact-attribute";
 import type { TResponse } from "@formbricks/types/responses";
 import type { TTag } from "@formbricks/types/tags";

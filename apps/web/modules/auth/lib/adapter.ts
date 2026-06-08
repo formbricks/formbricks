@@ -1,7 +1,7 @@
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import type { PrismaClient } from "@prisma/client";
 import type { Awaitable } from "next-auth";
 import type { Adapter, AdapterAccount } from "next-auth/adapters";
+import type { PrismaClient } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { resolveAccountProvider } from "@/modules/ee/sso/lib/provider-normalization";
 
@@ -39,7 +39,7 @@ const withAdapterErrorLogging =
  * provider-specific naming into the call sites.
  */
 export const getNextAuthAdapter = (prismaClient: PrismaClient): Adapter => {
-  const baseAdapter = PrismaAdapter(prismaClient);
+  const baseAdapter = PrismaAdapter(prismaClient as unknown as Parameters<typeof PrismaAdapter>[0]);
   const { getUserByAccount, linkAccount, unlinkAccount } = baseAdapter;
 
   if (!getUserByAccount || !linkAccount || !unlinkAccount) {

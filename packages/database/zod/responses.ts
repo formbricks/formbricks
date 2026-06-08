@@ -1,5 +1,5 @@
-import type { Response } from "@prisma/client";
 import { z } from "zod";
+import type { Response } from "../src/prisma";
 
 export const ZResponse = z.object({
   id: z.cuid2().describe("The ID of the response"),

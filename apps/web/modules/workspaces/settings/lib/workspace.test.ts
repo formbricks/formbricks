@@ -1,6 +1,6 @@
-import { Prisma } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { StorageErrorCode } from "@formbricks/storage";
 import { DatabaseError, InvalidInputError, ValidationError } from "@formbricks/types/errors";

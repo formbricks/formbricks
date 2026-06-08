@@ -1,6 +1,6 @@
-import { ApiKeyPermission } from "@prisma/client";
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { ApiKeyPermission } from "@formbricks/database/prisma";
 import { TooManyRequestsError } from "@formbricks/types/errors";
 import { authenticateApiKeyFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";

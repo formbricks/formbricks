@@ -1,6 +1,6 @@
-import { SurveyType, Workspace } from "@prisma/client";
 import { type JSX, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { SurveyType, Workspace } from "@formbricks/database/prisma-browser";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";

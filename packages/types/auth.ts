@@ -1,7 +1,9 @@
-import { ApiKeyPermission } from "@prisma/client";
 import { z } from "zod";
 import { ZOrganizationAccess } from "./api-key";
 import { ZUser } from "./user";
+
+export const ZApiKeyPermission = z.enum(["read", "write", "manage"]);
+export type TApiKeyPermission = z.infer<typeof ZApiKeyPermission>;
 
 export const ZAuthSession = z.object({
   user: ZUser,
@@ -10,7 +12,7 @@ export const ZAuthSession = z.object({
 export const ZAPIKeyWorkspacePermission = z.object({
   workspaceId: z.cuid2(),
   workspaceName: z.string(),
-  permission: z.enum(ApiKeyPermission),
+  permission: ZApiKeyPermission,
 });
 
 export type TAPIKeyWorkspacePermission = z.infer<typeof ZAPIKeyWorkspacePermission>;

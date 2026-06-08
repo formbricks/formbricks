@@ -1,11 +1,11 @@
 import { z } from "zod";
-import { TSurveyFollowUp } from "@formbricks/database/types/survey-follow-up";
 import { logger } from "@formbricks/logger";
 import { ZId } from "@formbricks/types/common";
 import { Result, err } from "@formbricks/types/error-handlers";
 import { ValidationError } from "@formbricks/types/errors";
 import { TOrganization } from "@formbricks/types/organizations";
 import { TResponse } from "@formbricks/types/responses";
+import { TSurveyFollowUp } from "@formbricks/types/surveys/follow-up";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getResponse } from "@/lib/response/service";

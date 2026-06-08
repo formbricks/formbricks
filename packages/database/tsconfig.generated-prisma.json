@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "declaration": true,
+    "declarationMap": true,
+    "emitDeclarationOnly": true,
+    "incremental": false,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "noEmit": false,
+    "outDir": "dist",
+    "rootDir": ".",
+    "skipLibCheck": true,
+    "tsBuildInfoFile": ".turbo/generated-prisma.tsbuildinfo"
+  },
+  "extends": "@formbricks/config-typescript/node16.json",
+  "include": ["generated/prisma/**/*.ts"]
+}

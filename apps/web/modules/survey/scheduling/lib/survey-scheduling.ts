@@ -1,6 +1,6 @@
 import "server-only";
-import { type Prisma, type SurveyStatus } from "@prisma/client";
 import { prisma } from "@formbricks/database";
+import { type Prisma, type SurveyStatus } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { ValidationError } from "@formbricks/types/errors";
 import type { TSurvey } from "@formbricks/types/surveys/types";

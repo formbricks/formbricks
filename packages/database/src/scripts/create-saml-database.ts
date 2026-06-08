@@ -1,5 +1,6 @@
-import { PrismaClient } from "@prisma/client";
 import { logger } from "@formbricks/logger";
+import { PrismaClient } from "../prisma";
+import { createPrismaPgAdapter } from "../prisma-adapter";
 
 const createSamlDatabase = async (): Promise<void> => {
   const samlDatabaseUrl = process.env.SAML_DATABASE_URL;
@@ -18,7 +19,8 @@ const createSamlDatabase = async (): Promise<void> => {
   }
 
   // Create a Prisma client to connect to the default database
-  const prisma = new PrismaClient();
+  const defaultDatabaseUrl = samlDatabaseUrl.replace(`/${dbName}`, "/postgres");
+  const prisma = new PrismaClient({ adapter: createPrismaPgAdapter(defaultDatabaseUrl).adapter });
 
   try {
     // Check if the database exists

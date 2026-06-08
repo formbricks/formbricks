@@ -1,5 +1,5 @@
-import type { Webhook } from "@prisma/client";
 import { z } from "zod";
+import type { Webhook } from "../src/prisma";
 
 export const ZWebhook = z.object({
   id: z.cuid2().describe("The ID of the webhook"),
