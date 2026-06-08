@@ -2,7 +2,7 @@
 
 import { InboxIcon } from "lucide-react";
 import Link from "next/link";
-import { Fragment, useState } from "react";
+import { Fragment, type KeyboardEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TI18nString } from "@formbricks/types/i18n";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
@@ -29,6 +29,8 @@ interface MultipleChoiceSummaryProps {
     filterComboBoxValue?: string | string[]
   ) => void;
 }
+
+type ChoiceSummaryResult = TSurveyElementSummaryMultipleChoice["choices"][number];
 
 export const MultipleChoiceSummary = ({
   elementSummary,
@@ -66,6 +68,27 @@ export const MultipleChoiceSummary = ({
     );
   };
 
+  const applyChoiceFilter = (result: ChoiceSummaryResult) => {
+    setFilter(
+      elementSummary.element.id,
+      elementSummary.element.headline,
+      elementSummary.element.type,
+      elementSummary.type === TSurveyElementTypeEnum.MultipleChoiceSingle || otherValue === result.value
+        ? t("workspace.surveys.summary.includes_either")
+        : t("workspace.surveys.summary.includes_all"),
+      [result.value]
+    );
+  };
+
+  const handleChoiceKeyDown = (event: KeyboardEvent<HTMLDivElement>, result: ChoiceSummaryResult) => {
+    if (event.target !== event.currentTarget || (event.key !== "Enter" && event.key !== " ")) {
+      return;
+    }
+
+    event.preventDefault();
+    applyChoiceFilter(result);
+  };
+
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
       <ElementSummaryHeader
@@ -86,21 +109,12 @@ export const MultipleChoiceSummary = ({
             const choiceId = getChoiceIdByValue(result.value, elementSummary.element);
             return (
               <Fragment key={result.value}>
-                <button
-                  type="button"
+                <div
+                  role="button"
+                  tabIndex={0}
                   className="group w-full cursor-pointer"
-                  onClick={() =>
-                    setFilter(
-                      elementSummary.element.id,
-                      elementSummary.element.headline,
-                      elementSummary.element.type,
-                      elementSummary.type === TSurveyElementTypeEnum.MultipleChoiceSingle ||
-                        otherValue === result.value
-                        ? t("workspace.surveys.summary.includes_either")
-                        : t("workspace.surveys.summary.includes_all"),
-                      [result.value]
-                    )
-                  }>
+                  onClick={() => applyChoiceFilter(result)}
+                  onKeyDown={(event) => handleChoiceKeyDown(event, result)}>
                   <div className="text flex flex-col justify-between px-2 pb-2 sm:flex-row">
                     <div className="mr-8 flex w-full justify-between gap-x-2 sm:justify-normal">
                       <p className="font-semibold text-slate-700 underline-offset-4 group-hover:underline">
@@ -120,7 +134,7 @@ export const MultipleChoiceSummary = ({
                   <div className="group-hover:opacity-80">
                     <ProgressBar barColor="bg-brand-dark" progress={result.percentage / 100} />
                   </div>
-                </button>
+                </div>
                 {result.others && result.others.length > 0 && (
                   <div className="mt-4 rounded-lg border border-slate-200">
                     <div className="grid h-12 grid-cols-2 content-center rounded-t-lg bg-slate-100 text-left text-sm font-semibold text-slate-900">
