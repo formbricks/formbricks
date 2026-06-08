@@ -2,8 +2,8 @@
 
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef } from "react";
-import { getIsActiveCustomerAction } from "./actions";
-import { isOnboardingPathname } from "./is-onboarding-pathname";
+import { getIsActiveCustomerAction } from "../lib/actions";
+import { isOnboardingPathname } from "../lib/utils";
 
 interface ChatwootWidgetProps {
   chatwootBaseUrl: string;

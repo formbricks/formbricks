@@ -1,5 +1,5 @@
 import { getServerSession } from "next-auth";
-import { ChatwootWidget } from "@/app/chatwoot/ChatwootWidget";
+import { ChatwootWidget } from "@/app/chatwoot/components/chatwoot-widget";
 import { PostHogIdentify } from "@/app/posthog/PostHogIdentify";
 import {
   CHATWOOT_BASE_URL,

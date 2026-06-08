@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { isOnboardingPathname } from "./is-onboarding-pathname";
+import { isOnboardingPathname } from "./utils";
 
 describe("isOnboardingPathname", () => {
   test("returns true for workspace onboarding routes", () => {
