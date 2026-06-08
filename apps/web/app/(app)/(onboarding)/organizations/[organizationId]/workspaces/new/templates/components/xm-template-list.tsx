@@ -6,11 +6,8 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TUserLocale } from "@formbricks/types/user";
-import {
-  TOnboardingXMTemplateId,
-  XM_TEMPLATE_IDS,
-} from "@/app/(app)/(onboarding)/organizations/[organizationId]/workspaces/new/templates/lib/xm-template-ids";
 import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizations/components/OnboardingOptionsContainer";
+import { type TXMTemplateId, XM_TEMPLATE_IDS } from "@/app/lib/xm-template-ids";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { createSurveyFromTemplate } from "@/modules/survey/components/template-list/lib/v3-template-client";
 
@@ -42,7 +39,7 @@ export const XMTemplateList = ({ workspaceId, defaultLanguage }: Readonly<XMTemp
     }
   };
 
-  const handleTemplateClick = (templateId: TOnboardingXMTemplateId) => {
+  const handleTemplateClick = (templateId: TXMTemplateId) => {
     setActiveTemplateId(templateId);
     void createSurvey(templateId);
   };

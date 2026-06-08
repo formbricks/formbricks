@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { XM_TEMPLATE_IDS } from "@/app/(app)/(onboarding)/organizations/[organizationId]/workspaces/new/templates/lib/xm-template-ids";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { CUSTOM_SURVEY_TEMPLATE_ID } from "@/app/lib/templates";
+import { XM_TEMPLATE_IDS } from "@/app/lib/xm-template-ids";
 import { getWorkspace } from "@/lib/workspace/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { createV3SurveyResponse } from "../../lib/operations";

@@ -1,7 +1,7 @@
 import type { TFunction } from "i18next";
 import { describe, expect, test } from "vitest";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
-import { XM_TEMPLATE_IDS } from "@/app/(app)/(onboarding)/organizations/[organizationId]/workspaces/new/templates/lib/xm-template-ids";
+import { XM_TEMPLATE_IDS } from "@/app/lib/xm-template-ids";
 import { templates } from "./templates";
 
 const mockTranslations: Record<string, string> = {
