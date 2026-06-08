@@ -62,7 +62,7 @@ export const hasUserWorkspaceAccessForAction = async (
     if (orgMembership.role === "billing") return false;
     if (orgMembership.role === "owner" || orgMembership.role === "manager") return true;
 
-    const workspaceTeam = await prisma.workspaceTeam.findFirst({
+    const workspaceTeams = await prisma.workspaceTeam.findMany({
       where: {
         workspaceId,
         team: {
@@ -74,9 +74,18 @@ export const hasUserWorkspaceAccessForAction = async (
       select: { permission: true },
     });
 
-    if (!workspaceTeam) return false;
+    if (workspaceTeams.length === 0) return false;
 
-    return teamPermissionSatisfies(workspaceTeam.permission, ACTION_REQUIRED_PERMISSION[action]);
+    // A user can belong to multiple teams that each grant access to the same
+    // workspace at different permission levels (the WorkspaceTeam unique key
+    // is [workspaceId, teamId], not [workspaceId, userId]). Pick the highest
+    // level so a `read` team membership doesn't shadow a `manage` one.
+    const highestPermission = workspaceTeams.reduce<WorkspacePermissionLevel>(
+      (max, wt) => (PERMISSION_RANK[wt.permission] > PERMISSION_RANK[max] ? wt.permission : max),
+      workspaceTeams[0].permission
+    );
+
+    return teamPermissionSatisfies(highestPermission, ACTION_REQUIRED_PERMISSION[action]);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
