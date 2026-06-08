@@ -72,10 +72,12 @@ enterprise functionality.
 
 - `AI_PROVIDER` and `AI_MODEL` are the base settings
 - `AI_PROVIDER=aws` requires `AI_AWS_REGION`, `AI_AWS_ACCESS_KEY_ID`, and `AI_AWS_SECRET_ACCESS_KEY`
-- `AI_PROVIDER=google` requires `AI_GOOGLE_CLOUD_PROJECT`, `AI_GOOGLE_CLOUD_LOCATION`, and either
-  `AI_GOOGLE_CLOUD_CREDENTIALS_JSON` or `AI_GOOGLE_CLOUD_APPLICATION_CREDENTIALS`
+- `AI_PROVIDER=google` requires `AI_GOOGLE_CLOUD_PROJECT` and `AI_GOOGLE_CLOUD_LOCATION`; credentials are
+  optional overrides when Application Default Credentials are unavailable
 - `AI_PROVIDER=azure` requires `AI_AZURE_API_KEY` and either `AI_AZURE_BASE_URL` or
   `AI_AZURE_RESOURCE_NAME`
+- `AI_PROVIDER=openai-compatible` requires `AI_OPENAI_COMPATIBLE_BASE_URL`; the LLM GA v1 self-hosted
+  path is Qwen served by vLLM
 
 #### Cube
 
@@ -238,8 +240,8 @@ Common upgrade issues:
 - **Bad `HUB_API_URL`**: the app starts, but Hub-backed features fail because the service cannot be reached
 - **No edge rate limiter in front of covered routes**: the v5 deployment runs, but those routes are no longer
   protected by the legacy in-app limiter
-- **Missing AI credentials**: AI features remain unavailable until `AI_PROVIDER`, `AI_MODEL`, and the matching
-  provider credentials are set correctly
+- **Missing AI provider configuration**: AI features remain unavailable until `AI_PROVIDER`, `AI_MODEL`, and the
+  matching provider settings are set correctly
 - **Missing `CUBEJS_API_SECRET`** (or unreachable Cube endpoint): the Formbricks app fails env validation
   at boot, or — if env vars are present but Cube is unreachable — dashboards and analysis queries fail
   while the rest of the app stays healthy

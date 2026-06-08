@@ -89,6 +89,97 @@ jobs:
             exit 1
           fi
 
+      - name: Validate Qwen/vLLM AI env rendering
+        run: |
+          set -euo pipefail
+
+          values_file="$(mktemp)"
+          trap 'rm -f "$values_file"' EXIT
+
+          cat > "$values_file" <<'YAML'
+          formbricks:
+            webappUrl: https://qa.example.com
+
+          externalSecret:
+            enabled: true
+            files:
+              ai-secrets:
+                data:
+                  AI_OPENAI_COMPATIBLE_API_KEY:
+                    remoteRef:
+                      key: formbricks/qwen-vllm
+                      property: apiKey
+                  AI_OPENAI_COMPATIBLE_HEADERS_JSON:
+                    remoteRef:
+                      key: formbricks/qwen-vllm
+                      property: headersJson
+                  AI_OPENAI_COMPATIBLE_QUERY_PARAMS_JSON:
+                    remoteRef:
+                      key: formbricks/qwen-vllm
+                      property: queryParamsJson
+
+          deployment:
+            env:
+              AI_PROVIDER: openai-compatible
+              AI_MODEL: qwen3-14b-awq
+              AI_OPENAI_COMPATIBLE_BASE_URL: http://vllm:8000/v1
+              AI_OPENAI_COMPATIBLE_PROVIDER_NAME: vllm
+              AI_OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUTS: "1"
+              AI_OPENAI_COMPATIBLE_API_KEY:
+                valueFrom:
+                  secretKeyRef:
+                    name: formbricks-ai-secrets
+                    key: AI_OPENAI_COMPATIBLE_API_KEY
+              AI_OPENAI_COMPATIBLE_HEADERS_JSON:
+                valueFrom:
+                  secretKeyRef:
+                    name: formbricks-ai-secrets
+                    key: AI_OPENAI_COMPATIBLE_HEADERS_JSON
+              AI_OPENAI_COMPATIBLE_QUERY_PARAMS_JSON:
+                valueFrom:
+                  secretKeyRef:
+                    name: formbricks-ai-secrets
+                    key: AI_OPENAI_COMPATIBLE_QUERY_PARAMS_JSON
+          YAML
+
+          rendered="$(helm template qa charts/formbricks \
+            -f "$values_file" \
+            --show-only templates/deployment.yaml \
+            --show-only templates/externalsecrets.yaml)"
+
+          for expected in \
+            "name: AI_PROVIDER" \
+            "value: \"openai-compatible\"" \
+            "name: AI_MODEL" \
+            "value: \"qwen3-14b-awq\"" \
+            "name: AI_OPENAI_COMPATIBLE_BASE_URL" \
+            "value: \"http://vllm:8000/v1\"" \
+            "name: AI_OPENAI_COMPATIBLE_PROVIDER_NAME" \
+            "value: \"vllm\"" \
+            "name: AI_OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUTS" \
+            "value: \"1\"" \
+            "name: formbricks-ai-secrets"; do
+            if ! grep -F "$expected" <<< "$rendered" >/dev/null; then
+              echo "Expected Helm render to contain: $expected"
+              exit 1
+            fi
+          done
+
+          for secret_key in \
+            AI_OPENAI_COMPATIBLE_API_KEY \
+            AI_OPENAI_COMPATIBLE_HEADERS_JSON \
+            AI_OPENAI_COMPATIBLE_QUERY_PARAMS_JSON; do
+            if ! grep -F "secretKey: ${secret_key}" <<< "$rendered" >/dev/null; then
+              echo "Expected ExternalSecret to render secretKey ${secret_key}"
+              exit 1
+            fi
+
+            if ! grep -F "key: ${secret_key}" <<< "$rendered" >/dev/null; then
+              echo "Expected Deployment to reference secret key ${secret_key}"
+              exit 1
+            fi
+          done
+
       - name: Package Helm chart
         env:
           VERSION: ${{ env.VERSION }}
