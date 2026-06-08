@@ -2,6 +2,8 @@ import "server-only";
 import { TUserLocale } from "@formbricks/types/user";
 import { env } from "./env";
 
+export { DEFAULT_BRAND_COLOR } from "./brand-color";
+
 export const IS_FORMBRICKS_CLOUD = env.IS_FORMBRICKS_CLOUD === "1";
 
 export const IS_PRODUCTION = env.NODE_ENV === "production";
@@ -17,7 +19,6 @@ export const ENCRYPTION_KEY = env.ENCRYPTION_KEY;
 
 // Other
 export const CRON_SECRET = env.CRON_SECRET;
-export const DEFAULT_BRAND_COLOR = "#64748b";
 export const FB_LOGO_URL = `${WEBAPP_URL}/logo-transparent.png`;
 
 export const PRIVACY_URL = env.PRIVACY_URL;

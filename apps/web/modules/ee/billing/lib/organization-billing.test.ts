@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
+  addOptimisticBillingFeature,
   applyPendingUpgradeFromSetupCheckout,
   createPaidPlanCheckoutSession,
   ensureCloudStripeSetupForOrganization,
@@ -1983,6 +1984,84 @@ describe("organization-billing", () => {
 
     expect(mocks.subscriptionsCancel).toHaveBeenCalledWith("sub_hobby", { prorate: false });
     expect(mocks.subscriptionsCreate).not.toHaveBeenCalled();
+  });
+
+  describe("addOptimisticBillingFeature", () => {
+    test("adds the feature when it is not already present and preserves every other stripe field", async () => {
+      const existingStripe = {
+        plan: "pro",
+        interval: "monthly",
+        subscriptionStatus: "trialing",
+        subscriptionId: "sub_123",
+        hasPaymentMethod: false,
+        features: ["existing-feature"],
+        pendingChange: null,
+        lastStripeEventCreatedAt: null,
+        lastSyncedAt: "2024-01-01T00:00:00.000Z",
+        lastSyncedEventId: null,
+        trialEnd: "2024-02-01T00:00:00.000Z",
+      };
+      mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+        stripeCustomerId: "cus_1",
+        limits: { workspaces: 3, monthly: { responses: 1500 } },
+        usageCycleAnchor: new Date("2024-01-01"),
+        stripe: existingStripe,
+      });
+
+      await addOptimisticBillingFeature("org_1", "ai-smart-tools");
+
+      expect(mocks.prismaOrganizationBillingUpdate).toHaveBeenCalledWith({
+        where: { organizationId: "org_1" },
+        data: {
+          stripe: {
+            ...existingStripe,
+            features: ["existing-feature", "ai-smart-tools"],
+          },
+        },
+      });
+      expect(mocks.cacheDel).toHaveBeenCalled();
+    });
+
+    test("is a no-op when the feature is already present", async () => {
+      mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+        stripeCustomerId: "cus_1",
+        limits: { workspaces: 3, monthly: { responses: 1500 } },
+        usageCycleAnchor: new Date("2024-01-01"),
+        stripe: {
+          lastSyncedAt: "2024-01-01T00:00:00.000Z",
+          features: ["ai-smart-tools", "contacts"],
+        },
+      });
+
+      await addOptimisticBillingFeature("org_1", "ai-smart-tools");
+
+      expect(mocks.prismaOrganizationBillingUpdate).not.toHaveBeenCalled();
+      expect(mocks.cacheDel).not.toHaveBeenCalled();
+    });
+
+    test("is a no-op when no billing record exists", async () => {
+      mocks.prismaOrganizationBillingFindUnique.mockResolvedValue(null);
+      mocks.prismaOrganizationFindUnique.mockResolvedValue(null);
+
+      await addOptimisticBillingFeature("org_1", "ai-smart-tools");
+
+      expect(mocks.prismaOrganizationBillingUpdate).not.toHaveBeenCalled();
+      expect(mocks.cacheDel).not.toHaveBeenCalled();
+    });
+
+    test("is a no-op when the billing snapshot has no stripe object", async () => {
+      mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+        stripeCustomerId: null,
+        limits: { workspaces: 3, monthly: { responses: 1500 } },
+        usageCycleAnchor: new Date("2024-01-01"),
+        stripe: null,
+      });
+
+      await addOptimisticBillingFeature("org_1", "ai-smart-tools");
+
+      expect(mocks.prismaOrganizationBillingUpdate).not.toHaveBeenCalled();
+      expect(mocks.cacheDel).not.toHaveBeenCalled();
+    });
   });
 
   test("applyPendingUpgradeFromSetupCheckout upgrades hobby to pro", async () => {

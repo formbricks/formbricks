@@ -11,7 +11,7 @@ export const SelectPlanOnboarding = ({
   featureVariant,
   ctaVariant,
 }: Readonly<SelectPlanOnboardingProps>) => {
-  const nextUrl = `/organizations/${organizationId}/workspaces/new/mode`;
+  const nextUrl = `/organizations/${organizationId}/workspaces/new/survey`;
 
   return (
     <div className="flex min-h-full min-w-full flex-col items-center justify-center">

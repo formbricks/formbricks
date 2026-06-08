@@ -1,6 +1,7 @@
 import { type Locator, expect } from "@playwright/test";
 import { surveys } from "@/playwright/utils/mock";
 import { test } from "./lib/fixtures";
+import { startSurveyFromScratch } from "./lib/utils";
 import * as helper from "./utils/helper";
 import {
   createSurvey,
@@ -303,8 +304,9 @@ test.describe("Multi Language Survey Create", async () => {
 
     // Create survey and add all questions in English (default language)
     await page.goto(`/workspaces/${workspaceId}/surveys`);
-    await page.getByText("Start from scratch").click();
-    await page.getByRole("button", { name: "Create survey", exact: true }).click();
+    await startSurveyFromScratch(page, {
+      waitForEditUrl: /\/workspaces\/[^/]+\/surveys\/[^/]+\/edit$/,
+    });
 
     // Enable welcome card
     await page.locator("#welcome-toggle").click();
