@@ -6,6 +6,7 @@ import { DEFAULT_LOCALE } from "@/lib/constants";
 import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
+import { TemplateCreateQueryClientProvider } from "@/modules/survey/components/template-list/query-client-provider";
 import { Header } from "@/modules/ui/components/header";
 
 interface TemplatesOnboardingPageProps {
@@ -36,7 +37,9 @@ const Page = async (props: TemplatesOnboardingPageProps) => {
   return (
     <div className="flex min-h-full min-w-full flex-col items-center justify-center gap-y-12">
       <Header title={t("workspace.xm-templates.headline")} />
-      <XMTemplateList workspaceId={workspace.id} defaultLanguage={locale} />
+      <TemplateCreateQueryClientProvider>
+        <XMTemplateList workspaceId={workspace.id} defaultLanguage={locale} />
+      </TemplateCreateQueryClientProvider>
     </div>
   );
 };

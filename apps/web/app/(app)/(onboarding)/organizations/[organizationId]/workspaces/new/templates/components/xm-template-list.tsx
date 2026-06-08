@@ -9,7 +9,7 @@ import type { TUserLocale } from "@formbricks/types/user";
 import { OnboardingOptionsContainer } from "@/app/(app)/(onboarding)/organizations/components/OnboardingOptionsContainer";
 import { type TXMTemplateId, XM_TEMPLATE_IDS } from "@/app/lib/xm-template-ids";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
-import { createSurveyFromTemplate } from "@/modules/survey/components/template-list/lib/v3-template-client";
+import { useCreateSurveyFromTemplate } from "@/modules/survey/components/template-list/hooks/use-create-survey-from-template";
 
 interface XMTemplateListProps {
   workspaceId: string;
@@ -20,10 +20,11 @@ export const XMTemplateList = ({ workspaceId, defaultLanguage }: Readonly<XMTemp
   const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
   const { t } = useTranslation();
   const router = useRouter();
+  const createSurveyMutation = useCreateSurveyFromTemplate();
 
   const createSurvey = async (templateId: string) => {
     try {
-      const survey = await createSurveyFromTemplate({
+      const survey = await createSurveyMutation.mutateAsync({
         workspaceId,
         templateId,
         source: "xm",

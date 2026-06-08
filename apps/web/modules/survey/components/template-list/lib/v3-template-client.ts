@@ -10,19 +10,21 @@ type TV3SurveyCreateResponse = {
 
 export type TV3TemplateSource = "catalog" | "custom" | "xm";
 
+export type TCreateSurveyFromTemplateInput = {
+  workspaceId: string;
+  templateId: string;
+  source: TV3TemplateSource;
+  surveyType: TSurveyType;
+  defaultLanguage: TUserLocale;
+};
+
 export async function createSurveyFromTemplate({
   workspaceId,
   templateId,
   source,
   surveyType,
   defaultLanguage,
-}: {
-  workspaceId: string;
-  templateId: string;
-  source: TV3TemplateSource;
-  surveyType: TSurveyType;
-  defaultLanguage: TUserLocale;
-}): Promise<TV3SurveyCreateResponse["data"]> {
+}: TCreateSurveyFromTemplateInput): Promise<TV3SurveyCreateResponse["data"]> {
   const response = await fetch("/api/v3/surveys/templates", {
     method: "POST",
     cache: "no-store",

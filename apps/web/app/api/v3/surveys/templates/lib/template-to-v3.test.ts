@@ -1,9 +1,11 @@
 import type { TFunction } from "i18next";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { prepareV3SurveyCreateInput } from "@/app/api/v3/surveys/prepare";
 import { CUSTOM_SURVEY_TEMPLATE_ID, customSurveyTemplate, templates } from "@/app/lib/templates";
 import { replacePresetPlaceholders } from "@/lib/utils/templates";
 import { buildV3SurveyCreatePayloadFromTemplate } from "./template-to-v3";
+
+vi.mock("server-only", () => ({}));
 
 const workspaceId = "clxx1234567890123456789012";
 const workspace = {

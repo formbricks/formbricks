@@ -150,6 +150,24 @@ describe("createTrustedTemplateSurveyResponse", () => {
     );
   });
 
+  test("returns bad request when the generated v3 survey document is invalid", async () => {
+    const response = await createTrustedTemplateSurveyResponse({
+      body: {
+        workspaceId,
+        templateId: "product-market-fit-superhuman",
+        source: "catalog",
+        surveyType: "invalid" as any,
+        defaultLanguage: "en-US",
+      },
+      authentication,
+      requestId,
+      instance,
+    });
+
+    expect(response.status).toBe(400);
+    expect(createV3SurveyResponse).not.toHaveBeenCalled();
+  });
+
   test("rejects unknown template/source combinations", async () => {
     const response = await createTrustedTemplateSurveyResponse({
       body: {

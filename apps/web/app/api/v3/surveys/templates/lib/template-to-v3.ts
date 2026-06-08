@@ -1,6 +1,8 @@
+import "server-only";
 import type { TSurveyType } from "@formbricks/types/surveys/types";
 import type { TTemplate } from "@formbricks/types/templates";
 import type { TUserLocale } from "@formbricks/types/user";
+import { isInternalI18nString, isPlainObject } from "../../guards";
 
 export type TV3TemplateSurveyCreatePayload = {
   workspaceId: string;
@@ -16,18 +18,6 @@ export type TV3TemplateSurveyCreatePayload = {
   hiddenFields: unknown;
   variables: unknown[];
 };
-
-function isPlainObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
-}
-
-function isInternalI18nString(value: unknown): value is Record<string, string> {
-  return (
-    isPlainObject(value) &&
-    typeof value.default === "string" &&
-    Object.values(value).every((entry) => typeof entry === "string")
-  );
-}
 
 function toPublicLocaleMap(
   value: Record<string, string>,

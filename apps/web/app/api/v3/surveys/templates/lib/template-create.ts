@@ -12,9 +12,9 @@ import { XM_TEMPLATE_IDS } from "@/app/lib/xm-template-ids";
 import { replacePresetPlaceholders } from "@/lib/utils/templates";
 import { getWorkspace } from "@/lib/workspace/service";
 import { getTranslate } from "@/lingodotdev/server";
-import { buildV3SurveyCreatePayloadFromTemplate } from "@/modules/survey/components/template-list/lib/template-to-v3";
 import { createV3SurveyResponse } from "../../lib/operations";
-import { ZV3CreateSurveyBody } from "../../schemas";
+import { ZV3CreateSurveyBody, formatV3ZodInvalidParams } from "../../schemas";
+import { buildV3SurveyCreatePayloadFromTemplate } from "./template-to-v3";
 
 export const ZV3TrustedTemplateCreateBody = z.object({
   workspaceId: z.cuid2(),
@@ -104,7 +104,7 @@ export async function createTrustedTemplateSurveyResponse({
       });
     }
 
-    const createBody = ZV3CreateSurveyBody.parse(
+    const createBodyResult = ZV3CreateSurveyBody.safeParse(
       buildV3SurveyCreatePayloadFromTemplate({
         template: resolvedTemplate.template,
         workspaceId: authResult.workspaceId,
@@ -113,8 +113,19 @@ export async function createTrustedTemplateSurveyResponse({
       })
     );
 
+    if (!createBodyResult.success) {
+      const invalidParams = formatV3ZodInvalidParams(createBodyResult.error, "data");
+
+      log.warn({ statusCode: 400, invalidParams }, "Trusted template survey create validation failed");
+
+      return problemBadRequest(requestId, "Invalid template survey document", {
+        invalid_params: invalidParams,
+        instance,
+      });
+    }
+
     return await createV3SurveyResponse({
-      body: createBody,
+      body: createBodyResult.data,
       authentication,
       requestId,
       instance,

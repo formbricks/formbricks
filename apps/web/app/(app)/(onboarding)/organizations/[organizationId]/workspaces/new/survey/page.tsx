@@ -6,6 +6,7 @@ import { DEFAULT_LOCALE } from "@/lib/constants";
 import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
+import { TemplateCreateQueryClientProvider } from "@/modules/survey/components/template-list/query-client-provider";
 import { getSurveyAIAvailability } from "@/modules/survey/lib/get-survey-ai-availability";
 import { Header } from "@/modules/ui/components/header";
 
@@ -41,13 +42,15 @@ const Page = async (props: SurveyOnboardingPageProps) => {
   return (
     <div className="flex min-h-full min-w-full flex-col items-center justify-center gap-y-12">
       <Header title={t("organizations.workspaces.new.survey.title")} />
-      <CreateFirstSurvey
-        organizationId={params.organizationId}
-        workspaceId={workspace.id}
-        defaultLanguage={locale}
-        isAIAvailable={isAIAvailable}
-        aiUnavailableReason={aiUnavailableReason}
-      />
+      <TemplateCreateQueryClientProvider>
+        <CreateFirstSurvey
+          organizationId={params.organizationId}
+          workspaceId={workspace.id}
+          defaultLanguage={locale}
+          isAIAvailable={isAIAvailable}
+          aiUnavailableReason={aiUnavailableReason}
+        />
+      </TemplateCreateQueryClientProvider>
     </div>
   );
 };

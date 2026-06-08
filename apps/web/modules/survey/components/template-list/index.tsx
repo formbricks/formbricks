@@ -16,7 +16,7 @@ import { CreateWithAITemplate } from "./components/create-with-ai-template";
 import { StartFromScratchTemplate } from "./components/start-from-scratch-template";
 import { Template } from "./components/template";
 import { TemplateFilters } from "./components/template-filters";
-import { createSurveyFromTemplate } from "./lib/v3-template-client";
+import { useCreateSurveyFromTemplate } from "./hooks/use-create-survey-from-template";
 
 interface TemplateListProps {
   workspaceId: string;
@@ -49,8 +49,8 @@ export const TemplateList = ({
   const { t } = useTranslation();
   const router = useRouter();
   const [activeTemplate, setActiveTemplate] = useState<TTemplate | null>(null);
-  const [loading, setLoading] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<TTemplateFilter[]>([null, null, null]);
+  const createSurveyMutation = useCreateSurveyFromTemplate();
   const surveyType: TSurveyType = useMemo(() => {
     if (workspace.config.channel) {
       if (workspace.config.channel === "website") {
@@ -64,9 +64,8 @@ export const TemplateList = ({
   }, [workspace.config.channel]);
 
   const createSurvey = async (activeTemplate: TTemplate) => {
-    setLoading(true);
     try {
-      const survey = await createSurveyFromTemplate({
+      const survey = await createSurveyMutation.mutateAsync({
         workspaceId,
         templateId: activeTemplate.id,
         source: activeTemplate.id === CUSTOM_SURVEY_TEMPLATE_ID ? "custom" : "catalog",
@@ -77,8 +76,6 @@ export const TemplateList = ({
       router.push(`${workspaceBasePath}/surveys/${survey.id}/edit`);
     } catch (error) {
       toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -129,7 +126,7 @@ export const TemplateList = ({
           onTemplateClick={onTemplateClick}
           workspace={workspace}
           createSurvey={createSurvey}
-          loading={loading}
+          loading={createSurveyMutation.isPending}
           noPreview={noPreview}
         />
         {showAICreateCard && (
@@ -151,7 +148,7 @@ export const TemplateList = ({
                 onTemplateClick={onTemplateClick}
                 workspace={workspace}
                 createSurvey={createSurvey}
-                loading={loading}
+                loading={createSurveyMutation.isPending}
                 selectedFilter={selectedFilter}
                 noPreview={noPreview}
               />

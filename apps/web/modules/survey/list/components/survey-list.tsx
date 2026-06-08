@@ -14,7 +14,7 @@ import { FORMBRICKS_SURVEYS_FILTERS_KEY_LS } from "@/lib/localStorage";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import type { TAIUnavailableReason } from "@/modules/ee/analysis/charts/lib/ai-availability";
 import { CreateWithAIDialog } from "@/modules/survey/components/template-list/components/create-with-ai-dialog";
-import { createSurveyFromTemplate } from "@/modules/survey/components/template-list/lib/v3-template-client";
+import { useCreateSurveyFromTemplate } from "@/modules/survey/components/template-list/hooks/use-create-survey-from-template";
 import { useDeleteSurvey } from "@/modules/survey/list/hooks/use-delete-survey";
 import { useSurveys } from "@/modules/survey/list/hooks/use-surveys";
 import { initialFilters } from "@/modules/survey/list/lib/constants";
@@ -57,16 +57,11 @@ type NewSurveyMenuProps = {
   aiUnavailableReason?: TAIUnavailableReason;
 };
 
-const NewSurveyMenu = ({
-  workspace,
-  language,
-  isAIAvailable,
-  aiUnavailableReason,
-}: NewSurveyMenuProps) => {
+const NewSurveyMenu = ({ workspace, language, isAIAvailable, aiUnavailableReason }: NewSurveyMenuProps) => {
   const { t } = useTranslation();
   const router = useRouter();
   const [isAIDialogOpen, setIsAIDialogOpen] = useState(false);
-  const [isCreatingBlankSurvey, setIsCreatingBlankSurvey] = useState(false);
+  const createSurveyMutation = useCreateSurveyFromTemplate();
   const workspaceBasePath = `/workspaces/${workspace.id}`;
 
   const surveyType: TSurveyType = useMemo(() => {
@@ -82,10 +77,8 @@ const NewSurveyMenu = ({
   }, [workspace.config.channel]);
 
   const handleStartFromScratch = async () => {
-    setIsCreatingBlankSurvey(true);
-
     try {
-      const survey = await createSurveyFromTemplate({
+      const survey = await createSurveyMutation.mutateAsync({
         workspaceId: workspace.id,
         templateId: CUSTOM_SURVEY_TEMPLATE_ID,
         source: "custom",
@@ -96,8 +89,6 @@ const NewSurveyMenu = ({
       router.push(`${workspaceBasePath}/surveys/${survey.id}/edit`);
     } catch (error) {
       toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
-    } finally {
-      setIsCreatingBlankSurvey(false);
     }
   };
 
@@ -122,7 +113,7 @@ const NewSurveyMenu = ({
             {t("workspace.surveys.ai_create.choose_template")}
           </DropdownMenuItem>
           <DropdownMenuItem
-            disabled={isCreatingBlankSurvey}
+            disabled={createSurveyMutation.isPending}
             icon={<PlusCircleIcon className="size-4" />}
             onSelect={(event) => {
               event.preventDefault();
