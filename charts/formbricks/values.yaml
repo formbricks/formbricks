@@ -99,6 +99,13 @@ deployment:
   # Cube is bundled by default (see the `cube` section below). To use an external Cube cluster instead,
   # set `cube.enabled: false` and provide CUBEJS_API_URL / CUBEJS_API_SECRET here via deployment.env or envFrom.
   # When bundled Cube is enabled, CUBEJS_API_URL is rendered automatically unless set here.
+  # For self-hosted Qwen/vLLM AI, set only the OpenAI-compatible variables you need, for example:
+  # AI_PROVIDER: openai-compatible
+  # AI_MODEL: qwen3-14b-awq
+  # AI_OPENAI_COMPATIBLE_BASE_URL: http://vllm:8000/v1
+  # AI_OPENAI_COMPATIBLE_PROVIDER_NAME: vllm
+  # AI_OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUTS: "1"
+  # Secret values can use valueFrom.secretKeyRef; omit unused provider variables.
   env: {}
 
   # Tolerations for scheduling pods on tainted nodes

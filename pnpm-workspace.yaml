@@ -2,6 +2,45 @@ packages:
   - "apps/*"
   - "packages/*"
 
+# Security overrides for transitive dependencies that still fail audit without a pin.
+# Remove each override once its upstream dependency chain adopts a patched version.
+overrides:
+  # Prisma dev tooling and @modelcontextprotocol/sdk chains.
+  "@hono/node-server": 1.19.13
+  hono: 4.12.18
+  # OpenTelemetry / protobuf chains.
+  "@protobufjs/utf8": 1.1.1
+  protobufjs@7: 7.5.8
+  protobufjs@8: 8.2.0
+  # sqlite3 / node-gyp chain.
+  "@tootallnate/once": 3.0.1
+  tar: 7.5.15
+  # SAML and XML processing chains.
+  "@xmldom/xmldom": 0.9.10
+  axios: 1.16.0
+  lodash: 4.18.1
+  node-forge: 1.4.0
+  qs@6: 6.15.2
+  # Webpack / linting / schema validation chains.
+  ajv@6: 6.14.0
+  fast-uri: 3.1.2
+  minimatch@10: 10.2.5
+  postcss: 8.5.14
+  # SDK and runtime transitive security pins.
+  effect: 3.20.0
+  fast-xml-parser: 5.7.0
+  ip-address: 10.1.1
+  js-cookie: 3.0.7
+  uuid@8: 11.1.1
+  uuid@9: 11.1.1
+  uuid@11: 11.1.1
+  # ENG-1111 / GHSA-58qx-3vcg-4xpx: ws is patched in 8.20.1+.
+  ws@8: 8.21.0
+  yaml@2: 2.9.0
+
+patchedDependencies:
+  next-auth@4.24.13: patches/next-auth@4.24.13.patch
+
 # Allow lifecycle scripts for packages that need to build native binaries
 # Required for pnpm v10+ which blocks scripts by default
 onlyBuiltDependencies:
