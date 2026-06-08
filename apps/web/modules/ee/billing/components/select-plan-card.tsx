@@ -77,7 +77,6 @@ export const SelectPlanCard = ({
       const result = await startProTrialAction({ organizationId });
       if (result?.data) {
         router.push(nextUrl);
-        router.refresh();
       } else if (result?.serverError === "trial_already_used") {
         toast.error(t("workspace.settings.billing.trial_already_used"));
         setIsStartingTrial(false);
@@ -97,7 +96,6 @@ export const SelectPlanCard = ({
       const result = await startHobbyAction({ organizationId });
       if (result?.data) {
         router.push(nextUrl);
-        router.refresh();
       } else {
         toast.error(t("common.something_went_wrong_please_try_again"));
         setIsStartingHobby(false);

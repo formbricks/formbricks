@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   ensureStripeCustomerForOrganization: vi.fn(),
   reconcileCloudStripeSubscriptionsForOrganization: vi.fn(),
   syncOrganizationBillingFromStripe: vi.fn(),
+  addOptimisticBillingFeature: vi.fn(),
   createCustomerPortalSession: vi.fn(),
   createSetupCheckoutSession: vi.fn(),
   isSubscriptionCancelled: vi.fn(),
@@ -62,6 +63,7 @@ vi.mock("@/modules/ee/billing/lib/organization-billing", () => ({
   ensureStripeCustomerForOrganization: mocks.ensureStripeCustomerForOrganization,
   reconcileCloudStripeSubscriptionsForOrganization: mocks.reconcileCloudStripeSubscriptionsForOrganization,
   syncOrganizationBillingFromStripe: mocks.syncOrganizationBillingFromStripe,
+  addOptimisticBillingFeature: mocks.addOptimisticBillingFeature,
 }));
 
 vi.mock("@/modules/ee/billing/lib/stripe-client", () => ({
@@ -86,6 +88,7 @@ describe("billing actions", () => {
     mocks.createProTrialSubscription.mockResolvedValue(undefined);
     mocks.reconcileCloudStripeSubscriptionsForOrganization.mockResolvedValue(undefined);
     mocks.syncOrganizationBillingFromStripe.mockResolvedValue({ stripe: { features: ["ai-smart-tools"] } });
+    mocks.addOptimisticBillingFeature.mockResolvedValue(undefined);
   });
 
   test("startHobbyAction ensures a customer, reconciles hobby, and syncs billing", async () => {
@@ -141,6 +144,7 @@ describe("billing actions", () => {
     expect(mocks.createProTrialSubscription).toHaveBeenCalledWith("org_1", "cus_1");
     expect(mocks.reconcileCloudStripeSubscriptionsForOrganization).toHaveBeenCalledWith("org_1");
     expect(mocks.syncOrganizationBillingFromStripe).toHaveBeenCalledWith("org_1");
+    expect(mocks.addOptimisticBillingFeature).toHaveBeenCalledWith("org_1", "ai-smart-tools");
     expect(result).toEqual({ success: true });
   });
 
@@ -161,6 +165,7 @@ describe("billing actions", () => {
     expect(mocks.createProTrialSubscription).toHaveBeenCalledWith("org_1", "cus_existing");
     expect(mocks.reconcileCloudStripeSubscriptionsForOrganization).toHaveBeenCalledWith("org_1");
     expect(mocks.syncOrganizationBillingFromStripe).toHaveBeenCalledWith("org_1");
+    expect(mocks.addOptimisticBillingFeature).toHaveBeenCalledWith("org_1", "ai-smart-tools");
     expect(result).toEqual({ success: true });
   });
 });

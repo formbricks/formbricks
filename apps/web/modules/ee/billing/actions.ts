@@ -16,6 +16,7 @@ import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { createCustomerPortalSession } from "@/modules/ee/billing/api/lib/create-customer-portal-session";
 import { createSetupCheckoutSession } from "@/modules/ee/billing/api/lib/create-setup-checkout-session";
 import {
+  addOptimisticBillingFeature,
   createPaidPlanCheckoutSession,
   createProTrialSubscription,
   ensureCloudStripeSetupForOrganization,
@@ -29,32 +30,6 @@ import {
 const ZManageSubscriptionAction = z.object({
   workspaceId: ZId,
 });
-
-const STRIPE_ENTITLEMENT_PROPAGATION_POLL_INTERVAL_MS = 500;
-const STRIPE_ENTITLEMENT_PROPAGATION_TIMEOUT_MS = 6_000;
-
-const wait = (milliseconds: number): Promise<void> =>
-  new Promise((resolve) => {
-    setTimeout(resolve, milliseconds);
-  });
-
-const waitForStripeAIEntitlementPropagation = async (organizationId: string): Promise<void> => {
-  const deadline = Date.now() + STRIPE_ENTITLEMENT_PROPAGATION_TIMEOUT_MS;
-
-  while (true) {
-    const billing = await syncOrganizationBillingFromStripe(organizationId);
-
-    if (billing?.stripe?.features?.includes(CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.AI_SMART_TOOLS)) {
-      return;
-    }
-
-    if (Date.now() >= deadline) {
-      return;
-    }
-
-    await wait(STRIPE_ENTITLEMENT_PROPAGATION_POLL_INTERVAL_MS);
-  }
-};
 
 export const manageSubscriptionAction = authenticatedActionClient
   .inputSchema(ZManageSubscriptionAction)
@@ -296,7 +271,14 @@ export const startProTrialAction = authenticatedActionClient
 
     await createProTrialSubscription(parsedInput.organizationId, customerId);
     await reconcileCloudStripeSubscriptionsForOrganization(parsedInput.organizationId);
-    await waitForStripeAIEntitlementPropagation(parsedInput.organizationId);
+    await syncOrganizationBillingFromStripe(parsedInput.organizationId);
+    // Optimistically grant ai-smart-tools so the onboarding survey page sees it
+    // on the very next render, even if Stripe's entitlements API hasn't yet
+    // surfaced it. The customer.subscription.created webhook will reconcile.
+    await addOptimisticBillingFeature(
+      parsedInput.organizationId,
+      CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.AI_SMART_TOOLS
+    );
 
     capturePostHogEvent(
       ctx.user.id,

@@ -1198,6 +1198,39 @@ export const syncOrganizationBillingFromStripe = async (
   return updatedBilling;
 };
 
+/**
+ * Optimistically add a feature lookup key to OrganizationBilling.stripe.features.
+ *
+ * Used immediately after a successful subscription change (e.g. starting a Pro
+ * trial) so the next page render sees the feature without waiting for Stripe's
+ * entitlements API to propagate.
+ *
+ * Only the features array is mutated. Every other field on the stripe snapshot
+ * (lastSyncedAt, subscriptionStatus, plan, interval, trialEnd, …) is preserved
+ * verbatim by spreading the existing snapshot. The subsequent
+ * customer.subscription.created webhook re-syncs the full snapshot from Stripe
+ * and is expected to converge on the same value in the common case.
+ */
+export const addOptimisticBillingFeature = async (organizationId: string, feature: string): Promise<void> => {
+  const billing = await getOrganizationBillingFromDatabase(organizationId);
+  if (!billing?.stripe) return;
+
+  const currentFeatures = billing.stripe.features ?? [];
+  if (currentFeatures.includes(feature)) return;
+
+  const updatedStripe = {
+    ...billing.stripe,
+    features: [...currentFeatures, feature],
+  };
+
+  await prisma.organizationBilling.update({
+    where: { organizationId },
+    data: { stripe: updatedStripe },
+  });
+
+  await invalidateOrganizationBillingCache(organizationId);
+};
+
 const isSnapshotStale = (billing: TOrganizationBilling | null): boolean => {
   const lastSyncedAt = getDateFromBilling(billing?.stripe?.lastSyncedAt ?? null);
   if (!lastSyncedAt) return true;
