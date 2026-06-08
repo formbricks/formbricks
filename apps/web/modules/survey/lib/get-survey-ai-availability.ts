@@ -27,12 +27,8 @@ export const getSurveyAIAvailability = async (
   const aiConfig = await getOrganizationAIConfig(organizationId);
   const resolvedConfig = {
     ...aiConfig,
-    ...(options?.isAISmartToolsEnabled !== undefined
-      ? { isAISmartToolsEnabled: options.isAISmartToolsEnabled }
-      : {}),
-    ...(options?.isAISmartToolsEntitled !== undefined
-      ? { isAISmartToolsEntitled: options.isAISmartToolsEntitled }
-      : {}),
+    isAISmartToolsEnabled: options?.isAISmartToolsEnabled ?? aiConfig.isAISmartToolsEnabled,
+    isAISmartToolsEntitled: options?.isAISmartToolsEntitled ?? aiConfig.isAISmartToolsEntitled,
   };
   const aiUnavailableReason = getAISmartToolsUnavailableReason(resolvedConfig);
 

@@ -74,7 +74,7 @@ export const CreateFirstSurvey = ({
     }
   };
 
-  const aiDisabledDescription = !isAIAvailable ? t(getUnavailableMessageKey(aiUnavailableReason)) : undefined;
+  const aiDisabledDescription = isAIAvailable ? undefined : t(getUnavailableMessageKey(aiUnavailableReason));
 
   const options = [
     {

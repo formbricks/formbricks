@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { type SyntheticEvent, useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TUserLocale } from "@formbricks/types/user";
 import { V3ApiError, getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
@@ -63,7 +63,7 @@ export const useCreateSurveyWithAI = ({
   );
 
   const handleGenerate = useCallback(
-    async (event: React.FormEvent<HTMLFormElement>) => {
+    async (event: SyntheticEvent<HTMLFormElement>) => {
       event.preventDefault();
 
       if (!canCreate) {
