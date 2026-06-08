@@ -1,6 +1,7 @@
 import type { Session } from "next-auth";
 import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
+import { getOnboardingWorkspace } from "@/app/(app)/(onboarding)/lib/onboarding-workspace";
 import { getOnboardingRedirectPath } from "@/app/(app)/(onboarding)/lib/redirect-if-onboarding-complete";
 import ClientWorkspaceRedirect from "@/app/ClientWorkspaceRedirect";
 import { getIsFreshInstance } from "@/lib/instance/service";
@@ -56,9 +57,10 @@ const Page = async () => {
   }
 
   if (isOwner || isManager) {
+    const onboardingWorkspace = await getOnboardingWorkspace(session.user.id, userOrganizations[0].id);
     const onboardingRedirectPath = await getOnboardingRedirectPath({
-      userId: session.user.id,
       organizationId: userOrganizations[0].id,
+      workspace: onboardingWorkspace,
     });
 
     if (onboardingRedirectPath) {

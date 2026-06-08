@@ -1,8 +1,8 @@
 import "server-only";
 import { redirect } from "next/navigation";
+import { TWorkspace } from "@formbricks/types/workspace";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getSurveyCount } from "@/lib/survey/service";
-import { getOnboardingWorkspace } from "./onboarding-workspace";
 
 export const redirectIfOnboardingComplete = async (workspaceId: string): Promise<void> => {
   const surveyCount = await getSurveyCount(workspaceId);
@@ -13,14 +13,12 @@ export const redirectIfOnboardingComplete = async (workspaceId: string): Promise
 };
 
 export const getOnboardingRedirectPath = async ({
-  userId,
   organizationId,
+  workspace,
 }: {
-  userId: string;
   organizationId: string;
+  workspace: TWorkspace | undefined;
 }): Promise<string | null> => {
-  const workspace = await getOnboardingWorkspace(userId, organizationId);
-
   if (!workspace) {
     return null;
   }
