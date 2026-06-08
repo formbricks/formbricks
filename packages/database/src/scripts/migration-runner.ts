@@ -29,7 +29,7 @@ export interface MigrationScript {
 // privilege migration database. When this runner spawns `prisma migrate
 // deploy` below, we explicitly inject the resolved URL into the child env so
 // the subprocess's prisma.config.mjs resolves to the same database.
-const migrationDatabaseUrl = process.env.MIGRATE_DATABASE_URL ?? process.env.DATABASE_URL;
+const migrationDatabaseUrl = process.env.MIGRATE_DATABASE_URL || process.env.DATABASE_URL;
 const prisma = new PrismaClient({ adapter: createPrismaPgAdapter(migrationDatabaseUrl).adapter });
 const TRANSACTION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 
