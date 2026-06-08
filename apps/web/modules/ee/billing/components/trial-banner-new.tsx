@@ -14,7 +14,6 @@ interface TrialBannerNewProps {
   responseLimit: number | null;
   baseResponseLimit: number;
   billingHref: string;
-  hasPaymentMethod?: boolean;
 }
 
 export const TrialBannerNew = ({
@@ -24,7 +23,6 @@ export const TrialBannerNew = ({
   responseLimit,
   baseResponseLimit,
   billingHref,
-  hasPaymentMethod = false,
 }: TrialBannerNewProps) => {
   const { t, i18n } = useTranslation();
   const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
@@ -59,15 +57,13 @@ export const TrialBannerNew = ({
         />
       </div>
 
-      {!hasPaymentMethod && (
-        <Button
-          variant="secondary"
-          size="sm"
-          className="w-full"
-          onClick={() => posthog.capture("main_nav_add_payment_clicked")}>
-          <Link href={billingHref}>{t("workspace.settings.billing.add_payment_method")}</Link>
-        </Button>
-      )}
+      <Button
+        variant="secondary"
+        size="sm"
+        className="w-full"
+        onClick={() => posthog.capture("main_nav_go_to_billing_clicked")}>
+        <Link href={billingHref}>{t("workspace.settings.billing.go_to_billing")}</Link>
+      </Button>
     </div>
   );
 };

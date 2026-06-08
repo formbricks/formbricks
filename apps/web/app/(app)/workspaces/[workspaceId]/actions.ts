@@ -22,7 +22,7 @@ import {
 } from "@/modules/ee/license-check/lib/utils";
 import { createWorkspace } from "@/modules/workspaces/settings/lib/workspace";
 import { getOrganizationsByUserId } from "./lib/organization";
-import { getWorkspacesByUserId } from "./lib/workspace";
+import { getWorkspacesByUserId, getWritableWorkspacesByUserId } from "./lib/workspace";
 
 const ZCreateWorkspaceAction = z.object({
   organizationId: ZId,
@@ -155,4 +155,34 @@ export const getWorkspacesForSwitcherAction = authenticatedActionClient
     }
 
     return await getWorkspacesByUserId(ctx.user.id, membership);
+  });
+
+const ZGetWritableWorkspacesAction = z.object({
+  organizationId: ZId,
+});
+
+/**
+ * Fetches workspaces the user can write to (org owner/manager, or team member with readWrite).
+ * Used by flows that target a workspace for a write operation (e.g. copy survey).
+ */
+export const getWritableWorkspacesAction = authenticatedActionClient
+  .inputSchema(ZGetWritableWorkspacesAction)
+  .action(async ({ ctx, parsedInput }) => {
+    await checkAuthorizationUpdated({
+      userId: ctx.user.id,
+      organizationId: parsedInput.organizationId,
+      access: [
+        {
+          type: "organization",
+          roles: ["owner", "manager", "member"],
+        },
+      ],
+    });
+
+    const membership = await getMembershipByUserIdOrganizationId(ctx.user.id, parsedInput.organizationId);
+    if (!membership) {
+      throw new AuthorizationError("Membership not found");
+    }
+
+    return await getWritableWorkspacesByUserId(ctx.user.id, membership);
   });

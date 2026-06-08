@@ -143,6 +143,39 @@ export function problemForbidden(
   });
 }
 
+export function problemAIUnavailable(
+  requestId: string,
+  detail: string,
+  code: string,
+  instance?: string
+): Response {
+  const status = code === "ai_instance_not_configured" ? 503 : 403;
+
+  return problemResponse(status, "AI Unavailable", detail, requestId, {
+    code,
+    instance,
+  });
+}
+
+export function problemUnprocessableContent(
+  requestId: string,
+  detail: string,
+  options?: { invalid_params?: InvalidParam[]; instance?: string; code?: string }
+): Response {
+  return problemResponse(422, "Unprocessable Content", detail, requestId, {
+    code: options?.code ?? "unprocessable_content",
+    instance: options?.instance,
+    invalid_params: options?.invalid_params,
+  });
+}
+
+export function problemBadGateway(requestId: string, detail: string, instance?: string): Response {
+  return problemResponse(502, "Bad Gateway", detail, requestId, {
+    code: "bad_gateway",
+    instance,
+  });
+}
+
 /**
  * 404 with resource details. Do not use for auth-sensitive or existence-sensitive resources:
  * the body includes resource_type and resource_id, which can leak existence to unauthenticated or unauthorized callers.

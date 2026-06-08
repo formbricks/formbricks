@@ -12,15 +12,12 @@ import { WorkspaceSettings } from "@/app/(app)/(onboarding)/organizations/[organ
 import { DEFAULT_BRAND_COLOR } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { capturePostHogEvent } from "@/lib/posthog";
-import { getPostHogFeatureFlag } from "@/lib/posthog/get-feature-flag";
-import { buildStylingFromBrandColor } from "@/lib/styling/constants";
 import { getUserWorkspaces } from "@/lib/workspace/service";
 import { getTranslate } from "@/lingodotdev/server";
 import { getAccessControlPermission } from "@/modules/ee/license-check/lib/utils";
 import { getOrganizationAuth } from "@/modules/organization/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { Header } from "@/modules/ui/components/header";
-import { createWorkspace } from "@/modules/workspaces/settings/lib/workspace";
 
 interface WorkspaceSettingsPageProps {
   params: Promise<{
@@ -48,27 +45,7 @@ const Page = async (props: WorkspaceSettingsPageProps) => {
   const industry = searchParams.industry ?? null;
   const mode = searchParams.mode ?? "surveys";
 
-  const experimentVariant =
-    (await getPostHogFeatureFlag(session.user.id, "a-b_onboarding_skip-theme-screen")) || "control";
-
   const workspaces = await getUserWorkspaces(session.user.id, params.organizationId);
-
-  if (experimentVariant === "remove-theme") {
-    const existing = workspaces.find((w) => w.name === organization.name);
-    const workspace =
-      existing ??
-      (await createWorkspace(params.organizationId, {
-        name: organization.name,
-        styling: buildStylingFromBrandColor(DEFAULT_BRAND_COLOR),
-        config: { channel, industry },
-      }));
-    if (channel === "app" || channel === "website") {
-      return redirect(`/workspaces/${workspace.id}/connect`);
-    } else if (channel === "link") {
-      return redirect(`/workspaces/${workspace.id}/surveys`);
-    }
-    return redirect(`/workspaces/${workspace.id}/xm-templates`);
-  }
 
   const organizationTeams = await getTeamsByOrganizationId(params.organizationId);
 

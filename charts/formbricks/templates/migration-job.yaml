@@ -7,8 +7,9 @@ metadata:
   labels:
     {{- include "formbricks.labels" . | nindent 4 }}
   annotations:
-    # ArgoCD sync hooks
-    argocd.argoproj.io/hook: PreSync
+    # Argo CD sync hook: keep this in Sync phase so lower-wave managed
+    # resources such as ExternalSecrets are applied before migrations run.
+    argocd.argoproj.io/hook: Sync
     argocd.argoproj.io/hook-delete-policy: HookSucceeded
     argocd.argoproj.io/sync-wave: "-1"
     {{- if .Values.migration.annotations }}

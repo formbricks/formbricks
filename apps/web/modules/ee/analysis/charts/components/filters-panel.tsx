@@ -154,7 +154,7 @@ export function FiltersPanel({
                 <SelectTrigger className="w-[200px] bg-white">
                   <SelectValue placeholder={t("workspace.analysis.charts.select_field")} />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-h-[var(--radix-select-content-available-height)] overflow-y-auto">
                   {fieldOptions.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
                       <span className="flex items-center gap-1.5">
@@ -178,7 +178,7 @@ export function FiltersPanel({
                 <SelectTrigger className="w-[150px] bg-white">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-h-[var(--radix-select-content-available-height)] overflow-y-auto">
                   {operators.map((op) => (
                     <SelectItem key={op} value={op}>
                       {op === "equals" && t("workspace.analysis.charts.equals")}

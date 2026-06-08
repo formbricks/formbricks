@@ -1,0 +1,31 @@
+---
+title: "Map Feedback to Journeys, Not Touchpoints"
+sidebarTitle: "Map to Journeys"
+description: "Tag feedback by journey and stage so it rolls up to end-to-end journeys instead of scattered screens."
+icon: "map"
+---
+
+Tag feedback by journey and stage so it rolls up into end-to-end journeys instead of scattered touchpoints.
+
+## Purpose
+
+Journey Management measures and improves each customer journey end to end, rather than tracking touchpoints in isolation. Feedback is one input, alongside behavioral and operational data. Tagging each response with its journey and stage is what lets you stitch it into a single journey instance. It lets you:
+
+* See which journey a problem affects, and at which journey stage
+* Group responses into end-to-end journeys, not single screens
+* Line feedback up with behavioral and operational data for journey stitching
+* Give journey scorecards and pattern analysis a clean base to build on
+
+## Formbricks Approach
+
+* [Feedback Directories](/unify-feedback/feedback-directories) to hold one journey or program
+* [Feedback Records](/unify-feedback/feedback-records) tagged with journey and stage
+* [Hidden Fields](/surveys/general-features/hidden-fields) to pass journey and stage into a link survey at collection time
+
+Pass the journey and stage as Hidden Fields so each record arrives pre-tagged:
+
+```
+https://app.formbricks.com/s/<surveyId>?journey=onboarding&stage=activation&userId=123
+```
+
+Keep journey and stage names identical across Formbricks, your warehouse, and your journey tool so the data lines up. Survey setup is covered in the [Surveys docs](/surveys/best-practices/understanding-survey-types).

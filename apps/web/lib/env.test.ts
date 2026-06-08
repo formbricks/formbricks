@@ -109,6 +109,97 @@ describe("env", () => {
     await expect(import("./env")).rejects.toThrow("AI_GOOGLE_CLOUD_CREDENTIALS_JSON");
   });
 
+  test("loads OpenAI-compatible AI configuration with the base URL and model", async () => {
+    setTestEnv({
+      AI_PROVIDER: "openai-compatible",
+      AI_MODEL: "Qwen/Qwen2.5-7B-Instruct",
+      AI_OPENAI_COMPATIBLE_BASE_URL: "http://vllm:8000/v1",
+    });
+
+    const { env } = await import("./env");
+
+    expect(env.AI_PROVIDER).toBe("openai-compatible");
+    expect(env.AI_OPENAI_COMPATIBLE_BASE_URL).toBe("http://vllm:8000/v1");
+  });
+
+  test("loads OpenAI-compatible AI configuration with string-valued headers and query params", async () => {
+    setTestEnv({
+      AI_PROVIDER: "openai-compatible",
+      AI_MODEL: "Qwen/Qwen2.5-7B-Instruct",
+      AI_OPENAI_COMPATIBLE_BASE_URL: "http://vllm:8000/v1",
+      AI_OPENAI_COMPATIBLE_HEADERS_JSON: JSON.stringify({ "X-Tenant": "acme" }),
+      AI_OPENAI_COMPATIBLE_QUERY_PARAMS_JSON: JSON.stringify({ "api-version": "2024-01" }),
+    });
+
+    const { env } = await import("./env");
+
+    expect(env.AI_OPENAI_COMPATIBLE_HEADERS_JSON).toBe(JSON.stringify({ "X-Tenant": "acme" }));
+    expect(env.AI_OPENAI_COMPATIBLE_QUERY_PARAMS_JSON).toBe(JSON.stringify({ "api-version": "2024-01" }));
+  });
+
+  test("fails to load when the OpenAI-compatible base URL is missing", async () => {
+    setTestEnv({
+      AI_PROVIDER: "openai-compatible",
+      AI_MODEL: "Qwen/Qwen2.5-7B-Instruct",
+      AI_OPENAI_COMPATIBLE_BASE_URL: undefined,
+    });
+
+    await expect(import("./env")).rejects.toThrow("AI_OPENAI_COMPATIBLE_BASE_URL");
+  });
+
+  test("fails to load when the OpenAI-compatible base URL is not a valid URL", async () => {
+    setTestEnv({
+      AI_PROVIDER: "openai-compatible",
+      AI_MODEL: "Qwen/Qwen2.5-7B-Instruct",
+      AI_OPENAI_COMPATIBLE_BASE_URL: "not-a-url",
+    });
+
+    await expect(import("./env")).rejects.toThrow("Invalid environment variables");
+  });
+
+  test("fails to load when the OpenAI-compatible base URL is not an HTTP URL", async () => {
+    setTestEnv({
+      AI_PROVIDER: "openai-compatible",
+      AI_MODEL: "Qwen/Qwen2.5-7B-Instruct",
+      AI_OPENAI_COMPATIBLE_BASE_URL: "ftp://example.com/v1",
+    });
+
+    await expect(import("./env")).rejects.toThrow("Invalid environment variables");
+  });
+
+  test("fails to load when the OpenAI-compatible headers JSON is malformed", async () => {
+    setTestEnv({
+      AI_PROVIDER: "openai-compatible",
+      AI_MODEL: "Qwen/Qwen2.5-7B-Instruct",
+      AI_OPENAI_COMPATIBLE_BASE_URL: "http://vllm:8000/v1",
+      AI_OPENAI_COMPATIBLE_HEADERS_JSON: "{not-json}",
+    });
+
+    await expect(import("./env")).rejects.toThrow("AI_OPENAI_COMPATIBLE_HEADERS_JSON");
+  });
+
+  test("fails to load when the OpenAI-compatible headers JSON has non-string values", async () => {
+    setTestEnv({
+      AI_PROVIDER: "openai-compatible",
+      AI_MODEL: "Qwen/Qwen2.5-7B-Instruct",
+      AI_OPENAI_COMPATIBLE_BASE_URL: "http://vllm:8000/v1",
+      AI_OPENAI_COMPATIBLE_HEADERS_JSON: JSON.stringify({ "X-Tenant": 1 }),
+    });
+
+    await expect(import("./env")).rejects.toThrow("AI_OPENAI_COMPATIBLE_HEADERS_JSON");
+  });
+
+  test("fails to load when the OpenAI-compatible query params JSON has non-string values", async () => {
+    setTestEnv({
+      AI_PROVIDER: "openai-compatible",
+      AI_MODEL: "Qwen/Qwen2.5-7B-Instruct",
+      AI_OPENAI_COMPATIBLE_BASE_URL: "http://vllm:8000/v1",
+      AI_OPENAI_COMPATIBLE_QUERY_PARAMS_JSON: JSON.stringify({ "api-version": ["2024-01"] }),
+    });
+
+    await expect(import("./env")).rejects.toThrow("AI_OPENAI_COMPATIBLE_QUERY_PARAMS_JSON");
+  });
+
   test("uses the configured Cube environment variables", async () => {
     setTestEnv();
     const { env } = await import("./env");
