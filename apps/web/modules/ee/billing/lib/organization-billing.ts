@@ -933,7 +933,7 @@ export const undoPendingOrganizationPlanChange = async (
 };
 
 const isValidSetupCheckoutUpgradeTarget = (
-  targetPlan: string | undefined
+  targetPlan?: string
 ): targetPlan is Exclude<TStandardCloudPlan, "hobby"> => {
   return targetPlan === "pro" || targetPlan === "scale";
 };
@@ -941,8 +941,8 @@ const isValidSetupCheckoutUpgradeTarget = (
 export const applyPendingUpgradeFromSetupCheckout = async (input: {
   organizationId: string;
   customerId: string;
-  targetPlan: string | undefined;
-  targetInterval: string | undefined;
+  targetPlan?: string;
+  targetInterval?: string;
 }): Promise<boolean> => {
   if (!isValidSetupCheckoutUpgradeTarget(input.targetPlan)) {
     return false;
