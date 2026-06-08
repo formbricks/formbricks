@@ -10,6 +10,7 @@ import { createOrganization } from "@/lib/organization/service";
 import { capturePostHogEvent, groupIdentifyPostHog } from "@/lib/posthog";
 import { updateUser } from "@/lib/user/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
+import { DEFAULT_WORKSPACE_NAME } from "@/lib/workspace/constants";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { ensureCloudStripeSetupForOrganization } from "@/modules/ee/billing/lib/organization-billing";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
@@ -49,7 +50,7 @@ export const createOrganizationAction = authenticatedActionClient
       }
 
       const newWorkspace = await createWorkspace(newOrganization.id, {
-        name: "My Workspace",
+        name: DEFAULT_WORKSPACE_NAME,
       });
 
       groupIdentifyPostHog("organization", newOrganization.id, { name: newOrganization.name });

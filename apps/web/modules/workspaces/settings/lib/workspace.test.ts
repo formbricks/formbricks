@@ -118,6 +118,16 @@ describe("workspace lib", () => {
       expectNoFrdSideEffects();
     });
 
+    test("seeds English as the default survey language when creating a workspace", async () => {
+      const createdWorkspace = { ...baseWorkspace, id: "p-language" };
+      vi.mocked(prisma.workspace.create).mockResolvedValueOnce(createdWorkspace as any);
+
+      await createWorkspace("org1", { name: "Workspace language" });
+
+      const createArgs = vi.mocked(prisma.workspace.create).mock.calls[0][0];
+      expect((createArgs.data as any).languages.create).toEqual([{ code: "en-US", alias: null }]);
+    });
+
     test("seeds the default contact attribute keys when creating a workspace", async () => {
       const createdWorkspace = { ...baseWorkspace, id: "p-defaults" };
       vi.mocked(prisma.workspace.create).mockResolvedValueOnce(createdWorkspace as any);

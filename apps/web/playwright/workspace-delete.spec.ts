@@ -25,6 +25,16 @@ test("requires workspace name confirmation before deleting a workspace", async (
     select: { id: true },
   });
 
+  await prisma.survey.create({
+    data: {
+      workspaceId: remainingWorkspace.id,
+      createdBy: user.id,
+      name: "Remaining Workspace Seed Survey",
+      status: "draft",
+      type: "link",
+    },
+  });
+
   await user.login();
   await page.goto(`/workspaces/${user.workspaceId}/settings/workspace/general`, {
     waitUntil: "domcontentloaded",
@@ -38,7 +48,7 @@ test("requires workspace name confirmation before deleting a workspace", async (
   await expect(dialog.getByRole("button", { name: "Delete", exact: true })).toBeEnabled();
   await dialog.getByRole("button", { name: "Delete", exact: true }).click();
 
-  await expect(page.getByText("Workspace deleted successfully", { exact: true })).toBeVisible();
-  await page.waitForURL(new RegExp(`/workspaces/${remainingWorkspace.id}`));
+  await expect(page.getByText("Workspace deleted successfully", { exact: true }).first()).toBeVisible();
+  await page.waitForURL(`**/workspaces/${remainingWorkspace.id}**`);
   await expect.poll(async () => prisma.workspace.findUnique({ where: { id: user.workspaceId! } })).toBeNull();
 });

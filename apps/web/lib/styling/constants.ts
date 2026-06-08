@@ -1,18 +1,17 @@
 // https://github.com/airbnb/javascript/#naming--uppercase
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
+import { DEFAULT_BRAND_COLOR } from "@/lib/brand-color";
 import { isLight, mixColor } from "@/lib/utils/colors";
 
 export const COLOR_DEFAULTS = {
-  brandColor: "#64748b",
-  elementHeadlineColor: "#2b2524",
-  inputBgColor: "#ffffff",
-  inputBorderColor: "#cbd5e1",
-  cardBackgroundColor: "#ffffff",
-  cardBorderColor: "#f8fafc",
-  highlightBorderColor: "#64748b",
+  brandColor: "#1e40af",
+  elementHeadlineColor: "#142a72",
+  inputBgColor: "#edf0f9",
+  inputBorderColor: "#a5b3df",
+  cardBackgroundColor: "#f8f9fd",
+  cardBorderColor: "#d2d9ef",
+  highlightBorderColor: "#1e40af",
 } as const;
-
-const DEFAULT_BRAND_COLOR = "#64748b";
 
 /**
  * Derives a complete set of suggested color values from a single brand color.
@@ -82,7 +81,7 @@ const _colors = getSuggestedColors(DEFAULT_BRAND_COLOR);
 /**
  * Single source of truth for every styling default.
  *
- * Color values are derived from the default brand color (#64748b) via
+ * Color values are derived from the default brand color (#1e40af) via
  * `getSuggestedColors()`.  Non-color values (dimensions, weights, sizes)
  * are hardcoded here and must be kept in sync with globals.css.
  *
