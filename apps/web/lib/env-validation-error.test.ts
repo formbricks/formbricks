@@ -53,14 +53,16 @@ describe("env validation error", () => {
 
   test("logs structured issues and throws the formatted validation error", () => {
     const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-    const issues: TEnvValidationIssue[] = [{ path: ["ENCRYPTION_KEY"], message: "Missing value" }];
+    const issues: (TEnvValidationIssue & { readonly input: string })[] = [
+      { path: ["ENCRYPTION_KEY"], message: "Missing value", input: "secret-value" },
+    ];
 
     expect(() => throwEnvValidationError(issues)).toThrow(
       ["Invalid environment variables:", "  - ENCRYPTION_KEY: Missing value"].join("\n")
     );
     expect(consoleErrorSpy).toHaveBeenCalledWith(
       ["Invalid environment variables:", "  - ENCRYPTION_KEY: Missing value"].join("\n"),
-      { issues }
+      { issues: [{ path: "ENCRYPTION_KEY", message: "Missing value" }] }
     );
   });
 });
