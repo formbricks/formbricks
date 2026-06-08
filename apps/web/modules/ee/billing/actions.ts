@@ -4,7 +4,6 @@ import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZCloudBillingInterval } from "@formbricks/types/organizations";
-import { revalidateOnboardingWorkspacePaths } from "@/app/(app)/(onboarding)/lib/revalidate-onboarding-paths";
 import { WEBAPP_URL } from "@/lib/constants";
 import { getOrganization } from "@/lib/organization/service";
 import { capturePostHogEvent } from "@/lib/posthog";
@@ -266,8 +265,6 @@ export const startHobbyAction = authenticatedActionClient
       { organizationId: parsedInput.organizationId }
     );
 
-    revalidateOnboardingWorkspacePaths(parsedInput.organizationId);
-
     return { success: true };
   });
 
@@ -320,8 +317,6 @@ export const startProTrialAction = authenticatedActionClient
       },
       { organizationId: parsedInput.organizationId }
     );
-
-    revalidateOnboardingWorkspacePaths(parsedInput.organizationId);
 
     return { success: true };
   });
