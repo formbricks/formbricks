@@ -60,11 +60,6 @@ const formatValue = (record: FeedbackRecordData, t: TFunction, locale: string): 
   return "—";
 };
 
-function truncate(str: string, maxLen: number): string {
-  if (str.length <= maxLen) return str;
-  return str.slice(0, maxLen) + "…";
-}
-
 interface FeedbackRecordsTableProps {
   workspaceId: string;
   initialRecords: FeedbackRecordData[];
@@ -72,6 +67,16 @@ interface FeedbackRecordsTableProps {
   frdMap: Record<string, string>;
   csvSources: { id: string; name: string; fieldMappings: TFeedbackSourceFieldMapping[] }[];
   canWrite: boolean;
+}
+
+interface FeedbackRecordRowProps {
+  record: FeedbackRecordData;
+  workspaceId: string;
+  locale: string;
+  t: TFunction;
+  isSelected: boolean;
+  onSelectChange: (checked: boolean) => void;
+  onClick: () => void;
 }
 
 export const FeedbackRecordsTable = ({
@@ -374,7 +379,17 @@ export const FeedbackRecordsTable = ({
 
         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px]">
+            <table className="w-full min-w-[1040px] table-fixed">
+              <colgroup>
+                <col className="w-10" />
+                <col className="w-40" />
+                <col className="w-32" />
+                <col className="w-40" />
+                <col className="w-52" />
+                <col className="w-28" />
+                <col />
+                <col className="w-44" />
+              </colgroup>
               <thead>
                 <tr className="border-b border-slate-200 text-left text-sm text-slate-900 [&>th]:font-semibold">
                   <th className="w-10 px-4 py-3">
@@ -482,17 +497,10 @@ const FeedbackRecordRow = ({
   isSelected,
   onSelectChange,
   onClick,
-}: {
-  record: FeedbackRecordData;
-  workspaceId: string;
-  locale: string;
-  t: TFunction;
-  isSelected: boolean;
-  onSelectChange: (checked: boolean) => void;
-  onClick: () => void;
-}) => {
+}: Readonly<FeedbackRecordRowProps>) => {
   const value = formatValue(record, t, locale);
   const isLongValue = value.length > 60;
+  const collectedAt = formatDateTimeForDisplay(new Date(record.collected_at), locale);
   const isFormbricksSurveySource =
     (record.source_type === "formbricks" || record.source_type === "formbricks_survey") && !!record.source_id;
   const surveySummaryHref = `/workspaces/${workspaceId}/surveys/${record.source_id}/summary`;
@@ -520,26 +528,26 @@ const FeedbackRecordRow = ({
           onCheckedChange={(checked) => onSelectChange(checked === true)}
         />
       </td>
-      <td className="whitespace-nowrap px-4 py-3 text-slate-500">
-        {formatDateTimeForDisplay(new Date(record.collected_at), locale)}
+      <td className="px-4 py-3 text-slate-500" title={collectedAt}>
+        <span className="block min-w-0 truncate">{collectedAt}</span>
       </td>
       <td className="whitespace-nowrap px-4 py-3">
         <Badge text={formatSourceType(record.source_type, t)} type="gray" size="tiny" />
       </td>
-      <td className="max-w-[150px] truncate px-4 py-3" title={record.source_name ?? undefined}>
+      <td className="px-4 py-3" title={record.source_name ?? undefined}>
         {isFormbricksSurveySource ? (
           <Link
             href={surveySummaryHref}
-            className="text-slate-700 underline underline-offset-2 hover:text-slate-900"
+            className="block min-w-0 truncate text-slate-700 underline underline-offset-2 hover:text-slate-900"
             onClick={(event) => event.stopPropagation()}>
             {record.source_name ?? "—"}
           </Link>
         ) : (
-          <span>{record.source_name ?? "—"}</span>
+          <span className="block min-w-0 truncate">{record.source_name ?? "—"}</span>
         )}
       </td>
-      <td className="max-w-[200px] truncate px-4 py-3" title={record.field_label ?? undefined}>
-        {record.field_label ?? record.field_id}
+      <td className="px-4 py-3" title={record.field_label ?? undefined}>
+        <span className="block min-w-0 truncate">{record.field_label ?? record.field_id}</span>
       </td>
       <td className="whitespace-nowrap px-4 py-3">
         <span className="inline-flex items-center gap-1 text-slate-600">
@@ -547,12 +555,12 @@ const FeedbackRecordRow = ({
           {record.field_type}
         </span>
       </td>
-      <td className="max-w-[250px] px-4 py-3">
+      <td className="px-4 py-3" title={value}>
         {isLongValue ? (
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className="cursor-default truncate">{truncate(value, 60)}</span>
+                <span className="block min-w-0 cursor-default truncate">{value}</span>
               </TooltipTrigger>
               <TooltipContent side="top" className="max-w-sm whitespace-pre-wrap">
                 {value}
@@ -560,11 +568,11 @@ const FeedbackRecordRow = ({
             </Tooltip>
           </TooltipProvider>
         ) : (
-          <span>{value}</span>
+          <span className="block min-w-0 truncate">{value}</span>
         )}
       </td>
-      <td className="max-w-[120px] truncate px-4 py-3 text-slate-500" title={record.user_id}>
-        {record.user_id ?? "—"}
+      <td className="px-4 py-3 text-slate-500" title={record.user_id}>
+        <span className="block min-w-0 truncate">{record.user_id ?? "—"}</span>
       </td>
     </tr>
   );
