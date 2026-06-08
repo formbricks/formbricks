@@ -34,7 +34,7 @@
     "test-e2e:azure": "pnpm test:e2e -c playwright.service.config.ts --workers=10",
     "prepare": "husky install",
     "storybook": "turbo run storybook",
-    "fb-migrate-dev": "pnpm --filter @formbricks/database create-migration && pnpm prisma generate",
+    "fb-migrate-dev": "pnpm --filter @formbricks/database create-migration && pnpm --filter @formbricks/database generate",
     "i18n:surveys:generate": "pnpm --filter @formbricks/surveys i18n:generate",
     "i18n:web:generate": "pnpm --filter @formbricks/web i18n:generate",
     "generate-translations": "pnpm i18n:web:generate && pnpm i18n:surveys:generate",

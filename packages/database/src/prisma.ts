@@ -104,6 +104,7 @@ export namespace Prisma {
   > = PrismaModelTypes.FeedbackSourceGetPayload<S>;
   export type FeedbackSourceSelect = PrismaModelTypes.FeedbackSourceSelect;
   export type FloatNullableFilter = PrismaModelTypes.FloatNullableFilter;
+  export type LanguageCreateWithoutWorkspaceInput = PrismaModelTypes.LanguageCreateWithoutWorkspaceInput;
   export type LanguageSelect = PrismaModelTypes.LanguageSelect;
   export type OrganizationBillingGetPayload<
     S extends boolean | null | undefined | PrismaModelTypes.OrganizationBillingDefaultArgs,
