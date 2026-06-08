@@ -130,7 +130,7 @@ const parseFeedbackRecordsGatewayRoute = (method: string, pathname: string): TPa
     return {
       operation: "retrieveSimilar",
       requiredPermission: "read",
-      tenantSource: "query",
+      tenantSource: "recordLookup",
       recordId,
     };
   }
