@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ZSurveyBlocks } from "./surveys/blocks";
-import { ZSurveyEndings, ZSurveyHiddenFields, ZSurveyStyling, ZSurveyWelcomeCard } from "./surveys/types";
+import { ZSurveyEndings, ZSurveyHiddenFields, ZSurveyWelcomeCard } from "./surveys/types";
 import { ZWorkspaceConfigChannel, ZWorkspaceConfigIndustry } from "./workspace";
 
 export const ZTemplateRole = z.enum([
@@ -13,6 +13,7 @@ export const ZTemplateRole = z.enum([
 export type TTemplateRole = z.infer<typeof ZTemplateRole>;
 
 export const ZTemplate = z.object({
+  id: z.string().min(1),
   name: z.string(),
   description: z.string(),
   icon: z.any().optional(),
@@ -29,15 +30,6 @@ export const ZTemplate = z.object({
 });
 
 export type TTemplate = z.infer<typeof ZTemplate>;
-
-export const ZXMTemplate = z.object({
-  name: z.string(),
-  blocks: ZSurveyBlocks,
-  endings: ZSurveyEndings,
-  styling: ZSurveyStyling,
-});
-
-export type TXMTemplate = z.infer<typeof ZXMTemplate>;
 
 export const ZTemplateFilter = z.union([
   ZWorkspaceConfigChannel,

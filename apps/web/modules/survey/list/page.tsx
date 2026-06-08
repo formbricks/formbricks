@@ -1,12 +1,12 @@
 import { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { getAISmartToolsUnavailableReason, getOrganizationAIConfig } from "@/lib/ai/service";
 import { DEFAULT_LOCALE, IS_FORMBRICKS_CLOUD, SURVEYS_PER_PAGE } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getBillingFallbackPath } from "@/lib/membership/navigation";
 import { getUserLocale } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
+import { getSurveyAIAvailability } from "@/modules/survey/lib/get-survey-ai-availability";
 import { getWorkspaceWithTeamIds } from "@/modules/survey/lib/workspace";
 import { SurveysList } from "@/modules/survey/list/components/survey-list";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
@@ -40,13 +40,9 @@ export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) 
 
   const currentWorkspaceChannel = workspace.config.channel ?? null;
   const locale = (await getUserLocale(session.user.id)) ?? DEFAULT_LOCALE;
-  const aiConfig = isReadOnly ? null : await getOrganizationAIConfig(workspace.organizationId);
-  const aiUnavailableReason = isReadOnly
-    ? "read_only"
-    : aiConfig
-      ? getAISmartToolsUnavailableReason(aiConfig)
-      : undefined;
-  const isAIAvailable = Boolean(aiConfig && !aiUnavailableReason);
+  const { isAIAvailable, aiUnavailableReason } = await getSurveyAIAvailability(workspace.organizationId, {
+    isReadOnly,
+  });
   const workspaceWithRequiredProps = {
     ...workspace,
     brandColor: workspace.styling?.brandColor?.light ?? null,

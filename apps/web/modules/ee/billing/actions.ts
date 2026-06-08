@@ -11,10 +11,12 @@ import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { getWorkspace } from "@/lib/workspace/service";
+import { CLOUD_STRIPE_FEATURE_LOOKUP_KEYS } from "@/modules/billing/lib/stripe-catalog";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { createCustomerPortalSession } from "@/modules/ee/billing/api/lib/create-customer-portal-session";
 import { createSetupCheckoutSession } from "@/modules/ee/billing/api/lib/create-setup-checkout-session";
 import {
+  addOptimisticBillingFeature,
   createPaidPlanCheckoutSession,
   createProTrialSubscription,
   ensureCloudStripeSetupForOrganization,
@@ -288,6 +290,13 @@ export const startProTrialAction = authenticatedActionClient
     await createProTrialSubscription(parsedInput.organizationId, customerId);
     await reconcileCloudStripeSubscriptionsForOrganization(parsedInput.organizationId);
     await syncOrganizationBillingFromStripe(parsedInput.organizationId);
+    // Optimistically grant ai-smart-tools so the onboarding survey page sees it
+    // on the very next render, even if Stripe's entitlements API hasn't yet
+    // surfaced it. The customer.subscription.created webhook will reconcile.
+    await addOptimisticBillingFeature(
+      parsedInput.organizationId,
+      CLOUD_STRIPE_FEATURE_LOOKUP_KEYS.AI_SMART_TOOLS
+    );
 
     capturePostHogEvent(
       ctx.user.id,

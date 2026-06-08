@@ -18,7 +18,7 @@ const Page = async (props: PlanPageProps) => {
   const params = await props.params;
 
   if (!IS_FORMBRICKS_CLOUD) {
-    return redirect(`/organizations/${params.organizationId}/workspaces/new/mode`);
+    return redirect(`/organizations/${params.organizationId}/workspaces/new/survey`);
   }
 
   const { session } = await getOrganizationAuth(params.organizationId);
@@ -34,7 +34,7 @@ const Page = async (props: PlanPageProps) => {
   const hasExistingSubscription = currentPlan !== undefined && PAID_PLANS.has(currentPlan);
 
   if (hasExistingSubscription) {
-    return redirect(`/organizations/${params.organizationId}/workspaces/new/mode`);
+    return redirect(`/organizations/${params.organizationId}/workspaces/new/survey`);
   }
 
   const [featureFlagValue, ctaFlagValue] = await Promise.all([
