@@ -51,7 +51,7 @@ const ZFilter = z
     if (VALUELESS_FILTER_OPERATORS.has(operator)) {
       if (values != null) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: "custom",
           message: `Filter operator "${operator}" must not include values`,
           path: ["values"],
         });
@@ -62,7 +62,7 @@ const ZFilter = z
 
     if (!values?.length) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         message: `Filter operator "${operator}" requires a non-empty values array`,
         path: ["values"],
       });
