@@ -83,10 +83,7 @@ export const waitForSurveyEditor = async (
   await expect(page.getByRole("button", { name: "Settings", exact: true })).toBeVisible();
 };
 
-export const createSurveyFromScratch = async (
-  page: Page,
-  options: { mode?: "cx" } = {}
-): Promise<string> => {
+export const createSurveyFromScratch = async (page: Page, options: { mode?: "cx" } = {}): Promise<string> => {
   const createResponse = waitForSurveyCreateResponse(page);
   const createSurveyButton = page.getByRole("button", { name: "Create survey", exact: true });
   const startFromScratchButton = page.getByText("Start from scratch", { exact: true }).first();
@@ -97,7 +94,10 @@ export const createSurveyFromScratch = async (
     await startFromScratchButton.click();
 
     const createSurveyButtonAppeared = await Promise.race([
-      createSurveyButton.waitFor({ state: "visible", timeout: 5000 }).then(() => true).catch(() => false),
+      createSurveyButton
+        .waitFor({ state: "visible", timeout: 5000 })
+        .then(() => true)
+        .catch(() => false),
       createResponse.then(() => false),
     ]);
 
@@ -127,7 +127,7 @@ export const useSelectedTemplate = async (page: Page): Promise<string> => {
 
 export const createXMTemplateSurvey = async (page: Page, templateName: RegExp | string): Promise<string> => {
   const createResponse = waitForSurveyCreateResponse(page);
-  await page.getByRole("button", { name: templateName }).click();
+  await page.getByRole("button", { name: templateName, exact: typeof templateName === "string" }).click();
   const surveyId = await createResponse;
   await waitForSurveyEditor(page, surveyId, { mode: "cx" });
 
