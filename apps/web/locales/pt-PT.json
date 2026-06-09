@@ -1565,6 +1565,7 @@
         "ai_not_available": "A geração de gráficos com IA não está disponível.",
         "ai_not_enabled": "As ferramentas inteligentes de IA estão desativadas para esta organização.",
         "ai_not_in_plan": "A geração de gráficos com IA não está disponível no teu plano atual.",
+        "ai_prompt_could_not_be_converted": "Não conseguimos transformar esse prompt num gráfico. Tenta reformulá-lo com uma métrica, dimensão ou intervalo de datas específico.",
         "ai_query_placeholder": "ex: Quantos utilizadores se registaram na semana passada?",
         "ai_query_section_description": "Descreve o que queres ver e deixa a IA construir o gráfico.",
         "ai_query_section_title": "Pergunta aos teus dados",

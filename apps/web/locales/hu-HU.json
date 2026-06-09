@@ -1565,6 +1565,7 @@
         "ai_not_available": "Az MI-adatelemzés nem érhető el.",
         "ai_not_enabled": "Az MI-adatelemzés le van tiltva ennél a szervezetnél.",
         "ai_not_in_plan": "Az MI-adatelemzés nem érhető el a jelenlegi csomagjában.",
+        "ai_prompt_could_not_be_converted": "Nem tudtuk diagrammá alakítani ezt a promptot. Próbáld meg átfogalmazni egy konkrét metrikával, dimenzióval vagy dátumtartománnyal.",
         "ai_query_placeholder": "például: Hány felhasználó regisztrált a múlt héten?",
         "ai_query_section_description": "Írja le, hogy mit szeretne látni, és hagyja, hogy az MI összeállítsa a diagramot.",
         "ai_query_section_title": "Kérdezze meg az adatait",

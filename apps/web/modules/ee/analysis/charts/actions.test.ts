@@ -11,21 +11,16 @@ const mocks = vi.hoisted(() => {
     checkFeedbackDirectoryAccess: vi.fn(),
     getIsDashboardsEnabled: vi.fn(),
     createChart: vi.fn(),
-    getAiModel: vi.fn(),
     assertOrganizationAIConfigured: vi.fn(),
     executeTenantScopedQuery: vi.fn(),
-    generateText: vi.fn(),
+    generateAIChartQuery: vi.fn(),
     updateChart: vi.fn(),
   };
 });
 
-vi.mock("@/lib/utils/action-client", () => ({
-  authenticatedActionClient: {
-    inputSchema: mocks.actionClientInputSchema,
-  },
-}));
+vi.mock("server-only", () => ({}));
 
-vi.mock("@/lib/utils/action-client/index", () => ({
+vi.mock("@/lib/utils/action-client", () => ({
   authenticatedActionClient: {
     inputSchema: mocks.actionClientInputSchema,
   },
@@ -41,6 +36,10 @@ vi.mock("@formbricks/logger", () => ({
 
 vi.mock("@/modules/ee/analysis/api/lib/cube-client", () => ({
   executeTenantScopedQuery: mocks.executeTenantScopedQuery,
+}));
+
+vi.mock("@/modules/ee/analysis/charts/lib/ai-chart-query.server", () => ({
+  generateAIChartQuery: mocks.generateAIChartQuery,
 }));
 
 vi.mock("@/modules/ee/analysis/charts/lib/charts", () => ({
@@ -65,27 +64,8 @@ vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
   withAuditLogging: vi.fn((_eventName, _objectType, fn) => fn),
 }));
 
-vi.mock("@formbricks/ai", () => ({
-  getAiModel: mocks.getAiModel,
-}));
-
 vi.mock("@/lib/ai/service", () => ({
   assertOrganizationAIConfigured: mocks.assertOrganizationAIConfigured,
-}));
-
-vi.mock("@/lib/env", () => ({
-  env: {},
-}));
-
-vi.mock("@/modules/ee/analysis/lib/ai-schema-context", () => ({
-  generateSchemaContext: vi.fn(() => "schema context"),
-}));
-
-vi.mock("ai", () => ({
-  Output: {
-    object: vi.fn(({ schema }) => schema),
-  },
-  generateText: mocks.generateText,
 }));
 
 const ctx = {
@@ -107,7 +87,6 @@ describe("chart Cube actions", () => {
       feedbackDirectoryId: "frd-1",
     });
     mocks.assertOrganizationAIConfigured.mockResolvedValue(undefined);
-    mocks.getAiModel.mockReturnValue("model");
     mocks.createChart.mockResolvedValue({
       id: "chart-1",
       name: "Chart",
@@ -171,14 +150,12 @@ describe("chart Cube actions", () => {
     expect(mocks.checkFeedbackDirectoryAccess).not.toHaveBeenCalled();
   });
 
-  test("generateAIChartAction delegates clean AI queries to the tenant-scoped Cube helper", async () => {
-    mocks.generateText.mockResolvedValue({
-      output: {
+  test("generateAIChartAction passes the generated query through to the tenant-scoped Cube helper", async () => {
+    mocks.generateAIChartQuery.mockResolvedValueOnce({
+      chartType: "bar",
+      query: {
         measures: ["FeedbackRecords.count"],
         dimensions: ["FeedbackRecords.sourceType"],
-        timeDimensions: null,
-        chartType: "bar",
-        filters: null,
       },
     });
 
@@ -191,6 +168,7 @@ describe("chart Cube actions", () => {
       },
     } as any);
 
+    expect(mocks.generateAIChartQuery).toHaveBeenCalledWith("responses by sentiment");
     expect(result).toMatchObject({
       chartType: "bar",
       data: [{ "FeedbackRecords.count": 1 }],
@@ -206,5 +184,40 @@ describe("chart Cube actions", () => {
       userId: "user-1",
       source: "charts.generateAIChartAction",
     });
+  });
+
+  test("generateAIChartAction does not call the AI lib before access checks succeed", async () => {
+    mocks.checkFeedbackDirectoryAccess.mockRejectedValueOnce(new Error("no access"));
+
+    await expect(
+      generateAIChartAction({
+        ctx,
+        parsedInput: {
+          workspaceId: "workspace-1",
+          prompt: "responses by sentiment",
+          feedbackDirectoryId: "frd-1",
+        },
+      } as any)
+    ).rejects.toThrow("no access");
+
+    expect(mocks.generateAIChartQuery).not.toHaveBeenCalled();
+    expect(mocks.executeTenantScopedQuery).not.toHaveBeenCalled();
+  });
+
+  test("generateAIChartAction does not execute a Cube query when AI generation fails", async () => {
+    mocks.generateAIChartQuery.mockRejectedValueOnce(new Error("AI failed"));
+
+    await expect(
+      generateAIChartAction({
+        ctx,
+        parsedInput: {
+          workspaceId: "workspace-1",
+          prompt: "responses by sentiment",
+          feedbackDirectoryId: "frd-1",
+        },
+      } as any)
+    ).rejects.toThrow("AI failed");
+
+    expect(mocks.executeTenantScopedQuery).not.toHaveBeenCalled();
   });
 });

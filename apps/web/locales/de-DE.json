@@ -1565,6 +1565,7 @@
         "ai_not_available": "KI-Diagrammerstellung ist nicht verfügbar.",
         "ai_not_enabled": "KI-Smart-Tools sind für diese Organisation deaktiviert.",
         "ai_not_in_plan": "KI-Diagrammerstellung ist in deinem aktuellen Tarif nicht verfügbar.",
+        "ai_prompt_could_not_be_converted": "Wir konnten diese Eingabeaufforderung nicht in ein Diagramm umwandeln. Formuliere sie mit einer bestimmten Kennzahl, Dimension oder einem Datumsbereich um.",
         "ai_query_placeholder": "z.B. Wie viele Nutzer haben sich letzte Woche angemeldet?",
         "ai_query_section_description": "Beschreibe, was du sehen möchtest, und lass die KI das Diagramm erstellen.",
         "ai_query_section_title": "Frag deine Daten",
