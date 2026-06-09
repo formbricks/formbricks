@@ -9,7 +9,8 @@ export const ZWorkflowSchemaVersion = z
   .int()
   .positive()
   .max(WORKFLOW_SCHEMA_VERSION)
-  .default(WORKFLOW_SCHEMA_VERSION);
+  .default(WORKFLOW_SCHEMA_VERSION)
+  .describe("Workflow definition schema version understood by this package.");
 
 export const ZWorkflowChildNode = z.union([ZWorkflowActionNode, ZWorkflowIfElseNode]);
 export type TWorkflowChildNode = z.infer<typeof ZWorkflowChildNode>;
@@ -21,18 +22,20 @@ export const ZWorkflowEdge = z.object({
   id: z.string().min(1),
   source: z.string().min(1),
   target: z.string().min(1),
-  sourceHandle: z.string().min(1).optional(),
+  sourceHandle: z.string().min(1).optional().describe("Optional source handle id for branched nodes."),
   targetHandle: z.string().min(1).optional(),
 });
 export type TWorkflowEdge = z.infer<typeof ZWorkflowEdge>;
 
-export const ZWorkflowDefinitionBase = z.object({
-  schemaVersion: ZWorkflowSchemaVersion,
-  trigger: ZWorkflowTriggerNode,
-  nodes: z.array(ZWorkflowChildNode).default([]),
-  edges: z.array(ZWorkflowEdge).default([]),
-  entryNodeId: z.string().min(1),
-});
+export const ZWorkflowDefinitionBase = z
+  .object({
+    schemaVersion: ZWorkflowSchemaVersion,
+    trigger: ZWorkflowTriggerNode,
+    nodes: z.array(ZWorkflowChildNode).default([]),
+    edges: z.array(ZWorkflowEdge).default([]),
+    entryNodeId: z.string().min(1).describe("Node id where execution starts after the trigger fires."),
+  })
+  .describe("Persisted workflow graph definition.");
 export type TWorkflowDefinitionBase = z.infer<typeof ZWorkflowDefinitionBase>;
 
 const validateWorkflowGraph = (definition: TWorkflowDefinitionBase, ctx: z.RefinementCtx): void => {
@@ -78,7 +81,9 @@ const validateWorkflowGraph = (definition: TWorkflowDefinitionBase, ctx: z.Refin
   }
 };
 
-export const ZWorkflowDefinition = ZWorkflowDefinitionBase.superRefine(validateWorkflowGraph);
+export const ZWorkflowDefinition = ZWorkflowDefinitionBase.superRefine(validateWorkflowGraph).describe(
+  "Persisted workflow definition with graph references validated."
+);
 export type TWorkflowDefinition = z.infer<typeof ZWorkflowDefinition>;
 
 export const ZWorkflowExecutableDefinition = ZWorkflowDefinitionBase.superRefine((definition, ctx) => {
@@ -93,5 +98,5 @@ export const ZWorkflowExecutableDefinition = ZWorkflowDefinitionBase.superRefine
       });
     }
   }
-});
+}).describe("Workflow definition subset that the Scope 1 runner can execute.");
 export type TWorkflowExecutableDefinition = z.infer<typeof ZWorkflowExecutableDefinition>;

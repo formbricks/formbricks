@@ -14,6 +14,9 @@ export type TWorkflowConditionOperator = z.infer<typeof ZWorkflowConditionOperat
 export const ZWorkflowCondition = z.object({
   left: ZWorkflowDataRef,
   operator: ZWorkflowConditionOperator,
-  right: z.union([z.string(), z.number(), z.boolean(), z.null()]).optional(),
+  right: z
+    .union([z.string(), z.number(), z.boolean(), z.null()])
+    .optional()
+    .describe("Right-hand comparison value. Omit for existence operators."),
 });
 export type TWorkflowCondition = z.infer<typeof ZWorkflowCondition>;

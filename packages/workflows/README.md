@@ -1,22 +1,13 @@
 # Formbricks Workflows
 
-This package contains the core functionality of Formbricks Workflows, including the types and validations.
+Framework-independent domain package for Formbricks Workflows.
 
-## Glossary and States Update Draft
+This package owns reusable workflow building blocks: contracts, validation, domain services, HTTP handler
+abstractions, and runner-facing helpers. It should remain independent from `apps/web` and any specific web
+framework so the same workflow logic can be reused across runtimes.
 
-Add `archived` to `WorkflowStatus`: `draft | enabled | disabled | archived`.
+## Boundaries
 
-Archived workflows are soft-deleted workflow records. They never execute and are excluded from list/get
-operations by default. `includeArchived=true` includes them.
-
-Allowed archive transitions:
-
-- `draft -> archived`
-- `disabled -> archived`
-
-Unarchive transitions:
-
-- `archived -> disabled`
-
-Unarchiving does not automatically resume execution. A user or API must explicitly enable the workflow after
-unarchiving.
+- Do not import from `apps/web` or Next.js-specific APIs.
+- Keep runtime adapters thin and explicit.
+- Prefer narrow dependencies and pass app/runtime concerns through interfaces.

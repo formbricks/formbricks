@@ -1,6 +1,10 @@
 import { z } from "zod";
 
-export const ZWorkflowStatus = z.enum(["draft", "enabled", "disabled", "archived"]);
+export const ZWorkflowStatus = z
+  .enum(["draft", "enabled", "disabled", "archived"])
+  .describe(
+    "Lifecycle state of a workflow. Archived workflows are soft-deleted and excluded from default reads."
+  );
 export type TWorkflowStatus = z.infer<typeof ZWorkflowStatus>;
 
 export const ZWorkflowNodeType = z.enum(["action", "if_else", "trigger"]);
@@ -20,13 +24,16 @@ export const ZWorkflowNodeUi = z
     position: ZWorkflowNodePosition.optional(),
     collapsed: z.boolean().optional(),
   })
-  .catchall(z.unknown());
+  .catchall(z.unknown())
+  .describe("Builder-only UI metadata that does not affect workflow execution.");
 export type TWorkflowNodeUi = z.infer<typeof ZWorkflowNodeUi>;
 
-export const ZWorkflowDataRef = z.object({
-  path: z.string().min(1),
-  fallback: z.string().optional(),
-});
+export const ZWorkflowDataRef = z
+  .object({
+    path: z.string().min(1).describe("Dot-path to a value in the workflow run context."),
+    fallback: z.string().optional().describe("Fallback string used when the referenced path is missing."),
+  })
+  .describe("Reference to dynamic workflow data used by conditions or actions.");
 
 export type TWorkflowDataRef = z.infer<typeof ZWorkflowDataRef>;
 
