@@ -206,6 +206,21 @@
         "@formbricks/surveys#build"
       ]
     },
+    "@formbricks/workflows#build": {
+      "outputs": ["dist/**"]
+    },
+    "@formbricks/workflows#lint": {
+      "dependsOn": []
+    },
+    "@formbricks/workflows#test": {
+      "dependsOn": []
+    },
+    "@formbricks/workflows#test:coverage": {
+      "dependsOn": []
+    },
+    "@formbricks/workflows#typecheck": {
+      "dependsOn": []
+    },
     "build": {
       "dependsOn": ["^build"],
       "env": [
