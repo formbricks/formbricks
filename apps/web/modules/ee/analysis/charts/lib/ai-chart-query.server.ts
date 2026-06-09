@@ -27,8 +27,49 @@ const ZMeasureId = z.enum(toEnumTuple(FEEDBACK_MEASURE_IDS));
 const ZDimensionId = z.enum(toEnumTuple(FEEDBACK_DIMENSION_IDS));
 const ZTimeDimensionId = z.enum(toEnumTuple(FEEDBACK_TIME_DIMENSION_IDS));
 const ZFilterMemberId = z.enum(toEnumTuple([...FEEDBACK_MEASURE_IDS, ...FEEDBACK_DIMENSION_IDS]));
+const ZFilterOperator = z.enum([
+  "equals",
+  "notEquals",
+  "contains",
+  "notContains",
+  "set",
+  "notSet",
+  "gt",
+  "gte",
+  "lt",
+  "lte",
+]);
+const VALUELESS_FILTER_OPERATORS = new Set<z.infer<typeof ZFilterOperator>>(["set", "notSet"]);
 
-const ZAIQueryResponse = z.object({
+const ZFilter = z
+  .object({
+    member: ZFilterMemberId,
+    operator: ZFilterOperator,
+    values: z.array(z.string()).nullable().optional(),
+  })
+  .superRefine(({ operator, values }, ctx) => {
+    if (VALUELESS_FILTER_OPERATORS.has(operator)) {
+      if (values != null) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Filter operator "${operator}" must not include values`,
+          path: ["values"],
+        });
+      }
+
+      return;
+    }
+
+    if (!values?.length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Filter operator "${operator}" requires a non-empty values array`,
+        path: ["values"],
+      });
+    }
+  });
+
+export const ZAIQueryResponse = z.object({
   measures: z.array(ZMeasureId),
   dimensions: z.array(ZDimensionId).nullable(),
   timeDimensions: z
@@ -41,26 +82,7 @@ const ZAIQueryResponse = z.object({
     )
     .nullable(),
   chartType: ZChartType,
-  filters: z
-    .array(
-      z.object({
-        member: ZFilterMemberId,
-        operator: z.enum([
-          "equals",
-          "notEquals",
-          "contains",
-          "notContains",
-          "set",
-          "notSet",
-          "gt",
-          "gte",
-          "lt",
-          "lte",
-        ]),
-        values: z.array(z.string()).nullable(),
-      })
-    )
-    .nullable(),
+  filters: z.array(ZFilter).nullable(),
 });
 
 type AIQueryResponse = z.infer<typeof ZAIQueryResponse>;

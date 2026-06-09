@@ -5,7 +5,7 @@ describe("AI chart errors", () => {
   test("translates the prompt conversion error code", () => {
     const t = vi.fn((key: string) => `translated:${key}`);
 
-    expect(getTranslatedAIChartError(AI_CHART_PROMPT_ERROR_CODE, t as any)).toBe(
+    expect(getTranslatedAIChartError(AI_CHART_PROMPT_ERROR_CODE, t)).toBe(
       "translated:workspace.analysis.charts.ai_prompt_could_not_be_converted"
     );
   });
@@ -13,7 +13,7 @@ describe("AI chart errors", () => {
   test("passes unknown error strings through unchanged", () => {
     const t = vi.fn((key: string) => `translated:${key}`);
 
-    expect(getTranslatedAIChartError("SOMETHING_ELSE", t as any)).toBe("SOMETHING_ELSE");
+    expect(getTranslatedAIChartError("SOMETHING_ELSE", t)).toBe("SOMETHING_ELSE");
     expect(t).not.toHaveBeenCalled();
   });
 });

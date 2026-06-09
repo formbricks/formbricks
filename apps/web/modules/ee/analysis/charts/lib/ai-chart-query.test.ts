@@ -2,7 +2,7 @@ import { NoObjectGeneratedError } from "ai";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { AI_CHART_PROMPT_ERROR_CODE } from "./ai-chart-errors";
-import { generateAIChartQuery } from "./ai-chart-query.server";
+import { ZAIQueryResponse, generateAIChartQuery } from "./ai-chart-query.server";
 
 const mocks = vi.hoisted(() => ({
   generateText: vi.fn(),
@@ -130,6 +130,48 @@ describe("generateAIChartQuery", () => {
       { member: "FeedbackRecords.sourceType", operator: "equals", values: ["survey"] },
       { member: "FeedbackRecords.sourceType", operator: "set" },
     ]);
+  });
+
+  test("rejects value-based filters without a non-empty values array", () => {
+    const result = ZAIQueryResponse.safeParse({
+      measures: ["FeedbackRecords.count"],
+      dimensions: null,
+      timeDimensions: null,
+      chartType: "bar",
+      filters: [{ member: "FeedbackRecords.sourceType", operator: "equals", values: null }],
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.message).toBe(
+      'Filter operator "equals" requires a non-empty values array'
+    );
+    expect(result.error?.issues[0]?.path).toEqual(["filters", 0, "values"]);
+  });
+
+  test("rejects valueless filters that include values", () => {
+    const result = ZAIQueryResponse.safeParse({
+      measures: ["FeedbackRecords.count"],
+      dimensions: null,
+      timeDimensions: null,
+      chartType: "bar",
+      filters: [{ member: "FeedbackRecords.sourceType", operator: "set", values: ["survey"] }],
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.message).toBe('Filter operator "set" must not include values');
+    expect(result.error?.issues[0]?.path).toEqual(["filters", 0, "values"]);
+  });
+
+  test("allows valueless filters with omitted values", () => {
+    const result = ZAIQueryResponse.safeParse({
+      measures: ["FeedbackRecords.count"],
+      dimensions: null,
+      timeDimensions: null,
+      chartType: "bar",
+      filters: [{ member: "FeedbackRecords.sourceType", operator: "notSet" }],
+    });
+
+    expect(result.success).toBe(true);
   });
 
   test("converts AI structured-output failures into a prompt error", async () => {
