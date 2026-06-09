@@ -1,15 +1,27 @@
+import { readFile } from "node:fs/promises";
 import { describe, expect, test } from "vitest";
 import {
   type TWorkflowDefinitionBase,
   ZResponseCompletedTriggerConfig,
   ZWorkflowDefinition,
   ZWorkflowExecutableDefinition,
+  ZWorkflowRunData,
+  ZWorkflowRunLog,
   ZWorkflowSendEmailActionConfig,
   ZWorkflowStatus,
+  ZWorkflowTriggerPayload,
+  ZWorkflowVersion,
 } from ".";
 
 const surveyId = "cm9zr4mps000008l8btfy1vtz";
 const endingCardId = "cm9zr4q7i000108l84gozfggr";
+
+const loadJsonFixture = async (fixtureName: string): Promise<unknown> => {
+  const fixture = await readFile(new URL(`./__fixtures__/${fixtureName}`, import.meta.url), "utf8");
+  const parsedFixture: unknown = JSON.parse(fixture);
+
+  return parsedFixture;
+};
 
 const sendEmailConfig = {
   from: "noreply@example.com",
@@ -51,6 +63,42 @@ const createDefinition = (): TWorkflowDefinitionBase => ({
 });
 
 describe("@formbricks/workflows", () => {
+  test("validates the full workflow definition fixture", async () => {
+    const fixture = await loadJsonFixture("workflow-definition.full.json");
+
+    expect(ZWorkflowDefinition.parse(fixture).nodes.some((node) => node.type === "if_else")).toBe(true);
+  });
+
+  test("validates the full executable workflow definition fixture", async () => {
+    const fixture = await loadJsonFixture("workflow-executable-definition.full.json");
+
+    expect(ZWorkflowExecutableDefinition.parse(fixture).nodes).toHaveLength(1);
+  });
+
+  test("validates the full workflow version fixture", async () => {
+    const fixture = await loadJsonFixture("workflow-version.full.json");
+
+    expect(ZWorkflowVersion.parse(fixture).version).toBe(1);
+  });
+
+  test("validates the full workflow run data fixture", async () => {
+    const fixture = await loadJsonFixture("workflow-run-data.full.json");
+
+    expect(ZWorkflowRunData.parse(fixture).steps).toHaveLength(1);
+  });
+
+  test("validates the full workflow run log fixture", async () => {
+    const fixture = await loadJsonFixture("workflow-run-log.full.json");
+
+    expect(ZWorkflowRunLog.parse(fixture).status).toBe("failed");
+  });
+
+  test("validates the full workflow trigger payload fixture", async () => {
+    const fixture = await loadJsonFixture("workflow-trigger-payload.full.json");
+
+    expect(ZWorkflowTriggerPayload.parse(fixture).type).toBe("response.completed");
+  });
+
   test("parses a valid Scope 1 executable definition", () => {
     expect(ZWorkflowExecutableDefinition.parse(createDefinition()).nodes[0]?.type).toBe("action");
   });
@@ -71,24 +119,115 @@ describe("@formbricks/workflows", () => {
           id: "condition",
           type: "if_else" as const,
           config: {
-            conditions: [
-              {
-                left: { path: "response.email" },
-                operator: "exists" as const,
-              },
-            ],
-            combinator: "and" as const,
+            condition: {
+              id: "condition-group",
+              connector: "and" as const,
+              conditions: [
+                {
+                  id: "email-exists",
+                  left: { path: "response.email" },
+                  operator: "exists" as const,
+                },
+                {
+                  id: "nested-group",
+                  connector: "or" as const,
+                  conditions: [
+                    {
+                      id: "score-high",
+                      left: { path: "response.score" },
+                      operator: "greaterThan" as const,
+                      right: 8,
+                    },
+                    {
+                      id: "plan-match",
+                      left: { path: "response.plan" },
+                      operator: "equals" as const,
+                      right: { path: "contact.plan" },
+                    },
+                  ],
+                },
+              ],
+            },
           },
+        },
+        {
+          id: "then-email",
+          type: "action" as const,
+          actionType: "send_email" as const,
+          config: sendEmailConfig,
+        },
+        {
+          id: "else-email",
+          type: "action" as const,
+          actionType: "send_email" as const,
+          config: sendEmailConfig,
         },
       ],
       edges: [
         ...createDefinition().edges,
         { id: "send-email-condition", source: "send-email", target: "condition" },
+        { id: "condition-then", source: "condition", target: "then-email", sourceHandle: "then" },
+        { id: "condition-else", source: "condition", target: "else-email", sourceHandle: "else" },
       ],
     };
 
     expect(() => ZWorkflowDefinition.parse(definition)).not.toThrow();
     expect(() => ZWorkflowExecutableDefinition.parse(definition)).toThrow(/if_else nodes/);
+  });
+
+  test("rejects if_else branch edges without then and else source handles", () => {
+    const definition = {
+      ...createDefinition(),
+      nodes: [
+        ...createDefinition().nodes,
+        {
+          id: "condition",
+          type: "if_else" as const,
+          config: {
+            condition: {
+              id: "condition-group",
+              connector: "and" as const,
+              conditions: [
+                {
+                  id: "email-exists",
+                  left: { path: "response.email" },
+                  operator: "exists" as const,
+                },
+              ],
+            },
+          },
+        },
+        {
+          id: "then-email",
+          type: "action" as const,
+          actionType: "send_email" as const,
+          config: sendEmailConfig,
+        },
+      ],
+      edges: [
+        ...createDefinition().edges,
+        { id: "send-email-condition", source: "send-email", target: "condition" },
+        { id: "condition-then", source: "condition", target: "then-email" },
+      ],
+    };
+
+    expect(() => ZWorkflowDefinition.parse(definition)).toThrow(/then or else sourceHandle/);
+  });
+
+  test("rejects then and else source handles on non-branch nodes", () => {
+    const definition = {
+      ...createDefinition(),
+      edges: [
+        {
+          id: "trigger-send-email",
+          source: "trigger",
+          target: "send-email",
+          sourceHandle: "then",
+        },
+      ],
+    };
+
+    expect(() => ZWorkflowDefinition.parse(definition)).toThrow(/Only if_else nodes/);
   });
 
   test("rejects sendWebhookPreview actions", () => {
