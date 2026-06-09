@@ -65,25 +65,29 @@ interface PlanResponseFeatureProps {
   currency: string;
 }
 
+const dynamicPricingComponent = (plan: TResponsePricingPlan, locale: string, currency: string) => (
+  <TooltipRenderer
+    tooltipContent={<ResponsePricingTable plan={plan} locale={locale} currency={currency} />}
+    className="max-w-none p-3"
+    triggerClass="cursor-help border-b border-dotted border-slate-400">
+    <span />
+  </TooltipRenderer>
+);
+
 export const PlanResponseFeature = ({ plan, locale, currency }: Readonly<PlanResponseFeatureProps>) => {
-  const i18nKey =
-    plan === "pro"
-      ? "workspace.settings.billing.plan_pro_feature_responses"
-      : "workspace.settings.billing.plan_scale_feature_responses";
+  if (plan === "pro") {
+    return (
+      <Trans
+        i18nKey="workspace.settings.billing.plan_pro_feature_responses"
+        components={{ dynamicPricing: dynamicPricingComponent(plan, locale, currency) }}
+      />
+    );
+  }
 
   return (
     <Trans
-      i18nKey={i18nKey}
-      components={{
-        dynamicPricing: (
-          <TooltipRenderer
-            tooltipContent={<ResponsePricingTable plan={plan} locale={locale} currency={currency} />}
-            className="max-w-none p-3"
-            triggerClass="cursor-help border-b border-dotted border-slate-400">
-            <span />
-          </TooltipRenderer>
-        ),
-      }}
+      i18nKey="workspace.settings.billing.plan_scale_feature_responses"
+      components={{ dynamicPricing: dynamicPricingComponent(plan, locale, currency) }}
     />
   );
 };
