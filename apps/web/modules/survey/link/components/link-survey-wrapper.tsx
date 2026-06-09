@@ -1,6 +1,7 @@
 import { type JSX, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { SurveyType, Workspace } from "@formbricks/database/prisma-browser";
+import { getLinkSurveyCardMaxWidth } from "@formbricks/types/styling";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
@@ -57,19 +58,27 @@ export const LinkSurveyWrapper = ({
     }
   };
   const styling = determineStyling();
+  const isCardless = styling.cardArrangement?.linkSurveys === "cardless";
+  const linkSurveyCardMaxWidth = getLinkSurveyCardMaxWidth(styling.linkSurveyCardWidth);
+
   if (isEmbed)
     return (
-      <div
-        className={cn(
-          "h-full w-full overflow-clip",
-          styling.cardArrangement?.linkSurveys === "straight" && "pt-6",
-          styling.cardArrangement?.linkSurveys === "casual" && "px-6 py-10"
-        )}>
+      <div className={cn("h-full w-full overflow-auto", !isCardless && "overflow-clip")}>
         <SurveyLoadingAnimation
           isWelcomeCardEnabled={isWelcomeCardEnabled}
           isBrandingEnabled={isBrandingEnabled}
         />
-        {children}
+        <div
+          className={cn(
+            "flex h-full w-full flex-col",
+            isCardless && "overflow-hidden",
+            !isCardless && "mx-auto",
+            styling.cardArrangement?.linkSurveys === "straight" && "pt-6",
+            styling.cardArrangement?.linkSurveys === "casual" && "px-6 py-10"
+          )}
+          style={!isCardless ? { maxWidth: linkSurveyCardMaxWidth } : undefined}>
+          {children}
+        </div>
       </div>
     );
   else
@@ -83,12 +92,24 @@ export const LinkSurveyWrapper = ({
         <MediaBackground
           surveyType={surveyType}
           styling={styling}
-          onBackgroundLoaded={handleBackgroundLoaded}>
-          <div className="flex max-h-dvh min-h-dvh items-center justify-center overflow-clip">
+          onBackgroundLoaded={handleBackgroundLoaded}
+          useNaturalHeight={isCardless}>
+          <div
+            className={cn(
+              "flex w-full justify-center",
+              isCardless
+                ? "h-full min-h-0 flex-1 flex-col items-stretch overflow-hidden"
+                : "max-h-dvh min-h-dvh items-center overflow-clip"
+            )}>
             {!styling.isLogoHidden && (workspace.logo?.url || styling.logo?.url) && (
               <ClientLogo workspaceLogo={workspace.logo} surveyLogo={styling.logo} dir={dir} />
             )}
-            <div className="h-full w-full max-w-4xl space-y-6 px-1.5">
+            <div
+              className={cn(
+                "w-full",
+                isCardless ? "flex min-h-0 w-full flex-1 flex-col" : "mx-auto h-full space-y-6 px-1.5"
+              )}
+              style={!isCardless ? { maxWidth: linkSurveyCardMaxWidth } : undefined}>
               {isPreview && (
                 <div className="fixed left-0 top-0 flex w-full items-center justify-between bg-slate-600 p-2 px-4 text-center text-sm text-white shadow-sm">
                   <div />
@@ -96,17 +117,31 @@ export const LinkSurveyWrapper = ({
                   <ResetProgressButton onClick={handleResetSurvey} />
                 </div>
               )}
-              {children}
+              <div className={cn("flex min-h-0 w-full flex-1 flex-col", !isCardless && "justify-center")}>
+                {children}
+              </div>
+              {isCardless && (
+                <LegalFooter
+                  IMPRINT_URL={IMPRINT_URL}
+                  PRIVACY_URL={PRIVACY_URL}
+                  TERMS_URL={TERMS_URL}
+                  IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
+                  surveyUrl={publicDomain + "/s/" + surveyId}
+                  isInFlow
+                />
+              )}
             </div>
           </div>
         </MediaBackground>
-        <LegalFooter
-          IMPRINT_URL={IMPRINT_URL}
-          PRIVACY_URL={PRIVACY_URL}
-          TERMS_URL={TERMS_URL}
-          IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
-          surveyUrl={publicDomain + "/s/" + surveyId}
-        />
+        {!isCardless && (
+          <LegalFooter
+            IMPRINT_URL={IMPRINT_URL}
+            PRIVACY_URL={PRIVACY_URL}
+            TERMS_URL={TERMS_URL}
+            IS_FORMBRICKS_CLOUD={IS_FORMBRICKS_CLOUD}
+            surveyUrl={publicDomain + "/s/" + surveyId}
+          />
+        )}
       </div>
     );
 };

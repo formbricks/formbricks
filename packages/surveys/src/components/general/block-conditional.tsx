@@ -43,6 +43,7 @@ interface BlockConditionalProps {
   onOpenExternalURL?: (url: string) => void | Promise<void>;
   dir?: "ltr" | "rtl" | "auto";
   fullSizeCards: boolean;
+  isCardless?: boolean;
   surveyLanguages: TSurveyLanguage[];
 }
 
@@ -67,6 +68,7 @@ export function BlockConditional({
   onOpenExternalURL,
   dir,
   fullSizeCards,
+  isCardless = false,
   surveyLanguages,
 }: Readonly<BlockConditionalProps>) {
   // Track the current element being filled (for TTC tracking)
@@ -352,7 +354,7 @@ export function BlockConditional({
   return (
     <div className={cn("space-y-6", fullSizeCards ? "h-full" : "")}>
       {/* Scrollable container for the entire block */}
-      <ScrollableContainer fullSizeCards={fullSizeCards}>
+      <ScrollableContainer fullSizeCards={fullSizeCards} disableInternalScroll={isCardless}>
         <div className="space-y-6">
           <div className="space-y-6">
             {block.elements.map((element, index) => {
@@ -391,7 +393,7 @@ export function BlockConditional({
           <div
             className={cn(
               "flex w-full flex-row-reverse justify-between",
-              fullSizeCards ? "bg-survey-bg sticky bottom-0" : ""
+              fullSizeCards && !isCardless ? "bg-survey-bg sticky bottom-0" : ""
             )}>
             <div>
               {shouldHideSubmitButton ? (

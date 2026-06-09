@@ -222,9 +222,10 @@ export interface TBaseStyling {
   isDarkModeEnabled?: boolean | null;
   roundness?: TDimension;
   cardArrangement?: {
-    linkSurveys: "casual" | "straight" | "simple";
-    appSurveys: "casual" | "straight" | "simple";
+    linkSurveys: "casual" | "straight" | "simple" | "cardless";
+    appSurveys: "casual" | "straight" | "simple" | "cardless";
   } | null;
+  linkSurveyCardWidth?: "narrow" | "default" | "wide" | null;
   background?: {
     bg?: string | null;
     bgType?: "animation" | "color" | "image" | "upload" | null;

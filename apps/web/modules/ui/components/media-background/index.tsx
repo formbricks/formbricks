@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { SurveyType } from "@formbricks/database/prisma-browser";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
 import { TWorkspaceStyling } from "@formbricks/types/workspace";
+import { cn } from "@/lib/cn";
 
 interface MediaBackgroundProps {
   children: React.ReactNode;
@@ -16,6 +17,7 @@ interface MediaBackgroundProps {
   isMobilePreview?: boolean;
   ContentRef?: React.RefObject<HTMLDivElement> | null;
   onBackgroundLoaded?: (isLoaded: boolean) => void;
+  useNaturalHeight?: boolean;
 }
 
 export const MediaBackground: React.FC<MediaBackgroundProps> = ({
@@ -26,6 +28,7 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
   isMobilePreview = false,
   ContentRef,
   onBackgroundLoaded,
+  useNaturalHeight = false,
 }) => {
   const { t } = useTranslation();
   const animatedBackgroundRef = useRef<HTMLVideoElement>(null);
@@ -185,9 +188,15 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
     );
   } else {
     return (
-      <div className="flex min-h-dvh flex-col items-center justify-center">
+      <div
+        className={cn(
+          "relative flex flex-col overflow-hidden",
+          useNaturalHeight ? "h-dvh items-stretch" : "min-h-dvh items-center justify-center"
+        )}>
         {renderBackground()}
-        <div className="relative w-full">{children}</div>
+        <div className={cn("relative w-full", useNaturalHeight && "flex min-h-0 flex-1 flex-col")}>
+          {children}
+        </div>
       </div>
     );
   }

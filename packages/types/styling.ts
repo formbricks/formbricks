@@ -7,13 +7,25 @@ export const ZStylingColor = z.object({
 });
 export type TStylingColor = z.infer<typeof ZStylingColor>;
 
-export const ZCardArrangementOptions = z.enum(["casual", "straight", "simple"]);
+export const ZCardArrangementOptions = z.enum(["casual", "straight", "simple", "cardless"]);
 export type TCardArrangementOptions = z.infer<typeof ZCardArrangementOptions>;
 
 export const ZCardArrangement = z.object({
   linkSurveys: ZCardArrangementOptions,
   appSurveys: ZCardArrangementOptions,
 });
+
+export const ZLinkSurveyCardWidthOptions = z.enum(["narrow", "default", "wide"]);
+export type TLinkSurveyCardWidthOptions = z.infer<typeof ZLinkSurveyCardWidthOptions>;
+
+export const LINK_SURVEY_CARD_WIDTH_MAX: Record<TLinkSurveyCardWidthOptions, string> = {
+  narrow: "clamp(17.5rem, 88vw, 30rem)",
+  default: "clamp(20rem, 92vw, 40rem)",
+  wide: "clamp(24rem, 96vw, 60rem)",
+};
+
+export const getLinkSurveyCardMaxWidth = (cardWidth?: TLinkSurveyCardWidthOptions | null): string =>
+  LINK_SURVEY_CARD_WIDTH_MAX[cardWidth ?? "default"];
 
 export const ZLogo = z.object({
   url: ZStorageUrl.optional(),
@@ -101,6 +113,7 @@ export const ZBaseStyling = z.object({
   isDarkModeEnabled: z.boolean().nullish(),
   roundness: z.union([z.number(), z.string()]).nullish(),
   cardArrangement: ZCardArrangement.nullish(),
+  linkSurveyCardWidth: ZLinkSurveyCardWidthOptions.nullish(),
   background: ZSurveyStylingBackground.nullish(),
   hideProgressBar: z.boolean().nullish(),
   isLogoHidden: z.boolean().nullish(),

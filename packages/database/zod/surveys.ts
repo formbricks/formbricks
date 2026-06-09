@@ -20,12 +20,14 @@ export const ZStylingColor = z.object({
   dark: ZColor.nullish(),
 });
 
-export const ZCardArrangementOptions = z.enum(["casual", "straight", "simple"]);
+export const ZCardArrangementOptions = z.enum(["casual", "straight", "simple", "cardless"]);
 
 export const ZCardArrangement = z.object({
   linkSurveys: ZCardArrangementOptions,
   appSurveys: ZCardArrangementOptions,
 });
+
+export const ZLinkSurveyCardWidthOptions = z.enum(["narrow", "default", "wide"]);
 
 export const ZSurveyStylingBackground = z.object({
   bg: z.string().nullish(),
@@ -121,6 +123,7 @@ const ZSurveyBase = z.object({
       isDarkModeEnabled: z.boolean().nullish(),
       roundness: z.number().nullish(),
       cardArrangement: ZCardArrangement.nullish(),
+      linkSurveyCardWidth: ZLinkSurveyCardWidthOptions.nullish(),
       background: ZSurveyStylingBackground.nullish(),
       hideProgressBar: z.boolean().nullish(),
       isLogoHidden: z.boolean().nullish(),
