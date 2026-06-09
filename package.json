@@ -66,8 +66,8 @@
     "*.json": [
       "prettier --write"
     ],
-    "packages/database/schema.prisma": [
-      "prisma format"
+    "packages/database/schema/**/*.prisma": [
+      "prisma format --schema packages/database/schema"
     ]
   },
   "engines": {

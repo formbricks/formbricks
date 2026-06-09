@@ -1,0 +1,118 @@
+enum WorkflowStatus {
+  draft
+  enabled
+  disabled
+  archived
+}
+
+enum WorkflowRunStatus {
+  queued
+  running
+  completed
+  failed
+  canceled
+}
+
+enum WorkflowRunLogStatus {
+  pending
+  running
+  succeeded
+  failed
+  skipped
+}
+
+model Workflow {
+  id          String            @id @default(cuid(2))
+  createdAt   DateTime          @default(now()) @map(name: "created_at")
+  updatedAt   DateTime          @updatedAt @map(name: "updated_at")
+  name        String
+  description String?
+  status      WorkflowStatus    @default(draft)
+  workspace   Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId String
+  creator     User?             @relation("workflowCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  createdBy   String?
+  /// [WorkflowDefinition]
+  definition  Json              @default("{}")
+  versions    WorkflowVersion[]
+  runs        WorkflowRun[]
+
+  @@unique([id, workspaceId])
+  @@index([workspaceId, status])
+  @@index([workspaceId, updatedAt])
+}
+
+model WorkflowVersion {
+  id          String        @id @default(cuid(2))
+  workflow    Workflow      @relation(fields: [workflowId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  workflowId  String
+  workspaceId String
+  version     Int
+  /// [WorkflowExecutableDefinition]
+  definition  Json
+  publishedAt DateTime      @default(now()) @map(name: "published_at")
+  publisher   User?         @relation("workflowVersionPublishedBy", fields: [publishedBy], references: [id], onDelete: SetNull)
+  publishedBy String?       @map(name: "published_by")
+  runs        WorkflowRun[]
+
+  @@unique([workflowId, version])
+  @@index([workflowId, workspaceId])
+  @@index([publishedBy])
+}
+
+model WorkflowRun {
+  id                String            @id @default(cuid(2))
+  createdAt         DateTime          @default(now()) @map(name: "created_at")
+  updatedAt         DateTime          @updatedAt @map(name: "updated_at")
+  workflow          Workflow          @relation(fields: [workflowId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  workflowId        String
+  workspace         Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId       String
+  workflowVersion   WorkflowVersion?  @relation(fields: [workflowVersionId], references: [id], onDelete: SetNull)
+  workflowVersionId String?
+  response          Response?         @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  responseId        String?
+  status            WorkflowRunStatus @default(queued)
+  triggerEvent      String
+  surveyId          String?
+  isDryRun          Boolean           @default(false)
+  idempotencyKey    String?
+  attempt           Int               @default(0)
+  nextAttemptAt     DateTime?
+  lastErrorAt       DateTime?
+  /// [WorkflowTriggerPayload]
+  triggerPayload    Json
+  /// [WorkflowRunData]
+  data              Json              @default("{}")
+  error             String?
+  startedAt         DateTime?
+  finishedAt        DateTime?
+  logs              WorkflowRunLog[]
+
+  @@unique([workflowId, idempotencyKey])
+  @@index([workspaceId, createdAt])
+  @@index([workflowId, workspaceId, createdAt])
+  @@index([status, createdAt])
+  @@index([responseId])
+  @@index([isDryRun])
+  @@index([nextAttemptAt])
+}
+
+model WorkflowRunLog {
+  id         String               @id @default(cuid(2))
+  run        WorkflowRun          @relation(fields: [runId], references: [id], onDelete: Cascade)
+  runId      String
+  sequence   Int
+  stepId     String
+  stepType   String
+  status     WorkflowRunLogStatus @default(pending)
+  /// [WorkflowRunLogInput]
+  input      Json                 @default("{}")
+  /// [WorkflowRunLogOutput]
+  output     Json                 @default("{}")
+  error      String?
+  startedAt  DateTime?
+  finishedAt DateTime?
+
+  @@index([runId, sequence])
+}
