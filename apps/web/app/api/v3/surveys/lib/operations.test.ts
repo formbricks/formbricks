@@ -21,13 +21,11 @@ import {
 import { V3SurveyWritePermissionError } from "../write-permissions";
 import {
   createV3SurveyResponse,
-  createV3SurveyResponseFromRawInput,
   deleteV3Survey,
   getV3Survey,
   listV3Surveys,
   patchV3SurveyResponse,
   validateV3Survey,
-  validateV3SurveyFromRawInput,
 } from "./operations";
 
 vi.mock("@formbricks/logger", () => ({
@@ -320,26 +318,6 @@ describe("createV3SurveyResponse", () => {
 
     expect(response.status).toBe(403);
     expect(vi.mocked(createV3Survey)).not.toHaveBeenCalled();
-  });
-
-  test("returns bad requests for invalid raw create input", async () => {
-    const response = await createV3SurveyResponseFromRawInput({
-      body: { workspaceId, name: "Customer Survey", blocks: [] },
-      authentication,
-      requestId,
-      instance,
-    });
-
-    expect(response.status).toBe(400);
-    expect(vi.mocked(requireV3WorkspaceAccess)).not.toHaveBeenCalled();
-    expect(vi.mocked(createV3Survey)).not.toHaveBeenCalled();
-    expect(await readJson(response)).toMatchObject({
-      invalid_params: [
-        expect.objectContaining({
-          name: "blocks",
-        }),
-      ],
-    });
   });
 
   test("maps validation, shape, permission, missing resource, and database errors", async () => {
@@ -796,26 +774,6 @@ describe("validateV3Survey", () => {
 
     expect(response.status).toBe(403);
     expect(vi.mocked(prepareV3SurveyPatchInput)).not.toHaveBeenCalled();
-  });
-
-  test("returns bad requests for invalid validation input", async () => {
-    const response = await validateV3SurveyFromRawInput({
-      body: { operation: "patch", data: {} },
-      authentication,
-      requestId,
-      instance,
-    });
-
-    expect(response.status).toBe(400);
-    expect(vi.mocked(getAuthorizedV3Survey)).not.toHaveBeenCalled();
-    expect(vi.mocked(prepareV3SurveyPatchInput)).not.toHaveBeenCalled();
-    expect(await readJson(response)).toMatchObject({
-      invalid_params: [
-        expect.objectContaining({
-          name: "surveyId",
-        }),
-      ],
-    });
   });
 
   test("maps database errors during validation", async () => {

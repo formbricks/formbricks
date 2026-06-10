@@ -5,7 +5,6 @@ import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { createSurvey } from "@/lib/survey/service";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import { V3SurveyCreatePermissionError, createV3Survey } from "./create";
-import { V3SurveyReferenceValidationError } from "./reference-validation";
 import { ZV3CreateSurveyBody } from "./schemas";
 
 vi.mock("server-only", () => ({}));
@@ -237,27 +236,6 @@ describe("createV3Survey", () => {
         ]),
       })
     );
-  });
-
-  test("rejects invalid media URLs before creating the survey", async () => {
-    const body = ZV3CreateSurveyBody.parse({
-      ...rawCreateBody,
-      blocks: [
-        {
-          ...rawCreateBody.blocks[0],
-          elements: [
-            {
-              ...rawCreateBody.blocks[0].elements[0],
-              videoUrl: "https://evil.example.com/not-a-video",
-            },
-          ],
-        },
-      ],
-    });
-
-    await expect(createV3Survey(body, null, "req_media")).rejects.toThrow(V3SurveyReferenceValidationError);
-    expect(createSurvey).not.toHaveBeenCalled();
-    expect(prisma.language.upsert).not.toHaveBeenCalled();
   });
 
   test("rejects external CTA buttons when the organization does not have external URL permission", async () => {

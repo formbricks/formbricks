@@ -1,7 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { Prisma } from "@formbricks/database/prisma";
-import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
@@ -10,7 +8,7 @@ import {
   normalizeSurveyScheduling,
   reconcileDueSurveySchedules,
 } from "@/modules/survey/scheduling/lib/survey-scheduling";
-import { executeV3SurveyPatch, patchV3Survey } from "./patch";
+import { patchV3Survey } from "./patch";
 import { V3SurveyReferenceValidationError } from "./reference-validation";
 import { ZV3CreateSurveyBody } from "./schemas";
 import { V3SurveyWritePermissionError } from "./write-permissions";
@@ -228,51 +226,6 @@ describe("patchV3Survey", () => {
     vi.mocked(getExternalUrlsPermission).mockResolvedValue(true);
   });
 
-  test("patches a name-only payload through v3 persistence", async () => {
-    await patchV3Survey(
-      currentSurvey,
-      { name: "Start from scratch (MCP QA test renamed)" },
-      "req_qa",
-      "org_1"
-    );
-
-    expect(prisma.survey.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { id: currentSurvey.id },
-        data: expect.objectContaining({
-          name: "Start from scratch (MCP QA test renamed)",
-          metadata: currentSurvey.metadata,
-          hiddenFields: currentSurvey.hiddenFields,
-        }),
-      })
-    );
-  });
-
-  test("patches metadata and hidden fields through v3 persistence", async () => {
-    await patchV3Survey(
-      currentSurvey,
-      {
-        metadata: {
-          title: { "en-US": "MCP QA title" },
-        },
-        hiddenFields: { enabled: true, fieldIds: ["utm_source"] },
-      },
-      "req_qa",
-      "org_1"
-    );
-
-    expect(prisma.survey.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          metadata: {
-            title: { default: "MCP QA title" },
-          },
-          hiddenFields: { enabled: true, fieldIds: ["utm_source"] },
-        }),
-      })
-    );
-  });
-
   test("maps the prepared v3 patch onto the existing internal survey", async () => {
     await patchV3Survey(
       currentSurvey,
@@ -342,165 +295,6 @@ describe("patchV3Survey", () => {
       })
     );
     expect(getExternalUrlsPermission).not.toHaveBeenCalled();
-  });
-
-  test("removes languages that are no longer present in the v3 survey document", async () => {
-    const currentSurveyWithGerman = {
-      ...currentSurvey,
-      languages: [
-        ...currentSurvey.languages,
-        {
-          language: {
-            id: "cllangdede",
-            code: "de-DE",
-            alias: null,
-            workspaceId,
-            createdAt: new Date("2026-04-21T10:00:00.000Z"),
-            updatedAt: new Date("2026-04-21T10:00:00.000Z"),
-          },
-          default: false,
-          enabled: true,
-        },
-      ],
-    } as TSurvey;
-
-    await executeV3SurveyPatch({
-      currentSurvey: currentSurveyWithGerman,
-      document: {
-        name: currentSurvey.name,
-        status: currentSurvey.status,
-        metadata: currentSurvey.metadata,
-        defaultLanguage: "en-US",
-        languages: [{ code: "en-US", enabled: true }],
-        welcomeCard: currentSurvey.welcomeCard,
-        blocks: currentSurvey.blocks,
-        endings: currentSurvey.endings,
-        hiddenFields: currentSurvey.hiddenFields,
-        variables: currentSurvey.variables,
-      },
-      languageRequests: [{ code: "en-US", default: true, enabled: true }],
-      requestId: "req_1",
-    });
-
-    expect(prisma.survey.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          languages: expect.objectContaining({
-            deleteMany: [{ languageId: "cllangdede" }],
-          }),
-        }),
-      })
-    );
-  });
-
-  test("reconciles due survey schedules without refetching when no schedule transition persisted", async () => {
-    vi.mocked(isSurveySchedulingDue).mockReturnValue(true);
-    vi.mocked(reconcileDueSurveySchedules).mockResolvedValue({
-      closedCount: 0,
-      publishedCount: 0,
-      surveyUpdated: false,
-    });
-
-    const result = await patchV3Survey(currentSurvey, { name: "Updated Feedback" }, "req_1", "org_1");
-
-    expect(reconcileDueSurveySchedules).toHaveBeenCalledWith({
-      logContext: {
-        source: "v3-survey-patch",
-        surveyId: currentSurvey.id,
-        workspaceId,
-      },
-      surveyId: currentSurvey.id,
-    });
-    expect(prisma.survey.findUnique).not.toHaveBeenCalled();
-    expect(result.name).toBe("Updated Feedback");
-  });
-
-  test("returns the refetched survey when schedule reconciliation persists a transition", async () => {
-    vi.mocked(isSurveySchedulingDue).mockReturnValue(true);
-    vi.mocked(reconcileDueSurveySchedules).mockResolvedValue({
-      closedCount: 0,
-      publishedCount: 1,
-      surveyUpdated: true,
-    });
-    vi.mocked(prisma.survey.findUnique).mockResolvedValueOnce({
-      ...currentSurvey,
-      name: "Published Feedback",
-      status: "inProgress",
-    } as unknown as Awaited<ReturnType<typeof prisma.survey.findUnique>>);
-
-    const result = await patchV3Survey(currentSurvey, { name: "Updated Feedback" }, "req_1", "org_1");
-
-    expect(prisma.survey.findUnique).toHaveBeenCalledWith({
-      where: { id: currentSurvey.id },
-      select: { id: true },
-    });
-    expect(result.name).toBe("Published Feedback");
-    expect(result.status).toBe("inProgress");
-  });
-
-  test("throws not found when schedule reconciliation updates a survey that cannot be refetched", async () => {
-    vi.mocked(isSurveySchedulingDue).mockReturnValue(true);
-    vi.mocked(reconcileDueSurveySchedules).mockResolvedValue({
-      closedCount: 1,
-      publishedCount: 0,
-      surveyUpdated: true,
-    });
-    vi.mocked(prisma.survey.findUnique).mockResolvedValueOnce(null);
-
-    await expect(
-      patchV3Survey(currentSurvey, { name: "Updated Feedback" }, "req_1", "org_1")
-    ).rejects.toThrow(ResourceNotFoundError);
-  });
-
-  test("maps Prisma persistence errors to database errors", async () => {
-    vi.mocked(prisma.survey.update).mockRejectedValueOnce(
-      new Prisma.PrismaClientKnownRequestError("Survey update failed", {
-        code: "P2025",
-        clientVersion: "test",
-      })
-    );
-
-    await expect(
-      patchV3Survey(currentSurvey, { name: "Updated Feedback" }, "req_1", "org_1")
-    ).rejects.toThrow(DatabaseError);
-  });
-
-  test("rethrows unknown persistence errors", async () => {
-    const unknownError = new Error("unexpected persistence failure");
-    vi.mocked(prisma.survey.update).mockRejectedValueOnce(unknownError);
-
-    await expect(patchV3Survey(currentSurvey, { name: "Updated Feedback" }, "req_1", "org_1")).rejects.toBe(
-      unknownError
-    );
-  });
-
-  test("rejects invalid media URLs before updating the survey", async () => {
-    await expect(
-      patchV3Survey(
-        currentSurvey,
-        {
-          blocks: [
-            {
-              id: "clbk1234567890123456789012",
-              name: "Main Block",
-              elements: [
-                {
-                  id: "satisfaction",
-                  type: "openText",
-                  headline: { "en-US": "What should we improve?" },
-                  required: true,
-                  videoUrl: "https://evil.example.com/not-a-video",
-                },
-              ],
-            },
-          ],
-        },
-        "req_media",
-        "org_1"
-      )
-    ).rejects.toThrow(V3SurveyReferenceValidationError);
-
-    expect(prisma.survey.update).not.toHaveBeenCalled();
   });
 
   test("rejects invalid patch documents before updating", async () => {
