@@ -13,9 +13,9 @@
   "main": "./dist/index.js",
   "types": "./dist/src/index.d.ts",
   "scripts": {
-    "build": "vite build",
+    "build": "vite build && publint",
     "clean": "rimraf .turbo node_modules coverage dist",
-    "lint": "eslint . --ext .js,.ts && publint",
+    "lint": "eslint . --ext .js,.ts",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit"
