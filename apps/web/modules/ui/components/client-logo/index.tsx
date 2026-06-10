@@ -6,11 +6,11 @@ import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { Workspace } from "@formbricks/database/prisma-browser";
 import { TLogo } from "@formbricks/types/styling";
-import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { cn } from "@/lib/cn";
 
 interface ClientLogoProps {
   workspaceLogo: Workspace["logo"] | null;
+  workspaceId?: string;
   surveyLogo?: TLogo | null;
   previewSurvey?: boolean;
   dir?: "ltr" | "rtl" | "auto";
@@ -18,14 +18,14 @@ interface ClientLogoProps {
 
 export const ClientLogo = ({
   workspaceLogo,
+  workspaceId,
   surveyLogo,
   previewSurvey = false,
   dir = "auto",
 }: ClientLogoProps) => {
-  const { workspace } = useWorkspace();
-  const workspaceBasePath = `/workspaces/${workspace?.id}`;
   const { t } = useTranslation();
   const logoToUse = surveyLogo?.url ? surveyLogo : workspaceLogo;
+  const lookSettingsHref = workspaceId ? `/workspaces/${workspaceId}/settings/workspace/look` : null;
 
   let positionClasses = "";
   if (!previewSurvey) {
@@ -40,9 +40,9 @@ export const ClientLogo = ({
     <div
       className={cn(positionClasses, "group absolute z-0 rounded-lg")}
       style={{ backgroundColor: logoToUse?.bgColor }}>
-      {previewSurvey && workspaceBasePath && (
+      {previewSurvey && lookSettingsHref && (
         <Link
-          href={`${workspaceBasePath}/settings/workspace/look`}
+          href={lookSettingsHref}
           className="group/link absolute h-full w-full hover:cursor-pointer"
           target="_blank">
           <ArrowUpRight
@@ -64,9 +64,9 @@ export const ClientLogo = ({
         />
       ) : (
         <Link
-          href={workspaceBasePath ? `${workspaceBasePath}/settings/workspace/look` : "#"}
+          href={lookSettingsHref ?? "#"}
           onClick={(e) => {
-            if (!workspaceBasePath) {
+            if (!lookSettingsHref) {
               e.preventDefault();
             }
           }}
