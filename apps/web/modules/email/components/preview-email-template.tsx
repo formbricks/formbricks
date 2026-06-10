@@ -111,6 +111,7 @@ const getRatingContent = (scale: string, i: number, range: number, isColorCoding
         addColors={isColorCodingEnabled}
         baseUrl={WEBAPP_URL}
         size={EMAIL_RATING_SMILEY_SIZE}
+        centered
       />
     );
   }

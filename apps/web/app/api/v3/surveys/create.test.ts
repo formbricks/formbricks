@@ -239,6 +239,27 @@ describe("createV3Survey", () => {
     );
   });
 
+  test("rejects invalid media URLs before creating the survey", async () => {
+    const body = ZV3CreateSurveyBody.parse({
+      ...rawCreateBody,
+      blocks: [
+        {
+          ...rawCreateBody.blocks[0],
+          elements: [
+            {
+              ...rawCreateBody.blocks[0].elements[0],
+              videoUrl: "https://evil.example.com/not-a-video",
+            },
+          ],
+        },
+      ],
+    });
+
+    await expect(createV3Survey(body, null, "req_media")).rejects.toThrow(V3SurveyReferenceValidationError);
+    expect(createSurvey).not.toHaveBeenCalled();
+    expect(prisma.language.upsert).not.toHaveBeenCalled();
+  });
+
   test("rejects external CTA buttons when the organization does not have external URL permission", async () => {
     vi.mocked(getExternalUrlsPermission).mockResolvedValue(false);
     const body = ZV3CreateSurveyBody.parse({
