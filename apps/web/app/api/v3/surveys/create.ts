@@ -11,6 +11,11 @@ import { V3SurveyReferenceValidationError } from "./reference-validation";
 import type { TV3CreateSurveyBody } from "./schemas";
 import { getV3SurveyMediaInvalidParams } from "./validation";
 
+export type TV3SurveyCreateOptions = {
+  skipExternalUrlPermissionCheck?: boolean;
+  surveyCreateInputOverrides?: Partial<TSurveyCreateInput>;
+};
+
 export class V3SurveyCreatePermissionError extends Error {
   constructor(message: string) {
     super(message);
@@ -43,9 +48,10 @@ function hasExternalUrlReferences(input: TV3CreateSurveyBody): boolean {
 
 async function assertV3SurveyCreatePermissions(
   input: TV3CreateSurveyBody,
-  organizationId?: string
+  organizationId?: string,
+  options: Pick<TV3SurveyCreateOptions, "skipExternalUrlPermissionCheck"> = {}
 ): Promise<void> {
-  if (!hasExternalUrlReferences(input)) {
+  if (options.skipExternalUrlPermissionCheck || !hasExternalUrlReferences(input)) {
     return;
   }
 
@@ -70,8 +76,9 @@ export async function executeV3SurveyCreate(params: {
   authentication: TV3Authentication;
   languageRequests: TV3SurveyLanguageRequest[];
   requestId?: string;
+  surveyCreateInputOverrides?: Partial<TSurveyCreateInput>;
 }) {
-  const { input, authentication, languageRequests, requestId } = params;
+  const { input, authentication, languageRequests, requestId, surveyCreateInputOverrides } = params;
   const mediaInvalidParams = getV3SurveyMediaInvalidParams(input.blocks);
   if (mediaInvalidParams.length > 0) {
     throw new V3SurveyReferenceValidationError(mediaInvalidParams);
@@ -80,7 +87,7 @@ export async function executeV3SurveyCreate(params: {
   const languages = await ensureV3WorkspaceLanguages(input.workspaceId, languageRequests, requestId);
   const surveyCreateInput: TSurveyCreateInput = {
     name: input.name,
-    type: "link",
+    type: input.type,
     status: input.status,
     metadata: input.metadata,
     welcomeCard: input.welcomeCard,
@@ -91,6 +98,7 @@ export async function executeV3SurveyCreate(params: {
     languages,
     questions: [],
     createdBy: getCreatedBy(authentication),
+    ...surveyCreateInputOverrides,
   };
 
   return await createSurvey(input.workspaceId, surveyCreateInput);
@@ -100,19 +108,21 @@ export async function createV3Survey(
   input: TV3CreateSurveyBody,
   authentication: TV3Authentication,
   requestId?: string,
-  organizationId?: string
+  organizationId?: string,
+  options: TV3SurveyCreateOptions = {}
 ) {
   const preparation = prepareV3SurveyCreate(input);
   if (!preparation.ok) {
     throw new V3SurveyReferenceValidationError(preparation.validation.invalidParams);
   }
 
-  await assertV3SurveyCreatePermissions(input, organizationId);
+  await assertV3SurveyCreatePermissions(input, organizationId, options);
 
   return await executeV3SurveyCreate({
     input: preparation.document,
     authentication,
     languageRequests: preparation.languageRequests,
     requestId,
+    surveyCreateInputOverrides: options.surveyCreateInputOverrides,
   });
 }

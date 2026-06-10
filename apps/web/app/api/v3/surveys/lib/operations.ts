@@ -13,11 +13,13 @@ import {
   successResponse,
 } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
+import type { V3WorkspaceContext } from "@/app/api/v3/lib/workspace-context";
+import { capturePostHogEvent } from "@/lib/posthog";
 import { deleteSurvey } from "@/modules/survey/lib/surveys";
 import { getSurveyCount } from "@/modules/survey/list/lib/survey";
 import { getSurveyListPage } from "@/modules/survey/list/lib/survey-page";
 import { getAuthorizedV3Survey } from "../authorization";
-import { V3SurveyCreatePermissionError, createV3Survey } from "../create";
+import { type TV3SurveyCreateOptions, V3SurveyCreatePermissionError, createV3Survey } from "../create";
 import { parseV3SurveysListQuery } from "../parse-v3-surveys-list-query";
 import { patchV3Survey } from "../patch";
 import {
@@ -55,6 +57,9 @@ type TCreateV3SurveyParams = {
   requestId: string;
   instance: string;
   auditLog?: TV3AuditLog;
+  createdFrom?: "blank" | "template" | "xm-template";
+  createOptions?: TV3SurveyCreateOptions;
+  authResult?: V3WorkspaceContext;
 };
 
 type TRawCreateV3SurveyParams = Omit<TCreateV3SurveyParams, "body"> & {
@@ -100,6 +105,14 @@ type TRawValidateV3SurveyParams = Omit<TValidateV3SurveyParams, "body"> & {
 const createWorkspaceIdSchema = z.object({
   workspaceId: z.cuid2(),
 });
+
+function getSessionUserId(authentication: TV3Authentication): string | null {
+  if (authentication && "user" in authentication && authentication.user?.id) {
+    return authentication.user.id;
+  }
+
+  return null;
+}
 
 function serializeValidationResult<TDocument extends TV3SurveyDocument>(
   operation: "create" | "patch",
@@ -195,18 +208,25 @@ export async function createV3SurveyResponse({
   requestId,
   instance,
   auditLog,
+  createdFrom,
+  createOptions,
+  authResult: providedAuthResult,
 }: TCreateV3SurveyParams): Promise<Response> {
   const log = logger.withContext({ requestId, workspaceId: body.workspaceId });
 
   try {
     const createBody = body;
-    const authResult = await requireV3WorkspaceAccess(
-      authentication,
-      createBody.workspaceId,
-      "readWrite",
-      requestId,
-      instance
-    );
+
+    const authResult =
+      providedAuthResult ??
+      (await requireV3WorkspaceAccess(
+        authentication,
+        createBody.workspaceId,
+        "readWrite",
+        requestId,
+        instance
+      ));
+
     if (authResult instanceof Response) {
       return authResult;
     }
@@ -218,7 +238,8 @@ export async function createV3SurveyResponse({
       },
       authentication,
       requestId,
-      authResult.organizationId
+      authResult.organizationId,
+      createOptions
     );
     const resource = serializeV3SurveyResource(survey);
 
@@ -226,6 +247,23 @@ export async function createV3SurveyResponse({
       auditLog.organizationId = authResult.organizationId;
       auditLog.targetId = survey.id;
       auditLog.newObject = resource;
+    }
+
+    const sessionUserId = getSessionUserId(authentication);
+    if (sessionUserId && createdFrom) {
+      capturePostHogEvent(
+        sessionUserId,
+        "survey_created",
+        {
+          survey_id: survey.id,
+          survey_type: survey.type,
+          organization_id: authResult.organizationId,
+          workspace_id: authResult.workspaceId,
+          question_count: survey.questions?.length ?? 0,
+          created_from: createdFrom,
+        },
+        { organizationId: authResult.organizationId, workspaceId: authResult.workspaceId }
+      );
     }
 
     return createdResponse(resource, {
