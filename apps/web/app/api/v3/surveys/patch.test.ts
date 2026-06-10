@@ -1,9 +1,16 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
+import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
-import { patchV3Survey } from "./patch";
+import {
+  isSurveySchedulingDue,
+  normalizeSurveyScheduling,
+  reconcileDueSurveySchedules,
+} from "@/modules/survey/scheduling/lib/survey-scheduling";
+import { executeV3SurveyPatch, patchV3Survey } from "./patch";
 import { V3SurveyReferenceValidationError } from "./reference-validation";
 import { ZV3CreateSurveyBody } from "./schemas";
 import { V3SurveyWritePermissionError } from "./write-permissions";
@@ -34,6 +41,12 @@ vi.mock("@/lib/organization/service", () => ({
 
 vi.mock("@/modules/survey/lib/permission", () => ({
   getExternalUrlsPermission: vi.fn(),
+}));
+
+vi.mock("@/modules/survey/scheduling/lib/survey-scheduling", () => ({
+  isSurveySchedulingDue: vi.fn(),
+  normalizeSurveyScheduling: vi.fn(),
+  reconcileDueSurveySchedules: vi.fn(),
 }));
 
 vi.mock("@formbricks/logger", () => ({
@@ -185,7 +198,19 @@ describe("patchV3Survey", () => {
         endings: data.endings ?? currentSurvey.endings,
         hiddenFields: data.hiddenFields ?? currentSurvey.hiddenFields,
         variables: data.variables ?? currentSurvey.variables,
+        closeOn: data.closeOn ?? currentSurvey.closeOn,
+        publishOn: data.publishOn ?? currentSurvey.publishOn,
       }) as unknown as TSurveyUpdateReturn;
+    });
+    vi.mocked(normalizeSurveyScheduling).mockImplementation(({ closeOn, publishOn }) => ({
+      closeOn,
+      publishOn,
+    }));
+    vi.mocked(isSurveySchedulingDue).mockReturnValue(false);
+    vi.mocked(reconcileDueSurveySchedules).mockResolvedValue({
+      closedCount: 0,
+      publishedCount: 0,
+      surveyUpdated: false,
     });
     vi.mocked(getOrganizationByWorkspaceId).mockResolvedValue({
       id: "org_1",
@@ -317,6 +342,136 @@ describe("patchV3Survey", () => {
       })
     );
     expect(getExternalUrlsPermission).not.toHaveBeenCalled();
+  });
+
+  test("removes languages that are no longer present in the v3 survey document", async () => {
+    const currentSurveyWithGerman = {
+      ...currentSurvey,
+      languages: [
+        ...currentSurvey.languages,
+        {
+          language: {
+            id: "cllangdede",
+            code: "de-DE",
+            alias: null,
+            workspaceId,
+            createdAt: new Date("2026-04-21T10:00:00.000Z"),
+            updatedAt: new Date("2026-04-21T10:00:00.000Z"),
+          },
+          default: false,
+          enabled: true,
+        },
+      ],
+    } as TSurvey;
+
+    await executeV3SurveyPatch({
+      currentSurvey: currentSurveyWithGerman,
+      document: {
+        name: currentSurvey.name,
+        status: currentSurvey.status,
+        metadata: currentSurvey.metadata,
+        defaultLanguage: "en-US",
+        languages: [{ code: "en-US", enabled: true }],
+        welcomeCard: currentSurvey.welcomeCard,
+        blocks: currentSurvey.blocks,
+        endings: currentSurvey.endings,
+        hiddenFields: currentSurvey.hiddenFields,
+        variables: currentSurvey.variables,
+      },
+      languageRequests: [{ code: "en-US", default: true, enabled: true }],
+      requestId: "req_1",
+    });
+
+    expect(prisma.survey.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          languages: expect.objectContaining({
+            deleteMany: [{ languageId: "cllangdede" }],
+          }),
+        }),
+      })
+    );
+  });
+
+  test("reconciles due survey schedules without refetching when no schedule transition persisted", async () => {
+    vi.mocked(isSurveySchedulingDue).mockReturnValue(true);
+    vi.mocked(reconcileDueSurveySchedules).mockResolvedValue({
+      closedCount: 0,
+      publishedCount: 0,
+      surveyUpdated: false,
+    });
+
+    const result = await patchV3Survey(currentSurvey, { name: "Updated Feedback" }, "req_1", "org_1");
+
+    expect(reconcileDueSurveySchedules).toHaveBeenCalledWith({
+      logContext: {
+        source: "v3-survey-patch",
+        surveyId: currentSurvey.id,
+        workspaceId,
+      },
+      surveyId: currentSurvey.id,
+    });
+    expect(prisma.survey.findUnique).not.toHaveBeenCalled();
+    expect(result.name).toBe("Updated Feedback");
+  });
+
+  test("returns the refetched survey when schedule reconciliation persists a transition", async () => {
+    vi.mocked(isSurveySchedulingDue).mockReturnValue(true);
+    vi.mocked(reconcileDueSurveySchedules).mockResolvedValue({
+      closedCount: 0,
+      publishedCount: 1,
+      surveyUpdated: true,
+    });
+    vi.mocked(prisma.survey.findUnique).mockResolvedValueOnce({
+      ...currentSurvey,
+      name: "Published Feedback",
+      status: "inProgress",
+    } as unknown as Awaited<ReturnType<typeof prisma.survey.findUnique>>);
+
+    const result = await patchV3Survey(currentSurvey, { name: "Updated Feedback" }, "req_1", "org_1");
+
+    expect(prisma.survey.findUnique).toHaveBeenCalledWith({
+      where: { id: currentSurvey.id },
+      select: { id: true },
+    });
+    expect(result.name).toBe("Published Feedback");
+    expect(result.status).toBe("inProgress");
+  });
+
+  test("throws not found when schedule reconciliation updates a survey that cannot be refetched", async () => {
+    vi.mocked(isSurveySchedulingDue).mockReturnValue(true);
+    vi.mocked(reconcileDueSurveySchedules).mockResolvedValue({
+      closedCount: 1,
+      publishedCount: 0,
+      surveyUpdated: true,
+    });
+    vi.mocked(prisma.survey.findUnique).mockResolvedValueOnce(null);
+
+    await expect(
+      patchV3Survey(currentSurvey, { name: "Updated Feedback" }, "req_1", "org_1")
+    ).rejects.toThrow(ResourceNotFoundError);
+  });
+
+  test("maps Prisma persistence errors to database errors", async () => {
+    vi.mocked(prisma.survey.update).mockRejectedValueOnce(
+      new Prisma.PrismaClientKnownRequestError("Survey update failed", {
+        code: "P2025",
+        clientVersion: "test",
+      })
+    );
+
+    await expect(
+      patchV3Survey(currentSurvey, { name: "Updated Feedback" }, "req_1", "org_1")
+    ).rejects.toThrow(DatabaseError);
+  });
+
+  test("rethrows unknown persistence errors", async () => {
+    const unknownError = new Error("unexpected persistence failure");
+    vi.mocked(prisma.survey.update).mockRejectedValueOnce(unknownError);
+
+    await expect(patchV3Survey(currentSurvey, { name: "Updated Feedback" }, "req_1", "org_1")).rejects.toBe(
+      unknownError
+    );
   });
 
   test("rejects invalid patch documents before updating", async () => {
