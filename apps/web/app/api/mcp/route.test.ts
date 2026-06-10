@@ -13,16 +13,16 @@ vi.mock("@/modules/api/lib/api-key-auth", () => ({
 }));
 
 vi.mock("@/modules/core/rate-limit/helpers", () => ({
-  applyRateLimit: vi.fn().mockResolvedValue(undefined),
+  applyRateLimit: vi.fn().mockResolvedValue({ allowed: true }),
 }));
 
 vi.mock("@/app/api/v3/surveys/lib/operations", () => ({
-  createV3SurveyResponse: vi.fn(),
+  createV3SurveyResponseFromRawInput: vi.fn(),
   deleteV3Survey: vi.fn(),
   getV3Survey: vi.fn(),
   listV3Surveys: vi.fn(),
   patchV3SurveyResponse: vi.fn(),
-  validateV3Survey: vi.fn(),
+  validateV3SurveyFromRawInput: vi.fn(),
 }));
 
 vi.mock("@/app/api/v3/lib/audit", () => ({
@@ -83,7 +83,7 @@ describe("POST /api/mcp", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     vi.mocked(authenticateApiKeyFromHeaders).mockResolvedValue(apiKeyAuth);
-    vi.mocked(applyRateLimit).mockResolvedValue(undefined);
+    vi.mocked(applyRateLimit).mockResolvedValue({ allowed: true });
     vi.mocked(listV3Surveys).mockResolvedValue(
       successListResponse([], { limit: 20, nextCursor: null, totalCount: 0 }, { requestId: "req_mcp" })
     );
@@ -152,6 +152,29 @@ describe("POST /api/mcp", () => {
       "patch_survey",
       "delete_survey",
     ]);
+    const tools = new Map(message.result.tools.map((tool: { name: string }) => [tool.name, tool]));
+    expect(Object.keys((tools.get("create_survey") as any).inputSchema.properties)).toEqual(
+      expect.arrayContaining([
+        "workspaceId",
+        "name",
+        "type",
+        "status",
+        "defaultLanguage",
+        "metadata",
+        "languages",
+        "welcomeCard",
+        "blocks",
+        "endings",
+        "hiddenFields",
+        "variables",
+      ])
+    );
+    expect(Object.keys((tools.get("validate_survey") as any).inputSchema.properties)).toEqual(
+      expect.arrayContaining(["operation", "surveyId", "data"])
+    );
+    expect(Object.keys((tools.get("patch_survey") as any).inputSchema.properties)).toEqual(
+      expect.arrayContaining(["surveyId", "data"])
+    );
     expect(message.result.tools.find((tool: { name: string }) => tool.name === "list_surveys")).toMatchObject(
       {
         annotations: {
