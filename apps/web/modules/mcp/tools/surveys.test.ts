@@ -10,22 +10,22 @@ import {
   successResponse,
 } from "@/app/api/v3/lib/response";
 import {
-  createV3SurveyResponse,
+  createV3SurveyResponseFromRawInput,
   deleteV3Survey,
   getV3Survey,
   listV3Surveys,
   patchV3SurveyResponse,
-  validateV3Survey,
+  validateV3SurveyFromRawInput,
 } from "@/app/api/v3/surveys/lib/operations";
 import { buildListSurveysSearchParams, registerSurveyTools } from "./surveys";
 
 vi.mock("@/app/api/v3/surveys/lib/operations", () => ({
-  createV3SurveyResponse: vi.fn(),
+  createV3SurveyResponseFromRawInput: vi.fn(),
   deleteV3Survey: vi.fn(),
   getV3Survey: vi.fn(),
   listV3Surveys: vi.fn(),
   patchV3SurveyResponse: vi.fn(),
-  validateV3Survey: vi.fn(),
+  validateV3SurveyFromRawInput: vi.fn(),
 }));
 
 vi.mock("@/app/api/v3/lib/audit", () => ({
@@ -155,6 +155,22 @@ describe("registerSurveyTools", () => {
         idempotentHint: false,
       },
     });
+    expect(Object.keys(tools.get("create_survey")?.config.inputSchema as Record<string, unknown>)).toEqual(
+      expect.arrayContaining([
+        "workspaceId",
+        "name",
+        "type",
+        "status",
+        "defaultLanguage",
+        "metadata",
+        "languages",
+        "welcomeCard",
+        "blocks",
+        "endings",
+        "hiddenFields",
+        "variables",
+      ])
+    );
     expect(tools.get("validate_survey")?.config).toMatchObject({
       title: "Validate survey",
       annotations: {
@@ -163,6 +179,9 @@ describe("registerSurveyTools", () => {
         idempotentHint: true,
       },
     });
+    expect(Object.keys(tools.get("validate_survey")?.config.inputSchema as Record<string, unknown>)).toEqual(
+      expect.arrayContaining(["operation", "surveyId", "data"])
+    );
     expect(tools.get("patch_survey")?.config).toMatchObject({
       title: "Patch survey",
       annotations: {
@@ -280,20 +299,33 @@ describe("registerSurveyTools", () => {
       defaultLanguage: "en-US",
       languages: [],
       welcomeCard: { enabled: false },
-      blocks: [],
+      blocks: [
+        {
+          id: "clbk1234567890123456789012",
+          name: "Main Block",
+          elements: [
+            {
+              id: "feedback",
+              type: "openText",
+              headline: { "en-US": "What should we improve?" },
+              required: true,
+            },
+          ],
+        },
+      ],
       endings: [],
       hiddenFields: { enabled: false, fieldIds: [] },
       variables: [],
     };
     vi.mocked(buildV3AuditLog).mockReturnValue(auditLog as any);
-    vi.mocked(createV3SurveyResponse).mockResolvedValue(
+    vi.mocked(createV3SurveyResponseFromRawInput).mockResolvedValue(
       createdResponse({ id: "clxx1234567890123456789012" }, { requestId: "req_tool", location: "/survey" })
     );
 
     const result = await tools.get("create_survey")!.handler(createBody, { authInfo });
 
     expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "created", "survey", "/api/mcp");
-    expect(createV3SurveyResponse).toHaveBeenCalledWith({
+    expect(createV3SurveyResponseFromRawInput).toHaveBeenCalledWith({
       body: createBody,
       authentication: apiKeyAuth,
       requestId: "req_tool",
@@ -317,13 +349,13 @@ describe("registerSurveyTools", () => {
         name: "New survey",
       },
     };
-    vi.mocked(validateV3Survey).mockResolvedValue(
+    vi.mocked(validateV3SurveyFromRawInput).mockResolvedValue(
       successResponse({ valid: true, operation: "create", invalid_params: [] }, { requestId: "req_tool" })
     );
 
     const result = await tools.get("validate_survey")!.handler(validationBody, { authInfo });
 
-    expect(validateV3Survey).toHaveBeenCalledWith({
+    expect(validateV3SurveyFromRawInput).toHaveBeenCalledWith({
       body: validationBody,
       authentication: apiKeyAuth,
       requestId: "req_tool",

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { TSurvey } from "@formbricks/types/surveys/types";
+import { getTextContent } from "@formbricks/types/surveys/validation";
 import { md } from "@/lib/markdownIt";
 import { Editor } from "@/modules/ui/components/editor";
 
@@ -30,7 +31,8 @@ export const RichTextTranslationInput = ({
   // only remount for the former.
   const lastWrittenRef = useRef(value);
   // Suppresses Lexical's mount-time empty listener fire which would otherwise clobber an
-  // externally-applied value back to "".
+  // externally-applied value back to empty. Lexical can serialize an empty editor as either
+  // "" or markup like "<p><br></p>", so we check by text content rather than literal equality.
   const initialContentSetRef = useRef(false);
 
   useEffect(() => {
@@ -52,7 +54,7 @@ export const RichTextTranslationInput = ({
         setFirstRender={setFirstRender}
         getText={() => md.render(value)}
         setText={(v: string) => {
-          if (!initialContentSetRef.current && v === "") return;
+          if (!initialContentSetRef.current && getTextContent(v).trim() === "") return;
           initialContentSetRef.current = true;
           lastWrittenRef.current = v;
           onChange(path, v);

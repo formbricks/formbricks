@@ -170,6 +170,7 @@ export const SurveyClientWrapper = ({
       )}
       <LinkSurveyWrapper
         workspace={workspace}
+        workspaceId={survey.workspaceId}
         surveyId={survey.id}
         isWelcomeCardEnabled={survey.welcomeCard.enabled}
         isPreview={isPreview}
