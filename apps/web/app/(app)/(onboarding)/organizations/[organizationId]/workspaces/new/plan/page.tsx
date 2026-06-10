@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 import { TCloudBillingPlan } from "@formbricks/types/organizations";
+import { getOnboardingWorkspace } from "@/app/(app)/(onboarding)/lib/onboarding-workspace";
+import { redirectIfOnboardingComplete } from "@/app/(app)/(onboarding)/lib/redirect-if-onboarding-complete";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { getPostHogFeatureFlag } from "@/lib/posthog/get-feature-flag";
 import { getOrganizationBillingWithReadThroughSync } from "@/modules/ee/billing/lib/organization-billing";
@@ -25,6 +27,11 @@ const Page = async (props: PlanPageProps) => {
 
   if (!session?.user) {
     return redirect(`/auth/login`);
+  }
+
+  const workspace = await getOnboardingWorkspace(session.user.id, params.organizationId);
+  if (workspace) {
+    await redirectIfOnboardingComplete(workspace.id);
   }
 
   // Users with an existing paid/trial subscription should not be shown the trial page.
