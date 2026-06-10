@@ -2,9 +2,9 @@
  * /api/v3/surveys - list and create block-based survey management resources.
  * Session cookie or x-api-key; scope by workspaceId only.
  */
-import { z } from "zod";
 import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
 import { createV3SurveyResponse, listV3Surveys } from "./lib/operations";
+import { ZV3CreateSurveyBody } from "./schemas";
 
 export const GET = withV3ApiWrapper({
   auth: "both",
@@ -21,7 +21,7 @@ export const GET = withV3ApiWrapper({
 export const POST = withV3ApiWrapper({
   auth: "both",
   schemas: {
-    body: z.unknown(),
+    body: ZV3CreateSurveyBody,
   },
   action: "created",
   targetType: "survey",

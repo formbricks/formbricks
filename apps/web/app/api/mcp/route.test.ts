@@ -7,7 +7,11 @@ import {
   successListResponse,
   successResponse,
 } from "@/app/api/v3/lib/response";
-import { createV3SurveyResponse, listV3Surveys, validateV3Survey } from "@/app/api/v3/surveys/lib/operations";
+import {
+  createV3SurveyResponseFromRawInput,
+  listV3Surveys,
+  validateV3SurveyFromRawInput,
+} from "@/app/api/v3/surveys/lib/operations";
 import { DEFAULT_REQUEST_BODY_LIMIT_BYTES } from "@/app/lib/api/request-body";
 import { authenticateApiKeyFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
@@ -22,12 +26,12 @@ vi.mock("@/modules/core/rate-limit/helpers", () => ({
 }));
 
 vi.mock("@/app/api/v3/surveys/lib/operations", () => ({
-  createV3SurveyResponse: vi.fn(),
+  createV3SurveyResponseFromRawInput: vi.fn(),
   deleteV3Survey: vi.fn(),
   getV3Survey: vi.fn(),
   listV3Surveys: vi.fn(),
   patchV3SurveyResponse: vi.fn(),
-  validateV3Survey: vi.fn(),
+  validateV3SurveyFromRawInput: vi.fn(),
 }));
 
 vi.mock("@/app/api/v3/lib/audit", () => ({
@@ -248,7 +252,7 @@ describe("POST /api/mcp", () => {
   });
 
   test("calls create_survey through the MCP route", async () => {
-    vi.mocked(createV3SurveyResponse).mockResolvedValue(
+    vi.mocked(createV3SurveyResponseFromRawInput).mockResolvedValue(
       createdResponse(
         { id: "clsv1234567890123456789012" },
         { requestId: "req_create", location: "/api/v3/surveys/clsv1234567890123456789012" }
@@ -295,7 +299,7 @@ describe("POST /api/mcp", () => {
       data: { id: "clsv1234567890123456789012" },
       requestId: "req_create",
     });
-    expect(createV3SurveyResponse).toHaveBeenCalledWith(
+    expect(createV3SurveyResponseFromRawInput).toHaveBeenCalledWith(
       expect.objectContaining({
         authentication: apiKeyAuth,
         requestId: "req_create",
@@ -305,7 +309,7 @@ describe("POST /api/mcp", () => {
   });
 
   test("calls validate_survey patch through the MCP route", async () => {
-    vi.mocked(validateV3Survey).mockResolvedValue(
+    vi.mocked(validateV3SurveyFromRawInput).mockResolvedValue(
       successResponse({ valid: true, operation: "patch", invalid_params: [] }, { requestId: "req_validate" })
     );
 
@@ -336,7 +340,7 @@ describe("POST /api/mcp", () => {
       data: { valid: true, operation: "patch", invalid_params: [] },
       requestId: "req_validate",
     });
-    expect(validateV3Survey).toHaveBeenCalledWith(
+    expect(validateV3SurveyFromRawInput).toHaveBeenCalledWith(
       expect.objectContaining({
         body: {
           operation: "patch",
@@ -351,13 +355,13 @@ describe("POST /api/mcp", () => {
   });
 
   test("maps v3 create and validate bad requests to MCP tool errors", async () => {
-    vi.mocked(createV3SurveyResponse).mockResolvedValueOnce(
+    vi.mocked(createV3SurveyResponseFromRawInput).mockResolvedValueOnce(
       problemBadRequest("req_create_invalid", "Invalid survey document", {
         instance: "/api/mcp",
         invalid_params: [{ name: "blocks.0.elements", reason: "Required" }],
       })
     );
-    vi.mocked(validateV3Survey).mockResolvedValueOnce(
+    vi.mocked(validateV3SurveyFromRawInput).mockResolvedValueOnce(
       problemBadRequest("req_validate_invalid", "Invalid survey validation request", {
         instance: "/api/mcp",
         invalid_params: [{ name: "surveyId", reason: "Required" }],

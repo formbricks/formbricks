@@ -474,6 +474,35 @@ describe("patchV3Survey", () => {
     );
   });
 
+  test("rejects invalid media URLs before updating the survey", async () => {
+    await expect(
+      patchV3Survey(
+        currentSurvey,
+        {
+          blocks: [
+            {
+              id: "clbk1234567890123456789012",
+              name: "Main Block",
+              elements: [
+                {
+                  id: "satisfaction",
+                  type: "openText",
+                  headline: { "en-US": "What should we improve?" },
+                  required: true,
+                  videoUrl: "https://evil.example.com/not-a-video",
+                },
+              ],
+            },
+          ],
+        },
+        "req_media",
+        "org_1"
+      )
+    ).rejects.toThrow(V3SurveyReferenceValidationError);
+
+    expect(prisma.survey.update).not.toHaveBeenCalled();
+  });
+
   test("rejects invalid patch documents before updating", async () => {
     await expect(
       patchV3Survey(currentSurvey, {

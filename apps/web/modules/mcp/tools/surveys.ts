@@ -2,12 +2,12 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { logger } from "@formbricks/logger";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
 import {
-  createV3SurveyResponse,
+  createV3SurveyResponseFromRawInput,
   deleteV3Survey,
   getV3Survey,
   listV3Surveys,
   patchV3SurveyResponse,
-  validateV3Survey,
+  validateV3SurveyFromRawInput,
 } from "@/app/api/v3/surveys/lib/operations";
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
 import { getMcpAuthentication, getMcpRequestId } from "../auth";
@@ -134,7 +134,7 @@ export function registerSurveyTools(server: McpServer): void {
       const auditLog = buildV3AuditLog(authentication, "created", "survey", MCP_API_ROUTE);
 
       try {
-        const response = await createV3SurveyResponse({
+        const response = await createV3SurveyResponseFromRawInput({
           body: input,
           authentication,
           requestId,
@@ -178,7 +178,7 @@ export function registerSurveyTools(server: McpServer): void {
     },
     async (input: TMcpValidateSurveyInput, extra) => {
       const requestId = getMcpRequestId(extra.authInfo);
-      const response = await validateV3Survey({
+      const response = await validateV3SurveyFromRawInput({
         body: input,
         authentication: getMcpAuthentication(extra.authInfo),
         requestId,

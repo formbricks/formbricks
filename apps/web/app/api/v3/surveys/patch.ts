@@ -14,6 +14,7 @@ import { type TV3SurveyLanguageRequest, ensureV3WorkspaceLanguages } from "./lan
 import { prepareV3SurveyPatchInput } from "./prepare";
 import { V3SurveyReferenceValidationError } from "./reference-validation";
 import type { TV3SurveyDocument } from "./schemas";
+import { getV3SurveyMediaInvalidParams } from "./validation";
 import { assertV3SurveyWritePermissions } from "./write-permissions";
 
 function buildSurveyLanguageUpdate(
@@ -106,6 +107,11 @@ export async function executeV3SurveyPatch(params: {
   requestId?: string;
 }): Promise<TSurvey> {
   const { currentSurvey, document, languageRequests, requestId } = params;
+  const mediaInvalidParams = getV3SurveyMediaInvalidParams(document.blocks);
+  if (mediaInvalidParams.length > 0) {
+    throw new V3SurveyReferenceValidationError(mediaInvalidParams);
+  }
+
   const languages = await ensureV3WorkspaceLanguages(currentSurvey.workspaceId, languageRequests, requestId);
   const normalizedScheduling = normalizeSurveyScheduling({
     currentStatus: currentSurvey.status,

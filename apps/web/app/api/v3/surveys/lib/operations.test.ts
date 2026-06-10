@@ -11,6 +11,7 @@ import { parseV3SurveysListQuery } from "../parse-v3-surveys-list-query";
 import { patchV3Survey } from "../patch";
 import { prepareV3SurveyCreateInput, prepareV3SurveyPatchInput } from "../prepare";
 import { V3SurveyReferenceValidationError } from "../reference-validation";
+import { ZV3CreateSurveyBody } from "../schemas";
 import {
   V3SurveyLanguageError,
   V3SurveyUnsupportedShapeError,
@@ -20,11 +21,13 @@ import {
 import { V3SurveyWritePermissionError } from "../write-permissions";
 import {
   createV3SurveyResponse,
+  createV3SurveyResponseFromRawInput,
   deleteV3Survey,
   getV3Survey,
   listV3Surveys,
   patchV3SurveyResponse,
   validateV3Survey,
+  validateV3SurveyFromRawInput,
 } from "./operations";
 
 vi.mock("@formbricks/logger", () => ({
@@ -129,6 +132,7 @@ const createBody = {
     },
   ],
 } as any;
+const parsedCreateBody = ZV3CreateSurveyBody.parse(createBody);
 
 function mockListQuery(overrides: Record<string, unknown> = {}) {
   vi.mocked(parseV3SurveysListQuery).mockReturnValue({
@@ -265,7 +269,7 @@ describe("createV3SurveyResponse", () => {
     const auditLog = {} as any;
 
     const response = await createV3SurveyResponse({
-      body: createBody,
+      body: parsedCreateBody,
       authentication,
       requestId,
       instance,
@@ -308,7 +312,7 @@ describe("createV3SurveyResponse", () => {
     vi.mocked(requireV3WorkspaceAccess).mockResolvedValue(problemForbidden(requestId, "nope", instance));
 
     const response = await createV3SurveyResponse({
-      body: createBody,
+      body: parsedCreateBody,
       authentication,
       requestId,
       instance,
@@ -319,7 +323,7 @@ describe("createV3SurveyResponse", () => {
   });
 
   test("returns bad requests for invalid raw create input", async () => {
-    const response = await createV3SurveyResponse({
+    const response = await createV3SurveyResponseFromRawInput({
       body: { workspaceId, name: "Customer Survey", blocks: [] },
       authentication,
       requestId,
@@ -345,7 +349,7 @@ describe("createV3SurveyResponse", () => {
     expect(
       (
         await createV3SurveyResponse({
-          body: createBody,
+          body: parsedCreateBody,
           authentication,
           requestId,
           instance,
@@ -357,7 +361,7 @@ describe("createV3SurveyResponse", () => {
     expect(
       (
         await createV3SurveyResponse({
-          body: createBody,
+          body: parsedCreateBody,
           authentication,
           requestId,
           instance,
@@ -369,7 +373,7 @@ describe("createV3SurveyResponse", () => {
     expect(
       (
         await createV3SurveyResponse({
-          body: createBody,
+          body: parsedCreateBody,
           authentication,
           requestId,
           instance,
@@ -381,7 +385,7 @@ describe("createV3SurveyResponse", () => {
     expect(
       (
         await createV3SurveyResponse({
-          body: createBody,
+          body: parsedCreateBody,
           authentication,
           requestId,
           instance,
@@ -393,7 +397,7 @@ describe("createV3SurveyResponse", () => {
     expect(
       (
         await createV3SurveyResponse({
-          body: createBody,
+          body: parsedCreateBody,
           authentication,
           requestId,
           instance,
@@ -795,7 +799,7 @@ describe("validateV3Survey", () => {
   });
 
   test("returns bad requests for invalid validation input", async () => {
-    const response = await validateV3Survey({
+    const response = await validateV3SurveyFromRawInput({
       body: { operation: "patch", data: {} },
       authentication,
       requestId,

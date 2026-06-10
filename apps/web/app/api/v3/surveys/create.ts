@@ -9,6 +9,7 @@ import { type TV3SurveyLanguageRequest, ensureV3WorkspaceLanguages } from "./lan
 import { prepareV3SurveyCreate } from "./prepare";
 import { V3SurveyReferenceValidationError } from "./reference-validation";
 import type { TV3CreateSurveyBody } from "./schemas";
+import { getV3SurveyMediaInvalidParams } from "./validation";
 
 export class V3SurveyCreatePermissionError extends Error {
   constructor(message: string) {
@@ -71,6 +72,11 @@ export async function executeV3SurveyCreate(params: {
   requestId?: string;
 }) {
   const { input, authentication, languageRequests, requestId } = params;
+  const mediaInvalidParams = getV3SurveyMediaInvalidParams(input.blocks);
+  if (mediaInvalidParams.length > 0) {
+    throw new V3SurveyReferenceValidationError(mediaInvalidParams);
+  }
+
   const languages = await ensureV3WorkspaceLanguages(input.workspaceId, languageRequests, requestId);
   const surveyCreateInput: TSurveyCreateInput = {
     name: input.name,

@@ -27,7 +27,9 @@ import {
 } from "../prepare";
 import { V3SurveyReferenceValidationError } from "../reference-validation";
 import {
+  type TV3CreateSurveyBody,
   type TV3SurveyDocument,
+  type TV3SurveyValidationRequestBody,
   ZV3CreateSurveyBody,
   ZV3SurveyValidationRequestBody,
   formatV3ZodInvalidParams,
@@ -48,11 +50,15 @@ type TListV3SurveysParams = {
 };
 
 type TCreateV3SurveyParams = {
-  body: unknown;
+  body: TV3CreateSurveyBody;
   authentication: TV3Authentication;
   requestId: string;
   instance: string;
   auditLog?: TV3AuditLog;
+};
+
+type TRawCreateV3SurveyParams = Omit<TCreateV3SurveyParams, "body"> & {
+  body: unknown;
 };
 
 type TGetV3SurveyParams = {
@@ -81,10 +87,14 @@ type TPatchV3SurveyParams = {
 };
 
 type TValidateV3SurveyParams = {
-  body: unknown;
+  body: TV3SurveyValidationRequestBody;
   authentication: TV3Authentication;
   requestId: string;
   instance: string;
+};
+
+type TRawValidateV3SurveyParams = Omit<TValidateV3SurveyParams, "body"> & {
+  body: unknown;
 };
 
 const createWorkspaceIdSchema = z.object({
@@ -186,20 +196,10 @@ export async function createV3SurveyResponse({
   instance,
   auditLog,
 }: TCreateV3SurveyParams): Promise<Response> {
-  const log = logger.withContext({ requestId });
+  const log = logger.withContext({ requestId, workspaceId: body.workspaceId });
 
   try {
-    const parsedBody = ZV3CreateSurveyBody.safeParse(body);
-    if (!parsedBody.success) {
-      const invalidParams = formatV3ZodInvalidParams(parsedBody.error, "body");
-      log.warn({ statusCode: 400, invalidParams }, "Survey document validation failed");
-      return problemBadRequest(requestId, "Invalid survey document", {
-        invalid_params: invalidParams,
-        instance,
-      });
-    }
-
-    const createBody = parsedBody.data;
+    const createBody = body;
     const authResult = await requireV3WorkspaceAccess(
       authentication,
       createBody.workspaceId,
@@ -263,6 +263,34 @@ export async function createV3SurveyResponse({
     log.error({ error: err, statusCode: 500 }, "V3 survey create unexpected error");
     return problemInternalError(requestId, "An unexpected error occurred.", instance);
   }
+}
+
+export async function createV3SurveyResponseFromRawInput({
+  body,
+  authentication,
+  requestId,
+  instance,
+  auditLog,
+}: TRawCreateV3SurveyParams): Promise<Response> {
+  const log = logger.withContext({ requestId });
+  const parsedBody = ZV3CreateSurveyBody.safeParse(body);
+
+  if (!parsedBody.success) {
+    const invalidParams = formatV3ZodInvalidParams(parsedBody.error, "body");
+    log.warn({ statusCode: 400, invalidParams }, "Survey document validation failed");
+    return problemBadRequest(requestId, "Invalid survey document", {
+      invalid_params: invalidParams,
+      instance,
+    });
+  }
+
+  return await createV3SurveyResponse({
+    body: parsedBody.data,
+    authentication,
+    requestId,
+    instance,
+    auditLog,
+  });
 }
 
 export async function getV3Survey({
@@ -476,23 +504,17 @@ export async function validateV3Survey({
   requestId,
   instance,
 }: TValidateV3SurveyParams): Promise<Response> {
-  const log = logger.withContext({ requestId });
+  let log = logger.withContext({
+    requestId,
+    ...(body.operation === "patch" ? { surveyId: body.surveyId } : {}),
+  });
 
   try {
-    const parsedBody = ZV3SurveyValidationRequestBody.safeParse(body);
-    if (!parsedBody.success) {
-      const invalidParams = formatV3ZodInvalidParams(parsedBody.error, "body");
-      log.warn({ statusCode: 400, invalidParams }, "Survey validation request failed");
-      return problemBadRequest(requestId, "Invalid survey validation request", {
-        invalid_params: invalidParams,
-        instance,
-      });
-    }
-
-    const validationBody = parsedBody.data;
+    const validationBody = body;
     if (validationBody.operation === "create") {
       const workspaceResult = createWorkspaceIdSchema.safeParse(validationBody.data);
       if (workspaceResult.success) {
+        log = logger.withContext({ requestId, workspaceId: workspaceResult.data.workspaceId });
         const authResult = await requireV3WorkspaceAccess(
           authentication,
           workspaceResult.data.workspaceId,
@@ -531,6 +553,12 @@ export async function validateV3Survey({
       return response;
     }
 
+    log = logger.withContext({
+      requestId,
+      surveyId: validationBody.surveyId,
+      workspaceId: survey.workspaceId,
+    });
+
     return successResponse(
       serializeValidationResult("patch", prepareV3SurveyPatchInput(survey, validationBody.data)),
       {
@@ -547,4 +575,30 @@ export async function validateV3Survey({
     log.error({ error, statusCode: 500 }, "V3 survey validation unexpected error");
     return problemInternalError(requestId, "An unexpected error occurred.", instance);
   }
+}
+
+export async function validateV3SurveyFromRawInput({
+  body,
+  authentication,
+  requestId,
+  instance,
+}: TRawValidateV3SurveyParams): Promise<Response> {
+  const log = logger.withContext({ requestId });
+  const parsedBody = ZV3SurveyValidationRequestBody.safeParse(body);
+
+  if (!parsedBody.success) {
+    const invalidParams = formatV3ZodInvalidParams(parsedBody.error, "body");
+    log.warn({ statusCode: 400, invalidParams }, "Survey validation request failed");
+    return problemBadRequest(requestId, "Invalid survey validation request", {
+      invalid_params: invalidParams,
+      instance,
+    });
+  }
+
+  return await validateV3Survey({
+    body: parsedBody.data,
+    authentication,
+    requestId,
+    instance,
+  });
 }
