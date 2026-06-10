@@ -72,6 +72,19 @@ const mockOpenTextAnswers = (survey: TSurvey): void => {
   });
 };
 
+const getOpenTextRowsFromPrompt = (
+  prompt: string
+): Array<{
+  rowId: string;
+  requestedOpenTextAnswers: Array<{ elementId: string }>;
+}> => {
+  const marker = "Survey context (JSON):\n";
+  const contextStart = prompt.indexOf(marker);
+  if (contextStart === -1) throw new Error("Expected survey context in prompt");
+
+  return JSON.parse(prompt.slice(contextStart + marker.length)).rows;
+};
+
 describe("buildExampleResponsesSchema", () => {
   beforeEach(() => vi.clearAllMocks());
 
@@ -228,6 +241,51 @@ describe("generateExampleResponseDataset", () => {
     expect(call.prompt).toContain("plannedAnswers");
     expect(call.prompt).toContain("hi");
     expect(call.prompt).not.toContain("Generate 10 diverse example responses");
+    expect(call.temperature).toBe(0);
+    expect(call.maxOutputTokens).toBe(4096);
+    expect(call.timeout).toBe(45_000);
+  });
+
+  test("chunks large open-text batches and falls back only for failed chunks", async () => {
+    const survey = makeSurvey(
+      Array.from({ length: 4 }, (_, index) => ({
+        ...baseQuestion,
+        id: `q_text_${index + 1}`,
+        type: TSurveyElementTypeEnum.OpenText,
+        headline: i18n(`Question ${index + 1}`),
+      })) as unknown as TSurvey["questions"]
+    );
+    const providerError = new Error("provider failed");
+    let callIndex = 0;
+
+    vi.mocked(mocks.generateOrganizationAIObject).mockImplementation(async (call) => {
+      callIndex += 1;
+      if (callIndex === 2) throw providerError;
+
+      const rows = getOpenTextRowsFromPrompt(String(call.prompt));
+      return {
+        object: {
+          responses: rows.map((row) => ({
+            rowId: row.rowId,
+            answers: row.requestedOpenTextAnswers.map(({ elementId }) => ({
+              elementId,
+              answer: `AI ${row.rowId} ${elementId}`,
+            })),
+          })),
+        },
+      };
+    });
+
+    const result = await generateExampleResponseDataset({ survey, organizationId: "org_1" });
+
+    expect(mocks.generateOrganizationAIObject).toHaveBeenCalledTimes(2);
+    expect(result.responses[2].data.q_text_1).toBe("AI row_2 q_text_1");
+    expect(result.responses[7].data.q_text_1).not.toBe("AI row_7 q_text_1");
+    expect(result.responses[7].data.q_text_1).toBeTypeOf("string");
+    expect(mocks.loggerError).toHaveBeenCalledWith(
+      { err: providerError, organizationId: "org_1" },
+      "Failed to generate open-text example responses with AI; using fallback answers"
+    );
   });
 
   test("uses question-aware fallback text when the LLM omits open-text answers", async () => {

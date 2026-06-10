@@ -429,8 +429,10 @@ export const generateAIChartAction = authenticatedActionClient
         );
       }
 
+      const validatedQuery = ZChartQuery.parse(cleanQuery);
+
       const data = await executeTenantScopedQuery({
-        query: cleanQuery,
+        query: validatedQuery,
         feedbackDirectoryId,
         workspaceId,
         organizationId,
@@ -439,7 +441,7 @@ export const generateAIChartAction = authenticatedActionClient
       });
 
       return {
-        query: cleanQuery,
+        query: validatedQuery,
         chartType,
         data: Array.isArray(data) ? data : [],
       };

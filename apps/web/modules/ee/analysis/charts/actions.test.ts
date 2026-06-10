@@ -198,4 +198,58 @@ describe("chart Cube actions", () => {
       source: "charts.generateAIChartAction",
     });
   });
+
+  test("generateAIChartAction removes nested nulls before validating and executing AI queries", async () => {
+    mocks.generateOrganizationAIObject.mockResolvedValue({
+      object: {
+        measures: ["FeedbackRecords.count"],
+        dimensions: null,
+        timeDimensions: [
+          {
+            dimension: "FeedbackRecords.createdAt",
+            granularity: null,
+            dateRange: null,
+          },
+        ],
+        chartType: "line",
+        filters: [
+          {
+            member: "FeedbackRecords.sourceType",
+            operator: "equals",
+            values: null,
+          },
+        ],
+      },
+    });
+
+    const result = await generateAIChartAction({
+      ctx,
+      parsedInput: {
+        workspaceId: "workspace-1",
+        prompt: "daily responses",
+        feedbackDirectoryId: "frd-1",
+      },
+    } as any);
+
+    expect(result).toMatchObject({
+      chartType: "line",
+      query: {
+        measures: ["FeedbackRecords.count"],
+        timeDimensions: [{ dimension: "FeedbackRecords.createdAt" }],
+        filters: [{ member: "FeedbackRecords.sourceType", operator: "equals" }],
+      },
+    });
+    expect(mocks.executeTenantScopedQuery).toHaveBeenCalledWith({
+      query: {
+        measures: ["FeedbackRecords.count"],
+        timeDimensions: [{ dimension: "FeedbackRecords.createdAt" }],
+        filters: [{ member: "FeedbackRecords.sourceType", operator: "equals" }],
+      },
+      feedbackDirectoryId: "frd-1",
+      workspaceId: "workspace-1",
+      organizationId: "organization-1",
+      userId: "user-1",
+      source: "charts.generateAIChartAction",
+    });
+  });
 });

@@ -21,6 +21,7 @@ const DROP_OFF_RATE = 0.2;
 const RESPONSE_TIME_SPREAD_DAYS = 10;
 const OPEN_TEXT_AI_TIMEOUT_MS = 45_000;
 const OPEN_TEXT_AI_MAX_OUTPUT_TOKENS = 4096;
+const OPEN_TEXT_AI_MAX_REQUESTED_ANSWERS_PER_CHUNK = 20;
 
 // Realistic distributions for synthetic response metadata. Weighted toward
 // common values so charts don't look uniformly random.
@@ -329,6 +330,34 @@ type TOpenTextAIResponse = {
 
 type TOpenTextAIResult = {
   responses: TOpenTextAIResponse[];
+};
+
+const chunkOpenTextRows = (rows: TExampleResponsePlanRow[]): TExampleResponsePlanRow[][] => {
+  const chunks: TExampleResponsePlanRow[][] = [];
+  let currentChunk: TExampleResponsePlanRow[] = [];
+  let currentRequestedAnswerCount = 0;
+
+  for (const row of rows) {
+    const rowRequestedAnswerCount = row.openTextElementIds.length;
+    const wouldExceedChunk =
+      currentChunk.length > 0 &&
+      currentRequestedAnswerCount + rowRequestedAnswerCount > OPEN_TEXT_AI_MAX_REQUESTED_ANSWERS_PER_CHUNK;
+
+    if (wouldExceedChunk) {
+      chunks.push(currentChunk);
+      currentChunk = [];
+      currentRequestedAnswerCount = 0;
+    }
+
+    currentChunk.push(row);
+    currentRequestedAnswerCount += rowRequestedAnswerCount;
+  }
+
+  if (currentChunk.length > 0) {
+    chunks.push(currentChunk);
+  }
+
+  return chunks;
 };
 
 const buildOpenTextResponsesSchema = (): z.ZodTypeAny =>
@@ -905,32 +934,33 @@ const fillOpenTextAnswers = async (
   if (rowsNeedingText.length === 0) return planRows;
   const elementsById = new Map(collectSurveyElements(survey).map((element) => [element.id, element]));
 
-  let object: TOpenTextAIResult;
+  const aiResponses: TOpenTextAIResponse[] = [];
 
-  try {
-    const result = await generateOrganizationAIObject<TOpenTextAIResult>({
-      organizationId,
-      schema: buildOpenTextResponsesSchema() as z.ZodType<TOpenTextAIResult>,
-      system: SYSTEM_PROMPT,
-      prompt: `Write one short answer for each requestedOpenTextAnswers entry in every row below. Every requested elementId must map to a non-empty string in your output. Stay grounded in the actual question headline for each elementId.
+  for (const rowsChunk of chunkOpenTextRows(rowsNeedingText)) {
+    try {
+      const result = await generateOrganizationAIObject<TOpenTextAIResult>({
+        organizationId,
+        schema: buildOpenTextResponsesSchema() as z.ZodType<TOpenTextAIResult>,
+        system: SYSTEM_PROMPT,
+        prompt: `Write one short answer for each requestedOpenTextAnswers entry in every row below. Every requested elementId must map to a non-empty string in your output. Stay grounded in the actual question headline for each elementId.
 
 Survey context (JSON):
-${JSON.stringify(buildOpenTextLlmContext(survey, rowsNeedingText), null, 2)}`,
-      temperature: 0,
-      maxOutputTokens: OPEN_TEXT_AI_MAX_OUTPUT_TOKENS,
-      timeout: OPEN_TEXT_AI_TIMEOUT_MS,
-    });
-    object = result.object;
-  } catch (err) {
-    logger.error(
-      { err, organizationId },
-      "Failed to generate open-text example responses with AI; using fallback answers"
-    );
-    object = { responses: [] };
+${JSON.stringify(buildOpenTextLlmContext(survey, rowsChunk), null, 2)}`,
+        temperature: 0,
+        maxOutputTokens: OPEN_TEXT_AI_MAX_OUTPUT_TOKENS,
+        timeout: OPEN_TEXT_AI_TIMEOUT_MS,
+      });
+      aiResponses.push(...result.object.responses);
+    } catch (err) {
+      logger.error(
+        { err, organizationId },
+        "Failed to generate open-text example responses with AI; using fallback answers"
+      );
+    }
   }
 
   const answersByRowId = new Map(
-    object.responses.map((response) => [
+    aiResponses.map((response) => [
       response.rowId,
       new Map(response.answers.map(({ elementId, answer }) => [elementId, answer])),
     ])
