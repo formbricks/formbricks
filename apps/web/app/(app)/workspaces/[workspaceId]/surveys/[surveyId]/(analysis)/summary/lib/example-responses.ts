@@ -1,6 +1,7 @@
 import "server-only";
 import { randomInt } from "node:crypto";
 import { z } from "zod";
+import { logger } from "@formbricks/logger";
 import { type TResponseData, type TResponseInput, type TResponseTtc } from "@formbricks/types/responses";
 import { type TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { type TSurvey } from "@formbricks/types/surveys/types";
@@ -18,6 +19,8 @@ export const EXAMPLE_AI_GENERATED_TAG_NAME = "AI-generated example response";
 // abandonment. The remaining ~80% are finished.
 const DROP_OFF_RATE = 0.2;
 const RESPONSE_TIME_SPREAD_DAYS = 10;
+const OPEN_TEXT_AI_TIMEOUT_MS = 45_000;
+const OPEN_TEXT_AI_MAX_OUTPUT_TOKENS = 4096;
 
 // Realistic distributions for synthetic response metadata. Weighted toward
 // common values so charts don't look uniformly random.
@@ -314,13 +317,34 @@ export type TExampleResponseSchemaContext = {
   openTextElementIds: string[];
 };
 
+type TOpenTextAIAnswer = {
+  elementId: string;
+  answer: string;
+};
+
+type TOpenTextAIResponse = {
+  rowId: string;
+  answers: TOpenTextAIAnswer[];
+};
+
+type TOpenTextAIResult = {
+  responses: TOpenTextAIResponse[];
+};
+
 const buildOpenTextResponsesSchema = (): z.ZodTypeAny =>
   z.object({
     responses: z
       .array(
         z.object({
           rowId: z.string().min(1),
-          answers: z.record(z.string(), z.string().min(1)),
+          answers: z
+            .array(
+              z.object({
+                elementId: z.string().min(1),
+                answer: z.string().min(1),
+              })
+            )
+            .default([]),
         })
       )
       .default([]),
@@ -440,7 +464,10 @@ Style:
 
 Example output shape:
 { "responses": [
-  { "rowId": "row_0", "answers": { "<elementId1>": "...", "<elementId2>": "..." } },
+  { "rowId": "row_0", "answers": [
+    { "elementId": "<elementId1>", "answer": "..." },
+    { "elementId": "<elementId2>", "answer": "..." }
+  ] },
   ...
 ] }`;
 
@@ -878,30 +905,45 @@ const fillOpenTextAnswers = async (
   if (rowsNeedingText.length === 0) return planRows;
   const elementsById = new Map(collectSurveyElements(survey).map((element) => [element.id, element]));
 
-  const { object } = await generateOrganizationAIObject<{
-    responses: Array<{ rowId: string; answers: Record<string, string> }>;
-  }>({
-    organizationId,
-    schema: buildOpenTextResponsesSchema() as z.ZodType<{
-      responses: Array<{ rowId: string; answers: Record<string, string> }>;
-    }>,
-    system: SYSTEM_PROMPT,
-    prompt: `Write one short answer for each requestedOpenTextAnswers entry in every row below. Every requested elementId must map to a non-empty string in your output. Stay grounded in the actual question headline for each elementId.
+  let object: TOpenTextAIResult;
+
+  try {
+    const result = await generateOrganizationAIObject<TOpenTextAIResult>({
+      organizationId,
+      schema: buildOpenTextResponsesSchema() as z.ZodType<TOpenTextAIResult>,
+      system: SYSTEM_PROMPT,
+      prompt: `Write one short answer for each requestedOpenTextAnswers entry in every row below. Every requested elementId must map to a non-empty string in your output. Stay grounded in the actual question headline for each elementId.
 
 Survey context (JSON):
 ${JSON.stringify(buildOpenTextLlmContext(survey, rowsNeedingText), null, 2)}`,
-  });
+      temperature: 0,
+      maxOutputTokens: OPEN_TEXT_AI_MAX_OUTPUT_TOKENS,
+      timeout: OPEN_TEXT_AI_TIMEOUT_MS,
+    });
+    object = result.object;
+  } catch (err) {
+    logger.error(
+      { err, organizationId },
+      "Failed to generate open-text example responses with AI; using fallback answers"
+    );
+    object = { responses: [] };
+  }
 
-  const answersByRowId = new Map(object.responses.map((response) => [response.rowId, response.answers]));
+  const answersByRowId = new Map(
+    object.responses.map((response) => [
+      response.rowId,
+      new Map(response.answers.map(({ elementId, answer }) => [elementId, answer])),
+    ])
+  );
 
   return planRows.map((row) => {
     if (row.openTextElementIds.length === 0) return row;
 
-    const llmAnswers = answersByRowId.get(row.rowId) ?? {};
+    const llmAnswers = answersByRowId.get(row.rowId);
     const openTextAnswers: Record<string, string> = {};
     for (const elementId of row.openTextElementIds) {
       openTextAnswers[elementId] =
-        llmAnswers[elementId] || buildFallbackOpenTextAnswer(row.profile, elementsById.get(elementId));
+        llmAnswers?.get(elementId) || buildFallbackOpenTextAnswer(row.profile, elementsById.get(elementId));
     }
 
     // Belt-and-suspenders: even with the prompt rules and varied fallbacks,

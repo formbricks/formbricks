@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { z } from "zod";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { type TSurvey } from "@formbricks/types/surveys/types";
 import {
@@ -14,12 +15,19 @@ import {
 
 const mocks = vi.hoisted(() => ({
   generateOrganizationAIObject: vi.fn(),
+  loggerError: vi.fn(),
 }));
 
 vi.mock("server-only", () => ({}));
 
 vi.mock("@/lib/ai/service", () => ({
   generateOrganizationAIObject: mocks.generateOrganizationAIObject,
+}));
+
+vi.mock("@formbricks/logger", () => ({
+  logger: {
+    error: mocks.loggerError,
+  },
 }));
 
 const i18n = (s: string) => ({ default: s });
@@ -55,7 +63,10 @@ const mockOpenTextAnswers = (survey: TSurvey): void => {
     object: {
       responses: Array.from({ length: EXAMPLE_RESPONSE_COUNT }, (_, index) => ({
         rowId: `row_${index}`,
-        answers: Object.fromEntries(ctx.openTextElementIds.map((id) => [id, `Open text answer ${index}`])),
+        answers: ctx.openTextElementIds.map((id) => ({
+          elementId: id,
+          answer: `Open text answer ${index}`,
+        })),
       })),
     },
   });
@@ -93,10 +104,11 @@ describe("buildExampleResponsesSchema", () => {
       schema.safeParse({
         responses: Array.from({ length: EXAMPLE_RESPONSE_COUNT }, (_, index) => ({
           rowId: `row_${index}`,
-          answers: { q_text: `Answer ${index}` },
+          answers: [{ elementId: "q_text", answer: `Answer ${index}` }],
         })),
       }).success
     ).toBe(true);
+    expect(JSON.stringify(z.toJSONSchema(schema))).not.toContain("propertyNames");
   });
 
   test("reads legacy survey.questions when blocks are empty", () => {
@@ -243,7 +255,7 @@ describe("generateExampleResponseDataset", () => {
       object: {
         responses: Array.from({ length: EXAMPLE_RESPONSE_COUNT }, (_, index) => ({
           rowId: `row_${index}`,
-          answers: {},
+          answers: [],
         })),
       },
     });
@@ -317,14 +329,20 @@ describe("generateExampleResponseDataset", () => {
     }
   });
 
-  test("propagates errors from the open-text LLM call", async () => {
+  test("falls back to local open-text answers when the LLM call fails", async () => {
     const survey = makeSurvey([
       { ...baseQuestion, id: "q_text", type: TSurveyElementTypeEnum.OpenText },
     ] as unknown as TSurvey["questions"]);
-    vi.mocked(mocks.generateOrganizationAIObject).mockRejectedValue(new Error("ai_features_not_enabled"));
+    const error = new Error("provider failed");
+    vi.mocked(mocks.generateOrganizationAIObject).mockRejectedValue(error);
 
-    await expect(generateExampleResponseDataset({ survey, organizationId: "org_1" })).rejects.toThrow(
-      "ai_features_not_enabled"
+    const result = await generateExampleResponseDataset({ survey, organizationId: "org_1" });
+
+    expect(result.responses).toHaveLength(EXAMPLE_RESPONSE_COUNT);
+    expect(result.responses.some((response) => typeof response.data.q_text === "string")).toBe(true);
+    expect(mocks.loggerError).toHaveBeenCalledWith(
+      { err: error, organizationId: "org_1" },
+      "Failed to generate open-text example responses with AI; using fallback answers"
     );
   });
 
@@ -362,7 +380,7 @@ describe("generateExampleResponseDataset", () => {
       object: {
         responses: Array.from({ length: EXAMPLE_RESPONSE_COUNT }, (_, index) => ({
           rowId: `row_${index}`,
-          answers: {},
+          answers: [],
         })),
       },
     });
@@ -396,7 +414,7 @@ describe("generateExampleResponseDataset", () => {
       object: {
         responses: Array.from({ length: EXAMPLE_RESPONSE_COUNT }, (_, index) => ({
           rowId: `row_${index}`,
-          answers: {},
+          answers: [],
         })),
       },
     });

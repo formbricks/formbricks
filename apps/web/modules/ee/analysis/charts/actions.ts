@@ -1,13 +1,10 @@
 "use server";
 
-import { Output, generateText } from "ai";
 import { z } from "zod";
-import { getAiModel } from "@formbricks/ai";
 import { type TChartQuery, ZChartQuery } from "@formbricks/types/analysis";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
-import { assertOrganizationAIConfigured } from "@/lib/ai/service";
-import { env } from "@/lib/env";
+import { generateOrganizationAIObject } from "@/lib/ai/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { executeTenantScopedQuery } from "@/modules/ee/analysis/api/lib/cube-client";
@@ -291,6 +288,8 @@ export const executeQueryAction = authenticatedActionClient
   );
 
 const CUBE_NAME = "FeedbackRecords";
+const AI_CHART_GENERATION_TIMEOUT_MS = 30_000;
+const AI_CHART_GENERATION_MAX_OUTPUT_TOKENS = 1024;
 
 const toEnumTuple = (values: readonly string[]): [string, ...string[]] => {
   if (values.length === 0) {
@@ -303,6 +302,17 @@ const ZMeasureId = z.enum(toEnumTuple(FEEDBACK_MEASURE_IDS));
 const ZDimensionId = z.enum(toEnumTuple(FEEDBACK_DIMENSION_IDS));
 const ZTimeDimensionId = z.enum(toEnumTuple(FEEDBACK_TIME_DIMENSION_IDS));
 const ZFilterMemberId = z.enum(toEnumTuple([...FEEDBACK_MEASURE_IDS, ...FEEDBACK_DIMENSION_IDS]));
+type TGenerateAIQueryFilter = {
+  member: string;
+  operator: string;
+  values: string[] | null;
+};
+
+type TGenerateAIQueryTimeDimension = {
+  dimension: string;
+  granularity: "hour" | "day" | "week" | "month" | "quarter" | "year" | null;
+  dateRange: string | null;
+};
 
 const ZGenerateAIQueryResponse = z.object({
   measures: z.array(ZMeasureId),
@@ -338,6 +348,13 @@ const ZGenerateAIQueryResponse = z.object({
     )
     .nullable(),
 });
+type TGenerateAIQueryResponse = {
+  measures: string[];
+  dimensions: string[] | null;
+  timeDimensions: TGenerateAIQueryTimeDimension[] | null;
+  chartType: z.infer<typeof ZChartType>;
+  filters: TGenerateAIQueryFilter[] | null;
+};
 
 const ZGenerateAIChartAction = z.object({
   workspaceId: ZId,
@@ -363,8 +380,6 @@ export const generateAIChartAction = authenticatedActionClient
 
       await checkDashboardsEnabled(organizationId);
 
-      await assertOrganizationAIConfigured(organizationId);
-
       const { feedbackDirectoryId } = await checkFeedbackDirectoryAccess({
         feedbackDirectoryId: parsedInput.feedbackDirectoryId,
         organizationId,
@@ -375,12 +390,14 @@ export const generateAIChartAction = authenticatedActionClient
 
       const schemaContext = generateSchemaContext();
 
-      const { output } = await generateText({
-        model: getAiModel(env),
-        output: Output.object({ schema: ZGenerateAIQueryResponse }),
+      const { object: output } = await generateOrganizationAIObject<TGenerateAIQueryResponse>({
+        organizationId,
+        schema: ZGenerateAIQueryResponse,
         system: schemaContext,
         prompt: `User request: "${parsedInput.prompt}"`,
         temperature: 0,
+        maxOutputTokens: AI_CHART_GENERATION_MAX_OUTPUT_TOKENS,
+        timeout: AI_CHART_GENERATION_TIMEOUT_MS,
       });
 
       const measures = output.measures.length > 0 ? output.measures : [`${CUBE_NAME}.count`];
@@ -393,19 +410,23 @@ export const generateAIChartAction = authenticatedActionClient
       }
 
       if (cubeQuery.filters?.length) {
-        cleanQuery.filters = cubeQuery.filters.map(({ member, operator, values }) => ({
-          member,
-          operator,
-          ...(values == null ? {} : { values }),
-        }));
+        cleanQuery.filters = cubeQuery.filters.map(
+          ({ member, operator, values }: TGenerateAIQueryFilter) => ({
+            member,
+            operator,
+            ...(values == null ? {} : { values }),
+          })
+        );
       }
 
       if (cubeQuery.timeDimensions?.length) {
-        cleanQuery.timeDimensions = cubeQuery.timeDimensions.map(({ dimension, granularity, dateRange }) => ({
-          dimension,
-          ...(granularity == null ? {} : { granularity }),
-          ...(dateRange == null ? {} : { dateRange }),
-        }));
+        cleanQuery.timeDimensions = cubeQuery.timeDimensions.map(
+          ({ dimension, granularity, dateRange }: TGenerateAIQueryTimeDimension) => ({
+            dimension,
+            ...(granularity == null ? {} : { granularity }),
+            ...(dateRange == null ? {} : { dateRange }),
+          })
+        );
       }
 
       const data = await executeTenantScopedQuery({
