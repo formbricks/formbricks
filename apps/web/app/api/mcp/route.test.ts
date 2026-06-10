@@ -1,6 +1,6 @@
-import { ApiKeyPermission } from "@prisma/client";
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { ApiKeyPermission } from "@formbricks/database/prisma";
 import {
   createdResponse,
   problemBadRequest,
