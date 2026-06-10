@@ -1,10 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
-import { AdvancedChartBuilder } from "@/modules/ee/analysis/charts/components/advanced-chart-builder";
+import {
+  AdvancedChartBuilder,
+  type ChartQueryState,
+} from "@/modules/ee/analysis/charts/components/advanced-chart-builder";
 import { AIQuerySection } from "@/modules/ee/analysis/charts/components/ai-query-section";
 import { ChartDialogFooter } from "@/modules/ee/analysis/charts/components/chart-dialog-footer";
 import { ChartDialogLoadingView } from "@/modules/ee/analysis/charts/components/chart-dialog-loading-view";
@@ -80,15 +83,9 @@ export function CreateChartView({
     directories,
   });
 
-  const chartPreviewRef = useRef<HTMLDivElement>(null);
   const CREATE_CHART_FORM_ID = "create-chart-form";
   const [chartNameError, setChartNameError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (chartData) {
-      chartPreviewRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    }
-  }, [chartData]);
+  const [queryState, setQueryState] = useState<ChartQueryState>({ isLoading: false, error: null });
 
   if (isLoadingChart && isEditing && !initialChart) {
     return <ChartDialogLoadingView open={open} onClose={handleClose} />;
@@ -140,52 +137,9 @@ export function CreateChartView({
         <DialogBody>
           <div className="grid gap-4">
             {hasSelectedDirectory ? (
-              <>
-                {!isEditing && !isAIQueryAvailable && (
-                  <AIQuerySection
-                    workspaceId={workspaceId}
-                    onChartGenerated={handleChartGenerated}
-                    feedbackDirectoryId={selectedDirectoryId}
-                    isAIAvailable={isAIAvailable}
-                    aiUnavailableReason={aiUnavailableReason}
-                  />
-                )}
-
-                <form
-                  id={CREATE_CHART_FORM_ID}
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    setChartNameError(null);
-                    return handleSaveChart();
-                  }}
-                  className="space-y-2">
-                  <Label htmlFor="create-chart-name" className={cn(chartNameError && "text-red-500")}>
-                    {t("workspace.analysis.charts.chart_name")}
-                  </Label>
-                  <Input
-                    id="create-chart-name"
-                    value={chartName}
-                    onChange={(event) => {
-                      if (chartNameError) setChartNameError(null);
-                      setChartName(event.target.value);
-                    }}
-                    onInvalid={(event) => {
-                      // Suppress the browser tooltip and render our inline message instead.
-                      event.preventDefault();
-                      event.currentTarget.scrollIntoView({ behavior: "smooth", block: "center" });
-                      event.currentTarget.focus();
-                      setChartNameError(t("workspace.analysis.charts.please_enter_chart_name"));
-                    }}
-                    placeholder={t("workspace.analysis.charts.chart_name_placeholder")}
-                    maxLength={255}
-                    required
-                    isInvalid={!!chartNameError}
-                  />
-                  {chartNameError && <p className="text-sm text-red-500">{chartNameError}</p>}
-                </form>
-
-                {!isEditing && isAIQueryAvailable && (
-                  <>
+              <div className="grid gap-6 lg:grid-cols-2">
+                <div className="min-w-0 space-y-4">
+                  {!isEditing && !isAIQueryAvailable && (
                     <AIQuerySection
                       workspaceId={workspaceId}
                       onChartGenerated={handleChartGenerated}
@@ -193,44 +147,92 @@ export function CreateChartView({
                       isAIAvailable={isAIAvailable}
                       aiUnavailableReason={aiUnavailableReason}
                     />
+                  )}
 
-                    <div className="relative">
-                      <div className="absolute inset-0 flex items-center" aria-hidden="true">
-                        <div className="w-full border-t border-gray-200" />
+                  <form
+                    id={CREATE_CHART_FORM_ID}
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      setChartNameError(null);
+                      return handleSaveChart();
+                    }}
+                    className="space-y-2">
+                    <Label htmlFor="create-chart-name" className={cn(chartNameError && "text-red-500")}>
+                      {t("workspace.analysis.charts.chart_name")}
+                    </Label>
+                    <Input
+                      id="create-chart-name"
+                      value={chartName}
+                      onChange={(event) => {
+                        if (chartNameError) setChartNameError(null);
+                        setChartName(event.target.value);
+                      }}
+                      onInvalid={(event) => {
+                        // Suppress the browser tooltip and render our inline message instead.
+                        event.preventDefault();
+                        event.currentTarget.scrollIntoView({ behavior: "smooth", block: "center" });
+                        event.currentTarget.focus();
+                        setChartNameError(t("workspace.analysis.charts.please_enter_chart_name"));
+                      }}
+                      placeholder={t("workspace.analysis.charts.chart_name_placeholder")}
+                      maxLength={255}
+                      required
+                      isInvalid={!!chartNameError}
+                    />
+                    {chartNameError && <p className="text-sm text-red-500">{chartNameError}</p>}
+                  </form>
+
+                  {!isEditing && isAIQueryAvailable && (
+                    <>
+                      <AIQuerySection
+                        workspaceId={workspaceId}
+                        onChartGenerated={handleChartGenerated}
+                        feedbackDirectoryId={selectedDirectoryId}
+                        isAIAvailable={isAIAvailable}
+                        aiUnavailableReason={aiUnavailableReason}
+                      />
+
+                      <div className="relative">
+                        <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                          <div className="w-full border-t border-gray-200" />
+                        </div>
+                        <div className="relative flex justify-center">
+                          <span className="bg-white px-2 text-sm text-gray-500">
+                            {t("workspace.analysis.charts.OR")}
+                          </span>
+                        </div>
                       </div>
-                      <div className="relative flex justify-center">
-                        <span className="bg-white px-2 text-sm text-gray-500">
-                          {t("workspace.analysis.charts.OR")}
-                        </span>
-                      </div>
-                    </div>
-                  </>
-                )}
+                    </>
+                  )}
 
-                <ManualChartBuilder selectedChartType={chartType} onChartTypeSelect={handleChartTypeChange} />
-
-                {chartType && (
-                  <AdvancedChartBuilder
-                    workspaceId={workspaceId}
-                    chartType={chartType}
-                    initialQuery={chartData?.query ?? initialQuery}
-                    hidePreview={true}
-                    onChartGenerated={handleChartGenerated}
-                    feedbackDirectoryId={selectedDirectoryId}
-                    runQueryCtaLabel={
-                      chartData
-                        ? t("workspace.analysis.charts.update_chart")
-                        : t("workspace.analysis.charts.preview_chart")
-                    }
+                  <ManualChartBuilder
+                    selectedChartType={chartType}
+                    onChartTypeSelect={handleChartTypeChange}
                   />
-                )}
 
-                {(isEditing || chartData) && (
-                  <div ref={chartPreviewRef}>
-                    <ChartPreview chartData={chartData} isLoading={isLoadingChart} error={chartLoadError} />
+                  {chartType && (
+                    <AdvancedChartBuilder
+                      workspaceId={workspaceId}
+                      chartType={chartType}
+                      initialQuery={chartData?.query ?? initialQuery}
+                      onChartGenerated={handleChartGenerated}
+                      onQueryStateChange={setQueryState}
+                      feedbackDirectoryId={selectedDirectoryId}
+                    />
+                  )}
+                </div>
+
+                <div className="min-w-0">
+                  <div className="lg:sticky lg:top-2">
+                    <ChartPreview
+                      chartData={chartData}
+                      isLoading={isLoadingChart || queryState.isLoading}
+                      error={chartLoadError ?? queryState.error}
+                      emptyMessage={t("workspace.analysis.charts.advanced_chart_builder_config_prompt")}
+                    />
                   </div>
-                )}
-              </>
+                </div>
+              </div>
             ) : (
               <Alert variant="error" size="small">
                 <div>
@@ -246,7 +248,7 @@ export function CreateChartView({
           </div>
         </DialogBody>
 
-        {chartData && (
+        {chartData && !queryState.error && (
           <ChartDialogFooter
             formId={CREATE_CHART_FORM_ID}
             isSaving={isSaving}
