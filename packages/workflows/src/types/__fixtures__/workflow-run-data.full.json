@@ -20,12 +20,16 @@
   ],
   "trigger": {
     "data": {
-      "endingCardId": "cm9zr4q7i000108l84gozfggr",
-      "responseId": "cm9zr4rsp000708l8bqccpfrx",
-      "surveyId": "cm9zr4mps000008l8btfy1vtz",
-      "workspaceId": "cm9zr4wsp000508l8y6nh9r2v"
+      "response": {
+        "email": "jane@example.com",
+        "score": 9
+      }
     },
-    "receivedAt": "2026-06-09T12:01:00.000Z",
-    "type": "response.completed"
+    "endingCardId": "cm9zr4q7i000108l84gozfggr",
+    "responseId": "cm9zr4rsp000708l8bqccpfrx",
+    "surveyId": "cm9zr4mps000008l8btfy1vtz",
+    "triggeredAt": "2026-06-09T12:01:00.000Z",
+    "type": "response.completed",
+    "workspaceId": "cm9zr4wsp000508l8y6nh9r2v"
   }
 }

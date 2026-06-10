@@ -3,6 +3,7 @@ import { describe, expect, test } from "vitest";
 import {
   type TWorkflowDefinitionBase,
   ZResponseCompletedTriggerConfig,
+  ZWorkflowCondition,
   ZWorkflowDefinition,
   ZWorkflowExecutableDefinition,
   ZWorkflowRunData,
@@ -99,7 +100,28 @@ describe("@formbricks/workflows", () => {
     expect(ZWorkflowTriggerPayload.parse(fixture).type).toBe("response.completed");
   });
 
-  test("parses a valid Scope 1 executable definition", () => {
+  test("rejects response completed trigger payloads without tenant and response context", () => {
+    expect(() =>
+      ZWorkflowTriggerPayload.parse({
+        type: "response.completed",
+        surveyId,
+        responseId: "cm9zr4rsp000708l8bqccpfrx",
+      })
+    ).toThrow(/workspaceId/);
+  });
+
+  test("rejects run trigger snapshots without the response completed payload context", () => {
+    expect(() =>
+      ZWorkflowRunData.parse({
+        trigger: {
+          type: "response.completed",
+          triggeredAt: "2026-06-09T12:01:00.000Z",
+        },
+      })
+    ).toThrow(/workspaceId/);
+  });
+
+  test("parses a valid executable definition", () => {
     expect(ZWorkflowExecutableDefinition.parse(createDefinition()).nodes[0]?.type).toBe("action");
   });
 
@@ -173,6 +195,35 @@ describe("@formbricks/workflows", () => {
 
     expect(() => ZWorkflowDefinition.parse(definition)).not.toThrow();
     expect(() => ZWorkflowExecutableDefinition.parse(definition)).toThrow(/if_else nodes/);
+  });
+
+  test("rejects executable definitions with unreachable nodes", () => {
+    const definition = createDefinition();
+    definition.nodes.push({
+      id: "orphan-email",
+      type: "action",
+      actionType: "send_email",
+      config: sendEmailConfig,
+    });
+
+    expect(() => ZWorkflowExecutableDefinition.parse(definition)).toThrow(/unreachable node ids/);
+  });
+
+  test("rejects executable definitions with cycles", () => {
+    const definition = createDefinition();
+    definition.nodes.push({
+      id: "second-email",
+      type: "action",
+      actionType: "send_email",
+      config: sendEmailConfig,
+    });
+    definition.edges = [
+      { id: "trigger-send-email", source: "trigger", target: "send-email" },
+      { id: "send-email-second-email", source: "send-email", target: "second-email" },
+      { id: "second-email-send-email", source: "second-email", target: "send-email" },
+    ];
+
+    expect(() => ZWorkflowExecutableDefinition.parse(definition)).toThrow(/acyclic/);
   });
 
   test("rejects if_else branch edges without then and else source handles", () => {
@@ -259,6 +310,33 @@ describe("@formbricks/workflows", () => {
       "subject",
       "to",
     ]);
+  });
+
+  test("validates condition right-hand values based on operator semantics", () => {
+    expect(() =>
+      ZWorkflowCondition.parse({
+        id: "email-exists",
+        left: { path: "response.email" },
+        operator: "exists",
+      })
+    ).not.toThrow();
+
+    expect(() =>
+      ZWorkflowCondition.parse({
+        id: "email-exists",
+        left: { path: "response.email" },
+        operator: "exists",
+        right: "",
+      })
+    ).toThrow(/must not have/);
+
+    expect(() =>
+      ZWorkflowCondition.parse({
+        id: "email-equals",
+        left: { path: "response.email" },
+        operator: "equals",
+      })
+    ).toThrow(/requires/);
   });
 
   test("supports empty and specific response completed ending card ids", () => {

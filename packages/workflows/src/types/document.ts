@@ -36,7 +36,10 @@ export const ZWorkflowDefinitionBase = z
     trigger: ZWorkflowTriggerNode,
     nodes: z.array(ZWorkflowChildNode).default([]),
     edges: z.array(ZWorkflowEdge).default([]),
-    entryNodeId: z.string().min(1).describe("Node id where execution starts after the trigger fires."),
+    entryNodeId: z
+      .string()
+      .min(1)
+      .describe("Workflow entry point. Must reference the workflow trigger node."),
   })
   .describe("Persisted workflow graph definition.");
 export type TWorkflowDefinitionBase = z.infer<typeof ZWorkflowDefinitionBase>;
@@ -147,8 +150,91 @@ export const ZWorkflowDefinition = ZWorkflowDefinitionBase.superRefine(validateW
 );
 export type TWorkflowDefinition = z.infer<typeof ZWorkflowDefinition>;
 
+const validateExecutableGraph = (definition: TWorkflowDefinitionBase, ctx: z.RefinementCtx): void => {
+  const nodesById = new Map<string, TWorkflowNode>([[definition.trigger.id, definition.trigger]]);
+  for (const node of definition.nodes) {
+    nodesById.set(node.id, node);
+  }
+
+  const outgoingEdgesBySource = new Map<string, string[]>();
+  for (const edge of definition.edges) {
+    if (!nodesById.has(edge.source) || !nodesById.has(edge.target)) {
+      continue;
+    }
+
+    const outgoingTargets = outgoingEdgesBySource.get(edge.source) ?? [];
+    outgoingTargets.push(edge.target);
+    outgoingEdgesBySource.set(edge.source, outgoingTargets);
+  }
+
+  const reachableNodeIds = new Set<string>();
+  const nodesToVisit = [definition.trigger.id];
+
+  while (nodesToVisit.length > 0) {
+    const nodeId = nodesToVisit.pop();
+    if (!nodeId || reachableNodeIds.has(nodeId)) {
+      continue;
+    }
+
+    reachableNodeIds.add(nodeId);
+
+    for (const targetId of outgoingEdgesBySource.get(nodeId) ?? []) {
+      nodesToVisit.push(targetId);
+    }
+  }
+
+  const unreachableNodeIds = definition.nodes
+    .map((node) => node.id)
+    .filter((nodeId) => !reachableNodeIds.has(nodeId));
+
+  if (unreachableNodeIds.length > 0) {
+    ctx.addIssue({
+      code: "custom",
+      message: `Executable workflow contains unreachable node ids: ${unreachableNodeIds.join(", ")}`,
+      path: ["nodes"],
+    });
+  }
+
+  const visitedNodeIds = new Set<string>();
+  const activeNodeIds = new Set<string>();
+
+  const hasCycle = (nodeId: string): boolean => {
+    if (activeNodeIds.has(nodeId)) {
+      return true;
+    }
+
+    if (visitedNodeIds.has(nodeId)) {
+      return false;
+    }
+
+    visitedNodeIds.add(nodeId);
+    activeNodeIds.add(nodeId);
+
+    for (const targetId of outgoingEdgesBySource.get(nodeId) ?? []) {
+      if (hasCycle(targetId)) {
+        return true;
+      }
+    }
+
+    activeNodeIds.delete(nodeId);
+    return false;
+  };
+
+  for (const nodeId of nodesById.keys()) {
+    if (hasCycle(nodeId)) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Executable workflow graph must be acyclic",
+        path: ["edges"],
+      });
+      break;
+    }
+  }
+};
+
 export const ZWorkflowExecutableDefinition = ZWorkflowDefinitionBase.superRefine((definition, ctx) => {
   validateWorkflowGraph(definition, ctx);
+  validateExecutableGraph(definition, ctx);
 
   for (const [index, node] of definition.nodes.entries()) {
     if (node.type === "if_else") {
@@ -159,5 +245,5 @@ export const ZWorkflowExecutableDefinition = ZWorkflowDefinitionBase.superRefine
       });
     }
   }
-}).describe("Workflow definition subset that the Scope 1 runner can execute.");
+}).describe("Workflow definition subset that the current runner can execute.");
 export type TWorkflowExecutableDefinition = z.infer<typeof ZWorkflowExecutableDefinition>;

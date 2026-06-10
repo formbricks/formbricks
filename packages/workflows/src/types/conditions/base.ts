@@ -24,6 +24,8 @@ export const ZWorkflowConditionValue = z.union([
 ]);
 export type TWorkflowConditionValue = z.infer<typeof ZWorkflowConditionValue>;
 
+const WORKFLOW_CONDITION_PRESENCE_OPERATORS = new Set<TWorkflowConditionOperator>(["exists", "notExists"]);
+
 export interface TWorkflowCondition {
   id: string;
   left: z.infer<typeof ZWorkflowDataRef>;
@@ -37,14 +39,34 @@ export interface TWorkflowConditionGroup {
   conditions: (TWorkflowCondition | TWorkflowConditionGroup)[];
 }
 
-export const ZWorkflowCondition: z.ZodType<TWorkflowCondition> = z.object({
-  id: z.string().min(1),
-  left: ZWorkflowDataRef,
-  operator: ZWorkflowConditionOperator,
-  right: ZWorkflowConditionValue.optional().describe(
-    "Right-hand comparison value. Omit for existence operators."
-  ),
-});
+export const ZWorkflowCondition: z.ZodType<TWorkflowCondition> = z
+  .object({
+    id: z.string().min(1),
+    left: ZWorkflowDataRef,
+    operator: ZWorkflowConditionOperator,
+    right: ZWorkflowConditionValue.optional().describe(
+      "Right-hand comparison value. Omit for presence operators."
+    ),
+  })
+  .superRefine((condition, ctx) => {
+    const isPresenceOperator = WORKFLOW_CONDITION_PRESENCE_OPERATORS.has(condition.operator);
+
+    if (isPresenceOperator && condition.right !== undefined) {
+      ctx.addIssue({
+        code: "custom",
+        message: `Operator ${condition.operator} must not have a right-hand value`,
+        path: ["right"],
+      });
+    }
+
+    if (!isPresenceOperator && condition.right === undefined) {
+      ctx.addIssue({
+        code: "custom",
+        message: `Operator ${condition.operator} requires a right-hand value`,
+        path: ["right"],
+      });
+    }
+  });
 
 export const ZWorkflowConditionGroup: z.ZodType<TWorkflowConditionGroup> = z.lazy(() =>
   z.object({

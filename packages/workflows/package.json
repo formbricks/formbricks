@@ -6,16 +6,16 @@
   "type": "module",
   "exports": {
     ".": {
-      "types": "./src/index.ts",
+      "types": "./dist/src/index.d.ts",
       "import": "./dist/index.js"
     }
   },
   "main": "./dist/index.js",
-  "types": "./src/index.ts",
+  "types": "./dist/src/index.d.ts",
   "scripts": {
     "build": "vite build",
     "clean": "rimraf .turbo node_modules coverage dist",
-    "lint": "eslint . --ext .js,.ts",
+    "lint": "eslint . --ext .js,.ts && publint",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit"
@@ -27,6 +27,7 @@
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/eslint-config": "workspace:*",
     "@vitest/coverage-v8": "4.1.6",
+    "publint": "0.3.21",
     "rimraf": "^6.1.2",
     "typescript": "^5.9.3",
     "vite": "7.3.3",

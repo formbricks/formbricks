@@ -14,8 +14,9 @@ export type TResponseCompletedTriggerConfig = z.infer<typeof ZResponseCompletedT
 export const ZWorkflowTriggerPayload = z
   .object({
     type: z.literal(WORKFLOW_TRIGGERS.RESPONSE_COMPLETED),
-    surveyId: z.cuid2().optional(),
-    responseId: z.cuid2().optional(),
+    workspaceId: z.cuid2(),
+    surveyId: z.cuid2(),
+    responseId: z.cuid2(),
     endingCardId: z.cuid2().optional(),
     data: z.record(z.string(), z.unknown()).optional(),
   })

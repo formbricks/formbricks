@@ -1,6 +1,8 @@
 import { z } from "zod";
 import { ZWorkflowExecutableDefinition } from "./document";
-import { ZWorkflowTriggerType } from "./triggers";
+import { ZWorkflowTriggerPayload } from "./triggers";
+
+const ZIsoDateTime = z.iso.datetime({ offset: true });
 
 export const ZWorkflowRunStatus = z.enum(["queued", "running", "completed", "failed", "canceled"]);
 export type TWorkflowRunStatus = z.infer<typeof ZWorkflowRunStatus>;
@@ -8,13 +10,9 @@ export type TWorkflowRunStatus = z.infer<typeof ZWorkflowRunStatus>;
 export const ZWorkflowRunLogStatus = z.enum(["pending", "running", "succeeded", "failed", "skipped"]);
 export type TWorkflowRunLogStatus = z.infer<typeof ZWorkflowRunLogStatus>;
 
-export const ZWorkflowTriggerRunPayload = z
-  .object({
-    type: ZWorkflowTriggerType,
-    data: z.record(z.string(), z.unknown()).optional(),
-  })
-  .catchall(z.unknown())
-  .describe("Trigger payload snapshot stored with a workflow run.");
+export const ZWorkflowTriggerRunPayload = ZWorkflowTriggerPayload.extend({
+  triggeredAt: ZIsoDateTime,
+}).describe("Trigger payload snapshot stored with a workflow run.");
 export type TWorkflowTriggerRunPayload = z.infer<typeof ZWorkflowTriggerRunPayload>;
 
 export const ZWorkflowRunLogInput = z.record(z.string(), z.unknown());
@@ -30,8 +28,8 @@ export const ZWorkflowStepResult = z.object({
   input: ZWorkflowRunLogInput.optional(),
   output: ZWorkflowRunLogOutput.optional(),
   error: z.string().optional(),
-  startedAt: z.coerce.date().optional(),
-  finishedAt: z.coerce.date().optional(),
+  startedAt: ZIsoDateTime.optional(),
+  finishedAt: ZIsoDateTime.optional(),
 });
 export type TWorkflowStepResult = z.infer<typeof ZWorkflowStepResult>;
 
@@ -50,7 +48,7 @@ export const ZWorkflowVersion = z
     workspaceId: z.cuid2(),
     version: z.number().int().positive().describe("Monotonic workflow version number."),
     definition: ZWorkflowExecutableDefinition.describe("Immutable executable definition snapshot."),
-    publishedAt: z.coerce.date(),
+    publishedAt: ZIsoDateTime,
     publishedBy: z.cuid2().nullable().optional(),
   })
   .describe("Immutable workflow definition snapshot used by runs.");
@@ -67,8 +65,8 @@ export const ZWorkflowRunLog = z
     input: ZWorkflowRunLogInput.optional(),
     output: ZWorkflowRunLogOutput.optional(),
     error: z.string().nullable().optional(),
-    startedAt: z.coerce.date().nullable().optional(),
-    finishedAt: z.coerce.date().nullable().optional(),
+    startedAt: ZIsoDateTime.nullable().optional(),
+    finishedAt: ZIsoDateTime.nullable().optional(),
   })
   .describe("Persisted trace entry for one workflow run step.");
 export type TWorkflowRunLog = z.infer<typeof ZWorkflowRunLog>;
