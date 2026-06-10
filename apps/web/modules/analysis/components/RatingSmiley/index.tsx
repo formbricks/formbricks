@@ -26,17 +26,28 @@ const getSmileyColor = (range: number, idx: number) => {
   }
 };
 
+interface GetSmileyParams {
+  iconIdx: number;
+  idx: number;
+  range: number;
+  active: boolean;
+  addColors: boolean;
+  baseUrl?: string;
+  size?: number;
+  centered?: boolean;
+}
+
 // Helper function to get smiley image URL based on index and range
-const getSmiley = (
-  iconIdx: number,
-  idx: number,
-  range: number,
-  active: boolean,
-  addColors: boolean,
-  baseUrl?: string,
-  size: number = 24,
-  centered: boolean = false
-): JSX.Element => {
+const getSmiley = ({
+  iconIdx,
+  idx,
+  range,
+  active,
+  addColors,
+  baseUrl,
+  size = 24,
+  centered = false,
+}: GetSmileyParams): JSX.Element => {
   const activeColor = "bg-rating-fill";
   const inactiveColor = addColors ? getSmileyColor(range, idx) : "bg-fill-none";
 
@@ -105,5 +116,5 @@ export const RatingSmiley = ({
   else if (range === 4) iconsIdx = [4, 5, 6, 7];
   else if (range === 3) iconsIdx = [4, 5, 7];
 
-  return getSmiley(iconsIdx[idx], idx, range, active, addColors, baseUrl, size, centered);
+  return getSmiley({ iconIdx: iconsIdx[idx], idx, range, active, addColors, baseUrl, size, centered });
 };
