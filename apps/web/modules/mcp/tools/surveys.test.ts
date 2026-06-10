@@ -1,5 +1,5 @@
-import { ApiKeyPermission } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { ApiKeyPermission } from "@formbricks/database/prisma";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
 import {
   createdResponse,
