@@ -9,7 +9,7 @@ import {
   ZWorkflowRunLogStatus,
   ZWorkflowRunStatus,
   ZWorkflowStatus,
-  ZWorkflowTriggerPayload,
+  ZWorkflowTriggerRunPayload,
   ZWorkflowTriggerType,
 } from "@formbricks/workflows";
 
@@ -44,14 +44,16 @@ export const ZWorkflowRun = z.object({
   workflowVersionId: z.cuid2().nullable().describe("The workflow version ID"),
   responseId: z.cuid2().nullable().describe("The response ID that triggered the workflow run"),
   status: ZWorkflowRunStatus.describe("The workflow run status"),
-  triggerEvent: ZWorkflowTriggerType.describe("The event that triggered the workflow run"),
+  triggerType: ZWorkflowTriggerType.describe("The trigger type that started the workflow run"),
   surveyId: z.cuid2().nullable().describe("The survey ID that triggered the workflow run"),
   isDryRun: z.boolean().describe("Whether the workflow run is a dry run"),
   idempotencyKey: z.string().nullable().describe("The workflow run idempotency key"),
   attempt: z.number().int().nonnegative().describe("The workflow run attempt count"),
   nextAttemptAt: z.coerce.date().nullable().describe("The next retry time"),
   lastErrorAt: z.coerce.date().nullable().describe("The last error time"),
-  triggerPayload: ZWorkflowTriggerPayload.describe("The trigger payload"),
+  triggerPayload: ZWorkflowTriggerRunPayload.describe(
+    "The trigger payload snapshot captured when the run was created"
+  ),
   data: ZWorkflowRunData.describe("The workflow run data"),
   error: z.string().nullable().describe("The workflow run error"),
   startedAt: z.coerce.date().nullable().describe("The date and time the workflow run started"),

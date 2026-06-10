@@ -17,7 +17,7 @@ CREATE TABLE "Workflow" (
     "status" "WorkflowStatus" NOT NULL DEFAULT 'draft',
     "workspaceId" TEXT NOT NULL,
     "createdBy" TEXT,
-    "definition" JSONB NOT NULL DEFAULT '{}',
+    "definition" JSONB NOT NULL,
 
     CONSTRAINT "Workflow_pkey" PRIMARY KEY ("id")
 );
@@ -29,8 +29,8 @@ CREATE TABLE "WorkflowVersion" (
     "workspaceId" TEXT NOT NULL,
     "version" INTEGER NOT NULL,
     "definition" JSONB NOT NULL,
-    "published_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "published_by" TEXT,
+    "publishedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "publishedBy" TEXT,
 
     CONSTRAINT "WorkflowVersion_pkey" PRIMARY KEY ("id")
 );
@@ -45,7 +45,7 @@ CREATE TABLE "WorkflowRun" (
     "workflowVersionId" TEXT,
     "responseId" TEXT,
     "status" "WorkflowRunStatus" NOT NULL DEFAULT 'queued',
-    "triggerEvent" TEXT NOT NULL,
+    "triggerType" TEXT NOT NULL,
     "surveyId" TEXT,
     "isDryRun" BOOLEAN NOT NULL DEFAULT false,
     "idempotencyKey" TEXT,
@@ -97,7 +97,7 @@ CREATE UNIQUE INDEX "WorkflowVersion_workflowId_version_key" ON "WorkflowVersion
 CREATE INDEX "WorkflowVersion_workflowId_workspaceId_idx" ON "WorkflowVersion"("workflowId", "workspaceId");
 
 -- CreateIndex
-CREATE INDEX "WorkflowVersion_published_by_idx" ON "WorkflowVersion"("published_by");
+CREATE INDEX "WorkflowVersion_publishedBy_idx" ON "WorkflowVersion"("publishedBy");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "WorkflowRun_workflowId_idempotencyKey_key" ON "WorkflowRun"("workflowId", "idempotencyKey");
@@ -133,7 +133,7 @@ ALTER TABLE "Workflow" ADD CONSTRAINT "Workflow_createdBy_fkey" FOREIGN KEY ("cr
 ALTER TABLE "WorkflowVersion" ADD CONSTRAINT "WorkflowVersion_workflowId_workspaceId_fkey" FOREIGN KEY ("workflowId", "workspaceId") REFERENCES "Workflow"("id", "workspaceId") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "WorkflowVersion" ADD CONSTRAINT "WorkflowVersion_published_by_fkey" FOREIGN KEY ("published_by") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "WorkflowVersion" ADD CONSTRAINT "WorkflowVersion_publishedBy_fkey" FOREIGN KEY ("publishedBy") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "WorkflowRun" ADD CONSTRAINT "WorkflowRun_workflowId_workspaceId_fkey" FOREIGN KEY ("workflowId", "workspaceId") REFERENCES "Workflow"("id", "workspaceId") ON DELETE CASCADE ON UPDATE CASCADE;

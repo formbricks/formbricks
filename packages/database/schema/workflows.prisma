@@ -33,7 +33,7 @@ model Workflow {
   creator     User?             @relation("workflowCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
   createdBy   String?
   /// [WorkflowDefinition]
-  definition  Json              @default("{}")
+  definition  Json
   versions    WorkflowVersion[]
   runs        WorkflowRun[]
 
@@ -50,9 +50,9 @@ model WorkflowVersion {
   version     Int
   /// [WorkflowExecutableDefinition]
   definition  Json
-  publishedAt DateTime      @default(now()) @map(name: "published_at")
+  publishedAt DateTime      @default(now())
   publisher   User?         @relation("workflowVersionPublishedBy", fields: [publishedBy], references: [id], onDelete: SetNull)
-  publishedBy String?       @map(name: "published_by")
+  publishedBy String?
   runs        WorkflowRun[]
 
   @@unique([workflowId, version])
@@ -73,14 +73,14 @@ model WorkflowRun {
   response          Response?         @relation(fields: [responseId], references: [id], onDelete: Cascade)
   responseId        String?
   status            WorkflowRunStatus @default(queued)
-  triggerEvent      String
+  triggerType       String
   surveyId          String?
   isDryRun          Boolean           @default(false)
   idempotencyKey    String?
   attempt           Int               @default(0)
   nextAttemptAt     DateTime?
   lastErrorAt       DateTime?
-  /// [WorkflowTriggerPayload]
+  /// [WorkflowTriggerRunPayload]
   triggerPayload    Json
   /// [WorkflowRunData]
   data              Json              @default("{}")

@@ -42,7 +42,7 @@ import type {
   TWorkflowRunData,
   TWorkflowRunLogInput,
   TWorkflowRunLogOutput,
-  TWorkflowTriggerPayload,
+  TWorkflowTriggerRunPayload,
 } from "@formbricks/workflows";
 
 declare global {
@@ -88,7 +88,7 @@ declare global {
     export type WidgetLayout = TWidgetLayout;
     export type WorkflowDefinition = TWorkflowDefinition;
     export type WorkflowExecutableDefinition = TWorkflowExecutableDefinition;
-    export type WorkflowTriggerPayload = TWorkflowTriggerPayload;
+    export type WorkflowTriggerRunPayload = TWorkflowTriggerRunPayload;
     export type WorkflowRunData = TWorkflowRunData;
     export type WorkflowRunLogInput = TWorkflowRunLogInput;
     export type WorkflowRunLogOutput = TWorkflowRunLogOutput;
