@@ -42,7 +42,7 @@ export const ClientLogo = ({
       style={{ backgroundColor: logoToUse?.bgColor }}>
       {previewSurvey && workspaceBasePath && (
         <Link
-          href={`${workspaceBasePath}/look`}
+          href={`${workspaceBasePath}/settings/workspace/look`}
           className="group/link absolute h-full w-full hover:cursor-pointer"
           target="_blank">
           <ArrowUpRight
@@ -64,7 +64,7 @@ export const ClientLogo = ({
         />
       ) : (
         <Link
-          href={workspaceBasePath ? `${workspaceBasePath}/look` : "#"}
+          href={workspaceBasePath ? `${workspaceBasePath}/settings/workspace/look` : "#"}
           onClick={(e) => {
             if (!workspaceBasePath) {
               e.preventDefault();
