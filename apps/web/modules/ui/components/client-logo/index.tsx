@@ -10,7 +10,7 @@ import { cn } from "@/lib/cn";
 
 interface ClientLogoProps {
   workspaceLogo: Workspace["logo"] | null;
-  workspaceId?: string;
+  workspaceId: string;
   surveyLogo?: TLogo | null;
   previewSurvey?: boolean;
   dir?: "ltr" | "rtl" | "auto";
@@ -25,7 +25,7 @@ export const ClientLogo = ({
 }: ClientLogoProps) => {
   const { t } = useTranslation();
   const logoToUse = surveyLogo?.url ? surveyLogo : workspaceLogo;
-  const lookSettingsHref = workspaceId ? `/workspaces/${workspaceId}/settings/workspace/look` : null;
+  const lookSettingsHref = `/workspaces/${workspaceId}/settings/workspace/look`;
 
   let positionClasses = "";
   if (!previewSurvey) {
@@ -40,7 +40,7 @@ export const ClientLogo = ({
     <div
       className={cn(positionClasses, "group absolute z-0 rounded-lg")}
       style={{ backgroundColor: logoToUse?.bgColor }}>
-      {previewSurvey && lookSettingsHref && (
+      {previewSurvey && (
         <Link
           href={lookSettingsHref}
           className="group/link absolute h-full w-full hover:cursor-pointer"
@@ -64,12 +64,7 @@ export const ClientLogo = ({
         />
       ) : (
         <Link
-          href={lookSettingsHref ?? "#"}
-          onClick={(e) => {
-            if (!lookSettingsHref) {
-              e.preventDefault();
-            }
-          }}
+          href={lookSettingsHref}
           className="whitespace-nowrap rounded-md border border-dashed border-slate-400 bg-slate-200 px-6 py-3 text-xs text-slate-900 opacity-50 backdrop-blur-sm hover:cursor-pointer hover:border-slate-600"
           target="_blank">
           {t("common.add_logo")}
