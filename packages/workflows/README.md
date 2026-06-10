@@ -6,6 +6,9 @@ This package owns reusable workflow building blocks: contracts, validation, doma
 abstractions, and runner-facing helpers. It should remain independent from `apps/web` and any specific web
 framework so the same workflow logic can be reused across runtimes.
 
+For a human-friendly guide to the workflow shapes and data model, see
+[`src/types/README.md`](./src/types/README.md).
+
 ## Boundaries
 
 - Do not import from `apps/web` or Next.js-specific APIs.
