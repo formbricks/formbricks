@@ -1,5 +1,5 @@
+import { ApiKeyPermission } from "@prisma/client";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { ApiKeyPermission } from "@formbricks/database/prisma";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
 import {
   createdResponse,
@@ -155,6 +155,22 @@ describe("registerSurveyTools", () => {
         idempotentHint: false,
       },
     });
+    expect(Object.keys(tools.get("create_survey")?.config.inputSchema as Record<string, unknown>)).toEqual(
+      expect.arrayContaining([
+        "workspaceId",
+        "name",
+        "type",
+        "status",
+        "defaultLanguage",
+        "metadata",
+        "languages",
+        "welcomeCard",
+        "blocks",
+        "endings",
+        "hiddenFields",
+        "variables",
+      ])
+    );
     expect(tools.get("validate_survey")?.config).toMatchObject({
       title: "Validate survey",
       annotations: {
@@ -163,6 +179,9 @@ describe("registerSurveyTools", () => {
         idempotentHint: true,
       },
     });
+    expect(Object.keys(tools.get("validate_survey")?.config.inputSchema as Record<string, unknown>)).toEqual(
+      expect.arrayContaining(["operation", "surveyId", "data"])
+    );
     expect(tools.get("patch_survey")?.config).toMatchObject({
       title: "Patch survey",
       annotations: {
@@ -280,7 +299,20 @@ describe("registerSurveyTools", () => {
       defaultLanguage: "en-US",
       languages: [],
       welcomeCard: { enabled: false },
-      blocks: [],
+      blocks: [
+        {
+          id: "clbk1234567890123456789012",
+          name: "Main Block",
+          elements: [
+            {
+              id: "feedback",
+              type: "openText",
+              headline: { "en-US": "What should we improve?" },
+              required: true,
+            },
+          ],
+        },
+      ],
       endings: [],
       hiddenFields: { enabled: false, fieldIds: [] },
       variables: [],

@@ -87,6 +87,7 @@ vi.mock("../serializers", async () => {
 });
 
 const workspaceId = "tz4a98xxat96iws9zmbrgj3a";
+const validSurveyId = "tz4a98xxat96iws9zmbrgj4c";
 const requestId = "req_123";
 const instance = "/api/v3/surveys";
 const authentication = { type: "apiKey", apiKey: { id: "api_key_1" } } as any;
@@ -112,13 +113,21 @@ const serializedUpdatedSurvey = {
 const createBody = {
   workspaceId,
   name: "Customer Survey",
-  status: "draft",
-  metadata: {},
-  welcomeCard: { enabled: false },
-  blocks: [],
-  endings: [],
-  hiddenFields: { enabled: false, fieldIds: [] },
-  variables: [],
+  defaultLanguage: "en-US",
+  blocks: [
+    {
+      id: "tz4a98xxat96iws9zmbrgj4b",
+      name: "Main Block",
+      elements: [
+        {
+          id: "feedback",
+          type: "openText",
+          headline: { "en-US": "What should we improve?" },
+          required: true,
+        },
+      ],
+    },
+  ],
 } as any;
 
 function mockListQuery(overrides: Record<string, unknown> = {}) {
@@ -266,7 +275,23 @@ describe("createV3SurveyResponse", () => {
     expect(response.status).toBe(201);
     expect(response.headers.get("Location")).toBe("/api/v3/surveys/survey_1");
     expect(vi.mocked(createV3Survey)).toHaveBeenCalledWith(
-      { ...createBody, workspaceId },
+      expect.objectContaining({
+        workspaceId,
+        name: "Customer Survey",
+        type: "link",
+        status: "draft",
+        defaultLanguage: "en-US",
+        metadata: {},
+        blocks: [
+          expect.objectContaining({
+            elements: [
+              expect.objectContaining({
+                headline: { default: "What should we improve?" },
+              }),
+            ],
+          }),
+        ],
+      }),
       authentication,
       requestId,
       "org_1"
@@ -291,6 +316,26 @@ describe("createV3SurveyResponse", () => {
 
     expect(response.status).toBe(403);
     expect(vi.mocked(createV3Survey)).not.toHaveBeenCalled();
+  });
+
+  test("returns bad requests for invalid raw create input", async () => {
+    const response = await createV3SurveyResponse({
+      body: { workspaceId, name: "Customer Survey", blocks: [] },
+      authentication,
+      requestId,
+      instance,
+    });
+
+    expect(response.status).toBe(400);
+    expect(vi.mocked(requireV3WorkspaceAccess)).not.toHaveBeenCalled();
+    expect(vi.mocked(createV3Survey)).not.toHaveBeenCalled();
+    expect(await readJson(response)).toMatchObject({
+      invalid_params: [
+        expect.objectContaining({
+          name: "blocks",
+        }),
+      ],
+    });
   });
 
   test("maps validation, shape, permission, missing resource, and database errors", async () => {
@@ -450,7 +495,7 @@ describe("deleteV3Survey", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     vi.mocked(getAuthorizedV3Survey).mockResolvedValue({ survey, authResult, response: null } as any);
-    vi.mocked(deleteSurvey).mockResolvedValue(undefined);
+    vi.mocked(deleteSurvey).mockResolvedValue(survey as any);
   });
 
   test("deletes an authorized survey and enriches the audit log", async () => {
@@ -707,7 +752,7 @@ describe("validateV3Survey", () => {
 
   test("validates patch input against the authorized survey", async () => {
     const response = await validateV3Survey({
-      body: { operation: "patch", surveyId: "survey_1", data: { name: "" } },
+      body: { operation: "patch", surveyId: validSurveyId, data: { name: "" } },
       authentication,
       requestId,
       instance,
@@ -715,7 +760,7 @@ describe("validateV3Survey", () => {
 
     expect(response.status).toBe(200);
     expect(vi.mocked(getAuthorizedV3Survey)).toHaveBeenCalledWith({
-      surveyId: "survey_1",
+      surveyId: validSurveyId,
       authentication,
       access: "readWrite",
       requestId,
@@ -739,7 +784,7 @@ describe("validateV3Survey", () => {
     } as any);
 
     const response = await validateV3Survey({
-      body: { operation: "patch", surveyId: "survey_1", data: {} },
+      body: { operation: "patch", surveyId: validSurveyId, data: {} },
       authentication,
       requestId,
       instance,
@@ -749,11 +794,31 @@ describe("validateV3Survey", () => {
     expect(vi.mocked(prepareV3SurveyPatchInput)).not.toHaveBeenCalled();
   });
 
+  test("returns bad requests for invalid validation input", async () => {
+    const response = await validateV3Survey({
+      body: { operation: "patch", data: {} },
+      authentication,
+      requestId,
+      instance,
+    });
+
+    expect(response.status).toBe(400);
+    expect(vi.mocked(getAuthorizedV3Survey)).not.toHaveBeenCalled();
+    expect(vi.mocked(prepareV3SurveyPatchInput)).not.toHaveBeenCalled();
+    expect(await readJson(response)).toMatchObject({
+      invalid_params: [
+        expect.objectContaining({
+          name: "surveyId",
+        }),
+      ],
+    });
+  });
+
   test("maps database errors during validation", async () => {
     vi.mocked(getAuthorizedV3Survey).mockRejectedValue(new DatabaseError("db down"));
 
     const response = await validateV3Survey({
-      body: { operation: "patch", surveyId: "survey_1", data: {} },
+      body: { operation: "patch", surveyId: validSurveyId, data: {} },
       authentication,
       requestId,
       instance,

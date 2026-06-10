@@ -1,6 +1,6 @@
+import { ApiKeyPermission } from "@prisma/client";
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { ApiKeyPermission } from "@formbricks/database/prisma";
 import { TooManyRequestsError } from "@formbricks/types/errors";
 import { authenticateApiKeyFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
@@ -58,7 +58,7 @@ function createRequest(url = "http://localhost/api/mcp", headers: Record<string,
 describe("authenticateMcpRequest", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(applyRateLimit).mockResolvedValue(undefined);
+    vi.mocked(applyRateLimit).mockResolvedValue({ allowed: true });
   });
 
   test("returns 401 when no API key authenticates", async () => {
@@ -182,7 +182,7 @@ describe("authenticateMcpRequest", () => {
 describe("handleAuthenticatedMcpRequest", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(applyRateLimit).mockResolvedValue(undefined);
+    vi.mocked(applyRateLimit).mockResolvedValue({ allowed: true });
   });
 
   test("attaches MCP auth info and request headers to handler response", async () => {

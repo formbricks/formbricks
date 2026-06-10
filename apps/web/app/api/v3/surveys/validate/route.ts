@@ -1,11 +1,12 @@
+import { z } from "zod";
 import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
 import { validateV3Survey } from "../lib/operations";
-import { ZV3EmptyQuery, ZV3SurveyValidationRequestBody } from "../schemas";
+import { ZV3EmptyQuery } from "../schemas";
 
 export const POST = withV3ApiWrapper({
   auth: "both",
   schemas: {
-    body: ZV3SurveyValidationRequestBody,
+    body: z.unknown(),
     query: ZV3EmptyQuery,
   },
   handler: async ({ parsedInput, authentication, requestId, instance }) => {

@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
-import { updateSurvey } from "@/lib/survey/service";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import { patchV3Survey } from "./patch";
 import { V3SurveyReferenceValidationError } from "./reference-validation";
@@ -16,11 +15,17 @@ vi.mock("@formbricks/database", () => ({
     language: {
       upsert: vi.fn(),
     },
+    survey: {
+      findUnique: vi.fn(),
+      update: vi.fn(),
+    },
   },
 }));
 
 vi.mock("@/lib/survey/service", () => ({
-  updateSurvey: vi.fn(),
+  selectSurvey: {
+    id: true,
+  },
 }));
 
 vi.mock("@/lib/organization/service", () => ({
@@ -141,6 +146,8 @@ const createExternalCtaBlock = () => ({
 
 type TLanguageUpsertArgs = Parameters<typeof prisma.language.upsert>[0];
 type TLanguageUpsertReturn = ReturnType<typeof prisma.language.upsert>;
+type TSurveyUpdateArgs = Parameters<typeof prisma.survey.update>[0];
+type TSurveyUpdateReturn = ReturnType<typeof prisma.survey.update>;
 
 describe("patchV3Survey", () => {
   beforeEach(() => {
@@ -153,7 +160,10 @@ describe("patchV3Survey", () => {
         }
 
         return Promise.resolve({
-          id: `cllang${workspaceIdCode.code.toLowerCase().replaceAll("-", "")}`,
+          id:
+            workspaceIdCode.code === "en-US"
+              ? "cllangenus000000000000000"
+              : `cllang${workspaceIdCode.code.toLowerCase().replaceAll("-", "")}`,
           code: workspaceIdCode.code,
           alias: null,
           workspaceId: workspaceIdCode.workspaceId,
@@ -162,7 +172,21 @@ describe("patchV3Survey", () => {
         }) as TLanguageUpsertReturn;
       }
     );
-    vi.mocked(updateSurvey).mockImplementation(async (survey) => survey);
+    vi.mocked(prisma.survey.update).mockImplementation((args: TSurveyUpdateArgs): TSurveyUpdateReturn => {
+      const data = args.data;
+
+      return Promise.resolve({
+        ...currentSurvey,
+        name: data.name ?? currentSurvey.name,
+        status: data.status ?? currentSurvey.status,
+        metadata: data.metadata ?? currentSurvey.metadata,
+        welcomeCard: data.welcomeCard ?? currentSurvey.welcomeCard,
+        blocks: data.blocks ?? currentSurvey.blocks,
+        endings: data.endings ?? currentSurvey.endings,
+        hiddenFields: data.hiddenFields ?? currentSurvey.hiddenFields,
+        variables: data.variables ?? currentSurvey.variables,
+      }) as unknown as TSurveyUpdateReturn;
+    });
     vi.mocked(getOrganizationByWorkspaceId).mockResolvedValue({
       id: "org_1",
       name: "Organization",
@@ -174,10 +198,54 @@ describe("patchV3Survey", () => {
         usageCycleAnchor: null,
       },
       isAISmartToolsEnabled: false,
-      isAIDataAnalysisEnabled: false,
       whitelabel: undefined,
     });
     vi.mocked(getExternalUrlsPermission).mockResolvedValue(true);
+  });
+
+  test("patches a name-only payload through v3 persistence", async () => {
+    await patchV3Survey(
+      currentSurvey,
+      { name: "Start from scratch (MCP QA test renamed)" },
+      "req_qa",
+      "org_1"
+    );
+
+    expect(prisma.survey.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: currentSurvey.id },
+        data: expect.objectContaining({
+          name: "Start from scratch (MCP QA test renamed)",
+          metadata: currentSurvey.metadata,
+          hiddenFields: currentSurvey.hiddenFields,
+        }),
+      })
+    );
+  });
+
+  test("patches metadata and hidden fields through v3 persistence", async () => {
+    await patchV3Survey(
+      currentSurvey,
+      {
+        metadata: {
+          title: { "en-US": "MCP QA title" },
+        },
+        hiddenFields: { enabled: true, fieldIds: ["utm_source"] },
+      },
+      "req_qa",
+      "org_1"
+    );
+
+    expect(prisma.survey.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          metadata: {
+            title: { default: "MCP QA title" },
+          },
+          hiddenFields: { enabled: true, fieldIds: ["utm_source"] },
+        }),
+      })
+    );
   });
 
   test("maps the prepared v3 patch onto the existing internal survey", async () => {
@@ -214,33 +282,38 @@ describe("patchV3Survey", () => {
         create: { workspaceId, code: "de-DE", alias: null },
       })
     );
-    expect(updateSurvey).toHaveBeenCalledWith(
+    expect(prisma.survey.update).toHaveBeenCalledWith(
       expect.objectContaining({
-        id: currentSurvey.id,
-        workspaceId,
-        createdBy: "user_1",
-        type: "link",
-        name: "Updated Feedback",
-        metadata: {
-          title: { default: "Updated Feedback", "de-DE": "Aktualisiertes Feedback" },
-        },
-        blocks: [
-          expect.objectContaining({
-            elements: [
+        where: { id: currentSurvey.id },
+        data: expect.objectContaining({
+          name: "Updated Feedback",
+          metadata: {
+            title: { default: "Updated Feedback", "de-DE": "Aktualisiertes Feedback" },
+          },
+          blocks: [
+            expect.objectContaining({
+              elements: [
+                expect.objectContaining({
+                  headline: { default: "What should we improve?", "de-DE": "Was sollen wir verbessern?" },
+                }),
+              ],
+            }),
+          ],
+          languages: expect.objectContaining({
+            create: [
               expect.objectContaining({
-                headline: { default: "What should we improve?", "de-DE": "Was sollen wir verbessern?" },
+                default: false,
+                enabled: true,
+                languageId: "cllangdede",
               }),
             ],
+            updateMany: expect.arrayContaining([
+              expect.objectContaining({
+                data: { default: true, enabled: true },
+              }),
+            ]),
           }),
-        ],
-        languages: expect.arrayContaining([
-          expect.objectContaining({ default: true, enabled: true }),
-          expect.objectContaining({
-            language: expect.objectContaining({ code: "de-DE" }),
-            default: false,
-            enabled: true,
-          }),
-        ]),
+        }),
       })
     );
     expect(getExternalUrlsPermission).not.toHaveBeenCalled();
@@ -253,7 +326,7 @@ describe("patchV3Survey", () => {
       })
     ).rejects.toThrow(V3SurveyReferenceValidationError);
 
-    expect(updateSurvey).not.toHaveBeenCalled();
+    expect(prisma.survey.update).not.toHaveBeenCalled();
   });
 
   test("allows patching unrelated fields when existing external URLs are unchanged", async () => {
@@ -282,11 +355,13 @@ describe("patchV3Survey", () => {
     await patchV3Survey(currentSurveyWithExternalUrls, { name: "Renamed Feedback" }, "req_2", "org_1");
 
     expect(getExternalUrlsPermission).not.toHaveBeenCalled();
-    expect(updateSurvey).toHaveBeenCalledWith(
+    expect(prisma.survey.update).toHaveBeenCalledWith(
       expect.objectContaining({
-        name: "Renamed Feedback",
-        blocks: externalUrlBody.blocks,
-        endings: externalUrlBody.endings,
+        data: expect.objectContaining({
+          name: "Renamed Feedback",
+          blocks: externalUrlBody.blocks,
+          endings: externalUrlBody.endings,
+        }),
       })
     );
   });
@@ -305,7 +380,7 @@ describe("patchV3Survey", () => {
       )
     ).rejects.toThrow(V3SurveyWritePermissionError);
 
-    expect(updateSurvey).not.toHaveBeenCalled();
+    expect(prisma.survey.update).not.toHaveBeenCalled();
   });
 
   test("reuses external URL permission checks for patched redirect endings", async () => {
@@ -328,7 +403,7 @@ describe("patchV3Survey", () => {
       )
     ).rejects.toThrow(V3SurveyWritePermissionError);
 
-    expect(updateSurvey).not.toHaveBeenCalled();
+    expect(prisma.survey.update).not.toHaveBeenCalled();
   });
 
   test("fails closed when external URL permissions cannot resolve an organization", async () => {
@@ -345,6 +420,6 @@ describe("patchV3Survey", () => {
     ).rejects.toThrow(`Unable to verify external URL permissions for workspaceId: ${workspaceId}`);
 
     expect(getExternalUrlsPermission).not.toHaveBeenCalled();
-    expect(updateSurvey).not.toHaveBeenCalled();
+    expect(prisma.survey.update).not.toHaveBeenCalled();
   });
 });

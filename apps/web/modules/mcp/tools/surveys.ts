@@ -119,7 +119,7 @@ export function registerSurveyTools(server: McpServer): void {
     {
       title: "Create survey",
       description: "Create a Formbricks link survey using the v3 Surveys API contract.",
-      inputSchema: ZMcpCreateSurveyInput,
+      inputSchema: ZMcpCreateSurveyInput.shape,
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
@@ -168,7 +168,7 @@ export function registerSurveyTools(server: McpServer): void {
     {
       title: "Validate survey",
       description: "Validate a v3 survey create or patch payload without writing survey changes.",
-      inputSchema: ZMcpValidateSurveyInput,
+      inputSchema: ZMcpValidateSurveyInput.shape,
       annotations: {
         readOnlyHint: true,
         destructiveHint: false,

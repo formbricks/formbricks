@@ -26,7 +26,12 @@ import {
   prepareV3SurveyPatchInput,
 } from "../prepare";
 import { V3SurveyReferenceValidationError } from "../reference-validation";
-import type { TV3CreateSurveyBody, TV3SurveyDocument, TV3SurveyValidationRequestBody } from "../schemas";
+import {
+  type TV3SurveyDocument,
+  ZV3CreateSurveyBody,
+  ZV3SurveyValidationRequestBody,
+  formatV3ZodInvalidParams,
+} from "../schemas";
 import {
   V3SurveyLanguageError,
   V3SurveyUnsupportedShapeError,
@@ -43,7 +48,7 @@ type TListV3SurveysParams = {
 };
 
 type TCreateV3SurveyParams = {
-  body: TV3CreateSurveyBody;
+  body: unknown;
   authentication: TV3Authentication;
   requestId: string;
   instance: string;
@@ -76,7 +81,7 @@ type TPatchV3SurveyParams = {
 };
 
 type TValidateV3SurveyParams = {
-  body: TV3SurveyValidationRequestBody;
+  body: unknown;
   authentication: TV3Authentication;
   requestId: string;
   instance: string;
@@ -181,12 +186,23 @@ export async function createV3SurveyResponse({
   instance,
   auditLog,
 }: TCreateV3SurveyParams): Promise<Response> {
-  const log = logger.withContext({ requestId, workspaceId: body.workspaceId });
+  const log = logger.withContext({ requestId });
 
   try {
+    const parsedBody = ZV3CreateSurveyBody.safeParse(body);
+    if (!parsedBody.success) {
+      const invalidParams = formatV3ZodInvalidParams(parsedBody.error, "body");
+      log.warn({ statusCode: 400, invalidParams }, "Survey document validation failed");
+      return problemBadRequest(requestId, "Invalid survey document", {
+        invalid_params: invalidParams,
+        instance,
+      });
+    }
+
+    const createBody = parsedBody.data;
     const authResult = await requireV3WorkspaceAccess(
       authentication,
-      body.workspaceId,
+      createBody.workspaceId,
       "readWrite",
       requestId,
       instance
@@ -197,7 +213,7 @@ export async function createV3SurveyResponse({
 
     const survey = await createV3Survey(
       {
-        ...body,
+        ...createBody,
         workspaceId: authResult.workspaceId,
       },
       authentication,
@@ -460,11 +476,22 @@ export async function validateV3Survey({
   requestId,
   instance,
 }: TValidateV3SurveyParams): Promise<Response> {
-  const log = logger.withContext({ requestId, operation: body.operation });
+  const log = logger.withContext({ requestId });
 
   try {
-    if (body.operation === "create") {
-      const workspaceResult = createWorkspaceIdSchema.safeParse(body.data);
+    const parsedBody = ZV3SurveyValidationRequestBody.safeParse(body);
+    if (!parsedBody.success) {
+      const invalidParams = formatV3ZodInvalidParams(parsedBody.error, "body");
+      log.warn({ statusCode: 400, invalidParams }, "Survey validation request failed");
+      return problemBadRequest(requestId, "Invalid survey validation request", {
+        invalid_params: invalidParams,
+        instance,
+      });
+    }
+
+    const validationBody = parsedBody.data;
+    if (validationBody.operation === "create") {
+      const workspaceResult = createWorkspaceIdSchema.safeParse(validationBody.data);
       if (workspaceResult.success) {
         const authResult = await requireV3WorkspaceAccess(
           authentication,
@@ -479,14 +506,17 @@ export async function validateV3Survey({
         }
       }
 
-      return successResponse(serializeValidationResult("create", prepareV3SurveyCreateInput(body.data)), {
-        requestId,
-        cache: "private, no-store",
-      });
+      return successResponse(
+        serializeValidationResult("create", prepareV3SurveyCreateInput(validationBody.data)),
+        {
+          requestId,
+          cache: "private, no-store",
+        }
+      );
     }
 
     const { survey, response } = await getAuthorizedV3Survey({
-      surveyId: body.surveyId,
+      surveyId: validationBody.surveyId,
       authentication,
       access: "readWrite",
       requestId,
@@ -495,16 +525,19 @@ export async function validateV3Survey({
 
     if (response) {
       log.warn(
-        { statusCode: response.status, surveyId: body.surveyId },
+        { statusCode: response.status, surveyId: validationBody.surveyId },
         "Survey not found or not accessible"
       );
       return response;
     }
 
-    return successResponse(serializeValidationResult("patch", prepareV3SurveyPatchInput(survey, body.data)), {
-      requestId,
-      cache: "private, no-store",
-    });
+    return successResponse(
+      serializeValidationResult("patch", prepareV3SurveyPatchInput(survey, validationBody.data)),
+      {
+        requestId,
+        cache: "private, no-store",
+      }
+    );
   } catch (error) {
     if (error instanceof DatabaseError) {
       log.error({ error, statusCode: 500 }, "Database error");
