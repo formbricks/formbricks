@@ -253,7 +253,7 @@ export const getStripeBillingCatalog = reactCache(async (): Promise<TStripeBilli
 const toResponseOverageDisplay = (item: TStripeBillingCatalogItem): TResponseOverageDisplay | null => {
   // The tier table renders graduated semantics (each band priced separately),
   // so volume-mode prices must not be displayed with it.
-  if (!item.responsePrice || item.responsePrice.tiers_mode !== "graduated") {
+  if (item.responsePrice?.tiers_mode !== "graduated") {
     return null;
   }
 
