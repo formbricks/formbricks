@@ -1,7 +1,6 @@
 import "server-only";
 import type { AuthInfo } from "@modelcontextprotocol/sdk/server/auth/types.js";
 import type { NextRequest } from "next/server";
-import { ApiKeyPermission } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import type { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { TooManyRequestsError } from "@formbricks/types/errors";
@@ -74,8 +73,7 @@ function getMcpScopes(authentication: TAuthenticationApiKey): string[] {
   const scopes = new Set(["surveys:read"]);
   if (
     authentication.workspacePermissions.some(
-      (permission) =>
-        permission.permission === ApiKeyPermission.write || permission.permission === ApiKeyPermission.manage
+      (permission) => permission.permission === "write" || permission.permission === "manage"
     )
   ) {
     scopes.add("surveys:write");

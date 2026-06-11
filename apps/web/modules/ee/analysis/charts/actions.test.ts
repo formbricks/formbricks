@@ -11,7 +11,6 @@ const mocks = vi.hoisted(() => {
     checkFeedbackDirectoryAccess: vi.fn(),
     getIsDashboardsEnabled: vi.fn(),
     createChart: vi.fn(),
-    assertOrganizationAIConfigured: vi.fn(),
     executeTenantScopedQuery: vi.fn(),
     generateAIChartQuery: vi.fn(),
     updateChart: vi.fn(),
@@ -64,10 +63,6 @@ vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
   withAuditLogging: vi.fn((_eventName, _objectType, fn) => fn),
 }));
 
-vi.mock("@/lib/ai/service", () => ({
-  assertOrganizationAIConfigured: mocks.assertOrganizationAIConfigured,
-}));
-
 const ctx = {
   user: { id: "user-1" },
   auditLoggingCtx: {},
@@ -86,7 +81,6 @@ describe("chart Cube actions", () => {
     mocks.checkFeedbackDirectoryAccess.mockResolvedValue({
       feedbackDirectoryId: "frd-1",
     });
-    mocks.assertOrganizationAIConfigured.mockResolvedValue(undefined);
     mocks.createChart.mockResolvedValue({
       id: "chart-1",
       name: "Chart",
@@ -168,9 +162,16 @@ describe("chart Cube actions", () => {
       },
     } as any);
 
-    expect(mocks.generateAIChartQuery).toHaveBeenCalledWith("responses by sentiment");
+    expect(mocks.generateAIChartQuery).toHaveBeenCalledWith({
+      organizationId: "organization-1",
+      prompt: "responses by sentiment",
+    });
     expect(result).toMatchObject({
       chartType: "bar",
+      query: {
+        measures: ["FeedbackRecords.count"],
+        dimensions: ["FeedbackRecords.sourceType"],
+      },
       data: [{ "FeedbackRecords.count": 1 }],
     });
     expect(mocks.executeTenantScopedQuery).toHaveBeenCalledWith({

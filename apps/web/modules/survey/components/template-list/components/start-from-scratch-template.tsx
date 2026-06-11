@@ -27,10 +27,10 @@ export const StartFromScratchTemplate = ({
   createSurvey,
   loading,
   noPreview,
-}: StartFromScratchTemplateProps) => {
+}: Readonly<StartFromScratchTemplateProps>) => {
   const { t } = useTranslation();
   const customSurvey = customSurveyTemplate(t);
-  const showCreateSurveyButton = activeTemplate?.name === customSurvey.name;
+  const showCreateSurveyButton = activeTemplate?.id === customSurvey.id;
 
   const handleCardClick = () => {
     if (noPreview) {

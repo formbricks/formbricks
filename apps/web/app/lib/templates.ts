@@ -19,6 +19,8 @@ import {
 import { buildSurvey, getDefaultSurveyPreset, hiddenFieldsDefault } from "@/app/lib/survey-builder";
 import { createI18nString } from "@/lib/i18n/utils";
 
+export const CUSTOM_SURVEY_TEMPLATE_ID = "custom";
+
 const cartAbandonmentSurvey = (t: TFunction): TTemplate => {
   const reusableElementIds = [createId(), createId(), createId()];
   const block8Id = createId(); // Pre-generate ID for Block 8 (referenced by Block 6 logic)
@@ -4846,7 +4848,7 @@ export const templates = (t: TFunction): TTemplate[] => [
 
 export const customSurveyTemplate = (t: TFunction): TTemplate => {
   return {
-    id: "custom",
+    id: CUSTOM_SURVEY_TEMPLATE_ID,
     name: t("templates.custom_survey_name"),
     description: t("templates.custom_survey_description"),
     preset: {
@@ -4875,6 +4877,14 @@ export const customSurveyTemplate = (t: TFunction): TTemplate => {
       ],
     },
   };
+};
+
+export const getTemplateById = (templateId: string, t: TFunction): TTemplate | null => {
+  if (templateId === CUSTOM_SURVEY_TEMPLATE_ID) {
+    return customSurveyTemplate(t);
+  }
+
+  return templates(t).find((template) => template.id === templateId) ?? null;
 };
 
 export const previewSurvey = (workspaceName: string, t: TFunction): TSurvey => {

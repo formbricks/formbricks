@@ -1,9 +1,7 @@
 import "server-only";
-import { Output, generateText } from "ai";
 import { z } from "zod";
-import { getAiModel } from "@formbricks/ai";
 import { type TChartQuery } from "@formbricks/types/analysis";
-import { env } from "@/lib/env";
+import { generateOrganizationAIObject } from "@/lib/ai/service";
 import { generateSchemaContext } from "@/modules/ee/analysis/lib/ai-schema-context";
 import {
   FEEDBACK_DIMENSION_IDS,
@@ -15,6 +13,8 @@ import { getAIChartPromptError } from "./ai-chart-errors.server";
 
 const CUBE_NAME = "FeedbackRecords";
 const DEFAULT_MEASURE = `${CUBE_NAME}.count`;
+const AI_CHART_GENERATION_TIMEOUT_MS = 30_000;
+const AI_CHART_GENERATION_MAX_OUTPUT_TOKENS = 1024;
 
 const toEnumTuple = (values: readonly string[]): [string, ...string[]] => {
   if (values.length === 0) {
@@ -92,27 +92,37 @@ export type AIChartQueryResult = {
   query: TChartQuery;
 };
 
+type GenerateAIChartQueryInput = {
+  organizationId: string;
+  prompt: string;
+};
+
 /**
  * Translate a natural-language prompt into a normalized Cube.js chart query.
  * Throws an InvalidInputError carrying a stable AI chart error code when
  * structured output cannot be generated; provider/config/network failures
  * stay on the existing error path.
  */
-export const generateAIChartQuery = async (prompt: string): Promise<AIChartQueryResult> => {
+export const generateAIChartQuery = async ({
+  organizationId,
+  prompt,
+}: GenerateAIChartQueryInput): Promise<AIChartQueryResult> => {
   const schemaContext = generateSchemaContext();
 
   let output: AIQueryResponse;
   try {
-    const response = await generateText({
-      model: getAiModel(env),
-      output: Output.object({ schema: ZAIQueryResponse }),
+    const response = await generateOrganizationAIObject<AIQueryResponse>({
+      organizationId,
+      schema: ZAIQueryResponse,
       system: schemaContext,
       // JSON.stringify escapes embedded quotes and newlines so a hostile prompt
       // cannot break out of the "User request:" framing and inject instructions.
       prompt: `User request: ${JSON.stringify(prompt)}`,
       temperature: 0,
+      maxOutputTokens: AI_CHART_GENERATION_MAX_OUTPUT_TOKENS,
+      timeout: AI_CHART_GENERATION_TIMEOUT_MS,
     });
-    output = response.output;
+    output = response.object;
   } catch (error) {
     const promptError = getAIChartPromptError(error);
     if (promptError) {

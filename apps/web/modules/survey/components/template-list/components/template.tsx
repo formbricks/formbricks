@@ -30,10 +30,10 @@ export const Template = ({
   loading,
   selectedFilter,
   noPreview,
-}: TemplateProps) => {
+}: Readonly<TemplateProps>) => {
   const { t } = useTranslation();
 
-  const showCreateSurveyButton = activeTemplate?.name === template.name;
+  const showCreateSurveyButton = activeTemplate?.id === template.id;
 
   const handleCardClick = () => {
     const newTemplate = replacePresetPlaceholders(template, workspace);
@@ -74,7 +74,7 @@ export const Template = ({
   }
 
   return (
-    <button type="button" className={cardClass} onClick={handleCardClick} key={template.name}>
+    <button type="button" className={cardClass} onClick={handleCardClick}>
       {cardContent}
     </button>
   );

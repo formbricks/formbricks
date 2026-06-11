@@ -5,41 +5,22 @@ import { AI_CHART_PROMPT_ERROR_CODE } from "./ai-chart-errors";
 import { ZAIQueryResponse, generateAIChartQuery } from "./ai-chart-query.server";
 
 const mocks = vi.hoisted(() => ({
-  generateText: vi.fn(),
-  getAiModel: vi.fn(),
+  generateOrganizationAIObject: vi.fn(),
 }));
 
 vi.mock("server-only", () => ({}));
 
-vi.mock("@formbricks/ai", () => ({
-  getAiModel: mocks.getAiModel,
-}));
-
-vi.mock("@/lib/env", () => ({
-  env: {},
+vi.mock("@/lib/ai/service", () => ({
+  generateOrganizationAIObject: mocks.generateOrganizationAIObject,
 }));
 
 vi.mock("@/modules/ee/analysis/lib/ai-schema-context", () => ({
   generateSchemaContext: vi.fn(() => "schema context"),
 }));
 
-// Partial mock so NoObjectGeneratedError keeps its real isInstance marker check.
-// Faking it by name string masks SDK contract drift.
-vi.mock("ai", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("ai")>();
-  return {
-    ...actual,
-    Output: {
-      object: vi.fn(({ schema }) => schema),
-    },
-    generateText: mocks.generateText,
-  };
-});
-
 describe("generateAIChartQuery", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.getAiModel.mockReturnValue("model");
   });
 
   afterEach(() => {
@@ -47,8 +28,8 @@ describe("generateAIChartQuery", () => {
   });
 
   test("returns the AI-generated chart type and normalized query for a clean response", async () => {
-    mocks.generateText.mockResolvedValueOnce({
-      output: {
+    mocks.generateOrganizationAIObject.mockResolvedValueOnce({
+      object: {
         measures: ["FeedbackRecords.count"],
         dimensions: ["FeedbackRecords.sourceType"],
         timeDimensions: null,
@@ -57,7 +38,10 @@ describe("generateAIChartQuery", () => {
       },
     });
 
-    const result = await generateAIChartQuery("responses by sentiment");
+    const result = await generateAIChartQuery({
+      organizationId: "organization-1",
+      prompt: "responses by sentiment",
+    });
 
     expect(result).toEqual({
       chartType: "bar",
@@ -66,11 +50,21 @@ describe("generateAIChartQuery", () => {
         dimensions: ["FeedbackRecords.sourceType"],
       },
     });
+    expect(mocks.generateOrganizationAIObject).toHaveBeenCalledWith(
+      expect.objectContaining({
+        organizationId: "organization-1",
+        system: "schema context",
+        prompt: 'User request: "responses by sentiment"',
+        temperature: 0,
+        maxOutputTokens: 1024,
+        timeout: 30000,
+      })
+    );
   });
 
   test("maps NPS score prompts to the NPS score measure", async () => {
-    mocks.generateText.mockResolvedValueOnce({
-      output: {
+    mocks.generateOrganizationAIObject.mockResolvedValueOnce({
+      object: {
         measures: ["FeedbackRecords.npsScore"],
         dimensions: null,
         timeDimensions: null,
@@ -79,7 +73,10 @@ describe("generateAIChartQuery", () => {
       },
     });
 
-    const result = await generateAIChartQuery("create a big number chart with the NPS score");
+    const result = await generateAIChartQuery({
+      organizationId: "organization-1",
+      prompt: "create a big number chart with the NPS score",
+    });
 
     expect(result).toEqual({
       chartType: "big_number",
@@ -88,8 +85,8 @@ describe("generateAIChartQuery", () => {
   });
 
   test("falls back to the total count measure when the AI returns no measures", async () => {
-    mocks.generateText.mockResolvedValueOnce({
-      output: {
+    mocks.generateOrganizationAIObject.mockResolvedValueOnce({
+      object: {
         measures: [],
         dimensions: null,
         timeDimensions: null,
@@ -98,14 +95,17 @@ describe("generateAIChartQuery", () => {
       },
     });
 
-    const result = await generateAIChartQuery("show a big number");
+    const result = await generateAIChartQuery({
+      organizationId: "organization-1",
+      prompt: "show a big number",
+    });
 
     expect(result.query.measures).toEqual(["FeedbackRecords.count"]);
   });
 
   test("normalizes filters and time dimensions, dropping null-only optional fields", async () => {
-    mocks.generateText.mockResolvedValueOnce({
-      output: {
+    mocks.generateOrganizationAIObject.mockResolvedValueOnce({
+      object: {
         measures: ["FeedbackRecords.count"],
         dimensions: null,
         timeDimensions: [
@@ -120,7 +120,10 @@ describe("generateAIChartQuery", () => {
       },
     });
 
-    const result = await generateAIChartQuery("trend over time");
+    const result = await generateAIChartQuery({
+      organizationId: "organization-1",
+      prompt: "trend over time",
+    });
 
     expect(result.query.timeDimensions).toEqual([
       { dimension: "FeedbackRecords.collectedAt", granularity: "day", dateRange: "last 30 days" },
@@ -175,9 +178,13 @@ describe("generateAIChartQuery", () => {
   });
 
   test("converts AI structured-output failures into a prompt error", async () => {
-    mocks.generateText.mockRejectedValueOnce(new NoObjectGeneratedError({ message: "No object generated" }));
+    mocks.generateOrganizationAIObject.mockRejectedValueOnce(
+      new NoObjectGeneratedError({ message: "No object generated" })
+    );
 
-    await expect(generateAIChartQuery("anything")).rejects.toMatchObject({
+    await expect(
+      generateAIChartQuery({ organizationId: "organization-1", prompt: "anything" })
+    ).rejects.toMatchObject({
       name: InvalidInputError.name,
       message: AI_CHART_PROMPT_ERROR_CODE,
     });
@@ -185,14 +192,18 @@ describe("generateAIChartQuery", () => {
 
   test("does not convert provider failures", async () => {
     const providerError = new Error("billing disabled");
-    mocks.generateText.mockRejectedValueOnce(providerError);
+    mocks.generateOrganizationAIObject.mockRejectedValueOnce(providerError);
 
-    await expect(generateAIChartQuery("anything")).rejects.toBe(providerError);
+    await expect(generateAIChartQuery({ organizationId: "organization-1", prompt: "anything" })).rejects.toBe(
+      providerError
+    );
   });
 
   test("does not convert non-Error rejections", async () => {
-    mocks.generateText.mockRejectedValueOnce("string failure");
+    mocks.generateOrganizationAIObject.mockRejectedValueOnce("string failure");
 
-    await expect(generateAIChartQuery("anything")).rejects.toBe("string failure");
+    await expect(generateAIChartQuery({ organizationId: "organization-1", prompt: "anything" })).rejects.toBe(
+      "string failure"
+    );
   });
 });

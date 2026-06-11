@@ -4,7 +4,6 @@ import { z } from "zod";
 import { ZChartQuery } from "@formbricks/types/analysis";
 import { ZId } from "@formbricks/types/common";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
-import { assertOrganizationAIConfigured } from "@/lib/ai/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { AuthenticatedActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { executeTenantScopedQuery } from "@/modules/ee/analysis/api/lib/cube-client";
@@ -306,8 +305,6 @@ export const generateAIChartAction = authenticatedActionClient
 
       await checkDashboardsEnabled(organizationId);
 
-      await assertOrganizationAIConfigured(organizationId);
-
       const { feedbackDirectoryId } = await checkFeedbackDirectoryAccess({
         feedbackDirectoryId: parsedInput.feedbackDirectoryId,
         organizationId,
@@ -316,10 +313,15 @@ export const generateAIChartAction = authenticatedActionClient
         source: "charts.generateAIChartAction",
       });
 
-      const { chartType, query } = await generateAIChartQuery(parsedInput.prompt);
+      const { chartType, query } = await generateAIChartQuery({
+        organizationId,
+        prompt: parsedInput.prompt,
+      });
+
+      const validatedQuery = ZChartQuery.parse(query);
 
       const data = await executeTenantScopedQuery({
-        query,
+        query: validatedQuery,
         feedbackDirectoryId,
         workspaceId,
         organizationId,
@@ -328,7 +330,7 @@ export const generateAIChartAction = authenticatedActionClient
       });
 
       return {
-        query,
+        query: validatedQuery,
         chartType,
         data: Array.isArray(data) ? data : [],
       };

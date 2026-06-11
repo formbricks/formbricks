@@ -195,7 +195,11 @@ export const ManageTranslationsModal = ({
   const handleSave = () => {
     const updatedSurvey = structuredClone(localSurvey);
     for (const s of strings) {
-      const val = draftTranslations[s.path] ?? "";
+      const draft = draftTranslations[s.path] ?? "";
+      // Rich-text editors keep an empty wrapper like "<p><br></p>" in the draft. That's
+      // visually empty but a non-empty string, so without normalization it would survive
+      // save and downstream checks would treat the field as translated.
+      const val = s.isRichText && getTextContent(draft).trim() === "" ? "" : draft;
       setTranslationAtPathMutable(updatedSurvey, s.path, languageCode, val);
     }
     setLocalSurvey(updatedSurvey);

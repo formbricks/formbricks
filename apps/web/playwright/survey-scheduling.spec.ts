@@ -4,7 +4,7 @@ import {
   SURVEY_SCHEDULING_TIME_ZONE_LABEL,
 } from "@/modules/survey/scheduling/lib/constants";
 import { test } from "./lib/fixtures";
-import { startSurveyFromScratch } from "./lib/utils";
+import { createSurveyFromScratch } from "./utils/helper";
 
 const formatSelectedDate = (date: Date): string =>
   new Intl.DateTimeFormat("en-US", {
@@ -54,9 +54,7 @@ const openResponseOptions = async (page: Page) => {
 };
 
 const createMinimalSurvey = async (page: Page) => {
-  await startSurveyFromScratch(page, {
-    waitForEditUrl: /\/workspaces\/[^/]+\/surveys\/[^/]+\/edit$/,
-  });
+  await createSurveyFromScratch(page);
 };
 
 const publishScheduleSummary = `Survey will be published at ${SURVEY_SCHEDULING_TIME_LABEL} in the ${SURVEY_SCHEDULING_TIME_ZONE_LABEL} timezone on the selected date`;

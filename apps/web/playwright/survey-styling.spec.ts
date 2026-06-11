@@ -1,6 +1,6 @@
 import { expect } from "@playwright/test";
 import { test } from "./lib/fixtures";
-import { startSurveyFromScratch } from "./lib/utils";
+import { createSurveyFromScratch } from "./utils/helper";
 
 test.describe("Survey Styling", async () => {
   // Shared Helpers
@@ -306,10 +306,7 @@ test.describe("Survey Styling", async () => {
     await user.login();
     await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
 
-    // Create a new survey
-    await startSurveyFromScratch(page, {
-      waitForEditUrl: /\/workspaces\/[^/]+\/surveys\/[^/]+\/edit$/,
-    });
+    await createSurveyFromScratch(page);
 
     // Ensure Welcome Card is active so we can see it
     await page.locator("p", { hasText: "Welcome card" }).first().click({ force: true });
