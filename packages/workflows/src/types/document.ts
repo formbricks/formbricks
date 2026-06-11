@@ -109,11 +109,13 @@ const validateWorkflowGraph = (definition: TWorkflowDefinitionBase, ctx: z.Refin
     }
   }
 
+  // At most one so trigger-only drafts (no nodes/edges yet) stay persistable;
+  // the executable definition requires exactly one.
   const triggerEdges = definition.edges.filter((edge) => edge.source === definition.trigger.id);
-  if (triggerEdges.length !== 1) {
+  if (triggerEdges.length > 1) {
     ctx.addIssue({
       code: "custom",
-      message: "A workflow must have exactly one outgoing trigger edge",
+      message: "A workflow can have at most one outgoing trigger edge",
       path: ["edges"],
     });
   }
@@ -151,6 +153,15 @@ export const ZWorkflowDefinition = ZWorkflowDefinitionBase.superRefine(validateW
 export type TWorkflowDefinition = z.infer<typeof ZWorkflowDefinition>;
 
 const validateExecutableGraph = (definition: TWorkflowDefinitionBase, ctx: z.RefinementCtx): void => {
+  const triggerEdges = definition.edges.filter((edge) => edge.source === definition.trigger.id);
+  if (triggerEdges.length !== 1) {
+    ctx.addIssue({
+      code: "custom",
+      message: "An executable workflow must have exactly one outgoing trigger edge",
+      path: ["edges"],
+    });
+  }
+
   const nodesById = new Map<string, TWorkflowNode>([[definition.trigger.id, definition.trigger]]);
   for (const node of definition.nodes) {
     nodesById.set(node.id, node);

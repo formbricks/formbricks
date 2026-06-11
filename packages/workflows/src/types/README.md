@@ -58,12 +58,12 @@ Example:
 
 ```json
 {
+  "collapsed": false,
+  "color": "blue",
   "position": {
     "x": 0,
     "y": 0
-  },
-  "collapsed": false,
-  "color": "blue"
+  }
 }
 ```
 
@@ -81,8 +81,8 @@ Example:
 
 ```json
 {
-  "path": "response.email",
-  "fallback": "support@example.com"
+  "fallback": "support@example.com",
+  "path": "response.email"
 }
 ```
 
@@ -103,14 +103,14 @@ Example:
 ```json
 {
   "id": "send-email",
-  "type": "action",
   "label": "Send thank you email",
+  "type": "action",
   "ui": {
+    "collapsed": false,
     "position": {
       "x": 320,
       "y": 0
-    },
-    "collapsed": false
+    }
   }
 }
 ```
@@ -157,48 +157,49 @@ Example:
 
 ```json
 {
-  "schemaVersion": 1,
-  "entryNodeId": "trigger",
-  "trigger": {
-    "id": "trigger",
-    "type": "trigger",
-    "triggerType": "response.completed",
-    "config": {
-      "surveyId": "cm9zr4mps000008l8btfy1vtz",
-      "endingCardIds": []
-    }
-  },
-  "nodes": [
-    {
-      "id": "send-email",
-      "type": "action",
-      "actionType": "send_email",
-      "config": {
-        "to": "{{response.email}}",
-        "from": "noreply@example.com",
-        "replyTo": ["support@example.com"],
-        "subject": "Thanks for your response",
-        "body": "We received your response.",
-        "attachResponseData": true,
-        "includeVariables": false,
-        "includeHiddenFields": false
-      }
-    }
-  ],
   "edges": [
     {
       "id": "trigger-send-email",
       "source": "trigger",
       "target": "send-email"
     }
-  ]
+  ],
+  "entryNodeId": "trigger",
+  "nodes": [
+    {
+      "actionType": "send_email",
+      "config": {
+        "attachResponseData": true,
+        "body": "We received your response.",
+        "from": "noreply@example.com",
+        "includeHiddenFields": false,
+        "includeVariables": false,
+        "replyTo": ["support@example.com"],
+        "subject": "Thanks for your response",
+        "to": "{{response.email}}"
+      },
+      "id": "send-email",
+      "type": "action"
+    }
+  ],
+  "schemaVersion": 1,
+  "trigger": {
+    "config": {
+      "endingCardIds": [],
+      "surveyId": "cm9zr4mps000008l8btfy1vtz"
+    },
+    "id": "trigger",
+    "triggerType": "response.completed",
+    "type": "trigger"
+  }
 }
 ```
 
 ### `ZWorkflowDefinition` / `TWorkflowDefinition`
 
 Persisted workflow definition with graph validation. It rejects duplicate node ids, invalid edge references,
-wrong `if_else` branch handles, and definitions where the trigger does not have exactly one outgoing edge.
+wrong `if_else` branch handles, and definitions where the trigger has more than one outgoing edge (a
+trigger-only draft with no nodes or edges is valid; only the executable definition requires the edge).
 
 It uses the same object shape as `ZWorkflowDefinitionBase`.
 
@@ -206,39 +207,39 @@ Example:
 
 ```json
 {
-  "schemaVersion": 1,
-  "entryNodeId": "trigger",
-  "trigger": {
-    "id": "trigger",
-    "type": "trigger",
-    "triggerType": "response.completed",
-    "config": {
-      "surveyId": "cm9zr4mps000008l8btfy1vtz",
-      "endingCardIds": ["cm9zr4q7i000108l84gozfggr"]
-    }
-  },
-  "nodes": [
-    {
-      "id": "send-email",
-      "type": "action",
-      "actionType": "send_email",
-      "config": {
-        "to": "{{response.email}}",
-        "from": "noreply@example.com",
-        "replyTo": ["support@example.com"],
-        "subject": "Thanks",
-        "body": "Thanks for your response.",
-        "attachResponseData": false
-      }
-    }
-  ],
   "edges": [
     {
       "id": "trigger-send-email",
       "source": "trigger",
       "target": "send-email"
     }
-  ]
+  ],
+  "entryNodeId": "trigger",
+  "nodes": [
+    {
+      "actionType": "send_email",
+      "config": {
+        "attachResponseData": false,
+        "body": "Thanks for your response.",
+        "from": "noreply@example.com",
+        "replyTo": ["support@example.com"],
+        "subject": "Thanks",
+        "to": "{{response.email}}"
+      },
+      "id": "send-email",
+      "type": "action"
+    }
+  ],
+  "schemaVersion": 1,
+  "trigger": {
+    "config": {
+      "endingCardIds": ["cm9zr4q7i000108l84gozfggr"],
+      "surveyId": "cm9zr4mps000008l8btfy1vtz"
+    },
+    "id": "trigger",
+    "triggerType": "response.completed",
+    "type": "trigger"
+  }
 }
 ```
 
@@ -260,39 +261,39 @@ Example:
 
 ```json
 {
-  "schemaVersion": 1,
-  "entryNodeId": "trigger",
-  "trigger": {
-    "id": "trigger",
-    "type": "trigger",
-    "triggerType": "response.completed",
-    "config": {
-      "surveyId": "cm9zr4mps000008l8btfy1vtz",
-      "endingCardIds": []
-    }
-  },
-  "nodes": [
-    {
-      "id": "send-email",
-      "type": "action",
-      "actionType": "send_email",
-      "config": {
-        "to": "jane@example.com",
-        "from": "noreply@example.com",
-        "replyTo": ["support@example.com"],
-        "subject": "Thanks",
-        "body": "Thanks for your response.",
-        "attachResponseData": false
-      }
-    }
-  ],
   "edges": [
     {
       "id": "trigger-send-email",
       "source": "trigger",
       "target": "send-email"
     }
-  ]
+  ],
+  "entryNodeId": "trigger",
+  "nodes": [
+    {
+      "actionType": "send_email",
+      "config": {
+        "attachResponseData": false,
+        "body": "Thanks for your response.",
+        "from": "noreply@example.com",
+        "replyTo": ["support@example.com"],
+        "subject": "Thanks",
+        "to": "jane@example.com"
+      },
+      "id": "send-email",
+      "type": "action"
+    }
+  ],
+  "schemaVersion": 1,
+  "trigger": {
+    "config": {
+      "endingCardIds": [],
+      "surveyId": "cm9zr4mps000008l8btfy1vtz"
+    },
+    "id": "trigger",
+    "triggerType": "response.completed",
+    "type": "trigger"
+  }
 }
 ```
 
@@ -311,8 +312,8 @@ Example:
 
 ```json
 {
-  "surveyId": "cm9zr4mps000008l8btfy1vtz",
-  "endingCardIds": ["cm9zr4q7i000108l84gozfggr"]
+  "endingCardIds": ["cm9zr4q7i000108l84gozfggr"],
+  "surveyId": "cm9zr4mps000008l8btfy1vtz"
 }
 ```
 
@@ -333,14 +334,14 @@ Example:
 
 ```json
 {
-  "id": "trigger",
-  "type": "trigger",
-  "triggerType": "response.completed",
-  "label": "Survey response completed",
   "config": {
-    "surveyId": "cm9zr4mps000008l8btfy1vtz",
-    "endingCardIds": []
+    "endingCardIds": [],
+    "surveyId": "cm9zr4mps000008l8btfy1vtz"
   },
+  "id": "trigger",
+  "label": "Survey response completed",
+  "triggerType": "response.completed",
+  "type": "trigger",
   "ui": {
     "position": {
       "x": 0,
@@ -369,17 +370,17 @@ Example:
 
 ```json
 {
-  "type": "response.completed",
-  "workspaceId": "cm9zr4wsp000508l8y6nh9r2v",
-  "surveyId": "cm9zr4mps000008l8btfy1vtz",
-  "responseId": "cm9zr4rsp000708l8bqccpfrx",
-  "endingCardId": "cm9zr4q7i000108l84gozfggr",
   "data": {
     "response": {
       "email": "jane@example.com",
       "score": 9
     }
-  }
+  },
+  "endingCardId": "cm9zr4q7i000108l84gozfggr",
+  "responseId": "cm9zr4rsp000708l8bqccpfrx",
+  "surveyId": "cm9zr4mps000008l8btfy1vtz",
+  "type": "response.completed",
+  "workspaceId": "cm9zr4wsp000508l8y6nh9r2v"
 }
 ```
 
@@ -404,14 +405,14 @@ Example:
 
 ```json
 {
-  "to": "{{response.email}}",
+  "attachResponseData": true,
+  "body": "We received your response.",
   "from": "noreply@example.com",
+  "includeHiddenFields": false,
+  "includeVariables": false,
   "replyTo": ["support@example.com"],
   "subject": "Thanks for your response",
-  "body": "We received your response.",
-  "attachResponseData": true,
-  "includeVariables": false,
-  "includeHiddenFields": false
+  "to": "{{response.email}}"
 }
 ```
 
@@ -432,18 +433,18 @@ Example:
 
 ```json
 {
-  "id": "send-email",
-  "type": "action",
   "actionType": "send_email",
-  "label": "Send thank you email",
   "config": {
-    "to": "{{response.email}}",
+    "attachResponseData": false,
+    "body": "Thanks for your response.",
     "from": "noreply@example.com",
     "replyTo": ["support@example.com"],
     "subject": "Thanks",
-    "body": "Thanks for your response.",
-    "attachResponseData": false
+    "to": "{{response.email}}"
   },
+  "id": "send-email",
+  "label": "Send thank you email",
+  "type": "action",
   "ui": {
     "position": {
       "x": 320,
@@ -495,8 +496,6 @@ Example:
 
 ```json
 {
-  "id": "qualified-response",
-  "connector": "and",
   "conditions": [
     {
       "id": "email-exists",
@@ -513,7 +512,9 @@ Example:
       "operator": "greaterThan",
       "right": 8
     }
-  ]
+  ],
+  "connector": "and",
+  "id": "qualified-response"
 }
 ```
 
@@ -539,13 +540,8 @@ Example:
 
 ```json
 {
-  "id": "condition",
-  "type": "if_else",
-  "label": "Qualified response",
   "config": {
     "condition": {
-      "id": "qualified-response",
-      "connector": "and",
       "conditions": [
         {
           "id": "score-high",
@@ -555,9 +551,14 @@ Example:
           "operator": "greaterThan",
           "right": 8
         }
-      ]
+      ],
+      "connector": "and",
+      "id": "qualified-response"
     }
   },
+  "id": "condition",
+  "label": "Qualified response",
+  "type": "if_else",
   "ui": {
     "collapsed": true
   }
@@ -580,17 +581,17 @@ Example:
 
 ```json
 {
-  "type": "response.completed",
-  "workspaceId": "cm9zr4wsp000508l8y6nh9r2v",
-  "surveyId": "cm9zr4mps000008l8btfy1vtz",
-  "responseId": "cm9zr4rsp000708l8bqccpfrx",
-  "endingCardId": "cm9zr4q7i000108l84gozfggr",
-  "triggeredAt": "2026-06-09T12:01:00.000Z",
   "data": {
     "response": {
       "email": "jane@example.com"
     }
-  }
+  },
+  "endingCardId": "cm9zr4q7i000108l84gozfggr",
+  "responseId": "cm9zr4rsp000708l8bqccpfrx",
+  "surveyId": "cm9zr4mps000008l8btfy1vtz",
+  "triggeredAt": "2026-06-09T12:01:00.000Z",
+  "type": "response.completed",
+  "workspaceId": "cm9zr4wsp000508l8y6nh9r2v"
 }
 ```
 
@@ -606,8 +607,8 @@ Example:
 
 ```json
 {
-  "to": "jane@example.com",
-  "subject": "Thanks"
+  "subject": "Thanks",
+  "to": "jane@example.com"
 }
 ```
 
@@ -647,19 +648,19 @@ Example:
 
 ```json
 {
-  "stepId": "send-email",
-  "stepType": "send_email",
-  "status": "failed",
+  "error": "SMTP provider rejected the message",
+  "finishedAt": "2026-06-09T12:01:03.000Z",
   "input": {
-    "to": "jane@example.com",
-    "subject": "Thanks"
+    "subject": "Thanks",
+    "to": "jane@example.com"
   },
   "output": {
     "provider": "smtp"
   },
-  "error": "SMTP provider rejected the message",
   "startedAt": "2026-06-09T12:01:01.000Z",
-  "finishedAt": "2026-06-09T12:01:03.000Z"
+  "status": "failed",
+  "stepId": "send-email",
+  "stepType": "send_email"
 }
 ```
 
@@ -679,20 +680,20 @@ Example:
 ```json
 {
   "attempt": 1,
-  "trigger": {
-    "type": "response.completed",
-    "workspaceId": "cm9zr4wsp000508l8y6nh9r2v",
-    "surveyId": "cm9zr4mps000008l8btfy1vtz",
-    "responseId": "cm9zr4rsp000708l8bqccpfrx",
-    "triggeredAt": "2026-06-09T12:01:00.000Z"
-  },
   "steps": [
     {
+      "status": "succeeded",
       "stepId": "send-email",
-      "stepType": "send_email",
-      "status": "succeeded"
+      "stepType": "send_email"
     }
-  ]
+  ],
+  "trigger": {
+    "responseId": "cm9zr4rsp000708l8bqccpfrx",
+    "surveyId": "cm9zr4mps000008l8btfy1vtz",
+    "triggeredAt": "2026-06-09T12:01:00.000Z",
+    "type": "response.completed",
+    "workspaceId": "cm9zr4wsp000508l8y6nh9r2v"
+  }
 }
 ```
 
@@ -714,47 +715,47 @@ Example:
 
 ```json
 {
-  "id": "cm9zr4ver000308l8h4hn6f5x",
-  "workflowId": "cm9zr4wrk000408l8tmq2r7ua",
-  "workspaceId": "cm9zr4wsp000508l8y6nh9r2v",
-  "version": 1,
-  "publishedAt": "2026-06-09T12:00:00.000Z",
-  "publishedBy": "cm9zr4usr000608l8ly1pkz8r",
   "definition": {
-    "schemaVersion": 1,
-    "entryNodeId": "trigger",
-    "trigger": {
-      "id": "trigger",
-      "type": "trigger",
-      "triggerType": "response.completed",
-      "config": {
-        "surveyId": "cm9zr4mps000008l8btfy1vtz",
-        "endingCardIds": []
-      }
-    },
-    "nodes": [
-      {
-        "id": "send-email",
-        "type": "action",
-        "actionType": "send_email",
-        "config": {
-          "to": "{{response.email}}",
-          "from": "noreply@example.com",
-          "replyTo": ["support@example.com"],
-          "subject": "Thanks",
-          "body": "Thanks for your response.",
-          "attachResponseData": false
-        }
-      }
-    ],
     "edges": [
       {
         "id": "trigger-send-email",
         "source": "trigger",
         "target": "send-email"
       }
-    ]
-  }
+    ],
+    "entryNodeId": "trigger",
+    "nodes": [
+      {
+        "actionType": "send_email",
+        "config": {
+          "attachResponseData": false,
+          "body": "Thanks for your response.",
+          "from": "noreply@example.com",
+          "replyTo": ["support@example.com"],
+          "subject": "Thanks",
+          "to": "{{response.email}}"
+        },
+        "id": "send-email",
+        "type": "action"
+      }
+    ],
+    "schemaVersion": 1,
+    "trigger": {
+      "config": {
+        "endingCardIds": [],
+        "surveyId": "cm9zr4mps000008l8btfy1vtz"
+      },
+      "id": "trigger",
+      "triggerType": "response.completed",
+      "type": "trigger"
+    }
+  },
+  "id": "cm9zr4ver000308l8h4hn6f5x",
+  "publishedAt": "2026-06-09T12:00:00.000Z",
+  "publishedBy": "cm9zr4usr000608l8ly1pkz8r",
+  "version": 1,
+  "workflowId": "cm9zr4wrk000408l8tmq2r7ua",
+  "workspaceId": "cm9zr4wsp000508l8y6nh9r2v"
 }
 ```
 
@@ -780,12 +781,9 @@ Example:
 
 ```json
 {
+  "error": "SMTP provider rejected the message",
+  "finishedAt": "2026-06-09T12:01:03.000Z",
   "id": "cm9zr4log000808l8f36vw9sz",
-  "runId": "cm9zr4run000908l8q9b9d3pm",
-  "sequence": 1,
-  "stepId": "send-email",
-  "stepType": "send_email",
-  "status": "failed",
   "input": {
     "subject": "Thanks",
     "to": "jane@example.com"
@@ -793,9 +791,12 @@ Example:
   "output": {
     "provider": "smtp"
   },
-  "error": "SMTP provider rejected the message",
+  "runId": "cm9zr4run000908l8q9b9d3pm",
+  "sequence": 1,
   "startedAt": "2026-06-09T12:01:01.000Z",
-  "finishedAt": "2026-06-09T12:01:03.000Z"
+  "status": "failed",
+  "stepId": "send-email",
+  "stepType": "send_email"
 }
 ```
 

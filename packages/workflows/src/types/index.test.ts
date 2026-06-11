@@ -132,6 +132,27 @@ describe("@formbricks/workflows", () => {
     expect(() => ZWorkflowDefinition.parse(definition)).toThrow(/Edge target/);
   });
 
+  test("allows persisting a trigger-only draft definition", () => {
+    const definition = { ...createDefinition(), nodes: [], edges: [] };
+
+    expect(ZWorkflowDefinition.parse(definition).nodes).toHaveLength(0);
+  });
+
+  test("rejects definitions with multiple outgoing trigger edges", () => {
+    const definition = createDefinition();
+    definition.edges.push({ id: "trigger-send-email-2", source: "trigger", target: "send-email" });
+
+    expect(() => ZWorkflowDefinition.parse(definition)).toThrow(/at most one outgoing trigger edge/);
+  });
+
+  test("rejects executable definitions without an outgoing trigger edge", () => {
+    const definition = { ...createDefinition(), nodes: [], edges: [] };
+
+    expect(() => ZWorkflowExecutableDefinition.parse(definition)).toThrow(
+      /exactly one outgoing trigger edge/
+    );
+  });
+
   test("allows if_else in generic definitions but rejects it for executable definitions", () => {
     const definition = {
       ...createDefinition(),
