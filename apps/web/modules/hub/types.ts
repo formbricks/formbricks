@@ -26,6 +26,13 @@ export type TaxonomyFieldOption = TaxonomyScope & {
 
 export type TaxonomyRunStatus = "pending" | "running" | "succeeded" | "failed" | "canceled";
 
+export type TaxonomyRunFailureCode =
+  | "insufficient_data"
+  | "service_unavailable"
+  | "generation_failed"
+  | "invalid_output"
+  | "internal_error";
+
 export type TaxonomyRun = TaxonomyScope & {
   id: string;
   field_label?: string;
@@ -37,6 +44,7 @@ export type TaxonomyRun = TaxonomyScope & {
   cluster_count: number;
   node_count: number;
   error?: string;
+  error_code?: TaxonomyRunFailureCode;
   started_at?: string;
   finished_at?: string;
   created_at: string;

@@ -11,6 +11,7 @@ import type {
   TaxonomyNode,
   TaxonomyNodeRecordsResponse,
   TaxonomyRun,
+  TaxonomyRunFailureCode,
   TaxonomyScope,
   TaxonomyTreeResponse,
 } from "@/modules/hub/types";
@@ -46,6 +47,14 @@ interface TopicsSubtopicsPreviewProps {
 
 const RUNNING_STATUSES = new Set(["pending", "running"]);
 
+const RUN_FAILURE_MESSAGES: Record<TaxonomyRunFailureCode, string> = {
+  insufficient_data: "Not enough embedded feedback records are available for this field.",
+  service_unavailable: "Taxonomy generation is temporarily unavailable.",
+  generation_failed: "Taxonomy generation failed.",
+  invalid_output: "The generated taxonomy could not be validated.",
+  internal_error: "Taxonomy generation failed because of an internal error.",
+};
+
 const fieldKey = (field: TaxonomyFieldOption) =>
   [field.source_type, field.source_id, field.field_id].join("::");
 
@@ -64,6 +73,9 @@ const statusBadgeType = (status: TaxonomyRun["status"]): "warning" | "success" |
   if (status === "pending" || status === "running") return "warning";
   return "gray";
 };
+
+const runErrorMessage = (run: TaxonomyRun) =>
+  run.error ?? (run.error_code ? RUN_FAILURE_MESSAGES[run.error_code] : null);
 
 export const TopicsSubtopicsPreview = ({
   workspaceId,
@@ -115,6 +127,7 @@ export const TopicsSubtopicsPreview = ({
     [selectedField]
   );
   const latestRun = runs[0] ?? null;
+  const latestRunError = latestRun ? runErrorMessage(latestRun) : null;
   const hasRunningRun = latestRun ? RUNNING_STATUSES.has(latestRun.status) : false;
   const canGenerate = Boolean(selectedField && canWrite && !hasRunningRun && !isGenerating);
 
@@ -466,7 +479,7 @@ export const TopicsSubtopicsPreview = ({
               </span>
               {hasRunningRun && <Loader2Icon className="size-4 animate-spin text-slate-500" />}
             </div>
-            {latestRun.error && <p className="mt-2 text-sm text-red-700">{latestRun.error}</p>}
+            {latestRunError && <p className="mt-2 text-sm text-red-700">{latestRunError}</p>}
           </div>
         )}
 
