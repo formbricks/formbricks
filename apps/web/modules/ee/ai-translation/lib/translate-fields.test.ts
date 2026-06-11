@@ -23,6 +23,19 @@ const fields: TAITranslationField[] = [
   { path: "questions.0.html.default", defaultText: "<p>Hello</p>", isRichText: true },
 ];
 
+const makeFields = (count: number): TAITranslationField[] =>
+  Array.from({ length: count }, (_, index) => ({
+    path: `questions.${index}.headline.default`,
+    defaultText: `Text ${index}`,
+    isRichText: false,
+  }));
+
+const mockTranslationsFor = (fieldList: TAITranslationField[]): void => {
+  mockGenerateOrganizationAIObject.mockResolvedValue({
+    object: Object.fromEntries(fieldList.map((_, index) => [`t${index}`, `Translated ${index}`])),
+  });
+};
+
 describe("translateFields", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -66,7 +79,33 @@ describe("translateFields", () => {
 
     await translateFields({ ...baseInput, fields });
 
-    expect(mockGenerateOrganizationAIObject.mock.calls[0][0].temperature).toBe(0);
+    expect(mockGenerateOrganizationAIObject.mock.calls[0][0]).toMatchObject({
+      temperature: 0,
+      maxOutputTokens: 1024,
+      timeout: 45000,
+    });
+  });
+
+  test("scales maxOutputTokens with field count in the mid-range", async () => {
+    const midRangeFields = makeFields(20);
+    mockTranslationsFor(midRangeFields);
+
+    await translateFields({ ...baseInput, fields: midRangeFields });
+
+    expect(mockGenerateOrganizationAIObject.mock.calls[0][0]).toMatchObject({
+      maxOutputTokens: 3200,
+    });
+  });
+
+  test("clamps maxOutputTokens to the maximum for large translation batches", async () => {
+    const largeBatchFields = makeFields(60);
+    mockTranslationsFor(largeBatchFields);
+
+    await translateFields({ ...baseInput, fields: largeBatchFields });
+
+    expect(mockGenerateOrganizationAIObject.mock.calls[0][0]).toMatchObject({
+      maxOutputTokens: 8192,
+    });
   });
 
   test("returns empty object without calling the model when no fields are provided", async () => {

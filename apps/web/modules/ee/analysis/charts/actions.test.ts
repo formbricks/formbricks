@@ -11,10 +11,8 @@ const mocks = vi.hoisted(() => {
     checkFeedbackDirectoryAccess: vi.fn(),
     getIsDashboardsEnabled: vi.fn(),
     createChart: vi.fn(),
-    getAiModel: vi.fn(),
-    assertOrganizationAIConfigured: vi.fn(),
     executeTenantScopedQuery: vi.fn(),
-    generateText: vi.fn(),
+    generateOrganizationAIObject: vi.fn(),
     updateChart: vi.fn(),
   };
 });
@@ -65,27 +63,12 @@ vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
   withAuditLogging: vi.fn((_eventName, _objectType, fn) => fn),
 }));
 
-vi.mock("@formbricks/ai", () => ({
-  getAiModel: mocks.getAiModel,
-}));
-
 vi.mock("@/lib/ai/service", () => ({
-  assertOrganizationAIConfigured: mocks.assertOrganizationAIConfigured,
-}));
-
-vi.mock("@/lib/env", () => ({
-  env: {},
+  generateOrganizationAIObject: mocks.generateOrganizationAIObject,
 }));
 
 vi.mock("@/modules/ee/analysis/lib/ai-schema-context", () => ({
   generateSchemaContext: vi.fn(() => "schema context"),
-}));
-
-vi.mock("ai", () => ({
-  Output: {
-    object: vi.fn(({ schema }) => schema),
-  },
-  generateText: mocks.generateText,
 }));
 
 const ctx = {
@@ -106,8 +89,6 @@ describe("chart Cube actions", () => {
     mocks.checkFeedbackDirectoryAccess.mockResolvedValue({
       feedbackDirectoryId: "frd-1",
     });
-    mocks.assertOrganizationAIConfigured.mockResolvedValue(undefined);
-    mocks.getAiModel.mockReturnValue("model");
     mocks.createChart.mockResolvedValue({
       id: "chart-1",
       name: "Chart",
@@ -172,8 +153,8 @@ describe("chart Cube actions", () => {
   });
 
   test("generateAIChartAction delegates clean AI queries to the tenant-scoped Cube helper", async () => {
-    mocks.generateText.mockResolvedValue({
-      output: {
+    mocks.generateOrganizationAIObject.mockResolvedValue({
+      object: {
         measures: ["FeedbackRecords.count"],
         dimensions: ["FeedbackRecords.sourceType"],
         timeDimensions: null,
@@ -195,10 +176,74 @@ describe("chart Cube actions", () => {
       chartType: "bar",
       data: [{ "FeedbackRecords.count": 1 }],
     });
+    expect(mocks.generateOrganizationAIObject).toHaveBeenCalledWith(
+      expect.objectContaining({
+        organizationId: "organization-1",
+        system: "schema context",
+        prompt: 'User request: "responses by sentiment"',
+        temperature: 0,
+        maxOutputTokens: 1024,
+        timeout: 30000,
+      })
+    );
     expect(mocks.executeTenantScopedQuery).toHaveBeenCalledWith({
       query: {
         measures: ["FeedbackRecords.count"],
         dimensions: ["FeedbackRecords.sourceType"],
+      },
+      feedbackDirectoryId: "frd-1",
+      workspaceId: "workspace-1",
+      organizationId: "organization-1",
+      userId: "user-1",
+      source: "charts.generateAIChartAction",
+    });
+  });
+
+  test("generateAIChartAction removes nested nulls before validating and executing AI queries", async () => {
+    mocks.generateOrganizationAIObject.mockResolvedValue({
+      object: {
+        measures: ["FeedbackRecords.count"],
+        dimensions: null,
+        timeDimensions: [
+          {
+            dimension: "FeedbackRecords.createdAt",
+            granularity: null,
+            dateRange: null,
+          },
+        ],
+        chartType: "line",
+        filters: [
+          {
+            member: "FeedbackRecords.sourceType",
+            operator: "equals",
+            values: null,
+          },
+        ],
+      },
+    });
+
+    const result = await generateAIChartAction({
+      ctx,
+      parsedInput: {
+        workspaceId: "workspace-1",
+        prompt: "daily responses",
+        feedbackDirectoryId: "frd-1",
+      },
+    } as any);
+
+    expect(result).toMatchObject({
+      chartType: "line",
+      query: {
+        measures: ["FeedbackRecords.count"],
+        timeDimensions: [{ dimension: "FeedbackRecords.createdAt" }],
+        filters: [{ member: "FeedbackRecords.sourceType", operator: "equals" }],
+      },
+    });
+    expect(mocks.executeTenantScopedQuery).toHaveBeenCalledWith({
+      query: {
+        measures: ["FeedbackRecords.count"],
+        timeDimensions: [{ dimension: "FeedbackRecords.createdAt" }],
+        filters: [{ member: "FeedbackRecords.sourceType", operator: "equals" }],
       },
       feedbackDirectoryId: "frd-1",
       workspaceId: "workspace-1",
