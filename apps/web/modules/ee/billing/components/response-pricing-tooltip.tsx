@@ -2,15 +2,9 @@
 
 import { Trans, useTranslation } from "react-i18next";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
-import { getResponsePricingTiers } from "../lib/response-pricing-tiers";
+import type { TResponseOverageDisplay } from "../lib/stripe-billing-catalog";
 
 type TResponsePricingPlan = "pro" | "scale";
-
-interface ResponsePricingTooltipProps {
-  plan: TResponsePricingPlan;
-  locale: string;
-  currency: string;
-}
 
 const formatTierUnit = (value: number, locale: string) => {
   return value.toLocaleString(locale);
@@ -25,9 +19,11 @@ const formatPerUnitPrice = (perUnitCents: number, currency: string, locale: stri
   }).format(perUnitCents / 100);
 };
 
-const ResponsePricingTable = ({ plan, locale, currency }: Readonly<ResponsePricingTooltipProps>) => {
+const ResponsePricingTable = ({
+  overage,
+  locale,
+}: Readonly<{ overage: TResponseOverageDisplay; locale: string }>) => {
   const { t } = useTranslation();
-  const tiers = getResponsePricingTiers(plan);
 
   return (
     <table className="w-full text-left text-xs">
@@ -43,7 +39,7 @@ const ResponsePricingTable = ({ plan, locale, currency }: Readonly<ResponsePrici
         </tr>
       </thead>
       <tbody>
-        {tiers.map((tier) => (
+        {overage.tiers.map((tier) => (
           <tr key={`${tier.firstUnit}-${tier.lastUnit ?? "unlimited"}`} className="text-slate-700">
             <td className="py-1 pr-4 tabular-nums">{formatTierUnit(tier.firstUnit, locale)}</td>
             <td className="py-1 pr-4 tabular-nums">
@@ -51,7 +47,9 @@ const ResponsePricingTable = ({ plan, locale, currency }: Readonly<ResponsePrici
                 ? t("workspace.settings.billing.dynamic_pricing_unlimited")
                 : formatTierUnit(tier.lastUnit, locale)}
             </td>
-            <td className="py-1 tabular-nums">{formatPerUnitPrice(tier.perUnitCents, currency, locale)}</td>
+            <td className="py-1 tabular-nums">
+              {formatPerUnitPrice(tier.perUnitCents, overage.currency, locale)}
+            </td>
           </tr>
         ))}
       </tbody>
@@ -62,32 +60,33 @@ const ResponsePricingTable = ({ plan, locale, currency }: Readonly<ResponsePrici
 interface PlanResponseFeatureProps {
   plan: TResponsePricingPlan;
   locale: string;
-  currency: string;
+  overage: TResponseOverageDisplay | null;
 }
 
-const dynamicPricingComponent = (plan: TResponsePricingPlan, locale: string, currency: string) => (
-  <TooltipRenderer
-    tooltipContent={<ResponsePricingTable plan={plan} locale={locale} currency={currency} />}
-    className="max-w-none p-3"
-    triggerClass="cursor-help border-b border-dotted border-slate-400">
-    <span />
-  </TooltipRenderer>
-);
-
-export const PlanResponseFeature = ({ plan, locale, currency }: Readonly<PlanResponseFeatureProps>) => {
-  if (plan === "pro") {
-    return (
-      <Trans
-        i18nKey="workspace.settings.billing.plan_pro_feature_responses"
-        components={{ dynamicPricing: dynamicPricingComponent(plan, locale, currency) }}
-      />
-    );
+// The <span /> placeholder child is replaced by react-i18next's <Trans> with
+// the translated text inside the <dynamicPricing> tag.
+const dynamicPricingComponent = (overage: TResponseOverageDisplay | null, locale: string) => {
+  if (!overage) {
+    return <span />;
   }
 
   return (
-    <Trans
-      i18nKey="workspace.settings.billing.plan_scale_feature_responses"
-      components={{ dynamicPricing: dynamicPricingComponent(plan, locale, currency) }}
-    />
+    <TooltipRenderer
+      tooltipContent={<ResponsePricingTable overage={overage} locale={locale} />}
+      className="max-w-none p-3"
+      triggerClass="cursor-help border-b border-dotted border-slate-400">
+      <span />
+    </TooltipRenderer>
+  );
+};
+
+export const PlanResponseFeature = ({ plan, locale, overage }: Readonly<PlanResponseFeatureProps>) => {
+  const i18nKey =
+    plan === "pro"
+      ? "workspace.settings.billing.plan_pro_feature_responses"
+      : "workspace.settings.billing.plan_scale_feature_responses";
+
+  return (
+    <Trans i18nKey={i18nKey} components={{ dynamicPricing: dynamicPricingComponent(overage, locale) }} />
   );
 };

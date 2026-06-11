@@ -1,4 +1,4 @@
-import type { TStandardCloudPlan } from "./stripe-billing-catalog";
+import type Stripe from "stripe";
 
 export type TResponsePricingTier = {
   firstUnit: number;
@@ -6,27 +6,41 @@ export type TResponsePricingTier = {
   perUnitCents: number;
 };
 
-export const PRO_RESPONSE_PRICING_TIERS: TResponsePricingTier[] = [
-  { firstUnit: 0, lastUnit: 2_000, perUnitCents: 0 },
-  { firstUnit: 2_001, lastUnit: 5_000, perUnitCents: 8 },
-  { firstUnit: 5_001, lastUnit: 7_500, perUnitCents: 7 },
-  { firstUnit: 7_501, lastUnit: 10_000, perUnitCents: 6 },
-  { firstUnit: 10_001, lastUnit: 15_000, perUnitCents: 5 },
-  { firstUnit: 15_001, lastUnit: 20_000, perUnitCents: 4 },
-  { firstUnit: 20_001, lastUnit: 50_000, perUnitCents: 3 },
-  { firstUnit: 50_001, lastUnit: null, perUnitCents: 2 },
-];
+// The graduated "responses" prices in Stripe are the source of truth for
+// overage pricing. Tiers are derived from the fetched price at catalog-build
+// time so the billing UI can never drift from what Stripe actually charges.
+export const mapStripeTiersToResponsePricingTiers = (
+  tiers: Stripe.Price.Tier[] | undefined
+): TResponsePricingTier[] | null => {
+  if (!tiers || tiers.length === 0) {
+    return null;
+  }
 
-export const SCALE_RESPONSE_PRICING_TIERS: TResponsePricingTier[] = [
-  { firstUnit: 0, lastUnit: 5_000, perUnitCents: 0 },
-  { firstUnit: 5_001, lastUnit: 7_500, perUnitCents: 6 },
-  { firstUnit: 7_501, lastUnit: 10_000, perUnitCents: 5 },
-  { firstUnit: 10_001, lastUnit: 15_000, perUnitCents: 4 },
-  { firstUnit: 15_001, lastUnit: 20_000, perUnitCents: 3 },
-  { firstUnit: 20_001, lastUnit: 50_000, perUnitCents: 2 },
-  { firstUnit: 50_001, lastUnit: null, perUnitCents: 1 },
-];
+  const mapped: TResponsePricingTier[] = [];
+  let firstUnit = 0;
 
-export const getResponsePricingTiers = (plan: Extract<TStandardCloudPlan, "pro" | "scale">) => {
-  return plan === "pro" ? PRO_RESPONSE_PRICING_TIERS : SCALE_RESPONSE_PRICING_TIERS;
+  for (const [index, tier] of tiers.entries()) {
+    const isLast = index === tiers.length - 1;
+    if (tier.up_to === null && !isLast) {
+      return null;
+    }
+
+    const perUnitCents =
+      tier.unit_amount ?? (tier.unit_amount_decimal === null ? null : Number(tier.unit_amount_decimal));
+    if (perUnitCents === null || Number.isNaN(perUnitCents)) {
+      return null;
+    }
+
+    mapped.push({
+      firstUnit,
+      lastUnit: tier.up_to,
+      perUnitCents,
+    });
+
+    if (tier.up_to !== null) {
+      firstUnit = tier.up_to + 1;
+    }
+  }
+
+  return mapped;
 };
