@@ -34,6 +34,8 @@ overrides:
   uuid@8: 11.1.1
   uuid@9: 11.1.1
   uuid@11: 11.1.1
+  # ENG-1302 / GHSA-w7jw-789q-3m8p: shell-quote quote() does not escape newlines, patched in 1.8.4.
+  shell-quote: 1.8.4
   # ENG-1111 / GHSA-58qx-3vcg-4xpx: ws is patched in 8.20.1+.
   ws@8: 8.21.0
   yaml@2: 2.9.0
