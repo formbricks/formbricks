@@ -1,0 +1,37 @@
+{
+  "name": "@formbricks/workflows",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Formbricks Workflows core library",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/src/index.d.ts",
+  "scripts": {
+    "build": "vite build && publint",
+    "clean": "rimraf .turbo node_modules coverage dist",
+    "lint": "eslint . --ext .js,.ts",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "zod": "4.3.6"
+  },
+  "devDependencies": {
+    "@formbricks/config-typescript": "workspace:*",
+    "@formbricks/eslint-config": "workspace:*",
+    "@vitest/coverage-v8": "4.1.6",
+    "publint": "0.3.21",
+    "rimraf": "^6.1.2",
+    "typescript": "^5.9.3",
+    "vite": "7.3.3",
+    "vite-plugin-dts": "^4.5.4",
+    "vitest": "4.1.6"
+  }
+}
