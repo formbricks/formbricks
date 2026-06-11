@@ -113,8 +113,12 @@ RUN mkdir -p ./packages/database/migrations && chown -R nextjs:nextjs ./packages
 COPY --from=installer /app/packages/database/package.json ./packages/database/package.json
 RUN chown nextjs:nextjs ./packages/database/package.json && chmod 644 ./packages/database/package.json
 
-COPY --from=installer /app/packages/database/schema.prisma ./packages/database/schema.prisma
-RUN chown nextjs:nextjs ./packages/database/schema.prisma && chmod 644 ./packages/database/schema.prisma
+COPY --from=installer /app/packages/database/schema ./packages/database/schema
+RUN chown -R nextjs:nextjs ./packages/database/schema && chmod -R 755 ./packages/database/schema
+
+# The migration runner invokes `prisma migrate deploy --config packages/database/prisma.config.ts`
+COPY --from=installer /app/packages/database/prisma.config.ts ./packages/database/prisma.config.ts
+RUN chown nextjs:nextjs ./packages/database/prisma.config.ts && chmod 644 ./packages/database/prisma.config.ts
 
 COPY --from=installer /app/packages/database/dist ./packages/database/dist
 RUN chown -R nextjs:nextjs ./packages/database/dist && chmod -R 755 ./packages/database/dist

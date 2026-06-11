@@ -31,9 +31,12 @@ packages/database/
 │   └── [timestamp_name]/      # Data migration folder
 │       └── migration.ts       # Data migration file
 ├── migrations/                # Prisma internal migrations
+├── schema/                    # Prisma schema folder
+│   ├── main.prisma            # Shared models, datasource, and generators
+│   └── workflows.prisma       # Workflows models and enums
 ├── types/                     # Custom TypeScript types
 ├── zod/                       # Zod schema definitions
-├── schema.prisma              # Main Prisma schema file
+├── prisma.config.ts           # Prisma schema and migration paths
 └── package.json
 ```
 
@@ -109,12 +112,12 @@ Run these commands from the `packages/database` directory:
   "create-migration": "Create new schema migration",
   "db:migrate:deploy": "Apply migrations in production",
   "db:migrate:dev": "Apply migrations in development",
-  "db:push": "prisma db push --accept-data-loss",
+  "db:push": "prisma db push --accept-data-loss --config ./prisma.config.ts",
   "db:seed": "Seed the database with sample data",
   "db:seed:clear": "Clear all data and re-seed",
   "db:setup": "pnpm db:migrate:dev && pnpm db:create-saml-database:dev && pnpm db:seed",
   "dev": "vite build --watch",
-  "generate": "prisma generate",
+  "generate": "prisma generate --config ./prisma.config.ts",
   "generate-data-migration": "Create new data migration"
 }
 ```
@@ -150,7 +153,7 @@ By default, the seed script uses `upsert` to ensure it can be run multiple times
 
 ### Adding a Schema Migration
 
-1. Modify your Prisma schema in `schema.prisma`
+1. Modify your Prisma schema in `schema/`
 2. Run `pnpm fb-migrate-dev` from the root of the monorepo
 3. Follow the prompts to name your migration
 4. The script automatically:
