@@ -2,6 +2,7 @@ export { VerificationEmail } from "../emails/auth/verification-email";
 export { ForgotPasswordEmail } from "../emails/auth/forgot-password-email";
 export { NewEmailVerification } from "../emails/auth/new-email-verification";
 export { PasswordResetNotifyEmail } from "../emails/auth/password-reset-notify-email";
+export { AccountDeletionNotifyEmail } from "../emails/auth/account-deletion-notify-email";
 export { InviteEmail } from "../emails/invite/invite-email";
 export { InviteAcceptedEmail } from "../emails/invite/invite-accepted-email";
 export { LinkSurveyEmail } from "../emails/survey/link-survey-email";
@@ -20,6 +21,7 @@ export {
   renderForgotPasswordEmail,
   renderNewEmailVerification,
   renderPasswordResetNotifyEmail,
+  renderAccountDeletionNotifyEmail,
   renderInviteEmail,
   renderInviteAcceptedEmail,
   renderLinkSurveyEmail,

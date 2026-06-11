@@ -12,6 +12,7 @@ import {
   DELETE_ACCOUNT_WRONG_PASSWORD_ERROR,
 } from "@/modules/account/constants";
 import { requiresPasswordConfirmationForAccountDeletion } from "@/modules/account/lib/account-deletion-auth";
+import { queueAccountDeletionEmailBackground } from "@/modules/account/lib/account-deletion-email";
 import { consumeAccountDeletionSsoReauthentication } from "@/modules/account/lib/account-deletion-sso-reauth";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 
@@ -103,6 +104,12 @@ export const deleteUserWithAccountDeletionAuthorization = async ({
   }
 
   await deleteUser(userId);
+
+  queueAccountDeletionEmailBackground({
+    email: oldUser.email,
+    locale: oldUser.locale,
+    userId,
+  });
 
   return { oldUser };
 };

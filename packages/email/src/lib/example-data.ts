@@ -24,6 +24,10 @@ export const exampleData = {
     // No props needed
   },
 
+  accountDeletionNotifyEmail: {
+    // No props needed
+  },
+
   inviteEmail: {
     inviteeName: "Jane Smith",
     inviterName: "John Doe",

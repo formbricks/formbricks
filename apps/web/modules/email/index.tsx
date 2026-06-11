@@ -1,6 +1,7 @@
 import { createTransport } from "nodemailer";
 import type SMTPTransport from "nodemailer/lib/smtp-transport";
 import {
+  renderAccountDeletionNotifyEmail,
   renderEmailCustomizationPreviewEmail,
   renderEmbedSurveyPreviewEmail,
   renderForgotPasswordEmail,
@@ -206,6 +207,19 @@ export const sendPasswordResetNotifyEmail = async (user: {
   return await sendEmail({
     to: user.email,
     subject: t("emails.password_reset_notify_email_subject"),
+    html,
+  });
+};
+
+export const sendAccountDeletionEmail = async (user: {
+  email: string;
+  locale: TUserLocale;
+}): Promise<boolean> => {
+  const t = await getTranslate(user.locale);
+  const html = await renderAccountDeletionNotifyEmail({ t, ...legalProps });
+  return await sendEmail({
+    to: user.email,
+    subject: t("emails.account_deletion_email_subject"),
     html,
   });
 };

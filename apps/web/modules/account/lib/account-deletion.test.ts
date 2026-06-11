@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   getUser: vi.fn(),
   getUserAuthenticationData: vi.fn(),
   loggerWarn: vi.fn(),
+  queueAccountDeletionEmailBackground: vi.fn(),
   verifyUserPassword: vi.fn(),
 }));
 
@@ -18,6 +19,7 @@ const user = {
 
 const oldUser = {
   ...user,
+  locale: "en-US",
   name: "Delete User",
 };
 
@@ -50,6 +52,10 @@ const loadAccountDeletionModule = async ({
   vi.doMock("@/lib/user/service", () => ({
     deleteUser: mocks.deleteUser,
     getUser: mocks.getUser,
+  }));
+
+  vi.doMock("@/modules/account/lib/account-deletion-email", () => ({
+    queueAccountDeletionEmailBackground: mocks.queueAccountDeletionEmailBackground,
   }));
 
   vi.doMock("@/modules/account/lib/account-deletion-sso-reauth", () => ({
@@ -163,5 +169,37 @@ describe("deleteUserWithAccountDeletionAuthorization", () => {
 
     expect(mocks.consumeAccountDeletionSsoReauthentication).not.toHaveBeenCalled();
     expect(mocks.deleteUser).not.toHaveBeenCalled();
+  });
+
+  test("queues the account deletion confirmation email after a successful deletion", async () => {
+    const { deleteUserWithAccountDeletionAuthorization } = await loadAccountDeletionModule();
+
+    await deleteUserWithAccountDeletionAuthorization({
+      confirmationEmail: user.email,
+      userEmail: user.email,
+      userId: user.id,
+    });
+
+    expect(mocks.queueAccountDeletionEmailBackground).toHaveBeenCalledExactlyOnceWith({
+      email: oldUser.email,
+      locale: oldUser.locale,
+      userId: user.id,
+    });
+    expect(mocks.deleteUser).toHaveBeenCalledBefore(mocks.queueAccountDeletionEmailBackground);
+  });
+
+  test("does not queue the confirmation email when deletion fails", async () => {
+    mocks.deleteUser.mockRejectedValueOnce(new Error("Database error"));
+    const { deleteUserWithAccountDeletionAuthorization } = await loadAccountDeletionModule();
+
+    await expect(
+      deleteUserWithAccountDeletionAuthorization({
+        confirmationEmail: user.email,
+        userEmail: user.email,
+        userId: user.id,
+      })
+    ).rejects.toThrow("Database error");
+
+    expect(mocks.queueAccountDeletionEmailBackground).not.toHaveBeenCalled();
   });
 });

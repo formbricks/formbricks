@@ -523,6 +523,9 @@
   },
   "emails": {
     "accept": "Accept",
+    "account_deletion_email_heading": "Account deleted",
+    "account_deletion_email_subject": "Your Formbricks account has been deleted",
+    "account_deletion_email_text": "Your Formbricks account and all associated data have been permanently deleted. If you did not request this deletion, please contact our support team immediately.",
     "click_or_drag_to_upload_files": "Click or drag to upload files.",
     "email_customization_preview_email_heading": "Hey {userName}",
     "email_customization_preview_email_subject": "Formbricks Email Customization Preview",
