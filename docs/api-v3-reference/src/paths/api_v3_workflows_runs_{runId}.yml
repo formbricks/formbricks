@@ -1,0 +1,66 @@
+get:
+  operationId: getWorkflowRunV3
+  summary: Retrieve a workflow run
+  description: >
+    Returns one workflow run by globally unique run id, including the full debug
+    payload: the
+
+    captured `triggerPayload`, the run `data` (per-step results), the persisted
+    `logs` trace,
+
+    and retry metadata (`attempt`, `nextAttemptAt`, `lastErrorAt`). Scope 1
+    deliberately exposes
+
+    these as JSON dumps so users and agents can understand exactly what happened
+    in a run.
+
+
+    Poll this endpoint after `POST /api/v3/workflows/{workflowId}/test`: runs
+    execute
+
+    asynchronously and transition `queued` → `running` →
+    `completed`/`failed`/`canceled`.
+
+
+    Unknown or inaccessible run ids return `403` rather than `404` to avoid
+    leaking
+
+    cross-workspace resource existence.
+  tags:
+    - V3 Workflows
+  parameters:
+    - $ref: ../components/parameters/WorkflowRunIdPath.yml
+  responses:
+    '200':
+      description: Workflow run retrieved successfully
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/WorkflowRunResource.yml
+    '400':
+      $ref: ../components/responses/V3BadRequest.yml
+    '401':
+      $ref: ../components/responses/V3Unauthorized.yml
+    '403':
+      $ref: ../components/responses/V3Forbidden.yml
+    '429':
+      $ref: ../components/responses/V3TooManyRequests.yml
+    '500':
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []

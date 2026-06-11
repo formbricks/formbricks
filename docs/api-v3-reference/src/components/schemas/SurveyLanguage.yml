@@ -1,0 +1,33 @@
+type: object
+description: >
+  Language configured for this survey. GET responses expose the server-emitted
+  code/tag used as the
+
+  translatable map key. Existing surveys can use region-qualified,
+  language-only, or script-only codes.
+
+  Disabled languages can still be read by the management API so unfinished
+  translations can be completed.
+required:
+  - code
+  - default
+  - enabled
+properties:
+  code:
+    type: string
+    description: Server-emitted survey language code/tag used as the translatable map key.
+    example: en-US
+  alias:
+    type:
+      - string
+      - 'null'
+    description: >-
+      Optional configured alias accepted by `?lang` for compatibility and agent
+      discovery.
+    example: english
+  default:
+    type: boolean
+    description: Whether this is the default authoring language.
+  enabled:
+    type: boolean
+    description: Whether this language is enabled for respondent-facing delivery.

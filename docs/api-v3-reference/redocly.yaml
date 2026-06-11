@@ -1,0 +1,14 @@
+# Lint configuration for the v3 OpenAPI source tree (used by `pnpm api:v3:lint` via scripts/bundle.mjs).
+# Known accepted findings live in .redocly.lint-ignore.yaml; anything new fails CI as an error.
+extends:
+  - recommended
+rules:
+  # Parity with the v2 spec, which also ships without an info.license field.
+  info-license: off
+  # Raised from warn so NEW ambiguous paths fail CI. The six known overlaps between
+  # /api/v3/workflows/runs/{runId} and /api/v3/workflows/{workflowId}/* are a deliberate
+  # ENG-1101 decision (run ids are globally unique; cuid2 never equals the literal "runs")
+  # and are listed in .redocly.lint-ignore.yaml.
+  no-ambiguous-paths: error
+  # Raised from warn: response examples must validate against their schemas.
+  no-invalid-media-type-examples: error

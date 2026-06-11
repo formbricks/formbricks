@@ -1,0 +1,20 @@
+type: object
+description: Dynamic reference to another value in the survey document.
+required:
+  - type
+  - value
+properties:
+  type:
+    type: string
+    enum:
+      - element
+      - variable
+      - hiddenField
+  value:
+    type: string
+    description: Element id, variable id, or hidden field id depending on `type`.
+  meta:
+    type: object
+    additionalProperties:
+      type: string
+additionalProperties: false

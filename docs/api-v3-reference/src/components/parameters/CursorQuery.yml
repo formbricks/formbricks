@@ -1,0 +1,7 @@
+in: query
+name: cursor
+schema:
+  type: string
+description: >-
+  Opaque cursor returned as `meta.nextCursor` from the previous page. Omit on
+  the first request.

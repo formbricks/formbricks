@@ -1,0 +1,13 @@
+description: >
+  Full workflow shape returned by detail, create, update, duplicate, and
+  lifecycle endpoints:
+
+  the list-item fields plus the complete `definition` document.
+allOf:
+  - $ref: ./WorkflowListItem.yml
+  - type: object
+    required:
+      - definition
+    properties:
+      definition:
+        $ref: ./WorkflowDefinition.yml

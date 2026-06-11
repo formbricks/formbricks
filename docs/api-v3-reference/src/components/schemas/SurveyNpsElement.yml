@@ -1,0 +1,16 @@
+allOf:
+  - $ref: ./SurveyElementBase.yml
+  - type: object
+    properties:
+      type:
+        type: string
+        enum:
+          - nps
+      lowerLabel:
+        $ref: ./TranslatableText.yml
+      upperLabel:
+        $ref: ./TranslatableText.yml
+      isColorCodingEnabled:
+        type: boolean
+        default: false
+unevaluatedProperties: false

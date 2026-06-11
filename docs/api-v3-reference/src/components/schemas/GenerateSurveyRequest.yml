@@ -1,0 +1,48 @@
+type: object
+description: >
+  AI survey creation request. `prompt` is used only to create a draft payload;
+  it is not
+
+  persisted by this endpoint. The generated payload is validated and returned to
+  the caller for
+
+  a separate create request.
+required:
+  - workspaceId
+  - prompt
+properties:
+  workspaceId:
+    type: string
+    format: cuid2
+    description: >-
+      Workspace where the AI-created survey draft would be created. Requires
+      read/write access.
+  prompt:
+    type: string
+    minLength: 4
+    maxLength: 1200
+    description: >
+      Natural-language survey goal and audience. Prompts with fewer than 24
+      characters or fewer
+
+      than four whitespace-separated words return prompt feedback before any AI
+      provider call.
+  type:
+    type: string
+    enum:
+      - link
+    default: link
+    description: >-
+      Link Survey is the only AI-created type until the v3 create endpoint
+      supports additional types.
+  language:
+    $ref: ./AISurveyGenerationLocaleCode.yml
+    description: >
+      Preferred survey language. Session clients should send the logged-in
+      user's language.
+
+      The generator uses it when the prompt language is ambiguous or cannot be
+      confidently
+
+      matched to a supported app locale.
+additionalProperties: false

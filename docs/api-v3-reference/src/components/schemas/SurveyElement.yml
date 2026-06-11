@@ -1,0 +1,46 @@
+oneOf:
+  - $ref: ./SurveyOpenTextElement.yml
+  - $ref: ./SurveyConsentElement.yml
+  - $ref: ./SurveyMultipleChoiceSingleElement.yml
+  - $ref: ./SurveyMultipleChoiceMultiElement.yml
+  - $ref: ./SurveyNpsElement.yml
+  - $ref: ./SurveyCtaElement.yml
+  - $ref: ./SurveyRatingElement.yml
+  - $ref: ./SurveyPictureSelectionElement.yml
+  - $ref: ./SurveyDateElement.yml
+  - $ref: ./SurveyFileUploadElement.yml
+  - $ref: ./SurveyCalElement.yml
+  - $ref: ./SurveyMatrixElement.yml
+  - $ref: ./SurveyAddressElement.yml
+  - $ref: ./SurveyRankingElement.yml
+  - $ref: ./SurveyContactInfoElement.yml
+  - $ref: ./SurveyCsatElement.yml
+  - $ref: ./SurveyCesElement.yml
+discriminator:
+  propertyName: type
+  mapping:
+    openText: ./SurveyOpenTextElement.yml
+    consent: ./SurveyConsentElement.yml
+    multipleChoiceSingle: ./SurveyMultipleChoiceSingleElement.yml
+    multipleChoiceMulti: ./SurveyMultipleChoiceMultiElement.yml
+    nps: ./SurveyNpsElement.yml
+    cta: ./SurveyCtaElement.yml
+    rating: ./SurveyRatingElement.yml
+    pictureSelection: ./SurveyPictureSelectionElement.yml
+    date: ./SurveyDateElement.yml
+    fileUpload: ./SurveyFileUploadElement.yml
+    cal: ./SurveyCalElement.yml
+    matrix: ./SurveyMatrixElement.yml
+    address: ./SurveyAddressElement.yml
+    ranking: ./SurveyRankingElement.yml
+    contactInfo: ./SurveyContactInfoElement.yml
+    csat: ./SurveyCsatElement.yml
+    ces: ./SurveyCesElement.yml
+description: >
+  Survey element/question inside a block. Element ids are stable public
+  identifiers used by
+
+  logic, recall strings, response data, quotas, integrations, and analysis.
+  `type` selects the
+
+  allowed shape; unsupported fields are rejected instead of ignored.

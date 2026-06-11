@@ -1,0 +1,83 @@
+type: object
+minProperties: 1
+description: >
+  Patch payload shape. Top-level fields are partial; any provided nested object
+  or array
+
+  fully replaces that subtree. Omitted top-level fields are preserved.
+  Immutable/system fields
+
+  such as `id`, `workspaceId`, `type`, `defaultLanguage`, timestamps,
+  `questions`, analytics,
+
+  distribution, styling, targeting, and scripts are rejected.
+
+
+  `metadata`, `languages`, `welcomeCard`, `blocks`, `endings`, `hiddenFields`,
+  and `variables`
+
+  replace their full top-level value when provided. Missing ids in replaced
+  arrays are deletions.
+
+  Non-default locale keys in translatable maps must be declared in `languages`;
+  undeclared locale
+
+  keys are rejected with `unsupported_locale`. To remove a language, remove it
+  from both
+
+  `languages` and every translatable map that contains that locale key.
+
+  Use `/api/v3/surveys/validate` with `operation: patch` before committing
+  automated or agentic
+
+  changes.
+properties:
+  name:
+    type: string
+    minLength: 1
+  status:
+    type: string
+    enum:
+      - draft
+      - inProgress
+      - paused
+      - completed
+  metadata:
+    allOf:
+      - $ref: ./SurveyMetadata.yml
+  languages:
+    type: array
+    items:
+      $ref: ./CreateSurveyLanguage.yml
+    description: >
+      Replaces the survey language configuration. The default language cannot be
+      changed through
+
+      PATCH; any `default: true` entry must match the existing default language.
+      Languages referenced
+
+      by `metadata`, `welcomeCard`, `blocks`, or `endings` translatable maps
+      must be explicitly
+
+      declared here, so remove the locale key from those maps as well when
+      intentionally removing
+
+      a language.
+  welcomeCard:
+    $ref: ./SurveyWelcomeCard.yml
+  blocks:
+    type: array
+    minItems: 1
+    items:
+      $ref: ./SurveyBlock.yml
+  endings:
+    type: array
+    items:
+      $ref: ./SurveyEnding.yml
+  hiddenFields:
+    $ref: ./SurveyHiddenFields.yml
+  variables:
+    type: array
+    items:
+      $ref: ./SurveyVariable.yml
+additionalProperties: false

@@ -1,0 +1,8 @@
+oneOf:
+  - $ref: ./SurveyNumberVariable.yml
+  - $ref: ./SurveyTextVariable.yml
+description: >
+  Survey variable. Variable ids are stable references used by logic and
+  calculation actions.
+
+  Variable names are human-readable labels and must be unique within the survey.

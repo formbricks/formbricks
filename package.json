@@ -26,7 +26,7 @@
     "start": "turbo run start --parallel",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "generate": "turbo run generate",
-    "lint": "turbo run lint",
+    "lint": "turbo run lint && pnpm api:v3:lint",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test --no-cache",
     "test:coverage": "turbo run test:coverage --no-cache",
@@ -41,6 +41,9 @@
     "scan-translations": "pnpm --filter @formbricks/i18n-utils scan-translations",
     "i18n": "pnpm generate-translations && pnpm scan-translations",
     "i18n:validate": "pnpm scan-translations",
+    "api:v3:bundle": "node docs/api-v3-reference/scripts/bundle.mjs",
+    "api:v3:lint": "node docs/api-v3-reference/scripts/bundle.mjs --lint",
+    "api:v3:check": "node docs/api-v3-reference/scripts/bundle.mjs --check",
     "dev:setup": "bash scripts/setup-dev-env.sh"
   },
   "dependencies": {
@@ -51,6 +54,7 @@
     "@azure/playwright": "1.1.5",
     "@formbricks/eslint-config": "workspace:*",
     "@playwright/test": "1.58.2",
+    "@redocly/cli": "1.34.3",
     "dotenv": "17.3.1",
     "eslint": "8.57.1",
     "husky": "9.1.7",
