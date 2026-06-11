@@ -66,7 +66,11 @@ describe("translateFields", () => {
 
     await translateFields({ ...baseInput, fields });
 
-    expect(mockGenerateOrganizationAIObject.mock.calls[0][0].temperature).toBe(0);
+    expect(mockGenerateOrganizationAIObject.mock.calls[0][0]).toMatchObject({
+      temperature: 0,
+      maxOutputTokens: 1024,
+      timeout: 45000,
+    });
   });
 
   test("returns empty object without calling the model when no fields are provided", async () => {
