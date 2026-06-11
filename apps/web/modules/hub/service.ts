@@ -380,17 +380,19 @@ export const listTaxonomyRuns = async (
   }
 };
 
-export const getTaxonomyRun = async (runId: string): Promise<HubResult<TaxonomyRun>> => {
+export const getTaxonomyRun = async (runId: string, tenantId: string): Promise<HubResult<TaxonomyRun>> => {
   const client = getHubClient();
   if (!client) {
     return { data: null, error: { ...NO_CONFIG_ERROR } };
   }
 
   try {
-    const data = await client.get<TaxonomyRun>(`/v1/taxonomy/runs/${encodeURIComponent(runId)}`);
+    const data = await client.get<TaxonomyRun>(
+      `/v1/taxonomy/runs/${encodeURIComponent(runId)}${toQueryString({ tenant_id: tenantId })}`
+    );
     return { data, error: null };
   } catch (err) {
-    logger.warn({ err, runId }, "Hub: getTaxonomyRun failed");
+    logger.warn({ err, runId, tenantId }, "Hub: getTaxonomyRun failed");
     return createHubResultFromError(err);
   }
 };
@@ -414,7 +416,10 @@ export const getActiveTaxonomyTree = async (
   }
 };
 
-export const getTaxonomyTree = async (runId: string): Promise<HubResult<TaxonomyTreeResponse>> => {
+export const getTaxonomyTree = async (
+  runId: string,
+  tenantId: string
+): Promise<HubResult<TaxonomyTreeResponse>> => {
   const client = getHubClient();
   if (!client) {
     return { data: null, error: { ...NO_CONFIG_ERROR } };
@@ -422,11 +427,11 @@ export const getTaxonomyTree = async (runId: string): Promise<HubResult<Taxonomy
 
   try {
     const data = await client.get<TaxonomyTreeResponse>(
-      `/v1/taxonomy/runs/${encodeURIComponent(runId)}/tree`
+      `/v1/taxonomy/runs/${encodeURIComponent(runId)}/tree${toQueryString({ tenant_id: tenantId })}`
     );
     return { data, error: null };
   } catch (err) {
-    logger.warn({ err, runId }, "Hub: getTaxonomyTree failed");
+    logger.warn({ err, runId, tenantId }, "Hub: getTaxonomyTree failed");
     return createHubResultFromError(err);
   }
 };

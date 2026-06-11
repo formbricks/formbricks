@@ -210,7 +210,7 @@ export const getTaxonomyRunAction = authenticatedActionClient
       await ensureAccess(ctx.user.id, parsedInput.workspaceId, "read");
       await ensureDirectoryAccess(parsedInput.workspaceId, parsedInput.scope.tenant_id);
 
-      const result = await getTaxonomyRun(parsedInput.runId);
+      const result = await getTaxonomyRun(parsedInput.runId, parsedInput.scope.tenant_id);
       if (result.error || !result.data) {
         throw new Error(hubErrorMessage(result.error?.message, "Failed to load taxonomy run"));
       }
@@ -236,7 +236,7 @@ export const getTaxonomyTreeAction = authenticatedActionClient
       await ensureAccess(ctx.user.id, parsedInput.workspaceId, "read");
       await ensureDirectoryAccess(parsedInput.workspaceId, parsedInput.scope.tenant_id);
 
-      const result = await getTaxonomyTree(parsedInput.runId);
+      const result = await getTaxonomyTree(parsedInput.runId, parsedInput.scope.tenant_id);
       if (result.error || !result.data) {
         throw new Error(hubErrorMessage(result.error?.message, "Failed to load taxonomy tree"));
       }

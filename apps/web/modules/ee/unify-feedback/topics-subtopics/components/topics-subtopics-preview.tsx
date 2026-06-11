@@ -1,5 +1,6 @@
 "use client";
 
+import type { TFunction } from "i18next";
 import { GitBranchIcon, Loader2Icon, PencilIcon, PlayIcon, RefreshCwIcon, Trash2Icon } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -47,14 +48,6 @@ interface TopicsSubtopicsPreviewProps {
 
 const RUNNING_STATUSES = new Set(["pending", "running"]);
 
-const RUN_FAILURE_MESSAGES: Record<TaxonomyRunFailureCode, string> = {
-  insufficient_data: "Not enough embedded feedback records are available for this field.",
-  service_unavailable: "Taxonomy generation is temporarily unavailable.",
-  generation_failed: "Taxonomy generation failed.",
-  invalid_output: "The generated taxonomy could not be validated.",
-  internal_error: "Taxonomy generation failed because of an internal error.",
-};
-
 const fieldKey = (field: TaxonomyFieldOption) =>
   [field.source_type, field.source_id, field.field_id].join("::");
 
@@ -74,8 +67,46 @@ const statusBadgeType = (status: TaxonomyRun["status"]): "warning" | "success" |
   return "gray";
 };
 
-const runErrorMessage = (run: TaxonomyRun) =>
-  run.error ?? (run.error_code ? RUN_FAILURE_MESSAGES[run.error_code] : null);
+const runFailureMessage = (code: TaxonomyRunFailureCode, t: TFunction): string => {
+  switch (code) {
+    case "insufficient_data":
+      return t("workspace.unify.taxonomy_failure_insufficient_data");
+    case "service_unavailable":
+      return t("workspace.unify.taxonomy_failure_service_unavailable");
+    case "generation_failed":
+      return t("workspace.unify.taxonomy_failure_generation_failed");
+    case "invalid_output":
+      return t("workspace.unify.taxonomy_failure_invalid_output");
+    case "internal_error":
+      return t("workspace.unify.taxonomy_failure_internal_error");
+  }
+};
+
+const runStatusLabel = (status: TaxonomyRun["status"], t: TFunction): string => {
+  switch (status) {
+    case "pending":
+      return t("workspace.unify.taxonomy_status_pending");
+    case "running":
+      return t("workspace.unify.taxonomy_status_running");
+    case "succeeded":
+      return t("workspace.unify.taxonomy_status_succeeded");
+    case "failed":
+      return t("workspace.unify.taxonomy_status_failed");
+    case "canceled":
+      return t("workspace.unify.taxonomy_status_canceled");
+  }
+};
+
+const nodeTypeLabel = (nodeType: TaxonomyNode["node_type"], t: TFunction): string => {
+  switch (nodeType) {
+    case "root":
+      return t("workspace.unify.taxonomy_node_type_root");
+    case "branch":
+      return t("workspace.unify.taxonomy_node_type_branch");
+    case "leaf":
+      return t("workspace.unify.taxonomy_node_type_leaf");
+  }
+};
 
 export const TopicsSubtopicsPreview = ({
   workspaceId,
@@ -126,6 +157,10 @@ export const TopicsSubtopicsPreview = ({
     () => (selectedField ? scopeFromField(selectedField) : null),
     [selectedField]
   );
+  const runErrorMessage = useCallback(
+    (run: TaxonomyRun) => run.error ?? (run.error_code ? runFailureMessage(run.error_code, t) : null),
+    [t]
+  );
   const latestRun = runs[0] ?? null;
   const latestRunError = latestRun ? runErrorMessage(latestRun) : null;
   const hasRunningRun = latestRun ? RUNNING_STATUSES.has(latestRun.status) : false;
@@ -149,13 +184,13 @@ export const TopicsSubtopicsPreview = ({
       try {
         const response = await getTaxonomyFieldsAction({ workspaceId, directoryId: nextDirectoryId });
         if (!response?.data) {
-          setError(getFormattedErrorMessage(response) ?? "Failed to load taxonomy fields");
+          setError(getFormattedErrorMessage(response) ?? t("workspace.unify.taxonomy_load_fields_failed"));
           return;
         }
 
         setFields(response.data.fields);
         if (response.data.unavailable) {
-          setNotice(response.data.unavailableMessage ?? "Taxonomy fields are unavailable");
+          setNotice(response.data.unavailableMessage ?? t("workspace.unify.taxonomy_fields_unavailable"));
         }
 
         const firstField = response.data.fields[0];
@@ -164,12 +199,12 @@ export const TopicsSubtopicsPreview = ({
           setSelectedFieldKey(fieldKey(firstField));
         }
       } catch {
-        setError("Failed to load taxonomy fields");
+        setError(t("workspace.unify.taxonomy_load_fields_failed"));
       } finally {
         setIsLoadingFields(false);
       }
     },
-    [workspaceId]
+    [t, workspaceId]
   );
 
   const loadState = useCallback(async () => {
@@ -184,21 +219,21 @@ export const TopicsSubtopicsPreview = ({
     try {
       const response = await getTaxonomyStateAction({ workspaceId, scope: selectedScope });
       if (!response?.data) {
-        setError(getFormattedErrorMessage(response) ?? "Failed to load taxonomy");
+        setError(getFormattedErrorMessage(response) ?? t("workspace.unify.taxonomy_load_failed"));
         return;
       }
 
       setActiveTree(response.data.activeTree);
       setRuns(response.data.runs);
       if (response.data.unavailable) {
-        setNotice(response.data.unavailableMessage ?? "Active taxonomy is unavailable");
+        setNotice(response.data.unavailableMessage ?? t("workspace.unify.taxonomy_active_unavailable"));
       }
     } catch {
-      setError("Failed to load taxonomy");
+      setError(t("workspace.unify.taxonomy_load_failed"));
     } finally {
       setIsLoadingState(false);
     }
-  }, [selectedScope, workspaceId]);
+  }, [selectedScope, t, workspaceId]);
 
   useEffect(() => {
     void loadFields(directoryId);
@@ -211,10 +246,14 @@ export const TopicsSubtopicsPreview = ({
   useEffect(() => {
     if (!latestRun || !selectedScope || !RUNNING_STATUSES.has(latestRun.status)) return;
 
+    const abortController = new AbortController();
+
     const interval = window.setInterval(async () => {
+      if (abortController.signal.aborted) return;
+
       const response = await getTaxonomyRunAction({ workspaceId, scope: selectedScope, runId: latestRun.id });
       const run = response?.data;
-      if (!run) return;
+      if (!run || abortController.signal.aborted) return;
 
       setRuns((prev) => [run, ...prev.filter((existingRun) => existingRun.id !== run.id)]);
       if (!RUNNING_STATUSES.has(run.status)) {
@@ -224,7 +263,7 @@ export const TopicsSubtopicsPreview = ({
             scope: selectedScope,
             runId: run.id,
           });
-          if (treeResponse?.data) {
+          if (treeResponse?.data && !abortController.signal.aborted) {
             setActiveTree(treeResponse.data);
           }
         }
@@ -232,7 +271,10 @@ export const TopicsSubtopicsPreview = ({
       }
     }, 5000);
 
-    return () => window.clearInterval(interval);
+    return () => {
+      abortController.abort();
+      window.clearInterval(interval);
+    };
   }, [latestRun, selectedScope, workspaceId]);
 
   const handleSourceChange = (value: string) => {
@@ -255,17 +297,17 @@ export const TopicsSubtopicsPreview = ({
         fieldLabel: selectedField.field_label,
       });
       if (!response?.data) {
-        setError(getFormattedErrorMessage(response) ?? "Failed to start taxonomy generation");
+        setError(getFormattedErrorMessage(response) ?? t("workspace.unify.taxonomy_start_failed"));
         return;
       }
 
       const result = response.data;
       setRuns((prev) => [result.run, ...prev.filter((run) => run.id !== result.run.id)]);
       if (result.inProgress) {
-        setNotice("A taxonomy run is already in progress for this field.");
+        setNotice(t("workspace.unify.taxonomy_run_in_progress"));
       }
     } catch {
-      setError("Failed to start taxonomy generation");
+      setError(t("workspace.unify.taxonomy_start_failed"));
     } finally {
       setIsGenerating(false);
     }
@@ -287,13 +329,13 @@ export const TopicsSubtopicsPreview = ({
         limit: 50,
       });
       if (!response?.data) {
-        setError(getFormattedErrorMessage(response) ?? "Failed to load feedback records");
+        setError(getFormattedErrorMessage(response) ?? t("workspace.unify.taxonomy_load_records_failed"));
         return;
       }
 
       setNodeRecords(response.data.data);
     } catch {
-      setError("Failed to load feedback records");
+      setError(t("workspace.unify.taxonomy_load_records_failed"));
     } finally {
       setIsLoadingRecords(false);
     }
@@ -325,14 +367,14 @@ export const TopicsSubtopicsPreview = ({
         label: renameLabel.trim(),
       });
       if (!response?.data) {
-        setError(getFormattedErrorMessage(response) ?? "Failed to rename topic");
+        setError(getFormattedErrorMessage(response) ?? t("workspace.unify.taxonomy_rename_failed"));
         return;
       }
 
       setSelectedNode(response.data);
       await reloadTree();
     } catch {
-      setError("Failed to rename topic");
+      setError(t("workspace.unify.taxonomy_rename_failed"));
     } finally {
       setIsSavingNode(false);
     }
@@ -350,7 +392,7 @@ export const TopicsSubtopicsPreview = ({
         nodeId: selectedNode.id,
       });
       if (!response?.data) {
-        setError(getFormattedErrorMessage(response) ?? "Failed to remove topic");
+        setError(getFormattedErrorMessage(response) ?? t("workspace.unify.taxonomy_remove_failed"));
         return;
       }
 
@@ -358,7 +400,7 @@ export const TopicsSubtopicsPreview = ({
       setNodeRecords([]);
       await reloadTree();
     } catch {
-      setError("Failed to remove topic");
+      setError(t("workspace.unify.taxonomy_remove_failed"));
     } finally {
       setIsSavingNode(false);
     }
@@ -375,13 +417,13 @@ export const TopicsSubtopicsPreview = ({
       <div className="space-y-4">
         <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end">
-            <Selector label="Feedback directory">
+            <Selector label={t("workspace.unify.feedback_directory")}>
               <Select
                 value={directoryId}
                 onValueChange={setDirectoryId}
                 disabled={!hasDirectories || isLoadingFields}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select directory" />
+                  <SelectValue placeholder={t("workspace.unify.select_feedback_directory")} />
                 </SelectTrigger>
                 <SelectContent>
                   {directoryIds.map((id) => (
@@ -393,13 +435,13 @@ export const TopicsSubtopicsPreview = ({
               </Select>
             </Selector>
 
-            <Selector label="Source">
+            <Selector label={t("workspace.unify.taxonomy_source")}>
               <Select
                 value={selectedSourceKey}
                 onValueChange={handleSourceChange}
                 disabled={sourceOptions.length === 0 || isLoadingFields}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select source" />
+                  <SelectValue placeholder={t("workspace.unify.taxonomy_select_source")} />
                 </SelectTrigger>
                 <SelectContent>
                   {sourceOptions.map((field) => (
@@ -411,13 +453,13 @@ export const TopicsSubtopicsPreview = ({
               </Select>
             </Selector>
 
-            <Selector label="Field">
+            <Selector label={t("workspace.unify.taxonomy_field")}>
               <Select
                 value={selectedFieldKey}
                 onValueChange={setSelectedFieldKey}
                 disabled={filteredFields.length === 0 || isLoadingFields}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select field" />
+                  <SelectValue placeholder={t("workspace.unify.taxonomy_select_field")} />
                 </SelectTrigger>
                 <SelectContent>
                   {filteredFields.map((field) => (
@@ -436,26 +478,40 @@ export const TopicsSubtopicsPreview = ({
               loading={isGenerating}
               onClick={handleGenerate}>
               {activeTree ? <RefreshCwIcon className="size-4" /> : <PlayIcon className="size-4" />}
-              {activeTree ? "Regenerate taxonomy" : "Generate taxonomy"}
+              {activeTree ? t("workspace.unify.taxonomy_regenerate") : t("workspace.unify.taxonomy_generate")}
             </Button>
           </div>
 
           {selectedField && (
             <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-500">
-              <Badge text={`${selectedField.embedding_count} embedded`} type="gray" size="tiny" />
-              <Badge text={`${selectedField.record_count} text records`} type="gray" size="tiny" />
-              {!canWrite && <Badge text="Read only" type="warning" size="tiny" />}
+              <Badge
+                text={t("workspace.unify.taxonomy_embedded_records_short", {
+                  count: selectedField.embedding_count,
+                })}
+                type="gray"
+                size="tiny"
+              />
+              <Badge
+                text={t("workspace.unify.taxonomy_text_records_short", {
+                  count: selectedField.record_count,
+                })}
+                type="gray"
+                size="tiny"
+              />
+              {!canWrite && (
+                <Badge text={t("workspace.unify.taxonomy_read_only")} type="warning" size="tiny" />
+              )}
             </div>
           )}
         </div>
 
         {!hasDirectories && (
           <div className="rounded-lg border border-slate-200 bg-white p-6 text-center shadow-sm">
-            <p className="text-sm text-slate-600">
-              No feedback record directory is assigned to this workspace yet.
-            </p>
+            <p className="text-sm text-slate-600">{t("workspace.unify.taxonomy_no_directory")}</p>
             <Button className="mt-4" size="sm" asChild>
-              <Link href={`/workspaces/${workspaceId}/feedback-sources`}>Manage feedback sources</Link>
+              <Link href={`/workspaces/${workspaceId}/feedback-sources`}>
+                {t("workspace.unify.manage_feedback_sources")}
+              </Link>
             </Button>
           </div>
         )}
@@ -472,10 +528,17 @@ export const TopicsSubtopicsPreview = ({
         {latestRun && (
           <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
             <div className="flex flex-wrap items-center gap-3">
-              <Badge text={latestRun.status} type={statusBadgeType(latestRun.status)} size="tiny" />
+              <Badge
+                text={runStatusLabel(latestRun.status, t)}
+                type={statusBadgeType(latestRun.status)}
+                size="tiny"
+              />
               <span className="text-sm text-slate-600">
-                {latestRun.embedding_count} embedded records, {latestRun.cluster_count} clusters,{" "}
-                {latestRun.node_count} topics
+                {t("workspace.unify.taxonomy_run_summary", {
+                  embeddedCount: latestRun.embedding_count,
+                  clusterCount: latestRun.cluster_count,
+                  topicCount: latestRun.node_count,
+                })}
               </span>
               {hasRunningRun && <Loader2Icon className="size-4 animate-spin text-slate-500" />}
             </div>
@@ -488,7 +551,9 @@ export const TopicsSubtopicsPreview = ({
             <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
               <div className="flex items-center gap-2">
                 <GitBranchIcon className="size-4 text-slate-500" />
-                <h2 className="text-sm font-semibold text-slate-900">Taxonomy</h2>
+                <h2 className="text-sm font-semibold text-slate-900">
+                  {t("workspace.unify.taxonomy_title")}
+                </h2>
               </div>
               {isLoadingState && <Loader2Icon className="size-4 animate-spin text-slate-500" />}
             </div>
@@ -503,8 +568,8 @@ export const TopicsSubtopicsPreview = ({
               ) : (
                 <div className="rounded-lg border border-dashed border-slate-300 p-8 text-center text-sm text-slate-600">
                   {selectedField
-                    ? "No active taxonomy has been generated for this field yet."
-                    : "Select a feedback field to view its taxonomy."}
+                    ? t("workspace.unify.taxonomy_empty_no_active")
+                    : t("workspace.unify.taxonomy_empty_select_field")}
                 </div>
               )}
             </div>
@@ -512,7 +577,9 @@ export const TopicsSubtopicsPreview = ({
 
           <div className="rounded-lg border border-slate-200 bg-white shadow-sm">
             <div className="border-b border-slate-200 px-4 py-3">
-              <h2 className="text-sm font-semibold text-slate-900">Selected topic</h2>
+              <h2 className="text-sm font-semibold text-slate-900">
+                {t("workspace.unify.taxonomy_selected_topic")}
+              </h2>
             </div>
 
             <div className="space-y-4 p-4">
@@ -528,7 +595,7 @@ export const TopicsSubtopicsPreview = ({
                         loading={isSavingNode}
                         onClick={handleRename}>
                         <PencilIcon className="size-4" />
-                        Rename
+                        {t("workspace.unify.taxonomy_rename")}
                       </Button>
                       <Button
                         size="sm"
@@ -536,14 +603,16 @@ export const TopicsSubtopicsPreview = ({
                         disabled={!canWrite || isSavingNode || selectedNode.node_type === "root"}
                         onClick={handleRemove}>
                         <Trash2Icon className="size-4" />
-                        Remove
+                        {t("workspace.unify.taxonomy_remove")}
                       </Button>
                     </div>
                   </div>
 
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium text-slate-900">Feedback records</p>
+                      <p className="text-sm font-medium text-slate-900">
+                        {t("workspace.unify.feedback_records")}
+                      </p>
                       {isLoadingRecords && <Loader2Icon className="size-4 animate-spin text-slate-500" />}
                     </div>
                     {nodeRecords.length > 0 ? (
@@ -554,20 +623,18 @@ export const TopicsSubtopicsPreview = ({
                               {record.field_label || record.field_id}
                             </p>
                             <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700">
-                              {record.value_text || "No text value"}
+                              {record.value_text || t("workspace.unify.taxonomy_no_text_value")}
                             </p>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <p className="text-sm text-slate-500">
-                        No feedback records are attached to this topic.
-                      </p>
+                      <p className="text-sm text-slate-500">{t("workspace.unify.taxonomy_no_records")}</p>
                     )}
                   </div>
                 </>
               ) : (
-                <p className="text-sm text-slate-500">Select a topic to inspect its feedback records.</p>
+                <p className="text-sm text-slate-500">{t("workspace.unify.taxonomy_select_topic")}</p>
               )}
             </div>
           </div>
@@ -593,6 +660,7 @@ const TaxonomyTree = ({
   selectedNodeId?: string;
   onSelect: (node: TaxonomyNode) => void;
 }>) => {
+  const { t } = useTranslation();
   const isSelected = selectedNodeId === node.id;
 
   return (
@@ -608,7 +676,7 @@ const TaxonomyTree = ({
         }}
         onClick={() => onSelect(node)}>
         <span className="min-w-0 truncate">{node.label}</span>
-        <Badge text={node.node_type} type={isSelected ? "gray" : "gray"} size="tiny" />
+        <Badge text={nodeTypeLabel(node.node_type, t)} type="gray" size="tiny" />
       </button>
       {node.children?.map((child) => (
         <TaxonomyTree key={child.id} node={child} selectedNodeId={selectedNodeId} onSelect={onSelect} />
