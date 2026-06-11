@@ -1,0 +1,64 @@
+post:
+  operationId: duplicateWorkflowV3
+  summary: Duplicate a workflow
+  description: >
+    Creates a new `draft` workflow by copying an existing workflow's definition,
+    name (or the
+
+    provided override), and description. The duplicate receives its own id and
+    timestamps and
+
+    starts with empty run and version history; the source workflow is unchanged.
+    Archived
+
+    workflows can be duplicated (the copy starts as a normal draft).
+  tags:
+    - V3 Workflows
+  parameters:
+    - $ref: ../components/parameters/WorkflowIdPath.yml
+  requestBody:
+    required: false
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/DuplicateWorkflowRequest.yml
+  responses:
+    '201':
+      description: Workflow duplicated successfully
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+        Location:
+          schema:
+            type: string
+          example: /api/v3/workflows/clworkflowcopy000000000
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/WorkflowResource.yml
+    '400':
+      $ref: ../components/responses/V3BadRequest.yml
+    '401':
+      $ref: ../components/responses/V3Unauthorized.yml
+    '403':
+      $ref: ../components/responses/V3Forbidden.yml
+    '422':
+      $ref: ../components/responses/V3UnprocessableContent.yml
+    '429':
+      $ref: ../components/responses/V3TooManyRequests.yml
+    '500':
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []

@@ -1,0 +1,19 @@
+type: object
+description: Jumps to another block or ending when the logic rule matches.
+required:
+  - id
+  - objective
+  - target
+properties:
+  id:
+    type: string
+    format: cuid2
+  objective:
+    type: string
+    enum:
+      - jumpToBlock
+  target:
+    type: string
+    format: cuid2
+    description: Target block id or ending id.
+additionalProperties: false

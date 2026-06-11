@@ -1,0 +1,54 @@
+post:
+  operationId: enableWorkflowV3
+  summary: Enable a workflow
+  description: >
+    Moves a workflow from `draft` or `disabled` to `enabled`. Only enabled
+    workflows respond to
+
+    trigger events.
+
+
+    Enabling validates that the definition is executable — the trigger has
+    exactly one outgoing
+
+    edge (trigger-only drafts cannot be enabled), the graph is acyclic, every
+    node is
+
+    reachable from the trigger, only Scope 1 node types are present, and the
+    referenced survey
+
+    and ending cards still exist — and then snapshots an immutable workflow
+    version. Runs
+
+    reference that snapshot via `workflowVersionId`, so later draft edits never
+    change what an
+
+    enabled workflow executes. Validation failures return **422** with code
+
+    `workflow_not_executable` and structured `invalid_params`; calling enable in
+    a state other
+
+    than `draft` or `disabled` returns **422** with code
+    `invalid_workflow_state`.
+  tags:
+    - V3 Workflows
+  parameters:
+    - $ref: ../components/parameters/WorkflowIdPath.yml
+  responses:
+    '200':
+      $ref: ../components/responses/WorkflowResourceResponse.yml
+    '400':
+      $ref: ../components/responses/V3BadRequest.yml
+    '401':
+      $ref: ../components/responses/V3Unauthorized.yml
+    '403':
+      $ref: ../components/responses/V3Forbidden.yml
+    '422':
+      $ref: ../components/responses/V3UnprocessableContent.yml
+    '429':
+      $ref: ../components/responses/V3TooManyRequests.yml
+    '500':
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []

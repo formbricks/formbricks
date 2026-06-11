@@ -1,0 +1,14 @@
+type: object
+description: Field config for address and contact info elements.
+required:
+  - show
+  - required
+  - placeholder
+properties:
+  show:
+    type: boolean
+  required:
+    type: boolean
+  placeholder:
+    $ref: ./TranslatableText.yml
+additionalProperties: false

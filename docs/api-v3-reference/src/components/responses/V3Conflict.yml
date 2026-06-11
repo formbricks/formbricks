@@ -1,0 +1,17 @@
+description: >-
+  Conflict — an `Idempotency-Key` retry arrived while the original request was still being
+  processed (IETF `draft-ietf-httpapi-idempotency-key-header` semantics). Retry after the original
+  request completes to receive its stored result.
+headers:
+  X-Request-Id:
+    schema:
+      type: string
+    description: Request correlation ID
+  Cache-Control:
+    schema:
+      type: string
+    example: private, no-store
+content:
+  application/problem+json:
+    schema:
+      $ref: ../schemas/Problem.yml

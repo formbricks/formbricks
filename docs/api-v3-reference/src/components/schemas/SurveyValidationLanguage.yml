@@ -1,0 +1,21 @@
+type: object
+required:
+  - code
+  - default
+  - enabled
+  - writeBehavior
+properties:
+  code:
+    $ref: ./LocaleCode.yml
+  default:
+    type: boolean
+  enabled:
+    type: boolean
+  writeBehavior:
+    type: string
+    enum:
+      - connect_or_create
+    description: >-
+      Validation is read-only; a real write would connect an existing language
+      or create it if missing.
+additionalProperties: false

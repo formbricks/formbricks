@@ -1,0 +1,30 @@
+allOf:
+  - $ref: ./SurveyElementBase.yml
+  - type: object
+    required:
+      - addressLine1
+      - addressLine2
+      - city
+      - state
+      - zip
+      - country
+    properties:
+      type:
+        type: string
+        enum:
+          - address
+      addressLine1:
+        $ref: ./SurveyToggleInputConfig.yml
+      addressLine2:
+        $ref: ./SurveyToggleInputConfig.yml
+      city:
+        $ref: ./SurveyToggleInputConfig.yml
+      state:
+        $ref: ./SurveyToggleInputConfig.yml
+      zip:
+        $ref: ./SurveyToggleInputConfig.yml
+      country:
+        $ref: ./SurveyToggleInputConfig.yml
+      validation:
+        $ref: ./SurveyValidation.yml
+unevaluatedProperties: false

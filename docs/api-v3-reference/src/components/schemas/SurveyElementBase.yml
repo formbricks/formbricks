@@ -1,0 +1,44 @@
+type: object
+required:
+  - id
+  - type
+  - headline
+  - required
+properties:
+  id:
+    type: string
+    pattern: ^[a-zA-Z0-9_-]+$
+    description: Stable element id. Avoid spaces and reserved ids.
+  type:
+    type: string
+    enum:
+      - openText
+      - multipleChoiceSingle
+      - multipleChoiceMulti
+      - nps
+      - rating
+      - csat
+      - ces
+      - consent
+      - pictureSelection
+      - cta
+      - date
+      - fileUpload
+      - cal
+      - matrix
+      - address
+      - ranking
+      - contactInfo
+  headline:
+    $ref: ./TranslatableText.yml
+  subheader:
+    $ref: ./TranslatableText.yml
+  required:
+    type: boolean
+  imageUrl:
+    type: string
+  videoUrl:
+    type: string
+  isDraft:
+    type: boolean
+    description: Draft marker used by the editor and future update rules.

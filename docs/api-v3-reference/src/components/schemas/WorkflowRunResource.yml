@@ -1,0 +1,51 @@
+description: >
+  Full run shape returned by `GET /api/v3/workflows/runs/{runId}` and
+
+  `POST /api/v3/workflows/{workflowId}/test`: the summary fields plus the
+  captured trigger
+
+  payload, per-step results, the persisted log trace, and retry/idempotency
+  metadata.
+allOf:
+  - $ref: ./WorkflowRunSummary.yml
+  - type: object
+    required:
+      - triggerPayload
+      - data
+      - logs
+      - idempotencyKey
+      - nextAttemptAt
+      - lastErrorAt
+    properties:
+      triggerPayload:
+        $ref: ./WorkflowTriggerPayload.yml
+      data:
+        $ref: ./WorkflowRunData.yml
+      logs:
+        type: array
+        items:
+          $ref: ./WorkflowRunLog.yml
+        description: >-
+          Persisted step-by-step trace, ordered by `sequence`. Empty while the
+          run is still `queued`.
+      idempotencyKey:
+        type:
+          - string
+          - 'null'
+        description: >-
+          Deduplication key for this run, unique per workflow. Set from the
+          `Idempotency-Key` header on dry runs or from trigger-event
+          deduplication.
+      nextAttemptAt:
+        type:
+          - string
+          - 'null'
+        format: date-time
+        description: >-
+          When the next retry attempt is scheduled. `null` when no retry is
+          pending.
+      lastErrorAt:
+        type:
+          - string
+          - 'null'
+        format: date-time
